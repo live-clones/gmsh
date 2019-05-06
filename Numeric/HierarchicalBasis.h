@@ -42,32 +42,32 @@ public:
                              std::vector<double> &faceBasis,
                              std::vector<double> &bubbleBasis) = 0;
 
-  virtual void
-  generateBasis(double const &u, double const &v, double const &w,
-                std::vector<std::vector<double> > &vertexBasis,
-                std::vector<std::vector<double> > &edgeBasis,
-                std::vector<std::vector<double> > &faceBasis,
-                std::vector<std::vector<double> > &bubbleBasis,
-                std::string typeFunction) = 0; // typeFunction =GradH1Legendre ,
-                                               // HcurlLegendre,curlHcurlLegendre
+  virtual void generateBasis(
+    double const &u, double const &v, double const &w,
+    std::vector<std::vector<double> > &vertexBasis,
+    std::vector<std::vector<double> > &edgeBasis,
+    std::vector<std::vector<double> > &faceBasis,
+    std::vector<std::vector<double> > &bubbleBasis,
+    std::string typeFunction) = 0; // typeFunction =GradH1Legendre ,
+                                   // HcurlLegendre,curlHcurlLegendre
 
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
                           std::vector<std::vector<double> > &edgeBasis) = 0;
 
+  virtual void
+  orientFace(double const &u, double const &v, double const &w,
+             int const &flag1, int const &flag2, int const &flag3,
+             int const &faceNumber,
+             std::vector<std::vector<double> > &faceBasis,
+             std::string typeFunction) = 0; // typeFunction =GradH1Legendre ,
+                                            // HcurlLegendre,curlHcurlLegendre
+
+  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                          std::vector<double> &edgeFunctions) = 0;
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<std::vector<double>> &faceBasis,
-                          std::string typeFunction) = 0; // typeFunction =GradH1Legendre ,
-                                                           // HcurlLegendre,curlHcurlLegendre
-
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<double>  &edgeFunctions) = 0;
-  virtual void orientFace(double const &u, double const &v, double const &w,
-                            int const &flag1, int const &flag2, int const &flag3,
-                            int const &faceNumber,
-                              std::vector<double>  &faceFunctions )=0;
-
+                          std::vector<double> &faceFunctions) = 0;
 };
 
 #endif

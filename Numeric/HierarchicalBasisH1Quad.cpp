@@ -440,3 +440,102 @@ void HierarchicalBasisH1Quad::orientEdge(
     }
   }
 }
+
+void HierarchicalBasisH1Quad::orientFace(double const &u, double const &v,
+                                         double const &w, int const &flag1,
+                                         int const &flag2, int const &flag3,
+                                         int const &faceNumber,
+                                         std::vector<double> &faceBasis)
+{
+  if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
+    int iterator = 0;
+    if(flag3 == 1) {
+      for(int it1 = 2; it1 <= _pf1; it1++) {
+        for(int it2 = 2; it2 <= _pf2; it2++) {
+          int impactFlag1 = 1;
+          int impactFlag2 = 1;
+          if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+          faceBasis[iterator] = faceBasis[iterator] * impactFlag1 * impactFlag2;
+          iterator++;
+        }
+      }
+    }
+    else {
+      std::vector<double> lkVector1(_pf2 - 1);
+      std::vector<double> lkVector2(_pf1 - 1);
+      for(int it = 2; it <= _pf1; it++) {
+        lkVector1[it - 2] = OrthogonalPoly::EvalLobatto(it, u);
+      }
+      for(int it = 2; it <= _pf2; it++) {
+        lkVector2[it - 2] = OrthogonalPoly::EvalLobatto(it, v);
+      }
+
+      for(int it1 = 2; it1 <= _pf2; it1++) {
+        for(int it2 = 2; it2 <= _pf1; it2++) {
+          int impactFlag1 = 1;
+          int impactFlag2 = 1;
+          if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+          faceBasis[iterator] =
+            lkVector1[it2 - 2] * lkVector2[it1 - 2] * impactFlag1 * impactFlag2;
+          iterator++;
+        }
+      }
+    }
+  }
+}
+
+void HierarchicalBasisH1Quad::orientFace(
+  double const &u, double const &v, double const &w, int const &flag1,
+  int const &flag2, int const &flag3, int const &faceNumber,
+  std::vector<std::vector<double> > &gradientFace, std::string typeFunction)
+{
+  if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
+    int iterator = 0;
+    if(flag3 == 1) {
+      for(int it1 = 2; it1 <= _pf1; it1++) {
+        for(int it2 = 2; it2 <= _pf2; it2++) {
+          int impactFlag1 = 1;
+          int impactFlag2 = 1;
+          if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+          gradientFace[iterator][0] =
+            gradientFace[iterator][0] * impactFlag1 * impactFlag2;
+          gradientFace[iterator][1] =
+            gradientFace[iterator][1] * impactFlag1 * impactFlag2;
+
+          iterator++;
+        }
+      }
+    }
+    else {
+      std::vector<double> lkVector1(_pf1 - 1);
+      std::vector<double> lkVector2(_pf2 - 1);
+      std::vector<double> dlkVector1(_pf1 - 1);
+      std::vector<double> dlkVector2(_pf2 - 1);
+      for(int it = 2; it <= _pf1; it++) {
+        lkVector1[it - 2] = OrthogonalPoly::EvalLobatto(it, u);
+        dlkVector1[it - 2] = OrthogonalPoly::EvalDLobatto(it, u);
+      }
+      for(int it = 2; it <= _pf2; it++) {
+        lkVector2[it - 2] = OrthogonalPoly::EvalLobatto(it, v);
+        dlkVector2[it - 2] = OrthogonalPoly::EvalDLobatto(it, v);
+      }
+      for(int it1 = 2; it1 <= _pf2; it1++) {
+        for(int it2 = 2; it2 <= _pf1; it2++) {
+          int impactFlag1 = 1;
+          int impactFlag2 = 1;
+          if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+
+          gradientFace[iterator][0] = dlkVector1[it2 - 2] * lkVector2[it1 - 2] *
+                                      impactFlag1 * impactFlag2;
+          gradientFace[iterator][1] = lkVector1[it2 - 2] * dlkVector2[it1 - 2] *
+                                      impactFlag1 * impactFlag2;
+          iterator++;
+        }
+      }
+    }
+  }
+}

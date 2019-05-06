@@ -19,17 +19,17 @@
  *         v
  *         ^
  *         |+1
- *   3<----------2
- *   |     |     ^
+ *    ---------->2
+ *   ^     |     ^
  *   |     |     |
  * -1|     +---- |+1 --> u
  *   |           |
- *   v           |
+ *   |           |
  *   0---------->1
  *	   -1
  *
  * Oriented Edges:
- *  e0={v0;v1}    e1={v1;v2}  e2={v2;v3}  e3={v3;v4}
+ *  e0={v0;v1}    e1={v1;v2}  e2={v3;v2}  e3={v0;v3}
  *  pe3,pe1<=pf2       pe0,pe2<=pf1
  *
  */
@@ -66,13 +66,13 @@ public:
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<double> &faceBasis){};
+                          std::vector<double> &faceBasis);
 
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
                           std::vector<std::vector<double> > &faceBasis,
-                          std::string typeFunction="GradH1Legendre"){};
+                          std::string typeFunction = "GradH1Legendre");
 
 private:
   int _pf1; // face function order in  direction u

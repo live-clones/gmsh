@@ -427,9 +427,6 @@ void HierarchicalBasisH1Brick::orientEdge(int const &flagOrientation,
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    if(edgeNumber > 11) {
-      throw std::string("edgeNumber  must be : 0<=edgeNumber<=11");
-    }
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
@@ -446,9 +443,6 @@ void HierarchicalBasisH1Brick::orientEdge(
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    if(edgeNumber > 11) {
-      throw std::string("edgeNumber  must be : 0<=edgeNumber<=11");
-    }
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
@@ -470,9 +464,6 @@ void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
-    if(faceNumber > 5) {
-      throw std::string("edgeNumber  must be : 0<=faceNumber<=5");
-    }
     for(int i = 0; i < faceNumber; i++) {
       iterator += (_pOrderFace1[i] - 1) * (_pOrderFace2[i] - 1);
     }
@@ -524,12 +515,12 @@ void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
         var2 = v;
         break;
       }
-      std::vector<double> lkVector1(_pOrderFace2[faceNumber] - 1);
-      std::vector<double> lkVector2(_pOrderFace1[faceNumber] - 1);
-      for(int it = 2; it <= _pOrderFace2[faceNumber]; it++) {
+      std::vector<double> lkVector1(_pOrderFace1[faceNumber] - 1);
+      std::vector<double> lkVector2(_pOrderFace2[faceNumber] - 1);
+      for(int it = 2; it <= _pOrderFace1[faceNumber]; it++) {
         lkVector1[it - 2] = OrthogonalPoly::EvalLobatto(it, var1);
       }
-      for(int it = 2; it <= _pOrderFace1[faceNumber]; it++) {
+      for(int it = 2; it <= _pOrderFace2[faceNumber]; it++) {
         lkVector2[it - 2] = OrthogonalPoly::EvalLobatto(it, var2);
       }
 
@@ -537,8 +528,8 @@ void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
         for(int it2 = 2; it2 <= _pOrderFace1[faceNumber]; it2++) {
           int impactFlag1 = 1;
           int impactFlag2 = 1;
-          if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-          if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+          if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
           faceBasis[iterator] = lambda * lkVector1[it2 - 2] *
                                 lkVector2[it1 - 2] * impactFlag1 * impactFlag2;
           iterator++;
@@ -550,13 +541,10 @@ void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
 void HierarchicalBasisH1Brick::orientFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &gradientFace,std::string typeFunction)
+  std::vector<std::vector<double> > &gradientFace, std::string typeFunction)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
-    if(faceNumber > 5) {
-      throw std::string("edgeNumber  must be : 0<=faceNumber<=5");
-    }
     for(int i = 0; i < faceNumber; i++) {
       iterator += (_pOrderFace1[i] - 1) * (_pOrderFace2[i] - 1);
     }
@@ -624,30 +612,26 @@ void HierarchicalBasisH1Brick::orientFace(
         gradientLambda[2] = 0.5;
         break;
       }
-      std::vector<double> lkVector1(_pOrderFace2[faceNumber] - 1);
-      std::vector<double> lkVector2(_pOrderFace1[faceNumber] - 1);
-      std::vector<std::vector<double> > dlkVector1(_pOrderFace2[faceNumber] - 1,
+      std::vector<double> lkVector1(_pOrderFace1[faceNumber] - 1);
+      std::vector<double> lkVector2(_pOrderFace2[faceNumber] - 1);
+      std::vector<std::vector<double> > dlkVector1(_pOrderFace1[faceNumber] - 1,
                                                    std::vector<double>(3, 0.));
-      std::vector<std::vector<double> > dlkVector2(_pOrderFace1[faceNumber] - 1,
+      std::vector<std::vector<double> > dlkVector2(_pOrderFace2[faceNumber] - 1,
                                                    std::vector<double>(3, 0.));
-      for(int it = 2; it <= _pOrderFace2[faceNumber]; it++) {
-        lkVector1[it - 2] = OrthogonalPoly::EvalLobatto(it, uvw[var1]);
-      }
       for(int it = 2; it <= _pOrderFace1[faceNumber]; it++) {
-        lkVector2[it - 2] = OrthogonalPoly::EvalLobatto(it, uvw[var2]);
-      }
-      for(int it = 2; it <= _pOrderFace2[faceNumber]; it++) {
+        lkVector1[it - 2] = OrthogonalPoly::EvalLobatto(it, uvw[var1]);
         dlkVector1[it - 2][var1] = OrthogonalPoly::EvalDLobatto(it, uvw[var1]);
       }
-      for(int it = 2; it <= _pOrderFace1[faceNumber]; it++) {
+      for(int it = 2; it <= _pOrderFace2[faceNumber]; it++) {
+        lkVector2[it - 2] = OrthogonalPoly::EvalLobatto(it, uvw[var2]);
         dlkVector2[it - 2][var2] = OrthogonalPoly::EvalDLobatto(it, uvw[var2]);
       }
       for(int it1 = 2; it1 <= _pOrderFace2[faceNumber]; it1++) {
         for(int it2 = 2; it2 <= _pOrderFace1[faceNumber]; it2++) {
           int impactFlag1 = 1;
           int impactFlag2 = 1;
-          if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-          if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+          if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
           for(int itVector = 0; itVector < 3; itVector++) {
             gradientFace[iterator][itVector] =
               (gradientLambda[itVector] * lkVector1[it2 - 2] *

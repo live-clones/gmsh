@@ -49,6 +49,7 @@
 #include "HierarchicalBasisH1Tetra.h"
 #include "HierarchicalBasisH1Pri.h"
 #include "HierarchicalBasisHcurlQuad.h"
+#include "HierarchicalBasisHcurlBrick.h"
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGFaceOptimize.h"
@@ -1516,34 +1517,33 @@ static bool _getIntegrationInfo(const std::string &intType,
   return false;
 }
 static bool _getHierarchicalFunctionSpaceInfo(const std::string &fsType,
-                                  std::string &fsName, int &  basisOrder,
-                                  int &fsComp)
+                                              std::string &fsName,
+                                              int &basisOrder, int &fsComp)
 {
   if(fsType.substr(0, 10) == "H1Legendre") {
     fsComp = 1;
     basisOrder = atoi(fsType.substr(10).c_str());
-    fsName="H1Legendre";
+    fsName = "H1Legendre";
     return true;
   }
   if(fsType.substr(0, 14) == "GradH1Legendre") {
     fsComp = 3;
     basisOrder = atoi(fsType.substr(14).c_str());
-    fsName="GradH1Legendre";
+    fsName = "GradH1Legendre";
     return true;
   }
   if(fsType.substr(0, 13) == "HcurlLegendre") {
     fsComp = 3;
     basisOrder = atoi(fsType.substr(13).c_str());
-    fsName="HcurlLegendre";
+    fsName = "HcurlLegendre";
     return true;
   }
   if(fsType.substr(0, 17) == "CurlHcurlLegendre") {
     fsComp = 3;
     basisOrder = atoi(fsType.substr(17).c_str());
-    fsName="CurlHcurlLegendre";
+    fsName = "CurlHcurlLegendre";
     return true;
   }
-
   return false;
 }
 
@@ -1905,8 +1905,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     throw 2;
   }
   int basisOrder = 0;
-  std::string fsName="";
-  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType,fsName, basisOrder,numComponents)) {
+  std::string fsName = "";
+  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
+                                        numComponents)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
@@ -1931,7 +1932,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   HierarchicalBasis *basis(0);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
-  if(fsName=="H1Legendre" || fsName=="GradH1Legendre"){
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
     switch(familyType) {
     case TYPE_HEX: {
       basis = new HierarchicalBasisH1Brick(basisOrder);
@@ -1954,12 +1955,15 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
- else{
+  else {
     switch(familyType) {
-      case TYPE_QUA: {
-        basis = new HierarchicalBasisHcurlQuad(basisOrder);
-      } break;
-      default: Msg::Error("Unknown familyType "); throw 2;
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisHcurlQuad(basisOrder);
+    } break;
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisHcurlBrick(basisOrder);
+    } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
   int nq = weights.size();
@@ -1980,10 +1984,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   int const1 = nq * numFunctionsPerElement * numComponents;
   switch(numComponents) {
   case 1: {
-    int i=0;
-  //  for(int i = 0; i < nq; i++) {
-    //  double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
-     double u =-0.666666666667000 , v =0.333333333333000, w =   -0.577350269190000;
+    for(int i = 0; i < nq; i++) {
+      double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
       std::vector<double> vTable(vSize); // Vertex functions of one element
       std::vector<double> bTable(bSize); // bubble functions of one element
       std::vector<double> fTable(fSize); // face functions of one element
@@ -2000,7 +2002,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           std::vector<double> eTableCopy(
             eSize); // use eTableCopy to orient the edges
           for(int r = 0; r < eSize; r++) { eTableCopy[r] = eTable[r]; }
-          if(eSize > 0 && basis->getNumEdge() > 1) {
+          if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
               int orientationFlag = 1;
@@ -2016,8 +2018,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           }
           std::vector<double> fTableCopy(fSize);
           for(int r = 0; r < fSize; r++) { fTableCopy[r] = fTable[r]; }
-          if(fSize > 0 &&
-             basis->getNumTriFace() + basis->getNumQuadFace() > 1) {
+          if(fSize > 0) {
             for(int jj = 0;
                 jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
               MFace face = e->getFaceSolin(jj);
@@ -2026,68 +2027,36 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               basis->orientFace(u, v, w, faceOrientationFlag[0],
                                 faceOrientationFlag[1], faceOrientationFlag[2],
                                 jj, fTableCopy);
-              if(e->getNum()==41){
-                  std::cout<<"numFac "<<face.getVertex(0)->getNum()<<" "<<face.getVertex(1)->getNum()<<" "<<face.getVertex(2)->getNum()<<" flag : "<<faceOrientationFlag[0]<<" "<<faceOrientationFlag[1]<<" "<<faceOrientationFlag[2]<<std::endl;
-              }
             }
           }
-          if(e->getNum()==41){
-            std::cout<<"simple"<<std::endl;
-            std::cout<<"verte"<<std::endl;
-            for(int k = 0; k < vSize; k++) {
-              std::cout<< vTable[k]<<std::endl;
-              basisFunctions[const3 + k] = vTable[k];
-            }
-            std::size_t const4 = const3 + vSize;
-            std::cout<<"edge"<<std::endl;
-            for(int k = 0; k < eSize; k++) {
-                  std::cout<<eTableCopy[k]<<std::endl;
-              basisFunctions[const4 + k] = eTableCopy[k];
-            }
-            std::cout<<"face"<<std::endl;
-            std::size_t const5 = const4 + eSize;
-            for(int k = 0; k < fSize; k++) {
-                std::cout<<fTableCopy[k]<<std::endl;
-              basisFunctions[const5 + k] = fTableCopy[k];
-            }
-            std::cout<<"bulle"<<std::endl;
-            std::size_t const6 = const5 + fSize;
-            for(int k = 0; k < bSize; k++) {
-                std::cout<<bTable[k]<<std::endl;
-              basisFunctions[const6 + k] = bTable[k];
-            }
-
+          for(int k = 0; k < vSize; k++) {
+            basisFunctions[const3 + k] = vTable[k];
           }
-          /* for(int k = 0; k < vSize; k++) {
-             basisFunctions[const3 + k] = vTable[k];
-           }
-           std::size_t const4 = const3 + vSize;
-           for(int k = 0; k < eSize; k++) {
-             basisFunctions[const4 + k] = eTableCopy[k];
-           }
-           std::size_t const5 = const4 + eSize;
-           for(int k = 0; k < fSize; k++) {
-             basisFunctions[const5 + k] = fTableCopy[k];
-           }
-           std::size_t const6 = const5 + fSize;
-           for(int k = 0; k < bSize; k++) {
-             basisFunctions[const6 + k] = bTable[k];
-           }*/
+          std::size_t const4 = const3 + vSize;
+          for(int k = 0; k < eSize; k++) {
+            basisFunctions[const4 + k] = eTableCopy[k];
+          }
+          std::size_t const5 = const4 + eSize;
+          for(int k = 0; k < fSize; k++) {
+            basisFunctions[const5 + k] = fTableCopy[k];
+          }
+          std::size_t const6 = const5 + fSize;
+          for(int k = 0; k < bSize; k++) {
+            basisFunctions[const6 + k] = bTable[k];
+          }
 
           indexNumElement++;
         }
       }
-    //}
+    }
     break;
   }
   case 3: {
     int prod1 = vSize * numComponents;
     int prod2 = eSize * numComponents;
     int prod3 = fSize * numComponents;
-    int i=0;
-  //  for(int i = 0; i < nq; i++) {
-    //  double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
-   double u =-0.666666666667000 , v =0.333333333333000, w =   -0.577350269190000;
+    for(int i = 0; i < nq; i++) {
+      double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
       std::vector<std::vector<double> > gradientVertex(
         vSize, std::vector<double>(3, 0.));
       std::vector<std::vector<double> > gradientEdge(
@@ -2096,8 +2065,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         fSize, std::vector<double>(3, 0.));
       std::vector<std::vector<double> > gradientBubble(
         bSize, std::vector<double>(3, 0.));
-     basis->generateBasis(u, v, w, gradientVertex, gradientEdge,
-                                   gradientFace, gradientBubble,fsName);
+      basis->generateBasis(u, v, w, gradientVertex, gradientEdge, gradientFace,
+                           gradientBubble, fsName);
       int const2 = i * numFunctionsPerElement * numComponents;
       size_t indexNumElement = 0;
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
@@ -2113,7 +2082,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             eTableCopy[r][1] = gradientEdge[r][1];
             eTableCopy[r][2] = gradientEdge[r][2];
           }
-          if(eSize > 0 && basis->getNumEdge() > 1) {
+          if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
               int orientationFlag = 1;
@@ -2127,7 +2096,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               basis->orientEdge(orientationFlag, jj, eTableCopy);
             }
           }
-
           std::vector<std::vector<double> > fTableCopy(
             fSize, std::vector<double>(3, 0.));
           for(int r = 0; r < fSize; r++) {
@@ -2135,75 +2103,43 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             fTableCopy[r][1] = gradientFace[r][1];
             fTableCopy[r][2] = gradientFace[r][2];
           }
-          if(fSize > 0 &&
-             basis->getNumTriFace() + basis->getNumQuadFace() > 1) {
+          if(fSize > 0) {
             for(int jj = 0;
-                jj < basis->getNumTriFace() +basis->getNumQuadFace(); jj++) {
+                jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
               MFace face = e->getFaceSolin(jj);
               std::vector<int> faceOrientationFlag(3);
               face.getOrientationFlagForFace(faceOrientationFlag);
               basis->orientFace(u, v, w, faceOrientationFlag[0],
-                                    faceOrientationFlag[1],
-                                    faceOrientationFlag[2], jj, fTableCopy,fsName);
+                                faceOrientationFlag[1], faceOrientationFlag[2],
+                                jj, fTableCopy, fsName);
             }
           }
           std::size_t const4 = const3 + prod1;
           std::size_t const5 = const4 + prod2;
           std::size_t const6 = const5 + prod3;
-          if(e->getNum()==41){
-            std::cout<<"grad"<<std::endl;
-            for(int indexNumComp = 0; indexNumComp < numComponents;
-                 indexNumComp++) {
-               std::cout<<"uvw "<<indexNumComp <<std::endl;
-                std::cout<<"vertex"<<std::endl;
-               for(int k = 0; k < vSize; k++) {
-                 basisFunctions[const3 + k * numComponents + indexNumComp] =
-                   gradientVertex[k][indexNumComp];
-                   std::cout<< gradientVertex[k][indexNumComp]<<std::endl;
-               }
-               std::cout<<"edge"<<std::endl;
-               for(int k = 0; k < eSize; k++) {
-                 basisFunctions[const4 + k * numComponents + indexNumComp] =
-                   eTableCopy[k][indexNumComp];
-                   std::cout<< eTableCopy[k][indexNumComp]<<std::endl;
-               }
-               std::cout<<"face"<<std::endl;
-               for(int k = 0; k < fSize; k++) {
-                 basisFunctions[const5 + k * numComponents + indexNumComp] =
-                   fTableCopy[k][indexNumComp];
-                      std::cout<< fTableCopy[k][indexNumComp]<<std::endl;
-               }
-               std::cout<<"bulle"<<std::endl;
-               for(int k = 0; k < bSize; k++) {
-                 basisFunctions[const6 + k * numComponents + indexNumComp] =
-                   gradientBubble[k][indexNumComp];
-                       std::cout<<    gradientBubble[k][indexNumComp]<<std::endl;
-               }
+          for(int indexNumComp = 0; indexNumComp < numComponents;
+              indexNumComp++) {
+            for(int k = 0; k < vSize; k++) {
+              basisFunctions[const3 + k * numComponents + indexNumComp] =
+                gradientVertex[k][indexNumComp];
+            }
+            for(int k = 0; k < eSize; k++) {
+              basisFunctions[const4 + k * numComponents + indexNumComp] =
+                eTableCopy[k][indexNumComp];
+            }
+            for(int k = 0; k < fSize; k++) {
+              basisFunctions[const5 + k * numComponents + indexNumComp] =
+                fTableCopy[k][indexNumComp];
+            }
+            for(int k = 0; k < bSize; k++) {
+              basisFunctions[const6 + k * numComponents + indexNumComp] =
+                gradientBubble[k][indexNumComp];
             }
           }
-        /*  for(int indexNumComp = 0; indexNumComp < numComponents;
-               indexNumComp++) {
-             for(int k = 0; k < vSize; k++) {
-               basisFunctions[const3 + k * numComponents + indexNumComp] =
-                 gradientVertex[k][indexNumComp];
-             }
-             for(int k = 0; k < eSize; k++) {
-               basisFunctions[const4 + k * numComponents + indexNumComp] =
-                 eTableCopy[k][indexNumComp];
-             }
-             for(int k = 0; k < fSize; k++) {
-               basisFunctions[const5 + k * numComponents + indexNumComp] =
-                 fTableCopy[k][indexNumComp];
-             }
-             for(int k = 0; k < bSize; k++) {
-               basisFunctions[const6 + k * numComponents + indexNumComp] =
-                 gradientBubble[k][indexNumComp];
-             }
-          }*/
           indexNumElement++;
         }
       }
-    //}
+    }
     break;
   }
   }
@@ -2220,9 +2156,9 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
   keys.clear();
   int order = 0;
   int numComponents = 0;
-  std::string fsName="";
-  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType,fsName, order,
-    numComponents)) {
+  std::string fsName = "";
+  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, fsName, order,
+                                        numComponents)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
@@ -2242,7 +2178,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
 
   else {
     HierarchicalBasis *basis(0);
-    if(fsName=="H1Legendre" || fsName=="GradH1Legendre"){
+    if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
       switch(familyType) {
       case TYPE_HEX: {
         basis = new HierarchicalBasisH1Brick(order);
@@ -2265,11 +2201,14 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       default: Msg::Error("Unknown familyType "); throw 2;
       }
     }
-    else{
+    else {
       switch(familyType) {
-        case TYPE_QUA: {
-          basis = new HierarchicalBasisHcurlQuad(order);
-        } break;
+      case TYPE_QUA: {
+        basis = new HierarchicalBasisHcurlQuad(order);
+      } break;
+      case TYPE_HEX: {
+        basis = new HierarchicalBasisHcurlBrick(order);
+      } break;
       }
     }
     int vSize = basis->getnVertexFunction();

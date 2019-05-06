@@ -179,9 +179,6 @@ void HierarchicalBasisH1Tetra::orientEdge(int const &flagOrientation,
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    if(edgeNumber > 5) {
-      throw std::string("edgeNumber  must be : 0<=edgeNumber<=5");
-    }
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
@@ -197,9 +194,6 @@ void HierarchicalBasisH1Tetra::orientEdge(
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    if(edgeNumber > 5) {
-      throw std::string("edgeNumber  must be : 0<=edgeNumber<=5");
-    }
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
@@ -226,9 +220,6 @@ void HierarchicalBasisH1Tetra::orientFace(double const &u, double const &v,
     double wc = 2 * w - 1;
     //*****
     int iterator = 0;
-    if(faceNumber > 3) {
-      throw std::string("faceNumber  must be : 0<=faceNumber<=3");
-    }
     for(int i = 0; i < faceNumber; i++) {
       iterator += int((_pOrderFace[i] - 1) * (_pOrderFace[i] - 2) / 2);
     }
@@ -256,7 +247,7 @@ void HierarchicalBasisH1Tetra::orientFace(double const &u, double const &v,
       break;
     }
     double product = lambda[0] * lambda[1] * lambda[2];
-    if(flag1 == 2 && flag2 == -1) {
+    if(flag1 == 1 && flag2 == -1) {
       double copy = lambda[0];
       lambda[0] = lambda[1];
       lambda[1] = copy;
@@ -266,7 +257,7 @@ void HierarchicalBasisH1Tetra::orientFace(double const &u, double const &v,
       lambda[2] = lambda[1];
       lambda[1] = copy;
     }
-    else if(flag1 == 1 && flag2 == -1) {
+    else if(flag1 == 2 && flag2 == -1) {
       double copy = lambda[2];
       lambda[2] = lambda[0];
       lambda[0] = copy;
@@ -526,7 +517,7 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
 void HierarchicalBasisH1Tetra::orientFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &gradientFace,std::string typeFunction)
+  std::vector<std::vector<double> > &gradientFace, std::string typeFunction)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     // to map onto the reference domain of gmsh:
@@ -535,9 +526,6 @@ void HierarchicalBasisH1Tetra::orientFace(
     double wc = 2 * w - 1;
     //*****
     int iterator = 0;
-    if(faceNumber > 3) {
-      throw std::string("faceNumber  must be : 0<=faceNumber<=3");
-    }
     for(int i = 0; i < faceNumber; i++) {
       iterator += int((_pOrderFace[i] - 1) * (_pOrderFace[i] - 2) / 2);
     }
@@ -604,7 +592,7 @@ void HierarchicalBasisH1Tetra::orientFace(
     }
     }
     double product = lambda[0] * lambda[1] * lambda[2];
-    if(flag1 == 2 && flag2 == -1) {
+    if(flag1 == 1 && flag2 == -1) {
       double copy = lambda[0];
       lambda[0] = lambda[1];
       lambda[1] = copy;
@@ -620,7 +608,7 @@ void HierarchicalBasisH1Tetra::orientFace(
       dlambda[2] = dlambda[1];
       dlambda[1] = dcopy;
     }
-    else if(flag1 == 1 && flag2 == -1) {
+    else if(flag1 == 2 && flag2 == -1) {
       double copy = lambda[2];
       lambda[2] = lambda[0];
       lambda[0] = copy;

@@ -72,3 +72,25 @@ void HierarchicalBasisH1Line::generateGradientBasis(
     gradientEdge[k - 2][0] = OrthogonalPoly::EvalDLobatto(k, u);
   }
 }
+
+void HierarchicalBasisH1Line::orientEdge(int const &flagOrientation,
+                                         int const &edgeNumber,
+                                         std::vector<double> &edgeBasis)
+{
+  if(flagOrientation == -1) {
+    for(int k = 0; k <= _pe - 2; k++) {
+      if(k % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
+    }
+  }
+}
+
+void HierarchicalBasisH1Line::orientEdge(
+  int const &flagOrientation, int const &edgeNumber,
+  std::vector<std::vector<double> > &gradientEdge)
+{
+  if(flagOrientation == -1) {
+    for(int k = 0; k <= _pe - 2; k++) {
+      if(k % 2 != 0) { gradientEdge[k][0] = gradientEdge[k][0] * (-1); }
+    }
+  }
+}

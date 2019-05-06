@@ -325,7 +325,6 @@ void HierarchicalBasisH1Pri::generateGradientBasis(
   productEdgeTerm[8] = product1[4] * lambda1;
   std::vector<std::vector<double> > dproductEdgeTerm(_nedge,
                                                      std::vector<double>(3));
-
   for(int i = 0; i < 3; i++) {
     dproductEdgeTerm[0][i] =
       gradientVertex[0][i] * lambda3 + dlambda3[i] * product1[0];
@@ -513,9 +512,6 @@ void HierarchicalBasisH1Pri::orientEdge(int const &flagOrientation,
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    if(edgeNumber > 8) {
-      throw std::string("edgeNumber  must be : 0<=edgeNumber<=8");
-    }
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
@@ -531,9 +527,6 @@ void HierarchicalBasisH1Pri::orientEdge(
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    if(edgeNumber > 8) {
-      throw std::string("edgeNumber  must be : 0<=edgeNumber<=8");
-    }
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
@@ -611,21 +604,21 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
           var2 = lambda4 - lambda5;
         } break;
         }
-        std::vector<double> phi1(_pOrderQuadFace2[faceNumber] - 1);
-        std::vector<double> phi2(_pOrderQuadFace1[faceNumber] - 1);
-        for(int it = 0; it <= _pOrderQuadFace2[faceNumber] - 2; it++) {
+        std::vector<double> phi1(_pOrderQuadFace1[faceNumber] - 1);
+        std::vector<double> phi2(_pOrderQuadFace2[faceNumber] - 1);
+        for(int it = 0; it <= _pOrderQuadFace1[faceNumber] - 2; it++) {
           phi1[it] = OrthogonalPoly::EvalKernelFunction(it, var1);
         }
-        for(int it = 0; it <= _pOrderQuadFace1[faceNumber] - 2; it++) {
+        for(int it = 0; it <= _pOrderQuadFace2[faceNumber] - 2; it++) {
           phi2[it] = OrthogonalPoly::EvalKernelFunction(it, var2);
         }
 
-        for(int it1 = 0; it1 <= _pOrderQuadFace1[faceNumber] - 2; it1++) {
-          for(int it2 = 0; it2 <= _pOrderQuadFace2[faceNumber] - 2; it2++) {
+        for(int it1 = 0; it1 <= _pOrderQuadFace2[faceNumber] - 2; it1++) {
+          for(int it2 = 0; it2 <= _pOrderQuadFace1[faceNumber] - 2; it2++) {
             int impactFlag1 = 1;
             int impactFlag2 = 1;
-            if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+            if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
             faceBasis[iterator] =
               lambdaProduct * phi1[it2] * phi2[it1] * impactFlag1 * impactFlag2;
             iterator++;
@@ -645,9 +638,6 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
       int iterator = (_pOrderQuadFace2[0] - 1) * (_pOrderQuadFace1[0] - 1) +
                      (_pOrderQuadFace2[1] - 1) * (_pOrderQuadFace1[1] - 1) +
                      (_pOrderQuadFace2[2] - 1) * (_pOrderQuadFace1[2] - 1);
-      if(faceNumber > 4) {
-        throw std::string("edgeNumber  must be : 0<=faceNumber<=4");
-      }
       for(int i = 0; i < constant; i++) {
         iterator += int((_pOrderTriFace[i] - 1) * (_pOrderTriFace[i] - 2) / 2);
       }
@@ -668,7 +658,7 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
         break;
       }
       double product = lambda[0] * lambda[1] * lambda[2] * lambdai;
-      if(flag1 == 2 && flag2 == -1) {
+      if(flag1 == 1 && flag2 == -1) {
         double copy = lambda[0];
         lambda[0] = lambda[1];
         lambda[1] = copy;
@@ -678,7 +668,7 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
         lambda[2] = lambda[1];
         lambda[1] = copy;
       }
-      else if(flag1 == 1 && flag2 == -1) {
+      else if(flag1 == 2 && flag2 == -1) {
         double copy = lambda[2];
         lambda[2] = lambda[0];
         lambda[0] = copy;
@@ -715,7 +705,7 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
 void HierarchicalBasisH1Pri::orientFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &gradientFace,std::string typeFunction)
+  std::vector<std::vector<double> > &gradientFace, std::string typeFunction)
 {
   if(faceNumber < 3) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
@@ -730,7 +720,6 @@ void HierarchicalBasisH1Pri::orientFace(
             int impactFlag2 = 1;
             if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
             if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-
             gradientFace[iterator][0] =
               gradientFace[iterator][0] * impactFlag1 * impactFlag2;
             gradientFace[iterator][1] =
@@ -809,25 +798,25 @@ void HierarchicalBasisH1Pri::orientFace(
 
         } break;
         }
-        std::vector<double> phi1(_pOrderQuadFace2[faceNumber] - 1);
-        std::vector<double> phi2(_pOrderQuadFace1[faceNumber] - 1);
-        std::vector<double> dphi1(_pOrderQuadFace2[faceNumber] - 1);
-        std::vector<double> dphi2(_pOrderQuadFace1[faceNumber] - 1);
-        for(int it = 0; it <= _pOrderQuadFace2[faceNumber] - 2; it++) {
+        std::vector<double> phi1(_pOrderQuadFace1[faceNumber] - 1);
+        std::vector<double> phi2(_pOrderQuadFace2[faceNumber] - 1);
+        std::vector<double> dphi1(_pOrderQuadFace1[faceNumber] - 1);
+        std::vector<double> dphi2(_pOrderQuadFace2[faceNumber] - 1);
+        for(int it = 0; it <= _pOrderQuadFace1[faceNumber] - 2; it++) {
           phi1[it] = OrthogonalPoly::EvalKernelFunction(it, var1);
           dphi1[it] = OrthogonalPoly::EvalDKernelFunction(it, var1);
         }
-        for(int it = 0; it <= _pOrderQuadFace1[faceNumber] - 2; it++) {
+        for(int it = 0; it <= _pOrderQuadFace2[faceNumber] - 2; it++) {
           phi2[it] = OrthogonalPoly::EvalKernelFunction(it, var2);
           dphi2[it] = OrthogonalPoly::EvalDKernelFunction(it, var2);
         }
 
-        for(int it1 = 0; it1 <= _pOrderQuadFace1[faceNumber] - 2; it1++) {
-          for(int it2 = 0; it2 <= _pOrderQuadFace2[faceNumber] - 2; it2++) {
+        for(int it1 = 0; it1 <= _pOrderQuadFace2[faceNumber] - 2; it1++) {
+          for(int it2 = 0; it2 <= _pOrderQuadFace1[faceNumber] - 2; it2++) {
             int impactFlag1 = 1;
             int impactFlag2 = 1;
-            if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+            if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
             for(int i = 0; i < 3; i++) {
               gradientFace[iterator][i] =
                 impactFlag1 * impactFlag2 *
@@ -852,9 +841,6 @@ void HierarchicalBasisH1Pri::orientFace(
       int iterator = (_pOrderQuadFace2[0] - 1) * (_pOrderQuadFace1[0] - 1) +
                      (_pOrderQuadFace2[1] - 1) * (_pOrderQuadFace1[1] - 1) +
                      (_pOrderQuadFace2[2] - 1) * (_pOrderQuadFace1[2] - 1);
-      if(faceNumber > 4) {
-        throw std::string("edgeNumber  must be : 0<=faceNumber<=4");
-      }
       for(int i = 0; i < constant; i++) {
         iterator += int((_pOrderTriFace[i] - 1) * (_pOrderTriFace[i] - 2) / 2);
       }
@@ -886,7 +872,7 @@ void HierarchicalBasisH1Pri::orientFace(
         dlambdai[2] = 0.5;
         break;
       }
-      if(flag1 == 2 && flag2 == -1) {
+      if(flag1 == 1 && flag2 == -1) {
         double copy = lambda[0];
         lambda[0] = lambda[1];
         lambda[1] = copy;
@@ -902,7 +888,7 @@ void HierarchicalBasisH1Pri::orientFace(
         dlambda[2] = dlambda[1];
         dlambda[1] = dcopy;
       }
-      else if(flag1 == 1 && flag2 == -1) {
+      else if(flag1 == 2 && flag2 == -1) {
         double copy = lambda[2];
         lambda[2] = lambda[0];
         lambda[0] = copy;

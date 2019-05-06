@@ -87,7 +87,8 @@ public:
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<std::vector<double> > &faceBasis,std::string typeFunction="GradH1Legendre");
+                          std::vector<std::vector<double> > &faceBasis,
+                          std::string typeFunction = "GradH1Legendre");
 
 private:
   int _pb; // bubble function order

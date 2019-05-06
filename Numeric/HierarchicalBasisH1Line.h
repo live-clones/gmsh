@@ -53,9 +53,9 @@ public:
   }
 
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<double> &edgeBasis){};
+                          std::vector<double> &edgeBasis);
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<std::vector<double> > &edgeBasis){};
+                          std::vector<std::vector<double> > &edgeBasis);
 
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
@@ -65,7 +65,8 @@ public:
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<std::vector<double> > &faceBasis,std::string typeFunction="GradH1Legendre"){};
+                          std::vector<std::vector<double> > &faceBasis,
+                          std::string typeFunction = "GradH1Legendre"){};
 
 private:
   int _pe; //  edge function order in  direction u

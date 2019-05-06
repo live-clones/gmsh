@@ -36,25 +36,30 @@ class HierarchicalBasisHcurlQuad : public HierarchicalBasisHcurl {
 public:
   HierarchicalBasisHcurlQuad(int order);
   virtual ~HierarchicalBasisHcurlQuad();
-  virtual void generateBasis(
-    double const &u, double const &v, double const &w,
-    std::vector<std::vector<double> > &vertexBasis,
-    std::vector<std::vector<double> > &edgeBasis,
-    std::vector<std::vector<double> > &faceBasis,
-    std::vector<std::vector<double> > &bubbleBasis,
-    std::string typeFunction){
-      if(typeFunction=="HcurlLegendre"){
-        generateBasis(u, v,w,edgeBasis,faceBasis,bubbleBasis);
-      }
-      else{
-        generateCurlBasis(u, v,w,edgeBasis,faceBasis,bubbleBasis);
-      }
+  virtual void generateBasis(double const &u, double const &v, double const &w,
+                             std::vector<std::vector<double> > &vertexBasis,
+                             std::vector<std::vector<double> > &edgeBasis,
+                             std::vector<std::vector<double> > &faceBasis,
+                             std::vector<std::vector<double> > &bubbleBasis,
+                             std::string typeFunction)
+  {
+    if(typeFunction == "HcurlLegendre") {
+      generateBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,std::vector<std::vector<double>> &edgeBasis);
+    else if("CurlHcurlLegendre" == typeFunction) {
+      generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
+    }
+    else {
+      throw std::string("unknown typeFunction");
+    }
+  };
+  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                          std::vector<std::vector<double> > &edgeBasis);
   virtual void orientFace(double const &u, double const &v, double const &w,
-                                                                          int const &flag1, int const &flag2, int const &flag3,
-                                                                          int const &faceNumber,
-                                                                          std::vector<std::vector<double>> &faceFunctions,std::string typeFunction) {};
+                          int const &flag1, int const &flag2, int const &flag3,
+                          int const &faceNumber,
+                          std::vector<std::vector<double> > &faceFunctions,
+                          std::string typeFunction);
 
 private:
   int _pf1; // face function order in  direction u
@@ -65,15 +70,17 @@ private:
   _affineCoordinate(int const &j, double const &u,
                     double const &v); // affine coordinate lambdaj j=1..4
   // edgeBasis=[phie0_{0},...phie0_{pe0},phie1_{0},...phie1_{pe1}...]
-  // faceBasis=[phieFf1{n1,n2} (with 0<=n1<=pf1 , 2<=n2<=pf2+1), phieFf2{n1,n2} (with 2<=n1<=pf1+1 , 0<=n2<=pf2) ]
+  // faceBasis=[phieFf1{n1,n2} (with 0<=n1<=pf1 , 2<=n2<=pf2+1), phieFf2{n1,n2}
+  // (with 2<=n1<=pf1+1 , 0<=n2<=pf2) ]
   virtual void generateBasis(double const &u, double const &v, double const &w,
-                             std::vector<std::vector<double>> &edgeBasis,
-                             std::vector<std::vector<double>> &faceBasis,
-                            std::vector<std::vector<double>> &bubbleBasis);
-  virtual void generateCurlBasis(double const &u, double const &v, double const &w,
-                             std::vector<std::vector<double>> &edgeBasis,
-                               std::vector<std::vector<double>> &faceBasis,
-                             std::vector<std::vector<double>> &bubbleBasis);
+                             std::vector<std::vector<double> > &edgeBasis,
+                             std::vector<std::vector<double> > &faceBasis,
+                             std::vector<std::vector<double> > &bubbleBasis);
+  virtual void
+  generateCurlBasis(double const &u, double const &v, double const &w,
+                    std::vector<std::vector<double> > &edgeBasis,
+                    std::vector<std::vector<double> > &faceBasis,
+                    std::vector<std::vector<double> > &bubbleBasis);
 };
 
 #endif
