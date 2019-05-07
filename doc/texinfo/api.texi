@@ -1124,9 +1124,9 @@ points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
 
 @item getJacobians
 Get the Jacobians of all the elements of type @code{elementType} classified on
-the entity of dimension @code{dim} and tag @code{tag}, at the G integration
-points @code{integrationPoints} given as concatenated triplets of coordinates in
-the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by
+the entity of tag @code{tag}, at the G integration points
+@code{integrationPoints} given as concatenated triplets of coordinates in the
+reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by
 element, with elements in the same order as in @code{getElements} and
 @code{getElementsByType}. @code{jacobians} contains for each element the 9
 entries of the 3x3 Jacobian matrix at each integration point, by row: [e1g1Jxu,
