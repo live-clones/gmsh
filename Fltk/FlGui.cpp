@@ -446,6 +446,7 @@ FlGui::FlGui(int argc, char **argv)
   Fl_Mac_App_Menu::about = "About Gmsh";
   Fl_Mac_App_Menu::hide = "Hide Gmsh";
   Fl_Mac_App_Menu::quit = "Quit Gmsh";
+  Fl_Mac_App_Menu::print = ""; // this sometimes crashes
 #endif
 
   // tell fltk we're (potentially) in multi-threaded mode
