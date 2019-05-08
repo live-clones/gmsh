@@ -44,7 +44,7 @@ linux64_compatibility_ci:
     - make -j 8
     - cmake -DENABLE_POST=1 ..
     - make -j 8
-    - cmake -DENABLE_MESH=1 ..
+    - cmake -DENABLE_MESH=1 -DENABLE_BUILD_DYNAMIC=1 -DENABLE_PRIVATE_API=1 -DENABLE_WRAP_PYTHON=1 ..
     - make -j 8
     - rm -rf *
     - export CXXFLAGS=-std=c++98

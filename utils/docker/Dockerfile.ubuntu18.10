@@ -11,6 +11,8 @@ RUN apt-get install -y libc6-dbg
 ENV LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
 ENV PATH /usr/local/bin:$PATH
 
+RUN apt-get install -y swig libpython-dev python-numpy python-scipy && apt-get clean
+
 # "docker build --build-arg REBUILD_GMSH=yes -f Dockerfile.ubuntu18.10 -t onelab/ubuntu18.10 ."
 ARG REBUILD_GMSH=
 
