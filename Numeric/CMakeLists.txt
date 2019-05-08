@@ -51,6 +51,7 @@ set(SRC
   HierarchicalBasisHcurl.cpp
   HierarchicalBasisHcurlQuad.cpp
   HierarchicalBasisHcurlBrick.cpp
+  HierarchicalBasisHcurlTria.cpp
 
 )
 

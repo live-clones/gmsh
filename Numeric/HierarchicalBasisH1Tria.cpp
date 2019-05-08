@@ -303,25 +303,23 @@ void HierarchicalBasisH1Tria::orientEdge(int const &flagOrientation,
     case(0): {
       const1 = 0;
       const2 = _pOrderEdge[0] - 2;
+    }break;
     case(1): {
       const1 = _pOrderEdge[0] - 1;
       const2 = _pOrderEdge[0] + _pOrderEdge[1] - 3;
-
     } break;
     case(2): {
       const1 = _pOrderEdge[0] + _pOrderEdge[1] - 2;
       const2 = _pOrderEdge[2] + _pOrderEdge[0] + _pOrderEdge[1] - 4;
-
     } break;
-
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=2");
     }
       for(int k = const1; k <= const2; k++) {
         if((k - const1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
       }
     }
-  }
 }
+
 
 void HierarchicalBasisH1Tria::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
@@ -334,7 +332,6 @@ void HierarchicalBasisH1Tria::orientEdge(
     case(0): {
       const1 = 0;
       const2 = _pOrderEdge[0] - 2;
-
     } break;
     case(1): {
       const1 = _pOrderEdge[0] - 1;
