@@ -683,7 +683,7 @@ Set the @code{x}, @code{y}, @code{z} coordinates of a geometrical point.
 @end ftable
 
 @node Namespace gmsh/model/mesh, Namespace gmsh/model/mesh/field, Namespace gmsh/model, Gmsh API
-@section Namespace @code{gmsh/model/mesh}: meshing functions
+@section Namespace @code{gmsh/model/mesh}: mesh functions
 
 @ftable @code
 @item generate
@@ -1751,7 +1751,7 @@ Set the field @code{tag} as a boundary layer size field.
 
 @ftable @code
 @item addPoint
-Add a geometrical point in the internal GEO CAD representation, at coordinates
+Add a geometrical point in the built-in CAD representation, at coordinates
 (@code{x}, @code{y}, @code{z}). If @code{meshSize} is > 0, add a meshing
 constraint at that point. If @code{tag} is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Return the tag of the point.
@@ -2085,8 +2085,8 @@ location).
 @end table
 
 @item synchronize
-Synchronize the internal GEO CAD representation with the current Gmsh model.
-This can be called at any time, but since it involves a non trivial amount of
+Synchronize the built-in CAD representation with the current Gmsh model. This
+can be called at any time, but since it involves a non trivial amount of
 processing, the number of synchronization points should normally be minimized.
 
 @table @asis
@@ -2214,11 +2214,11 @@ as-is.
 
 @ftable @code
 @item addPoint
-Add a geometrical point in the internal OpenCASCADE CAD representation, at
-coordinates (@code{x}, @code{y}, @code{z}). If @code{meshSize} is > 0, add a
-meshing constraint at that point. If @code{tag} is positive, set the tag
-explicitly; otherwise a new tag is selected automatically. Return the tag of the
-point. (Note that the point will be added in the current model only after
+Add a geometrical point in the OpenCASCADE CAD representation, at coordinates
+(@code{x}, @code{y}, @code{z}). If @code{meshSize} is > 0, add a meshing
+constraint at that point. If @code{tag} is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the point.
+(Note that the point will be added in the current model only after
 @code{synchronize} is called. This behavior holds for all the entities added in
 the occ module.)
 
@@ -2948,10 +2948,9 @@ and tag @code{tag}.
 @end table
 
 @item synchronize
-Synchronize the internal OpenCASCADE CAD representation with the current Gmsh
-model. This can be called at any time, but since it involves a non trivial
-amount of processing, the number of synchronization points should normally be
-minimized.
+Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This
+can be called at any time, but since it involves a non trivial amount of
+processing, the number of synchronization points should normally be minimized.
 
 @table @asis
 @item Input:

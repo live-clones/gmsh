@@ -38,7 +38,7 @@ opt(BLAS_LAPACK "Enable BLAS/Lapack for linear algebra (required for meshing)" O
 opt(BLOSSOM "Enable Blossom algorithm (needed for full quad meshing)" ${DEFAULT})
 opt(BUILD_LIB "Enable 'lib' target for building static Gmsh library" OFF)
 opt(BUILD_SHARED "Enable 'shared' target for building shared Gmsh library" OFF)
-opt(BUILD_DYNAMIC "Enable dynamic Gmsh executable (linked with shared lib)" OFF)
+opt(BUILD_DYNAMIC "Enable dynamic Gmsh executable (linked with shared library)" OFF)
 opt(BUILD_ANDROID "Enable Android NDK library target (experimental)" OFF)
 opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
 opt(CGNS "Enable CGNS mesh import (experimental)" ${DEFAULT})

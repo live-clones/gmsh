@@ -1163,7 +1163,7 @@ class model:
 
     class mesh:
         """
-        Meshing functions
+        Mesh functions
         """
 
         @staticmethod
@@ -2643,12 +2643,12 @@ class model:
         @staticmethod
         def addPoint(x, y, z, meshSize=0., tag=-1):
             """
-            Add a geometrical point in the internal GEO CAD representation, at
-            coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint
-            at that point. If `tag' is positive, set the tag explicitly; otherwise a
-            new tag is selected automatically. Return the tag of the point. (Note that
-            the point will be added in the current model only after `synchronize' is
-            called. This behavior holds for all the entities added in the geo module.)
+            Add a geometrical point in the built-in CAD representation, at coordinates
+            (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that
+            point. If `tag' is positive, set the tag explicitly; otherwise a new tag is
+            selected automatically. Return the tag of the point. (Note that the point
+            will be added in the current model only after `synchronize' is called. This
+            behavior holds for all the entities added in the geo module.)
 
             Return an integer value.
             """
@@ -3170,10 +3170,10 @@ class model:
         @staticmethod
         def synchronize():
             """
-            Synchronize the internal GEO CAD representation with the current Gmsh
-            model. This can be called at any time, but since it involves a non trivial
-            amount of processing, the number of synchronization points should normally
-            be minimized.
+            Synchronize the built-in CAD representation with the current Gmsh model.
+            This can be called at any time, but since it involves a non trivial amount
+            of processing, the number of synchronization points should normally be
+            minimized.
             """
             ierr = c_int()
             lib.gmshModelGeoSynchronize(
@@ -3331,7 +3331,7 @@ class model:
         @staticmethod
         def addPoint(x, y, z, meshSize=0., tag=-1):
             """
-            Add a geometrical point in the internal OpenCASCADE CAD representation, at
+            Add a geometrical point in the OpenCASCADE CAD representation, at
             coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint
             at that point. If `tag' is positive, set the tag explicitly; otherwise a
             new tag is selected automatically. Return the tag of the point. (Note that
@@ -4516,10 +4516,10 @@ class model:
         @staticmethod
         def synchronize():
             """
-            Synchronize the internal OpenCASCADE CAD representation with the current
-            Gmsh model. This can be called at any time, but since it involves a non
-            trivial amount of processing, the number of synchronization points should
-            normally be minimized.
+            Synchronize the OpenCASCADE CAD representation with the current Gmsh model.
+            This can be called at any time, but since it involves a non trivial amount
+            of processing, the number of synchronization points should normally be
+            minimized.
             """
             ierr = c_int()
             lib.gmshModelOccSynchronize(

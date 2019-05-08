@@ -26,16 +26,32 @@ Build Gmsh from the command line
 
     mkdir build
 
-* Run cmake from within the build directory, pointing to Gmsh's source
-  directory:
+* To build the monolithic Gmsh app with the default build options, run cmake
+  from within the build directory, pointing to Gmsh's source directory, then run
+  "make"
 
     cd build
     cmake ..
+    make
 
-* To build and install Gmsh then simply type
+  Optionally running
 
+    make install
+
+  will install the Gmsh app in the standard system location (controlled by
+  CMAKE_INSTALL_PREFIX - see below).
+
+* To build the Gmsh app dynamically linked to the shared Gmsh library, which can
+  then also be used by external codes through the C++, C, Python and Julia Gmsh
+  API, run
+
+    cd build
+    cmake -DENABLE_BUILD_DYNAMIC=1 ..
     make
     make install
+
+  This will install the Gmsh app and the shared Gmsh library, as well as the C++
+  and C include files and the Python and Julia modules.
 
 * To change build options you can use "ccmake" instead of "cmake", e.g.:
 
@@ -57,27 +73,6 @@ Build Gmsh from the command line
 
   to build a version of Gmsh without the FLTK graphical interface. The list of
   all available configuration options is given in the reference manual.
-
-* You can keep multiple builds with different build options at the same
-  time. For example, you could configure a debug graphical build in a "bin"
-  subdirectory with
-
-    cd bin
-    cmake -DCMAKE_BUILD_TYPE=Debug ..
-    make
-    make install
-
-  and configure a fairly minimal static library (with only the geometry and
-  post-processing modules and the parser) in a "lib" subdirectory with
-
-    cd lib
-    cmake -DDEFAULT=0 -DENABLE_BUILD_LIB=1 -DENABLE_POST=1 -DENABLE_PARSER=1 ..
-    make lib
-    make install/fast
-
-  (Note that "make install/fast" allows you to install only the target that you
-  just built, i.e. "lib", and will not trigger the recompilation of the default
-  target "gmsh".)
 
 * To see a detailed compilation log use
 

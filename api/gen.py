@@ -193,7 +193,7 @@ model.add('setCoordinates',doc,None,iint('tag'),idouble('x'),idouble('y'),idoubl
 
 ################################################################################
 
-mesh = model.add_module('mesh','meshing functions')
+mesh = model.add_module('mesh','mesh functions')
 
 doc = '''Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).'''
 mesh.add('generate',doc,None,iint('dim', '3'))
@@ -410,7 +410,7 @@ field.add('setAsBoundaryLayer',doc,None,iint('tag'))
 
 geo = model.add_module('geo','built-in CAD kernel functions')
 
-doc = '''Add a geometrical point in the internal GEO CAD representation, at coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the geo module.)'''
+doc = '''Add a geometrical point in the built-in CAD representation, at coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the geo module.)'''
 geo.add('addPoint',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('meshSize','0.'),iint('tag','-1'))
 
 doc = '''Add a straight line segment between the two points with tags `startTag' and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the line.'''
@@ -476,7 +476,7 @@ geo.add('remove',doc,None,ivectorpair('dimTags'),ibool('recursive','false','Fals
 doc = '''Remove all duplicate entities (different entities at the same geometrical location).'''
 geo.add('removeAllDuplicates',doc,None)
 
-doc = '''Synchronize the internal GEO CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
+doc = '''Synchronize the built-in CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 geo.add('synchronize',doc,None)
 
 ################################################################################
@@ -508,7 +508,7 @@ mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'
 
 occ = model.add_module('occ','OpenCASCADE CAD kernel functions')
 
-doc = '''Add a geometrical point in the internal OpenCASCADE CAD representation, at coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the occ module.)'''
+doc = '''Add a geometrical point in the OpenCASCADE CAD representation, at coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the occ module.)'''
 occ.add('addPoint',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('meshSize','0.'),iint('tag','-1'))
 
 doc = '''Add a straight line segment between the two points with tags `startTag' and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the line.'''
@@ -652,7 +652,7 @@ occ.add('getCenterOfMass',doc,None,iint('dim'),iint('tag'),odouble('x'),odouble(
 doc = '''Get the matrix of inertia (by row) of the model entity of dimension `dim' and tag `tag'.'''
 occ.add('getMatrixOfInertia',doc,None,iint('dim'),iint('tag'),ovectordouble('mat'))
 
-doc = '''Synchronize the internal OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
+doc = '''Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 occ.add('synchronize',doc,None)
 
 ################################################################################

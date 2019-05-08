@@ -364,7 +364,7 @@ namespace gmsh { // Top-level functions
                                  const double y,
                                  const double z);
 
-    namespace mesh { // Meshing functions
+    namespace mesh { // Mesh functions
 
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or
       // 3).
@@ -956,13 +956,12 @@ namespace gmsh { // Top-level functions
 
     namespace geo { // Built-in CAD kernel functions
 
-      // Add a geometrical point in the internal GEO CAD representation, at
-      // coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing
-      // constraint at that point. If `tag' is positive, set the tag explicitly;
-      // otherwise a new tag is selected automatically. Return the tag of the
-      // point. (Note that the point will be added in the current model only after
-      // `synchronize' is called. This behavior holds for all the entities added in
-      // the geo module.)
+      // Add a geometrical point in the built-in CAD representation, at coordinates
+      // (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that
+      // point. If `tag' is positive, set the tag explicitly; otherwise a new tag
+      // is selected automatically. Return the tag of the point. (Note that the
+      // point will be added in the current model only after `synchronize' is
+      // called. This behavior holds for all the entities added in the geo module.)
       GMSH_API int addPoint(const double x,
                             const double y,
                             const double z,
@@ -1171,10 +1170,10 @@ namespace gmsh { // Top-level functions
       // location).
       GMSH_API void removeAllDuplicates();
 
-      // Synchronize the internal GEO CAD representation with the current Gmsh
-      // model. This can be called at any time, but since it involves a non trivial
-      // amount of processing, the number of synchronization points should normally
-      // be minimized.
+      // Synchronize the built-in CAD representation with the current Gmsh model.
+      // This can be called at any time, but since it involves a non trivial amount
+      // of processing, the number of synchronization points should normally be
+      // minimized.
       GMSH_API void synchronize();
 
       namespace mesh { // Built-in CAD kernel meshing constraints
@@ -1238,7 +1237,7 @@ namespace gmsh { // Top-level functions
 
     namespace occ { // OpenCASCADE CAD kernel functions
 
-      // Add a geometrical point in the internal OpenCASCADE CAD representation, at
+      // Add a geometrical point in the OpenCASCADE CAD representation, at
       // coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing
       // constraint at that point. If `tag' is positive, set the tag explicitly;
       // otherwise a new tag is selected automatically. Return the tag of the
@@ -1724,10 +1723,10 @@ namespace gmsh { // Top-level functions
                                        const int tag,
                                        std::vector<double> & mat);
 
-      // Synchronize the internal OpenCASCADE CAD representation with the current
-      // Gmsh model. This can be called at any time, but since it involves a non
-      // trivial amount of processing, the number of synchronization points should
-      // normally be minimized.
+      // Synchronize the OpenCASCADE CAD representation with the current Gmsh
+      // model. This can be called at any time, but since it involves a non trivial
+      // amount of processing, the number of synchronization points should normally
+      // be minimized.
       GMSH_API void synchronize();
 
     } // namespace occ
