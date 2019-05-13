@@ -68,9 +68,9 @@ PView::PView(PViewData *data, int tag)
                             _options->targetError);
 }
 
-PView::PView(PView *ref, bool copyOptions)
+PView::PView(PView *ref, bool copyOptions, int tag)
 {
-  _init();
+  _init(tag);
 
   if(ref->getAliasOf() >= 0) { // alias of an alias
     PView *orig = getViewByTag(ref->getAliasOf());

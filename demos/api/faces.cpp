@@ -84,10 +84,11 @@ int main(int argc, char **argv)
   // iterate over all 2D elements and get integration information
   gmsh::model::mesh::getElementTypes(eleTypes, 2);
   int eleType2D = eleTypes[0];
-  std::vector<double> intpts, bf;
+  std::vector<double> uvw, q;
+  gmsh::model::mesh::getIntegrationPoints(eleType2D, "Gauss3", uvw, q);
+  std::vector<double> bf;
   int numComp;
-  gmsh::model::mesh::getBasisFunctions(eleType2D, "Gauss3", "IsoParametric",
-                                       intpts, numComp, bf);
+  gmsh::model::mesh::getBasisFunctions(eleType2D, uvw, "Lagrange", numComp, bf);
   gmsh::model::getEntities(entities, 2);
   for(std::size_t i = 0; i < entities.size(); i++){
     int s = entities[i].second;
@@ -96,7 +97,7 @@ int main(int argc, char **argv)
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements on surface " + std::to_string(s));
     std::vector<double> jac, det, pts;
-    gmsh::model::mesh::getJacobians(eleType2D, "Gauss3", jac, det, pts, s);
+    gmsh::model::mesh::getJacobians(eleType2D, uvw, jac, det, pts, s);
   }
 
   gmsh::fltk::run();

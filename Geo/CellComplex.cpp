@@ -50,15 +50,15 @@ CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
   _reduced = false;
 
   Msg::Debug("Cells in domain:");
-  Msg::Debug(" %d volumes, %d faces %d edges, and %d vertices",
+  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
              getNumCells(3, 1), getNumCells(2, 1), getNumCells(1, 1),
              getNumCells(0, 1));
   Msg::Debug("Cells in subdomain:");
-  Msg::Debug(" %d volumes, %d faces %d edges, and %d vertices",
+  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
              getNumCells(3, 2), getNumCells(2, 2), getNumCells(1, 2),
              getNumCells(0, 2));
   Msg::Debug("Cells in relative domain:");
-  Msg::Debug(" %d volumes, %d faces %d edges, and %d vertices",
+  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
              getNumCells(3, 0), getNumCells(2, 0), getNumCells(1, 0),
              getNumCells(0, 0));
 }
@@ -204,7 +204,7 @@ bool CellComplex::_removeCells(std::vector<MElement *> &elements, int domain)
     }
   }
   Msg::Debug("Removed %d volumes, %d faces, %d edges, and %d vertices from the "
-             "cell complex.",
+             "cell complex",
              (int)removed[3].size(), (int)removed[2].size(),
              (int)removed[1].size(), (int)removed[0].size());
   return true;

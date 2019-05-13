@@ -10,9 +10,11 @@
 #include "GVertex.h"
 #include "MVertex.h"
 
+class Vertex;
+
 class discreteVertex : public GVertex {
 private:
-  double _x, _y, _z;
+  Vertex *_v;
 public:
   discreteVertex(GModel *m, int num, double x = 0., double y = 0.,
                  double z = 0.);
@@ -21,6 +23,7 @@ public:
   virtual double x() const;
   virtual double y() const;
   virtual double z() const;
+  virtual void setPosition(GPoint &p);
 };
 
 #endif

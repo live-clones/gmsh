@@ -60,6 +60,8 @@ struct contextMeshOptions {
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
+  int metisObjective, metisMinConn;
+  double metisMaxLoadImbalance;
   // mesh display
   int draw, changed, light, lightTwoSide, lightLines, pointType;
   int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
@@ -193,8 +195,8 @@ public:
   double min[3], max[3];
   // "center of mass" of the current geometry, used for graphics only
   double cg[3];
-  // characteristic length for the whole problem (never used in mesh
-  // generation ->only for geo/post)
+  // characteristic length for the whole problem, measuring the overall bounding
+  // box (used to set tolerances relative to the overall model size)
   double lc;
   // double buffer/antialias/stereo graphics?
   int db, antialiasing, stereo, camera;

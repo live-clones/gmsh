@@ -1,0 +1,26 @@
+FROM ubuntu:18.10
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get install -y git cmake python curl g++ gfortran texlive texlive-generic-recommended texinfo libopenblas-dev libfltk1.3-dev libfreetype6-dev libgl1-mesa-dev libxi-dev libxmu-dev mesa-common-dev tcl-dev tk-dev libhdf5-dev libcgns-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev clang-tidy libocct-foundation-dev libocct-data-exchange-dev libocct-ocaf-dev petsc-dev slepc-dev libopenmpi-dev emacs-nox && apt-get clean
+
+# valgrind 3.13 shipping with ubuntu 18.10 is buggy
+RUN curl -L -O http://www.valgrind.org/downloads/valgrind-3.14.0.tar.bz2 && tar xf valgrind-3.14.0.tar.bz2 && cd valgrind-3.14.0 && ./configure && make -j 4 && make install && cd .. && rm -rf valgrind-3.14.0*
+RUN apt-get install -y libc6-dbg
+
+ENV LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
+ENV PATH /usr/local/bin:$PATH
+
+RUN apt-get install -y swig libpython-dev python-numpy python-scipy && apt-get clean
+
+# "docker build --build-arg REBUILD_GMSH=yes -f Dockerfile.ubuntu18.10 -t onelab/ubuntu18.10 ."
+ARG REBUILD_GMSH=
+
+RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git && cd gmsh && mkdir build && cd build && cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_PRIVATE_API=1 .. && make -j8 shared && make install/fast && cd .. && rm -rf gmsh
+
+VOLUME ["/etc/gitlab-runner"]
+RUN useradd -ms /bin/bash validator
+USER validator
+WORKDIR /home/validator
+RUN mkdir -p ~/.ssh
+RUN chmod 700 ~/.ssh

@@ -525,6 +525,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 #endif
     }
 #if defined(HAVE_POST)
+    else if(ext == ".pch") {
+      status = PView::readPCH(fileName);
+    }
     else if(!strncmp(header, "$PostFormat", 11) ||
             !strncmp(header, "$View", 5)) {
       status = PView::readPOS(fileName);

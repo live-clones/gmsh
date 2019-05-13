@@ -39,6 +39,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
     return 0;
   }
 
+  //SPoint3 p0(1.9e6, 4e6, 0);
+
   bool binary = strncmp(buffer, "solid", 5) && strncmp(buffer, "SOLID", 5);
 
   // ASCII STL
@@ -73,6 +75,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double x, y, z;
         if(sscanf(buffer, "%s %lf %lf %lf", s1, &x, &y, &z) != 4) break;
         SPoint3 p(x, y, z);
+        //p -= p0;
         points.back().push_back(p);
         bbox += p;
       }
@@ -123,6 +126,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
             if(swap) SwapBytes((char *)xyz, sizeof(float), 12);
             for(int j = 0; j < 3; j++) {
               SPoint3 p(xyz[3 + 3 * j], xyz[3 + 3 * j + 1], xyz[3 + 3 * j + 2]);
+              //p -= p0;
               points.back().push_back(p);
               bbox += p;
             }
@@ -177,7 +181,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   pos.insert(vertices);
 
   std::set<MFace, Less_Face> unique;
-  int nbDuplic = 0;
+  int nbDuplic = 0, nbDegen = 0;
   for(std::size_t i = 0; i < points.size(); i++) {
     for(std::size_t j = 0; j < points[i].size(); j += 3) {
       MVertex *v[3];
@@ -198,11 +202,20 @@ int GModel::readSTL(const std::string &name, double tolerance)
         }
       }
       else{
-        faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+        if(v[0] == v[1] || v[0] == v[2] || v[1] == v[2]){
+          Msg::Debug("Skipping degenerated triangle %lu %lu %lu",
+                     v[0]->getNum(), v[1]->getNum(), v[2]->getNum());
+          nbDegen++;
+        }
+        else{
+          faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+        }
       }
     }
   }
-  if(nbDuplic) Msg::Warning("%d duplicate triangles in STL file", nbDuplic);
+  if(nbDuplic || nbDegen)
+    Msg::Warning("%d duplicate/%d degenerate triangles in STL file",
+                 nbDuplic, nbDegen);
 
   _associateEntityWithMeshVertices();
 

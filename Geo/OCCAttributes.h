@@ -295,7 +295,7 @@ public:
           int a = (int)(col[3] * 255);
           a = (a < 0) ? 0 : (a > 255) ? 255 : a;
         }
-        color = CTX::instance()->packColor(r, b, g, a);
+        color = CTX::instance()->packColor(r, g, b, a);
         boundary = (col.size() == 5) ? col[4] : 0;
         return true;
       }

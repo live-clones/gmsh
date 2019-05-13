@@ -527,14 +527,14 @@ Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste, List_T *Knots,
         pC->beg = v;
       }
       else {
-        Msg::Error("Unknown control point %d in GEO edge %d", p1, pC->Num);
+        Msg::Error("Unknown control point %d in GEO curve %d", p1, pC->Num);
       }
       if((v = FindPoint(p2))) {
         Msg::Info("Curve %d first control point %d ", pC->Num, v->Num);
         pC->end = v;
       }
       else {
-        Msg::Error("Unknown control point %d in GEO edge %d", p2, pC->Num);
+        Msg::Error("Unknown control point %d in GEO curve %d", p2, pC->Num);
       }
     }
     EndCurve(pC);
@@ -3348,14 +3348,14 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient)
     if((c = FindCurve(j))) {
       List_Add(temp, &c);
       if(c->Typ == MSH_SEGM_DISCRETE) {
-        Msg::Debug("Aborting line loop sort for discrete edge: "
+        Msg::Debug("Aborting curve loop sort for discrete curve: "
                    "let's hope you know what you're doing ;-)");
         List_Delete(temp);
         return;
       }
     }
     else {
-      Msg::Debug("Unknown curve %d, aborting line loop sort: "
+      Msg::Debug("Unknown curve %d, aborting curve loop sort: "
                  "let's hope you know what you're doing ;-)",
                  j);
       List_Delete(temp);
@@ -3385,7 +3385,7 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient)
         if(c2->end == c0->beg) {
           if(List_Nbr(temp)) {
             Msg::Info(
-              "Starting subloop %d in Line Loop %d (are you sure about this?)",
+              "Starting subloop %d in Curve Loop %d (are you sure about this?)",
               ++k, num);
             c0 = c1 = *(Curve **)List_Pointer(temp, 0);
             List_Add(edges, &c1->Num);
@@ -3396,7 +3396,7 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient)
       }
     }
     if(j++ > nbEdges) {
-      Msg::Error("Line Loop %d is wrong", num);
+      Msg::Error("Curve Loop %d is wrong", num);
       break;
     }
   }
@@ -3417,7 +3417,7 @@ void SetSurfaceGeneratrices(Surface *s, List_T *loops)
     EdgeLoop *el;
     std::vector<int> fromModel;
     if(!(el = FindEdgeLoop(abs(iLoop)))) {
-      Msg::Error("Unknown line loop %d in GEO face %d", iLoop, s->Num);
+      Msg::Error("Unknown curve loop %d in GEO surface %d", iLoop, s->Num);
       List_Delete(s->Generatrices);
       s->Generatrices = NULL;
       return;

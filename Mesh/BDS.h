@@ -46,85 +46,6 @@ public:
   }
 };
 
-class BDS_Vector {
-public:
-  double x, y, z;
-  bool operator<(const BDS_Vector &o) const
-  {
-    if(x - o.x > t) return true;
-    if(x - o.x < -t) return false;
-    if(y - o.y > t) return true;
-    if(y - o.y < -t) return false;
-    if(z - o.z > t) return true;
-    return false;
-  }
-  BDS_Vector operator+(const BDS_Vector &v)
-  {
-    return BDS_Vector(x + v.x, y + v.y, z + v.z);
-  }
-  BDS_Vector operator-(const BDS_Vector &v)
-  {
-    return BDS_Vector(x - v.x, y - v.y, z - v.z);
-  }
-  BDS_Vector operator%(const BDS_Vector &other) const
-  {
-    return BDS_Vector(y * other.z - z * other.y, z * other.x - x * other.z,
-                      x * other.y - y * other.x);
-  }
-  BDS_Vector &operator+=(const BDS_Vector &v)
-  {
-    x += v.x;
-    y += v.y;
-    z += v.z;
-    return *this;
-  }
-  BDS_Vector &operator*=(const double &v)
-  {
-    x *= v;
-    y *= v;
-    z *= v;
-    return *this;
-  }
-  BDS_Vector &operator/=(const double &v)
-  {
-    x /= v;
-    y /= v;
-    z /= v;
-    return *this;
-  }
-  BDS_Vector operator/(const double &v)
-  {
-    return BDS_Vector(x / v, y / v, z / v);
-  }
-  BDS_Vector operator*(const double &v)
-  {
-    return BDS_Vector(x * v, y * v, z * v);
-  }
-  double angle(const BDS_Vector &v) const
-  {
-    double const a[3] = {x, y, z};
-    double const b[3] = {v.x, v.y, v.z};
-    double c[3];
-    c[2] = a[0] * b[1] - a[1] * b[0];
-    c[1] = -a[0] * b[2] + a[2] * b[0];
-    c[0] = a[1] * b[2] - a[2] * b[1];
-    double const cosa = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-    double const sina = std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-    return std::atan2(sina, cosa);
-  }
-  double angle_deg(const BDS_Vector &v) const { return angle(v) * 180. / M_PI; }
-  double operator*(const BDS_Vector &v) const
-  {
-    return (x * v.x + y * v.y + z * v.z);
-  }
-  BDS_Vector(const BDS_Point &p2, const BDS_Point &p1);
-  BDS_Vector(const double X = 0., const double Y = 0., const double Z = 0.)
-    : x(X), y(Y), z(Z)
-  {
-  }
-  static double t;
-};
-
 class BDS_Point {
   // the first size is the one dictated by the Background Mesh the
   // second one is dictated by characteristic lengths at points and is
@@ -160,7 +81,6 @@ public:
 };
 
 class BDS_Edge {
-  double _length;
   std::vector<BDS_Face *> _faces;
 
 public:
@@ -176,14 +96,18 @@ public:
     }
     p1->edges.push_back(this);
     p2->edges.push_back(this);
-    update();
   }
 
   BDS_Face *faces(std::size_t const i) const { return _faces[i]; }
-  double length() const { return _length; }
+  double length() const
+  {
+    return std::sqrt((p1->X - p2->X) * (p1->X - p2->X) +
+                     (p1->Y - p2->Y) * (p1->Y - p2->Y) +
+                     (p1->Z - p2->Z) * (p1->Z - p2->Z));
+  }
   int numfaces() const { return static_cast<int>(_faces.size()); }
   int numTriangles() const;
-  BDS_Point *commonvertex(const BDS_Edge *other) const
+  inline BDS_Point *commonvertex(const BDS_Edge *other) const
   {
     if(p1 == other->p1 || p1 == other->p2) return p1;
     if(p2 == other->p1 || p2 == other->p2) return p2;
@@ -224,12 +148,6 @@ public:
   void oppositeof(BDS_Point *oface[2]) const;
   void computeNeighborhood(BDS_Point *oface[2], BDS_Point *t1[4],
                            BDS_Point *t2[4]) const;
-  void update()
-  {
-    _length = std::sqrt((p1->X - p2->X) * (p1->X - p2->X) +
-                        (p1->Y - p2->Y) * (p1->Y - p2->Y) +
-                        (p1->Z - p2->Z) * (p1->Z - p2->Z));
-  }
 
 public:
   bool deleted;
@@ -455,9 +373,7 @@ public:
   bool swap_edge(BDS_Edge *, const BDS_SwapEdgeTest &theTest,
                  bool force = false);
   bool collapse_edge_parametric(BDS_Edge *, BDS_Point *, bool = false);
-  bool smooth_point_parametric(BDS_Point *const p, GFace *const gf);
-  bool smooth_point_centroid(BDS_Point *p, GFace *gf,
-                             bool test_quality = false);
+  bool smooth_point_centroid(BDS_Point *p, GFace *gf, double thresh);
   bool split_edge(BDS_Edge *, BDS_Point *);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
   // Global operators

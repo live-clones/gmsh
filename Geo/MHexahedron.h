@@ -715,7 +715,7 @@ public:
     if(_order == 8 && _vs.size() + 8 == 92) return MSH_HEX_92;
     if(_order == 9 && _vs.size() + 8 == 104) return MSH_HEX_104;
 
-    Msg::Error("no tag matches a p%d hexahedron with %d vertices", _order,
+    Msg::Error("No MSH type found for P%d hexahedron with %d nodes", _order,
                8 + _vs.size());
     return 0;
   }

@@ -140,7 +140,7 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = _ivectordouble(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cdouble}, Csize_t"
-    a.julia_arg = name + ", length(" + name + ")"
+    a.julia_arg = "convert(Vector{Cdouble}, " + name + "), length(" + name + ")"
     return a
 
 def ivectorstring(name, value=None, python_value=None, julia_value=None):
@@ -686,11 +686,10 @@ class Module:
         self.submodules = []
 
     def add(self, name, doc, rtype, *args):
-        self.fs.append((rtype, name, args, doc, ''))
+        self.fs.append((rtype, name, args, doc, []))
 
-    # a raw C implementation of the function is available
-    def add_rawc(self, name, doc, rtype, *args):
-        self.fs.append((rtype, name, args, doc, 'rawc'))
+    def add_special(self, name, doc, special, rtype, *args):
+        self.fs.append((rtype, name, args, doc, special))
 
     def add_module(self, name, doc):
         module = Module(name, doc)
@@ -948,6 +947,8 @@ from math import pi
 {5}_API_VERSION_MAJOR = {3}
 {5}_API_VERSION_MINOR = {4}
 
+__version__ = {5}_API_VERSION
+
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
@@ -1120,6 +1121,8 @@ julia_header = """# {0}
 # types. See `demos/api' for examples.
 """
 
+def capi(s): return s[:1].upper() + s[1:]
+
 class API:
 
     def __init__(self, version_major, version_minor, namespace="gmsh", code="Gmsh",
@@ -1141,7 +1144,8 @@ class API:
 
     def write_cpp(self):
         def write_module(module, indent):
-            f.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
+            f.write(indent + "namespace " + module.name + " { // " +
+                    capi(module.doc) + "\n\n")
             indent += "  "
             for rtype, name, args, doc, special in module.fs:
                 f.write(indent + "// " + ("\n" + indent + "// ").join(
@@ -1169,7 +1173,8 @@ class API:
                 c_namespace += module.name[0].upper() + module.name[1:]
             else:
                 c_namespace = module.name
-            fcwrap.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
+            fcwrap.write(indent + "namespace " + module.name + " { // " +
+                         capi(module.doc) + "\n\n")
             indent += "  "
             for rtype, name, args, doc, special in module.fs:
                 # *c.h
@@ -1180,7 +1185,7 @@ class API:
                         + (",\n" + ' ' * len(fnameapi)).join(
                             list((a.c for a in args + (oint("ierr"), ))))
                         + ");\n")
-                if special != 'rawc':
+                if "rawc" not in special:
                     # *c.cpp
                     fc.write(ns.upper() + "_API " + (rtype.rc_type if rtype else "void"))
                     fc.write(" " + fname + "(" +
@@ -1263,6 +1268,7 @@ class API:
             return a.name + (("=" + a.python_value) if a.python_value else "")
         def write_function(f, fun, modulepath, indent):
             (rtype, name, args, doc, special) = fun
+            if "onlycc++" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
@@ -1313,7 +1319,8 @@ class API:
                 f.write("\n\n" + indent + "class " + module.name + ":\n")
                 indentm = indent + "    "
                 f.write(indentm + '"""\n')
-                f.write(indentm + ("\n" + indentm).join(textwrap.wrap(module.doc, 75)) + "\n")
+                f.write(indentm + ("\n" + indentm).join
+                        (textwrap.wrap(capi(module.doc), 75)) + "\n")
                 f.write(indentm + '"""\n')
                 write_module(f, module, modulepath, indentm)
         with open(ns + ".py", "w") as f:
@@ -1328,6 +1335,7 @@ class API:
             return a.name + ((" = " + a.julia_value) if a.julia_value else "")
         def write_function(f, fun, c_mpath, jl_mpath):
             (rtype, name, args, doc, special) = fun
+            if "onlycc++" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write('\n"""\n    ')
@@ -1371,7 +1379,7 @@ class API:
         def write_module(f, m, c_mpath, jl_mpath, level):
             f.write('\n"""\n    ')
             f.write("module " + jl_mpath + m.name + "\n\n")
-            f.write("\n".join(textwrap.wrap(m.doc, 80)) + "\n")
+            f.write("\n".join(textwrap.wrap(capi(m.doc), 80)) + "\n")
             f.write('"""\n')
             f.write("module " + m.name + "\n\n")
             if level == 1:
@@ -1407,9 +1415,9 @@ class API:
                 write_module(f, module, "", "", 1)
 
     def write_texi(self):
-        def write_module(module, parent):
-            full = parent + "/" + module.name
-            f.write("@heading Module @code{" + full + "}\n");
+        def write_module(module, path, node, node_next, node_prev):
+            f.write("@node " + node + ", " + node_next + ", " + node_prev + ", Gmsh API\n");
+            f.write("@section Namespace @code{" + path + "}: " + module.doc + "\n\n");
             f.write("@ftable @code\n");
             for rtype, name, args, doc, special in module.fs:
                 f.write("@item " + name + "\n");
@@ -1428,9 +1436,24 @@ class API:
                         (rtype.rtexi_type if rtype else "-") + "\n")
                 f.write("@end table\n\n");
             f.write("@end ftable\n\n");
-            for m in module.submodules:
-                write_module(m, full)
         with open("api.texi", "w") as f:
             f.write("@c This file was generated by api/gen.py: do not edit manually!\n\n")
+            def flatten_module(flat, module, path):
+                p = path + ("/" if len(path) else "") + module.name
+                flat.append((module, p))
+                for m in module.submodules:
+                    flatten_module(flat, m, p)
+            def node_name(n):
+                return "Namespace " + n[1]
+            flat = []
             for m in self.modules:
-                write_module(m, "")
+                flatten_module(flat, m, "")
+            N = len(flat)
+            f.write("@menu\n")
+            for i in range(N):
+                f.write("* " + node_name(flat[i]) + "::\n")
+            f.write("@end menu\n\n")
+            for i in range(N):
+                write_module(flat[i][0], flat[i][1], node_name(flat[i]),
+                             "" if i == N - 1 else node_name(flat[i+1]),
+                             "" if i == 0 else node_name(flat[i-1]))

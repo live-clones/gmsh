@@ -120,7 +120,7 @@ public:
     if(faces.size()) {
       char name[256];
       sprintf(name, "missingFacesOnRegion%d.pos", gr->tag());
-      Msg::Error("Region %d : %d mesh faces that should be embedded are "
+      Msg::Error("Volume %d : %d mesh faces that should be embedded are "
                  "missing in the final mesh",
                  gr->tag(), (int)faces.size());
       Msg::Error("Saving the missing faces in file %s", name);
@@ -937,11 +937,14 @@ static void Mesh3D(GModel *m)
     std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
 
   std::stringstream debugInfo;
-  debugInfo << "No elements in region ";
+  debugInfo << "No elements in volume ";
   bool emptyRegionFound = false;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
-    if((*it)->getNumMeshElements() == 0) {
-      debugInfo << (*it)->tag() << " ";
+    GRegion *gr = *it;
+    if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility())
+      continue;
+    if(gr->getNumMeshElements() == 0) {
+      debugInfo << gr->tag() << " ";
       emptyRegionFound = true;
     }
   }
@@ -962,6 +965,23 @@ static void Mesh3D(GModel *m)
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }
 
+void OptimizeMesh(GModel *m)
+{
+  Msg::StatusBar(true, "Optimizing 3D mesh...");
+  double t1 = Cpu();
+
+  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegion());
+  // Ensure that all volume Jacobians are positive
+  m->setAllVolumesPositive();
+
+  if(Msg::GetVerbosity() > 98)
+    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
+
+  CTX::instance()->mesh.changed = ENT_ALL;
+  double t2 = Cpu();
+  Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);
+}
+
 void OptimizeMeshNetgen(GModel *m)
 {
   Msg::StatusBar(true, "Optimizing 3D mesh with Netgen...");
@@ -980,21 +1000,30 @@ void OptimizeMeshNetgen(GModel *m)
   Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);
 }
 
-void OptimizeMesh(GModel *m)
+void OptimizeHighOrderMesh(GModel *m)
 {
-  Msg::StatusBar(true, "Optimizing 3D mesh...");
-  double t1 = Cpu();
+#if defined(HAVE_OPTHOM)
+  OptHomParameters p;
+  p.nbLayers = CTX::instance()->mesh.hoNLayers;
+  p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;
+  p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
+  p.itMax = CTX::instance()->mesh.hoIterMax;
+  p.optPassMax = CTX::instance()->mesh.hoPassMax;
+  p.dim = GModel::current()->getDim();
+  p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
+  HighOrderMeshOptimizer(GModel::current(), p);
+#else
+  Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
+}
 
-  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegion());
-  // Ensure that all volume Jacobians are positive
-  m->setAllVolumesPositive();
-
-  if(Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
-
-  CTX::instance()->mesh.changed = ENT_ALL;
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);
+void OptimizeHighOrderMeshElastic(GModel *m)
+{
+#if defined(HAVE_OPTHOM)
+  HighOrderMeshElasticAnalogy(m, false);
+#else
+  Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
 }
 
 void SmoothMesh(GModel *m)
@@ -1116,27 +1145,12 @@ void GenerateMesh(GModel *m, int ask)
               CTX::instance()->mesh.secondOrderIncomplete);
 
   // Optimize high order elements
-  if(CTX::instance()->mesh.hoOptimize) {
-#if defined(HAVE_OPTHOM)
-    if(CTX::instance()->mesh.hoOptimize < 0 ||
-       CTX::instance()->mesh.hoOptimize >= 2) {
-      HighOrderMeshElasticAnalogy(GModel::current(), false);
-    }
-    if(CTX::instance()->mesh.hoOptimize >= 1){
-      OptHomParameters p;
-      p.nbLayers = CTX::instance()->mesh.hoNLayers;
-      p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;
-      p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
-      p.itMax = CTX::instance()->mesh.hoIterMax;
-      p.optPassMax = CTX::instance()->mesh.hoPassMax;
-      p.dim = GModel::current()->getDim();
-      p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
-      HighOrderMeshOptimizer(GModel::current(), p);
-    }
-#else
-    Msg::Error("High-order mesh optimization requires the OPTHOM module");
-#endif
-  }
+  if(CTX::instance()->mesh.hoOptimize < 0 ||
+     CTX::instance()->mesh.hoOptimize >= 2)
+    OptimizeHighOrderMeshElastic(GModel::current());
+
+  if(CTX::instance()->mesh.hoOptimize >= 1)
+    OptimizeHighOrderMesh(GModel::current());
 
   if(CTX::instance()->mesh.renumber){
     m->renumberMeshVertices();
