@@ -207,8 +207,11 @@ void Msg::SetLogFile(const std::string &name)
 {
   _logFileName = name;
   if(_logFile) fclose(_logFile);
-  if(name.size())
+  if(name.size()){
     _logFile = Fopen(name.c_str(), "w");
+    if(!_logFile)
+      Msg::Error("Could not open file '%s'", name.c_str());
+  }
   else
     _logFile = 0;
 }
