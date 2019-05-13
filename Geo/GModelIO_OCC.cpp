@@ -3449,10 +3449,11 @@ void OCC_Internals::synchronize(GModel *model)
         tag = ++vTagMax;
         Msg::Info("Binding unbound OpenCASCADE point to tag %d", tag);
       }
-      double lc = _attributes->getMeshSize(0, vertex);
-      occv = new OCCVertex(model, tag, vertex, lc);
+      occv = new OCCVertex(model, tag, vertex);
       model->add(occv);
     }
+    double lc = _attributes->getMeshSize(0, vertex);
+    occv->setPrescribedMeshSizeAtVertex(lc);
     std::vector<std::string> labels;
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
