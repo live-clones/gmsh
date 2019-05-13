@@ -98,13 +98,12 @@ void HierarchicalBasisH1Pri::generateBasis(double const &u, double const &v,
     _pb1 - 2));
   phi[1] = std::vector<double>(std::max(
     std::max(_pOrderEdge[1] - 1, _pOrderEdge[7] - 1), _pOrderQuadFace1[1] - 1));
-  phi[2] = std::vector<double>(
-    std::max(std::max(std::max(std::max(std::max(_pOrderEdge[2] - 1,
-                                                          _pOrderEdge[4] - 1),
-                                                 _pOrderEdge[5] - 1),
-                                        _pOrderQuadFace2[0] - 1),
-                               _pOrderQuadFace2[1] - 1),
-                      _pOrderQuadFace2[2] - 1));
+  phi[2] = std::vector<double>(std::max(
+    std::max(std::max(std::max(std::max(_pOrderEdge[2] - 1, _pOrderEdge[4] - 1),
+                               _pOrderEdge[5] - 1),
+                      _pOrderQuadFace2[0] - 1),
+             _pOrderQuadFace2[1] - 1),
+    _pOrderQuadFace2[2] - 1));
 
   phi[3] = std::vector<double>(std::max(
     std::max(_pOrderEdge[8] - 1, _pOrderEdge[3] - 1), _pOrderQuadFace1[2] - 1));
@@ -114,7 +113,6 @@ void HierarchicalBasisH1Pri::generateBasis(double const &u, double const &v,
   for(int i = 0; i < 5; i++) {
     for(unsigned int j = 0; j < phi[i].size(); j++) {
       phi[i][j] = OrthogonalPoly::EvalKernelFunction(j, substraction[i]);
-
     }
   }
   // edge shape functions:
@@ -185,7 +183,7 @@ void HierarchicalBasisH1Pri::generateBasis(double const &u, double const &v,
       for(int n1 = 0; n1 < _pOrderTriFace[iFace - 3] - 2; n1++) {
         for(int n2 = 0; n2 < _pOrderTriFace[iFace - 3] - 2 - n1; n2++) {
           faceBasis[indexFaceFunction] =
-            lambdaProduct* phi[indexPhi1][n1] * phi[indexPhi2][n2];
+            lambdaProduct * phi[indexPhi1][n1] * phi[indexPhi2][n2];
           indexFaceFunction++;
         }
       }
@@ -193,12 +191,13 @@ void HierarchicalBasisH1Pri::generateBasis(double const &u, double const &v,
   }
   // bubble shape functions:
   int indexBubbleBasis = 0;
-  double lambdaProductBubble = lambda1*lambda2*lambda3;
+  double lambdaProductBubble = lambda1 * lambda2 * lambda3;
   for(int n1 = 0; n1 < _pb1 - 2; n1++) {
     for(int n2 = 0; n2 < _pb1 - 2 - n1; n2++) {
-      for(int n3 = 2; n3 <= _pb2 ; n3++) {
-        bubbleBasis[indexBubbleBasis] =
-        lambdaProductBubble * phi[0][n1] * phi[4][n2]*OrthogonalPoly::EvalLobatto(n3, w);
+      for(int n3 = 2; n3 <= _pb2; n3++) {
+        bubbleBasis[indexBubbleBasis] = lambdaProductBubble * phi[0][n1] *
+                                        phi[4][n2] *
+                                        OrthogonalPoly::EvalLobatto(n3, w);
         indexBubbleBasis++;
       }
     }
@@ -269,12 +268,12 @@ void HierarchicalBasisH1Pri::generateGradientBasis(
     _pb1 - 2));
   phi[1] = std::vector<double>(std::max(
     std::max(_pOrderEdge[1] - 1, _pOrderEdge[7] - 1), _pOrderQuadFace1[1] - 1));
-  phi[2] = std::vector<double>(std::max(std::max(std::max(std::max(std::max(_pOrderEdge[2] - 1,
-                                                          _pOrderEdge[4] - 1),
-                                                 _pOrderEdge[5] - 1),
-                                        _pOrderQuadFace2[0] - 1),
-                               _pOrderQuadFace2[1] - 1),
-                      _pOrderQuadFace2[2] - 1));
+  phi[2] = std::vector<double>(std::max(
+    std::max(std::max(std::max(std::max(_pOrderEdge[2] - 1, _pOrderEdge[4] - 1),
+                               _pOrderEdge[5] - 1),
+                      _pOrderQuadFace2[0] - 1),
+             _pOrderQuadFace2[1] - 1),
+    _pOrderQuadFace2[2] - 1));
 
   phi[3] = std::vector<double>(std::max(
     std::max(_pOrderEdge[8] - 1, _pOrderEdge[3] - 1), _pOrderQuadFace1[2] - 1));
@@ -289,13 +288,12 @@ void HierarchicalBasisH1Pri::generateGradientBasis(
     _pb1 - 2));
   dphi[1] = std::vector<double>(std::max(
     std::max(_pOrderEdge[1] - 1, _pOrderEdge[7] - 1), _pOrderQuadFace1[1] - 1));
-  dphi[2] = std::vector<double>(
-    std::max(std::max(std::max(std::max(std::max(_pOrderEdge[2] - 1,
-                                                          _pOrderEdge[4] - 1),
-                                                 _pOrderEdge[5] - 1),
-                                        _pOrderQuadFace2[0] - 1),
-                               _pOrderQuadFace2[1] - 1),
-                      _pOrderQuadFace2[2] - 1));
+  dphi[2] = std::vector<double>(std::max(
+    std::max(std::max(std::max(std::max(_pOrderEdge[2] - 1, _pOrderEdge[4] - 1),
+                               _pOrderEdge[5] - 1),
+                      _pOrderQuadFace2[0] - 1),
+             _pOrderQuadFace2[1] - 1),
+    _pOrderQuadFace2[2] - 1));
 
   dphi[3] = std::vector<double>(std::max(
     std::max(_pOrderEdge[8] - 1, _pOrderEdge[3] - 1), _pOrderQuadFace1[2] - 1));
@@ -327,7 +325,6 @@ void HierarchicalBasisH1Pri::generateGradientBasis(
   productEdgeTerm[8] = product1[4] * lambda1;
   std::vector<std::vector<double> > dproductEdgeTerm(_nedge,
                                                      std::vector<double>(3));
-
   for(int i = 0; i < 3; i++) {
     dproductEdgeTerm[0][i] =
       gradientVertex[0][i] * lambda3 + dlambda3[i] * product1[0];
@@ -372,9 +369,6 @@ void HierarchicalBasisH1Pri::generateGradientBasis(
           dproductEdgeTerm[iEdge][i] * phi[numPhi][indexEdgeFunc] +
           dsubstraction[numPhi][i] * productEdgeTerm[iEdge] *
             dphi[numPhi][indexEdgeFunc];
-
-
-
       }
 
       indexEdgeBasis++;
@@ -468,44 +462,42 @@ void HierarchicalBasisH1Pri::generateGradientBasis(
   }
   // bubble shape functions:
   int indexBubbleBasis = 0;
-  double lambdaProductBubble = lambda1*lambda2*lambda3;
+  double lambdaProductBubble = lambda1 * lambda2 * lambda3;
   std::vector<double> dlambdaProductBubble(3);
-  for(int i=0;i<3;i++){
-    dlambdaProductBubble[i]=dlambda1[i]*lambda2*lambda3+lambda1*dlambda2[i]*lambda3+lambda1*lambda2*dlambda3[i];
-
+  for(int i = 0; i < 3; i++) {
+    dlambdaProductBubble[i] = dlambda1[i] * lambda2 * lambda3 +
+                              lambda1 * dlambda2[i] * lambda3 +
+                              lambda1 * lambda2 * dlambda3[i];
   }
 
   for(int n1 = 0; n1 < _pb1 - 2; n1++) {
     for(int n2 = 0; n2 < _pb1 - 2 - n1; n2++) {
-      for(int n3 = 2; n3 <= _pb2 ; n3++) {
+      for(int n3 = 2; n3 <= _pb2; n3++) {
+        gradientBubble[indexBubbleBasis][0] =
+          (dlambdaProductBubble[0] * phi[0][n1] * phi[4][n2] +
+           lambdaProductBubble * dsubstraction[0][0] * dphi[0][n1] *
+             phi[4][n2] +
+           lambdaProductBubble * dsubstraction[4][0] * phi[0][n1] *
+             dphi[4][n2]) *
+          OrthogonalPoly::EvalLobatto(n3, w);
 
+        gradientBubble[indexBubbleBasis][1] =
+          (dlambdaProductBubble[1] * phi[0][n1] * phi[4][n2] +
+           lambdaProductBubble * dsubstraction[0][1] * dphi[0][n1] *
+             phi[4][n2] +
+           lambdaProductBubble * dsubstraction[4][1] * phi[0][n1] *
+             dphi[4][n2]) *
+          OrthogonalPoly::EvalLobatto(n3, w);
 
-          gradientBubble[indexBubbleBasis][0] =
-          (dlambdaProductBubble[0] * phi[0][n1]* phi[4][n2] +
-            lambdaProductBubble * dsubstraction[0][0] * dphi[0][n1] *
-              phi[4][n2]+
-            lambdaProductBubble * dsubstraction[4][0] * phi[0][n1] *
-              dphi[4][n2] ) *OrthogonalPoly::EvalLobatto(n3, w);
-
-
-              gradientBubble[indexBubbleBasis][1] =
-              (dlambdaProductBubble[1] * phi[0][n1]* phi[4][n2] +
-                lambdaProductBubble * dsubstraction[0][1] * dphi[0][n1] *
-                  phi[4][n2]+
-                lambdaProductBubble * dsubstraction[4][1] * phi[0][n1] *
-                  dphi[4][n2] ) *OrthogonalPoly::EvalLobatto(n3, w);
-
-
-                  gradientBubble[indexBubbleBasis][2] =
-                  (dlambdaProductBubble[2] * phi[0][n1]* phi[4][n2] +
-                    lambdaProductBubble * dsubstraction[0][2] * dphi[0][n1] *
-                      phi[4][n2]+
-                    lambdaProductBubble * dsubstraction[4][2] * phi[0][n1] *
-                      dphi[4][n2] ) *OrthogonalPoly::EvalLobatto(n3, w)
-                      +OrthogonalPoly::EvalDLobatto(n3, w)*lambdaProductBubble * phi[0][n1]* phi[4][n2];
-
-
-
+        gradientBubble[indexBubbleBasis][2] =
+          (dlambdaProductBubble[2] * phi[0][n1] * phi[4][n2] +
+           lambdaProductBubble * dsubstraction[0][2] * dphi[0][n1] *
+             phi[4][n2] +
+           lambdaProductBubble * dsubstraction[4][2] * phi[0][n1] *
+             dphi[4][n2]) *
+            OrthogonalPoly::EvalLobatto(n3, w) +
+          OrthogonalPoly::EvalDLobatto(n3, w) * lambdaProductBubble *
+            phi[0][n1] * phi[4][n2];
 
         indexBubbleBasis++;
       }
@@ -520,9 +512,6 @@ void HierarchicalBasisH1Pri::orientEdge(int const &flagOrientation,
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    if(edgeNumber > 8) {
-      throw std::string("edgeNumber  must be : 0<=edgeNumber<=8");
-    }
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
@@ -531,16 +520,13 @@ void HierarchicalBasisH1Pri::orientEdge(int const &flagOrientation,
     }
   }
 }
-void HierarchicalBasisH1Pri::orientEdgeGrad(
+void HierarchicalBasisH1Pri::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    if(edgeNumber > 8) {
-      throw std::string("edgeNumber  must be : 0<=edgeNumber<=8");
-    }
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
@@ -580,54 +566,59 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
         }
       }
       else {
+        // to map onto the reference domain of gmsh:
+        double uc = 2 * u - 1;
+        double vc = 2 * v - 1;
+        double wc = w;
+        //*****
         double lambdaProduct = 0;
         double var1 = 0;
         double var2 = 0;
         switch(faceNumber) {
         case(0): {
-          double lambda2 = _affineCoordinate(2, u, v, w);
-          double lambda3 = _affineCoordinate(3, u, v, w);
-          double lambda4 = _affineCoordinate(4, u, v, w);
-          double lambda5 = _affineCoordinate(5, u, v, w);
+          double lambda2 = _affineCoordinate(2, uc, vc, wc);
+          double lambda3 = _affineCoordinate(3, uc, vc, wc);
+          double lambda4 = _affineCoordinate(4, uc, vc, wc);
+          double lambda5 = _affineCoordinate(5, uc, vc, wc);
           lambdaProduct = lambda2 * lambda3 * lambda4 * lambda5;
           var1 = lambda3 - lambda2;
           var2 = lambda4 - lambda5;
 
         } break;
         case(1): {
-          double lambda1 = _affineCoordinate(1, u, v, w);
-          double lambda2 = _affineCoordinate(2, u, v, w);
-          double lambda4 = _affineCoordinate(4, u, v, w);
-          double lambda5 = _affineCoordinate(5, u, v, w);
+          double lambda1 = _affineCoordinate(1, uc, vc, wc);
+          double lambda2 = _affineCoordinate(2, uc, vc, wc);
+          double lambda4 = _affineCoordinate(4, uc, vc, wc);
+          double lambda5 = _affineCoordinate(5, uc, vc, wc);
           lambdaProduct = lambda2 * lambda1 * lambda4 * lambda5;
           var1 = lambda1 - lambda2;
           var2 = lambda4 - lambda5;
         } break;
         case(2): {
-          double lambda1 = _affineCoordinate(1, u, v, w);
-          double lambda3 = _affineCoordinate(3, u, v, w);
-          double lambda4 = _affineCoordinate(4, u, v, w);
-          double lambda5 = _affineCoordinate(5, u, v, w);
+          double lambda1 = _affineCoordinate(1, uc, vc, wc);
+          double lambda3 = _affineCoordinate(3, uc, vc, wc);
+          double lambda4 = _affineCoordinate(4, uc, vc, wc);
+          double lambda5 = _affineCoordinate(5, uc, vc, wc);
           lambdaProduct = lambda1 * lambda3 * lambda4 * lambda5;
           var1 = lambda1 - lambda3;
           var2 = lambda4 - lambda5;
         } break;
         }
-        std::vector<double> phi1(_pOrderQuadFace2[faceNumber] - 1);
-        std::vector<double> phi2(_pOrderQuadFace1[faceNumber] - 1);
-        for(int it = 0; it <= _pOrderQuadFace2[faceNumber] - 2; it++) {
+        std::vector<double> phi1(_pOrderQuadFace1[faceNumber] - 1);
+        std::vector<double> phi2(_pOrderQuadFace2[faceNumber] - 1);
+        for(int it = 0; it <= _pOrderQuadFace1[faceNumber] - 2; it++) {
           phi1[it] = OrthogonalPoly::EvalKernelFunction(it, var1);
         }
-        for(int it = 0; it <= _pOrderQuadFace1[faceNumber] - 2; it++) {
+        for(int it = 0; it <= _pOrderQuadFace2[faceNumber] - 2; it++) {
           phi2[it] = OrthogonalPoly::EvalKernelFunction(it, var2);
         }
 
-        for(int it1 = 0; it1 <= _pOrderQuadFace1[faceNumber] - 2; it1++) {
-          for(int it2 = 0; it2 <= _pOrderQuadFace2[faceNumber] - 2; it2++) {
+        for(int it1 = 0; it1 <= _pOrderQuadFace2[faceNumber] - 2; it1++) {
+          for(int it2 = 0; it2 <= _pOrderQuadFace1[faceNumber] - 2; it2++) {
             int impactFlag1 = 1;
             int impactFlag2 = 1;
-            if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+            if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
             faceBasis[iterator] =
               lambdaProduct * phi1[it2] * phi2[it1] * impactFlag1 * impactFlag2;
             iterator++;
@@ -647,15 +638,12 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
       int iterator = (_pOrderQuadFace2[0] - 1) * (_pOrderQuadFace1[0] - 1) +
                      (_pOrderQuadFace2[1] - 1) * (_pOrderQuadFace1[1] - 1) +
                      (_pOrderQuadFace2[2] - 1) * (_pOrderQuadFace1[2] - 1);
-      if(faceNumber > 4) {
-        throw std::string("edgeNumber  must be : 0<=faceNumber<=4");
-      }
       for(int i = 0; i < constant; i++) {
         iterator += int((_pOrderTriFace[i] - 1) * (_pOrderTriFace[i] - 2) / 2);
       }
       std::vector<double> lambda(3);
       double lambdai = 0;
-      switch(constant) {
+      switch(faceNumber) {
       case(3):
         lambda[0] = _affineCoordinate(2, uc, vc, wc);
         lambda[1] = _affineCoordinate(3, uc, vc, wc);
@@ -670,7 +658,7 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
         break;
       }
       double product = lambda[0] * lambda[1] * lambda[2] * lambdai;
-      if(flag1 == 2 && flag2 == -1) {
+      if(flag1 == 1 && flag2 == -1) {
         double copy = lambda[0];
         lambda[0] = lambda[1];
         lambda[1] = copy;
@@ -680,7 +668,7 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
         lambda[2] = lambda[1];
         lambda[1] = copy;
       }
-      else if(flag1 == 1 && flag2 == -1) {
+      else if(flag1 == 2 && flag2 == -1) {
         double copy = lambda[2];
         lambda[2] = lambda[0];
         lambda[0] = copy;
@@ -714,10 +702,10 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
   }
 }
 
-void HierarchicalBasisH1Pri::orientFaceGrad(
+void HierarchicalBasisH1Pri::orientFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &gradientFace)
+  std::vector<std::vector<double> > &gradientFace, std::string typeFunction)
 {
   if(faceNumber < 3) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
@@ -732,7 +720,6 @@ void HierarchicalBasisH1Pri::orientFaceGrad(
             int impactFlag2 = 1;
             if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
             if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-
             gradientFace[iterator][0] =
               gradientFace[iterator][0] * impactFlag1 * impactFlag2;
             gradientFace[iterator][1] =
@@ -744,6 +731,11 @@ void HierarchicalBasisH1Pri::orientFaceGrad(
         }
       }
       else {
+        // to map onto the reference domain of gmsh:
+        double uc = 2 * u - 1;
+        double vc = 2 * v - 1;
+        double wc = w;
+        //*****
         double lambdaProduct = 0;
         std::vector<double> dlambdaProduct(3, 0);
         double var1 = 0;
@@ -752,10 +744,10 @@ void HierarchicalBasisH1Pri::orientFaceGrad(
         std::vector<double> dvar2(3, 0);
         switch(faceNumber) {
         case(0): {
-          double lambda2 = _affineCoordinate(2, u, v, w);
-          double lambda3 = _affineCoordinate(3, u, v, w);
-          double lambda4 = _affineCoordinate(4, u, v, w);
-          double lambda5 = _affineCoordinate(5, u, v, w);
+          double lambda2 = _affineCoordinate(2, uc, vc, wc);
+          double lambda3 = _affineCoordinate(3, uc, vc, wc);
+          double lambda4 = _affineCoordinate(4, uc, vc, wc);
+          double lambda5 = _affineCoordinate(5, uc, vc, wc);
           double lambda45 = lambda4 * lambda5;
           double lambda23 = lambda2 * lambda3;
           lambdaProduct = lambda23 * lambda45;
@@ -770,10 +762,10 @@ void HierarchicalBasisH1Pri::orientFaceGrad(
 
         } break;
         case(1): {
-          double lambda1 = _affineCoordinate(1, u, v, w);
-          double lambda2 = _affineCoordinate(2, u, v, w);
-          double lambda4 = _affineCoordinate(4, u, v, w);
-          double lambda5 = _affineCoordinate(5, u, v, w);
+          double lambda1 = _affineCoordinate(1, uc, vc, wc);
+          double lambda2 = _affineCoordinate(2, uc, vc, wc);
+          double lambda4 = _affineCoordinate(4, uc, vc, wc);
+          double lambda5 = _affineCoordinate(5, uc, vc, wc);
           var1 = lambda1 - lambda2;
           var2 = lambda4 - lambda5;
           double lambda45 = lambda4 * lambda5;
@@ -788,10 +780,10 @@ void HierarchicalBasisH1Pri::orientFaceGrad(
 
         } break;
         case(2): {
-          double lambda1 = _affineCoordinate(1, u, v, w);
-          double lambda3 = _affineCoordinate(3, u, v, w);
-          double lambda4 = _affineCoordinate(4, u, v, w);
-          double lambda5 = _affineCoordinate(5, u, v, w);
+          double lambda1 = _affineCoordinate(1, uc, vc, wc);
+          double lambda3 = _affineCoordinate(3, uc, vc, wc);
+          double lambda4 = _affineCoordinate(4, uc, vc, wc);
+          double lambda5 = _affineCoordinate(5, uc, vc, wc);
           var1 = lambda1 - lambda3;
           var2 = lambda4 - lambda5;
           double lambda45 = lambda4 * lambda5;
@@ -806,25 +798,25 @@ void HierarchicalBasisH1Pri::orientFaceGrad(
 
         } break;
         }
-        std::vector<double> phi1(_pOrderQuadFace2[faceNumber] - 1);
-        std::vector<double> phi2(_pOrderQuadFace1[faceNumber] - 1);
-        std::vector<double> dphi1(_pOrderQuadFace2[faceNumber] - 1);
-        std::vector<double> dphi2(_pOrderQuadFace1[faceNumber] - 1);
-        for(int it = 0; it <= _pOrderQuadFace2[faceNumber] - 2; it++) {
+        std::vector<double> phi1(_pOrderQuadFace1[faceNumber] - 1);
+        std::vector<double> phi2(_pOrderQuadFace2[faceNumber] - 1);
+        std::vector<double> dphi1(_pOrderQuadFace1[faceNumber] - 1);
+        std::vector<double> dphi2(_pOrderQuadFace2[faceNumber] - 1);
+        for(int it = 0; it <= _pOrderQuadFace1[faceNumber] - 2; it++) {
           phi1[it] = OrthogonalPoly::EvalKernelFunction(it, var1);
           dphi1[it] = OrthogonalPoly::EvalDKernelFunction(it, var1);
         }
-        for(int it = 0; it <= _pOrderQuadFace1[faceNumber] - 2; it++) {
+        for(int it = 0; it <= _pOrderQuadFace2[faceNumber] - 2; it++) {
           phi2[it] = OrthogonalPoly::EvalKernelFunction(it, var2);
           dphi2[it] = OrthogonalPoly::EvalDKernelFunction(it, var2);
         }
 
-        for(int it1 = 0; it1 <= _pOrderQuadFace1[faceNumber] - 2; it1++) {
-          for(int it2 = 0; it2 <= _pOrderQuadFace2[faceNumber] - 2; it2++) {
+        for(int it1 = 0; it1 <= _pOrderQuadFace2[faceNumber] - 2; it1++) {
+          for(int it2 = 0; it2 <= _pOrderQuadFace1[faceNumber] - 2; it2++) {
             int impactFlag1 = 1;
             int impactFlag2 = 1;
-            if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+            if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
             for(int i = 0; i < 3; i++) {
               gradientFace[iterator][i] =
                 impactFlag1 * impactFlag2 *
@@ -849,9 +841,6 @@ void HierarchicalBasisH1Pri::orientFaceGrad(
       int iterator = (_pOrderQuadFace2[0] - 1) * (_pOrderQuadFace1[0] - 1) +
                      (_pOrderQuadFace2[1] - 1) * (_pOrderQuadFace1[1] - 1) +
                      (_pOrderQuadFace2[2] - 1) * (_pOrderQuadFace1[2] - 1);
-      if(faceNumber > 4) {
-        throw std::string("edgeNumber  must be : 0<=faceNumber<=4");
-      }
       for(int i = 0; i < constant; i++) {
         iterator += int((_pOrderTriFace[i] - 1) * (_pOrderTriFace[i] - 2) / 2);
       }
@@ -859,7 +848,7 @@ void HierarchicalBasisH1Pri::orientFaceGrad(
       std::vector<std::vector<double> > dlambda(3, std::vector<double>(3, 0));
       double lambdai = 0;
       std::vector<double> dlambdai(3, 0);
-      switch(constant) {
+      switch(faceNumber) {
       case(3):
         lambda[0] = _affineCoordinate(2, uc, vc, wc);
         lambda[1] = _affineCoordinate(3, uc, vc, wc);
@@ -883,7 +872,7 @@ void HierarchicalBasisH1Pri::orientFaceGrad(
         dlambdai[2] = 0.5;
         break;
       }
-      if(flag1 == 2 && flag2 == -1) {
+      if(flag1 == 1 && flag2 == -1) {
         double copy = lambda[0];
         lambda[0] = lambda[1];
         lambda[1] = copy;
@@ -899,7 +888,7 @@ void HierarchicalBasisH1Pri::orientFaceGrad(
         dlambda[2] = dlambda[1];
         dlambda[1] = dcopy;
       }
-      else if(flag1 == 1 && flag2 == -1) {
+      else if(flag1 == 2 && flag2 == -1) {
         double copy = lambda[2];
         lambda[2] = lambda[0];
         lambda[0] = copy;

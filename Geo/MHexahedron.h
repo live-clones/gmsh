@@ -218,7 +218,7 @@ public:
   }
   virtual MFace getFaceSolin(int numFace){
     static const int fSolin[6][4] = {{0, 1, 3, 2}, {0, 1, 4, 5}, {0, 3, 4, 7},
-                                {1, 2, 5, 6}, {2, 3, 6, 7}, {4, 5, 7, 6}};
+                                {1, 2, 5, 6}, {3, 2, 7, 6}, {4, 5, 7, 6}};
     return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
                  _v[fSolin[numFace][2]], _v[fSolin[numFace][3]]);
   }

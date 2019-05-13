@@ -323,7 +323,7 @@ void HierarchicalBasisH1Tria::orientEdge(int const &flagOrientation,
   }
 }
 
-void HierarchicalBasisH1Tria::orientEdgeGrad(
+void HierarchicalBasisH1Tria::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {
@@ -353,6 +353,168 @@ void HierarchicalBasisH1Tria::orientEdgeGrad(
       if((k - const1) % 2 != 0) {
         gradientEdge[k][0] = gradientEdge[k][0] * (-1);
         gradientEdge[k][1] = gradientEdge[k][1] * (-1);
+      }
+    }
+  }
+}
+
+void HierarchicalBasisH1Tria::orientFace(double const &u, double const &v,
+                                         double const &w, int const &flag1,
+                                         int const &flag2, int const &flag3,
+                                         int const &faceNumber,
+                                         std::vector<double> &faceBasis)
+{
+  if(!(flag1 == 0 && flag2 == 1)) {
+    // to map onto the reference domain of gmsh:
+    double uc = 2 * u - 1;
+    double vc = 2 * v - 1;
+    //*****
+    int iterator = 0;
+    std::vector<double> lambda(3);
+
+    lambda[0] = _affineCoordinate(2, uc, vc);
+    lambda[1] = _affineCoordinate(3, uc, vc);
+    lambda[2] = _affineCoordinate(1, uc, vc);
+
+    double product = lambda[0] * lambda[1] * lambda[2];
+    if(flag1 == 1 && flag2 == -1) {
+      double copy = lambda[0];
+      lambda[0] = lambda[1];
+      lambda[1] = copy;
+    }
+    else if(flag1 == 0 && flag2 == -1) {
+      double copy = lambda[2];
+      lambda[2] = lambda[1];
+      lambda[1] = copy;
+    }
+    else if(flag1 == 2 && flag2 == -1) {
+      double copy = lambda[2];
+      lambda[2] = lambda[0];
+      lambda[0] = copy;
+    }
+    else if(flag1 == 1 && flag2 == 1) {
+      double copy = lambda[0];
+      lambda[0] = lambda[1];
+      lambda[1] = lambda[2];
+      lambda[2] = copy;
+    }
+    else if(flag1 == 2 && flag2 == 1) {
+      double copy = lambda[0];
+      lambda[0] = lambda[2];
+      lambda[2] = lambda[1];
+      lambda[1] = copy;
+    }
+    double subs1 = lambda[1] - lambda[0];
+    double subs2 = lambda[0] - lambda[2];
+    std::vector<double> phiSubs2(_pf - 2);
+    for(int it = 0; it < _pf - 2; it++) {
+      phiSubs2[it] = OrthogonalPoly::EvalKernelFunction(it, subs2);
+    }
+    for(int n1 = 0; n1 < _pf - 2; n1++) {
+      double phiSubs1 = OrthogonalPoly::EvalKernelFunction(n1, subs1);
+      for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
+        faceBasis[iterator] = product * phiSubs1 * phiSubs2[n2];
+        iterator++;
+      }
+    }
+  }
+}
+
+void HierarchicalBasisH1Tria::orientFace(
+  double const &u, double const &v, double const &w, int const &flag1,
+  int const &flag2, int const &flag3, int const &faceNumber,
+  std::vector<std::vector<double> > &gradientFace, std::string typeFunction)
+{
+  if(!(flag1 == 0 && flag2 == 1)) {
+    // to map onto the reference domain of gmsh:
+    double uc = 2 * u - 1;
+    double vc = 2 * v - 1;
+    //*****
+    int iterator = 0;
+    std::vector<double> lambda(3);
+    std::vector<std::vector<double> > dlambda(3, std::vector<double>(2, 0));
+    std::vector<double> dProduct(2); // gradient of (lambdaA*lambdaB*lambdaC)
+
+    lambda[0] = _affineCoordinate(2, uc, vc);
+    lambda[1] = _affineCoordinate(3, uc, vc);
+    lambda[2] = _affineCoordinate(1, uc, vc);
+    dlambda[0][0] = -1; //* jacobian
+    dlambda[0][1] = -1; //* jacobian
+    dlambda[1][0] = 1; //* jacobian
+    dlambda[2][1] = 1; //* jacobian
+    double pl3l1 = lambda[1] * lambda[2];
+    dProduct[0] = lambda[2] * lambda[0] - pl3l1;
+    dProduct[1] = lambda[0] * lambda[1] - pl3l1;
+    double product = lambda[0] * lambda[1] * lambda[2];
+    if(flag1 == 1 && flag2 == -1) {
+      double copy = lambda[0];
+      lambda[0] = lambda[1];
+      lambda[1] = copy;
+      std::vector<double> dcopy = dlambda[0];
+      dlambda[0] = dlambda[1];
+      dlambda[1] = dcopy;
+    }
+    else if(flag1 == 0 && flag2 == -1) {
+      double copy = lambda[2];
+      lambda[2] = lambda[1];
+      lambda[1] = copy;
+      std::vector<double> dcopy = dlambda[2];
+      dlambda[2] = dlambda[1];
+      dlambda[1] = dcopy;
+    }
+    else if(flag1 == 2 && flag2 == -1) {
+      double copy = lambda[2];
+      lambda[2] = lambda[0];
+      lambda[0] = copy;
+      std::vector<double> dcopy = dlambda[2];
+      dlambda[2] = dlambda[0];
+      dlambda[0] = dcopy;
+    }
+    else if(flag1 == 1 && flag2 == 1) {
+      double copy = lambda[0];
+      lambda[0] = lambda[1];
+      lambda[1] = lambda[2];
+      lambda[2] = copy;
+      std::vector<double> dcopy = dlambda[0];
+      dlambda[0] = dlambda[1];
+      dlambda[1] = dlambda[2];
+      dlambda[2] = dcopy;
+    }
+    else if(flag1 == 2 && flag2 == 1) {
+      double copy = lambda[0];
+      lambda[0] = lambda[2];
+      lambda[2] = lambda[1];
+      lambda[1] = copy;
+      std::vector<double> dcopy = dlambda[0];
+      dlambda[0] = dlambda[2];
+      dlambda[2] = dlambda[1];
+      dlambda[1] = dcopy;
+    }
+    double subsBA = lambda[1] - lambda[0];
+    double subsAC = lambda[0] - lambda[2];
+    std::vector<double> dsubsBA(2);
+    std::vector<double> dsubsAC(2);
+    for(int i = 0; i < 2; i++) {
+      dsubsBA[i] = dlambda[1][i] - dlambda[0][i];
+      dsubsAC[i] = dlambda[0][i] - dlambda[2][i];
+    }
+    std::vector<double> phiSubsAC(_pf - 2);
+    std::vector<double> dphiSubsAC(_pf - 2);
+    for(int it = 0; it < _pf - 2; it++) {
+      phiSubsAC[it] = OrthogonalPoly::EvalKernelFunction(it, subsAC);
+      dphiSubsAC[it] = OrthogonalPoly::EvalDKernelFunction(it, subsAC);
+    }
+    for(int n1 = 0; n1 < _pf - 2; n1++) {
+      double phiBA = OrthogonalPoly::EvalKernelFunction(n1, subsBA);
+      double dphiBA = OrthogonalPoly::EvalDKernelFunction(n1, subsBA);
+      for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
+        for(int i = 0; i < 2; i++) {
+          gradientFace[iterator][i] =
+            dProduct[i] * phiBA * phiSubsAC[n2] +
+            product * dphiBA * dsubsBA[i] * phiSubsAC[n2] +
+            product * phiBA * dsubsAC[i] * dphiSubsAC[n2];
+        }
+        iterator++;
       }
     }
   }

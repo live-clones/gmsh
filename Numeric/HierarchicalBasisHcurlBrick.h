@@ -8,10 +8,10 @@
 // Segeth ,
 //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
-#ifndef HIERARCHICAL_BASIS_H1_BRICK_H
-#define HIERARCHICAL_BASIS_H1_BRICK_H
+#ifndef HIERARCHICAL_BASIS_HCURL_BRICK_H
+#define HIERARCHICAL_BASIS_HCURL_BRICK_H
 
-#include "HierarchicalBasisH1.h"
+#include "HierarchicalBasisHcurl.h"
 
 /*
  * MHexahedron
@@ -35,51 +35,42 @@
  *
  * Oritented Surface:
  *  s0={0, 1, 3, 2}, s1={0, 1, 4, 5}, s2={0, 3, 4, 7},
- *  s3={1, 2, 5, 6}, s4={3,2,7,6}, s5={4, 5, 7, 6}
+ *  s3={1, 2, 5, 5}, s4={2, 3, 6, 6}, s5={4, 5, 7, 6}
  * Local (directional) orders on mesh faces are not allowed to exceed the mini-
  * mum of the (appropriate directional) orders of approximation associated with
  * the interior of the adjacent elements. Local orders of approximation on mesh
  * edges are limited by the minimum of all (appropriate directional) orders cor-
  * responding to faces sharing that edge
  */
-class HierarchicalBasisH1Brick : public HierarchicalBasisH1 {
+class HierarchicalBasisHcurlBrick : public HierarchicalBasisHcurl {
 public:
-  HierarchicalBasisH1Brick(int order);
-  virtual ~HierarchicalBasisH1Brick();
-  // vertexBasis=[v0,...,v12]
-  // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
-  // faceBasis=[phif0_{2,2},...,phif0_{2,pF0_2},...,phif0_{pF0_1,2},...,phief0_{pF0_1,pF0_2},phif1_{2,2}...}]
-  // bubbleBasis=[phieb_{2,2,2},...,phieb_{2,,2,pb3},phieb_{2,3,2},...,phieb_{2,3,pe3},...}]
-  virtual void generateBasis(double const &u, double const &v, double const &w,
-                             std::vector<double> &vertexBasis,
-                             std::vector<double> &edgeBasis,
-                             std::vector<double> &faceBasis,
-                             std::vector<double> &bubbleBasis);
+  HierarchicalBasisHcurlBrick(int order);
+  virtual ~HierarchicalBasisHcurlBrick();
+
   virtual void generateBasis(double const &u, double const &v, double const &w,
                              std::vector<std::vector<double> > &vertexBasis,
                              std::vector<std::vector<double> > &edgeBasis,
                              std::vector<std::vector<double> > &faceBasis,
                              std::vector<std::vector<double> > &bubbleBasis,
-                             std::string typeFunction = "GradH1Legendre")
+                             std::string typeFunction)
   {
-    generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
-                          bubbleBasis);
-  }
-
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<double> &edgeBasis);
+    if(typeFunction == "HcurlLegendre") {
+      generateBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
+    }
+    else if("CurlHcurlLegendre" == typeFunction) {
+      generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
+    }
+    else {
+      throw std::string("unknown typeFunction");
+    }
+  };
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
                           std::vector<std::vector<double> > &edgeBasis);
-
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<double> &faceBasis);
-  virtual void orientFace(double const &u, double const &v, double const &w,
-                          int const &flag1, int const &flag2, int const &flag3,
-                          int const &faceNumber,
-                          std::vector<std::vector<double> > &faceBasis,
-                          std::string typeFunction = "GradH1Legendre");
+                          std::vector<std::vector<double> > &faceFunctions,
+                          std::string typeFunction);
 
 private:
   int _pb1; // bubble function order in  direction u
@@ -94,21 +85,19 @@ private:
   static double
   _affineCoordinate(const int &j, const double &u, const double &v,
                     const double &w); // affine coordinate lambdaj j=1..6
-  inline void _someProduct(double const &u, double const &v, double const &w,
-                           std::vector<double> &product,
-                           std::vector<double> &lambda); // compute some product
-  inline void
-  _someProductGrad(double const &u, double const &v, double const &w,
-                   std::vector<double> &product,
-                   std::vector<std::vector<double> > &gradientProduct,
-                   std::vector<double> &lambda,
-                   std::vector<std::vector<double> >
-                     &gradientLambda); // compute some product and fill the
-                                       // vector gradientVertex
-  void generateGradientBasis(double const &u, double const &v, double const &w,
-                             std::vector<std::vector<double> > &gradientVertex,
-                             std::vector<std::vector<double> > &gradientEdge,
-                             std::vector<std::vector<double> > &gradientFace,
-                             std::vector<std::vector<double> > &gradientBubble);
+
+  // edgeBasis=[phie0_{0},...phie0_{pe0},phie1_{0},...phie1_{pe1}...]
+  // faceBasis=[phieFf1{n1,n2} (with 0<=n1<=pf1 , 2<=n2<=pf2+1), phieFf2{n1,n2}
+  // (with 2<=n1<=pf1+1 , 0<=n2<=pf2) ] bubbleBasis=[phieb1{n1,n2,n3} (with
+  // 0<=n1<=pb1 , 2<=n2<=pb2+1 , 2<=n3<=pb3+1)...]
+  virtual void generateBasis(double const &u, double const &v, double const &w,
+                             std::vector<std::vector<double> > &edgeBasis,
+                             std::vector<std::vector<double> > &faceBasis,
+                             std::vector<std::vector<double> > &bubbleBasis);
+  virtual void
+  generateCurlBasis(double const &u, double const &v, double const &w,
+                    std::vector<std::vector<double> > &edgeBasis,
+                    std::vector<std::vector<double> > &faceBasis,
+                    std::vector<std::vector<double> > &bubbleBasis);
 };
 #endif

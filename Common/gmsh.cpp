@@ -48,6 +48,8 @@
 #include "HierarchicalBasisH1Brick.h"
 #include "HierarchicalBasisH1Tetra.h"
 #include "HierarchicalBasisH1Pri.h"
+#include "HierarchicalBasisHcurlQuad.h"
+#include "HierarchicalBasisHcurlBrick.h"
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGFaceOptimize.h"
@@ -1584,16 +1586,31 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(
 }
 
 static bool _getHierarchicalFunctionSpaceInfo(const std::string &fsType,
-                                              int &fsComp, int &basisOrder)
+                                              std::string &fsName,
+                                              int &basisOrder, int &fsComp)
 {
   if(fsType.substr(0, 10) == "H1Legendre") {
     fsComp = 1;
     basisOrder = atoi(fsType.substr(10).c_str());
+    fsName = "H1Legendre";
     return true;
   }
-  else if(fsType.substr(0, 14) == "GradH1Legendre") {
+  if(fsType.substr(0, 14) == "GradH1Legendre") {
     fsComp = 3;
     basisOrder = atoi(fsType.substr(14).c_str());
+    fsName = "GradH1Legendre";
+    return true;
+  }
+  if(fsType.substr(0, 13) == "HcurlLegendre") {
+    fsComp = 3;
+    basisOrder = atoi(fsType.substr(13).c_str());
+    fsName = "HcurlLegendre";
+    return true;
+  }
+  if(fsType.substr(0, 17) == "CurlHcurlLegendre") {
+    fsComp = 3;
+    basisOrder = atoi(fsType.substr(17).c_str());
+    fsName = "CurlHcurlLegendre";
     return true;
   }
   return false;
@@ -1920,37 +1937,51 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
 {
   basisFunctions.clear();
   int basisOrder = 0;
-  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, numComponents,
-                                        basisOrder)) {
+  std::string fsName = "";
+  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
+                                        numComponents)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
   int dim = ElementType::getDimension(elementType);
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
-  HierarchicalBasisH1 *basis(0);
+  HierarchicalBasis *basis(0);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
-  switch(familyType) {
-  case TYPE_HEX: {
-    basis = new HierarchicalBasisH1Brick(basisOrder);
-  } break;
-  case TYPE_PRI: {
-    basis = new HierarchicalBasisH1Pri(basisOrder);
-  } break;
-  case TYPE_TET: {
-    basis = new HierarchicalBasisH1Tetra(basisOrder);
-  } break;
-  case TYPE_QUA: {
-    basis = new HierarchicalBasisH1Quad(basisOrder);
-  } break;
-  case TYPE_TRI: {
-    basis = new HierarchicalBasisH1Tria(basisOrder);
-  } break;
-  case TYPE_LIN: {
-    basis = new HierarchicalBasisH1Line(basisOrder);
-  } break;
-  default: Msg::Error("Unknown familyType "); throw 2;
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
+    switch(familyType) {
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisH1Brick(basisOrder);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisH1Pri(basisOrder);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisH1Tetra(basisOrder);
+    } break;
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisH1Quad(basisOrder);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisH1Tria(basisOrder);
+    } break;
+    case TYPE_LIN: {
+      basis = new HierarchicalBasisH1Line(basisOrder);
+    } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
+    }
+  }
+  else {
+    switch(familyType) {
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisHcurlQuad(basisOrder);
+    } break;
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisHcurlBrick(basisOrder);
+    } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
+    }
   }
   int nq = integrationPoints.size() / 3;
   int vSize = basis->getnVertexFunction();
@@ -1990,7 +2021,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           std::vector<double> eTableCopy(
             eSize); // use eTableCopy to orient the edges
           for(int r = 0; r < eSize; r++) { eTableCopy[r] = eTable[r]; }
-          if(eSize > 0 && basis->getNumEdge() > 1) {
+          if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
               int orientationFlag = 1;
@@ -2006,8 +2037,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           }
           std::vector<double> fTableCopy(fSize);
           for(int r = 0; r < fSize; r++) { fTableCopy[r] = fTable[r]; }
-          if(fSize > 0 &&
-             basis->getNumTriFace() + basis->getNumQuadFace() > 1) {
+          if(fSize > 0) {
             for(int jj = 0;
                 jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
               MFace face = e->getFaceSolin(jj);
@@ -2033,6 +2063,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           for(int k = 0; k < bSize; k++) {
             basisFunctions[const6 + k] = bTable[k];
           }
+
           indexNumElement++;
         }
       }
@@ -2055,8 +2086,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         fSize, std::vector<double>(3, 0.));
       std::vector<std::vector<double> > gradientBubble(
         bSize, std::vector<double>(3, 0.));
-      basis->generateGradientBasis(u, v, w, gradientVertex, gradientEdge,
-                                   gradientFace, gradientBubble);
+      basis->generateBasis(u, v, w, gradientVertex, gradientEdge, gradientFace,
+                           gradientBubble, fsName);
       int const2 = i * numFunctionsPerElement * numComponents;
       size_t indexNumElement = 0;
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
@@ -2072,7 +2103,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             eTableCopy[r][1] = gradientEdge[r][1];
             eTableCopy[r][2] = gradientEdge[r][2];
           }
-          if(eSize > 0 && basis->getNumEdge() > 1) {
+          if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
               int orientationFlag = 1;
@@ -2083,10 +2114,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               else {
                 orientationFlag = 1;
               }
-              basis->orientEdgeGrad(orientationFlag, jj, eTableCopy);
+              basis->orientEdge(orientationFlag, jj, eTableCopy);
             }
           }
-
           std::vector<std::vector<double> > fTableCopy(
             fSize, std::vector<double>(3, 0.));
           for(int r = 0; r < fSize; r++) {
@@ -2094,16 +2124,15 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             fTableCopy[r][1] = gradientFace[r][1];
             fTableCopy[r][2] = gradientFace[r][2];
           }
-          if(fSize > 0 &&
-             basis->getNumTriFace() + basis->getNumQuadFace() > 1) {
+          if(fSize > 0) {
             for(int jj = 0;
                 jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
               MFace face = e->getFaceSolin(jj);
               std::vector<int> faceOrientationFlag(3);
               face.getOrientationFlagForFace(faceOrientationFlag);
-              basis->orientFaceGrad(u, v, w, faceOrientationFlag[0],
-                                    faceOrientationFlag[1],
-                                    faceOrientationFlag[2], jj, fTableCopy);
+              basis->orientFace(u, v, w, faceOrientationFlag[0],
+                                faceOrientationFlag[1], faceOrientationFlag[2],
+                                jj, fTableCopy, fsName);
             }
           }
           std::size_t const4 = const3 + prod1;
@@ -2146,15 +2175,14 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
   if(!_isInitialized()) { throw -1; }
   coord.clear();
   keys.clear();
-
   int order = 0;
   int numComponents = 0;
-  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, numComponents,
-                                        order)) {
+  std::string fsName = "";
+  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, fsName, order,
+                                        numComponents)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
-
   int dim = ElementType::getDimension(elementType);
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
@@ -2170,27 +2198,39 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
   }
 
   else {
-    HierarchicalBasisH1 *basis(0);
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(order);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(order);
-    } break;
-    default: Msg::Error("Unknown familyType"); throw 2;
+    HierarchicalBasis *basis(0);
+    if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
+      switch(familyType) {
+      case TYPE_HEX: {
+        basis = new HierarchicalBasisH1Brick(order);
+      } break;
+      case TYPE_PRI: {
+        basis = new HierarchicalBasisH1Pri(order);
+      } break;
+      case TYPE_TET: {
+        basis = new HierarchicalBasisH1Tetra(order);
+      } break;
+      case TYPE_QUA: {
+        basis = new HierarchicalBasisH1Quad(order);
+      } break;
+      case TYPE_TRI: {
+        basis = new HierarchicalBasisH1Tria(order);
+      } break;
+      case TYPE_LIN: {
+        basis = new HierarchicalBasisH1Line(order);
+      } break;
+      default: Msg::Error("Unknown familyType "); throw 2;
+      }
+    }
+    else {
+      switch(familyType) {
+      case TYPE_QUA: {
+        basis = new HierarchicalBasisHcurlQuad(order);
+      } break;
+      case TYPE_HEX: {
+        basis = new HierarchicalBasisHcurlBrick(order);
+      } break;
+      }
     }
     int vSize = basis->getnVertexFunction();
     int bSize = basis->getnBubbleFunction();
@@ -2305,6 +2345,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
         }
       }
     }
+
     else {
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
