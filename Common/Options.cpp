@@ -6244,6 +6244,13 @@ double opt_mesh_ho_prim_surf_mesh(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoPrimSurfMesh;
 }
 
+double opt_mesh_ho_dist_cad(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.hoDistCAD = (int)val;
+  return CTX::instance()->mesh.hoDistCAD;
+}
+
 double opt_mesh_ho_iter_max(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

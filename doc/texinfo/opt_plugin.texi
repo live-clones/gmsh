@@ -17,8 +17,7 @@ Parameters:@*
 @*
 - ICNMeasure = @{0, 1@}@*
 @*
-- HidingThreshold = [0, 1]: Hides all element for which min(mu) is strictly greater than the threshold, where mu is the ICN if ICN measure == 1, otherwise mu is the IGE it IGE measure == 1, otherwise mu is the Jacobian determinant.@*
-If threshold == 0, hides all elements except invalid.@*
+- HidingThreshold = [0, 1]: Hides all element for which min(mu) is strictly greater than the threshold, where mu is ICN ifICNMeasure == 1, otherwise it is IGE if IGEMeasure == 1. If ICNMeasure == IGEMeasure == 0, nothing happens. If threshold == 0, hides all elements except invalid.@*
 @*
 - DrawPView = @{0, 1@}: Creates a PView of min(J)/max(J), min(IGE) and/or min(ICN) according to what is asked. If 'Recompute' = 1, new PViews are created.@*
 @*

@@ -176,6 +176,11 @@ Try to fix flipped surface mesh elements in high-order optimizer?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderDistCAD
+Try to optimize distance to CAD in high-order optimizer?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.HighOrderThresholdMin
 Minimum threshold for high-order element optimization@*
 Default value: @code{0.1}@*

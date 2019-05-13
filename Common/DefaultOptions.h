@@ -1068,6 +1068,8 @@ StringXNumber MeshOptions_Number[] = {
     "(between -1.0 and 0.5, excluded)"},
   { F|O, "HighOrderPrimSurfMesh", opt_mesh_ho_prim_surf_mesh, 0,
     "Try to fix flipped surface mesh elements in high-order optimizer?"},
+  { F|O, "HighOrderDistCAD", opt_mesh_ho_dist_cad, 0,
+    "Try to optimize distance to CAD in high-order optimizer?"},
   { F|O, "HighOrderThresholdMin", opt_mesh_ho_threshold_min, 0.1,
     "Minimum threshold for high-order element optimization"},
   { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,

@@ -1011,6 +1011,7 @@ void OptimizeHighOrderMesh(GModel *m)
   p.optPassMax = CTX::instance()->mesh.hoPassMax;
   p.dim = GModel::current()->getDim();
   p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
+  p.optCAD = CTX::instance()->mesh.hoDistCAD;
   HighOrderMeshOptimizer(GModel::current(), p);
 #else
   Msg::Error("High-order mesh optimization requires the OPTHOM module");
