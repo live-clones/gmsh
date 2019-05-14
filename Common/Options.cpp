@@ -5788,6 +5788,13 @@ double opt_mesh_med_import_groups_of_nodes(OPT_ARGS_NUM)
   return CTX::instance()->mesh.medImportGroupsOfNodes;
 }
 
+double opt_mesh_med_single_model(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.medSingleModel = (int)val;
+  return CTX::instance()->mesh.medSingleModel;
+}
+
 double opt_mesh_partition_split_mesh_files(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -6237,6 +6244,13 @@ double opt_mesh_ho_prim_surf_mesh(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoPrimSurfMesh;
 }
 
+double opt_mesh_ho_dist_cad(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.hoDistCAD = (int)val;
+  return CTX::instance()->mesh.hoDistCAD;
+}
+
 double opt_mesh_ho_iter_max(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -6503,33 +6517,44 @@ double opt_mesh_partition_num(OPT_ARGS_NUM)
 
 double opt_mesh_partition_metis_algorithm(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    int ival = (int)val;
-    if(ival < 1 || ival > 2)
-      ival = (CTX::instance()->mesh.numPartitions <= 8) ? 1 : 2;
-    CTX::instance()->mesh.metisAlgorithm = ival;
-  }
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.metisAlgorithm = (int)val;
   return  CTX::instance()->mesh.metisAlgorithm;
 }
 
 double opt_mesh_partition_metis_edge_matching(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    const int ival = (int)val;
-    CTX::instance()->mesh.metisEdgeMatching =
-      (ival < 1 || ival > 2) ? 2 : ival;
-  }
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.metisEdgeMatching = (int)val;
   return CTX::instance()->mesh.metisEdgeMatching;
 }
 
 double opt_mesh_partition_metis_refinement_algorithm(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    const int ival = (int)val;
-    CTX::instance()->mesh.metisRefinementAlgorithm =
-      (ival < 1 || ival > 4) ? 2 : ival;
-  }
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.metisRefinementAlgorithm = (int)val;
   return CTX::instance()->mesh.metisRefinementAlgorithm;
+}
+
+double opt_mesh_partition_metis_max_load_imbalance(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.metisMaxLoadImbalance = val;
+  return CTX::instance()->mesh.metisMaxLoadImbalance;
+}
+
+double opt_mesh_partition_metis_objective(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.metisObjective = (int)val;
+  return CTX::instance()->mesh.metisObjective;
+}
+
+double opt_mesh_partition_metis_min_conn(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.metisMinConn = (int)val;
+  return CTX::instance()->mesh.metisMinConn;
 }
 
 double opt_mesh_clip(OPT_ARGS_NUM)

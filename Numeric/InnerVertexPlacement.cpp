@@ -6,6 +6,7 @@
 // Contributed by Amaury Johnen
 
 #include "InnerVertexPlacement.h"
+#include "GmshDefines.h"
 #include "pointsGenerators.h"
 
 namespace {

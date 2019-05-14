@@ -16,7 +16,7 @@
 \usepackage{subfig}
 \usepackage{epstopdf}
 \usepackage{amsfonts,amsmath,amssymb,amscd}
-% typesetting headers and footers 
+% typesetting headers and footers
 \usepackage{fancyhdr}
 %\usepackage{lastpage}
 
@@ -49,7 +49,7 @@
 %\newcommand{\reference}{D4.1-30b}
 %\newcommand{\shorttitle}{Curvilinear Mesh Generation Capability in Gmsh}
 %\newcommand{\theauthor}{T. Toulorge, J.F. Remacle}
- 
+
 \title{Mesh Optimization in Gmsh}
 \author{Thomas Toulorge}
 \date{November 2014}
@@ -80,7 +80,7 @@
 %\newcommand{\chaptermark}[1]{\markboth{#1}{}}
 
 % ------------------------------------------------------------------------------
-% main text 
+% main text
 % ------------------------------------------------------------------------------
 
 %\newpage
@@ -163,7 +163,7 @@ $m$ will never exceed $\epsilon$.
 %\end{center}
 \caption{Barrier function for $\omega=1$ and
 $\epsilon<\omega$ (left) or $\epsilon>\omega$
-(right)\label{fig:barrier}} 
+(right)\label{fig:barrier}}
 \end{figure}
 
 In order for the measure $m$ to remain in the domain of definition of
@@ -193,7 +193,7 @@ function is composed of a fixed barrier set to $m_{\min}$, plus a moving
 barrier that forces $m$ to drop below a value $m_{\max}$. This technique
 can also prove useful when one wants to impose a constraint on a crucial
 measure $m_1$ in a first pass, and then improve another less important
-one $m_2$ in a second pass. 
+one $m_2$ in a second pass.
 
 \begin{figure}
 %\begin{center}
@@ -201,7 +201,7 @@ one $m_2$ in a second pass.
 \includegraphics[width=0.95\textwidth]{opti_process/opti_process}
 %\end{center}
 \caption{Optimization process: three successive series of
-(maximum) 30 conjugate gradient iterations\label{fig:opti_process}} 
+(maximum) 30 conjugate gradient iterations\label{fig:opti_process}}
 \end{figure}
 
 
@@ -353,7 +353,7 @@ entity each element is classified) should be passed respectively:
 \item to \texttt{patchDef} (see Section~\ref{sec:patch-selec}), in
 order to take it into account in the selection of mesh patches,
 \item to the classes \texttt{MeshOpt} and \texttt{Patch}, in order
-to take it into account in the evaluation of quality measures.   
+to take it into account in the evaluation of quality measures.
 \end{itemize}
 If both fields are set to \texttt{false}, the geometrical information
 is not computed, which may result in an improved performance.
@@ -671,7 +671,7 @@ on the minimum scaled Jacobian plus a moving barrier on the maximum
 scaled Jacobian with $J_{\max}$ as target value.
 
 
-The high-order mesh optimizer is accessible from the ``High order
+The high-order mesh optimizer is accessible from the ``High-order
 tools'' window in Gmsh's graphical interface. The parameters are
 as follows:
 

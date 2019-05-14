@@ -47,7 +47,7 @@ ACISEdge::ACISEdge(GModel *model, EDGE *edge, int num, GVertex *v1, GVertex *v2)
     //    s0 += _cur->equation().param_period()/2;
     //    s1 += _cur->equation().param_period()/2;
   }
-  Msg::Info("ACIS Edge %d is %s goes from %g to %g", tag(),
+  Msg::Info("ACIS curve %d is %s goes from point %g to point %g", tag(),
             getTypeString().c_str(), s0, s1);
 }
 

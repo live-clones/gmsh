@@ -70,7 +70,120 @@ MFace::MFace(const std::vector<MVertex *> &v)
   for(std::size_t i = 0; i < v.size(); i++) _v.push_back(v[i]);
   sortVertices(_v, _si);
 }
+void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
+{ // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+  // Segeth ,
+  //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr
+  //                 (2003)
+  if(_v.size() == 3) { // triangular face
+    if(_v[int(_si[0])]->getNum() == _v[0]->getNum()) {
+      faceOrientationFlag[0] = 0;
+      if(_v[int(_si[1])]->getNum() == _v[1]->getNum()) {
+        faceOrientationFlag[1] = 1;
+      }
+      else {
+        faceOrientationFlag[1] = -1;
+      }
+    }
+    else {
+      if(_v[1]->getNum() == _v[int(_si[0])]->getNum()) {
+        faceOrientationFlag[0] = 1;
+        if(_v[0]->getNum() == _v[int(_si[2])]->getNum()) {
+          faceOrientationFlag[1] = 1;
+        }
+        else {
+          faceOrientationFlag[1] = -1;
+        }
+      }
+      else {
+        faceOrientationFlag[0] = 2;
+        if(_v[1]->getNum() == _v[int(_si[2])]->getNum()) {
+          faceOrientationFlag[1] = 1;
+        }
+        else {
+          faceOrientationFlag[1] = -1;
+        }
+      }
+    }
+  }
+  else { // quadrilateral face
+    int c = 0;
+    for(int i = 0; i < 4; i++) {
+      if(_v[int(_si[0])]->getNum() == unsigned(_v[i]->getNum())) {
+        c = i;
+      }
+    }
+    int indexopposedVertex = 0;
+    switch(c) {
+    case(0): indexopposedVertex = 3; break;
+    case(1): indexopposedVertex = 2; break;
+    case(2): indexopposedVertex = 1; break;
+    case(3): indexopposedVertex = 0; break;
+    }
+    int numVertexOpposed = _v[indexopposedVertex]->getNum();
 
+    int axis1A = _v[int(_si[0])]->getNum();
+    int axis1B = 0;
+    if(_v[int(_si[1])]->getNum() == unsigned(numVertexOpposed)) {
+      axis1B = _v[int(_si[2])]->getNum();
+    }
+    else {
+      axis1B = _v[int(_si[1])]->getNum();
+    }
+    if(unsigned(axis1A) == _v[0]->getNum()) {
+      if(unsigned(axis1B) == _v[1]->getNum()) {
+        faceOrientationFlag[0] = 1;
+        faceOrientationFlag[1] = 1;
+        faceOrientationFlag[2] = 1;
+      }
+      else {
+        faceOrientationFlag[0] = 1;
+        faceOrientationFlag[1] = 1;
+        faceOrientationFlag[2] = -1;
+      }
+    }
+    else {
+      if(unsigned(axis1A) == _v[1]->getNum()) {
+        if(unsigned(axis1B) == _v[0]->getNum()) {
+          faceOrientationFlag[0] = -1;
+          faceOrientationFlag[1] = 1;
+          faceOrientationFlag[2] = 1;
+        }
+        else {
+          faceOrientationFlag[0] = -1;
+          faceOrientationFlag[1] = 1;
+          faceOrientationFlag[2] = -1;
+        }
+      }
+      else {
+        if(unsigned(axis1A) == _v[2]->getNum()) {
+          if(unsigned(axis1B) == _v[3]->getNum()) {
+            faceOrientationFlag[0] = 1;
+            faceOrientationFlag[1] = -1;
+            faceOrientationFlag[2] = 1;
+          }
+          else {
+            faceOrientationFlag[0] = 1;
+            faceOrientationFlag[1] = -1;
+            faceOrientationFlag[2] = -1;
+          }
+        }
+        else {
+          if(unsigned(axis1B) == _v[2]->getNum()) {
+            faceOrientationFlag[0] = -1;
+            faceOrientationFlag[1] = -1;
+            faceOrientationFlag[2] = 1;
+          }
+          else {
+            faceOrientationFlag[0] = -1;
+            faceOrientationFlag[1] = -1;
+            faceOrientationFlag[2] = -1;
+          }
+        }
+      }
+    }
+  }
+}
 double MFace::approximateArea() const
 {
   SPoint3 p0 = _v[0]->point(), p1 = _v[1]->point(), p2 = _v[2]->point();
@@ -120,7 +233,7 @@ MFaceN::MFaceN(int type, int order, const std::vector<MVertex *> &v)
 MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
 {
   int nCorner = getNumCorners();
-  std::vector<MVertex *> vertices((unsigned int)_order + 1);
+  std::vector<MVertex *> vertices(static_cast<std::size_t>(_order) + 1);
   if(sign == 1) {
     vertices[0] = _v[num];
     vertices[1] = _v[(num + 1) % nCorner];
