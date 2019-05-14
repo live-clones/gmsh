@@ -34,7 +34,10 @@ HXTStatus hxtMeanValuesCreate(HXTEdges *edges, HXTMeanValues **meanValues)
 
   // be moved into parametrization?
   HXTBoundaries *boundaries;
+    printf("1 %d %d %d\n",mesh->triangles.node[0],mesh->triangles.node[1],mesh->triangles.node[2]);
+    printf("1 %d %d %d\n",mesh->triangles.node[3],mesh->triangles.node[4],mesh->triangles.node[5]);
   HXT_CHECK(hxtEdgesSetBoundaries(edges, &boundaries));
+    printf("2\n");
   map->boundaries = boundaries;
 
 
@@ -52,7 +55,7 @@ HXTStatus hxtMeanValuesCreate(HXTEdges *edges, HXTMeanValues **meanValues)
     }
   }
 
-  HXT_CHECK(hxtMalloc(&map->hole,(nBoundaries-1)*sizeof(int)));
+  HXT_CHECK(hxtMalloc(&map->hole,(nBoundaries+1)*sizeof(int)));
   int c = 0;
   for(int i=0; i<nBoundaries; i++)
     if(i!=map->boundary){
@@ -82,11 +85,12 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
     HXT_CHECK(hxtBoundariesGetNumberOfEdgesOfLineLoop(meanValues->boundaries,meanValues->hole[i],&c));
     nby += c;
   }
-
+  
+#ifdef __FILLERGAP_
   uint32_t *fillergap;
   HXT_CHECK(hxtMalloc(&fillergap, 3*(nTriangles+nby)*sizeof(uint32_t)));
   memcpy(fillergap, mesh->triangles.node, 3*nTriangles*sizeof(uint32_t));
-
+  
   int s=0;
   for(int i=0; i<meanValues->nHoles; i++){
     uint32_t *cedgs;
@@ -100,20 +104,27 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
     }
     s += n_;
   }
+#endif // __FILLERGAP_
+  
   /*
     for(int i=0; i<nTriangles+nby; i++)
     printf("tri %d (nby=%d) \t %u %u %u\n",i,nby,fillergap[3*i+0],fillergap[3*i+1],fillergap[3*i+2]);
   */
-
+  
   HXTLinearSystem *sys;
-
+  
+#ifdef __FILLERGAP_
   HXT_CHECK(hxtLinearSystemCreateLU(&sys,nTriangles+nby,3,1,fillergap));
-
+#else
+  HXT_CHECK(hxtLinearSystemCreateLU(&sys,nTriangles,3,1,mesh->triangles.node));
+#endif
+  
+  
   uint32_t *flag;
   HXT_CHECK(hxtMalloc(&flag,nNodes*sizeof(uint32_t)));
   for(uint32_t ii=0; ii<nNodes; ii++)
     flag[ii] = 0;
-
+  
   /* boundary conditions */
   double *uv = meanValues->uv;
   int n;
@@ -130,28 +141,28 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
     uv[2*edges->node[2*edges_ll[i]+0]+1] = sin(angle);
     currentLength += hxtEdgesLength(meanValues->initialEdges, edges_ll[i]);
   }
-
+  
   double *U, *V, *Urhs, *Vrhs;
   //printf("allocation: %d\n",nNodes+meanValues->nHoles);
   HXT_CHECK( hxtMalloc(&U,(nNodes+meanValues->nHoles)*sizeof(double)) );
   HXT_CHECK( hxtMalloc(&V,(nNodes+meanValues->nHoles)*sizeof(double)) );
   HXT_CHECK( hxtMalloc(&Urhs,(nNodes+meanValues->nHoles)*sizeof(double)) );
   HXT_CHECK( hxtMalloc(&Vrhs,(nNodes+meanValues->nHoles)*sizeof(double)) );
-
-
+  
+  
   // init linear system
   HXT_CHECK(hxtLinearSystemZeroMatrix(sys));
   for(uint32_t i=0; i<(nNodes+meanValues->nHoles); i++){
     Urhs[i] = 0.;
     Vrhs[i] = 0.;
   }
-
+  
   // setting linear system
   for(uint32_t ie=0; ie<edges->numEdges; ie++){
 
     int ik[2] = {-1,-1};
     uint64_t *tri = edges->edg2tri + 2*ie;
-
+    
     // gather local edge index
     for(int it=0; it<2; it++){
       if(tri[it]==(uint64_t)-1)
@@ -163,21 +174,21 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
         }
       }
     }
-
+    
     for(int ij=0; ij<2; ij++){
-
+      
       uint32_t v0 = edges->node[2*ie+ij];
       uint32_t v1 = edges->node[2*ie+(1-ij)];
-
+      
       if (flag[v0]==1){//boundary nodes/conditons
-        HXT_CHECK(hxtLinearSystemSetMatrixRowIdentity(sys,v0,0));
+	HXT_CHECK(hxtLinearSystemSetMatrixRowIdentity(sys,v0,0));
         HXT_CHECK(hxtLinearSystemSetRhsEntry(sys,Urhs, v0,0, uv[2*v0+0]));
         HXT_CHECK(hxtLinearSystemSetRhsEntry(sys,Vrhs, v0,0, uv[2*v0+1]));
       }
       else {// inner node
-        double e[3] = {mesh->vertices.coord[4*v1+0]-mesh->vertices.coord[4*v0+0],mesh->vertices.coord[4*v1+1]-mesh->vertices.coord[4*v0+1],mesh->vertices.coord[4*v1+2]-mesh->vertices.coord[4*v0+2]};
-        double ne = sqrt(e[0]*e[0]+e[1]*e[1]+e[2]*e[2]);
-
+	double e[3] = {mesh->vertices.coord[4*v1+0]-mesh->vertices.coord[4*v0+0],mesh->vertices.coord[4*v1+1]-mesh->vertices.coord[4*v0+1],mesh->vertices.coord[4*v1+2]-mesh->vertices.coord[4*v0+2]};
+	double ne = sqrt(e[0]*e[0]+e[1]*e[1]+e[2]*e[2]);
+	
         uint32_t vLeft = mesh->triangles.node[3*tri[0] + (ik[0]+2)%3];
         double a[3] = {mesh->vertices.coord[4*vLeft+0]-mesh->vertices.coord[4*v0+0],mesh->vertices.coord[4*vLeft+1]-mesh->vertices.coord[4*v0+1],mesh->vertices.coord[4*vLeft+2]-mesh->vertices.coord[4*v0+2]};
         double na = sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);
@@ -199,9 +210,9 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
       }
     }
   }// end for int ie
+  
 
-
-
+#ifdef __FILLERGAP_
   // holes are filled somehow
   for(int i=0; i<meanValues->nHoles; i++){
 
@@ -258,6 +269,8 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
     HXT_CHECK(hxtFree(&c));
     HXT_CHECK(hxtFree(&d));
   }
+#endif
+  
   HXT_CHECK(hxtLinearSystemSolve(sys,Urhs,U));
   HXT_CHECK(hxtLinearSystemSolve(sys,Vrhs,V));
   for(uint32_t i=0; i<nNodes; i++){
@@ -265,7 +278,9 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
     uv[2*i+1] = V[i] ;
   }
 
+#ifdef __FILLERGAP_
   HXT_CHECK(hxtFree(&fillergap));
+#endif
   HXT_CHECK(hxtFree(&flag));
   HXT_CHECK(hxtFree(&U));
   HXT_CHECK(hxtFree(&V));
@@ -305,7 +320,7 @@ HXTStatus hxtMeanValueAspectRatio(HXTMeanValues *meanValues, int *aspectRatio)
 
 
 
-HXTStatus hxtMeanValuesGetData(HXTMeanValues *mv, uint64_t **global,uint32_t **gn, double **uv, int *nv, int *ne){
+HXTStatus hxtMeanValuesGetData(HXTMeanValues *mv, uint64_t **global,uint32_t **gn, double **uv, int *nv, int *ne, int onlyuv){
 
   *nv = mv->initialEdges->edg2mesh->vertices.num;
   *ne = mv->initialEdges->edg2mesh->triangles.num;
@@ -318,7 +333,7 @@ HXTStatus hxtMeanValuesGetData(HXTMeanValues *mv, uint64_t **global,uint32_t **g
       uv_[iv] = mv->uv[iv];
     *uv=uv_;
   }
-  //  return HXT_STATUS_OK;
+  if (onlyuv) return HXT_STATUS_OK;
 
   uint64_t *global_;
   HXT_CHECK(hxtMalloc(&global_,(*ne)*sizeof(uint64_t)));
