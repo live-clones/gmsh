@@ -2808,8 +2808,10 @@ by default).
 
 All element sizes are further constrained in the interval [
 @code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
-]. The resulting value is then finally multiplied by
-@code{Mesh.CharacteristicLengthFactor}.
+] (which can also be provided on the command line with @code{-clmin} and
+@code{-clmax}). The resulting value is then finally multiplied by
+@code{Mesh.CharacteristicLengthFactor} (@code{-clscale} on the command
+line).
 
 Note that when the element size is fully specified by a background mesh
 field, it is thus often desirable to set
