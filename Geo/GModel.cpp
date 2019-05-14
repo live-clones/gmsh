@@ -2951,7 +2951,6 @@ static void recurClassifyEdges(MTri3 *t, std::map<MTriangle *, GFace *> &reverse
   while (!_stack.empty()){
     t = _stack.top();
     _stack.pop();
-    //  printf("%d\n",rec);
     if(!t->isDeleted()) {
       trisTouched.erase(t);
       t->setDeleted(true);
@@ -3123,8 +3122,8 @@ void GModel::classifyFaces()
 
   for(std::map<std::pair<int, int>, GEdge *>::iterator ite = newEdges.begin();
       ite != newEdges.end(); ++ite) {
-    //    printf("%d %d -->
-    //    %d\n",ite->first.first,ite->first.second,ite->second->tag());
+
+    printf("%d %d -->  %d\n",ite->first.first,ite->first.second,ite->second->tag());
     std::list<MLine *> allSegments;
     for(std::size_t i = 0; i < ite->second->lines.size(); i++)
       allSegments.push_back(ite->second->lines[i]);
