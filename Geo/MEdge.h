@@ -8,7 +8,6 @@
 
 #include "MVertex.h"
 #include "SVector3.h"
-#include <iostream>
 
 // A mesh edge.
 class MEdge {
@@ -119,10 +118,7 @@ inline bool operator!=(const MEdge &e1, const MEdge &e2)
 }
 
 struct Equal_Edge {
-  bool operator()(const MEdge &e1, const MEdge &e2) const
-  {
-    return (e1 == e2);
-  }
+  bool operator()(const MEdge &e1, const MEdge &e2) const { return (e1 == e2); }
 };
 
 struct Less_Edge {

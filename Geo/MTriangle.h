@@ -167,11 +167,6 @@ public:
     return e[edge][vert];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
-  virtual int getVertexSolin(int numEdge, int numVertex){
-    static const int eSolin[3][2] = {{0, 1}, {1, 2}, {2, 0}};
-    return getVertex(eSolin[numEdge][numVertex])->getNum();
-  }
-  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
 };
 
 /*
@@ -407,7 +402,7 @@ public:
     if(_order == 8 && _vs.size() == 21) return MSH_TRI_24;
     if(_order == 9 && _vs.size() == 24) return MSH_TRI_27;
     if(_order == 10 && _vs.size() == 27) return MSH_TRI_30;
-    Msg::Error("No MSH type found for P%d triangle with %d nodes", _order,
+    Msg::Error("no tag matches a p%d triangle with %d vertices", _order,
                3 + _vs.size());
     return 0;
   }

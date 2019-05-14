@@ -94,7 +94,6 @@ public:
   static void Info(const char *fmt, ...);
   static void RequestRender();
   static void Direct(const char *fmt, ...);
-  static void Auto(const char *fmt, ...);
   static void StatusBar(bool log, const char *fmt, ...);
   static void StatusGl(const char *fmt, ...);
   static void SetWindowTitle(const std::string &title);

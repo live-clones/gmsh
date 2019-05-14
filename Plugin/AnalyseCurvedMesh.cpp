@@ -8,21 +8,22 @@
 #if defined(HAVE_MESH)
 
 #include "AnalyseCurvedMesh.h"
-#include "qualityMeasuresJacobian.h"
 #include "OS.h"
 #include "Context.h"
-#include "PView.h"
-#include "GModel.h"
-#include "MElement.h"
-#include "bezierBasis.h"
-#include <sstream>
-#include <fstream>
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
+#include "PView.h"
+#include "GModel.h"
+#include "MElement.h"
+#include <sstream>
+#include <fstream>
+#include "qualityMeasuresJacobian.h"
 #if defined(HAVE_VISUDEV)
 #include "BasisFactory.h"
 #endif
+
+class bezierBasis;
 
 StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "JacobianDeterminant", NULL, 0},
@@ -91,9 +92,10 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
          "- ICNMeasure = {0, 1}\n"
          "\n"
          "- HidingThreshold = [0, 1]: Hides all element for which min(mu) is "
-         "strictly greater than the threshold, where mu is ICN if"
-         "ICNMeasure == 1, otherwise it is IGE if IGEMeasure == 1. "
-         "If ICNMeasure == IGEMeasure == 0, nothing happens. "
+         "strictly greater than the threshold, where mu is the ICN if ICN "
+         "measure == 1, "
+         "otherwise mu is the IGE it IGE measure == 1, "
+         "otherwise mu is the Jacobian determinant.\n"
          "If threshold == 0, hides all elements except invalid.\n"
          "\n"
          "- DrawPView = {0, 1}: Creates a PView of min(J)/max(J), min(IGE) "
@@ -193,7 +195,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
 #endif
 
   // Create PView
-  if(drawPView) {
+  if(drawPView)
     for(int dim = 1; dim <= 3; ++dim) {
       if((askedDim == 4 && dim > 1) || dim == askedDim) {
         if(!_pviewJac[dim - 1] && computeJac) {
@@ -246,9 +248,8 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         }
       }
     }
-  }
 
-    // Hide elements
+      // Hide elements
 #if defined(HAVE_OPENGL)
   _hideWithThreshold(askedDim,
                      computeICN ? 2 : computeIGE ? 1 : computeJac ? 0 : -1);
@@ -277,7 +278,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     for(GModel::eiter it = _m->firstEdge(); it != _m->lastEdge(); it++)
       entities.insert(*it);
     break;
-  default: return;
+  default:
+    return;
   }
 
   int cntInverted = 0;
@@ -380,7 +382,6 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     Msg::Warning("%d elements are completely inverted", cntInverted);
   }
   _computedJac[dim - 1] = true;
-  bezierCoeff::releasePools();
 }
 
 void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
@@ -392,7 +393,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
   for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if(el->getDim() != dim) continue;
-    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) {
+    if(_data[i].minJ() <= 0 && _data[i].maxJ() > 0) {
       _data[i].setMinS(0);
     }
     else {
@@ -413,7 +414,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
   for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if(el->getDim() != dim) continue;
-    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) {
+    if(_data[i].minJ() <= 0 && _data[i].maxJ() > 0) {
       _data[i].setMinI(0);
     }
     else {
@@ -429,7 +430,7 @@ int GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim,
                                                      int whichMeasure)
 {
   // only hide for quality measures
-  if(_threshold > 1 || whichMeasure < 1) return 0;
+  if(_threshold > 1 || whichMeasure == 0) return 0;
 
   int nHidden = 0;
 
@@ -566,8 +567,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(
   }
 
   if(_pwJac) {
-    jacobianBasedQuality::sampleJacobianDeterminant(el, _viewOrder, tmpVector,
-                                                    normals);
+    jacobianBasedQuality::sampleJacobian(el, _viewOrder, tmpVector, normals);
     std::vector<double> &vec = _dataPViewJac[num];
     for(int j = 0; j < tmpVector.size(); ++j) vec.push_back(tmpVector(j));
   }

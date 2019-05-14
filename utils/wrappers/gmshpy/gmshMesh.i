@@ -24,11 +24,9 @@
   #include "Field.h"
   #include "FieldPython.h"
   #include "meshMetric.h"
-#if defined(HAVE_DOMHEX)
   #include "simple3D.h"
   #include "directions3D.h"
   #include "yamakawa.h"
-#endif
 #endif
 %}
 
@@ -73,9 +71,7 @@ namespace std {
   }
 }
 %include "meshMetric.h"
-#if defined(HAVE_DOMHEX)
 %include "simple3D.h"
 %include "directions3D.h"
 %include "yamakawa.h"
-#endif
 #endif

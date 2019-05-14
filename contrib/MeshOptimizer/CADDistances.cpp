@@ -224,9 +224,7 @@ namespace {
                      const std::vector<SPoint3> &Q)
   {
     double CAij;
-    if(CA(i, j) > -1.) {
-      CAij = CA(i, j);
-    }
+    if(CA(i, j) > -1.) { CAij = CA(i, j); }
     else if(i == 0 && j == 0) {
       CA(i, j) = P[0].distance(Q[0]); // update the CA permanent
       CAij = CA(i, j); // set the current relevant value
@@ -471,8 +469,7 @@ double taylorDistanceSq2D(const GradientBasis *gb,
 double taylorDistanceEdge(MLine *l, GEdge *ge)
 {
   const int nV = l->getNumVertices();
-  const GradientBasis *gb;
-  gb = BasisFactory::getGradientBasis(l->getTypeForMSH(), FuncSpaceData(l));
+  const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(l));
 
   // Coordinates of vertices
   fullMatrix<double> nodesXYZ(nV, 3);
@@ -494,8 +491,7 @@ double taylorDistanceEdge(MLine *l, GEdge *ge)
 double taylorDistanceFace(MElement *el, GFace *gf)
 {
   const int nV = el->getNumVertices();
-  const GradientBasis *gb;
-  gb = BasisFactory::getGradientBasis(el->getTypeForMSH(), FuncSpaceData(el));
+  const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(el));
 
   // Coordinates of vertices
   fullMatrix<double> nodesXYZ(nV, 3);

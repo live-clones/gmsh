@@ -70,14 +70,20 @@ namespace {
     }
   }
 
-  void drawBezierControlPolygon(const bezierCoeff &controlPoints, GEdge *gedge)
+  void drawBezierControlPolygon(const fullMatrix<double> &controlPoints,
+                                GEdge *gedge)
   {
-    const int nVert = controlPoints.getNumCoeff();
+    const int nVert = controlPoints.size1();
+    std::vector<int> idx(nVert);
+    idx[0] = 0;
+    for(int i = 1; i < nVert - 1; ++i) idx[i] = i + 1;
+    idx[nVert - 1] = 1;
 
     MVertex *previous = NULL;
     for(int i = 0; i < nVert; ++i) {
-      MVertex *v = new MVertex(controlPoints(i, 0), controlPoints(i, 1),
-                               controlPoints(i, 2), gedge);
+      MVertex *v =
+        new MVertex(controlPoints(idx[i], 0), controlPoints(idx[i], 1),
+                    controlPoints(idx[i], 2), gedge);
       if(previous) {
         MLine *line = new MLine(v, previous);
         gedge->addLine(line);
@@ -90,35 +96,53 @@ namespace {
   void drawBezierControlPolygon(const std::vector<MVertex *> &vertices,
                                 GEdge *gedge = NULL)
   {
-    if(!gedge) {
-      gedge = *GModel::current()->firstEdge();
-    }
+    if(!gedge) { gedge = *GModel::current()->firstEdge(); }
 
     const int nVert = (int)vertices.size();
+    const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+
     fullMatrix<double> xyz(nVert, 3);
     for(int i = 0; i < nVert; ++i) {
       xyz(i, 0) = vertices[i]->x();
       xyz(i, 1) = vertices[i]->y();
       xyz(i, 2) = vertices[i]->z();
     }
+    fullMatrix<double> controlPoints(nVert, 3);
+    fs->lag2Bez(xyz, controlPoints);
 
-    bezierCoeff *controlPoints =
-      new bezierCoeff(FuncSpaceData(TYPE_LIN, nVert - 1, false), xyz);
-    std::vector<bezierCoeff *> allControlPoints(1, controlPoints);
-
-    int numSubdivision = 0; // change this to choose num subdivision
-    while(numSubdivision-- > 0) {
-      std::vector<bezierCoeff *> gatherSubs;
-      for(std::size_t i = 0; i < allControlPoints.size(); ++i) {
-        std::vector<bezierCoeff *> tmp;
-        allControlPoints[i]->subdivide(tmp);
-        gatherSubs.insert(allControlPoints.end(), tmp.begin(), tmp.end());
+    bool subdivide = false;
+    bool subdivide2 = false;
+    if(subdivide) {
+      fullMatrix<double> allSubs(2 * nVert, 3);
+      fs->subdivideBezCoeff(controlPoints, allSubs);
+      fullMatrix<double> sub(nVert, 3);
+      sub.copy(allSubs, 0, nVert, 0, 3, 0, 0);
+      if(subdivide2) {
+        fullMatrix<double> allSubs2(2 * nVert, 3);
+        fs->subdivideBezCoeff(sub, allSubs2);
+        fullMatrix<double> sub2(nVert, 3);
+        sub2.copy(allSubs2, 0, nVert, 0, 3, 0, 0);
+        drawBezierControlPolygon(sub2, gedge);
+        sub2.copy(allSubs2, nVert, nVert, 0, 3, 0, 0);
+        drawBezierControlPolygon(sub2, gedge);
       }
-      allControlPoints.swap(gatherSubs);
+      else
+        drawBezierControlPolygon(sub, gedge);
+      sub.copy(allSubs, nVert, nVert, 0, 3, 0, 0);
+      if(subdivide2) {
+        fullMatrix<double> allSubs2(2 * nVert, 3);
+        fs->subdivideBezCoeff(sub, allSubs2);
+        fullMatrix<double> sub2(nVert, 3);
+        sub2.copy(allSubs2, 0, nVert, 0, 3, 0, 0);
+        drawBezierControlPolygon(sub2, gedge);
+        sub2.copy(allSubs2, nVert, nVert, 0, 3, 0, 0);
+        drawBezierControlPolygon(sub2, gedge);
+      }
+      else
+        drawBezierControlPolygon(sub, gedge);
     }
-
-    for(std::size_t i = 0; i < allControlPoints.size(); ++i) {
-      drawBezierControlPolygon(*allControlPoints[i], gedge);
+    else {
+      drawBezierControlPolygon(controlPoints, gedge);
     }
   }
 
@@ -217,9 +241,9 @@ namespace BoundaryLayerCurver {
             Msg::Warning("Could not compute param of vertex %d on edge %d",
                          edge->getVertex(i)->getNum(), gedge->tag());
           }
-          else if(gedge->periodic(0) && gedge->getBeginVertex() &&
-                  edge->getVertex(i) ==
-                    gedge->getBeginVertex()->mesh_vertices[0]) {
+          else if(gedge->periodic(0) &&
+                  gedge->getBeginVertex() &&
+                  edge->getVertex(i) == gedge->getBeginVertex()->mesh_vertices[0]) {
             double u0 = gedge->getLowerBound();
             double un = gedge->getUpperBound();
             int k = (nVert == 2 ? 1 - i : (i == 0 ? 2 : nVert - 1));
@@ -248,9 +272,7 @@ namespace BoundaryLayerCurver {
         t = _gedge->firstDer(paramGeoEdge);
         t.normalize();
       }
-      if(!_gedge || t.norm() == 0) {
-        t = _edgeOnBoundary->tangent(paramEdge);
-      }
+      if(!_gedge || t.norm() == 0) { t = _edgeOnBoundary->tangent(paramEdge); }
 
       if(_gface) {
         SPoint2 paramGFace;
@@ -468,7 +490,7 @@ namespace BoundaryLayerCurver {
       data->invA.mult(xyz, newxyzLow);
 
       std::vector<MVertex *> vertices = edge->getVertices();
-      vertices.resize(static_cast<std::size_t>(order) + 1);
+      vertices.resize((unsigned int)order + 1);
       MEdgeN lowOrderEdge(vertices);
 
       for(std::size_t i = 2; i < vertices.size(); ++i) {
@@ -584,9 +606,7 @@ namespace BoundaryLayerCurver {
         for(int i = 0; i < nbDofh; ++i) {
           double sf[100];
           fs->f(refNodesh(i, 0), refNodesh(i, 1), refNodesh(i, 2), sf);
-          for(int j = 0; j < nbDof; ++j) {
-            Mh(i, j) = sf[j];
-          }
+          for(int j = 0; j < nbDof; ++j) { Mh(i, j) = sf[j]; }
         }
         //      Mh.print("Mh");
 
@@ -606,9 +626,7 @@ namespace BoundaryLayerCurver {
           double *val = new double[nbDofh];
           for(int i = 0; i < nbDofh; ++i) {
             LegendrePolynomials::fc(order + 1, refNodesh(i, 0), val);
-            for(int j = 0; j < nbDofh; ++j) {
-              vandermonde(i, j) = val[j];
-            }
+            for(int j = 0; j < nbDofh; ++j) { vandermonde(i, j) = val[j]; }
           }
           delete val;
 
@@ -625,9 +643,7 @@ namespace BoundaryLayerCurver {
           double *val = new double[nbDof];
           for(int i = 0; i < nbDof; ++i) {
             LegendrePolynomials::fc(order, refNodes(i, 0), val);
-            for(int j = 0; j < nbDof; ++j) {
-              Me(i, j) = val[j];
-            }
+            for(int j = 0; j < nbDof; ++j) { Me(i, j) = val[j]; }
           }
           delete val;
         }
@@ -1010,9 +1026,7 @@ namespace BoundaryLayerCurver {
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), 0, 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1048,9 +1062,7 @@ namespace BoundaryLayerCurver {
             M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
-        for(int i = 0; i < nConstraint; ++i) {
-          M2(szSpace + i, nGP + i) = 1;
-        }
+        for(int i = 0; i < nConstraint; ++i) { M2(szSpace + i, nGP + i) = 1; }
       }
 
       fullMatrix<double> M1(szSpace + nConstraint, szSpace + nConstraint, true);
@@ -1072,9 +1084,7 @@ namespace BoundaryLayerCurver {
       {
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), refNodes(i, 1), 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1110,9 +1120,7 @@ namespace BoundaryLayerCurver {
             M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
-        for(int i = 0; i < nConstraint; ++i) {
-          M2(szSpace + i, nGP + i) = 1;
-        }
+        for(int i = 0; i < nConstraint; ++i) { M2(szSpace + i, nGP + i) = 1; }
       }
 
       fullMatrix<double> M1(szSpace + nConstraint, szSpace + nConstraint, true);
@@ -1134,9 +1142,7 @@ namespace BoundaryLayerCurver {
       {
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), refNodes(i, 1), 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1221,18 +1227,14 @@ namespace BoundaryLayerCurver {
         }
 
         for(int l = k - numVertexPerLayer; l < k; ++l) {
-          if(stack[l] == vbot) {
-            stack[l + numVertexPerLayer] = vtop;
-          }
+          if(stack[l] == vbot) { stack[l + numVertexPerLayer] = vtop; }
         }
       }
 
       // If there remains NULL values, it is because the vertex is the same
       // on bottom face and top face.
       for(int l = k; l < k + numVertexPerLayer; ++l) {
-        if(stack[l] == NULL) {
-          stack[l] = stack[l - numVertexPerLayer];
-        }
+        if(stack[l] == NULL) { stack[l] = stack[l - numVertexPerLayer]; }
       }
 
       k += numVertexPerLayer;

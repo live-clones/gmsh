@@ -12,10 +12,10 @@
 #include "Geo.h"
 
 discreteVertex::discreteVertex(GModel *m, int num, double x, double y, double z)
-  : GVertex(m, num)
+  : GVertex(m, num), _x(x), _y(y), _z(z)
 {
-  _v = CreateVertex(num, x, y, z, 0, 0);
-  Tree_Add(m->getGEOInternals()->Points, &_v);
+  Vertex *v = CreateVertex(num, x, y, z, 0, 0);
+  Tree_Add(m->getGEOInternals()->Points, &v);
 }
 
 discreteVertex::~discreteVertex()
@@ -27,29 +27,17 @@ GPoint discreteVertex::point() const
   return GPoint(x(), y(), z(), this);
 }
 
-void discreteVertex::setPosition(GPoint &p)
-{
-  _v->Pos.X = p.x();
-  _v->Pos.Y = p.y();
-  _v->Pos.Z = p.z();
-  if(mesh_vertices.size()) {
-    mesh_vertices[0]->x() = p.x();
-    mesh_vertices[0]->y() = p.y();
-    mesh_vertices[0]->z() = p.z();
-  }
-}
-
 double discreteVertex::x() const
 {
-  return mesh_vertices.size() ? mesh_vertices[0]->x() : _v->Pos.X;
+  return mesh_vertices.size() ? mesh_vertices[0]->x() : _x;
 }
 
 double discreteVertex::y() const
 {
-  return mesh_vertices.size() ? mesh_vertices[0]->y() : _v->Pos.Y;
+  return mesh_vertices.size() ? mesh_vertices[0]->y() : _y;
 }
 
 double discreteVertex::z() const
 {
-  return mesh_vertices.size() ? mesh_vertices[0]->z() : _v->Pos.Z;
+  return mesh_vertices.size() ? mesh_vertices[0]->z() : _z;
 }

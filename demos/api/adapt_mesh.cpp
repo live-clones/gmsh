@@ -80,17 +80,21 @@ class myMesh{
         (vtags[i], vxyz[3*i], vxyz[3*i+1], vxyz[3*i+2]);
     }
     for(unsigned int i = 0; i < etypes.size(); i++){
-      std::vector<double> quvw, qweight;
-      gmsh::model::mesh::getIntegrationPoints(etypes[i], "Gauss2", quvw, qweight);
       std::vector<double> qdeter, qjacob, qpoints;
-      gmsh::model::mesh::getJacobians(etypes[i], quvw, qjacob, qdeter, qpoints);
+      gmsh::model::mesh::getJacobians(etypes[i], "Gauss2",
+                                      qjacob, qdeter, qpoints);
+      std::vector<double> quvwo, fsdata;
+      int fsnumcomp;
+      gmsh::model::mesh::getBasisFunctions(etypes[i], "Gauss2", "None",
+                                           quvwo, fsnumcomp, fsdata);
       int nev = evtags[i].size() / etags[i].size();
-      int nq = quvw.size() / 3;
-      std::vector<double> qu, qv, qw;
-      for(unsigned int j = 0; j < quvw.size(); j+=3){
-        qu.push_back(quvw[j]);
-        qv.push_back(quvw[j+1]);
-        qw.push_back(quvw[j+2]);
+      int nq = quvwo.size() / 4;
+      std::vector<double> qu, qv, qw, qweight;
+      for(unsigned int j = 0; j < quvwo.size(); j+=4){
+        qu.push_back(quvwo[j]);
+        qv.push_back(quvwo[j+1]);
+        qw.push_back(quvwo[j+2]);
+        qweight.push_back(quvwo[j+3]);
       }
       for(unsigned int j = 0; j < etags[i].size(); j++){
         std::vector<myVertex*> ev;

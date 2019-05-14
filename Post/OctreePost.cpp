@@ -449,8 +449,7 @@ static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
     if(elements.size()) return elements[0];
   }
   else {
-    SPoint3 uvw;
-    return m->getMeshElementByCoord(pt, uvw);
+    return m->getMeshElementByCoord(pt);
   }
   return 0;
 }

@@ -73,9 +73,9 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize, int *num,
   case 0: // free field
   case -1: // free field with continuation
     for(int i = 0; i < 5; i++) {
-      tmp[i][31] = '\0';
-      strncpy(tmp[i], &buffer[j + 1], 31);
-      for(int k = 0; k < 31; k++) {
+      tmp[i][16] = '\0';
+      strncpy(tmp[i], &buffer[j + 1], 16);
+      for(int k = 0; k < 16; k++) {
         if(tmp[i][k] == ',') tmp[i][k] = '\0';
       }
       j++;
@@ -86,7 +86,7 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize, int *num,
       if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
       j = 0;
       while(j < (int)strlen(buffer2) && buffer2[j] != ',') j++;
-      strncpy(tmp[4], &buffer2[j + 1], 31);
+      strncpy(tmp[4], &buffer2[j + 1], 16);
     }
     break;
   case 1: // small field

@@ -888,22 +888,23 @@ int ElementType::getPrimaryType(int mshtype)
   return getType(getParentType(mshtype), 1);
 }
 
-std::string ElementType::nameOfParentType(int parentType, bool plural)
+std::string ElementType::nameOfParentType(int parentType)
 {
   switch(parentType) {
-  case TYPE_PNT: return plural ? "points" : "point";
-  case TYPE_LIN: return plural ? "lines" : "line";
-  case TYPE_TRI: return plural ? "triangles" : "triangle";
-  case TYPE_QUA: return plural ? "quadrangles" : "quadrangle";
-  case TYPE_TET: return plural ? "tetrahedra" : "tetrahedron";
-  case TYPE_PYR: return plural ? "pyramids" : "pyramid";
-  case TYPE_PRI: return plural ? "prisms" : "prism";
-  case TYPE_HEX: return plural ? "hexahedra" : "hexahedron";
-  case TYPE_POLYG: return plural ? "polygons" : "polygon";
-  case TYPE_POLYH: return plural ? "polyhedra" : "polyhedron";
-  case TYPE_XFEM: return "xfem";
-  case TYPE_MINI: return "mini";
-  case TYPE_TRIH: return plural ? "trihedra" : "trihedron";
-  default: return "undefined";
+  case TYPE_PNT: return std::string("point"); break;
+  case TYPE_LIN: return std::string("line"); break;
+  case TYPE_TRI: return std::string("triangle"); break;
+  case TYPE_QUA: return std::string("quadrangle"); break;
+  case TYPE_TET: return std::string("tetrahedron"); break;
+  case TYPE_PYR: return std::string("pyramid"); break;
+  case TYPE_PRI: return std::string("prism"); break;
+  case TYPE_HEX: return std::string("hexahedron"); break;
+  case TYPE_POLYG: return std::string("polygon"); break;
+  case TYPE_POLYH: return std::string("polyhedron"); break;
+  case TYPE_XFEM: return std::string("xfem"); break;
+  case TYPE_MINI: return std::string("mini"); break;
+  case TYPE_TRIH: return std::string("trihedron"); break;
   }
+
+  return std::string("undefined");
 }

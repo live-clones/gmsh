@@ -149,21 +149,6 @@ void polynomialBasis::f(const fullMatrix<double> &coord,
   }
 }
 
-void polynomialBasis::f(double u, double v, double w, int i, double *sf) const
-{
-  if(i < 0 || i >= coefficients.size1()){
-    Msg::Error("Node out of range for polynomial basis");
-    return;
-  }
-
-  double p[1256];
-  evaluateMonomials(u, v, w, p);
-  *sf = 0.0;
-  for(int j = 0; j < coefficients.size2(); j++) {
-    *sf += coefficients(i, j) * p[j];
-  }
-}
-
 void polynomialBasis::df(const fullMatrix<double> &coord,
                          fullMatrix<double> &dfm) const
 {
@@ -232,61 +217,6 @@ void polynomialBasis::df(double u, double v, double w, double grads[][3]) const
                          pow_int(v, monomials(j, 1)) *
                          pow_int(w, (monomials(j, 2) - 1)) * monomials(j, 2);
       }
-    }
-    break;
-  }
-}
-
-void polynomialBasis::df(double u, double v, double w, int i, double grad[3]) const
-{
-  if(i < 0 || i >= coefficients.size1()){
-    Msg::Error("Node out of range for polynomial basis gradient");
-    return;
-  }
-
-  switch(monomials.size2()) {
-  case 1:
-    grad[0] = 0;
-    grad[1] = 0;
-    grad[2] = 0;
-    for(int j = 0; j < coefficients.size2(); j++) {
-      if(monomials(j, 0) > 0)
-        grad[0] += coefficients(i, j) *
-          pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0);
-    }
-    break;
-  case 2:
-    grad[0] = 0;
-    grad[1] = 0;
-    grad[2] = 0;
-    for(int j = 0; j < coefficients.size2(); j++) {
-      if(monomials(j, 0) > 0)
-        grad[0] += coefficients(i, j) *
-          pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0) *
-          pow_int(v, monomials(j, 1));
-      if(monomials(j, 1) > 0)
-        grad[1] += coefficients(i, j) * pow_int(u, monomials(j, 0)) *
-          pow_int(v, (monomials(j, 1) - 1)) * monomials(j, 1);
-    }
-    break;
-  case 3:
-    grad[0] = 0;
-    grad[1] = 0;
-    grad[2] = 0;
-    for(int j = 0; j < coefficients.size2(); j++) {
-      if(monomials(j, 0) > 0)
-        grad[0] += coefficients(i, j) *
-          pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0) *
-          pow_int(v, monomials(j, 1)) *
-          pow_int(w, monomials(j, 2));
-      if(monomials(j, 1) > 0)
-        grad[1] += coefficients(i, j) * pow_int(u, monomials(j, 0)) *
-          pow_int(v, (monomials(j, 1) - 1)) * monomials(j, 1) *
-          pow_int(w, monomials(j, 2));
-      if(monomials(j, 2) > 0)
-        grad[2] += coefficients(i, j) * pow_int(u, monomials(j, 0)) *
-          pow_int(v, monomials(j, 1)) *
-          pow_int(w, (monomials(j, 2) - 1)) * monomials(j, 2);
     }
     break;
   }

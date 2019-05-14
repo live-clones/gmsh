@@ -117,7 +117,8 @@ void MLineN::discretize(double tol, std::vector<SPoint3> &dpts,
     lagNodes(i, 1) = v->y();
     lagNodes(i, 2) = v->z();
   }
-  bezierCoeff bezNodes2(getFuncSpaceData(), lagNodes);
+  const bezierBasis *bez = BasisFactory::getBezierBasis(TYPE_LIN, order);
+  bez->matrixLag2Bez.mult(lagNodes, bezNodes);
   std::vector<SPoint3> pts(bezNodes.size1());
   pts[0][0] = bezNodes(0, 0);
   pts[0][1] = bezNodes(0, 1);

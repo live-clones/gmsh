@@ -135,7 +135,7 @@ namespace tetgenBR {
 #if !defined(TETLIBRARY)
 #define TETLIBRARY
 #endif
-#define printf Msg::Auto
+#define printf Msg::Info
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"
 #undef printf
@@ -295,7 +295,7 @@ namespace tetgenBR {
       int t1ver;
       int idx, k;
 
-      Msg::Info("Reconstructing mesh...");
+      Msg::Info("Reconstructing mesh ...");
 
       // Allocate an array that maps each vertex to its adjacent tets.
       ver2tetarray = new tetrahedron[_vertices.size() + in->firstnumber];
@@ -358,7 +358,7 @@ namespace tetgenBR {
         }
         else if(ori == 0.0) {
           if(!b->quiet) {
-            Msg::Warning("Tet #%d is degenerated", i + in->firstnumber);
+            Msg::Warning("Tet #%d is degenerate", i + in->firstnumber);
           }
         }
         // Create a new tetrahedron.
@@ -499,7 +499,7 @@ namespace tetgenBR {
     std::vector<GEdge *> const &e_list = _gr->embeddedEdges();
 
     {
-      Msg::Info(" - Creating surface mesh");
+      Msg::Info("Creating surface mesh...");
       face newsh;
       face newseg;
       point p[4];
@@ -559,7 +559,7 @@ namespace tetgenBR {
       // Connecting triangles, removing redundant segments.
       unifysegments();
 
-      Msg::Info(" - Identifying boundary edges");
+      Msg::Info("Identifying boundary edges...");
 
       face *shperverlist;
       int *idx2shlist;
@@ -651,7 +651,7 @@ namespace tetgenBR {
       delete[] shperverlist;
       delete[] idx2shlist;
 
-      Msg::Debug("  %ld (%ld) subfaces (segments)", subfaces->items,
+      Msg::Debug("  %ld (%ld) subfaces (segments).", subfaces->items,
                  subsegs->items);
 
       // The total number of iunput segments.
@@ -667,7 +667,7 @@ namespace tetgenBR {
     // Boundary recovery.
 
     clock_t t;
-    Msg::Info(" - Recovering boundary");
+    Msg::Info("Boundary Recovery...");
     recoverboundary(t);
 
     carveholes();
@@ -885,8 +885,7 @@ namespace tetgenBR {
       }
 
       if(!_extras.empty())
-        Msg::Info(" - Added %d Steiner point%s", _extras.size(),
-                  (_extras.size() > 1) ? "s" : "");
+        Msg::Info("Added %d steiner points", _extras.size());
 
       if(l_edges.size() > 0) {
         // There are Steiner points on segments!
@@ -907,7 +906,7 @@ namespace tetgenBR {
             }
           }
           assert(ge != NULL);
-          Msg::Info(" - Steiner points exist on curve %d", ge->tag());
+          Msg::Info("Steiner points exist on curve %d", ge->tag());
           // Delete the old triangles.
           for(std::size_t i = 0; i < ge->lines.size(); i++)
             delete ge->lines[i];
@@ -954,7 +953,7 @@ namespace tetgenBR {
           }
           assert(gf != NULL);
           // Delete the old triangles.
-          Msg::Info(" - Steiner points exist on surface %d", gf->tag());
+          Msg::Info("Steiner points exist on surface %d", gf->tag());
           for(std::size_t i = 0; i < gf->triangles.size(); i++)
             delete gf->triangles[i];
           gf->triangles.clear();
@@ -1020,7 +1019,7 @@ namespace tetgenBR {
       }
     } // mesh output
 
-    Msg::Info("Done reconstructing mesh (%g s)", Cpu() - t_start);
+    Msg::Info("Reconstruct time : %g sec", Cpu() - t_start);
 
     // Put all coordinates back so they are not pertubated anymore (pertubation
     // done in delaunayTriangulation)

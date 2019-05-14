@@ -108,11 +108,10 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       if(!brep) {
         Msg::Warning("Entity %d not found in the Brep of entity %d",
                      brepTags[i], entity->tag());
+        return false;
       }
-      else{
-        boundingEntities.push_back(brep);
-        boundingSign.push_back((std::abs(brepTags[i]) == brepTags[i] ? 1 : -1));
-      }
+      boundingEntities.push_back(brep);
+      boundingSign.push_back((std::abs(brepTags[i]) == brepTags[i] ? 1 : -1));
     }
   }
   else {
@@ -136,11 +135,10 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       if(!brep) {
         Msg::Warning("Entity %d not found in the Brep of entity %d", entityTag,
                      entity->tag());
+        return false;
       }
-      else{
-        boundingEntities.push_back(brep);
-        boundingSign.push_back((std::abs(entityTag) == entityTag ? 1 : -1));
-      }
+      boundingEntities.push_back(brep);
+      boundingSign.push_back((std::abs(entityTag) == entityTag ? 1 : -1));
     }
   }
 

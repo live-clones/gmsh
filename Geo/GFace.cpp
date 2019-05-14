@@ -96,7 +96,7 @@ void GFace::delFreeEdge(GEdge *edge)
   std::vector<int>::iterator itd = l_dirs.begin();
   while(ite != l_edges.end()) {
     if(edge == *ite) {
-      Msg::Debug("Erasing curve %d from curve list in surface %d", edge->tag(),
+      Msg::Debug("Erasing edge %d from edge list in face %d", edge->tag(),
                  tag());
       l_edges.erase(ite);
       if(itd != l_dirs.end()) l_dirs.erase(itd);
@@ -111,7 +111,7 @@ void GFace::delFreeEdge(GEdge *edge)
       it != edgeLoops.end(); it++) {
     for(GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); it2++) {
       if(edge == it2->ge) {
-        Msg::Debug("Erasing curve %d from curve loop in surface %d", edge->tag(),
+        Msg::Debug("Erasing edge %d from edge loop in face %d", edge->tag(),
                    tag());
         it->erase(it2);
         break;
@@ -585,7 +585,7 @@ void GFace::computeMeanPlane()
   }
 
   if(colinear) {
-    Msg::Debug("Adding curve points (%d) to compute mean plane of surface %d",
+    Msg::Debug("Adding edge points (%d) to compute mean plane of face %d",
                pts.size(), tag());
     std::vector<GEdge *> const &edg = edges();
     for(std::vector<GEdge *>::const_iterator ite = edg.begin();
@@ -1675,7 +1675,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   if(l_vtxToEdge.size() != m_vtxToEdge.size()) {
     Msg::Error(
       "Periodic connection specified between topologically "
-      "incompatible surfaces %d and %d (that have %d vs %d model curves)",
+      "incompatible surfaces %d and %d (that have %d vs %d model edges)",
       master->tag(), tag(), l_vtxToEdge.size(), m_vtxToEdge.size());
     return;
   }
@@ -1751,8 +1751,8 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     }
 
     if(mv2eIter == m_vtxToEdge.end()) {
-      Msg::Error("Could not find periodic copy of curve %d-%d "
-                 "(corresponding to vertices %d %d) in surface %d",
+      Msg::Error("Could not find periodic copy of edge %d-%d "
+                 "(corresponding to vertices %d %d) in face %d",
                  lPair.first->tag(), lPair.second->tag(), mPair.first->tag(),
                  mPair.second->tag(), master->tag());
       return;
@@ -1761,7 +1761,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
 
     if(masterEdge->getMeshMaster() != localEdge) {
       localEdge->setMeshMaster(masterEdge, tfo);
-      Msg::Info("Setting curve master %d - %d", localEdge->tag(),
+      Msg::Info("Setting edge master %d - %d", localEdge->tag(),
                 masterEdge->tag());
     }
     gEdgeCounterparts[localEdge] = std::make_pair(masterEdge, sign);
@@ -1861,7 +1861,7 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
       if(adnksd != edgeCopies.end())
         source_e = adnksd->second;
       else {
-        Msg::Error("Could not find curve counterpart %d in slave surface %d",
+        Msg::Error("Could not find edge counterpart %d in slave surface %d",
                    (*it)->tag(), master->tag());
         return;
       }

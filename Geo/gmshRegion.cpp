@@ -63,7 +63,7 @@ void gmshRegion::resetMeshAttributes()
       if(gv)
         meshAttributes.corners.push_back(gv);
       else
-        Msg::Error("Unknown point %d in transfinite attributes", corn->Num);
+        Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
     }
   }
 }

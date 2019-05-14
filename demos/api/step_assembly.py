@@ -14,8 +14,7 @@ for e in ent:
     # get entity labels read from STEP and create a physical group for all
     # entities having the same 3rd label in the /-separated label path
     if n:
-        print('Entity ' + str(e) + ' has label ' + n + ' (and mass ' +
-              str(gmsh.model.occ.getMass(e[0], e[1])) + ')')
+        print('Entity ' + str(e) + ' has label ' + n)
         path = n.split('/')
         if e[0] == 3 and len(path) > 3:
             if(path[2] not in physicals):

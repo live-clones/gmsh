@@ -18,7 +18,7 @@ variables:
 # ----------------------------------------------
 
 linux64_ci:
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu18.04
   script:
     - mkdir build
     - cd build
@@ -34,7 +34,7 @@ linux64_ci:
     - tags
 
 linux64_compatibility_ci:
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu18.04
   script:
     - mkdir build
     - cd build
@@ -44,7 +44,7 @@ linux64_compatibility_ci:
     - make -j 8
     - cmake -DENABLE_POST=1 ..
     - make -j 8
-    - cmake -DENABLE_MESH=1 -DENABLE_BUILD_DYNAMIC=1 -DENABLE_PRIVATE_API=1 -DENABLE_WRAP_PYTHON=1 ..
+    - cmake -DENABLE_MESH=1 ..
     - make -j 8
     - rm -rf *
     - export CXXFLAGS=-std=c++98
@@ -309,7 +309,7 @@ macos64-sdk_official_release:
 # ----------------------------------------------
 
 .source_official: &source_official
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu18.04.simple
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -341,7 +341,7 @@ source_official_release:
 # ----------------------------------------------
 
 doc_official_snapshot:
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu18.04.simple
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -359,7 +359,7 @@ doc_official_snapshot:
     - tags
 
 doc_official_release:
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu18.04.simple
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   only:

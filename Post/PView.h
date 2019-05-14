@@ -48,7 +48,7 @@ public:
   // construct a new view using the given data
   PView(PViewData *data, int tag = -1);
   // construct a new view, alias of the view "ref"
-  PView(PView *ref, bool copyOptions = true, int tag = -1);
+  PView(PView *ref, bool copyOptions = true);
   // construct a new list-based view from a simple 2D point dataset
   PView(const std::string &xname, const std::string &yname,
         std::vector<double> &x, std::vector<double> &y);
@@ -131,7 +131,6 @@ public:
   static bool readMSH(const std::string &fileName, int fileIndex = -1,
                       int partitionToRead = -1);
   static bool readMED(const std::string &fileName, int fileIndex = -1);
-  static bool readPCH(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);
   // IO write routine
   bool write(const std::string &fileName, int format, bool append = false);

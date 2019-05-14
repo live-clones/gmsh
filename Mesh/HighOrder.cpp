@@ -286,7 +286,7 @@ static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
     }
   }
   else
-    Msg::Error("Cannot reparametrize a mesh node in high order meshing");
+    Msg::Error("Cannot reparam a mesh Vertex in high order meshing");
 
   if(!reparamOK) return false;
 
@@ -434,7 +434,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
   }
   else if(p.first != p.second) {
     // Vertices already exist and edge is not a degenerated edge
-    Msg::Error("Mesh edges from different entities share nodes: create a finer mesh "
+    Msg::Error("Edges from different entities share vertices: create a finer mesh "
                "(curve involved: %d)", ge->tag());
   }
   ve.insert(ve.end(), veEdge.begin(), veEdge.end());
@@ -876,7 +876,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
       }
       else
         Msg::Error(
-          "Error in face lookup for retrieval of high order face nodes");
+          "Error in face lookup for recuperation of high order face nodes");
       vFace.assign(vtcs.begin(), vtcs.end());
     }
     else { // Vertices do not exist, create them by interpolation
@@ -1660,7 +1660,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   std::vector<MElement *> bad;
   double worst;
   checkHighOrderTriangles("Surface mesh", m, bad, worst);
-  checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
+  checkHighOrderTetrahedron("Volume Mesh", m, bad, worst);
   // FIXME : add other element check
 
   Msg::StatusBar(true, "Done meshing order %d (%g s)", order, t2 - t1);

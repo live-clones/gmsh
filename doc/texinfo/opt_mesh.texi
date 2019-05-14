@@ -176,11 +176,6 @@ Try to fix flipped surface mesh elements in high-order optimizer?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderDistCAD
-Try to optimize distance to CAD in high-order optimizer?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.HighOrderThresholdMin
 Minimum threshold for high-order element optimization@*
 Default value: @code{0.1}@*
@@ -257,32 +252,17 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisAlgorithm
-METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)@*
+METIS partitioning algorithm (1: Recursive, 2: K-way)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisEdgeMatching
-METIS edge matching type 'ctype' (1: Random, 2: Sorted Heavy-Edge)@*
+METIS edge matching type (1: Random, 2: Sorted Heavy-Edge)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MetisMaxLoadImbalance
-METIS maximum load imbalance 'ufactor' (-1: default, i.e. 30 for K-way and 1 for Recursive)@*
-Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.MetisObjective
-METIS objective type 'objtype' (1: min. edge-cut, 2: min. communication volume)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.MetisMinConn
-METIS minimize maximum connectivity of partitions 'minconn' (-1: default)@*
-Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.MetisRefinementAlgorithm
-METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, 3: Two-sided node FM, 4: One-sided node FM)@*
+METIS algorithm for k-way refinement (1: FM-based cut, 2: Greedy, 3: Two-sided node FM, 4: One-sided node FM)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -308,11 +288,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MedImportGroupsOfNodes
 Import groups of nodes (0: no; 1: create geometrical point for each node)?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.MedSingleModel
-Import MED meshes in the current model, even if several MED mesh names exist@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -537,7 +512,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.IgnorePeriodicity
-Ignore alignment of periodic boundaries when reading the mesh in MSH2 format (used by ParaView plugin)@*
+Ignore alignment of periodic boundaries when reading the mesh (used by ParaView plugin)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

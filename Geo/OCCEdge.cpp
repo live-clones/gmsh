@@ -137,12 +137,12 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       double dy = p1.y() - p2.y();
       double dz = p1.z() - p2.z();
       if(sqrt(dx * dx + dy * dy + dz * dz) > CTX::instance()->geom.tolerance) {
-        Msg::Debug("Reparam on surface was inaccurate for curve %d on surface %d "
+        Msg::Debug("Reparam on face was inaccurate for curve %d on surface %d "
                    "at point %g",
                    tag(), face->tag(), epar);
-        Msg::Debug("On the surface %d local (%g %g) global (%g %g %g)",
+        Msg::Debug("On the face %d local (%g %g) global (%g %g %g)",
                    face->tag(), u, v, p2.x(), p2.y(), p2.z());
-        Msg::Debug("On the curve %d local (%g) global (%g %g %g)", tag(), epar,
+        Msg::Debug("On the edge %d local (%g) global (%g %g %g)", tag(), epar,
                    p1.x(), p1.y(), p1.z());
         double guess[2] = {u, v};
         GPoint pp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()), guess);
@@ -155,11 +155,11 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
         dz = p1.z() - p2.z();
         if(sqrt(dx * dx + dy * dy + dz * dz) >
            CTX::instance()->geom.tolerance) {
-          Msg::Warning("Closest point was inaccurate for curve %d on surface %d "
+          Msg::Warning("Closest Point was inaccurate for curve %d on surface %d "
                        "at point %g", tag(), face->tag(), epar);
-          Msg::Warning("On the surface %d local (%g %g) global (%g %g %g)",
+          Msg::Warning("On the face %d local (%g %g) global (%g %g %g)",
                        face->tag(), u, v, p2.x(), p2.y(), p2.z());
-          Msg::Warning("On the curve %d local (%g) global (%g %g %g)", tag(), epar,
+          Msg::Warning("On the edge %d local (%g) global (%g %g %g)", tag(), epar,
                        p1.x(), p1.y(), p1.z());
         }
       }
@@ -216,7 +216,7 @@ GPoint OCCEdge::point(double par) const
     return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, par);
   }
   else {
-    Msg::Warning("OCC curve %d is neither a 3D curve not a trimmed curve",
+    Msg::Warning("OCC Curve %d is neither a 3D curve not a trimmed curve",
                  tag());
     return GPoint(0, 0, 0);
   }

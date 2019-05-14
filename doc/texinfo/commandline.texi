@@ -139,8 +139,6 @@ Create new model before merge next file
 Merge next files
 @item -open
 Open next files
-@item -log filename
-Log all messages to filename
 @item -a, -g, -m, -s, -p
 Start in automatic, geometry, mesh, solver or post-processing mode
 @item -pid

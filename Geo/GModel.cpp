@@ -588,7 +588,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         }
       }
       else {
-        Msg::Error("Unknown model curve with tag %d", tag);
+        Msg::Error("Unknown model edge with tag %d", tag);
         ret = false;
       }
     }
@@ -617,8 +617,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     }
     outDimTags.clear();
     for(int dim = 0; dim < 3; dim++) {
-      for(std::set<int, AbsIntLessThan>::iterator it = c[dim].begin();
-          it != c[dim].end(); it++)
+      for(std::set<int, AbsIntLessThan>::iterator it = c[dim].begin(); it != c[dim].end(); it++)
         outDimTags.push_back(std::pair<int, int>(dim, *it));
     }
   }
@@ -1200,36 +1199,10 @@ int GModel::refineMesh(int linear)
 #endif
 }
 
-int GModel::recombineMesh()
-{
-#if defined(HAVE_MESH)
-  RecombineMesh(this);
-  return 1;
-#else
-  Msg::Error("Mesh module not compiled");
-  return 0;
-#endif
-}
-
-int GModel::smoothMesh()
-{
-#if defined(HAVE_MESH)
-  SmoothMesh(this);
-  return 1;
-#else
-  Msg::Error("Mesh module not compiled");
-  return 0;
-#endif
-}
-
 int GModel::optimizeMesh(const std::string &how)
 {
 #if defined(HAVE_MESH)
-  if(how == "HighOrder")
-    OptimizeHighOrderMesh(this);
-  else if(how == "HighOrderElastic")
-    OptimizeHighOrderMeshElastic(this);
-  else if(how == "Netgen")
+  if(how == "Netgen")
     OptimizeMeshNetgen(this);
   else
     OptimizeMesh(this);
@@ -1306,20 +1279,6 @@ std::size_t GModel::getNumMeshParentElements() const
   for(std::size_t i = 0; i < entities.size(); i++)
     n += entities[i]->getNumMeshParentElements();
   return n;
-}
-
-int GModel::addMEdge(const MEdge &edge)
-{
-  std::pair<MEdge, int> key(edge, _mapEdgeNum.size());
-  std::pair<hashmapMEdge::iterator, bool> it = _mapEdgeNum.insert(key);
-  return it.first->second;
-}
-
-int GModel::addMFace(const MFace &face)
-{
-  std::pair<MFace, int> key(face, _mapFaceNum.size());
-  std::pair<hashmapMFace::iterator, bool> it = _mapFaceNum.insert(key);
-  return it.first->second;
 }
 
 void GModel::renumberMeshVertices()
@@ -1463,23 +1422,13 @@ std::size_t GModel::getNumMeshElements(unsigned c[6])
   return 0;
 }
 
-MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param,
-                                        int dim, bool strict)
+MElement *GModel::getMeshElementByCoord(SPoint3 &p, int dim, bool strict)
 {
   if(!_elementOctree) {
     Msg::Debug("Rebuilding mesh element octree");
     _elementOctree = new MElementOctree(this);
   }
-  MElement *e = _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
-  if(e){
-    double xyz[3] = {p.x(), p.y(), p.z()}, uvw[3];
-    e->xyz2uvw(xyz, uvw);
-    param.setPosition(uvw[0], uvw[1], uvw[2]);
-  }
-  else{
-    param.setPosition(0, 0, 0);
-  }
-  return e;
+  return _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
 }
 
 std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,
@@ -2326,10 +2275,6 @@ static int connectedSurfaces(std::vector<MElement *> &elements,
 
 void GModel::alignPeriodicBoundaries()
 {
-  // Is this still necessary/useful?
-  // 1) It's quite horrible
-  // 2) It's only called when reading MSH2 files
-
   Msg::Debug("Aligning periodic boundaries");
 
   // realigning edges
@@ -2345,7 +2290,7 @@ void GModel::alignPeriodicBoundaries()
       for(std::size_t i = 0; i < src->getNumMeshElements(); i++) {
         MLine *srcLine = dynamic_cast<MLine *>(src->getMeshElement(i));
         if(!srcLine) {
-          Msg::Debug("Master element %d is not a line",
+          Msg::Error("Master element %d is not an edge ",
                      src->getMeshElement(i)->getNum());
           return;
         }
@@ -2353,14 +2298,14 @@ void GModel::alignPeriodicBoundaries()
       }
 
       // run through slave edge elements
-      // - check whether we find a counterpart (if not, abort)
+      // - check whether we find a counterpart (if not, flag error)
       // - check orientation and reorient if necessary
 
       for(std::size_t i = 0; i < tgt->getNumMeshElements(); ++i) {
         MLine *tgtLine = dynamic_cast<MLine *>(tgt->getMeshElement(i));
 
         if(!tgtLine) {
-          Msg::Debug("Slave element %d is not a line",
+          Msg::Error("Slave element %d is not an edge ",
                      tgt->getMeshElement(i)->getNum());
           return;
         }
@@ -2373,11 +2318,16 @@ void GModel::alignPeriodicBoundaries()
           std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
           std::map<MVertex *, MVertex *>::iterator srcIter = v2v.find(tgtVtx);
           if(srcIter == v2v.end() || !srcIter->second) {
+            // Msg::Info("Cannot find periodic counterpart of vertex %d on edge
+            // %d"
+            //              ", looking on entity %d of dimension %d",
+            //              tgtVtx->getNum(),tgt->tag(),ge->tag(),ge->dim());
             srcIter = geV2v.find(tgtVtx);
             if(srcIter == geV2v.end() || !srcIter->second) {
-              Msg::Debug("Could not find periodic counterpart of node %d on curve %d "
-                         "or on entity %d of dimension %d",
-                         tgtVtx->getNum(), tgt->tag(), ge->tag(), ge->dim());
+              Msg::Error(
+                "Cannot find periodic counterpart of vertex %d on edge %d"
+                " nor on %d",
+                tgtVtx->getNum(), tgt->tag(), ge->tag());
               return;
             }
             else
@@ -2393,8 +2343,8 @@ void GModel::alignPeriodicBoundaries()
           srcLines.find(tgtEdge);
 
         if(sIter == srcLines.end() || !sIter->second) {
-          Msg::Debug("Could not find periodic counterpart of mesh edge %d-%d on "
-                     "curve %d for mesh edge %d-%d on curve %d",
+          Msg::Error("Can't find periodic counterpart of edge %d-%d on edge %d"
+                     ", connected to edge %d-%d on %d",
                      tgtLine->getVertex(0)->getNum(),
                      tgtLine->getVertex(1)->getNum(), tgt->tag(),
                      tgtVtcs[0]->getNum(), tgtVtcs[1]->getNum(), src->tag());
@@ -2449,11 +2399,13 @@ void GModel::alignPeriodicBoundaries()
 
           std::map<MVertex *, MVertex *>::iterator vIter = v2v.find(vtx);
           if(vIter == v2v.end() || !vIter->second) {
+            Msg::Info("Could not find copy of vertex %d in face %d"
+                      ", looking in entity %d of dimension %d",
+                      vtx->getNum(), tgt->tag(), ge->tag(), ge->dim());
             vIter = geV2v.find(vtx);
             if(vIter == geV2v.end() || !vIter->second) {
-              Msg::Debug("Could not find periodic counterpart of node %d in "
-                         "surface %d or in entity %d of dimension %d",
-                         vtx->getNum(), tgt->tag(), ge->tag(), ge->dim());
+              Msg::Error("Could not find copy of vertex %d in %d nor in %d",
+                         vtx->getNum(), tgt->tag(), ge->tag());
               return;
             }
             else
@@ -2470,8 +2422,8 @@ void GModel::alignPeriodicBoundaries()
           for(int iVtx = 0; iVtx < nbVtcs; iVtx++) {
             faceDef << vtcs[iVtx]->getNum() << " ";
           }
-          Msg::Debug("Could not find periodic counterpart of mesh face %s in "
-                     "surface %d connected to surface %d",
+          Msg::Error("Cannot find periodic counterpart of face %s in face %d "
+                     "connected to %d",
                      faceDef.str().c_str(), tgt->tag(), src->tag());
           return;
         }
@@ -2487,11 +2439,11 @@ void GModel::alignPeriodicBoundaries()
           bool swap = false;
 
           if(!tgtFace.computeCorrespondence(srcFace, rotation, swap)) {
-            Msg::Debug("Could not find correspondance between mesh face %d-%d-%d (slave) "
-                       "and %d-%d-%d (master)",
-                       tgtElmt->getVertex(0)->getNum(), tgtElmt->getVertex(1)->getNum(),
-                       tgtElmt->getVertex(2)->getNum(), srcElmt->getVertex(0)->getNum(),
-                       srcElmt->getVertex(1)->getNum(), srcElmt->getVertex(2)->getNum());
+            Msg::Error(
+              "Non-corresponding face %d-%d-%d (slave) %d-%d-%d (master)",
+              tgtElmt->getVertex(0)->getNum(), tgtElmt->getVertex(1)->getNum(),
+              tgtElmt->getVertex(2)->getNum(), srcElmt->getVertex(0)->getNum(),
+              srcElmt->getVertex(1)->getNum(), srcElmt->getVertex(2)->getNum());
             return;
           }
 

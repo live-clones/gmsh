@@ -11,8 +11,8 @@
 
 void STensor43::print(const char *s) const
 {
-  char format[8192];
-  const char l[128] =
+  char format[2048];
+  const char l[256] =
     "%12.5E %12.5E %12.5E  %12.5E %12.5E %12.5E  %12.5E %12.5E %12.5E \n";
   sprintf(format, " tensor4 %s : \n %s %s %s \n %s %s %s \n %s %s %s \n", s, l,
           l, l, l, l, l, l, l, l);

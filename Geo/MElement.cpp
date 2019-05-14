@@ -26,8 +26,6 @@
 #include "Numeric.h"
 #include "CondNumBasis.h"
 #include "Context.h"
-#include "FuncSpaceData.h"
-#include "bezierBasis.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasuresJacobian.h"
@@ -183,7 +181,7 @@ char MElement::getVisibility() const
 MEdgeN MElement::getHighOrderEdge(int num, int sign)
 {
   const int order = getPolynomialOrder();
-  std::vector<MVertex *> vertices(static_cast<std::size_t>(order) + 1);
+  std::vector<MVertex *> vertices((unsigned int)order + 1);
   vertices[0] = getVertex(numEdge2numVertex(num, sign > 0 ? 0 : 1));
   vertices[1] = getVertex(numEdge2numVertex(num, sign > 0 ? 1 : 0));
   const int start = getNumPrimaryVertices() + num * (order - 1);
@@ -347,7 +345,7 @@ void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
   const int numJacNodes = jac->getNumJacNodes();
   fullMatrix<double> nodesXYZ(jac->getNumMapNodes(), 3);
   getNodesCoord(nodesXYZ);
-  fullVector<double> SJi(numJacNodes);
+  fullVector<double> SJi(numJacNodes), Bi(numJacNodes);
   jac->getScaledJacobian(nodesXYZ, SJi);
   if(ge && (ge->dim() == 2) && ge->haveParametrization()) {
     // If parametrized surface entity provided...
@@ -373,9 +371,9 @@ void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
                         geoNorm(2) * elNorm(0, 2);
     if(scal < 0.) SJi.scale(-1.);
   }
-  bezierCoeff Bi(jac->getFuncSpaceData(), SJi);
-  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
-  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
+  jac->lag2Bez(SJi, Bi);
+  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
+  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
 #endif
 }
 
@@ -387,7 +385,7 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
   const int numJacNodes = jac->getNumJacNodes();
   fullMatrix<double> nodesXYZ(jac->getNumMapNodes(), 3);
   getNodesCoord(nodesXYZ);
-  fullVector<double> iJi(numJacNodes);
+  fullVector<double> iJi(numJacNodes), Bi(numJacNodes);
   jac->getSignedIdealJacobian(nodesXYZ, iJi);
   const int nEd = getNumEdges(), dim = getDim();
   double sumEdLength = 0.;
@@ -427,9 +425,10 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
                       geoNorm(2) * elNorm(0, 2);
     if(dp < 0.) scale = -scale;
   }
-  bezierCoeff Bi(jac->getFuncSpaceData(), iJi);
-  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
-  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
+  iJi.scale(scale);
+  jac->lag2Bez(iJi, Bi);
+  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
+  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
 #endif
 }
 
@@ -715,24 +714,11 @@ const nodalBasis *MElement::getFunctionSpace(int order, bool serendip) const
   return type ? BasisFactory::getNodalBasis(type) : NULL;
 }
 
-const FuncSpaceData MElement::getFuncSpaceData(int order, bool serendip) const
+const JacobianBasis *MElement::getJacobianFuncSpace(int order) const
 {
-  if(order == -1) return FuncSpaceData(this);
-  return FuncSpaceData(this, order, serendip);
-}
-
-const JacobianBasis *MElement::getJacobianFuncSpace(int orderElement) const
-{
-  if(orderElement == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  int tag = ElementType::getType(getType(), orderElement);
-  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
-}
-
-const FuncSpaceData MElement::getJacobianFuncSpaceData(int orderElement) const
-{
-  if(orderElement == -1) orderElement = getPolynomialOrder();
-  int orderJac = JacobianBasis::jacobianOrder(this->getType(), orderElement);
-  return FuncSpaceData(this, orderJac, false);
+  if(order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
+  int tag = ElementType::getType(getType(), order);
+  return BasisFactory::getJacobianBasis(tag);
 }
 
 static double _computeDeterminantAndRegularize(const MElement *ele,
@@ -1443,9 +1429,8 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
     // tags change from element to element (third-party codes can
     // still write MSH file optimized for reading speed, by grouping
     // elements with the same number of tags in blobs)
-    int blob[60] = {
-      type,          1,          numTags,       num ? num : (int)_num,
-      abs(physical), elementary, 1 + numGhosts, _partition};
+    int blob[60] = {type,          1,          numTags,       num ? num : (int)_num,
+                    abs(physical), elementary, 1 + numGhosts, _partition};
     if(ghosts)
       for(int i = 0; i < numGhosts; i++) blob[8 + i] = -(*ghosts)[i];
     if(par) blob[8 + numGhosts] = parentNum;
@@ -1675,8 +1660,7 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
   if(binary) {
     int verts[60];
     verts[0] = n;
-    for(int i = 0; i < n; i++)
-      verts[i + 1] = (int)getVertexVTK(i)->getIndex() - 1;
+    for(int i = 0; i < n; i++) verts[i + 1] = (int)getVertexVTK(i)->getIndex() - 1;
     // VTK always expects big endian binary data
     if(!bigEndian) SwapBytes((char *)verts, sizeof(int), n + 1);
     fwrite(verts, sizeof(int), n + 1, fp);
@@ -2432,9 +2416,10 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
 }
 
 MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
-                                  std::size_t num, int part, bool owner,
-                                  int parent, MElement *parent_ptr,
-                                  MElement *d1, MElement *d2)
+                                  std::size_t num,
+                                  int part, bool owner, int parent,
+                                  MElement *parent_ptr, MElement *d1,
+                                  MElement *d2)
 {
   switch(type) {
   case MSH_PNT: return new MPoint(v, num, part);

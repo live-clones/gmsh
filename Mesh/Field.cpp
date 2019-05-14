@@ -1983,7 +1983,8 @@ public:
       faces_id,
       "Tags of surfaces in the geometric model (Warning, this feature "
       "is still experimental. It might (read: will probably) give wrong "
-      "results for complex surfaces)",
+      "results "
+      "for complex surfaces)",
       &update_needed);
     _xFieldId = _yFieldId = _zFieldId = -1;
     options["FieldX"] = new FieldOptionInt(
@@ -2077,7 +2078,6 @@ public:
           _infos.push_back(AttractorInfo(*it, 0, 0, 0));
         }
       }
-
       for(std::list<int>::iterator it = edges_id.begin(); it != edges_id.end();
           ++it) {
         GEdge *e = GModel::current()->getEdgeByTag(*it);
@@ -2125,6 +2125,7 @@ public:
             }
             count++;
           }
+
           else {
             for(int i = 0; i < n_nodes_by_edge; i++) {
               for(int j = 0; j < n_nodes_by_edge; j++) {
@@ -2433,7 +2434,8 @@ public:
       faces_id,
       "Tags of surfaces in the geometric model (Warning, this feature "
       "is still experimental. It might (read: will probably) give wrong "
-      "results for complex surfaces)",
+      "results "
+      "for complex surfaces)",
       &update_needed);
     _xFieldId = _yFieldId = _zFieldId = -1;
     options["FieldX"] = new FieldOptionInt(

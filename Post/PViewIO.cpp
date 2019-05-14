@@ -360,18 +360,6 @@ bool PView::readMED(const std::string &fileName, int fileIndex)
 
 #endif
 
-bool PView::readPCH(const std::string &fileName, int fileIndex)
-{
-  PViewDataGModel::DataType type = PViewDataGModel::NodeData;
-  // PViewDataGModel::ElementData;
-  // PViewDataGModel::ElementNodeData;
-  PViewDataGModel *d = new PViewDataGModel(type);
-  d->setFileName(fileName);
-  d->readPCH(fileName, fileIndex);
-  new PView(d);
-  return true;
-}
-
 bool PView::write(const std::string &fileName, int format, bool append)
 {
   Msg::StatusBar(true, "Writing '%s'...", fileName.c_str());

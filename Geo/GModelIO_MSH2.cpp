@@ -29,7 +29,7 @@
 
 // periodic nodes and entities backported from MSH3 format
 extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
-                                  bool renumber, bool saveAll);
+                                  bool renumber);
 extern void readMSHPeriodicNodes(FILE *fp, GModel *gm);
 extern void writeMSHEntities(FILE *fp, GModel *gm);
 
@@ -1082,7 +1082,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
     fprintf(fp, "$ENDELM\n");
   }
 
-  writeMSHPeriodicNodes(fp, entities, renumberVertices, saveAll);
+  writeMSHPeriodicNodes(fp, entities, renumberVertices);
 
   fclose(fp);
 

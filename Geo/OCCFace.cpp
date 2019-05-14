@@ -43,7 +43,7 @@
 #include <BRepTools.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
-  : GFace(m, num), s(_s), sf(_s, Standard_True), _radius(-1)
+: GFace(m, num), s(_s),sf(_s, Standard_True), _radius(-1)
 {
   setup();
   if(model()->getOCCInternals()) model()->getOCCInternals()->bind(s, num);
@@ -69,16 +69,18 @@ void OCCFace::setup()
   for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp2.More();
       exp2.Next()) {
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
-    Msg::Debug("OCC surface %d - new wire", tag());
+    Msg::Debug("OCC Face %d - New Wire", tag());
     std::vector<GEdge *> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()) {
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       GEdge *e = 0;
       if(model()->getOCCInternals())
         e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
-      if(!e) { Msg::Error("Unknown curve in face %d", tag()); }
+      if(!e) {
+        Msg::Error("Unknown edge in face %d", tag());
+      }
       else if(edge.Orientation() == TopAbs_INTERNAL) {
-        Msg::Debug("Adding embedded curve %d in surface %d", e->tag(), tag());
+        Msg::Debug("Adding embedded edge %d in face %d", e->tag(), tag());
         embedded_edges.push_back(e);
         e->addFace(this);
         OCCEdge *occe = (OCCEdge *)e;
@@ -86,7 +88,7 @@ void OCCFace::setup()
       }
       else {
         l_wire.push_back(e);
-        Msg::Debug("Curve %d (%d --> %d) ori %d", e->tag(),
+        Msg::Debug("Edge %d (%d --> %d) ori %d", e->tag(),
                    e->getBeginVertex() ? e->getBeginVertex()->tag() : -1,
                    e->getEndVertex() ? e->getEndVertex()->tag() : -1,
                    edge.Orientation());
@@ -122,7 +124,7 @@ void OCCFace::setup()
   if(_periodic[1]) _period[1] = surface.VPeriod();
 
   ShapeAnalysis::GetFaceUVBounds(s, umin, umax, vmin, vmax);
-  Msg::Debug("OCC surface %d with %d parameter bounds (%g,%g)(%g,%g)", tag(),
+  Msg::Debug("OCC Face %d with %d parameter bounds (%g,%g)(%g,%g)", tag(),
              l_edges.size(), umin, umax, vmin, vmax);
   // we do that for the projections to converge on the borders of the surface
   const double du = umax - umin;
@@ -139,9 +141,11 @@ void OCCFace::setup()
     GVertex *v = 0;
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
-    if(!v) { Msg::Error("Unknown point in surface %d", tag()); }
+    if(!v) {
+      Msg::Error("Unknown vertex in face %d", tag());
+    }
     else if(vertex.Orientation() == TopAbs_INTERNAL) {
-      Msg::Debug("Adding embedded point %d in surface %d", v->tag(), tag());
+      Msg::Debug("Adding embedded vertex %d in face %d", v->tag(), tag());
       embedded_vertices.insert(v);
     }
   }
@@ -253,12 +257,14 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
                              const double initialGuess[2]) const
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  double a, b, c, d;
-  ShapeAnalysis::GetFaceUVBounds(s, a, b, c, d);
-  GeomAPI_ProjectPointOnSurf proj(pnt, occface, a, b, c, d);
+  double a,b,c,d;
+  ShapeAnalysis::GetFaceUVBounds(s, a,b,c,d);
+
+  //  printf("minmax %g %g %g %g\n",umin, umax, vmin, vmax);
+  GeomAPI_ProjectPointOnSurf proj(pnt, occface, a,b,c,d);
 
   if(!proj.NbPoints()) {
-    Msg::Debug("OCC projection of point on surface failed");
+    Msg::Debug("OCC Project Point on Surface FAIL");
     GPoint gp(0, 0);
     gp.setNoSuccess();
     return gp;
@@ -266,6 +272,8 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
 
   double pp[2] = {initialGuess[0], initialGuess[1]};
   proj.LowerDistanceParameters(pp[0], pp[1]);
+
+   
 
   if((pp[0] < umin || umax < pp[0]) || (pp[1] < vmin || vmax < pp[1])) {
     Msg::Warning("Point projection is out of face bounds");
@@ -284,7 +292,7 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
   if(!proj.NbPoints()) {
-    Msg::Error("OCC projection of point on surface failed");
+    Msg::Error("OCC Project Point on Surface FAIL");
     return GFace::parFromPoint(qp);
   }
   double U, V;
@@ -316,10 +324,13 @@ GEntity::GeomType OCCFace::geomType() const
 double OCCFace::curvatureMax(const SPoint2 &param) const
 {
   const double eps = 1.e-12;
+  //  BRepAdaptor_Surface sf(s, Standard_True);
   BRepLProp_SLProps prop(sf, 2, eps);
   prop.SetParameters(param.x(), param.y());
 
-  if(!prop.IsCurvatureDefined()) { return eps; }
+  if(!prop.IsCurvatureDefined()) {
+    return eps;
+  }
 
   return std::max(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
 }
@@ -329,10 +340,13 @@ double OCCFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
                            double &curvMin) const
 {
   const double eps = 1.e-12;
+  //  BRepAdaptor_Surface sf(s, Standard_True);
   BRepLProp_SLProps prop(sf, 2, eps);
   prop.SetParameters(param.x(), param.y());
 
-  if(!prop.IsCurvatureDefined()) { return -1.; }
+  if(!prop.IsCurvatureDefined()) {
+    return -1.;
+  }
 
   curvMax = prop.MaxCurvature();
   curvMin = prop.MinCurvature();
@@ -390,7 +404,7 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
     return std::abs(angle) > 2 * M_PI - 0.5 && std::abs(angle) < 2 * M_PI + 0.5;
   }
   else
-    Msg::Error("Not done yet...");
+    Msg::Error("Not Done Yet ...");
   return false;
 }
 

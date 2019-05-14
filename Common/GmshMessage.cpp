@@ -207,11 +207,8 @@ void Msg::SetLogFile(const std::string &name)
 {
   _logFileName = name;
   if(_logFile) fclose(_logFile);
-  if(name.size()){
+  if(name.size())
     _logFile = Fopen(name.c_str(), "w");
-    if(!_logFile)
-      Msg::Error("Could not open file '%s'", name.c_str());
-  }
   else
     _logFile = 0;
 }
@@ -665,21 +662,6 @@ void Msg::Direct(const char *fmt, ...)
       fprintf(stdout, "%s%s%s\n", c0, str, c1);
     fflush(stdout);
   }
-}
-
-void Msg::Auto(const char *fmt, ...)
-{
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-  if(strstr(str, "Error") || strstr(str, "error"))
-    Msg::Error("%s", str);
-  else if(strstr(str, "Warning") || strstr(str, "warning"))
-    Msg::Warning("%s", str);
-  else
-    Msg::Info("%s", str);
 }
 
 void Msg::StatusBar(bool log, const char *fmt, ...)

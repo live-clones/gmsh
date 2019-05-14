@@ -6,6 +6,7 @@
 #include "JacobianBasis.h"
 #include "pointsGenerators.h"
 #include "nodalBasis.h"
+#include "bezierBasis.h"
 #include "BasisFactory.h"
 #include "Numeric.h"
 #include <cmath>
@@ -137,23 +138,15 @@ namespace {
 
 } // namespace
 
-GradientBasis::GradientBasis(int elementTag, FuncSpaceData data)
-  : _elementTag(elementTag), _data(data)
+GradientBasis::GradientBasis(FuncSpaceData data) : _data(data)
 {
-  // Matrix gradShapeMatX, when multiplied by Lagrange coefficients,
-  // gives the first derivative with respect to first reference coordinate at
-  // a certain number of sampling points (for element tag 'data._tag')
-  // The number of sampling points is determined by 'data._spaceOrder'.
-  // The ordering of the sampling points is "ordered" (see pointsGenerator.cpp)
-  // and is thus different from the Gmsh ordering convention. This is for being
-  // able to convert sampling of jacobian from lagrange to bezier space easily.
   fullMatrix<double> samplingPoints;
-  gmshGenerateOrderedPoints(data, samplingPoints);
+  gmshGeneratePoints(data, samplingPoints);
   const int numSampPnts = samplingPoints.size1();
 
   // Store shape function gradients of mapping at Jacobian nodes
   fullMatrix<double> allDPsi;
-  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(_elementTag);
+  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(_data.elementTag());
   mapBasis->df(samplingPoints, allDPsi);
   const int numMapNodes = allDPsi.size2();
 
@@ -171,8 +164,13 @@ GradientBasis::GradientBasis(int elementTag, FuncSpaceData data)
   gradShapeIdealMatX = gradShapeMatX;
   gradShapeIdealMatY = gradShapeMatY;
   gradShapeIdealMatZ = gradShapeMatZ;
-  mapFromIdealElement(_data.getType(), gradShapeIdealMatX, gradShapeIdealMatY,
-                      gradShapeIdealMatZ);
+  mapFromIdealElement(_data.elementType(), gradShapeIdealMatX,
+                      gradShapeIdealMatY, gradShapeIdealMatZ);
+}
+
+const bezierBasis *GradientBasis::getBezier() const
+{
+  return BasisFactory::getBezierBasis(_data);
 }
 
 void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
@@ -244,18 +242,24 @@ void GradientBasis::mapFromIdealElement(int type, double jac[3][3])
   mapFromIdealElement(type, dxyzdX, dxyzdY, dxyzdZ);
 }
 
-JacobianBasis::JacobianBasis(int elementTag, FuncSpaceData data)
-  : _elementTag(elementTag), _data(data), _dim(data.getDimension())
+void GradientBasis::lag2Bez(const fullMatrix<double> &lag,
+                            fullMatrix<double> &bez) const
 {
-  const int parentType = data.getType();
+  getBezier()->matrixLag2Bez.mult(lag, bez);
+}
+
+JacobianBasis::JacobianBasis(FuncSpaceData data)
+  : _data(data), _dim(data.dimension())
+{
+  const int parentType = data.elementType();
   const int primJacobianOrder = jacobianOrder(parentType, 1);
 
-  fullMatrix<double> samplingPoints;
-  gmshGeneratePoints(data, samplingPoints);
-  numJacNodes = samplingPoints.size1();
+  fullMatrix<double> lagPoints; // Sampling points
+  gmshGeneratePoints(data, lagPoints);
+  numJacNodes = lagPoints.size1();
 
   // Store shape function gradients of mapping at Jacobian nodes
-  _gradBasis = BasisFactory::getGradientBasis(elementTag, data);
+  _gradBasis = BasisFactory::getGradientBasis(data);
 
   // Compute matrix for lifting from primary Jacobian basis to Jacobian basis
   int primJacType = ElementType::getType(parentType, primJacobianOrder, false);
@@ -263,7 +267,7 @@ JacobianBasis::JacobianBasis(int elementTag, FuncSpaceData data)
   numPrimJacNodes = primJacBasis->getNumShapeFunctions();
 
   matrixPrimJac2Jac.resize(numJacNodes, numPrimJacNodes);
-  primJacBasis->f(samplingPoints, matrixPrimJac2Jac);
+  primJacBasis->f(lagPoints, matrixPrimJac2Jac);
 
   // Compute shape function gradients of primary mapping at barycenter, in order
   // to compute normal to straight element
@@ -313,7 +317,7 @@ JacobianBasis::JacobianBasis(int elementTag, FuncSpaceData data)
   lagPointsFast(numPrimMapNodes, 2) = barycenter[2];
 
   fullMatrix<double> allDPsiFast;
-  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(_elementTag);
+  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(data.elementTag());
   mapBasis->df(lagPointsFast, allDPsiFast);
   numMapNodes = mapBasis->getNumShapeFunctions();
 
@@ -327,6 +331,11 @@ JacobianBasis::JacobianBasis(int elementTag, FuncSpaceData data)
       gradShapeMatZFast(i, j) = allDPsiFast(3 * i + 2, j);
     }
   }
+}
+
+const bezierBasis *JacobianBasis::getBezier() const
+{
+  return BasisFactory::getBezierBasis(_data);
 }
 
 // Computes (unit) normals to straight line element at barycenter (with norm of
@@ -804,6 +813,36 @@ void JacobianBasis::getMetricMinAndGradients(
   }
 }
 
+void JacobianBasis::lag2Bez(const fullVector<double> &lag,
+                            fullVector<double> &bez) const
+{
+  getBezier()->matrixLag2Bez.mult(lag, bez);
+}
+
+void JacobianBasis::lag2Bez(const fullMatrix<double> &lag,
+                            fullMatrix<double> &bez) const
+{
+  getBezier()->matrixLag2Bez.mult(lag, bez);
+}
+
+// Research purpose (to be removed ?)
+void JacobianBasis::interpolate(const fullVector<double> &jacobian,
+                                const fullMatrix<double> &uvw,
+                                fullMatrix<double> &result,
+                                bool areBezier) const
+{
+  fullMatrix<double> bezM(jacobian.size(), 1);
+  fullVector<double> bez;
+  bez.setAsProxy(bezM, 0);
+
+  if(areBezier)
+    bez.setAll(jacobian);
+  else
+    lag2Bez(jacobian, bez);
+
+  getBezier()->interpolate(bezM, uvw, result);
+}
+
 int JacobianBasis::jacobianOrder(int tag)
 {
   const int parentType = ElementType::getParentType(tag);
@@ -835,7 +874,7 @@ FuncSpaceData JacobianBasis::jacobianMatrixSpace(int type, int order)
 {
   if(type == TYPE_PYR) {
     Msg::Error("jacobianMatrixSpace not yet implemented for pyramids");
-    return FuncSpaceData(type, false, 1, 0, false);
+    return FuncSpaceData(false, type, false, 1, 0);
   }
   int jacOrder = -1;
   switch(type) {
@@ -847,8 +886,8 @@ FuncSpaceData JacobianBasis::jacobianMatrixSpace(int type, int order)
   case TYPE_PRI:
   case TYPE_HEX: jacOrder = order; break;
   default:
-    Msg::Error("Unknown element type %d, return default space", type);
-    return FuncSpaceData();
+    Msg::Error("Unknown element type %d, return order 0", type);
+    return 0;
   }
-  return FuncSpaceData(type, jacOrder, false);
+  return FuncSpaceData(true, ElementType::getType(type, order), jacOrder);
 }

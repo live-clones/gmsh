@@ -150,12 +150,14 @@ namespace std {
   {
     std::vector<MElement*> elements;
     for (unsigned int i = 0; i < p.size()/3; i++){
-      SPoint3 P(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]), U;
-      MElement *e =  $self->getMeshElementByCoord(P, U, dim, strict_);
+      SPoint3 P(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]);
+      MElement *e =  $self->getMeshElementByCoord(P, dim, strict_);
+      double xyz[3] = {P.x(), P.y(), P.z()}, uvw[3] = {0., 0., 0.};
+      e->xyz2uvw(xyz, uvw);
       elements.push_back(e);
-      paramCoord.push_back(U.x());
-      paramCoord.push_back(U.y());
-      paramCoord.push_back(U.z());
+      paramCoord.push_back(uvw[0]);
+      paramCoord.push_back(uvw[1]);
+      paramCoord.push_back(uvw[2]);
     }
     return elements;
   }
@@ -227,3 +229,4 @@ namespace std {
     $self->meshAttributes.recombine3D = 1;
   }
 }
+

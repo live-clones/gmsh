@@ -437,7 +437,9 @@ double computeInnerRadiusForQuad(double *x, double *y, int i)
   // that is the point where the 2 bisectors meet
   double x_s = (c12 * b23 - c23 * b12) / (a23 * b12 - a12 * b23);
   double y_s = 0.;
-  if(b12 != 0) { y_s = -a12 / b12 * x_s - c12 / b12; }
+  if(b12 != 0) {
+    y_s = -a12 / b12 * x_s - c12 / b12;
+  }
   else {
     y_s = -a23 / b23 * x_s - c23 / b23;
   }
@@ -508,11 +510,11 @@ double ComputeScalarRep(int numComp, double *val, int tensorRep)
     return val[0];
   else if(numComp == 3)
     return sqrt(val[0] * val[0] + val[1] * val[1] + val[2] * val[2]);
-  else if(numComp == 9) {
-    if(tensorRep == 0) { // Von-Mises
+  else if(numComp == 9){
+    if(tensorRep == 0){ // Von-Mises
       return ComputeVonMises(val);
     }
-    else {
+    else{
       fullMatrix<double> tensor(3, 3);
       fullVector<double> S(3), imS(3);
       fullMatrix<double> V(3, 3);
@@ -523,10 +525,10 @@ double ComputeScalarRep(int numComp, double *val, int tensorRep)
         tensor(j, 2) = val[2 + j * 3];
       }
       tensor.eig(S, imS, V, rightV, true);
-      if(tensorRep == 1) { // max eigenvalue
+      if(tensorRep == 1){ // max eigenvalue
         return S(2);
       }
-      else { // min eigenvalue
+      else{ // min eigenvalue
         return S(0);
       }
     }
@@ -661,7 +663,9 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
   fullMatrix<double> M(3, 3), V(3, 3);
   fullVector<double> W(3);
   for(i = 1; i <= n; i++) {
-    for(j = 1; j <= n; j++) { M(i - 1, j - 1) = MM[i - 1][j - 1]; }
+    for(j = 1; j <= n; j++) {
+      M(i - 1, j - 1) = MM[i - 1][j - 1];
+    }
   }
   M.svd(V, W);
   for(i = 1; i <= n; i++) {
@@ -693,7 +697,9 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
 
   for(int iter = 0; iter < MAXIT; iter++) {
     if(x.norm() > 1.e6) return false;
-    if(!func(x, f, data)) { return false; }
+    if(!func(x, f, data)) {
+      return false;
+    }
 
     bool isZero = false;
     for(int k = 0; k < N; k++) {
@@ -709,8 +715,12 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
       double h = EPS * fabs(x(j));
       if(h == 0.) h = EPS;
       x(j) += h;
-      if(!func(x, feps, data)) { return false; }
-      for(int i = 0; i < N; i++) { J(i, j) = (feps(i) - f(i)) / h; }
+      if(!func(x, feps, data)) {
+        return false;
+      }
+      for(int i = 0; i < N; i++) {
+        J(i, j) = (feps(i) - f(i)) / h;
+      }
       x(j) -= h;
     }
 
@@ -722,7 +732,9 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
 
     for(int i = 0; i < N; i++) x(i) -= relax * dx(i);
 
-    if(dx.norm() < tolx) { return true; }
+    if(dx.norm() < tolx) {
+      return true;
+    }
   }
   return false;
 }
@@ -1010,7 +1022,9 @@ int computeDistanceRatio(const double &y, const double &yp, const double &x,
     }
     else {
       b = (xp * y - x * yp) / (yp - y);
-      if(yp == 0.0) { a = -(b + x) / y; }
+      if(yp == 0.0) {
+        a = -(b + x) / y;
+      }
       else {
         a = -(b + xp) / yp;
       }
@@ -1049,7 +1063,9 @@ int computeDistanceRatio(const double &y, const double &yp, const double &x,
   }
   double rho = be * be - 4 * ae * ce;
   double x1, x2, y1, y2, propdist;
-  if(rho < 0) { return 1; }
+  if(rho < 0) {
+    return 1;
+  }
   else {
     x1 = -(be + sqrt(rho)) / (2.0 * ae);
     x2 = (-be + sqrt(rho)) / (2.0 * ae);
@@ -1079,17 +1095,23 @@ int computeDistanceRatio(const double &y, const double &yp, const double &x,
     }
     if(x1 == x2) {
       propdist = (y1 - y) / (yp - y);
-      if(propdist < 0.0) { propdist = (y2 - y) / (yp - y); }
+      if(propdist < 0.0) {
+        propdist = (y2 - y) / (yp - y);
+      }
     }
     else {
       if(xp != x) {
         propdist = (x1 - x) / (xp - x);
-        if(propdist < 0.0) { propdist = (x2 - x) / (xp - x); }
+        if(propdist < 0.0) {
+          propdist = (x2 - x) / (xp - x);
+        }
       }
       else {
         if(yp != y) {
           propdist = (y1 - y) / (yp - y);
-          if(propdist < 0.0) { propdist = (y2 - y) / (yp - y); }
+          if(propdist < 0.0) {
+            propdist = (y2 - y) / (yp - y);
+          }
         }
         else {
           propdist = 0.01;
@@ -1295,7 +1317,9 @@ void signedDistancesPointsEllipseLine(
       changeReferential(direction, p, closePt, p1, p2, &xp, &yp, &otherp, &x,
                         &y, &other);
       int result = 1;
-      if(fabs(other - otherp) > 0.01) { result = 1; }
+      if(fabs(other - otherp) > 0.01) {
+        result = 1;
+      }
       else {
         if(direction == 1) {
           result = computeDistanceRatio(y, yp, x, xp, &propdist, maxA, minA);
@@ -1581,7 +1605,9 @@ bool catenary(double x0, double x1, double y0, double y1, double ys, int N,
     return true;
   }
   else {
-    for(int i = 0; i < N; i++) { yp[i] = y0 + (i + 1) * (y1 - y0) / (N + 1); }
+    for(int i = 0; i < N; i++) {
+      yp[i] = y0 + (i + 1) * (y1 - y0) / (N + 1);
+    }
     return false;
   }
 }

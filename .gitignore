@@ -12,7 +12,7 @@ doc/doxygen/html
 *.so
 *.so.*
 *#
-*.pyc
+
 ## CLion directories
 .idea
 cmake-build-*

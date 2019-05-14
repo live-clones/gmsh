@@ -13,7 +13,7 @@
 #include "Numeric.h"
 
 orthogonalBasis::orthogonalBasis(const FuncSpaceData &_data)
-  : _type(_data.getType()), _order(_data.getSpaceOrder())
+  : _type(_data.elementType()), _order(_data.spaceOrder())
 {
 }
 

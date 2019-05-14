@@ -143,7 +143,6 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-new", "Create new model before merge next file"));
   s.push_back(mp("-merge", "Merge next files"));
   s.push_back(mp("-open", "Open next files"));
-  s.push_back(mp("-log filename", "Log all messages to filename"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, solver or "
                  "post-processing mode"));
@@ -430,14 +429,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         i++;
       }
       else if(!strcmp(argv[i] + 1, "log")) {
+        Msg::SetLogFile("gmsh.log");
         i++;
-        if(argv[i]){
-          Msg::SetLogFile(argv[i++]);
-        }
-        else{
-          Msg::Error("Missing filename");
-          if(exitOnError) Msg::Exit(1);
-        }
       }
       else if(!strcmp(argv[i] + 1, "refine")) {
         CTX::instance()->batch = 5;
@@ -629,12 +622,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "debugSurface")) {
 	i++;
-        if(argv[i])
-          CTX::instance()->debugSurface = atoi(argv[i++]);
-        else{
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
+        CTX::instance()->debugSurface = atoi(argv[i++]);
       }
       else if(!strcmp(argv[i] + 1, "ho_max")) {
         i++;
@@ -941,7 +929,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         if(argv[i]) {
           CTX::instance()->mesh.toleranceEdgeLength = atof(argv[i++]);
           if(CTX::instance()->mesh.toleranceEdgeLength <= 0.0){
-            Msg::Error("Tolerance for model curve length must be > 0 (here %g)",
+            Msg::Error("Tolerance for model edge length must be > 0 (here %g)",
                        CTX::instance()->mesh.toleranceEdgeLength);
             if(exitOnError) Msg::Exit(1);
           }

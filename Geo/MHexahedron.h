@@ -210,18 +210,6 @@ public:
     return e[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
-  virtual int getVertexSolin(int numEdge, int numVertex){
-    static const int eSolin[12][2] =  {{0, 1}, {0, 3}, {0, 4}, {1, 2},
-                                 {1, 5}, {3, 2}, {2, 6}, {3, 7},
-                                 {4, 5}, {4, 7}, {5, 6}, {7, 6}};
-    return getVertex(eSolin[numEdge][numVertex])->getNum();
-  }
-  virtual MFace getFaceSolin(int numFace){
-    static const int fSolin[6][4] = {{0, 1, 3, 2}, {0, 1, 4, 5}, {0, 3, 4, 7},
-                                {1, 2, 5, 6}, {3, 2, 7, 6}, {4, 5, 7, 6}};
-    return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
-                 _v[fSolin[numFace][2]], _v[fSolin[numFace][3]]);
-  }
 };
 
 /*
@@ -715,7 +703,7 @@ public:
     if(_order == 8 && _vs.size() + 8 == 92) return MSH_HEX_92;
     if(_order == 9 && _vs.size() + 8 == 104) return MSH_HEX_104;
 
-    Msg::Error("No MSH type found for P%d hexahedron with %d nodes", _order,
+    Msg::Error("no tag matches a p%d hexahedron with %d vertices", _order,
                8 + _vs.size());
     return 0;
   }

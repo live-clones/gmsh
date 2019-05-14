@@ -37,8 +37,6 @@ struct mean_plane {
 
 inline double pow_int(const double &a, const int &n)
 {
-  if(n < 0) return pow_int(1 / a, -n);
-
   switch(n) {
   case 0: return 1.0;
   case 1: return a;
@@ -74,7 +72,7 @@ inline double pow_int(const double &a, const int &n)
     const double a4 = a2 * a2;
     return a4 * a4 * a2;
   }
-  default: return pow_int(a, n - 10) * pow_int(a, 10);
+  default: return pow_int(a, n - 9) * pow_int(a, 9);
   }
 }
 

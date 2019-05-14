@@ -196,8 +196,6 @@ public:
     return e[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
-  virtual int getVertexSolin(int numEdge, int numVertex){return 0;}
-  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
 };
 
 /*
@@ -337,7 +335,7 @@ public:
     if(_order == 7 && _vs.size() + 5 == 53) return MSH_PYR_53;
     if(_order == 8 && _vs.size() + 5 == 61) return MSH_PYR_61;
     if(_order == 9 && _vs.size() + 5 == 69) return MSH_PYR_69;
-    Msg::Error("No MSH type found for P%d pyramid with %d nodes", _order,
+    Msg::Error("no tag matches a p%d pyramid with %d vertices", _order,
                5 + _vs.size());
     return 0;
   }

@@ -48,6 +48,7 @@ void buildVertexToElement(std::vector<T *> const &elements, v2t_cont &adj)
 template <class T>
 void buildEdgeToElement(std::vector<T *> &eles, e2t_cont &adj);
 
+void buildVertexToTriangle(std::vector<MTriangle *> &, v2t_cont &adj);
 void buildEdgeToTriangle(std::vector<MTriangle *> &, e2t_cont &adj);
 void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
                           std::vector<edge_angle> &edges_lonly);
@@ -55,6 +56,11 @@ void buildEdgeToElements(std::vector<MElement *> &tris, e2t_cont &adj);
 
 void laplaceSmoothing(GFace *gf, int niter = 1, bool infinity_norm = false);
 
+enum swapCriterion { SWCR_DEL, SWCR_QUAL, SWCR_SPH };
+enum splitCriterion { SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS };
+
+int edgeSwapPass(GFace *gf, std::set<MTri3 *, compareTri3Ptr> &allTris,
+                 const swapCriterion &cr, bidimMeshData &DATA);
 bool buildMeshGenerationDataStructures(
   GFace *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data);
 void transferDataStructure(GFace *gf,

@@ -105,9 +105,6 @@ RUN git clone https://github.com/fltk/fltk.git && cd fltk && make -j 4 && make i
 # Minimal Gmsh library
 # -----------------------
 
-# "docker build --build-arg REBUILD_GMSH=yes"
-ARG REBUILD_GMSH=
-
 RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git && cd gmsh && mkdir build && cd build && cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_PRIVATE_API=1 .. && make -j 4 lib && make install/fast && cd ../.. && rm -rf gmsh
 
 VOLUME ["/etc/gitlab-runner"]

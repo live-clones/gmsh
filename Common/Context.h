@@ -33,7 +33,6 @@ struct contextMeshOptions {
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
   int meshOnlyVisible, minCircPoints, minCurvPoints;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
-  int hoDistCAD;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   std::map<int, int> algo2dPerFace;
   std::map<int, int> curvatureControlPerFace;
@@ -45,7 +44,7 @@ struct contextMeshOptions {
   // mesh IO
   int fileFormat;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
-  int medImportGroupsOfNodes, medSingleModel;
+  int medImportGroupsOfNodes;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
   int saveParametric, saveTopology, zoneDefinition;
@@ -61,8 +60,6 @@ struct contextMeshOptions {
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
-  int metisObjective, metisMinConn;
-  double metisMaxLoadImbalance;
   // mesh display
   int draw, changed, light, lightTwoSide, lightLines, pointType;
   int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
@@ -196,8 +193,8 @@ public:
   double min[3], max[3];
   // "center of mass" of the current geometry, used for graphics only
   double cg[3];
-  // characteristic length for the whole problem, measuring the overall bounding
-  // box (used to set tolerances relative to the overall model size)
+  // characteristic length for the whole problem (never used in mesh
+  // generation ->only for geo/post)
   double lc;
   // double buffer/antialias/stereo graphics?
   int db, antialiasing, stereo, camera;

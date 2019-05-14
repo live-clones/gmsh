@@ -351,6 +351,12 @@ void transferDataStructure(GFace *gf,
   computeEquivalences(gf, data);
 }
 
+void buildVertexToTriangle(std::vector<MTriangle *> &eles, v2t_cont &adj)
+{
+  adj.clear();
+  buildVertexToElement(eles, adj);
+}
+
 template <class T>
 void buildEdgeToElement(std::vector<T *> &elements, e2t_cont &adj)
 {
@@ -407,9 +413,8 @@ void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
   std::sort(edges_detected.begin(), edges_detected.end());
 }
 
-static void parametricCoordinates(MElement *t, GFace *gf,
-                                  double u[4], double v[4],
-                                  MVertex *close = 0)
+void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4],
+                           MVertex *close = 0)
 {
   for(std::size_t j = 0; j < t->getNumVertices(); j++) {
     MVertex *ver = t->getVertex(j);
@@ -425,15 +430,9 @@ static void parametricCoordinates(MElement *t, GFace *gf,
 
 double surfaceFaceUV(MElement *t, GFace *gf, bool maximal = true)
 {
-  const int N = t->getNumVertices();
-  if(N > 4){
-    Msg::Warning("surfaceFaceUV only for first order elements");
-    return 0;
-  }
-
   double u[4], v[4];
   parametricCoordinates(t, gf, u, v);
-  if(N == 3)
+  if(t->getNumVertices() == 3)
     return 0.5 *
            fabs((u[1] - u[0]) * (v[2] - v[0]) - (u[2] - u[0]) * (v[1] - v[0]));
   else {
@@ -913,6 +912,7 @@ static void _relocate(GFace *gf, MVertex *ver,
 
 void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
 {
+  //  return;
   vs.clear();
   BoundaryLayerColumns *_columns = gf->getColumns();
   if(!_columns) return;
@@ -926,13 +926,6 @@ void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
 
 void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 {
-  if((gf->triangles.size() > 0 && gf->triangles[0]->getPolynomialOrder() > 1) ||
-     (gf->quadrangles.size() > 0 && gf->quadrangles[0]->getPolynomialOrder() > 1)){
-    Msg::Error("Surface mesh smoothing only valid for first order mesh (use the high-"
-               "order optimization tools for high-order meshes)");
-    return;
-  }
-
   if(!niter) return;
   std::set<MVertex *> vs;
   getAllBoundaryLayerVertices(gf, vs);
@@ -948,6 +941,204 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
       ++it;
     }
   }
+}
+
+bool edgeSwapDelProj(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
+{
+  MTriangle t1(v1, v2, v3);
+  MTriangle t2(v2, v1, v4);
+
+  SVector3 n1 = t1.getFace(0).normal();
+  SVector3 n2 = t2.getFace(0).normal();
+  if(dot(n1, n2) <= 0) {
+    return true;
+  }
+  return false;
+}
+
+bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
+              std::vector<MTri3 *> &newTris, const swapCriterion &cr,
+              bidimMeshData &data)
+{
+  MTri3 *t2 = t1->getNeigh(iLocalEdge);
+  if(!t2) return false;
+
+  MVertex *v1 = t1->tri()->getVertex(iLocalEdge == 0 ? 2 : iLocalEdge - 1);
+  MVertex *v2 = t1->tri()->getVertex((iLocalEdge) % 3);
+  MVertex *v3 = t1->tri()->getVertex((iLocalEdge + 1) % 3);
+  MVertex *v4 = 0;
+
+  std::set<MEdge, Less_Edge>::iterator it =
+    data.internalEdges.find(MEdge(v1, v2));
+  if(it != data.internalEdges.end()) return false;
+
+  for(int i = 0; i < 3; i++)
+    if(t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
+      v4 = t2->tri()->getVertex(i);
+
+  if(!v4) {
+    printf("%lu %lu %lu\n", v1->getNum(), v2->getNum(), v3->getNum());
+    printf("%lu %lu %lu\n", t2->tri()->getVertex(0)->getNum(),
+           t2->tri()->getVertex(1)->getNum(),
+           t2->tri()->getVertex(2)->getNum());
+  }
+
+  swapquad sq(v1, v2, v3, v4);
+  if(configs.find(sq) != configs.end()) return false;
+  configs.insert(sq);
+
+  // if (edgeSwapDelProj(v3, v4, v2, v1)) return false;
+
+  MTriangle *t1b = new MTriangle(v2, v3, v4);
+  MTriangle *t2b = new MTriangle(v4, v3, v1);
+
+  switch(cr) {
+  case SWCR_QUAL: {
+    const double triQualityRef =
+      std::min(qmTriangle::gamma(t1->tri()), qmTriangle::gamma(t2->tri()));
+    const double triQuality =
+      std::min(qmTriangle::gamma(t1b), qmTriangle::gamma(t2b));
+    if(!edgeSwapDelProj(v1, v2, v3, v4)) {
+      if(triQuality < triQualityRef) {
+        delete t1b;
+        delete t2b;
+        return false;
+      }
+    }
+    break;
+  }
+  case SWCR_DEL: {
+    int index1 = data.getIndex(v1);
+    int index2 = data.getIndex(v2);
+    int index3 = data.getIndex(v3);
+    int index4 = data.getIndex(v4);
+    double edgeCenter[2] = {
+      (data.Us[index1] + data.Us[index2] + data.Us[index3] + data.Us[index4]) *
+        .25,
+      (data.Vs[index1] + data.Vs[index2] + data.Vs[index3] + data.Vs[index4]) *
+        .25};
+    double uv4[2] = {data.Us[index4], data.Vs[index4]};
+    double metric[3];
+    buildMetric(gf, edgeCenter, metric);
+    if(!inCircumCircleAniso(gf, t1->tri(), uv4, metric, data)) {
+      delete t1b;
+      delete t2b;
+      return false;
+    }
+  } break;
+  default:
+    Msg::Error("Unknown swapping criterion");
+    delete t1b;
+    delete t2b;
+    return false;
+  }
+
+  std::list<MTri3 *> cavity;
+  for(int i = 0; i < 3; i++) {
+    if(t1->getNeigh(i) && t1->getNeigh(i) != t2) {
+      bool found = false;
+      for(std::list<MTri3 *>::iterator it = cavity.begin(); it != cavity.end();
+          it++) {
+        if(*it == t1->getNeigh(i)) found = true;
+      }
+      if(!found) cavity.push_back(t1->getNeigh(i));
+    }
+  }
+  for(int i = 0; i < 3; i++) {
+    if(t2->getNeigh(i) && t2->getNeigh(i) != t1) {
+      bool found = false;
+      for(std::list<MTri3 *>::iterator it = cavity.begin(); it != cavity.end();
+          it++) {
+        if(*it == t2->getNeigh(i)) found = true;
+      }
+      if(!found) cavity.push_back(t2->getNeigh(i));
+    }
+  }
+
+  int i10 = data.getIndex(t1b->getVertex(0));
+  int i11 = data.getIndex(t1b->getVertex(1));
+  int i12 = data.getIndex(t1b->getVertex(2));
+
+  int i20 = data.getIndex(t2b->getVertex(0));
+  int i21 = data.getIndex(t2b->getVertex(1));
+  int i22 = data.getIndex(t2b->getVertex(2));
+
+  double lc1 =
+    0.3333333333 * (data.vSizes[i10] + data.vSizes[i11] + data.vSizes[i12]);
+  double lcBGM1 = 0.3333333333 * (data.vSizesBGM[i10] + data.vSizesBGM[i11] +
+                                  data.vSizesBGM[i12]);
+
+  double lc2 =
+    0.3333333333 * (data.vSizes[i20] + data.vSizes[i21] + data.vSizes[i22]);
+  double lcBGM2 = 0.3333333333 * (data.vSizesBGM[i20] + data.vSizesBGM[i21] +
+                                  data.vSizesBGM[i22]);
+
+  MTri3 *t1b3 =
+    new MTri3(t1b, Extend1dMeshIn2dSurfaces() ? std::min(lc1, lcBGM1) : lcBGM1,
+              0, &data, gf);
+  MTri3 *t2b3 =
+    new MTri3(t2b, Extend1dMeshIn2dSurfaces() ? std::min(lc2, lcBGM2) : lcBGM2,
+              0, &data, gf);
+
+  cavity.push_back(t2b3);
+  cavity.push_back(t1b3);
+  t1->setDeleted(true);
+  t2->setDeleted(true);
+  connectTriangles(cavity);
+  newTris.push_back(t2b3);
+  newTris.push_back(t1b3);
+  return true;
+}
+
+int edgeSwapPass(GFace *gf, std::set<MTri3 *, compareTri3Ptr> &allTris,
+                 const swapCriterion &cr, bidimMeshData &data)
+{
+  return 0;
+  typedef std::set<MTri3 *, compareTri3Ptr> CONTAINER;
+
+  int nbSwapTot = 0;
+  std::set<swapquad> configs;
+
+  std::set<MTri3 *, compareTri3Ptr> allTris2;
+
+  for(int iter = 0; iter < 10; iter++) {
+    //    printf("coucou1 %d\n",iter);
+    int nbSwap = 0;
+    std::vector<MTri3 *> newTris;
+    CONTAINER::iterator it = allTris.begin();
+    while(it != allTris.end()) {
+      CONTAINER::iterator current = it++;
+      if(!(*current)->isDeleted()) {
+        for(int i = 0; i < 3; i++) {
+          if(edgeSwap(configs, *current, gf, i, newTris, cr, data)) {
+            //	    printf("swap\n");
+            nbSwap++;
+            break;
+          }
+        }
+      }
+      else {
+        delete(*current)->tri();
+        delete *current;
+        allTris.erase(current);
+      }
+    }
+    //    printf("coucou2\n");
+
+    //    allTris = allTris2;
+
+    allTris.insert(newTris.begin(), newTris.end());
+
+    // for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
+    //   printf("---> %d %d %d (%d)\n",(*it)->tri()->getVertex(0)->getNum(),
+    // 	     (*it)->tri()->getVertex(1)->getNum(),
+    // 	     (*it)->tri()->getVertex(2)->getNum(),(*it)->isDeleted() );
+    // }
+
+    nbSwapTot += nbSwap;
+    if(nbSwap == 0) break;
+  }
+  return nbSwapTot;
 }
 
 static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)

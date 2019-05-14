@@ -11,6 +11,7 @@ import sys
 # $ python demos/api/poisson.py
 # with usual gmsh line arguments, e.g., -clscale 0.5 -order 2
 
+INTEGRATION = 'Gauss2'
 DEBUG = 0
 RECOMBINE = 0
 
@@ -97,12 +98,12 @@ def fem_solve():
                 # Assembly of stiffness matrix for all 2 dimensional elements
                 # (triangles or quadrangles)
                 if dimEntity==2 :
-                    prop = model.mesh.getElementProperties(elementType)
-                    uvw, weights = model.mesh.getIntegrationPoints(
-                        elementType, "Gauss" + str(2 * prop[2]))
-                    numcomp, sf = model.mesh.getBasisFunctions(
-                        elementType, uvw, 'Lagrange')
-                    weigths = np.array(weights)
+                    uvwo, numcomp, sf = model.mesh.getBasisFunctions(
+                        elementType, INTEGRATION, 'Lagrange')
+                    # debug('%uvwo =', len(uvwo), '%numcomp =', numcomp,
+                    #       '%sf =', len(sf))
+                    # only keep the Gauss weights
+                    weights = np.array(uvwo).reshape((-1,4))[:,3]
                     numGaussPoints = weights.shape[0]
                     debug('numGaussPoints = g =', numGaussPoints, ', %weights (g) =',
                           weights.shape)
@@ -110,15 +111,17 @@ def fem_solve():
                     debug('%sf (g,n) =', sf.shape)
                     if sf.shape[1] != numElementNodes:
                         error('Something went wrong')
-                    numcomp, dsfdu = model.mesh.getBasisFunctions(
-                        elementType, uvw, 'GradLagrange')
+                    _, numcomp, dsfdu = model.mesh.getBasisFunctions(
+                        elementType, INTEGRATION, 'GradLagrange')
+                    # debug('%uvwo =', len(uvwo), '%numcomp =', numcomp, '%dsfdu =',
+                    #       len(dsfdu))
                     # remove useless dsfdw
                     dsfdu = np.array(dsfdu).reshape(
                         (numGaussPoints,numElementNodes,3))[:,:,:-1]
                     debug('%dsfdu (g,n,u) =', dsfdu.shape)
 
                     qjac, qdet, qpoint = model.mesh.getJacobians(
-                        elementType, uvw, tagEntity)
+                        elementType, INTEGRATION, tagEntity)
                     debug('Gauss integr:', len(qjac), len(qdet), len(qpoint),
                            '= (9, 1, 3) x', numGaussPoints, 'x', numElements)
                     qdet = np.array(qdet).reshape((numElements, numGaussPoints))
@@ -126,7 +129,7 @@ def fem_solve():
                     # remove components of dxdu useless in dimEntity dimensions (here 2D)
                     dxdu = np.array(qjac).reshape(
                         (numElements, numGaussPoints, 3, 3))[:,:,:-1,:-1]
-                    # jacobian stored by row, so dxdu[i][j] = dxdu_ij = dxi/duj
+                    # jacobien store by row, so dxdu[i][j] = dxdu_ij = dxi/duj
                     debug('%dxdu (e,g,x,u)=', dxdu.shape)
 
                     # dudx[j][k] = dudx_jk = duj/dxk

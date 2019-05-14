@@ -195,28 +195,24 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
     std::vector<MTetrahedron *> tetrahedra2;
     for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
       MTetrahedron *t = gr->tetrahedra[i];
-      // Use a template that maximizes the quality, which is a modification of
-      // Algorithm RedRefinement3D in: Bey, Jürgen. "Simplicial grid refinement:
-      // on Freudenthal's algorithm and the optimal number of congruence
-      // classes." Numerische Mathematik 85.1 (2000): 1-29. Contributed by Jose
-      // Paulo Moitinho de Almeida, April 2019.
+      // FIXME: we should choose the template to maximize the quality
       if(t->getNumVertices() == 10) {
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(0), t->getVertex(4), t->getVertex(6), t->getVertex(7)));
+          t->getVertex(0), t->getVertex(4), t->getVertex(7), t->getVertex(6)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(4), t->getVertex(1), t->getVertex(5), t->getVertex(9)));
+          t->getVertex(1), t->getVertex(4), t->getVertex(5), t->getVertex(9)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(6), t->getVertex(5), t->getVertex(2), t->getVertex(8)));
+          t->getVertex(2), t->getVertex(5), t->getVertex(6), t->getVertex(8)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(7), t->getVertex(9), t->getVertex(8), t->getVertex(3)));
+          t->getVertex(3), t->getVertex(7), t->getVertex(9), t->getVertex(8)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(4), t->getVertex(6), t->getVertex(7), t->getVertex(9)));
+          t->getVertex(5), t->getVertex(8), t->getVertex(7), t->getVertex(9)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(4), t->getVertex(9), t->getVertex(5), t->getVertex(6)));
+          t->getVertex(5), t->getVertex(7), t->getVertex(4), t->getVertex(9)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(6), t->getVertex(7), t->getVertex(9), t->getVertex(8)));
+          t->getVertex(7), t->getVertex(8), t->getVertex(5), t->getVertex(6)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(6), t->getVertex(8), t->getVertex(9), t->getVertex(5)));
+          t->getVertex(4), t->getVertex(7), t->getVertex(5), t->getVertex(6)));
         setBLData(t);
       }
       delete t;
