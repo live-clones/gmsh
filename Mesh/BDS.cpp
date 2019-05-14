@@ -1362,12 +1362,12 @@ static inline bool getOrderedNeighboringVertices (BDS_Point *p,
   if (p->iD == CHECK){
     for (size_t i = 0 ; i < ts.size() ; i++){
       BDS_Point *pts[4];
-      ts[i]->getNodes(pts);
-      //printf("TR %d : %d %d %d\n",i,pts[0]->iD,pts[1]->iD,pts[2]->iD);
+      ts[i]->getNodes(pts);      
+      printf("TR %d : %d %d %d\n",i,pts[0]->iD,pts[1]->iD,pts[2]->iD);
     }
   }
 
-  if (ts.empty())return false;
+  if (ts.empty())return false;  
   while (1){
     bool found = false;
     for (size_t i = 0 ; i < ts.size() ; i++){
@@ -1398,11 +1398,11 @@ static inline bool getOrderedNeighboringVertices (BDS_Point *p,
 	}
       }
     }
-
+    
     if (nbg.size() == ts.size()) break;
     if (!found) return false;
   }
-
+  
   if (p->iD == CHECK){
     printf("FINALLY : ");
     for (size_t i=0;i< nbg.size() ;i++){
@@ -1447,7 +1447,7 @@ static inline void getCentroidUV (const BDS_Point *p, GFace *gf,
     factSum += fact;
     U += kernel[i].x()*fact;
     V += kernel[i].y()*fact;
-    LC += lc[i]*fact;
+    LC += lc[i]*fact;    
   }
   U /= factSum;
   V /= factSum;
@@ -1488,16 +1488,16 @@ static inline void computeSomeKindOfKernel (const BDS_Point *p,
 					    std::vector<double> &lc,
 					    int check){
 
-
+  
   FILE *f = NULL;
   if (p->iD == check) f = fopen("kernel.pos","w");
-
+  
   SPoint2 pp (p->u,p->v);
   if (p->iD == check){
     fprintf(f,"View \"kernel\"{\n");
     fprintf(f,"SP(%g,%g,0){2};\n",p->u,p->v);
   }
-
+  
   double  ll = p->lc();
   kernel.clear();
   lc.clear();
@@ -1512,7 +1512,7 @@ static inline void computeSomeKindOfKernel (const BDS_Point *p,
     }
     else if (nbg[(i+1)%nbg.size()]->degenerated){
       kernel.push_back(SPoint2 (nbg[i]->u,nbg[i]->v));
-      kernel.push_back(SPoint2 (nbg[i]->u,nbg[(i+1)%nbg.size()]->v));
+      kernel.push_back(SPoint2 (nbg[i]->u,nbg[(i+1)%nbg.size()]->v));      
       lc.push_back(nbg[i]->lc());
       lc.push_back(nbg[i]->lc());
     }
@@ -1552,7 +1552,7 @@ static inline void computeSomeKindOfKernel (const BDS_Point *p,
     lc[i] = lc_now;
   }
 
-
+  
   if (p->iD == check){
     //    for (size_t i = 0; i<kernel.size();i++){
     //      fprintf(f,"SL(%g,%g,0,%g,%g,0){3,3};\n",kernel[i].x(),kernel[i].y(),kernel[(i+1)%nbg.size()].x(),kernel[(i+1)%nbg.size()].y());
@@ -1570,8 +1570,8 @@ static inline void getGradientTutteEnergy (const BDS_Point *p,
 					   double dEduv[2]){
   // X = X0 + dX/dU (U-U0)
   // E = \sum_i (X-X_i)^2 = \sum_i (U-U_i)^T G (U-U_i)
-  // dE/dU = G \sum_i  (U-U_i)
-
+  // dE/dU = G \sum_i  (U-U_i)  
+  
   Pair<SVector3, SVector3> d = gf->firstDer(SPoint2 (p->u,p->v));
   double G11 = dot (d.left(),d.left());
   double G12 = dot (d.left(),d.right());
@@ -1655,7 +1655,7 @@ static inline bool minimizeTutteEnergyProj (BDS_Point *p,
   if (p->iD == check){
     printf("%g %g %d\n",p->u,p->v,validityOfCavity (p, nbg));
   }
-
+  
   if (validityOfCavity (p, nbg)){
     p->X = gp.x(); p->Y = gp.y(); p->Z = gp.z();
     double E_moved = getTutteEnergy (p, nbg, RATIO) ;
@@ -1663,7 +1663,7 @@ static inline bool minimizeTutteEnergyProj (BDS_Point *p,
       return true;
     }
   }
-
+  
   p->X = oldX; p->Y = oldY; p->Z = oldZ; p->u = oldU; p->v = oldV;
   return false;
 }
@@ -1683,9 +1683,9 @@ static inline bool minimizeTutteEnergyParam (BDS_Point *p,
   double E_moved  = getTutteEnergy (p, nbg, RATIO2);
 
   if (p->iD == check)printf("%g vs %g\n",E_unmoved ,E_moved);
-
+  
   if (E_moved < E_unmoved ) {
-    p->u = U; p->v = V;
+    p->u = U; p->v = V; 
     if (!validityOfCavity (p, nbg)){
       p->X = oldX; p->Y = oldY; p->Z = oldZ; p->u = oldU; p->v = oldV;
       return false;
@@ -1708,7 +1708,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
   }
 
   int CHECK = -1;
-
+  
   std::vector<BDS_Point *> nbg;
   std::vector<double> lc;
   std::vector<SPoint2> kernel;
@@ -1721,14 +1721,14 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
   if (RATIO > threshold)return false;
 
   computeSomeKindOfKernel (p,nbg,kernel,lc, CHECK);
-
-  if (! minimizeTutteEnergyParam ( p,E_unmoved, RATIO,nbg,kernel,lc,gf, CHECK)){
-    if ( ! minimizeTutteEnergyProj (p,E_unmoved, RATIO,nbg,kernel,lc,gf, CHECK)) {
+  
+  if (! minimizeTutteEnergyParam ( p,E_unmoved, RATIO,nbg,kernel,lc,gf, CHECK)){ 
+    if ( ! minimizeTutteEnergyProj (p,E_unmoved, RATIO,nbg,kernel,lc,gf, CHECK)) {      
       //      __COUNT3++;
       return false;
     }
     else{
-      p->config_modified = true;
+      p->config_modified = true;      
       E_unmoved  = getTutteEnergy (p, nbg, RATIO);
       minimizeTutteEnergyProj (p,E_unmoved, RATIO,nbg,kernel,lc,gf, CHECK);
       //      __COUNT2++;
@@ -1740,5 +1740,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
   }
 
   return true;
-
+  
 }
+
+
