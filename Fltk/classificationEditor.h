@@ -35,7 +35,7 @@ public:
   std::vector<MElement *> elements;
   Fl_Window *window;
   Fl_Button *buttons[7];
-  Fl_Check_Button *toggles[3];
+  Fl_Check_Button *toggles[4];
   Fl_Value_Input *inputs[1];
   GEdge *selected;
   std::vector<edge_angle> edges_detected, edges_lonly;

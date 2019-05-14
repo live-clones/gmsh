@@ -83,7 +83,7 @@ static inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2,
 static double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
 {
   // FIXME !!!
-  return 
+  return
     f->geomType() == GEntity::Plane ?
     e->length() :
     computeEdgeLinearLength(e->p1, e->p2, f);
@@ -211,6 +211,59 @@ static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, double &t,
   m.cleanup();
   delete qual;
   t += ( Cpu() - t1 );
+}
+
+static bool edgeSwapTestDelaunayAniso(BDS_Edge *e, GFace *gf,
+                                      std::set<swapquad> &configs)
+{
+  BDS_Point *op[2];
+
+  if(!e->p1->config_modified && !e->p2->config_modified) return false;
+
+  if(e->numfaces() != 2) return false;
+
+  e->oppositeof(op);
+
+  swapquad sq(e->p1->iD, e->p2->iD, op[0]->iD, op[1]->iD);
+  if(configs.find(sq) != configs.end()) return false;
+  configs.insert(sq);
+
+  double edgeCenter[2] = {0.5 * (e->p1->u + e->p2->u),
+                          0.5 * (e->p1->v + e->p2->v)};
+
+  double p1[2] = {e->p1->u, e->p1->v};
+  double p2[2] = {e->p2->u, e->p2->v};
+  double p3[2] = {op[0]->u, op[0]->v};
+  double p4[2] = {op[1]->u, op[1]->v};
+  double metric[3];
+  buildMetric(gf, edgeCenter, metric);
+  if(!inCircumCircleAniso(gf, p1, p2, p3, p4, metric)) {
+    return false;
+  }
+  return true;
+}
+
+void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap)
+{
+  typedef std::vector<BDS_Edge *>::size_type size_type;
+
+  nb_swap = 0;
+  std::set<swapquad> configs;
+  while(1) {
+    size_type NSW = 0;
+
+    for(size_type index = 0; index < m.edges.size(); ++index) {
+      if(!m.edges.at(index)->deleted) {
+        if(edgeSwapTestDelaunayAniso(m.edges.at(index), gf, configs)) {
+          if(m.swap_edge(m.edges.at(index), BDS_SwapEdgeTestQuality(false))) {
+            ++NSW;
+          }
+        }
+      }
+    }
+    nb_swap += NSW;
+    if(!NSW) return;
+  }
 }
 
 static bool edges_sort(std::pair<double, BDS_Edge *> a,
@@ -695,7 +748,7 @@ void modifyInitialMeshToRemoveDegeneracies(
       degenerated.find(it->second);
     if(it2 != degenerated.end()) { it->first->degenerated = true; }
   }
-  for(size_t i = 0; i < degenerated_edges.size(); i++) {    
+  for(size_t i = 0; i < degenerated_edges.size(); i++) {
     m.collapse_edge_parametric(degenerated_edges[i], degenerated_edges[i]->p1,
                                true);
     recoverMap->erase(degenerated_edges[i]->p1);
@@ -769,9 +822,9 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       setDegeneracy(deg,false);
     }
     else setDegeneracy(deg,true);
-    
+
     //    printf("degeneracy %d\n",nbSplit);
-    
+
     // we count the number of local mesh modifs.
     int nb_split = 0;
     int nb_smooth = 0;
@@ -838,7 +891,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     }
     if((minL > MINE_ && maxL < MAXE_) || IT > (abs(NIT))) break;
 
-    
+
     IT++;
     Msg::Debug(" iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f -- "
                "Small/Large/Total (%6d/%6d/%6d): "
@@ -922,7 +975,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   }
 
   setDegeneracy(deg,true);
-  
+
   double t_total = t_spl + t_sw + t_col + t_sm;
   if(!t_total) t_total = 1.e-6;
   Msg::Debug(" ---------------------------------------");
