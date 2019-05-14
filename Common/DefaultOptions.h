@@ -146,8 +146,8 @@ StringXString GeometryOptions_String[] = {
 
   { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "
-    "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to keep the unit defined "
-    "in the STEP and IGES file)"},
+    "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use OpenCASCADE "
+    "default bahavior)"},
 
   { 0, 0 , 0 , "" , 0 }
 } ;
@@ -1068,6 +1068,8 @@ StringXNumber MeshOptions_Number[] = {
     "(between -1.0 and 0.5, excluded)"},
   { F|O, "HighOrderPrimSurfMesh", opt_mesh_ho_prim_surf_mesh, 0,
     "Try to fix flipped surface mesh elements in high-order optimizer?"},
+  { F|O, "HighOrderDistCAD", opt_mesh_ho_dist_cad, 0,
+    "Try to optimize distance to CAD in high-order optimizer?"},
   { F|O, "HighOrderThresholdMin", opt_mesh_ho_threshold_min, 0.1,
     "Minimum threshold for high-order element optimization"},
   { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,
@@ -1102,11 +1104,17 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
-    "METIS partitioning algorithm (1: Recursive, 2: K-way)" },
+    "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
-    "METIS edge matching type (1: Random, 2: Sorted Heavy-Edge)" },
+    "METIS edge matching type 'ctype' (1: Random, 2: Sorted Heavy-Edge)" },
+  { F|O, "MetisMaxLoadImbalance" , opt_mesh_partition_metis_max_load_imbalance, -1. ,
+    "METIS maximum load imbalance 'ufactor' (-1: default, i.e. 30 for K-way and 1 for Recursive)" },
+  { F|O, "MetisObjective" , opt_mesh_partition_metis_objective, 1. ,
+    "METIS objective type 'objtype' (1: min. edge-cut, 2: min. communication volume)" },
+  { F|O, "MetisMinConn" , opt_mesh_partition_metis_min_conn, -1. ,
+    "METIS minimize maximum connectivity of partitions 'minconn' (-1: default)" },
   { F|O, "MetisRefinementAlgorithm" , opt_mesh_partition_metis_refinement_algorithm, 2. ,
-    "METIS algorithm for k-way refinement (1: FM-based cut, 2: Greedy, "
+    "METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
     "Minimum number of nodes used to mesh a circle (and number of nodes per 2*pi "
@@ -1119,6 +1127,8 @@ StringXNumber MeshOptions_Number[] = {
     "Minor version of the MED file format to use (-1: use minor version of the MED library)" },
   { F|O, "MedImportGroupsOfNodes" , opt_mesh_med_import_groups_of_nodes , 0. ,
     "Import groups of nodes (0: no; 1: create geometrical point for each node)?" },
+  { F|O, "MedSingleModel" , opt_mesh_med_single_model , 0. ,
+    "Import MED meshes in the current model, even if several MED mesh names exist" },
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
     "Weight of hexahedral element for METIS load balancing (-1: automatic)" },
   { F|O, "PartitionLineWeight" , opt_mesh_partition_line_weight , -1 ,
@@ -1221,7 +1231,7 @@ StringXNumber MeshOptions_Number[] = {
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 0. ,
-    "Ignore alignment of periodic boundaries when reading the mesh "
+    "Ignore alignment of periodic boundaries when reading the mesh in MSH2 format "
     "(used by ParaView plugin)"},
 #if defined(HAVE_BLOSSOM)
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 1 ,

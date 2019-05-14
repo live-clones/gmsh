@@ -40,7 +40,7 @@ api = API(version_major, version_minor)
 
 ################################################################################
 
-gmsh = api.add_module('gmsh','Top-level functions')
+gmsh = api.add_module('gmsh','top-level functions')
 
 doc = '''Initialize Gmsh. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options).'''
 gmsh.add('initialize',doc,None,argcargv(),ibool('readConfigFiles','true','True'))
@@ -48,10 +48,10 @@ gmsh.add('initialize',doc,None,argcargv(),ibool('readConfigFiles','true','True')
 doc = '''Finalize Gmsh. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize',doc,None)
 
-doc = '''Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents.'''
+doc = '''Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents: opening a file with model data will create a new model.'''
 gmsh.add('open',doc,None,istring('fileName'))
 
-doc = '''Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents.'''
+doc = '''Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents. Merging a file with model data will add the data to the current model.'''
 gmsh.add('merge',doc,None,istring('fileName'))
 
 doc = '''Write a file. The export format is determined by the file extension.'''
@@ -62,7 +62,7 @@ gmsh.add('clear',doc,None)
 
 ################################################################################
 
-option = gmsh.add_module('option','Global option handling functions')
+option = gmsh.add_module('option','option handling functions')
 
 doc = '''Set a numerical option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setNumber',doc,None,istring('name'),idouble('value'))
@@ -76,9 +76,15 @@ option.add('setString',doc,None,istring('name'),istring('value'))
 doc = '''Get the `value' of a string option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getString',doc,None,istring('name'),ostring('value'))
 
+doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
+option.add('setColor',doc,None,istring('name'),iint('r'),iint('g'),iint('b'),iint('a','0'))
+
+doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
+option.add('getColor',doc,None,istring('name'),oint('r'),oint('g'),oint('b'),oint('a'))
+
 ################################################################################
 
-model = gmsh.add_module('model','Per-model functions')
+model = gmsh.add_module('model','model functions')
 
 doc = '''Add a new model, with name `name', and set it as the current model.'''
 model.add('add',doc,None,istring('name'))
@@ -92,7 +98,7 @@ model.add('list',doc,None,ovectorstring('names'))
 doc = '''Set the current model to the model with name `name'. If several models have the same name, select the one that was added first.'''
 model.add('setCurrent',doc,None,istring('name'))
 
-doc = '''Get all the (elementary) geometrical entities in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
+doc = '''Get all the entities in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 model.add('getEntities',doc,None,ovectorpair('dimTags'),iint('dim','-1'))
 
 doc = '''Set the name of the entity of dimension `dim' and tag `tag'.'''
@@ -104,13 +110,13 @@ model.add('getEntityName',doc,None,iint('dim'),iint('tag'),ostring('name'))
 doc = '''Get all the physical groups in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. physical points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 model.add('getPhysicalGroups',doc,None,ovectorpair('dimTags'),iint('dim','-1'))
 
-doc = '''Get the tags of the geometrical entities making up the physical group of dimension `dim' and tag `tag'.'''
+doc = '''Get the tags of the model entities making up the physical group of dimension `dim' and tag `tag'.'''
 model.add('getEntitiesForPhysicalGroup',doc,None,iint('dim'),iint('tag'),ovectorint('tags'))
 
-doc = '''Get the tags of the physical groups (if any) to which the geometrical entity of dimension `dim' and tag `tag' belongs.'''
+doc = '''Get the tags of the physical groups (if any) to which the model entity of dimension `dim' and tag `tag' belongs.'''
 model.add('getPhysicalGroupsForEntity',doc,None,iint('dim'),iint('tag'),ovectorint('physicalTags'))
 
-doc = '''Add a physical group of dimension `dim', grouping the elementary entities with tags `tags'. Return the tag of the physical group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0.'''
+doc = '''Add a physical group of dimension `dim', grouping the model entities with tags `tags'. Return the tag of the physical group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0.'''
 model.add('addPhysicalGroup',doc,oint,iint('dim'),ivectorint('tags'),iint('tag','-1'))
 
 doc = '''Set the name of the physical group of dimension `dim' and tag `tag'.'''
@@ -119,19 +125,19 @@ model.add('setPhysicalName',doc,None,iint('dim'),iint('tag'),istring('name'))
 doc = '''Get the name of the physical group of dimension `dim' and tag `tag'.'''
 model.add('getPhysicalName',doc,None,iint('dim'),iint('tag'),ostring('name'))
 
-doc = '''Get the boundary of the geometrical entities `dimTags'. Return in `outDimTags' the boundary of the individual entities (if `combined' is false) or the boundary of the combined geometrical shape formed by all input entities (if `combined' is true). Return tags multiplied by the sign of the boundary entity if `oriented' is true. Apply the boundary operator recursively down to dimension 0 (i.e. to points) if `recursive' is true.'''
+doc = '''Get the boundary of the model entities `dimTags'. Return in `outDimTags' the boundary of the individual entities (if `combined' is false) or the boundary of the combined geometrical shape formed by all input entities (if `combined' is true). Return tags multiplied by the sign of the boundary entity if `oriented' is true. Apply the boundary operator recursively down to dimension 0 (i.e. to points) if `recursive' is true.'''
 model.add('getBoundary',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'),ibool('combined','true','True'),ibool('oriented','true','True'),ibool('recursive','false','False'))
 
-doc = '''Get the (elementary) geometrical entities in the bounding box defined by the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
+doc = '''Get the model entities in the bounding box defined by the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
 model.add('getEntitiesInBoundingBox',doc,None,idouble('xmin'),idouble('ymin'),idouble('zmin'),idouble('xmax'),idouble('ymax'),idouble('zmax'),ovectorpair('tags'),iint('dim','-1'))
 
-doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the geometrical entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the model entity of dimension `dim' and tag `tag'. If `dim' and `tag' are negative, get the bounding box of the whole model.'''
 model.add('getBoundingBox',doc,None,iint('dim'),iint('tag'),odouble('xmin'),odouble('ymin'),odouble('zmin'),odouble('xmax'),odouble('ymax'),odouble('zmax'))
 
 doc = '''Get the geometrical dimension of the current model.'''
 model.add('getDimension',doc,oint)
 
-doc = '''Add a discrete geometrical entity (defined by a mesh) of dimension `dim' in the current model. Return the tag of the new discrete entity, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags of the entities on the boundary of the discrete entity, if any. Specyfing `boundary' allows Gmsh to construct the topology of the overall model.'''
+doc = '''Add a discrete model entity (defined by a mesh) of dimension `dim' in the current model. Return the tag of the new discrete entity, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags of the entities on the boundary of the discrete entity, if any. Specifying `boundary' allows Gmsh to construct the topology of the overall model.'''
 model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('boundary','std::vector<int>()',"[]","[]"))
 
 doc = '''Remove the entities `dimTags' of the current model. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
@@ -170,21 +176,24 @@ model.add('getPrincipalCurvatures',doc,None,iint('tag'),ivectordouble('parametri
 doc = '''Get the normal to the surface with tag `tag' at the parametric coordinates `parametricCoord'. `parametricCoord' are given by pairs of u and v coordinates, concatenated: [p1u, p1v, p2u, ...]. `normals' are returned as triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].'''
 model.add('getNormal',doc,None,iint('tag'),ivectordouble('parametricCoord'),ovectordouble('normals'))
 
-doc = '''Set the visibility of the geometrical entities `dimTags' to `value'. Apply the visibility setting recursively if `recursive' is true.'''
+doc = '''Set the visibility of the model entities `dimTags' to `value'. Apply the visibility setting recursively if `recursive' is true.'''
 model.add('setVisibility',doc,None,ivectorpair('dimTags'),iint('value'),ibool('recursive','false','False'))
 
-doc = '''Get the visibility of the geometrical entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the visibility of the model entity of dimension `dim' and tag `tag'.'''
 model.add('getVisibility',doc,None,iint('dim'),iint('tag'),oint('value'))
 
-doc = '''Set the color of the geometrical entities `dimTags' to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255. Apply the color setting recursively if `recursive' is true.'''
+doc = '''Set the color of the model entities `dimTags' to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255. Apply the color setting recursively if `recursive' is true.'''
 model.add('setColor',doc,None,ivectorpair('dimTags'),iint('r'),iint('g'),iint('b'),iint('a','0'),ibool('recursive','false','False'))
 
-doc = '''Get the color of the geometrical entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the color of the model entity of dimension `dim' and tag `tag'.'''
 model.add('getColor',doc,None,iint('dim'),iint('tag'),oint('r'),oint('g'),oint('b'),oint('a'))
+
+doc = '''Set the `x', `y', `z' coordinates of a geometrical point.'''
+model.add('setCoordinates',doc,None,iint('tag'),idouble('x'),idouble('y'),idouble('z'))
 
 ################################################################################
 
-mesh = model.add_module('mesh','Per-model meshing functions')
+mesh = model.add_module('mesh','mesh functions')
 
 doc = '''Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).'''
 mesh.add('generate',doc,None,iint('dim', '3'))
@@ -195,8 +204,17 @@ mesh.add('partition',doc,None,iint('numPart'))
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition',doc,None)
 
+doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother).'''
+mesh.add('optimize',doc,None,istring('method',''))
+
+doc = '''Recombine the mesh of the current model.'''
+mesh.add('recombine',doc,None)
+
 doc = '''Refine the mesh of the current model by uniformly splitting the elements.'''
 mesh.add('refine',doc,None)
+
+doc = '''Smooth the mesh of the current model.'''
+mesh.add('smooth',doc,None)
 
 doc = '''Set the order of the elements in the mesh of the current model to `order'.'''
 mesh.add('setOrder',doc,None,iint('order'))
@@ -207,10 +225,10 @@ mesh.add('getLastEntityError',doc,None,ovectorpair('dimTags'))
 doc = '''Get the last nodes (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastNodeError',doc,None,ovectorsize('nodeTags'))
 
-doc = '''Get the nodes classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0, `parametricCoord' contains the parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If `includeBoundary' is set, also return the nodes classified on the boundary of the entity (wich will be reparametrized on the entity if `dim' >= 0 in order to compute their parametric coordinates).'''
-mesh.add('getNodes',doc,None,ovectorsize('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'),ibool('includeBoundary','false','False'))
+doc = '''Get the nodes classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0 and `returnParamtricCoord' is set, `parametricCoord' contains the parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If `includeBoundary' is set, also return the nodes classified on the boundary of the entity (which will be reparametrized on the entity if `dim' >= 0 in order to compute their parametric coordinates).'''
+mesh.add('getNodes',doc,None,ovectorsize('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'),ibool('includeBoundary','false','False'),ibool('returnParametricCoord','true','True'))
 
-doc = '''Get the coordinates and the parametric coordinates (if any) of the node with tag `tag'. This is a sometimes useful but inefficient way of accessing nodes, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
+doc = '''Get the coordinates and the parametric coordinates (if any) of the node with tag `tag'. This is a sometimes useful but inefficient way of accessing nodes, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
 mesh.add('getNode',doc,None,isize('nodeTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
 
 doc = '''Rebuild the node cache.'''
@@ -219,10 +237,10 @@ mesh.add('rebuildNodeCache',doc,None,ibool('onlyIfNecessary', 'true', 'True'))
 doc = '''Get the nodes from all the elements belonging to the physical group of dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].'''
 mesh.add('getNodesForPhysicalGroup',doc,None,iint('dim'),iint('tag'),ovectorsize('nodeTags'),ovectordouble('coord'))
 
-doc = '''Set the nodes classified on the geometrical entity of dimension `dim' and tag `tag'. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord' vector contains the parametric coordinates of the nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If the `nodeTags' vector is empty, new tags are automatically assigned to the nodes.'''
+doc = '''Set the nodes classified on the model entity of dimension `dim' and tag `tag'. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord' vector contains the parametric coordinates of the nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If the `nodeTags' vector is empty, new tags are automatically assigned to the nodes.'''
 mesh.add('setNodes',doc,None,iint('dim'),iint('tag'),ivectorsize('nodeTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]","[]"))
 
-doc = '''Reclassify all nodes on their associated geometrical entity, based on the elements. Can be used when importing nodes in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc. after the elements have been set.'''
+doc = '''Reclassify all nodes on their associated model entity, based on the elements. Can be used when importing nodes in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc. after the elements have been set.'''
 mesh.add('reclassifyNodes',doc,None)
 
 doc = '''Relocate the nodes classified on the entity of dimension `dim' and tag `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, relocate all the nodes in the mesh.'''
@@ -231,11 +249,11 @@ mesh.add('relocateNodes',doc,None,iint('dim', '-1'),iint('tag', '-1'))
 doc = '''Get the elements classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the elements for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the elements in the mesh. `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see `getElementProperties' to obtain the properties for a given element type). `elementTags' is a vector of the same length as `elementTypes'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `elementTypes'; each entry is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].'''
 mesh.add('getElements',doc,None,ovectorint('elementTypes'),ovectorvectorsize('elementTags'),ovectorvectorsize('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
 
-doc = '''Get the type and node tags of the element with tag `tag'. This is a sometimes useful but inefficient way of accessing elements, as it relies on a cache stored in the model. For large meshes all the elements in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
+doc = '''Get the type and node tags of the element with tag `tag'. This is a sometimes useful but inefficient way of accessing elements, as it relies on a cache stored in the model. For large meshes all the elements in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
 mesh.add('getElement',doc,None,isize('elementTag'),oint('elementType'),ovectorsize('nodeTags'))
 
-doc = '''Get the tag, type and node tags of the element located at coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a search in a spatial octree.'''
-mesh.add('getElementByCoordinates',doc,None,idouble('x'),idouble('y'),idouble('z'),osize('elementTag'),oint('elementType'),ovectorsize('nodeTags'))
+doc = '''Search the mesh for an element located at coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a search in a spatial octree. If an element is found, return its tag, type and node tags, as well as the local coordinates (`u', `v', `w') within the element corresponding to search location. If `dim' is >= 0, only search for elements of the given dimension. If `strict' is not set, use a tolerance to find elements near the search location.'''
+mesh.add('getElementByCoordinates',doc,None,idouble('x'),idouble('y'),idouble('z'),osize('elementTag'),oint('elementType'),ovectorsize('nodeTags'),odouble('u'),odouble('v'),odouble('w'),iint('dim', '-1'),ibool('strict','false','False'))
 
 doc = '''Get the types of elements in the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
 mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
@@ -246,11 +264,11 @@ mesh.add('getElementType',doc,oint,istring('familyName'),iint('order'),ibool('se
 doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes') and parametric node coordinates (`parametricCoord' vector, of length `dim' times `numNodes').'''
 mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numNodes'),ovectordouble('parametricCoord'))
 
-doc = '''Get the elements of type `elementType' classified on the entity of of tag `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+doc = '''Get the elements of type `elementType' classified on the entity of tag `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorsize('elementTags'),ovectorsize('nodeTags'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
 
-doc = '''Preallocate the data for `getElementsByType'. This is necessary only if `getElementsByType' is called with `numTasks' > 1.'''
-mesh.add('preallocateElementsByType',doc,None,iint('elementType'),ibool('elementTag'),ibool('nodeTag'),ovectorsize('elementTags'),ovectorsize('nodeTags'),iint('tag', '-1'))
+doc = '''Preallocate data before calling `getElementsByType' with `numTasks' > 1. For C and C++ only.'''
+mesh.add_special('preallocateElementsByType',doc,['onlycc++'],None,iint('elementType'),ibool('elementTag'),ibool('nodeTag'),ovectorsize('elementTags'),ovectorsize('nodeTags'),iint('tag', '-1'))
 
 doc = '''Set the elements of the entity of dimension `dim' and tag `tag'. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the given type times the number N of nodes per element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].'''
 mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('elementTypes'),ivectorvectorsize('elementTags'),ivectorvectorsize('nodeTags'))
@@ -258,34 +276,46 @@ mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('elementTypes
 doc = '''Set the elements of type `elementType' in the entity of tag `tag'. `elementTags' contains the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements times the number N of nodes per element, that contains the node tags of all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are automatically assigned to the elements.'''
 mesh.add('setElementsByType',doc,None,iint('tag'),iint('elementType'),ivectorsize('elementTags'),ivectorsize('nodeTags'))
 
-doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of dimension `dim' and tag `tag', at the G integration points required by the `integrationType' integration rule (e.g. \"Gauss4\" for a Gauss quadrature suited for integrating 4th order polynomials). Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. `jacobians' contains for each element the 9 entries of the 3x3 Jacobian matrix at each integration point, by row: [e1g1Jxu, e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each element the determinant of the Jacobian matrix at each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z coordinates of the integration points. If `tag' < 0, get the Jacobian data for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
-mesh.add('getJacobians',doc,None,iint('elementType'),istring('integrationType'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
+doc = '''Get the numerical quadrature information for the given element type `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a Gauss quadrature suited for integrating 4th order polynomials). `integrationPoints' contains the u, v, w coordinates of the G integration points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `integrationWeigths' contains the associated weights: [g1q, ..., gGq].'''
+mesh.add('getIntegrationPoints',doc,None,iint('elementType'),istring('integrationType'),ovectordouble('integrationPoints'),ovectordouble('integrationWeights'))
 
-doc = '''Preallocate the data required by `getJacobians'. This is necessary only if `getJacobians' is called with `numTasks' > 1.'''
-mesh.add('preallocateJacobians',doc,None,iint('elementType'),istring('integrationType'),ibool('jacobian'),ibool('determinant'),ibool('point'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'))
+doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of tag `tag', at the G integration points `integrationPoints' given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. `jacobians' contains for each element the 9 entries of the 3x3 Jacobian matrix at each integration point, by row: [e1g1Jxu, e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each element the determinant of the Jacobian matrix at each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z coordinates of the integration points. If `tag' < 0, get the Jacobian data for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+mesh.add('getJacobians',doc,None,iint('elementType'),ivectordouble('integrationPoints'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
 
-doc = '''Get the basis functions of the element of type `elementType' for the given `integrationType' integration rule (e.g. \"Gauss4\" for a Gauss quadrature suited for integrating 4th order polynomials) and `functionSpaceType' function space (e.g. \"Lagrange\" or \"GradLagrange\" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element). `integrationPoints' contains the u, v, w coordinates of the integration points in the reference element as well as the associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents' returns the number C of components of a basis function. `basisFunctions' contains the evaluation of the basis functions at the integration points: [g1f1, ..., g1fC, g2f1, ...].'''
-mesh.add('getBasisFunctions',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),oint('numComponents'),ovectordouble('basisFunctions'))
+doc = '''Preallocate data before calling `getJacobians' with `numTasks' > 1. For C and C++ only.'''
+mesh.add_special('preallocateJacobians',doc,['onlycc++'],None,iint('elementType'),iint('numIntegrationPoints'),ibool('jacobian'),ibool('determinant'),ibool('point'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'))
 
-doc = '''Precomputes the basis functions corresponding to `elementType'.'''
+doc = '''Get the basis functions of the element of type `elementType' at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element). `numComponents' returns the number C of components of a basis function. `basisFunctions' returns the value of the N basis functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.'''
+mesh.add('getBasisFunctions',doc,None,iint('elementType'),ivectordouble('integrationPoints'),istring('functionSpaceType'),oint('numComponents'),ovectordouble('basisFunctions'))
+
+doc = '''Get the element-dependent basis functions of the elements of type `elementType' in the entity of tag `tag'at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates of the reference elements). `numComponents' returns the number C of components of a basis function. `numBasisFunctions' returns the number N of basis functions per element. `basisFunctions' returns the value of the basis functions at the integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getBasisFunctionsForElements',doc,None,iint('elementType'),ivectordouble('integrationPoints'),istring('functionSpaceType'),oint('numComponents'),oint('numFunctionsPerElements'),ovectordouble('basisFunctions'),iint('tag','-1'))
+
+doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getKeysForElements',doc,None,iint('elementType'),istring('functionSpaceType'),ovectorpair('keys'),ovectordouble('coord'),iint('tag', '-1'),ibool('returnCoord','true', 'True'))
+
+doc = '''Get information about the `keys'. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getInformationForElements',doc,None,ivectorpair('keys'),ovectorpair('info'),iint('order'),iint('elementType'))
+
+doc = '''Precomputes the basis functions corresponding to `elementType'. '''
 mesh.add('precomputeBasisFunctions',doc,None,iint('elementType'))
 
 doc = '''Get the barycenters of all elements of type `elementType' classified on the entity of tag `tag'. If `primary' is set, only the primary nodes of the elements are taken into account for the barycenter calculation. If `fast' is set, the function returns the sum of the primary node coordinates (without normalizing by the number of nodes). If `tag' < 0, get the barycenters for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getBarycenters',doc,None,iint('elementType'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'),isize('task', '0'),isize('numTasks', '1'))
 
-doc = '''Preallocate the data required by `getBarycenters'. This is necessary only if `getBarycenters' is called with `numTasks' > 1.'''
-mesh.add('preallocateBarycenters',doc,None,iint('elementType'),ovectordouble('barycenters'),iint('tag', '-1'))
+doc = '''Preallocate data before calling `getBarycenters' with `numTasks' > 1. For C and C++ only.'''
+mesh.add_special('preallocateBarycenters',doc,['onlycc++'],None,iint('elementType'),ovectordouble('barycenters'),iint('tag', '-1'))
 
-doc = '''Get the nodes on the edges of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags. If `primary' is set, only the primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the edge nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+doc = '''Get the nodes on the edges of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags of the edges for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. If `primary' is set, only the primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the edge nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getElementEdgeNodes',doc,None,iint('elementType'),ovectorsize('nodeTags'),iint('tag','-1'),ibool('primary','false','False'),isize('task', '0'),isize('numTasks', '1'))
 
-doc = '''Get the nodes on the faces of type `faceType' (3 for triangular faces, 4 for quadrangular faces) of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags. If `primary' is set, only the primary (corner) nodes of the faces are returned. If `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+doc = '''Get the nodes on the faces of type `faceType' (3 for triangular faces, 4 for quadrangular faces) of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags of the faces for all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. If `primary' is set, only the primary (corner) nodes of the faces are returned. If `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getElementFaceNodes',doc,None,iint('elementType'),iint('faceType'),ovectorsize('nodeTags'),iint('tag','-1'),ibool('primary','false','False'),isize('task', '0'),isize('numTasks', '1'))
 
 doc = '''Get the ghost elements `elementTags' and their associated `partitions' stored in the ghost entity of dimension `dim' and tag `tag'.'''
 mesh.add('getGhostElements',doc,None,iint('dim'),iint('tag'),ovectorsize('elementTags'),ovectorint('partitions'))
 
-doc = '''Set a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
+doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
 doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
@@ -297,22 +327,22 @@ mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Le
 doc = '''Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.'''
 mesh.add('setTransfiniteVolume',doc,None,iint('tag'),ivectorint('cornerTags','std::vector<int>()',"[]","[]"))
 
-doc = '''Set a recombination meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
+doc = '''Set a recombination meshing constraint on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
 mesh.add('setRecombine',doc,None,iint('dim'),iint('tag'))
 
-doc = '''Set a smoothing meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.'''
+doc = '''Set a smoothing meshing constraint on the model entity of dimension `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.'''
 mesh.add('setSmoothing',doc,None,iint('dim'),iint('tag'),iint('val'))
 
-doc = '''Set a reverse meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometrical entity). If `val' is false, the mesh is left as-is.'''
+doc = '''Set a reverse meshing constraint on the model entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometry). If `val' is false, the mesh is left as-is.'''
 mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'))
 
 doc = '''Set meshing constraints on the bounding surfaces of the volume of tag `tag' so that all surfaces are oriented with outward pointing normals. Currently only available with the OpenCASCADE kernel, as it relies on the STL triangulation.'''
 mesh.add('setOutwardOrientation',doc,None,iint('tag'))
 
-doc = '''Embed the geometrical entities of dimension `dim' and tags `tags' in the (inDim, inTag) geometrical entity. `inDim' must be strictly greater than `dim'.'''
+doc = '''Embed the model entities of dimension `dim' and tags `tags' in the (inDim, inTag) model entity. `inDim' must be strictly greater than `dim'.'''
 mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
 
-doc = '''Remove embedded entities in the geometrical entities `dimTags'. if `dim' is >= 0, only remove embedded entities of the given dimension (e.g. embedded points if `dim' == 0).'''
+doc = '''Remove embedded entities in the model entities `dimTags'. if `dim' is >= 0, only remove embedded entities of the given dimension (e.g. embedded points if `dim' == 0).'''
 mesh.add('removeEmbedded',doc,None,ivectorpair('dimTags'),iint('dim', '-1'))
 
 doc = '''Reorder the elements of type `elementType' classified on the entity of tag `tag' according to `ordering'.'''
@@ -353,9 +383,9 @@ mesh.add('computeCohomology',doc,None,ivectorint('domainTags','std::vector<int>(
 
 ################################################################################
 
-field = mesh.add_module('field','Per-model mesh size field functions')
+field = mesh.add_module('field','mesh size field functions')
 
-doc = '''Add a new mesh size field of type `fieldType'. If `tag' is positive, assign the tag explcitly; otherwise a new tag is assigned automatically. Return the field tag.'''
+doc = '''Add a new mesh size field of type `fieldType'. If `tag' is positive, assign the tag explicitly; otherwise a new tag is assigned automatically. Return the field tag.'''
 field.add('add',doc,oint,istring('fieldType'),iint('tag','-1'))
 
 doc = '''Remove the field with tag `tag'.'''
@@ -378,18 +408,18 @@ field.add('setAsBoundaryLayer',doc,None,iint('tag'))
 
 ################################################################################
 
-geo = model.add_module('geo','Internal per-model GEO CAD kernel functions')
+geo = model.add_module('geo','built-in CAD kernel functions')
 
-doc = '''Add a geometrical point in the internal GEO CAD representation, at coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the geo module.)'''
+doc = '''Add a geometrical point in the built-in CAD representation, at coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the geo module.)'''
 geo.add('addPoint',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('meshSize','0.'),iint('tag','-1'))
 
 doc = '''Add a straight line segment between the two points with tags `startTag' and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the line.'''
 geo.add('addLine',doc,oint,iint('startTag'),iint('endTag'),iint('tag','-1'))
 
-doc = '''Add a circle arc (stricly smaller than Pi) between the two points with tags `startTag' and `endTag', with center `centertag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely set the plane of the circle arc. Return the tag of the circle arc.'''
+doc = '''Add a circle arc (strictly smaller than Pi) between the two points with tags `startTag' and `endTag', with center `centertag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly set the plane of the circle arc. Return the tag of the circle arc.'''
 geo.add('addCircleArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag'),iint('tag','-1'),idouble('nx','0.'),idouble('ny','0.'),idouble('nz','0.'))
 
-doc = '''Add an ellipse arc (stricly smaller than Pi) between the two points `startTag' and `endTag', with center `centertag' and major axis point `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely set the plane of the circle arc. Return the tag of the ellipse arc.'''
+doc = '''Add an ellipse arc (strictly smaller than Pi) between the two points `startTag' and `endTag', with center `centertag' and major axis point `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly set the plane of the circle arc. Return the tag of the ellipse arc.'''
 geo.add('addEllipseArc',doc,oint,iint('startTag'),iint('centerTag'),iint('majorTag'),iint('endTag'),iint('tag','-1'),idouble('nx','0.'),idouble('ny','0.'),idouble('nz','0.'))
 
 doc = '''Add a spline (Catmull-Rom) curve going through the points `pointTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Create a periodic curve if the first and last points are the same. Return the tag of the spline curve.'''
@@ -401,7 +431,7 @@ geo.add('addBSpline',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 doc = '''Add a Bezier curve with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.  Return the tag of the Bezier curve.'''
 geo.add('addBezier',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 
-doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of geometrical enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
+doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of model enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
 geo.add('addCurveLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
 
 doc = '''Add a plane surface defined by one or more curve loops `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
@@ -416,25 +446,25 @@ geo.add('addSurfaceLoop',doc,oint,ivectorint('surfaceTags'),iint('tag','-1'))
 doc = '''Add a volume (a region) defined by one or more shells `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the volume.'''
 geo.add('addVolume',doc,oint,ivectorint('shellTags'),iint('tag','-1'))
 
-doc = '''Extrude the geometrical entities `dimTags' by translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the model entities `dimTags' by translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are extruded along their normal.'''
 geo.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]","[]"),ivectordouble('heights','std::vector<double>()',"[]","[]"),ibool('recombine','false','False'))
 
-doc = '''Extrude the geometrical entities `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the model entities `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
 geo.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]","[]"),ivectordouble('heights','std::vector<double>()',"[]","[]"),ibool('recombine','false','False'))
 
-doc = '''Extrude the geometrical entities `dimTags' by a combined translation and rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the model entities `dimTags' by a combined translation and rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
 geo.add('twist',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]","[]"),ivectordouble('heights','std::vector<double>()',"[]","[]"),ibool('recombine','false','False'))
 
-doc = '''Translate the geometrical entities `dimTags' along (`dx', `dy', `dz').'''
+doc = '''Translate the model entities `dimTags' along (`dx', `dy', `dz').'''
 geo.add('translate',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'))
 
-doc = '''Rotate the geometrical entities `dimTags' of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
+doc = '''Rotate the model entities `dimTags' of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
 geo.add('rotate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'))
 
-doc = '''Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
+doc = '''Scale the model entities `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
 geo.add('dilate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('a'),idouble('b'),idouble('c'))
 
-doc = '''Apply a symmetry transformation to the geometrical entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
+doc = '''Apply a symmetry transformation to the model entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
 geo.add('symmetrize',doc,None,ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
 
 doc = '''Copy the entities `dimTags'; the new entities are returned in `outDimTags'.'''
@@ -446,17 +476,17 @@ geo.add('remove',doc,None,ivectorpair('dimTags'),ibool('recursive','false','Fals
 doc = '''Remove all duplicate entities (different entities at the same geometrical location).'''
 geo.add('removeAllDuplicates',doc,None)
 
-doc = '''Synchronize the internal GEO CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
+doc = '''Synchronize the built-in CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 geo.add('synchronize',doc,None)
 
 ################################################################################
 
-mesh = geo.add_module('mesh','GEO-specific meshing constraints')
+mesh = geo.add_module('mesh','built-in CAD kernel meshing constraints')
 
-doc = '''Set a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
+doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
-doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extreminties of the curve).'''
+doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
 mesh.add('setTransfiniteCurve',doc,None,iint('tag'),iint('nPoints'),istring('meshType','"Progression"'),idouble('coef','1.'))
 
 doc = '''Set a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
@@ -465,20 +495,20 @@ mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Le
 doc = '''Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.'''
 mesh.add('setTransfiniteVolume',doc,None,iint('tag'),ivectorint('cornerTags','std::vector<int>()',"[]","[]"))
 
-doc = '''Set a recombination meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
+doc = '''Set a recombination meshing constraint on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
 mesh.add('setRecombine',doc,None,iint('dim'),iint('tag'),idouble('angle','45.'))
 
-doc = '''Set a smoothing meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.'''
+doc = '''Set a smoothing meshing constraint on the model entity of dimension `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.'''
 mesh.add('setSmoothing',doc,None,iint('dim'),iint('tag'),iint('val'))
 
-doc = '''Set a reverse meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometrical entity). If `val' is false, the mesh is left as-is.'''
+doc = '''Set a reverse meshing constraint on the model entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometry). If `val' is false, the mesh is left as-is.'''
 mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'))
 
 ################################################################################
 
-occ = model.add_module('occ','Internal per-model OpenCASCADE CAD kernel functions')
+occ = model.add_module('occ','OpenCASCADE CAD kernel functions')
 
-doc = '''Add a geometrical point in the internal OpenCASCADE CAD representation, at coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the occ module.)'''
+doc = '''Add a geometrical point in the OpenCASCADE CAD representation, at coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the occ module.)'''
 occ.add('addPoint',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('meshSize','0.'),iint('tag','-1'))
 
 doc = '''Add a straight line segment between the two points with tags `startTag' and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the line.'''
@@ -553,10 +583,10 @@ occ.add('addThruSections',doc,None,ivectorint('wireTags'),ovectorpair('outDimTag
 doc = '''Add a hollowed volume built from an initial volume `volumeTag' and a set of faces from this volume `excludeSurfaceTags', which are to be removed. The remaining faces of the volume become the walls of the hollowed solid, with thickness `offset'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.'''
 occ.add('addThickSolid',doc,None,iint('volumeTag'),ivectorint('excludeSurfaceTags'),idouble('offset'),ovectorpair('outDimTags'),iint('tag','-1'))
 
-doc = '''Extrude the geometrical entities `dimTags' by translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the model entities `dimTags' by translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
 occ.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]","[]"),ivectordouble('heights','std::vector<double>()',"[]","[]"),ibool('recombine','false','False'))
 
-doc = '''Extrude the geometrical entities `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the model entities `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
 occ.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]","[]"),ivectordouble('heights','std::vector<double>()',"[]","[]"),ibool('recombine','false','False'))
 
 doc = '''Add a pipe by extruding the entities `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'.'''
@@ -568,31 +598,31 @@ occ.add('fillet',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),ivect
 doc = '''Chamfer the volumes `volumeTags' on the curves `curveTags' with distances `distances' measured on surfaces `surfaceTags'. The `distances' vector can either contain a single distance, as many distances as `curveTags' and `surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which case the first in each pair is measured on the corresponding surface in `surfaceTags', the other on the other adjacent surface). Return the chamfered entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
 occ.add('chamfer',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),ivectorint('surfaceTags'),ivectordouble('distances'),ovectorpair('outDimTags'),ibool('removeVolume','true','True'))
 
-doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fuse',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
-doc = '''Compute the boolean intersection (the common parts) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean intersection (the common parts) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('intersect',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
-doc = '''Compute the boolean difference between the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean difference between the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('cut',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
-doc = '''Compute the boolean fragments (general fuse) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean fragments (general fuse) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fragment',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
-doc = '''Translate the geometrical entities `dimTags' along (`dx', `dy', `dz').'''
+doc = '''Translate the model entities `dimTags' along (`dx', `dy', `dz').'''
 occ.add('translate',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'))
 
-doc = '''Rotate the geometrical entities `dimTags' of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
+doc = '''Rotate the model entities `dimTags' of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
 occ.add('rotate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'))
 
-doc = '''Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
+doc = '''Scale the model entities `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
 occ.add('dilate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('a'),idouble('b'),idouble('c'))
 
-doc = '''Apply a symmetry transformation to the geometrical entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
+doc = '''Apply a symmetry transformation to the model entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
 occ.add('symmetrize',doc,None,ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
 
-doc = '''Apply a general affine transformation matrix `a' (16 entries of a 4x4 matrix, by row; only the 12 first can be provided for convenience) to the geometrical entities `dimTag'.'''
+doc = '''Apply a general affine transformation matrix `a' (16 entries of a 4x4 matrix, by row; only the 12 first can be provided for convenience) to the model entities `dimTag'.'''
 occ.add('affineTransform',doc,None,ivectorpair('dimTags'),ivectordouble('a'))
 
 doc = '''Copy the entities `dimTags'; the new entities are returned in `outDimTags'.'''
@@ -607,18 +637,27 @@ occ.add('removeAllDuplicates',doc,None)
 doc = '''Import BREP, STEP or IGES shapes from the file `fileName'. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
 occ.add('importShapes',doc,None,istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'),istring('format','""'))
 
-doc = '''Imports an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
-occ.add('importShapesNativePointer',doc,None,ivoidstar('shape'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'))
+doc = '''Imports an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. For C and C++ only. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
+occ.add_special('importShapesNativePointer',doc,['onlycc++'],None,ivoidstar('shape'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'))
 
-doc = '''Set a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
+doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 occ.add('setMeshSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
-doc = '''Synchronize the internal OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
+doc = '''Get the mass of the model entity of dimension `dim' and tag `tag'.'''
+occ.add('getMass',doc,None,iint('dim'),iint('tag'),odouble('mass'))
+
+doc = '''Get the center of mass of the model entity of dimension `dim' and tag `tag'.'''
+occ.add('getCenterOfMass',doc,None,iint('dim'),iint('tag'),odouble('x'),odouble('y'),odouble('z'))
+
+doc = '''Get the matrix of inertia (by row) of the model entity of dimension `dim' and tag `tag'.'''
+occ.add('getMatrixOfInertia',doc,None,iint('dim'),iint('tag'),ovectordouble('mat'))
+
+doc = '''Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 occ.add('synchronize',doc,None)
 
 ################################################################################
 
-view = gmsh.add_module('view','Post-processing view functions')
+view = gmsh.add_module('view','post-processing view functions')
 
 doc = '''Add a new post-processing view, with name `name'. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''
 view.add('add',doc,oint,istring('name'),iint('tag','-1'))
@@ -636,13 +675,22 @@ doc = '''Add model-based post-processing data to the view with tag `tag'. `model
 view.add('addModelData',doc,None,iint('tag'),iint('step'),istring('modelName'),istring('dataType'),ivectorsize('tags'),ivectorvectordouble('data'),idouble('time','0.'),iint('numComponents','-1'),iint('partition','0'))
 
 doc = '''Get model-based post-processing data from the view with tag `tag' at step `step'. Return the `data' associated to the nodes or the elements with tags `tags', as well as the `dataType' and the number of components `numComponents'.'''
-view.add_rawc('getModelData',doc,None,iint('tag'),iint('step'),ostring('dataType'),ovectorsize('tags'),ovectorvectordouble('data'),odouble('time'),oint('numComponents'))
+view.add_special('getModelData',doc,['rawc'],None,iint('tag'),iint('step'),ostring('dataType'),ovectorsize('tags'),ovectorvectordouble('data'),odouble('time'),oint('numComponents'))
 
 doc = '''Add list-based post-processing data to the view with tag `tag'. `dataType' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
 view.add('addListData',doc,None,iint('tag'),istring('dataType'),iint('numEle'),ivectordouble('data'))
 
 doc = '''Get list-based post-processing data from the view with tag `tag'. Return the types `dataTypes', the number of elements `numElements' for each data type and the `data' for each data type.'''
 view.add('getListData',doc,None,iint('tag'),ovectorstring('dataType'),ovectorint('numElements'),ovectorvectordouble('data'))
+
+doc = '''Add a post-processing view as an `alias' of the reference view with tag `refTag'. If `copyOptions' is set, copy the options of the reference view. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''
+view.add('addAlias',doc,oint,iint('refTag'),ibool('copyOptions','false','False'),iint('tag','-1'))
+
+doc = '''Copy the options from the view with tag `refTag' to the view with tag `tag'.'''
+view.add('copyOptions',doc,None,iint('refTag'),iint('tag'))
+
+doc = '''Combine elements (if `what' == "elements") or steps (if `what' == "steps") of all views (`how' == "all"), all visible views (`how' == "visible") or all views having the same name (`how' == "name"). Remove original views if `remove' is set.'''
+view.add('combine',doc,None,istring('what'),istring('how'),ibool('remove','false','False'))
 
 doc = '''Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only the value at step `step' is `step' is positive. Return only values with `numComp' if `numComp' is positive. Return the gradient of the `value' if `gradient' is set. Probes with a geometrical tolerance (in the reference unit cube) of `tolerance' if `tolerance' is not zero. Return the result from the element described by its coordinates if `xElementCoord', `yElementCoord' and `zElementCoord' are provided.'''
 view.add('probe',doc,None,iint('tag'),idouble('x'),idouble('y'),idouble('z'),ovectordouble('value'),iint('step','-1'),iint('numComp','-1'),ibool('gradient','false','False'),idouble('tolerance','0.'),ivectordouble('xElemCoord','std::vector<double>()',"[]","[]"),ivectordouble('yElemCoord','std::vector<double>()',"[]","[]"),ivectordouble('zElemCoord','std::vector<double>()',"[]","[]"))
@@ -652,7 +700,7 @@ view.add('write',doc,None,iint('tag'),istring('fileName'),ibool('append','false'
 
 ################################################################################
 
-plugin = gmsh.add_module('plugin','Plugin functions')
+plugin = gmsh.add_module('plugin','plugin functions')
 
 doc = '''Set the numerical option `option' to the value `value' for plugin `name'.'''
 plugin.add('setNumber',doc,None,istring('name'),istring('option'),idouble('value'))
@@ -665,16 +713,16 @@ plugin.add('run',doc,None,istring('name'))
 
 ################################################################################
 
-graphics = gmsh.add_module('graphics','Graphics functions')
+graphics = gmsh.add_module('graphics','graphics functions')
 
 doc = '''Draw all the OpenGL scenes.'''
 graphics.add('draw',doc,None)
 
 ################################################################################
 
-fltk = gmsh.add_module('fltk','Fltk graphical user interface functions')
+fltk = gmsh.add_module('fltk','FLTK graphical user interface functions')
 
-doc = '''Create the Fltk graphical user interface. Can only be called in the main thread.'''
+doc = '''Create the FLTK graphical user interface. Can only be called in the main thread.'''
 fltk.add('initialize',doc,None)
 
 doc = '''Wait at most `time' seconds for user interface events and return. If `time' < 0, wait indefinitely. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
@@ -734,7 +782,7 @@ onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 
 ################################################################################
 
-logger = gmsh.add_module('logger','Message logger functions')
+logger = gmsh.add_module('logger','information logging functions')
 
 doc = '''Write a `message'. `level' can be "info", "warning" or "error".'''
 logger.add('write',doc,None,istring('message'),istring('level','"info"'))

@@ -132,6 +132,7 @@ bool GEO_Internals::addVertex(int &tag, double x, double y,
     return false;
   }
   if(tag < 0) tag = getMaxTag(0) + 1;
+  if(!lc) lc = MAX_LC;
   Vertex *v = CreateVertex(tag, x, y, surface, lc);
   Tree_Add(Points, &v);
   _changed = true;
@@ -1289,10 +1290,10 @@ void GEO_Internals::synchronize(GModel *model)
   SetBoundingBox();
 
   Msg::Debug("GModel imported:");
-  Msg::Debug("%d vertices", model->getNumVertices());
-  Msg::Debug("%d edges", model->getNumEdges());
-  Msg::Debug("%d faces", model->getNumFaces());
-  Msg::Debug("%d regions", model->getNumRegions());
+  Msg::Debug("%d points", model->getNumVertices());
+  Msg::Debug("%d curves", model->getNumEdges());
+  Msg::Debug("%d surfaces", model->getNumFaces());
+  Msg::Debug("%d volumes", model->getNumRegions());
 
   _changed = false;
 }
@@ -1626,9 +1627,9 @@ int GModel::exportDiscreteGEOInternals()
   _geo_internals->setMaxTag(3, maxv);
 
   Msg::Debug("Geo internal model has:");
-  Msg::Debug("%d Vertices", Tree_Nbr(_geo_internals->Points));
-  Msg::Debug("%d Edges", Tree_Nbr(_geo_internals->Curves));
-  Msg::Debug("%d Faces", Tree_Nbr(_geo_internals->Surfaces));
+  Msg::Debug("%d points", Tree_Nbr(_geo_internals->Points));
+  Msg::Debug("%d curves", Tree_Nbr(_geo_internals->Curves));
+  Msg::Debug("%d surfaces", Tree_Nbr(_geo_internals->Surfaces));
 
   return 1;
 }

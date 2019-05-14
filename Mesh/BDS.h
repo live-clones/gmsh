@@ -46,7 +46,6 @@ public:
   }
 };
 
-
 class BDS_Point {
   // the first size is the one dictated by the Background Mesh the
   // second one is dictated by characteristic lengths at points and is
@@ -99,9 +98,12 @@ public:
   }
 
   BDS_Face *faces(std::size_t const i) const { return _faces[i]; }
-  double length() const { return  std::sqrt((p1->X - p2->X) * (p1->X - p2->X) +
-					    (p1->Y - p2->Y) * (p1->Y - p2->Y) +
-					    (p1->Z - p2->Z) * (p1->Z - p2->Z));}
+  double length() const
+  {
+    return std::sqrt((p1->X - p2->X) * (p1->X - p2->X) +
+                     (p1->Y - p2->Y) * (p1->Y - p2->Y) +
+                     (p1->Z - p2->Z) * (p1->Z - p2->Z));
+  }
   int numfaces() const { return static_cast<int>(_faces.size()); }
   int numTriangles() const;
   inline BDS_Point *commonvertex(const BDS_Edge *other) const

@@ -187,7 +187,7 @@ struct doubleXstring{
 %token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
 %token tTextAttributes
 %token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tCurrentDirectory
-%token tSyncModel tNewModel
+%token tSyncModel tNewModel tMass tCenterOfMass
 %token tOnelabAction tOnelabRun tCodeName
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateGeometry tRenumberMeshNodes tRenumberMeshElements
@@ -5177,12 +5177,10 @@ FExpr_Single :
       }
       Free($2);
     }
-
   | '#' Struct_FullName '.' tSTRING_Member LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float_getDim($2.char1, $2.char2, $4);
     }
-
   | tDimNameSpace LP String__Index RP
     {
       std::string struct_namespace($3);
@@ -5194,7 +5192,6 @@ FExpr_Single :
       std::string struct_namespace(std::string(""));
       $$ = (double)gmsh_yynamespaces[struct_namespace].size();
     }
-
   | String__Index NumericIncrement
     {
       if(!gmsh_yysymbols.count($1)){
@@ -5234,7 +5231,6 @@ FExpr_Single :
       }
       Free($1);
     }
-
   | String__Index '(' FExpr ')' NumericIncrement
     {
       int index = (int)$3;
@@ -5255,7 +5251,6 @@ FExpr_Single :
       }
       Free($1);
     }
-
   // Option Strings
 /* not any more ...
   | tSTRING '.' tSTRING
@@ -5264,7 +5259,6 @@ FExpr_Single :
       Free($1); Free($3);
     }
 */
-
 //+++ ... extention to structures
 // PD: TO FIX (to avoid shift/reduce conflict)
 //  | Struct_FullName '.' tSTRING_Member
@@ -5276,7 +5270,6 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5);
     }
-
   | String__Index '.' tSTRING_Member '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
@@ -5293,7 +5286,6 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
     }
-
   | String__Index '[' FExpr ']' '.' tSTRING
     {
       NumberOption(GMSH_GET, $1, (int)$3, $6, $$);
@@ -5667,6 +5659,32 @@ FExpr_Multi :
       $$ = List_Create(10, 10, sizeof(double));
       getBoundingBox($2, $4, $$);
       List_Delete($4);
+    }
+   | tMass GeoEntity123 '{' FExpr '}'
+    {
+      $$ = List_Create(1, 1, sizeof(double));
+      double m = 0;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->getMass($2, (int)$4, m);
+      }
+      else{
+        yymsg(0, "Mass only available with OpenCASCADE geometry kernel");
+      }
+      List_Add($$, &m);
+    }
+   | tCenterOfMass GeoEntity123 '{' FExpr '}'
+    {
+      $$ = List_Create(3, 1, sizeof(double));
+      double x = 0., y = 0., z = 0.;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->getCenterOfMass($2, (int)$4, x, y, z);
+      }
+      else{
+        yymsg(0, "CenterOfMass only available with OpenCASCADE geometry kernel");
+      }
+      List_Add($$, &x);
+      List_Add($$, &y);
+      List_Add($$, &z);
     }
   | Transform
     {

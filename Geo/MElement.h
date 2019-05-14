@@ -16,10 +16,10 @@
 #include "MVertex.h"
 #include "MEdge.h"
 #include "MFace.h"
-#include "FuncSpaceData.h"
 #include "nodalBasis.h"
 #include "polynomialBasis.h"
 #include "GaussIntegration.h"
+#include "FuncSpaceData.h"
 
 class GModel;
 class JacobianBasis;
@@ -57,7 +57,6 @@ protected:
 public:
   MElement(std::size_t num = 0, int part = 0);
   virtual ~MElement() {}
-
   // set/get the tolerance for isInside() test
   static void setTolerance(const double tol);
   static double getTolerance();
@@ -114,7 +113,11 @@ public:
   {
     Msg::Error("Vertex information not available for this element");
   }
-
+  // get the face  using the local orientation defined by Solin
+  virtual MFace getFaceSolin(int numFace) = 0;
+  // get the global vertex num of a edge using the local orientation defined by
+  // Solin
+  virtual int getVertexSolin(int numEdge, int numVertex) = 0;
   // get the vertex using the I-deas UNV ordering
   virtual MVertex *getVertexUNV(int num) { return getVertex(num); }
 
@@ -316,9 +319,14 @@ public:
   // get the function space for the element
   virtual const nodalBasis *getFunctionSpace(int order = -1,
                                              bool serendip = false) const;
+  virtual const FuncSpaceData getFuncSpaceData(int order = -1,
+                                               bool serendip = false) const;
 
   // get the function space for the jacobian of the element
-  virtual const JacobianBasis *getJacobianFuncSpace(int order = -1) const;
+  virtual const JacobianBasis *
+  getJacobianFuncSpace(int orderElement = -1) const;
+  virtual const FuncSpaceData
+  getJacobianFuncSpaceData(int orderElement = -1) const;
 
   // return parametric coordinates (u,v,w) of a vertex
   virtual void getNode(int num, double &u, double &v, double &w) const;

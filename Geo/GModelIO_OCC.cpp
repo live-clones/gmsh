@@ -1189,24 +1189,25 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
                                const std::vector<double> &knots,
                                const std::vector<int> &multiplicities)
 {
-  if(pointTags.size() < 2) {
+  int np = pointTags.size();
+  if(np < 2) {
     Msg::Error("BSpline curve requires at least 2 control points");
     return false;
   }
   int d = degree;
   std::vector<double> w(weights), k(knots);
   std::vector<int> m(multiplicities);
-  // degree 3 if not specified:
+  // degree 3 if not specified...
   if(d <= 0) d = 3;
-  // But degree nPts-1 if nPts is 2 or 3:
-  if(d > static_cast<int>(pointTags.size()) - 1) d = pointTags.size() - 1;
+  // ... or number of control points - 1 if not enough points
+  if(d > np - 1) d = np - 1;
   // automatic default weights if not provided:
-  if(w.empty()) w.resize(pointTags.size(), 1);
+  if(w.empty()) w.resize(np, 1);
   // automatic default knots and multiplicities if not provided:
   if(k.empty()) {
     bool periodic = (pointTags.front() == pointTags.back());
     if(!periodic) {
-      int sum_of_all_mult = pointTags.size() + d + 1;
+      int sum_of_all_mult = np + d + 1;
       int num_knots = sum_of_all_mult - 2 * d;
       if(num_knots < 2) {
         Msg::Error("Not enough control points for building BSpline of "
@@ -1220,7 +1221,7 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
       m.back() = d + 1;
     }
     else {
-      k.resize(pointTags.size() - 1);
+      k.resize(np - d + 2);
       for(std::size_t i = 0; i < k.size(); i++) k[i] = i;
       m.resize(k.size(), 1);
       m.front() = d - 1;
@@ -2274,8 +2275,13 @@ bool OCC_Internals::_extrude(int mode,
       if(e)
         Msg::Warning(
           "Structured meshes not yet available with OpenCASCADE pipe");
-      // TODO - need to pass the profile, too
-      // dim = getReturnedShapes(c, (BRepFill_Pipe*)&pipe, top, body, lateral);
+      // Check if
+      //   pipe.FirstShape() gives us "bottom"
+      //   pipe.LastShape() gives us "top"
+      //   pipe.Shape() gives us "body"
+      //   using pipe.Spine(), pipe.{Face,Edge}(spine, c) gives us the lateral
+      //     entities
+      //dim = getReturnedShapesForPipe(c, pipe, top, body, lateral);
     }
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -3328,6 +3334,67 @@ bool OCC_Internals::getVertex(int tag, double &x, double &y, double &z)
   return false;
 }
 
+bool OCC_Internals::getMass(int dim, int tag, double &mass)
+{
+  if(!_isBound(dim, tag)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
+               tag);
+    return false;
+  }
+  TopoDS_Shape shape = _find(dim, tag);
+  GProp_GProps System;
+  switch(dim){
+  case 1: BRepGProp::LinearProperties(shape, System); break;
+  case 2: BRepGProp::SurfaceProperties(shape, System); break;
+  case 3: BRepGProp::VolumeProperties(shape, System); break;
+  }
+  mass = System.Mass();
+  return true;
+}
+
+bool OCC_Internals::getCenterOfMass(int dim, int tag, double &x, double &y, double &z)
+{
+  if(!_isBound(dim, tag)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
+               tag);
+    return false;
+  }
+  TopoDS_Shape shape = _find(dim, tag);
+  GProp_GProps System;
+  switch(dim){
+  case 1: BRepGProp::LinearProperties(shape, System); break;
+  case 2: BRepGProp::SurfaceProperties(shape, System); break;
+  case 3: BRepGProp::VolumeProperties(shape, System); break;
+  }
+  gp_Pnt c = System.CentreOfMass();
+  x = c.X();
+  y = c.Y();
+  z = c.Z();
+  return true;
+}
+
+bool OCC_Internals::getMatrixOfInertia(int dim, int tag, std::vector<double> &mat)
+{
+  if(!_isBound(dim, tag)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
+               tag);
+    return false;
+  }
+  TopoDS_Shape shape = _find(dim, tag);
+  GProp_GProps System;
+  switch(dim){
+  case 1: BRepGProp::LinearProperties(shape, System); break;
+  case 2: BRepGProp::SurfaceProperties(shape, System); break;
+  case 3: BRepGProp::VolumeProperties(shape, System); break;
+  }
+  gp_Mat m = System.MatrixOfInertia();
+  mat.clear();
+  for(int i = 1; i <= 3; i++)
+    for(int j = 1; j <= 3; j++)
+      mat.push_back(m.Value(i, j));
+  return true;
+}
+
 bool const sortByInvDim(std::pair<int, int> const &lhs,
                         std::pair<int, int> const &rhs)
 {
@@ -3382,10 +3449,11 @@ void OCC_Internals::synchronize(GModel *model)
         tag = ++vTagMax;
         Msg::Info("Binding unbound OpenCASCADE point to tag %d", tag);
       }
-      double lc = _attributes->getMeshSize(0, vertex);
-      occv = new OCCVertex(model, tag, vertex, lc);
+      occv = new OCCVertex(model, tag, vertex);
       model->add(occv);
     }
+    double lc = _attributes->getMeshSize(0, vertex);
+    occv->setPrescribedMeshSizeAtVertex(lc);
     std::vector<std::string> labels;
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);

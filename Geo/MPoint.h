@@ -90,6 +90,8 @@ public:
   {
     return 1;
   }
+  virtual int getVertexSolin(int numEdge, int numVertex){return 0;}
+  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
 };
 
 #endif

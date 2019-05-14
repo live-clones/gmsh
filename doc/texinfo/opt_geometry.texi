@@ -22,7 +22,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCTargetUnit
-Length unit to which coordinates from STEP and IGES files are converted to when imported by OpenCASCADE, e.g. 'M' for meters (leave empty to keep the unit defined in the STEP and IGES file)@*
+Length unit to which coordinates from STEP and IGES files are converted to when imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use OpenCASCADE default bahavior)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 

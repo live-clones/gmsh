@@ -21,7 +21,8 @@ void refineMeshBDS(
   std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap = 0,
   std::vector<SPoint2> *true_boundary = 0);
 void modifyInitialMeshToRemoveDegeneracies(
-					   GFace *gf, BDS_Mesh &m,
-					   std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap);
+  GFace *gf, BDS_Mesh &m,
+  std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap);
+void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap);
 
 #endif

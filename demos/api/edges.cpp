@@ -84,10 +84,11 @@ int main(int argc, char **argv)
   // iterate over all 1D elements and get integration information
   gmsh::model::mesh::getElementTypes(eleTypes, 1);
   int eleType1D = eleTypes[0];
-  std::vector<double> intpts, bf;
+  std::vector<double> uvw, q;
+  gmsh::model::mesh::getIntegrationPoints(eleType1D, "Gauss3", uvw, q);
+  std::vector<double> bf;
   int numComp;
-  gmsh::model::mesh::getBasisFunctions(eleType1D, "Gauss3", "IsoParametric",
-                                       intpts, numComp, bf);
+  gmsh::model::mesh::getBasisFunctions(eleType1D, uvw, "Lagrange", numComp, bf);
   gmsh::model::getEntities(entities, 1);
   for(std::size_t i = 0; i < entities.size(); i++){
     int c = entities[i].second;
@@ -96,7 +97,7 @@ int main(int argc, char **argv)
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements on curve " + std::to_string(c));
     std::vector<double> jac, det, pts;
-    gmsh::model::mesh::getJacobians(eleType1D, "Gauss3", jac, det, pts, c);
+    gmsh::model::mesh::getJacobians(eleType1D, uvw, jac, det, pts, c);
   }
 
   gmsh::fltk::run();

@@ -246,6 +246,22 @@ public:
   }
 
   /**
+     @param scalar A pointer to an array of scalar;
+     @param r The number of rows.
+
+     This fullVector becomes a proxy of the array.
+
+     Previous data are lost.
+  */
+  void setAsProxy(scalar *data, int r)
+  {
+    if(_own_data && _data) delete[] _data;
+    _own_data = false;
+    _r = r;
+    _data = data;
+  }
+
+  /**
      @param s A scalar.
 
      Multiplies all the data of this fullVector by s.
@@ -351,13 +367,7 @@ public:
 
      This string starts by name.
   */
-  void print(const char *name = "") const
-  {
-    printf("double %s[%d]=\n", name, size());
-    printf("{  ");
-    for(int I = 0; I < size(); I++) { printf("%12.5E ", (*this)(I)); }
-    printf("};\n");
-  }
+  void print(const std::string name = "", const std::string format = "") const;
 
   /**
      @param f A pointer to a FILE stream.

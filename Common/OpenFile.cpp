@@ -415,7 +415,10 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   }
   else if(ext == ".med" || ext == ".MED" || ext == ".mmed" || ext == ".MMED" ||
           ext == ".rmed" || ext == ".RMED") {
-    status = GModel::readMED(fileName);
+    if(CTX::instance()->mesh.medSingleModel)
+      status = GModel::current()->readMED(fileName, 0);
+    else
+      status = GModel::readMED(fileName);
     mesh = true;
 #if defined(HAVE_POST)
     if(status > 1) status = PView::readMED(fileName);
@@ -522,6 +525,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 #endif
     }
 #if defined(HAVE_POST)
+    else if(ext == ".pch") {
+      status = PView::readPCH(fileName);
+    }
     else if(!strncmp(header, "$PostFormat", 11) ||
             !strncmp(header, "$View", 5)) {
       status = PView::readPOS(fileName);

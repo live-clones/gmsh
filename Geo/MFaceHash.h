@@ -12,7 +12,7 @@
 struct Hash_Face : public std::unary_function<MFace, size_t> {
   size_t operator()(const MFace &f) const
   {
-    const MVertex *v[4];
+    const MVertex *v[4] = {0, 0, 0, 0};
     f.getOrderedVertices(v);
     return HashFNV1a<sizeof(MVertex * [4])>::eval(v);
   }

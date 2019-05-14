@@ -1033,6 +1033,18 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
 
 #endif
 
+bool PViewDataGModel::readPCH(const std::string &fileName, int fileIndex)
+{
+  Msg::Info("Placeholder for reading punch file '%s'",
+            fileName.c_str());
+
+  std::map<int, std::vector<double> > data;
+  for(int i = 1; i < 200; i++)
+    data[i].push_back(1.234);
+  addData(GModel::current(), data, 0, 0.0, 1, 1);
+
+  return true;
+}
 
 void PViewDataGModel::sendToServer(const std::string &name)
 {
