@@ -15,7 +15,7 @@ set(SRC
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
     meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp
-    meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
+    meshGRegionExtruded.cpp meshGRegionCarveHole.cpp 
     meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
   meshGRegionBoundaryLayer.cpp
   meshRelocateVertex.cpp
@@ -31,6 +31,8 @@ set(SRC
   DivideAndConquer.cpp
   Field.cpp
   filterElements.cpp
+  gmshCrossFields.cpp
+  automaticMeshSizeField.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

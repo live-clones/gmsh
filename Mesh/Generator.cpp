@@ -482,10 +482,10 @@ static void Mesh2D(GModel *m)
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     // STL remeshing is not yet thread-safe
-    if((*it)->geomType() == GEntity::DiscreteSurface){
-      if(static_cast<discreteFace *>(*it)->haveParametrization())
-        Msg::SetNumThreads(1);
-    }
+    //    if((*it)->geomType() == GEntity::DiscreteSurface){
+    //      if(static_cast<discreteFace *>(*it)->haveParametrization())
+    //        Msg::SetNumThreads(1);
+    //    }
     // Frontal-Delaunay for quads and co are not yet thread-safe
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||

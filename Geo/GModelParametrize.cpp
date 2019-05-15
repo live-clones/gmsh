@@ -79,6 +79,36 @@ static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
   return HXT_STATUS_OK;
 }
 
+HXTStatus computeDiscreteCurvatures(GModel *gm, std::map<MVertex* , std::pair<SVector3, SVector3> > &C ){
+  C.clear();
+  
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    HXTMesh *m;
+    HXTEdges *edges;
+    double *nodalCurvatures;
+    double *crossField;
+    std::map<MVertex *, int> v2c;
+    std::vector<MVertex *> c2v;
+    gmsh2hxt(*it, &m, v2c, c2v);
+    HXT_CHECK(hxtEdgesCreate(m, &edges));
+    HXT_CHECK(hxtCurvatureRusinkiewicz(m, &nodalCurvatures, &crossField, edges, false));
+    for (size_t i=0;i<m->vertices.num;i++){
+      MVertex *v = c2v[i];
+      double *c = &nodalCurvatures[6*i];
+      SVector3 cMax (c[0],c[1],c[2]);
+      SVector3 cMin (c[3],c[4],c[5]);
+      std::pair<SVector3, SVector3> out = std::make_pair(cMax,cMin);
+      C.insert(std::make_pair(v,out));
+    }    
+    HXT_CHECK(hxtEdgesDelete(&edges));
+    HXT_CHECK(hxtFree(&nodalCurvatures));
+    HXT_CHECK(hxtFree(&crossField));
+    HXT_CHECK(hxtMeshDelete(&m));    
+  }
+  return HXT_STATUS_OK;  
+}
+
+
 void parametrizeAllGEdge(GModel *gm)
 {
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
@@ -87,17 +117,17 @@ void parametrizeAllGEdge(GModel *gm)
   }
 }
 
-int parametrizeAllGFace(GModel *gm)
+int parametrizeAllGFace(GModel *gm,  std::map<MVertex* , std::pair<SVector3, SVector3> > *C)
 {
   int result = 0;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
-    if(df) result += parametrizeGFace(df);
+    if(df) result += parametrizeGFace(df,C);
   }
   return result;
 }
 
-int parametrizeGFace(discreteFace *gf)
+int parametrizeGFace(discreteFace *gf,  std::map<MVertex* , std::pair<SVector3, SVector3> > *C)
 {
   int n = 1;
   if(gf->triangles.empty()) return 0;
@@ -110,6 +140,7 @@ int parametrizeGFace(discreteFace *gf)
   gmsh2hxt(gf, &m, v2c, c2v);
   //  double *nodalCurvatures;
   //  double *crossField;
+  //  printf("A %d triangles\n",m->triangles.num);
   HXT_CHECK(hxtEdgesCreate(m, &edges));
   HXT_CHECK(hxtMeanValuesCreate(edges, &param));
   HXT_CHECK(hxtMeanValuesCompute(param));
@@ -120,10 +151,20 @@ int parametrizeGFace(discreteFace *gf)
   gf->stl_vertices_uv.resize(nv);
   gf->stl_vertices_xyz.clear();
   gf->stl_vertices_xyz.resize(nv);
+  gf->stl_curvatures.clear();
+  if (C) gf->stl_curvatures.resize(2*nv);
   gf->stl_normals.clear();
   gf->stl_normals.resize(nv);
-  
+
   for(int iv = 0; iv < nv; iv++) {
+    if (C){
+      MVertex *v = c2v[iv];
+      std::map<MVertex* , std::pair<SVector3, SVector3> >::iterator it = C->find(v);
+      if (it == C->end())Msg::Error("POINT %d NOT FOUND FOR COMPUTING CURVATURES",v->getNum());
+      //      printf("%g %g %g\n",it->second.first.x(),it->second.first.y(),it->second.first.z());
+      gf->stl_curvatures[2*iv] = it->second.first;
+      gf->stl_curvatures[2*iv+1] = it->second.second;
+    }
     gf->stl_vertices_uv[iv]  = SPoint2(uvc[2*iv],uvc[2*iv+1]);
 
     gf->stl_vertices_xyz[iv] =
@@ -138,14 +179,16 @@ int parametrizeGFace(discreteFace *gf)
     gf->stl_triangles[3 * ie + 1] = m->triangles.node[3 * ie + 1];
     gf->stl_triangles[3 * ie + 2] = m->triangles.node[3 * ie + 2];
   }
+  //  printf("A\n");
   gf->fillVertexArray(false);
   HXT_CHECK(hxtMeshDelete(&m));
   HXT_CHECK(hxtEdgesDelete(&edges));
   HXT_CHECK(hxtFree(&uvc));
+  //  printf("B\n");
   return 0;
 }
 #else
-int parametrizeGFace(GFace *gf)
+int parametrizeGFace(GFace *gf,  std::map<std::pair<MVertex*,GFace*> , std::pair<SVector3, SVector3> > *C)
 {
   Msg::Error("Gmsh should be compiled against HXT for being able to compute "
              "discrete parametrizations");
@@ -174,12 +217,27 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   }
   std::map<MEdge, int, Less_Edge>::iterator it = e.begin();
   std::vector<MEdge> _bnd;
-  for(; it != e.end(); ++it)
+  for(; it != e.end(); ++it){
     if(it->second == 1) _bnd.push_back(it->first);
+  }
+
   std::vector<std::vector<MVertex *> > vs;
-  //  printf("%d triangles %d edges %d vertices %d edges on
-  //  boundaries\n",t.size(),v.size(),e.size(),_bnd.size());
-  if(!SortEdgeConsecutive(_bnd, vs)) return 2;
+  if(!SortEdgeConsecutive(_bnd, vs)) {
+    // we have vertices adjacent to more than 2 model edges
+    //    FILE *f = fopen("bug.pos","w");
+    //    fprintf(f,"View\"\"{\n");
+    //    for (size_t i=0;i<t.size();i++){      
+    //      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+    //	      t[i]->getVertex(0)->x(),t[i]->getVertex(0)->y(),t[i]->getVertex(0)->z(),
+    //	      t[i]->getVertex(1)->x(),t[i]->getVertex(1)->y(),t[i]->getVertex(1)->z(),
+    //	      t[i]->getVertex(2)->x(),t[i]->getVertex(2)->y(),t[i]->getVertex(2)->z(),
+    //	      t[i]->getVertex(0)->getNum(),t[i]->getVertex(1)->getNum(),t[i]->getVertex(2)->getNum());
+    //    }
+    //    fprintf(f,"};\n");
+    //    fclose(f);
+    //    getchar();
+    return 2;
+  }
   double lmax = 0;
   for(size_t i = 0; i < vs.size(); i++) {
     double li = 0;
@@ -189,7 +247,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     lmax = std::max(li, lmax);
   }
 
-  if(ar * lmax * lmax < 2 * M_PI * surf) { return 2; }
+  if(ar * lmax * lmax < 2 * M_PI * surf) { return 4; }
 
   int poincare =
     t.size() - (2 * (v.size() - 1) - _bnd.size() + 2 * (vs.size() - 1));
@@ -206,6 +264,26 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut)
 {
   GModel m;
+
+  // ----------------------------------------------------------------------------------
+  // STUPID FIX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    std::vector<MTriangle*> aa;
+    for(size_t i = 0; i < (*it)->triangles.size(); i++){
+      if ((*it)->triangles[i]->getVertex(0) == (*it)->triangles[i]->getVertex(1) ||
+	  (*it)->triangles[i]->getVertex(0) == (*it)->triangles[i]->getVertex(2) ||
+	  (*it)->triangles[i]->getVertex(1) == (*it)->triangles[i]->getVertex(2)){
+	//	printf("TRIANGLE BAD %d %d %d\n",(*it)->triangles[i]->getVertex(0)->getNum()
+	//	       ,(*it)->triangles[i]->getVertex(1)->getNum()
+	//	       ,(*it)->triangles[i]->getVertex(2)->getNum());
+      }
+      else aa.push_back((*it)->triangles[i]);      
+    }
+    (*it)->triangles = aa;
+  }
+  // END STUPID FIX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  // ----------------------------------------------------------------------------------
+  
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     int part = 0;
     if((*it)->triangles.empty()) continue;

@@ -32,6 +32,7 @@ public:
   virtual void mesh(bool verbose);
   int minimumDrawSegments() const { return 2 * _pars.size(); }
   virtual int minimumMeshSegments() const { return periodic(0) ? 3 : 2; }
+  virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   void setSplit(discreteEdge *e0, discreteEdge *e1, GVertex *vs)
   {
     _split[0] = e0;

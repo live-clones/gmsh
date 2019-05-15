@@ -152,8 +152,18 @@ SVector3 discreteEdge::firstDer(double par) const
   return der;
 }
 
+SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar, int dir) const {
+  GPoint p = point(epar);
+  double guess[2];
+  GPoint ps = face->closestPoint(SPoint3(p.x(),p.y(),p.z()),guess);
+  //  printf("garouclaboucazou %g %g %g %g %g %g\n",p.x(),p.y(),p.z(),ps.x(),ps.y(),ps.z());
+  return SPoint2(ps.u(),ps.v());
+}
+
+
 double discreteEdge::curvature(double par) const
 {
+  return 1.e-12;
   double tLoc;
   int iEdge;
   if(_discretization.size() <= 3)
@@ -238,8 +248,14 @@ void discreteEdge::createGeometry()
   if(lines.empty()) return;
 
   if(!_discretization.empty()) return;
-  
+
+  //  printf("line %d\n",tag());
+  //  for(std::size_t i = 0; i < lines.size(); i++) {
+  //    printf("(%d %d)",lines[i]->getVertex(0)->getNum(),lines[i]->getVertex(1)->getNum());
+  //  }
+  //  printf("\n");
   orderMLines();
+  //  printf("done \n");
   
   bool reverse = false;
   if(getEndVertex())

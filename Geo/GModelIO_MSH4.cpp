@@ -1297,11 +1297,13 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp,  bool binary
       gf->stl_vertices_uv.clear();
       gf->stl_normals.clear();
       for (int i=0;i<n;i++){
-	double u,v,x,y,z;
-	fscanf (fp,"%lf %lf %lf %lf %lf",&u,&v,&x,&y,&z);
+	double u,v,x,y,z,cxM,cyM,czM,cxm,cym,czm;
+	fscanf (fp,"%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",&u,&v,&x,&y,&z,&cxM,&cyM,&czM,&cxm,&cym,&czm);
 	gf->stl_vertices_uv.push_back(SPoint2(u,v));
 	gf->stl_vertices_xyz.push_back(SPoint3(x,y,z));
 	gf->stl_normals.push_back(SVector3(0,0,0));
+	gf->stl_curvatures.push_back(SVector3(cxM,cyM,czM));
+	gf->stl_curvatures.push_back(SVector3(cxm,cym,czm));
       }
       gf->stl_triangles.clear();
       for (int i=0;i<t;i++){
@@ -2821,8 +2823,15 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,  bool binar
     if (gf->stl_vertices_uv.size()){
       fprintf(fp,"%d %lu %lu\n",gf->tag(),gf->stl_vertices_uv.size(),gf->stl_triangles.size()/3);
       for (size_t i=0;i<gf->stl_vertices_uv.size();i++){
-	fprintf(fp,"%g %g %g %g %g\n",gf->stl_vertices_uv[i].x(),gf->stl_vertices_uv[i].y(),
-		gf->stl_vertices_xyz[i].x(),gf->stl_vertices_xyz[i].y(),gf->stl_vertices_xyz[i].z());
+	if (gf->stl_curvatures.empty())
+	  fprintf(fp,"%22.15e %22.15e %22.15e %22.15e %22.15e 0 0 0 0 0 0\n",gf->stl_vertices_uv[i].x(),gf->stl_vertices_uv[i].y(),
+		  gf->stl_vertices_xyz[i].x(),gf->stl_vertices_xyz[i].y(),gf->stl_vertices_xyz[i].z());
+	else
+	  fprintf(fp,"%22.15e %22.15e %22.15e %22.15e %22.15e %22.15e %22.15e %22.15e %22.15e %22.15e %22.15e\n",gf->stl_vertices_uv[i].x(),gf->stl_vertices_uv[i].y(),
+		  gf->stl_vertices_xyz[i].x(),gf->stl_vertices_xyz[i].y(),gf->stl_vertices_xyz[i].z(),
+		  gf->stl_curvatures[2*i].x(),gf->stl_curvatures[2*i].y(),gf->stl_curvatures[2*i].z(),
+		  gf->stl_curvatures[2*i+1].x(),gf->stl_curvatures[2*i+1].y(),gf->stl_curvatures[2*i+1].z());
+	
       }
       for (size_t i=0;i<gf->stl_triangles.size()/3;i++){
 	fprintf(fp,"%d %d %d\n",gf->stl_triangles[3 * i + 0],gf->stl_triangles[3 * i + 1],gf->stl_triangles[3 * i + 2]);

@@ -327,6 +327,7 @@ public:
   std::vector<SPoint2> stl_vertices_uv;
   std::vector<SPoint3> stl_vertices_xyz;
   std::vector<SVector3> stl_normals;
+  std::vector<SVector3> stl_curvatures;
   std::vector<int> stl_triangles;
 
   // a vertex array containing a geometrical representation of the
