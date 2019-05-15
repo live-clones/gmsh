@@ -19,7 +19,7 @@ void parametrizeAllGEdge(GModel *gm);
 int parametrizeGFace(
   discreteFace *gf,
   std::map<MVertex *, std::pair<SVector3, SVector3> > *C = NULL);
-HXTStatus computeDiscreteCurvatures(
+int computeDiscreteCurvatures(
   GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > &C);
 
 #endif

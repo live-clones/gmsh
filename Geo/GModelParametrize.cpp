@@ -30,7 +30,9 @@ extern "C" {
 #include "hxt_edge.h"
 #include "hxt_mean_values.h"
 }
+#endif
 
+#if defined(HAVE_HXT)
 static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
                           std::map<MVertex *, int> &v2c,
                           std::vector<MVertex *> &c2v)
@@ -78,8 +80,10 @@ static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
   *pm = m;
   return HXT_STATUS_OK;
 }
+#endif
 
-HXTStatus computeDiscreteCurvatures(
+#if defined(HAVE_HXT)
+int computeDiscreteCurvatures(
   GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > &C)
 {
   C.clear();
@@ -108,7 +112,8 @@ HXTStatus computeDiscreteCurvatures(
     HXT_CHECK(hxtFree(&crossField));
     HXT_CHECK(hxtMeshDelete(&m));
   }
-  return HXT_STATUS_OK;
+#endif
+  return 0;
 }
 
 void parametrizeAllGEdge(GModel *gm)
@@ -133,6 +138,7 @@ int parametrizeAllGFace(GModel *gm,
 int parametrizeGFace(discreteFace *gf,
                      std::map<MVertex *, std::pair<SVector3, SVector3> > *C)
 {
+#if defined(HAVE_HXT)
   int n = 1;
   if(gf->triangles.empty()) return 0;
   HXT_CHECK(hxtInitializeLinearSystems(&n, NULL));
@@ -192,18 +198,9 @@ int parametrizeGFace(discreteFace *gf,
   HXT_CHECK(hxtEdgesDelete(&edges));
   HXT_CHECK(hxtFree(&uvc));
   //  printf("B\n");
+#endif
   return 0;
 }
-#else
-int parametrizeGFace(
-  GFace *gf,
-  std::map<std::pair<MVertex *, GFace *>, std::pair<SVector3, SVector3> > *C)
-{
-  Msg::Error("Gmsh should be compiled against HXT for being able to compute "
-             "discrete parametrizations");
-  return -1;
-}
-#endif
 
 int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
                                   double ar)
