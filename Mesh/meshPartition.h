@@ -8,6 +8,7 @@
 
 class GModel;
 class MElement;
+class GFace;
 
 int PartitionMesh(GModel *const model);
 int PartitionFace(GFace *gf, int np, int *p);
