@@ -210,7 +210,7 @@ static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, double &t,
   }
   m.cleanup();
   delete qual;
-  t += ( Cpu() - t1 );
+  t += (Cpu() - t1);
 }
 
 static bool edgeSwapTestDelaunayAniso(BDS_Edge *e, GFace *gf,
@@ -267,7 +267,7 @@ void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap)
 }
 
 static bool edges_sort(std::pair<double, BDS_Edge *> a,
-                std::pair<double, BDS_Edge *> b)
+                       std::pair<double, BDS_Edge *> b)
 {
   // don't compare pointers: it leads to non-deterministic behavior
   // if (a.first == b.first){
@@ -330,7 +330,7 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
 
 // create a valid initial mesh when degeneracies are present
 
-static void getDegeneracy(BDS_Mesh &m, std::vector<BDS_Point*> &deg)
+static void getDegeneracy(BDS_Mesh &m, std::vector<BDS_Point *> &deg)
 {
   deg.clear();
   std::set<BDS_Point *, PointLessThan>::iterator itp = m.points.begin();
@@ -437,7 +437,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
       if(e->p2->degenerated) U2 = U1;
       double U = 0.5 * (U1 + U2);
       double V = 0.5 * (e->p1->v + e->p2->v);
-      if(faceDiscrete)middlePoint(gf, e, U, V);
+      if(faceDiscrete) middlePoint(gf, e, U, V);
 
       GPoint gpp = gf->point(U, V);
       bool inside = true;
@@ -599,51 +599,6 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q,
   }
   t += (Cpu() - t1);
 }
-
-/*
->>>>>>> 44f622c69e1a8386f8dd66b63bb5b07c55b00f9f
-static void CHECK_STRANGE(const char *c, BDS_Mesh &m)
-{
-  return;
-#if 0
-  int strange = 0;
-  for (size_t i=0;i<m.triangles.size();++i){
-    BDS_Point *pts[4];
-    m.triangles[i]->getNodes(pts);
-    double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
-    if (pts[0]->degenerated+pts[1]->degenerated+pts[2]->degenerated <= 1){
-      if (fabs(surface_triangle_param(pts[0],pts[1],pts[2]))<1.e-8){
-    strange ++;
-      }
-    }
-  }
-  if (strange) printf("strange(%s) = %d\n",c,strange);
-
-  return;
-  for (size_t int i=0;i<m.triangles.size();++i){
-    BDS_Point *pts[4];
-    m.triangles[i]->getNodes(pts);
-    if (pts[0] == pts[1] ||
-    pts[0] == pts[2] ||
-    pts[1] == pts[2]){
-      strange ++;
-    }
-  }
-
-  return;
-  strange = 0;
-  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
-  while (itp != m.points.end()){
-    if ((*itp)->g && (*itp)->g->classif_degree == 2){
-      std::vector<BDS_Face*> t = (*itp)->getTriangles();
-      if (t.size() == 2)strange++;//printf("vertex %d \n",(*itp)->iD);
-    }
-    ++itp;
-  }
-  printf("strange(%s) = %d\n",c,strange);
-#endif
-}
-*/
 
 static void
 computeNodalSizes(GFace *gf, BDS_Mesh &m,
@@ -816,15 +771,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     else
       setDegeneracy(deg, true);
 
-    //    printf("degeneracy %d\n",nbSplit);
-    if (nbSplit){
-      Msg::Info ("Splits are now done to allow geodesics close to singular points");
-      setDegeneracy(deg,false);
-    }
-    else setDegeneracy(deg,true);
-
-    //    printf("degeneracy %d\n",nbSplit);
-
     // we count the number of local mesh modifs.
     int nb_split = 0;
     int nb_smooth = 0;
@@ -890,7 +836,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       ++it;
     }
     if((minL > MINE_ && maxL < MAXE_) || IT > (abs(NIT))) break;
-
 
     IT++;
     Msg::Debug(" iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f -- "
@@ -974,7 +919,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     }
   }
 
-  setDegeneracy(deg,true);
+  setDegeneracy(deg, true);
 
   double t_total = t_spl + t_sw + t_col + t_sm;
   if(!t_total) t_total = 1.e-6;

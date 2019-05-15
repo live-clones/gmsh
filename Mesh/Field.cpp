@@ -27,6 +27,7 @@
 #include "BackgroundMeshTools.h"
 #include "STensor3.h"
 #include "ExtrudeParams.h"
+#include "automaticMeshSizeField.h"
 #include "nanoflann.hpp"
 
 #if defined(HAVE_POST)
@@ -2954,6 +2955,7 @@ FieldManager::FieldManager()
   map_type_name["AttractorAnisoCurve"] = new FieldFactoryT<AttractorAnisoCurveField>();
 #endif
   map_type_name["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
+  map_type_name["AutomaticMeshSizeField"] = new FieldFactoryT<automaticMeshSizeField>();
   _background_field = -1;
 }
 

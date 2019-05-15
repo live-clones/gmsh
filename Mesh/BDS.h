@@ -82,6 +82,7 @@ public:
 
 class BDS_Edge {
   std::vector<BDS_Face *> _faces;
+
 public:
   BDS_Edge(BDS_Point *A, BDS_Point *B) : deleted(false), g(0)
   {

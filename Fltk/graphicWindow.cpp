@@ -61,6 +61,7 @@ typedef unsigned long intptr_t;
 #include "HighOrder.h"
 #include "OS.h"
 #include "onelabUtils.h"
+#include "gmshCrossFields.h"
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
@@ -2114,6 +2115,12 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 1;
   OptimizeMesh(GModel::current());
   CTX::instance()->lock = 0;
+  drawContext::global()->draw();
+}
+
+static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
+{
+  computeCrossField (GModel::current());
   drawContext::global()->draw();
 }
 
@@ -4297,6 +4304,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_inspect_cb} ,
   {"0Modules/Mesh/Refine by splitting",
    (Fl_Callback *)mesh_refine_cb} ,
+  {"0Modules/Mesh/Compute Cross Field",
+   (Fl_Callback *)mesh_cross_compute_cb} ,
 #if defined(HAVE_METIS)
   {"0Modules/Mesh/Partition",
    (Fl_Callback *)mesh_partition_cb} ,

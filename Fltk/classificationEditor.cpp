@@ -45,9 +45,6 @@ static void ElementsSelectedMode(classificationEditor *e)
   e->toggles[CLASS_TOGGLE_BOUNDARY]->activate();
   e->inputs[CLASS_VALUE_ANGLE]->activate();
   e->buttons[CLASS_BUTTON_CLASSIFY]->activate();
-
-  //  e->buttons[CLASS_BUTTON_SELECT_ELEMENTS]->deactivate();
-  //  e->buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]->deactivate();
 }
 
 static void update_edges_cb(Fl_Widget *w, void *data)
@@ -263,41 +260,28 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
   NoElementsSelectedMode(e);
 }
 
-/*
-static void printttt(std::vector<MTriangle *> &t, int p){
-  char name [256];
-  sprintf(name, "f%d.pos",p);
-  FILE *f = fopen(name,"w");
-  fprintf(f,"View \" \"{\n");
-  for (size_t i=0;i<t.size();++i){
-    fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-	    t[i]->getVertex(0)->x(),t[i]->getVertex(0)->y(),t[i]->getVertex(0)->z(),
-	    t[i]->getVertex(1)->x(),t[i]->getVertex(1)->y(),t[i]->getVertex(1)->z(),
-	    t[i]->getVertex(2)->x(),t[i]->getVertex(2)->y(),t[i]->getVertex(2)->z(),
-	    p,p,p);
-  }
-  fprintf(f,"};\n");
-  fclose(f);
-}
-*/
-
-
 static void classify_cb(Fl_Widget *w, void *data)
 {
+  //  printf("cpoc<<<\n");
   classificationEditor *e = (classificationEditor *)data;
 
-  if (!e->selected) {
+  if(!e->selected) {
     e->selected =
       new discreteEdge(GModel::current(),
-		       GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+                       GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
     GModel::current()->add(e->selected);
   }
-  
-  if (e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
-    computeEdgeCut (GModel::current(), e->selected->lines,100000);
-  
-  computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
+  //  printf("cpoc<<<\n");
 
+  std::map<MVertex* , std::pair<SVector3, SVector3> > CURVATURES;
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
+    computeDiscreteCurvatures(GModel::current(), CURVATURES );
+    computeEdgeCut(GModel::current(), e->selected->lines, 100000);
+  }
+  //  printf("cpoc<<<\n");
+
+  computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
+  
   GModel::current()->classifyFaces();
 
   // remove selected, but do not delete its elements
@@ -307,14 +291,22 @@ static void classify_cb(Fl_Widget *w, void *data)
     delete e->selected;
     e->selected = 0;
   }
+  //  printf("cpoc<<<\n");
 
   e->elements.clear();
   e->edges_detected.clear();
   GModel::current()->pruneMeshVertexAssociations();
   NoElementsSelectedMode(e);
 
-  if (e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
-    parametrizeAllGFace(GModel::current());
+  //  printf("cpoc<<< PARAMETRIZE\n");
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
+    //    printf("ZAZOU\n");
+    parametrizeAllGEdge(GModel::current());
+    //    printf("ZAZOU\n");
+    parametrizeAllGFace(GModel::current(), &CURVATURES);
+  }
+  //  printf("cpoc<<<\n");
+
 }
 
 classificationEditor::classificationEditor() : selected(0)
@@ -420,18 +412,18 @@ classificationEditor::classificationEditor() : selected(0)
     x += WB;
     y += BH;
 
-    buttons[CLASS_BUTTON_CLASSIFY] =
-      new Fl_Return_Button((int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
+    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button(
+      (int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
     buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
     buttons[CLASS_BUTTON_CLASSIFY]->activate();
 
-    
     x -= WB;
 
     y += BH;
-    toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES] = new Fl_Check_Button( x, y, width - x - 2 * WB, BH, "Create parametrized discrete model");
-    toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->type(FL_TOGGLE_BUTTON);
-
+    toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES] = new Fl_Check_Button(
+      x, y, width - x - 2 * WB, BH, "Create parametrized discrete model");
+    toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->type(
+      FL_TOGGLE_BUTTON);
   }
 
   window->end();

@@ -275,7 +275,6 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   }
 
   pnt = proj.NearestPoint();
-  //  Msg::Info("%g %g %g vs %g %g %g\n",pnt.X(), pnt.Y(), pnt.Z(),qp.x(),qp.y(),qp.z());
   return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, pp);
 }
 

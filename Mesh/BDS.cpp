@@ -166,7 +166,8 @@ void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3])
   norme(c);
 }
 
-static double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
+static double surface_triangle_param(BDS_Point *p1, BDS_Point *p2,
+                                     BDS_Point *p3)
 {
   // FIXME
   // THIS ASSUMES DEGENERATED EDGES ALONG AXIS U !!!
@@ -1200,7 +1201,6 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
     }
   }
 
-  //  if (p->iD == 17127)printf("a \n");
   if(e->numfaces() == 2) {
     BDS_Point *oface[2];
     e->oppositeof(oface);
@@ -1316,7 +1316,6 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
 
   return true;
 }
-
 
 // Tutte's simple smoothing
 // other implementations are coming
@@ -1751,7 +1750,4 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
   }
 
   return true;
-  
 }
-
-
