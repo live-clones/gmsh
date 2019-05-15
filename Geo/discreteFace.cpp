@@ -64,15 +64,15 @@ int discreteFace::trianglePosition(double par1, double par2, double &u,
 {
 #if defined(HAVE_HXT)
   if(_parametrizations.empty()) return 0;
+  int ipar = _parametrizations.size() == 1 ? 0 : _currentParametrization;
+  if(ipar < 0) return 0;
 
   double xy[3] = {par1, par2, 0};
   double uv[3];
-  const MElement *e =
-    _parametrizations[_currentParametrization].oct->find(par1, par2, 0.0);
+  const MElement *e = _parametrizations[ipar].oct->find(par1, par2, 0.0);
   if(!e) return -1;
   e->xyz2uvw(xy, uv);
-  int position =
-    (int)((MTriangle *)e - &_parametrizations[_currentParametrization].t2d[0]);
+  int position = (int)((MTriangle *)e - &_parametrizations[ipar].t2d[0]);
   u = uv[0];
   v = uv[1];
   return position;
@@ -84,37 +84,23 @@ int discreteFace::trianglePosition(double par1, double par2, double &u,
 GPoint discreteFace::point(double par1, double par2) const
 {
 #if defined(HAVE_HXT)
-  if(_parametrizations.empty()) return 0;
+  if(_parametrizations.empty()) return GPoint();
+  int ipar = _parametrizations.size() == 1 ? 0 : _currentParametrization;
+  if(ipar < 0) return GPoint();
 
   double xy[3] = {par1, par2, 0};
   double uv[3];
-  const MElement *e =
-    _parametrizations[_currentParametrization].oct->find(par1, par2, 0.0);
+  const MElement *e = _parametrizations[ipar].oct->find(par1, par2, 0.0);
   if(!e) {
     GPoint gp = GPoint(1.e21, 1.e21, 1.e21, this, xy);
     gp.setNoSuccess();
     return gp;
   }
   e->xyz2uvw(xy, uv);
-  int position =
-    (int)((MTriangle *)e - &_parametrizations[_currentParametrization].t2d[0]);
-  const MTriangle &t3d =
-    _parametrizations[_currentParametrization].t3d[position];
-
+  int position = (int)((MTriangle *)e - &_parametrizations[ipar].t2d[0]);
+  const MTriangle &t3d = _parametrizations[ipar].t3d[position];
   double X = 0, Y = 0, Z = 0;
   double eval[3] = {1. - uv[0] - uv[1], uv[0], uv[1]};
-
-  /*  if (position == 1332){
-    printf("%g %g %g\n",t3d.getVertex(0)->x() ,t3d.getVertex(0)->y()
-    ,t3d.getVertex(0)->z()); printf("%g %g %g\n",t3d.getVertex(1)->x()
-    ,t3d.getVertex(1)->y() ,t3d.getVertex(1)->z()); printf("%g %g
-    %g\n",t3d.getVertex(2)->x() ,t3d.getVertex(2)->y() ,t3d.getVertex(2)->z());
-    printf("%22.15e %22.15e\n",e->getVertex(0)->x() ,e->getVertex(0)->y());
-    printf("%22.15e %22.15e\n",e->getVertex(1)->x() ,e->getVertex(1)->y());
-    printf("%22.15e %22.15e\n",e->getVertex(2)->x() ,e->getVertex(2)->y());
-    printf("%d %g %g %g %g\n",position, uv[0],uv[1],par1,par2);
-    }*/
-
   for(int io = 0; io < 3; io++) {
     X += t3d.getVertex(io)->x() * eval[io];
     Y += t3d.getVertex(io)->y() * eval[io];
@@ -185,10 +171,9 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                                   SVector3 *normal) const
 {
 #if defined(HAVE_HXT)
-  int currentParametrization =
-    _parametrizations.size() == 1 ? 0 : _currentParametrization;
   if(_parametrizations.empty()) return GPoint();
-  if(currentParametrization == -1) return GPoint();
+  int ipar = _parametrizations.size() == 1 ? 0 : _currentParametrization;
+  if(ipar < 0) return GPoint();
 
   dfWrapper wrapper(queryPoint);
   do {
@@ -197,7 +182,7 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                      queryPoint.z() - maxDistance};
     double MAX[3] = {queryPoint.x() + maxDistance, queryPoint.y() + maxDistance,
                      queryPoint.z() + maxDistance};
-    _parametrizations[currentParametrization].rtree3d.Search(
+    _parametrizations[ipar].rtree3d.Search(
       MIN, MAX, discreteFace_rtree_callback, &wrapper);
     maxDistance *= 2.0;
   } while(!wrapper._t3d);
@@ -259,19 +244,17 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
 {
 #if defined(HAVE_HXT)
   if(_parametrizations.empty()) return SVector3();
-  if(_currentParametrization == -1) return SVector3();
+  int ipar = _parametrizations.size() == 1 ? 0 : _currentParametrization;
+  if(ipar < 0) return SVector3();
 
-  MElement *e = _parametrizations[_currentParametrization].oct->find(
-    param.x(), param.y(), 0.0);
+  MElement *e = _parametrizations[ipar].oct->find(param.x(), param.y(), 0.0);
   if(!e) {
     Msg::Warning("Triangle not found at uv=(%g,%g) on discrete surface %d",
                  param.x(), param.y(), tag());
     return SVector3(0, 0, 1);
   }
-  int position =
-    (int)((MTriangle *)e - &_parametrizations[_currentParametrization].t2d[0]);
-  const MTriangle &t3d =
-    _parametrizations[_currentParametrization].t3d[position];
+  int position = (int)((MTriangle *)e - &_parametrizations[ipar].t2d[0]);
+  const MTriangle &t3d = _parametrizations[ipar].t3d[position];
   return NORMAL_(t3d);
 #else
   Msg::Error("Cannot evaluate normal on discrete surface without HXT");
@@ -282,12 +265,13 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
 double discreteFace::curvatureMax(const SPoint2 &param) const
 {
 #if defined(HAVE_HXT)
+  if(_parametrizations.empty()) return 0.;
+  int ipar = _parametrizations.size() == 1 ? 0 : _currentParametrization;
+  if(ipar < 0) return 0.;
+
   SVector3 dirMax, dirMin;
   double c, C;
-  int a = _currentParametrization;
-  if(_parametrizations.size() == 1) a = 0;
-  if(a == -1) return 0.0;
-  if(_parametrizations[a].CURV.empty()) return 0.0;
+  if(_parametrizations[ipar].CURV.empty()) return 0.0;
   curvatures(param, dirMax, dirMin, C, c);
   return std::max(c, C);
 #else
@@ -301,14 +285,13 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
                                 double &curvMin) const
 {
 #if defined(HAVE_HXT)
-  if(_parametrizations.empty()) return 0.0;
-  int currentParametrization =
-    _parametrizations.size() == 1 ? 0 : _currentParametrization;
-  if(currentParametrization == -1) return 0.0;
-  if(_parametrizations[currentParametrization].CURV.empty()) return 0.0;
+  if(_parametrizations.empty()) return 0.;
+  int ipar = _parametrizations.size() == 1 ? 0 : _currentParametrization;
+  if(ipar < 0) return 0.;
 
-  MElement *e = _parametrizations[currentParametrization].oct->find(
-    param.x(), param.y(), 0.0);
+  if(_parametrizations[ipar].CURV.empty()) return 0.0;
+
+  MElement *e = _parametrizations[ipar].oct->find(param.x(), param.y(), 0.0);
   if(!e) {
     Msg::Warning("Triangle not found for curvatures at uv=(%g,%g) on "
                  "discrete surface %d",
@@ -316,21 +299,14 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
     return 0.0;
   }
 
-  int position =
-    (int)((MTriangle *)e - &_parametrizations[currentParametrization].t2d[0]);
+  int position = (int)((MTriangle *)e - &_parametrizations[ipar].t2d[0]);
 
-  SVector3 c0max =
-    _parametrizations[currentParametrization].CURV[6 * position + 0];
-  SVector3 c1max =
-    _parametrizations[currentParametrization].CURV[6 * position + 1];
-  SVector3 c2max =
-    _parametrizations[currentParametrization].CURV[6 * position + 2];
-  SVector3 c0min =
-    _parametrizations[currentParametrization].CURV[6 * position + 3];
-  SVector3 c1min =
-    _parametrizations[currentParametrization].CURV[6 * position + 4];
-  SVector3 c2min =
-    _parametrizations[currentParametrization].CURV[6 * position + 5];
+  SVector3 c0max = _parametrizations[ipar].CURV[6 * position + 0];
+  SVector3 c1max = _parametrizations[ipar].CURV[6 * position + 1];
+  SVector3 c2max = _parametrizations[ipar].CURV[6 * position + 2];
+  SVector3 c0min = _parametrizations[ipar].CURV[6 * position + 3];
+  SVector3 c1min = _parametrizations[ipar].CURV[6 * position + 4];
+  SVector3 c2min = _parametrizations[ipar].CURV[6 * position + 5];
 
   curvMax = c0max.norm();
   curvMin = c0min.norm();
@@ -348,13 +324,12 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
 #if defined(HAVE_HXT)
-  if(_currentParametrization == -1)
-    return Pair<SVector3, SVector3>(SVector3(), SVector3());
   if(_parametrizations.empty())
     return Pair<SVector3, SVector3>(SVector3(), SVector3());
+  int ipar = _parametrizations.size() == 1 ? 0 : _currentParametrization;
+  if(ipar < 0) return Pair<SVector3, SVector3>(SVector3(), SVector3());
 
-  MElement *e = _parametrizations[_currentParametrization].oct->find(
-    param.x(), param.y(), 0.0);
+  MElement *e = _parametrizations[ipar].oct->find(param.x(), param.y(), 0.0);
   if(!e) {
     Msg::Warning("Triangle not found for first derivative at uv=(%g,%g) on "
                  "discrete surface %d",
@@ -362,11 +337,9 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
     return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
   }
 
-  int position =
-    (int)((MTriangle *)e - &_parametrizations[_currentParametrization].t2d[0]);
+  int position = (int)((MTriangle *)e - &_parametrizations[ipar].t2d[0]);
 
-  const MTriangle &t3d =
-    _parametrizations[_currentParametrization].t3d[position];
+  const MTriangle &t3d = _parametrizations[ipar].t3d[position];
   const MVertex *v1 = t3d.getVertex(0);
   const MVertex *v2 = t3d.getVertex(1);
   const MVertex *v3 = t3d.getVertex(2);
@@ -713,28 +686,28 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
                                             double uv[2])
 {
 #if defined(HAVE_HXT)
-  if(_parametrizations.empty()) return GPoint();
+  if(_parametrizations.empty()) return 0.;
+  int ipar = _parametrizations.size() == 1 ? 0 : _currentParametrization;
+  if(ipar < 0) return 0.;
 
   MTriangle *t2d =
-    (MTriangle *)_parametrizations[_currentParametrization].oct->find(
-      uv[0], uv[1], 0.0);
+    (MTriangle *)_parametrizations[ipar].oct->find(uv[0], uv[1], 0.0);
   MTriangle *t3d = NULL;
   if(t2d) {
-    int position =
-      (int)(t2d - &_parametrizations[_currentParametrization].t2d[0]);
-    t3d = &_parametrizations[_currentParametrization].t3d[position];
+    int position = (int)(t2d - &_parametrizations[ipar].t2d[0]);
+    t3d = &_parametrizations[ipar].t3d[position];
   }
 
   SVector3 n = crossprod(n1, n2);
   n.normalize();
 
-  int N = _parametrizations[_currentParametrization].t3d.size();
+  int N = _parametrizations[ipar].t3d.size();
   int start = 0;
   if(t2d) start = -1;
   for(int i = start; i < N; i++) {
     if(i >= 0) {
-      t2d = &_parametrizations[_currentParametrization].t2d[i];
-      t3d = &_parametrizations[_currentParametrization].t3d[i];
+      t2d = &_parametrizations[ipar].t2d[i];
+      t3d = &_parametrizations[ipar].t3d[i];
     }
     SVector3 v0(t3d->getVertex(0)->x(), t3d->getVertex(0)->y(),
                 t3d->getVertex(0)->z());
