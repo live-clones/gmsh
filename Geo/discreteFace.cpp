@@ -408,7 +408,6 @@ void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
 
 void discreteFace::createGeometry()
 {
-  printf("ARGH\n");
 #if defined(HAVE_HXT)
   if(_parametrizations.size()) return;
   if(!_checkAndFixOrientation()) return;
@@ -423,6 +422,7 @@ void discreteFace::createGeometryFromSTL()
   if(stl_triangles.empty() || stl_vertices_uv.empty() ||
      stl_vertices_xyz.empty())
     return;
+#if defined(HAVE_HXT)
   _parametrizations.clear();
   _parametrizations.resize(1);
 
@@ -452,8 +452,6 @@ void discreteFace::createGeometryFromSTL()
       _parametrizations[0].CURV.push_back(stl_curvatures[2 * c]);
       _parametrizations[0].CURV.push_back(stl_curvatures[2 * c + 1]);
     }
-    //    _parametrizations[0].t3d.push_back(MTriangle(v0,v1,v2));
-    //    _parametrizations[0].t2d.push_back(MTriangle(vv0,vv1,vv2));
   }
   _parametrizations[0].bnd = edges();
   _parametrizations[0].emb = embedded_edges;
@@ -485,7 +483,7 @@ void discreteFace::createGeometryFromSTL()
   }
   _parametrizations[0].oct = new MElementOctree(temp);
 
-#define debug
+//#define debug
 #ifdef debug
   // save the atlas in pos files for checking - debugging
   char zz[256];
@@ -520,6 +518,8 @@ void discreteFace::createGeometryFromSTL()
   fclose(f);
   fprintf(f2, "};\n");
   fclose(f2);
+#endif
+
 #endif
 }
 
@@ -1345,7 +1345,7 @@ HXTStatus discreteFace::_reparametrizeThroughHxt()
   }
 
   // count how much triangles per partition
-#define debug
+//#define debug
 #ifdef debug
   // save the atlas in pos files for checking - debugging
   char zz[256];
