@@ -524,6 +524,12 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
 bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
+  if(!v->onWhat()){
+    Msg::Error("Mesh node %d is not classified: cannot reparametrize",
+               v->getNum());
+    return false;
+  }
+
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve) {
     param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);

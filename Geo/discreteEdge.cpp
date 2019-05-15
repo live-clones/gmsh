@@ -119,13 +119,13 @@ GPoint discreteEdge::point(double par) const
   if(!getLocalParameter(par, iEdge, tLoc)) return GPoint();
 
   SPoint3 vB = _discretization[iEdge];
-  SPoint3 vE = _discretization[iEdge+1];
+  SPoint3 vE = _discretization[iEdge + 1];
   //  MVertex *vB = discrete_lines[iEdge]->getVertex(0);
   //  MVertex *vE = discrete_lines[iEdge]->getVertex(1);
   //  if(!vB || !vE) return GPoint();
 
   // linear Lagrange mesh
-  SPoint3 v = vB + (vE-vB)*tLoc;
+  SPoint3 v = vB + (vE - vB) * tLoc;
   return GPoint(v.x(), v.y(), v.z(), this, par);
 }
 
@@ -137,9 +137,9 @@ SVector3 discreteEdge::firstDer(double par) const
   if(!getLocalParameter(par, iEdge, tLoc)) return SVector3();
 
   SPoint3 vB = _discretization[iEdge];
-  SPoint3 vE = _discretization[iEdge+1];
+  SPoint3 vE = _discretization[iEdge + 1];
 
-  //MVertex *vB = discrete_lines[iEdge]->getVertex(0);
+  // MVertex *vB = discrete_lines[iEdge]->getVertex(0);
   //  MVertex *vE = discrete_lines[iEdge]->getVertex(1);
   //  if(!vB || !vE) return SVector3();
 
@@ -152,14 +152,16 @@ SVector3 discreteEdge::firstDer(double par) const
   return der;
 }
 
-SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar, int dir) const {
+SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
+                                    int dir) const
+{
   GPoint p = point(epar);
   double guess[2];
-  GPoint ps = face->closestPoint(SPoint3(p.x(),p.y(),p.z()),guess);
-  //  printf("garouclaboucazou %g %g %g %g %g %g\n",p.x(),p.y(),p.z(),ps.x(),ps.y(),ps.z());
-  return SPoint2(ps.u(),ps.v());
+  GPoint ps = face->closestPoint(SPoint3(p.x(), p.y(), p.z()), guess);
+  //  printf("garouclaboucazou %g %g %g %g %g
+  //  %g\n",p.x(),p.y(),p.z(),ps.x(),ps.y(),ps.z());
+  return SPoint2(ps.u(), ps.v());
 }
-
 
 double discreteEdge::curvature(double par) const
 {
@@ -189,10 +191,12 @@ double discreteEdge::curvature(double par) const
     if(periodic(0)) { iEdgePlus = 0; }
   }
 
-  SPoint3 a = (_discretization[iEdgeMinus] + _discretization[iEdgeMinus+1]) *.5;
-  SPoint3 b = (_discretization[iEdge] + _discretization[iEdge+1]) *.5;
-  SPoint3 c = (_discretization[iEdgePlus] + _discretization[iEdgePlus+1]) *.5;
-  
+  SPoint3 a =
+    (_discretization[iEdgeMinus] + _discretization[iEdgeMinus + 1]) * .5;
+  SPoint3 b = (_discretization[iEdge] + _discretization[iEdge + 1]) * .5;
+  SPoint3 c =
+    (_discretization[iEdgePlus] + _discretization[iEdgePlus + 1]) * .5;
+
   // SPoint3 a((discrete_lines[iEdgeMinus]->getVertex(0)->x() +
   //            discrete_lines[iEdgeMinus]->getVertex(1)->x()) *
   //             .5,
@@ -224,20 +228,20 @@ double discreteEdge::curvature(double par) const
   double A = b.distance(c);
   double B = c.distance(a);
   double C = a.distance(b);
-  
+
   // radius of the circumcircle ...
   // Heron's formula for the area of a triangle
   double R =
     A * B * C / sqrt((A + B + C) * (-A + B + C) * (A - B + C) * (A + B - C));
-  
+
   //  printf("R(%d,%g) = %g\n",tag(),par,R);
-  
+
   return R = 0.0 ? 1.E22 : 1. / R;
 }
 
 Range<double> discreteEdge::parBounds(int i) const
 {
-  return Range<double>(0, (double)(_discretization.size()-1));
+  return Range<double>(0, (double)(_discretization.size() - 1));
 }
 
 void discreteEdge::createGeometry()
@@ -251,28 +255,29 @@ void discreteEdge::createGeometry()
 
   //  printf("line %d\n",tag());
   //  for(std::size_t i = 0; i < lines.size(); i++) {
-  //    printf("(%d %d)",lines[i]->getVertex(0)->getNum(),lines[i]->getVertex(1)->getNum());
+  //    printf("(%d
+  //    %d)",lines[i]->getVertex(0)->getNum(),lines[i]->getVertex(1)->getNum());
   //  }
   //  printf("\n");
   orderMLines();
   //  printf("done \n");
-  
+
   bool reverse = false;
   if(getEndVertex())
     reverse = (lines[0]->getVertex(0) == getEndVertex()->mesh_vertices[0]);
-    
+
   std::map<MVertex *, MVertex *> old2new;
-  
+
   for(std::size_t i = 0; i < lines.size(); i++) {
     for(std::size_t j = 0; j < 2; j++) {
       MVertex *v = lines[i]->getVertex(j);
       if(old2new.find(v) == old2new.end()) {
-	MVertex *vnew = new MVertex(v->x(), v->y(), v->z(), this);
-	old2new[v] = vnew;
+        MVertex *vnew = new MVertex(v->x(), v->y(), v->z(), this);
+        old2new[v] = vnew;
       }
     }
   }
-  
+
   std::vector<MLine *> _temp;
   discrete_lines.resize(lines.size());
   for(std::size_t i = 0; i < lines.size(); i++) {
@@ -288,15 +293,15 @@ void discreteEdge::createGeometry()
 
   // compute parameters and recompute the vertices
   _discretization.push_back(SPoint3(discrete_lines[0]->getVertex(0)->x(),
-				    discrete_lines[0]->getVertex(0)->y(),
-				    discrete_lines[0]->getVertex(0)->z()));
+                                    discrete_lines[0]->getVertex(0)->y(),
+                                    discrete_lines[0]->getVertex(0)->z()));
 
   for(std::size_t i = 0; i < discrete_lines.size(); i++) {
     _discretization.push_back(SPoint3(discrete_lines[i]->getVertex(1)->x(),
-				      discrete_lines[i]->getVertex(1)->y(),
-				      discrete_lines[i]->getVertex(1)->z()));
+                                      discrete_lines[i]->getVertex(1)->y(),
+                                      discrete_lines[i]->getVertex(1)->z()));
   }
-  
+
   _pars.push_back(0.0);
   for(std::size_t i = 1; i < discrete_lines.size(); i++) {
     _pars.push_back((double)i);
@@ -437,27 +442,29 @@ void discreteEdge::unsplit(void)
   }
 }
 
-void discreteEdge::writeParametrization (FILE *fp, bool binary){
-  fprintf(fp,"%lu\n",_discretization.size());
-  for (size_t i=0;i<_discretization.size();i++){
-    fprintf(fp,"%g %g %g %g\n",_discretization[i].x(),
-	    _discretization[i].y(),_discretization[i].z(),_pars[i]);
+void discreteEdge::writeParametrization(FILE *fp, bool binary)
+{
+  fprintf(fp, "%lu\n", _discretization.size());
+  for(size_t i = 0; i < _discretization.size(); i++) {
+    fprintf(fp, "%g %g %g %g\n", _discretization[i].x(), _discretization[i].y(),
+            _discretization[i].z(), _pars[i]);
   }
 }
 
-void discreteEdge::readParametrization (FILE *fp, bool binary){
+void discreteEdge::readParametrization(FILE *fp, bool binary)
+{
   int N;
-  fscanf(fp,"%d",&N);
-  //  printf("%d %d\n",tag(),N);
+  if(fscanf(fp, "%d", &N) != 1)
+    return;
+
   _pars.resize(N);
   _discretization.resize(N);
-  for (int i=0;i<N;i++){
-    double x,y,z,t;
-    fscanf(fp,"%lf %lf %lf %lf\n",&x,&y,&z,&t);
-    _pars[i] = t;   
-    _discretization[i]= SPoint3 (x,y,z);
+  for(int i = 0; i < N; i++) {
+    double x, y, z, t;
+    if(fscanf(fp, "%lf %lf %lf %lf\n", &x, &y, &z, &t) != 4) {
+      return;
+    }
+    _pars[i] = t;
+    _discretization[i] = SPoint3(x, y, z);
   }
 }
-
-
-

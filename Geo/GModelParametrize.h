@@ -13,9 +13,13 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut);
 void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
                              bool addBoundary);
-int parametrizeAllGFace(GModel *gm,  std::map<MVertex* , std::pair<SVector3, SVector3> > *C=NULL);
+int parametrizeAllGFace(
+  GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > *C = NULL);
 void parametrizeAllGEdge(GModel *gm);
-int parametrizeGFace(discreteFace *gf,  std::map<MVertex* , std::pair<SVector3, SVector3> > *C=NULL);
-HXTStatus computeDiscreteCurvatures(GModel *gm, std::map<MVertex* , std::pair<SVector3, SVector3> > &C );
+int parametrizeGFace(
+  discreteFace *gf,
+  std::map<MVertex *, std::pair<SVector3, SVector3> > *C = NULL);
+HXTStatus computeDiscreteCurvatures(
+  GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > &C);
 
 #endif
