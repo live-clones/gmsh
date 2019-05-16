@@ -82,12 +82,11 @@ static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
 }
 #endif
 
-#if defined(HAVE_HXT)
 int computeDiscreteCurvatures(
   GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > &C)
 {
+#if defined(HAVE_HXT)
   C.clear();
-
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     HXTMesh *m;
     HXTEdges *edges;
