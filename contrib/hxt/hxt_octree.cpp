@@ -2279,7 +2279,7 @@ p8est_connectivity_new_cube (double c)
 
 HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, double *size) {
 
-  *size = 1.e22;}
+  *size = 1.e22;
   static int count = 0;
   if (count ++ < 20)
     return HXT_ERROR_MSG(HXT_STATUS_ERROR,"HXT needs P4EST to compute automatic size fields");
