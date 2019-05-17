@@ -1053,6 +1053,66 @@ GMSH_API void gmsh::model::mesh::getNodes(std::vector<std::size_t> &nodeTags,
   }
 }
 
+GMSH_API void gmsh::model::mesh::getNodesByElementType(const int elementType,
+                                                       std::vector<std::size_t> & nodeTags,
+                                                       std::vector<double> & coord,
+                                                       std::vector<double> & parametricCoord,
+                                                       const int dim, const int tag,
+                                                       const bool returnParametricCoord)
+{
+  if(!_isInitialized()) { throw -1; }
+  nodeTags.clear();
+  coord.clear();
+  parametricCoord.clear();
+  std::vector<GEntity *> entities;
+  
+  if(dim >= 0 && tag >= 0) {
+    GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+    if(!ge) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    entities.push_back(ge);
+  }
+  else {
+    GModel::current()->getEntities(entities, dim);
+  }
+  
+  int familyType = ElementType::getParentType(elementType);
+  int numNodesByElements = ElementType::getNumVertices(elementType);
+  std::size_t numElements = 0;
+  for(std::size_t i = 0; i < entities.size(); ++i) {
+    numElements = entities[i]->getNumMeshElementsByType(familyType);
+  }
+  std::size_t numNodes = numElements * numNodesByElements;
+  
+  nodeTags.reserve(numNodes);
+  coord.reserve(numNodes * 3);
+  if(returnParametricCoord) {
+    parametricCoord.reserve(numNodes * 3);
+  }
+  
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElementsByType(familyType); j++) {
+      MElement *e = ge->getMeshElementByType(familyType, j);
+      for(std::size_t k = 0; k < e->getNumVertices(); ++k) {
+        MVertex *v = e->getVertex(k);
+        nodeTags.push_back(v->getNum());
+        coord.push_back(v->x());
+        coord.push_back(v->y());
+        coord.push_back(v->z());
+        if(dim > 0 && returnParametricCoord) {
+          double par;
+          for(int k = 0; k < dim; k++) {
+            if(v->getParameter(k, par)) parametricCoord.push_back(par);
+          }
+        }
+      }
+    }
+  }
+}
+
 GMSH_API void gmsh::model::mesh::getNode(const std::size_t nodeTag,
                                          std::vector<double> &coord,
                                          std::vector<double> &parametricCoord)

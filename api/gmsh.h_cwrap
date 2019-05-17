@@ -832,6 +832,28 @@ namespace gmsh { // Top-level functions
         parametricCoord.assign(api_parametricCoord_, api_parametricCoord_ + api_parametricCoord_n_); gmshFree(api_parametricCoord_);
       }
 
+      // Get the nodes classified on the entity of dimension `dim' and tag `tag' as
+      // `getNodes' functions but only return nodes owned by elements of type
+      // `elementType'.
+      inline void getNodesByElementType(const int elementType,
+                                        std::vector<std::size_t> & nodeTags,
+                                        std::vector<double> & coord,
+                                        std::vector<double> & parametricCoord,
+                                        const int dim = -1,
+                                        const int tag = -1,
+                                        const bool returnParametricCoord = true)
+      {
+        int ierr = 0;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
+        double *api_coord_; size_t api_coord_n_;
+        double *api_parametricCoord_; size_t api_parametricCoord_n_;
+        gmshModelMeshGetNodesByElementType(elementType, &api_nodeTags_, &api_nodeTags_n_, &api_coord_, &api_coord_n_, &api_parametricCoord_, &api_parametricCoord_n_, dim, tag, (int)returnParametricCoord, &ierr);
+        if(ierr) throw ierr;
+        nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
+        coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+        parametricCoord.assign(api_parametricCoord_, api_parametricCoord_ + api_parametricCoord_n_); gmshFree(api_parametricCoord_);
+      }
+
       // Get the coordinates and the parametric coordinates (if any) of the node
       // with tag `tag'. This is a sometimes useful but inefficient way of
       // accessing nodes, as it relies on a cache stored in the model. For large

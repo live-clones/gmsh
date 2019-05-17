@@ -1113,6 +1113,33 @@ function getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricC
 end
 
 """
+    gmsh.model.mesh.getNodesByElementType(elementType, dim = -1, tag = -1, returnParametricCoord = true)
+
+Get the nodes classified on the entity of dimension `dim` and tag `tag` as
+`getNodes` functions but only return nodes owned by elements of type
+`elementType`.
+
+Return `nodeTags`, `coord`, `parametricCoord`.
+"""
+function getNodesByElementType(elementType, dim = -1, tag = -1, returnParametricCoord = true)
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetNodesByElementType, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
+          elementType, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, returnParametricCoord, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNodesByElementType returned non-zero error code: $(ierr[])")
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    return nodeTags, coord, parametricCoord
+end
+
+"""
     gmsh.model.mesh.getNode(nodeTag)
 
 Get the coordinates and the parametric coordinates (if any) of the node with tag

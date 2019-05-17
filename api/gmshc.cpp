@@ -795,6 +795,23 @@ GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n, dou
   }
 }
 
+GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType, size_t ** nodeTags, size_t * nodeTags_n, double ** coord, size_t * coord_n, double ** parametricCoord, size_t * parametricCoord_n, const int dim, const int tag, const int returnParametricCoord, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_nodeTags_;
+    std::vector<double> api_coord_;
+    std::vector<double> api_parametricCoord_;
+    gmsh::model::mesh::getNodesByElementType(elementType, api_nodeTags_, api_coord_, api_parametricCoord_, dim, tag, returnParametricCoord);
+    vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+    vector2ptr(api_coord_, coord, coord_n);
+    vector2ptr(api_parametricCoord_, parametricCoord, parametricCoord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGetNode(const size_t nodeTag, double ** coord, size_t * coord_n, double ** parametricCoord, size_t * parametricCoord_n, int * ierr)
 {
   if(ierr) *ierr = 0;

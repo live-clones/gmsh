@@ -835,6 +835,20 @@ the entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 -
 @end table
 
+@item getNodesByElementType
+Get the nodes classified on the entity of dimension @code{dim} and tag
+@code{tag} as @code{getNodes} functions but only return nodes owned by elements
+of type @code{elementType}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{dim}, @code{tag}, @code{returnParametricCoord}
+@item Output:
+@code{nodeTags}, @code{coord}, @code{parametricCoord}
+@item Return:
+-
+@end table
+
 @item getNode
 Get the coordinates and the parametric coordinates (if any) of the node with tag
 @code{tag}. This is a sometimes useful but inefficient way of accessing nodes,

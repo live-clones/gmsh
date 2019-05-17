@@ -423,6 +423,17 @@ namespace gmsh { // Top-level functions
                              const bool includeBoundary = false,
                              const bool returnParametricCoord = true);
 
+      // Get the nodes classified on the entity of dimension `dim' and tag `tag' as
+      // `getNodes' functions but only return nodes owned by elements of type
+      // `elementType'.
+      GMSH_API void getNodesByElementType(const int elementType,
+                                          std::vector<std::size_t> & nodeTags,
+                                          std::vector<double> & coord,
+                                          std::vector<double> & parametricCoord,
+                                          const int dim = -1,
+                                          const int tag = -1,
+                                          const bool returnParametricCoord = true);
+
       // Get the coordinates and the parametric coordinates (if any) of the node
       // with tag `tag'. This is a sometimes useful but inefficient way of
       // accessing nodes, as it relies on a cache stored in the model. For large

@@ -452,6 +452,18 @@ GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n,
                                     const int returnParametricCoord,
                                     int * ierr);
 
+/* Get the nodes classified on the entity of dimension `dim' and tag `tag' as
+ * `getNodes' functions but only return nodes owned by elements of type
+ * `elementType'. */
+GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType,
+                                                 size_t ** nodeTags, size_t * nodeTags_n,
+                                                 double ** coord, size_t * coord_n,
+                                                 double ** parametricCoord, size_t * parametricCoord_n,
+                                                 const int dim,
+                                                 const int tag,
+                                                 const int returnParametricCoord,
+                                                 int * ierr);
+
 /* Get the coordinates and the parametric coordinates (if any) of the node
  * with tag `tag'. This is a sometimes useful but inefficient way of accessing
  * nodes, as it relies on a cache stored in the model. For large meshes all

@@ -1357,6 +1357,37 @@ class model:
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
+        def getNodesByElementType(elementType, dim=-1, tag=-1, returnParametricCoord=True):
+            """
+            Get the nodes classified on the entity of dimension `dim' and tag `tag' as
+            `getNodes' functions but only return nodes owned by elements of type
+            `elementType'.
+
+            Return `nodeTags', `coord', `parametricCoord'.
+            """
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetNodesByElementType(
+                c_int(elementType),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+                c_int(dim),
+                c_int(tag),
+                c_int(bool(returnParametricCoord)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNodesByElementType returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+
+        @staticmethod
         def getNode(nodeTag):
             """
             Get the coordinates and the parametric coordinates (if any) of the node
