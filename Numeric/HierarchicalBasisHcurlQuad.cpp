@@ -42,7 +42,7 @@ double HierarchicalBasisHcurlQuad::_affineCoordinate(int const &j,
   }
 }
 
-void HierarchicalBasisHcurlQuad::generateBasis(
+void HierarchicalBasisHcurlQuad::generateHcurlBasis(
   double const &u, double const &v, double const &w,
   std::vector<std::vector<double> > &edgeBasis,
   std::vector<std::vector<double> > &faceBasis,
@@ -53,10 +53,8 @@ void HierarchicalBasisHcurlQuad::generateBasis(
   double lambda3 = _affineCoordinate(3, u, v);
   double lambda4 = _affineCoordinate(4, u, v);
   std::vector<std::vector<double> > legendreVector(2);
-  legendreVector[0] = std::vector<double>(
-    std::max(std::max(_pOrderEdge[0] + 1, _pOrderEdge[2] + 1), _pf1 + 1));
-  legendreVector[1] = std::vector<double>(
-    std::max(std::max(_pOrderEdge[1] + 1, _pOrderEdge[3] + 1), _pf2 + 1));
+  legendreVector[0] = std::vector<double>( _pf1 + 1);
+  legendreVector[1] = std::vector<double>( _pf2 + 1);
   for(unsigned int k = 0; k < legendreVector[0].size(); k++) {
     legendreVector[0][k] = OrthogonalPoly::EvalLegendre(k, u);
   }
@@ -167,10 +165,8 @@ void HierarchicalBasisHcurlQuad::generateCurlBasis(
   double dlambda3 = 0.5;
   double dlambda4 = -0.5;
   std::vector<std::vector<double> > legendreVector(2);
-  legendreVector[0] = std::vector<double>(
-    std::max(std::max(_pOrderEdge[0] + 1, _pOrderEdge[2] + 1), _pf1 + 1));
-  legendreVector[1] = std::vector<double>(
-    std::max(std::max(_pOrderEdge[1] + 1, _pOrderEdge[3] + 1), _pf2 + 1));
+  legendreVector[0] = std::vector<double>( _pf1 + 1);
+  legendreVector[1] = std::vector<double>( _pf2 + 1);
   for(unsigned int k = 0; k < legendreVector[0].size(); k++) {
     legendreVector[0][k] = OrthogonalPoly::EvalLegendre(k, u);
   }
@@ -258,7 +254,7 @@ void HierarchicalBasisHcurlQuad::orientFace(
             if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
             if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
             faceFunctions[iterator][1] =
-              faceFunctions[iterator][0] * impactFlag1 * impactFlag2;
+              faceFunctions[iterator][1] * impactFlag1 * impactFlag2;
 
             iterator++;
           }
@@ -294,7 +290,7 @@ void HierarchicalBasisHcurlQuad::orientFace(
             if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
             if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
             faceFunctions[iterator][1] = legendreVector[1][it1] *
-                                         OrthogonalPoly::EvalLobatto(it2, v) *
+                                         OrthogonalPoly::EvalLobatto(it2, u) *
                                          impactFlag1 * impactFlag2;
             iterator++;
           }
@@ -322,7 +318,7 @@ void HierarchicalBasisHcurlQuad::orientFace(
             int impactFlag2 = 1;
             if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
             if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-            faceFunctions[iterator][1] =
+            faceFunctions[iterator][2] =
               faceFunctions[iterator][2] * impactFlag1 * impactFlag2;
 
             iterator++;
@@ -359,7 +355,7 @@ void HierarchicalBasisHcurlQuad::orientFace(
             if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
             if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
             faceFunctions[iterator][2] = legendreVector[1][it1] *
-                                         OrthogonalPoly::EvalDLobatto(it2, v) *
+                                         OrthogonalPoly::EvalDLobatto(it2, u) *
                                          impactFlag1 * impactFlag2;
             iterator++;
           }

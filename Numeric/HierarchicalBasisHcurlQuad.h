@@ -45,7 +45,7 @@ public:
                              std::string typeFunction)
   {
     if(typeFunction == "HcurlLegendre") {
-      generateBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
+    generateHcurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
     else if("CurlHcurlLegendre" == typeFunction) {
       generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
@@ -73,7 +73,7 @@ private:
   // edgeBasis=[phie0_{0},...phie0_{pe0},phie1_{0},...phie1_{pe1}...]
   // faceBasis=[phieFf1{n1,n2} (with 0<=n1<=pf1 , 2<=n2<=pf2+1), phieFf2{n1,n2}
   // (with 2<=n1<=pf1+1 , 0<=n2<=pf2) ]
-  virtual void generateBasis(double const &u, double const &v, double const &w,
+  virtual void generateHcurlBasis(double const &u, double const &v, double const &w,
                              std::vector<std::vector<double> > &edgeBasis,
                              std::vector<std::vector<double> > &faceBasis,
                              std::vector<std::vector<double> > &bubbleBasis);
