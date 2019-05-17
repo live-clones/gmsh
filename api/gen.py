@@ -315,6 +315,9 @@ mesh.add('getElementFaceNodes',doc,None,iint('elementType'),iint('faceType'),ove
 doc = '''Get the ghost elements `elementTags' and their associated `partitions' stored in the ghost entity of dimension `dim' and tag `tag'.'''
 mesh.add('getGhostElements',doc,None,iint('dim'),iint('tag'),ovectorsize('elementTags'),ovectorint('partitions'))
 
+doc = '''Get the u, v, w coordinates of the reference elements of type `elementType'.'''
+mesh.add('getUVWcoordinatesOfNodes',doc,None,iint('elementType'),ovectordouble('coord'));
+
 doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 

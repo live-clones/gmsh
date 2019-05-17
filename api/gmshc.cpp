@@ -1206,6 +1206,19 @@ GMSH_API void gmshModelMeshGetGhostElements(const int dim, const int tag, size_t
   }
 }
 
+GMSH_API void gmshModelMeshGetUVWcoordinatesOfNodes(const int elementType, double ** coord, size_t * coord_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_;
+    gmsh::model::mesh::getUVWcoordinatesOfNodes(elementType, api_coord_);
+    vector2ptr(api_coord_, coord, coord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n, const double size, int * ierr)
 {
   if(ierr) *ierr = 0;
