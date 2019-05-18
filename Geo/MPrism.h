@@ -316,7 +316,7 @@ public:
   {
     static const int map[15] = {0, 1, 2,  3, 4, 5,  6, 9, 7,
                                 12, 14, 13, 8, 10, 11};
-    return getVertexBDF(map[num]);
+    return getVertex(map[num]);
   }
   virtual MVertex *getVertexKEY(int num) { return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 9; }
