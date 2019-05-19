@@ -1036,7 +1036,7 @@ integer value
 @item getElementProperties
 Get the properties of an element of type @code{elementType}: its name
 (@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
-nodes (@code{numNodes}) and node}s coordinates in the reference element
+nodes (@code{numNodes}) and nodes}s coordinates in the reference element
 (@code{coordinates} vector, of length @code{dim} times @code{numNodes}).
 
 @table @asis

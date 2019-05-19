@@ -548,7 +548,7 @@ namespace gmsh { // Top-level functions
 
       // Get the properties of an element of type `elementType': its name
       // (`elementName'), dimension (`dim'), order (`order'), number of nodes
-      // (`numNodes') and node's coordinates in the reference element
+      // (`numNodes') and nodes's coordinates in the reference element
       // (`coordinates' vector, of length `dim' times `numNodes').
       GMSH_API void getElementProperties(const int elementType,
                                          std::string & elementName,

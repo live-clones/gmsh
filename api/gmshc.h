@@ -588,8 +588,8 @@ GMSH_API int gmshModelMeshGetElementType(const char * familyName,
 
 /* Get the properties of an element of type `elementType': its name
  * (`elementName'), dimension (`dim'), order (`order'), number of nodes
- * (`numNodes') and node's coordinates in the reference element (`coordinates'
- * vector, of length `dim' times `numNodes'). */
+ * (`numNodes') and nodes's coordinates in the reference element
+ * (`coordinates' vector, of length `dim' times `numNodes'). */
 GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
                                                 char ** elementName,
                                                 int * dim,
