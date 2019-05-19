@@ -776,11 +776,6 @@ namespace gmsh { // Top-level functions
                                      std::vector<std::size_t> & elementTags,
                                      std::vector<int> & partitions);
 
-      // Get the u, v, w coordinates of the reference elements of type
-      // `elementType'.
-      GMSH_API void getUVWcoordinatesOfNodes(const int elementType,
-                                             std::vector<double> & coord);
-
       // Set a mesh size constraint on the model entities `dimTags'. Currently only
       // entities of dimension 0 (points) are handled.
       GMSH_API void setSize(const gmsh::vectorpair & dimTags,

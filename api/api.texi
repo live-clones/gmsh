@@ -1343,19 +1343,6 @@ stored in the ghost entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item getUVWcoordinatesOfNodes
-Get the u, v, w coordinates of the reference elements of type
-@code{elementType}.
-
-@table @asis
-@item Input:
-@code{elementType}
-@item Output:
-@code{coord}
-@item Return:
--
-@end table
-
 @item setSize
 Set a mesh size constraint on the model entities @code{dimTags}. Currently only
 entities of dimension 0 (points) are handled.

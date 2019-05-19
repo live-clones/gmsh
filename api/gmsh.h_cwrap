@@ -1436,18 +1436,6 @@ namespace gmsh { // Top-level functions
         partitions.assign(api_partitions_, api_partitions_ + api_partitions_n_); gmshFree(api_partitions_);
       }
 
-      // Get the u, v, w coordinates of the reference elements of type
-      // `elementType'.
-      inline void getUVWcoordinatesOfNodes(const int elementType,
-                                           std::vector<double> & coord)
-      {
-        int ierr = 0;
-        double *api_coord_; size_t api_coord_n_;
-        gmshModelMeshGetUVWcoordinatesOfNodes(elementType, &api_coord_, &api_coord_n_, &ierr);
-        if(ierr) throw ierr;
-        coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
-      }
-
       // Set a mesh size constraint on the model entities `dimTags'. Currently only
       // entities of dimension 0 (points) are handled.
       inline void setSize(const gmsh::vectorpair & dimTags,

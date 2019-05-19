@@ -1783,25 +1783,6 @@ function getGhostElements(dim, tag)
 end
 
 """
-    gmsh.model.mesh.getUVWcoordinatesOfNodes(elementType)
-
-Get the u, v, w coordinates of the reference elements of type `elementType`.
-
-Return `coord`.
-"""
-function getUVWcoordinatesOfNodes(elementType)
-    api_coord_ = Ref{Ptr{Cdouble}}()
-    api_coord_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetUVWcoordinatesOfNodes, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, api_coord_, api_coord_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetUVWcoordinatesOfNodes returned non-zero error code: $(ierr[])")
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
-    return coord
-end
-
-"""
     gmsh.model.mesh.setSize(dimTags, size)
 
 Set a mesh size constraint on the model entities `dimTags`. Currently only

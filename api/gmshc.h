@@ -833,12 +833,6 @@ GMSH_API void gmshModelMeshGetGhostElements(const int dim,
                                             int ** partitions, size_t * partitions_n,
                                             int * ierr);
 
-/* Get the u, v, w coordinates of the reference elements of type
- * `elementType'. */
-GMSH_API void gmshModelMeshGetUVWcoordinatesOfNodes(const int elementType,
-                                                    double ** coord, size_t * coord_n,
-                                                    int * ierr);
-
 /* Set a mesh size constraint on the model entities `dimTags'. Currently only
  * entities of dimension 0 (points) are handled. */
 GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,

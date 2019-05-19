@@ -2815,27 +2815,6 @@ gmsh::model::mesh::getGhostElements(const int dim, const int tag,
   }
 }
 
-GMSH_API void gmsh::model::mesh::getUVWcoordinatesOfNodes(const int elementType,
-                                       std::vector<double> & coord)
-{
-  if(!_isInitialized()) { throw -1; }
-  int numNodes = ElementType::getNumVertices(elementType);
-  if(numNodes == 0) { throw 1; }
-  
-  int dim = ElementType::getDimension(elementType);
-  
-  coord.resize(3 * numNodes);
-  const nodalBasis *basis = BasisFactory::getNodalBasis(elementType);
-  if(basis) {
-    const fullMatrix<double> &refpnts = basis->getReferenceNodes();
-    for(int i = 0; i < numNodes; ++i) {
-      coord[3 * i] = refpnts(i, 0);
-      coord[3 * i + 1] = (dim > 1 ? refpnts(i, 1) : 0.);
-      coord[3 * i + 2] = (dim > 2 ? refpnts(i, 2) : 0.);
-    }
-  }
-}
-
 // TODO: give access to closures
 // GMSH_API void gmsh::model::mesh::getElementClosures(const int elementType,
 // ...)

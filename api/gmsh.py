@@ -2133,26 +2133,6 @@ class model:
                 _ovectorint(api_partitions_, api_partitions_n_.value))
 
         @staticmethod
-        def getUVWcoordinatesOfNodes(elementType):
-            """
-            Get the u, v, w coordinates of the reference elements of type
-            `elementType'.
-
-            Return `coord'.
-            """
-            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetUVWcoordinatesOfNodes(
-                c_int(elementType),
-                byref(api_coord_), byref(api_coord_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetUVWcoordinatesOfNodes returned non-zero error code: ",
-                    ierr.value)
-            return _ovectordouble(api_coord_, api_coord_n_.value)
-
-        @staticmethod
         def setSize(dimTags, size):
             """
             Set a mesh size constraint on the model entities `dimTags'. Currently only
