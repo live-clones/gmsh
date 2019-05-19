@@ -1538,7 +1538,7 @@ GMSH_API int gmsh::model::mesh::getElementType(const std::string &family,
 
 GMSH_API void gmsh::model::mesh::getElementProperties(
   const int elementType, std::string &name, int &dim, int &order, int &numNodes,
-  std::vector<double> &parametricCoord)
+  std::vector<double> &coordinates)
 {
   if(!_isInitialized()) { throw -1; }
   const char *n;
@@ -1555,7 +1555,7 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
   numNodes = basis->points.size1();
   for(int i = 0; i < basis->points.size1(); i++)
     for(int j = 0; j < basis->points.size2(); j++)
-      parametricCoord.push_back(basis->points(i, j));
+      coordinates.push_back(basis->points(i, j));
   delete basis;
 }
 
