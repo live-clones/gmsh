@@ -842,7 +842,7 @@ of type @code{elementType}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{dim}, @code{tag}, @code{returnParametricCoord}
+@code{elementType}, @code{tag}, @code{returnParametricCoord}
 @item Output:
 @code{nodeTags}, @code{coord}, @code{parametricCoord}
 @item Return:

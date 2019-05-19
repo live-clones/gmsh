@@ -1357,7 +1357,7 @@ class model:
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
-        def getNodesByElementType(elementType, dim=-1, tag=-1, returnParametricCoord=True):
+        def getNodesByElementType(elementType, tag=-1, returnParametricCoord=True):
             """
             Get the nodes classified on the entity of dimension `dim' and tag `tag' as
             `getNodes' functions but only return nodes owned by elements of type
@@ -1374,7 +1374,6 @@ class model:
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
                 byref(api_coord_), byref(api_coord_n_),
                 byref(api_parametricCoord_), byref(api_parametricCoord_n_),
-                c_int(dim),
                 c_int(tag),
                 c_int(bool(returnParametricCoord)),
                 byref(ierr))

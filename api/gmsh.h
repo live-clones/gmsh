@@ -430,7 +430,6 @@ namespace gmsh { // Top-level functions
                                           std::vector<std::size_t> & nodeTags,
                                           std::vector<double> & coord,
                                           std::vector<double> & parametricCoord,
-                                          const int dim = -1,
                                           const int tag = -1,
                                           const bool returnParametricCoord = true);
 

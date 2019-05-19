@@ -1057,7 +1057,7 @@ GMSH_API void gmsh::model::mesh::getNodesByElementType(const int elementType,
                                                        std::vector<std::size_t> & nodeTags,
                                                        std::vector<double> & coord,
                                                        std::vector<double> & parametricCoord,
-                                                       const int dim, const int tag,
+                                                       const int tag,
                                                        const bool returnParametricCoord)
 {
   if(!_isInitialized()) { throw -1; }
@@ -1065,7 +1065,7 @@ GMSH_API void gmsh::model::mesh::getNodesByElementType(const int elementType,
   coord.clear();
   parametricCoord.clear();
   std::vector<GEntity *> entities;
-  
+  int dim = ElementType::getDimension(elementType);
   if(dim >= 0 && tag >= 0) {
     GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
     if(!ge) {

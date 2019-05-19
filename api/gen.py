@@ -229,7 +229,7 @@ doc = '''Get the nodes classified on the entity of dimension `dim' and tag `tag'
 mesh.add('getNodes',doc,None,ovectorsize('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'),ibool('includeBoundary','false','False'),ibool('returnParametricCoord','true','True'))
 
 doc = '''Get the nodes classified on the entity of dimension `dim' and tag `tag' as `getNodes' functions but only return nodes owned by elements of type `elementType'. '''
-mesh.add('getNodesByElementType',doc,None,iint('elementType'), ovectorsize('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'),ibool('returnParametricCoord','true','True'))
+mesh.add('getNodesByElementType',doc,None,iint('elementType'), ovectorsize('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('tag', '-1'),ibool('returnParametricCoord','true','True'))
 
 doc = '''Get the coordinates and the parametric coordinates (if any) of the node with tag `tag'. This is a sometimes useful but inefficient way of accessing nodes, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
 mesh.add('getNode',doc,None,isize('nodeTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))

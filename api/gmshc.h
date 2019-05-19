@@ -459,7 +459,6 @@ GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType,
                                                  size_t ** nodeTags, size_t * nodeTags_n,
                                                  double ** coord, size_t * coord_n,
                                                  double ** parametricCoord, size_t * parametricCoord_n,
-                                                 const int dim,
                                                  const int tag,
                                                  const int returnParametricCoord,
                                                  int * ierr);

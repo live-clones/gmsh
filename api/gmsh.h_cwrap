@@ -839,7 +839,6 @@ namespace gmsh { // Top-level functions
                                         std::vector<std::size_t> & nodeTags,
                                         std::vector<double> & coord,
                                         std::vector<double> & parametricCoord,
-                                        const int dim = -1,
                                         const int tag = -1,
                                         const bool returnParametricCoord = true)
       {
@@ -847,7 +846,7 @@ namespace gmsh { // Top-level functions
         size_t *api_nodeTags_; size_t api_nodeTags_n_;
         double *api_coord_; size_t api_coord_n_;
         double *api_parametricCoord_; size_t api_parametricCoord_n_;
-        gmshModelMeshGetNodesByElementType(elementType, &api_nodeTags_, &api_nodeTags_n_, &api_coord_, &api_coord_n_, &api_parametricCoord_, &api_parametricCoord_n_, dim, tag, (int)returnParametricCoord, &ierr);
+        gmshModelMeshGetNodesByElementType(elementType, &api_nodeTags_, &api_nodeTags_n_, &api_coord_, &api_coord_n_, &api_parametricCoord_, &api_parametricCoord_n_, tag, (int)returnParametricCoord, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
