@@ -262,7 +262,6 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
 
 static void classify_cb(Fl_Widget *w, void *data)
 {
-  //  printf("cpoc<<<\n");
   classificationEditor *e = (classificationEditor *)data;
 
   if(!e->selected) {
@@ -271,17 +270,15 @@ static void classify_cb(Fl_Widget *w, void *data)
                        GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
     GModel::current()->add(e->selected);
   }
-  //  printf("cpoc<<<\n");
 
   std::map<MVertex* , std::pair<SVector3, SVector3> > CURVATURES;
   if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
     computeDiscreteCurvatures(GModel::current(), CURVATURES );
     computeEdgeCut(GModel::current(), e->selected->lines, 100000);
   }
-  //  printf("cpoc<<<\n");
 
   computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
-  
+
   GModel::current()->classifyFaces();
 
   // remove selected, but do not delete its elements
@@ -291,22 +288,16 @@ static void classify_cb(Fl_Widget *w, void *data)
     delete e->selected;
     e->selected = 0;
   }
-  //  printf("cpoc<<<\n");
 
   e->elements.clear();
   e->edges_detected.clear();
   GModel::current()->pruneMeshVertexAssociations();
   NoElementsSelectedMode(e);
 
-  //  printf("cpoc<<< PARAMETRIZE\n");
   if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
-    //    printf("ZAZOU\n");
     parametrizeAllGEdge(GModel::current());
-    //    printf("ZAZOU\n");
     parametrizeAllGFace(GModel::current(), &CURVATURES);
   }
-  //  printf("cpoc<<<\n");
-
 }
 
 classificationEditor::classificationEditor() : selected(0)

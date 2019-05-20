@@ -220,8 +220,7 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
     if(gv->mesh_vertices.size()) {
       MVertex *mv = gv->mesh_vertices[0];
       mVertexToGVertex[mv] = gv;
-      Msg::Info("The mesh contains already topological GVertex %i containing "
-                "MVertex %i",
+      Msg::Info("The model already has point %i, containing node %i",
                 gv->tag(), mv->getNum());
     }
   }

@@ -36,12 +36,6 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
 
 discreteEdge::~discreteEdge()
 {
-  //  for(std::size_t i = 0; i < discrete_lines.size(); i++)
-  //    delete discrete_lines[i];
-  //  for(std::size_t i = 0; i < discrete_vertices.size(); i++)
-  //    delete discrete_vertices[i];
-  //  discrete_lines.clear();
-  //  discrete_vertices.clear();
   _split[0] = _split[1] = NULL;
 }
 
@@ -120,9 +114,6 @@ GPoint discreteEdge::point(double par) const
 
   SPoint3 vB = _discretization[iEdge];
   SPoint3 vE = _discretization[iEdge + 1];
-  //  MVertex *vB = discrete_lines[iEdge]->getVertex(0);
-  //  MVertex *vE = discrete_lines[iEdge]->getVertex(1);
-  //  if(!vB || !vE) return GPoint();
 
   // linear Lagrange mesh
   SPoint3 v = vB + (vE - vB) * tLoc;
@@ -139,10 +130,6 @@ SVector3 discreteEdge::firstDer(double par) const
   SPoint3 vB = _discretization[iEdge];
   SPoint3 vE = _discretization[iEdge + 1];
 
-  // MVertex *vB = discrete_lines[iEdge]->getVertex(0);
-  //  MVertex *vE = discrete_lines[iEdge]->getVertex(1);
-  //  if(!vB || !vE) return SVector3();
-
   double dx, dy, dz;
   dx = (vE.x() - vB.x()); // / dt;
   dy = (vE.y() - vB.y()); // / dt;
@@ -158,8 +145,6 @@ SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
   GPoint p = point(epar);
   double guess[2];
   GPoint ps = face->closestPoint(SPoint3(p.x(), p.y(), p.z()), guess);
-  //  printf("garouclaboucazou %g %g %g %g %g
-  //  %g\n",p.x(),p.y(),p.z(),ps.x(),ps.y(),ps.z());
   return SPoint2(ps.u(), ps.v());
 }
 
@@ -234,7 +219,7 @@ double discreteEdge::curvature(double par) const
   double R =
     A * B * C / sqrt((A + B + C) * (-A + B + C) * (A - B + C) * (A + B - C));
 
-  //  printf("R(%d,%g) = %g\n",tag(),par,R);
+  // printf("R(%d,%g) = %g\n",tag(),par,R);
 
   return R = 0.0 ? 1.E22 : 1. / R;
 }
@@ -253,14 +238,7 @@ void discreteEdge::createGeometry()
 
   if(!_discretization.empty()) return;
 
-  //  printf("line %d\n",tag());
-  //  for(std::size_t i = 0; i < lines.size(); i++) {
-  //    printf("(%d
-  //    %d)",lines[i]->getVertex(0)->getNum(),lines[i]->getVertex(1)->getNum());
-  //  }
-  //  printf("\n");
   orderMLines();
-  //  printf("done \n");
 
   bool reverse = false;
   if(getEndVertex())
@@ -346,12 +324,6 @@ bool discreteEdge::split(MVertex *v, GVertex *gv, int &TAG)
 
   int current = 0;
   de_new[current]->lines.push_back(lines[0]);
-  //  printf("lines :");
-  //  for(size_t i = 0; i < lines.size(); i++) {
-  //    printf("(%d
-  //    %d)",lines[i]->getVertex(0)->onWhat()->tag(),lines[i]->getVertex(1)->onWhat()->tag());
-  // }
-  //  printf("\n");
   for(size_t i = 1; i < lines.size(); i++) {
     if(lines[i]->getVertex(0) == v) { current++; }
     else {

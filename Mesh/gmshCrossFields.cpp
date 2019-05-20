@@ -6,6 +6,7 @@
 #include "MTriangle.h"
 #include "GmshMessage.h"
 #include "Context.h"
+
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
@@ -27,14 +28,14 @@ public:
   }
   void normalize(double &a){
     double D = M_PI*.5;
-    if (a < 0 ) while (a < 0) a += D; 
-    if (a >= D) while (a >= D) a -= D; 
+    if (a < 0 ) while (a < 0) a += D;
+    if (a >= D) while (a >= D) a -= D;
   }
   void finish ( std::map<MEdge,cross2d,Less_Edge > &C){
     for (size_t i=0;i<_neighbors.size();i++){
       std::map<MEdge,cross2d,Less_Edge >::iterator it = C.find(_neighbors[i]);
       if (it == C.end())Msg::Error("impossible situation");
-      else _cneighbors.push_back(&(it->second));      
+      else _cneighbors.push_back(&(it->second));
     }
     if (_cneighbors.size() != 4){
       _a = atan2 (_e.getVertex(1)->y()-_e.getVertex(0)->y(),_e.getVertex(1)->x()-_e.getVertex(0)->x());
@@ -47,7 +48,7 @@ public:
   }
   double average_init (){
     if (_cneighbors.size() == 4){
-      
+
       _btemp = 0.25*(_cneighbors[0]->_b+_cneighbors[1]->_b+_cneighbors[2]->_b+_cneighbors[3]->_b);
       _ctemp = 0.25*(_cneighbors[0]->_c+_cneighbors[1]->_c+_cneighbors[2]->_c+_cneighbors[3]->_c);
       _atemp = 0.25*atan2(_b,_c);
@@ -55,14 +56,14 @@ public:
       return 1;
     }
     return 1;
-  }  
+  }
 
   void update () {
     _a = _atemp;
     _b = _btemp;
-    _c = _ctemp;    
+    _c = _ctemp;
   }
-  
+
   double grad () {
     if (_cneighbors.size() == 4){
       double D = M_PI*.5;
@@ -74,13 +75,13 @@ public:
 	    fabs(_a - a[i]) < fabs(_a - (a[i]-D))) {b[i] = a[i];}
 	else if (fabs(_a - (a[i]+D)) < fabs(_a - (a[i])) &&
 		 fabs(_a - (a[i]+D)) < fabs(_a - (a[i]-D))) {b[i] = a[i]+D;}
-	else {b[i] = a[i]-D;}	
+	else {b[i] = a[i]-D;}
       }
       return fabs(_a-b[0]) + fabs(_a-b[1]) + fabs(_a-b[2]) + fabs(_a-b[3]) ;
     }
     return 0;
   }
-  
+
   double average (){
     if (_cneighbors.size() == 4){
       double D = M_PI*.5;
@@ -93,12 +94,12 @@ public:
 	    fabs(_a - a[i]) < fabs(_a - (a[i]-D))) {b[i] = a[i];}
 	else if (fabs(_a - (a[i]+D)) < fabs(_a - (a[i])) &&
 		 fabs(_a - (a[i]+D)) < fabs(_a - (a[i]-D))) {b[i] = a[i]+D;}
-	else {b[i] = a[i]-D;}	
+	else {b[i] = a[i]-D;}
       }
       avg = 0.25*(b[0]+b[1]+b[2]+b[3]);
-      
+
       normalize(avg);
-      
+
       double d = fabs(_a-avg);
       _atemp = avg;
       return d;
@@ -113,7 +114,7 @@ public:
 
 int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * outputName){
   Msg::SetNumThreads(Msg::GetMaxThreads());
-  
+
   std::map<MEdge,cross2d,Less_Edge > C;
   for (size_t i=0;i<f.size();i++){
     for (size_t j=0;j<f[i]->triangles.size();j++){
@@ -139,7 +140,7 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
 
   std::vector<cross2d*> pc;
   for (it = C.begin(); it !=C.end();++it)pc.push_back(&(it->second));
-  
+
   const int MAXITER = 20000;
   int ITER = 0;
   while (ITER++ < MAXITER){
@@ -156,7 +157,7 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
 #pragma omp parallel for schedule(dynamic)
 #endif
     for (size_t i=0;i<pc.size(); i++)pc[i]->update();
-    
+
     if (ITER%100 == 0)printf("DELTA = %12.5E\n",DELTA);
     if (DELTA  < 1.e-12)break;
     //    getchar();
@@ -172,7 +173,7 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
 	    0.5*(e0.getVertex(0)->y()+e0.getVertex(1)->y()),
 	    0.5*(e0.getVertex(0)->z()+e0.getVertex(1)->z()), a);
   }
-  
+
   for (size_t i=0;i<f.size();i++){
     for (size_t j=0;j<f[i]->triangles.size();j++){
       MTriangle *t = f[i]->triangles[j];
@@ -186,7 +187,7 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
       double a1 = it1->second._a;
       double a2 = it2->second._a;
       //      double avg = atan2 (sin(a1)+sin(a2)+sin(a0),
-      //			  cos(a1)+cos(a2)+cos(a0));		 
+      //			  cos(a1)+cos(a2)+cos(a0));
       fprintf(of,"VP(%g,%g,%g){%g,%g,%g};",
 	      0.5*(e0.getVertex(0)->x()+e0.getVertex(1)->x()),
 	      0.5*(e0.getVertex(0)->y()+e0.getVertex(1)->y()),
@@ -217,7 +218,7 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
 	      0.5*(e2.getVertex(0)->y()+e2.getVertex(1)->y()),
 	      0.5*(e2.getVertex(0)->z()+e2.getVertex(1)->z()),
 	      -sin (a2), cos(a2),0.0);
-      
+
       /*
       fprintf(of,"VT(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};",
 	      t->getVertex(0)->x(),t->getVertex(0)->y(),t->getVertex(0)->z(),
@@ -225,13 +226,13 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
 	      t->getVertex(2)->x(),t->getVertex(2)->y(),t->getVertex(2)->z(),
 	      cos(avg),sin(avg),0.,cos(avg),sin(avg),0.,cos(avg),sin(avg),0.);
       */
-      
+
     }
   }
   fprintf(of,"};\n");
   fclose(of);
   return 0;
-  
+
 }
 
 int computeCrossField (GModel *gm)

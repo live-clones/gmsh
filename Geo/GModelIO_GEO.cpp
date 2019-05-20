@@ -1247,10 +1247,10 @@ void GEO_Internals::synchronize(GModel *model)
       case MSH_PHYSICAL_VOLUME: ge = model->getRegionByTag(tag); break;
       }
       int pnum = CTX::instance()->geom.orientedPhysicals ?
-                   (gmsh_sign(num) * p->Num) :
-                   p->Num;
+        (gmsh_sign(num) * p->Num) :
+        p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-                 ge->physicals.end())
+         ge->physicals.end())
         ge->physicals.push_back(pnum);
     }
   }
@@ -1566,7 +1566,7 @@ int GModel::exportDiscreteGEOInternals()
       GVertex *gve = (*it)->getEndVertex();
 
       if(!gvb || !gve) {
-        Msg::Error("Discrete Edge %d has NULL endpoint(s) : %p %p",
+        Msg::Error("Discrete curve %d has NULL endpoint(s): %p %p",
                    (*it)->tag(), gvb, gve);
       }
       int nb = 2;

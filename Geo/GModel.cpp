@@ -2972,10 +2972,10 @@ void GModel::classifyAllFaces(double angleThreshold, bool includeBoundary)
 
 #if defined(HAVE_MESH)
 static void recurClassifyEdges(MTri3 *t, std::map<MTriangle *, GFace *> &reverse,
-                        std::map<MLine *, GEdge *, compareMLinePtr> &lines,
-                        std::set<MLine *> &touched,
-                        std::set<MTri3 *> &trisTouched,
-                        std::map<std::pair<int, int>, GEdge *> &newEdges)
+                               std::map<MLine *, GEdge *, compareMLinePtr> &lines,
+                               std::set<MLine *> &touched,
+                               std::set<MTri3 *> &trisTouched,
+                               std::map<std::pair<int, int>, GEdge *> &newEdges)
 {
 
   std::stack<MTri3 *> _stack;
@@ -3005,7 +3005,7 @@ static void recurClassifyEdges(MTri3 *t, std::map<MTriangle *, GFace *> &reverse
 	}
 	if(tn){
 	  _stack.push(tn);
-	  //	  recurClassifyEdges(tn, reverse, lines, touched, trisTouched, newEdges,rec+1);
+	  // recurClassifyEdges(tn, reverse, lines, touched, trisTouched, newEdges,rec+1);
 	}
       }
     }
@@ -3013,12 +3013,12 @@ static void recurClassifyEdges(MTri3 *t, std::map<MTriangle *, GFace *> &reverse
 }
 
 static void recurClassify(MTri3 *t, GFace *gf,
-                   std::map<MLine *, GEdge *, compareMLinePtr> &lines,
-                   std::map<MTriangle *, GFace *> &reverse)
+                          std::map<MLine *, GEdge *, compareMLinePtr> &lines,
+                          std::map<MTriangle *, GFace *> &reverse)
 {
   std::stack<MTri3 *> _stack;
   _stack.push(t);
-  
+
   while (!_stack.empty()){
     t = _stack.top();
     _stack.pop();
@@ -3033,7 +3033,10 @@ static void recurClassify(MTri3 *t, GFace *gf,
 	  MLine ml(exf._v(0), exf._v(1));
 	  std::map<MLine *, GEdge *, compareMLinePtr>::iterator it =
 	    lines.find(&ml);
-	  if(it == lines.end()) _stack.push(tn);//recurClassify(tn, gf, lines, reverse);
+	  if(it == lines.end()){
+            _stack.push(tn);
+            //recurClassify(tn, gf, lines, reverse);
+          }
 	}
       }
     }
@@ -3063,7 +3066,6 @@ void GModel::classifyFaces()
   for(size_t i = 0; i < edgesToRemove.size(); ++i) {
     remove(edgesToRemove[i]);
   }
-  //  printf("cpoc<<<s\n");
 
   // create triangle 2 triangle connections
   std::map<MTriangle *, GFace *> reverse_old;
@@ -3082,9 +3084,7 @@ void GModel::classifyFaces()
     }
   }
   if(tris.empty()) return;
-  //  printf("cpoc<<<ss\n");
   connectTriangles(tris);
-  //  printf("cpoc<<<sq\n");
 
   // classify
   std::map<MTriangle *, GFace *> reverse;
@@ -3106,7 +3106,6 @@ void GModel::classifyFaces()
     }
     ++it;
   }
-  //  printf("cpoc<<<s\n");
 
   // now we have all faces coloured. If some regions were existing, replace
   // their faces by the new ones
@@ -3125,7 +3124,6 @@ void GModel::classifyFaces()
     }
     (*rit)->set(std::vector<GFace *>(_newFaces.begin(), _newFaces.end()));
   }
-  //  printf("cpoc<<<s\n");
 
   // color some lines
   it = tris.begin();
@@ -3145,7 +3143,6 @@ void GModel::classifyFaces()
     recurClassifyEdges(*trisTouched.begin(), reverse, lines, touched,
                        trisTouched, newEdges);
 
-  //  printf("cpoc<<<s\n");
   std::map<discreteFace *, std::vector<int> > newFaceTopology;
 
   // check if new edges should not be splitted
@@ -3156,7 +3153,6 @@ void GModel::classifyFaces()
   for(std::map<std::pair<int, int>, GEdge *>::iterator ite = newEdges.begin();
       ite != newEdges.end(); ++ite) {
 
-    printf("%d %d -->  %d\n",ite->first.first,ite->first.second,ite->second->tag());
     std::list<MLine *> allSegments;
     for(std::size_t i = 0; i < ite->second->lines.size(); i++)
       allSegments.push_back(ite->second->lines[i]);
@@ -3242,14 +3238,12 @@ void GModel::classifyFaces()
       if(gf2) newFaceTopology[gf2].push_back(newGe->tag());
     }
   }
-  //  printf("edededededecpocss<<<s\n");
 
   std::map<discreteFace *, std::vector<int> >::iterator itFT =
     newFaceTopology.begin();
   for(; itFT != newFaceTopology.end(); ++itFT) {
     itFT->first->setBoundEdges(itFT->second);
   }
-  //  printf("edededededecpocss<<<s\n");
 
   for(std::map<std::pair<int, int>, GEdge *>::iterator it = newEdges.begin();
       it != newEdges.end(); ++it) {
@@ -3264,7 +3258,6 @@ void GModel::classifyFaces()
     ++it;
   }
 
-  //  printf("cpoc<<<s\n");
   // delete empty mesh faces and reclasssify
   std::set<GFace *, GEntityLessThan> fac = faces;
   for(fiter fit = fac.begin(); fit != fac.end(); ++fit) {

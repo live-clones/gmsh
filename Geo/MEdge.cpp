@@ -83,8 +83,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
     else {
       if(it0->second.second == NULL) { it0->second.second = v1; }
       else {
-        Msg::Debug(
-          "A list of edges is has points that are adjacet to 3 edges ! ");
+        Msg::Debug("A list of edges has points that are adjacent to 3 edges");
         return false;
       }
     }
@@ -93,14 +92,10 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
     else {
       if(it1->second.second == NULL) { it1->second.second = v0; }
       else {
-        Msg::Debug("Wrong topology for a list of edges ");
-        Msg::Debug("Vertex %d is adjacent to more than 2 vertices %d %d",v1->getNum(),it1->second.first->getNum(),it1->second.second->getNum());
-	//        printf("Vertex %d is adjacent to more than 2 vertices %d %d\n",v1->getNum(),it1->second.first->getNum(),it1->second.second->getNum());
-	//	for (size_t j=0;j<e.size();j++){
-	//	  printf("(%d %d)",e[j].getVertex(0)->getNum(),
-	//		 e[j].getVertex(1)->getNum());
-	//	}
-	//	printf("\n");
+        Msg::Debug("Wrong topology for a list of edges");
+        Msg::Debug("Node %d is adjacent to more than 2 nodes %d %d",
+                   v1->getNum(),it1->second.first->getNum(),
+                   it1->second.second->getNum());
         return false;
       }
     }

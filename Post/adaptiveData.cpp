@@ -2499,14 +2499,12 @@ void adaptiveElements<T>::addInViewForVTK(int step, PViewData *in,
   if(!numEle) return;
 
   // New variables for high order visualiztion through vtk files
-  int numNodInsert;
+  int numNodInsert = 0;
   nodMap<T> myNodMap;
 
-  double minVal;
-  double maxVal;
   PViewDataGModel *tmpPViewDataGModel = dynamic_cast<PViewDataGModel *>(in);
-  minVal = tmpPViewDataGModel->getMin(step);
-  maxVal = tmpPViewDataGModel->getMax(step);
+  double minVal = tmpPViewDataGModel->getMin(step);
+  double maxVal = tmpPViewDataGModel->getMax(step);
 
   for(int ent = 0; ent < in->getNumEntities(step); ent++) {
     for(int ele = 0; ele < in->getNumElements(step, ent); ele++) {
