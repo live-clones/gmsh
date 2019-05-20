@@ -234,9 +234,9 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-                          std::map<MVertex *, int> &v2c,
-                          std::vector<MVertex *> &c2v)
+HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
+		   std::map<MVertex *, int> &v2c,
+		   std::vector<MVertex *> &c2v)
 {
   std::set<MVertex *> all;
   std::vector<GFace *> faces;

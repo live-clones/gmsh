@@ -1,37 +1,55 @@
 #ifndef AUTOMATIC_MESH_SIZE_FIELD_H
 #define AUTOMATIC_MESH_SIZE_FIELD_H
 
+#include "GmshConfig.h"
+
+#ifdef HAVE_HXT
+#include "hxt_octree.h"
+#endif
+
 #include "Field.h"
 
 class automaticMeshSizeField : public Field {
+  
+#ifdef HAVE_HXT
+  struct HXTForest *forest;
+  struct HXTForestOptions *forestOptions;
+  HXTStatus updateHXT();
+#endif
+  
   int _nPointsPerCircle;
   int _nPointsPerGap;
   double _hmin, _hmax;
   double _hbulk;
   double _gradientMax;
-
-public:
-  automaticMeshSizeField()
-  {
-    _nPointsPerCircle = 15;
+  int _nRefine;
+  char fileName[256];
+  
+ public:
+  ~automaticMeshSizeField();
+  automaticMeshSizeField() : forest(NULL), forestOptions(NULL){
+    _nPointsPerCircle = 55 ;
     _nPointsPerGap = 5;
     _hmin = 1.e-8; // update needed
     _hmax = 1.e+8; // update needed
     _hbulk = 0.1; // update needed
-    _gradientMax = 1.4;
-
-    options["nPointsPerCircle"] = new FieldOptionInt(
-      _nPointsPerCircle,
-      "Number of points per circle (adapt to curvature of surfaces)");
-
-    options["nPointsPerGap"] =
-      new FieldOptionInt(_nPointsPerGap, "Number of points in thin layers");
-
-    options["hBulk"] = new FieldOptionDouble(
-      _hbulk, "Size everywhere no size is prescribed", &update_needed);
-
-    options["gradientMax"] =
-      new FieldOptionDouble(_gradientMax, "Maximun gradient of the size field");
+    _gradientMax =1.4;
+    _nRefine = 5;
+    
+    options["nPointsPerCircle"] = new FieldOptionInt(_nPointsPerCircle,
+						     "Number of points per circle (adapt to curvature of surfaces)",&update_needed);
+    
+    options["nPointsPerGap"] = new FieldOptionInt(_nPointsPerGap,
+						  "Number of points in thin layers",&update_needed);
+    
+    options["hBulk"] = new FieldOptionDouble(_hbulk,
+					     "Size everywhere no size is prescribed", &update_needed);
+    
+    options["gradientMax"] = new FieldOptionDouble(_gradientMax,
+						   "Maximun gradient of the size field",&update_needed);
+    
+    options["NRefine"] = new FieldOptionInt(_nRefine,
+					    "Initial refinement level for the octree",&update_needed);
   }
   const char *getName() { return "AutomaticMeshSizeField"; }
 

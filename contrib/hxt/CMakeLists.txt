@@ -39,6 +39,7 @@ set(SRC ${SRC}
   hxt_tetUtils.c
   hxt_tet_aspect_ratio.c
   hxt_vertices.c
+  hxt_octree.cpp
   predicates.c
 )
 endif()
