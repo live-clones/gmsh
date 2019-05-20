@@ -795,6 +795,23 @@ GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n, dou
   }
 }
 
+GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType, size_t ** nodeTags, size_t * nodeTags_n, double ** coord, size_t * coord_n, double ** parametricCoord, size_t * parametricCoord_n, const int tag, const int returnParametricCoord, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_nodeTags_;
+    std::vector<double> api_coord_;
+    std::vector<double> api_parametricCoord_;
+    gmsh::model::mesh::getNodesByElementType(elementType, api_nodeTags_, api_coord_, api_parametricCoord_, tag, returnParametricCoord);
+    vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+    vector2ptr(api_coord_, coord, coord_n);
+    vector2ptr(api_parametricCoord_, parametricCoord, parametricCoord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGetNode(const size_t nodeTag, double ** coord, size_t * coord_n, double ** parametricCoord, size_t * parametricCoord_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -941,15 +958,15 @@ GMSH_API int gmshModelMeshGetElementType(const char * familyName, const int orde
   return result_api_;
 }
 
-GMSH_API void gmshModelMeshGetElementProperties(const int elementType, char ** elementName, int * dim, int * order, int * numNodes, double ** parametricCoord, size_t * parametricCoord_n, int * ierr)
+GMSH_API void gmshModelMeshGetElementProperties(const int elementType, char ** elementName, int * dim, int * order, int * numNodes, double ** nodeCoord, size_t * nodeCoord_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::string api_elementName_;
-    std::vector<double> api_parametricCoord_;
-    gmsh::model::mesh::getElementProperties(elementType, api_elementName_, *dim, *order, *numNodes, api_parametricCoord_);
+    std::vector<double> api_nodeCoord_;
+    gmsh::model::mesh::getElementProperties(elementType, api_elementName_, *dim, *order, *numNodes, api_nodeCoord_);
     *elementName = strdup(api_elementName_.c_str());
-    vector2ptr(api_parametricCoord_, parametricCoord, parametricCoord_n);
+    vector2ptr(api_nodeCoord_, nodeCoord, nodeCoord_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

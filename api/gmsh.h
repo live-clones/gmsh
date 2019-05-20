@@ -423,6 +423,15 @@ namespace gmsh { // Top-level functions
                              const bool includeBoundary = false,
                              const bool returnParametricCoord = true);
 
+      // Get the nodes classified on the entity of tag `tag', for all the elements
+      // of type `elementType'. The other arguments are treated as in `getNodes'.
+      GMSH_API void getNodesByElementType(const int elementType,
+                                          std::vector<std::size_t> & nodeTags,
+                                          std::vector<double> & coord,
+                                          std::vector<double> & parametricCoord,
+                                          const int tag = -1,
+                                          const bool returnParametricCoord = true);
+
       // Get the coordinates and the parametric coordinates (if any) of the node
       // with tag `tag'. This is a sometimes useful but inefficient way of
       // accessing nodes, as it relies on a cache stored in the model. For large
@@ -538,14 +547,14 @@ namespace gmsh { // Top-level functions
 
       // Get the properties of an element of type `elementType': its name
       // (`elementName'), dimension (`dim'), order (`order'), number of nodes
-      // (`numNodes') and parametric node coordinates (`parametricCoord' vector, of
-      // length `dim' times `numNodes').
+      // (`numNodes') and coordinates of the nodes in the reference element
+      // (`nodeCoord' vector, of length `dim' times `numNodes').
       GMSH_API void getElementProperties(const int elementType,
                                          std::string & elementName,
                                          int & dim,
                                          int & order,
                                          int & numNodes,
-                                         std::vector<double> & parametricCoord);
+                                         std::vector<double> & nodeCoord);
 
       // Get the elements of type `elementType' classified on the entity of tag
       // `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a

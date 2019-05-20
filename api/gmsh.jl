@@ -1113,6 +1113,32 @@ function getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricC
 end
 
 """
+    gmsh.model.mesh.getNodesByElementType(elementType, tag = -1, returnParametricCoord = true)
+
+Get the nodes classified on the entity of tag `tag`, for all the elements of
+type `elementType`. The other arguments are treated as in `getNodes`.
+
+Return `nodeTags`, `coord`, `parametricCoord`.
+"""
+function getNodesByElementType(elementType, tag = -1, returnParametricCoord = true)
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetNodesByElementType, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, tag, returnParametricCoord, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNodesByElementType returned non-zero error code: $(ierr[])")
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    return nodeTags, coord, parametricCoord
+end
+
+"""
     gmsh.model.mesh.getNode(nodeTag)
 
 Get the coordinates and the parametric coordinates (if any) of the node with tag
@@ -1374,26 +1400,26 @@ end
 
 Get the properties of an element of type `elementType`: its name
 (`elementName`), dimension (`dim`), order (`order`), number of nodes
-(`numNodes`) and parametric node coordinates (`parametricCoord` vector, of
-length `dim` times `numNodes`).
+(`numNodes`) and coordinates of the nodes in the reference element (`nodeCoord`
+vector, of length `dim` times `numNodes`).
 
-Return `elementName`, `dim`, `order`, `numNodes`, `parametricCoord`.
+Return `elementName`, `dim`, `order`, `numNodes`, `nodeCoord`.
 """
 function getElementProperties(elementType)
     api_elementName_ = Ref{Ptr{Cchar}}()
     api_dim_ = Ref{Cint}()
     api_order_ = Ref{Cint}()
     api_numNodes_ = Ref{Cint}()
-    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
-    api_parametricCoord_n_ = Ref{Csize_t}()
+    api_nodeCoord_ = Ref{Ptr{Cdouble}}()
+    api_nodeCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementProperties, gmsh.lib), Cvoid,
           (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_nodeCoord_, api_nodeCoord_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElementProperties returned non-zero error code: $(ierr[])")
     elementName = unsafe_string(api_elementName_[])
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
-    return elementName, api_dim_[], api_order_[], api_numNodes_[], parametricCoord
+    nodeCoord = unsafe_wrap(Array, api_nodeCoord_[], api_nodeCoord_n_[], own=true)
+    return elementName, api_dim_[], api_order_[], api_numNodes_[], nodeCoord
 end
 
 """

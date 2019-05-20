@@ -1357,6 +1357,35 @@ class model:
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
+        def getNodesByElementType(elementType, tag=-1, returnParametricCoord=True):
+            """
+            Get the nodes classified on the entity of tag `tag', for all the elements
+            of type `elementType'. The other arguments are treated as in `getNodes'.
+
+            Return `nodeTags', `coord', `parametricCoord'.
+            """
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetNodesByElementType(
+                c_int(elementType),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+                c_int(tag),
+                c_int(bool(returnParametricCoord)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNodesByElementType returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+
+        @staticmethod
         def getNode(nodeTag):
             """
             Get the coordinates and the parametric coordinates (if any) of the node
@@ -1649,16 +1678,16 @@ class model:
             """
             Get the properties of an element of type `elementType': its name
             (`elementName'), dimension (`dim'), order (`order'), number of nodes
-            (`numNodes') and parametric node coordinates (`parametricCoord' vector, of
-            length `dim' times `numNodes').
+            (`numNodes') and coordinates of the nodes in the reference element
+            (`nodeCoord' vector, of length `dim' times `numNodes').
 
-            Return `elementName', `dim', `order', `numNodes', `parametricCoord'.
+            Return `elementName', `dim', `order', `numNodes', `nodeCoord'.
             """
             api_elementName_ = c_char_p()
             api_dim_ = c_int()
             api_order_ = c_int()
             api_numNodes_ = c_int()
-            api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            api_nodeCoord_, api_nodeCoord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElementProperties(
                 c_int(elementType),
@@ -1666,7 +1695,7 @@ class model:
                 byref(api_dim_),
                 byref(api_order_),
                 byref(api_numNodes_),
-                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+                byref(api_nodeCoord_), byref(api_nodeCoord_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1677,7 +1706,7 @@ class model:
                 api_dim_.value,
                 api_order_.value,
                 api_numNodes_.value,
-                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+                _ovectordouble(api_nodeCoord_, api_nodeCoord_n_.value))
 
         @staticmethod
         def getElementsByType(elementType, tag=-1, task=0, numTasks=1):

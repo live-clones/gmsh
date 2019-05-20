@@ -452,6 +452,16 @@ GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n,
                                     const int returnParametricCoord,
                                     int * ierr);
 
+/* Get the nodes classified on the entity of tag `tag', for all the elements
+ * of type `elementType'. The other arguments are treated as in `getNodes'. */
+GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType,
+                                                 size_t ** nodeTags, size_t * nodeTags_n,
+                                                 double ** coord, size_t * coord_n,
+                                                 double ** parametricCoord, size_t * parametricCoord_n,
+                                                 const int tag,
+                                                 const int returnParametricCoord,
+                                                 int * ierr);
+
 /* Get the coordinates and the parametric coordinates (if any) of the node
  * with tag `tag'. This is a sometimes useful but inefficient way of accessing
  * nodes, as it relies on a cache stored in the model. For large meshes all
@@ -577,14 +587,14 @@ GMSH_API int gmshModelMeshGetElementType(const char * familyName,
 
 /* Get the properties of an element of type `elementType': its name
  * (`elementName'), dimension (`dim'), order (`order'), number of nodes
- * (`numNodes') and parametric node coordinates (`parametricCoord' vector, of
- * length `dim' times `numNodes'). */
+ * (`numNodes') and coordinates of the nodes in the reference element
+ * (`nodeCoord' vector, of length `dim' times `numNodes'). */
 GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
                                                 char ** elementName,
                                                 int * dim,
                                                 int * order,
                                                 int * numNodes,
-                                                double ** parametricCoord, size_t * parametricCoord_n,
+                                                double ** nodeCoord, size_t * nodeCoord_n,
                                                 int * ierr);
 
 /* Get the elements of type `elementType' classified on the entity of tag
