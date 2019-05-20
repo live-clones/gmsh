@@ -1359,9 +1359,8 @@ class model:
         @staticmethod
         def getNodesByElementType(elementType, tag=-1, returnParametricCoord=True):
             """
-            Get the nodes classified on the entity of dimension `dim' and tag `tag' as
-            `getNodes' functions but only return nodes owned by elements of type
-            `elementType'.
+            Get the nodes classified on the entity of tag `tag', for all the elements
+            of type `elementType'. The other arguments are treated as in `getNodes'.
 
             Return `nodeTags', `coord', `parametricCoord'.
             """
@@ -1679,16 +1678,16 @@ class model:
             """
             Get the properties of an element of type `elementType': its name
             (`elementName'), dimension (`dim'), order (`order'), number of nodes
-            (`numNodes') and nodes's coordinates in the reference element
-            (`coordinates' vector, of length `dim' times `numNodes').
+            (`numNodes') and coordinates of the nodes in the reference element
+            (`nodeCoord' vector, of length `dim' times `numNodes').
 
-            Return `elementName', `dim', `order', `numNodes', `coordinates'.
+            Return `elementName', `dim', `order', `numNodes', `nodeCoord'.
             """
             api_elementName_ = c_char_p()
             api_dim_ = c_int()
             api_order_ = c_int()
             api_numNodes_ = c_int()
-            api_coordinates_, api_coordinates_n_ = POINTER(c_double)(), c_size_t()
+            api_nodeCoord_, api_nodeCoord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElementProperties(
                 c_int(elementType),
@@ -1696,7 +1695,7 @@ class model:
                 byref(api_dim_),
                 byref(api_order_),
                 byref(api_numNodes_),
-                byref(api_coordinates_), byref(api_coordinates_n_),
+                byref(api_nodeCoord_), byref(api_nodeCoord_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1707,7 +1706,7 @@ class model:
                 api_dim_.value,
                 api_order_.value,
                 api_numNodes_.value,
-                _ovectordouble(api_coordinates_, api_coordinates_n_.value))
+                _ovectordouble(api_nodeCoord_, api_nodeCoord_n_.value))
 
         @staticmethod
         def getElementsByType(elementType, tag=-1, task=0, numTasks=1):

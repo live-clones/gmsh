@@ -1115,9 +1115,8 @@ end
 """
     gmsh.model.mesh.getNodesByElementType(elementType, tag = -1, returnParametricCoord = true)
 
-Get the nodes classified on the entity of dimension `dim` and tag `tag` as
-`getNodes` functions but only return nodes owned by elements of type
-`elementType`.
+Get the nodes classified on the entity of tag `tag`, for all the elements of
+type `elementType`. The other arguments are treated as in `getNodes`.
 
 Return `nodeTags`, `coord`, `parametricCoord`.
 """
@@ -1401,26 +1400,26 @@ end
 
 Get the properties of an element of type `elementType`: its name
 (`elementName`), dimension (`dim`), order (`order`), number of nodes
-(`numNodes`) and nodes`s coordinates in the reference element (`coordinates`
+(`numNodes`) and coordinates of the nodes in the reference element (`nodeCoord`
 vector, of length `dim` times `numNodes`).
 
-Return `elementName`, `dim`, `order`, `numNodes`, `coordinates`.
+Return `elementName`, `dim`, `order`, `numNodes`, `nodeCoord`.
 """
 function getElementProperties(elementType)
     api_elementName_ = Ref{Ptr{Cchar}}()
     api_dim_ = Ref{Cint}()
     api_order_ = Ref{Cint}()
     api_numNodes_ = Ref{Cint}()
-    api_coordinates_ = Ref{Ptr{Cdouble}}()
-    api_coordinates_n_ = Ref{Csize_t}()
+    api_nodeCoord_ = Ref{Ptr{Cdouble}}()
+    api_nodeCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementProperties, gmsh.lib), Cvoid,
           (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_coordinates_, api_coordinates_n_, ierr)
+          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_nodeCoord_, api_nodeCoord_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElementProperties returned non-zero error code: $(ierr[])")
     elementName = unsafe_string(api_elementName_[])
-    coordinates = unsafe_wrap(Array, api_coordinates_[], api_coordinates_n_[], own=true)
-    return elementName, api_dim_[], api_order_[], api_numNodes_[], coordinates
+    nodeCoord = unsafe_wrap(Array, api_nodeCoord_[], api_nodeCoord_n_[], own=true)
+    return elementName, api_dim_[], api_order_[], api_numNodes_[], nodeCoord
 end
 
 """

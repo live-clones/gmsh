@@ -836,9 +836,9 @@ the entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 @end table
 
 @item getNodesByElementType
-Get the nodes classified on the entity of dimension @code{dim} and tag
-@code{tag} as @code{getNodes} functions but only return nodes owned by elements
-of type @code{elementType}.
+Get the nodes classified on the entity of tag @code{tag}, for all the elements
+of type @code{elementType}. The other arguments are treated as in
+@code{getNodes}.
 
 @table @asis
 @item Input:
@@ -1036,14 +1036,14 @@ integer value
 @item getElementProperties
 Get the properties of an element of type @code{elementType}: its name
 (@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
-nodes (@code{numNodes}) and nodes}s coordinates in the reference element
-(@code{coordinates} vector, of length @code{dim} times @code{numNodes}).
+nodes (@code{numNodes}) and coordinates of the nodes in the reference element
+(@code{nodeCoord} vector, of length @code{dim} times @code{numNodes}).
 
 @table @asis
 @item Input:
 @code{elementType}
 @item Output:
-@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{coordinates}
+@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{nodeCoord}
 @item Return:
 -
 @end table

@@ -423,9 +423,8 @@ namespace gmsh { // Top-level functions
                              const bool includeBoundary = false,
                              const bool returnParametricCoord = true);
 
-      // Get the nodes classified on the entity of dimension `dim' and tag `tag' as
-      // `getNodes' functions but only return nodes owned by elements of type
-      // `elementType'.
+      // Get the nodes classified on the entity of tag `tag', for all the elements
+      // of type `elementType'. The other arguments are treated as in `getNodes'.
       GMSH_API void getNodesByElementType(const int elementType,
                                           std::vector<std::size_t> & nodeTags,
                                           std::vector<double> & coord,
@@ -548,14 +547,14 @@ namespace gmsh { // Top-level functions
 
       // Get the properties of an element of type `elementType': its name
       // (`elementName'), dimension (`dim'), order (`order'), number of nodes
-      // (`numNodes') and nodes's coordinates in the reference element
-      // (`coordinates' vector, of length `dim' times `numNodes').
+      // (`numNodes') and coordinates of the nodes in the reference element
+      // (`nodeCoord' vector, of length `dim' times `numNodes').
       GMSH_API void getElementProperties(const int elementType,
                                          std::string & elementName,
                                          int & dim,
                                          int & order,
                                          int & numNodes,
-                                         std::vector<double> & coordinates);
+                                         std::vector<double> & nodeCoord);
 
       // Get the elements of type `elementType' classified on the entity of tag
       // `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a

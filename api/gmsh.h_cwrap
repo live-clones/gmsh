@@ -832,9 +832,8 @@ namespace gmsh { // Top-level functions
         parametricCoord.assign(api_parametricCoord_, api_parametricCoord_ + api_parametricCoord_n_); gmshFree(api_parametricCoord_);
       }
 
-      // Get the nodes classified on the entity of dimension `dim' and tag `tag' as
-      // `getNodes' functions but only return nodes owned by elements of type
-      // `elementType'.
+      // Get the nodes classified on the entity of tag `tag', for all the elements
+      // of type `elementType'. The other arguments are treated as in `getNodes'.
       inline void getNodesByElementType(const int elementType,
                                         std::vector<std::size_t> & nodeTags,
                                         std::vector<double> & coord,
@@ -1050,22 +1049,22 @@ namespace gmsh { // Top-level functions
 
       // Get the properties of an element of type `elementType': its name
       // (`elementName'), dimension (`dim'), order (`order'), number of nodes
-      // (`numNodes') and nodes's coordinates in the reference element
-      // (`coordinates' vector, of length `dim' times `numNodes').
+      // (`numNodes') and coordinates of the nodes in the reference element
+      // (`nodeCoord' vector, of length `dim' times `numNodes').
       inline void getElementProperties(const int elementType,
                                        std::string & elementName,
                                        int & dim,
                                        int & order,
                                        int & numNodes,
-                                       std::vector<double> & coordinates)
+                                       std::vector<double> & nodeCoord)
       {
         int ierr = 0;
         char *api_elementName_;
-        double *api_coordinates_; size_t api_coordinates_n_;
-        gmshModelMeshGetElementProperties(elementType, &api_elementName_, &dim, &order, &numNodes, &api_coordinates_, &api_coordinates_n_, &ierr);
+        double *api_nodeCoord_; size_t api_nodeCoord_n_;
+        gmshModelMeshGetElementProperties(elementType, &api_elementName_, &dim, &order, &numNodes, &api_nodeCoord_, &api_nodeCoord_n_, &ierr);
         if(ierr) throw ierr;
         elementName = std::string(api_elementName_); gmshFree(api_elementName_);
-        coordinates.assign(api_coordinates_, api_coordinates_ + api_coordinates_n_); gmshFree(api_coordinates_);
+        nodeCoord.assign(api_nodeCoord_, api_nodeCoord_ + api_nodeCoord_n_); gmshFree(api_nodeCoord_);
       }
 
       // Get the elements of type `elementType' classified on the entity of tag
