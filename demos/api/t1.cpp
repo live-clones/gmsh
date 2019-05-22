@@ -79,6 +79,12 @@ int main(int argc, char **argv)
   // ... and save it to disk
   gmsh::write("t1.msh");
 
+  // Remember that by default, if physical groups are defined, Gmsh will export
+  // in the output mesh file only those elements that belong to at least one
+  // physical group. To force Gmsh to save all elements, you can use
+  //
+  // gmsh::option::setNumber("Mesh.SaveAll", 1);
+
   // This should be called at the end:
   gmsh::finalize();
   return 0;
