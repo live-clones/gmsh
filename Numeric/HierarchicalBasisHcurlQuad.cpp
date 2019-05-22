@@ -53,8 +53,8 @@ void HierarchicalBasisHcurlQuad::generateHcurlBasis(
   double lambda3 = _affineCoordinate(3, u, v);
   double lambda4 = _affineCoordinate(4, u, v);
   std::vector<std::vector<double> > legendreVector(2);
-  legendreVector[0] = std::vector<double>( _pf1 + 1);
-  legendreVector[1] = std::vector<double>( _pf2 + 1);
+  legendreVector[0] = std::vector<double>(_pf1 + 1);
+  legendreVector[1] = std::vector<double>(_pf2 + 1);
   for(unsigned int k = 0; k < legendreVector[0].size(); k++) {
     legendreVector[0][k] = OrthogonalPoly::EvalLegendre(k, u);
   }
@@ -165,8 +165,8 @@ void HierarchicalBasisHcurlQuad::generateCurlBasis(
   double dlambda3 = 0.5;
   double dlambda4 = -0.5;
   std::vector<std::vector<double> > legendreVector(2);
-  legendreVector[0] = std::vector<double>( _pf1 + 1);
-  legendreVector[1] = std::vector<double>( _pf2 + 1);
+  legendreVector[0] = std::vector<double>(_pf1 + 1);
+  legendreVector[1] = std::vector<double>(_pf2 + 1);
   for(unsigned int k = 0; k < legendreVector[0].size(); k++) {
     legendreVector[0][k] = OrthogonalPoly::EvalLegendre(k, u);
   }
