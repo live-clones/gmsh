@@ -18,7 +18,6 @@
 #include "BackgroundMeshTools.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
-#include "Generator.h"
 #include "Context.h"
 #include "OS.h"
 #include "SVector3.h"

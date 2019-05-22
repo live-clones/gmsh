@@ -55,6 +55,7 @@
 #include "meshMetric.h"
 #include "meshGRegionMMG3D.h"
 #include "meshGFaceBamg.h"
+#include "meshRefine.h"
 #endif
 
 #if defined(HAVE_KBIPACK)
@@ -887,6 +888,12 @@ int GModel::mesh(int dimension)
 {
 #if defined(HAVE_MESH)
   GenerateMesh(this, dimension);
+  if(CTX::instance()->mesh.renumber){
+    renumberMeshVertices();
+    renumberMeshElements();
+  }
+  computeHomology(); // must be done after renumbering
+  CTX::instance()->mesh.changed = ENT_ALL;
   return true;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1023,6 +1030,22 @@ void GModel::setAllVolumesPositiveTopology()
         queued.insert(neigh[iN].first);
       }
   }
+}
+
+int GModel::adaptMesh()
+{
+#if defined(HAVE_MESH)
+  AdaptMesh(this);
+  if(CTX::instance()->mesh.renumber){
+    renumberMeshVertices();
+    renumberMeshElements();
+  }
+  CTX::instance()->mesh.changed = ENT_ALL;
+  return 1;
+#else
+  Msg::Error("Mesh module not compiled");
+  return 0;
+#endif
 }
 
 int GModel::adaptMesh(std::vector<int> technique,
@@ -1182,6 +1205,12 @@ int GModel::adaptMesh(std::vector<int> technique,
   // copy context (in order to allow multiple calls)
   *(CTX::instance()) = _backup;
 
+  if(CTX::instance()->mesh.renumber){
+    renumberMeshVertices();
+    renumberMeshElements();
+  }
+  CTX::instance()->mesh.changed = ENT_ALL;
+
   return 0;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1189,10 +1218,20 @@ int GModel::adaptMesh(std::vector<int> technique,
 #endif
 }
 
-int GModel::refineMesh(int linear)
+int GModel::refineMesh(int linear, bool barycentric)
 {
 #if defined(HAVE_MESH)
-  RefineMesh(this, linear);
+  if(!barycentric){
+    RefineMesh(this, linear);
+  }
+  else{
+    BarycentricRefineMesh(this);
+  }
+  if(CTX::instance()->mesh.renumber){
+    renumberMeshVertices();
+    renumberMeshElements();
+  }
+  CTX::instance()->mesh.changed = ENT_ALL;
   return 1;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1204,6 +1243,11 @@ int GModel::recombineMesh()
 {
 #if defined(HAVE_MESH)
   RecombineMesh(this);
+  if(CTX::instance()->mesh.renumber){
+    renumberMeshVertices();
+    renumberMeshElements();
+  }
+  CTX::instance()->mesh.changed = ENT_ALL;
   return 1;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1215,6 +1259,11 @@ int GModel::smoothMesh()
 {
 #if defined(HAVE_MESH)
   SmoothMesh(this);
+  if(CTX::instance()->mesh.renumber){
+    renumberMeshVertices();
+    renumberMeshElements();
+  }
+  CTX::instance()->mesh.changed = ENT_ALL;
   return 1;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1233,6 +1282,11 @@ int GModel::optimizeMesh(const std::string &how)
     OptimizeMeshNetgen(this);
   else
     OptimizeMesh(this);
+  if(CTX::instance()->mesh.renumber){
+    renumberMeshVertices();
+    renumberMeshElements();
+  }
+  CTX::instance()->mesh.changed = ENT_ALL;
   return 1;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1243,7 +1297,15 @@ int GModel::optimizeMesh(const std::string &how)
 int GModel::setOrderN(int order, int linear, int incomplete)
 {
 #if defined(HAVE_MESH)
-  SetOrderN(this, order, linear, incomplete);
+  if(order > 1)
+    SetOrderN(this, order, linear, incomplete);
+  else
+    SetOrder1(this);
+  if(CTX::instance()->mesh.renumber){
+    renumberMeshVertices();
+    renumberMeshElements();
+  }
+  CTX::instance()->mesh.changed = ENT_ALL;
   return true;
 #else
   Msg::Error("Mesh module not compiled");

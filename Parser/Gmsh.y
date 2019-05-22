@@ -36,7 +36,6 @@
 #include "fullMatrix.h"
 
 #if defined(HAVE_MESH)
-#include "Generator.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
 #include "HighOrder.h"

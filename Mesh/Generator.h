@@ -18,9 +18,6 @@ void OptimizeMeshNetgen(GModel *m);
 void OptimizeHighOrderMesh(GModel *m);
 void OptimizeHighOrderMeshElastic(GModel *m);
 void SmoothMesh(GModel *m);
-void RefineMesh(GModel *m, bool linear, bool splitIntoQuads = false,
-                bool splitIntoHexas = false);
-void BarycentricRefineMesh(GModel *m);
 void RecombineMesh(GModel *m);
 
 #endif

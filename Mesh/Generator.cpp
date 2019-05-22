@@ -26,12 +26,12 @@
 #include "meshGRegion.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "meshRelocateVertex.h"
+#include "meshRefine.h"
 #include "discreteFace.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "ExtrudeParams.h"
 #include "HighOrder.h"
-#include "Generator.h"
 #include "Field.h"
 #include "Options.h"
 
@@ -953,8 +953,6 @@ static void Mesh3D(GModel *m)
     Msg::Error(debugInfo.str().c_str());
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
-
   Msg::SetNumThreads(prevNumThreads);
 
   double t2 = Cpu();
@@ -977,7 +975,6 @@ void OptimizeMesh(GModel *m)
   if(Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
 
-  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);
 }
@@ -995,7 +992,6 @@ void OptimizeMeshNetgen(GModel *m)
   if(Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
 
-  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);
 }
@@ -1037,7 +1033,6 @@ void SmoothMesh(GModel *m)
     laplaceSmoothing(gf);
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done smoothing 2D mesh (%g s)", t2 - t1);
 }
@@ -1050,7 +1045,6 @@ void AdaptMesh(GModel *m)
   for(int i = 0; i < 10; i++)
     std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
 
-  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done adaptating 3D mesh (%g s)", t2 - t1);
 }
@@ -1068,7 +1062,6 @@ void RecombineMesh(GModel *m)
     recombineIntoQuads(gf, blossom, topo, true, .01);
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done recombining 2D mesh (%g s)", t2 - t1);
 }
@@ -1153,20 +1146,11 @@ void GenerateMesh(GModel *m, int ask)
   if(CTX::instance()->mesh.hoOptimize >= 1)
     OptimizeHighOrderMesh(GModel::current());
 
-  if(CTX::instance()->mesh.renumber){
-    m->renumberMeshVertices();
-    m->renumberMeshElements();
-  }
-
-  // Compute homology if necessary
-  if(!Msg::GetErrorCount()) m->computeHomology();
-
   Msg::Info("%d vertices %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 
   CTX::instance()->lock = 0;
-  CTX::instance()->mesh.changed = ENT_ALL;
   // ProfilerStop();
 }

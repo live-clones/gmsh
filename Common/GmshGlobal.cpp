@@ -42,7 +42,6 @@ typedef unsigned long intptr_t;
 #endif
 
 #if defined(HAVE_MESH)
-#include "Generator.h"
 #include "Field.h"
 #include "meshPartition.h"
 #endif
@@ -330,13 +329,13 @@ int GmshBatch()
     if(CTX::instance()->batch < 4)
       GModel::current()->mesh(CTX::instance()->batch);
     else if(CTX::instance()->batch == 4)
-      AdaptMesh(GModel::current());
+      GModel::current()->adaptMesh();
     else if(CTX::instance()->batch == 5)
-      RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
+      GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
     else if(CTX::instance()->batch == 6)
       GModel::current()->classifyAllFaces(0.7, true);
     else if(CTX::instance()->batch == 7)
-      BarycentricRefineMesh(GModel::current());
+      GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear, true);
 #endif
   }
 

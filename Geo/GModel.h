@@ -563,6 +563,9 @@ public:
   // mesh the model
   int mesh(int dimension);
 
+  // adapt 3d mesh
+  int adaptMesh();
+
   // adapt the mesh anisotropically using metrics that are computed from a set
   // of functions f(x,y,z). The algorithm first generate a mesh if no one is
   // available; see the cpp for parameter documentation
@@ -581,7 +584,7 @@ public:
   int setOrderN(int order, int linear, int incomplete);
 
   // refine the mesh by splitting all elements
-  int refineMesh(int linear);
+  int refineMesh(int linear, bool barycentric = false);
 
   // optimize the mesh
   int optimizeMesh(const std::string &how);

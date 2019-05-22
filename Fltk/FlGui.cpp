@@ -44,7 +44,6 @@
 #include "CommandLine.h"
 #include "Context.h"
 #include "StringUtils.h"
-#include "Generator.h"
 #include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"

@@ -17,7 +17,6 @@
 #include "MPyramid.h"
 #include "GmshMessage.h"
 #include "OS.h"
-#include "Context.h"
 #include "meshGFaceOptimize.h"
 
 void subdivide_pyramid(MElement *element, GRegion *gr,
@@ -485,7 +484,6 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
   // Check all 3D elements for negative volume and reverse if needed
   m->setAllVolumesPositive();
 
-  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done refining mesh (%g s)", t2 - t1);
 }
@@ -547,8 +545,6 @@ void BarycentricRefineMesh(GModel *m)
       gr->deleteVertexArrays();
     }
   }
-
-  CTX::instance()->mesh.changed = ENT_ALL;
 
   double t2 = Cpu();
   Msg::StatusBar(true, "Done barycentrically refining mesh (%g s)", t2 - t1);
