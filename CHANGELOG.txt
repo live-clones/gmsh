@@ -1,7 +1,8 @@
 4.4.0: added API support for color options, mesh optimization, recombination and
 smoothing; changed getJacobians and getBasisFunctions API to specify integration
 points explicitely; exposed additional METIS options; improved support for
-periodic entities in legacy MSH2 format; small bug fixes.
+periodic entities in legacy MSH2 format; added mesh renumbering also after
+interactive mesh modifications; small bug fixes.
 
 4.3.0 (April 19, 2019): improved meshing of surfaces with singular
 parametrizations; added API support for aliasing and combining views, copying
