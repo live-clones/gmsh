@@ -671,14 +671,14 @@ GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType,
  * [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with
  * elements in the same order as in `getElements' and `getElementsByType'.
  * `jacobians' contains for each element the 9 entries of the 3x3 Jacobian
- * matrix at each integration point, by row: [e1g1Jxu, e1g1Jxv, e1g1Jxw,
- * e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
- * Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each element the
- * determinant of the Jacobian matrix at each integration point: [e1g1, e1g2,
- * ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z
- * coordinates of the integration points. If `tag' < 0, get the Jacobian data
- * for all entities. If `numTasks' > 1, only compute and return the part of
- * the data indexed by `task'. */
+ * matrix at each integration point. The matrix is returned by column:
+ * [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw,
+ * e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for
+ * each element the determinant of the Jacobian matrix at each integration
+ * point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each
+ * element the x, y, z coordinates of the integration points. If `tag' < 0,
+ * get the Jacobian data for all entities. If `numTasks' > 1, only compute and
+ * return the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetJacobians(const int elementType,
                                         double * integrationPoints, size_t integrationPoints_n,
                                         double ** jacobians, size_t * jacobians_n,
