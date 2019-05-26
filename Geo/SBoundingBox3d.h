@@ -122,6 +122,13 @@ public:
       return true;
     return false;
   }
+  bool transform(const std::vector<double> &tfo)
+  {
+    if(tfo.size() != 16) return false;
+    MinPt.transform(tfo);
+    MaxPt.transform(tfo);
+    return true;
+  }
 };
 
 #endif

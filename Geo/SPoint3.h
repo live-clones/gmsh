@@ -7,6 +7,8 @@
 #define SPOINT3_H
 
 #include <cmath>
+#include <vector>
+
 // A point in 3-space
 class SPoint3 {
 protected:
@@ -72,6 +74,18 @@ public:
   }
   const double *data() const { return P; }
   double *data() { return P; }
+  bool transform(const std::vector<double> &tfo)
+  {
+    if(tfo.size() != 16) return false;
+    double old[3] = {P[0], P[1], P[2]};
+    P[0] = P[1] = P[2] = 0.;
+    int idx = 0;
+    for(int i = 0; i < 3; i++) {
+      for(int j = 0; j < 3; j++) P[i] += old[j] * tfo[idx++];
+      P[i] += tfo[idx++];
+    }
+    return true;
+  }
 };
 
 inline SPoint3 operator+(const SPoint3 &a, const SPoint3 &b)
