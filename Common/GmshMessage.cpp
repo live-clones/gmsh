@@ -674,9 +674,9 @@ void Msg::Auto(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  if(strstr(str, "Error") || strstr(str, "error"))
+  if(strstr(str, "Error") || strstr(str, "error") || strstr(str, "ERROR"))
     Msg::Error("%s", str);
-  else if(strstr(str, "Warning") || strstr(str, "warning"))
+  else if(strstr(str, "Warning") || strstr(str, "warning") || strstr(str, "WARNING"))
     Msg::Warning("%s", str);
   else
     Msg::Info("%s", str);
