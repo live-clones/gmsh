@@ -232,7 +232,7 @@ SBoundingBox3d GEdge::bounds(bool fast) const
   if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve &&
      geomType() != PartitionCurve) {
     Range<double> tr = parBounds(0);
-    const int N = 10;
+    const int N = fast ? 3 : 10;
     for(int i = 0; i < N; i++) {
       double t =
         tr.low() + (double)i / (double)(N - 1) * (tr.high() - tr.low());
