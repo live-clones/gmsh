@@ -1598,111 +1598,90 @@ void GFace::relocateMeshVertices()
 
 void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
 {
-  std::vector<GEdge *>::const_iterator eIter;
-  std::list<GVertex *>::iterator vIter;
-
   Msg::Info("Setting mesh master using transformation");
 
-  // list all vertices and construct vertex to edge correspondence for local
-  // edge
-
+  // points and curves
   std::set<GVertex *> l_vertices;
-  std::map<std::pair<GVertex *, GVertex *>, GEdge *> l_vtxToEdge;
-
-  for(eIter = l_edges.begin(); eIter != l_edges.end(); ++eIter) {
+  std::multimap<std::pair<GVertex *, GVertex *>, GEdge *> l_vtxToEdge;
+  for(std::vector<GEdge *>::const_iterator eIter = l_edges.begin();
+      eIter != l_edges.end(); ++eIter) {
     GVertex *v0 = (*eIter)->getBeginVertex();
     GVertex *v1 = (*eIter)->getEndVertex();
     if(v0 && v1) {
       l_vertices.insert(v0);
       l_vertices.insert(v1);
-      l_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+      l_vtxToEdge.insert(std::make_pair(std::make_pair(v0, v1), *eIter));
     }
   }
-
-  for(eIter = embedded_edges.begin(); eIter != embedded_edges.end(); ++eIter) {
+  for(std::vector<GEdge *>::const_iterator eIter = embedded_edges.begin();
+      eIter != embedded_edges.end(); ++eIter) {
     GVertex *v0 = (*eIter)->getBeginVertex();
     GVertex *v1 = (*eIter)->getEndVertex();
     if(v0 && v1) {
       l_vertices.insert(v0);
       l_vertices.insert(v1);
-      l_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+      l_vtxToEdge.insert(std::make_pair(std::make_pair(v0, v1), *eIter));
     }
   }
-
   l_vertices.insert(embedded_vertices.begin(), embedded_vertices.end());
 
-  // list all vertices and vertex to edge correspondence for remote edge
-
+  // master points and curves
   std::vector<GEdge *> const &m_edges = master->edges();
   std::set<GVertex *> m_vertices;
-  std::map<std::pair<GVertex *, GVertex *>, GEdge *> m_vtxToEdge;
-  for(eIter = m_edges.begin(); eIter != m_edges.end(); ++eIter) {
+  std::multimap<std::pair<GVertex *, GVertex *>, GEdge *> m_vtxToEdge;
+  for(std::vector<GEdge *>::const_iterator eIter = m_edges.begin();
+      eIter != m_edges.end(); ++eIter) {
     GVertex *v0 = (*eIter)->getBeginVertex();
     GVertex *v1 = (*eIter)->getEndVertex();
     if(v0 && v1) {
       m_vertices.insert(v0);
       m_vertices.insert(v1);
-      m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+      m_vtxToEdge.insert(std::make_pair(std::make_pair(v0, v1), *eIter));
     }
   }
-
   std::vector<GEdge *> const &m_embedded_edges = master->embeddedEdges();
-
-  for(eIter = m_embedded_edges.begin(); eIter != m_embedded_edges.end();
-      eIter++) {
+  for(std::vector<GEdge *>::const_iterator eIter = m_embedded_edges.begin();
+      eIter != m_embedded_edges.end(); eIter++) {
     GVertex *v0 = (*eIter)->getBeginVertex();
     GVertex *v1 = (*eIter)->getEndVertex();
     if(v0 && v1) {
       m_vertices.insert(v0);
       m_vertices.insert(v1);
-      m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+      m_vtxToEdge.insert(std::make_pair(std::make_pair(v0, v1), *eIter));
     }
   }
-
   std::set<GVertex *, GEntityLessThan> m_embedded_vertices =
     master->embeddedVertices();
   m_vertices.insert(m_embedded_vertices.begin(), m_embedded_vertices.end());
 
-  // check topological correspondence
-
+  // check topological correspondance
   if(l_vertices.size() != m_vertices.size()) {
-    Msg::Error(
-      "Periodic connection specified between topologically "
-      "incompatible surfaces %d and %d (that have %d vs %d model vertices)",
-      master->tag(), tag(), l_vertices.size(), m_vertices.size());
+    Msg::Error("Different number of points (%d vs %d) for periodic correspondance "
+               "between surfaces %d and %d", l_vertices.size(), m_vertices.size(),
+               master->tag(), tag());
     return;
   }
-
   if(l_vtxToEdge.size() != m_vtxToEdge.size()) {
-    Msg::Error(
-      "Periodic connection specified between topologically "
-      "incompatible surfaces %d and %d (that have %d vs %d model curves)",
-      master->tag(), tag(), l_vtxToEdge.size(), m_vtxToEdge.size());
+    Msg::Error("Different number of curves (%d vs %d) for periodic correspondance "
+               "between surfaces %d and %d", l_vtxToEdge.size(), m_vtxToEdge.size(),
+               master->tag(), tag());
     return;
   }
 
   // compute corresponding vertices
-
   std::map<GVertex *, GVertex *> gVertexCounterparts;
-
-  std::set<GVertex *>::iterator mvIter;
-  for(mvIter = m_vertices.begin(); mvIter != m_vertices.end(); ++mvIter) {
+  for(std::set<GVertex *>::iterator mvIter = m_vertices.begin();
+      mvIter != m_vertices.end(); ++mvIter) {
     GVertex *m_vertex = *mvIter;
 
-    SPoint3 xyzOri((*mvIter)->x(), (*mvIter)->y(), (*mvIter)->z());
-    SPoint3 xyzTfo(0, 0, 0);
-
-    int idx = 0;
-    for(int i = 0; i < 3; i++) {
-      for(int j = 0; j < 3; j++) xyzTfo[i] += xyzOri[j] * tfo[idx++];
-      xyzTfo[i] += tfo[idx++];
-    }
+    SPoint3 xyzTfo((*mvIter)->x(), (*mvIter)->y(), (*mvIter)->z());
+    xyzTfo.transform(tfo);
 
     GVertex *l_vertex = NULL;
 
     double dist_min = 1.e22;
-    std::set<GVertex *>::iterator lvIter = l_vertices.begin();
-    for(; lvIter != l_vertices.end(); ++lvIter) {
+    for(std::set<GVertex *>::iterator lvIter = l_vertices.begin();
+        lvIter != l_vertices.end(); ++lvIter) {
       SPoint3 xyz((*lvIter)->x(), (*lvIter)->y(), (*lvIter)->z());
       SVector3 dist = xyz - xyzTfo;
       dist_min = std::min(dist_min, dist.norm());
@@ -1713,9 +1692,8 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     }
 
     if(l_vertex == NULL) {
-      Msg::Error("Was not able to find corresponding node %d "
-                 "for periodic connection of surface %d to %d "
-                 "(min distance is %g with a tolerance of %g)",
+      Msg::Error("No corresponding point %d for periodic connection of surface "
+                 "%d to %d (min. distance = %g, tolerance = %g)",
                  m_vertex->tag(), master->tag(), tag(), dist_min,
                  CTX::instance()->geom.tolerance * CTX::instance()->lc);
       return;
@@ -1724,14 +1702,12 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   }
 
   if(gVertexCounterparts.size() != m_vertices.size()) {
-    Msg::Error("Could not find all node correspondances "
-               "for the periodic connection from surface %d to %d",
-               master->tag(), tag());
+    Msg::Error("Could not find all point correspondances for the periodic "
+               "connection from surface %d to %d", master->tag(), tag());
     return;
   }
 
   // construct edge correspondence and update the edge masters
-
   std::map<GEdge *, std::pair<GEdge *, int> > gEdgeCounterparts;
 
   std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator lv2eIter;
@@ -1740,25 +1716,63 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     std::pair<GVertex *, GVertex *> lPair = lv2eIter->first;
     GEdge *localEdge = lv2eIter->second;
 
-    std::pair<GVertex *, GVertex *> mPair(gVertexCounterparts[lPair.first],
-                                          gVertexCounterparts[lPair.second]);
-    int sign = 1;
-    std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator mv2eIter =
-      m_vtxToEdge.find(mPair);
-    if(mv2eIter == m_vtxToEdge.end()) {
-      sign *= -1;
-      std::pair<GVertex *, GVertex *> backward(mPair.second, mPair.first);
-      mv2eIter = m_vtxToEdge.find(backward);
+    std::pair<GVertex *, GVertex *> forward(gVertexCounterparts[lPair.first],
+                                            gVertexCounterparts[lPair.second]);
+    int numf = m_vtxToEdge.count(forward);
+    std::pair<GVertex *, GVertex *> backward(forward.second, forward.first);
+    int numb = m_vtxToEdge.count(backward);
+    int sign = 0;
+    GEdge *masterEdge = 0;
+    if(numf == 1){
+      masterEdge = m_vtxToEdge.find(forward)->second;
+      sign = 1;
+    }
+    else if(numb == 1){
+      masterEdge = m_vtxToEdge.find(backward)->second;
+      sign = -1;
+    }
+    else if(numf > 1){
+      SBoundingBox3d localbb = localEdge->bounds(true);
+      std::pair<std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator,
+                std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator> ret =
+        m_vtxToEdge.equal_range(forward);
+      for(std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator it = ret.first;
+          it != ret.second; it++){
+        SBoundingBox3d masterbb = it->second->bounds(true);
+        masterbb.transform(tfo);
+        masterbb *= (1. + CTX::instance()->geom.tolerance);
+        if(masterbb.contains(localbb)){
+          masterEdge = it->second;
+          sign = 1;
+          break;
+        }
+      }
+    }
+    else if(numb > 1){
+      SBoundingBox3d localbb = localEdge->bounds(true);
+      std::pair<std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator,
+                std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator> ret =
+        m_vtxToEdge.equal_range(backward);
+      for(std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator it = ret.first;
+          it != ret.second; it++){
+        SBoundingBox3d masterbb = it->second->bounds(true);
+        masterbb.transform(tfo);
+        masterbb *= (1. + CTX::instance()->geom.tolerance);
+        if(masterbb.contains(localbb)){
+          masterEdge = it->second;
+          sign = -1;
+          break;
+        }
+      }
     }
 
-    if(mv2eIter == m_vtxToEdge.end()) {
-      Msg::Error("Could not find periodic copy of curve %d-%d "
-                 "(corresponding to vertices %d %d) in surface %d",
-                 lPair.first->tag(), lPair.second->tag(), mPair.first->tag(),
-                 mPair.second->tag(), master->tag());
+    if(!masterEdge){
+      Msg::Error("Could not find counterpart of curve with end points %d-%d "
+                 "(corresponding to curve with end points %d %d) in surface %d",
+                 lPair.first->tag(), lPair.second->tag(), forward.first->tag(),
+                 forward.second->tag(), master->tag());
       return;
     }
-    GEdge *masterEdge = mv2eIter->second;
 
     if(masterEdge->getMeshMaster() != localEdge) {
       localEdge->setMeshMaster(masterEdge, tfo);
