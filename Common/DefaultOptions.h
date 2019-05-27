@@ -827,8 +827,9 @@ StringXNumber GeneralOptions_Number[] = {
 
 StringXNumber GeometryOptions_Number[] = {
   { F|O, "AutoCoherence" , opt_geometry_auto_coherence , 1. ,
-    "Should all duplicate entities be automatically removed? (If AutoCoherence == 2, "
-    "also remove degenerate entities)" },
+    "Should all duplicate entities be automatically removed with the built-in "
+    "geometry kernel? (If AutoCoherence == 2, also remove degenerate entities.) The "
+    "option has no effect with the OpenCASCADE kernel"},
 
   { F,   "Clip" , opt_geometry_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
@@ -879,26 +880,30 @@ StringXNumber GeometryOptions_Number[] = {
     "Number of edge subdivisions between control points when displaying curves" },
 
   { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
-    "Automatically fix orientation of wires, faces, shells and volumes when creating"
-    " new entities" },
+    "Automatically fix orientation of wires, faces, shells and volumes when creating "
+    "new entities with the OpenCASCADE kernel" },
   { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
-    "Try to preserve numbering of entities through OCC boolean operations" },
+    "Try to preserve the numbering of entities through OpenCASCADE boolean operations" },
   { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
-    "Disable STL computation" },
+    "Disable STL creation in OpenCASCADE kernel" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
-    "Fix degenerated edges/faces in STEP, IGES and BRep models" },
+    "Fix degenerated edges/faces when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 0. ,
-    "Fix small edges in STEP, IGES and BRep models" },
+    "Fix small edges when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCFixSmallFaces" , opt_geometry_occ_fix_small_faces , 0. ,
-    "Fix small faces in STEP, IGES and BRep models" },
+    "Fix small faces when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
-    "Import labels and colors from STEP models" },
+    "Import labels and colors when importing STEP models with the OpenCASCADE kernel" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
-    "Use multi-threaded OCC boolean operators" },
+    "Use multi-threaded OpenCASCADE boolean operators" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
-    "Scale STEP, IGES and BRep model by given factor" },
+    "Scale STEP, IGES and BRep models by the given factor when importing them with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. ,
-    "Sew faces in STEP, IGES and BRep models" },
+    "Sew faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. ,
     "Model display offset along X-axis (in model coordinates)" },
   { F,   "OffsetY" , opt_geometry_offset1 , 0. ,

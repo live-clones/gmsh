@@ -27,7 +27,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.AutoCoherence
-Should all duplicate entities be automatically removed? (If AutoCoherence == 2, also remove degenerate entities)@*
+Should all duplicate entities be automatically removed with the built-in geometry kernel? (If AutoCoherence == 2, also remove degenerate entities.) The option has no effect with the OpenCASCADE kernel@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -132,52 +132,52 @@ Default value: @code{40}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCAutoFix
-Automatically fix orientation of wires, faces, shells and volumes when creating new entities@*
+Automatically fix orientation of wires, faces, shells and volumes when creating new entities with the OpenCASCADE kernel@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCBooleanPreserveNumbering
-Try to preserve numbering of entities through OCC boolean operations@*
+Try to preserve the numbering of entities through OpenCASCADE boolean operations@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCDisableSTL
-Disable STL computation@*
+Disable STL creation in OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCFixDegenerated
-Fix degenerated edges/faces in STEP, IGES and BRep models@*
+Fix degenerated edges/faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCFixSmallEdges
-Fix small edges in STEP, IGES and BRep models@*
+Fix small edges when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCFixSmallFaces
-Fix small faces in STEP, IGES and BRep models@*
+Fix small faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCImportLabels
-Import labels and colors from STEP models@*
+Import labels and colors when importing STEP models with the OpenCASCADE kernel@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCParallel
-Use multi-threaded OCC boolean operators@*
+Use multi-threaded OpenCASCADE boolean operators@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCScaling
-Scale STEP, IGES and BRep model by given factor@*
+Scale STEP, IGES and BRep models by the given factor when importing them with the OpenCASCADE kernel@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCSewFaces
-Sew faces in STEP, IGES and BRep models@*
+Sew faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

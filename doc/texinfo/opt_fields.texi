@@ -73,6 +73,32 @@ type: float@*
 default value: @code{0.5}
 @end table
 
+@item AutomaticMeshSizeField
+Compute a mesh size field that is quite automatic Takes into account surface curvatures and closeness of objects@*
+Options:@*
+@table @code
+@item NRefine
+Initial refinement level for the octree@*
+type: integer@*
+default value: @code{5}
+@item gradientMax
+Maximun gradient of the size field@*
+type: float@*
+default value: @code{1.4}
+@item hBulk
+Size everywhere no size is prescribed@*
+type: float@*
+default value: @code{0.1}
+@item nPointsPerCircle
+Number of points per circle (adapt to curvature of surfaces)@*
+type: integer@*
+default value: @code{55}
+@item nPointsPerGap
+Number of points in thin layers@*
+type: integer@*
+default value: @code{5}
+@end table
+
 @item Ball
 The value of this field is VIn inside a spherical ball, VOut outside. The ball is defined by@*
 @*
