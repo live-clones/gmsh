@@ -36,10 +36,6 @@
 SPoint3 VertexCoordParent::getUvw(MVertex *vert) const
 {
   GEntity *ge = vert->onWhat();
-  if((ge->geomType() == GEntity::DiscreteCurve) ||
-     (ge->geomType() == GEntity::DiscreteSurface))
-    Msg::Error("Using parent coordinates on discrete curve or surface");
-
   switch(ge->dim()) {
   case 1: {
     SPoint3 p(0., 0., 0.);
