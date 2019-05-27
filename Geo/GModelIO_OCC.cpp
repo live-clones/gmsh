@@ -32,7 +32,6 @@
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
-#include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepCheck_Analyzer.hxx>
@@ -1565,20 +1564,6 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
 
   TopoDS_Shape result;
   try {
-#if 1
-    BRepBuilderAPI_Sewing s;
-    for(std::size_t i = 0; i < surfaceTags.size(); i++) {
-      if(!_tagFace.IsBound(surfaceTags[i])) {
-        Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
-        return false;
-      }
-      TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
-      s.Add(face);
-    }
-    s.Perform();
-    result = s.SewedShape();
-#else
-    // Another way: not sure which is better
     BRep_Builder builder;
     BRepPrim_Builder b(builder);
     TopoDS_Shell shell;
@@ -1591,54 +1576,18 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
       TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
       b.AddShellFace(shell, face);
     }
-    result = shell;
-#endif
-  } catch(Standard_Failure &err) {
-    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
-    return false;
-  }
-
-  bool first = true;
-  TopExp_Explorer exp0;
-  for(exp0.Init(result, TopAbs_SHELL); exp0.More(); exp0.Next()) {
-    TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
     if(CTX::instance()->geom.occAutoFix) {
       // make sure faces in shell are oriented correctly
       ShapeFix_Shell fix(shell);
       fix.Perform();
       shell = fix.Shell();
     }
-    int t = tag;
-    if(first) { first = false; }
-    else {
-      t = getMaxTag(-2) + 1;
-      Msg::Warning("Creating additional surface loop %d", t);
-    }
-    bind(shell, t, true);
-    return true;
-  }
-
-  // if sewing didn't work and we have single surface, try brute-force
-  if(surfaceTags.size() == 1) {
-    if(!_tagFace.IsBound(surfaceTags[0])) {
-      Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[0]);
-      return false;
-    }
-    TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[0]));
-    Handle(Geom_Surface) surf = BRep_Tool::Surface(face);
-    BRepBuilderAPI_MakeShell s(surf);
-    s.Build();
-    if(!s.IsDone()) {
-      Msg::Error("Could not create shell");
-      return false;
-    }
-    TopoDS_Shell shell = s.Shell();
     bind(shell, tag, true);
     return true;
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
   }
-
-  Msg::Error("Could not create shell");
-  return false;
 }
 
 bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
