@@ -234,7 +234,9 @@ SVector3 OCCEdge::firstDer(double par) const
 GEntity::GeomType OCCEdge::geomType() const
 {
   if(curve.IsNull()) {
-    if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Circle))
+    if(curve2d.IsNull())
+      return Unknown;
+    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Circle))
       return Circle;
     else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Line))
       return Line;
