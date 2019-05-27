@@ -30,12 +30,12 @@
  *       4----------5
  *
  *  Oriented Edges:
- * e0={0, 1}, e1={0, 3}, e2={0, 4}, e3={1, 2}, e4 ={1, 5}, e5={2, 3},e6={2, 6},
- * e7={3, 7},e8={4, 5}, e9= {4, 7}, e10={5, 6}, e11={6, 7}
+ * e0={0, 1}, e1={0, 3}, e2={0, 4}, e3={1, 2}, e4 ={1, 5}, e5={3, 2},e6={2, 6},
+ * e7={3, 7},e8={4, 5}, e9= {4, 7}, e10={5, 6}, e11={7, 6}
  *
  * Oritented Surface:
  *  s0={0, 1, 3, 2}, s1={0, 1, 4, 5}, s2={0, 3, 4, 7},
- *  s3={1, 2, 5, 5}, s4={2, 3, 6, 6}, s5={4, 5, 7, 6}
+ *  s3={1, 2, 5, 6}, s4={2, 3, 7, 6}, s5={4, 5, 7, 6}
  * Local (directional) orders on mesh faces are not allowed to exceed the mini-
  * mum of the (appropriate directional) orders of approximation associated with
  * the interior of the adjacent elements. Local orders of approximation on mesh
@@ -55,7 +55,7 @@ public:
                              std::string typeFunction)
   {
     if(typeFunction == "HcurlLegendre") {
-      generateBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
+      generateHcurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
     else if("CurlHcurlLegendre" == typeFunction) {
       generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
@@ -90,10 +90,11 @@ private:
   // faceBasis=[phieFf1{n1,n2} (with 0<=n1<=pf1 , 2<=n2<=pf2+1), phieFf2{n1,n2}
   // (with 2<=n1<=pf1+1 , 0<=n2<=pf2) ] bubbleBasis=[phieb1{n1,n2,n3} (with
   // 0<=n1<=pb1 , 2<=n2<=pb2+1 , 2<=n3<=pb3+1)...]
-  virtual void generateBasis(double const &u, double const &v, double const &w,
-                             std::vector<std::vector<double> > &edgeBasis,
-                             std::vector<std::vector<double> > &faceBasis,
-                             std::vector<std::vector<double> > &bubbleBasis);
+  virtual void
+  generateHcurlBasis(double const &u, double const &v, double const &w,
+                     std::vector<std::vector<double> > &edgeBasis,
+                     std::vector<std::vector<double> > &faceBasis,
+                     std::vector<std::vector<double> > &bubbleBasis);
   virtual void
   generateCurlBasis(double const &u, double const &v, double const &w,
                     std::vector<std::vector<double> > &edgeBasis,
