@@ -42,7 +42,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.BoundaryLayerFanPoints
-Number of points (per Pi rad) for 2D boundary layer fans@*
+Number of points (per Pi radians) for 2D boundary layer fans@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -287,7 +287,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCirclePoints
-Minimum number of nodes used to mesh a circle (and number of nodes per 2*pi radians when the mesh size of adapted to the curvature)@*
+Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi radians when the mesh size of adapted to the curvature)@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
