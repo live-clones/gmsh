@@ -56,18 +56,19 @@ public:
   virtual char getVisibility() const = 0;
   virtual void setVisibility(char val, bool recursive = false,
                              bool allmodels = false) = 0;
-  std::string getBrowserLine()
+  std::string getBrowserLine(bool tabs = true)
   {
     std::ostringstream sstream;
-    sstream << "\t" << getType()
-            << "\t" << getTag()
-            << "\t" << getName();
+    if(tabs)
+      sstream << "\t" << getType() << "\t" << getTag() << "\t" << getName();
+    else
+      sstream << " " << getType() << " " << getTag() << " " << getName();
     return sstream.str();
   }
   bool match(const std::string &pattern)
   {
     if(pattern.empty()) return true;
-    std::string tmp(getBrowserLine());
+    std::string tmp(getBrowserLine(false));
     std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
     if(tmp.find(pattern) != std::string::npos)
       return true;
@@ -448,7 +449,7 @@ static void visibility_sort_cb(Fl_Widget *w, void *data)
   }
   else { // set new sorting mode
     VisibilityList::instance()->setSortMode(val);
-    visibility_cb(NULL, (void *)"redraw_only");
+    visibility_cb(NULL, (void *)"list_only");
   }
 }
 
@@ -784,16 +785,19 @@ public:
 
 void visibility_cb(Fl_Widget *w, void *data)
 {
-  // get the visibility info from the model, and update the browser
-  // accordingly
-  const char *str = (const char *)data;
-  if(str && !strcmp(str, "redraw_only"))
+  // get the visibility info from the model, and update the browser accordingly
+  std::string tmp;
+  if(data) tmp = (const char *)data;
+  if(tmp.find("redraw_only") != std::string::npos)
     FlGui::instance()->visibility->show(true);
   else
     FlGui::instance()->visibility->show(false);
 
   _rebuild_list_browser();
-  _rebuild_tree_browser(false);
+
+  if(tmp.find("list_only") == std::string::npos)
+    _rebuild_tree_browser(false);
+
   FlGui::instance()->visibility->updatePerWindow(true);
 }
 
@@ -1258,10 +1262,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     }
 
     static Fl_Menu_Item browser_type_table[] = {
-      {"Models", 0, (Fl_Callback *)visibility_cb},
-      {"Elementary entities", 0, (Fl_Callback *)visibility_cb},
-      {"Physical groups", 0, (Fl_Callback *)visibility_cb},
-      {"Mesh partitions", 0, (Fl_Callback *)visibility_cb},
+      {"Models", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
+      {"Elementary entities", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
+      {"Physical groups", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
+      {"Mesh partitions", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
       {0}};
 
     double w1 = 1.3 * CC;
@@ -1279,7 +1283,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     search = new Fl_Input(2 * WB + w1 + WB + BH, height - 2 * BH - 3 * WB + 2,
                           w2 - BH - 2, BH - 4, "@gmsh_search");
     search->box(FL_FLAT_BOX);
-    search->callback(visibility_cb, (void *)"redraw_only");
+    search->callback(visibility_cb, (void *)"list_only");
     search->when(FL_WHEN_CHANGED);
     o->resizable(search);
     o->end();
