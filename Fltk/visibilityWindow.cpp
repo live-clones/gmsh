@@ -11,6 +11,7 @@ typedef unsigned long intptr_t;
 #endif
 #include <string>
 #include <sstream>
+#include <algorithm>
 #include <map>
 #include <vector>
 #include <string.h>
@@ -55,6 +56,23 @@ public:
   virtual char getVisibility() const = 0;
   virtual void setVisibility(char val, bool recursive = false,
                              bool allmodels = false) = 0;
+  std::string getBrowserLine()
+  {
+    std::ostringstream sstream;
+    sstream << "\t" << getType()
+            << "\t" << getTag()
+            << "\t" << getName();
+    return sstream.str();
+  }
+  bool match(const std::string &pattern)
+  {
+    if(pattern.empty()) return true;
+    std::string tmp(getBrowserLine());
+    std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
+    if(tmp.find(pattern) != std::string::npos)
+      return true;
+    return false;
+  }
 };
 
 class VisModel : public Vis {
@@ -225,8 +243,11 @@ public:
     }
   };
   // repopulate the list with current data of the given type
-  void update(VisibilityType type)
+  void update(VisibilityType type, const std::string &search)
   {
+    std::string pattern(search);
+    std::transform(pattern.begin(), pattern.end(), pattern.begin(), ::tolower);
+
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
     for(std::map<std::string, gmsh_yysymbol>::iterator it =
@@ -240,11 +261,14 @@ public:
     for(std::size_t i = 0; i < _entities.size(); i++) delete _entities[i];
     _entities.clear();
     GModel *m = GModel::current();
+
     if(type == Models) {
       for(std::size_t i = 0; i < GModel::list.size(); i++) {
         std::string name = GModel::list[i]->getName();
         if(GModel::list[i] == GModel::current()) name += " (Current Model)";
-        _entities.push_back(new VisModel(GModel::list[i], i, name));
+        Vis *v = new VisModel(GModel::list[i], i, name);
+        if(v->match(pattern)) _entities.push_back(v);
+        else delete v;
       }
     }
     else if(type == ElementaryEntities) {
@@ -254,7 +278,9 @@ public:
         GEntity *ge = entities[i];
         std::string name = m->getElementaryName(ge->dim(), ge->tag());
         if(name.empty()) name = oldLabels[ge->tag()];
-        _entities.push_back(new VisElementary(ge, name));
+        Vis *v = new VisElementary(ge, name);
+        if(v->match(pattern)) _entities.push_back(v);
+        else delete v;
       }
     }
     else if(type == PhysicalEntities) {
@@ -266,13 +292,18 @@ public:
         for(; it != groups[i].end(); ++it) {
           std::string name = m->getPhysicalName(i, it->first);
           if(name.empty()) name = oldLabels[it->first];
-          _entities.push_back(new VisPhysical(it->first, i, it->second, name));
+          Vis *v = new VisPhysical(it->first, i, it->second, name);
+          if(v->match(pattern)) _entities.push_back(v);
+          else delete v;
         }
       }
     }
     else if(type == MeshPartitions) {
-      for(std::size_t part = 0; part < m->getNumPartitions(); part++)
-        _entities.push_back(new VisPartition(part + 1));
+      for(std::size_t part = 0; part < m->getNumPartitions(); part++){
+        Vis *v = new VisPartition(part + 1);
+        if(v->match(pattern)) _entities.push_back(v);
+        else delete v;
+      }
     }
     std::sort(_entities.begin(), _entities.end(), VisLessThan());
   }
@@ -313,13 +344,7 @@ public:
   // get the tag of the nth entity in the list
   int getTag(int n) { return _entities[n]->getTag(); }
   // get the browser line for the nth entity in the list
-  std::string getBrowserLine(int n)
-  {
-    std::ostringstream sstream;
-    sstream << "\t" << _entities[n]->getType() << "\t" << _entities[n]->getTag()
-            << "\t" << _entities[n]->getName();
-    return sstream.str();
-  }
+  std::string getBrowserLine(int n) { return _entities[n]->getBrowserLine(); }
   // set the sort mode
   void setSortMode(int mode) { _sortMode = (_sortMode != mode) ? mode : -mode; }
   // get the sort mode
@@ -341,10 +366,12 @@ static void _rebuild_list_browser()
   default: type = VisibilityList::ElementaryEntities; break;
   }
 
-  VisibilityList::instance()->update(type);
+  std::string search = FlGui::instance()->visibility->search->value();
+  VisibilityList::instance()->update(type, search);
+
   for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++) {
-    FlGui::instance()->visibility->browser->add(
-      VisibilityList::instance()->getBrowserLine(i).c_str());
+    FlGui::instance()->visibility->browser->add
+      (VisibilityList::instance()->getBrowserLine(i).c_str());
     if(VisibilityList::instance()->getVisibility(i))
       FlGui::instance()->visibility->browser->select(i + 1);
   }
@@ -418,18 +445,6 @@ static void visibility_sort_cb(Fl_Widget *w, void *data)
     for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
       if(!state[i]) FlGui::instance()->visibility->browser->select(i + 1);
     delete[] state;
-  }
-  else if(val == -2) { // create new parameter name for selection
-    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++) {
-      if(FlGui::instance()->visibility->browser->selected(i + 1)) {
-        static char tmpstr[256];
-        sprintf(tmpstr, "%d", VisibilityList::instance()->getTag(i));
-        FlGui::instance()->elementaryContext->input[1]->value(tmpstr);
-        break;
-      }
-    }
-    FlGui::instance()->elementaryContext->input[0]->value("NewName");
-    FlGui::instance()->elementaryContext->show(0);
   }
   else { // set new sorting mode
     VisibilityList::instance()->setSortMode(val);
@@ -1172,7 +1187,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   int CC = (int)(1.18 * BB);
 
   static int cols[5] = {3 * WB, CC, CC, 2 * CC, 0};
-  int width = cols[0] + cols[1] + cols[2] + cols[3] + 7 * WB;
+  int width = cols[0] + cols[1] + cols[2] + cols[3] + 4 * WB;
   int height = 18 * BH;
   int brw = width - 4 * WB;
 
@@ -1188,7 +1203,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
     {
       Fl_Group *gg = new Fl_Group(
-        2 * WB, WB + BH, cols[0] + cols[1] + cols[2] + cols[3] / 2, BH);
+        2 * WB, WB + BH, cols[0] + cols[1] + cols[2] + cols[3], BH);
       gg->resizable(NULL);
 
       Fl_Button *o0 = new Fl_Button(2 * WB, 2 * WB + BH, cols[0], BH / 2, "*");
@@ -1225,12 +1240,6 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       o4->callback(visibility_sort_cb, (void *)"name");
 
       gg->end();
-
-      Fl_Button *o5 =
-        new Fl_Button(width - 5 * WB, 2 * WB + BH, 3 * WB, BH, "+");
-      o5->box(FL_THIN_UP_BOX);
-      o5->tooltip("Add parameter name for first selected item");
-      o5->callback(visibility_sort_cb, (void *)"+");
     }
     {
       Fl_Group *gg =
@@ -1254,12 +1263,29 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       {"Physical groups", 0, (Fl_Callback *)visibility_cb},
       {"Mesh partitions", 0, (Fl_Callback *)visibility_cb},
       {0}};
+
+    double w1 = 1.3 * CC;
+    double w3 = CC;
+    double w2 = (width - 6 * WB - w1 - w3);
     browser_type =
-      new Fl_Choice(2 * WB, height - 2 * BH - 3 * WB, (width - 3 * WB) / 2, BH);
+      new Fl_Choice(2 * WB, height - 2 * BH - 3 * WB, w1, BH);
     browser_type->menu(browser_type_table);
 
+    Fl_Group *o = new Fl_Group(2 * WB + w1 + WB, height - 2 * BH - 3 * WB,
+                               w2, BH);
+    o->tooltip("Filter values");
+    o->box(FL_DOWN_BOX);
+    o->color(FL_BACKGROUND2_COLOR);
+    search = new Fl_Input(2 * WB + w1 + WB + BH, height - 2 * BH - 3 * WB + 2,
+                          w2 - BH - 2, BH - 4, "@gmsh_search");
+    search->box(FL_FLAT_BOX);
+    search->callback(visibility_cb, (void *)"redraw_only");
+    search->when(FL_WHEN_CHANGED);
+    o->resizable(search);
+    o->end();
+
     Fl_Return_Button *b1 = new Fl_Return_Button(
-      width - 1 * CC - 2 * WB, height - 2 * BH - 3 * WB, CC, BH, "Apply");
+    width - 2 * WB - w3, height - 2 * BH - 3 * WB, w3, BH, "Apply");
     b1->callback(visibility_browser_apply_cb);
 
     g->end();
