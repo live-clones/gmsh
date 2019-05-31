@@ -5,6 +5,10 @@
 
 #include <sstream>
 #include <algorithm>
+#include <string>
+#if __cplusplus >= 201103L
+#include <regex>
+#endif
 #include <FL/Fl_Help_View.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
@@ -283,10 +287,20 @@ void help_options_cb(Fl_Widget *w, void *data)
       FlGui::instance()->help->browser->add(s0[i].c_str(), d);
     }
     else {
+#if __cplusplus >= 201103L
+      try{
+        // icase for case-insensitive search
+        if(std::regex_search(s0[i], std::regex(search, std::regex_constants::icase)))
+          FlGui::instance()->help->browser->add(s0[i].c_str(), d);
+      }
+      catch(...) {
+      }
+#else
       std::string tmp(s0[i]);
       std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
       if(tmp.find(search) != std::string::npos)
         FlGui::instance()->help->browser->add(s0[i].c_str(), d);
+#endif
     }
   }
   FlGui::instance()->help->browser->topline(top);

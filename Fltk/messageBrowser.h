@@ -8,6 +8,10 @@
 
 #include "FlGui.h"
 #include <algorithm>
+#include <string>
+#if __cplusplus >= 201103L
+#include <regex>
+#endif
 
 class messageBrowser : public Fl_Group {
 private:
@@ -89,10 +93,21 @@ public:
       _browser->add(newtext);
     }
     else {
-      std::transform(search.begin(), search.end(), search.begin(), ::tolower);
       std::string tmp(newtext);
+#if __cplusplus >= 201103L
+      try{
+        // icase for case-insensitive search
+        if(std::regex_search(tmp, std::regex(search, std::regex_constants::icase)))
+          _browser->add(newtext);
+      }
+      catch(...) {
+      }
+#else
+      std::transform(search.begin(), search.end(), search.begin(), ::tolower);
       std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
-      if(tmp.find(search) != std::string::npos) _browser->add(newtext);
+      if(tmp.find(search) != std::string::npos)
+        _browser->add(newtext);
+#endif
     }
   }
   void clear() { _browser->clear(); }

@@ -10,6 +10,9 @@
 typedef unsigned long intptr_t;
 #endif
 #include <string>
+#if __cplusplus >= 201103L
+#include <regex>
+#endif
 #include <sstream>
 #include <algorithm>
 #include <map>
@@ -68,10 +71,23 @@ public:
   bool match(const std::string &pattern)
   {
     if(pattern.empty()) return true;
-    std::string tmp(getBrowserLine(false));
-    std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
-    if(tmp.find(pattern) != std::string::npos)
+    std::string line(getBrowserLine(false));
+#if __cplusplus >= 201103L
+    try{
+      // icase for case-insensitive search
+      if(std::regex_search(line, std::regex(pattern, std::regex_constants::icase)))
+        return true;
+    }
+    catch(...) {
+      return false;
+    }
+#else
+    std::transform(line.begin(), line.end(), line.begin(), ::tolower);
+    std::string pat(pattern);
+    std::transform(pat.begin(), pat.end(), pat.begin(), ::tolower);
+    if(line.find(pat) != std::string::npos)
       return true;
+#endif
     return false;
   }
 };
@@ -246,9 +262,6 @@ public:
   // repopulate the list with current data of the given type
   void update(VisibilityType type, const std::string &search)
   {
-    std::string pattern(search);
-    std::transform(pattern.begin(), pattern.end(), pattern.begin(), ::tolower);
-
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
     for(std::map<std::string, gmsh_yysymbol>::iterator it =
@@ -268,7 +281,7 @@ public:
         std::string name = GModel::list[i]->getName();
         if(GModel::list[i] == GModel::current()) name += " (Current Model)";
         Vis *v = new VisModel(GModel::list[i], i, name);
-        if(v->match(pattern)) _entities.push_back(v);
+        if(v->match(search)) _entities.push_back(v);
         else delete v;
       }
     }
@@ -280,7 +293,7 @@ public:
         std::string name = m->getElementaryName(ge->dim(), ge->tag());
         if(name.empty()) name = oldLabels[ge->tag()];
         Vis *v = new VisElementary(ge, name);
-        if(v->match(pattern)) _entities.push_back(v);
+        if(v->match(search)) _entities.push_back(v);
         else delete v;
       }
     }
@@ -294,7 +307,7 @@ public:
           std::string name = m->getPhysicalName(i, it->first);
           if(name.empty()) name = oldLabels[it->first];
           Vis *v = new VisPhysical(it->first, i, it->second, name);
-          if(v->match(pattern)) _entities.push_back(v);
+          if(v->match(search)) _entities.push_back(v);
           else delete v;
         }
       }
@@ -302,7 +315,7 @@ public:
     else if(type == MeshPartitions) {
       for(std::size_t part = 0; part < m->getNumPartitions(); part++){
         Vis *v = new VisPartition(part + 1);
-        if(v->match(pattern)) _entities.push_back(v);
+        if(v->match(search)) _entities.push_back(v);
         else delete v;
       }
     }
@@ -1277,7 +1290,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
     Fl_Group *o = new Fl_Group(2 * WB + w1 + WB, height - 2 * BH - 3 * WB,
                                w2, BH);
-    o->tooltip("Filter values");
+    o->tooltip("Filter list");
     o->box(FL_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
     search = new Fl_Input(2 * WB + w1 + WB + BH, height - 2 * BH - 3 * WB + 2,
