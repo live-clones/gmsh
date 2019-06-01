@@ -675,6 +675,14 @@ public:
   {
     return _error("export shape");
   }
+  bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
+                  std::vector<std::pair<int, int> > &outDimTags,
+                  double tolerance, bool fixDegenerated,
+                  bool fixSmallEdges, bool fixSmallFaces,
+                  bool sewFaces)
+  {
+    return _error("heal shapes");
+  }
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}
   bool getVertex(int tag, double &x, double &y, double &z) { return false; }
