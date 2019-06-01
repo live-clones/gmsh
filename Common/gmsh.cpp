@@ -4326,6 +4326,24 @@ GMSH_API void gmsh::model::occ::removeAllDuplicates()
   GModel::current()->getOCCInternals()->removeAllDuplicates();
 }
 
+GMSH_API void gmsh::model::occ::healShapes(vectorpair &outDimTags,
+                                           const vectorpair &inDimTags,
+                                           const double tolerance,
+                                           const bool fixDegenerated,
+                                           const bool fixSmallEdges,
+                                           const bool fixSmallFaces,
+                                           const bool sewFaces)
+{
+  if(!_isInitialized()) { throw -1; }
+  _createOcc();
+  outDimTags.clear();
+  if(!GModel::current()->getOCCInternals()->healShapes
+     (inDimTags, outDimTags, tolerance, fixDegenerated, fixSmallEdges,
+      fixSmallFaces, sewFaces)) {
+    throw 1;
+  }
+}
+
 GMSH_API void gmsh::model::occ::importShapes(const std::string &fileName,
                                              vectorpair &outDimTags,
                                              const bool highestDimOnly,

@@ -1688,6 +1688,18 @@ namespace gmsh { // Top-level functions
       // dimensional entities.
       GMSH_API void removeAllDuplicates();
 
+      // Apply various healing procedures to the entities `dimTags' (or to all the
+      // entities in the model if `dimTags' is empty). Return the healed entities
+      // in `outDimTags'. Available healing options are listed in the Gmsh
+      // reference manual.
+      GMSH_API void healShapes(gmsh::vectorpair & outDimTags,
+                               const gmsh::vectorpair & dimTags = gmsh::vectorpair(),
+                               const double tolerance = 1e-8,
+                               const bool fixDegenerated = true,
+                               const bool fixSmallEdges = true,
+                               const bool fixSmallFaces = true,
+                               const bool sewFaces = true);
+
       // Import BREP, STEP or IGES shapes from the file `fileName'. The imported
       // entities are returned in `outDimTags'. If the optional argument
       // `highestDimOnly' is set, only import the highest dimensional entities in

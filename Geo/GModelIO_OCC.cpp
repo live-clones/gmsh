@@ -3691,9 +3691,9 @@ void OCC_Internals::_addShapeToMaps(const TopoDS_Shape &shape)
 }
 
 void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
-                               bool fixdegenerated, bool fixsmalledges,
-                               bool fixspotstripfaces, bool sewfaces,
-                               bool makesolids, double scaling)
+                               bool fixDegenerated, bool fixSmallEdges,
+                               bool fixSmallFaces, bool sewFaces,
+                               bool makeSolids, double scaling)
 {
   if(scaling != 1.0) {
     Msg::Info("Scaling geometry (factor: %g)", scaling);
@@ -3703,8 +3703,8 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     myshape = trsf.Shape();
   }
 
-  if(!fixdegenerated && !fixsmalledges && !fixspotstripfaces && !sewfaces &&
-     !makesolids)
+  if(!fixDegenerated && !fixSmallEdges && !fixSmallFaces && !sewFaces &&
+     !makeSolids)
     return;
 
   Msg::Info("Healing shapes (tolerance: %g)", tolerance);
@@ -3733,7 +3733,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     surfacecont += system.Mass();
   }
 
-  if(fixdegenerated) {
+  if(fixDegenerated) {
     Msg::Info(" - Fixing degenerated edges and faces");
 
     {
@@ -3799,7 +3799,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     }
   }
 
-  if(fixsmalledges) {
+  if(fixSmallEdges) {
     Msg::Info(" - Fixing small edges");
 
     Handle(ShapeFix_Wire) sfw;
@@ -3928,7 +3928,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     myshape = sfwf->Shape();
   }
 
-  if(fixspotstripfaces) {
+  if(fixSmallFaces) {
     Msg::Info(" - Fixing spot and strip faces");
     Handle(ShapeFix_FixSmallFace) sffsm = new ShapeFix_FixSmallFace();
     sffsm->Init(myshape);
@@ -3938,7 +3938,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     myshape = sffsm->FixShape();
   }
 
-  if(sewfaces) {
+  if(sewFaces) {
     Msg::Info(" - Sewing faces");
 
     BRepOffsetAPI_Sewing sewedObj(tolerance);
@@ -3966,7 +3966,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     myshape = rebuild->Apply(myshape);
   }
 
-  if(makesolids) {
+  if(makeSolids) {
     Msg::Info(" - Making solids");
 
     BRepBuilderAPI_MakeSolid ms;
@@ -4037,6 +4037,59 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   Msg::Info(" - Edges              : %d (%d)", nnre, nre);
   Msg::Info(" - Vertices           : %d (%d)", nnrv, nrv);
   Msg::Info(" - Total surface area : %g (%g)", newsurfacecont, surfacecont);
+}
+
+bool OCC_Internals::healShapes(const std::vector<std::pair<int, int> > &inDimTags,
+                               std::vector<std::pair<int, int> > &outDimTags,
+                               double tolerance, bool fixDegenerated,
+                               bool fixSmallEdges, bool fixSmallFaces,
+                               bool sewFaces)
+{
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
+  if(inDimTags.empty()){
+    // construct a compound with all the shapes with tags
+    _somap.Clear();
+    _shmap.Clear();
+    _fmap.Clear();
+    _wmap.Clear();
+    _emap.Clear();
+    _vmap.Clear();
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
+    for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
+    for(; exp1.More(); exp1.Next()) _addShapeToMaps(exp1.Value());
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
+    for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp3(_tagSolid);
+    for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
+    for(int i = 1; i <= _vmap.Extent(); i++) b.Add(c, _vmap(i));
+    for(int i = 1; i <= _emap.Extent(); i++) b.Add(c, _emap(i));
+    for(int i = 1; i <= _wmap.Extent(); i++) b.Add(c, _wmap(i));
+    for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
+    for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
+    for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
+  }
+  else{
+    // construct a compound with the given shapes
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
+      int dim = inDimTags[i].first;
+      int tag = inDimTags[i].second;
+      if(!_isBound(dim, tag)) {
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
+                   tag);
+        return false;
+      }
+      TopoDS_Shape shape = _find(dim, tag);
+      b.Add(c, shape);
+    }
+  }
+
+  _healShape(c, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces,
+             sewFaces, false, 1.0);
+  _multiBind(c, -1, outDimTags, false, true);
+  return true;
 }
 
 static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,

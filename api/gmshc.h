@@ -1817,6 +1817,19 @@ GMSH_API void gmshModelOccRemove(int * dimTags, size_t dimTags_n,
  * dimensional entities. */
 GMSH_API void gmshModelOccRemoveAllDuplicates(int * ierr);
 
+/* Apply various healing procedures to the entities `dimTags' (or to all the
+ * entities in the model if `dimTags' is empty). Return the healed entities in
+ * `outDimTags'. Available healing options are listed in the Gmsh reference
+ * manual. */
+GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n,
+                                     int * dimTags, size_t dimTags_n,
+                                     const double tolerance,
+                                     const int fixDegenerated,
+                                     const int fixSmallEdges,
+                                     const int fixSmallFaces,
+                                     const int sewFaces,
+                                     int * ierr);
+
 /* Import BREP, STEP or IGES shapes from the file `fileName'. The imported
  * entities are returned in `outDimTags'. If the optional argument
  * `highestDimOnly' is set, only import the highest dimensional entities in

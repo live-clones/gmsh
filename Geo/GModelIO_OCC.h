@@ -108,9 +108,9 @@ private:
   void _addShapeToMaps(const TopoDS_Shape &shape);
 
   // apply various healing algorithms to try to fix the shape
-  void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixdegenerated,
-                  bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
-                  bool makesolids = false, double scaling = 0.0);
+  void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixDegenerated,
+                  bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
+                  bool makeSolids = false, double scaling = 0.0);
 
   // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
@@ -331,6 +331,13 @@ public:
   // export all bound shapes to file
   bool exportShapes(const std::string &fileName,
                     const std::string &format = "");
+
+  // apply various healing algorithms to try to fix the shapes
+  bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
+                  std::vector<std::pair<int, int> > &outDimTags,
+                  double tolerance, bool fixDegenerated,
+                  bool fixSmallEdges, bool fixSmallFaces,
+                  bool sewFaces);
 
   // set meshing constraints
   void setMeshSize(int dim, int tag, double size);

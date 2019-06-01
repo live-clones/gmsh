@@ -4432,6 +4432,34 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True):
+            """
+            Apply various healing procedures to the entities `dimTags' (or to all the
+            entities in the model if `dimTags' is empty). Return the healed entities in
+            `outDimTags'. Available healing options are listed in the Gmsh reference
+            manual.
+
+            Return `outDimTags'.
+            """
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelOccHealShapes(
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                api_dimTags_, api_dimTags_n_,
+                c_double(tolerance),
+                c_int(bool(fixDegenerated)),
+                c_int(bool(fixSmallEdges)),
+                c_int(bool(fixSmallFaces)),
+                c_int(bool(sewFaces)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccHealShapes returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+
+        @staticmethod
         def importShapes(fileName, highestDimOnly=True, format=""):
             """
             Import BREP, STEP or IGES shapes from the file `fileName'. The imported

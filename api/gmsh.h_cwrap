@@ -3107,6 +3107,27 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
+      // Apply various healing procedures to the entities `dimTags' (or to all the
+      // entities in the model if `dimTags' is empty). Return the healed entities
+      // in `outDimTags'. Available healing options are listed in the Gmsh
+      // reference manual.
+      inline void healShapes(gmsh::vectorpair & outDimTags,
+                             const gmsh::vectorpair & dimTags = gmsh::vectorpair(),
+                             const double tolerance = 1e-8,
+                             const bool fixDegenerated = true,
+                             const bool fixSmallEdges = true,
+                             const bool fixSmallFaces = true,
+                             const bool sewFaces = true)
+      {
+        int ierr = 0;
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelOccHealShapes(&api_outDimTags_, &api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, (int)fixDegenerated, (int)fixSmallEdges, (int)fixSmallFaces, (int)sewFaces, &ierr);
+        if(ierr) throw ierr;
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+        gmshFree(api_dimTags_);
+      }
+
       // Import BREP, STEP or IGES shapes from the file `fileName'. The imported
       // entities are returned in `outDimTags'. If the optional argument
       // `highestDimOnly' is set, only import the highest dimensional entities in

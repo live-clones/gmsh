@@ -3722,6 +3722,28 @@ function removeAllDuplicates()
 end
 
 """
+    gmsh.model.occ.healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true)
+
+Apply various healing procedures to the entities `dimTags` (or to all the
+entities in the model if `dimTags` is empty). Return the healed entities in
+`outDimTags`. Available healing options are listed in the Gmsh reference manual.
+
+Return `outDimTags`.
+"""
+function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccHealShapes, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Cdouble, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, ierr)
+    ierr[] != 0 && error("gmshModelOccHealShapes returned non-zero error code: $(ierr[])")
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+
+"""
     gmsh.model.occ.importShapes(fileName, highestDimOnly = true, format = "")
 
 Import BREP, STEP or IGES shapes from the file `fileName`. The imported entities
