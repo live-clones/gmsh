@@ -34,7 +34,11 @@ public:
     _box->box(GMSH_SIMPLE_TOP_BOX);
 
     Fl_Group *o = new Fl_Group(x + wb, y + wb, sw, bh);
+#if __cplusplus >= 201103L
+    o->tooltip("Filter messages using regular expression");
+#else
     o->tooltip("Filter messages");
+#endif
     o->box(FL_THIN_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
     _search = new Fl_Input(x + wb + bh, y + wb + 2, sw - bh - 2, bh - 4,

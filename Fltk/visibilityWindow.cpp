@@ -1289,7 +1289,11 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
     Fl_Group *o = new Fl_Group(2 * WB + w1 + WB, height - 2 * BH - 3 * WB,
                                w2, BH);
+#if __cplusplus >= 201103L
+    o->tooltip("Filter list using regular expression");
+#else
     o->tooltip("Filter list");
+#endif
     o->box(FL_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
     search = new Fl_Input(2 * WB + w1 + WB + BH, height - 2 * BH - 3 * WB + 2,
