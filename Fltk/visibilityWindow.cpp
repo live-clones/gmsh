@@ -1224,6 +1224,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
       Fl_Button *o0 = new Fl_Button(2 * WB, 2 * WB + BH, cols[0], BH / 2, "*");
       o0->box(FL_THIN_DOWN_BOX);
+      o0->color(FL_BACKGROUND2_COLOR);
       o0->labelfont(FL_BOLD);
       o0->align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
       o0->tooltip("Select/unselect all");
@@ -1232,6 +1233,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       Fl_Button *o1 =
         new Fl_Button(2 * WB, 2 * WB + BH + BH / 2, cols[0], BH - BH / 2, "-");
       o1->box(FL_THIN_DOWN_BOX);
+      o1->color(FL_BACKGROUND2_COLOR);
       o1->labelfont(FL_BOLD);
       o1->tooltip("Invert selection");
       o1->callback(visibility_sort_cb, (void *)"-");
@@ -1239,6 +1241,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       Fl_Button *o2 =
         new Fl_Button(2 * WB + cols[0], 2 * WB + BH, cols[1], BH, "Type");
       o2->box(FL_THIN_DOWN_BOX);
+      o2->color(FL_BACKGROUND2_COLOR);
       o2->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       o2->tooltip("Sort by type");
       o2->callback(visibility_sort_cb, (void *)"type");
@@ -1246,6 +1249,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       Fl_Button *o3 = new Fl_Button(2 * WB + cols[0] + cols[1], 2 * WB + BH,
                                     cols[2], BH, "Number");
       o3->box(FL_THIN_DOWN_BOX);
+      o3->color(FL_BACKGROUND2_COLOR);
       o3->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       o3->tooltip("Sort by number");
       o3->callback(visibility_sort_cb, (void *)"number");
@@ -1253,6 +1257,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       Fl_Button *o4 = new Fl_Button(2 * WB + cols[0] + cols[1] + cols[2],
                                     2 * WB + BH, cols[3], BH, "Name");
       o4->box(FL_THIN_DOWN_BOX);
+      o4->color(FL_BACKGROUND2_COLOR);
       o4->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       o4->tooltip("Sort by name");
       o4->callback(visibility_sort_cb, (void *)"name");
