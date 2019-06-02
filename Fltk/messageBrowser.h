@@ -70,8 +70,6 @@ public:
     _browser->box(GMSH_SIMPLE_TOP_BOX);
     _browser->textfont(FL_SCREEN);
     _browser->type(FL_MULTI_BROWSER);
-    _browser->scrollbar_size(
-      std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
     _browser->end();
     end();
     resizable(_browser);

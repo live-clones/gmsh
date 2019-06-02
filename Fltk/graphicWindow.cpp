@@ -3460,7 +3460,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #endif
       _bar = new Fl_Menu_Bar(0, 0, width, BH);
       _bar->menu(bar_table);
-      _bar->box(FL_UP_BOX);
       _bar->global();
       fillRecentHistoryMenu();
 #if defined(__APPLE__)

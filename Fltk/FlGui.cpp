@@ -387,7 +387,7 @@ static void fatal_error_handler(const char *fmt, ...)
   Msg::Fatal("%s (FLTK internal error)", str);
 }
 
-void FlGui::applyColorScheme()
+void FlGui::applyColorScheme(bool redraw)
 {
   static int first = true;
   int N = 4 + FL_NUM_GRAY;
@@ -414,9 +414,7 @@ void FlGui::applyColorScheme()
       int d = (int)(min + i * (max - min) / (FL_NUM_GRAY - 1.));
       Fl::set_color(fl_gray_ramp(i), d, d, d);
     }
-    if(available()) Fl::reload_scheme();
     Fl::set_color(FL_SELECTION_COLOR, 200, 200, 200);
-    if(available()) updateViews(true, true);
   }
   else if(!first && available() && CTX::instance()->guiColorScheme == 0) {
     // retore default colors (only if not calling the routine from the
@@ -427,12 +425,26 @@ void FlGui::applyColorScheme()
     for(int i = 0; i < FL_NUM_GRAY; i++) {
       Fl::set_color(fl_gray_ramp(i), r[4 + i], g[4 + i], b[4 + i]);
     }
-    Fl::reload_scheme();
     Fl::set_color(FL_SELECTION_COLOR, r[3], g[3], b[3]);
-    updateViews(true, true);
   }
 
   first = false;
+
+  // also change default box type here (to thin versions)
+  Fl::set_boxtype(FL_UP_BOX, FL_THIN_UP_BOX);
+  Fl::set_boxtype(FL_DOWN_BOX, FL_THIN_DOWN_BOX);
+  Fl::set_boxtype(FL_UP_FRAME, FL_THIN_UP_FRAME);
+  Fl::set_boxtype(FL_DOWN_FRAME, FL_THIN_DOWN_FRAME);
+
+  // thinner scrollbars
+  Fl::scrollbar_size(std::max(10, FL_NORMAL_SIZE));
+
+  if(redraw && available()){
+    updateViews(true, true);
+    for (Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
+      win->redraw();
+    }
+  }
 }
 
 FlGui::FlGui(int argc, char **argv)
@@ -455,13 +467,13 @@ FlGui::FlGui(int argc, char **argv)
   if(CTX::instance()->display.size())
     Fl::display(CTX::instance()->display.c_str());
 
-  // apply color scheme before widget creation (noop if default color scheme is
-  // selected), so that there's no color "flashing"
-  applyColorScheme();
-
   // add new box types (dx dy dw dh)
   Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 0, 0, 1, 0);
   Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 0, 1, 0, 1);
+
+  // apply color scheme before widget creation (noop if default color scheme is
+  // selected), so that there's no color "flashing"
+  applyColorScheme();
 
   // add gamepad handler
   if(CTX::instance()->gamepad) Fl::add_timeout(5., gamepad_handler, (void *)0);
@@ -548,8 +560,8 @@ FlGui::FlGui(int argc, char **argv)
   graph[0]->getWindow()->show(argc > 0 ? 1 : 0, argv);
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
-  // re-apply color scheme (necessary for some reason to get the selection color
-  // right)
+  // re-apply color scheme (necessary after open_display to get the selection
+  // color and boxtypes right)
   applyColorScheme();
 
   // graphic window should have the initial focus (so we can e.g. directly loop

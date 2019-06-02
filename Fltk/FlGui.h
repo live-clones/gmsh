@@ -156,7 +156,7 @@ public:
   // open module in tree
   void openModule(const std::string &name);
   // apply color scheme to widgets
-  void applyColorScheme();
+  void applyColorScheme(bool redraw = false);
 };
 
 void redraw_cb(Fl_Widget *w, void *data);

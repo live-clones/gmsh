@@ -2140,7 +2140,7 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
       (CTX::instance()->guiColorScheme);
   }
   if(action & GMSH_SET && FlGui::available()){
-    FlGui::instance()->applyColorScheme();
+    FlGui::instance()->applyColorScheme(true);
   }
 #endif
   return CTX::instance()->guiColorScheme;

@@ -320,13 +320,9 @@ pluginWindow::pluginWindow(int deltaFontSize)
   browser->callback(plugin_browser_cb);
   browser->box(GMSH_SIMPLE_RIGHT_BOX);
   browser->has_scrollbar(Fl_Browser_::VERTICAL);
-  browser->scrollbar_size(
-    std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
 
   view_browser = new Fl_Multi_Browser(L1, 0, L2, height);
   view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
-  view_browser->scrollbar_size(
-    std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
   view_browser->callback(plugin_browser_cb);
   view_browser->box(GMSH_SIMPLE_RIGHT_BOX);
 

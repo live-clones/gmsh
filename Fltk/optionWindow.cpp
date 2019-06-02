@@ -1354,8 +1354,6 @@ optionWindow::optionWindow(int deltaFontSize)
   browser = new Fl_Multi_Browser(0, 0, L, height);
   browser->box(GMSH_SIMPLE_RIGHT_BOX);
   browser->has_scrollbar(Fl_Browser_::VERTICAL);
-  browser->scrollbar_size(
-    std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
   browser->add("General");
   browser->add("Geometry");
   browser->add("Mesh");
