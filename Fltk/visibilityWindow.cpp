@@ -1201,7 +1201,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int CC = (int)(1.18 * BB);
+  int CC = BB;
 
   static int cols[5] = {3 * WB, CC, CC, 2 * CC, 0};
   int width = cols[0] + cols[1] + cols[2] + cols[3] + 4 * WB;
@@ -1216,46 +1216,48 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
   {
     Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB,
-                               height - 3 * WB - 2 * BH, "List browser");
+                               height - 3 * WB - 2 * BH, "List");
 
     {
       Fl_Group *gg = new Fl_Group(
         2 * WB, WB + BH, cols[0] + cols[1] + cols[2] + cols[3], BH);
-      gg->resizable(NULL);
 
       Fl_Button *o0 = new Fl_Button(2 * WB, 2 * WB + BH, cols[0], BH / 2, "*");
-      o0->box(FL_THIN_UP_BOX);
+      o0->box(FL_THIN_DOWN_BOX);
+      o0->labelfont(FL_BOLD);
       o0->align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
       o0->tooltip("Select/unselect all");
       o0->callback(visibility_sort_cb, (void *)"*");
 
       Fl_Button *o1 =
         new Fl_Button(2 * WB, 2 * WB + BH + BH / 2, cols[0], BH - BH / 2, "-");
-      o1->box(FL_THIN_UP_BOX);
+      o1->box(FL_THIN_DOWN_BOX);
+      o1->labelfont(FL_BOLD);
       o1->tooltip("Invert selection");
       o1->callback(visibility_sort_cb, (void *)"-");
 
       Fl_Button *o2 =
         new Fl_Button(2 * WB + cols[0], 2 * WB + BH, cols[1], BH, "Type");
-      o2->box(FL_THIN_UP_BOX);
+      o2->box(FL_THIN_DOWN_BOX);
       o2->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       o2->tooltip("Sort by type");
       o2->callback(visibility_sort_cb, (void *)"type");
 
       Fl_Button *o3 = new Fl_Button(2 * WB + cols[0] + cols[1], 2 * WB + BH,
                                     cols[2], BH, "Number");
-      o3->box(FL_THIN_UP_BOX);
+      o3->box(FL_THIN_DOWN_BOX);
       o3->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       o3->tooltip("Sort by number");
       o3->callback(visibility_sort_cb, (void *)"number");
 
       Fl_Button *o4 = new Fl_Button(2 * WB + cols[0] + cols[1] + cols[2],
                                     2 * WB + BH, cols[3], BH, "Name");
-      o4->box(FL_THIN_UP_BOX);
+      o4->box(FL_THIN_DOWN_BOX);
       o4->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       o4->tooltip("Sort by name");
       o4->callback(visibility_sort_cb, (void *)"name");
 
+      gg->resizable(o4);
       gg->end();
     }
     {
@@ -1280,7 +1282,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       {"Mesh partitions", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
       {0}};
 
-    double w1 = 1.4 * CC;
+    double w1 = 1.7 * CC;
     double w3 = CC;
     double w2 = (width - 6 * WB - w1 - w3);
     browser_type =
@@ -1313,7 +1315,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   }
   {
     Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB,
-                               height - 3 * WB - 2 * BH, "Tree browser");
+                               height - 3 * WB - 2 * BH, "Tree");
 
     tree = new treeBrowser(2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH);
     tree->labelsize(FL_NORMAL_SIZE - 1);
@@ -1344,19 +1346,19 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     int yy = 2 * WB + BH;
     for(int i = 0; i < 10; i++) {
       if(i == 0) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 2) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 6) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
@@ -1417,19 +1419,19 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     int yy = 2 * WB + BH;
     for(int i = 0; i < 9; i++) {
       if(i == 0) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 1) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 5) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
@@ -1512,29 +1514,28 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
   {
     int aw = (int)(3.5 * FL_NORMAL_SIZE);
-    int ww = (width - 5 * WB - aw) / 4;
 
     Fl_Group *g =
-      new Fl_Group(WB, height - BH - WB, width - 2 * WB - 2 * ww, BH);
+      new Fl_Group(WB, height - BH - WB, width - 2 * WB - CC, BH);
     g->resizable(NULL);
 
     Fl_Box *b = new Fl_Box(WB, height - BH - WB, aw, BH, "Apply");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
-    butt[0] = new Fl_Check_Button(WB + aw + WB, height - BH - WB, ww, BH,
+    butt[0] = new Fl_Check_Button(WB + aw + WB, height - BH - WB, 2 * aw, BH,
                                   "recursively");
     butt[0]->type(FL_TOGGLE_BUTTON);
     butt[0]->value(1);
 
-    butt[1] = new Fl_Check_Button(WB + aw + WB + ww, height - BH - WB, ww + WB,
+    butt[1] = new Fl_Check_Button(WB + 3 * aw + 2 * WB, height - BH - WB, 3 * aw,
                                   BH, "to all models");
     butt[1]->type(FL_TOGGLE_BUTTON);
     butt[1]->value(1);
 
     g->end();
 
-    Fl_Button *o1 = new Fl_Button(width - 2 * ww - WB, height - BH - WB, 2 * ww,
-                                  BH, "Save current visibility");
+    Fl_Button *o1 = new Fl_Button(width - CC - WB, height - BH - WB, CC,
+                                  BH, "Save");
     o1->callback(visibility_save_cb);
   }
 
