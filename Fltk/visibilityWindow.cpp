@@ -480,7 +480,7 @@ class listBrowser : public Fl_Browser {
       }
       else if(Fl::test_shortcut(FL_Enter) || Fl::test_shortcut(FL_KP_Enter)) {
         visibility_browser_apply_cb(NULL, NULL);
-        Fl_Browser_::select(l);
+        if(l) Fl_Browser_::select(l);
         return 1;
       }
       else if(Fl::test_shortcut(FL_Up)) {
