@@ -532,7 +532,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_optimize(0, GMSH_SET, o->mesh.butt[2]->value());
   opt_mesh_optimize_netgen(0, GMSH_SET, o->mesh.butt[24]->value());
   opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
-  opt_mesh_ho_optimize(0, GMSH_SET, o->mesh.butt[3]->value());
+  opt_mesh_ho_optimize(0, GMSH_SET, o->mesh.butt[3]->value() ? 2 : 1);
   opt_mesh_second_order_incomplete(0, GMSH_SET, o->mesh.butt[4]->value());
   opt_mesh_points(0, GMSH_SET, o->mesh.butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, o->mesh.butt[7]->value());
@@ -555,7 +555,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_light_two_side(0, GMSH_SET, o->mesh.butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, o->mesh.butt[19]->value());
   opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
-  opt_mesh_recombine3d_all(0, GMSH_SET, o->mesh.butt[22]->value());
 
   opt_mesh_nb_smoothing(0, GMSH_SET, o->mesh.value[0]->value());
   opt_mesh_lc_factor(0, GMSH_SET, o->mesh.value[2]->value());
@@ -587,7 +586,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
                   (o->mesh.choice[3]->value() == 2) ? ALGO_3D_HXT :
                   (o->mesh.choice[3]->value() == 3) ? ALGO_3D_MMG3D :
-                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_RTREE :
                   ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
@@ -1997,7 +1995,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Box *b2 =
         new Fl_Box(FL_NO_BOX, L + 2 * WB, 2 * WB + 3 * BH + 1, IW, BH,
-                   "Open CASCADE model healing options (experimental):");
+                   "Open CASCADE model healing options:");
       b2->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
 
       geo.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
@@ -2293,15 +2291,14 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Frontal-Delaunay", 0, 0, 0},
         {"BAMG (experimental)", 0, 0, 0},
         {"Frontal-Delaunay for Quads (experimental)", 0, 0, 0},
-        {"Packing of Parallelograms (experimental)", 0, 0, 0},
+        {"Packing of Parallelograms (experimental, planar only)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
         {"HXT (experimental)", 0, 0, 0},
-        {"MMG3D (experimental)", 0, 0, 0},
-        {"R-Tree (experimental)", 0, 0, 0},
+        {"MMG3D (experimental, single volume only)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {
@@ -2403,7 +2400,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[1] = new Fl_Check_Button(
         L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
-        "Compute element sizes from curvature (experimental)");
+        "Compute element sizes from curvature");
       mesh.butt[1]->type(FL_TOGGLE_BUTTON);
       mesh.butt[1]->callback(mesh_options_ok_cb);
 
@@ -2428,15 +2425,9 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[3] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                            "Optimize high-order meshes (experimental)");
+                            "Optimize high-order meshes");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
-
-      mesh.butt[22] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
-                            "Recombine tets into hex-dom mesh (experimental)");
-      mesh.butt[22]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[22]->callback(mesh_options_ok_cb);
 
       o->end();
     }
