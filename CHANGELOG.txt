@@ -1,12 +1,13 @@
 4.4.0: new STL remeshing workflow; added API support for color options, mesh
-optimization, recombination, smoothing and shape healing; changed getJacobians
-and getBasisFunctions API to specify integration points explicitely; changed API
-for storing nodes and elements (set{Nodes,Elements} replaced by
-add{Nodes,Elements}); exposed additional METIS options; improved support for
-periodic entities (multiple curves with the same start/end points; legacy MSH2
-format); added mesh renumbering also after interactive mesh modifications; new
-interactive filter in visibility window; modernized GUI with slightly "flatter"
-scheme; small bug fixes.
+optimization, recombination, smoothing and shape healing; exposed additional
+METIS options; improved support for periodic entities (multiple curves with the
+same start/end points; legacy MSH2 format); added mesh renumbering also after
+interactive mesh modifications; new interactive filter in visibility window;
+modernized GUI with slightly "flatter" scheme; small bug fixes.
+
+* Incompatible API changes: mesh/getJacobians and mesh/getBasisFunctions now
+  take integration points explicitely; mesh/setNodes and mesh/setElements have
+  been replaced by mesh/addNodes and mesh/addElements.
 
 4.3.0 (April 19, 2019): improved meshing of surfaces with singular
 parametrizations; added API support for aliasing and combining views, copying
@@ -27,17 +28,19 @@ shape; added support for reading IGES labels and colors; improved search for
 shared library in Python and Julia modules; improved Plugin(MeshVolume); updates
 to the reference manual.
 
-4.2.0 (March 5, 2019): changed type of node and element tags in API to support
-(very) large meshes (using size_t instead of int); new MSH4.1 revision of the
-MSH file format, with support for size_t node and element tags (see the
-reference manual for detailed changes); changed the logger, getPeriodicNodes and
-setElementsByType API; added support for reading STEP labels and colors with OCC
-CAF; changed default "General.OCCTargetUnit" value to none (i.e. use STEP file
-coordinates as-is, without conversion); improved high-order mesh optimization;
-added ability to import groups of nodes from MED files; extruded meshes now
-fill-in periodic node information; enhanced Plugin(Distance) and
-Plugin(SimplePartition); removed unmaintained plugins; removed default
-dependency on PETSc; small improvements and bug fixes.
+4.2.0 (March 5, 2019): new MSH4.1 revision of the MSH file format, with support
+for size_t node and element tags (see the reference manual for detailed
+changes); added support for reading STEP labels and colors with OCC CAF; changed
+default "General.OCCTargetUnit" value to none (i.e. use STEP file coordinates
+as-is, without conversion); improved high-order mesh optimization; added ability
+to import groups of nodes from MED files; extruded meshes now fill-in periodic
+node information; enhanced Plugin(Distance) and Plugin(SimplePartition); removed
+unmaintained plugins; removed default dependency on PETSc; small improvements
+and bug fixes.
+
+* Incompatible API changes: changed type of node and element tags from int to
+  size_t to support (very) large meshes; changed logger/start,
+  mesh/getPeriodicNodes and mesh/setElementsByType.
 
 4.1.5 (February 14, 2019): improved OpenMP parallelization, STL remeshing, mesh
 partitioning and high-order mesh optimization; added classifySurfaces in API;
@@ -65,6 +68,8 @@ interface.
 
 4.1.0 (January 13, 2019): improved ONELAB and Fltk support in API; improved
 renumbering of mesh nodes/elements; major code refactoring.
+
+* Incompatible API changes: changed onelab/get.
 
 4.0.7 (December 9, 2018): fixed small memory leaks; removed unused code.
 
