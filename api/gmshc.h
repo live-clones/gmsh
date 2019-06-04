@@ -430,6 +430,9 @@ GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n
 GMSH_API void gmshModelMeshGetLastNodeError(size_t ** nodeTags, size_t * nodeTags_n,
                                             int * ierr);
 
+/* Clear the mesh, i.e. delete all the nodes and elements. */
+GMSH_API void gmshModelMeshClear(int * ierr);
+
 /* Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
  * `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
  * `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the
@@ -487,8 +490,8 @@ GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
                                                     double ** coord, size_t * coord_n,
                                                     int * ierr);
 
-/* Set the nodes classified on the model entity of dimension `dim' and tag
- * `tag'. `nodeTags' contains the node tags (their unique, strictly positive
+/* Add nodes classified on the model entity of dimension `dim' and tag `tag'.
+ * `nodeTags' contains the node tags (their unique, strictly positive
  * identification numbers). `coord' is a vector of length 3 times the length
  * of `nodeTags' that contains the x, y, z coordinates of the nodes,
  * concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
@@ -496,7 +499,7 @@ GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
  * of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
  * the `nodeTags' vector is empty, new tags are automatically assigned to the
  * nodes. */
-GMSH_API void gmshModelMeshSetNodes(const int dim,
+GMSH_API void gmshModelMeshAddNodes(const int dim,
                                     const int tag,
                                     size_t * nodeTags, size_t nodeTags_n,
                                     double * coord, size_t coord_n,
@@ -624,30 +627,31 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
                                                      const int tag,
                                                      int * ierr);
 
-/* Set the elements of the entity of dimension `dim' and tag `tag'. `types'
- * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
- * the Gmsh reference manual). `elementTags' is a vector of the same length as
- * `types'; each entry is a vector containing the tags (unique, strictly
- * positive identifiers) of the elements of the corresponding type. `nodeTags'
- * is also a vector of the same length as `types'; each entry is a vector of
- * length equal to the number of elements of the given type times the number N
- * of nodes per element, that contains the node tags of all the elements of
- * the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. */
-GMSH_API void gmshModelMeshSetElements(const int dim,
+/* Add elements classified on the entity of dimension `dim' and tag `tag'.
+ * `types' contains the MSH types of the elements (e.g. `2' for 3-node
+ * triangles: see the Gmsh reference manual). `elementTags' is a vector of the
+ * same length as `types'; each entry is a vector containing the tags (unique,
+ * strictly positive identifiers) of the elements of the corresponding type.
+ * `nodeTags' is also a vector of the same length as `types'; each entry is a
+ * vector of length equal to the number of elements of the given type times
+ * the number N of nodes per element, that contains the node tags of all the
+ * elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
+ * ...]. */
+GMSH_API void gmshModelMeshAddElements(const int dim,
                                        const int tag,
                                        int * elementTypes, size_t elementTypes_n,
                                        const size_t ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
                                        const size_t ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,
                                        int * ierr);
 
-/* Set the elements of type `elementType' in the entity of tag `tag'.
+/* Add elements of type `elementType' classified on the entity of tag `tag'.
  * `elementTags' contains the tags (unique, strictly positive identifiers) of
  * the elements of the corresponding type. `nodeTags' is a vector of length
  * equal to the number of elements times the number N of nodes per element,
  * that contains the node tags of all the elements, concatenated: [e1n1, e1n2,
  * ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are
  * automatically assigned to the elements. */
-GMSH_API void gmshModelMeshSetElementsByType(const int tag,
+GMSH_API void gmshModelMeshAddElementsByType(const int tag,
                                              const int elementType,
                                              size_t * elementTags, size_t elementTags_n,
                                              size_t * nodeTags, size_t nodeTags_n,

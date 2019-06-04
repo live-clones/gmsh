@@ -100,7 +100,7 @@ def _ovectorvectorint(ptr, size, n):
     return v
 
 def _ovectorvectorsize(ptr, size, n):
-    v = [_ovectorint(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
+    v = [_ovectorsize(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
     lib.gmshFree(size)
     lib.gmshFree(ptr)
     return v
@@ -1316,6 +1316,19 @@ class model:
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
+        def clear():
+            """
+            Clear the mesh, i.e. delete all the nodes and elements.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshClear(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshClear returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True):
             """
             Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
@@ -1455,10 +1468,10 @@ class model:
                 _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
-        def setNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
+        def addNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
             """
-            Set the nodes classified on the model entity of dimension `dim' and tag
-            `tag'. `nodeTags' contains the node tags (their unique, strictly positive
+            Add nodes classified on the model entity of dimension `dim' and tag `tag'.
+            `nodeTags' contains the node tags (their unique, strictly positive
             identification numbers). `coord' is a vector of length 3 times the length
             of `nodeTags' that contains the x, y, z coordinates of the nodes,
             concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
@@ -1471,7 +1484,7 @@ class model:
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
             ierr = c_int()
-            lib.gmshModelMeshSetNodes(
+            lib.gmshModelMeshAddNodes(
                 c_int(dim),
                 c_int(tag),
                 api_nodeTags_, api_nodeTags_n_,
@@ -1480,7 +1493,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetNodes returned non-zero error code: ",
+                    "gmshModelMeshAddNodes returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -1743,23 +1756,24 @@ class model:
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
-        def setElements(dim, tag, elementTypes, elementTags, nodeTags):
+        def addElements(dim, tag, elementTypes, elementTags, nodeTags):
             """
-            Set the elements of the entity of dimension `dim' and tag `tag'. `types'
-            contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-            the Gmsh reference manual). `elementTags' is a vector of the same length as
-            `types'; each entry is a vector containing the tags (unique, strictly
-            positive identifiers) of the elements of the corresponding type. `nodeTags'
-            is also a vector of the same length as `types'; each entry is a vector of
-            length equal to the number of elements of the given type times the number N
-            of nodes per element, that contains the node tags of all the elements of
-            the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+            Add elements classified on the entity of dimension `dim' and tag `tag'.
+            `types' contains the MSH types of the elements (e.g. `2' for 3-node
+            triangles: see the Gmsh reference manual). `elementTags' is a vector of the
+            same length as `types'; each entry is a vector containing the tags (unique,
+            strictly positive identifiers) of the elements of the corresponding type.
+            `nodeTags' is also a vector of the same length as `types'; each entry is a
+            vector of length equal to the number of elements of the given type times
+            the number N of nodes per element, that contains the node tags of all the
+            elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
+            ...].
             """
             api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorsize(elementTags)
             api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = _ivectorvectorsize(nodeTags)
             ierr = c_int()
-            lib.gmshModelMeshSetElements(
+            lib.gmshModelMeshAddElements(
                 c_int(dim),
                 c_int(tag),
                 api_elementTypes_, api_elementTypes_n_,
@@ -1768,13 +1782,13 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetElements returned non-zero error code: ",
+                    "gmshModelMeshAddElements returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def setElementsByType(tag, elementType, elementTags, nodeTags):
+        def addElementsByType(tag, elementType, elementTags, nodeTags):
             """
-            Set the elements of type `elementType' in the entity of tag `tag'.
+            Add elements of type `elementType' classified on the entity of tag `tag'.
             `elementTags' contains the tags (unique, strictly positive identifiers) of
             the elements of the corresponding type. `nodeTags' is a vector of length
             equal to the number of elements times the number N of nodes per element,
@@ -1785,7 +1799,7 @@ class model:
             api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             ierr = c_int()
-            lib.gmshModelMeshSetElementsByType(
+            lib.gmshModelMeshAddElementsByType(
                 c_int(tag),
                 c_int(elementType),
                 api_elementTags_, api_elementTags_n_,
@@ -1793,7 +1807,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetElementsByType returned non-zero error code: ",
+                    "gmshModelMeshAddElementsByType returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod

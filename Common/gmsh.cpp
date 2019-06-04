@@ -942,6 +942,12 @@ gmsh::model::mesh::getLastNodeError(std::vector<std::size_t> &nodeTags)
   for(std::size_t i = 0; i < v.size(); i++) nodeTags.push_back(v[i]->getNum());
 }
 
+GMSH_API void gmsh::model::mesh::clear()
+{
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->deleteMesh();
+}
+
 static void _getAdditionalNodesOnBoundary(GEntity *entity,
                                           std::vector<std::size_t> &nodeTags,
                                           std::vector<double> &coord,
@@ -1160,7 +1166,7 @@ gmsh::model::mesh::getNodesForPhysicalGroup(const int dim, const int tag,
   }
 }
 
-GMSH_API void gmsh::model::mesh::setNodes(
+GMSH_API void gmsh::model::mesh::addNodes(
   const int dim, const int tag, const std::vector<std::size_t> &nodeTags,
   const std::vector<double> &coord, const std::vector<double> &parametricCoord)
 {
@@ -1186,25 +1192,23 @@ GMSH_API void gmsh::model::mesh::setNodes(
     }
     param = true;
   }
-  // delete nodes and elements; this will also delete the model mesh cache
-  ge->deleteMesh();
   for(int i = 0; i < numNodes; i++) {
-    std::size_t n = (numNodeTags ? nodeTags[i] : 0); // 0 = automatic tag
+    std::size_t tag = (numNodeTags ? nodeTags[i] : 0); // 0 = automatic tag
     double x = coord[3 * i];
     double y = coord[3 * i + 1];
     double z = coord[3 * i + 2];
     MVertex *vv = 0;
     if(param && dim == 1) {
       double u = parametricCoord[i];
-      vv = new MEdgeVertex(x, y, z, ge, u, n);
+      vv = new MEdgeVertex(x, y, z, ge, u, tag);
     }
     else if(param && dim == 2) {
       double u = parametricCoord[2 * i];
       double v = parametricCoord[2 * i + 1];
-      vv = new MFaceVertex(x, y, z, ge, u, v, n);
+      vv = new MFaceVertex(x, y, z, ge, u, v, tag);
     }
     else
-      vv = new MVertex(x, y, z, ge, n);
+      vv = new MVertex(x, y, z, ge, tag);
     ge->mesh_vertices.push_back(vv);
   }
 }
@@ -1453,7 +1457,7 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
   }
 }
 
-GMSH_API void gmsh::model::mesh::setElements(
+GMSH_API void gmsh::model::mesh::addElements(
   const int dim, const int tag, const std::vector<int> &elementTypes,
   const std::vector<std::vector<std::size_t> > &elementTags,
   const std::vector<std::vector<std::size_t> > &nodeTags)
@@ -1472,13 +1476,12 @@ GMSH_API void gmsh::model::mesh::setElements(
     Msg::Error("Wrong number of node tags");
     throw 2;
   }
-  // delete only elements; this will also delete the model mesh cache
-  ge->deleteMesh(true);
+
   for(std::size_t i = 0; i < elementTypes.size(); i++)
     _addElements(dim, tag, ge, elementTypes[i], elementTags[i], nodeTags[i]);
 }
 
-GMSH_API void gmsh::model::mesh::setElementsByType(
+GMSH_API void gmsh::model::mesh::addElementsByType(
   const int tag, const int elementType,
   const std::vector<std::size_t> &elementTags,
   const std::vector<std::size_t> &nodeTags)

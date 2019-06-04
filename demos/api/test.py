@@ -48,7 +48,7 @@ for e in entities :
         print("tags : ", list(tags[i]))
         print("nodes : ", list(nodes[i]))
     if e[0] == [2] and e[1] == 6 :
-        model.mesh.setElements(e[0],e[1],types,[tags[0][:10]],[nodes[0][:30]])
+        model.mesh.addElements(e[0],e[1],types,[tags[0][:10]],[nodes[0][:30]])
 
 gmsh.write("mesh_truncated.msh")
 print("Nodes")

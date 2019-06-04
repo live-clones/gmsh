@@ -1077,6 +1077,20 @@ function getLastNodeError()
 end
 
 """
+    gmsh.model.mesh.clear()
+
+Clear the mesh, i.e. delete all the nodes and elements.
+"""
+function clear()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshClear, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshClear returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricCoord = true)
 
 Get the nodes classified on the entity of dimension `dim` and tag `tag`. If
@@ -1205,9 +1219,9 @@ function getNodesForPhysicalGroup(dim, tag)
 end
 
 """
-    gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
+    gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
 
-Set the nodes classified on the model entity of dimension `dim` and tag `tag`.
+Add nodes classified on the model entity of dimension `dim` and tag `tag`.
 `nodeTags` contains the node tags (their unique, strictly positive
 identification numbers). `coord` is a vector of length 3 times the length of
 `nodeTags` that contains the x, y, z coordinates of the nodes, concatenated:
@@ -1216,12 +1230,12 @@ parametric coordinates of the nodes, if any. The length of `parametricCoord` can
 be 0 or `dim` times the length of `nodeTags`. If the `nodeTags` vector is empty,
 new tags are automatically assigned to the nodes.
 """
-function setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
+function addNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetNodes, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshAddNodes, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
           dim, tag, convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetNodes returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshAddNodes returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -1452,9 +1466,9 @@ function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
 end
 
 """
-    gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
+    gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)
 
-Set the elements of the entity of dimension `dim` and tag `tag`. `types`
+Add elements classified on the entity of dimension `dim` and tag `tag`. `types`
 contains the MSH types of the elements (e.g. `2` for 3-node triangles: see the
 Gmsh reference manual). `elementTags` is a vector of the same length as `types`;
 each entry is a vector containing the tags (unique, strictly positive
@@ -1464,34 +1478,34 @@ the number of elements of the given type times the number N of nodes per
 element, that contains the node tags of all the elements of the given type,
 concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 """
-function setElements(dim, tag, elementTypes, elementTags, nodeTags)
+function addElements(dim, tag, elementTypes, elementTags, nodeTags)
     api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
     api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshAddElements, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
           dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Csize_t}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Csize_t}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetElements returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshAddElements returned non-zero error code: $(ierr[])")
     return nothing
 end
 
 """
-    gmsh.model.mesh.setElementsByType(tag, elementType, elementTags, nodeTags)
+    gmsh.model.mesh.addElementsByType(tag, elementType, elementTags, nodeTags)
 
-Set the elements of type `elementType` in the entity of tag `tag`. `elementTags`
-contains the tags (unique, strictly positive identifiers) of the elements of the
-corresponding type. `nodeTags` is a vector of length equal to the number of
-elements times the number N of nodes per element, that contains the node tags of
-all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the
-`elementTag` vector is empty, new tags are automatically assigned to the
-elements.
+Add elements of type `elementType` classified on the entity of tag `tag`.
+`elementTags` contains the tags (unique, strictly positive identifiers) of the
+elements of the corresponding type. `nodeTags` is a vector of length equal to
+the number of elements times the number N of nodes per element, that contains
+the node tags of all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
+...]. If the `elementTag` vector is empty, new tags are automatically assigned
+to the elements.
 """
-function setElementsByType(tag, elementType, elementTags, nodeTags)
+function addElementsByType(tag, elementType, elementTags, nodeTags)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetElementsByType, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshAddElementsByType, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
           tag, elementType, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetElementsByType returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshAddElementsByType returned non-zero error code: $(ierr[])")
     return nothing
 end
 

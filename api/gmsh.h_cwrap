@@ -800,6 +800,14 @@ namespace gmsh { // Top-level functions
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
+      // Clear the mesh, i.e. delete all the nodes and elements.
+      inline void clear()
+      {
+        int ierr = 0;
+        gmshModelMeshClear(&ierr);
+        if(ierr) throw ierr;
+      }
+
       // Get the nodes classified on the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains
@@ -897,8 +905,8 @@ namespace gmsh { // Top-level functions
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
-      // Set the nodes classified on the model entity of dimension `dim' and tag
-      // `tag'. `nodeTags' contains the node tags (their unique, strictly positive
+      // Add nodes classified on the model entity of dimension `dim' and tag `tag'.
+      // `nodeTags' contains the node tags (their unique, strictly positive
       // identification numbers). `coord' is a vector of length 3 times the length
       // of `nodeTags' that contains the x, y, z coordinates of the nodes,
       // concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
@@ -906,7 +914,7 @@ namespace gmsh { // Top-level functions
       // length of `parametricCoord' can be 0 or `dim' times the length of
       // `nodeTags'. If the `nodeTags' vector is empty, new tags are automatically
       // assigned to the nodes.
-      inline void setNodes(const int dim,
+      inline void addNodes(const int dim,
                            const int tag,
                            const std::vector<std::size_t> & nodeTags,
                            const std::vector<double> & coord,
@@ -916,7 +924,7 @@ namespace gmsh { // Top-level functions
         size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
         double *api_parametricCoord_; size_t api_parametricCoord_n_; vector2ptr(parametricCoord, &api_parametricCoord_, &api_parametricCoord_n_);
-        gmshModelMeshSetNodes(dim, tag, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, &ierr);
+        gmshModelMeshAddNodes(dim, tag, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_nodeTags_);
         gmshFree(api_coord_);
@@ -1110,17 +1118,17 @@ namespace gmsh { // Top-level functions
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
-      // Set the elements of the entity of dimension `dim' and tag `tag'. `types'
-      // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-      // the Gmsh reference manual). `elementTags' is a vector of the same length
-      // as `types'; each entry is a vector containing the tags (unique, strictly
-      // positive identifiers) of the elements of the corresponding type.
-      // `nodeTags' is also a vector of the same length as `types'; each entry is a
-      // vector of length equal to the number of elements of the given type times
-      // the number N of nodes per element, that contains the node tags of all the
-      // elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
-      // ...].
-      inline void setElements(const int dim,
+      // Add elements classified on the entity of dimension `dim' and tag `tag'.
+      // `types' contains the MSH types of the elements (e.g. `2' for 3-node
+      // triangles: see the Gmsh reference manual). `elementTags' is a vector of
+      // the same length as `types'; each entry is a vector containing the tags
+      // (unique, strictly positive identifiers) of the elements of the
+      // corresponding type. `nodeTags' is also a vector of the same length as
+      // `types'; each entry is a vector of length equal to the number of elements
+      // of the given type times the number N of nodes per element, that contains
+      // the node tags of all the elements of the given type, concatenated: [e1n1,
+      // e1n2, ..., e1nN, e2n1, ...].
+      inline void addElements(const int dim,
                               const int tag,
                               const std::vector<int> & elementTypes,
                               const std::vector<std::vector<std::size_t> > & elementTags,
@@ -1130,21 +1138,21 @@ namespace gmsh { // Top-level functions
         int *api_elementTypes_; size_t api_elementTypes_n_; vector2ptr(elementTypes, &api_elementTypes_, &api_elementTypes_n_);
         size_t **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_; vectorvector2ptrptr(elementTags, &api_elementTags_, &api_elementTags_n_, &api_elementTags_nn_);
         size_t **api_nodeTags_; size_t *api_nodeTags_n_, api_nodeTags_nn_; vectorvector2ptrptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTags_nn_);
-        gmshModelMeshSetElements(dim, tag, api_elementTypes_, api_elementTypes_n_, (const size_t **)api_elementTags_, api_elementTags_n_, api_elementTags_nn_, (const size_t **)api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
+        gmshModelMeshAddElements(dim, tag, api_elementTypes_, api_elementTypes_n_, (const size_t **)api_elementTags_, api_elementTags_n_, api_elementTags_nn_, (const size_t **)api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_elementTypes_);
         for(size_t i = 0; i < api_elementTags_nn_; ++i){ gmshFree(api_elementTags_[i]); } gmshFree(api_elementTags_); gmshFree(api_elementTags_n_);
         for(size_t i = 0; i < api_nodeTags_nn_; ++i){ gmshFree(api_nodeTags_[i]); } gmshFree(api_nodeTags_); gmshFree(api_nodeTags_n_);
       }
 
-      // Set the elements of type `elementType' in the entity of tag `tag'.
+      // Add elements of type `elementType' classified on the entity of tag `tag'.
       // `elementTags' contains the tags (unique, strictly positive identifiers) of
       // the elements of the corresponding type. `nodeTags' is a vector of length
       // equal to the number of elements times the number N of nodes per element,
       // that contains the node tags of all the elements, concatenated: [e1n1,
       // e1n2, ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags
       // are automatically assigned to the elements.
-      inline void setElementsByType(const int tag,
+      inline void addElementsByType(const int tag,
                                     const int elementType,
                                     const std::vector<std::size_t> & elementTags,
                                     const std::vector<std::size_t> & nodeTags)
@@ -1152,7 +1160,7 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
         size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
-        gmshModelMeshSetElementsByType(tag, elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, &ierr);
+        gmshModelMeshAddElementsByType(tag, elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_elementTags_);
         gmshFree(api_nodeTags_);

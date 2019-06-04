@@ -811,6 +811,18 @@ populated by the new 3D meshing algorithms.
 -
 @end table
 
+@item clear
+Clear the mesh, i.e. delete all the nodes and elements.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item getNodes
 Get the nodes classified on the entity of dimension @code{dim} and tag
 @code{tag}. If @code{tag} < 0, get the nodes for all entities of dimension
@@ -894,8 +906,8 @@ n2x, ...].
 -
 @end table
 
-@item setNodes
-Set the nodes classified on the model entity of dimension @code{dim} and tag
+@item addNodes
+Add nodes classified on the model entity of dimension @code{dim} and tag
 @code{tag}. @code{nodeTags} contains the node tags (their unique, strictly
 positive identification numbers). @code{coord} is a vector of length 3 times the
 length of @code{nodeTags} that contains the x, y, z coordinates of the nodes,
@@ -1081,16 +1093,17 @@ Preallocate data before calling @code{getElementsByType} with @code{numTasks} >
 -
 @end table
 
-@item setElements
-Set the elements of the entity of dimension @code{dim} and tag @code{tag}.
-@code{types} contains the MSH types of the elements (e.g. @code{2} for 3-node
-triangles: see the Gmsh reference manual). @code{elementTags} is a vector of the
-same length as @code{types}; each entry is a vector containing the tags (unique,
-strictly positive identifiers) of the elements of the corresponding type.
-@code{nodeTags} is also a vector of the same length as @code{types}; each entry
-is a vector of length equal to the number of elements of the given type times
-the number N of nodes per element, that contains the node tags of all the
-elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+@item addElements
+Add elements classified on the entity of dimension @code{dim} and tag
+@code{tag}. @code{types} contains the MSH types of the elements (e.g. @code{2}
+for 3-node triangles: see the Gmsh reference manual). @code{elementTags} is a
+vector of the same length as @code{types}; each entry is a vector containing the
+tags (unique, strictly positive identifiers) of the elements of the
+corresponding type. @code{nodeTags} is also a vector of the same length as
+@code{types}; each entry is a vector of length equal to the number of elements
+of the given type times the number N of nodes per element, that contains the
+node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ...,
+e1nN, e2n1, ...].
 
 @table @asis
 @item Input:
@@ -1101,14 +1114,14 @@ elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 -
 @end table
 
-@item setElementsByType
-Set the elements of type @code{elementType} in the entity of tag @code{tag}.
-@code{elementTags} contains the tags (unique, strictly positive identifiers) of
-the elements of the corresponding type. @code{nodeTags} is a vector of length
-equal to the number of elements times the number N of nodes per element, that
-contains the node tags of all the elements, concatenated: [e1n1, e1n2, ...,
-e1nN, e2n1, ...]. If the @code{elementTag} vector is empty, new tags are
-automatically assigned to the elements.
+@item addElementsByType
+Add elements of type @code{elementType} classified on the entity of tag
+@code{tag}. @code{elementTags} contains the tags (unique, strictly positive
+identifiers) of the elements of the corresponding type. @code{nodeTags} is a
+vector of length equal to the number of elements times the number N of nodes per
+element, that contains the node tags of all the elements, concatenated: [e1n1,
+e1n2, ..., e1nN, e2n1, ...]. If the @code{elementTag} vector is empty, new tags
+are automatically assigned to the elements.
 
 @table @asis
 @item Input:
