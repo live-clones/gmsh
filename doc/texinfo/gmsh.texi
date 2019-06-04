@@ -5917,7 +5917,7 @@ element sizes in your input file so that the surface mesh better matches
 the geometrical details of the model.
 
 If nothing works, file a bug report with the version of your operating
-system and and the full geometry.
+system and the full geometry.
 
 @item How can I only save tetrahedral elements (not triangles and lines)?
 
@@ -5925,6 +5925,15 @@ By default, if physical groups are defined, the output mesh only
 contains those elements that belong to physical entities. So to save
 only 3D elements, simply define one (or more) physical volume(s) and
 don't define any physical surfaces, physical curves or physical points.
+
+@item How can I remove mesh nodes for geometrical construction points (centers of spheres, etc.) from output mesh file?
+
+By default Gmsh saves all the geometrical entities and their associated
+mesh. In particular, since each geometry point is meshed with a point
+element, defined by a mesh node, the output file will contain one 0-D
+mesh element and one mesh node for each geometry point. To remove such
+elements/nodes from the mesh, simply define physical groups for the
+entities you want to save (see previous question).
 
 @item My 2D meshes of IGES files present gaps between surfaces
 
@@ -5969,7 +5978,7 @@ algorithm with smoothing (e.g., with @code{Mesh.Smoothing = 10}).
 Yes, just choose the appropriate order in the mesh menu after the mesh
 is completed. High-order optimization tools are also available in the
 mesh menu. You can select the order on the command line with e.g.
-@code{-order 2}, and activcate high-order optization with
+@code{-order 2}, and activcate high-order optimization with
 @code{-optimize_ho}.
 
 @item Can I import an existing surface mesh in Gmsh and use it to build a 3D mesh?
