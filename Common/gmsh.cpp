@@ -1906,6 +1906,45 @@ GMSH_API void gmsh::model::mesh::getJacobians(
         }
       }
     }
+    else if(!haveDeterminants && haveJacobians && !havePoints) {
+      std::vector<std::vector<SVector3> > gsf;
+      size_t o = 0;
+      size_t idx = begin * numIntegrationPoints;
+      for(std::size_t i = 0; i < entities.size(); i++) {
+        GEntity *ge = entities[i];
+        for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
+            j++) {
+          if(o >= begin && o < end) {
+            MElement *e = ge->getMeshElementByType(familyType, j);
+            if(gsf.size() == 0) {
+              gsf.resize(numIntegrationPoints);
+              for(int k = 0; k < numIntegrationPoints; k++) {
+                double value[1256][3];
+                e->getGradShapeFunctions(integrationPoints[3 * k],
+                                         integrationPoints[3 * k + 1],
+                                         integrationPoints[3 * k + 2],
+                                         value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < numIntegrationPoints; k++) {
+              e->getJacobian(gsf[k], &jacobians[idx * 9]);
+              idx++;
+            }
+          }
+          o++;
+        }
+      }
+    }
+    else {
+      Msg::Error("The case with 'haveDeterminants = %s', `haveJacobians = %s` and 'havePoints = %s' is not yet implemented.", (haveDeterminants ? "true" : "false"), (haveJacobians ? "true" : "false"), (havePoints ? "true" : "false"));
+      throw 2;
+    }
     // Add other combinaisons if necessary
   }
 }
