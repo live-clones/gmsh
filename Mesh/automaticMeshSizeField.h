@@ -28,7 +28,7 @@ class automaticMeshSizeField : public Field {
  public:
   ~automaticMeshSizeField();
   automaticMeshSizeField() : forest(NULL), forestOptions(NULL){
-    _nPointsPerCircle = 55 ;
+    _nPointsPerCircle = 50 ;
     _nPointsPerGap = 5;
     _hmin = 1.e-8;// update needed
     _hmax = 1.e+8;// update needed    
@@ -46,11 +46,15 @@ class automaticMeshSizeField : public Field {
 					     "Size everywhere no size is prescribed", &update_needed);
     
     options["gradientMax"] = new FieldOptionDouble(_gradientMax,
-						   "Maximun gradient of the size field",&update_needed);
+						   "Maximum gradient of the size field",&update_needed);
     
     options["NRefine"] = new FieldOptionInt(_nRefine,
 					    "Initial refinement level for the octree",&update_needed);
+
+    update_needed = true;
+    update();
   }
+
   const char *getName() { return "AutomaticMeshSizeField"; }
   
   std::string getDescription(){

@@ -5,7 +5,7 @@
 
 #define MAX_DIFF 0.05 // La difference de taille max absolue sur un quadrant pour raffiner
 #define D2S_TOL 0.05
-#define ALPHA 1.40123
+#define ALPHA 1.4
 #define BULK_SIZE 7.77;
 
 #ifdef HAVE_P4EST
@@ -67,6 +67,7 @@ static HXTStatus hxtOctreeGetOctantSize(p4est_t *p4est, p4est_topidx_t which_tre
   #endif
                           max);
   
+  // Normalement les trois côtés ont la même taille
   *h = fmax(max[0] - min[0],fmax(max[1] - min[1],max[2] - min[2]));
 
   return HXT_STATUS_OK;
@@ -116,6 +117,7 @@ static void hxtOctreeSetInitialSize(p4est_t* p4est, p4est_topidx_t which_tree, p
 #endif
 
     data->refineFlag = 0;
+    data->coarsenFlag = 0;
 }
 
 HXTStatus hxtForestOptionsCreate(HXTForestOptions **forestOptions){
@@ -480,7 +482,6 @@ static void hxtOctreeComputeGradientCenter(p4est_iter_face_info_t * info, void *
 
     p4est_iter_face_side_t *side[2];
     sc_array_t             *sides = &(info->sides);
-    // size_data_t            *ghost_data = (size_data_t *) user_data;
     size_data_t            *size_data;
     size_data_t            *size_data_opp;
     double                  s_avg;
@@ -504,26 +505,25 @@ static void hxtOctreeComputeGradientCenter(p4est_iter_face_info_t * info, void *
 
             s_avg = 0;
             if (side[i]->is_hanging) {
-                /* there are 2^(d-1) (P4EST_HALF) subfaces */
+                /* there are 2^(dim-1) (P4EST_HALF) subfaces */
                 for(int j = 0; j < P4EST_HALF; j++) {
-
-                    size_data     = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
-                    size_data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-                
+                    size_data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
                     s_avg += size_data->size;
                 }
 
                 // Calcul de la valeur moyenne sur les P4EST_HALF quadrants courants
                 s_avg /= P4EST_HALF;
 
+                size_data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+
                 switch(which_face_opp){
-                    case 0 :    size_data_opp->ds[0] -= s_avg; break;
-                    case 1 :    size_data_opp->ds[0] += s_avg; break;
-                    case 2 :    size_data_opp->ds[1] -= s_avg; break;
-                    case 3 :    size_data_opp->ds[1] += s_avg; break;
+                    case 0 :    size_data_opp->ds[0] -= 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_xL + size_data->h_xR); break;
+                    case 1 :    size_data_opp->ds[0] += 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_xR + size_data->h_xL); break;
+                    case 2 :    size_data_opp->ds[1] -= 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_yD + size_data->h_yU); break;
+                    case 3 :    size_data_opp->ds[1] += 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_yU + size_data->h_yD); break;
                 #ifdef P4_TO_P8
-                    case 4 :    size_data_opp->ds[2] -= s_avg; break;
-                    case 5 :    size_data_opp->ds[2] += s_avg; break;
+                    case 4 :    size_data_opp->ds[2] -= 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_zB + size_data->h_zT); break;
+                    case 5 :    size_data_opp->ds[2] += 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_zT + size_data->h_zB); break;
                 #endif
                     default :
                         std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
@@ -540,13 +540,13 @@ static void hxtOctreeComputeGradientCenter(p4est_iter_face_info_t * info, void *
                         size_data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
 
                         switch(which_face_opp){
-                            case 0 :    size_data_opp->ds[0] -= s_avg; break;
-                            case 1 :    size_data_opp->ds[0] += s_avg; break;
-                            case 2 :    size_data_opp->ds[1] -= s_avg; break;
-                            case 3 :    size_data_opp->ds[1] += s_avg; break;
+                            case 0 :    size_data_opp->ds[0] -= 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_xL + size_data->h_xR); break;
+                            case 1 :    size_data_opp->ds[0] += 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_xR + size_data->h_xL); break;
+                            case 2 :    size_data_opp->ds[1] -= 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_yD + size_data->h_yU); break;
+                            case 3 :    size_data_opp->ds[1] += 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_yU + size_data->h_yD); break;
                         #ifdef P4_TO_P8
-                            case 4 :    size_data_opp->ds[2] -= s_avg; break;
-                            case 5 :    size_data_opp->ds[2] += s_avg; break;
+                            case 4 :    size_data_opp->ds[2] -= 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_zB + size_data->h_zT); break;
+                            case 5 :    size_data_opp->ds[2] += 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_zT + size_data->h_zB); break;
                         #endif
                             default :
                                 std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
@@ -559,13 +559,13 @@ static void hxtOctreeComputeGradientCenter(p4est_iter_face_info_t * info, void *
                     size_data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
 
                     switch(which_face_opp){
-                        case 0 :    size_data_opp->ds[0] -= s_avg;  break;
-                        case 1 :    size_data_opp->ds[0] += s_avg;  break;
-                        case 2 :    size_data_opp->ds[1] -= s_avg;  break;
-                        case 3 :    size_data_opp->ds[1] += s_avg;  break;
+                        case 0 :    size_data_opp->ds[0] -= 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_xL + size_data->h_xR); break;
+                        case 1 :    size_data_opp->ds[0] += 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_xR + size_data->h_xL); break;
+                        case 2 :    size_data_opp->ds[1] -= 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_yD + size_data->h_yU); break;
+                        case 3 :    size_data_opp->ds[1] += 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_yU + size_data->h_yD); break;
                     #ifdef P4_TO_P8
-                        case 4 :    size_data_opp->ds[2] -= s_avg; break;
-                        case 5 :    size_data_opp->ds[2] += s_avg; break;
+                        case 4 :    size_data_opp->ds[2] -= 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_zB + size_data->h_zT); break;
+                        case 5 :    size_data_opp->ds[2] += 0.5 * (s_avg - size_data_opp->size)/(size_data_opp->h_zT + size_data->h_zB); break;
                     #endif
                         default :
                             std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
@@ -611,21 +611,20 @@ static void hxtOctreeComputeGradientCenter(p4est_iter_face_info_t * info, void *
         // }
 
         // Differences finies aux faces (decentrees) si le quadrant est a la frontiere
-        switch(which_face){
-            case 0 :    size_data->ds[0] -= size_data->size; break;
-            case 1 :    size_data->ds[0] += size_data->size; break;
-            case 2 :    size_data->ds[1] -= size_data->size; break;
-            case 3 :    size_data->ds[1] += size_data->size; break;
-        #ifdef P4_TO_P8
-            case 4 :    size_data->ds[2] -= size_data->size; break;
-            case 5 :    size_data->ds[2] += size_data->size; break;
-        #endif
-            default :
-                std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
-        }
+        // switch(which_face){
+        //     case 0 :    size_data->ds[0] -= size_data->size; break;
+        //     case 1 :    size_data->ds[0] += size_data->size; break;
+        //     case 2 :    size_data->ds[1] -= size_data->size; break;
+        //     case 3 :    size_data->ds[1] += size_data->size; break;
+        // #ifdef P4_TO_P8
+        //     case 4 :    size_data->ds[2] -= size_data->size; break;
+        //     case 5 :    size_data->ds[2] += size_data->size; break;
+        // #endif
+        //     default :
+        //         std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+        // }
     }
 }
-
 
 static void hxtOctreeComputeGradientCenterBoundary(p4est_iter_face_info_t * info, void *user_data){
 
@@ -988,10 +987,14 @@ static void hxtOctreeComputeLaplacianQuadrant(p4est_iter_volume_info_t * info, v
     // data->ds[0] /= 2.0 * fmin(data->h_xL,data->h_xR);
     // data->ds[1] /= 2.0 * fmin(data->h_yU,data->h_yD);
 
-    for(int i = 0; i < P4EST_DIM; ++i){
-        data->ds[i] /= 2.0 * data->hMin;
-    }
+    // for(int i = 0; i < P4EST_DIM; ++i){
+    //     data->ds[i] /= 2.0 * data->hMin;
+    // }
     
+    // data->ds[0] /= (data->h_xL + data->h_xL);
+    // data->ds[1] /= (data->h_yU + data->h_yD);
+    // data->ds[2] /= (data->h_zT + data->h_zB);
+
     // data->d2s -= 2.0 * data->size / data->h_xavg;
     // data->d2s -= 2.0 * data->size / data->h_yavg;
 #ifdef P4_TO_P8
@@ -1030,6 +1033,38 @@ static void hxtOctreeResetLaplacian(p4est_iter_volume_info_t * info, void *user_
 
     size_data->hMin = 0.0;
 }
+
+HXTStatus hxtOctreeComputeGradient(HXTForest *forest){
+
+  // Remet à 0 les derivees, h et laplacien sur chaque quadrant
+    p4est_iterate(forest->p4est, NULL, NULL, hxtOctreeResetLaplacian, NULL,
+            #ifdef P4_TO_P8
+                        NULL,
+            #endif
+                        NULL);
+
+    // Calcule les tailles
+    p4est_iterate(forest->p4est, NULL, NULL, NULL, hxtOctreeComputeSizeMin,
+        #ifdef P4_TO_P8
+                    NULL,
+        #endif
+                    NULL);
+
+    // Calcule le gradient au centre de chaque quadrant
+    p4est_iterate(forest->p4est, NULL, NULL, NULL, hxtOctreeComputeGradientCenter,
+        #ifdef P4_TO_P8
+                    NULL,
+        #endif
+                    NULL);
+
+    // // Finalise le calcul gradient sur les quadrants aux bords
+    // p4est_iterate(forest->p4est, NULL, NULL, NULL, hxtOctreeComputeGradientCenterBoundary,
+    //     #ifdef P4_TO_P8
+    //                 NULL,
+    //     #endif
+    //                 NULL);
+}
+
 
 HXTStatus hxtOctreeComputeLaplacian(HXTForest *forest){
 
@@ -1101,7 +1136,7 @@ void max_dsdx (p4est_iter_volume_info_t * info, void *user_data)
   size_data_t        *data = (size_data_t *) q->p.user_data;
   double              umax = *((double *) user_data);
 
-  umax = SC_MAX (data->ds[0], umax);
+  umax = SC_MAX (fabs(data->ds[0]), umax);
 
   *((double *) user_data) = umax;
 }
@@ -1112,7 +1147,7 @@ void max_dsdy (p4est_iter_volume_info_t * info, void *user_data)
   size_data_t        *data = (size_data_t *) q->p.user_data;
   double              umax = *((double *) user_data);
 
-  umax = SC_MAX (data->ds[1], umax);
+  umax = SC_MAX (fabs(data->ds[1]), umax);
 
   *((double *) user_data) = umax;
 }
@@ -1124,7 +1159,7 @@ void max_dsdz (p4est_iter_volume_info_t * info, void *user_data)
   size_data_t        *data = (size_data_t *) q->p.user_data;
   double              umax = *((double *) user_data);
 
-  umax = SC_MAX (data->ds[2], umax);
+  umax = SC_MAX (fabs(data->ds[2]), umax);
 
   *((double *) user_data) = umax;
 }
@@ -1185,124 +1220,114 @@ void set_max_gradient_faces(p4est_iter_face_info_t * info, void *user_data){
 
     if(sides->elem_count==2){
 
-        for(int i = 0; i < 2; ++i){
+      for(int i = 0; i < 2; ++i){
 
-            iOpp = 1 - i;
-            which_dir = side[i]->face / 2; // Direction x (0), y (1) ou z(2)
-            which_face_opp = side[iOpp]->face;
+        iOpp = 1 - i;
+        which_dir = side[i]->face / 2; // Direction x (0), y (1) ou z(2)
+        which_face_opp = side[iOpp]->face;
 
-            if(side[i]->is_hanging){
+        if(side[i]->is_hanging){
 
-                size_data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+          size_data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
 
-                for(int j = 0; j < P4EST_HALF; ++j){
+          for(int j = 0; j < P4EST_HALF; ++j){
 
-                    size_data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+            size_data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
 
-                    if(fabs(size_data->ds[which_dir]) > ALPHA-1){
-                        // std::cout<<"Coucou  "<<size_data->ds[which_dir]<<std::endl;
-                        // if(size_data->ds[which_dir] > 0){
+            if(fabs(size_data->ds[which_dir]) > ALPHA-1){
 
-                            if(size_data->size > size_data_opp1->size){
-                                size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
-                            }else{
-                                size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
-                            }
+              if(size_data->size > size_data_opp1->size){
+                  // size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                switch(which_face_opp){
+                  case 0 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_xL + size_data->h_xR)); break;
+                  case 1 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_xR + size_data->h_xL)); break;
+                  case 2 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_yD + size_data->h_yU)); break;
+                  case 3 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_yU + size_data->h_yD)); break;
+                  case 4 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_zB + size_data->h_zT)); break;
+                  case 5 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_zT + size_data->h_zB)); break;
+                }
+              }else{
+                  // size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                switch(which_face_opp){
+                  case 0 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_xL + size_data->h_xR)); break;
+                  case 1 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_xR + size_data->h_xL)); break;
+                  case 2 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_yD + size_data->h_yU)); break;
+                  case 3 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_yU + size_data->h_yD)); break;
+                  case 4 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_zB + size_data->h_zT)); break;
+                  case 5 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_zT + size_data->h_zB)); break;
+                }
+              }
+            } // if ds > alpha-1
+          } // for j hanging
+        } // if hanging
+        else{
 
-                            // switch(which_face_opp){
-                            //     case 0 : 
-                            //         if(size_data->size > size_data_opp1->size){
-                            //             size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
-                            //         }else{
-                            //             size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
-                            //         } break;
+          size_data = (size_data_t *) side[i]->is.full.quad->p.user_data;
 
-                            //     case 1 :
-                            //         if(size_data->size > size_data_opp1->size){
-                            //             size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
-                            //         }else{
-                            //             size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
-                            //         } break;
+          if(fabs(size_data->ds[which_dir]) > ALPHA-1){
+            if(side[iOpp]->is_hanging){
+                // Full - Oppose hanging
+              for(int j = 0; j < P4EST_HALF; ++j){
+                size_data_opp1 = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
+                // size_data_opp2 = (size_data_t *) side[iOpp]->is.hanging.quad[1]->p.user_data;
 
-                            //     case 2 : 
-                            //         if(size_data->size > size_data_opp1->size){
-                            //             size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
-                            //         }else{
-                            //             size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
-                            //         } break;
-
-                            //     case 3 : 
-                            //         if(size_data->size > size_data_opp1->size){
-                            //             size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
-                            //         }else{
-                            //             size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
-                            //         } break;
-
-                            //     default : 
-                            //         std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
-                            //         exit(-1);
-                            // }
-                        // }
-                        // else{
-                        //     switch(which_face_opp){
-                        //         case 0 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
-                        //             if(size_data->size > size_data_opp1->size){
-                        //                 size_data->size = fmin(size_data->size, size_data_opp1->size - (ALPHA-1) * size_data_opp1->hMin);
-                        //             }else{
-                        //                 size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
-                        //             } break;
-                        //         case 1 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin); break;
-                        //         case 2 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin); break;
-                        //         case 3 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin); break;
-                        //         default : 
-                        //             std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
-                        //             exit(-1);
-                        //     }
-                        // }
-                    } // if
-
-                } // for j
+                // if(size_data->size > fmin(size_data_opp1->size, size_data_opp2->size) ){
+                if(size_data->size > size_data_opp1->size){
+                    // size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                    // size_data->size = fmin(size_data->size, size_data_opp2->size + (ALPHA-1) * size_data_opp2->hMin);
+                  switch(which_face_opp){
+                    case 0 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_xL + size_data->h_xR)); break;
+                    case 1 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_xR + size_data->h_xL)); break;
+                    case 2 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_yD + size_data->h_yU)); break;
+                    case 3 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_yU + size_data->h_yD)); break;
+                    case 4 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_zB + size_data->h_zT)); break;
+                    case 5 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_zT + size_data->h_zB)); break;
+                  }
+                }
+                else{
+                    // size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                    // size_data_opp2->size = fmin(size_data_opp2->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                  switch(which_face_opp){
+                    case 0 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_xL + size_data->h_xR)); break;
+                    case 1 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_xR + size_data->h_xL)); break;
+                    case 2 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_yD + size_data->h_yU)); break;
+                    case 3 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_yU + size_data->h_yD)); break;
+                    case 4 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_zB + size_data->h_zT)); break;
+                    case 5 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_zT + size_data->h_zB)); break;
+                  }
+                }
+              }
             }
             else{
+                // Full - Oppose full
+                size_data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
 
-                size_data = (size_data_t *) side[i]->is.full.quad->p.user_data;
-
-                if(fabs(size_data->ds[which_dir]) > ALPHA-1){
-                    if(side[iOpp]->is_hanging){
-                        // Full - Oppose hanging
-                        for(int j = 0; j < P4EST_HALF; ++j){
-                            size_data_opp1 = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
-                            // size_data_opp2 = (size_data_t *) side[iOpp]->is.hanging.quad[1]->p.user_data;
-
-                            // if(size_data->size > fmin(size_data_opp1->size, size_data_opp2->size) ){
-                            if(size_data->size > size_data_opp1->size){
-                                size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
-                                // size_data->size = fmin(size_data->size, size_data_opp2->size + (ALPHA-1) * size_data_opp2->hMin);
-                            }
-                            else{
-                                size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
-                                // size_data_opp2->size = fmin(size_data_opp2->size, size_data->size + (ALPHA-1) * size_data->hMin);
-                            }
-                        }
-                    }
-                    else{
-                        // Full - Oppose full
-                        size_data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-
-                        if(size_data->size > size_data_opp1->size){
-                            size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
-                        }
-                        else{
-                            size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
-                        }
-
-                    }
-                    
-                } // if gradient trop grand
-
-            } // else
-
-        }
+                if(size_data->size > size_data_opp1->size){
+                    // size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                  switch(which_face_opp){
+                    case 0 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_xL + size_data->h_xR)); break;
+                    case 1 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_xR + size_data->h_xL)); break;
+                    case 2 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_yD + size_data->h_yU)); break;
+                    case 3 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_yU + size_data->h_yD)); break;
+                    case 4 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_zB + size_data->h_zT)); break;
+                    case 5 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * (size_data_opp1->h_zT + size_data->h_zB)); break;
+                  }
+                }
+                else{
+                    // size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                  switch(which_face_opp){
+                    case 0 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_xL + size_data->h_xR)); break;
+                    case 1 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_xR + size_data->h_xL)); break;
+                    case 2 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_yD + size_data->h_yU)); break;
+                    case 3 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_yU + size_data->h_yD)); break;
+                    case 4 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_zB + size_data->h_zT)); break;
+                    case 5 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * (size_data_opp1->h_zT + size_data->h_zB)); break;
+                  }
+                }
+            }  
+          } // if gradient trop grand
+        } // else
+      }
     }
     else{
         // size_data = (size_data_t *) side[0]->is.full.quad->p.user_data;
@@ -1428,8 +1453,8 @@ static void fill_d2s_vec(p4est_iter_volume_info_t * info, void *user_data){
     // std::cout<<data->d2s<<std::endl;
 }
 
-static void fill_h_vec(p4est_iter_volume_info_t * info, void *user_data){
-    sc_array_t         *h_vec = (sc_array_t *) user_data;      /* we passed the array of values to fill as the user_data in the call to p4est_iterate */
+static void fill_refineFlag(p4est_iter_volume_info_t * info, void *user_data){
+    sc_array_t         *refineFlag = (sc_array_t *) user_data;      /* we passed the array of values to fill as the user_data in the call to p4est_iterate */
     p4est_t            *p4est = info->p4est;
     p4est_quadrant_t   *q = info->quad;
     p4est_topidx_t      which_tree = info->treeid;
@@ -1443,8 +1468,8 @@ static void fill_h_vec(p4est_iter_volume_info_t * info, void *user_data){
     local_id += tree->quadrants_offset;   /* now the id is relative to the MPI process */
     arrayoffset = local_id;      /* Chaque quadrant deux valeurs pour la derivee (offset dans le vecteur)*/
 
-    this_h_ptr = (double *) sc_array_index(h_vec, arrayoffset);
-    this_h_ptr[0] = data->hMin;
+    this_h_ptr = (double *) sc_array_index(refineFlag, arrayoffset);
+    this_h_ptr[0] = data->refineFlag;
     // std::cout<<data->d2s<<std::endl;
 }
 
@@ -1506,7 +1531,7 @@ void write_ds_to_vtk(p4est_t *p4est, const char *filename){
     sc_array_t *dsdz_vec = sc_array_new_size (sizeof (double), numquads);
 #endif
     sc_array_t *d2s_vec = sc_array_new_size (sizeof (double), numquads);
-    sc_array_t *h_vec = sc_array_new_size (sizeof (double), numquads);
+    sc_array_t *refineFlag = sc_array_new_size (sizeof (double), numquads);
 
     p4est_iterate (p4est, NULL,   /* we don't need any ghost quadrants for this loop */
                  (void *) s_vec,     /* user_data : pass in size_vec so that we can fill it */
@@ -1554,8 +1579,8 @@ void write_ds_to_vtk(p4est_t *p4est, const char *filename){
                  NULL);         /* there is no callback for the corners between quadrants */
 
     p4est_iterate (p4est, NULL,   /* we don't need any ghost quadrants for this loop */
-                 (void *) h_vec,     /* user_data : pass in size_vec so that we can fill it */
-                 fill_h_vec,    /* callback function that interpolates from the cell center to the cell corners, defined above */
+                 (void *) refineFlag,     /* user_data : pass in size_vec so that we can fill it */
+                 fill_refineFlag,    /* callback function that interpolates from the cell center to the cell corners, defined above */
                  NULL,          /* there is no callback for the faces between quadrants */
         #ifdef P4_TO_P8
                  NULL,          /* there is no callback for the edges between quadrants */
@@ -1595,8 +1620,8 @@ void write_ds_to_vtk(p4est_t *p4est, const char *filename){
                                     #endif
                                         "d2s",
                                         d2s_vec,
-                                        "hMin",
-                                        h_vec,
+                                        "refineFlag",
+                                        refineFlag,
                                         context);       /* mark the end of the variable cell data. */
     SC_CHECK_ABORT (context != NULL, P4EST_STRING "_vtk: Error writing cell data");
 
@@ -1610,7 +1635,7 @@ void write_ds_to_vtk(p4est_t *p4est, const char *filename){
     sc_array_destroy(dsdz_vec);
 #endif
     sc_array_destroy(d2s_vec);
-    sc_array_destroy(h_vec);
+    sc_array_destroy(refineFlag);
 }
 
 int finalizeP4est(p4est_t *p4est, p4est_connectivity_t *connect)
@@ -1726,6 +1751,8 @@ static int hxtOctreeReplaceCallback(p4est_t * p4est, p4est_topidx_t which_tree, 
 
     if(in_box && is_leaf){
         data->size = p->size;
+        // printf("Taille remplacée dans l'octree à la position %f - %f - %f \n",p->x,p->y,p->z);
+        // printf("dans le quadrant centré en %f - %f - %f de côté %f \n", center[0], center[1], center[2], h);
     }
 
     return in_box;
@@ -1785,10 +1812,9 @@ static void hxtOctreeRTreeCallback(p4est_iter_volume_info_t * info, void *user_d
 
   if(!candidates.empty()){
     double kappa = 0.0;
-    for(auto &val : candidates){
-      // std::cout<<val<<std::endl;
+    for(std::vector<int>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
       for(int i = 0; i < 3; ++i){
-          int node = forestOptions->mesh->triangles.node[(size_t) 3*val+i];
+          int node = forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
 
           double *v1 = forestOptions->nodalCurvature + 6*node;
           double *v2 = forestOptions->nodalCurvature + 6*node + 3;
@@ -1801,17 +1827,97 @@ static void hxtOctreeRTreeCallback(p4est_iter_volume_info_t * info, void *user_d
         }
     }
 
-    // std::cout<<kappa<<std::endl;
     double size = 2*M_PI/(forestOptions->nodePerTwoPi * kappa);
-    // std::cout<<size<<std::endl;
-    // std::cout<<data->size<<std::endl;
-    // std::cout<<size<<std::endl;
-    if(data->size > size){
+
+    if(data->size > size || candidates.size() > 8){
       data->size = size;
       data->refineFlag = 1;
     }
   }
+  else{
+    data->coarsenFlag = 1;
+  }
 }
+
+/** Initialize the state variables of incoming quadrants from outgoing
+ * quadrants.
+ *
+ * The functions p4est_refine_ext(), p4est_coarsen_ext(), and
+ * p4est_balance_ext() take as an argument a p4est_replace_t callback function,
+ * which allows one to setup the quadrant data of incoming quadrants from the
+ * data of outgoing quadrants, before the outgoing data is destroyed.  This
+ * function matches the p4est_replace_t prototype.
+ *
+ * In this example, we linearly interpolate the state variable of a quadrant
+ * that is refined to its children, and we average the midpoints of children
+ * that are being coarsened to the parent.
+ *
+ * \param [in] p4est          the forest
+ * \param [in] which_tree     the tree in the forest containing \a children
+ * \param [in] num_outgoing   the number of quadrants that are being replaced:
+ *                            either 1 if a quadrant is being refined, or
+ *                            P4EST_CHILDREN if a family of children are being
+ *                            coarsened.
+ * \param [in] outgoing       the outgoing quadrants
+ * \param [in] num_incoming   the number of quadrants that are being added:
+ *                            either P4EST_CHILDREN if a quadrant is being refined, or
+ *                            1 if a family of children are being
+ *                            coarsened.
+ * \param [in,out] incoming   quadrants whose data are initialized.
+ */
+static void hxtOctreeCurvatureReplaceOctants(p4est_t * p4est, p4est_topidx_t which_tree,
+                     int num_outgoing,
+                     p4est_quadrant_t * outgoing[],
+                     int num_incoming, p4est_quadrant_t * incoming[])
+{
+  size_data_t       *parent_data, *child_data;
+  int                 i, j;
+  double              h;
+  double              du_old, du_est;
+
+  if (num_outgoing > 1) {
+    /* this is coarsening */
+    parent_data = (size_data_t*) incoming[0]->p.user_data;
+
+    for (i = 0; i < P4EST_CHILDREN; i++) {
+      child_data = (size_data_t*) outgoing[i]->p.user_data;
+      parent_data->size += child_data->size / P4EST_CHILDREN;
+      // for (j = 0; j < P4EST_DIM; j++) {
+      //   du_old = parent_data->du[j];
+      //   du_est = child_data->du[j];
+
+      //   if (du_old == du_old) {
+      //     if (du_est * du_old >= 0.) {
+      //       if (fabs (du_est) < fabs (du_old)) {
+      //         parent_data->du[j] = du_est;
+      //       }
+      //     }
+      //     else {
+      //       parent_data->du[j] = 0.;
+      //     }
+      //   }
+      //   else {
+      //     parent_data->du[j] = du_est;
+      //   }
+      // }
+    }
+  }
+  else {
+    parent_data = (size_data_t *) outgoing[0]->p.user_data;
+    // h = (double) P4EST_QUADRANT_LEN (outgoing[0]->level) / (double) P4EST_ROOT_LEN;
+
+    for (i = 0; i < P4EST_CHILDREN; i++) {
+      child_data = (size_data_t *) incoming[i]->p.user_data;
+      child_data->size = parent_data->size;
+      // for (j = 0; j < P4EST_DIM; j++) {
+      //   child_data->du[j] = parent_data->du[j];
+      //   child_data->u +=
+      //     (h / 4.) * parent_data->du[j] * ((i & (1 << j)) ? 1. : -1);
+      // }
+    }
+  }
+}
+
 
 HXTStatus hxtOctreeLaplacianRefine(HXTForest *forest, int nRefine){
 
@@ -1857,11 +1963,16 @@ static int hxtCurvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree,
   return ((size_data_t *) q->p.user_data)->refineFlag;
 }
 
+static int hxtCurvatureCoarsenCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *children[]){
+  // std::cout<<((size_data_t *) q->p.user_data)->refineFlag<<std::endl;
+  int flag = 1;
 
-// static void hxtOctreeResetRefineFlag(p4est_iter_volume_info_t * info, void *user_data){
-//   size_data_t *data = (size_data_t *) info->quad->p.user_data;
-//   data->refineFlag = 0;
-// }
+  for(int n = 0; n < P4EST_CHILDREN; ++n){
+        flag &= ((size_data_t *) children[n]->p.user_data)->coarsenFlag;
+    }
+  
+  return flag;
+}
 
 HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax){
 
@@ -1879,12 +1990,22 @@ HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax){
                   NULL);
 
     // Refine with respect to the curvature
-    p4est_refine(forest->p4est, 0, hxtCurvatureRefineCallback, hxtOctreeSetInitialSize);
+    // p4est_refine(forest->p4est, 0, hxtCurvatureRefineCallback, hxtOctreeSetInitialSize);
+    p4est_refine_ext(forest->p4est, 0, P4EST_QMAXLEVEL, hxtCurvatureRefineCallback, hxtOctreeSetInitialSize, hxtOctreeCurvatureReplaceOctants);
+
+    // Coarsen
+    p4est_coarsen_ext(forest->p4est, 0, 0, hxtCurvatureCoarsenCallback, hxtOctreeSetInitialSize, hxtOctreeCurvatureReplaceOctants);
 
     // Balance the octree to get 2:1 ratio between adjacent cells
-    p4est_balance(forest->p4est, P4EST_CONNECT_FACE, hxtOctreeSetInitialSize);
+    p4est_balance_ext(forest->p4est, P4EST_CONNECT_FACE, hxtOctreeSetInitialSize, hxtOctreeCurvatureReplaceOctants);
 
-    // Recompute size on newly created cells ?
+    // Recompute size on newly created cells ? => PAS BESOIN SI REPLACE_QUADS
+    // p4est_iterate(forest->p4est, NULL, forest->forestOptions, hxtOctreeRTreeCallback, NULL,
+    //   #ifdef P4_TO_P8
+    //               NULL,
+    //   #endif
+    //               NULL);
+
     p4est_iterate(forest->p4est, NULL, forest->forestOptions, hxtOctreeRTreeCallback, NULL,
       #ifdef P4_TO_P8
                   NULL,
@@ -1892,16 +2013,17 @@ HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax){
                   NULL);
 
     // Print octree in VTK
-    //    std::string fileVTK = "/Users/arthur/Documents/Code/Mesh_octree/results_octree/dummy_3D_rtree_curvature_refine" + std::to_string(i);
-    //    write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
+       // std::string fileVTK = "/Users/arthur/Documents/Code/Mesh_octree/results_octree/dummy_3D_rtree_curvature_refine" + std::to_string(i);
+       std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/curvature_refine_tore" + std::to_string(i);
+       write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
 
     ++i;
 
     std::cout<<"Number of quadrants : "<<forest->p4est->global_num_quadrants<<std::endl;
     
-  }while(i < nMax && numQuadrants < forest->p4est->global_num_quadrants);
+  // }while(i < nMax && numQuadrants < forest->p4est->global_num_quadrants);
+  }while(i < nMax);
 
-  std::cout<<"Number of quadrants : "<<forest->p4est->global_num_quadrants<<std::endl;
   if(i == nMax){ std::cout<<"Curvature refinement stopped after "<<i<<" iterations"<<std::endl; }
 
   return HXT_STATUS_OK;
@@ -2068,7 +2190,7 @@ HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<int> *candidates
     double d_tmp;
     signedDistancePointTriangle2(p1, p2, p3, p, d_tmp, closePt);
     d = fmin(d, fabs(d_tmp));
-    printf("d = %f \n", d);
+    // printf("d = %f \n", d);
 
   }
 
@@ -2102,7 +2224,11 @@ void hxtBFSTriangles(HXTForest *forest, std::vector<int> *candidates, int node){
           int local_node = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
           if(local_node != q.front()) q.push(local_node);
         }
-        tri = candidates->erase(tri);
+
+
+        // if(!containsNode && distanceToTriangle > size){
+	        tri = candidates->erase(tri);
+    	// }
       }
       else{
         ++tri;
@@ -2111,9 +2237,16 @@ void hxtBFSTriangles(HXTForest *forest, std::vector<int> *candidates, int node){
     q.pop();
   }
 
-  //  std::cout<<"Elements restants"<<std::endl;
-  //  for(auto &val : *candidates)
-  //    std::cout<<val<<std::endl;
+  // if(candidates.size()){
+  //     p.setPosition(x,y,z);
+  //     hxtDistanceToTriangles(forest, &candidates, p, size);
+  //     size /= forest->forestOptions->nodePerGap;
+  //     printf("Taille corrigée au noeud %d = %f \n", i+1, size);
+  //   }
+
+   // std::cout<<"Elements restants"<<std::endl;
+   // for(auto &val : *candidates)
+     // std::cout<<val<<std::endl;
 }
 
 HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
@@ -2121,11 +2254,12 @@ HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
   // Pour chaque noeud : recuperer sa taille dans l'octree et prendre les triangles dans la boule de rayon h
   // for(int i = 0; i < forest->forestOptions->mesh->vertices.num; ++i){
   SPoint3 p = SPoint3();
-  sc_array_t *points = sc_array_new_size(sizeof(size_point_t), forest->forestOptions->mesh->vertices.num);
+  // sc_array_t *points = sc_array_new_size(sizeof(size_point_t), forest->forestOptions->mesh->vertices.num);
+  sc_array_t *points = sc_array_new_size(sizeof(size_point_t), 1);
   size_point_t *p_tmp;
 
-  for(int i = 0; i < forest->forestOptions->mesh->vertices.num; ++i){
-    p_tmp = (size_point_t *) sc_array_index(points, i);
+  for(uint64_t i = 0; i < forest->forestOptions->mesh->vertices.num; ++i){
+    p_tmp = (size_point_t *) sc_array_index(points, 0);
 
     // La taille du noeud courant
     double size; 
@@ -2160,21 +2294,23 @@ HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
     // for(std::vector<int>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri)
     //   std::cout<<(*tri)+1<<std::endl;
     // printf("=========  BFS\n");
-
+    // printf("Candidates.size = %d \n", candidates.size());
     hxtBFSTriangles(forest, &candidates, i);
 
     if(candidates.size()){
       p.setPosition(x,y,z);
       hxtDistanceToTriangles(forest, &candidates, p, size);
       size /= forest->forestOptions->nodePerGap;
-      printf("Taille corrigée au noeud %d = %f \n", i+1, size);
+      // printf("Taille corrigée au noeud %d = %f \n", i+1, size);
+      p_tmp->size = size;
+      p4est_search(forest->p4est, NULL, hxtOctreeReplaceCallback, points);
     }
 
-    p_tmp->size = size;
+    
   }
 
   // On cherche dans l'octree et on remplace dans les quadrants associes aux noeuds
-  p4est_search(forest->p4est, NULL, hxtOctreeReplaceCallback, points);
+  // p4est_search(forest->p4est, NULL, hxtOctreeReplaceCallback, points);
 
   // Clean up
   sc_array_destroy(points);
@@ -2191,7 +2327,17 @@ void elementEstimateCallback(p4est_iter_volume_info_t * info, void *user_data)
 // #ifndef P4_TO_P8
   // *((double *) user_data) += (data->h * data->h)           / pow(data->size, 2);
 // #else
-  *((double *) user_data) += (data->h * data->h * data->h) / pow(data->size, 3);
+  p4est_t            *p4est = info->p4est;
+  p4est_topidx_t      which_tree = info->treeid;
+
+  double center[3];
+  hxtOctreeGetCenter(p4est, which_tree, q, center);
+
+  // Si le quadrant est dans la géométrie à mailler : à corriger
+  if(sqrt(center[0]*center[0] + center[1]*center[1] + center[2]*center[2]) <= 1){
+    *((double *) user_data) += (data->h * data->h * data->h) / pow(data->size, 3);
+    // printf("Int = %f \n", *((double *) user_data));
+  }
   // printf("size = %f et total = %f\n",data->size, *((double *) user_data));
 // #endif
 

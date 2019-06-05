@@ -74,6 +74,7 @@ typedef struct size_data{
   // Pour raffiner sur la courbure : pas possible de donner un user_pointer
   //  à p4est_refine ?
   int refineFlag; 
+  int coarsenFlag; 
   
 } size_data_t;
 
@@ -105,5 +106,14 @@ HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax);
 HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, double *size);
 HXTStatus hxtOctreeSurfacesProches(HXTForest *forest);
 HXTStatus hxtOctreeElementEstimation(HXTForest *forest, double *elemEstimate);
+
+HXTStatus hxtOctreeComputeGradient(HXTForest *forest);
+
+HXTStatus hxtOctreeComputeMaxGradientX(HXTForest *forest, double *dsdx_max);
+HXTStatus hxtOctreeComputeMaxGradientY(HXTForest *forest, double *dsdy_max);
+HXTStatus hxtOctreeComputeMaxGradientZ(HXTForest *forest, double *dsdz_max);
+HXTStatus hxtOctreeComputeMinimumSize(HXTForest *forest, double *size_min);
+
+void write_ds_to_vtk(p4est_t *p4est, const char *filename);
 
 #endif
