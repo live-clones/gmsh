@@ -16,6 +16,9 @@ normals and retrieving mass, center of mass and inertia from OpenCASCADE CAD
 entities; fixed regression introduced in 4.1.4 that could lead to
 non-deterministic 2D meshes; small bug fixes.
 
+* Incompatible API changes: added optional arguments to mesh/getNodes and
+  mesh/getElementByCoordinates
+
 4.2.3 (April 3, 2019): added STL export by physical surface; added ability to
 remove embedded entities; added handling of boundary entities in
 addDiscreteEntity; small bug fixes.
