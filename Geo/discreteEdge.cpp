@@ -418,7 +418,7 @@ void discreteEdge::writeParametrization(FILE *fp, bool binary)
 {
   fprintf(fp, "%lu\n", _discretization.size());
   for(size_t i = 0; i < _discretization.size(); i++) {
-    fprintf(fp, "%g %g %g %g\n", _discretization[i].x(), _discretization[i].y(),
+    fprintf(fp, "%22.15E %22.15E %22.15E %22.15E\n", _discretization[i].x(), _discretization[i].y(),
             _discretization[i].z(), _pars[i]);
   }
 }

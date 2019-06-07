@@ -34,10 +34,10 @@ HXTStatus hxtMeanValuesCreate(HXTEdges *edges, HXTMeanValues **meanValues)
 
   // be moved into parametrization?
   HXTBoundaries *boundaries;
-    printf("1 %d %d %d\n",mesh->triangles.node[0],mesh->triangles.node[1],mesh->triangles.node[2]);
-    printf("1 %d %d %d\n",mesh->triangles.node[3],mesh->triangles.node[4],mesh->triangles.node[5]);
+  //    printf("1 %d %d %d\n",mesh->triangles.node[0],mesh->triangles.node[1],mesh->triangles.node[2]);
+  //    printf("1 %d %d %d\n",mesh->triangles.node[3],mesh->triangles.node[4],mesh->triangles.node[5]);
   HXT_CHECK(hxtEdgesSetBoundaries(edges, &boundaries));
-    printf("2\n");
+  //    printf("2\n");
   map->boundaries = boundaries;
 
 
