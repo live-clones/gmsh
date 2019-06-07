@@ -7,6 +7,7 @@
 #include <set>
 #include <map>
 #include <stack>
+#include <string.h>
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "GFace.h"
