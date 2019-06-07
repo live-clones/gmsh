@@ -708,7 +708,7 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
   e->oppositeof(op);
   if(!op[0] || !op[1]) return false;
 
-  const int CHECK1 = -1, CHECK2 = 6280;
+  const int CHECK1 = -1, CHECK2 = -1;
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
     printf("splitting edge %d %d opp %d %d new %d\n", p1->iD, p2->iD, op[0]->iD,
@@ -1050,7 +1050,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
 
   if(e->g && e->g->classif_degree == 1) return false;
 
-  const int CHECK1 = -1, CHECK2 = 6280;
+  const int CHECK1 = -1, CHECK2 = -1;
 
   BDS_Point *op[2];
   BDS_Point *pts1[4];
@@ -1189,13 +1189,13 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
     if(e->g->classif_degree == 2 && p->g != e->g) return false;
   }
 
-  const int CHECK1 = -1, CHECK2 = 6280;
+  const int CHECK1 = -1, CHECK2 = -1;
 
   if(e->p1->iD == CHECK1 && e->p2->iD == CHECK2){
     printf("collapsing edge %p %p onto %p\n", e->p1, e->p2, p);
     printf("collapsing edge %d %d onto %d\n", e->p1->iD, e->p2->iD, p->iD);
   }
-  
+
   if(!force) {
     for(size_t i = 0; i < e->p1->edges.size(); i++) {
       for(size_t j = 0; j < e->p2->edges.size(); j++) {
@@ -1355,8 +1355,8 @@ static inline bool getOrderedNeighboringVertices(BDS_Point *p,
     for(size_t i = 0; i < ts.size(); i++) {
       BDS_Point *pts[4];
       ts[i]->getNodes(pts);
-      printf("TR %d : %p %p %p\n",i,pts[0],pts[1],pts[2]);
-      printf("TR %d : %d %d - %d %d - %d %d\n",i,
+      printf("TR %lu : %p %p %p\n",i,pts[0],pts[1],pts[2]);
+      printf("TR %lu : %d %d - %d %d - %d %d\n",i,
 	     ts[i]->e1->p1->iD,ts[i]->e1->p2->iD,
 	     ts[i]->e2->p1->iD,ts[i]->e2->p2->iD,
 	     ts[i]->e3->p1->iD,ts[i]->e3->p2->iD );

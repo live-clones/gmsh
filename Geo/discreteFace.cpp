@@ -253,7 +253,7 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
   SPoint3 pp3(U * v03->x() + V * v13->x() + W * v23->x(),
 	      U * v03->y() + V * v13->y() + W * v23->y(),
 	      U * v03->z() + V * v13->z() + W * v23->z());
-  
+
   //  printf("2 point found in %12.5E %12.5E -- %12.5E %12.5E -- %12.5E %12.5E UV %12.5E %12.5E %12.5E uv %12.5E %12.5E\n",
   //	 v0->x(),v0->y(),v1->x(),v1->y(),v2->x(),v2->y(),V,W,U,pp.x(),pp.y());
 
@@ -268,10 +268,10 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
 	  PP01.distance(SPoint3(v03->x(),v03->y(),v03->z())),
 	  PP02.distance(SPoint3(v13->x(),v13->y(),v13->z())),
 	  PP03.distance(SPoint3(v23->x(),v23->y(),v23->z())));
-  
+
   printf("DISTANCE = %12.5E\n",pp3.distance(queryPoint));
   */
-  
+
   //  if (queryPoint.distance(wrapper._closestPoint) > 1.e-8)
   //    printf("%12.5E %12.5E %12.5E -- %12.5E %12.5E %12.5E d %12.5E\n",
   //	 queryPoint.x(),queryPoint.y(),queryPoint.z(),
@@ -1390,7 +1390,7 @@ HXTStatus discreteFace::_reparametrizeThroughHxt()
   }
 
   // count how much triangles per partition
-#define debug
+  //#define debug
 #ifdef debug
   // save the atlas in pos files for checking - debugging
   char zz[256];

@@ -738,7 +738,7 @@ static int PartitionGraph(Graph &graph)
       break;
     }
 
-    Msg::Debug("Running METIS with %s", opt.str().c_str());
+    Msg::Info("Running METIS with %s", opt.str().c_str());
 
     // C numbering
     metisOptions[METIS_OPTION_NUMBERING] = 0;
@@ -794,7 +794,7 @@ static int PartitionGraph(Graph &graph)
     }
     graph.partition(epart);
 
-    Msg::Debug("%d partitions, %d total edge-cuts", numPart, objval);
+    Msg::Info("%d partitions, %d total edge-cuts", numPart, objval);
   } catch(...) {
     Msg::Error("METIS exception");
     return 2;

@@ -75,9 +75,9 @@ static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle*> &t,
     m->triangles.node[3 * i + 2] = v2c[t[i]->getVertex(2)];
     m->triangles.colors[i] = tag;
   }
-  
+
   m->lines.num = m->lines.size = 0;
-  
+
   *pm = m;
   return HXT_STATUS_OK;
 }
@@ -213,6 +213,7 @@ int parametrizeGFace(discreteFace *gf,
 int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
                                   double ar, char *why)
 {
+#if defined(HAVE_HXT)
   int XX = (int)t.size();
   if(XX > Nmax) {
     sprintf(why,"too much triangles (%d vs. %d)",XX,Nmax);
@@ -266,13 +267,13 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     }
 
   double poincare =
-    t.size() - (2 * (v.size() - 1) - _bnd.size() + 2 * (vs.size() - 1));  
-  
+    t.size() - (2 * (v.size() - 1) - _bnd.size() + 2 * (vs.size() - 1));
+
   //  if(ar * lmax * lmax < 2 * M_PI * surf) {
   //    sprintf(why,"aspect ratio %12.5E is too large", surf *2 * M_PI/(ar * lmax * lmax) );
   //    return 2;
   //  }
-  
+
   if (poincare != 0){
     sprintf(why,"poincare caracteristic %3g is not 0", poincare);
     return 2;
@@ -305,9 +306,9 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   double *uvc = NULL;
   int nv, ne;
   HXT_CHECK(hxtMeanValuesGetData(param, NULL, NULL, &uvc, &nv, &ne, 1));
-  
-  
-  for (int ie=0;ie<ne;ie++){    
+
+
+  for (int ie=0;ie<ne;ie++){
     double u0 = uvc[2 * m->triangles.node[3 * ie + 0]+0];
     double v0 = uvc[2 * m->triangles.node[3 * ie + 0]+1];
     double u1 = uvc[2 * m->triangles.node[3 * ie + 1]+0];
@@ -316,7 +317,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     double v2 = uvc[2 * m->triangles.node[3 * ie + 2]+1];
     double det = fabs ((u1-u0)*(v2-v0)-(v1-v0)*(u2-u0));
 
-    
+
     if (det < 1.e-12){
       HXT_CHECK(hxtMeshDelete(&m));
       HXT_CHECK(hxtEdgesDelete(&edges));
@@ -326,12 +327,12 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
       return 2;
     }
   }
-  
+
   HXT_CHECK(hxtMeshDelete(&m));
   HXT_CHECK(hxtEdgesDelete(&edges));
   HXT_CHECK(hxtFree(&uvc));
-  
-  return 1 ;  
+#endif
+  return 1 ;
 }
 
 void makeMLinesUnique(std::vector<MLine *> &v)
@@ -355,7 +356,7 @@ public :
 
 static void makePartitionSimplyConnected (std::vector<MTriangle*> &t ,
 					  std::vector<std::vector<MTriangle*> >&ts) {
-  std::map<MEdge,twoT,Less_Edge> conn;  
+  std::map<MEdge,twoT,Less_Edge> conn;
   for (size_t i=0; i<t.size(); i++){
     for (int j=0;j<3;j++){
       MEdge e = t[i]->getEdge(j);
@@ -389,7 +390,7 @@ static void makePartitionSimplyConnected (std::vector<MTriangle*> &t ,
     std::vector<MTriangle*> _update;
     for (size_t i=0;i<t.size();i++)if (_touch.find(t[i]) == _touch.end()) _update.push_back(t[i]);
     t = _update;
-  }  
+  }
 }
 
 static void WHITES (char* n, int nw){
@@ -401,8 +402,8 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
 {
   GModel m;
 
-  Msg::Info("Splitting the %d triangulations of the model",gm->getNumFaces()); 
-  
+  Msg::Info("Splitting the %d triangulations of the model",gm->getNumFaces());
+
   // ----------------------------------------------------------------------------------
   // STUPID FIX
   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
