@@ -105,10 +105,10 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
   double const det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 
   // TOLERANCE ! WARNING WARNING
-  if(norm == 0.0 || std::abs(det) / norm < 1.e-12) {
+  if(norm == 0.0 || std::abs(det) / norm < 1.e-16) {
     //    if(norm)
     //      Msg::Debug("Assuming 2x2 matrix is singular (det/norm == %.16g)",
-    //                 std::abs(det) / norm);
+    //		 std::abs(det) / norm);
     res[0] = res[1] = 0.0;
     return 0;
   }
