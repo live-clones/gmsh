@@ -19,6 +19,7 @@ public:
   virtual ~gmshEdge() {}
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const;
+  virtual bool haveParametrization();
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual SVector3 secondDer(double par) const;

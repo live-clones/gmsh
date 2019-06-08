@@ -406,11 +406,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
                             edgeContainer &edgeVertices, bool linear,
                             int nPts = 1)
 {
-  if(//ge->geomType() == GEntity::DiscreteCurve ||
-     ge->geomType() == GEntity::BoundaryLayerCurve ||
-     ge->geomType() == GEntity::CompoundCurve ||
-     ge->geomType() == GEntity::PartitionCurve)
-    linear = true;
+  if(!ge->haveParametrization()) linear = true;
 
   std::vector<MVertex *> veOld;
   ele->getVertices(veOld);
@@ -447,11 +443,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
                             edgeContainer &edgeVertices, bool linear,
                             int nPts = 1)
 {
-  if(//gf->geomType() == GEntity::DiscreteSurface ||
-     gf->geomType() == GEntity::BoundaryLayerSurface ||
-     gf->geomType() == GEntity::CompoundSurface ||
-     gf->geomType() == GEntity::PartitionSurface)
-    linear = true;
+  if(!gf->haveParametrization()) linear = true;
 
   for(int i = 0; i < ele->getNumEdges(); i++) {
     std::vector<MVertex *> veOld;
@@ -753,11 +745,7 @@ static void getFaceVertices(GFace *gf, MElement *ele,
                             faceContainer &faceVertices, bool linear,
                             int nPts = 1)
 {
-  if(//gf->geomType() == GEntity::DiscreteSurface ||
-     gf->geomType() == GEntity::BoundaryLayerSurface ||
-     gf->geomType() == GEntity::CompoundSurface ||
-     gf->geomType() == GEntity::PartitionSurface)
-    linear = true;
+  if(!gf->haveParametrization()) linear = true;
 
   std::vector<MVertex *> boundaryVertices;
   {
