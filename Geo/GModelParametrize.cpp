@@ -203,9 +203,13 @@ int parametrizeGFace(discreteFace *gf,
   }
   //  printf("A\n");
   gf->fillVertexArray(false);
+  gf->createGeometryFromSTL();
+
   HXT_CHECK(hxtMeshDelete(&m));
   HXT_CHECK(hxtEdgesDelete(&edges));
   HXT_CHECK(hxtFree(&uvc));
+
+
   //  printf("B\n");
 #endif
   return 0;
