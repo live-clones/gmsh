@@ -89,6 +89,9 @@ void discreteEdge::orderMLines()
   if(g1) setEndVertex(g1);
   if(!g0 || !g1)
     Msg::Error("Discrete curve %d has non consecutive line elements", tag());
+
+  deleteVertexArrays();
+  model()->destroyMeshCaches();
 }
 
 bool discreteEdge::getLocalParameter(const double &t, int &iLine,
