@@ -313,7 +313,7 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
     count++;
   }
 
-  /*if (debug)*/saveNodalField (mesh,*nodalCurvatures,  6, "curvaturesMax.pos");
+  if (debug)saveNodalField (mesh,*nodalCurvatures,  6, "curvaturesMax.pos");
   if (debug)saveNodalField (mesh,*nodalCurvatures, -6, "curvaturesMin.pos");
 
   //-----------------------------------------------------------------------------

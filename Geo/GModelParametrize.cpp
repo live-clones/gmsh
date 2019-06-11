@@ -108,6 +108,74 @@ int computeDiscreteCurvatures(
     HXT_CHECK(hxtEdgesCreate(m, &edges));
     HXT_CHECK(
       hxtCurvatureRusinkiewicz(m, &nodalCurvatures, &crossField, edges, false));
+    const double ratioMax = 1.3;
+    {
+      char name[256];
+      sprintf(name,"nodalCurvatures%d.pos",(*it)->tag());
+      saveNodalField (m,nodalCurvatures,  6, name);
+    }
+    while (0){
+      int touched = 0;
+      for(size_t i = 0; i < m->triangles.num; i++) {
+	for (int j=0;j<3;j++){
+	  uint32_t v0 = m->triangles.node[3*i+(j+0)%3];
+	  uint32_t v1 = m->triangles.node[3*i+(j+1)%3];
+	  double *c0 = &nodalCurvatures[6 * v0];
+	  double *c1 = &nodalCurvatures[6 * v1];
+	  SVector3 cMax0(c0[0], c0[1], c0[2]);
+	  SVector3 cMin0(c0[3], c0[4], c0[5]);
+	  SVector3 cMax1(c1[0], c1[1], c1[2]);
+	  SVector3 cMin1(c1[3], c1[4], c1[5]);
+	  SPoint3 p0 (m->vertices.coord[4*v0+0],m->vertices.coord[4*v0+1],m->vertices.coord[4*v0+2]);
+	  SPoint3 p1 (m->vertices.coord[4*v1+0],m->vertices.coord[4*v1+1],m->vertices.coord[4*v1+2]);
+	  double d01 = p0.distance(p1);
+	  double M0 = cMax0.norm();
+	  double M1 = cMax1.norm();
+	  // change M0
+	  if (d01 > 0 && M0 > 0 && M1 > 0 && M0 > M1){
+	    // the largest size is at node 0
+	    double size0 = 2*M_PI*M0/(15);
+	    double size1 = 2*M_PI*M1/(15);
+	    double gradSize = (size0 - size1)/d01;
+	    if (gradSize > ratioMax){
+	      touched++;
+	      size0 = size1 -  ratioMax * d01;
+	      M0 = size0 * 15 / (2*M_PI);
+	      cMax0.normalize();
+	      cMax0 *= M0;
+	      nodalCurvatures[6 * v0 + 0] = cMax0.x();
+	      nodalCurvatures[6 * v0 + 1] = cMax0.y();
+	      nodalCurvatures[6 * v0 + 2] = cMax0.z();
+	    }
+	  }
+	  else if (d01 > 0 &&  M0 > 0 && M1 > 0 && M1 > M0){
+	    // the largest size is at node 0
+	    double size0 = 2*M_PI*M0/(15);
+	    double size1 = 2*M_PI*M1/(15);
+	    double gradSize = (size1 - size0)/d01;
+	    if (gradSize > ratioMax) {
+	      touched++;
+	      size1 = size0 -  ratioMax * d01;
+	      M1 = size1 * 15 / (2*M_PI);
+	      cMax1.normalize();
+	      cMax1 *= M0;
+	      nodalCurvatures[6 * v1 + 0] = cMax0.x();
+	      nodalCurvatures[6 * v1 + 1] = cMax0.y();
+	      nodalCurvatures[6 * v1 + 2] = cMax0.z();
+	    }
+	  }
+	}
+      }
+      printf("%d touched\n",touched);
+      if (!touched)break;
+    }
+
+    {
+      char name[256];
+      sprintf(name,"nodalCurvaturesCorrected%d.pos",(*it)->tag());
+      saveNodalField (m,nodalCurvatures,  6, name);
+    }
+    
     for(size_t i = 0; i < m->vertices.num; i++) {
       MVertex *v = c2v[i];
       double *c = &nodalCurvatures[6 * i];
@@ -259,6 +327,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     //    fprintf(f,"};\n");
     //    fclose(f);
     //    getchar();
+    sprintf(why,"boundary not manifold",XX,Nmax);
     return 2;
   }
 
@@ -272,17 +341,27 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     }
 
   double poincare =
-    t.size() - (2 * (v.size() - 1) - _bnd.size() + 2 * (vs.size() - 1));
+    t.size() - (2 * (v.size() - 1) - _bnd.size() + 2 * (vs.size() - 1));  
 
+  //  printf("%d %d %d %d\n",_bnd.size(),v.size(),vs.size(),t.size());
+
+  if (_bnd.empty()){
+    sprintf(why,"poincare characteristic 2 is not 0");
+    return 2;
+  }
+  
   //  if(ar * lmax * lmax < 2 * M_PI * surf) {
   //    sprintf(why,"aspect ratio %12.5E is too large", surf *2 * M_PI/(ar * lmax * lmax) );
   //    return 2;
   //  }
 
   if (poincare != 0){
-    sprintf(why,"poincare caracteristic %3g is not 0", poincare);
+    sprintf(why,"poincare characteristic %3g is not 0", poincare);
     return 2;
   }
+  //  if(XX < 200) {
+  //    return 1;
+  //  }
   int n = 1;
   HXT_CHECK(hxtInitializeLinearSystems(&n, NULL));
   //  printf("%d triangles %d\n",t.size(),poincare);
@@ -323,11 +402,11 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     double det = fabs ((u1-u0)*(v2-v0)-(v1-v0)*(u2-u0));
 
 
-    if (det < 1.e-12){
+    if (det < 1.e-5){
       HXT_CHECK(hxtMeshDelete(&m));
       HXT_CHECK(hxtEdgesDelete(&edges));
       HXT_CHECK(hxtFree(&uvc));
-      sprintf(why,"parametrizat triangles are too small (%12.5E)", det);
+      sprintf(why,"parametrized triangles are too small (%12.5E)", det);
       //      printf("coucou\n");
       return 2;
     }

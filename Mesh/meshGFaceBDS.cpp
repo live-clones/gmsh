@@ -300,7 +300,7 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
   SPoint3 pp(0.5*(X1+X2),0.5*(Y1+Y2),0.5*(Z1+Z2));
   double guess[2] = {0.5 * (u1 + u2),0.5 * (v1 + v2)};
   GPoint gp = gf->closestPoint(pp,guess);
-  if(gp.succeeded()){
+  if(0 && gp.succeeded()){
     SPoint3 XX1 (X1,Y1,Z1);
     SPoint3 XX2 (X2,Y2,Z2);
     SPoint3 MID = (XX1+XX2)*0.5;
@@ -318,16 +318,13 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
       double _op1[2] = {op[0]->u, op[0]->v};
       double _op2[2] = {op[1]->u, op[1]->v};
       double _ss[2] = {gp.u(), gp.v()};
-      double oris_1 [3] =
-	{robustPredicates::orient2d(_op1,_p1, _ss),
-	 robustPredicates::orient2d(_p1, _p2, _ss),
-	 robustPredicates::orient2d(_p2, _op1, _ss)};
-      double oris_2 [3] =
-	{robustPredicates::orient2d(_op2,_p2, _ss),
-	 robustPredicates::orient2d(_p2, _p1, _ss),
-	 robustPredicates::orient2d(_p1, _op2, _ss)};
-      if ((oris_1[0]*oris_1[1] > 0 && oris_1[0]*oris_1[2] > 0) ||
-	  (oris_2[0]*oris_2[1] > 0 && oris_2[0]*oris_2[2] > 0)){      	
+      double oris_ [4] =
+	{robustPredicates::orient2d(_p1,_op2, _ss),
+	 robustPredicates::orient2d(_op2,_p2, _ss),
+	 robustPredicates::orient2d(_p2,_op1, _ss),
+	 robustPredicates::orient2d(_op1,_p1, _ss)};
+      if (oris_[0]*oris_[1] > 0 && oris_[0]*oris_[2] > 0 && oris_[0]*oris_[3] > 0 && oris_[1]*oris_[2] > 0
+	  && oris_[1]*oris_[3] > 0 && oris_[2]*oris_[3] > 0){      	
 	//	printf("this does not suck\n");
 	u = gp.u();
 	v = gp.v();

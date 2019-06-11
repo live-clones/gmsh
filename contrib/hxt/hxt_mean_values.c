@@ -79,13 +79,15 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
   uint32_t nNodes = mesh->vertices.num;
 
 
+  //  printf("coucou1 %d\n",meanValues->nHoles);
   int nby = 0;
   for(int i=0; i<meanValues->nHoles; i++){
     int c;
     HXT_CHECK(hxtBoundariesGetNumberOfEdgesOfLineLoop(meanValues->boundaries,meanValues->hole[i],&c));
     nby += c;
   }
-  
+  //    printf("coucou1\n");
+
 #ifdef __FILLERGAP_
   uint32_t *fillergap;
   HXT_CHECK(hxtMalloc(&fillergap, 3*(nTriangles+nby)*sizeof(uint32_t)));
@@ -124,23 +126,31 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
   HXT_CHECK(hxtMalloc(&flag,nNodes*sizeof(uint32_t)));
   for(uint32_t ii=0; ii<nNodes; ii++)
     flag[ii] = 0;
+  //  printf("coucou1\n");
   
   /* boundary conditions */
   double *uv = meanValues->uv;
   int n;
+  //  printf("coucou31\n");
   HXT_CHECK(hxtBoundariesGetNumberOfEdgesOfLineLoop(meanValues->boundaries,meanValues->boundary,&n));
+  //  printf("coucou31 %d %d\n",n,meanValues->boundary);
   uint32_t *edges_ll;
   HXT_CHECK(hxtBoundariesGetEdgesOfLineLoop(meanValues->boundaries, meanValues->boundary,&edges_ll));
+  //  printf("coucou31 %d\n",n);
   double totalLength, currentLength;;
   HXT_CHECK(hxtBoundariesGetLengthOfLineLoop(meanValues->boundaries,meanValues->boundary,&totalLength));
+  //  printf("coucou31 %d\n",n);
   currentLength = 0;
   for(int i=0; i<n; i++){
     double angle = 2*M_PI * currentLength/totalLength;
+    //    printf("%d/%d %g\n",i,n,angle);
     flag[edges->node[2*edges_ll[i]+0]] = 1;
     uv[2*edges->node[2*edges_ll[i]+0]+0] = cos(angle);
     uv[2*edges->node[2*edges_ll[i]+0]+1] = sin(angle);
     currentLength += hxtEdgesLength(meanValues->initialEdges, edges_ll[i]);
   }
+  //  printf("coucou31\n");
+  //  printf("coucou1\n");
   
   double *U, *V, *Urhs, *Vrhs;
   //printf("allocation: %d\n",nNodes+meanValues->nHoles);
@@ -148,6 +158,7 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
   HXT_CHECK( hxtMalloc(&V,(nNodes+meanValues->nHoles)*sizeof(double)) );
   HXT_CHECK( hxtMalloc(&Urhs,(nNodes+meanValues->nHoles)*sizeof(double)) );
   HXT_CHECK( hxtMalloc(&Vrhs,(nNodes+meanValues->nHoles)*sizeof(double)) );
+  //  printf("coucou1\n");
   
   
   // init linear system
@@ -270,13 +281,14 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
     HXT_CHECK(hxtFree(&d));
   }
 #endif
-  
+  //  printf("coucou1\n");
   HXT_CHECK(hxtLinearSystemSolve(sys,Urhs,U));
   HXT_CHECK(hxtLinearSystemSolve(sys,Vrhs,V));
   for(uint32_t i=0; i<nNodes; i++){
     uv[2*i+0] = U[i] ;
     uv[2*i+1] = V[i] ;
   }
+  //  printf("coucou2\n");
 
 #ifdef __FILLERGAP_
   HXT_CHECK(hxtFree(&fillergap));
@@ -287,6 +299,7 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
   HXT_CHECK(hxtFree(&Urhs));
   HXT_CHECK(hxtFree(&Vrhs));
   HXT_CHECK(hxtLinearSystemDelete(&sys));
+  //  printf("coucou3\n");
 
   return HXT_STATUS_OK;
 }
