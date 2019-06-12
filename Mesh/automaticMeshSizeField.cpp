@@ -3,6 +3,8 @@
 #include "GRegion.h"
 #include "MVertex.h"
 
+#include <inttypes.h>
+
 #ifdef HAVE_HXT
 extern "C" {
 #include "hxt_edge.h"
@@ -62,7 +64,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   
   // verify that only one region exists in the model
   if (GModel::current()->getNumRegions() != 1){
-    printf("value = %d \n", GModel::current()->getNumRegions());
+    printf("#regions = %d \n", GModel::current()->getNumRegions());
     Msg::Error ("automaticMeshSizeField can only work for now on models with one region");
     return HXT_STATUS_ERROR;
   }
@@ -86,22 +88,29 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   HXT_CHECK(hxtEdgesCreate(mesh,&edges));
   HXT_CHECK(hxtCurvatureRusinkiewicz(mesh,&nodalCurvature,&curvatureCrossfield,edges,1));
   
-  // compute rtree
-  RTree<int , double,3> triRTree;
+  // Compute rtree
+  RTree<uint64_t, double, 3> triRTree;
   HXTBbox          bbox_triangle;
 
   for(uint64_t i = 0; i < mesh->triangles.num; ++i){
     hxtBboxInit(&bbox_triangle);
+    if(i<10)printf("Triangle %d \n", i+1);
     // Noeuds
-    for(int j = 0; j < 3; ++j){
+    for(uint64_t j = 0; j < 3; ++j){
+
       double coord[3];
-      int node = mesh->triangles.node[(size_t) 3*i+j];
+
+      uint32_t node = mesh->triangles.node[3*i+j];
+      // if(i<10)printf("%d \t", node);
+      // if(i<10)printf("%" PRIu32 " \t", mesh->triangles.node[(size_t) 3*i+j]);
       // Coordonnees
-      for(int k = 0; k < 3; ++k){ coord[k] = mesh->vertices.coord[(size_t) 4*node+k]; }
+      for(uint32_t k = 0; k < 3; ++k){ coord[k] = mesh->vertices.coord[(size_t) 4*node+k]; }
+      if(i<10)printf("%f \t %f \t %f \n", coord[0], coord[1], coord[2]);
       hxtBboxAddOne(&bbox_triangle, coord);
     }
-    int K = (int)i;
-    triRTree.Insert(bbox_triangle.min,bbox_triangle.max,K);
+    // if(i<10)std::cout<<std::endl;
+    // int K = (int) i;
+    triRTree.Insert(bbox_triangle.min,bbox_triangle.max, i);
   }
   
   // compute bbox of the mesh
@@ -138,32 +147,27 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
     double dsdx, dsdy, dsdz;
 
-    while (ITER++ < 2*_nRefine) {
-      dsdx = 0;
-      dsdy = 0;
-      dsdz = 0;
-      printf("Lissage %d \n", ITER);
-      // HXT_CHECK(hxtOctreeComputeLaplacian(forest));   
+    while (ITER++ < 4*_nRefine) {
+      dsdx = -1;
+      dsdy = -1;
+      dsdz = -1;
+      printf("Lissage%d \n", ITER);
       HXT_CHECK(hxtOctreeComputeGradient(forest)); 
-      HXT_CHECK(hxtOctreeSetMaxGradient(forest));
-      // HXT_CHECK(hxtOctreeComputeLaplacian(forest)); 
-      HXT_CHECK(hxtOctreeComputeGradient(forest));  
 
       HXT_CHECK(hxtOctreeComputeMaxGradientX(forest, &dsdx));
       HXT_CHECK(hxtOctreeComputeMaxGradientY(forest, &dsdy));
       HXT_CHECK(hxtOctreeComputeMaxGradientZ(forest, &dsdz));
 
+      HXT_CHECK(hxtOctreeSetMaxGradient(forest));
+      
       printf("dsdx max = %f \n", dsdx);
       printf("dsdy max = %f \n", dsdy);
       printf("dsdz max = %f \n", dsdz);
-      std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/smoothing_tore" + std::to_string(ITER);
-      write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
+      // std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/smoothing_tore" + std::to_string(ITER);
+      // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
+      if(fmax(dsdx,fmax(dsdy,dsdz)) < 0.41) break;
     }
   }
-
-  double elemEstimation;
-  HXT_CHECK(hxtOctreeElementEstimation(forest, &elemEstimation));
-  printf("Estimation du nombre d'éléments : %f \n", elemEstimation);
 
   double sizeMin = 1e22;
   HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
@@ -171,35 +175,41 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
   forestOptions->nodePerGap = _nPointsPerGap;
   printf("------- Surfaces proches ------- \n");
-  // HXT_CHECK(hxtOctreeSurfacesProches(forest));
+  HXT_CHECK(hxtOctreeSurfacesProches(forest));
 
-  // sizeMin = 1e22;
-  // HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
-  // printf("sizeMin = %f \n", sizeMin);
+  sizeMin = 1e22;
+  HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
+  printf("sizeMin = %f \n", sizeMin);
 
-  // ITER = 0;
+  ITER = 0;
 
-  // double dsdx, dsdy, dsdz;
+  double dsdx, dsdy, dsdz;
 
-  // while (ITER++ < 6*_nRefine) {
-  //   dsdx = -1;
-  //   dsdy = -1;
-  //   dsdz = -1;
-  //   printf("Lissage %d \n", ITER);
-  //   // HXT_CHECK(hxtOctreeComputeLaplacian(forest)); 
-  //   HXT_CHECK(hxtOctreeComputeGradient(forest));    
-  //   HXT_CHECK(hxtOctreeSetMaxGradient(forest));
-  //   HXT_CHECK(hxtOctreeComputeGradient(forest)); 
-  //   // HXT_CHECK(hxtOctreeComputeLaplacian(forest));  
+  while (ITER++ < 4*_nRefine) {
+    dsdx = -1;
+    dsdy = -1;
+    dsdz = -1;
+    printf("Lissage après surfaces proches %d \n", ITER);
+    HXT_CHECK(hxtOctreeComputeGradient(forest));  
 
-  //   HXT_CHECK(hxtOctreeComputeMaxGradientX(forest, &dsdx));
-  //   HXT_CHECK(hxtOctreeComputeMaxGradientY(forest, &dsdy));
-  //   HXT_CHECK(hxtOctreeComputeMaxGradientZ(forest, &dsdz));
+    HXT_CHECK(hxtOctreeComputeMaxGradientX(forest, &dsdx));
+    HXT_CHECK(hxtOctreeComputeMaxGradientY(forest, &dsdy));
+    HXT_CHECK(hxtOctreeComputeMaxGradientZ(forest, &dsdz));
 
-  //   printf("dsdx max = %f \n", dsdx);
-  //   printf("dsdy max = %f \n", dsdy);
-  //   printf("dsdz max = %f \n", dsdz);
-  //  }
+    HXT_CHECK(hxtOctreeSetMaxGradient(forest));
+
+    printf("dsdx max = %f \n", dsdx);
+    printf("dsdy max = %f \n", dsdy);
+    printf("dsdz max = %f \n", dsdz);
+
+    // std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/smoothing_tore" + std::to_string(ITER);
+      // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
+    if(fmax(dsdx,fmax(dsdy,dsdz)) < 0.41) break;
+   }
+
+  double elemEstimation;
+  HXT_CHECK(hxtOctreeElementEstimation(forest, &elemEstimation));
+  printf("Estimation du nombre d'éléments : %f \n", elemEstimation);
 
   HXT_CHECK(hxtEdgesDelete(&edges)       );
   HXT_CHECK(hxtFree(&curvatureCrossfield));
@@ -207,6 +217,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   HXT_CHECK(hxtMeshDelete(&mesh)                  );
   HXT_CHECK(hxtContextDelete(&context)            );
 
+  return HXT_STATUS_OK;
 
 #endif //ifdef HAVE_P4EST
 }

@@ -39,7 +39,7 @@ typedef struct HXTForestOptions{
   double               *bbox;
   double               *nodalCurvature;
   double              (*sizeFunction)(double, double, double) ;
-  RTree<int,double,3>  *triRTree;
+  RTree<uint64_t,double,3>  *triRTree;
   HXTMesh              *mesh;
 } HXTForestOptions;
 
@@ -84,6 +84,7 @@ typedef struct size_point{
   double y;
   double z;
   double size;
+  int surfaceFlag;
 } size_point_t;
 
 typedef struct size_fun{

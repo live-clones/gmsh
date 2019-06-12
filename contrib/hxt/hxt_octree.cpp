@@ -8,7 +8,11 @@
 #define ALPHA 1.4
 #define BULK_SIZE 7.77;
 
+#define P8EST_QMAXLEVEL 8
+
 #ifdef HAVE_P4EST
+
+int counter = 0;
 
 p4est_connectivity_t *p8est_connectivity_new_cube (double c);
   
@@ -1751,6 +1755,7 @@ static int hxtOctreeReplaceCallback(p4est_t * p4est, p4est_topidx_t which_tree, 
 
     if(in_box && is_leaf){
         data->size = p->size;
+        data->refineFlag = p->surfaceFlag;
         // printf("Taille remplacée dans l'octree à la position %f - %f - %f \n",p->x,p->y,p->z);
         // printf("dans le quadrant centré en %f - %f - %f de côté %f \n", center[0], center[1], center[2], h);
     }
@@ -1787,8 +1792,8 @@ HXTStatus hxtOctreeSearch(HXTForest *forest, std::vector<double> *x, std::vector
   return HXT_STATUS_OK;
 }
 
-static bool rtreeCallback(int id, void *ctx) {
-  std::vector<int>* vec = reinterpret_cast< std::vector<int>* >(ctx);
+static bool rtreeCallback(uint64_t id, void *ctx) {
+  std::vector<uint64_t>* vec = reinterpret_cast< std::vector<uint64_t>* >(ctx);
   vec->push_back(id);
   return true;
 }
@@ -1807,12 +1812,12 @@ static void hxtOctreeRTreeCallback(p4est_iter_volume_info_t * info, void *user_d
   double min[3], max[3];
   hxtOctreeGetBboxOctant(p4est, which_tree, q, min, max);
 
-  std::vector<int> candidates;  
+  std::vector<uint64_t> candidates;  
   forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
 
   if(!candidates.empty()){
     double kappa = 0.0;
-    for(std::vector<int>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
+    for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
       for(int i = 0; i < 3; ++i){
           int node = forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
 
@@ -1827,15 +1832,53 @@ static void hxtOctreeRTreeCallback(p4est_iter_volume_info_t * info, void *user_d
         }
     }
 
-    double size = 2*M_PI/(forestOptions->nodePerTwoPi * kappa);
-
-    if(data->size > size || candidates.size() > 8){
-      data->size = size;
+    // if(data->size > size || candidates.size() > 1){
+    if(candidates.size() > 1){
+      // data->size = size;
       data->refineFlag = 1;
     }
+    // else{
+    //   data->size = fmin(data->size, 2*M_PI/(forestOptions->nodePerTwoPi * kappa));
+    //   ++counter;
+    // }
   }
   else{
     data->coarsenFlag = 1;
+  }
+}
+
+static void hxtOctreeAssignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *user_data){
+
+  p4est_t            *p4est = info->p4est;
+  p4est_quadrant_t   *q = info->quad;
+  p4est_topidx_t      which_tree = info->treeid;
+  size_data_t        *data = (size_data_t *) q->p.user_data;
+  HXTForestOptions   *forestOptions = (HXTForestOptions *) user_data;
+
+  double min[3], max[3];
+  hxtOctreeGetBboxOctant(p4est, which_tree, q, min, max);
+
+  std::vector<uint64_t> candidates;  
+  forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
+
+  if(!candidates.empty()){
+    double kappa = 0.0;
+    for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
+      for(int i = 0; i < 3; ++i){
+          int node = forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
+
+          double *v1 = forestOptions->nodalCurvature + 6*node;
+          double *v2 = forestOptions->nodalCurvature + 6*node + 3;
+
+          double k1, k2;
+          hxtNorm2V3(v1, &k1);
+          hxtNorm2V3(v2, &k2);
+
+          kappa = fmax(kappa,fmax(k1,k2));
+        }
+    }
+
+    data->size = fmin(data->size, 2*M_PI/(forestOptions->nodePerTwoPi * kappa));
   }
 }
 
@@ -1980,6 +2023,7 @@ HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax){
 
   int i = 0;
   do{
+    counter = 0;
     numQuadrants = forest->p4est->global_num_quadrants;
 
     // Check if size is smaller than the size prescribed by curvature
@@ -1988,6 +2032,8 @@ HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax){
                   NULL,
       #endif
                   NULL);
+
+    printf("Counter = %d\n", counter);
 
     // Refine with respect to the curvature
     // p4est_refine(forest->p4est, 0, hxtCurvatureRefineCallback, hxtOctreeSetInitialSize);
@@ -1999,23 +2045,12 @@ HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax){
     // Balance the octree to get 2:1 ratio between adjacent cells
     p4est_balance_ext(forest->p4est, P4EST_CONNECT_FACE, hxtOctreeSetInitialSize, hxtOctreeCurvatureReplaceOctants);
 
-    // Recompute size on newly created cells ? => PAS BESOIN SI REPLACE_QUADS
-    // p4est_iterate(forest->p4est, NULL, forest->forestOptions, hxtOctreeRTreeCallback, NULL,
-    //   #ifdef P4_TO_P8
-    //               NULL,
-    //   #endif
-    //               NULL);
-
-    p4est_iterate(forest->p4est, NULL, forest->forestOptions, hxtOctreeRTreeCallback, NULL,
-      #ifdef P4_TO_P8
-                  NULL,
-      #endif
-                  NULL);
+    if(numQuadrants == forest->p4est->global_num_quadrants) break;
 
     // Print octree in VTK
        // std::string fileVTK = "/Users/arthur/Documents/Code/Mesh_octree/results_octree/dummy_3D_rtree_curvature_refine" + std::to_string(i);
-       std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/curvature_refine_tore" + std::to_string(i);
-       write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
+       // std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/curvature_refine_tore" + std::to_string(i);
+       // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
 
     ++i;
 
@@ -2025,6 +2060,12 @@ HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax){
   }while(i < nMax);
 
   if(i == nMax){ std::cout<<"Curvature refinement stopped after "<<i<<" iterations"<<std::endl; }
+
+  p4est_iterate(forest->p4est, NULL, forest->forestOptions, hxtOctreeAssignSizeAfterRefinement, NULL,
+      #ifdef P4_TO_P8
+                  NULL,
+      #endif
+                  NULL);
 
   return HXT_STATUS_OK;
 }
@@ -2147,7 +2188,7 @@ void signedDistancePointTriangle2(const SPoint3 &p1, const SPoint3 &p2,
  }
 }
 
-HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<int> *candidates, const SPoint3 &p, double &d){
+HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, const SPoint3 &p, double &d){
 
   SPoint3 p1 = SPoint3();
   SPoint3 p2 = SPoint3();
@@ -2158,7 +2199,7 @@ HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<int> *candidates
 
   double x,y,z;
 
-  for(std::vector<int>::iterator tri = candidates->begin(); tri != candidates->end(); ++tri){
+  for(std::vector<uint64_t>::iterator tri = candidates->begin(); tri != candidates->end(); ++tri){
     // Coordonnees des points du triangle
     int node1 = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)  ];
     int node2 = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+1];
@@ -2202,7 +2243,7 @@ HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<int> *candidates
 // qui sont proches de node par rapport a la topologie de la triangulation (!= distance euclidienne)
 // In : - candidates, le vecteur des triangles qui intersectent la boite de cote h autour de node
 //      - node, le noeud courant dans SurfacesProches
-void hxtBFSTriangles(HXTForest *forest, std::vector<int> *candidates, int node){
+void hxtBFSTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, int node){
 
   // Contient des noeuds (il faut partir de node)
   std::queue<int> q; 
@@ -2212,7 +2253,7 @@ void hxtBFSTriangles(HXTForest *forest, std::vector<int> *candidates, int node){
     // std::cout<<q.front()<<std::endl;
     // Prendre tous les triangles de candidates qui contiennent node, puis les retirer de candidates. 
     // Prendre tous les noeuds de ces triangles et les ajouter dans la file
-    for(std::vector<int>::iterator tri = candidates->begin(); tri != candidates->end(); ){
+    for(std::vector<uint64_t>::iterator tri = candidates->begin(); tri != candidates->end(); ){
       bool flag = false;
       for(int i = 0; i < 3; ++i){
         int local_node = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
@@ -2281,8 +2322,15 @@ HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
     min[0] = x - size; max[0] = x + size;
     min[1] = y - size; max[1] = y + size;
     min[2] = z - size; max[2] = z + size;
-    std::vector<int> candidates;  
+    std::vector<uint64_t> candidates;  
     forest->forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
+
+    // if(i == 10 || i == 9 || i == 11){
+    //   std::cout<<"Elements restants"<<std::endl;
+    //   for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
+    //     printf("%d \t", (*tri)+77);
+    //   }
+    // }
 
     // printf("=========  Test\n");
     // for(std::vector<int>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri)
@@ -2295,15 +2343,28 @@ HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
     //   std::cout<<(*tri)+1<<std::endl;
     // printf("=========  BFS\n");
     // printf("Candidates.size = %d \n", candidates.size());
+    if(fabs(x - 0.8925593860114857)<1e-6 && fabs(y + 1.206422550937903e-16)<1e-6 && fabs(z - 0.08593748455702142)<1e-6){
+      std::cout<<"Elements restants : taille = "<<size<<std::endl;
+      for(auto &val : candidates)
+      std::cout<<val+forest->forestOptions->mesh->lines.num<<std::endl;
+    }
+
     hxtBFSTriangles(forest, &candidates, i);
 
-    if(candidates.size()){
+    if(!candidates.empty()){
       p.setPosition(x,y,z);
       hxtDistanceToTriangles(forest, &candidates, p, size);
       size /= forest->forestOptions->nodePerGap;
       // printf("Taille corrigée au noeud %d = %f \n", i+1, size);
       p_tmp->size = size;
+      p_tmp->surfaceFlag = 2;
       p4est_search(forest->p4est, NULL, hxtOctreeReplaceCallback, points);
+    }
+
+    if(fabs(x - 0.8925593860114857)<1e-6 && fabs(y + 1.206422550937903e-16)<1e-6 && fabs(z - 0.08593748455702142)<1e-6){
+      std::cout<<"Elements restants : taille = "<<size<<std::endl;
+      for(auto &val : candidates)
+      std::cout<<val+forest->forestOptions->mesh->lines.num<<std::endl;
     }
 
     
