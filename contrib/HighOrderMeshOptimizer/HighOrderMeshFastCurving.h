@@ -53,6 +53,6 @@ struct FastCurvingParameters {
 };
 
 void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
-                              bool requireBLInfo = false);
+                              bool onlyIfBLInfo = false);
 
 #endif

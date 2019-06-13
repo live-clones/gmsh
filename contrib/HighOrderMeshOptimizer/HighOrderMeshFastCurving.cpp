@@ -1273,114 +1273,121 @@ namespace {
 
 } // namespace
 
-// Main function for fast curving
+
+// Main functions for fast curving
+void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
+                              FastCurvingParameters &p)
+{
+  if(boundary.empty()) return;
+
+  // Compute normal if planar surface
+  SVector3 normal;
+  if(p.dim == 2) {
+    if(ent->geomType() == GEntity::Plane && ent->haveParametrization()) {
+      double u = ent->parBounds(0).low();
+      double v = ent->parBounds(1).low();
+      normal = dynamic_cast<GFace *>(ent)->normal(SPoint2(u, v));
+    }
+    else if(ent->geomType() == GEntity::DiscreteSurface) {
+      SBoundingBox3d bb = ent->bounds();
+      // If we don't have the CAD, check if the mesh is 2D:
+      if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
+        normal = SVector3(0, 0, 1);
+      }
+      // TODO: Check if the mesh is in a general plane?
+    }
+  }
+
+  // Compute edge/face -> elt. connectivity
+  Msg::Info("Computing connectivity for entity %i...", ent->tag());
+  MEdgeVecMEltMap ed2el;
+  MFaceVecMEltMap face2el;
+  if(p.dim == 2)
+    calcEdge2Elements(ent, ed2el);
+  else
+    calcFace2Elements(ent, face2el);
+
+  // Curve mesh from each boundary entity
+  std::vector<std::pair<MElement *, std::vector<MElement *> > > bndEl2column;
+
+  for(int i = 0; i < boundary.size(); i++) {
+    GEntity *bndEnt = boundary[i];
+
+    if(p.dim == 2 || !p.thickness) {
+      Msg::Info("Curving elements in surface %d for boundary edge %d...",
+                ent->tag(), bndEnt->tag());
+      curveMeshFromBnd(ed2el, face2el, ent, bndEnt, p, normal);
+    }
+    else
+      gather3Dcolumns(face2el, ent, bndEnt, p, bndEl2column);
+  }
+
+  if(p.thickness && p.dim == 3 && boundary.size()) {
+    Msg::Info("Curving elements in volume %d...", ent->tag());
+    curve3DBoundaryLayer(bndEl2column, (GFace *)boundary[0]);
+  }
+}
+
 void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
-                              bool requireBLInfo)
+                              bool onlyIfBLInfo)
 {
   double t1 = Cpu();
   Msg::StatusBar(true, "Curving high order boundary layer mesh...");
 
-  // Retrieve geometric entities and boundary layer field
-  std::vector<GEntity *> allGEnt;
-  gm->getEntities(allGEnt);
+  // Retrieve geometric entities
+  std::vector<GEntity *> allEntities;
+  gm->getEntities(allEntities);
+
+  // Retrieve boundary layer field
   std::vector<BoundaryLayerField *> blFields;
-  {
-    FieldManager *fields = gm->getFields();
-    int n = fields->getNumBoundaryLayerFields();
-    for(int i = 0; i < n; ++i) {
-      Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-      if(bl_field == NULL) continue;
-      blFields.push_back(dynamic_cast<BoundaryLayerField *>(bl_field));
-    }
+  FieldManager *fields = gm->getFields();
+  for(int i = 0; i < fields->getNumBoundaryLayerFields(); ++i) {
+    Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
+    if(bl_field == NULL) continue;
+    blFields.push_back(dynamic_cast<BoundaryLayerField *>(bl_field));
   }
+  if(onlyIfBLInfo && blFields.empty()) return;
 
-  // Curve mesh for non-straight boundary entities
-  for(int iEnt = 0; iEnt < allGEnt.size(); ++iEnt) {
-    // Retrieve entity
-    GEntity *&gEnt = allGEnt[iEnt];
-    if(gEnt->dim() != p.dim) {
-      //      for (size_t iEl = 0; iEl < gEnt->getNumMeshElements(); iEl++)
-      //        gEnt->getMeshElement(iEl)->setVisibility(0); // fordebug
-      continue;
-    }
+  for(std::size_t i = 0; i < allEntities.size(); ++i) {
+    GEntity *entity = allEntities[i];
 
-    // Compute normal if planar surface
-    SVector3 normal;
-    if(p.dim == 2) {
-      if(gEnt->geomType() == GEntity::Plane && gEnt->haveParametrization()) {
-        double u = gEnt->parBounds(0).low();
-        double v = gEnt->parBounds(1).low();
-        normal = dynamic_cast<GFace *>(gEnt)->normal(SPoint2(u, v));
-      }
-      else if(gEnt->geomType() == GEntity::DiscreteSurface) {
-        SBoundingBox3d bb = gEnt->bounds();
-        // If we don't have the CAD, check if the mesh is 2D:
-        if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
-          normal = SVector3(0, 0, 1);
-        }
-        // TODO: Check if the mesh is in a general plane?
-      }
-    }
+    if(entity->dim() != p.dim) continue;
 
-    // Retrieve boundary entities and test if boundary layer
-    std::vector<GEntity *> bndEnts;
-    std::set<GEntity *> blBndEnts;
-    if(p.dim == 2) {
-      std::vector<GEdge *> const &gEds = gEnt->edges();
-      bndEnts = std::vector<GEntity *>(gEds.begin(), gEds.end());
-      for(int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
-        GEntity *&bndEnt = bndEnts[iBndEnt];
+    // Retrieve boundary entities
+    std::vector<GEntity *> boundary;
+    if(p.dim == 2)
+      boundary.assign(entity->edges().begin(), entity->edges().end());
+    else
+      boundary.assign(entity->faces().begin(), entity->faces().end());
+
+    // Remove undesired boundary entities
+    int j = 0;
+    while(j < boundary.size()) {
+      GEntity *bndEntity = boundary[j];
+
+      bool toRemove = false;
+      if(p.onlyVisible && !bndEntity->getVisibility()) toRemove = true;
+      const GEntity::GeomType type = bndEntity->geomType();
+      if((type == GEntity::Line) || (type == GEntity::Plane)) toRemove = true;
+      // Also remove if this entity is unequipped with BL fields but model
+      // contains at least one
+      if(!blFields.empty()) {
         for(std::size_t k = 0; k < blFields.size(); ++k) {
-          if(blFields[k]->isEdgeBL(bndEnt->tag())) {
-            blBndEnts.insert(bndEnt);
+          if(blFields[k]->isEdgeBL(bndEntity->tag())) {
+            toRemove = true;
             break;
           }
         }
       }
-    }
-    else {
-      std::vector<GFace *> gFaces = gEnt->faces();
-      bndEnts = std::vector<GEntity *>(gFaces.begin(), gFaces.end());
-    }
-    if(requireBLInfo && blBndEnts.empty())
-      continue; // Skip if BL info is required but there is none
 
-    // Compute edge/face -> elt. connectivity
-    Msg::Info("Computing connectivity for entity %i...", gEnt->tag());
-    MEdgeVecMEltMap ed2el;
-    MFaceVecMEltMap face2el;
-    if(p.dim == 2)
-      calcEdge2Elements(gEnt, ed2el);
-    else
-      calcFace2Elements(gEnt, face2el);
-
-    // Curve mesh from each boundary entity
-    std::vector<std::pair<MElement *, std::vector<MElement *> > > bndEl2column;
-
-    for(int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
-      GEntity *&bndEnt = bndEnts[iBndEnt];
-      if(p.onlyVisible && !bndEnt->getVisibility())
-        continue; // Skip if "only visible" required and entity is invisible
-      if(!blBndEnts
-            .empty() && // Skip if there is BL info but not on this boundary
-         (blBndEnts.find(bndEnt) == blBndEnts.end()))
-        continue;
-      const GEntity::GeomType bndType = bndEnt->geomType();
-      if((bndType == GEntity::Line) || (bndType == GEntity::Plane))
-        continue; // Skip if boundary is straight
-      if(p.dim == 2 || !p.thickness) {
-        Msg::Info("Curving elements in surface %d for boundary edge %d...",
-                  gEnt->tag(), bndEnt->tag());
-        curveMeshFromBnd(ed2el, face2el, gEnt, bndEnt, p, normal);
+      if(toRemove) {
+        boundary[j] = boundary.back();
+        boundary.pop_back();
       }
-      else
-        gather3Dcolumns(face2el, gEnt, bndEnt, p, bndEl2column);
+      else ++j;
     }
 
-    if(p.thickness && p.dim == 3 && bndEnts.size()) {
-      Msg::Info("Curving elements in volume %d...", gEnt->tag());
-      curve3DBoundaryLayer(bndEl2column, (GFace *)bndEnts[0]);
-    }
+    HighOrderMeshFastCurving(entity, boundary, p);
   }
 
   double t2 = Cpu();
