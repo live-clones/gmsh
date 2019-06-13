@@ -938,6 +938,48 @@ namespace BoundaryLayerCurver {
         if(allOk) return;
       }
     }
+
+    void curveEdgesAndPreserveQualityTri(std::vector<MEdgeN> &stackEdges,
+                                      std::vector<MFaceN> &stackFaces,
+                                      std::vector<MElement*> &stackElements,
+                                         int iFirst, int iLast, const GFace *gface,
+                                         const GEdge *gedge, SVector3 normal)
+    {
+      std::vector<std::pair<double, double> > eta;
+      fullMatrix<double> terms[8];
+      _computeEtaAndTerms(stackEdges, iFirst, iLast, eta, terms);
+
+      // Compute quality of primary elements
+      unsigned long numElements = stackElements.size() - 1;
+      std::vector<double> qualitiesLinear(numElements);
+      for (unsigned int i = 0; i < numElements; ++i) {
+        MElement *linear = createPrimaryElement(stackElements[i]);
+        qualitiesLinear[i] = jacobianBasedQuality::minIGEMeasure(linear);
+        delete linear;
+      }
+
+      static double coeffHermite[11] = {1, .9, .8, .7, .6, .5, .4, .3, .2, .1, 0};
+      for (int i = 0; i < 11; ++i) {
+        _generalTFI(stackEdges, iLast, eta, terms, coeffHermite[i], gface);
+        for (unsigned int j = 0; j < stackEdges.size()-2; j += 2) {
+          EdgeCurver2D::curveEdge(&stackEdges[j], &stackEdges[j+1], gface, NULL, normal);
+        }
+        repositionInnerVertices(stackFaces, gface);
+
+        bool allOk = true;
+        if (coeffHermite[i]) {
+          for (unsigned int i = 0; i < numElements; ++i) {
+            double qual = jacobianBasedQuality::minIGEMeasure(stackElements[i]);
+            if (qual < .5 && qual < .8 * qualitiesLinear[i]) {
+              allOk = false;
+              break;
+            }
+          }
+        }
+
+        if (allOk) return;
+      }
+    }
   } // namespace InteriorEdgeCurver
 
   MElement *createPrimaryElement(MElement *el)
@@ -1347,6 +1389,9 @@ namespace BoundaryLayerCurver {
     // Curve interior edges and inner vertices
     InteriorEdgeCurver::curveEdgesAndPreserveQuality(
       stackEdges, stackFaces, column.second, iFirst, iLast, gface);
+//    InteriorEdgeCurver::curveEdgesAndPreserveQualityTri(
+//      stackEdges, stackFaces, column.second, iFirst, iLast, gface, gedge,
+//      normal);
     return true;
   }
 
@@ -1483,26 +1528,25 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   //  }
 
   for(int i = 0; i < bndEl2column.size(); ++i) {
-    //    if (bndEl2column[i].first->getNum() != 205) continue; // t161
-    //    if (bndEl2column[i].first->getNum() != 316) continue; // t161
-    //    if (bndEl2column[i].first->getNum() != 1156) continue; // trimesh
-    //    if (   bndEl2column[i].first->getNum() != 1156
-    //        && bndEl2column[i].first->getNum() != 1079
-    //        && bndEl2column[i].first->getNum() != 1102
-    //        && bndEl2column[i].first->getNum() != 1119) continue;
-    //    std::cout << std::endl;
-    //    std::cout << "column " << bndEl2column[i].first->getNum() <<
-    //    std::endl; if (bndEl2column[i].first->getNum() != 1079) continue; //
-    //    Good if (bndEl2column[i].first->getNum() != 1078) continue; // Next to
-    //    good if (bndEl2column[i].first->getNum() != 1099) continue; // Long on
-    //    corner if (bndEl2column[i].first->getNum() != 1102) continue; // Bad
-    //    HO if (bndEl2column[i].first->getNum() != 1136) continue; // Bad
-    //    linear if (bndEl2column[i].first->getNum() != 1149) continue; //
-    //    shorter if (bndEl2column[i].first->getNum() != 1150) continue; //
-    //    concave if (bndEl2column[i].first->getNum() != 1151) continue; //
-    //    symetric of concave if (bndEl2column[i].first->getNum() != 1156)
-    //    continue; // Strange if (bndEl2column[i].first->getNum() != 1157)
-    //    continue; // next to Strange
+//    if(bndEl2column[i].first->getNum() != 205) continue; // t161
+//    if(bndEl2column[i].first->getNum() != 316) continue; // t161
+//    if(bndEl2column[i].first->getNum() != 1156) continue; // trimesh
+//    if(   bndEl2column[i].first->getNum() != 1156
+//       && bndEl2column[i].first->getNum() != 1079
+//       && bndEl2column[i].first->getNum() != 1102
+//       && bndEl2column[i].first->getNum() != 1119) continue;
+//    std::cout << std::endl;
+//    std::cout << "column " << bndEl2column[i].first->getNum() << std::endl;
+//    if(bndEl2column[i].first->getNum() != 1079) continue; // Good
+//    if(bndEl2column[i].first->getNum() != 1078) continue; // Next to good
+//    if(bndEl2column[i].first->getNum() != 1099) continue; // Long on corner
+//    if(bndEl2column[i].first->getNum() != 1102) continue; // Bad HO
+//    if(bndEl2column[i].first->getNum() != 1136) continue; // Bad linear
+//    if(bndEl2column[i].first->getNum() != 1149) continue; // shorter
+//    if(bndEl2column[i].first->getNum() != 1150) continue; // concave
+//    if(bndEl2column[i].first->getNum() != 1151) continue; // symetric of concave
+//    if(bndEl2column[i].first->getNum() != 1156) continue; // Strange
+//    if(bndEl2column[i].first->getNum() != 1157) continue; // next to Strange
     BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], NULL, gedge, normal);
   }
 }
