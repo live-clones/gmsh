@@ -7,6 +7,7 @@
 #include <set>
 #include <map>
 #include <stack>
+#include <sstream>
 #include <string.h>
 #include "GmshConfig.h"
 #include "GModel.h"
@@ -284,12 +285,12 @@ int parametrizeGFace(discreteFace *gf,
 }
 
 int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
-                                  double ar, char *why)
+                                  double ar, std::ostringstream &why)
 {
 #if defined(HAVE_HXT)
   int XX = (int)t.size();
   if(XX > Nmax) {
-    sprintf(why,"too much triangles (%d vs. %d)",XX,Nmax);
+    why << "too many triangles (" << XX << " vs. " << Nmax << ")";
     return XX / Nmax + 1;
   }
   std::set<MVertex *> v;
@@ -327,7 +328,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     //    fprintf(f,"};\n");
     //    fclose(f);
     //    getchar();
-    sprintf(why,"boundary not manifold");
+    why << "boundary not manifold";
     return 2;
   }
 
@@ -346,17 +347,17 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   //  printf("%d %d %d %d\n",_bnd.size(),v.size(),vs.size(),t.size());
 
   if (_bnd.empty()){
-    sprintf(why,"poincare characteristic 2 is not 0");
+    why << "poincare characteristic 2 is not 0";
     return 2;
   }
 
   //  if(ar * lmax * lmax < 2 * M_PI * surf) {
-  //    sprintf(why,"aspect ratio %12.5E is too large", surf *2 * M_PI/(ar * lmax * lmax) );
+  //    why << "aspect ratio " << surf *2 * M_PI/(ar * lmax * lmax) << " is too large";
   //    return 2;
   //  }
 
   if (poincare != 0){
-    sprintf(why,"poincare characteristic %3g is not 0", poincare);
+    why << "poincare characteristic " << poincare << " is not 0";
     return 2;
   }
   //  if(XX < 200) {
@@ -406,7 +407,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
       HXT_CHECK(hxtMeshDelete(&m));
       HXT_CHECK(hxtEdgesDelete(&edges));
       HXT_CHECK(hxtFree(&uvc));
-      sprintf(why,"parametrized triangles are too small (%12.5E)", det);
+      why << "parametrized triangles are too small (" << det << ")";
       //      printf("coucou\n");
       return 2;
     }
@@ -477,10 +478,6 @@ static void makePartitionSimplyConnected (std::vector<MTriangle*> &t ,
   }
 }
 
-static void WHITES (char* n, int nw){
-  for (int i=0;i<nw;i++)strcat(n," ");
-}
-
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut)
 {
@@ -539,15 +536,13 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
       (*it)->mesh_vertices.insert((*it)->mesh_vertices.begin(), vs.begin(),
                                   vs.end());
       partitions.pop();
-      char why[256];
+      std::ostringstream why;
       int np =
         isTriangulationParametrizable((*it)->triangles, max_elems_per_cut, 5.0, why);
       if (np > 1){
-	char WH[256];
-	WH[0] = '\0';
-	WHITES (WH,level);
-	Msg::Info("%sPartition (level %2d) with %7d triangles split in %d parts because %s",WH,
-		  level,(*it)->triangles.size(),np,why);
+        std::string WH(level, ' ');
+	Msg::Info("%sPartition (level %2d) with %7d triangles split in %d parts because %s",
+                  WH.c_str(), level,(*it)->triangles.size(),np,why.str().c_str());
       }
       if(np == 1) {
         for(size_t i = 0; i < (*it)->triangles.size(); i++)
