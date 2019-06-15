@@ -2272,120 +2272,6 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   return num;
 }
 
-/*
-struct ElementSort{
-  MElement *ele;
-  std::vector<int> sortedVertexNum;
-};
-
-struct Less_ElementSort{
-  return a->sortedVertexNum < b->sortedVertexNum;
-};
-
-int GModel::removeDuplicateMeshElements()
-{
-
-}
-*/
-
-static void
-connectMElementsByMFace(const MFace &f,
-                        std::multimap<MFace, MElement *, Less_Face> &e2f,
-                        std::set<MElement *> &group,
-                        std::set<MFace, Less_Face> &touched, int recur_level)
-{
-  // this is very slow...
-  std::stack<MFace> _stack;
-  _stack.push(f);
-
-  while(!_stack.empty()) {
-    MFace ff = _stack.top();
-    _stack.pop();
-    if(touched.find(ff) == touched.end()) {
-      touched.insert(ff);
-      for(std::multimap<MFace, MElement *, Less_Face>::iterator it =
-            e2f.lower_bound(ff);
-          it != e2f.upper_bound(ff); ++it) {
-        group.insert(it->second);
-        for(int i = 0; i < it->second->getNumFaces(); ++i) {
-          _stack.push(it->second->getFace(i));
-        }
-      }
-    }
-  }
-}
-
-static int connectedVolumes(std::vector<MElement *> &elements,
-                            std::vector<std::vector<MElement *> > &regs)
-{
-  std::multimap<MFace, MElement *, Less_Face> e2f;
-  for(std::size_t i = 0; i < elements.size(); ++i) {
-    for(int j = 0; j < elements[i]->getNumFaces(); j++) {
-      e2f.insert(std::make_pair(elements[i]->getFace(j), elements[i]));
-    }
-  }
-  while(!e2f.empty()) {
-    std::set<MElement *> group;
-    std::set<MFace, Less_Face> touched;
-    connectMElementsByMFace(e2f.begin()->first, e2f, group, touched, 0);
-    std::vector<MElement *> temp;
-    temp.insert(temp.begin(), group.begin(), group.end());
-    regs.push_back(temp);
-    for(std::set<MFace, Less_Face>::iterator it = touched.begin();
-        it != touched.end(); ++it)
-      e2f.erase(*it);
-  }
-  return regs.size();
-}
-
-static void connectMElementsByMEdge(
-  const MEdge &e, std::multimap<MEdge, MElement *, Less_Edge> &e2e,
-  std::set<MElement *> &group, std::set<MEdge, Less_Edge> &touched)
-{
-  // this is very slow...
-  std::stack<MEdge> _stack;
-  _stack.push(e);
-
-  while(!_stack.empty()) {
-    MEdge ee = _stack.top();
-    _stack.pop();
-    if(touched.find(ee) == touched.end()) {
-      touched.insert(ee);
-      for(std::multimap<MEdge, MElement *, Less_Edge>::iterator it =
-            e2e.lower_bound(ee);
-          it != e2e.upper_bound(ee); ++it) {
-        group.insert(it->second);
-        for(int i = 0; i < it->second->getNumEdges(); ++i) {
-          _stack.push(it->second->getEdge(i));
-        }
-      }
-    }
-  }
-}
-
-static int connectedSurfaces(std::vector<MElement *> &elements,
-                             std::vector<std::vector<MElement *> > &faces)
-{
-  std::multimap<MEdge, MElement *, Less_Edge> e2e;
-  for(std::size_t i = 0; i < elements.size(); ++i) {
-    for(int j = 0; j < elements[i]->getNumEdges(); j++) {
-      e2e.insert(std::make_pair(elements[i]->getEdge(j), elements[i]));
-    }
-  }
-  while(!e2e.empty()) {
-    std::set<MElement *> group;
-    std::set<MEdge, Less_Edge> touched;
-    connectMElementsByMEdge(e2e.begin()->first, e2e, group, touched);
-    std::vector<MElement *> temp;
-    temp.insert(temp.begin(), group.begin(), group.end());
-    faces.push_back(temp);
-    for(std::set<MEdge, Less_Edge>::iterator it = touched.begin();
-        it != touched.end(); ++it)
-      e2e.erase(*it);
-  }
-  return faces.size();
-}
-
 void GModel::alignPeriodicBoundaries()
 {
   // Is this still necessary/useful?
@@ -2564,6 +2450,104 @@ void GModel::alignPeriodicBoundaries()
     }
   }
   Msg::Debug("Done aligning periodic boundaries");
+}
+
+static void
+connectMElementsByMFace(const MFace &f,
+                        std::multimap<MFace, MElement *, Less_Face> &e2f,
+                        std::set<MElement *> &group,
+                        std::set<MFace, Less_Face> &touched, int recur_level)
+{
+  // this is very slow...
+  std::stack<MFace> _stack;
+  _stack.push(f);
+
+  while(!_stack.empty()) {
+    MFace ff = _stack.top();
+    _stack.pop();
+    if(touched.find(ff) == touched.end()) {
+      touched.insert(ff);
+      for(std::multimap<MFace, MElement *, Less_Face>::iterator it =
+            e2f.lower_bound(ff);
+          it != e2f.upper_bound(ff); ++it) {
+        group.insert(it->second);
+        for(int i = 0; i < it->second->getNumFaces(); ++i) {
+          _stack.push(it->second->getFace(i));
+        }
+      }
+    }
+  }
+}
+
+static int connectedVolumes(std::vector<MElement *> &elements,
+                            std::vector<std::vector<MElement *> > &regs)
+{
+  std::multimap<MFace, MElement *, Less_Face> e2f;
+  for(std::size_t i = 0; i < elements.size(); ++i) {
+    for(int j = 0; j < elements[i]->getNumFaces(); j++) {
+      e2f.insert(std::make_pair(elements[i]->getFace(j), elements[i]));
+    }
+  }
+  while(!e2f.empty()) {
+    std::set<MElement *> group;
+    std::set<MFace, Less_Face> touched;
+    connectMElementsByMFace(e2f.begin()->first, e2f, group, touched, 0);
+    std::vector<MElement *> temp;
+    temp.insert(temp.begin(), group.begin(), group.end());
+    regs.push_back(temp);
+    for(std::set<MFace, Less_Face>::iterator it = touched.begin();
+        it != touched.end(); ++it)
+      e2f.erase(*it);
+  }
+  return regs.size();
+}
+
+static void connectMElementsByMEdge(
+  const MEdge &e, std::multimap<MEdge, MElement *, Less_Edge> &e2e,
+  std::set<MElement *> &group, std::set<MEdge, Less_Edge> &touched)
+{
+  // this is very slow...
+  std::stack<MEdge> _stack;
+  _stack.push(e);
+
+  while(!_stack.empty()) {
+    MEdge ee = _stack.top();
+    _stack.pop();
+    if(touched.find(ee) == touched.end()) {
+      touched.insert(ee);
+      for(std::multimap<MEdge, MElement *, Less_Edge>::iterator it =
+            e2e.lower_bound(ee);
+          it != e2e.upper_bound(ee); ++it) {
+        group.insert(it->second);
+        for(int i = 0; i < it->second->getNumEdges(); ++i) {
+          _stack.push(it->second->getEdge(i));
+        }
+      }
+    }
+  }
+}
+
+static int connectedSurfaces(std::vector<MElement *> &elements,
+                             std::vector<std::vector<MElement *> > &faces)
+{
+  std::multimap<MEdge, MElement *, Less_Edge> e2e;
+  for(std::size_t i = 0; i < elements.size(); ++i) {
+    for(int j = 0; j < elements[i]->getNumEdges(); j++) {
+      e2e.insert(std::make_pair(elements[i]->getEdge(j), elements[i]));
+    }
+  }
+  while(!e2e.empty()) {
+    std::set<MElement *> group;
+    std::set<MEdge, Less_Edge> touched;
+    connectMElementsByMEdge(e2e.begin()->first, e2e, group, touched);
+    std::vector<MElement *> temp;
+    temp.insert(temp.begin(), group.begin(), group.end());
+    faces.push_back(temp);
+    for(std::set<MEdge, Less_Edge>::iterator it = touched.begin();
+        it != touched.end(); ++it)
+      e2e.erase(*it);
+  }
+  return faces.size();
 }
 
 void GModel::makeDiscreteRegionsSimplyConnected()
