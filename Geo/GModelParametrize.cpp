@@ -175,7 +175,7 @@ int computeDiscreteCurvatures(
       sprintf(name,"nodalCurvaturesCorrected%d.pos",(*it)->tag());
       saveNodalField (m,nodalCurvatures,  6, name);
     }
-    
+
     for(size_t i = 0; i < m->vertices.num; i++) {
       MVertex *v = c2v[i];
       double *c = &nodalCurvatures[6 * i];
@@ -327,7 +327,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     //    fprintf(f,"};\n");
     //    fclose(f);
     //    getchar();
-    sprintf(why,"boundary not manifold",XX,Nmax);
+    sprintf(why,"boundary not manifold");
     return 2;
   }
 
@@ -341,7 +341,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     }
 
   double poincare =
-    t.size() - (2 * (v.size() - 1) - _bnd.size() + 2 * (vs.size() - 1));  
+    t.size() - (2 * (v.size() - 1) - _bnd.size() + 2 * (vs.size() - 1));
 
   //  printf("%d %d %d %d\n",_bnd.size(),v.size(),vs.size(),t.size());
 
@@ -349,7 +349,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     sprintf(why,"poincare characteristic 2 is not 0");
     return 2;
   }
-  
+
   //  if(ar * lmax * lmax < 2 * M_PI * surf) {
   //    sprintf(why,"aspect ratio %12.5E is too large", surf *2 * M_PI/(ar * lmax * lmax) );
   //    return 2;
