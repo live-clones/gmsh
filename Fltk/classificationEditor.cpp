@@ -271,8 +271,9 @@ static void classify_cb(Fl_Widget *w, void *data)
     GModel::current()->add(e->selected);
   }
 
-  std::map<MVertex* , std::pair<SVector3, SVector3> > curvatures;
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
+  std::map<MVertex *, std::pair<SVector3, SVector3> > curvatures;
+
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()) {
     computeDiscreteCurvatures(GModel::current(), curvatures);
     computeEdgeCut(GModel::current(), e->selected->lines, 100000);
   }
@@ -294,9 +295,17 @@ static void classify_cb(Fl_Widget *w, void *data)
   GModel::current()->pruneMeshVertexAssociations();
   NoElementsSelectedMode(e);
 
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
-    parametrizeAllGEdge(GModel::current());
-    parametrizeAllGFace(GModel::current(), &curvatures);
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()) {
+    for(GModel::eiter it = GModel::current()->firstEdge();
+        it != GModel::current()->lastEdge(); ++it) {
+      discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
+      if(de) de->createGeometry();
+    }
+    for(GModel::fiter it = GModel::current()->firstFace();
+        it != GModel::current()->lastFace(); ++it) {
+      discreteFace *df = dynamic_cast<discreteFace *>(*it);
+      if(df) df->createGeometry(&curvatures);
+    }
   }
 }
 

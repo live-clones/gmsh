@@ -78,7 +78,8 @@ int discreteFace::trianglePosition(double par1, double par2, double &u,
 
   double xy[3] = {par1, par2, 0};
   double uv[3];
-  const MElement *e = _parametrizations[ipar].oct->find(par1, par2, 0.0, -1, true);
+  const MElement *e =
+    _parametrizations[ipar].oct->find(par1, par2, 0.0, -1, true);
   if(!e) return -1;
   e->xyz2uvw(xy, uv);
   int position = (int)((MTriangle *)e - &_parametrizations[ipar].t2d[0]);
@@ -90,12 +91,12 @@ int discreteFace::trianglePosition(double par1, double par2, double &u,
 #endif
 }
 
-static void MYxyz2uvw(const MElement *t, double xyz[3], double uvw[3]) {
-
+static void MYxyz2uvw(const MElement *t, double xyz[3], double uvw[3])
+{
   double M[2][2], R[2];
-  const SPoint2 p0 (t->getVertex(0)->x(),t->getVertex(0)->y());
-  const SPoint2 p1 (t->getVertex(1)->x(),t->getVertex(1)->y());
-  const SPoint2 p2 (t->getVertex(2)->x(),t->getVertex(2)->y());
+  const SPoint2 p0(t->getVertex(0)->x(), t->getVertex(0)->y());
+  const SPoint2 p1(t->getVertex(1)->x(), t->getVertex(1)->y());
+  const SPoint2 p2(t->getVertex(2)->x(), t->getVertex(2)->y());
   M[0][0] = p1.x() - p0.x();
   M[0][1] = p2.x() - p0.x();
   M[1][0] = p1.y() - p0.y();
@@ -106,8 +107,8 @@ static void MYxyz2uvw(const MElement *t, double xyz[3], double uvw[3]) {
   //  printf("DET = %22.15E\n",det);
   uvw[0] = R[0] * M[1][1] - M[0][1] * R[1];
   uvw[1] = M[0][0] * R[1] - M[1][0] * R[0];
-  uvw[0]/= det;
-  uvw[1]/= det;
+  uvw[0] /= det;
+  uvw[1] /= det;
   return;
 }
 
@@ -121,21 +122,24 @@ GPoint discreteFace::point(double par1, double par2) const
   double xy[3] = {par1, par2, 0};
   double uv[3];
   //  MElement::setTolerance(1.e-17);
-  const MElement *e = _parametrizations[ipar].oct->find(par1, par2, 0.0, -1, true);
-  //  std::vector<MElement *> es = _parametrizations[ipar].oct->findAll(par1, par2, 0.0,-1,false);
-  //  printf("--> %g %g\n",par1,par2);
+  const MElement *e =
+    _parametrizations[ipar].oct->find(par1, par2, 0.0, -1, true);
+  //  std::vector<MElement *> es = _parametrizations[ipar].oct->findAll(par1,
+  //  par2, 0.0,-1,false); printf("--> %g %g\n",par1,par2);
   if(!e) {
     GPoint gp = GPoint(1.e21, 1.e21, 1.e21, this, xy);
     gp.setNoSuccess();
     return gp;
   }
-  MYxyz2uvw(e,xy, uv);
+  MYxyz2uvw(e, xy, uv);
   //  e->xyz2uvw(xy, uv);
-  //  printf("1 point found in %12.5E %12.5E -- %12.5E %12.5E -- %12.5E %12.5E UVW %12.5E %12.5E %12.5E uv %12.5E %12.5E\n",
+  //  printf("1 point found in %12.5E %12.5E -- %12.5E %12.5E -- %12.5E %12.5E
+  //  UVW %12.5E %12.5E %12.5E uv %12.5E %12.5E\n",
   //	 e->getVertex(0)->x(),e->getVertex(0)->y(),
   //	 e->getVertex(1)->x(),e->getVertex(1)->y(),
   //	 e->getVertex(2)->x(),e->getVertex(2)->y(),uv[0],uv[1],1.-uv[0]-uv[1],par1,par2);
-  //  printf("DIFFERENCE %12.5E %12.5E -- %12.5E %12.5E\n",par1,par2,uv[0]*e->getVertex(1)->x()+
+  //  printf("DIFFERENCE %12.5E %12.5E -- %12.5E
+  //  %12.5E\n",par1,par2,uv[0]*e->getVertex(1)->x()+
   //	 uv[1]*e->getVertex(2)->x()+(1.-uv[0]-uv[1])*e->getVertex(0)->x(),uv[0]*e->getVertex(1)->y()+
   //	 uv[1]*e->getVertex(2)->y()+(1.-uv[0]-uv[1])*e->getVertex(0)->y()
   //	 );
@@ -144,7 +148,8 @@ GPoint discreteFace::point(double par1, double par2) const
   const MTriangle &t3d = _parametrizations[ipar].t3d[position];
   double X = 0, Y = 0, Z = 0;
   double eval[3] = {1. - uv[0] - uv[1], uv[0], uv[1]};
-  //  printf("%12.5E  %12.5E  %12.5E %d %d\n",eval[0],eval[1],eval[2],e->isInside(eval[1],eval[2],0.0),es.size());
+  //  printf("%12.5E  %12.5E  %12.5E %d
+  //  %d\n",eval[0],eval[1],eval[2],e->isInside(eval[1],eval[2],0.0),es.size());
   for(int io = 0; io < 3; io++) {
     X += t3d.getVertex(io)->x() * eval[io];
     Y += t3d.getVertex(io)->y() * eval[io];
@@ -260,10 +265,11 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
   SPoint2 pp(U * v0->x() + V * v1->x() + W * v2->x(),
              U * v0->y() + V * v1->y() + W * v2->y());
   SPoint3 pp3(U * v03->x() + V * v13->x() + W * v23->x(),
-	      U * v03->y() + V * v13->y() + W * v23->y(),
-	      U * v03->z() + V * v13->z() + W * v23->z());
+              U * v03->y() + V * v13->y() + W * v23->y(),
+              U * v03->z() + V * v13->z() + W * v23->z());
 
-  //  printf("2 point found in %12.5E %12.5E -- %12.5E %12.5E -- %12.5E %12.5E UV %12.5E %12.5E %12.5E uv %12.5E %12.5E\n",
+  //  printf("2 point found in %12.5E %12.5E -- %12.5E %12.5E -- %12.5E %12.5E
+  //  UV %12.5E %12.5E %12.5E uv %12.5E %12.5E\n",
   //	 v0->x(),v0->y(),v1->x(),v1->y(),v2->x(),v2->y(),V,W,U,pp.x(),pp.y());
 
   /*
@@ -274,9 +280,9 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
   SPoint3 PP02(pp02.x(),pp02.y(),pp02.z());
   SPoint3 PP03(pp03.x(),pp03.y(),pp03.z());
   printf ("CORNER DISTANCES %12.5E %12.5E %12.5E\n",
-	  PP01.distance(SPoint3(v03->x(),v03->y(),v03->z())),
-	  PP02.distance(SPoint3(v13->x(),v13->y(),v13->z())),
-	  PP03.distance(SPoint3(v23->x(),v23->y(),v23->z())));
+      PP01.distance(SPoint3(v03->x(),v03->y(),v03->z())),
+      PP02.distance(SPoint3(v13->x(),v13->y(),v13->z())),
+      PP03.distance(SPoint3(v23->x(),v23->y(),v23->z())));
 
   printf("DISTANCE = %12.5E\n",pp3.distance(queryPoint));
   */
@@ -285,9 +291,10 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
   //    printf("%12.5E %12.5E %12.5E -- %12.5E %12.5E %12.5E d %12.5E\n",
   //	 queryPoint.x(),queryPoint.y(),queryPoint.z(),
   //	   wrapper._closestPoint.x(), wrapper._closestPoint.y(),
-  //	   wrapper._closestPoint.z(), queryPoint.distance(wrapper._closestPoint));
+  //	   wrapper._closestPoint.z(),
+  //queryPoint.distance(wrapper._closestPoint));
 
-  return GPoint(pp3.x(),pp3.y(),pp3.z(), this, pp);
+  return GPoint(pp3.x(), pp3.y(), pp3.z(), this, pp);
 #else
   return GPoint();
 #endif
@@ -310,7 +317,8 @@ SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
   //  printf(" START -- %12.5E %12.5E %12.5E\n",p.x(),p.y(),p.z());
   GPoint gp = closestPoint(p, 0.000001);
   //  GPoint gp2 = point(SPoint2(gp.u(),gp.v()));
-  //  printf(" END -- %12.5E %12.5E %12.5E -- dist %12.5E\n\n",gp2.x(),gp2.y(),gp2.z(),
+  //  printf(" END -- %12.5E %12.5E %12.5E -- dist
+  //  %12.5E\n\n",gp2.x(),gp2.y(),gp2.z(),
   //	 sqrt((gp2.x()-p.x())*(gp2.x()-p.x()) +
   //	      (gp2.y()-p.y())*(gp2.y()-p.y()) +
   //	      (gp2.z()-p.z())*(gp2.z()-p.z()) ));
@@ -328,7 +336,8 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
   int ipar = _parametrizations.size() == 1 ? 0 : _currentParametrization;
   if(ipar < 0) return SVector3();
 
-  MElement *e = _parametrizations[ipar].oct->find(param.x(), param.y(), 0.0, -1 , true);
+  MElement *e =
+    _parametrizations[ipar].oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
     Msg::Warning("Triangle not found at uv=(%g,%g) on discrete surface %d",
                  param.x(), param.y(), tag());
@@ -372,7 +381,8 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 
   if(_parametrizations[ipar].CURV.empty()) return 0.0;
 
-  MElement *e = _parametrizations[ipar].oct->find(param.x(), param.y(), 0.0, -1, true);
+  MElement *e =
+    _parametrizations[ipar].oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
     //    Msg::Warning("Triangle not found for curvatures at uv=(%g,%g) on "
     //                 "discrete surface %d",
@@ -410,7 +420,8 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
   int ipar = _parametrizations.size() == 1 ? 0 : _currentParametrization;
   if(ipar < 0) return Pair<SVector3, SVector3>(SVector3(), SVector3());
 
-  MElement *e = _parametrizations[ipar].oct->find(param.x(), param.y(), 0.0, -1, true);
+  MElement *e =
+    _parametrizations[ipar].oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
     Msg::Warning("Triangle not found for first derivative at uv=(%g,%g) on "
                  "discrete surface %d",
@@ -519,8 +530,8 @@ static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
 
 #endif
 
-int discreteFace::createGeometry(std::map<MVertex *,
-                                 std::pair<SVector3, SVector3> > *curvatures)
+int discreteFace::createGeometry(
+  std::map<MVertex *, std::pair<SVector3, SVector3> > *curvatures)
 {
 #if defined(HAVE_HXT)
   int n = 1;
@@ -552,10 +563,10 @@ int discreteFace::createGeometry(std::map<MVertex *,
       MVertex *v = c2v[iv];
       std::map<MVertex *, std::pair<SVector3, SVector3> >::iterator it =
         curvatures->find(v);
-      if(it == curvatures->end()){
+      if(it == curvatures->end()) {
         Msg::Error("Curvature not found for node %d", v->getNum());
       }
-      else{
+      else {
         stl_curvatures[2 * iv] = it->second.first;
         stl_curvatures[2 * iv + 1] = it->second.second;
       }

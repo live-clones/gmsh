@@ -579,25 +579,6 @@ int computeDiscreteCurvatures(
   return 0;
 }
 
-void parametrizeAllGEdge(GModel *gm)
-{
-  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
-    discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
-    if(de) de->createGeometry();
-  }
-}
-
-int parametrizeAllGFace(GModel *gm,
-                        std::map<MVertex *, std::pair<SVector3, SVector3> > *C)
-{
-  int result = 0;
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    discreteFace *df = dynamic_cast<discreteFace *>(*it);
-    if(df) result += df->createGeometry(C);
-  }
-  return result;
-}
-
 int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
                                   double ar, std::ostringstream &why)
 {
@@ -630,18 +611,20 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   std::vector<std::vector<MVertex *> > vs;
   if(!SortEdgeConsecutive(_bnd, vs)) {
     // we have vertices adjacent to more than 2 model edges
-    //    FILE *f = fopen("bug.pos","w");
-    //    fprintf(f,"View\"\"{\n");
-    //    for (size_t i=0;i<t.size();i++){
-    //      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-    //	      t[i]->getVertex(0)->x(),t[i]->getVertex(0)->y(),t[i]->getVertex(0)->z(),
-    //	      t[i]->getVertex(1)->x(),t[i]->getVertex(1)->y(),t[i]->getVertex(1)->z(),
-    //	      t[i]->getVertex(2)->x(),t[i]->getVertex(2)->y(),t[i]->getVertex(2)->z(),
-    //	      t[i]->getVertex(0)->getNum(),t[i]->getVertex(1)->getNum(),t[i]->getVertex(2)->getNum());
-    //    }
-    //    fprintf(f,"};\n");
-    //    fclose(f);
-    //    getchar();
+#if 0
+    FILE *f = fopen("bug.pos","w");
+    fprintf(f,"View\"\"{\n");
+    for (size_t i=0;i<t.size();i++){
+      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+        t[i]->getVertex(0)->x(),t[i]->getVertex(0)->y(),t[i]->getVertex(0)->z(),
+        t[i]->getVertex(1)->x(),t[i]->getVertex(1)->y(),t[i]->getVertex(1)->z(),
+        t[i]->getVertex(2)->x(),t[i]->getVertex(2)->y(),t[i]->getVertex(2)->z(),
+        t[i]->getVertex(0)->getNum(),t[i]->getVertex(1)->getNum(),t[i]->getVertex(2)->getNum());
+    }
+    fprintf(f,"};\n");
+    fclose(f);
+    getchar();
+#endif
     why << "boundary not manifold";
     return 2;
   }
@@ -658,40 +641,37 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   double poincare =
     t.size() - (2 * (v.size() - 1) - _bnd.size() + 2 * (vs.size() - 1));
 
-  //  printf("%d %d %d %d\n",_bnd.size(),v.size(),vs.size(),t.size());
-
   if(_bnd.empty()) {
     why << "poincare characteristic 2 is not 0";
     return 2;
   }
 
-  //  if(ar * lmax * lmax < 2 * M_PI * surf) {
-  //    why << "aspect ratio " << surf *2 * M_PI/(ar * lmax * lmax) << " is too
-  //    large"; return 2;
-  //  }
+  // if(ar * lmax * lmax < 2 * M_PI * surf) {
+  //   why << "aspect ratio " << surf *2 * M_PI/(ar * lmax * lmax) << " is too
+  //   large"; return 2;
+  // }
 
   if(poincare != 0) {
     why << "poincare characteristic " << poincare << " is not 0";
     return 2;
   }
-  //  if(XX < 200) {
-  //    return 1;
-  //  }
+
   int n = 1;
   HXT_CHECK(hxtInitializeLinearSystems(&n, NULL));
-  //  printf("%d triangles %d\n",t.size(),poincare);
 
-  //        FILE *f = fopen("bug.pos","w");
-  //    fprintf(f,"View\"\"{\n");
-  //        for (size_t i=0;i<t.size();i++){
-  //          fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-  //    	      t[i]->getVertex(0)->x(),t[i]->getVertex(0)->y(),t[i]->getVertex(0)->z(),
-  //    	      t[i]->getVertex(1)->x(),t[i]->getVertex(1)->y(),t[i]->getVertex(1)->z(),
-  //    	      t[i]->getVertex(2)->x(),t[i]->getVertex(2)->y(),t[i]->getVertex(2)->z(),
-  //    	      t[i]->getVertex(0)->getNum(),t[i]->getVertex(1)->getNum(),t[i]->getVertex(2)->getNum());
-  //        }
-  //        fprintf(f,"};\n");
-  //        fclose(f);
+#if 0
+  FILE *f = fopen("bug.pos","w");
+  fprintf(f,"View\"\"{\n");
+  for (size_t i=0;i<t.size();i++){
+    fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+            t[i]->getVertex(0)->x(),t[i]->getVertex(0)->y(),t[i]->getVertex(0)->z(),
+            t[i]->getVertex(1)->x(),t[i]->getVertex(1)->y(),t[i]->getVertex(1)->z(),
+            t[i]->getVertex(2)->x(),t[i]->getVertex(2)->y(),t[i]->getVertex(2)->z(),
+            t[i]->getVertex(0)->getNum(),t[i]->getVertex(1)->getNum(),t[i]->getVertex(2)->getNum());
+  }
+  fprintf(f,"};\n");
+  fclose(f);
+#endif
 
   HXTMesh *m;
   HXTMeanValues *param;
@@ -720,7 +700,6 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
       HXT_CHECK(hxtEdgesDelete(&edges));
       HXT_CHECK(hxtFree(&uvc));
       why << "parametrized triangles are too small (" << det << ")";
-      //      printf("coucou\n");
       return 2;
     }
   }
@@ -802,9 +781,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
 
   Msg::Info("Splitting the %d triangulations of the model", gm->getNumFaces());
 
-  // ----------------------------------------------------------------------------------
-  // STUPID FIX
-  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#if 0 // this is now done in the STL reader
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     std::vector<MTriangle *> aa;
     for(size_t i = 0; i < (*it)->triangles.size(); i++) {
@@ -814,19 +791,13 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
            (*it)->triangles[i]->getVertex(2) ||
          (*it)->triangles[i]->getVertex(1) ==
            (*it)->triangles[i]->getVertex(2)) {
-        //	printf("TRIANGLE BAD %d %d
-        //%d\n",(*it)->triangles[i]->getVertex(0)->getNum()
-        //	       ,(*it)->triangles[i]->getVertex(1)->getNum()
-        //	       ,(*it)->triangles[i]->getVertex(2)->getNum());
       }
       else
         aa.push_back((*it)->triangles[i]);
     }
     (*it)->triangles = aa;
   }
-  // END STUPID FIX
-  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  // ----------------------------------------------------------------------------------
+#endif
 
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     int part = 0;
@@ -951,6 +922,3 @@ void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
   }
   makeMLinesUnique(cut);
 }
-
-// todo...
-void detectPlanarFaces(GModel *gm, std::vector<MLine *> &cut) {}
