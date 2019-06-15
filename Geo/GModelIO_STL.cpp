@@ -191,7 +191,12 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double z = points[i][j + k].z();
         v[k] = pos.find(x, y, z);
       }
-      if(CTX::instance()->mesh.stlRemoveDuplicateTriangles){
+      if(v[0] == v[1] || v[0] == v[2] || v[1] == v[2]){
+        Msg::Debug("Skipping degenerated triangle %lu %lu %lu",
+                   v[0]->getNum(), v[1]->getNum(), v[2]->getNum());
+        nbDegen++;
+      }
+      else if(CTX::instance()->mesh.stlRemoveDuplicateTriangles){
         MFace mf(v[0], v[1], v[2]);
         if(unique.find(mf) == unique.end()) {
           faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
@@ -202,14 +207,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         }
       }
       else{
-        if(v[0] == v[1] || v[0] == v[2] || v[1] == v[2]){
-          Msg::Debug("Skipping degenerated triangle %lu %lu %lu",
-                     v[0]->getNum(), v[1]->getNum(), v[2]->getNum());
-          nbDegen++;
-        }
-        else{
-          faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
-        }
+        faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
       }
     }
   }
