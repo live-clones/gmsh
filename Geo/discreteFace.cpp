@@ -121,35 +121,18 @@ GPoint discreteFace::point(double par1, double par2) const
 
   double xy[3] = {par1, par2, 0};
   double uv[3];
-  //  MElement::setTolerance(1.e-17);
   const MElement *e =
     _parametrizations[ipar].oct->find(par1, par2, 0.0, -1, true);
-  //  std::vector<MElement *> es = _parametrizations[ipar].oct->findAll(par1,
-  //  par2, 0.0,-1,false); printf("--> %g %g\n",par1,par2);
   if(!e) {
     GPoint gp = GPoint(1.e21, 1.e21, 1.e21, this, xy);
     gp.setNoSuccess();
     return gp;
   }
   MYxyz2uvw(e, xy, uv);
-  //  e->xyz2uvw(xy, uv);
-  //  printf("1 point found in %12.5E %12.5E -- %12.5E %12.5E -- %12.5E %12.5E
-  //  UVW %12.5E %12.5E %12.5E uv %12.5E %12.5E\n",
-  //	 e->getVertex(0)->x(),e->getVertex(0)->y(),
-  //	 e->getVertex(1)->x(),e->getVertex(1)->y(),
-  //	 e->getVertex(2)->x(),e->getVertex(2)->y(),uv[0],uv[1],1.-uv[0]-uv[1],par1,par2);
-  //  printf("DIFFERENCE %12.5E %12.5E -- %12.5E
-  //  %12.5E\n",par1,par2,uv[0]*e->getVertex(1)->x()+
-  //	 uv[1]*e->getVertex(2)->x()+(1.-uv[0]-uv[1])*e->getVertex(0)->x(),uv[0]*e->getVertex(1)->y()+
-  //	 uv[1]*e->getVertex(2)->y()+(1.-uv[0]-uv[1])*e->getVertex(0)->y()
-  //	 );
-
   int position = (int)((MTriangle *)e - &_parametrizations[ipar].t2d[0]);
   const MTriangle &t3d = _parametrizations[ipar].t3d[position];
   double X = 0, Y = 0, Z = 0;
   double eval[3] = {1. - uv[0] - uv[1], uv[0], uv[1]};
-  //  printf("%12.5E  %12.5E  %12.5E %d
-  //  %d\n",eval[0],eval[1],eval[2],e->isInside(eval[1],eval[2],0.0),es.size());
   for(int io = 0; io < 3; io++) {
     X += t3d.getVertex(io)->x() * eval[io];
     Y += t3d.getVertex(io)->y() * eval[io];
@@ -268,32 +251,6 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
               U * v03->y() + V * v13->y() + W * v23->y(),
               U * v03->z() + V * v13->z() + W * v23->z());
 
-  //  printf("2 point found in %12.5E %12.5E -- %12.5E %12.5E -- %12.5E %12.5E
-  //  UV %12.5E %12.5E %12.5E uv %12.5E %12.5E\n",
-  //	 v0->x(),v0->y(),v1->x(),v1->y(),v2->x(),v2->y(),V,W,U,pp.x(),pp.y());
-
-  /*
-  GPoint pp01 = point( SPoint2(v0->x(),v0->y()));
-  GPoint pp02 = point( SPoint2(v1->x(),v1->y()));
-  GPoint pp03 = point( SPoint2(v2->x(),v2->y()));
-  SPoint3 PP01(pp01.x(),pp01.y(),pp01.z());
-  SPoint3 PP02(pp02.x(),pp02.y(),pp02.z());
-  SPoint3 PP03(pp03.x(),pp03.y(),pp03.z());
-  printf ("CORNER DISTANCES %12.5E %12.5E %12.5E\n",
-      PP01.distance(SPoint3(v03->x(),v03->y(),v03->z())),
-      PP02.distance(SPoint3(v13->x(),v13->y(),v13->z())),
-      PP03.distance(SPoint3(v23->x(),v23->y(),v23->z())));
-
-  printf("DISTANCE = %12.5E\n",pp3.distance(queryPoint));
-  */
-
-  //  if (queryPoint.distance(wrapper._closestPoint) > 1.e-8)
-  //    printf("%12.5E %12.5E %12.5E -- %12.5E %12.5E %12.5E d %12.5E\n",
-  //	 queryPoint.x(),queryPoint.y(),queryPoint.z(),
-  //	   wrapper._closestPoint.x(), wrapper._closestPoint.y(),
-  //	   wrapper._closestPoint.z(),
-  //queryPoint.distance(wrapper._closestPoint));
-
   return GPoint(pp3.x(), pp3.y(), pp3.z(), this, pp);
 #else
   return GPoint();
@@ -314,14 +271,7 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,
 SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
 #if defined(HAVE_HXT)
-  //  printf(" START -- %12.5E %12.5E %12.5E\n",p.x(),p.y(),p.z());
   GPoint gp = closestPoint(p, 0.000001);
-  //  GPoint gp2 = point(SPoint2(gp.u(),gp.v()));
-  //  printf(" END -- %12.5E %12.5E %12.5E -- dist
-  //  %12.5E\n\n",gp2.x(),gp2.y(),gp2.z(),
-  //	 sqrt((gp2.x()-p.x())*(gp2.x()-p.x()) +
-  //	      (gp2.y()-p.y())*(gp2.y()-p.y()) +
-  //	      (gp2.z()-p.z())*(gp2.z()-p.z()) ));
   return SPoint2(gp.u(), gp.v());
 #else
   Msg::Error("Cannot evaluate par from point on discrete surface without HXT");
@@ -384,9 +334,8 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
   MElement *e =
     _parametrizations[ipar].oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
-    //    Msg::Warning("Triangle not found for curvatures at uv=(%g,%g) on "
-    //                 "discrete surface %d",
-    //                 param.x(), param.y(), tag());
+    // Msg::Warning("Triangle not found for curvatures at uv=(%g,%g) on "
+    //              "discrete surface %d", param.x(), param.y(), tag());
     return 0.0;
   }
 
@@ -859,7 +808,7 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
 #endif
   GPoint pp(0);
   pp.setNoSuccess();
-  //  Msg::Warning("Could not intersect with circle");
+  // Msg::Warning("Could not intersect with circle");
   return pp;
 }
 
@@ -896,15 +845,10 @@ bool discreteFace::param::checkPlanar()
   SVector3 VY(mp.plan[1][0], mp.plan[1][1], mp.plan[1][2]);
   SPoint3 XP(mp.x, mp.y, mp.z);
 
-  //  printf("%g %g %g\n",mp.plan[0][0],mp.plan[0][1],mp.plan[0][2]);
-  //  printf("%g %g %g\n",mp.plan[1][0],mp.plan[1][1],mp.plan[1][2]);
-  //  printf("%g %g %g\n",mp.x,mp.y,mp.z);
-
   int count = 0;
   for(size_t i = 0; i < t2d.size(); i++) {
     for(int j = 0; j < 3; j++) {
       SVector3 DX = vp[count++] - XP;
-      // printf("x y = %g %g\n",dot(DX,VX),dot(DX,VY));
       t2d[i].getVertex(j)->x() = dot(DX, VX);
       t2d[i].getVertex(j)->y() = dot(DX, VY);
     }

@@ -52,14 +52,14 @@ static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
   // FIXME remove internal edges!
   if(i1 == i2) return 0;
 
+  GModel *gm = gf1->model();
+
   std::map<std::pair<int, int>, GEdge *>::iterator it =
     newEdges.find(std::make_pair(i1, i2));
   if(it == newEdges.end()) {
     discreteEdge *ge =
-      new discreteEdge(GModel::current(),
-                       GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
-    GModel::current()->add(ge);
-    // if(i1 == i2) printf("internal edge %d\n", ge->tag());
+      new discreteEdge(gm, gm->getMaxElementaryNumber(1) + 1, 0, 0);
+    gm->add(ge);
     newEdges[std::make_pair(i1, i2)] = ge;
     return ge;
   }
@@ -147,7 +147,7 @@ void classifyFaces(GModel *gm)
     if((*it)->getBeginVertex()) edgesToRemove.push_back(*it);
   }
 
-  for(size_t i = 0; i < edgesToRemove.size(); ++i) {
+  for(std::size_t i = 0; i < edgesToRemove.size(); ++i) {
     gm->remove(edgesToRemove[i]);
   }
 
@@ -426,7 +426,7 @@ static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle *> &t,
   HXTMesh *m;
   HXT_CHECK(hxtMeshCreate(context, &m));
   std::set<MVertex *> all;
-  for(size_t i = 0; i < t.size(); i++) {
+  for(std::size_t i = 0; i < t.size(); i++) {
     all.insert(t[i]->getVertex(0));
     all.insert(t[i]->getVertex(1));
     all.insert(t[i]->getVertex(2));
@@ -435,7 +435,7 @@ static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle *> &t,
   HXT_CHECK(
     hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
 
-  size_t count = 0;
+  std::size_t count = 0;
   c2v.resize(all.size());
   for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
     m->vertices.coord[4 * count + 0] = (*it)->x();
@@ -452,7 +452,7 @@ static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle *> &t,
                              (m->triangles.num) * 3 * sizeof(uint32_t)));
   HXT_CHECK(hxtAlignedMalloc(&m->triangles.colors,
                              (m->triangles.num) * sizeof(uint16_t)));
-  for(size_t i = 0; i < t.size(); i++) {
+  for(std::size_t i = 0; i < t.size(); i++) {
     m->triangles.node[3 * i + 0] = v2c[t[i]->getVertex(0)];
     m->triangles.node[3 * i + 1] = v2c[t[i]->getVertex(1)];
     m->triangles.node[3 * i + 2] = v2c[t[i]->getVertex(2)];
@@ -498,7 +498,7 @@ int computeDiscreteCurvatures(
     }
     while(0) {
       int touched = 0;
-      for(size_t i = 0; i < m->triangles.num; i++) {
+      for(std::size_t i = 0; i < m->triangles.num; i++) {
         for(int j = 0; j < 3; j++) {
           uint32_t v0 = m->triangles.node[3 * i + (j + 0) % 3];
           uint32_t v1 = m->triangles.node[3 * i + (j + 1) % 3];
@@ -552,7 +552,6 @@ int computeDiscreteCurvatures(
           }
         }
       }
-      printf("%d touched\n", touched);
       if(!touched) break;
     }
 
@@ -562,7 +561,7 @@ int computeDiscreteCurvatures(
       saveNodalField(m, nodalCurvatures, 6, name);
     }
 
-    for(size_t i = 0; i < m->vertices.num; i++) {
+    for(std::size_t i = 0; i < m->vertices.num; i++) {
       MVertex *v = c2v[i];
       double *c = &nodalCurvatures[6 * i];
       SVector3 cMax(c[0], c[1], c[2]);
@@ -591,7 +590,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   std::set<MVertex *> v;
   std::map<MEdge, int, Less_Edge> e;
   double surf = 0;
-  for(size_t i = 0; i < t.size(); ++i) {
+  for(std::size_t i = 0; i < t.size(); ++i) {
     surf += t[i]->getVolume();
     for(int j = 0; j < 3; j++) {
       v.insert(t[i]->getVertex(j));
@@ -614,12 +613,14 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
 #if 0
     FILE *f = fopen("bug.pos","w");
     fprintf(f,"View\"\"{\n");
-    for (size_t i=0;i<t.size();i++){
+    for (std::size_t i = 0; i < t.size(); i++){
       fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-        t[i]->getVertex(0)->x(),t[i]->getVertex(0)->y(),t[i]->getVertex(0)->z(),
-        t[i]->getVertex(1)->x(),t[i]->getVertex(1)->y(),t[i]->getVertex(1)->z(),
-        t[i]->getVertex(2)->x(),t[i]->getVertex(2)->y(),t[i]->getVertex(2)->z(),
-        t[i]->getVertex(0)->getNum(),t[i]->getVertex(1)->getNum(),t[i]->getVertex(2)->getNum());
+              t[i]->getVertex(0)->x(), t[i]->getVertex(0)->y(),
+              t[i]->getVertex(0)->z(), t[i]->getVertex(1)->x(),
+              t[i]->getVertex(1)->y(), t[i]->getVertex(1)->z(),
+              t[i]->getVertex(2)->x(), t[i]->getVertex(2)->y(),
+              t[i]->getVertex(2)->z(), t[i]->getVertex(0)->getNum(),
+              t[i]->getVertex(1)->getNum(), t[i]->getVertex(2)->getNum());
     }
     fprintf(f,"};\n");
     fclose(f);
@@ -630,9 +631,9 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   }
 
   double lmax = 0;
-  for(size_t i = 0; i < vs.size(); i++) {
+  for(std::size_t i = 0; i < vs.size(); i++) {
     double li = 0;
-    for(size_t j = 1; j < vs[i].size(); j++) {
+    for(std::size_t j = 1; j < vs[i].size(); j++) {
       li += distance(vs[i][j], vs[i][j - 1]);
     }
     lmax = std::max(li, lmax);
@@ -662,12 +663,14 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
 #if 0
   FILE *f = fopen("bug.pos","w");
   fprintf(f,"View\"\"{\n");
-  for (size_t i=0;i<t.size();i++){
+  for (std:: size_t i = 0; i < t.size(); i++){
     fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-            t[i]->getVertex(0)->x(),t[i]->getVertex(0)->y(),t[i]->getVertex(0)->z(),
-            t[i]->getVertex(1)->x(),t[i]->getVertex(1)->y(),t[i]->getVertex(1)->z(),
-            t[i]->getVertex(2)->x(),t[i]->getVertex(2)->y(),t[i]->getVertex(2)->z(),
-            t[i]->getVertex(0)->getNum(),t[i]->getVertex(1)->getNum(),t[i]->getVertex(2)->getNum());
+            t[i]->getVertex(0)->x(), t[i]->getVertex(0)->y(),
+            t[i]->getVertex(0)->z(), t[i]->getVertex(1)->x(),
+            t[i]->getVertex(1)->y(), t[i]->getVertex(1)->z(),
+            t[i]->getVertex(2)->x(), t[i]->getVertex(2)->y(),
+            t[i]->getVertex(2)->z(), t[i]->getVertex(0)->getNum(),
+            t[i]->getVertex(1)->getNum(), t[i]->getVertex(2)->getNum());
   }
   fprintf(f,"};\n");
   fclose(f);
@@ -735,7 +738,7 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
                              std::vector<std::vector<MTriangle *> > &ts)
 {
   std::map<MEdge, twoT, Less_Edge> conn;
-  for(size_t i = 0; i < t.size(); i++) {
+  for(std::size_t i = 0; i < t.size(); i++) {
     for(int j = 0; j < 3; j++) {
       MEdge e = t[i]->getEdge(j);
       std::map<MEdge, twoT, Less_Edge>::iterator it = conn.find(e);
@@ -768,7 +771,7 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
     _part.insert(_part.begin(), _touch.begin(), _touch.end());
     ts.push_back(_part);
     std::vector<MTriangle *> _update;
-    for(size_t i = 0; i < t.size(); i++)
+    for(std::size_t i = 0; i < t.size(); i++)
       if(_touch.find(t[i]) == _touch.end()) _update.push_back(t[i]);
     t = _update;
   }
@@ -784,13 +787,13 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
 #if 0 // this is now done in the STL reader
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     std::vector<MTriangle *> aa;
-    for(size_t i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       if((*it)->triangles[i]->getVertex(0) ==
-           (*it)->triangles[i]->getVertex(1) ||
+         (*it)->triangles[i]->getVertex(1) ||
          (*it)->triangles[i]->getVertex(0) ==
-           (*it)->triangles[i]->getVertex(2) ||
+         (*it)->triangles[i]->getVertex(2) ||
          (*it)->triangles[i]->getVertex(1) ==
-           (*it)->triangles[i]->getVertex(2)) {
+         (*it)->triangles[i]->getVertex(2)) {
       }
       else
         aa.push_back((*it)->triangles[i]);
@@ -817,8 +820,8 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
       (*it)->triangles = partitions.top();
       (*it)->mesh_vertices.clear();
       std::set<MVertex *> vs;
-      for(size_t i = 0; i < (*it)->triangles.size(); ++i) {
-        for(size_t j = 0; j < 3; ++j)
+      for(std::size_t i = 0; i < (*it)->triangles.size(); ++i) {
+        for(std::size_t j = 0; j < 3; ++j)
           vs.insert((*it)->triangles[i]->getVertex(j));
       }
       (*it)->mesh_vertices.insert((*it)->mesh_vertices.begin(), vs.begin(),
@@ -835,7 +838,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                   why.str().c_str());
       }
       if(np == 1) {
-        for(size_t i = 0; i < (*it)->triangles.size(); i++)
+        for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
           global[(*it)->triangles[i]] = part;
         part++;
       }
@@ -844,14 +847,13 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
         int *p = new int[(*it)->triangles.size()];
         if(!PartitionFace(*it, np, p)) {
           std::vector<MTriangle *> t[1000];
-          for(size_t i = 0; i < (*it)->triangles.size(); i++)
+          for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
             t[(*it)->triangles[i]->getPartition()].push_back(
               (*it)->triangles[i]);
           for(int i = 0; i < np; i++) {
             std::vector<std::vector<MTriangle *> > ts;
             makePartitionSimplyConnected(t[i], ts);
-            //	    printf("%d connected parts\n",ts.size());
-            for(size_t j = 0; j < ts.size(); j++) {
+            for(std::size_t j = 0; j < ts.size(); j++) {
               _levels.push(level + 1);
               partitions.push(ts[j]);
             }
@@ -889,7 +891,7 @@ void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
 {
   std::map<MEdge, int, Less_Edge> m;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    for(size_t i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       for(int j = 0; j < 3; j++) {
         std::map<MEdge, int, Less_Edge>::iterator it2 =
           m.find((*it)->triangles[i]->getEdge(j));
