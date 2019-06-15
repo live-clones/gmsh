@@ -47,7 +47,7 @@
 #include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"
-#if defined(__APPLE__)
+#ifdef HAVE_TOUCHBAR
   #include "touchBar.h"
 #endif
 
@@ -626,7 +626,7 @@ FlGui::FlGui(int argc, char **argv)
   if(CTX::instance()->showOptionsOnStartup) options->win->show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
   
-#if defined(__APPLE__)
+#ifdef HAVE_TOUCHBAR
   showTouchBar();
 #endif
 }

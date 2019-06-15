@@ -68,6 +68,7 @@
 #cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGENBR
+#cmakedefine HAVE_TOUCHBAR
 #cmakedefine HAVE_VISUDEV
 #cmakedefine HAVE_VOROPP
 #cmakedefine HAVE_ZIPPER

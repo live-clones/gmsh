@@ -176,10 +176,6 @@ endif()
 string(REPLACE "\\" " " PACKAGER ${PACKAGER})
 set(GMSH_PACKAGER "${PACKAGER}")
 
-if(APPLE AND ENABLE_FLTK AND ENABLE_TOUCHBAR)
-  set(GMSH_SRC ${GMSH_SRC};Fltk/touchBar.mm)
-endif()
-
 if(APPLE)
   set(GMSH_OS "MacOSX")
 elseif(CYGWIN OR MSYS)
@@ -218,6 +214,11 @@ endmacro()
 check_type_size("void*" SIZEOF_VOID_P)
 if(SIZEOF_VOID_P EQUAL 8)
   set_config_option(HAVE_64BIT_SIZE_T "64Bit")
+endif()
+
+if(APPLE AND ENABLE_FLTK AND ENABLE_TOUCHBAR)
+  set(GMSH_SRC ${GMSH_SRC};Fltk/touchBar.mm)
+  set_config_option(HAVE_TOUCHBAR "Touch bar")
 endif()
 
 # append 32/64 to the build name on Linux and Windows
