@@ -383,21 +383,22 @@ public:
 };
 
 class BoxField : public Field {
-  double v_in, v_out, x_min, x_max, y_min, y_max, z_min, z_max;
+  double v_in, v_out, x_min, x_max, y_min, y_max, z_min, z_max, thick;
 
 public:
   std::string getDescription()
   {
     return "The value of this field is VIn inside the box, VOut outside the "
-           "box. "
-           "The box is given by\n\n"
+           "box. The box is defined by\n\n"
            "  Xmin <= x <= XMax &&\n"
            "  YMin <= y <= YMax &&\n"
-           "  ZMin <= z <= ZMax";
+           "  ZMin <= z <= ZMax\n\n"
+           "If Thickness is > 0, the mesh size is interpolated between VIn and VOut "
+           "in a layer around the box of the prescribed thickness.";
   }
   BoxField()
   {
-    v_in = v_out = x_min = x_max = y_min = y_max = z_min = z_max = 0;
+    v_in = v_out = x_min = x_max = y_min = y_max = z_min = z_max = thick = 0;
     options["VIn"] = new FieldOptionDouble(v_in, "Value inside the box");
     options["VOut"] = new FieldOptionDouble(v_out, "Value outside the box");
     options["XMin"] =
@@ -412,15 +413,60 @@ public:
       new FieldOptionDouble(z_min, "Minimum Z coordinate of the box");
     options["ZMax"] =
       new FieldOptionDouble(z_max, "Maximum Z coordinate of the box");
+    options["Thickness"] =
+      new FieldOptionDouble(thick, "Thickness of a transition layer outside the box");
   }
   const char *getName() { return "Box"; }
   using Field::operator();
+  double computeDistance(double xp, double yp, double zp)
+  {
+    // orthogonal basis with origin (x_min,y_min,z_min)
+    double x0[3] = {x_min, y_min, z_min};
+    double x1[3] = {x_max, y_min, z_min};
+    double y1[3] = {x_min, y_max, z_min};
+    double z1[3] = {x_min, y_min, z_max};
+    double nx[3] = {x1[0] - x0[0], x1[1] - x0[1], x1[2] - x0[2]};
+    double ny[3] = {y1[0] - x0[0], y1[1] - x0[1], y1[2] - x0[2]};
+    double nz[3] = {z1[0] - x0[0], z1[1] - x0[1], z1[2] - x0[2]};
+    double pvect[3] = {xp - x0[0], yp - x0[1], zp - x0[2]};
+    double projX = scalProd(nx, pvect);
+    double tempX = scalProd(nx, nx);
+    if(tempX) projX /= tempX;
+    double projY = scalProd(ny, pvect);
+    double tempY = scalProd(ny, ny);
+    if(tempY) projY /= tempY;
+    double projZ = scalProd(nz, pvect);
+    double tempZ = scalProd(nz,nz);
+    if(tempZ) projZ /= tempZ;
+    if(projX < 0.0) projX = 0.0;
+    if(projX > 1.0) projX = 1.0;
+    if(projY < 0.0) projY = 0.0;
+    if(projY > 1.0) projY = 1.0;
+    if(projZ < 0.0) projZ = 0.0;
+    if(projZ > 1.0) projZ = 1.0;
+    double psbox[3] = {x0[0] + projX * nx[0] + projY * ny[0] + projZ * nz[0],
+                       x0[1] + projX * nx[1] + projY * ny[1] + projZ * nz[1],
+                       x0[2] + projX * nx[2] + projY * ny[2] + projZ * nz[2]};
+    double dist = sqrt(std::pow((psbox[0] - xp), 2) +
+                       std::pow((psbox[1] - yp), 2) +
+                       std::pow((psbox[2] - zp), 2));
+    return dist;
+  }
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    return (x <= x_max && x >= x_min && y <= y_max && y >= y_min &&
-            z <= z_max && z >= z_min) ?
-             v_in :
-             v_out;
+    // inside
+    if(x >= x_min && x <= x_max &&
+       y >= y_min && y <= y_max &&
+       z >= z_min && z <= z_max){
+      return v_in;
+    }
+    // transition layer
+    if(thick > 0){
+      double dist = computeDistance(x, y, z);
+      if(dist <= thick)
+        return v_in + (dist / thick) * (v_out - v_in);
+    }
+    return v_out;
   }
 };
 
@@ -487,7 +533,7 @@ public:
 class BallField : public Field {
   double v_in, v_out;
   double xc, yc, zc;
-  double R;
+  double R, thick;
 
 public:
   std::string getDescription()
@@ -496,7 +542,9 @@ public:
            "outside. "
            "The ball is defined by\n\n"
            "  ||dX||^2 < R^2 &&\n"
-           "  dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2";
+           "  dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2\n\n"
+           "If Thickness is > 0, the mesh size is interpolated between VIn and VOut "
+           "in a layer around the ball of the prescribed thickness.";
   }
   BallField()
   {
@@ -511,8 +559,9 @@ public:
       new FieldOptionDouble(yc, "Y coordinate of the ball center");
     options["ZCenter"] =
       new FieldOptionDouble(zc, "Z coordinate of the ball center");
-
     options["Radius"] = new FieldOptionDouble(R, "Radius");
+    options["Thickness"] =
+      new FieldOptionDouble(thick, "Thickness of a transition layer outside the ball");
   }
   const char *getName() { return "Ball"; }
   using Field::operator();
@@ -521,8 +570,15 @@ public:
     double dx = x - xc;
     double dy = y - yc;
     double dz = z - zc;
-
-    return ((dx * dx + dy * dy + dz * dz < R * R)) ? v_in : v_out;
+    double d = sqrt(dx * dx + dy * dy + dz * dz);
+    if(d < R) return v_in;
+    // transition layer
+    if(thick > 0){
+      double dist = d - R;
+      if(dist <= thick)
+        return v_in + (dist / thick) * (v_out - v_in);
+    }
+    return v_out;
   }
 };
 
