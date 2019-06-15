@@ -18,9 +18,6 @@ void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
 int parametrizeAllGFace(
   GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > *C = NULL);
 void parametrizeAllGEdge(GModel *gm);
-int parametrizeGFace(
-  discreteFace *gf,
-  std::map<MVertex *, std::pair<SVector3, SVector3> > *C = NULL);
 int computeDiscreteCurvatures(
   GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > &C);
 

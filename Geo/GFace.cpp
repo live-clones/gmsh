@@ -1490,7 +1490,7 @@ static void meshCompound(GFace *gf, bool verbose)
     c->mesh_vertices.clear();
   }
 
-  df->createGeometry();
+  df->createGeometry(NULL);
   df->mesh(verbose);
 
   for(std::size_t i = 0; i < df->mesh_vertices.size(); i++) {

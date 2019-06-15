@@ -33,6 +33,8 @@
 extern "C" {
 #include "hxt_mesh.h"
 #include "hxt_edge.h"
+#include "hxt_curvature.h"
+#include "hxt_linear_system.h"
 #include "hxt_mean_values.h"
 }
 #endif
@@ -591,79 +593,9 @@ int parametrizeAllGFace(GModel *gm,
   int result = 0;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
-    if(df) result += parametrizeGFace(df, C);
+    if(df) result += df->createGeometry(C);
   }
   return result;
-}
-
-int parametrizeGFace(discreteFace *gf,
-                     std::map<MVertex *, std::pair<SVector3, SVector3> > *C)
-{
-#if defined(HAVE_HXT)
-  int n = 1;
-  if(gf->triangles.empty()) return 0;
-  HXT_CHECK(hxtInitializeLinearSystems(&n, NULL));
-  HXTMesh *m;
-  HXTMeanValues *param;
-  HXTEdges *edges;
-  std::map<MVertex *, int> v2c;
-  std::vector<MVertex *> c2v;
-  gmsh2hxt(gf, &m, v2c, c2v);
-  //  double *nodalCurvatures;
-  //  double *crossField;
-  //  printf("A %d triangles\n",m->triangles.num);
-  HXT_CHECK(hxtEdgesCreate(m, &edges));
-  HXT_CHECK(hxtMeanValuesCreate(edges, &param));
-  HXT_CHECK(hxtMeanValuesCompute(param));
-  double *uvc = NULL;
-  int nv, ne;
-  HXT_CHECK(hxtMeanValuesGetData(param, NULL, NULL, &uvc, &nv, &ne, 1));
-  gf->stl_vertices_uv.clear();
-  gf->stl_vertices_uv.resize(nv);
-  gf->stl_vertices_xyz.clear();
-  gf->stl_vertices_xyz.resize(nv);
-  gf->stl_curvatures.clear();
-  if(C) gf->stl_curvatures.resize(2 * nv);
-  gf->stl_normals.clear();
-  gf->stl_normals.resize(nv);
-
-  for(int iv = 0; iv < nv; iv++) {
-    if(C) {
-      MVertex *v = c2v[iv];
-      std::map<MVertex *, std::pair<SVector3, SVector3> >::iterator it =
-        C->find(v);
-      if(it == C->end())
-        Msg::Error("POINT %d NOT FOUND FOR COMPUTING CURVATURES", v->getNum());
-      //      printf("%g %g
-      //      %g\n",it->second.first.x(),it->second.first.y(),it->second.first.z());
-      gf->stl_curvatures[2 * iv] = it->second.first;
-      gf->stl_curvatures[2 * iv + 1] = it->second.second;
-    }
-    gf->stl_vertices_uv[iv] = SPoint2(uvc[2 * iv], uvc[2 * iv + 1]);
-
-    gf->stl_vertices_xyz[iv] =
-      SPoint3(m->vertices.coord[4 * iv + 0], m->vertices.coord[4 * iv + 1],
-              m->vertices.coord[4 * iv + 2]);
-    gf->stl_normals[iv] = SVector3(1, 0, 0);
-  }
-  gf->stl_triangles.clear();
-  gf->stl_triangles.resize(3 * ne);
-  for(int ie = 0; ie < ne; ie++) {
-    gf->stl_triangles[3 * ie + 0] = m->triangles.node[3 * ie + 0];
-    gf->stl_triangles[3 * ie + 1] = m->triangles.node[3 * ie + 1];
-    gf->stl_triangles[3 * ie + 2] = m->triangles.node[3 * ie + 2];
-  }
-  //  printf("A\n");
-  gf->fillVertexArray(false);
-  gf->createGeometryFromSTL();
-
-  HXT_CHECK(hxtMeshDelete(&m));
-  HXT_CHECK(hxtEdgesDelete(&edges));
-  HXT_CHECK(hxtFree(&uvc));
-
-  //  printf("B\n");
-#endif
-  return 0;
 }
 
 int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,

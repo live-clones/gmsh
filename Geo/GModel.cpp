@@ -1964,7 +1964,7 @@ void GModel::createGeometryOfDiscreteEntities()
   double t1 = Cpu();
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     if((*it)->geomType() == GEntity::DiscreteSurface)
-      static_cast<discreteFace *>(*it)->createGeometry();
+      static_cast<discreteFace *>(*it)->createGeometry(NULL);
   }
   double t2 = Cpu();
   Msg::StatusBar(true, "Done creating geometry of discrete surfaces (%g s)",

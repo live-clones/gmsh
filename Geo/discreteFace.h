@@ -18,49 +18,28 @@
 #include "MLine.h"
 #include "rtree.h"
 
-#if defined(HAVE_HXT)
-
-extern "C" {
-#include "hxt_mesh.h"
-#include "hxt_parametrization.h"
-#include "hxt_linear_system.h"
-#include "hxt_curvature.h"
-}
-
 class MElementOctree;
-
-class hxt_reparam_surf {
-public:
-  MElementOctree *oct;
-  mutable RTree<std::pair<MTriangle *, MTriangle *> *, double, 3> rtree3d;
-  std::vector<MVertex> v2d;
-  std::vector<MVertex> v3d;
-  std::vector<MTriangle> t2d;
-  std::vector<MTriangle> t3d;
-  std::vector<SVector3> CURV;
-  std::vector<GEdge *> bnd;
-  std::vector<GEdge *> emb;
-  hxt_reparam_surf() : oct(NULL) {}
-  ~hxt_reparam_surf();
-  bool checkPlanar();
-};
-
-#endif
 
 class discreteFace : public GFace {
 private:
   bool _checkAndFixOrientation();
-#if defined(HAVE_HXT)
   int _currentParametrization;
-  std::vector<hxt_reparam_surf> _parametrizations;
-  bool _computeTopologyOfPartition(int nbColors, int *colors, int *nNodes,
-                                   int *nodes, double *uv,
-                                   double *nodalCurvatures,
-                                   std::vector<MVertex *> &c2v);
-  void _computeSplitEdges(int nbColors, int *colors,
-                          std::vector<MEdge> &splitEdges);
-  HXTStatus _reparametrizeThroughHxt();
-#endif
+  class param {
+  public:
+    MElementOctree *oct;
+    mutable RTree<std::pair<MTriangle *, MTriangle *> *, double, 3> rtree3d;
+    std::vector<MVertex> v2d;
+    std::vector<MVertex> v3d;
+    std::vector<MTriangle> t2d;
+    std::vector<MTriangle> t3d;
+    std::vector<SVector3> CURV;
+    std::vector<GEdge *> bnd;
+    std::vector<GEdge *> emb;
+    param() : oct(NULL) {}
+    ~param();
+    bool checkPlanar();
+  };
+  std::vector<param> _parametrizations;
 public:
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
@@ -79,15 +58,12 @@ public:
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
-  void createGeometry();
+  int createGeometry(std::map<MVertex *,
+                     std::pair<SVector3, SVector3> > *curvatures);
   void createGeometryFromSTL();
   virtual bool haveParametrization()
   {
-#if defined(HAVE_HXT)
     return !_parametrizations.empty();
-#else
-    return false;
-#endif
   }
   virtual void mesh(bool verbose);
   void setBoundEdges(const std::vector<int> &tagEdges);
@@ -97,16 +73,6 @@ public:
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
                                 const SVector3 &p, const double &R,
                                 double uv[2]);
-#if defined(HAVE_HXT)
-  HXTStatus computsSplitEdgesForPartitionIntoGenusOneSurfaces(
-    std::vector<MEdge> &splitEdges);
-#else
-  bool computsSplitEdgesForPartitionIntoGenusOneSurfaces(
-    std::vector<MEdge> &splitEdges)
-  {
-    return false;
-  }
-#endif
 };
 
 #endif
