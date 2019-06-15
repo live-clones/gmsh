@@ -2460,17 +2460,20 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def classifySurfaces(angle, boundary=True):
+        def classifySurfaces(angle, boundary=True, forReparametrization=False):
             """
             Classify ("color") the surface mesh based on the angle threshold `angle'
             (in radians), and create discrete curves accordingly. If `boundary' is set,
-            also create discrete curves on the boundary if the surface is open.
-            Warning: this is an experimental feature.
+            also create discrete curves on the boundary if the surface is open. If
+            `forReparametrization' is set, create edges and surfaces than can be
+            reparametrized using a single map. Warning: this is an experimental
+            feature.
             """
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
                 c_double(angle),
                 c_int(bool(boundary)),
+                c_int(bool(forReparametrization)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -2497,8 +2500,7 @@ class model:
             """
             Create a parametrization for curves and surfaces that do not have one (i.e.
             discrete curves and surfaces represented solely by meshes, without an
-            underlying CAD description). `createGeometry' automatically calls
-            `createTopology'. Warning: this is an experimental feature.
+            underlying CAD description). Warning: this is an experimental feature.
             """
             ierr = c_int()
             lib.gmshModelMeshCreateGeometry(

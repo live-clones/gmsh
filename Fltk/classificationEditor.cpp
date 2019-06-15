@@ -271,15 +271,15 @@ static void classify_cb(Fl_Widget *w, void *data)
     GModel::current()->add(e->selected);
   }
 
-  std::map<MVertex* , std::pair<SVector3, SVector3> > CURVATURES;
+  std::map<MVertex* , std::pair<SVector3, SVector3> > curvatures;
   if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
-    computeDiscreteCurvatures(GModel::current(), CURVATURES );
+    computeDiscreteCurvatures(GModel::current(), curvatures);
     computeEdgeCut(GModel::current(), e->selected->lines, 100000);
   }
 
   computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
 
-  GModel::current()->classifyFaces();
+  classifyFaces(GModel::current());
 
   // remove selected, but do not delete its elements
   if(e->selected) {
@@ -296,7 +296,7 @@ static void classify_cb(Fl_Widget *w, void *data)
 
   if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
     parametrizeAllGEdge(GModel::current());
-    parametrizeAllGFace(GModel::current(), &CURVATURES);
+    parametrizeAllGFace(GModel::current(), &curvatures);
   }
 }
 
@@ -401,20 +401,20 @@ classificationEditor::classificationEditor() : selected(0)
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     x += WB;
-    y += BH;
-
-    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button(
-      (int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
-    buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
-    buttons[CLASS_BUTTON_CLASSIFY]->activate();
-
-    x -= WB;
 
     y += BH;
     toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES] = new Fl_Check_Button(
       x, y, width - x - 2 * WB, BH, "Create parametrized discrete model");
     toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->type(
       FL_TOGGLE_BUTTON);
+
+    y += BH;
+    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button(
+      (int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
+    buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
+    buttons[CLASS_BUTTON_CLASSIFY]->activate();
+
+    x -= WB;
   }
 
   window->end();

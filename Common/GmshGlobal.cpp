@@ -333,7 +333,7 @@ int GmshBatch()
     else if(CTX::instance()->batch == 5)
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
     else if(CTX::instance()->batch == 6)
-      GModel::current()->classifyAllFaces(0.7, true);
+      GModel::current()->classifySurfaces(0.7, true, false); // FIXME specify args
     else if(CTX::instance()->batch == 7)
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear, true);
 #endif

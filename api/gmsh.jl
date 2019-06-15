@@ -2075,18 +2075,19 @@ function splitQuadrangles(quality = 1., tag = -1)
 end
 
 """
-    gmsh.model.mesh.classifySurfaces(angle, boundary = true)
+    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
 radians), and create discrete curves accordingly. If `boundary` is set, also
-create discrete curves on the boundary if the surface is open. Warning: this is
-an experimental feature.
+create discrete curves on the boundary if the surface is open. If
+`forReparametrization` is set, create edges and surfaces than can be
+reparametrized using a single map. Warning: this is an experimental feature.
 """
-function classifySurfaces(angle, boundary = true)
+function classifySurfaces(angle, boundary = true, forReparametrization = false)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClassifySurfaces, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Ptr{Cint}),
-          angle, boundary, ierr)
+          (Cdouble, Cint, Cint, Ptr{Cint}),
+          angle, boundary, forReparametrization, ierr)
     ierr[] != 0 && error("gmshModelMeshClassifySurfaces returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2112,8 +2113,7 @@ end
 
 Create a parametrization for curves and surfaces that do not have one (i.e.
 discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description). `createGeometry` automatically calls `createTopology`.
-Warning: this is an experimental feature.
+CAD description). Warning: this is an experimental feature.
 """
 function createGeometry()
     ierr = Ref{Cint}()

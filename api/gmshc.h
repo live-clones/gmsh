@@ -962,10 +962,13 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality,
 
 /* Classify ("color") the surface mesh based on the angle threshold `angle'
  * (in radians), and create discrete curves accordingly. If `boundary' is set,
- * also create discrete curves on the boundary if the surface is open.
- * Warning: this is an experimental feature. */
+ * also create discrete curves on the boundary if the surface is open. If
+ * `forReparametrization' is set, create edges and surfaces than can be
+ * reparametrized using a single map. Warning: this is an experimental
+ * feature. */
 GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const int boundary,
+                                            const int forReparametrization,
                                             int * ierr);
 
 /* Create a boundary representation from the mesh if the model does not have
@@ -975,8 +978,7 @@ GMSH_API void gmshModelMeshCreateTopology(int * ierr);
 
 /* Create a parametrization for curves and surfaces that do not have one (i.e.
  * discrete curves and surfaces represented solely by meshes, without an
- * underlying CAD description). `createGeometry' automatically calls
- * `createTopology'. Warning: this is an experimental feature. */
+ * underlying CAD description). Warning: this is an experimental feature. */
 GMSH_API void gmshModelMeshCreateGeometry(int * ierr);
 
 /* Compute a basis representation for homology spaces after a mesh has been

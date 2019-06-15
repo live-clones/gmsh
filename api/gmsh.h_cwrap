@@ -1665,12 +1665,15 @@ namespace gmsh { // Top-level functions
       // Classify ("color") the surface mesh based on the angle threshold `angle'
       // (in radians), and create discrete curves accordingly. If `boundary' is
       // set, also create discrete curves on the boundary if the surface is open.
-      // Warning: this is an experimental feature.
+      // If `forReparametrization' is set, create edges and surfaces than can be
+      // reparametrized using a single map. Warning: this is an experimental
+      // feature.
       inline void classifySurfaces(const double angle,
-                                   const bool boundary = true)
+                                   const bool boundary = true,
+                                   const bool forReparametrization = false)
       {
         int ierr = 0;
-        gmshModelMeshClassifySurfaces(angle, (int)boundary, &ierr);
+        gmshModelMeshClassifySurfaces(angle, (int)boundary, (int)forReparametrization, &ierr);
         if(ierr) throw ierr;
       }
 
@@ -1686,8 +1689,7 @@ namespace gmsh { // Top-level functions
 
       // Create a parametrization for curves and surfaces that do not have one
       // (i.e. discrete curves and surfaces represented solely by meshes, without
-      // an underlying CAD description). `createGeometry' automatically calls
-      // `createTopology'. Warning: this is an experimental feature.
+      // an underlying CAD description). Warning: this is an experimental feature.
       inline void createGeometry()
       {
         int ierr = 0;

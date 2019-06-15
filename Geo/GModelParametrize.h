@@ -6,9 +6,11 @@
 #ifndef GMODEL_PARAMETRIZE_H
 #define GMODEL_PARAMETRIZE_H
 
-int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
-                                  double ar);
-int isTriangulationParametrizable(const std::vector<MTriangle *> &t);
+void classifyFaces(GModel *gm,
+                   double angleThreshold,
+                   bool includeBoundary,
+                   bool forParametrization);
+void classifyFaces(GModel *gm);
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut);
 void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,

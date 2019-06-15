@@ -891,9 +891,12 @@ namespace gmsh { // Top-level functions
       // Classify ("color") the surface mesh based on the angle threshold `angle'
       // (in radians), and create discrete curves accordingly. If `boundary' is
       // set, also create discrete curves on the boundary if the surface is open.
-      // Warning: this is an experimental feature.
+      // If `forReparametrization' is set, create edges and surfaces than can be
+      // reparametrized using a single map. Warning: this is an experimental
+      // feature.
       GMSH_API void classifySurfaces(const double angle,
-                                     const bool boundary = true);
+                                     const bool boundary = true,
+                                     const bool forReparametrization = false);
 
       // Create a boundary representation from the mesh if the model does not have
       // one (e.g. when imported from mesh file formats with no BRep representation
@@ -902,8 +905,7 @@ namespace gmsh { // Top-level functions
 
       // Create a parametrization for curves and surfaces that do not have one
       // (i.e. discrete curves and surfaces represented solely by meshes, without
-      // an underlying CAD description). `createGeometry' automatically calls
-      // `createTopology'. Warning: this is an experimental feature.
+      // an underlying CAD description). Warning: this is an experimental feature.
       GMSH_API void createGeometry();
 
       // Compute a basis representation for homology spaces after a mesh has been

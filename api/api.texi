@@ -1598,12 +1598,13 @@ surfaces.
 @item classifySurfaces
 Classify ("color") the surface mesh based on the angle threshold @code{angle}
 (in radians), and create discrete curves accordingly. If @code{boundary} is set,
-also create discrete curves on the boundary if the surface is open. Warning:
-this is an experimental feature.
+also create discrete curves on the boundary if the surface is open. If
+@code{forReparametrization} is set, create edges and surfaces than can be
+reparametrized using a single map. Warning: this is an experimental feature.
 
 @table @asis
 @item Input:
-@code{angle}, @code{boundary}
+@code{angle}, @code{boundary}, @code{forReparametrization}
 @item Output:
 -
 @item Return:
@@ -1627,8 +1628,7 @@ underlying model). Warning: this is an experimental feature.
 @item createGeometry
 Create a parametrization for curves and surfaces that do not have one (i.e.
 discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description). @code{createGeometry} automatically calls
-@code{createTopology}. Warning: this is an experimental feature.
+CAD description). Warning: this is an experimental feature.
 
 @table @asis
 @item Input:

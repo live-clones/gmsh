@@ -3216,10 +3216,11 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
 }
 
 GMSH_API void gmsh::model::mesh::classifySurfaces(const double angle,
-                                                  const bool boundary)
+                                                  const bool boundary,
+                                                  const bool forReparametrization)
 {
   if(!_isInitialized()) { throw -1; }
-  GModel::current()->classifyAllFaces(angle, boundary);
+  GModel::current()->classifySurfaces(angle, boundary, forReparametrization);
 }
 
 GMSH_API void gmsh::model::mesh::createTopology()
