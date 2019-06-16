@@ -34,10 +34,7 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
   _split[0] = _split[1] = NULL;
 }
 
-discreteEdge::~discreteEdge()
-{
-  _split[0] = _split[1] = NULL;
-}
+discreteEdge::~discreteEdge() { _split[0] = _split[1] = NULL; }
 
 void discreteEdge::orderMLines()
 {
@@ -421,24 +418,21 @@ void discreteEdge::writeParametrization(FILE *fp, bool binary)
 {
   fprintf(fp, "%lu\n", _discretization.size());
   for(size_t i = 0; i < _discretization.size(); i++) {
-    fprintf(fp, "%22.15E %22.15E %22.15E %22.15E\n", _discretization[i].x(), _discretization[i].y(),
-            _discretization[i].z(), _pars[i]);
+    fprintf(fp, "%22.15E %22.15E %22.15E %22.15E\n", _discretization[i].x(),
+            _discretization[i].y(), _discretization[i].z(), _pars[i]);
   }
 }
 
 void discreteEdge::readParametrization(FILE *fp, bool binary)
 {
   int N;
-  if(fscanf(fp, "%d", &N) != 1)
-    return;
+  if(fscanf(fp, "%d", &N) != 1) return;
 
   _pars.resize(N);
   _discretization.resize(N);
   for(int i = 0; i < N; i++) {
     double x, y, z, t;
-    if(fscanf(fp, "%lf %lf %lf %lf\n", &x, &y, &z, &t) != 4) {
-      return;
-    }
+    if(fscanf(fp, "%lf %lf %lf %lf\n", &x, &y, &z, &t) != 4) { return; }
     _pars[i] = t;
     _discretization[i] = SPoint3(x, y, z);
   }

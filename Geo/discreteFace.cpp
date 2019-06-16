@@ -345,10 +345,13 @@ void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
 
 #if defined(HAVE_HXT)
 
-static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle *> &t,
-                          HXTMesh **pm, std::map<MVertex *, int> &v2c,
+static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
+                          std::map<MVertex *, int> &v2c,
                           std::vector<MVertex *> &c2v)
 {
+  int tag = gf->tag();
+  const std::vector<MTriangle *> &t = gf->triangles;
+
   HXTContext *context;
   hxtContextCreate(&context);
   HXTMesh *m;
@@ -391,13 +394,6 @@ static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle *> &t,
 
   *pm = m;
   return HXT_STATUS_OK;
-}
-
-static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
-                          std::map<MVertex *, int> &v2c,
-                          std::vector<MVertex *> &c2v)
-{
-  return gmsh2hxt(gf->tag(), gf->triangles, pm, v2c, c2v);
 }
 
 #endif
@@ -464,7 +460,6 @@ int discreteFace::createGeometry(
   HXT_CHECK(hxtMeshDelete(&m));
   HXT_CHECK(hxtEdgesDelete(&edges));
   HXT_CHECK(hxtFree(&uvc));
-
 #endif
   return 0;
 }
