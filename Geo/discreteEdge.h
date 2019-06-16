@@ -54,8 +54,8 @@ public:
   }
   void unsplit();
   bool split(MVertex *v, GVertex *gv, int &TAG);
-  void writeParametrization(FILE *fp, bool binary);
-  void readParametrization(FILE *fp, bool binary);
+  bool writeParametrization(FILE *fp, bool binary);
+  bool readParametrization(FILE *fp, bool binary);
 };
 
 #endif

@@ -1201,55 +1201,23 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
     GEdge *ge = model->getEdgeByTag(tag);
     if(ge) {
       discreteEdge *de = dynamic_cast<discreteEdge *>(ge);
-      if(de) { de->readParametrization(fp, binary); }
+      if(de) {
+        if(!de->readParametrization(fp, binary)) return false;
+      }
     }
   }
 
   for(int face = 0; face < nParam; face++) {
-    int tag, n, t;
-    if(fscanf(fp, "%d %d %d", &tag, &n, &t) != 3) {
+    int tag;
+    if(fscanf(fp, "%d", &tag) != 1) {
       return false;
     }
     GFace *gf = model->getFaceByTag(tag);
     if(gf) {
-      gf->stl_vertices_xyz.clear();
-      gf->stl_vertices_uv.clear();
-      gf->stl_normals.clear();
-      for(int i = 0; i < n; i++) {
-        double u, v, x, y, z, cxM, cyM, czM, cxm, cym, czm;
-        if(fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-                  &u, &v, &x, &y, &z, &cxM, &cyM, &czM, &cxm, &cym, &czm) != 11) {
-          return false;
-        }
-        gf->stl_vertices_uv.push_back(SPoint2(u, v));
-        gf->stl_vertices_xyz.push_back(SPoint3(x, y, z));
-        gf->stl_normals.push_back(SVector3(0, 0, 0));
-        gf->stl_curvatures.push_back(SVector3(cxM, cyM, czM));
-        gf->stl_curvatures.push_back(SVector3(cxm, cym, czm));
-      }
-      gf->stl_triangles.clear();
-      for(int i = 0; i < t; i++) {
-        int a, b, c;
-        if(fscanf(fp, "%d %d %d", &a, &b, &c) != 3){
-          return false;
-        }
-        gf->stl_triangles.push_back(a);
-        gf->stl_triangles.push_back(b);
-        gf->stl_triangles.push_back(c);
-        SPoint3 pa(gf->stl_vertices_xyz[a]);
-        SPoint3 pb(gf->stl_vertices_xyz[b]);
-        SPoint3 pc(gf->stl_vertices_xyz[c]);
-        SVector3 vba = pb - pa;
-        SVector3 vca = pc - pa;
-        SVector3 n = crossprod(vba, vca);
-        gf->stl_normals[a] += n;
-        gf->stl_normals[b] += n;
-        gf->stl_normals[c] += n;
-      }
-      for(int i = 0; i < n; i++) gf->stl_normals[i].normalize();
-      gf->fillVertexArray();
       discreteFace *df = dynamic_cast<discreteFace *>(gf);
-      if(df) { df->createGeometryFromSTL(); }
+      if(df) {
+        if(!df->readParametrization(fp, binary)) return false;
+      }
     }
   }
   return true;
@@ -2709,20 +2677,17 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
                                       bool binary)
 {
   fprintf(fp, "$Parametrizations\n");
-  int nParam = 0;
-  int nParamE = 0;
+  int nParamE = 0, nParamF = 0;
 
   for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
     if(de && de->haveParametrization()) { nParamE++; }
   }
-
   for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
-    GFace *gf = *it;
-    if(gf->stl_vertices_uv.size()) { nParam++; }
+    discreteFace *df = dynamic_cast<discreteFace *>(*it);
+    if(df && df->haveParametrization()) { nParamF++; }
   }
-  fprintf(fp, "%d %d\n", nParamE, nParam);
-
+  fprintf(fp, "%d %d\n", nParamE, nParamF);
   for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
     if(de && de->haveParametrization()) {
@@ -2730,34 +2695,11 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
       de->writeParametrization(fp, binary);
     }
   }
-
   for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
-    GFace *gf = *it;
-    if(gf->stl_vertices_uv.size()) {
-      fprintf(fp, "%d %lu %lu\n", gf->tag(), gf->stl_vertices_uv.size(),
-              gf->stl_triangles.size() / 3);
-      for(size_t i = 0; i < gf->stl_vertices_uv.size(); i++) {
-        if(gf->stl_curvatures.empty())
-          fprintf(fp, "%22.15e %22.15e %22.15e %22.15e %22.15e 0 0 0 0 0 0\n",
-                  gf->stl_vertices_uv[i].x(), gf->stl_vertices_uv[i].y(),
-                  gf->stl_vertices_xyz[i].x(), gf->stl_vertices_xyz[i].y(),
-                  gf->stl_vertices_xyz[i].z());
-        else
-          fprintf(fp,
-                  "%22.15e %22.15e %22.15e %22.15e %22.15e %22.15e %22.15e "
-                  "%22.15e %22.15e %22.15e %22.15e\n",
-                  gf->stl_vertices_uv[i].x(), gf->stl_vertices_uv[i].y(),
-                  gf->stl_vertices_xyz[i].x(), gf->stl_vertices_xyz[i].y(),
-                  gf->stl_vertices_xyz[i].z(), gf->stl_curvatures[2 * i].x(),
-                  gf->stl_curvatures[2 * i].y(), gf->stl_curvatures[2 * i].z(),
-                  gf->stl_curvatures[2 * i + 1].x(),
-                  gf->stl_curvatures[2 * i + 1].y(),
-                  gf->stl_curvatures[2 * i + 1].z());
-      }
-      for(size_t i = 0; i < gf->stl_triangles.size() / 3; i++) {
-        fprintf(fp, "%d %d %d\n", gf->stl_triangles[3 * i + 0],
-                gf->stl_triangles[3 * i + 1], gf->stl_triangles[3 * i + 2]);
-      }
+    discreteFace *df = dynamic_cast<discreteFace *>(*it);
+    if(df && df->haveParametrization()) {
+      fprintf(fp, "%d\n", df->tag());
+      df->writeParametrization(fp, binary);
     }
   }
   fprintf(fp, "$EndParametrizations\n");

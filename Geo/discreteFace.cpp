@@ -24,6 +24,64 @@ extern "C" {
 }
 #endif
 
+discreteFace::param::~param()
+{
+  if(oct) delete oct;
+}
+
+void discreteFace::param::clear()
+{
+  if(oct) delete oct;
+  rtree3d.RemoveAll();
+  v2d.clear();
+  v3d.clear();
+  t2d.clear();
+  t3d.clear();
+  CURV.clear();
+  bnd.clear();
+  emb.clear();
+}
+
+bool discreteFace::param::checkPlanar()
+{
+  SBoundingBox3d bb;
+  mean_plane mp;
+  std::vector<SPoint3> v, vp;
+  for(size_t i = 0; i < t3d.size(); i++) {
+    for(int j = 0; j < 3; j++) {
+      SPoint3 p(t3d[i].getVertex(j)->x(), t3d[i].getVertex(j)->y(),
+                t3d[i].getVertex(j)->z());
+      bb += p;
+      v.push_back(p);
+    }
+  }
+
+  computeMeanPlaneSimple(v, mp);
+  projectPointsToPlane(v, vp, mp);
+  for(size_t i = 0; i < v.size(); i++) {
+    double F = mp.a * v[i].x() + mp.b * v[i].y() + mp.c * v[i].z() - mp.d;
+    // double d = v[i].distance (vp[i]);
+    if(fabs(F) > 1.e-3 * bb.diag()) {
+      // printf("distance is too large %G vs %g\n",d,bb.diag());
+      return false;
+    }
+  }
+
+  SVector3 VX(mp.plan[0][0], mp.plan[0][1], mp.plan[0][2]);
+  SVector3 VY(mp.plan[1][0], mp.plan[1][1], mp.plan[1][2]);
+  SPoint3 XP(mp.x, mp.y, mp.z);
+
+  int count = 0;
+  for(size_t i = 0; i < t2d.size(); i++) {
+    for(int j = 0; j < 3; j++) {
+      SVector3 DX = vp[count++] - XP;
+      t2d[i].getVertex(j)->x() = dot(DX, VX);
+      t2d[i].getVertex(j)->y() = dot(DX, VY);
+    }
+  }
+  return true;
+}
+
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
   Surface *s = CreateSurface(num, MSH_SURF_DISCRETE);
@@ -95,7 +153,6 @@ static void MYxyz2uvw(const MElement *t, double xyz[3], double uvw[3])
   R[0] = (xyz[0] - p0.x());
   R[1] = (xyz[1] - p0.y());
   double const det = M[0][0] * M[1][1] - M[1][0] * M[0][1];
-  //  printf("DET = %22.15E\n",det);
   uvw[0] = R[0] * M[1][1] - M[0][1] * R[1];
   uvw[1] = M[0][0] * R[1] - M[1][0] * R[0];
   uvw[0] /= det;
@@ -454,7 +511,6 @@ int discreteFace::createGeometry(
     stl_triangles[3 * ie + 2] = m->triangles.node[3 * ie + 2];
   }
 
-  fillVertexArray(false);
   createGeometryFromSTL();
 
   HXT_CHECK(hxtMeshDelete(&m));
@@ -703,60 +759,77 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
   return pp;
 }
 
-discreteFace::param::~param()
+bool discreteFace::writeParametrization(FILE *fp, bool binary)
 {
-  if(oct) delete oct;
-}
-
-void discreteFace::param::clear()
-{
-  if(oct) delete oct;
-  rtree3d.RemoveAll();
-  v2d.clear();
-  v3d.clear();
-  t2d.clear();
-  t3d.clear();
-  CURV.clear();
-  bnd.clear();
-  emb.clear();
-}
-
-bool discreteFace::param::checkPlanar()
-{
-  SBoundingBox3d bb;
-  mean_plane mp;
-  std::vector<SPoint3> v, vp;
-  for(size_t i = 0; i < t3d.size(); i++) {
-    for(int j = 0; j < 3; j++) {
-      SPoint3 p(t3d[i].getVertex(j)->x(), t3d[i].getVertex(j)->y(),
-                t3d[i].getVertex(j)->z());
-      bb += p;
-      v.push_back(p);
-    }
+  fprintf(fp, "%lu %lu\n", stl_vertices_uv.size(),
+          stl_triangles.size() / 3);
+  for(std::size_t i = 0; i < stl_vertices_uv.size(); i++) {
+    if(stl_curvatures.empty())
+      fprintf(fp, "%.16g %.16g %.16g %.16g %.16g 0 0 0 0 0 0\n",
+              stl_vertices_uv[i].x(), stl_vertices_uv[i].y(),
+              stl_vertices_xyz[i].x(), stl_vertices_xyz[i].y(),
+              stl_vertices_xyz[i].z());
+    else
+      fprintf(fp,
+              "%.16g %.16g %.16g %.16g %.16g %.16g %.16g "
+              "%.16g %.16g %.16g %.16g\n",
+              stl_vertices_uv[i].x(), stl_vertices_uv[i].y(),
+              stl_vertices_xyz[i].x(), stl_vertices_xyz[i].y(),
+              stl_vertices_xyz[i].z(), stl_curvatures[2 * i].x(),
+              stl_curvatures[2 * i].y(), stl_curvatures[2 * i].z(),
+              stl_curvatures[2 * i + 1].x(),
+              stl_curvatures[2 * i + 1].y(),
+              stl_curvatures[2 * i + 1].z());
   }
+  for(std::size_t i = 0; i < stl_triangles.size() / 3; i++) {
+    fprintf(fp, "%d %d %d\n", stl_triangles[3 * i + 0],
+            stl_triangles[3 * i + 1], stl_triangles[3 * i + 2]);
+  }
+  return true;
+}
 
-  computeMeanPlaneSimple(v, mp);
-  projectPointsToPlane(v, vp, mp);
-  for(size_t i = 0; i < v.size(); i++) {
-    double F = mp.a * v[i].x() + mp.b * v[i].y() + mp.c * v[i].z() - mp.d;
-    // double d = v[i].distance (vp[i]);
-    if(fabs(F) > 1.e-3 * bb.diag()) {
-      // printf("distance is too large %G vs %g\n",d,bb.diag());
+bool discreteFace::readParametrization(FILE *fp, bool binary)
+{
+  int n, t;
+  if(fscanf(fp, "%d %d", &n, &t) != 2) {
+    return false;
+  }
+  stl_vertices_xyz.clear();
+  stl_vertices_uv.clear();
+  stl_normals.clear();
+  for(int i = 0; i < n; i++) {
+    double u, v, x, y, z, cxM, cyM, czM, cxm, cym, czm;
+    if(fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
+              &u, &v, &x, &y, &z, &cxM, &cyM, &czM, &cxm, &cym, &czm) != 11) {
       return false;
     }
+    stl_vertices_uv.push_back(SPoint2(u, v));
+    stl_vertices_xyz.push_back(SPoint3(x, y, z));
+    stl_normals.push_back(SVector3(0, 0, 0));
+    stl_curvatures.push_back(SVector3(cxM, cyM, czM));
+    stl_curvatures.push_back(SVector3(cxm, cym, czm));
   }
-
-  SVector3 VX(mp.plan[0][0], mp.plan[0][1], mp.plan[0][2]);
-  SVector3 VY(mp.plan[1][0], mp.plan[1][1], mp.plan[1][2]);
-  SPoint3 XP(mp.x, mp.y, mp.z);
-
-  int count = 0;
-  for(size_t i = 0; i < t2d.size(); i++) {
-    for(int j = 0; j < 3; j++) {
-      SVector3 DX = vp[count++] - XP;
-      t2d[i].getVertex(j)->x() = dot(DX, VX);
-      t2d[i].getVertex(j)->y() = dot(DX, VY);
+  stl_triangles.clear();
+  for(int i = 0; i < t; i++) {
+    int a, b, c;
+    if(fscanf(fp, "%d %d %d", &a, &b, &c) != 3){
+      return false;
     }
+    stl_triangles.push_back(a);
+    stl_triangles.push_back(b);
+    stl_triangles.push_back(c);
+    SPoint3 pa(stl_vertices_xyz[a]);
+    SPoint3 pb(stl_vertices_xyz[b]);
+    SPoint3 pc(stl_vertices_xyz[c]);
+    SVector3 vba = pb - pa;
+    SVector3 vca = pc - pa;
+    SVector3 n = crossprod(vba, vca);
+    stl_normals[a] += n;
+    stl_normals[b] += n;
+    stl_normals[c] += n;
   }
+  for(int i = 0; i < n; i++) stl_normals[i].normalize();
+
+  createGeometryFromSTL();
   return true;
 }

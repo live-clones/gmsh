@@ -64,6 +64,8 @@ public:
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
                                 const SVector3 &p, const double &R,
                                 double uv[2]);
+  bool writeParametrization(FILE *fp, bool binary);
+  bool readParametrization(FILE *fp, bool binary);
 };
 
 #endif

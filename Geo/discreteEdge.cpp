@@ -38,7 +38,7 @@ discreteEdge::~discreteEdge() { _split[0] = _split[1] = NULL; }
 
 void discreteEdge::orderMLines()
 {
-  size_t ss = lines.size();
+  std::size_t ss = lines.size();
   if(!ss) return;
 
   std::vector<MEdge> ed;
@@ -312,7 +312,7 @@ bool discreteEdge::split(MVertex *v, GVertex *gv, int &TAG)
   GVertex *gv1 = getEndVertex();
 
   if(v != gv->mesh_vertices[0]) {
-    Msg::Error("Wrong vertex for splitting discrete curve");
+    Msg::Error("Wrong mesh node for splitting discrete curve");
     return false;
   }
   discreteEdge *de_new[2];
@@ -324,7 +324,7 @@ bool discreteEdge::split(MVertex *v, GVertex *gv, int &TAG)
 
   int current = 0;
   de_new[current]->lines.push_back(lines[0]);
-  for(size_t i = 1; i < lines.size(); i++) {
+  for(std::size_t i = 1; i < lines.size(); i++) {
     if(lines[i]->getVertex(0) == v) { current++; }
     else {
       de_new[current]->mesh_vertices.push_back(lines[i]->getVertex(0));
@@ -334,15 +334,15 @@ bool discreteEdge::split(MVertex *v, GVertex *gv, int &TAG)
   }
   lines.clear();
   mesh_vertices.clear();
-  Msg::Info("Edge %d split in %d %d (%d and %d lines)\n", tag(),
+  Msg::Info("Discrete curve %d split in %d %d (%d and %d line elements)", tag(),
             de_new[0]->tag(), de_new[1]->tag(), de_new[0]->lines.size(),
             de_new[1]->lines.size());
 
   std::vector<GFace *> f = faces();
-  for(size_t i = 0; i < f.size(); i++) {
+  for(std::size_t i = 0; i < f.size(); i++) {
     std::vector<GEdge *> new_eds, old_eds;
     old_eds = f[i]->edges();
-    for(size_t j = 0; j < old_eds.size(); j++) {
+    for(std::size_t j = 0; j < old_eds.size(); j++) {
       if(old_eds[j] == this) {
         new_eds.push_back(de_new[0]);
         new_eds.push_back(de_new[1]);
@@ -368,13 +368,13 @@ void discreteEdge::unsplit(void)
   std::vector<GVertex *> l_vertices;
   getSplit(l_edges, l_vertices);
   // remove all internal model vertices
-  for(size_t k = 0; k < l_vertices.size(); k++) {
+  for(std::size_t k = 0; k < l_vertices.size(); k++) {
     l_vertices[k]->mesh_vertices.clear();
     model()->remove(l_vertices[k]);
   }
   // remove all internal model edges
-  for(size_t k = 0; k < l_edges.size(); k++) {
-    for(size_t l = 0; l < l_edges[k]->lines.size(); l++) {
+  for(std::size_t k = 0; k < l_edges.size(); k++) {
+    for(std::size_t l = 0; l < l_edges[k]->lines.size(); l++) {
       lines.push_back(l_edges[k]->lines[l]);
       if(l_edges[k]->lines[l]->getVertex(0)->onWhat() != getBeginVertex() &&
          l_edges[k]->lines[l]->getVertex(0)->onWhat() != getEndVertex() &&
@@ -400,11 +400,11 @@ void discreteEdge::unsplit(void)
   // recompute the right edge 2 face topology
 
   std::vector<GFace *> f = faces();
-  for(size_t i = 0; i < f.size(); i++) {
+  for(std::size_t i = 0; i < f.size(); i++) {
     std::vector<GEdge *> new_eds, old_eds;
     old_eds = f[i]->edges();
     new_eds.push_back(this);
-    for(size_t j = 0; j < old_eds.size(); j++) {
+    for(std::size_t j = 0; j < old_eds.size(); j++) {
       if(std::find(l_edges.begin(), l_edges.end(), old_eds[j]) ==
          l_edges.end()) {
         new_eds.push_back(old_eds[j]);
@@ -414,26 +414,28 @@ void discreteEdge::unsplit(void)
   }
 }
 
-void discreteEdge::writeParametrization(FILE *fp, bool binary)
+bool discreteEdge::writeParametrization(FILE *fp, bool binary)
 {
   fprintf(fp, "%lu\n", _discretization.size());
-  for(size_t i = 0; i < _discretization.size(); i++) {
-    fprintf(fp, "%22.15E %22.15E %22.15E %22.15E\n", _discretization[i].x(),
+  for(std::size_t i = 0; i < _discretization.size(); i++) {
+    fprintf(fp, "%.16g %.16g %.16g %.16g\n", _discretization[i].x(),
             _discretization[i].y(), _discretization[i].z(), _pars[i]);
   }
+  return true;
 }
 
-void discreteEdge::readParametrization(FILE *fp, bool binary)
+bool discreteEdge::readParametrization(FILE *fp, bool binary)
 {
   int N;
-  if(fscanf(fp, "%d", &N) != 1) return;
+  if(fscanf(fp, "%d", &N) != 1) return false;
 
   _pars.resize(N);
   _discretization.resize(N);
   for(int i = 0; i < N; i++) {
     double x, y, z, t;
-    if(fscanf(fp, "%lf %lf %lf %lf\n", &x, &y, &z, &t) != 4) { return; }
+    if(fscanf(fp, "%lf %lf %lf %lf\n", &x, &y, &z, &t) != 4) { return false; }
     _pars[i] = t;
     _discretization[i] = SPoint3(x, y, z);
   }
+  return true;
 }
