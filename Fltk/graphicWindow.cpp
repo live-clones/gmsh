@@ -2992,7 +2992,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
   }
   
 #ifdef HAVE_TOUCHBAR
-  updateTouchBar(what.c_str());
+  updateTouchBar();
 #endif
 }
 
