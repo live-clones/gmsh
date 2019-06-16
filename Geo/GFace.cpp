@@ -1509,6 +1509,9 @@ static void meshCompound(GFace *gf, bool verbose)
   }
   std::vector<GEdge*> ed(bndc.begin(), bndc.end());
   df->set(ed);
+
+  // FIXME: handle embedded entities
+
   df->createGeometry(NULL);
   df->mesh(verbose);
 

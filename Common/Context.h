@@ -89,7 +89,7 @@ struct contextGeometryOptions {
   int matchGeomAndMesh;
   double matchMeshScaleFactor;
   double matchMeshTolerance;
-  int hideCompounds, orientedPhysicals;
+  int orientedPhysicals;
   int reparamOnFaceRobust;
   // geometry display
   int draw, light, lightTwoSide, points, curves, surfaces, volumes;
