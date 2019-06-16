@@ -3521,11 +3521,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   if(main){
     _browser = new messageBrowser(twidth, mh + glheight, glwidth, mheight);
     int s = CTX::instance()->msgFontSize;
-#if defined(WIN32) // screen font on Windows is really small
-    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE : s);
-#else
     _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 2 : s);
-#endif
     _browser->callback(message_browser_cb, this);
     _browser->search_callback(message_menu_search_cb, this);
     _browser->autoscroll_callback(message_menu_autoscroll_cb, this);
@@ -4071,11 +4067,7 @@ void graphicWindow::copySelectedMessagesToClipboard()
 void graphicWindow::setMessageFontSize(int size)
 {
   if(!_browser) return;
-#if defined(WIN32) // screen font on Windows is really small
-  _browser->textsize(size <= 0 ? FL_NORMAL_SIZE - 1 : size);
-#else
   _browser->textsize(size <= 0 ? FL_NORMAL_SIZE - 2 : size);
-#endif
   _browser->redraw();
 }
 

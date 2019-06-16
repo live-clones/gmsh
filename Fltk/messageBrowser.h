@@ -68,7 +68,11 @@ public:
 
     _browser = new Fl_Browser(x, y + bh + 2 * wb, w, h - bh - 2 * wb, l);
     _browser->box(GMSH_SIMPLE_TOP_BOX);
+#if defined(WIN32) // FL_SCREEN seems to be too tiny on most Windows setups
+    _browser->textfont(FL_COURIER);
+#else
     _browser->textfont(FL_SCREEN);
+#endif
     _browser->type(FL_MULTI_BROWSER);
     _browser->end();
     end();

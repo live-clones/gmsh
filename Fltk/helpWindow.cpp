@@ -467,7 +467,11 @@ helpWindow::helpWindow()
 
     browser = new Fl_Browser(0, BH + 2 * WB, width, height - 2 * BH - 4 * WB);
     browser->box(GMSH_SIMPLE_TOP_BOX);
+#if defined(WIN32) // FL_SCREEN seems to be too tiny on most Windows setups
+    browser->textfont(FL_COURIER);
+#else
     browser->textfont(FL_SCREEN);
+#endif
     browser->textsize(FL_NORMAL_SIZE - 2);
     browser->type(FL_MULTI_BROWSER);
     browser->callback(browser_cb);
