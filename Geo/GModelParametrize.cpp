@@ -14,6 +14,7 @@
 #include "GFace.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
+#include "discreteVertex.h"
 #include "MTriangle.h"
 #include "MEdge.h"
 #include "GEdge.h"
@@ -491,7 +492,8 @@ int computeDiscreteCurvatures(
     HXT_CHECK(
       hxtCurvatureRusinkiewicz(m, &nodalCurvatures, &crossField, edges, false));
     const double ratioMax = 1.3;
-    {
+    const bool debug = false;
+    if(debug) {
       char name[256];
       sprintf(name, "nodalCurvatures%d.pos", (*it)->tag());
       saveNodalField(m, nodalCurvatures, 6, name);
@@ -555,7 +557,7 @@ int computeDiscreteCurvatures(
       if(!touched) break;
     }
 
-    {
+    if(debug) {
       char name[256];
       sprintf(name, "nodalCurvaturesCorrected%d.pos", (*it)->tag());
       saveNodalField(m, nodalCurvatures, 6, name);

@@ -7,23 +7,15 @@
 #define DISCRETE_FACE_H
 
 #include <algorithm>
-#include "GmshConfig.h"
 #include "GModel.h"
 #include "GFace.h"
-#include "discreteVertex.h"
-#include "discreteEdge.h"
 #include "MTriangle.h"
-#include "MElementCut.h"
-#include "MEdge.h"
-#include "MLine.h"
 #include "rtree.h"
 
 class MElementOctree;
 
 class discreteFace : public GFace {
 private:
-  bool _checkAndFixOrientation();
-  int _currentParametrization;
   class param {
   public:
     MElementOctree *oct;
@@ -37,9 +29,11 @@ private:
     std::vector<GEdge *> emb;
     param() : oct(NULL) {}
     ~param();
+    bool empty() const { return t2d.empty(); }
+    void clear();
     bool checkPlanar();
   };
-  std::vector<param> _parametrizations;
+  param _param;
 public:
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
@@ -61,10 +55,7 @@ public:
   int createGeometry(std::map<MVertex *,
                      std::pair<SVector3, SVector3> > *curvatures);
   void createGeometryFromSTL();
-  virtual bool haveParametrization()
-  {
-    return !_parametrizations.empty();
-  }
+  virtual bool haveParametrization() { return !_param.empty(); }
   virtual void mesh(bool verbose);
   void setBoundEdges(const std::vector<int> &tagEdges);
   void setBoundEdges(const std::vector<int> &tagEdges,
