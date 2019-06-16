@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributors: Anthony Royer
+// Contributors: Anthony Roy
 
 #ifndef TOUCHBAR_H
 #define TOUCHBAR_H

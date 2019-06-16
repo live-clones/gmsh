@@ -11,13 +11,12 @@
 #include "graphicWindow.h"
 #include "drawContext.h"
 #include "Options.h"
+#include "PView.h"
 #include <Foundation/Foundation.h>
 #include <AppKit/AppKit.h>
 
 static NSString *touchBarCustomizationId = @"com.something.customization_id";
-static NSString *touchBarItem1D = @"com.something.item_1D";
-static NSString *touchBarItem2D = @"com.something.item_2D";
-static NSString *touchBarItem3D = @"com.something.item_3D";
+static NSString *touchBarItemMesh = @"com.something.item_mesh";
 static NSString *touchBarItemGeoVisibility = @"com.something.item_geoVisibility";
 static NSString *touchBarItemGeoVisibility_Points = @"com.something.item_geoVisibility_Points";
 static NSString *touchBarItemGeoVisibility_Curves = @"com.something.item_geoVisibility_Curves";
@@ -30,6 +29,9 @@ static NSString *touchBarItemMeshVisibility_2DEdge = @"com.something.item_meshVi
 static NSString *touchBarItemMeshVisibility_2DFace = @"com.something.item_meshVisibility_2DFace";
 static NSString *touchBarItemMeshVisibility_3DEdge = @"com.something.item_meshVisibility_3DEdge";
 static NSString *touchBarItemMeshVisibility_3DFace = @"com.something.item_meshVisibility_3DFace";
+static NSString *touchBarItemViewVisibility = @"com.something.item_viewVisibility";
+static NSString *touchBarItemViewVisibility_Intervals = @"com.something.item_viewVisibility_Intervals";
+static NSString *touchBarItemViewVisibility_IntervalsRange = @"com.something.item_viewVisibility_IntervalsRange";
 
 @interface TouchBarDelegate : NSObject <NSTouchBarDelegate>
 
@@ -46,13 +48,12 @@ static NSString *touchBarItemMeshVisibility_3DFace = @"com.something.item_meshVi
 @property(strong) NSButton *buttonMeshVisibility2D_face;
 @property(strong) NSButton *buttonMeshVisibility3D_edge;
 @property(strong) NSButton *buttonMeshVisibility3D_face;
+@property(strong) NSSlider *viewIntervalRangeSliderControl;
 
   - (NSTouchBar *)makeTouchBar;
   - (NSCustomTouchBarItem *)makeButton:(NSString *)theIdentifier title:(NSString *)title buttonAction:(SEL)buttonAction;
   - (NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier;
-  - (void)button1D:(id)sender;
-  - (void)button2D:(id)sender;
-  - (void)button3D:(id)sender;
+  - (void)buttonMesh:(id)sender;
   - (void)nodes:(id)sender;
   - (void)lines:(id)sender;
   - (void)edge2D:(id)sender;
@@ -63,6 +64,8 @@ static NSString *touchBarItemMeshVisibility_3DFace = @"com.something.item_meshVi
   - (void)curves:(id)sender;
   - (void)surfaces:(id)sender;
   - (void)volumes:(id)sender;
+  - (void)intervals:(id)sender;
+  - (void)intervalsRange:(id)sender;
   - (void)changeState:(NSButton*) button;
 @end
 
@@ -73,8 +76,8 @@ static NSString *touchBarItemMeshVisibility_3DFace = @"com.something.item_meshVi
       touchBar.delegate = self;
       touchBar.customizationIdentifier = touchBarCustomizationId;
 
-      touchBar.defaultItemIdentifiers = @[touchBarItem1D, touchBarItem2D, touchBarItem3D, touchBarItemGeoVisibility, touchBarItemMeshVisibility];
-      touchBar.customizationAllowedItemIdentifiers = @[touchBarItem1D, touchBarItem2D, touchBarItem3D, touchBarItemGeoVisibility, touchBarItemMeshVisibility];
+      touchBar.defaultItemIdentifiers = @[touchBarItemMesh, touchBarItemGeoVisibility, touchBarItemMeshVisibility, touchBarItemViewVisibility];
+      touchBar.customizationAllowedItemIdentifiers = @[touchBarItemMesh, touchBarItemGeoVisibility, touchBarItemMeshVisibility, touchBarItemViewVisibility];
 
       return touchBar;
     }
@@ -85,32 +88,28 @@ static NSString *touchBarItemMeshVisibility_3DFace = @"com.something.item_meshVi
     
       NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:theIdentifier];
       touchBarItem.view = button;
-      touchBarItem.customizationLabel = NSLocalizedString(@"Truth Button", @"");
 
       return touchBarItem;
     }
 
     - (NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier
     {
-      if ([identifier isEqualToString:touchBarItem1D])
+      if ([identifier isEqualToString:touchBarItemMesh])
       {
-        return [self makeButton:touchBarItem1D title:NSLocalizedString(@"1D", @"") buttonAction:@selector(button1D:)];
-      }
-      else if ([identifier isEqualToString:touchBarItem2D])
-      {
-        return [self makeButton:touchBarItem2D title:NSLocalizedString(@"2D", @"") buttonAction:@selector(button3D:)];
-      }
-      else if ([identifier isEqualToString:touchBarItem3D])
-      {
-        return [self makeButton:touchBarItem3D title:NSLocalizedString(@"3D", @"") buttonAction:@selector(button3D:)];
+        NSSegmentedControl *segmentedControl = [NSSegmentedControl segmentedControlWithLabels:@[@"1D", @"2D", @"3D"] trackingMode:NSSegmentSwitchTrackingMomentary target:self action:@selector(buttonMesh:)];
+    
+        NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemMesh];
+        touchBarItem.view = segmentedControl;
+
+        return touchBarItem;
       }
       else if ([identifier isEqualToString:touchBarItemGeoVisibility])
       {
         NSPopoverTouchBarItem *popoverTouchBarItem = [[NSPopoverTouchBarItem alloc] initWithIdentifier:touchBarItemGeoVisibility];
-        popoverTouchBarItem.customizationLabel = @"Geometry Visibility";
+        popoverTouchBarItem.customizationLabel = @"Geometry";
       
         popoverTouchBarItem.showsCloseButton = YES;
-        popoverTouchBarItem.collapsedRepresentationLabel = @"Geometry Visibility";
+        popoverTouchBarItem.collapsedRepresentationLabel = @"Geometry";
       
         NSTouchBar *secondTouchBar = [[NSTouchBar alloc] init];
         secondTouchBar.delegate = self;
@@ -173,10 +172,10 @@ static NSString *touchBarItemMeshVisibility_3DFace = @"com.something.item_meshVi
       else if ([identifier isEqualToString:touchBarItemMeshVisibility])
       {
         NSPopoverTouchBarItem *popoverTouchBarItem = [[NSPopoverTouchBarItem alloc] initWithIdentifier:touchBarItemMeshVisibility];
-        popoverTouchBarItem.customizationLabel = @"Mesh Visibility";
+        popoverTouchBarItem.customizationLabel = @"Mesh";
       
         popoverTouchBarItem.showsCloseButton = YES;
-        popoverTouchBarItem.collapsedRepresentationLabel = @"Mesh Visibility";
+        popoverTouchBarItem.collapsedRepresentationLabel = @"Mesh";
       
         NSTouchBar *secondTouchBar = [[NSTouchBar alloc] init];
         secondTouchBar.delegate = self;
@@ -258,23 +257,77 @@ static NSString *touchBarItemMeshVisibility_3DFace = @"com.something.item_meshVi
         }
         return item;
       }
+      else if ([identifier isEqualToString:touchBarItemViewVisibility])
+      {
+        NSPopoverTouchBarItem *popoverTouchBarItem = [[NSPopoverTouchBarItem alloc] initWithIdentifier:touchBarItemViewVisibility];
+        popoverTouchBarItem.customizationLabel = @"View";
+      
+        popoverTouchBarItem.showsCloseButton = YES;
+        popoverTouchBarItem.collapsedRepresentationLabel = @"View";
+      
+        NSTouchBar *secondTouchBar = [[NSTouchBar alloc] init];
+        secondTouchBar.delegate = self;
+      
+        secondTouchBar.defaultItemIdentifiers = @[touchBarItemViewVisibility_Intervals, touchBarItemViewVisibility_IntervalsRange];
+        popoverTouchBarItem.popoverTouchBar = secondTouchBar;
+      
+        return popoverTouchBarItem;
+      }
+      else if ([identifier isEqualToString:touchBarItemViewVisibility_Intervals])
+      {
+        NSSegmentedControl *segmentedControl = [NSSegmentedControl segmentedControlWithLabels:@[@"Iso-values", @"Continuous map", @"Filled iso-values", @"Numeric values"] trackingMode:NSSegmentSwitchTrackingSelectOne target:self action:@selector(intervals:)];
+      
+        for(std::size_t i = 0; i < PView::list.size(); i++) {
+          if(opt_view_visible(i, GMSH_GET, 0)) {
+            NSInteger opt = opt_view_intervals_type(i, GMSH_GET, 0);
+            [segmentedControl setSelected:YES forSegment:opt-1];
+          }
+        }
+    
+        NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemViewVisibility_Intervals];
+        touchBarItem.view = segmentedControl;
+
+        return touchBarItem;
+      }
+      else if ([identifier isEqualToString:touchBarItemViewVisibility_IntervalsRange])
+      {
+        _viewIntervalRangeSliderControl = [NSSlider sliderWithValue:10 minValue:1 maxValue:50 target:self action:@selector(intervalsRange:)];
+    
+        NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemViewVisibility_IntervalsRange];
+        touchBarItem.view = _viewIntervalRangeSliderControl;
+      
+        for(std::size_t i = 0; i < PView::list.size(); i++) {
+          if(opt_view_visible(i, GMSH_GET, 0)) {
+            NSInteger opt = opt_view_intervals_type(i, GMSH_GET, 0);
+            if(opt == 2 || opt == 4) { // For continuous map and numeric values
+              _viewIntervalRangeSliderControl.hidden = YES;
+            }
+          }
+        }
+
+        return touchBarItem;
+      }
+
 
       return nil;
     }
 
-    - (void)button1D:(id)sender
+    - (void)buttonMesh:(id)sender
     {
-      mesh_1d_cb(0, 0);
-    }
-
-    - (void)button2D:(id)sender
-    {
-      mesh_2d_cb(0, 0);
-    }
-
-    - (void)button3D:(id)sender
-    {
-      mesh_3d_cb(0, 0);
+      NSInteger segment = ((NSSegmentedControl*) sender).selectedSegment;
+      switch(segment) {
+      case 0:
+        mesh_1d_cb(0, 0);
+        break;
+      case 1:
+        mesh_2d_cb(0, 0);
+        break;
+      case 2:
+        mesh_3d_cb(0, 0);
+        break;
+      default:
+        break;
+      }
     }
 
     - (void)nodes:(id)sender
@@ -345,6 +398,37 @@ static NSString *touchBarItemMeshVisibility_3DFace = @"com.something.item_meshVi
       [_buttonGeoVisibilityVolumes setNextState];
       quick_access_cb(0, (void *)"geometry_volumes");
       drawContext::global()->draw();
+    }
+
+    - (void)intervals:(id)sender
+    {
+      NSInteger segment = ((NSSegmentedControl*) sender).selectedSegment;
+      for(std::size_t i = 0; i < PView::list.size(); i++) {
+        if(opt_view_visible(i, GMSH_GET, 0)) {
+          opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, segment+1);
+        }
+      }
+      if(segment+1 == 1 || segment+1 == 3) { // For iso-values and filled iso-values
+        _viewIntervalRangeSliderControl.hidden = NO;
+      }
+      else {
+        _viewIntervalRangeSliderControl.hidden = YES;
+      }
+      drawContext::global()->draw();
+    }
+
+    - (void)intervalsRange:(id)sender
+    {
+      if(!_viewIntervalRangeSliderControl.hidden) {
+        NSSlider *slider = ((NSSlider*) sender);
+        double value = slider.doubleValue;
+        for(std::size_t i = 0; i < PView::list.size(); i++) {
+          if(opt_view_visible(i, GMSH_GET, 0)) {
+            opt_view_nb_iso(i, GMSH_SET|GMSH_GUI, value);
+          }
+        }
+        drawContext::global()->draw();
+      }
     }
 
     - (void)changeState:(NSButton*) button
