@@ -38,10 +38,6 @@ public:
 
   std::vector<MLine *> lines;
 
-  // when a compound of edges is created, both meshes should be kept alive this
-  // is due to Gmsh's flow and it only applies to model edges
-  GEdge *compound_edge;
-
 public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   GEdge(GModel *model, int tag);
