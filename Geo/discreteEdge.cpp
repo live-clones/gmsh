@@ -32,7 +32,7 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
   CreateReversedCurve(c);
 }
 
-void discreteEdge::orderMLines()
+void discreteEdge::_orderMLines()
 {
   std::size_t ss = lines.size();
   if(!ss) return;
@@ -87,7 +87,7 @@ void discreteEdge::orderMLines()
   model()->destroyMeshCaches();
 }
 
-bool discreteEdge::getLocalParameter(const double &t, int &iLine,
+bool discreteEdge::_getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
   for(iLine = 0; iLine < (int)_discretization.size() - 1; iLine++) {
@@ -106,7 +106,7 @@ GPoint discreteEdge::point(double par) const
   double tLoc;
   int iEdge;
 
-  if(!getLocalParameter(par, iEdge, tLoc)) return GPoint();
+  if(!_getLocalParameter(par, iEdge, tLoc)) return GPoint();
 
   SPoint3 vB = _discretization[iEdge];
   SPoint3 vE = _discretization[iEdge + 1];
@@ -121,7 +121,7 @@ SVector3 discreteEdge::firstDer(double par) const
   double tLoc;
   int iEdge;
 
-  if(!getLocalParameter(par, iEdge, tLoc)) return SVector3();
+  if(!_getLocalParameter(par, iEdge, tLoc)) return SVector3();
 
   SPoint3 vB = _discretization[iEdge];
   SPoint3 vE = _discretization[iEdge + 1];
@@ -152,7 +152,7 @@ double discreteEdge::curvature(double par) const
   if(_discretization.size() <= 3)
     return 0.0; // no clue on how to compute curvature with so few data...
 
-  if(!getLocalParameter(par, iEdge, tLoc)) return 0.0;
+  if(!_getLocalParameter(par, iEdge, tLoc)) return 0.0;
 
   // Take 3 points x y z : radius of curvature is equal to  |x-y| |x-z| |z-y| /
   // area (x,y,z)
@@ -234,7 +234,7 @@ void discreteEdge::createGeometry()
 
   if(!_discretization.empty()) return;
 
-  orderMLines();
+  _orderMLines();
 
   bool reverse = false;
   if(getEndVertex())

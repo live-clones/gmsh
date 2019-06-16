@@ -741,6 +741,7 @@ static void meshCompound(GEdge *ge)
   ge->model()->add(de);
   for(std::size_t i = 0; i < ge->_compound.size(); i++) {
     GEdge *c = (GEdge *)ge->_compound[i];
+    // cannot use the same line elements, as they get deleted in createGeometry
     for(std::size_t j = 0; j < c->lines.size(); j++) {
       de->lines.push_back(new MLine(c->lines[j]->getVertex(0),
                                     c->lines[j]->getVertex(1)));

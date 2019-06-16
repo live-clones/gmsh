@@ -509,7 +509,7 @@ int discreteFace::createGeometry(
     stl_triangles[3 * ie + 2] = m->triangles.node[3 * ie + 2];
   }
 
-  createGeometryFromSTL();
+  _createGeometryFromSTL();
 
   HXT_CHECK(hxtMeshDelete(&m));
   HXT_CHECK(hxtEdgesDelete(&edges));
@@ -518,7 +518,7 @@ int discreteFace::createGeometry(
   return 0;
 }
 
-void discreteFace::createGeometryFromSTL()
+void discreteFace::_createGeometryFromSTL()
 {
   if(stl_triangles.empty() || stl_vertices_uv.empty() ||
      stl_vertices_xyz.empty())
@@ -801,6 +801,6 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
   }
   for(int i = 0; i < n; i++) stl_normals[i].normalize();
 
-  createGeometryFromSTL();
+  _createGeometryFromSTL();
   return true;
 }

@@ -10,12 +10,11 @@
 #include "GEdge.h"
 
 class discreteEdge : public GEdge {
-protected:
+private:
   std::vector<double> _pars;
   std::vector<SPoint3> _discretization;
-  void orderMLines();
-  bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
-
+  void _orderMLines();
+  bool _getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
 public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   discreteEdge(GModel *model, int num);

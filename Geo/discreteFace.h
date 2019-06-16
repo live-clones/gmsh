@@ -32,6 +32,7 @@ private:
     bool checkPlanar();
   };
   param _param;
+  void _createGeometryFromSTL();
 public:
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
@@ -52,7 +53,6 @@ public:
                          SVector3 &dudv) const;
   int createGeometry(std::map<MVertex *,
                      std::pair<SVector3, SVector3> > *curvatures);
-  void createGeometryFromSTL();
   virtual bool haveParametrization() { return !_param.empty(); }
   virtual void mesh(bool verbose);
   void setBoundEdges(const std::vector<int> &tagEdges);
