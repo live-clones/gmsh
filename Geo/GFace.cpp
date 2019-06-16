@@ -1489,16 +1489,25 @@ static void meshCompound(GFace *gf, bool verbose)
     }
     std::vector<GEdge*> edges = c->edges();
     for(std::size_t j = 0; j < edges.size(); j++){
-      GEdge *e = edges[j]->compoundCurve ? edges[j]->compoundCurve : edges[j];
-      if(bnd.find(e) == bnd.end())
-        bnd.insert(e);
+      if(bnd.find(edges[j]) == bnd.end())
+        bnd.insert(edges[j]);
       else
-        bnd.erase(e);
+        bnd.erase(edges[j]);
     }
     c->triangles.clear();
     c->mesh_vertices.clear();
   }
-  std::vector<GEdge*> ed(bnd.begin(), bnd.end());
+
+  std::set<GEdge*, GEntityLessThan> bndc;
+  for(std::set<GEdge*, GEntityLessThan>::iterator it = bnd.begin();
+      it != bnd.end(); it++){
+    GEdge *e = *it;
+    if(e->compoundCurve)
+      bndc.insert(e->compoundCurve);
+    else
+      bndc.insert(e);
+  }
+  std::vector<GEdge*> ed(bndc.begin(), bndc.end());
   df->set(ed);
   df->createGeometry(NULL);
   df->mesh(verbose);
