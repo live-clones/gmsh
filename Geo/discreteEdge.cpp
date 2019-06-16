@@ -23,7 +23,6 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
   Tree_Add(model->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
-  _split[0] = _split[1] = NULL;
 }
 
 discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
@@ -31,10 +30,7 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
   Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
   Tree_Add(model->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
-  _split[0] = _split[1] = NULL;
 }
-
-discreteEdge::~discreteEdge() { _split[0] = _split[1] = NULL; }
 
 void discreteEdge::orderMLines()
 {
@@ -304,114 +300,6 @@ void discreteEdge::mesh(bool verbose)
   meshGEdge mesher;
   mesher(this);
 #endif
-}
-
-bool discreteEdge::split(MVertex *v, GVertex *gv, int &TAG)
-{
-  GVertex *gv0 = getBeginVertex();
-  GVertex *gv1 = getEndVertex();
-
-  if(v != gv->mesh_vertices[0]) {
-    Msg::Error("Wrong mesh node for splitting discrete curve");
-    return false;
-  }
-  discreteEdge *de_new[2];
-
-  de_new[0] = new discreteEdge(model(), ++TAG, gv0, gv);
-  de_new[1] = new discreteEdge(model(), ++TAG, gv, gv1);
-
-  setSplit(de_new[0], de_new[1], gv);
-
-  int current = 0;
-  de_new[current]->lines.push_back(lines[0]);
-  for(std::size_t i = 1; i < lines.size(); i++) {
-    if(lines[i]->getVertex(0) == v) { current++; }
-    else {
-      de_new[current]->mesh_vertices.push_back(lines[i]->getVertex(0));
-      lines[i]->getVertex(0)->setEntity(de_new[current]);
-    }
-    de_new[current]->lines.push_back(lines[i]);
-  }
-  lines.clear();
-  mesh_vertices.clear();
-  Msg::Info("Discrete curve %d split in %d %d (%d and %d line elements)", tag(),
-            de_new[0]->tag(), de_new[1]->tag(), de_new[0]->lines.size(),
-            de_new[1]->lines.size());
-
-  std::vector<GFace *> f = faces();
-  for(std::size_t i = 0; i < f.size(); i++) {
-    std::vector<GEdge *> new_eds, old_eds;
-    old_eds = f[i]->edges();
-    for(std::size_t j = 0; j < old_eds.size(); j++) {
-      if(old_eds[j] == this) {
-        new_eds.push_back(de_new[0]);
-        new_eds.push_back(de_new[1]);
-        new_eds[0]->addFace(f[i]);
-        new_eds[1]->addFace(f[i]);
-      }
-      else
-        new_eds.push_back(old_eds[j]);
-    }
-    f[i]->set(new_eds);
-  }
-  model()->add(de_new[0]);
-  model()->add(de_new[1]);
-  model()->remove(this);
-  return true;
-}
-
-void discreteEdge::unsplit(void)
-{
-  if(_split[2] != NULL) return;
-  if(_split[0] == NULL) return;
-  std::vector<GEdge *> l_edges;
-  std::vector<GVertex *> l_vertices;
-  getSplit(l_edges, l_vertices);
-  // remove all internal model vertices
-  for(std::size_t k = 0; k < l_vertices.size(); k++) {
-    l_vertices[k]->mesh_vertices.clear();
-    model()->remove(l_vertices[k]);
-  }
-  // remove all internal model edges
-  for(std::size_t k = 0; k < l_edges.size(); k++) {
-    for(std::size_t l = 0; l < l_edges[k]->lines.size(); l++) {
-      lines.push_back(l_edges[k]->lines[l]);
-      if(l_edges[k]->lines[l]->getVertex(0)->onWhat() != getBeginVertex() &&
-         l_edges[k]->lines[l]->getVertex(0)->onWhat() != getEndVertex() &&
-         l_edges[k]->lines[l]->getVertex(0)->onWhat() != this)
-        l_edges[k]->lines[l]->getVertex(0)->setEntity(this);
-      if(l_edges[k]->lines[l]->getVertex(1)->onWhat() != getBeginVertex() &&
-         l_edges[k]->lines[l]->getVertex(1)->onWhat() != getEndVertex() &&
-         l_edges[k]->lines[l]->getVertex(1)->onWhat() != this)
-        l_edges[k]->lines[l]->getVertex(1)->setEntity(this);
-      if(l_edges[k]->lines[l]->getVertex(1)->onWhat() == this &&
-         std::find(mesh_vertices.begin(), mesh_vertices.end(),
-                   l_edges[k]->lines[l]->getVertex(0)) == mesh_vertices.end())
-        mesh_vertices.push_back(l_edges[k]->lines[l]->getVertex(1));
-      if(l_edges[k]->lines[l]->getVertex(1)->onWhat() == this &&
-         std::find(mesh_vertices.begin(), mesh_vertices.end(),
-                   l_edges[k]->lines[l]->getVertex(1)) == mesh_vertices.end())
-        mesh_vertices.push_back(l_edges[k]->lines[l]->getVertex(1));
-    }
-    l_edges[k]->lines.clear();
-    l_edges[k]->mesh_vertices.clear();
-    model()->remove(l_edges[k]);
-  }
-  // recompute the right edge 2 face topology
-
-  std::vector<GFace *> f = faces();
-  for(std::size_t i = 0; i < f.size(); i++) {
-    std::vector<GEdge *> new_eds, old_eds;
-    old_eds = f[i]->edges();
-    new_eds.push_back(this);
-    for(std::size_t j = 0; j < old_eds.size(); j++) {
-      if(std::find(l_edges.begin(), l_edges.end(), old_eds[j]) ==
-         l_edges.end()) {
-        new_eds.push_back(old_eds[j]);
-      }
-    }
-    f[i]->set(new_eds);
-  }
 }
 
 bool discreteEdge::writeParametrization(FILE *fp, bool binary)

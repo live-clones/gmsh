@@ -24,7 +24,7 @@
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), v0(_v0),
-    v1(_v1), masterOrientation(0)
+    v1(_v1), masterOrientation(0), compoundCurve(NULL)
 {
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);
@@ -34,7 +34,7 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
 
 GEdge::GEdge(GModel *model, int tag)
   : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), v0(0), v1(0),
-    masterOrientation(0)
+    masterOrientation(0), compoundCurve(NULL)
 {
   meshStatistics.status = GEdge::PENDING;
   GEdge::resetMeshAttributes();
@@ -735,19 +735,27 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,
 #if defined(HAVE_MESH)
 static void meshCompound(GEdge *ge)
 {
-  std::vector<MLine *> lines;
+  // store all line elements of the compound in a new (compound) discrete curve;
+  // no new mesh nodes are created here
+  discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000);
+  ge->model()->add(de);
   for(std::size_t i = 0; i < ge->_compound.size(); i++) {
     GEdge *c = (GEdge *)ge->_compound[i];
     for(std::size_t j = 0; j < c->lines.size(); j++) {
-      lines.push_back(
-        new MLine(c->lines[j]->getVertex(0), c->lines[j]->getVertex(1)));
+      de->lines.push_back(new MLine(c->lines[j]->getVertex(0),
+                                    c->lines[j]->getVertex(1)));
     }
+    c->compoundCurve = de;
   }
-  discreteEdge *de =
-    new discreteEdge(ge->model(), ge->tag() + 100000, NULL, NULL);
-  ge->model()->add(de);
-  de->lines = lines;
+  // create the geometry of the compound
   de->createGeometry();
+  // once the geometry is created, delete the newly created mesh elements and
+  // reset the mesh - because meshGEdge would delete the mesh
+  for(std::size_t j = 0; j < de->lines.size(); j++)
+    delete de->lines[j];
+  de->lines.clear();
+  de->mesh_vertices.clear();
+  // mesh the compound
   de->mesh(false);
 }
 #endif
@@ -757,7 +765,7 @@ void GEdge::mesh(bool verbose)
 #if defined(HAVE_MESH)
   meshGEdge mesher;
   mesher(this);
-  if(_compound.size()) { // Some faces are meshed together
+  if(_compound.size()) { // Some edges are meshed together
     if(_compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
       for(std::size_t i = 0; i < _compound.size(); i++) {

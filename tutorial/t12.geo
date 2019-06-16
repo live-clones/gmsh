@@ -27,16 +27,15 @@ Line(7) = {7, 6}; Line(8) = {6, 1}; Spline(9) = {7, 5, 9};
 Line(10) = {6, 8};
 
 Curve Loop(11) = {5, 6, 9, 4};     Surface(1) = {11};
-Curve Loop(13) = {9, -3, -10, -7}; Surface(5) = {13};
-Curve Loop(15) = {10, -2, -1, -8}; Surface(10) = {15};
+Curve Loop(13) = {-9, 3, 10, 7}; Surface(5) = {13};
+Curve Loop(15) = {-10, 2, 1, 8}; Surface(10) = {15};
 
-Printf("Warning : Compound curves/surfaces from CAD entities need to be reimplemented in Gmsh 4.4");
-/*
-// Treat curves 2, 3 and 4 as a single curve
+// Treat curves 2, 3 and 4 as a single curve when meshing (i.e. mesh across
+// points 6 and 7)
 Compound Curve{2, 3, 4};
 // Idem with curves 6, 7 and 8
 Compound Curve{6, 7, 8};
 
-// Treat surfaces 12, 14 and 16 as a single surface
+// Treat surfaces 1, 5 and 10 as a single surface when meshing (i.e. mesh across
+// curves 9 and 10)
 Compound Surface{1, 5, 10};
-*/

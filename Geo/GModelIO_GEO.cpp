@@ -1257,8 +1257,7 @@ void GEO_Internals::synchronize(GModel *model)
 
   // we might want to store mesh compounds directly in GModel; but this is OK
   // for now.
-  for(std::multimap<int, std::vector<int> >::iterator it =
-        _meshCompounds.begin();
+  for(std::multimap<int, std::vector<int> >::iterator it = _meshCompounds.begin();
       it != _meshCompounds.end(); ++it) {
     int dim = it->first;
     std::vector<int> compound = it->second;

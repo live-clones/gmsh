@@ -38,8 +38,6 @@ void discreteFace::param::clear()
   t2d.clear();
   t3d.clear();
   CURV.clear();
-  bnd.clear();
-  emb.clear();
 }
 
 bool discreteFace::param::checkPlanar()
@@ -553,8 +551,6 @@ void discreteFace::createGeometryFromSTL()
       _param.CURV.push_back(stl_curvatures[2 * c + 1]);
     }
   }
-  _param.bnd = edges();
-  _param.emb = embedded_edges;
   if(_param.checkPlanar())
     Msg::Info("Discrete surface %d is planar, simplifying parametrization",
               tag());
@@ -618,32 +614,7 @@ void discreteFace::createGeometryFromSTL()
 void discreteFace::mesh(bool verbose)
 {
   if(_param.empty()) return;
-
-  std::vector<MTriangle *> _t;
-  std::vector<MVertex *> _v;
-  std::vector<GEdge *> const tmp = l_edges;
-  std::vector<GVertex *> _gv;
-
-  l_edges.clear();
-  for(size_t j = 0; j < _param.bnd.size(); j++) {
-    if(_param.bnd[j]->geomType() == DiscreteCurve)
-      ((discreteEdge *)_param.bnd[j])->getSplit(l_edges, _gv);
-    else
-      l_edges.push_back(_param.bnd[j]);
-  }
-  embedded_edges.clear();
-  embedded_edges.insert(embedded_edges.begin(), _param.emb.begin(),
-                        _param.emb.end());
-  triangles.clear();
-  mesh_vertices.clear();
   GFace::mesh(verbose);
-  _t.insert(_t.begin(), triangles.begin(), triangles.end());
-  _v.insert(_v.begin(), mesh_vertices.begin(), mesh_vertices.end());
-  triangles = _t;
-  mesh_vertices = _v;
-  l_edges = tmp;
-  embedded_edges.clear();
-  meshStatistics.status = GFace::DONE;
 }
 
 GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,

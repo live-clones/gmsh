@@ -25,8 +25,6 @@ private:
     std::vector<MTriangle> t2d;
     std::vector<MTriangle> t3d;
     std::vector<SVector3> CURV;
-    std::vector<GEdge *> bnd;
-    std::vector<GEdge *> emb;
     param() : oct(NULL) {}
     ~param();
     bool empty() const { return t2d.empty(); }

@@ -1472,6 +1472,7 @@ static void meshCompound(GFace *gf, bool verbose)
   std::vector<GFace *> triangles_tag;
   std::vector<SPoint2> triangles_uv;
 
+  std::set<GEdge*, GEntityLessThan> bnd;
   for(std::size_t i = 0; i < gf->_compound.size(); i++) {
     GFace *c = (GFace *)gf->_compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
@@ -1486,10 +1487,19 @@ static void meshCompound(GFace *gf, bool verbose)
         triangles_uv.push_back(param);
       }
     }
+    std::vector<GEdge*> edges = c->edges();
+    for(std::size_t j = 0; j < edges.size(); j++){
+      GEdge *e = edges[j]->compoundCurve ? edges[j]->compoundCurve : edges[j];
+      if(bnd.find(e) == bnd.end())
+        bnd.insert(e);
+      else
+        bnd.erase(e);
+    }
     c->triangles.clear();
     c->mesh_vertices.clear();
   }
-
+  std::vector<GEdge*> ed(bnd.begin(), bnd.end());
+  df->set(ed);
   df->createGeometry(NULL);
   df->mesh(verbose);
 
@@ -1532,7 +1542,7 @@ static void meshCompound(GFace *gf, bool verbose)
     else
       gf->triangles.push_back(t); // FIXME could be better!
   }
-  // gf->triangles = df->triangles;
+
   df->triangles.clear();
   df->mesh_vertices.clear();
   delete df;

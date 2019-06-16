@@ -38,6 +38,11 @@ public:
 
   std::vector<MLine *> lines;
 
+  // when a compound of curves is created, both meshes should be kept alive
+  // (because the 2D meshing procedure will need to access the mesh of each of
+  // the original curves, in addition to the mesh of the compound curve)
+  GEdge *compoundCurve;
+
 public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   GEdge(GModel *model, int tag);

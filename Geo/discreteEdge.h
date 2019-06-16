@@ -15,13 +15,11 @@ protected:
   std::vector<SPoint3> _discretization;
   void orderMLines();
   bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
-  discreteEdge *_split[3];
-  GVertex *_vsplit;
 
 public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   discreteEdge(GModel *model, int num);
-  virtual ~discreteEdge();
+  virtual ~discreteEdge() {}
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
@@ -33,27 +31,6 @@ public:
   int minimumDrawSegments() const { return 2 * _pars.size(); }
   virtual int minimumMeshSegments() const { return periodic(0) ? 3 : 2; }
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
-  void setSplit(discreteEdge *e0, discreteEdge *e1, GVertex *vs)
-  {
-    _split[0] = e0;
-    _split[1] = e1;
-    e0->_split[2] = this;
-    e1->_split[2] = this;
-    _vsplit = vs;
-  }
-  void getSplit(std::vector<GEdge *> &s, std::vector<GVertex *> &vs)
-  {
-    if(_split[0] == NULL) {
-      if(std::find(s.begin(), s.end(), this) == s.end()) { s.push_back(this); }
-    }
-    else {
-      vs.push_back(_vsplit);
-      _split[0]->getSplit(s, vs);
-      _split[1]->getSplit(s, vs);
-    }
-  }
-  void unsplit();
-  bool split(MVertex *v, GVertex *gv, int &TAG);
   bool writeParametrization(FILE *fp, bool binary);
   bool readParametrization(FILE *fp, bool binary);
 };
