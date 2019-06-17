@@ -821,7 +821,7 @@ static void modifyInitialMeshForBoundaryLayers(
   std::set<MEdge, Less_Edge> removed;
 
   std::vector<GEdge *> edges = gf->edges();
-  std::vector<GEdge *> const &embedded_edges = gf->embeddedEdges();
+  std::vector<GEdge *> embedded_edges = gf->getEmbeddedEdges();
   edges.insert(edges.begin(), embedded_edges.begin(), embedded_edges.end());
   std::vector<GEdge *>::iterator ite = edges.begin();
 
@@ -1216,7 +1216,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     return false;
   }
 
-  std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
+  std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
   ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
     if(!(*ite)->isMeshDegenerated()) {
@@ -1233,8 +1233,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   // add embedded vertices
-  std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
-  std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
+  std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+  std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
   while(itvx != emb_vertx.end()) {
     all_vertices.insert((*itvx)->mesh_vertices.begin(),
                         (*itvx)->mesh_vertices.end());
@@ -2165,8 +2165,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
     // Embedded Vertices
     // add embedded vertices
-    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
+    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+    std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
 
     std::map<MVertex *, std::set<BDS_Point *> > invertedRecoverMap;
     for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
@@ -2178,7 +2178,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     int pNum = m->MAXPOINTNUMBER;
     nbPointsTotal += emb_vertx.size();
     {
-      std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
+      std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
       std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
       std::set<MVertex *> vs;
       while(ite != emb_edges.end()) {
@@ -2219,7 +2219,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       ++itvx;
     }
 
-    std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
+    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
     std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
     std::set<MVertex *> vs;
     std::map<MVertex *, BDS_Point *> facile;

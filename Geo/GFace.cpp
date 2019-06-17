@@ -323,8 +323,23 @@ SOrientedBoundingBox GFace::getOBB()
   return SOrientedBoundingBox(_obb);
 }
 
-std::vector<MVertex *> GFace::getEmbeddedMeshVertices() const
+std::vector<GVertex *> GFace::getEmbeddedVertices(bool force) const
 {
+  if(!force && _compound.size()) return std::vector<GVertex *>();
+  return std::vector<GVertex*>(embedded_vertices.begin(),
+                               embedded_vertices.end());
+}
+
+std::vector<GEdge *> GFace::getEmbeddedEdges(bool force) const
+{
+  if(!force && _compound.size()) return std::vector<GEdge *>();
+  return embedded_edges;
+}
+
+std::vector<MVertex *> GFace::getEmbeddedMeshVertices(bool force) const
+{
+  if(!force && _compound.size()) return std::vector<MVertex *>();
+
   std::set<MVertex *> tmp;
   for(std::vector<GEdge *>::const_iterator it = embedded_edges.begin();
       it != embedded_edges.end(); it++) {
@@ -1472,7 +1487,8 @@ static void meshCompound(GFace *gf, bool verbose)
   std::vector<GFace *> triangles_tag;
   std::vector<SPoint2> triangles_uv;
 
-  std::set<GEdge*, GEntityLessThan> bnd;
+  std::set<GEdge*, GEntityLessThan> bnd, emb1;
+  std::set<GVertex*, GEntityLessThan> emb0;
   for(std::size_t i = 0; i < gf->_compound.size(); i++) {
     GFace *c = (GFace *)gf->_compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
@@ -1494,6 +1510,12 @@ static void meshCompound(GFace *gf, bool verbose)
       else
         bnd.erase(edges[j]);
     }
+    // force retrieval of embedded entities
+    std::vector<GVertex*> embv = c->getEmbeddedVertices(true);
+    emb0.insert(embv.begin(), embv.end());
+    std::vector<GEdge*> embe = c->getEmbeddedEdges(true);
+    emb1.insert(embe.begin(), embe.end());
+
     c->triangles.clear();
     c->mesh_vertices.clear();
   }
@@ -1510,7 +1532,13 @@ static void meshCompound(GFace *gf, bool verbose)
   std::vector<GEdge*> ed(bndc.begin(), bndc.end());
   df->set(ed);
 
-  // FIXME: handle embedded entities
+  for(std::set<GEdge*, GEntityLessThan>::iterator it = emb1.begin();
+      it != emb1.end(); it++)
+    df->addEmbeddedEdge(*it);
+
+  for(std::set<GVertex*, GEntityLessThan>::iterator it = emb0.begin();
+      it != emb0.end(); it++)
+    df->addEmbeddedVertex(*it);
 
   df->createGeometry(NULL);
   df->mesh(verbose);

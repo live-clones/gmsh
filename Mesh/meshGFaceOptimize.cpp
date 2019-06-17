@@ -125,8 +125,8 @@ bool buildMeshGenerationDataStructures(
   // take care of embedded vertices
   std::set<MVertex *> embeddedVertices;
   {
-    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
+    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+    std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       if((*itvx)->mesh_vertices.size()) {
         MVertex *v = *((*itvx)->mesh_vertices.begin());
@@ -140,7 +140,7 @@ bool buildMeshGenerationDataStructures(
 
   // take good care of embedded edges
   {
-    std::vector<GEdge *> const &embedded_edges = gf->embeddedEdges();
+    std::vector<GEdge *> embedded_edges = gf->getEmbeddedEdges();
     std::vector<GEdge *>::const_iterator ite = embedded_edges.begin();
     while(ite != embedded_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
@@ -955,7 +955,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
 
   std::vector<MVertex *> emb_edgeverts;
   {
-    std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
+    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
     std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
     while(ite != emb_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {

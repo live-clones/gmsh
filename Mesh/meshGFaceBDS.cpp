@@ -284,8 +284,8 @@ static bool edges_sort(std::pair<double, BDS_Edge *> a,
 }
 
 static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
-{  
-  
+{
+
   double u1 = e->p1->u;
   double u2 = e->p2->u;
   double v1 = e->p1->v;
@@ -312,7 +312,7 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
       BDS_Point *op[2];
       BDS_Point *p1 = e->p1;
       BDS_Point *p2 = e->p2;
-      e->oppositeof(op);      
+      e->oppositeof(op);
       double _p1[2] = {p1->u, p1->v};
       double _p2[2] = {p2->u, p2->v};
       double _op1[2] = {op[0]->u, op[0]->v};
@@ -324,7 +324,7 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
 	 robustPredicates::orient2d(_p2,_op1, _ss),
 	 robustPredicates::orient2d(_op1,_p1, _ss)};
       if (oris_[0]*oris_[1] > 0 && oris_[0]*oris_[2] > 0 && oris_[0]*oris_[3] > 0 && oris_[1]*oris_[2] > 0
-	  && oris_[1]*oris_[3] > 0 && oris_[2]*oris_[3] > 0){      	
+	  && oris_[1]*oris_[3] > 0 && oris_[2]*oris_[3] > 0){
 	//	printf("this does not suck\n");
 	u = gp.u();
 	v = gp.v();
@@ -332,8 +332,8 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
       }
     }
   }
-	     
-  
+
+
   int iter = 0;
   while(1) {
     u = 0.5 * (u1 + u2);
@@ -367,7 +367,7 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
   }
   return true;
 }
-  
+
 // create a valid initial mesh when degeneracies are present
 
 static void getDegeneracy(BDS_Mesh &m, std::vector<BDS_Point *> &deg)
@@ -770,8 +770,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   // classify correctly the embedded vertices use a negative model
   // face number to avoid mesh motion
   if(recoverMapInv) {
-    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
+    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+    std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       MVertex *v = *((*itvx)->mesh_vertices.begin());
       std::map<MVertex *, BDS_Point *>::iterator itp = recoverMapInv->find(v);
@@ -849,12 +849,12 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 
     swapEdgePass(gf, m, nb_swap, t_sw);
     smoothVertexPass(gf, m, nb_smooth, false, .5, t_sm);
-    
+
 #ifdef superdebug
     outputScalarField(m.triangles, "swapsmooth1.pos", 1, gf);
     outputScalarField(m.triangles, "swapsmooth0.pos", 0, gf);
 #endif
-    
+
     collapseEdgePass(gf, m, minE, MAXNP, nb_collaps, t_col);
 #ifdef superdebug
     outputScalarField(m.triangles, "collapse0.pos", 0, gf);
@@ -864,7 +864,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 #ifdef superdebug
     outputScalarField(m.triangles, "collapsemooth.pos", 1, gf);
 #endif
-	    
+
     swapEdgePass(gf, m, nb_swap, t_sw);
 #ifdef superdebug
     outputScalarField(m.triangles, "d1.pos", 1, gf);
@@ -920,7 +920,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   outputScalarField(m.triangles, "before0.pos", 0, gf);
   outputScalarField(m.triangles, "before1.pos", 1, gf);
 #endif
-  
+
   int ITER = 0;
   int bad = 0;
   int invalid = 0;

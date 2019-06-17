@@ -125,7 +125,11 @@ public:
     return embedded_vertices;
   }
 
-  std::vector<MVertex *> getEmbeddedMeshVertices() const;
+  // get embedded entities; if force is not set, don't return them if the face
+  // is part of a compound
+  std::vector<GVertex *> getEmbeddedVertices(bool force = false) const;
+  std::vector<GEdge *> getEmbeddedEdges(bool force = false) const;
+  std::vector<MVertex *> getEmbeddedMeshVertices(bool force = false) const;
 
   // vertices that bound the face
   virtual std::vector<GVertex *> vertices() const;
