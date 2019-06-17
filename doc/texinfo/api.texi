@@ -2306,7 +2306,8 @@ integer value
 Add an ellipse arc between the two points with tags @code{startTag} and
 @code{endTag}, with center @code{centerTag}. If @code{tag} is positive, set the
 tag explicitly; otherwise a new tag is selected automatically. Return the tag of
-the ellipse arc.
+the ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs with
+identical major and minor radii: in that case use @code{addCircleArc} instead.
 
 @table @asis
 @item Input:

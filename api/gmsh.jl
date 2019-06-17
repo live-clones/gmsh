@@ -2941,7 +2941,9 @@ end
 
 Add an ellipse arc between the two points with tags `startTag` and `endTag`,
 with center `centerTag`. If `tag` is positive, set the tag explicitly; otherwise
-a new tag is selected automatically. Return the tag of the ellipse arc.
+a new tag is selected automatically. Return the tag of the ellipse arc. Note
+that OpenCASCADE does not allow creating ellipse arcs with identical major and
+minor radii: in that case use `addCircleArc` instead.
 
 Return an integer value.
 """

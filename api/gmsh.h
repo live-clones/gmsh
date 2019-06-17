@@ -1295,7 +1295,9 @@ namespace gmsh { // Top-level functions
       // Add an ellipse arc between the two points with tags `startTag' and
       // `endTag', with center `centerTag'. If `tag' is positive, set the tag
       // explicitly; otherwise a new tag is selected automatically. Return the tag
-      // of the ellipse arc.
+      // of the ellipse arc. Note that OpenCASCADE does not allow creating ellipse
+      // arcs with identical major and minor radii: in that case use `addCircleArc'
+      // instead.
       GMSH_API int addEllipseArc(const int startTag,
                                  const int centerTag,
                                  const int endTag,
