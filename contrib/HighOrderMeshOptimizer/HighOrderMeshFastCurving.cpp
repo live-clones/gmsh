@@ -1284,25 +1284,19 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
   SVector3 normal;
   if(ent->dim() == 2) {
     if(ent->geomType() == GEntity::Plane && ent->haveParametrization()) {
-//      double u = ent->parBounds(0).low();
-//      double v = ent->parBounds(1).low();
-//      normal = dynamic_cast<GFace *>(ent)->normal(SPoint2(u, v));
-      // FIXME: does not work because SPoint2(u, v) can be outside the plane.
-      // Use parfromPoint and containsParam
       GEdge *oneEdge = *ent->edges().begin();
       GVertex *oneVertex = oneEdge->getBeginVertex();
       SPoint2 par = dynamic_cast<GFace *>(ent)->parFromPoint(oneVertex->xyz());
-//      dynamic_cast<GFace *>(ent)->containsParam(p);
       normal = dynamic_cast<GFace *>(ent)->normal(par);
     }
     else if(ent->geomType() == GEntity::Plane ||
             ent->geomType() == GEntity::DiscreteSurface) {
-      // If we don't have the CAD, check if the mesh is 2D:
+      // Check if the mesh is in xy-plane (NB: we do not need orientation):
       SBoundingBox3d bb = ent->bounds();
       if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
         normal = SVector3(0, 0, 1);
       }
-      // TODO: Check if the mesh is in a general plane?
+      // NB: Check if the mesh is in a general plane?
     }
   }
 

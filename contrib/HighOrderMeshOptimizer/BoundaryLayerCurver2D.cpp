@@ -158,11 +158,31 @@ namespace BoundaryLayerCurver {
   void projectVertexIntoGFace(MVertex *v, const GFace *gface)
   {
     SPoint3 p = v->point();
-    SPoint2 param = gface->parFromPoint(p);
-    GPoint projected = gface->point(param);
+    double initialGuess[2];
+
+    // Check if we can obtain parametric coordinates:
+    if(!v->getParameter(0, initialGuess[0])) {
+      Msg::Error("DEBUG no parametric vertex");
+      // FIXME: This is really annoying, why v is not MFaceVertex? It should be
+      SPoint2 param = gface->parFromPoint(p);
+      GPoint projected = gface->point(param);
+      v->x() = projected.x();
+      v->y() = projected.y();
+      v->z() = projected.z();
+      return;
+    }
+    if(!v->getParameter(1, initialGuess[1])) {
+      Msg::Error("This should not happen. We should project on the GEdge...");
+      return;
+    }
+
+    // We do have parametric coordinates and we can use robust functions:
+    GPoint projected = gface->closestPoint(p, initialGuess);
     v->x() = projected.x();
     v->y() = projected.y();
     v->z() = projected.z();
+    v->setParameter(0, projected.u());
+    v->setParameter(1, projected.v());
   }
 
   void projectVerticesIntoGFace(const MEdgeN *edge, const GFace *gface,
