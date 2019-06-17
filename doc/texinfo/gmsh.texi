@@ -1998,8 +1998,9 @@ with the OpenCASCADE kernel. With the OpenCASCADE kernel additional
 @var{expression}s can be provided to define a full ellipse (4th and 5th
 expressions define the radii along X and Y) or en ellipse arc (next 2
 expressions). Note that OpenCASCADE does not allow creating ellipse arcs
-with identical major and minor radii: in that case use @code{Circle}
-instead.
+with the major radius (along the x-axis) smaller than or equal to the
+minor radius (along the y-axis): rotate the shape or use @code{Circle}
+in such cases.
 
 @item Curve Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented loop of curves, i.e. a closed wire. The

@@ -2307,7 +2307,8 @@ Add an ellipse arc between the two points with tags @code{startTag} and
 @code{endTag}, with center @code{centerTag}. If @code{tag} is positive, set the
 tag explicitly; otherwise a new tag is selected automatically. Return the tag of
 the ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs with
-identical major and minor radii: in that case use @code{addCircleArc} instead.
+the major radius (along the x-axis) smaller than or equal to the minor radius
+(along the y-axis): rotate the shape or use @code{addCircleArc} in such cases.
 
 @table @asis
 @item Input:
@@ -2323,7 +2324,10 @@ Add an ellipse of center (@code{x}, @code{y}, @code{z}) and radii @code{r1} and
 @code{r2} along the x- and y-axes respectively. If @code{tag} is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. If
 @code{angle1} and @code{angle2} are specified, create an ellipse arc between the
-two angles. Return the tag of the ellipse.
+two angles. Return the tag of the ellipse. Note that OpenCASCADE does not allow
+creating ellipses with the major radius (along the x-axis) smaller than or equal
+to the minor radius (along the y-axis): rotate the shape or use @code{addCircle}
+in such cases.
 
 @table @asis
 @item Input:
