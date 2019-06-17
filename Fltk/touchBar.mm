@@ -74,7 +74,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
       if ([identifier isEqualToString:touchBarItemRunMesh])
       {
         NSSegmentedControl *segmentedControl = [NSSegmentedControl segmentedControlWithLabels:@[@"1D", @"2D", @"3D"] trackingMode:NSSegmentSwitchTrackingMomentary target:self action:@selector(buttonRunMesh:)];
-    
+
         NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemRunMesh];
         touchBarItem.view = segmentedControl;
 
@@ -84,30 +84,30 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
       {
         NSPopoverTouchBarItem *popoverTouchBarItem = [[NSPopoverTouchBarItem alloc] initWithIdentifier:touchBarItemGeoMenu];
         popoverTouchBarItem.customizationLabel = @"Geometry";
-      
+
         popoverTouchBarItem.showsCloseButton = YES;
         popoverTouchBarItem.collapsedRepresentationLabel = @"Geometry";
-      
+
         NSTouchBar *secondTouchBar = [[NSTouchBar alloc] init];
         secondTouchBar.delegate = self;
         secondTouchBar.defaultItemIdentifiers = @[touchBarItemGeoButtons];
-      
+
         NSTouchBar *thirdTouchBar = [[NSTouchBar alloc] init];
         thirdTouchBar.delegate = self;
         thirdTouchBar.defaultItemIdentifiers = @[touchBarItemGeoHoldButtons];
-      
+
         popoverTouchBarItem.popoverTouchBar = secondTouchBar;
         popoverTouchBarItem.pressAndHoldTouchBar = thirdTouchBar;
-      
+
         return popoverTouchBarItem;
       }
       else if ([identifier isEqualToString:touchBarItemGeoButtons])
       {
         NSSegmentedControl *segmentedControl = [NSSegmentedControl segmentedControlWithLabels:@[@"Points", @"Curves", @"Surfaces", @"Volumes"] trackingMode:NSSegmentSwitchTrackingSelectAny target:self action:@selector(buttonGeo:)];
-      
+
         NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemGeoButtons];
         touchBarItem.view = segmentedControl;
-      
+
         _geoButtons = segmentedControl;
         [self updateGeo];
 
@@ -116,7 +116,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
       else if ([identifier isEqualToString:touchBarItemGeoHoldButtons])
       {
         NSSegmentedControl *segmentedControl = [NSSegmentedControl segmentedControlWithLabels:@[@"Show all", @"Hide all"] trackingMode:NSSegmentSwitchTrackingMomentary target:self action:@selector(buttonHoldGeo:)];
-      
+
         NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemGeoHoldButtons];
         touchBarItem.view = segmentedControl;
 
@@ -126,30 +126,30 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
       {
         NSPopoverTouchBarItem *popoverTouchBarItem = [[NSPopoverTouchBarItem alloc] initWithIdentifier:touchBarItemMeshMenu];
         popoverTouchBarItem.customizationLabel = @"Mesh";
-      
+
         popoverTouchBarItem.showsCloseButton = YES;
         popoverTouchBarItem.collapsedRepresentationLabel = @"Mesh";
-      
+
         NSTouchBar *secondTouchBar = [[NSTouchBar alloc] init];
         secondTouchBar.delegate = self;
         secondTouchBar.defaultItemIdentifiers = @[touchBarItemMeshButtons];
-      
+
         NSTouchBar *thirdTouchBar = [[NSTouchBar alloc] init];
         thirdTouchBar.delegate = self;
         thirdTouchBar.defaultItemIdentifiers = @[touchBarItemMeshHoldButtons];
-      
+
         popoverTouchBarItem.popoverTouchBar = secondTouchBar;
         popoverTouchBarItem.pressAndHoldTouchBar = thirdTouchBar;
-      
+
         return popoverTouchBarItem;
       }
       else if ([identifier isEqualToString:touchBarItemMeshButtons])
       {
-        NSSegmentedControl *segmentedControl = [NSSegmentedControl segmentedControlWithLabels:@[@"Nodes", @"Lines", @"2D Edge", @"2D Face", @"3D Edge", @"3D Face"] trackingMode:NSSegmentSwitchTrackingSelectAny target:self action:@selector(buttonMesh:)];
-    
+        NSSegmentedControl *segmentedControl = [NSSegmentedControl segmentedControlWithLabels:@[@"Nodes", @"Lines", @"2D Edges", @"2D Faces", @"3D Edges", @"3D Faces"] trackingMode:NSSegmentSwitchTrackingSelectAny target:self action:@selector(buttonMesh:)];
+
         NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemMeshButtons];
         touchBarItem.view = segmentedControl;
-      
+
         _meshButtons = segmentedControl;
         [self updateMesh];
 
@@ -158,7 +158,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
       else if ([identifier isEqualToString:touchBarItemMeshHoldButtons])
       {
         NSSegmentedControl *segmentedControl = [NSSegmentedControl segmentedControlWithLabels:@[@"Show all", @"Hide all"] trackingMode:NSSegmentSwitchTrackingMomentary target:self action:@selector(buttonHoldMesh:)];
-      
+
         NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemMeshHoldButtons];
         touchBarItem.view = segmentedControl;
 
@@ -168,28 +168,28 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
       {
         NSPopoverTouchBarItem *popoverTouchBarItem = [[NSPopoverTouchBarItem alloc] initWithIdentifier:touchBarItemViewMenu];
         popoverTouchBarItem.customizationLabel = @"View";
-      
+
         popoverTouchBarItem.showsCloseButton = YES;
         popoverTouchBarItem.collapsedRepresentationLabel = @"View";
-      
+
         NSTouchBar *secondTouchBar = [[NSTouchBar alloc] init];
         secondTouchBar.delegate = self;
-      
+
         _viewMenuButton = (NSButton*) popoverTouchBarItem.view;
         [self updateViewMenu];
-      
+
         secondTouchBar.defaultItemIdentifiers = @[touchBarItemViewButtons, touchBarItemViewSlider];
         popoverTouchBarItem.popoverTouchBar = secondTouchBar;
-      
+
         return popoverTouchBarItem;
       }
       else if ([identifier isEqualToString:touchBarItemViewButtons])
       {
         NSSegmentedControl *segmentedControl = [NSSegmentedControl segmentedControlWithLabels:@[@"Iso-values", @"Continuous map", @"Filled iso-values", @"Numeric values"] trackingMode:NSSegmentSwitchTrackingSelectOne target:self action:@selector(buttonView:)];
-    
+
         NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemViewButtons];
         touchBarItem.view = segmentedControl;
-      
+
         _viewButtons = segmentedControl;
         [self updateViewButtons];
 
@@ -198,10 +198,10 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
       else if ([identifier isEqualToString:touchBarItemViewSlider])
       {
         NSSlider *slider = [NSSlider sliderWithValue:10 minValue:1 maxValue:50 target:self action:@selector(sliderView:)];
-    
+
         NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemViewSlider];
         touchBarItem.view = slider;
-      
+
         _viewSlider = slider;
         [self updateViewSlider];
 
@@ -409,21 +409,21 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
       else {
         [_geoButtons setSelected:NO forSegment:0];
       }
-    
+
       if(opt_geometry_curves(0, GMSH_GET, 0)) {
         [_geoButtons setSelected:YES forSegment:1];
       }
       else {
         [_geoButtons setSelected:NO forSegment:1];
       }
-    
+
       if(opt_geometry_surfaces(0, GMSH_GET, 0)) {
         [_geoButtons setSelected:YES forSegment:2];
       }
       else {
         [_geoButtons setSelected:NO forSegment:2];
       }
-    
+
       if(opt_geometry_volumes(0, GMSH_GET, 0)) {
         [_geoButtons setSelected:YES forSegment:3];
       }
@@ -440,35 +440,35 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
       else {
         [_meshButtons setSelected:NO forSegment:0];
       }
-    
+
       if(opt_mesh_lines(0, GMSH_GET, 0)) {
         [_meshButtons setSelected:YES forSegment:1];
       }
       else {
         [_meshButtons setSelected:NO forSegment:1];
       }
-    
+
       if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) {
         [_meshButtons setSelected:YES forSegment:2];
       }
       else {
         [_meshButtons setSelected:NO forSegment:2];
       }
-    
+
       if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) {
         [_meshButtons setSelected:YES forSegment:3];
       }
       else {
         [_meshButtons setSelected:NO forSegment:3];
       }
-    
+
       if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) {
         [_meshButtons setSelected:YES forSegment:4];
       }
       else {
         [_meshButtons setSelected:NO forSegment:4];
       }
-    
+
       if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) {
         [_meshButtons setSelected:YES forSegment:5];
       }
