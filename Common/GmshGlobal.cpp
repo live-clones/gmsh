@@ -55,6 +55,11 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "drawContext.h"
 #include "onelabGroup.h"
+
+#ifdef HAVE_TOUCHBAR
+#include "touchBar.h"
+#endif
+
 #endif
 
 int GmshInitialize(int argc, char **argv, bool readConfigFiles,
@@ -434,8 +439,13 @@ int GmshFLTK(int argc, char **argv)
   // launch solver (if requested) and fill onelab tree
   solver_cb(0, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
 
+#ifdef HAVE_TOUCHBAR
+  updateTouchBar();
+#endif
+
   // loop
   return FlGui::instance()->run();
+
 #else
   Msg::Error("GmshFLTK unavailable: please recompile with FLTK support");
   return 0;
