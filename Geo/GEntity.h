@@ -56,7 +56,7 @@ public: // these will become protected at some point
   std::vector<MVertex *> mesh_vertices;
 
   // a list of geometrical entities that form a compound mesh
-  std::vector<GEntity *> _compound;
+  std::vector<GEntity *> compound;
 
   // corresponding principal vertices
   std::map<GVertex *, GVertex *> vertexCounterparts;

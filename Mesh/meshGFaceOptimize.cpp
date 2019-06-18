@@ -952,6 +952,7 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
 {
   if(gf->triangles.empty()) return;
+  if(gf->compound.size()) return;
 
   std::vector<MVertex *> emb_edgeverts;
   {

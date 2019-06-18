@@ -739,8 +739,8 @@ static void meshCompound(GEdge *ge)
   // no new mesh nodes are created here
   discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000);
   ge->model()->add(de);
-  for(std::size_t i = 0; i < ge->_compound.size(); i++) {
-    GEdge *c = (GEdge *)ge->_compound[i];
+  for(std::size_t i = 0; i < ge->compound.size(); i++) {
+    GEdge *c = (GEdge *)ge->compound[i];
     // cannot use the same line elements, as they get deleted in createGeometry
     for(std::size_t j = 0; j < c->lines.size(); j++) {
       de->lines.push_back(new MLine(c->lines[j]->getVertex(0),
@@ -766,11 +766,11 @@ void GEdge::mesh(bool verbose)
 #if defined(HAVE_MESH)
   meshGEdge mesher;
   mesher(this);
-  if(_compound.size()) { // Some edges are meshed together
-    if(_compound[0] == this) { // I'm the one that makes the compound job
+  if(compound.size()) { // Some edges are meshed together
+    if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
-      for(std::size_t i = 0; i < _compound.size(); i++) {
-        GEdge *ge = (GEdge *)_compound[i];
+      for(std::size_t i = 0; i < compound.size(); i++) {
+        GEdge *ge = (GEdge *)compound[i];
         ok &= (ge->meshStatistics.status == GEdge::DONE);
       }
       if(!ok) { meshStatistics.status = GEdge::PENDING; }

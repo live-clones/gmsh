@@ -263,6 +263,7 @@ public:
     if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine)
       return;
     if(CTX::instance()->mesh.algoRecombine < 2) return;
+    if(gf->compound.size()) return;
     if(periodic) {
       Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
       return;

@@ -325,20 +325,20 @@ SOrientedBoundingBox GFace::getOBB()
 
 std::vector<GVertex *> GFace::getEmbeddedVertices(bool force) const
 {
-  if(!force && _compound.size()) return std::vector<GVertex *>();
+  if(!force && compound.size()) return std::vector<GVertex *>();
   return std::vector<GVertex*>(embedded_vertices.begin(),
                                embedded_vertices.end());
 }
 
 std::vector<GEdge *> GFace::getEmbeddedEdges(bool force) const
 {
-  if(!force && _compound.size()) return std::vector<GEdge *>();
+  if(!force && compound.size()) return std::vector<GEdge *>();
   return embedded_edges;
 }
 
 std::vector<MVertex *> GFace::getEmbeddedMeshVertices(bool force) const
 {
-  if(!force && _compound.size()) return std::vector<MVertex *>();
+  if(!force && compound.size()) return std::vector<MVertex *>();
 
   std::set<MVertex *> tmp;
   for(std::vector<GEdge *>::const_iterator it = embedded_edges.begin();
@@ -1484,25 +1484,22 @@ static void meshCompound(GFace *gf, bool verbose)
 {
   discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000);
 
-  std::vector<GFace *> triangles_tag;
-  std::vector<SPoint2> triangles_uv;
+  std::vector<GFace *> triangles_tag, quadrangles_tag;
 
   std::set<GEdge*, GEntityLessThan> bnd, emb1;
   std::set<GVertex*, GEntityLessThan> emb0;
-  for(std::size_t i = 0; i < gf->_compound.size(); i++) {
-    GFace *c = (GFace *)gf->_compound[i];
+  for(std::size_t i = 0; i < gf->compound.size(); i++) {
+    GFace *c = (GFace *)gf->compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
                          c->triangles.end());
+    df->quadrangles.insert(df->quadrangles.end(), c->quadrangles.begin(),
+                           c->quadrangles.end());
     df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),
                              c->mesh_vertices.end());
-    for(std::size_t j = 0; j < c->triangles.size(); j++) {
+    for(std::size_t j = 0; j < c->triangles.size(); j++)
       triangles_tag.push_back(c);
-      for(int k = 0; k < 3; k++) {
-        SPoint2 param;
-        reparamMeshVertexOnFace(c->triangles[j]->getVertex(k), c, param);
-        triangles_uv.push_back(param);
-      }
-    }
+    for(std::size_t j = 0; j < c->quadrangles.size(); j++)
+      quadrangles_tag.push_back(c);
     std::vector<GEdge*> edges = c->edges();
     for(std::size_t j = 0; j < edges.size(); j++){
       if(bnd.find(edges[j]) == bnd.end())
@@ -1517,6 +1514,7 @@ static void meshCompound(GFace *gf, bool verbose)
     emb1.insert(embe.begin(), embe.end());
 
     c->triangles.clear();
+    c->quadrangles.clear();
     c->mesh_vertices.clear();
   }
 
@@ -1552,18 +1550,6 @@ static void meshCompound(GFace *gf, bool verbose)
     if(position != -1) {
       triangles_tag[position]->mesh_vertices.push_back(df->mesh_vertices[i]);
       df->mesh_vertices[i]->setEntity(triangles_tag[position]);
-      if(0 && triangles_tag[position]->geomType() != GEntity::DiscreteSurface) {
-        SPoint2 p0 = triangles_uv[3 * position + 0];
-        SPoint2 p1 = triangles_uv[3 * position + 1];
-        SPoint2 p2 = triangles_uv[3 * position + 2];
-        SPoint2 p = p0 * (1 - U - V) + p1 * U + p2 * V;
-        GPoint gp = triangles_tag[position]->point(p);
-        df->mesh_vertices[i]->setParameter(0, p.x());
-        df->mesh_vertices[i]->setParameter(1, p.y());
-        df->mesh_vertices[i]->x() = gp.x();
-        df->mesh_vertices[i]->y() = gp.y();
-        df->mesh_vertices[i]->z() = gp.z();
-      }
     }
     else {
       df->mesh_vertices.push_back(df->mesh_vertices[i]);
@@ -1582,8 +1568,21 @@ static void meshCompound(GFace *gf, bool verbose)
     else
       gf->triangles.push_back(t); // FIXME could be better!
   }
+  for(std::size_t i = 0; i < df->quadrangles.size(); i++) {
+    MQuadrangle *t = df->quadrangles[i];
+    if(t->getVertex(0)->onWhat()->dim() == 2)
+      ((GFace *)t->getVertex(0)->onWhat())->quadrangles.push_back(t);
+    else if(t->getVertex(1)->onWhat()->dim() == 2)
+      ((GFace *)t->getVertex(1)->onWhat())->quadrangles.push_back(t);
+    else if(t->getVertex(2)->onWhat()->dim() == 2)
+      ((GFace *)t->getVertex(2)->onWhat())->quadrangles.push_back(t);
+    else
+      gf->quadrangles.push_back(t); // FIXME could be better!
+  }
+
 
   df->triangles.clear();
+  df->quadrangles.clear();
   df->mesh_vertices.clear();
   delete df;
 }
@@ -1600,11 +1599,11 @@ void GFace::mesh(bool verbose)
 #if defined(HAVE_MESH)
   meshGFace mesher;
   mesher(this, verbose);
-  if(_compound.size()) { // Some faces are meshed together
-    if(_compound[0] == this) { // I'm the one that makes the compound job
+  if(compound.size()) { // Some faces are meshed together
+    if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
-      for(std::size_t i = 0; i < _compound.size(); i++) {
-        GFace *gf = (GFace *)_compound[i];
+      for(std::size_t i = 0; i < compound.size(); i++) {
+        GFace *gf = (GFace *)compound[i];
         ok &= (gf->meshStatistics.status == GFace::DONE);
       }
       if(!ok) { meshStatistics.status = GFace::PENDING; }

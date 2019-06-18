@@ -1273,7 +1273,7 @@ void GEO_Internals::synchronize(GModel *model)
       }
       if(ent) ents.push_back(ent);
     }
-    for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->_compound = ents; }
+    for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->compound = ents; }
   }
 
   // recompute global boundind box in CTX
