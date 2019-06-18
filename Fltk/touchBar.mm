@@ -77,6 +77,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 
         NSCustomTouchBarItem *touchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemRunMesh];
         touchBarItem.view = segmentedControl;
+        touchBarItem.customizationLabel = @"Meshing commands";
 
         return touchBarItem;
       }
