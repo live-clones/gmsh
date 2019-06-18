@@ -1696,10 +1696,6 @@ Shape :
           r = GModel::current()->getOCCInternals()->addEllipseArc
             (num, tags[0], tags[1], tags[2]);
         }
-        else if(tags.size() == 4){
-          r = GModel::current()->getOCCInternals()->addEllipseArc
-            (num, tags[0], tags[1], tags[3]);
-        }
         else if(param.size() >= 5 && param.size() <= 7){
           double a1 = (param.size() == 7) ? param[5] : 0.;
           double a2 = (param.size() == 7) ? param[6] :
@@ -1708,7 +1704,7 @@ Shape :
             (num, param[0], param[1], param[2], param[3], param[4], a1, a2);
         }
         else{
-          yymsg(0, "Ellipse requires 3 or 4 points, or 5 to 7 parameters");
+          yymsg(0, "Ellipse requires 3 points, or 5 to 7 parameters");
         }
       }
       else{

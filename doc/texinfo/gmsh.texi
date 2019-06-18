@@ -1991,16 +1991,17 @@ between two angles (next 2 expressions).
 @c todo: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
 
 @item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} <, ...> @};
-Creates an ellipse arc. The four @var{expression}s on the
-right-hand-side define the start point, the center point, a major axis
-point and the end point of the ellipse. The third point can be omitted
-with the OpenCASCADE kernel. With the OpenCASCADE kernel additional
-@var{expression}s can be provided to define a full ellipse (4th and 5th
-expressions define the radii along X and Y) or en ellipse arc (next 2
-expressions). Note that OpenCASCADE does not allow creating ellipse arcs
-with the major radius (along the x-axis) smaller than or equal to the
-minor radius (along the y-axis): rotate the shape or use @code{Circle}
-in such cases.
+Creates an ellipse arc. With the built-in kernel four @var{expression}s
+must be provided on the right-hand-side, defining the start point, the
+center point, a point anywhere on the major axis and the end point. The
+OpenCASCADE kernel accepts different numbers of @var{expression}s. If
+three are provided, they define the start point on the major axis, the
+center point and the end point. If between 5 and 7 are provided, the
+first three define the coordinates of the center, the next two define
+the major (along the x-axis) and minor radii (along the y-axis), and the
+next two the start and end angle. Note that OpenCASCADE does not allow
+creating ellipse arcs with the major radius smaller than the minor
+radius.
 
 @item Curve Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented loop of curves, i.e. a closed wire. The
