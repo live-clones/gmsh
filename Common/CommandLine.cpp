@@ -1091,10 +1091,6 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         CTX::instance()->mesh.algoRecombine = 2;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "meshdiscrete")) {
-        i++;
-        CTX::instance()->meshDiscrete = 1;
-      }
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;
         if(argv[i]) {

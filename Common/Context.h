@@ -170,8 +170,6 @@ public:
   int batch;
   // batch operations to apply after meshing (1: partition mesh)
   int batchAfterMesh;
-  // mesh discrete faces / edges
-  int meshDiscrete;
   // initial menu (0: automatic, 1: geom, 2: mesh, 3: solver, 4: post)
   int initialContext;
   // show some windows on startup?

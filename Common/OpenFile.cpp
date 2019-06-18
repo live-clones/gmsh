@@ -553,9 +553,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 
   if(setBoundingBox) SetBoundingBox();
 
-  if(mesh && CTX::instance()->meshDiscrete)
-    GModel::current()->createGeometryOfDiscreteEntities();
-
   CTX::instance()->geom.draw = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
 

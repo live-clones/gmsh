@@ -2290,14 +2290,6 @@ double opt_general_show_module_menu(OPT_ARGS_NUM)
   return CTX::instance()->showModuleMenu;
 }
 
-double opt_general_meshdiscrete(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->meshDiscrete = (int)val;
-  }
-  return CTX::instance()->meshDiscrete;
-}
-
 double opt_general_message_size(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
