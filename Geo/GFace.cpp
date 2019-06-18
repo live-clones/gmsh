@@ -1539,13 +1539,22 @@ static void meshCompound(GFace *gf, bool verbose)
   df->createGeometry();
   df->mesh(verbose);
 
-  // FIXME: we should probably not play this game of putting elements and nodes
-  // back in the original surfaces: it detroys the underlying parametrization
-  // and will prevent doing e.g. nice high-order meshes.
+  // FIXME: playing this game of putting elements and nodes back in the original
+  // surfaces is nice, but it prevents applying algorithms that will depend on
+  // working with the parametrization afterwards (e.g. high-order meshing).
   //
-  // We should probably just do things as in 1D: keep the discrete face, add a
-  // link to it in the source GFace, and update the 3D meshing to use the
-  // compound mesh if available instead of the original mesh.
+  // We could:
+  //  - keep the df around (without mesh elements/nodes in it), with a
+  //      "discreteSurface" member in GFace (same as "discreteCurve" in GEdge)
+  //  - change the functions that deal with the parameter space in GFace to
+  //      use discreteSurface instead of the native param if it exists
+  //
+  // Otherwise we should just do the same as in 1D, i.e. keep the compound mesh
+  // in df (and use that as the boundary mesh for any 3D mesh). The downside is
+  // that e.g. the tag of df is not known, so it's kinda going back to the
+  // previous explicit compound flow.
+  //
+  // We should also try to have the same behavior for 1D and 2D compounds...
 
   for(std::size_t i = 0; i < df->mesh_vertices.size(); i++) {
     double u, v;
