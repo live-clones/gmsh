@@ -1484,7 +1484,7 @@ static void meshCompound(GFace *gf, bool verbose)
 {
   discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000);
 
-  std::vector<GFace *> triangles_tag, quadrangles_tag;
+  std::vector<GFace *> triangles_tag;
 
   std::set<GEdge*, GEntityLessThan> bnd, emb1;
   std::set<GVertex*, GEntityLessThan> emb0;
@@ -1498,8 +1498,6 @@ static void meshCompound(GFace *gf, bool verbose)
                              c->mesh_vertices.end());
     for(std::size_t j = 0; j < c->triangles.size(); j++)
       triangles_tag.push_back(c);
-    for(std::size_t j = 0; j < c->quadrangles.size(); j++)
-      quadrangles_tag.push_back(c);
     std::vector<GEdge*> edges = c->edges();
     for(std::size_t j = 0; j < edges.size(); j++){
       if(bnd.find(edges[j]) == bnd.end())
@@ -1541,45 +1539,60 @@ static void meshCompound(GFace *gf, bool verbose)
   df->createGeometry();
   df->mesh(verbose);
 
+  // FIXME: we should probably not play this game of putting elements and nodes
+  // back in the original surfaces: it detroys the underlying parametrization
+  // and will prevent doing e.g. nice high-order meshes.
+  //
+  // We should probably just do things as in 1D: keep the discrete face, add a
+  // link to it in the source GFace, and update the 3D meshing to use the
+  // compound mesh if available instead of the original mesh.
+
   for(std::size_t i = 0; i < df->mesh_vertices.size(); i++) {
     double u, v;
     df->mesh_vertices[i]->getParameter(0, u);
     df->mesh_vertices[i]->getParameter(1, v);
     double U, V;
+    // search triangle in original mesh used to compute the parametrization
     int position = df->trianglePosition(u, v, U, V);
     if(position != -1) {
       triangles_tag[position]->mesh_vertices.push_back(df->mesh_vertices[i]);
       df->mesh_vertices[i]->setEntity(triangles_tag[position]);
     }
     else {
-      df->mesh_vertices.push_back(df->mesh_vertices[i]);
-      df->mesh_vertices[i]->setEntity(gf);
+      gf->mesh_vertices.push_back(df->mesh_vertices[i]);
+      gf->mesh_vertices[i]->setEntity(gf);
     }
   }
 
   for(std::size_t i = 0; i < df->triangles.size(); i++) {
     MTriangle *t = df->triangles[i];
-    if(t->getVertex(0)->onWhat()->dim() == 2)
-      ((GFace *)t->getVertex(0)->onWhat())->triangles.push_back(t);
-    else if(t->getVertex(1)->onWhat()->dim() == 2)
-      ((GFace *)t->getVertex(1)->onWhat())->triangles.push_back(t);
-    else if(t->getVertex(2)->onWhat()->dim() == 2)
-      ((GFace *)t->getVertex(2)->onWhat())->triangles.push_back(t);
-    else
+    bool found = false;
+    for(int i = 0; i < 3; i++){
+      if(t->getVertex(i)->onWhat()->dim() == 2){
+        ((GFace *)t->getVertex(i)->onWhat())->triangles.push_back(t);
+        found = true;
+        break;
+      }
+    }
+    if(!found){
       gf->triangles.push_back(t); // FIXME could be better!
-  }
-  for(std::size_t i = 0; i < df->quadrangles.size(); i++) {
-    MQuadrangle *t = df->quadrangles[i];
-    if(t->getVertex(0)->onWhat()->dim() == 2)
-      ((GFace *)t->getVertex(0)->onWhat())->quadrangles.push_back(t);
-    else if(t->getVertex(1)->onWhat()->dim() == 2)
-      ((GFace *)t->getVertex(1)->onWhat())->quadrangles.push_back(t);
-    else if(t->getVertex(2)->onWhat()->dim() == 2)
-      ((GFace *)t->getVertex(2)->onWhat())->quadrangles.push_back(t);
-    else
-      gf->quadrangles.push_back(t); // FIXME could be better!
+    }
   }
 
+  for(std::size_t i = 0; i < df->quadrangles.size(); i++) {
+    MQuadrangle *q = df->quadrangles[i];
+    bool found = false;
+    for(int i = 0; i < 4; i++){
+      if(q->getVertex(i)->onWhat()->dim() == 2){
+        ((GFace *)q->getVertex(i)->onWhat())->quadrangles.push_back(q);
+        found = true;
+        break;
+      }
+    }
+    if(!found){
+      gf->quadrangles.push_back(q); // FIXME could be better!
+    }
+  }
 
   df->triangles.clear();
   df->quadrangles.clear();
