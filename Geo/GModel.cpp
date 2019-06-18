@@ -215,8 +215,6 @@ void GModel::destroyMeshCaches()
   std::map<int, int>().swap(_elementIndexCache);
   delete _elementOctree;
   _elementOctree = 0;
-  _curvatures.clear();
-  std::map<MVertex *, std::pair<SVector3, SVector3> >().swap(_curvatures);
 }
 
 void GModel::deleteMesh(bool deleteOnlyElements)
