@@ -1540,7 +1540,7 @@ static void meshCompound(GFace *gf, bool verbose)
       it != emb0.end(); it++)
     df->addEmbeddedVertex(*it);
 
-  df->createGeometry(NULL);
+  df->createGeometry();
   df->mesh(verbose);
 
   for(std::size_t i = 0; i < df->mesh_vertices.size(); i++) {

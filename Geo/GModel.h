@@ -112,6 +112,9 @@ protected:
   // an octree for fast mesh element lookup
   MElementOctree *_elementOctree;
 
+  // global cache storage of discrete curvatures
+  std::map<MVertex *, std::pair<SVector3, SVector3> > _curvatures;
+
   // Geo (Gmsh native) model internal data
   GEO_Internals *_geo_internals;
   // OpenCascade model internal data
@@ -617,6 +620,12 @@ public:
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
   void computeHomology();
+
+  // access global cache of discrete curvatures
+  std::map<MVertex *, std::pair<SVector3, SVector3> > &getCurvatures()
+  {
+    return _curvatures;
+  }
 
   // "automatic" IO based on Gmsh global functions
   void load(const std::string &fileName);

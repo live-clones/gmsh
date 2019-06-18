@@ -13,7 +13,6 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut);
 void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
                              bool addBoundary);
-int computeDiscreteCurvatures(
-  GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > &C);
+int computeDiscreteCurvatures(GModel *gm);
 
 #endif

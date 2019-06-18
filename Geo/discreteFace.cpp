@@ -453,8 +453,7 @@ static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
 
 #endif
 
-int discreteFace::createGeometry(
-  std::map<MVertex *, std::pair<SVector3, SVector3> > *curvatures)
+int discreteFace::createGeometry()
 {
 #if defined(HAVE_HXT)
   int n = 1;
@@ -477,16 +476,16 @@ int discreteFace::createGeometry(
   stl_vertices_xyz.clear();
   stl_vertices_xyz.resize(nv);
   stl_curvatures.clear();
-  if(curvatures) stl_curvatures.resize(2 * nv);
+  if(model()->getCurvatures().size()) stl_curvatures.resize(2 * nv);
   stl_normals.clear();
   stl_normals.resize(nv);
 
   for(int iv = 0; iv < nv; iv++) {
-    if(curvatures) {
+    if(model()->getCurvatures().size()) {
       MVertex *v = c2v[iv];
       std::map<MVertex *, std::pair<SVector3, SVector3> >::iterator it =
-        curvatures->find(v);
-      if(it == curvatures->end()) {
+        model()->getCurvatures().find(v);
+      if(it == model()->getCurvatures().end()) {
         Msg::Error("Curvature not found for node %d", v->getNum());
       }
       else {

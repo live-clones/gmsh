@@ -271,15 +271,10 @@ static void classify_cb(Fl_Widget *w, void *data)
     GModel::current()->add(e->selected);
   }
 
-  std::map<MVertex *, std::pair<SVector3, SVector3> > curvatures;
-
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()) {
-    computeDiscreteCurvatures(GModel::current(), curvatures);
+  computeDiscreteCurvatures(GModel::current());
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
     computeEdgeCut(GModel::current(), e->selected->lines, 100000);
-  }
-
   computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
-
   classifyFaces(GModel::current());
 
   // remove selected, but do not delete its elements
@@ -290,10 +285,10 @@ static void classify_cb(Fl_Widget *w, void *data)
     e->selected = 0;
   }
 
+  GModel::current()->pruneMeshVertexAssociations();
+
   e->elements.clear();
   e->edges_detected.clear();
-  GModel::current()->pruneMeshVertexAssociations();
-  NoElementsSelectedMode(e);
 
   if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()) {
     for(GModel::eiter it = GModel::current()->firstEdge();
@@ -304,9 +299,11 @@ static void classify_cb(Fl_Widget *w, void *data)
     for(GModel::fiter it = GModel::current()->firstFace();
         it != GModel::current()->lastFace(); ++it) {
       discreteFace *df = dynamic_cast<discreteFace *>(*it);
-      if(df) df->createGeometry(&curvatures);
+      if(df) df->createGeometry();
     }
   }
+
+  NoElementsSelectedMode(e);
 }
 
 classificationEditor::classificationEditor() : selected(0)

@@ -51,8 +51,7 @@ public:
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
-  int createGeometry(std::map<MVertex *,
-                     std::pair<SVector3, SVector3> > *curvatures);
+  int createGeometry();
   virtual bool haveParametrization() { return !_param.empty(); }
   virtual void mesh(bool verbose);
   void setBoundEdges(const std::vector<int> &tagEdges);

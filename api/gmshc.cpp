@@ -1455,22 +1455,22 @@ GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int bounda
   }
 }
 
-GMSH_API void gmshModelMeshCreateTopology(int * ierr)
+GMSH_API void gmshModelMeshCreateGeometry(int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::createTopology();
+    gmsh::model::mesh::createGeometry();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
   }
 }
 
-GMSH_API void gmshModelMeshCreateGeometry(int * ierr)
+GMSH_API void gmshModelMeshCreateTopology(int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::createGeometry();
+    gmsh::model::mesh::createTopology();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

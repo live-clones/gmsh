@@ -1597,10 +1597,10 @@ surfaces.
 
 @item classifySurfaces
 Classify ("color") the surface mesh based on the angle threshold @code{angle}
-(in radians), and create discrete curves accordingly. If @code{boundary} is set,
-also create discrete curves on the boundary if the surface is open. If
-@code{forReparametrization} is set, create edges and surfaces than can be
-reparametrized using a single map. Warning: this is an experimental feature.
+(in radians), and create new discrete surfaces, curves and points accordingly.
+If @code{boundary} is set, also create discrete curves on the boundary if the
+surface is open. If @code{forReparametrization} is set, create edges and
+surfaces that can be reparametrized using a single map.
 
 @table @asis
 @item Input:
@@ -1611,10 +1611,10 @@ reparametrized using a single map. Warning: this is an experimental feature.
 -
 @end table
 
-@item createTopology
-Create a boundary representation from the mesh if the model does not have one
-(e.g. when imported from mesh file formats with no BRep representation of the
-underlying model). Warning: this is an experimental feature.
+@item createGeometry
+Create a parametrization for discrete curves and surfaces (i.e. curves and
+surfaces represented solely by a mesh, without an underlying CAD description),
+assuming that each can be parametrized with a single map.
 
 @table @asis
 @item Input:
@@ -1625,10 +1625,10 @@ underlying model). Warning: this is an experimental feature.
 -
 @end table
 
-@item createGeometry
-Create a parametrization for curves and surfaces that do not have one (i.e.
-discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description). Warning: this is an experimental feature.
+@item createTopology
+Create a boundary representation from the mesh if the model does not have one
+(e.g. when imported from mesh file formats with no BRep representation of the
+underlying model).
 
 @table @asis
 @item Input:

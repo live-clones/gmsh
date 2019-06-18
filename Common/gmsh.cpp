@@ -3223,16 +3223,16 @@ GMSH_API void gmsh::model::mesh::classifySurfaces(const double angle,
   GModel::current()->classifySurfaces(angle, boundary, forReparametrization);
 }
 
-GMSH_API void gmsh::model::mesh::createTopology()
-{
-  if(!_isInitialized()) { throw -1; }
-  GModel::current()->createTopologyFromMesh();
-}
-
 GMSH_API void gmsh::model::mesh::createGeometry()
 {
   if(!_isInitialized()) { throw -1; }
   GModel::current()->createGeometryOfDiscreteEntities();
+}
+
+GMSH_API void gmsh::model::mesh::createTopology()
+{
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->createTopologyFromMesh();
 }
 
 GMSH_API void

@@ -152,6 +152,7 @@ CenterOfMass            return tCenterOfMass;
 Chamfer                 return tChamfer;
 Characteristic          return tCharacteristic;
 Circle                  return tCircle;
+ClassifySurfaces        return tClassifySurfaces;
 CodeName                return tCodeName;
 Coherence               return tCoherence;
 Cohomology              return tCohomology;

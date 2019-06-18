@@ -2078,10 +2078,10 @@ end
     gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
-radians), and create discrete curves accordingly. If `boundary` is set, also
-create discrete curves on the boundary if the surface is open. If
-`forReparametrization` is set, create edges and surfaces than can be
-reparametrized using a single map. Warning: this is an experimental feature.
+radians), and create new discrete surfaces, curves and points accordingly. If
+`boundary` is set, also create discrete curves on the boundary if the surface is
+open. If `forReparametrization` is set, create edges and surfaces that can be
+reparametrized using a single map.
 """
 function classifySurfaces(angle, boundary = true, forReparametrization = false)
     ierr = Ref{Cint}()
@@ -2093,27 +2093,11 @@ function classifySurfaces(angle, boundary = true, forReparametrization = false)
 end
 
 """
-    gmsh.model.mesh.createTopology()
-
-Create a boundary representation from the mesh if the model does not have one
-(e.g. when imported from mesh file formats with no BRep representation of the
-underlying model). Warning: this is an experimental feature.
-"""
-function createTopology()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshCreateTopology, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
-    ierr[] != 0 && error("gmshModelMeshCreateTopology returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
     gmsh.model.mesh.createGeometry()
 
-Create a parametrization for curves and surfaces that do not have one (i.e.
-discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description). Warning: this is an experimental feature.
+Create a parametrization for discrete curves and surfaces (i.e. curves and
+surfaces represented solely by a mesh, without an underlying CAD description),
+assuming that each can be parametrized with a single map.
 """
 function createGeometry()
     ierr = Ref{Cint}()
@@ -2121,6 +2105,22 @@ function createGeometry()
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelMeshCreateGeometry returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.createTopology()
+
+Create a boundary representation from the mesh if the model does not have one
+(e.g. when imported from mesh file formats with no BRep representation of the
+underlying model).
+"""
+function createTopology()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreateTopology, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshCreateTopology returned non-zero error code: $(ierr[])")
     return nothing
 end
 

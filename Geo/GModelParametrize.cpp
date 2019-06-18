@@ -135,11 +135,10 @@ static void classify(MTri3 *t, GFace *gf,
 void classifyFaces(GModel *gm)
 {
 #if defined(HAVE_MESH)
-  // faces are ALL faces of the mesh, if not, this makes NO sense
-  std::map<MLine *, GEdge *, compareMLinePtr> lines;
 
-  // create a structure from mesh edges to geometrical edges, remove existing
-  // GEdges but keep track of their traces, remove existing model Vertices
+  // create a structure from mesh edges to geometrical curves, and remove curves
+  // from the model
+  std::map<MLine *, GEdge *, compareMLinePtr> lines;
   std::vector<GEdge *> edgesToRemove;
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
@@ -147,12 +146,11 @@ void classifyFaces(GModel *gm)
     }
     if((*it)->getBeginVertex()) edgesToRemove.push_back(*it);
   }
-
   for(std::size_t i = 0; i < edgesToRemove.size(); ++i) {
     gm->remove(edgesToRemove[i]);
   }
 
-  // create triangle 2 triangle connections
+  // create triangle-triangle connections
   std::map<MTriangle *, GFace *> reverse_old;
   std::list<MTri3 *> tris;
   {
@@ -171,10 +169,9 @@ void classifyFaces(GModel *gm)
   if(tris.empty()) return;
   connectTriangles(tris);
 
-  // classify
+  // color all triangles
   std::map<MTriangle *, GFace *> reverse;
   std::multimap<GFace *, GFace *> replacedBy;
-  // color all triangles
   std::list<MTri3 *>::iterator it = tris.begin();
   std::list<GFace *> newf;
   while(it != tris.end()) {
@@ -208,36 +205,29 @@ void classifyFaces(GModel *gm)
     (*rit)->set(std::vector<GFace *>(_newFaces.begin(), _newFaces.end()));
   }
 
-  // color some lines
   it = tris.begin();
   while(it != tris.end()) {
     (*it)->setDeleted(false);
     ++it;
   }
 
-  // classify edges that are bound by different GFaces
+  // color lines that are bound by different GFaces
   std::map<std::pair<int, int>, GEdge *> newEdges;
   std::set<MLine *> touched;
   std::set<MTri3 *> trisTouched;
-  // bug fix : multiply connected domains
-
   trisTouched.insert(tris.begin(), tris.end());
   while(!trisTouched.empty())
     classify(*trisTouched.begin(), reverse, lines, touched, trisTouched,
              newEdges);
 
-  std::map<discreteFace *, std::vector<int> > newFaceTopology;
-
   // check if new edges should not be split;
-
+  std::map<discreteFace *, std::vector<int> > newFaceTopology;
   std::map<MVertex *, GVertex *> modelVertices;
-
   for(std::map<std::pair<int, int>, GEdge *>::iterator ite = newEdges.begin();
       ite != newEdges.end(); ++ite) {
     std::list<MLine *> allSegments;
     for(std::size_t i = 0; i < ite->second->lines.size(); i++)
       allSegments.push_back(ite->second->lines[i]);
-
     while(!allSegments.empty()) {
       std::list<MLine *> segmentsForThisDiscreteEdge;
       MVertex *vB = (*allSegments.begin())->getVertex(0);
@@ -397,16 +387,22 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
     }
   }
 
-  if(forParametrization) computeEdgeCut(gm, edge->lines, 100000);
-
+  computeDiscreteCurvatures(gm);
+  if(forParametrization)
+    computeEdgeCut(gm, edge->lines, 100000);
+  computeNonManifoldEdges(gm, edge->lines, true);
   classifyFaces(gm);
 
   gm->remove(edge);
   edge->lines.clear();
   delete edge;
-  elements.clear();
-  edges_detected.clear();
-  edges_lonely.clear();
+
+  gm->pruneMeshVertexAssociations();
+
+  // we have created and deleted discrete entities; call this to reset the
+  // handles in the old GEO database (without this, empty discrete entities will
+  // show up at the next sync between the GEO database and the GModel).
+  gm->exportDiscreteGEOInternals();
 
   double t2 = Cpu();
   Msg::StatusBar(true, "Done classifying surfaces (%g s)", t2 - t1);
@@ -475,10 +471,10 @@ static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
 
 #endif
 
-int computeDiscreteCurvatures(
-  GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > &C)
+int computeDiscreteCurvatures(GModel *gm)
 {
 #if defined(HAVE_HXT)
+  std::map<MVertex *, std::pair<SVector3, SVector3> > &C = gm->getCurvatures();
   C.clear();
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     HXTMesh *m;

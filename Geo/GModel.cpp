@@ -215,6 +215,8 @@ void GModel::destroyMeshCaches()
   std::map<int, int>().swap(_elementIndexCache);
   delete _elementOctree;
   _elementOctree = 0;
+  _curvatures.clear();
+  std::map<MVertex *, std::pair<SVector3, SVector3> >().swap(_curvatures);
 }
 
 void GModel::deleteMesh(bool deleteOnlyElements)
@@ -1957,27 +1959,24 @@ static void _associateEntityWithElementVertices(GEntity *ge,
 
 void GModel::createGeometryOfDiscreteEntities()
 {
-  createTopologyFromMeshNew();
-  exportDiscreteGEOInternals();
-
-  Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
+  Msg::StatusBar(true, "Creating geometry of discrete curves...");
   double t1 = Cpu();
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
-    if((*it)->geomType() == GEntity::DiscreteSurface)
-      static_cast<discreteFace *>(*it)->createGeometry(NULL);
+  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+    discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
+    if(de) de->createGeometry();
   }
   double t2 = Cpu();
-  Msg::StatusBar(true, "Done creating geometry of discrete surfaces (%g s)",
+  Msg::StatusBar(true, "Done creating geometry of discrete curves (%g s)",
                  t2 - t1);
 
-  Msg::StatusBar(true, "Creating geometry of discrete curves...");
+  Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
   t1 = Cpu();
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    if((*it)->geomType() == GEntity::DiscreteCurve)
-      static_cast<discreteEdge *>(*it)->createGeometry();
+  for(fiter it = firstFace(); it != lastFace(); ++it) {
+    discreteFace *df = dynamic_cast<discreteFace *>(*it);
+    if(df) df->createGeometry();
   }
   t2 = Cpu();
-  Msg::StatusBar(true, "Done creating geometry of discrete curves (%g s)",
+  Msg::StatusBar(true, "Done creating geometry of discrete surfaces (%g s)",
                  t2 - t1);
 }
 
