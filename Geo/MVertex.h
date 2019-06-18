@@ -143,11 +143,13 @@ public:
   }
   virtual bool getParameter(int i, double &par) const
   {
+    if(i != 0) return false;
     par = _u;
     return true;
   }
   virtual bool setParameter(int i, double par)
   {
+    if (i != 0  ) return false;
     _u = par;
     return true;
   }
@@ -172,16 +174,27 @@ public:
   }
   virtual bool getParameter(int i, double &par) const
   {
-    par = (i ? _v : _u);
-    return true;
+    if(i == 0) {
+      par = _u;
+      return true;
+    }
+    else if(i == 1) {
+      par = _v;
+      return true;
+    }
+    return false;
   }
   virtual bool setParameter(int i, double par)
   {
-    if(!i)
+    if(i == 0) {
       _u = par;
-    else
+      return true;
+    }
+    else if(i == 1) {
       _v = par;
-    return true;
+      return true;
+    }
+    return false;
   }
 };
 
