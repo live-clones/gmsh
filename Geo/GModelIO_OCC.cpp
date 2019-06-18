@@ -1554,6 +1554,76 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
   return true;
 }
 
+#if 0 // FIXME: old code
+bool OCC_Internals::addSurfaceLoop(int &tag,
+                                   const std::vector<int> &surfaceTags)
+{
+  if(tag >= 0 && _tagShell.IsBound(tag)) {
+    Msg::Error("OpenCASCADE surface loop with tag %d already exists", tag);
+    return false;
+  }
+
+  TopoDS_Shape result;
+  try {
+    BRepBuilderAPI_Sewing s;
+    for(std::size_t i = 0; i < surfaceTags.size(); i++) {
+      if(!_tagFace.IsBound(surfaceTags[i])) {
+        Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
+        return false;
+      }
+      TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
+      s.Add(face);
+    }
+    s.Perform();
+    result = s.SewedShape();
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+
+  bool first = true;
+  TopExp_Explorer exp0;
+  for(exp0.Init(result, TopAbs_SHELL); exp0.More(); exp0.Next()) {
+    TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
+    if(CTX::instance()->geom.occAutoFix) {
+      // make sure faces in shell are oriented correctly
+      ShapeFix_Shell fix(shell);
+      fix.Perform();
+      shell = fix.Shell();
+    }
+    int t = tag;
+    if(first) { first = false; }
+    else {
+      t = getMaxTag(-2) + 1;
+      Msg::Warning("Creating additional surface loop %d", t);
+    }
+    bind(shell, t, true);
+    return true;
+  }
+
+  // if sewing didn't work and we have single surface, try brute-force
+  if(surfaceTags.size() == 1) {
+    if(!_tagFace.IsBound(surfaceTags[0])) {
+      Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[0]);
+      return false;
+    }
+    TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[0]));
+    Handle(Geom_Surface) surf = BRep_Tool::Surface(face);
+    BRepBuilderAPI_MakeShell s(surf);
+    s.Build();
+    if(!s.IsDone()) {
+      Msg::Error("Could not create shell");
+      return false;
+    }
+    TopoDS_Shell shell = s.Shell();
+    bind(shell, tag, true);
+    return true;
+  }
+
+  Msg::Error("Could not create shell");
+  return false;
+}
+#else // FIXME: new simpler code, without sewing
 bool OCC_Internals::addSurfaceLoop(int &tag,
                                    const std::vector<int> &surfaceTags)
 {
@@ -1589,6 +1659,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
     return false;
   }
 }
+#endif
 
 bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
 {
