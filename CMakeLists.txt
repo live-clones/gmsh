@@ -216,19 +216,6 @@ if(SIZEOF_VOID_P EQUAL 8)
   set_config_option(HAVE_64BIT_SIZE_T "64Bit")
 endif()
 
-if(ENABLE_TOUCHBAR)
-  if(APPLE)
-    if(ENABLE_FLTK)
-      set(GMSH_SRC ${GMSH_SRC};Fltk/touchBar.mm)
-      set_config_option(HAVE_TOUCHBAR "TouchBar")
-    else()
-      message(WARNING "FLTK must be switched on to activate the Touch Bar.")
-    endif()
-  else()
-    message(WARNING "The Touch Bar can only be activated on Apple devices.")
-  endif()
-endif()
-
 # append 32/64 to the build name on Linux and Windows
 if(NOT APPLE)
   if(HAVE_64BIT_SIZE_T)
@@ -641,6 +628,11 @@ endif()
 
 if(ENABLE_NATIVE_FILE_CHOOSER)
   set_config_option(HAVE_NATIVE_FILE_CHOOSER "NativeFileChooser")
+endif()
+
+if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
+  set(GMSH_SRC ${GMSH_SRC};Fltk/touchBar.mm)
+  set_config_option(HAVE_TOUCHBAR "TouchBar")
 endif()
 
 if(ENABLE_ONELAB)

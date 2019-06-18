@@ -63,8 +63,8 @@ typedef unsigned long intptr_t;
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
-#ifdef HAVE_TOUCHBAR
-  #include "touchBar.h"
+#if defined(HAVE_TOUCHBAR)
+#include "touchBar.h"
 #endif
 
 static void file_new_cb(Fl_Widget *w, void *data)
@@ -2990,8 +2990,8 @@ void quick_access_cb(Fl_Widget *w, void *data)
       opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, 0);
     }
   }
-  
-#ifdef HAVE_TOUCHBAR
+
+#if defined(HAVE_TOUCHBAR)
   updateTouchBar();
 #endif
 }

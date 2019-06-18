@@ -47,8 +47,8 @@
 #include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"
-#ifdef HAVE_TOUCHBAR
-  #include "touchBar.h"
+#if defined(HAVE_TOUCHBAR)
+#include "touchBar.h"
 #endif
 
 #if defined(HAVE_3M)
@@ -625,8 +625,8 @@ FlGui::FlGui(int argc, char **argv)
 
   if(CTX::instance()->showOptionsOnStartup) options->win->show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
-  
-#ifdef HAVE_TOUCHBAR
+
+#if defined(HAVE_TOUCHBAR)
   showTouchBar();
 #endif
 }
@@ -658,6 +658,10 @@ int FlGui::run()
 {
   // draw the scene
   drawContext::global()->draw();
+
+#if defined(HAVE_TOUCHBAR)
+  updateTouchBar();
+#endif
 
   return Fl::run();
 }
@@ -1020,6 +1024,10 @@ int FlGui::testGlobalShortcuts(int event)
   else if(testArrowShortcuts()) {
     status = 1;
   }
+
+#if defined(HAVE_TOUCHBAR)
+  updateTouchBar();
+#endif
 
   if(status == 2) {
     drawContext::global()->draw();
