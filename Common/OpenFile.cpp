@@ -373,12 +373,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
     GModel::current()->setName(SplitFileName(fileName)[1]);
   }
 
-  bool mesh = false;
-
   if(ext == ".stl" || ext == ".STL") {
     status =
       GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
-    mesh = true;
   }
   else if(ext == ".brep" || ext == ".rle" || ext == ".brp" || ext == ".BRP") {
     status = GModel::current()->readOCCBREP(fileName);
@@ -394,24 +391,19 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   }
   else if(ext == ".unv" || ext == ".UNV") {
     status = GModel::current()->readUNV(fileName);
-    mesh = true;
   }
   else if(ext == ".vtk" || ext == ".VTK") {
     status = GModel::current()->readVTK(fileName, CTX::instance()->bigEndian);
-    mesh = true;
   }
   else if(ext == ".wrl" || ext == ".WRL" || ext == ".vrml" || ext == ".VRML" ||
           ext == ".iv" || ext == ".IV") {
     status = GModel::current()->readVRML(fileName);
-    mesh = true;
   }
   else if(ext == ".mesh" || ext == ".MESH") {
     status = GModel::current()->readMESH(fileName);
-    mesh = true;
   }
   else if(ext == ".diff" || ext == ".DIFF") {
     status = GModel::current()->readDIFF(fileName);
-    mesh = true;
   }
   else if(ext == ".med" || ext == ".MED" || ext == ".mmed" || ext == ".MMED" ||
           ext == ".rmed" || ext == ".RMED") {
@@ -419,14 +411,12 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
       status = GModel::current()->readMED(fileName, 0);
     else
       status = GModel::readMED(fileName);
-    mesh = true;
 #if defined(HAVE_POST)
     if(status > 1) status = PView::readMED(fileName);
 #endif
   }
   else if(ext == ".bdf" || ext == ".BDF" || ext == ".nas" || ext == ".NAS") {
     status = GModel::current()->readBDF(fileName);
-    mesh = true;
   }
   else if(ext == ".dat" || ext == ".DAT") {
     if(!strncmp(header, "BEGIN ACTRAN", 12))
@@ -436,11 +426,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
       status = GModel::current()->readSAMCEF(fileName);
     else
       status = GModel::current()->readBDF(fileName);
-    mesh = true;
   }
   else if(ext == ".p3d" || ext == ".P3D") {
     status = GModel::current()->readP3D(fileName);
-    mesh = true;
   }
 #if defined(HAVE_FLTK)
   else if(ext == ".pnm" || ext == ".PNM" || ext == ".pbm" || ext == ".PBM" ||
@@ -463,15 +451,12 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 #endif
   else if(ext == ".ply2" || ext == ".PLY2") {
     status = GModel::current()->readPLY2(fileName);
-    mesh = true;
   }
   else if(ext == ".ply" || ext == ".PLY") {
     status = GModel::current()->readPLY(fileName);
-    mesh = true;
   }
   else if(ext == ".geom" || ext == ".GEOM") {
     status = GModel::current()->readGEOM(fileName);
-    mesh = true;
   }
 #if defined(HAVE_LIBCGNS)
   else if(ext == ".cgns" || ext == ".CGNS") {
@@ -489,7 +474,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
       CTX::instance()->geom.matchMeshScaleFactor = 1;
       status = GModel::current()->readCGNS(fileName);
     }
-    mesh = true;
   }
 #endif
 #if defined(HAVE_3M)
@@ -519,7 +503,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
         CTX::instance()->geom.matchMeshScaleFactor = 1;
         status = GModel::current()->readMSH(fileName);
       }
-      mesh = true;
 #if defined(HAVE_POST)
       if(status > 1) status = PView::readMSH(fileName, -1, partitionToRead);
 #endif
