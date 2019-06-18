@@ -61,7 +61,7 @@ namespace {
   {
     for(std::size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
       MElement *elt = entity->getMeshElement(iEl);
-      //    elt->setVisibility(0); // fordebug
+      elt->setVisibility(0); // FIXMEDEBUG for visualisation
       if(elt->getDim() == 2)
         for(int iEdge = 0; iEdge < elt->getNumEdges(); iEdge++) {
           ed2el[elt->getEdge(iEdge)].push_back(elt);
@@ -74,7 +74,7 @@ namespace {
   {
     for(std::size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
       MElement *elt = entity->getMeshElement(iEl);
-      //    elt->setVisibility(0); // fordebug
+      elt->setVisibility(0); // FIXMEDEBUG for visualisation
       if(elt->getDim() == 3)
         for(int iFace = 0; iFace < elt->getNumFaces(); iFace++)
           face2el[elt->getFace(iFace)].push_back(elt);
