@@ -11,6 +11,8 @@
 #include "SPoint3.h"
 #include "SVector3.h"
 #include "rtree.h"
+#include "GModel.h"
+#include "GRegion.h"
 
 // P4EST INCLUDES
 
@@ -116,5 +118,10 @@ HXTStatus hxtOctreeComputeMaxGradientZ(HXTForest *forest, double *dsdz_max);
 HXTStatus hxtOctreeComputeMinimumSize(HXTForest *forest, double *size_min);
 
 void write_ds_to_vtk(p4est_t *p4est, const char *filename);
+
+HXTStatus GmshFace2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
+       std::map<MVertex *, int> &v2c,
+       std::vector<MVertex *> &c2v,
+       int faceID);
 
 #endif

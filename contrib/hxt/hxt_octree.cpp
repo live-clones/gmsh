@@ -1,4 +1,5 @@
 #include <hxt_octree.h>
+#include "MTriangle.h"
 
 #include <math.h>
 #include <iostream>
@@ -8,7 +9,7 @@
 #define ALPHA 1.4
 #define BULK_SIZE 7.77;
 
-#define P8EST_QMAXLEVEL 8
+#define P8EST_QMAXLEVEL 11
 
 #ifdef HAVE_P4EST
 
@@ -1817,6 +1818,8 @@ static void hxtOctreeRTreeCallback(p4est_iter_volume_info_t * info, void *user_d
 
   if(!candidates.empty()){
     double kappa = 0.0;
+    double kmax = -1.0;
+    double kmin = 1e22;
     for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
       for(int i = 0; i < 3; ++i){
           int node = forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
@@ -1828,12 +1831,17 @@ static void hxtOctreeRTreeCallback(p4est_iter_volume_info_t * info, void *user_d
           hxtNorm2V3(v1, &k1);
           hxtNorm2V3(v2, &k2);
 
+          kmax = fmax(kmax,fmax(k1,k2));
+          kmin = fmin(kmin,fmin(k1,k2));
+
           kappa = fmax(kappa,fmax(k1,k2));
         }
     }
 
     // if(data->size > size || candidates.size() > 1){
-    if(candidates.size() > 1){
+    // if(candidates.size() > 5){
+    if(kmax/kmin > 1.1 && candidates.size() > 1){
+    // if(kappa > 3){
       // data->size = size;
       data->refineFlag = 1;
     }
@@ -1862,6 +1870,7 @@ static void hxtOctreeAssignSizeAfterRefinement(p4est_iter_volume_info_t * info, 
   forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
 
   if(!candidates.empty()){
+    // printf("candidates.size() = %d\n", candidates.size());
     double kappa = 0.0;
     for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
       for(int i = 0; i < 3; ++i){
@@ -2039,13 +2048,15 @@ HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax){
     // p4est_refine(forest->p4est, 0, hxtCurvatureRefineCallback, hxtOctreeSetInitialSize);
     p4est_refine_ext(forest->p4est, 0, P4EST_QMAXLEVEL, hxtCurvatureRefineCallback, hxtOctreeSetInitialSize, hxtOctreeCurvatureReplaceOctants);
 
+    if(numQuadrants == forest->p4est->global_num_quadrants) break;
+
     // Coarsen
     p4est_coarsen_ext(forest->p4est, 0, 0, hxtCurvatureCoarsenCallback, hxtOctreeSetInitialSize, hxtOctreeCurvatureReplaceOctants);
 
     // Balance the octree to get 2:1 ratio between adjacent cells
     p4est_balance_ext(forest->p4est, P4EST_CONNECT_FACE, hxtOctreeSetInitialSize, hxtOctreeCurvatureReplaceOctants);
 
-    if(numQuadrants == forest->p4est->global_num_quadrants) break;
+    
 
     // Print octree in VTK
        // std::string fileVTK = "/Users/arthur/Documents/Code/Mesh_octree/results_octree/dummy_3D_rtree_curvature_refine" + std::to_string(i);
@@ -2385,22 +2396,18 @@ void elementEstimateCallback(p4est_iter_volume_info_t * info, void *user_data)
   p4est_quadrant_t   *q = info->quad;
   size_data_t        *data = (size_data_t *) q->p.user_data;
 
-// #ifndef P4_TO_P8
-  // *((double *) user_data) += (data->h * data->h)           / pow(data->size, 2);
-// #else
   p4est_t            *p4est = info->p4est;
   p4est_topidx_t      which_tree = info->treeid;
 
   double center[3];
   hxtOctreeGetCenter(p4est, which_tree, q, center);
 
-  // Si le quadrant est dans la géométrie à mailler : à corriger
+  double octantVolume = data->h * data->h * data->h;
+  double tetVolume = data->size * data->size * data->size * sqrt(2) / 12.0;
+
   if(sqrt(center[0]*center[0] + center[1]*center[1] + center[2]*center[2]) <= 1){
-    *((double *) user_data) += (data->h * data->h * data->h) / pow(data->size, 3);
-    // printf("Int = %f \n", *((double *) user_data));
+    *((double *) user_data) += octantVolume/tetVolume;
   }
-  // printf("size = %f et total = %f\n",data->size, *((double *) user_data));
-// #endif
 
 }
 
@@ -2496,3 +2503,137 @@ HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, do
 
   
 #endif // HAVE_P4EST
+
+static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
+                                         HXTMesh *m,
+                                         std::vector<GFace *> &allFaces)
+{
+  std::set<GFace *, GEntityLessThan> allFacesSet;
+  if(m) {
+    m->brep.numVolumes = regions.size();
+    HXT_CHECK(hxtAlignedMalloc(&m->brep.numSurfacesPerVolume,
+                               m->brep.numVolumes * sizeof(uint32_t)));
+  }
+  uint32_t to_alloc = 0;
+  for(std::size_t i = 0; i < regions.size(); i++) {
+    std::vector<GFace *> const &f = regions[i]->faces();
+    std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
+    if(m) {
+      m->brep.numSurfacesPerVolume[i] = f.size() + f_e.size();
+      to_alloc += m->brep.numSurfacesPerVolume[i];
+    }
+    allFacesSet.insert(f.begin(), f.end());
+    allFacesSet.insert(f_e.begin(), f_e.end());
+  }
+  allFaces.insert(allFaces.begin(), allFacesSet.begin(), allFacesSet.end());
+
+  if(!m) return HXT_STATUS_OK;
+
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->brep.surfacesPerVolume, to_alloc * sizeof(uint32_t)));
+
+  uint32_t counter = 0;
+  for(std::size_t i = 0; i < regions.size(); i++) {
+    std::vector<GFace *> const &f = regions[i]->faces();
+    std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
+    for(size_t j = 0; j < f.size(); j++)
+      m->brep.surfacesPerVolume[counter++] = f[j]->tag();
+    for(size_t j = 0; j < f_e.size(); j++)
+      m->brep.surfacesPerVolume[counter++] = f_e[j]->tag();
+  }
+
+  //  printf("volume 0 has %d faces\n",m->brep.numSurfacesPerVolume[0]);
+  //  for (int i=0;i<m->brep.numSurfacesPerVolume[0];i++)printf("%d
+  //  ",m->brep.surfacesPerVolume[i]); printf("\n");
+
+  return HXT_STATUS_OK;
+}
+
+HXTStatus GmshFace2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
+       std::map<MVertex *, int> &v2c,
+       std::vector<MVertex *> &c2v,
+       int faceID)
+{
+  std::set<MVertex *> all;
+  std::vector<GFace *> faces;
+  // std::vector<GEdge *> edges;
+
+  HXT_CHECK(getAllFacesOfAllRegions(regions, m, faces));
+  // HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
+
+  uint64_t ntri = 0;
+  uint64_t nedg = 0;
+
+  // for(size_t j = 0; j < edges.size(); j++) {
+  //   GEdge *ge = edges[j];
+  //   nedg += ge->lines.size();
+  //   for(size_t i = 0; i < ge->lines.size(); i++) {
+  //     all.insert(ge->lines[i]->getVertex(0));
+  //     all.insert(ge->lines[i]->getVertex(1));
+  //   }
+  // }
+
+  // for(size_t j = 0; j < faces.size(); j++) {
+    GFace *gf = faces[faceID];
+    ntri += gf->triangles.size();
+    for(size_t i = 0; i < gf->triangles.size(); i++) {
+      all.insert(gf->triangles[i]->getVertex(0));
+      all.insert(gf->triangles[i]->getVertex(1));
+      all.insert(gf->triangles[i]->getVertex(2));
+    }
+  // }
+
+  //  printf("%d vertices %d triangles\n",all.size(),ntri);
+
+  m->vertices.num = m->vertices.size = all.size();
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
+
+  size_t count = 0;
+  c2v.resize(all.size());
+  for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
+    m->vertices.coord[4 * count + 0] = (*it)->x();
+    m->vertices.coord[4 * count + 1] = (*it)->y();
+    m->vertices.coord[4 * count + 2] = (*it)->z();
+    m->vertices.coord[4 * count + 3] = 0.0;
+    v2c[*it] = count;
+    c2v[count++] = *it;
+  }
+  all.clear();
+
+  m->lines.num = m->lines.size = nedg;
+  uint64_t index = 0;
+
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->lines.colors, (m->lines.num) * sizeof(uint16_t)));
+
+  // for(size_t j = 0; j < edges.size(); j++) {
+  //   GEdge *ge = edges[j];
+  //   for(size_t i = 0; i < ge->lines.size(); i++) {
+  //     m->lines.node[2 * index + 0] = v2c[ge->lines[i]->getVertex(0)];
+  //     m->lines.node[2 * index + 1] = v2c[ge->lines[i]->getVertex(1)];
+  //     m->lines.colors[index] = ge->tag();
+  //     index++;
+  //   }
+  // }
+
+  m->triangles.num = m->triangles.size = ntri;
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
+                             (m->triangles.num) * 3 * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.colors,
+                             (m->triangles.num) * sizeof(uint16_t)));
+
+  index = 0;
+  // for(size_t j = 0; j < faces.size(); j++) {
+    for(size_t i = 0; i < gf->triangles.size(); i++) {
+      m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
+      m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
+      m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
+      m->triangles.colors[index] = gf->tag();
+      index++;
+    }
+  // }
+  return HXT_STATUS_OK;
+}

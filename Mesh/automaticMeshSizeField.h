@@ -28,8 +28,8 @@ class automaticMeshSizeField : public Field {
  public:
   ~automaticMeshSizeField();
   automaticMeshSizeField() : forest(NULL), forestOptions(NULL){
-    _nPointsPerCircle = 25 ;
-    _nPointsPerGap = 20;
+    _nPointsPerCircle = 20;
+    _nPointsPerGap = 1;
     _hmin = 1.e-8;// update needed
     _hmax = 1.e+8;// update needed    
     _hbulk = 0.1; // update needed
