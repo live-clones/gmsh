@@ -194,6 +194,17 @@ SVector3 OCCFace::normal(const SPoint2 &param) const
   return n;
 }
 
+bool OCCFace::uniqueNormal(SVector3 &n, bool oriented) const
+{
+  if(geomType() != GeomType::Plane) return false;
+
+  // FIXMEDEBUG can we be outside the surface?
+  n = normal(SPoint2(-1, -1));
+  n = normal(SPoint2(999, 999));
+  n = normal(SPoint2(0, 0));
+  return true;
+}
+
 Pair<SVector3, SVector3> OCCFace::firstDer(const SPoint2 &param) const
 {
   gp_Pnt pnt;

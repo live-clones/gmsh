@@ -23,7 +23,7 @@ public:
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature(double par) const;
-  virtual bool haveParametrization() { return !_pars.empty(); }
+  virtual bool haveParametrization() const { return !_pars.empty(); }
   virtual Range<double> parBounds(int) const;
   void createGeometry();
   virtual void mesh(bool verbose);

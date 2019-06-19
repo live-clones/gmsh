@@ -28,7 +28,7 @@ public:
   }
   virtual ~partitionEdge() {}
   virtual GeomType geomType() const { return PartitionCurve; }
-  virtual bool haveParametrization() { return false; }
+  virtual bool haveParametrization() const { return false; }
   virtual void setParentEntity(GEntity *e) { _parentEntity = e; }
   virtual GEntity *getParentEntity() { return _parentEntity; }
   virtual void setPartitions(std::vector<unsigned int> &partitions)

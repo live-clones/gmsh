@@ -27,11 +27,12 @@ public:
   virtual bool containsPoint(const SPoint3 &pt) const;
   virtual double getMetricEigenvalue(const SPoint2 &);
   virtual SVector3 normal(const SPoint2 &param) const;
+  virtual bool uniqueNormal(SVector3 &n, bool oriented = true) const;
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &,
                          SVector3 &) const;
   virtual GEntity::GeomType geomType() const;
-  virtual bool haveParametrization();
+  virtual bool haveParametrization() const;
   ModelType getNativeType() const { return GmshModel; }
   void *getNativePtr() const { return s; }
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;

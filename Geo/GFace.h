@@ -193,6 +193,10 @@ public:
   // return the normal to the face at the given parameter location
   virtual SVector3 normal(const SPoint2 &param) const;
 
+  // return the unique normal to the face if it exists (i.e. if planar surface)
+  virtual bool uniqueNormal(SVector3 &n, bool oriented = true) const;
+  virtual bool globalNormalDiscreteFace(SVector3 &n) const;
+
   // return the first derivate of the face at the parameter location
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const = 0;
 

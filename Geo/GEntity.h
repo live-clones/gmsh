@@ -101,8 +101,8 @@ public:
     ParametricCurve,
     BoundaryLayerCurve,
     DiscreteCurve,
-    Plane,
     Nurb,
+    Plane,
     Cylinder,
     Sphere,
     Cone,
@@ -244,7 +244,7 @@ public:
   virtual bool degenerate(int dim) const { return false; }
 
   // does the entity have a parametrization?
-  virtual bool haveParametrization() { return true; }
+  virtual bool haveParametrization() const { return true; }
 
   // parametric bounds of the entity in the "i" direction.
   virtual Range<double> parBounds(int i) const { return Range<double>(0., 0.); }

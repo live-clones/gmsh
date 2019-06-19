@@ -89,7 +89,7 @@ GEntity::GeomType gmshEdge::geomType() const
   }
 }
 
-bool gmshEdge::haveParametrization()
+bool gmshEdge::haveParametrization() const
 {
   return geomType() != BoundaryLayerCurve;
 }

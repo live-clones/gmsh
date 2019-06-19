@@ -39,6 +39,7 @@ public:
                               const double initialGuess[2]) const;
   virtual bool containsPoint(const SPoint3 &pt) const;
   virtual SVector3 normal(const SPoint2 &param) const;
+  virtual bool uniqueNormal(SVector3 &n, bool oriented = true) const;
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &,
                          SVector3 &) const;

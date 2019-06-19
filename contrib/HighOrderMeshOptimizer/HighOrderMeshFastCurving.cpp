@@ -1280,25 +1280,9 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
 {
   if(boundary.empty()) return;
 
-  // Compute normal if planar surface
+  // If it is a planar surface: compute the normal for speedup
   SVector3 normal;
-  if(ent->dim() == 2) {
-    if(ent->geomType() == GEntity::Plane && ent->haveParametrization()) {
-      GEdge *oneEdge = *ent->edges().begin();
-      GVertex *oneVertex = oneEdge->getBeginVertex();
-      SPoint2 par = dynamic_cast<GFace *>(ent)->parFromPoint(oneVertex->xyz());
-      normal = dynamic_cast<GFace *>(ent)->normal(par);
-    }
-    else if(ent->geomType() == GEntity::Plane ||
-            ent->geomType() == GEntity::DiscreteSurface) {
-      // Check if the mesh is in xy-plane (NB: we do not need orientation):
-      SBoundingBox3d bb = ent->bounds();
-      if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
-        normal = SVector3(0, 0, 1);
-      }
-      // NB: Check if the mesh is in a general plane?
-    }
-  }
+  if(ent->dim() == 2) dynamic_cast<GFace *>(ent)->uniqueNormal(normal);
 
   // Compute edge/face -> elt. connectivity
   Msg::Info("Computing connectivity for entity %i...", ent->tag());
@@ -1336,11 +1320,11 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
   double t1 = Cpu();
   Msg::StatusBar(true, "Curving high order boundary layer mesh...");
 
-  // Retrieve geometric entities
+  // Get geometric entities
   std::vector<GEntity *> allEntities;
   gm->getEntities(allEntities);
 
-  // Retrieve boundary layer field
+  // Get boundary layer field
   std::vector<BoundaryLayerField *> blFields;
   FieldManager *fields = gm->getFields();
   for(int i = 0; i < fields->getNumBoundaryLayerFields(); ++i) {
@@ -1350,12 +1334,13 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
   }
   if(onlyIfBLInfo && blFields.empty()) return;
 
+  // Main loop
   for(std::size_t i = 0; i < allEntities.size(); ++i) {
     GEntity *entity = allEntities[i];
 
     if(entity->dim() != p.dim) continue;
 
-    // Retrieve boundary entities
+    // Get boundary entities
     std::vector<GEntity *> boundary;
     if(p.dim == 2)
       boundary.assign(entity->edges().begin(), entity->edges().end());
@@ -1371,12 +1356,13 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       if(p.onlyVisible && !bndEntity->getVisibility()) toRemove = true;
       const GEntity::GeomType type = bndEntity->geomType();
       if((type == GEntity::Line) || (type == GEntity::Plane)) toRemove = true;
-      // Also remove if this entity is unequipped with BL fields but model
-      // contains at least one
-      if(!blFields.empty()) {
+      // Also remove if the model contains BL fields but this entity is
+      // unequipped with one
+      if(!toRemove && !blFields.empty()) {
+        toRemove = true;
         for(std::size_t k = 0; k < blFields.size(); ++k) {
           if(blFields[k]->isEdgeBL(bndEntity->tag())) {
-            toRemove = true;
+            toRemove = false;
             break;
           }
         }

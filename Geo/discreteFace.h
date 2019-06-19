@@ -52,7 +52,7 @@ public:
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
   int createGeometry();
-  virtual bool haveParametrization() { return !_param.empty(); }
+  virtual bool haveParametrization() const { return !_param.empty(); }
   virtual void mesh(bool verbose);
   void setBoundEdges(const std::vector<int> &tagEdges);
   void setBoundEdges(const std::vector<int> &tagEdges,

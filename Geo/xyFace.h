@@ -33,6 +33,11 @@ public:
     SVector3 n(0, 0, 1);
     return n;
   }
+  virtual bool uniqueNormal(SVector3 &n, bool oriented = true) const
+  {
+    n = normal(SPoint2());
+    return true;
+  }
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const
   {
     SVector3 t1(1, 0, 0);

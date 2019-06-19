@@ -1236,6 +1236,28 @@ SVector3 GFace::normal(const SPoint2 &param) const
   return n;
 }
 
+bool GFace::uniqueNormal(SVector3 &n, bool oriented) const
+{
+  if(geomType() == GeomType::DiscreteSurface)
+    return globalNormalDiscreteFace(n);
+  else if(geomType() == GeomType::Plane) {
+    Msg::Error("uniqueNormal not implemented in this case");
+  }
+  return false;
+}
+
+bool GFace::globalNormalDiscreteFace(SVector3 &n) const
+{
+  // Check if the mesh is in xy-plane
+  SBoundingBox3d bb = bounds();
+  if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
+    n = SVector3(0, 0, 1);
+    return true;
+  }
+  return false;
+  // We should check that the plane is a general plane..
+}
+
 bool GFace::buildRepresentationCross(bool force)
 {
   if(cross[0].size()) {

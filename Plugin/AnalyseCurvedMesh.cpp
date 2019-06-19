@@ -286,6 +286,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     GEntity *entity = *it;
     unsigned num = entity->getNumMeshElements();
     fullMatrix<double> *normals = NULL;
+    SVector3 v;
     switch(dim) {
     case 3:
       Msg::StatusBar(true, "Volume %d: checking the Jacobian of %d elements",
@@ -294,25 +295,11 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     case 2:
       Msg::StatusBar(true, "Surface %d: checking the Jacobian of %d elements",
                      entity->tag(), num);
-      if(entity->geomType() == GEntity::Plane &&
-         entity->haveParametrization()) {
-        double u = entity->parBounds(0).low();
-        double v = entity->parBounds(1).low();
-        SVector3 n = dynamic_cast<GFace *>(entity)->normal(SPoint2(u, v));
+      if(dynamic_cast<GFace *>(entity)->uniqueNormal(v, true)) {
         normals = new fullMatrix<double>(1, 3);
-        normals->set(0, 0, n[0]);
-        normals->set(0, 1, n[1]);
-        normals->set(0, 2, n[2]);
-      }
-      else if(entity->geomType() == GEntity::DiscreteSurface) {
-        SBoundingBox3d bb = entity->bounds();
-        // If we don't have the CAD, check if the mesh is 2D:
-        if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
-          normals = new fullMatrix<double>(1, 3);
-          normals->set(0, 0, 0);
-          normals->set(0, 1, 0);
-          normals->set(0, 2, 1);
-        }
+        normals->set(0, 0, v[0]);
+        normals->set(0, 1, v[1]);
+        normals->set(0, 2, v[2]);
       }
       break;
     case 1:

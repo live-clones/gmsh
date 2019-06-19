@@ -205,6 +205,36 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
   }
 }
 
+bool gmshFace::uniqueNormal(SVector3 &n, bool oriented) const
+{
+  if(s->Typ == MSH_SURF_DISCRETE) return globalNormalDiscreteFace(n);
+  if(s->Typ != MSH_SURF_PLAN) return false;
+
+  if(!oriented) {
+    n[0] = meanPlane.a;
+    n[1] = meanPlane.b;
+    n[2] = meanPlane.c;
+  }
+  else {
+    // This is more complex because we have to find a point that
+    // is inside the face...
+    // Idea1: take the center of an element -> we do not necessarily have an
+    //   existing mesh. We can create a STL but this idea can fail if the STL
+    //   is not sufficiently fine.
+    // Idea2: find a non-acute corner (see 'normal' function to see why
+    //   acute corner will fail) -> will fail if the face is a star
+    // Idea3: take the middle of a non-degenerate geometric edge ->
+    //   can fail if the edge is curved and we may not find a straight edge.
+    // => Idea2 seems the more likely to be a success.
+    // This code only take a random corner:
+    GEdge *oneEdge = *edges().begin();
+    GVertex *oneCorner = oneEdge->getBeginVertex();
+    SPoint2 par = parFromPoint(oneCorner->xyz());
+    n = normal(par);
+  }
+  return true;
+}
+
 Pair<SVector3, SVector3> gmshFace::firstDer(const SPoint2 &param) const
 {
   if(s->Typ == MSH_SURF_PLAN && !s->geometry) {
@@ -330,13 +360,17 @@ GEntity::GeomType gmshFace::geomType() const
   }
 }
 
-bool gmshFace::haveParametrization()
+bool gmshFace::haveParametrization() const
 {
   return geomType() != BoundaryLayerSurface;
 }
 
 bool gmshFace::containsPoint(const SPoint3 &pt) const
 {
+  // FIXME:
+  //  1) If the surface is planar, shouldn't we check also that the point
+  //     is coplanar with it?
+  //  2) If the surface is not planar, is it normal to always return false?
   if(s->Typ == MSH_SURF_PLAN) {
     // OK to use the normal from the mean plane here: we compensate
     // for the (possibly wrong) orientation at the end
