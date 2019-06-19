@@ -295,7 +295,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     case 2:
       Msg::StatusBar(true, "Surface %d: checking the Jacobian of %d elements",
                      entity->tag(), num);
-      if(dynamic_cast<GFace *>(entity)->uniqueNormal(v, true)) {
+      if(entity->cast2Face()->uniqueNormal(v, true)) {
         normals = new fullMatrix<double>(1, 3);
         normals->set(0, 0, v[0]);
         normals->set(0, 1, v[1]);
@@ -307,7 +307,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
                      entity->tag(), num);
       if(entity->geomType() == GEntity::Line && entity->haveParametrization()) {
         double u = entity->parBounds(0).low();
-        SVector3 t = dynamic_cast<GEdge *>(entity)->firstDer(u);
+        SVector3 t = entity->cast2Edge()->firstDer(u);
         SVector3 dum = SVector3(0, 0, 0);
         if(t[0] == 0.)
           dum[0] = 1;

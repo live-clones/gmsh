@@ -75,7 +75,7 @@ bool computeFourNeighbors(frameFieldBackgroundMesh2D *bgm,
   // based on gf
 
   // get BGM and GFace
-  GFace *gf = dynamic_cast<GFace *>(bgm->getBackgroundGEntity());
+  GFace *gf = bgm->getBackgroundGEntity()->cast2Face();
 
   // get the parametric coordinates of the point on the surface
   reparamMeshVertexOnFace(v_center, gf, midpoint);
@@ -205,7 +205,7 @@ void computeTwoNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent,
   double y = parent->y();
   double z = parent->z();
   double newx, newy, newz;
-  GRegion *gr = dynamic_cast<GRegion *>(bgm->getBackgroundGEntity());
+  GRegion *gr = bgm->getBackgroundGEntity()->cast2Region();
 
   newx = x + h * dir(0);
   newy = y + h * dir(1);
@@ -226,7 +226,7 @@ void computeSixNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent,
   double y = parent->y();
   double z = parent->z();
   double newx, newy, newz;
-  GRegion *gr = dynamic_cast<GRegion *>(bgm->getBackgroundGEntity());
+  GRegion *gr = bgm->getBackgroundGEntity()->cast2Region();
 
   for(int i = 0; i < 3; i++) {
     newx = x + h * dir(0, i);

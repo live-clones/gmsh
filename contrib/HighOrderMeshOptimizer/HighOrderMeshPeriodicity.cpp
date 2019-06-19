@@ -59,8 +59,8 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
   for(it = _master2slave.begin(); it != _master2slave.end(); ++it) {
     switch(it->first->dim()) {
     case 2: {
-      GFace *master = dynamic_cast<GFace *>(it->first);
-      GFace *slave = dynamic_cast<GFace *>(it->second);
+      GFace *master = it->first->cast2Face();
+      GFace *slave = it->second->cast2Face();
       if(slave->affineTransform.size() < 16) break;
 
       std::vector<double> tfo = _inverse(slave->affineTransform);
@@ -101,15 +101,15 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
       break;
     }
     case 1: {
-      GEdge *master = dynamic_cast<GEdge *>(it->first);
+      GEdge *master = it->first->cast2Edge();
       int numSlave = _master2slave.count(master);
 
       for(int i = 0; i < numSlave; ++i) {
         if(i > 0) ++it;
         GEntity *slave = it->second;
 
-        GEdge *me = dynamic_cast<GEdge *>(master);
-        GEdge *se = dynamic_cast<GEdge *>(slave);
+        GEdge *me = master->cast2Edge();
+        GEdge *se = slave->cast2Edge();
         if(slave->affineTransform.size() < 16) break;
 
         std::vector<double> tfo = _inverse(slave->affineTransform);
@@ -181,8 +181,8 @@ void HighOrderMeshPeriodicity::_copyBackMasterVertices()
   for(it = _master2slave.begin(); it != _master2slave.end(); ++it) {
     switch(it->first->dim()) {
     case 2: {
-      GFace *master = dynamic_cast<GFace *>(it->first);
-      GFace *slave = dynamic_cast<GFace *>(it->second);
+      GFace *master = it->first->cast2Face();
+      GFace *slave = it->second->cast2Face();
 
       Msg::Info("Copying master vertices from face %d to %d", master->tag(),
                 slave->tag());
@@ -223,8 +223,8 @@ void HighOrderMeshPeriodicity::_copyBackMasterVertices()
       break;
     }
     case 1: {
-      GEdge *master = dynamic_cast<GEdge *>(it->first);
-      GEdge *slave = dynamic_cast<GEdge *>(it->second);
+      GEdge *master = it->first->cast2Edge();
+      GEdge *slave = it->second->cast2Edge();
 
       Msg::Info("Copying master vertices from edge %d to %d", master->tag(),
                 slave->tag());

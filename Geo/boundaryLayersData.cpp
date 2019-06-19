@@ -498,8 +498,8 @@ bool buildAdditionalPoints2D(GFace *gf)
             // printf("HERE WE ARE IN FACE %d %d\n",gf->tag(),Ts.size());
             // printf("Classif dim %d
             // %d\n",(*it)->onWhat()->dim(),Ts[0]->onWhat()->dim());
-            GEdge *ge = dynamic_cast<GEdge *>(Ts[0]->onWhat());
-            GVertex *gv = dynamic_cast<GVertex *>((*it)->onWhat());
+            GEdge *ge = Ts[0]->onWhat()->cast2Edge();
+            GVertex *gv = (*it)->onWhat()->cast2Vertex();
             if(ge && gv) {
               addColumnAtTheEndOfTheBL(ge, gv, _columns, blf);
             }

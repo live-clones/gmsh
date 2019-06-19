@@ -2281,7 +2281,7 @@ void GModel::alignPeriodicBoundaries()
 
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     GEdge *tgt = *it;
-    GEdge *src = dynamic_cast<GEdge *>(tgt->getMeshMaster());
+    GEdge *src = tgt->getMeshMaster()->cast2Edge();
 
     if(src != NULL && src != tgt) {
       // compose a search list on master edge
@@ -2358,7 +2358,7 @@ void GModel::alignPeriodicBoundaries()
 
   for(GModel::fiter it = firstFace(); it != lastFace(); ++it) {
     GFace *tgt = *it;
-    GFace *src = dynamic_cast<GFace *>(tgt->getMeshMaster());
+    GFace *src = tgt->getMeshMaster()->cast2Face();
     if(src != NULL && src != tgt) {
       std::map<MFace, MElement *, Less_Face> srcElmts;
 

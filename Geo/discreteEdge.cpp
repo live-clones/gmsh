@@ -75,10 +75,9 @@ void discreteEdge::_orderMLines()
     Msg::Error("No line elements in discrete curve %d", tag());
     return;
   }
-  GVertex *g0 = dynamic_cast<GVertex *>(lines[0]->getVertex(0)->onWhat());
+  GVertex *g0 = lines[0]->getVertex(0)->onWhat()->cast2Vertex();
   if(g0) setBeginVertex(g0);
-  GVertex *g1 =
-    dynamic_cast<GVertex *>(lines[lines.size() - 1]->getVertex(1)->onWhat());
+  GVertex *g1 = lines[lines.size() - 1]->getVertex(1)->onWhat()->cast2Vertex();
   if(g1) setEndVertex(g1);
   if(!g0 || !g1)
     Msg::Error("Discrete curve %d has non consecutive line elements", tag());

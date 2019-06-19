@@ -325,7 +325,7 @@ static void Mesh0D(GModel *m)
     GVertex *gv = *it;
     if(gv->getMeshMaster() != gv) {
       if(gv->correspondingVertices.empty()) {
-        GVertex *master = dynamic_cast<GVertex *>(gv->getMeshMaster());
+        GVertex *master = gv->getMeshMaster()->cast2Vertex();
         if(master)
           gv->correspondingVertices[gv->mesh_vertices[0]] =
             master->mesh_vertices[0];

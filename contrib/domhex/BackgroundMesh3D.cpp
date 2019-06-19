@@ -60,7 +60,7 @@ void backgroundMesh3D::computeSizeField()
   std::cout << "backgroundMesh3D::computeSizeField() " << std::endl;
 
   // fills dirichlet BC
-  GRegion *region = dynamic_cast<GRegion *>(gf);
+  GRegion *region = gf->cast2Region();
   if(!region) {
     Msg::Error("Entity is not a region in background mesh");
     return;
@@ -105,7 +105,7 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
                                        bool in_parametric_plane)
 {
   // same as Size_field::solve()
-  GRegion *gr = dynamic_cast<GRegion *>(gf);
+  GRegion *gr = gf->cast2Region();
   if(!gr) {
     Msg::Error("Entity is not a region in background mesh");
     return;
@@ -185,7 +185,7 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
 
 GPoint backgroundMesh3D::get_GPoint_from_MVertex(const MVertex *v) const
 {
-  return GPoint(v->x(), v->y(), v->z(), dynamic_cast<GRegion *>(gf));
+  return GPoint(v->x(), v->y(), v->z(), gf->cast2Region());
 }
 
 MVertex *backgroundMesh3D::get_nearest_neighbor(const MVertex *v)
@@ -216,7 +216,7 @@ MVertex *backgroundMesh3D::get_nearest_neighbor(double x, double y, double z,
 MElementOctree *backgroundMesh3D::getOctree()
 {
   if(!octree) {
-    GRegion *gr = dynamic_cast<GRegion *>(gf);
+    GRegion *gr = gf->cast2Region();
     if(!gr) {
       Msg::Error("Entity is not a region in background mesh");
       return 0;
@@ -624,7 +624,7 @@ void frameFieldBackgroundMesh3D::initiate_crossfield()
   MVertex *v;
 
   // first, for boundaries :
-  GRegion *gr = dynamic_cast<GRegion *>(gf);
+  GRegion *gr = gf->cast2Region();
   if(!gr) {
     Msg::Error("Entity is not a region in background mesh");
     return;
@@ -786,7 +786,7 @@ double frameFieldBackgroundMesh3D::get_vectorial_smoothness(const int idir,
 
 void frameFieldBackgroundMesh3D::build_vertex_to_element_table()
 {
-  GRegion *gr = dynamic_cast<GRegion *>(gf);
+  GRegion *gr = gf->cast2Region();
   if(!gr) {
     Msg::Error("Entity is not a region in background mesh");
     return;
@@ -819,7 +819,7 @@ void frameFieldBackgroundMesh3D::build_vertex_to_element_table()
 
 const MElement *backgroundMesh3D::getElement(unsigned int i) const
 {
-  GRegion *gr = dynamic_cast<GRegion *>(gf);
+  GRegion *gr = gf->cast2Region();
   if(!gr) {
     Msg::Error("Entity is not a region in background mesh");
     return 0;
@@ -829,7 +829,7 @@ const MElement *backgroundMesh3D::getElement(unsigned int i) const
 
 unsigned int backgroundMesh3D::getNumMeshElements() const
 {
-  GRegion *gr = dynamic_cast<GRegion *>(gf);
+  GRegion *gr = gf->cast2Region();
   if(!gr) {
     Msg::Error("Entity is not a region in background mesh");
     return 0;

@@ -1166,12 +1166,11 @@ namespace {
 
     if(p.dim == 2) {
       if(normal.norm() > .5) {
-        curve2DBoundaryLayer(bndEl2column, normal,
-                             dynamic_cast<GEdge *>(bndEnt));
+        curve2DBoundaryLayer(bndEl2column, normal, bndEnt->cast2Edge());
       }
       else {
-        curve2DBoundaryLayer(bndEl2column, dynamic_cast<GFace *>(ent),
-                             dynamic_cast<GEdge *>(bndEnt));
+        curve2DBoundaryLayer(bndEl2column, ent->cast2Face(),
+                             bndEnt->cast2Edge());
       }
     }
     //  else curve3DBoundaryLayer(bndEl2column);
@@ -1282,7 +1281,7 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
 
   // If it is a planar surface: compute the normal for speedup
   SVector3 normal;
-  if(ent->dim() == 2) dynamic_cast<GFace *>(ent)->uniqueNormal(normal);
+  if(ent->dim() == 2) ent->cast2Face()->uniqueNormal(normal);
 
   // Compute edge/face -> elt. connectivity
   Msg::Info("Computing connectivity for entity %i...", ent->tag());

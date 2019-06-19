@@ -1240,7 +1240,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
     // non complete periodic info (e.g. through extrusion)
     if(tgt->vertexCounterparts.empty()) continue;
 
-    GEdge *src = dynamic_cast<GEdge *>(tgt->getMeshMaster());
+    GEdge *src = tgt->getMeshMaster()->cast2Edge();
 
     if(src != NULL && src != tgt) {
       std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
@@ -1319,7 +1319,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
     // non complete periodic info (e.g. through extrusion)
     if(tgt->vertexCounterparts.empty()) continue;
 
-    GFace *src = dynamic_cast<GFace *>(tgt->getMeshMaster());
+    GFace *src = tgt->getMeshMaster()->cast2Face();
     if(src != NULL && src != tgt) {
       Msg::Info("Reconstructing periodicity for surface connection %d - %d",
                 tgt->tag(), src->tag());

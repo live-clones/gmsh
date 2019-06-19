@@ -58,7 +58,7 @@ void normalizeAngle(double &angle)
 
 void backgroundMesh2D::create_face_mesh()
 {
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GFace *face = gf->cast2Face();
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return;
@@ -141,7 +141,7 @@ void backgroundMesh2D::create_mesh_copy()
 {
   // TODO: useful to extend it to other elements ???
   // std::set<SPoint2> myBCNodes;
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GFace *face = gf->cast2Face();
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return;
@@ -174,7 +174,7 @@ void backgroundMesh2D::create_mesh_copy()
 
 GPoint backgroundMesh2D::get_GPoint_from_MVertex(const MVertex *v) const
 {
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GFace *face = gf->cast2Face();
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return GPoint();
@@ -190,7 +190,7 @@ backgroundMesh2D::backgroundMesh2D(GFace *_gf, bool erase_2D3D)
   if(erase_2D3D) {
     // now, the new mesh has been copied in local in backgroundMesh2D, deleting
     // the mesh from GFace, back to the previous one !
-    GFace *face = dynamic_cast<GFace *>(gf);
+    GFace *face = gf->cast2Face();
     if(!face)
       Msg::Error("Entity is not a face in background mesh");
     else
@@ -224,7 +224,7 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
 
   // Number vertices
   std::set<MVertex *> vs;
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GFace *face = gf->cast2Face();
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     delete _lsys;
@@ -278,7 +278,7 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
 
 void backgroundMesh2D::computeSizeField()
 {
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GFace *face = gf->cast2Face();
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return;
@@ -344,7 +344,7 @@ void backgroundMesh2D::updateSizes()
       lc = sizeFactor * BGM_MeshSize(v->onWhat(), u, 0, v->x(), v->y(), v->z());
     }
     else {
-      GFace *face = dynamic_cast<GFace *>(gf);
+      GFace *face = gf->cast2Face();
       if(!face) {
         Msg::Error("Entity is not a face in background mesh");
         return;
@@ -394,7 +394,7 @@ frameFieldBackgroundMesh2D::frameFieldBackgroundMesh2D(GFace *_gf)
 
   // now, the new mesh has been copied in local in backgroundMesh2D, deleting
   // the mesh from GFace, back to the previous one !
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GFace *face = gf->cast2Face();
   if(!face)
     Msg::Error("Entity is not a face in background mesh");
   else
@@ -474,7 +474,7 @@ void frameFieldBackgroundMesh2D::computeCrossField(
 
   DoubleStorageType _cosines4, _sines4;
 
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GFace *face = gf->cast2Face();
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return;
@@ -545,7 +545,7 @@ void frameFieldBackgroundMesh2D::eval_crossfield(double u, double v,
   }
 
   //  SVector3 t1,t2,n;
-  //  GFace *face = dynamic_cast<GFace*>(gf);
+  //  GFace *face = gf->cast2Face();
   //  Pair<SVector3, SVector3> der = face->firstDer(SPoint2(u,v));
   //  SVector3 s1 = der.first();
   //  SVector3 s2 = der.second();
@@ -566,7 +566,7 @@ void frameFieldBackgroundMesh2D::eval_crossfield(double u, double v,
 void frameFieldBackgroundMesh2D::eval_crossfield(MVertex *vert, STensor3 &cf)
 {
   SPoint2 parampoint;
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GFace *face = gf->cast2Face();
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return;
@@ -661,7 +661,7 @@ frameFieldBackgroundMesh2D::compute_crossfield_directions(double u, double v,
                                                           double angle_current)
 {
   // get the unit normal at that point
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GFace *face = gf->cast2Face();
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return Pair<SVector3, SVector3>(SVector3(), SVector3());
@@ -705,7 +705,7 @@ bool frameFieldBackgroundMesh2D::compute_RK_infos(double u, double v, double x,
   // compute t1,t2: cross field directions
 
   // get the unit normal at that point
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GFace *face = gf->cast2Face();
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return false;

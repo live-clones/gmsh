@@ -2882,7 +2882,7 @@ void meshGFace::operator()(GFace *gf, bool print)
   if(MeshTransfiniteSurface(gf)) return;
   if(MeshExtrudedSurface(gf)) return;
   if(gf->getMeshMaster() != gf) {
-    GFace *gff = dynamic_cast<GFace *>(gf->getMeshMaster());
+    GFace *gff = gf->getMeshMaster()->cast2Face();
     if(gff) {
       if(gff->meshStatistics.status != GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;

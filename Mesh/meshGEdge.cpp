@@ -553,7 +553,7 @@ void meshGEdge::operator()(GEdge *ge)
   if(MeshExtrudedCurve(ge)) return;
 
   if(ge->getMeshMaster() != ge) {
-    GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
+    GEdge *gef = ge->getMeshMaster()->cast2Edge();
     if(gef->meshStatistics.status == GEdge::PENDING) return;
     Msg::Info("Meshing curve %d (%s) as a copy of %d", ge->tag(),
               ge->getTypeString().c_str(), ge->getMeshMaster()->tag());

@@ -388,7 +388,7 @@ static double _relocateVertex(GFace *gf, MVertex *ver,
       reparamMeshVertexOnFace(v, gf, pp);
       counter++;
       if(v->onWhat()->dim() == 1) {
-        GEdge *ge = dynamic_cast<GEdge *>(v->onWhat());
+        GEdge *ge = v->onWhat()->cast2Edge();
         // do not take any chance
         if(ge->isSeam(gf)) return 2.0;
       }
