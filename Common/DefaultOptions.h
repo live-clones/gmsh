@@ -1031,6 +1031,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
     "Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical "
     "entity, 3: by partition)" },
+  { F|O, "CompoundClassify" , opt_mesh_compound_classify , 1. ,
+    "How are surface mesh elements classified on compounds? (0: on the new discrete "
+    "entity, 1: on the original geometrical entity)" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
 

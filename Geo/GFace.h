@@ -352,6 +352,10 @@ public:
   std::vector<MQuadrangle *> quadrangles;
   std::vector<MPolygon *> polygons;
 
+  // when a compound of surfaces is created, we keep track of the compound
+  // surface
+  GFace *compoundSurface;
+
   void addTriangle(MTriangle *t) { triangles.push_back(t); }
   void addQuadrangle(MQuadrangle *q) { quadrangles.push_back(q); }
   void addPolygon(MPolygon *p) { polygons.push_back(p); }

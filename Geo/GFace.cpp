@@ -36,7 +36,8 @@
 #define SQU(a) ((a) * (a))
 
 GFace::GFace(GModel *model, int tag)
-  : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0)
+  : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0),
+    compoundSurface(0)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;
@@ -1482,7 +1483,13 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
 
 static void meshCompound(GFace *gf, bool verbose)
 {
+  // reclassify the elements on the original surfaces? (This is nice but it will
+  // perturb algorithms that depend on the parametrization after the mesh is
+  // done
+  bool magic = (CTX::instance()->mesh.compoundClassify == 1);
+
   discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000);
+  gf->model()->add(df);
 
   std::vector<GFace *> triangles_tag;
 
@@ -1511,9 +1518,12 @@ static void meshCompound(GFace *gf, bool verbose)
     std::vector<GEdge*> embe = c->getEmbeddedEdges(true);
     emb1.insert(embe.begin(), embe.end());
 
-    c->triangles.clear();
-    c->quadrangles.clear();
-    c->mesh_vertices.clear();
+    if(magic){
+      c->triangles.clear();
+      c->quadrangles.clear();
+      c->mesh_vertices.clear();
+    }
+    c->compoundSurface = df;
   }
 
   std::set<GEdge*, GEntityLessThan> bndc;
@@ -1537,24 +1547,17 @@ static void meshCompound(GFace *gf, bool verbose)
     df->addEmbeddedVertex(*it);
 
   df->createGeometry();
+
+  if(!magic){
+    df->triangles.clear();
+    df->quadrangles.clear();
+    df->mesh_vertices.clear();
+  }
   df->mesh(verbose);
 
-  // FIXME: playing this game of putting elements and nodes back in the original
-  // surfaces is nice, but it prevents applying algorithms that will depend on
-  // working with the parametrization afterwards (e.g. high-order meshing).
-  //
-  // We could:
-  //  - keep the df around (without mesh elements/nodes in it), with a
-  //      "discreteSurface" member in GFace (same as "discreteCurve" in GEdge)
-  //  - change the functions that deal with the parameter space in GFace to
-  //      use discreteSurface instead of the native param if it exists
-  //
-  // Otherwise we should just do the same as in 1D, i.e. keep the compound mesh
-  // in df (and use that as the boundary mesh for any 3D mesh). The downside is
-  // that e.g. the tag of df is not known, so it's kinda going back to the
-  // previous explicit compound flow.
-  //
-  // We should also try to have the same behavior for 1D and 2D compounds...
+  if(!magic){
+    return;
+  }
 
   for(std::size_t i = 0; i < df->mesh_vertices.size(); i++) {
     double u, v;
@@ -1606,7 +1609,6 @@ static void meshCompound(GFace *gf, bool verbose)
   df->triangles.clear();
   df->quadrangles.clear();
   df->mesh_vertices.clear();
-  delete df;
 }
 #endif
 
