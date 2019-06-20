@@ -1,10 +1,10 @@
-4.4.0: new STL remeshing workflow (and new ClassifySurfaces in .geo files);
-added API support for color options, mesh optimization, recombination, smoothing
-and shape healing; exposed additional METIS options; improved support for
-periodic entities (multiple curves with the same start/end points; legacy MSH2
-format); added mesh renumbering also after interactive mesh modifications; new
-interactive filter in visibility window; modernized GUI with slightly "flatter"
-scheme; small bug fixes.
+4.4.0: new STL remeshing workflow (with new ClassifySurfaces command in .geo
+files); added API support for color options, mesh optimization, recombination,
+smoothing and shape healing; exposed additional METIS options; improved support
+for periodic entities (multiple curves with the same start/end points, legacy
+MSH2 format, periodic surfaces with embedded entities); added mesh renumbering
+also after interactive mesh modifications; new interactive filter in visibility
+window; flatter GUI theme; small bug fixes.
 
 * Incompatible API changes: mesh/getJacobians and mesh/getBasisFunctions now
   take integration points explicitely; mesh/setNodes and mesh/setElements have
