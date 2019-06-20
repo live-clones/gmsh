@@ -726,12 +726,12 @@ public:
   {
     if(t == _t1) return _t2;
     if(t == _t2) return _t1;
-    Msg::Error("error in twoT");
+    Msg::Error("Non-manifold triangulation not supported yet");
     return NULL;
   }
 };
 
-static void
+static bool
 makePartitionSimplyConnected(std::vector<MTriangle *> &t,
                              std::vector<std::vector<MTriangle *> > &ts)
 {
@@ -761,6 +761,7 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
         std::map<MEdge, twoT, Less_Edge>::iterator it = conn.find(e);
         if(it->second._t2) {
           MTriangle *tt = it->second.other(x);
+          if(!tt) return false; // FIXME
           if(_touch.find(tt) == _touch.end()) _s.push(tt);
         }
       }
@@ -773,6 +774,7 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
       if(_touch.find(t[i]) == _touch.end()) _update.push_back(t[i]);
     t = _update;
   }
+  return true;
 }
 
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
@@ -850,7 +852,9 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
               (*it)->triangles[i]);
           for(int i = 0; i < np; i++) {
             std::vector<std::vector<MTriangle *> > ts;
-            makePartitionSimplyConnected(t[i], ts);
+            if(!makePartitionSimplyConnected(t[i], ts)){
+              break; // FIXME
+            }
             for(std::size_t j = 0; j < ts.size(); j++) {
               _levels.push(level + 1);
               partitions.push(ts[j]);
