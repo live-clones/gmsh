@@ -6,6 +6,7 @@
 // Contributed by Anthony Royer.
 
 // FIXME: The partitioning code should be updated to
+// - make it deterministic!
 // - use int for partition tags (to match the type for other entities in Gmsh)
 // - use size_t for element/node tags, and thus the graph
 
