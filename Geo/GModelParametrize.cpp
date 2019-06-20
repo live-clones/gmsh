@@ -782,7 +782,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
 {
   GModel m;
 
-  Msg::Info("Splitting the %d triangulations of the model", gm->getNumFaces());
+  Msg::Info("Splitting triangulations to make them parametrizable:");
 
 #if 0 // this is now done in the STL reader
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
@@ -831,10 +831,8 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
       int np = isTriangulationParametrizable((*it)->triangles,
                                              max_elems_per_cut, 5.0, why);
       if(np > 1) {
-        std::string WH(level, ' ');
-        Msg::Info("%sPartition (level %2d) with %7d triangles split in %d "
-                  "parts because %s",
-                  WH.c_str(), level, (*it)->triangles.size(), np,
+        Msg::Info(" - Level %d partition with %d triangles split in %d "
+                  "parts because %s", level, (*it)->triangles.size(), np,
                   why.str().c_str());
       }
       if(np == 1) {
