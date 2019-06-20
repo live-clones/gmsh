@@ -2080,14 +2080,17 @@ corner; the next 2 define the width and height. If a 6th expression is
 provided, it defines a radius to round the rectangle
 corners. @code{Rectangle} is only available with the OpenCASCADE kernel.
 
-@item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
+@item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @} < Using Sewing >;
 Creates a surface loop (a shell). The @var{expression} inside the
 parentheses is the surface loop's tag; the @var{expression-list} on the
 right hand side should contain the tags of all the surfaces that
 constitute the surface loop. A surface loop must always represent a
 closed shell, and the surfaces should be oriented consistently (using
 negative tags to specify reverse orientation). (Surface loops are used
-to create volumes: see @ref{Volumes}.)
+to create volumes: see @ref{Volumes}.) With the OpenCASCADE kernel, the
+optional @code{Using Sewing} argument allows to build a shell made of
+surfaces that share geometrically identical (but topologically
+different) curves.
 
 @item Physical Surface ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
 Creates a physical surface. The @var{expression} inside the parentheses

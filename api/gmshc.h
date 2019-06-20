@@ -1385,13 +1385,11 @@ GMSH_API int gmshModelOccAddCircle(const double x,
                                    const double angle2,
                                    int * ierr);
 
-/* Add an ellipse arc between the two points with tags `startTag' and
- * `endTag', with center `centerTag'. If `tag' is positive, set the tag
- * explicitly; otherwise a new tag is selected automatically. Return the tag
- * of the ellipse arc. Note that OpenCASCADE does not allow creating ellipse
- * arcs with the major radius (along the x-axis) smaller than or equal to the
- * minor radius (along the y-axis): rotate the shape or use `addCircleArc' in
- * such cases. */
+/* Add an ellipse arc between the major axis point `startTag' and `endTag',
+ * with center `centerTag'. If `tag' is positive, set the tag explicitly;
+ * otherwise a new tag is selected automatically. Return the tag of the
+ * ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs
+ * with the major radius smaller than the minor radius. */
 GMSH_API int gmshModelOccAddEllipseArc(const int startTag,
                                        const int centerTag,
                                        const int endTag,
@@ -1445,20 +1443,22 @@ GMSH_API int gmshModelOccAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Add a wire (open or closed) formed by the curves `curveTags'. `curveTags'
- * should contain (signed) tags: a negative tag signifies that the underlying
- * curve is considered with reversed orientation. If `tag' is positive, set
- * the tag explicitly; otherwise a new tag is selected automatically. Return
- * the tag of the wire. */
+/* Add a wire (open or closed) formed by the curves `curveTags'. Note that an
+ * OpenCASCADE wire can be made of curves that share geometrically identical
+ * (but topologically different) points. If `tag' is positive, set the tag
+ * explicitly; otherwise a new tag is selected automatically. Return the tag
+ * of the wire. */
 GMSH_API int gmshModelOccAddWire(int * curveTags, size_t curveTags_n,
                                  const int tag,
                                  const int checkClosed,
                                  int * ierr);
 
 /* Add a curve loop (a closed wire) formed by the curves `curveTags'.
- * `curveTags' should contain tags of curves forming a closed loop. If `tag'
- * is positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Return the tag of the curve loop. */
+ * `curveTags' should contain tags of curves forming a closed loop. Note that
+ * an OpenCASCADE curve loop can be made of curves that share geometrically
+ * identical (but topologically different) points. If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the curve loop. */
 GMSH_API int gmshModelOccAddCurveLoop(int * curveTags, size_t curveTags_n,
                                       const int tag,
                                       int * ierr);
@@ -1507,9 +1507,12 @@ GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
 
 /* Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
  * positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Return the tag of the surface loop. */
+ * automatically. Return the tag of the surface loop. Setting `sewing' allows
+ * to build a shell made of surfaces that share geometrically identical (but
+ * topologically different) curves. */
 GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,
                                         const int tag,
+                                        const int sewing,
                                         int * ierr);
 
 /* Add a volume (a region) defined by one or more surface loops `shellTags'.

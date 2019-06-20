@@ -2939,12 +2939,11 @@ end
 """
     gmsh.model.occ.addEllipseArc(startTag, centerTag, endTag, tag = -1)
 
-Add an ellipse arc between the two points with tags `startTag` and `endTag`,
-with center `centerTag`. If `tag` is positive, set the tag explicitly; otherwise
-a new tag is selected automatically. Return the tag of the ellipse arc. Note
-that OpenCASCADE does not allow creating ellipse arcs with the major radius
-(along the x-axis) smaller than or equal to the minor radius (along the y-axis):
-rotate the shape or use `addCircleArc` in such cases.
+Add an ellipse arc between the major axis point `startTag` and `endTag`, with
+center `centerTag`. If `tag` is positive, set the tag explicitly; otherwise a
+new tag is selected automatically. Return the tag of the ellipse arc. Note that
+OpenCASCADE does not allow creating ellipse arcs with the major radius smaller
+than the minor radius.
 
 Return an integer value.
 """
@@ -3039,11 +3038,10 @@ end
 """
     gmsh.model.occ.addWire(curveTags, tag = -1, checkClosed = false)
 
-Add a wire (open or closed) formed by the curves `curveTags`. `curveTags` should
-contain (signed) tags: a negative tag signifies that the underlying curve is
-considered with reversed orientation. If `tag` is positive, set the tag
-explicitly; otherwise a new tag is selected automatically. Return the tag of the
-wire.
+Add a wire (open or closed) formed by the curves `curveTags`. Note that an
+OpenCASCADE wire can be made of curves that share geometrically identical (but
+topologically different) points. If `tag` is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the wire.
 
 Return an integer value.
 """
@@ -3060,9 +3058,10 @@ end
     gmsh.model.occ.addCurveLoop(curveTags, tag = -1)
 
 Add a curve loop (a closed wire) formed by the curves `curveTags`. `curveTags`
-should contain tags of curves forming a closed loop. If `tag` is positive, set
-the tag explicitly; otherwise a new tag is selected automatically. Return the
-tag of the curve loop.
+should contain tags of curves forming a closed loop. Note that an OpenCASCADE
+curve loop can be made of curves that share geometrically identical (but
+topologically different) points. If `tag` is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the curve loop.
 
 Return an integer value.
 """
@@ -3151,19 +3150,21 @@ function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
 end
 
 """
-    gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1)
+    gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
 
 Add a surface loop (a closed shell) formed by `surfaceTags`.  If `tag` is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the surface loop.
+Return the tag of the surface loop. Setting `sewing` allows to build a shell
+made of surfaces that share geometrically identical (but topologically
+different) curves.
 
 Return an integer value.
 """
-function addSurfaceLoop(surfaceTags, tag = -1)
+function addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelOccAddSurfaceLoop, gmsh.lib), Cint,
-          (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, surfaceTags), length(surfaceTags), tag, ierr)
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, surfaceTags), length(surfaceTags), tag, sewing, ierr)
     ierr[] != 0 && error("gmshModelOccAddSurfaceLoop returned non-zero error code: $(ierr[])")
     return api__result__
 end

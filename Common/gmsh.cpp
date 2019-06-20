@@ -3993,13 +3993,14 @@ gmsh::model::occ::addSurfaceFilling(const int wireTag, const int tag,
 
 GMSH_API int
 gmsh::model::occ::addSurfaceLoop(const std::vector<int> &surfaceTags,
-                                 const int tag)
+                                 const int tag, const bool sewing)
 {
   if(!_isInitialized()) { throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addSurfaceLoop(outTag,
-                                                           surfaceTags)) {
+                                                           surfaceTags,
+                                                           sewing)) {
     throw 1;
   }
   return outTag;

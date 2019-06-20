@@ -9,7 +9,7 @@ scheme; small bug fixes.
 * Incompatible API changes: mesh/getJacobians and mesh/getBasisFunctions now
   take integration points explicitely; mesh/setNodes and mesh/setElements have
   been replaced by mesh/addNodes and mesh/addElements; added optional arguement
-  to mesh/classifySurfaces
+  to mesh/classifySurfaces; added optional argument to occ/addSurfaceLoop.
 
 4.3.0 (April 19, 2019): improved meshing of surfaces with singular
 parametrizations; added API support for aliasing and combining views, copying

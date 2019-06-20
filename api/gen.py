@@ -541,10 +541,10 @@ occ.add('addBSpline',doc,oint,ivectorint('pointTags'),iint('tag','-1'),iint('deg
 doc = '''Add a Bezier curve with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the Bezier curve.'''
 occ.add('addBezier',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 
-doc = '''Add a wire (open or closed) formed by the curves `curveTags'. `curveTags' should contain (signed) tags: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the wire.'''
+doc = '''Add a wire (open or closed) formed by the curves `curveTags'. Note that an OpenCASCADE wire can be made of curves that share geometrically identical (but topologically different) points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the wire.'''
 occ.add('addWire',doc,oint,ivectorint('curveTags'),iint('tag','-1'),ibool('checkClosed','false','False'))
 
-doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain tags of curves forming a closed loop. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
+doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain tags of curves forming a closed loop. Note that an OpenCASCADE curve loop can be made of curves that share geometrically identical (but topologically different) points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
 occ.add('addCurveLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
 
 doc = '''Add a rectangle with lower left corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Round the corners if `roundedRadius' is nonzero. Return the tag of the rectangle.'''
@@ -559,8 +559,8 @@ occ.add('addPlaneSurface',doc,oint,ivectorint('wireTags'),iint('tag','-1'))
 doc = '''Add a surface filling the curve loops in `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface. If `pointTags' are provided, force the surface to pass through the given points.'''
 occ.add('addSurfaceFilling',doc,oint,iint('wireTag'),iint('tag','-1'),ivectorint('pointTags','std::vector<int>()',"[]","[]"))
 
-doc = '''Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface loop.'''
-occ.add('addSurfaceLoop',doc,oint,ivectorint('surfaceTags'),iint('tag','-1'))
+doc = '''Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface loop. Setting `sewing' allows to build a shell made of surfaces that share geometrically identical (but topologically different) curves.'''
+occ.add('addSurfaceLoop',doc,oint,ivectorint('surfaceTags'),iint('tag','-1'),ibool('sewing','false','False'))
 
 doc = '''Add a volume (a region) defined by one or more surface loops `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the volume.'''
 occ.add('addVolume',doc,oint,ivectorint('shellTags'),iint('tag','-1'))

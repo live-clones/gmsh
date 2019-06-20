@@ -306,6 +306,7 @@ SetTag                  return tSetTag;
 SetNumber               return tSetNumber;
 SetPartition            return tSetPartition;
 SetString               return tSetString;
+Sewing                  return tSewing;
 ShapeFromFile           return tShapeFromFile;
 Show                    return tShow;
 Sin                     return tSin;

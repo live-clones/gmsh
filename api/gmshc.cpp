@@ -2218,13 +2218,13 @@ GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n, const int tag, const int sewing, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
-    result_api_ = gmsh::model::occ::addSurfaceLoop(api_surfaceTags_, tag);
+    result_api_ = gmsh::model::occ::addSurfaceLoop(api_surfaceTags_, tag, sewing);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

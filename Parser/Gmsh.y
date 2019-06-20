@@ -200,7 +200,7 @@ struct doubleXstring{
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
-%token tUsing tPlugin tDegenerated tRecursive
+%token tUsing tPlugin tDegenerated tRecursive tSewing
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
@@ -220,6 +220,7 @@ struct doubleXstring{
 %token tNameToString tStringToName
 
 %type <d> FExpr FExpr_Single DefineStruct NameStruct_Arg GetForced_Default
+%type <d> LoopOptions
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
 %type <i> PhysicalId_per_dim_entity GeoEntity GeoEntity123 GeoEntity12 GeoEntity02
@@ -1592,6 +1593,15 @@ CircleOptions :
     }
 ;
 
+LoopOptions :
+    {
+      $$ = 0;
+    }
+  | tUsing tSewing
+    {
+      $$ = 1;
+    }
+
 Shape :
     tPoint '(' FExpr ')' tAFFECT VExpr tEND
     {
@@ -2156,13 +2166,13 @@ Shape :
       if(!r) yymsg(0, "Could not add thick solid");
       List_Delete($6);
     }
-  | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble LoopOptions tEND
     {
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        r = GModel::current()->getOCCInternals()->addSurfaceLoop(num, tags);
+        r = GModel::current()->getOCCInternals()->addSurfaceLoop(num, tags, $8);
       }
       else{
         r = GModel::current()->getGEOInternals()->addSurfaceLoop(num, tags);

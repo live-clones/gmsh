@@ -2303,12 +2303,11 @@ integer value
 @end table
 
 @item addEllipseArc
-Add an ellipse arc between the two points with tags @code{startTag} and
+Add an ellipse arc between the major axis point @code{startTag} and
 @code{endTag}, with center @code{centerTag}. If @code{tag} is positive, set the
 tag explicitly; otherwise a new tag is selected automatically. Return the tag of
 the ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs with
-the major radius (along the x-axis) smaller than or equal to the minor radius
-(along the y-axis): rotate the shape or use @code{addCircleArc} in such cases.
+the major radius smaller than the minor radius.
 
 @table @asis
 @item Input:
@@ -2385,11 +2384,11 @@ integer value
 @end table
 
 @item addWire
-Add a wire (open or closed) formed by the curves @code{curveTags}.
-@code{curveTags} should contain (signed) tags: a negative tag signifies that the
-underlying curve is considered with reversed orientation. If @code{tag} is
-positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the wire.
+Add a wire (open or closed) formed by the curves @code{curveTags}. Note that an
+OpenCASCADE wire can be made of curves that share geometrically identical (but
+topologically different) points. If @code{tag} is positive, set the tag
+explicitly; otherwise a new tag is selected automatically. Return the tag of the
+wire.
 
 @table @asis
 @item Input:
@@ -2402,9 +2401,11 @@ integer value
 
 @item addCurveLoop
 Add a curve loop (a closed wire) formed by the curves @code{curveTags}.
-@code{curveTags} should contain tags of curves forming a closed loop. If
-@code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. Return the tag of the curve loop.
+@code{curveTags} should contain tags of curves forming a closed loop. Note that
+an OpenCASCADE curve loop can be made of curves that share geometrically
+identical (but topologically different) points. If @code{tag} is positive, set
+the tag explicitly; otherwise a new tag is selected automatically. Return the
+tag of the curve loop.
 
 @table @asis
 @item Input:
@@ -2479,11 +2480,13 @@ integer value
 @item addSurfaceLoop
 Add a surface loop (a closed shell) formed by @code{surfaceTags}.  If @code{tag}
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. Return the tag of the surface loop.
+automatically. Return the tag of the surface loop. Setting @code{sewing} allows
+to build a shell made of surfaces that share geometrically identical (but
+topologically different) curves.
 
 @table @asis
 @item Input:
-@code{surfaceTags}, @code{tag}
+@code{surfaceTags}, @code{tag}, @code{sewing}
 @item Output:
 -
 @item Return:
