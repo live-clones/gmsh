@@ -334,9 +334,15 @@ int GmshBatch()
     else if(CTX::instance()->batch == 5)
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
     else if(CTX::instance()->batch == 6)
-      GModel::current()->classifySurfaces(6.29, true, true); // FIXME specify args
-    else if(CTX::instance()->batch == 7)
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear, true);
+    else if(CTX::instance()->batch == 7)
+      GModel::current()->classifySurfaces
+        (CTX::instance()->batchSomeValue * M_PI / 180., true, false);
+    else if(CTX::instance()->batch == 8){
+      GModel::current()->classifySurfaces
+        (CTX::instance()->batchSomeValue * M_PI / 180., true, true);
+      GModel::current()->createGeometryOfDiscreteEntities();
+    }
 #endif
   }
 

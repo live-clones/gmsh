@@ -80,7 +80,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-bin", "Create binary files when possible"));
   s.push_back(mp("-refine", "Perform uniform mesh refinement, then exit"));
   s.push_back(mp("-barycentric_refine", "Perform barycentric mesh refinement, then exit"));
-  s.push_back(mp("-reclassify", "Reclassify surface mesh, then exit"));
+  s.push_back(mp("-reclassify angle", "Reclassify surface mesh, then exit"));
+  s.push_back(mp("-reparam angle", "Reparametrize surface mesh, then exit"));
   s.push_back(mp("-part int", "Partition after batch mesh generation"));
   s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int",
                  "Weight of a triangle/quad/etc. during partitioning"));
@@ -443,13 +444,31 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         CTX::instance()->batch = 5;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "reclassify")) {
+      else if(!strcmp(argv[i] + 1, "barycentric_refine")) {
         CTX::instance()->batch = 6;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "barycentric_refine")) {
-        CTX::instance()->batch = 7;
+      else if(!strcmp(argv[i] + 1, "reclassify")) {
         i++;
+        if(argv[i]){
+          CTX::instance()->batch = 7 ;
+          CTX::instance()->batchSomeValue = atof(argv[i]);
+        }
+        else{
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
+      else if(!strcmp(argv[i] + 1, "reparam")) {
+        i++;
+        if(argv[i]){
+          CTX::instance()->batch = 8 ;
+          CTX::instance()->batchSomeValue = atof(argv[i]);
+        }
+        else{
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
       }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;

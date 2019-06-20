@@ -41,6 +41,7 @@ CTX::CTX() : debugSurface(-1), gamepad(0)
     homeDir += "/";
 
   batch = batchAfterMesh = 0;
+  batchSomeValue = 0;
   outputFileName = "";
   bgmFileName = "";
   createAppendMeshStatReport = 0;
