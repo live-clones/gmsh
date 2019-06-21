@@ -1268,7 +1268,8 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
       while(nbTwoQuadNodes || nbDiamonds) {
         Msg::Debug("Topological optimization of quad mesh: pass %d", iter);
         nbTwoQuadNodes = removeTwoQuadsNodes(gf);
-        nbDiamonds = removeDiamonds(gf);
+        // removeDiamonds uses the parametrization or searches for closest point
+        nbDiamonds = haveParam ? removeDiamonds(gf) : 0;
         if(haveParam && nodeRepositioning)
           RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
         iter++;
