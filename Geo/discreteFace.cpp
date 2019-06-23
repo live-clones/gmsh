@@ -731,63 +731,107 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
 
 bool discreteFace::writeParametrization(FILE *fp, bool binary)
 {
-  fprintf(fp, "%lu %lu\n", stl_vertices_uv.size(),
-          stl_triangles.size() / 3);
-  for(std::size_t i = 0; i < stl_vertices_uv.size(); i++) {
-    if(stl_curvatures.empty())
-      fprintf(fp, "%.16g %.16g %.16g %.16g %.16g 0 0 0 0 0 0\n",
-              stl_vertices_uv[i].x(), stl_vertices_uv[i].y(),
-              stl_vertices_xyz[i].x(), stl_vertices_xyz[i].y(),
-              stl_vertices_xyz[i].z());
-    else
-      fprintf(fp,
-              "%.16g %.16g %.16g %.16g %.16g %.16g %.16g "
-              "%.16g %.16g %.16g %.16g\n",
-              stl_vertices_uv[i].x(), stl_vertices_uv[i].y(),
-              stl_vertices_xyz[i].x(), stl_vertices_xyz[i].y(),
-              stl_vertices_xyz[i].z(), stl_curvatures[2 * i].x(),
-              stl_curvatures[2 * i].y(), stl_curvatures[2 * i].z(),
-              stl_curvatures[2 * i + 1].x(),
-              stl_curvatures[2 * i + 1].y(),
-              stl_curvatures[2 * i + 1].z());
+  std::size_t N = stl_vertices_uv.size();
+  std::size_t T = stl_triangles.size() / 3;
+  std::vector<double> d(11 * N, 0.);
+  for(std::size_t i = 0; i < N; i++) {
+    d[11 * i + 0] = stl_vertices_xyz[i].x();
+    d[11 * i + 1] = stl_vertices_xyz[i].y();
+    d[11 * i + 2] = stl_vertices_xyz[i].z();
+    d[11 * i + 3] = stl_vertices_uv[i].x();
+    d[11 * i + 4] = stl_vertices_uv[i].y();
+    if(stl_curvatures.size() == 2 * stl_vertices_uv.size()){
+      d[11 * i + 5] = stl_curvatures[2 * i].x();
+      d[11 * i + 6] = stl_curvatures[2 * i].y();
+      d[11 * i + 7] = stl_curvatures[2 * i].z();
+      d[11 * i + 8] = stl_curvatures[2 * i + 1].x();
+      d[11 * i + 9] = stl_curvatures[2 * i + 1].y();
+      d[11 * i + 10] = stl_curvatures[2 * i + 1].z();
+    }
   }
-  for(std::size_t i = 0; i < stl_triangles.size() / 3; i++) {
-    fprintf(fp, "%d %d %d\n", stl_triangles[3 * i + 0],
-            stl_triangles[3 * i + 1], stl_triangles[3 * i + 2]);
+  if(binary){
+    fwrite(&N, sizeof(std::size_t), 1, fp);
+    fwrite(&T, sizeof(std::size_t), 1, fp);
+    fwrite(&d[0], sizeof(double), d.size(), fp);
+    fwrite(&stl_triangles[0], sizeof(int), stl_triangles.size(), fp);
+  }
+  else{
+    fprintf(fp, "%lu %lu\n", N, T);
+    for(std::size_t i = 0; i < N; i++)
+      fprintf(fp, "%.16g %.16g %.16g %.16g %.16g %.16g %.16g "
+              "%.16g %.16g %.16g %.16g\n",
+              d[11 * i + 0], d[11 * i + 1], d[11 * i + 2], d[11 * i + 3],
+              d[11 * i + 4], d[11 * i + 5], d[11 * i + 6], d[11 * i + 7],
+              d[11 * i + 8], d[11 * i + 9], d[11 * i + 10]);
+    for(std::size_t i = 0; i < T; i++) {
+      fprintf(fp, "%d %d %d\n", stl_triangles[3 * i + 0],
+              stl_triangles[3 * i + 1], stl_triangles[3 * i + 2]);
+    }
   }
   return true;
 }
 
 bool discreteFace::readParametrization(FILE *fp, bool binary)
 {
-  int n, t;
-  if(fscanf(fp, "%d %d", &n, &t) != 2) {
-    return false;
-  }
   stl_vertices_xyz.clear();
   stl_vertices_uv.clear();
   stl_normals.clear();
-  for(int i = 0; i < n; i++) {
-    double u, v, x, y, z, cxM, cyM, czM, cxm, cym, czm;
-    if(fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-              &u, &v, &x, &y, &z, &cxM, &cyM, &czM, &cxm, &cym, &czm) != 11) {
-      return false;
-    }
-    stl_vertices_uv.push_back(SPoint2(u, v));
-    stl_vertices_xyz.push_back(SPoint3(x, y, z));
-    stl_normals.push_back(SVector3(0, 0, 0));
-    stl_curvatures.push_back(SVector3(cxM, cyM, czM));
-    stl_curvatures.push_back(SVector3(cxm, cym, czm));
-  }
+  stl_curvatures.clear();
   stl_triangles.clear();
-  for(int i = 0; i < t; i++) {
-    int a, b, c;
-    if(fscanf(fp, "%d %d %d", &a, &b, &c) != 3){
+
+  std::size_t N, T;
+  if(binary){
+    if(fread(&N, sizeof(std::size_t), 1, fp) != 1) { return false; }
+    if(fread(&T, sizeof(std::size_t), 1, fp) != 1) { return false; }
+  }
+  else{
+    if(fscanf(fp, "%lu %lu", &N, &T) != 2) {
       return false;
     }
-    stl_triangles.push_back(a);
-    stl_triangles.push_back(b);
-    stl_triangles.push_back(c);
+  }
+  std::vector<double> d(11 * N);
+  stl_vertices_xyz.resize(N);
+  stl_vertices_uv.resize(N);
+  stl_normals.resize(N);
+  stl_curvatures.resize(2 * N);
+  stl_triangles.resize(3 * T);
+
+  if(binary){
+    if(fread(&d[0], sizeof(double), 11 * N, fp) != 11 * N){ return false; }
+    if(fread(&stl_triangles[0], sizeof(int), 3 * T, fp) != 3 * T){ return false; }
+  }
+  else{
+    for(std::size_t i = 0; i < N; i++) {
+      if(fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
+                &d[11 * i + 0], &d[11 * i + 1], &d[11 * i + 2], &d[11 * i + 3],
+                &d[11 * i + 4], &d[11 * i + 5], &d[11 * i + 6], &d[11 * i + 7],
+                &d[11 * i + 8], &d[11 * i + 9], &d[11 * i + 10]) != 11) {
+        return false;
+      }
+    }
+    for(std::size_t i = 0; i < T; i++) {
+      if(fscanf(fp, "%d %d %d", &stl_triangles[3 * i + 0],
+                &stl_triangles[3 * i + 1], &stl_triangles[3 * i + 2]) != 3){
+        return false;
+      }
+    }
+  }
+
+  for(std::size_t i = 0; i < N; i++) {
+    stl_vertices_xyz[i] = SPoint3(d[11 * i + 0], d[11 * i + 1], d[11 * i + 2]);
+    stl_vertices_uv[i] = SPoint2(d[11 * i + 3], d[11 * i + 4]);
+    stl_normals[i] = SVector3(0, 0, 0);
+    stl_curvatures[2 * i + 0] = SVector3(d[11 * i + 5],
+                                         d[11 * i + 6],
+                                         d[11 * i + 7]);
+    stl_curvatures[2 * i + 1] = SVector3(d[11 * i + 8],
+                                         d[11 * i + 9],
+                                         d[11 * i + 10]);
+  }
+  for(std::size_t i = 0; i < T; i++) {
+    int a = stl_triangles[3 * i + 0];
+    int b = stl_triangles[3 * i + 1];
+    int c = stl_triangles[3 * i + 2];
     SPoint3 pa(stl_vertices_xyz[a]);
     SPoint3 pb(stl_vertices_xyz[b]);
     SPoint3 pc(stl_vertices_xyz[c]);
@@ -798,7 +842,7 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
     stl_normals[b] += n;
     stl_normals[c] += n;
   }
-  for(int i = 0; i < n; i++) stl_normals[i].normalize();
+  for(std::size_t i = 0; i < N; i++) stl_normals[i].normalize();
 
   _createGeometryFromSTL();
   return true;

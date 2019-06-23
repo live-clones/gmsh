@@ -304,26 +304,58 @@ void discreteEdge::mesh(bool verbose)
 
 bool discreteEdge::writeParametrization(FILE *fp, bool binary)
 {
-  fprintf(fp, "%lu\n", _discretization.size());
-  for(std::size_t i = 0; i < _discretization.size(); i++) {
-    fprintf(fp, "%.16g %.16g %.16g %.16g\n", _discretization[i].x(),
-            _discretization[i].y(), _discretization[i].z(), _pars[i]);
+  std::size_t N = _discretization.size();
+  if(N != _pars.size()){
+    Msg::Error("Wrong number of parameters in STL mesh of curve %d", tag());
+    return false;
+  }
+  if(binary){
+    fwrite(&N, sizeof(std::size_t), 1, fp);
+    std::vector<double> d(4 * N);
+    for(std::size_t i = 0; i < N; i++){
+      d[4 * i + 0] = _discretization[i].x();
+      d[4 * i + 1] = _discretization[i].y();
+      d[4 * i + 2] = _discretization[i].z();
+      d[4 * i + 3] = _pars[i];
+    }
+    fwrite(&d[0], sizeof(double), 4 * N, fp);
+  }
+  else{
+    fprintf(fp, "%lu\n", N);
+    for(std::size_t i = 0; i < N; i++) {
+      fprintf(fp, "%.16g %.16g %.16g %.16g\n", _discretization[i].x(),
+              _discretization[i].y(), _discretization[i].z(), _pars[i]);
+    }
   }
   return true;
 }
 
 bool discreteEdge::readParametrization(FILE *fp, bool binary)
 {
-  int N;
-  if(fscanf(fp, "%d", &N) != 1) return false;
-
+  std::size_t N;
+  if(binary){
+    if(fread(&N, sizeof(std::size_t), 1, fp) != 1) { return false; }
+  }
+  else{
+    if(fscanf(fp, "%lu", &N) != 1){ return false; }
+  }
   _pars.resize(N);
   _discretization.resize(N);
-  for(int i = 0; i < N; i++) {
-    double x, y, z, t;
-    if(fscanf(fp, "%lf %lf %lf %lf\n", &x, &y, &z, &t) != 4) { return false; }
-    _pars[i] = t;
-    _discretization[i] = SPoint3(x, y, z);
+
+  std::vector<double> d(4 * N);
+  if(binary){
+    if(fread(&d[0], sizeof(double), 4 * N, fp) != 4 * N){ return false; }
+  }
+  else{
+    for(std::size_t i = 0; i < N; i++) {
+      if(fscanf(fp, "%lf %lf %lf %lf\n", &d[4 * i + 0], &d[4 * i + 1],
+                &d[4 * i + 2], &d[4 * i + 3]) != 4) { return false; }
+    }
+  }
+
+  for(std::size_t i = 0; i < N; i++) {
+    _discretization[i] = SPoint3(d[4 * i + 0], d[4 * i + 1], d[4 * i + 2]);
+    _pars[i] = d[4 * i + 3];
   }
   return true;
 }

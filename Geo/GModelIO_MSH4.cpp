@@ -1188,15 +1188,33 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
 
 static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 {
-  int nParam, nParamE;
-  if(fscanf(fp, "%d %d", &nParamE, &nParam) != 2) {
-    return false;
+  std::size_t nParamE, nParamF;
+
+  if(binary){
+    if(fread(&nParamE, sizeof(std::size_t), 1, fp) != 1) {
+      return false;
+    }
+    if(fread(&nParamF, sizeof(std::size_t), 1, fp) != 1) {
+      return false;
+    }
+  }
+  else{
+    if(fscanf(fp, "%lu %lu", &nParamE, &nParamF) != 2) {
+      return false;
+    }
   }
 
-  for(int edge = 0; edge < nParamE; edge++) {
+  for(std::size_t edge = 0; edge < nParamE; edge++) {
     int tag;
-    if(fscanf(fp, "%d", &tag) != 1) {
-      return false;
+    if(binary){
+      if(fread(&tag, sizeof(int), 1, fp) != 1) {
+        return false;
+      }
+    }
+    else{
+      if(fscanf(fp, "%d", &tag) != 1) {
+        return false;
+      }
     }
     GEdge *ge = model->getEdgeByTag(tag);
     if(ge) {
@@ -1207,10 +1225,17 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
     }
   }
 
-  for(int face = 0; face < nParam; face++) {
+  for(std::size_t face = 0; face < nParamF; face++) {
     int tag;
-    if(fscanf(fp, "%d", &tag) != 1) {
-      return false;
+    if(binary){
+      if(fread(&tag, sizeof(int), 1, fp) != 1) {
+        return false;
+      }
+    }
+    else{
+      if(fscanf(fp, "%d", &tag) != 1) {
+        return false;
+      }
     }
     GFace *gf = model->getFaceByTag(tag);
     if(gf) {
@@ -1243,9 +1268,7 @@ int GModel::_readMSH4(const std::string &name)
 
     std::string sectionName(&str[1]);
     std::string endSectionName = "End" + sectionName;
-    //    printf("%s %s
-    //    %d\n",sectionName.c_str(),endSectionName.c_str(),strncmp(&str[1],
-    //    "Parametrizations", 16));
+
     if(feof(fp)) break;
 
     if(!strncmp(&str[1], "MeshFormat", 10)) {
@@ -2677,7 +2700,7 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
                                       bool binary)
 {
   fprintf(fp, "$Parametrizations\n");
-  int nParamE = 0, nParamF = 0;
+  std::size_t nParamE = 0, nParamF = 0;
 
   for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
@@ -2687,21 +2710,36 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
     if(df && df->haveParametrization()) { nParamF++; }
   }
-  fprintf(fp, "%d %d\n", nParamE, nParamF);
+
+  if(binary){
+    fwrite(&nParamE, sizeof(std::size_t), 1, fp);
+    fwrite(&nParamF, sizeof(std::size_t), 1, fp);
+  }
+  else{
+    fprintf(fp, "%lu %lu\n", nParamE, nParamF);
+  }
+
   for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
     if(de && de->haveParametrization()) {
-      fprintf(fp, "%d\n", de->tag());
+      int t = de->tag();
+      if(binary) fwrite(&t, sizeof(int), 1, fp);
+      else fprintf(fp, "%d\n", t);
       de->writeParametrization(fp, binary);
     }
   }
   for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
     if(df && df->haveParametrization()) {
-      fprintf(fp, "%d\n", df->tag());
+      int t = df->tag();
+      if(binary) fwrite(&t, sizeof(int), 1, fp);
+      else fprintf(fp, "%d\n", t);
       df->writeParametrization(fp, binary);
     }
   }
+
+  if(binary) fprintf(fp, "\n");
+
   fprintf(fp, "$EndParametrizations\n");
 }
 
