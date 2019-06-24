@@ -71,6 +71,10 @@ void discreteEdge::_orderMLines()
     MVertex *v11 = lines[i]->getVertex(1);
     mesh_vertices.push_back(v11);
   }
+
+  deleteVertexArrays();
+  model()->destroyMeshCaches();
+
   if(lines.empty()) {
     Msg::Error("No line elements in discrete curve %d", tag());
     return;
@@ -82,9 +86,6 @@ void discreteEdge::_orderMLines()
   if(g1) setEndVertex(g1);
   if(!g0 || !g1)
     Msg::Error("Discrete curve %d has non consecutive line elements", tag());
-
-  deleteVertexArrays();
-  model()->destroyMeshCaches();
 }
 
 bool discreteEdge::_getLocalParameter(const double &t, int &iLine,
@@ -227,9 +228,6 @@ Range<double> discreteEdge::parBounds(int i) const
 
 void discreteEdge::createGeometry()
 {
-  std::vector<MVertex *> discrete_vertices;
-  std::vector<MLine *> discrete_lines;
-
   if(lines.empty()) return;
 
   if(!_discretization.empty()) return;
@@ -252,8 +250,7 @@ void discreteEdge::createGeometry()
     }
   }
 
-  std::vector<MLine *> _temp;
-  discrete_lines.resize(lines.size());
+  std::vector<MLine *> discrete_lines(lines.size());
   for(std::size_t i = 0; i < lines.size(); i++) {
     MVertex *v0 = lines[i]->getVertex(0);
     MVertex *v1 = lines[i]->getVertex(1);
@@ -264,8 +261,6 @@ void discreteEdge::createGeometry()
     else
       discrete_lines[i] = new MLine(v00, v01);
   }
-
-  // compute parameters and recompute the vertices
   _discretization.push_back(SPoint3(discrete_lines[0]->getVertex(0)->x(),
                                     discrete_lines[0]->getVertex(0)->y(),
                                     discrete_lines[0]->getVertex(0)->z()));
@@ -275,22 +270,14 @@ void discreteEdge::createGeometry()
                                       discrete_lines[i]->getVertex(1)->y(),
                                       discrete_lines[i]->getVertex(1)->z()));
   }
+  for(std::size_t i = 0; i < discrete_lines.size(); i++)
+    delete discrete_lines[i];
 
   _pars.push_back(0.0);
   for(std::size_t i = 1; i < discrete_lines.size(); i++) {
     _pars.push_back((double)i);
-    MVertex *newv = discrete_lines[i]->getVertex(0);
-    discrete_vertices.push_back(newv);
   }
   _pars.push_back((double)discrete_lines.size());
-  //  mesh_vertices.clear();
-  //  lines.clear();
-  for(std::size_t i = 0; i < discrete_lines.size(); i++)
-    delete discrete_lines[i];
-  for(std::size_t i = 0; i < discrete_vertices.size(); i++)
-    delete discrete_vertices[i];
-  discrete_lines.clear();
-  discrete_vertices.clear();
 }
 
 void discreteEdge::mesh(bool verbose)
