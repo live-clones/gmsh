@@ -399,6 +399,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
 
   gm->pruneMeshVertexAssociations();
   gm->destroyMeshCaches();
+  gm->deleteVertexArrays();
 
   // we have created and deleted discrete entities; call this to reset the
   // handles in the old GEO database (without this, empty discrete entities will

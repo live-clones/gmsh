@@ -756,6 +756,7 @@ static void meshCompound(GEdge *ge)
     delete de->lines[j];
   de->lines.clear();
   de->mesh_vertices.clear();
+  de->deleteVertexArrays();
   // mesh the compound
   de->mesh(false);
 }

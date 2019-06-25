@@ -233,6 +233,18 @@ void GModel::deleteMesh(bool deleteOnlyElements)
   _lastMeshVertexError.clear();
 }
 
+void GModel::deleteVertexArrays()
+{
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    (*it)->deleteVertexArrays();
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    (*it)->deleteVertexArrays();
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    (*it)->deleteVertexArrays();
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    (*it)->deleteVertexArrays();
+}
+
 bool GModel::empty() const
 {
   return vertices.empty() && edges.empty() && faces.empty() && regions.empty();
