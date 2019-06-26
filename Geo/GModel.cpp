@@ -677,8 +677,8 @@ void GModel::getPhysicalGroups(
     for(std::map<int, std::vector<GEntity *> >::iterator it = group.begin();
         it != group.end(); ++it) {
       std::vector<GEntity *> &v = it->second;
-      std::sort(v.begin(), v.end());
-      std::unique(v.begin(), v.end());
+      std::sort(v.begin(), v.end(), GEntityLessThan());
+      std::unique(v.begin(), v.end(), GEntityLessThan());
     }
   }
 }
@@ -699,8 +699,8 @@ void GModel::getPhysicalGroups(
   for(std::map<int, std::vector<GEntity *> >::iterator it = groups.begin();
       it != groups.end(); ++it) {
     std::vector<GEntity *> &v = it->second;
-    std::sort(v.begin(), v.end());
-    std::unique(v.begin(), v.end());
+    std::sort(v.begin(), v.end(), GEntityLessThan());
+    std::unique(v.begin(), v.end(), GEntityLessThan());
   }
 }
 
