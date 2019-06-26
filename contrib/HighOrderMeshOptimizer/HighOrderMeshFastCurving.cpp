@@ -477,7 +477,7 @@ namespace {
   // Column of tets: assume tets obtained from subdivision of prism
   void getColumnTet(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
                     MFace &elBaseFace, std::vector<MElement *> &blob,
-                    MElement *&aboveElt)
+                    std::set<MFace> &BLShell)
   {
     const double maxDP = std::cos(p.maxAngle);
     const double maxDPIn = std::cos(p.maxAngleInner);
@@ -550,7 +550,8 @@ namespace {
 
   void getColumnPrismHex(int elType, MFaceVecMEltMap &face2el,
                          const FastCurvingParameters &p, MFace &elBaseFace,
-                         std::vector<MElement *> &blob, MElement *&aboveElt)
+                         std::vector<MElement *> &blob,
+                         std::set<MFace> &BLShell)
   {
     const double maxDP = std::cos(p.maxAngle);
 
@@ -1104,38 +1105,48 @@ namespace {
     //  dbgOut.write("meta-elements", bndEnt->tag());
   }
 
-  void gather3Dcolumns(
-    const MFaceVecMEltMap &face2el, GFace *gFace,
-    const FastCurvingParameters &p, VecPairMElemVecMElem &columns,
-    std::set<MElement *> interiorElement, std::set<MFace> &facesInOut)
+  void get3Dcolumn(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
+                   MElement *bndEl, std::vector<MElement *> &column,
+                   std::set<MFace> &BLShell, MFace &topFace)
+  {
+    const int typeBase = bndEl->getType();
+    if(typeBase == TYPE_POLYG) return;
+
+    column.clear();
+
+    MVertex *vb0 = bndEl->getVertex(0);
+    MVertex *vb1 = bndEl->getVertex(1);
+    MVertex *vb2 = bndEl->getVertex(2);
+    MVertex *vb3 = NULL;
+    if(typeBase == TYPE_QUA) vb3 = bndEl->getVertex(3);
+    MFace face(vb0, vb1, vb2, vb3);
+
+    const int typeColumn = face2el[face][0]->getType();
+    if(typeColumn == TYPE_TET)
+      getColumnTet(face2el, p, face, column, BLShell);
+    else if(typeColumn == TYPE_PRI || typeColumn == TYPE_HEX)
+      getColumnPrismHex(typeColumn, face2el, p, face, column, BLShell);
+
+    topFace = face;
+  }
+
+  void gather3Dcolumns(MFaceVecMEltMap &face2el, GFace *gFace,
+                       const FastCurvingParameters &p,
+                       VecPairMElemVecMElem &columns, std::set<MFace> &BLShell)
   {
     // An element can be in only one column and an element can be a top element
     // of multiple column but then cannot be inside a column.
 
     for(std::size_t i = 0; i < gFace->getNumMeshElements(); ++i) {
       MElement *bndEl = gFace->getMeshElement(i);
-      const int type = bndEl->getType();
-      if(type == TYPE_POLYG) continue;
-      std::vector<MVertex *> baseVert, topPrimVert;
-
-      MVertex *vb0 = bndEl->getVertex(0);
-      MVertex *vb1 = bndEl->getVertex(1);
-      MVertex *vb2 = bndEl->getVertex(2);
-      MVertex *vb3 = NULL;
-      if(type == TYPE_QUA) vb3 = bndEl->getVertex(3);
-      MFace baseFace(vb0, vb1, vb2, vb3);
-
-      MElement *aboveElement;
       std::vector<MElement *> col;
-      getColumn3D(
-        face2el, p, baseFace, baseVert, topPrimVert, col, aboveElement);
-      if(col.size()) {
-        //FIXMEDEBUG should not happen:
-        if(!aboveElement) Msg::Error("aaargh gather3Dcolumns");
-        col.push_back(aboveElement);
-        columns.push_back(std::make_pair(bndEl, std::vector<MElement *>()));
-        columns.back().second.swap(col);
-      }
+      MFace dum;
+      get3Dcolumn(face2el, p, bndEl, col, BLShell, dum);
+
+      if(col.empty()) continue;
+
+      columns.push_back(std::make_pair(bndEl, std::vector<MElement *>()));
+      columns.back().second.swap(col);
     }
   }
 
@@ -1163,14 +1174,15 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
   VecPairMElemVecMElem columns;
 
   if (dim == 3) {
-    std::set<MElement *> interiorElement;
-    std::set<MFace> facesInOut;
+    std::set<MFace> BLShell;
 
     for(int i = 0; i < boundary.size(); i++) {
       GEntity *bndEnt = boundary[i];
-      gather3Dcolumns(
-        face2el, bndEnt->cast2Face(), p, columns, interiorElement, facesInOut);
+      gather3Dcolumns(face2el, bndEnt->cast2Face(), p, columns, BLShell);
     }
+
+    std::set<MElement *> interiorElement;
+    // TODO compute interior elements
   }
 
   for(int i = 0; i < boundary.size(); i++) {
