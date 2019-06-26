@@ -241,7 +241,9 @@ void discreteEdge::createGeometry()
 
   if(!_discretization.empty()) return;
 
+  printf("coucou1 %d\n",tag());
   orderMLines();
+  printf("coucou2\n");
 
   bool reverse = false;
   if(getEndVertex())

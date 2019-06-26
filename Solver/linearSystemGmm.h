@@ -100,9 +100,9 @@ public:
       return 1;
     }
 #else
-    // gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 25, 0.);
-    // gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 30, 1.e-10);
-    gmm::ilu_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a);
+    //gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 25, 0.);
+    gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 30, 1.e-10);
+    //gmm::ilu_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a);
     gmm::iteration iter(_tol);
     iter.set_noisy(_noisy);
     if(_method == "gmres")

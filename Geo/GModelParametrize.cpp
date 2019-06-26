@@ -402,7 +402,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     double det = fabs ((u1-u0)*(v2-v0)-(v1-v0)*(u2-u0));
 
 
-    if (det < 1.e-5){
+    if (det < 1.e-12){
       HXT_CHECK(hxtMeshDelete(&m));
       HXT_CHECK(hxtEdgesDelete(&edges));
       HXT_CHECK(hxtFree(&uvc));

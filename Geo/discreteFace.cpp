@@ -24,6 +24,54 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 #endif
 }
 
+
+
+// ----------------------------------------------------------------------------------
+// JF FIX ensure that edges are oriented correctly
+// only do that when there are 3 or 4 edges (only used in transfinite)
+// FIXME BE GENERAL .. EVZN THOUGH THE ONLY PLACE IT IS USED IS IN
+// TRANSFINITE MESH
+static void sort_edges (std::vector<GEdge *> &e, std::vector<int> &dir){
+  //  if (e.size() != 4)return;
+  std::vector<GEdge *> result;
+  result.push_back(e[0]);
+  e.erase(e.begin());
+  dir.clear();
+  dir.push_back(1);
+  while (!e.empty()){
+    bool found = false;
+    GEdge *ge = result[result.size()-1];
+    GVertex *gv = dir[dir.size()-1] == 1 ?
+      ge->getEndVertex() : ge->getBeginVertex();    
+    for (size_t i = 0 ; i< e.size();i++){
+      if (e[i]->getBeginVertex() == gv){
+	found = true;
+	result.push_back(e[i]);
+	e.erase(e.begin()+i);
+	dir.push_back(1);
+	break;
+      }
+      if (e[i]->getEndVertex() == gv){
+	found = true;
+	result.push_back(e[i]);
+	e.erase(e.begin()+i);
+	dir.push_back(-1);
+	break;
+      }
+    }
+    if (!found && !e.empty()){
+      result.push_back(e[0]);
+      e.erase(e.begin());
+      dir.push_back(1);
+    }
+  }
+  e = result;
+  //  for (size_t i=0;i<e.size();i++){
+  //    printf("(%d %d -- %d)",e[i]->getBeginVertex()->tag(),e[i]->getEndVertex()->tag(),dir[i]);
+  //  }
+  //  printf("\n");
+}
+
 void discreteFace::setBoundEdges(const std::vector<int> &tagEdges)
 {
   for(std::size_t i = 0; i != tagEdges.size(); i++) {
@@ -37,7 +85,10 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges)
       Msg::Error("Unknown curve %d in discrete surface %d", tagEdges[i], tag());
     }
   }
+  sort_edges (l_edges,l_dirs);
 }
+
+// ----------------------------------------------------------------------------------
 
 void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
                                  const std::vector<int> &signEdges)
@@ -57,6 +108,8 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
       Msg::Error("Unknown curve %d in discrete surface %d", tagEdges[i], tag());
     }
   }
+  sort_edges (l_edges,l_dirs);
+
 }
 
 int discreteFace::trianglePosition(double par1, double par2, double &u,

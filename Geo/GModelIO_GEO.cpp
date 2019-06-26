@@ -1180,7 +1180,7 @@ void GEO_Internals::synchronize(GModel *model)
             else
               ((gmshEdge *)e)->resetNativePtr(c, 0, 0);
           }
-          e->resetMeshAttributes();
+	  //          e->resetMeshAttributes();
         }
         if(c->degenerated) e->setTooSmall(true);
       }
@@ -1201,7 +1201,7 @@ void GEO_Internals::synchronize(GModel *model)
       else {
         if(f->getNativeType() == GEntity::GmshModel)
           ((gmshFace *)f)->resetNativePtr(s);
-        f->resetMeshAttributes();
+	//        f->resetMeshAttributes();
       }
     }
     List_Delete(surfaces);
