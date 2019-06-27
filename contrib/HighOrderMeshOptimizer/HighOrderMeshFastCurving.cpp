@@ -1125,7 +1125,7 @@ namespace {
 
   void get3Dcolumn(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
                    MElement *bndEl, std::vector<MElement *> &column,
-                   std::set<MFace> &BLShell, MFace &topFace)
+                   MElement *&aboveEl, std::set<MFace> &BLShell, MFace &topFace)
   {
     const int typeBase = bndEl->getType();
     if(typeBase == TYPE_POLYG) return;
@@ -1141,9 +1141,9 @@ namespace {
 
     const int typeColumn = face2el[face][0]->getType();
     if(typeColumn == TYPE_TET)
-      getColumnTet(face2el, p, face, column, BLShell);
+      getColumnTet(face2el, p, face, column, aboveEl, BLShell);
     else if(typeColumn == TYPE_PRI || typeColumn == TYPE_HEX)
-      getColumnPrismHex(typeColumn, face2el, p, face, column, BLShell);
+      getColumnPrismHex(typeColumn, face2el, p, face, column, aboveEl, BLShell);
 
     topFace = face;
   }
@@ -1159,13 +1159,28 @@ namespace {
       MElement *bndEl = gFace->getMeshElement(i);
       std::vector<MElement *> col;
       MFace dum;
-      get3Dcolumn(face2el, p, bndEl, col, BLShell, dum);
+      MElement *aboveEl;
+      get3Dcolumn(face2el, p, bndEl, col, aboveEl, BLShell, dum);
 
       if(col.empty()) continue;
 
+      col.push_back(aboveEl); // even if aboveEl is NULL
       columns.push_back(std::make_pair(bndEl, std::vector<MElement *>()));
       columns.back().second.swap(col);
     }
+  }
+
+  void computeMapMEdge2TouchedElements(GRegion *ent,
+                                       const VecPairMElemVecMElem &columns,
+                                       const std::set<MFace> &BLShell,
+                                       MapMEdgeVecMElem &touchedElements)
+  {
+    std::set<MElement *> interiorElement;
+    // TODO compute interior elements from columns
+
+    // TODO compute touched MEdge from BLShell
+
+    // TODO compute touchedElements
   }
 
 } // namespace
@@ -1180,7 +1195,8 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
 
   // If it is a planar surface: compute the normal for speedup
   SVector3 normal;
-  if(ent->dim() == 2) ent->cast2Face()->uniqueNormal(normal);
+  bool haveNormal;
+  if(ent->dim() == 2) haveNormal = ent->cast2Face()->uniqueNormal(normal);
 
   // Compute edge/face -> elt. connectivity
   Msg::Info("Computing connectivity for entity %i...", ent->tag());
@@ -1189,19 +1205,33 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
   if(dim == 2) calcEdge2Elements(ent, edge2el);
   else         calcFace2Elements(ent, face2el);
 
-  VecPairMElemVecMElem columns;
+  if(p.thickness) {
+    VecPairMElemVecMElem columns;
 
-  if (dim == 3) {
-    std::set<MFace> BLShell;
+    if(dim == 3) {
+      std::set<MFace> BLShell;
+      for(int i = 0; i < boundary.size(); i++)
+        gather3Dcolumns(face2el, boundary[i]->cast2Face(), p, columns, BLShell);
 
-    for(int i = 0; i < boundary.size(); i++) {
-      GEntity *bndEnt = boundary[i];
-      gather3Dcolumns(face2el, bndEnt->cast2Face(), p, columns, BLShell);
+      MapMEdgeVecMElem touchedElements;
+      computeMapMEdge2TouchedElements(ent, columns, BLShell, touchedElements);
+
+      curve3DBoundaryLayer(bndEl2column, touchedElements);
     }
-
-    std::set<MElement *> interiorElement;
-    // TODO compute interior elements
+    else {
+      for(int i = 0; i < boundary.size(); i++)
+        gather2Dcolumns(edge2el, boundary[i]->cast2Edge(), p, columns);
+      if(haveNormal)
+        curve2DBoundaryLayer(columns, normal, boundary[i]->cast2Edge());
+      else
+        curve2DBoundaryLayer(
+          columns, ent->cast2Face(), boundary[i]->cast2Edge());
+    }
   }
+
+  
+
+
 
   for(int i = 0; i < boundary.size(); i++) {
     GEntity *bndEnt = boundary[i];
@@ -1221,7 +1251,7 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
 
   if(p.thickness && p.dim == 3 && boundary.size()) {
     Msg::Info("Curving elements in volume %d...", ent->tag());
-    curve3DBoundaryLayer(bndEl2column, (GFace *)boundary[0]);
+    curve3DBoundaryLayer(bndEl2column, boundary[0]->cast2Face());
   }
 }
 

@@ -845,8 +845,7 @@ namespace BoundaryLayerCurver {
     // Let (t, n, w) be the local reference frame on 'baseEdge'
     // where t(u) is the unit tangent of the 'baseEdge'
     //       n(u) is unit, normal to 't' and such that (t, n) is bisector of
-    //       faces
-    //            'bottom1' and 'bottom2' at corresponding point
+    //            faces 'bottom1' and 'bottom2' at corresponding point
     //       w = t x n
     // We seek for each component the polynomial function that fit the best
     //   x1(u) = x0(u) + h(u) * n(u) + b(u) * t(u) + c(u) * w(u)

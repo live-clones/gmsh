@@ -383,13 +383,13 @@ void Patch::calcNormalEl2D(int iEl, NormalScaling scaling,
       double u, v;
       _vert[iV]->getParameter(0, u);
       _vert[iV]->getParameter(1, v);
-      geoNorm += ((GFace *)ge)->normal(SPoint2(u, v));
+      geoNorm += ge->cast2Face()->normal(SPoint2(u, v));
     }
   }
   if(hasGeoNorm && (geoNorm.normSq() == 0.)) {
     SPoint2 param =
-      ((GFace *)ge)->parFromPoint(_el[iEl]->barycenter(true), false);
-    geoNorm = ((GFace *)ge)->normal(param);
+      ge->cast2Face()->parFromPoint(_el[iEl]->barycenter(true), false);
+    geoNorm = ge->cast2Face()->normal(param);
   }
 
   elNorm.resize(1, 3);

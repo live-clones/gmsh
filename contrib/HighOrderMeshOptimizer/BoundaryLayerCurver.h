@@ -42,6 +42,7 @@ struct nodalBasis;
 
 typedef std::pair<MElement *, std::vector<MElement *> > PairMElemVecMElem;
 typedef std::vector<PairMElemVecMElem> VecPairMElemVecMElem;
+typedef std::map<MEdge, std::vector<MElement *> > MapMEdgeVecMElem;
 
 namespace BoundaryLayerCurver {
   bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);
@@ -208,6 +209,8 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *,
                           const GEdge *);
 
 // 3D BL
-void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *);
+void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *); //deprecated
+void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
+                          MapMEdgeVecMElem &touchedElements)
 
 #endif
