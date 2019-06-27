@@ -474,6 +474,18 @@ namespace {
     elTopFace = MFace(topVert);
   }
 
+  void updateBLShell(MElement *el, std::set<MFace> &BLShell)
+  {
+    for(int i = 0; i < el->getNumFaces(); ++i) {
+      MFace f = el->getFace(i);
+      std::set<MFace>::iterator it = BLShell.find(f);
+      if(it == BLShell.end())
+        BLShell.insert(f);
+      else
+        BLShell.erase(it);
+    }
+  }
+
   // Column of tets: assume tets obtained from subdivision of prism
   void getColumnTet(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
                     MFace &inOutFace, std::vector<MElement *> &blob,
@@ -487,6 +499,7 @@ namespace {
     MElement *el0 = NULL, *el1 = NULL, *el2 = NULL;
     MFace baseFace = inOutFace;
     aboveElt = face2el[baseFace][0];
+    BLShell.insert(baseFace);
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
       MFace topFace0, topFace1, topFace2;
@@ -532,8 +545,10 @@ namespace {
       blob.push_back(el1);
       blob.push_back(el2);
       inOutFace = topFace2;
-      aboveElt = 0;
-      // FIXME: update BLShell
+      aboveElt = NULL;
+      updateBLShell(el0, BLShell);
+      updateBLShell(el1, BLShell);
+      updateBLShell(el2, BLShell);
 
       // Above element & update baseFace
       std::vector<MElement *> newEltsnext = face2el[topFace2];
@@ -554,6 +569,7 @@ namespace {
     MElement *el = NULL;
     MFace baseFace = inOutFace;
     aboveElt = face2el[baseFace][0];
+    BLShell.insert(baseFace);
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
       el = aboveElt;
@@ -575,8 +591,8 @@ namespace {
       // Add new layer
       blob.push_back(el);
       inOutFace = topFace;
-      aboveElt = 0;
-      // FIXME: update BLShell
+      aboveElt = NULL;
+      updateBLShell(el, BLShell);
 
       // Above element & update baseFace
       std::vector<MElement *> newElts = face2el[topFace];
