@@ -1170,17 +1170,38 @@ namespace {
     }
   }
 
-  void computeMapMEdge2TouchedElements(GRegion *ent,
-                                       const VecPairMElemVecMElem &columns,
-                                       const std::set<MFace> &BLShell,
+  void computeMapMEdge2TouchedElements(GRegion *gr,
+                                       VecPairMElemVecMElem &columns,
+                                       std::set<MFace> &BLShell,
                                        MapMEdgeVecMElem &touchedElements)
   {
-    std::set<MElement *> interiorElement;
-    // TODO compute interior elements from columns
+    std::set<MElement *> interiorElements;
+    for(std::size_t i = 0; i < columns.size(); ++i) {
+      std::vector<MElement *> &col = columns[i].second;
+      interiorElements.insert(col.begin(), col.end());
+    }
 
-    // TODO compute touched MEdge from BLShell
+    std::set<MEdge> BLShellEdges;
+    std::set<MFace>::iterator it;
+    for(it = BLShell.begin(); it < BLShell.end(); ++it) {
+      MFace &f = *it;
+      const std::size_t n = f.getNumVertices();
+      for(std::size_t i = 0; i < n; ++i) {
+        BLShellEdges.insert(f.getEdge(i));
+      }
+    }
 
-    // TODO compute touchedElements
+    for(std::size_t i = 0; i < gr->getNumMeshElements(); ++i) {
+      MElement *el = gr->getMeshElement(i);
+      if(interiorElements.find(el) != interiorElements.end()) continue;
+
+      const std::size_t n = el->getNumEdges();
+      for(std::size_t i = 0; i < n; ++i) {
+        MEdge &edge = el->getEdge(i);
+        if(BLShellEdges.find(el) == BLShellEdges.end()) continue;
+        touchedElements[edge].push_back(el);
+      }
+    }
   }
 
 } // namespace
@@ -1229,7 +1250,7 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
     }
   }
 
-  
+
 
 
 
