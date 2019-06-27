@@ -1699,8 +1699,8 @@ Same as @code{Printf} above, but output the expression in a file.
 Same as @code{Printf} above, but appends the expression at the end of
 the file.
 
-@item Error ( @var{char-expression} <, @var{expression-list}> );
-Same as @code{Printf}, but raises an error.
+@item Warning|Error ( @var{char-expression} <, @var{expression-list}> );
+Same as @code{Printf}, but raises a warning or an error.
 
 @item Merge @var{char-expression};
 Merges a file named @var{char-expression}. This command is equivalent to
