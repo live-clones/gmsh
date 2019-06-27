@@ -43,11 +43,13 @@ struct FastCurvingParameters {
   double maxAngle; // Maximum angle between layers of elements to curve in BL
   double maxAngleInner; // Maximum angle between edges/faces within layers of
                         // triangles/tets to curve in BL
+  double cosMaxAngle, cosMaxAngleInner;
 
   FastCurvingParameters()
     : dim(3), onlyVisible(true), optimizeGeometry(false),
       curveOuterBL(OUTER_NOCURVE), maxNumLayers(100), maxRho(0.3),
-      maxAngle(3.1415927 * 10. / 180.), maxAngleInner(3.1415927 * 30. / 180.)
+      maxAngle(3.1415927 * 10. / 180.), maxAngleInner(3.1415927 * 30. / 180.),
+      cosMaxAngle(std::cos(maxAngle)), cosMaxAngleInner(std::cos(maxAngleInner))
   {
   }
 };

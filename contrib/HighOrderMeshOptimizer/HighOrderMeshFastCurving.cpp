@@ -476,111 +476,113 @@ namespace {
 
   // Column of tets: assume tets obtained from subdivision of prism
   void getColumnTet(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
-                    MFace &elBaseFace, std::vector<MElement *> &blob,
-                    std::set<MFace> &BLShell)
+                    MFace &inOutFace, std::vector<MElement *> &blob,
+                    MElement *&aboveElt, std::set<MFace> &BLShell)
   {
-    const double maxDP = std::cos(p.maxAngle);
-    const double maxDPIn = std::cos(p.maxAngleInner);
+    // inOutFace: in = bottom face of BL column, out = top face of BL column
 
-    MElement *el0 = 0, *el1 = 0, *el2 = 0;
+    const double maxDP = p.cosMaxAngle;
+    const double maxDPIn = p.cosMaxAngleInner;
+
+    MElement *el0 = NULL, *el1 = NULL, *el2 = NULL;
+    MFace baseFace = inOutFace;
+    aboveElt = face2el[baseFace][0];
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
-      // Get first element in layer
-      std::vector<MElement *> newElts0 = face2el[elBaseFace];
-      if((iLayer > 0) && (newElts0.size() < 2)) {
-        aboveElt = 0;
-        break;
-      }
-      el0 = (newElts0[0] == el2) ? newElts0[1] : newElts0[0];
-      aboveElt = el0;
-      if(el0->getType() != TYPE_TET) break;
-      MFace elTopFace0;
-      double faceSurfMin0, faceSurfMax0;
-      getOppositeFaceTet(el0, elBaseFace, elTopFace0, faceSurfMin0,
-                         faceSurfMax0);
-      const SVector3 normBase = elBaseFace.normal();
-      const SVector3 normTop0 = elTopFace0.normal();
-      if(std::abs(dot(normBase, normTop0)) < maxDPIn) break;
+      MFace topFace0, topFace1, topFace2;
+      double faceSurfMin0, faceSurfMax0, faceSurfMin1, faceSurfMax1,
+             faceSurfMin2, faceSurfMax2;
 
-      // Get second element in layer
-      std::vector<MElement *> newElts1 = face2el[elTopFace0];
-      if(newElts1.size() < 2) {
-        aboveElt = 0;
-        break;
-      }
+      // first element
+      el0 = aboveElt;
+      if(el0->getType() != TYPE_TET) return;
+      getOppositeFaceTet(el0, baseFace, topFace0, faceSurfMin0, faceSurfMax0);
+
+      // second element
+      std::vector<MElement *> newElts1 = face2el[topFace0];
+      if(newElts1.size() < 2) return;
       el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
-      if(el1->getType() != TYPE_TET) break;
-      MFace elTopFace1;
-      double faceSurfMin1, faceSurfMax1;
-      getOppositeFaceTet(el1, elTopFace0, elTopFace1, faceSurfMin1,
-                         faceSurfMax1);
-      const SVector3 normTop1 = elTopFace1.normal();
-      if(std::abs(dot(normTop0, normTop1)) < maxDPIn) break;
+      if(el1->getType() != TYPE_TET) return;
+      getOppositeFaceTet(el1, topFace0, topFace1, faceSurfMin1, faceSurfMax1);
 
-      // Get third element in layer
-      std::vector<MElement *> newElts2 = face2el[elTopFace1];
-      if(newElts2.size() < 2) {
-        aboveElt = 0;
-        break;
-      }
+      // Third element
+      std::vector<MElement *> newElts2 = face2el[topFace1];
+      if(newElts2.size() < 2) return;
       el2 = (newElts2[0] == el1) ? newElts2[1] : newElts2[0];
-      if(el2->getType() != TYPE_TET) break;
-      MFace elTopFace2;
-      double faceSurfMin2, faceSurfMax2;
-      getOppositeFaceTet(el2, elTopFace1, elTopFace2, faceSurfMin2,
-                         faceSurfMax2);
-      const SVector3 normTop2 = elTopFace2.normal();
-      if(std::abs(dot(normTop1, normTop2)) < maxDPIn) break;
+      if(el2->getType() != TYPE_TET) return;
+      getOppositeFaceTet(el2, topFace1, topFace2, faceSurfMin2, faceSurfMax2);
 
-      // Check stop criteria
+      const SVector3 normBase = baseFace.normal();
+      const SVector3 normTop0 = topFace0.normal();
+      const SVector3 normTop1 = topFace1.normal();
+      const SVector3 normTop2 = topFace2.normal();
+      if(std::abs(dot(normBase, normTop0)) < maxDPIn ||
+         std::abs(dot(normTop0, normTop1)) < maxDPIn ||
+         std::abs(dot(normTop1, normTop2)) < maxDPIn ||
+         std::abs(dot(normBase, normTop2)) < maxDP) return;
+
       const double faceSurfMin =
         std::min(faceSurfMin0, std::min(faceSurfMin1, faceSurfMin2));
       const double faceSurfMax =
         std::max(faceSurfMax0, std::min(faceSurfMax1, faceSurfMax2));
-      if(faceSurfMin > faceSurfMax * p.maxRho) break;
-      if(std::abs(dot(normBase, normTop2)) < maxDP) break;
+      if(faceSurfMin > faceSurfMax * p.maxRho) return;
 
-      // Add elements to blob and pass top face to next layer
+      // Add new layer
       blob.push_back(el0);
       blob.push_back(el1);
       blob.push_back(el2);
-      elBaseFace = elTopFace2;
+      inOutFace = topFace2;
+      aboveElt = 0;
+      // FIXME: update BLShell
+
+      // Above element & update baseFace
+      std::vector<MElement *> newEltsnext = face2el[topFace2];
+      if(newEltsnext.size() < 2) return;
+      aboveElt = (newEltsnext[0] == el2) ? newEltsnext[1] : newEltsnext[0];
+      baseFace = topFace2;
     }
   }
 
   void getColumnPrismHex(int elType, MFaceVecMEltMap &face2el,
-                         const FastCurvingParameters &p, MFace &elBaseFace,
-                         std::vector<MElement *> &blob,
+                         const FastCurvingParameters &p, MFace &inOutFace,
+                         std::vector<MElement *> &blob, MElement *&aboveElt,
                          std::set<MFace> &BLShell)
   {
-    const double maxDP = std::cos(p.maxAngle);
+    // inOutFace: in = bottom face of BL column, out = top face of BL column
 
-    MElement *el = 0;
+    const double maxDP = p.cosMaxAngle;
+    MElement *el = NULL;
+    MFace baseFace = inOutFace;
+    aboveElt = face2el[baseFace][0];
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
-      std::vector<MElement *> newElts = face2el[elBaseFace];
-      if((iLayer > 0) && (newElts.size() < 2)) {
-        aboveElt = 0;
-        break;
-      }
-      el = (newElts[0] == el) ? newElts[1] : newElts[0];
-      aboveElt = el;
-      if(el->getType() != elType) break;
+      el = aboveElt;
+      if(el->getType() != elType) return;
 
-      MFace elTopFace;
+      MFace topFace;
       double faceSurfMin, faceSurfMax;
-      if(el->getType() == TYPE_PRI)
-        getOppositeFacePrism(el, elBaseFace, elTopFace, faceSurfMin,
-                             faceSurfMax);
-      else if(el->getType() == TYPE_HEX)
-        getOppositeFaceHex(el, elBaseFace, elTopFace, faceSurfMin, faceSurfMax);
+      if(elType == TYPE_PRI)
+        getOppositeFacePrism(el, baseFace, topFace, faceSurfMin, faceSurfMax);
+      else if(elType == TYPE_HEX)
+        getOppositeFaceHex(el, baseFace, topFace, faceSurfMin, faceSurfMax);
 
-      if(faceSurfMin > faceSurfMax * p.maxRho) break;
-      const double dp = dot(elBaseFace.normal(), elTopFace.normal());
-      if(std::abs(dp) < maxDP) break;
+      if(faceSurfMin > faceSurfMax * p.maxRho) return;
+      // FIXME: for hexes, the following code is not robust
+      //  (normal is of triangular face):
+      const double dp = dot(baseFace.normal(), topFace.normal());
+      if(std::abs(dp) < maxDP) return;
 
+      // Add new layer
       blob.push_back(el);
-      elBaseFace = elTopFace;
+      inOutFace = topFace;
+      aboveElt = 0;
+      // FIXME: update BLShell
+
+      // Above element & update baseFace
+      std::vector<MElement *> newElts = face2el[topFace];
+      if(newElts.size() < 2) return;
+      aboveElt = (newElts[0] == el) ? newElts[1] : newElts[0];
+      baseFace = topFace;
     }
   }
 
