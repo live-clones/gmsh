@@ -13,7 +13,7 @@ class discreteEdge : public GEdge {
 private:
   std::vector<double> _pars;
   std::vector<SPoint3> _discretization;
-  void _orderMLines();
+  bool _orderMLines();
   bool _getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
 public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
@@ -25,7 +25,7 @@ public:
   virtual double curvature(double par) const;
   virtual bool haveParametrization() { return !_pars.empty(); }
   virtual Range<double> parBounds(int) const;
-  void createGeometry();
+  int createGeometry();
   virtual void mesh(bool verbose);
   int minimumDrawSegments() const { return 2 * _pars.size(); }
   virtual int minimumMeshSegments() const { return periodic(0) ? 3 : 2; }

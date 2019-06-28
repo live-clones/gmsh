@@ -290,18 +290,8 @@ static void classify_cb(Fl_Widget *w, void *data)
   e->elements.clear();
   e->edges_detected.clear();
 
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()) {
-    for(GModel::eiter it = GModel::current()->firstEdge();
-        it != GModel::current()->lastEdge(); ++it) {
-      discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
-      if(de) de->createGeometry();
-    }
-    for(GModel::fiter it = GModel::current()->firstFace();
-        it != GModel::current()->lastFace(); ++it) {
-      discreteFace *df = dynamic_cast<discreteFace *>(*it);
-      if(df) df->createGeometry();
-    }
-  }
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
+    GModel::current()->createGeometryOfDiscreteEntities();
 
   NoElementsSelectedMode(e);
 }

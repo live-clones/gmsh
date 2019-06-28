@@ -1973,7 +1973,11 @@ void GModel::createGeometryOfDiscreteEntities()
   double t1 = Cpu();
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
-    if(de) de->createGeometry();
+    if(de){
+      if(de->createGeometry())
+        Msg::Error("Could not create geometry of discrete curve %d",
+                   de->tag());
+    }
   }
   double t2 = Cpu();
   Msg::StatusBar(true, "Done creating geometry of discrete curves (%g s)",
@@ -1983,7 +1987,11 @@ void GModel::createGeometryOfDiscreteEntities()
   t1 = Cpu();
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
-    if(df) df->createGeometry();
+    if(df){
+      if(df->createGeometry())
+        Msg::Error("Could not create geometry of discrete surface %d",
+                   df->tag());
+    }
   }
   t2 = Cpu();
   Msg::StatusBar(true, "Done creating geometry of discrete surfaces (%g s)",
