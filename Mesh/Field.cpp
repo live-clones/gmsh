@@ -548,7 +548,7 @@ public:
   }
   BallField()
   {
-    v_in = v_out = xc = yc = zc = R = 0;
+    v_in = v_out = xc = yc = zc = R = thick = 0;
 
     options["VIn"] = new FieldOptionDouble(v_in, "Value inside the ball");
     options["VOut"] = new FieldOptionDouble(v_out, "Value outside the ball");
