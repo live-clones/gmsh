@@ -57,8 +57,7 @@ private:
         tmp << _max;
         _input->maximum(_max);
       }
-      if(_step == 0.) _step = 1.;
-      if(_step != 1.) tmp << " : " << _step;
+      if(_step && _step != 1.) tmp << " : " << _step;
       _input->step(_step, 1);
       _choices.clear();
     }
@@ -120,7 +119,7 @@ private:
       if(step.size())
         _step = atof(step.c_str());
       else
-        _step = 1.;
+        _step = 0.;
       _input->step(_step, 1);
       _choices.clear();
     }
@@ -246,7 +245,7 @@ private:
 public:
   inputRange(int x, int y, int w, int h, double max_number,
              bool readOnlyRange = false, const char *l = 0)
-    : Fl_Group(x, y, w, h, l), _min(-max_number), _max(max_number), _step(1.),
+    : Fl_Group(x, y, w, h, l), _min(-max_number), _max(max_number), _step(0.),
       _max_number(max_number), _do_callback_on_values(true)
   {
     _graph_val.resize(36, '0');
