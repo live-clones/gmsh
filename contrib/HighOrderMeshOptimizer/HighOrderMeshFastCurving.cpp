@@ -481,11 +481,11 @@ namespace {
     elTopFace = MFace(topVert);
   }
 
-  void updateBLShell(MElement *el, std::set<MFace> &BLShell)
+  void updateBLShell(MElement *el, std::set<MFace, Less_Face> &BLShell)
   {
     for(int i = 0; i < el->getNumFaces(); ++i) {
       MFace f = el->getFace(i);
-      std::set<MFace>::iterator it = BLShell.find(f);
+      std::set<MFace, Less_Face>::iterator it = BLShell.find(f);
       if(it == BLShell.end())
         BLShell.insert(f);
       else
@@ -496,7 +496,7 @@ namespace {
   // Column of tets: assume tets obtained from subdivision of prism
   void getColumnTet(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
                     MFace &inOutFace, std::vector<MElement *> &blob,
-                    MElement *&aboveElt, std::set<MFace> &BLShell)
+                    MElement *&aboveElt, std::set<MFace, Less_Face> &BLShell)
   {
     // inOutFace: in = bottom face of BL column, out = top face of BL column
     const double maxDP = p.cosMaxAngle;
@@ -569,7 +569,7 @@ namespace {
   void getColumnPrismHex(int elType, MFaceVecMEltMap &face2el,
                          const FastCurvingParameters &p, MFace &inOutFace,
                          std::vector<MElement *> &blob, MElement *&aboveElt,
-                         std::set<MFace> &BLShell)
+                         std::set<MFace, Less_Face> &BLShell)
   {
     // inOutFace: in = bottom face of BL column, out = top face of BL column
     const double maxDP = p.cosMaxAngle;
@@ -614,7 +614,8 @@ namespace {
 
   void get3Dcolumn(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
                    MElement *bndEl, std::vector<MElement *> &column,
-                   MElement *&aboveEl, std::set<MFace> &BLShell, MFace &topFace)
+                   MElement *&aboveEl, std::set<MFace, Less_Face> &BLShell,
+                   MFace &topFace)
   {
     const int typeBase = bndEl->getType();
     if(typeBase == TYPE_POLYG) return;
@@ -960,7 +961,7 @@ namespace {
     }
     else { // 3D BL mesh
       MFace topFace;
-      std::set<MFace> dum;
+      std::set<MFace, Less_Face> dum;
       get3Dcolumn(face2el, p, bndElt, blob, aboveElt, dum, topFace);
       for(std::size_t i = 0; i < topFace.getNumVertices(); ++i)
         topPrimVert.push_back(topFace.getVertex(i));
@@ -1037,7 +1038,8 @@ namespace {
 
   void gather3Dcolumns(MFaceVecMEltMap &face2el, GFace *gFace,
                        const FastCurvingParameters &p,
-                       VecPairMElemVecMElem &columns, std::set<MFace> &BLShell)
+                       VecPairMElemVecMElem &columns, std::set<MFace,
+                       Less_Face> &BLShell)
   {
     // An element can be in only one column and an element can be a top element
     // of multiple column but then cannot be inside a column.
@@ -1061,7 +1063,7 @@ namespace {
 
   void computeMapMEdge2TouchedElements(GRegion *gr,
                                        VecPairMElemVecMElem &columns,
-                                       std::set<MFace> &BLShell,
+                                       std::set<MFace, Less_Face> &BLShell,
                                        MapMEdgeVecMElem &touchedElements)
   {
     std::set<MElement *> interiorElements;
@@ -1070,8 +1072,8 @@ namespace {
       interiorElements.insert(col.begin(), col.end());
     }
 
-    std::set<MEdge> BLShellEdges;
-    std::set<MFace>::iterator it;
+    std::set<MEdge, Less_Edge> BLShellEdges;
+    std::set<MFace, Less_Face>::iterator it;
     for(it = BLShell.begin(); it != BLShell.end(); ++it) {
       const MFace &f = *it;
       const std::size_t n = f.getNumVertices();
@@ -1119,7 +1121,7 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
     VecPairMElemVecMElem columns;
 
     if(dim == 3) {
-      std::set<MFace> BLShell;
+      std::set<MFace, Less_Face> BLShell;
       for(int i = 0; i < boundary.size(); i++)
         gather3Dcolumns(face2el, boundary[i]->cast2Face(), p, columns, BLShell);
 
@@ -1144,32 +1146,11 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
     return;
   }
   else {
+    Msg::Info("Curving elements...");
     for(int i = 0; i < boundary.size(); i++) {
       GEntity *bndEnt = boundary[i];
       curveMeshFromBnd(edge2el, face2el, ent, bndEnt, p);
     }
-
-  }
-
-
-
-
-
-  for(int i = 0; i < boundary.size(); i++) {
-    GEntity *bndEnt = boundary[i];
-
-    if(dim == 2 || !p.thickness) {
-      Msg::Info("Curving elements in surface %d for boundary edge %d...",
-                ent->tag(), bndEnt->tag());
-      curveMeshFromBnd(edge2el, face2el, ent, bndEnt, p, normal);
-    }
-    else
-      gather3Dcolumns(face2el, ent, bndEnt, p, bndEl2column);
-  }
-
-  if(p.thickness && p.dim == 3 && boundary.size()) {
-    Msg::Info("Curving elements in volume %d...", ent->tag());
-    curve3DBoundaryLayer(bndEl2column, boundary[0]->cast2Face());
   }
 }
 

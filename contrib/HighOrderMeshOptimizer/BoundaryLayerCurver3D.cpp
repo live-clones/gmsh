@@ -1255,3 +1255,9 @@ void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     }
   }
 }
+
+void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
+                          MapMEdgeVecMElem &touchedElements)
+{
+  // FIXME: to implement
+}
