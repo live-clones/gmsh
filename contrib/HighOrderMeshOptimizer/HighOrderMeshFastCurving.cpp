@@ -216,86 +216,96 @@ namespace {
       elTopEd = MEdge(elMaxEd.getVertex(1), elMaxEd.getVertex(0));
   }
 
-  void getColumnQuad(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
-                     MEdge &elBaseEd, std::vector<MElement *> &blob,
+  void getColumnQuad(MEdgeVecMEltMap &edge2el, const FastCurvingParameters &p,
+                     MEdge &inOutEdge, std::vector<MElement *> &blob,
                      MElement *&aboveElt)
   {
-    const double maxDP = std::cos(p.maxAngle);
+    // inOutEdge: in = bottom edge of BL column, out = top edge of BL column
+    const double maxDP = p.cosMaxAngle;
 
-    MElement *el = 0;
+    blob.clear();
+    MElement *el = NULL;
+    MEdge baseEdge = inOutEdge;
+    aboveElt = edge2el[baseEdge][0];
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
-      std::vector<MElement *> newElts = ed2el[elBaseEd];
-      if((iLayer > 0) && (newElts.size() < 2)) {
-        aboveElt = 0;
-        break;
-      }
-      el = (newElts[0] == el) ? newElts[1] : newElts[0];
-      aboveElt = el;
-      if(el->getType() != TYPE_QUA) break;
-      MEdge elTopEd;
+      MEdge topEdge;
       double edLenMin, edLenMax;
-      getOppositeEdgeQuad(el, elBaseEd, elTopEd, edLenMin, edLenMax);
 
+      el = aboveElt;
+      if(el->getType() != TYPE_QUA) return;
+      getOppositeEdgeQuad(el, baseEdge, topEdge, edLenMin, edLenMax);
+
+      // Geometrical stopping criteria
+      const double dp = dot(baseEdge.tangent(), topEdge.tangent());
+      if(std::abs(dp) < maxDP) return;
       if(edLenMin > edLenMax * p.maxRho) break;
-      const double dp = dot(elBaseEd.tangent(), elTopEd.tangent());
-      if(std::abs(dp) < maxDP) break;
 
+      // Add new layer
       blob.push_back(el);
-      elBaseEd = elTopEd;
+      inOutEdge = topEdge;
+      aboveElt = NULL;
+
+      // Above element & update baseFace
+      std::vector<MElement *> newElts = edge2el[baseEdge];
+      if(newElts.size() < 2) return;
+      aboveElt = (newElts[0] == el) ? newElts[1] : newElts[0];
+      baseEdge = topEdge;
     }
   }
 
-  void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
-                    MEdge &elBaseEd, std::vector<MElement *> &blob,
+  void getColumnTri(MEdgeVecMEltMap &edge2el, const FastCurvingParameters &p,
+                    MEdge &inOutEdge, std::vector<MElement *> &blob,
                     MElement *&aboveElt)
   {
-    const double maxDP = std::cos(p.maxAngle);
-    const double maxDPIn = std::cos(p.maxAngleInner);
+    // inOutEdge: in = bottom edge of BL column, out = top edge of BL column
+    const double maxDP = p.cosMaxAngle;
+    const double maxDPIn = p.cosMaxAngleInner;
 
-    MElement *el0 = 0, *el1 = 0;
+    blob.clear();
+    MElement *el0 = NULL, *el1 = NULL;
+    MEdge baseEdge = inOutEdge;
+    aboveElt = edge2el[baseEdge][0];
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
-      // Get first element in layer
-      std::vector<MElement *> newElts0 = ed2el[elBaseEd];
-      if((iLayer > 0) && (newElts0.size() < 2)) {
-        aboveElt = 0;
-        break;
-      }
-      el0 = (newElts0[0] == el1) ? newElts0[1] : newElts0[0];
-      aboveElt = el0;
-      if(el0->getType() != TYPE_TRI) break;
-      MEdge elTopEd0;
-      double edLenMin0, edLenMax0;
-      getOppositeEdgeTri(el0, elBaseEd, elTopEd0, edLenMin0, edLenMax0);
-      const SVector3 tangentBase = elBaseEd.tangent();
-      const SVector3 tangentTop0 = elTopEd0.tangent();
-      if(std::abs(dot(tangentBase, tangentTop0)) < maxDPIn) break;
+      MEdge topEdge0, topEdge1;
+      double edLenMin0, edLenMax0, edLenMin1, edLenMax1;
 
-      // Get second element in layer
-      std::vector<MElement *> newElts1 = ed2el[elTopEd0];
-      if(newElts1.size() < 2) {
-        aboveElt = 0;
-        break;
-      }
+      // first element
+      el0 = aboveElt;
+      if(el0->getType() != TYPE_TRI) return;
+      getOppositeEdgeTri(el0, inOutEdge, topEdge0, edLenMin0, edLenMax0);
+
+      // second element
+      std::vector<MElement *> newElts1 = edge2el[topEdge0];
+      if(newElts1.size() < 2) return;
       el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
-      if(el1->getType() != TYPE_TRI) break;
-      MEdge elTopEd1;
-      double edLenMin1, edLenMax1;
-      getOppositeEdgeTri(el1, elTopEd0, elTopEd1, edLenMin1, edLenMax1);
-      const SVector3 tangentTop1 = elTopEd1.tangent();
-      if(std::abs(dot(tangentTop0, tangentTop1)) < maxDPIn) break;
+      if(el1->getType() != TYPE_TRI) return;
+      getOppositeEdgeTri(el1, topEdge0, topEdge1, edLenMin1, edLenMax1);
 
-      // Check stop criteria
+      // Geometrical stopping criteria
+      const SVector3 tangentBase = inOutEdge.tangent();
+      const SVector3 tangentTop0 = topEdge0.tangent();
+      const SVector3 tangentTop1 = topEdge1.tangent();
+      if(std::abs(dot(tangentBase, tangentTop0)) < maxDPIn ||
+         std::abs(dot(tangentTop0, tangentTop1)) < maxDPIn ||
+         std::abs(dot(tangentBase, tangentTop1)) < maxDP) return;
+
       const double edLenMin = std::min(edLenMin0, edLenMin1);
       const double edLenMax = std::max(edLenMax0, edLenMax1);
-      if(edLenMin > edLenMax * p.maxRho) break;
-      if(std::abs(dot(tangentBase, tangentTop1)) < maxDP) break;
+      if(edLenMin > edLenMax * p.maxRho) return;
 
-      // Add elements to blob and pass top edge to next layer
+      // Add new layer
       blob.push_back(el0);
       blob.push_back(el1);
-      elBaseEd = elTopEd1;
+      inOutEdge = topEdge1;
+      aboveElt = NULL;
+
+      // Above element & update baseEdge
+      std::vector<MElement *> newEltsnext = edge2el[inOutEdge];
+      if(newEltsnext.size() < 2) return;
+      aboveElt = (newEltsnext[0] == el1) ? newEltsnext[1] : newEltsnext[0];
+      baseEdge = topEdge1;
     }
   }
 
@@ -492,10 +502,10 @@ namespace {
                     MElement *&aboveElt, std::set<MFace> &BLShell)
   {
     // inOutFace: in = bottom face of BL column, out = top face of BL column
-
     const double maxDP = p.cosMaxAngle;
     const double maxDPIn = p.cosMaxAngleInner;
 
+    blob.clear();
     MElement *el0 = NULL, *el1 = NULL, *el2 = NULL;
     MFace baseFace = inOutFace;
     aboveElt = face2el[baseFace][0];
@@ -525,6 +535,7 @@ namespace {
       if(el2->getType() != TYPE_TET) return;
       getOppositeFaceTet(el2, topFace1, topFace2, faceSurfMin2, faceSurfMax2);
 
+      // Geometrical stopping criteria
       const SVector3 normBase = baseFace.normal();
       const SVector3 normTop0 = topFace0.normal();
       const SVector3 normTop1 = topFace1.normal();
@@ -564,29 +575,31 @@ namespace {
                          std::set<MFace> &BLShell)
   {
     // inOutFace: in = bottom face of BL column, out = top face of BL column
-
     const double maxDP = p.cosMaxAngle;
+
+    blob.clear();
     MElement *el = NULL;
     MFace baseFace = inOutFace;
     aboveElt = face2el[baseFace][0];
     BLShell.insert(baseFace);
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
-      el = aboveElt;
-      if(el->getType() != elType) return;
-
       MFace topFace;
       double faceSurfMin, faceSurfMax;
+
+      el = aboveElt;
+      if(el->getType() != elType) return;
       if(elType == TYPE_PRI)
         getOppositeFacePrism(el, baseFace, topFace, faceSurfMin, faceSurfMax);
       else if(elType == TYPE_HEX)
         getOppositeFaceHex(el, baseFace, topFace, faceSurfMin, faceSurfMax);
 
-      if(faceSurfMin > faceSurfMax * p.maxRho) return;
+      // Geometrical stopping criteria
       // FIXME: for hexes, the following code is not robust
       //  (normal is of triangular face):
       const double dp = dot(baseFace.normal(), topFace.normal());
       if(std::abs(dp) < maxDP) return;
+      if(faceSurfMin > faceSurfMax * p.maxRho) return;
 
       // Add new layer
       blob.push_back(el);
