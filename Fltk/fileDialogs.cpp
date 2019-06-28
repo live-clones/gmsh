@@ -35,6 +35,7 @@
 #include "PView.h"
 #include "PViewOptions.h"
 #include <iostream>
+
 // File chooser
 
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
@@ -269,13 +270,13 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
     dialog->v[0] = new Fl_Value_Input(WB, y, BB / 2, BH);
     dialog->v[0]->minimum(-1);
     dialog->v[0]->maximum(5000);
-    dialog->v[0]->step(1);
+    if(CTX::instance()->inputScrolling) dialog->v[0]->step(1);
     dialog->v[1] =
       new Fl_Value_Input(WB + BB / 2, y, BB - BB / 2, BH, "Dimensions");
     y += BH;
     dialog->v[1]->minimum(-1);
     dialog->v[1]->maximum(5000);
-    dialog->v[1]->step(1);
+    if(CTX::instance()->inputScrolling) dialog->v[1]->step(1);
     dialog->v[1]->align(FL_ALIGN_RIGHT);
     dialog->s[0] = new Fl_Value_Slider(WB, y, BB, BH, "Quality");
     y += BH;
@@ -283,14 +284,14 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
     dialog->s[0]->align(FL_ALIGN_RIGHT);
     dialog->s[0]->minimum(1);
     dialog->s[0]->maximum(100);
-    dialog->s[0]->step(1);
+    if(CTX::instance()->inputScrolling) dialog->s[0]->step(1);
     dialog->s[1] = new Fl_Value_Slider(WB, y, BB, BH, "Smoothing");
     y += BH;
     dialog->s[1]->type(FL_HOR_SLIDER);
     dialog->s[1]->align(FL_ALIGN_RIGHT);
     dialog->s[1]->minimum(0);
     dialog->s[1]->maximum(100);
-    dialog->s[1]->step(1);
+    if(CTX::instance()->inputScrolling) dialog->s[1]->step(1);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
@@ -379,13 +380,13 @@ int pgfBitmapFileDialog(const char *name, const char *title, int format)
     dialog->v[0] = new Fl_Value_Input(WB, y, BB / 2, BH);
     dialog->v[0]->minimum(-1);
     dialog->v[0]->maximum(5000);
-    dialog->v[0]->step(1);
+    if(CTX::instance()->inputScrolling) dialog->v[0]->step(1);
     dialog->v[1] =
       new Fl_Value_Input(WB + BB / 2, y, BB - BB / 2, BH, "Dimensions");
     y += BH;
     dialog->v[1]->minimum(-1);
     dialog->v[1]->maximum(5000);
-    dialog->v[1]->step(1);
+    if(CTX::instance()->inputScrolling) dialog->v[1]->step(1);
     dialog->v[1]->align(FL_ALIGN_RIGHT);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -537,7 +538,7 @@ int mpegFileDialog(const char *name)
     dialog->v[4]->align(FL_ALIGN_RIGHT);
     dialog->v[4]->minimum(1);
     dialog->v[4]->maximum(500);
-    dialog->v[4]->step(1);
+    if(CTX::instance()->inputScrolling) dialog->v[4]->step(1);
     y += BH;
     dialog->param->end();
 
@@ -548,7 +549,7 @@ int mpegFileDialog(const char *name)
     y += BH;
     dialog->v[0]->minimum(1. / 30.);
     dialog->v[0]->maximum(2.);
-    dialog->v[0]->step(1. / 30.);
+    if(CTX::instance()->inputScrolling) dialog->v[0]->step(1. / 30.);
     dialog->v[0]->precision(3);
     dialog->v[0]->align(FL_ALIGN_RIGHT);
 
@@ -556,7 +557,7 @@ int mpegFileDialog(const char *name)
     y += BH;
     dialog->v[1]->minimum(1);
     dialog->v[1]->maximum(100);
-    dialog->v[1]->step(1);
+    if(CTX::instance()->inputScrolling) dialog->v[1]->step(1);
     dialog->v[1]->align(FL_ALIGN_RIGHT);
 
     dialog->c[0] = new Fl_Check_Button(WB, y, ww, BH, "Print background");
@@ -1804,7 +1805,7 @@ int pvtuAdaptFileDialog(const char *name)
     dialog->vi[0]->align(FL_ALIGN_RIGHT);
     dialog->vi[0]->minimum(0);
     dialog->vi[0]->maximum(6);
-    dialog->vi[0]->step(1);
+    if(CTX::instance()->inputScrolling) dialog->vi[0]->step(1);
     dialog->vi[0]->value(1);
     dialog->vi[0]->when(FL_WHEN_RELEASE);
 
@@ -1813,7 +1814,7 @@ int pvtuAdaptFileDialog(const char *name)
     dialog->vi[1]->align(FL_ALIGN_RIGHT);
     dialog->vi[1]->minimum(-1.e-4);
     dialog->vi[1]->maximum(0.1);
-    dialog->vi[1]->step(1.e-4);
+    if(CTX::instance()->inputScrolling) dialog->vi[1]->step(1.e-4);
     dialog->vi[1]->value(-1.e-4);
     dialog->vi[1]->when(FL_WHEN_RELEASE);
 
@@ -1822,7 +1823,7 @@ int pvtuAdaptFileDialog(const char *name)
     dialog->vi[2]->align(FL_ALIGN_RIGHT);
     dialog->vi[2]->minimum(1);
     dialog->vi[2]->maximum(262144);
-    dialog->vi[2]->step(1);
+    if(CTX::instance()->inputScrolling) dialog->vi[2]->step(1);
     dialog->vi[2]->value(4);
     dialog->vi[2]->when(FL_WHEN_RELEASE);
 
@@ -1912,13 +1913,13 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
     dialog->input[0]->align(FL_ALIGN_RIGHT);
     dialog->input[0]->minimum(-16);
     dialog->input[0]->maximum(16);
-    dialog->input[0]->step(.25);
+    if(CTX::instance()->inputScrolling) dialog->input[0]->step(.25);
     dialog->input[1] = new Fl_Value_Input(WB, y, BB, BH, "Transparency");
     y += BH;
     dialog->input[1]->align(FL_ALIGN_RIGHT);
     dialog->input[1]->minimum(0.);
     dialog->input[1]->maximum(1.);
-    dialog->input[1]->step(0.05);
+    if(CTX::instance()->inputScrolling) dialog->input[1]->step(0.05);
     dialog->e[1] = new Fl_Check_Button(WB, y, w - 2 * WB, BH,
                                        "High compatibility (no scale)");
     y += BH;

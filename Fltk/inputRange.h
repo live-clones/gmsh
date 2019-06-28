@@ -17,6 +17,7 @@
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/fl_ask.H>
+#include "Context.h"
 
 class inputRange : public Fl_Group {
 private:
@@ -42,7 +43,8 @@ private:
       if(_choices.size() > 1) {
         _input->minimum(_choices[0]);
         _input->maximum(_choices[_choices.size() - 1]);
-        _input->step(_choices[1] - _choices[0], 1);
+        if(CTX::instance()->inputScrolling)
+          _input->step(_choices[1] - _choices[0], 1);
       }
       _step = 0.;
     }
@@ -58,7 +60,7 @@ private:
         _input->maximum(_max);
       }
       if(_step && _step != 1.) tmp << " : " << _step;
-      _input->step(_step, 1);
+      if(CTX::instance()->inputScrolling) _input->step(_step, 1);
       _choices.clear();
     }
     _range = tmp.str();
@@ -88,7 +90,8 @@ private:
       if(_choices.size() > 1) {
         _input->minimum(_choices[0]);
         _input->maximum(_choices[_choices.size() - 1]);
-        _input->step(_choices[1] - _choices[0], 1);
+        if(CTX::instance()->inputScrolling)
+          _input->step(_choices[1] - _choices[0], 1);
       }
       _step = 0.;
     }
@@ -120,7 +123,7 @@ private:
         _step = atof(step.c_str());
       else
         _step = 0.;
-      _input->step(_step, 1);
+      if(CTX::instance()->inputScrolling) _input->step(_step, 1);
       _choices.clear();
     }
   }

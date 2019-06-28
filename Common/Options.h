@@ -233,6 +233,7 @@ double opt_general_nopopup(OPT_ARGS_NUM);
 double opt_general_non_modal_windows(OPT_ARGS_NUM);
 double opt_general_terminal(OPT_ARGS_NUM);
 double opt_general_tooltips(OPT_ARGS_NUM);
+double opt_general_input_scrolling(OPT_ARGS_NUM);
 double opt_general_confirm_overwrite(OPT_ARGS_NUM);
 double opt_general_orthographic(OPT_ARGS_NUM);
 double opt_general_mouse_selection(OPT_ARGS_NUM);

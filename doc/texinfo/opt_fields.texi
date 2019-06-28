@@ -115,7 +115,7 @@ default value: @code{0}
 @item Thickness
 Thickness of a transition layer outside the ball@*
 type: float@*
-default value: @code{5.285563251714757e+180}
+default value: @code{0}
 @item VIn
 Value inside the ball@*
 type: float@*

@@ -906,7 +906,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
   but->value(p.getValue());
   but->minimum(p.getMin());
   but->maximum(p.getMax());
-  but->step(p.getStep());
+  if(CTX::instance()->inputScrolling) but->step(p.getStep());
   but->choices(p.getChoices());
   but->loop(p.getAttribute("Loop"));
   but->graph(p.getAttribute("Graph"));

@@ -572,6 +572,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "InitialModule", opt_general_initial_context, 0. ,
     "Module launched on startup (0: automatic, 1: geometry, 2: mesh, 3: solver, "
     "4: post-processing) " },
+  { F|O, "InputScrolling" , opt_general_input_scrolling , 1. ,
+    "Enable numerical input scrolling in user interface (moving the mouse to change "
+    "numbers)" },
 
   { F|O, "Light0" , opt_general_light0 , 1. ,
     "Enable light source 0" },
