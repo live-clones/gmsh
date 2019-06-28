@@ -137,17 +137,26 @@ void classifyFaces(GModel *gm)
 #if defined(HAVE_MESH)
 
   // create a structure from mesh edges to geometrical curves, and remove curves
-  // from the model
+  // from the model (FIXME: memory leak)
   std::map<MLine *, GEdge *, compareMLinePtr> lines;
   std::vector<GEdge *> edgesToRemove;
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       lines[(*it)->lines[i]] = *it;
     }
-    if((*it)->getBeginVertex()) edgesToRemove.push_back(*it);
+    edgesToRemove.push_back(*it);
   }
   for(std::size_t i = 0; i < edgesToRemove.size(); ++i) {
     gm->remove(edgesToRemove[i]);
+  }
+
+  // remove points from model (FIXME: memory leak)
+  std::vector<GVertex *> pointsToRemove;
+  for(GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
+    pointsToRemove.push_back(*it);
+  }
+  for(std::size_t i = 0; i < pointsToRemove.size(); ++i) {
+    gm->remove(pointsToRemove[i]);
   }
 
   // create triangle-triangle connections
@@ -223,6 +232,7 @@ void classifyFaces(GModel *gm)
   // check if new edges should not be split;
   std::map<discreteFace *, std::vector<int> > newFaceTopology;
   std::map<MVertex *, GVertex *> modelVertices;
+
   for(std::map<std::pair<int, int>, GEdge *>::iterator ite = newEdges.begin();
       ite != newEdges.end(); ++ite) {
     std::list<MLine *> allSegments;
@@ -326,24 +336,11 @@ void classifyFaces(GModel *gm)
     ++it;
   }
 
-  // delete empty mesh faces and reclasssify
+  // remove empty mesh faces
   std::set<GFace *, GEntityLessThan> fac = gm->getFaces();
   for(std::set<GFace *, GEntityLessThan>::iterator fit = fac.begin();
       fit != fac.end(); ++fit) {
-    std::set<MVertex *> _verts;
-    (*fit)->mesh_vertices.clear();
-    for(std::size_t i = 0; i < (*fit)->triangles.size(); i++) {
-      for(int j = 0; j < 3; j++) {
-        if((*fit)->triangles[i]->getVertex(j)->onWhat()->dim() > 1) {
-          (*fit)->triangles[i]->getVertex(j)->setEntity(*fit);
-          _verts.insert((*fit)->triangles[i]->getVertex(j));
-        }
-      }
-    }
-    if((*fit)->triangles.size())
-      (*fit)->mesh_vertices.insert((*fit)->mesh_vertices.begin(),
-                                   _verts.begin(), _verts.end());
-    else
+    if((*fit)->triangles.empty())
       gm->remove(*fit);
   }
 #endif
