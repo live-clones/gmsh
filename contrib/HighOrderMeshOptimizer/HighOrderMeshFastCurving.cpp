@@ -289,7 +289,8 @@ namespace {
       const SVector3 tangentTop1 = topEdge1.tangent();
       if(std::abs(dot(tangentBase, tangentTop0)) < maxDPIn ||
          std::abs(dot(tangentTop0, tangentTop1)) < maxDPIn ||
-         std::abs(dot(tangentBase, tangentTop1)) < maxDP) return;
+         std::abs(dot(tangentBase, tangentTop1)) < maxDP)
+        return;
 
       const double edLenMin = std::min(edLenMin0, edLenMin1);
       const double edLenMax = std::max(edLenMax0, edLenMax1);
@@ -511,7 +512,7 @@ namespace {
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
       MFace topFace0, topFace1, topFace2;
       double faceSurfMin0, faceSurfMax0, faceSurfMin1, faceSurfMax1,
-             faceSurfMin2, faceSurfMax2;
+        faceSurfMin2, faceSurfMax2;
 
       // first element
       el0 = aboveElt;
@@ -540,7 +541,8 @@ namespace {
       if(std::abs(dot(normBase, normTop0)) < maxDPIn ||
          std::abs(dot(normTop0, normTop1)) < maxDPIn ||
          std::abs(dot(normTop1, normTop2)) < maxDPIn ||
-         std::abs(dot(normBase, normTop2)) < maxDP) return;
+         std::abs(dot(normBase, normTop2)) < maxDP)
+        return;
 
       const double faceSurfMin =
         std::min(faceSurfMin0, std::min(faceSurfMin1, faceSurfMin2));
@@ -1038,8 +1040,8 @@ namespace {
 
   void gather3Dcolumns(MFaceVecMEltMap &face2el, GFace *gFace,
                        const FastCurvingParameters &p,
-                       VecPairMElemVecMElem &columns, std::set<MFace,
-                       Less_Face> &BLShell)
+                       VecPairMElemVecMElem &columns,
+                       std::set<MFace, Less_Face> &BLShell)
   {
     // An element can be in only one column and an element can be a top element
     // of multiple column but then cannot be inside a column.
@@ -1097,7 +1099,6 @@ namespace {
 
 } // namespace
 
-
 // Main functions for fast curving
 void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
                               FastCurvingParameters &p)
@@ -1114,8 +1115,10 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
   Msg::Info("Computing connectivity for entity %i...", ent->tag());
   MEdgeVecMEltMap edge2el;
   MFaceVecMEltMap face2el;
-  if(dim == 2) calcEdge2Elements(ent, edge2el);
-  else         calcFace2Elements(ent, face2el);
+  if(dim == 2)
+    calcEdge2Elements(ent, edge2el);
+  else
+    calcFace2Elements(ent, face2el);
 
   if(p.thickness) {
     VecPairMElemVecMElem columns;
@@ -1126,8 +1129,8 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
         gather3Dcolumns(face2el, boundary[i]->cast2Face(), p, columns, BLShell);
 
       MapMEdgeVecMElem touchedElements;
-      computeMapMEdge2TouchedElements(
-        ent->cast2Region(), columns, BLShell, touchedElements);
+      computeMapMEdge2TouchedElements(ent->cast2Region(), columns, BLShell,
+                                      touchedElements);
 
       Msg::Info("Curving elements in volume %d...", ent->tag());
       curve3DBoundaryLayer(columns, touchedElements);
@@ -1212,7 +1215,8 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
         boundary[j] = boundary.back();
         boundary.pop_back();
       }
-      else ++j;
+      else
+        ++j;
     }
 
     HighOrderMeshFastCurving(entity, boundary, p);

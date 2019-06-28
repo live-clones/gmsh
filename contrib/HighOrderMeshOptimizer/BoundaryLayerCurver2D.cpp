@@ -267,8 +267,9 @@ namespace BoundaryLayerCurver {
 
         t = _gedge->firstDer(paramGeoEdge);
         t.normalize();
-        if (t.norm() == 0) // FIXMEDEBUG should not arrive
-          std::cout << "aarg " << _gedge->tag() << " " << paramGeoEdge << std::endl;
+        if(t.norm() == 0) // FIXMEDEBUG should not arrive
+          std::cout << "aarg " << _gedge->tag() << " " << paramGeoEdge
+                    << std::endl;
       }
       if(!_gedge || t.norm() == 0) {
         t = _edgeOnBoundary->tangent(paramEdge);
@@ -962,10 +963,11 @@ namespace BoundaryLayerCurver {
     }
 
     void curveEdgesAndPreserveQualityTri(std::vector<MEdgeN> &stackEdges,
-                                      std::vector<MFaceN> &stackFaces,
-                                      std::vector<MElement*> &stackElements,
-                                         int iFirst, int iLast, const GFace *gface,
-                                         const GEdge *gedge, SVector3 normal)
+                                         std::vector<MFaceN> &stackFaces,
+                                         std::vector<MElement *> &stackElements,
+                                         int iFirst, int iLast,
+                                         const GFace *gface, const GEdge *gedge,
+                                         SVector3 normal)
     {
       std::vector<std::pair<double, double> > eta;
       fullMatrix<double> terms[8];
@@ -974,32 +976,34 @@ namespace BoundaryLayerCurver {
       // Compute quality of primary elements
       unsigned long numElements = stackElements.size() - 1;
       std::vector<double> qualitiesLinear(numElements);
-      for (unsigned int i = 0; i < numElements; ++i) {
+      for(unsigned int i = 0; i < numElements; ++i) {
         MElement *linear = createPrimaryElement(stackElements[i]);
         qualitiesLinear[i] = jacobianBasedQuality::minIGEMeasure(linear);
         delete linear;
       }
 
-      static double coeffHermite[11] = {1, .9, .8, .7, .6, .5, .4, .3, .2, .1, 0};
-      for (int i = 0; i < 11; ++i) {
+      static double coeffHermite[11] = {1,  .9, .8, .7, .6, .5,
+                                        .4, .3, .2, .1, 0};
+      for(int i = 0; i < 11; ++i) {
         _generalTFI(stackEdges, iLast, eta, terms, coeffHermite[i], gface);
-        for (unsigned int j = 0; j < stackEdges.size()-2; j += 2) {
-          EdgeCurver2D::curveEdge(&stackEdges[j], &stackEdges[j+1], gface, NULL, normal);
+        for(unsigned int j = 0; j < stackEdges.size() - 2; j += 2) {
+          EdgeCurver2D::curveEdge(&stackEdges[j], &stackEdges[j + 1], gface,
+                                  NULL, normal);
         }
         repositionInnerVertices(stackFaces, gface);
 
         bool allOk = true;
-        if (coeffHermite[i]) {
-          for (unsigned int i = 0; i < numElements; ++i) {
+        if(coeffHermite[i]) {
+          for(unsigned int i = 0; i < numElements; ++i) {
             double qual = jacobianBasedQuality::minIGEMeasure(stackElements[i]);
-            if (qual < .5 && qual < .8 * qualitiesLinear[i]) {
+            if(qual < .5 && qual < .8 * qualitiesLinear[i]) {
               allOk = false;
               break;
             }
           }
         }
 
-        if (allOk) return;
+        if(allOk) return;
       }
     }
   } // namespace InteriorEdgeCurver

@@ -397,7 +397,9 @@ namespace BoundaryLayerCurver {
     }
 
     // Reset factorDegenerate
-    for(int i = 0; i < 4; ++i) { _factorDegenerate[i] = 1; }
+    for(int i = 0; i < 4; ++i) {
+      _factorDegenerate[i] = 1;
+    }
   }
 
   SPoint3

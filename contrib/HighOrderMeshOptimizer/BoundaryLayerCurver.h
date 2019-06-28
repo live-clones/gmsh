@@ -209,7 +209,8 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *,
                           const GEdge *);
 
 // 3D BL
-void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *); //deprecated
+void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
+                          const GFace *); // deprecated
 void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
                           MapMEdgeVecMElem &touchedElements);
 

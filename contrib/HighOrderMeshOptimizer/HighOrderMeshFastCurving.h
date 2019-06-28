@@ -31,18 +31,34 @@ class GModel;
 
 struct FastCurvingParameters {
   enum OUTERBLCURVE { OUTER_NOCURVE, OUTER_CURVE, OUTER_CURVECONSERVATIVE };
-  int dim; // Spatial dimension of the mesh to curve
-  bool thickness; // Curve boundary layer with new algo (experimental)
-  bool onlyVisible; // Apply curving to visible entities ONLY?
-  bool optimizeGeometry; // Optimize boundary edges/faces to fit geometry?
-  OUTERBLCURVE
-    curveOuterBL; // Curve also the outer surface of the boundary layer?
-  int maxNumLayers; // Maximum number of layers of elements to curve in BL
-  double
-    maxRho; // Maximum ratio min/max edge/face size for elements to curve in BL
-  double maxAngle; // Maximum angle between layers of elements to curve in BL
-  double maxAngleInner; // Maximum angle between edges/faces within layers of
-                        // triangles/tets to curve in BL
+
+  // Spatial dimension of the mesh to curve
+  int dim;
+
+  // Curve boundary layer with new algo (experimental)
+  bool thickness;
+
+  // Apply curving to visible entities ONLY?
+  bool onlyVisible;
+
+  // Optimize boundary edges/faces to fit geometry?
+  bool optimizeGeometry;
+
+  // Curve also the outer surface of the boundary layer?
+  OUTERBLCURVE curveOuterBL;
+
+  // Maximum number of layers of elements to curve in BL
+  int maxNumLayers;
+
+  // Maximum ratio min/max edge/face size for elements to curve in BL
+  double maxRho;
+
+  // Maximum angle between layers of elements to curve in BL
+  double maxAngle;
+
+  // Maximum angle between edges/faces within layers of
+  // triangles/tets to curve in BL
+  double maxAngleInner;
   double cosMaxAngle, cosMaxAngleInner;
 
   FastCurvingParameters()
