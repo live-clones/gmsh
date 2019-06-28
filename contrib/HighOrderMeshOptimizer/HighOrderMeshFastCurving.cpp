@@ -1027,7 +1027,6 @@ namespace {
           continue;
         }
 
-        std::vector<MElement *> vec;
         bndEl2column.push_back(
           std::make_pair(bndEl, std::vector<MElement *>()));
         aboveElements.push_back(NULL);
@@ -1123,6 +1122,49 @@ namespace {
     //  dbgOut.write("meta-elements", bndEnt->tag());
   }
 
+  void get2Dcolumn(MEdgeVecMEltMap &edge2el, const FastCurvingParameters &p,
+                   MElement *bndEl, std::vector<MElement *> &column,
+                   MElement *&aboveEl, MEdge &topEdge)
+  {
+    column.clear();
+
+    MVertex *vb0 = bndEl->getVertex(0);
+    MVertex *vb1 = bndEl->getVertex(1);
+    MEdge edge(vb0, vb1);
+
+    // Check if baseEd is adjacent to an element of the face
+    // (the contrary can happen with degenerate edge, see fix b91a1b822)
+    MEdgeVecMEltMap::iterator myit = edge2el.find(edge);
+    if(myit == edge2el.end()) return;
+
+    const int typeColumn = edge2el[edge][0]->getType();
+    if(typeColumn == TYPE_TRI)
+      getColumnTri(edge2el, p, edge, column, aboveEl);
+    else
+      getColumnQuad(edge2el, p, edge, column, aboveEl);
+
+    topEdge = edge;
+  }
+
+  void gather2Dcolumns(MEdgeVecMEltMap &edge2el, GEdge *gEdge,
+                       const FastCurvingParameters &p,
+                       VecPairMElemVecMElem &columns)
+  {
+    for(std::size_t i = 0; i < gEdge->getNumMeshElements(); ++i) {
+      MElement *bndEl = gEdge->getMeshElement(i);
+      std::vector<MElement *> col;
+      MEdge dum;
+      MElement *aboveEl;
+      get2Dcolumn(edge2el, p, bndEl, col, aboveEl, dum);
+
+      if(col.empty()) continue;
+
+      col.push_back(aboveEl); // even if aboveEl is NULL
+      columns.push_back(std::make_pair(bndEl, std::vector<MElement *>()));
+      columns.back().second.swap(col);
+    }
+  }
+
   void get3Dcolumn(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
                    MElement *bndEl, std::vector<MElement *> &column,
                    MElement *&aboveEl, std::set<MFace> &BLShell, MFace &topFace)
@@ -1197,8 +1239,8 @@ namespace {
 
       const std::size_t n = el->getNumEdges();
       for(std::size_t i = 0; i < n; ++i) {
-        MEdge &edge = el->getEdge(i);
-        if(BLShellEdges.find(el) == BLShellEdges.end()) continue;
+        MEdge edge = el->getEdge(i);
+        if(BLShellEdges.find(edge) == BLShellEdges.end()) continue;
         touchedElements[edge].push_back(el);
       }
     }
@@ -1235,19 +1277,29 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
         gather3Dcolumns(face2el, boundary[i]->cast2Face(), p, columns, BLShell);
 
       MapMEdgeVecMElem touchedElements;
-      computeMapMEdge2TouchedElements(ent, columns, BLShell, touchedElements);
+      computeMapMEdge2TouchedElements(
+        ent->cast2Region(), columns, BLShell, touchedElements);
 
-      curve3DBoundaryLayer(bndEl2column, touchedElements);
+      Msg::Info("Curving elements in volume %d...", ent->tag());
+      curve3DBoundaryLayer(columns, touchedElements);
     }
     else {
-      for(int i = 0; i < boundary.size(); i++)
+      for(int i = 0; i < boundary.size(); i++) {
+        columns.clear();
         gather2Dcolumns(edge2el, boundary[i]->cast2Edge(), p, columns);
-      if(haveNormal)
-        curve2DBoundaryLayer(columns, normal, boundary[i]->cast2Edge());
-      else
-        curve2DBoundaryLayer(
-          columns, ent->cast2Face(), boundary[i]->cast2Edge());
+        if(haveNormal)
+          curve2DBoundaryLayer(columns, normal, boundary[i]->cast2Edge());
+        else
+          curve2DBoundaryLayer(columns, ent->cast2Face(),
+                               boundary[i]->cast2Edge());
+      }
     }
+    return;
+  }
+
+  for(int i = 0; i < boundary.size(); i++) {
+    GEntity *bndEnt = boundary[i];
+    curveMeshFromBnd(edge2el, face2el, ent, bndEnt, p, normal);
   }
 
 
@@ -1265,10 +1317,6 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
     else
       gather3Dcolumns(face2el, ent, bndEnt, p, bndEl2column);
   }
-
-  // Compute external elements that are touched by at least one edge of
-  // the BL mesh
-  std::vector<std::pair<MEdge, std::vector<MElement *> > > touchedExtElements;
 
   if(p.thickness && p.dim == 3 && boundary.size()) {
     Msg::Info("Curving elements in volume %d...", ent->tag());
