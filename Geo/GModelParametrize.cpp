@@ -69,7 +69,7 @@ static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
 }
 
 static void classify(MTri3 *t, std::map<MTriangle *, GFace *> &reverse,
-                     std::map<MLine *, GEdge *, compareMLinePtr> &lines,
+                     std::set<MLine *, compareMLinePtr> &lines,
                      std::set<MLine *> &touched, std::set<MTri3 *> &trisTouched,
                      std::map<std::pair<int, int>, GEdge *> &newEdges)
 {
@@ -88,13 +88,13 @@ static void classify(MTri3 *t, std::map<MTriangle *, GFace *> &reverse,
         if(tn) gf2 = reverse[tn->tri()];
         edgeXface exf(t, i);
         MLine ml(exf._v(0), exf._v(1));
-        std::map<MLine *, GEdge *, compareMLinePtr>::iterator it =
+        std::set<MLine *, compareMLinePtr>::iterator it =
           lines.find(&ml);
         if(it != lines.end()) {
-          if(touched.find(it->first) == touched.end()) {
+          if(touched.find(*it) == touched.end()) {
             GEdge *ge = getNewModelEdge(gf1, gf2, newEdges);
-            if(ge) ge->lines.push_back(it->first);
-            touched.insert(it->first);
+            if(ge) ge->lines.push_back(*it);
+            touched.insert(*it);
           }
         }
         if(tn) { _stack.push(tn); }
@@ -104,7 +104,7 @@ static void classify(MTri3 *t, std::map<MTriangle *, GFace *> &reverse,
 }
 
 static void classify(MTri3 *t, GFace *gf,
-                     std::map<MLine *, GEdge *, compareMLinePtr> &lines,
+                     std::set<MLine *, compareMLinePtr> &lines,
                      std::map<MTriangle *, GFace *> &reverse)
 {
   std::stack<MTri3 *> _stack;
@@ -121,7 +121,7 @@ static void classify(MTri3 *t, GFace *gf,
         if(tn) {
           edgeXface exf(t, i);
           MLine ml(exf._v(0), exf._v(1));
-          std::map<MLine *, GEdge *, compareMLinePtr>::iterator it =
+          std::set<MLine *, compareMLinePtr>::iterator it =
             lines.find(&ml);
           if(it == lines.end()) { _stack.push(tn); }
         }
@@ -136,13 +136,44 @@ void classifyFaces(GModel *gm)
 {
 #if defined(HAVE_MESH)
 
-  // create a structure from mesh edges to geometrical curves, and remove curves
-  // from the model (FIXME: memory leak)
-  std::map<MLine *, GEdge *, compareMLinePtr> lines;
+  // create triangle-triangle connections
+  std::set<MVertex *, MVertexLessThanNum> allVertices;
+  std::map<MTriangle *, GFace *> triangleToOldFace;
+  std::list<MTri3 *> tris;
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++){
+    GFace *gf = *it;
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+      tris.push_back(new MTri3(gf->triangles[i], 0));
+      triangleToOldFace[gf->triangles[i]] = gf;
+      for(std::size_t j = 0; j < gf->triangles[i]->getNumVertices(); j++)
+        allVertices.insert(gf->triangles[i]->getVertex(j));
+    }
+  }
+
+  if(tris.empty()){
+    Msg::Warning("No triangles to reclassify in surface mesh");
+    return;
+  }
+
+  // clear mesh from old surfaces
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++){
+    GFace *gf = *it;
+    gf->triangles.clear();
+    gf->mesh_vertices.clear();
+  }
+
+  // reset classification of mesh nodes
+  for(std::set<MVertex *, MVertexLessThanNum>::iterator it = allVertices.begin();
+      it != allVertices.end(); it++){
+    (*it)->setEntity(0);
+  }
+
+  // keep track of all line elements and clear curve meshes
+  std::set<MLine *, compareMLinePtr> lines;
   std::vector<GEdge *> edgesToRemove;
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
-      lines[(*it)->lines[i]] = *it;
+      lines.insert((*it)->lines[i]);
     }
     edgesToRemove.push_back(*it);
   }
@@ -150,7 +181,7 @@ void classifyFaces(GModel *gm)
     gm->remove(edgesToRemove[i]);
   }
 
-  // remove points from model (FIXME: memory leak)
+  // remove points from model
   std::vector<GVertex *> pointsToRemove;
   for(GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
     pointsToRemove.push_back(*it);
@@ -159,23 +190,6 @@ void classifyFaces(GModel *gm)
     gm->remove(pointsToRemove[i]);
   }
 
-  // create triangle-triangle connections
-  std::map<MTriangle *, GFace *> reverse_old;
-  std::list<MTri3 *> tris;
-  {
-    GModel::fiter it = gm->firstFace();
-    while(it != gm->lastFace()) {
-      GFace *gf = *it;
-      for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-        tris.push_back(new MTri3(gf->triangles[i], 0));
-        reverse_old[gf->triangles[i]] = gf;
-      }
-      gf->triangles.clear();
-      gf->mesh_vertices.clear();
-      ++it;
-    }
-  }
-  if(tris.empty()) return;
   connectTriangles(tris);
 
   // color all triangles
@@ -191,7 +205,7 @@ void classifyFaces(GModel *gm)
       gm->add(gf);
       newf.push_back(gf);
       for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-        replacedBy.insert(std::make_pair(reverse_old[gf->triangles[i]], gf));
+        replacedBy.insert(std::make_pair(triangleToOldFace[gf->triangles[i]], gf));
       }
     }
     ++it;
@@ -301,7 +315,7 @@ void classifyFaces(GModel *gm)
       for(std::list<MLine *>::iterator itL =
             segmentsForThisDiscreteEdge.begin();
           itL != segmentsForThisDiscreteEdge.end(); ++itL) {
-        if((*itL)->getVertex(0)->onWhat()->dim() != 0) {
+        if(!(*itL)->getVertex(0)->onWhat()) {
           newGe->mesh_vertices.push_back((*itL)->getVertex(0));
           (*itL)->getVertex(0)->setEntity(newGe);
         }
@@ -336,11 +350,24 @@ void classifyFaces(GModel *gm)
     ++it;
   }
 
-  // remove empty mesh faces
+  // remove empty mesh faces and put mesh nodes on them
   std::set<GFace *, GEntityLessThan> fac = gm->getFaces();
   for(std::set<GFace *, GEntityLessThan>::iterator fit = fac.begin();
       fit != fac.end(); ++fit) {
-    if((*fit)->triangles.empty())
+    std::set<MVertex *> _verts;
+    (*fit)->mesh_vertices.clear();
+    for(std::size_t i = 0; i < (*fit)->triangles.size(); i++) {
+      for(int j = 0; j < 3; j++) {
+        if(!(*fit)->triangles[i]->getVertex(j)->onWhat()) {
+          (*fit)->triangles[i]->getVertex(j)->setEntity(*fit);
+          _verts.insert((*fit)->triangles[i]->getVertex(j));
+        }
+      }
+    }
+    if((*fit)->triangles.size())
+      (*fit)->mesh_vertices.insert((*fit)->mesh_vertices.begin(),
+                                   _verts.begin(), _verts.end());
+    else
       gm->remove(*fit);
   }
 #endif
