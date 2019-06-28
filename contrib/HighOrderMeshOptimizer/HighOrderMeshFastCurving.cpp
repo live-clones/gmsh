@@ -274,7 +274,7 @@ namespace {
       // first element
       el0 = aboveElt;
       if(el0->getType() != TYPE_TRI) return;
-      getOppositeEdgeTri(el0, inOutEdge, topEdge0, edLenMin0, edLenMax0);
+      getOppositeEdgeTri(el0, baseEdge, topEdge0, edLenMin0, edLenMax0);
 
       // second element
       std::vector<MElement *> newElts1 = edge2el[topEdge0];
@@ -284,7 +284,7 @@ namespace {
       getOppositeEdgeTri(el1, topEdge0, topEdge1, edLenMin1, edLenMax1);
 
       // Geometrical stopping criteria
-      const SVector3 tangentBase = inOutEdge.tangent();
+      const SVector3 tangentBase = baseEdge.tangent();
       const SVector3 tangentTop0 = topEdge0.tangent();
       const SVector3 tangentTop1 = topEdge1.tangent();
       if(std::abs(dot(tangentBase, tangentTop0)) < maxDPIn ||
@@ -302,38 +302,35 @@ namespace {
       aboveElt = NULL;
 
       // Above element & update baseEdge
-      std::vector<MElement *> newEltsnext = edge2el[inOutEdge];
+      std::vector<MElement *> newEltsnext = edge2el[topEdge1];
       if(newEltsnext.size() < 2) return;
       aboveElt = (newEltsnext[0] == el1) ? newEltsnext[1] : newEltsnext[0];
       baseEdge = topEdge1;
     }
   }
 
-  bool getColumn2D(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
-                   const MEdge &baseEd, std::vector<MVertex *> &baseVert,
-                   std::vector<MVertex *> &topPrimVert,
-                   std::vector<MElement *> &blob, MElement *&aboveElt)
+  void get2Dcolumn(MEdgeVecMEltMap &edge2el, const FastCurvingParameters &p,
+                   MElement *bndEl, std::vector<MElement *> &column,
+                   MElement *&aboveEl, MEdge &topEdge)
   {
-    // Get first element and base vertices
-    std::vector<MElement *> firstElts = ed2el[baseEd];
-    MElement *el = firstElts[0];
-    int iFirstElEd, iDum;
-    el->getEdgeInfo(baseEd, iFirstElEd, iDum);
-    el->getEdgeVertices(iFirstElEd, baseVert);
-    MEdge elBaseEd(baseVert[0], baseVert[1]);
+    column.clear();
 
-    // FIXME elBaseEd is baseEd no?
+    MVertex *vb0 = bndEl->getVertex(0);
+    MVertex *vb1 = bndEl->getVertex(1);
+    MEdge edge(vb0, vb1);
 
-    // Sweep column upwards by choosing largest edges in each element
-    if(el->getType() == TYPE_TRI)
-      getColumnTri(ed2el, p, elBaseEd, blob, aboveElt);
+    // Check if baseEd is adjacent to an element of the face
+    // (the contrary can happen with degenerate edge, see fix b91a1b822)
+    MEdgeVecMEltMap::iterator myit = edge2el.find(edge);
+    if(myit == edge2el.end()) return;
+
+    const int typeColumn = edge2el[edge][0]->getType();
+    if(typeColumn == TYPE_TRI)
+      getColumnTri(edge2el, p, edge, column, aboveEl);
     else
-      getColumnQuad(ed2el, p, elBaseEd, blob, aboveElt);
+      getColumnQuad(edge2el, p, edge, column, aboveEl);
 
-    topPrimVert.resize(2);
-    topPrimVert[0] = elBaseEd.getVertex(0);
-    topPrimVert[1] = elBaseEd.getVertex(1);
-    return true;
+    topEdge = edge;
   }
 
   void getOppositeFacePrism(MElement *el, const MFace &elBaseFace,
@@ -615,43 +612,29 @@ namespace {
     }
   }
 
-  bool getColumn3D(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
-                   const MFace &baseFace, std::vector<MVertex *> &baseVert,
-                   std::vector<MVertex *> &topPrimVert,
-                   std::vector<MElement *> &blob, MElement *&aboveElt)
+  void get3Dcolumn(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
+                   MElement *bndEl, std::vector<MElement *> &column,
+                   MElement *&aboveEl, std::set<MFace> &BLShell, MFace &topFace)
   {
-    // Get first element and base vertices
-    const int nbBaseFaceVert = baseFace.getNumVertices();
-    std::vector<MElement *> firstElts = face2el[baseFace];
-    MElement *el = firstElts[0];
-    int iFirstElFace = -1, iDum;
-    el->getFaceInfo(baseFace, iFirstElFace, iDum, iDum);
-    el->getFaceVertices(iFirstElFace, baseVert);
-    MFace elBaseFace(baseVert[0], baseVert[1], baseVert[2],
-                     (nbBaseFaceVert == 3) ? 0 : baseVert[3]);
+    const int typeBase = bndEl->getType();
+    if(typeBase == TYPE_POLYG) return;
 
-    // Sweep column upwards by choosing largest faces in each element
-    if(nbBaseFaceVert == 3) {
-      if(el->getType() == TYPE_PRI) // Get BL column of prisms
-        getColumnPrismHex(TYPE_PRI, face2el, p, elBaseFace, blob, aboveElt);
-      else if(el->getType() == TYPE_TET)
-        getColumnTet(face2el, p, elBaseFace, blob, aboveElt);
-    }
-    else if((nbBaseFaceVert == 4) &&
-            (el->getType() == TYPE_HEX)) // Get BL column of hexas
-      getColumnPrismHex(TYPE_HEX, face2el, p, elBaseFace, blob, aboveElt);
-    else
-      return false; // Not a BL
-    if(blob.size() == 0)
-      return false; // Could not find column (may not be a BL)
+    column.clear();
 
-    // Create top face of column with last face vertices
-    topPrimVert.resize(nbBaseFaceVert);
-    topPrimVert[0] = elBaseFace.getVertex(0);
-    topPrimVert[1] = elBaseFace.getVertex(1);
-    topPrimVert[2] = elBaseFace.getVertex(2);
-    if(nbBaseFaceVert == 4) topPrimVert[3] = elBaseFace.getVertex(3);
-    return true;
+    MVertex *vb0 = bndEl->getVertex(0);
+    MVertex *vb1 = bndEl->getVertex(1);
+    MVertex *vb2 = bndEl->getVertex(2);
+    MVertex *vb3 = NULL;
+    if(typeBase == TYPE_QUA) vb3 = bndEl->getVertex(3);
+    MFace face(vb0, vb1, vb2, vb3);
+
+    const int typeColumn = face2el[face][0]->getType();
+    if(typeColumn == TYPE_TET)
+      getColumnTet(face2el, p, face, column, aboveEl, BLShell);
+    else if(typeColumn == TYPE_PRI || typeColumn == TYPE_HEX)
+      getColumnPrismHex(typeColumn, face2el, p, face, column, aboveEl, BLShell);
+
+    topFace = face;
   }
 
   class DbgOutputMeta {
@@ -965,165 +948,63 @@ namespace {
   {
     const int bndType = bndElt->getType();
     int metaElType;
-    bool foundCol;
     std::vector<MVertex *> baseVert, topPrimVert;
     std::vector<MElement *> blob;
     MElement *aboveElt = 0;
-    if(bndType == TYPE_LIN) { // 1D boundary
-      MVertex *vb0 = bndElt->getVertex(0);
-      MVertex *vb1 = bndElt->getVertex(1);
+    if(bndType == TYPE_LIN) { // 2D BL mesh
+      MEdge topEdge;
+      get2Dcolumn(ed2el, p, bndElt, blob, aboveElt, topEdge);
+      topPrimVert.push_back(topEdge.getVertex(0));
+      topPrimVert.push_back(topEdge.getVertex(1));
       metaElType = TYPE_QUA;
-      MEdge baseEd(vb0, vb1);
-      foundCol =
-        getColumn2D(ed2el, p, baseEd, baseVert, topPrimVert, blob, aboveElt);
     }
-    else { // 2D boundary
-      MVertex *vb0 = bndElt->getVertex(0);
-      MVertex *vb1 = bndElt->getVertex(1);
-      MVertex *vb2 = bndElt->getVertex(2);
-      MVertex *vb3;
-      if(bndType == TYPE_QUA) {
-        vb3 = bndElt->getVertex(3);
+    else { // 3D BL mesh
+      MFace topFace;
+      std::set<MFace> dum;
+      get3Dcolumn(face2el, p, bndElt, blob, aboveElt, dum, topFace);
+      for(std::size_t i = 0; i < topFace.getNumVertices(); ++i)
+        topPrimVert.push_back(topFace.getVertex(i));
+      if(bndType == TYPE_QUA)
         metaElType = TYPE_HEX;
-      }
-      else {
-        vb3 = 0;
+      else
         metaElType = TYPE_PRI;
-      }
-      MFace baseFace(vb0, vb1, vb2, vb3);
-      foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert, blob,
-                             aboveElt);
     }
-    if(!foundCol || blob.empty())
-      return; // Skip bnd. el. if top vertices not found
+    if(blob.empty()) return; // Skip bnd. el. if top vertices not found
+
     DbgOutputCol dbgOutCol;
     dbgOutCol.addBlob(blob);
     //  dbgOutCol.write("col_KO", bndElt->getNum());
     if(aboveElt == 0)
       std::cout << "DBGTT: aboveElt = 0 for bnd. elt. " << bndElt->getNum()
                 << std::endl;
+
+    bndElt->getVertices(baseVert);
     curveColumn(p, ent, bndEnt, metaElType, baseVert, topPrimVert, aboveElt,
                 blob, movedVert, dbgOut);
     //  dbgOutCol.write("col_OK", bndElt->getNum());
   }
 
-  void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
-                                       MFaceVecMEltMap &face2el, GEntity *ent,
-                                       GEntity *bndEnt,
-                                       std::list<MElement *> &bndElts,
-                                       const FastCurvingParameters &p,
-                                       const SVector3 &normal)
-  {
-    // inspired from curveMeshFromBndElt
-
-    VecPairMElemVecMElem bndEl2column;
-    std::vector<MElement *> aboveElements;
-
-    std::list<MElement *>::iterator it = bndElts.begin();
-    while(it != bndElts.end()) {
-      MElement *bndEl = *it;
-      const int bndType = bndEl->getType();
-      bool foundCol;
-      std::vector<MVertex *> baseVert, topPrimVert;
-      MElement *aboveElt = 0;
-
-      if(bndType == TYPE_LIN) { // 1D boundary
-        MVertex *vb0 = bndEl->getVertex(0);
-        MVertex *vb1 = bndEl->getVertex(1);
-        MEdge baseEd(vb0, vb1);
-
-        // Check if baseEd is adjacent to an element of the face
-        // (the contrary can happen with degenerate edge, see fix b91a1b822)
-        MEdgeVecMEltMap::iterator myit = ed2el.find(baseEd);
-        if(myit == ed2el.end()) {
-          ++it;
-          continue;
-        }
-
-        bndEl2column.push_back(
-          std::make_pair(bndEl, std::vector<MElement *>()));
-        aboveElements.push_back(NULL);
-        foundCol =
-          getColumn2D(ed2el, p, baseEd, baseVert, topPrimVert,
-                      bndEl2column.back().second, aboveElements.back());
-      }
-      else { // 2D boundary
-        MVertex *vb0 = bndEl->getVertex(0);
-        MVertex *vb1 = bndEl->getVertex(1);
-        MVertex *vb2 = bndEl->getVertex(2);
-        MVertex *vb3 = NULL;
-        if(bndType == TYPE_QUA) vb3 = bndEl->getVertex(3);
-        MFace baseFace(vb0, vb1, vb2, vb3);
-        bndEl2column.push_back(
-          std::make_pair(bndEl, std::vector<MElement *>()));
-        aboveElements.push_back(NULL);
-        foundCol =
-          getColumn3D(face2el, p, baseFace, baseVert, topPrimVert,
-                      bndEl2column.back().second, aboveElements.back());
-      }
-      if(!foundCol || bndEl2column.back().second.empty()) {
-        bndEl2column.pop_back();
-        aboveElements.pop_back();
-      } // Skip bnd. el. if top vertices not found
-
-      ++it;
-    }
-
-    for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
-      if(aboveElements[i])
-        bndEl2column[i].second.push_back(aboveElements[i]);
-      else if(bndEl2column[i].second.size() &&
-              bndEl2column[i].second[0]->getType() == TYPE_TRI)
-        bndEl2column[i].second.pop_back();
-    }
-
-    if(p.dim == 2) {
-      if(normal.norm() > .5) {
-        curve2DBoundaryLayer(bndEl2column, normal, bndEnt->cast2Edge());
-      }
-      else {
-        curve2DBoundaryLayer(bndEl2column, ent->cast2Face(),
-                             bndEnt->cast2Edge());
-      }
-    }
-    //  else curve3DBoundaryLayer(bndEl2column);
-  }
-
   void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
                         GEntity *ent, GEntity *bndEnt,
-                        const FastCurvingParameters &p, SVector3 const normal)
+                        const FastCurvingParameters &p)
   {
     // Build list of bnd. elements to consider
     std::list<MElement *> bndEl;
     if(bndEnt->dim() == 1) {
       GEdge *gEd = bndEnt->cast2Edge();
       for(std::size_t i = 0; i < gEd->lines.size(); i++)
-        //      insertIfCurved(gEd->lines[i], bndEl);
-        bndEl.push_back(gEd->lines[i]);
+        insertIfCurved(gEd->lines[i], bndEl);
     }
     else if(bndEnt->dim() == 2) {
       GFace *gFace = bndEnt->cast2Face();
-      for(std::size_t i = 0; i < gFace->triangles.size(); i++) {
-        if(p.thickness)
-          bndEl.push_back(gFace->triangles[i]);
-        else
-          insertIfCurved(gFace->triangles[i], bndEl);
-      }
+      for(std::size_t i = 0; i < gFace->triangles.size(); i++)
+        insertIfCurved(gFace->triangles[i], bndEl);
       for(std::size_t i = 0; i < gFace->quadrangles.size(); i++)
-        if(p.thickness)
-          bndEl.push_back(gFace->quadrangles[i]);
-        else
-          insertIfCurved(gFace->quadrangles[i], bndEl);
+        insertIfCurved(gFace->quadrangles[i], bndEl);
     }
     else
       Msg::Error("Cannot process model entity %i of dim %i", bndEnt->tag(),
                  bndEnt->dim());
-
-    if(p.thickness) {
-      getColumnsAndcurveBoundaryLayer(ed2el, face2el, ent, bndEnt, bndEl, p,
-                                      normal);
-      return;
-    }
 
     // Loop over boundary elements to curve them by columns
     DbgOutputMeta dbgOut;
@@ -1133,30 +1014,6 @@ namespace {
       curveMeshFromBndElt(ed2el, face2el, ent, bndEnt, *itBE, movedVert, p,
                           dbgOut);
     //  dbgOut.write("meta-elements", bndEnt->tag());
-  }
-
-  void get2Dcolumn(MEdgeVecMEltMap &edge2el, const FastCurvingParameters &p,
-                   MElement *bndEl, std::vector<MElement *> &column,
-                   MElement *&aboveEl, MEdge &topEdge)
-  {
-    column.clear();
-
-    MVertex *vb0 = bndEl->getVertex(0);
-    MVertex *vb1 = bndEl->getVertex(1);
-    MEdge edge(vb0, vb1);
-
-    // Check if baseEd is adjacent to an element of the face
-    // (the contrary can happen with degenerate edge, see fix b91a1b822)
-    MEdgeVecMEltMap::iterator myit = edge2el.find(edge);
-    if(myit == edge2el.end()) return;
-
-    const int typeColumn = edge2el[edge][0]->getType();
-    if(typeColumn == TYPE_TRI)
-      getColumnTri(edge2el, p, edge, column, aboveEl);
-    else
-      getColumnQuad(edge2el, p, edge, column, aboveEl);
-
-    topEdge = edge;
   }
 
   void gather2Dcolumns(MEdgeVecMEltMap &edge2el, GEdge *gEdge,
@@ -1178,37 +1035,14 @@ namespace {
     }
   }
 
-  void get3Dcolumn(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
-                   MElement *bndEl, std::vector<MElement *> &column,
-                   MElement *&aboveEl, std::set<MFace> &BLShell, MFace &topFace)
-  {
-    const int typeBase = bndEl->getType();
-    if(typeBase == TYPE_POLYG) return;
-
-    column.clear();
-
-    MVertex *vb0 = bndEl->getVertex(0);
-    MVertex *vb1 = bndEl->getVertex(1);
-    MVertex *vb2 = bndEl->getVertex(2);
-    MVertex *vb3 = NULL;
-    if(typeBase == TYPE_QUA) vb3 = bndEl->getVertex(3);
-    MFace face(vb0, vb1, vb2, vb3);
-
-    const int typeColumn = face2el[face][0]->getType();
-    if(typeColumn == TYPE_TET)
-      getColumnTet(face2el, p, face, column, aboveEl, BLShell);
-    else if(typeColumn == TYPE_PRI || typeColumn == TYPE_HEX)
-      getColumnPrismHex(typeColumn, face2el, p, face, column, aboveEl, BLShell);
-
-    topFace = face;
-  }
-
   void gather3Dcolumns(MFaceVecMEltMap &face2el, GFace *gFace,
                        const FastCurvingParameters &p,
                        VecPairMElemVecMElem &columns, std::set<MFace> &BLShell)
   {
     // An element can be in only one column and an element can be a top element
     // of multiple column but then cannot be inside a column.
+    // BLShell: faces surrounding the BL except faces on the boundary. Note
+    //   that columns can have different number of layers.
 
     for(std::size_t i = 0; i < gFace->getNumMeshElements(); ++i) {
       MElement *bndEl = gFace->getMeshElement(i);
@@ -1219,7 +1053,7 @@ namespace {
 
       if(col.empty()) continue;
 
-      col.push_back(aboveEl); // even if aboveEl is NULL
+      col.push_back(aboveEl); // (even if aboveEl is NULL)
       columns.push_back(std::make_pair(bndEl, std::vector<MElement *>()));
       columns.back().second.swap(col);
     }
@@ -1238,8 +1072,8 @@ namespace {
 
     std::set<MEdge> BLShellEdges;
     std::set<MFace>::iterator it;
-    for(it = BLShell.begin(); it < BLShell.end(); ++it) {
-      MFace &f = *it;
+    for(it = BLShell.begin(); it != BLShell.end(); ++it) {
+      const MFace &f = *it;
       const std::size_t n = f.getNumVertices();
       for(std::size_t i = 0; i < n; ++i) {
         BLShellEdges.insert(f.getEdge(i));
@@ -1309,10 +1143,12 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
     }
     return;
   }
+  else {
+    for(int i = 0; i < boundary.size(); i++) {
+      GEntity *bndEnt = boundary[i];
+      curveMeshFromBnd(edge2el, face2el, ent, bndEnt, p);
+    }
 
-  for(int i = 0; i < boundary.size(); i++) {
-    GEntity *bndEnt = boundary[i];
-    curveMeshFromBnd(edge2el, face2el, ent, bndEnt, p, normal);
   }
 
 
