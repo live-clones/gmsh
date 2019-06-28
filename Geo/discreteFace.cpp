@@ -288,8 +288,8 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
 
   MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
-    Msg::Warning("Triangle not found at uv=(%g,%g) on discrete surface %d",
-                 param.x(), param.y(), tag());
+    Msg::Info("Triangle not found at uv=(%g,%g) on discrete surface %d",
+              param.x(), param.y(), tag());
     return SVector3(0, 0, 1);
   }
   int position = (int)((MTriangle *)e - &_param.t2d[0]);
@@ -325,8 +325,8 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 
   MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
-    // Msg::Warning("Triangle not found for curvatures at uv=(%g,%g) on "
-    //              "discrete surface %d", param.x(), param.y(), tag());
+    Msg::Info("Triangle not found for curvatures at uv=(%g,%g) on "
+              "discrete surface %d", param.x(), param.y(), tag());
     return 0.0;
   }
 
@@ -354,9 +354,8 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 
   MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
-    Msg::Warning("Triangle not found for first derivative at uv=(%g,%g) on "
-                 "discrete surface %d",
-                 param.x(), param.y(), tag());
+    Msg::Info("Triangle not found for first derivative at uv=(%g,%g) on "
+              "discrete surface %d", param.x(), param.y(), tag());
     return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
   }
 
