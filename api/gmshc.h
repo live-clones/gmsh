@@ -902,17 +902,20 @@ GMSH_API void gmshModelMeshSetReverse(const int dim,
 GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag,
                                                  int * ierr);
 
-/* Embed the model entities of dimension `dim' and tags `tags' in the (inDim,
- * inTag) model entity. `inDim' must be strictly greater than `dim'. */
+/* Embed the model entities of dimension `dim' and tags `tags' in the
+ * (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must
+ * be strictly smaller than `inDim', which must be either 2 or 3. The embedded
+ * entities should not be part of the boundary of the entity `inTag', whose
+ * mesh will conform to the mesh of the embedded entities. */
 GMSH_API void gmshModelMeshEmbed(const int dim,
                                  int * tags, size_t tags_n,
                                  const int inDim,
                                  const int inTag,
                                  int * ierr);
 
-/* Remove embedded entities in the model entities `dimTags'. if `dim' is >= 0,
- * only remove embedded entities of the given dimension (e.g. embedded points
- * if `dim' == 0). */
+/* Remove embedded entities from the model entities `dimTags'. if `dim' is >=
+ * 0, only remove embedded entities of the given dimension (e.g. embedded
+ * points if `dim' == 0). */
 GMSH_API void gmshModelMeshRemoveEmbedded(int * dimTags, size_t dimTags_n,
                                           const int dim,
                                           int * ierr);
@@ -1176,11 +1179,11 @@ GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
 
 /* Extrude the model entities `dimTags' by rotation of `angle' radians around
  * the axis of revolution defined by the point (`x', `y', `z') and the
- * direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
- * `numElements' is not empty, also extrude the mesh: the entries in
- * `numElements' give the number of elements in each layer. If `height' is not
- * empty, it provides the (cumulative) height of the different layers,
- * normalized to 1. */
+ * direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi.
+ * Return extruded entities in `outDimTags'. If `numElements' is not empty,
+ * also extrude the mesh: the entries in `numElements' give the number of
+ * elements in each layer. If `height' is not empty, it provides the
+ * (cumulative) height of the different layers, normalized to 1. */
 GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -1198,10 +1201,11 @@ GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
 /* Extrude the model entities `dimTags' by a combined translation and rotation
  * of `angle' radians, along (`dx', `dy', `dz') and around the axis of
  * revolution defined by the point (`x', `y', `z') and the direction (`ax',
- * `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is
- * not empty, also extrude the mesh: the entries in `numElements' give the
- * number of elements in each layer. If `height' is not empty, it provides the
- * (cumulative) height of the different layers, normalized to 1. */
+ * `ay', `az'). The angle should be strictly smaller than Pi. Return extruded
+ * entities in `outDimTags'. If `numElements' is not empty, also extrude the
+ * mesh: the entries in `numElements' give the number of elements in each
+ * layer. If `height' is not empty, it provides the (cumulative) height of the
+ * different layers, normalized to 1. */
 GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const double x,
                                 const double y,
@@ -1660,7 +1664,8 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
  * `numElements' is not empty, also extrude the mesh: the entries in
  * `numElements' give the number of elements in each layer. If `height' is not
  * empty, it provides the (cumulative) height of the different layers,
- * normalized to 1. */
+ * normalized to 1. When the mesh is extruded the angle should be strictly
+ * smaller than 2*Pi. */
 GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,

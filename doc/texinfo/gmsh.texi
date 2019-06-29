@@ -2222,7 +2222,8 @@ should contain three @w{@var{expression}s} giving the X, Y and Z
 direction of the rotation axis; the second @var{expression-list} should
 contain three @w{@var{expression}s} giving the X, Y and Z components of
 any point on this axis; the last @var{expression} should contain the
-rotation angle (in radians).
+rotation angle (in radians). With the built-in geometry kernel the angle
+should be strictly smaller than Pi.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @}
 Extrudes all elementary entities (points, curves or surfaces) in
@@ -2234,7 +2235,8 @@ three @w{@var{expression}s} giving the X, Y and Z direction of the
 rotation axis, which should match the direction of the translation; the
 third @var{expression-list} should contain three @w{@var{expression}s}
 giving the X, Y and Z components of any point on this axis; the last
-@var{expression} should contain the rotation angle (in radians).
+@var{expression} should contain the rotation angle (in radians). With
+the built-in geometry kernel the angle should be strictly smaller than Pi.
 
 @item Extrude @{ @var{extrude-list} @}
 Extrudes entities in @var{extrude-list} using a translation along their
@@ -2767,7 +2769,7 @@ advanced methods explained below.
 Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
 not by default), the mesh will be adapted with respect to the curvature
 of the model entities and the value of @code{Mesh.MinimumCirclePoints},
-which gives the number of points per 2 pi radians.
+which gives the number of points per 2 Pi radians.
 @item
 Finally, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
@@ -2958,12 +2960,17 @@ apply a QuadTri algorithm to those volumes only.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @var{layers} @}
 Extrudes both the geometry and the mesh using a rotation
-(@pxref{Extrusions}). The @var{layers} option is defined as above.
+(@pxref{Extrusions}). The @var{layers} option is defined as above.  With
+the built-in geometry kernel the angle should be strictly smaller than
+Pi. With the OpenCASCADE kernel the angle should be strictly smaller
+than 2 Pi.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @var{layers} @}
 Extrudes both the geometry and the mesh using a combined translation and
 rotation (@pxref{Extrusions}). The @var{layers} option is defined as
-above.
+above. With the built-in geometry kernel the angle should be strictly
+smaller than Pi. With the OpenCASCADE kernel the angle should be
+strictly smaller than 2 Pi.
 
 @item Extrude @{ Surface @{ @var{expression-list} @}; @var{layers} < Using Index[@var{expr}]; > < Using View[@var{expr}]; > < ScaleLastLayer; > @}
 Extrudes a boundary layer from the specified surfaces. If no view is

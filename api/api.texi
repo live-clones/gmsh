@@ -1475,8 +1475,10 @@ available with the OpenCASCADE kernel, as it relies on the STL triangulation.
 
 @item embed
 Embed the model entities of dimension @code{dim} and tags @code{tags} in the
-(inDim, inTag) model entity. @code{inDim} must be strictly greater than
-@code{dim}.
+(@code{inDim}, @code{inTag}) model entity. The dimension @code{dim} can 0, 1 or
+2 and must be strictly smaller than @code{inDim}, which must be either 2 or 3.
+The embedded entities should not be part of the boundary of the entity
+@code{inTag}, whose mesh will conform to the mesh of the embedded entities.
 
 @table @asis
 @item Input:
@@ -1488,9 +1490,9 @@ Embed the model entities of dimension @code{dim} and tags @code{tags} in the
 @end table
 
 @item removeEmbedded
-Remove embedded entities in the model entities @code{dimTags}. if @code{dim} is
->= 0, only remove embedded entities of the given dimension (e.g. embedded points
-if @code{dim} == 0).
+Remove embedded entities from the model entities @code{dimTags}. if @code{dim}
+is >= 0, only remove embedded entities of the given dimension (e.g. embedded
+points if @code{dim} == 0).
 
 @table @asis
 @item Input:
@@ -1983,11 +1985,12 @@ extruded along their normal.
 @item revolve
 Extrude the model entities @code{dimTags} by rotation of @code{angle} radians
 around the axis of revolution defined by the point (@code{x}, @code{y},
-@code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). Return extruded
-entities in @code{outDimTags}. If @code{numElements} is not empty, also extrude
-the mesh: the entries in @code{numElements} give the number of elements in each
-layer. If @code{height} is not empty, it provides the (cumulative) height of the
-different layers, normalized to 1.
+@code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). The angle should
+be strictly smaller than Pi. Return extruded entities in @code{outDimTags}. If
+@code{numElements} is not empty, also extrude the mesh: the entries in
+@code{numElements} give the number of elements in each layer. If @code{height}
+is not empty, it provides the (cumulative) height of the different layers,
+normalized to 1.
 
 @table @asis
 @item Input:
@@ -2002,11 +2005,12 @@ different layers, normalized to 1.
 Extrude the model entities @code{dimTags} by a combined translation and rotation
 of @code{angle} radians, along (@code{dx}, @code{dy}, @code{dz}) and around the
 axis of revolution defined by the point (@code{x}, @code{y}, @code{z}) and the
-direction (@code{ax}, @code{ay}, @code{az}). Return extruded entities in
-@code{outDimTags}. If @code{numElements} is not empty, also extrude the mesh:
-the entries in @code{numElements} give the number of elements in each layer. If
-@code{height} is not empty, it provides the (cumulative) height of the different
-layers, normalized to 1.
+direction (@code{ax}, @code{ay}, @code{az}). The angle should be strictly
+smaller than Pi. Return extruded entities in @code{outDimTags}. If
+@code{numElements} is not empty, also extrude the mesh: the entries in
+@code{numElements} give the number of elements in each layer. If @code{height}
+is not empty, it provides the (cumulative) height of the different layers,
+normalized to 1.
 
 @table @asis
 @item Input:
@@ -2663,7 +2667,8 @@ around the axis of revolution defined by the point (@code{x}, @code{y},
 entities in @code{outDimTags}. If @code{numElements} is not empty, also extrude
 the mesh: the entries in @code{numElements} give the number of elements in each
 layer. If @code{height} is not empty, it provides the (cumulative) height of the
-different layers, normalized to 1.
+different layers, normalized to 1. When the mesh is extruded the angle should be
+strictly smaller than 2*Pi.
 
 @table @asis
 @item Input:
