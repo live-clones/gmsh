@@ -2058,16 +2058,17 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex *> &vertices)
 void GModel::pruneMeshVertexAssociations()
 {
   std::vector<GEntity *> entities;
-  std::vector<MVertex *> vertices;
+  std::set<MVertex *, MVertexLessThanNum> vertSet;
   getEntities(entities);
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
       v->setEntity(0);
-      vertices.push_back(v);
+      vertSet.insert(v);
     }
     entities[i]->mesh_vertices.clear();
   }
+  std::vector<MVertex *> vertices(vertSet.begin(), vertSet.end());
   _associateEntityWithMeshVertices();
   // associate mesh vertices primarily with chain entities
   for(riter it = _chainRegions.begin(); it != _chainRegions.end(); ++it) {
