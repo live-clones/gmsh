@@ -3843,15 +3843,15 @@ GMSH_API int gmsh::model::occ::addCircle(const double x, const double y,
   return outTag;
 }
 
-GMSH_API int gmsh::model::occ::addEllipseArc(const int startTag,
-                                             const int centerTag,
-                                             const int endTag, const int tag)
+GMSH_API int gmsh::model::occ::addEllipseArc(
+  const int startTag, const int centerTag, const int majorTag, const int endTag,
+  const int tag)
 {
   if(!_isInitialized()) { throw -1; }
   _createOcc();
   int outTag = tag;
-  if(!GModel::current()->getOCCInternals()->addEllipseArc(outTag, startTag,
-                                                          centerTag, endTag)) {
+  if(!GModel::current()->getOCCInternals()->addEllipseArc(
+       outTag, startTag, majorTag, centerTag, endTag)) {
     throw 1;
   }
   return outTag;

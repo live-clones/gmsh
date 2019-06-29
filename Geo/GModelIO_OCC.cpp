@@ -796,8 +796,8 @@ bool OCC_Internals::addLine(int &tag, const std::vector<int> &pointTags)
   return false;
 }
 
-bool OCC_Internals::_addArc(int &tag, int startTag, int centerTag, int endTag,
-                            int mode)
+bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
+                                 int endTag)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -824,36 +824,21 @@ bool OCC_Internals::_addArc(int &tag, int startTag, int centerTag, int endTag,
     gp_Pnt aP1 = BRep_Tool::Pnt(start);
     gp_Pnt aP2 = BRep_Tool::Pnt(center);
     gp_Pnt aP3 = BRep_Tool::Pnt(end);
-    Handle(Geom_TrimmedCurve) arc;
-    if(mode == 0) { // circle
-      Standard_Real Radius = aP1.Distance(aP2);
-      gce_MakeCirc MC(aP2, gce_MakePln(aP1, aP2, aP3).Value(), Radius);
-      if(!MC.IsDone()) {
-        Msg::Error("Could not build circle");
-        return false;
-      }
-      const gp_Circ &Circ = MC.Value();
-      Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
-      Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
-      Handle(Geom_Circle) C = new Geom_Circle(Circ);
-      arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
+    Standard_Real Radius = aP1.Distance(aP2);
+    gce_MakeCirc MC(aP2, gce_MakePln(aP1, aP2, aP3).Value(), Radius);
+    if(!MC.IsDone()) {
+      Msg::Error("Could not build circle");
+      return false;
     }
-    else {
-      gce_MakeElips ME(aP1, aP3, aP2);
-      if(!ME.IsDone()) {
-        Msg::Error("Could not build ellipse");
-        return false;
-      }
-      const gp_Elips &Elips = ME.Value();
-      Standard_Real Alpha1 = ElCLib::Parameter(Elips, aP1);
-      Standard_Real Alpha2 = ElCLib::Parameter(Elips, aP3);
-      Handle(Geom_Ellipse) E = new Geom_Ellipse(Elips);
-      arc = new Geom_TrimmedCurve(E, Alpha1, Alpha2, true);
-    }
+    const gp_Circ &Circ = MC.Value();
+    Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
+    Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
+    Handle(Geom_Circle) C = new Geom_Circle(Circ);
+    Handle(Geom_TrimmedCurve) arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
     BRepBuilderAPI_MakeEdge e(arc, start, end);
     e.Build();
     if(!e.IsDone()) {
-      Msg::Error("Could not create %s arc", mode ? "ellipse" : "circle");
+      Msg::Error("Could not create circle arc");
       return false;
     }
     result = e.Edge();
@@ -866,16 +851,105 @@ bool OCC_Internals::_addArc(int &tag, int startTag, int centerTag, int endTag,
   return true;
 }
 
-bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
-                                 int endTag)
-{
-  return _addArc(tag, startTag, centerTag, endTag, 0);
-}
-
 bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
-                                  int endTag)
+                                  int majorTag, int endTag)
 {
-  return _addArc(tag, startTag, centerTag, endTag, 1);
+  if(tag >= 0 && _tagEdge.IsBound(tag)) {
+    Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
+    return false;
+  }
+  if(!_tagVertex.IsBound(startTag)) {
+    Msg::Error("Unknown OpenCASCADE point with tag %d", startTag);
+    return false;
+  }
+  if(!_tagVertex.IsBound(centerTag)) {
+    Msg::Error("Unknown OpenCASCADE point with tag %d", centerTag);
+    return false;
+  }
+  if(!_tagVertex.IsBound(majorTag)) {
+    Msg::Error("Unknown OpenCASCADE point with tag %d", majorTag);
+    return false;
+  }
+  if(!_tagVertex.IsBound(endTag)) {
+    Msg::Error("Unknown OpenCASCADE point with tag %d", endTag);
+    return false;
+  }
+
+  TopoDS_Edge result;
+  try {
+    TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
+    TopoDS_Vertex center = TopoDS::Vertex(_tagVertex.Find(centerTag));
+    TopoDS_Vertex major = TopoDS::Vertex(_tagVertex.Find(majorTag));
+    TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
+    gp_Pnt startPnt = BRep_Tool::Pnt(start);
+    gp_Pnt centerPnt = BRep_Tool::Pnt(center);
+    gp_Pnt majorPnt = BRep_Tool::Pnt(major);
+    gp_Pnt endPnt = BRep_Tool::Pnt(end);
+    gp_XYZ x1 = startPnt.XYZ() - centerPnt.XYZ();
+    gp_XYZ x2 = endPnt.XYZ() - centerPnt.XYZ();
+    gp_Dir u = majorPnt.XYZ() - centerPnt.XYZ();
+    gp_Dir v;
+    if(!u.IsParallel(x1, 10.0 * RealSmall()))
+      v = x1 - x1.Dot(u.XYZ()) * u.XYZ();
+    else if(!u.IsParallel(x2, 10.0 * RealSmall()))
+      v = x2 - x2.Dot(u.XYZ()) * u.XYZ();
+    else {
+      Msg::Error("The points do not define an ellipse");
+      return false;
+    }
+    Standard_Real x1u = Square(x1.Dot(u.XYZ()));
+    Standard_Real x1v = Square(x1.Dot(v.XYZ()));
+    Standard_Real x2u = Square(x2.Dot(u.XYZ()));
+    Standard_Real x2v = Square(x2.Dot(v.XYZ()));
+    if(IsEqual(x1u, x2u) || IsEqual(x1v, x2v)) {
+      Msg::Error("The points do not define an ellipse");
+      return false;
+    }
+    Standard_Real a2 = (x1v * x2u - x1u * x2v) / (x1v - x2v);
+    Standard_Real b2 = (x1u * x2v - x1v * x2u) / (x1u - x2u);
+    if(a2 <= 0.0 || b2 <= 0.0) {
+      Msg::Error("The points do not define an ellipse");
+      return false;
+    }
+    Standard_Real a; // Major radius
+    Standard_Real b; // Minor radius
+    gp_Ax2 Axes; // Ellipse local coordinate system
+    if(a2 >= b2) {
+      a = Sqrt(a2);
+      b = Sqrt(b2);
+      Axes = gp_Ax2(centerPnt, u ^ v, u);
+    }
+    else {
+      Msg::Warning("Major radius smaller than minor radius");
+      a = Sqrt(b2);
+      b = Sqrt(a2);
+      Axes = gp_Ax2(centerPnt, v ^ u, v);
+    }
+    gce_MakeElips ME(Axes, a, b);
+    if(!ME.IsDone()) {
+      Msg::Error("Could not build ellipse");
+      return false;
+    }
+    const gp_Elips &Elips = ME.Value();
+    Standard_Real Alpha1 = ElCLib::Parameter(Elips, startPnt);
+    Standard_Real Alpha2 = ElCLib::Parameter(Elips, endPnt);
+    Handle(Geom_Ellipse) E = new Geom_Ellipse(Elips);
+    Handle(Geom_TrimmedCurve) arc =
+      new Geom_TrimmedCurve(E, Alpha1, Alpha2, true);
+    BRepBuilderAPI_MakeEdge e(arc, start, end);
+    e.Build();
+    if(!e.IsDone()) {
+      Msg::Error("Could not create ellipse arc");
+      return false;
+    }
+    result = e.Edge();
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+  if(tag < 0) tag = getMaxTag(1) + 1;
+  bind(result, tag, true);
+  return true;
 }
 
 bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,

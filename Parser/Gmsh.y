@@ -1720,9 +1720,13 @@ Shape :
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        if(tags.size() == 3){
+        if(tags.size() == 3){ // keep this for backward compatibility
           r = GModel::current()->getOCCInternals()->addEllipseArc
-            (num, tags[0], tags[1], tags[2]);
+            (num, tags[0], tags[1], tags[0], tags[2]);
+        }
+        else if(tags.size() == 4){
+          r = GModel::current()->getOCCInternals()->addEllipseArc
+            (num, tags[0], tags[1], tags[2], tags[3]);
         }
         else if(param.size() >= 5 && param.size() <= 7){
           double a1 = (param.size() == 7) ? param[5] : 0.;
@@ -1732,11 +1736,15 @@ Shape :
             (num, param[0], param[1], param[2], param[3], param[4], a1, a2);
         }
         else{
-          yymsg(0, "Ellipse requires 3 points, or 5 to 7 parameters");
+          yymsg(0, "Ellipse requires 4 points, or 5 to 7 parameters");
         }
       }
       else{
-        if(tags.size() == 4){
+        if(tags.size() == 3){ // to match occ
+          r = GModel::current()->getGEOInternals()->addEllipseArc
+            (num, tags[0], tags[1], tags[0], tags[2], $7[0], $7[1], $7[2]);
+        }
+        else if(tags.size() == 4){
           r = GModel::current()->getGEOInternals()->addEllipseArc
             (num, tags[0], tags[1], tags[2], tags[3], $7[0], $7[1], $7[2]);
         }

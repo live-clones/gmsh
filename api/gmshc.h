@@ -1082,7 +1082,7 @@ GMSH_API int gmshModelGeoAddCircleArc(const int startTag,
                                       int * ierr);
 
 /* Add an ellipse arc (strictly smaller than Pi) between the two points
- * `startTag' and `endTag', with center `centertag' and major axis point
+ * `startTag' and `endTag', with center `centerTag' and major axis point
  * `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
  * tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly
  * set the plane of the circle arc. Return the tag of the ellipse arc. */
@@ -1389,13 +1389,14 @@ GMSH_API int gmshModelOccAddCircle(const double x,
                                    const double angle2,
                                    int * ierr);
 
-/* Add an ellipse arc between the major axis point `startTag' and `endTag',
- * with center `centerTag'. If `tag' is positive, set the tag explicitly;
- * otherwise a new tag is selected automatically. Return the tag of the
- * ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs
- * with the major radius smaller than the minor radius. */
+/* Add an ellipse arc between the two points `startTag' and `endTag', with
+ * center `centerTag' and major axis point `majorTag'. If `tag' is positive,
+ * set the tag explicitly; otherwise a new tag is selected automatically.
+ * Return the tag of the ellipse arc. Note that OpenCASCADE does not allow
+ * creating ellipse arcs with the major radius smaller than the minor radius. */
 GMSH_API int gmshModelOccAddEllipseArc(const int startTag,
                                        const int centerTag,
+                                       const int majorTag,
                                        const int endTag,
                                        const int tag,
                                        int * ierr);

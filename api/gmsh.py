@@ -2765,7 +2765,7 @@ class model:
         def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
             """
             Add an ellipse arc (strictly smaller than Pi) between the two points
-            `startTag' and `endTag', with center `centertag' and major axis point
+            `startTag' and `endTag', with center `centerTag' and major axis point
             `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
             tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly
             set the plane of the circle arc. Return the tag of the ellipse arc.
@@ -3473,13 +3473,13 @@ class model:
             return api__result__
 
         @staticmethod
-        def addEllipseArc(startTag, centerTag, endTag, tag=-1):
+        def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1):
             """
-            Add an ellipse arc between the major axis point `startTag' and `endTag',
-            with center `centerTag'. If `tag' is positive, set the tag explicitly;
-            otherwise a new tag is selected automatically. Return the tag of the
-            ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs
-            with the major radius smaller than the minor radius.
+            Add an ellipse arc between the two points `startTag' and `endTag', with
+            center `centerTag' and major axis point `majorTag'. If `tag' is positive,
+            set the tag explicitly; otherwise a new tag is selected automatically.
+            Return the tag of the ellipse arc. Note that OpenCASCADE does not allow
+            creating ellipse arcs with the major radius smaller than the minor radius.
 
             Return an integer value.
             """
@@ -3487,6 +3487,7 @@ class model:
             api__result__ = lib.gmshModelOccAddEllipseArc(
                 c_int(startTag),
                 c_int(centerTag),
+                c_int(majorTag),
                 c_int(endTag),
                 c_int(tag),
                 byref(ierr))

@@ -117,9 +117,6 @@ private:
                   BRepBuilderAPI_Transform *tfo,
                   BRepBuilderAPI_GTransform *gtfo);
 
-  // add circle or ellipse arc
-  bool _addArc(int &tag, int startTag, int centerTag, int endTag, int mode);
-
   // add bspline
   bool _addBSpline(int &tag, const std::vector<int> &pointTags, int mode,
                    const int degree = -1,
@@ -192,7 +189,8 @@ public:
   bool addCircleArc(int &tag, int startTag, int centerTag, int endTag);
   bool addCircle(int &tag, double x, double y, double z, double r,
                  double angle1, double angle2);
-  bool addEllipseArc(int &tag, int startTag, int centerTag, int endTag);
+  bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
+                     int endTag);
   bool addEllipse(int &tag, double x, double y, double z, double r1, double r2,
                   double angle1, double angle2);
   bool addSpline(int &tag, const std::vector<int> &pointTags);
@@ -440,7 +438,8 @@ public:
   {
     return _error("add circle");
   }
-  bool addEllipseArc(int &tag, int startTag, int centerTag, int endTag)
+  bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
+                     int endTag)
   {
     return _error("add ellipse arc");
   }

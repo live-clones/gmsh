@@ -1005,7 +1005,7 @@ namespace gmsh { // Top-level functions
                                 const double nz = 0.);
 
       // Add an ellipse arc (strictly smaller than Pi) between the two points
-      // `startTag' and `endTag', with center `centertag' and major axis point
+      // `startTag' and `endTag', with center `centerTag' and major axis point
       // `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
       // tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0),
       // explicitly set the plane of the circle arc. Return the tag of the ellipse
@@ -1294,13 +1294,14 @@ namespace gmsh { // Top-level functions
                              const double angle1 = 0.,
                              const double angle2 = 2*M_PI);
 
-      // Add an ellipse arc between the major axis point `startTag' and `endTag',
-      // with center `centerTag'. If `tag' is positive, set the tag explicitly;
-      // otherwise a new tag is selected automatically. Return the tag of the
-      // ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs
-      // with the major radius smaller than the minor radius.
+      // Add an ellipse arc between the two points `startTag' and `endTag', with
+      // center `centerTag' and major axis point `majorTag'. If `tag' is positive,
+      // set the tag explicitly; otherwise a new tag is selected automatically.
+      // Return the tag of the ellipse arc. Note that OpenCASCADE does not allow
+      // creating ellipse arcs with the major radius smaller than the minor radius.
       GMSH_API int addEllipseArc(const int startTag,
                                  const int centerTag,
+                                 const int majorTag,
                                  const int endTag,
                                  const int tag = -1);
 

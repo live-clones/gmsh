@@ -2356,7 +2356,7 @@ end
     gmsh.model.geo.addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
 
 Add an ellipse arc (strictly smaller than Pi) between the two points `startTag`
-and `endTag`, with center `centertag` and major axis point `majorTag`. If `tag`
+and `endTag`, with center `centerTag` and major axis point `majorTag`. If `tag`
 is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. If (`nx`, `ny`, `nz`) != (0,0,0), explicitly set the plane of the
 circle arc. Return the tag of the ellipse arc.
@@ -2942,21 +2942,21 @@ function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
 end
 
 """
-    gmsh.model.occ.addEllipseArc(startTag, centerTag, endTag, tag = -1)
+    gmsh.model.occ.addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1)
 
-Add an ellipse arc between the major axis point `startTag` and `endTag`, with
-center `centerTag`. If `tag` is positive, set the tag explicitly; otherwise a
-new tag is selected automatically. Return the tag of the ellipse arc. Note that
-OpenCASCADE does not allow creating ellipse arcs with the major radius smaller
-than the minor radius.
+Add an ellipse arc between the two points `startTag` and `endTag`, with center
+`centerTag` and major axis point `majorTag`. If `tag` is positive, set the tag
+explicitly; otherwise a new tag is selected automatically. Return the tag of the
+ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs with the
+major radius smaller than the minor radius.
 
 Return an integer value.
 """
-function addEllipseArc(startTag, centerTag, endTag, tag = -1)
+function addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1)
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelOccAddEllipseArc, gmsh.lib), Cint,
-          (Cint, Cint, Cint, Cint, Ptr{Cint}),
-          startTag, centerTag, endTag, tag, ierr)
+          (Cint, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          startTag, centerTag, majorTag, endTag, tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddEllipseArc returned non-zero error code: $(ierr[])")
     return api__result__
 end
