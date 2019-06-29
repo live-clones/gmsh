@@ -147,14 +147,12 @@ int GFace::delEdge(GEdge *edge)
   return orientation;
 }
 
-void GFace::deleteMesh(bool onlyDeleteElements)
+void GFace::deleteMesh()
 {
-  if(!onlyDeleteElements) {
-    for(std::size_t i = 0; i < mesh_vertices.size(); i++)
-      delete mesh_vertices[i];
-    mesh_vertices.clear();
-    transfinite_vertices.clear();
-  }
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++)
+    delete mesh_vertices[i];
+  mesh_vertices.clear();
+  transfinite_vertices.clear();
   for(std::size_t i = 0; i < triangles.size(); i++) delete triangles[i];
   triangles.clear();
   for(std::size_t i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
