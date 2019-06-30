@@ -69,7 +69,18 @@ bool discreteEdge::_orderMLines()
   mesh_vertices.clear();
   for(std::size_t i = 0; i < lines.size() - 1; ++i) {
     MVertex *v11 = lines[i]->getVertex(1);
-    mesh_vertices.push_back(v11);
+    if(v11->onWhat() == this || !v11->onWhat()){
+      v11->setEntity(this);
+      mesh_vertices.push_back(v11);
+    }
+    else{
+      Msg::Warning("Discrete curve %d topology is wrong (node %lu classified "
+                   "on %s %d)", tag(), v11->getNum(),
+                   (v11->onWhat()->dim() == 3) ? "volume" :
+                   (v11->onWhat()->dim() == 2) ? "surface" :
+                   (v11->onWhat()->dim() == 1) ? "curve" : "point",
+                   v11->onWhat()->tag());
+    }
   }
 
   deleteVertexArrays();
