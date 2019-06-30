@@ -889,9 +889,9 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
     gp_XYZ x2 = endPnt.XYZ() - centerPnt.XYZ();
     gp_Dir u = majorPnt.XYZ() - centerPnt.XYZ();
     gp_Dir v;
-    if(!u.IsParallel(x1, 10.0 * RealSmall()))
+    if(!u.IsParallel(x1, 1e-6))
       v = x1 - x1.Dot(u.XYZ()) * u.XYZ();
-    else if(!u.IsParallel(x2, 10.0 * RealSmall()))
+    else if(!u.IsParallel(x2, 1e-6))
       v = x2 - x2.Dot(u.XYZ()) * u.XYZ();
     else {
       Msg::Error("The points do not define an ellipse");
