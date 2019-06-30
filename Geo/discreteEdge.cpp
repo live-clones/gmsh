@@ -32,7 +32,7 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
   CreateReversedCurve(c);
 }
 
-bool discreteEdge::_orderMLines()
+bool discreteEdge::_orderMLines(bool isCompound)
 {
   std::size_t ss = lines.size();
   if(!ss) return true;
@@ -73,13 +73,16 @@ bool discreteEdge::_orderMLines()
       v11->setEntity(this);
       mesh_vertices.push_back(v11);
     }
-    else{
-      Msg::Warning("Discrete curve %d topology is wrong (node %lu classified "
-                   "on %s %d)", tag(), v11->getNum(),
-                   (v11->onWhat()->dim() == 3) ? "volume" :
-                   (v11->onWhat()->dim() == 2) ? "surface" :
-                   (v11->onWhat()->dim() == 1) ? "curve" : "point",
-                   v11->onWhat()->tag());
+    else if(!isCompound){
+      // no error for compound, where the mesh_vertices are just pointing to the
+      // original ones on their respective entities, and the vector will be
+      // cleared without deleting its contents as soon as createGeometry is done
+      Msg::Error("Discrete curve %d topology is wrong (node %lu classified "
+                 "on %s %d)", tag(), v11->getNum(),
+                 (v11->onWhat()->dim() == 3) ? "volume" :
+                 (v11->onWhat()->dim() == 2) ? "surface" :
+                 (v11->onWhat()->dim() == 1) ? "curve" : "point",
+                 v11->onWhat()->tag());
     }
   }
 
@@ -240,13 +243,17 @@ Range<double> discreteEdge::parBounds(int i) const
   return Range<double>(0, (double)(_discretization.size() - 1));
 }
 
-int discreteEdge::createGeometry()
+int discreteEdge::createGeometry(bool isCompound)
 {
   if(lines.empty()) return 0;
 
   if(!_discretization.empty()) return 0;
 
-  if(!_orderMLines())
+  // FIXME: createGeometry should *not* modify the mesh (and should thus not
+  // call _orderMLines) - it should assume that the mesh is already correctly
+  // ordered. Any reordering should be made explicitely before.
+
+  if(!_orderMLines(isCompound))
     return -1;
 
   bool reverse = false;

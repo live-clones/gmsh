@@ -747,7 +747,7 @@ static void meshCompound(GEdge *ge)
     c->compoundCurve = de;
   }
   // create the geometry of the compound
-  de->createGeometry();
+  de->createGeometry(true);
   // once the geometry is created, delete the newly created mesh elements and
   // reset the mesh - because meshGEdge would delete the mesh
   for(std::size_t j = 0; j < de->lines.size(); j++)
