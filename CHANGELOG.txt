@@ -1,4 +1,4 @@
-4.4.0 (Work in progress): new STL remeshing workflow (with new ClassifySurfaces
+4.4.0 (July 1, 2019): new STL remeshing workflow (with new ClassifySurfaces
 command in .geo files); added API support for color options, mesh optimization,
 recombination, smoothing and shape healing; exposed additional METIS options;
 improved support for periodic entities (multiple curves with the same start/end

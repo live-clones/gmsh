@@ -3703,7 +3703,8 @@ physical group names (@code{$PhysicalName}), the elementary model
 entities (@code{$Entities}), the partitioned entities
 (@code{$PartitionedEntities}), the nodes (@code{$Nodes}), the elements
 (@code{$Elements}), the periodicity relations (@code{$Periodic}), the
-ghost elements (@code{$GhostElements}) and the post-processing datasets
+ghost elements (@code{$GhostElements}), the parametrizations
+(@code{$Parametrizations}) and the post-processing datasets
 (@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}).
 
 To represent a simple mesh, the minimal sections that should be present
@@ -3859,7 +3860,7 @@ $GhostElements
   ...
 $EndGhostElements
 
-$Paremetrizations
+$Parametrizations
   numCurveParam(size_t) numSurfaceParam(size_t)
   curveTag(int) numNodes(size_t)
     nodeX(double) nodeY(double) nodeZ(double) nodeU(double)
