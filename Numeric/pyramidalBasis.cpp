@@ -69,7 +69,7 @@ void pyramidalBasis::f(double u, double v, double w, double *val) const
 {
   if(!bergot) return;
 
-  const int N = bergot->size();
+  const int N = points.size1();
 
   double *fval = new double[N];
   bergot->f(u, v, w, fval);
@@ -87,7 +87,7 @@ void pyramidalBasis::f(const fullMatrix<double> &coord,
 {
   if(!bergot) return;
 
-  const int N = bergot->size(), NPts = coord.size1();
+  const int N = points.size1(), NPts = coord.size1();
 
   sf.resize(NPts, N);
   double *fval = new double[N];
@@ -113,7 +113,7 @@ void pyramidalBasis::f(double u, double v, double w, int i, double *val) const
     return;
   }
 
-  const int N = bergot->size();
+  const int N = points.size1();
 
   double *fval = new double[N];
   bergot->f(u, v, w, fval);
@@ -129,7 +129,7 @@ void pyramidalBasis::df(double u, double v, double w, double grads[][3]) const
 {
   if(!bergot) return;
 
-  const int N = bergot->size();
+  const int N = points.size1();
 
   double(*dfval)[3] = new double[N][3];
   bergot->df(u, v, w, dfval);
@@ -153,7 +153,7 @@ void pyramidalBasis::df(const fullMatrix<double> &coord,
 {
   if(!bergot) return;
 
-  const int N = bergot->size(), NPts = coord.size1();
+  const int N = points.size1(), NPts = coord.size1();
 
   double(*dfv)[3] = new double[N][3];
   dfm.resize(3 * NPts, N, false);
@@ -179,7 +179,7 @@ void pyramidalBasis::df(double u, double v, double w, int i, double grad[3]) con
     return;
   }
 
-  const int N = bergot->size();
+  const int N = points.size1();
 
   double(*dfval)[3] = new double[N][3];
   bergot->df(u, v, w, dfval);
