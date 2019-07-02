@@ -169,7 +169,7 @@ public:
 // a class to print the progression and estimated remaining time
 class MsgProgressStatus {
 private:
-  int _totalElementToTreat, _currentI, _nextIToCheck;
+  int _totalElementToTreat, _currentI,  _lastI, _nextIToCheck;
   double _initialTime, _lastTime;
   int _lastPercentage;
   int _progressMeterStep;
