@@ -247,7 +247,7 @@ namespace {
       aboveElt = NULL;
 
       // Above element & update baseFace
-      std::vector<MElement *> newElts = edge2el[baseEdge];
+      std::vector<MElement *> newElts = edge2el[topEdge];
       if(newElts.size() < 2) return;
       aboveElt = (newElts[0] == el) ? newElts[1] : newElts[0];
       baseEdge = topEdge;
@@ -1072,6 +1072,10 @@ namespace {
     for(std::size_t i = 0; i < columns.size(); ++i) {
       std::vector<MElement *> &col = columns[i].second;
       interiorElements.insert(col.begin(), col.end());
+      // FIXMEDEBUG for visulization
+      for(int j = 0; j < col.size(); ++j) {
+        if(col[j]) col[j]->setVisibility(1);
+      }
     }
 
     std::set<MEdge, Less_Edge> BLShellEdges;
@@ -1128,6 +1132,15 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
       for(int i = 0; i < boundary.size(); i++)
         gather3Dcolumns(face2el, boundary[i]->cast2Face(), p, columns, BLShell);
 
+      // FIXMEDEBUG for visulization
+      for(int j = 0; j < columns.size(); ++j) {
+        std::vector<MElement*> &col = columns[j].second;
+        for(int k = 0; k < col.size(); ++k) {
+          if(col[k]) col[k]->setVisibility(1);
+        }
+      }
+      return;
+
       MapMEdgeVecMElem touchedElements;
       computeMapMEdge2TouchedElements(ent->cast2Region(), columns, BLShell,
                                       touchedElements);
@@ -1139,6 +1152,16 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
       for(int i = 0; i < boundary.size(); i++) {
         columns.clear();
         gather2Dcolumns(edge2el, boundary[i]->cast2Edge(), p, columns);
+
+        // FIXMEDEBUG for visulization
+        for(int j = 0; j < columns.size(); ++j) {
+          std::vector<MElement*> &col = columns[j].second;
+          for(int k = 0; k < col.size(); ++k) {
+            if(col[k]) col[k]->setVisibility(1);
+          }
+        }
+        continue;
+
         if(haveNormal)
           curve2DBoundaryLayer(columns, normal, boundary[i]->cast2Edge());
         else
@@ -1177,7 +1200,6 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
   }
   if(onlyIfBLInfo && blFields.empty()) return;
 
-  // Main loop
   for(std::size_t i = 0; i < allEntities.size(); ++i) {
     GEntity *entity = allEntities[i];
 
@@ -1185,10 +1207,14 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
 
     // Get boundary entities
     std::vector<GEntity *> boundary;
-    if(p.dim == 2)
-      boundary.assign(entity->edges().begin(), entity->edges().end());
-    else
-      boundary.assign(entity->faces().begin(), entity->faces().end());
+    if(p.dim == 2) {
+      std::vector<GEdge *> edges = entity->edges();
+      boundary.assign(edges.begin(), edges.end());
+    }
+    else {
+      std::vector<GFace *> faces = entity->faces();
+      boundary.assign(faces.begin(), faces.end());
+    }
 
     // Remove undesired boundary entities
     int j = 0;
@@ -1219,6 +1245,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
         ++j;
     }
 
+    // Do the other stuffs
     HighOrderMeshFastCurving(entity, boundary, p);
   }
 
