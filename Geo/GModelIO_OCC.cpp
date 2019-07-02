@@ -934,8 +934,11 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
     Standard_Real Alpha1 = ElCLib::Parameter(Elips, startPnt);
     Standard_Real Alpha2 = ElCLib::Parameter(Elips, endPnt);
     Handle(Geom_Ellipse) E = new Geom_Ellipse(Elips);
-    Handle(Geom_TrimmedCurve) arc =
-      new Geom_TrimmedCurve(E, Alpha1, Alpha2, true);
+    Handle(Geom_TrimmedCurve) arc;
+    if (Alpha2 < Alpha1 || Alpha2 - Alpha1 > M_PI)
+      arc = new Geom_TrimmedCurve(E, Alpha2, Alpha1, false);
+    else
+      arc = new Geom_TrimmedCurve(E, Alpha1, Alpha2, true);
     BRepBuilderAPI_MakeEdge e(arc, start, end);
     e.Build();
     if(!e.IsDone()) {
