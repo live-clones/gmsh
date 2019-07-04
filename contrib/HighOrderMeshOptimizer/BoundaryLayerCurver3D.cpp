@@ -434,24 +434,28 @@ namespace BoundaryLayerCurver {
 
   // compute adjacencies of boundary elements, thus of columns
   void computeAdjacencies(VecPairMElemVecMElem &bndEl2column,
-                          std::vector<std::pair<int, int> > &adjacencies)
+                          std::vector<std::pair<int, int> > &adjacencies,
+                          std::vector<std::pair<int, MEdge> > &borderEdges)
   {
     std::map<MEdge, int, Less_Edge> edge2element;
+    std::map<MEdge, int, Less_Edge>::iterator it;
     for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
       MElement *el = bndEl2column[i].first;
       for(std::size_t j = 0; j < el->getNumEdges(); ++j) {
         MEdge e = el->getEdge(j);
-        std::map<MEdge, int, Less_Edge>::iterator it = edge2element.find(e);
+        it = edge2element.find(e);
         if(it != edge2element.end()) {
           adjacencies.push_back(std::make_pair(i, it->second));
-          // This is for debug purpose, we expect that two elements at most
-          // share a given edge.
-          it->second = -1;
+          edge2element.erase(it);
         }
         else {
           edge2element[e] = i;
         }
       }
+    }
+    borderEdges.reserve(edge2element.size());
+    for(it = edge2element.begin(); it != edge2element.end(); ++it) {
+      borderEdges.push_back(std::make_pair(it->second, it->first));
     }
   }
 
@@ -1241,7 +1245,7 @@ void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
                           const GFace *boundary)
 {
   std::vector<std::pair<int, int> > adjacencies;
-  BoundaryLayerCurver::computeAdjacencies(bndEl2column, adjacencies);
+  // BoundaryLayerCurver::computeAdjacencies(bndEl2column, adjacencies);
 
   BoundaryLayerCurver::curveInterfaces(bndEl2column, adjacencies, boundary);
 
@@ -1261,5 +1265,19 @@ void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
                           MapMEdgeVecMElem &touchedElements)
 {
+  std::vector<std::pair<int, int> > adjacencies;
+  std::vector<std::pair<int, MEdge> > borderEdges;
+  BoundaryLayerCurver::computeAdjacencies(columns, adjacencies, borderEdges);
+
+  // FIXME we should check that the border interface it is not in a GFace in
+  //  which case we should call curve2DBoundaryLayer. In the other case, we can
+  //  use the same algo than for internal interfaces.
+  // BoundaryLayerCurver::curveBorders(columns, borderEdges);
+
+  // NOTE: We can obtain the boundary geometry from boundary element.
+  // BoundaryLayerCurver::curveInterfaces(columns, adjacencies, boundary);
+
+  // BoundaryLayerCurver::curveColumns(columns, boundary);
+
   // FIXME: to implement
 }
