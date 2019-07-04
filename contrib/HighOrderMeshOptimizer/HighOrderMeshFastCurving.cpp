@@ -241,6 +241,10 @@ namespace {
       if(std::abs(dp) < maxDP) return;
       if(edLenMin > edLenMax * p.maxRho) break;
 
+      const double aspectRatio = el->minEdge() / el->maxEdge();
+      if(iLayer == 0 && aspectRatio > p.maxAspectRatioFirst) return;
+      if(aspectRatio > p.maxAspectRatio) return;
+
       // Add new layer
       blob.push_back(el);
       inOutEdge = topEdge;
@@ -271,12 +275,12 @@ namespace {
       MEdge topEdge0, topEdge1;
       double edLenMin0, edLenMax0, edLenMin1, edLenMax1;
 
-      // first element
+      // first element of layer
       el0 = aboveElt;
       if(el0->getType() != TYPE_TRI) return;
       getOppositeEdgeTri(el0, baseEdge, topEdge0, edLenMin0, edLenMax0);
 
-      // second element
+      // second element of layer
       std::vector<MElement *> newElts1 = edge2el[topEdge0];
       if(newElts1.size() < 2) return;
       el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
@@ -295,6 +299,12 @@ namespace {
       const double edLenMin = std::min(edLenMin0, edLenMin1);
       const double edLenMax = std::max(edLenMax0, edLenMax1);
       if(edLenMin > edLenMax * p.maxRho) return;
+
+      double minLen = el0->minEdge();
+      minLen = std::min(minLen, el1->minEdge());
+      const double aspectRatio = minLen / el0->maxEdge();
+      if(iLayer == 0 && aspectRatio > p.maxAspectRatioFirst) return;
+      if(aspectRatio > p.maxAspectRatio) return;
 
       // Add new layer
       blob.push_back(el0);
@@ -514,19 +524,19 @@ namespace {
       double faceSurfMin0, faceSurfMax0, faceSurfMin1, faceSurfMax1,
         faceSurfMin2, faceSurfMax2;
 
-      // first element
+      // first element of layer
       el0 = aboveElt;
       if(el0->getType() != TYPE_TET) return;
       getOppositeFaceTet(el0, baseFace, topFace0, faceSurfMin0, faceSurfMax0);
 
-      // second element
+      // second element of layer
       std::vector<MElement *> newElts1 = face2el[topFace0];
       if(newElts1.size() < 2) return;
       el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
       if(el1->getType() != TYPE_TET) return;
       getOppositeFaceTet(el1, topFace0, topFace1, faceSurfMin1, faceSurfMax1);
 
-      // Third element
+      // Third element of layer
       std::vector<MElement *> newElts2 = face2el[topFace1];
       if(newElts2.size() < 2) return;
       el2 = (newElts2[0] == el1) ? newElts2[1] : newElts2[0];
@@ -549,6 +559,13 @@ namespace {
       const double faceSurfMax =
         std::max(faceSurfMax0, std::min(faceSurfMax1, faceSurfMax2));
       if(faceSurfMin > faceSurfMax * p.maxRho) return;
+
+      double minLen = el0->minEdge();
+      minLen = std::min(minLen, el1->minEdge());
+      minLen = std::min(minLen, el2->minEdge());
+      const double aspectRatio = minLen / el0->maxEdge();
+      if(iLayer == 0 && aspectRatio > p.maxAspectRatioFirst) return;
+      if(aspectRatio > p.maxAspectRatio) return;
 
       // Add new layer
       blob.push_back(el0);
@@ -599,6 +616,10 @@ namespace {
       const double dp = dot(baseFace.normal(), topFace.normal());
       if(std::abs(dp) < maxDP) return;
       if(faceSurfMin > faceSurfMax * p.maxRho) return;
+
+      const double aspectRatio = el->minEdge() / el->maxEdge();
+      if(iLayer == 0 && aspectRatio > p.maxAspectRatioFirst) return;
+      if(aspectRatio > p.maxAspectRatio) return;
 
       // Add new layer
       blob.push_back(el);
@@ -1132,9 +1153,9 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
       for(int i = 0; i < boundary.size(); i++)
         gather3Dcolumns(face2el, boundary[i]->cast2Face(), p, columns, BLShell);
 
-      // FIXMEDEBUG for visulization
+      // FIXMEDEBUG for visualization
       for(int j = 0; j < columns.size(); ++j) {
-        std::vector<MElement*> &col = columns[j].second;
+        std::vector<MElement *> &col = columns[j].second;
         for(int k = 0; k < col.size(); ++k) {
           if(col[k]) col[k]->setVisibility(1);
         }
@@ -1153,9 +1174,9 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
         columns.clear();
         gather2Dcolumns(edge2el, boundary[i]->cast2Edge(), p, columns);
 
-        // FIXMEDEBUG for visulization
+        // FIXMEDEBUG for visualization
         for(int j = 0; j < columns.size(); ++j) {
-          std::vector<MElement*> &col = columns[j].second;
+          std::vector<MElement *> &col = columns[j].second;
           for(int k = 0; k < col.size(); ++k) {
             if(col[k]) col[k]->setVisibility(1);
           }
