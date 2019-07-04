@@ -321,8 +321,8 @@ void bezierBasisRaiser::_fillRaiserData()
       FuncSpaceData data(_bfs->_funcSpaceData, 2 * order);
       generateExponents(data, expD2);
       double2int(expD2, exp2);
-      _raiser2.resize(exp2.size1());
     }
+    _raiser2.resize(exp2.size1());
 
     for(int i = 0; i < exp2.size1(); ++i) {
       int hash = 0;
@@ -375,8 +375,8 @@ void bezierBasisRaiser::_fillRaiserData()
       FuncSpaceData data(_bfs->_funcSpaceData, 3 * order);
       generateExponents(data, expD3);
       double2int(expD3, exp3);
-      _raiser3.resize(exp3.size1());
     }
+    _raiser3.resize(exp3.size1());
 
     for(int i = 0; i < exp3.size1(); ++i) {
       int hash = 0;
@@ -466,8 +466,8 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
       FuncSpaceData data(_bfs->_funcSpaceData, 2 * order[0], 2 * order[2]);
       generateExponents(data, expD2);
       double2int(expD2, exp2);
-      _raiser2.resize(exp2.size1());
     }
+    _raiser2.resize(exp2.size1());
 
     for(int i = 0; i < exp2.size1(); ++i) {
       int hash = 0;
@@ -508,8 +508,8 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
       FuncSpaceData data(_bfs->_funcSpaceData, 3 * order[0], 3 * order[2]);
       generateExponents(data, expD3);
       double2int(expD3, exp3);
-      _raiser3.resize(exp3.size1());
     }
+    _raiser3.resize(exp3.size1());
 
     for(int i = 0; i < exp3.size1(); ++i) {
       int hash = 0;
@@ -1323,8 +1323,8 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
 void bezierCoeff::_subdividePyramid(const bezierCoeff &coeff,
                                     std::vector<bezierCoeff *> &subCoeff)
 {
-  const int nij = coeff._funcSpaceData.getNij();
-  const int nk = coeff._funcSpaceData.getNk();
+  const int nij = coeff._funcSpaceData.getNij() + 1;
+  const int nk = coeff._funcSpaceData.getNk() + 1;
   const int Nij = 2 * nij - 1;
   const int Nk = 2 * nk - 1;
   const int dim = coeff._c;

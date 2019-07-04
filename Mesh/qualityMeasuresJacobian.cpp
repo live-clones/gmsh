@@ -239,6 +239,14 @@ static void _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
   }
 }
 
+static bool _robustIGETooExpensive(MElement *el)
+{
+  const int type = el->getType();
+  const int order = el->getPolynomialOrder();
+  if(type == TYPE_PYR && order > 3) return true;
+  return false;
+}
+
 namespace jacobianBasedQuality {
 
   void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
@@ -291,6 +299,18 @@ namespace jacobianBasedQuality {
       if((jmin <= 0 && jmax >= 0) || (jmax < 0 && !reversedOk)) return 0;
     }
 
+    if(_robustIGETooExpensive(el)) {
+      double min, max;
+      int order = el->getPolynomialOrder();
+      // for(int i = 1; i < 10; ++i) {
+      //   sampleIGEMeasure(el, i*order, min, max);
+      //   std::cout << min << " ";
+      // }
+      // std::cout << std::endl;
+      sampleIGEMeasure(el, 5*order, min, max);
+      return min;
+    }
+
     // Get Jacobian and gradient bases
     const GradientBasis *gradBasis;
     const JacobianBasis *jacBasis;
@@ -307,7 +327,7 @@ namespace jacobianBasedQuality {
     el->getNodesCoord(nodesXYZ);
     jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag, normals);
     gradBasis->getAllGradientsFromNodes(nodesXYZ, coeffMatLag);
-    // NB: If coeffDetLag(0) is negative, then all coefficients are negative
+    // NB: If one coefficient of coeffDetLag is negative, then all are negative.
     if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
     if(el->getDim() == 2) coeffMatLag.resize(coeffMatLag.size1(), 6, false);
 
@@ -595,6 +615,11 @@ namespace jacobianBasedQuality {
 
   double _coeffDataIGE::_computeLowerBound() const
   {
+    // The nature of the measure makes the computation of a lower bound an
+    // arduous problem for nontensorial elements: Either we compute a sharp
+    // but expensive bound or we compute a cheap bound which may require too
+    // much subdivision to converge (also see comments below).
+
     fullVector<double> det;
     fullMatrix<double> mat;
     _coeffDet->setVectorAsProxy(det);
@@ -716,6 +741,8 @@ namespace jacobianBasedQuality {
         _coeffDet->getBezierBasis()->getRaiser();
       raiserBis->computeCoeff(coeffNum1, det, coeffNumerator);
       raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
+      // This implementation computes a sharp bound but requires to compute
+      // raiserBis which is (too) expensive both in time and memory consumption.
 
       result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
       return cPyr * result / 8;
