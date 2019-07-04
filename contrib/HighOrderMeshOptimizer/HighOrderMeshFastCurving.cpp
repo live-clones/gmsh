@@ -198,14 +198,13 @@ namespace {
 
     // Look for largest edge except base one
     for(int iElEd = 0; iElEd < el->getNumEdges(); iElEd++) {
-      if(iElEd != iElBaseEd) {
-        MEdge edTest = el->getEdge(iElEd);
-        double edLenTest = edTest.length();
-        if(edLenTest < edLenMin) edLenMin = edLenTest;
-        if(edLenTest > edLenMax) {
-          edLenMax = edLenTest;
-          elMaxEd = edTest;
-        }
+      if(iElEd == iElBaseEd) continue;
+      MEdge edTest = el->getEdge(iElEd);
+      double edLenTest = edTest.length();
+      if(edLenTest < edLenMin) edLenMin = edLenTest;
+      if(edLenTest > edLenMax) {
+        edLenMax = edLenTest;
+        elMaxEd = edTest;
       }
     }
 
@@ -239,11 +238,8 @@ namespace {
       // Geometrical stopping criteria
       const double dp = dot(baseEdge.tangent(), topEdge.tangent());
       if(std::abs(dp) < maxDP) return;
+      if(iLayer == 0 && edLenMin > edLenMax * p.maxRhoFirst) return;
       if(edLenMin > edLenMax * p.maxRho) break;
-
-      const double aspectRatio = el->minEdge() / el->maxEdge();
-      if(iLayer == 0 && aspectRatio > p.maxAspectRatioFirst) return;
-      if(aspectRatio > p.maxAspectRatio) return;
 
       // Add new layer
       blob.push_back(el);
@@ -298,13 +294,8 @@ namespace {
 
       const double edLenMin = std::min(edLenMin0, edLenMin1);
       const double edLenMax = std::max(edLenMax0, edLenMax1);
+      if(iLayer == 0 && edLenMin > edLenMax * p.maxRhoFirst) return;
       if(edLenMin > edLenMax * p.maxRho) return;
-
-      double minLen = el0->minEdge();
-      minLen = std::min(minLen, el1->minEdge());
-      const double aspectRatio = minLen / el0->maxEdge();
-      if(iLayer == 0 && aspectRatio > p.maxAspectRatioFirst) return;
-      if(aspectRatio > p.maxAspectRatio) return;
 
       // Add new layer
       blob.push_back(el0);
@@ -456,14 +447,13 @@ namespace {
 
     // Look for largest face except base one
     for(int iElFace = 0; iElFace < el->getNumFaces(); iElFace++) {
-      if(iElFace != iElBaseFace) {
-        MFace faceTest = el->getFace(iElFace);
-        const double faceSurfTest = faceTest.approximateArea();
-        if(faceSurfTest < faceSurfMin) faceSurfMin = faceSurfTest;
-        if(faceSurfTest > faceSurfMax) {
-          faceSurfMax = faceSurfTest;
-          elMaxFace = faceTest;
-        }
+      if(iElFace == iElBaseFace) continue;
+      MFace faceTest = el->getFace(iElFace);
+      const double faceSurfTest = faceTest.approximateArea();
+      if(faceSurfTest < faceSurfMin) faceSurfMin = faceSurfTest;
+      if(faceSurfTest > faceSurfMax) {
+        faceSurfMax = faceSurfTest;
+        elMaxFace = faceTest;
       }
     }
 
@@ -558,14 +548,8 @@ namespace {
         std::min(faceSurfMin0, std::min(faceSurfMin1, faceSurfMin2));
       const double faceSurfMax =
         std::max(faceSurfMax0, std::min(faceSurfMax1, faceSurfMax2));
+      if(iLayer == 0 && faceSurfMin > faceSurfMax * p.maxRhoFirst) return;
       if(faceSurfMin > faceSurfMax * p.maxRho) return;
-
-      double minLen = el0->minEdge();
-      minLen = std::min(minLen, el1->minEdge());
-      minLen = std::min(minLen, el2->minEdge());
-      const double aspectRatio = minLen / el0->maxEdge();
-      if(iLayer == 0 && aspectRatio > p.maxAspectRatioFirst) return;
-      if(aspectRatio > p.maxAspectRatio) return;
 
       // Add new layer
       blob.push_back(el0);
@@ -615,11 +599,8 @@ namespace {
       //  (normal is of triangular face):
       const double dp = dot(baseFace.normal(), topFace.normal());
       if(std::abs(dp) < maxDP) return;
+      if(iLayer == 0 && faceSurfMin > faceSurfMax * p.maxRhoFirst) return;
       if(faceSurfMin > faceSurfMax * p.maxRho) return;
-
-      const double aspectRatio = el->minEdge() / el->maxEdge();
-      if(iLayer == 0 && aspectRatio > p.maxAspectRatioFirst) return;
-      if(aspectRatio > p.maxAspectRatio) return;
 
       // Add new layer
       blob.push_back(el);
