@@ -1211,6 +1211,7 @@ GMSH_API void gmsh::model::mesh::addNodes(
       vv = new MVertex(x, y, z, ge, tag);
     ge->mesh_vertices.push_back(vv);
   }
+  GModel::current()->destroyMeshCaches();
 }
 
 GMSH_API void gmsh::model::mesh::reclassifyNodes()
@@ -1479,6 +1480,7 @@ GMSH_API void gmsh::model::mesh::addElements(
 
   for(std::size_t i = 0; i < elementTypes.size(); i++)
     _addElements(dim, tag, ge, elementTypes[i], elementTags[i], nodeTags[i]);
+  GModel::current()->destroyMeshCaches();
 }
 
 GMSH_API void gmsh::model::mesh::addElementsByType(
@@ -1494,6 +1496,7 @@ GMSH_API void gmsh::model::mesh::addElementsByType(
     throw 2;
   }
   _addElements(dim, tag, ge, elementType, elementTags, nodeTags);
+  GModel::current()->destroyMeshCaches();
 }
 
 GMSH_API void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,
