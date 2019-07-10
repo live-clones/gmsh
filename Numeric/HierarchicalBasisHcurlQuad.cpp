@@ -145,7 +145,7 @@ void HierarchicalBasisHcurlQuad::orientEdge(
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=3");
     }
     for(int k = constant1; k <= constant2; k++) {
-      if((k - constant1) % 2 != 0) {
+      if((k - constant1) % 2 == 0) {
         edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
         edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
         edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
@@ -232,100 +232,41 @@ void HierarchicalBasisHcurlQuad::orientFace(
   std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
-    if(typeFunction == "HcurlLegendre") {
-      if(flag3 == 1) {
-        int iterator = 0;
-        for(int it1 = 0; it1 <= _pf1; it1++) {
-          for(int it2 = 2; it2 <= _pf2 + 1; it2++) {
-            int impactFlag1 = 1;
-            int impactFlag2 = 1;
-            if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-            faceFunctions[iterator][0] =
-              faceFunctions[iterator][0] * impactFlag1 * impactFlag2;
-
-            iterator++;
-          }
-        }
-        for(int it1 = 2; it1 <= _pf1 + 1; it1++) {
-          for(int it2 = 0; it2 <= _pf2; it2++) {
-            int impactFlag1 = 1;
-            int impactFlag2 = 1;
-            if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-            faceFunctions[iterator][1] =
-              faceFunctions[iterator][1] * impactFlag1 * impactFlag2;
-
-            iterator++;
-          }
+    if(flag3 == 1) {
+      int iterator = 0;
+      for(int it1 = 0; it1 <= _pf1; it1++) {
+        for(int it2 = 2; it2 <= _pf2 + 1; it2++) {
+          int impactFlag1 = 1;
+          int impactFlag2 = 1;
+          if(flag1 == -1 && it1 % 2 == 0) { impactFlag1 = -1; }
+          if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+          faceFunctions[iterator][0] =
+            faceFunctions[iterator][0] * impactFlag1 * impactFlag2;
+          faceFunctions[iterator][1] =
+            faceFunctions[iterator][1] * impactFlag1 * impactFlag2;
+          faceFunctions[iterator][2] =
+            faceFunctions[iterator][2] * impactFlag1 * impactFlag2;
+          iterator++;
         }
       }
-      else {
-        std::vector<std::vector<double> > legendreVector(2);
-        legendreVector[0] = std::vector<double>(_pf1 + 1);
-        legendreVector[1] = std::vector<double>(_pf2 + 1);
-        for(unsigned int k = 0; k < legendreVector[0].size(); k++) {
-          legendreVector[0][k] = OrthogonalPoly::EvalLegendre(k, u);
-        }
-        for(unsigned int k = 0; k < legendreVector[1].size(); k++) {
-          legendreVector[1][k] = OrthogonalPoly::EvalLegendre(k, v);
-        }
-        int iterator = 0;
-        for(int it1 = 2; it1 <= _pf2 + 1; it1++) {
-          for(int it2 = 0; it2 <= _pf1; it2++) {
-            int impactFlag1 = 1;
-            int impactFlag2 = 1;
-            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-            faceFunctions[iterator][0] = legendreVector[0][it2] *
-                                         OrthogonalPoly::EvalLobatto(it1, v) *
-                                         impactFlag1 * impactFlag2;
-            iterator++;
-          }
-        }
-        for(int it1 = 0; it1 <= _pf2; it1++) {
-          for(int it2 = 2; it2 <= _pf1 + 1; it2++) {
-            int impactFlag1 = 1;
-            int impactFlag2 = 1;
-            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-            faceFunctions[iterator][1] = legendreVector[1][it1] *
-                                         OrthogonalPoly::EvalLobatto(it2, u) *
-                                         impactFlag1 * impactFlag2;
-            iterator++;
-          }
+      for(int it1 = 2; it1 <= _pf1 + 1; it1++) {
+        for(int it2 = 0; it2 <= _pf2; it2++) {
+          int impactFlag1 = 1;
+          int impactFlag2 = 1;
+          if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag2 == -1 && it2 % 2 == 0) { impactFlag2 = -1; }
+          faceFunctions[iterator][0] =
+            faceFunctions[iterator][0] * impactFlag1 * impactFlag2;
+          faceFunctions[iterator][1] =
+            faceFunctions[iterator][1] * impactFlag1 * impactFlag2;
+          faceFunctions[iterator][2] =
+            faceFunctions[iterator][2] * impactFlag1 * impactFlag2;
+          iterator++;
         }
       }
     }
-    else if(typeFunction == "CurlHcurlLegendre") {
-      if(flag3 == 1) {
-        int iterator = 0;
-        for(int it1 = 0; it1 <= _pf1; it1++) {
-          for(int it2 = 2; it2 <= _pf2 + 1; it2++) {
-            int impactFlag1 = 1;
-            int impactFlag2 = 1;
-            if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-            faceFunctions[iterator][2] =
-              faceFunctions[iterator][2] * impactFlag1 * impactFlag2;
-
-            iterator++;
-          }
-        }
-        for(int it1 = 2; it1 <= _pf1 + 1; it1++) {
-          for(int it2 = 0; it2 <= _pf2; it2++) {
-            int impactFlag1 = 1;
-            int impactFlag2 = 1;
-            if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-            faceFunctions[iterator][2] =
-              faceFunctions[iterator][2] * impactFlag1 * impactFlag2;
-
-            iterator++;
-          }
-        }
-      }
-      else {
+    else {
+      if(typeFunction == "HcurlLegendre") {
         std::vector<std::vector<double> > legendreVector(2);
         legendreVector[0] = std::vector<double>(_pf1 + 1);
         legendreVector[1] = std::vector<double>(_pf2 + 1);
@@ -336,34 +277,79 @@ void HierarchicalBasisHcurlQuad::orientFace(
           legendreVector[1][k] = OrthogonalPoly::EvalLegendre(k, v);
         }
         int iterator = 0;
+
+        for(int it1 = 0; it1 <= _pf2; it1++) {
+          for(int it2 = 2; it2 <= _pf1 + 1; it2++) {
+            int impactFlag1 = 1;
+            int impactFlag2 = 1;
+            if(flag2 == -1 && it1 % 2 == 0) { impactFlag1 = -1; }
+            if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+            faceFunctions[iterator][0] = 0;
+            faceFunctions[iterator][1] = legendreVector[1][it1] *
+                                         OrthogonalPoly::EvalLobatto(it2, u) *
+                                         impactFlag1 * impactFlag2;
+            faceFunctions[iterator][2] = 0;
+            iterator++;
+          }
+        }
         for(int it1 = 2; it1 <= _pf2 + 1; it1++) {
           for(int it2 = 0; it2 <= _pf1; it2++) {
             int impactFlag1 = 1;
             int impactFlag2 = 1;
             if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-            faceFunctions[iterator][2] = -legendreVector[0][it2] *
-                                         OrthogonalPoly::EvalDLobatto(it1, v) *
+            if(flag1 == -1 && it2 % 2 == 0) { impactFlag2 = -1; }
+            faceFunctions[iterator][0] = legendreVector[0][it2] *
+                                         OrthogonalPoly::EvalLobatto(it1, v) *
                                          impactFlag1 * impactFlag2;
+            faceFunctions[iterator][1] = 0;
+            faceFunctions[iterator][2] = 0;
             iterator++;
           }
         }
+      }
+      else if(typeFunction == "CurlHcurlLegendre") {
+        std::vector<std::vector<double> > legendreVector(2);
+        legendreVector[0] = std::vector<double>(_pf1 + 1);
+        legendreVector[1] = std::vector<double>(_pf2 + 1);
+        for(unsigned int k = 0; k < legendreVector[0].size(); k++) {
+          legendreVector[0][k] = OrthogonalPoly::EvalLegendre(k, u);
+        }
+        for(unsigned int k = 0; k < legendreVector[1].size(); k++) {
+          legendreVector[1][k] = OrthogonalPoly::EvalLegendre(k, v);
+        }
+        int iterator = 0;
         for(int it1 = 0; it1 <= _pf2; it1++) {
           for(int it2 = 2; it2 <= _pf1 + 1; it2++) {
             int impactFlag1 = 1;
             int impactFlag2 = 1;
-            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+            if(flag2 == -1 && it1 % 2 == 0) { impactFlag1 = -1; }
             if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+            faceFunctions[iterator][0] = 0;
+            faceFunctions[iterator][1] = 0;
             faceFunctions[iterator][2] = legendreVector[1][it1] *
                                          OrthogonalPoly::EvalDLobatto(it2, u) *
                                          impactFlag1 * impactFlag2;
             iterator++;
           }
         }
+        for(int it1 = 2; it1 <= _pf2 + 1; it1++) {
+          for(int it2 = 0; it2 <= _pf1; it2++) {
+            int impactFlag1 = 1;
+            int impactFlag2 = 1;
+            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+            if(flag1 == -1 && it2 % 2 == 0) { impactFlag2 = -1; }
+            faceFunctions[iterator][0] = 0;
+            faceFunctions[iterator][1] = 0;
+            faceFunctions[iterator][2] = -legendreVector[0][it2] *
+                                         OrthogonalPoly::EvalDLobatto(it1, v) *
+                                         impactFlag1 * impactFlag2;
+            iterator++;
+          }
+        }
       }
-    }
-    else {
-      throw std::string("unknown typeFunction");
+      else {
+        throw std::string("unknown typeFunction");
+      }
     }
   }
 }

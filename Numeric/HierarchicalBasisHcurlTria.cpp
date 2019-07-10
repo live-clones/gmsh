@@ -27,14 +27,11 @@ HierarchicalBasisHcurlTria::HierarchicalBasisHcurlTria(int order)
   _pOrderEdge[0] = order;
   _pOrderEdge[1] = order;
   _pOrderEdge[2] = order;
-  _flagEdgeOrientation[0] = 1;
-  _flagEdgeOrientation[1] = 1;
-  _flagEdgeOrientation[2] = 1;
 }
-double HierarchicalBasisHcurlTria::dotProduct(const std::vector<double> &u1,
-                                              const std::vector<double> &u2)
+double HierarchicalBasisHcurlTria::dotProduct(const std::vector<double> &u,
+                                              const std::vector<double> &v)
 {
-  return u1[0] * u2[0] + u1[1] * u2[1];
+  return u[0] * v[0] + u[1] * v[1];
 }
 
 HierarchicalBasisHcurlTria::~HierarchicalBasisHcurlTria() {}
@@ -63,7 +60,6 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
   double vc = 2 * v - 1;
   double jacob = 2;
   //*****
-
   double lambda1 = _affineCoordinate(1, uc, vc);
   double lambda2 = _affineCoordinate(2, uc, vc);
   double lambda3 = _affineCoordinate(3, uc, vc);
@@ -120,10 +116,6 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
   }
   int edgeIt = 0;
   int faceIt = 0;
-  std::vector<double> subtraction(3, 0);
-  subtraction[0] = lambda3 - lambda2;
-  subtraction[1] = lambda1 - lambda3;
-  subtraction[2] = lambda2 - lambda1;
   for(int i = 0; i < _nedge; i++) {
     for(int j = 0; j < 3; j++) { edgeBasis[edgeIt][j] = jacob * psie_0[i][j]; }
     edgeIt++;
@@ -145,25 +137,26 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
       }
     }
     double product = 0;
-    std::vector<double> *normal(0);
+    std::vector<double> nD(3, 0);
     switch(i) {
     case(0):
       product = lambda3 * lambda2;
-      normal = &n1;
+      nD[1] = 0.5;
       break;
     case(1):
       product = lambda1 * lambda3;
-      normal = &n2;
+      nD[0] = -0.5;
+      nD[1] = -0.5;
       break;
     case(2):
       product = lambda1 * lambda2;
-      normal = &n3;
+      nD[0] = 0.5;
       break;
     }
     for(int i1 = 2; i1 <= _pf; i1++) {
       for(int j = 0; j < 3; j++) {
         faceBasis[faceIt][j] =
-          jacob * product * legendreVector[i][i1 - 2] * (*normal)[j];
+          jacob * product * legendreVector[i][i1 - 2] * nD[j];
       }
       faceIt++;
     }
@@ -173,7 +166,7 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
   for(int n1 = 0; n1 < _pf - 2; n1++) {
     for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
       faceBasis[faceIt][0] =
-        jacob * (product * legendreVector[0][n1] * legendreVector[2][n2]);
+        0.5 * jacob * (product * legendreVector[0][n1] * legendreVector[2][n2]);
       faceBasis[faceIt][1] = 0;
       faceBasis[faceIt][2] = 0;
       faceIt++;
@@ -195,7 +188,6 @@ void HierarchicalBasisHcurlTria::orientEdge(
   std::vector<std::vector<double> > &edgeFunctions)
 {
   if(flagOrientation == -1) {
-    _flagEdgeOrientation[edgeNumber] = -1;
     int constant1 = 0;
     int constant2 = 0;
     switch(edgeNumber) {
@@ -214,7 +206,7 @@ void HierarchicalBasisHcurlTria::orientEdge(
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=2");
     }
     for(int k = constant1; k <= constant2; k++) {
-      if((k - constant1) % 2 != 0) {
+      if((k - constant1) % 2 == 0) {
         edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
         edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
         edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
@@ -347,8 +339,9 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   double prod32 = lambda3 * lambda2;
   for(int n1 = 2; n1 <= _pf; n1++) {
     faceBasis[faceIt][2] =
-      det * (dlambda23 * legendreVector[0][n1 - 2] +
-             prod32 * dsubtraction[0][0] * dlegendreVector[0][n1 - 2]);
+      0.5 * det *
+      (dlambda23 * legendreVector[0][n1 - 2] +
+       prod32 * dsubtraction[0][0] * dlegendreVector[0][n1 - 2]);
 
     faceIt++;
   }
@@ -357,7 +350,7 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   double prod13 = lambda3 * lambda1;
   for(int n1 = 2; n1 <= _pf; n1++) {
     faceBasis[faceIt][2] =
-      -det * sqrt(0.5) *
+      -det * 0.5 *
       (dlambda13U * legendreVector[1][n1 - 2] +
        prod13 * dsubtraction[1][0] * dlegendreVector[1][n1 - 2] -
        (dlambda13V * legendreVector[1][n1 - 2] +
@@ -369,23 +362,24 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   double prod12 = lambda2 * lambda1;
   for(int n1 = 2; n1 <= _pf; n1++) {
     faceBasis[faceIt][2] =
-      -det * (dlambda12 * legendreVector[2][n1 - 2] +
-              prod12 * dsubtraction[2][1] * dlegendreVector[2][n1 - 2]);
+      -0.5 * det *
+      (dlambda12 * legendreVector[2][n1 - 2] +
+       prod12 * dsubtraction[2][1] * dlegendreVector[2][n1 - 2]);
 
     faceIt++;
   }
   double prod123 = lambda1 * lambda2 * lambda3;
   double dlambda123U = 0.5 * lambda1 * (lambda2 - lambda3);
   double dlambda123V = 0.5 * lambda3 * (lambda2 - lambda1);
-
   for(int n1 = 0; n1 < _pf - 2; n1++) {
     for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
       faceBasis[faceIt][2] =
-        -det * (dlambda123V * legendreVector[0][n1] * legendreVector[2][n2] +
-                prod123 * dsubtraction[0][1] * dlegendreVector[0][n1] *
-                  legendreVector[2][n2] +
-                prod123 * dsubtraction[2][1] * legendreVector[0][n1] *
-                  dlegendreVector[2][n2]);
+        -0.5 * det *
+        (dlambda123V * legendreVector[0][n1] * legendreVector[2][n2] +
+         prod123 * dsubtraction[0][1] * dlegendreVector[0][n1] *
+           legendreVector[2][n2] +
+         prod123 * dsubtraction[2][1] * legendreVector[0][n1] *
+           dlegendreVector[2][n2]);
 
       faceIt++;
     }
@@ -393,11 +387,12 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   for(int n1 = 0; n1 < _pf - 2; n1++) {
     for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
       faceBasis[faceIt][2] =
-        det * (dlambda123U * legendreVector[0][n1] * legendreVector[2][n2] +
-               prod123 * dsubtraction[0][0] * dlegendreVector[0][n1] *
-                 legendreVector[2][n2] +
-               prod123 * dsubtraction[2][0] * legendreVector[0][n1] *
-                 dlegendreVector[2][n2]);
+        0.5 * det *
+        (dlambda123U * legendreVector[0][n1] * legendreVector[2][n2] +
+         prod123 * dsubtraction[0][0] * dlegendreVector[0][n1] *
+           legendreVector[2][n2] +
+         prod123 * dsubtraction[2][0] * legendreVector[0][n1] *
+           dlegendreVector[2][n2]);
       faceIt++;
     }
   }
@@ -408,99 +403,136 @@ void HierarchicalBasisHcurlTria::orientFace(
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
 {
-  for(int i = 0; i < 3; i++) {
-    if(_flagEdgeOrientation[i] == -1) {
-      int const1;
-      int const2;
-      switch(i) {
-      case(0): {
-        const1 = 0;
-        const2 = _pf - 2;
-      } break;
-      case(1): {
-        const1 = _pf - 1;
-        const2 = 2 * _pf - 3;
-      } break;
-      case(2): {
-        const1 = 2 * _pf - 2;
-        const2 = 3 * _pf - 4;
-      } break;
-      }
-      for(int k = const1; k <= const2; k++) {
-        if((k - const1) % 2 != 0) {
-          faceFunctions[k][0] = faceFunctions[k][0] * (-1);
-          faceFunctions[k][1] = faceFunctions[k][1] * (-1);
-          faceFunctions[k][2] = faceFunctions[k][2] * (-1);
-        }
-      }
-      _flagEdgeOrientation[i] = 1;
-    }
-  }
-
-  if(_pf > 2) {
+  if(!(flag1 == 0 && flag2 == 1)) {
     if(typeFunction == "HcurlLegendre") {
-      // orient Edge-based interior functions
+      // to map onto the reference domain of gmsh:
+      double uc = 2 * u - 1;
+      double vc = 2 * v - 1;
+      double jacob = 2;
+      //*****
 
-      if(!(flag1 == 0 && flag2 == 1)) {
-        // to map onto the reference domain of gmsh:
-        double uc = 2 * u - 1;
-        double vc = 2 * v - 1;
-        double jacob = 2;
-        //*****
-
-        int faceIt = 3 * (_pf - 1);
-        std::vector<double> lambda(3);
-        lambda[0] = _affineCoordinate(2, uc, vc);
-        lambda[1] = _affineCoordinate(3, uc, vc);
-        lambda[2] = _affineCoordinate(1, uc, vc);
-        double product = lambda[0] * lambda[1] * lambda[2];
-        if(flag1 == 1 && flag2 == -1) {
-          double copy = lambda[0];
-          lambda[0] = lambda[1];
-          lambda[1] = copy;
+      int faceIt = 0;
+      std::vector<double> lambda(3, 0);
+      lambda[0] = _affineCoordinate(2, uc, vc);
+      lambda[1] = _affineCoordinate(3, uc, vc);
+      lambda[2] = _affineCoordinate(1, uc, vc);
+      std::vector<std::vector<double> > dlambda(3, std::vector<double>(2, 0));
+      dlambda[0][0] = -0.5;
+      dlambda[0][1] = -0.5;
+      dlambda[1][0] = 0.5;
+      dlambda[2][1] = 0.5;
+      double product = lambda[0] * lambda[1] * lambda[2];
+      if(flag1 == 1 && flag2 == -1) {
+        double copy = lambda[0];
+        lambda[0] = lambda[1];
+        lambda[1] = copy;
+        std::vector<double> dcopy = dlambda[0];
+        dlambda[0] = dlambda[1];
+        dlambda[1] = dcopy;
+      }
+      else if(flag1 == 0 && flag2 == -1) {
+        double copy = lambda[2];
+        lambda[2] = lambda[1];
+        lambda[1] = copy;
+        std::vector<double> dcopy = dlambda[2];
+        dlambda[2] = dlambda[1];
+        dlambda[1] = dcopy;
+      }
+      else if(flag1 == 2 && flag2 == -1) {
+        double copy = lambda[2];
+        lambda[2] = lambda[0];
+        lambda[0] = copy;
+        std::vector<double> dcopy = dlambda[2];
+        dlambda[2] = dlambda[0];
+        dlambda[0] = dcopy;
+      }
+      else if(flag1 == 1 && flag2 == 1) {
+        double copy = lambda[0];
+        lambda[0] = lambda[1];
+        lambda[1] = lambda[2];
+        lambda[2] = copy;
+        std::vector<double> dcopy = dlambda[0];
+        dlambda[0] = dlambda[1];
+        dlambda[1] = dlambda[2];
+        dlambda[2] = dcopy;
+      }
+      else if(flag1 == 2 && flag2 == 1) {
+        double copy = lambda[0];
+        lambda[0] = lambda[2];
+        lambda[2] = lambda[1];
+        lambda[1] = copy;
+        std::vector<double> dcopy = dlambda[0];
+        dlambda[0] = dlambda[2];
+        dlambda[2] = dlambda[1];
+        dlambda[1] = dcopy;
+      }
+      std::vector<double> sub(3);
+      sub[0] = lambda[1] - lambda[0];
+      sub[1] = lambda[2] - lambda[1];
+      sub[2] = lambda[0] - lambda[2];
+      std::vector<double> n1 = std::vector<double>(2, 0);
+      n1[0] = dlambda[2][0];
+      n1[1] = dlambda[2][1];
+      std::vector<double> n2 = std::vector<double>(2, 0);
+      n2[0] = dlambda[0][0];
+      n2[1] = dlambda[0][1];
+      std::vector<double> n3 = std::vector<double>(2, 0);
+      n3[0] = dlambda[1][0];
+      n3[1] = dlambda[1][1];
+      // edge-based face functions
+      for(int i = 0; i < 3; i++) {
+        double product2 = 0;
+        std::vector<double> *normal(0);
+        switch(i) {
+        case(0):
+          product2 = lambda[1] * lambda[0];
+          normal = &n1;
+          break;
+        case(1):
+          product2 = lambda[1] * lambda[2];
+          normal = &n2;
+          break;
+        case(2):
+          product2 = lambda[2] * lambda[0];
+          normal = &n3;
+          break;
         }
-        else if(flag1 == 0 && flag2 == -1) {
-          double copy = lambda[2];
-          lambda[2] = lambda[1];
-          lambda[1] = copy;
-        }
-        else if(flag1 == 2 && flag2 == -1) {
-          double copy = lambda[2];
-          lambda[2] = lambda[0];
-          lambda[0] = copy;
-        }
-        else if(flag1 == 1 && flag2 == 1) {
-          double copy = lambda[0];
-          lambda[0] = lambda[1];
-          lambda[1] = lambda[2];
-          lambda[2] = copy;
-        }
-        else if(flag1 == 2 && flag2 == 1) {
-          double copy = lambda[0];
-          lambda[0] = lambda[2];
-          lambda[2] = lambda[1];
-          lambda[1] = copy;
-        }
-        double sub1 = lambda[1] - lambda[0];
-        double sub2 = lambda[0] - lambda[2];
-        std::vector<double> LSub2(_pf - 2);
-        for(int it = 0; it < _pf - 2; it++) {
-          LSub2[it] = OrthogonalPoly::EvalLegendre(it, sub2);
-        }
-        for(int n1 = 0; n1 < _pf - 2; n1++) {
-          double LSub1 = OrthogonalPoly::EvalLegendre(n1, sub1);
-          for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
-            faceFunctions[faceIt][0] = jacob * product * LSub1 * LSub2[n2];
-            faceIt++;
+        for(int i1 = 2; i1 <= _pf; i1++) {
+          for(int j = 0; j < 2; j++) {
+            faceFunctions[faceIt][j] =
+              jacob * product2 * OrthogonalPoly::EvalLegendre(i1 - 2, sub[i]) *
+              (*normal)[j];
           }
+          faceFunctions[faceIt][2] = 0;
+          faceIt++;
         }
-        int faceIt2 = 3 * (_pf - 1);
-        for(int n1 = 0; n1 < _pf - 2; n1++) {
-          for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
-            faceFunctions[faceIt][1] = faceFunctions[faceIt2][0];
-            faceIt++;
-            faceIt2++;
-          }
+      }
+      double sub1 = sub[0];
+      double sub2 = sub[2];
+      std::vector<double> LSub2(_pf - 2);
+      for(int it = 0; it < _pf - 2; it++) {
+        LSub2[it] = OrthogonalPoly::EvalLegendre(it, sub2);
+      }
+      for(int n1 = 0; n1 < _pf - 2; n1++) {
+        double LSub1 = OrthogonalPoly::EvalLegendre(n1, sub1);
+        for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
+          faceFunctions[faceIt][0] =
+            jacob * product * LSub1 * LSub2[n2] * dlambda[1][0];
+          faceFunctions[faceIt][1] =
+            jacob * product * LSub1 * LSub2[n2] * dlambda[1][1];
+          faceIt++;
+        }
+      }
+      int faceIt2 = 3 * (_pf - 1);
+      for(int n1 = 0; n1 < _pf - 2; n1++) {
+        double LSub1 = OrthogonalPoly::EvalLegendre(n1, sub1);
+        for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
+          faceFunctions[faceIt][0] =
+            jacob * product * LSub1 * LSub2[n2] * dlambda[2][0];
+          faceFunctions[faceIt][1] =
+            jacob * product * LSub1 * LSub2[n2] * dlambda[2][1];
+          faceIt++;
+          faceIt2++;
         }
       }
     }
@@ -510,7 +542,7 @@ void HierarchicalBasisHcurlTria::orientFace(
       double vc = 2 * v - 1;
       double det = 4;
       //*****
-      int faceIt = 3 * (_pf - 1);
+      int faceIt = 0;
       std::vector<double> lambda(3);
       std::vector<std::vector<double> > dlambda(3, std::vector<double>(2, 0));
       std::vector<double> dProduct(2); // grad(lambdaA*lambdaB*lambdaC)
@@ -568,13 +600,79 @@ void HierarchicalBasisHcurlTria::orientFace(
         dlambda[2] = dlambda[1];
         dlambda[1] = dcopy;
       }
-      double subBA = lambda[1] - lambda[0];
-      double subAC = lambda[0] - lambda[2];
+      std::vector<double> sub(3);
+      sub[0] = lambda[1] - lambda[0];
+      sub[1] = lambda[2] - lambda[1];
+      sub[2] = lambda[0] - lambda[2];
+      std::vector<double> n1 = std::vector<double>(2, 0);
+      n1[0] = dlambda[2][0];
+      n1[1] = dlambda[2][1];
+      std::vector<double> n2 = std::vector<double>(2, 0);
+      n2[0] = dlambda[0][0];
+      n2[1] = dlambda[0][1];
+      std::vector<double> n3 = std::vector<double>(2, 0);
+      n3[0] = dlambda[1][0];
+      n3[1] = dlambda[1][1];
+      std::vector<std::vector<double> > dsub(3, std::vector<double>(2, 0));
+      for(int p = 0; p < 3; p++) {
+        dsub[0][p] = dlambda[1][p] - dlambda[0][p];
+        dsub[1][p] = dlambda[2][p] - dlambda[1][p];
+        dsub[2][p] = dlambda[0][p] - dlambda[2][p];
+      }
+      // edge-based face functions
+      double dlambda23U = dlambda[0][0] * lambda[1] + dlambda[1][0] * lambda[0];
+      double dlambda23V = dlambda[0][1] * lambda[1] + dlambda[1][1] * lambda[0];
+      double prod32 = lambda[0] * lambda[1];
+      for(int i1 = 2; i1 <= _pf; i1++) {
+        double dphiU =
+          dlambda23U * OrthogonalPoly::EvalLegendre(i1 - 2, sub[0]) +
+          prod32 * dsub[0][0] * OrthogonalPoly::EvalDLegendre(i1 - 2, sub[0]);
+        double dphiV =
+          dlambda23V * OrthogonalPoly::EvalLegendre(i1 - 2, sub[0]) +
+          prod32 * dsub[0][1] * OrthogonalPoly::EvalDLegendre(i1 - 2, sub[0]);
+        faceFunctions[faceIt][0] = 0;
+        faceFunctions[faceIt][1] = 0;
+        faceFunctions[faceIt][2] = det * (n1[1] * dphiU - n1[0] * dphiV);
+        faceIt++;
+      }
+      double dlambda13U = dlambda[2][0] * lambda[1] + dlambda[1][0] * lambda[2];
+      double dlambda13V = dlambda[2][1] * lambda[1] + dlambda[1][1] * lambda[2];
+      double prod13 = lambda[2] * lambda[1];
+      for(int i1 = 2; i1 <= _pf; i1++) {
+        double dphiU =
+          dlambda13U * OrthogonalPoly::EvalLegendre(i1 - 2, sub[1]) +
+          prod13 * dsub[1][0] * OrthogonalPoly::EvalDLegendre(i1 - 2, sub[1]);
+        double dphiV =
+          dlambda13V * OrthogonalPoly::EvalLegendre(i1 - 2, sub[1]) +
+          prod13 * dsub[1][1] * OrthogonalPoly::EvalDLegendre(i1 - 2, sub[1]);
+        faceFunctions[faceIt][0] = 0;
+        faceFunctions[faceIt][1] = 0;
+        faceFunctions[faceIt][2] = det * (n2[1] * dphiU - n2[0] * dphiV);
+        faceIt++;
+      }
+      double dlambda12U = dlambda[2][0] * lambda[0] + dlambda[0][0] * lambda[2];
+      double dlambda12V = dlambda[2][1] * lambda[0] + dlambda[0][1] * lambda[2];
+      double prod12 = lambda[0] * lambda[2];
+      for(int i1 = 2; i1 <= _pf; i1++) {
+        double dphiU =
+          dlambda12U * OrthogonalPoly::EvalLegendre(i1 - 2, sub[2]) +
+          prod12 * dsub[2][0] * OrthogonalPoly::EvalDLegendre(i1 - 2, sub[2]);
+        double dphiV =
+          dlambda12V * OrthogonalPoly::EvalLegendre(i1 - 2, sub[2]) +
+          prod12 * dsub[2][1] * OrthogonalPoly::EvalDLegendre(i1 - 2, sub[2]);
+        faceFunctions[faceIt][0] = 0;
+        faceFunctions[faceIt][1] = 0;
+        faceFunctions[faceIt][2] = det * (n3[1] * dphiU - n3[0] * dphiV);
+        faceIt++;
+      }
+      // Genuine face function
+      double subBA = sub[0];
+      double subAC = sub[2];
       std::vector<double> dsubBA(2);
       std::vector<double> dsubAC(2);
       for(int i = 0; i < 2; i++) {
-        dsubBA[i] = dlambda[1][i] - dlambda[0][i];
-        dsubAC[i] = dlambda[0][i] - dlambda[2][i];
+        dsubBA[i] = dsub[0][i];
+        dsubAC[i] = dsub[2][i];
       }
       std::vector<double> LSubAC(_pf - 2);
       std::vector<double> dLSubAC(_pf - 2);
@@ -592,9 +690,14 @@ void HierarchicalBasisHcurlTria::orientFace(
       for(int n1 = 0; n1 < _pf - 2; n1++) {
         for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
           faceFunctions[faceIt][2] =
-            -det * (dProduct[1] * LSubAC[n2] * LSubBA[n1] +
-                    product * dsubBA[1] * LSubAC[n2] * dLSubBA[n1] +
-                    product * dsubAC[1] * dLSubAC[n2] * LSubBA[n1]);
+            det *
+            ((dProduct[0] * LSubAC[n2] * LSubBA[n1] +
+              product * dsubBA[0] * LSubAC[n2] * dLSubBA[n1] +
+              product * dsubAC[0] * dLSubAC[n2] * LSubBA[n1]) *
+               dlambda[1][1] -
+             dlambda[1][0] * (dProduct[1] * LSubAC[n2] * LSubBA[n1] +
+                              product * dsubBA[1] * LSubAC[n2] * dLSubBA[n1] +
+                              product * dsubAC[1] * dLSubAC[n2] * LSubBA[n1]));
 
           faceIt++;
         }
@@ -602,14 +705,18 @@ void HierarchicalBasisHcurlTria::orientFace(
       for(int n1 = 0; n1 < _pf - 2; n1++) {
         for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
           faceFunctions[faceIt][2] =
-            det * (dProduct[0] * LSubAC[n2] * LSubBA[n1] +
-                   product * dsubBA[0] * LSubAC[n2] * dLSubBA[n1] +
-                   product * dsubAC[0] * dLSubAC[n2] * LSubBA[n1]);
+            det *
+            ((dProduct[0] * LSubAC[n2] * LSubBA[n1] +
+              product * dsubBA[0] * LSubAC[n2] * dLSubBA[n1] +
+              product * dsubAC[0] * dLSubAC[n2] * LSubBA[n1]) *
+               dlambda[2][1] -
+             dlambda[2][0] * (dProduct[1] * LSubAC[n2] * LSubBA[n1] +
+                              product * dsubBA[1] * LSubAC[n2] * dLSubBA[n1] +
+                              product * dsubAC[1] * dLSubAC[n2] * LSubBA[n1]));
           faceIt++;
         }
       }
     }
-
     else {
       throw std::string("unknown typeFunction");
     }

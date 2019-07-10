@@ -44,7 +44,7 @@ set(SRC
   HierarchicalBasisH1Quad.cpp
   HierarchicalBasisH1Tria.cpp
   HierarchicalBasisH1Line.cpp
-  HierarchicalBasisH1Brick.cpp	
+  HierarchicalBasisH1Brick.cpp
   HierarchicalBasisH1Tetra.cpp
   HierarchicalBasisH1Pri.cpp
   HierarchicalBasis.cpp
@@ -52,8 +52,9 @@ set(SRC
   HierarchicalBasisHcurlQuad.cpp
   HierarchicalBasisHcurlBrick.cpp
   HierarchicalBasisHcurlTria.cpp
-
+  HierarchicalBasisHcurlTetra.cpp
+  HierarchicalBasisHcurlPri.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(Numeric "${SRC};${HDR}")
