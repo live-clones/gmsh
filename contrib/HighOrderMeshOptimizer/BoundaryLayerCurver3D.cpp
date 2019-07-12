@@ -583,19 +583,6 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  //  bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e)
-  //  {
-  //    for (int i = 0; i < el1->getNumEdges(); ++i) {
-  //      e = el1->getEdge(i);
-  //      for (int j = 0; j < el2->getNumEdges(); ++j) {
-  //        MEdge thisEdge = el2->getEdge(j);
-  //        if (thisEdge == e) return true;
-  //      }
-  //    }
-  //    e = MEdge();
-  //    return false;
-  //  }
-
   void computeInterface(const PairMElemVecMElem &c1,
                         const PairMElemVecMElem &c2,
                         std::vector<MFaceN> &interface, MEdgeN &bottomEdge,
@@ -1004,33 +991,30 @@ namespace BoundaryLayerCurver {
     repositionInteriorNodes(column);
   }
 
-  // compute then curve interfaces between columns
   void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
                        std::vector<std::pair<int, int> > &adjacencies,
                        const GFace *boundary)
   {
+    // compute then curve interfaces between columns
     for(std::size_t i = 0; i < adjacencies.size(); ++i) {
       MEdgeN bottomEdge, topEdge;
       std::vector<MFaceN> interface;
       PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
       PairMElemVecMElem &column2 = bndEl2column[adjacencies[i].second];
-      //      bool doIt = true;
-      //      if (column1.first->getNum() != 861 && column1.first->getNum() !=
-      //      467)
-      //        doIt = false;
-      //      if (column2.first->getNum() != 861 && column2.first->getNum() !=
-      //      467)
-      //        doIt = false;
+      // bool doIt = true;
+      // if (column1.first->getNum() != 861 && column1.first->getNum() != 467)
+      //   doIt = false;
+      // if (column2.first->getNum() != 861 && column2.first->getNum() != 467)
+      //   doIt = false;
+      // if (column1.first->getNum() != 5184 || column2.first->getNum() != 4750)
+      //   continue;
 
-      //      if (column1.first->getNum() != 5184 || column2.first->getNum() !=
-      //      4750) continue;
-
-      //      if (doIt) {
+      // if (doIt) {
       computeInterface(column1, column2, interface, bottomEdge, topEdge);
       curveInterface(interface, column1.first, column2.first, bottomEdge,
                      topEdge, 0, boundary, true);
-      //        Msg::Error("RETURN"); return;
-      //      }
+      // Msg::Error("RETURN"); return;
+      // }
     }
   }
 
@@ -1269,7 +1253,7 @@ void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
   std::vector<std::pair<int, MEdge> > borderEdges;
   BoundaryLayerCurver::computeAdjacencies(columns, adjacencies, borderEdges);
 
-  // FIXME we should check that the border interface it is not in a GFace in
+  // FIXME we should check that the border interface is not in a GFace in
   //  which case we should call curve2DBoundaryLayer. In the other case, we can
   //  use the same algo than for internal interfaces.
   // BoundaryLayerCurver::curveBorders(columns, borderEdges);
@@ -1281,3 +1265,24 @@ void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
 
   // FIXME: to implement
 }
+
+// FIXME? Est-ce qu'un MVertex connait toujours l'entité dans laquelle elle se trouve ?
+// FIXME? Que se passe-t-il si un maillage est chargé sans géométrie ?
+// FIXME? Si on charge un maillage avec la géométrie, il y a une différence si
+//        le maillage contient des parametric nodes ou pas. Si oui,
+//        des MFaceVertex et MEdgeVertex sont créés. Sinon, non.
+//        Si on charge juste un maillage, mais que les faces sont plans, on doit
+//        pouvoir courber aussi. La seule situation ou on ne peut rien faire,
+//        c'est si on n'a pas la géométrie et que les surfaces ne sont pas plans
+// FIXME? A: Vertex connait sa face et sa paramétrisation
+//        B: Vertex connait sa face mais pas sa paramétrisation
+//        C: Vertex se trouve dans une face discrète (la paramétrisation ne sert à rien)
+//                         +-----------+---------------+
+//                         | Géométrie | Pas Géométrie |
+//        -----------------+-----------+---------------+
+//        Pas maillage     |     A     | xxxxxxxxxxxxx |
+//        -----------------+-----------+---------------+
+//        Maillage par     |     A     |      C        |
+//        -----------------+-----------+---------------+
+//        Maillage non par |     B     |      C        |
+//        -----------------+-----------+---------------+

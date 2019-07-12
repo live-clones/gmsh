@@ -1581,10 +1581,8 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
                           const GFace *gface, const GEdge *gedge)
 {
-  if(!gface || !gedge) {
-    Msg::Error("both gface and gedge are needed for boundary layer curving "
-               "(%d, %d)",
-               gface, gedge);
+  if(!gface) {
+    Msg::Error("gface is needed for boundary layer curving");
     return;
   }
 
