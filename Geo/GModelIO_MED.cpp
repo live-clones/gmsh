@@ -146,8 +146,8 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
     return map[k];
   }
   case MED_PENTA15: {
-    static const int map[15] = {0,  2, 1,  3,  5,  4, 8, 6,
-                                12, 7, 14, 13, 11, 9, 10};
+    static const int map[15] = {0, 2, 1, 3, 5, 4,
+                                7, 9, 6, 13, 14, 12, 8, 11, 10};
     return map[k];
   }
   case MED_PYRA5: {
