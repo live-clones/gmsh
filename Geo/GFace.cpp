@@ -1544,7 +1544,10 @@ static void meshCompound(GFace *gf, bool verbose)
       it != emb0.end(); it++)
     df->addEmbeddedVertex(*it);
 
-  df->createGeometry();
+  if(df->createGeometry()){
+    Msg::Error("Could not create geometry of discrete face %d (check "
+               "orientation of input triangulations)", df->tag());
+  }
 
   if(!magic){
     df->triangles.clear();
@@ -1621,6 +1624,8 @@ void GFace::mesh(bool verbose)
 #if defined(HAVE_MESH)
   meshGFace mesher;
   mesher(this, verbose);
+  orientMeshGFace orient;
+  orient(this);
   if(compound.size()) { // Some faces are meshed together
     if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
