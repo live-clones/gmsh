@@ -46,7 +46,7 @@ double HierarchicalBasisHcurlBrick::_affineCoordinate(const int &j,
   }
 }
 
-void HierarchicalBasisHcurlBrick::generateBasis(
+void HierarchicalBasisHcurlBrick::generateHcurlBasis(
   double const &u, double const &v, double const &w,
   std::vector<std::vector<double> > &edgeBasis,
   std::vector<std::vector<double> > &faceBasis,
@@ -65,7 +65,6 @@ void HierarchicalBasisHcurlBrick::generateBasis(
   for(int it = 2; it <= _pb3 + 1; it++) {
     lobattoVector[2][it - 2] = OrthogonalPoly::EvalLobatto(it, w);
   }
-
   std::vector<std::vector<double> > legendreVector(3);
   legendreVector[0] = std::vector<double>(_pb1 + 1);
   legendreVector[1] = std::vector<double>(_pb2 + 1);
@@ -135,6 +134,7 @@ void HierarchicalBasisHcurlBrick::generateBasis(
       indexEdgeBasis++;
     }
   }
+
   // face  functions:
   int indexFaceFunction = 0;
   for(int iFace = 0; iFace < _nfaceQuad; iFace++) {
@@ -261,7 +261,7 @@ void HierarchicalBasisHcurlBrick::orientEdge(
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber];
     for(int k = constant1; k <= constant2; k++) {
-      if((k - constant1) % 2 != 0) {
+      if((k - constant1) % 2 == 0) {
         gradientEdge[k][0] = gradientEdge[k][0] * (-1);
         gradientEdge[k][1] = gradientEdge[k][1] * (-1);
         gradientEdge[k][2] = gradientEdge[k][2] * (-1);
@@ -286,8 +286,23 @@ void HierarchicalBasisHcurlBrick::orientFace(
         for(int it2 = 0; it2 < _pOrderFace2[faceNumber]; it2++) {
           int impactFlag1 = 1;
           int impactFlag2 = 1;
-          if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag1 == -1 && it1 % 2 == 0) { impactFlag1 = -1; }
           if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+          faceFunctions[iterator][0] =
+            faceFunctions[iterator][0] * impactFlag1 * impactFlag2;
+          faceFunctions[iterator][1] =
+            faceFunctions[iterator][1] * impactFlag1 * impactFlag2;
+          faceFunctions[iterator][2] =
+            faceFunctions[iterator][2] * impactFlag1 * impactFlag2;
+          iterator++;
+        }
+      }
+      for(int it1 = 0; it1 < _pOrderFace1[faceNumber]; it1++) {
+        for(int it2 = 0; it2 < _pOrderFace2[faceNumber] + 1; it2++) {
+          int impactFlag1 = 1;
+          int impactFlag2 = 1;
+          if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag2 == -1 && it2 % 2 == 0) { impactFlag2 = -1; }
           faceFunctions[iterator][0] =
             faceFunctions[iterator][0] * impactFlag1 * impactFlag2;
           faceFunctions[iterator][1] =
@@ -357,27 +372,13 @@ void HierarchicalBasisHcurlBrick::orientFace(
         }
         std::vector<double> direction1(3, 0);
         direction1[var1] = 1;
-        for(int it1 = 0; it1 < _pOrderFace2[faceNumber]; it1++) {
-          for(int it2 = 0; it2 < _pOrderFace1[faceNumber] + 1; it2++) {
-            int impactFlag1 = 1;
-            int impactFlag2 = 1;
-            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-            if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-            for(int itVector = 0; itVector < 3; itVector++) {
-              faceFunctions[iterator][itVector] =
-                lambda * legendreVector1[it2] * lkVector1[it1] * impactFlag1 *
-                impactFlag2 * direction1[itVector];
-            }
-            iterator++;
-          }
-        }
         std::vector<double> direction2(3, 0);
         direction2[var2] = 1;
         for(int it1 = 0; it1 < _pOrderFace2[faceNumber] + 1; it1++) {
           for(int it2 = 0; it2 < _pOrderFace1[faceNumber]; it2++) {
             int impactFlag1 = 1;
             int impactFlag2 = 1;
-            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+            if(flag2 == -1 && it1 % 2 == 0) { impactFlag1 = -1; }
             if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
             for(int itVector = 0; itVector < 3; itVector++) {
               faceFunctions[iterator][itVector] =
@@ -387,175 +388,175 @@ void HierarchicalBasisHcurlBrick::orientFace(
             iterator++;
           }
         }
+        for(int it1 = 0; it1 < _pOrderFace2[faceNumber]; it1++) {
+          for(int it2 = 0; it2 < _pOrderFace1[faceNumber] + 1; it2++) {
+            int impactFlag1 = 1;
+            int impactFlag2 = 1;
+            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+            if(flag1 == -1 && it2 % 2 == 0) { impactFlag2 = -1; }
+            for(int itVector = 0; itVector < 3; itVector++) {
+              faceFunctions[iterator][itVector] =
+                lambda * legendreVector1[it2] * lkVector1[it1] * impactFlag1 *
+                impactFlag2 * direction1[itVector];
+            }
+            iterator++;
+          }
+        }
       }
       else if(typeFunction == "CurlHcurlLegendre") {
-        int indexFaceFunction = 0;
-        for(int iFace = 0; iFace < _nfaceQuad; iFace++) {
-          std::vector<double> vec1(3, 0);
-          std::vector<double> vec2(3, 0);
-          std::vector<double> uvw(3);
-          uvw[0] = u;
-          uvw[1] = v;
-          uvw[2] = w;
-          int uvw1 = 0;
-          int uvw2 = 0;
-          int il1 = 0;
-          int jl1 = 0;
-          int il2 = 0;
-          int jl2 = 0;
-          switch(iFace) {
-          case(0):
-            uvw1 = 0;
-            uvw2 = 1;
-            vec1[1] = -0.5;
-            vec1[2] = -_affineCoordinate(6, u, v, w);
-            ;
-            il1 = 2;
-            jl1 = 1;
-            vec2[0] = 0.5;
-            vec2[2] = _affineCoordinate(6, u, v, w);
-            ;
-            il2 = 2;
-            jl2 = 0;
-            break;
-          case(1):
-            uvw1 = 0;
-            uvw2 = 2;
-            vec1[1] = _affineCoordinate(4, u, v, w);
-            ;
-            vec1[2] = 0.5;
-            il1 = 1;
-            jl1 = 2;
-            vec2[0] = -0.5;
-            vec2[1] = -_affineCoordinate(4, u, v, w);
-            ;
-            il2 = 1;
-            jl2 = 0;
-            break;
-          case(2):
-            uvw1 = 1;
-            uvw2 = 2;
-            vec1[0] = -_affineCoordinate(2, u, v, w);
-            ;
-            vec1[2] = -0.5;
-            il1 = 0;
-            jl1 = 2;
-            vec2[0] = -0.5;
-            vec2[1] = -_affineCoordinate(2, u, v, w);
-            ;
-            il2 = 1;
-            jl2 = 0;
-            break;
-          case(3):
-            uvw1 = 1;
-            uvw2 = 2;
-            vec1[0] = -_affineCoordinate(1, u, v, w);
-            ;
-            vec1[2] = 0.5;
-            il1 = 0;
-            jl1 = 2;
-            vec2[0] = 0.5;
-            vec2[1] = -_affineCoordinate(1, u, v, w);
-            ;
-            il2 = 1;
-            jl2 = 0;
-            break;
-          case(4):
-            uvw1 = 0;
-            uvw2 = 2;
-            vec1[1] = _affineCoordinate(3, u, v, w);
-            ;
-            vec1[2] = -0.5;
-            il1 = 1;
-            jl1 = 2;
-            vec2[0] = 0.5;
-            vec2[1] = -_affineCoordinate(3, u, v, w);
-            ;
-            il2 = 1;
-            jl2 = 0;
-            break;
-          case(5):
-            uvw1 = 0;
-            uvw2 = 1;
-            vec1[1] = 0.5;
-            vec1[2] = -_affineCoordinate(5, u, v, w);
-            ;
-            il1 = 2;
-            jl1 = 1;
-            vec2[0] = -0.5;
-            vec2[2] = _affineCoordinate(5, u, v, w);
-            ;
-            il2 = 2;
-            jl2 = 0;
-            break;
-          }
-          std::vector<double> lkVector1(_pOrderFace2[faceNumber]);
-          std::vector<double> lkVector2(_pOrderFace1[faceNumber]);
-          std::vector<double> dlkVector1(_pOrderFace2[faceNumber]);
-          std::vector<double> dlkVector2(_pOrderFace1[faceNumber]);
-          std::vector<double> legendreVector1(_pOrderFace1[faceNumber] + 1);
-          std::vector<double> legendreVector2(_pOrderFace2[faceNumber] + 1);
-          for(int it = 2; it <= _pOrderFace2[faceNumber] + 1; it++) {
-            lkVector1[it - 2] = OrthogonalPoly::EvalLobatto(it, uvw[uvw2]);
-            dlkVector1[it - 2] = OrthogonalPoly::EvalDLobatto(it, uvw[uvw2]);
-          }
-          for(int it = 2; it <= _pOrderFace1[faceNumber] + 1; it++) {
-            lkVector2[it - 2] = OrthogonalPoly::EvalLobatto(it, uvw[uvw1]);
-            dlkVector2[it - 2] = OrthogonalPoly::EvalDLobatto(it, uvw[uvw1]);
-          }
-          for(int it = 0; it <= _pOrderFace1[faceNumber]; it++) {
-            legendreVector1[it] = OrthogonalPoly::EvalLegendre(it, uvw[uvw1]);
-          }
-          for(int it = 0; it <= _pOrderFace2[faceNumber]; it++) {
-            legendreVector2[it] = OrthogonalPoly::EvalLegendre(it, uvw[uvw2]);
-          }
-          for(int it1 = 0; it1 < _pOrderFace2[faceNumber]; it1++) {
-            for(int it2 = 0; it2 < _pOrderFace1[faceNumber] + 1; it2++) {
-              int impactFlag1 = 1;
-              int impactFlag2 = 1;
-              if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-              if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-              for(int j = 0; j < 3; j++) {
-                if(j == jl1) {
-                  faceFunctions[indexFaceFunction][j] =
-                    vec1[j] * legendreVector1[it2] * lkVector1[it1] *
-                    impactFlag1 * impactFlag2;
-                }
-                else if(j == il1) {
-                  faceFunctions[indexFaceFunction][j] =
-                    vec1[j] * legendreVector1[it2] * lkVector1[it1] *
-                    impactFlag1 * impactFlag2;
-                }
-                else {
-                  faceFunctions[indexFaceFunction][j] = 0;
-                }
+        std::vector<double> vec1(3, 0);
+        std::vector<double> vec2(3, 0);
+        std::vector<double> uvw(3);
+        uvw[0] = u;
+        uvw[1] = v;
+        uvw[2] = w;
+        int uvw1 = 0;
+        int uvw2 = 0;
+        int il1 = 0;
+        int jl1 = 0;
+        int il2 = 0;
+        int jl2 = 0;
+        switch(faceNumber) {
+        case(0):
+          uvw1 = 0;
+          uvw2 = 1;
+          vec1[1] = -0.5;
+          vec1[2] = -_affineCoordinate(6, u, v, w);
+          il1 = 2;
+          jl1 = 1;
+          vec2[0] = 0.5;
+          vec2[2] = _affineCoordinate(6, u, v, w);
+          il2 = 2;
+          jl2 = 0;
+          break;
+        case(1):
+          uvw1 = 0;
+          uvw2 = 2;
+          vec1[1] = _affineCoordinate(4, u, v, w);
+          vec1[2] = 0.5;
+          il1 = 1;
+          jl1 = 2;
+          vec2[0] = -0.5;
+          vec2[1] = -_affineCoordinate(4, u, v, w);
+          il2 = 1;
+          jl2 = 0;
+          break;
+        case(2):
+          uvw1 = 1;
+          uvw2 = 2;
+          vec1[0] = -_affineCoordinate(2, u, v, w);
+          vec1[2] = -0.5;
+          il1 = 0;
+          jl1 = 2;
+          vec2[0] = _affineCoordinate(2, u, v, w);
+          vec2[1] = 0.5;
+          il2 = 0;
+          jl2 = 1;
+          break;
+        case(3):
+          uvw1 = 1;
+          uvw2 = 2;
+          vec1[0] = -_affineCoordinate(1, u, v, w);
+          vec1[2] = 0.5;
+          il1 = 0;
+          jl1 = 2;
+          vec2[0] = _affineCoordinate(1, u, v, w);
+          vec2[1] = -0.5;
+          il2 = 0;
+          jl2 = 1;
+          break;
+        case(4):
+          uvw1 = 0;
+          uvw2 = 2;
+          vec1[1] = _affineCoordinate(3, u, v, w);
+          vec1[2] = -0.5;
+          il1 = 1;
+          jl1 = 2;
+          vec2[0] = 0.5;
+          vec2[1] = -_affineCoordinate(3, u, v, w);
+          il2 = 1;
+          jl2 = 0;
+          break;
+        case(5):
+          uvw1 = 0;
+          uvw2 = 1;
+          vec1[1] = 0.5;
+          vec1[2] = -_affineCoordinate(5, u, v, w);
+          il1 = 2;
+          jl1 = 1;
+          vec2[0] = -0.5;
+          vec2[2] = _affineCoordinate(5, u, v, w);
+          il2 = 2;
+          jl2 = 0;
+          break;
+        }
+        std::vector<double> lkVector1(_pOrderFace2[faceNumber]);
+        std::vector<double> lkVector2(_pOrderFace1[faceNumber]);
+        std::vector<double> dlkVector1(_pOrderFace2[faceNumber]);
+        std::vector<double> dlkVector2(_pOrderFace1[faceNumber]);
+        std::vector<double> legendreVector1(_pOrderFace1[faceNumber] + 1);
+        std::vector<double> legendreVector2(_pOrderFace2[faceNumber] + 1);
+        for(int it = 2; it <= _pOrderFace2[faceNumber] + 1; it++) {
+          lkVector1[it - 2] = OrthogonalPoly::EvalLobatto(it, uvw[uvw2]);
+          dlkVector1[it - 2] = OrthogonalPoly::EvalDLobatto(it, uvw[uvw2]);
+        }
+        for(int it = 2; it <= _pOrderFace1[faceNumber] + 1; it++) {
+          lkVector2[it - 2] = OrthogonalPoly::EvalLobatto(it, uvw[uvw1]);
+          dlkVector2[it - 2] = OrthogonalPoly::EvalDLobatto(it, uvw[uvw1]);
+        }
+        for(int it = 0; it <= _pOrderFace1[faceNumber]; it++) {
+          legendreVector1[it] = OrthogonalPoly::EvalLegendre(it, uvw[uvw1]);
+        }
+        for(int it = 0; it <= _pOrderFace2[faceNumber]; it++) {
+          legendreVector2[it] = OrthogonalPoly::EvalLegendre(it, uvw[uvw2]);
+        }
+        for(int it1 = 0; it1 < _pOrderFace2[faceNumber] + 1; it1++) {
+          for(int it2 = 0; it2 < _pOrderFace1[faceNumber]; it2++) {
+            int impactFlag1 = 1;
+            int impactFlag2 = 1;
+            if(flag2 == -1 && it1 % 2 == 0) { impactFlag1 = -1; }
+            if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+            for(int j = 0; j < 3; j++) {
+              if(j == jl2) {
+                faceFunctions[iterator][j] = vec2[j] * lkVector2[it2] *
+                                             legendreVector2[it1] *
+                                             impactFlag1 * impactFlag2;
               }
-              indexFaceFunction++;
-            }
-          }
-          for(int it1 = 0; it1 < _pOrderFace2[faceNumber] + 1; it1++) {
-            for(int it2 = 0; it2 < _pOrderFace1[faceNumber]; it2++) {
-              int impactFlag1 = 1;
-              int impactFlag2 = 1;
-              if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-              if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-              for(int j = 0; j < 3; j++) {
-                if(j == jl2) {
-                  faceFunctions[indexFaceFunction][j] =
-                    vec2[j] * lkVector2[it2] * legendreVector2[it1] *
-                    impactFlag1 * impactFlag2;
-                }
-                else if(j == il2) {
-                  faceFunctions[indexFaceFunction][j] =
-                    vec2[j] * lkVector2[it2] * legendreVector2[it1] *
-                    impactFlag1 * impactFlag2;
-                }
-                else {
-                  faceFunctions[indexFaceFunction][j] = 0;
-                }
+              else if(j == il2) {
+                faceFunctions[iterator][j] = vec2[j] * dlkVector2[it2] *
+                                             legendreVector2[it1] *
+                                             impactFlag1 * impactFlag2;
               }
-              indexFaceFunction++;
+              else {
+                faceFunctions[iterator][j] = 0;
+              }
             }
+            iterator++;
+          }
+        }
+        for(int it1 = 0; it1 < _pOrderFace2[faceNumber]; it1++) {
+          for(int it2 = 0; it2 < _pOrderFace1[faceNumber] + 1; it2++) {
+            int impactFlag1 = 1;
+            int impactFlag2 = 1;
+            if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+            if(flag1 == -1 && it2 % 2 == 0) { impactFlag2 = -1; }
+            for(int j = 0; j < 3; j++) {
+              if(j == jl1) {
+                faceFunctions[iterator][j] = vec1[j] * legendreVector1[it2] *
+                                             lkVector1[it1] * impactFlag1 *
+                                             impactFlag2;
+              }
+
+              else if(j == il1) {
+                faceFunctions[iterator][j] = vec1[j] * legendreVector1[it2] *
+                                             dlkVector1[it1] * impactFlag1 *
+                                             impactFlag2;
+              }
+              else {
+                faceFunctions[iterator][j] = 0;
+              }
+            }
+            iterator++;
           }
         }
       }
@@ -719,10 +720,10 @@ void HierarchicalBasisHcurlBrick::generateCurlBasis(
       vec1[2] = dlambda[1];
       il1 = 0;
       jl1 = 2;
-      vec2[0] = dlambda[1];
-      vec2[1] = -lambda[1];
-      il2 = 1;
-      jl2 = 0;
+      vec2[0] = lambda[1];
+      vec2[1] = -dlambda[1];
+      il2 = 0;
+      jl2 = 1;
       break;
     case(3):
       uvw1 = 1;
@@ -731,10 +732,10 @@ void HierarchicalBasisHcurlBrick::generateCurlBasis(
       vec1[2] = dlambda[0];
       il1 = 0;
       jl1 = 2;
-      vec2[0] = dlambda[0];
-      vec2[1] = -lambda[0];
-      il2 = 1;
-      jl2 = 0;
+      vec2[0] = lambda[0];
+      vec2[1] = -dlambda[0];
+      il2 = 0;
+      jl2 = 1;
       break;
     case(4):
       uvw1 = 0;

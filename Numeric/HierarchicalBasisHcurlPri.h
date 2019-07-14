@@ -7,10 +7,11 @@
 // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
 // Segeth ,
 //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
-#ifndef HIERARCHICAL_BASIS_H1_PRI_H
-#define HIERARCHICAL_BASIS_H1_PRI_H
+#ifndef HIERARCHICAL_BASIS_HCURL_PRI_H
+#define HIERARCHICAL_BASIS_HCURL_PRI_H
 #include <algorithm>
-#include "HierarchicalBasisH1.h"
+#include "HierarchicalBasisHcurl.h"
+#include <math.h>
 
 /**
  * MPrism
@@ -48,49 +49,35 @@
  * edges are limited by the minimum of all (appropriate directional) orders cor-
  * responding to faces sharing that edge
  */
-class HierarchicalBasisH1Pri : public HierarchicalBasisH1 {
+class HierarchicalBasisHcurlPri : public HierarchicalBasisHcurl {
 public:
-  HierarchicalBasisH1Pri(int order);
-  virtual ~HierarchicalBasisH1Pri();
-  // vertexBasis=[v0,...,v5]
-  // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
-  // faceBasis=[\Quad
-  // Face\phif2_{2,2},...,phif2_{2,pF2_2},...,phif2_{pF2_1,2},...,phief2_{pF2_1,pF2_2},phif3_{2,2}...,
-  //\TriFace\phif0_{1,1},...,phif0_{1,pF0-2},phif0_{2,1}...,phif0_{2,pF0-3},...,phief0_{pF-2,1},phif1_{1,1}...]
-  //
-  // bubbleBasis=[phieb_{1,1,1},...]   1<=n1,n2;n1+n2<=pb1-1; 2<=n3<pb2
-  virtual void generateBasis(double const &u, double const &v, double const &w,
-                             std::vector<double> &vertexBasis,
-                             std::vector<double> &edgeBasis,
-                             std::vector<double> &faceBasis,
-                             std::vector<double> &bubbleBasis);
-
+  HierarchicalBasisHcurlPri(int order);
+  virtual ~HierarchicalBasisHcurlPri();
   virtual void generateBasis(double const &u, double const &v, double const &w,
                              std::vector<std::vector<double> > &vertexBasis,
                              std::vector<std::vector<double> > &edgeBasis,
                              std::vector<std::vector<double> > &faceBasis,
                              std::vector<std::vector<double> > &bubbleBasis,
-                             std::string typeFunction = "GradH1Legendre")
+                             std::string typeFunction)
   {
-    generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
-                          bubbleBasis);
+    if(typeFunction == "HcurlLegendre") {
+      generateHcurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
+    }
+    else if("CurlHcurlLegendre" == typeFunction) {
+      generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
+    }
+    else {
+      throw std::string("unknown typeFunction");
+    }
   }
 
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<double> &edgeBasis);
-
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
                           std::vector<std::vector<double> > &edgeBasis);
-
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<double> &faceBasis);
-  virtual void orientFace(double const &u, double const &v, double const &w,
-                          int const &flag1, int const &flag2, int const &flag3,
-                          int const &faceNumber,
-                          std::vector<std::vector<double> > &faceBasis,
-                          std::string typeFunction = "GradH1Legendre");
+                          std::vector<std::vector<double> > &faceFunctions,
+                          std::string typeFunction);
 
 private:
   int _pb1; // bubble function order in  direction uv
@@ -107,10 +94,24 @@ private:
   static double
   _affineCoordinate(const int &j, const double &u, const double &v,
                     const double &w); // affine coordinate lambda j=1..5
-  void generateGradientBasis(double const &u, double const &v, double const &w,
-                             std::vector<std::vector<double> > &gradientVertex,
-                             std::vector<std::vector<double> > &gradientEdge,
-                             std::vector<std::vector<double> > &gradientFace,
-                             std::vector<std::vector<double> > &gradientBubble);
+  static double dotProduct(const std::vector<double> &u1,
+                           const std::vector<double> &u2);
+  // to take into account the mapping (product with jacobian)
+  static void matrixVectorProductForMapping(
+    const double &a, const std::vector<double> &u,
+    std::vector<double> &result); // ((2,0,0),(0,2,0),(0,0,1))*u
+  static void matrixVectorProductForCurlMapping(
+    std::vector<double> &result); // det*((0.5,0,0),(0,0.5,0),(0,0,1))*result
+  virtual void
+  generateHcurlBasis(double const &u, double const &v, double const &w,
+                     std::vector<std::vector<double> > &edgeBasis,
+                     std::vector<std::vector<double> > &faceBasis,
+                     std::vector<std::vector<double> > &bubbleBasis);
+
+  virtual void
+  generateCurlBasis(double const &u, double const &v, double const &w,
+                    std::vector<std::vector<double> > &edgeBasis,
+                    std::vector<std::vector<double> > &faceBasis,
+                    std::vector<std::vector<double> > &bubbleBasis);
 };
 #endif
