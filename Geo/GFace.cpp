@@ -1483,7 +1483,7 @@ static void meshCompound(GFace *gf, bool verbose)
 {
   // reclassify the elements on the original surfaces? (This is nice but it will
   // perturb algorithms that depend on the parametrization after the mesh is
-  // done
+  // done)
   bool magic = (CTX::instance()->mesh.compoundClassify == 1);
 
   discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000);
@@ -1624,9 +1624,9 @@ void GFace::mesh(bool verbose)
 #if defined(HAVE_MESH)
   meshGFace mesher;
   mesher(this, verbose);
-  orientMeshGFace orient;
-  orient(this);
   if(compound.size()) { // Some faces are meshed together
+    orientMeshGFace orient;
+    orient(this);
     if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
       for(std::size_t i = 0; i < compound.size(); i++) {
