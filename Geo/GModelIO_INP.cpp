@@ -62,7 +62,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
 
   if(noPhysicalGroups()) saveAll = true;
 
-  indexMeshVertices(saveAll);
+  indexMeshVertices(saveAll, 0, false);
   std::vector<GEntity *> entities;
   getEntities(entities);
 

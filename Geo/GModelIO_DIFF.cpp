@@ -417,9 +417,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
 
   if(noPhysicalGroups()) saveAll = true;
 
-  // get the number of vertices and index the vertices in a continuous
-  // sequence
-  int numVertices = indexMeshVertices(saveAll);
+  // get the number of vertices and flag vertices to skip
+  int numVertices = indexMeshVertices(saveAll, 0, false);
 
   // tag the vertices according to which surface they belong to (Note
   // that we use a brute force approach here, so that we can deal with

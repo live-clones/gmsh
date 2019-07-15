@@ -60,7 +60,7 @@ int GModel::writeKEY(const std::string &name, int saveAll,
 
   if(noPhysicalGroups()) saveAll = 0x51;
 
-  indexMeshVertices(saveAll & 0x51);
+  indexMeshVertices(saveAll & 0x51, 0, false);
   std::vector<GEntity *> entities;
   getEntities(entities);
 
