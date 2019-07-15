@@ -13,17 +13,17 @@ ENV PATH /usr/local/bin:$PATH
 
 RUN apt-get install -y swig libpython-dev python-numpy python-scipy && apt-get clean
 
-# "docker build --build-arg REBUILD_GMSH=yes -f Dockerfile.ubuntu18.10 -t onelab/ubuntu18.10 ."
-ARG REBUILD_GMSH=
-
-RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git && cd gmsh && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_PRIVATE_API=1 .. && make -j8 shared && make install/fast && cd .. && rm -rf gmsh
-
 # install libre office + computer modern fonts
 RUN apt-get update && apt-get install -y libreoffice
 RUN apt-get update && apt-get install -y fonts-cmu
 
 # to convert a .fodt document, simply run
 # soffice --headless --convert-to pdf Tutorials.fodt
+
+# "docker build --build-arg REBUILD_GMSH=yes"
+ARG REBUILD_GMSH=
+
+RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git && cd gmsh && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_PRIVATE_API=1 .. && make -j8 shared && make install/fast && cd .. && rm -rf gmsh
 
 VOLUME ["/etc/gitlab-runner"]
 RUN useradd -ms /bin/bash validator
