@@ -364,9 +364,8 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
   }
   else {
     // large field format (8 char first/last field, 16 char middle, 6 per line)
-    fprintf(fp, "GRID*   %-16ld%-16d%-16.9G%-16.9G*N%-6ld\n", _index, 0, x1, y1,
-            _index);
-    fprintf(fp, "*N%-6ld%-16.9G\n", _index, z1);
+    fprintf(fp, "GRID*   %-16ld%-16d%-16.9G%-16.9G\n", _index, 0, x1, y1);
+    fprintf(fp, "*       %-16.9G\n", z1);
   }
 }
 
