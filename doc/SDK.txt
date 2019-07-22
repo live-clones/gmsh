@@ -48,5 +48,13 @@ Notes:
     C:\gmsh-git-Windows64-sdk> cd lib
     C:\gmsh-git-Windows64-sdk\lib> ..\simple.exe
 
-  * The shared Gmsh library references several other shared system libraries. If
-    some of these libraries are missing you will need to install them.
+  * To make it as portable and as easy-to-use as possible the shared Gmsh
+    library embeds most Gmsh dependencies statically linked directly inside the
+    share library: libgfortran, OpenBLAS, FreeType, OpenCASCADE, OpenBLAS, HDF5,
+    MED, CGNS, FLTK, ... Linking your app with different versions of some of
+    these dependencies (e.g. linking your app with the MKL BLAS) will cause
+    issues: in this case you should rebuild the Gmsh shared library from source
+    and manage the dependencies consistently.
+
+  * The shared Gmsh library also references shared system libraries. If some of
+    these libraries are missing you will need to install them.

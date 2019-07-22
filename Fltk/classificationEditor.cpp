@@ -19,6 +19,7 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
+#include "GModelParametrize.h"
 
 static void NoElementsSelectedMode(classificationEditor *e)
 {
@@ -43,9 +44,7 @@ static void ElementsSelectedMode(classificationEditor *e)
   e->buttons[CLASS_BUTTON_RESET_SELECTION]->activate();
   e->toggles[CLASS_TOGGLE_BOUNDARY]->activate();
   e->inputs[CLASS_VALUE_ANGLE]->activate();
-
-  e->buttons[CLASS_BUTTON_SELECT_ELEMENTS]->deactivate();
-  e->buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]->deactivate();
+  e->buttons[CLASS_BUTTON_CLASSIFY]->activate();
 }
 
 static void update_edges_cb(Fl_Widget *w, void *data)
@@ -261,57 +260,22 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
   NoElementsSelectedMode(e);
 }
 
-static void select_surfaces_cb(Fl_Widget *w, void *data)
-{
-  classificationEditor *e = (classificationEditor *)data;
-
-  bool all = (w == e->buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]);
-
-  if(all) {
-    for(GModel::fiter it = GModel::current()->firstFace();
-        it != GModel::current()->lastFace(); ++it)
-      e->faces.insert(*it);
-  }
-  else {
-    std::vector<GFace *> temp;
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-    while(1) {
-      CTX::instance()->mesh.changed = ENT_ALL;
-      drawContext::global()->draw();
-      Msg::StatusGl("Select Surface\n"
-                    "[Press 'e' to end selection or 'q' to abort]");
-      char ib = FlGui::instance()->selectEntity(ENT_SURFACE);
-      if(ib == 'l') {
-        for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size();
-            i++) {
-          FlGui::instance()->selectedFaces[i]->setSelection(1);
-          temp.push_back(FlGui::instance()->selectedFaces[i]);
-        }
-      }
-      if(ib == 'e') { // store the list of gfaces
-        GModel::current()->setSelection(0);
-        for(std::size_t i = 0; i < temp.size(); i++) e->faces.insert(temp[i]);
-        break;
-      }
-      if(ib == 'q') { // do nothing
-        GModel::current()->setSelection(0);
-        break;
-      }
-    }
-  }
-
-  if(e->faces.size()) e->buttons[CLASS_BUTTON_CLASSIFY]->activate();
-
-  CTX::instance()->mesh.changed = ENT_ALL;
-  drawContext::global()->draw();
-  Msg::StatusGl("");
-}
-
 static void classify_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
 
-  GModel::current()->classifyFaces(e->faces);
+  if(!e->selected) {
+    e->selected =
+      new discreteEdge(GModel::current(),
+                       GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+    GModel::current()->add(e->selected);
+  }
+
+  computeDiscreteCurvatures(GModel::current());
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
+    computeEdgeCut(GModel::current(), e->selected->lines, 100000);
+  computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
+  classifyFaces(GModel::current());
 
   // remove selected, but do not delete its elements
   if(e->selected) {
@@ -320,8 +284,15 @@ static void classify_cb(Fl_Widget *w, void *data)
     delete e->selected;
     e->selected = 0;
   }
+
+  GModel::current()->pruneMeshVertexAssociations();
+
   e->elements.clear();
   e->edges_detected.clear();
+
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
+    GModel::current()->createGeometryOfDiscreteEntities();
+
   NoElementsSelectedMode(e);
 }
 
@@ -332,7 +303,7 @@ classificationEditor::classificationEditor() : selected(0)
   drawContext::global()->draw();
 
   int BBB = (int)(1.4 * BB);
-  const int width = (int)(3.15 * BBB), height = (int)(9.5 * BH);
+  const int width = (int)(3.15 * BBB), height = (int)(10.5 * BH);
 
   window = new paletteWindow(width, height,
                              CTX::instance()->nonModalWindows ? true : false,
@@ -383,8 +354,8 @@ classificationEditor::classificationEditor() : selected(0)
     inputs[CLASS_VALUE_ANGLE]->value(40);
     inputs[CLASS_VALUE_ANGLE]->maximum(180);
     inputs[CLASS_VALUE_ANGLE]->minimum(0);
+    if(CTX::instance()->inputScrolling) inputs[CLASS_VALUE_ANGLE]->step(1);
     inputs[CLASS_VALUE_ANGLE]->align(FL_ALIGN_RIGHT);
-    inputs[CLASS_VALUE_ANGLE]->step(1);
     inputs[CLASS_VALUE_ANGLE]->when(FL_WHEN_RELEASE);
     inputs[CLASS_VALUE_ANGLE]->callback(update_edges_cb, this);
 
@@ -426,21 +397,18 @@ classificationEditor::classificationEditor() : selected(0)
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     x += WB;
+
     y += BH;
+    toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES] = new Fl_Check_Button(
+      x, y, width - x - 2 * WB, BH, "Create parametrized discrete model");
+    toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->type(
+      FL_TOGGLE_BUTTON);
 
-    buttons[CLASS_BUTTON_SELECT_SURFACES] =
-      new Fl_Button(x, y, BBB, BH, "Select surfaces");
-    buttons[CLASS_BUTTON_SELECT_SURFACES]->callback(select_surfaces_cb, this);
-
-    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES] =
-      new Fl_Button(x + BBB + WB, y, (int)(0.5 * BBB) - WB, BH, "All");
-    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]->callback(select_surfaces_cb,
-                                                        this);
-
-    buttons[CLASS_BUTTON_CLASSIFY] =
-      new Fl_Return_Button((int)(x + 1.5 * BBB + WB), y, BBB, BH, "Reclassify");
+    y += BH;
+    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button(
+      (int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
     buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
-    buttons[CLASS_BUTTON_CLASSIFY]->deactivate();
+    buttons[CLASS_BUTTON_CLASSIFY]->activate();
 
     x -= WB;
   }

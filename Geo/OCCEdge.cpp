@@ -197,7 +197,6 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 // True if the edge is a seam for the given face
 bool OCCEdge::isSeam(const GFace *face) const
 {
-  if(face->geomType() == GEntity::CompoundSurface) return false;
   if(face->getNativeType() != GEntity::OpenCascadeModel) return false;
   const TopoDS_Face *s = (TopoDS_Face *)face->getNativePtr();
   bool ret = BRep_Tool::IsClosed(c, *s);
@@ -234,7 +233,9 @@ SVector3 OCCEdge::firstDer(double par) const
 GEntity::GeomType OCCEdge::geomType() const
 {
   if(curve.IsNull()) {
-    if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Circle))
+    if(curve2d.IsNull())
+      return Unknown;
+    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Circle))
       return Circle;
     else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Line))
       return Line;

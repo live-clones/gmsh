@@ -11,6 +11,7 @@
 #include "GModel.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
+#include "discreteVertex.h"
 #include "MPoint.h"
 #include "MVertex.h"
 #include "MLine.h"
@@ -77,9 +78,7 @@ std::vector<GEdge *> ensureSimplyConnectedEdge(GEdge *ge)
       _stack.pop();
       _lines.erase(l);
       // avoid adding twice the last one
-      if(!_part.size() || _part[_part.size() - 1] != l) {
-        _part.push_back(l);
-      }
+      if(!_part.size() || _part[_part.size() - 1] != l) { _part.push_back(l); }
       for(int j = 0; j < 2; j++) {
         std::map<MVertex *, std::pair<MLine *, MLine *> >::iterator it =
           _conn.find(l->getVertex(j));
@@ -146,9 +145,7 @@ void ensureManifoldFace(GFace *gf)
           _pairs[ed] = std::make_pair(e, (MElement *)NULL);
         }
         else {
-          if(it->second.second == NULL) {
-            it->second.second = e;
-          }
+          if(it->second.second == NULL) { it->second.second = e; }
           else {
             _nonManifold.insert(ed);
             _pairs.erase(it);
@@ -224,9 +221,8 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
     if(gv->mesh_vertices.size()) {
       MVertex *mv = gv->mesh_vertices[0];
       mVertexToGVertex[mv] = gv;
-      Msg::Info(
-        "The mesh contains already topological vertex %i containing vertex %i",
-        gv->tag(), mv->getNum());
+      Msg::Info("The model already has point %i, containing node %i",
+                gv->tag(), mv->getNum());
     }
   }
 
@@ -309,6 +305,7 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
       if(splits.size() == 1) { // periodic case
         GVertex *gv1 = *(gVerts.begin());
         ge->setBeginVertex(gv1);
+        ge->setEndVertex(gv1);
         gv1->addEdge(ge);
       }
       else {
@@ -425,9 +422,6 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
 
   for(it = tEdgeToGFaces.begin(); it != tEdgeToGFaces.end(); ++it) {
     std::set<GFace *> &gfaces = it->second;
-
-    //    printf("%d faces\n",gfaces.size());
-
     if(gfaces.size() > 1) {
       GFacesToGEdgeMap::iterator gfIter = gFacesToGEdge.find(gfaces);
 

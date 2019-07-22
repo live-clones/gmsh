@@ -57,12 +57,14 @@ typedef unsigned long intptr_t;
 #include "Options.h"
 #include "Context.h"
 #include "StringUtils.h"
-#include "Generator.h"
-#include "HighOrder.h"
 #include "OS.h"
 #include "onelabUtils.h"
+#include "gmshCrossFields.h"
 #if defined(HAVE_3M)
 #include "3M.h"
+#endif
+#if defined(HAVE_TOUCHBAR)
+#include "touchBar.h"
 #endif
 
 static void file_new_cb(Fl_Widget *w, void *data)
@@ -2092,16 +2094,8 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
 static void mesh_degree_cb(Fl_Widget *w, void *data)
 {
   int degree = (intptr_t)data;
-  if(degree == 2)
-    SetOrderN(GModel::current(), 2, CTX::instance()->mesh.secondOrderLinear,
-              CTX::instance()->mesh.secondOrderIncomplete);
-  else if (degree == 1)
-    SetOrder1(GModel::current());
-  else // For now, use the same options as for second order meshes
-    SetOrderN(GModel::current(), degree,
-	      CTX::instance()->mesh.secondOrderLinear,
-              CTX::instance()->mesh.secondOrderIncomplete);
-  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  GModel::current()->setOrderN(degree, CTX::instance()->mesh.secondOrderLinear,
+                               CTX::instance()->mesh.secondOrderIncomplete);
   drawContext::global()->draw();
 }
 
@@ -2112,26 +2106,32 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
     return;
   }
   CTX::instance()->lock = 1;
-  OptimizeMesh(GModel::current());
+  GModel::current()->optimizeMesh("");
   CTX::instance()->lock = 0;
+  drawContext::global()->draw();
+}
+
+static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
+{
+  computeCrossField (GModel::current());
   drawContext::global()->draw();
 }
 
 static void mesh_refine_cb(Fl_Widget *w, void *data)
 {
-  RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
+  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
   drawContext::global()->draw();
 }
 
 static void mesh_smooth_cb(Fl_Widget *w, void *data)
 {
-  SmoothMesh(GModel::current());
+  GModel::current()->smoothMesh();
   drawContext::global()->draw();
 }
 
 static void mesh_recombine_cb(Fl_Widget *w, void *data)
 {
-  RecombineMesh(GModel::current());
+  GModel::current()->recombineMesh();
   drawContext::global()->draw();
 }
 
@@ -2143,7 +2143,7 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
     return;
   }
   CTX::instance()->lock = 1;
-  OptimizeMeshNetgen(GModel::current());
+  GModel::current()->optimizeMesh("Netgen");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
 }
@@ -2990,6 +2990,10 @@ void quick_access_cb(Fl_Widget *w, void *data)
       opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, 0);
     }
   }
+
+#if defined(HAVE_TOUCHBAR)
+  updateTouchBar();
+#endif
 }
 
 static void model_switch_cb(Fl_Widget* w, void *data)
@@ -3463,7 +3467,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #endif
       _bar = new Fl_Menu_Bar(0, 0, width, BH);
       _bar->menu(bar_table);
-      _bar->box(FL_UP_BOX);
       _bar->global();
       fillRecentHistoryMenu();
 #if defined(__APPLE__)
@@ -3525,11 +3528,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   if(main){
     _browser = new messageBrowser(twidth, mh + glheight, glwidth, mheight);
     int s = CTX::instance()->msgFontSize;
-#if defined(WIN32) // screen font on Windows is really small
-    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE : s);
-#else
     _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 2 : s);
-#endif
     _browser->callback(message_browser_cb, this);
     _browser->search_callback(message_menu_search_cb, this);
     _browser->autoscroll_callback(message_menu_autoscroll_cb, this);
@@ -4075,11 +4074,7 @@ void graphicWindow::copySelectedMessagesToClipboard()
 void graphicWindow::setMessageFontSize(int size)
 {
   if(!_browser) return;
-#if defined(WIN32) // screen font on Windows is really small
-  _browser->textsize(size <= 0 ? FL_NORMAL_SIZE - 1 : size);
-#else
   _browser->textsize(size <= 0 ? FL_NORMAL_SIZE - 2 : size);
-#endif
   _browser->redraw();
 }
 
@@ -4297,6 +4292,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_inspect_cb} ,
   {"0Modules/Mesh/Refine by splitting",
    (Fl_Callback *)mesh_refine_cb} ,
+  {"0Modules/Mesh/Compute Cross Field",
+   (Fl_Callback *)mesh_cross_compute_cb} ,
 #if defined(HAVE_METIS)
   {"0Modules/Mesh/Partition",
    (Fl_Callback *)mesh_partition_cb} ,

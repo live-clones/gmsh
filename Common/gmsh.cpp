@@ -944,6 +944,12 @@ gmsh::model::mesh::getLastNodeError(std::vector<std::size_t> &nodeTags)
   for(std::size_t i = 0; i < v.size(); i++) nodeTags.push_back(v[i]->getNum());
 }
 
+GMSH_API void gmsh::model::mesh::clear()
+{
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->deleteMesh();
+}
+
 static void _getAdditionalNodesOnBoundary(GEntity *entity,
                                           std::vector<std::size_t> &nodeTags,
                                           std::vector<double> &coord,
@@ -1055,6 +1061,66 @@ GMSH_API void gmsh::model::mesh::getNodes(std::vector<std::size_t> &nodeTags,
   }
 }
 
+GMSH_API void gmsh::model::mesh::getNodesByElementType(const int elementType,
+                                                       std::vector<std::size_t> & nodeTags,
+                                                       std::vector<double> & coord,
+                                                       std::vector<double> & parametricCoord,
+                                                       const int tag,
+                                                       const bool returnParametricCoord)
+{
+  if(!_isInitialized()) { throw -1; }
+  nodeTags.clear();
+  coord.clear();
+  parametricCoord.clear();
+  std::vector<GEntity *> entities;
+  int dim = ElementType::getDimension(elementType);
+  if(dim >= 0 && tag >= 0) {
+    GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+    if(!ge) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    entities.push_back(ge);
+  }
+  else {
+    GModel::current()->getEntities(entities, dim);
+  }
+
+  int familyType = ElementType::getParentType(elementType);
+  int numNodesByElements = ElementType::getNumVertices(elementType);
+  std::size_t numElements = 0;
+  for(std::size_t i = 0; i < entities.size(); ++i) {
+    numElements = entities[i]->getNumMeshElementsByType(familyType);
+  }
+  std::size_t numNodes = numElements * numNodesByElements;
+
+  nodeTags.reserve(numNodes);
+  coord.reserve(numNodes * 3);
+  if(returnParametricCoord) {
+    parametricCoord.reserve(numNodes * 3);
+  }
+
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElementsByType(familyType); j++) {
+      MElement *e = ge->getMeshElementByType(familyType, j);
+      for(std::size_t k = 0; k < e->getNumVertices(); ++k) {
+        MVertex *v = e->getVertex(k);
+        nodeTags.push_back(v->getNum());
+        coord.push_back(v->x());
+        coord.push_back(v->y());
+        coord.push_back(v->z());
+        if(dim > 0 && returnParametricCoord) {
+          double par;
+          for(int k = 0; k < dim; k++) {
+            if(v->getParameter(k, par)) parametricCoord.push_back(par);
+          }
+        }
+      }
+    }
+  }
+}
+
 GMSH_API void gmsh::model::mesh::getNode(const std::size_t nodeTag,
                                          std::vector<double> &coord,
                                          std::vector<double> &parametricCoord)
@@ -1102,7 +1168,7 @@ gmsh::model::mesh::getNodesForPhysicalGroup(const int dim, const int tag,
   }
 }
 
-GMSH_API void gmsh::model::mesh::setNodes(
+GMSH_API void gmsh::model::mesh::addNodes(
   const int dim, const int tag, const std::vector<std::size_t> &nodeTags,
   const std::vector<double> &coord, const std::vector<double> &parametricCoord)
 {
@@ -1128,27 +1194,26 @@ GMSH_API void gmsh::model::mesh::setNodes(
     }
     param = true;
   }
-  // delete nodes and elements; this will also delete the model mesh cache
-  ge->deleteMesh();
   for(int i = 0; i < numNodes; i++) {
-    std::size_t n = (numNodeTags ? nodeTags[i] : 0); // 0 = automatic tag
+    std::size_t tag = (numNodeTags ? nodeTags[i] : 0); // 0 = automatic tag
     double x = coord[3 * i];
     double y = coord[3 * i + 1];
     double z = coord[3 * i + 2];
     MVertex *vv = 0;
     if(param && dim == 1) {
       double u = parametricCoord[i];
-      vv = new MEdgeVertex(x, y, z, ge, u, n);
+      vv = new MEdgeVertex(x, y, z, ge, u, tag);
     }
     else if(param && dim == 2) {
       double u = parametricCoord[2 * i];
       double v = parametricCoord[2 * i + 1];
-      vv = new MFaceVertex(x, y, z, ge, u, v, n);
+      vv = new MFaceVertex(x, y, z, ge, u, v, tag);
     }
     else
-      vv = new MVertex(x, y, z, ge, n);
+      vv = new MVertex(x, y, z, ge, tag);
     ge->mesh_vertices.push_back(vv);
   }
+  GModel::current()->destroyMeshCaches();
 }
 
 GMSH_API void gmsh::model::mesh::reclassifyNodes()
@@ -1395,7 +1460,7 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
   }
 }
 
-GMSH_API void gmsh::model::mesh::setElements(
+GMSH_API void gmsh::model::mesh::addElements(
   const int dim, const int tag, const std::vector<int> &elementTypes,
   const std::vector<std::vector<std::size_t> > &elementTags,
   const std::vector<std::vector<std::size_t> > &nodeTags)
@@ -1414,13 +1479,13 @@ GMSH_API void gmsh::model::mesh::setElements(
     Msg::Error("Wrong number of node tags");
     throw 2;
   }
-  // delete only elements; this will also delete the model mesh cache
-  ge->deleteMesh(true);
+
   for(std::size_t i = 0; i < elementTypes.size(); i++)
     _addElements(dim, tag, ge, elementTypes[i], elementTags[i], nodeTags[i]);
+  GModel::current()->destroyMeshCaches();
 }
 
-GMSH_API void gmsh::model::mesh::setElementsByType(
+GMSH_API void gmsh::model::mesh::addElementsByType(
   const int tag, const int elementType,
   const std::vector<std::size_t> &elementTags,
   const std::vector<std::size_t> &nodeTags)
@@ -1433,6 +1498,7 @@ GMSH_API void gmsh::model::mesh::setElementsByType(
     throw 2;
   }
   _addElements(dim, tag, ge, elementType, elementTags, nodeTags);
+  GModel::current()->destroyMeshCaches();
 }
 
 GMSH_API void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,
@@ -1480,7 +1546,7 @@ GMSH_API int gmsh::model::mesh::getElementType(const std::string &family,
 
 GMSH_API void gmsh::model::mesh::getElementProperties(
   const int elementType, std::string &name, int &dim, int &order, int &numNodes,
-  std::vector<double> &parametricCoord)
+  std::vector<double> &nodeCoord)
 {
   if(!_isInitialized()) { throw - 1; }
   const char *n;
@@ -1497,7 +1563,7 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
   numNodes = basis->points.size1();
   for(int i = 0; i < basis->points.size1(); i++)
     for(int j = 0; j < basis->points.size2(); j++)
-      parametricCoord.push_back(basis->points(i, j));
+      nodeCoord.push_back(basis->points(i, j));
   delete basis;
 }
 
@@ -1838,6 +1904,45 @@ GMSH_API void gmsh::model::mesh::getJacobians(
           o++;
         }
       }
+    }
+    else if(!haveDeterminants && haveJacobians && !havePoints) {
+      std::vector<std::vector<SVector3> > gsf;
+      size_t o = 0;
+      size_t idx = begin * numIntegrationPoints;
+      for(std::size_t i = 0; i < entities.size(); i++) {
+        GEntity *ge = entities[i];
+        for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
+            j++) {
+          if(o >= begin && o < end) {
+            MElement *e = ge->getMeshElementByType(familyType, j);
+            if(gsf.size() == 0) {
+              gsf.resize(numIntegrationPoints);
+              for(int k = 0; k < numIntegrationPoints; k++) {
+                double value[1256][3];
+                e->getGradShapeFunctions(integrationPoints[3 * k],
+                                         integrationPoints[3 * k + 1],
+                                         integrationPoints[3 * k + 2],
+                                         value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < numIntegrationPoints; k++) {
+              e->getJacobian(gsf[k], &jacobians[idx * 9]);
+              idx++;
+            }
+          }
+          o++;
+        }
+      }
+    }
+    else {
+      Msg::Error("The case with 'haveDeterminants = %s', `haveJacobians = %s` and 'havePoints = %s' is not yet implemented.", (haveDeterminants ? "true" : "false"), (haveJacobians ? "true" : "false"), (havePoints ? "true" : "false"));
+      throw 2;
     }
     // Add other combinaisons if necessary
   }
@@ -3128,22 +3233,23 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
 }
 
 GMSH_API void gmsh::model::mesh::classifySurfaces(const double angle,
-                                                  const bool boundary)
+                                                  const bool boundary,
+                                                  const bool forReparametrization)
 {
-  if(!_isInitialized()) { throw - 1; }
-  GModel::current()->classifyAllFaces(angle, boundary);
-}
-
-GMSH_API void gmsh::model::mesh::createTopology()
-{
-  if(!_isInitialized()) { throw - 1; }
-  GModel::current()->createTopologyFromMesh();
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->classifySurfaces(angle, boundary, forReparametrization);
 }
 
 GMSH_API void gmsh::model::mesh::createGeometry()
 {
-  if(!_isInitialized()) { throw - 1; }
+  if(!_isInitialized()) { throw -1; }
   GModel::current()->createGeometryOfDiscreteEntities();
+}
+
+GMSH_API void gmsh::model::mesh::createTopology()
+{
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->createTopologyFromMesh();
 }
 
 GMSH_API void
@@ -3754,15 +3860,15 @@ GMSH_API int gmsh::model::occ::addCircle(const double x, const double y,
   return outTag;
 }
 
-GMSH_API int gmsh::model::occ::addEllipseArc(const int startTag,
-                                             const int centerTag,
-                                             const int endTag, const int tag)
+GMSH_API int gmsh::model::occ::addEllipseArc(
+  const int startTag, const int centerTag, const int majorTag, const int endTag,
+  const int tag)
 {
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
   int outTag = tag;
-  if(!GModel::current()->getOCCInternals()->addEllipseArc(outTag, startTag,
-                                                          centerTag, endTag)) {
+  if(!GModel::current()->getOCCInternals()->addEllipseArc(
+       outTag, startTag, majorTag, centerTag, endTag)) {
     throw 1;
   }
   return outTag;
@@ -3904,13 +4010,14 @@ gmsh::model::occ::addSurfaceFilling(const int wireTag, const int tag,
 
 GMSH_API int
 gmsh::model::occ::addSurfaceLoop(const std::vector<int> &surfaceTags,
-                                 const int tag)
+                                 const int tag, const bool sewing)
 {
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addSurfaceLoop(outTag,
-                                                           surfaceTags)) {
+                                                           surfaceTags,
+                                                           sewing)) {
     throw 1;
   }
   return outTag;
@@ -4278,6 +4385,24 @@ GMSH_API void gmsh::model::occ::removeAllDuplicates()
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
   GModel::current()->getOCCInternals()->removeAllDuplicates();
+}
+
+GMSH_API void gmsh::model::occ::healShapes(vectorpair &outDimTags,
+                                           const vectorpair &inDimTags,
+                                           const double tolerance,
+                                           const bool fixDegenerated,
+                                           const bool fixSmallEdges,
+                                           const bool fixSmallFaces,
+                                           const bool sewFaces)
+{
+  if(!_isInitialized()) { throw -1; }
+  _createOcc();
+  outDimTags.clear();
+  if(!GModel::current()->getOCCInternals()->healShapes
+     (inDimTags, outDimTags, tolerance, fixDegenerated, fixSmallEdges,
+      fixSmallFaces, sewFaces)) {
+    throw 1;
+  }
 }
 
 GMSH_API void gmsh::model::occ::importShapes(const std::string &fileName,

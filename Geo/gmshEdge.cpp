@@ -89,6 +89,11 @@ GEntity::GeomType gmshEdge::geomType() const
   }
 }
 
+bool gmshEdge::haveParametrization()
+{
+  return geomType() != BoundaryLayerCurve;
+}
+
 std::string gmshEdge::getAdditionalInfoString(bool multline)
 {
   if(List_Nbr(c->Control_Points) > 0) {

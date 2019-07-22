@@ -108,17 +108,14 @@ private:
   void _addShapeToMaps(const TopoDS_Shape &shape);
 
   // apply various healing algorithms to try to fix the shape
-  void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixdegenerated,
-                  bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
-                  bool makesolids = false, double scaling = 0.0);
+  void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixDegenerated,
+                  bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
+                  bool makeSolids = false, double scaling = 0.0);
 
   // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
                   BRepBuilderAPI_Transform *tfo,
                   BRepBuilderAPI_GTransform *gtfo);
-
-  // add circle or ellipse arc
-  bool _addArc(int &tag, int startTag, int centerTag, int endTag, int mode);
 
   // add bspline
   bool _addBSpline(int &tag, const std::vector<int> &pointTags, int mode,
@@ -192,7 +189,8 @@ public:
   bool addCircleArc(int &tag, int startTag, int centerTag, int endTag);
   bool addCircle(int &tag, double x, double y, double z, double r,
                  double angle1, double angle2);
-  bool addEllipseArc(int &tag, int startTag, int centerTag, int endTag);
+  bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
+                     int endTag);
   bool addEllipse(int &tag, double x, double y, double z, double r1, double r2,
                   double angle1, double angle2);
   bool addSpline(int &tag, const std::vector<int> &pointTags);
@@ -213,7 +211,8 @@ public:
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>());
-  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags);
+  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
+                      bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
   bool addSphere(int &tag, double xc, double yc, double zc, double radius,
                  double angle1, double angle2, double angle3);
@@ -332,6 +331,13 @@ public:
   bool exportShapes(const std::string &fileName,
                     const std::string &format = "");
 
+  // apply various healing algorithms to try to fix the shapes
+  bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
+                  std::vector<std::pair<int, int> > &outDimTags,
+                  double tolerance, bool fixDegenerated,
+                  bool fixSmallEdges, bool fixSmallFaces,
+                  bool sewFaces);
+
   // set meshing constraints
   void setMeshSize(int dim, int tag, double size);
 
@@ -432,7 +438,8 @@ public:
   {
     return _error("add circle");
   }
-  bool addEllipseArc(int &tag, int startTag, int centerTag, int endTag)
+  bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
+                     int endTag)
   {
     return _error("add ellipse arc");
   }
@@ -486,7 +493,7 @@ public:
   {
     return _error("add surface filling");
   }
-  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags)
+  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags, bool sewing)
   {
     return _error("add surface loop");
   }
@@ -667,6 +674,14 @@ public:
   bool exportShapes(const std::string &fileName, const std::string &format = "")
   {
     return _error("export shape");
+  }
+  bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
+                  std::vector<std::pair<int, int> > &outDimTags,
+                  double tolerance, bool fixDegenerated,
+                  bool fixSmallEdges, bool fixSmallFaces,
+                  bool sewFaces)
+  {
+    return _error("heal shapes");
   }
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}

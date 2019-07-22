@@ -83,9 +83,10 @@ static inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2,
 static double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
 {
   // FIXME !!!
-  return f->geomType() == GEntity::Plane ?
-           e->length() :
-           computeEdgeLinearLength(e->p1, e->p2, f);
+  return
+    f->geomType() == GEntity::Plane ?
+    e->length() :
+    computeEdgeLinearLength(e->p1, e->p2, f);
 }
 
 static double NewGetLc(BDS_Point *point)
@@ -284,6 +285,7 @@ static bool edges_sort(std::pair<double, BDS_Edge *> a,
 
 static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
 {
+
   double u1 = e->p1->u;
   double u2 = e->p2->u;
   double v1 = e->p1->v;
@@ -295,30 +297,69 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
   double Z1 = e->p1->Z;
   double Z2 = e->p2->Z;
 
+  SPoint3 pp(0.5*(X1+X2),0.5*(Y1+Y2),0.5*(Z1+Z2));
+  double guess[2] = {0.5 * (u1 + u2),0.5 * (v1 + v2)};
+  GPoint gp = gf->closestPoint(pp,guess);
+  if(0 && gp.succeeded()){
+    SPoint3 XX1 (X1,Y1,Z1);
+    SPoint3 XX2 (X2,Y2,Z2);
+    SPoint3 MID = (XX1+XX2)*0.5;
+    SPoint3 PRJ (gp.x(),gp.y(),gp.z()); ;
+    double d1 = PRJ.distance(MID);
+    double d2 = XX1.distance(XX2);
+    // projection is close to mid...
+    if (d1 < .3*d2){
+      BDS_Point *op[2];
+      BDS_Point *p1 = e->p1;
+      BDS_Point *p2 = e->p2;
+      e->oppositeof(op);
+      double _p1[2] = {p1->u, p1->v};
+      double _p2[2] = {p2->u, p2->v};
+      double _op1[2] = {op[0]->u, op[0]->v};
+      double _op2[2] = {op[1]->u, op[1]->v};
+      double _ss[2] = {gp.u(), gp.v()};
+      double oris_ [4] =
+	{robustPredicates::orient2d(_p1,_op2, _ss),
+	 robustPredicates::orient2d(_op2,_p2, _ss),
+	 robustPredicates::orient2d(_p2,_op1, _ss),
+	 robustPredicates::orient2d(_op1,_p1, _ss)};
+      if (oris_[0]*oris_[1] > 0 && oris_[0]*oris_[2] > 0 && oris_[0]*oris_[3] > 0 && oris_[1]*oris_[2] > 0
+	  && oris_[1]*oris_[3] > 0 && oris_[2]*oris_[3] > 0){
+	//	printf("this does not suck\n");
+	u = gp.u();
+	v = gp.v();
+	return true;
+      }
+    }
+  }
+
+
   int iter = 0;
   while(1) {
     u = 0.5 * (u1 + u2);
     v = 0.5 * (v1 + v2);
     GPoint gpp = gf->point(u, v);
-    double X = gpp.x();
-    double Y = gpp.y();
-    double Z = gpp.z();
-    double l1 = std::sqrt((X - X1) * (X - X1) + (Y - Y1) * (Y - Y1) +
-                          (Z - Z1) * (Z - Z1));
-    double l2 = std::sqrt((X - X2) * (X - X2) + (Y - Y2) * (Y - Y2) +
-                          (Z - Z2) * (Z - Z2));
-    // 1 ------ p -- 2
-    if(l1 > 1.2 * l2) {
-      u2 = u;
-      v2 = v;
+    if (gpp.succeeded()){
+      double X = gpp.x();
+      double Y = gpp.y();
+      double Z = gpp.z();
+      double l1 = std::sqrt((X - X1) * (X - X1) + (Y - Y1) * (Y - Y1) +
+			    (Z - Z1) * (Z - Z1));
+      double l2 = std::sqrt((X - X2) * (X - X2) + (Y - Y2) * (Y - Y2) +
+			    (Z - Z2) * (Z - Z2));
+      // 1 ------ p -- 2
+      if(l1 > 1.2 * l2) {
+	u2 = u;
+	v2 = v;
+      }
+      else if(l2 > 1.2 * l1) {
+	u1 = u;
+	v1 = v;
+      }
+      else
+	break;
     }
-    else if(l2 > 1.2 * l1) {
-      u1 = u;
-      v1 = v;
-    }
-    else
-      break;
-    if(iter++ > 10) {
+    if(iter++ > 4) {
       u = 0.5 * (e->p1->u + e->p2->u);
       v = 0.5 * (e->p1->v + e->p2->v);
       return false;
@@ -412,7 +453,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
   std::vector<BDS_Edge *>::const_iterator it = m.edges.begin();
   while(it != m.edges.end()) {
     if(!(*it)->deleted && (*it)->numfaces() == 2 &&
-       (*it)->g->classif_degree == 2) {
+       (*it)->g && (*it)->g->classif_degree == 2) {
       double lone = NewGetLc(*it, gf);
       if(lone > MAXE_) edges.push_back(std::make_pair(-lone, *it));
     }
@@ -436,7 +477,8 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
       if(e->p2->degenerated) U2 = U1;
       double U = 0.5 * (U1 + U2);
       double V = 0.5 * (e->p1->v + e->p2->v);
-      if(faceDiscrete) middlePoint(gf, e, U, V);
+      if(faceDiscrete)
+	if (!middlePoint(gf, e, U, V))continue;
 
       GPoint gpp = gf->point(U, V);
       bool inside = true;
@@ -445,18 +487,13 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
         int N;
         if(!pointInsideParametricDomain(*true_boundary, pp, out, N)) {
           inside = false;
-          // printf("%g %g\n",e->p1->u,e->p1->v);
-          // printf("%g %g\n",e->p2->u,e->p2->v);
-          // printf("%d %d %g %g\n",e->p1->iD,e->p2->iD,U1,U2);
-          //          Msg::Info("%g %g outside of parametric domain?", pp.x(),
-          //          pp.y());
-          // FILE *f = fopen("TOTO.pos","a");
-          // fprintf(f,"SP(%g,%g,0){%d};\n",pp.x(),pp.y(),N);
-          // fclose(f);
         }
       }
       if(inside && gpp.succeeded()) {
         mid = m.add_point(++m.MAXPOINTNUMBER, gpp.x(), gpp.y(), gpp.z());
+	//	if (mid->iD == 230){
+	//	  printf("CREATE %g %g %d\n",U,V,gpp.succeeded());
+	//	}
         mid->u = U;
         mid->v = V;
         mid->lc() = 0.5 * (e->p1->lc() + e->p2->lc());
@@ -521,7 +558,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
 
   while(it != m.edges.end()) {
     if(!(*it)->deleted && (*it)->numfaces() == 2 &&
-       (*it)->g->classif_degree == 2) {
+       (*it)->g && (*it)->g->classif_degree == 2) {
       double lone = NewGetLc(*it, gf);
       if(lone < MINE_) edges.push_back(std::make_pair(lone, *it));
     }
@@ -588,7 +625,6 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q,
   //  __COUNT2=0;
   //  __COUNT3=0;
   double t1 = Cpu();
-
   for(int i = 0; i < 1; i++) {
     std::set<BDS_Point *, PointLessThan>::iterator itp = m.points.begin();
     while(itp != m.points.end()) {
@@ -606,52 +642,7 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q,
     }
   }
   t += (Cpu() - t1);
-  //  printf("%d %d %d smooth \n",__COUNT1, __COUNT2, __COUNT3);
 }
-
-/*
-static void CHECK_STRANGE(const char *c, BDS_Mesh &m)
-{
-  return;
-#if 0
-  int strange = 0;
-  for (size_t i=0;i<m.triangles.size();++i){
-    BDS_Point *pts[4];
-    m.triangles[i]->getNodes(pts);
-    double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
-    if (pts[0]->degenerated+pts[1]->degenerated+pts[2]->degenerated <= 1){
-      if (fabs(surface_triangle_param(pts[0],pts[1],pts[2]))<1.e-8){
-    strange ++;
-      }
-    }
-  }
-  if (strange) printf("strange(%s) = %d\n",c,strange);
-
-  return;
-  for (size_t int i=0;i<m.triangles.size();++i){
-    BDS_Point *pts[4];
-    m.triangles[i]->getNodes(pts);
-    if (pts[0] == pts[1] ||
-    pts[0] == pts[2] ||
-    pts[1] == pts[2]){
-      strange ++;
-    }
-  }
-
-  return;
-  strange = 0;
-  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
-  while (itp != m.points.end()){
-    if ((*itp)->g && (*itp)->g->classif_degree == 2){
-      std::vector<BDS_Face*> t = (*itp)->getTriangles();
-      if (t.size() == 2)strange++;//printf("vertex %d \n",(*itp)->iD);
-    }
-    ++itp;
-  }
-  printf("strange(%s) = %d\n",c,strange);
-#endif
-}
-*/
 
 static void
 computeNodalSizes(GFace *gf, BDS_Mesh &m,
@@ -763,12 +754,15 @@ void modifyInitialMeshToRemoveDegeneracies(
   }
 }
 
+//#define superdebug 1
+
 void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
                    const bool computeNodalSizeField,
                    std::map<MVertex *, BDS_Point *> *recoverMapInv,
                    std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap,
                    std::vector<SPoint2> *true_boundary)
 {
+  //  getchar();
   //  return;
   int IT = 0;
   int MAXNP = m.MAXPOINTNUMBER;
@@ -776,8 +770,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   // classify correctly the embedded vertices use a negative model
   // face number to avoid mesh motion
   if(recoverMapInv) {
-    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
+    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+    std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       MVertex *v = *((*itvx)->mesh_vertices.begin());
       std::map<MVertex *, BDS_Point *>::iterator itp = recoverMapInv->find(v);
@@ -824,8 +818,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     else
       setDegeneracy(deg, true);
 
-    //    printf("degeneracy %d\n",nbSplit);
-
     // we count the number of local mesh modifs.
     int nb_split = 0;
     int nb_smooth = 0;
@@ -840,30 +832,51 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     //    getchar();
     splitEdgePass(gf, m, maxE, nb_split, true_boundary, t_spl);
     if(IT == 0) {
-      //      outputScalarField(m.triangles, "split0.pos", 1, gf);
+#ifdef superdebug
+      outputScalarField(m.triangles, "split0.pos", 1, gf);
+#endif
       splitEdgePass(gf, m, maxE, nb_split, true_boundary, t_spl);
     }
-    //        outputScalarField(m.triangles, "split.pos", 1, gf);
+#ifdef superdebug
+    outputScalarField(m.triangles, "split0.pos", 0, gf);
+    outputScalarField(m.triangles, "split1.pos", 1, gf);
+#endif
     smoothVertexPass(gf, m, nb_smooth, false, .5, t_sm);
-    //        outputScalarField(m.triangles, "splitsmooth.pos", 1, gf);
+#ifdef superdebug
+    outputScalarField(m.triangles, "splitsmooth0.pos", 0, gf);
+    outputScalarField(m.triangles, "splitsmooth1.pos", 1, gf);
+#endif
 
     swapEdgePass(gf, m, nb_swap, t_sw);
     smoothVertexPass(gf, m, nb_smooth, false, .5, t_sm);
 
-    //    outputScalarField(m.triangles, "swapsmooth.pos", 1, gf);
-    //    outputScalarField(m.triangles, "swapsmoothe.pos", 0, gf);
+#ifdef superdebug
+    outputScalarField(m.triangles, "swapsmooth1.pos", 1, gf);
+    outputScalarField(m.triangles, "swapsmooth0.pos", 0, gf);
+#endif
 
     collapseEdgePass(gf, m, minE, MAXNP, nb_collaps, t_col);
-    //        outputScalarField(m.triangles, "collapse.pos", 1, gf);
+#ifdef superdebug
+    outputScalarField(m.triangles, "collapse0.pos", 0, gf);
+    outputScalarField(m.triangles, "collapse1.pos", 1, gf);
+#endif
     smoothVertexPass(gf, m, nb_smooth, false, .5, t_sm);
-    //        outputScalarField(m.triangles, "collapsemooth.pos", 1, gf);
+#ifdef superdebug
+    outputScalarField(m.triangles, "collapsemooth.pos", 1, gf);
+#endif
 
     swapEdgePass(gf, m, nb_swap, t_sw);
-    //    outputScalarField(m.triangles, "d1.pos", 1, gf);
+#ifdef superdebug
+    outputScalarField(m.triangles, "d1.pos", 1, gf);
+#endif
     smoothVertexPass(gf, m, nb_smooth, false, .5, t_sm);
-    //    outputScalarField(m.triangles, "temp0.pos", 0, gf);
-    //    outputScalarField(m.triangles, "temp1.pos", 1, gf);
-    //            getchar();
+#ifdef superdebug
+    outputScalarField(m.triangles, "temp0.pos", 0, gf);
+    outputScalarField(m.triangles, "temp1.pos", 1, gf);
+    printf("IN FULL DEBUG MODE AT ITER %d/%d : press enter\n",IT,NIT);
+    getchar();
+    printf("THANKS .. continuing\n");
+#endif
 
     // remove small edges
     if(IT == abs(NIT)) {
@@ -902,7 +915,11 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     if(nb_split == 0 && nb_collaps == 0) break;
   }
 
-  //  outputScalarField(m.triangles, "before.pos", 0, gf);
+#ifdef superdebug
+  printf("FULL DEBUG MODE : cleaning bad triangles\n");
+  outputScalarField(m.triangles, "before0.pos", 0, gf);
+  outputScalarField(m.triangles, "before1.pos", 1, gf);
+#endif
 
   int ITER = 0;
   int bad = 0;
@@ -917,7 +934,9 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     }
     double orientation = invalid > (int)m.triangles.size() / 2 ? -1.0 : 1.0;
 
-    // printf("NOW FIXING BAD ELEMENTS\n");
+#ifdef superdebug
+     printf("NOW FIXING BAD ELEMENTS\n");
+#endif
 
     while(1) {
       // printf("ITERATION %d\n",ITER);

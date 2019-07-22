@@ -295,10 +295,12 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     else {
       k = std::min(iCurve + i, NbControlPoints - 1);
     }
-    if(k < NbControlPoints)
+
+    if(k >= 0 && k < NbControlPoints){
       List_Read(Curve->Control_Points, k, &v[i]);
+    }
     else {
-      Msg::Error("Wrong control point inedx in bspline");
+      Msg::Warning("Wrong control point index in bspline");
       Vertex V;
       return V;
     }
@@ -783,51 +785,6 @@ static void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
   T->Pos.X = center.Pos.X + r * dirx;
   T->Pos.Y = center.Pos.Y + r * diry;
   T->Pos.Z = center.Pos.Z + r * dirz;
-}
-
-bool IsRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
-{
-  if(s->Typ != MSH_SURF_REGL && s->Typ != MSH_SURF_TRIC) return false;
-  if(!List_Nbr(s->Generatrices)) return false;
-
-  bool isSphere = true;
-  Vertex *O = 0;
-  Curve *C[4] = {0, 0, 0, 0};
-  for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++)
-    List_Read(s->Generatrices, i, &C[i]);
-
-  if(s->InSphereCenter) {
-    // it's on a sphere: get the center
-    O = s->InSphereCenter;
-  }
-  else {
-    // try to be intelligent (hum)
-    for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++) {
-      if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV) {
-        isSphere = false;
-      }
-      else if(isSphere) {
-        if(!i) {
-          List_Read(C[i]->Control_Points, 1, &O);
-          ((double *)center)[0] = O->Pos.X;
-          ((double *)center)[1] = O->Pos.Y;
-          ((double *)center)[2] = O->Pos.Z;
-        }
-        else {
-          Vertex *tmp;
-          List_Read(C[i]->Control_Points, 1, &tmp);
-          if(CompareVertex(&O, &tmp)) isSphere = false;
-        }
-      }
-    }
-  }
-  if(isSphere && C[0]) {
-    Vertex *p = C[0]->beg;
-    radius = std::sqrt((p->Pos.X - center.x()) + (p->Pos.Y - center.y()) +
-                       (p->Pos.Z - center.z()));
-  }
-
-  return isSphere;
 }
 
 static Vertex InterpolateRuledSurface(Surface *s, double u, double v)

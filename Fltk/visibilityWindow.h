@@ -26,6 +26,7 @@ public:
   Fl_Check_Button *butt[2];
   Fl_Button *push[2];
   Fl_Input *input[10];
+  Fl_Input *search;
 
 public:
   visibilityWindow(int deltaFontSize = 0);

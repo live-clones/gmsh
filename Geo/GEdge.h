@@ -38,9 +38,10 @@ public:
 
   std::vector<MLine *> lines;
 
-  // when a compound of edges is created, both meshes should be kept alive this
-  // is due to Gmsh's flow and it only applies to model edges
-  GEdge *compound_edge;
+  // when a compound of curves is created, both meshes should be kept alive
+  // (because the 2D meshing procedure will need to access the mesh of each of
+  // the original curves, in addition to the mesh of the compound curve)
+  GEdge *compoundCurve;
 
 public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
@@ -48,7 +49,7 @@ public:
   virtual ~GEdge();
 
   // delete mesh data
-  virtual void deleteMesh(bool onlyDeleteElements = false);
+  virtual void deleteMesh();
 
   // get the start/end vertices of the edge
   void setBeginVertex(GVertex *gv) { v0 = gv; }

@@ -20,6 +20,7 @@ set(SRC
   GModel.cpp
     GModelCreateTopologyFromMesh.cpp
     GModelVertexArrays.cpp
+    GModelParametrize.cpp
     GModelIO_GEO.cpp GModelIO_ACIS.cpp GModelIO_OCC.cpp
     GModelIO_MSH.cpp GModelIO_MSH2.cpp GModelIO_MSH3.cpp GModelIO_MSH4.cpp
     GModelIO_VTK.cpp GModelIO_CGNS.cpp GModelIO_MED.cpp GModelIO_MESH.cpp

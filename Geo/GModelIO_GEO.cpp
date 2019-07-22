@@ -647,9 +647,7 @@ bool GEO_Internals::intersectCurvesWithSurface(
   for(int i = 0; i < List_Nbr(shapes); i++) {
     Shape s;
     List_Read(shapes, i, &s);
-    if(s.Type == MSH_POINT) {
-      pointTags.push_back(s.Num);
-    }
+    if(s.Type == MSH_POINT) { pointTags.push_back(s.Num); }
     else {
       Msg::Error("Degenerated curve-surface intersection not implemented");
       return false;
@@ -1026,9 +1024,7 @@ void GEO_Internals::setRecombine(int dim, int tag, double angle)
     }
     else {
       Volume *v = FindVolume(tag);
-      if(v) {
-        v->Recombine3D = 1;
-      }
+      if(v) { v->Recombine3D = 1; }
     }
   }
   _changed = true;
@@ -1233,8 +1229,7 @@ void GEO_Internals::synchronize(GModel *model)
   // delete all physical groups before sync only if there is no mesh (if there
   // is a mesh, it could have been loaded from a file with physical groups - we
   // don't want to remove those)
-  if(!model->getNumMeshElements())
-    model->removePhysicalGroups();
+  if(!model->getNumMeshElements()) model->removePhysicalGroups();
   // we might want to store physical groups directly in GModel; but I guess this
   // is OK for now:
   for(int i = 0; i < List_Nbr(PhysicalGroups); i++) {
@@ -1262,8 +1257,7 @@ void GEO_Internals::synchronize(GModel *model)
 
   // we might want to store mesh compounds directly in GModel; but this is OK
   // for now.
-  for(std::multimap<int, std::vector<int> >::iterator it =
-        _meshCompounds.begin();
+  for(std::multimap<int, std::vector<int> >::iterator it = _meshCompounds.begin();
       it != _meshCompounds.end(); ++it) {
     int dim = it->first;
     std::vector<int> compound = it->second;
@@ -1279,9 +1273,7 @@ void GEO_Internals::synchronize(GModel *model)
       }
       if(ent) ents.push_back(ent);
     }
-    for(std::size_t i = 0; i < ents.size(); i++) {
-      ents[i]->_compound = ents;
-    }
+    for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->compound = ents; }
   }
 
   // recompute global boundind box in CTX
@@ -1571,6 +1563,11 @@ int GModel::exportDiscreteGEOInternals()
       List_T *points = Tree2List(_geo_internals->Points);
       GVertex *gvb = (*it)->getBeginVertex();
       GVertex *gve = (*it)->getEndVertex();
+
+      if(!gvb || !gve) {
+        Msg::Error("Discrete curve %d has NULL endpoint(s): %p %p",
+                   (*it)->tag(), gvb, gve);
+      }
       int nb = 2;
       c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
       for(int i = 0; i < List_Nbr(points); i++) {
@@ -1603,9 +1600,7 @@ int GModel::exportDiscreteGEOInternals()
           ite != edges.end(); ite++) {
         for(int i = 0; i < List_Nbr(curves); i++) {
           List_Read(curves, i, &c);
-          if(c->Num == (*ite)->tag()) {
-            List_Add(s->Generatrices, &c);
-          }
+          if(c->Num == (*ite)->tag()) { List_Add(s->Generatrices, &c); }
         }
       }
       Tree_Add(_geo_internals->Surfaces, &s);

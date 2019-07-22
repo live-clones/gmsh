@@ -100,7 +100,7 @@ def _ovectorvectorint(ptr, size, n):
     return v
 
 def _ovectorvectorsize(ptr, size, n):
-    v = [_ovectorint(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
+    v = [_ovectorsize(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
     lib.gmshFree(size)
     lib.gmshFree(ptr)
     return v
@@ -1316,6 +1316,19 @@ class model:
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
+        def clear():
+            """
+            Clear the mesh, i.e. delete all the nodes and elements.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshClear(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshClear returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True):
             """
             Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
@@ -1350,6 +1363,35 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshGetNodes returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+
+        @staticmethod
+        def getNodesByElementType(elementType, tag=-1, returnParametricCoord=True):
+            """
+            Get the nodes classified on the entity of tag `tag', for all the elements
+            of type `elementType'. The other arguments are treated as in `getNodes'.
+
+            Return `nodeTags', `coord', `parametricCoord'.
+            """
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetNodesByElementType(
+                c_int(elementType),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+                c_int(tag),
+                c_int(bool(returnParametricCoord)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNodesByElementType returned non-zero error code: ",
                     ierr.value)
             return (
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
@@ -1426,10 +1468,10 @@ class model:
                 _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
-        def setNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
+        def addNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
             """
-            Set the nodes classified on the model entity of dimension `dim' and tag
-            `tag'. `nodeTags' contains the node tags (their unique, strictly positive
+            Add nodes classified on the model entity of dimension `dim' and tag `tag'.
+            `nodeTags' contains the node tags (their unique, strictly positive
             identification numbers). `coord' is a vector of length 3 times the length
             of `nodeTags' that contains the x, y, z coordinates of the nodes,
             concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
@@ -1442,7 +1484,7 @@ class model:
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
             ierr = c_int()
-            lib.gmshModelMeshSetNodes(
+            lib.gmshModelMeshAddNodes(
                 c_int(dim),
                 c_int(tag),
                 api_nodeTags_, api_nodeTags_n_,
@@ -1451,7 +1493,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetNodes returned non-zero error code: ",
+                    "gmshModelMeshAddNodes returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -1649,16 +1691,16 @@ class model:
             """
             Get the properties of an element of type `elementType': its name
             (`elementName'), dimension (`dim'), order (`order'), number of nodes
-            (`numNodes') and parametric node coordinates (`parametricCoord' vector, of
-            length `dim' times `numNodes').
+            (`numNodes') and coordinates of the nodes in the reference element
+            (`nodeCoord' vector, of length `dim' times `numNodes').
 
-            Return `elementName', `dim', `order', `numNodes', `parametricCoord'.
+            Return `elementName', `dim', `order', `numNodes', `nodeCoord'.
             """
             api_elementName_ = c_char_p()
             api_dim_ = c_int()
             api_order_ = c_int()
             api_numNodes_ = c_int()
-            api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            api_nodeCoord_, api_nodeCoord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElementProperties(
                 c_int(elementType),
@@ -1666,7 +1708,7 @@ class model:
                 byref(api_dim_),
                 byref(api_order_),
                 byref(api_numNodes_),
-                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+                byref(api_nodeCoord_), byref(api_nodeCoord_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1677,7 +1719,7 @@ class model:
                 api_dim_.value,
                 api_order_.value,
                 api_numNodes_.value,
-                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+                _ovectordouble(api_nodeCoord_, api_nodeCoord_n_.value))
 
         @staticmethod
         def getElementsByType(elementType, tag=-1, task=0, numTasks=1):
@@ -1714,23 +1756,24 @@ class model:
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
-        def setElements(dim, tag, elementTypes, elementTags, nodeTags):
+        def addElements(dim, tag, elementTypes, elementTags, nodeTags):
             """
-            Set the elements of the entity of dimension `dim' and tag `tag'. `types'
-            contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-            the Gmsh reference manual). `elementTags' is a vector of the same length as
-            `types'; each entry is a vector containing the tags (unique, strictly
-            positive identifiers) of the elements of the corresponding type. `nodeTags'
-            is also a vector of the same length as `types'; each entry is a vector of
-            length equal to the number of elements of the given type times the number N
-            of nodes per element, that contains the node tags of all the elements of
-            the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+            Add elements classified on the entity of dimension `dim' and tag `tag'.
+            `types' contains the MSH types of the elements (e.g. `2' for 3-node
+            triangles: see the Gmsh reference manual). `elementTags' is a vector of the
+            same length as `types'; each entry is a vector containing the tags (unique,
+            strictly positive identifiers) of the elements of the corresponding type.
+            `nodeTags' is also a vector of the same length as `types'; each entry is a
+            vector of length equal to the number of elements of the given type times
+            the number N of nodes per element, that contains the node tags of all the
+            elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
+            ...].
             """
             api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorsize(elementTags)
             api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = _ivectorvectorsize(nodeTags)
             ierr = c_int()
-            lib.gmshModelMeshSetElements(
+            lib.gmshModelMeshAddElements(
                 c_int(dim),
                 c_int(tag),
                 api_elementTypes_, api_elementTypes_n_,
@@ -1739,13 +1782,13 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetElements returned non-zero error code: ",
+                    "gmshModelMeshAddElements returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def setElementsByType(tag, elementType, elementTags, nodeTags):
+        def addElementsByType(tag, elementType, elementTags, nodeTags):
             """
-            Set the elements of type `elementType' in the entity of tag `tag'.
+            Add elements of type `elementType' classified on the entity of tag `tag'.
             `elementTags' contains the tags (unique, strictly positive identifiers) of
             the elements of the corresponding type. `nodeTags' is a vector of length
             equal to the number of elements times the number N of nodes per element,
@@ -1756,7 +1799,7 @@ class model:
             api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             ierr = c_int()
-            lib.gmshModelMeshSetElementsByType(
+            lib.gmshModelMeshAddElementsByType(
                 c_int(tag),
                 c_int(elementType),
                 api_elementTags_, api_elementTags_n_,
@@ -1764,7 +1807,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetElementsByType returned non-zero error code: ",
+                    "gmshModelMeshAddElementsByType returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -1805,14 +1848,14 @@ class model:
             [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with
             elements in the same order as in `getElements' and `getElementsByType'.
             `jacobians' contains for each element the 9 entries of the 3x3 Jacobian
-            matrix at each integration point, by row: [e1g1Jxu, e1g1Jxv, e1g1Jxw,
-            e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
-            Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each element the
-            determinant of the Jacobian matrix at each integration point: [e1g1, e1g2,
-            ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z
-            coordinates of the integration points. If `tag' < 0, get the Jacobian data
-            for all entities. If `numTasks' > 1, only compute and return the part of
-            the data indexed by `task'.
+            matrix at each integration point. The matrix is returned by column:
+            [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw,
+            e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for
+            each element the determinant of the Jacobian matrix at each integration
+            point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each
+            element the x, y, z coordinates of the integration points. If `tag' < 0,
+            get the Jacobian data for all entities. If `numTasks' > 1, only compute and
+            return the part of the data indexed by `task'.
 
             Return `jacobians', `determinants', `points'.
             """
@@ -2254,8 +2297,11 @@ class model:
         @staticmethod
         def embed(dim, tags, inDim, inTag):
             """
-            Embed the model entities of dimension `dim' and tags `tags' in the (inDim,
-            inTag) model entity. `inDim' must be strictly greater than `dim'.
+            Embed the model entities of dimension `dim' and tags `tags' in the
+            (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must
+            be strictly smaller than `inDim', which must be either 2 or 3. The embedded
+            entities should not be part of the boundary of the entity `inTag', whose
+            mesh will conform to the mesh of the embedded entities.
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             ierr = c_int()
@@ -2273,9 +2319,9 @@ class model:
         @staticmethod
         def removeEmbedded(dimTags, dim=-1):
             """
-            Remove embedded entities in the model entities `dimTags'. if `dim' is >= 0,
-            only remove embedded entities of the given dimension (e.g. embedded points
-            if `dim' == 0).
+            Remove embedded entities from the model entities `dimTags'. if `dim' is >=
+            0, only remove embedded entities of the given dimension (e.g. embedded
+            points if `dim' == 0).
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2417,17 +2463,19 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def classifySurfaces(angle, boundary=True):
+        def classifySurfaces(angle, boundary=True, forReparametrization=False):
             """
             Classify ("color") the surface mesh based on the angle threshold `angle'
-            (in radians), and create discrete curves accordingly. If `boundary' is set,
-            also create discrete curves on the boundary if the surface is open.
-            Warning: this is an experimental feature.
+            (in radians), and create new discrete surfaces, curves and points
+            accordingly. If `boundary' is set, also create discrete curves on the
+            boundary if the surface is open. If `forReparametrization' is set, create
+            edges and surfaces that can be reparametrized using a single map.
             """
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
                 c_double(angle),
                 c_int(bool(boundary)),
+                c_int(bool(forReparametrization)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -2435,27 +2483,11 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def createTopology():
-            """
-            Create a boundary representation from the mesh if the model does not have
-            one (e.g. when imported from mesh file formats with no BRep representation
-            of the underlying model). Warning: this is an experimental feature.
-            """
-            ierr = c_int()
-            lib.gmshModelMeshCreateTopology(
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshCreateTopology returned non-zero error code: ",
-                    ierr.value)
-
-        @staticmethod
         def createGeometry():
             """
-            Create a parametrization for curves and surfaces that do not have one (i.e.
-            discrete curves and surfaces represented solely by meshes, without an
-            underlying CAD description). `createGeometry' automatically calls
-            `createTopology'. Warning: this is an experimental feature.
+            Create a parametrization for discrete curves and surfaces (i.e. curves and
+            surfaces represented solely by a mesh, without an underlying CAD
+            description), assuming that each can be parametrized with a single map.
             """
             ierr = c_int()
             lib.gmshModelMeshCreateGeometry(
@@ -2463,6 +2495,21 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshCreateGeometry returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def createTopology():
+            """
+            Create a boundary representation from the mesh if the model does not have
+            one (e.g. when imported from mesh file formats with no BRep representation
+            of the underlying model).
+            """
+            ierr = c_int()
+            lib.gmshModelMeshCreateTopology(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshCreateTopology returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -2718,7 +2765,7 @@ class model:
         def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
             """
             Add an ellipse arc (strictly smaller than Pi) between the two points
-            `startTag' and `endTag', with center `centertag' and major axis point
+            `startTag' and `endTag', with center `centerTag' and major axis point
             `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
             tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly
             set the plane of the circle arc. Return the tag of the ellipse arc.
@@ -2957,11 +3004,11 @@ class model:
             """
             Extrude the model entities `dimTags' by rotation of `angle' radians around
             the axis of revolution defined by the point (`x', `y', `z') and the
-            direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
-            `numElements' is not empty, also extrude the mesh: the entries in
-            `numElements' give the number of elements in each layer. If `height' is not
-            empty, it provides the (cumulative) height of the different layers,
-            normalized to 1.
+            direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi.
+            Return extruded entities in `outDimTags'. If `numElements' is not empty,
+            also extrude the mesh: the entries in `numElements' give the number of
+            elements in each layer. If `height' is not empty, it provides the
+            (cumulative) height of the different layers, normalized to 1.
 
             Return `outDimTags'.
             """
@@ -2996,10 +3043,11 @@ class model:
             Extrude the model entities `dimTags' by a combined translation and rotation
             of `angle' radians, along (`dx', `dy', `dz') and around the axis of
             revolution defined by the point (`x', `y', `z') and the direction (`ax',
-            `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is
-            not empty, also extrude the mesh: the entries in `numElements' give the
-            number of elements in each layer. If `height' is not empty, it provides the
-            (cumulative) height of the different layers, normalized to 1.
+            `ay', `az'). The angle should be strictly smaller than Pi. Return extruded
+            entities in `outDimTags'. If `numElements' is not empty, also extrude the
+            mesh: the entries in `numElements' give the number of elements in each
+            layer. If `height' is not empty, it provides the (cumulative) height of the
+            different layers, normalized to 1.
 
             Return `outDimTags'.
             """
@@ -3425,12 +3473,13 @@ class model:
             return api__result__
 
         @staticmethod
-        def addEllipseArc(startTag, centerTag, endTag, tag=-1):
+        def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1):
             """
-            Add an ellipse arc between the two points with tags `startTag' and
-            `endTag', with center `centerTag'. If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. Return the tag
-            of the ellipse arc.
+            Add an ellipse arc between the two points `startTag' and `endTag', with
+            center `centerTag' and major axis point `majorTag'. If `tag' is positive,
+            set the tag explicitly; otherwise a new tag is selected automatically.
+            Return the tag of the ellipse arc. Note that OpenCASCADE does not allow
+            creating ellipse arcs with the major radius smaller than the minor radius.
 
             Return an integer value.
             """
@@ -3438,6 +3487,7 @@ class model:
             api__result__ = lib.gmshModelOccAddEllipseArc(
                 c_int(startTag),
                 c_int(centerTag),
+                c_int(majorTag),
                 c_int(endTag),
                 c_int(tag),
                 byref(ierr))
@@ -3454,7 +3504,10 @@ class model:
             x- and y-axes respectively. If `tag' is positive, set the tag explicitly;
             otherwise a new tag is selected automatically. If `angle1' and `angle2' are
             specified, create an ellipse arc between the two angles. Return the tag of
-            the ellipse.
+            the ellipse. Note that OpenCASCADE does not allow creating ellipses with
+            the major radius (along the x-axis) smaller than or equal to the minor
+            radius (along the y-axis): rotate the shape or use `addCircle' in such
+            cases.
 
             Return an integer value.
             """
@@ -3552,11 +3605,11 @@ class model:
         @staticmethod
         def addWire(curveTags, tag=-1, checkClosed=False):
             """
-            Add a wire (open or closed) formed by the curves `curveTags'. `curveTags'
-            should contain (signed) tags: a negative tag signifies that the underlying
-            curve is considered with reversed orientation. If `tag' is positive, set
-            the tag explicitly; otherwise a new tag is selected automatically. Return
-            the tag of the wire.
+            Add a wire (open or closed) formed by the curves `curveTags'. Note that an
+            OpenCASCADE wire can be made of curves that share geometrically identical
+            (but topologically different) points. If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. Return the tag
+            of the wire.
 
             Return an integer value.
             """
@@ -3577,9 +3630,11 @@ class model:
         def addCurveLoop(curveTags, tag=-1):
             """
             Add a curve loop (a closed wire) formed by the curves `curveTags'.
-            `curveTags' should contain tags of curves forming a closed loop. If `tag'
-            is positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Return the tag of the curve loop.
+            `curveTags' should contain tags of curves forming a closed loop. Note that
+            an OpenCASCADE curve loop can be made of curves that share geometrically
+            identical (but topologically different) points. If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the curve loop.
 
             Return an integer value.
             """
@@ -3692,11 +3747,13 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceLoop(surfaceTags, tag=-1):
+        def addSurfaceLoop(surfaceTags, tag=-1, sewing=False):
             """
             Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
             positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Return the tag of the surface loop.
+            automatically. Return the tag of the surface loop. Setting `sewing' allows
+            to build a shell made of surfaces that share geometrically identical (but
+            topologically different) curves.
 
             Return an integer value.
             """
@@ -3705,6 +3762,7 @@ class model:
             api__result__ = lib.gmshModelOccAddSurfaceLoop(
                 api_surfaceTags_, api_surfaceTags_n_,
                 c_int(tag),
+                c_int(bool(sewing)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -3999,7 +4057,8 @@ class model:
             `numElements' is not empty, also extrude the mesh: the entries in
             `numElements' give the number of elements in each layer. If `height' is not
             empty, it provides the (cumulative) height of the different layers,
-            normalized to 1.
+            normalized to 1. When the mesh is extruded the angle should be strictly
+            smaller than 2*Pi.
 
             Return `outDimTags'.
             """
@@ -4401,6 +4460,34 @@ class model:
                 raise ValueError(
                     "gmshModelOccRemoveAllDuplicates returned non-zero error code: ",
                     ierr.value)
+
+        @staticmethod
+        def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True):
+            """
+            Apply various healing procedures to the entities `dimTags' (or to all the
+            entities in the model if `dimTags' is empty). Return the healed entities in
+            `outDimTags'. Available healing options are listed in the Gmsh reference
+            manual.
+
+            Return `outDimTags'.
+            """
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelOccHealShapes(
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                api_dimTags_, api_dimTags_n_,
+                c_double(tolerance),
+                c_int(bool(fixDegenerated)),
+                c_int(bool(fixSmallEdges)),
+                c_int(bool(fixSmallFaces)),
+                c_int(bool(sewFaces)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccHealShapes returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
         def importShapes(fileName, highestDimOnly=True, format=""):

@@ -105,10 +105,10 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
   double const det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 
   // TOLERANCE ! WARNING WARNING
-  if(norm == 0.0 || std::abs(det) / norm < 1.e-12) {
+  if(norm == 0.0 || std::abs(det) / norm < 1.e-16) {
     //    if(norm)
     //      Msg::Debug("Assuming 2x2 matrix is singular (det/norm == %.16g)",
-    //                 std::abs(det) / norm);
+    //		 std::abs(det) / norm);
     res[0] = res[1] = 0.0;
     return 0;
   }
@@ -1566,22 +1566,30 @@ bool catenary(double x0, double x1, double y0, double y1, double ys, int N,
   // ys - 1/b + 1/b cosh(b(x1-c)) - y1 = 0
   double param[5] = {x0, x1, y0, y1, ys};
   fullVector<double> x(2);
-  bool success = false;
+  bool success = false, physical = true;
+  double tolx = 1e-6 * fabs(x1 - x0);
+  double toly = 1e-6 * fabs(std::max(y0, y1) - ys);
   if(x0 != x1) {
     x(0) = 1. / (x1 - x0);
     x(1) = (x0 + x1) / 2.;
-    success = newton_fd(catenary_fct, x, param, 1., 1e-6 * fabs(x1 - x0));
+    success = newton_fd(catenary_fct, x, param, 1, tolx);
   }
   if(success) {
     double a = ys - 1 / x(0);
     for(int i = 0; i < N; i++) {
       double r = x0 + (i + 1) * (x1 - x0) / (N + 1);
       yp[i] = a + 1 / x(0) * cosh(x(0) * (r - x(1)));
+      if(yp[i] > std::max(y0, y1) + toly || yp[i] < ys - toly){
+        physical = false;
+        break;
+      }
     }
-    return true;
   }
-  else {
-    for(int i = 0; i < N; i++) { yp[i] = y0 + (i + 1) * (y1 - y0) / (N + 1); }
-    return false;
+  if(physical) return true;
+
+  // could not solve: return linear interpolation
+  for(int i = 0; i < N; i++) {
+    yp[i] = y0 + (i + 1) * (y1 - y0) / (N + 1);
   }
+  return false;
 }

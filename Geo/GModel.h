@@ -112,6 +112,9 @@ protected:
   // an octree for fast mesh element lookup
   MElementOctree *_elementOctree;
 
+  // global cache storage of discrete curvatures
+  std::map<MVertex *, std::pair<SVector3, SVector3> > _curvatures;
+
   // Geo (Gmsh native) model internal data
   GEO_Internals *_geo_internals;
   // OpenCascade model internal data
@@ -253,7 +256,9 @@ public:
   // mesh is changed)
   void destroyMeshCaches();
   // delete the mesh stored in entities and call destroMeshCaches
-  void deleteMesh(bool onlyDeleteElements = false);
+  void deleteMesh();
+  // delete the vertex arrays used for efficient mesh drawing
+  void deleteVertexArrays();
 
   // remove all mesh vertex associations to geometrical entities and remove
   // vertices from geometrical entities, then _associateEntityWithMeshVertices
@@ -563,6 +568,9 @@ public:
   // mesh the model
   int mesh(int dimension);
 
+  // adapt 3d mesh
+  int adaptMesh();
+
   // adapt the mesh anisotropically using metrics that are computed from a set
   // of functions f(x,y,z). The algorithm first generate a mesh if no one is
   // available; see the cpp for parameter documentation
@@ -581,7 +589,7 @@ public:
   int setOrderN(int order, int linear, int incomplete);
 
   // refine the mesh by splitting all elements
-  int refineMesh(int linear);
+  int refineMesh(int linear, bool barycentric = false);
 
   // optimize the mesh
   int optimizeMesh(const std::string &how);
@@ -596,8 +604,8 @@ public:
   bool fillVertexArrays();
 
   // reclassify a surface mesh, using an angle threshold to tag edges and faces
-  void classifyAllFaces(double angleThreshold, bool includeBoundary);
-  void classifyFaces(std::set<GFace *> &_faces);
+  void classifySurfaces(double angleThreshold, bool includeBoundary,
+                        bool forReparametrization);
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements
@@ -614,6 +622,12 @@ public:
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
   void computeHomology();
+
+  // access global cache of discrete curvatures
+  std::map<MVertex *, std::pair<SVector3, SVector3> > &getCurvatures()
+  {
+    return _curvatures;
+  }
 
   // "automatic" IO based on Gmsh global functions
   void load(const std::string &fileName);

@@ -17,8 +17,7 @@ Parameters:@*
 @*
 - ICNMeasure = @{0, 1@}@*
 @*
-- HidingThreshold = [0, 1]: Hides all element for which min(mu) is strictly greater than the threshold, where mu is the ICN if ICN measure == 1, otherwise mu is the IGE it IGE measure == 1, otherwise mu is the Jacobian determinant.@*
-If threshold == 0, hides all elements except invalid.@*
+- HidingThreshold = [0, 1]: Hides all element for which min(mu) is strictly greater than the threshold, where mu is ICN ifICNMeasure == 1, otherwise it is IGE if IGEMeasure == 1. If ICNMeasure == IGEMeasure == 0, nothing happens. If threshold == 0, hides all elements except invalid.@*
 @*
 - DrawPView = @{0, 1@}: Creates a PView of min(J)/max(J), min(IGE) and/or min(ICN) according to what is asked. If 'Recompute' = 1, new PViews are created.@*
 @*
@@ -89,6 +88,28 @@ Numeric options:
 @table @code
 @item ShrinkFactor
 Default value: @code{0}
+@end table
+
+@item Plugin(CVTRemesh)
+Plugin(CVTRemesh) triangulates an input geometry usingcentroïdal Voronoï tesselations. The STL mesh of the geometryis generated and randomly sampled. An objective function derivedfrom centroïdal Voronoï tesselations is then defined on thegenerated sampling, and optimized through LBFGS to obtain aregular sampling of the surface. The triangulation is extractedas the restricted Delaunay triangulation of the samples and theSTL mesh.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
+Plugin(Triangulate) creates one new view.
+Numeric options:
+@table @code
+@item Sites
+Default value: @code{20000}
+@item Iterations
+Default value: @code{20}
+@item Anisotropy
+Default value: @code{0.03}
+@item Variable density
+Default value: @code{0.3}
+@item Feature sensitivity
+Default value: @code{5}
+@item Normal computation radius
+Default value: @code{0.005}
 @end table
 
 @item Plugin(Crack)

@@ -53,6 +53,7 @@
 #cmakedefine HAVE_OPENGL
 #cmakedefine HAVE_OPTHOM
 #cmakedefine HAVE_OSMESA
+#cmakedefine HAVE_P4EST
 #cmakedefine HAVE_PARSER
 #cmakedefine HAVE_PETSC
 #cmakedefine HAVE_PETSC4PY
@@ -67,6 +68,7 @@
 #cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGENBR
+#cmakedefine HAVE_TOUCHBAR
 #cmakedefine HAVE_VISUDEV
 #cmakedefine HAVE_VOROPP
 #cmakedefine HAVE_ZIPPER

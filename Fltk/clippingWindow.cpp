@@ -195,8 +195,6 @@ clippingWindow::clippingWindow(int deltaFontSize)
   browser = new Fl_Multi_Browser(0, 0, L, height);
   browser->callback(clip_update_cb);
   browser->box(GMSH_SIMPLE_RIGHT_BOX);
-  browser->scrollbar_size(
-    std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
 
   Fl_Tabs *o =
     new Fl_Tabs(L + WB, WB, width - L - 2 * WB, height - 3 * WB - 4 * BH);
@@ -311,7 +309,7 @@ void clippingWindow::resetBrowser()
     plane[j]->value(CTX::instance()->clipPlane[idx][j]);
 
   for(int j = 0; j < 3; j++) {
-    plane[j]->step(0.01);
+    if(CTX::instance()->inputScrolling) plane[j]->step(0.01);
     plane[j]->minimum(-1.0);
     plane[j]->maximum(1.0);
   }
@@ -321,14 +319,14 @@ void clippingWindow::resetBrowser()
                                    fabs(CTX::instance()->max[i])));
   val1 *= 1.5;
 
-  plane[3]->step(val1 / 200., 1);
+  if(CTX::instance()->inputScrolling) plane[3]->step(val1 / 200., 1);
   plane[3]->minimum(-val1);
   plane[3]->maximum(val1);
 
   fillBoxValuesFromPlaneValues();
 
   for(int i = 0; i < 6; i++) {
-    box[i]->step(val1 / 200., 1);
+    if(CTX::instance()->inputScrolling) box[i]->step(val1 / 200., 1);
     box[i]->minimum(-val1);
     box[i]->maximum(val1);
   }

@@ -255,7 +255,7 @@ public:
   }
   virtual int getTypeForMSH() const
   {
-    switch(_vs.size()){
+    switch(_vs.size()) {
     case 0: return MSH_LIN_2;
     case 1: return MSH_LIN_3;
     case 2: return MSH_LIN_4;
@@ -292,6 +292,14 @@ struct compareMLinePtr {
   bool operator()(MLine *l1, MLine *l2) const
   {
     static Less_Edge le;
+    return le(l1->getEdge(0), l2->getEdge(0));
+  }
+};
+
+struct equalMLinePtr {
+  bool operator()(MLine *l1, MLine *l2) const
+  {
+    static Equal_Edge le;
     return le(l1->getEdge(0), l2->getEdge(0));
   }
 };

@@ -8,6 +8,10 @@
 
 #include "FlGui.h"
 #include <algorithm>
+#include <string>
+#if __cplusplus >= 201103L
+#include <regex>
+#endif
 
 class messageBrowser : public Fl_Group {
 private:
@@ -30,7 +34,11 @@ public:
     _box->box(GMSH_SIMPLE_TOP_BOX);
 
     Fl_Group *o = new Fl_Group(x + wb, y + wb, sw, bh);
+#if __cplusplus >= 201103L
+    o->tooltip("Filter messages using regular expression");
+#else
     o->tooltip("Filter messages");
+#endif
     o->box(FL_THIN_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
     _search = new Fl_Input(x + wb + bh, y + wb + 2, sw - bh - 2, bh - 4,
@@ -60,10 +68,12 @@ public:
 
     _browser = new Fl_Browser(x, y + bh + 2 * wb, w, h - bh - 2 * wb, l);
     _browser->box(GMSH_SIMPLE_TOP_BOX);
+#if defined(WIN32) // FL_SCREEN seems to be too tiny on most Windows setups
+    _browser->textfont(FL_COURIER);
+#else
     _browser->textfont(FL_SCREEN);
+#endif
     _browser->type(FL_MULTI_BROWSER);
-    _browser->scrollbar_size(
-      std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
     _browser->end();
     end();
     resizable(_browser);
@@ -89,10 +99,21 @@ public:
       _browser->add(newtext);
     }
     else {
-      std::transform(search.begin(), search.end(), search.begin(), ::tolower);
       std::string tmp(newtext);
+#if __cplusplus >= 201103L
+      try{
+        // icase for case-insensitive search
+        if(std::regex_search(tmp, std::regex(search, std::regex_constants::icase)))
+          _browser->add(newtext);
+      }
+      catch(...) {
+      }
+#else
+      std::transform(search.begin(), search.end(), search.begin(), ::tolower);
       std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
-      if(tmp.find(search) != std::string::npos) _browser->add(newtext);
+      if(tmp.find(search) != std::string::npos)
+        _browser->add(newtext);
+#endif
     }
   }
   void clear() { _browser->clear(); }

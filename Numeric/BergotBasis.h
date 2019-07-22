@@ -19,12 +19,6 @@ public:
   BergotBasis(int p, bool incpl = false);
   virtual ~BergotBasis();
 
-  int size() const
-  {
-    const int n = order + 1;
-    return n * (n + 1) * (2 * n + 1) / 6;
-  }
-
   void f(double u, double v, double w, double *val) const;
   void df(double u, double v, double w, double grads[][3]) const;
 

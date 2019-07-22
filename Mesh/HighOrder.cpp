@@ -406,11 +406,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
                             edgeContainer &edgeVertices, bool linear,
                             int nPts = 1)
 {
-  if(ge->geomType() == GEntity::DiscreteCurve ||
-     ge->geomType() == GEntity::BoundaryLayerCurve ||
-     ge->geomType() == GEntity::CompoundCurve ||
-     ge->geomType() == GEntity::PartitionCurve)
-    linear = true;
+  if(!ge->haveParametrization()) linear = true;
 
   std::vector<MVertex *> veOld;
   ele->getVertices(veOld);
@@ -447,11 +443,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
                             edgeContainer &edgeVertices, bool linear,
                             int nPts = 1)
 {
-  if(gf->geomType() == GEntity::DiscreteSurface ||
-     gf->geomType() == GEntity::BoundaryLayerSurface ||
-     gf->geomType() == GEntity::CompoundSurface ||
-     gf->geomType() == GEntity::PartitionSurface)
-    linear = true;
+  if(!gf->haveParametrization()) linear = true;
 
   for(int i = 0; i < ele->getNumEdges(); i++) {
     std::vector<MVertex *> veOld;
@@ -753,10 +745,7 @@ static void getFaceVertices(GFace *gf, MElement *ele,
                             faceContainer &faceVertices, bool linear,
                             int nPts = 1)
 {
-  if(gf->geomType() == GEntity::DiscreteSurface ||
-     gf->geomType() == GEntity::BoundaryLayerSurface ||
-     gf->geomType() == GEntity::CompoundSurface)
-    linear = true;
+  if(!gf->haveParametrization()) linear = true;
 
   std::vector<MVertex *> boundaryVertices;
   {
@@ -1535,8 +1524,8 @@ void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
   for(GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
     if((*itr)->getNumMeshElements()) {
       meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder();
-      //      complete = (meshOrder <= 2) ? 1 :
-      //      (*itr)->getMeshElement(0)->getNumVolumeVertices();
+      // complete = (meshOrder <= 2) ? 1 :
+      //   (*itr)->getMeshElement(0)->getNumVolumeVertices();
       break;
     }
   }
@@ -1544,9 +1533,9 @@ void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
     if((*itf)->getNumMeshElements()) {
       if(meshOrder == -1) {
         meshOrder = (*itf)->getMeshElement(0)->getPolynomialOrder();
-        //        complete = (meshOrder <= 2) ? 1 :
-        //        (*itf)->getMeshElement(0)->getNumFaceVertices();
-        if((*itf)->geomType() == GEntity::DiscreteSurface) CAD = false;
+        // complete = (meshOrder <= 2) ? 1 :
+        //   (*itf)->getMeshElement(0)->getNumFaceVertices();
+        // if((*itf)->geomType() == GEntity::DiscreteSurface) CAD = false;
         break;
       }
     }

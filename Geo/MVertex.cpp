@@ -364,9 +364,8 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
   }
   else {
     // large field format (8 char first/last field, 16 char middle, 6 per line)
-    fprintf(fp, "GRID*   %-16ld%-16d%-16.9G%-16.9G*N%-6ld\n", _index, 0, x1, y1,
-            _index);
-    fprintf(fp, "*N%-6ld%-16.9G\n", _index, z1);
+    fprintf(fp, "GRID*   %-16ld%-16d%-16.9G%-16.9G\n", _index, 0, x1, y1);
+    fprintf(fp, "*       %-16.9G\n", z1);
   }
 }
 
@@ -524,6 +523,12 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
 bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
+  if(!v->onWhat()){
+    Msg::Error("Mesh node %d is not classified: cannot reparametrize",
+               v->getNum());
+    return false;
+  }
+
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve) {
     param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);

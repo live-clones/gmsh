@@ -344,7 +344,7 @@ int GModel::writeBDF(const std::string &name, int format, int elementTagType,
 
   if(noPhysicalGroups()) saveAll = true;
 
-  indexMeshVertices(saveAll);
+  indexMeshVertices(saveAll, 0, false);
 
   fprintf(fp, "$ Created by Gmsh\n");
 

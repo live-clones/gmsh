@@ -33,6 +33,7 @@ struct contextMeshOptions {
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
   int meshOnlyVisible, minCircPoints, minCurvPoints;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
+  int hoDistCAD;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   std::map<int, int> algo2dPerFace;
   std::map<int, int> curvatureControlPerFace;
@@ -40,7 +41,7 @@ struct contextMeshOptions {
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
-  int renumber;
+  int renumber, compoundClassify;
   // mesh IO
   int fileFormat;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
@@ -88,7 +89,7 @@ struct contextGeometryOptions {
   int matchGeomAndMesh;
   double matchMeshScaleFactor;
   double matchMeshTolerance;
-  int hideCompounds, orientedPhysicals;
+  int orientedPhysicals;
   int reparamOnFaceRobust;
   // geometry display
   int draw, light, lightTwoSide, points, curves, surfaces, volumes;
@@ -149,6 +150,8 @@ public:
   std::string watchFilePattern;
   // show tootips in the GUI?
   int tooltips;
+  // enable input field scrolling (moving the mouse to change numbers)
+  int inputScrolling;
   // position and size of various windows in the GUI
   int glPosition[2], glSize[2], msgSize, menuPosition[2], menuSize[2],
     detachedMenu;
@@ -169,8 +172,8 @@ public:
   int batch;
   // batch operations to apply after meshing (1: partition mesh)
   int batchAfterMesh;
-  // mesh discrete faces / edges
-  int meshDiscrete;
+  // some option for batch processing
+  double batchSomeValue;
   // initial menu (0: automatic, 1: geom, 2: mesh, 3: solver, 4: post)
   int initialContext;
   // show some windows on startup?

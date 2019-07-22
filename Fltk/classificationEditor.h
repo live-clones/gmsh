@@ -26,16 +26,16 @@
 #define CLASS_TOGGLE_HIDE 0
 #define CLASS_TOGGLE_BOUNDARY 1
 #define CLASS_TOGGLE_SHOW_ONLY_EDGES 2
+#define CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES 3
 
 #define CLASS_VALUE_ANGLE 0
 
 class classificationEditor {
 public:
   std::vector<MElement *> elements;
-  std::set<GFace *> faces;
   Fl_Window *window;
   Fl_Button *buttons[7];
-  Fl_Check_Button *toggles[3];
+  Fl_Check_Button *toggles[4];
   Fl_Value_Input *inputs[1];
   GEdge *selected;
   std::vector<edge_angle> edges_detected, edges_lonly;

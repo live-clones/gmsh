@@ -70,12 +70,12 @@ manipWindow::manipWindow(int deltaFontSize)
     if(i < 3) {
       value[i]->minimum(0.);
       value[i]->maximum(360.);
-      value[i]->step(1.);
+      if(CTX::instance()->inputScrolling) value[i]->step(1.);
     }
     else if(i > 5) {
       value[i]->minimum(0.1);
       value[i]->maximum(100.);
-      value[i]->step(0.1);
+      if(CTX::instance()->inputScrolling) value[i]->step(0.1);
     }
     value[i]->align(FL_ALIGN_RIGHT);
     value[i]->callback(manip_update_cb);
@@ -121,13 +121,13 @@ void manipWindow::update(bool force)
     for(int i = 0; i < 3; i++) {
       value[i]->minimum(-360.);
       value[i]->maximum(360.);
-      value[i]->step(1.);
+      if(CTX::instance()->inputScrolling) value[i]->step(1.);
       value[i + 3]->minimum(-val1);
       value[i + 3]->maximum(val1);
-      value[i + 3]->step(val1 / 200., 1);
+      if(CTX::instance()->inputScrolling) value[i + 3]->step(val1 / 200., 1);
       value[i + 6]->minimum(0.01);
       value[i + 6]->maximum(100.);
-      value[i + 6]->step(0.01);
+      if(CTX::instance()->inputScrolling) value[i + 6]->step(0.01);
     }
   }
 }

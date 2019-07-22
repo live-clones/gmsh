@@ -32,7 +32,6 @@
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
-#include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepCheck_Analyzer.hxx>
@@ -797,8 +796,8 @@ bool OCC_Internals::addLine(int &tag, const std::vector<int> &pointTags)
   return false;
 }
 
-bool OCC_Internals::_addArc(int &tag, int startTag, int centerTag, int endTag,
-                            int mode)
+bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
+                                 int endTag)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -825,36 +824,21 @@ bool OCC_Internals::_addArc(int &tag, int startTag, int centerTag, int endTag,
     gp_Pnt aP1 = BRep_Tool::Pnt(start);
     gp_Pnt aP2 = BRep_Tool::Pnt(center);
     gp_Pnt aP3 = BRep_Tool::Pnt(end);
-    Handle(Geom_TrimmedCurve) arc;
-    if(mode == 0) { // circle
-      Standard_Real Radius = aP1.Distance(aP2);
-      gce_MakeCirc MC(aP2, gce_MakePln(aP1, aP2, aP3).Value(), Radius);
-      if(!MC.IsDone()) {
-        Msg::Error("Could not build circle");
-        return false;
-      }
-      const gp_Circ &Circ = MC.Value();
-      Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
-      Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
-      Handle(Geom_Circle) C = new Geom_Circle(Circ);
-      arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
+    Standard_Real Radius = aP1.Distance(aP2);
+    gce_MakeCirc MC(aP2, gce_MakePln(aP1, aP2, aP3).Value(), Radius);
+    if(!MC.IsDone()) {
+      Msg::Error("Could not build circle");
+      return false;
     }
-    else {
-      gce_MakeElips ME(aP1, aP3, aP2);
-      if(!ME.IsDone()) {
-        Msg::Error("Could not build ellipse");
-        return false;
-      }
-      const gp_Elips &Elips = ME.Value();
-      Standard_Real Alpha1 = ElCLib::Parameter(Elips, aP1);
-      Standard_Real Alpha2 = ElCLib::Parameter(Elips, aP3);
-      Handle(Geom_Ellipse) E = new Geom_Ellipse(Elips);
-      arc = new Geom_TrimmedCurve(E, Alpha1, Alpha2, true);
-    }
+    const gp_Circ &Circ = MC.Value();
+    Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
+    Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
+    Handle(Geom_Circle) C = new Geom_Circle(Circ);
+    Handle(Geom_TrimmedCurve) arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
     BRepBuilderAPI_MakeEdge e(arc, start, end);
     e.Build();
     if(!e.IsDone()) {
-      Msg::Error("Could not create %s arc", mode ? "ellipse" : "circle");
+      Msg::Error("Could not create circle arc");
       return false;
     }
     result = e.Edge();
@@ -867,16 +851,108 @@ bool OCC_Internals::_addArc(int &tag, int startTag, int centerTag, int endTag,
   return true;
 }
 
-bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
-                                 int endTag)
-{
-  return _addArc(tag, startTag, centerTag, endTag, 0);
-}
-
 bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
-                                  int endTag)
+                                  int majorTag, int endTag)
 {
-  return _addArc(tag, startTag, centerTag, endTag, 1);
+  if(tag >= 0 && _tagEdge.IsBound(tag)) {
+    Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
+    return false;
+  }
+  if(!_tagVertex.IsBound(startTag)) {
+    Msg::Error("Unknown OpenCASCADE point with tag %d", startTag);
+    return false;
+  }
+  if(!_tagVertex.IsBound(centerTag)) {
+    Msg::Error("Unknown OpenCASCADE point with tag %d", centerTag);
+    return false;
+  }
+  if(!_tagVertex.IsBound(majorTag)) {
+    Msg::Error("Unknown OpenCASCADE point with tag %d", majorTag);
+    return false;
+  }
+  if(!_tagVertex.IsBound(endTag)) {
+    Msg::Error("Unknown OpenCASCADE point with tag %d", endTag);
+    return false;
+  }
+
+  TopoDS_Edge result;
+  try {
+    TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
+    TopoDS_Vertex center = TopoDS::Vertex(_tagVertex.Find(centerTag));
+    TopoDS_Vertex major = TopoDS::Vertex(_tagVertex.Find(majorTag));
+    TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
+    gp_Pnt startPnt = BRep_Tool::Pnt(start);
+    gp_Pnt centerPnt = BRep_Tool::Pnt(center);
+    gp_Pnt majorPnt = BRep_Tool::Pnt(major);
+    gp_Pnt endPnt = BRep_Tool::Pnt(end);
+    gp_XYZ x1 = startPnt.XYZ() - centerPnt.XYZ();
+    gp_XYZ x2 = endPnt.XYZ() - centerPnt.XYZ();
+    gp_Dir u = majorPnt.XYZ() - centerPnt.XYZ();
+    gp_Dir v;
+    if(!u.IsParallel(x1, 1e-6))
+      v = x1 - x1.Dot(u.XYZ()) * u.XYZ();
+    else if(!u.IsParallel(x2, 1e-6))
+      v = x2 - x2.Dot(u.XYZ()) * u.XYZ();
+    else {
+      Msg::Error("The points do not define an ellipse");
+      return false;
+    }
+    Standard_Real x1u = Square(x1.Dot(u.XYZ()));
+    Standard_Real x1v = Square(x1.Dot(v.XYZ()));
+    Standard_Real x2u = Square(x2.Dot(u.XYZ()));
+    Standard_Real x2v = Square(x2.Dot(v.XYZ()));
+    if(IsEqual(x1u, x2u) || IsEqual(x1v, x2v)) {
+      Msg::Error("The points do not define an ellipse");
+      return false;
+    }
+    Standard_Real a2 = (x1v * x2u - x1u * x2v) / (x1v - x2v);
+    Standard_Real b2 = (x1u * x2v - x1v * x2u) / (x1u - x2u);
+    if(a2 <= 0.0 || b2 <= 0.0) {
+      Msg::Error("The points do not define an ellipse");
+      return false;
+    }
+    Standard_Real a; // Major radius
+    Standard_Real b; // Minor radius
+    gp_Ax2 Axes; // Ellipse local coordinate system
+    if(a2 >= b2) {
+      a = Sqrt(a2);
+      b = Sqrt(b2);
+      Axes = gp_Ax2(centerPnt, u ^ v, u);
+    }
+    else {
+      Msg::Warning("Major radius smaller than minor radius");
+      a = Sqrt(b2);
+      b = Sqrt(a2);
+      Axes = gp_Ax2(centerPnt, v ^ u, v);
+    }
+    gce_MakeElips ME(Axes, a, b);
+    if(!ME.IsDone()) {
+      Msg::Error("Could not build ellipse");
+      return false;
+    }
+    const gp_Elips &Elips = ME.Value();
+    Standard_Real Alpha1 = ElCLib::Parameter(Elips, startPnt);
+    Standard_Real Alpha2 = ElCLib::Parameter(Elips, endPnt);
+    Handle(Geom_Ellipse) E = new Geom_Ellipse(Elips);
+    Handle(Geom_TrimmedCurve) arc;
+    if ((Alpha2 > Alpha1 && Alpha2 - Alpha1 < M_PI) || Alpha1 - Alpha2 > M_PI)
+      arc = new Geom_TrimmedCurve(E, Alpha1, Alpha2, true);
+    else
+      arc = new Geom_TrimmedCurve(E, Alpha2, Alpha1, false);
+    BRepBuilderAPI_MakeEdge e(arc, start, end);
+    e.Build();
+    if(!e.IsDone()) {
+      Msg::Error("Could not create ellipse arc");
+      return false;
+    }
+    result = e.Edge();
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+  if(tag < 0) tag = getMaxTag(1) + 1;
+  bind(result, tag, true);
+  return true;
 }
 
 bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
@@ -1239,9 +1315,13 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
     return false;
   }
 
-  TopoDS_Wire result;
+  // Note: contrary to shells wires are always "sewed", i.e., a valid wire is
+  // constructed if points are geometrically at the same location (even if they
+  // are not topologically identical); there is thus no need to add a "sewing"
+  // option.
   try {
     BRepBuilderAPI_MakeWire w;
+    TopoDS_Wire wire;
     for(std::size_t i = 0; i < curveTags.size(); i++) {
       if(!_tagEdge.IsBound(curveTags[i])) {
         Msg::Error("Unknown OpenCASCADE curve with tag %d", curveTags[i]);
@@ -1250,17 +1330,17 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
       TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(curveTags[i]));
       w.Add(edge);
     }
-    result = w.Wire();
-    if(checkClosed && !result.Closed()) {
+    wire = w.Wire();
+    if(checkClosed && !wire.Closed()) {
       Msg::Error("Line Loop is not closed");
       return false;
     }
+    if(tag < 0) tag = getMaxTag(-1) + 1;
+    bind(wire, tag, true);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag < 0) tag = getMaxTag(-1) + 1;
-  bind(result, tag, true);
   return true;
 }
 
@@ -1556,29 +1636,56 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
 }
 
 bool OCC_Internals::addSurfaceLoop(int &tag,
-                                   const std::vector<int> &surfaceTags)
+                                   const std::vector<int> &surfaceTags,
+                                   bool sewing)
 {
   if(tag >= 0 && _tagShell.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface loop with tag %d already exists", tag);
     return false;
   }
 
-  TopoDS_Shape result;
-  try {
-#if 1
-    BRepBuilderAPI_Sewing s;
-    for(std::size_t i = 0; i < surfaceTags.size(); i++) {
-      if(!_tagFace.IsBound(surfaceTags[i])) {
-        Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
-        return false;
+  if(sewing){
+    // this allows to build a shell made of surfaces that share geometrically
+    // identical (but topologically different) curves.
+    TopoDS_Shape result;
+    try {
+      BRepBuilderAPI_Sewing s;
+      for(std::size_t i = 0; i < surfaceTags.size(); i++) {
+        if(!_tagFace.IsBound(surfaceTags[i])) {
+          Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
+          return false;
+        }
+        TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
+        s.Add(face);
       }
-      TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
-      s.Add(face);
+      s.Perform();
+      result = s.SewedShape();
+    } catch(Standard_Failure &err) {
+      Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+      return false;
     }
-    s.Perform();
-    result = s.SewedShape();
-#else
-    // Another way: not sure which is better
+    bool first = true;
+    TopExp_Explorer exp0;
+    for(exp0.Init(result, TopAbs_SHELL); exp0.More(); exp0.Next()) {
+      TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
+      if(CTX::instance()->geom.occAutoFix) {
+        // make sure faces in shell are oriented correctly
+        ShapeFix_Shell fix(shell);
+        fix.Perform();
+        shell = fix.Shell();
+      }
+      int t = tag;
+      if(first) { first = false; }
+      else {
+        t = getMaxTag(-2) + 1;
+        Msg::Warning("Creating additional surface loop %d", t);
+      }
+      bind(shell, t, true);
+      return true;
+    }
+  }
+
+  try {
     BRep_Builder builder;
     BRepPrim_Builder b(builder);
     TopoDS_Shell shell;
@@ -1591,54 +1698,18 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
       TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
       b.AddShellFace(shell, face);
     }
-    result = shell;
-#endif
-  } catch(Standard_Failure &err) {
-    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
-    return false;
-  }
-
-  bool first = true;
-  TopExp_Explorer exp0;
-  for(exp0.Init(result, TopAbs_SHELL); exp0.More(); exp0.Next()) {
-    TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
     if(CTX::instance()->geom.occAutoFix) {
       // make sure faces in shell are oriented correctly
       ShapeFix_Shell fix(shell);
       fix.Perform();
       shell = fix.Shell();
     }
-    int t = tag;
-    if(first) { first = false; }
-    else {
-      t = getMaxTag(-2) + 1;
-      Msg::Warning("Creating additional surface loop %d", t);
-    }
-    bind(shell, t, true);
-    return true;
-  }
-
-  // if sewing didn't work and we have single surface, try brute-force
-  if(surfaceTags.size() == 1) {
-    if(!_tagFace.IsBound(surfaceTags[0])) {
-      Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[0]);
-      return false;
-    }
-    TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[0]));
-    Handle(Geom_Surface) surf = BRep_Tool::Surface(face);
-    BRepBuilderAPI_MakeShell s(surf);
-    s.Build();
-    if(!s.IsDone()) {
-      Msg::Error("Could not create shell");
-      return false;
-    }
-    TopoDS_Shell shell = s.Shell();
     bind(shell, tag, true);
     return true;
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
   }
-
-  Msg::Error("Could not create shell");
-  return false;
 }
 
 bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
@@ -3449,10 +3520,11 @@ void OCC_Internals::synchronize(GModel *model)
         tag = ++vTagMax;
         Msg::Info("Binding unbound OpenCASCADE point to tag %d", tag);
       }
-      double lc = _attributes->getMeshSize(0, vertex);
-      occv = new OCCVertex(model, tag, vertex, lc);
+      occv = new OCCVertex(model, tag, vertex);
       model->add(occv);
     }
+    double lc = _attributes->getMeshSize(0, vertex);
+    occv->setPrescribedMeshSizeAtVertex(lc);
     std::vector<std::string> labels;
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
@@ -3741,9 +3813,9 @@ void OCC_Internals::_addShapeToMaps(const TopoDS_Shape &shape)
 }
 
 void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
-                               bool fixdegenerated, bool fixsmalledges,
-                               bool fixspotstripfaces, bool sewfaces,
-                               bool makesolids, double scaling)
+                               bool fixDegenerated, bool fixSmallEdges,
+                               bool fixSmallFaces, bool sewFaces,
+                               bool makeSolids, double scaling)
 {
   if(scaling != 1.0) {
     Msg::Info("Scaling geometry (factor: %g)", scaling);
@@ -3753,8 +3825,8 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     myshape = trsf.Shape();
   }
 
-  if(!fixdegenerated && !fixsmalledges && !fixspotstripfaces && !sewfaces &&
-     !makesolids)
+  if(!fixDegenerated && !fixSmallEdges && !fixSmallFaces && !sewFaces &&
+     !makeSolids)
     return;
 
   Msg::Info("Healing shapes (tolerance: %g)", tolerance);
@@ -3783,7 +3855,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     surfacecont += system.Mass();
   }
 
-  if(fixdegenerated) {
+  if(fixDegenerated) {
     Msg::Info(" - Fixing degenerated edges and faces");
 
     {
@@ -3849,7 +3921,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     }
   }
 
-  if(fixsmalledges) {
+  if(fixSmallEdges) {
     Msg::Info(" - Fixing small edges");
 
     Handle(ShapeFix_Wire) sfw;
@@ -3978,7 +4050,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     myshape = sfwf->Shape();
   }
 
-  if(fixspotstripfaces) {
+  if(fixSmallFaces) {
     Msg::Info(" - Fixing spot and strip faces");
     Handle(ShapeFix_FixSmallFace) sffsm = new ShapeFix_FixSmallFace();
     sffsm->Init(myshape);
@@ -3988,7 +4060,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     myshape = sffsm->FixShape();
   }
 
-  if(sewfaces) {
+  if(sewFaces) {
     Msg::Info(" - Sewing faces");
 
     BRepOffsetAPI_Sewing sewedObj(tolerance);
@@ -4016,7 +4088,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     myshape = rebuild->Apply(myshape);
   }
 
-  if(makesolids) {
+  if(makeSolids) {
     Msg::Info(" - Making solids");
 
     BRepBuilderAPI_MakeSolid ms;
@@ -4087,6 +4159,59 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   Msg::Info(" - Edges              : %d (%d)", nnre, nre);
   Msg::Info(" - Vertices           : %d (%d)", nnrv, nrv);
   Msg::Info(" - Total surface area : %g (%g)", newsurfacecont, surfacecont);
+}
+
+bool OCC_Internals::healShapes(const std::vector<std::pair<int, int> > &inDimTags,
+                               std::vector<std::pair<int, int> > &outDimTags,
+                               double tolerance, bool fixDegenerated,
+                               bool fixSmallEdges, bool fixSmallFaces,
+                               bool sewFaces)
+{
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
+  if(inDimTags.empty()){
+    // construct a compound with all the shapes with tags
+    _somap.Clear();
+    _shmap.Clear();
+    _fmap.Clear();
+    _wmap.Clear();
+    _emap.Clear();
+    _vmap.Clear();
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
+    for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
+    for(; exp1.More(); exp1.Next()) _addShapeToMaps(exp1.Value());
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
+    for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp3(_tagSolid);
+    for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
+    for(int i = 1; i <= _vmap.Extent(); i++) b.Add(c, _vmap(i));
+    for(int i = 1; i <= _emap.Extent(); i++) b.Add(c, _emap(i));
+    for(int i = 1; i <= _wmap.Extent(); i++) b.Add(c, _wmap(i));
+    for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
+    for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
+    for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
+  }
+  else{
+    // construct a compound with the given shapes
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
+      int dim = inDimTags[i].first;
+      int tag = inDimTags[i].second;
+      if(!_isBound(dim, tag)) {
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
+                   tag);
+        return false;
+      }
+      TopoDS_Shape shape = _find(dim, tag);
+      b.Add(c, shape);
+    }
+  }
+
+  _healShape(c, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces,
+             sewFaces, false, 1.0);
+  _multiBind(c, -1, outDimTags, false, true);
+  return true;
 }
 
 static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,

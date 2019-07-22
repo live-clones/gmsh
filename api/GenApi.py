@@ -1025,7 +1025,7 @@ def _ovectorvectorint(ptr, size, n):
     return v
 
 def _ovectorvectorsize(ptr, size, n):
-    v = [_ovectorint(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
+    v = [_ovectorsize(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
     lib.{6}Free(size)
     lib.{6}Free(ptr)
     return v

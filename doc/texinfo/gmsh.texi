@@ -1699,8 +1699,8 @@ Same as @code{Printf} above, but output the expression in a file.
 Same as @code{Printf} above, but appends the expression at the end of
 the file.
 
-@item Error ( @var{char-expression} <, @var{expression-list}> );
-Same as @code{Printf}, but raises an error.
+@item Warning|Error ( @var{char-expression} <, @var{expression-list}> );
+Same as @code{Printf}, but raises a warning or an error.
 
 @item Merge @var{char-expression};
 Merges a file named @var{char-expression}. This command is equivalent to
@@ -1990,14 +1990,17 @@ to define a full circle (4th expression is the radius) or a circle arc
 between two angles (next 2 expressions).
 @c todo: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
 
-@item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} <, ...> @};
-Creates an ellipse arc. The four @var{expression}s on the
-right-hand-side define the start point, the center point, a major axis
-point and the end point of the ellipse. The third point can be omitted
-with the OpenCASCADE kernel. With the OpenCASCADE kernel additional
-@var{expression}s can be provided to define a full ellipse (4th and 5th
-expressions define the radii along X and Y) or en ellipse arc (next 2
-expressions).
+@item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, <, ...> @};
+Creates an ellipse arc. If four @var{expression}s are provided on the
+right-hand-side they define the start point, the center point, a point
+anywhere on the major axis and the end point. If the first point is a
+major axis point, the third expression can be ommitted. With the
+OpenCASCADE kernel, if between 5 and 7 expressions are provided, the
+first three define the coordinates of the center, the next two define
+the major (along the x-axis) and minor radii (along the y-axis), and the
+next two the start and end angle. Note that OpenCASCADE does not allow
+creating ellipse arcs with the major radius smaller than the minor
+radius.
 
 @item Curve Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented loop of curves, i.e. a closed wire. The
@@ -2076,14 +2079,17 @@ corner; the next 2 define the width and height. If a 6th expression is
 provided, it defines a radius to round the rectangle
 corners. @code{Rectangle} is only available with the OpenCASCADE kernel.
 
-@item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
+@item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @} < Using Sewing >;
 Creates a surface loop (a shell). The @var{expression} inside the
 parentheses is the surface loop's tag; the @var{expression-list} on the
 right hand side should contain the tags of all the surfaces that
 constitute the surface loop. A surface loop must always represent a
 closed shell, and the surfaces should be oriented consistently (using
 negative tags to specify reverse orientation). (Surface loops are used
-to create volumes: see @ref{Volumes}.)
+to create volumes: see @ref{Volumes}.) With the OpenCASCADE kernel, the
+optional @code{Using Sewing} argument allows to build a shell made of
+surfaces that share geometrically identical (but topologically
+different) curves.
 
 @item Physical Surface ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
 Creates a physical surface. The @var{expression} inside the parentheses
@@ -2215,7 +2221,8 @@ should contain three @w{@var{expression}s} giving the X, Y and Z
 direction of the rotation axis; the second @var{expression-list} should
 contain three @w{@var{expression}s} giving the X, Y and Z components of
 any point on this axis; the last @var{expression} should contain the
-rotation angle (in radians).
+rotation angle (in radians). With the built-in geometry kernel the angle
+should be strictly smaller than Pi.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @}
 Extrudes all elementary entities (points, curves or surfaces) in
@@ -2227,7 +2234,8 @@ three @w{@var{expression}s} giving the X, Y and Z direction of the
 rotation axis, which should match the direction of the translation; the
 third @var{expression-list} should contain three @w{@var{expression}s}
 giving the X, Y and Z components of any point on this axis; the last
-@var{expression} should contain the rotation angle (in radians).
+@var{expression} should contain the rotation angle (in radians). With
+the built-in geometry kernel the angle should be strictly smaller than Pi.
 
 @item Extrude @{ @var{extrude-list} @}
 Extrudes entities in @var{extrude-list} using a translation along their
@@ -2760,7 +2768,7 @@ advanced methods explained below.
 Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
 not by default), the mesh will be adapted with respect to the curvature
 of the model entities and the value of @code{Mesh.MinimumCirclePoints},
-which gives the number of points per 2 pi radians.
+which gives the number of points per 2 Pi radians.
 @item
 Finally, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
@@ -2808,8 +2816,10 @@ by default).
 
 All element sizes are further constrained in the interval [
 @code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
-]. The resulting value is then finally multiplied by
-@code{Mesh.CharacteristicLengthFactor}.
+] (which can also be provided on the command line with @code{-clmin} and
+@code{-clmax}). The resulting value is then finally multiplied by
+@code{Mesh.CharacteristicLengthFactor} (@code{-clscale} on the command
+line).
 
 Note that when the element size is fully specified by a background mesh
 field, it is thus often desirable to set
@@ -2949,12 +2959,17 @@ apply a QuadTri algorithm to those volumes only.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @var{layers} @}
 Extrudes both the geometry and the mesh using a rotation
-(@pxref{Extrusions}). The @var{layers} option is defined as above.
+(@pxref{Extrusions}). The @var{layers} option is defined as above.  With
+the built-in geometry kernel the angle should be strictly smaller than
+Pi. With the OpenCASCADE kernel the angle should be strictly smaller
+than 2 Pi.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @var{layers} @}
 Extrudes both the geometry and the mesh using a combined translation and
 rotation (@pxref{Extrusions}). The @var{layers} option is defined as
-above.
+above. With the built-in geometry kernel the angle should be strictly
+smaller than Pi. With the OpenCASCADE kernel the angle should be
+strictly smaller than 2 Pi.
 
 @item Extrude @{ Surface @{ @var{expression-list} @}; @var{layers} < Using Index[@var{expr}]; > < Using View[@var{expr}]; > < ScaleLastLayer; > @}
 Extrudes a boundary layer from the specified surfaces. If no view is
@@ -3103,6 +3118,14 @@ representation of the underlying model).
 Creates a parametrization for curves and surfaces that do not have one
 (i.e. discrete curves and surfaces represented solely by meshes, without
 an underlying CAD description).
+
+@item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} @};
+Classify (``color'') the surface mesh based on an angle threshold (the
+first argument, in radians), and create new discrete surfaces, curves
+and points accordingly.  If the second argument is set, also create
+discrete curves on the boundary if the surface is open. If the third
+argument is set, create edges and surfaces than can be reparametrized
+with @code{CreateGeometry}.
 
 @item RenumberMeshNodes;
 Renumbers the node tags in the current mesh in a contiunous sequence.
@@ -3680,7 +3703,8 @@ physical group names (@code{$PhysicalName}), the elementary model
 entities (@code{$Entities}), the partitioned entities
 (@code{$PartitionedEntities}), the nodes (@code{$Nodes}), the elements
 (@code{$Elements}), the periodicity relations (@code{$Periodic}), the
-ghost elements (@code{$GhostElements}) and the post-processing datasets
+ghost elements (@code{$GhostElements}), the parametrizations
+(@code{$Parametrizations}) and the post-processing datasets
 (@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}).
 
 To represent a simple mesh, the minimal sections that should be present
@@ -3835,6 +3859,22 @@ $GhostElements
     numGhostPartitions(size_t) ghostPartitionTag(int) ...
   ...
 $EndGhostElements
+
+$Parametrizations
+  numCurveParam(size_t) numSurfaceParam(size_t)
+  curveTag(int) numNodes(size_t)
+    nodeX(double) nodeY(double) nodeZ(double) nodeU(double)
+    ...
+  ...
+  surfaceTag(int) numNodes(size_t) numTriangles(size_t)
+    nodeX(double) nodeY(double) nodeZ(double) nodeU(double) nodeV(double)
+      curvMaxX(double) curvMaxY(double) curvMaxZ(double)
+      curvMinX(double) curvMinY(double) curvMinZ(double)
+    ...
+    nodeIndex1(int) nodeIndex2(int) nodeIndex3(int)
+    ...
+  ...
+$EndParametrizations
 
 $NodeData
   numStringTags(ASCII int)
@@ -5915,7 +5955,7 @@ element sizes in your input file so that the surface mesh better matches
 the geometrical details of the model.
 
 If nothing works, file a bug report with the version of your operating
-system and and the full geometry.
+system and the full geometry.
 
 @item How can I only save tetrahedral elements (not triangles and lines)?
 
@@ -5923,6 +5963,15 @@ By default, if physical groups are defined, the output mesh only
 contains those elements that belong to physical entities. So to save
 only 3D elements, simply define one (or more) physical volume(s) and
 don't define any physical surfaces, physical curves or physical points.
+
+@item How can I remove mesh nodes for geometrical construction points (centers of spheres, etc.) from output mesh file?
+
+By default Gmsh saves all the geometrical entities and their associated
+mesh. In particular, since each geometry point is meshed with a point
+element, defined by a mesh node, the output file will contain one 0-D
+mesh element and one mesh node for each geometry point. To remove such
+elements/nodes from the mesh, simply define physical groups for the
+entities you want to save (see previous question).
 
 @item My 2D meshes of IGES files present gaps between surfaces
 
@@ -5967,7 +6016,7 @@ algorithm with smoothing (e.g., with @code{Mesh.Smoothing = 10}).
 Yes, just choose the appropriate order in the mesh menu after the mesh
 is completed. High-order optimization tools are also available in the
 mesh menu. You can select the order on the command line with e.g.
-@code{-order 2}, and activcate high-order optization with
+@code{-order 2}, and activcate high-order optimization with
 @code{-optimize_ho}.
 
 @item Can I import an existing surface mesh in Gmsh and use it to build a 3D mesh?

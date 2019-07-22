@@ -27,8 +27,10 @@ Create binary files when possible
 Perform uniform mesh refinement, then exit
 @item -barycentric_refine
 Perform barycentric mesh refinement, then exit
-@item -reclassify
+@item -reclassify angle
 Reclassify surface mesh, then exit
+@item -reparam angle
+Reparametrize surface mesh, then exit
 @item -part int
 Partition after batch mesh generation
 @item -part_weight tri|quad|tet|hex|pri|pyr|trih int
@@ -139,6 +141,8 @@ Create new model before merge next file
 Merge next files
 @item -open
 Open next files
+@item -log filename
+Log all messages to filename
 @item -a, -g, -m, -s, -p
 Start in automatic, geometry, mesh, solver or post-processing mode
 @item -pid

@@ -830,7 +830,9 @@ static void CopySurface(Surface *s, Surface *ss)
     List_Create(List_Nbr(s->Generatrices) + 1, 1, sizeof(Curve *));
   ss->GeneratricesByTag =
     List_Create(List_Nbr(s->GeneratricesByTag) + 1, 1, sizeof(int));
-  ss->InSphereCenter = s->InSphereCenter; // FIXME: hack...
+  // after copy (and subsequent transformation), the sphere center does not make
+  // sense anymore
+  ss->InSphereCenter = 0;
   List_Copy(s->Generatrices, ss->Generatrices);
   List_Copy(s->GeneratricesByTag, ss->GeneratricesByTag);
   EndSurface(ss);

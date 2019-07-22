@@ -572,6 +572,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "InitialModule", opt_general_initial_context, 0. ,
     "Module launched on startup (0: automatic, 1: geometry, 2: mesh, 3: solver, "
     "4: post-processing) " },
+  { F|O, "InputScrolling" , opt_general_input_scrolling , 1. ,
+    "Enable numerical input scrolling in user interface (moving the mouse to change "
+    "numbers)" },
 
   { F|O, "Light0" , opt_general_light0 , 1. ,
     "Enable light source 0" },
@@ -662,8 +665,6 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the (detached) menu tree" },
   { F|S, "MenuPositionY" , opt_general_menu_position1 , 400. ,
     "Vertical position (in pixels) of the (detached) menu tree" },
-  { F|O, "MeshDiscrete" , opt_general_meshdiscrete , 0. ,
-    "Mesh discrete surfaces through automatic parametrization (0)" },
   { F|O, "MessageFontSize" , opt_general_message_fontsize , -1. ,
     "Size of the font in the message window, in pixels (-1: automatic)" },
   { F|S, "MessageHeight" , opt_general_message_size , 300. ,
@@ -827,8 +828,9 @@ StringXNumber GeneralOptions_Number[] = {
 
 StringXNumber GeometryOptions_Number[] = {
   { F|O, "AutoCoherence" , opt_geometry_auto_coherence , 1. ,
-    "Should all duplicate entities be automatically removed? (If AutoCoherence == 2, "
-    "also remove degenerate entities)" },
+    "Should all duplicate entities be automatically removed with the built-in "
+    "geometry kernel? (If AutoCoherence == 2, also remove degenerate entities.) The "
+    "option has no effect with the OpenCASCADE kernel"},
 
   { F,   "Clip" , opt_geometry_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
@@ -879,26 +881,30 @@ StringXNumber GeometryOptions_Number[] = {
     "Number of edge subdivisions between control points when displaying curves" },
 
   { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
-    "Automatically fix orientation of wires, faces, shells and volumes when creating"
-    " new entities" },
+    "Automatically fix orientation of wires, faces, shells and volumes when creating "
+    "new entities with the OpenCASCADE kernel" },
   { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
-    "Try to preserve numbering of entities through OCC boolean operations" },
+    "Try to preserve the numbering of entities through OpenCASCADE boolean operations" },
   { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
-    "Disable STL computation" },
+    "Disable STL creation in OpenCASCADE kernel" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
-    "Fix degenerated edges/faces in STEP, IGES and BRep models" },
+    "Fix degenerated edges/faces when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 0. ,
-    "Fix small edges in STEP, IGES and BRep models" },
+    "Fix small edges when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCFixSmallFaces" , opt_geometry_occ_fix_small_faces , 0. ,
-    "Fix small faces in STEP, IGES and BRep models" },
+    "Fix small faces when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
-    "Import labels and colors from STEP models" },
+    "Import labels and colors when importing STEP models with the OpenCASCADE kernel" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
-    "Use multi-threaded OCC boolean operators" },
+    "Use multi-threaded OpenCASCADE boolean operators" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
-    "Scale STEP, IGES and BRep model by given factor" },
+    "Scale STEP, IGES and BRep models by the given factor when importing them with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. ,
-    "Sew faces in STEP, IGES and BRep models" },
+    "Sew faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. ,
     "Model display offset along X-axis (in model coordinates)" },
   { F,   "OffsetY" , opt_geometry_offset1 , 0. ,
@@ -1002,7 +1008,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
   { F|O, "BoundaryLayerFanPoints" , opt_mesh_boundary_layer_fan_points, 5. ,
-    "Number of points (per Pi rad) for 2D boundary layer fans" },
+    "Number of points (per Pi radians) for 2D boundary layer fans" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Enable the creation of high-order mesh from CGNS structured meshes"
@@ -1028,6 +1034,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
     "Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical "
     "entity, 3: by partition)" },
+  { F|O, "CompoundClassify" , opt_mesh_compound_classify , 1. ,
+    "How are surface mesh elements classified on compounds? (0: on the new discrete "
+    "entity, 1: on the original geometrical entity)" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
 
@@ -1068,6 +1077,8 @@ StringXNumber MeshOptions_Number[] = {
     "(between -1.0 and 0.5, excluded)"},
   { F|O, "HighOrderPrimSurfMesh", opt_mesh_ho_prim_surf_mesh, 0,
     "Try to fix flipped surface mesh elements in high-order optimizer?"},
+  { F|O, "HighOrderDistCAD", opt_mesh_ho_dist_cad, 0,
+    "Try to optimize distance to CAD in high-order optimizer?"},
   { F|O, "HighOrderThresholdMin", opt_mesh_ho_threshold_min, 0.1,
     "Minimum threshold for high-order element optimization"},
   { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,
@@ -1115,7 +1126,7 @@ StringXNumber MeshOptions_Number[] = {
     "METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
-    "Minimum number of nodes used to mesh a circle (and number of nodes per 2*pi "
+    "Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi "
     "radians when the mesh size of adapted to the curvature)" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },

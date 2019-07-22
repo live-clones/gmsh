@@ -1077,6 +1077,20 @@ function getLastNodeError()
 end
 
 """
+    gmsh.model.mesh.clear()
+
+Clear the mesh, i.e. delete all the nodes and elements.
+"""
+function clear()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshClear, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshClear returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricCoord = true)
 
 Get the nodes classified on the entity of dimension `dim` and tag `tag`. If
@@ -1106,6 +1120,32 @@ function getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricC
           (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cint, Ptr{Cint}),
           api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, includeBoundary, returnParametricCoord, ierr)
     ierr[] != 0 && error("gmshModelMeshGetNodes returned non-zero error code: $(ierr[])")
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    return nodeTags, coord, parametricCoord
+end
+
+"""
+    gmsh.model.mesh.getNodesByElementType(elementType, tag = -1, returnParametricCoord = true)
+
+Get the nodes classified on the entity of tag `tag`, for all the elements of
+type `elementType`. The other arguments are treated as in `getNodes`.
+
+Return `nodeTags`, `coord`, `parametricCoord`.
+"""
+function getNodesByElementType(elementType, tag = -1, returnParametricCoord = true)
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetNodesByElementType, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, tag, returnParametricCoord, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNodesByElementType returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
@@ -1179,9 +1219,9 @@ function getNodesForPhysicalGroup(dim, tag)
 end
 
 """
-    gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
+    gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
 
-Set the nodes classified on the model entity of dimension `dim` and tag `tag`.
+Add nodes classified on the model entity of dimension `dim` and tag `tag`.
 `nodeTags` contains the node tags (their unique, strictly positive
 identification numbers). `coord` is a vector of length 3 times the length of
 `nodeTags` that contains the x, y, z coordinates of the nodes, concatenated:
@@ -1190,12 +1230,12 @@ parametric coordinates of the nodes, if any. The length of `parametricCoord` can
 be 0 or `dim` times the length of `nodeTags`. If the `nodeTags` vector is empty,
 new tags are automatically assigned to the nodes.
 """
-function setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
+function addNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetNodes, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshAddNodes, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
           dim, tag, convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetNodes returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshAddNodes returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -1374,26 +1414,26 @@ end
 
 Get the properties of an element of type `elementType`: its name
 (`elementName`), dimension (`dim`), order (`order`), number of nodes
-(`numNodes`) and parametric node coordinates (`parametricCoord` vector, of
-length `dim` times `numNodes`).
+(`numNodes`) and coordinates of the nodes in the reference element (`nodeCoord`
+vector, of length `dim` times `numNodes`).
 
-Return `elementName`, `dim`, `order`, `numNodes`, `parametricCoord`.
+Return `elementName`, `dim`, `order`, `numNodes`, `nodeCoord`.
 """
 function getElementProperties(elementType)
     api_elementName_ = Ref{Ptr{Cchar}}()
     api_dim_ = Ref{Cint}()
     api_order_ = Ref{Cint}()
     api_numNodes_ = Ref{Cint}()
-    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
-    api_parametricCoord_n_ = Ref{Csize_t}()
+    api_nodeCoord_ = Ref{Ptr{Cdouble}}()
+    api_nodeCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementProperties, gmsh.lib), Cvoid,
           (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_nodeCoord_, api_nodeCoord_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElementProperties returned non-zero error code: $(ierr[])")
     elementName = unsafe_string(api_elementName_[])
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
-    return elementName, api_dim_[], api_order_[], api_numNodes_[], parametricCoord
+    nodeCoord = unsafe_wrap(Array, api_nodeCoord_[], api_nodeCoord_n_[], own=true)
+    return elementName, api_dim_[], api_order_[], api_numNodes_[], nodeCoord
 end
 
 """
@@ -1426,9 +1466,9 @@ function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
 end
 
 """
-    gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
+    gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)
 
-Set the elements of the entity of dimension `dim` and tag `tag`. `types`
+Add elements classified on the entity of dimension `dim` and tag `tag`. `types`
 contains the MSH types of the elements (e.g. `2` for 3-node triangles: see the
 Gmsh reference manual). `elementTags` is a vector of the same length as `types`;
 each entry is a vector containing the tags (unique, strictly positive
@@ -1438,34 +1478,34 @@ the number of elements of the given type times the number N of nodes per
 element, that contains the node tags of all the elements of the given type,
 concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 """
-function setElements(dim, tag, elementTypes, elementTags, nodeTags)
+function addElements(dim, tag, elementTypes, elementTags, nodeTags)
     api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
     api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshAddElements, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
           dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Csize_t}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Csize_t}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetElements returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshAddElements returned non-zero error code: $(ierr[])")
     return nothing
 end
 
 """
-    gmsh.model.mesh.setElementsByType(tag, elementType, elementTags, nodeTags)
+    gmsh.model.mesh.addElementsByType(tag, elementType, elementTags, nodeTags)
 
-Set the elements of type `elementType` in the entity of tag `tag`. `elementTags`
-contains the tags (unique, strictly positive identifiers) of the elements of the
-corresponding type. `nodeTags` is a vector of length equal to the number of
-elements times the number N of nodes per element, that contains the node tags of
-all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the
-`elementTag` vector is empty, new tags are automatically assigned to the
-elements.
+Add elements of type `elementType` classified on the entity of tag `tag`.
+`elementTags` contains the tags (unique, strictly positive identifiers) of the
+elements of the corresponding type. `nodeTags` is a vector of length equal to
+the number of elements times the number N of nodes per element, that contains
+the node tags of all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
+...]. If the `elementTag` vector is empty, new tags are automatically assigned
+to the elements.
 """
-function setElementsByType(tag, elementType, elementTags, nodeTags)
+function addElementsByType(tag, elementType, elementTags, nodeTags)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetElementsByType, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshAddElementsByType, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
           tag, elementType, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetElementsByType returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshAddElementsByType returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -1504,14 +1544,14 @@ entity of tag `tag`, at the G integration points `integrationPoints` given as
 concatenated triplets of coordinates in the reference element [g1u, g1v, g1w,
 ..., gGu, gGv, gGw]. Data is returned by element, with elements in the same
 order as in `getElements` and `getElementsByType`. `jacobians` contains for each
-element the 9 entries of the 3x3 Jacobian matrix at each integration point, by
-row: [e1g1Jxu, e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw,
-e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants` contains for each
-element the determinant of the Jacobian matrix at each integration point: [e1g1,
-e1g2, ... e1gG, e2g1, ...]. `points` contains for each element the x, y, z
-coordinates of the integration points. If `tag` < 0, get the Jacobian data for
-all entities. If `numTasks` > 1, only compute and return the part of the data
-indexed by `task`.
+element the 9 entries of the 3x3 Jacobian matrix at each integration point. The
+matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw,
+e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc.
+`determinants` contains for each element the determinant of the Jacobian matrix
+at each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points` contains
+for each element the x, y, z coordinates of the integration points. If `tag` <
+0, get the Jacobian data for all entities. If `numTasks` > 1, only compute and
+return the part of the data indexed by `task`.
 
 Return `jacobians`, `determinants`, `points`.
 """
@@ -1889,8 +1929,11 @@ end
 """
     gmsh.model.mesh.embed(dim, tags, inDim, inTag)
 
-Embed the model entities of dimension `dim` and tags `tags` in the (inDim,
-inTag) model entity. `inDim` must be strictly greater than `dim`.
+Embed the model entities of dimension `dim` and tags `tags` in the (`inDim`,
+`inTag`) model entity. The dimension `dim` can 0, 1 or 2 and must be strictly
+smaller than `inDim`, which must be either 2 or 3. The embedded entities should
+not be part of the boundary of the entity `inTag`, whose mesh will conform to
+the mesh of the embedded entities.
 """
 function embed(dim, tags, inDim, inTag)
     ierr = Ref{Cint}()
@@ -1904,9 +1947,9 @@ end
 """
     gmsh.model.mesh.removeEmbedded(dimTags, dim = -1)
 
-Remove embedded entities in the model entities `dimTags`. if `dim` is >= 0, only
-remove embedded entities of the given dimension (e.g. embedded points if `dim`
-== 0).
+Remove embedded entities from the model entities `dimTags`. if `dim` is >= 0,
+only remove embedded entities of the given dimension (e.g. embedded points if
+`dim` == 0).
 """
 function removeEmbedded(dimTags, dim = -1)
     ierr = Ref{Cint}()
@@ -2035,19 +2078,36 @@ function splitQuadrangles(quality = 1., tag = -1)
 end
 
 """
-    gmsh.model.mesh.classifySurfaces(angle, boundary = true)
+    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
-radians), and create discrete curves accordingly. If `boundary` is set, also
-create discrete curves on the boundary if the surface is open. Warning: this is
-an experimental feature.
+radians), and create new discrete surfaces, curves and points accordingly. If
+`boundary` is set, also create discrete curves on the boundary if the surface is
+open. If `forReparametrization` is set, create edges and surfaces that can be
+reparametrized using a single map.
 """
-function classifySurfaces(angle, boundary = true)
+function classifySurfaces(angle, boundary = true, forReparametrization = false)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClassifySurfaces, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Ptr{Cint}),
-          angle, boundary, ierr)
+          (Cdouble, Cint, Cint, Ptr{Cint}),
+          angle, boundary, forReparametrization, ierr)
     ierr[] != 0 && error("gmshModelMeshClassifySurfaces returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.createGeometry()
+
+Create a parametrization for discrete curves and surfaces (i.e. curves and
+surfaces represented solely by a mesh, without an underlying CAD description),
+assuming that each can be parametrized with a single map.
+"""
+function createGeometry()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreateGeometry, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshCreateGeometry returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -2056,7 +2116,7 @@ end
 
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
-underlying model). Warning: this is an experimental feature.
+underlying model).
 """
 function createTopology()
     ierr = Ref{Cint}()
@@ -2064,23 +2124,6 @@ function createTopology()
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelMeshCreateTopology returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
-    gmsh.model.mesh.createGeometry()
-
-Create a parametrization for curves and surfaces that do not have one (i.e.
-discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description). `createGeometry` automatically calls `createTopology`.
-Warning: this is an experimental feature.
-"""
-function createGeometry()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshCreateGeometry, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
-    ierr[] != 0 && error("gmshModelMeshCreateGeometry returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -2313,7 +2356,7 @@ end
     gmsh.model.geo.addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
 
 Add an ellipse arc (strictly smaller than Pi) between the two points `startTag`
-and `endTag`, with center `centertag` and major axis point `majorTag`. If `tag`
+and `endTag`, with center `centerTag` and major axis point `majorTag`. If `tag`
 is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. If (`nx`, `ny`, `nz`) != (0,0,0), explicitly set the plane of the
 circle arc. Return the tag of the ellipse arc.
@@ -2510,10 +2553,11 @@ end
 
 Extrude the model entities `dimTags` by rotation of `angle` radians around the
 axis of revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`,
-`ay`, `az`). Return extruded entities in `outDimTags`. If `numElements` is not
-empty, also extrude the mesh: the entries in `numElements` give the number of
-elements in each layer. If `height` is not empty, it provides the (cumulative)
-height of the different layers, normalized to 1.
+`ay`, `az`). The angle should be strictly smaller than Pi. Return extruded
+entities in `outDimTags`. If `numElements` is not empty, also extrude the mesh:
+the entries in `numElements` give the number of elements in each layer. If
+`height` is not empty, it provides the (cumulative) height of the different
+layers, normalized to 1.
 
 Return `outDimTags`.
 """
@@ -2535,11 +2579,12 @@ end
 
 Extrude the model entities `dimTags` by a combined translation and rotation of
 `angle` radians, along (`dx`, `dy`, `dz`) and around the axis of revolution
-defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`, `az`).
-Return extruded entities in `outDimTags`. If `numElements` is not empty, also
-extrude the mesh: the entries in `numElements` give the number of elements in
-each layer. If `height` is not empty, it provides the (cumulative) height of the
-different layers, normalized to 1.
+defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`, `az`). The
+angle should be strictly smaller than Pi. Return extruded entities in
+`outDimTags`. If `numElements` is not empty, also extrude the mesh: the entries
+in `numElements` give the number of elements in each layer. If `height` is not
+empty, it provides the (cumulative) height of the different layers, normalized
+to 1.
 
 Return `outDimTags`.
 """
@@ -2897,19 +2942,21 @@ function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
 end
 
 """
-    gmsh.model.occ.addEllipseArc(startTag, centerTag, endTag, tag = -1)
+    gmsh.model.occ.addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1)
 
-Add an ellipse arc between the two points with tags `startTag` and `endTag`,
-with center `centerTag`. If `tag` is positive, set the tag explicitly; otherwise
-a new tag is selected automatically. Return the tag of the ellipse arc.
+Add an ellipse arc between the two points `startTag` and `endTag`, with center
+`centerTag` and major axis point `majorTag`. If `tag` is positive, set the tag
+explicitly; otherwise a new tag is selected automatically. Return the tag of the
+ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs with the
+major radius smaller than the minor radius.
 
 Return an integer value.
 """
-function addEllipseArc(startTag, centerTag, endTag, tag = -1)
+function addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1)
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelOccAddEllipseArc, gmsh.lib), Cint,
-          (Cint, Cint, Cint, Cint, Ptr{Cint}),
-          startTag, centerTag, endTag, tag, ierr)
+          (Cint, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          startTag, centerTag, majorTag, endTag, tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddEllipseArc returned non-zero error code: $(ierr[])")
     return api__result__
 end
@@ -2921,6 +2968,9 @@ Add an ellipse of center (`x`, `y`, `z`) and radii `r1` and `r2` along the x-
 and y-axes respectively. If `tag` is positive, set the tag explicitly; otherwise
 a new tag is selected automatically. If `angle1` and `angle2` are specified,
 create an ellipse arc between the two angles. Return the tag of the ellipse.
+Note that OpenCASCADE does not allow creating ellipses with the major radius
+(along the x-axis) smaller than or equal to the minor radius (along the y-axis):
+rotate the shape or use `addCircle` in such cases.
 
 Return an integer value.
 """
@@ -2993,11 +3043,10 @@ end
 """
     gmsh.model.occ.addWire(curveTags, tag = -1, checkClosed = false)
 
-Add a wire (open or closed) formed by the curves `curveTags`. `curveTags` should
-contain (signed) tags: a negative tag signifies that the underlying curve is
-considered with reversed orientation. If `tag` is positive, set the tag
-explicitly; otherwise a new tag is selected automatically. Return the tag of the
-wire.
+Add a wire (open or closed) formed by the curves `curveTags`. Note that an
+OpenCASCADE wire can be made of curves that share geometrically identical (but
+topologically different) points. If `tag` is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the wire.
 
 Return an integer value.
 """
@@ -3014,9 +3063,10 @@ end
     gmsh.model.occ.addCurveLoop(curveTags, tag = -1)
 
 Add a curve loop (a closed wire) formed by the curves `curveTags`. `curveTags`
-should contain tags of curves forming a closed loop. If `tag` is positive, set
-the tag explicitly; otherwise a new tag is selected automatically. Return the
-tag of the curve loop.
+should contain tags of curves forming a closed loop. Note that an OpenCASCADE
+curve loop can be made of curves that share geometrically identical (but
+topologically different) points. If `tag` is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the curve loop.
 
 Return an integer value.
 """
@@ -3105,19 +3155,21 @@ function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
 end
 
 """
-    gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1)
+    gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
 
 Add a surface loop (a closed shell) formed by `surfaceTags`.  If `tag` is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the surface loop.
+Return the tag of the surface loop. Setting `sewing` allows to build a shell
+made of surfaces that share geometrically identical (but topologically
+different) curves.
 
 Return an integer value.
 """
-function addSurfaceLoop(surfaceTags, tag = -1)
+function addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelOccAddSurfaceLoop, gmsh.lib), Cint,
-          (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, surfaceTags), length(surfaceTags), tag, ierr)
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, surfaceTags), length(surfaceTags), tag, sewing, ierr)
     ierr[] != 0 && error("gmshModelOccAddSurfaceLoop returned non-zero error code: $(ierr[])")
     return api__result__
 end
@@ -3339,7 +3391,8 @@ axis of revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`,
 `ay`, `az`). Return extruded entities in `outDimTags`. If `numElements` is not
 empty, also extrude the mesh: the entries in `numElements` give the number of
 elements in each layer. If `height` is not empty, it provides the (cumulative)
-height of the different layers, normalized to 1.
+height of the different layers, normalized to 1. When the mesh is extruded the
+angle should be strictly smaller than 2*Pi.
 
 Return `outDimTags`.
 """
@@ -3693,6 +3746,28 @@ function removeAllDuplicates()
           ierr)
     ierr[] != 0 && error("gmshModelOccRemoveAllDuplicates returned non-zero error code: $(ierr[])")
     return nothing
+end
+
+"""
+    gmsh.model.occ.healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true)
+
+Apply various healing procedures to the entities `dimTags` (or to all the
+entities in the model if `dimTags` is empty). Return the healed entities in
+`outDimTags`. Available healing options are listed in the Gmsh reference manual.
+
+Return `outDimTags`.
+"""
+function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccHealShapes, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Cdouble, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, ierr)
+    ierr[] != 0 && error("gmshModelOccHealShapes returned non-zero error code: $(ierr[])")
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
 end
 
 """

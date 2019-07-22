@@ -61,7 +61,7 @@ public:
   virtual ~GFace();
 
   // delete mesh data
-  virtual void deleteMesh(bool onlyDeleteElements = false);
+  virtual void deleteMesh();
 
   // add/delete regions that are bounded by the face
   void addRegion(GRegion *r)
@@ -125,7 +125,11 @@ public:
     return embedded_vertices;
   }
 
-  std::vector<MVertex *> getEmbeddedMeshVertices() const;
+  // get embedded entities; if force is not set, don't return them if the face
+  // is part of a compound
+  std::vector<GVertex *> getEmbeddedVertices(bool force = false) const;
+  std::vector<GEdge *> getEmbeddedEdges(bool force = false) const;
+  std::vector<MVertex *> getEmbeddedMeshVertices(bool force = false) const;
 
   // vertices that bound the face
   virtual std::vector<GVertex *> vertices() const;
@@ -327,6 +331,7 @@ public:
   std::vector<SPoint2> stl_vertices_uv;
   std::vector<SPoint3> stl_vertices_xyz;
   std::vector<SVector3> stl_normals;
+  std::vector<SVector3> stl_curvatures;
   std::vector<int> stl_triangles;
 
   // a vertex array containing a geometrical representation of the
@@ -347,6 +352,10 @@ public:
   std::vector<MQuadrangle *> quadrangles;
   std::vector<MPolygon *> polygons;
 
+  // when a compound of surfaces is created, we keep track of the compound
+  // surface
+  GFace *compoundSurface;
+
   void addTriangle(MTriangle *t) { triangles.push_back(t); }
   void addQuadrangle(MQuadrangle *q) { quadrangles.push_back(q); }
   void addPolygon(MPolygon *p) { polygons.push_back(p); }
@@ -361,7 +370,8 @@ public:
   std::vector<SVector3> storage3; // sizes and directions storage
   std::vector<double> storage4; // sizes and directions storage
 
-  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
+  virtual bool reorder(const int elementType,
+                       const std::vector<std::size_t> &ordering);
 };
 
 #endif

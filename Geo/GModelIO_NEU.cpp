@@ -217,7 +217,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   fprintf(fp, "%s", ctime(&rawtime));
 
   fprintf(fp, "     NUMNP     NELEM     NGRPS    NBSETS     NDFCD     NDFVL\n");
-  fprintf(fp, " %9ld %9d %9lu %9lu %9d %9d\n", indexMeshVertices(saveAll),
+  fprintf(fp, " %9ld %9d %9lu %9lu %9d %9d\n", indexMeshVertices(saveAll, 0, false),
           numTetrahedra, elementGroups.size(), boundaryConditions.size(),
           getDim(), getDim());
   fprintf(fp, "ENDOFSECTION\n");

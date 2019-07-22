@@ -56,7 +56,7 @@ public: // these will become protected at some point
   std::vector<MVertex *> mesh_vertices;
 
   // a list of geometrical entities that form a compound mesh
-  std::vector<GEntity *> _compound;
+  std::vector<GEntity *> compound;
 
   // corresponding principal vertices
   std::map<GVertex *, GVertex *> vertexCounterparts;
@@ -100,7 +100,6 @@ public:
     Bezier,
     ParametricCurve,
     BoundaryLayerCurve,
-    CompoundCurve,
     DiscreteCurve,
     Plane,
     Nurb,
@@ -116,10 +115,8 @@ public:
     BoundaryLayerSurface,
     DiscreteSurface,
     DiscreteDiskSurface,
-    CompoundSurface,
     Volume,
     DiscreteVolume,
-    CompoundVolume,
     PartitionPoint,
     PartitionCurve,
     PartitionSurface,
@@ -150,7 +147,6 @@ public:
       "Bezier",
       "Parametric curve",
       "Boundary layer curve",
-      "Compound curve",
       "Discrete curve",
       "Plane",
       "Nurb",
@@ -166,10 +162,8 @@ public:
       "Boundary layer surface",
       "Discrete surface",
       "Discrete surface (parametrizable, isomorphic to a disk)",
-      "Compound surface",
       "Volume",
       "Discrete volume",
-      "Compound Volume",
       "Partition vertex",
       "Partition curve",
       "Partition surface",
@@ -192,7 +186,7 @@ public:
   virtual void mesh(bool verbose) {}
 
   // delete the mesh data
-  virtual void deleteMesh(bool onlyDeleteElements = false) {}
+  virtual void deleteMesh() {}
 
   // delete the vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();

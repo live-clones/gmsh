@@ -71,6 +71,7 @@ static void field_put_on_view_cb(Fl_Widget *w, void *data)
 {
   Fl_Menu_Button *mb = ((Fl_Menu_Button *)w);
   Field *field = (Field *)FlGui::instance()->fields->editor_group->user_data();
+  field->update();
   if(mb->value() == 0)
     field->putOnNewView();
   else if(mb->value() - 1 < (int)PView::list.size())

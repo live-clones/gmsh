@@ -330,6 +330,11 @@ GEntity::GeomType gmshFace::geomType() const
   }
 }
 
+bool gmshFace::haveParametrization()
+{
+  return geomType() != BoundaryLayerSurface;
+}
+
 bool gmshFace::containsPoint(const SPoint3 &pt) const
 {
   if(s->Typ == MSH_SURF_PLAN) {

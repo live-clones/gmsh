@@ -42,7 +42,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.BoundaryLayerFanPoints
-Number of points (per Pi rad) for 2D boundary layer fans@*
+Number of points (per Pi radians) for 2D boundary layer fans@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -93,6 +93,11 @@ Saved in: @code{-}
 
 @item Mesh.ColorCarousel
 Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical entity, 3: by partition)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CompoundClassify
+How are surface mesh elements classified on compounds? (0: on the new discrete entity, 1: on the original geometrical entity)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -173,6 +178,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderPrimSurfMesh
 Try to fix flipped surface mesh elements in high-order optimizer?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderDistCAD
+Try to optimize distance to CAD in high-order optimizer?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -282,7 +292,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCirclePoints
-Minimum number of nodes used to mesh a circle (and number of nodes per 2*pi radians when the mesh size of adapted to the curvature)@*
+Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi radians when the mesh size of adapted to the curvature)@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 

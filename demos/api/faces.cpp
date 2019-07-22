@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 
     // and add new 2D elements to it, for all faces
     int eleType2D = gmsh::model::mesh::getElementType("triangle", order);
-    gmsh::model::mesh::setElementsByType(s, eleType2D, {}, nodes);
+    gmsh::model::mesh::addElementsByType(s, eleType2D, {}, nodes);
 
     // this will create two 2D elements for each face; to create unique elements
     // it would be useful to call getElementFaceNodes() with the extra `primary'

@@ -811,6 +811,18 @@ populated by the new 3D meshing algorithms.
 -
 @end table
 
+@item clear
+Clear the mesh, i.e. delete all the nodes and elements.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item getNodes
 Get the nodes classified on the entity of dimension @code{dim} and tag
 @code{tag}. If @code{tag} < 0, get the nodes for all entities of dimension
@@ -829,6 +841,20 @@ the entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 @table @asis
 @item Input:
 @code{dim}, @code{tag}, @code{includeBoundary}, @code{returnParametricCoord}
+@item Output:
+@code{nodeTags}, @code{coord}, @code{parametricCoord}
+@item Return:
+-
+@end table
+
+@item getNodesByElementType
+Get the nodes classified on the entity of tag @code{tag}, for all the elements
+of type @code{elementType}. The other arguments are treated as in
+@code{getNodes}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{tag}, @code{returnParametricCoord}
 @item Output:
 @code{nodeTags}, @code{coord}, @code{parametricCoord}
 @item Return:
@@ -880,8 +906,8 @@ n2x, ...].
 -
 @end table
 
-@item setNodes
-Set the nodes classified on the model entity of dimension @code{dim} and tag
+@item addNodes
+Add nodes classified on the model entity of dimension @code{dim} and tag
 @code{tag}. @code{nodeTags} contains the node tags (their unique, strictly
 positive identification numbers). @code{coord} is a vector of length 3 times the
 length of @code{nodeTags} that contains the x, y, z coordinates of the nodes,
@@ -1022,14 +1048,14 @@ integer value
 @item getElementProperties
 Get the properties of an element of type @code{elementType}: its name
 (@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
-nodes (@code{numNodes}) and parametric node coordinates (@code{parametricCoord}
-vector, of length @code{dim} times @code{numNodes}).
+nodes (@code{numNodes}) and coordinates of the nodes in the reference element
+(@code{nodeCoord} vector, of length @code{dim} times @code{numNodes}).
 
 @table @asis
 @item Input:
 @code{elementType}
 @item Output:
-@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{parametricCoord}
+@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{nodeCoord}
 @item Return:
 -
 @end table
@@ -1067,16 +1093,17 @@ Preallocate data before calling @code{getElementsByType} with @code{numTasks} >
 -
 @end table
 
-@item setElements
-Set the elements of the entity of dimension @code{dim} and tag @code{tag}.
-@code{types} contains the MSH types of the elements (e.g. @code{2} for 3-node
-triangles: see the Gmsh reference manual). @code{elementTags} is a vector of the
-same length as @code{types}; each entry is a vector containing the tags (unique,
-strictly positive identifiers) of the elements of the corresponding type.
-@code{nodeTags} is also a vector of the same length as @code{types}; each entry
-is a vector of length equal to the number of elements of the given type times
-the number N of nodes per element, that contains the node tags of all the
-elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+@item addElements
+Add elements classified on the entity of dimension @code{dim} and tag
+@code{tag}. @code{types} contains the MSH types of the elements (e.g. @code{2}
+for 3-node triangles: see the Gmsh reference manual). @code{elementTags} is a
+vector of the same length as @code{types}; each entry is a vector containing the
+tags (unique, strictly positive identifiers) of the elements of the
+corresponding type. @code{nodeTags} is also a vector of the same length as
+@code{types}; each entry is a vector of length equal to the number of elements
+of the given type times the number N of nodes per element, that contains the
+node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ...,
+e1nN, e2n1, ...].
 
 @table @asis
 @item Input:
@@ -1087,14 +1114,14 @@ elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 -
 @end table
 
-@item setElementsByType
-Set the elements of type @code{elementType} in the entity of tag @code{tag}.
-@code{elementTags} contains the tags (unique, strictly positive identifiers) of
-the elements of the corresponding type. @code{nodeTags} is a vector of length
-equal to the number of elements times the number N of nodes per element, that
-contains the node tags of all the elements, concatenated: [e1n1, e1n2, ...,
-e1nN, e2n1, ...]. If the @code{elementTag} vector is empty, new tags are
-automatically assigned to the elements.
+@item addElementsByType
+Add elements of type @code{elementType} classified on the entity of tag
+@code{tag}. @code{elementTags} contains the tags (unique, strictly positive
+identifiers) of the elements of the corresponding type. @code{nodeTags} is a
+vector of length equal to the number of elements times the number N of nodes per
+element, that contains the node tags of all the elements, concatenated: [e1n1,
+e1n2, ..., e1nN, e2n1, ...]. If the @code{elementTag} vector is empty, new tags
+are automatically assigned to the elements.
 
 @table @asis
 @item Input:
@@ -1129,14 +1156,14 @@ the entity of tag @code{tag}, at the G integration points
 reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by
 element, with elements in the same order as in @code{getElements} and
 @code{getElementsByType}. @code{jacobians} contains for each element the 9
-entries of the 3x3 Jacobian matrix at each integration point, by row: [e1g1Jxu,
-e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...],
-with Jxu=dx/du, Jxv=dx/dv, etc. @code{determinants} contains for each element
-the determinant of the Jacobian matrix at each integration point: [e1g1, e1g2,
-... e1gG, e2g1, ...]. @code{points} contains for each element the x, y, z
-coordinates of the integration points. If @code{tag} < 0, get the Jacobian data
-for all entities. If @code{numTasks} > 1, only compute and return the part of
-the data indexed by @code{task}.
+entries of the 3x3 Jacobian matrix at each integration point. The matrix is
+returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu,
+..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. @code{determinants}
+contains for each element the determinant of the Jacobian matrix at each
+integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. @code{points} contains for
+each element the x, y, z coordinates of the integration points. If @code{tag} <
+0, get the Jacobian data for all entities. If @code{numTasks} > 1, only compute
+and return the part of the data indexed by @code{task}.
 
 @table @asis
 @item Input:
@@ -1448,8 +1475,10 @@ available with the OpenCASCADE kernel, as it relies on the STL triangulation.
 
 @item embed
 Embed the model entities of dimension @code{dim} and tags @code{tags} in the
-(inDim, inTag) model entity. @code{inDim} must be strictly greater than
-@code{dim}.
+(@code{inDim}, @code{inTag}) model entity. The dimension @code{dim} can 0, 1 or
+2 and must be strictly smaller than @code{inDim}, which must be either 2 or 3.
+The embedded entities should not be part of the boundary of the entity
+@code{inTag}, whose mesh will conform to the mesh of the embedded entities.
 
 @table @asis
 @item Input:
@@ -1461,9 +1490,9 @@ Embed the model entities of dimension @code{dim} and tags @code{tags} in the
 @end table
 
 @item removeEmbedded
-Remove embedded entities in the model entities @code{dimTags}. if @code{dim} is
->= 0, only remove embedded entities of the given dimension (e.g. embedded points
-if @code{dim} == 0).
+Remove embedded entities from the model entities @code{dimTags}. if @code{dim}
+is >= 0, only remove embedded entities of the given dimension (e.g. embedded
+points if @code{dim} == 0).
 
 @table @asis
 @item Input:
@@ -1570,13 +1599,28 @@ surfaces.
 
 @item classifySurfaces
 Classify ("color") the surface mesh based on the angle threshold @code{angle}
-(in radians), and create discrete curves accordingly. If @code{boundary} is set,
-also create discrete curves on the boundary if the surface is open. Warning:
-this is an experimental feature.
+(in radians), and create new discrete surfaces, curves and points accordingly.
+If @code{boundary} is set, also create discrete curves on the boundary if the
+surface is open. If @code{forReparametrization} is set, create edges and
+surfaces that can be reparametrized using a single map.
 
 @table @asis
 @item Input:
-@code{angle}, @code{boundary}
+@code{angle}, @code{boundary}, @code{forReparametrization}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item createGeometry
+Create a parametrization for discrete curves and surfaces (i.e. curves and
+surfaces represented solely by a mesh, without an underlying CAD description),
+assuming that each can be parametrized with a single map.
+
+@table @asis
+@item Input:
+-
 @item Output:
 -
 @item Return:
@@ -1586,22 +1630,7 @@ this is an experimental feature.
 @item createTopology
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
-underlying model). Warning: this is an experimental feature.
-
-@table @asis
-@item Input:
--
-@item Output:
--
-@item Return:
--
-@end table
-
-@item createGeometry
-Create a parametrization for curves and surfaces that do not have one (i.e.
-discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description). @code{createGeometry} automatically calls
-@code{createTopology}. Warning: this is an experimental feature.
+underlying model).
 
 @table @asis
 @item Input:
@@ -1800,7 +1829,7 @@ integer value
 
 @item addEllipseArc
 Add an ellipse arc (strictly smaller than Pi) between the two points
-@code{startTag} and @code{endTag}, with center @code{centertag} and major axis
+@code{startTag} and @code{endTag}, with center @code{centerTag} and major axis
 point @code{majorTag}. If @code{tag} is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. If (@code{nx}, @code{ny},
 @code{nz}) != (0,0,0), explicitly set the plane of the circle arc. Return the
@@ -1956,11 +1985,12 @@ extruded along their normal.
 @item revolve
 Extrude the model entities @code{dimTags} by rotation of @code{angle} radians
 around the axis of revolution defined by the point (@code{x}, @code{y},
-@code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). Return extruded
-entities in @code{outDimTags}. If @code{numElements} is not empty, also extrude
-the mesh: the entries in @code{numElements} give the number of elements in each
-layer. If @code{height} is not empty, it provides the (cumulative) height of the
-different layers, normalized to 1.
+@code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). The angle should
+be strictly smaller than Pi. Return extruded entities in @code{outDimTags}. If
+@code{numElements} is not empty, also extrude the mesh: the entries in
+@code{numElements} give the number of elements in each layer. If @code{height}
+is not empty, it provides the (cumulative) height of the different layers,
+normalized to 1.
 
 @table @asis
 @item Input:
@@ -1975,11 +2005,12 @@ different layers, normalized to 1.
 Extrude the model entities @code{dimTags} by a combined translation and rotation
 of @code{angle} radians, along (@code{dx}, @code{dy}, @code{dz}) and around the
 axis of revolution defined by the point (@code{x}, @code{y}, @code{z}) and the
-direction (@code{ax}, @code{ay}, @code{az}). Return extruded entities in
-@code{outDimTags}. If @code{numElements} is not empty, also extrude the mesh:
-the entries in @code{numElements} give the number of elements in each layer. If
-@code{height} is not empty, it provides the (cumulative) height of the different
-layers, normalized to 1.
+direction (@code{ax}, @code{ay}, @code{az}). The angle should be strictly
+smaller than Pi. Return extruded entities in @code{outDimTags}. If
+@code{numElements} is not empty, also extrude the mesh: the entries in
+@code{numElements} give the number of elements in each layer. If @code{height}
+is not empty, it provides the (cumulative) height of the different layers,
+normalized to 1.
 
 @table @asis
 @item Input:
@@ -2276,14 +2307,15 @@ integer value
 @end table
 
 @item addEllipseArc
-Add an ellipse arc between the two points with tags @code{startTag} and
-@code{endTag}, with center @code{centerTag}. If @code{tag} is positive, set the
-tag explicitly; otherwise a new tag is selected automatically. Return the tag of
-the ellipse arc.
+Add an ellipse arc between the two points @code{startTag} and @code{endTag},
+with center @code{centerTag} and major axis point @code{majorTag}. If @code{tag}
+is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. Return the tag of the ellipse arc. Note that OpenCASCADE does not
+allow creating ellipse arcs with the major radius smaller than the minor radius.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag}
+@code{startTag}, @code{centerTag}, @code{majorTag}, @code{endTag}, @code{tag}
 @item Output:
 -
 @item Return:
@@ -2295,7 +2327,10 @@ Add an ellipse of center (@code{x}, @code{y}, @code{z}) and radii @code{r1} and
 @code{r2} along the x- and y-axes respectively. If @code{tag} is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. If
 @code{angle1} and @code{angle2} are specified, create an ellipse arc between the
-two angles. Return the tag of the ellipse.
+two angles. Return the tag of the ellipse. Note that OpenCASCADE does not allow
+creating ellipses with the major radius (along the x-axis) smaller than or equal
+to the minor radius (along the y-axis): rotate the shape or use @code{addCircle}
+in such cases.
 
 @table @asis
 @item Input:
@@ -2353,11 +2388,11 @@ integer value
 @end table
 
 @item addWire
-Add a wire (open or closed) formed by the curves @code{curveTags}.
-@code{curveTags} should contain (signed) tags: a negative tag signifies that the
-underlying curve is considered with reversed orientation. If @code{tag} is
-positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the wire.
+Add a wire (open or closed) formed by the curves @code{curveTags}. Note that an
+OpenCASCADE wire can be made of curves that share geometrically identical (but
+topologically different) points. If @code{tag} is positive, set the tag
+explicitly; otherwise a new tag is selected automatically. Return the tag of the
+wire.
 
 @table @asis
 @item Input:
@@ -2370,9 +2405,11 @@ integer value
 
 @item addCurveLoop
 Add a curve loop (a closed wire) formed by the curves @code{curveTags}.
-@code{curveTags} should contain tags of curves forming a closed loop. If
-@code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. Return the tag of the curve loop.
+@code{curveTags} should contain tags of curves forming a closed loop. Note that
+an OpenCASCADE curve loop can be made of curves that share geometrically
+identical (but topologically different) points. If @code{tag} is positive, set
+the tag explicitly; otherwise a new tag is selected automatically. Return the
+tag of the curve loop.
 
 @table @asis
 @item Input:
@@ -2447,11 +2484,13 @@ integer value
 @item addSurfaceLoop
 Add a surface loop (a closed shell) formed by @code{surfaceTags}.  If @code{tag}
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. Return the tag of the surface loop.
+automatically. Return the tag of the surface loop. Setting @code{sewing} allows
+to build a shell made of surfaces that share geometrically identical (but
+topologically different) curves.
 
 @table @asis
 @item Input:
-@code{surfaceTags}, @code{tag}
+@code{surfaceTags}, @code{tag}, @code{sewing}
 @item Output:
 -
 @item Return:
@@ -2628,7 +2667,8 @@ around the axis of revolution defined by the point (@code{x}, @code{y},
 entities in @code{outDimTags}. If @code{numElements} is not empty, also extrude
 the mesh: the entries in @code{numElements} give the number of elements in each
 layer. If @code{height} is not empty, it provides the (cumulative) height of the
-different layers, normalized to 1.
+different layers, normalized to 1. When the mesh is extruded the angle should be
+strictly smaller than 2*Pi.
 
 @table @asis
 @item Input:
@@ -2859,6 +2899,21 @@ entities.
 -
 @item Output:
 -
+@item Return:
+-
+@end table
+
+@item healShapes
+Apply various healing procedures to the entities @code{dimTags} (or to all the
+entities in the model if @code{dimTags} is empty). Return the healed entities in
+@code{outDimTags}. Available healing options are listed in the Gmsh reference
+manual.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{tolerance}, @code{fixDegenerated}, @code{fixSmallEdges}, @code{fixSmallFaces}, @code{sewFaces}
+@item Output:
+@code{outDimTags}
 @item Return:
 -
 @end table

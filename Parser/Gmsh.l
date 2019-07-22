@@ -152,6 +152,7 @@ CenterOfMass            return tCenterOfMass;
 Chamfer                 return tChamfer;
 Characteristic          return tCharacteristic;
 Circle                  return tCircle;
+ClassifySurfaces        return tClassifySurfaces;
 CodeName                return tCodeName;
 Coherence               return tCoherence;
 Cohomology              return tCohomology;
@@ -305,6 +306,7 @@ SetTag                  return tSetTag;
 SetNumber               return tSetNumber;
 SetPartition            return tSetPartition;
 SetString               return tSetString;
+Sewing                  return tSewing;
 ShapeFromFile           return tShapeFromFile;
 Show                    return tShow;
 Sin                     return tSin;
@@ -355,6 +357,7 @@ Using                   return tUsing;
 
 Volume                  return tVolume;
 
+Warning                 return tWarning;
 Wedge                   return tWedge;
 Wire                    return tWire;
 

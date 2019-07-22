@@ -430,6 +430,9 @@ GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n
 GMSH_API void gmshModelMeshGetLastNodeError(size_t ** nodeTags, size_t * nodeTags_n,
                                             int * ierr);
 
+/* Clear the mesh, i.e. delete all the nodes and elements. */
+GMSH_API void gmshModelMeshClear(int * ierr);
+
 /* Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
  * `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
  * `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the
@@ -451,6 +454,16 @@ GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n,
                                     const int includeBoundary,
                                     const int returnParametricCoord,
                                     int * ierr);
+
+/* Get the nodes classified on the entity of tag `tag', for all the elements
+ * of type `elementType'. The other arguments are treated as in `getNodes'. */
+GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType,
+                                                 size_t ** nodeTags, size_t * nodeTags_n,
+                                                 double ** coord, size_t * coord_n,
+                                                 double ** parametricCoord, size_t * parametricCoord_n,
+                                                 const int tag,
+                                                 const int returnParametricCoord,
+                                                 int * ierr);
 
 /* Get the coordinates and the parametric coordinates (if any) of the node
  * with tag `tag'. This is a sometimes useful but inefficient way of accessing
@@ -477,8 +490,8 @@ GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
                                                     double ** coord, size_t * coord_n,
                                                     int * ierr);
 
-/* Set the nodes classified on the model entity of dimension `dim' and tag
- * `tag'. `nodeTags' contains the node tags (their unique, strictly positive
+/* Add nodes classified on the model entity of dimension `dim' and tag `tag'.
+ * `nodeTags' contains the node tags (their unique, strictly positive
  * identification numbers). `coord' is a vector of length 3 times the length
  * of `nodeTags' that contains the x, y, z coordinates of the nodes,
  * concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
@@ -486,7 +499,7 @@ GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
  * of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
  * the `nodeTags' vector is empty, new tags are automatically assigned to the
  * nodes. */
-GMSH_API void gmshModelMeshSetNodes(const int dim,
+GMSH_API void gmshModelMeshAddNodes(const int dim,
                                     const int tag,
                                     size_t * nodeTags, size_t nodeTags_n,
                                     double * coord, size_t coord_n,
@@ -577,14 +590,14 @@ GMSH_API int gmshModelMeshGetElementType(const char * familyName,
 
 /* Get the properties of an element of type `elementType': its name
  * (`elementName'), dimension (`dim'), order (`order'), number of nodes
- * (`numNodes') and parametric node coordinates (`parametricCoord' vector, of
- * length `dim' times `numNodes'). */
+ * (`numNodes') and coordinates of the nodes in the reference element
+ * (`nodeCoord' vector, of length `dim' times `numNodes'). */
 GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
                                                 char ** elementName,
                                                 int * dim,
                                                 int * order,
                                                 int * numNodes,
-                                                double ** parametricCoord, size_t * parametricCoord_n,
+                                                double ** nodeCoord, size_t * nodeCoord_n,
                                                 int * ierr);
 
 /* Get the elements of type `elementType' classified on the entity of tag
@@ -614,30 +627,31 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
                                                      const int tag,
                                                      int * ierr);
 
-/* Set the elements of the entity of dimension `dim' and tag `tag'. `types'
- * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
- * the Gmsh reference manual). `elementTags' is a vector of the same length as
- * `types'; each entry is a vector containing the tags (unique, strictly
- * positive identifiers) of the elements of the corresponding type. `nodeTags'
- * is also a vector of the same length as `types'; each entry is a vector of
- * length equal to the number of elements of the given type times the number N
- * of nodes per element, that contains the node tags of all the elements of
- * the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. */
-GMSH_API void gmshModelMeshSetElements(const int dim,
+/* Add elements classified on the entity of dimension `dim' and tag `tag'.
+ * `types' contains the MSH types of the elements (e.g. `2' for 3-node
+ * triangles: see the Gmsh reference manual). `elementTags' is a vector of the
+ * same length as `types'; each entry is a vector containing the tags (unique,
+ * strictly positive identifiers) of the elements of the corresponding type.
+ * `nodeTags' is also a vector of the same length as `types'; each entry is a
+ * vector of length equal to the number of elements of the given type times
+ * the number N of nodes per element, that contains the node tags of all the
+ * elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
+ * ...]. */
+GMSH_API void gmshModelMeshAddElements(const int dim,
                                        const int tag,
                                        int * elementTypes, size_t elementTypes_n,
                                        const size_t ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
                                        const size_t ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,
                                        int * ierr);
 
-/* Set the elements of type `elementType' in the entity of tag `tag'.
+/* Add elements of type `elementType' classified on the entity of tag `tag'.
  * `elementTags' contains the tags (unique, strictly positive identifiers) of
  * the elements of the corresponding type. `nodeTags' is a vector of length
  * equal to the number of elements times the number N of nodes per element,
  * that contains the node tags of all the elements, concatenated: [e1n1, e1n2,
  * ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are
  * automatically assigned to the elements. */
-GMSH_API void gmshModelMeshSetElementsByType(const int tag,
+GMSH_API void gmshModelMeshAddElementsByType(const int tag,
                                              const int elementType,
                                              size_t * elementTags, size_t elementTags_n,
                                              size_t * nodeTags, size_t nodeTags_n,
@@ -661,14 +675,14 @@ GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType,
  * [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with
  * elements in the same order as in `getElements' and `getElementsByType'.
  * `jacobians' contains for each element the 9 entries of the 3x3 Jacobian
- * matrix at each integration point, by row: [e1g1Jxu, e1g1Jxv, e1g1Jxw,
- * e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
- * Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each element the
- * determinant of the Jacobian matrix at each integration point: [e1g1, e1g2,
- * ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z
- * coordinates of the integration points. If `tag' < 0, get the Jacobian data
- * for all entities. If `numTasks' > 1, only compute and return the part of
- * the data indexed by `task'. */
+ * matrix at each integration point. The matrix is returned by column:
+ * [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw,
+ * e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for
+ * each element the determinant of the Jacobian matrix at each integration
+ * point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each
+ * element the x, y, z coordinates of the integration points. If `tag' < 0,
+ * get the Jacobian data for all entities. If `numTasks' > 1, only compute and
+ * return the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetJacobians(const int elementType,
                                         double * integrationPoints, size_t integrationPoints_n,
                                         double ** jacobians, size_t * jacobians_n,
@@ -888,17 +902,20 @@ GMSH_API void gmshModelMeshSetReverse(const int dim,
 GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag,
                                                  int * ierr);
 
-/* Embed the model entities of dimension `dim' and tags `tags' in the (inDim,
- * inTag) model entity. `inDim' must be strictly greater than `dim'. */
+/* Embed the model entities of dimension `dim' and tags `tags' in the
+ * (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must
+ * be strictly smaller than `inDim', which must be either 2 or 3. The embedded
+ * entities should not be part of the boundary of the entity `inTag', whose
+ * mesh will conform to the mesh of the embedded entities. */
 GMSH_API void gmshModelMeshEmbed(const int dim,
                                  int * tags, size_t tags_n,
                                  const int inDim,
                                  const int inTag,
                                  int * ierr);
 
-/* Remove embedded entities in the model entities `dimTags'. if `dim' is >= 0,
- * only remove embedded entities of the given dimension (e.g. embedded points
- * if `dim' == 0). */
+/* Remove embedded entities from the model entities `dimTags'. if `dim' is >=
+ * 0, only remove embedded entities of the given dimension (e.g. embedded
+ * points if `dim' == 0). */
 GMSH_API void gmshModelMeshRemoveEmbedded(int * dimTags, size_t dimTags_n,
                                           const int dim,
                                           int * ierr);
@@ -947,23 +964,24 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality,
                                             int * ierr);
 
 /* Classify ("color") the surface mesh based on the angle threshold `angle'
- * (in radians), and create discrete curves accordingly. If `boundary' is set,
- * also create discrete curves on the boundary if the surface is open.
- * Warning: this is an experimental feature. */
+ * (in radians), and create new discrete surfaces, curves and points
+ * accordingly. If `boundary' is set, also create discrete curves on the
+ * boundary if the surface is open. If `forReparametrization' is set, create
+ * edges and surfaces that can be reparametrized using a single map. */
 GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const int boundary,
+                                            const int forReparametrization,
                                             int * ierr);
+
+/* Create a parametrization for discrete curves and surfaces (i.e. curves and
+ * surfaces represented solely by a mesh, without an underlying CAD
+ * description), assuming that each can be parametrized with a single map. */
+GMSH_API void gmshModelMeshCreateGeometry(int * ierr);
 
 /* Create a boundary representation from the mesh if the model does not have
  * one (e.g. when imported from mesh file formats with no BRep representation
- * of the underlying model). Warning: this is an experimental feature. */
+ * of the underlying model). */
 GMSH_API void gmshModelMeshCreateTopology(int * ierr);
-
-/* Create a parametrization for curves and surfaces that do not have one (i.e.
- * discrete curves and surfaces represented solely by meshes, without an
- * underlying CAD description). `createGeometry' automatically calls
- * `createTopology'. Warning: this is an experimental feature. */
-GMSH_API void gmshModelMeshCreateGeometry(int * ierr);
 
 /* Compute a basis representation for homology spaces after a mesh has been
  * generated. The computation domain is given in a list of physical group tags
@@ -1064,7 +1082,7 @@ GMSH_API int gmshModelGeoAddCircleArc(const int startTag,
                                       int * ierr);
 
 /* Add an ellipse arc (strictly smaller than Pi) between the two points
- * `startTag' and `endTag', with center `centertag' and major axis point
+ * `startTag' and `endTag', with center `centerTag' and major axis point
  * `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
  * tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly
  * set the plane of the circle arc. Return the tag of the ellipse arc. */
@@ -1161,11 +1179,11 @@ GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
 
 /* Extrude the model entities `dimTags' by rotation of `angle' radians around
  * the axis of revolution defined by the point (`x', `y', `z') and the
- * direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
- * `numElements' is not empty, also extrude the mesh: the entries in
- * `numElements' give the number of elements in each layer. If `height' is not
- * empty, it provides the (cumulative) height of the different layers,
- * normalized to 1. */
+ * direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi.
+ * Return extruded entities in `outDimTags'. If `numElements' is not empty,
+ * also extrude the mesh: the entries in `numElements' give the number of
+ * elements in each layer. If `height' is not empty, it provides the
+ * (cumulative) height of the different layers, normalized to 1. */
 GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -1183,10 +1201,11 @@ GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
 /* Extrude the model entities `dimTags' by a combined translation and rotation
  * of `angle' radians, along (`dx', `dy', `dz') and around the axis of
  * revolution defined by the point (`x', `y', `z') and the direction (`ax',
- * `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is
- * not empty, also extrude the mesh: the entries in `numElements' give the
- * number of elements in each layer. If `height' is not empty, it provides the
- * (cumulative) height of the different layers, normalized to 1. */
+ * `ay', `az'). The angle should be strictly smaller than Pi. Return extruded
+ * entities in `outDimTags'. If `numElements' is not empty, also extrude the
+ * mesh: the entries in `numElements' give the number of elements in each
+ * layer. If `height' is not empty, it provides the (cumulative) height of the
+ * different layers, normalized to 1. */
 GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const double x,
                                 const double y,
@@ -1370,12 +1389,14 @@ GMSH_API int gmshModelOccAddCircle(const double x,
                                    const double angle2,
                                    int * ierr);
 
-/* Add an ellipse arc between the two points with tags `startTag' and
- * `endTag', with center `centerTag'. If `tag' is positive, set the tag
- * explicitly; otherwise a new tag is selected automatically. Return the tag
- * of the ellipse arc. */
+/* Add an ellipse arc between the two points `startTag' and `endTag', with
+ * center `centerTag' and major axis point `majorTag'. If `tag' is positive,
+ * set the tag explicitly; otherwise a new tag is selected automatically.
+ * Return the tag of the ellipse arc. Note that OpenCASCADE does not allow
+ * creating ellipse arcs with the major radius smaller than the minor radius. */
 GMSH_API int gmshModelOccAddEllipseArc(const int startTag,
                                        const int centerTag,
+                                       const int majorTag,
                                        const int endTag,
                                        const int tag,
                                        int * ierr);
@@ -1384,7 +1405,10 @@ GMSH_API int gmshModelOccAddEllipseArc(const int startTag,
  * x- and y-axes respectively. If `tag' is positive, set the tag explicitly;
  * otherwise a new tag is selected automatically. If `angle1' and `angle2' are
  * specified, create an ellipse arc between the two angles. Return the tag of
- * the ellipse. */
+ * the ellipse. Note that OpenCASCADE does not allow creating ellipses with
+ * the major radius (along the x-axis) smaller than or equal to the minor
+ * radius (along the y-axis): rotate the shape or use `addCircle' in such
+ * cases. */
 GMSH_API int gmshModelOccAddEllipse(const double x,
                                     const double y,
                                     const double z,
@@ -1424,20 +1448,22 @@ GMSH_API int gmshModelOccAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Add a wire (open or closed) formed by the curves `curveTags'. `curveTags'
- * should contain (signed) tags: a negative tag signifies that the underlying
- * curve is considered with reversed orientation. If `tag' is positive, set
- * the tag explicitly; otherwise a new tag is selected automatically. Return
- * the tag of the wire. */
+/* Add a wire (open or closed) formed by the curves `curveTags'. Note that an
+ * OpenCASCADE wire can be made of curves that share geometrically identical
+ * (but topologically different) points. If `tag' is positive, set the tag
+ * explicitly; otherwise a new tag is selected automatically. Return the tag
+ * of the wire. */
 GMSH_API int gmshModelOccAddWire(int * curveTags, size_t curveTags_n,
                                  const int tag,
                                  const int checkClosed,
                                  int * ierr);
 
 /* Add a curve loop (a closed wire) formed by the curves `curveTags'.
- * `curveTags' should contain tags of curves forming a closed loop. If `tag'
- * is positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Return the tag of the curve loop. */
+ * `curveTags' should contain tags of curves forming a closed loop. Note that
+ * an OpenCASCADE curve loop can be made of curves that share geometrically
+ * identical (but topologically different) points. If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the curve loop. */
 GMSH_API int gmshModelOccAddCurveLoop(int * curveTags, size_t curveTags_n,
                                       const int tag,
                                       int * ierr);
@@ -1486,9 +1512,12 @@ GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
 
 /* Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
  * positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Return the tag of the surface loop. */
+ * automatically. Return the tag of the surface loop. Setting `sewing' allows
+ * to build a shell made of surfaces that share geometrically identical (but
+ * topologically different) curves. */
 GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,
                                         const int tag,
+                                        const int sewing,
                                         int * ierr);
 
 /* Add a volume (a region) defined by one or more surface loops `shellTags'.
@@ -1636,7 +1665,8 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
  * `numElements' is not empty, also extrude the mesh: the entries in
  * `numElements' give the number of elements in each layer. If `height' is not
  * empty, it provides the (cumulative) height of the different layers,
- * normalized to 1. */
+ * normalized to 1. When the mesh is extruded the angle should be strictly
+ * smaller than 2*Pi. */
 GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -1806,6 +1836,19 @@ GMSH_API void gmshModelOccRemove(int * dimTags, size_t dimTags_n,
  * location) after intersecting (using boolean fragments) all highest
  * dimensional entities. */
 GMSH_API void gmshModelOccRemoveAllDuplicates(int * ierr);
+
+/* Apply various healing procedures to the entities `dimTags' (or to all the
+ * entities in the model if `dimTags' is empty). Return the healed entities in
+ * `outDimTags'. Available healing options are listed in the Gmsh reference
+ * manual. */
+GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n,
+                                     int * dimTags, size_t dimTags_n,
+                                     const double tolerance,
+                                     const int fixDegenerated,
+                                     const int fixSmallEdges,
+                                     const int fixSmallFaces,
+                                     const int sewFaces,
+                                     int * ierr);
 
 /* Import BREP, STEP or IGES shapes from the file `fileName'. The imported
  * entities are returned in `outDimTags'. If the optional argument

@@ -2140,7 +2140,7 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
       (CTX::instance()->guiColorScheme);
   }
   if(action & GMSH_SET && FlGui::available()){
-    FlGui::instance()->applyColorScheme();
+    FlGui::instance()->applyColorScheme(true);
   }
 #endif
   return CTX::instance()->guiColorScheme;
@@ -2288,14 +2288,6 @@ double opt_general_show_module_menu(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->showModuleMenu = (int)val;
   return CTX::instance()->showModuleMenu;
-}
-
-double opt_general_meshdiscrete(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->meshDiscrete = (int)val;
-  }
-  return CTX::instance()->meshDiscrete;
 }
 
 double opt_general_message_size(OPT_ARGS_NUM)
@@ -2980,6 +2972,14 @@ double opt_general_tooltips(OPT_ARGS_NUM)
       (CTX::instance()->tooltips);
 #endif
   return CTX::instance()->tooltips;
+}
+
+double opt_general_input_scrolling(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->inputScrolling = (int)val;
+  }
+  return CTX::instance()->inputScrolling;
 }
 
 double opt_general_orthographic(OPT_ARGS_NUM)
@@ -6050,12 +6050,6 @@ double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.recombine3DAll = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)){
-    FlGui::instance()->options->mesh.butt[22]->value
-      (CTX::instance()->mesh.recombine3DAll);
-  }
-#endif
   return CTX::instance()->mesh.recombine3DAll;
 }
 
@@ -6064,12 +6058,6 @@ double opt_mesh_recombine3d_level(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     CTX::instance()->mesh.recombine3DLevel = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)){
-    FlGui::instance()->options->mesh.butt[22]->value
-      (CTX::instance()->mesh.recombine3DLevel);
-  }
-#endif
   return CTX::instance()->mesh.recombine3DLevel;
 }
 
@@ -6078,12 +6066,6 @@ double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     CTX::instance()->mesh.recombine3DConformity = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)){
-    FlGui::instance()->options->mesh.butt[22]->value
-      (CTX::instance()->mesh.recombine3DConformity);
-  }
-#endif
   return CTX::instance()->mesh.recombine3DConformity;
 }
 
@@ -6134,9 +6116,6 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
       break;
     case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(3);
-      break;
-    case ALGO_3D_RTREE:
-      FlGui::instance()->options->mesh.choice[3]->value(4);
       break;
     case ALGO_3D_DELAUNAY:
     default:
@@ -6242,6 +6221,13 @@ double opt_mesh_ho_prim_surf_mesh(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->mesh.hoPrimSurfMesh = (int)val;
   return CTX::instance()->mesh.hoPrimSurfMesh;
+}
+
+double opt_mesh_ho_dist_cad(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.hoDistCAD = (int)val;
+  return CTX::instance()->mesh.hoDistCAD;
 }
 
 double opt_mesh_ho_iter_max(OPT_ARGS_NUM)
@@ -6407,6 +6393,13 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->mesh.colorCarousel;
+}
+
+double opt_mesh_compound_classify(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.compoundClassify = (int)val;
+  return CTX::instance()->mesh.compoundClassify;
 }
 
 double opt_mesh_switch_elem_tags(OPT_ARGS_NUM)

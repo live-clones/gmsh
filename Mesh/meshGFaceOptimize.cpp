@@ -18,7 +18,6 @@
 #include "BackgroundMeshTools.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
-#include "Generator.h"
 #include "Context.h"
 #include "OS.h"
 #include "SVector3.h"
@@ -126,8 +125,8 @@ bool buildMeshGenerationDataStructures(
   // take care of embedded vertices
   std::set<MVertex *> embeddedVertices;
   {
-    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
+    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+    std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       if((*itvx)->mesh_vertices.size()) {
         MVertex *v = *((*itvx)->mesh_vertices.begin());
@@ -141,7 +140,7 @@ bool buildMeshGenerationDataStructures(
 
   // take good care of embedded edges
   {
-    std::vector<GEdge *> const &embedded_edges = gf->embeddedEdges();
+    std::vector<GEdge *> embedded_edges = gf->getEmbeddedEdges();
     std::vector<GEdge *>::const_iterator ite = embedded_edges.begin();
     while(ite != embedded_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
@@ -953,10 +952,11 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
 {
   if(gf->triangles.empty()) return;
+  if(gf->compound.size()) return;
 
   std::vector<MVertex *> emb_edgeverts;
   {
-    std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
+    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
     std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
     while(ite != emb_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
@@ -1268,7 +1268,8 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
       while(nbTwoQuadNodes || nbDiamonds) {
         Msg::Debug("Topological optimization of quad mesh: pass %d", iter);
         nbTwoQuadNodes = removeTwoQuadsNodes(gf);
-        nbDiamonds = removeDiamonds(gf);
+        // removeDiamonds uses the parametrization or searches for closest point
+        nbDiamonds = haveParam ? removeDiamonds(gf) : 0;
         if(haveParam && nodeRepositioning)
           RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
         iter++;

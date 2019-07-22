@@ -348,7 +348,8 @@ public:
                                                 double s[][3][3][3],
                                                 int order = -1) const;
   // return the Jacobian of the element evaluated at point (u,v,w) in parametric
-  // coordinates
+  // coordinates: jac[i][j] = \partial x_j / \partial u_i (beware the
+  // transposition compared to the usual definition of the Jacobian)
   virtual double getJacobian(const fullMatrix<double> &gsf,
                              double jac[3][3]) const;
   // To be compatible with _vgrads of functionSpace without having to put under

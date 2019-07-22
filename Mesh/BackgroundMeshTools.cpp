@@ -19,7 +19,7 @@ static double max_surf_curvature(const GEdge *ge, double u)
   std::vector<GFace *>::iterator it = faces.begin();
   while(it != faces.end()) {
     SPoint2 par = ge->reparamOnFace((*it), u, 1);
-    double cc = (*it)->curvature(par);
+    double cc = (*it)->curvatureMax(par);
     val = std::max(cc, val);
     ++it;
   }

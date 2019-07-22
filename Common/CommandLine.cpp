@@ -80,7 +80,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-bin", "Create binary files when possible"));
   s.push_back(mp("-refine", "Perform uniform mesh refinement, then exit"));
   s.push_back(mp("-barycentric_refine", "Perform barycentric mesh refinement, then exit"));
-  s.push_back(mp("-reclassify", "Reclassify surface mesh, then exit"));
+  s.push_back(mp("-reclassify angle", "Reclassify surface mesh, then exit"));
+  s.push_back(mp("-reparam angle", "Reparametrize surface mesh, then exit"));
   s.push_back(mp("-part int", "Partition after batch mesh generation"));
   s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int",
                  "Weight of a triangle/quad/etc. during partitioning"));
@@ -143,6 +144,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-new", "Create new model before merge next file"));
   s.push_back(mp("-merge", "Merge next files"));
   s.push_back(mp("-open", "Open next files"));
+  s.push_back(mp("-log filename", "Log all messages to filename"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, solver or "
                  "post-processing mode"));
@@ -429,20 +431,44 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         i++;
       }
       else if(!strcmp(argv[i] + 1, "log")) {
-        Msg::SetLogFile("gmsh.log");
         i++;
+        if(argv[i]){
+          Msg::SetLogFile(argv[i++]);
+        }
+        else{
+          Msg::Error("Missing filename");
+          if(exitOnError) Msg::Exit(1);
+        }
       }
       else if(!strcmp(argv[i] + 1, "refine")) {
         CTX::instance()->batch = 5;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "reclassify")) {
+      else if(!strcmp(argv[i] + 1, "barycentric_refine")) {
         CTX::instance()->batch = 6;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "barycentric_refine")) {
-        CTX::instance()->batch = 7;
+      else if(!strcmp(argv[i] + 1, "reclassify")) {
         i++;
+        if(argv[i]){
+          CTX::instance()->batch = 7 ;
+          CTX::instance()->batchSomeValue = atof(argv[i]);
+        }
+        else{
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
+      else if(!strcmp(argv[i] + 1, "reparam")) {
+        i++;
+        if(argv[i]){
+          CTX::instance()->batch = 8 ;
+          CTX::instance()->batchSomeValue = atof(argv[i]);
+        }
+        else{
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
       }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;
@@ -622,7 +648,12 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "debugSurface")) {
 	i++;
-        CTX::instance()->debugSurface = atoi(argv[i++]);
+        if(argv[i])
+          CTX::instance()->debugSurface = atoi(argv[i++]);
+        else{
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
       }
       else if(!strcmp(argv[i] + 1, "ho_max")) {
         i++;
@@ -1078,10 +1109,6 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         CTX::instance()->mesh.recombineAll = 1;
         CTX::instance()->mesh.algoRecombine = 2;
         i++;
-      }
-      else if(!strcmp(argv[i] + 1, "meshdiscrete")) {
-        i++;
-        CTX::instance()->meshDiscrete = 1;
       }
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;

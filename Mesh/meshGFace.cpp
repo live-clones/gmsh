@@ -263,6 +263,7 @@ public:
     if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine)
       return;
     if(CTX::instance()->mesh.algoRecombine < 2) return;
+    if(gf->compound.size()) return;
     if(periodic) {
       Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
       return;
@@ -318,14 +319,28 @@ static void copyMesh(GFace *source, GFace *target)
 {
   std::map<MVertex *, MVertex *> vs2vt;
 
-  // add principal vertex pairs
+  // add principal GVertex pairs
 
-  std::vector<GVertex *> const &s_vtcs = source->vertices();
-  std::vector<GVertex *> const &t_vtcs = target->vertices();
+  std::vector<GVertex *> s_vtcs = source->vertices();
+  s_vtcs.insert(s_vtcs.end(), source->embeddedVertices().begin(),
+                source->embeddedVertices().end());
+  for(std::vector<GEdge*>::iterator it = source->embeddedEdges().begin();
+      it != source->embeddedEdges().end(); it++){
+    if((*it)->getBeginVertex()) s_vtcs.push_back((*it)->getBeginVertex());
+    if((*it)->getEndVertex()) s_vtcs.push_back((*it)->getEndVertex());
+  }
+  std::vector<GVertex *> t_vtcs = target->vertices();
+  t_vtcs.insert(t_vtcs.end(), target->embeddedVertices().begin(),
+                target->embeddedVertices().end());
+  for(std::vector<GEdge*>::iterator it = target->embeddedEdges().begin();
+      it != target->embeddedEdges().end(); it++){
+    if((*it)->getBeginVertex()) t_vtcs.push_back((*it)->getBeginVertex());
+    if((*it)->getEndVertex()) t_vtcs.push_back((*it)->getEndVertex());
+  }
 
   if(s_vtcs.size() != t_vtcs.size()) {
     Msg::Info("Periodicity imposed on topologically incompatible surfaces"
-              "(%d vs %d bounding vertices)",
+              "(%d vs %d points)",
               s_vtcs.size(), t_vtcs.size());
   }
 
@@ -365,10 +380,14 @@ static void copyMesh(GFace *source, GFace *target)
     }
   }
 
-  // add corresponding edge nodes assuming edges were correctly meshed already
+  // add corresponding curve nodes assuming curves were correctly meshed already
 
   std::vector<GEdge *> s_edges = source->edges();
+  s_edges.insert(s_edges.end(), source->embeddedEdges().begin(),
+                 source->embeddedEdges().end());
   std::vector<GEdge *> t_edges = target->edges();
+  t_edges.insert(t_edges.end(), target->embeddedEdges().begin(),
+                 target->embeddedEdges().end());
 
   std::set<GEdge *> checkEdges;
   checkEdges.insert(s_edges.begin(), s_edges.end());
@@ -389,7 +408,7 @@ static void copyMesh(GFace *source, GFace *target)
       if(checkEdges.find(ges) == checkEdges.end()) {
         Msg::Error(
           "Periodic meshing of surface %d with surface %d: "
-          "curve %d has periodic counterpart %d outside of get surface",
+          "curve %d has periodic counterpart %d",
           target->tag(), source->tag(), get->tag(), ges->tag());
       }
       if(get->mesh_vertices.size() != ges->mesh_vertices.size()) {
@@ -411,7 +430,7 @@ static void copyMesh(GFace *source, GFace *target)
     }
   }
 
-  // now transform
+  // transform interior nodes
   std::vector<double> &tfo = target->affineTransform;
 
   for(std::size_t i = 0; i < source->mesh_vertices.size(); i++) {
@@ -435,21 +454,21 @@ static void copyMesh(GFace *source, GFace *target)
     vs2vt[vs] = vt;
   }
 
+  // create new elements
   for(unsigned i = 0; i < source->triangles.size(); i++) {
-    MVertex *vt[3];
-    for(int j = 0; j < 3; j++) {
-      MVertex *vs = source->triangles[i]->getVertex(j);
-      vt[j] = vs2vt[vs];
+    MVertex *v1 = vs2vt[source->triangles[i]->getVertex(0)];
+    MVertex *v2 = vs2vt[source->triangles[i]->getVertex(1)];
+    MVertex *v3 = vs2vt[source->triangles[i]->getVertex(2)];
+    if(v1 && v2 && v3){
+      target->triangles.push_back(new MTriangle(v1, v2, v3));
     }
-    if(!vt[0] || !vt[1] || !vt[2]) {
-      Msg::Error("Problem in mesh copying procedure %p %p %p %d %d %d", vt[0],
-                 vt[1], vt[2],
-                 source->triangles[i]->getVertex(0)->onWhat()->dim(),
-                 source->triangles[i]->getVertex(1)->onWhat()->dim(),
-                 source->triangles[i]->getVertex(2)->onWhat()->dim());
-      return;
+    else{
+      Msg::Error("Could not find periodic counterpart of triangle nodes "
+                 "%lu %lu %lu",
+                 source->triangles[i]->getVertex(0)->getNum(),
+                 source->triangles[i]->getVertex(1)->getNum(),
+                 source->triangles[i]->getVertex(2)->getNum());
     }
-    target->triangles.push_back(new MTriangle(vt[0], vt[1], vt[2]));
   }
 
   for(unsigned i = 0; i < source->quadrangles.size(); i++) {
@@ -457,15 +476,17 @@ static void copyMesh(GFace *source, GFace *target)
     MVertex *v2 = vs2vt[source->quadrangles[i]->getVertex(1)];
     MVertex *v3 = vs2vt[source->quadrangles[i]->getVertex(2)];
     MVertex *v4 = vs2vt[source->quadrangles[i]->getVertex(3)];
-    if(!v1 || !v2 || !v3 || !v4) {
-      Msg::Error("Problem in mesh copying procedure %p %p %p %p %d %d %d %d",
-                 v1, v2, v3, v4,
-                 source->quadrangles[i]->getVertex(0)->onWhat()->dim(),
-                 source->quadrangles[i]->getVertex(1)->onWhat()->dim(),
-                 source->quadrangles[i]->getVertex(2)->onWhat()->dim(),
-                 source->quadrangles[i]->getVertex(3)->onWhat()->dim());
+    if(v1 && v2 && v3 && v4) {
+      target->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
     }
-    target->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+    else{
+      Msg::Error("Could not find periodic counterpart of quadrangle nodes "
+                 "%lu %lu %lu %lu",
+                 source->quadrangles[i]->getVertex(0)->getNum(),
+                 source->quadrangles[i]->getVertex(1)->getNum(),
+                 source->quadrangles[i]->getVertex(2)->getNum(),
+                 source->quadrangles[i]->getVertex(3)->getNum());
+    }
   }
 }
 
@@ -821,7 +842,7 @@ static void modifyInitialMeshForBoundaryLayers(
   std::set<MEdge, Less_Edge> removed;
 
   std::vector<GEdge *> edges = gf->edges();
-  std::vector<GEdge *> const &embedded_edges = gf->embeddedEdges();
+  std::vector<GEdge *> embedded_edges = gf->getEmbeddedEdges();
   edges.insert(edges.begin(), embedded_edges.begin(), embedded_edges.end());
   std::vector<GEdge *>::iterator ite = edges.begin();
 
@@ -1216,7 +1237,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     return false;
   }
 
-  std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
+  std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
   ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
     if(!(*ite)->isMeshDegenerated()) {
@@ -1233,8 +1254,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   // add embedded vertices
-  std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
-  std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
+  std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+  std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
   while(itvx != emb_vertx.end()) {
     all_vertices.insert((*itvx)->mesh_vertices.begin(),
                         (*itvx)->mesh_vertices.end());
@@ -2165,8 +2186,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
     // Embedded Vertices
     // add embedded vertices
-    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
+    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+    std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
 
     std::map<MVertex *, std::set<BDS_Point *> > invertedRecoverMap;
     for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
@@ -2178,7 +2199,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     int pNum = m->MAXPOINTNUMBER;
     nbPointsTotal += emb_vertx.size();
     {
-      std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
+      std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
       std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
       std::set<MVertex *> vs;
       while(ite != emb_edges.end()) {
@@ -2219,7 +2240,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       ++itvx;
     }
 
-    std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
+    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
     std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
     std::set<MVertex *> vs;
     std::map<MVertex *, BDS_Point *> facile;

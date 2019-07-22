@@ -10,43 +10,28 @@
 #include "GEdge.h"
 
 class discreteEdge : public GEdge {
-protected:
+private:
   std::vector<double> _pars;
-  std::vector<MVertex *> discrete_vertices;
-  std::vector<MLine *> discrete_lines;
-  void orderMLines();
-  bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
-  discreteEdge *_split[2];
-
+  std::vector<SPoint3> _discretization;
+  bool _orderMLines(bool isCompound);
+  bool _getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
 public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   discreteEdge(GModel *model, int num);
-  virtual ~discreteEdge();
+  virtual ~discreteEdge() {}
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature(double par) const;
   virtual bool haveParametrization() { return !_pars.empty(); }
   virtual Range<double> parBounds(int) const;
-  void createGeometry();
+  int createGeometry(bool isCompound = false);
   virtual void mesh(bool verbose);
   int minimumDrawSegments() const { return 2 * _pars.size(); }
-  virtual int minimumMeshSegments() const { return periodic(0) ? 3: 2;}
-  void setSplit (discreteEdge *e0, discreteEdge *e1) {
-    _split[0] = e0;
-    _split[1] = e1;
-  }
-  void getSplit (std::vector<GEdge*> & s) {
-    if (_split[0] == NULL){
-      if (std::find(s.begin(),s.end(),this) == s.end())
-	s.push_back(this);
-    }
-    else {
-      _split[0]->getSplit(s);
-      _split[1]->getSplit(s);
-    }
-  }
-
+  virtual int minimumMeshSegments() const { return periodic(0) ? 3 : 2; }
+  virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
+  bool writeParametrization(FILE *fp, bool binary);
+  bool readParametrization(FILE *fp, bool binary);
 };
 
 #endif

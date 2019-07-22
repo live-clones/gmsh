@@ -708,25 +708,25 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
   e->oppositeof(op);
   if(!op[0] || !op[1]) return false;
 
-  int CHECK1 = -1, CHECK2 = 46;
+  const int CHECK1 = -1, CHECK2 = -1;
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
     printf("splitting edge %d %d opp %d %d new %d\n", p1->iD, p2->iD, op[0]->iD,
            op[1]->iD, mid->iD);
 
-  double ori0 = fabs(surface_triangle_param(p2, p1, op[0])) +
-                fabs(surface_triangle_param(p2, p1, op[1]));
-  double ori1 = fabs(surface_triangle_param(mid, p1, op[1]));
-  double ori2 = fabs(surface_triangle_param(mid, op[1], p2));
-  double ori3 = fabs(surface_triangle_param(mid, p2, op[0]));
-  double ori4 = fabs(surface_triangle_param(mid, op[0], p1));
-
-  double eps = 1.e-2;
-  if(ori1 < eps * ori0 || ori2 < eps * ori0 || ori3 < eps * ori0 ||
-     ori4 < eps * ori0) {
-    // printf("%g %g %g %g %g\n",ori0,ori1,ori2,ori3,ori4);
-    // return false;
-  }
+  //  double ori0 = fabs(surface_triangle_param(p2, p1, op[0])) +
+  //                fabs(surface_triangle_param(p2, p1, op[1]));
+  //  double ori1 = fabs(surface_triangle_param(mid, p1, op[1]));
+  //  double ori2 = fabs(surface_triangle_param(mid, op[1], p2));
+  //  double ori3 = fabs(surface_triangle_param(mid, p2, op[0]));
+  //  double ori4 = fabs(surface_triangle_param(mid, op[0], p1));
+  //
+  //  double eps = 1.e-21;
+  //  if(ori1 < eps * ori0 || ori2 < eps * ori0 || ori3 < eps * ori0 ||
+  //     ori4 < eps * ori0) {
+  //    // printf("%g %g %g %g %g\n",ori0,ori1,ori2,ori3,ori4);
+  //    return false;
+  //  }
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
     printf("%d %d %d %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD);
@@ -1189,6 +1189,13 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
     if(e->g->classif_degree == 2 && p->g != e->g) return false;
   }
 
+  const int CHECK1 = -1, CHECK2 = -1;
+
+  if(e->p1->iD == CHECK1 && e->p2->iD == CHECK2){
+    printf("collapsing edge %p %p onto %p\n", e->p1, e->p2, p);
+    printf("collapsing edge %d %d onto %d\n", e->p1->iD, e->p2->iD, p->iD);
+  }
+
   if(!force) {
     for(size_t i = 0; i < e->p1->edges.size(); i++) {
       for(size_t j = 0; j < e->p2->edges.size(); j++) {
@@ -1344,10 +1351,16 @@ static inline bool getOrderedNeighboringVertices(BDS_Point *p,
                                                  int CHECK)
 {
   if(p->iD == CHECK) {
+    printf("LISTING THE TRIANGLES\n");
     for(size_t i = 0; i < ts.size(); i++) {
       BDS_Point *pts[4];
       ts[i]->getNodes(pts);
-      //      printf("TR %d : %d %d %d\n",i,pts[0]->iD,pts[1]->iD,pts[2]->iD);
+      printf("TR %lu : %p %p %p\n",i,pts[0],pts[1],pts[2]);
+      printf("TR %lu : %d %d - %d %d - %d %d\n",i,
+	     ts[i]->e1->p1->iD,ts[i]->e1->p2->iD,
+	     ts[i]->e2->p1->iD,ts[i]->e2->p2->iD,
+	     ts[i]->e3->p1->iD,ts[i]->e3->p2->iD );
+      //     printf("TR %d : %d %d %d\n",i,pts[0]->iD,pts[1]->iD,pts[2]->iD);
     }
   }
 
@@ -1410,6 +1423,7 @@ static inline double getTutteEnergy(const BDS_Point *p,
 {
   double E = 0;
   double MAX, MIN;
+  if (nbg.empty())return 1.e22;
   for(size_t i = 0; i < nbg.size(); ++i) {
     const double dx = p->X - nbg[i]->X;
     const double dy = p->Y - nbg[i]->Y;
@@ -1664,6 +1678,7 @@ static inline bool minimizeTutteEnergyProj(BDS_Point *p, double E_unmoved,
   p->Z = oldZ;
   p->u = oldU;
   p->v = oldV;
+  if(p->iD == check) printf("NO WAY\n");
   return false;
 }
 
@@ -1679,6 +1694,7 @@ static inline bool minimizeTutteEnergyParam(BDS_Point *p, double E_unmoved,
   double RATIO2;
   getCentroidUV(p, gf, kernel, lc, U, V, LC);
   GPoint gp = gf->point(U, V);
+  if (!gp.succeeded())return false;
   p->X = gp.x();
   p->Y = gp.y();
   p->Z = gp.z();
@@ -1717,12 +1733,18 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
 
   int CHECK = -1;
 
+  if(p->iD == CHECK) printf("VERTEX %d TRYING TO MOVE from its initial position %g %g\n",CHECK,p->u,p->v);
+
   std::vector<BDS_Point *> nbg;
   std::vector<double> lc;
   std::vector<SPoint2> kernel;
   std::vector<BDS_Face *> ts = p->getTriangles();
 
+  if(p->iD == CHECK) printf("%d adjacent triangles\n",(int)ts.size());
+
   if(!getOrderedNeighboringVertices(p, nbg, ts, CHECK)) return false;
+
+  if(p->iD == CHECK) printf("%d adjacent vertices\n",(int)nbg.size());
 
   double RATIO;
   double E_unmoved = getTutteEnergy(p, nbg, RATIO);
