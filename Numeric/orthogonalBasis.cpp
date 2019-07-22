@@ -26,9 +26,7 @@ void orthogonalBasis::f(double u, double v, double w, double *sf) const
   case TYPE_LIN: LegendrePolynomials::f(_order, u, sf); return;
   case TYPE_TRI:
     if(u >= 1.) {
-      for(int k = 0; k <= _order; ++k) {
-        sf[k] = k + 1;
-      }
+      for(int k = 0; k <= _order; ++k) { sf[k] = k + 1; }
       for(int k = _order; k < (_order + 1) * (_order + 2) / 2; ++k) {
         sf[k] = 0;
       }
@@ -38,21 +36,15 @@ void orthogonalBasis::f(double u, double v, double w, double *sf) const
     for(int i = 0; i <= _order; ++i) {
       JacobiPolynomials::f(_order - i, 2 * i + 1, 0, 2 * u - 1, sf1);
       double coeff = pow_int(1 - u, i);
-      for(int j = 0; j <= _order - i; ++j) {
-        sf1[j] *= coeff;
-      }
-      for(int j = 0; j <= _order - i; ++j) {
-        sf[k++] = sf0[i] * sf1[j];
-      }
+      for(int j = 0; j <= _order - i; ++j) { sf1[j] *= coeff; }
+      for(int j = 0; j <= _order - i; ++j) { sf[k++] = sf0[i] * sf1[j]; }
     }
     return;
   case TYPE_QUA:
     LegendrePolynomials::f(_order, u, sf0);
     LegendrePolynomials::f(_order, v, sf1);
     for(int i = 0; i <= _order; ++i) {
-      for(int j = 0; j <= _order; ++j) {
-        sf[k++] = sf0[i] * sf1[j];
-      }
+      for(int j = 0; j <= _order; ++j) { sf[k++] = sf0[i] * sf1[j]; }
     }
     return;
   }
@@ -63,9 +55,7 @@ void orthogonalBasis::integralfSquared(double *val) const
   int k = 0;
   switch(_type) {
   case TYPE_LIN:
-    for(int i = 0; i <= _order; ++i) {
-      val[i] = 2. / (1 + 2 * i);
-    }
+    for(int i = 0; i <= _order; ++i) { val[i] = 2. / (1 + 2 * i); }
     return;
   case TYPE_TRI:
     for(int i = 0; i <= _order; ++i) {
