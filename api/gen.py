@@ -749,7 +749,7 @@ fltk.add('lock',doc,None)
 doc = '''Release the lock that was set using lock.'''
 fltk.add('unlock',doc,None)
 
-doc = '''Run the event loop of the graphical user interface, i.e. repeatedly calls `wait()'. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
+doc = '''Run the event loop of the graphical user interface, i.e. repeatedly call `wait()'. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('run',doc,None)
 
 doc = '''Select entities in the user interface. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''

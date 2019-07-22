@@ -2081,7 +2081,7 @@ GMSH_API void gmshFltkLock(int * ierr);
 /* Release the lock that was set using lock. */
 GMSH_API void gmshFltkUnlock(int * ierr);
 
-/* Run the event loop of the graphical user interface, i.e. repeatedly calls
+/* Run the event loop of the graphical user interface, i.e. repeatedly call
  * `wait()'. First automatically create the user interface if it has not yet
  * been initialized. Can only be called in the main thread. */
 GMSH_API void gmshFltkRun(int * ierr);

@@ -4340,7 +4340,7 @@ end
 """
     gmsh.fltk.run()
 
-Run the event loop of the graphical user interface, i.e. repeatedly calls
+Run the event loop of the graphical user interface, i.e. repeatedly call
 `wait()`. First automatically create the user interface if it has not yet been
 initialized. Can only be called in the main thread.
 """
