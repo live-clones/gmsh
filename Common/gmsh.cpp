@@ -48,6 +48,7 @@
 #include "HierarchicalBasisH1Brick.h"
 #include "HierarchicalBasisH1Tetra.h"
 #include "HierarchicalBasisH1Pri.h"
+#include "HierarchicalBasisHcurlLine.h"
 #include "HierarchicalBasisHcurlQuad.h"
 #include "HierarchicalBasisHcurlBrick.h"
 #include "HierarchicalBasisHcurlTria.h"
@@ -2089,6 +2090,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     case TYPE_PRI: {
       basis = new HierarchicalBasisHcurlPri(basisOrder);
     } break;
+    case TYPE_LIN: {
+      basis = new HierarchicalBasisHcurlLine(basisOrder);
+    } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
@@ -2347,6 +2351,9 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       } break;
       case TYPE_PRI: {
         basis = new HierarchicalBasisHcurlPri(order);
+      } break;
+      case TYPE_LIN: {
+        basis = new HierarchicalBasisHcurlLine(order);
       } break;
       }
     }

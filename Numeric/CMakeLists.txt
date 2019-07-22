@@ -54,6 +54,7 @@ set(SRC
   HierarchicalBasisHcurlTria.cpp
   HierarchicalBasisHcurlTetra.cpp
   HierarchicalBasisHcurlPri.cpp
+  HierarchicalBasisHcurlLine.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
