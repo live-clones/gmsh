@@ -709,6 +709,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   HXT_CHECK(hxtEdgesCreate(m, &edges));
   HXT_CHECK(hxtMeanValuesCreate(edges, &param));
   HXT_CHECK(hxtMeanValuesCompute(param));
+
   double *uvc = NULL;
   int nv, ne;
   HXT_CHECK(hxtMeanValuesGetData(param, NULL, NULL, &uvc, &nv, &ne, 1));
@@ -860,6 +861,11 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
         Msg::Info(" - Level %d partition with %d triangles split in %d "
                   "parts because %s", level, (*it)->triangles.size(), np,
                   why.str().c_str());
+      }
+      else if(np < 0){ // HXT_STATUS_ERROR are < 0
+        Msg::Error("Could not create parametrization (check orientation of "
+                   "input triangulations)");
+        break;
       }
       if(np == 1) {
         for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
