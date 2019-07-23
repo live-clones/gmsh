@@ -87,52 +87,42 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   meshStatistics.status = GFace::DONE;
 }
 
-
-
-// ----------------------------------------------------------------------------------
-// JF FIX ensure that edges are oriented correctly
-// only do that when there are 3 or 4 edges (only used in transfinite)
-// FIXME BE GENERAL .. EVZN THOUGH THE ONLY PLACE IT IS USED IS IN
-// TRANSFINITE MESH
-static void sort_edges (std::vector<GEdge *> &e, std::vector<int> &dir){
-  //  if (e.size() != 4)return;
+static void sort_edges(std::vector<GEdge *> &e, std::vector<int> &dir)
+{
+  if(e.empty() || dir.empty()) return;
   std::vector<GEdge *> result;
   result.push_back(e[0]);
   e.erase(e.begin());
   dir.clear();
   dir.push_back(1);
-  while (!e.empty()){
+  while(!e.empty()) {
     bool found = false;
-    GEdge *ge = result[result.size()-1];
-    GVertex *gv = dir[dir.size()-1] == 1 ?
-      ge->getEndVertex() : ge->getBeginVertex();    
-    for (size_t i = 0 ; i< e.size();i++){
-      if (e[i]->getBeginVertex() == gv){
-	found = true;
-	result.push_back(e[i]);
-	e.erase(e.begin()+i);
-	dir.push_back(1);
-	break;
+    GEdge *ge = result[result.size() - 1];
+    GVertex *gv =
+      dir[dir.size() - 1] == 1 ? ge->getEndVertex() : ge->getBeginVertex();
+    for(size_t i = 0; i < e.size(); i++) {
+      if(e[i]->getBeginVertex() == gv) {
+        found = true;
+        result.push_back(e[i]);
+        e.erase(e.begin() + i);
+        dir.push_back(1);
+        break;
       }
-      if (e[i]->getEndVertex() == gv){
-	found = true;
-	result.push_back(e[i]);
-	e.erase(e.begin()+i);
-	dir.push_back(-1);
-	break;
+      if(e[i]->getEndVertex() == gv) {
+        found = true;
+        result.push_back(e[i]);
+        e.erase(e.begin() + i);
+        dir.push_back(-1);
+        break;
       }
     }
-    if (!found && !e.empty()){
+    if(!found && !e.empty()) {
       result.push_back(e[0]);
       e.erase(e.begin());
       dir.push_back(1);
     }
   }
   e = result;
-  //  for (size_t i=0;i<e.size();i++){
-  //    printf("(%d %d -- %d)",e[i]->getBeginVertex()->tag(),e[i]->getEndVertex()->tag(),dir[i]);
-  //  }
-  //  printf("\n");
 }
 
 void discreteFace::setBoundEdges(const std::vector<int> &tagEdges)
@@ -148,10 +138,8 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges)
       Msg::Error("Unknown curve %d in discrete surface %d", tagEdges[i], tag());
     }
   }
-  sort_edges (l_edges,l_dirs);
+  sort_edges(l_edges, l_dirs);
 }
-
-// ----------------------------------------------------------------------------------
 
 void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
                                  const std::vector<int> &signEdges)
@@ -171,8 +159,7 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
       Msg::Error("Unknown curve %d in discrete surface %d", tagEdges[i], tag());
     }
   }
-  sort_edges (l_edges,l_dirs);
-
+  sort_edges(l_edges, l_dirs);
 }
 
 int discreteFace::trianglePosition(double par1, double par2, double &u,
@@ -379,7 +366,8 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
   MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
     Msg::Info("Triangle not found for curvatures at uv=(%g,%g) on "
-              "discrete surface %d", param.x(), param.y(), tag());
+              "discrete surface %d",
+              param.x(), param.y(), tag());
     return 0.0;
   }
 
@@ -408,7 +396,8 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
   MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
     Msg::Info("Triangle not found for first derivative at uv=(%g,%g) on "
-              "discrete surface %d", param.x(), param.y(), tag());
+              "discrete surface %d",
+              param.x(), param.y(), tag());
     return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
   }
 
@@ -792,7 +781,7 @@ bool discreteFace::writeParametrization(FILE *fp, bool binary)
     d[11 * i + 2] = stl_vertices_xyz[i].z();
     d[11 * i + 3] = stl_vertices_uv[i].x();
     d[11 * i + 4] = stl_vertices_uv[i].y();
-    if(stl_curvatures.size() == 2 * stl_vertices_uv.size()){
+    if(stl_curvatures.size() == 2 * stl_vertices_uv.size()) {
       d[11 * i + 5] = stl_curvatures[2 * i].x();
       d[11 * i + 6] = stl_curvatures[2 * i].y();
       d[11 * i + 7] = stl_curvatures[2 * i].z();
@@ -801,16 +790,17 @@ bool discreteFace::writeParametrization(FILE *fp, bool binary)
       d[11 * i + 10] = stl_curvatures[2 * i + 1].z();
     }
   }
-  if(binary){
+  if(binary) {
     fwrite(&N, sizeof(std::size_t), 1, fp);
     fwrite(&T, sizeof(std::size_t), 1, fp);
     fwrite(&d[0], sizeof(double), d.size(), fp);
     fwrite(&stl_triangles[0], sizeof(int), stl_triangles.size(), fp);
   }
-  else{
+  else {
     fprintf(fp, "%lu %lu\n", N, T);
     for(std::size_t i = 0; i < N; i++)
-      fprintf(fp, "%.16g %.16g %.16g %.16g %.16g %.16g %.16g "
+      fprintf(fp,
+              "%.16g %.16g %.16g %.16g %.16g %.16g %.16g "
               "%.16g %.16g %.16g %.16g\n",
               d[11 * i + 0], d[11 * i + 1], d[11 * i + 2], d[11 * i + 3],
               d[11 * i + 4], d[11 * i + 5], d[11 * i + 6], d[11 * i + 7],
@@ -832,14 +822,12 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
   stl_triangles.clear();
 
   std::size_t N, T;
-  if(binary){
+  if(binary) {
     if(fread(&N, sizeof(std::size_t), 1, fp) != 1) { return false; }
     if(fread(&T, sizeof(std::size_t), 1, fp) != 1) { return false; }
   }
-  else{
-    if(fscanf(fp, "%lu %lu", &N, &T) != 2) {
-      return false;
-    }
+  else {
+    if(fscanf(fp, "%lu %lu", &N, &T) != 2) { return false; }
   }
   std::vector<double> d(11 * N);
   stl_vertices_xyz.resize(N);
@@ -848,11 +836,13 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
   stl_curvatures.resize(2 * N);
   stl_triangles.resize(3 * T);
 
-  if(binary){
-    if(fread(&d[0], sizeof(double), 11 * N, fp) != 11 * N){ return false; }
-    if(fread(&stl_triangles[0], sizeof(int), 3 * T, fp) != 3 * T){ return false; }
+  if(binary) {
+    if(fread(&d[0], sizeof(double), 11 * N, fp) != 11 * N) { return false; }
+    if(fread(&stl_triangles[0], sizeof(int), 3 * T, fp) != 3 * T) {
+      return false;
+    }
   }
-  else{
+  else {
     for(std::size_t i = 0; i < N; i++) {
       if(fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
                 &d[11 * i + 0], &d[11 * i + 1], &d[11 * i + 2], &d[11 * i + 3],
@@ -863,7 +853,7 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
     }
     for(std::size_t i = 0; i < T; i++) {
       if(fscanf(fp, "%d %d %d", &stl_triangles[3 * i + 0],
-                &stl_triangles[3 * i + 1], &stl_triangles[3 * i + 2]) != 3){
+                &stl_triangles[3 * i + 1], &stl_triangles[3 * i + 2]) != 3) {
         return false;
       }
     }
@@ -873,12 +863,10 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
     stl_vertices_xyz[i] = SPoint3(d[11 * i + 0], d[11 * i + 1], d[11 * i + 2]);
     stl_vertices_uv[i] = SPoint2(d[11 * i + 3], d[11 * i + 4]);
     stl_normals[i] = SVector3(0, 0, 0);
-    stl_curvatures[2 * i + 0] = SVector3(d[11 * i + 5],
-                                         d[11 * i + 6],
-                                         d[11 * i + 7]);
-    stl_curvatures[2 * i + 1] = SVector3(d[11 * i + 8],
-                                         d[11 * i + 9],
-                                         d[11 * i + 10]);
+    stl_curvatures[2 * i + 0] =
+      SVector3(d[11 * i + 5], d[11 * i + 6], d[11 * i + 7]);
+    stl_curvatures[2 * i + 1] =
+      SVector3(d[11 * i + 8], d[11 * i + 9], d[11 * i + 10]);
   }
   for(std::size_t i = 0; i < T; i++) {
     int a = stl_triangles[3 * i + 0];
