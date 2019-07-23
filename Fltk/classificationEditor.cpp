@@ -260,19 +260,6 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
   NoElementsSelectedMode(e);
 }
 
-static void filterUnusedDiscreteEdges (GModel *gm,GEdge *e){
-  std::vector<GEdge*> toDelete;
-  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge() ; ++it){
-    printf("%d\n",(*it)->tag());
-    if ((*it) != e && (*it)->faces().empty()){
-      toDelete.push_back(*it);
-      for (size_t i=0;i<(*it)->lines.size();i++)e->lines.push_back((*it)->lines[i]);	
-      (*it)->lines.clear();
-    }
-  }
-  for (size_t i=0;i<toDelete.size();i++)gm->remove(toDelete[i]);
-}
-
 static void classify_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
@@ -284,7 +271,6 @@ static void classify_cb(Fl_Widget *w, void *data)
     GModel::current()->add(e->selected);
   }
 
-  //  filterUnusedDiscreteEdges (GModel::current(),e->selected);
   computeDiscreteCurvatures(GModel::current());
   if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
     computeEdgeCut(GModel::current(), e->selected->lines, 100000);
