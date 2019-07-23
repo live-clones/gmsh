@@ -256,7 +256,9 @@ public:
   // mesh is changed)
   void destroyMeshCaches();
   // delete the mesh stored in entities and call destroMeshCaches
-  void deleteMesh(bool onlyDeleteElements = false);
+  void deleteMesh();
+  // delete the vertex arrays used for efficient mesh drawing
+  void deleteVertexArrays();
 
   // remove all mesh vertex associations to geometrical entities and remove
   // vertices from geometrical entities, then _associateEntityWithMeshVertices

@@ -2297,8 +2297,11 @@ class model:
         @staticmethod
         def embed(dim, tags, inDim, inTag):
             """
-            Embed the model entities of dimension `dim' and tags `tags' in the (inDim,
-            inTag) model entity. `inDim' must be strictly greater than `dim'.
+            Embed the model entities of dimension `dim' and tags `tags' in the
+            (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must
+            be strictly smaller than `inDim', which must be either 2 or 3. The embedded
+            entities should not be part of the boundary of the entity `inTag', whose
+            mesh will conform to the mesh of the embedded entities.
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             ierr = c_int()
@@ -2316,9 +2319,9 @@ class model:
         @staticmethod
         def removeEmbedded(dimTags, dim=-1):
             """
-            Remove embedded entities in the model entities `dimTags'. if `dim' is >= 0,
-            only remove embedded entities of the given dimension (e.g. embedded points
-            if `dim' == 0).
+            Remove embedded entities from the model entities `dimTags'. if `dim' is >=
+            0, only remove embedded entities of the given dimension (e.g. embedded
+            points if `dim' == 0).
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2762,7 +2765,7 @@ class model:
         def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
             """
             Add an ellipse arc (strictly smaller than Pi) between the two points
-            `startTag' and `endTag', with center `centertag' and major axis point
+            `startTag' and `endTag', with center `centerTag' and major axis point
             `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
             tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly
             set the plane of the circle arc. Return the tag of the ellipse arc.
@@ -3001,11 +3004,11 @@ class model:
             """
             Extrude the model entities `dimTags' by rotation of `angle' radians around
             the axis of revolution defined by the point (`x', `y', `z') and the
-            direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
-            `numElements' is not empty, also extrude the mesh: the entries in
-            `numElements' give the number of elements in each layer. If `height' is not
-            empty, it provides the (cumulative) height of the different layers,
-            normalized to 1.
+            direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi.
+            Return extruded entities in `outDimTags'. If `numElements' is not empty,
+            also extrude the mesh: the entries in `numElements' give the number of
+            elements in each layer. If `height' is not empty, it provides the
+            (cumulative) height of the different layers, normalized to 1.
 
             Return `outDimTags'.
             """
@@ -3040,10 +3043,11 @@ class model:
             Extrude the model entities `dimTags' by a combined translation and rotation
             of `angle' radians, along (`dx', `dy', `dz') and around the axis of
             revolution defined by the point (`x', `y', `z') and the direction (`ax',
-            `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is
-            not empty, also extrude the mesh: the entries in `numElements' give the
-            number of elements in each layer. If `height' is not empty, it provides the
-            (cumulative) height of the different layers, normalized to 1.
+            `ay', `az'). The angle should be strictly smaller than Pi. Return extruded
+            entities in `outDimTags'. If `numElements' is not empty, also extrude the
+            mesh: the entries in `numElements' give the number of elements in each
+            layer. If `height' is not empty, it provides the (cumulative) height of the
+            different layers, normalized to 1.
 
             Return `outDimTags'.
             """
@@ -3469,13 +3473,13 @@ class model:
             return api__result__
 
         @staticmethod
-        def addEllipseArc(startTag, centerTag, endTag, tag=-1):
+        def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1):
             """
-            Add an ellipse arc between the major axis point `startTag' and `endTag',
-            with center `centerTag'. If `tag' is positive, set the tag explicitly;
-            otherwise a new tag is selected automatically. Return the tag of the
-            ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs
-            with the major radius smaller than the minor radius.
+            Add an ellipse arc between the two points `startTag' and `endTag', with
+            center `centerTag' and major axis point `majorTag'. If `tag' is positive,
+            set the tag explicitly; otherwise a new tag is selected automatically.
+            Return the tag of the ellipse arc. Note that OpenCASCADE does not allow
+            creating ellipse arcs with the major radius smaller than the minor radius.
 
             Return an integer value.
             """
@@ -3483,6 +3487,7 @@ class model:
             api__result__ = lib.gmshModelOccAddEllipseArc(
                 c_int(startTag),
                 c_int(centerTag),
+                c_int(majorTag),
                 c_int(endTag),
                 c_int(tag),
                 byref(ierr))
@@ -4052,7 +4057,8 @@ class model:
             `numElements' is not empty, also extrude the mesh: the entries in
             `numElements' give the number of elements in each layer. If `height' is not
             empty, it provides the (cumulative) height of the different layers,
-            normalized to 1.
+            normalized to 1. When the mesh is extruded the angle should be strictly
+            smaller than 2*Pi.
 
             Return `outDimTags'.
             """
@@ -5087,7 +5093,7 @@ class fltk:
     @staticmethod
     def run():
         """
-        Run the event loop of the graphical user interface, i.e. repeatedly calls
+        Run the event loop of the graphical user interface, i.e. repeatedly call
         `wait()'. First automatically create the user interface if it has not yet
         been initialized. Can only be called in the main thread.
         """

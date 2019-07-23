@@ -83,7 +83,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
   int dim = getDim();
   if(noPhysicalGroups()) saveAll = true;
 
-  indexMeshVertices(saveAll);
+  indexMeshVertices(saveAll, 0, false);
   std::vector<GEntity *> entities;
   getEntities(entities);
 

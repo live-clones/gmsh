@@ -661,6 +661,11 @@ Module launched on startup (0: automatic, 1: geometry, 2: mesh, 3: solver, 4: po
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.InputScrolling
+Enable numerical input scrolling in user interface (moving the mouse to change numbers)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Light0
 Enable light source 0@*
 Default value: @code{1}@*

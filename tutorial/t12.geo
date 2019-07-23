@@ -39,3 +39,6 @@ Compound Curve{6, 7, 8};
 // Treat surfaces 1, 5 and 10 as a single surface when meshing (i.e. mesh across
 // curves 9 and 10)
 Compound Surface{1, 5, 10};
+
+// The option "Mesh.CompoundClassify" can be used to choose how the compound
+// surface mesh elements should be classified.

@@ -86,8 +86,17 @@ static void computeEdgeLoops(const GFace *gf,
                              std::vector<MVertex *> &all_mvertices,
                              std::vector<int> &indices)
 {
-  std::vector<GEdge *> const &edges = gf->edges();
-  std::vector<int> const &ori = gf->orientations();
+  std::vector<GEdge *> const &e = gf->edges();
+  std::vector<int> const &o = gf->orientations();
+  std::vector<GEdge *> edges;
+  std::vector<int> ori;
+  for(std::size_t i = 0; i < e.size(); i++){
+    if(!e[i]->degenerate(0)){ // skip degenerate curves
+      edges.push_back(e[i]);
+      ori.push_back(i < o.size() ? o[i] : 1);
+    }
+  }
+
   std::vector<GEdge *>::const_iterator it = edges.begin();
   std::vector<int>::const_iterator ito = ori.begin();
 
@@ -159,8 +168,8 @@ int MeshTransfiniteSurface(GFace *gf)
   std::vector<MVertex *> corners;
   findTransfiniteCorners(gf, corners);
   if(corners.size() != 3 && corners.size() != 4) {
-    Msg::Error("Surface %d is transfinite but has %d corners", gf->tag(),
-               corners.size());
+    Msg::Error("Surface %d is transfinite but has %d corner%s", gf->tag(),
+               corners.size(), corners.size() > 1 ? "s" : "");
     return 0;
   }
 
@@ -169,8 +178,9 @@ int MeshTransfiniteSurface(GFace *gf)
   computeEdgeLoops(gf, d_vertices, indices);
 
   if(indices.size() != 2) {
-    Msg::Error("Surface %d is transfinite but has %d holes", gf->tag(),
-               indices.size() - 2);
+    int nh = indices.size() - 2;
+    Msg::Error("Surface %d is transfinite but has %d hole%s", gf->tag(),
+               nh, nh > 1 ? "s" : "");
     return 0;
   }
 

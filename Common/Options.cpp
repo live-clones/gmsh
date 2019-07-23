@@ -2974,6 +2974,14 @@ double opt_general_tooltips(OPT_ARGS_NUM)
   return CTX::instance()->tooltips;
 }
 
+double opt_general_input_scrolling(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->inputScrolling = (int)val;
+  }
+  return CTX::instance()->inputScrolling;
+}
+
 double opt_general_orthographic(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

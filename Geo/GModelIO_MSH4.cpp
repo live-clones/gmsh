@@ -1596,6 +1596,11 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         regions.insert(*it);
   }
 
+  if(partition)
+    fprintf(fp, "$PartitionedEntities\n");
+  else
+    fprintf(fp, "$Entities\n");
+
   if(binary) {
     if(partition) {
       std::size_t numPartitions = model->getNumPartitions();
@@ -1961,6 +1966,11 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       fprintf(fp, "\n");
     }
   }
+
+  if(partition)
+    fprintf(fp, "$EndPartitionedEntities\n");
+  else
+    fprintf(fp, "$EndEntities\n");
 }
 
 static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
@@ -2250,6 +2260,10 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   std::size_t numNodes = getEntitiesForNodes(model, partitioned, saveAll,
                                              regions, faces, edges, vertices);
 
+  if(!numNodes) return;
+
+  fprintf(fp, "$Nodes\n");
+
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
@@ -2315,6 +2329,8 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   }
 
   if(binary) fprintf(fp, "\n");
+
+  fprintf(fp, "$EndNodes\n");
 }
 
 static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
@@ -2444,6 +2460,10 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
+  if(!numElements) return;
+
+  fprintf(fp, "$Elements\n");
+
   std::size_t numSection = 0;
   for(int dim = 0; dim <= 3; dim++) numSection += elementsByType[dim].size();
 
@@ -2520,6 +2540,8 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   }
 
   if(binary) fprintf(fp, "\n");
+
+  fprintf(fp, "$EndElements\n");
 }
 
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
@@ -2699,7 +2721,6 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
 static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
                                       bool binary)
 {
-  fprintf(fp, "$Parametrizations\n");
   std::size_t nParamE = 0, nParamF = 0;
 
   for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
@@ -2710,6 +2731,10 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
     if(df && df->haveParametrization()) { nParamF++; }
   }
+
+  if(!nParamE && !nParamF) return;
+
+  fprintf(fp, "$Parametrizations\n");
 
   if(binary){
     fwrite(&nParamE, sizeof(std::size_t), 1, fp);
@@ -2790,28 +2815,20 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   }
 
   // entities
-  fprintf(fp, "$Entities\n");
   writeMSH4Entities(this, fp, false, binary, scalingFactor, version);
-  fprintf(fp, "$EndEntities\n");
 
   // partitioned entities
   if(getNumPartitions() > 0) {
-    fprintf(fp, "$PartitionedEntities\n");
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version);
-    fprintf(fp, "$EndPartitionedEntities\n");
   }
 
   // nodes
-  fprintf(fp, "$Nodes\n");
   writeMSH4Nodes(this, fp, getNumPartitions() == 0 ? false : true, binary,
                  saveParametric ? 1 : 0, scalingFactor, saveAll, version);
-  fprintf(fp, "$EndNodes\n");
 
   // elements
-  fprintf(fp, "$Elements\n");
   writeMSH4Elements(this, fp, getNumPartitions() == 0 ? false : true, binary,
                     saveAll, version);
-  fprintf(fp, "$EndElements\n");
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, getNumPartitions() == 0 ? false : true,

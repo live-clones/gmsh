@@ -456,7 +456,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
   std::vector<BDS_Edge *>::const_iterator it = m.edges.begin();
   while(it != m.edges.end()) {
     if(!(*it)->deleted && (*it)->numfaces() == 2 &&
-       (*it)->g->classif_degree == 2) {
+       (*it)->g && (*it)->g->classif_degree == 2) {
       double lone = NewGetLc(*it, gf);
       if(lone > MAXE_) edges.push_back(std::make_pair(-lone, *it));
     }
@@ -565,7 +565,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
 
   while(it != m.edges.end()) {
     if(!(*it)->deleted && (*it)->numfaces() == 2 &&
-       (*it)->g->classif_degree == 2) {
+       (*it)->g && (*it)->g->classif_degree == 2) {
       double lone = NewGetLc(*it, gf);
       if(lone < MINE_) edges.push_back(std::make_pair(lone, *it));
     }

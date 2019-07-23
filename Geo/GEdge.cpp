@@ -48,13 +48,11 @@ GEdge::~GEdge()
   GEdge::deleteMesh();
 }
 
-void GEdge::deleteMesh(bool onlyDeleteElements)
+void GEdge::deleteMesh()
 {
-  if(!onlyDeleteElements) {
-    for(std::size_t i = 0; i < mesh_vertices.size(); i++)
-      delete mesh_vertices[i];
-    mesh_vertices.clear();
-  }
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++)
+    delete mesh_vertices[i];
+  mesh_vertices.clear();
   for(std::size_t i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
   deleteVertexArrays();
@@ -749,13 +747,14 @@ static void meshCompound(GEdge *ge)
     c->compoundCurve = de;
   }
   // create the geometry of the compound
-  de->createGeometry();
+  de->createGeometry(true);
   // once the geometry is created, delete the newly created mesh elements and
   // reset the mesh - because meshGEdge would delete the mesh
   for(std::size_t j = 0; j < de->lines.size(); j++)
     delete de->lines[j];
   de->lines.clear();
   de->mesh_vertices.clear();
+  de->deleteVertexArrays();
   // mesh the compound
   de->mesh(false);
 }

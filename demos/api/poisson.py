@@ -102,8 +102,8 @@ def fem_solve():
                         elementType, "Gauss" + str(2 * prop[2]))
                     numcomp, sf = model.mesh.getBasisFunctions(
                         elementType, uvw, 'Lagrange')
-                    weigths = np.array(weights)
-                    numGaussPoints = weights.shape[0]
+                    weights = np.array(weights)
+                    numGaussPoints = len(weights)
                     debug('numGaussPoints = g =', numGaussPoints, ', %weights (g) =',
                           weights.shape)
                     sf = np.array(sf).reshape((numGaussPoints, -1))

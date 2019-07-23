@@ -451,7 +451,7 @@ static void onelab_subtree_cb(Fl_Widget *w, void *data)
 void onelabGroup::_computeWidths()
 {
   // "-FL_NORMAL_SIZE" to have space for a scrollbar to the right
-  _baseWidth = _tree->w() - _tree->marginleft() - FL_NORMAL_SIZE;
+  _baseWidth = _tree->w() - _tree->marginleft() - 1.1 * FL_NORMAL_SIZE;
   // not sure why we have the "-2" correction at the end, but this is what is
   // needed to make things pixel-correct.
   _indent = _tree->connectorwidth() / 2. + _tree->openicon()->w() / 2. - 2.;
@@ -906,7 +906,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
   but->value(p.getValue());
   but->minimum(p.getMin());
   but->maximum(p.getMax());
-  but->step(p.getStep());
+  if(CTX::instance()->inputScrolling) but->step(p.getStep());
   but->choices(p.getChoices());
   but->loop(p.getAttribute("Loop"));
   but->graph(p.getAttribute("Graph"));

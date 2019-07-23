@@ -29,7 +29,7 @@ public:
   virtual ~GVertex();
 
   // delete mesh data
-  virtual void deleteMesh(bool onlyDeleteElements = false);
+  virtual void deleteMesh();
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();

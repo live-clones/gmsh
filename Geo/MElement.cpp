@@ -1829,12 +1829,25 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType,
       fprintf(fp, ",0.,0.,0.");
     fprintf(fp, "\n");
   }
-  else { // small or large field format
+  else if(format == 1) { // small field format
     fprintf(fp, "%-8s%-8lu%-8d", str, _num, tag);
     for(int i = 0; i < n; i++) {
       fprintf(fp, "%-8ld", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)) {
         fprintf(fp, "+%s%-6lu\n+%s%-6lu", cont[ncont], _num, cont[ncont], _num);
+        ncont++;
+      }
+    }
+    if(n == 2) // CBAR
+      fprintf(fp, "%-8s%-8s%-8s", "0.", "0.", "0.");
+    fprintf(fp, "\n");
+  }
+  else{ // large field format
+    fprintf(fp, "%-8s%-8lu%-8d", str, _num, tag);
+    for(int i = 0; i < n; i++) {
+      fprintf(fp, "%-8ld", getVertexBDF(i)->getIndex());
+      if(i != n - 1 && !((i + 3) % 8)) {
+        fprintf(fp, "\n        ");
         ncont++;
       }
     }

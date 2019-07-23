@@ -186,7 +186,7 @@ public:
   virtual void mesh(bool verbose) {}
 
   // delete the mesh data
-  virtual void deleteMesh(bool onlyDeleteElements = false) {}
+  virtual void deleteMesh() {}
 
   // delete the vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();

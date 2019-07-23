@@ -32,10 +32,10 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
   CreateReversedCurve(c);
 }
 
-void discreteEdge::_orderMLines()
+bool discreteEdge::_orderMLines(bool isCompound)
 {
   std::size_t ss = lines.size();
-  if(!ss) return;
+  if(!ss) return true;
 
   std::vector<MEdge> ed;
   std::vector<std::vector<MVertex *> > vs;
@@ -69,7 +69,21 @@ void discreteEdge::_orderMLines()
   mesh_vertices.clear();
   for(std::size_t i = 0; i < lines.size() - 1; ++i) {
     MVertex *v11 = lines[i]->getVertex(1);
-    mesh_vertices.push_back(v11);
+    if(v11->onWhat() == this || !v11->onWhat()){
+      v11->setEntity(this);
+      mesh_vertices.push_back(v11);
+    }
+    else if(!isCompound){
+      // no error for compound, where the mesh_vertices are just pointing to the
+      // original ones on their respective entities, and the vector will be
+      // cleared without deleting its contents as soon as createGeometry is done
+      Msg::Error("Discrete curve %d topology is wrong (node %lu classified "
+                 "on %s %d)", tag(), v11->getNum(),
+                 (v11->onWhat()->dim() == 3) ? "volume" :
+                 (v11->onWhat()->dim() == 2) ? "surface" :
+                 (v11->onWhat()->dim() == 1) ? "curve" : "point",
+                 v11->onWhat()->tag());
+    }
   }
 
   deleteVertexArrays();
@@ -77,15 +91,18 @@ void discreteEdge::_orderMLines()
 
   if(lines.empty()) {
     Msg::Error("No line elements in discrete curve %d", tag());
-    return;
+    return false;
   }
   GVertex *g0 = dynamic_cast<GVertex *>(lines[0]->getVertex(0)->onWhat());
   if(g0) setBeginVertex(g0);
   GVertex *g1 =
     dynamic_cast<GVertex *>(lines[lines.size() - 1]->getVertex(1)->onWhat());
   if(g1) setEndVertex(g1);
-  if(!g0 || !g1)
+  if(!g0 || !g1){
     Msg::Error("Discrete curve %d has non consecutive line elements", tag());
+    return false;
+  }
+  return true;
 }
 
 bool discreteEdge::_getLocalParameter(const double &t, int &iLine,
@@ -226,13 +243,18 @@ Range<double> discreteEdge::parBounds(int i) const
   return Range<double>(0, (double)(_discretization.size() - 1));
 }
 
-void discreteEdge::createGeometry()
+int discreteEdge::createGeometry(bool isCompound)
 {
-  if(lines.empty()) return;
+  if(lines.empty()) return 0;
 
-  if(!_discretization.empty()) return;
+  if(!_discretization.empty()) return 0;
 
-  _orderMLines();
+  // FIXME: createGeometry should *not* modify the mesh (and should thus not
+  // call _orderMLines) - it should assume that the mesh is already correctly
+  // ordered. Any reordering should be made explicitely before.
+
+  if(!_orderMLines(isCompound))
+    return -1;
 
   bool reverse = false;
   if(getEndVertex())
@@ -278,6 +300,8 @@ void discreteEdge::createGeometry()
     _pars.push_back((double)i);
   }
   _pars.push_back((double)discrete_lines.size());
+
+  return 0;
 }
 
 void discreteEdge::mesh(bool verbose)

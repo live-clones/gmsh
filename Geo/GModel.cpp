@@ -217,20 +217,32 @@ void GModel::destroyMeshCaches()
   _elementOctree = 0;
 }
 
-void GModel::deleteMesh(bool deleteOnlyElements)
+void GModel::deleteMesh()
 {
   for(riter it = firstRegion(); it != lastRegion(); ++it)
-    (*it)->deleteMesh(deleteOnlyElements);
+    (*it)->deleteMesh();
   for(fiter it = firstFace(); it != lastFace(); ++it)
-    (*it)->deleteMesh(deleteOnlyElements);
+    (*it)->deleteMesh();
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    (*it)->deleteMesh(deleteOnlyElements);
+    (*it)->deleteMesh();
   for(viter it = firstVertex(); it != lastVertex(); ++it)
-    (*it)->deleteMesh(deleteOnlyElements);
+    (*it)->deleteMesh();
   destroyMeshCaches();
   _currentMeshEntity = 0;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
+}
+
+void GModel::deleteVertexArrays()
+{
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    (*it)->deleteVertexArrays();
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    (*it)->deleteVertexArrays();
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    (*it)->deleteVertexArrays();
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    (*it)->deleteVertexArrays();
 }
 
 bool GModel::empty() const
@@ -665,8 +677,8 @@ void GModel::getPhysicalGroups(
     for(std::map<int, std::vector<GEntity *> >::iterator it = group.begin();
         it != group.end(); ++it) {
       std::vector<GEntity *> &v = it->second;
-      std::sort(v.begin(), v.end());
-      std::unique(v.begin(), v.end());
+      std::sort(v.begin(), v.end(), GEntityLessThan());
+      std::unique(v.begin(), v.end(), GEntityLessThan());
     }
   }
 }
@@ -687,8 +699,8 @@ void GModel::getPhysicalGroups(
   for(std::map<int, std::vector<GEntity *> >::iterator it = groups.begin();
       it != groups.end(); ++it) {
     std::vector<GEntity *> &v = it->second;
-    std::sort(v.begin(), v.end());
-    std::unique(v.begin(), v.end());
+    std::sort(v.begin(), v.end(), GEntityLessThan());
+    std::unique(v.begin(), v.end(), GEntityLessThan());
   }
 }
 
@@ -1961,7 +1973,11 @@ void GModel::createGeometryOfDiscreteEntities()
   double t1 = Cpu();
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
-    if(de) de->createGeometry();
+    if(de){
+      if(de->createGeometry())
+        Msg::Error("Could not create geometry of discrete curve %d",
+                   de->tag());
+    }
   }
   double t2 = Cpu();
   Msg::StatusBar(true, "Done creating geometry of discrete curves (%g s)",
@@ -1971,7 +1987,11 @@ void GModel::createGeometryOfDiscreteEntities()
   t1 = Cpu();
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
-    if(df) df->createGeometry();
+    if(df){
+      if(df->createGeometry())
+        Msg::Error("Could not create geometry of discrete surface %d",
+                   df->tag());
+    }
   }
   t2 = Cpu();
   Msg::StatusBar(true, "Done creating geometry of discrete surfaces (%g s)",
@@ -2038,16 +2058,17 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex *> &vertices)
 void GModel::pruneMeshVertexAssociations()
 {
   std::vector<GEntity *> entities;
-  std::vector<MVertex *> vertices;
+  std::set<MVertex *, MVertexLessThanNum> vertSet;
   getEntities(entities);
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
       v->setEntity(0);
-      vertices.push_back(v);
+      vertSet.insert(v);
     }
     entities[i]->mesh_vertices.clear();
   }
+  std::vector<MVertex *> vertices(vertSet.begin(), vertSet.end());
   _associateEntityWithMeshVertices();
   // associate mesh vertices primarily with chain entities
   for(riter it = _chainRegions.begin(); it != _chainRegions.end(); ++it) {

@@ -150,6 +150,8 @@ public:
   std::string watchFilePattern;
   // show tootips in the GUI?
   int tooltips;
+  // enable input field scrolling (moving the mouse to change numbers)
+  int inputScrolling;
   // position and size of various windows in the GUI
   int glPosition[2], glSize[2], msgSize, menuPosition[2], menuSize[2],
     detachedMenu;

@@ -61,7 +61,7 @@ public:
   virtual ~GFace();
 
   // delete mesh data
-  virtual void deleteMesh(bool onlyDeleteElements = false);
+  virtual void deleteMesh();
 
   // add/delete regions that are bounded by the face
   void addRegion(GRegion *r)

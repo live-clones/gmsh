@@ -17,13 +17,11 @@ GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms)
 
 GVertex::~GVertex() { GVertex::deleteMesh(); }
 
-void GVertex::deleteMesh(bool onlyDeleteElements)
+void GVertex::deleteMesh()
 {
-  if(!onlyDeleteElements) {
-    for(std::size_t i = 0; i < mesh_vertices.size(); i++)
-      delete mesh_vertices[i];
-    mesh_vertices.clear();
-  }
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++)
+    delete mesh_vertices[i];
+  mesh_vertices.clear();
   for(std::size_t i = 0; i < points.size(); i++) delete points[i];
   points.clear();
   deleteVertexArrays();

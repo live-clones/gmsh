@@ -95,7 +95,7 @@ double numberOrStringOptionChooser(const std::string &category, int index,
       d.name = name;
       number->minimum(minimum);
       number->maximum(maximum);
-      number->step(step, 1);
+      if(CTX::instance()->inputScrolling) number->step(step, 1);
       number->callback(interactive_cb, (void *)&d);
       number->when(FL_WHEN_RELEASE);
     }

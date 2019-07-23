@@ -147,14 +147,12 @@ int GFace::delEdge(GEdge *edge)
   return orientation;
 }
 
-void GFace::deleteMesh(bool onlyDeleteElements)
+void GFace::deleteMesh()
 {
-  if(!onlyDeleteElements) {
-    for(std::size_t i = 0; i < mesh_vertices.size(); i++)
-      delete mesh_vertices[i];
-    mesh_vertices.clear();
-    transfinite_vertices.clear();
-  }
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++)
+    delete mesh_vertices[i];
+  mesh_vertices.clear();
+  transfinite_vertices.clear();
   for(std::size_t i = 0; i < triangles.size(); i++) delete triangles[i];
   triangles.clear();
   for(std::size_t i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
@@ -1485,7 +1483,7 @@ static void meshCompound(GFace *gf, bool verbose)
 {
   // reclassify the elements on the original surfaces? (This is nice but it will
   // perturb algorithms that depend on the parametrization after the mesh is
-  // done
+  // done)
   bool magic = (CTX::instance()->mesh.compoundClassify == 1);
 
   discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000);
@@ -1546,7 +1544,10 @@ static void meshCompound(GFace *gf, bool verbose)
       it != emb0.end(); it++)
     df->addEmbeddedVertex(*it);
 
-  df->createGeometry();
+  if(df->createGeometry()){
+    Msg::Error("Could not create geometry of discrete face %d (check "
+               "orientation of input triangulations)", df->tag());
+  }
 
   if(!magic){
     df->triangles.clear();
@@ -1624,6 +1625,8 @@ void GFace::mesh(bool verbose)
   meshGFace mesher;
   mesher(this, verbose);
   if(compound.size()) { // Some faces are meshed together
+    orientMeshGFace orient;
+    orient(this);
     if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
       for(std::size_t i = 0; i < compound.size(); i++) {

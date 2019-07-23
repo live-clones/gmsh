@@ -181,7 +181,7 @@ struct doubleXstring{
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tAbs tFloor tCeil tRound
 %token tFmod tModulo tHypot tList tLinSpace tLogSpace tListFromFile tCatenary
-%token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
+%token tPrintf tError tWarning tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tAbsolutePath tDirName tStrSub tStrLen
 %token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
 %token tTextAttributes
@@ -336,6 +336,11 @@ Printf :
       Msg::Direct($3);
       Free($3);
     }
+  | tWarning '(' StringExprVar ')' tEND
+    {
+      Msg::Warning($3);
+      Free($3);
+    }
   | tError '(' StringExprVar ')' tEND
     {
       Msg::Error($3);
@@ -365,6 +370,19 @@ Printf :
 	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else
 	Msg::Direct(tmpstring);
+      Free($3);
+      List_Delete($5);
+    }
+  | tWarning '(' StringExprVar ',' RecursiveListOfDouble ')' tEND
+    {
+      char tmpstring[5000];
+      int i = printListOfDouble($3, $5, tmpstring);
+      if(i < 0)
+	yymsg(1, "Too few arguments in Error");
+      else if(i > 0)
+	yymsg(1, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
+      else
+	Msg::Warning(tmpstring);
       Free($3);
       List_Delete($5);
     }
@@ -1702,9 +1720,13 @@ Shape :
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        if(tags.size() == 3){
+        if(tags.size() == 3){ // keep this for backward compatibility
           r = GModel::current()->getOCCInternals()->addEllipseArc
-            (num, tags[0], tags[1], tags[2]);
+            (num, tags[0], tags[1], tags[0], tags[2]);
+        }
+        else if(tags.size() == 4){
+          r = GModel::current()->getOCCInternals()->addEllipseArc
+            (num, tags[0], tags[1], tags[2], tags[3]);
         }
         else if(param.size() >= 5 && param.size() <= 7){
           double a1 = (param.size() == 7) ? param[5] : 0.;
@@ -1714,11 +1736,15 @@ Shape :
             (num, param[0], param[1], param[2], param[3], param[4], a1, a2);
         }
         else{
-          yymsg(0, "Ellipse requires 3 points, or 5 to 7 parameters");
+          yymsg(0, "Ellipse requires 4 points, or 5 to 7 parameters");
         }
       }
       else{
-        if(tags.size() == 4){
+        if(tags.size() == 3){ // to match occ
+          r = GModel::current()->getGEOInternals()->addEllipseArc
+            (num, tags[0], tags[1], tags[0], tags[2], $7[0], $7[1], $7[2]);
+        }
+        else if(tags.size() == 4){
           r = GModel::current()->getGEOInternals()->addEllipseArc
             (num, tags[0], tags[1], tags[2], tags[3], $7[0], $7[1], $7[2]);
         }

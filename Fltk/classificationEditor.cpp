@@ -304,18 +304,8 @@ static void classify_cb(Fl_Widget *w, void *data)
   e->elements.clear();
   e->edges_detected.clear();
 
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()) {
-    for(GModel::eiter it = GModel::current()->firstEdge();
-        it != GModel::current()->lastEdge(); ++it) {
-      discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
-      if(de) de->createGeometry();
-    }
-    for(GModel::fiter it = GModel::current()->firstFace();
-        it != GModel::current()->lastFace(); ++it) {
-      discreteFace *df = dynamic_cast<discreteFace *>(*it);
-      if(df) df->createGeometry();
-    }
-  }
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
+    GModel::current()->createGeometryOfDiscreteEntities();
 
   NoElementsSelectedMode(e);
 }
@@ -378,8 +368,8 @@ classificationEditor::classificationEditor() : selected(0)
     inputs[CLASS_VALUE_ANGLE]->value(40);
     inputs[CLASS_VALUE_ANGLE]->maximum(180);
     inputs[CLASS_VALUE_ANGLE]->minimum(0);
+    if(CTX::instance()->inputScrolling) inputs[CLASS_VALUE_ANGLE]->step(1);
     inputs[CLASS_VALUE_ANGLE]->align(FL_ALIGN_RIGHT);
-    inputs[CLASS_VALUE_ANGLE]->step(1);
     inputs[CLASS_VALUE_ANGLE]->when(FL_WHEN_RELEASE);
     inputs[CLASS_VALUE_ANGLE]->callback(update_edges_cb, this);
 

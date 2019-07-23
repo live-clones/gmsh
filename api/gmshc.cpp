@@ -2065,12 +2065,12 @@ GMSH_API int gmshModelOccAddCircle(const double x, const double y, const double 
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddEllipseArc(const int startTag, const int centerTag, const int endTag, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddEllipseArc(const int startTag, const int centerTag, const int majorTag, const int endTag, const int tag, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addEllipseArc(startTag, centerTag, endTag, tag);
+    result_api_ = gmsh::model::occ::addEllipseArc(startTag, centerTag, majorTag, endTag, tag);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

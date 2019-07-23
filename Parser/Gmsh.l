@@ -357,6 +357,7 @@ Using                   return tUsing;
 
 Volume                  return tVolume;
 
+Warning                 return tWarning;
 Wedge                   return tWedge;
 Wire                    return tWire;
 

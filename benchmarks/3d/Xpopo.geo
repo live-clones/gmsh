@@ -28,11 +28,13 @@ Physical Surface(1) = {1,2,9,13,16,19,22,25};
 
 //Lower Left Quarter
 l1[] = Symmetry {0, 1, 0, 0} { Duplicata{ Surface{1,2,9,13,16,19,22,25}; } };
-Physical Surface(2) = - {l1[]};
+Physical Surface(2) = {l1[]};
+ReverseMesh Surface{ l1[] };
 
 //Upper Right Quarter
 l2[] = Symmetry {1, 0, 0, 0} { Duplicata{ Surface{1,2,9,13,16,19,22,25}; } };
-Physical Surface(3) = - {l2[]};
+Physical Surface(3) = {l2[]};
+ReverseMesh Surface{ l2[] };
 
 //Lower Right Quarter
 l3[] = Rotate { {0,0,1}, {0,0,0}, Pi } { Duplicata{ Surface{1,2,9,13,16,19,22,25}; } };
