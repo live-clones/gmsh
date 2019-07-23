@@ -230,7 +230,7 @@ static MTriangle *findTriangle(std::vector<MElement *> &els, MTriangle *t,
   return NULL;
 }
 
-static size_t
+size_t
 computeCutGraphParts(std::vector<GFace *> &f,
                      std::map<MEdge, cross2d, Less_Edge> &C,
                      std::vector<std::map<MVertex *, MVertex *> > &new2olds,
@@ -293,7 +293,7 @@ computeCutGraphParts(std::vector<GFace *> &f,
         }
         if(duplicateFirst) {
           side.insert(side.begin(), sideLoc.begin(), sideLoc.end());
-          printf("adding %d to side\n", sideLoc.size());
+          printf("adding %lu to side\n", sideLoc.size());
         }
 
         side.push_back(itxx->second._t[0]);
@@ -332,7 +332,7 @@ computeCutGraphParts(std::vector<GFace *> &f,
     }
     new2olds.push_back(new2old);
     for(size_t j = 0; j < side.size(); j++) {
-      fprintf(fff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+      fprintf(fff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%lu,%lu,%lu};\n",
               side[j]->getVertex(0)->x(), side[j]->getVertex(0)->y(),
               side[j]->getVertex(0)->z(), side[j]->getVertex(1)->x(),
               side[j]->getVertex(1)->y(), side[j]->getVertex(1)->z(),
@@ -438,7 +438,7 @@ static void duplicateNodesInCutGraph(std::vector<GFace *> &f,
 
 #if defined(HAVE_SOLVER)
 
-static void
+void
 computePotentials(GModel *gm, std::vector<GFace *> &f, const char *outputName,
                   dofManager<double> &dof,
                   std::map<MEdge, cross2d, Less_Edge> &C,
@@ -655,15 +655,15 @@ computePotentials(GModel *gm, std::vector<GFace *> &f, const char *outputName,
       myAssembler.getDofValue(d22, D22);
       myAssembler.getDofValue(d21, D21);
       myAssembler.getDofValue(d12, D12);
-      printf("%3d %12.5E %12.5E\n", K, D11 - D22, D21 - D12);
+      printf("%lu %12.5E %12.5E\n", K, D11 - D22, D21 - D12);
     }
   }
 }
 
-static void computePotential(GModel *gm, std::vector<GFace *> &f,
-                             const char *outputName, dofManager<double> &dof,
-                             int dir, std::map<MEdge, cross2d, Less_Edge> &C,
-                             std::map<MVertex *, MVertex *> &new2old)
+void computePotential(GModel *gm, std::vector<GFace *> &f,
+                      const char *outputName, dofManager<double> &dof,
+                      int dir, std::map<MEdge, cross2d, Less_Edge> &C,
+                      std::map<MVertex *, MVertex *> &new2old)
 {
   double a[3];
   std::set<MVertex *> vs;
