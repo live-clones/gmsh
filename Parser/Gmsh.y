@@ -4360,7 +4360,6 @@ Constraints :
               (sig * j, npoints, type * gmsh_sign(d), coef);
             GEdge *ge = GModel::current()->getEdgeByTag(sig * j);
             if(ge){
-	      //	      Msg::Info("edge %p tagged %d with %d points",ge,ge->tag(),npoints);
               ge->meshAttributes.method = MESH_TRANSFINITE;
               ge->meshAttributes.nbPointsTransfinite = npoints;
               ge->meshAttributes.typeTransfinite = type * gmsh_sign(d);
