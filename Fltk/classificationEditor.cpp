@@ -284,20 +284,12 @@ static void classify_cb(Fl_Widget *w, void *data)
     GModel::current()->add(e->selected);
   }
 
-  
-  
-  printf("coucou1\n");
-  filterUnusedDiscreteEdges (GModel::current(),e->selected);
-  printf("coucou2\n");
-  std::map<MVertex* , std::pair<SVector3, SVector3> > CURVATURES;
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
-    computeDiscreteCurvatures(GModel::current(), CURVATURES );
+  //  filterUnusedDiscreteEdges (GModel::current(),e->selected);
+  computeDiscreteCurvatures(GModel::current());
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
     computeEdgeCut(GModel::current(), e->selected->lines, 100000);
-  }
-
   computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
-
-  GModel::current()->classifyFaces();
+  classifyFaces(GModel::current());
 
   // remove selected, but do not delete its elements
   if(e->selected) {
@@ -307,15 +299,25 @@ static void classify_cb(Fl_Widget *w, void *data)
     e->selected = 0;
   }
 
+  GModel::current()->pruneMeshVertexAssociations();
+
   e->elements.clear();
   e->edges_detected.clear();
-  GModel::current()->pruneMeshVertexAssociations();
-  NoElementsSelectedMode(e);
 
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
-    parametrizeAllGEdge(GModel::current());
-    parametrizeAllGFace(GModel::current(), &CURVATURES);
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()) {
+    for(GModel::eiter it = GModel::current()->firstEdge();
+        it != GModel::current()->lastEdge(); ++it) {
+      discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
+      if(de) de->createGeometry();
+    }
+    for(GModel::fiter it = GModel::current()->firstFace();
+        it != GModel::current()->lastFace(); ++it) {
+      discreteFace *df = dynamic_cast<discreteFace *>(*it);
+      if(df) df->createGeometry();
+    }
   }
+
+  NoElementsSelectedMode(e);
 }
 
 classificationEditor::classificationEditor() : selected(0)
@@ -419,20 +421,20 @@ classificationEditor::classificationEditor() : selected(0)
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     x += WB;
-    y += BH;
-
-    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button(
-      (int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
-    buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
-    buttons[CLASS_BUTTON_CLASSIFY]->activate();
-
-    x -= WB;
 
     y += BH;
     toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES] = new Fl_Check_Button(
       x, y, width - x - 2 * WB, BH, "Create parametrized discrete model");
     toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->type(
       FL_TOGGLE_BUTTON);
+
+    y += BH;
+    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button(
+      (int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
+    buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
+    buttons[CLASS_BUTTON_CLASSIFY]->activate();
+
+    x -= WB;
   }
 
   window->end();

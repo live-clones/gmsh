@@ -41,7 +41,7 @@ struct contextMeshOptions {
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
-  int renumber;
+  int renumber, compoundClassify;
   // mesh IO
   int fileFormat;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
@@ -89,7 +89,7 @@ struct contextGeometryOptions {
   int matchGeomAndMesh;
   double matchMeshScaleFactor;
   double matchMeshTolerance;
-  int hideCompounds, orientedPhysicals;
+  int orientedPhysicals;
   int reparamOnFaceRobust;
   // geometry display
   int draw, light, lightTwoSide, points, curves, surfaces, volumes;
@@ -170,8 +170,8 @@ public:
   int batch;
   // batch operations to apply after meshing (1: partition mesh)
   int batchAfterMesh;
-  // mesh discrete faces / edges
-  int meshDiscrete;
+  // some option for batch processing
+  double batchSomeValue;
   // initial menu (0: automatic, 1: geom, 2: mesh, 3: solver, 4: post)
   int initialContext;
   // show some windows on startup?

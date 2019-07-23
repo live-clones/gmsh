@@ -2290,14 +2290,6 @@ double opt_general_show_module_menu(OPT_ARGS_NUM)
   return CTX::instance()->showModuleMenu;
 }
 
-double opt_general_meshdiscrete(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->meshDiscrete = (int)val;
-  }
-  return CTX::instance()->meshDiscrete;
-}
-
 double opt_general_message_size(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -6393,6 +6385,13 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->mesh.colorCarousel;
+}
+
+double opt_mesh_compound_classify(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.compoundClassify = (int)val;
+  return CTX::instance()->mesh.compoundClassify;
 }
 
 double opt_mesh_switch_elem_tags(OPT_ARGS_NUM)

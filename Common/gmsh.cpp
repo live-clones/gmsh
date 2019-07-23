@@ -3216,22 +3216,23 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
 }
 
 GMSH_API void gmsh::model::mesh::classifySurfaces(const double angle,
-                                                  const bool boundary)
+                                                  const bool boundary,
+                                                  const bool forReparametrization)
 {
   if(!_isInitialized()) { throw -1; }
-  GModel::current()->classifyAllFaces(angle, boundary);
-}
-
-GMSH_API void gmsh::model::mesh::createTopology()
-{
-  if(!_isInitialized()) { throw -1; }
-  GModel::current()->createTopologyFromMesh();
+  GModel::current()->classifySurfaces(angle, boundary, forReparametrization);
 }
 
 GMSH_API void gmsh::model::mesh::createGeometry()
 {
   if(!_isInitialized()) { throw -1; }
   GModel::current()->createGeometryOfDiscreteEntities();
+}
+
+GMSH_API void gmsh::model::mesh::createTopology()
+{
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->createTopologyFromMesh();
 }
 
 GMSH_API void
@@ -3992,13 +3993,14 @@ gmsh::model::occ::addSurfaceFilling(const int wireTag, const int tag,
 
 GMSH_API int
 gmsh::model::occ::addSurfaceLoop(const std::vector<int> &surfaceTags,
-                                 const int tag)
+                                 const int tag, const bool sewing)
 {
   if(!_isInitialized()) { throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addSurfaceLoop(outTag,
-                                                           surfaceTags)) {
+                                                           surfaceTags,
+                                                           sewing)) {
     throw 1;
   }
   return outTag;

@@ -613,9 +613,9 @@ static void completeTheSetOfFaces(GModel *model, std::set<GFace *> &faces_bound)
   std::set<GFace *> toAdd;
   for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
     if(faces_bound.find(*it) != faces_bound.end()) {
-      if((*it)->_compound.size()) {
-        for(std::size_t i = 0; i < (*it)->_compound.size(); ++i) {
-          GFace *gf = static_cast<GFace *>((*it)->_compound[i]);
+      if((*it)->compound.size()) {
+        for(std::size_t i = 0; i < (*it)->compound.size(); ++i) {
+          GFace *gf = static_cast<GFace *>((*it)->compound[i]);
           if(gf) toAdd.insert(gf);
         }
       }

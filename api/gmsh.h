@@ -889,22 +889,23 @@ namespace gmsh { // Top-level functions
                                      const int tag = -1);
 
       // Classify ("color") the surface mesh based on the angle threshold `angle'
-      // (in radians), and create discrete curves accordingly. If `boundary' is
-      // set, also create discrete curves on the boundary if the surface is open.
-      // Warning: this is an experimental feature.
+      // (in radians), and create new discrete surfaces, curves and points
+      // accordingly. If `boundary' is set, also create discrete curves on the
+      // boundary if the surface is open. If `forReparametrization' is set, create
+      // edges and surfaces that can be reparametrized using a single map.
       GMSH_API void classifySurfaces(const double angle,
-                                     const bool boundary = true);
+                                     const bool boundary = true,
+                                     const bool forReparametrization = false);
+
+      // Create a parametrization for discrete curves and surfaces (i.e. curves and
+      // surfaces represented solely by a mesh, without an underlying CAD
+      // description), assuming that each can be parametrized with a single map.
+      GMSH_API void createGeometry();
 
       // Create a boundary representation from the mesh if the model does not have
       // one (e.g. when imported from mesh file formats with no BRep representation
-      // of the underlying model). Warning: this is an experimental feature.
+      // of the underlying model).
       GMSH_API void createTopology();
-
-      // Create a parametrization for curves and surfaces that do not have one
-      // (i.e. discrete curves and surfaces represented solely by meshes, without
-      // an underlying CAD description). `createGeometry' automatically calls
-      // `createTopology'. Warning: this is an experimental feature.
-      GMSH_API void createGeometry();
 
       // Compute a basis representation for homology spaces after a mesh has been
       // generated. The computation domain is given in a list of physical group
@@ -1290,10 +1291,11 @@ namespace gmsh { // Top-level functions
                              const double angle1 = 0.,
                              const double angle2 = 2*M_PI);
 
-      // Add an ellipse arc between the two points with tags `startTag' and
-      // `endTag', with center `centerTag'. If `tag' is positive, set the tag
-      // explicitly; otherwise a new tag is selected automatically. Return the tag
-      // of the ellipse arc.
+      // Add an ellipse arc between the major axis point `startTag' and `endTag',
+      // with center `centerTag'. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the
+      // ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs
+      // with the major radius smaller than the minor radius.
       GMSH_API int addEllipseArc(const int startTag,
                                  const int centerTag,
                                  const int endTag,
@@ -1303,7 +1305,10 @@ namespace gmsh { // Top-level functions
       // x- and y-axes respectively. If `tag' is positive, set the tag explicitly;
       // otherwise a new tag is selected automatically. If `angle1' and `angle2'
       // are specified, create an ellipse arc between the two angles. Return the
-      // tag of the ellipse.
+      // tag of the ellipse. Note that OpenCASCADE does not allow creating ellipses
+      // with the major radius (along the x-axis) smaller than or equal to the
+      // minor radius (along the y-axis): rotate the shape or use `addCircle' in
+      // such cases.
       GMSH_API int addEllipse(const double x,
                               const double y,
                               const double z,
@@ -1339,19 +1344,21 @@ namespace gmsh { // Top-level functions
       GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Add a wire (open or closed) formed by the curves `curveTags'. `curveTags'
-      // should contain (signed) tags: a negative tag signifies that the underlying
-      // curve is considered with reversed orientation. If `tag' is positive, set
-      // the tag explicitly; otherwise a new tag is selected automatically. Return
-      // the tag of the wire.
+      // Add a wire (open or closed) formed by the curves `curveTags'. Note that an
+      // OpenCASCADE wire can be made of curves that share geometrically identical
+      // (but topologically different) points. If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the wire.
       GMSH_API int addWire(const std::vector<int> & curveTags,
                            const int tag = -1,
                            const bool checkClosed = false);
 
       // Add a curve loop (a closed wire) formed by the curves `curveTags'.
-      // `curveTags' should contain tags of curves forming a closed loop. If `tag'
-      // is positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. Return the tag of the curve loop.
+      // `curveTags' should contain tags of curves forming a closed loop. Note that
+      // an OpenCASCADE curve loop can be made of curves that share geometrically
+      // identical (but topologically different) points. If `tag' is positive, set
+      // the tag explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the curve loop.
       GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
                                 const int tag = -1);
 
@@ -1395,9 +1402,12 @@ namespace gmsh { // Top-level functions
 
       // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. Return the tag of the surface loop.
+      // automatically. Return the tag of the surface loop. Setting `sewing' allows
+      // to build a shell made of surfaces that share geometrically identical (but
+      // topologically different) curves.
       GMSH_API int addSurfaceLoop(const std::vector<int> & surfaceTags,
-                                  const int tag = -1);
+                                  const int tag = -1,
+                                  const bool sewing = false);
 
       // Add a volume (a region) defined by one or more surface loops `shellTags'.
       // The first surface loop defines the exterior boundary; additional surface

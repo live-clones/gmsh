@@ -96,6 +96,11 @@ Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical entit
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.CompoundClassify
+How are surface mesh elements classified on compounds? (0: on the new discrete entity, 1: on the original geometrical entity)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.CpuTime
 CPU time (in seconds) for the generation of the current mesh (read-only)@*
 Default value: @code{0}@*

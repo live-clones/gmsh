@@ -1663,35 +1663,36 @@ namespace gmsh { // Top-level functions
       }
 
       // Classify ("color") the surface mesh based on the angle threshold `angle'
-      // (in radians), and create discrete curves accordingly. If `boundary' is
-      // set, also create discrete curves on the boundary if the surface is open.
-      // Warning: this is an experimental feature.
+      // (in radians), and create new discrete surfaces, curves and points
+      // accordingly. If `boundary' is set, also create discrete curves on the
+      // boundary if the surface is open. If `forReparametrization' is set, create
+      // edges and surfaces that can be reparametrized using a single map.
       inline void classifySurfaces(const double angle,
-                                   const bool boundary = true)
+                                   const bool boundary = true,
+                                   const bool forReparametrization = false)
       {
         int ierr = 0;
-        gmshModelMeshClassifySurfaces(angle, (int)boundary, &ierr);
+        gmshModelMeshClassifySurfaces(angle, (int)boundary, (int)forReparametrization, &ierr);
+        if(ierr) throw ierr;
+      }
+
+      // Create a parametrization for discrete curves and surfaces (i.e. curves and
+      // surfaces represented solely by a mesh, without an underlying CAD
+      // description), assuming that each can be parametrized with a single map.
+      inline void createGeometry()
+      {
+        int ierr = 0;
+        gmshModelMeshCreateGeometry(&ierr);
         if(ierr) throw ierr;
       }
 
       // Create a boundary representation from the mesh if the model does not have
       // one (e.g. when imported from mesh file formats with no BRep representation
-      // of the underlying model). Warning: this is an experimental feature.
+      // of the underlying model).
       inline void createTopology()
       {
         int ierr = 0;
         gmshModelMeshCreateTopology(&ierr);
-        if(ierr) throw ierr;
-      }
-
-      // Create a parametrization for curves and surfaces that do not have one
-      // (i.e. discrete curves and surfaces represented solely by meshes, without
-      // an underlying CAD description). `createGeometry' automatically calls
-      // `createTopology'. Warning: this is an experimental feature.
-      inline void createGeometry()
-      {
-        int ierr = 0;
-        gmshModelMeshCreateGeometry(&ierr);
         if(ierr) throw ierr;
       }
 
@@ -2385,10 +2386,11 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
-      // Add an ellipse arc between the two points with tags `startTag' and
-      // `endTag', with center `centerTag'. If `tag' is positive, set the tag
-      // explicitly; otherwise a new tag is selected automatically. Return the tag
-      // of the ellipse arc.
+      // Add an ellipse arc between the major axis point `startTag' and `endTag',
+      // with center `centerTag'. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the
+      // ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs
+      // with the major radius smaller than the minor radius.
       inline int addEllipseArc(const int startTag,
                                const int centerTag,
                                const int endTag,
@@ -2404,7 +2406,10 @@ namespace gmsh { // Top-level functions
       // x- and y-axes respectively. If `tag' is positive, set the tag explicitly;
       // otherwise a new tag is selected automatically. If `angle1' and `angle2'
       // are specified, create an ellipse arc between the two angles. Return the
-      // tag of the ellipse.
+      // tag of the ellipse. Note that OpenCASCADE does not allow creating ellipses
+      // with the major radius (along the x-axis) smaller than or equal to the
+      // minor radius (along the y-axis): rotate the shape or use `addCircle' in
+      // such cases.
       inline int addEllipse(const double x,
                             const double y,
                             const double z,
@@ -2476,11 +2481,11 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
-      // Add a wire (open or closed) formed by the curves `curveTags'. `curveTags'
-      // should contain (signed) tags: a negative tag signifies that the underlying
-      // curve is considered with reversed orientation. If `tag' is positive, set
-      // the tag explicitly; otherwise a new tag is selected automatically. Return
-      // the tag of the wire.
+      // Add a wire (open or closed) formed by the curves `curveTags'. Note that an
+      // OpenCASCADE wire can be made of curves that share geometrically identical
+      // (but topologically different) points. If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the wire.
       inline int addWire(const std::vector<int> & curveTags,
                          const int tag = -1,
                          const bool checkClosed = false)
@@ -2494,9 +2499,11 @@ namespace gmsh { // Top-level functions
       }
 
       // Add a curve loop (a closed wire) formed by the curves `curveTags'.
-      // `curveTags' should contain tags of curves forming a closed loop. If `tag'
-      // is positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. Return the tag of the curve loop.
+      // `curveTags' should contain tags of curves forming a closed loop. Note that
+      // an OpenCASCADE curve loop can be made of curves that share geometrically
+      // identical (but topologically different) points. If `tag' is positive, set
+      // the tag explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the curve loop.
       inline int addCurveLoop(const std::vector<int> & curveTags,
                               const int tag = -1)
       {
@@ -2576,13 +2583,16 @@ namespace gmsh { // Top-level functions
 
       // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. Return the tag of the surface loop.
+      // automatically. Return the tag of the surface loop. Setting `sewing' allows
+      // to build a shell made of surfaces that share geometrically identical (but
+      // topologically different) curves.
       inline int addSurfaceLoop(const std::vector<int> & surfaceTags,
-                                const int tag = -1)
+                                const int tag = -1,
+                                const bool sewing = false)
       {
         int ierr = 0;
         int *api_surfaceTags_; size_t api_surfaceTags_n_; vector2ptr(surfaceTags, &api_surfaceTags_, &api_surfaceTags_n_);
-        int result_api_ = gmshModelOccAddSurfaceLoop(api_surfaceTags_, api_surfaceTags_n_, tag, &ierr);
+        int result_api_ = gmshModelOccAddSurfaceLoop(api_surfaceTags_, api_surfaceTags_n_, tag, (int)sewing, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_surfaceTags_);
         return result_api_;

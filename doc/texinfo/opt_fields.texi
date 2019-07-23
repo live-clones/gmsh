@@ -104,12 +104,18 @@ The value of this field is VIn inside a spherical ball, VOut outside. The ball i
 @*
   ||dX||^2 < R^2 &&@*
   dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2@*
+@*
+If Thickness is > 0, the mesh size is interpolated between VIn and VOut in a layer around the ball of the prescribed thickness.@*
 Options:@*
 @table @code
 @item Radius
 Radius@*
 type: float@*
 default value: @code{0}
+@item Thickness
+Thickness of a transition layer outside the ball@*
+type: float@*
+default value: @code{5.285563251714757e+180}
 @item VIn
 Value inside the ball@*
 type: float@*
@@ -187,13 +193,19 @@ default value: @code{0.01}
 @end table
 
 @item Box
-The value of this field is VIn inside the box, VOut outside the box. The box is given by@*
+The value of this field is VIn inside the box, VOut outside the box. The box is defined by@*
 @*
   Xmin <= x <= XMax &&@*
   YMin <= y <= YMax &&@*
   ZMin <= z <= ZMax@*
+@*
+If Thickness is > 0, the mesh size is interpolated between VIn and VOut in a layer around the box of the prescribed thickness.@*
 Options:@*
 @table @code
+@item Thickness
+Thickness of a transition layer outside the box@*
+type: float@*
+default value: @code{0}
 @item VIn
 Value inside the box@*
 type: float@*

@@ -1444,22 +1444,11 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag,
   }
 }
 
-GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, int * ierr)
+GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::classifySurfaces(angle, boundary);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
-GMSH_API void gmshModelMeshCreateTopology(int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::createTopology();
+    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1471,6 +1460,17 @@ GMSH_API void gmshModelMeshCreateGeometry(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::createGeometry();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshCreateTopology(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::createTopology();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -2218,13 +2218,13 @@ GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n, const int tag, const int sewing, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
-    result_api_ = gmsh::model::occ::addSurfaceLoop(api_surfaceTags_, tag);
+    result_api_ = gmsh::model::occ::addSurfaceLoop(api_surfaceTags_, tag, sewing);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{" 64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg[fltk] Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[MacPorts] OptHom Parser Plugins Png[fltk] Post QuadTri Solver TetGen/BR Voro++ Zlib"}@*
+Default value: @code{" 64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg[fltk] Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[MacPorts] OptHom Parser Plugins Png[fltk] Post QuadTri Revoropt Solver TetGen/BR TouchBar Voro++ Zlib"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
@@ -158,7 +158,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.4.0-git-8a05e3a29"}@*
+Default value: @code{"4.4.0-git-abf7d3375"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -860,11 +860,6 @@ Saved in: @code{General.SessionFileName}
 Vertical position (in pixels) of the (detached) menu tree@*
 Default value: @code{400}@*
 Saved in: @code{General.SessionFileName}
-
-@item General.MeshDiscrete
-Mesh discrete surfaces through automatic parametrization (0)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
 
 @item General.MessageFontSize
 Size of the font in the message window, in pixels (-1: automatic)@*

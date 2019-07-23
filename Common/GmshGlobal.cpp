@@ -55,6 +55,7 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "drawContext.h"
 #include "onelabGroup.h"
+
 #endif
 
 int GmshInitialize(int argc, char **argv, bool readConfigFiles,
@@ -333,9 +334,15 @@ int GmshBatch()
     else if(CTX::instance()->batch == 5)
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
     else if(CTX::instance()->batch == 6)
-      GModel::current()->classifyAllFaces(0.7, true);
-    else if(CTX::instance()->batch == 7)
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear, true);
+    else if(CTX::instance()->batch == 7)
+      GModel::current()->classifySurfaces
+        (CTX::instance()->batchSomeValue * M_PI / 180., true, false);
+    else if(CTX::instance()->batch == 8){
+      GModel::current()->classifySurfaces
+        (CTX::instance()->batchSomeValue * M_PI / 180., true, true);
+      GModel::current()->createGeometryOfDiscreteEntities();
+    }
 #endif
   }
 
@@ -436,6 +443,7 @@ int GmshFLTK(int argc, char **argv)
 
   // loop
   return FlGui::instance()->run();
+
 #else
   Msg::Error("GmshFLTK unavailable: please recompile with FLTK support");
   return 0;

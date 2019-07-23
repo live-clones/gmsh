@@ -6,6 +6,7 @@
 // Contributed by Anthony Royer.
 
 // FIXME: The partitioning code should be updated to
+// - make it deterministic!
 // - use int for partition tags (to match the type for other entities in Gmsh)
 // - use size_t for element/node tags, and thus the graph
 
@@ -637,7 +638,7 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
 
 // Partition a graph created by MakeGraph using Metis library. Returns: 0 =
 // success, 1 = error, 2 = exception thrown.
-static int PartitionGraph(Graph &graph)
+static int PartitionGraph(Graph &graph, bool verbose)
 {
 #ifdef HAVE_METIS
   std::stringstream opt;
@@ -738,7 +739,8 @@ static int PartitionGraph(Graph &graph)
       break;
     }
 
-    Msg::Info("Running METIS with %s", opt.str().c_str());
+    if(verbose)
+      Msg::Info("Running METIS with %s", opt.str().c_str());
 
     // C numbering
     metisOptions[METIS_OPTION_NUMBERING] = 0;
@@ -793,8 +795,8 @@ static int PartitionGraph(Graph &graph)
       }
     }
     graph.partition(epart);
-
-    Msg::Info("%d partitions, %d total edge-cuts", numPart, objval);
+    if(verbose)
+      Msg::Info("%d partitions, %d total edge-cuts", numPart, objval);
   } catch(...) {
     Msg::Error("METIS exception");
     return 2;
@@ -2312,7 +2314,7 @@ int PartitionFace(GFace *gf, int np, int *p)
   Graph graph(&m);
   if(MakeGraph(&m, graph, -1)) return 1;
   graph.nparts(np);
-  if(PartitionGraph(graph)) return 1;
+  if(PartitionGraph(graph, false)) return 1;
   m.remove(gf);
   //  for (size_t i=0;i<graph.ne();++i)p[i]=graph.partition(i);
   for(unsigned int i = 0; i < graph.ne(); i++)
@@ -2333,7 +2335,7 @@ int PartitionMesh(GModel *const model)
   Graph graph(model);
   if(MakeGraph(model, graph, -1)) return 1;
   graph.nparts(CTX::instance()->mesh.numPartitions);
-  if(PartitionGraph(graph)) return 1;
+  if(PartitionGraph(graph, true)) return 1;
 
   std::vector<int> elmCount[TYPE_MAX_NUM + 1];
   for(int i = 0; i < TYPE_MAX_NUM + 1; i++) {

@@ -6,20 +6,13 @@
 #ifndef GMODEL_PARAMETRIZE_H
 #define GMODEL_PARAMETRIZE_H
 
-int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
-                                  double ar);
-int isTriangulationParametrizable(const std::vector<MTriangle *> &t);
+void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
+                   bool forParametrization);
+void classifyFaces(GModel *gm);
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut);
 void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
                              bool addBoundary);
-int parametrizeAllGFace(
-  GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > *C = NULL);
-void parametrizeAllGEdge(GModel *gm);
-int parametrizeGFace(
-  discreteFace *gf,
-  std::map<MVertex *, std::pair<SVector3, SVector3> > *C = NULL);
-int computeDiscreteCurvatures(
-  GModel *gm, std::map<MVertex *, std::pair<SVector3, SVector3> > &C);
+int computeDiscreteCurvatures(GModel *gm);
 
 #endif

@@ -29,6 +29,7 @@ class cross2d {
 public:
   MEdge _e;
   bool inCutGraph;
+  int  cutGraphPart;
   std::vector<MEdge> _neighbors;
   std::vector<cross2d*> _cneighbors;
   // euler angles
@@ -170,6 +171,164 @@ static void computeLifting (cross2d *first, int branch){
   fclose(f);
 }
 
+static MVertex * otherVertex (MTriangle *t, const MEdge &e){
+  for (int i=0;i<3;i++){
+    MVertex *v = t->getVertex(i);
+    if (e.getVertex(0) != v && e.getVertex(1) != v)return v;
+  }
+  Msg::Error("Error in CutGraph");
+  return NULL;  
+}
+
+static bool containsEdge (MTriangle *t, const MEdge &ed){
+  if (t->getEdge(0) == ed ||
+      t->getEdge(1) == ed ||
+      t->getEdge(2) == ed)return true;
+  return false;
+}
+  
+static MTriangle * findTriangle (std::vector <MElement*> &els,
+				 MTriangle *t, const MEdge &ed){
+  for (size_t i=0 ; i<els.size(); i++){
+    MTriangle *e = (MTriangle*) els[i];
+    if (e != t && containsEdge(e,ed))return e;
+  }
+  Msg::Error("Error in CutGraph");
+  return NULL;  
+}
+
+
+static size_t computeCutGraphParts (std::vector<GFace *> &f,
+				    std::map<MEdge,cross2d,Less_Edge > &C,
+				    std::vector<std::map<MVertex*,MVertex*> >&new2olds,
+				    std::map<MVertex*,MVertex*> &ALL){
+
+  std::vector<std::pair<MElement*,std::pair<int,MVertex*> > > replacements;
+  std::vector<MEdge> e;
+  std::map<MEdge,cross2d,Less_Edge >::iterator it = C.begin();
+  for (;it != C.end(); ++it){
+    if (it->second.inCutGraph)
+      e.push_back(it->first);
+  }
+  std::vector<std::vector<MVertex *> > vs;
+  SortEdgeConsecutive(e,vs);
+  for (size_t i=0;i<vs.size();i++){
+    for (size_t j=1;j<vs[i].size();j++){
+      MEdge e (vs[i][j-1],vs[i][j]);
+      std::map<MEdge,cross2d,Less_Edge >::iterator it = C.find(e);
+      it->second.cutGraphPart = i;
+    }
+  }
+
+  v2t_cont adj;
+		 
+  for (size_t i=0;i<f.size();i++){
+    buildVertexToElement(f[i]->triangles,adj);
+  }
+
+  FILE *fff = fopen("sides.pos","w");
+  fprintf(fff,"View \"sides\"{\n");
+  
+  for (size_t i=0;i<vs.size();i++){
+    std::map<MVertex*,MVertex*> new2old;
+    std::vector<MTriangle*> side;
+
+    bool duplicateFirst = false;
+    for (size_t j=1;j<vs[i].size();j++){
+      MEdge e (vs[i][j-1],vs[i][j]);
+      if (j == 1){
+	std::map<MEdge,cross2d,Less_Edge >::iterator itxx = C.find(e);
+	std::vector<MTriangle*> sideLoc;
+	MVertex *vv = vs[i][j-1];
+	MEdge eprec (vs[i][j],vs[i][j-1]);
+	MTriangle *tprec = itxx->second._t[0];
+	v2t_cont::iterator it = adj.find(vv);
+	std::vector <MElement*> els = it->second;
+	while (1){
+	  MVertex *v_other = otherVertex (tprec,eprec);
+	  tprec = findTriangle (els,tprec,MEdge (vv,v_other));
+	  if (!tprec){
+	    duplicateFirst = true;
+	    break;
+	  }
+	  sideLoc.push_back(tprec);
+	  if (containsEdge (tprec,e)){
+	    duplicateFirst = false;
+	    break;
+	  }
+	  else eprec = MEdge (vv,v_other);
+	}
+	if (duplicateFirst){
+	  side.insert(side.begin(),sideLoc.begin(),sideLoc.end());
+	  printf("adding %d to side\n",sideLoc.size());
+	}
+	
+	side.push_back(itxx->second._t[0]);       
+      }
+      else {
+	MEdge eprec (vs[i][j-2],vs[i][j-1]);
+	MTriangle *tprec = side[side.size()-1];
+	if (containsEdge (tprec,e)) continue;
+	MVertex *vv = vs[i][j-1];
+	v2t_cont::iterator it = adj.find(vv);
+	std::vector <MElement*> els = it->second;
+	while (1){
+	  MVertex *v_other = otherVertex (tprec,eprec);
+	  tprec = findTriangle (els,tprec,MEdge (vv,v_other));
+	  side.push_back(tprec);
+	  if (containsEdge (tprec,e)){
+	    break;
+	  }
+	  else eprec = MEdge (vv,v_other);
+	}	
+      }	
+    }
+    
+    // now duplicate all vertices on that side except the singularity
+    std::map<MVertex*,MVertex*> old2new;
+    for (size_t j=0;j<vs[i].size();j++){
+      if ((j == 0 && vs[i][j]->onWhat()->dim() == 2) ||
+      	  (j == vs[i].size() -1  && vs[i][j]->onWhat()->dim() == 2)){
+      }
+      else {
+	MVertex *v = new MVertex (vs[i][j]->x(),vs[i][j]->y(),vs[i][j]->z(),f[0]);
+	new2old[v] = vs[i][j];
+	ALL[v] = vs[i][j];
+	old2new[vs[i][j]] = v;
+	f[0]->mesh_vertices.push_back(v);
+      }
+    }
+    new2olds.push_back(new2old);
+    for (size_t j=0;j<side.size();j++){
+      fprintf(fff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+	      side[j]->getVertex(0)->x(),side[j]->getVertex(0)->y(),side[j]->getVertex(0)->z(),
+	      side[j]->getVertex(1)->x(),side[j]->getVertex(1)->y(),side[j]->getVertex(1)->z(),
+	      side[j]->getVertex(2)->x(),side[j]->getVertex(2)->y(),side[j]->getVertex(2)->z(),i,i,i);
+	      
+      for (int k=0;k<3;k++){
+	MVertex *v = side[j]->getVertex(k);
+	std::map<MVertex*,MVertex*>::iterator it = old2new.find(v);
+	if (it != old2new.end()){
+	  std::pair<int,MVertex*> r = std::make_pair(k,it->second);
+	  std::pair< MElement*, std::pair<int,MVertex*> > r2 =
+	    std::make_pair(side[j],r);
+	  replacements.push_back(r2);
+	}
+      }
+    }
+  }
+  for (size_t i=0 ; i<replacements.size();i++){
+    MElement *e = replacements[i].first;
+    int j = replacements[i].second.first;
+    MVertex *v = replacements[i].second.second;
+    e->setVertex(j,v);
+  }
+  fprintf(fff,"};\n");
+  fclose(fff);
+
+  return vs.size();
+}
+
 static void duplicateNodesInCutGraph (std::vector<GFace *> &f,
 				      std::map<MEdge,cross2d,Less_Edge > &C,
 				      std::map<MVertex*,MVertex*> &new2old){
@@ -185,6 +344,9 @@ static void duplicateNodesInCutGraph (std::vector<GFace *> &f,
   v2t_cont::iterator it = adj.begin();
   std::set<MElement *> touched;
   std::set<MVertex *> vtouched;
+
+  std::vector<std::pair<MElement*,std::pair<int,MVertex*> > > replacements;
+  
   while(it != adj.end()) {
     std::vector <MElement*> els = it->second;
     std::stack<MElement*> _s;
@@ -213,21 +375,249 @@ static void duplicateNodesInCutGraph (std::vector<GFace *> &f,
       f[0]->mesh_vertices.push_back(v);
       for (size_t i=0;i<els.size();i++){
 	for (size_t j=0;j<3;j++){
-	  if (els[i]->getVertex(j) == it->first)
-	    els[i]->setVertex(j,v);
+	  if (els[i]->getVertex(j) == it->first){
+	    std::pair<int,MVertex*> r = std::make_pair(j,v);
+	    std::pair< MElement*, std::pair<int,MVertex*> > r2 = std::make_pair(els[i],r);
+	    replacements.push_back(r2);
+	  }
 	}
-      }
+      }      
       fprintf(_f,"SP(%g,%g,%g){%d};\n",it->first->x(),it->first->y(),it->first->z(),
 	      (int)els.size());  
-      printf("found vertex with %d on one side\n",els.size());
+      //      printf("found vertex with %d on one side\n",els.size());
     }
     ++it;
   }
   fprintf(_f,"};\n");
   fclose(_f);
+
+  for (size_t i=0 ; i<replacements.size();i++){
+    MElement *e = replacements[i].first;
+    int j = replacements[i].second.first;
+    MVertex *v = replacements[i].second.second;
+    e->setVertex(j,v);
+  }
+
 }
 
+static void computePotentials (GModel *gm,std::vector<GFace *> &f,
+			       const char * outputName,
+			       dofManager<double> &dof,
+			       std::map<MEdge,cross2d,Less_Edge > &C,
+			       std::vector<std::map<MVertex*,MVertex*> >&new2olds,
+			       std::map<MVertex*,MVertex*>&ALL){
   
+#if defined(HAVE_SOLVER)
+  double a[3];
+  std::set<MVertex *>vs;
+  for (size_t i=0;i<f.size();i++){
+    for (size_t j=0;j<f[i]->triangles.size();j++){
+      MTriangle *t = f[i]->triangles[j];
+      for (size_t k=0;k<3;k++){
+	vs.insert(t->getVertex(k));
+      }
+    }
+  }
+
+#if defined(HAVE_PETSC)
+  linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_GMM)
+  linearSystemCSRGmm<double> *_lsys = new linearSystemCSRGmm<double>;
+  //  _lsys->setGmres(0);
+#else
+  linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+#endif
+
+  dofManager<double> myAssembler(_lsys);
+  
+  for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it){
+    myAssembler.numberVertex(*it, 0, 1);
+    myAssembler.numberVertex(*it, 0, 2);
+  }
+  for (size_t K = 0;K<new2olds.size();K++){
+    std::map<MVertex*,MVertex*> & new2old = new2olds[K];
+    std::map<MVertex*,MVertex*>::iterator it = new2old.begin();
+    ++it;
+    for ( ; it != new2old.end(); it++){
+      //      myAssembler.numberVertex(it->first, 0, 3+K);    
+      //      myAssembler.numberVertex(it->first, 0, 4+K);    
+    }
+  }
+  
+  // LAGRANGE MULTIPLIERS
+  // CONNECT U AND V on both sides of the cut graph
+  for (size_t K = 0;K<new2olds.size();K++){
+    std::map<MVertex*,MVertex*> & new2old = new2olds[K];
+    std::map<MVertex*,MVertex*>::iterator it = new2old.begin();
+    Dof dref11(it->first->getNum(),  Dof::createTypeWithTwoInts(0, 1));
+    Dof dref21(it->first->getNum(),  Dof::createTypeWithTwoInts(0, 2));
+    Dof dref12(it->second->getNum(), Dof::createTypeWithTwoInts(0, 1));
+    Dof dref22(it->second->getNum(), Dof::createTypeWithTwoInts(0, 2));
+    ++it;
+    for ( ; it != new2old.end(); it++){
+      Dof d1 (it->first->getNum(),  Dof::createTypeWithTwoInts(0, 3+K));
+      Dof d2 (it->first->getNum(),  Dof::createTypeWithTwoInts(0, 4+K));
+      Dof d11(it->first->getNum(),  Dof::createTypeWithTwoInts(0, 1));
+      Dof d21(it->first->getNum(),  Dof::createTypeWithTwoInts(0, 2));
+      Dof d12(it->second->getNum(), Dof::createTypeWithTwoInts(0, 1));
+      Dof d22(it->second->getNum(), Dof::createTypeWithTwoInts(0, 2));
+      
+      myAssembler.assemble (d1,    d11     , 1.0);
+      myAssembler.assemble (d1,    d22     ,-1.0);
+      //      myAssembler.assemble (d1,    dref11  ,-1.0);
+      //      myAssembler.assemble (d1,    dref22  , 1.0);
+
+      myAssembler.assemble (d11,   d1      , 1.0);
+      myAssembler.assemble (d22,   d1      ,-1.0);
+      //      myAssembler.assemble (dref11,d1      ,-1.0);
+      //      myAssembler.assemble (dref22,d1      , 1.0);
+      
+      myAssembler.assemble (d2,d21,1.0);
+      myAssembler.assemble (d2,d12,-1.0);
+      //      myAssembler.assemble (d2,dref21,-1.0);
+      //      myAssembler.assemble (d2,dref12,1.0);
+      myAssembler.assemble (d21,d2,1.0);
+      myAssembler.assemble (d12,d2,-1.0);
+      //      myAssembler.assemble (dref21,d2,-1.0);
+      //      myAssembler.assemble (dref12,d2,1.0);
+      
+    }
+  }
+  
+  simpleFunction<double> ONE(1.0);
+  laplaceTerm l1(0, 1, &ONE);
+  laplaceTerm l2(0, 2, &ONE);
+
+  //  char name[234];
+  //  sprintf(name,"vperelem%d.pos",dir);
+  //  FILE *__f = fopen(name,"w");
+  //  fprintf(__f,"View \"\"{\n");
+  
+  for (size_t i=0;i<f.size();i++){
+    for (size_t j=0;j<f[i]->triangles.size();j++){
+      MTriangle *t = f[i]->triangles[j];
+      SElement se(t);
+      l1.addToMatrix(myAssembler, &se);
+      l2.addToMatrix(myAssembler, &se);
+      double a0 = 0;
+      int n = 0;      
+
+      for (int k=0;k<3;k++){	      
+	MEdge e = t->getEdge(k);
+	std::map<MEdge,cross2d,Less_Edge >::iterator it = C.find(e);
+	if (it != C.end()){
+	  if (!it->second.inCutGraph){
+	    n++; a0 += it->second._atemp;
+	  }
+	}
+	else {
+	  std::map<MVertex*,MVertex*>::iterator itx0 = ALL.find(e.getVertex(0));
+	  std::map<MVertex*,MVertex*>::iterator itx1 = ALL.find(e.getVertex(1));
+	  e = MEdge (itx0== ALL.end() ? e.getVertex(0) : itx0->second,
+		     itx1== ALL.end() ? e.getVertex(1) : itx1->second);
+	  it = C.find(e);
+	  if (it != C.end() && !it->second.inCutGraph){
+	    n++; a0 += it->second._atemp;
+	  }
+	}
+      }
+      if (n) a0 /= n;
+      double va,vb,vc;
+      std::map<MVertex*,MVertex*>::iterator itx = ALL.find(t->getVertex(0));
+      dof.getDofValue(itx == ALL.end() ? t->getVertex(0): itx->second, 0, 1,va);
+      itx = ALL.find(t->getVertex(1));
+      dof.getDofValue(itx == ALL.end() ? t->getVertex(1): itx->second, 0, 1,vb);
+      itx = ALL.find(t->getVertex(2));
+      dof.getDofValue(itx == ALL.end() ? t->getVertex(2): itx->second, 0, 1,vc);
+
+      double F = (exp(va)+exp(vb)+exp(vc))/3.0 ;
+
+      for (int dir = 1; dir <= 2; dir ++){
+	double c = dir == 1 ? F*cos(a0) : -F*sin (a0);
+	double s = dir == 1 ? F*sin(a0) : F*cos (a0);	
+	SPoint3 pp = t->barycenter();
+	//	fprintf(__f,"VP(%g,%g,%g){%g,%g,0};\n",pp.x(),pp.y(),pp.z(),
+	//		c,s);	
+	double G1[3] = {c,s,0};
+	double G2[3] = {c,s,0};
+	double G3[3] = {c,s,0};
+	double g1[3];
+	a[0] = 1; a[1] = 0; a[2] = 0;
+	t->interpolateGrad (a, 0,0,0,g1);
+	double RHS1 = g1[0]*G1[0]+g1[1]*G1[1]+g1[2]*G1[2];
+	a[0] = 0; a[1] = 1; a[2] = 0;
+	t->interpolateGrad (a, 0,0,0,g1);
+	double RHS2 = g1[0]*G2[0]+g1[1]*G2[1]+g1[2]*G2[2];
+	a[0] = 0; a[1] = 0; a[2] = 1;
+	t->interpolateGrad (a, 0,0,0,g1);
+	double RHS3 = g1[0]*G3[0]+g1[1]*G3[1]+g1[2]*G3[2];
+	int num1 = myAssembler.getDofNumber (dir == 1 ? l1.getLocalDofR (&se,0):l2.getLocalDofR (&se,0));
+	int num2 = myAssembler.getDofNumber (dir == 1 ? l1.getLocalDofR (&se,1):l2.getLocalDofR (&se,1));
+	int num3 = myAssembler.getDofNumber (dir == 1 ? l1.getLocalDofR (&se,2):l2.getLocalDofR (&se,2));
+	double V = t->getVolume();
+	_lsys->addToRightHandSide (num1,RHS1*V);
+	_lsys->addToRightHandSide (num2,RHS2*V);
+	_lsys->addToRightHandSide (num3,RHS3*V);
+      }
+    }
+  }
+//  fprintf(__f,"};\n");
+//  fclose(__f);
+  _lsys->systemSolve();
+  
+  FILE *_f = fopen (outputName,"w");
+  fprintf(_f,"View \"V\"{\n");
+
+  for (size_t i=0;i<f.size();i++){
+    for (size_t j=0;j<f[i]->triangles.size();j++){
+      MTriangle *t = f[i]->triangles[j];
+      double a1,b1,c1;
+      double a2,b2,c2;
+      myAssembler.getDofValue(t->getVertex(0), 0, 1,a1);
+      myAssembler.getDofValue(t->getVertex(1), 0, 1,b1);
+      myAssembler.getDofValue(t->getVertex(2), 0, 1,c1);
+      myAssembler.getDofValue(t->getVertex(0), 0, 2,a2);
+      myAssembler.getDofValue(t->getVertex(1), 0, 2,b2);
+      myAssembler.getDofValue(t->getVertex(2), 0, 2,c2);
+      
+      fprintf(_f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g};\n",
+	      t->getVertex(0)->x(),t->getVertex(0)->y(),t->getVertex(0)->z(),
+	      t->getVertex(1)->x(),t->getVertex(1)->y(),t->getVertex(1)->z(),
+	      t->getVertex(2)->x(),t->getVertex(2)->y(),t->getVertex(2)->z(),
+	      a1,b1,c1,a2,b2,c2);
+    }
+  }
+  fprintf(_f,"};\n");
+  fclose(_f);
+
+
+  for (size_t K = 0;K<new2olds.size();K++){
+    std::map<MVertex*,MVertex*> & new2old = new2olds[K];
+    std::map<MVertex*,MVertex*>::iterator it = new2old.begin();
+    for ( ; it != new2old.end(); it++){
+      Dof d11(it->first->getNum(),  Dof::createTypeWithTwoInts(0, 1));
+      Dof d21(it->first->getNum(),  Dof::createTypeWithTwoInts(0, 2));
+      Dof d12(it->second->getNum(), Dof::createTypeWithTwoInts(0, 1));
+      Dof d22(it->second->getNum(), Dof::createTypeWithTwoInts(0, 2));
+
+      double D11, D22;
+      double D21, D12;
+      myAssembler.getDofValue(d11,D11);
+      myAssembler.getDofValue(d22,D22);
+      myAssembler.getDofValue(d21,D21);
+      myAssembler.getDofValue(d12,D12);
+      printf("%3d %12.5E %12.5E\n",K,D11-D22,D21-D12);
+      
+    }
+  }
+
+
+
+#endif
+}
+
+
+
 static void computePotential (GModel *gm,std::vector<GFace *> &f,
 			      const char * outputName,
 			      dofManager<double> &dof,
@@ -263,60 +653,36 @@ static void computePotential (GModel *gm,std::vector<GFace *> &f,
     
   simpleFunction<double> ONE(1.0);
   laplaceTerm l(0, 1, &ONE);
+
+  //  char name[234];
+  //  sprintf(name,"vperelem%d.pos",dir);
+  //  FILE *__f = fopen(name,"w");
+  //  fprintf(__f,"View \"\"{\n");
   
   for (size_t i=0;i<f.size();i++){
     for (size_t j=0;j<f[i]->triangles.size();j++){
       MTriangle *t = f[i]->triangles[j];
       SElement se(t);
       l.addToMatrix(myAssembler, &se);
-      MEdge e0 = t->getEdge(0);
-      MEdge e1 = t->getEdge(1);
-      MEdge e2 = t->getEdge(2);
-      std::map<MEdge,cross2d,Less_Edge >::iterator it0 = C.find(e0);
-      std::map<MEdge,cross2d,Less_Edge >::iterator it1 = C.find(e1);
-      std::map<MEdge,cross2d,Less_Edge >::iterator it2 = C.find(e2);
       double a0 = 0;
-      int n = 0;
-
-      if (it0 != C.end()){
-	n++; a0 += it0->second._atemp;
-      }
-      else {
-	std::map<MVertex*,MVertex*>::iterator itx0 = new2old.find(e0.getVertex(0));
-	std::map<MVertex*,MVertex*>::iterator itx1 = new2old.find(e0.getVertex(1));
-	e0 = MEdge (itx0== new2old.end() ? e0.getVertex(0) : itx0->second,
-		    itx1== new2old.end() ? e0.getVertex(1) : itx1->second);
-	it0 = C.find(e0);
-	if (it0 != C.end() && !it0->second.inCutGraph){
-	  n++; a0 += it0->second._atemp;
+      int n = 0;      
+      for (int k=0;k<3;k++){	      
+	MEdge e = t->getEdge(k);
+	std::map<MEdge,cross2d,Less_Edge >::iterator it = C.find(e);
+	if (it != C.end()){
+	  if (!it->second.inCutGraph){
+	    n++; a0 += it->second._atemp;
+	  }
 	}
-      }
-
-      if (it1 != C.end()){
-	n++; a0 += it1->second._atemp;
-      }
-      else {
-	std::map<MVertex*,MVertex*>::iterator itx0 = new2old.find(e1.getVertex(0));
-	std::map<MVertex*,MVertex*>::iterator itx1 = new2old.find(e1.getVertex(1));
-	e1 = MEdge (itx0== new2old.end() ? e1.getVertex(0) : itx0->second,
-		    itx1== new2old.end() ? e1.getVertex(1) : itx1->second);
-	it1 = C.find(e1);
-	if (it1 != C.end() && !it1->second.inCutGraph){
-	  n++; a0 += it1->second._atemp;
-	}
-      }
-
-      if (it2 != C.end()){
-	n++; a0 += it2->second._atemp;
-      }
-      else {
-	std::map<MVertex*,MVertex*>::iterator itx0 = new2old.find(e2.getVertex(0));
-	std::map<MVertex*,MVertex*>::iterator itx1 = new2old.find(e2.getVertex(1));
-	e2 = MEdge (itx0== new2old.end() ? e2.getVertex(0) : itx0->second,
-		    itx1== new2old.end() ? e2.getVertex(1) : itx1->second);
-	it2 = C.find(e2);
-	if (it2 != C.end() && !it2->second.inCutGraph){
-	  n++; a0 += it2->second._atemp ;
+	else {
+	  std::map<MVertex*,MVertex*>::iterator itx0 = new2old.find(e.getVertex(0));
+	  std::map<MVertex*,MVertex*>::iterator itx1 = new2old.find(e.getVertex(1));
+	  e = MEdge (itx0== new2old.end() ? e.getVertex(0) : itx0->second,
+		     itx1== new2old.end() ? e.getVertex(1) : itx1->second);
+	  it = C.find(e);
+	  if (it != C.end() && !it->second.inCutGraph){
+	    n++; a0 += it->second._atemp;
+	  }
 	}
       }
       if (n) a0 /= n;
@@ -328,10 +694,15 @@ static void computePotential (GModel *gm,std::vector<GFace *> &f,
       itx = new2old.find(t->getVertex(2));
       dof.getDofValue(itx == new2old.end() ? t->getVertex(2): itx->second, 0, 1,vc);
 
-      double F = 1;//exp((va+vb+vc)/3.0);
+      double F = (exp(va)+exp(vb)+exp(vc))/3.0 ;
       
       double c = dir == 1 ? F*cos(a0) : -F*sin (a0);
       double s = dir == 1 ? F*sin(a0) : F*cos (a0);
+
+      SPoint3 pp = t->barycenter();
+      //      fprintf(__f,"VP(%g,%g,%g){%g,%g,0};\n",pp.x(),pp.y(),pp.z(),
+      //	      c,s);
+      
       double G1[3] = {c,s,0};
       double G2[3] = {c,s,0};
       double G3[3] = {c,s,0};
@@ -351,15 +722,17 @@ static void computePotential (GModel *gm,std::vector<GFace *> &f,
 
 
       double V = t->getVolume();
-      if (fabs(it0->second._atemp-it1->second._atemp) < M_PI/10 &&
-      	  fabs(it0->second._atemp-it2->second._atemp) < M_PI/10 &&
-      	  fabs(it1->second._atemp-it2->second._atemp) < M_PI/10 ){
+      //      if (fabs(it0->second._atemp-it1->second._atemp) < M_PI/10 &&
+      //      	  fabs(it0->second._atemp-it2->second._atemp) < M_PI/10 &&
+      //      	  fabs(it1->second._atemp-it2->second._atemp) < M_PI/10 ){
 	_lsys->addToRightHandSide (num1,RHS1*V);
 	_lsys->addToRightHandSide (num2,RHS2*V);
 	_lsys->addToRightHandSide (num3,RHS3*V);
-      }
+	//      }
     }
   }
+//  fprintf(__f,"};\n");
+//  fclose(__f);
   _lsys->systemSolve();
   
   FILE *_f = fopen (outputName,"w");
@@ -385,6 +758,44 @@ static void computePotential (GModel *gm,std::vector<GFace *> &f,
 #endif
 }
 
+/*
+void cutGraph (std::map<MEdge,cross2d,Less_Edge > &C ){
+  std::set<MTriangle*> touched;
+  std::vector<cross2d*> tree;
+  std::vector<cross2d*> cotree;
+  std::stack<MTriangle*> _s;
+  MTriangle *t = (C.begin())->second._t[0];
+  _s.push(t);
+  touched.insert(t);
+  while(!_s.empty()){
+    t = _s.top();
+    _s.pop();
+    for (int i=0;i<3;i++){
+      MEdge e = t->getEdge(i);
+      std::map<MEdge,cross2d,Less_Edge >::iterator it = C.find(e);
+      for (size_t j=0;j<it->_t.size();j++){
+	MTriangle *tt = it->_t[j];
+	if (touched.find(tt) == touched.end()){
+	  _s.push(tt);
+	  touched.insert(tt);
+	  tree.push_back(&it->second);
+	}
+      }
+    }
+  }
+
+  std::sort(tree.begin(),tree.end());
+  std::map<MEdge,cross2d,Less_Edge >::iterator it = C.begin();
+  for (; it != C.end(); ++it){
+    if (!std::binary_search(tree.begin(),tree.end(),&it->second))
+      cotree.push_back(&it->second);
+  }
+
+  
+
+  
+}
+*/
 
 int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * outputName){
   Msg::SetNumThreads(Msg::GetMaxThreads());
@@ -417,7 +828,7 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
   std::vector<cross2d*> pc;
   for (it = C.begin(); it !=C.end();++it)pc.push_back(&(it->second));
 
-  const int MAXITER = 20000;
+  const int MAXITER = 30000;
   int ITER = 0;
   while (ITER++ < MAXITER){
     double DELTA = 0;
@@ -425,7 +836,7 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
 #pragma omp parallel for schedule(dynamic)
 #endif
     for (size_t i=0;i<pc.size(); i++){
-      if (ITER<2000)DELTA += pc[i]->average_init();
+      if (ITER<4000)DELTA += pc[i]->average_init();
       else DELTA += pc[i]->average();
     }
 
@@ -434,7 +845,7 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
 #endif
     for (size_t i=0;i<pc.size(); i++)pc[i]->update();
 
-    if (ITER%100 == 0)printf("DELTA = %12.5E\n",DELTA);
+    if (ITER%1000 == 0)printf("IT %6d DELTA = %12.5E\n",ITER,DELTA);
     if (DELTA  < 1.e-12)break;
     //    getchar();
   }
@@ -517,8 +928,13 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
       double a0 = it0->second._a;
       double a1 = it0->second.lifting(it1->second._a);
       double a2 = it0->second.lifting(it2->second._a);
-
-      double a[3] = {0.5*(a0+a2),0.5*(a0+a1),0.5*(a1+a2)};
+      
+      //      a0 = atan2(t->getVertex(0)->y(),t->getVertex(0)->x());
+      //      a1 = atan2(t->getVertex(1)->y(),t->getVertex(1)->x());
+      //      a2 = atan2(t->getVertex(2)->y(),t->getVertex(2)->x());
+      
+      double a[3] = {a0+a2-a1,a0+a1-a2,a1+a2-a0};
+      //double a[3] = {a0,a1,a2};
       double g[3] = {0,0,0};
       t->interpolateGrad (a, 0,0,0,g);
       SPoint3 pp = t->barycenter();
@@ -526,6 +942,7 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
       //	      g[0],g[1],g[2]);
       fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",pp.x(),pp.y(),pp.z(),
 	      -g[1],g[0],g[2]);
+      //      printf("A %g vs %g\n",sqrt( g[1]*g[1]+g[0]*g[0]), 1./(sqrt((pp.x())*(pp.x())+(pp.y())*(pp.y()))));
       double g1[3];
       a[0] = 1; a[1] = 0; a[2] = 0;
       t->interpolateGrad (a, 0,0,0,g1);
@@ -578,7 +995,7 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
   fprintf(_f,"View \"lifting\"{\n");
   computeLifting (&(C.begin()->second),0);
 
-
+  // COMPUTING CUT GRAPH
   for (it = C.begin(); it !=C.end();++it){
     MEdge e0 = it->second._e;
     double a0 = it->second._atemp;
@@ -610,11 +1027,16 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
   fclose(_f);
 
 
-  std::map<MVertex*,MVertex*> new2old;
+  std::map<MVertex*,MVertex*>new2old;
+  std::vector<std::map<MVertex*,MVertex*> >new2olds;
+  //  computeCutGraphParts (f,C,new2olds,new2old);
+  
+  
   duplicateNodesInCutGraph (f,C,new2old);
 
   computePotential (gm,f,"potX.pos",myAssembler,0,C,new2old);
   computePotential (gm,f,"potY.pos",myAssembler,1,C,new2old);
+  // computePotentials (gm,f,"pot.pos",myAssembler,C,new2olds,new2old);
   
 #endif
   /*

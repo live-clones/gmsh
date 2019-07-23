@@ -2075,19 +2075,36 @@ function splitQuadrangles(quality = 1., tag = -1)
 end
 
 """
-    gmsh.model.mesh.classifySurfaces(angle, boundary = true)
+    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
-radians), and create discrete curves accordingly. If `boundary` is set, also
-create discrete curves on the boundary if the surface is open. Warning: this is
-an experimental feature.
+radians), and create new discrete surfaces, curves and points accordingly. If
+`boundary` is set, also create discrete curves on the boundary if the surface is
+open. If `forReparametrization` is set, create edges and surfaces that can be
+reparametrized using a single map.
 """
-function classifySurfaces(angle, boundary = true)
+function classifySurfaces(angle, boundary = true, forReparametrization = false)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClassifySurfaces, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Ptr{Cint}),
-          angle, boundary, ierr)
+          (Cdouble, Cint, Cint, Ptr{Cint}),
+          angle, boundary, forReparametrization, ierr)
     ierr[] != 0 && error("gmshModelMeshClassifySurfaces returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.createGeometry()
+
+Create a parametrization for discrete curves and surfaces (i.e. curves and
+surfaces represented solely by a mesh, without an underlying CAD description),
+assuming that each can be parametrized with a single map.
+"""
+function createGeometry()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreateGeometry, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshCreateGeometry returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -2096,7 +2113,7 @@ end
 
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
-underlying model). Warning: this is an experimental feature.
+underlying model).
 """
 function createTopology()
     ierr = Ref{Cint}()
@@ -2104,23 +2121,6 @@ function createTopology()
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelMeshCreateTopology returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
-    gmsh.model.mesh.createGeometry()
-
-Create a parametrization for curves and surfaces that do not have one (i.e.
-discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description). `createGeometry` automatically calls `createTopology`.
-Warning: this is an experimental feature.
-"""
-function createGeometry()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshCreateGeometry, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
-    ierr[] != 0 && error("gmshModelMeshCreateGeometry returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -2939,9 +2939,11 @@ end
 """
     gmsh.model.occ.addEllipseArc(startTag, centerTag, endTag, tag = -1)
 
-Add an ellipse arc between the two points with tags `startTag` and `endTag`,
-with center `centerTag`. If `tag` is positive, set the tag explicitly; otherwise
-a new tag is selected automatically. Return the tag of the ellipse arc.
+Add an ellipse arc between the major axis point `startTag` and `endTag`, with
+center `centerTag`. If `tag` is positive, set the tag explicitly; otherwise a
+new tag is selected automatically. Return the tag of the ellipse arc. Note that
+OpenCASCADE does not allow creating ellipse arcs with the major radius smaller
+than the minor radius.
 
 Return an integer value.
 """
@@ -2961,6 +2963,9 @@ Add an ellipse of center (`x`, `y`, `z`) and radii `r1` and `r2` along the x-
 and y-axes respectively. If `tag` is positive, set the tag explicitly; otherwise
 a new tag is selected automatically. If `angle1` and `angle2` are specified,
 create an ellipse arc between the two angles. Return the tag of the ellipse.
+Note that OpenCASCADE does not allow creating ellipses with the major radius
+(along the x-axis) smaller than or equal to the minor radius (along the y-axis):
+rotate the shape or use `addCircle` in such cases.
 
 Return an integer value.
 """
@@ -3033,11 +3038,10 @@ end
 """
     gmsh.model.occ.addWire(curveTags, tag = -1, checkClosed = false)
 
-Add a wire (open or closed) formed by the curves `curveTags`. `curveTags` should
-contain (signed) tags: a negative tag signifies that the underlying curve is
-considered with reversed orientation. If `tag` is positive, set the tag
-explicitly; otherwise a new tag is selected automatically. Return the tag of the
-wire.
+Add a wire (open or closed) formed by the curves `curveTags`. Note that an
+OpenCASCADE wire can be made of curves that share geometrically identical (but
+topologically different) points. If `tag` is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the wire.
 
 Return an integer value.
 """
@@ -3054,9 +3058,10 @@ end
     gmsh.model.occ.addCurveLoop(curveTags, tag = -1)
 
 Add a curve loop (a closed wire) formed by the curves `curveTags`. `curveTags`
-should contain tags of curves forming a closed loop. If `tag` is positive, set
-the tag explicitly; otherwise a new tag is selected automatically. Return the
-tag of the curve loop.
+should contain tags of curves forming a closed loop. Note that an OpenCASCADE
+curve loop can be made of curves that share geometrically identical (but
+topologically different) points. If `tag` is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the curve loop.
 
 Return an integer value.
 """
@@ -3145,19 +3150,21 @@ function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
 end
 
 """
-    gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1)
+    gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
 
 Add a surface loop (a closed shell) formed by `surfaceTags`.  If `tag` is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the surface loop.
+Return the tag of the surface loop. Setting `sewing` allows to build a shell
+made of surfaces that share geometrically identical (but topologically
+different) curves.
 
 Return an integer value.
 """
-function addSurfaceLoop(surfaceTags, tag = -1)
+function addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelOccAddSurfaceLoop, gmsh.lib), Cint,
-          (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, surfaceTags), length(surfaceTags), tag, ierr)
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, surfaceTags), length(surfaceTags), tag, sewing, ierr)
     ierr[] != 0 && error("gmshModelOccAddSurfaceLoop returned non-zero error code: $(ierr[])")
     return api__result__
 end

@@ -1991,13 +1991,17 @@ between two angles (next 2 expressions).
 @c todo: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
 
 @item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} <, ...> @};
-Creates an ellipse arc. The four @var{expression}s on the
-right-hand-side define the start point, the center point, a major axis
-point and the end point of the ellipse. The third point can be omitted
-with the OpenCASCADE kernel. With the OpenCASCADE kernel additional
-@var{expression}s can be provided to define a full ellipse (4th and 5th
-expressions define the radii along X and Y) or en ellipse arc (next 2
-expressions).
+Creates an ellipse arc. With the built-in kernel four @var{expression}s
+must be provided on the right-hand-side, defining the start point, the
+center point, a point anywhere on the major axis and the end point. The
+OpenCASCADE kernel accepts different numbers of @var{expression}s. If
+three are provided, they define the start point on the major axis, the
+center point and the end point. If between 5 and 7 are provided, the
+first three define the coordinates of the center, the next two define
+the major (along the x-axis) and minor radii (along the y-axis), and the
+next two the start and end angle. Note that OpenCASCADE does not allow
+creating ellipse arcs with the major radius smaller than the minor
+radius.
 
 @item Curve Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented loop of curves, i.e. a closed wire. The
@@ -2076,14 +2080,17 @@ corner; the next 2 define the width and height. If a 6th expression is
 provided, it defines a radius to round the rectangle
 corners. @code{Rectangle} is only available with the OpenCASCADE kernel.
 
-@item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
+@item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @} < Using Sewing >;
 Creates a surface loop (a shell). The @var{expression} inside the
 parentheses is the surface loop's tag; the @var{expression-list} on the
 right hand side should contain the tags of all the surfaces that
 constitute the surface loop. A surface loop must always represent a
 closed shell, and the surfaces should be oriented consistently (using
 negative tags to specify reverse orientation). (Surface loops are used
-to create volumes: see @ref{Volumes}.)
+to create volumes: see @ref{Volumes}.) With the OpenCASCADE kernel, the
+optional @code{Using Sewing} argument allows to build a shell made of
+surfaces that share geometrically identical (but topologically
+different) curves.
 
 @item Physical Surface ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
 Creates a physical surface. The @var{expression} inside the parentheses
@@ -3106,6 +3113,14 @@ Creates a parametrization for curves and surfaces that do not have one
 (i.e. discrete curves and surfaces represented solely by meshes, without
 an underlying CAD description).
 
+@item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} @};
+Classify (``color'') the surface mesh based on an angle threshold (the
+first argument, in radians), and create new discrete surfaces, curves
+and points accordingly.  If the second argument is set, also create
+discrete curves on the boundary if the surface is open. If the third
+argument is set, create edges and surfaces than can be reparametrized
+with @code{CreateGeometry}.
+
 @item RenumberMeshNodes;
 Renumbers the node tags in the current mesh in a contiunous sequence.
 
@@ -3837,6 +3852,22 @@ $GhostElements
     numGhostPartitions(size_t) ghostPartitionTag(int) ...
   ...
 $EndGhostElements
+
+$Paremetrizations
+  numCurveParam(size_t) numSurfaceParam(size_t)
+  curveTag(int) numNodes(size_t)
+    nodeX(double) nodeY(double) nodeZ(double) nodeU(double)
+    ...
+  ...
+  surfaceTag(int) numNodes(size_t) numTriangles(size_t)
+    nodeX(double) nodeY(double) nodeZ(double) nodeU(double) nodeV(double)
+      curvMaxX(double) curvMaxY(double) curvMaxZ(double)
+      curvMinX(double) curvMinY(double) curvMinZ(double)
+    ...
+    nodeIndex1(int) nodeIndex2(int) nodeIndex3(int)
+    ...
+  ...
+$EndParametrizations
 
 $NodeData
   numStringTags(ASCII int)

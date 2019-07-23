@@ -55,7 +55,8 @@ class BDS_Point {
 public:
   double X, Y, Z;
   double u, v;
-  bool config_modified, degenerated;
+  bool config_modified;
+  short degenerated;
   BDS_Point *_periodicCounterpart;
   int iD;
   BDS_GeomEntity *g;
@@ -74,7 +75,7 @@ public:
   std::vector<BDS_Face *> getTriangles() const;
   BDS_Point(int id, double x = 0, double y = 0, double z = 0)
     : _lcBGM(1.e22), _lcPTS(1.e22), X(x), Y(y), Z(z), u(0), v(0),
-      config_modified(true), degenerated(false), _periodicCounterpart(NULL),
+      config_modified(true), degenerated(0), _periodicCounterpart(NULL),
       iD(id), g(0)
   {
   }

@@ -189,7 +189,8 @@ struct doubleXstring{
 %token tSyncModel tNewModel tMass tCenterOfMass
 %token tOnelabAction tOnelabRun tCodeName
 %token tCpu tMemory tTotalMemory
-%token tCreateTopology tCreateGeometry tRenumberMeshNodes tRenumberMeshElements
+%token tCreateTopology tCreateGeometry tClassifySurfaces
+%token tRenumberMeshNodes tRenumberMeshElements
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
 %token tDefineString tSetNumber tSetTag tSetString
@@ -199,7 +200,7 @@ struct doubleXstring{
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
-%token tUsing tPlugin tDegenerated tRecursive
+%token tUsing tPlugin tDegenerated tRecursive tSewing
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
@@ -219,6 +220,7 @@ struct doubleXstring{
 %token tNameToString tStringToName
 
 %type <d> FExpr FExpr_Single DefineStruct NameStruct_Arg GetForced_Default
+%type <d> LoopOptions
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
 %type <i> PhysicalId_per_dim_entity GeoEntity GeoEntity123 GeoEntity12 GeoEntity02
@@ -1591,6 +1593,15 @@ CircleOptions :
     }
 ;
 
+LoopOptions :
+    {
+      $$ = 0;
+    }
+  | tUsing tSewing
+    {
+      $$ = 1;
+    }
+
 Shape :
     tPoint '(' FExpr ')' tAFFECT VExpr tEND
     {
@@ -1695,10 +1706,6 @@ Shape :
           r = GModel::current()->getOCCInternals()->addEllipseArc
             (num, tags[0], tags[1], tags[2]);
         }
-        else if(tags.size() == 4){
-          r = GModel::current()->getOCCInternals()->addEllipseArc
-            (num, tags[0], tags[1], tags[3]);
-        }
         else if(param.size() >= 5 && param.size() <= 7){
           double a1 = (param.size() == 7) ? param[5] : 0.;
           double a2 = (param.size() == 7) ? param[6] :
@@ -1707,7 +1714,7 @@ Shape :
             (num, param[0], param[1], param[2], param[3], param[4], a1, a2);
         }
         else{
-          yymsg(0, "Ellipse requires 3 or 4 points, or 5 to 7 parameters");
+          yymsg(0, "Ellipse requires 3 points, or 5 to 7 parameters");
         }
       }
       else{
@@ -2159,13 +2166,13 @@ Shape :
       if(!r) yymsg(0, "Could not add thick solid");
       List_Delete($6);
     }
-  | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble LoopOptions tEND
     {
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        r = GModel::current()->getOCCInternals()->addSurfaceLoop(num, tags);
+        r = GModel::current()->getOCCInternals()->addSurfaceLoop(num, tags, $8);
       }
       else{
         r = GModel::current()->getGEOInternals()->addSurfaceLoop(num, tags);
@@ -3458,6 +3465,10 @@ Command :
    | tCreateTopology tEND
     {
       GModel::current()->createTopologyFromMesh();
+    }
+  | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr '}' tEND
+    {
+      GModel::current()->classifySurfaces($3, $5, $7);
     }
    | tCreateGeometry tEND
     {

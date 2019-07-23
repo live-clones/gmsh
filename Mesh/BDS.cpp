@@ -38,7 +38,7 @@ double BDS_Face_Validity(GFace *gf, BDS_Face *f)
     Msg::Error("Null point in face validity");
     return 0.;
   }
-  if(pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated < 2) {
+  if((pts[0]->degenerated ? 1:0) + (pts[1]->degenerated?1:0) + (pts[2]->degenerated?1:0) < 2) {
     double qa1 = qmTriangle::gamma(pts[0], pts[1], pts[2]);
     return qa1 * _cos_N(pts[0], pts[1], pts[2], gf);
   }
@@ -62,11 +62,14 @@ void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
       if(!(*tit)->deleted) {
         (*tit)->getNodes(pts);
         for(int j = 0; j < 3; j++) {
-          double U1 = pts[j]->degenerated ? pts[(j + 1) % 3]->u : pts[j]->u;
+          double U1 = pts[j]->degenerated==1 ? pts[(j + 1) % 3]->u : pts[j]->u;
           double U2 =
-            pts[(j + 1) % 3]->degenerated ? pts[j]->u : pts[(j + 1) % 3]->u;
-          SPoint2 p1(U1, pts[j]->v);
-          SPoint2 p2(U2, pts[(j + 1) % 3]->v);
+            pts[(j + 1) % 3]->degenerated==1 ? pts[j]->u : pts[(j + 1) % 3]->u;
+          double V1 = pts[j]->degenerated==2 ? pts[(j + 1) % 3]->v : pts[j]->v;
+          double V2 =
+            pts[(j + 1) % 3]->degenerated==2 ? pts[j]->v : pts[(j + 1) % 3]->v;
+          SPoint2 p1(U1, V1);
+          SPoint2 p2(U2, V2);
           SPoint2 prev = p1;
           for(int k = 1; k < 30; k++) {
             double t = (double)k / 29;
@@ -106,24 +109,49 @@ void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
                 (double)pts[1]->iD, (double)pts[2]->iD);
       }
       if(param && gf) {
-        if(pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated >
+	  // FIXME --- LOOK AT THE VALUE OG DEGENERATED
+        if((pts[0]->degenerated?1:0) + (pts[1]->degenerated?1:0) + (pts[2]->degenerated?1:0) >
            1) {}
-        else if(pts[0]->degenerated)
+        else if(pts[0]->degenerated == 1)
           fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
                   pts[1]->u, pts[1]->v, 0.0, pts[2]->u, pts[2]->v, 0.0,
                   pts[2]->u, pts[0]->v, 0.0, pts[1]->u, pts[0]->v, 0.0,
                   (double)pts[1]->iD, (double)pts[2]->iD, (double)pts[0]->iD,
                   (double)pts[0]->iD);
-        else if(pts[1]->degenerated)
+        else if(pts[1]->degenerated == 1)
           fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
                   pts[2]->u, pts[2]->v, 0.0, pts[0]->u, pts[0]->v, 0.0,
                   pts[0]->u, pts[1]->v, 0.0, pts[2]->u, pts[1]->v, 0.0,
                   (double)pts[2]->iD, (double)pts[0]->iD, (double)pts[1]->iD,
                   (double)pts[1]->iD);
-        else if(pts[2]->degenerated)
+        else if(pts[2]->degenerated == 1)
           fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
                   pts[0]->u, pts[0]->v, 0.0, pts[1]->u, pts[1]->v, 0.0,
                   pts[1]->u, pts[2]->v, 0.0, pts[0]->u, pts[2]->v, 0.0,
+                  (double)pts[0]->iD, (double)pts[1]->iD, (double)pts[2]->iD,
+                  (double)pts[2]->iD);
+        else if(pts[0]->degenerated == 2)
+          fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+                  pts[1]->u, pts[1]->v, 0.0,
+		  pts[2]->u, pts[2]->v, 0.0,
+                  pts[0]->u, pts[2]->v, 0.0,
+		  pts[0]->u, pts[1]->v, 0.0,
+                  (double)pts[1]->iD, (double)pts[2]->iD, (double)pts[0]->iD,
+                  (double)pts[0]->iD);
+        else if(pts[1]->degenerated == 2)
+          fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+                  pts[2]->u, pts[2]->v, 0.0,
+		  pts[0]->u, pts[0]->v, 0.0,
+                  pts[1]->u, pts[0]->v, 0.0,
+		  pts[1]->u, pts[2]->v, 0.0,
+                  (double)pts[2]->iD, (double)pts[0]->iD, (double)pts[1]->iD,
+                  (double)pts[1]->iD);
+        else if(pts[2]->degenerated == 2)
+          fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+                  pts[0]->u, pts[0]->v, 0.0,
+		  pts[1]->u, pts[1]->v, 0.0,
+                  pts[2]->u, pts[1]->v, 0.0,
+		  pts[2]->u, pts[0]->v, 0.0,
                   (double)pts[0]->iD, (double)pts[1]->iD, (double)pts[2]->iD,
                   (double)pts[2]->iD);
         else {
@@ -179,19 +207,31 @@ static double surface_triangle_param(BDS_Point *p1, BDS_Point *p2,
   }
 
   double c;
-  if(p1->degenerated + p2->degenerated + p3->degenerated > 1)
+  if((p1->degenerated?1:0) + (p2->degenerated?1:0) + (p3->degenerated?1:0) > 1)
     c = 0; // vector_triangle_parametric(p1, p2, p3, c);
-  else if(p1->degenerated) {
+  else if(p1->degenerated==1) {
     double du = fabs(p3->u - p2->u);
     c = 2 * fabs(0.5 * (p3->v + p2->v) - p1->v) * du;
   }
-  else if(p2->degenerated) {
+  else if(p2->degenerated==1) {
     double du = fabs(p3->u - p1->u);
     c = 2 * fabs(0.5 * (p3->v + p1->v) - p2->v) * du;
   }
-  else if(p3->degenerated) {
+  else if(p3->degenerated==1) {
     double du = fabs(p2->u - p1->u);
     c = 2 * fabs(0.5 * (p2->v + p1->v) - p3->v) * du;
+  }
+  else if(p1->degenerated==2) {
+    double dv = fabs(p3->v - p2->v);
+    c = 2 * fabs(0.5 * (p3->u + p2->u) - p1->u) * dv;
+  }
+  else if(p2->degenerated==2) {
+    double dv = fabs(p3->v - p1->v);
+    c = 2 * fabs(0.5 * (p3->u + p1->u) - p2->u) * dv;
+  }
+  else if(p3->degenerated==2) {
+    double dv = fabs(p2->v - p1->v);
+    c = 2 * fabs(0.5 * (p2->u + p1->u) - p3->u) * dv;
   }
   else
     c = vector_triangle_parametric(p1, p2, p3);
@@ -1331,14 +1371,18 @@ static inline bool validityOfCavity(const BDS_Point *p,
                                     const std::vector<BDS_Point *> &nbg)
 {
   double p_[2] = {p->u, p->v};
-  double q_[2] = {nbg[0]->degenerated ? nbg[1]->u : nbg[0]->u, nbg[0]->v};
-  double r_[2] = {nbg[1]->degenerated ? nbg[0]->u : nbg[1]->u, nbg[1]->v};
+  double q_[2] = {nbg[0]->degenerated ==1? nbg[1]->u : nbg[0]->u,
+		  nbg[0]->degenerated ==2? nbg[1]->v : nbg[0]->v};
+  double r_[2] = {nbg[1]->degenerated ==1? nbg[0]->u : nbg[1]->u,
+		  nbg[1]->degenerated ==2? nbg[0]->v : nbg[1]->v};
   double sign = robustPredicates::orient2d(p_, q_, r_);
   for(size_t i = 1; i < nbg.size(); ++i) {
     BDS_Point *p0 = nbg[i];
     BDS_Point *p1 = nbg[(i + 1) % nbg.size()];
-    double qq_[2] = {p0->degenerated ? p1->u : p0->u, p0->v};
-    double rr_[2] = {p1->degenerated ? p0->u : p1->u, p1->v};
+    double qq_[2] = {p0->degenerated == 1? p1->u : p0->u,
+		     p0->degenerated == 2? p1->v : p0->v};
+    double rr_[2] = {p1->degenerated == 1? p0->u : p1->u,
+		     p1->degenerated == 2? p0->v : p1->v};
     double sign_ = robustPredicates::orient2d(p_, qq_, rr_);
     if(sign * sign_ <= 0) return false;
   }
@@ -1508,16 +1552,29 @@ static inline void computeSomeKindOfKernel(const BDS_Point *p,
   kernel.clear();
   lc.clear();
   for(size_t i = 0; i < nbg.size(); i++) {
-    if(nbg[i]->degenerated) {
+    if(nbg[i]->degenerated == 1) {
       kernel.push_back(SPoint2(p->u, nbg[i]->v));
       kernel.push_back(SPoint2(nbg[(i + 1) % nbg.size()]->u, nbg[i]->v));
 
       lc.push_back(nbg[i]->lc());
       lc.push_back(nbg[i]->lc());
     }
-    else if(nbg[(i + 1) % nbg.size()]->degenerated) {
+    else if(nbg[i]->degenerated == 2) {
+      kernel.push_back(SPoint2(nbg[i]->u, p->v));
+      kernel.push_back(SPoint2(nbg[i]->u, nbg[(i + 1) % nbg.size()]->v));
+
+      lc.push_back(nbg[i]->lc());
+      lc.push_back(nbg[i]->lc());
+    }
+    else if(nbg[(i + 1) % nbg.size()]->degenerated == 1) {
       kernel.push_back(SPoint2(nbg[i]->u, nbg[i]->v));
       kernel.push_back(SPoint2(nbg[i]->u, nbg[(i + 1) % nbg.size()]->v));
+      lc.push_back(nbg[i]->lc());
+      lc.push_back(nbg[i]->lc());
+    }
+    else if(nbg[(i + 1) % nbg.size()]->degenerated == 2) {
+      kernel.push_back(SPoint2(nbg[i]->u, nbg[i]->v));
+      kernel.push_back(SPoint2(nbg[(i + 1) % nbg.size()]->u, nbg[i]->v ));
       lc.push_back(nbg[i]->lc());
       lc.push_back(nbg[i]->lc());
     }

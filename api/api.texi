@@ -1597,13 +1597,28 @@ surfaces.
 
 @item classifySurfaces
 Classify ("color") the surface mesh based on the angle threshold @code{angle}
-(in radians), and create discrete curves accordingly. If @code{boundary} is set,
-also create discrete curves on the boundary if the surface is open. Warning:
-this is an experimental feature.
+(in radians), and create new discrete surfaces, curves and points accordingly.
+If @code{boundary} is set, also create discrete curves on the boundary if the
+surface is open. If @code{forReparametrization} is set, create edges and
+surfaces that can be reparametrized using a single map.
 
 @table @asis
 @item Input:
-@code{angle}, @code{boundary}
+@code{angle}, @code{boundary}, @code{forReparametrization}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item createGeometry
+Create a parametrization for discrete curves and surfaces (i.e. curves and
+surfaces represented solely by a mesh, without an underlying CAD description),
+assuming that each can be parametrized with a single map.
+
+@table @asis
+@item Input:
+-
 @item Output:
 -
 @item Return:
@@ -1613,22 +1628,7 @@ this is an experimental feature.
 @item createTopology
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
-underlying model). Warning: this is an experimental feature.
-
-@table @asis
-@item Input:
--
-@item Output:
--
-@item Return:
--
-@end table
-
-@item createGeometry
-Create a parametrization for curves and surfaces that do not have one (i.e.
-discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description). @code{createGeometry} automatically calls
-@code{createTopology}. Warning: this is an experimental feature.
+underlying model).
 
 @table @asis
 @item Input:
@@ -2303,10 +2303,11 @@ integer value
 @end table
 
 @item addEllipseArc
-Add an ellipse arc between the two points with tags @code{startTag} and
+Add an ellipse arc between the major axis point @code{startTag} and
 @code{endTag}, with center @code{centerTag}. If @code{tag} is positive, set the
 tag explicitly; otherwise a new tag is selected automatically. Return the tag of
-the ellipse arc.
+the ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs with
+the major radius smaller than the minor radius.
 
 @table @asis
 @item Input:
@@ -2322,7 +2323,10 @@ Add an ellipse of center (@code{x}, @code{y}, @code{z}) and radii @code{r1} and
 @code{r2} along the x- and y-axes respectively. If @code{tag} is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. If
 @code{angle1} and @code{angle2} are specified, create an ellipse arc between the
-two angles. Return the tag of the ellipse.
+two angles. Return the tag of the ellipse. Note that OpenCASCADE does not allow
+creating ellipses with the major radius (along the x-axis) smaller than or equal
+to the minor radius (along the y-axis): rotate the shape or use @code{addCircle}
+in such cases.
 
 @table @asis
 @item Input:
@@ -2380,11 +2384,11 @@ integer value
 @end table
 
 @item addWire
-Add a wire (open or closed) formed by the curves @code{curveTags}.
-@code{curveTags} should contain (signed) tags: a negative tag signifies that the
-underlying curve is considered with reversed orientation. If @code{tag} is
-positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the wire.
+Add a wire (open or closed) formed by the curves @code{curveTags}. Note that an
+OpenCASCADE wire can be made of curves that share geometrically identical (but
+topologically different) points. If @code{tag} is positive, set the tag
+explicitly; otherwise a new tag is selected automatically. Return the tag of the
+wire.
 
 @table @asis
 @item Input:
@@ -2397,9 +2401,11 @@ integer value
 
 @item addCurveLoop
 Add a curve loop (a closed wire) formed by the curves @code{curveTags}.
-@code{curveTags} should contain tags of curves forming a closed loop. If
-@code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. Return the tag of the curve loop.
+@code{curveTags} should contain tags of curves forming a closed loop. Note that
+an OpenCASCADE curve loop can be made of curves that share geometrically
+identical (but topologically different) points. If @code{tag} is positive, set
+the tag explicitly; otherwise a new tag is selected automatically. Return the
+tag of the curve loop.
 
 @table @asis
 @item Input:
@@ -2474,11 +2480,13 @@ integer value
 @item addSurfaceLoop
 Add a surface loop (a closed shell) formed by @code{surfaceTags}.  If @code{tag}
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. Return the tag of the surface loop.
+automatically. Return the tag of the surface loop. Setting @code{sewing} allows
+to build a shell made of surfaces that share geometrically identical (but
+topologically different) curves.
 
 @table @asis
 @item Input:
-@code{surfaceTags}, @code{tag}
+@code{surfaceTags}, @code{tag}, @code{sewing}
 @item Output:
 -
 @item Return:

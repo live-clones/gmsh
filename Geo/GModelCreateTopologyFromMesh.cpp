@@ -11,6 +11,7 @@
 #include "GModel.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
+#include "discreteVertex.h"
 #include "MPoint.h"
 #include "MVertex.h"
 #include "MLine.h"

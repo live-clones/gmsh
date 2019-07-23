@@ -2460,17 +2460,19 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def classifySurfaces(angle, boundary=True):
+        def classifySurfaces(angle, boundary=True, forReparametrization=False):
             """
             Classify ("color") the surface mesh based on the angle threshold `angle'
-            (in radians), and create discrete curves accordingly. If `boundary' is set,
-            also create discrete curves on the boundary if the surface is open.
-            Warning: this is an experimental feature.
+            (in radians), and create new discrete surfaces, curves and points
+            accordingly. If `boundary' is set, also create discrete curves on the
+            boundary if the surface is open. If `forReparametrization' is set, create
+            edges and surfaces that can be reparametrized using a single map.
             """
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
                 c_double(angle),
                 c_int(bool(boundary)),
+                c_int(bool(forReparametrization)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -2478,27 +2480,11 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def createTopology():
-            """
-            Create a boundary representation from the mesh if the model does not have
-            one (e.g. when imported from mesh file formats with no BRep representation
-            of the underlying model). Warning: this is an experimental feature.
-            """
-            ierr = c_int()
-            lib.gmshModelMeshCreateTopology(
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshCreateTopology returned non-zero error code: ",
-                    ierr.value)
-
-        @staticmethod
         def createGeometry():
             """
-            Create a parametrization for curves and surfaces that do not have one (i.e.
-            discrete curves and surfaces represented solely by meshes, without an
-            underlying CAD description). `createGeometry' automatically calls
-            `createTopology'. Warning: this is an experimental feature.
+            Create a parametrization for discrete curves and surfaces (i.e. curves and
+            surfaces represented solely by a mesh, without an underlying CAD
+            description), assuming that each can be parametrized with a single map.
             """
             ierr = c_int()
             lib.gmshModelMeshCreateGeometry(
@@ -2506,6 +2492,21 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshCreateGeometry returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def createTopology():
+            """
+            Create a boundary representation from the mesh if the model does not have
+            one (e.g. when imported from mesh file formats with no BRep representation
+            of the underlying model).
+            """
+            ierr = c_int()
+            lib.gmshModelMeshCreateTopology(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshCreateTopology returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -3470,10 +3471,11 @@ class model:
         @staticmethod
         def addEllipseArc(startTag, centerTag, endTag, tag=-1):
             """
-            Add an ellipse arc between the two points with tags `startTag' and
-            `endTag', with center `centerTag'. If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. Return the tag
-            of the ellipse arc.
+            Add an ellipse arc between the major axis point `startTag' and `endTag',
+            with center `centerTag'. If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the
+            ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs
+            with the major radius smaller than the minor radius.
 
             Return an integer value.
             """
@@ -3497,7 +3499,10 @@ class model:
             x- and y-axes respectively. If `tag' is positive, set the tag explicitly;
             otherwise a new tag is selected automatically. If `angle1' and `angle2' are
             specified, create an ellipse arc between the two angles. Return the tag of
-            the ellipse.
+            the ellipse. Note that OpenCASCADE does not allow creating ellipses with
+            the major radius (along the x-axis) smaller than or equal to the minor
+            radius (along the y-axis): rotate the shape or use `addCircle' in such
+            cases.
 
             Return an integer value.
             """
@@ -3595,11 +3600,11 @@ class model:
         @staticmethod
         def addWire(curveTags, tag=-1, checkClosed=False):
             """
-            Add a wire (open or closed) formed by the curves `curveTags'. `curveTags'
-            should contain (signed) tags: a negative tag signifies that the underlying
-            curve is considered with reversed orientation. If `tag' is positive, set
-            the tag explicitly; otherwise a new tag is selected automatically. Return
-            the tag of the wire.
+            Add a wire (open or closed) formed by the curves `curveTags'. Note that an
+            OpenCASCADE wire can be made of curves that share geometrically identical
+            (but topologically different) points. If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. Return the tag
+            of the wire.
 
             Return an integer value.
             """
@@ -3620,9 +3625,11 @@ class model:
         def addCurveLoop(curveTags, tag=-1):
             """
             Add a curve loop (a closed wire) formed by the curves `curveTags'.
-            `curveTags' should contain tags of curves forming a closed loop. If `tag'
-            is positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Return the tag of the curve loop.
+            `curveTags' should contain tags of curves forming a closed loop. Note that
+            an OpenCASCADE curve loop can be made of curves that share geometrically
+            identical (but topologically different) points. If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the curve loop.
 
             Return an integer value.
             """
@@ -3735,11 +3742,13 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceLoop(surfaceTags, tag=-1):
+        def addSurfaceLoop(surfaceTags, tag=-1, sewing=False):
             """
             Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
             positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Return the tag of the surface loop.
+            automatically. Return the tag of the surface loop. Setting `sewing' allows
+            to build a shell made of surfaces that share geometrically identical (but
+            topologically different) curves.
 
             Return an integer value.
             """
@@ -3748,6 +3757,7 @@ class model:
             api__result__ = lib.gmshModelOccAddSurfaceLoop(
                 api_surfaceTags_, api_surfaceTags_n_,
                 c_int(tag),
+                c_int(bool(sewing)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

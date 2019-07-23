@@ -213,7 +213,8 @@ public:
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>());
-  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags);
+  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
+                      bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
   bool addSphere(int &tag, double xc, double yc, double zc, double radius,
                  double angle1, double angle2, double angle3);
@@ -493,7 +494,7 @@ public:
   {
     return _error("add surface filling");
   }
-  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags)
+  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags, bool sewing)
   {
     return _error("add surface loop");
   }
