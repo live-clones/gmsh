@@ -79,6 +79,9 @@ public:
                           std::vector<std::vector<double> > &faceFunctions,
                           std::string typeFunction);
 
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo);
+
 private:
   int _pb1; // bubble function order in  direction uv
   int _pb2; // bubble function order in  direction w

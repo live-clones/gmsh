@@ -300,8 +300,8 @@ mesh.add('getBasisFunctionsForElements',doc,None,iint('elementType'),ivectordoub
 doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeysForElements',doc,None,iint('elementType'),istring('functionSpaceType'),ovectorpair('keys'),ovectordouble('coord'),iint('tag', '-1'),ibool('returnCoord','true', 'True'))
 
-doc = '''Get information about the `keys'. Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getInformationForElements',doc,None,ivectorpair('keys'),ovectorpair('info'),iint('order'),iint('elementType'))
+doc = '''Get information about the `keys'. `infoKeys' returns information about the functions associated with the `keys'. `infoKeys[0].first' describes the type of function (0 for  vertex function, 1 for edge function, 2 for face function and 3 for bubble function). `infoKeys[0].second' gives the order of the function associated with the key. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getInformationForElements',doc,None,ivectorpair('keys'),iint('elementType'),istring('functionSpaceType'),ovectorpair('infoKeys'))
 
 doc = '''Precomputes the basis functions corresponding to `elementType'. '''
 mesh.add('precomputeBasisFunctions',doc,None,iint('elementType'))

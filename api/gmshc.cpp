@@ -1138,7 +1138,7 @@ GMSH_API void gmshModelMeshGetKeysForElements(const int elementType, const char 
   }
 }
 
-GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n, int ** info, size_t * info_n, const int order, const int elementType, int * ierr)
+GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n, const int elementType, const char * functionSpaceType, int ** infoKeys, size_t * infoKeys_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -1147,9 +1147,9 @@ GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n, 
       api_keys_[i].first = keys[i * 2 + 0];
       api_keys_[i].second = keys[i * 2 + 1];
     }
-    gmsh::vectorpair api_info_;
-    gmsh::model::mesh::getInformationForElements(api_keys_, api_info_, order, elementType);
-    vectorpair2intptr(api_info_, info, info_n);
+    gmsh::vectorpair api_infoKeys_;
+    gmsh::model::mesh::getInformationForElements(api_keys_, elementType, functionSpaceType, api_infoKeys_);
+    vectorpair2intptr(api_infoKeys_, infoKeys, infoKeys_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

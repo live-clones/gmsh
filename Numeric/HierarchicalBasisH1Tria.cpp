@@ -515,3 +515,29 @@ void HierarchicalBasisH1Tria::orientFace(
     }
   }
 }
+
+void HierarchicalBasisH1Tria::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                          std::vector<int> &orderInfo)
+{
+  functionTypeInfo[0] = 0;
+  functionTypeInfo[1] = 0;
+  functionTypeInfo[2] = 0;
+  orderInfo[0] = 1;
+  orderInfo[1] = 1;
+  orderInfo[2] = 1;
+  int it = 3;
+  for(int numEdge = 0; numEdge < 3; numEdge++) {
+    for(int i = 2; i <= _pOrderEdge[numEdge]; i++) {
+      functionTypeInfo[it] = 1;
+      orderInfo[it] = i;
+      it++;
+    }
+  }
+  for(int n1 = 1; n1 < _pf - 1; n1++) {
+    for(int n2 = 1; n2 <= _pf - 1 - n1; n2++) {
+      functionTypeInfo[it] = 2;
+      orderInfo[it] = n1 + n2 +1;
+      it++;
+    }
+  }
+}

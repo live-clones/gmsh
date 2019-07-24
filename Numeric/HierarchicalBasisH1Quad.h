@@ -74,6 +74,9 @@ public:
                           std::vector<std::vector<double> > &faceBasis,
                           std::string typeFunction = "GradH1Legendre");
 
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo);
+
 private:
   int _pf1; // face function order in  direction u
   int _pf2; // face function order in  direction v

@@ -1992,27 +1992,31 @@ class model:
                 _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
-        def getInformationForElements(keys, order, elementType):
+        def getInformationForElements(keys, elementType, functionSpaceType):
             """
-            Get information about the `keys'. Warning: this is an experimental feature
-            and will probably change in a future release.
+            Get information about the `keys'. `infoKeys' returns information about the
+            functions associated with the `keys'. `infoKeys[0].first' describes the
+            type of function (0 for  vertex function, 1 for edge function, 2 for face
+            function and 3 for bubble function). `infoKeys[0].second' gives the order
+            of the function associated with the key. Warning: this is an experimental
+            feature and will probably change in a future release.
 
-            Return `info'.
+            Return `infoKeys'.
             """
             api_keys_, api_keys_n_ = _ivectorpair(keys)
-            api_info_, api_info_n_ = POINTER(c_int)(), c_size_t()
+            api_infoKeys_, api_infoKeys_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetInformationForElements(
                 api_keys_, api_keys_n_,
-                byref(api_info_), byref(api_info_n_),
-                c_int(order),
                 c_int(elementType),
+                c_char_p(functionSpaceType.encode()),
+                byref(api_infoKeys_), byref(api_infoKeys_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshGetInformationForElements returned non-zero error code: ",
                     ierr.value)
-            return _ovectorpair(api_info_, api_info_n_.value)
+            return _ovectorpair(api_infoKeys_, api_infoKeys_n_.value)
 
         @staticmethod
         def precomputeBasisFunctions(elementType):

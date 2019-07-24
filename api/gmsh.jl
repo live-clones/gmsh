@@ -1663,24 +1663,28 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
 end
 
 """
-    gmsh.model.mesh.getInformationForElements(keys, order, elementType)
+    gmsh.model.mesh.getInformationForElements(keys, elementType, functionSpaceType)
 
-Get information about the `keys`. Warning: this is an experimental feature and
-will probably change in a future release.
+Get information about the `keys`. `infoKeys` returns information about the
+functions associated with the `keys`. `infoKeys[0].first` describes the type of
+function (0 for  vertex function, 1 for edge function, 2 for face function and 3
+for bubble function). `infoKeys[0].second` gives the order of the function
+associated with the key. Warning: this is an experimental feature and will
+probably change in a future release.
 
-Return `info`.
+Return `infoKeys`.
 """
-function getInformationForElements(keys, order, elementType)
-    api_info_ = Ref{Ptr{Cint}}()
-    api_info_n_ = Ref{Csize_t}()
+function getInformationForElements(keys, elementType, functionSpaceType)
+    api_infoKeys_ = Ref{Ptr{Cint}}()
+    api_infoKeys_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetInformationForElements, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(keys))), 2 * length(keys), api_info_, api_info_n_, order, elementType, ierr)
+          (Ptr{Cint}, Csize_t, Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(keys))), 2 * length(keys), elementType, functionSpaceType, api_infoKeys_, api_infoKeys_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetInformationForElements returned non-zero error code: $(ierr[])")
-    tmp_api_info_ = unsafe_wrap(Array, api_info_[], api_info_n_[], own=true)
-    info = [ (tmp_api_info_[i], tmp_api_info_[i+1]) for i in 1:2:length(tmp_api_info_) ]
-    return info
+    tmp_api_infoKeys_ = unsafe_wrap(Array, api_infoKeys_[], api_infoKeys_n_[], own=true)
+    infoKeys = [ (tmp_api_infoKeys_[i], tmp_api_infoKeys_[i+1]) for i in 1:2:length(tmp_api_infoKeys_) ]
+    return infoKeys
 end
 
 """

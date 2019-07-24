@@ -955,3 +955,49 @@ void HierarchicalBasisH1Pri::orientFace(
     }
   }
 }
+
+void HierarchicalBasisH1Pri::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                         std::vector<int> &orderInfo)
+{
+  for(int i = 0; i < 6; i++) {
+    functionTypeInfo[i] = 0;
+    orderInfo[i] = 1;
+  }
+  int it = 6;
+  for(int numEdge = 0; numEdge < 9; numEdge++) {
+    for(int i = 2; i <= _pOrderEdge[numEdge]; i++) {
+      functionTypeInfo[it] = 1;
+      orderInfo[it] = i;
+      it++;
+    }
+  }
+  for(int iFace = 0; iFace < _nfaceQuad + _nfaceTri; iFace++) {
+    if(iFace < 3) {
+      for(int n1 = 2; n1 <= _pOrderQuadFace1[iFace]; n1++) {
+        for(int n2 = 2; n2 <= _pOrderQuadFace2[iFace]; n2++) {
+          functionTypeInfo[it] = 2;
+          orderInfo[it] = std::max(n1,n2);
+          it++;
+        }
+      }
+    }
+    else {
+      for(int n1 = 1; n1 < _pOrderTriFace[iFace - 3] - 1; n1++) {
+        for(int n2 = 1; n2 <= _pOrderTriFace[iFace - 3] - 1 - n1; n2++) {
+          functionTypeInfo[it] = 2;
+          orderInfo[it] = n1 + n2+1;
+          it++;
+        }
+      }
+    }
+  }
+  for(int n1 = 1; n1 < _pb1 - 1; n1++) {
+    for(int n2 = 1; n2 <= _pb1 - 1 - n1; n2++) {
+      for(int n3 = 2; n3 <= _pb2; n3++) {
+        functionTypeInfo[it] = 3;
+        orderInfo[it] = std::max(n1 + n2+1,n3);
+        it++;
+      }
+    }
+  }
+}

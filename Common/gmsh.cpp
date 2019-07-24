@@ -2518,72 +2518,86 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getInformationForElements(
-  const gmsh::vectorpair &keys, gmsh::vectorpair &info, const int order,
-  const int elementType)
+GMSH_API void gmsh::model::mesh::getInformationForElements(const gmsh::vectorpair & keys,
+                                        const int elementType,
+                                        const std::string & functionSpaceType,
+                                        gmsh::vectorpair & infoKeys)
 {
-  // to modify! ,this function will return the global order!
+  infoKeys.clear();
+  int basisOrder = 0;
+  std::string fsName = "";
+  int numComponents=0;
+  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
+                                        numComponents)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    throw 2;
+  }
+  HierarchicalBasis *basis(0);
   int familyType = ElementType::getParentType(elementType);
-  switch(familyType) {
-  case TYPE_QUA: {
-    std::vector<int> bubbleOrder((order - 1) * (order - 1));
-    int it = 0;
-    for(int n1 = 2; n1 <= order; n1++) {
-      for(int n2 = 2; n2 <= order; n2++) {
-        bubbleOrder[it] = n1 + n2;
-        it++;
-      }
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
+    switch(familyType) {
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisH1Brick(basisOrder);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisH1Pri(basisOrder);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisH1Tetra(basisOrder);
+    } break;
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisH1Quad(basisOrder);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisH1Tria(basisOrder);
+    } break;
+    case TYPE_LIN: {
+      basis = new HierarchicalBasisH1Line(basisOrder);
+    } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
     }
-    int bnumElement = 0;
-    int it2 = 0;
-    for(std::size_t i = 0; i < keys.size(); i++) {
-      if(keys[i].first == 2) { info.push_back(std::pair<int, int>(2, 1)); }
-      else {
-        if(keys[i].first > 2 && keys[i].first < order + 2) {
-          info.push_back(std::pair<int, int>(keys[i].first, 2));
-        }
-        else {
-          int numElement = keys[i].second;
-          if(numElement != bnumElement) { it2 = 0; }
-          info.push_back(std::pair<int, int>(bubbleOrder[it2], 4));
-          it2++;
-          bnumElement = numElement;
-        }
-      }
+  }
+  else {
+    switch(familyType) {
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisHcurlQuad(basisOrder);
+    } break;
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisHcurlBrick(basisOrder);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisHcurlTria(basisOrder);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisHcurlTetra(basisOrder);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisHcurlPri(basisOrder);
+    } break;
+    case TYPE_LIN: {
+      basis = new HierarchicalBasisHcurlLine(basisOrder);
+    } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
     }
-  } break;
-  case TYPE_TRI: {
-    int bnumElement = 0;
-    int it2 = 0;
-    std::vector<int> bubbleOrder(int((order - 1) * (order - 2) / 2));
-    int it = 0;
-    for(int n1 = 1; n1 <= order - 2; n1++) {
-      for(int n2 = 1; n2 <= order - 1 - n1; n2++) {
-        bubbleOrder[it] = 1 + n1 + n2;
-        it++;
-      }
+  }
+  int vSize = basis->getnVertexFunction();
+  int bSize = basis->getnBubbleFunction();
+  int eSize = basis->getnEdgeFunction();
+  int quadFSize = basis->getnQuadFaceFunction();
+  int triFSize = basis->getnTriFaceFunction();
+  int numDofsPerElement = vSize + bSize + eSize +  quadFSize + triFSize;
+  std::vector<int> functionTypeInfo(numDofsPerElement);
+  std::vector<int> orderInfo(numDofsPerElement);
+  basis->getKeysInfo(functionTypeInfo,orderInfo);
+  delete basis;
+  std::size_t keySize=keys.size();
+  infoKeys.resize(keySize);
+  std::size_t it=keySize/numDofsPerElement;
+  for(std::size_t i = 0; i < it; i++){
+    size_t const1=i*numDofsPerElement;
+    for(int j=0;j<numDofsPerElement;j++){
+      infoKeys[const1+j]=std::pair<int, int>(functionTypeInfo[j], orderInfo[j]);
     }
-    for(std::size_t i = 0; i < keys.size(); i++) {
-      if(keys[i].first == 2) { info.push_back(std::pair<int, int>(1, 1)); }
-      else {
-        if(keys[i].first > 2 && keys[i].first < order + 2) {
-          info.push_back(std::pair<int, int>(keys[i].first - 1, 2));
-        }
-        else {
-          int numElement = keys[i].second;
-          if(numElement != bnumElement) { it2 = 0; }
-          info.push_back(std::pair<int, int>(bubbleOrder[it2], 4));
-          it2++;
-          bnumElement = numElement;
-        }
-      }
-    }
-
-  } break;
-  case TYPE_HEX: std::cout << "not done yet" << std::endl; break;
-  case TYPE_LIN: std::cout << "not done yet" << std::endl; break;
-  case TYPE_TET: std::cout << "not done yet" << std::endl; break;
-  default: Msg::Error("Unknown familyType "); throw 2;
   }
 }
 

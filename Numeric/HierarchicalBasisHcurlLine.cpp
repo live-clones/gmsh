@@ -110,3 +110,12 @@ void HierarchicalBasisHcurlLine::generateCurlBasis(
 {
   // zero for all orders
 }
+
+void HierarchicalBasisHcurlLine::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                             std::vector<int> &orderInfo)
+{
+  for(int k = 0; k <= _pe; k++) {
+    orderInfo[k] = k;
+    functionTypeInfo[k] = 1;
+  }
+}

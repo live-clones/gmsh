@@ -353,3 +353,30 @@ void HierarchicalBasisHcurlQuad::orientFace(
     }
   }
 }
+
+void HierarchicalBasisHcurlQuad::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                             std::vector<int> &orderInfo)
+{
+  int it = 0;
+  for(int numEdge = 0; numEdge < 4; numEdge++) {
+    for(int i = 0; i <= _pOrderEdge[numEdge]; i++) {
+      functionTypeInfo[it] = 1;
+      orderInfo[it] = i;
+      it++;
+    }
+  }
+  for(int n1 = 0; n1 <= _pf1; n1++) {
+    for(int n2 = 2; n2 <= _pf2 + 1; n2++) {
+      functionTypeInfo[it] = 2;
+      orderInfo[it] = std::max(n1,n2);
+      it++;
+    }
+  }
+  for(int n1 = 2; n1 <= _pf1 + 1; n1++) {
+    for(int n2 = 0; n2 <= _pf2; n2++) {
+      functionTypeInfo[it] = 2;
+      orderInfo[it] =std::max(n1,n2);
+      it++;
+    }
+  }
+}
