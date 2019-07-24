@@ -758,11 +758,11 @@ static void computePotential (GModel *gm,std::vector<GFace *> &f,
 #endif
 }
 
-/*
+
 void cutGraph (std::map<MEdge,cross2d,Less_Edge > &C ){
   std::set<MTriangle*> touched;
   std::vector<cross2d*> tree;
-  std::vector<cross2d*> cotree;
+  std::vector<MEdge> cotree;
   std::stack<MTriangle*> _s;
   MTriangle *t = (C.begin())->second._t[0];
   _s.push(t);
@@ -773,8 +773,8 @@ void cutGraph (std::map<MEdge,cross2d,Less_Edge > &C ){
     for (int i=0;i<3;i++){
       MEdge e = t->getEdge(i);
       std::map<MEdge,cross2d,Less_Edge >::iterator it = C.find(e);
-      for (size_t j=0;j<it->_t.size();j++){
-	MTriangle *tt = it->_t[j];
+      for (size_t j=0;j<it->second._t.size();j++){
+	MTriangle *tt = it->second._t[j];
 	if (touched.find(tt) == touched.end()){
 	  _s.push(tt);
 	  touched.insert(tt);
@@ -783,19 +783,47 @@ void cutGraph (std::map<MEdge,cross2d,Less_Edge > &C ){
       }
     }
   }
-
   std::sort(tree.begin(),tree.end());
   std::map<MEdge,cross2d,Less_Edge >::iterator it = C.begin();
+  std::map<MVertex*,std::vector<MEdge> >_graph;
   for (; it != C.end(); ++it){
     if (!std::binary_search(tree.begin(),tree.end(),&it->second))
-      cotree.push_back(&it->second);
+      {
+	for (int i=0;i<2;i++){
+	  std::map<MVertex*,std::vector<MEdge> >::iterator it0 = _graph.find(it->first.getVertex(i));
+	  if (it0 == _graph.end()){
+	    std::vector<MEdge> ee ; ee.push_back(it->first); _graph[it->first.getVertex(i)] = ee;
+	  }
+	  else it0->second.push_back(it->first);	  
+	}
+	cotree.push_back(it->first);
+      }
   }
-
+  /*  
+  while (1){
+    std::map<MVertex*,std::vector<MEdge> >::iterator it = _graph.begin();
+    for (; it != _graph.end(); ++it){
+      
+    }
+    
+  }
+  */
   
+  printf("%d edges in the cotree %d in tree %d parts\n",cotree.size(),tree.size(),vs.size());
+  FILE *fff = fopen("cotree.pos","w");
+  fprintf(fff,"View \"sides\"{\n");
+  for (size_t i=0;i<cotree.size();i++){
+    MEdge e = cotree[i];
+    fprintf(fff,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
+	    e.getVertex(0)->x(),e.getVertex(0)->y(),e.getVertex(0)->z(),
+	    e.getVertex(1)->x(),e.getVertex(1)->y(),e.getVertex(1)->z());
+  }
+  fprintf(fff,"};\n");
+  fclose(fff);
 
   
 }
-*/
+
 
 int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * outputName){
   Msg::SetNumThreads(Msg::GetMaxThreads());
@@ -822,6 +850,8 @@ int computeCrossField2dTheta (GModel *gm,std::vector<GFace *> &f, const char * o
     }
   }
 
+  cutGraph(C);
+  
   std::map<MEdge,cross2d,Less_Edge >::iterator it = C.begin();
   for (; it !=C.end();++it)it->second.finish(C);
 
