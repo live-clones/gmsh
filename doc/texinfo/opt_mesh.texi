@@ -97,7 +97,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CompoundClassify
-How are surface mesh elements classified on compounds? (0: on the new discrete entity, 1: on the original geometrical entity)@*
+How are surface mesh elements classified on compounds? (0: on the new discrete entity, 1: on the original geometrical entity - incompatible with e.g. high-order meshing)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

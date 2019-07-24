@@ -1,7 +1,7 @@
 4.1.1: small improvements (transfinite with degenerate curves, renumbering for
 some mesh formats, empty MSH file sections) and bug fixes (ellipse < pi,
-orientation of compound parts, serendip pyramids, periodic MeshAdapt robustness,
-invalidate cache after mesh/addNodes).
+orientation and reclassification of compound parts, serendip pyramids, periodic
+MeshAdapt robustness, invalidate cache after mesh/addNodes).
 
 4.4.0 (July 1, 2019): new STL remeshing workflow (with new ClassifySurfaces
 command in .geo files); added API support for color options, mesh optimization,

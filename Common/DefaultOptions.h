@@ -1036,7 +1036,8 @@ StringXNumber MeshOptions_Number[] = {
     "entity, 3: by partition)" },
   { F|O, "CompoundClassify" , opt_mesh_compound_classify , 1. ,
     "How are surface mesh elements classified on compounds? (0: on the new discrete "
-    "entity, 1: on the original geometrical entity)" },
+    "entity, 1: on the original geometrical entity - incompatible with e.g. high-order "
+    "meshing)" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
 
