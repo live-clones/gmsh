@@ -11,8 +11,7 @@
 #ifndef HIERARCHICAL_BASIS_H1_LINE_H
 #define HIERARCHICAL_BASIS_H1_LINE_H
 
-#include <algorithm>
-#include <vector>
+
 
 #include "HierarchicalBasisH1.h"
 /*

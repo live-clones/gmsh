@@ -11,7 +11,7 @@
 #ifndef HIERARCHICAL_BASIS_H1_TRIA_H
 #define HIERARCHICAL_BASIS_H1_TRIA_H
 
-#include <algorithm>
+
 #include "HierarchicalBasisH1.h"
 
 /*

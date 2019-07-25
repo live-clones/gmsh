@@ -11,8 +11,7 @@
 #ifndef HIERARCHICAL_BASIS_HCURL_LINE_H
 #define HIERARCHICAL_BASIS_HCURL_LINE_H
 
-#include <algorithm>
-#include <vector>
+
 
 #include "HierarchicalBasisHcurl.h"
 /*

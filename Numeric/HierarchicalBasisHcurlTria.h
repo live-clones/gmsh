@@ -13,7 +13,6 @@
 
 #include "HierarchicalBasisHcurl.h"
 #include <math.h>
-#include <algorithm>
 
 /*
  * MTriangle

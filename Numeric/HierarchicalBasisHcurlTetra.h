@@ -12,7 +12,6 @@
 #define HIERARCHICAL_BASIS_HCURL_TETRA_H
 
 #include "HierarchicalBasisHcurl.h"
-#include <algorithm>
 #include <math.h>
 
 /*

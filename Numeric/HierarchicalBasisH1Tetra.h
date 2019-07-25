@@ -11,7 +11,7 @@
 #ifndef HIERARCHICAL_BASIS_H1_TETRA_H
 #define HIERARCHICAL_BASIS_H1_TETRA_H
 
-#include <algorithm>
+
 #include "HierarchicalBasisH1.h"
 
 /*

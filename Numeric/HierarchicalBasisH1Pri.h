@@ -9,7 +9,6 @@
 //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 #ifndef HIERARCHICAL_BASIS_H1_PRI_H
 #define HIERARCHICAL_BASIS_H1_PRI_H
-#include <algorithm>
 #include "HierarchicalBasisH1.h"
 
 /**

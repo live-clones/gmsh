@@ -13,6 +13,7 @@
 
 #include <vector>
 #include "OrthogonalPoly.h"
+#include <algorithm>
 
 class HierarchicalBasis {
 protected:
