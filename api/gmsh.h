@@ -379,8 +379,10 @@ namespace gmsh { // Top-level functions
       // Optimize the mesh of the current model using `method' (empty for default
       // tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
       // direct high-order mesh optimizer, "HighOrderElastic" for high-order
-      // elastic smoother).
-      GMSH_API void optimize(const std::string & method);
+      // elastic smoother). If `force' is set apply the optimization also to
+      // discrete entities.
+      GMSH_API void optimize(const std::string & method,
+                             const bool force = false);
 
       // Recombine the mesh of the current model.
       GMSH_API void recombine();

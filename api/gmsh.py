@@ -1208,16 +1208,18 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def optimize(method):
+        def optimize(method, force=False):
             """
             Optimize the mesh of the current model using `method' (empty for default
             tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
             direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
-            smoother).
+            smoother). If `force' is set apply the optimization also to discrete
+            entities.
             """
             ierr = c_int()
             lib.gmshModelMeshOptimize(
                 c_char_p(method.encode()),
+                c_int(bool(force)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

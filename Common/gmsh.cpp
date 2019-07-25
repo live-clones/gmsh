@@ -886,10 +886,11 @@ GMSH_API void gmsh::model::mesh::smooth()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::optimize(const std::string &how)
+GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
+                                          const bool force)
 {
   if(!_isInitialized()) { throw - 1; }
-  GModel::current()->optimizeMesh(how);
+  GModel::current()->optimizeMesh(how, force);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 

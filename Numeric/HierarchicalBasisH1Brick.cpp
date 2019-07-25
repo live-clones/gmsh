@@ -8,6 +8,7 @@
 // Segeth ,
 //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
+#include <algorithm>
 #include "HierarchicalBasisH1Brick.h"
 
 HierarchicalBasisH1Brick::HierarchicalBasisH1Brick(int order)

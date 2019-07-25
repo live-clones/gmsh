@@ -592,7 +592,7 @@ public:
   int refineMesh(int linear, bool barycentric = false);
 
   // optimize the mesh
-  int optimizeMesh(const std::string &how);
+  int optimizeMesh(const std::string &how, bool force = false);
 
   // smooth the mesh
   int smoothMesh();

@@ -726,11 +726,12 @@ Unpartition the mesh of the current model.
 Optimize the mesh of the current model using @code{method} (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
 direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
-smoother).
+smoother). If @code{force} is set apply the optimization also to discrete
+entities.
 
 @table @asis
 @item Input:
-@code{method}
+@code{method}, @code{force}
 @item Output:
 -
 @item Return:

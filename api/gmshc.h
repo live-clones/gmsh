@@ -403,8 +403,10 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr);
 /* Optimize the mesh of the current model using `method' (empty for default
  * tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
  * direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
- * smoother). */
+ * smoother). If `force' is set apply the optimization also to discrete
+ * entities. */
 GMSH_API void gmshModelMeshOptimize(const char * method,
+                                    const int force,
                                     int * ierr);
 
 /* Recombine the mesh of the current model. */

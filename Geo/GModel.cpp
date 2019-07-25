@@ -1283,7 +1283,7 @@ int GModel::smoothMesh()
 #endif
 }
 
-int GModel::optimizeMesh(const std::string &how)
+int GModel::optimizeMesh(const std::string &how, const bool force)
 {
 #if defined(HAVE_MESH)
   if(how == "HighOrder")
@@ -1291,9 +1291,9 @@ int GModel::optimizeMesh(const std::string &how)
   else if(how == "HighOrderElastic")
     OptimizeHighOrderMeshElastic(this);
   else if(how == "Netgen")
-    OptimizeMeshNetgen(this);
+    OptimizeMeshNetgen(this, force);
   else
-    OptimizeMesh(this);
+    OptimizeMesh(this, force);
   if(CTX::instance()->mesh.renumber){
     renumberMeshVertices();
     renumberMeshElements();

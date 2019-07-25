@@ -697,11 +697,11 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshOptimize(const char * method, int * ierr)
+GMSH_API void gmshModelMeshOptimize(const char * method, const int force, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::optimize(method);
+    gmsh::model::mesh::optimize(method, force);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

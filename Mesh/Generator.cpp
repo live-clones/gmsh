@@ -34,6 +34,7 @@
 #include "HighOrder.h"
 #include "Field.h"
 #include "Options.h"
+#include "Generator.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -963,12 +964,16 @@ static void Mesh3D(GModel *m)
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }
 
-void OptimizeMesh(GModel *m)
+void OptimizeMesh(GModel *m, bool force)
 {
   Msg::StatusBar(true, "Optimizing 3D mesh...");
   double t1 = Cpu();
 
-  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegion());
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+    optimizeMeshGRegion opt;
+    opt(*it, force);
+  }
+
   // Ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
@@ -979,12 +984,15 @@ void OptimizeMesh(GModel *m)
   Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);
 }
 
-void OptimizeMeshNetgen(GModel *m)
+void OptimizeMeshNetgen(GModel *m, bool force)
 {
   Msg::StatusBar(true, "Optimizing 3D mesh with Netgen...");
   double t1 = Cpu();
 
-  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+    optimizeMeshGRegionNetgen opt;
+    opt(*it, force);
+  }
 
   // ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();

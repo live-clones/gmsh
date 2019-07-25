@@ -204,8 +204,8 @@ mesh.add('partition',doc,None,iint('numPart'))
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition',doc,None)
 
-doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother).'''
-mesh.add('optimize',doc,None,istring('method',''))
+doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother). If `force' is set apply the optimization also to discrete entities.'''
+mesh.add('optimize',doc,None,istring('method',''),ibool('force','false','False'))
 
 doc = '''Recombine the mesh of the current model.'''
 mesh.add('recombine',doc,None)

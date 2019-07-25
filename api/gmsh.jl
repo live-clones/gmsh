@@ -963,18 +963,18 @@ function unpartition()
 end
 
 """
-    gmsh.model.mesh.optimize(method)
+    gmsh.model.mesh.optimize(method, force = false)
 
 Optimize the mesh of the current model using `method` (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
 direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
-smoother).
+smoother). If `force` is set apply the optimization also to discrete entities.
 """
-function optimize(method)
+function optimize(method, force = false)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshOptimize, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Ptr{Cint}),
-          method, ierr)
+          (Ptr{Cchar}, Cint, Ptr{Cint}),
+          method, force, ierr)
     ierr[] != 0 && error("gmshModelMeshOptimize returned non-zero error code: $(ierr[])")
     return nothing
 end
