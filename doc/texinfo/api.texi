@@ -1249,14 +1249,18 @@ experimental feature and will probably change in a future release.
 @end table
 
 @item getInformationForElements
-Get information about the @code{keys}. Warning: this is an experimental feature
-and will probably change in a future release.
+Get information about the @code{keys}. @code{infoKeys} returns information about
+the functions associated with the @code{keys}. @code{infoKeys[0].first}
+describes the type of function (0 for  vertex function, 1 for edge function, 2
+for face function and 3 for bubble function). @code{infoKeys[0].second} gives
+the order of the function associated with the key. Warning: this is an
+experimental feature and will probably change in a future release.
 
 @table @asis
 @item Input:
-@code{keys}, @code{order}, @code{elementType}
+@code{keys}, @code{elementType}, @code{functionSpaceType}
 @item Output:
-@code{info}
+@code{infoKeys}
 @item Return:
 -
 @end table
