@@ -101,6 +101,11 @@ How are surface mesh elements classified on compounds? (0: on the new discrete e
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.CompoundCharacteristicLengthFactor
+Mesh size factor applied to compound parts@*
+Default value: @code{0.5}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.CpuTime
 CPU time (in seconds) for the generation of the current mesh (read-only)@*
 Default value: @code{0}@*
@@ -534,6 +539,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RandomFactor3D
 Random factor used in the 3D meshing algorithm@*
 Default value: @code{1e-12}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RandomSeed
+Seed of pseudo-random number generator@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PreserveNumberingMsh2
