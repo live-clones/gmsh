@@ -29,8 +29,11 @@ public:
                 std::vector<std::vector<double> > &bubbleBasis,
                 std::string typeFunction) = 0; // typeFunction = HcurlLegendre,
                                                // CurlHcurlLegendre
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<std::vector<double> > &edgeFunctions) = 0;
+  virtual void
+  orientEdge(int const &flagOrientation, int const &edgeNumber,
+             std::vector<std::vector<double> > &edgeBasis,
+             const std::vector<std::vector<double> > &eTablePositiveFlag,
+             const std::vector<std::vector<double> > &eTableNegativeFlag) = 0;
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
@@ -38,7 +41,13 @@ public:
                           std::string typeFunction) = 0;
 
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<double> &edgeFunctions){};
+                          std::vector<double> &edgeFunctions,
+                          const std::vector<double> &eTablePositiveFlag,
+                          const std::vector<double> &eTableNegativeFlag){};
+  virtual void
+  orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions){};
+  virtual void orientEdgeFunctionsForNegativeFlag(
+    std::vector<std::vector<double> > &edgeFunctions) = 0;
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,

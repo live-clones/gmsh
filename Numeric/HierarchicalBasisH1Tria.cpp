@@ -292,68 +292,102 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Tria::orientEdge(int const &flagOrientation,
-                                         int const &edgeNumber,
-                                         std::vector<double> &edgeBasis)
+void HierarchicalBasisH1Tria::orientEdge(
+  int const &flagOrientation, int const &edgeNumber,
+  std::vector<double> &edgeFunctions,
+  const std::vector<double> &eTablePositiveFlag,
+  const std::vector<double> &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
-    int const1;
-    int const2;
-    switch(edgeNumber) {
-    case(0): {
-      const1 = 0;
-      const2 = _pOrderEdge[0] - 2;
-    } break;
-    case(1): {
-      const1 = _pOrderEdge[0] - 1;
-      const2 = _pOrderEdge[0] + _pOrderEdge[1] - 3;
-    } break;
-    case(2): {
-      const1 = _pOrderEdge[0] + _pOrderEdge[1] - 2;
-      const2 = _pOrderEdge[2] + _pOrderEdge[0] + _pOrderEdge[1] - 4;
-    } break;
-    default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=2");
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k] = eTableNegativeFlag[k];
     }
-    for(int k = const1; k <= const2; k++) {
-      if((k - const1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k] = eTablePositiveFlag[k];
     }
   }
 }
 
 void HierarchicalBasisH1Tria::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &gradientEdge)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
-    int const1;
-    int const2;
-    switch(edgeNumber) {
-    case(0): {
-      const1 = 0;
-      const2 = _pOrderEdge[0] - 2;
-    } break;
-    case(1): {
-      const1 = _pOrderEdge[0] - 1;
-      const2 = _pOrderEdge[0] + _pOrderEdge[1] - 3;
-
-    } break;
-    case(2): {
-      const1 = _pOrderEdge[0] + _pOrderEdge[1] - 2;
-      const2 = _pOrderEdge[2] + _pOrderEdge[0] + _pOrderEdge[1] - 4;
-
-    } break;
-
-    default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=2");
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
     }
-    for(int k = const1; k <= const2; k++) {
-      if((k - const1) % 2 != 0) {
-        gradientEdge[k][0] = gradientEdge[k][0] * (-1);
-        gradientEdge[k][1] = gradientEdge[k][1] * (-1);
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
+    }
+  }
+}
+void HierarchicalBasisH1Tria::orientEdgeFunctionsForNegativeFlag(
+  std::vector<double> &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      if((k - constant1) % 2 != 0) {
+        edgeFunctions[k] = edgeFunctions[k] * (-1);
       }
     }
   }
 }
 
+void HierarchicalBasisH1Tria::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      if((k - constant1) % 2 != 0) {
+        edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
+        edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
+        edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
+      }
+    }
+  }
+}
 void HierarchicalBasisH1Tria::orientFace(double const &u, double const &v,
                                          double const &w, int const &flag1,
                                          int const &flag2, int const &flag3,
@@ -536,7 +570,7 @@ void HierarchicalBasisH1Tria::getKeysInfo(std::vector<int> &functionTypeInfo,
   for(int n1 = 1; n1 < _pf - 1; n1++) {
     for(int n2 = 1; n2 <= _pf - 1 - n1; n2++) {
       functionTypeInfo[it] = 2;
-      orderInfo[it] = n1 + n2 +1;
+      orderInfo[it] = n1 + n2 + 1;
       it++;
     }
   }

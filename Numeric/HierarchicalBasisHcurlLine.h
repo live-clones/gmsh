@@ -11,8 +11,6 @@
 #ifndef HIERARCHICAL_BASIS_HCURL_LINE_H
 #define HIERARCHICAL_BASIS_HCURL_LINE_H
 
-
-
 #include "HierarchicalBasisHcurl.h"
 /*
  *
@@ -51,8 +49,13 @@ public:
       throw std::string("unknown typeFunction");
     }
   };
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<std::vector<double> > &edgeBasis);
+  virtual void
+  orientEdge(int const &flagOrientation, int const &edgeNumber,
+             std::vector<std::vector<double> > &edgeBasis,
+             const std::vector<std::vector<double> > &eTablePositiveFlag,
+             const std::vector<std::vector<double> > &eTableNegativeFlag);
+  virtual void orientEdgeFunctionsForNegativeFlag(
+    std::vector<std::vector<double> > &edgeFunctions);
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,

@@ -252,19 +252,51 @@ void HierarchicalBasisHcurlBrick::generateHcurlBasis(
 
 void HierarchicalBasisHcurlBrick::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &gradientEdge)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
+      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
+    }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
+      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
+    }
+  }
+}
+void HierarchicalBasisHcurlBrick::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber];
     for(int k = constant1; k <= constant2; k++) {
       if((k - constant1) % 2 == 0) {
-        gradientEdge[k][0] = gradientEdge[k][0] * (-1);
-        gradientEdge[k][1] = gradientEdge[k][1] * (-1);
-        gradientEdge[k][2] = gradientEdge[k][2] * (-1);
+        edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
+        edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
+        edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
       }
     }
   }
@@ -865,14 +897,14 @@ void HierarchicalBasisHcurlBrick::getKeysInfo(
     for(int index1 = 0; index1 <= _pOrderFace1[iFace]; index1++) {
       for(int index2 = 2; index2 <= _pOrderFace2[iFace] + 1; index2++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = std::max(index1,index2);
+        orderInfo[it] = std::max(index1, index2);
         it++;
       }
     }
     for(int index1 = 2; index1 <= _pOrderFace1[iFace] + 1; index1++) {
       for(int index2 = 0; index2 <= _pOrderFace2[iFace]; index2++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = std::max(index1,index2);
+        orderInfo[it] = std::max(index1, index2);
         it++;
       }
     }
@@ -881,7 +913,7 @@ void HierarchicalBasisHcurlBrick::getKeysInfo(
     for(int ipb2 = 2; ipb2 <= _pb2 + 1; ipb2++) {
       for(int ipb3 = 2; ipb3 <= _pb3 + 1; ipb3++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(std::max(ipb1 , ipb2), ipb3);
+        orderInfo[it] = std::max(std::max(ipb1, ipb2), ipb3);
         it++;
       }
     }
@@ -890,7 +922,7 @@ void HierarchicalBasisHcurlBrick::getKeysInfo(
     for(int ipb2 = 0; ipb2 < _pb2 + 1; ipb2++) {
       for(int ipb3 = 2; ipb3 <= _pb3 + 1; ipb3++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(std::max(ipb1 , ipb2), ipb3);
+        orderInfo[it] = std::max(std::max(ipb1, ipb2), ipb3);
         it++;
       }
     }
@@ -899,7 +931,7 @@ void HierarchicalBasisHcurlBrick::getKeysInfo(
     for(int ipb2 = 2; ipb2 <= _pb2 + 1; ipb2++) {
       for(int ipb3 = 0; ipb3 < _pb3 + 1; ipb3++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(std::max(ipb1 , ipb2), ipb3);
+        orderInfo[it] = std::max(std::max(ipb1, ipb2), ipb3);
         it++;
       }
     }

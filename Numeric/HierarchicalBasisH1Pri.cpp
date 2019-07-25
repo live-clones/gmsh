@@ -505,9 +505,11 @@ void HierarchicalBasisH1Pri::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Pri::orientEdge(int const &flagOrientation,
-                                        int const &edgeNumber,
-                                        std::vector<double> &edgeBasis)
+void HierarchicalBasisH1Pri::orientEdge(
+  int const &flagOrientation, int const &edgeNumber,
+  std::vector<double> &edgeFunctions,
+  const std::vector<double> &eTablePositiveFlag,
+  const std::vector<double> &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
@@ -516,13 +518,25 @@ void HierarchicalBasisH1Pri::orientEdge(int const &flagOrientation,
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
     for(int k = constant1; k <= constant2; k++) {
-      if((k - constant1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
+      edgeFunctions[k] = eTableNegativeFlag[k];
+    }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k] = eTablePositiveFlag[k];
     }
   }
 }
 void HierarchicalBasisH1Pri::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &gradientEdge)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
@@ -531,15 +545,63 @@ void HierarchicalBasisH1Pri::orientEdge(
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
     for(int k = constant1; k <= constant2; k++) {
-      if((k - constant1) % 2 != 0) {
-        gradientEdge[k][0] = gradientEdge[k][0] * (-1);
-        gradientEdge[k][1] = gradientEdge[k][1] * (-1);
-        gradientEdge[k][2] = gradientEdge[k][2] * (-1);
-      }
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
+      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
+    }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
+      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
     }
   }
 }
 
+void HierarchicalBasisH1Pri::orientEdgeFunctionsForNegativeFlag(
+  std::vector<double> &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      if((k - constant1) % 2 != 0) {
+        edgeFunctions[k] = edgeFunctions[k] * (-1);
+      }
+    }
+  }
+}
+void HierarchicalBasisH1Pri::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      if((k - constant1) % 2 != 0) {
+        edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
+        edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
+        edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
+      }
+    }
+  }
+}
 void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
                                         double const &w, int const &flag1,
                                         int const &flag2, int const &flag3,
@@ -976,7 +1038,7 @@ void HierarchicalBasisH1Pri::getKeysInfo(std::vector<int> &functionTypeInfo,
       for(int n1 = 2; n1 <= _pOrderQuadFace1[iFace]; n1++) {
         for(int n2 = 2; n2 <= _pOrderQuadFace2[iFace]; n2++) {
           functionTypeInfo[it] = 2;
-          orderInfo[it] = std::max(n1,n2);
+          orderInfo[it] = std::max(n1, n2);
           it++;
         }
       }
@@ -985,7 +1047,7 @@ void HierarchicalBasisH1Pri::getKeysInfo(std::vector<int> &functionTypeInfo,
       for(int n1 = 1; n1 < _pOrderTriFace[iFace - 3] - 1; n1++) {
         for(int n2 = 1; n2 <= _pOrderTriFace[iFace - 3] - 1 - n1; n2++) {
           functionTypeInfo[it] = 2;
-          orderInfo[it] = n1 + n2+1;
+          orderInfo[it] = n1 + n2 + 1;
           it++;
         }
       }
@@ -995,7 +1057,7 @@ void HierarchicalBasisH1Pri::getKeysInfo(std::vector<int> &functionTypeInfo,
     for(int n2 = 1; n2 <= _pb1 - 1 - n1; n2++) {
       for(int n3 = 2; n3 <= _pb2; n3++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(n1 + n2+1,n3);
+        orderInfo[it] = std::max(n1 + n2 + 1, n3);
         it++;
       }
     }
