@@ -1038,6 +1038,8 @@ StringXNumber MeshOptions_Number[] = {
     "How are surface mesh elements classified on compounds? (0: on the new discrete "
     "entity, 1: on the original geometrical entity - incompatible with e.g. high-order "
     "meshing)" },
+  { F|O, "CompoundCharacteristicLengthFactor" , opt_mesh_compound_lc_factor , 0.5 ,
+    "Mesh size factor applied to compound parts" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
 
@@ -1237,6 +1239,9 @@ StringXNumber MeshOptions_Number[] = {
     "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
   { F|O, "RandomFactor3D" , opt_mesh_rand_factor3d , 1.e-12 ,
     "Random factor used in the 3D meshing algorithm" },
+
+  { F|O, "RandomSeed" , opt_mesh_random_seed , 1. ,
+    "Seed of pseudo-random number generator" },
   { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},

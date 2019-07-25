@@ -6402,6 +6402,20 @@ double opt_mesh_compound_classify(OPT_ARGS_NUM)
   return CTX::instance()->mesh.compoundClassify;
 }
 
+double opt_mesh_compound_lc_factor(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.compoundLcFactor = val;
+  return CTX::instance()->mesh.compoundLcFactor;
+}
+
+double opt_mesh_random_seed(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.randomSeed = (unsigned int)val;
+  return CTX::instance()->mesh.randomSeed;
+}
+
 double opt_mesh_switch_elem_tags(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

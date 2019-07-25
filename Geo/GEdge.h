@@ -222,7 +222,7 @@ public:
   struct {
     char method;
     double coeffTransfinite;
-    double meshSize;
+    double meshSize, meshSizeFactor;
     int nbPointsTransfinite;
     int typeTransfinite;
     int minimumMeshSegments;

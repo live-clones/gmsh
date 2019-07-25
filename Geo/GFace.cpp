@@ -245,6 +245,7 @@ void GFace::resetMeshAttributes()
   meshAttributes.extrude = 0;
   meshAttributes.reverseMesh = false;
   meshAttributes.meshSize = MAX_LC;
+  meshAttributes.meshSizeFactor = 1.;
 }
 
 SBoundingBox3d GFace::bounds(bool fast) const
@@ -1622,9 +1623,15 @@ void GFace::mesh(bool verbose)
   }
 
 #if defined(HAVE_MESH)
+  if(compound.size())
+    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
+
   meshGFace mesher;
   mesher(this, verbose);
+
   if(compound.size()) { // Some faces are meshed together
+    meshAttributes.meshSizeFactor = 1;
+
     orientMeshGFace orient;
     orient(this);
     if(compound[0] == this) { // I'm the one that makes the compound job

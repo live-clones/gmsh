@@ -1,6 +1,11 @@
+
+// Example of "Virtual topology" using mesh compounds to avoid enforcing small
+// elements: see
+
+// https://github.com/mkraska/CalculiX-Examples/tree/master/CAD/OnshapeTutorial
+
 Merge "part.step";
 
-// Virtual topology to avoid enforcing small elements
 Compound Curve {63,64};
 Compound Curve {65,66};
 Compound Surface {23,25};
@@ -23,6 +28,10 @@ order = DefineNumber[1, Choices{1="First order",2="Second order"},
 
 Mesh.CompoundClassify = classif;
 Mesh.ElementOrder = order;
+
+// refine the mesh of the compound parts to improve the geometrical location of
+// compound mesh nodes (which are located on the *mesh* of the compound parts)
+Mesh.CompoundCharacteristicLengthFactor = 0.3;
 
 If(classif && order > 1)
   Error("High-order mesh not compatible with magic reclassification :-)");

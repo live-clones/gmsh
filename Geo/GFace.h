@@ -304,7 +304,7 @@ public:
     // reverse mesh orientation
     bool reverseMesh;
     // global mesh size constraint for the surface
-    double meshSize;
+    double meshSize, meshSizeFactor;
   } meshAttributes;
 
   int getMeshingAlgo() const;
@@ -312,7 +312,14 @@ public:
   void unsetMeshingAlgo() const;
   int getCurvatureControlParameter() const;
   void setCurvatureControlParameter(int);
-  virtual double getMeshSize() const { return meshAttributes.meshSize; }
+  virtual double getMeshSize() const
+  {
+    return meshAttributes.meshSize;
+  }
+  virtual double getMeshSizeFactor() const
+  {
+    return meshAttributes.meshSizeFactor;
+  }
 
   struct {
     mutable GEntity::MeshGenerationStatus status;

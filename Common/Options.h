@@ -547,6 +547,8 @@ double opt_mesh_save_topology(OPT_ARGS_NUM);
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM);
 double opt_mesh_color_carousel(OPT_ARGS_NUM);
 double opt_mesh_compound_classify(OPT_ARGS_NUM);
+double opt_mesh_compound_lc_factor(OPT_ARGS_NUM);
+double opt_mesh_random_seed(OPT_ARGS_NUM);
 double opt_mesh_switch_elem_tags(OPT_ARGS_NUM);
 double opt_mesh_zone_definition(OPT_ARGS_NUM);
 double opt_mesh_nb_nodes(OPT_ARGS_NUM);

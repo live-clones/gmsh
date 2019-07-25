@@ -1085,7 +1085,7 @@ void GenerateMesh(GModel *m, int ask)
   int old = m->getMeshStatus(false);
 
   // Initialize pseudo random mesh generator with the same seed
-  srand(1);
+  srand(CTX::instance()->mesh.randomSeed);
 
   // Change any high order elements back into first order ones
   SetOrder1(m);
