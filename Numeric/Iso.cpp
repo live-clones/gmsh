@@ -288,9 +288,7 @@ int CutTriangle(double *X, double *Y, double *Z, double *Val, double V1,
     Fl = 0;
   }
 
-  if(V2 == Val[io[0]]) {
-    return 0;
-  }
+  if(V2 == Val[io[0]]) { return 0; }
   else if((Val[io[0]] < V2) && (V2 < Val[io[1]])) {
     Vp[Np] = V2;
     InterpolateIso(X, Y, Z, Val, V2, io[0], io[1], &Xp[Np], &Yp[Np], &Zp[Np]);

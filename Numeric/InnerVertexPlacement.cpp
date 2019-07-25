@@ -35,9 +35,7 @@ fullMatrix<double> *getInnerVertexPlacement(int type, int order)
   if(type < 3 || type > 8) return NULL;
   std::map<int, fullMatrix<double> *>::iterator it;
   it = storedMatrices[type - 3].find(order);
-  if(it != storedMatrices[type - 3].end()) {
-    return it->second;
-  }
+  if(it != storedMatrices[type - 3].end()) { return it->second; }
   else {
     fullMatrix<double> *matrix = new fullMatrix<double>();
     switch(type) {

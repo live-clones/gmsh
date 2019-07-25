@@ -3,24 +3,21 @@
 
 #include <math.h>
 #include <string>
-namespace  OrthogonalPoly{
+namespace OrthogonalPoly {
 
-
-//Lobatto Orthogonal Shape Functions in Horner's form
+  // Lobatto Orthogonal Shape Functions in Horner's form
   double EvalLobatto(int order, double x);
-//derivative of lobatto orthogonal shape funcions in Horner's form
+  // derivative of lobatto orthogonal shape funcions in Horner's form
   double EvalDLobatto(int order, double x);
-//Kernel functions in Horner's form
+  // Kernel functions in Horner's form
   double EvalKernelFunction(int order, double x);
-//derivative of Kernel functions in Horner's form
+  // derivative of Kernel functions in Horner's form
   double EvalDKernelFunction(int order, double x);
-//Legendre Functions in Horner's form
+  // Legendre Functions in Horner's form
   double EvalLegendre(int order, double x);
-//derivative of Legendre  Functions in Horner's form
- double EvalDLegendre(int order, double x);
+  // derivative of Legendre  Functions in Horner's form
+  double EvalDLegendre(int order, double x);
 
-};
-
-
+}; // namespace OrthogonalPoly
 
 #endif

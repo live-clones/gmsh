@@ -24,9 +24,7 @@ const nodalBasis *BasisFactory::getNodalBasis(int tag)
 {
   // If the Basis has already been built, return it.
   std::map<int, nodalBasis *>::const_iterator it = fs.find(tag);
-  if(it != fs.end()) {
-    return it->second;
-  }
+  if(it != fs.end()) { return it->second; }
   // Get the parent type to see which kind of basis
   // we want to create
   nodalBasis *F = NULL;

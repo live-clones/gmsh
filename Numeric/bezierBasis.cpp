@@ -139,17 +139,13 @@ namespace {
     const int nColumns = lag.size2();
     fullMatrix<D> f(order + 1, nColumns);
     for(int i = start, n = 0; n <= order; i += inc, ++n) {
-      for(int j = 0; j < nColumns; ++j) {
-        f(n, j) = lag(i, j);
-      }
+      for(int j = 0; j < nColumns; ++j) { f(n, j) = lag(i, j); }
     }
     fullVector<D> w(order + 1);
     w.setAll(0);
     w(0) = 1;
     fullMatrix<D> c(order + 1, nColumns);
-    for(int j = 0; j < nColumns; ++j) {
-      c(0, j) = f(0, j);
-    }
+    for(int j = 0; j < nColumns; ++j) { c(0, j) = f(0, j); }
     for(int s = 1; s <= order; ++s) {
       for(int k = order; k >= s; --k) {
         for(int j = 0; j < nColumns; ++j) {
@@ -166,9 +162,7 @@ namespace {
         }
       }
       w(0) = -w(0) * x(s - 1);
-      for(int j = 0; j < nColumns; ++j) {
-        c(0, j) = c(0, j) + f(s, j) * w(0);
-      }
+      for(int j = 0; j < nColumns; ++j) { c(0, j) = c(0, j) + f(s, j) * w(0); }
     }
     for(int i = start, n = 0; n <= order; i += inc, ++n) {
       for(int j = 0; j < nColumns; ++j) {
@@ -879,9 +873,7 @@ void bezierCoeff::getCornerCoeffs(fullVector<double> &v) const
 {
   const int n = getNumCornerCoeff();
   v.resize(n);
-  for(int i = 0; i < n; ++i) {
-    v(i) = getCornerCoeff(i);
-  }
+  for(int i = 0; i < n; ++i) { v(i) = getCornerCoeff(i); }
 }
 
 void bezierCoeff::getCornerCoeffs(fullMatrix<double> &m) const
@@ -890,9 +882,7 @@ void bezierCoeff::getCornerCoeffs(fullMatrix<double> &m) const
   m.resize(n, _c);
   for(int i = 0; i < n; ++i) {
     const int k = getIdxCornerCoeff(i);
-    for(int j = 0; j < _c; ++j) {
-      m(i, j) = _data[k + _r * j];
-    }
+    for(int j = 0; j < _c; ++j) { m(i, j) = _data[k + _r * j]; }
   }
 }
 
@@ -1218,17 +1208,11 @@ void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff,
     for(int j = 0; j < n; ++j) {
       const int I1 = i + j * n;
       const int I2 = (2 * i) + (2 * j) * N;
-      for(int k = 0; k < dim; ++k) {
-        _sub(I2, k) = coeff(I1, k);
-      }
+      for(int k = 0; k < dim; ++k) { _sub(I2, k) = coeff(I1, k); }
     }
   }
-  for(int i = 0; i < N; i += 2) {
-    _subdivide(_sub, n, i, N);
-  }
-  for(int j = 0; j < N; ++j) {
-    _subdivide(_sub, n, j * N);
-  }
+  for(int i = 0; i < N; i += 2) { _subdivide(_sub, n, i, N); }
+  for(int j = 0; j < N; ++j) { _subdivide(_sub, n, j * N); }
   _copyQuad(_sub, n, 0, 0, *subCoeff[0]);
   _copyQuad(_sub, n, n - 1, 0, *subCoeff[1]);
   _copyQuad(_sub, n, 0, n - 1, *subCoeff[2]);
@@ -1248,26 +1232,18 @@ void bezierCoeff::_subdivideHexahedron(const bezierCoeff &coeff,
       for(int k = 0; k < n; ++k) {
         const int I1 = i + j * n + k * n * n;
         const int I2 = (2 * i) + (2 * j) * N + (2 * k) * N * N;
-        for(int k = 0; k < dim; ++k) {
-          _sub(I2, k) = coeff(I1, k);
-        }
+        for(int k = 0; k < dim; ++k) { _sub(I2, k) = coeff(I1, k); }
       }
     }
   }
   for(int i = 0; i < N; i += 2) {
-    for(int j = 0; j < N; j += 2) {
-      _subdivide(_sub, n, i + j * N, N * N);
-    }
+    for(int j = 0; j < N; j += 2) { _subdivide(_sub, n, i + j * N, N * N); }
   }
   for(int i = 0; i < N; i += 2) {
-    for(int k = 0; k < N; ++k) {
-      _subdivide(_sub, n, i + k * N * N, N);
-    }
+    for(int k = 0; k < N; ++k) { _subdivide(_sub, n, i + k * N * N, N); }
   }
   for(int j = 0; j < N; ++j) {
-    for(int k = 0; k < N; ++k) {
-      _subdivide(_sub, n, j * N + k * N * N);
-    }
+    for(int k = 0; k < N; ++k) { _subdivide(_sub, n, j * N + k * N * N); }
   }
   _copyHex(_sub, n, 0, 0, 0, *subCoeff[0]);
   _copyHex(_sub, n, n - 1, 0, 0, *subCoeff[1]);
@@ -1294,14 +1270,10 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
     for(int i = 0; i < ntri; ++i) {
       const int I1 = i + k * ntri;
       const int I2 = i + (2 * k) * ntri;
-      for(int l = 0; l < dim; ++l) {
-        _sub(I2, l) = coeff(I1, l);
-      }
+      for(int l = 0; l < dim; ++l) { _sub(I2, l) = coeff(I1, l); }
     }
   }
-  for(int i = 0; i < ntri; ++i) {
-    _subdivide(_sub, n, i, ntri);
-  }
+  for(int i = 0; i < ntri; ++i) { _subdivide(_sub, n, i, ntri); }
 
   // Copy first subdomain into subCoeff[0] and second one into subCoeff2[0]
   std::vector<bezierCoeff *> subCoeff2;
@@ -1335,9 +1307,7 @@ void bezierCoeff::_subdividePyramid(const bezierCoeff &coeff,
       for(int k = 0; k < nk; ++k) {
         const int I1 = i + j * nij + k * nij * nij;
         const int I2 = (2 * i) + (2 * j) * Nij + (2 * k) * Nij * Nij;
-        for(int k = 0; k < dim; ++k) {
-          _sub(I2, k) = coeff(I1, k);
-        }
+        for(int k = 0; k < dim; ++k) { _sub(I2, k) = coeff(I1, k); }
       }
     }
   }
@@ -1372,9 +1342,7 @@ void bezierCoeff::_copy(const bezierCoeff &from, int start, int num,
 {
   const int dim = from._c;
   for(int i = start; i < start + num; ++i) {
-    for(int j = 0; j < dim; ++j) {
-      to(i, j) = from(i, j);
-    }
+    for(int j = 0; j < dim; ++j) { to(i, j) = from(i, j); }
   }
 }
 
@@ -1383,9 +1351,7 @@ void bezierCoeff::_copyLine(const fullMatrix<double> &allSub, int n, int start,
 {
   const int dim = allSub.size2();
   for(int i = 0; i < n; ++i) {
-    for(int K = 0; K < dim; ++K) {
-      sub(i, K) = allSub(start + i, K);
-    }
+    for(int K = 0; K < dim; ++K) { sub(i, K) = allSub(start + i, K); }
   }
 }
 
@@ -1398,9 +1364,7 @@ void bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int n, int starti,
     for(int j = 0; j < n; ++j) {
       const int I1 = i + j * n;
       const int I2 = (starti + i) + (startj + j) * N;
-      for(int K = 0; K < dim; ++K) {
-        sub(I1, K) = allSub(I2, K);
-      }
+      for(int K = 0; K < dim; ++K) { sub(I1, K) = allSub(I2, K); }
     }
   }
 }
@@ -1415,9 +1379,7 @@ void bezierCoeff::_copyHex(const fullMatrix<double> &allSub, int n, int starti,
       for(int k = 0; k < n; ++k) {
         const int I1 = i + j * n + k * n * n;
         const int I2 = (starti + i) + (startj + j) * N + (startk + k) * N * N;
-        for(int K = 0; K < dim; ++K) {
-          sub(I1, K) = allSub(I2, K);
-        }
+        for(int K = 0; K < dim; ++K) { sub(I1, K) = allSub(I2, K); }
       }
     }
   }
@@ -1434,9 +1396,7 @@ void bezierCoeff::_copyPyr(const fullMatrix<double> &allSub, int nij, int nk,
         const int I1 = i + j * nij + k * nij * nij;
         const int I2 =
           (starti + i) + (startj + j) * Nij + (startk + k) * Nij * Nij;
-        for(int K = 0; K < dim; ++K) {
-          sub(I1, K) = allSub(I2, K);
-        }
+        for(int K = 0; K < dim; ++K) { sub(I1, K) = allSub(I2, K); }
       }
     }
   }

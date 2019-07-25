@@ -646,3 +646,38 @@ void HierarchicalBasisH1Brick::orientFace(
     }
   }
 }
+
+void HierarchicalBasisH1Brick::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                           std::vector<int> &orderInfo)
+{
+  for(int i = 0; i < 8; i++) {
+    functionTypeInfo[i] = 0;
+    orderInfo[i] = 1;
+  }
+  int it = 8;
+  for(int numEdge = 0; numEdge < 12; numEdge++) {
+    for(int i = 2; i <= _pOrderEdge[numEdge]; i++) {
+      functionTypeInfo[it] = 1;
+      orderInfo[it] = i;
+      it++;
+    }
+  }
+  for(int numFace = 0; numFace < 6; numFace++) {
+    for(int n1 = 2; n1 <= _pOrderFace1[numFace]; n1++) {
+      for(int n2 = 2; n2 <= _pOrderFace2[numFace]; n2++) {
+        functionTypeInfo[it] = 2;
+        orderInfo[it] = std::max(n1,n2);
+        it++;
+      }
+    }
+  }
+  for(int ipb1 = 2; ipb1 <= _pb1 ; ipb1++) {
+    for(int ipb2 = 2; ipb2 <= _pb2 ; ipb2++) {
+      for(int ipb3 = 2; ipb3 <= _pb3; ipb3++) {
+        functionTypeInfo[it] = 3;
+        orderInfo[it] = std::max(std::max(ipb1,ipb2),ipb3);
+        it++;
+      }
+    }
+  }
+}

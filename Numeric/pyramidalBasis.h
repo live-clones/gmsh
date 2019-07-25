@@ -27,7 +27,8 @@ public:
   virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const;
   virtual void f(double u, double v, double w, int i, double *val) const;
   virtual void df(double u, double v, double w, double grads[][3]) const;
-  virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const;
+  virtual void df(const fullMatrix<double> &coord,
+                  fullMatrix<double> &dfm) const;
   virtual void df(double u, double v, double w, int i, double grad[3]) const;
   virtual int getNumShapeFunctions() const;
 };

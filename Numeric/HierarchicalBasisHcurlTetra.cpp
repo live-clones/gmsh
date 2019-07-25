@@ -225,7 +225,7 @@ void HierarchicalBasisHcurlTetra::generateHcurlBasis(
         for(int i1 = 2; i1 <= _pOrderFace[0]; i1++) {
           for(int j = 0; j < 3; j++) {
             faceBasis[faceIt][j] =
-               jacob * product * legendreVector[index][i1 - 2] * nD[j];
+              jacob * product * legendreVector[index][i1 - 2] * nD[j];
           }
           faceIt++;
         }
@@ -341,7 +341,7 @@ void HierarchicalBasisHcurlTetra::generateHcurlBasis(
         for(int i1 = 2; i1 <= _pOrderFace[3]; i1++) {
           for(int j = 0; j < 3; j++) {
             faceBasis[faceIt][j] =
-              jacob * product *  legendreVector[index][i1 - 2] * nD[j];
+              jacob * product * legendreVector[index][i1 - 2] * nD[j];
           }
           faceIt++;
         }
@@ -1176,7 +1176,7 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
 
           gradient(product, legendreVector[i][i1 - 2], dproduct, gradLegendre,
                    grad);
-          curlFunction( jacob * det, nD, grad, faceBasis[faceIt]);
+          curlFunction(jacob * det, nD, grad, faceBasis[faceIt]);
 
           faceIt++;
         }
@@ -1228,7 +1228,7 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
             dsubtraction[index][2] * dlegendreVector[index][i1 - 2];
           gradient(product, legendreVector[index][i1 - 2], dproduct,
                    gradLegendre, grad);
-          curlFunction( jacob * det, nD, grad, faceBasis[faceIt]);
+          curlFunction(jacob * det, nD, grad, faceBasis[faceIt]);
           faceIt++;
         }
       }
@@ -1279,7 +1279,7 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
             dsubtraction[index][2] * dlegendreVector[index][i1 - 2];
           gradient(product, legendreVector[index][i1 - 2], dproduct,
                    gradLegendre, grad);
-          curlFunction( jacob * det, nD, grad, faceBasis[faceIt]);
+          curlFunction(jacob * det, nD, grad, faceBasis[faceIt]);
           faceIt++;
         }
       }
@@ -1329,7 +1329,7 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
             dsubtraction[index][2] * dlegendreVector[index][i1 - 2];
           gradient(product, legendreVector[index][i1 - 2], dproduct,
                    gradLegendre, grad);
-          curlFunction( jacob * det, nD, grad, faceBasis[faceIt]);
+          curlFunction(jacob * det, nD, grad, faceBasis[faceIt]);
           faceIt++;
         }
       }
@@ -1492,6 +1492,62 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
           bubbleBasis[bubbleIt][2] = 0;
 
           bubbleIt++;
+        }
+      }
+    }
+  }
+}
+
+void HierarchicalBasisHcurlTetra::getKeysInfo(
+  std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo)
+{
+  int it = 0;
+  for(int numEdge = 0; numEdge < 6; numEdge++) {
+    for(int i = 0; i <= _pOrderEdge[numEdge]; i++) {
+      functionTypeInfo[it] = 1;
+      orderInfo[it] = i;
+      it++;
+    }
+  }
+  for(int numFace = 0; numFace < 4; numFace++) {
+    for(int i = 0; i < 3; i++) {
+      for(int i1 = 2; i1 <= _pOrderFace[numFace]; i1++) {
+        functionTypeInfo[it] = 2;
+        orderInfo[it] = i1;
+        it++;
+      }
+    }
+    for(int n1 = 1; n1 < _pOrderFace[numFace] - 1; n1++) {
+      for(int n2 = 1; n2 <= _pOrderFace[numFace] - 1 - n1; n2++) {
+        functionTypeInfo[it] = 2;
+        orderInfo[it] = n1 + n2+1;
+        it++;
+      }
+    }
+    for(int n1 = 1; n1 < _pOrderFace[numFace] - 1; n1++) {
+      for(int n2 = 1; n2 <=_pOrderFace[numFace] - 1 - n1; n2++) {
+        functionTypeInfo[it] = 2;
+        orderInfo[it] = n1 + n2+1;
+        it++;
+      }
+    }
+  }
+  for(int numFace = 0; numFace < 4; numFace++) {
+    for(int n1 = 1; n1 < _pb - 1; n1++) {
+      for(int n2 = 1; n2 <= _pb - 1 - n1; n2++) {
+        functionTypeInfo[it] = 3;
+        orderInfo[it] = n1 + n2+1;
+        it++;
+      }
+    }
+  }
+  for(int i = 0; i < 3; i++) {
+    for(int n1 = 1; n1 < _pb - 2; n1++) {
+      for(int n2 = 1; n2 <= _pb - 2 - n1; n2++) {
+        for(int n3 = 1; n3 <= _pb - 1 - n2 - n1; n3++) {
+          functionTypeInfo[it] = 3;
+          orderInfo[it] =  n1 + n2 + n3 +1;
+          it++;
         }
       }
     }

@@ -1322,20 +1322,24 @@ namespace gmsh { // Top-level functions
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
-      // Get information about the `keys'. Warning: this is an experimental feature
-      // and will probably change in a future release.
+      // Get information about the `keys'. `infoKeys' returns information about the
+      // functions associated with the `keys'. `infoKeys[0].first' describes the
+      // type of function (0 for  vertex function, 1 for edge function, 2 for face
+      // function and 3 for bubble function). `infoKeys[0].second' gives the order
+      // of the function associated with the key. Warning: this is an experimental
+      // feature and will probably change in a future release.
       inline void getInformationForElements(const gmsh::vectorpair & keys,
-                                            gmsh::vectorpair & info,
-                                            const int order,
-                                            const int elementType)
+                                            const int elementType,
+                                            const std::string & functionSpaceType,
+                                            gmsh::vectorpair & infoKeys)
       {
         int ierr = 0;
         int *api_keys_; size_t api_keys_n_; vectorpair2intptr(keys, &api_keys_, &api_keys_n_);
-        int *api_info_; size_t api_info_n_;
-        gmshModelMeshGetInformationForElements(api_keys_, api_keys_n_, &api_info_, &api_info_n_, order, elementType, &ierr);
+        int *api_infoKeys_; size_t api_infoKeys_n_;
+        gmshModelMeshGetInformationForElements(api_keys_, api_keys_n_, elementType, functionSpaceType.c_str(), &api_infoKeys_, &api_infoKeys_n_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_keys_);
-        info.resize(api_info_n_ / 2); for(size_t i = 0; i < api_info_n_ / 2; ++i){ info[i].first = api_info_[i * 2 + 0]; info[i].second = api_info_[i * 2 + 1]; } gmshFree(api_info_);
+        infoKeys.resize(api_infoKeys_n_ / 2); for(size_t i = 0; i < api_infoKeys_n_ / 2; ++i){ infoKeys[i].first = api_infoKeys_[i * 2 + 0]; infoKeys[i].second = api_infoKeys_[i * 2 + 1]; } gmshFree(api_infoKeys_);
       }
 
       // Precomputes the basis functions corresponding to `elementType'.

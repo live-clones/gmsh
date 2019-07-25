@@ -722,3 +722,37 @@ void HierarchicalBasisHcurlTria::orientFace(
     }
   }
 }
+
+void HierarchicalBasisHcurlTria::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                             std::vector<int> &orderInfo)
+{
+  int it = 0;
+  for(int numEdge = 0; numEdge < 3; numEdge++) {
+    for(int i = 0; i <= _pOrderEdge[numEdge]; i++) {
+      functionTypeInfo[it] = 1;
+      orderInfo[it] = i;
+      it++;
+    }
+  }
+  for(int numEdge = 0; numEdge < 3; numEdge++) {
+    for(int i = 2; i <= _pf; i++) {
+      functionTypeInfo[it] = 2;
+      orderInfo[it] = i;
+      it++;
+    }
+  }
+  for(int n1 = 1; n1 < _pf - 1; n1++) {
+    for(int n2 = 1; n2 <= _pf - 1 - n1; n2++) {
+      functionTypeInfo[it] = 2;
+      orderInfo[it] =  n1 + n2 +1;
+      it++;
+    }
+  }
+  for(int n1 = 1; n1 < _pf - 1; n1++) {
+    for(int n2 = 1; n2 <= _pf - 1 - n1; n2++) {
+      functionTypeInfo[it] = 2;
+      orderInfo[it] = n1 + n2 +1;
+      it++;
+    }
+  }
+}

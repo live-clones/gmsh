@@ -43,6 +43,9 @@ public:
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
                           std::vector<double> &faceFunctions){};
+
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo) = 0;
 };
 
 #endif

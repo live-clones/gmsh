@@ -68,6 +68,10 @@ public:
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
                           std::vector<double> &faceFunctions) = 0;
+
+  // Get information about the `keys' defined in GMSH API for one  element
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo) = 0;
 };
 
 #endif

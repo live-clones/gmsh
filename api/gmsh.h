@@ -708,12 +708,16 @@ namespace gmsh { // Top-level functions
                                        const int tag = -1,
                                        const bool returnCoord = true);
 
-      // Get information about the `keys'. Warning: this is an experimental feature
-      // and will probably change in a future release.
+      // Get information about the `keys'. `infoKeys' returns information about the
+      // functions associated with the `keys'. `infoKeys[0].first' describes the
+      // type of function (0 for  vertex function, 1 for edge function, 2 for face
+      // function and 3 for bubble function). `infoKeys[0].second' gives the order
+      // of the function associated with the key. Warning: this is an experimental
+      // feature and will probably change in a future release.
       GMSH_API void getInformationForElements(const gmsh::vectorpair & keys,
-                                              gmsh::vectorpair & info,
-                                              const int order,
-                                              const int elementType);
+                                              const int elementType,
+                                              const std::string & functionSpaceType,
+                                              gmsh::vectorpair & infoKeys);
 
       // Precomputes the basis functions corresponding to `elementType'.
       GMSH_API void precomputeBasisFunctions(const int elementType);
