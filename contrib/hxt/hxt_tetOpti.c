@@ -455,7 +455,9 @@ static inline HXTStatus createNewDeleted(HXTMesh* mesh, ThreadShared* shared, Th
   HXT_CHECK( synchronizeReallocation(mesh, shared, NULL, NULL) );
   HXT_CHECK( reserveNewDeleted(local, needed) );
 
+#if !defined(HAVE_NO_OPENMP_SIMD)
   #pragma omp simd
+#endif
   for (uint64_t i=0; i<needed; i++){
     local->deleted.tetID[local->deleted.num+i] = ntet+i;
     shared->quality2.values[ntet+i] = DBL_MAX;
@@ -602,7 +604,9 @@ static HXTStatus threadLocals_update(HXTMesh* mesh, HXTBbox* bbox, double minSiz
       HXT_CHECK( hxtVerticesHilbertDist(bbox, vertices, mesh->vertices.num, nbits, bboxShift) );
     }
 
+#if !defined(HAVE_NO_OPENMP_SIMD)
     #pragma omp parallel for simd aligned(badTets:SIMD_ALIGN)
+#endif
     for (uint64_t i=0; i<shared->badTets.num; i++) {
       uint32_t firstNode = mesh->tetrahedra.node[4*badTets[i].v[1]];
       badTets[i].v[0] = vertices[firstNode].padding.hilbertDist;

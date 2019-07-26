@@ -940,7 +940,9 @@ static inline HXTStatus computeAdjacenciesFast(HXTMesh* mesh, TetLocal* local, u
 HXT_ASSERT(((size_t) bnd)%SIMD_ALIGN==0);
 HXT_ASSERT(((size_t) verticesID)%SIMD_ALIGN==0);
 
+#if !defined(HAVE_NO_OPENMP_SIMD)
   #pragma omp simd aligned(verticesID,bnd:SIMD_ALIGN)
+#endif
   for (uint32_t i=0; i<blength; i++){
     verticesID[bnd[i].node[0]] = UINT32_MAX;
     verticesID[bnd[i].node[1]] = UINT32_MAX;
@@ -978,7 +980,9 @@ HXT_ASSERT(((size_t) verticesID)%SIMD_ALIGN==0);
 
   HXT_ASSERT_MSG((npts-3+ghost_is_there)*2==blength, "Failed to compute adjacencies (f) %u (%u ghost) vertices and %u cavity boundaries", npts-1+ghost_is_there, ghost_is_there, blength); // symbol undefined
 
+#if !defined(HAVE_NO_OPENMP_SIMD)
   #pragma omp simd aligned(verticesID:SIMD_ALIGN)
+#endif
   for (uint32_t i=0; i<blength; i++)
   {
     local->Map[bnd[i].node[0]*32 + bnd[i].node[1]] = bnd[i].neigh + 3;
@@ -986,7 +990,9 @@ HXT_ASSERT(((size_t) verticesID)%SIMD_ALIGN==0);
     local->Map[bnd[i].node[2]*32 + bnd[i].node[0]] = bnd[i].neigh + 2;
   }
 
+#if !defined(HAVE_NO_OPENMP_SIMD)
   #pragma omp simd aligned(verticesID:SIMD_ALIGN)
+#endif
   for (uint32_t i=0; i<blength; i++)
   {
     mesh->tetrahedra.neigh[bnd[i].neigh + 1] = local->Map[bnd[i].node[2]*32 + bnd[i].node[1]];
@@ -1068,7 +1074,9 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, uint32_t*
   uint64_t start = clength - blength;
 
   // #pragma vector aligned
+#if !defined(HAVE_NO_OPENMP_SIMD)
   #pragma omp simd
+#endif
   for (uint64_t i=0; i<blength; i++)
   {
 
@@ -1189,7 +1197,9 @@ static inline HXTStatus insertion(HXTMesh* mesh,
     reserveNewTet(mesh);
     reserveNewDeleted(local, needed);
 
+#if !defined(HAVE_NO_OPENMP_SIMD)
     #pragma omp simd
+#endif
     for (uint64_t i=0; i<needed; i++){
       local->deleted.tetID[local->deleted.num+i] = ntet+i;
       mesh->tetrahedra.flag[ntet+i] = 0;
@@ -1404,7 +1414,9 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
 
       
 
+#if !defined(HAVE_NO_OPENMP_SIMD)
       #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
+#endif
       for (uint32_t i=passStart; i<passEnd; i++) {
         nodeInfo[i].hilbertDist = vertices[nodeInfo[i].node].padding.hilbertDist;
       }
@@ -1870,7 +1882,9 @@ HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* userOptions){
   HXT_CHECK( hxtAlignedMalloc(&nodeInfo, nToInsert*sizeof(hxtNodeInfo)) );
   
   // we fill nodeInfo with the indices of each vertices to insert...
+#if !defined(HAVE_NO_OPENMP_SIMD)
   #pragma omp parallel for simd
+#endif
   for (uint32_t i=0; i<nToInsert; i++) {
     nodeInfo[i].node = options.numVerticesInMesh + i;
     nodeInfo[i].status = HXT_STATUS_TRYAGAIN; // necessary for when foundTet = 0;

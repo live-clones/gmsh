@@ -68,7 +68,9 @@ HXTStatus hxtBboxAdd(HXTBbox* bbox, double* coord, const uint32_t n){
 
                 #pragma omp critical
                 {
+#if !defined(HAVE_NO_OPENMP_SIMD)
                         #pragma omp simd aligned(min,max:SIMD_ALIGN)
+#endif
                         for (uint32_t i=0; i<3; i++)
                         {
                                 if(min[i]<bbox->min[i])

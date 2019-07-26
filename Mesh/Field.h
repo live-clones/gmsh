@@ -69,13 +69,13 @@ public:
   std::string getTypeName()
   {
     switch(getType()) {
-    case FIELD_OPTION_INT: return "integer"; break;
-    case FIELD_OPTION_DOUBLE: return "float"; break;
-    case FIELD_OPTION_BOOL: return "boolean"; break;
-    case FIELD_OPTION_PATH: return "path"; break;
-    case FIELD_OPTION_STRING: return "string"; break;
-    case FIELD_OPTION_LIST: return "list"; break;
-    case FIELD_OPTION_LIST_DOUBLE: return "list_double"; break;
+    case FIELD_OPTION_INT: return "integer";
+    case FIELD_OPTION_DOUBLE: return "float";
+    case FIELD_OPTION_BOOL: return "boolean";
+    case FIELD_OPTION_PATH: return "path";
+    case FIELD_OPTION_STRING: return "string";
+    case FIELD_OPTION_LIST: return "list";
+    case FIELD_OPTION_LIST_DOUBLE: return "list_double";
     default: return "unknown";
     }
   }

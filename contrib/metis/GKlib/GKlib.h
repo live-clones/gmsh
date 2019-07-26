@@ -19,7 +19,9 @@
 #if defined(__ICC)
 #define __ICC__
 #endif
-
+#if defined(__PGI)
+#define __thread /* fix for Gmsh: __thread not ok with PGI */
+#endif
 
 #include "gk_arch.h" /*!< This should be here, prior to the includes */
 
