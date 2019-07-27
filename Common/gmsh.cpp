@@ -1143,6 +1143,25 @@ GMSH_API void gmsh::model::mesh::getNode(const std::size_t nodeTag,
   if(v->getParameter(1, u)) parametricCoord.push_back(u);
 }
 
+GMSH_API void gmsh::model::mesh::setNode(const std::size_t nodeTag,
+                                         const std::vector<double> &coord,
+                                         const std::vector<double> &parametricCoord)
+{
+  if(!_isInitialized()) { throw - 1; }
+  MVertex *v = GModel::current()->getMeshVertexByTag(nodeTag);
+  if(!v) {
+    Msg::Error("Unknown node %d", nodeTag);
+    throw 2;
+  }
+  if(coord.size() < 3) {
+    Msg::Error("Less than three coordinates provided for node %d", nodeTag);
+    throw 2;
+  }
+  v->setXYZ(coord[0], coord[1], coord[2]);
+  if(parametricCoord.size() >= 1) v->setParameter(0, parametricCoord[0]);
+  if(parametricCoord.size() >= 2) v->setParameter(1, parametricCoord[1]);
+}
+
 GMSH_API void gmsh::model::mesh::rebuildNodeCache(bool onlyIfNecessary)
 {
   if(!_isInitialized()) { throw - 1; }

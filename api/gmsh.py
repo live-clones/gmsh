@@ -1429,6 +1429,28 @@ class model:
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
+        def setNode(nodeTag, coord, parametricCoord):
+            """
+            Set the coordinates and the parametric coordinates (if any) of the node
+            with tag `tag'. This is a sometimes useful but inefficient way of accessing
+            nodes, as it relies on a cache stored in the model. For large meshes all
+            the nodes in the model should be added at once, and numbered in a
+            continuous sequence of tags from 1 to N.
+            """
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+            ierr = c_int()
+            lib.gmshModelMeshSetNode(
+                c_size_t(nodeTag),
+                api_coord_, api_coord_n_,
+                api_parametricCoord_, api_parametricCoord_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetNode returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def rebuildNodeCache(onlyIfNecessary=True):
             """
             Rebuild the node cache.

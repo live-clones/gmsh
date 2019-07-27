@@ -478,6 +478,16 @@ GMSH_API void gmshModelMeshGetNode(const size_t nodeTag,
                                    double ** parametricCoord, size_t * parametricCoord_n,
                                    int * ierr);
 
+/* Set the coordinates and the parametric coordinates (if any) of the node
+ * with tag `tag'. This is a sometimes useful but inefficient way of accessing
+ * nodes, as it relies on a cache stored in the model. For large meshes all
+ * the nodes in the model should be added at once, and numbered in a
+ * continuous sequence of tags from 1 to N. */
+GMSH_API void gmshModelMeshSetNode(const size_t nodeTag,
+                                   double * coord, size_t coord_n,
+                                   double * parametricCoord, size_t parametricCoord_n,
+                                   int * ierr);
+
 /* Rebuild the node cache. */
 GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary,
                                             int * ierr);

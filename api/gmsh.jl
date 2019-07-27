@@ -1180,6 +1180,24 @@ function getNode(nodeTag)
 end
 
 """
+    gmsh.model.mesh.setNode(nodeTag, coord, parametricCoord)
+
+Set the coordinates and the parametric coordinates (if any) of the node with tag
+`tag`. This is a sometimes useful but inefficient way of accessing nodes, as it
+relies on a cache stored in the model. For large meshes all the nodes in the
+model should be added at once, and numbered in a continuous sequence of tags
+from 1 to N.
+"""
+function setNode(nodeTag, coord, parametricCoord)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetNode, gmsh.lib), Cvoid,
+          (Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          nodeTag, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetNode returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary = true)
 
 Rebuild the node cache.

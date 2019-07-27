@@ -447,6 +447,15 @@ namespace gmsh { // Top-level functions
                             std::vector<double> & coord,
                             std::vector<double> & parametricCoord);
 
+      // Set the coordinates and the parametric coordinates (if any) of the node
+      // with tag `tag'. This is a sometimes useful but inefficient way of
+      // accessing nodes, as it relies on a cache stored in the model. For large
+      // meshes all the nodes in the model should be added at once, and numbered in
+      // a continuous sequence of tags from 1 to N.
+      GMSH_API void setNode(const std::size_t nodeTag,
+                            const std::vector<double> & coord,
+                            const std::vector<double> & parametricCoord);
+
       // Rebuild the node cache.
       GMSH_API void rebuildNodeCache(const bool onlyIfNecessary = true);
 

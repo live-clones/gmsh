@@ -838,6 +838,19 @@ GMSH_API void gmshModelMeshGetNode(const size_t nodeTag, double ** coord, size_t
   }
 }
 
+GMSH_API void gmshModelMeshSetNode(const size_t nodeTag, double * coord, size_t coord_n, double * parametricCoord, size_t parametricCoord_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    gmsh::model::mesh::setNode(nodeTag, api_coord_, api_parametricCoord_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary, int * ierr)
 {
   if(ierr) *ierr = 0;

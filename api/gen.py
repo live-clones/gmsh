@@ -237,6 +237,9 @@ mesh.add('getNodesByElementType',doc,None,iint('elementType'), ovectorsize('node
 doc = '''Get the coordinates and the parametric coordinates (if any) of the node with tag `tag'. This is a sometimes useful but inefficient way of accessing nodes, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
 mesh.add('getNode',doc,None,isize('nodeTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
 
+doc = '''Set the coordinates and the parametric coordinates (if any) of the node with tag `tag'. This is a sometimes useful but inefficient way of accessing nodes, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be added at once, and numbered in a continuous sequence of tags from 1 to N.'''
+mesh.add('setNode',doc,None,isize('nodeTag'),ivectordouble('coord'),ivectordouble('parametricCoord'))
+
 doc = '''Rebuild the node cache.'''
 mesh.add('rebuildNodeCache',doc,None,ibool('onlyIfNecessary', 'true', 'True'))
 

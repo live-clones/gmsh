@@ -879,6 +879,22 @@ vector; otherwise it uses a map).
 -
 @end table
 
+@item setNode
+Set the coordinates and the parametric coordinates (if any) of the node with tag
+@code{tag}. This is a sometimes useful but inefficient way of accessing nodes,
+as it relies on a cache stored in the model. For large meshes all the nodes in
+the model should be added at once, and numbered in a continuous sequence of tags
+from 1 to N.
+
+@table @asis
+@item Input:
+@code{nodeTag}, @code{coord}, @code{parametricCoord}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item rebuildNodeCache
 Rebuild the node cache.
 
