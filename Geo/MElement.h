@@ -162,7 +162,7 @@ public:
   virtual int getNumEdges() const = 0;
   virtual MEdge getEdge(int num) const = 0;
   virtual MEdgeN getHighOrderEdge(int num, int sign);
-  virtual MEdgeN getHighOrderEdge(const MEdge &edge)
+  MEdgeN getHighOrderEdge(const MEdge &edge)
   {
     int num, sign;
     if(!getEdgeInfo(edge, num, sign)) return MEdgeN();
@@ -186,7 +186,7 @@ public:
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) const = 0;
   virtual MFaceN getHighOrderFace(int num, int sign, int rot);
-  virtual MFaceN getHighOrderFace(const MFace &face)
+  MFaceN getHighOrderFace(const MFace &face)
   {
     int num, sign, rot;
     if(!getFaceInfo(face, num, sign, rot)) return MFaceN();

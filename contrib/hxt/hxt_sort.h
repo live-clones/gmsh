@@ -161,6 +161,9 @@ do{                                                                             
 #if defined(_MSC_VER)
 #define _HXTSORT_PRAGMA(x) __pragma (#x);
 #define _HXTSORT_PRAGMA_ALIGNED(...)
+#elif defined(__PGI)
+#define _HXTSORT_PRAGMA(x) _Pragma (#x)
+#define _HXTSORT_PRAGMA_ALIGNED(...)
 #else
 #define _HXTSORT_PRAGMA(x) _Pragma (#x)
 #define _HXTSORT_PRAGMA_ALIGNED(...) _HXTSORT_PRAGMA(omp simd aligned(__VA_ARGS__:SIMD_ALIGN))
