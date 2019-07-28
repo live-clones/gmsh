@@ -45,7 +45,7 @@ RUN curl -L -O https://github.com/Kitware/CMake/releases/download/v3.13.4/cmake-
 # OpenCASCADE
 # -----------------------
 
-RUN curl -L -o occt73.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_3_0;sf=tgz" && tar xf occt73.tgz && cd occt-V7_3_0 && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt73.tgz occt-V7_3_0
+RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=HEAD;sf=tgz" && tar xf occt.tgz && cd occt-HEAD-* && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt.tgz occt-HEAD-*
 
 # -----------------------
 # HDF5
