@@ -1406,7 +1406,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
     }
     else {
       if(ITER++ % 500 == 0)
-        Msg::Info("It. %d - %d points created - worst tet radius %g (points removed %d %d)",
+        Msg::Info("It. %d - %d nodes created - worst tet radius %g (nodes removed %d %d)",
                   ITER, REALCOUNT, worst->getRadius(), COUNT_MISS_1, COUNT_MISS_2);
       if(worst->getRadius() < worstTetRadiusTarget) break;
       double center[3];
@@ -1527,11 +1527,11 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
   double t2 = Cpu();
   double dt = (t2 - t1);
   int COUNT_MISS = COUNT_MISS_1 + COUNT_MISS_2;
-  Msg::Info("3D point insertion terminated (%d points created):",
+  Msg::Info("3D node insertion terminated (%d nodes created):",
             (int)vSizes.size());
   Msg::Info(" - %d Delaunay cavities modified for star shapeness",
             NB_CORRECTION_OF_CAVITY);
-  Msg::Info(" - %d points could not be inserted", COUNT_MISS);
+  Msg::Info(" - %d nodes could not be inserted", COUNT_MISS);
   Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/s)",
             allTets.size(), dt, (int)(allTets.size() / dt));
 
@@ -1572,5 +1572,5 @@ void delaunayMeshIn3D(std::vector<MVertex *> &v,
   double t1 = Cpu();
   delaunayTriangulation(1, 1, v, result);
   double t2 = Cpu();
-  Msg::Info("Tetrahedrization of %d points in %g seconds", v.size(), t2 - t1);
+  Msg::Info("Tetrahedrization of %d nodes in %g seconds", v.size(), t2 - t1);
 }
