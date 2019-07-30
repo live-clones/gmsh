@@ -97,7 +97,8 @@ void discreteRegion::remesh()
 #if defined(HAVE_MESH)
 
   bool classify = false;
-  insertVerticesInRegion(this, 2000000000, classify);
+  insertVerticesInRegion(this, CTX::instance()->mesh.maxIterDelaunay3D,
+                         1., classify);
 
   // not functional yet: need boundaries
   for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,

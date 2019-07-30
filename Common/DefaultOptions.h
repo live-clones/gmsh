@@ -1107,6 +1107,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "LineWidth" , opt_mesh_line_width , 1.0 ,
     "Display width of mesh lines (in pixels)" },
 
+  { F|O, "MaxIterDelaunay3D" , opt_mesh_max_iter_delaunay_3d, 0,
+    "Maximum number of point insertion iterations in 3D Delaunay mesher (0: unlimited)" },
   { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
     "Maximum number of threads for 1D meshing (0: use default)" },
   { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,

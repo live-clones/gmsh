@@ -1218,8 +1218,8 @@ static void _deleteUnusedVertices(GRegion *gr)
                            allverts.end());
 }
 
-void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
-                            splitQuadRecovery *sqr)
+void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarget,
+                            bool _classify, splitQuadRecovery *sqr)
 {
 
 #ifdef DEBUG_BOUNDARY_RECOVERY
@@ -1392,8 +1392,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
   // main loop in Delaunay inserstion starts here
 
   while(1) {
-    if(COUNT_MISS_2 > 100000) break;
-    if(ITER >= maxVert) break;
+    if(maxIter > 0 && ITER >= maxIter) break;
     if(allTets.empty()) {
       Msg::Error("No tetrahedra in region %d", gr->tag());
       break;
@@ -1407,9 +1406,9 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
     }
     else {
       if(ITER++ % 500 == 0)
-        Msg::Info("%d points created - worst tet radius %g (points removed %d %d)",
-          REALCOUNT, worst->getRadius(), COUNT_MISS_1, COUNT_MISS_2);
-      if(worst->getRadius() < 1) break;
+        Msg::Info("It. %d - %d points created - worst tet radius %g (points removed %d %d)",
+                  ITER, REALCOUNT, worst->getRadius(), COUNT_MISS_1, COUNT_MISS_2);
+      if(worst->getRadius() < worstTetRadiusTarget) break;
       double center[3];
       double uvw[3];
       MTetrahedron *base = worst->tet();

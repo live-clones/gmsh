@@ -184,7 +184,8 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     refineMeshMMG(gr);
   }
   else{
-    insertVerticesInRegion(gr, 2000000000, true, &sqr);
+    insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D,
+                           1., true, &sqr);
 
     if(sqr.buildPyramids(gr->model())){
       Msg::Info("Optimizing pyramids for hybrid mesh...");

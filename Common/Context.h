@@ -37,7 +37,7 @@ struct contextMeshOptions {
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   std::map<int, int> algo2dPerFace;
   std::map<int, int> curvatureControlPerFace;
-  int NewtonConvergenceTestXYZ;
+  int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
