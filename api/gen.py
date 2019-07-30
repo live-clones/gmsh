@@ -204,17 +204,14 @@ mesh.add('partition',doc,None,iint('numPart'))
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition',doc,None)
 
-doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother). If `force' is set apply the optimization also to discrete entities.'''
-mesh.add('optimize',doc,None,istring('method',''),ibool('force','false','False'))
+doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If `force' is set apply the optimization also to discrete entities.'''
+mesh.add('optimize',doc,None,istring('method',''),ibool('force','false','False'),iint('niter','1'))
 
 doc = '''Recombine the mesh of the current model.'''
 mesh.add('recombine',doc,None)
 
 doc = '''Refine the mesh of the current model by uniformly splitting the elements.'''
 mesh.add('refine',doc,None)
-
-doc = '''Smooth the mesh of the current model.'''
-mesh.add('smooth',doc,None)
 
 doc = '''Set the order of the elements in the mesh of the current model to `order'.'''
 mesh.add('setOrder',doc,None,iint('order'))

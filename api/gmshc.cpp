@@ -697,11 +697,11 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshOptimize(const char * method, const int force, int * ierr)
+GMSH_API void gmshModelMeshOptimize(const char * method, const int force, const int niter, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::optimize(method, force);
+    gmsh::model::mesh::optimize(method, force, niter);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -724,17 +724,6 @@ GMSH_API void gmshModelMeshRefine(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::refine();
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
-GMSH_API void gmshModelMeshSmooth(int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::smooth();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

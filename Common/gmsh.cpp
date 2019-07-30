@@ -879,18 +879,12 @@ GMSH_API void gmsh::model::mesh::recombine()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::smooth()
-{
-  if(!_isInitialized()) { throw - 1; }
-  GModel::current()->smoothMesh();
-  CTX::instance()->mesh.changed = ENT_ALL;
-}
-
 GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
-                                          const bool force)
+                                          const bool force,
+                                          const int niter)
 {
   if(!_isInitialized()) { throw - 1; }
-  GModel::current()->optimizeMesh(how, force);
+  GModel::current()->optimizeMesh(how, force, niter);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 

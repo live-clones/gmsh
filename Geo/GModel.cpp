@@ -1267,33 +1267,10 @@ int GModel::recombineMesh()
 #endif
 }
 
-int GModel::smoothMesh()
+int GModel::optimizeMesh(const std::string &how, const bool force, int niter)
 {
 #if defined(HAVE_MESH)
-  SmoothMesh(this);
-  if(CTX::instance()->mesh.renumber){
-    renumberMeshVertices();
-    renumberMeshElements();
-  }
-  CTX::instance()->mesh.changed = ENT_ALL;
-  return 1;
-#else
-  Msg::Error("Mesh module not compiled");
-  return 0;
-#endif
-}
-
-int GModel::optimizeMesh(const std::string &how, const bool force)
-{
-#if defined(HAVE_MESH)
-  if(how == "HighOrder")
-    OptimizeHighOrderMesh(this);
-  else if(how == "HighOrderElastic")
-    OptimizeHighOrderMeshElastic(this);
-  else if(how == "Netgen")
-    OptimizeMeshNetgen(this, force);
-  else
-    OptimizeMesh(this, force);
+  OptimizeMesh(this, how, force, niter);
   if(CTX::instance()->mesh.renumber){
     renumberMeshVertices();
     renumberMeshElements();

@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.4).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.5).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -738,13 +738,15 @@ namespace gmsh { // Top-level functions
       // Optimize the mesh of the current model using `method' (empty for default
       // tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
       // direct high-order mesh optimizer, "HighOrderElastic" for high-order
-      // elastic smoother). If `force' is set apply the optimization also to
-      // discrete entities.
+      // elastic smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and
+      // "Relocate3D" for node relocation). If `force' is set apply the
+      // optimization also to discrete entities.
       inline void optimize(const std::string & method,
-                           const bool force = false)
+                           const bool force = false,
+                           const int niter = 1)
       {
         int ierr = 0;
-        gmshModelMeshOptimize(method.c_str(), (int)force, &ierr);
+        gmshModelMeshOptimize(method.c_str(), (int)force, niter, &ierr);
         if(ierr) throw ierr;
       }
 
@@ -761,14 +763,6 @@ namespace gmsh { // Top-level functions
       {
         int ierr = 0;
         gmshModelMeshRefine(&ierr);
-        if(ierr) throw ierr;
-      }
-
-      // Smooth the mesh of the current model.
-      inline void smooth()
-      {
-        int ierr = 0;
-        gmshModelMeshSmooth(&ierr);
         if(ierr) throw ierr;
       }
 

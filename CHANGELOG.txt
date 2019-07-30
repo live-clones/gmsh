@@ -1,4 +1,9 @@
-4.1.1 (July 25, 2019): small improvements (transfinite with degenerate curves,
+4.5.0 (Work-in-progress): small fixes.
+
+* Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
+  like all other mesh optimizers); new argument to mesh/optimize.
+
+4.4.1 (July 25, 2019): small improvements (transfinite with degenerate curves,
 renumbering for some mesh formats, empty MSH file sections, tunable accuracy of
 compound meshes) and bug fixes (ellipse < pi, orientation and reclassification
 of compound parts, serendip pyramids, periodic MeshAdapt robustness, invalidate
