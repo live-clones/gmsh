@@ -246,6 +246,11 @@ Display width of mesh lines (in pixels)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MaxIterDelaunay3D
+Maximum number of point insertion iterations in 3D Delaunay mesher (0: unlimited)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MaxNumThreads1D
 Maximum number of threads for 1D meshing (0: use default)@*
 Default value: @code{0}@*
