@@ -1527,7 +1527,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
   double t2 = Cpu();
   double dt = (t2 - t1);
   int COUNT_MISS = COUNT_MISS_1 + COUNT_MISS_2;
-  Msg::Info("3D node insertion terminated (%d nodes created):",
+  Msg::Info("3D refinement terminated (%d nodes total):",
             (int)vSizes.size());
   Msg::Info(" - %d Delaunay cavities modified for star shapeness",
             NB_CORRECTION_OF_CAVITY);
