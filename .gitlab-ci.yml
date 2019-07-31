@@ -120,7 +120,7 @@ linux64_official_release:
 linux64-sdk_official_snapshot:
   image: onelab/debian.wheezy.64bit
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lpthread'"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lpthread'"
   <<: *linux_official
   except:
     - tags
