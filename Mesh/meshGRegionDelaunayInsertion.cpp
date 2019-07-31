@@ -1407,7 +1407,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
     else {
       if(ITER++ % 500 == 0)
         Msg::Info("It. %d - %d nodes created - worst tet radius %g (nodes removed %d %d)",
-                  ITER, REALCOUNT, worst->getRadius(), COUNT_MISS_1, COUNT_MISS_2);
+                  ITER - 1, REALCOUNT, worst->getRadius(), COUNT_MISS_1, COUNT_MISS_2);
       if(worst->getRadius() < worstTetRadiusTarget) break;
       double center[3];
       double uvw[3];
