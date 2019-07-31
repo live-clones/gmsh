@@ -1071,19 +1071,21 @@ namespace gmsh { // Top-level functions
 
       // Get the properties of an element of type `elementType': its name
       // (`elementName'), dimension (`dim'), order (`order'), number of nodes
-      // (`numNodes') and coordinates of the nodes in the reference element
-      // (`nodeCoord' vector, of length `dim' times `numNodes').
+      // (`numNodes'), coordinates of the nodes in the reference element
+      // (`nodeCoord' vector, of length `dim' times `numNodes') and number of
+      // primary (first order) nodes (`numPrimaryNodes').
       inline void getElementProperties(const int elementType,
                                        std::string & elementName,
                                        int & dim,
                                        int & order,
                                        int & numNodes,
-                                       std::vector<double> & nodeCoord)
+                                       std::vector<double> & nodeCoord,
+                                       int & numPrimaryNodes)
       {
         int ierr = 0;
         char *api_elementName_;
         double *api_nodeCoord_; size_t api_nodeCoord_n_;
-        gmshModelMeshGetElementProperties(elementType, &api_elementName_, &dim, &order, &numNodes, &api_nodeCoord_, &api_nodeCoord_n_, &ierr);
+        gmshModelMeshGetElementProperties(elementType, &api_elementName_, &dim, &order, &numNodes, &api_nodeCoord_, &api_nodeCoord_n_, &numPrimaryNodes, &ierr);
         if(ierr) throw ierr;
         elementName = std::string(api_elementName_); gmshFree(api_elementName_);
         nodeCoord.assign(api_nodeCoord_, api_nodeCoord_ + api_nodeCoord_n_); gmshFree(api_nodeCoord_);

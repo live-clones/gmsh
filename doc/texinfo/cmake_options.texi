@@ -19,7 +19,7 @@ Enable 'lib' target for building static Gmsh library (default: OFF)
 @item ENABLE_BUILD_SHARED
 Enable 'shared' target for building shared Gmsh library (default: OFF)
 @item ENABLE_BUILD_DYNAMIC
-Enable dynamic Gmsh executable (linked with shared lib) (default: OFF)
+Enable dynamic Gmsh executable (linked with shared library) (default: OFF)
 @item ENABLE_BUILD_ANDROID
 Enable Android NDK library target (experimental) (default: OFF)
 @item ENABLE_BUILD_IOS
@@ -90,6 +90,8 @@ Add TBB libraries in list of OCC libraries (default: OFF)
 Enable ONELAB solver interface (default: ON)
 @item ENABLE_ONELAB_METAMODEL
 Enable ONELAB metamodels (experimental) (default: ON)
+@item ENABLE_OPENACC
+Enable OpenACC (default: OFF)
 @item ENABLE_OPENMP
 Enable OpenMP (default: OFF)
 @item ENABLE_OPTHOM
@@ -98,6 +100,8 @@ Enable high-order mesh optimization tools (default: ON)
 Enable OS-specific (e.g. app bundle) installation (default: OFF)
 @item ENABLE_OSMESA
 Enable OSMesa for offscreen rendering (experimental) (default: OFF)
+@item ENABLE_P4EST
+Enable p4est for enabling automatic mesh size firld (experimental) (default: OFF)
 @item ENABLE_PARSER
 Enable GEO file parser (required for .geo/.pos files) (default: ON)
 @item ENABLE_PETSC
@@ -122,6 +126,8 @@ Enable built-in finite element solvers (required for compounds) (default: ON)
 Use system versions of contrib libraries, when possible (default: OFF)
 @item ENABLE_TCMALLOC
 Enable libtcmalloc (fast malloc that does not release memory) (default: OFF)
+@item ENABLE_TOUCHBAR
+Enable Apple Touch bar (default: OFF)
 @item ENABLE_VISUDEV
 Enable additional visualization capabilities for development purposes (default: OFF)
 @item ENABLE_VOROPP

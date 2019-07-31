@@ -1,7 +1,9 @@
-4.5.0 (Work-in-progress): small fixes.
+4.5.0 (Work-in-progress): improved handling of anisotropic surface meshes in 3D
+Delaunay; small fixes.
 
 * Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
-  like all other mesh optimizers); new argument to mesh/optimize.
+  like all other mesh optimizers); new arguments to mesh/optimize and
+  mesh/getElementProperties.
 
 4.4.1 (July 25, 2019): small improvements (transfinite with degenerate curves,
 renumbering for some mesh formats, empty MSH file sections, tunable accuracy of

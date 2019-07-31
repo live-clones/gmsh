@@ -1054,14 +1054,15 @@ integer value
 @item getElementProperties
 Get the properties of an element of type @code{elementType}: its name
 (@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
-nodes (@code{numNodes}) and coordinates of the nodes in the reference element
-(@code{nodeCoord} vector, of length @code{dim} times @code{numNodes}).
+nodes (@code{numNodes}), coordinates of the nodes in the reference element
+(@code{nodeCoord} vector, of length @code{dim} times @code{numNodes}) and number
+of primary (first order) nodes (@code{numPrimaryNodes}).
 
 @table @asis
 @item Input:
 @code{elementType}
 @item Output:
-@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{nodeCoord}
+@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{nodeCoord}, @code{numPrimaryNodes}
 @item Return:
 -
 @end table

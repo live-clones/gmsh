@@ -1704,16 +1704,18 @@ class model:
             """
             Get the properties of an element of type `elementType': its name
             (`elementName'), dimension (`dim'), order (`order'), number of nodes
-            (`numNodes') and coordinates of the nodes in the reference element
-            (`nodeCoord' vector, of length `dim' times `numNodes').
+            (`numNodes'), coordinates of the nodes in the reference element
+            (`nodeCoord' vector, of length `dim' times `numNodes') and number of
+            primary (first order) nodes (`numPrimaryNodes').
 
-            Return `elementName', `dim', `order', `numNodes', `nodeCoord'.
+            Return `elementName', `dim', `order', `numNodes', `nodeCoord', `numPrimaryNodes'.
             """
             api_elementName_ = c_char_p()
             api_dim_ = c_int()
             api_order_ = c_int()
             api_numNodes_ = c_int()
             api_nodeCoord_, api_nodeCoord_n_ = POINTER(c_double)(), c_size_t()
+            api_numPrimaryNodes_ = c_int()
             ierr = c_int()
             lib.gmshModelMeshGetElementProperties(
                 c_int(elementType),
@@ -1722,6 +1724,7 @@ class model:
                 byref(api_order_),
                 byref(api_numNodes_),
                 byref(api_nodeCoord_), byref(api_nodeCoord_n_),
+                byref(api_numPrimaryNodes_),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1732,7 +1735,8 @@ class model:
                 api_dim_.value,
                 api_order_.value,
                 api_numNodes_.value,
-                _ovectordouble(api_nodeCoord_, api_nodeCoord_n_.value))
+                _ovectordouble(api_nodeCoord_, api_nodeCoord_n_.value),
+                api_numPrimaryNodes_.value)
 
         @staticmethod
         def getElementsByType(elementType, tag=-1, task=0, numTasks=1):

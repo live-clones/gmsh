@@ -1561,11 +1561,10 @@ GMSH_API int gmsh::model::mesh::getElementType(const std::string &family,
 
 GMSH_API void gmsh::model::mesh::getElementProperties(
   const int elementType, std::string &name, int &dim, int &order, int &numNodes,
-  std::vector<double> &nodeCoord)
+  std::vector<double> &nodeCoord, int &numPrimaryNodes)
 {
   if(!_isInitialized()) { throw - 1; }
   const char *n;
-  numNodes = MElement::getInfoMSH(elementType, &n);
   name = n;
   int parentType = ElementType::getParentType(elementType);
   nodalBasis *basis = 0;
@@ -1576,10 +1575,16 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
   dim = basis->dimension;
   order = basis->order;
   numNodes = basis->points.size1();
+  if(numNodes != ElementType::getNumVertices(elementType)){
+    Msg::Error("Size of basis incompatible with element type");
+    throw 2;
+  }
   for(int i = 0; i < basis->points.size1(); i++)
     for(int j = 0; j < basis->points.size2(); j++)
       nodeCoord.push_back(basis->points(i, j));
   delete basis;
+  numPrimaryNodes = ElementType::getNumVertices
+    (ElementType::getPrimaryType(elementType));
 }
 
 GMSH_API void gmsh::model::mesh::getElementsByType(

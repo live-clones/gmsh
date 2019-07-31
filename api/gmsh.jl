@@ -1420,10 +1420,11 @@ end
 
 Get the properties of an element of type `elementType`: its name
 (`elementName`), dimension (`dim`), order (`order`), number of nodes
-(`numNodes`) and coordinates of the nodes in the reference element (`nodeCoord`
-vector, of length `dim` times `numNodes`).
+(`numNodes`), coordinates of the nodes in the reference element (`nodeCoord`
+vector, of length `dim` times `numNodes`) and number of primary (first order)
+nodes (`numPrimaryNodes`).
 
-Return `elementName`, `dim`, `order`, `numNodes`, `nodeCoord`.
+Return `elementName`, `dim`, `order`, `numNodes`, `nodeCoord`, `numPrimaryNodes`.
 """
 function getElementProperties(elementType)
     api_elementName_ = Ref{Ptr{Cchar}}()
@@ -1432,14 +1433,15 @@ function getElementProperties(elementType)
     api_numNodes_ = Ref{Cint}()
     api_nodeCoord_ = Ref{Ptr{Cdouble}}()
     api_nodeCoord_n_ = Ref{Csize_t}()
+    api_numPrimaryNodes_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementProperties, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_nodeCoord_, api_nodeCoord_n_, ierr)
+          (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}),
+          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_nodeCoord_, api_nodeCoord_n_, api_numPrimaryNodes_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElementProperties returned non-zero error code: $(ierr[])")
     elementName = unsafe_string(api_elementName_[])
     nodeCoord = unsafe_wrap(Array, api_nodeCoord_[], api_nodeCoord_n_[], own=true)
-    return elementName, api_dim_[], api_order_[], api_numNodes_[], nodeCoord
+    return elementName, api_dim_[], api_order_[], api_numNodes_[], nodeCoord, api_numPrimaryNodes_[]
 end
 
 """

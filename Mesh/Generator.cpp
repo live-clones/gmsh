@@ -591,8 +591,9 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
     connected.push_back(temp2);
     delaunay = temp1;
   }
-  Msg::Info("3D Meshing %d volumes with %d connected components",
-            nbVolumes, connected.size());
+  Msg::Info("3D Meshing %d volume%s with %d connected component%s",
+            nbVolumes, nbVolumes > 1 ? "s" : "", connected.size(),
+            connected.size() > 1 ? "s" : "");
 }
 
 // JFR : use hex-splitting to resolve non conformity
