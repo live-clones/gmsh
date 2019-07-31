@@ -128,7 +128,7 @@ linux64-sdk_official_snapshot:
 linux64-sdk_official_release:
   image: onelab/debian.wheezy.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread'"
   <<: *linux_official
   only:
     - /^gmsh_.*$/
@@ -152,7 +152,7 @@ linux32_official_release:
 linux32-sdk_official_snapshot:
   image: onelab/debian.wheezy.32bit
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread'"
   <<: *linux_official
   except:
     - tags
@@ -160,7 +160,7 @@ linux32-sdk_official_snapshot:
 linux32-sdk_official_release:
   image: onelab/debian.wheezy.32bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread'"
   <<: *linux_official
   only:
     - /^gmsh_.*$/
