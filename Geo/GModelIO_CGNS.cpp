@@ -13,14 +13,15 @@
 
 namespace CGNS {
 #include <cgnslib.h>
+}
+
 #ifndef CGNSTYPES_H
-#define cgsize_t int
+#define CGNS::cgsize_t int
 #endif
 #ifndef CGNS_ENUMT
 #defome CGNS_ENUMT(e) e
 #defome CGNS_ENUMV(e) e
 #endif
-}
 
 static int cgnsError(const int cgIndexFile = -1)
 {
