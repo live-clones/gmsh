@@ -14,9 +14,9 @@ namespace CGNS {
 #include <cgnslib.h>
 #ifdef cgsize_t
 #undef cgsize_t
-typedef int cgsize_t;
+  typedef int cgsize_t;
 #endif
-}
+} // namespace CGNS
 
 static int cgnsError(const int cgIndexFile = -1)
 {
@@ -36,7 +36,8 @@ static const CGNS::ElementType_t msh2cgns[] = {
 
 int GModel::readCGNS(const std::string &name) { return 0; }
 
-int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFactor)
+int GModel::writeCGNS(const std::string &name, bool saveAll,
+                      double scalingFactor)
 {
   int cgIndexFile = 0;
   if(CGNS::cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile))
@@ -64,7 +65,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFacto
   // are referenced with per-zone index (starting at 1) inside a zone
   int cgIndexZone = 0;
   CGNS::cgsize_t numElementsMaxDim = 0;
-  for(std::size_t i = 0; i < entities.size(); i++){
+  for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     if(ge->dim() == meshDim && (saveAll || ge->physicals.size())) {
       numElementsMaxDim += ge->getNumMeshElements();
@@ -75,8 +76,8 @@ int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFacto
                          cgZoneSize, CGNS::Unstructured, &cgIndexZone))
     return cgnsError();
 
-  // create a grid with x, y and z coordinates of all nodes (that are reference
-  // by elements)
+  // create a grid with x, y and z coordinates of all the nodes (that are
+  // referenced by elements)
   int cgIndexGrid = 0;
   if(CGNS::cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone,
                          "GridCoordinates", &cgIndexGrid))
@@ -89,8 +90,8 @@ int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFacto
       MVertex *mv = ge->getMeshVertex(j);
       if(mv->getIndex() < 0) continue;
       int n = mv->getIndex();
-      if(n > numNodes) {
-        Msg::Error("Incoherent mesh node indexing in CGNS output");
+      if(n > numNodes) { // should never happen
+        Msg::Error("Incoherent mesh node indexing in CGNS writer");
         return 0;
       }
       xcoord[n - 1] = mv->x() * scalingFactor;
@@ -113,18 +114,18 @@ int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFacto
                           &cgIndexCoord))
     return cgnsError();
 
-  // write an element section for each entity, per element type (TODO? check if
+  // write an element section for each entity, per element type (TODO: check if
   // using the actual element tag in case the numbering is dense and
-  // saveAll==true would make sense/would be useful - think in the context of
-  // partitioned meshes)
+  // saveAll==true would make sense/would be useful; maybe in the context of
+  // partitioned meshes?)
   CGNS::cgsize_t eleStart = 0, eleEnd = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
 
     // FIXME:
-    // 1) find better name (and investigate if using MIXED sections for
+    // 1) create better name (and investigate if using MIXED sections for
     //    hybrid meshes would be a good idea)
-    // 2) store physical information in Family_t?
+    // 2) store physical information in a "family"?
     std::string name = getElementaryName(ge->dim(), ge->tag());
     if(name.empty()) {
       std::ostringstream s;
@@ -150,6 +151,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFacto
           for(int j = 0; j < numEle; j++) {
             me = ge->getMeshElementByType(eleTypes[eleType], j);
             for(int k = 0; k < numNodesPerEle; k++) {
+              // FIXME: code msh2cgnsNodeIndex(mshType, k)!
               elemNodes[n++] = me->getVertex(k)->getIndex();
             }
           }
@@ -159,7 +161,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFacto
                                     &elemNodes[0], &cgIndexSection))
             return cgnsError();
         }
-        else{
+        else {
           Msg::Error("Unhandled element type in CGNS ouput (%d)", mshType);
           break;
         }
@@ -180,7 +182,8 @@ int GModel::readCGNS(const std::string &name)
   return 0;
 }
 
-int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFactor)
+int GModel::writeCGNS(const std::string &name, bool saveAll,
+                      double scalingFactor)
 {
   Msg::Error("This version of Gmsh was compiled without CGNS support");
   return 0;
