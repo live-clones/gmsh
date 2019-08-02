@@ -3,13 +3,12 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshConfig.h"
-
-#if defined(HAVE_LIBCGNS)
-
 #include <string>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+
+#if defined(HAVE_LIBCGNS)
 
 namespace CGNS {
 #include <cgnslib.h>
@@ -181,7 +180,7 @@ int GModel::readCGNS(const std::string &name)
   return 0;
 }
 
-int GModel::writeCGNS(const std::string &name, double scalingFactor)
+int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFactor)
 {
   Msg::Error("This version of Gmsh was compiled without CGNS support");
   return 0;
