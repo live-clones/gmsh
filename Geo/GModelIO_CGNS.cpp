@@ -15,7 +15,7 @@ namespace CGNS {
 #include <cgnslib.h>
 #ifdef cgsize_t
 #undef cgsize_t
-typedef cgsize_t int;
+typedef int cgsize_t;
 #endif
 }
 
