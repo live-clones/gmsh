@@ -15,7 +15,13 @@ namespace CGNS {
 #include <cgnslib.h>
 }
 
+#if CGNS_VERSION < 3100
+#warning "OOOOOLDDD!"
+#define cgsize_t int
+#endif
+
 #ifndef CGNSTYPES_H
+#warning "we don't have CGNSTYPES_H"
 #define CGNS::cgsize_t int
 #endif
 #ifndef CGNS_ENUMT
