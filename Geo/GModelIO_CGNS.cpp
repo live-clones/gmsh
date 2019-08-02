@@ -19,21 +19,6 @@ typedef int cgsize_t;
 #endif
 }
 
-
-#if CGNS_VERSION < 3100
-#warning "OOOOOLDDD!"
-#define cgsize_t int
-#endif
-
-#ifndef CGNSTYPES_H
-#warning "we don't have CGNSTYPES_H"
-#define CGNS::cgsize_t int
-#endif
-#ifndef CGNS_ENUMT
-#defome CGNS_ENUMT(e) e
-#defome CGNS_ENUMV(e) e
-#endif
-
 static int cgnsError(const int cgIndexFile = -1)
 {
   Msg::Error("Error detected by CGNS library");
@@ -104,7 +89,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFacto
     for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
       MVertex *mv = ge->getMeshVertex(j);
       if(mv->getIndex() < 0) continue;
-      std::size_t n = mv->getIndex();
+      int n = mv->getIndex();
       if(n > numNodes) {
         Msg::Error("Incoherent mesh node indexing in CGNS output");
         return 0;
@@ -158,14 +143,14 @@ int GModel::writeCGNS(const std::string &name, bool saveAll, double scalingFacto
         eleEnd += numEle;
         MElement *me = ge->getMeshElementByType(eleTypes[eleType], 0);
         int mshType = me->getTypeForMSH();
-        if(mshType - 1 < sizeof(msh2cgns) / sizeof(msh2cgns[0])) {
+        if(mshType - 1 < (int)(sizeof(msh2cgns) / sizeof(msh2cgns[0]))) {
           CGNS::ElementType_t cgType = msh2cgns[mshType - 1];
           int numNodesPerEle = me->getNumVertices();
           std::vector<CGNS::cgsize_t> elemNodes(numEle * numNodesPerEle);
           std::size_t n = 0;
-          for(std::size_t j = 0; j < numEle; j++) {
+          for(int j = 0; j < numEle; j++) {
             me = ge->getMeshElementByType(eleTypes[eleType], j);
-            for(std::size_t k = 0; k < numNodesPerEle; k++) {
+            for(int k = 0; k < numNodesPerEle; k++) {
               elemNodes[n++] = me->getVertex(k)->getIndex();
             }
           }
