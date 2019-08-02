@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <stdio.h>
+#include "GmshDefines.h"
 #include "GEntity.h"
 #include "boundaryLayersData.h"
 
@@ -101,8 +102,17 @@ public:
   // export in GEO format
   virtual void writeGEO(FILE *fp);
 
-  // number of types of elements
-  int getNumElementTypes() const { return 6; }
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const
+  {
+    types.clear();
+    types.push_back(TYPE_TET);
+    types.push_back(TYPE_PYR);
+    types.push_back(TYPE_PRI);
+    types.push_back(TYPE_HEX);
+    types.push_back(TYPE_TRIH);
+    types.push_back(TYPE_POLYH);
+  };
 
   // get total/by-type number of elements in the mesh
   std::size_t getNumMeshElements() const;

@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "GmshDefines.h"
 #include "GEntity.h"
 #include "GPoint.h"
 #include "GEdgeLoop.h"
@@ -244,8 +245,14 @@ public:
                         double &z) const;
   void getMeanPlaneData(double plan[3][3]) const;
 
-  // number of types of elements
-  int getNumElementTypes() const { return 3; }
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const
+  {
+    types.clear();
+    types.push_back(TYPE_TRI);
+    types.push_back(TYPE_QUA);
+    types.push_back(TYPE_POLYG);
+  };
 
   // get total/by-type number of elements in the mesh
   std::size_t getNumMeshElements() const;

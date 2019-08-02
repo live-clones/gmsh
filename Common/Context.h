@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "CGNSOptions.h"
 
 #define NUM_SOLVERS 10
 
@@ -282,7 +281,6 @@ public:
   contextGeometryOptions geom;
   // mesh options
   contextMeshOptions mesh;
-  CGNSOptions cgnsOptions;
   // post processing options
   struct {
     int draw, link, horizontalScales;

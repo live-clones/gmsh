@@ -335,8 +335,8 @@ public:
   virtual double getMeshSize() const { return MAX_LC; }
   virtual double getMeshSizeFactor() const { return 1.; }
 
-  // number of types of elements
-  virtual int getNumElementTypes() const { return 0; }
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const {};
 
   // get the number of mesh elements (total and by type) in the entity
   virtual std::size_t getNumMeshElements() const { return 0; }

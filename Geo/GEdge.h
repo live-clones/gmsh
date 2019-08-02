@@ -10,6 +10,7 @@
 #include <vector>
 #include <stdio.h>
 #include "GmshMessage.h"
+#include "GmshDefines.h"
 #include "GEntity.h"
 #include "GVertex.h"
 #include "SVector3.h"
@@ -170,8 +171,12 @@ public:
     return _tooSmall || (v0 && v0 == v1 && mesh_vertices.size() < 2);
   }
 
-  // number of types of elements
-  int getNumElementTypes() const { return 1; }
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const
+  {
+    types.clear();
+    types.push_back(TYPE_LIN);
+  };
 
   // get total/by-type number of elements in the mesh
   std::size_t getNumMeshElements() const { return lines.size(); }

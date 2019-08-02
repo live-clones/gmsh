@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <stdio.h>
+#include "GmshDefines.h"
 #include "GEntity.h"
 #include "GPoint.h"
 #include "SPoint2.h"
@@ -82,6 +83,13 @@ public:
 
   // export in GEO format
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");
+
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const
+  {
+    types.clear();
+    types.push_back(TYPE_PNT);
+  };
 
   // get number of elements in the mesh
   std::size_t getNumMeshElements() const { return points.size(); }

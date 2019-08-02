@@ -37,7 +37,6 @@ class OCC_Internals;
 class ACIS_Internals;
 class smooth_normals;
 class FieldManager;
-class CGNSOptions;
 class gLevelset;
 class discreteFace;
 class discreteRegion;
@@ -158,10 +157,6 @@ protected:
   void _resetOCCInternals();
 
   void _deleteACISInternals();
-
-  // CGNS helpers
-  int _readCGNSStructured(const std::string &name);
-  int _readCGNSUnstructured(const std::string &name);
 
   // store the elements given in the map (indexed by elementary region
   // number) into the model, creating discrete geometrical entities on
@@ -719,8 +714,8 @@ public:
 
   // CFD General Notation System files
   int readCGNS(const std::string &name);
-  int writeCGNS(const std::string &name, int zoneDefinition,
-                const CGNSOptions &options, double scalingFactor = 1.0);
+  int writeCGNS(const std::string &name, bool saveAll = false,
+                double scalingFactor = 1.0);
 
   // Med "Modele d'Echange de Donnees" file format (the static routine
   // is allowed to load multiple models/meshes)
