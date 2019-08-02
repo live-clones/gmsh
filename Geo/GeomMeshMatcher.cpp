@@ -117,7 +117,7 @@ GeomMeshMatcher::matchVertices(GModel *m1, GModel *m2, bool &ok)
   }
 
   if(num_matched_vertices != num_total_vertices) ok = false;
-  Msg::Info("Matched %i vertices out of %i.", num_matched_vertices,
+  Msg::Info("Matched %i points out of %i.", num_matched_vertices,
             num_total_vertices);
   return (coresp_v);
 }
@@ -211,7 +211,7 @@ GeomMeshMatcher::matchEdges(GModel *m1, GModel *m2,
     num_matched_edges++;
   }
 
-  Msg::Info("Matched %i edges out of %i.", num_matched_edges, num_total_edges);
+  Msg::Info("Matched %i curves out of %i.", num_matched_edges, num_total_edges);
   if(num_matched_edges != num_total_edges) ok = false;
   return (coresp_e);
 }
@@ -291,7 +291,7 @@ GeomMeshMatcher::matchFaces(GModel *m1, GModel *m2,
     }
   }
 
-  Msg::Info("Matched %i faces out of %i.", num_matched_faces, num_total_faces);
+  Msg::Info("Matched %i surfaces out of %i.", num_matched_faces, num_total_faces);
 
   return coresp_f;
 }
@@ -317,7 +317,7 @@ GeomMeshMatcher::matchRegions(GModel *m1, GModel *m2,
 
   if(m1_entities.empty() || m2_entities.empty()) {
     Msg::Info(
-      "No regions could be matched since one of the models doesn't have any");
+      "No volumes could be matched since one of the models doesn't have any");
     return coresp_r;
   }
 
@@ -393,7 +393,7 @@ GeomMeshMatcher::matchRegions(GModel *m1, GModel *m2,
     }
   }
 
-  Msg::Info("Regions matched : %i / %i", num_matched_regions,
+  Msg::Info("Volumes matched : %i / %i", num_matched_regions,
             num_total_regions);
   if(num_matched_regions != num_total_regions) ok = false;
   return coresp_r;

@@ -174,7 +174,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
 
   // negative 'numVertices' gives the minimum required number of vertices
   if((int)fields.size() - 2 < abs(numVertices)) {
-    Msg::Error("Wrong number of vertices %d for element", fields.size() - 2);
+    Msg::Error("Wrong number of nodes %d for element", fields.size() - 2);
     return 0;
   }
 

@@ -91,7 +91,7 @@ int GModel::readDIFF(const std::string &name)
       fclose(fp);
       return 0;
     }
-    Msg::Info("%d vertices", numVertices);
+    Msg::Info("%d nodes", numVertices);
 
     int numVerticesPerElement;
     if(!fgets(str, sizeof(str), fp) || feof(fp)) {

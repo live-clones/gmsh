@@ -61,7 +61,7 @@ int GModel::writeSU2(const std::string &name, bool saveAll,
   }
   int npoin = indexMeshVertices(saveAll);
 
-  Msg::Info("Writing %d elements and %d vertices", nelem, npoin);
+  Msg::Info("Writing %d elements and %d nodes", nelem, npoin);
 
   // elements
   fprintf(fp, "NELEM= %d\n", nelem);

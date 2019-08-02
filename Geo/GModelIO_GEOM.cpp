@@ -38,12 +38,12 @@ int GModel::readGEOM(const std::string &name)
   }
 
   if(!numNodes || !numElements) {
-    Msg::Warning("No vertices or elements found");
+    Msg::Warning("No nodes or elements found");
     fclose(fp);
     return 0;
   }
 
-  Msg::Info("%d vertices, %d elements", numNodes, numElements);
+  Msg::Info("%d nodes, %d elements", numNodes, numElements);
 
   std::vector<MVertex *> vertexVector;
   std::map<int, std::vector<MElement *> > elements[1];

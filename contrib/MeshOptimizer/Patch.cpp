@@ -95,7 +95,7 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
   }
 
   if(nonGeoMove)
-    Msg::Warning("Some vertices will be moved along local lines "
+    Msg::Warning("Some nodes will be moved along local lines "
                  "or planes, they may not remain on the exact geometry");
 
   // Initialize boundary elements and related connectivity if required
@@ -135,8 +135,7 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
       }
     }
     if(unknownVert)
-      Msg::Error("Unknown vertices in boundary element "
-                 "at patch initialization");
+      Msg::Error("Unknown nodes in boundary element at patch initialization");
   }
 
   // Initial coordinates

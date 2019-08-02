@@ -68,7 +68,7 @@ int GModel::readACTRAN(const std::string &name)
       }
     }
     else if(!strcmp(str, "BEGIN") && !strcmp(str2, "NODE")) {
-      Msg::Info("%d vertices", nbv);
+      Msg::Info("%d nodes", nbv);
       for(int i = 0; i < nbv; i++) {
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int num;

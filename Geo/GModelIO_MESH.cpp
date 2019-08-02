@@ -69,7 +69,7 @@ int GModel::readMESH(const std::string &name)
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbv;
         sscanf(buffer, "%d", &nbv);
-        Msg::Info("%d vertices", nbv);
+        Msg::Info("%d nodes", nbv);
         vertexVector.resize(nbv);
         for(int i = 0; i < nbv; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;

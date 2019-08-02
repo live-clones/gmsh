@@ -1593,7 +1593,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   // compute characteristic lengths at vertices
   if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG && !onlyInitialMesh) {
-    Msg::Debug("Computing mesh size field at mesh vertices %d",
+    Msg::Debug("Computing mesh size field at mesh nodes %d",
                edgesToRecover.size());
     std::set<BDS_Point *, PointLessThan>::iterator it = m->points.begin();
     for(; it != m->points.end(); ++it) {
@@ -1689,7 +1689,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // only delete the mesh data stored in the base GFace class
   gf->GFace::deleteMesh();
 
-  Msg::Debug("Starting to add internal points");
+  Msg::Debug("Starting to add internal nodes");
   // start mesh generation
   if(!algoDelaunay2D(gf) && !onlyInitialMesh) {
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
@@ -2963,7 +2963,7 @@ void meshGFace::operator()(GFace *gf, bool print)
                   debugSurface >= 0 || debugSurface == -100);
   }
 
-  Msg::Debug("Type %d %d triangles generated, %d internal vertices",
+  Msg::Debug("Type %d %d triangles generated, %d internal nodes",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 
   halfmesh.finish();

@@ -36,7 +36,7 @@ public:
     : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
   {
     if(v.size() % 4) {
-      Msg::Error("Got %d vertices for polyhedron", (int)v.size());
+      Msg::Error("Got %d nodes for polyhedron", (int)v.size());
       return;
     }
     for(std::size_t i = 0; i < v.size(); i += 4)

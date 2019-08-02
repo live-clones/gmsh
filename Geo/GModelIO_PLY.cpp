@@ -207,7 +207,7 @@ int GModel::readPLY2(const std::string &name)
       sscanf(buffer, "%d", &nbv);
       if(!fgets(buffer, sizeof(buffer), fp)) break;
       sscanf(buffer, "%d", &nbf);
-      Msg::Info("%d vertices", nbv);
+      Msg::Info("%d nodes", nbv);
       Msg::Info("%d triangles", nbf);
       vertexVector.resize(nbv);
       for(int i = 0; i < nbv; i++) {

@@ -48,7 +48,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
     nums += vset.size();
   }
 
-  Msg::Info("Writing %d triangles and %d vertices", numf, nums);
+  Msg::Info("Writing %d triangles and %d nodes", numf, nums);
 
   int idf = 1, ids = 1;
   /*

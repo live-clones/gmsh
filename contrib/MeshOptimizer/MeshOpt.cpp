@@ -308,7 +308,7 @@ int MeshOpt::optimize(const MeshOptParameters &par)
       patch.nEl(), patch.nVert(), patch.nFV(), patch.nPC());
   }
   if(_verbose > 2)
-    Msg::Info("Patch composed of %i elements, %i vertices, %i free vertices, "
+    Msg::Info("Patch composed of %i elements, %i nodes, %i free nodes, "
               "%i variables",
               patch.nEl(), patch.nVert(), patch.nFV(), patch.nPC());
 

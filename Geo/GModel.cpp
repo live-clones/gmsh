@@ -2111,7 +2111,7 @@ void GModel::checkMeshCoherence(double tolerance)
 
   // check for duplicate mesh vertices
   {
-    Msg::Info("Checking for duplicate vertices...");
+    Msg::Info("Checking for duplicate nodes...");
     std::vector<MVertex *> vertices;
     for(std::size_t i = 0; i < entities.size(); i++)
       vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
@@ -2120,9 +2120,9 @@ void GModel::checkMeshCoherence(double tolerance)
     std::set<MVertex *> duplicates;
     int num = pos.insert(vertices, true, &duplicates);
     if(num) {
-      Msg::Error("%d duplicate vert%s: see `duplicate_vertices.pos'", num,
-                 num > 1 ? "ices" : "ex");
-      FILE *fp = Fopen("duplicate_vertices.pos", "w");
+      Msg::Error("%d duplicate node%s: see `duplicate_node.pos'", num,
+                 num > 1 ? "s" : "");
+      FILE *fp = Fopen("duplicate_nodes.pos", "w");
       if(fp) {
         fprintf(fp, "View \"duplicate vertices\"{\n");
         for(std::set<MVertex *>::iterator it = duplicates.begin();
@@ -2201,10 +2201,10 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   }
 
   int num = (int)duplicates.size();
-  Msg::Info("Found %d duplicate vertices ", num);
+  Msg::Info("Found %d duplicate nodes ", num);
 
   if(!num) {
-    Msg::Info("No duplicate vertices found");
+    Msg::Info("No duplicate nodes found");
     return 0;
   }
 
@@ -2260,10 +2260,9 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   for(std::size_t i = 0; i < to_delete.size(); i++) delete to_delete[i];
 
   if(num)
-    Msg::Info("Removed %d duplicate mesh %s", num,
-              num > 1 ? "vertices" : "vertex");
+    Msg::Info("Removed %d duplicate mesh node%s", num, num > 1 ? "s" : "");
 
-  Msg::StatusBar(true, "Done removing duplicate mesh vertices");
+  Msg::StatusBar(true, "Done removing duplicate mesh nodes");
   return num;
 }
 

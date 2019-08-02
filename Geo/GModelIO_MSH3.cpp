@@ -284,7 +284,7 @@ int GModel::_readMSH3(const std::string &name)
         fclose(fp);
         return 0;
       }
-      Msg::Info("%d vertices", numVertices);
+      Msg::Info("%d nodes", numVertices);
       Msg::ResetProgressMeter();
       _vertexMapCache.clear();
       _vertexVectorCache.clear();

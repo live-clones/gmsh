@@ -967,7 +967,7 @@ static void Mesh3D(GModel *m)
 
 void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 {
-  if(how != "" &&
+  if(how != "" && how != "Optimize" &&
      how != "Netgen" &&
      how != "HighOrder" &&
      how != "HighOrderElastic" &&
@@ -1156,7 +1156,7 @@ void GenerateMesh(GModel *m, int ask)
   if(CTX::instance()->mesh.hoOptimize >= 1)
     OptimizeMesh(GModel::current(), "HighOrder");
 
-  Msg::Info("%d vertices %d elements", m->getNumMeshVertices(),
+  Msg::Info("%d nodes %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());
 
   Msg::PrintErrorCounter("Mesh generation error summary");

@@ -39,7 +39,7 @@ static int readVerticesVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
     vertexVector.push_back(new MVertex(x, y, z));
   for(std::size_t i = 0; i < vertexVector.size(); i++)
     allVertexVector.push_back(vertexVector[i]);
-  Msg::Info("%d vertices", vertexVector.size());
+  Msg::Info("%d nodes", vertexVector.size());
   return 1;
 }
 
@@ -81,7 +81,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
       }
       idx.clear();
       if(vertices.size() < 2) {
-        Msg::Info("Skipping %d-vertex element", (int)vertices.size());
+        Msg::Info("Skipping %d-node element", (int)vertices.size());
       }
       else if(vertices.size() == 2) {
         elements[0][region].push_back(new MLine(vertices));

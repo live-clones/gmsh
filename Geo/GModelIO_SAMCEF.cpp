@@ -56,7 +56,7 @@ int GModel::readSAMCEF(const std::string &name)
           return 0;
         _vertexMapCache[num] = new MVertex(x, y, z, 0, num);
       }
-      Msg::Info("Read %d mesh vertices", (int)_vertexMapCache.size());
+      Msg::Info("Read %d mesh nodes", (int)_vertexMapCache.size());
     }
     else if(!strncmp(buffer, ".MAI", 4)) {
       while(!feof(fp)) {

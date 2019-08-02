@@ -3625,10 +3625,10 @@ void OCC_Internals::synchronize(GModel *model)
   SetBoundingBox();
 
   Msg::Debug("GModel imported:");
-  Msg::Debug("%d vertices", model->getNumVertices());
-  Msg::Debug("%d edges", model->getNumEdges());
-  Msg::Debug("%d faces", model->getNumFaces());
-  Msg::Debug("%d regions", model->getNumRegions());
+  Msg::Debug("%d points", model->getNumVertices());
+  Msg::Debug("%d curves", model->getNumEdges());
+  Msg::Debug("%d surfaces", model->getNumFaces());
+  Msg::Debug("%d volumes", model->getNumRegions());
   _changed = false;
 }
 
