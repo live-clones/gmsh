@@ -499,7 +499,7 @@ void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
     }
   }
   if(iV == -1) {
-    Msg::Error("Trying to build a cavity of tets for a vertex that does not "
+    Msg::Error("Trying to build a cavity of tets for a node that does not "
                "belong to this tet");
     return;
   }
@@ -531,7 +531,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
                     const localMeshModAction action, double *minQual)
 {
   if(t->isDeleted()) {
-    Msg::Warning("Impossible to collapse vertex");
+    Msg::Warning("Impossible to collapse node");
     return false;
   }
 
@@ -624,7 +624,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
 bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
 {
   if(t->isDeleted()) {
-    Msg::Warning("Impossible to collapse vertex");
+    Msg::Warning("Impossible to collapse node");
     return false;
   }
   if(t->tet()->getVertex(iVertex)->onWhat()->dim() < 3) return false;

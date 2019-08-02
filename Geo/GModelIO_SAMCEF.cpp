@@ -21,7 +21,7 @@ static bool getMeshVertices(GModel *m, int num, int *n,
   for(int i = 0; i < num; i++) {
     MVertex *v = m->getMeshVertexByTag(n[i]);
     if(!v) {
-      Msg::Error("Wrong vertex number %d", n[i]);
+      Msg::Error("Wrong node number %d", n[i]);
       return false;
     }
     else

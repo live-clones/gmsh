@@ -92,7 +92,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
           SPoint2 param;
           bool ok = reparamMeshVertexOnFace(v, f, param);
           if(!ok)
-            Msg::Warning("Could not reparamtrize vertex %d on face %d",
+            Msg::Warning("Could not reparamtrize node %d on surface %d",
                          v->getNum(), f->tag());
           CelumInfo info;
           info.normal = f->normal(param);

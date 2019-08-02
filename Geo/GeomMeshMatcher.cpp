@@ -519,7 +519,7 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
         }
       }
       if(!found)
-        Msg::Error("vertex %d classified on %d %d not matched", v->getNum(),
+        Msg::Error("Node %d classified on %d %d not matched", v->getNum(),
                    v->onWhat()->dim(), v->onWhat()->tag());
     }
   }
@@ -642,13 +642,13 @@ static void copy_periodicity(std::vector<Pair<GEType *, GEType *> > &eCor,
 
         if(newTvIter == mesh_to_geom.end()) {
           Msg::Error(
-            "Could not find copy of target vertex %d in entity %d of dim",
+            "Could not find copy of target node %d in entity %d of dim",
             oldTgtV->getIndex(), oldTgt->tag(), oldTgt->dim());
         }
 
         if(newSvIter == mesh_to_geom.end()) {
           Msg::Error(
-            "Could not find copy of source vertex %d in entity %d of dim",
+            "Could not find copy of source node %d in entity %d of dim",
             oldSrcV->getIndex(), oldSrc->tag(), oldSrc->dim());
         }
         newV2v[newTvIter->second] = newSvIter->second;
@@ -788,7 +788,7 @@ static void copy_elements(std::vector<ELEMENT *> &to,
         _mesh_to_geom.find(e->getVertex(j));
 
       if(vIter == _mesh_to_geom.end()) {
-        Msg::Error("Could not find match for vertex %i during element copy "
+        Msg::Error("Could not find match for node %i during element copy "
                    "while matching discrete to actual CAD",
                    e->getVertex(j)->getNum());
       }

@@ -2600,7 +2600,7 @@ MElement *MElementFactory::create(int num, int type,
         vertices[i] = v;
       }
       else {
-        Msg::Error("Unknown vertex %d in element %d", numVertex, num);
+        Msg::Error("Unknown node %d in element %d", numVertex, num);
         return 0;
       }
     }

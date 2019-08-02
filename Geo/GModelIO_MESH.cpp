@@ -19,7 +19,7 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
 {
   for(int i = 0; i < num; i++) {
     if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)) {
-      Msg::Error("Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong node index %d", indices[i]);
       return false;
     }
     else

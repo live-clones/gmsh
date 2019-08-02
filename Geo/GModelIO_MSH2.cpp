@@ -39,7 +39,7 @@ static bool getMeshVertices(int num, int *indices,
 {
   for(int i = 0; i < num; i++) {
     if(!map.count(indices[i])) {
-      Msg::Error("Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong node index %d", indices[i]);
       return false;
     }
     else
@@ -54,7 +54,7 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
   for(int i = 0; i < num; i++) {
     if(indices[i] < minVertex ||
        indices[i] > (int)(vec.size() - 1 + minVertex)) {
-      Msg::Error("Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong node index %d", indices[i]);
       return false;
     }
     else
@@ -295,7 +295,7 @@ int GModel::_readMSH2(const std::string &name)
         minVertex = std::min(minVertex, num);
         maxVertex = std::max(maxVertex, num);
         if(vertexMap.count(num))
-          Msg::Warning("Skipping duplicate vertex %d", num);
+          Msg::Warning("Skipping duplicate node %d", num);
         vertexMap[num] = newVertex;
         if(numVertices > 100000)
           Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");

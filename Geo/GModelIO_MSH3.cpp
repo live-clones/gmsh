@@ -398,7 +398,7 @@ int GModel::_readMSH3(const std::string &name)
             vertex = new MVertex(xyz[0], xyz[1], xyz[2], gr, num);
           } break;
           default:
-            Msg::Error("Wrong entity dimension for vertex %d", num);
+            Msg::Error("Wrong entity dimension for node %d", num);
             fclose(fp);
             return 0;
           }
@@ -406,7 +406,7 @@ int GModel::_readMSH3(const std::string &name)
         minVertex = std::min(minVertex, num);
         maxVertex = std::max(maxVertex, num);
         if(_vertexMapCache.count(num))
-          Msg::Warning("Skipping duplicate vertex %d", num);
+          Msg::Warning("Skipping duplicate node %d", num);
         _vertexMapCache[num] = vertex;
         if(numVertices > 100000)
           Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");

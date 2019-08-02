@@ -73,7 +73,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
       std::vector<MVertex *> vertices;
       for(std::size_t j = 0; j < idx.size(); j++) {
         if(idx[j] < 0 || idx[j] > (int)(vertexVector.size() - 1)) {
-          Msg::Error("Wrong vertex index %d", idx[j]);
+          Msg::Error("Wrong node index %d", idx[j]);
           return 0;
         }
         else

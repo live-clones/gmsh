@@ -157,7 +157,7 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
         for(int p = 0; p < 4; p++) {
           MVertex *tmp = pos.find(x[p], y[p], z[p]);
           if(!tmp) {
-            Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g) "
+            Msg::Error("Could not find extruded node (%.16g, %.16g, %.16g) "
                        "in surface %d",
                        x[p], y[p], z[p], to->tag());
             return;
@@ -250,7 +250,7 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
       MVertex *tmp = pos.find(x, y, z);
       if(!tmp) {
         Msg::Error(
-          "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
+          "Could not find extruded node (%.16g, %.16g, %.16g) in surface %d",
           x, y, z, to->tag());
         return;
       }
@@ -282,7 +282,7 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
       MVertex *tmp = pos.find(x, y, z);
       if(!tmp) {
         Msg::Error(
-          "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
+          "Could not find extruded node (%.16g, %.16g, %.16g) in surface %d",
           x, y, z, to->tag());
         return;
       }

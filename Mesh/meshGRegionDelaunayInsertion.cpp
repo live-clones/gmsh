@@ -1328,7 +1328,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
           getRegionFromBoundingFaces(gr->model(), faces_bound);
         if(myGRegion) { // a geometrical region associated to the list of faces
                         // has been found
-          Msg::Info("Found region %d", myGRegion->tag());
+          Msg::Info("Found volume %d", myGRegion->tag());
           for(std::list<MTet4 *>::iterator it2 = theRegion.begin();
               it2 != theRegion.end(); ++it2) {
             (*it2)->setOnWhat(myGRegion);

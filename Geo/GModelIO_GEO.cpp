@@ -419,7 +419,7 @@ bool GEO_Internals::addSurfaceFilling(int &tag,
   if(sphereCenterTag >= 0) {
     s->InSphereCenter = FindPoint(sphereCenterTag);
     if(!s->InSphereCenter) {
-      Msg::Error("Unknown sphere center vertex %d", sphereCenterTag);
+      Msg::Error("Unknown sphere center point %d", sphereCenterTag);
     }
   }
   Tree_Add(Surfaces, &s);

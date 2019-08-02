@@ -2283,7 +2283,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                 }
               }
               if(pp == 0) {
-                Msg::Error("Embedded edge vertex %d is on the seam edge of "
+                Msg::Error("Embedded edge node %d is on the seam edge of "
                            "surface %d and no appropriate point could be "
                            "found!",
                            v->getNum(), gf->tag());
