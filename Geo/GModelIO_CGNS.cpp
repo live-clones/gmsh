@@ -13,6 +13,9 @@
 
 namespace CGNS {
 #include <cgnslib.h>
+#if CGNS_VERSION < 3100
+#define cgsize_t int
+#endif
 }
 
 static int cgnsError(const int cgIndexFile = -1)
