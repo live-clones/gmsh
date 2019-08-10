@@ -3705,7 +3705,14 @@ entities (@code{$Entities}), the partitioned entities
 (@code{$Elements}), the periodicity relations (@code{$Periodic}), the
 ghost elements (@code{$GhostElements}), the parametrizations
 (@code{$Parametrizations}) and the post-processing datasets
-(@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}).
+(@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}). The
+sections reflect the underlying Gmsh data model: @code{$Entities} store
+the boundary representation of the model geometrical entities,
+@code{$Nodes} and @code{$Elements} store mesh data classified on these
+entities, and @code{$NodeData}, @code{$ElementData},
+@code{$ElementNodeData} store post-processing data (views). (See
+@ref{Gmsh API} and @ref{Source code structure} for a more detailed
+description of the internal Gmsh data model.)
 
 To represent a simple mesh, the minimal sections that should be present
 in the file are @code{$MeshFormat}, @code{$Nodes} and
@@ -5406,7 +5413,7 @@ the native Gmsh C++ API, as it entails additional data copies between
 the C++ wrapper, the C API and the native C++ code.
 
 The structure of the API reflects the underlying Gmsh data model
-(@pxref{Source code structure}):
+(see also @ref{Source code structure}):
 @itemize
 @item
 There are two main data containers: @emph{models} (which hold the
