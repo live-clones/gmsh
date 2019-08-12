@@ -1565,6 +1565,7 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
 {
   if(!_isInitialized()) { throw - 1; }
   const char *n;
+  MElement::getInfoMSH(elementType, &n);
   name = n;
   int parentType = ElementType::getParentType(elementType);
   nodalBasis *basis = 0;
