@@ -7,6 +7,10 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "partitionRegion.h"
+#include "partitionFace.h"
+#include "partitionEdge.h"
+#include "partitionVertex.h"
 #include "CGNSConventions.h"
 
 #if defined(HAVE_LIBCGNS)
@@ -21,7 +25,11 @@ namespace CGNS {
 #endif
 } // namespace CGNS
 
-static int cgnsError(const int cgIndexFile = -1)
+
+namespace {
+
+
+int cgnsError(const int cgIndexFile = -1)
 {
   Msg::Error("Error detected by CGNS library");
   Msg::Error(CGNS::cg_get_error());
@@ -33,39 +41,60 @@ static int cgnsError(const int cgIndexFile = -1)
   return 0;
 }
 
-int GModel::readCGNS(const std::string &name) { return 0; }
 
-int GModel::writeCGNS(const std::string &name, bool saveAll,
-                      double scalingFactor)
+// create a single zone for the whole partition; nodes and elements are
+// referenced with per-zone index (starting at 1) inside a zone
+static int writeZone(GModel *model, bool saveAll, double scalingFactor,
+                     size_t numNodesTotal, size_t partition,
+                     const std::vector<GEntity *> &entities, int cgIndexFile,
+                     int cgIndexBase)
 {
-  int cgIndexFile = 0;
-  if(CGNS::cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile))
-    return cgnsError();
+  int meshDim = model->getMeshDim();
 
-  // write the base node
-  int meshDim = getMeshDim(), dim = getDim(), cgIndexBase = 0;
-  size_t posStartName = name.find_last_of("/\\");
-  if (posStartName == std::string::npos) posStartName = 0;
-  else posStartName++;
-  std::string baseName = cgnsString(name.substr(posStartName));
-  if(CGNS::cg_base_write(cgIndexFile, baseName.c_str(), meshDim, dim, &cgIndexBase))
-    return cgnsError();
+  // build set of nodes first, use elements because nodes not all in
+  // entities[i]->mesh_vertices if entities do not include partition interfaces
+  std::set<MVertex *> nodeSet;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    std::vector<int> eleTypes;
+    ge->getElementTypes(eleTypes);
+    for(std::size_t eleType = 0; eleType < eleTypes.size(); eleType++) {
+      int numEle = ge->getNumMeshElementsByType(eleTypes[eleType]);
+      if(numEle && (saveAll || ge->physicals.size())) {
+        for(int j = 0; j < numEle; j++) {
+          MElement *me = ge->getMeshElementByType(eleTypes[eleType], j);
+          for(std::size_t k = 0; k < me->getNumVertices(); k++) {
+            nodeSet.insert(me->getVertex(k));
+          }
+        }
+      }
+    }
+  }
 
-  // write information about who generated the mesh
-  if(CGNS::cg_goto(cgIndexFile, cgIndexBase, "end")) return cgnsError();
-  if(CGNS::cg_descriptor_write("About", "Created by Gmsh")) return cgnsError();
+  // build global <-> partition-local node index correspondance
+  std::vector<CGNS::cgsize_t> g2LIndex(numNodesTotal+1, 0);
+  std::vector<long> l2GIndex;
+  l2GIndex.reserve(numNodesTotal+1);
+  CGNS::cgsize_t numNodes = 0;
+  // for(std::size_t i = 0; i < entities.size(); i++) {
+  //   for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+  //     const long gInd = entities[i]->mesh_vertices[j]->getIndex();
+  //     if (gInd < 0) continue;
+  //     numNodes++;
+  //     g2LIndex[gInd] = numNodes;
+  //     l2GIndex[numNodes] = gInd;
+  //   }
+  // }
+  typedef std::set<MVertex *>::iterator NodeSetIter;
+  for(NodeSetIter it = nodeSet.begin(); it != nodeSet.end(); ++it) {
+    const long gInd = (*it)->getIndex();
+    if (gInd < 0) continue;
+    numNodes++;
+    g2LIndex[gInd] = numNodes;
+    l2GIndex[numNodes] = gInd;
+  }
 
-  // index mesh nodes, as CGNS does not store node tags
-  if(noPhysicalGroups()) saveAll = true;
-  CGNS::cgsize_t numNodes = indexMeshVertices(saveAll);
-
-  // get all entities from model
-  std::vector<GEntity *> entities;
-  getEntities(entities);
-
-  // create a single zone for the whole unstructured mesh; nodes and elements
-  // are referenced with per-zone index (starting at 1) inside a zone
-  int cgIndexZone = 0;
+  // number of elements for highest spatial dimension
   CGNS::cgsize_t numElementsMaxDim = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
@@ -73,8 +102,13 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
       numElementsMaxDim += ge->getNumMeshElements();
     }
   }
+
+  // write zone CGNS node
+  int cgIndexZone = 0;
   CGNS::cgsize_t cgZoneSize[3] = {numNodes, numElementsMaxDim, 0};
-  std::string zoneName = cgnsString(getName());
+  std::ostringstream ossZone;
+  ossZone << model->getName() << "_Part" << partition;
+  std::string zoneName = cgnsString(ossZone.str());
   if(CGNS::cg_zone_write(cgIndexFile, cgIndexBase, zoneName.c_str(), cgZoneSize,
                          CGNS::Unstructured, &cgIndexZone))
     return cgnsError();
@@ -92,15 +126,16 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
       MVertex *mv = ge->getMeshVertex(j);
-      int n = mv->getIndex();
+      const int n = mv->getIndex();
       if(n < 0) continue;
-      if(n > numNodes) { // should never happen
+      const int ln = g2LIndex[n];
+      if(ln > numNodes) { // should never happen
         Msg::Error("Incoherent mesh node indexing in CGNS writer");
         return 0;
       }
-      xcoord[n - 1] = mv->x() * scalingFactor;
-      ycoord[n - 1] = mv->y() * scalingFactor;
-      zcoord[n - 1] = mv->z() * scalingFactor;
+      xcoord[ln - 1] = mv->x() * scalingFactor;
+      ycoord[ln - 1] = mv->y() * scalingFactor;
+      zcoord[ln - 1] = mv->z() * scalingFactor;
     }
   }
 
@@ -128,17 +163,17 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
 
     // FIXME: use MIXED section? -> probably less efficient
     // 2) store physical information in a "family"?
-    std::string sectionName = getElementaryName(ge->dim(), ge->tag());
-    if(sectionName.empty()) {
+    std::string entityName = model->getElementaryName(ge->dim(), ge->tag());
+    if(entityName.empty()) {
       std::ostringstream s;
       std::string entStr = (ge->dim() == 3) ? "Vol" :
                            (ge->dim() == 2) ? "Surf" :
                            (ge->dim() == 1) ? "Curve" :
                            (ge->dim() == 0) ? "Pnt" : ""; 
       s << "Gmsh_" << entStr << "_" << ge->tag();
-      sectionName = s.str();
+      entityName = s.str();
     }
-    sectionName = cgnsString(sectionName);
+    entityName = cgnsString(entityName);
 
     // retrieve element types for this geometric entity
     std::vector<int> eleTypes;
@@ -165,17 +200,127 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
         for(int j = 0; j < numEle; j++) {
           me = ge->getMeshElementByType(eleTypes[eleType], j);
           for(int k = 0; k < numNodesPerEle; k++) {
-            elemNodes[n++] = me->getVertex(mshNodeInd[k])->getIndex();
+            const int gInd = me->getVertex(mshNodeInd[k])->getIndex();
+            elemNodes[n] = g2LIndex[gInd];
+            n++;
           }
         }
+
+        std::ostringstream ossSection(entityName);
+        ossSection << "_" << eleTypes[eleType];
         int cgIndexSection = 0;
         if(CGNS::cg_section_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                                  sectionName.c_str(), cgType, eleStart, eleEnd,
-                                  0, &elemNodes[0], &cgIndexSection))
+                                  ossSection.str().c_str(), cgType, eleStart,
+                                  eleEnd, 0, &elemNodes[0], &cgIndexSection))
           return cgnsError();
       }
     }
   }
+
+  return 0;
+}
+
+
+void getEntitiesInPartition(const std::vector<GEntity *> &entities,
+                            std::size_t iPart,
+                            std::vector<GEntity *> &entitiesPart)
+{
+  for(std::size_t j = 0; j < entities.size(); j++) {
+    GEntity *ge = entities[j];
+    switch(ge->geomType()) {
+    case GEntity::PartitionVolume: {
+      partitionRegion *pr = static_cast<partitionRegion *>(ge);
+      if(std::find(pr->getPartitions().begin(), pr->getPartitions().end(),
+                    iPart) != pr->getPartitions().end()) {
+        entitiesPart.push_back(pr);
+      }
+    } break;
+    case GEntity::PartitionSurface: {
+      partitionFace *pf = static_cast<partitionFace *>(ge);
+      if(std::find(pf->getPartitions().begin(), pf->getPartitions().end(),
+                    iPart) != pf->getPartitions().end()) {
+        entitiesPart.push_back(pf);
+      }
+    } break;
+    case GEntity::PartitionCurve: {
+      partitionEdge *pe = static_cast<partitionEdge *>(ge);
+      if(std::find(pe->getPartitions().begin(), pe->getPartitions().end(),
+                    iPart) != pe->getPartitions().end()) {
+        entitiesPart.push_back(pe);
+      }
+    } break;
+    case GEntity::PartitionPoint: {
+      partitionVertex *pv = static_cast<partitionVertex *>(ge);
+      if(std::find(pv->getPartitions().begin(), pv->getPartitions().end(),
+                    iPart) != pv->getPartitions().end()) {
+        entitiesPart.push_back(pv);
+      }
+    } break;
+    default:
+      entitiesPart.push_back(ge);
+      break;
+    }         // switch
+  }           // loop on entities
+}
+
+
+} // anonymous namespace
+
+
+int GModel::readCGNS(const std::string &name) { return 0; }
+
+int GModel::writeCGNS(const std::string &name, bool saveAll,
+                      double scalingFactor)
+{
+  int cgIndexFile = 0;
+  if(CGNS::cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile))
+    return cgnsError();
+
+  // write the base node
+  int meshDim = getMeshDim(), dim = getDim(), cgIndexBase = 0;
+  size_t posStartName = name.find_last_of("/\\");
+  if (posStartName == std::string::npos) posStartName = 0;
+  else posStartName++;
+  std::string baseName = cgnsString(name.substr(posStartName));
+  if(CGNS::cg_base_write(cgIndexFile, baseName.c_str(), meshDim, dim,
+                         &cgIndexBase))
+    return cgnsError();
+
+  // write information about who generated the mesh
+  if(CGNS::cg_goto(cgIndexFile, cgIndexBase, "end")) return cgnsError();
+  if(CGNS::cg_descriptor_write("About", "Created by Gmsh")) return cgnsError();
+
+  // index mesh nodes, as CGNS does not store node tags
+  if(noPhysicalGroups()) saveAll = true;
+  const size_t numNodes = indexMeshVertices(saveAll);
+
+  // get all entities from model
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+
+  // write one zone per partition
+  if (getNumPartitions() == 0) {                        // mesh not partitioned
+    int err = writeZone(this, saveAll, scalingFactor, numNodes, 0, entities,
+                        cgIndexFile, cgIndexBase);
+    if(err) return err;
+  }
+  else {                                                // partitioned mesh
+    for(std::size_t iPart = 1; iPart <= getNumPartitions(); iPart++) {
+      if(getNumPartitions() > 100) {
+        if(iPart % 100 == 1) {
+          Msg::Info("Writing partition %d/%d", iPart, getNumPartitions());
+        }
+      }
+      else {
+        Msg::Info("Writing partition %d", iPart);
+      }
+      std::vector<GEntity *> entitiesPart;
+      getEntitiesInPartition(entities, iPart, entitiesPart);
+      int err = writeZone(this, saveAll, scalingFactor, numNodes, iPart,
+                          entitiesPart, cgIndexFile, cgIndexBase);
+      if(err) return err;
+    }             // loop on partitions
+  }               // getNumPartitions()
 
   if(CGNS::cg_close(cgIndexFile)) return cgnsError();
 
