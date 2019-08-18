@@ -56,7 +56,7 @@ StringXString *GMSH_NewViewPlugin::getOptionStr(int iopt)
 PView *GMSH_NewViewPlugin::execute(PView *v)
 {
   int numComp = (int)NewViewOptions_Number[0].def;
-  int value = NewViewOptions_Number[1].def;
+  double value = NewViewOptions_Number[1].def;
   int tag = (int)NewViewOptions_Number[2].def;
   std::string type = NewViewOptions_String[0].def;
 
