@@ -259,9 +259,9 @@ void HierarchicalBasisHcurlBrick::orientEdge(
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
     constant2 = constant2 - 1;
-    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
     for(int k = constant1; k <= constant2; k++) {
       edgeFunctions[k][0] = eTableNegativeFlag[k][0];
       edgeFunctions[k][1] = eTableNegativeFlag[k][1];
@@ -271,9 +271,9 @@ void HierarchicalBasisHcurlBrick::orientEdge(
   else {
     int constant1 = 0;
     int constant2 = 0;
-    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
     constant2 = constant2 - 1;
-    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
     for(int k = constant1; k <= constant2; k++) {
       edgeFunctions[k][0] = eTablePositiveFlag[k][0];
       edgeFunctions[k][1] = eTablePositiveFlag[k][1];
@@ -301,8 +301,7 @@ void HierarchicalBasisHcurlBrick::orientEdgeFunctionsForNegativeFlag(
     }
   }
 }
-
-void HierarchicalBasisHcurlBrick::orientFace(
+void HierarchicalBasisHcurlBrick::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
@@ -596,6 +595,29 @@ void HierarchicalBasisHcurlBrick::orientFace(
         throw std::string("unknown typeFunction");
       }
     }
+  }
+}
+void HierarchicalBasisHcurlBrick::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double> > &fTableCopy)
+{
+  int iterator = 0;
+  for(int i = 0; i < faceNumber; i++) {
+    iterator += (_pOrderFace1[i] + 1) * _pOrderFace2[i] +
+                (_pOrderFace2[i] + 1) * _pOrderFace1[i];
+  }
+  int numFaceFunctions =
+    (_pOrderFace1[faceNumber] + 1) * _pOrderFace2[faceNumber] +
+    (_pOrderFace2[faceNumber] + 1) * _pOrderFace1[faceNumber];
+  int iOrientation = numberOrientationQuadFace(flag1, flag2, flag3);
+  int offset = iOrientation * _nQuadFaceFunction;
+  int offset2 = iterator + numFaceFunctions;
+  for(int i = iterator; i < offset2; i++) {
+    fTableCopy[i][0] = quadFaceFunctionsAllOrientation[i + offset][0];
+    fTableCopy[i][1] = quadFaceFunctionsAllOrientation[i + offset][1];
+    fTableCopy[i][2] = quadFaceFunctionsAllOrientation[i + offset][2];
   }
 }
 

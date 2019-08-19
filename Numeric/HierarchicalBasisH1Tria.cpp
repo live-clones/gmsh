@@ -388,11 +388,11 @@ void HierarchicalBasisH1Tria::orientEdgeFunctionsForNegativeFlag(
     }
   }
 }
-void HierarchicalBasisH1Tria::orientFace(double const &u, double const &v,
-                                         double const &w, int const &flag1,
-                                         int const &flag2, int const &flag3,
-                                         int const &faceNumber,
-                                         std::vector<double> &faceBasis)
+void HierarchicalBasisH1Tria::orientOneFace(double const &u, double const &v,
+                                            double const &w, int const &flag1,
+                                            int const &flag2, int const &flag3,
+                                            int const &faceNumber,
+                                            std::vector<double> &faceBasis)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     // to map onto the reference domain of gmsh:
@@ -449,8 +449,7 @@ void HierarchicalBasisH1Tria::orientFace(double const &u, double const &v,
     }
   }
 }
-
-void HierarchicalBasisH1Tria::orientFace(
+void HierarchicalBasisH1Tria::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &gradientFace, std::string typeFunction)
@@ -547,6 +546,32 @@ void HierarchicalBasisH1Tria::orientFace(
         iterator++;
       }
     }
+  }
+}
+void HierarchicalBasisH1Tria::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<double> &quadFaceFunctionsAllOrientation,
+  const std::vector<double> &triFaceFunctionsAllOrientation,
+  std::vector<double> &fTableCopy)
+{
+  int iOrientation = numberOrientationTriFace(flag1, flag2);
+  int offset = iOrientation * _nQuadFaceFunction;
+  for(int i = 0; i < _nTriFaceFunction; i++) {
+    fTableCopy[i] = triFaceFunctionsAllOrientation[i + offset];
+  }
+}
+void HierarchicalBasisH1Tria::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double> > &fTableCopy)
+{
+  int iOrientation = numberOrientationTriFace(flag1, flag2);
+  int offset = iOrientation * _nQuadFaceFunction;
+  for(int i = 0; i < _nTriFaceFunction; i++) {
+    fTableCopy[i][0] = triFaceFunctionsAllOrientation[i + offset][0];
+    fTableCopy[i][1] = triFaceFunctionsAllOrientation[i + offset][1];
+    fTableCopy[i][2] = triFaceFunctionsAllOrientation[i + offset][2];
   }
 }
 

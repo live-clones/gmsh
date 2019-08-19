@@ -438,9 +438,9 @@ void HierarchicalBasisHcurlPri::orientEdge(
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
     constant2 = constant2 - 1;
-    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
     for(int k = constant1; k <= constant2; k++) {
       edgeFunctions[k][0] = eTableNegativeFlag[k][0];
       edgeFunctions[k][1] = eTableNegativeFlag[k][1];
@@ -450,9 +450,9 @@ void HierarchicalBasisHcurlPri::orientEdge(
   else {
     int constant1 = 0;
     int constant2 = 0;
-    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
     constant2 = constant2 - 1;
-    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
     for(int k = constant1; k <= constant2; k++) {
       edgeFunctions[k][0] = eTablePositiveFlag[k][0];
       edgeFunctions[k][1] = eTablePositiveFlag[k][1];
@@ -480,8 +480,7 @@ void HierarchicalBasisHcurlPri::orientEdgeFunctionsForNegativeFlag(
     }
   }
 }
-
-void HierarchicalBasisHcurlPri::orientFace(
+void HierarchicalBasisHcurlPri::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
@@ -1183,6 +1182,50 @@ void HierarchicalBasisHcurlPri::orientFace(
       else {
         throw std::string("unknown typeFunction");
       }
+    }
+  }
+}
+void HierarchicalBasisHcurlPri::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double> > &fTableCopy)
+{
+  if(faceNumber < 3) {
+    int iterator = 0;
+    for(int i = 0; i < faceNumber; i++) {
+      iterator += (_pOrderQuadFace1[i] + 1) * _pOrderQuadFace2[i] +
+                  (_pOrderQuadFace2[i] + 1) * _pOrderQuadFace1[i];
+    }
+    int numFaceFunctions =
+      (_pOrderQuadFace1[faceNumber] + 1) * _pOrderQuadFace2[faceNumber] +
+      (_pOrderQuadFace2[faceNumber] + 1) * _pOrderQuadFace1[faceNumber];
+    int iOrientation = numberOrientationQuadFace(flag1, flag2, flag3);
+    int offset = iOrientation * _nQuadFaceFunction;
+    int offset2 = iterator + numFaceFunctions;
+    for(int i = iterator; i < offset2; i++) {
+      fTableCopy[i][0] = quadFaceFunctionsAllOrientation[i + offset][0];
+      fTableCopy[i][1] = quadFaceFunctionsAllOrientation[i + offset][1];
+      fTableCopy[i][2] = quadFaceFunctionsAllOrientation[i + offset][2];
+    }
+  }
+  else {
+    int iterator = _nQuadFaceFunction;
+    int numface = faceNumber - 3;
+    for(int i = 0; i < numface; i++) {
+      iterator += 3 * (_pOrderTriFace[i] - 1) +
+                  (_pOrderTriFace[i] - 1) * (_pOrderTriFace[i] - 2);
+    }
+    int numFaceFunctions =
+      3 * (_pOrderTriFace[numface] - 1) +
+      (_pOrderTriFace[numface] - 1) * (_pOrderTriFace[numface] - 2);
+    int iOrientation = numberOrientationTriFace(flag1, flag2);
+    int offset = iOrientation * _nTriFaceFunction - _nQuadFaceFunction;
+    int offset2 = iterator + numFaceFunctions;
+    for(int i = iterator; i < offset2; i++) {
+      fTableCopy[i][0] = triFaceFunctionsAllOrientation[i + offset][0];
+      fTableCopy[i][1] = triFaceFunctionsAllOrientation[i + offset][1];
+      fTableCopy[i][2] = triFaceFunctionsAllOrientation[i + offset][2];
     }
   }
 }

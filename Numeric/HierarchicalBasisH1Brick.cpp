@@ -519,11 +519,12 @@ void HierarchicalBasisH1Brick::orientEdgeFunctionsForNegativeFlag(
     }
   }
 }
-void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
-                                          double const &w, int const &flag1,
-                                          int const &flag2, int const &flag3,
-                                          int const &faceNumber,
-                                          std::vector<double> &faceBasis)
+
+void HierarchicalBasisH1Brick::orientOneFace(double const &u, double const &v,
+                                             double const &w, int const &flag1,
+                                             int const &flag2, int const &flag3,
+                                             int const &faceNumber,
+                                             std::vector<double> &faceBasis)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -601,7 +602,7 @@ void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
     }
   }
 }
-void HierarchicalBasisH1Brick::orientFace(
+void HierarchicalBasisH1Brick::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &gradientFace, std::string typeFunction)
@@ -707,6 +708,47 @@ void HierarchicalBasisH1Brick::orientFace(
         }
       }
     }
+  }
+}
+
+void HierarchicalBasisH1Brick::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<double> &quadFaceFunctionsAllOrientation,
+  const std::vector<double> &triFaceFunctionsAllOrientation,
+  std::vector<double> &fTableCopy)
+{
+  int iterator = 0;
+  for(int i = 0; i < faceNumber; i++) {
+    iterator += (_pOrderFace1[i] - 1) * (_pOrderFace2[i] - 1);
+  }
+  int numFaceFunctions =
+    (_pOrderFace1[faceNumber] - 1) * (_pOrderFace2[faceNumber] - 1);
+  int iOrientation = numberOrientationQuadFace(flag1, flag2, flag3);
+  int offset = iOrientation * _nQuadFaceFunction;
+  int offset2 = iterator + numFaceFunctions;
+  for(int i = iterator; i < offset2; i++) {
+    fTableCopy[i] = quadFaceFunctionsAllOrientation[i + offset];
+  }
+}
+void HierarchicalBasisH1Brick::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double> > &fTableCopy)
+{
+  int iterator = 0;
+  for(int i = 0; i < faceNumber; i++) {
+    iterator += (_pOrderFace1[i] - 1) * (_pOrderFace2[i] - 1);
+  }
+  int numFaceFunctions =
+    (_pOrderFace1[faceNumber] - 1) * (_pOrderFace2[faceNumber] - 1);
+  int iOrientation = numberOrientationQuadFace(flag1, flag2, flag3);
+  int offset = iOrientation * _nQuadFaceFunction;
+  int offset2 = iterator + numFaceFunctions;
+  for(int i = iterator; i < offset2; i++) {
+    fTableCopy[i][0] = quadFaceFunctionsAllOrientation[i + offset][0];
+    fTableCopy[i][1] = quadFaceFunctionsAllOrientation[i + offset][1];
+    fTableCopy[i][2] = quadFaceFunctionsAllOrientation[i + offset][2];
   }
 }
 

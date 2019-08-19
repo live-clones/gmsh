@@ -26,6 +26,15 @@ protected:
   int _nQuadFaceFunction;
   int _nTriFaceFunction;
   int _nBubbleFunction;
+  virtual void orientOneFace(double const &u, double const &v, double const &w,
+                             int const &flag1, int const &flag2,
+                             int const &flag3, int const &faceNumber,
+                             std::vector<double> &faceFunctions) = 0;
+  virtual void orientOneFace(double const &u, double const &v, double const &w,
+                             int const &flag1, int const &flag2,
+                             int const &flag3, int const &faceNumber,
+                             std::vector<std::vector<double> > &faceFunctions,
+                             std::string typeFunction) = 0;
 
 public:
   virtual ~HierarchicalBasis() = 0;
@@ -63,22 +72,80 @@ public:
   virtual void orientEdgeFunctionsForNegativeFlag(
     std::vector<std::vector<double> > &edgeFunctions) = 0;
 
+  virtual void addAllOrientedFaceFunctions(
+    double const &u, double const &v, double const &w,
+    const std::vector<double> &faceFunctions,
+    std::vector<double> &quadFaceFunctionsAllOrientation,
+    std::vector<double> &triFaceFunctionsAllOrientation) = 0;
+
+  virtual void addAllOrientedFaceFunctions(
+    double const &u, double const &v, double const &w,
+    const std::vector<std::vector<double> > &faceFunctions,
+    std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+    std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+    std::string typeFunction) = 0; // typeFunction =GradH1Legendre ,
+                                   // HcurlLegendre,curlHcurlLegendre
   virtual void
-  orientFace(double const &u, double const &v, double const &w,
-             int const &flag1, int const &flag2, int const &flag3,
+  orientFace(int const &flag1, int const &flag2, int const &flag3,
              int const &faceNumber,
-             std::vector<std::vector<double> > &faceBasis,
-             std::string typeFunction) = 0; // typeFunction =GradH1Legendre ,
-                                            // HcurlLegendre,curlHcurlLegendre
+             const std::vector<double> &quadFaceFunctionsAllOrientation,
+             const std::vector<double> &triFaceFunctionsAllOrientation,
+             std::vector<double> &fTableCopy) = 0;
+  virtual void orientFace(
+    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+    const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+    std::vector<std::vector<double> > &fTableCopy) = 0;
 
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
                           std::vector<double> &edgeFunctions,
                           const std::vector<double> &eTablePositiveFlag,
                           const std::vector<double> &eTableNegativeFlag) = 0;
-  virtual void orientFace(double const &u, double const &v, double const &w,
-                          int const &flag1, int const &flag2, int const &flag3,
-                          int const &faceNumber,
-                          std::vector<double> &faceFunctions) = 0;
+  inline int numberOrientationQuadFace(int const &flag1, int const &flag2,
+                                       int const &flag3)
+  {
+    if(flag1 == 1 && flag2 == 1 && flag3 == 1) { return 0; }
+    else if(flag1 == -1 && flag2 == 1 && flag3 == 1) {
+      return 1;
+    }
+    else if(flag1 == 1 && flag2 == -1 && flag3 == 1) {
+      return 2;
+    }
+    else if(flag1 == -1 && flag2 == -1 && flag3 == 1) {
+      return 3;
+    }
+    else if(flag1 == 1 && flag2 == 1 && flag3 == -1) {
+      return 4;
+    }
+    else if(flag1 == -1 && flag2 == 1 && flag3 == -1) {
+      return 5;
+    }
+    else if(flag1 == 1 && flag2 == -1 && flag3 == -1) {
+      return 6;
+    }
+    else {
+      return 7;
+    }
+  }
+  inline int numberOrientationTriFace(int const &flag1, int const &flag2)
+  {
+    if(flag1 == 0 && flag2 == 1) { return 0; }
+    else if(flag1 == 1 && flag2 == 1) {
+      return 1;
+    }
+    else if(flag1 == 2 && flag2 == 1) {
+      return 2;
+    }
+    else if(flag1 == 0 && flag2 == -1) {
+      return 3;
+    }
+    else if(flag1 == 1 && flag2 == -1) {
+      return 4;
+    }
+    else {
+      return 5;
+    }
+  }
 
   // Get information about the `keys' defined in GMSH API for one  element
   virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
