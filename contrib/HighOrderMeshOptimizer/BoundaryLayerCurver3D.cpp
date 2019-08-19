@@ -1223,6 +1223,52 @@ namespace BoundaryLayerCurver {
       repositionInteriorNodes(stackFaces, bndEl2column[i].second);
     }
   }
+
+  void curveBorders(VecPairMElemVecMElem &columns,
+                    std::vector<std::pair<int, MEdge> > &borderEdges)
+  {
+    for(size_t i = 0; i < borderEdges.size(); ++i) {
+
+      // FIXME: compute border interface then curve
+
+      std::size_t idx = borderEdges[i].first;
+      std::vector<MElement *> column = columns[idx].second;
+      MElement *firstEl = column[0];
+      if(firstEl->getPolynomialOrder() < 2) continue;
+
+      // Get an interior vertex and check if the border of the column is on a
+      // GFace. Then do the same for the bottom of column.
+      GFace *gf = NULL;
+      {
+        MVertex *v;
+        if(firstEl->getType() == TYPE_QUA) v = firstEl->getVertex(8);
+        else {
+          MElement *secondEl = column[1];
+          MEdge e;
+          computeCommonEdge(firstEl, secondEl, e);
+          MEdgeN en = firstEl->getHighOrderEdge(e);
+          v = en.getVertex(2);
+        }
+        GEntity *entity = v->onWhat();
+        if(entity && entity->dim() == 2) gf = entity->cast2Face();
+      }
+
+      GEdge *ge = NULL;
+      {
+        MEdgeN en = firstEl->getHighOrderEdge(borderEdges[i].second);
+        GEntity *entity = en.getVertex(2)->onWhat();
+        if(entity && entity->dim() == 1) ge = entity->cast2Edge();
+      }
+
+      if(gf) {
+        SVector3 n;
+        // if(gf->uniqueNormal(n, false))
+        //   curve2Dcolumn(columns[idx], NULL, ge, n);
+        // else
+        //   curve2Dcolumn(columns[idx], gf, ge, n);
+      }
+    }
+  }
 } // namespace BoundaryLayerCurver
 
 void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,

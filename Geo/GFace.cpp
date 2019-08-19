@@ -1238,6 +1238,8 @@ SVector3 GFace::normal(const SPoint2 &param) const
 
 bool GFace::uniqueNormal(SVector3 &n, bool oriented) const
 {
+  // FIXME: The normal of a plane surface should be computed a single time
+  //  and stored
   if(geomType() == GeomType::DiscreteSurface)
     return uniqueNormalDiscreteFace(n);
   else if(geomType() == GeomType::Plane) {

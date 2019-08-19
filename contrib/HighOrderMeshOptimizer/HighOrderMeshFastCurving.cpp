@@ -1115,7 +1115,7 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
   // If it is a planar surface: compute the normal for speedup
   SVector3 normal;
   bool haveNormal;
-  if(ent->dim() == 2) haveNormal = ent->cast2Face()->uniqueNormal(normal);
+  if(dim == 2) haveNormal = ent->cast2Face()->uniqueNormal(normal);
 
   // Compute edge/face -> elt. connectivity
   Msg::Info("Computing connectivity for entity %i...", ent->tag());
@@ -1126,6 +1126,7 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
   else
     calcFace2Elements(ent, face2el);
 
+  // Compute columns and curve
   if(p.thickness) {
     VecPairMElemVecMElem columns;
 
@@ -1202,9 +1203,9 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
   }
   if(onlyIfBLInfo && blFields.empty()) return;
 
+  // Main loop
   for(std::size_t i = 0; i < allEntities.size(); ++i) {
     GEntity *entity = allEntities[i];
-
     if(entity->dim() != p.dim) continue;
 
     // Get boundary entities
