@@ -687,6 +687,65 @@ namespace BoundaryLayerCurver {
     topEdge = interface.back().getHighOrderEdge(0, 1);
   }
 
+  void computeBorderInterface(const PairMElemVecMElem &column,
+                              const MEdge edge,
+                              std::vector<MFaceN> &interface,
+                              MEdgeN &bottomEdge,
+                              MEdgeN &topEdge)
+  {
+    const std::size_t nLayers = column.second.size();
+    MElement *bottomElement = column.first;
+    bottomEdge = bottomElement->getHighOrderEdge(edge);
+
+
+    // Compute stack of Primary vertices
+    std::vector<MVertex *> allPrimaryVertices;
+    computeStackPrimaryVertices(column, allPrimaryVertices);
+
+    std::vector<MVertex *> interfacePrimaryVertices;
+    {
+      int nVertexPerLayer = bottomElement->getNumPrimaryVertices();
+      int n0 = -1;
+      int n1 = -1;
+      for(int i = 0; i < nVertexPerLayer; ++i) {
+        if(bottomEdge.getVertex(0) == allPrimaryVertices[i]) n0 = i;
+        if(bottomEdge.getVertex(1) == allPrimaryVertices[i]) n1 = i;
+      }
+      if(n0 == -1 || n1 == -1) {
+        Msg::Error("Error in computeBorderInterface");
+        return;
+      }
+      interfacePrimaryVertices.resize(2 * (nLayers));
+      for(std::size_t i = 0; i < nLayers; ++i) {
+        interfacePrimaryVertices[2 * i + 0] =
+          allPrimaryVertices[nVertexPerLayer * i + n0];
+        interfacePrimaryVertices[2 * i + 1] =
+          allPrimaryVertices[nVertexPerLayer * i + n1];
+      }
+    }
+
+    interface.clear();
+    for(int i = 0; i < nLayers - 1; ++i) {
+      MVertex *v0 = interfacePrimaryVertices[2 * i + 0];
+      MVertex *v1 = interfacePrimaryVertices[2 * i + 1];
+      MVertex *v2 = interfacePrimaryVertices[2 * i + 3];
+      MVertex *v3 = interfacePrimaryVertices[2 * i + 2];
+      if(v2 == v1 && v3 == v0) {
+        Msg::Error("Error in computeInterface: not an element");
+      }
+      if(v2 == v1) {
+        v2 = v3;
+        v3 = NULL;
+      }
+      else if(v3 == v0) {
+        v3 = NULL;
+      }
+      interface.push_back(
+        column.second[i]->getHighOrderFace(MFace(v0, v1, v2, v3)));
+    }
+    topEdge = interface.back().getHighOrderEdge(0, 1);
+  }
+
   void getBisectorsAtCommonCorners(const MElement *surface1,
                                    const MElement *surface2,
                                    MEdgeN const &commonEdge, SVector3 &n1,
