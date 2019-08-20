@@ -3055,6 +3055,13 @@ void orientMeshGFace::operator()(GFace *gf)
 {
   if(!gf->getNumMeshElements()) return;
 
+  // Warning: it's not clear if periodic meshes should be orientated according
+  // to the orientation of the underlying CAD surface. Since we don't reorient
+  // periodic curve meshes, let's also not reorient surface meshes for now. This
+  // has implications for high-order periodic meshes: see comment in
+  // FixPeriodicMesh().
+  if(gf->getMeshMaster() != gf) return;
+
   gf->model()->setCurrentMeshEntity(gf);
 
   if(gf->geomType() == GEntity::DiscreteSurface ||

@@ -6183,7 +6183,7 @@ double opt_mesh_ho_optimize(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[3]->value
-      (CTX::instance()->mesh.hoOptimize);
+      (CTX::instance()->mesh.hoOptimize == 2 ? 1 : 0);
 #endif
   return CTX::instance()->mesh.hoOptimize;
 }

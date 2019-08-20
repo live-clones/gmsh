@@ -7,6 +7,7 @@
 //   Brian Helenbrook
 //
 
+#include "GModel.h"
 #include "HighOrder.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -18,6 +19,8 @@
 #include "GmshMessage.h"
 #include "OS.h"
 #include "meshGFaceOptimize.h"
+
+typedef std::map<MFace, std::vector<MVertex *>, Less_Face> faceContainer;
 
 void subdivide_pyramid(MElement *element, GRegion *gr,
                        faceContainer &faceVertices,

@@ -49,6 +49,7 @@
 #if defined(HAVE_OPTHOM)
 #include "HighOrderMeshOptimizer.h"
 #include "HighOrderMeshElasticAnalogy.h"
+#include "HighOrderMeshFastCurving.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -1006,10 +1007,10 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
     p.itMax = CTX::instance()->mesh.hoIterMax;
     p.optPassMax = CTX::instance()->mesh.hoPassMax;
-    p.dim = GModel::current()->getDim();
+    p.dim = m->getDim();
     p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
     p.optCAD = CTX::instance()->mesh.hoDistCAD;
-    HighOrderMeshOptimizer(GModel::current(), p);
+    HighOrderMeshOptimizer(m, p);
 #else
     Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
@@ -1017,6 +1018,17 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
   else if(how == "HighOrderElastic") {
 #if defined(HAVE_OPTHOM)
     HighOrderMeshElasticAnalogy(m, false);
+#else
+    Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
+  }
+  else if(how == "HighOrderFastCurving") {
+#if defined(HAVE_OPTHOM)
+    FastCurvingParameters p;
+    p.dim = m->getMeshDim();
+    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
+    p.thickness = false;
+    HighOrderMeshFastCurving(m, p, true);
 #else
     Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
@@ -1099,6 +1111,7 @@ void GenerateMesh(GModel *m, int ask)
 
   // Change any high order elements back into first order ones
   SetOrder1(m);
+  FixPeriodicMesh(m);
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
@@ -1142,19 +1155,28 @@ void GenerateMesh(GModel *m, int ask)
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);
 
-  // Create high order elements
-  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1)
+  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1){
+    // Create high order elements
     SetOrderN(m, CTX::instance()->mesh.order,
               CTX::instance()->mesh.secondOrderLinear,
               CTX::instance()->mesh.secondOrderIncomplete);
 
-  // Optimize high order elements
-  if(CTX::instance()->mesh.hoOptimize < 0 ||
-     CTX::instance()->mesh.hoOptimize >= 2)
-    OptimizeMesh(GModel::current(), "HighOrderElastic");
+    // Optimize high order elements
+    if(CTX::instance()->mesh.hoOptimize == 2 ||
+       CTX::instance()->mesh.hoOptimize == 3)
+      OptimizeMesh(m, "HighOrderElastic");
 
-  if(CTX::instance()->mesh.hoOptimize >= 1)
-    OptimizeMesh(GModel::current(), "HighOrder");
+    if(CTX::instance()->mesh.hoOptimize == 1 ||
+       CTX::instance()->mesh.hoOptimize == 2)
+      OptimizeMesh(m, "HighOrder");
+
+    if(CTX::instance()->mesh.hoOptimize == 4)
+      OptimizeMesh(m, "HighOrderFastCurving");
+  }
+
+  // make sure periodic meshes are actually periodic and store periodic node
+  // correspondances
+  FixPeriodicMesh(m);
 
   Msg::Info("%d nodes %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());

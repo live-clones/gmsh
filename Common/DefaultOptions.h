@@ -1070,7 +1070,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
     "Number of layers around a problematic element to consider for high-order optimization"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
-    "Optimize high-order meshes? (-1: elastic smoothing, 1: optimization, 2: both)" },
+    "Optimize high-order meshes? (0: none, 1: optimization, 2: elastic+optimization, "
+    "3: elastic, 4: fast curving)" },
   { F|O, "HighOrderPassMax", opt_mesh_ho_pass_max, 25,
     "Maximum number of high-order optimization passes (moving barrier)"},
   { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
