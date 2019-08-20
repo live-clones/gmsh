@@ -433,14 +433,14 @@ namespace BoundaryLayerCurver {
   }
 
   // compute adjacencies of boundary elements, thus of columns
-  void computeAdjacencies(VecPairMElemVecMElem &bndEl2column,
+  void computeAdjacencies(VecPairMElemVecMElem &columns,
                           std::vector<std::pair<int, int> > &adjacencies,
                           std::vector<std::pair<int, MEdge> > &borderEdges)
   {
     std::map<MEdge, int, Less_Edge> edge2element;
     std::map<MEdge, int, Less_Edge>::iterator it;
-    for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
-      MElement *el = bndEl2column[i].first;
+    for(std::size_t i = 0; i < columns.size(); ++i) {
+      MElement *el = columns[i].first;
       for(std::size_t j = 0; j < el->getNumEdges(); ++j) {
         MEdge e = el->getEdge(j);
         it = edge2element.find(e);
@@ -527,24 +527,24 @@ namespace BoundaryLayerCurver {
     return v0In && v1In;
   }
 
-  void computeStackPrimaryVertices(const PairMElemVecMElem &c1,
+  void computeStackPrimaryVertices(const PairMElemVecMElem &column,
                                    std::vector<MVertex *> &stack)
   {
     // FIXME Currently, we compute the top vertices until the last but one
     //  element of the stack. It may be interesting to compute the last one.
-    int numVertexPerLayer = c1.first->getNumPrimaryVertices();
-    std::size_t numLayers = c1.second.size();
+    int numVertexPerLayer = column.first->getNumPrimaryVertices();
+    std::size_t numLayers = column.second.size();
     stack.assign(numVertexPerLayer * numLayers, NULL);
 
     int k = 0;
     for(int i = 0; i < numVertexPerLayer; ++i) {
-      stack[k++] = c1.first->getVertex(i);
+      stack[k++] = column.first->getVertex(i);
     }
-    MFace bottomFace = c1.first->getFace(0);
+    MFace bottomFace = column.first->getFace(0);
     for(std::size_t i = 0; i < numLayers - 1; ++i) {
-      MElement *currentElement = c1.second[i];
+      MElement *currentElement = column.second[i];
       MFace topFace;
-      if(!computeCommonFace(currentElement, c1.second[i + 1], topFace)) {
+      if(!computeCommonFace(currentElement, column.second[i + 1], topFace)) {
         Msg::Error("Did not find common face");
       }
 
@@ -619,7 +619,7 @@ namespace BoundaryLayerCurver {
 
     // Compute stack of high order faces
     stack.clear();
-    for(int i = 0; i < nLayers - 1; ++i) {
+    for(std::size_t i = 0; i < nLayers - 1; ++i) {
       MVertex *v0 = interfacePrimaryVertices[2 * i + 0];
       MVertex *v1 = interfacePrimaryVertices[2 * i + 1];
       MVertex *v2 = interfacePrimaryVertices[2 * i + 3];
@@ -642,23 +642,23 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void computeInterface(const PairMElemVecMElem &c1,
-                        const PairMElemVecMElem &c2,
+  void computeInterface(const PairMElemVecMElem &col1,
+                        const PairMElemVecMElem &col2,
                         std::vector<MFaceN> &interface, MEdgeN &bottomEdge,
                         MEdgeN &topEdge)
   {
     MEdge commonEdge;
-    if(!computeCommonEdge(c1.first, c2.first, commonEdge)) {
+    if(!computeCommonEdge(col1.first, col2.first, commonEdge)) {
       Msg::Error("Couldn't find common edge on bottom elements");
       return;
     }
-    bottomEdge = c1.first->getHighOrderEdge(commonEdge);
+    bottomEdge = col1.first->getHighOrderEdge(commonEdge);
 
-    if(c1.second.size() > c2.second.size()) {
-      computeStackHighOrderFaces(c1, bottomEdge, interface);
+    if(col1.second.size() > col2.second.size()) {
+      computeStackHighOrderFaces(col1, bottomEdge, interface);
     }
     else {
-      computeStackHighOrderFaces(c2, bottomEdge, interface);
+      computeStackHighOrderFaces(col2, bottomEdge, interface);
     }
 
     topEdge = interface.back().getHighOrderEdge(0, 1);
@@ -857,7 +857,7 @@ namespace BoundaryLayerCurver {
     fullMatrix<double> newxyz(orderCurve + 1, 3);
     data->invA.mult(xyz, newxyz);
 
-    for(int i = 2; i < topEdge.getNumVertices(); ++i) {
+    for(std::size_t i = 2; i < topEdge.getNumVertices(); ++i) {
       MVertex *v = topEdge.getVertex(i);
       v->x() = newxyz(i, 0);
       v->y() = newxyz(i, 1);
@@ -905,12 +905,12 @@ namespace BoundaryLayerCurver {
     //    draw3DFrame(p2, t, n2, w, .1, *GModel::current()->firstFace());
   }
 
-  void computePositionInteriorEdgesLinearTFI(std::vector<MFaceN> &column,
+  void computePositionInteriorEdgesLinearTFI(std::vector<MFaceN> &stackFaces,
                                              const MEdgeN &baseEdge,
                                              const MEdgeN &topEdge)
   {
     // Here, we assume that "thickness" is identical on the left and on the
-    // right part of the column => identical eta_i
+    // right part of the stack => identical eta_i
     MVertex *vbot = baseEdge.getVertex(0);
     MVertex *vtop = topEdge.getVertex(0);
     double dX = vtop->x() - vbot->x();
@@ -926,9 +926,9 @@ namespace BoundaryLayerCurver {
     else if(std::abs(dZ) > std::abs(dX))
       componentToLookAt = 2;
 
-    // Go trough the whole column and compute TFI position of topVertices
-    for(int i = 1; i < (int)column.size() - 1; ++i) {
-      MEdgeN e = column[i].getHighOrderEdge(0, 1);
+    // Go trough the whole stack and compute TFI position of topVertices
+    for(std::size_t i = 1; i < (int)stackFaces.size() - 1; ++i) {
+      MEdgeN e = stackFaces[i].getHighOrderEdge(0, 1);
       MVertex *v = e.getVertex(0);
       double factor;
       switch(componentToLookAt) {
@@ -936,7 +936,7 @@ namespace BoundaryLayerCurver {
       case 1: factor = (v->y() - vbot->y()) / dY; break;
       case 2: factor = (v->z() - vbot->z()) / dZ; break;
       }
-      for(int j = 2; j < e.getNumVertices(); ++j) {
+      for(std::size_t j = 2; j < e.getNumVertices(); ++j) {
         MVertex *vbot = baseEdge.getVertex(j);
         MVertex *vtop = topEdge.getVertex(j);
         MVertex *v = e.getVertex(j);
@@ -947,10 +947,10 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void repositionInteriorNodes(std::vector<MFaceN> &column)
+  void repositionInteriorNodes(std::vector<MFaceN> &stackFaces)
   {
-    for(std::size_t i = 0; i < column.size(); ++i) {
-      MFaceN &f = column[i];
+    for(std::size_t i = 0; i < stackFaces.size(); ++i) {
+      MFaceN &f = stackFaces[i];
       const fullMatrix<double> *placement = NULL;
       if(f.isTriangular()) {
         // TODO Determine if edge 0 or 2
@@ -963,7 +963,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void curveInterface(std::vector<MFaceN> &column, const MElement *bottom1,
+  void curveInterface(std::vector<MFaceN> &stackFaces, const MElement *bottom1,
                       const MElement *bottom2, const MEdgeN &baseEdge,
                       MEdgeN &topEdge, double dampingFactor,
                       const GFace *bndEnt, bool linear)
@@ -976,11 +976,11 @@ namespace BoundaryLayerCurver {
     computePosition3DEdge(bottom1, bottom2, baseEdge, topEdge, parameters, 0,
                           dampingFactor, bndEnt);
 
-    computePositionInteriorEdgesLinearTFI(column, baseEdge, topEdge);
-    repositionInteriorNodes(column);
+    computePositionInteriorEdgesLinearTFI(stackFaces, baseEdge, topEdge);
+    repositionInteriorNodes(stackFaces);
   }
 
-  void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
+  void curveInterfaces(VecPairMElemVecMElem &columns,
                        std::vector<std::pair<int, int> > &adjacencies,
                        const GFace *boundary)
   {
@@ -988,36 +988,36 @@ namespace BoundaryLayerCurver {
     for(std::size_t i = 0; i < adjacencies.size(); ++i) {
       MEdgeN bottomEdge, topEdge;
       std::vector<MFaceN> interface;
-      PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
-      PairMElemVecMElem &column2 = bndEl2column[adjacencies[i].second];
+      PairMElemVecMElem &col1 = columns[adjacencies[i].first];
+      PairMElemVecMElem &col2 = columns[adjacencies[i].second];
       // bool doIt = true;
-      // if (column1.first->getNum() != 861 && column1.first->getNum() != 467)
+      // if (col1.first->getNum() != 861 && col1.first->getNum() != 467)
       //   doIt = false;
-      // if (column2.first->getNum() != 861 && column2.first->getNum() != 467)
+      // if (col2.first->getNum() != 861 && col2.first->getNum() != 467)
       //   doIt = false;
-      // if (column1.first->getNum() != 5184 || column2.first->getNum() != 4750)
+      // if (col1.first->getNum() != 5184 || col2.first->getNum() != 4750)
       //   continue;
 
       // if (doIt) {
-      computeInterface(column1, column2, interface, bottomEdge, topEdge);
-      curveInterface(interface, column1.first, column2.first, bottomEdge,
+      computeInterface(col1, col2, interface, bottomEdge, topEdge);
+      curveInterface(interface, col1.first, col2.first, bottomEdge,
                      topEdge, 0, boundary, true);
       // Msg::Error("RETURN"); return;
       // }
     }
   }
 
-  void computeStackHighOrderFaces(const PairMElemVecMElem &bndEl2column,
+  void computeStackHighOrderFaces(const PairMElemVecMElem &column,
                                   std::vector<MFaceN> &stack)
   {
-    const std::vector<MElement *> &column = bndEl2column.second;
-    stack.resize(column.size());
+    const std::vector<MElement *> &stackElements = column.second;
+    stack.resize(stackElements.size());
 
     std::vector<MVertex *> allPrimaryVertices;
-    computeStackPrimaryVertices(bndEl2column, allPrimaryVertices);
+    computeStackPrimaryVertices(column, allPrimaryVertices);
     // FIXME already calculated in computeInterfaces. Reuse them?
 
-    int nVertexPerLayer = bndEl2column.first->getNumPrimaryVertices();
+    int nVertexPerLayer = column.first->getNumPrimaryVertices();
     for(std::size_t j = 0; j < stack.size(); ++j) {
       MFace f;
       if(nVertexPerLayer == 3)
@@ -1026,7 +1026,7 @@ namespace BoundaryLayerCurver {
       else
         f = MFace(allPrimaryVertices[j * 4 + 0], allPrimaryVertices[j * 4 + 1],
                   allPrimaryVertices[j * 4 + 2], allPrimaryVertices[j * 4 + 3]);
-      stack[j] = column[j]->getHighOrderFace(f);
+      stack[j] = stackElements[j]->getHighOrderFace(f);
     }
   }
 
@@ -1084,7 +1084,7 @@ namespace BoundaryLayerCurver {
     fullMatrix<double> newxyz(data->invA.size1(), 3);
     data->invA.mult(xyz, newxyz);
 
-    for(int i = nVerticesBoundary; i < topFace.getNumVertices(); ++i) {
+    for(std::size_t i = nVerticesBoundary; i < topFace.getNumVertices(); ++i) {
       MVertex *v = topFace.getVertex(i);
       v->x() = newxyz(i, 0);
       v->y() = newxyz(i, 1);
@@ -1092,7 +1092,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void computePositionInteriorFacesLinearTFI(std::vector<MFaceN> &column,
+  void computePositionInteriorFacesLinearTFI(std::vector<MFaceN> &stackFaces,
                                              const MFaceN &baseFace,
                                              const MFaceN &topFace)
   {
@@ -1113,9 +1113,9 @@ namespace BoundaryLayerCurver {
     else if(std::abs(dZ) > std::abs(dX))
       componentToLookAt = 2;
 
-    // Go trough the whole column and compute TFI position of topVertices
-    for(int i = 1; i < (int)column.size() - 1; ++i) {
-      MFaceN &f = column[i];
+    // Go trough the whole stack and compute TFI position of topVertices
+    for(std::size_t i = 1; i < (int)stackFaces.size() - 1; ++i) {
+      MFaceN &f = stackFaces[i];
       MVertex *v = f.getVertex(0);
       double factor;
       switch(componentToLookAt) {
@@ -1123,7 +1123,7 @@ namespace BoundaryLayerCurver {
       case 1: factor = (v->y() - vbot->y()) / dY; break;
       case 2: factor = (v->z() - vbot->z()) / dZ; break;
       }
-      for(int j = f.getNumVerticesOnBoundary(); j < f.getNumVertices(); ++j) {
+      for(std::size_t j = f.getNumVerticesOnBoundary(); j < f.getNumVertices(); ++j) {
         MVertex *vbot = baseFace.getVertex(j);
         MVertex *vtop = topFace.getVertex(j);
         MVertex *v = f.getVertex(j);
@@ -1138,7 +1138,7 @@ namespace BoundaryLayerCurver {
                                const fullMatrix<double> &placement)
   {
     int start = el->getNumVertices() - el->getNumVolumeVertices();
-    for(int i = start; i < el->getNumVertices(); ++i) {
+    for(std::size_t i = start; i < el->getNumVertices(); ++i) {
       MVertex *v = el->getVertex(i);
       v->x() = 0;
       v->y() = 0;
@@ -1154,11 +1154,11 @@ namespace BoundaryLayerCurver {
   }
 
   void repositionInteriorNodes(const std::vector<MFaceN> &stackFaces,
-                               const std::vector<MElement *> &column)
+                               const std::vector<MElement *> &stackElements)
   {
     // TODO: reposition last elements
-    for(std::size_t i = 0; i < column.size() - 1; ++i) {
-      MElement *el = column[i];
+    for(std::size_t i = 0; i < stackElements.size() - 1; ++i) {
+      MElement *el = stackElements[i];
       const fullMatrix<double> *placement = NULL;
       const int order = el->getPolynomialOrder();
       int nFace, nOtherFace, sign, rot;
@@ -1194,14 +1194,14 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void curveColumns(VecPairMElemVecMElem &bndEl2column, const GFace *boundary)
+  void curveColumns(VecPairMElemVecMElem &columns, const GFace *boundary)
   {
     Parameters3DSurface parameters;
-    for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
-      //      if (bndEl2column[i].first->getNum() != 855) continue;
+    for(std::size_t i = 0; i < columns.size(); ++i) {
+      //      if (columns[i].first->getNum() != 855) continue;
 
       std::vector<MFaceN> stackFaces;
-      computeStackHighOrderFaces(bndEl2column[i], stackFaces);
+      computeStackHighOrderFaces(columns[i], stackFaces);
 
       MFaceN &baseFace = stackFaces[0];
       MFaceN &topFace = stackFaces.rbegin()[1]; // last but one element
@@ -1209,7 +1209,7 @@ namespace BoundaryLayerCurver {
       computePosition3DFace(baseFace, topFace, parameters, boundary);
 
       computePositionInteriorFacesLinearTFI(stackFaces, baseFace, topFace);
-      repositionInteriorNodes(stackFaces, bndEl2column[i].second);
+      repositionInteriorNodes(stackFaces, columns[i].second);
     }
   }
 
@@ -1221,8 +1221,8 @@ namespace BoundaryLayerCurver {
       // FIXME: compute border interface then curve
 
       std::size_t idx = borderEdges[i].first;
-      std::vector<MElement *> column = columns[idx].second;
-      MElement *firstEl = column[0];
+      std::vector<MElement *> stackElements = columns[idx].second;
+      MElement *firstEl = stackElements[0];
       if(firstEl->getPolynomialOrder() < 2) continue;
 
       // Get an interior vertex and check if the border of the column is on a
@@ -1232,7 +1232,7 @@ namespace BoundaryLayerCurver {
         MVertex *v;
         if(firstEl->getType() == TYPE_QUA) v = firstEl->getVertex(8);
         else {
-          MElement *secondEl = column[1];
+          MElement *secondEl = stackElements[1];
           MEdge e;
           computeCommonEdge(firstEl, secondEl, e);
           MEdgeN en = firstEl->getHighOrderEdge(e);
@@ -1260,23 +1260,23 @@ namespace BoundaryLayerCurver {
   }
 } // namespace BoundaryLayerCurver
 
-void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
+void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
                           const GFace *boundary)
 {
   std::vector<std::pair<int, int> > adjacencies;
-  // BoundaryLayerCurver::computeAdjacencies(bndEl2column, adjacencies);
+  // BoundaryLayerCurver::computeAdjacencies(columns, adjacencies);
 
-  BoundaryLayerCurver::curveInterfaces(bndEl2column, adjacencies, boundary);
+  BoundaryLayerCurver::curveInterfaces(columns, adjacencies, boundary);
 
-  BoundaryLayerCurver::curveColumns(bndEl2column, boundary);
+  BoundaryLayerCurver::curveColumns(columns, boundary);
 
-  //  Msg::Info("size %d", bndEl2column.size());
-  for(int i = 0; i < bndEl2column.size(); ++i) {
-    bndEl2column[i].first->setVisibility(1);
-    //    Msg::Info("el %d, size %d", bndEl2column[i].first->getNum(),
-    //    bndEl2column[i].second.size());
-    for(std::size_t j = 0; j < bndEl2column[i].second.size(); ++j) {
-      bndEl2column[i].second[j]->setVisibility(1);
+  //  Msg::Info("size %d", columns.size());
+  for(std::size_t i = 0; i < columns.size(); ++i) {
+    columns[i].first->setVisibility(1);
+    //    Msg::Info("el %d, size %d", columns[i].first->getNum(),
+    //    columns[i].second.size());
+    for(std::size_t j = 0; j < columns[i].second.size(); ++j) {
+      columns[i].second[j]->setVisibility(1);
     }
   }
 }

@@ -202,16 +202,16 @@ namespace BoundaryLayerCurver {
 
 // BL in planar surface (always prefer this one if possible)
 //   GEdge is not mandatory but highly recommended
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
+void curve2DBoundaryLayer(VecPairMElemVecMElem &columns, SVector3 normal,
                           const GEdge *edge = NULL);
 
 // BL on CAD surface
 //   GEdge is not mandatory but highly recommended
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *,
+void curve2DBoundaryLayer(VecPairMElemVecMElem &columns, const GFace *,
                           const GEdge *edge = NULL);
 
 // 3D BL
-void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
+void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
                           const GFace *); // deprecated
 void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
                           MapMEdgeVecMElem &touchedElements);

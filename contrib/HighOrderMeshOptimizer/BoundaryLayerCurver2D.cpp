@@ -1308,7 +1308,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void computeStackHOEdgesFaces(const PairMElemVecMElem &column,
+  void  computeStackHOEdgesFaces(const PairMElemVecMElem &column,
                                 std::vector<MEdgeN> &stackEdges,
                                 std::vector<MFaceN> &stackFaces)
   {
@@ -1537,7 +1537,7 @@ namespace BoundaryLayerCurver {
   }
 } // namespace BoundaryLayerCurver
 
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
+void curve2DBoundaryLayer(VecPairMElemVecMElem &columns, SVector3 normal,
                           const GEdge *gedge)
 {
   double length = normal.normalize();
@@ -1547,38 +1547,38 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   }
 
   // FIXMEDEBUG for visualisation
-  for(int i = 0; i < bndEl2column.size(); ++i) {
-    bndEl2column[i].first->setVisibility(1);
-    for(std::size_t j = 0; j < bndEl2column[i].second.size(); ++j) {
-      bndEl2column[i].second[j]->setVisibility(1);
+  for(int i = 0; i < columns.size(); ++i) {
+    columns[i].first->setVisibility(1);
+    for(std::size_t j = 0; j < columns[i].second.size(); ++j) {
+      columns[i].second[j]->setVisibility(1);
     }
   }
 
-  for(int i = 0; i < bndEl2column.size(); ++i) {
-//    if(bndEl2column[i].first->getNum() != 205) continue; // t161
-//    if(bndEl2column[i].first->getNum() != 316) continue; // t161
-//    if(bndEl2column[i].first->getNum() != 1156) continue; // trimesh
-//    if(   bndEl2column[i].first->getNum() != 1156
-//       && bndEl2column[i].first->getNum() != 1079
-//       && bndEl2column[i].first->getNum() != 1102
-//       && bndEl2column[i].first->getNum() != 1119) continue;
+  for(int i = 0; i < columns.size(); ++i) {
+//    if(columns[i].first->getNum() != 205) continue; // t161
+//    if(columns[i].first->getNum() != 316) continue; // t161
+//    if(columns[i].first->getNum() != 1156) continue; // trimesh
+//    if(   columns[i].first->getNum() != 1156
+//       && columns[i].first->getNum() != 1079
+//       && columns[i].first->getNum() != 1102
+//       && columns[i].first->getNum() != 1119) continue;
 //    std::cout << std::endl;
-//    std::cout << "column " << bndEl2column[i].first->getNum() << std::endl;
-//    if(bndEl2column[i].first->getNum() != 1079) continue; // Good
-//    if(bndEl2column[i].first->getNum() != 1078) continue; // Next to good
-//    if(bndEl2column[i].first->getNum() != 1099) continue; // Long on corner
-//    if(bndEl2column[i].first->getNum() != 1102) continue; // Bad HO
-//    if(bndEl2column[i].first->getNum() != 1136) continue; // Bad linear
-//    if(bndEl2column[i].first->getNum() != 1149) continue; // shorter
-//    if(bndEl2column[i].first->getNum() != 1150) continue; // concave
-//    if(bndEl2column[i].first->getNum() != 1151) continue; // symetric of concave
-//    if(bndEl2column[i].first->getNum() != 1156) continue; // Strange
-//    if(bndEl2column[i].first->getNum() != 1157) continue; // next to Strange
-    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], NULL, gedge, normal);
+//    std::cout << "column " << columns[i].first->getNum() << std::endl;
+//    if(columns[i].first->getNum() != 1079) continue; // Good
+//    if(columns[i].first->getNum() != 1078) continue; // Next to good
+//    if(columns[i].first->getNum() != 1099) continue; // Long on corner
+//    if(columns[i].first->getNum() != 1102) continue; // Bad HO
+//    if(columns[i].first->getNum() != 1136) continue; // Bad linear
+//    if(columns[i].first->getNum() != 1149) continue; // shorter
+//    if(columns[i].first->getNum() != 1150) continue; // concave
+//    if(columns[i].first->getNum() != 1151) continue; // symetric of concave
+//    if(columns[i].first->getNum() != 1156) continue; // Strange
+//    if(columns[i].first->getNum() != 1157) continue; // next to Strange
+    BoundaryLayerCurver::curve2Dcolumn(columns[i], NULL, gedge, normal);
   }
 }
 
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
+void curve2DBoundaryLayer(VecPairMElemVecMElem &columns,
                           const GFace *gface, const GEdge *gedge)
 {
   if(!gface) {
@@ -1586,14 +1586,14 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     return;
   }
 
-  //  for (int i = 0; i < bndEl2column.size(); ++i) {
-  //    bndEl2column[i].first->setVisibility(1);
-  //    for (std::size_t j = 0; j < bndEl2column[i].second.size(); ++j) {
-  //      bndEl2column[i].second[j]->setVisibility(1);
+  //  for (int i = 0; i < columns.size(); ++i) {
+  //    columns[i].first->setVisibility(1);
+  //    for (std::size_t j = 0; j < columns[i].second.size(); ++j) {
+  //      columns[i].second[j]->setVisibility(1);
   //    }
   //  }
 
-  for(int i = 0; i < bndEl2column.size(); ++i)
-    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge,
+  for(int i = 0; i < columns.size(); ++i)
+    BoundaryLayerCurver::curve2Dcolumn(columns[i], gface, gedge,
                                        SVector3());
 }
