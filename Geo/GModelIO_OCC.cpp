@@ -3332,6 +3332,12 @@ bool OCC_Internals::exportShapes(const std::string &fileName,
 {
   // iterate over all shapes with tags, and import them into the (sub)shape
   // _maps
+  _somap.Clear();
+  _shmap.Clear();
+  _fmap.Clear();
+  _wmap.Clear();
+  _emap.Clear();
+  _vmap.Clear();
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
   for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
