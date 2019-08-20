@@ -1305,7 +1305,6 @@ void FixPeriodicMesh(GModel *m)
         }
         else {
           MLine *srcLine = srcIter->second;
-          if(tgtLine->getNumVertices() != srcLine->getNumVertices()) throw;
           for(std::size_t i = 2; i < tgtLine->getNumVertices(); i++)
             p2p[tgtLine->getVertex(i)] = srcLine->getVertex(i);
         }
