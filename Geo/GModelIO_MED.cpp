@@ -121,8 +121,7 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
     return map[k];
   }
   case MED_TETRA10: {
-    //~ static const int map[10] = {0, 2, 1, 3, 6, 5, 4, 7, 8, 9};
-    static const int map[10] = {0, 1, 3, 2, 4, 9, 7, 6, 5, 8};
+    static const int map[10] = {0, 2, 1, 3, 6, 5, 4, 7, 8, 9};
     return map[k];
   }
   case MED_HEXA8: {
@@ -132,8 +131,8 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
   case MED_HEXA20: {
     //~ static const int map[20] = {0,  1,  3,  2,  4,  5,  6,  7,  8,  9,
                                 //~ 10, 11, 16, 17, 18, 19, 12, 13, 14, 15};
-    static const int map[20] = {3, 7, 6, 2, 0, 4, 5, 1, 15, 19,
-                                14, 13, 10, 16, 12, 8, 9, 17, 18, 11};
+    static const int map[20] = {0, 3, 2, 1, 4, 7, 6, 5, 9, 13,
+                                11, 8, 17, 19, 18, 16, 10, 15, 14, 12};
     return map[k];
   }
 #if(MED_MAJOR_NUM >= 3)
@@ -149,10 +148,8 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
     return map[k];
   }
   case MED_PENTA15: {
-    //~ static const int map[15] = {0, 2, 1, 3, 5, 4,
-                                //~ 7, 9, 6, 13, 14, 12, 8, 11, 10};
-    static const int map[15] = {3, 4, 5, 0, 1, 2,
-                                12, 14, 13, 6, 9, 7, 8, 10, 11};
+    static const int map[15] = {0, 2, 1, 3, 5, 4,
+                                7, 9, 6, 13, 14, 12, 8, 11, 10};
     return map[k];
   }
   case MED_PYRA5: {
