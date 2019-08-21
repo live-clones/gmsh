@@ -1,5 +1,6 @@
 4.5.0 (Work-in-progress): improved handling of anisotropic surface meshes in 3D
-Delaunay; small fixes.
+Delaunay; improved high-order periodic meshing; improved 2D boolean unions;
+small fixes.
 
 * Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
   like all other mesh optimizers); new arguments to mesh/optimize and
