@@ -1250,6 +1250,35 @@ namespace BoundaryLayerCurver {
     return false;
   }
 
+  bool computeOtherEdge(MElement *el, MEdge &edge, MEdge &other)
+  {
+    if(el->getNumEdges() == 3) {
+      for(int i = 0; i < 3; ++i) {
+        MVertex *v = el->getVertex(i);
+        if(edge.getVertex(0) != v && edge.getVertex(1) != v) {
+          other = MEdge(v, v);
+          return true;
+        }
+      }
+    }
+    else {
+      MVertex *vertices[4];
+      int k = 0;
+      for(int i = 0; i < 4; ++i) {
+        MVertex *v = el->getVertex(i);
+        if(edge.getVertex(0) != v && edge.getVertex(1) != v) {
+          vertices[k++] = v;
+        }
+      }
+      if(k != 2) {
+        other = MEdge();
+        return false;
+      }
+      other = MEdge(vertices[0], vertices[1]);
+      return true;
+    }
+  }
+
   void compute2DstackPrimaryVertices(const PairMElemVecMElem &column,
                                      std::vector<MVertex *> &stack)
   {
@@ -1257,21 +1286,29 @@ namespace BoundaryLayerCurver {
     const std::vector<MElement *> &stackElements = column.second;
     int numVertexPerLayer = 2;
     unsigned long numLayers = stackElements.size();
-    stack.assign(numVertexPerLayer * numLayers, NULL);
+    stack.assign(numVertexPerLayer * (numLayers + 1), NULL);
 
     int k = 0;
     for(int i = 0; i < numVertexPerLayer; ++i) {
       stack[k++] = bottomElement->getVertex(i);
     }
     MEdge bottomEdge = bottomElement->getEdge(0);
-    for(std::size_t i = 0; i < numLayers - 1; ++i) {
+    for(std::size_t i = 0; i < numLayers; ++i) {
       MElement *currentElement = stackElements[i];
       MEdge topEdge;
-      if(!computeCommonEdge(currentElement, stackElements[i + 1], topEdge)) {
-        Msg::Error("Did not find common edge");
+      bool success;
+      if(i < numLayers - 1) {
+        success =
+          computeCommonEdge(currentElement, stackElements[i + 1], topEdge);
+      }
+      else {
+        success = computeOtherEdge(currentElement, bottomEdge, topEdge);
+      }
+      if(!success) {
+        Msg::Error("Did not find common edge of layer %d", i);
       }
 
-      // Eeach edge that is not the bottom edge nor the top edge links a bottom
+      // Each edge that is not the bottom edge nor the top edge links a bottom
       // node with the corresponding top node
       for(int j = 0; j < currentElement->getNumEdges(); ++j) {
         MEdge edge = currentElement->getEdge(j);
@@ -1309,9 +1346,11 @@ namespace BoundaryLayerCurver {
   }
 
   void  computeStackHOEdgesFaces(const PairMElemVecMElem &column,
-                                std::vector<MEdgeN> &stackEdges,
-                                std::vector<MFaceN> &stackFaces)
+                                 std::vector<MEdgeN> &stackEdges,
+                                 std::vector<MFaceN> &stackFaces)
   {
+    // stackEdges is the stack of bottom edge of each face in stackFaces. Each
+    // edge in stackEdges have the same orientation
     const std::vector<MElement *> &stackElements = column.second;
     const int numElements = (int)stackElements.size();
     stackEdges.resize(numElements);
@@ -1324,21 +1363,24 @@ namespace BoundaryLayerCurver {
       MEdge e(primVert[2 * i + 0], primVert[2 * i + 1]);
       stackEdges[i] = stackElements[i]->getHighOrderEdge(e);
     }
-    for(std::size_t i = 0; i < numElements - 1; ++i) {
+    // FIXME NOW Check ok edges
+    for(std::size_t i = 0; i < numElements; ++i) {
       MFace face;
-      if(primVert[2 * i + 0] == primVert[2 * i + 2])
-        face =
-          MFace(primVert[2 * i + 1], primVert[2 * i + 0], primVert[2 * i + 3]);
-      else if(primVert[2 * i + 1] == primVert[2 * i + 3])
-        face =
-          MFace(primVert[2 * i + 0], primVert[2 * i + 1], primVert[2 * i + 2]);
+      MVertex *&v0 = primVert[2 * i + 0];
+      MVertex *&v1 = primVert[2 * i + 1];
+      MVertex *&v2 = primVert[2 * i + 2];
+      MVertex *&v3 = primVert[2 * i + 3];
+      // Note: we don't care about the orientation since we do not compute the
+      // quality from the MFaceN but from the MElement. However, the acute
+      // angle of the triangles should be every time at the same node (2nd).
+      if(v2 == v3 || v1 == v3)
+        face = MFace(v0, v1, v2);
+      else if(v0 == v2)
+        face = MFace(v1, v0, v3);
       else
-        face = MFace(primVert[2 * i + 0], primVert[2 * i + 1],
-                     primVert[2 * i + 3], primVert[2 * i + 2]);
+        face = MFace(v0, v1, v3, v2);
       stackFaces[i] = stackElements[i]->getHighOrderFace(face);
     }
-    // We don't care about the orientation of the last element
-    stackFaces.back() = stackElements.back()->getHighOrderFace(0, 0, 0);
   }
 
   bool edgesShareVertex(MEdgeN *e0, MEdgeN *e1)
@@ -1398,7 +1440,7 @@ namespace BoundaryLayerCurver {
     computeStackHOEdgesFaces(column, stackEdges, stackFaces);
 
     // Curve topEdge of first element and last edge
-    int iFirst = 1, iLast = (int)stackEdges.size() - 1;
+    std::size_t iFirst = 1, iLast = stackEdges.size() - 1;
     MEdgeN *baseEdge = &stackEdges[0];
     MEdgeN *firstEdge = &stackEdges[iFirst];
     if(edgesShareVertex(baseEdge, firstEdge)) {
