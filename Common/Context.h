@@ -84,7 +84,7 @@ struct contextGeometryOptions {
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occParallel, occBooleanPreserveNumbering;
-  int occDisableSTL, occImportLabels;
+  int occDisableSTL, occImportLabels, occUnionUnify;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;

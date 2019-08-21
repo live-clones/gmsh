@@ -181,6 +181,11 @@ Sew faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel@
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCUnionUnify
+Try to unify faces and edges (remove internal seams) which lie on the same geometry after performing a boolean union with the OpenCASCADE kernel@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OffsetX
 Model display offset along X-axis (in model coordinates)@*
 Default value: @code{0}@*

@@ -905,6 +905,9 @@ StringXNumber GeometryOptions_Number[] = {
     "OpenCASCADE kernel" },
   { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. ,
     "Sew faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel" },
+  { F|O, "OCCUnionUnify" , opt_geometry_occ_union_unify , 1. ,
+    "Try to unify faces and edges (remove internal seams) which lie on the same geometry "
+    "after performing a boolean union with the OpenCASCADE kernel" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. ,
     "Model display offset along X-axis (in model coordinates)" },
   { F,   "OffsetY" , opt_geometry_offset1 , 0. ,

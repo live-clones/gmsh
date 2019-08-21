@@ -74,6 +74,7 @@
 #include <ShapeFix_FixSmallFace.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wireframe.hxx>
+#include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <Standard_Version.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
@@ -2608,6 +2609,13 @@ bool OCC_Internals::booleanOperator(
         return false;
       }
       result = fuse.Shape();
+      // try to unify faces and edges of the shape (remove internal seams) which
+      // lie on the same geometry
+      if(CTX::instance()->geom.occUnionUnify) {
+        ShapeUpgrade_UnifySameDomain unify(result);
+        unify.Build();
+        result = unify.Shape();
+      }
       TopTools_ListIteratorOfListOfShape it(objectShapes);
       for(; it.More(); it.Next()) {
         mapOriginal.push_back(it.Value());

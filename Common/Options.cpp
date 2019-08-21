@@ -4802,6 +4802,13 @@ double opt_geometry_occ_sew_faces(OPT_ARGS_NUM)
   return CTX::instance()->geom.occSewFaces;
 }
 
+double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occUnionUnify = (int)val;
+  return CTX::instance()->geom.occUnionUnify;
+}
+
 double opt_geometry_occ_parallel(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
