@@ -1588,13 +1588,13 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &columns, SVector3 normal,
     return;
   }
 
-  // FIXMEDEBUG for visualisation
-  for(int i = 0; i < columns.size(); ++i) {
-    columns[i].first->setVisibility(1);
-    for(std::size_t j = 0; j < columns[i].second.size(); ++j) {
-      columns[i].second[j]->setVisibility(1);
-    }
-  }
+  // // FIXMEDEBUG for visualisation
+  // for(int i = 0; i < columns.size(); ++i) {
+  //   columns[i].first->setVisibility(1);
+  //   for(std::size_t j = 0; j < columns[i].second.size(); ++j) {
+  //     columns[i].second[j]->setVisibility(1);
+  //   }
+  // }
 
   for(int i = 0; i < columns.size(); ++i) {
 //    if(columns[i].first->getNum() != 205) continue; // t161
@@ -1616,6 +1616,12 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &columns, SVector3 normal,
 //    if(columns[i].first->getNum() != 1151) continue; // symetric of concave
 //    if(columns[i].first->getNum() != 1156) continue; // Strange
 //    if(columns[i].first->getNum() != 1157) continue; // next to Strange
+
+    // FIXMEDEBUG for visualisation
+    columns[i].first->setVisibility(1);
+    for(std::size_t j = 0; j < columns[i].second.size(); ++j) {
+      columns[i].second[j]->setVisibility(1);
+    }
     BoundaryLayerCurver::curve2Dcolumn(columns[i], NULL, gedge, normal);
   }
 }

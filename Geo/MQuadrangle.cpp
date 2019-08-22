@@ -513,12 +513,13 @@ namespace {
     for(int i = 0; i < ref.size1(); ++i) {
       double u = ref(i, 0);
       double v = ref(i, 1);
-      double tmp = u;
+      double tmp;
       if(swap) {
         tmp = u;
         u = v;
         v = tmp;
       }
+      tmp = u;
       switch(rot) {
       case 1:
         u = v;

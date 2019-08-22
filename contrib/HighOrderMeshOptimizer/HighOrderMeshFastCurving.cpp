@@ -1074,10 +1074,10 @@ namespace {
     for(std::size_t i = 0; i < columns.size(); ++i) {
       std::vector<MElement *> &col = columns[i].second;
       interiorElements.insert(col.begin(), col.end());
-      // FIXMEDEBUG for visulization
-      for(int j = 0; j < col.size(); ++j) {
-        if(col[j]) col[j]->setVisibility(1);
-      }
+      // // FIXMEDEBUG for visulization
+      // for(int j = 0; j < col.size(); ++j) {
+      //   if(col[j]) col[j]->setVisibility(1);
+      // }
     }
 
     std::set<MEdge, Less_Edge> BLShellEdges;
@@ -1156,14 +1156,14 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
         columns.clear();
         gather2Dcolumns(edge2el, boundary[i]->cast2Edge(), p, columns);
 
-        // FIXMEDEBUG for visualization
-        for(int j = 0; j < columns.size(); ++j) {
-          std::vector<MElement *> &col = columns[j].second;
-          for(int k = 0; k < col.size(); ++k) {
-            if(col[k]) col[k]->setVisibility(1);
-          }
-        }
-        continue;
+        // // FIXMEDEBUG for visualization
+        // for(int j = 0; j < columns.size(); ++j) {
+        //   std::vector<MElement *> &col = columns[j].second;
+        //   for(int k = 0; k < col.size(); ++k) {
+        //     if(col[k]) col[k]->setVisibility(1);
+        //   }
+        // }
+        // continue;
 
         if(haveNormal)
           curve2DBoundaryLayer(columns, normal, boundary[i]->cast2Edge());
