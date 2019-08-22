@@ -390,7 +390,7 @@ static void Mesh1D(GModel *m)
     }
 
     if(!nPending) break;
-    if(nIter++ > 10) break;
+    if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
 
   Msg::SetNumThreads(prevNumThreads);
@@ -540,7 +540,7 @@ static void Mesh2D(GModel *m)
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
       // serialize (self-intersections of 1D meshes are not thread safe)!
       if(nIter > 2) Msg::SetNumThreads(1);
-      if(nIter++ > 10) break;
+      if(nIter++ > CTX::instance()->mesh.maxRetries) break;
     }
   }
 

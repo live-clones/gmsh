@@ -11,6 +11,11 @@ Saved in: @code{General.OptionsFileName}
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.AlgorithmSwitchOnFailure
+Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based algorithms, switching to MeshAdapt)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.AngleSmoothNormals
 Threshold angle below which normals are not smoothed@*
 Default value: @code{30}@*
@@ -264,6 +269,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.MaxNumThreads3D
 Maximum number of threads for 3D meshing (0: use default)@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MaxRetries
+Maximum number of times meshing is retried on curves and surfaces with a pending mesh@*
+Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshOnlyVisible

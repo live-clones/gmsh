@@ -6008,6 +6008,22 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
   return CTX::instance()->mesh.algo2d;
 }
 
+double opt_mesh_algo_switch_on_failure(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.algoSwitchOnFailure = (int)val;
+  }
+  return CTX::instance()->mesh.algoSwitchOnFailure;
+}
+
+double opt_mesh_max_retries(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.maxRetries = (int)val;
+  }
+  return CTX::instance()->mesh.maxRetries;
+}
+
 double opt_mesh_algo_recombine(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

@@ -995,6 +995,9 @@ StringXNumber MeshOptions_Number[] = {
     "7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
     "3D mesh algorithm (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)" },
+  { F|O, "AlgorithmSwitchOnFailure" , opt_mesh_algo_switch_on_failure , 1 ,
+    "Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based "
+    "algorithms, switching to MeshAdapt)"},
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
@@ -1112,13 +1115,17 @@ StringXNumber MeshOptions_Number[] = {
     "Display width of mesh lines (in pixels)" },
 
   { F|O, "MaxIterDelaunay3D" , opt_mesh_max_iter_delaunay_3d, 0,
-    "Maximum number of point insertion iterations in 3D Delaunay mesher (0: unlimited)" },
+    "Maximum number of point insertion iterations in 3D Delaunay mesher "
+    "(0: unlimited)" },
   { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
     "Maximum number of threads for 1D meshing (0: use default)" },
   { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
     "Maximum number of threads for 2D meshing (0: use default)" },
   { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
     "Maximum number of threads for 3D meshing (0: use default)" },
+  { F|O, "MaxRetries" , opt_mesh_max_retries , 10 ,
+    "Maximum number of times meshing is retried on curves and surfaces with a "
+    "pending mesh"},
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
@@ -1126,7 +1133,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
     "METIS edge matching type 'ctype' (1: Random, 2: Sorted Heavy-Edge)" },
   { F|O, "MetisMaxLoadImbalance" , opt_mesh_partition_metis_max_load_imbalance, -1. ,
-    "METIS maximum load imbalance 'ufactor' (-1: default, i.e. 30 for K-way and 1 for Recursive)" },
+    "METIS maximum load imbalance 'ufactor' (-1: default, i.e. 30 for K-way and 1 "
+    "for Recursive)" },
   { F|O, "MetisObjective" , opt_mesh_partition_metis_objective, 1. ,
     "METIS objective type 'objtype' (1: min. edge-cut, 2: min. communication volume)" },
   { F|O, "MetisMinConn" , opt_mesh_partition_metis_min_conn, -1. ,

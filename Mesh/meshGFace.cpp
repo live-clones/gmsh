@@ -2844,7 +2844,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 void deMeshGFace::operator()(GFace *gf)
 {
   if(gf->geomType() == GEntity::DiscreteSurface) {
-    if(!static_cast<discreteFace *>(gf)->haveParametrization()) return;
+    if(!static_cast<discreteFace *>(gf)->haveParametrization()){
+      return;
+    }
   }
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
@@ -2975,7 +2977,8 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
-  if(gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
+  if(CTX::instance()->mesh.algoSwitchOnFailure &&
+     gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
      !isMeshValid(gf)) {
     Msg::Debug(
       "Delaunay-based mesher failed on surface %d -> moving to MeshAdapt",

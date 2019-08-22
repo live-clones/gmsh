@@ -324,8 +324,9 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
 void deMeshGEdge::operator()(GEdge *ge)
 {
   if(ge->geomType() == GEntity::DiscreteCurve){
-    if(!static_cast<discreteEdge *>(ge)->haveParametrization())
+    if(!static_cast<discreteEdge *>(ge)->haveParametrization()){
       return;
+    }
   }
   ge->deleteMesh();
   ge->meshStatistics.status = GEdge::PENDING;
@@ -542,10 +543,12 @@ void meshGEdge::operator()(GEdge *ge)
 
   ge->model()->setCurrentMeshEntity(ge);
 
-  if(ge->degenerate(1)) return;
-  if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
-  if(ge->meshAttributes.method == MESH_NONE) return;
-  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
+  if(ge->degenerate(1) ||
+     (ge->geomType() == GEntity::BoundaryLayerCurve) ||
+     (ge->meshAttributes.method == MESH_NONE) ||
+     (CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility())) {
+    return;
+  }
 
   deMeshGEdge dem;
   dem(ge);
