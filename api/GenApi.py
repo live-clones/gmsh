@@ -186,8 +186,9 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorpair(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
-    a.julia_arg = ("convert(Vector{Cint}, collect(Cint, Iterators.flatten(" + name + "))), " +
-                   "2 * length(" + name + ")")
+    a.julia_pre = (api_name + " = collect(Cint, Iterators.flatten(" + name + "))\n    " +
+                   api_name_n + " = length(" + api_name + ")")
+    a.julia_arg = (api_name + ", " + api_name_n)
     return a
 
 def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
