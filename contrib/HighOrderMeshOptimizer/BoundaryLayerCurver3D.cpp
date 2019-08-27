@@ -1028,23 +1028,6 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void curveInterface(std::vector<MFaceN> &stackFaces, const MElement *bottom1,
-                      const MElement *bottom2, const MEdgeN &baseEdge,
-                      MEdgeN &topEdge, double dampingFactor,
-                      const GFace *bndEnt, bool linear)
-  {
-    // inspired from curve2DQuadColumnTFI
-
-    Parameters3DCurve parameters;
-    computeExtremityCoefficients(bottom1, bottom2, baseEdge, topEdge,
-                                 parameters);
-    computePosition3DEdge(bottom1, bottom2, baseEdge, topEdge, parameters, 0,
-                          dampingFactor, bndEnt);
-
-    computePositionInteriorEdgesLinearTFI(stackFaces, baseEdge, topEdge);
-    repositionInteriorNodes(stackFaces);
-  }
-
   void curveInterfaces(VecPairMElemVecMElem &columns,
                        std::vector<std::pair<int, int> > &adjacencies,
                        const GFace *boundary)
@@ -1063,14 +1046,24 @@ namespace BoundaryLayerCurver {
       //   continue;
 
       // if (doIt) {
-      computeInterface(col1, col2, interface, bottomEdge, topEdge);
-      curveInterface(interface, col1.first, col2.first, bottomEdge,
-                     topEdge, 0, boundary, true);
+      computeInterface(col1, col2, interface);
+
+      Parameters3DCurve parameters;
+      MEdgeN baseEdge = interface[0].getHighOrderEdge(0, 0);
+      MEdgeN topEdge = interface.back().getHighOrderEdge(0, 0);
+      const MElement *bottomEl1 = col1.first;
+      const MElement *bottomEl2 = col2.first;
+      computeExtremityCoefficients(bottomEl1, bottomEl2, baseEdge, topEdge, parameters);
+      computePosition3DEdge(bottomEl1, bottomEl2, baseEdge, topEdge, parameters, 0, 0, boundary);
+
+      computePositionInteriorEdgesLinearTFI(interface, baseEdge, topEdge);
+      repositionInteriorNodes(interface);
       // Msg::Error("RETURN"); return;
       // }
     }
   }
 
+  // Returns the stack of faces that are shared by two successive element
   void computeStackHighOrderFaces(const PairMElemVecMElem &column,
                                   std::vector<MFaceN> &stack)
   {
