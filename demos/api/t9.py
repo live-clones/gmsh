@@ -32,7 +32,7 @@ plugin.run("CutPlane")
 
 # Third is Annotate
 plugin.setString("Annotate", "Text", "A nice title")
-# By convention, window coordinates larger than 99999 represent the center`
+# By convention, window coordinates larger than 99999 represent the center
 plugin.setNumber("Annotate", "X", 1.e5)
 plugin.setNumber("Annotate", "Y", 50)
 plugin.setString("Annotate", "Font", "Times-BoldItalic")

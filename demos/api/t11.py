@@ -61,7 +61,6 @@ model.mesh.generate(2)
 # Force a full-quad mesh with either option
 # gmsh.option.setNumber("Mesh.SubdivisionAlgorithm", 1)
 # gmsh.option.setNumber("Mesh.RecombinationAlgorithm", 2) # or 3
-
 # model.mesh.generate(2)
 
 gmsh.fltk.run()

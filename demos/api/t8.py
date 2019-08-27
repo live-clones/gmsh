@@ -1,40 +1,34 @@
 # This file reimplements gmsh/tutorial/t8.geo in Python.
-# It demonstrates post-processing, animations and using options.
+#
+# Post-processing, scripting, animations, options
 
 import gmsh
 
 model = gmsh.model
 factory = model.geo
 
-# adapted t1.py section {{{
-
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
 
+# Copied from t1.py...
 lc = 1e-2
 factory.addPoint(0, 0, 0, lc, 1)
 factory.addPoint(.1, 0,  0, lc, 2)
 factory.addPoint(.1, .3, 0, lc, 3)
 factory.addPoint(0, .3, 0, lc, 4)
-
 factory.addLine(1, 2, 1)
 factory.addLine(3, 2, 2)
 factory.addLine(3, 4, 3)
 factory.addLine(4, 1, 4)
-
 factory.addCurveLoop([4, 1, -2, 3], 1)
 factory.addPlaneSurface([1], 1)
-
 model.addPhysicalGroup(0, [1, 2], 1)
 model.addPhysicalGroup(1, [1, 2], 2)
 model.addPhysicalGroup(2, [1], 6)
-
 model.setPhysicalName(2, 6, "My surface")
+# ...end of copy
 
-model.geo.synchronize()
-# }}}
-
-# -- begin t8.py --
+factory.synchronize()
 
 # add post-processing views to work on
 gmsh.merge("view1.pos")
@@ -164,10 +158,11 @@ for num in range(1, 4):
 
         # write out the graphics scene to an image file
         # Gmsh will try to detect the file extension
-        if num == 3:
-            gmsh.write("t2-{:.2g}.gif".format(num2))
-            gmsh.write("t2-{:.2g}.ppm".format(num2))
-            gmsh.write("t2-{:.2g}.jpg".format(num2))
+
+        # if num == 3:
+        #     gmsh.write("t2-{:.2g}.gif".format(num2))
+        #     gmsh.write("t2-{:.2g}.ppm".format(num2))
+        #     gmsh.write("t2-{:.2g}.jpg".format(num2))
 
     if num == 3:
         pass
