@@ -527,130 +527,6 @@ namespace BoundaryLayerCurver {
     return v0In && v1In;
   }
 
-  // // Warning: returns the opposite, possibly degenerate face, e.g. returns
-  // // a MFace whose vertices are the unique opposite vertex for tetrahedra.
-  // // For prisms, the result depends on the input face. If it is a triangle,
-  // // the function returns the opposite triangular face. If it is a quad face,
-  // // the function returns the opposite edge.
-  // bool computeOppositeFace(MElement *el, MFace &face, MFace &other)
-  // {
-  //   switch(el->getType()) {
-  //   case TYPE_PRI:
-  //     if(face.getNumVertices() == 3) {
-  //       MVertex *vertices[3];
-  //       int k = 0;
-  //       for(int i = 0; i < 4; ++i) {
-  //         MVertex *v = el->getVertex(i);
-  //         if(edge.getVertex(0) != v && edge.getVertex(1) != v) {
-  //           vertices[k++] = v;
-  //         }
-  //       }
-  //       if(k != 2) {
-  //         other = MEdge();
-  //         return false;
-  //       }
-  //       other = MEdge(vertices[0], vertices[1]);
-  //       return true;
-  //     }
-  //   }
-  //   if(el->getNumEdges() == 3) {
-  //     for(int i = 0; i < 3; ++i) {
-  //       MVertex *v = el->getVertex(i);
-  //       if(edge.getVertex(0) != v && edge.getVertex(1) != v) {
-  //         other = MEdge(v, v);
-  //         return true;
-  //       }
-  //     }
-  //   }
-  //   else {
-  //     MVertex *vertices[4];
-  //     int k = 0;
-  //     for(int i = 0; i < 4; ++i) {
-  //       MVertex *v = el->getVertex(i);
-  //       if(edge.getVertex(0) != v && edge.getVertex(1) != v) {
-  //         vertices[k++] = v;
-  //       }
-  //     }
-  //     if(k != 2) {
-  //       other = MEdge();
-  //       return false;
-  //     }
-  //     other = MEdge(vertices[0], vertices[1]);
-  //     return true;
-  //   }
-  // }
-
-  void compute3DStackPrimaryVertices(const PairMElemVecMElem &column,
-                                     std::vector<MVertex *> &stack)
-  {
-    // FIXME Currently, we compute the top vertices until the last but one
-    //  element of the stack. It may be interesting to compute the last one.
-    MElement *bottomElement = column.first;
-    const std::vector<MElement *> &stackElements = column.second;
-    const int numVertexPerLayer = bottomElement->getNumPrimaryVertices();
-    std::size_t numLayers = stackElements.size();
-    stack.assign(numVertexPerLayer * numLayers, NULL);
-
-    int k = 0;
-    for(int i = 0; i < numVertexPerLayer; ++i) {
-      stack[k++] = bottomElement->getVertex(i);
-    }
-    MFace bottomFace = bottomElement->getFace(0);
-    for(std::size_t i = 0; i < numLayers - 1; ++i) {
-      MElement *currentElement = stackElements[i];
-      MFace topFace;
-      // if(!) {
-      //   Msg::Error("Did not find common face");
-      // }
-      bool success;
-      if(i < numLayers - 1) {
-        success =
-          computeCommonFace(currentElement, stackElements[i + 1], topFace);
-      }
-      else {
-        // success = computeOppositeFace(currentElement, bottomFace, topFace);
-      }
-      if(!success) {
-        Msg::Error("Did not find common edge of layer %d", i);
-      }
-
-      // Each edge that is not in bottom face nor in top face links a bottom
-      // node with the corresponding top node
-      for(int j = 0; j < currentElement->getNumEdges(); ++j) {
-        MEdge edge = currentElement->getEdge(j);
-        if(faceContainsEdge(bottomFace, edge) ||
-           faceContainsEdge(topFace, edge))
-          continue;
-
-        MVertex *vbot, *vtop;
-        if(faceContainsVertex(bottomFace, edge.getVertex(0))) {
-          vbot = edge.getVertex(0);
-          vtop = edge.getVertex(1);
-        }
-        else {
-          vbot = edge.getVertex(1);
-          vtop = edge.getVertex(0);
-        }
-
-        for(int l = k - numVertexPerLayer; l < k; ++l) {
-          if(stack[l] == vbot) {
-            stack[l + numVertexPerLayer] = vtop;
-            break;
-          }
-        }
-      }
-
-      // If there remains NULL values, it is because the vertex is the same
-      // on bottom face and top face.
-      for(int l = k; l < k + numVertexPerLayer; ++l) {
-        if(stack[l] == NULL) stack[l] = stack[l - numVertexPerLayer];
-      }
-
-      k += numVertexPerLayer;
-      bottomFace = topFace;
-    }
-  }
-
   // Returns the stack of edges and faces of the interface (i.e. the border
   // of the column) that is above bottomEdge
   void computeStackHighOrderFaces(const PairMElemVecMElem column,
@@ -662,7 +538,7 @@ namespace BoundaryLayerCurver {
 
     // Compute stack of Primary vertices
     std::vector<MVertex *> allPrimaryVertices;
-    compute3DStackPrimaryVertices(column, allPrimaryVertices);
+    computeStackPrimaryVertices(column, allPrimaryVertices);
 
     std::vector<MVertex *> interfacePrimaryVertices;
     {
@@ -727,18 +603,6 @@ namespace BoundaryLayerCurver {
     else {
       // computeStackHighOrderFaces(col2, commonEdge, stackFaces);
     }
-  }
-
-  void computeBorderInterface(const PairMElemVecMElem &column,
-                              const MEdge edge,
-                              std::vector<MFaceN> &interface,
-                              MEdgeN &bottomEdge,
-                              MEdgeN &topEdge)
-  {
-    // compute bottomEdge
-    bottomEdge = column.first->getHighOrderEdge(edge);
-    computeStackHighOrderFaces(column, bottomEdge, interface);
-    topEdge = interface.back().getHighOrderEdge(0, 1);
   }
 
   void getBisectorsAtCommonCorners(const MElement *surface1,
@@ -1063,7 +927,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  // Returns the stack of faces that are shared by two successive element
+  // Returns the stack of faces that are shared by two successive elements
   void computeStackHighOrderFaces(const PairMElemVecMElem &column,
                                   std::vector<MFaceN> &stack)
   {
@@ -1071,7 +935,7 @@ namespace BoundaryLayerCurver {
     stack.resize(stackElements.size());
 
     std::vector<MVertex *> allPrimaryVertices;
-    compute3DStackPrimaryVertices(column, allPrimaryVertices);
+    computeStackPrimaryVertices(column, allPrimaryVertices);
     // FIXME already calculated in computeInterfaces. Reuse them?
 
     int nVertexPerLayer = column.first->getNumPrimaryVertices();

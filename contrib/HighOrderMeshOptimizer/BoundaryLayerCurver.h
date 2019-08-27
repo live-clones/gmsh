@@ -52,6 +52,9 @@ namespace BoundaryLayerCurver {
 
   MElement *createPrimaryElement(MElement *el);
 
+  void computeStackPrimaryVertices(const PairMElemVecMElem &column,
+                                   std::vector<MVertex *> &stack);
+
   // The boundary layer curver algorithm is seperated into different modules:
   namespace EdgeCurver2D {
   }
