@@ -28,14 +28,8 @@ factory.synchronize()
 # add a post-processing view to use as a size field
 gmsh.merge("t17.pos")
 
-field = gmsh.model.mesh.field
-
-# The field is of type "PostView"
-bg_field = field.add("PostView")
-# "IView" is the index of the view you want to use.
-field.setNumber(bg_field, "IView", 0)
-# set the field as a background mesh
-field.setAsBackgroundMesh(bg_field)
+bg_field = model.mesh.field.fromView(0)
+model.mesh.field.setAsBackgroundMesh(bg_field)
 
 # use bamg
 gmsh.option.setNumber("Mesh.SmoothRatio", 3)
