@@ -1375,7 +1375,6 @@ namespace BoundaryLayerCurver {
       MEdge e(primVert[2 * i + 0], primVert[2 * i + 1]);
       stackEdges[i] = stackElements[i]->getHighOrderEdge(e);
     }
-    // FIXME NOW Check ok edges
     for(std::size_t i = 0; i < numElements; ++i) {
       MFace face;
       MVertex *&v0 = primVert[2 * i + 0];
@@ -1384,7 +1383,7 @@ namespace BoundaryLayerCurver {
       MVertex *&v3 = primVert[2 * i + 3];
       // Note: we don't care about the orientation since we do not compute the
       // quality from the MFaceN but from the MElement. However, the acute
-      // angle of the triangles should be every time at the same node (2nd).
+      // angle of the triangles should be every time at the same node (the 2nd).
       if(v2 == v3 || v1 == v3)
         face = MFace(v0, v1, v2);
       else if(v0 == v2)

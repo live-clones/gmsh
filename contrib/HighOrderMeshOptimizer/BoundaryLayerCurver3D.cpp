@@ -529,11 +529,13 @@ namespace BoundaryLayerCurver {
 
   // Returns the stack of edges and faces of the interface (i.e. the border
   // of the column) that is above bottomEdge
-  void computeStackHighOrderFaces(const PairMElemVecMElem column,
-                                  const MEdge bottomEdge,
-                                  std::vector<MFaceN> &stackEdges,
-                                  std::vector<MFaceN> &stackFaces)
+  void computeStackHOEdgesFaces(const PairMElemVecMElem column,
+                                const MEdge bottomEdge,
+                                std::vector<MEdgeN> &stackEdges,
+                                std::vector<MFaceN> &stackFaces)
   {
+    // stackEdges is the stack of bottom edge of each face in stackFaces. Each
+    // edge in stackEdges have the same orientation
     const std::size_t nLayers = column.second.size();
 
     // Compute stack of Primary vertices
@@ -563,6 +565,7 @@ namespace BoundaryLayerCurver {
     }
 
     // Compute stack of high order faces
+    stackEdges.clear();
     stackFaces.clear();
     for(std::size_t i = 0; i < nLayers - 1; ++i) {
       MVertex *v0 = interfacePrimaryVertices[2 * i + 0];
@@ -582,6 +585,7 @@ namespace BoundaryLayerCurver {
         v3 = NULL;
       }
 
+      stackEdges.push_back(column.second[i]->getHighOrderEdge(MEdge(v0, v1)));
       stackFaces.push_back(
         column.second[i]->getHighOrderFace(MFace(v0, v1, v2, v3)));
     }
@@ -589,6 +593,7 @@ namespace BoundaryLayerCurver {
 
   void computeInterface(const PairMElemVecMElem &col1,
                         const PairMElemVecMElem &col2,
+                        std::vector<MEdgeN> &stackEdges,
                         std::vector<MFaceN> &stackFaces)
   {
     MEdge commonEdge;
@@ -598,10 +603,10 @@ namespace BoundaryLayerCurver {
     }
 
     if(col1.second.size() > col2.second.size()) {
-      // computeStackHighOrderFaces(col1, commonEdge, stackFaces);
+      computeStackHOEdgesFaces(col1, commonEdge, stackEdges, stackFaces);
     }
     else {
-      // computeStackHighOrderFaces(col2, commonEdge, stackFaces);
+      computeStackHOEdgesFaces(col2, commonEdge, stackEdges, stackFaces);
     }
   }
 
@@ -898,7 +903,8 @@ namespace BoundaryLayerCurver {
   {
     // compute then curve interfaces between columns
     for(std::size_t i = 0; i < adjacencies.size(); ++i) {
-      std::vector<MFaceN> interface;
+      std::vector<MEdgeN> stackEdges;
+      std::vector<MFaceN> stackFaces;
       PairMElemVecMElem &col1 = columns[adjacencies[i].first];
       PairMElemVecMElem &col2 = columns[adjacencies[i].second];
       // bool doIt = true;
@@ -910,18 +916,18 @@ namespace BoundaryLayerCurver {
       //   continue;
 
       // if (doIt) {
-      computeInterface(col1, col2, interface);
+      computeInterface(col1, col2, stackEdges, stackFaces);
 
-      Parameters3DCurve parameters;
-      MEdgeN baseEdge = interface[0].getHighOrderEdge(0, 0);
-      MEdgeN topEdge = interface.back().getHighOrderEdge(0, 0);
+      MEdgeN baseEdge = stackEdges[0];
+      MEdgeN topEdge = stackEdges.back();
       const MElement *bottomEl1 = col1.first;
       const MElement *bottomEl2 = col2.first;
-      computeExtremityCoefficients(bottomEl1, bottomEl2, baseEdge, topEdge, parameters);
+      Parameters3DCurve parameters;
+      computeExtremityCoefficients(bottomEl1, bottomEl2, stackEdges[0], stackEdges.back(), parameters);
       computePosition3DEdge(bottomEl1, bottomEl2, baseEdge, topEdge, parameters, 0, 0, boundary);
 
-      computePositionInteriorEdgesLinearTFI(interface, baseEdge, topEdge);
-      repositionInteriorNodes(interface);
+      computePositionInteriorEdgesLinearTFI(stackFaces, baseEdge, topEdge);
+      repositionInteriorNodes(stackFaces);
       // Msg::Error("RETURN"); return;
       // }
     }
@@ -1148,8 +1154,8 @@ namespace BoundaryLayerCurver {
 
       std::vector<MFaceN> stackFaces;
       std::vector<MEdgeN> stackEdges;
+      computeStackHOEdgesFaces(columns[idx], edge, stackEdges, stackFaces);
       // MEdgeN bottomEdge, topEdge;
-      // computeStackHighOrderFaces(columns[idx], edge, stackFaces, stackEdges);
 
 
 
