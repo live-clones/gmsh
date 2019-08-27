@@ -2239,6 +2239,24 @@ function remove(tag)
 end
 
 """
+    gmsh.model.mesh.field.fromView(viewTag, tag = -1)
+
+Add a new mesh size field from a post-processing view with tag `viewTag`. If
+`tag` is positive, assign the tag explicitly; otherwise a new tag is assigned
+automatically. Return the field tag.
+
+Return an integer value.
+"""
+function fromView(viewTag, tag = -1)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelMeshFieldFromView, gmsh.lib), Cint,
+          (Cint, Cint, Ptr{Cint}),
+          viewTag, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshFieldFromView returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.model.mesh.field.setNumber(tag, option, value)
 
 Set the numerical option `option` to value `value` for field `tag`.

@@ -1037,6 +1037,13 @@ GMSH_API int gmshModelMeshFieldAdd(const char * fieldType,
 GMSH_API void gmshModelMeshFieldRemove(const int tag,
                                        int * ierr);
 
+/* Add a new mesh size field from a post-processing view with tag `viewTag'.
+ * If `tag' is positive, assign the tag explicitly; otherwise a new tag is
+ * assigned automatically. Return the field tag. */
+GMSH_API int gmshModelMeshFieldFromView(const int viewTag,
+                                        const int tag,
+                                        int * ierr);
+
 /* Set the numerical option `option' to value `value' for field `tag'. */
 GMSH_API void gmshModelMeshFieldSetNumber(const int tag,
                                           const char * option,

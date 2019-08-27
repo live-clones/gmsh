@@ -397,6 +397,9 @@ field.add('add',doc,oint,istring('fieldType'),iint('tag','-1'))
 doc = '''Remove the field with tag `tag'.'''
 field.add('remove',doc,None,iint('tag'))
 
+doc = '''Add a new mesh size field from a post-processing view with tag `viewTag'. If `tag' is positive, assign the tag explicitly; otherwise a new tag is assigned automatically. Return the field tag.'''
+field.add('fromView',doc,oint,iint('viewTag'), iint('tag','-1'))
+
 doc = '''Set the numerical option `option' to value `value' for field `tag'.'''
 field.add('setNumber',doc,None,iint('tag'),istring('option'),idouble('value'))
 

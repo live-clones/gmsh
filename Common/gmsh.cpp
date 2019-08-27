@@ -3350,6 +3350,14 @@ GMSH_API void gmsh::model::mesh::field::remove(const int tag)
 #endif
 }
 
+GMSH_API int gmsh::model::mesh::field::fromView(const int viewTag, const int tag)
+{
+  if(!_isInitialized()) { throw - 1; }
+  int outTag = gmsh::model::mesh::field::add("PostView", tag);
+  gmsh::model::mesh::field::setNumber(outTag, "IView", viewTag);
+  return outTag;
+}
+
 #if defined(HAVE_MESH)
 static FieldOption *_getFieldOption(const int tag, const std::string &option)
 {
