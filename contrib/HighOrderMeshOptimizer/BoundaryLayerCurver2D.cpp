@@ -239,7 +239,7 @@ namespace BoundaryLayerCurver {
           }
           else if(gedge->periodic(0) && gedge->getBeginVertex() &&
                   edge->getVertex(i) ==
-                    gedge->getBeginVertex()->mesh_vertices[0]) {
+                  gedge->getBeginVertex()->mesh_vertices[0]) {
             double u0 = gedge->getLowerBound();
             double un = gedge->getUpperBound();
             int k = (nVert == 2 ? 1 - i : (i == 0 ? 2 : nVert - 1));
@@ -1250,7 +1250,9 @@ namespace BoundaryLayerCurver {
     return false;
   }
 
-  bool computeOtherEdge(MElement *el, MEdge &edge, MEdge &other)
+  // Warning: returns the opposite, possibly degenerate edge, i.e. returns
+  // a MEdge whose vertices are the unique opposite vertex for triangles
+  bool computeOppositeEdge(MElement *el, MEdge &edge, MEdge &other)
   {
     if(el->getNumEdges() == 3) {
       for(int i = 0; i < 3; ++i) {
@@ -1279,13 +1281,97 @@ namespace BoundaryLayerCurver {
     }
   }
 
+  bool isPrimaryVertex(MElement *el, MVertex *v)
+  {
+    for(int i = 0; i < el->getNumPrimaryVertices(); ++i) {
+      if(v == el->getVertex(i)) return true;
+    }
+    return false;
+  }
+
+  // FIXMECOMEBACK I am trying to generate a single function for
+  // compute3DStackPrimaryVertices and compute2DStackPrimaryVertices
+  //
+  // Compute a stack of primary vertices corresponding to each layer of the
+  // column. The last layer can be degenerate (e.g. when the external element
+  // is a triangle or a tetrahedron).
+  void computeStackPrimaryVertices(const PairMElemVecMElem &column,
+                                   std::vector<MVertex *> &stack)
+  {
+    MElement *bottomElement = column.first;
+    const std::vector<MElement *> &stackElements = column.second;
+    const int numVertexPerLayer = bottomElement->getNumPrimaryVertices();
+    std::size_t numLayers = stackElements.size();
+    stack.assign(numVertexPerLayer * (numLayers + 1), NULL);
+
+    std::size_t k = 0;
+    for(int i = 0; i < numVertexPerLayer; ++i) {
+      stack[k++] = bottomElement->getVertex(i);
+    }
+    for(std::size_t i = 0; i < numLayers; ++i) {
+      MElement *currentElement = stackElements[i];
+      // Find the edges that touch one node of current layer but is not an edge
+      // of the current layer nor of the next one.
+      for(int j = 0; j < currentElement->getNumEdges(); ++j) {
+        MEdge edge = currentElement->getEdge(j);
+        MVertex *v0 = edge.getVertex(0);
+        MVertex *v1 = edge.getVertex(1);
+        // v0Atbottom
+        // v1Atbottom
+        // v0inNext
+        // v1inNext
+        // if(v0inNext && v1inNext) continue;
+
+        // Check that the edge is not part of the next element
+        if(i < numLayers - 1) {
+          MElement *nextElement = stackElements[i + 1];
+          if(isPrimaryVertex(nextElement, v0) &&
+             isPrimaryVertex(nextElement, v1))
+            continue;
+        }
+
+        // Check if the edge links the two layers and update 'stack'
+        int idxv0AtBottom = -1;
+        for(int m = 0; m < numVertexPerLayer; ++m) {
+          if(v0 == stack[k - 1 - m]) {
+            idxv0AtBottom = k - 1 - m;
+            break;
+          }
+        }
+        int idxv1AtBottom = -1;
+        for(std::size_t m = 0; m < (std::size_t)numVertexPerLayer; ++m) {
+          if(v1 == stack[k - 1 - m]) {
+            idxv1AtBottom = k - 1 - m;
+            break;
+          }
+        }
+        if(idxv0AtBottom == -1 && idxv1AtBottom != -1) {
+          stack[idxv1AtBottom + numVertexPerLayer] = v0;
+        }
+        else if(idxv0AtBottom != -1 && idxv1AtBottom == -1) {
+          stack[idxv0AtBottom + numVertexPerLayer] = v1;
+        }
+      }
+
+      // If there remains NULL values, it is because the vertex is the same
+      // on both layers (because of a non-tensorial element).
+      for(int l = k; l < k + numVertexPerLayer; ++l) {
+        if(stack[l] == NULL) {
+          stack[l] = stack[l - numVertexPerLayer];
+        }
+      }
+
+      k += numVertexPerLayer;
+    }
+  }
+
   void compute2DstackPrimaryVertices(const PairMElemVecMElem &column,
                                      std::vector<MVertex *> &stack)
   {
     MElement *bottomElement = column.first;
     const std::vector<MElement *> &stackElements = column.second;
-    int numVertexPerLayer = 2;
-    unsigned long numLayers = stackElements.size();
+    const int numVertexPerLayer = 2;
+    std::size_t numLayers = stackElements.size();
     stack.assign(numVertexPerLayer * (numLayers + 1), NULL);
 
     int k = 0;
@@ -1302,7 +1388,7 @@ namespace BoundaryLayerCurver {
           computeCommonEdge(currentElement, stackElements[i + 1], topEdge);
       }
       else {
-        success = computeOtherEdge(currentElement, bottomEdge, topEdge);
+        success = computeOppositeEdge(currentElement, bottomEdge, topEdge);
       }
       if(!success) {
         Msg::Error("Did not find common edge of layer %d", i);
@@ -1328,6 +1414,7 @@ namespace BoundaryLayerCurver {
         for(int l = k - numVertexPerLayer; l < k; ++l) {
           if(stack[l] == vbot) {
             stack[l + numVertexPerLayer] = vtop;
+            break;
           }
         }
       }
@@ -1357,7 +1444,8 @@ namespace BoundaryLayerCurver {
     stackFaces.resize(numElements);
 
     std::vector<MVertex *> primVert;
-    compute2DstackPrimaryVertices(column, primVert);
+    // compute2DstackPrimaryVertices(column, primVert);
+    computeStackPrimaryVertices(column, primVert);
 
     for(std::size_t i = 0; i < numElements; ++i) {
       MEdge e(primVert[2 * i + 0], primVert[2 * i + 1]);

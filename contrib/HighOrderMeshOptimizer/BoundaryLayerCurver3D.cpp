@@ -527,25 +527,91 @@ namespace BoundaryLayerCurver {
     return v0In && v1In;
   }
 
-  void computeStackPrimaryVertices(const PairMElemVecMElem &column,
-                                   std::vector<MVertex *> &stack)
+  // // Warning: returns the opposite, possibly degenerate face, e.g. returns
+  // // a MFace whose vertices are the unique opposite vertex for tetrahedra.
+  // // For prisms, the result depends on the input face. If it is a triangle,
+  // // the function returns the opposite triangular face. If it is a quad face,
+  // // the function returns the opposite edge.
+  // bool computeOppositeFace(MElement *el, MFace &face, MFace &other)
+  // {
+  //   switch(el->getType()) {
+  //   case TYPE_PRI:
+  //     if(face.getNumVertices() == 3) {
+  //       MVertex *vertices[3];
+  //       int k = 0;
+  //       for(int i = 0; i < 4; ++i) {
+  //         MVertex *v = el->getVertex(i);
+  //         if(edge.getVertex(0) != v && edge.getVertex(1) != v) {
+  //           vertices[k++] = v;
+  //         }
+  //       }
+  //       if(k != 2) {
+  //         other = MEdge();
+  //         return false;
+  //       }
+  //       other = MEdge(vertices[0], vertices[1]);
+  //       return true;
+  //     }
+  //   }
+  //   if(el->getNumEdges() == 3) {
+  //     for(int i = 0; i < 3; ++i) {
+  //       MVertex *v = el->getVertex(i);
+  //       if(edge.getVertex(0) != v && edge.getVertex(1) != v) {
+  //         other = MEdge(v, v);
+  //         return true;
+  //       }
+  //     }
+  //   }
+  //   else {
+  //     MVertex *vertices[4];
+  //     int k = 0;
+  //     for(int i = 0; i < 4; ++i) {
+  //       MVertex *v = el->getVertex(i);
+  //       if(edge.getVertex(0) != v && edge.getVertex(1) != v) {
+  //         vertices[k++] = v;
+  //       }
+  //     }
+  //     if(k != 2) {
+  //       other = MEdge();
+  //       return false;
+  //     }
+  //     other = MEdge(vertices[0], vertices[1]);
+  //     return true;
+  //   }
+  // }
+
+  void compute3DStackPrimaryVertices(const PairMElemVecMElem &column,
+                                     std::vector<MVertex *> &stack)
   {
     // FIXME Currently, we compute the top vertices until the last but one
     //  element of the stack. It may be interesting to compute the last one.
-    int numVertexPerLayer = column.first->getNumPrimaryVertices();
-    std::size_t numLayers = column.second.size();
+    MElement *bottomElement = column.first;
+    const std::vector<MElement *> &stackElements = column.second;
+    const int numVertexPerLayer = bottomElement->getNumPrimaryVertices();
+    std::size_t numLayers = stackElements.size();
     stack.assign(numVertexPerLayer * numLayers, NULL);
 
     int k = 0;
     for(int i = 0; i < numVertexPerLayer; ++i) {
-      stack[k++] = column.first->getVertex(i);
+      stack[k++] = bottomElement->getVertex(i);
     }
-    MFace bottomFace = column.first->getFace(0);
+    MFace bottomFace = bottomElement->getFace(0);
     for(std::size_t i = 0; i < numLayers - 1; ++i) {
-      MElement *currentElement = column.second[i];
+      MElement *currentElement = stackElements[i];
       MFace topFace;
-      if(!computeCommonFace(currentElement, column.second[i + 1], topFace)) {
-        Msg::Error("Did not find common face");
+      // if(!) {
+      //   Msg::Error("Did not find common face");
+      // }
+      bool success;
+      if(i < numLayers - 1) {
+        success =
+          computeCommonFace(currentElement, stackElements[i + 1], topFace);
+      }
+      else {
+        // success = computeOppositeFace(currentElement, bottomFace, topFace);
+      }
+      if(!success) {
+        Msg::Error("Did not find common edge of layer %d", i);
       }
 
       // Each edge that is not in bottom face nor in top face links a bottom
@@ -585,15 +651,18 @@ namespace BoundaryLayerCurver {
     }
   }
 
+  // Returns the stack of edges and faces of the interface (i.e. the border
+  // of the column) that is above bottomEdge
   void computeStackHighOrderFaces(const PairMElemVecMElem column,
-                                  const MEdgeN bottomEdge,
-                                  std::vector<MFaceN> &stack)
+                                  const MEdge bottomEdge,
+                                  std::vector<MFaceN> &stackEdges,
+                                  std::vector<MFaceN> &stackFaces)
   {
     const std::size_t nLayers = column.second.size();
 
     // Compute stack of Primary vertices
     std::vector<MVertex *> allPrimaryVertices;
-    computeStackPrimaryVertices(column, allPrimaryVertices);
+    compute3DStackPrimaryVertices(column, allPrimaryVertices);
 
     std::vector<MVertex *> interfacePrimaryVertices;
     {
@@ -610,15 +679,15 @@ namespace BoundaryLayerCurver {
       }
       interfacePrimaryVertices.resize(2 * nLayers);
       for(std::size_t i = 0; i < nLayers; ++i) {
-        interfacePrimaryVertices[2 * i + 0] =
-          allPrimaryVertices[nVertexPerLayer * i + n0];
-        interfacePrimaryVertices[2 * i + 1] =
-          allPrimaryVertices[nVertexPerLayer * i + n1];
+        MVertex *v0 = allPrimaryVertices[nVertexPerLayer * i + n0];
+        MVertex *v1 = allPrimaryVertices[nVertexPerLayer * i + n1];
+        interfacePrimaryVertices[2 * i + 0] = v0;
+        interfacePrimaryVertices[2 * i + 1] = v1;
       }
     }
 
     // Compute stack of high order faces
-    stack.clear();
+    stackFaces.clear();
     for(std::size_t i = 0; i < nLayers - 1; ++i) {
       MVertex *v0 = interfacePrimaryVertices[2 * i + 0];
       MVertex *v1 = interfacePrimaryVertices[2 * i + 1];
@@ -637,31 +706,27 @@ namespace BoundaryLayerCurver {
         v3 = NULL;
       }
 
-      stack.push_back(
+      stackFaces.push_back(
         column.second[i]->getHighOrderFace(MFace(v0, v1, v2, v3)));
     }
   }
 
   void computeInterface(const PairMElemVecMElem &col1,
                         const PairMElemVecMElem &col2,
-                        std::vector<MFaceN> &interface, MEdgeN &bottomEdge,
-                        MEdgeN &topEdge)
+                        std::vector<MFaceN> &stackFaces)
   {
     MEdge commonEdge;
     if(!computeCommonEdge(col1.first, col2.first, commonEdge)) {
       Msg::Error("Couldn't find common edge on bottom elements");
       return;
     }
-    bottomEdge = col1.first->getHighOrderEdge(commonEdge);
 
     if(col1.second.size() > col2.second.size()) {
-      computeStackHighOrderFaces(col1, bottomEdge, interface);
+      // computeStackHighOrderFaces(col1, commonEdge, stackFaces);
     }
     else {
-      computeStackHighOrderFaces(col2, bottomEdge, interface);
+      // computeStackHighOrderFaces(col2, commonEdge, stackFaces);
     }
-
-    topEdge = interface.back().getHighOrderEdge(0, 1);
   }
 
   void computeBorderInterface(const PairMElemVecMElem &column,
@@ -986,7 +1051,6 @@ namespace BoundaryLayerCurver {
   {
     // compute then curve interfaces between columns
     for(std::size_t i = 0; i < adjacencies.size(); ++i) {
-      MEdgeN bottomEdge, topEdge;
       std::vector<MFaceN> interface;
       PairMElemVecMElem &col1 = columns[adjacencies[i].first];
       PairMElemVecMElem &col2 = columns[adjacencies[i].second];
@@ -1014,7 +1078,7 @@ namespace BoundaryLayerCurver {
     stack.resize(stackElements.size());
 
     std::vector<MVertex *> allPrimaryVertices;
-    computeStackPrimaryVertices(column, allPrimaryVertices);
+    compute3DStackPrimaryVertices(column, allPrimaryVertices);
     // FIXME already calculated in computeInterfaces. Reuse them?
 
     int nVertexPerLayer = column.first->getNumPrimaryVertices();
@@ -1217,36 +1281,45 @@ namespace BoundaryLayerCurver {
                     std::vector<std::pair<int, MEdge> > &borderEdges)
   {
     for(size_t i = 0; i < borderEdges.size(); ++i) {
+      std::size_t idx = borderEdges[i].first;
+      MEdge &edge = borderEdges[i].second;
+      // MElement *bottomElement = columns[idx].first;
+      // std::vector<MElement *> &stackElements = columns[idx].second;
+
+      // if(bottomElement->getPolynomialOrder() < 2) continue;
+      // The rest of the function suppose that the order is > 2
+
+      std::vector<MFaceN> stackFaces;
+      std::vector<MEdgeN> stackEdges;
+      // MEdgeN bottomEdge, topEdge;
+      // computeStackHighOrderFaces(columns[idx], edge, stackFaces, stackEdges);
+
+
 
       // FIXME: compute border interface then curve
-
-      std::size_t idx = borderEdges[i].first;
-      std::vector<MElement *> stackElements = columns[idx].second;
-      MElement *firstEl = stackElements[0];
-      if(firstEl->getPolynomialOrder() < 2) continue;
 
       // Get an interior vertex and check if the border of the column is on a
       // GFace. Then do the same for the bottom of column.
       GFace *gf = NULL;
       {
-        MVertex *v;
-        if(firstEl->getType() == TYPE_QUA) v = firstEl->getVertex(8);
-        else {
-          MElement *secondEl = stackElements[1];
-          MEdge e;
-          computeCommonEdge(firstEl, secondEl, e);
-          MEdgeN en = firstEl->getHighOrderEdge(e);
-          v = en.getVertex(2);
-        }
-        GEntity *entity = v->onWhat();
-        if(entity && entity->dim() == 2) gf = entity->cast2Face();
+        // MVertex *v;
+        // if(firstEl->getType() == TYPE_QUA) v = firstEl->getVertex(8);
+        // else {
+        //   MElement *secondEl = stackElements[1];
+        //   MEdge e;
+        //   computeCommonEdge(firstEl, secondEl, e);
+        //   MEdgeN en = firstEl->getHighOrderEdge(e);
+        //   v = en.getVertex(2);
+        // }
+        // GEntity *entity = v->onWhat();
+        // if(entity && entity->dim() == 2) gf = entity->cast2Face();
       }
 
       GEdge *ge = NULL;
       {
-        MEdgeN en = firstEl->getHighOrderEdge(borderEdges[i].second);
-        GEntity *entity = en.getVertex(2)->onWhat();
-        if(entity && entity->dim() == 1) ge = entity->cast2Edge();
+        // MEdgeN en = firstEl->getHighOrderEdge(borderEdges[i].second);
+        // GEntity *entity = en.getVertex(2)->onWhat();
+        // if(entity && entity->dim() == 1) ge = entity->cast2Edge();
       }
 
       if(gf) {
