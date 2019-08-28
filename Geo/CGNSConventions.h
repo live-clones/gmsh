@@ -29,7 +29,8 @@ int cgns2MshEltType(CGNS::ElementType_t);
 
 std::vector<int> &cgns2MshNodeIndex(int mshTag);
 
-std::string cgnsString(const std::string &s);
+std::string cgnsString(const std::string &s,
+                       std::string::size_type maxLength = 32);
 
 #endif // HAVE_LIBCGNS
 

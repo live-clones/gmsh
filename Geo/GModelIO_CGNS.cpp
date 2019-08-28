@@ -44,10 +44,10 @@ int cgnsError(const int cgIndexFile = -1)
 
 // create a single zone for the whole partition; nodes and elements are
 // referenced with per-zone index (starting at 1) inside a zone
-static int writeZone(GModel *model, bool saveAll, double scalingFactor,
-                     size_t numNodesTotal, size_t partition,
-                     const std::vector<GEntity *> &entities, int cgIndexFile,
-                     int cgIndexBase)
+int writeZone(GModel *model, bool saveAll, double scalingFactor,
+              size_t numNodesTotal, size_t partition,
+              const std::vector<GEntity *> &entities, int cgIndexFile,
+              int cgIndexBase)
 {
   int meshDim = model->getMeshDim();
 
@@ -71,21 +71,13 @@ static int writeZone(GModel *model, bool saveAll, double scalingFactor,
     }
   }
 
-  // build global <-> partition-local node index correspondance
-  std::vector<CGNS::cgsize_t> g2LIndex(numNodesTotal+1, 0);
-  std::vector<long> l2GIndex;
-  l2GIndex.reserve(numNodesTotal+1);
-  CGNS::cgsize_t numNodes = 0;
-  // for(std::size_t i = 0; i < entities.size(); i++) {
-  //   for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-  //     const long gInd = entities[i]->mesh_vertices[j]->getIndex();
-  //     if (gInd < 0) continue;
-  //     numNodes++;
-  //     g2LIndex[gInd] = numNodes;
-  //     l2GIndex[numNodes] = gInd;
-  //   }
-  // }
+  // build global <-> partition-local node index correspondence
+  // note: cannot use cgsize_t for global indexing because global indices are
+  // stored in DataArray_t CGNS structures
   typedef std::set<MVertex *>::iterator NodeSetIter;
+  std::vector<CGNS::cgsize_t> g2LIndex(numNodesTotal+1, 0);
+  std::vector<long> l2GIndex(nodeSet.size()+1, 0);
+  CGNS::cgsize_t numNodes = 0;
   for(NodeSetIter it = nodeSet.begin(); it != nodeSet.end(); ++it) {
     const long gInd = (*it)->getIndex();
     if (gInd < 0) continue;
@@ -93,6 +85,48 @@ static int writeZone(GModel *model, bool saveAll, double scalingFactor,
     g2LIndex[gInd] = numNodes;
     l2GIndex[numNodes] = gInd;
   }
+
+  // build periodic node correspondence (global indices)
+  // note: cannot use cgsize_t for periodic indexing because global indices are
+  // stored in DataArray_t CGNS structures
+  typedef std::set<GEntity *> EntSet;
+  typedef std::map<MVertex *, MVertex *> VertVertMap;
+  EntSet parentEnt;
+  std::size_t maxNumPerNodes = 0;
+  if (partition == 0) {
+    parentEnt.insert(entities.begin(), entities.end());
+    maxNumPerNodes = numNodes;
+  }
+  else {
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *pe = entities[i]->getParentEntity();
+      if(pe != 0) {
+        parentEnt.insert(pe);
+        maxNumPerNodes += pe->correspondingVertices.size();
+      }
+    }
+  }
+  CGNS::cgsize_t numPerNodes = 0;
+  std::vector<long> slaveGlobalIndex;
+  std::vector<long> masterGlobalIndex;
+  masterGlobalIndex.reserve(maxNumPerNodes);
+  slaveGlobalIndex.reserve(maxNumPerNodes);
+  for(EntSet::iterator it = parentEnt.begin(); it != parentEnt.end(); ++it) {
+    GEntity *g_slave = *it;
+    GEntity *g_master = g_slave->getMeshMaster();
+    if (g_slave == g_master) continue;
+    VertVertMap &vv = g_slave->correspondingVertices;
+    // std::cout << "DBGTT: in partition " << partition << ", entity " << g_slave->tag() << " has " << vv.size() << " periodic vertices with master " << g_master->tag() << "\n";
+    for(VertVertMap::iterator it = vv.begin(); it != vv.end(); it++) {
+      const long slaveInd = it->first->getIndex();
+      if(g2LIndex[slaveInd] != 0) {
+        slaveGlobalIndex.push_back(slaveInd);
+        masterGlobalIndex.push_back(it->second->getIndex());
+        numPerNodes++;
+      }
+    }
+  }
+  // if (numPerNodes > 0) std::cout << "DBGTT: numPerNodes = " << numPerNodes << "\n";
 
   // number of elements for highest spatial dimension
   CGNS::cgsize_t numElementsMaxDim = 0;
@@ -106,9 +140,11 @@ static int writeZone(GModel *model, bool saveAll, double scalingFactor,
   // write zone CGNS node
   int cgIndexZone = 0;
   CGNS::cgsize_t cgZoneSize[3] = {numNodes, numElementsMaxDim, 0};
-  std::ostringstream ossZone;
-  ossZone << model->getName() << "_Part" << partition;
-  std::string zoneName = cgnsString(ossZone.str());
+  std::ostringstream ossPart;
+  ossPart << "_Part" << partition;
+  std::string partSuffix = ossPart.str();
+  std::string modelName = cgnsString(model->getName(), 32-partSuffix.size());
+  std::string zoneName = modelName + partSuffix;
   if(CGNS::cg_zone_write(cgIndexFile, cgIndexBase, zoneName.c_str(), cgZoneSize,
                          CGNS::Unstructured, &cgIndexZone))
     return cgnsError();
@@ -139,6 +175,7 @@ static int writeZone(GModel *model, bool saveAll, double scalingFactor,
     }
   }
 
+  // write list of coordinates
   int cgIndexCoord = 0;
   if(CGNS::cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
                           CGNS::RealDouble, "CoordinateX", &xcoord[0],
@@ -153,6 +190,31 @@ static int writeZone(GModel *model, bool saveAll, double scalingFactor,
                           &cgIndexCoord))
     return cgnsError();
 
+  // write list of global node indices and periodic nodes in a UserDefined_t
+  // CGNS node 
+  if(CGNS::cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone, "end"))
+    return cgnsError();
+  if(CGNS::cg_user_data_write("NodeInformation")) return cgnsError();
+  // if(CGNS::cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
+  //                  "NodeInformation", 0, "end"))
+  //   return cgnsError();
+  if(CGNS::cg_gorel(cgIndexFile, "NodeInformation", 0, "end"))
+    return cgnsError();
+  if(CGNS::cg_array_write("GlobalNodeIndices", CGNS::LongInteger, 1, &numNodes,
+                          (void*)(l2GIndex.data()+1)))
+    return cgnsError();
+  if (numPerNodes > 0) {
+    if(CGNS::cg_user_data_write("PeriodicNodeInformation")) return cgnsError();
+    if(CGNS::cg_gorel(cgIndexFile, "PeriodicNodeInformation", 0, "end"))
+      return cgnsError();
+    if(CGNS::cg_array_write("SlaveGlobalIndices", CGNS::LongInteger, 1,
+                            &numPerNodes, (void*)(slaveGlobalIndex.data())))
+      return cgnsError();
+    if(CGNS::cg_array_write("MasterGlobalIndices", CGNS::LongInteger, 1,
+                            &numPerNodes, (void*)(masterGlobalIndex.data())))
+      return cgnsError();
+  }
+
   // write an element section for each entity, per element type (TODO: check if
   // using the actual element tag in case the numbering is dense and
   // saveAll==true would make sense/would be useful; maybe in the context of
@@ -163,6 +225,7 @@ static int writeZone(GModel *model, bool saveAll, double scalingFactor,
 
     // FIXME: use MIXED section? -> probably less efficient
     // 2) store physical information in a "family"?
+    // get or create the name for the entity 
     std::string entityName = model->getElementaryName(ge->dim(), ge->tag());
     if(entityName.empty()) {
       std::ostringstream s;
@@ -257,7 +320,6 @@ void getEntitiesInPartition(const std::vector<GEntity *> &entities,
       }
     } break;
     default:
-      entitiesPart.push_back(ge);
       break;
     }         // switch
   }           // loop on entities

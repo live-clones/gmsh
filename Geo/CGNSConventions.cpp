@@ -629,10 +629,10 @@ std::vector<int> &cgns2MshNodeIndex(int mshTag)
   return mshInd[mshTag];
 }
 
-std::string cgnsString(const std::string &s)
+std::string cgnsString(const std::string &s, std::string::size_type maxLength)
 {
   std::string s2(s);
-  if(s2.size() > 32) s2.resize(32);
+  if(s2.size() > maxLength) s2.resize(maxLength);
   return s2;
 }
 
