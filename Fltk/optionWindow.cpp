@@ -1276,6 +1276,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
                               opt_view_color_prisms(current, GMSH_GET, 0));
         opt_view_color_pyramids(i, GMSH_SET,
                                 opt_view_color_pyramids(current, GMSH_GET, 0));
+        opt_view_color_trihedra(i, GMSH_SET,
+                                opt_view_color_trihedra(current, GMSH_GET, 0));
         opt_view_color_tangents(i, GMSH_SET,
                                 opt_view_color_tangents(current, GMSH_GET, 0));
         opt_view_color_normals(i, GMSH_SET,
@@ -1286,6 +1288,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
                               opt_view_color_text3d(current, GMSH_GET, 0));
         opt_view_color_axes(i, GMSH_SET,
                             opt_view_color_axes(current, GMSH_GET, 0));
+        opt_view_color_background2d(i, GMSH_SET,
+                                    opt_view_color_background2d(current, GMSH_GET, 0));
       }
 
       // colorbar window
@@ -3867,6 +3871,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_color_text2d(index, GMSH_GUI, 0);
   opt_view_color_text3d(index, GMSH_GUI, 0);
   opt_view_color_axes(index, GMSH_GUI, 0);
+  opt_view_color_background2d(index, GMSH_GUI, 0);
 
   view.colorbar->update(data->getName().c_str(), data->getMin(), data->getMax(),
                         &opt->colorTable, &v->getChanged());

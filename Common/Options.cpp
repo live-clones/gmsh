@@ -10092,7 +10092,7 @@ unsigned int opt_view_color_text2d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.text2d, FlGui::instance()->options->view.color[10]);
+    CCC(opt->color.text2d, FlGui::instance()->options->view.color[11]);
     drawContext::global()->resetFontTextures();
   }
 #endif
@@ -10111,7 +10111,7 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.text3d, FlGui::instance()->options->view.color[11]);
+    CCC(opt->color.text3d, FlGui::instance()->options->view.color[12]);
     drawContext::global()->resetFontTextures();
   }
 #endif
@@ -10130,7 +10130,7 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.axes, FlGui::instance()->options->view.color[12]);
+    CCC(opt->color.axes, FlGui::instance()->options->view.color[13]);
     drawContext::global()->resetFontTextures();
   }
 #endif
@@ -10149,7 +10149,7 @@ unsigned int opt_view_color_background2d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.background2d, FlGui::instance()->options->view.color[13]);
+    CCC(opt->color.background2d, FlGui::instance()->options->view.color[14]);
     drawContext::global()->resetFontTextures();
   }
 #endif
