@@ -33,11 +33,9 @@ factory.synchronize()
 # add the background mesh file as a view
 gmsh.merge("bgmesh.pos")
 
-field = gmsh.model.mesh.field
-
 # add the post-processing view as a new size field
-bg_field = field.fromView(0)
-field.setAsBackgroundMesh(bg_field)
+bg_field = model.mesh.field.add("PostView")
+model.mesh.field.setAsBackgroundMesh(bg_field)
 
 gmsh.model.mesh.generate(2)
 gmsh.write("t7.msh")

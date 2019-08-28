@@ -1722,20 +1722,6 @@ Remove the field with tag @code{tag}.
 -
 @end table
 
-@item fromView
-Add a new mesh size field from a post-processing view with tag @code{viewTag}.
-If @code{tag} is positive, assign the tag explicitly; otherwise a new tag is
-assigned automatically. Return the field tag.
-
-@table @asis
-@item Input:
-@code{viewTag}, @code{tag}
-@item Output:
--
-@item Return:
-integer value
-@end table
-
 @item setNumber
 Set the numerical option @code{option} to value @code{value} for field
 @code{tag}.

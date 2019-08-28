@@ -1787,18 +1787,6 @@ namespace gmsh { // Top-level functions
           if(ierr) throw ierr;
         }
 
-        // Add a new mesh size field from a post-processing view with tag
-        // `viewTag'. If `tag' is positive, assign the tag explicitly; otherwise a
-        // new tag is assigned automatically. Return the field tag.
-        inline int fromView(const int viewTag,
-                            const int tag = -1)
-        {
-          int ierr = 0;
-          int result_api_ = gmshModelMeshFieldFromView(viewTag, tag, &ierr);
-          if(ierr) throw ierr;
-          return result_api_;
-        }
-
         // Set the numerical option `option' to value `value' for field `tag'.
         inline void setNumber(const int tag,
                               const std::string & option,

@@ -1498,6 +1498,7 @@ public:
     octree = 0;
     view_index = 0;
     view_tag = -1;
+    update_needed = true; // in case we don't set IView or ViewTag explicitely
     options["IView"] = new FieldOptionInt(
       view_index, "Post-processing view index", &update_needed);
     options["ViewTag"] =

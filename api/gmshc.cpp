@@ -1531,19 +1531,6 @@ GMSH_API void gmshModelMeshFieldRemove(const int tag, int * ierr)
   }
 }
 
-GMSH_API int gmshModelMeshFieldFromView(const int viewTag, const int tag, int * ierr)
-{
-  int result_api_ = 0;
-  if(ierr) *ierr = 0;
-  try {
-    result_api_ = gmsh::model::mesh::field::fromView(viewTag, tag);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-  return result_api_;
-}
-
 GMSH_API void gmshModelMeshFieldSetNumber(const int tag, const char * option, const double value, int * ierr)
 {
   if(ierr) *ierr = 0;

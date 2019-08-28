@@ -2626,26 +2626,6 @@ class model:
                         ierr.value)
 
             @staticmethod
-            def fromView(viewTag, tag=-1):
-                """
-                Add a new mesh size field from a post-processing view with tag `viewTag'.
-                If `tag' is positive, assign the tag explicitly; otherwise a new tag is
-                assigned automatically. Return the field tag.
-
-                Return an integer value.
-                """
-                ierr = c_int()
-                api__result__ = lib.gmshModelMeshFieldFromView(
-                    c_int(viewTag),
-                    c_int(tag),
-                    byref(ierr))
-                if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelMeshFieldFromView returned non-zero error code: ",
-                        ierr.value)
-                return api__result__
-
-            @staticmethod
             def setNumber(tag, option, value):
                 """
                 Set the numerical option `option' to value `value' for field `tag'.

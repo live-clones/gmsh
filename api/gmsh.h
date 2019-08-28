@@ -961,12 +961,6 @@ namespace gmsh { // Top-level functions
         // Remove the field with tag `tag'.
         GMSH_API void remove(const int tag);
 
-        // Add a new mesh size field from a post-processing view with tag
-        // `viewTag'. If `tag' is positive, assign the tag explicitly; otherwise a
-        // new tag is assigned automatically. Return the field tag.
-        GMSH_API int fromView(const int viewTag,
-                              const int tag = -1);
-
         // Set the numerical option `option' to value `value' for field `tag'.
         GMSH_API void setNumber(const int tag,
                                 const std::string & option,
