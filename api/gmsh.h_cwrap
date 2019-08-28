@@ -1556,6 +1556,19 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
+      // Set a compound meshing constraint on the model entities of dimension `dim`
+      // and tags `tags`. During meshing, compound entities are treated as a single
+      // discrete entity, which is automatically reparametrized.
+      inline void setCompound(const int dim,
+                              const std::vector<int> & tags)
+      {
+        int ierr = 0;
+        int *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
+        gmshModelMeshSetCompound(dim, api_tags_, api_tags_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_tags_);
+      }
+
       // Set meshing constraints on the bounding surfaces of the volume of tag
       // `tag' so that all surfaces are oriented with outward pointing normals.
       // Currently only available with the OpenCASCADE kernel, as it relies on the

@@ -912,6 +912,13 @@ GMSH_API void gmshModelMeshSetReverse(const int dim,
                                       const int val,
                                       int * ierr);
 
+/* Set a compound meshing constraint on the model entities of dimension `dim`
+ * and tags `tags`. During meshing, compound entities are treated as a single
+ * discrete entity, which is automatically reparametrized. */
+GMSH_API void gmshModelMeshSetCompound(const int dim,
+                                       int * tags, size_t tags_n,
+                                       int * ierr);
+
 /* Set meshing constraints on the bounding surfaces of the volume of tag `tag'
  * so that all surfaces are oriented with outward pointing normals. Currently
  * only available with the OpenCASCADE kernel, as it relies on the STL

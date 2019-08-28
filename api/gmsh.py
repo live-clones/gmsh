@@ -2299,6 +2299,24 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def setCompound(dim, tags):
+            """
+            Set a compound meshing constraint on the model entities of dimension `dim`
+            and tags `tags`. During meshing, compound entities are treated as a single
+            discrete entity, which is automatically reparametrized.
+            """
+            api_tags_, api_tags_n_ = _ivectorint(tags)
+            ierr = c_int()
+            lib.gmshModelMeshSetCompound(
+                c_int(dim),
+                api_tags_, api_tags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetCompound returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def setOutwardOrientation(tag):
             """
             Set meshing constraints on the bounding surfaces of the volume of tag `tag'

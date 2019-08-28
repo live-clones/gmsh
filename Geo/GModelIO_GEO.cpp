@@ -1269,7 +1269,7 @@ void GEO_Internals::synchronize(GModel *model)
       case 1: ent = model->getEdgeByTag(tag); break;
       case 2: ent = model->getFaceByTag(tag); break;
       case 3: ent = model->getRegionByTag(tag); break;
-      default: Msg::Error("compound mesh with dimension %d", dim);
+      default: Msg::Error("Compound mesh constraint with dimension %d", dim);
       }
       if(ent) ents.push_back(ent);
     }

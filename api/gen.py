@@ -342,6 +342,9 @@ mesh.add('setSmoothing',doc,None,iint('dim'),iint('tag'),iint('val'))
 doc = '''Set a reverse meshing constraint on the model entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometry). If `val' is false, the mesh is left as-is.'''
 mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'))
 
+doc = '''Set a compound meshing constraint on the model entities of dimension `dim` and tags `tags`. During meshing, compound entities are treated as a single discrete entity, which is automatically reparametrized.'''
+mesh.add('setCompound',doc,None,iint('dim'),ivectorint('tags'))
+
 doc = '''Set meshing constraints on the bounding surfaces of the volume of tag `tag' so that all surfaces are oriented with outward pointing normals. Currently only available with the OpenCASCADE kernel, as it relies on the STL triangulation.'''
 mesh.add('setOutwardOrientation',doc,None,iint('tag'))
 

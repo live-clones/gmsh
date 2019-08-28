@@ -846,6 +846,12 @@ namespace gmsh { // Top-level functions
                                const int tag,
                                const bool val = true);
 
+      // Set a compound meshing constraint on the model entities of dimension `dim`
+      // and tags `tags`. During meshing, compound entities are treated as a single
+      // discrete entity, which is automatically reparametrized.
+      GMSH_API void setCompound(const int dim,
+                                const std::vector<int> & tags);
+
       // Set meshing constraints on the bounding surfaces of the volume of tag
       // `tag' so that all surfaces are oriented with outward pointing normals.
       // Currently only available with the OpenCASCADE kernel, as it relies on the

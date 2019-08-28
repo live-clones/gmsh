@@ -1937,6 +1937,22 @@ function setReverse(dim, tag, val = true)
 end
 
 """
+    gmsh.model.mesh.setCompound(dim, tags)
+
+Set a compound meshing constraint on the model entities of dimension `dim` and
+tags `tags`. During meshing, compound entities are treated as a single discrete
+entity, which is automatically reparametrized.
+"""
+function setCompound(dim, tags)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetCompound, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          dim, convert(Vector{Cint}, tags), length(tags), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetCompound returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.setOutwardOrientation(tag)
 
 Set meshing constraints on the bounding surfaces of the volume of tag `tag` so
