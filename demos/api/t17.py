@@ -28,7 +28,7 @@ factory.synchronize()
 # add a post-processing view to use as a size field
 gmsh.merge("t17.pos")
 
-bg_field = model.mesh.field.fromView(0)
+bg_field = model.mesh.field.add("PostView")
 model.mesh.field.setAsBackgroundMesh(bg_field)
 
 # use bamg
