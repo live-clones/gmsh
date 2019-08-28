@@ -2301,8 +2301,8 @@ class model:
         @staticmethod
         def setCompound(dim, tags):
             """
-            Set a compound meshing constraint on the model entities of dimension `dim`
-            and tags `tags`. During meshing, compound entities are treated as a single
+            Set a compound meshing constraint on the model entities of dimension `dim'
+            and tags `tags'. During meshing, compound entities are treated as a single
             discrete entity, which is automatically reparametrized.
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)

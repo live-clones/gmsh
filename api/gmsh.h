@@ -846,8 +846,8 @@ namespace gmsh { // Top-level functions
                                const int tag,
                                const bool val = true);
 
-      // Set a compound meshing constraint on the model entities of dimension `dim`
-      // and tags `tags`. During meshing, compound entities are treated as a single
+      // Set a compound meshing constraint on the model entities of dimension `dim'
+      // and tags `tags'. During meshing, compound entities are treated as a single
       // discrete entity, which is automatically reparametrized.
       GMSH_API void setCompound(const int dim,
                                 const std::vector<int> & tags);

@@ -912,8 +912,8 @@ GMSH_API void gmshModelMeshSetReverse(const int dim,
                                       const int val,
                                       int * ierr);
 
-/* Set a compound meshing constraint on the model entities of dimension `dim`
- * and tags `tags`. During meshing, compound entities are treated as a single
+/* Set a compound meshing constraint on the model entities of dimension `dim'
+ * and tags `tags'. During meshing, compound entities are treated as a single
  * discrete entity, which is automatically reparametrized. */
 GMSH_API void gmshModelMeshSetCompound(const int dim,
                                        int * tags, size_t tags_n,
