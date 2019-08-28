@@ -60,20 +60,18 @@ set_color("General.Text", black)
 option.setNumber("General.Orthographic", 0)
 option.setNumber("General.Axes", 0); option.setNumber("General.SmallAxes", 0)
 
+# show the GUI
+gmsh.fltk.initialize()
+
 # set options for each view
 
-# If we were to follow the geo example blindly, we would
-# read the number of views from the relevant option value
-#
-# Make sure to cast to int since getNumber returns a float
-# v0 = int(option.getNumber("PostProcessing.NbViews")) - 4
-# v1 = v0 + 1; v2 = v0 + 2; v3 = v0 + 3
-
-# A nicer way is to use gmsh.view.getTags()
+# If we were to follow the geo example blindly, we would read the number of
+# views from the relevant option value. A nicer way is to use
+# gmsh.view.getTags()
 view_tags = [v0, v1, v2, v3] = gmsh.view.getTags()
 
-# View name format helper function -- Returns "View[X]." for an input of X
-view_fmt = lambda v: "View[" + str(v) + "]."
+# View name format helper function: returns "View[index]." for a given view tag
+view_fmt = lambda v_tag: "View[" + str(gmsh.view.getIndex(v_tag)) + "]."
 
 # option setter
 def set_opt(name, val):
@@ -90,7 +88,7 @@ def set_opt(name, val):
         quit(1)
 
 # We'll use this helper function for our views
-set_view_opt = lambda v_num, name, val: set_opt(view_fmt(v_num) + name, val)
+set_view_opt = lambda v_tag, name, val: set_opt(view_fmt(v_tag) + name, val)
 
 # v0
 set_view_opt(v0, "IntervalsType", 2)
@@ -110,7 +108,6 @@ set_view_opt(v1, "ShowScale", 0)
 # v2
 set_view_opt(v2, "Name", "Test...")
 set_view_opt(v2, "Axes", 1)
-set_color(view_fmt(v2) + "Axes", black)
 set_view_opt(v2, "IntervalsType", 2)
 set_view_opt(v2, "Type", 2)
 set_view_opt(v2, "IntervalsType", 2)
@@ -153,7 +150,7 @@ for num in range(1, 4):
         adjust_num_opt("General.RotationX", 10)
         set_opt("General.RotationY", option.getNumber("General.RotationX") / 3)
         adjust_num_opt("General.RotationZ", 0.1)
-        gmsh.fltk.wait(0.01) # open the GUI, wait for 0.01s and resume execution
+        gmsh.fltk.wait(0.01) # wait for 0.01s and resume execution
         gmsh.graphics.draw()
 
         # write out the graphics scene to an image file
@@ -173,7 +170,5 @@ for num in range(1, 4):
         # subprocess.call(call_ffmpeg1.split(' '))
         # subprocess.call(call_ffmpeg2.split(' '))
 
-# show the GUI at the end
 gmsh.fltk.run()
-
 gmsh.finalize()
