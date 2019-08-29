@@ -491,12 +491,14 @@ points) if `recursive` is true.
 Return `outDimTags`.
 """
 function getBoundary(dimTags, combined = true, oriented = true, recursive = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGetBoundary, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), api_outDimTags_, api_outDimTags_n_, combined, oriented, recursive, ierr)
+          api_dimTags_, api_dimTags_n_, api_outDimTags_, api_outDimTags_n_, combined, oriented, recursive, ierr)
     ierr[] != 0 && error("gmshModelGetBoundary returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -592,10 +594,12 @@ Remove the entities `dimTags` of the current model. If `recursive` is true,
 remove all the entities on their boundaries, down to dimension 0.
 """
 function removeEntities(dimTags, recursive = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelRemoveEntities, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
+          api_dimTags_, api_dimTags_n_, recursive, ierr)
     ierr[] != 0 && error("gmshModelRemoveEntities returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -621,10 +625,12 @@ Remove the physical groups `dimTags` of the current model. If `dimTags` is
 empty, remove all groups.
 """
 function removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelRemovePhysicalGroups, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), ierr)
+          api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelRemovePhysicalGroups returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -836,10 +842,12 @@ Set the visibility of the model entities `dimTags` to `value`. Apply the
 visibility setting recursively if `recursive` is true.
 """
 function setVisibility(dimTags, value, recursive = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelSetVisibility, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), value, recursive, ierr)
+          api_dimTags_, api_dimTags_n_, value, recursive, ierr)
     ierr[] != 0 && error("gmshModelSetVisibility returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -869,10 +877,12 @@ Set the color of the model entities `dimTags` to the RGBA value (`r`, `g`, `b`,
 the color setting recursively if `recursive` is true.
 """
 function setColor(dimTags, r, g, b, a = 0, recursive = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelSetColor, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cint, Cint, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), r, g, b, a, recursive, ierr)
+          api_dimTags_, api_dimTags_n_, r, g, b, a, recursive, ierr)
     ierr[] != 0 && error("gmshModelSetColor returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1683,12 +1693,14 @@ probably change in a future release.
 Return `infoKeys`.
 """
 function getInformationForElements(keys, elementType, functionSpaceType)
+    api_keys_ = collect(Cint, Iterators.flatten(keys))
+    api_keys_n_ = length(api_keys_)
     api_infoKeys_ = Ref{Ptr{Cint}}()
     api_infoKeys_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetInformationForElements, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(keys))), 2 * length(keys), elementType, functionSpaceType, api_infoKeys_, api_infoKeys_n_, ierr)
+          api_keys_, api_keys_n_, elementType, functionSpaceType, api_infoKeys_, api_infoKeys_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetInformationForElements returned non-zero error code: $(ierr[])")
     tmp_api_infoKeys_ = unsafe_wrap(Array, api_infoKeys_[], api_infoKeys_n_[], own=true)
     infoKeys = [ (tmp_api_infoKeys_[i], tmp_api_infoKeys_[i+1]) for i in 1:2:length(tmp_api_infoKeys_) ]
@@ -1814,10 +1826,12 @@ Set a mesh size constraint on the model entities `dimTags`. Currently only
 entities of dimension 0 (points) are handled.
 """
 function setSize(dimTags, size)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetSize, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
+          api_dimTags_, api_dimTags_n_, size, ierr)
     ierr[] != 0 && error("gmshModelMeshSetSize returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1923,6 +1937,22 @@ function setReverse(dim, tag, val = true)
 end
 
 """
+    gmsh.model.mesh.setCompound(dim, tags)
+
+Set a compound meshing constraint on the model entities of dimension `dim` and
+tags `tags`. During meshing, compound entities are treated as a single discrete
+entity, which is automatically reparametrized.
+"""
+function setCompound(dim, tags)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetCompound, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          dim, convert(Vector{Cint}, tags), length(tags), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetCompound returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.setOutwardOrientation(tag)
 
 Set meshing constraints on the bounding surfaces of the volume of tag `tag` so
@@ -1964,10 +1994,12 @@ only remove embedded entities of the given dimension (e.g. embedded points if
 `dim` == 0).
 """
 function removeEmbedded(dimTags, dim = -1)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshRemoveEmbedded, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dim, ierr)
+          api_dimTags_, api_dimTags_n_, dim, ierr)
     ierr[] != 0 && error("gmshModelMeshRemoveEmbedded returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2548,12 +2580,14 @@ are extruded along their normal.
 Return `outDimTags`.
 """
 function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoExtrude, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
+          api_dimTags_, api_dimTags_n_, dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelGeoExtrude returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2574,12 +2608,14 @@ layers, normalized to 1.
 Return `outDimTags`.
 """
 function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoRevolve, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
+          api_dimTags_, api_dimTags_n_, x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelGeoRevolve returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2601,12 +2637,14 @@ to 1.
 Return `outDimTags`.
 """
 function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoTwist, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
+          api_dimTags_, api_dimTags_n_, x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelGeoTwist returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2619,10 +2657,12 @@ end
 Translate the model entities `dimTags` along (`dx`, `dy`, `dz`).
 """
 function translate(dimTags, dx, dy, dz)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoTranslate, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, ierr)
+          api_dimTags_, api_dimTags_n_, dx, dy, dz, ierr)
     ierr[] != 0 && error("gmshModelGeoTranslate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2635,10 +2675,12 @@ revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`,
 `az`).
 """
 function rotate(dimTags, x, y, z, ax, ay, az, angle)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoRotate, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, ierr)
+          api_dimTags_, api_dimTags_n_, x, y, z, ax, ay, az, angle, ierr)
     ierr[] != 0 && error("gmshModelGeoRotate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2651,10 +2693,12 @@ coordinate axes; use (`x`, `y`, `z`) as the center of the homothetic
 transformation.
 """
 function dilate(dimTags, x, y, z, a, b, c)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoDilate, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, a, b, c, ierr)
+          api_dimTags_, api_dimTags_n_, x, y, z, a, b, c, ierr)
     ierr[] != 0 && error("gmshModelGeoDilate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2666,10 +2710,12 @@ Apply a symmetry transformation to the model entities `dimTag`, with respect to
 the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
 """
 function symmetrize(dimTags, a, b, c, d)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoSymmetrize, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
+          api_dimTags_, api_dimTags_n_, a, b, c, d, ierr)
     ierr[] != 0 && error("gmshModelGeoSymmetrize returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2682,12 +2728,14 @@ Copy the entities `dimTags`; the new entities are returned in `outDimTags`.
 Return `outDimTags`.
 """
 function copy(dimTags)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoCopy, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), api_outDimTags_, api_outDimTags_n_, ierr)
+          api_dimTags_, api_dimTags_n_, api_outDimTags_, api_outDimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelGeoCopy returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2701,10 +2749,12 @@ Remove the entities `dimTags`. If `recursive` is true, remove all the entities
 on their boundaries, down to dimension 0.
 """
 function remove(dimTags, recursive = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoRemove, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
+          api_dimTags_, api_dimTags_n_, recursive, ierr)
     ierr[] != 0 && error("gmshModelGeoRemove returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2756,10 +2806,12 @@ Set a mesh size constraint on the model entities `dimTags`. Currently only
 entities of dimension 0 (points) are handled.
 """
 function setSize(dimTags, size)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoMeshSetSize, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
+          api_dimTags_, api_dimTags_n_, size, ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetSize returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3383,12 +3435,14 @@ different layers, normalized to 1.
 Return `outDimTags`.
 """
 function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccExtrude, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
+          api_dimTags_, api_dimTags_n_, dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelOccExtrude returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3409,12 +3463,14 @@ angle should be strictly smaller than 2*Pi.
 Return `outDimTags`.
 """
 function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccRevolve, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
+          api_dimTags_, api_dimTags_n_, x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelOccRevolve returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3430,12 +3486,14 @@ the pipe in `outDimTags`.
 Return `outDimTags`.
 """
 function addPipe(dimTags, wireTag)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccAddPipe, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), wireTag, api_outDimTags_, api_outDimTags_n_, ierr)
+          api_dimTags_, api_dimTags_n_, wireTag, api_outDimTags_, api_outDimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelOccAddPipe returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3504,6 +3562,10 @@ the tool if `removeTool` is set.
 Return `outDimTags`, `outDimTagsMap`.
 """
 function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
+    api_objectDimTags_ = collect(Cint, Iterators.flatten(objectDimTags))
+    api_objectDimTags_n_ = length(api_objectDimTags_)
+    api_toolDimTags_ = collect(Cint, Iterators.flatten(toolDimTags))
+    api_toolDimTags_n_ = length(api_toolDimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     api_outDimTagsMap_ = Ref{Ptr{Ptr{Cint}}}()
@@ -3512,7 +3574,7 @@ function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeT
     ierr = Ref{Cint}()
     ccall((:gmshModelOccFuse, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Cint, Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+          api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error("gmshModelOccFuse returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3539,6 +3601,10 @@ the boolean operation results in a single entity). Remove the object if
 Return `outDimTags`, `outDimTagsMap`.
 """
 function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
+    api_objectDimTags_ = collect(Cint, Iterators.flatten(objectDimTags))
+    api_objectDimTags_n_ = length(api_objectDimTags_)
+    api_toolDimTags_ = collect(Cint, Iterators.flatten(toolDimTags))
+    api_toolDimTags_n_ = length(api_toolDimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     api_outDimTagsMap_ = Ref{Ptr{Ptr{Cint}}}()
@@ -3547,7 +3613,7 @@ function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, re
     ierr = Ref{Cint}()
     ccall((:gmshModelOccIntersect, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Cint, Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+          api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error("gmshModelOccIntersect returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3574,6 +3640,10 @@ the tool if `removeTool` is set.
 Return `outDimTags`, `outDimTagsMap`.
 """
 function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
+    api_objectDimTags_ = collect(Cint, Iterators.flatten(objectDimTags))
+    api_objectDimTags_n_ = length(api_objectDimTags_)
+    api_toolDimTags_ = collect(Cint, Iterators.flatten(toolDimTags))
+    api_toolDimTags_n_ = length(api_toolDimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     api_outDimTagsMap_ = Ref{Ptr{Ptr{Cint}}}()
@@ -3582,7 +3652,7 @@ function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTo
     ierr = Ref{Cint}()
     ccall((:gmshModelOccCut, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Cint, Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+          api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error("gmshModelOccCut returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3609,6 +3679,10 @@ the tool if `removeTool` is set.
 Return `outDimTags`, `outDimTagsMap`.
 """
 function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
+    api_objectDimTags_ = collect(Cint, Iterators.flatten(objectDimTags))
+    api_objectDimTags_n_ = length(api_objectDimTags_)
+    api_toolDimTags_ = collect(Cint, Iterators.flatten(toolDimTags))
+    api_toolDimTags_n_ = length(api_toolDimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     api_outDimTagsMap_ = Ref{Ptr{Ptr{Cint}}}()
@@ -3617,7 +3691,7 @@ function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, rem
     ierr = Ref{Cint}()
     ccall((:gmshModelOccFragment, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Cint, Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+          api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error("gmshModelOccFragment returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3638,10 +3712,12 @@ end
 Translate the model entities `dimTags` along (`dx`, `dy`, `dz`).
 """
 function translate(dimTags, dx, dy, dz)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccTranslate, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, ierr)
+          api_dimTags_, api_dimTags_n_, dx, dy, dz, ierr)
     ierr[] != 0 && error("gmshModelOccTranslate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3654,10 +3730,12 @@ revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`,
 `az`).
 """
 function rotate(dimTags, x, y, z, ax, ay, az, angle)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccRotate, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, ierr)
+          api_dimTags_, api_dimTags_n_, x, y, z, ax, ay, az, angle, ierr)
     ierr[] != 0 && error("gmshModelOccRotate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3670,10 +3748,12 @@ coordinate axes; use (`x`, `y`, `z`) as the center of the homothetic
 transformation.
 """
 function dilate(dimTags, x, y, z, a, b, c)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccDilate, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, a, b, c, ierr)
+          api_dimTags_, api_dimTags_n_, x, y, z, a, b, c, ierr)
     ierr[] != 0 && error("gmshModelOccDilate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3685,10 +3765,12 @@ Apply a symmetry transformation to the model entities `dimTag`, with respect to
 the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
 """
 function symmetrize(dimTags, a, b, c, d)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccSymmetrize, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
+          api_dimTags_, api_dimTags_n_, a, b, c, d, ierr)
     ierr[] != 0 && error("gmshModelOccSymmetrize returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3701,10 +3783,12 @@ row; only the 12 first can be provided for convenience) to the model entities
 `dimTag`.
 """
 function affineTransform(dimTags, a)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccAffineTransform, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), convert(Vector{Cdouble}, a), length(a), ierr)
+          api_dimTags_, api_dimTags_n_, convert(Vector{Cdouble}, a), length(a), ierr)
     ierr[] != 0 && error("gmshModelOccAffineTransform returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3717,12 +3801,14 @@ Copy the entities `dimTags`; the new entities are returned in `outDimTags`.
 Return `outDimTags`.
 """
 function copy(dimTags)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccCopy, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), api_outDimTags_, api_outDimTags_n_, ierr)
+          api_dimTags_, api_dimTags_n_, api_outDimTags_, api_outDimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelOccCopy returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3736,10 +3822,12 @@ Remove the entities `dimTags`. If `recursive` is true, remove all the entities
 on their boundaries, down to dimension 0.
 """
 function remove(dimTags, recursive = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccRemove, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
+          api_dimTags_, api_dimTags_n_, recursive, ierr)
     ierr[] != 0 && error("gmshModelOccRemove returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3772,10 +3860,12 @@ Return `outDimTags`.
 function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccHealShapes, gmsh.lib), Cvoid,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Cdouble, Cint, Cint, Cint, Cint, Ptr{Cint}),
-          api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, ierr)
+          api_outDimTags_, api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, ierr)
     ierr[] != 0 && error("gmshModelOccHealShapes returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3813,10 +3903,12 @@ Set a mesh size constraint on the model entities `dimTags`. Currently only
 entities of dimension 0 (points) are handled.
 """
 function setMeshSize(dimTags, size)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccSetMeshSize, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
+          api_dimTags_, api_dimTags_n_, size, ierr)
     ierr[] != 0 && error("gmshModelOccSetMeshSize returned non-zero error code: $(ierr[])")
     return nothing
 end

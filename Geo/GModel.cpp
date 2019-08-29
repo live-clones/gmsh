@@ -1271,6 +1271,7 @@ int GModel::optimizeMesh(const std::string &how, const bool force, int niter)
 {
 #if defined(HAVE_MESH)
   OptimizeMesh(this, how, force, niter);
+  FixPeriodicMesh(this);
   if(CTX::instance()->mesh.renumber){
     renumberMeshVertices();
     renumberMeshElements();
@@ -1290,6 +1291,7 @@ int GModel::setOrderN(int order, int linear, int incomplete)
     SetOrderN(this, order, linear, incomplete);
   else
     SetOrder1(this);
+  FixPeriodicMesh(this);
   if(CTX::instance()->mesh.renumber){
     renumberMeshVertices();
     renumberMeshElements();

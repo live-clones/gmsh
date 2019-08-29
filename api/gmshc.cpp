@@ -1320,6 +1320,18 @@ GMSH_API void gmshModelMeshSetReverse(const int dim, const int tag, const int va
   }
 }
 
+GMSH_API void gmshModelMeshSetCompound(const int dim, int * tags, size_t tags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_(tags, tags + tags_n);
+    gmsh::model::mesh::setCompound(dim, api_tags_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;

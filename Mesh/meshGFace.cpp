@@ -2844,7 +2844,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 void deMeshGFace::operator()(GFace *gf)
 {
   if(gf->geomType() == GEntity::DiscreteSurface) {
-    if(!static_cast<discreteFace *>(gf)->haveParametrization()) return;
+    if(!static_cast<discreteFace *>(gf)->haveParametrization()){
+      return;
+    }
   }
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
@@ -2975,7 +2977,8 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
-  if(gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
+  if(CTX::instance()->mesh.algoSwitchOnFailure &&
+     gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
      !isMeshValid(gf)) {
     Msg::Debug(
       "Delaunay-based mesher failed on surface %d -> moving to MeshAdapt",
@@ -3054,6 +3057,13 @@ static void getGFaceOrientation(GFace *gf, BoundaryLayerColumns *blc,
 void orientMeshGFace::operator()(GFace *gf)
 {
   if(!gf->getNumMeshElements()) return;
+
+  // Warning: it's not clear if periodic meshes should be orientated according
+  // to the orientation of the underlying CAD surface. Since we don't reorient
+  // periodic curve meshes, let's also not reorient surface meshes for now. This
+  // has implications for high-order periodic meshes: see comment in
+  // FixPeriodicMesh().
+  if(gf->getMeshMaster() != gf) return;
 
   gf->model()->setCurrentMeshEntity(gf);
 

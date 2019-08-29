@@ -74,6 +74,7 @@
 #include <ShapeFix_FixSmallFace.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wireframe.hxx>
+#include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <Standard_Version.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
@@ -2608,6 +2609,13 @@ bool OCC_Internals::booleanOperator(
         return false;
       }
       result = fuse.Shape();
+      // try to unify faces and edges of the shape (remove internal seams) which
+      // lie on the same geometry
+      if(CTX::instance()->geom.occUnionUnify) {
+        ShapeUpgrade_UnifySameDomain unify(result);
+        unify.Build();
+        result = unify.Shape();
+      }
       TopTools_ListIteratorOfListOfShape it(objectShapes);
       for(; it.More(); it.Next()) {
         mapOriginal.push_back(it.Value());
@@ -3332,6 +3340,12 @@ bool OCC_Internals::exportShapes(const std::string &fileName,
 {
   // iterate over all shapes with tags, and import them into the (sub)shape
   // _maps
+  _somap.Clear();
+  _shmap.Clear();
+  _fmap.Clear();
+  _wmap.Clear();
+  _emap.Clear();
+  _vmap.Clear();
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
   for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);

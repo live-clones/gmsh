@@ -1470,6 +1470,20 @@ as-is.
 -
 @end table
 
+@item setCompound
+Set a compound meshing constraint on the model entities of dimension @code{dim}
+and tags @code{tags}. During meshing, compound entities are treated as a single
+discrete entity, which is automatically reparametrized.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tags}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item setOutwardOrientation
 Set meshing constraints on the bounding surfaces of the volume of tag @code{tag}
 so that all surfaces are oriented with outward pointing normals. Currently only

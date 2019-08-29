@@ -1565,6 +1565,7 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
 {
   if(!_isInitialized()) { throw - 1; }
   const char *n;
+  MElement::getInfoMSH(elementType, &n);
   name = n;
   int parentType = ElementType::getParentType(elementType);
   nodalBasis *basis = 0;
@@ -3048,6 +3049,25 @@ GMSH_API void gmsh::model::mesh::setReverse(const int dim, const int tag,
       throw 2;
     }
     gf->meshAttributes.reverseMesh = val;
+  }
+}
+
+GMSH_API void gmsh::model::mesh::setCompound(const int dim,
+                                             const std::vector<int> &tags)
+{
+  if(!_isInitialized()) { throw - 1; }
+  std::vector<GEntity *> ents;
+  for(std::size_t i = 0; i < tags.size(); i++) {
+    GEntity *ent = GModel::current()->getEntityByTag(dim, tags[i]);
+    if(ent) {
+      ents.push_back(ent);
+    }
+    else {
+      Msg::Error("%s does not exist", _getEntityName(dim, tags[i]).c_str());
+    }
+  }
+  for(std::size_t i = 0; i < ents.size(); i++) {
+    ents[i]->compound = ents;
   }
 }
 

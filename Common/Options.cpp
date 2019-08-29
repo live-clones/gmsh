@@ -4802,6 +4802,13 @@ double opt_geometry_occ_sew_faces(OPT_ARGS_NUM)
   return CTX::instance()->geom.occSewFaces;
 }
 
+double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occUnionUnify = (int)val;
+  return CTX::instance()->geom.occUnionUnify;
+}
+
 double opt_geometry_occ_parallel(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -6001,6 +6008,22 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
   return CTX::instance()->mesh.algo2d;
 }
 
+double opt_mesh_algo_switch_on_failure(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.algoSwitchOnFailure = (int)val;
+  }
+  return CTX::instance()->mesh.algoSwitchOnFailure;
+}
+
+double opt_mesh_max_retries(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.maxRetries = (int)val;
+  }
+  return CTX::instance()->mesh.maxRetries;
+}
+
 double opt_mesh_algo_recombine(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -6183,7 +6206,7 @@ double opt_mesh_ho_optimize(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[3]->value
-      (CTX::instance()->mesh.hoOptimize);
+      (CTX::instance()->mesh.hoOptimize == 2 ? 1 : 0);
 #endif
   return CTX::instance()->mesh.hoOptimize;
 }
@@ -10069,7 +10092,7 @@ unsigned int opt_view_color_text2d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.text2d, FlGui::instance()->options->view.color[10]);
+    CCC(opt->color.text2d, FlGui::instance()->options->view.color[11]);
     drawContext::global()->resetFontTextures();
   }
 #endif
@@ -10088,7 +10111,7 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.text3d, FlGui::instance()->options->view.color[11]);
+    CCC(opt->color.text3d, FlGui::instance()->options->view.color[12]);
     drawContext::global()->resetFontTextures();
   }
 #endif
@@ -10107,7 +10130,7 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.axes, FlGui::instance()->options->view.color[12]);
+    CCC(opt->color.axes, FlGui::instance()->options->view.color[13]);
     drawContext::global()->resetFontTextures();
   }
 #endif
@@ -10126,7 +10149,7 @@ unsigned int opt_view_color_background2d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.background2d, FlGui::instance()->options->view.color[13]);
+    CCC(opt->color.background2d, FlGui::instance()->options->view.color[14]);
     drawContext::global()->resetFontTextures();
   }
 #endif
