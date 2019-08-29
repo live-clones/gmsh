@@ -970,7 +970,7 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       master = model->getEdgeByTag(masterTag);
       break;
     case 2:
-      slave = model->getFaceByTag(masterTag);
+      slave = model->getFaceByTag(slaveTag);
       master = model->getFaceByTag(masterTag);
       break;
     }
