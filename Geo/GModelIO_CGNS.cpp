@@ -90,9 +90,12 @@ int writePeriodic(GModel *model, bool saveAll, double scalingFactor,
     }
     GEntity *g_master = g_slave->getMeshMaster();
     if (g_slave == g_master) continue;
+    const std::size_t numNodePairs = g_slave->correspondingVertices.size();
+    if (numNodePairs == 0) continue;
     perEnt.insert(g_slave);
-    maxNumPerNodes += g_slave->correspondingVertices.size();
-    std::cout << "DBGTT: partition " << partition << ": slave = " << g_slave->tag() << ", master = " << g_master->tag() << "\n";
+    maxNumPerNodes += numNodePairs;
+    // std::cout << "DBGTT: partition " << partition << ": slave = " << g_slave->tag()
+    //           << ", master = " << g_master->tag() << ", max. nodes = " << maxNumPerNodes << "\n";
   }
 
   // lists of corresponding master/slave nodes for each master partition 
@@ -114,8 +117,7 @@ int writePeriodic(GModel *model, bool saveAll, double scalingFactor,
       }
     }
   }
-  // std::cout << "DBGTT: in partition" << partition << ", " << ms.slave.size() << " pairs of corresponding nodes in entity" << (*itE)->tag() << "\n";
-  std::cout << "DBGTT: partition " << partition << " has periodic connectivities with " << perConnect.size() << " partitions\n";
+  // std::cout << "DBGTT: partition " << partition << " has periodic connectivities with " << perConnect.size() << " partitions\n";
 
   // write periodic node correspondence
   typedef std::map<size_t, MasterSlaveNodes>::iterator PerConnectIter;
@@ -128,7 +130,7 @@ int writePeriodic(GModel *model, bool saveAll, double scalingFactor,
     ossInt << "Part" << partition << "_Part" << masterPart;
     const std::string interfaceName = cgnsString(ossInt.str()); 
     int dum;
-    std::cout << "DBGTT: writing " << ms.slave.size() << " pairs of corresponding verticies between partitions " << partition << " and " << masterPart << "\n";
+    // std::cout << "DBGTT: writing " << ms.slave.size() << " pairs of corresponding verticies between partitions " << partition << " and " << masterPart << "\n";
     CGNS::cg_conn_write(cgIndexFile, cgIndexBase, slaveZone,
                         interfaceName.c_str(), CGNS::Vertex, CGNS::Abutting1to1,
                         CGNS::PointList, ms.slave.size(), ms.slave.data(),
