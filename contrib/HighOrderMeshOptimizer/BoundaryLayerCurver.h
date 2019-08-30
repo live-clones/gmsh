@@ -45,19 +45,19 @@ typedef std::vector<PairMElemVecMElem> VecPairMElemVecMElem;
 typedef std::map<MEdge, std::vector<MElement *>, Less_Edge> MapMEdgeVecMElem;
 
 namespace BoundaryLayerCurver {
-  bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);
+  bool computeCommonEdge(MElement *, MElement *, MEdge &);
 
   void repositionInnerVertices(MFaceN &, const GFace *, bool linearInYDir);
 
   void repositionInnerVertices(const std::vector<MFaceN> &, const GFace *,
                                bool linearInYDir);
 
-  MElement *createPrimaryElement(MElement *el);
+  MElement *createPrimaryElement(MElement *);
 
   void computeStackPrimaryVertices(const PairMElemVecMElem &column,
-                                   std::vector<MVertex *> &stack);
+                                   std::vector<MVertex *> &);
 
-  bool edgesShareVertex(MEdgeN *, MEdgeN *);
+  bool edgesShareVertex(MEdgeN &, MEdgeN &);
 
   // The boundary layer curver algorithm is seperated into different modules:
   namespace EdgeCurver2D {
@@ -76,13 +76,13 @@ namespace BoundaryLayerCurver {
     // that contain the edge is needed. It is computed from the CAD if 'gface'
     // and 'gedge' are provided. Otherwise, 'normal' is taken into account.
     // At least 'gface' & 'gedge' or 'normal' have to be provided.
-    void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
-                   const GEdge *gedge, const SVector3 &normal);
+    void curveEdge(const MEdgeN &baseEdge, MEdgeN &edge, const GFace *,
+                   const GEdge *, const SVector3 &normal);
 
     void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
                                 std::vector<MFaceN> &stackFaces,
                                 std::vector<MElement *> &stackElements,
-                                int iFirst, int iLast, const GFace *gface);
+                                int iFirst, int iLast, const GFace *);
 
     class _Frame {
       SVector3 _normalToTheMesh;
@@ -93,7 +93,7 @@ namespace BoundaryLayerCurver {
       double _paramVerticesOnGEdge[20];
 
     public:
-      _Frame(const MEdgeN *edge, const GFace *gface, const GEdge *gedge,
+      _Frame(const MEdgeN *, const GFace *, const GEdge *,
              const SVector3 &normal);
 
       void computeFrame(double paramEdge, SVector3 &t, SVector3 &n, SVector3 &w,
@@ -104,14 +104,14 @@ namespace BoundaryLayerCurver {
   } // namespace EdgeCurver2D
 
   namespace InteriorEdgeCurver {
-    void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
-                    const GFace *gface);
+    void curveEdges(std::vector<MEdgeN> &, int iFirst, int iLast,
+                    const GFace *);
 
     void curveEdgesAndPreserveQuality(std::vector<MEdgeN> &stackEdges,
                                       std::vector<MFaceN> &stackFacesBL,
                                       std::vector<MElement *> &stackElements,
                                       int iFirst, int iLast,
-                                      const GFace *gface);
+                                      const GFace *);
   } // namespace InteriorEdgeCurver
 
   struct Parameters3DCurve {

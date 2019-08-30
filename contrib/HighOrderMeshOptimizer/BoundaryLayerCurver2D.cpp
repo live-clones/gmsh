@@ -185,22 +185,20 @@ namespace BoundaryLayerCurver {
     v->setParameter(1, projected.v());
   }
 
-  void projectVerticesIntoGFace(const MEdgeN *edge, const GFace *gface,
+  void projectVerticesIntoGFace(const MEdgeN &edge, const GFace *gface,
                                 bool alsoExtremity = true)
   {
     int i = alsoExtremity ? 0 : 2;
-
-    for(; i < edge->getNumVertices(); ++i)
-      projectVertexIntoGFace(edge->getVertex(i), gface);
+    for(; i < edge.getNumVertices(); ++i)
+      projectVertexIntoGFace(edge.getVertex(i), gface);
   }
 
-  void projectVerticesIntoGFace(const MFaceN *face, const GFace *gface,
+  void projectVerticesIntoGFace(const MFaceN &face, const GFace *gface,
                                 bool alsoBoundary = true)
   {
-    int i = alsoBoundary ? 0 : face->getNumVerticesOnBoundary();
-
-    for(; i < face->getNumVertices(); ++i)
-      projectVertexIntoGFace(face->getVertex(i), gface);
+    int i = alsoBoundary ? 0 : face.getNumVerticesOnBoundary();
+    for(; i < face.getNumVertices(); ++i)
+      projectVertexIntoGFace(face.getVertex(i), gface);
   }
 
   namespace EdgeCurver2D {
@@ -312,15 +310,15 @@ namespace BoundaryLayerCurver {
       return SPoint3(p.x(), p.y(), p.z());
     }
 
-    void _computeParameters(const MEdgeN *baseEdge, const MEdgeN *otherEdge,
+    void _computeParameters(const MEdgeN &baseEdge, const MEdgeN &otherEdge,
                             const _Frame &frame, double coeffs[2][3])
     {
       SVector3 t, n, w, h;
       MVertex *vb, *vt;
 
       frame.computeFrame(-1, t, n, w, true);
-      vb = baseEdge->getVertex(0);
-      vt = otherEdge->getVertex(0);
+      vb = baseEdge.getVertex(0);
+      vt = otherEdge.getVertex(0);
       h = SVector3(vt->x() - vb->x(), vt->y() - vb->y(), vt->z() - vb->z());
       coeffs[0][0] = dot(h, n);
       coeffs[0][1] = dot(h, t);
@@ -331,8 +329,8 @@ namespace BoundaryLayerCurver {
       draw3DFrame(p1, t, n, w, .0004);
 
       frame.computeFrame(1, t, n, w, true);
-      vb = baseEdge->getVertex(1);
-      vt = otherEdge->getVertex(1);
+      vb = baseEdge.getVertex(1);
+      vt = otherEdge.getVertex(1);
       h = SVector3(vt->x() - vb->x(), vt->y() - vb->y(), vt->z() - vb->z());
       coeffs[1][0] = dot(h, n);
       coeffs[1][1] = dot(h, t);
@@ -343,13 +341,13 @@ namespace BoundaryLayerCurver {
       draw3DFrame(p2, t, n, w, .0004);
     }
 
-    void _idealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
+    void _idealPositionEdge(const MEdgeN &baseEdge, const _Frame &frame,
                             double coeffs[2][3], int nbPoints,
                             const IntPt *points, fullMatrix<double> &xyz)
     {
       for(int i = 0; i < nbPoints; ++i) {
         double u = points[i].pt[0];
-        SPoint3 p = baseEdge->pnt(u);
+        SPoint3 p = baseEdge.pnt(u);
         SVector3 t, n, w;
         frame.computeFrame(u, t, n, w);
 
@@ -371,7 +369,7 @@ namespace BoundaryLayerCurver {
       }
     }
 
-    void _drawIdealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
+    void _drawIdealPositionEdge(const MEdgeN &baseEdge, const _Frame &frame,
                                 double coeffs[2][3], GEdge *gedge)
     {
       int N = 100;
@@ -379,7 +377,7 @@ namespace BoundaryLayerCurver {
 
       for(int i = 0; i < N + 1; ++i) {
         const double u = (double)i / N * 2 - 1;
-        SPoint3 p = baseEdge->pnt(u);
+        SPoint3 p = baseEdge.pnt(u);
         SVector3 t, n, w;
         frame.computeFrame(u, t, n, w);
 
@@ -408,15 +406,15 @@ namespace BoundaryLayerCurver {
       }
     }
 
-    void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
+    void curveEdge(const MEdgeN &baseEdge, MEdgeN &edge, const GFace *gface,
                    const GEdge *gedge, const SVector3 &normal)
     {
-      _Frame frame(baseEdge, gface, gedge, normal);
+      _Frame frame(&baseEdge, gface, gedge, normal);
 
       double coeffs[2][3];
       _computeParameters(baseEdge, edge, frame, coeffs);
 
-      const int orderCurve = baseEdge->getPolynomialOrder();
+      const int orderCurve = baseEdge.getPolynomialOrder();
       const int orderGauss = orderCurve * 2;
       const int sizeSystem = getNGQLPts(orderGauss);
       const IntPt *gaussPnts = getGQLPts(orderGauss);
@@ -426,9 +424,9 @@ namespace BoundaryLayerCurver {
       _idealPositionEdge(baseEdge, frame, coeffs, sizeSystem, gaussPnts, xyz);
       //      _drawIdealPositionEdge(baseEdge, frame, coeffs, (GEdge*)gedge);
       for(int i = 0; i < 2; ++i) {
-        xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
-        xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
-        xyz(sizeSystem + i, 2) = edge->getVertex(i)->z();
+        xyz(sizeSystem + i, 0) = edge.getVertex(i)->x();
+        xyz(sizeSystem + i, 1) = edge.getVertex(i)->y();
+        xyz(sizeSystem + i, 2) = edge.getVertex(i)->z();
       }
 
       LeastSquareData *data =
@@ -436,25 +434,25 @@ namespace BoundaryLayerCurver {
       fullMatrix<double> newxyz(orderCurve + 1, 3);
       data->invA.mult(xyz, newxyz);
 
-      for(int i = 2; i < edge->getNumVertices(); ++i) {
-        edge->getVertex(i)->x() = newxyz(i, 0);
-        edge->getVertex(i)->y() = newxyz(i, 1);
-        edge->getVertex(i)->z() = newxyz(i, 2);
+      for(int i = 2; i < edge.getNumVertices(); ++i) {
+        edge.getVertex(i)->x() = newxyz(i, 0);
+        edge.getVertex(i)->y() = newxyz(i, 1);
+        edge.getVertex(i)->z() = newxyz(i, 2);
       }
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
-    void _reduceCurving(MEdgeN *edge, double factor, const GFace *gface)
+    void _reduceCurving(MEdgeN &edge, double factor, const GFace *gface)
     {
-      int order = edge->getPolynomialOrder();
+      int order = edge.getPolynomialOrder();
 
-      MVertex *v0 = edge->getVertex(0);
-      MVertex *v1 = edge->getVertex(1);
+      MVertex *v0 = edge.getVertex(0);
+      MVertex *v1 = edge.getVertex(1);
 
       for(int i = 2; i < order + 1; ++i) {
         double f = (double)(i - 1) / order;
-        MVertex *v = edge->getVertex(i);
+        MVertex *v = edge.getVertex(i);
         v->x() =
           (1 - factor) * v->x() + factor * ((1 - f) * v0->x() + f * v1->x());
         v->y() =
@@ -465,9 +463,9 @@ namespace BoundaryLayerCurver {
       if(gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
-    void _reduceOrderCurve(MEdgeN *edge, int order, const GFace *gface)
+    void _reduceOrderCurve(MEdgeN &edge, int order, const GFace *gface)
     {
-      const int orderCurve = edge->getPolynomialOrder();
+      const int orderCurve = edge.getPolynomialOrder();
       const int orderGauss = order * 2;
       const int sizeSystem = getNGQLPts(orderGauss);
       const IntPt *gaussPnts = getGQLPts(orderGauss);
@@ -475,22 +473,22 @@ namespace BoundaryLayerCurver {
       // Least square projection
       fullMatrix<double> xyz(sizeSystem + 2, 3);
       for(int i = 0; i < sizeSystem; ++i) {
-        SPoint3 p = edge->pnt(gaussPnts[i].pt[0]);
+        SPoint3 p = edge.pnt(gaussPnts[i].pt[0]);
         xyz(i, 0) = p.x();
         xyz(i, 1) = p.y();
         xyz(i, 2) = p.z();
       }
       for(int i = 0; i < 2; ++i) {
-        xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
-        xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
-        xyz(sizeSystem + i, 2) = edge->getVertex(i)->z();
+        xyz(sizeSystem + i, 0) = edge.getVertex(i)->x();
+        xyz(sizeSystem + i, 1) = edge.getVertex(i)->y();
+        xyz(sizeSystem + i, 2) = edge.getVertex(i)->z();
       }
 
       LeastSquareData *data = getLeastSquareData(TYPE_LIN, order, orderGauss);
       fullMatrix<double> newxyzLow(order + 1, 3);
       data->invA.mult(xyz, newxyzLow);
 
-      std::vector<MVertex *> vertices = edge->getVertices();
+      std::vector<MVertex *> vertices = edge.getVertices();
       vertices.resize(static_cast<std::size_t>(order) + 1);
       MEdgeN lowOrderEdge(vertices);
 
@@ -504,18 +502,18 @@ namespace BoundaryLayerCurver {
       const nodalBasis *nb = BasisFactory::getNodalBasis(tagLine);
       const fullMatrix<double> &refpnts = nb->getReferenceNodes();
 
-      fullMatrix<double> newxyz(edge->getNumVertices(), 3);
-      for(std::size_t i = 2; i < edge->getNumVertices(); ++i) {
+      fullMatrix<double> newxyz(edge.getNumVertices(), 3);
+      for(std::size_t i = 2; i < edge.getNumVertices(); ++i) {
         SPoint3 p = lowOrderEdge.pnt(refpnts(i, 0));
         newxyz(i, 0) = p.x();
         newxyz(i, 1) = p.y();
         newxyz(i, 2) = p.z();
       }
 
-      for(int i = 2; i < edge->getNumVertices(); ++i) {
-        edge->getVertex(i)->x() = newxyz(i, 0);
-        edge->getVertex(i)->y() = newxyz(i, 1);
-        edge->getVertex(i)->z() = newxyz(i, 2);
+      for(int i = 2; i < edge.getNumVertices(); ++i) {
+        edge.getVertex(i)->x() = newxyz(i, 0);
+        edge.getVertex(i)->y() = newxyz(i, 1);
+        edge.getVertex(i)->z() = newxyz(i, 2);
       }
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
@@ -531,7 +529,7 @@ namespace BoundaryLayerCurver {
       subsetEdges[1] = stackEdges[iFirst];
       subsetEdges[2] = stackEdges[iLast - 1];
       subsetEdges[3] = stackEdges[iLast];
-      MEdgeN *lastEdge = &stackEdges[iLast];
+      MEdgeN &lastEdge = stackEdges[iLast];
 
       // First get sure that last element of the BL is of good quality
       MFaceN &lastFaceBL = stackFaces[iLast - 1];
@@ -543,7 +541,7 @@ namespace BoundaryLayerCurver {
       InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
       repositionInnerVertices(lastFaceBL, gface, true);
       double qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
-      int currentOrder = lastEdge->getPolynomialOrder();
+      int currentOrder = lastEdge.getPolynomialOrder();
       while(qual < .75 && qual < .8 * qualLinear && currentOrder > 2) {
         _reduceOrderCurve(lastEdge, --currentOrder, gface);
         InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
@@ -890,7 +888,7 @@ namespace BoundaryLayerCurver {
           v->y() = x(j, 1);
           v->z() = x(j, 2);
         }
-        if(gface) projectVerticesIntoGFace(&stack[i], gface, false);
+        if(gface) projectVerticesIntoGFace(stack[i], gface, false);
       }
     }
 
@@ -942,7 +940,7 @@ namespace BoundaryLayerCurver {
                                         .4, .3, .2, .1, 0};
       for(int i = 0; i < 11; ++i) {
         _generalTFI(stackEdges, iLast, eta, terms, coeffHermite[i], gface);
-        repositionInnerVertices(stackFaces, gface);
+        repositionInnerVertices(stackFacesBL, gface, true);
 
         bool allOk = true;
         if(coeffHermite[i]) {
@@ -960,7 +958,7 @@ namespace BoundaryLayerCurver {
     }
 
     void curveEdgesAndPreserveQualityTri(std::vector<MEdgeN> &stackEdges,
-                                         std::vector<MFaceN> &stackFaces,
+                                         std::vector<MFaceN> &stackFacesBL,
                                          std::vector<MElement *> &stackElements,
                                          int iFirst, int iLast,
                                          const GFace *gface, const GEdge *gedge,
@@ -984,10 +982,10 @@ namespace BoundaryLayerCurver {
       for(int i = 0; i < 11; ++i) {
         _generalTFI(stackEdges, iLast, eta, terms, coeffHermite[i], gface);
         for(unsigned int j = 0; j < stackEdges.size() - 2; j += 2) {
-          EdgeCurver2D::curveEdge(&stackEdges[j], &stackEdges[j + 1], gface,
+          EdgeCurver2D::curveEdge(stackEdges[j], stackEdges[j + 1], gface,
                                   NULL, normal);
         }
-        repositionInnerVertices(stackFaces, gface);
+        repositionInnerVertices(stackFacesBL, gface, true);
 
         bool allOk = true;
         if(coeffHermite[i]) {
@@ -1391,14 +1389,14 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  bool edgesShareVertex(MEdgeN *e0, MEdgeN *e1)
+  bool edgesShareVertex(MEdgeN &e0, MEdgeN &e1)
   {
-    MVertex *v = e0->getVertex(0);
-    MVertex *v0 = e1->getVertex(0);
+    MVertex *v = e0.getVertex(0);
+    MVertex *v0 = e1.getVertex(0);
     if(v == v0) return true;
-    MVertex *v1 = e1->getVertex(1);
+    MVertex *v1 = e1.getVertex(1);
     if(v == v1) return true;
-    v = e0->getVertex(1);
+    v = e0.getVertex(1);
     if(v == v0 || v == v1) return true;
     return false;
   }
@@ -1415,7 +1413,7 @@ namespace BoundaryLayerCurver {
       placement = InnerVertPlacementMatrices::triangle(order, linearInYDir);
     }
     face.repositionInnerVertices(placement);
-    if(gface) projectVerticesIntoGFace(&face, gface, false);
+    if(gface) projectVerticesIntoGFace(face, gface, false);
   }
 
   void repositionInnerVertices(const std::vector<MFaceN> &stackFaces,
@@ -1435,7 +1433,7 @@ namespace BoundaryLayerCurver {
         face.repositionInnerVertices(placementQua);
       else
         face.repositionInnerVertices(placementTri);
-      if(gface) projectVerticesIntoGFace(&face, gface, false);
+      if(gface) projectVerticesIntoGFace(face, gface, false);
     }
   }
 
@@ -1454,13 +1452,13 @@ namespace BoundaryLayerCurver {
 
     // Curve topEdge of first element and last edge
     std::size_t iFirst = 1, iLast = stackEdges.size() - 1;
-    MEdgeN *baseEdge = &stackEdges[0];
-    MEdgeN *firstEdge = &stackEdges[iFirst];
+    MEdgeN &baseEdge = stackEdges[0];
+    MEdgeN &firstEdge = stackEdges[iFirst];
     if(edgesShareVertex(baseEdge, firstEdge)) {
       iFirst = 2;
-      firstEdge = &stackEdges[iFirst];
+      firstEdge = stackEdges[iFirst];
     }
-    MEdgeN *topEdge = &stackEdges[iLast];
+    MEdgeN &topEdge = stackEdges[iLast];
 
     EdgeCurver2D::curveEdge(baseEdge, firstEdge, gface, gedge, normal);
     EdgeCurver2D::curveEdge(baseEdge, topEdge, gface, gedge, normal);
