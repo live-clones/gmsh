@@ -1146,51 +1146,39 @@ namespace BoundaryLayerCurver {
     for(size_t i = 0; i < borderEdges.size(); ++i) {
       std::size_t idx = borderEdges[i].first;
       MEdge &edge = borderEdges[i].second;
-      // MElement *bottomElement = columns[idx].first;
-      // std::vector<MElement *> &stackElements = columns[idx].second;
-
-      // if(bottomElement->getPolynomialOrder() < 2) continue;
-      // The rest of the function suppose that the order is > 2
 
       std::vector<MFaceN> stackFaces;
       std::vector<MEdgeN> stackEdges;
       computeStackHOEdgesFaces(columns[idx], edge, stackEdges, stackFaces);
-      // MEdgeN bottomEdge, topEdge;
-
-
-
-      // FIXME: compute border interface then curve
+      if(stackEdges[0].getPolynomialOrder() < 2) continue;
 
       // Get an interior vertex and check if the border of the column is on a
       // GFace. Then do the same for the bottom of column.
       GFace *gf = NULL;
       {
-        // MVertex *v;
-        // if(firstEl->getType() == TYPE_QUA) v = firstEl->getVertex(8);
-        // else {
-        //   MElement *secondEl = stackElements[1];
-        //   MEdge e;
-        //   computeCommonEdge(firstEl, secondEl, e);
-        //   MEdgeN en = firstEl->getHighOrderEdge(e);
-        //   v = en.getVertex(2);
-        // }
-        // GEntity *entity = v->onWhat();
-        // if(entity && entity->dim() == 2) gf = entity->cast2Face();
+        MFaceN &face = stackFaces.back();
+        MVertex *v = face.getVertex(face.getNumVertices() - 1);
+        GEntity *entity = v->onWhat();
+        if(entity && entity->dim() == 2) gf = entity->cast2Face();
       }
-
       GEdge *ge = NULL;
       {
-        // MEdgeN en = firstEl->getHighOrderEdge(borderEdges[i].second);
-        // GEntity *entity = en.getVertex(2)->onWhat();
-        // if(entity && entity->dim() == 1) ge = entity->cast2Edge();
+        MEdgeN &edge = stackEdges[0];
+        MVertex *v = edge.getVertex(2);
+        GEntity *entity = v->onWhat();
+        if(entity && entity->dim() == 1) ge = entity->cast2Edge();
       }
 
       if(gf) {
-        SVector3 n;
+        // curveInterface(stackEdges, mapEdgeToElements, gf, ge);
+        // SVector3 n;
         // if(gf->uniqueNormal(n, false))
         //   curve2Dcolumn(columns[idx], NULL, ge, n);
         // else
         //   curve2Dcolumn(columns[idx], gf, ge, n);
+      }
+      else {
+        // FIXME:NOW
       }
     }
   }
