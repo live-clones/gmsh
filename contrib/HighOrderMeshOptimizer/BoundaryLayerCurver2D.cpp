@@ -532,26 +532,22 @@ namespace BoundaryLayerCurver {
       subsetEdges[2] = stackEdges[iLast - 1];
       subsetEdges[3] = stackEdges[iLast];
       MEdgeN *lastEdge = &stackEdges[iLast];
-      std::vector<MFaceN> subsetFaces;
-      subsetFaces.push_back(stackFaces[iLast - 1]);
-      subsetFaces.push_back(stackFaces[iLast]);
-      // Warning: subsetFaces should contain 2 faces since
-      // repositionInnerVertices() need a column of BL faces + the exterior face
 
       // First get sure that last element of the BL is of good quality
+      MFaceN &lastFaceBL = stackFaces[iLast - 1];
       MElement *lastElementBL = stackElements[iLast - 1];
       MElement *linear = createPrimaryElement(lastElementBL);
       double qualLinear = jacobianBasedQuality::minIGEMeasure(linear);
       delete linear;
 
       InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
-      repositionInnerVertices(subsetFaces, gface);
+      repositionInnerVertices(lastFaceBL, gface, true);
       double qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
       int currentOrder = lastEdge->getPolynomialOrder();
       while(qual < .75 && qual < .8 * qualLinear && currentOrder > 2) {
         _reduceOrderCurve(lastEdge, --currentOrder, gface);
         InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
-        repositionInnerVertices(subsetFaces, gface);
+        repositionInnerVertices(lastFaceBL, gface, true);
         qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
       }
       int iter = 0;
@@ -559,11 +555,12 @@ namespace BoundaryLayerCurver {
       while(qual < .75 && qual < .8 * qualLinear && ++iter < maxIter) {
         _reduceCurving(lastEdge, .25, gface);
         InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
-        repositionInnerVertices(subsetFaces, gface);
+        repositionInnerVertices(lastFaceBL, gface, true);
         qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
       }
 
       // Now, get sure the exterior element is of good quality
+      MFaceN &lastFace = stackFaces[iLast];
       MElement *lastElement = stackElements[iLast];
       linear = createPrimaryElement(lastElement);
       qualLinear = jacobianBasedQuality::minIGEMeasure(linear);
@@ -572,7 +569,7 @@ namespace BoundaryLayerCurver {
       qual = jacobianBasedQuality::minIGEMeasure(lastElement);
       while(qual < .75 && qual < .8 * qualLinear && ++iter < maxIter) {
         _reduceCurving(lastEdge, .25, gface);
-        repositionInnerVertices(subsetFaces, gface);
+        repositionInnerVertices(lastFace, gface, false);
         qual = jacobianBasedQuality::minIGEMeasure(lastElement);
       }
       if(iter == maxIter) _reduceCurving(lastEdge, 1, gface);
@@ -924,7 +921,7 @@ namespace BoundaryLayerCurver {
     }
 
     void curveEdgesAndPreserveQuality(std::vector<MEdgeN> &stackEdges,
-                                      std::vector<MFaceN> &stackFaces,
+                                      std::vector<MFaceN> &stackFacesBL,
                                       std::vector<MElement *> &stackElements,
                                       int iFirst, int iLast, const GFace *gface)
     {
@@ -1402,21 +1399,35 @@ namespace BoundaryLayerCurver {
     MVertex *v1 = e1->getVertex(1);
     if(v == v1) return true;
     v = e0->getVertex(1);
-    if(v == v0) return true;
-    if(v == v1) return true;
+    if(v == v0 || v == v1) return true;
     return false;
   }
 
+  void repositionInnerVertices(MFaceN &face, const GFace *gface,
+                               bool linearInYDir)
+  {
+    int order = face.getPolynomialOrder();
+    const fullMatrix<double> *placement;
+    if(face.getType() == TYPE_QUA) {
+      placement = InnerVertPlacementMatrices::quadrangle(order, linearInYDir);
+    }
+    else {
+      placement = InnerVertPlacementMatrices::triangle(order, linearInYDir);
+    }
+    face.repositionInnerVertices(placement);
+    if(gface) projectVerticesIntoGFace(&face, gface, false);
+  }
+
   void repositionInnerVertices(const std::vector<MFaceN> &stackFaces,
-                               const GFace *gface)
+                               const GFace *gface, bool linearInYDir)
   {
     if(stackFaces.empty()) return;
 
     int order = stackFaces[0].getPolynomialOrder();
-    const fullMatrix<double> *placementTri, *placementQua, *placement;
+    const fullMatrix<double> *placementTri, *placementQua;
 
-    placementTri = InnerVertPlacementMatrices::triangle(order, true);
-    placementQua = InnerVertPlacementMatrices::quadrangle(order, true);
+    placementTri = InnerVertPlacementMatrices::triangle(order, linearInYDir);
+    placementQua = InnerVertPlacementMatrices::quadrangle(order, linearInYDir);
 
     for(std::size_t i = 0; i < stackFaces.size() - 1; ++i) {
       const MFaceN &face = stackFaces[i];
@@ -1426,15 +1437,6 @@ namespace BoundaryLayerCurver {
         face.repositionInnerVertices(placementTri);
       if(gface) projectVerticesIntoGFace(&face, gface, false);
     }
-
-    if(stackFaces.back().getType() == TYPE_QUA) {
-      placement = InnerVertPlacementMatrices::quadrangle(order, false);
-    }
-    else {
-      placement = InnerVertPlacementMatrices::triangle(order, false);
-    }
-    stackFaces.back().repositionInnerVertices(placement);
-    if(gface) projectVerticesIntoGFace(&stackFaces.back(), gface, false);
   }
 
   bool curve2Dcolumn(PairMElemVecMElem &column, const GFace *gface,
@@ -1466,6 +1468,7 @@ namespace BoundaryLayerCurver {
                                          iFirst, iLast, gface);
 
     // Curve interior edges and inner vertices
+    stackFaces.pop_back();
     InteriorEdgeCurver::curveEdgesAndPreserveQuality(
       stackEdges, stackFaces, column.second, iFirst, iLast, gface);
 //    InteriorEdgeCurver::curveEdgesAndPreserveQualityTri(

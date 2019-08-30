@@ -47,13 +47,17 @@ typedef std::map<MEdge, std::vector<MElement *>, Less_Edge> MapMEdgeVecMElem;
 namespace BoundaryLayerCurver {
   bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);
 
-  void repositionInnerVertices(const std::vector<MFaceN> &stackFaces,
-                               const GFace *gface);
+  void repositionInnerVertices(MFaceN &, const GFace *, bool linearInYDir);
+
+  void repositionInnerVertices(const std::vector<MFaceN> &, const GFace *,
+                               bool linearInYDir);
 
   MElement *createPrimaryElement(MElement *el);
 
   void computeStackPrimaryVertices(const PairMElemVecMElem &column,
                                    std::vector<MVertex *> &stack);
+
+  bool edgesShareVertex(MEdgeN *, MEdgeN *);
 
   // The boundary layer curver algorithm is seperated into different modules:
   namespace EdgeCurver2D {
@@ -104,7 +108,7 @@ namespace BoundaryLayerCurver {
                     const GFace *gface);
 
     void curveEdgesAndPreserveQuality(std::vector<MEdgeN> &stackEdges,
-                                      std::vector<MFaceN> &stackFaces,
+                                      std::vector<MFaceN> &stackFacesBL,
                                       std::vector<MElement *> &stackElements,
                                       int iFirst, int iLast,
                                       const GFace *gface);
