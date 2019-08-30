@@ -85,7 +85,7 @@ int writePeriodic(GModel *model, bool saveAll, double scalingFactor,
     GEntity *g_slave;
     if (partition == 0) g_slave = entities[i];
     else {
-      entities[i]->getParentEntity();
+      g_slave = entities[i]->getParentEntity();
       if (g_slave == 0) continue;
     }
     GEntity *g_master = g_slave->getMeshMaster();
@@ -94,8 +94,6 @@ int writePeriodic(GModel *model, bool saveAll, double scalingFactor,
     if (numNodePairs == 0) continue;
     perEnt.insert(g_slave);
     maxNumPerNodes += numNodePairs;
-    // std::cout << "DBGTT: partition " << partition << ": slave = " << g_slave->tag()
-    //           << ", master = " << g_master->tag() << ", max. nodes = " << maxNumPerNodes << "\n";
   }
 
   // lists of corresponding master/slave nodes for each master partition 
@@ -117,7 +115,6 @@ int writePeriodic(GModel *model, bool saveAll, double scalingFactor,
       }
     }
   }
-  // std::cout << "DBGTT: partition " << partition << " has periodic connectivities with " << perConnect.size() << " partitions\n";
 
   // write periodic node correspondence
   typedef std::map<size_t, MasterSlaveNodes>::iterator PerConnectIter;
@@ -130,7 +127,6 @@ int writePeriodic(GModel *model, bool saveAll, double scalingFactor,
     ossInt << "Part" << partition << "_Part" << masterPart;
     const std::string interfaceName = cgnsString(ossInt.str()); 
     int dum;
-    // std::cout << "DBGTT: writing " << ms.slave.size() << " pairs of corresponding verticies between partitions " << partition << " and " << masterPart << "\n";
     CGNS::cg_conn_write(cgIndexFile, cgIndexBase, slaveZone,
                         interfaceName.c_str(), CGNS::Vertex, CGNS::Abutting1to1,
                         CGNS::PointList, ms.slave.size(), ms.slave.data(),
@@ -476,7 +472,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   Global2LocalData global2Local(numNodes+1);
   std::vector<std::string> zoneName(numPart+1);
 
-  // write partitions and periodic connectivities 
+  // write partitions and periodic connectivities
   if (numPart == 0) {                                   // mesh not partitioned
     int err = writeZone(this, saveAll, scalingFactor, numNodes, 0, entities[0],
                         cgIndexFile, cgIndexBase, global2Local, zoneName);
