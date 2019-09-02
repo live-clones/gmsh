@@ -531,16 +531,19 @@ namespace BoundaryLayerCurver {
       subsetEdges[3] = stackEdges[iLast];
       MEdgeN &lastEdge = stackEdges[iLast];
 
-      // First get sure that last element of the BL is of good quality
+      // Firstly, get sure that last element of the BL is of good quality
       MFaceN &lastFaceBL = stackFaces[iLast - 1];
       MElement *lastElementBL = stackElements[iLast - 1];
       MElement *linear = createPrimaryElement(lastElementBL);
       double qualLinear = jacobianBasedQuality::minIGEMeasure(linear);
       delete linear;
 
+      // Compute curving and quality of last element of the BL
       InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
       repositionInnerVertices(lastFaceBL, gface, true);
       double qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
+
+      // Reduce order until good quality or order 2
       int currentOrder = lastEdge.getPolynomialOrder();
       while(qual < .75 && qual < .8 * qualLinear && currentOrder > 2) {
         _reduceOrderCurve(lastEdge, --currentOrder, gface);
@@ -548,6 +551,8 @@ namespace BoundaryLayerCurver {
         repositionInnerVertices(lastFaceBL, gface, true);
         qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
       }
+
+      // If still not good quality, reduce curving
       int iter = 0;
       const int maxIter = 15;
       while(qual < .75 && qual < .8 * qualLinear && ++iter < maxIter) {
@@ -557,14 +562,18 @@ namespace BoundaryLayerCurver {
         qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
       }
 
-      // Now, get sure the exterior element is of good quality
+      // Secondly, get sure the external element is of good quality
       MFaceN &lastFace = stackFaces[iLast];
       MElement *lastElement = stackElements[iLast];
       linear = createPrimaryElement(lastElement);
       qualLinear = jacobianBasedQuality::minIGEMeasure(linear);
       delete linear;
 
+      // Compute curving and quality of external element
+      repositionInnerVertices(lastFace, gface, false);
       qual = jacobianBasedQuality::minIGEMeasure(lastElement);
+
+      // Reduce curving
       while(qual < .75 && qual < .8 * qualLinear && ++iter < maxIter) {
         _reduceCurving(lastEdge, .25, gface);
         repositionInnerVertices(lastFace, gface, false);

@@ -103,6 +103,12 @@ namespace BoundaryLayerCurver {
     };
   } // namespace EdgeCurver2D
 
+  namespace EdgeCurver3D {
+    void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
+                                const std::vector<std::vector<MElement *> > &touchedElem,
+                                int iFirst, int iLast, const GFace *);
+  } // namespace EdgeCurver3D
+
   namespace InteriorEdgeCurver {
     void curveEdges(std::vector<MEdgeN> &, int iFirst, int iLast,
                     const GFace *);
