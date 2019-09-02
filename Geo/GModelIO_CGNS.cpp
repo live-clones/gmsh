@@ -32,11 +32,35 @@ namespace {
 
 
 // Type for global node index -> (partition, local node index) correspondence
-struct LocalData { size_t partition = 0; CGNS::cgsize_t index = 0; };
+struct LocalData { unsigned int partition = 0; CGNS::cgsize_t index = 0; };
 typedef std::vector<LocalData> Global2LocalData;
 
-// Type for lists of corresponding master and slave nodes
+// Types for periodic connectivities
+struct PeriodicInterface {
+  GEntity *slaveEnt;        // Slave (parent) entity
+  unsigned int slavePart;
+  GEntity *masterEnt;       // Master (parent) entity
+  unsigned int masterPart;
+};
+struct Less_PeriodicInterface :
+  public std::binary_function<PeriodicInterface, PeriodicInterface, bool> {
+  bool operator()(const PeriodicInterface &i1, const PeriodicInterface &i2)
+    const
+  {
+    if (i1.slaveEnt < i2.slaveEnt) return true;
+    if (i1.slaveEnt > i2.slaveEnt) return false;
+    if (i1.masterEnt < i2.masterEnt) return true;
+    if (i1.masterEnt > i2.masterEnt) return false;
+    if (i1.slavePart < i2.slavePart) return true;
+    if (i1.slavePart > i2.slavePart) return false;
+    if (i1.masterPart < i2.masterPart) return true;
+    if (i1.masterPart > i2.masterPart) return false;
+    return false;
+  }
+};
 struct MasterSlaveNodes { std::vector<CGNS::cgsize_t> master, slave; };
+typedef std::map<PeriodicInterface, MasterSlaveNodes, Less_PeriodicInterface>
+          PeriodicConnection;
 
 
 int cgnsError(const int cgIndexFile = -1)
@@ -65,66 +89,49 @@ void printProgress(const char *cstr, size_t iPart, size_t numPart)
 }
 
 
-// create periodic connections for slave entities in a partition, including
-// with other partitions
-int writePeriodic(GModel *model, bool saveAll, double scalingFactor,
-                  size_t numNodesTotal, size_t partition,
-                  const std::vector<GEntity *> &entities, int cgIndexFile,
-                  int cgIndexBase, const Global2LocalData &global2Local,
-                  const std::vector<std::string> &zoneName)
+// create periodic connections for all entities in all partitions
+int writePeriodic(const std::vector<GEntity *> &entities, int cgIndexFile,
+                   int cgIndexBase, const Global2LocalData &global2Local,
+                   const std::vector<std::string> &zoneName)
 {
-  // int meshDim = model->getMeshDim();
-  
-  // get periodic entities in partition
-  // FIXME: periodic node correspondence will be moved from parent entities to
-  // partitioned entities
-  typedef std::set<GEntity *> EntSet;
-  EntSet perEnt;
-  std::size_t maxNumPerNodes = 0;         // FIXME: to remove ?
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *g_slave;
-    if (partition == 0) g_slave = entities[i];
-    else {
-      g_slave = entities[i]->getParentEntity();
-      if (g_slave == 0) continue;
-    }
-    GEntity *g_master = g_slave->getMeshMaster();
-    if (g_slave == g_master) continue;
-    const std::size_t numNodePairs = g_slave->correspondingVertices.size();
-    if (numNodePairs == 0) continue;
-    perEnt.insert(g_slave);
-    maxNumPerNodes += numNodePairs;
-  }
+  // lists of corresponding master/slave nodes for each pair of partitions
+  PeriodicConnection connect;
 
-  // lists of corresponding master/slave nodes for each master partition 
-  std::map<size_t, MasterSlaveNodes> perConnect;
-
-  // build periodic node correspondence for slave entities in the partition
   typedef std::map<MVertex *, MVertex *> VertVertMap;
-  for(EntSet::iterator itE = perEnt.begin(); itE != perEnt.end(); ++itE) {
-    VertVertMap &vv = (*itE)->correspondingVertices;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *slaveEnt = entities[i];
+    GEntity *masterEnt = slaveEnt->getMeshMaster();
+    if (slaveEnt == masterEnt) continue;
+    VertVertMap &vv = slaveEnt->correspondingVertices;
     for(VertVertMap::iterator itV = vv.begin(); itV != vv.end(); itV++) {
-      const long sInd = itV->first->getIndex();
-      const LocalData &sLoc = global2Local[sInd];
-      if((sLoc.partition == partition) && (sLoc.index != 0)) {
-        const long mInd = itV->second->getIndex();
-        const LocalData &mLoc = global2Local[mInd];
-        MasterSlaveNodes &ms = perConnect[mLoc.partition];
-        ms.slave.push_back(sLoc.index);
-        ms.master.push_back(mLoc.index);
-      }
+      const long slaveInd = itV->first->getIndex();
+      const long masterInd = itV->second->getIndex();
+      const LocalData &sData = global2Local[slaveInd];
+      const LocalData &mData = global2Local[masterInd];
+      PeriodicInterface perInt = {slaveEnt, sData.partition,
+                                  masterEnt, mData.partition};
+      MasterSlaveNodes &ms = connect[perInt];
+      ms.slave.push_back(sData.index);
+      ms.master.push_back(mData.index);
     }
   }
 
   // write periodic node correspondence
-  typedef std::map<size_t, MasterSlaveNodes>::iterator PerConnectIter;
-  for(PerConnectIter it = perConnect.begin(); it != perConnect.end(); ++it) {
-    int slaveZone = (partition == 0) ? 1 : partition;
-    std::size_t masterPart = it->first;
-    MasterSlaveNodes &ms = it->second;
+  typedef PeriodicConnection::iterator PerConnectIter;
+  for(PerConnectIter it = connect.begin(); it != connect.end(); ++it) {
+    const PeriodicInterface &perInt = it->first;
+    const std::size_t &slavePart = perInt.slavePart;
+    const int slaveEntTag = perInt.slaveEnt->tag();
+    const std::size_t &masterPart = perInt.masterPart;
+    const int masterEntTag = perInt.masterEnt->tag();
+    std::cout << "DBGTT: Writing connectivities between part. " << slavePart << ", ent. " << slaveEntTag
+              << " with master part. " << masterPart << ", ent. " << masterEntTag << std::endl;
+    const MasterSlaveNodes &ms = it->second;
+    int slaveZone = (slavePart == 0) ? 1 : slavePart;
     const std::string &masterZoneName = zoneName[masterPart]; 
     std::ostringstream ossInt;
-    ossInt << "Part" << partition << "_Part" << masterPart;
+    ossInt << "Part" << slavePart << "_Ent" << slaveEntTag
+           << "_Part" << masterPart << "_Ent" << masterEntTag;
     const std::string interfaceName = cgnsString(ossInt.str()); 
     int dum;
     CGNS::cg_conn_write(cgIndexFile, cgIndexBase, slaveZone,
@@ -389,6 +396,7 @@ void getEntitiesInPartition(const std::vector<GEntity *> &entities,
     switch(ge->geomType()) {
     case GEntity::PartitionVolume: {
       partitionRegion *pr = static_cast<partitionRegion *>(ge);
+      std::cout << "DBGTT: par. vol. " << ge->tag() << " with parent ent. " << ((ge->getParentEntity() == 0) ? "-1" : ge->getParentEntity()->getInfoString(false)) << ", " << pr->getPartitions().size() << " part." << std::endl;
       if(std::find(pr->getPartitions().begin(), pr->getPartitions().end(),
                     iPart) != pr->getPartitions().end()) {
         entitiesPart.push_back(pr);
@@ -396,6 +404,7 @@ void getEntitiesInPartition(const std::vector<GEntity *> &entities,
     } break;
     case GEntity::PartitionSurface: {
       partitionFace *pf = static_cast<partitionFace *>(ge);
+      std::cout << "DBGTT: par. surf. " << ge->tag() << " with parent ent. " << ((ge->getParentEntity() == 0) ? "-1" : ge->getParentEntity()->getInfoString(false)) << ", " << pf->getPartitions().size() << " part." << std::endl;
       if(std::find(pf->getPartitions().begin(), pf->getPartitions().end(),
                     iPart) != pf->getPartitions().end()) {
         entitiesPart.push_back(pf);
@@ -403,6 +412,7 @@ void getEntitiesInPartition(const std::vector<GEntity *> &entities,
     } break;
     case GEntity::PartitionCurve: {
       partitionEdge *pe = static_cast<partitionEdge *>(ge);
+      std::cout << "DBGTT: par. curve " << ge->tag() << " with parent ent. " << ((ge->getParentEntity() == 0) ? "-1" : ge->getParentEntity()->getInfoString(false)) << ", " << pe->getPartitions().size() << " part." << std::endl;
       if(std::find(pe->getPartitions().begin(), pe->getPartitions().end(),
                     iPart) != pe->getPartitions().end()) {
         entitiesPart.push_back(pe);
@@ -410,6 +420,7 @@ void getEntitiesInPartition(const std::vector<GEntity *> &entities,
     } break;
     case GEntity::PartitionPoint: {
       partitionVertex *pv = static_cast<partitionVertex *>(ge);
+      std::cout << "DBGTT: par. pnt. " << ge->tag() << " with parent ent. " << ((ge->getParentEntity() == 0) ? "-1" : ge->getParentEntity()->getInfoString(false)) << ", " << pv->getPartitions().size() << " part." << std::endl;
       if(std::find(pv->getPartitions().begin(), pv->getPartitions().end(),
                     iPart) != pv->getPartitions().end()) {
         entitiesPart.push_back(pv);
@@ -466,7 +477,6 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
       getEntitiesInPartition(allEntities, iPart, entities[iPart]);
     }
   }
-  allEntities.clear();
 
   // Global node index -> (partition, local node index) correspondence
   Global2LocalData global2Local(numNodes+1);
@@ -477,8 +487,8 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
     int err = writeZone(this, saveAll, scalingFactor, numNodes, 0, entities[0],
                         cgIndexFile, cgIndexBase, global2Local, zoneName);
     if(err) return err;
-    err = writePeriodic(this, saveAll, scalingFactor, numNodes, 0, entities[0],
-                        cgIndexFile, cgIndexBase, global2Local, zoneName);
+    err = writePeriodic(allEntities, cgIndexFile, cgIndexBase, global2Local,
+                         zoneName);
     if(err) return err;
   }
   else {                                                // partitioned mesh
@@ -489,13 +499,10 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
                           global2Local, zoneName);
       if(err) return err;
     }             // loop on partitions
-    for(std::size_t iPart = 1; iPart <= numPart; iPart++) {
-      printProgress("periodic connectivities for partition", iPart, numPart);
-      int err = writePeriodic(this, saveAll, scalingFactor, numNodes, iPart,
-                              entities[iPart], cgIndexFile, cgIndexBase,
-                              global2Local, zoneName);
-      if(err) return err;
-    }             // loop on partitions
+    Msg::Info("Writing periodic connectivities");
+    int err = writePeriodic(allEntities, cgIndexFile, cgIndexBase,
+                             global2Local, zoneName);
+    if(err) return err;
   }               // numPart == 0
 
   if(CGNS::cg_close(cgIndexFile)) return cgnsError();
