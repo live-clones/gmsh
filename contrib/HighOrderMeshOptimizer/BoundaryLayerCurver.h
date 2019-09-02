@@ -45,6 +45,54 @@ typedef std::vector<PairMElemVecMElem> VecPairMElemVecMElem;
 typedef std::map<MEdge, std::vector<MElement *>, Less_Edge> MapMEdgeVecMElem;
 
 namespace BoundaryLayerCurver {
+  class Column2DBL {
+  private:
+    std::vector<MElement *> _stackElements;
+    std::vector<MFaceN> _stackOrientedFaces;
+    std::vector<MEdgeN> _stackOrientedEdges;
+    MElement *_externalElement;
+    MElement *_boundaryLine;
+    SVector3 _normal;
+    GFace *_gface;
+    GEdge *_gedge;
+    int _type;
+  };
+  class Column3DBL {
+  private:
+    std::vector<MElement *> _stackElements;
+    std::vector<short> _orientationElements;
+    std::vector<MFaceN> _stackOrientedFaces;
+    MElement *_externalElement;
+    MElement *_boundaryElement;
+    SVector3 _normal;
+    GFace *_gface;
+    int _type;
+  };
+  class Interface3DBL {
+  private:
+    const Column3DBL *_col1;
+    const Column3DBL *_col2;
+    std::vector<MFaceN> _stackOrientedFaces;
+    std::vector<MEdgeN> _stackOrientedEdges;
+    MEdgeN _boundaryLine;
+
+    // External elements that touch the last face. May be NULL
+    MElement *_elementLastFace;
+    // External elements that touch the last edge but not the last face
+    std::vector<MElement *> _elementsLastEdge;
+    // External elements that touch interior edges but not the last face
+    std::vector<MElement *> _elementsInteriorEdge;
+
+    std::vector<std::vector<MFaceN> > _externalFaces;
+    SVector3 _normal;
+    GFace *_gface;
+    GEdge *_gedge;
+    int _type;
+
+  public:
+    void recoverQualityElements();
+  };
+
   bool computeCommonEdge(MElement *, MElement *, MEdge &);
 
   void repositionInnerVertices(MFaceN &, const GFace *, bool linearInYDir);
