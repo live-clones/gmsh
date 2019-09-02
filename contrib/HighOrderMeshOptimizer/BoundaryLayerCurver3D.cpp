@@ -340,6 +340,60 @@ namespace BoundaryLayerCurver {
     }
   } // namespace InnerVertPlacementMatrices
 
+  void intersect(const std::vector<MElement *> &v1,
+                 const std::vector<MElement *> &v2,
+                 std::vector<MElement *> &result)
+  {
+    result.resize(std::min(v1.size(), v2.size()));
+    std::vector<MElement *>::iterator it;
+    it = std::set_intersection(v1.begin(), v1.end(), v2.begin(),
+                               v2.end(), result.begin());
+    result.resize(it - result.begin());
+  }
+
+  void merge(const std::vector<MElement *> &v1,
+             const std::vector<MElement *> &v2,
+             std::vector<MElement *> &result)
+  {
+    result.resize(std::min(v1.size(), v2.size()));
+    std::vector<MElement *>::iterator it;
+    it = std::set_union(v1.begin(), v1.end(), v2.begin(), v2.end(),
+                        result.begin());
+    result.resize(it - result.begin());
+  }
+
+  void computeFacesTouchingEdges(const std::vector<MElement *> &elements,
+                                 const std::vector<MEdge> &edges,
+                                 std::vector<MFaceN> &faces)
+  {
+    for(std::size_t i = 0; i < elements.size(); ++i) {
+      for(std::size_t j = 0; j < edges.size(); ++j) {
+        // Loop over faces. Add a face if touches the edge and is not already in
+        int n = 0;
+        for(int k = 0; k < elements[i]->getNumFaces(); ++k) {
+          MFace f = elements[i]->getFace(k);
+          // loop on edges of face 'f':
+          for(std::size_t l = 0; l < f.getNumVertices(); ++l) {
+            if(f.getEdge(l) == edges[j]) {
+              ++n;
+              bool alreadyIn = false;
+              for(std::size_t l = 0; l < faces.size(); ++l) {
+                if(f == faces[l].getFace()) {
+                  alreadyIn = true;
+                  break;
+                }
+              }
+              if(!alreadyIn) faces.push_back(elements[i]->getHighOrderFace(f));
+              break;
+            }
+          }
+          // Only 2 faces of an element can touch a given edge
+          if(n == 2) break;
+        }
+      }
+    }
+  }
+
   namespace EdgeCurver3D {
     void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
                                 std::vector<MFaceN> &stackFaces,
