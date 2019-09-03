@@ -494,7 +494,20 @@ namespace BoundaryLayerCurver {
     return true;
   }
 
-  void Interface3DBL::_upInnerVertForLastFaceCheck()
+  void Interface3DBL::_computeElementsTouchingLastFace(std::vector<MElement *> &v)
+  {
+    v.clear();
+    v.reserve(2);
+    if(_elementAtLastFace) v.push_back(_elementAtLastFace);
+    MElement *tmp;
+    tmp = _col1->getElement(_numFace - 1);
+    if(tmp) v.push_back(tmp);
+    tmp = _col2->getElement(_numFace - 1);
+    if(tmp) v.push_back(tmp);
+  }
+
+  void Interface3DBL::_upQualityForLastFaceCheck(std::vector<double> &qual,
+                                                 std::vector<MElement *> &elements)
   {
     const std::size_t numFaces = _stackOrientedFaces.size();
     repositionInnerVertices(_stackOrientedFaces.back(), _gface, true);
@@ -503,45 +516,42 @@ namespace BoundaryLayerCurver {
     _col1->repositionInnerVertices(numFaces - 1);
     _col2->repositionInnerVertices(numFaces - 1);
     if(_elementAtLastFace) repositionInnerVertices3D(_elementAtLastFace);
+    qual.resize(elements.size());
+    for(std::size_t i = 0; i < elements.size(); ++i) {
+      qual[i] = jacobianBasedQuality::minIGEMeasure(elements[i]);
+    }
   }
 
-  void Interface3DBL::_upInnerVertForLastEdgeCheck()
+  void Interface3DBL::_upQualityForLastEdgeCheck(std::vector<double> &qual)
   {
     const std::size_t numFaces = _stackOrientedFaces.size();
     repositionInnerVertices(_externalFaces[numFaces], _gface, false);
+    qual.resize(_elementsAtLastEdge.size());
     for(std::size_t i = 0; i < _elementsAtLastEdge.size(); ++i) {
-      repositionInnerVertices3D(_elementsAtLastEdge[i]);
+      MElement *el = _elementsAtLastEdge[i];
+      repositionInnerVertices3D(el);
+      qual[i] = jacobianBasedQuality::minIGEMeasure(el);
     }
   }
 
   void Interface3DBL::recoverQualityElements()
   {
-    const std::size_t iFirstEdge = 1;
-    const std::size_t iLastEdge = _stackOrientedEdges.size() - 1;
-    const std::size_t iLastFace = iLastEdge - 1;
+    std::size_t iFirstEdge = 1;
     if(_type == TYPE_TRI) iFirstEdge = 2;
+    const std::size_t iLastEdge = _numFace;
     std::vector<MEdgeN> subsetEdges(4);
     subsetEdges[0] = _stackOrientedEdges[0];
     subsetEdges[1] = _stackOrientedEdges[iFirstEdge];
     subsetEdges[2] = _stackOrientedEdges[iLastEdge - 1];
     subsetEdges[3] = _stackOrientedEdges[iLastEdge];
     MEdgeN &lastEdge = subsetEdges[3];
-    MFaceN &lastFace = _stackOrientedFaces[iLastFace];
 
     // First, get sure that elements touching last face of the BL are of
     // good quality
 
     // Get elements touching last face and compute their linear quality
     std::vector<MElement *> lastElements;
-    {
-      lastElements.reserve(2);
-      if(_elementAtLastFace) lastElements.push_back(_elementAtLastFace);
-      MElement *tmp;
-      tmp = _col1->getElement(iLastFace);
-      if(tmp) lastElements.push_back(tmp);
-      tmp = _col2->getElement(iLastFace);
-      if(tmp) lastElements.push_back(tmp);
-    }
+    _computeElementsTouchingLastFace(lastElements);
     std::vector<double> qualLinear(lastElements.size());
     for(std::size_t i = 0; i < lastElements.size(); ++i) {
       MElement *linear = createPrimaryElement(lastElements[i]);
@@ -550,63 +560,46 @@ namespace BoundaryLayerCurver {
     }
 
     // Compute curving and quality of elements touching last face of the BL
+    std::vector<double> qualCurved;
     InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, _gface);
+    _upQualityForLastFaceCheck(qualCurved, lastElements);
 
-    _upInnerVertForLastFaceCheck();
-    std::vector<double> qualCurved(lastElements.size());
-    for(std::size_t j = 0; j < lastElements.size(); ++j) {
-      qualCurved[j] = jacobianBasedQuality::minIGEMeasure(lastElements[j]);
-    }
-
+    // Reduce order if quality not met (surely due to oscillations)
     int currentOrder = lastEdge.getPolynomialOrder();
-    bool reduceOrd = currentOrder > 2 && !qualityOk(qualLinear, qualCurved);
-    while(reduceOrd) {
-      reduceOrder(lastEdge, --currentOrder, _gface);
+    while(currentOrder > 2 && !qualityOk(qualLinear, qualCurved)) {
+      reduceOrderCurve(lastEdge, --currentOrder, _gface);
       InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, _gface);
-
-      _upInnerVertForLastFaceCheck();
-      for(std::size_t j = 0; j < lastElements.size(); ++j) {
-        qualCurved[j] = jacobianBasedQuality::minIGEMeasure(lastElements[j]);
-      }
-      reduceOrd = currentOrder > 2 && !qualityOk(qualLinear, qualCurved);
+      _upQualityForLastFaceCheck(qualCurved, lastElements);
     }
 
+    // Further reduce curving if quality not met
     int iter = 0;
     const int maxIter = 15;
-    bool reduceCurving = iter++ < maxIter && !qualityOk(qualLinear, qualCurved);
-    while(reduceCurving) {
+    while(iter++ < maxIter && !qualityOk(qualLinear, qualCurved)) {
       reduceCurving(lastEdge, .25, _gface);
       InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, _gface);
-
-      _upInnerVertForLastFaceCheck();
-      for(std::size_t j = 0; j < lastElements.size(); ++j) {
-        qualCurved[j] = jacobianBasedQuality::minIGEMeasure(lastElements[j]);
-      }
-      reduceCurving = iter++ < maxIter && !qualityOk(qualLinear, qualCurved);
+      _upQualityForLastFaceCheck(qualCurved, lastElements);
     }
 
-    _upInnerVertForLastEdgeCheck();
-    qualLinear.resize(_elementsAtLastEdge.size());
-    for(std::size_t i = 0; i < _elementsAtLastEdge.size(); ++i) {
-      MElement *el = _elementsAtLastEdge[i];
-      MElement *linear = createPrimaryElement(el);
-      qualLinear[i] = jacobianBasedQuality::minIGEMeasure(linear);
-      qualCurved[i] = jacobianBasedQuality::minIGEMeasure(el);
-      delete linear;
-    }
+    // Second, get sure that external elements touching last edge are of
+    // good quality
 
-    reduceCurving = !qualityOk(qualLinear, qualCurved) && iter++ < maxIter;
-    while(reduceCurving) {
-      reduceCurving(lastEdge, .25, _gface);
-      _upInnerVertForLastEdgeCheck();
-
+    if(iter < maxIter) {
+      qualLinear.resize(_elementsAtLastEdge.size());
       for(std::size_t i = 0; i < _elementsAtLastEdge.size(); ++i) {
-        MElement *el = _elementsAtLastEdge[i];
-        qualCurved[i] = jacobianBasedQuality::minIGEMeasure(el);
+        MElement *linear = createPrimaryElement(_elementsAtLastEdge[i]);
+        qualLinear[i] = jacobianBasedQuality::minIGEMeasure(linear);
+        delete linear;
       }
-      reduceCurving = !qualityOk(qualLinear, qualCurved) && iter++ < maxIter;
+
+      _upQualityForLastEdgeCheck(qualCurved);
+      while(!qualityOk(qualLinear, qualCurved) && iter++ < maxIter) {
+        reduceCurving(lastEdge, .25, _gface);
+        _upQualityForLastEdgeCheck(qualCurved);
+      }
     }
-    if(iter == maxIter) reduceCurving(lastEdge, 1, _gface);
+
+    if(iter == maxIter) reduceCurving(lastEdge, 1, _gface); // force linear
   }
 
   namespace EdgeCurver3D {

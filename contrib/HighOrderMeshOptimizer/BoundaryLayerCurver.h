@@ -78,6 +78,7 @@ namespace BoundaryLayerCurver {
   };
   class Interface3DBL {
   private:
+    int _numFace;
     const Column3DBL *_col1;
     const Column3DBL *_col2;
     std::vector<MFaceN> _stackOrientedFaces;
@@ -101,8 +102,10 @@ namespace BoundaryLayerCurver {
     void recoverQualityElements();
 
   private:
-    void _upInnerVertForLastFaceCheck();
-    void _upInnerVertForLastEdgeCheck();
+    void _computeElementsTouchingLastFace(std::vector<MElement *> &);
+    void _upQualityForLastFaceCheck(std::vector<double> &,
+                                    std::vector<MElement *> &);
+    void _upQualityForLastEdgeCheck(std::vector<double> &);
   };
 
   bool computeCommonEdge(MElement *, MElement *, MEdge &);
@@ -121,7 +124,7 @@ namespace BoundaryLayerCurver {
 
   void reduceCurving(MEdgeN &, double factor, const GFace *);
 
-  void reduceOrder(MEdgeN &, int order, const GFace *);
+  void reduceOrderCurve(MEdgeN &, int order, const GFace *);
 
   // The boundary layer curver algorithm is seperated into different modules:
   namespace EdgeCurver2D {
