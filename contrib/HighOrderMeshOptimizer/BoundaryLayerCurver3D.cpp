@@ -1401,6 +1401,41 @@ namespace BoundaryLayerCurver {
     }
   }
 
+  // Curve an interface that is embedded inside a GFace. The curving process is
+  // the same than in 2D but we have to check the quality of 3D elements.
+  void curveInterface(std::vector<MEdgeN> &stackEdges,
+                      const std::vector<std::vector<MElement *> > &touchedElem,
+                      GFace *faceOfSupport, GEdge *boundaryEdge)
+  {
+    if(stackEdges.size() < 2) return;
+
+    // Curve topEdge of first element and last edge
+    std::size_t iFirst = 1, iLast = stackEdges.size() - 1;
+    MEdgeN &baseEdge = stackEdges[0];
+    MEdgeN &firstEdge = stackEdges[iFirst];
+    if(edgesShareVertex(baseEdge, firstEdge)) {
+      iFirst = 2;
+      firstEdge = stackEdges[iFirst];
+    }
+    MEdgeN &topEdge = stackEdges[iLast];
+
+    SVector3 normal;
+    if(faceOfSupport->uniqueNormal(normal, false)) { faceOfSupport = NULL; }
+
+    EdgeCurver2D::curveEdge(baseEdge, firstEdge, faceOfSupport, boundaryEdge, normal);
+    EdgeCurver2D::curveEdge(baseEdge, topEdge, faceOfSupport, boundaryEdge, normal);
+    EdgeCurver2D::recoverQualityElements(stackEdges, stackFaces, column.second,
+                                         iFirst, iLast, gface);
+
+    // Curve interior edges and inner vertices
+    InteriorEdgeCurver::curveEdgesAndPreserveQuality(
+      stackEdges, stackFaces, column.second, iFirst, iLast, gface);
+//    InteriorEdgeCurver::curveEdgesAndPreserveQualityTri(
+//      stackEdges, stackFaces, column.second, iFirst, iLast, gface, gedge,
+//      normal);
+    return true;
+  }
+
   void curveBorders(VecPairMElemVecMElem &columns,
                     std::vector<std::pair<int, MEdge> > &borderEdges)
   {
