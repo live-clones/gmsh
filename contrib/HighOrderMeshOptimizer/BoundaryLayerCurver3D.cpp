@@ -340,6 +340,87 @@ namespace BoundaryLayerCurver {
     }
   } // namespace InnerVertPlacementMatrices
 
+  void repositionInteriorNodes(MElement *el,
+                               const fullMatrix<double> &placement)
+  {
+    int start = el->getNumVertices() - el->getNumVolumeVertices();
+    for(std::size_t i = start; i < el->getNumVertices(); ++i) {
+      MVertex *v = el->getVertex(i);
+      v->x() = 0;
+      v->y() = 0;
+      v->z() = 0;
+      for(int j = 0; j < placement.size2(); ++j) {
+        const double coeff = placement(i - start, j);
+        MVertex *other = el->getVertex(j);
+        v->x() += coeff * other->x();
+        v->y() += coeff * other->y();
+        v->z() += coeff * other->z();
+      }
+    }
+  }
+
+  void repositionInnerVertices3D(MElement *el)
+  {
+      const fullMatrix<double> *placement = NULL;
+      const int order = el->getPolynomialOrder();
+      int nFace, nOtherFace, sign, rot;
+      switch(el->getType()) {
+      case TYPE_TET:
+        placement = InnerVertPlacementMatrices::tetrahedron(order, false);
+        break;
+      case TYPE_HEX:
+        placement = InnerVertPlacementMatrices::hexahedron(order, false);
+        break;
+      case TYPE_PRI:
+        placement = InnerVertPlacementMatrices::prism(order, false);
+        break;
+      }
+      if(placement)
+        repositionInteriorNodes(el, *placement);
+      else
+        Msg::Error("Implement placement for type %d", el->getType());
+  }
+
+  bool Column3DBL::repositionInnerVertices(std::size_t num) const
+  {
+    if(_stackElements.size() <= num) return false;
+    MElement *el = _stackElements[num];
+    MFace bottomFace = _stackOrientedFaces[num].getFace();
+    MFace topFace = _stackOrientedFaces[num + 1].getFace();
+    const fullMatrix<double> *placement = NULL;
+    const int order = el->getPolynomialOrder();
+    int nFace, nOtherFace, sign, rot;
+    switch(el->getType()) {
+    case TYPE_TET:
+      el->getFaceInfo(bottomFace, nFace, sign, rot);
+      el->getFaceInfo(topFace, nOtherFace, sign, rot);
+      placement = InnerVertPlacementMatrices::tetrahedron(order, true, nFace,
+                                                          nOtherFace);
+      break;
+    case TYPE_HEX:
+      el->getFaceInfo(bottomFace, nFace, sign, rot);
+      placement = InnerVertPlacementMatrices::hexahedron(order, true, nFace);
+      break;
+    case TYPE_PRI:
+      el->getFaceInfo(bottomFace, nFace, sign, rot);
+      if(nFace > 1) {
+        el->getFaceInfo(topFace, nOtherFace, sign, rot);
+        if(nFace != 2 && nOtherFace != 2)
+          nFace = 2;
+        else if(nFace != 3 && nOtherFace != 3)
+          nFace = 3;
+        else
+          nFace = 4;
+      }
+      placement = InnerVertPlacementMatrices::prism(order, true, nFace);
+      break;
+    }
+    if(placement)
+      repositionInteriorNodes(el, *placement);
+    else
+      Msg::Error("Implement placement for type %d", el->getType());
+  }
+
   void intersect(const std::vector<MElement *> &v1,
                  const std::vector<MElement *> &v2,
                  std::vector<MElement *> &result)
@@ -392,6 +473,140 @@ namespace BoundaryLayerCurver {
         }
       }
     }
+  }
+
+  bool qualityOk(double qualLinear, double qualCurved)
+  {
+    return qualCurved >= .75 || qualCurved > .8 * qualLinear;
+  }
+
+  bool qualityOk(std::vector<double> &qualLinear,
+                 std::vector<double> &qualCurved)
+  {
+    if(qualLinear.size() != qualCurved.size()) {
+      // FIXMEDEBUG
+      Msg::Error("must be same size");
+      return true;
+    }
+    for(std::size_t i = 0; i < qualLinear.size(); ++i) {
+      if(!qualityOk(qualLinear[i], qualCurved[i])) return false;
+    }
+    return true;
+  }
+
+  void Interface3DBL::_upInnerVertForLastFaceCheck()
+  {
+    const std::size_t numFaces = _stackOrientedFaces.size();
+    repositionInnerVertices(_stackOrientedFaces.back(), _gface, true);
+    repositionInnerVertices(_externalFaces[numFaces], _gface, false);
+    repositionInnerVertices(_externalFaces[numFaces - 1], _gface, false);
+    _col1->repositionInnerVertices(numFaces - 1);
+    _col2->repositionInnerVertices(numFaces - 1);
+    if(_elementAtLastFace) repositionInnerVertices3D(_elementAtLastFace);
+  }
+
+  void Interface3DBL::_upInnerVertForLastEdgeCheck()
+  {
+    const std::size_t numFaces = _stackOrientedFaces.size();
+    repositionInnerVertices(_externalFaces[numFaces], _gface, false);
+    for(std::size_t i = 0; i < _elementsAtLastEdge.size(); ++i) {
+      repositionInnerVertices3D(_elementsAtLastEdge[i]);
+    }
+  }
+
+  void Interface3DBL::recoverQualityElements()
+  {
+    const std::size_t iFirstEdge = 1;
+    const std::size_t iLastEdge = _stackOrientedEdges.size() - 1;
+    const std::size_t iLastFace = iLastEdge - 1;
+    if(_type == TYPE_TRI) iFirstEdge = 2;
+    std::vector<MEdgeN> subsetEdges(4);
+    subsetEdges[0] = _stackOrientedEdges[0];
+    subsetEdges[1] = _stackOrientedEdges[iFirstEdge];
+    subsetEdges[2] = _stackOrientedEdges[iLastEdge - 1];
+    subsetEdges[3] = _stackOrientedEdges[iLastEdge];
+    MEdgeN &lastEdge = subsetEdges[3];
+    MFaceN &lastFace = _stackOrientedFaces[iLastFace];
+
+    // First, get sure that elements touching last face of the BL are of
+    // good quality
+
+    // Get elements touching last face and compute their linear quality
+    std::vector<MElement *> lastElements;
+    {
+      lastElements.reserve(2);
+      if(_elementAtLastFace) lastElements.push_back(_elementAtLastFace);
+      MElement *tmp;
+      tmp = _col1->getElement(iLastFace);
+      if(tmp) lastElements.push_back(tmp);
+      tmp = _col2->getElement(iLastFace);
+      if(tmp) lastElements.push_back(tmp);
+    }
+    std::vector<double> qualLinear(lastElements.size());
+    for(std::size_t i = 0; i < lastElements.size(); ++i) {
+      MElement *linear = createPrimaryElement(lastElements[i]);
+      qualLinear[i] = jacobianBasedQuality::minIGEMeasure(linear);
+      delete linear;
+    }
+
+    // Compute curving and quality of elements touching last face of the BL
+    InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, _gface);
+
+    _upInnerVertForLastFaceCheck();
+    std::vector<double> qualCurved(lastElements.size());
+    for(std::size_t j = 0; j < lastElements.size(); ++j) {
+      qualCurved[j] = jacobianBasedQuality::minIGEMeasure(lastElements[j]);
+    }
+
+    int currentOrder = lastEdge.getPolynomialOrder();
+    bool reduceOrd = currentOrder > 2 && !qualityOk(qualLinear, qualCurved);
+    while(reduceOrd) {
+      reduceOrder(lastEdge, --currentOrder, _gface);
+      InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, _gface);
+
+      _upInnerVertForLastFaceCheck();
+      for(std::size_t j = 0; j < lastElements.size(); ++j) {
+        qualCurved[j] = jacobianBasedQuality::minIGEMeasure(lastElements[j]);
+      }
+      reduceOrd = currentOrder > 2 && !qualityOk(qualLinear, qualCurved);
+    }
+
+    int iter = 0;
+    const int maxIter = 15;
+    bool reduceCurving = iter++ < maxIter && !qualityOk(qualLinear, qualCurved);
+    while(reduceCurving) {
+      reduceCurving(lastEdge, .25, _gface);
+      InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, _gface);
+
+      _upInnerVertForLastFaceCheck();
+      for(std::size_t j = 0; j < lastElements.size(); ++j) {
+        qualCurved[j] = jacobianBasedQuality::minIGEMeasure(lastElements[j]);
+      }
+      reduceCurving = iter++ < maxIter && !qualityOk(qualLinear, qualCurved);
+    }
+
+    _upInnerVertForLastEdgeCheck();
+    qualLinear.resize(_elementsAtLastEdge.size());
+    for(std::size_t i = 0; i < _elementsAtLastEdge.size(); ++i) {
+      MElement *el = _elementsAtLastEdge[i];
+      MElement *linear = createPrimaryElement(el);
+      qualLinear[i] = jacobianBasedQuality::minIGEMeasure(linear);
+      qualCurved[i] = jacobianBasedQuality::minIGEMeasure(el);
+      delete linear;
+    }
+
+    reduceCurving = !qualityOk(qualLinear, qualCurved) && iter++ < maxIter;
+    while(reduceCurving) {
+      reduceCurving(lastEdge, .25, _gface);
+      _upInnerVertForLastEdgeCheck();
+
+      for(std::size_t i = 0; i < _elementsAtLastEdge.size(); ++i) {
+        MElement *el = _elementsAtLastEdge[i];
+        qualCurved[i] = jacobianBasedQuality::minIGEMeasure(el);
+      }
+      reduceCurving = !qualityOk(qualLinear, qualCurved) && iter++ < maxIter;
+    }
+    if(iter == maxIter) reduceCurving(lastEdge, 1, _gface);
   }
 
   namespace EdgeCurver3D {
@@ -1218,25 +1433,6 @@ namespace BoundaryLayerCurver {
         v->x() = (1 - factor) * vbot->x() + factor * vtop->x();
         v->y() = (1 - factor) * vbot->y() + factor * vtop->y();
         v->z() = (1 - factor) * vbot->z() + factor * vtop->z();
-      }
-    }
-  }
-
-  void repositionInteriorNodes(MElement *el,
-                               const fullMatrix<double> &placement)
-  {
-    int start = el->getNumVertices() - el->getNumVolumeVertices();
-    for(std::size_t i = start; i < el->getNumVertices(); ++i) {
-      MVertex *v = el->getVertex(i);
-      v->x() = 0;
-      v->y() = 0;
-      v->z() = 0;
-      for(int j = 0; j < placement.size2(); ++j) {
-        const double coeff = placement(i - start, j);
-        MVertex *other = el->getVertex(j);
-        v->x() += coeff * other->x();
-        v->y() += coeff * other->y();
-        v->z() += coeff * other->z();
       }
     }
   }

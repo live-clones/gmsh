@@ -60,13 +60,21 @@ namespace BoundaryLayerCurver {
   class Column3DBL {
   private:
     std::vector<MElement *> _stackElements;
-    std::vector<short> _orientationElements;
+    std::vector<short> _orientationElements; // FIXME use this later (inn. vert)
     std::vector<MFaceN> _stackOrientedFaces;
     MElement *_externalElement;
     MElement *_boundaryElement;
     SVector3 _normal;
     GFace *_gface;
     int _type;
+
+  public:
+    MElement *getElement(std::size_t num) const {
+      if(_stackElements.size() <= num) return NULL;
+      return _stackElements[num];
+    }
+
+    bool repositionInnerVertices(std::size_t) const;
   };
   class Interface3DBL {
   private:
@@ -76,12 +84,12 @@ namespace BoundaryLayerCurver {
     std::vector<MEdgeN> _stackOrientedEdges;
     MEdgeN _boundaryLine;
 
-    // External elements that touch the last face. May be NULL
-    MElement *_elementLastFace;
+    // External element that touches the last face. May be NULL
+    MElement *_elementAtLastFace;
     // External elements that touch the last edge but not the last face
-    std::vector<MElement *> _elementsLastEdge;
+    std::vector<MElement *> _elementsAtLastEdge;
     // External elements that touch interior edges but not the last face
-    std::vector<MElement *> _elementsInteriorEdge;
+    std::vector<MElement *> _elementsAtInteriorEdges;
 
     std::vector<std::vector<MFaceN> > _externalFaces;
     SVector3 _normal;
@@ -91,6 +99,10 @@ namespace BoundaryLayerCurver {
 
   public:
     void recoverQualityElements();
+
+  private:
+    void _upInnerVertForLastFaceCheck();
+    void _upInnerVertForLastEdgeCheck();
   };
 
   bool computeCommonEdge(MElement *, MElement *, MEdge &);
@@ -106,6 +118,10 @@ namespace BoundaryLayerCurver {
                                    std::vector<MVertex *> &);
 
   bool edgesShareVertex(MEdgeN &, MEdgeN &);
+
+  void reduceCurving(MEdgeN &, double factor, const GFace *);
+
+  void reduceOrder(MEdgeN &, int order, const GFace *);
 
   // The boundary layer curver algorithm is seperated into different modules:
   namespace EdgeCurver2D {

@@ -443,7 +443,7 @@ namespace BoundaryLayerCurver {
       if(gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
-    void _reduceCurving(MEdgeN &edge, double factor, const GFace *gface)
+    void reduceCurving(MEdgeN &edge, double factor, const GFace *gface)
     {
       int order = edge.getPolynomialOrder();
 
@@ -463,7 +463,7 @@ namespace BoundaryLayerCurver {
       if(gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
-    void _reduceOrderCurve(MEdgeN &edge, int order, const GFace *gface)
+    void reduceOrderCurve(MEdgeN &edge, int order, const GFace *gface)
     {
       const int orderCurve = edge.getPolynomialOrder();
       const int orderGauss = order * 2;
@@ -546,7 +546,7 @@ namespace BoundaryLayerCurver {
       // Reduce order until good quality or order 2
       int currentOrder = lastEdge.getPolynomialOrder();
       while(qual < .75 && qual < .8 * qualLinear && currentOrder > 2) {
-        _reduceOrderCurve(lastEdge, --currentOrder, gface);
+        reduceOrderCurve(lastEdge, --currentOrder, gface);
         InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
         repositionInnerVertices(lastFaceBL, gface, true);
         qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
@@ -556,7 +556,7 @@ namespace BoundaryLayerCurver {
       int iter = 0;
       const int maxIter = 15;
       while(qual < .75 && qual < .8 * qualLinear && ++iter < maxIter) {
-        _reduceCurving(lastEdge, .25, gface);
+        reduceCurving(lastEdge, .25, gface);
         InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
         repositionInnerVertices(lastFaceBL, gface, true);
         qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
@@ -575,11 +575,11 @@ namespace BoundaryLayerCurver {
 
       // Reduce curving
       while(qual < .75 && qual < .8 * qualLinear && ++iter < maxIter) {
-        _reduceCurving(lastEdge, .25, gface);
+        reduceCurving(lastEdge, .25, gface);
         repositionInnerVertices(lastFace, gface, false);
         qual = jacobianBasedQuality::minIGEMeasure(lastElement);
       }
-      if(iter == maxIter) _reduceCurving(lastEdge, 1, gface);
+      if(iter == maxIter) reduceCurving(lastEdge, 1, gface);
     }
   } // namespace EdgeCurver2D
 
