@@ -381,6 +381,47 @@ namespace BoundaryLayerCurver {
         Msg::Error("Implement placement for type %d", el->getType());
   }
 
+  // Returns the stack of faces that are shared by two successive elements
+  void computeStackHighOrderFaces(const PairMElemVecMElem &column,
+                                  std::vector<MFaceN> &stack)
+  {
+    const std::vector<MElement *> &stackElements = column.second;
+    stack.resize(stackElements.size());
+
+    std::vector<MVertex *> allPrimaryVertices;
+    computeStackPrimaryVertices(column, allPrimaryVertices);
+    // FIXME already calculated in computeInterfaces. Reuse them?
+
+    int nVertexPerLayer = column.first->getNumPrimaryVertices();
+    for(std::size_t j = 0; j < stack.size(); ++j) {
+      MFace f;
+      if(nVertexPerLayer == 3)
+        f = MFace(allPrimaryVertices[j * 3 + 0], allPrimaryVertices[j * 3 + 1],
+                  allPrimaryVertices[j * 3 + 2]);
+      else
+        f = MFace(allPrimaryVertices[j * 4 + 0], allPrimaryVertices[j * 4 + 1],
+                  allPrimaryVertices[j * 4 + 2], allPrimaryVertices[j * 4 + 3]);
+      stack[j] = stackElements[j]->getHighOrderFace(f);
+    }
+  }
+
+  Column3DBL::Column3DBL(const PairMElemVecMElem &col) : _stackElements(col.second),
+                                                         _boundaryElement(col.first)
+  {
+    computeStackHighOrderFaces(col, _stackOrientedFaces);
+    _externalElement = _stackElements.back();
+    _stackElements.pop_back();
+    _gface = NULL;
+    int i = _boundaryElement->getNumVertices() - 1;
+    while(i-- >= 0) {
+      GEntity *ent = _boundaryElement->getVertex(i)->onWhat();
+      if(ent->dim() == 2) {
+        _gface = ent->cast2Face();
+        break;
+      }
+    }
+  }
+
   bool Column3DBL::repositionInnerVertices(std::size_t num) const
   {
     if(_stackElements.size() <= num) return false;
@@ -1196,30 +1237,6 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  // Returns the stack of faces that are shared by two successive elements
-  void computeStackHighOrderFaces(const PairMElemVecMElem &column,
-                                  std::vector<MFaceN> &stack)
-  {
-    const std::vector<MElement *> &stackElements = column.second;
-    stack.resize(stackElements.size());
-
-    std::vector<MVertex *> allPrimaryVertices;
-    computeStackPrimaryVertices(column, allPrimaryVertices);
-    // FIXME already calculated in computeInterfaces. Reuse them?
-
-    int nVertexPerLayer = column.first->getNumPrimaryVertices();
-    for(std::size_t j = 0; j < stack.size(); ++j) {
-      MFace f;
-      if(nVertexPerLayer == 3)
-        f = MFace(allPrimaryVertices[j * 3 + 0], allPrimaryVertices[j * 3 + 1],
-                  allPrimaryVertices[j * 3 + 2]);
-      else
-        f = MFace(allPrimaryVertices[j * 4 + 0], allPrimaryVertices[j * 4 + 1],
-                  allPrimaryVertices[j * 4 + 2], allPrimaryVertices[j * 4 + 3]);
-      stack[j] = stackElements[j]->getHighOrderFace(f);
-    }
-  }
-
   void idealPositionFace(const MFaceN &baseFace,
                          const Parameters3DSurface &parameters, int nbPoints,
                          const IntPt *points, fullMatrix<double> &xyz)
@@ -1426,6 +1443,16 @@ namespace BoundaryLayerCurver {
       }
     }
   }
+
+  void createColumns3D(const VecPairMElemVecMElem &cols,
+                       std::vector<Column3DBL> &columns)
+  {
+    columns.clear();
+    columns.reserve(cols.size());
+    for(std::size_t i = 0; i < cols.size(); ++i) {
+      columns.push_back(Column3DBL(cols[i]));
+    }
+  }
 } // namespace BoundaryLayerCurver
 
 void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
@@ -1449,12 +1476,15 @@ void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
   }
 }
 
-void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,
+void curve3DBoundaryLayer(VecPairMElemVecMElem &cols,
                           MapMEdgeVecMElem &touchedElements)
 {
   std::vector<std::pair<int, int> > adjacencies;
   std::vector<std::pair<int, MEdge> > borderEdges;
-  BoundaryLayerCurver::computeAdjacencies(columns, adjacencies, borderEdges);
+  BoundaryLayerCurver::computeAdjacencies(cols, adjacencies, borderEdges);
+
+  std::vector<BoundaryLayerCurver::Column3DBL> columns;
+  BoundaryLayerCurver::createColumns3D(cols, columns);
 
   // FIXME we should check that the border interface is not in a GFace in
   //  which case we should call curve2DBoundaryLayer. In the other case, we can

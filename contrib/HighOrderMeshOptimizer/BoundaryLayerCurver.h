@@ -57,6 +57,7 @@ namespace BoundaryLayerCurver {
     GEdge *_gedge;
     int _type;
   };
+
   class Column3DBL {
   private:
     std::vector<MElement *> _stackElements;
@@ -69,6 +70,8 @@ namespace BoundaryLayerCurver {
     int _type;
 
   public:
+    Column3DBL(const PairMElemVecMElem &);
+
     MElement *getElement(std::size_t num) const {
       if(_stackElements.size() <= num) return NULL;
       return _stackElements[num];
@@ -76,6 +79,7 @@ namespace BoundaryLayerCurver {
 
     bool repositionInnerVertices(std::size_t) const;
   };
+
   class Interface3DBL {
   private:
     int _numFace;
@@ -277,6 +281,9 @@ namespace BoundaryLayerCurver {
     const fullMatrix<double> *hexahedron(int order, bool linear, int face = 0);
     const fullMatrix<double> *prism(int order, bool linear, int face = 0);
   } // namespace InnerVertPlacementMatrices
+
+  void createColumns3D(const VecPairMElemVecMElem &cols,
+                       std::vector<Column3DBL> &columns);
 
 } // namespace BoundaryLayerCurver
 
