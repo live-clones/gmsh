@@ -455,7 +455,7 @@ namespace BoundaryLayerCurver {
       subsetEdges[3] = stackEdges[iLast];
       MEdgeN &lastEdge = stackEdges[iLast];
 
-      // Firstly, get sure that last element of the BL is of good quality
+      // 1. Get sure that last element of the BL is of good quality
       MFaceN &lastFaceBL = stackFaces[iLast - 1];
       MElement *lastElementBL = stackElements[iLast - 1];
       MElement *linear = createPrimaryElement(lastElementBL);
@@ -486,7 +486,7 @@ namespace BoundaryLayerCurver {
         qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
       }
 
-      // Secondly, get sure the external element is of good quality
+      // 2. Get sure the external element is of good quality
       MFaceN &lastFace = stackFaces[iLast];
       MElement *lastElement = stackElements[iLast];
       linear = createPrimaryElement(lastElement);
@@ -1321,6 +1321,69 @@ namespace BoundaryLayerCurver {
         // Check that the edge is not part of the next element
         if(i < numLayers - 1) {
           MElement *nextElement = stackElements[i + 1];
+          if(isPrimaryVertex(nextElement, v0) &&
+             isPrimaryVertex(nextElement, v1))
+            continue;
+        }
+
+        // Check if the edge links the two layers and update 'stack'
+        int idxv0AtBottom = -1;
+        for(int m = 0; m < numVertexPerLayer; ++m) {
+          if(v0 == stack[k - 1 - m]) {
+            idxv0AtBottom = k - 1 - m;
+            break;
+          }
+        }
+        int idxv1AtBottom = -1;
+        for(std::size_t m = 0; m < (std::size_t)numVertexPerLayer; ++m) {
+          if(v1 == stack[k - 1 - m]) {
+            idxv1AtBottom = k - 1 - m;
+            break;
+          }
+        }
+        if(idxv0AtBottom == -1 && idxv1AtBottom != -1) {
+          stack[idxv1AtBottom + numVertexPerLayer] = v0;
+        }
+        else if(idxv0AtBottom != -1 && idxv1AtBottom == -1) {
+          stack[idxv0AtBottom + numVertexPerLayer] = v1;
+        }
+      }
+
+      // If there remains NULL values, it is because the vertex is the same
+      // on both layers (because of a non-tensorial element).
+      for(int l = k; l < k + numVertexPerLayer; ++l) {
+        if(stack[l] == NULL) {
+          stack[l] = stack[l - numVertexPerLayer];
+        }
+      }
+
+      k += numVertexPerLayer;
+    }
+  }
+  void computeStackPrimaryVerticesNew(const Column3DBL &column,
+                                   std::vector<MVertex *> &stack)
+  {
+    MElement *bottomElement = column.getBoundaryElement();
+    const int numVertexPerLayer = bottomElement->getNumPrimaryVertices();
+    std::size_t numLayers = column.getNumBLElements();
+    stack.assign(numVertexPerLayer * (numLayers + 1), NULL);
+
+    std::size_t k = 0;
+    for(int i = 0; i < numVertexPerLayer; ++i) {
+      stack[k++] = bottomElement->getVertex(i);
+    }
+    for(std::size_t i = 0; i < numLayers; ++i) {
+      MElement *currentElement = column.getBLElement(i);
+      // Find all the edges that touch one node of current layer but is not
+      // an edge of the current layer nor of the next one.
+      for(int j = 0; j < currentElement->getNumEdges(); ++j) {
+        MEdge edge = currentElement->getEdge(j);
+        MVertex *v0 = edge.getVertex(0);
+        MVertex *v1 = edge.getVertex(1);
+
+        // Check that the edge is not part of the next element
+        if(i < numLayers - 1) {
+          MElement *nextElement = column.getBLElement(i + 1);
           if(isPrimaryVertex(nextElement, v0) &&
              isPrimaryVertex(nextElement, v1))
             continue;

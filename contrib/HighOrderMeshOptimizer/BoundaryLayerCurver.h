@@ -72,10 +72,13 @@ namespace BoundaryLayerCurver {
   public:
     Column3DBL(const PairMElemVecMElem &);
 
-    MElement *getElement(std::size_t num) const {
+    std::size_t getNumBLElements() const { return _stackElements.size(); }
+    MElement *getBLElement(std::size_t num) const {
       if(_stackElements.size() <= num) return NULL;
       return _stackElements[num];
     }
+
+    MElement *getBoundaryElement() const { return _boundaryElement; }
 
     bool repositionInnerVertices(std::size_t) const;
   };
@@ -89,11 +92,11 @@ namespace BoundaryLayerCurver {
     std::vector<MEdgeN> _stackOrientedEdges;
     MEdgeN _boundaryLine;
 
-    // External element that touches the last face. May be NULL
+    // External element that touches the last face, if any.
     MElement *_elementAtLastFace;
-    // External elements that touch the last edge but not the last face
+    // External elements that touch the last edge but not the last face.
     std::vector<MElement *> _elementsAtLastEdge;
-    // External elements that touch interior edges but not the last face
+    // External elements that touch interior edges but not the last face.
     std::vector<MElement *> _elementsAtInteriorEdges;
 
     std::vector<std::vector<MFaceN> > _externalFaces;
@@ -103,6 +106,9 @@ namespace BoundaryLayerCurver {
     int _type;
 
   public:
+    Interface3DBL(const Column3DBL &, MEdge &, MapMEdgeVecMElem &touchedElems);
+    Interface3DBL(const Column3DBL &, const Column3DBL &, MapMEdgeVecMElem &touchedElems);
+
     void recoverQualityElements();
 
   private:
@@ -122,6 +128,8 @@ namespace BoundaryLayerCurver {
   MElement *createPrimaryElement(MElement *);
 
   void computeStackPrimaryVertices(const PairMElemVecMElem &column,
+                                   std::vector<MVertex *> &);
+  void computeStackPrimaryVerticesNew(const Column3DBL &column,
                                    std::vector<MVertex *> &);
 
   bool edgesShareVertex(MEdgeN &, MEdgeN &);
