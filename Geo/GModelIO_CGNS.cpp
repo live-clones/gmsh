@@ -31,9 +31,14 @@ namespace CGNS {
 namespace {
 
 
+// Type for periodic node correpondence (global indices)
+typedef std::map<MVertex *, MVertex *> VertVertMap;
+
 // Type for global node index -> (partition, local node index) correspondence
 struct LocalData { unsigned int partition = 0; CGNS::cgsize_t index = 0; };
-typedef std::vector<LocalData> Global2LocalData;
+// typedef std::vector<LocalData> Global2LocalData;
+typedef std::map<MVertex *, std::vector<LocalData> > Vertex2LocalData;
+
 
 // Types for periodic connectivities
 struct PeriodicInterface {
@@ -89,43 +94,65 @@ void printProgress(const char *cstr, size_t iPart, size_t numPart)
 }
 
 
-// create periodic connections for all entities in all partitions
-int writePeriodic(const std::vector<GEntity *> &entities, int cgIndexFile,
-                   int cgIndexBase, const Global2LocalData &global2Local,
-                   const std::vector<std::string> &zoneName)
+void initPeriodicVertex2LocalData(const std::vector<GEntity *> &entities,
+                                  Vertex2LocalData &perVert2Local)
 {
-  // lists of corresponding master/slave nodes for each pair of partitions
-  PeriodicConnection connect;
-
-  typedef std::map<MVertex *, MVertex *> VertVertMap;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *slaveEnt = entities[i];
     GEntity *masterEnt = slaveEnt->getMeshMaster();
     if (slaveEnt == masterEnt) continue;
     VertVertMap &vv = slaveEnt->correspondingVertices;
     for(VertVertMap::iterator itV = vv.begin(); itV != vv.end(); itV++) {
-      const long slaveInd = itV->first->getIndex();
-      const long masterInd = itV->second->getIndex();
-      const LocalData &sData = global2Local[slaveInd];
-      const LocalData &mData = global2Local[masterInd];
-      PeriodicInterface perInt = {slaveEnt, sData.partition,
-                                  masterEnt, mData.partition};
-      MasterSlaveNodes &ms = connect[perInt];
-      ms.slave.push_back(sData.index);
-      ms.master.push_back(mData.index);
+      perVert2Local[itV->first] = std::vector<LocalData>();
+      perVert2Local[itV->second] = std::vector<LocalData>();
+    }
+  }
+}
+
+
+// create periodic connections for all entities in all partitions
+int writePeriodic(const std::vector<GEntity *> &entities, int cgIndexFile,
+                   int cgIndexBase, const std::vector<std::string> &zoneName,
+                   Vertex2LocalData &perVert2Local)
+{
+  // Consruct interfaces [slave (entity, part.) <-> master (entity, part.)] with
+  // corresponding nodes
+  PeriodicConnection connect;
+  typedef std::map<MVertex *, MVertex *> VertVertMap;
+  for(std::size_t iEnt = 0; iEnt < entities.size(); iEnt++) {
+    GEntity *slaveEnt = entities[iEnt];
+    GEntity *masterEnt = slaveEnt->getMeshMaster();
+    if (slaveEnt == masterEnt) continue;
+    Msg::Info("Constructing periodic interfaces for slave entity %i & master "
+              "entity %i", slaveEnt->tag(), masterEnt->tag());
+    VertVertMap &vv = slaveEnt->correspondingVertices;
+    for(VertVertMap::iterator itV = vv.begin(); itV != vv.end(); itV++) {
+      const std::vector<LocalData> &allSlaveData = perVert2Local[itV->first];
+      const std::vector<LocalData> &allMasterData = perVert2Local[itV->second];
+      for (std::size_t iS = 0; iS < allSlaveData.size(); iS++) {
+        const LocalData &slaveData = allSlaveData[iS];
+        for (std::size_t iM = 0; iM < allMasterData.size(); iM++) {
+          const LocalData &masterData = allMasterData[iM];
+          PeriodicInterface perInt = {slaveEnt, slaveData.partition,
+                                      masterEnt, masterData.partition};
+          MasterSlaveNodes &ms = connect[perInt];
+          ms.slave.push_back(slaveData.index);
+          ms.master.push_back(masterData.index);
+        }
+      }
     }
   }
 
-  // write periodic node correspondence
+  // write periodic interfaces
   typedef PeriodicConnection::iterator PerConnectIter;
   for(PerConnectIter it = connect.begin(); it != connect.end(); ++it) {
+    printProgress("periodic interface", std::distance(connect.begin(), it)+1,
+                  connect.size());
     const PeriodicInterface &perInt = it->first;
     const std::size_t &slavePart = perInt.slavePart;
     const int slaveEntTag = perInt.slaveEnt->tag();
     const std::size_t &masterPart = perInt.masterPart;
     const int masterEntTag = perInt.masterEnt->tag();
-    std::cout << "DBGTT: Writing connectivities between part. " << slavePart << ", ent. " << slaveEntTag
-              << " with master part. " << masterPart << ", ent. " << masterEntTag << std::endl;
     const MasterSlaveNodes &ms = it->second;
     int slaveZone = (slavePart == 0) ? 1 : slavePart;
     const std::string &masterZoneName = zoneName[masterPart]; 
@@ -151,13 +178,13 @@ int writePeriodic(const std::vector<GEntity *> &entities, int cgIndexFile,
 int writeZone(GModel *model, bool saveAll, double scalingFactor,
               size_t numNodesTotal, size_t partition,
               const std::vector<GEntity *> &entities, int cgIndexFile,
-              int cgIndexBase, Global2LocalData &global2Local,
-              std::vector<std::string> &zoneName)
+              int cgIndexBase, std::vector<std::string> &zoneName,
+              Vertex2LocalData &perVert2Local)
 {
   int meshDim = model->getMeshDim();
 
   // build set of nodes first, use elements because nodes not all in
-  // entities[i]->mesh_vertices if entities do not include partition interfaces
+  // GEntity::mesh_vertices if entities do not include partition interfaces
   std::set<MVertex *> nodeSet;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
@@ -176,19 +203,22 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
     }
   }
 
-  // build global <-> partition-local node index correspondence
-  // note: cannot use cgsize_t for global indexing because global indices are
-  // stored in DataArray_t CGNS structures
+  // build global -> partition-local node index correspondence and
+  // store local data correspondence for periodic nodes
   typedef std::set<MVertex *>::iterator NodeSetIter;
-  std::vector<long> local2GlobalInd(nodeSet.size()+1, 0);
+  std::vector<LocalData> global2Local(numNodesTotal+1);
+  // std::vector<long> local2GlobalInd(nodeSet.size()+1, 0);
   CGNS::cgsize_t numNodes = 0;
-  for(NodeSetIter it = nodeSet.begin(); it != nodeSet.end(); ++it) {
-    const long gInd = (*it)->getIndex();
+  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+    const long gInd = (*itN)->getIndex();
     if (gInd < 0) continue;
     numNodes++;
-    global2Local[gInd].partition = partition;
-    global2Local[gInd].index = numNodes;
-    local2GlobalInd[numNodes] = gInd;
+    // local2GlobalInd[numNodes] = gInd;
+    LocalData &ld = global2Local[gInd];
+    ld.partition = partition;
+    ld.index = numNodes;
+    Vertex2LocalData::iterator itPN = perVert2Local.find(*itN);
+    if (itPN != perVert2Local.end()) itPN->second.push_back(ld);
   }
 
   // // build periodic node correspondence (global indices)
@@ -255,7 +285,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
                          cgZoneSize, CGNS::Unstructured, &cgIndexZone))
     return cgnsError();
 
-  // create a grid with x, y and z coordinates of all the nodes (that are
+  // create a CGNS grid with x, y and z coordinates of all the nodes (that are
   // referenced by elements)
   int cgIndexGrid = 0;
   if(CGNS::cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone,
@@ -387,6 +417,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
 }
 
 
+// Get all entities in a partition, except partition interfaces
 void getEntitiesInPartition(const std::vector<GEntity *> &entities,
                             std::size_t iPart,
                             std::vector<GEntity *> &entitiesPart)
@@ -396,32 +427,32 @@ void getEntitiesInPartition(const std::vector<GEntity *> &entities,
     switch(ge->geomType()) {
     case GEntity::PartitionVolume: {
       partitionRegion *pr = static_cast<partitionRegion *>(ge);
-      std::cout << "DBGTT: par. vol. " << ge->tag() << " with parent ent. " << ((ge->getParentEntity() == 0) ? "-1" : ge->getParentEntity()->getInfoString(false)) << ", " << pr->getPartitions().size() << " part." << std::endl;
-      if(std::find(pr->getPartitions().begin(), pr->getPartitions().end(),
+      if (pr->getParentEntity()->dim() != pr->dim()) continue;  // Skip partition interfaces
+      if (std::find(pr->getPartitions().begin(), pr->getPartitions().end(),
                     iPart) != pr->getPartitions().end()) {
         entitiesPart.push_back(pr);
       }
     } break;
     case GEntity::PartitionSurface: {
       partitionFace *pf = static_cast<partitionFace *>(ge);
-      std::cout << "DBGTT: par. surf. " << ge->tag() << " with parent ent. " << ((ge->getParentEntity() == 0) ? "-1" : ge->getParentEntity()->getInfoString(false)) << ", " << pf->getPartitions().size() << " part." << std::endl;
-      if(std::find(pf->getPartitions().begin(), pf->getPartitions().end(),
+      if (pf->getParentEntity()->dim() != pf->dim()) continue;  // Skip partition interfaces
+      if (std::find(pf->getPartitions().begin(), pf->getPartitions().end(),
                     iPart) != pf->getPartitions().end()) {
         entitiesPart.push_back(pf);
       }
     } break;
     case GEntity::PartitionCurve: {
       partitionEdge *pe = static_cast<partitionEdge *>(ge);
-      std::cout << "DBGTT: par. curve " << ge->tag() << " with parent ent. " << ((ge->getParentEntity() == 0) ? "-1" : ge->getParentEntity()->getInfoString(false)) << ", " << pe->getPartitions().size() << " part." << std::endl;
-      if(std::find(pe->getPartitions().begin(), pe->getPartitions().end(),
+      if (pe->getParentEntity()->dim() != pe->dim()) continue;  // Skip partition interfaces
+      if (std::find(pe->getPartitions().begin(), pe->getPartitions().end(),
                     iPart) != pe->getPartitions().end()) {
         entitiesPart.push_back(pe);
       }
     } break;
     case GEntity::PartitionPoint: {
       partitionVertex *pv = static_cast<partitionVertex *>(ge);
-      std::cout << "DBGTT: par. pnt. " << ge->tag() << " with parent ent. " << ((ge->getParentEntity() == 0) ? "-1" : ge->getParentEntity()->getInfoString(false)) << ", " << pv->getPartitions().size() << " part." << std::endl;
-      if(std::find(pv->getPartitions().begin(), pv->getPartitions().end(),
+      if (pv->getParentEntity()->dim() != pv->dim()) continue;  // Skip partition interfaces
+      if (std::find(pv->getPartitions().begin(), pv->getPartitions().end(),
                     iPart) != pv->getPartitions().end()) {
         entitiesPart.push_back(pv);
       }
@@ -463,46 +494,47 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   if(noPhysicalGroups()) saveAll = true;
   const size_t numNodes = indexMeshVertices(saveAll);
 
-  // get all entities from model, for each partition if mesh if partitioned
-  std::vector<GEntity *> allEntities;
-  getEntities(allEntities);
-  const size_t numPart = getNumPartitions();
-  std::vector<std::vector<GEntity *> > entities;
-  if (numPart == 0) {
-    entities.push_back(allEntities);
-  }
-  else {
-    entities.resize(numPart+1);
-    for(std::size_t iPart = 1; iPart <= numPart; iPart++) {
-      getEntitiesInPartition(allEntities, iPart, entities[iPart]);
-    }
-  }
+  // get all entities from model
+  std::vector<GEntity *> entities;
+  getEntities(entities);
 
-  // Global node index -> (partition, local node index) correspondence
-  Global2LocalData global2Local(numNodes+1);
+  // Initialize vertex -> (partition, local node index) for periodic entities
+  Msg::Info("Looking for periodic vertices");
+  Vertex2LocalData perVert2Local;
+  initPeriodicVertex2LocalData(entities, perVert2Local);
+  Msg::Info("%i periodic vertices found", perVert2Local.size());
+
+  // Zone names
+  const size_t numPart = getNumPartitions();
   std::vector<std::string> zoneName(numPart+1);
 
   // write partitions and periodic connectivities
   if (numPart == 0) {                                   // mesh not partitioned
-    int err = writeZone(this, saveAll, scalingFactor, numNodes, 0, entities[0],
-                        cgIndexFile, cgIndexBase, global2Local, zoneName);
+    int err = writeZone(this, saveAll, scalingFactor, numNodes, 0, entities,
+                        cgIndexFile, cgIndexBase, zoneName, perVert2Local);
     if(err) return err;
-    err = writePeriodic(allEntities, cgIndexFile, cgIndexBase, global2Local,
-                         zoneName);
-    if(err) return err;
+    if (perVert2Local.size() > 0) {
+      err = writePeriodic(entities, cgIndexFile, cgIndexBase, zoneName,
+                          perVert2Local);
+      if(err) return err;
+    }
   }
   else {                                                // partitioned mesh
+    std::vector<std::vector<GEntity *> > entitiesPart;
+    entitiesPart.resize(numPart+1);
     for(std::size_t iPart = 1; iPart <= numPart; iPart++) {
       printProgress("partition", iPart, numPart);
+      getEntitiesInPartition(entities, iPart, entitiesPart[iPart]);
       int err = writeZone(this, saveAll, scalingFactor, numNodes, iPart,
-                          entities[iPart], cgIndexFile, cgIndexBase,
-                          global2Local, zoneName);
+                          entitiesPart[iPart], cgIndexFile, cgIndexBase,
+                          zoneName, perVert2Local);
       if(err) return err;
     }             // loop on partitions
-    Msg::Info("Writing periodic connectivities");
-    int err = writePeriodic(allEntities, cgIndexFile, cgIndexBase,
-                             global2Local, zoneName);
-    if(err) return err;
+    if (perVert2Local.size() > 0) {
+      int err = writePeriodic(entities, cgIndexFile, cgIndexBase, zoneName,
+                              perVert2Local);
+      if(err) return err;
+    }
   }               // numPart == 0
 
   if(CGNS::cg_close(cgIndexFile)) return cgnsError();
