@@ -443,82 +443,6 @@ namespace BoundaryLayerCurver {
       if(gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
-    void reduceCurving(MEdgeN &edge, double factor, const GFace *gface)
-    {
-      int order = edge.getPolynomialOrder();
-
-      MVertex *v0 = edge.getVertex(0);
-      MVertex *v1 = edge.getVertex(1);
-
-      for(int i = 2; i < order + 1; ++i) {
-        double f = (double)(i - 1) / order;
-        MVertex *v = edge.getVertex(i);
-        v->x() =
-          (1 - factor) * v->x() + factor * ((1 - f) * v0->x() + f * v1->x());
-        v->y() =
-          (1 - factor) * v->y() + factor * ((1 - f) * v0->y() + f * v1->y());
-        v->z() =
-          (1 - factor) * v->z() + factor * ((1 - f) * v0->z() + f * v1->z());
-      }
-      if(gface) projectVerticesIntoGFace(edge, gface, false);
-    }
-
-    void reduceOrderCurve(MEdgeN &edge, int order, const GFace *gface)
-    {
-      const int orderCurve = edge.getPolynomialOrder();
-      const int orderGauss = order * 2;
-      const int sizeSystem = getNGQLPts(orderGauss);
-      const IntPt *gaussPnts = getGQLPts(orderGauss);
-
-      // Least square projection
-      fullMatrix<double> xyz(sizeSystem + 2, 3);
-      for(int i = 0; i < sizeSystem; ++i) {
-        SPoint3 p = edge.pnt(gaussPnts[i].pt[0]);
-        xyz(i, 0) = p.x();
-        xyz(i, 1) = p.y();
-        xyz(i, 2) = p.z();
-      }
-      for(int i = 0; i < 2; ++i) {
-        xyz(sizeSystem + i, 0) = edge.getVertex(i)->x();
-        xyz(sizeSystem + i, 1) = edge.getVertex(i)->y();
-        xyz(sizeSystem + i, 2) = edge.getVertex(i)->z();
-      }
-
-      LeastSquareData *data = getLeastSquareData(TYPE_LIN, order, orderGauss);
-      fullMatrix<double> newxyzLow(order + 1, 3);
-      data->invA.mult(xyz, newxyzLow);
-
-      std::vector<MVertex *> vertices = edge.getVertices();
-      vertices.resize(static_cast<std::size_t>(order) + 1);
-      MEdgeN lowOrderEdge(vertices);
-
-      for(std::size_t i = 2; i < vertices.size(); ++i) {
-        vertices[i]->x() = newxyzLow(i, 0);
-        vertices[i]->y() = newxyzLow(i, 1);
-        vertices[i]->z() = newxyzLow(i, 2);
-      }
-
-      const int tagLine = ElementType::getType(TYPE_LIN, orderCurve);
-      const nodalBasis *nb = BasisFactory::getNodalBasis(tagLine);
-      const fullMatrix<double> &refpnts = nb->getReferenceNodes();
-
-      fullMatrix<double> newxyz(edge.getNumVertices(), 3);
-      for(std::size_t i = 2; i < edge.getNumVertices(); ++i) {
-        SPoint3 p = lowOrderEdge.pnt(refpnts(i, 0));
-        newxyz(i, 0) = p.x();
-        newxyz(i, 1) = p.y();
-        newxyz(i, 2) = p.z();
-      }
-
-      for(int i = 2; i < edge.getNumVertices(); ++i) {
-        edge.getVertex(i)->x() = newxyz(i, 0);
-        edge.getVertex(i)->y() = newxyz(i, 1);
-        edge.getVertex(i)->z() = newxyz(i, 2);
-      }
-
-      if(gface) projectVerticesIntoGFace(edge, gface, false);
-    }
-
     void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
                                 std::vector<MFaceN> &stackFaces,
                                 std::vector<MElement *> &stackElements,
@@ -582,6 +506,82 @@ namespace BoundaryLayerCurver {
       if(iter == maxIter) reduceCurving(lastEdge, 1, gface);
     }
   } // namespace EdgeCurver2D
+
+  void reduceCurving(MEdgeN &edge, double factor, const GFace *gface)
+  {
+    int order = edge.getPolynomialOrder();
+
+    MVertex *v0 = edge.getVertex(0);
+    MVertex *v1 = edge.getVertex(1);
+
+    for(int i = 2; i < order + 1; ++i) {
+      double f = (double)(i - 1) / order;
+      MVertex *v = edge.getVertex(i);
+      v->x() =
+        (1 - factor) * v->x() + factor * ((1 - f) * v0->x() + f * v1->x());
+      v->y() =
+        (1 - factor) * v->y() + factor * ((1 - f) * v0->y() + f * v1->y());
+      v->z() =
+        (1 - factor) * v->z() + factor * ((1 - f) * v0->z() + f * v1->z());
+    }
+    if(gface) projectVerticesIntoGFace(edge, gface, false);
+  }
+
+  void reduceOrderCurve(MEdgeN &edge, int order, const GFace *gface)
+  {
+    const int orderCurve = edge.getPolynomialOrder();
+    const int orderGauss = order * 2;
+    const int sizeSystem = getNGQLPts(orderGauss);
+    const IntPt *gaussPnts = getGQLPts(orderGauss);
+
+    // Least square projection
+    fullMatrix<double> xyz(sizeSystem + 2, 3);
+    for(int i = 0; i < sizeSystem; ++i) {
+      SPoint3 p = edge.pnt(gaussPnts[i].pt[0]);
+      xyz(i, 0) = p.x();
+      xyz(i, 1) = p.y();
+      xyz(i, 2) = p.z();
+    }
+    for(int i = 0; i < 2; ++i) {
+      xyz(sizeSystem + i, 0) = edge.getVertex(i)->x();
+      xyz(sizeSystem + i, 1) = edge.getVertex(i)->y();
+      xyz(sizeSystem + i, 2) = edge.getVertex(i)->z();
+    }
+
+    LeastSquareData *data = getLeastSquareData(TYPE_LIN, order, orderGauss);
+    fullMatrix<double> newxyzLow(order + 1, 3);
+    data->invA.mult(xyz, newxyzLow);
+
+    std::vector<MVertex *> vertices = edge.getVertices();
+    vertices.resize(static_cast<std::size_t>(order) + 1);
+    MEdgeN lowOrderEdge(vertices);
+
+    for(std::size_t i = 2; i < vertices.size(); ++i) {
+      vertices[i]->x() = newxyzLow(i, 0);
+      vertices[i]->y() = newxyzLow(i, 1);
+      vertices[i]->z() = newxyzLow(i, 2);
+    }
+
+    const int tagLine = ElementType::getType(TYPE_LIN, orderCurve);
+    const nodalBasis *nb = BasisFactory::getNodalBasis(tagLine);
+    const fullMatrix<double> &refpnts = nb->getReferenceNodes();
+
+    fullMatrix<double> newxyz(edge.getNumVertices(), 3);
+    for(std::size_t i = 2; i < edge.getNumVertices(); ++i) {
+      SPoint3 p = lowOrderEdge.pnt(refpnts(i, 0));
+      newxyz(i, 0) = p.x();
+      newxyz(i, 1) = p.y();
+      newxyz(i, 2) = p.z();
+    }
+
+    for(int i = 2; i < edge.getNumVertices(); ++i) {
+      edge.getVertex(i)->x() = newxyz(i, 0);
+      edge.getVertex(i)->y() = newxyz(i, 1);
+      edge.getVertex(i)->z() = newxyz(i, 2);
+    }
+
+    if(gface) projectVerticesIntoGFace(edge, gface, false);
+  }
 
   namespace InteriorEdgeCurver {
     static std::map<std::pair<int, int>, TFIData *> tfiData;
