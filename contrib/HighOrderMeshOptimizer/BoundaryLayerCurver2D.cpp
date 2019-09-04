@@ -1473,7 +1473,7 @@ namespace BoundaryLayerCurver {
     return false;
   }
 
-  void repositionInnerVertices(MFaceN &face, const GFace *gface,
+  void repositionInnerVertices(const MFaceN &face, const GFace *gface,
                                bool linearInYDir)
   {
     int order = face.getPolynomialOrder();

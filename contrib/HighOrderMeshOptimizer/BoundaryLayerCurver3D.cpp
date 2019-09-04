@@ -591,7 +591,75 @@ namespace BoundaryLayerCurver {
     PairMElemVecMElem column;
     computeStackHOEdgesFaces(column, edge, _stackOrientedEdges, _stackOrientedFaces);
 
-    _boundaryLine;
+    MapMEdgeVecMElem::iterator it;
+    std::vector<MElement *> &last = _elementsAtLastEdge;
+    std::vector<MElement *> &others = _elementsAtInteriorEdges;
+    std::vector<MElement *> common;
+
+    MEdge e = _stackOrientedEdges[_numFace].getEdge();
+    it = touchedElems.find(e);
+    if(it != touchedElems.end()) {
+      _elementsAtLastEdge = it->second;
+    }
+    e = _stackOrientedEdges[_numFace - 1].getEdge();
+    it = touchedElems.find(e);
+    if(it != touchedElems.end()) {
+      others = it->second;
+    }
+
+    _elementAtLastFace = NULL;
+    intersect(last, others, common);
+    if(common.size()) {
+      _elementAtLastFace = common[0];
+      if(common.size() > 1) {
+        //FIXMEDEBUG
+        Msg::Error("More than 1 common element is not possible");
+      }
+      for(std::size_t i = 0; i < last.size(); ++i) {
+        if(last[i] == _elementAtLastFace) {
+          last[i] = last.back();
+          last.pop_back();
+        }
+      }
+      for(std::size_t i = 0; i < others.size(); ++i) {
+        if(others[i] == _elementAtLastFace) {
+          others[i] = others.back();
+          others.pop_back();
+        }
+      }
+    }
+
+    for(std::size_t i = 0; i < _numFace - 1; ++i) {
+      std::vector<MElement *> tmp;
+      it = touchedElems.find(_stackOrientedEdges[i].getEdge());
+      if(it != touchedElems.end()) {
+        merge(it->second, others, tmp);
+      }
+      others = tmp;
+    }
+
+    _computeExternalFaces(touchedElems);
+
+    // FIXME:NOW
+
+
+
+
+    _normal;
+    _gface;
+    _gedge;
+    _type;
+  }
+
+  Interface3DBL::Interface3DBL(const Column3DBL &col1, const Column3DBL &col2,
+                               MapMEdgeVecMElem &touchedElems)
+    : _col1(&col1), _col2(&col1)
+  {
+    // FIXME:NOW
+    _numFace;
+
+    _stackOrientedFaces;
+    _stackOrientedEdges;
 
     _elementAtLastFace;
     _elementsAtLastEdge;
@@ -604,25 +672,54 @@ namespace BoundaryLayerCurver {
     _type;
   }
 
-  Interface3DBL::Interface3DBL(const Column3DBL &col1, const Column3DBL &col2,
-                               MapMEdgeVecMElem &touchedElems)
-    : _col1(&col1), _col2(&col1)
+  void Interface3DBL::_computeExternalFaces(MapMEdgeVecMElem &map)
   {
-    _numFace;
+    _externalFaces.resize(_stackOrientedEdges.size());
 
-    _stackOrientedFaces;
-    _stackOrientedEdges;
-    _boundaryLine;
+    for(std::size_t i = 0; i < _stackOrientedEdges.size(); ++i) {
+      std::vector<MFaceN> &faces = _externalFaces[i];
+      MEdge edge = _stackOrientedEdges[i].getEdge();
 
-    _elementAtLastFace;
-    _elementsAtLastEdge;
-    _elementsAtInteriorEdges;
+      // Compute elements touching edge
+      std::vector<MElement *> elements;
+      {
+        if(i > 0) elements.push_back(_col1->getBLElement(i - 1));
+        elements.push_back(_col1->getBLElement(i));
+        if(_col2) {
+          if(i > 0) elements.push_back(_col2->getBLElement(i - 1));
+          elements.push_back(_col2->getBLElement(i));
+        }
+        MapMEdgeVecMElem::iterator it = map.find(edge);
+        if(it != map.end())
+          elements.insert(elements.end(), it->second.begin(), it->second.end());
+      }
 
-    _externalFaces;
-    _normal;
-    _gface;
-    _gedge;
-    _type;
+      // Find faces
+      for(std::size_t i = 0; i < elements.size(); ++i) {
+        // Loop over faces. Add a face if touches the edge and is not already in
+        int n = 0;
+        for(int k = 0; k < elements[i]->getNumFaces(); ++k) {
+          MFace f = elements[i]->getFace(k);
+          // loop on edges of face 'f':
+          for(std::size_t l = 0; l < f.getNumVertices(); ++l) {
+            if(f.getEdge(l) == edge) {
+              ++n;
+              bool alreadyIn = false;
+              for(std::size_t l = 0; l < faces.size(); ++l) {
+                if(f == faces[l].getFace()) {
+                  alreadyIn = true;
+                  break;
+                }
+              }
+              if(!alreadyIn) faces.push_back(elements[i]->getHighOrderFace(f));
+              break;
+            }
+          }
+          // Only 2 faces of an element can touch a given edge
+          if(n == 2) break;
+        }
+      }
+    }
   }
 
   bool qualityOk(double qualLinear, double qualCurved)
@@ -644,7 +741,7 @@ namespace BoundaryLayerCurver {
     return true;
   }
 
-  void Interface3DBL::_computeElementsTouchingLastFace(std::vector<MElement *> &v)
+  void Interface3DBL::_computeElementsTouchingLastFace(std::vector<MElement *> &v) const
   {
     v.clear();
     v.reserve(2);
@@ -657,7 +754,7 @@ namespace BoundaryLayerCurver {
   }
 
   void Interface3DBL::_upQualityForLastFaceCheck(std::vector<double> &qual,
-                                                 std::vector<MElement *> &elements)
+                                                 const std::vector<MElement *> &elements) const
   {
     const std::size_t numFaces = _stackOrientedFaces.size();
     repositionInnerVertices(_stackOrientedFaces.back(), _gface, true);
@@ -672,7 +769,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void Interface3DBL::_upQualityForLastEdgeCheck(std::vector<double> &qual)
+  void Interface3DBL::_upQualityForLastEdgeCheck(std::vector<double> &qual) const
   {
     const std::size_t numFaces = _stackOrientedFaces.size();
     repositionInnerVertices(_externalFaces[numFaces], _gface, false);

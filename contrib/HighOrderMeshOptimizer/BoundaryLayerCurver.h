@@ -90,7 +90,6 @@ namespace BoundaryLayerCurver {
     const Column3DBL *_col2;
     std::vector<MFaceN> _stackOrientedFaces;
     std::vector<MEdgeN> _stackOrientedEdges;
-    MEdgeN _boundaryLine;
 
     // External element that touches the last face, if any.
     MElement *_elementAtLastFace;
@@ -112,15 +111,16 @@ namespace BoundaryLayerCurver {
     void recoverQualityElements();
 
   private:
-    void _computeElementsTouchingLastFace(std::vector<MElement *> &);
+    void _computeElementsTouchingLastFace(std::vector<MElement *> &) const;
     void _upQualityForLastFaceCheck(std::vector<double> &,
-                                    std::vector<MElement *> &);
-    void _upQualityForLastEdgeCheck(std::vector<double> &);
+                                    const std::vector<MElement *> &) const;
+    void _upQualityForLastEdgeCheck(std::vector<double> &) const;
+    void _computeExternalFaces(MapMEdgeVecMElem &);
   };
 
   bool computeCommonEdge(MElement *, MElement *, MEdge &);
 
-  void repositionInnerVertices(MFaceN &, const GFace *, bool linearInYDir);
+  void repositionInnerVertices(const MFaceN &, const GFace *, bool linearInYDir);
 
   void repositionInnerVertices(const std::vector<MFaceN> &, const GFace *,
                                bool linearInYDir);
