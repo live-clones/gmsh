@@ -47,27 +47,27 @@ typedef std::map<MEdge, std::vector<MElement *>, Less_Edge> MapMEdgeVecMElem;
 namespace BoundaryLayerCurver {
   class Column2DBL {
   private:
-    std::vector<MElement *> _stackElements;
-    std::vector<MFaceN> _stackOrientedFaces;
-    std::vector<MEdgeN> _stackOrientedEdges;
-    MElement *_externalElement;
-    MElement *_boundaryLine;
-    SVector3 _normal;
-    GFace *_gface;
-    GEdge *_gedge;
-    int _type;
+    // std::vector<MElement *> _stackElements;
+    // std::vector<MFaceN> _stackOrientedFaces;
+    // std::vector<MEdgeN> _stackOrientedEdges;
+    // MElement *_externalElement;
+    // MElement *_boundaryLine;
+    // SVector3 _normal;
+    // GFace *_gface;
+    // GEdge *_gedge;
+    // int _type;
   };
 
   class Column3DBL {
   private:
     std::vector<MElement *> _stackElements;
-    std::vector<short> _orientationElements; // FIXME use this later (inn. vert)
+    // std::vector<short> _orientationElements; // FIXME use this later (inn. vert)
     std::vector<MFaceN> _stackOrientedFaces;
     MElement *_externalElement;
     MElement *_boundaryElement;
-    SVector3 _normal;
+    // SVector3 _normal;
     GFace *_gface;
-    int _type;
+    // int _type;
 
   public:
     Column3DBL(const PairMElemVecMElem &);
@@ -99,7 +99,7 @@ namespace BoundaryLayerCurver {
     std::vector<MElement *> _elementsAtInteriorEdges;
 
     std::vector<std::vector<MFaceN> > _externalFaces;
-    SVector3 _normal;
+    // SVector3 _normal;
     GFace *_gface;
     GEdge *_gedge;
     int _type;
@@ -117,6 +117,7 @@ namespace BoundaryLayerCurver {
     void _upQualityForLastEdgeCheck(std::vector<double> &) const;
     void _classifyTouchedElements(MapMEdgeVecMElem &);
     void _computeExternalFaces(MapMEdgeVecMElem &);
+    void _checkGFaceGEdge();
   };
 
   bool computeCommonEdge(MElement *, MElement *, MEdge &);

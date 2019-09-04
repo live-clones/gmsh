@@ -405,17 +405,16 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  Column3DBL::Column3DBL(const PairMElemVecMElem &col) : _stackElements(col.second),
-                                                         _boundaryElement(col.first)
+  Column3DBL::Column3DBL(const PairMElemVecMElem &col)
+  : _stackElements(col.second), _boundaryElement(col.first), _gface(NULL)
   {
     computeStackHighOrderFaces(col, _stackOrientedFaces);
     _externalElement = _stackElements.back();
     _stackElements.pop_back();
-    _gface = NULL;
-    int i = _boundaryElement->getNumVertices() - 1;
-    while(i-- >= 0) {
+    std::size_t i = _boundaryElement->getNumVertices();
+    while(--i >= 0) {
       GEntity *ent = _boundaryElement->getVertex(i)->onWhat();
-      if(ent->dim() == 2) {
+      if(ent && ent->dim() == 2) {
         _gface = ent->cast2Face();
         break;
       }
@@ -586,25 +585,17 @@ namespace BoundaryLayerCurver {
 
   Interface3DBL::Interface3DBL(const Column3DBL &col, MEdge &edge,
                                MapMEdgeVecMElem &touchedElems)
-    : _numFace(col.getNumBLElements()), _col1(&col), _col2(NULL)
+  : _numFace(col.getNumBLElements()), _col1(&col), _col2(NULL), _gface(NULL),
+    _gedge(NULL)
   {
     PairMElemVecMElem column;
     computeStackHOEdgesFaces(column, edge, _stackOrientedEdges, _stackOrientedFaces);
 
     _classifyTouchedElements(touchedElems);
     _computeExternalFaces(touchedElems);
+    _checkGFaceGEdge();
 
-
-
-    // FIXME:NOW
-
-
-
-
-    _normal;
-    _gface;
-    _gedge;
-    _type;
+    _type = _stackOrientedFaces[0].getType();
   }
 
   Interface3DBL::Interface3DBL(const Column3DBL &col1, const Column3DBL &col2,
@@ -622,7 +613,7 @@ namespace BoundaryLayerCurver {
     _elementsAtInteriorEdges;
 
     _externalFaces;
-    _normal;
+    // _normal;
     _gface;
     _gedge;
     _type;
@@ -724,6 +715,31 @@ namespace BoundaryLayerCurver {
           // Only 2 faces of an element can touch a given edge
           if(n == 2) break;
         }
+      }
+    }
+  }
+
+  void Interface3DBL::_checkGFaceGEdge()
+  {
+    // Get an interior vertex and check if it is on a GFace:
+    MFaceN &face = _stackOrientedFaces.back();
+    std::size_t i = face.getNumVertices();
+    while(--i >= 0) {
+      GEntity *ent = face.getVertex(i)->onWhat();
+      if(ent && ent->dim() == 2) {
+        _gface = ent->cast2Face();
+        break;
+      }
+    }
+
+    // Get a vertex at the bottom and check if it is on a GEdge:
+    MEdgeN &edge = _stackOrientedEdges[0];
+    i = edge.getNumVertices();
+    while(--i >= 0) {
+      GEntity *ent = edge.getVertex(i)->onWhat();
+      if(ent && ent->dim() == 1) {
+        _gedge = ent->cast2Edge();
+        break;
       }
     }
   }
