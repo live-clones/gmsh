@@ -255,7 +255,7 @@ namespace BoundaryLayerCurver {
         return _tetrahedron[order];
       }
       else {
-        int dir;
+        std::size_t dir;
         const int hash = face * 4 + otherFace;
         switch(hash) {
         case 4 * 0 + 1:
@@ -292,7 +292,7 @@ namespace BoundaryLayerCurver {
         return _hexahedron[order];
       }
       else {
-        int dir;
+        std::size_t dir;
         switch(face) {
         default:
         case 0:
@@ -321,7 +321,7 @@ namespace BoundaryLayerCurver {
         return _prism[order];
       }
       else {
-        int dir;
+        std::size_t dir;
         switch(face) {
         default:
         case 0:
@@ -343,7 +343,7 @@ namespace BoundaryLayerCurver {
   void repositionInteriorNodes(MElement *el,
                                const fullMatrix<double> &placement)
   {
-    int start = el->getNumVertices() - el->getNumVolumeVertices();
+    std::size_t start = el->getNumVertices() - el->getNumVolumeVertices();
     for(std::size_t i = start; i < el->getNumVertices(); ++i) {
       MVertex *v = el->getVertex(i);
       v->x() = 0;
@@ -411,7 +411,7 @@ namespace BoundaryLayerCurver {
     computeStackHighOrderFaces(col, _stackOrientedFaces);
     _externalElement = _stackElements.back();
     _stackElements.pop_back();
-    std::size_t i = _boundaryElement->getNumVertices();
+    int i = _boundaryElement->getNumVertices();
     while(--i >= 0) {
       GEntity *ent = _boundaryElement->getVertex(i)->onWhat();
       if(ent && ent->dim() == 2) {
@@ -723,7 +723,7 @@ namespace BoundaryLayerCurver {
   {
     // Get an interior vertex and check if it is on a GFace:
     MFaceN &face = _stackOrientedFaces.back();
-    std::size_t i = face.getNumVertices();
+    int i = face.getNumVertices();
     while(--i >= 0) {
       GEntity *ent = face.getVertex(i)->onWhat();
       if(ent && ent->dim() == 2) {
@@ -995,13 +995,13 @@ namespace BoundaryLayerCurver {
   {
     // NB: f1 == f2 will return true for "twisted" quad (having same vertices
     // but the quads are different)
-    int nVertices = f1.getNumVertices();
+    std::size_t nVertices = f1.getNumVertices();
     if(f2.getNumVertices() != nVertices) return false;
 
     MVertex *v = f1.getVertex(0);
 
     // Find the vertex in f2
-    int k = 0;
+    std::size_t k = 0;
     while(k < nVertices && f2.getVertex(k) != v) ++k;
     if(k == nVertices) return false;
 
@@ -1016,7 +1016,7 @@ namespace BoundaryLayerCurver {
       inc = -1;
     if(inc == 0) return false;
 
-    for(int i = 2; i < nVertices; ++i) {
+    for(std::size_t i = 2; i < nVertices; ++i) {
       if(f1.getVertex(i) != f2.getVertex((k + nVertices + inc * i) % nVertices))
         return false;
     }
@@ -1040,7 +1040,7 @@ namespace BoundaryLayerCurver {
 
   bool faceContainsVertex(const MFace &f, const MVertex *v)
   {
-    for(int i = 0; i < f.getNumVertices(); ++i) {
+    for(std::size_t i = 0; i < f.getNumVertices(); ++i) {
       if(f.getVertex(i) == v) return true;
     }
     return false;
@@ -1052,7 +1052,7 @@ namespace BoundaryLayerCurver {
     MVertex *v1 = e.getMaxVertex();
     bool v0In = false;
     bool v1In = false;
-    for(int i = 0; i < f.getNumVertices(); ++i) {
+    for(std::size_t i = 0; i < f.getNumVertices(); ++i) {
       if(f.getVertex(i) == v0) v0In = true;
       if(f.getVertex(i) == v1) v1In = true;
     }
