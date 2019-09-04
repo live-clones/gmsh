@@ -163,7 +163,7 @@ namespace BoundaryLayerCurver {
     // Check if we can obtain parametric coordinates:
     if(!v->getParameter(0, initialGuess[0])) {
       Msg::Error("DEBUG no parametric vertex");
-      // FIXME: This is really annoying, why v is not MFaceVertex? It should be
+      // FIXME This is really annoying, why v is not MFaceVertex? It should be
       SPoint2 param = gface->parFromPoint(p);
       GPoint projected = gface->point(param);
       v->x() = projected.x();

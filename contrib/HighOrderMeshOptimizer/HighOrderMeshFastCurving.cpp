@@ -595,7 +595,7 @@ namespace {
         getOppositeFaceHex(el, baseFace, topFace, faceSurfMin, faceSurfMax);
 
       // Geometrical stopping criteria
-      // FIXME: for hexes, the following code is not robust
+      // FIXME for hexes, the following code is not robust
       //  (normal is of triangular face):
       const double dp = dot(baseFace.normal(), topFace.normal());
       if(std::abs(dp) < maxDP) return;

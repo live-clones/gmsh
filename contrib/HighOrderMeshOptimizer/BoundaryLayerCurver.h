@@ -105,8 +105,8 @@ namespace BoundaryLayerCurver {
     int _type;
 
   public:
-    Interface3DBL(const Column3DBL &, MEdge &, MapMEdgeVecMElem &touchedElems);
-    Interface3DBL(const Column3DBL &, const Column3DBL &, MapMEdgeVecMElem &touchedElems);
+    Interface3DBL(const Column3DBL &, MEdge &, MapMEdgeVecMElem &);
+    Interface3DBL(const Column3DBL &, const Column3DBL &, MapMEdgeVecMElem &);
 
     void recoverQualityElements();
 
@@ -115,7 +115,7 @@ namespace BoundaryLayerCurver {
     void _upQualityForLastFaceCheck(std::vector<double> &,
                                     const std::vector<MElement *> &) const;
     void _upQualityForLastEdgeCheck(std::vector<double> &) const;
-    void _classifyTouchedElements(MapMEdgeVecMElem &);
+    void _classifyExternalElements(MapMEdgeVecMElem &);
     void _computeExternalFaces(MapMEdgeVecMElem &);
     void _checkGFaceGEdge();
   };
