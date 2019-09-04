@@ -585,12 +585,10 @@ namespace BoundaryLayerCurver {
 
   Interface3DBL::Interface3DBL(const Column3DBL &col, MEdge &edge,
                                MapMEdgeVecMElem &touchedElems)
-  : _numFace(col.getNumBLElements()), _col1(&col), _col2(NULL), _gface(NULL),
-    _gedge(NULL)
+  : _numFace(col.getNumBLElements()), _col1(&col), _col2(NULL),
+    _boundaryElem2(NULL), _gface(NULL), _gedge(NULL)
   {
-    PairMElemVecMElem column;
-    computeStackHOEdgesFaces(column, edge, _stackOrientedEdges, _stackOrientedFaces);
-
+    computeStackHOEdgesFaces(col, edge, _stackOrientedEdges, _stackOrientedFaces);
     _classifyExternalElements(touchedElems);
     _computeExternalFaces(touchedElems);
     _checkGFaceGEdge();
@@ -600,7 +598,8 @@ namespace BoundaryLayerCurver {
 
   Interface3DBL::Interface3DBL(const Column3DBL &col1, const Column3DBL &col2,
                                MapMEdgeVecMElem &touchedElems)
-    : _col1(&col1), _col2(&col1), _gface(NULL), _gedge(NULL)
+    : _col1(&col1), _col2(&col1), _boundaryElem2(NULL), _gface(NULL),
+      _gedge(NULL)
   {
     MEdge commonEdge;
     {
@@ -623,6 +622,7 @@ namespace BoundaryLayerCurver {
     _classifyExternalElements(touchedElems);
     _computeExternalFaces(touchedElems);
     _checkGFaceGEdge();
+    _checkBoundaryElement(touchedElems);
 
     _type = _stackOrientedFaces[0].getType();
   }
@@ -681,7 +681,8 @@ namespace BoundaryLayerCurver {
   {
     _externalFaces.resize(_stackOrientedEdges.size());
 
-    for(std::size_t i = 0; i < _stackOrientedEdges.size(); ++i) {
+    // NB: Edge 0 is not modified so we do not need to know the faces it touches
+    for(std::size_t i = 1; i < _stackOrientedEdges.size(); ++i) {
       MEdge edge = _stackOrientedEdges[i].getEdge();
       std::vector<MFaceN> &faces = _externalFaces[i];
 
@@ -752,6 +753,53 @@ namespace BoundaryLayerCurver {
         break;
       }
     }
+  }
+
+  void Interface3DBL::_checkBoundaryElement(MapMEdgeVecMElem &map)
+  {
+    if(_col2) return;
+
+    MEdge bottomEdge = _stackOrientedEdges[0].getEdge();
+    MapMEdgeVecMElem::iterator it = map.find(bottomEdge);
+    if(it == map.end() || it->second.empty()) return;
+
+    std::vector<MElement *> &elements = it->second;
+
+    std::map<MFace, MFaceN> faces;
+    faces[_stackOrientedFaces[0].getFace()] = _stackOrientedFaces[0];
+    for(std::size_t i = 0; i < elements.size(); ++i) {
+      MElement *el = elements[i];
+      for(int j = 0; j < el->getNumFaces(); ++j) {
+        MFaceN fn = el->getHighOrderFace(j, 1, 0);
+        MFace f = fn.getFace();
+        bool toAdd = false;
+        for(std::size_t k = 0; k < f.getNumVertices(); ++k) {
+          MEdge e = f.getEdge(k);
+          if(e == bottomEdge) {
+            toAdd = true;
+            break;
+          }
+        }
+        std::map<MFace, MFaceN>::iterator it = faces.find(f);
+        if(toAdd) {
+          if(it == faces.end())
+            faces[f] = fn;
+          else
+            faces.erase(it);
+        }
+      }
+    }
+    if(faces.size() != 1) {
+      // FIXMEDEBUG
+      Msg::Error("We should have exactly one face!!");
+      return;
+    }
+
+    // MFace f = faces.begin()->first;
+    MFaceN fn = faces.begin()->second;
+    std::vector<MVertex *> vertices = fn.getVertices();
+    MElementFactory factory;
+    _boundaryElem2 = factory.create(fn.getType(), vertices);
   }
 
   bool qualityOk(double qualLinear, double qualCurved)

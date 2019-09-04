@@ -88,6 +88,7 @@ namespace BoundaryLayerCurver {
     int _numFace;
     const Column3DBL *_col1;
     const Column3DBL *_col2;
+    MElement *_boundaryElem2; // if any and _col2 == NULL
     std::vector<MFaceN> _stackOrientedFaces;
     std::vector<MEdgeN> _stackOrientedEdges;
 
@@ -107,6 +108,7 @@ namespace BoundaryLayerCurver {
   public:
     Interface3DBL(const Column3DBL &, MEdge &, MapMEdgeVecMElem &);
     Interface3DBL(const Column3DBL &, const Column3DBL &, MapMEdgeVecMElem &);
+    ~Interface3DBL() { delete _boundaryElem2; }
 
     void recoverQualityElements();
 
@@ -118,6 +120,7 @@ namespace BoundaryLayerCurver {
     void _classifyExternalElements(MapMEdgeVecMElem &);
     void _computeExternalFaces(MapMEdgeVecMElem &);
     void _checkGFaceGEdge();
+    void _checkBoundaryElement(MapMEdgeVecMElem &);
   };
 
   bool computeCommonEdge(MElement *, MElement *, MEdge &);
