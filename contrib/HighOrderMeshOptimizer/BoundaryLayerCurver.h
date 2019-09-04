@@ -115,6 +115,7 @@ namespace BoundaryLayerCurver {
     void _upQualityForLastFaceCheck(std::vector<double> &,
                                     const std::vector<MElement *> &) const;
     void _upQualityForLastEdgeCheck(std::vector<double> &) const;
+    void _classifyTouchedElements(MapMEdgeVecMElem &);
     void _computeExternalFaces(MapMEdgeVecMElem &);
   };
 

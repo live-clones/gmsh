@@ -591,54 +591,10 @@ namespace BoundaryLayerCurver {
     PairMElemVecMElem column;
     computeStackHOEdgesFaces(column, edge, _stackOrientedEdges, _stackOrientedFaces);
 
-    MapMEdgeVecMElem::iterator it;
-    std::vector<MElement *> &last = _elementsAtLastEdge;
-    std::vector<MElement *> &others = _elementsAtInteriorEdges;
-    std::vector<MElement *> common;
-
-    MEdge e = _stackOrientedEdges[_numFace].getEdge();
-    it = touchedElems.find(e);
-    if(it != touchedElems.end()) {
-      _elementsAtLastEdge = it->second;
-    }
-    e = _stackOrientedEdges[_numFace - 1].getEdge();
-    it = touchedElems.find(e);
-    if(it != touchedElems.end()) {
-      others = it->second;
-    }
-
-    _elementAtLastFace = NULL;
-    intersect(last, others, common);
-    if(common.size()) {
-      _elementAtLastFace = common[0];
-      if(common.size() > 1) {
-        //FIXMEDEBUG
-        Msg::Error("More than 1 common element is not possible");
-      }
-      for(std::size_t i = 0; i < last.size(); ++i) {
-        if(last[i] == _elementAtLastFace) {
-          last[i] = last.back();
-          last.pop_back();
-        }
-      }
-      for(std::size_t i = 0; i < others.size(); ++i) {
-        if(others[i] == _elementAtLastFace) {
-          others[i] = others.back();
-          others.pop_back();
-        }
-      }
-    }
-
-    for(std::size_t i = 0; i < _numFace - 1; ++i) {
-      std::vector<MElement *> tmp;
-      it = touchedElems.find(_stackOrientedEdges[i].getEdge());
-      if(it != touchedElems.end()) {
-        merge(it->second, others, tmp);
-      }
-      others = tmp;
-    }
-
+    _classifyTouchedElements(touchedElems);
     _computeExternalFaces(touchedElems);
+
+
 
     // FIXME:NOW
 
@@ -670,6 +626,56 @@ namespace BoundaryLayerCurver {
     _gface;
     _gedge;
     _type;
+  }
+
+  void Interface3DBL::_classifyTouchedElements(MapMEdgeVecMElem &map)
+  {
+    MapMEdgeVecMElem::iterator it;
+    std::vector<MElement *> &last = _elementsAtLastEdge;
+    std::vector<MElement *> &others = _elementsAtInteriorEdges;
+    std::vector<MElement *> common;
+
+    MEdge e = _stackOrientedEdges[_numFace].getEdge();
+    it = map.find(e);
+    if(it != map.end()) {
+      _elementsAtLastEdge = it->second;
+    }
+    e = _stackOrientedEdges[_numFace - 1].getEdge();
+    it = map.find(e);
+    if(it != map.end()) {
+      others = it->second;
+    }
+
+    _elementAtLastFace = NULL;
+    intersect(last, others, common);
+    if(common.size()) {
+      _elementAtLastFace = common[0];
+      if(common.size() > 1) {
+        //FIXMEDEBUG
+        Msg::Error("More than 1 common element is not possible");
+      }
+      for(std::size_t i = 0; i < last.size(); ++i) {
+        if(last[i] == _elementAtLastFace) {
+          last[i] = last.back();
+          last.pop_back();
+        }
+      }
+      for(std::size_t i = 0; i < others.size(); ++i) {
+        if(others[i] == _elementAtLastFace) {
+          others[i] = others.back();
+          others.pop_back();
+        }
+      }
+    }
+
+    for(std::size_t i = 0; i < _numFace - 1; ++i) {
+      std::vector<MElement *> tmp;
+      it = map.find(_stackOrientedEdges[i].getEdge());
+      if(it != map.end()) {
+        merge(it->second, others, tmp);
+      }
+      others = tmp;
+    }
   }
 
   void Interface3DBL::_computeExternalFaces(MapMEdgeVecMElem &map)
