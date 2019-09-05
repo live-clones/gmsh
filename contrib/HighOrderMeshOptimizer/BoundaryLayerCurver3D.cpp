@@ -583,8 +583,8 @@ namespace BoundaryLayerCurver {
     stackEdges.push_back(el->getHighOrderEdge(MEdge(v3, v2)));
   }
 
-  Interface3DBL::Interface3DBL(const Column3DBL &col, MEdge &edge,
-                               MapMEdgeVecMElem &touchedElems)
+  Interface3DBL::Interface3DBL(const Column3DBL &col, const MEdge &edge,
+                               const MapMEdgeVecMElem &touchedElems)
   : _numFace(col.getNumBLElements()), _col1(&col), _col2(NULL),
     _boundaryElem2(NULL), _gface(NULL), _gedge(NULL)
   {
@@ -597,7 +597,7 @@ namespace BoundaryLayerCurver {
   }
 
   Interface3DBL::Interface3DBL(const Column3DBL &col1, const Column3DBL &col2,
-                               MapMEdgeVecMElem &touchedElems)
+                               const MapMEdgeVecMElem &touchedElems)
     : _col1(&col1), _col2(&col1), _boundaryElem2(NULL), _gface(NULL),
       _gedge(NULL)
   {
@@ -611,14 +611,12 @@ namespace BoundaryLayerCurver {
       }
     }
 
-    if(col1.getNumBLElements() > col2.getNumBLElements()) {
-      _numFace = col1.getNumBLElements();
-      computeStackHOEdgesFaces(col1, commonEdge, _stackOrientedEdges, _stackOrientedFaces);
-    }
-    else {
-      _numFace = col2.getNumBLElements();
-      computeStackHOEdgesFaces(col2, commonEdge, _stackOrientedEdges, _stackOrientedFaces);
-    }
+    const Column3DBL *col;
+    if(col1.getNumBLElements() > col2.getNumBLElements()) col = &col1;
+    else col = &col2;
+    _numFace = col->getNumBLElements();
+    computeStackHOEdgesFaces(*col, commonEdge, _stackOrientedEdges, _stackOrientedFaces);
+
     _classifyExternalElements(touchedElems);
     _computeExternalFaces(touchedElems);
     _checkGFaceGEdge();
@@ -627,9 +625,9 @@ namespace BoundaryLayerCurver {
     _type = _stackOrientedFaces[0].getType();
   }
 
-  void Interface3DBL::_classifyExternalElements(MapMEdgeVecMElem &map)
+  void Interface3DBL::_classifyExternalElements(const MapMEdgeVecMElem &map)
   {
-    MapMEdgeVecMElem::iterator it;
+    MapMEdgeVecMElem::const_iterator it;
     std::vector<MElement *> &last = _elementsAtLastEdge;
     std::vector<MElement *> &others = _elementsAtInteriorEdges;
     std::vector<MElement *> common;
@@ -677,7 +675,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void Interface3DBL::_computeExternalFaces(MapMEdgeVecMElem &map)
+  void Interface3DBL::_computeExternalFaces(const MapMEdgeVecMElem &map)
   {
     _externalFaces.resize(_stackOrientedEdges.size());
 
@@ -697,7 +695,7 @@ namespace BoundaryLayerCurver {
         if(el = _col1->getBLElement(i)) elements.push_back(el);
         if(_col2 && (el = _col2->getBLElement(i))) elements.push_back(el);
 
-        MapMEdgeVecMElem::iterator it = map.find(edge);
+        MapMEdgeVecMElem::const_iterator it = map.find(edge);
         if(it != map.end())
           elements.insert(elements.end(), it->second.begin(), it->second.end());
       }
@@ -755,17 +753,17 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void Interface3DBL::_checkBoundaryElement(MapMEdgeVecMElem &map)
+  void Interface3DBL::_checkBoundaryElement(const MapMEdgeVecMElem &map)
   {
     if(_col2) return;
 
     MEdge bottomEdge = _stackOrientedEdges[0].getEdge();
-    MapMEdgeVecMElem::iterator it = map.find(bottomEdge);
+    MapMEdgeVecMElem::const_iterator it = map.find(bottomEdge);
     if(it == map.end() || it->second.empty()) return;
 
-    std::vector<MElement *> &elements = it->second;
+    const std::vector<MElement *> &elements = it->second;
 
-    std::map<MFace, MFaceN> faces;
+    std::map<MFace, MFaceN, Less_Face> faces;
     faces[_stackOrientedFaces[0].getFace()] = _stackOrientedFaces[0];
     for(std::size_t i = 0; i < elements.size(); ++i) {
       MElement *el = elements[i];
@@ -1023,7 +1021,7 @@ namespace BoundaryLayerCurver {
   }
 
   // compute adjacencies of boundary elements, thus of columns
-  void computeAdjacencies(std::vector<Column3DBL> &columns,
+  void computeAdjacencies(const std::vector<Column3DBL> &columns,
                           std::vector<std::pair<int, int> > &adjacencies,
                           std::vector<std::pair<int, MEdge> > &borderEdges)
   {
@@ -1573,7 +1571,7 @@ namespace BoundaryLayerCurver {
   }
 
   void curveInterfaces(std::vector<Column3DBL> &columns,
-                       MapMEdgeVecMElem &touchedElements)
+                       const MapMEdgeVecMElem &touchedElements)
   {
     // We could detect and create all the Interface3DBL objects and then curve
     // them one by one. We choose instead to compute the adjacencies and to
