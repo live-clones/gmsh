@@ -2,6 +2,8 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributed by Jeremy Theler
 
 #include <stdio.h>
 #include <string>
@@ -35,7 +37,7 @@ static void writeX3Dfaces(FILE *fp, std::vector<GFace*> &faces, bool useIndexedS
 
   fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
   fprintf(fp, "     <Appearance><Material DEF=\"mat%s\"></Material></Appearance>\n", name.c_str());
-  
+
   if (useIndexedSet) {
     // create faces with a list of nodes and a set of integers (no floating-point data will be duplicated)
     fprintf(fp, "     <IndexedTriangleSet DEF=\"set%s\" index=\"\n", name.c_str());
@@ -49,38 +51,38 @@ static void writeX3Dfaces(FILE *fp, std::vector<GFace*> &faces, bool useIndexedS
     }
     fprintf(fp, "\">\n");
 
-    
+
     fprintf(fp, "      <Coordinate point=\"\n");
     for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it) {
       if(useGeoX3D && (*it)->stl_vertices_uv.size()) {
         for(std::size_t i = 0; i < (*it)->stl_vertices_uv.size(); i++) {
           SPoint2 &p((*it)->stl_vertices_uv[i]);
           GPoint gp = (*it)->point(p);
-       
+
           fprintf(fp, "%g %g %g\n", gp.x() * scalingFactor, gp.y() * scalingFactor, gp.z() * scalingFactor);
         }
       }
     }
     fprintf(fp, "\"></Coordinate>\n");
-    
+
     fprintf(fp, "      <Normal vector=\"\n");
     for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it) {
       if(useGeoX3D && (*it)->stl_normals.size()) {
         for(std::size_t i = 0; i < (*it)->stl_normals.size(); i++) {
           SVector3 &n((*it)->stl_normals[i]);
           fprintf(fp, "%g %g %g\n", n.x(), n.y(), n.z());
-        } 
+        }
       }
     }
     fprintf(fp, "\"></Normal>\n");
-    
+
     fprintf(fp, "     </IndexedTriangleSet>\n");
-        
+
   } else {
-      
+
     // create faces with a explicit list or vertices (will duplicate floating-point data)
     fprintf(fp, "     <TriangleSet DEF=\"set%s\">\n", name.c_str());
-  
+
     fprintf(fp, "      <Coordinate point=\"\n");
     for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it) {
       if(useGeoX3D && (*it)->stl_vertices_uv.size()) {
@@ -94,7 +96,7 @@ static void writeX3Dfaces(FILE *fp, std::vector<GFace*> &faces, bool useIndexedS
           double x[3] = {gp1.x(), gp2.x(), gp3.x()};
           double y[3] = {gp1.y(), gp2.y(), gp3.y()};
           double z[3] = {gp1.z(), gp2.z(), gp3.z()};
-        
+
           for(int j = 0; j < 3; j++) {
             fprintf(fp, "%g %g %g\n", x[j] * scalingFactor, y[j] * scalingFactor, z[j] * scalingFactor);
           }
@@ -102,21 +104,21 @@ static void writeX3Dfaces(FILE *fp, std::vector<GFace*> &faces, bool useIndexedS
       }
     }
     fprintf(fp, "\"></Coordinate>\n");
-  
+
     fprintf(fp, "      <Normal vector=\"\n");
     for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it) {
       if(useGeoX3D && (*it)->stl_normals.size()) {
         for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i++) {
           SVector3 &n((*it)->stl_normals[(*it)->stl_triangles[i]]);
           fprintf(fp, "%g %g %g\n", n.x(), n.y(), n.z());
-        } 
+        }
       }
     }
     fprintf(fp, "\"></Normal>\n");
-    
+
     fprintf(fp, "     </TriangleSet>\n");
   }
-  
+
   fprintf(fp, "    </Shape>\n");
 }
 
@@ -128,7 +130,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
-  
+
   // X3D Header
   fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   fprintf(fp, "<!DOCTYPE X3D PUBLIC \"ISO//Web3D//DTD X3D 3.3//EN\" "
@@ -139,11 +141,11 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
   fprintf(fp, "    <meta name='creator' content='gmsh'/> \n");
   fprintf(fp, "  </head>\n");
   fprintf(fp, "  <Scene>\n");
-  
-  
-  
+
+
+
   fprintf(fp, "   <Group DEF=\"faces\">\n");
-  
+
   if(noPhysicalGroups()) saveAll = true;
 
   if(oneSolidPerSurface == 1) { // one x3d node per surface
@@ -204,12 +206,12 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
       fprintf(fp, "   </Transform>\n");
     }
     fprintf(fp, "   </Group>\n");
-  }  
-  
-  
+  }
+
+
   fprintf(fp, "  </Scene>\n");
   fprintf(fp, "</X3D>\n");
-  
+
   fclose(fp);
   return 1;
 }
