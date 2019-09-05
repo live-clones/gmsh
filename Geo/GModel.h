@@ -680,6 +680,11 @@ public:
   int writeSTL(const std::string &name, bool binary = false,
                bool saveAll = false, double scalingFactor = 1.0,
                int oneSolidPerSurface = 0);
+  
+  // X3D (only output from OCCT's triangulation)
+  int writeX3D(const std::string &name, 
+               bool saveAll = false, double scalingFactor = 1.0,
+               int oneSolidPerSurface = 0);
 
   // PLY(2) format (ascii text format)
   int readPLY(const std::string &name);
