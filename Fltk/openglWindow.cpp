@@ -820,6 +820,10 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   endSelection = 0;
   undoSelection = 0;
   invertSelection = 0;
+	//
+	void showSelectionWindow ( GModel* model, int );
+	void closeSelectionWindow ();
+	showSelectionWindow ( GModel::current(), type );
 
   while(1) {
     vertices.clear();
@@ -839,7 +843,8 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
       lassoMode = false;
       addPointMode = 0;
       cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-      return 'q';
+ 			closeSelectionWindow ();
+     return 'q';
     }
     if(endSelection) {
       _selection = ENT_NONE;
@@ -874,7 +879,11 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
           return 'r';
       }
     }
-  }
+ 		else if ( tryGuiSelectionAction ) { // Exit coming from the Gui 
+			tryGuiSelectionAction = false;
+			return 'l';
+		}
+ }
 }
 
 void openglWindow::drawTooltip(const std::string &text)
