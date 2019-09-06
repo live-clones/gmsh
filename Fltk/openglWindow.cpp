@@ -820,7 +820,17 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   endSelection = 0;
   undoSelection = 0;
   invertSelection = 0;
-
+//
+	vertices.clear ();
+	edges.clear ();
+	faces.clear ();
+	regions.clear ();
+	elements.clear ();
+	//
+	void showSelectionWindow ( GModel* model, int );
+	void closeSelectionWindow ();
+	showSelectionWindow ( GModel::current(), type );
+//
   while(1) {
     vertices.clear();
     edges.clear();
@@ -839,7 +849,8 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
       lassoMode = false;
       addPointMode = 0;
       cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-      return 'q';
+ 			closeSelectionWindow ();
+     return 'q';
     }
     if(endSelection) {
       _selection = ENT_NONE;
@@ -874,6 +885,10 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
           return 'r';
       }
     }
+		else if ( tryGuiSelectionAction ) {
+			tryGuiSelectionAction = false;
+			return 'l';
+		}
   }
 }
 
