@@ -98,7 +98,7 @@ public:
   time_t rawtime, prev_rawtime;
   double response_frequency;
   int addPointMode;
-  bool lassoMode, selectionMode;
+  bool lassoMode, selectionMode, tryGuiSelectionAction;
   int endSelection, undoSelection, invertSelection, quitSelection,
     changeSelection;
   std::string screenMessage[2];
