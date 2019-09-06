@@ -45,6 +45,31 @@ typedef std::vector<PairMElemVecMElem> VecPairMElemVecMElem;
 typedef std::map<MEdge, std::vector<MElement *>, Less_Edge> MapMEdgeVecMElem;
 
 namespace BoundaryLayerCurver {
+
+  class Positioner3DCurve {
+  private:
+    double _thickness[2];
+    double _coeffb[2];
+    double _coeffc[2];
+    const MElement *_el1;
+    const MElement *_el2;
+    const GFace *_gface;
+    const MEdgeN &_baseEdge;
+    MEdgeN &_topEdge;
+    double _paramVerticesOnGFace[40];
+
+  public:
+    Positioner3DCurve(const MEdgeN &bottomEdge, MEdgeN &topEdge,
+                     const MElement *bottomEl1, const MElement *bottomEl2);
+    Positioner3DCurve(const MEdgeN &bottomEdge, MEdgeN &topEdge,
+                     const GFace *gf);
+
+  private:
+
+    void _computeExtremityCoefficients();
+    void _computeBisector(double xi, SVector3 &n);
+  };
+
   class Column2DBL {
   private:
     // std::vector<MElement *> _stackElements;
@@ -60,7 +85,7 @@ namespace BoundaryLayerCurver {
 
   class Column3DBL {
   private:
-    std::vector<MElement *> _stackElements;
+    std::vector<MElement *> &_stackElements;
     // std::vector<short> _orientationElements; // FIXME use this later (inn. vert)
     std::vector<MFaceN> _stackOrientedFaces;
     MElement *_externalElement;
@@ -70,7 +95,7 @@ namespace BoundaryLayerCurver {
     // int _type;
 
   public:
-    Column3DBL(const PairMElemVecMElem &);
+    Column3DBL(PairMElemVecMElem &);
 
     std::size_t getNumBLElements() const { return _stackElements.size(); }
     MElement *getBLElement(std::size_t num) const {
@@ -110,9 +135,11 @@ namespace BoundaryLayerCurver {
     Interface3DBL(const Column3DBL &, const Column3DBL &, const MapMEdgeVecMElem &);
     ~Interface3DBL() { delete _boundaryElem2; }
 
+    void curve();
     void recoverQualityElements();
 
   private:
+    // Object construction
     void _computeElementsTouchingLastFace(std::vector<MElement *> &) const;
     void _upQualityForLastFaceCheck(std::vector<double> &,
                                     const std::vector<MElement *> &) const;

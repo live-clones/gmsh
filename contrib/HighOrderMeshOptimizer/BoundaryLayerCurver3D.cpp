@@ -405,7 +405,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  Column3DBL::Column3DBL(const PairMElemVecMElem &col)
+  Column3DBL::Column3DBL(PairMElemVecMElem &col)
   : _stackElements(col.second), _boundaryElement(col.first), _gface(NULL)
   {
     computeStackHighOrderFaces(col, _stackOrientedFaces);
@@ -800,6 +800,39 @@ namespace BoundaryLayerCurver {
     _boundaryElem2 = factory.create(fn.getType(), vertices);
   }
 
+  void Interface3DBL::curve()
+  {
+    // FIXME:NOW
+
+    // computeInterface(col1, col2, stackEdges, stackFaces);
+    //
+    // MEdgeN baseEdge = _stackOrientedEdges[0];
+    // MEdgeN topEdge = _stackOrientedEdges.back();
+    // // FIXME We should check that _stackOrientedEdges.back() is not in a GFace
+    //
+    // const MElement *bottomEl1 = _col1->getBoundaryElement();
+    // const MElement *bottomEl2 = _boundaryElem2; // may be NULL
+    // if(_col2) bottomEl2 = _col2->getBoundaryElement();
+    //
+    // // FIXME:NOW
+    //
+    // Parameters3DCurve parameters;
+    // _computeExtremityCoefficients(parameters);
+    // _positionTopEdge(parameters);
+    // _recoverQualityTopEdge();
+    // _positionInteriorEdges();
+    // _repositionInteriorNodes();
+    // _checkQuality();
+    //
+    // // FIXME quid GFace?
+    // // FIXME computeExtremityCoefficients should handle if bottomEl2 == NULL
+    // computeExtremityCoefficients(bottomEl1, bottomEl2, baseEdge, topEdge, parameters);
+    // computePosition3DEdge(bottomEl1, bottomEl2, baseEdge, topEdge, parameters, 0, 0, boundary);
+    //
+    // computePositionInteriorEdgesLinearTFI(stackFaces, baseEdge, topEdge);
+    // repositionInteriorNodes(stackFaces);
+  }
+
   bool qualityOk(double qualLinear, double qualCurved)
   {
     return qualCurved >= .75 || qualCurved > .8 * qualLinear;
@@ -1018,6 +1051,71 @@ namespace BoundaryLayerCurver {
     }
 
     return p + n * factorThickness * thickness + t0 * coeffb + t1 * coeffc;
+  }
+
+  Positioner3DCurve::Positioner3DCurve(const MEdgeN &bottomEdge,
+                                       MEdgeN &topEdge,
+                                       const MElement *bottomEl1,
+                                       const MElement *bottomEl2)
+  : _el1(bottomEl1), _el2(bottomEl2), _baseEdge(bottomEdge), _topEdge(topEdge)
+  {
+    _computeExtremityCoefficients();
+  }
+
+  Positioner3DCurve::Positioner3DCurve(const MEdgeN &bottomEdge,
+                                       MEdgeN &topEdge,
+                                       const GFace *gf)
+  {
+
+  }
+
+  void Positioner3DCurve::_computeExtremityCoefficients()
+  {
+    MVertex *vBase, *vTop;
+    SVector3 t, n1, n2, w, h;
+  
+    getBisectorsAtCommonCorners(bottom1, bottom2, baseEdge, n1, n2);
+
+    vBase = _baseEdge.getVertex(0);
+    vTop = _topEdge.getVertex(0);
+    t = _baseEdge.tangent(-1);
+    w = crossprod(t, n1);
+    h = SVector3(vTop->x() - vBase->x(), vTop->y() - vBase->y(),
+                 vTop->z() - vBase->z());
+
+    _thickness[0] = dot(h, n1);
+    _coeffb[0] = dot(h, t);
+    _coeffc[0] = dot(h, w);
+    //
+    //    SPoint3 p1(vBase->x(), vBase->y(), vBase->z());
+    //    draw3DFrame(p1, t, n1, w, .1, *GModel::current()->firstFace());
+
+    vBase = _baseEdge.getVertex(1);
+    vTop = _topEdge.getVertex(1);
+    t = _baseEdge.tangent(1);
+    w = crossprod(t, n2);
+    h = SVector3(vTop->x() - vBase->x(), vTop->y() - vBase->y(),
+                 vTop->z() - vBase->z());
+
+    _thickness[1] = dot(h, n2);
+    _coeffb[1] = dot(h, t);
+    _coeffc[1] = dot(h, w);
+    //
+    //    SPoint3 p2(vBase->x(), vBase->y(), vBase->z());
+    //    draw3DFrame(p2, t, n2, w, .1, *GModel::current()->firstFace());
+  }
+
+  void Positioner3DCurve::_computeBisector(double xi, SVector3 &n)
+  {
+    if(_gface) {
+      // FIXME:NOW Compute normal of gface
+    }
+    else if(!_el2) {
+      // FIXME:NOW Compute normal of el1
+    }
+    else {
+      // FIXME:NOW Compute bisector
+    }
   }
 
   // compute adjacencies of boundary elements, thus of columns
