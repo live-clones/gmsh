@@ -6,7 +6,6 @@
 #include <GmshConfig.h>
 #include <GmshDefines.h>
 #include <GmshMessage.h>
-#include "Gmsh.h"
 #include "GModel.h" 
 
 #ifdef HAVE_FLTK
