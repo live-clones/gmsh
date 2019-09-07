@@ -308,13 +308,13 @@ namespace GeoListSelection {
 	}
 
 	void ShowMessage () {
-		static	std::string message =
+		static const char* message =
 			"Step 0. Select Entity From the Left. \n"
 			"Step 1. Move it to the right pressing the button ->\n"
 			"Step 2. Apply To accept all the choices from Step 1.\n"
 			"Step 3. Execute to get the results.\n"
 			"Quit or Repeat from 0-3, if more is needed.";
-		fl_message ( message.c_str () );
+		fl_message ( message );
 	}
 
 	void ShowCloseMessage () {
