@@ -164,7 +164,7 @@ namespace GeoListSelection {
 
 	template<class T>
 	static void insertEntities ( std::vector<T*>& dst, std::vector<GEntity*>& src ) {
-		for ( auto value : src ) {
+		for ( GEntity* value : src ) {
 			dst.push_back ( ( T* ) value );
 		}
 	}
@@ -308,7 +308,7 @@ namespace GeoListSelection {
 	}
 
 	void ShowMessage () {
-		const char* message =
+		const	char* message =
 			"Step 0. Select Entity From the Left. \n"
 			"Step 1. Move it to the right pressing the button ->\n"
 			"Step 2. Apply To accept all the choices from Step 1.\n"
@@ -477,7 +477,7 @@ namespace GeoListSelection {
 			x = boxGroup1->x ();
 			y = boxGroup1->y () + boxGroup1->h ();
 			HH = 30;
-			auto boxGroup2 = new Fl_Group ( x, y, width, HH );
+			Fl_Group boxGroup2 = new Fl_Group ( x, y, width, HH );
 			boxGroup2->begin ();
 			//
 			y += 5;
