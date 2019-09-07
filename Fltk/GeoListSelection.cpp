@@ -121,7 +121,7 @@ namespace GeoListSelection {
 	}
 
 	void getEntitySelectedFromTree ( Fl_Tree *tree, int type, bool multiple,
-		std::map<int, std::vector<GEntity*> >& entities ) {
+		std::map<int, std::vector<GEntity*>>& entities ) {
 		//
 		if ( type == ENT_ALL || type == ENT_POINT ||
 			type == ENT_CURVE || type == ENT_SURFACE || type == ENT_VOLUME ) {
@@ -164,14 +164,14 @@ namespace GeoListSelection {
 
 	template<class T>
 	static void insertEntities ( std::vector<T*>& dst, std::vector<GEntity*>& src ) {
-		for ( int n = 0; n < src.size ();n++ ) {
+		for ( size_t n = 0; n < src.size();n++ ) {
 			dst.push_back ( ( T* ) src[n] );
 		}
 	}
 
-	void addSelectedEntities ( std::map<int, std::vector<GEntity*> >& entities ) {
+	void addSelectedEntities ( std::map<int, std::vector<GEntity*>>& entities ) {
 		//
-		FlGui* gui = FlGui::instance ();
+		auto gui = FlGui::instance ();
 		if ( entities.find ( 0 ) != entities.end () )insertEntities ( gui->selectedVertices, entities[0] );
 		if ( entities.find ( 1 ) != entities.end () )insertEntities ( gui->selectedEdges, entities[1] );
 		if ( entities.find ( 2 ) != entities.end () )insertEntities ( gui->selectedFaces, entities[2] );
@@ -182,7 +182,7 @@ namespace GeoListSelection {
 		//
 		//  Just accept and store into Left-tree at the top
 		//
-		std::map<int, std::vector<GEntity*> > entities;
+		std::map<int, std::vector<GEntity*>> entities;
 		int type = FlGui::instance ()->currentSectionType;
 		FlGui::instance ()->getCurrentOpenglWindow ()->endSelection;
 		FlGui::instance ()->getCurrentOpenglWindow ()->quitSelection;
@@ -196,7 +196,7 @@ namespace GeoListSelection {
 					entities[ge->dim ()].push_back ( ge );
 					std::stringstream ss;
 					ss << ( treeRight->root ()->children () + 1 ) << ") " << selectedItem->label ();
-					Fl_Tree_Item* item = treeRight->add ( ss.str ().c_str () );
+					auto item = treeRight->add ( ss.str ().c_str () );
 					if ( !item ) continue;
 					item->user_data ( selectedItem->user_data () );
 					//
@@ -219,9 +219,9 @@ namespace GeoListSelection {
 		//
 		//  add intermediate selections from the Top treePane
 		//
-		std::map<int, std::vector<GEntity*> > entities;
+		std::map<int, std::vector<GEntity*>> entities;
 		for ( int n = 0; n < treeRight->root ()->children (); n++ ) {
-			Fl_Tree_Item* item = treeRight->root ()->child ( n );
+			auto item = treeRight->root ()->child ( n );
 			GEntity* ge = ( GEntity* ) item->user_data ();
 			entities[ge->dim ()].push_back ( ge );
 			std::stringstream ss;
@@ -272,7 +272,7 @@ namespace GeoListSelection {
 		if ( !tree )return;
 		//
 		int type = FlGui::instance ()->currentSectionType;
-		std::map<int, std::vector<GEntity*> > entities;
+		std::map<int, std::vector<GEntity*>> entities;
 		getEntitySelectedFromTree ( tree, type, true, entities );
 		addSelectedEntities ( entities );
 		//
@@ -308,7 +308,7 @@ namespace GeoListSelection {
 	}
 
 	void ShowMessage () {
-		const char* message =
+		char* message =
 			"Step 0. Select Entity From the Left. \n"
 			"Step 1. Move it to the right pressing the button ->\n"
 			"Step 2. Apply To accept all the choices from Step 1.\n"
