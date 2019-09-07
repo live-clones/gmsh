@@ -123,12 +123,11 @@ namespace GeoListSelection {
 	void getEntitySelectedFromTree ( Fl_Tree *tree, int type, bool multiple,
 		std::map<int, std::vector<GEntity*>>& entities ) {
 		//
-		Fl_Tree_Item_Array sArray;
-		int count = tree->get_selected_items ( sArray );
-		if ( count && ( type == ENT_ALL || type == ENT_POINT ||
-			type == ENT_CURVE || type == ENT_SURFACE || type == ENT_VOLUME ) ) {
-			for ( int n = 0; n < sArray.total (); n++ ) {
-				GEntity* ge = ( GEntity* ) sArray[n]->user_data ();
+		if ( type == ENT_ALL || type == ENT_POINT ||
+			type == ENT_CURVE || type == ENT_SURFACE || type == ENT_VOLUME ) {
+			for ( Fl_Tree_Item *selectedItem = treeLeft->first_selected_item (); selectedItem;
+				selectedItem = treeLeft->next_selected_item ( selectedItem, FL_Down ) ) {
+				GEntity* ge = ( GEntity* ) selectedItem->user_data ();
 				if ( ge ) {
 					entities[ge->dim ()].push_back ( ge );
 					if ( !multiple )return;
@@ -184,23 +183,22 @@ namespace GeoListSelection {
 		//  Just accept and store into Left-tree at the top
 		//
 		std::map<int, std::vector<GEntity*>> entities;
-		Fl_Tree_Item_Array sArray;
-		int count = treeLeft->get_selected_items ( sArray );
 		int type = FlGui::instance ()->currentSectionType;
 		FlGui::instance ()->getCurrentOpenglWindow ()->endSelection;
 		FlGui::instance ()->getCurrentOpenglWindow ()->quitSelection;
 		//
-		if ( count && ( type == ENT_ALL || type == ENT_POINT ||
-			type == ENT_CURVE || type == ENT_SURFACE || type == ENT_VOLUME ) ) {
-			for ( int n = 0; n < sArray.total (); n++ ) {
-				GEntity* ge = ( GEntity* ) sArray[n]->user_data ();
+		if ( type == ENT_ALL || type == ENT_POINT ||
+			type == ENT_CURVE || type == ENT_SURFACE || type == ENT_VOLUME ) {
+			for ( Fl_Tree_Item *selectedItem = treeLeft->first_selected_item (); selectedItem;
+				selectedItem = treeLeft->next_selected_item ( selectedItem, FL_Down ) ) {
+				GEntity* ge = ( GEntity* ) selectedItem->user_data ();
 				if ( ge ) {
 					entities[ge->dim ()].push_back ( ge );
 					std::stringstream ss;
-					ss << ( treeRight->root ()->children () + 1 ) << ") " << sArray[n]->label ();
+					ss << ( treeRight->root ()->children () + 1 ) << ") " << selectedItem->label ();
 					auto item = treeRight->add ( ss.str ().c_str () );
 					if ( !item ) continue;
-					item->user_data ( sArray[n]->user_data () );
+					item->user_data ( selectedItem->user_data () );
 					//
 					//	if ( !multiple )break;
 				}
@@ -250,12 +248,11 @@ namespace GeoListSelection {
 	void buttonRemoveCallBack ( Fl_Widget *w, void *object ) {
 		Fl_Tree* tree = ( Fl_Tree* ) ( object );
 		if ( !tree )return;
-		Fl_Tree_Item_Array sArray;
-		tree->get_selected_items ( sArray );
-		for ( int n = 0; n < sArray.total (); n++ ) {
-			GEntity* ge = ( GEntity* ) sArray[n]->user_data ();
+		for ( Fl_Tree_Item *selectedItem = treeLeft->first_selected_item (); selectedItem;
+			selectedItem = treeLeft->next_selected_item ( selectedItem, FL_Down ) ) {
+			GEntity* ge = ( GEntity* ) selectedItem->user_data ();
 			if ( ge ) ge->setSelection ( 0 );
-			tree->remove ( sArray[n] );
+			tree->remove ( selectedItem );
 		}
 		tree->redraw ();
 	}
@@ -337,8 +334,8 @@ namespace GeoListSelection {
 		//
 		if ( type > 3 )return;
 		//
-		//std::string status = Msg::GetStatusGl ();
 		std::string status = FlGui::instance ()->getCurrentOpenglWindow ()->screenMessage[0];
+		// std::string status = Msg::GetStatusGl ();
 		//int pos = status.find ( '\n' );
 		//status = status.substr ( 0, pos );
 		const char* statusGl = status.c_str ();
@@ -401,7 +398,7 @@ namespace GeoListSelection {
 			treeLeft->marginleft ( 2 );
 			//
 			treeLeft->callback ( ( Fl_Callback* ) TreeSelectionCBCallBack );
-			treeLeft->item_draw_mode ( FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET );
+			//treeLeft->item_draw_mode ( FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET );
 			treeLeft->selectmode ( FL_TREE_SELECT_MULTI );
 			treeLeft->marginleft ( 2 );
 			rebuildSelectTree ( model, treeLeft );
@@ -449,7 +446,7 @@ namespace GeoListSelection {
 			treeRight = new Fl_Tree ( x, y, splitPaneR->w (), HH );
 			treeRight->root ()->label ( "Temp Selection" );
 			treeRight->callback ( ( Fl_Callback* ) TreeSelectionCBCallBack );
-			treeRight->item_draw_mode ( FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET );
+			//treeRight->item_draw_mode ( FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET );
 			treeRight->selectmode ( FL_TREE_SELECT_MULTI );
 			treeRight->marginleft ( 0 );
 			//
@@ -459,7 +456,7 @@ namespace GeoListSelection {
 			treeStatus = new Fl_Tree ( x, y, splitPaneR->w (), splitPane->h () - HH );
 			treeStatus->root ()->label ( "Selection History" );
 			treeStatus->callback ( ( Fl_Callback* ) TreeSelectionCBCallBack );
-			treeStatus->item_draw_mode ( FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET );
+			//treeStatus->item_draw_mode ( FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET );
 			treeStatus->selectmode ( FL_TREE_SELECT_MULTI );
 			treeStatus->marginleft ( 0 );
 			//
@@ -502,7 +499,6 @@ namespace GeoListSelection {
 			//
 			boxGroup2->end ();
 			//
-
 		}
 		//
 		win->end ();
