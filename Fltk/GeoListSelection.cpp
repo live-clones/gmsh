@@ -337,7 +337,8 @@ namespace GeoListSelection {
 		//
 		if ( type > 3 )return;
 		//
-		std::string status = Msg::GetStatusGl ();
+		//std::string status = Msg::GetStatusGl ();
+		std::string status = FlGui::instance ()->getCurrentOpenglWindow ()->screenMessage[0];
 		//int pos = status.find ( '\n' );
 		//status = status.substr ( 0, pos );
 		const char* statusGl = status.c_str ();
