@@ -308,7 +308,7 @@ namespace GeoListSelection {
 	}
 
 	void ShowMessage () {
-		static const char* message =
+		const char* message =
 			"Step 0. Select Entity From the Left. \n"
 			"Step 1. Move it to the right pressing the button ->\n"
 			"Step 2. Apply To accept all the choices from Step 1.\n"
