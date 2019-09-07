@@ -1189,6 +1189,9 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
 
 char FlGui::selectEntity(int type)
 {
+	//
+	this->currentSectionType = type;
+	//
   return getCurrentOpenglWindow()->selectEntity(
     type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
     selectedElements, selectedPoints, selectedViews);
