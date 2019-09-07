@@ -29,6 +29,7 @@ set(SRC
     viewButton.cpp solverButton.cpp
     Navigator.cpp
     onelabGroup.cpp
+    GeoListSelection.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
