@@ -477,7 +477,7 @@ namespace GeoListSelection {
 			x = boxGroup1->x ();
 			y = boxGroup1->y () + boxGroup1->h ();
 			HH = 30;
-			Fl_Group boxGroup2 = new Fl_Group ( x, y, width, HH );
+			Fl_Group* boxGroup2 = new Fl_Group ( x, y, width, HH );
 			boxGroup2->begin ();
 			//
 			y += 5;
