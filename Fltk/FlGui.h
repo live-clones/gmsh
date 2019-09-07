@@ -68,7 +68,8 @@ public:
   std::vector<MElement *> selectedElements;
   std::vector<SPoint2> selectedPoints;
   std::vector<PView *> selectedViews;
-
+ int currentSectionType;
+ 
 public:
   std::vector<graphicWindow *> graph;
   optionWindow *options;
