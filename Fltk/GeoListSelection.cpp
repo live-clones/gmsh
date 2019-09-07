@@ -448,7 +448,7 @@ namespace GeoListSelection {
 			treeRight = new Fl_Tree ( x, y, splitPaneR->w (), HH );
 			treeRight->root ()->label ( "Temp Selection" );
 			treeRight->callback ( ( Fl_Callback* ) TreeSelectionCBCallBack );
-			treeRight->item_draw_mode ( FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET | FL_TREE_ITEM_HEIGHT_FROM_WIDGET );
+			//treeRight->item_draw_mode ( FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET|FL_TREE_ITEM_HEIGHT_FROM_WIDGET );
 			treeRight->selectmode ( FL_TREE_SELECT_MULTI );
 			treeRight->marginleft ( 0 );
 			//
@@ -458,7 +458,7 @@ namespace GeoListSelection {
 			treeStatus = new Fl_Tree ( x, y, splitPaneR->w (), splitPane->h () - HH );
 			treeStatus->root ()->label ( "Selection History" );
 			treeStatus->callback ( ( Fl_Callback* ) TreeSelectionCBCallBack );
-			treeStatus->item_draw_mode ( FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET | FL_TREE_ITEM_HEIGHT_FROM_WIDGET );
+			//treeStatus->item_draw_mode ( FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET|FL_TREE_ITEM_HEIGHT_FROM_WIDGET );
 			treeStatus->selectmode ( FL_TREE_SELECT_MULTI );
 			treeStatus->marginleft ( 0 );
 			//
@@ -480,7 +480,6 @@ namespace GeoListSelection {
 			y = boxGroup1->y () + boxGroup1->h ();
 			HH = 30;
 			auto boxGroup2 = new Fl_Group ( x, y, width, HH );
-			boxGroup2->box ( FL_FLAT_BOX );
 			boxGroup2->begin ();
 			//
 			y += 5;
