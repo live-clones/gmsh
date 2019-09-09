@@ -591,6 +591,7 @@ namespace BoundaryLayerCurver {
     computeStackHOEdgesFaces(col, edge, _stackOrientedEdges, _stackOrientedFaces);
     _classifyExternalElements(touchedElems);
     _computeExternalFaces(touchedElems);
+    _checkBoundaryElement(touchedElems);
     _checkGFaceGEdge();
 
     _type = _stackOrientedFaces[0].getType();
@@ -620,7 +621,6 @@ namespace BoundaryLayerCurver {
     _classifyExternalElements(touchedElems);
     _computeExternalFaces(touchedElems);
     _checkGFaceGEdge();
-    _checkBoundaryElement(touchedElems);
 
     _type = _stackOrientedFaces[0].getType();
   }
@@ -802,6 +802,26 @@ namespace BoundaryLayerCurver {
 
   void Interface3DBL::curve()
   {
+    MEdgeN &bottomEdge = _stackOrientedEdges[0];
+    MEdgeN &topEdge = _stackOrientedEdges.back();
+    if(_gface) {
+      Positioner3DCurve(bottomEdge, topEdge, _gface);
+    }
+    else {
+      MElement *el1 = _col1->getBoundaryElement();
+      MElement *el2 = _boundaryElem2;
+      if(!el2 && _col2) el2 = _col2->getBoundaryElement();
+      if(!el2) {
+        // FIXMEDEBUG
+        Msg::Error("I don't find boundary element 2 Oo");
+        return;
+      }
+      Positioner3DCurve(bottomEdge, topEdge, el1, el2);
+    }
+
+    recoverQualityElements();
+
+
     // FIXME:NOW
 
     // computeInterface(col1, col2, stackEdges, stackFaces);
