@@ -1121,32 +1121,89 @@ namespace BoundaryLayerCurver {
     //    draw3DFrame(p2, t, n2, w, .1, *GModel::current()->firstFace());
   }
 
-  void Positioner3DCurve::_computeBisector(double xi, SVector3 &n)
+  void Positioner3DCurve::_computeBisectors(const std::vector<double> &xi,
+                                            std::vector<SVector3> &normals)
   {
+    normals.clear();
+    normals.reserve(xi.size());
+
     if(_gface) {
-      // FIXME:NOW Compute normal of gface
       const double eps = 1e-3;
       SPoint2 paramGFace;
-      if(xi < -1 + eps) {
-        paramGFace =
-          SPoint2(_paramVerticesOnGFace[0], _paramVerticesOnGFace[1]);
+      for(std::size_t i = 0; i < xi.size(); ++i) {
+        if(xi[i] < -1 + eps) {
+          paramGFace =
+            SPoint2(_paramVerticesOnGFace[0], _paramVerticesOnGFace[1]);
+        }
+        else if(xi[i] > 1 - eps) {
+          paramGFace =
+            SPoint2(_paramVerticesOnGFace[2], _paramVerticesOnGFace[3]);
+        }
+        else {
+          paramGFace = SPoint2(
+            _baseEdge.interpolate(_paramVerticesOnGFace.data(), xi[i], 2),
+            _baseEdge.interpolate(_paramVerticesOnGFace.data() + 1, xi[i], 2));
+        }
+        normals.push_back(_gface->normal(paramGFace));
       }
-      else if(xi > 1 - eps) {
-        paramGFace =
-          SPoint2(_paramVerticesOnGFace[2], _paramVerticesOnGFace[3]);
-      }
-      else {
-        paramGFace = SPoint2(
-          _baseEdge.interpolate(_paramVerticesOnGFace.data(), xi, 2),
-          _baseEdge.interpolate(_paramVerticesOnGFace.data() + 1, xi, 2));
-      }
-      n = _gface->normal(paramGFace);
+      return;
     }
-    else if(!_el2) {
-      // FIXME:NOW Compute normal of el1
+
+    // If we don't have _gface, we use the normal of el1 or the bisector of
+    // the two elements
+
+    // 1. Compute data common to all points
+    int nEdge1, sign1;
+    int nEdge2, sign2;
+    bool sameOrientation;
+    int nVertices1, nVertices2;
+    double uvwS1beg[3], uvwS1end[3];
+    double uvwS2beg[3], uvwS2end[3];
+    int iNodeBeg, iNodeEnd;
+
+    _el1->getEdgeInfo(_baseEdge.getEdge(), nEdge1, sign1);
+    nVertices1 = _el1->getNumPrimaryVertices();
+    iNodeBeg = sign1 > 1 ? nEdge1 : (nEdge1 + 1) % nVertices1;
+    iNodeEnd = sign1 > 1 ? (nEdge1 + 1) % nVertices1 : nEdge1;
+    _el1->getNode(iNodeBeg, uvwS1beg[0], uvwS1beg[1], uvwS1beg[2]);
+    _el1->getNode(iNodeEnd, uvwS1end[0], uvwS1end[1], uvwS1end[2]);
+
+    if(_el2) {
+      _el2->getEdgeInfo(_baseEdge.getEdge(), nEdge2, sign2);
+      nVertices2 = _el2->getNumPrimaryVertices();
+      iNodeBeg = sign2 > 1 ? nEdge2 : (nEdge2 + 1) % nVertices2;
+      iNodeEnd = sign2 > 1 ? (nEdge2 + 1) % nVertices2 : nEdge2;
+      _el2->getNode(iNodeBeg, uvwS2beg[0], uvwS2beg[1], uvwS2beg[2]);
+      _el2->getNode(iNodeEnd, uvwS2end[0], uvwS2end[1], uvwS2end[2]);
+
+      sameOrientation = (sign1 != sign2);
     }
-    else {
-      // FIXME:NOW Compute bisector
+
+    // 2. Loop on the points
+    double uvw[3];
+    double gradients[3][3];
+    for(std::size_t i = 0; i < xi.size(); ++i) {
+      const double coeff = .5 * (1 + xi[i]);
+
+      uvw[0] = (1 - coeff) * uvwS1beg[0] + coeff * uvwS1end[0];
+      uvw[1] = (1 - coeff) * uvwS1beg[1] + coeff * uvwS1end[1];
+      uvw[2] = (1 - coeff) * uvwS1beg[2] + coeff * uvwS1end[2];
+      _el1->getJacobian(uvw[0], uvw[1], uvw[2], gradients);
+      SVector3 n1(gradients[2][0], gradients[2][1], gradients[2][2]);
+
+      if(_el2) {
+        uvw[0] = (1 - coeff) * uvwS2beg[0] + coeff * uvwS2end[0];
+        uvw[1] = (1 - coeff) * uvwS2beg[1] + coeff * uvwS2end[1];
+        uvw[2] = (1 - coeff) * uvwS2beg[2] + coeff * uvwS2end[2];
+        _el2->getJacobian(uvw[0], uvw[1], uvw[2], gradients);
+        SVector3 n2(gradients[2][0], gradients[2][1], gradients[2][2]);
+
+        if(!sameOrientation) n2.negate();
+        n1.axpy(1, n2);
+        n1.normalize();
+      }
+
+      normals.push_back(n1);
     }
   }
 

@@ -67,7 +67,8 @@ namespace BoundaryLayerCurver {
   private:
 
     void _computeExtremityCoefficients();
-    void _computeBisector(double xi, SVector3 &n);
+    void _computeBisectors(const std::vector<double> &xi,
+                           std::vector<SVector3> &normals);
   };
 
   class Column2DBL {
