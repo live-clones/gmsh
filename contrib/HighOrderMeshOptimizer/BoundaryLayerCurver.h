@@ -70,6 +70,15 @@ namespace BoundaryLayerCurver {
     void _computeExtremityCoefficients(const SVector3 n[2]);
     void _computeBisectors(const std::vector<double> &xi,
                            std::vector<SVector3> &normals) const;
+    void _computePosition(int orderGauss, int sizeSystem,
+                          const IntPt *gaussPnts,
+                          const std::vector<SVector3> &normals);
+    void _computeIdealPosition(int nbPoints, const IntPt *points,
+                               const std::vector<SVector3> &normals,
+                               fullMatrix<double> &xyz);
+    static inline double _interpolateCoeff(double xi, const double val[2]) {
+      return val[0] * (1 - xi) / 2 + val[1] * (1 + xi) / 2;
+    }
   };
 
   class Column2DBL {

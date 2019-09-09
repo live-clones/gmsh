@@ -1088,8 +1088,7 @@ namespace BoundaryLayerCurver {
 
   void Positioner3DCurve::_execute()
   {
-    const int orderCurve = _baseEdge.getPolynomialOrder();
-    const int orderGauss = orderCurve * 2;
+    const int orderGauss = _baseEdge.getPolynomialOrder() * 2;
     const int nGaussPnts = getNGQLPts(orderGauss);
     const IntPt *gaussPnts = getGQLPts(orderGauss);
 
@@ -1103,10 +1102,79 @@ namespace BoundaryLayerCurver {
 
     std::vector<SVector3> normals;
     _computeBisectors(xi, normals);
-
     _computeExtremityCoefficients(normals.data() + nGaussPnts);
+    _computePosition(orderGauss, nGaussPnts, gaussPnts, normals);
+  }
 
-    // FIXME:NOW
+  void Positioner3DCurve::_computePosition(int orderGauss, int sizeSystem,
+                                           const IntPt *gaussPnts,
+                                           const std::vector<SVector3> &normals)
+  {
+    // Let (t, n, w) be the local reference frame on 'baseEdge'
+    // where t(u) is the unit tangent of the 'baseEdge'
+    //       n(u) is unit, normal to 't' and such that (t, n) is bisector of
+    //            faces '_el1' and '_el2' at corresponding point
+    //       w = t x n
+    // We seek for each component the polynomial function that fit the best
+    //   x1(u) = x0(u) + h(u) * n(u) + b(u) * t(u) + c(u) * w(u)
+    // in the least square sense.
+    // where x0(u) is the position of '_baseEdge' and h, b, c are given by
+    //       the interpolation of _thickness, _coeffb and _coeffc.
+
+    fullMatrix<double> xyz(sizeSystem + 2, 3);
+    _computeIdealPosition(sizeSystem, gaussPnts, normals, xyz);
+    //  drawIdealPositionEdge(bottom1, bottom2, baseEdge, parameters, gFace,
+    //  triDirection);
+    for(int i = 0; i < 2; ++i) {
+      MVertex *v = _topEdge.getVertex(i);
+      xyz(sizeSystem + i, 0) = v->x();
+      xyz(sizeSystem + i, 1) = v->y();
+      xyz(sizeSystem + i, 2) = v->z();
+    }
+
+    const int orderCurve = _baseEdge.getPolynomialOrder();
+    BoundaryLayerCurver::LeastSquareData *data =
+      BoundaryLayerCurver::getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
+    fullMatrix<double> newxyz(orderCurve + 1, 3);
+    data->invA.mult(xyz, newxyz);
+
+    for(std::size_t i = 2; i < _topEdge.getNumVertices(); ++i) {
+      MVertex *v = _topEdge.getVertex(i);
+      v->x() = newxyz(i, 0);
+      v->y() = newxyz(i, 1);
+      v->z() = newxyz(i, 2);
+    }
+  }
+
+  void Positioner3DCurve::_computeIdealPosition(int nbPoints,
+                                                const IntPt *points,
+                                                const std::vector<SVector3> &normals,
+                                                fullMatrix<double> &xyz)
+  {
+    //  static int ITER = 0;
+    //  ++ITER;
+    //  int MOD = 1;
+    //  int START = 0;
+
+    for(int i = 0; i < nbPoints; ++i) {
+      const double &xi = points[i].pt[0];
+      SPoint3 pnt = _baseEdge.pnt(xi);
+      SVector3 t = _baseEdge.tangent(xi);
+      const SVector3 &n = normals[i];
+      SVector3 w = crossprod(t, n);
+
+      //    if (ITER % MOD == START)
+      //      draw3DFrame(pnt, t, n, w, .25, gFace);
+
+      double a = _interpolateCoeff(xi, _thickness);
+      double b = _interpolateCoeff(xi, _coeffb);
+      double c = _interpolateCoeff(xi, _coeffc);
+      SVector3 h = a * n + b * t + c * w;
+
+      xyz(i, 0) = pnt.x() + h.x();
+      xyz(i, 1) = pnt.y() + h.y();
+      xyz(i, 2) = pnt.z() + h.z();
+    }
   }
 
   void Positioner3DCurve::_computeExtremityCoefficients(const SVector3 n[2])
