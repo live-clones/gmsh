@@ -1057,7 +1057,8 @@ namespace BoundaryLayerCurver {
                                        MEdgeN &topEdge,
                                        const MElement *bottomEl1,
                                        const MElement *bottomEl2)
-  : _el1(bottomEl1), _el2(bottomEl2), _baseEdge(bottomEdge), _topEdge(topEdge)
+  : _el1(bottomEl1), _el2(bottomEl2), _gface(NULL), _baseEdge(bottomEdge),
+    _topEdge(topEdge)
   {
     _computeExtremityCoefficients();
   }
@@ -1065,16 +1066,31 @@ namespace BoundaryLayerCurver {
   Positioner3DCurve::Positioner3DCurve(const MEdgeN &bottomEdge,
                                        MEdgeN &topEdge,
                                        const GFace *gf)
+  : _el1(NULL), _el2(NULL), _gface(gf), _baseEdge(bottomEdge), _topEdge(topEdge)
   {
+    if(!_gface) return;
 
+    _paramVerticesOnGFace.reserve(2 * _baseEdge.getNumVertices());
+    for(std::size_t i = 0; i < _baseEdge.getNumVertices(); ++i) {
+      SPoint2 param;
+      bool success =
+        reparamMeshVertexOnFace(_baseEdge.getVertex(i), _gface, param, true);
+      _paramVerticesOnGFace.push_back(param[0]);
+      _paramVerticesOnGFace.push_back(param[1]);
+      if(!success) {
+        Msg::Warning("Could not compute param of vertex %d on surface %d",
+                     _baseEdge.getVertex(i)->getNum(), _gface->tag());
+      }
+      // TODO: Check if periodic face
+    }
   }
 
   void Positioner3DCurve::_computeExtremityCoefficients()
   {
     MVertex *vBase, *vTop;
     SVector3 t, n1, n2, w, h;
-  
-    getBisectorsAtCommonCorners(bottom1, bottom2, baseEdge, n1, n2);
+
+    // getBisectorsAtCommonCorners(bottom1, bottom2, baseEdge, n1, n2);
 
     vBase = _baseEdge.getVertex(0);
     vTop = _topEdge.getVertex(0);
@@ -1109,6 +1125,22 @@ namespace BoundaryLayerCurver {
   {
     if(_gface) {
       // FIXME:NOW Compute normal of gface
+      const double eps = 1e-3;
+      SPoint2 paramGFace;
+      if(xi < -1 + eps) {
+        paramGFace =
+          SPoint2(_paramVerticesOnGFace[0], _paramVerticesOnGFace[1]);
+      }
+      else if(xi > 1 - eps) {
+        paramGFace =
+          SPoint2(_paramVerticesOnGFace[2], _paramVerticesOnGFace[3]);
+      }
+      else {
+        paramGFace = SPoint2(
+          _baseEdge.interpolate(_paramVerticesOnGFace.data(), xi, 2),
+          _baseEdge.interpolate(_paramVerticesOnGFace.data() + 1, xi, 2));
+      }
+      n = _gface->normal(paramGFace);
     }
     else if(!_el2) {
       // FIXME:NOW Compute normal of el1
@@ -1658,7 +1690,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void createColumns3D(const VecPairMElemVecMElem &cols,
+  void createColumns3D(VecPairMElemVecMElem &cols,
                        std::vector<Column3DBL> &columns)
   {
     columns.clear();

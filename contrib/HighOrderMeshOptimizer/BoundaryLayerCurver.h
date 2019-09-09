@@ -56,7 +56,7 @@ namespace BoundaryLayerCurver {
     const GFace *_gface;
     const MEdgeN &_baseEdge;
     MEdgeN &_topEdge;
-    double _paramVerticesOnGFace[40];
+    std::vector<double> _paramVerticesOnGFace;
 
   public:
     Positioner3DCurve(const MEdgeN &bottomEdge, MEdgeN &topEdge,
