@@ -1060,7 +1060,7 @@ namespace BoundaryLayerCurver {
   : _el1(bottomEl1), _el2(bottomEl2), _gface(NULL), _baseEdge(bottomEdge),
     _topEdge(topEdge)
   {
-    _computeExtremityCoefficients();
+    _execute();
   }
 
   Positioner3DCurve::Positioner3DCurve(const MEdgeN &bottomEdge,
@@ -1083,23 +1083,45 @@ namespace BoundaryLayerCurver {
       }
       // TODO: Check if periodic face
     }
+    _execute();
   }
 
-  void Positioner3DCurve::_computeExtremityCoefficients()
+  void Positioner3DCurve::_execute()
+  {
+    const int orderCurve = _baseEdge.getPolynomialOrder();
+    const int orderGauss = orderCurve * 2;
+    const int nGaussPnts = getNGQLPts(orderGauss);
+    const IntPt *gaussPnts = getGQLPts(orderGauss);
+
+    std::vector<double> xi;
+    xi.reserve(nGaussPnts + 2);
+    for(int i = 0; i < nGaussPnts; ++i) {
+      xi.push_back(gaussPnts[i].pt[0]);
+    }
+    xi.push_back(-1);
+    xi.push_back(1);
+
+    std::vector<SVector3> normals;
+    _computeBisectors(xi, normals);
+
+    _computeExtremityCoefficients(normals.data() + nGaussPnts);
+
+    // FIXME:NOW
+  }
+
+  void Positioner3DCurve::_computeExtremityCoefficients(const SVector3 n[2])
   {
     MVertex *vBase, *vTop;
-    SVector3 t, n1, n2, w, h;
-
-    // getBisectorsAtCommonCorners(bottom1, bottom2, baseEdge, n1, n2);
+    SVector3 t, w, h;
 
     vBase = _baseEdge.getVertex(0);
     vTop = _topEdge.getVertex(0);
     t = _baseEdge.tangent(-1);
-    w = crossprod(t, n1);
+    w = crossprod(t, n[0]);
     h = SVector3(vTop->x() - vBase->x(), vTop->y() - vBase->y(),
                  vTop->z() - vBase->z());
 
-    _thickness[0] = dot(h, n1);
+    _thickness[0] = dot(h, n[0]);
     _coeffb[0] = dot(h, t);
     _coeffc[0] = dot(h, w);
     //
@@ -1109,11 +1131,11 @@ namespace BoundaryLayerCurver {
     vBase = _baseEdge.getVertex(1);
     vTop = _topEdge.getVertex(1);
     t = _baseEdge.tangent(1);
-    w = crossprod(t, n2);
+    w = crossprod(t, n[1]);
     h = SVector3(vTop->x() - vBase->x(), vTop->y() - vBase->y(),
                  vTop->z() - vBase->z());
 
-    _thickness[1] = dot(h, n2);
+    _thickness[1] = dot(h, n[1]);
     _coeffb[1] = dot(h, t);
     _coeffc[1] = dot(h, w);
     //
@@ -1122,7 +1144,7 @@ namespace BoundaryLayerCurver {
   }
 
   void Positioner3DCurve::_computeBisectors(const std::vector<double> &xi,
-                                            std::vector<SVector3> &normals)
+                                            std::vector<SVector3> &normals) const
   {
     normals.clear();
     normals.reserve(xi.size());
