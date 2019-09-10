@@ -742,23 +742,25 @@ namespace BoundaryLayerCurver {
     }
 
     void _computeEtas(const std::vector<MEdgeN> &stack,
-                      std::vector<std::pair<double, double> > &eta)
+                      std::vector<double> &eta)
     {
-      eta.resize(stack.size());
-      eta[0] = std::make_pair(0, 0);
+      const std::size_t N = stack.size();
+      eta.resize(2 * N);
+      eta[0] = eta[1] = 0;
+
       MVertex *vb0 = stack[0].getVertex(0);
       MVertex *vb1 = stack[0].getVertex(1);
 
-      for(std::size_t i = 1; i < stack.size(); ++i) {
+      for(std::size_t i = 1; i < N; ++i) {
         MVertex *v0 = stack[i].getVertex(0);
         MVertex *v1 = stack[i].getVertex(1);
-        eta[i].first = vb0->distance(v0);
-        eta[i].second = vb1->distance(v1);
+        eta[2 * i] = vb0->distance(v0);
+        eta[2 * i + 1] = vb1->distance(v1);
       }
 
-      for(int i = 1; i < eta.size(); ++i) {
-        eta[i].first /= eta.back().first;
-        eta[i].second /= eta.back().second;
+      for(std::size_t i = 1; i < N; ++i) {
+        eta[2 * i] /= eta[2 * N - 2];
+        eta[2 * i + 1] /= eta[2 * N - 1];
       }
     }
 
@@ -849,7 +851,7 @@ namespace BoundaryLayerCurver {
     }
 
     void _generalTFI(std::vector<MEdgeN> &stack, int iLast,
-                     const std::vector<std::pair<double, double> > &eta,
+                     const std::vector<double> &eta,
                      const fullMatrix<double> terms[8], double coeffHermite,
                      const GFace *gface)
     {
@@ -881,15 +883,17 @@ namespace BoundaryLayerCurver {
         }
         _linearize(x, x);
 
-        double &c = coeffHermite;
+        const double &c = coeffHermite;
+        const double &eta1 = eta[2 * i];
+        const double &eta2 = eta[2 * i + 1];
         x.axpy(term0);
-        x.axpy(term1d10, c * eta[i].first);
-        x.axpy(term1d11, c * eta[i].second);
-        x.axpy(term1dN0, (1 - c) * eta[i].first);
-        x.axpy(term1dN1, (1 - c) * eta[i].second);
-        x.axpy(term20, c * eta[i].first * eta[i].first);
-        x.axpy(term21, c * 2 * eta[i].first * eta[i].second);
-        x.axpy(term22, c * eta[i].second * eta[i].second);
+        x.axpy(term1d10, c * eta1);
+        x.axpy(term1d11, c * eta2);
+        x.axpy(term1dN0, (1 - c) * eta1);
+        x.axpy(term1dN1, (1 - c) * eta2);
+        x.axpy(term20, c * eta1 * eta1);
+        x.axpy(term21, c * 2 * eta1 * eta2);
+        x.axpy(term22, c * eta2 * eta2);
 
         for(int j = 2; j < numVertices; ++j) {
           MVertex *v = stack[i].getVertex(j);
@@ -902,7 +906,7 @@ namespace BoundaryLayerCurver {
     }
 
     void _computeEtaAndTerms(std::vector<MEdgeN> &stack, int iFirst, int iLast,
-                             std::vector<std::pair<double, double> > &eta,
+                             std::vector<double> &eta,
                              fullMatrix<double> terms[8])
     {
       // Compute eta_i^k, k=0,1
@@ -913,14 +917,14 @@ namespace BoundaryLayerCurver {
       _computeDeltaForTFI(stack, iFirst, iLast, delta0, delta1, deltaN);
 
       // Compute terms
-      double eta1 = .5 * (eta[iFirst].first + eta[iFirst].second);
+      double eta1 = .5 * (eta[2 * iFirst] + eta[2 * iFirst] + 1);
       _computeTerms(delta0, delta1, deltaN, eta1, terms);
     }
 
     void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
                     const GFace *gface)
     {
-      std::vector<std::pair<double, double> > eta;
+      std::vector<double> eta;
       fullMatrix<double> terms[8];
       _computeEtaAndTerms(stack, iFirst, iLast, eta, terms);
 
@@ -932,7 +936,7 @@ namespace BoundaryLayerCurver {
                                       std::vector<MElement *> &stackElements,
                                       int iFirst, int iLast, const GFace *gface)
     {
-      std::vector<std::pair<double, double> > eta;
+      std::vector<double> eta;
       fullMatrix<double> terms[8];
       _computeEtaAndTerms(stackEdges, iFirst, iLast, eta, terms);
 
@@ -973,7 +977,7 @@ namespace BoundaryLayerCurver {
                                          const GFace *gface, const GEdge *gedge,
                                          SVector3 normal)
     {
-      std::vector<std::pair<double, double> > eta;
+      std::vector<double> eta;
       fullMatrix<double> terms[8];
       _computeEtaAndTerms(stackEdges, iFirst, iLast, eta, terms);
 
