@@ -149,15 +149,15 @@ public:
   MFaceN() {}
   MFaceN(int type, int order, const std::vector<MVertex *> &v);
 
-  int getPolynomialOrder() const { return _order; }
   int getType() const { return _type; }
+  int getPolynomialOrder() const { return _order; }
   bool isTriangular() const { return _type == TYPE_TRI; }
-  std::size_t getNumVertices() const { return (int)_v.size(); }
-  int getNumCorners() const { return isTriangular() ? 3 : 4; }
-  int getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
 
+  std::size_t getNumVertices() const { return (int)_v.size(); }
   MVertex *getVertex(int i) const { return _v[i]; }
   const std::vector<MVertex *> &getVertices() const { return _v; }
+  int getNumCorners() const { return isTriangular() ? 3 : 4; }
+  int getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
 
   MEdgeN getHighOrderEdge(int num, int sign) const;
   MFace getFace() const;

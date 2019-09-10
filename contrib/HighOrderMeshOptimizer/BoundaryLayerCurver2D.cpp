@@ -583,6 +583,18 @@ namespace BoundaryLayerCurver {
     if(gface) projectVerticesIntoGFace(edge, gface, false);
   }
 
+  template<class T>
+  PositionerInternal<T>::PositionerInternal(std::vector<T> &v, GFace *gf)
+  : _stack(v), _gface(gf)
+  {
+    if(v.size() < 3) return;
+    _type = v[0].getType();
+    _polynomialOrder = v[0].getPolynomialOrder();
+    _numVerticesOnBoundary = v[0].getNumVerticesOnBoundary();
+    _computeEtas();
+    _computeTerms();
+  }
+
   namespace InteriorEdgeCurver {
     static std::map<std::pair<int, int>, TFIData *> tfiData;
 

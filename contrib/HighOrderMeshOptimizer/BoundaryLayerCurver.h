@@ -81,6 +81,25 @@ namespace BoundaryLayerCurver {
     }
   };
 
+  template<class T>
+  class PositionerInternal {
+  private:
+    std::vector<T> &_stack;
+    std::vector<double> _eta;
+    fullMatrix<double> _terms[8];
+    int _numVerticesOnBoundary;
+    int _type;
+    int _polynomialOrder;
+    GFace *_gface;
+
+  public:
+    PositionerInternal(std::vector<T> &v, GFace *gf);
+
+  private:
+    void _computeEtas();
+    void _computeTerms();
+  };
+
   class Column2DBL {
   private:
     // std::vector<MElement *> _stackElements;

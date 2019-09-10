@@ -9,6 +9,7 @@
 #include "MVertex.h"
 #include "SVector3.h"
 #include <iostream>
+#include "GmshDefines.h"
 
 // A mesh edge.
 class MEdge {
@@ -149,10 +150,15 @@ public:
 public:
   MEdgeN() {}
   MEdgeN(const std::vector<MVertex *> &v);
+
+  int getType() const { return TYPE_LIN; }
+  int getPolynomialOrder() const { return getNumVertices() - 1; }
+
   size_type getNumVertices() const { return (int)_v.size(); }
   MVertex *getVertex(int i) const { return _v[i]; }
   const std::vector<MVertex *> &getVertices() const { return _v; }
-  int getPolynomialOrder() const { return getNumVertices() - 1; }
+  int getNumCorners() const { return 2; }
+  int getNumVerticesOnBoundary() const { return 2; }
 
   MEdge getEdge() const;
 
