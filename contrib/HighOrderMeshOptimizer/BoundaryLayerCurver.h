@@ -59,9 +59,9 @@ namespace BoundaryLayerCurver {
     std::vector<double> _paramVerticesOnGFace;
 
   public:
-    Positioner3DCurve(const MEdgeN &bottomEdge, MEdgeN &topEdge,
+    Positioner3DCurve(const MEdgeN &baseEdge, MEdgeN &topEdge,
                      const MElement *bottomEl1, const MElement *bottomEl2);
-    Positioner3DCurve(const MEdgeN &bottomEdge, MEdgeN &topEdge,
+    Positioner3DCurve(const MEdgeN &baseEdge, MEdgeN &topEdge,
                      const GFace *gf);
 
   private:
@@ -117,6 +117,11 @@ namespace BoundaryLayerCurver {
     MElement *getBoundaryElement() const { return _boundaryElement; }
 
     bool repositionInnerVertices(std::size_t) const;
+    void repositionInnerVertices() const {
+      for(std::size_t i = 0; i < _stackElements.size(); ++i) {
+        repositionInnerVertices(i);
+      }
+    }
   };
 
   class Interface3DBL {
@@ -147,7 +152,7 @@ namespace BoundaryLayerCurver {
     ~Interface3DBL() { delete _boundaryElem2; }
 
     void curve();
-    void recoverQualityElements();
+    void recoverQualityTopElements();
 
   private:
     // Object construction

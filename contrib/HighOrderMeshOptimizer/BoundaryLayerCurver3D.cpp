@@ -340,8 +340,8 @@ namespace BoundaryLayerCurver {
     }
   } // namespace InnerVertPlacementMatrices
 
-  void repositionInteriorNodes(MElement *el,
-                               const fullMatrix<double> &placement)
+  void repositionInnerVertices3D(MElement *el,
+                                 const fullMatrix<double> &placement)
   {
     std::size_t start = el->getNumVertices() - el->getNumVolumeVertices();
     for(std::size_t i = start; i < el->getNumVertices(); ++i) {
@@ -361,24 +361,49 @@ namespace BoundaryLayerCurver {
 
   void repositionInnerVertices3D(MElement *el)
   {
-      const fullMatrix<double> *placement = NULL;
-      const int order = el->getPolynomialOrder();
-      int nFace, nOtherFace, sign, rot;
+    const fullMatrix<double> *placement = NULL;
+    const int order = el->getPolynomialOrder();
+    switch(el->getType()) {
+    case TYPE_TET:
+      placement = InnerVertPlacementMatrices::tetrahedron(order, false);
+      break;
+    case TYPE_HEX:
+      placement = InnerVertPlacementMatrices::hexahedron(order, false);
+      break;
+    case TYPE_PRI:
+      placement = InnerVertPlacementMatrices::prism(order, false);
+      break;
+    }
+    if(placement)
+      repositionInnerVertices3D(el, *placement);
+    else
+      Msg::Error("Implement placement for type %d", el->getType());
+  }
+
+  void repositionInnerVertices3D(std::vector<MElement *> &elements)
+  {
+    // NB: we consider that all the elements have the same polynomial order
+
+    const int order = elements[0]->getPolynomialOrder();
+    const fullMatrix<double> *placementTet, *placementHex, *placementPri;
+    placementTet = InnerVertPlacementMatrices::tetrahedron(order, false);
+    placementHex = InnerVertPlacementMatrices::hexahedron(order, false);
+    placementPri = InnerVertPlacementMatrices::prism(order, false);
+
+    const fullMatrix<double> *placement;
+    for(std::size_t i = 0; i < elements.size(); ++i) {
+      MElement *el = elements[i];
       switch(el->getType()) {
-      case TYPE_TET:
-        placement = InnerVertPlacementMatrices::tetrahedron(order, false);
-        break;
-      case TYPE_HEX:
-        placement = InnerVertPlacementMatrices::hexahedron(order, false);
-        break;
-      case TYPE_PRI:
-        placement = InnerVertPlacementMatrices::prism(order, false);
-        break;
+      case TYPE_TET: placement = placementTet; break;
+      case TYPE_HEX: placement = placementHex; break;
+      case TYPE_PRI: placement = placementPri; break;
+      default: placement = NULL; break;
       }
       if(placement)
-        repositionInteriorNodes(el, *placement);
+        repositionInnerVertices3D(el, *placement);
       else
         Msg::Error("Implement placement for type %d", el->getType());
+    }
   }
 
   // Returns the stack of faces that are shared by two successive elements
@@ -457,9 +482,10 @@ namespace BoundaryLayerCurver {
       break;
     }
     if(placement)
-      repositionInteriorNodes(el, *placement);
+      repositionInnerVertices3D(el, *placement);
     else
       Msg::Error("Implement placement for type %d", el->getType());
+    return true;
   }
 
   void intersect(const std::vector<MElement *> &v1,
@@ -802,10 +828,18 @@ namespace BoundaryLayerCurver {
 
   void Interface3DBL::curve()
   {
+    // 1. Curve top edge
+
     MEdgeN &bottomEdge = _stackOrientedEdges[0];
+    MEdgeN &firstEdge = _stackOrientedEdges[1];
     MEdgeN &topEdge = _stackOrientedEdges.back();
     if(_gface) {
+      // FIXME change to be able to use only one object:
+      //   Positioner3DCurve positioner(bottomEdge, _gface);
+      //   positioner(firstEdge);
+      //   positioner(topEdge);
       Positioner3DCurve(bottomEdge, topEdge, _gface);
+      Positioner3DCurve(bottomEdge, firstEdge, _gface);
     }
     else {
       MElement *el1 = _col1->getBoundaryElement();
@@ -817,10 +851,30 @@ namespace BoundaryLayerCurver {
         return;
       }
       Positioner3DCurve(bottomEdge, topEdge, el1, el2);
+      Positioner3DCurve(bottomEdge, firstEdge, el1, el2);
+    }
+    recoverQualityTopElements();
+
+    // 2. Curve internal edges
+
+    // FIXME
+    //  1. do semi Hermite TFI
+    // curveInternalEdges();
+
+    repositionInnerVertices(_stackOrientedFaces, _gface, true);
+    for(std::size_t i = 0; i < _externalFaces.size(); ++i) {
+      repositionInnerVertices(_externalFaces[i], _gface, false);
     }
 
-    recoverQualityElements();
+    _col1->repositionInnerVertices();
+    _col2->repositionInnerVertices();
+    if(_elementAtLastFace) repositionInnerVertices3D(_elementAtLastFace);
 
+    // FIXME
+    //  2. Check quality if ok, return
+    //  3. Do linear TFI, check quality
+    //  4. If quality ok, do dichotomic search for combination, return
+    //  5. If quality not ok, reduce curving, go to 1.
 
     // FIXME:NOW
 
@@ -912,7 +966,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void Interface3DBL::recoverQualityElements()
+  void Interface3DBL::recoverQualityTopElements()
   {
     std::size_t iFirstEdge = 1;
     if(_type == TYPE_TRI) iFirstEdge = 2;
@@ -1073,20 +1127,20 @@ namespace BoundaryLayerCurver {
     return p + n * factorThickness * thickness + t0 * coeffb + t1 * coeffc;
   }
 
-  Positioner3DCurve::Positioner3DCurve(const MEdgeN &bottomEdge,
+  Positioner3DCurve::Positioner3DCurve(const MEdgeN &baseEdge,
                                        MEdgeN &topEdge,
                                        const MElement *bottomEl1,
                                        const MElement *bottomEl2)
-  : _el1(bottomEl1), _el2(bottomEl2), _gface(NULL), _baseEdge(bottomEdge),
+  : _el1(bottomEl1), _el2(bottomEl2), _gface(NULL), _baseEdge(baseEdge),
     _topEdge(topEdge)
   {
     _execute();
   }
 
-  Positioner3DCurve::Positioner3DCurve(const MEdgeN &bottomEdge,
+  Positioner3DCurve::Positioner3DCurve(const MEdgeN &baseEdge,
                                        MEdgeN &topEdge,
                                        const GFace *gf)
-  : _el1(NULL), _el2(NULL), _gface(gf), _baseEdge(bottomEdge), _topEdge(topEdge)
+  : _el1(NULL), _el2(NULL), _gface(gf), _baseEdge(baseEdge), _topEdge(topEdge)
   {
     if(!_gface) return;
 
@@ -1789,7 +1843,7 @@ namespace BoundaryLayerCurver {
         break;
       }
       if(placement)
-        repositionInteriorNodes(el, *placement);
+        repositionInnerVertices3D(el, *placement);
       else
         Msg::Error("Implement placement for type %d", el->getType());
     }
