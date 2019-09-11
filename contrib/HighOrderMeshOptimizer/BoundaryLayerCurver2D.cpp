@@ -610,59 +610,66 @@ namespace BoundaryLayerCurver {
   void PositionerInternal<T>::_computeEtas()
   {
     const std::size_t N = _stack.size();
-    _eta.resize(_numCornerVert * N);
+    _etas.resize(_numCornerVert * N);
     std::vector<MVertex *> baseNodes(_numCornerVert);
     for(std::size_t i = 0; i < _numCornerVert; ++i) {
-      _eta[i] = 0;
+      _etas[i] = 0;
       baseNodes[i] = _stack[0].getVertex(i);
     }
 
     for(std::size_t i = 1; i < N; ++i) {
       for(std::size_t j = 0; j < _numCornerVert; ++j) {
         MVertex *v = _stack[i].getVertex(j);
-        _eta[_numCornerVert * i + j] = baseNodes[j]->distance(v);
+        _etas[_numCornerVert * i + j] = baseNodes[j]->distance(v);
       }
     }
     for(std::size_t i = 1; i < N; ++i) {
       for(std::size_t j = 0; j < _numCornerVert; ++j) {
-        _eta[_numCornerVert * i + j] /= _eta[_numCornerVert * (N - 1) + j];
+        _etas[_numCornerVert * i + j] /= _etas[_numCornerVert * (N - 1) + j];
       }
     }
+
+    _avgEta1 = 0;
+    for(std::size_t j = 0; j < _numCornerVert; ++j) {
+      _avgEta1 += _etas[_numCornerVert * _iFirst + j];
+    }
+    _avgEta1 /= _numCornerVert;
   }
 
   template<class T>
   void PositionerInternal<T>::_computeTerms()
   {
     fullMatrix<double> delta0, delta1, deltaN;
+    _computeDeltas(delta0, delta1, deltaN);
 
+    fullMatrix<double> &term0 = _terms[0];
+    fullMatrix<double> &term1d10 = _terms[1];
+    fullMatrix<double> &term1d11 = _terms[2];
+    fullMatrix<double> &term1dN0 = _terms[3];
+    fullMatrix<double> &term1dN1 = _terms[4];
+    fullMatrix<double> &term20 = _terms[5];
+    fullMatrix<double> &term21 = _terms[6];
+    fullMatrix<double> &term22 = _terms[7];
+
+    const int numVertices = delta0.size1();
+
+    fullMatrix<double> delta10 = delta1;
+    delta10.add(delta0, -1);
+    delta10.scale(1 / _avgEta1);
+    fullMatrix<double> deltaN0 = deltaN;
+    deltaN0.add(delta0, -1);
+
+    term0.resize(numVertices, 3);
+    term1d10.resize(numVertices, 3);
+    term1d11.resize(numVertices, 3);
+    term1dN0.resize(numVertices, 3);
+    term1dN1.resize(numVertices, 3);
+    term20.resize(numVertices, 3);
+    term21.resize(numVertices, 3);
+    term22.resize(numVertices, 3);
 
     // FIXME:NOW
-    // fullMatrix<double> &term0 = terms[0];
-    // fullMatrix<double> &term1d10 = terms[1];
-    // fullMatrix<double> &term1d11 = terms[2];
-    // fullMatrix<double> &term1dN0 = terms[3];
-    // fullMatrix<double> &term1dN1 = terms[4];
-    // fullMatrix<double> &term20 = terms[5];
-    // fullMatrix<double> &term21 = terms[6];
-    // fullMatrix<double> &term22 = terms[7];
-    //
-    // const int numVertices = delta0.size1();
-    //
-    // fullMatrix<double> delta10 = delta1;
-    // delta10.add(delta0, -1);
-    // delta10.scale(1 / eta1);
-    // fullMatrix<double> deltaN0 = deltaN;
-    // deltaN0.add(delta0, -1);
-    //
-    // term0.resize(numVertices, 3);
-    // term1d10.resize(numVertices, 3);
-    // term1d11.resize(numVertices, 3);
-    // term1dN0.resize(numVertices, 3);
-    // term1dN1.resize(numVertices, 3);
-    // term20.resize(numVertices, 3);
-    // term21.resize(numVertices, 3);
-    // term22.resize(numVertices, 3);
-    //
+
     // TFIData *tfiData = _getTFIData(TYPE_LIN, numVertices - 1);
     //
     // term0.copy(delta0);
@@ -707,10 +714,9 @@ namespace BoundaryLayerCurver {
     fullMatrix<double> x0linear(numVert, 3);
     fullMatrix<double> x1linear(numVert, 3);
     fullMatrix<double> xNlinear(numVert, 3);
-    // FIXME:NOW
-    // _linearize(x0, x0linear);
-    // _linearize(x1, x1linear);
-    // _linearize(xN, xNlinear);
+    _linearize(x0, x0linear);
+    _linearize(x1, x1linear);
+    _linearize(xN, xNlinear);
     delta0 = x0;
     delta0.add(x0linear, -1);
     delta1 = x1;

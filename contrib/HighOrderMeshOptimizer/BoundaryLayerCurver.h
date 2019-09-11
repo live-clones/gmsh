@@ -98,7 +98,8 @@ namespace BoundaryLayerCurver {
     int _polynomialOrder;
     GFace *_gface;
 
-    std::vector<double> _eta;
+    double _avgEta1;
+    std::vector<double> _etas;
     fullMatrix<double> _terms[8];
 
   public:
