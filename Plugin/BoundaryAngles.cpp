@@ -22,7 +22,10 @@ GMSH_Plugin *GMSH_RegisterBoundaryAnglesPlugin() { return new GMSH_BoundaryAngle
 
 std::string GMSH_BoundaryAnglesPlugin::getHelp() const
 {
-  return "Plugin(BoundaryAngles) computes FIXME.";
+  return "Plugin(BoundaryAngles) computes the (interior) angles between each segments"
+         " on the boundary of each surface (in rad). The angles, computed modulo 2*Pi,"
+         " are stored in a PView (one for each surface) and stored on disk."
+         " This plugin only works for 2D Surface (co-planar).";
 }
 
 int GMSH_BoundaryAnglesPlugin::getNbOptions() const
