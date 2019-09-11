@@ -84,14 +84,22 @@ namespace BoundaryLayerCurver {
   template<class T>
   class PositionerInternal {
   private:
+
     std::vector<T> &_stack;
-    std::vector<double> _eta;
-    fullMatrix<double> _terms[8];
+    // _stack = stack of oriented MEdgeN for 2D columns and of oriented MFaceN for 3D columns
+
     std::size_t _numBoundaryVert;
     std::size_t _numCornerVert;
+    std::size_t _iFirst;
+    // _iFirst = num of first horizontal layer, i.e. first T in _stack that do
+    //           touches _stack[0]
+
     int _type;
     int _polynomialOrder;
     GFace *_gface;
+
+    std::vector<double> _eta;
+    fullMatrix<double> _terms[8];
 
   public:
     PositionerInternal(std::vector<T> &v, GFace *gf);
@@ -99,6 +107,9 @@ namespace BoundaryLayerCurver {
   private:
     void _computeEtas();
     void _computeTerms();
+    void _computeDeltas(fullMatrix<double> &delta0,
+                        fullMatrix<double> &delta1,
+                        fullMatrix<double> &deltaN) const;
   };
 
   class Column2DBL {
@@ -153,12 +164,14 @@ namespace BoundaryLayerCurver {
     std::vector<MFaceN> _stackOrientedFaces;
     std::vector<MEdgeN> _stackOrientedEdges;
 
-    // External element that touches the last face, if any.
     MElement *_elementAtLastFace;
-    // External elements that touch the last edge but not the last face.
     std::vector<MElement *> _elementsAtLastEdge;
-    // External elements that touch interior edges but not the last face.
     std::vector<MElement *> _elementsAtInteriorEdges;
+    // _elementAtLastFace = External element that touches the last face, if any.
+    // _elementsAtLastEdge = External elements that touch the last edge
+    //                       but not the last face.
+    // _elementsAtInteriorEdges = External elements that touch interior edges
+    //                            but not the last face.
 
     std::vector<std::vector<MFaceN> > _externalFaces;
     // SVector3 _normal;

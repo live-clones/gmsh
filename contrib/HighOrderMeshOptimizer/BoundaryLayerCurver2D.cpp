@@ -594,6 +594,16 @@ namespace BoundaryLayerCurver {
     _numCornerVert = v[0].getNumCorners();
     _computeEtas();
     _computeTerms();
+
+    bool touches = true;
+    std::size_t i = 0;
+    while(touches && ++i < v.size()) {
+      touches = false;
+      for(std::size_t j = 0; j < _numCornerVert; ++j) {
+        if(v[i].getVertex(j) == v[0].getVertex(j)) touches = true;
+      }
+    }
+    _iFirst = i;
   }
 
   template<class T>
@@ -618,6 +628,95 @@ namespace BoundaryLayerCurver {
         _eta[_numCornerVert * i + j] /= _eta[_numCornerVert * (N - 1) + j];
       }
     }
+  }
+
+  template<class T>
+  void PositionerInternal<T>::_computeTerms()
+  {
+    fullMatrix<double> delta0, delta1, deltaN;
+
+
+    // FIXME:NOW
+    // fullMatrix<double> &term0 = terms[0];
+    // fullMatrix<double> &term1d10 = terms[1];
+    // fullMatrix<double> &term1d11 = terms[2];
+    // fullMatrix<double> &term1dN0 = terms[3];
+    // fullMatrix<double> &term1dN1 = terms[4];
+    // fullMatrix<double> &term20 = terms[5];
+    // fullMatrix<double> &term21 = terms[6];
+    // fullMatrix<double> &term22 = terms[7];
+    //
+    // const int numVertices = delta0.size1();
+    //
+    // fullMatrix<double> delta10 = delta1;
+    // delta10.add(delta0, -1);
+    // delta10.scale(1 / eta1);
+    // fullMatrix<double> deltaN0 = deltaN;
+    // deltaN0.add(delta0, -1);
+    //
+    // term0.resize(numVertices, 3);
+    // term1d10.resize(numVertices, 3);
+    // term1d11.resize(numVertices, 3);
+    // term1dN0.resize(numVertices, 3);
+    // term1dN1.resize(numVertices, 3);
+    // term20.resize(numVertices, 3);
+    // term21.resize(numVertices, 3);
+    // term22.resize(numVertices, 3);
+    //
+    // TFIData *tfiData = _getTFIData(TYPE_LIN, numVertices - 1);
+    //
+    // term0.copy(delta0);
+    // tfiData->T0.mult(delta10, term1d10);
+    // tfiData->T1.mult(delta10, term1d11);
+    // tfiData->T0.mult(deltaN0, term1dN0);
+    // tfiData->T1.mult(deltaN0, term1dN1);
+    // fullMatrix<double> diff(numVertices, 3);
+    // fullMatrix<double> dum0(numVertices, 3);
+    // fullMatrix<double> dum1(numVertices, 3);
+    // diff.copy(deltaN0);
+    // diff.add(delta10, -1);
+    // tfiData->T0.mult(diff, dum0);
+    // tfiData->T1.mult(diff, dum1);
+    // tfiData->T0.mult(dum0, term20);
+    // tfiData->T1.mult(dum0, term21);
+    // tfiData->T1.mult(dum1, term22);
+  }
+
+  template<class T>
+  void PositionerInternal<T>::_computeDeltas(fullMatrix<double> &delta0,
+                                             fullMatrix<double> &delta1,
+                                             fullMatrix<double> &deltaN) const
+  {
+    const std::size_t numVert = _stack[0].getNumVertices();
+
+    fullMatrix<double> x0(numVert, 3);
+    fullMatrix<double> x1(numVert, 3);
+    fullMatrix<double> xN(numVert, 3);
+    for(int k = 0; k < numVert; ++k) {
+      x0(k, 0) = _stack[0].getVertex(k)->x();
+      x0(k, 1) = _stack[0].getVertex(k)->y();
+      x0(k, 2) = _stack[0].getVertex(k)->z();
+      x1(k, 0) = _stack[_iFirst].getVertex(k)->x();
+      x1(k, 1) = _stack[_iFirst].getVertex(k)->y();
+      x1(k, 2) = _stack[_iFirst].getVertex(k)->z();
+      xN(k, 0) = _stack.back().getVertex(k)->x();
+      xN(k, 1) = _stack.back().getVertex(k)->y();
+      xN(k, 2) = _stack.back().getVertex(k)->z();
+    }
+
+    fullMatrix<double> x0linear(numVert, 3);
+    fullMatrix<double> x1linear(numVert, 3);
+    fullMatrix<double> xNlinear(numVert, 3);
+    // FIXME:NOW
+    // _linearize(x0, x0linear);
+    // _linearize(x1, x1linear);
+    // _linearize(xN, xNlinear);
+    delta0 = x0;
+    delta0.add(x0linear, -1);
+    delta1 = x1;
+    delta1.add(x1linear, -1);
+    deltaN = xN;
+    deltaN.add(xNlinear, -1);
   }
 
   namespace InteriorEdgeCurver {
