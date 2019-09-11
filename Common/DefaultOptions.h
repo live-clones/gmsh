@@ -885,7 +885,7 @@ StringXNumber GeometryOptions_Number[] = {
     "new entities with the OpenCASCADE kernel" },
   { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
     "Try to preserve the numbering of entities through OpenCASCADE boolean operations" },
-  { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
+  { F|O, "OCCDisableStl" , opt_geometry_occ_disable_stl , 0. ,
     "Disable STL creation in OpenCASCADE kernel" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
     "Fix degenerated edges/faces when importing STEP, IGES and BRep models with the "
@@ -1317,6 +1317,12 @@ StringXNumber MeshOptions_Number[] = {
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at nodes of a same edge (used in BAMG)" },
+  { F|O, "StlAngularDeflection" , opt_mesh_stl_angular_deflection , 0.35 ,
+    "Maximum angular deflection when creating STL representation of surfaces "
+    "(currently only used with the OpenCASCADE kernel)"},
+  { F|O, "StlLinearDeflection" , opt_mesh_stl_linear_deflection , 0.01 ,
+    "Maximum linear deflection when creating STL representation of surfaces "
+    "(currently only used with the OpenCASCADE kernel)"},
   { F|O, "StlOneSolidPerSurface" , opt_mesh_stl_one_solid_per_surface, 0. ,
     "Create one solid per surface when exporting STL files? (0: single solid, "
     "1: one solid per face, 2: one solid per physical surface)" },

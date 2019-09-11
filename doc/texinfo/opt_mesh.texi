@@ -681,6 +681,16 @@ Ratio between mesh sizes at nodes of a same edge (used in BAMG)@*
 Default value: @code{1.8}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.StlAngularDeflection
+Maximum angular deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.35}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlLinearDeflection
+Maximum linear deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.01}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.StlOneSolidPerSurface
 Create one solid per surface when exporting STL files? (0: single solid, 1: one solid per face, 2: one solid per physical surface)@*
 Default value: @code{0}@*

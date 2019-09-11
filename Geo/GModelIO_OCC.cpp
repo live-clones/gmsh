@@ -3323,6 +3323,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
              CTX::instance()->geom.occFixSmallFaces,
              CTX::instance()->geom.occSewFaces, false,
              CTX::instance()->geom.occScaling);
+
   _multiBind(result, -1, outDimTags, highestDimOnly, true);
   return true;
 }
@@ -4234,21 +4235,24 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
 {
   if(CTX::instance()->geom.occDisableSTL) return false;
 
+  double lin = CTX::instance()->mesh.stlLinearDeflection;
+  double ang = CTX::instance()->mesh.stlAngularDeflection;
+
 #if OCC_VERSION_HEX > 0x070300
-  BRepMesh_IncrementalMesh aMesher(s, 0.01, Standard_False, 0.35, Standard_True);
+  BRepMesh_IncrementalMesh aMesher(s, lin, Standard_False, ang, Standard_True);
 #elif OCC_VERSION_HEX > 0x070000
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
   BRepMesh_FastDiscret::Parameters parameters;
-  parameters.Deflection = 0.1;
-  parameters.Angle = 0.35;
+  parameters.Deflection = lin;
+  parameters.Angle = ang;
   parameters.Relative = Standard_False;
   BRepMesh_FastDiscret aMesher(aBox, parameters);
   aMesher.Perform(s);
 #else
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
-  BRepMesh_FastDiscret aMesher(0.1, 0.35, aBox, Standard_False, Standard_False,
+  BRepMesh_FastDiscret aMesher(lin, ang, aBox, Standard_False, Standard_False,
                                Standard_True, Standard_False);
   aMesher.Perform(s);
 #endif

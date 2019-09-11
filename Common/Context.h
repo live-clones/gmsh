@@ -50,6 +50,7 @@ struct contextMeshOptions {
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
+  double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportOrder, cgnsConstructTopology;

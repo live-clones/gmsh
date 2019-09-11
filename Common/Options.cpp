@@ -5958,6 +5958,22 @@ double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM)
   return CTX::instance()->mesh.stlOneSolidPerSurface;
 }
 
+double opt_mesh_stl_linear_deflection(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.stlLinearDeflection = val;
+  }
+  return CTX::instance()->mesh.stlLinearDeflection;
+}
+
+double opt_mesh_stl_angular_deflection(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.stlAngularDeflection = val;
+  }
+  return CTX::instance()->mesh.stlAngularDeflection;
+}
+
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
