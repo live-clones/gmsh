@@ -8,6 +8,7 @@
 #include "GModel.h"
 #include "discreteEdge.h"
 #include "MLine.h"
+#include <cstring>
 
 StringXNumber BoundaryAnglesOptions_Number[] = {
   {GMSH_FULLRC, "View", NULL, -1.},
