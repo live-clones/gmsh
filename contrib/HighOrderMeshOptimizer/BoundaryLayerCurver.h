@@ -158,7 +158,7 @@ namespace BoundaryLayerCurver {
 
   class Interface3DBL {
   private:
-    int _numFace;
+    std::size_t _numFaces;
     const Column3DBL *_col1;
     const Column3DBL *_col2;
     MElement *_boundaryElem2; // if any and _col2 == NULL
@@ -323,7 +323,7 @@ namespace BoundaryLayerCurver {
     std::vector<double> _thickness;
     std::vector<double> _coeffb;
     std::vector<double> _coeffc;
-    int _nCorner;
+    std::size_t _nCorner;
     int _order; // not necessary
     double _factorDegenerate[4];
     const nodalBasis *_fs, *_primaryFs;

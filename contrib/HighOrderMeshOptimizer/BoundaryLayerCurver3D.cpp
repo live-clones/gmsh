@@ -611,7 +611,7 @@ namespace BoundaryLayerCurver {
 
   Interface3DBL::Interface3DBL(const Column3DBL &col, const MEdge &edge,
                                const MapMEdgeVecMElem &touchedElems)
-  : _numFace(col.getNumBLElements()), _col1(&col), _col2(NULL),
+  : _numFaces(col.getNumBLElements()), _col1(&col), _col2(NULL),
     _boundaryElem2(NULL), _gface(NULL), _gedge(NULL)
   {
     computeStackHOEdgesFaces(col, edge, _stackOrientedEdges, _stackOrientedFaces);
@@ -641,7 +641,7 @@ namespace BoundaryLayerCurver {
     const Column3DBL *col;
     if(col1.getNumBLElements() > col2.getNumBLElements()) col = &col1;
     else col = &col2;
-    _numFace = col->getNumBLElements();
+    _numFaces = col->getNumBLElements();
     computeStackHOEdgesFaces(*col, commonEdge, _stackOrientedEdges, _stackOrientedFaces);
 
     _classifyExternalElements(touchedElems);
@@ -658,12 +658,12 @@ namespace BoundaryLayerCurver {
     std::vector<MElement *> &others = _elementsAtInteriorEdges;
     std::vector<MElement *> common;
 
-    MEdge edge = _stackOrientedEdges[_numFace].getEdge();
+    MEdge edge = _stackOrientedEdges[_numFaces].getEdge();
     it = map.find(edge);
     if(it != map.end()) {
       last = it->second;
     }
-    edge = _stackOrientedEdges[_numFace - 1].getEdge();
+    edge = _stackOrientedEdges[_numFaces - 1].getEdge();
     it = map.find(edge);
     if(it != map.end()) {
       others = it->second;
@@ -691,7 +691,7 @@ namespace BoundaryLayerCurver {
       }
     }
 
-    for(std::size_t i = 0; i < _numFace - 1; ++i) {
+    for(std::size_t i = 0; i < _numFaces - 1; ++i) {
       std::vector<MElement *> tmp;
       it = map.find(_stackOrientedEdges[i].getEdge());
       if(it != map.end()) {
@@ -932,9 +932,9 @@ namespace BoundaryLayerCurver {
     v.reserve(2);
     if(_elementAtLastFace) v.push_back(_elementAtLastFace);
     MElement *tmp;
-    tmp = _col1->getBLElement(_numFace - 1);
+    tmp = _col1->getBLElement(_numFaces - 1);
     if(tmp) v.push_back(tmp);
-    tmp = _col2->getBLElement(_numFace - 1);
+    tmp = _col2->getBLElement(_numFaces - 1);
     if(tmp) v.push_back(tmp);
   }
 
@@ -970,7 +970,7 @@ namespace BoundaryLayerCurver {
   {
     std::size_t iFirstEdge = 1;
     if(_type == TYPE_TRI) iFirstEdge = 2;
-    const std::size_t iLastEdge = _numFace;
+    const std::size_t iLastEdge = _numFaces;
     std::vector<MEdgeN> subsetEdges(4);
     subsetEdges[0] = _stackOrientedEdges[0];
     subsetEdges[1] = _stackOrientedEdges[iFirstEdge];
@@ -1039,8 +1039,8 @@ namespace BoundaryLayerCurver {
   {
     _nCorner = baseFace.getNumCorners();
     _order = baseFace.getPolynomialOrder();
-    int nVerticesOnBoundary = _nCorner * _order;
-    int sizeParameters = nVerticesOnBoundary;
+    std::size_t nVerticesOnBoundary = _nCorner * _order;
+    std::size_t sizeParameters = nVerticesOnBoundary;
     bool incomplete = true;
     // Currently, incomplete polynomial space of triangles is not symmetrical,
     // we use complete space
@@ -1081,8 +1081,8 @@ namespace BoundaryLayerCurver {
     if(_nCorner == 3) {
       const fullMatrix<double> *interpolator;
       interpolator = InnerVertPlacementMatrices::triangle(_order, false);
-      for(int i = nVerticesOnBoundary; i < sizeParameters; ++i) {
-        for(int j = 0; j < interpolator->size2(); ++j) {
+      for(std::size_t i = nVerticesOnBoundary; i < sizeParameters; ++i) {
+        for(std::size_t j = 0; j < interpolator->size2(); ++j) {
           const double coeff = (*interpolator)(i - nVerticesOnBoundary, j);
           _thickness[i] += coeff * _thickness[j];
           _coeffb[i] += coeff * _coeffb[j];
@@ -1731,8 +1731,8 @@ namespace BoundaryLayerCurver {
 
     const int orderSurface = baseFace.getPolynomialOrder();
     const int orderGauss = orderSurface * 2;
-    const int nVerticesBoundary = baseFace.getNumVerticesOnBoundary();
-    int sizeSystem;
+    const std::size_t nVerticesBoundary = baseFace.getNumVerticesOnBoundary();
+    std::size_t sizeSystem;
     IntPt *gaussPnts;
     if(baseFace.isTriangular()) {
       sizeSystem = getNGQTPts(orderGauss);
@@ -1745,7 +1745,7 @@ namespace BoundaryLayerCurver {
 
     fullMatrix<double> xyz(sizeSystem + nVerticesBoundary, 3);
     idealPositionFace(baseFace, parameters, sizeSystem, gaussPnts, xyz);
-    for(int i = 0; i < nVerticesBoundary; ++i) {
+    for(std::size_t i = 0; i < nVerticesBoundary; ++i) {
       MVertex *v = topFace.getVertex(i);
       xyz(sizeSystem + i, 0) = v->x();
       xyz(sizeSystem + i, 1) = v->y();
@@ -1797,7 +1797,8 @@ namespace BoundaryLayerCurver {
       case 1: factor = (v->y() - vbot->y()) / dY; break;
       case 2: factor = (v->z() - vbot->z()) / dZ; break;
       }
-      for(std::size_t j = f.getNumVerticesOnBoundary(); j < f.getNumVertices(); ++j) {
+      const std::size_t nVertBoundary = f.getNumVerticesOnBoundary();
+      for(std::size_t j = nVertBoundary; j < f.getNumVertices(); ++j) {
         MVertex *vbot = baseFace.getVertex(j);
         MVertex *vtop = topFace.getVertex(j);
         MVertex *v = f.getVertex(j);

@@ -196,7 +196,7 @@ namespace BoundaryLayerCurver {
   void projectVerticesIntoGFace(const MFaceN &face, const GFace *gface,
                                 bool alsoBoundary = true)
   {
-    int i = alsoBoundary ? 0 : face.getNumVerticesOnBoundary();
+    std::size_t i = alsoBoundary ? 0 : face.getNumVerticesOnBoundary();
     for(; i < face.getNumVertices(); ++i)
       projectVertexIntoGFace(face.getVertex(i), gface);
   }

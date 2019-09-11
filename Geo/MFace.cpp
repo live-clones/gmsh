@@ -232,7 +232,7 @@ MFaceN::MFaceN(int type, int order, const std::vector<MVertex *> &v)
 
 MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
 {
-  int nCorner = getNumCorners();
+  std::size_t nCorner = getNumCorners();
   std::vector<MVertex *> vertices(static_cast<std::size_t>(_order) + 1);
   if(sign == 1) {
     vertices[0] = _v[num];
@@ -242,9 +242,9 @@ MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
     vertices[0] = _v[(num + 1) % nCorner];
     vertices[1] = _v[num];
   }
-  int start = nCorner + num * (_order - 1);
-  int end = nCorner + (num + 1) * (_order - 1);
-  int k = 1;
+  std::size_t start = nCorner + num * (_order - 1);
+  std::size_t end = nCorner + (num + 1) * (_order - 1);
+  std::size_t k = 1;
   if(sign == 1) {
     for(int i = start; i < end; ++i) vertices[++k] = _v[i];
   }
@@ -376,15 +376,15 @@ void MFaceN::frame(double u, double v, SPoint3 &p, SVector3 &t0, SVector3 &t1,
 
 void MFaceN::repositionInnerVertices(const fullMatrix<double> *placement) const
 {
-  int nCorner = getNumCorners();
-  int start = nCorner + (_order - 1) * nCorner;
-  for(int i = start; i < (int)_v.size(); ++i) {
+  std::size_t nCorner = getNumCorners();
+  std::size_t start = nCorner + (_order - 1) * nCorner;
+  for(std::size_t i = start; i < _v.size(); ++i) {
     MVertex *v = _v[i];
     v->x() = 0;
     v->y() = 0;
     v->z() = 0;
     for(int j = 0; j < placement->size2(); ++j) {
-      const double coeff = (*placement)(i - start, j);
+      const double &coeff = (*placement)(i - start, j);
       v->x() += coeff * _v[j]->x();
       v->y() += coeff * _v[j]->y();
       v->z() += coeff * _v[j]->z();

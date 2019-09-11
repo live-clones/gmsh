@@ -156,8 +156,8 @@ public:
   std::size_t getNumVertices() const { return (int)_v.size(); }
   MVertex *getVertex(int i) const { return _v[i]; }
   const std::vector<MVertex *> &getVertices() const { return _v; }
-  int getNumCorners() const { return isTriangular() ? 3 : 4; }
-  int getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
+  std::size_t getNumCorners() const { return isTriangular() ? 3 : 4; }
+  std::size_t getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
 
   MEdgeN getHighOrderEdge(int num, int sign) const;
   MFace getFace() const;
