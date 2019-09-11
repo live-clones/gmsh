@@ -108,7 +108,6 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
             }
           }
         }
-        printf("sorted nodes:\n");
         // Handle last elements
         nodes[0].push_back(nodes[0][0]);
         //Compute angle at each point (mod 2pi)
@@ -119,8 +118,6 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
           SVector3 v1(p2, p1);
           SVector3 v2(p2, p3);
           double a = signedAngle(v1, v2, normal);
-          printf("point = %d, angle = %g\n", nodes[0][i+1]->getNum() , a);
-
           data->SP.push_back(p2.x());
           data->SP.push_back(p2.y());
           data->SP.push_back(p2.z());
