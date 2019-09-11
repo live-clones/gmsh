@@ -590,9 +590,34 @@ namespace BoundaryLayerCurver {
     if(v.size() < 3) return;
     _type = v[0].getType();
     _polynomialOrder = v[0].getPolynomialOrder();
-    _numVerticesOnBoundary = v[0].getNumVerticesOnBoundary();
+    _numBoundaryVert = v[0].getNumVerticesOnBoundary();
+    _numCornerVert = v[0].getNumCorners();
     _computeEtas();
     _computeTerms();
+  }
+
+  template<class T>
+  void PositionerInternal<T>::_computeEtas()
+  {
+    const std::size_t N = _stack.size();
+    _eta.resize(_numCornerVert * N);
+    std::vector<MVertex *> baseNodes(_numCornerVert);
+    for(std::size_t i = 0; i < _numCornerVert; ++i) {
+      _eta[i] = 0;
+      baseNodes[i] = _stack[0].getVertex(i);
+    }
+
+    for(std::size_t i = 1; i < N; ++i) {
+      for(std::size_t j = 0; j < _numCornerVert; ++j) {
+        MVertex *v = _stack[i].getVertex(j);
+        _eta[_numCornerVert * i + j] = baseNodes[j]->distance(v);
+      }
+    }
+    for(std::size_t i = 1; i < N; ++i) {
+      for(std::size_t j = 0; j < _numCornerVert; ++j) {
+        _eta[_numCornerVert * i + j] /= _eta[_numCornerVert * (N - 1) + j];
+      }
+    }
   }
 
   namespace InteriorEdgeCurver {

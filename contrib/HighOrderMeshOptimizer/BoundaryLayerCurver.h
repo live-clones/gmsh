@@ -87,7 +87,8 @@ namespace BoundaryLayerCurver {
     std::vector<T> &_stack;
     std::vector<double> _eta;
     fullMatrix<double> _terms[8];
-    int _numVerticesOnBoundary;
+    std::size_t _numBoundaryVert;
+    std::size_t _numCornerVert;
     int _type;
     int _polynomialOrder;
     GFace *_gface;
