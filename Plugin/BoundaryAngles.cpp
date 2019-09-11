@@ -9,6 +9,7 @@
 #include "discreteEdge.h"
 #include "MLine.h"
 #include <cstring>
+#include <algorithm>
 
 StringXNumber BoundaryAnglesOptions_Number[] = {
   {GMSH_FULLRC, "View", NULL, -1.},
@@ -66,26 +67,10 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
         }
       }
     }
-    printf("%d boundary edges on face %d\n", boundaryEdges.size(), gf->tag());
     if(boundaryEdges.empty()) continue;
 
     PView *view = new PView();
     PViewDataList *data = getDataList(view);
-
-    // fix orientation?
-    /*
-    bool reverse;
-    std::set<std::pair<MEdge, MElement*>, Less_EdgeEle>::iterator it2 = boundaryEdges.begin();
-    for(int j = 0; j < it2->second->getNumEdges(); j++){
-      MEdge ed = it2->second->getEdge(j);
-      if(it2->first == ed){
-        if(it2->first.getVertex(0) != ed.getVertex(0)) {
-          printf("REVERSE!\n");
-          reverse = true;
-        }
-      }
-    }
-    */
 
     std::vector<MEdge> edges;
     SVector3 normal(0, 0, 1.);
@@ -101,8 +86,29 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
         Msg::Warning("Non connected boundary!");
       }
       else{
+        // Preserve orientation of the mesh
+        // Algo: Take first edge ; find "it" in the sorted vertices and check order; reverse if necessary
+        {
+          //First edge (and element) of the boundary
+          std::set<std::pair<MEdge, MElement*>, Less_EdgeEle>::iterator it2 = boundaryEdges.begin();
+          //Loop on every sorted and consecutive nodes
+          for(int j = 0; j < nodes[0].size()-1; j++){
+          //Find the vertex that is the starting point of the edge it2->first
+            if(nodes[0][j]->getNum() == it2->first.getVertex(0)->getNum())
+            {
+              //Check that next vertex is also the end-point of the edge
+              if(nodes[0][j+1]->getNum() != it2->first.getVertex(1)->getNum())
+              {
+                std::reverse(nodes[0].begin(), nodes[0].end());
+              }
+              break;
+            }
+          }
+        }
         printf("sorted nodes:\n");
-        // FIXME handle last elements
+        // Handle last elements
+        nodes[0].push_back(nodes[0][0]);
+        //Compute angle at each point (mod 2pi)
         for(std::size_t i = 0; i < nodes[0].size() - 2; i++) {
           SPoint3 p1 = nodes[0][i]->point();
           SPoint3 p2 = nodes[0][i + 1]->point();
@@ -110,7 +116,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
           SVector3 v1(p2, p1);
           SVector3 v2(p2, p3);
           double a = signedAngle(v1, v2, normal);
-          printf("angle = %g\n", a);
+          printf("point = %d, angle = %g\n", nodes[0][i+1]->getNum() , a);
 
           data->SP.push_back(p2.x());
           data->SP.push_back(p2.y());
