@@ -110,6 +110,7 @@ namespace BoundaryLayerCurver {
     void _computeDeltas(fullMatrix<double> &delta0,
                         fullMatrix<double> &delta1,
                         fullMatrix<double> &deltaN) const;
+    void _linearize(const fullMatrix<double> &, fullMatrix<double> &);
   };
 
   class Column2DBL {

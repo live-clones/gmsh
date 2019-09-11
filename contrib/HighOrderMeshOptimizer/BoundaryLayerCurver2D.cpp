@@ -719,6 +719,38 @@ namespace BoundaryLayerCurver {
     deltaN.add(xNlinear, -1);
   }
 
+  template<class T>
+  void PositionerInternal<T>::_linearize(const fullMatrix<double> &curv,
+                                         fullMatrix<double> &lin)
+  {
+    int N = curv.size1();
+    lin.resize(N, curv.size2(), true);
+    lin.copy(curv, 0, _numBoundaryVert, 0, 3, 0, 0);
+    if(_type == TYPE_LIN) {
+      lin.copy(curv, 0, 2, 0, 3, 0, 0);
+      for(int i = 2; i < N; ++i) {
+        double fact = ((double)i - 1) / (N - 1);
+        for(int j = 0; j < 3; ++j)
+          lin(i, j) = (1 - fact) * curv(0, j) + fact * curv(1, j);
+      }
+      return;
+    }
+    const fullMatrix<double> *placement;
+    if(_type == TYPE_TRI)
+      placement = InnerVertPlacementMatrices::triangle(_polynomialOrder, false);
+    else
+      placement = InnerVertPlacementMatrices::quadrangle(_polynomialOrder, false);
+
+    for(std::size_t i = _numBoundaryVert; i < N; ++i) {
+      for(int j = 0; j < placement->size2(); ++j) {
+        const double &coeff = (*placement)(i - _numBoundaryVert, j);
+        lin(i, 0) += coeff * lin(j, 0);
+        lin(i, 1) += coeff * lin(j, 1);
+        lin(i, 2) += coeff * lin(j, 2);
+      }
+    }
+  }
+
   namespace InteriorEdgeCurver {
     static std::map<std::pair<int, int>, TFIData *> tfiData;
 
