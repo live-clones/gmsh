@@ -95,7 +95,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
           //First edge (and element) of the boundary
           std::set<std::pair<MEdge, MElement*>, Less_EdgeEle>::iterator it2 = boundaryEdges.begin();
           //Loop on every sorted and consecutive nodes
-          for(int j = 0; j < nodes[0].size()-1; j++){
+          for(int j = 0; j < static_cast<int>(nodes[0].size())-1; j++){
           //Find the vertex that is the starting point of the edge it2->first
             if(nodes[0][j]->getNum() == it2->first.getVertex(0)->getNum())
             {
