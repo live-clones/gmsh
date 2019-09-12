@@ -762,14 +762,24 @@ namespace BoundaryLayerCurver {
 
     TFIData *_constructTFIData(int typeElement, int order)
     {
+      // This method constructs T0 and T1.
+      // T0 converts the order-n Lagrange
+      // coeffs of f(xi) into the order-n Lagrange coeffs of (1-xi)*f(xi).
+      // Since we do not increase the order of the Lagrange basis, we have to
+      // "forget" the higher term with the constraint that the extremities must
+      // not change. In other words, we have to project (1-xi)*f(xi) into
+      // the order-n basis.
+      // To do so, we transform the order-n+1 Lagrange coeff of (1-xi)*f(xi)
+      // into the constrained Legendre basis, set the last coeff to zero and
+      // then go back to the order-n Lagrange coeff.
       TFIData *data = new TFIData;
       int nbDof = order + 1;
 
-      fullMatrix<double> Mh; // lag coeff p n -> lag coeff p (n+1)
-      fullMatrix<double> M0; // lag coeff p (n+1) c -> (1-xi) * c
-      fullMatrix<double> M1; // lag coeff p (n+1) c ->    xi  * c
-      fullMatrix<double> Ml; // lag coeff p (n+1) -> leg coeff p n
-      fullMatrix<double> Me; // leg coeff p n -> lag coeff p n
+      fullMatrix<double> Mh; // lagCoeff p_n -> lagCoeff p_(n+1)
+      fullMatrix<double> M0; // c (= lagCoeff p_(n+1)) -> (1-xi) * c
+      fullMatrix<double> M1; // c (= lagCoeff p_(n+1)) ->    xi  * c
+      fullMatrix<double> Ml; // lagCoeff p_(n+1) -> lEgCoeff p_n
+      fullMatrix<double> Me; // lEgCoeff p_n -> lagCoeff p_n
 
       if(typeElement == TYPE_LIN) {
         int tagLine = ElementType::getType(TYPE_LIN, order);
