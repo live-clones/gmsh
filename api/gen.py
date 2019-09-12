@@ -644,7 +644,7 @@ doc = '''Remove all duplicate entities (different entities at the same geometric
 occ.add('removeAllDuplicates',doc,None)
 
 doc = '''Apply various healing procedures to the entities `dimTags' (or to all the entities in the model if `dimTags' is empty). Return the healed entities in `outDimTags'. Available healing options are listed in the Gmsh reference manual.'''
-occ.add('healShapes',doc,None,ovectorpair('outDimTags'),ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"),idouble('tolerance','1e-8'),ibool('fixDegenerated','true','True'),ibool('fixSmallEdges','true','True'),ibool('fixSmallFaces','true','True'),ibool('sewFaces','true','True'))
+occ.add('healShapes',doc,None,ovectorpair('outDimTags'),ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"),idouble('tolerance','1e-8'),ibool('fixDegenerated','true','True'),ibool('fixSmallEdges','true','True'),ibool('fixSmallFaces','true','True'),ibool('sewFaces','true','True'),ibool('makeSolids','true','True'))
 
 doc = '''Import BREP, STEP or IGES shapes from the file `fileName'. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
 occ.add('importShapes',doc,None,istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'),istring('format','""'))

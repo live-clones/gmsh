@@ -3321,7 +3321,8 @@ bool OCC_Internals::importShapes(const std::string &fileName,
              CTX::instance()->geom.occFixDegenerated,
              CTX::instance()->geom.occFixSmallEdges,
              CTX::instance()->geom.occFixSmallFaces,
-             CTX::instance()->geom.occSewFaces, false,
+             CTX::instance()->geom.occSewFaces,
+             CTX::instance()->geom.occMakeSolids,
              CTX::instance()->geom.occScaling);
 
   _multiBind(result, -1, outDimTags, highestDimOnly, true);
@@ -4123,17 +4124,13 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
         sfs->SetMaxTolerance(tolerance);
         sfs->Perform();
         myshape = sfs->Shape();
-
         for(exp0.Init(myshape, TopAbs_SOLID); exp0.More(); exp0.Next()) {
           TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
           TopoDS_Solid newsolid = solid;
           BRepLib::OrientClosedSolid(newsolid);
           Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
-          // rebuild->Apply(myshape);
           rebuild->Replace(solid, newsolid);
-          TopoDS_Shape newshape =
-            rebuild->Apply(myshape, TopAbs_COMPSOLID); //, 1);
-          // TopoDS_Shape newshape = rebuild->Apply(myshape);
+          TopoDS_Shape newshape = rebuild->Apply(myshape, TopAbs_COMPSOLID);
           myshape = newshape;
         }
       }
@@ -4180,7 +4177,7 @@ bool OCC_Internals::healShapes(const std::vector<std::pair<int, int> > &inDimTag
                                std::vector<std::pair<int, int> > &outDimTags,
                                double tolerance, bool fixDegenerated,
                                bool fixSmallEdges, bool fixSmallFaces,
-                               bool sewFaces)
+                               bool sewFaces, bool makeSolids)
 {
   BRep_Builder b;
   TopoDS_Compound c;
@@ -4224,7 +4221,7 @@ bool OCC_Internals::healShapes(const std::vector<std::pair<int, int> > &inDimTag
   }
 
   _healShape(c, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces,
-             sewFaces, false, 1.0);
+             sewFaces, makeSolids, 1.0);
   _multiBind(c, -1, outDimTags, false, true);
   return true;
 }

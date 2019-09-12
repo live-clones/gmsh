@@ -166,6 +166,11 @@ Import labels and colors when importing STEP models with the OpenCASCADE kernel@
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCMakeSolids
+Fix shells and make solids when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCParallel
 Use multi-threaded OpenCASCADE boolean operators@*
 Default value: @code{0}@*

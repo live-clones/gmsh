@@ -1738,7 +1738,8 @@ namespace gmsh { // Top-level functions
                                const bool fixDegenerated = true,
                                const bool fixSmallEdges = true,
                                const bool fixSmallFaces = true,
-                               const bool sewFaces = true);
+                               const bool sewFaces = true,
+                               const bool makeSolids = true);
 
       // Import BREP, STEP or IGES shapes from the file `fileName'. The imported
       // entities are returned in `outDimTags'. If the optional argument

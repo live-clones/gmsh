@@ -456,54 +456,6 @@ std::string Msg::PrintResources(bool printDate, bool printWallTime,
   return str;
 }
 
-void Msg::Fatal(const char *fmt, ...)
-{
-  _errorCount++;
-  _atLeastOneErrorInRun = 1;
-
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
-
-  if(_logFile) fprintf(_logFile, "Fatal: %s\n", str);
-  if(_callback) (*_callback)("Fatal", str);
-  if(_client) _client->Error(str);
-
-#if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    FlGui::check();
-    std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
-    FlGui::instance()->addMessage(tmp.c_str());
-    if(_firstError.empty()) _firstError = str;
-    FlGui::instance()->setLastStatus
-      (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
-    FlGui::instance()->saveMessages
-      ((CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
-    fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
-             "The error messages have been saved in the following file:\n\n%s",
-             (CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
-  }
-#endif
-
-  if(CTX::instance()->terminal){
-    const char *c0 = "", *c1 = "";
-    if(!streamIsFile(stderr) && streamIsVT100(stderr)){
-      c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
-    }
-    if(_commSize > 1)
-      fprintf(stderr, "%sFatal   : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
-    else
-      fprintf(stderr, "%sFatal   : %s%s\n", c0, str, c1);
-    fflush(stderr);
-  }
-
-  // only exit if a callback is not provided
-  if(!_callback) Exit(1);
-}
-
 void Msg::Error(const char *fmt, ...)
 {
   _errorCount++;

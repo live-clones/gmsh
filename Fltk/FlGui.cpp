@@ -362,34 +362,6 @@ static void gamepad_handler(void *data)
   }
 }
 
-static void error_handler(const char *fmt, ...)
-{
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-  if(!strcmp(str, "Insufficient GL support")) { // this should be fatal
-    CTX::instance()->terminal = 1;
-    Msg::Error("%s (FLTK internal error)", str);
-    Msg::Fatal("Your system does not seem to support OpenGL - aborting");
-  }
-  else {
-    Msg::Error("%s (FLTK internal error)", str);
-  }
-}
-
-static void fatal_error_handler(const char *fmt, ...)
-{
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-  CTX::instance()->terminal = 1;
-  Msg::Fatal("%s (FLTK internal error)", str);
-}
-
 void FlGui::applyColorScheme(bool redraw)
 {
   static int first = true;
@@ -450,10 +422,45 @@ void FlGui::applyColorScheme(bool redraw)
   }
 }
 
-FlGui::FlGui(int argc, char **argv)
+static void default_error_handler(const char *fmt, ...)
 {
-  Fl::error = error_handler;
-  Fl::fatal = fatal_error_handler;
+  char str[5000];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+  if(!strcmp(str, "Insufficient GL support")) { // this should be fatal
+    CTX::instance()->terminal = 1;
+    Msg::Error("%s (FLTK internal error)", str);
+    Msg::Error("Your system does not seem to support OpenGL - aborting");
+    Msg::Exit(1);
+  }
+  else {
+    Msg::Error("%s (FLTK internal error)", str);
+  }
+}
+
+static void default_fatal_error_handler(const char *fmt, ...)
+{
+  char str[5000];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+  Msg::Error("%s (FLTK internal error)", str);
+  Msg::Exit(1);
+}
+
+FlGui::FlGui(int argc, char **argv, void (*error_handler)(const char *fmt, ...))
+{
+  if(error_handler) {
+    Fl::error = error_handler;
+    Fl::fatal = error_handler;
+  }
+  else {
+    Fl::error = default_error_handler;
+    Fl::fatal = default_fatal_error_handler;
+  }
 
 #if defined(__APPLE__)
   // the defaults use %@, which leads to (lowercase) gmsh
@@ -633,10 +640,11 @@ FlGui::FlGui(int argc, char **argv)
 
 bool FlGui::available() { return _instance != 0; }
 
-FlGui *FlGui::instance(int argc, char **argv)
+FlGui *FlGui::instance(int argc, char **argv,
+                       void (*error_handler)(const char *fmt, ...))
 {
   if(!_instance) {
-    _instance = new FlGui(argc, argv);
+    _instance = new FlGui(argc, argv, error_handler);
     // set all options in the new GUI
     InitOptionsGUI(0);
     // say welcome!

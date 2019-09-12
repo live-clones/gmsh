@@ -4729,7 +4729,7 @@ double opt_geometry_light_two_side(OPT_ARGS_NUM)
     CTX::instance()->geom.lightTwoSide = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->geo.butt[14]->value
+    FlGui::instance()->options->geo.butt[15]->value
       (CTX::instance()->geom.lightTwoSide);
 #endif
   return CTX::instance()->geom.lightTwoSide;
@@ -4800,6 +4800,20 @@ double opt_geometry_occ_sew_faces(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->geom.occSewFaces;
+}
+
+double opt_geometry_occ_make_solids(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->geom.occMakeSolids = val ? 1 : 0;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->geo.butt[14]->value
+      (CTX::instance()->geom.occMakeSolids);
+  }
+#endif
+  return CTX::instance()->geom.occMakeSolids;
 }
 
 double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
