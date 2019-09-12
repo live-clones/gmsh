@@ -579,7 +579,7 @@ public:
     if(i >= _r || i < 0 || j >= _c || j < 0) {
       Msg::Error("Invalid index to access fullMatrix : %i %i (size = %i %i)", i,
                  j, _r, _c);
-      return 0;
+      return _data[0];
     }
 #endif
     return _data[i + _r * j];
