@@ -70,7 +70,7 @@ Copyright @value{COPYRIGHT}
 
 @subtitle The documentation for Gmsh @value{GMSH-VERSION}
 @subtitle A finite element mesh generator with built-in pre- and post-processing facilities
-@subtitle
+@subtitle @w{ }
 @subtitle @today{}
 
 @author Christophe Geuzaine

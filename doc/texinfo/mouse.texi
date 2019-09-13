@@ -2,31 +2,38 @@
 
 @table @kbd
 @item Move
-- Highlight the entity under the mouse pointer and display its properties
-@item 
-- Resize a lasso zoom or a lasso (un)selection
+@itemize -
+@item Highlight the entity under the mouse pointer and display its properties
+@item Resize a lasso zoom or a lasso (un)selection
+@end itemize
 @item Left button
-- Rotate
-@item 
-- Select an entity
-@item 
-- Accept a lasso zoom or a lasso selection
+@itemize -
+@item Rotate
+@item Select an entity
+@item Accept a lasso zoom or a lasso selection
+@end itemize
 @item Ctrl+Left button
-Start a lasso zoom or a lasso (un)selection
+@itemize -
+@item Start a lasso zoom or a lasso (un)selection
+@end itemize
 @item Middle button
-- Zoom
-@item 
-- Unselect an entity
-@item 
-- Accept a lasso zoom or a lasso unselection
+@itemize -
+@item Zoom
+@item Unselect an entity
+@item Accept a lasso zoom or a lasso unselection
+@end itemize
 @item Ctrl+Middle button
-Orthogonalize display
+@itemize -
+@item Orthogonalize display
+@end itemize
 @item Right button
-- Pan
-@item 
-- Cancel a lasso zoom or a lasso (un)selection
-@item 
-- Pop-up menu on post-processing view button
+@itemize -
+@item Pan
+@item Cancel a lasso zoom or a lasso (un)selection
+@item Pop-up menu on post-processing view button
+@end itemize
 @item Ctrl+Right button
-Reset to default viewpoint
+@itemize -
+@item Reset to default viewpoint
+@end itemize
 @end table
