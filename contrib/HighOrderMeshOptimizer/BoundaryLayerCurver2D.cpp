@@ -762,23 +762,41 @@ namespace BoundaryLayerCurver {
 
     TFIData *_constructTFIData(int typeElement, int order)
     {
-      // This method constructs T0 and T1.
-      // T0 converts the order-n Lagrange
-      // coeffs of f(xi) into the order-n Lagrange coeffs of (1-xi)*f(xi).
-      // Since we do not increase the order of the Lagrange basis, we have to
-      // "forget" the higher term with the constraint that the extremities must
-      // not change. In other words, we have to project (1-xi)*f(xi) into
-      // the order-n basis.
-      // To do so, we transform the order-n+1 Lagrange coeff of (1-xi)*f(xi)
-      // into the constrained Legendre basis, set the last coeff to zero and
-      // then go back to the order-n Lagrange coeff.
+      // This method constructs some transformation matrices for the problem
+      // of curving boundary layers (BL). What the are is explained in the
+      // following.
+      // Let XI be the coordinates: (xi) for a 1D element and (xi, eta) for a
+      // 2D element.
+      // Suppose a function f(XI) and the 'n' order-1 Lagrange functions
+      // N_i(XI), i=0,...,n-1 where n is the number of corner (2 for a line,
+      // 3 for a triangle and 4 for a quadrangle).
+      // Let F_i be the functions equal to f * N_i.
+      // If 'f' is of order p, then the F_i are of order p+1.
+      // Now, consider the functions f_i that are the projections of F_i into the
+      // space of order-p functions.
+      // The matrices computed here convert the Lagrange coefficients
+      // of f into the Lagrange coefficients of f_i.
+      // We choose the projection such that it minimizes the error between
+      // F_i and f_i in the least square sense. But with some constraints that
+      // are explained now.
+      // For the problem of curving BL, 'f' is not a general function. It has
+      // the property to be equal to zero on the boundary (the 2 extremity
+      // points for a line and the 3 or 4 border edges for a 2D element).
+      // The difficulty is to reduce the order of the F_i while keeping the
+      // property. To handle this, we transform the Lagrange coefficients
+      // into Legendre coefficients. In this basis, the property is fullfilled
+      // if some easy constraints on the coefficients are fulfilled and
+      // reducing the order con sists in setting the higher coefficients to zero.
+      // For a line, the constraints are:
+      //   c_0 + c_2 + c_4 + ... = 0
+      //   c_1 + c_3 + ... = 0
       TFIData *data = new TFIData;
       int nbDof = order + 1;
 
       fullMatrix<double> Mh; // lagCoeff p_n -> lagCoeff p_(n+1)
       fullMatrix<double> M0; // c (= lagCoeff p_(n+1)) -> (1-xi) * c
       fullMatrix<double> M1; // c (= lagCoeff p_(n+1)) ->    xi  * c
-      fullMatrix<double> Ml; // lagCoeff p_(n+1) -> lEgCoeff p_n
+      fullMatrix<double> Ml; // lagCoeff p_(n+1) -> lEgCoeff p_((n+1)-1)
       fullMatrix<double> Me; // lEgCoeff p_n -> lagCoeff p_n
 
       if(typeElement == TYPE_LIN) {
