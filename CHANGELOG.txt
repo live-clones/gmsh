@@ -3,8 +3,8 @@ Delaunay; improved high-order periodic meshing; improved 2D boolean unions;
 added API support for mesh compounds; small fixes.
 
 * Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
-  like all other mesh optimizers); new arguments to mesh/optimize and
-  mesh/getElementProperties.
+  like all other mesh optimizers); new arguments to mesh/optimize,
+  mesh/getElementProperties and occ/healShapes.
 
 4.4.1 (July 25, 2019): small improvements (transfinite with degenerate curves,
 renumbering for some mesh formats, empty MSH file sections, tunable accuracy of

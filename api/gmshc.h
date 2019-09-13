@@ -1872,6 +1872,7 @@ GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n,
                                      const int fixSmallEdges,
                                      const int fixSmallFaces,
                                      const int sewFaces,
+                                     const int makeSolids,
                                      int * ierr);
 
 /* Import BREP, STEP or IGES shapes from the file `fileName'. The imported

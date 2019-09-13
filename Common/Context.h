@@ -50,6 +50,7 @@ struct contextMeshOptions {
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
+  double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportOrder, cgnsConstructTopology;
@@ -83,7 +84,7 @@ struct contextGeometryOptions {
   int autoCoherence;
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occParallel, occBooleanPreserveNumbering;
+  int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occDisableSTL, occImportLabels, occUnionUnify;
   double occScaling;
   std::string occTargetUnit;

@@ -4453,14 +4453,15 @@ GMSH_API void gmsh::model::occ::healShapes(vectorpair &outDimTags,
                                            const bool fixDegenerated,
                                            const bool fixSmallEdges,
                                            const bool fixSmallFaces,
-                                           const bool sewFaces)
+                                           const bool sewFaces,
+                                           const bool makeSolids)
 {
   if(!_isInitialized()) { throw -1; }
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->healShapes
      (inDimTags, outDimTags, tolerance, fixDegenerated, fixSmallEdges,
-      fixSmallFaces, sewFaces)) {
+      fixSmallFaces, sewFaces, makeSolids)) {
     throw 1;
   }
 }
@@ -5089,11 +5090,22 @@ GMSH_API void gmsh::graphics::draw()
 
 // gmsh::fltk
 
+static void error_handler(const char *fmt, ...)
+{
+  char str[5000];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+  Msg::Error("%s (FLTK internal error)", str);
+  throw -1;
+}
+
 GMSH_API void gmsh::fltk::initialize()
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_FLTK)
-  FlGui::instance(_argc, _argv);
+  FlGui::instance(_argc, _argv, error_handler);
   FlGui::setFinishedProcessingCommandLine();
   FlGui::check(true);
 #else
@@ -5106,7 +5118,7 @@ GMSH_API void gmsh::fltk::wait(const double time)
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
   if(time >= 0)
     FlGui::wait(time, true);
   else
@@ -5143,7 +5155,7 @@ GMSH_API void gmsh::fltk::update()
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
   FlGui::instance()->updateViews(true, true);
 #else
   Msg::Error("Fltk not available");
@@ -5166,7 +5178,7 @@ GMSH_API void gmsh::fltk::run()
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
   FlGui::instance()->run(); // this calls draw() once
 #else
   Msg::Error("Fltk not available");
@@ -5193,7 +5205,7 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
   if(!_isInitialized()) { throw - 1; }
   dimTags.clear();
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
   char ret = 0;
   switch(dim) {
   case 0: ret = FlGui::instance()->selectEntity(ENT_POINT); break;
@@ -5225,7 +5237,7 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   if(!_isInitialized()) { throw - 1; }
   elementTags.clear();
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
   int old = CTX::instance()->pickElements;
   CTX::instance()->pickElements = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -5244,7 +5256,7 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
   if(!_isInitialized()) { throw - 1; }
   viewTags.clear();
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
   for(std::size_t i = 0; i < FlGui::instance()->selectedViews.size(); i++)
     viewTags.push_back(FlGui::instance()->selectedViews[i]->getTag());

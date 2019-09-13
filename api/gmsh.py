@@ -4501,7 +4501,7 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True):
+        def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True):
             """
             Apply various healing procedures to the entities `dimTags' (or to all the
             entities in the model if `dimTags' is empty). Return the healed entities in
@@ -4521,6 +4521,7 @@ class model:
                 c_int(bool(fixSmallEdges)),
                 c_int(bool(fixSmallFaces)),
                 c_int(bool(sewFaces)),
+                c_int(bool(makeSolids)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

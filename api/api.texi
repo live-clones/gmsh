@@ -2936,7 +2936,7 @@ manual.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{tolerance}, @code{fixDegenerated}, @code{fixSmallEdges}, @code{fixSmallFaces}, @code{sewFaces}
+@code{dimTags}, @code{tolerance}, @code{fixDegenerated}, @code{fixSmallEdges}, @code{fixSmallFaces}, @code{sewFaces}, @code{makeSolids}
 @item Output:
 @code{outDimTags}
 @item Return:
