@@ -53,7 +53,7 @@ def create_geometry():
 def fem_solve():
     mshNodes = np.array(model.mesh.getNodes()[0])
     numMeshNodes = len(mshNodes)
-    maxNodeTag = np.amax(mshNodes)
+    maxNodeTag = int(np.amax(mshNodes))
     debug('numMeshNodes =', numMeshNodes, ' maxNodeTag =', maxNodeTag)
 
     # typNodes[tag] = {0:does not exist, 1:internal node, 2:boundary node}
