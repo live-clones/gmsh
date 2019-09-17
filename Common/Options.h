@@ -773,6 +773,9 @@ double opt_print_x3d_compatibility(OPT_ARGS_NUM);
 double opt_print_x3d_transparency(OPT_ARGS_NUM);
 double opt_print_x3d_remove_inner_borders(OPT_ARGS_NUM);
 double opt_print_x3d_precision(OPT_ARGS_NUM);
+double opt_print_x3d_surfaces(OPT_ARGS_NUM);
+double opt_print_x3d_edges(OPT_ARGS_NUM);
+double opt_print_x3d_vertices(OPT_ARGS_NUM);
 
 // COLORS
 

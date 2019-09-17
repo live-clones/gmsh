@@ -19,23 +19,15 @@
 #include "StringUtils.h"
 #include "Context.h"
 
-static void writeX3Dfaces(FILE *fp, std::vector<GFace *> &faces,
+static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
                           bool useIndexedSet, double scalingFactor,
                           const std::string &name)
 {
-  bool useGeoX3D = false;
   unsigned int nfacets = 0;
   for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
       ++it) {
-    nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
-  }
-  if(!nfacets) { // use CAD X3D if there is no mesh
-    useGeoX3D = true;
-    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-        ++it) {
-      (*it)->buildSTLTriangulation();
-      nfacets += (*it)->stl_triangles.size() / 3;
-    }
+    (*it)->buildSTLTriangulation();
+    nfacets += (*it)->stl_triangles.size() / 3;
   }
 
   fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
@@ -50,7 +42,7 @@ static void writeX3Dfaces(FILE *fp, std::vector<GFace *> &faces,
             name.c_str());
     for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
         ++it) {
-      if(useGeoX3D && (*it)->stl_triangles.size()) {
+      if((*it)->stl_triangles.size()) {
         for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i++) {
           fprintf(fp, "%d ", (*it)->stl_triangles[i]);
         }
@@ -62,7 +54,7 @@ static void writeX3Dfaces(FILE *fp, std::vector<GFace *> &faces,
     fprintf(fp, "      <Coordinate point=\"\n");
     for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
         ++it) {
-      if(useGeoX3D && (*it)->stl_vertices_uv.size()) {
+      if((*it)->stl_vertices_uv.size()) {
         for(std::size_t i = 0; i < (*it)->stl_vertices_uv.size(); i++) {
           SPoint2 &p((*it)->stl_vertices_uv[i]);
           GPoint gp = (*it)->point(p);
@@ -80,7 +72,7 @@ static void writeX3Dfaces(FILE *fp, std::vector<GFace *> &faces,
     fprintf(fp, "      <Normal vector=\"\n");
     for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
         ++it) {
-      if(useGeoX3D && (*it)->stl_normals.size()) {
+      if((*it)->stl_normals.size()) {
         for(std::size_t i = 0; i < (*it)->stl_normals.size(); i++) {
           SVector3 &n((*it)->stl_normals[i]);
           fprintf(fp, "%g %g %g\n", n.x(), n.y(), n.z());
@@ -102,7 +94,7 @@ static void writeX3Dfaces(FILE *fp, std::vector<GFace *> &faces,
     fprintf(fp, "      <Coordinate point=\"\n");
     for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
         ++it) {
-      if(useGeoX3D && (*it)->stl_vertices_uv.size()) {
+      if((*it)->stl_vertices_uv.size()) {
         for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i += 3) {
           SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
           SPoint2 &p2((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 1]]);
@@ -129,7 +121,7 @@ static void writeX3Dfaces(FILE *fp, std::vector<GFace *> &faces,
     fprintf(fp, "      <Normal vector=\"\n");
     for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
         ++it) {
-      if(useGeoX3D && (*it)->stl_normals.size()) {
+      if((*it)->stl_normals.size()) {
         for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i++) {
           SVector3 &n((*it)->stl_normals[(*it)->stl_triangles[i]]);
           fprintf(fp, "%g %g %g\n", n.x(), n.y(), n.z());
@@ -147,12 +139,52 @@ static void writeX3Dfaces(FILE *fp, std::vector<GFace *> &faces,
   fprintf(fp, "    </Shape>\n");
 }
 
-int GModel::writeX3D(const std::string &name, bool saveAll,
-                     double scalingFactor, int oneSolidPerSurface)
+static void writeX3dEdges(FILE *fp, std::vector<GEdge *> &edges,
+                          double scalingFactor, const std::string &name)
 {
-  FILE *fp = Fopen(name.c_str(), "w");
+  for(std::vector<GEdge *>::iterator it = edges.begin(); it != edges.end();
+      ++it) {
+    if((*it)->stl_vertices_xyz.size()) {
+      fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
+      fprintf(fp,
+              "     <Appearance><Material "
+              "DEF=\"mat%s\"></Material><LineProperties "
+              "id=\"prop%s\"></LineProperties></Appearance>\n",
+              name.c_str(), name.c_str());
+      fprintf(fp, "     <LineSet vertexCount=\"%ld\">\n",
+              (*it)->stl_vertices_xyz.size());
+      fprintf(fp, "      <Coordinate point=\"\n");
+      for(std::size_t i = 0; i < (*it)->stl_vertices_xyz.size(); i++) {
+        SPoint3 &p((*it)->stl_vertices_xyz[i]);
+
+        fprintf(fp, "%g %g %g\n", p.x() * scalingFactor, p.y() * scalingFactor,
+                p.z() * scalingFactor);
+      }
+      fprintf(fp, "\"/>\n");
+      fprintf(fp, "     </LineSet>\n");
+      fprintf(fp, "    </Shape>\n");
+    }
+    else {
+      Msg::Warning("X3D not implemented yet without STL");
+    }
+  }
+}
+
+int GModel::writeX3D(const std::string &name, bool saveAll,
+                     double scalingFactor, int x3dsurfaces, int x3dedges,
+                     int x3dvertices)
+{
+  FILE *fp;
+
+  if(x3dsurfaces == 0 && x3dedges == 0 && x3dvertices == 0) {
+    Msg::Info("no surfaces, edges or vertices to write into '%s'",
+              name.c_str());
+    return 0;
+  }
+
+  fp = Fopen(name.c_str(), "w");
   if(!fp) {
-    Msg::Error("Unable to open file '%s'", name.c_str());
+    Msg::Warning("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -167,94 +199,110 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
   fprintf(fp, "  </head>\n");
   fprintf(fp, "  <Scene>\n");
 
-  fprintf(fp, "   <Group DEF=\"faces\">\n");
-
   if(noPhysicalGroups()) saveAll = true;
 
-  // oneSolidPerSurface is taken as a mask, besides 0, 1 & 2 like
-  // the case for STLs:
-  //  * if it has the 4th bit on (i.e. decimal 16) edges are included
-  //  * if it has the 5th bit on (i.e. decimal 32) vertices are included
-  // so oneSolidPerSurface = 1+16+32 would include everything
-  
-  if(oneSolidPerSurface % 8 == 1) { // one x3d node per surface
-    for(fiter it = firstFace(); it != lastFace(); ++it) {
-      if(saveAll || (*it)->physicals.size()) {
-        std::vector<GFace *> faces(1, *it);
-        std::string name = getElementaryName(2, (*it)->tag());
+  if(x3dsurfaces != 0) {
+    fprintf(fp, "   <Group DEF=\"faces\">\n");
+    if(x3dsurfaces == 1) {
+      // all surfaces in a single x3d object
+      std::vector<GFace *> faces;
+      for(fiter it = firstFace(); it != lastFace(); ++it) {
+        if(saveAll || (*it)->physicals.size()) { faces.push_back(*it); }
+      }
+      std::string name = "face";
+      writeX3dFaces(fp, faces, false, scalingFactor, name);
+    }
+    else if(x3dsurfaces == 2) {
+      // one x3d object for each physical surface
+      for(fiter it = firstFace(); it != lastFace(); ++it) {
+        if(saveAll || (*it)->physicals.size()) {
+          std::vector<GFace *> faces(1, *it);
+          std::string name = getElementaryName(2, (*it)->tag());
+          if(name.empty()) {
+            std::ostringstream s;
+            s << "face" << (*it)->tag();
+            name = s.str();
+          }
+          writeX3dFaces(fp, faces, true, scalingFactor, name);
+        }
+      }
+    }
+    else if(x3dsurfaces == 3) {
+      // one x3d object per physical surface
+      std::map<int, std::vector<GEntity *> > phys;
+      getPhysicalGroups(2, phys);
+      for(std::map<int, std::vector<GEntity *> >::iterator it = phys.begin();
+          it != phys.end(); it++) {
+        std::vector<GFace *> faces;
+        for(std::size_t i = 0; i < it->second.size(); i++) {
+          faces.push_back(static_cast<GFace *>(it->second[i]));
+        }
+        std::string name = getPhysicalName(2, it->first);
         if(name.empty()) {
           std::ostringstream s;
-          s << "face" << (*it)->tag();
+          s << "physicalsurface" << it->first;
           name = s.str();
         }
-        writeX3Dfaces(fp, faces, true, scalingFactor, name);
+        writeX3dFaces(fp, faces, false, scalingFactor, name);
       }
     }
-  }
-  else if(oneSolidPerSurface % 8 == 2) { // one x3d node  per physical surface
-    std::map<int, std::vector<GEntity *> > phys;
-    getPhysicalGroups(2, phys);
-    for(std::map<int, std::vector<GEntity *> >::iterator it = phys.begin();
-        it != phys.end(); it++) {
-      std::vector<GFace *> faces;
-      for(std::size_t i = 0; i < it->second.size(); i++) {
-        faces.push_back(static_cast<GFace *>(it->second[i]));
-      }
-      std::string name = getPhysicalName(2, it->first);
-      if(name.empty()) {
-        std::ostringstream s;
-        s << "physical" << it->first;
-        name = s.str();
-      }
-      writeX3Dfaces(fp, faces, false, scalingFactor, name);
-    }
-  }
-  else { // everything into one single x3d node
-    std::vector<GFace *> faces;
-    for(fiter it = firstFace(); it != lastFace(); ++it) {
-      if(saveAll || (*it)->physicals.size()) { faces.push_back(*it); }
-    }
-    std::string name = "f";
-    writeX3Dfaces(fp, faces, false, scalingFactor, name);
-  }
 
-  fprintf(fp, "   </Group>\n");
+    fprintf(fp, "   </Group>\n");
+  }
 
   // edges
-  if(oneSolidPerSurface & 16) {
+  if(x3dedges != 0) {
     fprintf(fp, "   <Group DEF=\"edges\">\n");
-    
-    for(eiter it = edges.begin(); it != edges.end(); ++it) {
-      if((*it)->stl_vertices_xyz.size()) {
-        fprintf(fp, "    <Shape DEF=\"edge%d\">\n", (*it)->tag());
-        fprintf(fp,
-                "     <Appearance><Material "
-                "DEF=\"matedge%d\"></Material><LineProperties "
-                "id=\"propedge%d\"></LineProperties></Appearance>\n",
-                (*it)->tag(), (*it)->tag());
-        fprintf(fp, "     <LineSet vertexCount=\"%ld\">\n", (*it)->stl_vertices_xyz.size());
-        fprintf(fp, "      <Coordinate point=\"\n");
-        for(std::size_t i = 0; i < (*it)->stl_vertices_xyz.size(); i++) {
-          SPoint3 &p((*it)->stl_vertices_xyz[i]);
-
-          fprintf(fp, "%g %g %g\n", p.x() * scalingFactor,
-                  p.y() * scalingFactor, p.z() * scalingFactor);
-        }
-        fprintf(fp, "\"/>\n");
-        fprintf(fp, "     </LineSet>\n");
-        fprintf(fp, "    </Shape>\n");
+    if(x3dedges == 1) {
+      // all edges in a single x3d object
+      std::vector<GEdge *> edges;
+      for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+        if(saveAll || (*it)->physicals.size()) { edges.push_back(*it); }
       }
-      else {
-        Msg::Warning("X3D not implemented yet without STL");
+      std::string name = "edge";
+      writeX3dEdges(fp, edges, scalingFactor, name);
+    }
+    else if(x3dedges == 2) {
+      // one x3d object for each physical edge
+      for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+        if(saveAll || (*it)->physicals.size()) {
+          std::vector<GEdge *> edges(1, *it);
+          std::string name = getElementaryName(1, (*it)->tag());
+          if(name.empty()) {
+            std::ostringstream s;
+            s << "edge" << (*it)->tag();
+            name = s.str();
+          }
+          writeX3dEdges(fp, edges, scalingFactor, name);
+        }
+      }
+    }
+    else if(x3dedges == 3) {
+      // one x3d object per physical edge
+      std::map<int, std::vector<GEntity *> > phys;
+      getPhysicalGroups(1, phys);
+      for(std::map<int, std::vector<GEntity *> >::iterator it = phys.begin();
+          it != phys.end(); it++) {
+        std::vector<GEdge *> edges;
+        for(std::size_t i = 0; i < it->second.size(); i++) {
+          edges.push_back(static_cast<GEdge *>(it->second[i]));
+        }
+        std::string name = getPhysicalName(1, it->first);
+        if(name.empty()) {
+          std::ostringstream s;
+          s << "physicaledge" << it->first;
+          name = s.str();
+        }
+        writeX3dEdges(fp, edges, scalingFactor, name);
       }
     }
     fprintf(fp, "   </Group>\n");
-      
   }
 
   // vertices
-  if(oneSolidPerSurface & 32) {
+  if(x3dvertices != 0) {
     fprintf(fp, "   <Group DEF=\"vertices\" render=\"false\">\n");
+
     for(viter it = firstVertex(); it != lastVertex(); ++it) {
       fprintf(fp, "   <Transform DEF=\"vertex%d\" translation=\"%g %g %g\">\n",
               (*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z());

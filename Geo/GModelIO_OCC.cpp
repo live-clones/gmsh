@@ -4308,41 +4308,35 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
   return true;
 }
 
-bool OCC_Internals::makeEdgeSTLFromFace(const TopoDS_Edge &c, const TopoDS_Face &s,
-        std::vector<SPoint3> *verticesXYZ) {
-    
-  TopLoc_Location aTrsf;
-  BRepMesh_IncrementalMesh aMesher(s, 1, Standard_False, 1, Standard_True);
-  Handle(Poly_Triangulation) trian = BRep_Tool::Triangulation (s, aTrsf);
+bool OCC_Internals::makeEdgeSTLFromFace(const TopoDS_Edge &c,
+                                        const TopoDS_Face &s,
+                                        std::vector<SPoint3> *verticesXYZ)
+{
+  // here we compute the vertices of a discretization of an edge c
+  // that is a boundary of the face s, which we just discretized
+  // the code below is inspired in pythonocc's tesselator.cpp
+  // that is GPLv3+ Copyright 2011 Fotios Sioutis
 
-  if (trian.IsNull()) {
-    return false;
-  }
+  TopLoc_Location aTrsf;
+  Handle(Poly_Triangulation) trian = BRep_Tool::Triangulation(s, aTrsf);
+
+  if(trian.IsNull()) { return false; }
 
   Handle(Poly_PolygonOnTriangulation) anEdgePoly =
-      BRep_Tool::PolygonOnTriangulation (c, trian, aTrsf);
+    BRep_Tool::PolygonOnTriangulation(c, trian, aTrsf);
 
-  if (anEdgePoly.IsNull()) {
-    return false;
-  }
-    
-  // get edge vertex indexes from face triangulation
-  const TColgp_Array1OfPnt& trainVerts = trian->Nodes ();
-  const TColStd_Array1OfInteger& edgeVerts = anEdgePoly->Nodes ();
+  if(anEdgePoly.IsNull()) { return false; }
 
-  if (edgeVerts.Length () < 2) {
-    return false;
-  }
+  const TColgp_Array1OfPnt &trainVerts = trian->Nodes();
+  const TColStd_Array1OfInteger &edgeVerts = anEdgePoly->Nodes();
 
-  for (int aNodeIdx = edgeVerts.Lower (); aNodeIdx <= edgeVerts.Upper (); aNodeIdx++) {
-    // node index in face triangulation
-    int aTriIndex = edgeVerts.Value (aNodeIdx);
+  if(edgeVerts.Length() < 2) { return false; }
 
-    // get node and apply location transformation to the node
-    gp_Pnt aTriNode = trainVerts.Value (aTriIndex);
-    if (!aTrsf.IsIdentity()) {
-      aTriNode.Transform (aTrsf);
-    }
+  for(int aNodeIdx = edgeVerts.Lower(); aNodeIdx <= edgeVerts.Upper();
+      aNodeIdx++) {
+    int aTriIndex = edgeVerts.Value(aNodeIdx);
+    gp_Pnt aTriNode = trainVerts.Value(aTriIndex);
+    if(!aTrsf.IsIdentity()) { aTriNode.Transform(aTrsf); }
 
     verticesXYZ->push_back(SPoint3(aTriNode.X(), aTriNode.Y(), aTriNode.Z()));
   }

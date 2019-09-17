@@ -191,6 +191,13 @@ Produce highliy compatible X3D output (no scale bar)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.X3dEdges
+Save edges in CAD X3D output (0: no, 1: yes in a single X3D object
+2: one X3D object per geometrical edge, 3: one X3D object per
+physical edge)
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.X3dPrecision
 Precision of X3D output@*
 Default value: @code{1e-09}@*
@@ -201,10 +208,23 @@ Remove inner borders in X3D output@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.X3dSurfaces
+Save surfaces in CAD X3D output (0: no, 1: yes in a single X3D object
+2: one X3D object per geometrical surface, 3: one X3D object per
+physical surface)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.X3dTransparency
 Transparency for X3D output@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
+
+@item Print.X3dVertices
+Save vertices in CAD X3D output (0: no, 1: yes)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 
 @item Print.Width
 Width of printed image; use (possibly scaled) current width if < 0)@*

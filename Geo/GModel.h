@@ -684,7 +684,7 @@ public:
   // X3D (only output from OCCT's triangulation)
   int writeX3D(const std::string &name, 
                bool saveAll = false, double scalingFactor = 1.0,
-               int oneSolidPerSurface = 0);
+               int x3dsurfaces = 1, int x3dedges = 0, int x3dvertices = 0);
 
   // PLY(2) format (ascii text format)
   int readPLY(const std::string &name);

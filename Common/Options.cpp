@@ -9462,6 +9462,27 @@ double opt_print_x3d_precision(OPT_ARGS_NUM)
   return CTX::instance()->print.x3dPrecision;
 }
 
+double opt_print_x3d_surfaces(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dSurfaces = (int)val;
+  return CTX::instance()->print.x3dSurfaces;
+}
+
+double opt_print_x3d_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dEdges = (int)val;
+  return CTX::instance()->print.x3dEdges;
+}
+
+double opt_print_x3d_vertices(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dVertices = (int)val;
+  return CTX::instance()->print.x3dVertices;
+}
+
 // Color option routines
 
 #if defined(HAVE_FLTK)

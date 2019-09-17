@@ -1851,13 +1851,23 @@ StringXNumber PrintOptions_Number[] = {
     "Print text strings?" },
 
   { F|O, "X3dCompatibility" , opt_print_x3d_compatibility, 0. ,
-    "Produce highliy compatible X3D output (no scale bar)" },
+    "Produce highly compatible X3D output (no scale bar)" },
   { F|O, "X3dPrecision" , opt_print_x3d_precision , 1.e-9 ,
     "Precision of X3D output" },
   { F|O, "X3dRemoveInnerBorders" , opt_print_x3d_remove_inner_borders , 0. ,
     "Remove inner borders in X3D output" },
   { F|O, "X3dTransparency" , opt_print_x3d_transparency , 0. ,
     "Transparency for X3D output" },
+  { F|O, "X3dSurfaces" , opt_print_x3d_surfaces, 1. ,
+    "Save surfaces in CAD X3D output (0: no, 1: yes in a single X3D object,"
+    "2: one X3D object per geometrical surface, 3: one X3D object per"
+    "physical surface). Default 1."},
+  { F|O, "X3dEdges" , opt_print_x3d_edges, 0. ,
+    "Save edges in CAD X3D output (0: no, 1: yes in a single X3D object,"
+    "2: one X3D object per geometrical edge, 3: one X3D object per"
+    "physical edge). Default 0."},
+  { F|O, "X3dVertices" , opt_print_x3d_vertices, 0. ,
+    "Save vertices in CAD X3D output (0: no, 1: yes). Default 0."},
 
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },

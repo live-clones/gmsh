@@ -335,7 +335,9 @@ void CreateOutputFile(const std::string &fileName, int format,
     GModel::current()->writeX3D
       (name, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor,
-       CTX::instance()->mesh.stlOneSolidPerSurface);
+       CTX::instance()->print.x3dSurfaces,
+       CTX::instance()->print.x3dEdges,
+       CTX::instance()->print.x3dVertices);
     break;
     
   case FORMAT_VRML:
