@@ -1858,16 +1858,17 @@ StringXNumber PrintOptions_Number[] = {
     "Remove inner borders in X3D output" },
   { F|O, "X3dTransparency" , opt_print_x3d_transparency , 0. ,
     "Transparency for X3D output" },
+    
   { F|O, "X3dSurfaces" , opt_print_x3d_surfaces, 1. ,
     "Save surfaces in CAD X3D output (0: no, 1: yes in a single X3D object,"
     "2: one X3D object per geometrical surface, 3: one X3D object per"
-    "physical surface). Default 1."},
+    "physical surface)"},
   { F|O, "X3dEdges" , opt_print_x3d_edges, 0. ,
     "Save edges in CAD X3D output (0: no, 1: yes in a single X3D object,"
     "2: one X3D object per geometrical edge, 3: one X3D object per"
-    "physical edge). Default 0."},
+    "physical edge)"},
   { F|O, "X3dVertices" , opt_print_x3d_vertices, 0. ,
-    "Save vertices in CAD X3D output (0: no, 1: yes). Default 0."},
+    "Save vertices in CAD X3D output (0: no, 1: yes)"},
 
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },
