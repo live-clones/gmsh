@@ -3928,7 +3928,7 @@ GMSH_API int gmsh::model::occ::addEllipseArc(
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addEllipseArc(
-       outTag, startTag, majorTag, centerTag, endTag)) {
+       outTag, startTag, centerTag, majorTag, endTag)) {
     throw 1;
   }
   return outTag;
