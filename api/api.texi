@@ -236,6 +236,18 @@ List the names of all models.
 -
 @end table
 
+@item getCurrent
+Get the name of the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{name}
+@item Return:
+-
+@end table
+
 @item setCurrent
 Set the current model to the model with name @code{name}. If several models have
 the same name, select the one that was added first.

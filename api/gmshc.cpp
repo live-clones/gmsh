@@ -238,6 +238,19 @@ GMSH_API void gmshModelList(char *** names, size_t * names_n, int * ierr)
   }
 }
 
+GMSH_API void gmshModelGetCurrent(char ** name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_name_;
+    gmsh::model::getCurrent(api_name_);
+    *name = strdup(api_name_.c_str());
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelSetCurrent(const char * name, int * ierr)
 {
   if(ierr) *ierr = 0;

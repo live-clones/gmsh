@@ -457,6 +457,24 @@ class model:
         return _ovectorstring(api_names_, api_names_n_.value)
 
     @staticmethod
+    def getCurrent():
+        """
+        Get the name of the current model.
+
+        Return `name'.
+        """
+        api_name_ = c_char_p()
+        ierr = c_int()
+        lib.gmshModelGetCurrent(
+            byref(api_name_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetCurrent returned non-zero error code: ",
+                ierr.value)
+        return _ostring(api_name_)
+
+    @staticmethod
     def setCurrent(name):
         """
         Set the current model to the model with name `name'. If several models have

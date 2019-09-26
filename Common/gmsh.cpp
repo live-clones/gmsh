@@ -268,6 +268,12 @@ GMSH_API void gmsh::model::list(std::vector<std::string> &names)
     names.push_back(GModel::list[i]->getName());
 }
 
+GMSH_API void gmsh::model::getCurrent(std::string &name)
+{
+  if(!_isInitialized()) { throw - 1; }
+  name = GModel::current()->getName();
+}
+
 GMSH_API void gmsh::model::setCurrent(const std::string &name)
 {
   if(!_isInitialized()) { throw - 1; }

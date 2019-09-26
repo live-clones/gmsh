@@ -257,6 +257,16 @@ namespace gmsh { // Top-level functions
       names.resize(api_names_n_); for(size_t i = 0; i < api_names_n_; ++i){ names[i] = std::string(api_names_[i]); gmshFree(api_names_[i]); } gmshFree(api_names_);
     }
 
+    // Get the name of the current model.
+    inline void getCurrent(std::string & name)
+    {
+      int ierr = 0;
+      char *api_name_;
+      gmshModelGetCurrent(&api_name_, &ierr);
+      if(ierr) throw ierr;
+      name = std::string(api_name_); gmshFree(api_name_);
+    }
+
     // Set the current model to the model with name `name'. If several models have
     // the same name, select the one that was added first.
     inline void setCurrent(const std::string & name)

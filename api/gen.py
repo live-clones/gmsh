@@ -95,6 +95,9 @@ model.add('remove',doc,None)
 doc = '''List the names of all models.'''
 model.add('list',doc,None,ovectorstring('names'))
 
+doc = '''Get the name of the current model.'''
+model.add('getCurrent',doc,None,ostring('name'))
+
 doc = '''Set the current model to the model with name `name'. If several models have the same name, select the one that was added first.'''
 model.add('setCurrent',doc,None,istring('name'))
 

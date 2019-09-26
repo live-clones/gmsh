@@ -130,6 +130,10 @@ GMSH_API void gmshModelRemove(int * ierr);
 GMSH_API void gmshModelList(char *** names, size_t * names_n,
                             int * ierr);
 
+/* Get the name of the current model. */
+GMSH_API void gmshModelGetCurrent(char ** name,
+                                  int * ierr);
+
 /* Set the current model to the model with name `name'. If several models have
  * the same name, select the one that was added first. */
 GMSH_API void gmshModelSetCurrent(const char * name,

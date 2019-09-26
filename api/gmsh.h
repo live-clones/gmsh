@@ -136,6 +136,9 @@ namespace gmsh { // Top-level functions
     // List the names of all models.
     GMSH_API void list(std::vector<std::string> & names);
 
+    // Get the name of the current model.
+    GMSH_API void getCurrent(std::string & name);
+
     // Set the current model to the model with name `name'. If several models have
     // the same name, select the one that was added first.
     GMSH_API void setCurrent(const std::string & name);

@@ -298,6 +298,24 @@ function list()
 end
 
 """
+    gmsh.model.getCurrent()
+
+Get the name of the current model.
+
+Return `name`.
+"""
+function getCurrent()
+    api_name_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetCurrent, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          api_name_, ierr)
+    ierr[] != 0 && error("gmshModelGetCurrent returned non-zero error code: $(ierr[])")
+    name = unsafe_string(api_name_[])
+    return name
+end
+
+"""
     gmsh.model.setCurrent(name)
 
 Set the current model to the model with name `name`. If several models have the
