@@ -99,9 +99,9 @@ public:
   virtual MVertex *getVertex(int num) = 0;
   void getVertices(std::vector<MVertex *> &verts)
   {
-    int N = getNumVertices();
+    std::size_t N = getNumVertices();
     verts.resize(N);
-    for(int i = 0; i < N; i++) verts[i] = getVertex(i);
+    for(std::size_t i = 0; i < N; i++) verts[i] = getVertex(i);
   }
   virtual void setVertex(int num, MVertex *v)
   {
@@ -152,7 +152,7 @@ public:
   virtual int getNumVolumeVertices() const { return 0; }
 
   // get the number of primary vertices (first-order element)
-  int getNumPrimaryVertices() const
+  std::size_t getNumPrimaryVertices() const
   {
     return getNumVertices() - getNumEdgeVertices() - getNumFaceVertices() -
            getNumVolumeVertices();
@@ -381,8 +381,8 @@ public:
   }
   void getSignedJacobian(fullVector<double> &jacobian, int o = -1) const;
   void getNodesCoord(fullMatrix<double> &nodesXYZ) const;
-  virtual int getNumShapeFunctions() const { return getNumVertices(); }
-  virtual int getNumPrimaryShapeFunctions() const
+  virtual std::size_t getNumShapeFunctions() const { return getNumVertices(); }
+  virtual std::size_t getNumPrimaryShapeFunctions() const
   {
     return getNumPrimaryVertices();
   }
@@ -492,7 +492,7 @@ public:
   // return the number of vertices, as well as the element name if 'name' != 0
   static unsigned int getInfoMSH(const int typeMSH,
                                  const char **const name = 0);
-  virtual int getNumVerticesForMSH() { return getNumVertices(); }
+  virtual std::size_t getNumVerticesForMSH() { return getNumVertices(); }
   virtual void getVerticesIdForMSH(std::vector<int> &verts);
 
   // copy element and parent if any, vertexMap contains the new vertices
