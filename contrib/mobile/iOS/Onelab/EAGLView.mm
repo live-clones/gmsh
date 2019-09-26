@@ -34,7 +34,7 @@
 
     // detect retina display
     if ([[UIScreen mainScreen] respondsToSelector:@selector(displayLinkWithTarget:selector:)] &&
-        ([UIScreen mainScreen].scale == 2.0)) {
+        ([UIScreen mainScreen].scale >= 2.0)) {
       self.contentScaleFactor = 2.0;
       eaglLayer.contentsScale = 2;
     }
