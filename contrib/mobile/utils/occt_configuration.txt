@@ -15,7 +15,6 @@ xcodebuild -configuration Release OTHER_CFLAGS="-miphoneos-version-min=8.0 -femb
 # Then combine all static libs using merge_static_libs.sh and put it in OCCT.framework
 
 ################## Android ####
-cmake -DCMAKE_TOOLCHAIN_FILE=~/Library/Android/sdk/ndk-bundle/build/cmake/android.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 -DBUILD_LIBRARY_TYPE=Static -DCMAKE_PREFIX_PATH=/opt/local ..
+cmake -DCMAKE_TOOLCHAIN_FILE=~/Library/Android/sdk/ndk-bundle/build/cmake/android.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 -DBUILD_LIBRARY_TYPE=Static -DCMAKE_PREFIX_PATH=/opt/local -DANDROID_ABI=arm64-v8a ..
 
 make -j 8 -k  ### -k so that compilation will continue even when linking to freetype fails
-
