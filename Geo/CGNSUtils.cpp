@@ -175,8 +175,8 @@ template <unsigned DIM> int MZone<DIM>::zoneData()
       ++eVecIt) {
     // It is sufficient to check the primary vertices to see if this element
     // is on the boundary
-    const int nPVert = eVecIt->element->getNumPrimaryVertices();
-    for(int iPVert = 0; iPVert != nPVert; ++iPVert) {
+    const std::size_t nPVert = eVecIt->element->getNumPrimaryVertices();
+    for(std::size_t iPVert = 0; iPVert != nPVert; ++iPVert) {
       if(vertMap[eVecIt->element->getVertex(iPVert)] <= numBoVert) {
         // The element index
         eVecIt->index = cElem++;
@@ -185,8 +185,8 @@ template <unsigned DIM> int MZone<DIM>::zoneData()
         // Increment number of boundary elements of this type
         ++zoneElemConn[iElemType].numBoElem;
         // Load connectivity for this element type
-        const int nVert = eVecIt->element->getNumVertices();
-        for(int iVert = 0; iVert != nVert; ++iVert) {
+        const std::size_t nVert = eVecIt->element->getNumVertices();
+        for(std::size_t iVert = 0; iVert != nVert; ++iVert) {
           zoneElemConn[iElemType].add_to_connectivity(
             vertMap[eVecIt->element->getVertex(iVert)]);
         }
@@ -207,8 +207,8 @@ template <unsigned DIM> int MZone<DIM>::zoneData()
       // The type of element
       const int iElemType = eVecIt->element->getTypeForMSH() - 1;
       // Load connectivity for this element type
-      const int nVert = eVecIt->element->getNumVertices();
-      for(int iVert = 0; iVert != nVert; ++iVert) {
+      const std::size_t nVert = eVecIt->element->getNumVertices();
+      for(std::size_t iVert = 0; iVert != nVert; ++iVert) {
         zoneElemConn[iElemType].add_to_connectivity(
           vertMap[eVecIt->element->getVertex(iVert)]);
       }
@@ -268,8 +268,8 @@ template <unsigned DIM> struct ParseEntity {
           elemVec.push_back(ElemData(element[iElem]));
           ++zoneElemConn[(element[iElem])->getTypeForMSH() - 1].numElem;
           // Unique list of vertices
-          const int nVert = element[iElem]->getNumVertices();
-          for(int iVert = 0; iVert != nVert; ++iVert)
+          const std::size_t nVert = element[iElem]->getNumVertices();
+          for(std::size_t iVert = 0; iVert != nVert; ++iVert)
             vertMap[element[iElem]->getVertex(iVert)] = 0; // Unlabelled
           // Maintain list of (base element) faces with only one bounding
           // element.

@@ -86,7 +86,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
     if(entities[ii]->dim() == _maxDim) {
       for(std::size_t i = 0; i < entities[ii]->getNumMeshElements(); i++) {
         MElement *e = entities[ii]->getMeshElement(i);
-        int numNodes = e->getNumPrimaryVertices();
+        std::size_t numNodes = e->getNumPrimaryVertices();
         if(e->getNumChildren())
           numNodes = e->getNumChildren() * e->getChild(0)->getNumVertices();
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
@@ -94,7 +94,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
         std::vector<MVertex *> nods;
 
         if(!e->getNumChildren())
-          for(int i = 0; i < numNodes; i++) nods.push_back(e->getVertex(i));
+          for(std::size_t i = 0; i < numNodes; i++) nods.push_back(e->getVertex(i));
         else
           for(int i = 0; i < e->getNumChildren(); i++)
             for(std::size_t j = 0; j < e->getChild(i)->getNumVertices(); j++)

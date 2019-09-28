@@ -760,7 +760,7 @@ static void getFaceVertices(GFace *gf, MElement *ele,
 
   std::vector<MVertex *> boundaryVertices;
   {
-    int nCorner = ele->getNumPrimaryVertices();
+    std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
     ele->getVertices(boundaryVertices);
     boundaryVertices.resize(nCorner);
@@ -902,7 +902,7 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
 {
   std::vector<MVertex *> boundaryVertices;
   {
-    int nCorner = ele->getNumPrimaryVertices();
+    std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
     ele->getVertices(boundaryVertices);
     boundaryVertices.resize(nCorner);
@@ -1213,10 +1213,10 @@ static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
   std::vector<T *> elements1;
   for(std::size_t i = 0; i < elements.size(); i++) {
     T *ele = elements[i];
-    int n = ele->getNumPrimaryVertices();
+    std::size_t n = ele->getNumPrimaryVertices();
     std::vector<MVertex *> v1;
     v1.reserve(n);
-    for(int j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
+    for(std::size_t j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
     elements1.push_back(new T(v1, 0, ele->getPartition()));
     delete ele;
   }

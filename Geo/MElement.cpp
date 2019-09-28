@@ -186,11 +186,11 @@ MEdgeN MElement::getHighOrderEdge(int num, int sign)
   std::vector<MVertex *> vertices(static_cast<std::size_t>(order) + 1);
   vertices[0] = getVertex(numEdge2numVertex(num, sign > 0 ? 0 : 1));
   vertices[1] = getVertex(numEdge2numVertex(num, sign > 0 ? 1 : 0));
-  const int start = getNumPrimaryVertices() + num * (order - 1);
-  const int end = getNumPrimaryVertices() + (num + 1) * (order - 1);
+  const std::size_t start = getNumPrimaryVertices() + num * (order - 1);
+  const std::size_t end = getNumPrimaryVertices() + (num + 1) * (order - 1);
   int k = 1;
   if(sign > 0) {
-    for(int i = start; i < end; ++i) {
+    for(std::size_t i = start; i < end; ++i) {
       vertices[++k] = getVertex(i);
     }
   }
@@ -453,7 +453,7 @@ void MElement::signedInvCondNumRange(double &iCNMin, double &iCNMax,
     // If parametrized surface entity provided...
     SVector3 geoNorm(0., 0., 0.);
     // ... correct Jacobian sign with geometrical normal
-    for(int i = 0; i < getNumPrimaryVertices(); i++) {
+    for(std::size_t i = 0; i < getNumPrimaryVertices(); i++) {
       const MVertex *vert = getVertex(i);
       if(vert->onWhat() == ge) {
         double u, v;
@@ -567,8 +567,8 @@ SPoint3 MElement::barycenter_infty() const
 SPoint3 MElement::barycenter(bool primary) const
 {
   SPoint3 p(0., 0., 0.);
-  int n = primary ? getNumPrimaryVertices() : getNumVertices();
-  for(int i = 0; i < n; i++) {
+  std::size_t n = primary ? getNumPrimaryVertices() : getNumVertices();
+  for(std::size_t i = 0; i < n; i++) {
     const MVertex *v = getVertex(i);
     p[0] += v->x();
     p[1] += v->y();
@@ -583,8 +583,8 @@ SPoint3 MElement::barycenter(bool primary) const
 SPoint3 MElement::fastBarycenter(bool primary) const
 {
   SPoint3 p(0., 0., 0.);
-  int n = primary ? getNumPrimaryVertices() : getNumVertices();
-  for(int i = 0; i < n; i++) {
+  std::size_t n = primary ? getNumPrimaryVertices() : getNumVertices();
+  for(std::size_t i = 0; i < n; i++) {
     const MVertex *v = getVertex(i);
     p[0] += v->x();
     p[1] += v->y();
@@ -900,7 +900,7 @@ double MElement::getJacobian(double u, double v, double w,
 
   double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf);
-  for(int i = 0; i < getNumShapeFunctions(); i++) {
+  for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     const MVertex *ver = getShapeFunctionNode(i);
     double *gg = gsf[i];
     for(int j = 0; j < getDim(); j++) {
@@ -921,8 +921,8 @@ double MElement::getJacobian(const fullMatrix<double> &gsf,
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
   if(gsf.size2() > 3) return 0;
 
-  const int numShapeFunctions = getNumShapeFunctions();
-  for(int i = 0; i < numShapeFunctions; i++) {
+  const std::size_t numShapeFunctions = getNumShapeFunctions();
+  for(std::size_t i = 0; i < numShapeFunctions; i++) {
     const MVertex *v = getShapeFunctionNode(i);
     for(int j = 0; j < gsf.size2(); j++) {
       jac[j][0] += v->x() * gsf(i, j);
@@ -982,10 +982,10 @@ double MElement::getPrimaryJacobian(double u, double v, double w,
 
   double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf, 1);
-  for(int i = 0; i < getNumPrimaryShapeFunctions(); i++) {
+  for(std::size_t i = 0; i < getNumPrimaryShapeFunctions(); i++) {
     const MVertex *v = getShapeFunctionNode(i);
     double *gg = gsf[i];
-    for(int j = 0; j < 3; j++) {
+    for(std::size_t j = 0; j < 3; j++) {
       jac[j][0] += v->x() * gg[j];
       jac[j][1] += v->y() * gg[j];
       jac[j][2] += v->z() * gg[j];
@@ -1069,7 +1069,7 @@ void MElement::pnt(double u, double v, double w, SPoint3 &p) const
   double x = 0., y = 0., z = 0.;
   double sf[1256];
   getShapeFunctions(u, v, w, sf);
-  for(int j = 0; j < getNumShapeFunctions(); j++) {
+  for(std::size_t j = 0; j < getNumShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
     y += sf[j] * v->y();
@@ -1083,7 +1083,7 @@ void MElement::pnt(double u, double v, double w, double *p) const
   double x = 0., y = 0., z = 0.;
   double sf[1256];
   getShapeFunctions(u, v, w, sf);
-  for(int j = 0; j < getNumShapeFunctions(); j++) {
+  for(std::size_t j = 0; j < getNumShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
     y += sf[j] * v->y();
@@ -1097,7 +1097,7 @@ void MElement::pnt(double u, double v, double w, double *p) const
 void MElement::pnt(const std::vector<double> &sf, SPoint3 &p) const
 {
   double x = 0., y = 0., z = 0.;
-  for(int j = 0; j < getNumShapeFunctions(); j++) {
+  for(std::size_t j = 0; j < getNumShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
     y += sf[j] * v->y();
@@ -1111,7 +1111,7 @@ void MElement::primaryPnt(double u, double v, double w, SPoint3 &p)
   double x = 0., y = 0., z = 0.;
   double sf[1256];
   getShapeFunctions(u, v, w, sf, 1);
-  for(int j = 0; j < getNumPrimaryShapeFunctions(); j++) {
+  for(std::size_t j = 0; j < getNumPrimaryShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
     y += sf[j] * v->y();
@@ -1134,7 +1134,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
     double distNearer = (v->x() - xyz[0]) * (v->x() - xyz[0]) +
                         (v->y() - xyz[1]) * (v->y() - xyz[1]) +
                         (v->z() - xyz[2]) * (v->z() - xyz[2]);
-    for(int i = 1; i < getNumShapeFunctions(); i++) {
+    for(std::size_t i = 1; i < getNumShapeFunctions(); i++) {
       const MVertex *v = getShapeFunctionNode(i);
       double dist = (v->x() - xyz[0]) * (v->x() - xyz[0]) +
                     (v->y() - xyz[1]) * (v->y() - xyz[1]) +
@@ -1160,7 +1160,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
     double xn = 0., yn = 0., zn = 0.;
     double sf[1256];
     getShapeFunctions(uvw[0], uvw[1], uvw[2], sf);
-    for(int i = 0; i < getNumShapeFunctions(); i++) {
+    for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
       const MVertex *v = getShapeFunctionNode(i);
       xn += v->x() * sf[i];
       yn += v->y() * sf[i];
@@ -1217,7 +1217,7 @@ double MElement::interpolate(double val[], double u, double v, double w,
   int j = 0;
   double sf[1256];
   getShapeFunctions(u, v, w, sf, order);
-  for(int i = 0; i < getNumShapeFunctions(); i++) {
+  for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     sum += val[j] * sf[i];
     j += stride;
   }
@@ -1232,7 +1232,7 @@ void MElement::interpolateGrad(double val[], double u, double v, double w,
   int j = 0;
   double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf, order);
-  for(int i = 0; i < getNumShapeFunctions(); i++) {
+  for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     dfdu[0] += val[j] * gsf[i][0];
     dfdu[1] += val[j] * gsf[i][1];
     dfdu[2] += val[j] * gsf[i][2];

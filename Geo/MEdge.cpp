@@ -171,7 +171,7 @@ SPoint3 MEdgeN::pnt(double u) const
   fs->f(u, 0, 0, f);
 
   double x = 0, y = 0, z = 0;
-  for(int i = 0; i < fs->getNumShapeFunctions(); i++) {
+  for(std::size_t i = 0; i < fs->getNumShapeFunctions(); i++) {
     x += f[i] * _v[i]->x();
     y += f[i] * _v[i]->y();
     z += f[i] * _v[i]->z();
@@ -188,7 +188,7 @@ SVector3 MEdgeN::tangent(double u) const
   fs->df(u, 0, 0, sf);
 
   double dx = 0, dy = 0, dz = 0;
-  for(int i = 0; i < fs->getNumShapeFunctions(); i++) {
+  for(std::size_t i = 0; i < fs->getNumShapeFunctions(); i++) {
     dx += sf[i][0] * _v[i]->x();
     dy += sf[i][0] * _v[i]->y();
     dz += sf[i][0] * _v[i]->z();
@@ -205,7 +205,7 @@ double MEdgeN::interpolate(const double val[], double u, int stride) const
   fs->f(u, 0, 0, f);
 
   double sum = 0;
-  for(int i = 0, k = 0; i < fs->getNumShapeFunctions(); i++, k += stride) {
+  for(std::size_t i = 0, k = 0; i < fs->getNumShapeFunctions(); i++, k += stride) {
     sum += f[i] * val[k];
   }
   return sum;

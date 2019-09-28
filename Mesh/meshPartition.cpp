@@ -466,10 +466,10 @@ static void fillElementsToNodesMap(Graph &graph, const GEntity *const entity,
                                    ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
-    const int numVertices = (*it)->getNumPrimaryVertices();
+    const std::size_t numVertices = (*it)->getNumPrimaryVertices();
     graph.element(eptrIndex++, *it);
     graph.eptr(eptrIndex, graph.eptr(eptrIndex - 1) + numVertices);
-    for(int i = 0; i < numVertices; i++) {
+    for(std::size_t i = 0; i < numVertices; i++) {
       if(graph.vertex((*it)->getVertex(i)->getNum() - 1) == -1) {
         graph.vertex((*it)->getVertex(i)->getNum() - 1, numVertex++);
       }
@@ -2053,7 +2053,7 @@ static void CreatePartitionTopology(
       for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
         for(std::set<MElement *>::iterator it = boundaryElements[i].begin();
             it != boundaryElements[i].end(); ++it) {
-          for(int j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
+          for(std::size_t j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
             vertexToElement[(*it)->getVertex(j)].push_back(
               std::pair<MElement *, std::vector<unsigned int> >(
                 *it, std::vector<unsigned int>(1, i + 1)));
@@ -2093,7 +2093,7 @@ static void CreatePartitionTopology(
       for(unsigned int i = 0; i < mapOfPartitionsTag; i++) {
         for(std::set<MElement *>::iterator it = subBoundaryElements[i].begin();
             it != subBoundaryElements[i].end(); ++it) {
-          for(int j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
+          for(std::size_t j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
             vertexToElement[(*it)->getVertex(j)].push_back(
               std::pair<MElement *, std::vector<unsigned int> >(
                 *it, mapOfPartitions[i]));

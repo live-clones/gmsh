@@ -220,7 +220,7 @@ double qmTriangle::angles(MTriangle *e)
   double tmp[3][3];
 
   // double minAngle = 120.0;
-  for(int i = 0; i < e->getNumPrimaryVertices(); i++) {
+  for(std::size_t i = 0; i < e->getNumPrimaryVertices(); i++) {
     const double u = i == 1 ? 1 : 0;
     const double v = i == 2 ? 1 : 0;
     const double w = 0;
