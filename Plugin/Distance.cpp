@@ -100,15 +100,15 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
             for(std::size_t j = 0; j < e->getChild(i)->getNumVertices(); j++)
               nods.push_back(e->getChild(i)->getVertex(j));
 
-        for(int nod = 0; nod < numNodes; nod++)
+        for(std::size_t nod = 0; nod < numNodes; nod++)
           out->push_back((nods[nod])->x());
-        for(int nod = 0; nod < numNodes; nod++)
+        for(std::size_t nod = 0; nod < numNodes; nod++)
           out->push_back((nods[nod])->y());
-        for(int nod = 0; nod < numNodes; nod++)
+        for(std::size_t nod = 0; nod < numNodes; nod++)
           out->push_back((nods[nod])->z());
 
         std::vector<double> dist;
-        for(int j = 0; j < numNodes; j++) {
+        for(std::size_t j = 0; j < numNodes; j++) {
           MVertex *v = nods[j];
           std::map<MVertex *, double>::iterator it = distanceMap.find(v);
           dist.push_back(it->second);
