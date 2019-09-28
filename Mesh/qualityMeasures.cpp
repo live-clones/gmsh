@@ -226,7 +226,7 @@ double qmTriangle::angles(MTriangle *e)
     const double w = 0;
     e->getJacobian(u, v, w, mat);
     e->getPrimaryJacobian(u, v, w, mat2);
-    for(int j = 0; j < i; j++) {
+    for(std::size_t j = 0; j < i; j++) {
       matmat(rot, mat, tmp);
       memcpy(mat, tmp, sizeof(mat));
     }
