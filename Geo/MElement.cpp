@@ -186,11 +186,11 @@ MEdgeN MElement::getHighOrderEdge(int num, int sign)
   std::vector<MVertex *> vertices(static_cast<std::size_t>(order) + 1);
   vertices[0] = getVertex(numEdge2numVertex(num, sign > 0 ? 0 : 1));
   vertices[1] = getVertex(numEdge2numVertex(num, sign > 0 ? 1 : 0));
-  const std::size_t start = getNumPrimaryVertices() + num * (order - 1);
-  const std::size_t end = getNumPrimaryVertices() + (num + 1) * (order - 1);
+  const int start = (int)getNumPrimaryVertices() + num * (order - 1);
+  const int end = (int)getNumPrimaryVertices() + (num + 1) * (order - 1);
   int k = 1;
   if(sign > 0) {
-    for(std::size_t i = start; i < end; ++i) {
+    for(int i = start; i < end; ++i) {
       vertices[++k] = getVertex(i);
     }
   }

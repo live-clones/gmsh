@@ -271,7 +271,7 @@ SPoint3 MFaceN::pnt(double u, double v) const
   fs->f(u, v, 0, f);
 
   double x = 0, y = 0, z = 0;
-  for(std::size_t j = 0; j < fs->getNumShapeFunctions(); j++) {
+  for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
     x += f[j] * _v[j]->x();
     y += f[j] * _v[j]->y();
     z += f[j] * _v[j]->z();
@@ -290,7 +290,7 @@ SVector3 MFaceN::tangent(double u, double v, int num) const
   fs->df(u, v, 0, sf);
 
   double dx = 0, dy = 0, dz = 0;
-  for(std::size_t j = 0; j < fs->getNumShapeFunctions(); j++) {
+  for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
     dx += sf[j][num] * _v[j]->x();
     dy += sf[j][num] * _v[j]->y();
     dz += sf[j][num] * _v[j]->z();
@@ -307,7 +307,7 @@ SVector3 MFaceN::normal(double u, double v) const
   fs->df(u, v, 0, sf);
 
   double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
-  for(std::size_t j = 0; j < fs->getNumShapeFunctions(); j++) {
+  for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
     for(int k = 0; k < 1; ++k) {
       dx[k] += sf[j][k] * _v[j]->x();
       dy[k] += sf[j][k] * _v[j]->y();
@@ -331,7 +331,7 @@ void MFaceN::frame(double u, double v, SVector3 &t0, SVector3 &t1,
   fs->df(u, v, 0, sf);
 
   double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
-  for(std::size_t j = 0; j < fs->getNumShapeFunctions(); j++) {
+  for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
     for(int k = 0; k < 2; ++k) {
       dx[k] += sf[j][k] * _v[j]->x();
       dy[k] += sf[j][k] * _v[j]->y();
@@ -357,7 +357,7 @@ void MFaceN::frame(double u, double v, SPoint3 &p, SVector3 &t0, SVector3 &t1,
 
   double x = 0, y = 0, z = 0;
   double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
-  for(std::size_t j = 0; j < fs->getNumShapeFunctions(); j++) {
+  for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
     x += f[j] * _v[j]->x();
     y += f[j] * _v[j]->y();
     z += f[j] * _v[j]->z();
