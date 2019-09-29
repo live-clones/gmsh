@@ -303,6 +303,13 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/local/lib/libomp -lomp")
+  elseif(APPLE AND EXISTS "/usr/local/lib/libomp.dylib")
+    set_config_option(HAVE_OPENMP "OpenMP[usr/local]")
+    set(CMAKE_C_FLAGS
+        "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
+    list(APPEND EXTERNAL_LIBRARIES "-lomp")
   endif()
 endif()
 
