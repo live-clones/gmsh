@@ -52,8 +52,8 @@
     }
     mContext = new drawContext((eaglLayer.contentsScale == 2) ? 1.5 : 1,
                                eaglLayer.contentsScale == 2);
+    rendering = NO;
   }
-  rendering = NO;
   return self;
 }
 
