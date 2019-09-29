@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 if(APPLE)
   option(ENABLE_BUILD_IOS "Build XCode project for iOS (ARM)" OFF)
   option(ENABLE_BUILD_IOS_EMULATOR "Build XCode project for iOS emulator (x86)" ON)
-  option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" OFF)
+  option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARM)" OFF)
 else(APPLE)
-  option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" ON)
+  option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARM)" ON)
 endif()
 
 if(APPNAME)
@@ -199,13 +199,13 @@ if(ENABLE_BUILD_ANDROID)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/models/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/Android/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/
-    COMMAND ${CMAKE_COMMAND} -E copy ${GMSH_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${GETDP_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${ONELAB_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${SLEPC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${LAPACK_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${BLAS_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${GMSH_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${GETDP_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${ONELAB_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${SLEPC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${LAPACK_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${BLAS_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
   )
   add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
                     ${CMAKE_CURRENT_BINARY_DIR}/models)
