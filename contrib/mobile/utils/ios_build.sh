@@ -118,6 +118,12 @@ if [ $enable_simulator != 0 ]; then
   sed -e "s|lastKnownFileType = archive.ar; name = libf2clapack.a; path = ${appname}/frameworks/petsc.framework/libf2clapack.a;|lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework;|" -i "" $gmsh_git/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj;
 fi
 
-#TODO
-#xcodebuild -project "Onelab" -target "Onelab" -configuration Release
-#xcrun -sdk iphoneos PackageApplication -v "Onelab.app" -o "Onelab.ipa" --sign "iPhone Distribution: Your Signature\" --embed enterprise.mobileprovision
+# TODO:
+#
+# xcodebuild -project "Onelab" -target "Onelab" -configuration Release
+# xcrun -sdk iphoneos PackageApplication -v "Onelab.app" -o "Onelab.ipa" --sign "iPhone Distribution: Your Signature\" --embed enterprise.mobileprovision
+
+# FIXME:
+#
+# When uploading the app to the AppStore, make sure to disable sending the
+# bitcode. For some reason this leads to crashing installs (sometimes?)
