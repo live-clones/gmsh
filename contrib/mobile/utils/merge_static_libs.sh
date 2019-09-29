@@ -9,5 +9,5 @@ for i in $*; do
     ar x ../${i}
 done
 cd ..
-ar r libpetsc_combined.a tmplib/*.o
+ar r lib_combined.a tmplib/*.o
 rm -rf tmplib
