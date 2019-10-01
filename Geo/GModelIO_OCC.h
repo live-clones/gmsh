@@ -206,11 +206,16 @@ public:
                     double dy, double roundedRadius = 0.);
   bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
+  bool addPlateSurface(
+		       int &tag, int wireTag,
+		       const std::vector<int> &pointTags = std::vector<int>(),
+		       const std::vector<int> &surfaceTags = std::vector<int>(),
+		       const std::vector<int> &surfaceContinuity = std::vector<int>());
   bool addSurfaceFilling(
-    int &tag, int wireTag,
-    const std::vector<int> &pointTags = std::vector<int>(),
-    const std::vector<int> &surfaceTags = std::vector<int>(),
-    const std::vector<int> &surfaceContinuity = std::vector<int>());
+			int &tag, int wireTag,
+			const std::vector<int> &pointTags = std::vector<int>(),
+			const std::vector<int> &surfaceTags = std::vector<int>(),
+			const std::vector<int> &surfaceContinuity = std::vector<int>());
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);

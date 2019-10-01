@@ -24,6 +24,7 @@
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Section.hxx>
+#include <BRepAdaptor_HCurve.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
@@ -37,6 +38,7 @@
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
+#include <BRepFill_CurveConstraint.hxx>
 #include <BRepGProp.hxx>
 #include <BRepLib.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
@@ -56,13 +58,18 @@
 #include <BRep_Tool.hxx>
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
+#include <GeomPlate_BuildPlateSurface.hxx>
 #include <GeomAPI_Interpolate.hxx>
 #include <Geom_BSplineCurve.hxx>
+#include <Geom_BSplineSurface.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_Circle.hxx>
 #include <Geom_Ellipse.hxx>
+#include <GeomPlate_Surface.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <GeomPlate_MakeApprox.hxx>
+#include <GeomProjLib.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
 #include <Interface_Static.hxx>
@@ -1560,6 +1567,106 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
   return true;
 }
 
+bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
+                                      const std::vector<int> &pointTags,
+                                      const std::vector<int> &surfaceTags,
+                                      const std::vector<int> &surfaceContinuity){
+  bool snap = false;
+
+  if(tag >= 0 && _tagFace.IsBound(tag)) {
+    Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
+    return false;
+  }
+
+  TopoDS_Face result;
+  try {
+    GeomPlate_BuildPlateSurface BPSurf (2,150,10);
+
+    if(!_tagWire.IsBound(wireTag)) {
+      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      //      return false;
+    }
+    else {
+      TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
+      TopExp_Explorer exp0;
+      for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
+	TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+	Handle(BRepAdaptor_HCurve) C = new BRepAdaptor_HCurve(); 
+	C->ChangeCurve().Initialize(edge); 
+	Handle(BRepFill_CurveConstraint) Cont= new BRepFill_CurveConstraint(C,0,10,.01); 
+	BPSurf.Add(Cont);
+      }
+    }
+
+    for(std::size_t i = 0; i < pointTags.size(); i++) {
+      if(!_tagVertex.IsBound(pointTags[i])) {
+        Msg::Error("Unknown OpenCASCADE point with tag %d", pointTags[i]);
+        return false;
+      }
+      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(pointTags[i]));   
+      Handle(GeomPlate_PointConstraint) PCont= new GeomPlate_PointConstraint(BRep_Tool::Pnt(vertex),0,.1); 
+      BPSurf.Add(PCont);
+    }
+    BPSurf.Perform(); 
+
+    printf("making the wire\n");
+    Standard_Integer MaxSeg=9; 
+    Standard_Integer MaxDegree=8; 
+    Standard_Integer CritOrder=0; 
+    Standard_Real dmax,Tol; 
+    Handle(GeomPlate_Surface) PSurf = BPSurf.Surface(); 
+    dmax = Max(0.0001,10*BPSurf.G0Error()); 
+    Tol=0.0001; 
+    GeomPlate_MakeApprox Mapp(PSurf,Tol,MaxSeg,MaxDegree,dmax,CritOrder); 
+    Handle (Geom_Surface) Surf (Mapp.Surface());
+    // create a face corresponding to the approximated Plate 
+
+    if (snap){
+      BRepBuilderAPI_MakeWire makeWire;
+      {
+	TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
+	TopExp_Explorer exp0;
+	for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
+	  TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+	  Standard_Real first,last;
+	  printf("making the wire -a\n");
+	  Handle(Geom_Curve) ccc2 = BRep_Tool::Curve(edge,first,last);
+	  printf("making the wire -b\n");
+	  Handle(Geom_Curve) c2= GeomProjLib::Project(ccc2, Surf);
+	  printf("making the wire -c\n");
+	  TopoDS_Edge aEdgepj = BRepBuilderAPI_MakeEdge(c2, c2->FirstParameter(),c2->LastParameter());
+	  makeWire.Add(aEdgepj);
+	}
+      }
+      makeWire.Build();
+      
+      result = BRepBuilderAPI_MakeFace (Surf,makeWire.Wire()); 
+    }
+    else {
+      Standard_Real Umin, Umax, Vmin, Vmax; 
+      PSurf->Bounds( Umin, Umax, Vmin, Vmax);
+      double DU = 0.*(Umax-Umin);
+      double DV = 0.*(Vmax-Vmin);
+      result = BRepBuilderAPI_MakeFace (Surf,Umin-DU, Umax+DU, Vmin-DV, Vmax+DV,1.e-6); 
+    }
+      
+    ShapeFix_Face fix(result);
+
+    fix.SetPrecision(CTX::instance()->geom.tolerance);
+    fix.Perform();
+    fix.FixOrientation(); // and I don't understand why this is necessary
+    result = fix.Face();
+    if(tag < 0) tag = getMaxTag(2) + 1;
+    bind(result, tag, true);
+    return true;
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+  
+}
+
+
 bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
                                       const std::vector<int> &pointTags,
                                       const std::vector<int> &surfaceTags,
@@ -1596,7 +1703,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
           f.Add(edge, face, GeomAbs_G1);
       }
       else {
-        f.Add(edge, GeomAbs_C0);
+	f.Add(edge, GeomAbs_C0);
       }
       i++;
     }
@@ -1621,7 +1728,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
     Handle(Geom_Surface) s = BRep_Tool::Surface(tmp);
     result = BRepBuilderAPI_MakeFace(s, wire);
     ShapeFix_Face fix(result);
-    //fix.SetPrecision(CTX::instance()->geom.tolerance);
+    fix.SetPrecision(CTX::instance()->geom.tolerance);
     fix.Perform();
     fix.FixOrientation(); // and I don't understand why this is necessary
     result = fix.Face();

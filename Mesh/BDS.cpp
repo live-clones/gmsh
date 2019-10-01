@@ -38,7 +38,9 @@ double BDS_Face_Validity(GFace *gf, BDS_Face *f)
     Msg::Error("Null point in face validity");
     return 0.;
   }
-  if((pts[0]->degenerated ? 1:0) + (pts[1]->degenerated?1:0) + (pts[2]->degenerated?1:0) < 2) {
+  if((pts[0]->degenerated ? 1 : 0) + (pts[1]->degenerated ? 1 : 0) +
+       (pts[2]->degenerated ? 1 : 0) <
+     2) {
     double qa1 = qmTriangle::gamma(pts[0], pts[1], pts[2]);
     return qa1 * _cos_N(pts[0], pts[1], pts[2], gf);
   }
@@ -62,12 +64,14 @@ void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
       if(!(*tit)->deleted) {
         (*tit)->getNodes(pts);
         for(int j = 0; j < 3; j++) {
-          double U1 = pts[j]->degenerated==1 ? pts[(j + 1) % 3]->u : pts[j]->u;
-          double U2 =
-            pts[(j + 1) % 3]->degenerated==1 ? pts[j]->u : pts[(j + 1) % 3]->u;
-          double V1 = pts[j]->degenerated==2 ? pts[(j + 1) % 3]->v : pts[j]->v;
-          double V2 =
-            pts[(j + 1) % 3]->degenerated==2 ? pts[j]->v : pts[(j + 1) % 3]->v;
+          double U1 =
+            pts[j]->degenerated == 1 ? pts[(j + 1) % 3]->u : pts[j]->u;
+          double U2 = pts[(j + 1) % 3]->degenerated == 1 ? pts[j]->u :
+                                                           pts[(j + 1) % 3]->u;
+          double V1 =
+            pts[j]->degenerated == 2 ? pts[(j + 1) % 3]->v : pts[j]->v;
+          double V2 = pts[(j + 1) % 3]->degenerated == 2 ? pts[j]->v :
+                                                           pts[(j + 1) % 3]->v;
           SPoint2 p1(U1, V1);
           SPoint2 p2(U2, V2);
           SPoint2 prev = p1;
@@ -109,8 +113,9 @@ void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
                 (double)pts[1]->iD, (double)pts[2]->iD);
       }
       if(param && gf) {
-	  // FIXME --- LOOK AT THE VALUE OG DEGENERATED
-        if((pts[0]->degenerated?1:0) + (pts[1]->degenerated?1:0) + (pts[2]->degenerated?1:0) >
+        // FIXME --- LOOK AT THE VALUE OG DEGENERATED
+        if((pts[0]->degenerated ? 1 : 0) + (pts[1]->degenerated ? 1 : 0) +
+             (pts[2]->degenerated ? 1 : 0) >
            1) {}
         else if(pts[0]->degenerated == 1)
           fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
@@ -132,26 +137,20 @@ void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
                   (double)pts[2]->iD);
         else if(pts[0]->degenerated == 2)
           fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-                  pts[1]->u, pts[1]->v, 0.0,
-		  pts[2]->u, pts[2]->v, 0.0,
-                  pts[0]->u, pts[2]->v, 0.0,
-		  pts[0]->u, pts[1]->v, 0.0,
+                  pts[1]->u, pts[1]->v, 0.0, pts[2]->u, pts[2]->v, 0.0,
+                  pts[0]->u, pts[2]->v, 0.0, pts[0]->u, pts[1]->v, 0.0,
                   (double)pts[1]->iD, (double)pts[2]->iD, (double)pts[0]->iD,
                   (double)pts[0]->iD);
         else if(pts[1]->degenerated == 2)
           fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-                  pts[2]->u, pts[2]->v, 0.0,
-		  pts[0]->u, pts[0]->v, 0.0,
-                  pts[1]->u, pts[0]->v, 0.0,
-		  pts[1]->u, pts[2]->v, 0.0,
+                  pts[2]->u, pts[2]->v, 0.0, pts[0]->u, pts[0]->v, 0.0,
+                  pts[1]->u, pts[0]->v, 0.0, pts[1]->u, pts[2]->v, 0.0,
                   (double)pts[2]->iD, (double)pts[0]->iD, (double)pts[1]->iD,
                   (double)pts[1]->iD);
         else if(pts[2]->degenerated == 2)
           fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-                  pts[0]->u, pts[0]->v, 0.0,
-		  pts[1]->u, pts[1]->v, 0.0,
-                  pts[2]->u, pts[1]->v, 0.0,
-		  pts[2]->u, pts[0]->v, 0.0,
+                  pts[0]->u, pts[0]->v, 0.0, pts[1]->u, pts[1]->v, 0.0,
+                  pts[2]->u, pts[1]->v, 0.0, pts[2]->u, pts[0]->v, 0.0,
                   (double)pts[0]->iD, (double)pts[1]->iD, (double)pts[2]->iD,
                   (double)pts[2]->iD);
         else {
@@ -207,29 +206,31 @@ static double surface_triangle_param(BDS_Point *p1, BDS_Point *p2,
   }
 
   double c;
-  if((p1->degenerated?1:0) + (p2->degenerated?1:0) + (p3->degenerated?1:0) > 1)
+  if((p1->degenerated ? 1 : 0) + (p2->degenerated ? 1 : 0) +
+       (p3->degenerated ? 1 : 0) >
+     1)
     c = 0; // vector_triangle_parametric(p1, p2, p3, c);
-  else if(p1->degenerated==1) {
+  else if(p1->degenerated == 1) {
     double du = fabs(p3->u - p2->u);
     c = 2 * fabs(0.5 * (p3->v + p2->v) - p1->v) * du;
   }
-  else if(p2->degenerated==1) {
+  else if(p2->degenerated == 1) {
     double du = fabs(p3->u - p1->u);
     c = 2 * fabs(0.5 * (p3->v + p1->v) - p2->v) * du;
   }
-  else if(p3->degenerated==1) {
+  else if(p3->degenerated == 1) {
     double du = fabs(p2->u - p1->u);
     c = 2 * fabs(0.5 * (p2->v + p1->v) - p3->v) * du;
   }
-  else if(p1->degenerated==2) {
+  else if(p1->degenerated == 2) {
     double dv = fabs(p3->v - p2->v);
     c = 2 * fabs(0.5 * (p3->u + p2->u) - p1->u) * dv;
   }
-  else if(p2->degenerated==2) {
+  else if(p2->degenerated == 2) {
     double dv = fabs(p3->v - p1->v);
     c = 2 * fabs(0.5 * (p3->u + p1->u) - p2->u) * dv;
   }
-  else if(p3->degenerated==2) {
+  else if(p3->degenerated == 2) {
     double dv = fabs(p2->v - p1->v);
     c = 2 * fabs(0.5 * (p2->u + p1->u) - p3->u) * dv;
   }
@@ -1231,7 +1232,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
 
   const int CHECK1 = -1, CHECK2 = -1;
 
-  if(e->p1->iD == CHECK1 && e->p2->iD == CHECK2){
+  if(e->p1->iD == CHECK1 && e->p2->iD == CHECK2) {
     printf("collapsing edge %p %p onto %p\n", e->p1, e->p2, p);
     printf("collapsing edge %d %d onto %d\n", e->p1->iD, e->p2->iD, p->iD);
   }
@@ -1317,7 +1318,8 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
   // if(!force && nt == 2) return false;
 
   if(!force && fabs(area_old - area_new) > 1.e-12 * (area_old + area_new)) {
-    // printf("%g %g\n", fabs(area_old - area_new), 1.e-12 * (area_old + area_new));
+    // printf("%g %g\n", fabs(area_old - area_new), 1.e-12 * (area_old +
+    // area_new));
     return false;
   }
   {
@@ -1371,18 +1373,18 @@ static inline bool validityOfCavity(const BDS_Point *p,
                                     const std::vector<BDS_Point *> &nbg)
 {
   double p_[2] = {p->u, p->v};
-  double q_[2] = {nbg[0]->degenerated ==1? nbg[1]->u : nbg[0]->u,
-		  nbg[0]->degenerated ==2? nbg[1]->v : nbg[0]->v};
-  double r_[2] = {nbg[1]->degenerated ==1? nbg[0]->u : nbg[1]->u,
-		  nbg[1]->degenerated ==2? nbg[0]->v : nbg[1]->v};
+  double q_[2] = {nbg[0]->degenerated == 1 ? nbg[1]->u : nbg[0]->u,
+                  nbg[0]->degenerated == 2 ? nbg[1]->v : nbg[0]->v};
+  double r_[2] = {nbg[1]->degenerated == 1 ? nbg[0]->u : nbg[1]->u,
+                  nbg[1]->degenerated == 2 ? nbg[0]->v : nbg[1]->v};
   double sign = robustPredicates::orient2d(p_, q_, r_);
   for(size_t i = 1; i < nbg.size(); ++i) {
     BDS_Point *p0 = nbg[i];
     BDS_Point *p1 = nbg[(i + 1) % nbg.size()];
-    double qq_[2] = {p0->degenerated == 1? p1->u : p0->u,
-		     p0->degenerated == 2? p1->v : p0->v};
-    double rr_[2] = {p1->degenerated == 1? p0->u : p1->u,
-		     p1->degenerated == 2? p0->v : p1->v};
+    double qq_[2] = {p0->degenerated == 1 ? p1->u : p0->u,
+                     p0->degenerated == 2 ? p1->v : p0->v};
+    double rr_[2] = {p1->degenerated == 1 ? p0->u : p1->u,
+                     p1->degenerated == 2 ? p0->v : p1->v};
     double sign_ = robustPredicates::orient2d(p_, qq_, rr_);
     if(sign * sign_ <= 0) return false;
   }
@@ -1399,11 +1401,10 @@ static inline bool getOrderedNeighboringVertices(BDS_Point *p,
     for(size_t i = 0; i < ts.size(); i++) {
       BDS_Point *pts[4];
       ts[i]->getNodes(pts);
-      printf("TR %lu : %p %p %p\n",i,pts[0],pts[1],pts[2]);
-      printf("TR %lu : %d %d - %d %d - %d %d\n",i,
-	     ts[i]->e1->p1->iD,ts[i]->e1->p2->iD,
-	     ts[i]->e2->p1->iD,ts[i]->e2->p2->iD,
-	     ts[i]->e3->p1->iD,ts[i]->e3->p2->iD );
+      printf("TR %lu : %p %p %p\n", i, pts[0], pts[1], pts[2]);
+      printf("TR %lu : %d %d - %d %d - %d %d\n", i, ts[i]->e1->p1->iD,
+             ts[i]->e1->p2->iD, ts[i]->e2->p1->iD, ts[i]->e2->p2->iD,
+             ts[i]->e3->p1->iD, ts[i]->e3->p2->iD);
       //     printf("TR %d : %d %d %d\n",i,pts[0]->iD,pts[1]->iD,pts[2]->iD);
     }
   }
@@ -1467,7 +1468,7 @@ static inline double getTutteEnergy(const BDS_Point *p,
 {
   double E = 0;
   double MAX, MIN;
-  if (nbg.empty())return 1.e22;
+  if(nbg.empty()) return 1.e22;
   for(size_t i = 0; i < nbg.size(); ++i) {
     const double dx = p->X - nbg[i]->X;
     const double dy = p->Y - nbg[i]->Y;
@@ -1574,7 +1575,7 @@ static inline void computeSomeKindOfKernel(const BDS_Point *p,
     }
     else if(nbg[(i + 1) % nbg.size()]->degenerated == 2) {
       kernel.push_back(SPoint2(nbg[i]->u, nbg[i]->v));
-      kernel.push_back(SPoint2(nbg[(i + 1) % nbg.size()]->u, nbg[i]->v ));
+      kernel.push_back(SPoint2(nbg[(i + 1) % nbg.size()]->u, nbg[i]->v));
       lc.push_back(nbg[i]->lc());
       lc.push_back(nbg[i]->lc());
     }
@@ -1751,7 +1752,7 @@ static inline bool minimizeTutteEnergyParam(BDS_Point *p, double E_unmoved,
   double RATIO2;
   getCentroidUV(p, gf, kernel, lc, U, V, LC);
   GPoint gp = gf->point(U, V);
-  if (!gp.succeeded())return false;
+  if(!gp.succeeded()) return false;
   p->X = gp.x();
   p->Y = gp.y();
   p->Z = gp.z();
@@ -1790,18 +1791,20 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
 
   int CHECK = -1;
 
-  if(p->iD == CHECK) printf("VERTEX %d TRYING TO MOVE from its initial position %g %g\n",CHECK,p->u,p->v);
+  if(p->iD == CHECK)
+    printf("VERTEX %d TRYING TO MOVE from its initial position %g %g\n", CHECK,
+           p->u, p->v);
 
   std::vector<BDS_Point *> nbg;
   std::vector<double> lc;
   std::vector<SPoint2> kernel;
   std::vector<BDS_Face *> ts = p->getTriangles();
 
-  if(p->iD == CHECK) printf("%d adjacent triangles\n",(int)ts.size());
+  if(p->iD == CHECK) printf("%d adjacent triangles\n", (int)ts.size());
 
   if(!getOrderedNeighboringVertices(p, nbg, ts, CHECK)) return false;
 
-  if(p->iD == CHECK) printf("%d adjacent vertices\n",(int)nbg.size());
+  if(p->iD == CHECK) printf("%d adjacent vertices\n", (int)nbg.size());
 
   double RATIO;
   double E_unmoved = getTutteEnergy(p, nbg, RATIO);
