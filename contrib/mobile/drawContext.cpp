@@ -1200,7 +1200,7 @@ int onelab_cb(std::string action)
     try{
       getdp(args, onelab::server::instance());
     }
-    catch(char *){
+    catch(...){
       Msg::Error("Calculation was aborted");
     }
   } while(action == "compute" && !onelabStop && (onelabUtils::incrementLoop("3") ||
