@@ -1197,7 +1197,12 @@ int onelab_cb(std::string action)
     args.insert(args.end(), c.begin(), c.end());
     args.push_back("-onelab");
     args.push_back("GetDP");
-    getdp(args, onelab::server::instance());
+    try{
+      getdp(args, onelab::server::instance());
+    }
+    catch(char *){
+      Msg::Error("Calculation was aborted");
+    }
   } while(action == "compute" && !onelabStop && (onelabUtils::incrementLoop("3") ||
                                                  onelabUtils::incrementLoop("2") ||
                                                  onelabUtils::incrementLoop("1")));
