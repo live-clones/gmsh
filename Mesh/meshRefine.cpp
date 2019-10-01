@@ -7,6 +7,7 @@
 //   Brian Helenbrook
 //
 
+#include "GModel.h"
 #include "HighOrder.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -18,6 +19,8 @@
 #include "GmshMessage.h"
 #include "OS.h"
 #include "meshGFaceOptimize.h"
+
+typedef std::map<MFace, std::vector<MVertex *>, Less_Face> faceContainer;
 
 void subdivide_pyramid(MElement *element, GRegion *gr,
                        faceContainer &faceVertices,
@@ -55,7 +58,7 @@ static void setBLData(MVertex *v)
 static bool setBLData(MElement *el)
 {
   // Check whether all low-order nodes are marked as BL nodes (only works in 2D)
-  for(int i = 0; i < el->getNumPrimaryVertices(); i++) {
+  for(std::size_t i = 0; i < el->getNumPrimaryVertices(); i++) {
     MVertex *v = el->getVertex(i);
     bool isBL = false;
     switch(v->onWhat()->dim()) {

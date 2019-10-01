@@ -183,7 +183,7 @@ void classifyFaces(GModel *gm)
       }
     }
   }
-  Msg::Info("Found %d model faces", newf.size());
+  Msg::Info("Found %d model surfaces", newf.size());
 
   // now we have all faces coloured. If some regions were existing, replace
   // their faces by the new ones
@@ -218,7 +218,7 @@ void classifyFaces(GModel *gm)
       }
     }
   }
-  Msg::Info("Found %d model edges", newEdges.size());
+  Msg::Info("Found %d model curves", newEdges.size());
 
   // check if new edges should not be split;
 

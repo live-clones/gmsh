@@ -87,8 +87,8 @@ public:
                              double jac[3][3]) const;
   virtual double getPrimaryJacobian(double u, double v, double w,
                                     double jac[3][3]) const;
-  virtual int getNumShapeFunctions() const;
-  virtual int getNumPrimaryShapeFunctions() const;
+  virtual std::size_t getNumShapeFunctions() const;
+  virtual std::size_t getNumPrimaryShapeFunctions() const;
   virtual const MVertex *getShapeFunctionNode(int i) const;
   virtual MVertex *getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
@@ -194,8 +194,8 @@ public:
                              double jac[3][3]) const;
   virtual double getPrimaryJacobian(double u, double v, double w,
                                     double jac[3][3]) const;
-  virtual int getNumShapeFunctions() const;
-  virtual int getNumPrimaryShapeFunctions() const;
+  virtual std::size_t getNumShapeFunctions() const;
+  virtual std::size_t getNumPrimaryShapeFunctions() const;
   virtual const MVertex *getShapeFunctionNode(int i) const;
   virtual MVertex *getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
@@ -301,8 +301,8 @@ public:
                              double jac[3][3]) const;
   virtual double getPrimaryJacobian(double u, double v, double w,
                                     double jac[3][3]) const;
-  virtual int getNumShapeFunctions() const;
-  virtual int getNumPrimaryShapeFunctions() const;
+  virtual std::size_t getNumShapeFunctions() const;
+  virtual std::size_t getNumPrimaryShapeFunctions() const;
   virtual const MVertex *getShapeFunctionNode(int i) const;
   virtual MVertex *getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
@@ -408,8 +408,8 @@ public:
                              double jac[3][3]) const;
   virtual double getPrimaryJacobian(double u, double v, double w,
                                     double jac[3][3]) const;
-  virtual int getNumShapeFunctions() const;
-  virtual int getNumPrimaryShapeFunctions() const;
+  virtual std::size_t getNumShapeFunctions() const;
+  virtual std::size_t getNumPrimaryShapeFunctions() const;
   virtual const MVertex *getShapeFunctionNode(int i) const;
   virtual MVertex *getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;

@@ -48,7 +48,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
     nums += vset.size();
   }
 
-  Msg::Info("Writing %d triangles and %d vertices", numf, nums);
+  Msg::Info("Writing %d triangles and %d nodes", numf, nums);
 
   int idf = 1, ids = 1;
   /*
@@ -92,7 +92,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
           SPoint2 param;
           bool ok = reparamMeshVertexOnFace(v, f, param);
           if(!ok)
-            Msg::Warning("Could not reparamtrize vertex %d on face %d",
+            Msg::Warning("Could not reparamtrize node %d on surface %d",
                          v->getNum(), f->tag());
           CelumInfo info;
           info.normal = f->normal(param);

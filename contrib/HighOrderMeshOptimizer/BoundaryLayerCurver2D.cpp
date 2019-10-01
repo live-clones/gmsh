@@ -202,7 +202,7 @@ namespace BoundaryLayerCurver {
           _paramVerticesOnGFace[2 * i + 0] = param[0];
           _paramVerticesOnGFace[2 * i + 1] = param[1];
           if(!success) {
-            Msg::Warning("Could not compute param of vertex %d on surface %d",
+            Msg::Warning("Could not compute param of node %d on surface %d",
                          edge->getVertex(i)->getNum(), gface->tag());
           }
           // TODO: Check if periodic face
@@ -214,7 +214,7 @@ namespace BoundaryLayerCurver {
           bool success = reparamMeshVertexOnEdge(edge->getVertex(i), gedge,
                                                  _paramVerticesOnGEdge[i]);
           if(!success) {
-            Msg::Warning("Could not compute param of vertex %d on edge %d",
+            Msg::Warning("Could not compute param of node %d on edge %d",
                          edge->getVertex(i)->getNum(), gedge->tag());
           }
           else if(gedge->periodic(0) && gedge->getBeginVertex() &&

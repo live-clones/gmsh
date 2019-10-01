@@ -108,7 +108,7 @@ void pyramidalBasis::f(double u, double v, double w, int i, double *val) const
 {
   if(!bergot) return;
 
-  if(i < 0 || i >= bergotCoefficients.size1()){
+  if(i < 0 || i >= bergotCoefficients.size1()) {
     Msg::Error("Node out of range for pyramidal basis");
     return;
   }
@@ -119,8 +119,7 @@ void pyramidalBasis::f(double u, double v, double w, int i, double *val) const
   bergot->f(u, v, w, fval);
 
   *val = 0.;
-  for(int j = 0; j < N; j++)
-    *val += bergotCoefficients(i, j) * fval[j];
+  for(int j = 0; j < N; j++) *val += bergotCoefficients(i, j) * fval[j];
 
   delete[] fval;
 }
@@ -170,11 +169,12 @@ void pyramidalBasis::df(const fullMatrix<double> &coord,
   delete[] dfv;
 }
 
-void pyramidalBasis::df(double u, double v, double w, int i, double grad[3]) const
+void pyramidalBasis::df(double u, double v, double w, int i,
+                        double grad[3]) const
 {
   if(!bergot) return;
 
-  if(i < 0 || i >= bergotCoefficients.size1()){
+  if(i < 0 || i >= bergotCoefficients.size1()) {
     Msg::Error("Node out of range for pyramidal basis gradient");
     return;
   }

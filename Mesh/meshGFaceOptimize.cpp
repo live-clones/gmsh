@@ -534,7 +534,7 @@ int removeTwoQuadsNodes(GFace *gf)
     if(!x) break;
     nbRemove += x;
   }
-  Msg::Debug("%i two-quadrangles vertices removed", nbRemove);
+  Msg::Debug("%i two-quadrangles nodes removed", nbRemove);
   return nbRemove;
 }
 

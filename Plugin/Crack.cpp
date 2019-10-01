@@ -123,7 +123,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
         MVertex *v = crackElements[i]->getVertex(j);
         crackVertices.insert(v);
       }
-      for(int j = 0; j < crackElements[i]->getNumPrimaryVertices(); j++) {
+      for(std::size_t j = 0; j < crackElements[i]->getNumPrimaryVertices(); j++) {
         MVertex *v = crackElements[i]->getVertex(j);
         if(bndVertices.find(v) == bndVertices.end())
           bndVertices.insert(v);

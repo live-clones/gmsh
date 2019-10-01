@@ -81,6 +81,9 @@ public:
                           std::vector<std::vector<double> > &faceBasis,
                           std::string typeFunction = "GradH1Legendre");
 
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo);
+
 private:
   int _pb1; // bubble function order in  direction u
   int _pb2; // bubble function order in  direction v

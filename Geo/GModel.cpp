@@ -449,7 +449,7 @@ void GModel::snapVertices()
         t = parb.high();
       }
       else {
-        Msg::Error("Weird vertex: impossible to snap");
+        Msg::Error("Weird point: impossible to snap");
         break;
       }
       GPoint gp = (*it)->point(t);
@@ -1267,33 +1267,11 @@ int GModel::recombineMesh()
 #endif
 }
 
-int GModel::smoothMesh()
+int GModel::optimizeMesh(const std::string &how, const bool force, int niter)
 {
 #if defined(HAVE_MESH)
-  SmoothMesh(this);
-  if(CTX::instance()->mesh.renumber){
-    renumberMeshVertices();
-    renumberMeshElements();
-  }
-  CTX::instance()->mesh.changed = ENT_ALL;
-  return 1;
-#else
-  Msg::Error("Mesh module not compiled");
-  return 0;
-#endif
-}
-
-int GModel::optimizeMesh(const std::string &how)
-{
-#if defined(HAVE_MESH)
-  if(how == "HighOrder")
-    OptimizeHighOrderMesh(this);
-  else if(how == "HighOrderElastic")
-    OptimizeHighOrderMeshElastic(this);
-  else if(how == "Netgen")
-    OptimizeMeshNetgen(this);
-  else
-    OptimizeMesh(this);
+  OptimizeMesh(this, how, force, niter);
+  FixPeriodicMesh(this);
   if(CTX::instance()->mesh.renumber){
     renumberMeshVertices();
     renumberMeshElements();
@@ -1313,6 +1291,7 @@ int GModel::setOrderN(int order, int linear, int incomplete)
     SetOrderN(this, order, linear, incomplete);
   else
     SetOrder1(this);
+  FixPeriodicMesh(this);
   if(CTX::instance()->mesh.renumber){
     renumberMeshVertices();
     renumberMeshElements();
@@ -1419,8 +1398,8 @@ void GModel::renumberMeshVertices()
   if(potentiallySaveSubset) {
     Msg::Debug("Renumbering for potentially partial mesh save");
     // if we potentially only save a subset of elements, make sure to first
-    // renumber the vertices that belong to those elements (so that we end up
-    // with a dense vertex numbering in the output file)
+    // renumber the nodes that belong to those elements (so that we end up
+    // with a dense node numbering in the output file)
     std::size_t nv = 0;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
@@ -1574,12 +1553,12 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
     _vertexMapCache.clear();
     bool dense = false;
     if(_maxVertexNum == getNumMeshVertices()) {
-      Msg::Debug("We have a dense vertex numbering in the cache");
+      Msg::Debug("We have a dense node numbering in the cache");
       dense = true;
     }
     else if(_maxVertexNum < 10 * getNumMeshVertices()) {
       Msg::Debug(
-        "We have a fairly dense vertex numbering - still using cache vector");
+        "We have a fairly dense node numbering - still using cache vector");
       dense = true;
     }
     std::vector<GEntity *> entities;
@@ -1604,7 +1583,7 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
 MVertex *GModel::getMeshVertexByTag(int n)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
-    Msg::Debug("Rebuilding mesh vertex cache");
+    Msg::Debug("Rebuilding mesh node cache");
     rebuildMeshVertexCache();
   }
 
@@ -1743,16 +1722,15 @@ std::size_t GModel::indexMeshVertices(bool all, int singlePartition,
   std::vector<GEntity *> entities;
   getEntities(entities);
 
-  // tag all mesh vertices with -1 (negative vertices will not be
-  // saved)
+  // tag all mesh nodes with -1 (negative nodes will not be saved)
   for(std::size_t i = 0; i < entities.size(); i++)
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->setIndex(-1);
 
-  // tag all mesh vertices belonging to elements that need to be saved with 0,
-  // or with -2 if they need to be taken into account in the numbering but need
-  // not to be saved (because we save a single partition and they are not used
-  // in that partition)
+  // tag all mesh nodes belonging to elements that need to be saved with 0, or
+  // with -2 if they need to be taken into account in the numbering but need not
+  // to be saved (because we save a single partition and they are not used in
+  // that partition)
   for(std::size_t i = 0; i < entities.size(); i++) {
     if(all || entities[i]->physicals.size() ||
        (entities[i]->getParentEntity() &&
@@ -1769,7 +1747,7 @@ std::size_t GModel::indexMeshVertices(bool all, int singlePartition,
     }
   }
 
-  // renumber all the mesh vertices tagged with 0
+  // renumber all the mesh nodes tagged with 0
   std::size_t numVertices = 0;
   long int index = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
@@ -2070,7 +2048,7 @@ void GModel::pruneMeshVertexAssociations()
   }
   std::vector<MVertex *> vertices(vertSet.begin(), vertSet.end());
   _associateEntityWithMeshVertices();
-  // associate mesh vertices primarily with chain entities
+  // associate mesh nodes primarily with chain entities
   for(riter it = _chainRegions.begin(); it != _chainRegions.end(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->tetrahedra, true);
     _associateEntityWithElementVertices(*it, (*it)->hexahedra, true);
@@ -2132,9 +2110,9 @@ void GModel::checkMeshCoherence(double tolerance)
   std::vector<GEntity *> entities;
   getEntities(entities);
 
-  // check for duplicate mesh vertices
+  // check for duplicate mesh nodes
   {
-    Msg::Info("Checking for duplicate vertices...");
+    Msg::Info("Checking for duplicate nodes...");
     std::vector<MVertex *> vertices;
     for(std::size_t i = 0; i < entities.size(); i++)
       vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
@@ -2143,9 +2121,9 @@ void GModel::checkMeshCoherence(double tolerance)
     std::set<MVertex *> duplicates;
     int num = pos.insert(vertices, true, &duplicates);
     if(num) {
-      Msg::Error("%d duplicate vert%s: see `duplicate_vertices.pos'", num,
-                 num > 1 ? "ices" : "ex");
-      FILE *fp = Fopen("duplicate_vertices.pos", "w");
+      Msg::Error("%d duplicate node%s: see `duplicate_node.pos'", num,
+                 num > 1 ? "s" : "");
+      FILE *fp = Fopen("duplicate_nodes.pos", "w");
       if(fp) {
         fprintf(fp, "View \"duplicate vertices\"{\n");
         for(std::set<MVertex *>::iterator it = duplicates.begin();
@@ -2187,7 +2165,7 @@ void GModel::checkMeshCoherence(double tolerance)
 
 int GModel::removeDuplicateMeshVertices(double tolerance)
 {
-  Msg::StatusBar(true, "Removing duplicate mesh vertices...");
+  Msg::StatusBar(true, "Removing duplicate mesh nodes...");
 
   SBoundingBox3d bbox = bounds();
   double lc = bbox.empty() ? 1. : norm(SVector3(bbox.max(), bbox.min()));
@@ -2224,10 +2202,10 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   }
 
   int num = (int)duplicates.size();
-  Msg::Info("Found %d duplicate vertices ", num);
+  Msg::Info("Found %d duplicate nodes ", num);
 
   if(!num) {
-    Msg::Info("No duplicate vertices found");
+    Msg::Info("No duplicate nodes found");
     return 0;
   }
 
@@ -2283,10 +2261,9 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   for(std::size_t i = 0; i < to_delete.size(); i++) delete to_delete[i];
 
   if(num)
-    Msg::Info("Removed %d duplicate mesh %s", num,
-              num > 1 ? "vertices" : "vertex");
+    Msg::Info("Removed %d duplicate mesh node%s", num, num > 1 ? "s" : "");
 
-  Msg::StatusBar(true, "Done removing duplicate mesh vertices");
+  Msg::StatusBar(true, "Done removing duplicate mesh nodes");
   return num;
 }
 

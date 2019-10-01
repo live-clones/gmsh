@@ -11,6 +11,11 @@ Saved in: @code{General.OptionsFileName}
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.AlgorithmSwitchOnFailure
+Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based algorithms, switching to MeshAdapt)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.AngleSmoothNormals
 Threshold angle below which normals are not smoothed@*
 Default value: @code{30}@*
@@ -97,8 +102,13 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CompoundClassify
-How are surface mesh elements classified on compounds? (0: on the new discrete entity, 1: on the original geometrical entity)@*
+How are surface mesh elements classified on compounds? (0: on the new discrete entity, 1: on the original geometrical entity - incompatible with e.g. high-order meshing)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CompoundCharacteristicLengthFactor
+Mesh size factor applied to compound parts@*
+Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CpuTime
@@ -157,7 +167,7 @@ Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderOptimize
-Optimize high-order meshes? (-1: elastic smoothing, 1: optimization, 2: both)@*
+Optimize high-order meshes? (0: none, 1: optimization, 2: elastic+optimization, 3: elastic, 4: fast curving)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -241,6 +251,11 @@ Display width of mesh lines (in pixels)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MaxIterDelaunay3D
+Maximum number of point insertion iterations in 3D Delaunay mesher (0: unlimited)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MaxNumThreads1D
 Maximum number of threads for 1D meshing (0: use default)@*
 Default value: @code{0}@*
@@ -254,6 +269,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.MaxNumThreads3D
 Maximum number of threads for 3D meshing (0: use default)@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MaxRetries
+Maximum number of times meshing is retried on curves and surfaces with a pending mesh@*
+Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshOnlyVisible
@@ -536,6 +556,11 @@ Random factor used in the 3D meshing algorithm@*
 Default value: @code{1e-12}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.RandomSeed
+Seed of pseudo-random number generator@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PreserveNumberingMsh2
 Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)@*
 Default value: @code{0}@*
@@ -654,6 +679,16 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.SmoothRatio
 Ratio between mesh sizes at nodes of a same edge (used in BAMG)@*
 Default value: @code{1.8}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlAngularDeflection
+Maximum angular deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.35}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlLinearDeflection
+Maximum linear deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.01}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlOneSolidPerSurface

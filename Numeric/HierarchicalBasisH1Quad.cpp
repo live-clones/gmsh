@@ -539,3 +539,31 @@ void HierarchicalBasisH1Quad::orientFace(
     }
   }
 }
+
+void HierarchicalBasisH1Quad::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                          std::vector<int> &orderInfo)
+{
+  functionTypeInfo[0] = 0;
+  functionTypeInfo[1] = 0;
+  functionTypeInfo[2] = 0;
+  functionTypeInfo[3] = 0;
+  orderInfo[0] = 1;
+  orderInfo[1] = 1;
+  orderInfo[2] = 1;
+  orderInfo[3] = 1;
+  int it = 4;
+  for(int numEdge = 0; numEdge < 4; numEdge++) {
+    for(int i = 2; i <= _pOrderEdge[numEdge]; i++) {
+      functionTypeInfo[it] = 1;
+      orderInfo[it] = i;
+      it++;
+    }
+  }
+  for(int n1 = 2; n1 <= _pf1; n1++) {
+    for(int n2 = 2; n2 <= _pf2; n2++) {
+      functionTypeInfo[it] = 2;
+      orderInfo[it] = std::max(n1,n2);
+      it++;
+    }
+  }
+}

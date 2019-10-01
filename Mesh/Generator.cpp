@@ -34,6 +34,7 @@
 #include "HighOrder.h"
 #include "Field.h"
 #include "Options.h"
+#include "Generator.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -48,6 +49,7 @@
 #if defined(HAVE_OPTHOM)
 #include "HighOrderMeshOptimizer.h"
 #include "HighOrderMeshElasticAnalogy.h"
+#include "HighOrderMeshFastCurving.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -388,7 +390,7 @@ static void Mesh1D(GModel *m)
     }
 
     if(!nPending) break;
-    if(nIter++ > 10) break;
+    if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
 
   Msg::SetNumThreads(prevNumThreads);
@@ -538,7 +540,7 @@ static void Mesh2D(GModel *m)
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
       // serialize (self-intersections of 1D meshes are not thread safe)!
       if(nIter > 2) Msg::SetNumThreads(1);
-      if(nIter++ > 10) break;
+      if(nIter++ > CTX::instance()->mesh.maxRetries) break;
     }
   }
 
@@ -590,8 +592,9 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
     connected.push_back(temp2);
     delaunay = temp1;
   }
-  Msg::Info("3D Meshing %d volumes with %d connected components",
-            nbVolumes, connected.size());
+  Msg::Info("3D Meshing %d volume%s with %d connected component%s",
+            nbVolumes, nbVolumes > 1 ? "s" : "", connected.size(),
+            connected.size() > 1 ? "s" : "");
 }
 
 // JFR : use hex-splitting to resolve non conformity
@@ -963,78 +966,97 @@ static void Mesh3D(GModel *m)
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }
 
-void OptimizeMesh(GModel *m)
+void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 {
-  Msg::StatusBar(true, "Optimizing 3D mesh...");
-  double t1 = Cpu();
-
-  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegion());
-  // Ensure that all volume Jacobians are positive
-  m->setAllVolumesPositive();
-
-  if(Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
-
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);
-}
-
-void OptimizeMeshNetgen(GModel *m)
-{
-  Msg::StatusBar(true, "Optimizing 3D mesh with Netgen...");
-  double t1 = Cpu();
-
-  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
-
-  // ensure that all volume Jacobians are positive
-  m->setAllVolumesPositive();
-
-  if(Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
-
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);
-}
-
-void OptimizeHighOrderMesh(GModel *m)
-{
-#if defined(HAVE_OPTHOM)
-  OptHomParameters p;
-  p.nbLayers = CTX::instance()->mesh.hoNLayers;
-  p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;
-  p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
-  p.itMax = CTX::instance()->mesh.hoIterMax;
-  p.optPassMax = CTX::instance()->mesh.hoPassMax;
-  p.dim = GModel::current()->getDim();
-  p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
-  p.optCAD = CTX::instance()->mesh.hoDistCAD;
-  HighOrderMeshOptimizer(GModel::current(), p);
-#else
-  Msg::Error("High-order mesh optimization requires the OPTHOM module");
-#endif
-}
-
-void OptimizeHighOrderMeshElastic(GModel *m)
-{
-#if defined(HAVE_OPTHOM)
-  HighOrderMeshElasticAnalogy(m, false);
-#else
-  Msg::Error("High-order mesh optimization requires the OPTHOM module");
-#endif
-}
-
-void SmoothMesh(GModel *m)
-{
-  Msg::StatusBar(true, "Smoothing 2D mesh...");
-  double t1 = Cpu();
-
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    GFace *gf = *it;
-    laplaceSmoothing(gf);
+  if(how != "" && how != "Optimize" &&
+     how != "Netgen" &&
+     how != "HighOrder" &&
+     how != "HighOrderElastic" &&
+     how != "Laplace2D" &&
+     how != "Relocate2D" &&
+     how != "Relocate3D") {
+    Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
+    return;
   }
 
+  if(how == "")
+    Msg::StatusBar(true, "Optimizing mesh...");
+  else
+    Msg::StatusBar(true, "Optimizing mesh (%s)...", how.c_str());
+  double t1 = Cpu();
+
+  if(how == "") {
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+      optimizeMeshGRegion opt;
+      opt(*it, force);
+    }
+    m->setAllVolumesPositive();
+  }
+  else if(how == "Netgen") {
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+      optimizeMeshGRegionNetgen opt;
+      opt(*it, force);
+    }
+    m->setAllVolumesPositive();
+  }
+  else if(how == "HighOrder") {
+#if defined(HAVE_OPTHOM)
+    OptHomParameters p;
+    p.nbLayers = CTX::instance()->mesh.hoNLayers;
+    p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;
+    p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
+    p.itMax = CTX::instance()->mesh.hoIterMax;
+    p.optPassMax = CTX::instance()->mesh.hoPassMax;
+    p.dim = m->getDim();
+    p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
+    p.optCAD = CTX::instance()->mesh.hoDistCAD;
+    HighOrderMeshOptimizer(m, p);
+#else
+    Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
+  }
+  else if(how == "HighOrderElastic") {
+#if defined(HAVE_OPTHOM)
+    HighOrderMeshElasticAnalogy(m, false);
+#else
+    Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
+  }
+  else if(how == "HighOrderFastCurving") {
+#if defined(HAVE_OPTHOM)
+    FastCurvingParameters p;
+    p.dim = m->getMeshDim();
+    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
+    p.thickness = false;
+    HighOrderMeshFastCurving(m, p, true);
+#else
+    Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
+  }
+  else if(how == "Laplace2D") {
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+      GFace *gf = *it;
+      laplaceSmoothing(gf, niter);
+    }
+  }
+  else if(how == "Relocate2D") {
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+      GFace *gf = *it;
+      RelocateVertices(gf, niter);
+    }
+  }
+  else if(how == "Relocate3D") {
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+      GRegion *gr = *it;
+      RelocateVertices(gr, niter);
+    }
+  }
+
+  if(Msg::GetVerbosity() > 98)
+    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
+
   double t2 = Cpu();
-  Msg::StatusBar(true, "Done smoothing 2D mesh (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done optimizing mesh (%g s)", t2 - t1);
 }
 
 void AdaptMesh(GModel *m)
@@ -1085,10 +1107,11 @@ void GenerateMesh(GModel *m, int ask)
   int old = m->getMeshStatus(false);
 
   // Initialize pseudo random mesh generator with the same seed
-  srand(1);
+  srand(CTX::instance()->mesh.randomSeed);
 
   // Change any high order elements back into first order ones
   SetOrder1(m);
+  FixPeriodicMesh(m);
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
@@ -1122,7 +1145,7 @@ void GenerateMesh(GModel *m, int ask)
                                 CTX::instance()->mesh.optimizeNetgen);
         i++) {
       if(CTX::instance()->mesh.optimize > i) OptimizeMesh(m);
-      if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMeshNetgen(m);
+      if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMesh(m, "Netgen");
     }
   }
 
@@ -1132,21 +1155,30 @@ void GenerateMesh(GModel *m, int ask)
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);
 
-  // Create high order elements
-  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1)
+  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1){
+    // Create high order elements
     SetOrderN(m, CTX::instance()->mesh.order,
               CTX::instance()->mesh.secondOrderLinear,
               CTX::instance()->mesh.secondOrderIncomplete);
 
-  // Optimize high order elements
-  if(CTX::instance()->mesh.hoOptimize < 0 ||
-     CTX::instance()->mesh.hoOptimize >= 2)
-    OptimizeHighOrderMeshElastic(GModel::current());
+    // Optimize high order elements
+    if(CTX::instance()->mesh.hoOptimize == 2 ||
+       CTX::instance()->mesh.hoOptimize == 3)
+      OptimizeMesh(m, "HighOrderElastic");
 
-  if(CTX::instance()->mesh.hoOptimize >= 1)
-    OptimizeHighOrderMesh(GModel::current());
+    if(CTX::instance()->mesh.hoOptimize == 1 ||
+       CTX::instance()->mesh.hoOptimize == 2)
+      OptimizeMesh(m, "HighOrder");
 
-  Msg::Info("%d vertices %d elements", m->getNumMeshVertices(),
+    if(CTX::instance()->mesh.hoOptimize == 4)
+      OptimizeMesh(m, "HighOrderFastCurving");
+  }
+
+  // make sure periodic meshes are actually periodic and store periodic node
+  // correspondances
+  FixPeriodicMesh(m);
+
+  Msg::Info("%d nodes %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());
 
   Msg::PrintErrorCounter("Mesh generation error summary");

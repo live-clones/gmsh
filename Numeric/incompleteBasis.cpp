@@ -164,9 +164,7 @@ void incompleteBasis::ddf(double u, double v, double w,
     int szInc = getNumShapeFunctions();
     for(int i = 0; i < szInc; ++i) {
       for(int k = 0; k < 3; ++k) {
-        for(int l = 0; l < 3; ++l) {
-          hess[i][k][l] = chess[i][k][l];
-        }
+        for(int l = 0; l < 3; ++l) { hess[i][k][l] = chess[i][k][l]; }
       }
       for(int j = 0; j < coefficients.size1(); ++j) {
         for(int k = 0; k < 3; ++k) {
@@ -191,9 +189,7 @@ void incompleteBasis::dddf(double u, double v, double w,
     for(int i = 0; i < szInc; ++i) {
       for(int k = 0; k < 3; ++k) {
         for(int l = 0; l < 3; ++l) {
-          for(int m = 0; m < 3; ++m) {
-            third[i][k][l][m] = cthird[i][k][l][m];
-          }
+          for(int m = 0; m < 3; ++m) { third[i][k][l][m] = cthird[i][k][l][m]; }
         }
       }
       for(int j = 0; j < coefficients.size1(); ++j) {

@@ -81,6 +81,7 @@
 #include <ShapeFix_FixSmallFace.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wireframe.hxx>
+#include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <Standard_Version.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
@@ -2715,6 +2716,13 @@ bool OCC_Internals::booleanOperator(
         return false;
       }
       result = fuse.Shape();
+      // try to unify faces and edges of the shape (remove internal seams) which
+      // lie on the same geometry
+      if(CTX::instance()->geom.occUnionUnify) {
+        ShapeUpgrade_UnifySameDomain unify(result);
+        unify.Build();
+        result = unify.Shape();
+      }
       TopTools_ListIteratorOfListOfShape it(objectShapes);
       for(; it.More(); it.Next()) {
         mapOriginal.push_back(it.Value());
@@ -3420,8 +3428,10 @@ bool OCC_Internals::importShapes(const std::string &fileName,
              CTX::instance()->geom.occFixDegenerated,
              CTX::instance()->geom.occFixSmallEdges,
              CTX::instance()->geom.occFixSmallFaces,
-             CTX::instance()->geom.occSewFaces, false,
+             CTX::instance()->geom.occSewFaces,
+             CTX::instance()->geom.occMakeSolids,
              CTX::instance()->geom.occScaling);
+
   _multiBind(result, -1, outDimTags, highestDimOnly, true);
   return true;
 }
@@ -3439,6 +3449,12 @@ bool OCC_Internals::exportShapes(const std::string &fileName,
 {
   // iterate over all shapes with tags, and import them into the (sub)shape
   // _maps
+  _somap.Clear();
+  _shmap.Clear();
+  _fmap.Clear();
+  _wmap.Clear();
+  _emap.Clear();
+  _vmap.Clear();
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
   for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
@@ -3732,10 +3748,10 @@ void OCC_Internals::synchronize(GModel *model)
   SetBoundingBox();
 
   Msg::Debug("GModel imported:");
-  Msg::Debug("%d vertices", model->getNumVertices());
-  Msg::Debug("%d edges", model->getNumEdges());
-  Msg::Debug("%d faces", model->getNumFaces());
-  Msg::Debug("%d regions", model->getNumRegions());
+  Msg::Debug("%d points", model->getNumVertices());
+  Msg::Debug("%d curves", model->getNumEdges());
+  Msg::Debug("%d surfaces", model->getNumFaces());
+  Msg::Debug("%d volumes", model->getNumRegions());
   _changed = false;
 }
 
@@ -4215,17 +4231,13 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
         sfs->SetMaxTolerance(tolerance);
         sfs->Perform();
         myshape = sfs->Shape();
-
         for(exp0.Init(myshape, TopAbs_SOLID); exp0.More(); exp0.Next()) {
           TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
           TopoDS_Solid newsolid = solid;
           BRepLib::OrientClosedSolid(newsolid);
           Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
-          // rebuild->Apply(myshape);
           rebuild->Replace(solid, newsolid);
-          TopoDS_Shape newshape =
-            rebuild->Apply(myshape, TopAbs_COMPSOLID); //, 1);
-          // TopoDS_Shape newshape = rebuild->Apply(myshape);
+          TopoDS_Shape newshape = rebuild->Apply(myshape, TopAbs_COMPSOLID);
           myshape = newshape;
         }
       }
@@ -4272,7 +4284,7 @@ bool OCC_Internals::healShapes(const std::vector<std::pair<int, int> > &inDimTag
                                std::vector<std::pair<int, int> > &outDimTags,
                                double tolerance, bool fixDegenerated,
                                bool fixSmallEdges, bool fixSmallFaces,
-                               bool sewFaces)
+                               bool sewFaces, bool makeSolids)
 {
   BRep_Builder b;
   TopoDS_Compound c;
@@ -4316,7 +4328,7 @@ bool OCC_Internals::healShapes(const std::vector<std::pair<int, int> > &inDimTag
   }
 
   _healShape(c, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces,
-             sewFaces, false, 1.0);
+             sewFaces, makeSolids, 1.0);
   _multiBind(c, -1, outDimTags, false, true);
   return true;
 }
@@ -4327,21 +4339,24 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
 {
   if(CTX::instance()->geom.occDisableSTL) return false;
 
+  double lin = CTX::instance()->mesh.stlLinearDeflection;
+  double ang = CTX::instance()->mesh.stlAngularDeflection;
+
 #if OCC_VERSION_HEX > 0x070300
-  BRepMesh_IncrementalMesh aMesher(s, 0.01, Standard_False, 0.35, Standard_True);
+  BRepMesh_IncrementalMesh aMesher(s, lin, Standard_False, ang, Standard_True);
 #elif OCC_VERSION_HEX > 0x070000
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
   BRepMesh_FastDiscret::Parameters parameters;
-  parameters.Deflection = 0.1;
-  parameters.Angle = 0.35;
+  parameters.Deflection = lin;
+  parameters.Angle = ang;
   parameters.Relative = Standard_False;
   BRepMesh_FastDiscret aMesher(aBox, parameters);
   aMesher.Perform(s);
 #else
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
-  BRepMesh_FastDiscret aMesher(0.1, 0.35, aBox, Standard_False, Standard_False,
+  BRepMesh_FastDiscret aMesher(lin, ang, aBox, Standard_False, Standard_False,
                                Standard_True, Standard_False);
   aMesher.Perform(s);
 #endif

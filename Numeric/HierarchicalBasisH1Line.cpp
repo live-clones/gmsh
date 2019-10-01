@@ -94,3 +94,16 @@ void HierarchicalBasisH1Line::orientEdge(
     }
   }
 }
+
+void HierarchicalBasisH1Line::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                          std::vector<int> &orderInfo)
+{
+  functionTypeInfo[0] = 0;
+  orderInfo[0] = 1;
+  functionTypeInfo[1] = 0;
+  orderInfo[1] = 1;
+  for(int k = 2; k <= _pe; k++) {
+    orderInfo[k] = k;
+    functionTypeInfo[k] = 1;
+  }
+}

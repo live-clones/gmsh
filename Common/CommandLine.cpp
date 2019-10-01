@@ -531,7 +531,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         opt_mesh_partition_split_mesh_files(0, GMSH_SET, 1.);
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "preserveNumberingMsh2")) {
+      else if(!strcmp(argv[i] + 1, "preserve_numbering_msh2") ||
+              !strcmp(argv[i] + 1, "preserveNumberingMsh2")) {
         opt_mesh_preserve_numbering_msh2(0, GMSH_SET, 1.);
         i++;
       }

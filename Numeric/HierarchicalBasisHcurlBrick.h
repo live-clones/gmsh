@@ -71,6 +71,8 @@ public:
                           int const &faceNumber,
                           std::vector<std::vector<double> > &faceFunctions,
                           std::string typeFunction);
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo);
 
 private:
   int _pb1; // bubble function order in  direction u

@@ -34,7 +34,7 @@
 
     // detect retina display
     if ([[UIScreen mainScreen] respondsToSelector:@selector(displayLinkWithTarget:selector:)] &&
-        ([UIScreen mainScreen].scale == 2.0)) {
+        ([UIScreen mainScreen].scale >= 2.0)) {
       self.contentScaleFactor = 2.0;
       eaglLayer.contentsScale = 2;
     }
@@ -52,8 +52,8 @@
     }
     mContext = new drawContext((eaglLayer.contentsScale == 2) ? 1.5 : 1,
                                eaglLayer.contentsScale == 2);
+    rendering = NO;
   }
-  rendering = NO;
   return self;
 }
 

@@ -2125,7 +2125,7 @@ static void mesh_refine_cb(Fl_Widget *w, void *data)
 
 static void mesh_smooth_cb(Fl_Widget *w, void *data)
 {
-  GModel::current()->smoothMesh();
+  GModel::current()->optimizeMesh("Laplace2D");
   drawContext::global()->draw();
 }
 

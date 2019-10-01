@@ -137,7 +137,7 @@ int GModel::readUNV(const std::string &name)
             }
             vertices[i] = getMeshVertexByTag(n);
             if(!vertices[i]) {
-              Msg::Error("Wrong vertex index %d", n);
+              Msg::Error("Wrong node index %d", n);
               gmshclose(fp);
               return 0;
             }

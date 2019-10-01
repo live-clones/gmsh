@@ -807,14 +807,13 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   getDegeneracy(m, deg);
   short degType = 1;
   if(deg.size()) degType = deg[0]->degenerated;
-  //  printf("%d degenerate points\n",deg.size());
+
   int nbSplit = 1;
   while(1) {
     if(nbSplit) nbSplit = validitiyOfGeodesics(gf, m);
 
     if(nbSplit) {
-      Msg::Info(
-        "Splits are now done to allow geodesics close to singular points");
+      Msg::Info("Splitting to allow geodesics close to singular points");
       setDegeneracy(deg, degType);
     }
     else
@@ -941,7 +940,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 #endif
 
     while(1) {
-      // printf("ITERATION %d\n",ITER);
       bad = 0;
       invalid = 0;
       for(size_t i = 0; i < m.triangles.size(); i++) {
@@ -956,8 +954,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       for(size_t i = 0; i < m.triangles.size(); i++) {
         BDS_Point *pts[4];
         m.triangles[i]->getNodes(pts);
-        // if (pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated <
-        // 2){
         double val = orientation * BDS_Face_Validity(gf, m.triangles[i]);
         if(val <= 0.2) {
           if(!m.triangles[i]->deleted && val <= 0) invalid++;
@@ -966,17 +962,15 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
           pts[2]->config_modified = true;
           bad++;
           if(val < 0) {
-            // printf("%d %d %d invalid\n",pts[0]->iD,pts[1]->iD,pts[2]->iD);
             invalid++;
           }
         }
-        // }
       }
       if(++ITER == 10) {
         if(invalid && !computeNodalSizeField) {
           gf->meshStatistics.status = GFace::FAILED;
-          Msg::Warning("Meshing surface %d : %d elements remain invalid",
-                       gf->tag(), invalid);
+          Msg::Warning("%d element%s remain invalid in surface %d",
+                       invalid, (invalid > 1) ? "s" : "", gf->tag());
         }
         break;
       }
@@ -988,8 +982,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
         smoothVertexPass(gf, m, nb_smooth, true, .5, t_sm);
       }
       else {
-        // Msg::Info("Meshing surface %d : all elements are oriented
-        //            properly\n", gf->tag());
+        // everything ok!
         break;
       }
     }

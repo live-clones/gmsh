@@ -110,7 +110,7 @@ private:
   // apply various healing algorithms to try to fix the shape
   void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixDegenerated,
                   bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
-                  bool makeSolids = false, double scaling = 0.0);
+                  bool makeSolids, double scaling = 0.0);
 
   // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
@@ -341,7 +341,7 @@ public:
                   std::vector<std::pair<int, int> > &outDimTags,
                   double tolerance, bool fixDegenerated,
                   bool fixSmallEdges, bool fixSmallFaces,
-                  bool sewFaces);
+                  bool sewFaces, bool makeSolids);
 
   // set meshing constraints
   void setMeshSize(int dim, int tag, double size);
@@ -684,7 +684,7 @@ public:
                   std::vector<std::pair<int, int> > &outDimTags,
                   double tolerance, bool fixDegenerated,
                   bool fixSmallEdges, bool fixSmallFaces,
-                  bool sewFaces)
+                  bool sewFaces, bool makeSolids)
   {
     return _error("heal shapes");
   }

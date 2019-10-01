@@ -885,7 +885,7 @@ StringXNumber GeometryOptions_Number[] = {
     "new entities with the OpenCASCADE kernel" },
   { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
     "Try to preserve the numbering of entities through OpenCASCADE boolean operations" },
-  { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
+  { F|O, "OCCDisableStl" , opt_geometry_occ_disable_stl , 0. ,
     "Disable STL creation in OpenCASCADE kernel" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
     "Fix degenerated edges/faces when importing STEP, IGES and BRep models with the "
@@ -898,6 +898,9 @@ StringXNumber GeometryOptions_Number[] = {
     "OpenCASCADE kernel" },
   { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
     "Import labels and colors when importing STEP models with the OpenCASCADE kernel" },
+  { F|O, "OCCMakeSolids" , opt_geometry_occ_make_solids , 0. ,
+    "Fix shells and make solids when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
     "Use multi-threaded OpenCASCADE boolean operators" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
@@ -905,6 +908,9 @@ StringXNumber GeometryOptions_Number[] = {
     "OpenCASCADE kernel" },
   { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. ,
     "Sew faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel" },
+  { F|O, "OCCUnionUnify" , opt_geometry_occ_union_unify , 1. ,
+    "Try to unify faces and edges (remove internal seams) which lie on the same geometry "
+    "after performing a boolean union with the OpenCASCADE kernel" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. ,
     "Model display offset along X-axis (in model coordinates)" },
   { F,   "OffsetY" , opt_geometry_offset1 , 0. ,
@@ -992,6 +998,9 @@ StringXNumber MeshOptions_Number[] = {
     "7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
     "3D mesh algorithm (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)" },
+  { F|O, "AlgorithmSwitchOnFailure" , opt_mesh_algo_switch_on_failure , 1 ,
+    "Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based "
+    "algorithms, switching to MeshAdapt)"},
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
@@ -1036,7 +1045,10 @@ StringXNumber MeshOptions_Number[] = {
     "entity, 3: by partition)" },
   { F|O, "CompoundClassify" , opt_mesh_compound_classify , 1. ,
     "How are surface mesh elements classified on compounds? (0: on the new discrete "
-    "entity, 1: on the original geometrical entity)" },
+    "entity, 1: on the original geometrical entity - incompatible with e.g. high-order "
+    "meshing)" },
+  { F|O, "CompoundCharacteristicLengthFactor" , opt_mesh_compound_lc_factor , 0.5 ,
+    "Mesh size factor applied to compound parts" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
 
@@ -1067,7 +1079,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
     "Number of layers around a problematic element to consider for high-order optimization"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
-    "Optimize high-order meshes? (-1: elastic smoothing, 1: optimization, 2: both)" },
+    "Optimize high-order meshes? (0: none, 1: optimization, 2: elastic+optimization, "
+    "3: elastic, 4: fast curving)" },
   { F|O, "HighOrderPassMax", opt_mesh_ho_pass_max, 25,
     "Maximum number of high-order optimization passes (moving barrier)"},
   { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
@@ -1104,12 +1117,18 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "LineWidth" , opt_mesh_line_width , 1.0 ,
     "Display width of mesh lines (in pixels)" },
 
+  { F|O, "MaxIterDelaunay3D" , opt_mesh_max_iter_delaunay_3d, 0,
+    "Maximum number of point insertion iterations in 3D Delaunay mesher "
+    "(0: unlimited)" },
   { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
     "Maximum number of threads for 1D meshing (0: use default)" },
   { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
     "Maximum number of threads for 2D meshing (0: use default)" },
   { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
     "Maximum number of threads for 3D meshing (0: use default)" },
+  { F|O, "MaxRetries" , opt_mesh_max_retries , 10 ,
+    "Maximum number of times meshing is retried on curves and surfaces with a "
+    "pending mesh"},
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
@@ -1117,7 +1136,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
     "METIS edge matching type 'ctype' (1: Random, 2: Sorted Heavy-Edge)" },
   { F|O, "MetisMaxLoadImbalance" , opt_mesh_partition_metis_max_load_imbalance, -1. ,
-    "METIS maximum load imbalance 'ufactor' (-1: default, i.e. 30 for K-way and 1 for Recursive)" },
+    "METIS maximum load imbalance 'ufactor' (-1: default, i.e. 30 for K-way and 1 "
+    "for Recursive)" },
   { F|O, "MetisObjective" , opt_mesh_partition_metis_objective, 1. ,
     "METIS objective type 'objtype' (1: min. edge-cut, 2: min. communication volume)" },
   { F|O, "MetisMinConn" , opt_mesh_partition_metis_min_conn, -1. ,
@@ -1236,6 +1256,9 @@ StringXNumber MeshOptions_Number[] = {
     "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
   { F|O, "RandomFactor3D" , opt_mesh_rand_factor3d , 1.e-12 ,
     "Random factor used in the 3D meshing algorithm" },
+
+  { F|O, "RandomSeed" , opt_mesh_random_seed , 1. ,
+    "Seed of pseudo-random number generator" },
   { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
@@ -1297,6 +1320,12 @@ StringXNumber MeshOptions_Number[] = {
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at nodes of a same edge (used in BAMG)" },
+  { F|O, "StlAngularDeflection" , opt_mesh_stl_angular_deflection , 0.35 ,
+    "Maximum angular deflection when creating STL representation of surfaces "
+    "(currently only used with the OpenCASCADE kernel)"},
+  { F|O, "StlLinearDeflection" , opt_mesh_stl_linear_deflection , 0.01 ,
+    "Maximum linear deflection when creating STL representation of surfaces "
+    "(currently only used with the OpenCASCADE kernel)"},
   { F|O, "StlOneSolidPerSurface" , opt_mesh_stl_one_solid_per_surface, 0. ,
     "Create one solid per surface when exporting STL files? (0: single solid, "
     "1: one solid per face, 2: one solid per physical surface)" },

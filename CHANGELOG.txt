@@ -1,7 +1,16 @@
-4.1.1: small improvements (transfinite with degenerate curves, renumbering for
-some mesh formats, empty MSH file sections) and bug fixes (ellipse < pi,
-orientation of compound parts, serendip pyramids, periodic MeshAdapt robustness,
-invalidate cache after mesh/addNodes).
+4.5.0 (Work-in-progress): improved handling of anisotropic surface meshes in 3D
+Delaunay; improved high-order periodic meshing; improved 2D boolean unions;
+added API support for mesh compounds; small fixes.
+
+* Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
+  like all other mesh optimizers); new arguments to mesh/optimize,
+  mesh/getElementProperties and occ/healShapes.
+
+4.4.1 (July 25, 2019): small improvements (transfinite with degenerate curves,
+renumbering for some mesh formats, empty MSH file sections, tunable accuracy of
+compound meshes) and bug fixes (ellipse < pi, orientation and reclassification
+of compound parts, serendip pyramids, periodic MeshAdapt robustness, invalidate
+cache after mesh/addNodes).
 
 4.4.0 (July 1, 2019): new STL remeshing workflow (with new ClassifySurfaces
 command in .geo files); added API support for color options, mesh optimization,

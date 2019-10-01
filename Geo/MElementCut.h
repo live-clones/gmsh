@@ -36,7 +36,7 @@ public:
     : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
   {
     if(v.size() % 4) {
-      Msg::Error("Got %d vertices for polyhedron", (int)v.size());
+      Msg::Error("Got %d nodes for polyhedron", (int)v.size());
       return;
     }
     for(std::size_t i = 0; i < v.size(); i += 4)
@@ -150,11 +150,11 @@ public:
   {
     if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
   }
-  virtual int getNumShapeFunctions() const
+  virtual std::size_t getNumShapeFunctions() const
   {
     return (_orig ? _orig->getNumShapeFunctions() : 0);
   }
-  virtual int getNumPrimaryShapeFunctions() const
+  virtual std::size_t getNumPrimaryShapeFunctions() const
   {
     return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
   }
@@ -180,10 +180,10 @@ public:
   virtual int getNumChildren() const { return _parts.size(); }
   virtual MElement *getChild(int i) const { return _parts[i]; }
   virtual bool ownsParent() const { return _owner; }
-  virtual int getNumVerticesForMSH() { return _parts.size() * 4; }
+  virtual std::size_t getNumVerticesForMSH() { return _parts.size() * 4; }
   virtual void getVerticesIdForMSH(std::vector<int> &verts)
   {
-    int n = getNumVerticesForMSH();
+    std::size_t n = getNumVerticesForMSH();
     verts.resize(n);
     for(std::size_t i = 0; i < _parts.size(); i++)
       for(int j = 0; j < 4; j++)
@@ -325,11 +325,11 @@ public:
   {
     if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
   }
-  virtual int getNumShapeFunctions() const
+  virtual std::size_t getNumShapeFunctions() const
   {
     return (_orig ? _orig->getNumShapeFunctions() : 0);
   }
-  virtual int getNumPrimaryShapeFunctions() const
+  virtual std::size_t getNumPrimaryShapeFunctions() const
   {
     return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
   }
@@ -346,10 +346,10 @@ public:
   // the coordinates in the local parent element.
   virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-  virtual int getNumVerticesForMSH() { return _parts.size() * 3; }
+  virtual std::size_t getNumVerticesForMSH() { return _parts.size() * 3; }
   virtual void getVerticesIdForMSH(std::vector<int> &verts)
   {
-    int n = getNumVerticesForMSH();
+    std::size_t n = getNumVerticesForMSH();
     verts.resize(n);
     for(std::size_t i = 0; i < _parts.size(); i++)
       for(int j = 0; j < 3; j++)

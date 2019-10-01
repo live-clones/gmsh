@@ -4729,7 +4729,7 @@ double opt_geometry_light_two_side(OPT_ARGS_NUM)
     CTX::instance()->geom.lightTwoSide = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->geo.butt[14]->value
+    FlGui::instance()->options->geo.butt[15]->value
       (CTX::instance()->geom.lightTwoSide);
 #endif
   return CTX::instance()->geom.lightTwoSide;
@@ -4800,6 +4800,27 @@ double opt_geometry_occ_sew_faces(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->geom.occSewFaces;
+}
+
+double opt_geometry_occ_make_solids(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->geom.occMakeSolids = val ? 1 : 0;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->geo.butt[14]->value
+      (CTX::instance()->geom.occMakeSolids);
+  }
+#endif
+  return CTX::instance()->geom.occMakeSolids;
+}
+
+double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occUnionUnify = (int)val;
+  return CTX::instance()->geom.occUnionUnify;
 }
 
 double opt_geometry_occ_parallel(OPT_ARGS_NUM)
@@ -5951,6 +5972,22 @@ double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM)
   return CTX::instance()->mesh.stlOneSolidPerSurface;
 }
 
+double opt_mesh_stl_linear_deflection(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.stlLinearDeflection = val;
+  }
+  return CTX::instance()->mesh.stlLinearDeflection;
+}
+
+double opt_mesh_stl_angular_deflection(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.stlAngularDeflection = val;
+  }
+  return CTX::instance()->mesh.stlAngularDeflection;
+}
+
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -5999,6 +6036,22 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->mesh.algo2d;
+}
+
+double opt_mesh_algo_switch_on_failure(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.algoSwitchOnFailure = (int)val;
+  }
+  return CTX::instance()->mesh.algoSwitchOnFailure;
+}
+
+double opt_mesh_max_retries(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.maxRetries = (int)val;
+  }
+  return CTX::instance()->mesh.maxRetries;
 }
 
 double opt_mesh_algo_recombine(OPT_ARGS_NUM)
@@ -6183,7 +6236,7 @@ double opt_mesh_ho_optimize(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[3]->value
-      (CTX::instance()->mesh.hoOptimize);
+      (CTX::instance()->mesh.hoOptimize == 2 ? 1 : 0);
 #endif
   return CTX::instance()->mesh.hoOptimize;
 }
@@ -6402,6 +6455,20 @@ double opt_mesh_compound_classify(OPT_ARGS_NUM)
   return CTX::instance()->mesh.compoundClassify;
 }
 
+double opt_mesh_compound_lc_factor(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.compoundLcFactor = val;
+  return CTX::instance()->mesh.compoundLcFactor;
+}
+
+double opt_mesh_random_seed(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.randomSeed = (unsigned int)val;
+  return CTX::instance()->mesh.randomSeed;
+}
+
 double opt_mesh_switch_elem_tags(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -6566,6 +6633,13 @@ double opt_mesh_ignore_periodicity(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->mesh.ignorePeriodicity = (int)val;
   return CTX::instance()->mesh.ignorePeriodicity;
+}
+
+double opt_mesh_max_iter_delaunay_3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.maxIterDelaunay3D = (int)val;
+  return CTX::instance()->mesh.maxIterDelaunay3D;
 }
 
 double opt_mesh_max_num_threads_1d(OPT_ARGS_NUM)
@@ -10048,7 +10122,7 @@ unsigned int opt_view_color_text2d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.text2d, FlGui::instance()->options->view.color[10]);
+    CCC(opt->color.text2d, FlGui::instance()->options->view.color[11]);
     drawContext::global()->resetFontTextures();
   }
 #endif
@@ -10067,7 +10141,7 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.text3d, FlGui::instance()->options->view.color[11]);
+    CCC(opt->color.text3d, FlGui::instance()->options->view.color[12]);
     drawContext::global()->resetFontTextures();
   }
 #endif
@@ -10086,7 +10160,7 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.axes, FlGui::instance()->options->view.color[12]);
+    CCC(opt->color.axes, FlGui::instance()->options->view.color[13]);
     drawContext::global()->resetFontTextures();
   }
 #endif
@@ -10105,7 +10179,7 @@ unsigned int opt_view_color_background2d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.background2d, FlGui::instance()->options->view.color[13]);
+    CCC(opt->color.background2d, FlGui::instance()->options->view.color[14]);
     drawContext::global()->resetFontTextures();
   }
 #endif

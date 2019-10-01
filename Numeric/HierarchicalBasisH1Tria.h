@@ -75,6 +75,9 @@ public:
                           std::vector<std::vector<double> > &faceBasis,
                           std::string typeFunction = "GradH1Legendre");
 
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo);
+
 private:
   int _pf; // face function order
   int _pOrderEdge[3]; // Edge functions order (pOrderEdge[0] matches the edge 0

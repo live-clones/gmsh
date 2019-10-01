@@ -70,7 +70,7 @@ PView *GMSH_MeshVolumePlugin::execute(PView *v)
       vol += entities[i]->getMeshElement(j)->getVolume();
 
   Msg::Info("Mesh volume (physical %d | dimension %d): %g",
-            vol, physical, dim);
+            physical, dim, vol);
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);

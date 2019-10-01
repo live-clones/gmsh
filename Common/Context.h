@@ -26,10 +26,10 @@ struct contextMeshOptions {
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
   double anisoMax, smoothRatio;
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
-  int nbSmoothing, algo2d, algo3d, algoSubdivide;
+  int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
-  int recombine3DAll, recombine3DLevel;
-  int recombine3DConformity, flexibleTransfinite;
+  int recombine3DAll, recombine3DLevel, recombine3DConformity;
+  int flexibleTransfinite, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
   int meshOnlyVisible, minCircPoints, minCurvPoints;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
@@ -37,17 +37,20 @@ struct contextMeshOptions {
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   std::map<int, int> algo2dPerFace;
   std::map<int, int> curvatureControlPerFace;
-  int NewtonConvergenceTestXYZ;
+  int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
   int renumber, compoundClassify;
+  double compoundLcFactor;
+  unsigned int randomSeed;
   // mesh IO
   int fileFormat;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
+  double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportOrder, cgnsConstructTopology;
@@ -81,8 +84,8 @@ struct contextGeometryOptions {
   int autoCoherence;
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occParallel, occBooleanPreserveNumbering;
-  int occDisableSTL, occImportLabels;
+  int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
+  int occDisableSTL, occImportLabels, occUnionUnify;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;

@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.4).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.5).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -255,6 +255,16 @@ namespace gmsh { // Top-level functions
       gmshModelList(&api_names_, &api_names_n_, &ierr);
       if(ierr) throw ierr;
       names.resize(api_names_n_); for(size_t i = 0; i < api_names_n_; ++i){ names[i] = std::string(api_names_[i]); gmshFree(api_names_[i]); } gmshFree(api_names_);
+    }
+
+    // Get the name of the current model.
+    inline void getCurrent(std::string & name)
+    {
+      int ierr = 0;
+      char *api_name_;
+      gmshModelGetCurrent(&api_name_, &ierr);
+      if(ierr) throw ierr;
+      name = std::string(api_name_); gmshFree(api_name_);
     }
 
     // Set the current model to the model with name `name'. If several models have
@@ -738,11 +748,15 @@ namespace gmsh { // Top-level functions
       // Optimize the mesh of the current model using `method' (empty for default
       // tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
       // direct high-order mesh optimizer, "HighOrderElastic" for high-order
-      // elastic smoother).
-      inline void optimize(const std::string & method)
+      // elastic smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and
+      // "Relocate3D" for node relocation). If `force' is set apply the
+      // optimization also to discrete entities.
+      inline void optimize(const std::string & method,
+                           const bool force = false,
+                           const int niter = 1)
       {
         int ierr = 0;
-        gmshModelMeshOptimize(method.c_str(), &ierr);
+        gmshModelMeshOptimize(method.c_str(), (int)force, niter, &ierr);
         if(ierr) throw ierr;
       }
 
@@ -759,14 +773,6 @@ namespace gmsh { // Top-level functions
       {
         int ierr = 0;
         gmshModelMeshRefine(&ierr);
-        if(ierr) throw ierr;
-      }
-
-      // Smooth the mesh of the current model.
-      inline void smooth()
-      {
-        int ierr = 0;
-        gmshModelMeshSmooth(&ierr);
         if(ierr) throw ierr;
       }
 
@@ -877,6 +883,24 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
         parametricCoord.assign(api_parametricCoord_, api_parametricCoord_ + api_parametricCoord_n_); gmshFree(api_parametricCoord_);
+      }
+
+      // Set the coordinates and the parametric coordinates (if any) of the node
+      // with tag `tag'. This is a sometimes useful but inefficient way of
+      // accessing nodes, as it relies on a cache stored in the model. For large
+      // meshes all the nodes in the model should be added at once, and numbered in
+      // a continuous sequence of tags from 1 to N.
+      inline void setNode(const std::size_t nodeTag,
+                          const std::vector<double> & coord,
+                          const std::vector<double> & parametricCoord)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        double *api_parametricCoord_; size_t api_parametricCoord_n_; vector2ptr(parametricCoord, &api_parametricCoord_, &api_parametricCoord_n_);
+        gmshModelMeshSetNode(nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_coord_);
+        gmshFree(api_parametricCoord_);
       }
 
       // Rebuild the node cache.
@@ -1057,19 +1081,21 @@ namespace gmsh { // Top-level functions
 
       // Get the properties of an element of type `elementType': its name
       // (`elementName'), dimension (`dim'), order (`order'), number of nodes
-      // (`numNodes') and coordinates of the nodes in the reference element
-      // (`nodeCoord' vector, of length `dim' times `numNodes').
+      // (`numNodes'), coordinates of the nodes in the reference element
+      // (`nodeCoord' vector, of length `dim' times `numNodes') and number of
+      // primary (first order) nodes (`numPrimaryNodes').
       inline void getElementProperties(const int elementType,
                                        std::string & elementName,
                                        int & dim,
                                        int & order,
                                        int & numNodes,
-                                       std::vector<double> & nodeCoord)
+                                       std::vector<double> & nodeCoord,
+                                       int & numPrimaryNodes)
       {
         int ierr = 0;
         char *api_elementName_;
         double *api_nodeCoord_; size_t api_nodeCoord_n_;
-        gmshModelMeshGetElementProperties(elementType, &api_elementName_, &dim, &order, &numNodes, &api_nodeCoord_, &api_nodeCoord_n_, &ierr);
+        gmshModelMeshGetElementProperties(elementType, &api_elementName_, &dim, &order, &numNodes, &api_nodeCoord_, &api_nodeCoord_n_, &numPrimaryNodes, &ierr);
         if(ierr) throw ierr;
         elementName = std::string(api_elementName_); gmshFree(api_elementName_);
         nodeCoord.assign(api_nodeCoord_, api_nodeCoord_ + api_nodeCoord_n_); gmshFree(api_nodeCoord_);
@@ -1322,20 +1348,24 @@ namespace gmsh { // Top-level functions
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
-      // Get information about the `keys'. Warning: this is an experimental feature
-      // and will probably change in a future release.
+      // Get information about the `keys'. `infoKeys' returns information about the
+      // functions associated with the `keys'. `infoKeys[0].first' describes the
+      // type of function (0 for  vertex function, 1 for edge function, 2 for face
+      // function and 3 for bubble function). `infoKeys[0].second' gives the order
+      // of the function associated with the key. Warning: this is an experimental
+      // feature and will probably change in a future release.
       inline void getInformationForElements(const gmsh::vectorpair & keys,
-                                            gmsh::vectorpair & info,
-                                            const int order,
-                                            const int elementType)
+                                            const int elementType,
+                                            const std::string & functionSpaceType,
+                                            gmsh::vectorpair & infoKeys)
       {
         int ierr = 0;
         int *api_keys_; size_t api_keys_n_; vectorpair2intptr(keys, &api_keys_, &api_keys_n_);
-        int *api_info_; size_t api_info_n_;
-        gmshModelMeshGetInformationForElements(api_keys_, api_keys_n_, &api_info_, &api_info_n_, order, elementType, &ierr);
+        int *api_infoKeys_; size_t api_infoKeys_n_;
+        gmshModelMeshGetInformationForElements(api_keys_, api_keys_n_, elementType, functionSpaceType.c_str(), &api_infoKeys_, &api_infoKeys_n_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_keys_);
-        info.resize(api_info_n_ / 2); for(size_t i = 0; i < api_info_n_ / 2; ++i){ info[i].first = api_info_[i * 2 + 0]; info[i].second = api_info_[i * 2 + 1]; } gmshFree(api_info_);
+        infoKeys.resize(api_infoKeys_n_ / 2); for(size_t i = 0; i < api_infoKeys_n_ / 2; ++i){ infoKeys[i].first = api_infoKeys_[i * 2 + 0]; infoKeys[i].second = api_infoKeys_[i * 2 + 1]; } gmshFree(api_infoKeys_);
       }
 
       // Precomputes the basis functions corresponding to `elementType'.
@@ -1534,6 +1564,19 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         gmshModelMeshSetReverse(dim, tag, (int)val, &ierr);
         if(ierr) throw ierr;
+      }
+
+      // Set a compound meshing constraint on the model entities of dimension `dim'
+      // and tags `tags'. During meshing, compound entities are treated as a single
+      // discrete entity, which is automatically reparametrized.
+      inline void setCompound(const int dim,
+                              const std::vector<int> & tags)
+      {
+        int ierr = 0;
+        int *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
+        gmshModelMeshSetCompound(dim, api_tags_, api_tags_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_tags_);
       }
 
       // Set meshing constraints on the bounding surfaces of the volume of tag
@@ -3140,12 +3183,13 @@ namespace gmsh { // Top-level functions
                              const bool fixDegenerated = true,
                              const bool fixSmallEdges = true,
                              const bool fixSmallFaces = true,
-                             const bool sewFaces = true)
+                             const bool sewFaces = true,
+                             const bool makeSolids = true)
       {
         int ierr = 0;
         int *api_outDimTags_; size_t api_outDimTags_n_;
         int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
-        gmshModelOccHealShapes(&api_outDimTags_, &api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, (int)fixDegenerated, (int)fixSmallEdges, (int)fixSmallFaces, (int)sewFaces, &ierr);
+        gmshModelOccHealShapes(&api_outDimTags_, &api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, (int)fixDegenerated, (int)fixSmallEdges, (int)fixSmallFaces, (int)sewFaces, (int)makeSolids, &ierr);
         if(ierr) throw ierr;
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
         gmshFree(api_dimTags_);

@@ -1218,8 +1218,8 @@ static void _deleteUnusedVertices(GRegion *gr)
                            allverts.end());
 }
 
-void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
-                            splitQuadRecovery *sqr)
+void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarget,
+                            bool _classify, splitQuadRecovery *sqr)
 {
 
 #ifdef DEBUG_BOUNDARY_RECOVERY
@@ -1328,7 +1328,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
           getRegionFromBoundingFaces(gr->model(), faces_bound);
         if(myGRegion) { // a geometrical region associated to the list of faces
                         // has been found
-          Msg::Info("Found region %d", myGRegion->tag());
+          Msg::Info("Found volume %d", myGRegion->tag());
           for(std::list<MTet4 *>::iterator it2 = theRegion.begin();
               it2 != theRegion.end(); ++it2) {
             (*it2)->setOnWhat(myGRegion);
@@ -1392,8 +1392,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
   // main loop in Delaunay inserstion starts here
 
   while(1) {
-    if(COUNT_MISS_2 > 100000) break;
-    if(ITER >= maxVert) break;
+    if(maxIter > 0 && ITER >= maxIter) break;
     if(allTets.empty()) {
       Msg::Error("No tetrahedra in region %d", gr->tag());
       break;
@@ -1407,9 +1406,9 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
     }
     else {
       if(ITER++ % 500 == 0)
-        Msg::Info("%d points created - worst tet radius %g (points removed %d %d)",
-          REALCOUNT, worst->getRadius(), COUNT_MISS_1, COUNT_MISS_2);
-      if(worst->getRadius() < 1) break;
+        Msg::Info("It. %d - %d nodes created - worst tet radius %g (nodes removed %d %d)",
+                  ITER - 1, REALCOUNT, worst->getRadius(), COUNT_MISS_1, COUNT_MISS_2);
+      if(worst->getRadius() < worstTetRadiusTarget) break;
       double center[3];
       double uvw[3];
       MTetrahedron *base = worst->tet();
@@ -1528,11 +1527,11 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
   double t2 = Cpu();
   double dt = (t2 - t1);
   int COUNT_MISS = COUNT_MISS_1 + COUNT_MISS_2;
-  Msg::Info("3D point insertion terminated (%d points created):",
+  Msg::Info("3D refinement terminated (%d nodes total):",
             (int)vSizes.size());
   Msg::Info(" - %d Delaunay cavities modified for star shapeness",
             NB_CORRECTION_OF_CAVITY);
-  Msg::Info(" - %d points could not be inserted", COUNT_MISS);
+  Msg::Info(" - %d nodes could not be inserted", COUNT_MISS);
   Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/s)",
             allTets.size(), dt, (int)(allTets.size() / dt));
 
@@ -1573,5 +1572,5 @@ void delaunayMeshIn3D(std::vector<MVertex *> &v,
   double t1 = Cpu();
   delaunayTriangulation(1, 1, v, result);
   double t2 = Cpu();
-  Msg::Info("Tetrahedrization of %d points in %g seconds", v.size(), t2 - t1);
+  Msg::Info("Tetrahedrization of %d nodes in %g seconds", v.size(), t2 - t1);
 }

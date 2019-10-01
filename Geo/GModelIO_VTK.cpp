@@ -246,7 +246,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
         if(n[j] >= 0 && n[j] < (int)vertices.size())
           cells[i].push_back(vertices[n[j]]);
         else
-          Msg::Error("Bad vertex index");
+          Msg::Error("Wrong node index %d", n[j]);
       }
     }
 

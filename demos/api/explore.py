@@ -9,6 +9,8 @@ gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
 gmsh.open(sys.argv[1])
 
+print("Model name: " + gmsh.model.getCurrent())
+
 # get all elementary entities in the model
 entities = gmsh.model.getEntities()
 
@@ -26,7 +28,7 @@ for e in entities:
            print " - Partition tag(s): " + str(partitions) + " - parent entity" +\
                str(gmsh.model.getParent(e[0], e[1]))
     for t in elemTypes:
-        name, dim, order, numv, parv = gmsh.model.mesh.getElementProperties(t)
+        name, dim, order, numv, parv, _ = gmsh.model.mesh.getElementProperties(t)
         print " - Element type: " + name + ", order " + str(order)
         print "   with " + str(numv) + " nodes in param coord: ", parv
 

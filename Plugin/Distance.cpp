@@ -86,7 +86,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
     if(entities[ii]->dim() == _maxDim) {
       for(std::size_t i = 0; i < entities[ii]->getNumMeshElements(); i++) {
         MElement *e = entities[ii]->getMeshElement(i);
-        int numNodes = e->getNumPrimaryVertices();
+        std::size_t numNodes = e->getNumPrimaryVertices();
         if(e->getNumChildren())
           numNodes = e->getNumChildren() * e->getChild(0)->getNumVertices();
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
@@ -94,21 +94,21 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
         std::vector<MVertex *> nods;
 
         if(!e->getNumChildren())
-          for(int i = 0; i < numNodes; i++) nods.push_back(e->getVertex(i));
+          for(std::size_t i = 0; i < numNodes; i++) nods.push_back(e->getVertex(i));
         else
           for(int i = 0; i < e->getNumChildren(); i++)
             for(std::size_t j = 0; j < e->getChild(i)->getNumVertices(); j++)
               nods.push_back(e->getChild(i)->getVertex(j));
 
-        for(int nod = 0; nod < numNodes; nod++)
+        for(std::size_t nod = 0; nod < numNodes; nod++)
           out->push_back((nods[nod])->x());
-        for(int nod = 0; nod < numNodes; nod++)
+        for(std::size_t nod = 0; nod < numNodes; nod++)
           out->push_back((nods[nod])->y());
-        for(int nod = 0; nod < numNodes; nod++)
+        for(std::size_t nod = 0; nod < numNodes; nod++)
           out->push_back((nods[nod])->z());
 
         std::vector<double> dist;
-        for(int j = 0; j < numNodes; j++) {
+        for(std::size_t j = 0; j < numNodes; j++) {
           MVertex *v = nods[j];
           std::map<MVertex *, double>::iterator it = distanceMap.find(v);
           dist.push_back(it->second);

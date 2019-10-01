@@ -345,9 +345,7 @@ namespace ClosureGen {
     closureRef.resize(24);
     for(int i = 0; i < 24; i++) closureRef[i] = 0;
     if(order == 0) {
-      for(int i = 0; i < 24; i++) {
-        closureFull[i].push_back(0);
-      }
+      for(int i = 0; i < 24; i++) { closureFull[i].push_back(0); }
       return;
     }
     // Mapping for the p1 nodes
@@ -516,9 +514,7 @@ namespace ClosureGen {
     // is so simple.
     int nNodes =
       isTriangle ? (order - 2) * (order - 1) / 2 : (order - 1) * (order - 1);
-    for(int i = 0; i < nNodes; ++i, ++idx, ++start) {
-      closure[idx] = start;
-    }
+    for(int i = 0; i < nNodes; ++i, ++idx, ++start) { closure[idx] = start; }
   }
 
   void reorderFaceClosure(int iSign, int iRotate, nodalBasis::closure &closure,
@@ -909,9 +905,7 @@ bool nodalBasis::forwardRenumbering(const fullMatrix<double> &nodes, int *renum,
         idx = j;
         nbOnes++;
       }
-      if(fabs(tfo(i, j)) < tol) {
-        nbZeroes++;
-      }
+      if(fabs(tfo(i, j)) < tol) { nbZeroes++; }
     }
     if(nbOnes != 1) return false;
     if(nbZeroes != nodes.size1() - 1) return false;

@@ -32,7 +32,7 @@ public:
       const double weight = GP[i].weight;
       const double detJ = e->getJacobian(u, v, w, jac);
       e->getShapeFunctions(u, v, w, ff);
-      for(int j = 0; j < e->getNumShapeFunctions(); j++) {
+      for(std::size_t j = 0; j < e->getNumShapeFunctions(); j++) {
         m(j) += ff[j] * weight * detJ;
       }
     }

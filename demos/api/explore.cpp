@@ -49,9 +49,10 @@ int main(int argc, char **argv)
     }
     for(unsigned int i = 0; i < elemTypes.size(); i++){
       std::string name;
-      int d, order, numv;
+      int d, order, numv, numpv;
       std::vector<double> param;
-      gmsh::model::mesh::getElementProperties(elemTypes[i], name, d, order, numv, param);
+      gmsh::model::mesh::getElementProperties(elemTypes[i], name, d, order,
+                                              numv, param, numpv);
       std::cout << " - Element type: " << name << ", order " << order << "\n";
       std::cout << "   with " << numv << " nodes in param coord: (";
       for(unsigned int j = 0; j < param.size(); j++)

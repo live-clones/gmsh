@@ -83,7 +83,7 @@ bool ElemChain::_equalVertices(const std::vector<MVertex *> &v2) const
 ElemChain::ElemChain(MElement *e)
 {
   _dim = e->getDim();
-  for(int i = 0; i < e->getNumPrimaryVertices(); i++)
+  for(std::size_t i = 0; i < e->getNumPrimaryVertices(); i++)
     _v.push_back(e->getVertex(i));
   _sortVertexIndices();
 }

@@ -236,6 +236,18 @@ List the names of all models.
 -
 @end table
 
+@item getCurrent
+Get the name of the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{name}
+@item Return:
+-
+@end table
+
 @item setCurrent
 Set the current model to the model with name @code{name}. If several models have
 the same name, select the one that was added first.
@@ -726,11 +738,13 @@ Unpartition the mesh of the current model.
 Optimize the mesh of the current model using @code{method} (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
 direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
-smoother).
+smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for
+node relocation). If @code{force} is set apply the optimization also to discrete
+entities.
 
 @table @asis
 @item Input:
-@code{method}
+@code{method}, @code{force}, @code{niter}
 @item Output:
 -
 @item Return:
@@ -751,18 +765,6 @@ Recombine the mesh of the current model.
 
 @item refine
 Refine the mesh of the current model by uniformly splitting the elements.
-
-@table @asis
-@item Input:
--
-@item Output:
--
-@item Return:
--
-@end table
-
-@item smooth
-Smooth the mesh of the current model.
 
 @table @asis
 @item Input:
@@ -874,6 +876,22 @@ vector; otherwise it uses a map).
 @code{nodeTag}
 @item Output:
 @code{coord}, @code{parametricCoord}
+@item Return:
+-
+@end table
+
+@item setNode
+Set the coordinates and the parametric coordinates (if any) of the node with tag
+@code{tag}. This is a sometimes useful but inefficient way of accessing nodes,
+as it relies on a cache stored in the model. For large meshes all the nodes in
+the model should be added at once, and numbered in a continuous sequence of tags
+from 1 to N.
+
+@table @asis
+@item Input:
+@code{nodeTag}, @code{coord}, @code{parametricCoord}
+@item Output:
+-
 @item Return:
 -
 @end table
@@ -1048,14 +1066,15 @@ integer value
 @item getElementProperties
 Get the properties of an element of type @code{elementType}: its name
 (@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
-nodes (@code{numNodes}) and coordinates of the nodes in the reference element
-(@code{nodeCoord} vector, of length @code{dim} times @code{numNodes}).
+nodes (@code{numNodes}), coordinates of the nodes in the reference element
+(@code{nodeCoord} vector, of length @code{dim} times @code{numNodes}) and number
+of primary (first order) nodes (@code{numPrimaryNodes}).
 
 @table @asis
 @item Input:
 @code{elementType}
 @item Output:
-@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{nodeCoord}
+@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{nodeCoord}, @code{numPrimaryNodes}
 @item Return:
 -
 @end table
@@ -1249,14 +1268,18 @@ experimental feature and will probably change in a future release.
 @end table
 
 @item getInformationForElements
-Get information about the @code{keys}. Warning: this is an experimental feature
-and will probably change in a future release.
+Get information about the @code{keys}. @code{infoKeys} returns information about
+the functions associated with the @code{keys}. @code{infoKeys[0].first}
+describes the type of function (0 for  vertex function, 1 for edge function, 2
+for face function and 3 for bubble function). @code{infoKeys[0].second} gives
+the order of the function associated with the key. Warning: this is an
+experimental feature and will probably change in a future release.
 
 @table @asis
 @item Input:
-@code{keys}, @code{order}, @code{elementType}
+@code{keys}, @code{elementType}, @code{functionSpaceType}
 @item Output:
-@code{info}
+@code{infoKeys}
 @item Return:
 -
 @end table
@@ -1453,6 +1476,20 @@ as-is.
 @table @asis
 @item Input:
 @code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setCompound
+Set a compound meshing constraint on the model entities of dimension @code{dim}
+and tags @code{tags}. During meshing, compound entities are treated as a single
+discrete entity, which is automatically reparametrized.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tags}
 @item Output:
 -
 @item Return:
@@ -2911,7 +2948,7 @@ manual.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{tolerance}, @code{fixDegenerated}, @code{fixSmallEdges}, @code{fixSmallFaces}, @code{sewFaces}
+@code{dimTags}, @code{tolerance}, @code{fixDegenerated}, @code{fixSmallEdges}, @code{fixSmallFaces}, @code{sewFaces}, @code{makeSolids}
 @item Output:
 @code{outDimTags}
 @item Return:

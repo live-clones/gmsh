@@ -20,14 +20,16 @@
 discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   : GEdge(model, num, _v0, _v1)
 {
-  Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
+  bool ok;
+  Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1., ok);
   Tree_Add(model->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
 }
 
 discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
 {
-  Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
+  bool ok;
+  Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1., ok);
   Tree_Add(model->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
 }

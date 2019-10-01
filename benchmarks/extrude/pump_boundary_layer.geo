@@ -135,7 +135,7 @@ Line Loop(5) = {17,18,19,20};
 Line Loop(6) = {-23, -15, 22, 24};
 /*Blades*/
 Line Loop(3) = {9,10,-12,-11};
-For t In {1:noBlades}
+For t In {1:noBlades-1}
   angle = theta*(t);
   Call Blades;
   Line Loop(t+6) = {tmp[0],tmp[1],-tmp[2],-tmp[3]};

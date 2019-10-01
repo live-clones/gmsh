@@ -592,10 +592,8 @@ public:
   int refineMesh(int linear, bool barycentric = false);
 
   // optimize the mesh
-  int optimizeMesh(const std::string &how);
-
-  // smooth the mesh
-  int smoothMesh();
+  int optimizeMesh(const std::string &how, bool force = false,
+                   int niter = 1);
 
   // recombine the mesh
   int recombineMesh();
@@ -680,6 +678,11 @@ public:
   // Stereo lithography format
   int readSTL(const std::string &name, double tolerance = 1.e-3);
   int writeSTL(const std::string &name, bool binary = false,
+               bool saveAll = false, double scalingFactor = 1.0,
+               int oneSolidPerSurface = 0);
+  
+  // X3D (only output from OCCT's triangulation)
+  int writeX3D(const std::string &name, 
                bool saveAll = false, double scalingFactor = 1.0,
                int oneSolidPerSurface = 0);
 

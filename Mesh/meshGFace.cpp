@@ -1593,7 +1593,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   // compute characteristic lengths at vertices
   if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG && !onlyInitialMesh) {
-    Msg::Debug("Computing mesh size field at mesh vertices %d",
+    Msg::Debug("Computing mesh size field at mesh nodes %d",
                edgesToRecover.size());
     std::set<BDS_Point *, PointLessThan>::iterator it = m->points.begin();
     for(; it != m->points.end(); ++it) {
@@ -1689,7 +1689,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // only delete the mesh data stored in the base GFace class
   gf->GFace::deleteMesh();
 
-  Msg::Debug("Starting to add internal points");
+  Msg::Debug("Starting to add internal nodes");
   // start mesh generation
   if(!algoDelaunay2D(gf) && !onlyInitialMesh) {
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
@@ -2283,7 +2283,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                 }
               }
               if(pp == 0) {
-                Msg::Error("Embedded edge vertex %d is on the seam edge of "
+                Msg::Error("Embedded edge node %d is on the seam edge of "
                            "surface %d and no appropriate point could be "
                            "found!",
                            v->getNum(), gf->tag());
@@ -2844,7 +2844,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 void deMeshGFace::operator()(GFace *gf)
 {
   if(gf->geomType() == GEntity::DiscreteSurface) {
-    if(!static_cast<discreteFace *>(gf)->haveParametrization()) return;
+    if(!static_cast<discreteFace *>(gf)->haveParametrization()){
+      return;
+    }
   }
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
@@ -2963,7 +2965,7 @@ void meshGFace::operator()(GFace *gf, bool print)
                   debugSurface >= 0 || debugSurface == -100);
   }
 
-  Msg::Debug("Type %d %d triangles generated, %d internal vertices",
+  Msg::Debug("Type %d %d triangles generated, %d internal nodes",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 
   halfmesh.finish();
@@ -2975,7 +2977,8 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
-  if(gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
+  if(CTX::instance()->mesh.algoSwitchOnFailure &&
+     gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
      !isMeshValid(gf)) {
     Msg::Debug(
       "Delaunay-based mesher failed on surface %d -> moving to MeshAdapt",
@@ -3054,6 +3057,13 @@ static void getGFaceOrientation(GFace *gf, BoundaryLayerColumns *blc,
 void orientMeshGFace::operator()(GFace *gf)
 {
   if(!gf->getNumMeshElements()) return;
+
+  // Warning: it's not clear if periodic meshes should be orientated according
+  // to the orientation of the underlying CAD surface. Since we don't reorient
+  // periodic curve meshes, let's also not reorient surface meshes for now. This
+  // has implications for high-order periodic meshes: see comment in
+  // FixPeriodicMesh().
+  if(gf->getMeshMaster() != gf) return;
 
   gf->model()->setCurrentMeshEntity(gf);
 

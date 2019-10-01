@@ -88,7 +88,6 @@ public:
   static std::map<std::string, std::string> &GetCommandLineStrings();
   static std::string PrintResources(bool printDate, bool printWallTime,
                                     bool printCpu, bool printMem);
-  static void Fatal(const char *fmt, ...);
   static void Error(const char *fmt, ...);
   static void Warning(const char *fmt, ...);
   static void Info(const char *fmt, ...);

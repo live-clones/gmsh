@@ -95,6 +95,9 @@ model.add('remove',doc,None)
 doc = '''List the names of all models.'''
 model.add('list',doc,None,ovectorstring('names'))
 
+doc = '''Get the name of the current model.'''
+model.add('getCurrent',doc,None,ostring('name'))
+
 doc = '''Set the current model to the model with name `name'. If several models have the same name, select the one that was added first.'''
 model.add('setCurrent',doc,None,istring('name'))
 
@@ -204,17 +207,14 @@ mesh.add('partition',doc,None,iint('numPart'))
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition',doc,None)
 
-doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother).'''
-mesh.add('optimize',doc,None,istring('method',''))
+doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If `force' is set apply the optimization also to discrete entities.'''
+mesh.add('optimize',doc,None,istring('method',''),ibool('force','false','False'),iint('niter','1'))
 
 doc = '''Recombine the mesh of the current model.'''
 mesh.add('recombine',doc,None)
 
 doc = '''Refine the mesh of the current model by uniformly splitting the elements.'''
 mesh.add('refine',doc,None)
-
-doc = '''Smooth the mesh of the current model.'''
-mesh.add('smooth',doc,None)
 
 doc = '''Set the order of the elements in the mesh of the current model to `order'.'''
 mesh.add('setOrder',doc,None,iint('order'))
@@ -236,6 +236,9 @@ mesh.add('getNodesByElementType',doc,None,iint('elementType'), ovectorsize('node
 
 doc = '''Get the coordinates and the parametric coordinates (if any) of the node with tag `tag'. This is a sometimes useful but inefficient way of accessing nodes, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
 mesh.add('getNode',doc,None,isize('nodeTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
+
+doc = '''Set the coordinates and the parametric coordinates (if any) of the node with tag `tag'. This is a sometimes useful but inefficient way of accessing nodes, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be added at once, and numbered in a continuous sequence of tags from 1 to N.'''
+mesh.add('setNode',doc,None,isize('nodeTag'),ivectordouble('coord'),ivectordouble('parametricCoord'))
 
 doc = '''Rebuild the node cache.'''
 mesh.add('rebuildNodeCache',doc,None,ibool('onlyIfNecessary', 'true', 'True'))
@@ -267,8 +270,8 @@ mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1')
 doc = '''Return an element type given its family name `familyName' ("point", "line", "triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron") and polynomial order `order'. If `serendip' is true, return the corresponding serendip element type (element without interior nodes).'''
 mesh.add('getElementType',doc,oint,istring('familyName'),iint('order'),ibool('serendip','false','False'))
 
-doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes') and coordinates of the nodes in the reference element (`nodeCoord' vector, of length `dim' times `numNodes').'''
-mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numNodes'),ovectordouble('nodeCoord'))
+doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes'), coordinates of the nodes in the reference element (`nodeCoord' vector, of length `dim' times `numNodes') and number of primary (first order) nodes (`numPrimaryNodes').'''
+mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numNodes'),ovectordouble('nodeCoord'),oint('numPrimaryNodes'))
 
 doc = '''Get the elements of type `elementType' classified on the entity of tag `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorsize('elementTags'),ovectorsize('nodeTags'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
@@ -300,8 +303,8 @@ mesh.add('getBasisFunctionsForElements',doc,None,iint('elementType'),ivectordoub
 doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeysForElements',doc,None,iint('elementType'),istring('functionSpaceType'),ovectorpair('keys'),ovectordouble('coord'),iint('tag', '-1'),ibool('returnCoord','true', 'True'))
 
-doc = '''Get information about the `keys'. Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getInformationForElements',doc,None,ivectorpair('keys'),ovectorpair('info'),iint('order'),iint('elementType'))
+doc = '''Get information about the `keys'. `infoKeys' returns information about the functions associated with the `keys'. `infoKeys[0].first' describes the type of function (0 for  vertex function, 1 for edge function, 2 for face function and 3 for bubble function). `infoKeys[0].second' gives the order of the function associated with the key. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getInformationForElements',doc,None,ivectorpair('keys'),iint('elementType'),istring('functionSpaceType'),ovectorpair('infoKeys'))
 
 doc = '''Precomputes the basis functions corresponding to `elementType'. '''
 mesh.add('precomputeBasisFunctions',doc,None,iint('elementType'))
@@ -341,6 +344,9 @@ mesh.add('setSmoothing',doc,None,iint('dim'),iint('tag'),iint('val'))
 
 doc = '''Set a reverse meshing constraint on the model entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometry). If `val' is false, the mesh is left as-is.'''
 mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'))
+
+doc = '''Set a compound meshing constraint on the model entities of dimension `dim' and tags `tags'. During meshing, compound entities are treated as a single discrete entity, which is automatically reparametrized.'''
+mesh.add('setCompound',doc,None,iint('dim'),ivectorint('tags'))
 
 doc = '''Set meshing constraints on the bounding surfaces of the volume of tag `tag' so that all surfaces are oriented with outward pointing normals. Currently only available with the OpenCASCADE kernel, as it relies on the STL triangulation.'''
 mesh.add('setOutwardOrientation',doc,None,iint('tag'))
@@ -641,7 +647,7 @@ doc = '''Remove all duplicate entities (different entities at the same geometric
 occ.add('removeAllDuplicates',doc,None)
 
 doc = '''Apply various healing procedures to the entities `dimTags' (or to all the entities in the model if `dimTags' is empty). Return the healed entities in `outDimTags'. Available healing options are listed in the Gmsh reference manual.'''
-occ.add('healShapes',doc,None,ovectorpair('outDimTags'),ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"),idouble('tolerance','1e-8'),ibool('fixDegenerated','true','True'),ibool('fixSmallEdges','true','True'),ibool('fixSmallFaces','true','True'),ibool('sewFaces','true','True'))
+occ.add('healShapes',doc,None,ovectorpair('outDimTags'),ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"),idouble('tolerance','1e-8'),ibool('fixDegenerated','true','True'),ibool('fixSmallEdges','true','True'),ibool('fixSmallFaces','true','True'),ibool('sewFaces','true','True'),ibool('makeSolids','true','True'))
 
 doc = '''Import BREP, STEP or IGES shapes from the file `fileName'. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
 occ.add('importShapes',doc,None,istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'),istring('format','""'))

@@ -64,6 +64,9 @@ public:
                           std::vector<std::vector<double> > &faceFunctions,
                           std::string typeFunction);
 
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo);
+
 private:
   int _pf; // face function order
   int _pOrderEdge[3]; // Edge functions order (pOrderEdge[0] matches the edge 0

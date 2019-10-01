@@ -207,6 +207,7 @@ void GEdge::resetMeshAttributes()
   meshAttributes.typeTransfinite = 0;
   meshAttributes.extrude = 0;
   meshAttributes.meshSize = MAX_LC;
+  meshAttributes.meshSizeFactor = 1.;
   meshAttributes.minimumMeshSegments = 1;
   meshAttributes.reverseMesh = false;
 }
@@ -763,9 +764,15 @@ static void meshCompound(GEdge *ge)
 void GEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
+  if(compound.size())
+    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
+
   meshGEdge mesher;
   mesher(this);
+
   if(compound.size()) { // Some edges are meshed together
+    meshAttributes.meshSizeFactor = 1.0;
+
     if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
       for(std::size_t i = 0; i < compound.size(); i++) {

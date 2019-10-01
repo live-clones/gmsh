@@ -333,6 +333,7 @@ public:
 
   // global mesh size constraint for the entity
   virtual double getMeshSize() const { return MAX_LC; }
+  virtual double getMeshSizeFactor() const { return 1.; }
 
   // number of types of elements
   virtual int getNumElementTypes() const { return 0; }

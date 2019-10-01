@@ -5,6 +5,7 @@
 //
 // Contributed by Ismail Badia.
 
+#include <algorithm>
 #include "HierarchicalBasisHcurlBrick.h"
 
 HierarchicalBasisHcurlBrick::HierarchicalBasisHcurlBrick(int order)
@@ -845,6 +846,62 @@ void HierarchicalBasisHcurlBrick::generateCurlBasis(
         bubbleBasis[indexBubbleBasis][2] = 0;
 
         indexBubbleBasis++;
+      }
+    }
+  }
+}
+
+void HierarchicalBasisHcurlBrick::getKeysInfo(
+  std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo)
+{
+  int it = 0;
+  for(int numEdge = 0; numEdge < 12; numEdge++) {
+    for(int i = 0; i <= _pOrderEdge[numEdge]; i++) {
+      functionTypeInfo[it] = 1;
+      orderInfo[it] = i;
+      it++;
+    }
+  }
+  for(int iFace = 0; iFace < _nfaceQuad; iFace++) {
+    for(int index1 = 0; index1 <= _pOrderFace1[iFace]; index1++) {
+      for(int index2 = 2; index2 <= _pOrderFace2[iFace] + 1; index2++) {
+        functionTypeInfo[it] = 2;
+        orderInfo[it] = std::max(index1,index2);
+        it++;
+      }
+    }
+    for(int index1 = 2; index1 <= _pOrderFace1[iFace] + 1; index1++) {
+      for(int index2 = 0; index2 <= _pOrderFace2[iFace]; index2++) {
+        functionTypeInfo[it] = 2;
+        orderInfo[it] = std::max(index1,index2);
+        it++;
+      }
+    }
+  }
+  for(int ipb1 = 0; ipb1 < _pb1 + 1; ipb1++) {
+    for(int ipb2 = 2; ipb2 <= _pb2 + 1; ipb2++) {
+      for(int ipb3 = 2; ipb3 <= _pb3 + 1; ipb3++) {
+        functionTypeInfo[it] = 3;
+        orderInfo[it] = std::max(std::max(ipb1 , ipb2), ipb3);
+        it++;
+      }
+    }
+  }
+  for(int ipb1 = 2; ipb1 <= _pb1 + 1; ipb1++) {
+    for(int ipb2 = 0; ipb2 < _pb2 + 1; ipb2++) {
+      for(int ipb3 = 2; ipb3 <= _pb3 + 1; ipb3++) {
+        functionTypeInfo[it] = 3;
+        orderInfo[it] = std::max(std::max(ipb1 , ipb2), ipb3);
+        it++;
+      }
+    }
+  }
+  for(int ipb1 = 2; ipb1 <= _pb1 + 1; ipb1++) {
+    for(int ipb2 = 2; ipb2 <= _pb2 + 1; ipb2++) {
+      for(int ipb3 = 0; ipb3 < _pb3 + 1; ipb3++) {
+        functionTypeInfo[it] = 3;
+        orderInfo[it] = std::max(std::max(ipb1 , ipb2), ipb3);
+        it++;
       }
     }
   }

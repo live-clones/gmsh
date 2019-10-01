@@ -486,8 +486,7 @@ int ElementType::getNumVertices(int mshtype)
   case MSH_TRI_21I: return 21;
   case MSH_TRI_24: return 24;
   case MSH_TRI_27: return 27;
-  case MSH_TRI_30:
-    return 30;
+  case MSH_TRI_30: return 30;
   // case MSH_TRI_MINI  : return 0;
   // case MSH_POLYG_  : return 0;
   // case MSH_POLYG_B : return 0;
@@ -509,8 +508,7 @@ int ElementType::getNumVertices(int mshtype)
   case MSH_TET_40: return 40;
   case MSH_TET_46: return 46;
   case MSH_TET_52: return 52;
-  case MSH_TET_58:
-    return 58;
+  case MSH_TET_58: return 58;
   // case MSH_TET_MINI  : return 0;
   case MSH_QUA_1: return 1;
   case MSH_QUA_4: return 4;
@@ -586,8 +584,7 @@ int ElementType::getNumVertices(int mshtype)
   case MSH_PYR_53: return 53;
   case MSH_PYR_61: return 61;
   case MSH_PYR_69: return 69;
-  case MSH_TRIH_4:
-    return 4;
+  case MSH_TRIH_4: return 4;
   // case MSH_POLYH_ : return 0;
   default: Msg::Warning("Unknown element MSH type %d", mshtype); return 0;
   }
@@ -636,9 +633,7 @@ int ElementType::getSerendipity(int mshtype)
 
   case MSH_POLYG_:
   case MSH_POLYG_B:
-  case MSH_POLYH_:
-
-    return 1; // Serendipity or not
+  case MSH_POLYH_: return 1; // Serendipity or not
 
   case MSH_TRI_10:
   case MSH_TRI_15:
@@ -695,9 +690,7 @@ int ElementType::getSerendipity(int mshtype)
   case MSH_PYR_285:
   case MSH_PYR_385:
 
-  case MSH_TRIH_4:
-
-    return 0; // Not Serendipity
+  case MSH_TRIH_4: return 0; // Not Serendipity
 
   case MSH_TRI_9:
   case MSH_TRI_12:
@@ -752,9 +745,7 @@ int ElementType::getSerendipity(int mshtype)
   case MSH_PYR_45:
   case MSH_PYR_53:
   case MSH_PYR_61:
-  case MSH_PYR_69:
-
-    return 2; // Only Serendipity
+  case MSH_PYR_69: return 2; // Only Serendipity
 
   default:
     Msg::Warning("Unknown element MSH type %d, assuming not serendipity.",

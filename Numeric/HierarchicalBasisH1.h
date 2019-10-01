@@ -42,6 +42,8 @@ public:
                           int const &faceNumber,
                           std::vector<std::vector<double> > &faceBasis,
                           std::string typeFunction = "GradH1Legendre") = 0;
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo) = 0;
 };
 
 #endif

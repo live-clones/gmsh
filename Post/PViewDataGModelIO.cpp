@@ -265,7 +265,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
           if(_steps[step]->getData(i)) {
             MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
             if(!v) {
-              Msg::Error("Unknown vertex %d in data", i);
+              Msg::Error("Unknown node %d in data", i);
               fclose(fp);
               return false;
             }
@@ -928,7 +928,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
-        Msg::Error("Unknown vertex %d in data", i);
+        Msg::Error("Unknown node %d in data", i);
         return false;
       }
       profile.push_back(v->getIndex());
@@ -1080,7 +1080,7 @@ void PViewDataGModel::sendToServer(const std::string &name)
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
-        Msg::Error("Unknown vertex %d in data", i);
+        Msg::Error("Unknown node %d in data", i);
         return;
       }
       int num = v->getNum();
