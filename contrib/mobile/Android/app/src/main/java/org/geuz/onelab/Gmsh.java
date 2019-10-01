@@ -7,6 +7,7 @@ import android.os.Parcelable;
 public class Gmsh implements Parcelable {
   // from C/C++ code:
   static {
+    System.loadLibrary("c++_shared");
     System.loadLibrary("f2cblas");
     System.loadLibrary("f2clapack");
     System.loadLibrary("petsc");

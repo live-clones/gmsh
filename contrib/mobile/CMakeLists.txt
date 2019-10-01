@@ -194,6 +194,10 @@ if(ENABLE_BUILD_ANDROID)
   if(NOT LAPACK_LIB)
     message(SEND_ERROR "Could not find LAPACK library")
   endif()
+  find_library(CPP_LIB c++_shared PATH_SUFFIXES lib)
+  if(NOT CPP_LIB)
+    message(SEND_ERROR "Could not find c++_shared library")
+  endif()
   set(ONELAB_LIB ${CMAKE_CURRENT_BINARY_DIR}/libs/libOnelab.so)
   add_custom_target(androidProject
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/
@@ -206,6 +210,7 @@ if(ENABLE_BUILD_ANDROID)
     COMMAND ${CMAKE_COMMAND} -E copy ${SLEPC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
     COMMAND ${CMAKE_COMMAND} -E copy ${LAPACK_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
     COMMAND ${CMAKE_COMMAND} -E copy ${BLAS_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CPP_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/arm64-v8a/
   )
   add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
                     ${CMAKE_CURRENT_BINARY_DIR}/models)

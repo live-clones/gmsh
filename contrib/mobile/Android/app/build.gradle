@@ -7,7 +7,7 @@ android {
         applicationId "org.geuz.onelab"
         minSdkVersion 16
         targetSdkVersion 29
-        ndk.abiFilters "armeabi-v7a", "arm64-v8a"
+        ndk.abiFilters "arm64-v8a"
     }
 
     signingConfigs {

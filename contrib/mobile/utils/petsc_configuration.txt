@@ -1,4 +1,4 @@
-####### configuration for PETSc #######
+####### configuration for PETSc 3.11.2 #######
 
 ################# iOS: ####
 
@@ -11,4 +11,14 @@ make
 
 # idem for SLEPc
 
-################# Andoird ####
+################# Android: ####
+
+export PETSC_ARCH=android_real
+./configure --CXX=/Users/geuzaine/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android21-clang++ --CC=/Users/geuzaine/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android21-clang --AR=/Users/geuzaine/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android-ar --CXXFLAGS="-isysroot /Users/geuzaine/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/sysroot --target=aarch64-none-linux-android21 -fPIC -DBUILD_ANDROID -DPETSC_BLASLAPACK_UNDERSCORE" --CFLAGS="-isysroot /Users/geuzaine/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/sysroot --target=aarch64-none-linux-android21 -fPIC -DBUILD_ANDROID -DPETSC_BLASLAPACK_UNDERSCORE" --with-blas-lib=$HOME/src/gmsh/contrib/mobile/frameworks_android/petsc/libf2cblas.so --with-lapack-lib=$HOME/src/gmsh/contrib/mobile/frameworks_android/petsc/libf2clapack.so --with-debugging=0 --with-ssl=0 --with-shared-libraries=1 --with-x=0 --with-clanguage=cxx --with-mpi=0 --with-fc=0 --with-batch=1 --known-bits-per-byte=8 --known-endian=little --known-level1-dcache-assoc=1 --known-level1-dcache-linesize=16 --known-level1-dcache-size=4000 --known-memcmp-ok=1 --known-sizeof-char=1 --known-sizeof-double=8 --known-sizeof-float=4 --known-sizeof-int=4 --known-sizeof-long-long=8 --known-sizeof-long=8 --known-sizeof-short=2 --known-sizeof-size_t=8 --known-sizeof-void-p=8 --with-cmake=1 --download-suitesparse=yes --known-64-bit-blas-indices=0
+
+# Before compiling need to change android_real/lib/petsc/conf/petscvariables:
+# SL_LINKER_FUNCTION = -shared   # instead of -dynamiclib ....
+# SONAME_FUNCTION = $(1).$(2).so  # instead of .dylib
+# DSYMUTIL = ls  # instead of wathever tool is
+
+make
