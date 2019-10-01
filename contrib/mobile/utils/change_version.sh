@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 version=2.3.0
-build=45 # must be incremented for each submitted build
+build=46 # must be incremented for each submitted build
 
 mobile="${HOME}/src/gmsh/contrib/mobile"
 

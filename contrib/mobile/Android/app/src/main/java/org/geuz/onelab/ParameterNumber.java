@@ -135,34 +135,53 @@ public class ParameterNumber extends Parameter {
   public double getMax() { return _max; }
   public double getMin() { return _min; }
   public double getStep() { return _step; }
+  public int parseInt(String s, int defaultValue)
+  {
+    int tmp;
+    try {
+      tmp = Integer.parseInt(s);
+    }
+    catch(NumberFormatException e) {
+      tmp = defaultValue;
+    }
+    return tmp;
+  }
+  public double parseDouble(String s, double defaultValue)
+  {
+    double tmp;
+    try {
+      tmp = Double.parseDouble(s);
+    }
+    catch(NumberFormatException e) {
+      tmp = defaultValue;
+    }
+    return tmp;
+  }
   public int fromString(String s)
   {
     int pos = super.fromString(s);
     if(pos <= 0) return -1; // error
     String[] infos = s.split(Character.toString((char)0x03));
-    int nValues = Integer.parseInt(infos[pos++]);
+    int nValues = parseInt(infos[pos++], 0);
     _value = 0;
     if(nValues > 0){
       double values[] = new double[nValues];
       for(int i = 0; i < nValues; i++){
         String tmpVal = infos[pos++];
-        if(tmpVal.equals("Inf"))
-          values[i] = 0;
-        else
-          values[i] = Double.parseDouble(tmpVal);
+        values[i] = parseDouble(tmpVal, 0.);
       }
       // FIXME: generalize to handle list of values
       _value = values[0];
     }
-    this.setMin(Double.parseDouble(infos[pos++]));
-    this.setMax(Double.parseDouble(infos[pos++]));
-    this.setStep(Double.parseDouble(infos[pos++]));
+    this.setMin(parseDouble(infos[pos++], 0.));
+    this.setMax(parseDouble(infos[pos++], 0.));
+    this.setStep(parseDouble(infos[pos++], 0.));
     pos++;// index
-    int nChoices = Integer.parseInt(infos[pos++]); // choices' size
+    int nChoices = parseInt(infos[pos++], 0); // choices' size
     double choices[] = new double[nChoices];
     for(int i = 0; i < nChoices; i++)
-      choices[i] = Double.parseDouble(infos[pos++]); // choice
-    int nLabels = Integer.parseInt(infos[pos++]); // labels' size
+      choices[i] = parseDouble(infos[pos++], 0.); // choice
+    int nLabels = parseInt(infos[pos++], 0); // labels' size
     if(nChoices == 2 && choices[0] == 0 && choices[1] == 1 && nLabels == 0) {
       _checkbox = new CheckBox(_context);
       this.update();
@@ -171,7 +190,7 @@ public class ParameterNumber extends Parameter {
     if(_choices != null) _choices.clear();
     if(_values != null) _values.clear();
     for(int i = 0; i < nLabels && nChoices == nLabels; i++){
-      double val = Double.parseDouble(infos[pos++]); // choice
+      double val = parseDouble(infos[pos++], 0.); // choice
       this.addChoice(val, infos[pos++]); // label
     }
     // ...
@@ -203,13 +222,7 @@ public class ParameterNumber extends Parameter {
           edit.setText(String.valueOf(_value));
           edit.addTextChangedListener(new TextWatcher() {
               public void onTextChanged(CharSequence s, int start, int before, int count) {
-                try {
-                  if(s.length() < 1)  _tmpValue = 1;
-                  _tmpValue = Double.parseDouble(s.toString());
-                }
-                catch(NumberFormatException e) {
-                  _tmpValue = 1;
-                }
+                _tmpValue = parseDouble(s.toString(), 1.);
               }
               // UNUSED Auto-generated method stub
               public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -292,14 +305,7 @@ public class ParameterNumber extends Parameter {
         });
       _edittext.addTextChangedListener(new TextWatcher() {
           public void onTextChanged(CharSequence s, int start, int before, int count) {
-            try {
-              if(s.length() < 1) _value = 1;
-              else _value = Double.parseDouble(s.toString());
-            }
-            catch(NumberFormatException e){
-              _value = 1;
-              //_edittext.setText("");
-            }
+            _value = parseDouble(s.toString(), 1.);
           }
           // UNUSED Auto-generated method stub
           public void beforeTextChanged(CharSequence s, int start, int count, int after) {}

@@ -82,6 +82,17 @@ public class Parameter {
     return name;
   }
   public boolean isReadOnly() { return _readOnly; }
+  public int parseInt(String s, int defaultValue)
+  {
+    int tmp;
+    try {
+      tmp = Integer.parseInt(s);
+    }
+    catch(NumberFormatException e) {
+      tmp = defaultValue;
+    }
+    return tmp;
+  }
   public int fromString(String s)
   {
     String[] infos = s.split(Character.toString((char)0x03));
@@ -94,11 +105,11 @@ public class Parameter {
     setLabel(infos[pos++]);// label
     pos++;// help
     pos++;// changedValue
-    if(Integer.parseInt(infos[pos++]) != 1) return -1;// visible
+    if(parseInt(infos[pos++], 0) != 1) return -1;// visible
     this.setReadOnly((infos[pos++].equals("1")));// read only
-    int nAttributes = Integer.parseInt(infos[pos++]);// number of attributes
+    int nAttributes = parseInt(infos[pos++], 0);// number of attributes
     pos+=(nAttributes*2);// key+value
-    int nClients = Integer.parseInt(infos[pos++]);// number of client
+    int nClients = parseInt(infos[pos++], 0);// number of client
     pos+=(nClients*2);// client+changed
     this.update();
     return pos;
