@@ -40,32 +40,36 @@ struct LocalData { unsigned int partition = 0; CGNS::cgsize_t index = 0; };
 typedef std::map<MVertex *, std::vector<LocalData> > Vertex2LocalData;
 
 
-// Types for periodic connectivities
-struct PeriodicInterface {
-  GEntity *slaveEnt;        // Slave (parent) entity
-  unsigned int slavePart;
-  GEntity *masterEnt;       // Master (parent) entity
-  unsigned int masterPart;
-};
-struct Less_PeriodicInterface :
-  public std::binary_function<PeriodicInterface, PeriodicInterface, bool> {
-  bool operator()(const PeriodicInterface &i1, const PeriodicInterface &i2)
-    const
-  {
-    if (i1.slaveEnt < i2.slaveEnt) return true;
-    if (i1.slaveEnt > i2.slaveEnt) return false;
-    if (i1.masterEnt < i2.masterEnt) return true;
-    if (i1.masterEnt > i2.masterEnt) return false;
-    if (i1.slavePart < i2.slavePart) return true;
-    if (i1.slavePart > i2.slavePart) return false;
-    if (i1.masterPart < i2.masterPart) return true;
-    if (i1.masterPart > i2.masterPart) return false;
-    return false;
-  }
-};
-struct MasterSlaveNodes { std::vector<CGNS::cgsize_t> master, slave; };
-typedef std::map<PeriodicInterface, MasterSlaveNodes, Less_PeriodicInterface>
-          PeriodicConnection;
+// Types for periodic and interface connectivities
+typedef std::pair<unsigned int, unsigned int> PartitionInterface;
+typedef std::pair<GEntity *, GEntity *> EntityInterface;
+typedef std::pair<PartitionInterface, EntityInterface> PeriodicInterface;
+// struct PeriodicInterface {
+//   GEntity *slaveEnt;        // Slave (parent) entity
+//   unsigned int slavePart;
+//   GEntity *masterEnt;       // Master (parent) entity
+//   unsigned int masterPart;
+// };
+// struct Less_PeriodicInterface :
+//   public std::binary_function<PeriodicInterface, PeriodicInterface, bool> {
+//   bool operator()(const PeriodicInterface &i1, const PeriodicInterface &i2)
+//     const
+//   {
+//     if (i1.slaveEnt < i2.slaveEnt) return true;
+//     if (i1.slaveEnt > i2.slaveEnt) return false;
+//     if (i1.masterEnt < i2.masterEnt) return true;
+//     if (i1.masterEnt > i2.masterEnt) return false;
+//     if (i1.slavePart < i2.slavePart) return true;
+//     if (i1.slavePart > i2.slavePart) return false;
+//     if (i1.masterPart < i2.masterPart) return true;
+//     if (i1.masterPart > i2.masterPart) return false;
+//     return false;
+//   }
+// };
+typedef std::pair<std::vector<CGNS::cgsize_t>, std::vector<CGNS::cgsize_t> >
+  NodeCorrespondence;
+typedef std::map<PeriodicInterface, NodeCorrespondence> PeriodicConnection;
+typedef std::map<PartitionInterface, NodeCorrespondence> PartitionConnection;
 
 
 int cgnsError(const int cgIndexFile = -1)
@@ -81,63 +85,71 @@ int cgnsError(const int cgIndexFile = -1)
 }
 
 
-void printProgress(const char *cstr, size_t iPart, size_t numPart)
+void printProgress(const char *cstr, size_t i, size_t num)
 {
-  if(numPart > 100) {
-    if(iPart % 100 == 1) {
-      Msg::Info("Writing %s %d/%d", cstr, iPart, numPart);
+  if(num > 100) {
+    if(i % 100 == 1) {
+      Msg::Info("%s %d/%d", cstr, i, num);
     }
   }
   else {
-    Msg::Info("Writing %s %d/%d", cstr, iPart, numPart);
+    Msg::Info("%s %d/%d", cstr, i, num);
   }
 }
 
 
-void initPeriodicVertex2LocalData(const std::vector<GEntity *> &entities,
-                                  Vertex2LocalData &perVert2Local)
+void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
+                                const std::vector<GEntity *> &entitiesInterf,
+                                Vertex2LocalData &interfVert2Local)
 {
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *slaveEnt = entities[i];
-    GEntity *masterEnt = slaveEnt->getMeshMaster();
-    if (slaveEnt == masterEnt) continue;
-    VertVertMap &vv = slaveEnt->correspondingVertices;
+  // Periodic entities
+  for(std::size_t i = 0; i < entitiesPer.size(); i++) {
+    VertVertMap &vv = entitiesPer[i]->correspondingVertices;
     for(VertVertMap::iterator itV = vv.begin(); itV != vv.end(); itV++) {
-      perVert2Local[itV->first] = std::vector<LocalData>();
-      perVert2Local[itV->second] = std::vector<LocalData>();
+      interfVert2Local[itV->first] = std::vector<LocalData>();
+      interfVert2Local[itV->second] = std::vector<LocalData>();
+    }
+  }
+
+  // Partition interface boundaries
+  for(std::size_t i = 0; i < entitiesInterf.size(); i++) {
+    GEntity *ge = entitiesInterf[i];
+    for(std::size_t iV = 0; iV < ge->getNumMeshVertices(); iV++) {
+      interfVert2Local[ge->getMeshVertex(iV)] = std::vector<LocalData>();
     }
   }
 }
 
 
 // create periodic connections for all entities in all partitions
-int writePeriodic(const std::vector<GEntity *> &entities, int cgIndexFile,
+int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
                    int cgIndexBase, const std::vector<std::string> &zoneName,
-                   Vertex2LocalData &perVert2Local)
+                   Vertex2LocalData &interfVert2Local)
 {
-  // Consruct interfaces [slave (entity, part.) <-> master (entity, part.)] with
+  // Construct interfaces [slave (entity, part.) <-> master (entity, part.)] with
   // corresponding nodes
   PeriodicConnection connect;
   typedef std::map<MVertex *, MVertex *> VertVertMap;
-  for(std::size_t iEnt = 0; iEnt < entities.size(); iEnt++) {
-    GEntity *slaveEnt = entities[iEnt];
+  for(std::size_t iEnt = 0; iEnt < entitiesPer.size(); iEnt++) {
+    GEntity *slaveEnt = entitiesPer[iEnt];
     GEntity *masterEnt = slaveEnt->getMeshMaster();
-    if (slaveEnt == masterEnt) continue;
-    Msg::Info("Constructing periodic interfaces for slave entity %i & master "
-              "entity %i", slaveEnt->tag(), masterEnt->tag());
+    Msg::Info("Constructing periodic connectivities for slave entity %i and "
+              "master entity %i", slaveEnt->tag(), masterEnt->tag());
     VertVertMap &vv = slaveEnt->correspondingVertices;
     for(VertVertMap::iterator itV = vv.begin(); itV != vv.end(); itV++) {
-      const std::vector<LocalData> &allSlaveData = perVert2Local[itV->first];
-      const std::vector<LocalData> &allMasterData = perVert2Local[itV->second];
+      const std::vector<LocalData> &allSlaveData = interfVert2Local[itV->first];
+      const std::vector<LocalData> &allMasterData = interfVert2Local[itV->second];
       for (std::size_t iS = 0; iS < allSlaveData.size(); iS++) {
         const LocalData &slaveData = allSlaveData[iS];
         for (std::size_t iM = 0; iM < allMasterData.size(); iM++) {
           const LocalData &masterData = allMasterData[iM];
-          PeriodicInterface perInt = {slaveEnt, slaveData.partition,
-                                      masterEnt, masterData.partition};
-          MasterSlaveNodes &ms = connect[perInt];
-          ms.slave.push_back(slaveData.index);
-          ms.master.push_back(masterData.index);
+          PartitionInterface partInt = std::make_pair(slaveData.partition,
+                                                      masterData.partition);
+          EntityInterface entInt = std::make_pair(slaveEnt, masterEnt);
+          PeriodicInterface perInt = std::make_pair(partInt, entInt);
+          NodeCorrespondence &nc = connect[perInt];
+          nc.first.push_back(slaveData.index);
+          nc.second.push_back(masterData.index);
         }
       }
     }
@@ -146,14 +158,18 @@ int writePeriodic(const std::vector<GEntity *> &entities, int cgIndexFile,
   // write periodic interfaces
   typedef PeriodicConnection::iterator PerConnectIter;
   for(PerConnectIter it = connect.begin(); it != connect.end(); ++it) {
-    printProgress("periodic interface", std::distance(connect.begin(), it)+1,
-                  connect.size());
+    printProgress("Writing periodic interface",
+                  std::distance(connect.begin(), it)+1, connect.size());
     const PeriodicInterface &perInt = it->first;
-    const std::size_t &slavePart = perInt.slavePart;
-    const int slaveEntTag = perInt.slaveEnt->tag();
-    const std::size_t &masterPart = perInt.masterPart;
-    const int masterEntTag = perInt.masterEnt->tag();
-    const MasterSlaveNodes &ms = it->second;
+    const PartitionInterface &partInt = perInt.first;
+    const EntityInterface &entInt = perInt.second;
+    const std::size_t &slavePart = partInt.first;
+    const int slaveEntTag = entInt.first->tag();
+    const std::size_t &masterPart = partInt.second;
+    const int masterEntTag = entInt.second->tag();
+    const NodeCorrespondence &nc = it->second;
+    const std::vector<CGNS::cgsize_t> &slaveNodes = nc.first;
+    const std::vector<CGNS::cgsize_t> &masterNodes = nc.second;
     int slaveZone = (slavePart == 0) ? 1 : slavePart;
     const std::string &masterZoneName = zoneName[masterPart]; 
     std::ostringstream ossInt;
@@ -163,10 +179,90 @@ int writePeriodic(const std::vector<GEntity *> &entities, int cgIndexFile,
     int dum;
     CGNS::cg_conn_write(cgIndexFile, cgIndexBase, slaveZone,
                         interfaceName.c_str(), CGNS::Vertex, CGNS::Abutting1to1,
-                        CGNS::PointList, ms.slave.size(), ms.slave.data(),
+                        CGNS::PointList, slaveNodes.size(), slaveNodes.data(),
                         masterZoneName.c_str(), CGNS::Unstructured,
                         CGNS::PointListDonor, CGNS::DataTypeNull,
-                        ms.master.size(), ms.master.data(), &dum);
+                        masterNodes.size(), masterNodes.data(), &dum);
+  }
+
+  return 0;
+}
+
+
+// const std::vector<unsigned int> &getPartitions(const GEntity *ge)
+// {
+//   switch(ge->geomType()) {
+//   case GEntity::PartitionVolume: {
+//     return static_cast<const partitionRegion *>(ge)->getPartitions();
+//   } break;
+//   case GEntity::PartitionSurface: {
+//     return static_cast<const partitionFace *>(ge)->getPartitions();
+//   } break;
+//   case GEntity::PartitionCurve: {
+//     return static_cast<const partitionEdge *>(ge)->getPartitions();
+//   } break;
+//   case GEntity::PartitionPoint: {
+//     return static_cast<const partitionVertex *>(ge)->getPartitions();
+//   } break;
+//   default: {  // should not happen
+//     Msg::Error("Entity %i is not a partitioned entity", ge->tag());
+//     return std::vector<unsigned int>();
+//   } break;
+//   }
+// }
+
+
+// create partition interfaces
+int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
+                    int cgIndexFile, int cgIndexBase,
+                    const std::vector<std::string> &zoneName,
+                    Vertex2LocalData &interfVert2Local)
+{
+  // Construct interfaces with corresponding nodes (in both directions)
+  Msg::Info("Constructing connectivities for %i partition interface entities",
+            entitiesInterf.size());
+  PartitionConnection connect;
+  for(std::size_t iEnt = 0; iEnt < entitiesInterf.size(); iEnt++) {
+    GEntity *ge = entitiesInterf[iEnt];
+    for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
+      MVertex *mv = ge->getMeshVertex(j);
+      const std::vector<LocalData> &allLocalData = interfVert2Local[mv];
+      for (std::size_t iS = 0; iS < allLocalData.size(); iS++) {
+        const LocalData &slaveData = allLocalData[iS];
+        for (std::size_t iM = 0; iM < allLocalData.size(); iM++) {
+          if (iM == iS) continue;
+          const LocalData &masterData = allLocalData[iM];
+          std::pair<unsigned int, unsigned int> partInt(slaveData.partition,
+                                                        masterData.partition);
+          NodeCorrespondence &nc = connect[partInt];
+          nc.first.push_back(slaveData.index);
+          nc.second.push_back(masterData.index);
+        }
+      }
+    }
+  }
+
+  // write periodic interfaces
+  typedef PartitionConnection::iterator PartConnectIter;
+  std::size_t iPartConnect = 0;
+  for(PartConnectIter it = connect.begin(); it != connect.end(); ++it) {
+    iPartConnect++;
+    printProgress("Writing partition interface", iPartConnect, connect.size());
+    const std::pair<unsigned int, unsigned int> &partInt = it->first;
+    const std::size_t &slavePart = partInt.first;
+    const std::size_t &masterPart = partInt.second;
+    const NodeCorrespondence &nc = it->second;
+    const std::string &masterZoneName = zoneName[masterPart]; 
+    std::ostringstream ossInt;
+    ossInt << "Part" << slavePart << "_Part" << masterPart;
+    const std::string interfaceName = cgnsString(ossInt.str()); 
+    int dum;
+    CGNS::cg_conn_write(cgIndexFile, cgIndexBase, slavePart,
+                        interfaceName.c_str(), CGNS::Vertex, CGNS::Abutting1to1,
+                        CGNS::PointList, nc.first.size(), nc.first.data(),
+                        masterZoneName.c_str(), CGNS::Unstructured,
+                        CGNS::PointListDonor, CGNS::DataTypeNull,
+                        nc.second.size(), nc.second.data(), &dum);
   }
 
   return 0;
@@ -176,13 +272,11 @@ int writePeriodic(const std::vector<GEntity *> &entities, int cgIndexFile,
 // create a single zone for a whole partition; nodes and elements are
 // referenced with per-zone index (starting at 1) inside a zone
 int writeZone(GModel *model, bool saveAll, double scalingFactor,
-              size_t numNodesTotal, size_t partition,
+              int meshDim, size_t numNodesTotal, size_t partition,
               const std::vector<GEntity *> &entities, int cgIndexFile,
               int cgIndexBase, std::vector<std::string> &zoneName,
-              Vertex2LocalData &perVert2Local)
+              Vertex2LocalData &interfVert2Local)
 {
-  int meshDim = model->getMeshDim();
-
   // build set of nodes first, use elements because nodes not all in
   // GEntity::mesh_vertices if entities do not include partition interfaces
   std::set<MVertex *> nodeSet;
@@ -204,7 +298,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   }
 
   // build global -> partition-local node index correspondence and
-  // store local data correspondence for periodic nodes
+  // store local data correspondence for periodic/interface nodes
   typedef std::set<MVertex *>::iterator NodeSetIter;
   std::vector<LocalData> global2Local(numNodesTotal+1);
   // std::vector<long> local2GlobalInd(nodeSet.size()+1, 0);
@@ -217,8 +311,8 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
     LocalData &ld = global2Local[gInd];
     ld.partition = partition;
     ld.index = numNodes;
-    Vertex2LocalData::iterator itPN = perVert2Local.find(*itN);
-    if (itPN != perVert2Local.end()) itPN->second.push_back(ld);
+    Vertex2LocalData::iterator itPN = interfVert2Local.find(*itN);
+    if (itPN != interfVert2Local.end()) itPN->second.push_back(ld);
   }
 
   // // build periodic node correspondence (global indices)
@@ -417,51 +511,133 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
 }
 
 
-// Get all entities in a partition, except partition interfaces
-void getEntitiesInPartition(const std::vector<GEntity *> &entities,
-                            std::size_t iPart,
-                            std::vector<GEntity *> &entitiesPart)
+// Get all partition interface entities
+void getPeriodicEntities(const std::vector<GEntity *> &entities,
+                         std::vector<GEntity *> &entitiesPer)
+{
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *slaveEnt = entities[i];
+    GEntity *masterEnt = slaveEnt->getMeshMaster();
+    if (slaveEnt != masterEnt) entitiesPer.push_back(slaveEnt);
+  }
+}
+
+
+// Get all partition interface entities
+void getPartitionInterfaceEntities(const std::vector<GEntity *> &entities,
+                                   std::vector<GEntity *> &entitiesInt)
 {
   for(std::size_t j = 0; j < entities.size(); j++) {
     GEntity *ge = entities[j];
     switch(ge->geomType()) {
     case GEntity::PartitionVolume: {
       partitionRegion *pr = static_cast<partitionRegion *>(ge);
-      if (pr->getParentEntity()->dim() != pr->dim()) continue;  // Skip partition interfaces
-      if (std::find(pr->getPartitions().begin(), pr->getPartitions().end(),
-                    iPart) != pr->getPartitions().end()) {
-        entitiesPart.push_back(pr);
-      }
+      if (pr->getParentEntity()->dim() != pr->dim()) entitiesInt.push_back(ge);
     } break;
     case GEntity::PartitionSurface: {
       partitionFace *pf = static_cast<partitionFace *>(ge);
-      if (pf->getParentEntity()->dim() != pf->dim()) continue;  // Skip partition interfaces
-      if (std::find(pf->getPartitions().begin(), pf->getPartitions().end(),
-                    iPart) != pf->getPartitions().end()) {
-        entitiesPart.push_back(pf);
-      }
+      if (pf->getParentEntity()->dim() != pf->dim()) entitiesInt.push_back(ge);
     } break;
     case GEntity::PartitionCurve: {
       partitionEdge *pe = static_cast<partitionEdge *>(ge);
-      if (pe->getParentEntity()->dim() != pe->dim()) continue;  // Skip partition interfaces
-      if (std::find(pe->getPartitions().begin(), pe->getPartitions().end(),
-                    iPart) != pe->getPartitions().end()) {
-        entitiesPart.push_back(pe);
-      }
+      if (pe->getParentEntity()->dim() != pe->dim()) entitiesInt.push_back(ge);
     } break;
     case GEntity::PartitionPoint: {
       partitionVertex *pv = static_cast<partitionVertex *>(ge);
-      if (pv->getParentEntity()->dim() != pv->dim()) continue;  // Skip partition interfaces
-      if (std::find(pv->getPartitions().begin(), pv->getPartitions().end(),
-                    iPart) != pv->getPartitions().end()) {
-        entitiesPart.push_back(pv);
-      }
+      if (pv->getParentEntity()->dim() != pv->dim()) entitiesInt.push_back(ge);
     } break;
     default:
       break;
     }         // switch
   }           // loop on entities
 }
+
+
+// Get entities in each partition, except partition interfaces
+void getEntitiesInPartitions(const std::vector<GEntity *> &entities,
+                             std::vector<std::vector<GEntity *> > &entitiesPart)
+{
+  for(std::size_t j = 0; j < entities.size(); j++) {
+    GEntity *ge = entities[j];
+    const std::vector<unsigned int> *parts = 0;
+    switch(ge->geomType()) {
+    case GEntity::PartitionVolume: {
+      partitionRegion *pr = static_cast<partitionRegion *>(ge);
+      if (pr->getParentEntity()->dim() != pr->dim()) continue;  // Skip partition interfaces
+      parts = &(pr->getPartitions());
+    } break;
+    case GEntity::PartitionSurface: {
+      partitionFace *pf = static_cast<partitionFace *>(ge);
+      if (pf->getParentEntity()->dim() != pf->dim()) continue;  // Skip partition interfaces
+      parts = &(pf->getPartitions());
+    } break;
+    case GEntity::PartitionCurve: {
+      partitionEdge *pe = static_cast<partitionEdge *>(ge);
+      if (pe->getParentEntity()->dim() != pe->dim()) continue;  // Skip partition interfaces
+      parts = &(pe->getPartitions());
+    } break;
+    case GEntity::PartitionPoint: {
+      partitionVertex *pv = static_cast<partitionVertex *>(ge);
+      if (pv->getParentEntity()->dim() != pv->dim()) continue;  // Skip partition interfaces
+      parts = &(pv->getPartitions());
+    } break;
+    default:
+      break;
+    }         // switch
+    if (parts != 0) {
+      for (std::size_t iPart = 0; iPart < parts->size(); iPart++) {
+        entitiesPart[(*parts)[iPart]].push_back(ge);
+      }
+    }
+  }           // loop on entities
+}
+
+
+// // Get all entities in a partition, except partition interfaces
+// void getEntitiesInPartition(const std::vector<GEntity *> &entities,
+//                             std::size_t iPart,
+//                             std::vector<GEntity *> &entitiesPart)
+// {
+//   for(std::size_t j = 0; j < entities.size(); j++) {
+//     GEntity *ge = entities[j];
+//     switch(ge->geomType()) {
+//     case GEntity::PartitionVolume: {
+//       partitionRegion *pr = static_cast<partitionRegion *>(ge);
+//       if (pr->getParentEntity()->dim() != pr->dim()) continue;  // Skip partition interfaces
+//       if (std::find(pr->getPartitions().begin(), pr->getPartitions().end(),
+//                     iPart) != pr->getPartitions().end()) {
+//         entitiesPart.push_back(pr);
+//       }
+//     } break;
+//     case GEntity::PartitionSurface: {
+//       partitionFace *pf = static_cast<partitionFace *>(ge);
+//       if (pf->getParentEntity()->dim() != pf->dim()) continue;  // Skip partition interfaces
+//       if (std::find(pf->getPartitions().begin(), pf->getPartitions().end(),
+//                     iPart) != pf->getPartitions().end()) {
+//         entitiesPart.push_back(pf);
+//       }
+//     } break;
+//     case GEntity::PartitionCurve: {
+//       partitionEdge *pe = static_cast<partitionEdge *>(ge);
+//       if (pe->getParentEntity()->dim() != pe->dim()) continue;  // Skip partition interfaces
+//       if (std::find(pe->getPartitions().begin(), pe->getPartitions().end(),
+//                     iPart) != pe->getPartitions().end()) {
+//         entitiesPart.push_back(pe);
+//       }
+//     } break;
+//     case GEntity::PartitionPoint: {
+//       partitionVertex *pv = static_cast<partitionVertex *>(ge);
+//       if (pv->getParentEntity()->dim() != pv->dim()) continue;  // Skip partition interfaces
+//       if (std::find(pv->getPartitions().begin(), pv->getPartitions().end(),
+//                     iPart) != pv->getPartitions().end()) {
+//         entitiesPart.push_back(pv);
+//       }
+//     } break;
+//     default:
+//       break;
+//     }         // switch
+//   }           // loop on entities
+// }
 
 
 } // anonymous namespace
@@ -490,52 +666,67 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   if(CGNS::cg_goto(cgIndexFile, cgIndexBase, "end")) return cgnsError();
   if(CGNS::cg_descriptor_write("About", "Created by Gmsh")) return cgnsError();
 
-  // index mesh nodes, as CGNS does not store node tags
-  if(noPhysicalGroups()) saveAll = true;
-  const size_t numNodes = indexMeshVertices(saveAll);
-
-  // get all entities from model
-  std::vector<GEntity *> entities;
-  getEntities(entities);
-
-  // Initialize vertex -> (partition, local node index) for periodic entities
-  Msg::Info("Looking for periodic vertices");
-  Vertex2LocalData perVert2Local;
-  initPeriodicVertex2LocalData(entities, perVert2Local);
-  Msg::Info("%i periodic vertices found", perVert2Local.size());
-
   // Zone names
   const size_t numPart = getNumPartitions();
   std::vector<std::string> zoneName(numPart+1);
 
-  // write partitions and periodic connectivities
+  // index mesh nodes, as CGNS does not store node tags
+  if(noPhysicalGroups()) saveAll = true;
+  const size_t numNodes = indexMeshVertices(saveAll);
+
+  // get entities from model
+  std::vector<GEntity *> entities, entitiesPer, entitiesInterf;
+  getEntities(entities);
+  getPeriodicEntities(entities, entitiesPer);
+  if (numPart > 0) {
+    getPartitionInterfaceEntities(entities, entitiesInterf);
+    if (entitiesInterf.size() == 0) {
+      Msg::Error("Partitioned entities not detected");
+    }
+  }
+
+  // initialize vertex -> (partition, local node index) for periodic and
+  // interface entities
+  Msg::Info("Looking for periodic/interface vertices");
+  Vertex2LocalData interfVert2Local;
+  initInterfVertex2LocalData(entitiesPer, entitiesInterf, interfVert2Local);
+  Msg::Info("%i periodic/interface vertices found", interfVert2Local.size());
+
+  // write partitions and periodic/partition connectivities
   if (numPart == 0) {                                   // mesh not partitioned
-    int err = writeZone(this, saveAll, scalingFactor, numNodes, 0, entities,
-                        cgIndexFile, cgIndexBase, zoneName, perVert2Local);
+    int err = writeZone(this, saveAll, scalingFactor, meshDim, numNodes, 0,
+                        entities, cgIndexFile, cgIndexBase, zoneName,
+                        interfVert2Local);
     if(err) return err;
-    if (perVert2Local.size() > 0) {
-      err = writePeriodic(entities, cgIndexFile, cgIndexBase, zoneName,
-                          perVert2Local);
+    if (entitiesPer.size() > 0) {
+      err = writePeriodic(entitiesPer, cgIndexFile, cgIndexBase, zoneName,
+                          interfVert2Local);
       if(err) return err;
     }
   }
   else {                                                // partitioned mesh
     std::vector<std::vector<GEntity *> > entitiesPart;
     entitiesPart.resize(numPart+1);
+    getEntitiesInPartitions(entities, entitiesPart);
     for(std::size_t iPart = 1; iPart <= numPart; iPart++) {
-      printProgress("partition", iPart, numPart);
-      getEntitiesInPartition(entities, iPart, entitiesPart[iPart]);
-      int err = writeZone(this, saveAll, scalingFactor, numNodes, iPart,
-                          entitiesPart[iPart], cgIndexFile, cgIndexBase,
-                          zoneName, perVert2Local);
+      printProgress("Writing partition", iPart, numPart);
+//      getEntitiesInPartition(entities, iPart, entitiesPart[iPart]);
+      int err = writeZone(this, saveAll, scalingFactor, meshDim, numNodes,
+                          iPart, entitiesPart[iPart], cgIndexFile, cgIndexBase,
+                          zoneName, interfVert2Local);
       if(err) return err;
     }             // loop on partitions
-    if (perVert2Local.size() > 0) {
-      int err = writePeriodic(entities, cgIndexFile, cgIndexBase, zoneName,
-                              perVert2Local);
+    if (entitiesPer.size() > 0) {
+      int err = writePeriodic(entitiesPer, cgIndexFile, cgIndexBase, zoneName,
+                              interfVert2Local);
       if(err) return err;
     }
-  }               // numPart == 0
+    if (entitiesInterf.size() > 0) {
+      int err = writeInterfaces(entitiesInterf, cgIndexFile, cgIndexBase,
+                                zoneName, interfVert2Local);
+      if(err) return err;
+    }
+  }   // numPart == 0
 
   if(CGNS::cg_close(cgIndexFile)) return cgnsError();
 
