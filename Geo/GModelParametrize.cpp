@@ -89,6 +89,23 @@ void classifyFaces(GModel *gm)
 {
 #if defined(HAVE_MESH)
 
+  // check if mesh is high-order
+  bool ho = false;
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++){
+    GFace *gf = *it;
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+      if(gf->triangles[i]->getPolynomialOrder() > 1) {
+        ho = true;
+        break;
+      }
+    }
+    if(ho) break;
+  }
+  if(ho) {
+    Msg::Warning("Reverting to first order mesh for classification");
+    gm->setOrderN(1, false, false);
+  }
+
   // create a structure from mesh edges to geometrical curves, and remove curves
   // from the model
   std::set<MLine *, compareMLinePtr> lines;
