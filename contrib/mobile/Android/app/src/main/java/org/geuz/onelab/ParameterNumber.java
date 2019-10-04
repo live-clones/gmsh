@@ -41,8 +41,8 @@ public class ParameterNumber extends Parameter {
   {
     super(context, gmsh, name);
   }
-  public ParameterNumber(Context context, Gmsh gmsh, String name,
-                         double value, double min, double max, double step)
+  public ParameterNumber(Context context, Gmsh gmsh, String name, double value,
+                         double min, double max, double step)
   {
     this(context, gmsh, name);
     _value = value;
@@ -50,8 +50,9 @@ public class ParameterNumber extends Parameter {
     _max = max;
     _step = step;
   }
-  public ParameterNumber(Context context, Gmsh gmsh, String name, boolean readOnly,
-                         double value, double min, double max, double step)
+  public ParameterNumber(Context context, Gmsh gmsh, String name,
+                         boolean readOnly, double value, double min, double max,
+                         double step)
   {
     this(context, gmsh, name, value, min, max, step);
     _readOnly = readOnly;
@@ -68,17 +69,16 @@ public class ParameterNumber extends Parameter {
     if(_bar != null) {
       _title.setText(getShortName() + " (" + formatDouble(_value) + ")");
       _bar.setMax(100);
-      _bar.setProgress((int)(100*(_value-_min)/(_max-_min)));
+      _bar.setProgress((int)(100 * (_value - _min) / (_max - _min)));
       _bar.setEnabled(!this.isReadOnly());
     }
     else if(_spinner != null) {
       for(int i = 0; i < _choices.size(); i++)
-        if(_values.get(i) == _value)
-          _spinner.setSelection(i, true);
+        if(_values.get(i) == _value) _spinner.setSelection(i, true);
     }
     else if(_checkbox != null) {
       _checkbox.setText(getShortName());
-      _checkbox.setChecked((_value == 0)? false : true);
+      _checkbox.setChecked((_value == 0) ? false : true);
     }
     else if(_edittext != null) {
       _edittext.setText("" + formatDouble(_value));
@@ -97,9 +97,21 @@ public class ParameterNumber extends Parameter {
     _gmsh.setParam(getType(), getName(), String.valueOf(value));
     if(mListener != null) mListener.OnParameterChanged();
   }
-  public void setMin(double min) { _min = min; this.update(); }
-  public void setMax(double max) { _max = max; this.update(); }
-  public void setStep(double step) { _step = step;this.update(); }
+  public void setMin(double min)
+  {
+    _min = min;
+    this.update();
+  }
+  public void setMax(double max)
+  {
+    _max = max;
+    this.update();
+  }
+  public void setStep(double step)
+  {
+    _step = step;
+    this.update();
+  }
   public void addChoice(double choice, String value)
   {
     if(_values == null) {
@@ -109,20 +121,20 @@ public class ParameterNumber extends Parameter {
       _choices.add(value);
       if(_spinner == null) {
         _spinner = new Spinner(_context);
-        _adapter = new ArrayAdapter<String>(_context,
-                                            android.R.layout.simple_spinner_dropdown_item,
-                                            _choices);
-        _adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        _adapter = new ArrayAdapter<String>(
+          _context, android.R.layout.simple_spinner_dropdown_item, _choices);
+        _adapter.setDropDownViewResource(
+          android.R.layout.simple_spinner_dropdown_item);
         _spinner.setAdapter(_adapter);
       }
     }
-    else{
-      for(int i=0;i<_values.size();i++) {
+    else {
+      for(int i = 0; i < _values.size(); i++) {
         if(_values.get(i).equals(choice) && _choices.size() > i) {
           _choices.set(i, value);
           return;
         }
-        else if(_values.get(i).equals(choice)){
+        else if(_values.get(i).equals(choice)) {
           _choices.add(value);
           return;
         }
@@ -140,8 +152,7 @@ public class ParameterNumber extends Parameter {
     int tmp;
     try {
       tmp = Integer.parseInt(s);
-    }
-    catch(NumberFormatException e) {
+    } catch(NumberFormatException e) {
       tmp = defaultValue;
     }
     return tmp;
@@ -151,8 +162,7 @@ public class ParameterNumber extends Parameter {
     double tmp;
     try {
       tmp = Double.parseDouble(s);
-    }
-    catch(NumberFormatException e) {
+    } catch(NumberFormatException e) {
       tmp = defaultValue;
     }
     return tmp;
@@ -164,9 +174,9 @@ public class ParameterNumber extends Parameter {
     String[] infos = s.split(Character.toString((char)0x03));
     int nValues = parseInt(infos[pos++], 0);
     _value = 0;
-    if(nValues > 0){
+    if(nValues > 0) {
       double values[] = new double[nValues];
-      for(int i = 0; i < nValues; i++){
+      for(int i = 0; i < nValues; i++) {
         String tmpVal = infos[pos++];
         values[i] = parseDouble(tmpVal, 0.);
       }
@@ -176,7 +186,7 @@ public class ParameterNumber extends Parameter {
     this.setMin(parseDouble(infos[pos++], 0.));
     this.setMax(parseDouble(infos[pos++], 0.));
     this.setStep(parseDouble(infos[pos++], 0.));
-    pos++;// index
+    pos++; // index
     int nChoices = parseInt(infos[pos++], 0); // choices' size
     double choices[] = new double[nChoices];
     for(int i = 0; i < nChoices; i++)
@@ -189,7 +199,7 @@ public class ParameterNumber extends Parameter {
     }
     if(_choices != null) _choices.clear();
     if(_values != null) _values.clear();
-    for(int i = 0; i < nLabels && nChoices == nLabels; i++){
+    for(int i = 0; i < nLabels && nChoices == nLabels; i++) {
       double val = parseDouble(infos[pos++], 0.); // choice
       this.addChoice(val, infos[pos++]); // label
     }
@@ -203,15 +213,15 @@ public class ParameterNumber extends Parameter {
     this.update();
     return pos;
   }
-  public String getType(){ return "ParameterNumber"; }
+  public String getType() { return "ParameterNumber"; }
   public LinearLayout getView()
   {
     LinearLayout paramLayout = new LinearLayout(_context);
     paramLayout.setOrientation(LinearLayout.VERTICAL);
     paramLayout.addView(_title);
-    if(!_readOnly) paramLayout.setOnLongClickListener(new View.OnLongClickListener(){
-        @Override
-        public boolean onLongClick(View v)
+    if(!_readOnly)
+      paramLayout.setOnLongClickListener(new View.OnLongClickListener() {
+        @Override public boolean onLongClick(View v)
         {
           AlertDialog.Builder builder = new AlertDialog.Builder(_context);
           LinearLayout layout = new LinearLayout(_context);
@@ -221,30 +231,39 @@ public class ParameterNumber extends Parameter {
           EditText edit = new EditText(_context);
           edit.setText(String.valueOf(_value));
           edit.addTextChangedListener(new TextWatcher() {
-              public void onTextChanged(CharSequence s, int start, int before, int count) {
-                _tmpValue = parseDouble(s.toString(), 1.);
-              }
-              // UNUSED Auto-generated method stub
-              public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-              // UNUSED Auto-generated method stub
-              public void afterTextChanged(Editable s) {}
-            });
+            public void onTextChanged(CharSequence s, int start, int before,
+                                      int count)
+            {
+              _tmpValue = parseDouble(s.toString(), 1.);
+            }
+            // UNUSED Auto-generated method stub
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after)
+            {
+            }
+            // UNUSED Auto-generated method stub
+            public void afterTextChanged(Editable s) {}
+          });
           edit.requestFocus();
           //_context.getWindow().setSoftInputMode
           //    (WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
           layout.addView(label);
           layout.addView(edit);
           builder.setView(layout)
-            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                  setValue(_tmpValue);
-                }
-              })
+            .setPositiveButton("OK",
+                               new DialogInterface.OnClickListener() {
+                                 public void onClick(DialogInterface dialog,
+                                                     int id)
+                                 {
+                                   setValue(_tmpValue);
+                                 }
+                               })
             .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                  // User cancelled the dialog
-                }
-              });
+              public void onClick(DialogInterface dialog, int id)
+              {
+                // User cancelled the dialog
+              }
+            });
           builder.create().show();
           return true;
         }
@@ -252,9 +271,12 @@ public class ParameterNumber extends Parameter {
     if(_spinner != null) {
       paramLayout.addView(_spinner);
       _spinner.setEnabled(!_readOnly);
-      _spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+      _spinner.setOnItemSelectedListener(
+        new AdapterView.OnItemSelectedListener() {
           public void onNothingSelected(AdapterView<?> arg0) {}
-          public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+          public void onItemSelected(AdapterView<?> parent, View view, int pos,
+                                     long id)
+          {
             setValue(_values.get(pos));
           }
         });
@@ -263,63 +285,76 @@ public class ParameterNumber extends Parameter {
       paramLayout.addView(_bar);
       _bar.setEnabled(!_readOnly);
       _bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-          public void onStopTrackingTouch(SeekBar seekBar) {
-            setValue(getMin() + (getMax() - getMin())*seekBar.getProgress()/100);
-          }
-          public void onStartTrackingTouch(SeekBar seekBar) {}
-          public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {}
-        });
+        public void onStopTrackingTouch(SeekBar seekBar)
+        {
+          setValue(getMin() +
+                   (getMax() - getMin()) * seekBar.getProgress() / 100);
+        }
+        public void onStartTrackingTouch(SeekBar seekBar) {}
+        public void onProgressChanged(SeekBar seekBar, int progress,
+                                      boolean fromUser)
+        {
+        }
+      });
     }
     else if(_checkbox != null) {
       paramLayout.removeView(_title);
       paramLayout.addView(_checkbox);
       _checkbox.setEnabled(!_readOnly);
-      _checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-          public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            setValue((isChecked)? 1 : 0);
+      _checkbox.setOnCheckedChangeListener(
+        new CompoundButton.OnCheckedChangeListener() {
+          public void onCheckedChanged(CompoundButton buttonView,
+                                       boolean isChecked)
+          {
+            setValue((isChecked) ? 1 : 0);
           }
         });
     }
-    else if(_edittext != null){
+    else if(_edittext != null) {
       paramLayout.addView(_edittext);
       _edittext.setEnabled(!_readOnly);
 
       _edittext.setOnKeyListener(new View.OnKeyListener() {
-          public boolean onKey(View v, int keyCode, KeyEvent event) {
-            if(keyCode == KeyEvent.KEYCODE_ENTER){ // hide the keyboard
-              InputMethodManager imm = (InputMethodManager)_context.getSystemService
-                (Context.INPUT_METHOD_SERVICE);
-              imm.hideSoftInputFromWindow(_edittext.getWindowToken(), 0);
-              setValue(_value);
-              _edittext.clearFocus();
-              return true;
-            }
-            if(keyCode > KeyEvent.KEYCODE_9 &&
-               keyCode != KeyEvent.KEYCODE_NUMPAD_DOT &&
-               (keyCode <KeyEvent.KEYCODE_NUMPAD_0 ||
-                keyCode >KeyEvent.KEYCODE_NUMPAD_9) &&
-               keyCode != KeyEvent.KEYCODE_DEL)
-              return true;
-            return false;
+        public boolean onKey(View v, int keyCode, KeyEvent event)
+        {
+          if(keyCode == KeyEvent.KEYCODE_ENTER) { // hide the keyboard
+            InputMethodManager imm =
+              (InputMethodManager)_context.getSystemService(
+                Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(_edittext.getWindowToken(), 0);
+            setValue(_value);
+            _edittext.clearFocus();
+            return true;
           }
-        });
+          if(keyCode > KeyEvent.KEYCODE_9 &&
+             keyCode != KeyEvent.KEYCODE_NUMPAD_DOT &&
+             (keyCode < KeyEvent.KEYCODE_NUMPAD_0 ||
+              keyCode > KeyEvent.KEYCODE_NUMPAD_9) &&
+             keyCode != KeyEvent.KEYCODE_DEL)
+            return true;
+          return false;
+        }
+      });
       _edittext.addTextChangedListener(new TextWatcher() {
-          public void onTextChanged(CharSequence s, int start, int before, int count) {
-            _value = parseDouble(s.toString(), 1.);
-          }
-          // UNUSED Auto-generated method stub
-          public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-          // UNUSED Auto-generated method stub
-          public void afterTextChanged(Editable s) {}
-        });
+        public void onTextChanged(CharSequence s, int start, int before,
+                                  int count)
+        {
+          _value = parseDouble(s.toString(), 1.);
+        }
+        // UNUSED Auto-generated method stub
+        public void beforeTextChanged(CharSequence s, int start, int count,
+                                      int after)
+        {
+        }
+        // UNUSED Auto-generated method stub
+        public void afterTextChanged(Editable s) {}
+      });
     }
     else if(_stepper != null) {
       paramLayout.addView(_stepper);
       _stepper.setOnValueChangedListener(new Stepper.OnValueChangedListener() {
-          public void onValueChanged() {
-            setValue(_stepper.getValue());
-          }
-        });
+        public void onValueChanged() { setValue(_stepper.getValue()); }
+      });
     }
     return paramLayout;
   }
@@ -328,8 +363,7 @@ public class ParameterNumber extends Parameter {
   {
     mListener = listener;
   }
-  public interface OnParameterChangedListener
-  {
+  public interface OnParameterChangedListener {
     void OnParameterChanged();
   }
 }

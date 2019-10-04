@@ -2,8 +2,8 @@
 
 #include "SplitViewController.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>{
-  @public
+@interface AppDelegate : UIResponder <UIApplicationDelegate> {
+@public
   bool compute;
 }
 

@@ -2,7 +2,7 @@
 
 @implementation Model
 
--(id) initWithName:(NSString *)name
+- (id)initWithName:(NSString *)name
 {
   self = [super init];
   if(self) {
@@ -15,7 +15,9 @@
   return self;
 }
 
--(id) initWithName:(NSString *)name withSummary:(NSString *)summary withFile:(NSString *)file
+- (id)initWithName:(NSString *)name
+       withSummary:(NSString *)summary
+          withFile:(NSString *)file
 {
   self = [super init];
   if(self) {
@@ -28,52 +30,52 @@
   return self;
 }
 
--(NSString *) getName
+- (NSString *)getName
 {
   return _name;
 }
 
--(NSString *) getSummary
+- (NSString *)getSummary
 {
   return _summary;
 }
 
--(NSString *) getFile
+- (NSString *)getFile
 {
   return _file;
 }
 
--(NSURL *) getUrl
+- (NSURL *)getUrl
 {
   return _url;
 }
 
--(UIImage *) getPreview
+- (UIImage *)getPreview
 {
   return _preview;
 }
 
--(void) setSummary:(NSString *)summary
+- (void)setSummary:(NSString *)summary
 {
   _summary = summary;
 }
 
--(void) setFile:(NSString *)file
+- (void)setFile:(NSString *)file
 {
   _file = file;
 }
 
--(void) setPreview:(NSString *)path
+- (void)setPreview:(NSString *)path
 {
   _preview = [UIImage imageWithContentsOfFile:path];
 }
 
--(void) setUrl:(NSString *)url
+- (void)setUrl:(NSString *)url
 {
   _url = [NSURL URLWithString:url];
 }
 
--(NSComparisonResult) compare:(Model *)p
+- (NSComparisonResult)compare:(Model *)p
 {
   return [[self getName] compare:[p getName]];
 }

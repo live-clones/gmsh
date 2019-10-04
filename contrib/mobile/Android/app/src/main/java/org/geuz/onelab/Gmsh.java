@@ -6,7 +6,8 @@ import android.os.Parcelable;
 
 public class Gmsh implements Parcelable {
   // from C/C++ code:
-  static {
+  static
+  {
     System.loadLibrary("c++_shared");
     System.loadLibrary("f2cblas");
     System.loadLibrary("f2clapack");
@@ -30,9 +31,12 @@ public class Gmsh implements Parcelable {
   // change a parameter
   public native int setParam(String type, String name, String value);
   // access Gmsh options
-  public native int setStringOption(String category, String name, String value, int index);
-  public native int setDoubleOption(String category, String name, double value, int index);
-  public native int setIntegerOption(String category, String name, int value, int index);
+  public native int setStringOption(String category, String name, String value,
+                                    int index);
+  public native int setDoubleOption(String category, String name, double value,
+                                    int index);
+  public native int setIntegerOption(String category, String name, int value,
+                                     int index);
   public native String getStringOption(String category, String name, int index);
   public native double getDoubleOption(String category, String name, int index);
   public native int getIntegerOption(String category, String name, int index);
@@ -54,83 +58,41 @@ public class Gmsh implements Parcelable {
     ptr = this.init(fontFactor);
     this.handler = handler;
   }
-  public void viewInit(int w, int h)
-  {
-    this.initView(ptr, w, h);
-  }
-  public void viewDraw()
-  {
-    this.drawView(ptr);
-  }
-  public void load(String filename)
-  {
-    this.loadFile(ptr, filename);
-  }
-  public void startEvent(float x, float y)
-  {
-    this.eventHandler(ptr, 0, x, y);
-  }
-  public void translate(float x, float y)
-  {
-    this.eventHandler(ptr, 1, x, y);
-  }
-  public void scale(float s)
-  {
-    this.eventHandler(ptr, 2, s, 0);
-  }
-  public void rotate(float x, float y)
-  {
-    this.eventHandler(ptr, 3, x, y);
-  }
+  public void viewInit(int w, int h) { this.initView(ptr, w, h); }
+  public void viewDraw() { this.drawView(ptr); }
+  public void load(String filename) { this.loadFile(ptr, filename); }
+  public void startEvent(float x, float y) { this.eventHandler(ptr, 0, x, y); }
+  public void translate(float x, float y) { this.eventHandler(ptr, 1, x, y); }
+  public void scale(float s) { this.eventHandler(ptr, 2, s, 0); }
+  public void rotate(float x, float y) { this.eventHandler(ptr, 3, x, y); }
   public void viewX() { this.eventHandler(ptr, 5, 0, 0); }
   public void viewY() { this.eventHandler(ptr, 6, 0, 0); }
   public void viewZ() { this.eventHandler(ptr, 7, 0, 0); }
-  public void endEvent(float x, float y)
-  {
-    this.eventHandler(ptr, 4, x, y);
-  }
-  public void resetPosition()
-  {
-    this.eventHandler(ptr, 10, 0, 0);
-  }
+  public void endEvent(float x, float y) { this.eventHandler(ptr, 4, x, y); }
+  public void resetPosition() { this.eventHandler(ptr, 10, 0, 0); }
   public void ShowPopup(String message)
   {
-    if(handler != null)
-      handler.obtainMessage(0, message).sendToTarget();
+    if(handler != null) handler.obtainMessage(0, message).sendToTarget();
   }
   public void RequestRender()
   {
-    if(handler != null)
-      handler.obtainMessage(1).sendToTarget();
+    if(handler != null) handler.obtainMessage(1).sendToTarget();
   }
   public void SetLoading(String message)
   {
-    if(handler != null)
-      handler.obtainMessage(2, message).sendToTarget();
+    if(handler != null) handler.obtainMessage(2, message).sendToTarget();
   }
   public void SetLoading(int percent)
   {
-    if(handler != null)
-      handler.obtainMessage(3, percent, 100).sendToTarget();
+    if(handler != null) handler.obtainMessage(3, percent, 100).sendToTarget();
   }
   // Parcelable methods/constructors
-  private Gmsh(Parcel in)
-  {
-    this.ptr = in.readLong();
-  }
+  private Gmsh(Parcel in) { this.ptr = in.readLong(); }
   public int describeContents() { return 0; }
-  public void writeToParcel(Parcel out, int flags)
-  {
-    out.writeLong(this.ptr);
-  }
-  public static Parcelable.Creator<Gmsh> CREATOR = new Parcelable.Creator<Gmsh>(){
-      public Gmsh createFromParcel(Parcel source)
-      {
-        return new Gmsh(source);
-      }
-      public Gmsh[] newArray(int size)
-      {
-        return new Gmsh[size];
-      }
+  public void writeToParcel(Parcel out, int flags) { out.writeLong(this.ptr); }
+  public static Parcelable.Creator<Gmsh> CREATOR =
+    new Parcelable.Creator<Gmsh>() {
+      public Gmsh createFromParcel(Parcel source) { return new Gmsh(source); }
+      public Gmsh[] newArray(int size) { return new Gmsh[size]; }
     };
 }
