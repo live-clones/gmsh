@@ -1,5 +1,4 @@
 ---
-Language:        Cpp
 BasedOnStyle: None
 AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
