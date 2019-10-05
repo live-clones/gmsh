@@ -7,6 +7,8 @@
   self = [super init];
   if(self) {
     label = [[UILabel alloc] init];
+    // set font size at 90% of default size
+    label.font = [label.font fontWithSize:(0.9 * label.font.pointSize)];
     [label setBackgroundColor:[UIColor clearColor]];
   }
   return self;
@@ -50,7 +52,7 @@
 
 + (double)getHeight
 {
-  return 60.0f;
+  return 65.0f;
 }
 @end
 
@@ -95,7 +97,7 @@
                             style:UIAlertActionStyleDefault
                           handler:^(UIAlertAction *action) {
                             [self updateString:string[0] withValue:choices[i]];
-                            [button
+                            [self->button
                               setTitle:[Utils getStringFromCString:choices[i]
                                                                      .c_str()]
                               forState:UIControlStateNormal];
@@ -141,10 +143,6 @@
   return button;
 }
 
-+ (double)getHeight
-{
-  return 60.f;
-}
 @end
 
 @implementation ParameterNumberList
@@ -192,7 +190,7 @@
                             style:UIAlertActionStyleDefault
                           handler:^(UIAlertAction *action) {
                             [self updateNumber:numbers[0] withValue:choices[i]];
-                            [button
+                            [self->button
                               setTitle:[Utils
                                          getStringFromCString:numbers[0]
                                                                 .getValueLabel(
@@ -244,10 +242,6 @@
   return button;
 }
 
-+ (double)getHeight
-{
-  return 60.f;
-}
 @end
 
 @implementation ParameterNumberCheckbox
@@ -300,7 +294,7 @@
 
 + (double)getHeight
 {
-  return 40.0f;
+  return 45.0f;
 }
 @end
 
@@ -311,6 +305,8 @@
   if(self) {
     name = [Utils getStringFromCString:number.getName().c_str()];
     stepper = [[UIStepper alloc] init];
+    // make the stepper a bit smaller
+    stepper.transform = CGAffineTransformMakeScale(0.8, 0.8);
     [stepper setValue:number.getValue()];
     [stepper setStepValue:1];
     [stepper setMaximumValue:number.getMax()];
@@ -375,10 +371,6 @@
   return stepper;
 }
 
-+ (double)getHeight
-{
-  return 60.0f;
-}
 @end
 
 @implementation ParameterNumberRange
@@ -457,10 +449,6 @@
   return slider;
 }
 
-+ (double)getHeight
-{
-  return 65.0f;
-}
 @end
 
 @implementation ParameterNumberTextbox
@@ -538,8 +526,4 @@
   return textbox;
 }
 
-+ (double)getHeight
-{
-  return 60.f;
-}
 @end

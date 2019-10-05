@@ -11,8 +11,10 @@
 		2907CCEC193DE6560011341A /* icon_onelab.png in Resources */ = {isa = PBXBuildFile; fileRef = 2907CCEB193DE6560011341A /* icon_onelab.png */; };
 		291191DB1E93ACF700069C0C /* occt.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 291191DA1E93ACF700069C0C /* occt.framework */; };
 		295056611D9AF3D200B9D9C4 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 295056601D9AF3D200B9D9C4 /* MessageUI.framework */; };
-		2988FF1E18E59558001435B6 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1C18E59558001435B6 /* Accelerate.framework */; };
-		2988FF1F18E59558001435B6 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1D18E59558001435B6 /* Accelerate.framework */; };
+		2988FF1E18E59558001435B6 /* libf2cblas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1C18E59558001435B6 /* libf2cblas.a */; };
+		2988FF1F18E59558001435B6 /* libf2clapack.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1D18E59558001435B6 /* libf2clapack.a */; };
+		2996986023488F94001779BC /* iPadStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C9608AB1712EF0900E1D4A0 /* iPadStoryboard.storyboard */; };
+		2996986123488F94001779BC /* iPhoneiPodStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CE1A65917B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard */; };
 		29A4AC80193CE6DA0007B5A5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */; };
 		29D83C8320A5E24700970050 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2924309A20A5D3830055B9AB /* LaunchScreen.storyboard */; };
 		9C1B9912194F4E0400507EFD /* slepc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C1B9911194F4E0400507EFD /* slepc.framework */; };
@@ -31,7 +33,6 @@
 		9C96089B1712C7BE00E1D4A0 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96089A1712C7BE00E1D4A0 /* OpenGLES.framework */; };
 		9C96089D1712C7F600E1D4A0 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */; };
 		9C96089F1712C8EB00E1D4A0 /* emulatorFix.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */; };
-		9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C9608AA1712EF0900E1D4A0 /* iPadStoryboard.storyboard */; };
 		9CB1CD9818DB2D8700110882 /* icon_rotate.png in Resources */ = {isa = PBXBuildFile; fileRef = 9CB1CD9618DB2D8700110882 /* icon_rotate.png */; };
 		9CB1CD9B18DC36AC00110882 /* AboutViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CB1CD9A18DC36AC00110882 /* AboutViewController.mm */; };
 		9CB1CD9D18DC57DE00110882 /* icon_translate.png in Resources */ = {isa = PBXBuildFile; fileRef = 9CB1CD9C18DC57DE00110882 /* icon_translate.png */; };
@@ -46,7 +47,6 @@
 		9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E04178AE6BE00A83B4B /* Trackball.cpp */; };
 		9CE18C2017B27EDB009BA06E /* Parameter.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE18C1F17B27EDB009BA06E /* Parameter.mm */; };
 		9CE1A65717B0F39D00E5152F /* Utils.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE1A65617B0F39D00E5152F /* Utils.mm */; };
-		9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CE1A65817B0FB9600E5152F /* iPhoneiPodStoryboard.storyboard */; };
 		9CE2773B17E197F50076E728 /* Social.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE2773917E197DA0076E728 /* Social.framework */; };
 		9CEAE86E17AF824B00813524 /* iosUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE86D17AF824B00813524 /* iosUtils.cpp */; };
 		9CEAE87D17AFD5BB00813524 /* SplitViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE87C17AFD5BB00813524 /* SplitViewController.mm */; };
@@ -60,8 +60,8 @@
 		291191DA1E93ACF700069C0C /* occt.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = occt.framework; path = Onelab/frameworks/occt.framework; sourceTree = "<group>"; };
 		2924309A20A5D3830055B9AB /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		295056601D9AF3D200B9D9C4 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
-                2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = Onelab/frameworks/petsc.framework/libf2cblas.a; sourceTree = "<group>"; };
-                2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = Onelab/frameworks/petsc.framework/libf2clapack.a; sourceTree = "<group>"; };
+		2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = Onelab/frameworks/petsc.framework/libf2cblas.a; sourceTree = "<group>"; };
+		2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = Onelab/frameworks/petsc.framework/libf2clapack.a; sourceTree = "<group>"; };
 		29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		9C1B9911194F4E0400507EFD /* slepc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = slepc.framework; path = Onelab/frameworks/slepc.framework; sourceTree = "<group>"; };
 		9C1C10F817BA5E7D00BFD483 /* OptionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OptionsViewController.h; sourceTree = "<group>"; };
@@ -87,7 +87,7 @@
 		9C96089A1712C7BE00E1D4A0 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = emulatorFix.c; sourceTree = "<group>"; usesTabs = 1; };
-		9C9608AB1712EF0900E1D4A0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = iPadStoryboard.storyboard; sourceTree = "<group>"; };
+		9C9608AB1712EF0900E1D4A0 /* iPadStoryboard.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = iPadStoryboard.storyboard; sourceTree = "<group>"; };
 		9C99754C17390DEE0036EC24 /* iosUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iosUtils.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CB1CD9618DB2D8700110882 /* icon_rotate.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_rotate.png; sourceTree = "<group>"; };
 		9CB1CD9918DC36AC00110882 /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AboutViewController.h; sourceTree = "<group>"; };
@@ -109,7 +109,7 @@
 		9CE18C1F17B27EDB009BA06E /* Parameter.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Parameter.mm; sourceTree = "<group>"; usesTabs = 1; };
 		9CE1A65517B0F39C00E5152F /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CE1A65617B0F39D00E5152F /* Utils.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Utils.mm; sourceTree = "<group>"; usesTabs = 1; };
-		9CE1A65917B0FB9700E5152F /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = iPhoneiPodStoryboard.storyboard; sourceTree = "<group>"; };
+		9CE1A65917B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = iPhoneiPodStoryboard.storyboard; sourceTree = "<group>"; };
 		9CE2773917E197DA0076E728 /* Social.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Social.framework; path = System/Library/Frameworks/Social.framework; sourceTree = SDKROOT; };
 		9CEAE86D17AF824B00813524 /* iosUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iosUtils.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9CEAE87B17AFD5BB00813524 /* SplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SplitViewController.h; sourceTree = "<group>"; usesTabs = 1; };
@@ -127,8 +127,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2988FF1E18E59558001435B6 /* Accelerate.framework in Frameworks */,
-				2988FF1F18E59558001435B6 /* Accelerate.framework in Frameworks */,
+				2988FF1E18E59558001435B6 /* libf2cblas.a in Frameworks */,
+				2988FF1F18E59558001435B6 /* libf2clapack.a in Frameworks */,
 				2901F1211BB0086C004C328B /* libz.tbd in Frameworks */,
 				9C2C3A20187FDF9900E87F78 /* libstdc++.tbd in Frameworks */,
 				9C2C3A1E187FDF9200E87F78 /* libc++.tbd in Frameworks */,
@@ -184,8 +184,8 @@
 				295056601D9AF3D200B9D9C4 /* MessageUI.framework */,
 				2901F1201BB0086C004C328B /* libz.tbd */,
 				9C1B9911194F4E0400507EFD /* slepc.framework */,
-				2988FF1C18E59558001435B6 /* Accelerate.framework */,
-				2988FF1D18E59558001435B6 /* Accelerate.framework */,
+				2988FF1C18E59558001435B6 /* libf2cblas.a */,
+				2988FF1D18E59558001435B6 /* libf2clapack.a */,
 				9C2C3A1F187FDF9900E87F78 /* libstdc++.tbd */,
 				9C2C3A1D187FDF9200E87F78 /* libc++.tbd */,
 				9CE2773917E197DA0076E728 /* Social.framework */,
@@ -208,8 +208,8 @@
 				9C928621180D216500AAABD4 /* icons */,
 				9CC85C011790286C00F241C4 /* files */,
 				2924309A20A5D3830055B9AB /* LaunchScreen.storyboard */,
-				9C9608AA1712EF0900E1D4A0 /* iPadStoryboard.storyboard */,
-				9CE1A65817B0FB9600E5152F /* iPhoneiPodStoryboard.storyboard */,
+				9C9608AB1712EF0900E1D4A0 /* iPadStoryboard.storyboard */,
+				9CE1A65917B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard */,
 				9C9608491712C16300E1D4A0 /* AppDelegate.h */,
 				9C96084A1712C16300E1D4A0 /* AppDelegate.mm */,
 				9C99754C17390DEE0036EC24 /* iosUtils.h */,
@@ -287,7 +287,7 @@
 		9C96082D1712C16300E1D4A0 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0500;
+				LastUpgradeCheck = 1100;
 				ORGANIZATIONNAME = "Christophe Geuzaine";
 				TargetAttributes = {
 					9C9608351712C16300E1D4A0 = {
@@ -297,10 +297,11 @@
 			};
 			buildConfigurationList = 9C9608301712C16300E1D4A0 /* Build configuration list for PBXProject "Onelab" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = 9C96082B1712C16300E1D4A0;
 			productRefGroup = 9C9608371712C16300E1D4A0 /* Products */;
@@ -317,14 +318,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */,
+				2996986023488F94001779BC /* iPadStoryboard.storyboard in Resources */,
 				29D83C8320A5E24700970050 /* LaunchScreen.storyboard in Resources */,
 				9CB1CD9818DB2D8700110882 /* icon_rotate.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
 				29A4AC80193CE6DA0007B5A5 /* Images.xcassets in Resources */,
 				2907CCEC193DE6560011341A /* icon_onelab.png in Resources */,
 				9CB1CD9D18DC57DE00110882 /* icon_translate.png in Resources */,
-				9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */,
+				2996986123488F94001779BC /* iPhoneiPodStoryboard.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -360,44 +361,38 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXVariantGroup section */
-		9C9608AA1712EF0900E1D4A0 /* iPadStoryboard.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				9C9608AB1712EF0900E1D4A0 /* en */,
-			);
-			name = iPadStoryboard.storyboard;
-			sourceTree = "<group>";
-		};
-		9CE1A65817B0FB9600E5152F /* iPhoneiPodStoryboard.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				9CE1A65917B0FB9700E5152F /* en */,
-			);
-			name = iPhoneiPodStoryboard.storyboard;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
-
 /* Begin XCBuildConfiguration section */
 		9C96086A1712C16400E1D4A0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -417,7 +412,7 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 2;
-				VALID_ARCHS = "arm64";
+				VALID_ARCHS = arm64;
 			};
 			name = Debug;
 		};
@@ -425,19 +420,31 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -452,14 +459,13 @@
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 2;
 				VALIDATE_PRODUCT = YES;
-				VALID_ARCHS = "arm64";
+				VALID_ARCHS = arm64;
 			};
 			name = Release;
 		};
 		9C96086D1712C16400E1D4A0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -480,10 +486,11 @@
 					"$(PROJECT_DIR)/Onelab/frameworks/petsc.framework",
 				);
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.geuz.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "arm64";
+				VALID_ARCHS = arm64;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -491,7 +498,6 @@
 		9C96086E1712C16400E1D4A0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -507,10 +513,11 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Onelab/frameworks/petsc.framework",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.geuz.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "arm64";
+				VALID_ARCHS = arm64;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

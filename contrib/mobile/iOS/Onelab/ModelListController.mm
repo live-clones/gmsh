@@ -191,26 +191,26 @@
                                                                         .row
                                                             inSection:0]];
                         }]];
-  [actionSheet
-    addAction:[UIAlertAction
-                actionWithTitle:@"Remove"
-                          style:UIAlertActionStyleDestructive
-                        handler:^(UIAlertAction *action) {
-                          NSString *file =
-                            [[models objectAtIndex:indexPath.row] getFile];
-                          NSString *path =
-                            [file stringByDeletingLastPathComponent];
-                          [[NSFileManager defaultManager] removeItemAtPath:path
-                                                                     error:nil];
-                          [self refreshList];
-                        }]];
+  [actionSheet addAction:[UIAlertAction
+                           actionWithTitle:@"Remove"
+                                     style:UIAlertActionStyleDestructive
+                                   handler:^(UIAlertAction *action) {
+                                     NSString *file = [[self->models
+                                       objectAtIndex:indexPath.row] getFile];
+                                     NSString *path =
+                                       [file stringByDeletingLastPathComponent];
+                                     [[NSFileManager defaultManager]
+                                       removeItemAtPath:path
+                                                  error:nil];
+                                     [self refreshList];
+                                   }]];
   [actionSheet
     addAction:[UIAlertAction
                 actionWithTitle:@"Clear results"
                           style:UIAlertActionStyleDefault
                         handler:^(UIAlertAction *action) {
-                          NSString *modelFile =
-                            [[models objectAtIndex:indexPath.row] getFile];
+                          NSString *modelFile = [[self->models
+                            objectAtIndex:indexPath.row] getFile];
                           NSString *modelPath =
                             [modelFile stringByDeletingLastPathComponent];
                           NSArray *modelFiles = [[NSFileManager defaultManager]
@@ -239,7 +239,7 @@
                   style:UIAlertActionStyleDefault
                 handler:^(UIAlertAction *action) {
                   NSString *modelFile =
-                    [[models objectAtIndex:indexPath.row] getFile];
+                    [[self->models objectAtIndex:indexPath.row] getFile];
                   NSString *modelPath =
                     [modelFile stringByDeletingLastPathComponent];
                   NSArray *modelFiles = [[NSFileManager defaultManager]
@@ -266,11 +266,11 @@
                             actionWithTitle:file
                                       style:UIAlertActionStyleDefault
                                     handler:^(UIAlertAction *action) {
-                                      NSString *modelFile = [[models
+                                      NSString *modelFile = [[self->models
                                         objectAtIndex:indexPath.row] getFile];
                                       NSString *modelPath = [modelFile
                                         stringByDeletingLastPathComponent];
-                                      currentFileToEdit = [[modelPath
+                                      self->currentFileToEdit = [[modelPath
                                         stringByAppendingString:@"/"]
                                         stringByAppendingString:file];
                                       [self performSegueWithIdentifier:
@@ -291,8 +291,8 @@
                 actionWithTitle:@"Email model files"
                           style:UIAlertActionStyleDefault
                         handler:^(UIAlertAction *action) {
-                          NSString *modelFile =
-                            [[models objectAtIndex:indexPath.row] getFile];
+                          NSString *modelFile = [[self->models
+                            objectAtIndex:indexPath.row] getFile];
                           NSString *modelPath =
                             [modelFile stringByDeletingLastPathComponent];
                           NSArray *modelFiles = [[NSFileManager defaultManager]
@@ -310,8 +310,8 @@
                             style:UIAlertActionStyleDefault
                           handler:^(UIAlertAction *action) {
                             [[UIApplication sharedApplication]
-                              openURL:[[models objectAtIndex:indexPath.row]
-                                        getUrl]];
+                              openURL:[[self->models
+                                        objectAtIndex:indexPath.row] getUrl]];
                           }]];
   }
 

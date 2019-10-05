@@ -133,7 +133,7 @@
 - (BOOL)textFieldShouldEndEditing:(UITextField *)textField
 {
   [_IntervalsStepper setValue:_pview->getOptions()->nbIso];
-  _pview->getOptions()->nbIso = [textField.text integerValue];
+  _pview->getOptions()->nbIso = (int)[textField.text integerValue];
   _pview->setChanged(true);
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
                                                       object:nil];
@@ -148,17 +148,6 @@
 - (void)doneWithNumberPad
 {
   [_Intervals endEditing:YES];
-}
-
-- (void)viewDidUnload
-{
-  [self setName:nil];
-  [self setRaiseZ:nil];
-  [self setIntervals:nil];
-  [self setIntervalsType:nil];
-  [self setName:nil];
-  [self setIntervalsStepper:nil];
-  [super viewDidUnload];
 }
 
 @end

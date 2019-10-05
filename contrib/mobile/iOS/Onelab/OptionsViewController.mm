@@ -129,6 +129,12 @@
   }
 }
 
+- (CGFloat)tableView:(UITableView *)tableView
+  heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  return 45.0f;
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -155,6 +161,9 @@
                                (tableView.frame.size.width -
                                 (showHideOptions.frame.size.width) - 50),
                                30)];
+    // set font size at 90% of default size
+    lblOptions.font = [lblOptions.font fontWithSize:(0.9 * lblOptions.font.pointSize)];
+
     if(indexPath.row == 0) {
       [lblOptions setText:@"Show geometry points"];
       [showHideOptions setOn:(CTX::instance()->geom.points)];
@@ -207,6 +216,8 @@
                                (tableView.frame.size.width -
                                 showHide.frame.size.width - 50),
                                30)];
+    // set font size at 90% of default size
+    lbl.font = [lbl.font fontWithSize:(0.9 * lbl.font.pointSize)];
     [showHide setOn:(PView::list[i]->getOptions()->visible == 1)];
     [showHide setTag:i];
     [showHide addTarget:self

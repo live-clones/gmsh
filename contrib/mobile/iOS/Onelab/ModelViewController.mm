@@ -126,9 +126,11 @@
                     nextButton, flexibleSpace, nil];
 }
 
-- (void)didRotateFromInterfaceOrientation:
-  (UIInterfaceOrientation)fromInterfaceOrientation
+- (void)viewWillTransitionToSize:(CGSize)size
+       withTransitionCoordinator:
+         (id<UIViewControllerTransitionCoordinator>)coordinator
 {
+  [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
   _progressLabel.frame = CGRectMake(50, self.view.frame.size.height - 25,
                                     _progressLabel.frame.size.width,
                                     _progressLabel.frame.size.height);
@@ -160,11 +162,11 @@
       [[NSNotificationCenter defaultCenter]
         postNotificationName:@"refreshParameters"
                       object:nil];
-      [_runStopButton setAction:@selector(compute)];
-      [_runStopButton setTitle:@"Run"];
-      [_progressLabel setHidden:YES];
-      [_progressIndicator stopAnimating];
-      [_progressIndicator setHidden:YES];
+      [self->_runStopButton setAction:@selector(compute)];
+      [self->_runStopButton setTitle:@"Run"];
+      [self->_progressLabel setHidden:YES];
+      [self->_progressIndicator stopAnimating];
+      [self->_progressIndicator setHidden:YES];
       self.navigationItem.hidesBackButton = NO;
     });
   });
@@ -301,17 +303,6 @@
   [self performSegueWithIdentifier:@"showSettingsSegue" sender:self];
 }
 
-- (void)viewDidUnload
-{
-  [self setGlView:nil];
-  [self setProgressLabel:nil];
-  [self setProgressIndicator:nil];
-  [self setSingleTap:nil];
-  [self setDoubleTap:nil];
-  [super viewDidUnload];
-  // Release any retained subviews of the main view.
-}
-
 - (void)requestRender
 {
   if([[UIApplication sharedApplication] applicationState] ==
@@ -319,20 +310,7 @@
     [glView drawView];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:
-  (UIInterfaceOrientation)interfaceOrientation
-{
-  return YES;
-}
-
 #pragma mark - Split view
-
-- (BOOL)splitViewController:(UISplitViewController *)svc
-   shouldHideViewController:(UIViewController *)vc
-              inOrientation:(UIInterfaceOrientation)orientation
-{
-  return NO;
-}
 
 void messageFromCpp(void *self, std::string level, std::string msg)
 {
