@@ -250,11 +250,11 @@ NSInteger compareParameter(id p1, id p2, void *context)
     NSString *name = [Utils getStringFromCString:number[i].getName().c_str()];
     NSString *sectiontitle = GetSectionTitle(name);
     Boolean found = false;
-    for(int iSection = 0; iSection < [_sectionstitle count]; iSection++) {
+    for(int iSection = 0; iSection < (int)[_sectionstitle count]; iSection++) {
       if([sectiontitle
            isEqualToString:[_sectionstitle objectAtIndex:iSection]]) {
         NSMutableArray *section = [_sections objectAtIndex:iSection];
-        for(int iparameter = 0; iparameter < [section count]; iparameter++) {
+        for(int iparameter = 0; iparameter < (int)[section count]; iparameter++) {
           if([[[section objectAtIndex:iparameter] getName]
                isEqualToString:name]) {
             // the parameter is in the section
@@ -317,9 +317,9 @@ NSInteger compareParameter(id p1, id p2, void *context)
   }
 
   // check for hidden/deleted parameters
-  for(int iSection = [_sectionstitle count] - 1; iSection >= 0; iSection--) {
+  for(int iSection = (int)[_sectionstitle count] - 1; iSection >= 0; iSection--) {
     NSMutableArray *section = [_sections objectAtIndex:iSection];
-    for(int iparameter = [section count] - 1; iparameter >= 0; iparameter--) {
+    for(int iparameter = (int)[section count] - 1; iparameter >= 0; iparameter--) {
       Parameter *p = [section objectAtIndex:iparameter];
       std::vector<onelab::number> number;
       onelab::server::instance()->get(number, [[p getName] UTF8String]);

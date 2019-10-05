@@ -602,7 +602,7 @@ void drawContext::drawPost()
 {
   if(PView::list.empty()) return;
 
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PView::list[i]->fillVertexArrays();
     drawPView(PView::list[i]);
   }
@@ -612,7 +612,7 @@ void drawContext::drawAxes()
 {
   glLineWidth(1.);
   bool geometryExists = false;
-  for(unsigned int i = 0; i < GModel::list.size(); i++) {
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
     if(!GModel::list[i]->empty()) {
       geometryExists = true;
       break;
@@ -679,7 +679,7 @@ static void drawGridStipple(int n1, int n2, double p1[3], double p2[3],
     v.push_back(p1[1] + t2[1] * d + t1[1] * l1);
     v.push_back(p1[2] + t2[2] * d + t1[2] * l1);
   }
-  for(unsigned int i = 0; i < v.size(); i++) {
+  for(std::size_t i = 0; i < v.size(); i++) {
     c.push_back(0);
     c.push_back(0);
     c.push_back(0);
@@ -692,7 +692,7 @@ static void drawGridStipple(int n1, int n2, double p1[3], double p2[3],
   glEnableClientState(GL_VERTEX_ARRAY);
   glColorPointer(4, GL_FLOAT, 0, &c[0]);
   glEnableClientState(GL_COLOR_ARRAY);
-  glDrawArrays(GL_LINES, 0, v.size() / 3);
+  glDrawArrays(GL_LINES, 0, (int)v.size() / 3);
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
   glDisable(GL_BLEND);
@@ -961,7 +961,7 @@ void drawContext::drawText2d()
   glPushMatrix();
   glLoadIdentity();
 
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
     if(opt->visible && opt->drawStrings) {
@@ -988,7 +988,7 @@ void drawGraph2d()
   glLoadIdentity();
 
   std::vector<PView *> graphs;
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
     if(!data->getDirty() && opt->visible && opt->type != PViewOptions::Plot3D)
@@ -1149,7 +1149,7 @@ std::vector<std::string> commandToVector(const std::string cmd)
 {
   std::vector<std::string> ret;
   int pos = 0, last = 0;
-  while((pos = cmd.find("-", last + 1)) != std::string::npos) {
+  while((pos = (int)cmd.find("-", last + 1)) != std::string::npos) {
     ret.push_back(cmd.substr(last, pos - 1 - last));
     last = pos;
   }
@@ -1236,7 +1236,7 @@ int onelab_cb(std::string action)
 int number_of_animation()
 {
   int ret = 0;
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PView *p = PView::list[i];
     if(p->getOptions()->visible) {
       int numSteps = (int)p->getData()->getNumTimeSteps();
@@ -1248,7 +1248,7 @@ int number_of_animation()
 
 void set_animation(int step)
 {
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PView *p = PView::list[i];
     if(p->getOptions()->visible) {
       p->getOptions()->timeStep = step;
@@ -1260,7 +1260,7 @@ void set_animation(int step)
 int animation_next()
 {
   int ret = 0;
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PView *p = PView::list[i];
     if(p->getOptions()->visible) {
       int step = (int)p->getOptions()->timeStep + 1;
@@ -1278,7 +1278,7 @@ int animation_next()
 int animation_prev()
 {
   int ret = 0;
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PView *p = PView::list[i];
     if(p->getOptions()->visible) {
       // skip empty steps

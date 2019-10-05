@@ -99,9 +99,9 @@ public:
   virtual MVertex *getVertex(int num) = 0;
   void getVertices(std::vector<MVertex *> &verts)
   {
-    std::size_t N = getNumVertices();
+    int N = (int)getNumVertices();
     verts.resize(N);
-    for(std::size_t i = 0; i < N; i++) verts[i] = getVertex(i);
+    for(int i = 0; i < N; i++) verts[i] = getVertex(i);
   }
   virtual void setVertex(int num, MVertex *v)
   {

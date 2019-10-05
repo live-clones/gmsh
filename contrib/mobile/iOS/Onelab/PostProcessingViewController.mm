@@ -110,7 +110,7 @@
       didSelectRow:(NSInteger)row
        inComponent:(NSInteger)component
 {
-  _pview->getOptions()->intervalsType = 1 + row;
+  _pview->getOptions()->intervalsType = (int)(1 + row);
   _pview->setChanged(true);
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
                                                       object:nil];

@@ -47,9 +47,9 @@ void drawMeshVertex(GVertex *e)
   }
   glVertexPointer(3, GL_FLOAT, 0, &vertex.front());
   glEnableClientState(GL_VERTEX_ARRAY);
-  glColorPointer(4, GL_UNSIGNED_BYTE, color.size() / 4, &color.front());
+  glColorPointer(4, GL_UNSIGNED_BYTE, (int)color.size() / 4, &color.front());
   glEnableClientState(GL_COLOR_ARRAY);
-  glDrawArrays(GL_POINTS, 0, vertex.size() / 3);
+  glDrawArrays(GL_POINTS, 0, (int)vertex.size() / 3);
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
 }

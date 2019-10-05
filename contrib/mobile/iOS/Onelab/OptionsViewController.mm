@@ -207,7 +207,7 @@
       }
 
     [cell setSelectionStyle:UITableViewCellSelectionStyleGray];
-    int i = PView::list.size() - 1 - indexPath.row;
+    int i = (int)(PView::list.size() - 1 - indexPath.row);
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     UISwitch *showHide =
       [[UISwitch alloc] initWithFrame:CGRectMake(15, 6.5, 100, 30)];
