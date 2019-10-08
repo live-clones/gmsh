@@ -4315,30 +4315,30 @@ bool OCC_Internals::makeEdgeSTLFromFace(const TopoDS_Edge &c,
   // here we compute the vertices of a discretization of an edge c
   // that is a boundary of the face s, which we just discretized
   // the code below is inspired in pythonocc's tesselator.cpp
-  // that is GPLv3+ Copyright 2011 Fotios Sioutis
+  // that is GPLv3+ Copyright 2011 Fotios Sioutis, but it was rewritten
+  // from scratch to keep Gmsh GPLv2
 
-  TopLoc_Location aTrsf;
-  Handle(Poly_Triangulation) trian = BRep_Tool::Triangulation(s, aTrsf);
+  TopLoc_Location transf;
+  Handle(Poly_Triangulation) trian = BRep_Tool::Triangulation(s, transf);
 
   if(trian.IsNull()) { return false; }
 
-  Handle(Poly_PolygonOnTriangulation) anEdgePoly =
-    BRep_Tool::PolygonOnTriangulation(c, trian, aTrsf);
+  Handle(Poly_PolygonOnTriangulation) edgepoly =
+    BRep_Tool::PolygonOnTriangulation(c, trian, transf);
 
-  if(anEdgePoly.IsNull()) { return false; }
+  if(edgepoly.IsNull()) { return false; }
 
   const TColgp_Array1OfPnt &trainVerts = trian->Nodes();
-  const TColStd_Array1OfInteger &edgeVerts = anEdgePoly->Nodes();
+  const TColStd_Array1OfInteger &edgeVerts = edgepoly->Nodes();
 
   if(edgeVerts.Length() < 2) { return false; }
 
-  for(int aNodeIdx = edgeVerts.Lower(); aNodeIdx <= edgeVerts.Upper();
-      aNodeIdx++) {
-    int aTriIndex = edgeVerts.Value(aNodeIdx);
-    gp_Pnt aTriNode = trainVerts.Value(aTriIndex);
-    if(!aTrsf.IsIdentity()) { aTriNode.Transform(aTrsf); }
+  for(int node = edgeVerts.Lower(); node <= edgeVerts.Upper(); node++) {
+    int index = edgeVerts.Value(node);
+    gp_Pnt trinode = trainVerts.Value(index);
+    if(!transf.IsIdentity()) { trinode.Transform(transf); }
 
-    verticesXYZ->push_back(SPoint3(aTriNode.X(), aTriNode.Y(), aTriNode.Z()));
+    verticesXYZ->push_back(SPoint3(trinode.X(), trinode.Y(), trinode.Z()));
   }
 
   return true;
