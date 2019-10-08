@@ -23,11 +23,19 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
                           bool useIndexedSet, double scalingFactor,
                           const std::string &name)
 {
+  bool useGeoSTL = false;
   unsigned int nfacets = 0;
   for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
       ++it) {
-    (*it)->buildSTLTriangulation();
-    nfacets += (*it)->stl_triangles.size() / 3;
+    nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
+  }
+  if(!nfacets) { // use CAD STL if there is no mesh
+    useGeoSTL = true;
+    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+        ++it) {
+      (*it)->buildSTLTriangulation();
+      nfacets += (*it)->stl_triangles.size() / 3;
+    }
   }
 
   fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
@@ -35,104 +43,119 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
           "     <Appearance><Material DEF=\"mat%s\"></Material></Appearance>\n",
           name.c_str());
 
-  if(useIndexedSet) {
-    // create faces with a list of nodes and a set of integers (no
-    // floating-point data will be duplicated)
-    fprintf(fp, "     <IndexedTriangleSet DEF=\"set%s\" index=\"\n",
-            name.c_str());
-    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-        ++it) {
-      if((*it)->stl_triangles.size()) {
-        for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i++) {
-          fprintf(fp, "%d ", (*it)->stl_triangles[i]);
-        }
-        fprintf(fp, "\n");
-      }
-    }
-    fprintf(fp, "\">\n");
-
-    fprintf(fp, "      <Coordinate point=\"\n");
-    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-        ++it) {
-      if((*it)->stl_vertices_uv.size()) {
-        for(std::size_t i = 0; i < (*it)->stl_vertices_uv.size(); i++) {
-          SPoint2 &p((*it)->stl_vertices_uv[i]);
-          GPoint gp = (*it)->point(p);
-
-          fprintf(fp, "%g %g %g\n", gp.x() * scalingFactor,
-                  gp.y() * scalingFactor, gp.z() * scalingFactor);
+  if(useGeoSTL) {
+    if(useIndexedSet) {
+      // create faces with a list of nodes and a set of integers (no
+      // floating-point data will be duplicated)
+      fprintf(fp, "     <IndexedTriangleSet DEF=\"set%s\" index=\"\n",
+              name.c_str());
+      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+          ++it) {
+        if((*it)->stl_triangles.size()) {
+          for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i++) {
+            fprintf(fp, "%d ", (*it)->stl_triangles[i]);
+          }
+          fprintf(fp, "\n");
         }
       }
-      else {
-        Msg::Warning("X3D not implemented yet without STL");
-      }
-    }
-    fprintf(fp, "\"></Coordinate>\n");
+      fprintf(fp, "\">\n");
 
-    fprintf(fp, "      <Normal vector=\"\n");
-    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-        ++it) {
-      if((*it)->stl_normals.size()) {
-        for(std::size_t i = 0; i < (*it)->stl_normals.size(); i++) {
-          SVector3 &n((*it)->stl_normals[i]);
-          fprintf(fp, "%g %g %g\n", n.x(), n.y(), n.z());
-        }
-      }
-      else {
-        Msg::Warning("X3D not implemented yet without STL");
-      }
-    }
-    fprintf(fp, "\"></Normal>\n");
+      fprintf(fp, "      <Coordinate point=\"\n");
+      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+          ++it) {
+        if((*it)->stl_vertices_uv.size()) {
+          for(std::size_t i = 0; i < (*it)->stl_vertices_uv.size(); i++) {
+            SPoint2 &p((*it)->stl_vertices_uv[i]);
+            GPoint gp = (*it)->point(p);
 
-    fprintf(fp, "     </IndexedTriangleSet>\n");
-  }
-  else {
-    // create faces with a explicit list or vertices (will duplicate
-    // floating-point data)
-    fprintf(fp, "     <TriangleSet DEF=\"set%s\">\n", name.c_str());
-
-    fprintf(fp, "      <Coordinate point=\"\n");
-    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-        ++it) {
-      if((*it)->stl_vertices_uv.size()) {
-        for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i += 3) {
-          SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
-          SPoint2 &p2((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 1]]);
-          SPoint2 &p3((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 2]]);
-          GPoint gp1 = (*it)->point(p1);
-          GPoint gp2 = (*it)->point(p2);
-          GPoint gp3 = (*it)->point(p3);
-          double x[3] = {gp1.x(), gp2.x(), gp3.x()};
-          double y[3] = {gp1.y(), gp2.y(), gp3.y()};
-          double z[3] = {gp1.z(), gp2.z(), gp3.z()};
-
-          for(int j = 0; j < 3; j++) {
-            fprintf(fp, "%g %g %g\n", x[j] * scalingFactor,
-                    y[j] * scalingFactor, z[j] * scalingFactor);
+            fprintf(fp, "%g %g %g\n", gp.x() * scalingFactor,
+                    gp.y() * scalingFactor, gp.z() * scalingFactor);
           }
         }
-      }
-      else {
-        Msg::Warning("X3D not implemented yet without STL");
-      }
-    }
-    fprintf(fp, "\"></Coordinate>\n");
-
-    fprintf(fp, "      <Normal vector=\"\n");
-    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-        ++it) {
-      if((*it)->stl_normals.size()) {
-        for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i++) {
-          SVector3 &n((*it)->stl_normals[(*it)->stl_triangles[i]]);
-          fprintf(fp, "%g %g %g\n", n.x(), n.y(), n.z());
+        else {
+          Msg::Warning("X3D not implemented yet without STL");
         }
       }
-      else {
-        Msg::Warning("X3D not implemented yet without STL");
-      }
-    }
-    fprintf(fp, "\"></Normal>\n");
+      fprintf(fp, "\"></Coordinate>\n");
 
+      fprintf(fp, "      <Normal vector=\"\n");
+      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+          ++it) {
+        if((*it)->stl_normals.size()) {
+          for(std::size_t i = 0; i < (*it)->stl_normals.size(); i++) {
+            SVector3 &n((*it)->stl_normals[i]);
+            fprintf(fp, "%g %g %g\n", n.x(), n.y(), n.z());
+          }
+        }
+        else {
+          Msg::Warning("X3D not implemented yet without STL");
+        }
+      }
+      fprintf(fp, "\"></Normal>\n");
+
+      fprintf(fp, "     </IndexedTriangleSet>\n");
+    }
+    else {
+      // create faces with a explicit list or vertices (will duplicate
+      // floating-point data)
+      fprintf(fp, "     <TriangleSet DEF=\"set%s\">\n", name.c_str());
+
+      fprintf(fp, "      <Coordinate point=\"\n");
+      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+          ++it) {
+        if((*it)->stl_vertices_uv.size()) {
+          for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i += 3) {
+            SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
+            SPoint2 &p2((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 1]]);
+            SPoint2 &p3((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 2]]);
+            GPoint gp1 = (*it)->point(p1);
+            GPoint gp2 = (*it)->point(p2);
+            GPoint gp3 = (*it)->point(p3);
+            double x[3] = {gp1.x(), gp2.x(), gp3.x()};
+            double y[3] = {gp1.y(), gp2.y(), gp3.y()};
+            double z[3] = {gp1.z(), gp2.z(), gp3.z()};
+
+            for(int j = 0; j < 3; j++) {
+              fprintf(fp, "%g %g %g\n", x[j] * scalingFactor,
+                      y[j] * scalingFactor, z[j] * scalingFactor);
+            }
+          }
+        }
+        else {
+          Msg::Warning("X3D not implemented yet without STL");
+        }
+      }
+      fprintf(fp, "\"></Coordinate>\n");
+
+      fprintf(fp, "      <Normal vector=\"\n");
+      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+          ++it) {
+        if((*it)->stl_normals.size()) {
+          for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i++) {
+            SVector3 &n((*it)->stl_normals[(*it)->stl_triangles[i]]);
+            fprintf(fp, "%g %g %g\n", n.x(), n.y(), n.z());
+          }
+        }
+        else {
+          Msg::Warning("X3D not implemented yet without STL");
+        }
+      }
+      fprintf(fp, "\"></Normal>\n");
+
+      fprintf(fp, "     </TriangleSet>\n");
+    }
+  }
+  else {
+    fprintf(fp, "     <TriangleSet DEF=\"set%s\">\n", name.c_str());
+    fprintf(fp, "      <Coordinate point=\"\n");
+    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+        ++it) {
+      for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
+        (*it)->triangles[i]->writeX3D(fp, scalingFactor);
+      for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++)
+        (*it)->quadrangles[i]->writeX3D(fp, scalingFactor);
+    }
+    fprintf(fp, "\"></Coordinate>\n");
     fprintf(fp, "     </TriangleSet>\n");
   }
 
