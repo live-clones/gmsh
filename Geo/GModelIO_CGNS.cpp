@@ -140,6 +140,8 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     }
   }
 
+  std::vector<float> rotCenter(3, 0.), rotAngle(3, 0.), trans(3, 0.);
+
   // write periodic interfaces
   typedef PeriodicConnection::iterator PerConnectIter;
   for(PerConnectIter it = connect.begin(); it != connect.end(); ++it) {
@@ -161,13 +163,16 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     ossInt << "Per_Part" << part1 << "_Ent" << entTag1
            << "_Part" << part2 << "_Ent" << entTag2;
     const std::string interfaceName = cgnsString(ossInt.str()); 
-    int dum;
+    int connIdx;
     CGNS::cg_conn_write(cgIndexFile, cgIndexBase, slaveZone,
                         interfaceName.c_str(), CGNS::Vertex, CGNS::Abutting1to1,
                         CGNS::PointList, nodes1.size(), nodes1.data(),
                         masterZoneName.c_str(), CGNS::Unstructured,
                         CGNS::PointListDonor, CGNS::DataTypeNull,
-                        nodes2.size(), nodes2.data(), &dum);
+                        nodes2.size(), nodes2.data(), &connIdx);
+    CGNS::cg_conn_periodic_write(cgIndexFile, cgIndexBase, slaveZone, connIdx,
+                                 rotCenter.data(), rotAngle.data(),
+                                 trans.data());
   }
 
   return 0;
