@@ -25,7 +25,31 @@ public:
   ~orthogonalBasis() {}
 
   void f(double u, double v, double w, double *sf) const;
-  void integralfSquared(double *val) const;
+  void L2Norms(double *val) const;
+};
+
+class orthoBasisConstrained {
+  // Create basis with those set of functions:
+  // - The first set is composed of 'n' linear functions that are the same than
+  //   in 'orthogonalBasis' ('n' is the number of corners).
+  // - The second set is composed of functions that are zero at corners.
+  // - If the basis is in dimension more than 1, the third set is composed
+  //   of functions that are zero on edges.
+  // In each set, the functions are orthogonal to each other.
+private:
+  const int _type;
+  const int _order;
+  static double _coeff_LIN[];
+  static double _coeff_TRI[];
+
+public:
+  orthoBasisConstrained();
+  explicit orthoBasisConstrained(const FuncSpaceData &_data);
+  orthoBasisConstrained(int type, int order) : _type(type), _order(order) {}
+  ~orthoBasisConstrained() {}
+
+  void f(double u, double v, double w, double *sf) const;
+  void normL2(double *val) const;
 };
 
 namespace LegendrePolynomials {

@@ -1267,7 +1267,7 @@ namespace BoundaryLayerCurver {
 
       fullMatrix<double> M1(szSpace + 2, szSpace + 2, true);
       {
-        basis.integralfSquared(val);
+        basis.L2Norms(val);
         for(int k = 0; k < szSpace; ++k) M1(k, k) = val[k];
 
         basis.f(-1, 0, 0, val);
@@ -1333,7 +1333,7 @@ namespace BoundaryLayerCurver {
 
       fullMatrix<double> M1(szSpace + nConstraint, szSpace + nConstraint, true);
       {
-        basis.integralfSquared(val);
+        basis.L2Norms(val);
         for(int k = 0; k < szSpace; ++k) M1(k, k) = val[k];
 
         for(int i = 0; i < nConstraint; ++i) {
@@ -1395,7 +1395,7 @@ namespace BoundaryLayerCurver {
 
       fullMatrix<double> M1(szSpace + nConstraint, szSpace + nConstraint, true);
       {
-        basis.integralfSquared(val);
+        basis.L2Norms(val);
         for(int k = 0; k < szSpace; ++k) M1(k, k) = val[k];
 
         for(int i = 0; i < nConstraint; ++i) {

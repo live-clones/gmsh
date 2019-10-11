@@ -23,7 +23,9 @@ void orthogonalBasis::f(double u, double v, double w, double *sf) const
   static double sf1[100];
   int k = 0;
   switch(_type) {
-  case TYPE_LIN: LegendrePolynomials::f(_order, u, sf); return;
+  case TYPE_LIN:
+    LegendrePolynomials::f(_order, u, sf);
+    return;
   case TYPE_TRI:
     if(u >= 1.) {
       for(int k = 0; k <= _order; ++k) {
@@ -58,7 +60,7 @@ void orthogonalBasis::f(double u, double v, double w, double *sf) const
   }
 }
 
-void orthogonalBasis::integralfSquared(double *val) const
+void orthogonalBasis::L2Norms(double *val) const
 {
   int k = 0;
   switch(_type) {
