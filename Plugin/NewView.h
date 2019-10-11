@@ -8,8 +8,9 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterNewViewPlugin();
+extern "C"
+{
+  GMSH_Plugin *GMSH_RegisterNewViewPlugin();
 }
 
 class GMSH_NewViewPlugin : public GMSH_PostPlugin {
