@@ -11,6 +11,10 @@
 #include "orthogonalBasis.h"
 #include "FuncSpaceData.h"
 #include "Numeric.h"
+#include <iostream> //FIXMEDEBUG
+
+double *orthoBasisConstrained::_coeff_LIN = NULL;
+int orthoBasisConstrained::_maxOrder = 10;
 
 orthogonalBasis::orthogonalBasis(const FuncSpaceData &_data)
   : _type(_data.getType()), _order(_data.getSpaceOrder())
@@ -82,6 +86,30 @@ void orthogonalBasis::L2Norms(double *val) const
         val[k++] = 4. / (1 + 2 * i) / (1 + 2 * j);
       }
     }
+  }
+}
+
+void orthoBasisConstrained::_constructCoeffArrays() const
+{
+  _coeff_LIN = new double[_maxOrder * _maxOrder / 4];
+  int *denominators = new int[_maxOrder + 1];
+  int k = -1;
+  int sumDenoms[2] = {0, 0};
+  for(int i = 0; i <= _maxOrder; ++i) {
+    denominators[i] = 1 + 2 * i;
+    int par = i % 2;
+    for(int j = par; j < i; j += 2) {
+      _coeff_LIN[++k] = - denominators[j] / static_cast<double>(sumDenoms[par]);
+    }
+    sumDenoms[par] += denominators[i];
+  }
+  std::cout << "k is now " << k << " compared to size " << _maxOrder * _maxOrder / 4 << std::endl; //FIXMEDEBUG
+  k = -1;
+  for(int i = 0; i <= _maxOrder; ++i) {
+    for(int j = i % 2; j < i; j += 2) {
+      std::cout << " " << _coeff_LIN[++k];
+    }
+    std::cout << std::endl;
   }
 }
 

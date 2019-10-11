@@ -39,8 +39,9 @@ class orthoBasisConstrained {
 private:
   const int _type;
   const int _order;
-  static double _coeff_LIN[];
-  static double _coeff_TRI[];
+  static double *_coeff_LIN;
+  static double *_coeff_TRI;
+  static int _maxOrder;
 
 public:
   orthoBasisConstrained();
@@ -49,7 +50,10 @@ public:
   ~orthoBasisConstrained() {}
 
   void f(double u, double v, double w, double *sf) const;
-  void normL2(double *val) const;
+  void L2Norms(double *val) const;
+
+private:
+  void _constructCoeffArrays() const;
 };
 
 namespace LegendrePolynomials {
