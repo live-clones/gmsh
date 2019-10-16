@@ -76,6 +76,34 @@ void printProgress(const char *cstr, size_t i, size_t num)
 }
 
 
+// Retrieve all nodes (possibly including high-order ones) in the elements
+// contained in the given entities
+template <bool INCLUDE_HO_NODES>
+void getNodesInEntities(const std::vector<GEntity *> &entities,
+                        bool allElements, std::set<MVertex *> &nodeSet)
+{
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    std::vector<int> eleTypes;
+    ge->getElementTypes(eleTypes);
+    for(std::size_t eleType = 0; eleType < eleTypes.size(); eleType++) {
+      int numEle = ge->getNumMeshElementsByType(eleTypes[eleType]);
+      if(numEle && (allElements || ge->physicals.size())) {
+        for(int j = 0; j < numEle; j++) {
+          MElement *me = ge->getMeshElementByType(eleTypes[eleType], j);
+          int numEltVert = INCLUDE_HO_NODES ? me->getNumVertices() :
+                                              me->getNumPrimaryVertices();
+          for(int k = 0; k < numEltVert; k++) {
+            nodeSet.insert(me->getVertex(k));
+          }
+        }
+      }
+    }
+  }
+}
+
+
+// Initialize MVertex -> local data correspondence (only for primary vertices)
 void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
                                 const std::vector<GEntity *> &entitiesInterf,
                                 Vertex2LocalData &interfVert2Local)
@@ -90,11 +118,11 @@ void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
   }
 
   // Partition interface boundaries
-  for(std::size_t i = 0; i < entitiesInterf.size(); i++) {
-    GEntity *ge = entitiesInterf[i];
-    for(std::size_t iV = 0; iV < ge->getNumMeshVertices(); iV++) {
-      interfVert2Local[ge->getMeshVertex(iV)] = std::vector<LocalData>();
-    }
+  typedef std::set<MVertex *>::iterator NodeSetIter;
+  std::set<MVertex *> nodeSet;
+  getNodesInEntities<false>(entitiesInterf, true, nodeSet);
+  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+    interfVert2Local[*itN] = std::vector<LocalData>();
   }
 }
 
@@ -185,26 +213,27 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
                     const std::vector<std::string> &zoneName,
                     Vertex2LocalData &interfVert2Local)
 {
-  // Construct (two-way) partition connectivities with corresponding nodes
+  // get nodes in partition interface entities
+  typedef std::set<MVertex *>::iterator NodeSetIter;
+  std::set<MVertex *> nodeSet;
+  getNodesInEntities<false>(entitiesInterf, true, nodeSet);
+
+  // construct (two-way) partition connectivities with corresponding nodes
   Msg::Info("Constructing connectivities for %i partition interface entities",
             entitiesInterf.size());
   PartitionConnection connect;
-  for(std::size_t iEnt = 0; iEnt < entitiesInterf.size(); iEnt++) {
-    GEntity *ge = entitiesInterf[iEnt];
-    for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
-      MVertex *mv = ge->getMeshVertex(j);
-      const std::vector<LocalData> &allLocalData = interfVert2Local[mv];
-      for (std::size_t iLD1 = 0; iLD1 < allLocalData.size(); iLD1++) {
-        const LocalData &localData1 = allLocalData[iLD1];
-        for (std::size_t iLD2 = 0; iLD2 < allLocalData.size(); iLD2++) {
-          if (iLD2 == iLD1) continue;
-          const LocalData &localData2 = allLocalData[iLD2];
-          std::pair<unsigned int, unsigned int> partInt(localData1.partition,
-                                                        localData2.partition);
-          NodeCorrespondence &nc = connect[partInt];
-          nc.first.push_back(localData1.index);
-          nc.second.push_back(localData2.index);
-        }
+  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+    const std::vector<LocalData> &allLocalData = interfVert2Local[*itN];
+    for (std::size_t iLD1 = 0; iLD1 < allLocalData.size(); iLD1++) {
+      const LocalData &localData1 = allLocalData[iLD1];
+      for (std::size_t iLD2 = 0; iLD2 < allLocalData.size(); iLD2++) {
+        if (iLD2 == iLD1) continue;
+        const LocalData &localData2 = allLocalData[iLD2];
+        std::pair<unsigned int, unsigned int> partInt(localData1.partition,
+                                                      localData2.partition);
+        NodeCorrespondence &nc = connect[partInt];
+        nc.first.push_back(localData1.index);
+        nc.second.push_back(localData2.index);
       }
     }
   }
@@ -244,42 +273,37 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
               int cgIndexBase, std::vector<std::string> &zoneName,
               Vertex2LocalData &interfVert2Local)
 {
+  typedef std::set<MVertex *>::iterator NodeSetIter;
+
   // build set of nodes first, use elements because nodes not all in
   // GEntity::mesh_vertices if entities do not include partition interfaces
   std::set<MVertex *> nodeSet;
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    std::vector<int> eleTypes;
-    ge->getElementTypes(eleTypes);
-    for(std::size_t eleType = 0; eleType < eleTypes.size(); eleType++) {
-      int numEle = ge->getNumMeshElementsByType(eleTypes[eleType]);
-      if(numEle && (saveAll || ge->physicals.size())) {
-        for(int j = 0; j < numEle; j++) {
-          MElement *me = ge->getMeshElementByType(eleTypes[eleType], j);
-          for(std::size_t k = 0; k < me->getNumVertices(); k++) {
-            nodeSet.insert(me->getVertex(k));
-          }
-        }
-      }
-    }
-  }
+  getNodesInEntities<true>(entities, saveAll, nodeSet);
 
   // build global -> partition-local node index correspondence and
   // store local data correspondence for periodic/interface nodes
-  typedef std::set<MVertex *>::iterator NodeSetIter;
   std::vector<LocalData> global2Local(numNodesTotal+1);
-  // std::vector<long> local2GlobalInd(nodeSet.size()+1, 0);
   CGNS::cgsize_t numNodes = 0;
   for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     const long gInd = (*itN)->getIndex();
     if (gInd < 0) continue;
     numNodes++;
-    // local2GlobalInd[numNodes] = gInd;
     LocalData &ld = global2Local[gInd];
     ld.partition = partition;
     ld.index = numNodes;
     Vertex2LocalData::iterator itPN = interfVert2Local.find(*itN);
     if (itPN != interfVert2Local.end()) itPN->second.push_back(ld);
+  }
+
+  // create lists of coordinates
+  std::vector<double> xcoord(numNodes), ycoord(numNodes), zcoord(numNodes);
+  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+    const long gInd = (*itN)->getIndex();
+    if (gInd < 0) continue;
+    const int ln = global2Local[gInd].index;
+    xcoord[ln - 1] = (*itN)->x() * scalingFactor;
+    ycoord[ln - 1] = (*itN)->y() * scalingFactor;
+    zcoord[ln - 1] = (*itN)->z() * scalingFactor;
   }
 
   // number of elements for highest spatial dimension
@@ -309,25 +333,6 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   if(CGNS::cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone,
                          "GridCoordinates", &cgIndexGrid))
     return cgnsError();
-
-  // create lists of coordinates
-  std::vector<double> xcoord(numNodes), ycoord(numNodes), zcoord(numNodes);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
-      MVertex *mv = ge->getMeshVertex(j);
-      const int n = mv->getIndex();
-      if(n < 0) continue;
-      const int ln = global2Local[n].index;
-      if(ln > numNodes) { // should never happen
-        Msg::Error("Incoherent mesh node indexing in CGNS writer");
-        return 0;
-      }
-      xcoord[ln - 1] = mv->x() * scalingFactor;
-      ycoord[ln - 1] = mv->y() * scalingFactor;
-      zcoord[ln - 1] = mv->z() * scalingFactor;
-    }
-  }
 
   // write list of coordinates
   int cgIndexCoord = 0;
