@@ -99,7 +99,8 @@ static Fl_Native_File_Chooser *nfc = 0;
 int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
                 const char *fname)
 {
-  static char thefilter[1024] = "";
+  static char thefilter[2000] = "";
+  static char thefilter2[2000] = "";
   static int thefilterindex = 0;
 
   // reset the filter and the selection if the filter has changed
@@ -107,6 +108,13 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     strncpy(thefilter, filter, sizeof(thefilter) - 1);
     thefilter[sizeof(thefilter) - 1] = '\0';
     thefilterindex = 0;
+    // for the basic file chooser, we should replace
+    //  * "\t" with " ("
+    //  * "\n" with ")\t"
+    std::string tmp(thefilter);
+    ReplaceSubStringInPlace("\t", " (", tmp);
+    ReplaceSubStringInPlace("\n", ")\t", tmp);
+    strncpy(thefilter2, tmp.c_str(), sizeof(thefilter2) - 1);
   }
 
   // determine where to start
@@ -136,7 +144,7 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     default: nfc->type(Fl_Native_File_Chooser::BROWSE_FILE); break;
     }
     nfc->title(message);
-    nfc->filter(filter);
+    nfc->filter(thefilter);
     nfc->filter_value(thefilterindex);
 
     static bool first = true;
@@ -171,7 +179,7 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     if(!fc) {
       fc =
         new flFileChooser(getenv("PWD") ? "." : CTX::instance()->homeDir.c_str(),
-                          thefilter, Fl_File_Chooser::SINGLE, message);
+                          thefilter2, Fl_File_Chooser::SINGLE, message);
       fc->position(CTX::instance()->fileChooserPosition[0],
                    CTX::instance()->fileChooserPosition[1]);
     }
@@ -182,7 +190,7 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     default: fc->type(Fl_File_Chooser::SINGLE); break;
     }
     fc->label(message);
-    fc->filter(thefilter);
+    fc->filter(thefilter2);
     fc->filter_value(thefilterindex);
     static bool first = true;
     if(first) {
