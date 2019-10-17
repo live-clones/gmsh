@@ -1,10 +1,12 @@
 4.5.0 (Work-in-progress): improved handling of anisotropic surface meshes in 3D
 Delaunay; improved high-order periodic meshing; improved 2D boolean unions;
-added API support for mesh compounds; small fixes.
+improved surface mesh reclassification; added API support for mesh compounds;
+file chooser type now changeable at runtime; small fixes.
 
 * Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
   like all other mesh optimizers); new arguments to mesh/optimize,
-  mesh/getElementProperties and occ/healShapes.
+  mesh/getElementProperties and occ/healShapes; added optional argument to
+  mesh/classifySurfaces.
 
 4.4.1 (July 25, 2019): small improvements (transfinite with degenerate curves,
 renumbering for some mesh formats, empty MSH file sections, tunable accuracy of

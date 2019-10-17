@@ -1639,11 +1639,12 @@ Classify ("color") the surface mesh based on the angle threshold @code{angle}
 (in radians), and create new discrete surfaces, curves and points accordingly.
 If @code{boundary} is set, also create discrete curves on the boundary if the
 surface is open. If @code{forReparametrization} is set, create edges and
-surfaces that can be reparametrized using a single map.
+surfaces that can be reparametrized using a single map. If @code{curveAngle} is
+less than Pi, also force curves to be split according to @code{curveAngle}.
 
 @table @asis
 @item Input:
-@code{angle}, @code{boundary}, @code{forReparametrization}
+@code{angle}, @code{boundary}, @code{forReparametrization}, @code{curveAngle}
 @item Output:
 -
 @item Return:

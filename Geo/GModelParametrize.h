@@ -7,8 +7,8 @@
 #define GMODEL_PARAMETRIZE_H
 
 void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
-                   bool forParametrization);
-void classifyFaces(GModel *gm);
+                   bool forParametrization, double curveAngleThreshold);
+void classifyFaces(GModel *gm, double curveAngleThreshold);
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut);
 void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,

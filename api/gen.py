@@ -378,8 +378,8 @@ mesh.add('removeDuplicateNodes',doc,None)
 doc = '''Split (into two triangles) all quadrangles in surface `tag' whose quality is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.'''
 mesh.add('splitQuadrangles',doc,None,idouble('quality','1.'),iint('tag','-1'))
 
-doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create edges and surfaces that can be reparametrized using a single map.'''
-mesh.add('classifySurfaces',doc,None,idouble('angle'),ibool('boundary','true','True'),ibool('forReparametrization','false','False'))
+doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create edges and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'.'''
+mesh.add('classifySurfaces',doc,None,idouble('angle'),ibool('boundary','true','True'),ibool('forReparametrization','false','False'),idouble('curveAngle','M_PI','pi','pi'))
 
 doc = '''Create a parametrization for discrete curves and surfaces (i.e. curves and surfaces represented solely by a mesh, without an underlying CAD description), assuming that each can be parametrized with a single map.'''
 mesh.add('createGeometry',doc,None)

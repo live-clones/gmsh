@@ -3127,13 +3127,14 @@ Creates a parametrization for curves and surfaces that do not have one
 (i.e. discrete curves and surfaces represented solely by meshes, without
 an underlying CAD description).
 
-@item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} @};
+@item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} < , @var{expression} > @};
 Classify (``color'') the surface mesh based on an angle threshold (the
 first argument, in radians), and create new discrete surfaces, curves
 and points accordingly.  If the second argument is set, also create
 discrete curves on the boundary if the surface is open. If the third
 argument is set, create edges and surfaces than can be reparametrized
-with @code{CreateGeometry}.
+with @code{CreateGeometry}. The last optional argument sets an angle
+threshold to force splitting of the generated curves.
 
 @item RenumberMeshNodes;
 Renumbers the node tags in the current mesh in a contiunous sequence.

@@ -2140,19 +2140,20 @@ function splitQuadrangles(quality = 1., tag = -1)
 end
 
 """
-    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false)
+    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
 radians), and create new discrete surfaces, curves and points accordingly. If
 `boundary` is set, also create discrete curves on the boundary if the surface is
 open. If `forReparametrization` is set, create edges and surfaces that can be
-reparametrized using a single map.
+reparametrized using a single map. If `curveAngle` is less than Pi, also force
+curves to be split according to `curveAngle`.
 """
-function classifySurfaces(angle, boundary = true, forReparametrization = false)
+function classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClassifySurfaces, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Cint, Ptr{Cint}),
-          angle, boundary, forReparametrization, ierr)
+          (Cdouble, Cint, Cint, Cdouble, Ptr{Cint}),
+          angle, boundary, forReparametrization, curveAngle, ierr)
     ierr[] != 0 && error("gmshModelMeshClassifySurfaces returned non-zero error code: $(ierr[])")
     return nothing
 end

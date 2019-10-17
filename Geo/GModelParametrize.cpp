@@ -68,8 +68,8 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
 
 #endif
 
-void addTriangle(MTriangle *t,
-                 std::map<MEdge, std::vector<MTriangle *>, Less_Edge> &tris)
+static void addTriangle(MTriangle *t,
+                        std::map<MEdge, std::vector<MTriangle *>, Less_Edge> &tris)
 {
   for(int i = 0; i < 3; i++) {
     MEdge e = t->getEdge(i);
@@ -85,7 +85,24 @@ void addTriangle(MTriangle *t,
   }
 }
 
-void classifyFaces(GModel *gm)
+static bool breakForLargeAngle(MLine *prev, MLine *curr, double threshold)
+{
+  if(threshold >= M_PI - 1e-12) return false;
+  if(threshold <= 0) return true;
+  SVector3 v1(prev->getVertex(0)->point(),
+              prev->getVertex(1)->point());
+  SVector3 v2(curr->getVertex(0)->point(),
+              curr->getVertex(1)->point());
+  double a = angle(v1, v2);
+  if((a > threshold && a < M_PI - threshold) ||
+     (a > M_PI + threshold && a < 2 * M_PI - threshold)) {
+    Msg::Debug("Breaking curve for angle = %g", a);
+    return true;
+  }
+  return false;
+}
+
+void classifyFaces(GModel *gm, double curveAngleThreshold)
 {
 #if defined(HAVE_MESH)
 
@@ -237,15 +254,15 @@ void classifyFaces(GModel *gm)
   }
   Msg::Info("Found %d model curves", newEdges.size());
 
-  // check if new edges should not be split;
+  // check if new curves should not be split;
 
   std::map<discreteFace *, std::vector<int> > newFaceTopology;
   std::map<MVertex *, GVertex *> modelVertices;
 
   for(std::vector<std::pair<GEdge *, std::vector<GFace *> > >::iterator ite =
-        newEdges.begin();
-      ite != newEdges.end(); ++ite) {
+        newEdges.begin(); ite != newEdges.end(); ++ite) {
     std::list<MLine *> allSegments;
+
     for(std::size_t i = 0; i < ite->first->lines.size(); i++) {
       allSegments.push_back(ite->first->lines[i]);
     }
@@ -255,6 +272,7 @@ void classifyFaces(GModel *gm)
       MVertex *vB = (*allSegments.begin())->getVertex(0);
       MVertex *vE = (*allSegments.begin())->getVertex(1);
       segmentsForThisDiscreteEdge.push_back(*allSegments.begin());
+
       allSegments.erase(allSegments.begin());
       while(1) {
         bool found = false;
@@ -263,6 +281,9 @@ void classifyFaces(GModel *gm)
           MVertex *v1 = (*it)->getVertex(0);
           MVertex *v2 = (*it)->getVertex(1);
           if(v1 == vE || v2 == vE) {
+            if(breakForLargeAngle(*(--segmentsForThisDiscreteEdge.end()), *it,
+                                  curveAngleThreshold))
+              break;
             segmentsForThisDiscreteEdge.push_back(*it);
             if(v2 == vE) (*it)->reverse();
             vE = (v1 == vE) ? v2 : v1;
@@ -271,6 +292,8 @@ void classifyFaces(GModel *gm)
             break;
           }
           if(v1 == vB || v2 == vB) {
+            if(breakForLargeAngle(*it, *segmentsForThisDiscreteEdge.begin(),
+                                  curveAngleThreshold)) break;
             segmentsForThisDiscreteEdge.push_front(*it);
             if(v1 == vB) (*it)->reverse();
             vB = (v1 == vB) ? v2 : v1;
@@ -365,7 +388,7 @@ void classifyFaces(GModel *gm)
 }
 
 void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
-                   bool forParametrization)
+                   bool forParametrization, double curveAngleThreshold)
 {
 #if defined(HAVE_MESH)
   Msg::StatusBar(true, "Classifying surfaces (angle: %g)...",
@@ -405,7 +428,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
   computeDiscreteCurvatures(gm);
   if(forParametrization) computeEdgeCut(gm, edge->lines, 100000);
   computeNonManifoldEdges(gm, edge->lines, true);
-  classifyFaces(gm);
+  classifyFaces(gm, curveAngleThreshold);
 
   gm->remove(edge);
   edge->lines.clear();

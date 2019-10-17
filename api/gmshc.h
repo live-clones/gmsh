@@ -995,10 +995,13 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality,
  * (in radians), and create new discrete surfaces, curves and points
  * accordingly. If `boundary' is set, also create discrete curves on the
  * boundary if the surface is open. If `forReparametrization' is set, create
- * edges and surfaces that can be reparametrized using a single map. */
+ * edges and surfaces that can be reparametrized using a single map. If
+ * `curveAngle' is less than Pi, also force curves to be split according to
+ * `curveAngle'. */
 GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const int boundary,
                                             const int forReparametrization,
+                                            const double curveAngle,
                                             int * ierr);
 
 /* Create a parametrization for discrete curves and surfaces (i.e. curves and

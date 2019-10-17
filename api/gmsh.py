@@ -2520,19 +2520,22 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def classifySurfaces(angle, boundary=True, forReparametrization=False):
+        def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi):
             """
             Classify ("color") the surface mesh based on the angle threshold `angle'
             (in radians), and create new discrete surfaces, curves and points
             accordingly. If `boundary' is set, also create discrete curves on the
             boundary if the surface is open. If `forReparametrization' is set, create
-            edges and surfaces that can be reparametrized using a single map.
+            edges and surfaces that can be reparametrized using a single map. If
+            `curveAngle' is less than Pi, also force curves to be split according to
+            `curveAngle'.
             """
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
                 c_double(angle),
                 c_int(bool(boundary)),
                 c_int(bool(forReparametrization)),
+                c_double(curveAngle),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

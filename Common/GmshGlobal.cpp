@@ -337,10 +337,10 @@ int GmshBatch()
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear, true);
     else if(CTX::instance()->batch == 7)
       GModel::current()->classifySurfaces
-        (CTX::instance()->batchSomeValue * M_PI / 180., true, false);
+        (CTX::instance()->batchSomeValue * M_PI / 180., true, false, M_PI);
     else if(CTX::instance()->batch == 8){
       GModel::current()->classifySurfaces
-        (CTX::instance()->batchSomeValue * M_PI / 180., true, true);
+        (CTX::instance()->batchSomeValue * M_PI / 180., true, true, M_PI);
       GModel::current()->createGeometryOfDiscreteEntities();
     }
 #endif

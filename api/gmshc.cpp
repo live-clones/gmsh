@@ -1471,11 +1471,11 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag,
   }
 }
 
-GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, int * ierr)
+GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, const double curveAngle, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization);
+    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization, curveAngle);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

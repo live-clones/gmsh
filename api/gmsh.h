@@ -920,10 +920,13 @@ namespace gmsh { // Top-level functions
       // (in radians), and create new discrete surfaces, curves and points
       // accordingly. If `boundary' is set, also create discrete curves on the
       // boundary if the surface is open. If `forReparametrization' is set, create
-      // edges and surfaces that can be reparametrized using a single map.
+      // edges and surfaces that can be reparametrized using a single map. If
+      // `curveAngle' is less than Pi, also force curves to be split according to
+      // `curveAngle'.
       GMSH_API void classifySurfaces(const double angle,
                                      const bool boundary = true,
-                                     const bool forReparametrization = false);
+                                     const bool forReparametrization = false,
+                                     const double curveAngle = M_PI);
 
       // Create a parametrization for discrete curves and surfaces (i.e. curves and
       // surfaces represented solely by a mesh, without an underlying CAD

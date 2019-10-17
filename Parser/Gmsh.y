@@ -3494,7 +3494,11 @@ Command :
     }
   | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr '}' tEND
     {
-      GModel::current()->classifySurfaces($3, $5, $7);
+      GModel::current()->classifySurfaces($3, $5, $7, M_PI);
+    }
+  | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
+    {
+      GModel::current()->classifySurfaces($3, $5, $7, $9);
     }
    | tCreateGeometry tEND
     {
