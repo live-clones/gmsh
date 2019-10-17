@@ -21,6 +21,10 @@
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Choice.H>
+#include <FL/Fl_Native_File_Chooser.H>
+#include <FL/Fl_File_Chooser.H>
+#include <FL/Fl_Window.H>
+#include <FL/Fl_File_Input.H>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
@@ -36,19 +40,7 @@
 #include "PViewOptions.h"
 #include <iostream>
 
-// File chooser
-
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-
-#include <FL/Fl_Native_File_Chooser.H>
-static Fl_Native_File_Chooser *fc = 0;
-
-#else
-
-#include <FL/Fl_File_Chooser.H>
-#include <FL/Fl_Window.H>
-#include <FL/Fl_File_Input.H>
-
+// basic file chooser
 class flFileChooser : public Fl_File_Chooser {
   // we derive our own so we can set its position (The original file
   // chooser doesn't expose its window to the world, so we need to use
@@ -101,7 +93,8 @@ public:
 
 static flFileChooser *fc = 0;
 
-#endif
+// native file chooser
+static Fl_Native_File_Chooser *nfc = 0;
 
 int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
                 const char *fname)
@@ -128,112 +121,124 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
   std::vector<std::string> split = SplitFileName(thepath);
   if(split[0].empty()) thepath = std::string("./") + thepath;
 
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-  if(!fc) fc = new Fl_Native_File_Chooser();
-  switch(type) {
-  case FILE_CHOOSER_MULTI:
-    fc->type(Fl_Native_File_Chooser::BROWSE_MULTI_FILE);
-    break;
-  case FILE_CHOOSER_CREATE:
-    fc->type(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
-    break;
-  case FILE_CHOOSER_DIRECTORY:
-    fc->type(Fl_Native_File_Chooser::BROWSE_DIRECTORY);
-    break;
-  default: fc->type(Fl_Native_File_Chooser::BROWSE_FILE); break;
-  }
-  fc->title(message);
-  fc->filter(filter);
-  fc->filter_value(thefilterindex);
+  if(CTX::instance()->nativeFileChooser) {
+    if(!nfc) nfc = new Fl_Native_File_Chooser();
+    switch(type) {
+    case FILE_CHOOSER_MULTI:
+      nfc->type(Fl_Native_File_Chooser::BROWSE_MULTI_FILE);
+      break;
+    case FILE_CHOOSER_CREATE:
+      nfc->type(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
+      break;
+    case FILE_CHOOSER_DIRECTORY:
+      nfc->type(Fl_Native_File_Chooser::BROWSE_DIRECTORY);
+      break;
+    default: nfc->type(Fl_Native_File_Chooser::BROWSE_FILE); break;
+    }
+    nfc->title(message);
+    nfc->filter(filter);
+    nfc->filter_value(thefilterindex);
 
-  static bool first = true;
-  if(first) {
-    // preset the path and the file only the first time in a given
-    // session. Afterwards, always reuse the last directory
-    fc->preset_file(thepath.c_str());
-    first = false;
+    static bool first = true;
+    if(first) {
+      // preset the path and the file only the first time in a given
+      // session. Afterwards, always reuse the last directory
+      nfc->preset_file(thepath.c_str());
+      first = false;
+    }
+    else {
+      std::string name = split[1] + split[2];
+      nfc->preset_file(name.c_str());
+    }
+
+    int ret = 0;
+    switch(nfc->show()) {
+    case -1: break; // error
+    case 1: break; // cancel
+    default:
+      if(nfc->filename()) ret = nfc->count();
+      break;
+    }
+    thefilterindex = nfc->filter_value();
+    // hack to clear the KEYDOWN state that remains when calling the
+    // file chooser on Mac and Windows using a keyboard shortcut
+    Fl::e_state = 0;
+    return ret;
   }
   else {
-    std::string name = split[1] + split[2];
-    fc->preset_file(name.c_str());
+    Fl_File_Chooser::show_label = "Format:";
+    Fl_File_Chooser::all_files_label = "All files (*)";
+    if(!fc) {
+      fc =
+        new flFileChooser(getenv("PWD") ? "." : CTX::instance()->homeDir.c_str(),
+                          thefilter, Fl_File_Chooser::SINGLE, message);
+      fc->position(CTX::instance()->fileChooserPosition[0],
+                   CTX::instance()->fileChooserPosition[1]);
+    }
+    switch(type) {
+    case FILE_CHOOSER_MULTI: fc->type(Fl_File_Chooser::MULTI); break;
+    case FILE_CHOOSER_CREATE: fc->type(Fl_File_Chooser::CREATE); break;
+    case FILE_CHOOSER_DIRECTORY: fc->type(Fl_File_Chooser::DIRECTORY); break;
+    default: fc->type(Fl_File_Chooser::SINGLE); break;
+    }
+    fc->label(message);
+    fc->filter(thefilter);
+    fc->filter_value(thefilterindex);
+    static bool first = true;
+    if(first) {
+      // preset the path and the file only the first time in a given
+      // session. Afterwards, always reuse the last directory
+      fc->value(thepath.c_str());
+      first = false;
+    }
+    else {
+      std::string name = split[1] + split[2];
+      fc->value(name.c_str());
+    }
+    fc->show();
+    while(fc->shown()) Fl::wait();
+    thefilterindex = fc->filter_value();
+    if(fc->value())
+      return fc->count();
+    else
+      return 0;
   }
-
-  int ret = 0;
-  switch(fc->show()) {
-  case -1: break; // error
-  case 1: break; // cancel
-  default:
-    if(fc->filename()) ret = fc->count();
-    break;
-  }
-  thefilterindex = fc->filter_value();
-  // hack to clear the KEYDOWN state that remains when calling the
-  // file chooser on Mac and Windows using a keyboard shortcut
-  Fl::e_state = 0;
-  return ret;
-#else
-  Fl_File_Chooser::show_label = "Format:";
-  Fl_File_Chooser::all_files_label = "All files (*)";
-  if(!fc) {
-    fc =
-      new flFileChooser(getenv("PWD") ? "." : CTX::instance()->homeDir.c_str(),
-                        thefilter, Fl_File_Chooser::SINGLE, message);
-    fc->position(CTX::instance()->fileChooserPosition[0],
-                 CTX::instance()->fileChooserPosition[1]);
-  }
-  switch(type) {
-  case FILE_CHOOSER_MULTI: fc->type(Fl_File_Chooser::MULTI); break;
-  case FILE_CHOOSER_CREATE: fc->type(Fl_File_Chooser::CREATE); break;
-  case FILE_CHOOSER_DIRECTORY: fc->type(Fl_File_Chooser::DIRECTORY); break;
-  default: fc->type(Fl_File_Chooser::SINGLE); break;
-  }
-  fc->label(message);
-  fc->filter(thefilter);
-  fc->filter_value(thefilterindex);
-  static bool first = true;
-  if(first) {
-    // preset the path and the file only the first time in a given
-    // session. Afterwards, always reuse the last directory
-    fc->value(thepath.c_str());
-    first = false;
-  }
-  else {
-    std::string name = split[1] + split[2];
-    fc->value(name.c_str());
-  }
-  fc->show();
-  while(fc->shown()) Fl::wait();
-  thefilterindex = fc->filter_value();
-  if(fc->value())
-    return fc->count();
-  else
-    return 0;
-#endif
 }
 
 std::string fileChooserGetName(int num)
 {
-  if(!fc) return "";
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-  return std::string(fc->filename(num - 1));
-#else
-  return std::string(fc->value(num));
-#endif
+  if(CTX::instance()->nativeFileChooser) {
+    if(!nfc) return "";
+    return std::string(nfc->filename(num - 1));
+  }
+  else {
+    if(!fc) return "";
+    return std::string(fc->value(num));
+  }
 }
 
 int fileChooserGetFilter()
 {
-  if(!fc) return 0;
-  return fc->filter_value();
+  if(CTX::instance()->nativeFileChooser) {
+    if(!nfc) return 0;
+    return nfc->filter_value();
+  }
+  else {
+    if(!fc) return 0;
+    return fc->filter_value();
+  }
 }
 
 void fileChooserGetPosition(int *x, int *y)
 {
-  if(!fc) return;
-#if !defined(HAVE_NATIVE_FILE_CHOOSER)
-  *x = fc->x();
-  *y = fc->y();
-#endif
+  if(CTX::instance()->nativeFileChooser) {
+    // not available
+  }
+  else {
+    if(!fc) return;
+    *x = fc->x();
+    *y = fc->y();
+  }
 }
 
 // Generic save bitmap dialog

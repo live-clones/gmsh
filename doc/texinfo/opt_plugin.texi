@@ -90,30 +90,8 @@ Numeric options:
 Default value: @code{0}
 @end table
 
-@item Plugin(CVTRemesh)
-Plugin(CVTRemesh) triangulates an input geometry usingcentroïdal Voronoï tesselations. The STL mesh of the geometryis generated and randomly sampled. An objective function derivedfrom centroïdal Voronoï tesselations is then defined on thegenerated sampling, and optimized through LBFGS to obtain aregular sampling of the surface. The triangulation is extractedas the restricted Delaunay triangulation of the samples and theSTL mesh.@*
-@*
-If `View' < 0, the plugin is run on the current view.@*
-@*
-Plugin(Triangulate) creates one new view.
-Numeric options:
-@table @code
-@item Sites
-Default value: @code{20000}
-@item Iterations
-Default value: @code{20}
-@item Anisotropy
-Default value: @code{0.03}
-@item Variable density
-Default value: @code{0.3}
-@item Feature sensitivity
-Default value: @code{5}
-@item Normal computation radius
-Default value: @code{0.005}
-@end table
-
 @item Plugin(Crack)
-Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2), embedded in a mesh of dimension `Dimension' + 1. The plugin duplicates the vertices and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the ``negative'' side are modified to use the newly generated vertices.If `OpenBoundaryPhysicalGroup' is given (> 0), its vertices are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its vertices are not duplicated. For 1D cracks, `NormalX', `NormalY' and `NormalZ' provide the reference normal of the surface in which the crack is supposed to be embedded.
+Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2), embedded in a mesh of dimension `Dimension' + 1. The plugin duplicates the nodes and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the ``negative'' side are modified to use the newly generated nodes.If `OpenBoundaryPhysicalGroup' is given (> 0), its nodes are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its nodes are not duplicated. For 1D cracks, `NormalX', `NormalY' and `NormalZ' provide the reference normal of the surface in which the crack is supposed to be embedded.
 Numeric options:
 @table @code
 @item Dimension

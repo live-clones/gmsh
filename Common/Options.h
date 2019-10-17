@@ -161,6 +161,7 @@ double opt_general_polygon_offset_always(OPT_ARGS_NUM);
 double opt_general_polygon_offset_factor(OPT_ARGS_NUM);
 double opt_general_polygon_offset_units(OPT_ARGS_NUM);
 double opt_general_system_menu_bar(OPT_ARGS_NUM);
+double opt_general_native_file_chooser(OPT_ARGS_NUM);
 double opt_general_show_module_menu(OPT_ARGS_NUM);
 double opt_general_message_size(OPT_ARGS_NUM);
 double opt_general_message_fontsize(OPT_ARGS_NUM);

@@ -2283,6 +2283,13 @@ double opt_general_system_menu_bar(OPT_ARGS_NUM)
   return CTX::instance()->systemMenuBar;
 }
 
+double opt_general_native_file_chooser(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->nativeFileChooser = (int)val;
+  return CTX::instance()->nativeFileChooser;
+}
+
 double opt_general_show_module_menu(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
