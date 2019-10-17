@@ -103,6 +103,8 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
             MVertex *newv = 0;
             if(to->geomType() != GEntity::DiscreteSurface &&
                to->geomType() != GEntity::BoundaryLayerSurface) {
+              // This can be inefficient, and sometimes useless. We could add an
+              // option to disable it.
               SPoint3 xyz(x, y, z);
               SPoint2 uv = to->parFromPoint(xyz);
               newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
