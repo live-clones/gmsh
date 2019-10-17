@@ -270,20 +270,17 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage()
 {
   typedef std::pair<std::string, std::string> mp;
   std::vector<mp> s;
-  s.push_back(mp("Move", "- Highlight the entity under the mouse pointer and "
-                 "display its properties"));
-  s.push_back(mp("", "- Resize a lasso zoom or a lasso (un)selection"));
-  s.push_back(mp("Left button", "- Rotate"));
-  s.push_back(mp("", "- Select an entity"));
-  s.push_back(mp("", "- Accept a lasso zoom or a lasso selection"));
+  s.push_back(mp("Move", "Highlight the entity under the mouse pointer and "
+                 "display its properties / Resize a lasso zoom or a lasso "
+                 "(un)selection"));
+  s.push_back(mp("Left button", "Rotate / Select an entity / Accept a lasso "
+                 "zoom or a lasso selection"));
   s.push_back(mp("Ctrl+Left button", "Start a lasso zoom or a lasso (un)selection"));
-  s.push_back(mp("Middle button", "- Zoom"));
-  s.push_back(mp("", "- Unselect an entity"));
-  s.push_back(mp("", "- Accept a lasso zoom or a lasso unselection"));
+  s.push_back(mp("Middle button", "Zoom / Unselect an entity / Accept a lasso "
+                 "zoom or a lasso unselection"));
   s.push_back(mp("Ctrl+Middle button", "Orthogonalize display"));
-  s.push_back(mp("Right button", "- Pan"));
-  s.push_back(mp("", "- Cancel a lasso zoom or a lasso (un)selection"));
-  s.push_back(mp("", "- Pop-up menu on post-processing view button"));
+  s.push_back(mp("Right button", "Pan / Cancel a lasso zoom or a lasso "
+                 "(un)selection / Pop-up menu on post-processing view button"));
   s.push_back(mp("Ctrl+Right button", "Reset to default viewpoint"));
   return s;
 }
