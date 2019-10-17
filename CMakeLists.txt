@@ -153,10 +153,6 @@ else()
   execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
-execute_process(COMMAND hostname OUTPUT_VARIABLE HOSTNAME
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND whoami OUTPUT_VARIABLE PACKAGER
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if(NOT DATE)
   set(DATE "unknown")
@@ -164,6 +160,8 @@ endif()
 set(GMSH_DATE "${DATE}")
 
 if(NOT GMSH_HOST)
+  execute_process(COMMAND hostname OUTPUT_VARIABLE HOSTNAME
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT HOSTNAME)
     set(HOSTNAME "unknown")
   endif()
@@ -171,6 +169,8 @@ if(NOT GMSH_HOST)
 endif()
 
 if(NOT GMSH_PACKAGER)
+  execute_process(COMMAND whoami OUTPUT_VARIABLE PACKAGER
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT PACKAGER)
     set(PACKAGER "unknown")
   endif()
