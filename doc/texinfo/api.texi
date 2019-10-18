@@ -1639,11 +1639,12 @@ Classify ("color") the surface mesh based on the angle threshold @code{angle}
 (in radians), and create new discrete surfaces, curves and points accordingly.
 If @code{boundary} is set, also create discrete curves on the boundary if the
 surface is open. If @code{forReparametrization} is set, create edges and
-surfaces that can be reparametrized using a single map.
+surfaces that can be reparametrized using a single map. If @code{curveAngle} is
+less than Pi, also force curves to be split according to @code{curveAngle}.
 
 @table @asis
 @item Input:
-@code{angle}, @code{boundary}, @code{forReparametrization}
+@code{angle}, @code{boundary}, @code{forReparametrization}, @code{curveAngle}
 @item Output:
 -
 @item Return:
@@ -1919,6 +1920,36 @@ Return the tag of the Bezier curve.
 @table @asis
 @item Input:
 @code{pointTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item addCompoundSpline
+Add a spline (Catmull-Rom) going through points sampling the curves in
+@code{curveTags}. The density of sampling points on each curve is governed by
+@code{numIntervals}. If @code{tag} is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the spline.
+
+@table @asis
+@item Input:
+@code{curveTags}, @code{numIntervals}, @code{tag}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item addCompoundBSpline
+Add a b-spline with control points sampling the curves in @code{curveTags}. The
+density of sampling points on each curve is governed by @code{numIntervals}. If
+@code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. Return the tag of the b-spline.
+
+@table @asis
+@item Input:
+@code{curveTags}, @code{numIntervals}, @code{tag}
 @item Output:
 -
 @item Return:

@@ -443,6 +443,12 @@ geo.add('addBSpline',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 doc = '''Add a Bezier curve with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.  Return the tag of the Bezier curve.'''
 geo.add('addBezier',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 
+doc = '''Add a spline (Catmull-Rom) going through points sampling the curves in `curveTags'. The density of sampling points on each curve is governed by `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the spline.'''
+geo.add('addCompoundSpline',doc,oint,ivectorint('curveTags'),iint('numIntervals','5'),iint('tag','-1'))
+
+doc = '''Add a b-spline with control points sampling the curves in `curveTags'. The density of sampling points on each curve is governed by `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the b-spline.'''
+geo.add('addCompoundBSpline',doc,oint,ivectorint('curveTags'),iint('numIntervals','20'),iint('tag','-1'))
+
 doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of model enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
 geo.add('addCurveLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
 

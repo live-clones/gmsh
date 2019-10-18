@@ -2915,6 +2915,52 @@ class model:
             return api__result__
 
         @staticmethod
+        def addCompoundSpline(curveTags, numIntervals=5, tag=-1):
+            """
+            Add a spline (Catmull-Rom) going through points sampling the curves in
+            `curveTags'. The density of sampling points on each curve is governed by
+            `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. Return the tag of the spline.
+
+            Return an integer value.
+            """
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
+            ierr = c_int()
+            api__result__ = lib.gmshModelGeoAddCompoundSpline(
+                api_curveTags_, api_curveTags_n_,
+                c_int(numIntervals),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoAddCompoundSpline returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def addCompoundBSpline(curveTags, numIntervals=20, tag=-1):
+            """
+            Add a b-spline with control points sampling the curves in `curveTags'. The
+            density of sampling points on each curve is governed by `numIntervals'. If
+            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the b-spline.
+
+            Return an integer value.
+            """
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
+            ierr = c_int()
+            api__result__ = lib.gmshModelGeoAddCompoundBSpline(
+                api_curveTags_, api_curveTags_n_,
+                c_int(numIntervals),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoAddCompoundBSpline returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
         def addCurveLoop(curveTags, tag=-1):
             """
             Add a curve loop (a closed wire) formed by the curves `curveTags'.

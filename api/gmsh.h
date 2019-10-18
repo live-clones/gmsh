@@ -1067,6 +1067,22 @@ namespace gmsh { // Top-level functions
       GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
 
+      // Add a spline (Catmull-Rom) going through points sampling the curves in
+      // `curveTags'. The density of sampling points on each curve is governed by
+      // `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a
+      // new tag is selected automatically. Return the tag of the spline.
+      GMSH_API int addCompoundSpline(const std::vector<int> & curveTags,
+                                     const int numIntervals = 5,
+                                     const int tag = -1);
+
+      // Add a b-spline with control points sampling the curves in `curveTags'. The
+      // density of sampling points on each curve is governed by `numIntervals'. If
+      // `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the b-spline.
+      GMSH_API int addCompoundBSpline(const std::vector<int> & curveTags,
+                                      const int numIntervals = 20,
+                                      const int tag = -1);
+
       // Add a curve loop (a closed wire) formed by the curves `curveTags'.
       // `curveTags' should contain (signed) tags of model enties of dimension 1
       // forming a closed loop: a negative tag signifies that the underlying curve

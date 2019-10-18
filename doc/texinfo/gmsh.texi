@@ -2008,6 +2008,13 @@ next two the start and end angle. Note that OpenCASCADE does not allow
 creating ellipse arcs with the major radius smaller than the minor
 radius.
 
+@item Compound Spline | BSpline ( @var{expression} ) = @{ @var{expression-list} @} Using @var{expression};
+Creates a spline or a BSpline from control points sampled on the curves
+in @var{expression-list}. @code{Using} @var{expression} specifies the
+number of intervals on each curve to compute the sampling
+points. Compound splines and BSplines are only available with the
+built-in geometry kernel.
+
 @item Curve Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented loop of curves, i.e. a closed wire. The
 @var{expression} inside the parentheses is the curve loop's tag; the

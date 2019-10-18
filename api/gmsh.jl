@@ -2492,6 +2492,44 @@ function addBezier(pointTags, tag = -1)
 end
 
 """
+    gmsh.model.geo.addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
+
+Add a spline (Catmull-Rom) going through points sampling the curves in
+`curveTags`. The density of sampling points on each curve is governed by
+`numIntervals`. If `tag` is positive, set the tag explicitly; otherwise a new
+tag is selected automatically. Return the tag of the spline.
+
+Return an integer value.
+"""
+function addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelGeoAddCompoundSpline, gmsh.lib), Cint,
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, curveTags), length(curveTags), numIntervals, tag, ierr)
+    ierr[] != 0 && error("gmshModelGeoAddCompoundSpline returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
+    gmsh.model.geo.addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
+
+Add a b-spline with control points sampling the curves in `curveTags`. The
+density of sampling points on each curve is governed by `numIntervals`. If `tag`
+is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. Return the tag of the b-spline.
+
+Return an integer value.
+"""
+function addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelGeoAddCompoundBSpline, gmsh.lib), Cint,
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, curveTags), length(curveTags), numIntervals, tag, ierr)
+    ierr[] != 0 && error("gmshModelGeoAddCompoundBSpline returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.model.geo.addCurveLoop(curveTags, tag = -1)
 
 Add a curve loop (a closed wire) formed by the curves `curveTags`. `curveTags`

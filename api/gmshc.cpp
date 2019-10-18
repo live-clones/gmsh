@@ -1706,6 +1706,34 @@ GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n, const in
   return result_api_;
 }
 
+GMSH_API int gmshModelGeoAddCompoundSpline(int * curveTags, size_t curveTags_n, const int numIntervals, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    result_api_ = gmsh::model::geo::addCompoundSpline(api_curveTags_, numIntervals, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelGeoAddCompoundBSpline(int * curveTags, size_t curveTags_n, const int numIntervals, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    result_api_ = gmsh::model::geo::addCompoundBSpline(api_curveTags_, numIntervals, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
 GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n, const int tag, int * ierr)
 {
   int result_api_ = 0;

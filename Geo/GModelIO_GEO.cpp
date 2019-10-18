@@ -10,6 +10,7 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "Geo.h"
+#include "GeoInterpolation.h"
 #include "OS.h"
 #include "OpenFile.h"
 #include "Numeric.h"
@@ -324,6 +325,63 @@ bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
   List_Delete(tmp);
   _changed = true;
   return ok;
+}
+
+bool GEO_Internals::_addCompoundSpline(int &tag, const std::vector<int> &curveTags,
+                                       int numIntervals, bool bspline)
+{
+  if(tag >= 0 && FindCurve(tag)) {
+    Msg::Error("GEO curve with tag %d already exists", tag);
+    return false;
+  }
+  if(curveTags.empty()) {
+    Msg::Error("Compound spline curve requires at least 1 input curve");
+    return false;
+  }
+  if(numIntervals < 0) {
+    Msg::Error("Negative number of intervals in compound spline");
+    return false;
+  }
+  if(tag < 0) tag = getMaxTag(1) + 1;
+
+  List_T *tmp = List_Create((numIntervals + 1) * curveTags.size(), 2, sizeof(int));
+  for(std::size_t i = 0; i < curveTags.size(); i++) {
+    Curve *c = FindCurve(curveTags[i]);
+    if(i == 0 && c->beg) List_Add(tmp, &c->beg->Num);
+    for(int j = 1; j < numIntervals; j++) {
+      double u = (double)j / (double)(numIntervals);
+      Vertex V = InterpolateCurve(c, u, 0);
+      double lc = (1 - u) * c->beg->lc + u * c->end->lc;
+      int tag = getMaxTag(0) + 1;
+      Vertex *v = CreateVertex(tag, V.Pos.X, V.Pos.Y, V.Pos.Z, lc, 1.0);
+      Tree_Add(Points, &v);
+      List_Add(tmp, &v->Num);
+    }
+    if(c->end) List_Add(tmp, &c->end->Num);
+  }
+  bool ok = true;
+  Curve *c;
+  if(bspline)
+    c = CreateCurve(tag, MSH_SEGM_BSPLN, 2, tmp, NULL, -1, -1, 0., 1., ok);
+  else //often too oscillatory for non-uniform distribution of control points
+    c = CreateCurve(tag, MSH_SEGM_SPLN, 3, tmp, NULL, -1, -1, 0., 1., ok);
+  Tree_Add(Curves, &c);
+  CreateReversedCurve(c);
+  List_Delete(tmp);
+  _changed = true;
+  return ok;
+}
+
+bool GEO_Internals::addCompoundSpline(int &tag, const std::vector<int> &curveTags,
+                                      int numIntervals)
+{
+  return _addCompoundSpline(tag, curveTags, numIntervals, false);
+}
+
+bool GEO_Internals::addCompoundBSpline(int &tag, const std::vector<int> &curveTags,
+                                      int numIntervals)
+{
+  return _addCompoundSpline(tag, curveTags, numIntervals, true);
 }
 
 bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
