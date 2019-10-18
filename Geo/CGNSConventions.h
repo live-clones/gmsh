@@ -6,20 +6,11 @@
 #ifndef CGNS_CONVENTIONS_H
 #define CGNS_CONVENTIONS_H
 
-#if defined(HAVE_LIBCGNS)
-
 #include <vector>
 #include <string>
 
-// FIXME: cgnslib.h is not suited to namespaces as it is full of defines (hence
-// the dirty redefine of csize_t). Namespace CGNS should be removed.
-namespace CGNS {
-#include <cgnslib.h>
-#ifdef cgsize_t
-#undef cgsize_t
-  typedef int cgsize_t;
-#endif
-} // namespace CGNS
+#if defined(HAVE_LIBCGNS)
+
 
 // msh to CGNS element type
 CGNS::ElementType_t msh2CgnsEltType(int mshTag);

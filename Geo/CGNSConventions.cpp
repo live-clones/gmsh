@@ -13,9 +13,11 @@
 #include "ElementType.h"
 #include "BasisFactory.h"
 #include "nodalBasis.h"
+#include "CGNSCommon.h"
 #include "CGNSConventions.h"
 
 #if defined(HAVE_LIBCGNS)
+
 
 namespace {
 
