@@ -56,10 +56,9 @@ for size_t node and element tags (see the reference manual for detailed
 changes); added support for reading STEP labels and colors with OCC CAF; changed
 default "General.OCCTargetUnit" value to none (i.e. use STEP file coordinates
 as-is, without conversion); improved high-order mesh optimization; added ability
-to import groups of nodes from MED files; extruded meshes now fill-in periodic
-node information; enhanced Plugin(Distance) and Plugin(SimplePartition); removed
-unmaintained plugins; removed default dependency on PETSc; small improvements
-and bug fixes.
+to import groups of nodes from MED files; enhanced Plugin(Distance) and
+Plugin(SimplePartition); removed unmaintained plugins; removed default
+dependency on PETSc; small improvements and bug fixes.
 
 * Incompatible API changes: changed type of node and element tags from int to
   size_t to support (very) large meshes; changed logger/start,
