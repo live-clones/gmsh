@@ -964,7 +964,11 @@ GMSH_API void gmshModelMeshRenumberElements(int * ierr);
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as
  * periodic copies of the meshes of entities `tagsMaster', using the affine
  * transformation specified in `affineTransformation' (16 entries of a 4x4
- * matrix, by row). Currently only available for `dim' == 1 and `dim' == 2. */
+ * matrix, by row). If used after meshing, generate the periodic node
+ * correspondence information assuming the meshes of entities `tags'
+ * effectively match the meshes of entities `tagsMaster' (useful for
+ * structured and extruded meshes). Currently only available for @code{dim} ==
+ * 1 and @code{dim} == 2. */
 GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        int * tags, size_t tags_n,
                                        int * tagsMaster, size_t tagsMaster_n,
