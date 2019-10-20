@@ -1581,8 +1581,11 @@ Renumber the element tags in a continuous sequence.
 Set the meshes of the entities of dimension @code{dim} and tag @code{tags} as
 periodic copies of the meshes of entities @code{tagsMaster}, using the affine
 transformation specified in @code{affineTransformation} (16 entries of a 4x4
-matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
-2.
+matrix, by row). If used after meshing, generate the periodic node
+correspondence information assuming the meshes of entities @code{tags}
+effectively match the meshes of entities @code{tagsMaster} (useful for
+structured and extruded meshes). Currently only available for @code{dim} == 1
+and @code{dim} == 2.
 
 @table @asis
 @item Input:
