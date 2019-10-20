@@ -50,7 +50,6 @@
 #if defined(HAVE_TOUCHBAR)
 #include "touchBar.h"
 #endif
-
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
