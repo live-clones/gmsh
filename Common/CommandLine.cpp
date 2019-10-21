@@ -183,7 +183,7 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Up arrow", "Make previous view visible"));
   s.push_back(mp("Down arrow", "Make next view visible"));
   s.push_back(mp("0", "Reload geometry"));
-  s.push_back(mp(cc + "0", "Reload full project"));
+  s.push_back(mp(cc + "0 or 9", "Reload full project"));
   s.push_back(mp("1 or F1", "Mesh lines"));
   s.push_back(mp("2 or F2", "Mesh surfaces"));
   s.push_back(mp("3 or F3", "Mesh volumes"));
