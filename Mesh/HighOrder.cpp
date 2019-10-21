@@ -1338,6 +1338,13 @@ void FixPeriodicMesh(GModel *m)
       std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHOPoints;
       p2p.clear();
 
+      if(tgt->getNumMeshElements() && v2v.empty()){
+        Msg::Info("No periodic vertices in surface %d (maybe due to a "
+                  "structured mesh constraint on the target surface)",
+                  tgt->tag());
+        continue;
+      }
+
       std::map<MFace, MElement *, Less_Face> srcFaces;
 
       for(std::size_t i = 0; i < src->getNumMeshElements(); ++i) {
@@ -1392,8 +1399,8 @@ void FixPeriodicMesh(GModel *m)
           // underlying orientation of the geometrical surfaces)
           bool revert = dot(tgtFace.normal(), srcIter->first.normal()) < 0;
           if(revert) srcElmt->reverse();
-          for(std::size_t i = nbVtcs; i < srcElmt->getNumVertices(); i++) {
-            p2p[tgtElmt->getVertex(i)] = srcElmt->getVertex(i);
+          for(std::size_t j = nbVtcs; j < srcElmt->getNumVertices(); j++) {
+            p2p[tgtElmt->getVertex(j)] = srcElmt->getVertex(j);
           }
           if(revert) srcElmt->reverse();
         }
