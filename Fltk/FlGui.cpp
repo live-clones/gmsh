@@ -684,7 +684,8 @@ int FlGui::testGlobalShortcuts(int event)
     geometry_reload_cb(0, 0);
     status = 1;
   }
-  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0')) {
+  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0') ||
+     Fl::test_shortcut('9')) { // for Bruno
     onelab_reload_cb(0, 0);
     status = 1;
   }
