@@ -2184,16 +2184,33 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge)
   ExtrudeParams *e =
     _attributes->getExtrudeParams(1, edge, sourceDim, sourceShape);
   if(!e) return;
+  if(e->geo.Mode == EXTRUDED_ENTITY) {
+    e->geo.Source = _getFuzzyTag(0, sourceShape);
+  }
+  else if(e->geo.Mode == COPIED_ENTITY) {
+    e->geo.Source = _getFuzzyTag(1, sourceShape);
+    // detect degenerate extrusions or cycles
+    std::set<int> cycle;
+    cycle.insert(ge->tag());
+    ExtrudeParams *p = e;
+    int recur = 0;
+    while(++recur < CTX::instance()->mesh.maxRetries){
+      if(cycle.count(p->geo.Source)) {
+        Msg::Info("Extrusion layer cycle detected for curve %d", ge->tag());
+        e = 0;
+        break;
+      }
+      GEdge *src = ge->model()->getEdgeByTag(p->geo.Source);
+      if(src && src->meshAttributes.extrude &&
+         src->meshAttributes.extrude->geo.Mode == COPIED_ENTITY) {
+        p = src->meshAttributes.extrude;
+      }
+      else {
+        break;
+      }
+    }
+  }
   ge->meshAttributes.extrude = e;
-  if(ge->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
-    ge->meshAttributes.extrude->geo.Source = _getFuzzyTag(0, sourceShape);
-  }
-  else if(ge->meshAttributes.extrude->geo.Mode == COPIED_ENTITY) {
-    ge->meshAttributes.extrude->geo.Source = _getFuzzyTag(1, sourceShape);
-    if(ge->meshAttributes.extrude->geo.Source ==
-       ge->tag()) // degenerate extrusion
-      ge->meshAttributes.extrude = 0;
-  }
 }
 
 void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GFace *gf)
@@ -2203,16 +2220,33 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GFace *gf)
   ExtrudeParams *e =
     _attributes->getExtrudeParams(2, face, sourceDim, sourceShape);
   if(!e) return;
+  if(e->geo.Mode == EXTRUDED_ENTITY) {
+    e->geo.Source = _getFuzzyTag(1, sourceShape);
+  }
+  else if(e->geo.Mode == COPIED_ENTITY) {
+    e->geo.Source = _getFuzzyTag(2, sourceShape);
+    // detect degenerate extrusions or cycles
+    std::set<int> cycle;
+    cycle.insert(gf->tag());
+    ExtrudeParams *p = e;
+    int recur = 0;
+    while(++recur < CTX::instance()->mesh.maxRetries){
+      if(cycle.count(p->geo.Source)) {
+        Msg::Info("Extrusion layer cycle detected for surface %d", gf->tag());
+        e = 0;
+        break;
+      }
+      GFace *src = gf->model()->getFaceByTag(p->geo.Source);
+      if(src && src->meshAttributes.extrude &&
+         src->meshAttributes.extrude->geo.Mode == COPIED_ENTITY) {
+        p = src->meshAttributes.extrude;
+      }
+      else {
+        break;
+      }
+    }
+  }
   gf->meshAttributes.extrude = e;
-  if(gf->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
-    gf->meshAttributes.extrude->geo.Source = _getFuzzyTag(1, sourceShape);
-  }
-  else if(gf->meshAttributes.extrude->geo.Mode == COPIED_ENTITY) {
-    gf->meshAttributes.extrude->geo.Source = _getFuzzyTag(2, sourceShape);
-    if(gf->meshAttributes.extrude->geo.Source ==
-       gf->tag()) // degenerate extrusion
-      gf->meshAttributes.extrude = 0;
-  }
 }
 
 void OCC_Internals::_copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr)
@@ -2222,10 +2256,10 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr)
   ExtrudeParams *e =
     _attributes->getExtrudeParams(3, solid, sourceDim, sourceShape);
   if(!e) return;
-  gr->meshAttributes.extrude = e;
-  if(gr->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
-    gr->meshAttributes.extrude->geo.Source = _getFuzzyTag(2, sourceShape);
+  if(e->geo.Mode == EXTRUDED_ENTITY) {
+    e->geo.Source = _getFuzzyTag(2, sourceShape);
   }
+  gr->meshAttributes.extrude = e;
 }
 
 template <class T>
