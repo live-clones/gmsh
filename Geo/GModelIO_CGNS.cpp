@@ -12,14 +12,17 @@
 #if defined(HAVE_LIBCGNS)
 
 
-int GModel::readCGNS(const std::string &name) { return 0; }
+int GModel::readCGNS(const std::string &name)
+{
+  return 0;
+}
 
 
 int GModel::writeCGNS(const std::string &name, bool saveAll,
                       double scalingFactor)
 {
   int cgIndexFile = 0;
-  if(CGNS::cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile))
+  if(cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile))
     return cgnsError();
 
   // write the base node
@@ -28,13 +31,13 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   if (posStartName == std::string::npos) posStartName = 0;
   else posStartName++;
   std::string baseName = cgnsString(name.substr(posStartName));
-  if(CGNS::cg_base_write(cgIndexFile, baseName.c_str(), meshDim, dim,
+  if(cg_base_write(cgIndexFile, baseName.c_str(), meshDim, dim,
                          &cgIndexBase))
     return cgnsError();
 
   // write information about who generated the mesh
-  if(CGNS::cg_goto(cgIndexFile, cgIndexBase, "end")) return cgnsError();
-  if(CGNS::cg_descriptor_write("About", "Created by Gmsh")) return cgnsError();
+  if(cg_goto(cgIndexFile, cgIndexBase, "end")) return cgnsError();
+  if(cg_descriptor_write("About", "Created by Gmsh")) return cgnsError();
 
   // Zone names
   const size_t numPart = getNumPartitions();
@@ -97,7 +100,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
     }
   }   // numPart == 0
 
-  if(CGNS::cg_close(cgIndexFile)) return cgnsError();
+  if(cg_close(cgIndexFile)) return cgnsError();
 
   return 0;
 }

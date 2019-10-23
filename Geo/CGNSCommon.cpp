@@ -12,9 +12,9 @@
 int cgnsError(const int cgIndexFile)
 {
   Msg::Error("Error detected by CGNS library");
-  Msg::Error(CGNS::cg_get_error());
+  Msg::Error(cg_get_error());
   if(cgIndexFile != -1) {
-    if(CGNS::cg_close(cgIndexFile)) {
+    if(cg_close(cgIndexFile)) {
       Msg::Error("Unable to close CGNS file");
     }
   }

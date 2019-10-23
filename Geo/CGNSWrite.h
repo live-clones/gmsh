@@ -20,7 +20,7 @@ class MVertex;
 
 
 // Type for global node index -> (partition, local node index) correspondence
-struct LocalData { unsigned int partition = 0; CGNS::cgsize_t index = 0; };
+struct LocalData { unsigned int partition = 0; cgsize_t index = 0; };
 // typedef std::vector<LocalData> Global2LocalData;
 typedef std::map<MVertex *, std::vector<LocalData> > Vertex2LocalData;
 

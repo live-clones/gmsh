@@ -8,16 +8,10 @@
 
 #if defined(HAVE_LIBCGNS)
 
-
-// FIXME: cgnslib.h is not suited to namespaces as it is full of defines (hence
-// the dirty redefine of csize_t). Namespace CGNS should be removed.
-namespace CGNS {
 #include <cgnslib.h>
-#ifdef cgsize_t
-#undef cgsize_t
-  typedef int cgsize_t;
+#if CGNS_VERSION < 3100
+typedef int cgsize_t
 #endif
-} // namespace CGNS
 
 
 int cgnsError(const int cgIndexFile = -1);
