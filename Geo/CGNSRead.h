@@ -6,7 +6,20 @@
 #ifndef CGNS_READ_H
 #define CGNS_READ_H
 
+#include <vector>
+
 #if defined(HAVE_LIBCGNS)
+
+
+class MVertex;
+class MElement;
+
+
+double readScale();
+
+int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
+             std::vector<MVertex *> &allVert,
+             std::map<int, std::vector<MElement *> > *allElt, int &nbEltTot);
 
 
 #endif // HAVE_LIBCGNS

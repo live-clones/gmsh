@@ -8,12 +8,49 @@
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 #include "CGNSWrite.h"
+#include "CGNSRead.h"
 
 #if defined(HAVE_LIBCGNS)
 
 
 int GModel::readCGNS(const std::string &name)
 {
+  // open CGNS file and read scale
+  int cgIndexFile = 0;
+  if(cg_open(name.c_str(), CG_MODE_READ, &cgIndexFile)) return cgnsError();
+  const double scale = readScale();
+
+  // read base node
+  const int cgIndexBase = 1;
+  int dim = 0, meshDim = 0;
+  char baseName[CGNS_MAX_STR_LEN];
+  if(cg_base_read(cgIndexFile, cgIndexBase, baseName, &dim, &meshDim))
+    return cgnsError();
+
+  // read mesh zones
+  std::vector<MVertex *> allVert;
+  std::map<int, std::vector<MElement *> > allElt[10];
+  int nbEltTot = 0;
+  int nbZones = 0;
+  if(cg_nzones(cgIndexFile, cgIndexBase, &nbZones)) return cgnsError();
+  for(int iZone = 1; iZone <= nbZones; iZone++) {
+    int err = readZone(cgIndexFile, cgIndexBase, iZone, dim, scale, allVert,
+                       allElt, nbEltTot);
+    if(err) return err;
+  }
+
+  // remove duplicate vertices
+  // DBGTT: change to geometric tolerance
+  removeDuplicateMeshVertices(1e-8);
+
+  // Populate data structures in Gmsh
+  for(int i = 0; i < 10; i++) _storeElementsInEntities(allElt[i]);
+  // if(CTX::instance()->mesh.cgnsConstructTopology) createTopologyFromMeshNew();
+  _associateEntityWithMeshVertices();
+  _storeVerticesInEntities(allVert);
+
+  if(cg_close(cgIndexFile)) return cgnsError();
+
   return 0;
 }
 

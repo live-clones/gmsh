@@ -8,9 +8,12 @@
 
 #include <vector>
 #include <string>
+#include "CGNSCommon.h"
 
 #if defined(HAVE_LIBCGNS)
 
+
+static const std::string::size_type CGNS_MAX_STR_LEN = 32;
 
 // msh to CGNS element type
 ElementType_t msh2CgnsEltType(int mshTag);
@@ -20,8 +23,11 @@ int cgns2MshEltType(ElementType_t);
 
 std::vector<int> &cgns2MshNodeIndex(int mshTag);
 
+// std::vector<int> &msh2CgnsNodeIndex(int mshTag);
+
 std::string cgnsString(const std::string &s,
-                       std::string::size_type maxLength = 32);
+                       std::string::size_type maxLength = CGNS_MAX_STR_LEN);
+
 
 #endif // HAVE_LIBCGNS
 

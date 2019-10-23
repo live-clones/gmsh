@@ -630,6 +630,23 @@ std::vector<int> &cgns2MshNodeIndex(int mshTag)
   return mshInd[mshTag];
 }
 
+// // msh to CGNS node ordering
+// std::vector<int> &msh2CgnsNodeIndex(int mshTag)
+// {
+//   static std::vector<std::vector<int> > cgnsInd(MSH_MAX_NUM+1);
+//   static std::vector<int> dumInd;
+
+//   if(mshTag > MSH_MAX_NUM) return dumInd;
+
+//   if(cgnsInd[mshTag].size() == 0) {
+//     std::vector<int> &mshInd = cgns2MshNodeIndex(mshTag);
+//     std::vector<int> &ind = cgnsInd[mshTag];
+//     for(int iV = 0; iV < mshInd.size(); iV++) ind[mshInd[iV]] = iV;
+//   }
+
+//   return cgnsInd[mshTag];
+// }
+
 std::string cgnsString(const std::string &s, std::string::size_type maxLength)
 {
   std::string s2(s);
