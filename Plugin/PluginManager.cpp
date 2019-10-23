@@ -67,6 +67,7 @@
 #include "GaussPoints.h"
 #include "VoroMetal.h"
 #include "Summation.h"
+#include "MeshSizeFieldView.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -277,6 +278,8 @@ void PluginManager::registerDefaultPlugins()
       "VoroMetal", GMSH_RegisterVoroMetalPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
+      "MeshSizeFieldView", GMSH_RegisterMeshSizeFieldViewPlugin()));
 #endif
 #if defined(HAVE_REVOROPT)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
