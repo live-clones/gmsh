@@ -11,7 +11,7 @@ Make previous view visible
 Make next view visible
 @item 0
 Reload geometry
-@item Ctrl+0
+@item Ctrl+0 or 9
 Reload full project
 @item 1 or F1
 Mesh lines
