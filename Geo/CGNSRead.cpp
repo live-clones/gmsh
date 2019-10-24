@@ -17,7 +17,7 @@ namespace {
 
 void getElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
                 const std::vector<MVertex *> &allVert,
-                std::map<int, std::vector<MElement *> > *allElt, int &nbEltTot,
+                std::map<int, std::vector<MElement *> > *allElt,
                 const std::vector<cgsize_t> &sectData, std::size_t &iSectData)
 {
   // get element type
@@ -30,19 +30,17 @@ void getElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
 
   // get element vertices in Gmsh ordering
   int mshEltType = cgns2MshEltType(eltType);
-  int nbEltNode = ElementType::getNumVertices(eltType);
+  int nbEltNode = ElementType::getNumVertices(mshEltType);
   const std::vector<int> &cgns2Msh = cgns2MshNodeIndex(mshEltType);
   std::vector<MVertex *> eltVert(nbEltNode);
   for (int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectData++) {
-    const int indNode = vertShift + sectData[iSectData];
+    const int indNode = vertShift + sectData[iSectData] - 1;
     eltVert[cgns2Msh[iEltNode]] = allVert[indNode];
   }
 
   // create element
-  nbEltTot++;
   MElementFactory factory;
-  MElement *e = factory.create(mshEltType, eltVert, nbEltTot, 0, false, 0, 0,
-                               0);
+  MElement *e = factory.create(mshEltType, eltVert);
 
   // add element to data structure
   switch(e->getType()) {
@@ -64,7 +62,7 @@ void getElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
 int readSection(int cgIndexFile, int cgIndexBase, int iZone, int iSect,
                 std::size_t vertShift, int entity,
                 const std::vector<MVertex *> &allVert,
-                std::map<int, std::vector<MElement *> > *allElt, int &nbEltTot)
+                std::map<int, std::vector<MElement *> > *allElt)
 {
   // read section information
   char sectName[CGNS_MAX_STR_LEN];
@@ -90,8 +88,8 @@ int readSection(int cgIndexFile, int cgIndexBase, int iZone, int iSect,
   // create elements
   std::size_t iSectData = 0;
   for(int iElt = 0; iElt < nbElt; iElt++) {
-    getElement(sectEltType, vertShift, entity, allVert, allElt, nbEltTot,
-               sectData, iSectData);
+    getElement(sectEltType, vertShift, entity, allVert, allElt, sectData,
+               iSectData);
   }
 
   return 0;
@@ -145,7 +143,7 @@ double readScale()
 
 int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
              std::vector<MVertex *> &allVert,
-             std::map<int, std::vector<MElement *> > *allElt, int &nbEltTot)
+             std::map<int, std::vector<MElement *> > *allElt)
 {
   // read zone type
   // DBGTT: read only unstructured zone at the moment
@@ -192,7 +190,7 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
     const double x = xyz[0][i] * scale;
     const double y = (dim > 1) ? xyz[1][i] * scale : 0.;
     const double z = (dim > 2) ? xyz[2][i] * scale : 0.;
-    allVert.push_back(new MVertex(x, y, z, 0, allVert.size()+1));
+    allVert.push_back(new MVertex(x, y, z));
   }
 
   // read number of sections of element-vertex connectivity
@@ -204,7 +202,7 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   const int entity = iZone; 
   for(int iSect = 1; iSect <= nbSect; iSect++) {
     readSection(cgIndexFile, cgIndexBase, iZone, iSect, vertShift, entity,
-                allVert, allElt, nbEltTot);
+                allVert, allElt);
   }
 
   return 0;

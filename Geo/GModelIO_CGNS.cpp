@@ -30,12 +30,11 @@ int GModel::readCGNS(const std::string &name)
   // read mesh zones
   std::vector<MVertex *> allVert;
   std::map<int, std::vector<MElement *> > allElt[10];
-  int nbEltTot = 0;
   int nbZones = 0;
   if(cg_nzones(cgIndexFile, cgIndexBase, &nbZones)) return cgnsError();
   for(int iZone = 1; iZone <= nbZones; iZone++) {
     int err = readZone(cgIndexFile, cgIndexBase, iZone, dim, scale, allVert,
-                       allElt, nbEltTot);
+                       allElt);
     if(err) return err;
   }
 

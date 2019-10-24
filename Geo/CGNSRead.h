@@ -19,7 +19,7 @@ double readScale();
 
 int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
              std::vector<MVertex *> &allVert,
-             std::map<int, std::vector<MElement *> > *allElt, int &nbEltTot);
+             std::map<int, std::vector<MElement *> > *allElt);
 
 
 #endif // HAVE_LIBCGNS
