@@ -182,6 +182,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   }
 
   // write zone CGNS node
+  int cgnsErr;
   int cgIndexZone = 0;
   cgsize_t cgZoneSize[3] = {numNodes, numElementsMaxDim, 0};
   std::ostringstream ossPart;
@@ -189,28 +190,28 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   std::string partSuffix = ossPart.str();
   std::string modelName = cgnsString(model->getName(), 32-partSuffix.size());
   zoneName[partition] = modelName + partSuffix;
-  if(cg_zone_write(cgIndexFile, cgIndexBase, zoneName[partition].c_str(),
-                   cgZoneSize, Unstructured, &cgIndexZone))
-    return cgnsError();
+  cgnsErr = cg_zone_write(cgIndexFile, cgIndexBase, zoneName[partition].c_str(),
+                          cgZoneSize, Unstructured, &cgIndexZone);
+  if(cgnsErr != CG_OK) return cgnsError();
 
   // create a CGNS grid with x, y and z coordinates of all the nodes (that are
   // referenced by elements)
   int cgIndexGrid = 0;
-  if(cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone, "GridCoordinates",
-                   &cgIndexGrid))
-    return cgnsError();
+  cgnsErr = cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                          "GridCoordinates", &cgIndexGrid);
+  if(cgnsErr != CG_OK) return cgnsError();
 
   // write list of coordinates
   int cgIndexCoord = 0;
-  if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                    "CoordinateX", &xcoord[0], &cgIndexCoord))
-    return cgnsError();
-  if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                    "CoordinateY", &ycoord[0], &cgIndexCoord))
-    return cgnsError();
-  if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                    "CoordinateZ", &zcoord[0], &cgIndexCoord))
-    return cgnsError();
+  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+                           "CoordinateX", &xcoord[0], &cgIndexCoord);
+  if(cgnsErr != CG_OK) return cgnsError();
+  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+                           "CoordinateY", &ycoord[0], &cgIndexCoord);
+  if(cgnsErr != CG_OK) return cgnsError();
+  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+                           "CoordinateZ", &zcoord[0], &cgIndexCoord);
+  if(cgnsErr != CG_OK) return cgnsError();
 
   // write an element section for each entity, per element type (TODO: check if
   // using the actual element tag in case the numbering is dense and
@@ -269,15 +270,15 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
         std::ostringstream ossSection(entityName);
         ossSection << "_" << eleTypes[eleType];
         int cgIndexSection = 0;
-        if(cg_section_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                            ossSection.str().c_str(), cgType, eleStart, eleEnd,
-                            0, &elemNodes[0], &cgIndexSection))
-          return cgnsError();
+        cgnsErr = cg_section_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                                   ossSection.str().c_str(), cgType, eleStart,
+                                   eleEnd, 0, &elemNodes[0], &cgIndexSection);
+        if(cgnsErr != CG_OK) return cgnsError();
       }
     }
   }
 
-  return 0;
+  return 1;
 }
 
 
@@ -326,6 +327,7 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
 
   // write periodic interfaces
   typedef PeriodicConnection::iterator PerConnectIter;
+  int cgnsErr;
   for(PerConnectIter it = connect.begin(); it != connect.end(); ++it) {
     printProgress("Writing periodic interface",
                   std::distance(connect.begin(), it)+1, connect.size());
@@ -346,15 +348,20 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
            << "_Part" << part2 << "_Ent" << entTag2;
     const std::string interfaceName = cgnsString(ossInt.str()); 
     int connIdx;
-    cg_conn_write(cgIndexFile, cgIndexBase, slaveZone, interfaceName.c_str(),
-                  Vertex, Abutting1to1, PointList, nodes1.size(), nodes1.data(),
-                  masterZoneName.c_str(), Unstructured, PointListDonor,
-                  DataTypeNull, nodes2.size(), nodes2.data(), &connIdx);
-    cg_conn_periodic_write(cgIndexFile, cgIndexBase, slaveZone, connIdx,
-                           rotCenter.data(), rotAngle.data(), trans.data());
+    cgnsErr = cg_conn_write(cgIndexFile, cgIndexBase, slaveZone,
+                            interfaceName.c_str(), Vertex, Abutting1to1,
+                            PointList, nodes1.size(), nodes1.data(),
+                            masterZoneName.c_str(), Unstructured,
+                            PointListDonor, DataTypeNull, nodes2.size(),
+                            nodes2.data(), &connIdx);
+    if(cgnsErr != CG_OK) return cgnsError();
+    cgnsErr = cg_conn_periodic_write(cgIndexFile, cgIndexBase, slaveZone,
+                                     connIdx, rotCenter.data(), rotAngle.data(),
+                                     trans.data());
+    if(cgnsErr != CG_OK) return cgnsError();
   }
 
-  return 0;
+  return 1;
 }
 
 
@@ -431,6 +438,7 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
 
   // write partition interfaces
   typedef PartitionConnection::iterator PartConnectIter;
+  int cgnsErr;
   std::size_t iPartConnect = 0;
   for(PartConnectIter it = connect.begin(); it != connect.end(); ++it) {
     iPartConnect++;
@@ -444,15 +452,16 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
     ossInt << "Part" << part1 << "_Part" << part2;
     const std::string interfaceName = cgnsString(ossInt.str()); 
     int dum;
-    cg_conn_write(cgIndexFile, cgIndexBase, part1,
-                  interfaceName.c_str(), Vertex, Abutting1to1,
-                  PointList, nc.first.size(), nc.first.data(),
-                  masterZoneName.c_str(), Unstructured,
-                  PointListDonor, DataTypeNull,
-                  nc.second.size(), nc.second.data(), &dum);
+    cgnsErr = cg_conn_write(cgIndexFile, cgIndexBase, part1,
+                            interfaceName.c_str(), Vertex, Abutting1to1,
+                            PointList, nc.first.size(), nc.first.data(),
+                            masterZoneName.c_str(), Unstructured,
+                            PointListDonor, DataTypeNull,
+                            nc.second.size(), nc.second.data(), &dum);
+    if(cgnsErr != CG_OK) return cgnsError();
   }
 
-  return 0;
+  return 1;
 }
 
 

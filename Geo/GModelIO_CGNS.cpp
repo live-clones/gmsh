@@ -15,27 +15,31 @@
 
 int GModel::readCGNS(const std::string &name)
 {
+  int cgnsErr;
+
   // open CGNS file and read scale
   int cgIndexFile = 0;
-  if(cg_open(name.c_str(), CG_MODE_READ, &cgIndexFile)) return cgnsError();
+  cgnsErr = cg_open(name.c_str(), CG_MODE_READ, &cgIndexFile);
+  if(cgnsErr != CG_OK) return cgnsError();
   const double scale = readScale();
 
   // read base node
   const int cgIndexBase = 1;
   int dim = 0, meshDim = 0;
   char baseName[CGNS_MAX_STR_LEN];
-  if(cg_base_read(cgIndexFile, cgIndexBase, baseName, &dim, &meshDim))
-    return cgnsError();
+  cgnsErr = cg_base_read(cgIndexFile, cgIndexBase, baseName, &dim, &meshDim);
+  if(cgnsErr != CG_OK) return cgnsError();
 
   // read mesh zones
   std::vector<MVertex *> allVert;
   std::map<int, std::vector<MElement *> > allElt[10];
   int nbZones = 0;
-  if(cg_nzones(cgIndexFile, cgIndexBase, &nbZones)) return cgnsError();
+  cgnsErr = cg_nzones(cgIndexFile, cgIndexBase, &nbZones);
+  if(cgnsErr != CG_OK) return cgnsError();
   for(int iZone = 1; iZone <= nbZones; iZone++) {
     int err = readZone(cgIndexFile, cgIndexBase, iZone, dim, scale, allVert,
                        allElt);
-    if(err) return err;
+    if(err == 0) return 0;
   }
 
   // remove duplicate vertices
@@ -48,18 +52,21 @@ int GModel::readCGNS(const std::string &name)
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVert);
 
-  if(cg_close(cgIndexFile)) return cgnsError();
+  cgnsErr = cg_close(cgIndexFile);
+  if(cgnsErr != CG_OK) return cgnsError();
 
-  return 0;
+  return 1;
 }
 
 
 int GModel::writeCGNS(const std::string &name, bool saveAll,
                       double scalingFactor)
 {
+  int cgnsErr;
+
   int cgIndexFile = 0;
-  if(cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile))
-    return cgnsError();
+  cgnsErr = cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile);
+  if(cgnsErr != CG_OK) return cgnsError();
 
   // write the base node
   int meshDim = getMeshDim(), dim = getDim(), cgIndexBase = 0;
@@ -67,13 +74,15 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   if (posStartName == std::string::npos) posStartName = 0;
   else posStartName++;
   std::string baseName = cgnsString(name.substr(posStartName));
-  if(cg_base_write(cgIndexFile, baseName.c_str(), meshDim, dim,
-                         &cgIndexBase))
-    return cgnsError();
+  cgnsErr = cg_base_write(cgIndexFile, baseName.c_str(), meshDim, dim,
+                          &cgIndexBase);
+  if(cgnsErr != CG_OK) return cgnsError();
 
   // write information about who generated the mesh
-  if(cg_goto(cgIndexFile, cgIndexBase, "end")) return cgnsError();
-  if(cg_descriptor_write("About", "Created by Gmsh")) return cgnsError();
+  cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "end");
+  if(cgnsErr != CG_OK) return cgnsError();
+  cgnsErr = cg_descriptor_write("About", "Created by Gmsh");
+  if(cgnsErr != CG_OK) return cgnsError();
 
   // Zone names
   const size_t numPart = getNumPartitions();
@@ -106,11 +115,11 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
     int err = writeZone(this, saveAll, scalingFactor, meshDim, numNodes, 0,
                         entities, cgIndexFile, cgIndexBase, zoneName,
                         interfVert2Local);
-    if(err) return err;
+    if(err == 0) return 0;
     if (entitiesPer.size() > 0) {
       err = writePeriodic(entitiesPer, cgIndexFile, cgIndexBase, zoneName,
                           interfVert2Local);
-      if(err) return err;
+      if(err == 0) return 0;
     }
   }
   else {                                                // partitioned mesh
@@ -122,23 +131,24 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
       int err = writeZone(this, saveAll, scalingFactor, meshDim, numNodes,
                           iPart, entitiesPart[iPart], cgIndexFile, cgIndexBase,
                           zoneName, interfVert2Local);
-      if(err) return err;
+      if(err == 0) return 0;
     }             // loop on partitions
     if (entitiesPer.size() > 0) {
       int err = writePeriodic(entitiesPer, cgIndexFile, cgIndexBase, zoneName,
                               interfVert2Local);
-      if(err) return err;
+      if(err == 0) return 0;
     }
     if (entitiesInterf.size() > 0) {
       int err = writeInterfaces(entitiesInterf, cgIndexFile, cgIndexBase,
                                 zoneName, interfVert2Local);
-      if(err) return err;
+      if(err == 0) return 0;
     }
   }   // numPart == 0
 
-  if(cg_close(cgIndexFile)) return cgnsError();
+  cgnsErr = cg_close(cgIndexFile);
+  if(cgnsErr != CG_OK) return cgnsError();
 
-  return 0;
+  return 1;
 }
 
 

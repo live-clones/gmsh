@@ -64,26 +64,30 @@ int readSection(int cgIndexFile, int cgIndexBase, int iZone, int iSect,
                 const std::vector<MVertex *> &allVert,
                 std::map<int, std::vector<MElement *> > *allElt)
 {
+  int cgnsErr;
+
   // read section information
   char sectName[CGNS_MAX_STR_LEN];
   ElementType_t sectEltType;
   cgsize_t startElt, endElt;
   int nbBnd, parentFlag;
-  if(cg_section_read(cgIndexFile, cgIndexBase, iZone, iSect, sectName,
-                     &sectEltType, &startElt, &endElt, &nbBnd, &parentFlag))
-    return cgnsError();
+  cgnsErr = cg_section_read(cgIndexFile, cgIndexBase, iZone, iSect, sectName,
+                            &sectEltType, &startElt, &endElt, &nbBnd,
+                            &parentFlag);
+  if(cgnsErr != CG_OK) return cgnsError();
   const int nbElt = endElt - startElt + 1;
 
   // read connectivity data size
   cgsize_t dataSize;
-  if(cg_ElementDataSize(cgIndexFile, cgIndexBase, iZone, iSect, &dataSize))
-    return cgnsError();
+  cgnsErr = cg_ElementDataSize(cgIndexFile, cgIndexBase, iZone, iSect,
+                               &dataSize);
+  if(cgnsErr != CG_OK) return cgnsError();
 
   // read connectivity data
   std::vector<cgsize_t> sectData(dataSize);
-  if(cg_elements_read(cgIndexFile, cgIndexBase, iZone, iSect,
-                      sectData.data(), 0))
-    return cgnsError();
+  cgnsErr = cg_elements_read(cgIndexFile, cgIndexBase, iZone, iSect,
+                             sectData.data(), 0);
+  if(cgnsErr != CG_OK) return cgnsError();
 
   // create elements
   std::size_t iSectData = 0;
@@ -92,7 +96,7 @@ int readSection(int cgIndexFile, int cgIndexBase, int iZone, int iSect,
                iSectData);
   }
 
-  return 0;
+  return 1;
 }
 
 
@@ -145,23 +149,26 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
              std::vector<MVertex *> &allVert,
              std::map<int, std::vector<MElement *> > *allElt)
 {
+  int cgnsErr;
+
   // read zone type
   // DBGTT: read only unstructured zone at the moment
   ZoneType_t zoneType;
-  if(cg_zone_type(cgIndexFile, cgIndexBase, iZone, &zoneType))
-    return cgnsError();
+  cgnsErr = cg_zone_type(cgIndexFile, cgIndexBase, iZone, &zoneType);
+  if(cgnsErr != CG_OK) return cgnsError();
   if(zoneType != Unstructured) return 0;
 
   // read zone size
   char zoneName[CGNS_MAX_STR_LEN];
   cgsize_t cgsizes[3];
-  if(cg_zone_read(cgIndexFile, cgIndexBase, iZone, zoneName, cgsizes))
-    return cgnsError();
+  cgnsErr = cg_zone_read(cgIndexFile, cgIndexBase, iZone, zoneName, cgsizes);
+  if(cgnsErr != CG_OK) return cgnsError();
   const int nbNode = cgsizes[0];
 
   // read dimension and check consistency with base node
   int dim2;
-  if(cg_ncoords(cgIndexFile, cgIndexBase, iZone, &dim2)) return cgnsError();
+  cgnsErr = cg_ncoords(cgIndexFile, cgIndexBase, iZone, &dim2);
+  if(cgnsErr != CG_OK) return cgnsError();
   if(dim2 != dim) {
     Msg::Error("%i coordinates in CGNS zone %i, while base has dimension %i",
                dim2, iZone, dim);
@@ -173,14 +180,14 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   for(int iXYZ = 0; iXYZ < dim; iXYZ++) {
     char xyzName[CGNS_MAX_STR_LEN];
     DataType_t dataType;
-    if(cg_coord_info(cgIndexFile, cgIndexBase, iZone, iXYZ+1, &dataType,
-                     xyzName))
-      return cgnsError();
+    cgnsErr = cg_coord_info(cgIndexFile, cgIndexBase, iZone, iXYZ+1, &dataType,
+                            xyzName);
+    if(cgnsErr != CG_OK) return cgnsError();
     const int startInd = 1;
     xyz[iXYZ].resize(nbNode);
-    if(cg_coord_read(cgIndexFile, cgIndexBase, iZone, xyzName, RealDouble,
-                     &startInd, &nbNode, xyz[iXYZ].data()))
-      return cgnsError();
+    cgnsErr = cg_coord_read(cgIndexFile, cgIndexBase, iZone, xyzName,
+                            RealDouble, &startInd, &nbNode, xyz[iXYZ].data());
+    if(cgnsErr != CG_OK) return cgnsError();
   }
 
   // create vertices
@@ -195,17 +202,18 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
 
   // read number of sections of element-vertex connectivity
   int nbSect;
-  if(cg_nsections(cgIndexFile, cgIndexBase, iZone, &nbSect))
-    return cgnsError();
+  cgnsErr = cg_nsections(cgIndexFile, cgIndexBase, iZone, &nbSect);
+  if(cgnsErr != CG_OK) return cgnsError();
 
   // read sections of element-vertex connectivity
   const int entity = iZone; 
   for(int iSect = 1; iSect <= nbSect; iSect++) {
-    readSection(cgIndexFile, cgIndexBase, iZone, iSect, vertShift, entity,
-                allVert, allElt);
+    int err = readSection(cgIndexFile, cgIndexBase, iZone, iSect, vertShift,
+                          entity, allVert, allElt);
+    if(err == 0) return 0;
   }
 
-  return 0;
+  return 1;
 }
 
 
