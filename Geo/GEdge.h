@@ -43,6 +43,9 @@ public:
   // the original curves, in addition to the mesh of the compound curve)
   GEdge *compoundCurve;
 
+  // the STL discretization
+  std::vector<SPoint3> stl_vertices_xyz;
+  
 public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   GEdge(GModel *model, int tag);

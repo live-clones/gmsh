@@ -4338,6 +4338,42 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
   return true;
 }
 
+bool OCC_Internals::makeEdgeSTLFromFace(const TopoDS_Edge &c,
+                                        const TopoDS_Face &s,
+                                        std::vector<SPoint3> *verticesXYZ)
+{
+  // here we compute the vertices of a discretization of an edge c
+  // that is a boundary of the face s, which we just discretized
+  // the code below is inspired in pythonocc's tesselator.cpp
+  // that is GPLv3+ Copyright 2011 Fotios Sioutis, but it was rewritten
+  // from scratch to keep Gmsh GPLv2
+
+  TopLoc_Location transf;
+  Handle(Poly_Triangulation) trian = BRep_Tool::Triangulation(s, transf);
+
+  if(trian.IsNull()) { return false; }
+
+  Handle(Poly_PolygonOnTriangulation) edgepoly =
+    BRep_Tool::PolygonOnTriangulation(c, trian, transf);
+
+  if(edgepoly.IsNull()) { return false; }
+
+  const TColgp_Array1OfPnt &trainVerts = trian->Nodes();
+  const TColStd_Array1OfInteger &edgeVerts = edgepoly->Nodes();
+
+  if(edgeVerts.Length() < 2) { return false; }
+
+  for(int node = edgeVerts.Lower(); node <= edgeVerts.Upper(); node++) {
+    int index = edgeVerts.Value(node);
+    gp_Pnt trinode = trainVerts.Value(index);
+    if(!transf.IsIdentity()) { trinode.Transform(transf); }
+
+    verticesXYZ->push_back(SPoint3(trinode.X(), trinode.Y(), trinode.Z()));
+  }
+
+  return true;
+}
+
 bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
                                 std::vector<SPoint2> &vertices_uv,
                                 std::vector<int> &triangles)
