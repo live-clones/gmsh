@@ -2,7 +2,7 @@
 Delaunay; improved high-order periodic meshing; improved 2D boolean unions;
 improved surface mesh reclassification; added API support for mesh compounds;
 file chooser type now changeable at runtime; new X3D output for geometries and
-meshes; small fixes.
+meshes; new compound spline/b-spline commands; small fixes.
 
 * Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
   like all other mesh optimizers); new arguments to mesh/optimize,
