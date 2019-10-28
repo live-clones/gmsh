@@ -107,12 +107,6 @@ int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
     familyName = std::string(tmpFamilyName);
   }
 
-  // Associate BC name and family name with indices
-  const int indBC = nameIndex(bcName, allBCName);
-  const int indBCFamily = nameIndex(familyName, allBCFamilyName);
-  bc2Family[indBC] = indBCFamily;
-  Msg::Info("DBGTT: associating BC %s (id %i) with family %s (id %i)", bcName, indBC, familyName.c_str(), indBCFamily);
-
   // read location of boundary condition (i.e. elements on which it applies)
   GridLocation_t location;
   cgnsErr = cg_boco_gridlocation_read(cgIndexFile, cgIndexBase, iZone, iZoneBC,
@@ -121,15 +115,20 @@ int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
 
   // check that boundary condition is imposed at the correct location
   if((dim == 2) && (location != EdgeCenter)) {
-    Msg::Error("Boundary condition %s should be specified on edges for a 2D "
-                "zone, not on %s", bcName, cg_GridLocationName(location));
-    return 0;
+    Msg::Warning("Boundary condition %s is specified %s instead of edges in a "
+                 "2D zone, skipping", bcName, cg_GridLocationName(location));
+    return 1;
   }
   else if((dim == 3) && (location != FaceCenter)) {
-    Msg::Error("Boundary condition %s should be specified on faces for a 3D "
-                "zone, not on %s", bcName, cg_GridLocationName(location));
-    return 0;
+    Msg::Error("Boundary condition %s is specified %s instead of faces for a "
+               "3D zone, skipping", bcName, cg_GridLocationName(location));
+    return 1;
   }
+
+  // Associate BC name and family name with indices
+  const int indBC = nameIndex(bcName, allBCName);
+  const int indBCFamily = nameIndex(familyName, allBCFamilyName);
+  bc2Family[indBC] = indBCFamily;
 
   // Read elements on which the BC is imposed
   std::vector<cgsize_t> elt(nbElts);
@@ -273,7 +272,11 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   int dim2;
   cgnsErr = cg_ncoords(cgIndexFile, cgIndexBase, iZone, &dim2);
   if(cgnsErr != CG_OK) return cgnsError();
-  if(dim2 != dim) {
+  if(dim2 > dim) {
+    Msg::Warning("%i coordinates in CGNS zone %i, while base has dimension %i,"
+                 " discarding upper dimensions", dim2, iZone, dim);
+  }
+  else if(dim2 < dim) {
     Msg::Error("%i coordinates in CGNS zone %i, while base has dimension %i",
                dim2, iZone, dim);
     return 0;

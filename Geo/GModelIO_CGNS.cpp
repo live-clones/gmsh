@@ -34,7 +34,7 @@ int GModel::readCGNS(const std::string &name)
   // read mesh zones
   std::vector<MVertex *> allVert;
   std::map<int, std::vector<MElement *> > allElt[10];
-  std::vector<std::string> allBCName, allBCFamilyName;
+  std::vector<std::string> allBCName(1, ""), allBCFamilyName(1, "");  // indices start at 1
   std::map<int, int> bc2Family;
   int nbZones = 0;
   cgnsErr = cg_nzones(cgIndexFile, cgIndexBase, &nbZones);
