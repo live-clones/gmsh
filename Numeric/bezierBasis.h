@@ -132,7 +132,7 @@ private:
   // FIXME: not thread safe. We shoud use one pool and one _sub per thread.
   //        The best would be to give the pool to the constructor.
   //        (the pools should be created and deleted e.g. by the plugin
-  //        AnalyseCurvedMesh)
+  //        AnalyseMeshQuality)
 
 public:
   bezierCoeff(){};
