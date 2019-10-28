@@ -1865,7 +1865,6 @@ StringXNumber PrintOptions_Number[] = {
     "Remove inner borders in X3D output" },
   { F|O, "X3dTransparency" , opt_print_x3d_transparency , 0. ,
     "Transparency for X3D output" },
-    
   { F|O, "X3dSurfaces" , opt_print_x3d_surfaces, 1. ,
     "Save surfaces in CAD X3D output (0: no, 1: yes in a single X3D object,"
     "2: one X3D object per geometrical surface, 3: one X3D object per"

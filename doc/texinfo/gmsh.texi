@@ -4148,7 +4148,7 @@ respect to the initial 4.0 version:
 @itemize @bullet
 @item
 All the @code{unsigned long} entries have been changed to
-@code{size_t}. All the entries designating counts which were previsouly
+@code{size_t}. All the entries designating counts which were previously
 encoded as @code{int} have also been changed to @code{size_t}. (This
 only impacts binary files.)
 @item
