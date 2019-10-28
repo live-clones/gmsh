@@ -19,7 +19,7 @@
 #include "CutSphere.h"
 #include "CutBox.h"
 #include "Skin.h"
-#include "AnalyseCurvedMesh.h"
+#include "AnalyseMeshQuality.h"
 #include "CurvedBndDist.h"
 #include "MathEval.h"
 #include "ExtractElements.h"
@@ -273,7 +273,7 @@ void PluginManager::registerDefaultPlugins()
       "Summation", GMSH_RegisterSummationPlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
-      "AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
+      "AnalyseMeshQuality", GMSH_RegisterAnalyseMeshQualityPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "VoroMetal", GMSH_RegisterVoroMetalPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(

@@ -42,7 +42,7 @@
 #include "FlGui.h"
 #endif
 #include "Options.h"
-#include "AnalyseCurvedMesh.h"
+#include "AnalyseMeshQuality.h"
 #include "InnerVertexPlacement.h"
 
 namespace {

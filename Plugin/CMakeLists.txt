@@ -24,7 +24,7 @@ set(SRC
   HarmonicToTime.cpp ModulusPhase.cpp
   HomologyComputation.cpp HomologyPostProcessing.cpp
   Distance.cpp ExtractEdges.cpp NearestNeighbor.cpp
-  AnalyseCurvedMesh.cpp
+  AnalyseMeshQuality.cpp
   CurvedBndDist.cpp
   FieldFromAmplitudePhase.cpp
   Bubbles.cpp NearToFarField.cpp

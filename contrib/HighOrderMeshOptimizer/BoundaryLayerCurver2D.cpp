@@ -43,7 +43,7 @@
 #include "FlGui.h"
 #endif
 #include "Options.h"
-#include "AnalyseCurvedMesh.h"
+#include "AnalyseMeshQuality.h"
 #include "InnerVertexPlacement.h"
 #include "pointsGenerators.h"
 #include "qualityMeasuresJacobian.h"
