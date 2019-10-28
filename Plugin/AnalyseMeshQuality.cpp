@@ -7,7 +7,7 @@
 
 #if defined(HAVE_MESH)
 
-#include "AnalyseCurvedMesh.h"
+#include "AnalyseMeshQuality.h"
 #include "qualityMeasuresJacobian.h"
 #include "OS.h"
 #include "Context.h"
@@ -39,25 +39,25 @@ StringXNumber CurvedMeshOptions_Number[] = {
 };
 
 extern "C" {
-GMSH_Plugin *GMSH_RegisterAnalyseCurvedMeshPlugin()
+GMSH_Plugin *GMSH_RegisterAnalyseMeshQualityPlugin()
 {
-  return new GMSH_AnalyseCurvedMeshPlugin();
+  return new GMSH_AnalyseMeshQualityPlugin();
 }
 }
 
-int GMSH_AnalyseCurvedMeshPlugin::getNbOptions() const
+int GMSH_AnalyseMeshQualityPlugin::getNbOptions() const
 {
   return sizeof(CurvedMeshOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_AnalyseCurvedMeshPlugin::getOption(int iopt)
+StringXNumber *GMSH_AnalyseMeshQualityPlugin::getOption(int iopt)
 {
   return &CurvedMeshOptions_Number[iopt];
 }
 
-std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
+std::string GMSH_AnalyseMeshQualityPlugin::getHelp() const
 {
-  return "Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. "
+  return "Plugin(AnalyseMeshQuality) analyse all elements of a given dimension. "
          "According to what is asked, it computes the minimum of the Jacobian "
          "determinant (J), the IGE quality measure (Inverse Gradient Error) "
          "and/or "
@@ -107,7 +107,7 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
          "greater dimension. If == 4, analyse 2D and 3D elements.";
 }
 
-PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
+PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 {
   _m = GModel::current();
   int computeJac = static_cast<int>(CurvedMeshOptions_Number[0].def);
@@ -259,7 +259,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   return NULL;
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
+void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
 {
   if(_computedJac[dim - 1]) return;
 
@@ -383,7 +383,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
   bezierCoeff::releasePools();
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
+void GMSH_AnalyseMeshQualityPlugin::_computeMinIGE(int dim)
 {
   if(_computedIGE[dim - 1]) return;
 
@@ -404,7 +404,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
   _computedIGE[dim - 1] = true;
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
+void GMSH_AnalyseMeshQualityPlugin::_computeMinICN(int dim)
 {
   if(_computedICN[dim - 1]) return;
 
@@ -425,7 +425,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
   _computedICN[dim - 1] = true;
 }
 
-int GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim,
+int GMSH_AnalyseMeshQualityPlugin::_hideWithThreshold(int askedDim,
                                                      int whichMeasure)
 {
   // only hide for quality measures
@@ -455,7 +455,7 @@ int GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim,
   return nHidden;
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
+void GMSH_AnalyseMeshQualityPlugin::_printStatJacobian()
 {
   if(_data.empty()) {
     Msg::Info("No stat to print.");
@@ -504,7 +504,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
             avgratJ, supratJ);
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_printStatIGE()
+void GMSH_AnalyseMeshQualityPlugin::_printStatIGE()
 {
   if(_data.empty()) {
     Msg::Info("No stat to print.");
@@ -524,7 +524,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatIGE()
             avgminS, supminS);
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
+void GMSH_AnalyseMeshQualityPlugin::_printStatICN()
 {
   if(_data.empty()) {
     Msg::Info("No stat to print.");
@@ -545,7 +545,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
 }
 
 #if defined(HAVE_VISUDEV)
-void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(
+void GMSH_AnalyseMeshQualityPlugin::_computePointwiseQuantities(
   MElement *el, const fullMatrix<double> *normals)
 {
   if(_numElementToScan != -1 && el->getNum() != _numElementToScan) return;
@@ -586,7 +586,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(
   }
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_setInterpolationMatrices(PView *view)
+void GMSH_AnalyseMeshQualityPlugin::_setInterpolationMatrices(PView *view)
 {
   PViewData *viewData = view->getData();
   for(int type = 0; type < 20; ++type) {
@@ -603,7 +603,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_setInterpolationMatrices(PView *view)
   }
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_createPViewPointwise()
+void GMSH_AnalyseMeshQualityPlugin::_createPViewPointwise()
 {
   if(_pwJac) {
     _setInterpolationMatrices(new PView("Pointwise Jacobian", "ElementNodeData",
