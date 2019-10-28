@@ -4,6 +4,7 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <vector>
+#include "Context.h"
 #include "GModel.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
@@ -33,27 +34,39 @@ int GModel::readCGNS(const std::string &name)
   // read mesh zones
   std::vector<MVertex *> allVert;
   std::map<int, std::vector<MElement *> > allElt[10];
+  std::vector<std::string> allBCName, allBCFamilyName;
+  std::map<int, int> bc2Family;
   int nbZones = 0;
   cgnsErr = cg_nzones(cgIndexFile, cgIndexBase, &nbZones);
   if(cgnsErr != CG_OK) return cgnsError();
   for(int iZone = 1; iZone <= nbZones; iZone++) {
     int err = readZone(cgIndexFile, cgIndexBase, iZone, dim, scale, allVert,
-                       allElt);
+                       allElt, allBCName, bc2Family, allBCFamilyName);
     if(err == 0) return 0;
   }
 
-  // remove duplicate vertices
-  // DBGTT: change to geometric tolerance
-  removeDuplicateMeshVertices(1e-8);
+  cgnsErr = cg_close(cgIndexFile);
+  if(cgnsErr != CG_OK) return cgnsError();
 
-  // Populate data structures in Gmsh
+  // remove duplicate vertices
+  removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
+
+  // populate data structures with elements and vertices
   for(int i = 0; i < 10; i++) _storeElementsInEntities(allElt[i]);
-  // if(CTX::instance()->mesh.cgnsConstructTopology) createTopologyFromMeshNew();
+  if(CTX::instance()->mesh.cgnsConstructTopology) createTopologyFromMeshNew();
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVert);
 
-  cgnsErr = cg_close(cgIndexFile);
-  if(cgnsErr != CG_OK) return cgnsError();
+  // add physical tags (BC family names)
+  typedef std::map<int, int>::iterator BC2FamilyIter;
+  std::map<int, std::map<int, std::string> > physicalBnd;
+  for(BC2FamilyIter it = bc2Family.begin(); it != bc2Family.end(); it++) {
+    const int entity = it->first;
+    const std::string &familyName = allBCFamilyName[it->second];
+    physicalBnd[entity][entity] = familyName;
+    _physicalNames[std::make_pair(meshDim-1, entity)] = familyName;
+  }
+  _storePhysicalTagsInEntities(meshDim-1, physicalBnd);
 
   return 1;
 }
