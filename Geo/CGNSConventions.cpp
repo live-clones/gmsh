@@ -26,6 +26,8 @@ namespace {
   void addEdgePointsCGNS(const SVector3 p0, const SVector3 p1, int order,
                          std::vector<SVector3> &points)
   {
+    if (order < 2) return;
+
     double ds = 1. / order;
     for(int i = 1; i < order; i++) {
       double f = ds * i;
@@ -38,6 +40,8 @@ namespace {
   void addTriPointsCGNS(const SVector3 p0, const SVector3 p1, const SVector3 p2,
                         int order, std::vector<SVector3> &points)
   {
+    if (order < 3) return;
+    
     std::vector<SVector3> triPoints = generatePointsTriCGNS(order - 3, true);
 
     double scale = double(order - 3) / double(order);
@@ -47,9 +51,7 @@ namespace {
       SVector3 ip = triPoints[i];
       double u = ip[0] * scale + 1. / order;
       double v = ip[1] * scale + 1. / order;
-
       SVector3 pt = (1. - u - v) * p0 + u * p1 + v * p2;
-
       points.push_back(pt);
     }
   }
@@ -110,6 +112,11 @@ namespace {
   {
     std::vector<SVector3> pp;
 
+    if(order == 0) {
+      pp.push_back(SVector3(0., 0., 0.));
+      return pp;
+    }
+
     // primary vertices
     pp.push_back(SVector3(-1, 0, 0));
     pp.push_back(SVector3(1, 0, 0));
@@ -123,6 +130,11 @@ namespace {
   std::vector<SVector3> generatePointsTriCGNS(int order, bool complete)
   {
     std::vector<SVector3> pp;
+
+    if(order == 0) {
+      pp.push_back(SVector3(1./3., 1./3., 0.));
+      return pp;
+    }
 
     // primary vertices
     pp.push_back(SVector3(0, 0, 0));
@@ -146,6 +158,11 @@ namespace {
   {
     std::vector<SVector3> pp;
 
+    if(order == 0) {
+      pp.push_back(SVector3(0., 0., 0.));
+      return pp;
+    }
+
     // primary vertices
     pp.push_back(SVector3(-1, -1, 0));
     pp.push_back(SVector3(1, -1, 0));
@@ -168,6 +185,11 @@ namespace {
   std::vector<SVector3> generatePointsTetCGNS(int order, bool complete)
   {
     std::vector<SVector3> pp;
+
+    if(order == 0) {
+      pp.push_back(SVector3(1./4., 1./4., 1./4.));
+      return pp;
+    }
 
     // primary vertices
     pp.push_back(SVector3(0, 0, 0));
@@ -212,6 +234,11 @@ namespace {
   std::vector<SVector3> generatePointsHexCGNS(int order, bool complete)
   {
     std::vector<SVector3> pp;
+
+    if(order == 0) {
+      pp.push_back(SVector3(0., 0., 0.));
+      return pp;
+    }
 
     // principal vertices
     pp.push_back(SVector3(-1, -1, -1));
@@ -264,6 +291,11 @@ namespace {
   {
     std::vector<SVector3> pp;
 
+    if(order == 0) {
+      pp.push_back(SVector3(1./3., 1./3., 0.));
+      return pp;
+    }
+
     // principal vertices
     pp.push_back(SVector3(0, 0, -1));
     pp.push_back(SVector3(1, 0, -1));
@@ -309,9 +341,15 @@ namespace {
     return pp;
   }
 
+  // WARNING: incomplete pyramids order 2 are wrong
   std::vector<SVector3> generatePointsPyrCGNS(int order, bool complete)
   {
     std::vector<SVector3> pp;
+
+    if(order == 0) {
+      pp.push_back(SVector3(0., 0., 0.));
+      return pp;
+    }
 
     // principal vertices
     pp.push_back(SVector3(-1, -1, 0));
@@ -335,13 +373,13 @@ namespace {
       addTriPointsCGNS(pp[i], pp[(i + 1) % 4], pp[4], order, pp);
 
     // internal points as an internal pyramid of order p-3
-    std::vector<SVector3> pyr = generatePointsPyrCGNS(order - 3, true);
-
-    SVector3 offset(0, 0, 1. / order);
-    double scale = double(order - 3) / double(order);
-
-    for(size_t i = 0; i < pyr.size(); ++i)
-      pp.push_back((pyr[i] * scale) + offset);
+    if (order > 2) {
+      std::vector<SVector3> pyr = generatePointsPyrCGNS(order - 3, true);
+      SVector3 offset(0, 0, 1. / order);
+      double scale = double(order - 3) / double(order);
+      for(size_t i = 0; i < pyr.size(); ++i)
+        pp.push_back((pyr[i] * scale) + offset);
+    }
 
     return pp;
   }
@@ -351,22 +389,19 @@ namespace {
   {
     std::vector<SVector3> pts;
 
-    if(order == 0) pts = std::vector<SVector3>(1, SVector3(0, 0, 0));
-    else {
-      switch(parentType) {
-      case TYPE_LIN: pts = generatePointsEdgeCGNS(order); break;
-      case TYPE_TRI: pts = generatePointsTriCGNS(order, complete); break;
-      case TYPE_QUA: pts = generatePointsQuaCGNS(order, complete); break;
-      case TYPE_TET: pts = generatePointsTetCGNS(order, complete); break;
-      case TYPE_HEX: pts = generatePointsHexCGNS(order, complete); break;
-      case TYPE_PRI: pts = generatePointsPriCGNS(order, complete); break;
-      case TYPE_PYR: pts = generatePointsPyrCGNS(order, complete); break;
-      default:
-        Msg::Error(
-          "%s (%i) : Error CGNS element %s of order %i not yet implemented",
-          __FILE__, __LINE__, ElementType::nameOfParentType(parentType).c_str(),
-          order);
-      }
+    switch(parentType) {
+    case TYPE_LIN: pts = generatePointsEdgeCGNS(order); break;
+    case TYPE_TRI: pts = generatePointsTriCGNS(order, complete); break;
+    case TYPE_QUA: pts = generatePointsQuaCGNS(order, complete); break;
+    case TYPE_TET: pts = generatePointsTetCGNS(order, complete); break;
+    case TYPE_HEX: pts = generatePointsHexCGNS(order, complete); break;
+    case TYPE_PRI: pts = generatePointsPriCGNS(order, complete); break;
+    case TYPE_PYR: pts = generatePointsPyrCGNS(order, complete); break;
+    default:
+      Msg::Error(
+        "%s (%i) : Error CGNS element %s of order %i not yet implemented",
+        __FILE__, __LINE__, ElementType::nameOfParentType(parentType).c_str(),
+        order);
     }
 
     size_t dim = 0;
