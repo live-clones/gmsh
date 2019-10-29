@@ -131,6 +131,20 @@ void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
 }
 
 
+std::string entTypeStr(int dim)
+{
+  return (dim == 3) ? "Volume" : (dim == 2) ? "Surface" : (dim == 1) ? "Curve" :
+         (dim == 0) ? "Point" : ""; 
+}
+
+
+std::string entTypeShortStr(int dim)
+{
+  return (dim == 3) ? "V" : (dim == 2) ? "S" : (dim == 1) ? "C" :
+         (dim == 0) ? "P" : ""; 
+}
+
+
 // create a single zone for a whole partition; nodes and elements are
 // referenced with per-zone index (starting at 1) inside a zone
 int writeZone(GModel *model, bool saveAll, double scalingFactor,
@@ -227,11 +241,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
     std::string entityName = model->getElementaryName(ge->dim(), ge->tag());
     if(entityName.empty()) {
       std::ostringstream s;
-      std::string entStr = (ge->dim() == 3) ? "Vol" :
-                           (ge->dim() == 2) ? "Surf" :
-                           (ge->dim() == 1) ? "Curve" :
-                           (ge->dim() == 0) ? "Pnt" : ""; 
-      s << "Gmsh_" << entStr << "_" << ge->tag();
+      s << "Gmsh_" << entTypeStr(ge->dim()) << "_" << ge->tag();
       entityName = s.str();
     }
     entityName = cgnsString(entityName);
@@ -336,16 +346,18 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     const EntityInterface &entInt = perInt.second;
     const std::size_t &part1 = partInt.first;
     const int entTag1 = entInt.first->tag();
+    const int dim1 = entInt.first->dim();
     const std::size_t &part2 = partInt.second;
     const int entTag2 = entInt.second->tag();
+    const int dim2 = entInt.second->dim();
     const NodeCorrespondence &nc = it->second;
     const std::vector<cgsize_t> &nodes1 = nc.first;
     const std::vector<cgsize_t> &nodes2 = nc.second;
     int slaveZone = (part1 == 0) ? 1 : part1;
     const std::string &masterZoneName = zoneName[part2]; 
     std::ostringstream ossInt;
-    ossInt << "Per_Part" << part1 << "_Ent" << entTag1
-           << "_Part" << part2 << "_Ent" << entTag2;
+    ossInt << "Per_" << part1 << "-" << entTypeShortStr(dim1) << entTag1 << "_"
+           << part2 << "-" << entTypeShortStr(dim2) << entTag2;
     const std::string interfaceName = cgnsString(ossInt.str()); 
     int connIdx;
     cgnsErr = cg_conn_write(cgIndexFile, cgIndexBase, slaveZone,
