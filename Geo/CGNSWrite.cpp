@@ -234,6 +234,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   cgsize_t eleStart = 0, eleEnd = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
+    const int entDim = ge->dim();
 
     // FIXME: use MIXED section? -> probably less efficient
     // 2) store physical information in a "family"?
@@ -245,46 +246,77 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
       entityName = s.str();
     }
     entityName = cgnsString(entityName);
+    std::vector<int> physicalEnt = ge->getPhysicalEntities();
+    std::string physicalName;
+    if (physicalEnt.size() > 0) {
+      physicalName = model->getPhysicalName(ge->dim(), physicalEnt[0]);
+    }
+    if(physicalName.length() > 0) physicalName = cgnsString(physicalName);
 
     // retrieve element types for this geometric entity
     std::vector<int> eleTypes;
     ge->getElementTypes(eleTypes);
 
+    // Range of element indices in entity (for BC)
+    cgsize_t eleEntRange[2] = {eleEnd + 1, 0};
+
     // build list of connectivities
     for(std::size_t eleType = 0; eleType < eleTypes.size(); eleType++) {
       int numEle = ge->getNumMeshElementsByType(eleTypes[eleType]);
-      if(numEle && (saveAll || ge->physicals.size())) {
-        eleStart = (eleEnd + 1);
-        eleEnd += numEle;
-        MElement *me = ge->getMeshElementByType(eleTypes[eleType], 0);
-        int mshType = me->getTypeForMSH();
-        ElementType_t cgType = msh2CgnsEltType(mshType);
-        if(cgType == ElementTypeNull) {
-          Msg::Error("Unhandled element type in CGNS ouput (%d)", mshType);
-          break;
-        }
-        std::vector<int> mshNodeInd = cgns2MshNodeIndex(mshType);
-        
-        int numNodesPerEle = me->getNumVertices();
-        std::vector<cgsize_t> elemNodes(numEle * numNodesPerEle);
-        std::size_t n = 0;
-        for(int j = 0; j < numEle; j++) {
-          me = ge->getMeshElementByType(eleTypes[eleType], j);
-          for(int k = 0; k < numNodesPerEle; k++) {
-            const int gInd = me->getVertex(mshNodeInd[k])->getIndex();
-            elemNodes[n] = global2Local[gInd].index;
-            n++;
-          }
-        }
-
-        std::ostringstream ossSection(entityName);
-        ossSection << "_" << eleTypes[eleType];
-        int cgIndexSection = 0;
-        cgnsErr = cg_section_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                                   ossSection.str().c_str(), cgType, eleStart,
-                                   eleEnd, 0, &elemNodes[0], &cgIndexSection);
-        if(cgnsErr != CG_OK) return cgnsError();
+      if((numEle == 0) || ((ge->physicals.size() == 0) && (!saveAll))) continue;
+      eleStart = eleEnd + 1;
+      eleEnd += numEle;
+      MElement *me = ge->getMeshElementByType(eleTypes[eleType], 0);
+      int mshType = me->getTypeForMSH();
+      ElementType_t cgType = msh2CgnsEltType(mshType);
+      if(cgType == ElementTypeNull) {
+        Msg::Error("Unhandled element type in CGNS ouput (%d)", mshType);
+        break;
       }
+      std::vector<int> mshNodeInd = cgns2MshNodeIndex(mshType);
+      
+      // build connectivity for each element
+      int numNodesPerEle = me->getNumVertices();
+      std::vector<cgsize_t> elemNodes(numEle * numNodesPerEle);
+      std::size_t n = 0;
+      for(int j = 0; j < numEle; j++) {
+        me = ge->getMeshElementByType(eleTypes[eleType], j);
+        for(int k = 0; k < numNodesPerEle; k++) {
+          const int gInd = me->getVertex(mshNodeInd[k])->getIndex();
+          elemNodes[n] = global2Local[gInd].index;
+          n++;
+        }
+      }
+
+      // write section
+      std::ostringstream ossSection(entityName);
+      ossSection << "_" << eleTypes[eleType];
+      int cgIndexSection = 0;
+      cgnsErr = cg_section_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                                  ossSection.str().c_str(), cgType, eleStart,
+                                  eleEnd, 0, &elemNodes[0], &cgIndexSection);
+      if(cgnsErr != CG_OK) return cgnsError();
+    }
+
+    // write elementary entity as BC and physical name as BC family name
+    eleEntRange[1] = eleEnd;
+    int iZoneBC;
+    cgnsErr = cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                            entityName.c_str(), FamilySpecified, PointRange,
+                            2, eleEntRange, &iZoneBC);
+    if(cgnsErr != CG_OK) return cgnsError();
+    const GridLocation_t loc = (entDim == 2) ? FaceCenter :
+                               (entDim == 1) ? EdgeCenter :
+                               (entDim == 0) ? Vertex : CellCenter;
+    cgnsErr = cg_boco_gridlocation_write(cgIndexFile, cgIndexBase,
+                                          cgIndexZone, iZoneBC, loc);
+    if(cgnsErr != CG_OK) return cgnsError();
+    if(physicalName.length() > 0) {
+      cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
+                        "ZoneBC_t", 1, "BC_t", iZoneBC, "end");
+      if(cgnsErr != CG_OK) return cgnsError();
+      cgnsErr = cg_famname_write(physicalName.c_str());
+      if(cgnsErr != CG_OK) return cgnsError();
     }
   }
 

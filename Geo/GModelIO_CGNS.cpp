@@ -58,25 +58,23 @@ int GModel::readCGNS(const std::string &name)
   _storeVerticesInEntities(allVert);
 
   // set names of geometric entities from BC names
-  for (int d = 0; d < meshDim; d++) {
+  for (int d = 0; d <= meshDim; d++) {
     std::vector<GEntity *> ent;
     getEntities(ent, d);
+    std::map<int, std::map<int, std::string> > physicalBnd;
     for(std::size_t iEnt = 0; iEnt < ent.size(); iEnt++) {
       int tag = ent[iEnt]->tag();
-      setElementaryName(ent[iEnt]->dim(), tag, allBCName[tag]);
+      setElementaryName(d, tag, allBCName[tag]);
+      const std::map<int, int>::iterator itFam = bc2Family.find(tag);
+      if(itFam != bc2Family.end()) {
+        const int family = itFam->second;
+        const std::string &familyName = allBCFamilyName[family];
+        physicalBnd[tag][tag] = familyName;
+        _physicalNames[std::make_pair(d, tag)] = familyName;
+      }
     }
+    _storePhysicalTagsInEntities(d, physicalBnd);
   }
-
-  // add physical tags (BC family names)
-  typedef std::map<int, int>::iterator BC2FamilyIter;
-  std::map<int, std::map<int, std::string> > physicalBnd;
-  for(BC2FamilyIter it = bc2Family.begin(); it != bc2Family.end(); it++) {
-    const int entity = it->first;
-    const std::string &familyName = allBCFamilyName[it->second];
-    physicalBnd[entity][entity] = familyName;
-    _physicalNames[std::make_pair(meshDim-1, entity)] = familyName;
-  }
-  _storePhysicalTagsInEntities(meshDim-1, physicalBnd);
 
   return 1;
 }

@@ -113,17 +113,20 @@ int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
                                       &location);
   if(cgnsErr != CG_OK) return cgnsError();
 
-  // check that boundary condition is imposed at the correct location
-  if((dim == 2) && (location != EdgeCenter)) {
-    Msg::Warning("Boundary condition %s is specified on %s instead of edges in "
-                 "a 2D zone, skipping", bcName, cg_GridLocationName(location));
-    return 1;
-  }
-  else if((dim == 3) && (location != FaceCenter)) {
-    Msg::Error("Boundary condition %s is specified on %s instead of faces for "
-               "a 3D zone, skipping", bcName, cg_GridLocationName(location));
-    return 1;
-  }
+  // // check that boundary condition is imposed at the correct location
+  // if((dim == 2) && (location != EdgeCenter) && (location != Vertex)) {
+  //   Msg::Warning("Boundary condition %s is specified on %s instead of edges or "
+  //                "vertices in a 2D zone, skipping", bcName,
+  //                cg_GridLocationName(location));
+  //   return 1;
+  // }
+  // else if((dim == 3) && (location != FaceCenter) && (location != EdgeCenter) &&
+  //         (location != Vertex)) {
+  //   Msg::Error("Boundary condition %s is specified on %s instead of faces, "
+  //              "edges or vertices for a 3D zone, skipping", bcName,
+  //              cg_GridLocationName(location));
+  //   return 1;
+  // }
 
   // Associate BC name and family name with indices
   const int indBC = nameIndex(bcName, allBCName);
