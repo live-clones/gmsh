@@ -107,7 +107,7 @@ int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
     familyName = std::string(tmpFamilyName);
   }
 
-  // read location of boundary condition (i.e. elements on which it applies)
+  // read location of bnd. condition (type of mesh entity on which it applies)
   GridLocation_t location;
   cgnsErr = cg_boco_gridlocation_read(cgIndexFile, cgIndexBase, iZone, iZoneBC,
                                       &location);
@@ -115,13 +115,13 @@ int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
 
   // check that boundary condition is imposed at the correct location
   if((dim == 2) && (location != EdgeCenter)) {
-    Msg::Warning("Boundary condition %s is specified %s instead of edges in a "
-                 "2D zone, skipping", bcName, cg_GridLocationName(location));
+    Msg::Warning("Boundary condition %s is specified on %s instead of edges in "
+                 "a 2D zone, skipping", bcName, cg_GridLocationName(location));
     return 1;
   }
   else if((dim == 3) && (location != FaceCenter)) {
-    Msg::Error("Boundary condition %s is specified %s instead of faces for a "
-               "3D zone, skipping", bcName, cg_GridLocationName(location));
+    Msg::Error("Boundary condition %s is specified on %s instead of faces for "
+               "a 3D zone, skipping", bcName, cg_GridLocationName(location));
     return 1;
   }
 

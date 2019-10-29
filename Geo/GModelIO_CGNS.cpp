@@ -57,6 +57,16 @@ int GModel::readCGNS(const std::string &name)
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVert);
 
+  // set names of geometric entities from BC names
+  for (int d = 0; d < meshDim; d++) {
+    std::vector<GEntity *> ent;
+    getEntities(ent, d);
+    for(std::size_t iEnt = 0; iEnt < ent.size(); iEnt++) {
+      int tag = ent[iEnt]->tag();
+      setElementaryName(ent[iEnt]->dim(), tag, allBCName[tag]);
+    }
+  }
+
   // add physical tags (BC family names)
   typedef std::map<int, int>::iterator BC2FamilyIter;
   std::map<int, std::map<int, std::string> > physicalBnd;
