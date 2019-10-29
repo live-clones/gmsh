@@ -95,16 +95,15 @@ int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
   if(cgnsErr != CG_OK) return cgnsError();
 
   // read family linked to BC, use BC name if not present
+  std::string familyName;
   cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "Zone_t", iZone, "ZoneBC_t",
                     1, "BC_t", iZoneBC, "end");
   if(cgnsErr != CG_OK) return cgnsError();
   char tmpFamilyName[CGNS_MAX_STR_LEN];
   cgnsErr = cg_famname_read(tmpFamilyName);
-  std::string familyName;
-  if(cgnsErr == CG_NODE_NOT_FOUND) familyName = std::string(bcName);
-  else {
-    if(cgnsErr != CG_OK) return cgnsError();
-    familyName = std::string(tmpFamilyName);
+  if(cgnsErr != CG_NODE_NOT_FOUND) {
+    if(cgnsErr == CG_OK) familyName = std::string(tmpFamilyName);
+    else return cgnsError();
   }
 
   // read location of bnd. condition (type of mesh entity on which it applies)
@@ -130,8 +129,10 @@ int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
 
   // Associate BC name and family name with indices
   const int indBC = nameIndex(bcName, allBCName);
-  const int indBCFamily = nameIndex(familyName, allBCFamilyName);
-  bc2Family[indBC] = indBCFamily;
+  if(familyName.length() > 0) {
+    const int indBCFamily = nameIndex(familyName, allBCFamilyName);
+    bc2Family[indBC] = indBCFamily;
+  }
 
   // Read elements on which the BC is imposed
   std::vector<cgsize_t> elt(nbElts);
@@ -162,8 +163,7 @@ int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
 
 
 int readSection(int cgIndexFile, int cgIndexBase, int iZone, int iSect,
-                std::size_t vertShift, int entity,
-                const std::vector<MVertex *> &allVert,
+                std::size_t vertShift, const std::vector<MVertex *> &allVert,
                 std::map<int, std::vector<MElement *> > *allElt,
                 const std::map<int, int> &elt2BC)
 {
@@ -195,7 +195,7 @@ int readSection(int cgIndexFile, int cgIndexBase, int iZone, int iSect,
   std::size_t iSectData = 0;
   for(int iElt = startElt; iElt <= endElt; iElt++) {
     const std::map<int, int>::const_iterator itBC = elt2BC.find(iElt);
-    const int entity = (itBC == elt2BC.end()) ? iZone : itBC->second;
+    const int entity = (itBC == elt2BC.end()) ? 1 : itBC->second;
     getElement(sectEltType, vertShift, entity, allVert, allElt, sectData,
                iSectData);
   }
@@ -326,10 +326,9 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   if(cgnsErr != CG_OK) return cgnsError();
 
   // read sections of element-vertex connectivity
-  const int entity = iZone; 
   for(int iSect = 1; iSect <= nbSect; iSect++) {
     int err = readSection(cgIndexFile, cgIndexBase, iZone, iSect, vertShift,
-                          entity, allVert, allElt, elt2BC);
+                          allVert, allElt, elt2BC);
     if(err == 0) return 0;
   }
 

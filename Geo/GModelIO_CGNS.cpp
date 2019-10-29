@@ -31,10 +31,14 @@ int GModel::readCGNS(const std::string &name)
   cgnsErr = cg_base_read(cgIndexFile, cgIndexBase, baseName, &dim, &meshDim);
   if(cgnsErr != CG_OK) return cgnsError();
 
+  // define BC names and families, used for elementary and physical names resp.
+  // Index start at 1 with empty name to acocunt for unclassified elements
+  std::vector<std::string> allBCName(2, "");
+  std::vector<std::string> allBCFamilyName(2, "");
+
   // read mesh zones
   std::vector<MVertex *> allVert;
   std::map<int, std::vector<MElement *> > allElt[10];
-  std::vector<std::string> allBCName(1, ""), allBCFamilyName(1, "");  // indices start at 1
   std::map<int, int> bc2Family;
   int nbZones = 0;
   cgnsErr = cg_nzones(cgIndexFile, cgIndexBase, &nbZones);
@@ -45,6 +49,7 @@ int GModel::readCGNS(const std::string &name)
     if(err == 0) return 0;
   }
 
+  // close file
   cgnsErr = cg_close(cgIndexFile);
   if(cgnsErr != CG_OK) return cgnsError();
 
@@ -64,7 +69,8 @@ int GModel::readCGNS(const std::string &name)
     std::map<int, std::map<int, std::string> > physicalBnd;
     for(std::size_t iEnt = 0; iEnt < ent.size(); iEnt++) {
       int tag = ent[iEnt]->tag();
-      setElementaryName(d, tag, allBCName[tag]);
+      const std::string &entName = allBCName[tag];
+      if(entName.length() > 0) setElementaryName(d, tag, entName);
       const std::map<int, int>::iterator itFam = bc2Family.find(tag);
       if(itFam != bc2Family.end()) {
         const int family = itFam->second;
