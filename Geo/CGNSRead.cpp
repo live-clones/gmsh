@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include "Context.h"
 #include "GmshMessage.h"
 #include "MVertex.h"
 #include "MElement.h"
@@ -204,6 +205,220 @@ int readSection(int cgIndexFile, int cgIndexBase, int iZone, int iSect,
 }
 
 
+int readElementsUnstructured(int cgIndexFile, int cgIndexBase, int iZone,
+                             std::size_t vertShift,
+                             std::vector<MVertex *> &allVert,
+                             std::map<int, std::vector<MElement *> > *allElt,
+                             std::vector<std::string> &allBCName,
+                             std::map<int, int> &bc2Family,
+                             std::vector<std::string> &allBCFamilyName,
+                             const std::map<int, int> &elt2BC)
+{
+  int cgnsErr;
+
+  // read number of sections of element-vertex connectivity
+  int nbSect;
+  cgnsErr = cg_nsections(cgIndexFile, cgIndexBase, iZone, &nbSect);
+  if(cgnsErr != CG_OK) return cgnsError();
+
+  // read sections of element-vertex connectivity
+  for(int iSect = 1; iSect <= nbSect; iSect++) {
+    int err = readSection(cgIndexFile, cgIndexBase, iZone, iSect, vertShift,
+                          allVert, allElt, elt2BC);
+    if(err == 0) return 0;
+  }
+
+  return 1;
+}
+
+
+class StructuredInd2D
+{
+public:
+  StructuredInd2D(int iZone, cgsize_t *size, int &err);
+
+  int nbVertI() const {return nbVertI_; }
+  int nbVertJ() const {return nbVertJ_; }
+  int nbEltI() const {return nbEltI_; }
+  int nbEltJ() const {return nbEltJ_; }
+    
+  int Elt(int i, int j) const { return j * nbEltI_ + i; }
+  int Vert(int i, int j) const { return j * nbVertI_ + i; }
+
+private:
+  int nbVertI_, nbVertJ_;
+  int nbEltI_, nbEltJ_;
+
+};
+
+
+StructuredInd2D::StructuredInd2D(int iZone, cgsize_t *size, int &err) :
+  nbVertI_(size[0]), nbVertJ_(size[1]), nbEltI_(size[2]), nbEltJ_(size[3])
+{
+  if((nbVertI_ != nbEltI_+1) || (nbVertJ_ != nbEltJ_+1)) {
+    Msg::Error("CGNS zone %i: number of vertices (%i, %i) is inconsistent with "
+               "number of elements (%i, %i)", iZone, nbVertI_, nbVertJ_,
+               nbEltI_, nbEltJ_);
+    err = 0;
+  }
+  else err = 1;
+}
+
+
+class StructuredInd3D
+{
+public:
+  StructuredInd3D(int iZone, cgsize_t *size, int &err);
+
+  int nbVertI() const {return nbVertI_; }
+  int nbVertJ() const {return nbVertJ_; }
+  int nbVertK() const {return nbVertK_; }
+  int nbEltI() const {return nbEltI_; }
+  int nbEltJ() const {return nbEltJ_; }
+  int nbEltK() const {return nbEltK_; }
+
+  int Elt(int i, int j, int k) const {
+    return (k * nbEltJ_ + j) * nbEltI_ + i;
+  }
+  int Vert(int i, int j, int k) const {
+    return(k * nbVertJ_ + j) * nbVertI_ + i;
+  }
+
+private:
+  int nbVertI_, nbVertJ_, nbVertK_;
+  int nbEltI_, nbEltJ_, nbEltK_;
+
+};
+
+
+StructuredInd3D::StructuredInd3D(int iZone, cgsize_t *size, int &err) :
+  nbVertI_(size[0]), nbVertJ_(size[1]), nbVertK_(size[2]), nbEltI_(size[3]),
+  nbEltJ_(size[4]), nbEltK_(size[5])
+{
+  if((nbVertI_ != nbEltI_+1) || (nbVertJ_ != nbEltJ_+1) ||
+     (nbVertK_ != nbEltK_+1)) {
+    Msg::Error("CGNS zone %i: number of vertices (%i, %i, %i) is inconsistent "
+               "with number of elements (%i, %i, %i)", iZone, nbVertI_,
+               nbVertJ_, nbVertK_, nbEltI_, nbEltJ_, nbEltK_);
+    err = 0;
+  }
+  else err = 1;
+}
+
+
+int readElementsStructured2D(int cgIndexFile, int cgIndexBase, int iZone,
+                             std::size_t vertShift, cgsize_t *zoneSize,
+                             std::vector<MVertex *> &allVert,
+                             std::map<int, std::vector<MElement *> > *allElt,
+                             std::vector<std::string> &allBCName,
+                             std::map<int, int> &bc2Family,
+                             std::vector<std::string> &allBCFamilyName,
+                             const std::map<int, int> &elt2BC)
+{
+  // number of vertices and elements
+  int err = 1;
+  StructuredInd2D si(iZone, zoneSize, err);
+  if(err == 0) return 0;
+
+  // for(int i = 0; i < nbEltI; i++) {
+  //   for(int j = 0; j < nbEltJ; j++) {
+  //   }
+  // }
+  
+
+  return 1;
+}
+
+
+void createHex(int i, int j, int k, const StructuredInd3D &si, int order,
+               std::size_t vertShift, std::vector<MVertex *> &allVert,
+               std::map<int, std::vector<MElement *> > *allElt)
+{
+  // node shift from (i, j, k) depending on order
+  static int shiftP1[8][3] = {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
+                              {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}};
+  static int shiftP2[27][3] = {{0, 0, 0}, {2, 0, 0}, {2, 2, 0}, {0, 2, 0},
+                               {0, 0, 2}, {2, 0, 2}, {2, 2, 2}, {0, 2, 2},
+                               {1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {2, 1, 0},
+                               {2, 0, 1}, {1, 2, 0}, {2, 2, 1}, {0, 2, 1},
+                               {1, 0, 2}, {0, 1, 2}, {2, 1, 2}, {1, 2, 2},
+                               {1, 1, 0}, {1, 0, 1}, {0, 1, 1}, {2, 1, 1},
+                               {1, 2, 1}, {1, 1, 2}, {1, 1, 1}};
+
+  // get element vertices
+  int mshEltType;
+  int *s;
+  if(order == 2) {
+    mshEltType = MSH_HEX_27;
+    s = (int*)shiftP2;
+  }
+  else {
+    mshEltType = MSH_HEX_8;
+    s = (int*)shiftP1;
+  }
+  int nbEltNode = ElementType::getNumVertices(mshEltType);
+  std::vector<MVertex *> eltVert(nbEltNode);
+  for(int iN = 0; iN < nbEltNode; iN++) {
+    const int ind = vertShift + si.Vert(i+s[3*iN], j+s[3*iN+1], k+s[3*iN+2]);
+    eltVert[iN] = allVert[ind];
+  }
+
+  // create element
+  MElementFactory factory;
+  MElement *e = factory.create(mshEltType, eltVert);
+
+  // add element to data structure
+  int entity = 1;
+  switch(e->getType()) {
+  case TYPE_PNT: allElt[0][entity].push_back(e); break;
+  case TYPE_LIN: allElt[1][entity].push_back(e); break;
+  case TYPE_TRI: allElt[2][entity].push_back(e); break;
+  case TYPE_QUA: allElt[3][entity].push_back(e); break;
+  case TYPE_TET: allElt[4][entity].push_back(e); break;
+  case TYPE_HEX: allElt[5][entity].push_back(e); break;
+  case TYPE_PRI: allElt[6][entity].push_back(e); break;
+  case TYPE_PYR: allElt[7][entity].push_back(e); break;
+  case TYPE_POLYG: allElt[8][entity].push_back(e); break;
+  case TYPE_POLYH: allElt[9][entity].push_back(e); break;
+  default: Msg::Error("Wrong type of element");
+  }
+}
+
+
+int readElementsStructured3D(int cgIndexFile, int cgIndexBase, int iZone,
+                             std::size_t vertShift, cgsize_t *zoneSize,
+                             std::vector<MVertex *> &allVert,
+                             std::map<int, std::vector<MElement *> > *allElt,
+                             std::vector<std::string> &allBCName,
+                             std::map<int, int> &bc2Family,
+                             std::vector<std::string> &allBCFamilyName,
+                             const std::map<int, int> &elt2BC)
+{
+  // number of vertices and elements (raw mesh)
+  int err = 1;
+  StructuredInd3D si(iZone, zoneSize, err);
+  if(err == 0) return 0;
+
+  // order of coarsened mesh and number of coarsened (HO) elements
+  int order = CTX::instance()->mesh.cgnsImportOrder;
+  const int nbEltI = si.nbEltI() / order; 
+  const int nbEltJ = si.nbEltJ() / order; 
+  const int nbEltK = si.nbEltK() / order; 
+
+  // create volume elements
+  for(int k = 0; k < nbEltK; k++) {
+    for(int j = 0; j < nbEltJ; j++) {
+      for(int i = 0; i < nbEltI; i++) {
+        createHex(i*order, j*order, k*order, si, order, vertShift, allVert, 
+                  allElt);
+      }
+    }
+  }
+
+  return 1;
+}
+
+
 }
 
 
@@ -262,14 +477,17 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   ZoneType_t zoneType;
   cgnsErr = cg_zone_type(cgIndexFile, cgIndexBase, iZone, &zoneType);
   if(cgnsErr != CG_OK) return cgnsError();
-  if(zoneType != Unstructured) return 0;
 
   // read zone size
   char zoneName[CGNS_MAX_STR_LEN];
-  cgsize_t cgsizes[3];
-  cgnsErr = cg_zone_read(cgIndexFile, cgIndexBase, iZone, zoneName, cgsizes);
+  cgsize_t zoneSize[9];
+  cgnsErr = cg_zone_read(cgIndexFile, cgIndexBase, iZone, zoneName, zoneSize);
   if(cgnsErr != CG_OK) return cgnsError();
-  const int nbNode = cgsizes[0];
+  int nbNode = zoneSize[0];
+  if (zoneType == Structured) {
+    if(dim > 1) nbNode *= zoneSize[1];
+    if(dim > 2) nbNode *= zoneSize[2];
+  }
 
   // read dimension and check consistency with base node
   int dim2;
@@ -286,6 +504,7 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   }
 
   // read boundary conditions for classification of mesh on geometry
+  Msg::Info("DBGTT: Reading BC");
   int nbZoneBC;
   cgnsErr = cg_nbocos(cgIndexFile, cgIndexBase, iZone, &nbZoneBC);
   if(cgnsErr != CG_OK) return cgnsError();
@@ -296,6 +515,7 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   }
 
   // read vertex coordinates
+  Msg::Info("DBGTT: Reading vertices");
   std::vector<double> xyz[3];
   for(int iXYZ = 0; iXYZ < dim; iXYZ++) {
     char xyzName[CGNS_MAX_STR_LEN];
@@ -303,14 +523,15 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
     cgnsErr = cg_coord_info(cgIndexFile, cgIndexBase, iZone, iXYZ+1, &dataType,
                             xyzName);
     if(cgnsErr != CG_OK) return cgnsError();
-    const int startInd = 1;
+    const int startInd[3] = {1, 1, 1};
     xyz[iXYZ].resize(nbNode);
     cgnsErr = cg_coord_read(cgIndexFile, cgIndexBase, iZone, xyzName,
-                            RealDouble, &startInd, &nbNode, xyz[iXYZ].data());
+                            RealDouble, startInd, zoneSize, xyz[iXYZ].data());
     if(cgnsErr != CG_OK) return cgnsError();
   }
 
   // create vertices
+  Msg::Info("DBGTT: Creating vertices");
   const std::size_t vertShift = allVert.size();
   allVert.reserve(vertShift+nbNode);
   for(int i = 0; i < nbNode; i++) {
@@ -320,17 +541,26 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
     allVert.push_back(new MVertex(x, y, z));
   }
 
-  // read number of sections of element-vertex connectivity
-  int nbSect;
-  cgnsErr = cg_nsections(cgIndexFile, cgIndexBase, iZone, &nbSect);
-  if(cgnsErr != CG_OK) return cgnsError();
-
-  // read sections of element-vertex connectivity
-  for(int iSect = 1; iSect <= nbSect; iSect++) {
-    int err = readSection(cgIndexFile, cgIndexBase, iZone, iSect, vertShift,
-                          allVert, allElt, elt2BC);
-    if(err == 0) return 0;
+  Msg::Info("DBGTT: Creating elements");
+  int err = 0;
+  if (zoneType == Structured) {
+    if(dim == 2) {
+      err = readElementsStructured2D(cgIndexFile, cgIndexBase, iZone, vertShift,
+                                     zoneSize, allVert, allElt, allBCName,
+                                     bc2Family, allBCFamilyName, elt2BC);
+    }
+    else if(dim == 3) {
+      err = readElementsStructured3D(cgIndexFile, cgIndexBase, iZone, vertShift,
+                                     zoneSize, allVert, allElt, allBCName,
+                                     bc2Family, allBCFamilyName, elt2BC);
+    }
   }
+  else {
+    err = readElementsUnstructured(cgIndexFile, cgIndexBase, iZone, vertShift,
+                                   allVert, allElt, allBCName, bc2Family,
+                                   allBCFamilyName, elt2BC);
+  }
+  if(err == 0) return 0;
 
   return 1;
 }
