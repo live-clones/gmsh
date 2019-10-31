@@ -306,6 +306,43 @@ StructuredInd3D::StructuredInd3D(int iZone, cgsize_t *size, int &err) :
 }
 
 
+void createQuad(int i, int j, const StructuredInd2D &si, int order,
+               std::size_t vertShift, std::vector<MVertex *> &allVert,
+               std::map<int, std::vector<MElement *> > *allElt)
+{
+  // node shift from (i, j, k) depending on order
+  static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+  static int shiftP2[9][2] = {{0, 0}, {2, 0}, {2, 2}, {0, 2}, {1, 0}, {2, 1},
+                              {1, 2}, {0, 1}, {1, 1}};
+
+  // get element vertices
+  int mshEltType;
+  int *s;
+  if(order == 2) {
+    mshEltType = MSH_QUA_9;
+    s = (int*)shiftP2;
+  }
+  else {
+    mshEltType = MSH_QUA_4;
+    s = (int*)shiftP1;
+  }
+  int nbEltNode = ElementType::getNumVertices(mshEltType);
+  std::vector<MVertex *> eltVert(nbEltNode);
+  for(int iN = 0; iN < nbEltNode; iN++) {
+    const int ind = vertShift + si.Vert(i+s[3*iN], j+s[3*iN+1]);
+    eltVert[iN] = allVert[ind];
+  }
+
+  // create element
+  MElementFactory factory;
+  MElement *e = factory.create(mshEltType, eltVert);
+
+  // add element to data structure
+  int entity = 1;
+  allElt[3][entity].push_back(e);
+}
+
+
 int readElementsStructured2D(int cgIndexFile, int cgIndexBase, int iZone,
                              std::size_t vertShift, cgsize_t *zoneSize,
                              std::vector<MVertex *> &allVert,
@@ -315,16 +352,33 @@ int readElementsStructured2D(int cgIndexFile, int cgIndexBase, int iZone,
                              std::vector<std::string> &allBCFamilyName,
                              const std::map<int, int> &elt2BC)
 {
-  // number of vertices and elements
+  // number of vertices and elements (raw mesh)
   int err = 1;
   StructuredInd2D si(iZone, zoneSize, err);
   if(err == 0) return 0;
 
-  // for(int i = 0; i < nbEltI; i++) {
-  //   for(int j = 0; j < nbEltJ; j++) {
-  //   }
-  // }
-  
+  // order of coarsened mesh and number of potentially coarsened (HO) elements
+  int order = CTX::instance()->mesh.cgnsImportOrder;
+  if(order > 2) {
+    Msg::Warning("Cannot coarsen structured grid to order %i, creating linear "
+                 "mesh in zone %i", order, iZone);
+    order = 1;
+  }
+  else if((si.nbEltI() % order != 0) || (si.nbEltJ() % order != 0)) {
+    Msg::Warning("Zone %i has (%i, %i) vertices which cannot be coarsened to "
+                 "order %i, creating linear mesh", iZone, si.nbVertI(),
+                 si.nbVertJ(), order);
+    order = 1;
+  }
+  const int nbEltI = si.nbEltI() / order; 
+  const int nbEltJ = si.nbEltJ() / order; 
+
+  // create volume elements
+  for(int j = 0; j < nbEltJ; j++) {
+    for(int i = 0; i < nbEltI; i++) {
+      createQuad(i*order, j*order, si, order, vertShift, allVert, allElt);
+    }
+  }
 
   return 1;
 }
@@ -369,19 +423,7 @@ void createHex(int i, int j, int k, const StructuredInd3D &si, int order,
 
   // add element to data structure
   int entity = 1;
-  switch(e->getType()) {
-  case TYPE_PNT: allElt[0][entity].push_back(e); break;
-  case TYPE_LIN: allElt[1][entity].push_back(e); break;
-  case TYPE_TRI: allElt[2][entity].push_back(e); break;
-  case TYPE_QUA: allElt[3][entity].push_back(e); break;
-  case TYPE_TET: allElt[4][entity].push_back(e); break;
-  case TYPE_HEX: allElt[5][entity].push_back(e); break;
-  case TYPE_PRI: allElt[6][entity].push_back(e); break;
-  case TYPE_PYR: allElt[7][entity].push_back(e); break;
-  case TYPE_POLYG: allElt[8][entity].push_back(e); break;
-  case TYPE_POLYH: allElt[9][entity].push_back(e); break;
-  default: Msg::Error("Wrong type of element");
-  }
+  allElt[5][entity].push_back(e);
 }
 
 
@@ -399,8 +441,20 @@ int readElementsStructured3D(int cgIndexFile, int cgIndexBase, int iZone,
   StructuredInd3D si(iZone, zoneSize, err);
   if(err == 0) return 0;
 
-  // order of coarsened mesh and number of coarsened (HO) elements
+  // order of coarsened mesh and number of potentially coarsened (HO) elements
   int order = CTX::instance()->mesh.cgnsImportOrder;
+  if(order > 2) {
+    Msg::Warning("Cannot coarsen structured grid to order %i, creating linear "
+                 "mesh in zone %i", order, iZone);
+    order = 1;
+  }
+  else if((si.nbEltI() % order != 0) || (si.nbEltJ() % order != 0) ||
+          (si.nbEltK() % order != 0)) {
+    Msg::Warning("Zone %i has (%i, %i, %i) vertices which cannot be coarsened "
+                 "to order %i, creating linear mesh", iZone, si.nbVertI(),
+                 si.nbVertJ(), si.nbVertK(), order);
+    order = 1;
+  }
   const int nbEltI = si.nbEltI() / order; 
   const int nbEltJ = si.nbEltJ() / order; 
   const int nbEltK = si.nbEltK() / order; 
@@ -504,7 +558,6 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   }
 
   // read boundary conditions for classification of mesh on geometry
-  Msg::Info("DBGTT: Reading BC");
   int nbZoneBC;
   cgnsErr = cg_nbocos(cgIndexFile, cgIndexBase, iZone, &nbZoneBC);
   if(cgnsErr != CG_OK) return cgnsError();
@@ -515,7 +568,6 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   }
 
   // read vertex coordinates
-  Msg::Info("DBGTT: Reading vertices");
   std::vector<double> xyz[3];
   for(int iXYZ = 0; iXYZ < dim; iXYZ++) {
     char xyzName[CGNS_MAX_STR_LEN];
@@ -531,7 +583,6 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   }
 
   // create vertices
-  Msg::Info("DBGTT: Creating vertices");
   const std::size_t vertShift = allVert.size();
   allVert.reserve(vertShift+nbNode);
   for(int i = 0; i < nbNode; i++) {
@@ -541,7 +592,7 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
     allVert.push_back(new MVertex(x, y, z));
   }
 
-  Msg::Info("DBGTT: Creating elements");
+  // read and create elementss
   int err = 0;
   if (zoneType == Structured) {
     if(dim == 2) {

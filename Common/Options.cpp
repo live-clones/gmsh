@@ -6315,14 +6315,7 @@ double opt_mesh_second_order_incomplete(OPT_ARGS_NUM)
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    int value = (int)val;
-    double order = val;
-    while(order >= 2.0) {
-      order = order / 2.0;
-    }
-
-    if (order != 1.0)
-      value = 1;
+    int value = std::min((int)val, 3);
     CTX::instance()->mesh.cgnsImportOrder = value;
   }
   return CTX::instance()->mesh.cgnsImportOrder;
