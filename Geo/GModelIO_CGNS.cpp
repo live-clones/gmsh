@@ -32,7 +32,7 @@ int GModel::readCGNS(const std::string &name)
   if(cgnsErr != CG_OK) return cgnsError();
 
   // define BC names and families, used for elementary and physical names resp.
-  // Index start at 1 with empty name to acocunt for unclassified elements
+  // Index start at 1 with empty name to account for unclassified elements
   std::vector<std::string> allBCName(2, "");
   std::vector<std::string> allBCFamilyName(2, "");
 
@@ -53,14 +53,14 @@ int GModel::readCGNS(const std::string &name)
   cgnsErr = cg_close(cgIndexFile);
   if(cgnsErr != CG_OK) return cgnsError();
 
-  // remove duplicate vertices
-  removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
-
   // populate data structures with elements and vertices
   for(int i = 0; i < 10; i++) _storeElementsInEntities(allElt[i]);
   if(CTX::instance()->mesh.cgnsConstructTopology) createTopologyFromMeshNew();
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVert);
+
+  // remove duplicate vertices
+  removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
 
   // set names of geometric entities from BC names
   for (int d = 0; d <= meshDim; d++) {
