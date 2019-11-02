@@ -9,6 +9,7 @@
 #include "MElement.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
+#include "SBoundingBox3d.h"
 #include "CGNSRead.h"
 
 #if defined(HAVE_LIBCGNS)
@@ -209,9 +210,6 @@ int readElementsUnstructured(int cgIndexFile, int cgIndexBase, int iZone,
                              std::size_t vertShift,
                              std::vector<MVertex *> &allVert,
                              std::map<int, std::vector<MElement *> > *allElt,
-                             std::vector<std::string> &allBCName,
-                             std::map<int, int> &bc2Family,
-                             std::vector<std::string> &allBCFamilyName,
                              const std::map<int, int> &elt2BC)
 {
   int cgnsErr;
@@ -347,10 +345,8 @@ int readElementsStructured2D(int cgIndexFile, int cgIndexBase, int iZone,
                              std::size_t vertShift, cgsize_t *zoneSize,
                              std::vector<MVertex *> &allVert,
                              std::map<int, std::vector<MElement *> > *allElt,
-                             std::vector<std::string> &allBCName,
-                             std::map<int, int> &bc2Family,
-                             std::vector<std::string> &allBCFamilyName,
-                             const std::map<int, int> &elt2BC)
+                             const std::map<int, int> &elt2BC,
+                             int firstDefaultBC)
 {
   // number of vertices and elements (raw mesh)
   int err = 1;
@@ -427,14 +423,54 @@ void createHex(int i, int j, int k, const StructuredInd3D &si, int order,
 }
 
 
+void createBndQuad(int i, int j, int k, const int ij2ijk[2],
+                   const StructuredInd3D &si,
+                   int order, int entity, std::size_t vertShift,
+                   std::vector<MVertex *> &allVert,
+                   std::map<int, std::vector<MElement *> > *allElt)
+{
+  // node shift from (i, j, k) depending on order
+  static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+  static int shiftP2[9][2] = {{0, 0}, {2, 0}, {2, 2}, {0, 2}, {1, 0}, {2, 1},
+                              {1, 2}, {0, 1}, {1, 1}};
+
+  // get element vertices
+  int mshEltType;
+  int *s;
+  if(order == 2) {
+    mshEltType = MSH_QUA_9;
+    s = (int*)shiftP2;
+  }
+  else {
+    mshEltType = MSH_QUA_4;
+    s = (int*)shiftP1;
+  }
+  int nbEltNode = ElementType::getNumVertices(mshEltType);
+  std::vector<MVertex *> eltVert(nbEltNode);
+  for(int iN = 0; iN < nbEltNode; iN++) {
+    int ijk[3] = {i, j, k};
+    ijk[ij2ijk[0]] += s[2*iN];
+    ijk[ij2ijk[1]] += s[2*iN+1];
+    const int ind = vertShift + si.Vert(ijk[0], ijk[1], ijk[2]);
+    eltVert[iN] = allVert[ind];
+  }
+
+  // create element
+  MElementFactory factory;
+  MElement *e = factory.create(mshEltType, eltVert);
+
+  // add element to data structure
+  allElt[3][entity].push_back(e);
+}
+
+
 int readElementsStructured3D(int cgIndexFile, int cgIndexBase, int iZone,
                              std::size_t vertShift, cgsize_t *zoneSize,
                              std::vector<MVertex *> &allVert,
                              std::map<int, std::vector<MElement *> > *allElt,
-                             std::vector<std::string> &allBCName,
-                             std::map<int, int> &bc2Family,
-                             std::vector<std::string> &allBCFamilyName,
-                             const std::map<int, int> &elt2BC)
+                             const std::map<int, int> &elt2BC,
+                             int firstDefaultBC,
+                             std::map<int, SBoundingBox3d> &blockBnd)
 {
   // number of vertices and elements (raw mesh)
   int err = 1;
@@ -455,9 +491,9 @@ int readElementsStructured3D(int cgIndexFile, int cgIndexBase, int iZone,
                  si.nbVertJ(), si.nbVertK(), order);
     order = 1;
   }
-  const int nbEltI = si.nbEltI() / order; 
-  const int nbEltJ = si.nbEltJ() / order; 
-  const int nbEltK = si.nbEltK() / order; 
+  const int nbEltI = si.nbEltI() / order;
+  const int nbEltJ = si.nbEltJ() / order;
+  const int nbEltK = si.nbEltK() / order;
 
   // create volume elements
   for(int k = 0; k < nbEltK; k++) {
@@ -466,6 +502,62 @@ int readElementsStructured3D(int cgIndexFile, int cgIndexBase, int iZone,
         createHex(i*order, j*order, k*order, si, order, vertShift, allVert, 
                   allElt);
       }
+    }
+  }
+
+  // boundary tags for block faces i-, i+, j-;j+, k- and k+
+  const int bcIMin = firstDefaultBC, bcIMax = firstDefaultBC+1;
+  const int bcJMin = firstDefaultBC+2, bcJMax = firstDefaultBC+3;
+  const int bcKMin = firstDefaultBC+4, bcKMax = firstDefaultBC+5;
+
+  // create boundary elements and bounding boxes for block faces i- and i+
+  SBoundingBox3d &bBoxIMin = blockBnd[bcIMin], &bBoxIMax = blockBnd[bcIMax];
+  for(int k = 0; k < nbEltK; k++) {
+    for(int j = 0; j < nbEltJ; j++) {
+        static const int ij2ijk[2] = {1, 2};
+        const int iMax = si.nbVertI()-1, jj = j*order, kk = k*order;
+        createBndQuad(0, jj, kk, ij2ijk, si, order, bcIMin, vertShift, allVert,
+                      allElt);
+        createBndQuad(iMax, jj, kk, ij2ijk, si, order, bcIMax,
+                      vertShift, allVert, allElt);
+        const int indMin = vertShift + si.Vert(0, jj, kk);
+        const int indMax = vertShift + si.Vert(iMax, jj, kk);
+        bBoxIMin += allVert[indMin]->point();
+        bBoxIMax += allVert[indMax]->point();
+    }
+  }
+
+  // create boundary elements for block faces j- and j+
+  SBoundingBox3d &bBoxJMin = blockBnd[bcJMin], &bBoxJMax = blockBnd[bcJMax];
+  for(int k = 0; k < nbEltK; k++) {
+    for(int i = 0; i < nbEltI; i++) {
+        static const int ij2ijk[2] = {0, 2};
+        const int ii = i*order, jMax = si.nbVertJ()-1, kk = k*order;
+        createBndQuad(ii, 0, kk, ij2ijk, si, order, bcJMin, vertShift, allVert,
+                      allElt);
+        createBndQuad(ii, jMax, kk, ij2ijk, si, order, bcJMax,
+                      vertShift, allVert, allElt);
+        const int indMin = vertShift + si.Vert(ii, 0, kk);
+        const int indMax = vertShift + si.Vert(ii, jMax, kk);
+        bBoxJMin += allVert[indMin]->point();
+        bBoxJMax += allVert[indMax]->point();
+    }
+  }
+
+  // create boundary elements for block faces k- and k+
+  SBoundingBox3d &bBoxKMin = blockBnd[bcKMin], &bBoxKMax = blockBnd[bcKMax];
+  for(int j = 0; j < nbEltJ; j++) {
+    for(int i = 0; i < nbEltI; i++) {
+        static const int ij2ijk[2] = {0, 1};
+        const int ii = i*order, jj = j*order, kMax = si.nbVertK()-1;
+        createBndQuad(ii, jj, 0, ij2ijk, si, order, bcKMin, vertShift, allVert,
+                      allElt);
+        createBndQuad(ii, jj, kMax, ij2ijk, si, order, bcKMax,
+                      vertShift, allVert, allElt);
+        const int indMin = vertShift + si.Vert(ii, jj, 0);
+        const int indMax = vertShift + si.Vert(ii, jj, kMax);
+        bBoxKMin += allVert[indMin]->point();
+        bBoxKMax += allVert[indMax]->point();
     }
   }
 
@@ -522,12 +614,12 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
              std::vector<MVertex *> &allVert,
              std::map<int, std::vector<MElement *> > *allElt,
              std::vector<std::string> &allBCName, std::map<int, int> &bc2Family,
-             std::vector<std::string> &allBCFamilyName)
+             std::vector<std::string> &allBCFamilyName,
+             std::map<int, SBoundingBox3d> &blockBnd)
 {
   int cgnsErr;
 
   // read zone type
-  // DBGTT: read only unstructured zone at the moment
   ZoneType_t zoneType;
   cgnsErr = cg_zone_type(cgIndexFile, cgIndexBase, iZone, &zoneType);
   if(cgnsErr != CG_OK) return cgnsError();
@@ -596,20 +688,23 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   int err = 0;
   if (zoneType == Structured) {
     if(dim == 2) {
+      const int firstDefaultBC = allBCName.size();
+      allBCName.insert(allBCName.end(), 4, "");
       err = readElementsStructured2D(cgIndexFile, cgIndexBase, iZone, vertShift,
-                                     zoneSize, allVert, allElt, allBCName,
-                                     bc2Family, allBCFamilyName, elt2BC);
+                                     zoneSize, allVert, allElt, elt2BC,
+                                     firstDefaultBC);
     }
     else if(dim == 3) {
+      const int firstDefaultBC = allBCName.size();
+      allBCName.insert(allBCName.end(), 6, "");
       err = readElementsStructured3D(cgIndexFile, cgIndexBase, iZone, vertShift,
-                                     zoneSize, allVert, allElt, allBCName,
-                                     bc2Family, allBCFamilyName, elt2BC);
+                                     zoneSize, allVert, allElt, elt2BC,
+                                     firstDefaultBC, blockBnd);
     }
   }
   else {
     err = readElementsUnstructured(cgIndexFile, cgIndexBase, iZone, vertShift,
-                                   allVert, allElt, allBCName, bc2Family,
-                                   allBCFamilyName, elt2BC);
+                                   allVert, allElt, elt2BC);
   }
   if(err == 0) return 0;
 

@@ -21,7 +21,8 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
              std::vector<MVertex *> &allVert,
              std::map<int, std::vector<MElement *> > *allElt,
              std::vector<std::string> &allBCName, std::map<int, int> &bc2Family,
-             std::vector<std::string> &allBCFamilyName);
+             std::vector<std::string> &allBCFamilyName,
+             std::map<int, SBoundingBox3d> &blockBnd);
 
 
 #endif // HAVE_LIBCGNS
