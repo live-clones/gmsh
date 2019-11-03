@@ -36,17 +36,20 @@ int GModel::readCGNS(const std::string &name)
   std::vector<std::string> allBCName(2, "");
   std::vector<std::string> allBCFamilyName(2, "");
 
+  // read basic info (number of nodes and elements) from all zones
+  std::vector<ZoneInfo> allZoneInfo;
+  readAllZoneInfo(cgIndexFile, cgIndexBase, meshDim, allZoneInfo);
+
   // read mesh zones
   std::vector<MVertex *> allVert;                     // all vertices
   std::map<int, std::vector<MElement *> > allElt[10]; // all elements by type
   std::map<int, int> bc2Family;                       // bc tag -> family
-  std::map<int, SBoundingBox3d> blockBnd;             // bc tag and bound. box for block boundaries
   int nbZones = 0;
   cgnsErr = cg_nzones(cgIndexFile, cgIndexBase, &nbZones);
   if(cgnsErr != CG_OK) return cgnsError();
   for(int iZone = 1; iZone <= nbZones; iZone++) {
-    int err = readZone(cgIndexFile, cgIndexBase, iZone, dim, scale, allVert,
-                       allElt, allBCName, bc2Family, allBCFamilyName, blockBnd);
+    int err = readZone(cgIndexFile, cgIndexBase, allZoneInfo[iZone], dim, scale,
+                       allVert, allElt, allBCName, bc2Family, allBCFamilyName);
     if(err == 0) return 0;
   }
 
@@ -63,15 +66,6 @@ int GModel::readCGNS(const std::string &name)
   // remove potential duplicate vertices if several zones
   // TODO: disable this through option ?
   if(nbZones > 1) removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
-
-  // remove internal block boundaries created in structured zones
-  typedef std::map<int, SBoundingBox3d>::iterator BlockBndIter;
-  for(BlockBndIter it = blockBnd.begin(); it != blockBnd.end(); ++it) {
-    Msg::Info("Block bnd. %i has bounding box (%g, %g, %g) - (%g, %g, %g)",
-              it->first, it->second.min().x(), it->second.min().y(),
-              it->second.min().z(), it->second.max().x(), it->second.max().y(),
-              it->second.max().z());
-  }
 
   // set names of geometric entities from BC names
   for (int d = 0; d <= meshDim; d++) {

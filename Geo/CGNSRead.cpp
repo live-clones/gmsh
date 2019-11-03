@@ -9,7 +9,6 @@
 #include "MElement.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
-#include "SBoundingBox3d.h"
 #include "CGNSRead.h"
 
 #if defined(HAVE_LIBCGNS)
@@ -230,83 +229,175 @@ int readElementsUnstructured(int cgIndexFile, int cgIndexBase, int iZone,
 }
 
 
-class StructuredInd2D
+template<int DIM>
+cgsize_t ijk2Ind(const cgsize_t *ijk, const cgsize_t *nijk);
+
+
+template<>
+cgsize_t ijk2Ind<2>(const cgsize_t *ijk, const cgsize_t *nijk)
+{
+  return ijk[1] * nijk[0] + ijk[0];
+}
+
+
+template<>
+cgsize_t ijk2Ind<3>(const cgsize_t *ijk, const cgsize_t *nijk)
+{
+  return (ijk[2] * nijk[1] + ijk[1]) * nijk[0] + ijk[0];
+}
+
+
+// template<int DIM>
+// cgsize_t nbTotFromIJK(const cgsize_t *nijk);
+
+
+// template<>
+// cgsize_t nbTotFromIJK<2>(const cgsize_t *nijk)
+// {
+//   return nijk[0] * nijk[1];
+// }
+
+
+// template<>
+// cgsize_t nbTotFromIJK<3>(const cgsize_t *nijk)
+// {
+//   return nijk[0] * nijk[1] * nijk[2];
+// }
+
+
+template<int DIM>
+class StructuredInd
 {
 public:
-  StructuredInd2D(int iZone, cgsize_t *size, int &err);
+  StructuredInd(int iZone, const cgsize_t *size, int &err);
 
-  int nbVertI() const {return nbVertI_; }
-  int nbVertJ() const {return nbVertJ_; }
-  int nbEltI() const {return nbEltI_; }
-  int nbEltJ() const {return nbEltJ_; }
+  cgsize_t nbNode(int iDim) const { return nbNode_[iDim]; }
+  // cgsize_t nbNode() const { return nbTotFromIJK<DIM>(nbNode_); }
+  cgsize_t nbElt(int iDim) const { return nbElt_[iDim]; }
+  // cgsize_t nbElt() const { return nbTotFromIJK<DIM>(nbElt_); }
     
-  int Elt(int i, int j) const { return j * nbEltI_ + i; }
-  int Vert(int i, int j) const { return j * nbVertI_ + i; }
-
-private:
-  int nbVertI_, nbVertJ_;
-  int nbEltI_, nbEltJ_;
-
-};
-
-
-StructuredInd2D::StructuredInd2D(int iZone, cgsize_t *size, int &err) :
-  nbVertI_(size[0]), nbVertJ_(size[1]), nbEltI_(size[2]), nbEltJ_(size[3])
-{
-  if((nbVertI_ != nbEltI_+1) || (nbVertJ_ != nbEltJ_+1)) {
-    Msg::Error("CGNS zone %i: number of vertices (%i, %i) is inconsistent with "
-               "number of elements (%i, %i)", iZone, nbVertI_, nbVertJ_,
-               nbEltI_, nbEltJ_);
-    err = 0;
-  }
-  else err = 1;
-}
-
-
-class StructuredInd3D
-{
-public:
-  StructuredInd3D(int iZone, cgsize_t *size, int &err);
-
-  int nbVertI() const {return nbVertI_; }
-  int nbVertJ() const {return nbVertJ_; }
-  int nbVertK() const {return nbVertK_; }
-  int nbEltI() const {return nbEltI_; }
-  int nbEltJ() const {return nbEltJ_; }
-  int nbEltK() const {return nbEltK_; }
-
-  int Elt(int i, int j, int k) const {
-    return (k * nbEltJ_ + j) * nbEltI_ + i;
-  }
-  int Vert(int i, int j, int k) const {
-    return(k * nbVertJ_ + j) * nbVertI_ + i;
+  cgsize_t Elt(const cgsize_t *ijk) const { return ijk2Ind<DIM>(ijk, nbElt_); }
+  cgsize_t Vert(const cgsize_t *ijk) const {
+    return ijk2Ind<DIM>(ijk, nbNode_);
   }
 
 private:
-  int nbVertI_, nbVertJ_, nbVertK_;
-  int nbEltI_, nbEltJ_, nbEltK_;
-
+  cgsize_t nbNode_[DIM], nbElt_[DIM];
 };
 
 
-StructuredInd3D::StructuredInd3D(int iZone, cgsize_t *size, int &err) :
-  nbVertI_(size[0]), nbVertJ_(size[1]), nbVertK_(size[2]), nbEltI_(size[3]),
-  nbEltJ_(size[4]), nbEltK_(size[5])
+template<int DIM>
+StructuredInd<DIM>::StructuredInd(int iZone, const cgsize_t *size, int &err)
 {
-  if((nbVertI_ != nbEltI_+1) || (nbVertJ_ != nbEltJ_+1) ||
-     (nbVertK_ != nbEltK_+1)) {
+  // Store number of elements and nodes
+  for(int d = 0; d < DIM; d++) nbNode_[d] = size[d];
+  for(int d = 0; d < DIM; d++) nbElt_[d] = size[DIM+d];
+
+  // Check consistency
+  bool ok = true;
+  for(int d = 0; d < DIM; d++) ok &= (nbNode_[d] == nbElt_[d]+1);
+  if (ok) err = 1;
+  else {
     Msg::Error("CGNS zone %i: number of vertices (%i, %i, %i) is inconsistent "
-               "with number of elements (%i, %i, %i)", iZone, nbVertI_,
-               nbVertJ_, nbVertK_, nbEltI_, nbEltJ_, nbEltK_);
+               "with number of elements (%i, %i, %i)", iZone, nbNode_[0],
+               nbNode_[1], (DIM == 3) ? nbNode_[2] : 0, nbElt_[0], nbElt_[1],
+               (DIM == 3) ? nbElt_[2] : 0);
     err = 0;
   }
-  else err = 1;
 }
 
 
-void createQuad(int i, int j, const StructuredInd2D &si, int order,
-               std::size_t vertShift, std::vector<MVertex *> &allVert,
-               std::map<int, std::vector<MElement *> > *allElt)
+template<int DIM>
+int readOneConnectivityStructured(int cgIndexFile, int cgIndexBase, int iZone,
+                                  int iConnect, ZoneInfo &zone)
+{
+  int cgnsErr; 
+ 
+  // read connection
+  char connectName[CGNS_MAX_STR_LEN], donorName[CGNS_MAX_STR_LEN];
+  cgsize_t range[2*DIM], donor_range[2*DIM];
+  int transform[DIM];
+  cgnsErr = cg_1to1_read(cgIndexFile, cgIndexBase, iZone, iConnect,
+                         connectName, donorName, range, donor_range, transform);
+  if(cgnsErr != CG_OK) return cgnsError();
+
+  float rotationCenter[3], rotationAngle[3], translation[3];
+  cgnsErr = cg_1to1_periodic_read(cgIndexFile, cgIndexBase, iZone, iConnect,
+                                  rotationCenter, rotationAngle, translation);
+  if(cgnsErr != CG_NODE_NOT_FOUND) {
+    if(cgnsErr == CG_OK) return 1;
+    else return cgnsError();
+  }
+
+  // // store connection info in zone info structure
+  // storeConnectionInZoneInfo<DIM>(iZone, range, zone);
+
+  // number of vertices and elements (raw mesh)
+  int err = 1;
+  StructuredInd<DIM> si(iZone, zone.size, err);
+  if(err == 0) return 0;
+
+  // range of IJK indices
+  const cgsize_t iMin = range[0]-1, iMax = range[DIM]-1;
+  const cgsize_t jMin = range[1]-1, jMax = range[DIM+1]-1;
+  const cgsize_t kMin = (DIM == 3) ? range[2]-1 : 1;
+  const cgsize_t kMax = (DIM == 3) ? range[5]-1 : 1;
+  
+  // Mark nodes as interface
+  int ijk[3];
+  for(ijk[2] = kMin; ijk[2] <= kMax; ijk[2]++) {
+    for(ijk[1] = jMin; ijk[1] <= jMax; ijk[1]++) {
+      for(ijk[0] = iMin; ijk[0] <= iMax; ijk[0]++) {
+        zone.interfaceNode[si.Vert(ijk)] = true;
+      }
+    }
+  }
+
+  return 1;
+}
+
+
+int readConnectivitiesStructured(int cgIndexFile, int cgIndexBase, int meshDim,
+                                 int iZone,
+                                 const std::map<std::string, int> &name2Zone,
+                                 std::vector<ZoneInfo> &allZoneInfo)
+{
+  int cgnsErr;
+
+  // read number of connectivities
+  int nbConnect;
+  cgnsErr = cg_n1to1(cgIndexFile, cgIndexBase, iZone, &nbConnect);
+  
+  if(cgnsErr != CG_OK) return cgnsError();
+  for(int iConnect = 1; iConnect <= nbConnect; iConnect++) {
+    int err;
+    if (meshDim == 2) {
+      err = readOneConnectivityStructured<2>(cgIndexFile, cgIndexBase, iZone,
+                                             iConnect, allZoneInfo[iZone]);
+    }
+    else if(meshDim == 3) {
+      err = readOneConnectivityStructured<3>(cgIndexFile, cgIndexBase, iZone,
+                                             iConnect, allZoneInfo[iZone]);
+    }
+    if(err == 0) return 0;
+  }
+
+  return 1;
+}
+
+
+template<int DIM>
+void createElement(const cgsize_t *ijk, const StructuredInd<DIM> &si,
+                   int order, std::size_t vertShift,
+                   std::vector<MVertex *> &allVert,
+                   std::map<int, std::vector<MElement *> > *allElt);
+
+
+template<>
+void createElement<2>(const cgsize_t *ijk, const StructuredInd<2> &si,
+                      int order, std::size_t vertShift,
+                      std::vector<MVertex *> &allVert,
+                      std::map<int, std::vector<MElement *> > *allElt)
 {
   // node shift from (i, j, k) depending on order
   static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
@@ -327,7 +418,8 @@ void createQuad(int i, int j, const StructuredInd2D &si, int order,
   int nbEltNode = ElementType::getNumVertices(mshEltType);
   std::vector<MVertex *> eltVert(nbEltNode);
   for(int iN = 0; iN < nbEltNode; iN++) {
-    const int ind = vertShift + si.Vert(i+s[3*iN], j+s[3*iN+1]);
+    const cgsize_t ijN[3] = {ijk[0]+s[2*iN], ijk[1]+s[2*iN+1]};
+    const int ind = vertShift + si.Vert(ijN);
     eltVert[iN] = allVert[ind];
   }
 
@@ -341,48 +433,11 @@ void createQuad(int i, int j, const StructuredInd2D &si, int order,
 }
 
 
-int readElementsStructured2D(int cgIndexFile, int cgIndexBase, int iZone,
-                             std::size_t vertShift, cgsize_t *zoneSize,
-                             std::vector<MVertex *> &allVert,
-                             std::map<int, std::vector<MElement *> > *allElt,
-                             const std::map<int, int> &elt2BC,
-                             int firstDefaultBC)
-{
-  // number of vertices and elements (raw mesh)
-  int err = 1;
-  StructuredInd2D si(iZone, zoneSize, err);
-  if(err == 0) return 0;
-
-  // order of coarsened mesh and number of potentially coarsened (HO) elements
-  int order = CTX::instance()->mesh.cgnsImportOrder;
-  if(order > 2) {
-    Msg::Warning("Cannot coarsen structured grid to order %i, creating linear "
-                 "mesh in zone %i", order, iZone);
-    order = 1;
-  }
-  else if((si.nbEltI() % order != 0) || (si.nbEltJ() % order != 0)) {
-    Msg::Warning("Zone %i has (%i, %i) vertices which cannot be coarsened to "
-                 "order %i, creating linear mesh", iZone, si.nbVertI(),
-                 si.nbVertJ(), order);
-    order = 1;
-  }
-  const int nbEltI = si.nbEltI() / order; 
-  const int nbEltJ = si.nbEltJ() / order; 
-
-  // create volume elements
-  for(int j = 0; j < nbEltJ; j++) {
-    for(int i = 0; i < nbEltI; i++) {
-      createQuad(i*order, j*order, si, order, vertShift, allVert, allElt);
-    }
-  }
-
-  return 1;
-}
-
-
-void createHex(int i, int j, int k, const StructuredInd3D &si, int order,
-               std::size_t vertShift, std::vector<MVertex *> &allVert,
-               std::map<int, std::vector<MElement *> > *allElt)
+template<>
+void createElement<3>(const cgsize_t *ijk, const StructuredInd<3> &si,
+                      int order, std::size_t vertShift,
+                      std::vector<MVertex *> &allVert,
+                      std::map<int, std::vector<MElement *> > *allElt)
 {
   // node shift from (i, j, k) depending on order
   static int shiftP1[8][3] = {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
@@ -409,7 +464,9 @@ void createHex(int i, int j, int k, const StructuredInd3D &si, int order,
   int nbEltNode = ElementType::getNumVertices(mshEltType);
   std::vector<MVertex *> eltVert(nbEltNode);
   for(int iN = 0; iN < nbEltNode; iN++) {
-    const int ind = vertShift + si.Vert(i+s[3*iN], j+s[3*iN+1], k+s[3*iN+2]);
+    const cgsize_t ijkN[3] = {ijk[0]+s[3*iN], ijk[1]+s[3*iN+1],
+                              ijk[2]+s[3*iN+2]};
+    const cgsize_t ind = vertShift + si.Vert(ijkN);
     eltVert[iN] = allVert[ind];
   }
 
@@ -423,11 +480,36 @@ void createHex(int i, int j, int k, const StructuredInd3D &si, int order,
 }
 
 
-void createBndQuad(int i, int j, int k, const int ij2ijk[2],
-                   const StructuredInd3D &si,
-                   int order, int entity, std::size_t vertShift,
-                   std::vector<MVertex *> &allVert,
-                   std::map<int, std::vector<MElement *> > *allElt)
+template<int DIM>
+void createBndElement(const cgsize_t *ijk, const int *dir,
+                      const StructuredInd<DIM> &si,
+                      int order, int entity, std::size_t vertShift,
+                      std::vector<MVertex *> &allVert,
+                      std::map<int, std::vector<MElement *> > *allElt,
+                      const std::vector<bool> &interfaceNode);
+
+
+template<>
+void createBndElement<2>(const cgsize_t *ijk, const int *dir,
+                         const StructuredInd<2> &si,
+                         int order, int entity, std::size_t vertShift,
+                         std::vector<MVertex *> &allVert,
+                         std::map<int, std::vector<MElement *> > *allElt,
+                         const std::vector<bool> &interfaceNode)
+{
+  // TODO: to be implemented
+  Msg::Error("Creation of boundary elements for 2D structured blocks not "
+             "implemented");
+}
+
+
+template<>
+void createBndElement<3>(const cgsize_t *ijk, const int *dir,
+                         const StructuredInd<3> &si,
+                         int order, int entity, std::size_t vertShift,
+                         std::vector<MVertex *> &allVert,
+                         std::map<int, std::vector<MElement *> > *allElt,
+                         const std::vector<bool> &interfaceNode)
 {
   // node shift from (i, j, k) depending on order
   static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
@@ -447,13 +529,18 @@ void createBndQuad(int i, int j, int k, const int ij2ijk[2],
   }
   int nbEltNode = ElementType::getNumVertices(mshEltType);
   std::vector<MVertex *> eltVert(nbEltNode);
+  bool isInternalInterface = true;
   for(int iN = 0; iN < nbEltNode; iN++) {
-    int ijk[3] = {i, j, k};
-    ijk[ij2ijk[0]] += s[2*iN];
-    ijk[ij2ijk[1]] += s[2*iN+1];
-    const int ind = vertShift + si.Vert(ijk[0], ijk[1], ijk[2]);
-    eltVert[iN] = allVert[ind];
+    cgsize_t ijkN[3] = {ijk[0], ijk[1], ijk[2]};
+    ijkN[dir[0]] += s[2*iN];
+    ijkN[dir[1]] += s[2*iN+1];
+    const cgsize_t localInd = si.Vert(ijkN);
+    isInternalInterface &= interfaceNode[localInd];
+    eltVert[iN] = allVert[vertShift+localInd];
   }
+
+  // do no add element if it is part of an internal interface between blocks
+  if(isInternalInterface) return;
 
   // create element
   MElementFactory factory;
@@ -464,17 +551,18 @@ void createBndQuad(int i, int j, int k, const int ij2ijk[2],
 }
 
 
-int readElementsStructured3D(int cgIndexFile, int cgIndexBase, int iZone,
-                             std::size_t vertShift, cgsize_t *zoneSize,
-                             std::vector<MVertex *> &allVert,
-                             std::map<int, std::vector<MElement *> > *allElt,
-                             const std::map<int, int> &elt2BC,
-                             int firstDefaultBC,
-                             std::map<int, SBoundingBox3d> &blockBnd)
+template<int DIM>
+int readElementsStructured(int cgIndexFile, int cgIndexBase, int iZone,
+                           std::size_t vertShift, const cgsize_t *zoneSize,
+                           std::vector<MVertex *> &allVert,
+                           std::map<int, std::vector<MElement *> > *allElt,
+                           const std::map<int, int> &elt2BC,
+                           const std::vector<bool> &interfaceNode,
+                           int firstDefaultBC)
 {
   // number of vertices and elements (raw mesh)
   int err = 1;
-  StructuredInd3D si(iZone, zoneSize, err);
+  StructuredInd<DIM> si(iZone, zoneSize, err);
   if(err == 0) return 0;
 
   // order of coarsened mesh and number of potentially coarsened (HO) elements
@@ -484,80 +572,71 @@ int readElementsStructured3D(int cgIndexFile, int cgIndexBase, int iZone,
                  "mesh in zone %i", order, iZone);
     order = 1;
   }
-  else if((si.nbEltI() % order != 0) || (si.nbEltJ() % order != 0) ||
-          (si.nbEltK() % order != 0)) {
-    Msg::Warning("Zone %i has (%i, %i, %i) vertices which cannot be coarsened "
-                 "to order %i, creating linear mesh", iZone, si.nbVertI(),
-                 si.nbVertJ(), si.nbVertK(), order);
-    order = 1;
+  else {
+    bool orderOK = true;
+    for(int d = 0; d < DIM; d++) orderOK &= (si.nbElt(d) % order == 0);
+    if(!orderOK) {
+      Msg::Warning("Zone %i has (%i, %i, %i) vertices which cannot be coarsened"
+                   " to order %i, creating linear mesh", iZone, si.nbNode(0),
+                   si.nbNode(1), (DIM == 3) ? si.nbNode(2) : 0, order);
+      order = 1;
+    }
   }
-  const int nbEltI = si.nbEltI() / order;
-  const int nbEltJ = si.nbEltJ() / order;
-  const int nbEltK = si.nbEltK() / order;
+  const int nbEltI = si.nbElt(0) / order;
+  const int nbEltJ = si.nbElt(1) / order;
+  const int nbEltK = (DIM == 3) ? si.nbElt(2) / order : 1;
 
-  // create volume elements
+  // create domain elements
   for(int k = 0; k < nbEltK; k++) {
     for(int j = 0; j < nbEltJ; j++) {
       for(int i = 0; i < nbEltI; i++) {
-        createHex(i*order, j*order, k*order, si, order, vertShift, allVert, 
-                  allElt);
+        const cgsize_t ijk[3] = {i*order, j*order, k*order};
+        createElement<DIM>(ijk, si, order, vertShift, allVert, allElt);
       }
     }
   }
 
-  // boundary tags for block faces i-, i+, j-;j+, k- and k+
+  // create boundary elements for block faces i- and i+
   const int bcIMin = firstDefaultBC, bcIMax = firstDefaultBC+1;
-  const int bcJMin = firstDefaultBC+2, bcJMax = firstDefaultBC+3;
-  const int bcKMin = firstDefaultBC+4, bcKMax = firstDefaultBC+5;
-
-  // create boundary elements and bounding boxes for block faces i- and i+
-  SBoundingBox3d &bBoxIMin = blockBnd[bcIMin], &bBoxIMax = blockBnd[bcIMax];
   for(int k = 0; k < nbEltK; k++) {
     for(int j = 0; j < nbEltJ; j++) {
-        static const int ij2ijk[2] = {1, 2};
-        const int iMax = si.nbVertI()-1, jj = j*order, kk = k*order;
-        createBndQuad(0, jj, kk, ij2ijk, si, order, bcIMin, vertShift, allVert,
-                      allElt);
-        createBndQuad(iMax, jj, kk, ij2ijk, si, order, bcIMax,
-                      vertShift, allVert, allElt);
-        const int indMin = vertShift + si.Vert(0, jj, kk);
-        const int indMax = vertShift + si.Vert(iMax, jj, kk);
-        bBoxIMin += allVert[indMin]->point();
-        bBoxIMax += allVert[indMax]->point();
+        static const int dir[2] = {1, 2};
+        cgsize_t ijk[3] = {0, j*order, k*order};
+        createBndElement<DIM>(ijk, dir, si, order, bcIMin, vertShift, allVert,
+                              allElt, interfaceNode);
+        ijk[0] = si.nbNode(0)-1;
+        createBndElement<DIM>(ijk, dir, si, order, bcIMax, vertShift, allVert,
+                              allElt, interfaceNode);
     }
   }
 
   // create boundary elements for block faces j- and j+
-  SBoundingBox3d &bBoxJMin = blockBnd[bcJMin], &bBoxJMax = blockBnd[bcJMax];
+  const int bcJMin = firstDefaultBC+2, bcJMax = firstDefaultBC+3;
   for(int k = 0; k < nbEltK; k++) {
     for(int i = 0; i < nbEltI; i++) {
-        static const int ij2ijk[2] = {0, 2};
-        const int ii = i*order, jMax = si.nbVertJ()-1, kk = k*order;
-        createBndQuad(ii, 0, kk, ij2ijk, si, order, bcJMin, vertShift, allVert,
-                      allElt);
-        createBndQuad(ii, jMax, kk, ij2ijk, si, order, bcJMax,
-                      vertShift, allVert, allElt);
-        const int indMin = vertShift + si.Vert(ii, 0, kk);
-        const int indMax = vertShift + si.Vert(ii, jMax, kk);
-        bBoxJMin += allVert[indMin]->point();
-        bBoxJMax += allVert[indMax]->point();
+        static const int dir[2] = {0, 2};
+        cgsize_t ijk[3] = {i*order, 0, k*order};
+        createBndElement<DIM>(ijk, dir, si, order, bcJMin, vertShift, allVert,
+                              allElt, interfaceNode);
+        ijk[1] = si.nbNode(1)-1;
+        createBndElement<DIM>(ijk, dir, si, order, bcJMax, vertShift, allVert,
+                              allElt, interfaceNode);
     }
   }
 
-  // create boundary elements for block faces k- and k+
-  SBoundingBox3d &bBoxKMin = blockBnd[bcKMin], &bBoxKMax = blockBnd[bcKMax];
-  for(int j = 0; j < nbEltJ; j++) {
-    for(int i = 0; i < nbEltI; i++) {
-        static const int ij2ijk[2] = {0, 1};
-        const int ii = i*order, jj = j*order, kMax = si.nbVertK()-1;
-        createBndQuad(ii, jj, 0, ij2ijk, si, order, bcKMin, vertShift, allVert,
-                      allElt);
-        createBndQuad(ii, jj, kMax, ij2ijk, si, order, bcKMax,
-                      vertShift, allVert, allElt);
-        const int indMin = vertShift + si.Vert(ii, jj, 0);
-        const int indMax = vertShift + si.Vert(ii, jj, kMax);
-        bBoxKMin += allVert[indMin]->point();
-        bBoxKMax += allVert[indMax]->point();
+  // create boundary elements for block faces k- and k+ if 3D
+  if (DIM == 3) {
+    const int bcKMin = firstDefaultBC+4, bcKMax = firstDefaultBC+5;
+    for(int j = 0; j < nbEltJ; j++) {
+      for(int i = 0; i < nbEltI; i++) {
+          static const int dir[2] = {0, 1};
+          cgsize_t ijk[3] = {i*order, j*order, 0};
+          createBndElement<DIM>(ijk, dir, si, order, bcKMin, vertShift, allVert,
+                                allElt, interfaceNode);
+          ijk[2] = si.nbNode(2)-1;
+          createBndElement<DIM>(ijk, dir, si, order, bcKMax, vertShift, allVert,
+                                allElt, interfaceNode);
+      }
     }
   }
 
@@ -610,52 +689,88 @@ double readScale()
 }
 
 
-int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
-             std::vector<MVertex *> &allVert,
-             std::map<int, std::vector<MElement *> > *allElt,
-             std::vector<std::string> &allBCName, std::map<int, int> &bc2Family,
-             std::vector<std::string> &allBCFamilyName,
-             std::map<int, SBoundingBox3d> &blockBnd)
+int readAllZoneInfo(int cgIndexFile, int cgIndexBase, int meshDim,
+                    std::vector<ZoneInfo> &allZoneInfo)
 {
   int cgnsErr;
 
-  // read zone type
-  ZoneType_t zoneType;
-  cgnsErr = cg_zone_type(cgIndexFile, cgIndexBase, iZone, &zoneType);
+  // read number of zones (allZoneInfo[0] is dummy because index starts at 1) 
+  int nbZones = 0;
+  cgnsErr = cg_nzones(cgIndexFile, cgIndexBase, &nbZones);
   if(cgnsErr != CG_OK) return cgnsError();
+  allZoneInfo.resize(nbZones+1);
 
-  // read zone size
-  char zoneName[CGNS_MAX_STR_LEN];
-  cgsize_t zoneSize[9];
-  cgnsErr = cg_zone_read(cgIndexFile, cgIndexBase, iZone, zoneName, zoneSize);
-  if(cgnsErr != CG_OK) return cgnsError();
-  int nbNode = zoneSize[0];
-  if (zoneType == Structured) {
-    if(dim > 1) nbNode *= zoneSize[1];
-    if(dim > 2) nbNode *= zoneSize[2];
+  // read zone type and size
+  cgsize_t offset = 0;
+  std::map<std::string, int> name2Zone;
+  for(int iZone = 1; iZone <= nbZones; iZone++) {
+    // index
+    ZoneInfo &zone = allZoneInfo[iZone];
+    zone.index= iZone;
+
+    // read zone type
+    cgnsErr = cg_zone_type(cgIndexFile, cgIndexBase, iZone, &(zone.type));
+    if(cgnsErr != CG_OK) return cgnsError();
+
+    // read zone size
+    cgnsErr = cg_zone_read(cgIndexFile, cgIndexBase, iZone, zone.name, zone.size);
+    if(cgnsErr != CG_OK) return cgnsError();
+    
+    // Compute info about node size
+    zone.startNode = offset; 
+    zone.nbNode = zone.size[0];
+    if (zone.type == Structured) {
+      if(meshDim > 1) zone.nbNode *= zone.size[1];
+      if(meshDim > 2) zone.nbNode *= zone.size[2];
+    }
+    zone.interfaceNode.resize(zone.nbNode);
+
+    // helper variables
+    offset += zone.nbNode;
+    name2Zone[std::string(zone.name)] = iZone-1;
   }
 
-  // read dimension and check consistency with base node
+  // read interface and periodicity info
+  for(int iZone = 1; iZone <= nbZones; iZone++) {
+    if(allZoneInfo[iZone].type == Structured) {
+      readConnectivitiesStructured(cgIndexFile, cgIndexBase, meshDim, iZone,
+                                   name2Zone, allZoneInfo);
+    }
+  }
+
+  return 1;
+}
+
+
+int readZone(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone, int dim,
+             double scale, std::vector<MVertex *> &allVert,
+             std::map<int, std::vector<MElement *> > *allElt,
+             std::vector<std::string> &allBCName, std::map<int, int> &bc2Family,
+             std::vector<std::string> &allBCFamilyName)
+{
+  int cgnsErr;
+
+  // read dimension of coordinates and check consistency with base node
   int dim2;
-  cgnsErr = cg_ncoords(cgIndexFile, cgIndexBase, iZone, &dim2);
+  cgnsErr = cg_ncoords(cgIndexFile, cgIndexBase, zone.index, &dim2);
   if(cgnsErr != CG_OK) return cgnsError();
   if(dim2 > dim) {
     Msg::Warning("%i coordinates in CGNS zone %i, while base has dimension %i,"
-                 " discarding upper dimensions", dim2, iZone, dim);
+                 " discarding upper dimensions", dim2, zone.index, dim);
   }
   else if(dim2 < dim) {
     Msg::Error("%i coordinates in CGNS zone %i, while base has dimension %i",
-               dim2, iZone, dim);
+               dim2, zone.index, dim);
     return 0;
   }
 
   // read boundary conditions for classification of mesh on geometry
   int nbZoneBC;
-  cgnsErr = cg_nbocos(cgIndexFile, cgIndexBase, iZone, &nbZoneBC);
-  if(cgnsErr != CG_OK) return cgnsError();
   std::map<int, int> elt2BC;
+  cgnsErr = cg_nbocos(cgIndexFile, cgIndexBase, zone.index, &nbZoneBC);
+  if(cgnsErr != CG_OK) return cgnsError();
   for(int iZoneBC = 1; iZoneBC <= nbZoneBC; iZoneBC++) {
-    readBoundaryCondition(cgIndexFile, cgIndexBase, iZone, iZoneBC, dim,
+    readBoundaryCondition(cgIndexFile, cgIndexBase, zone.index, iZoneBC, dim,
                           elt2BC, allBCName, bc2Family, allBCFamilyName);
   }
 
@@ -664,20 +779,20 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
   for(int iXYZ = 0; iXYZ < dim; iXYZ++) {
     char xyzName[CGNS_MAX_STR_LEN];
     DataType_t dataType;
-    cgnsErr = cg_coord_info(cgIndexFile, cgIndexBase, iZone, iXYZ+1, &dataType,
-                            xyzName);
+    cgnsErr = cg_coord_info(cgIndexFile, cgIndexBase, zone.index, iXYZ+1,
+                            &dataType, xyzName);
     if(cgnsErr != CG_OK) return cgnsError();
     const int startInd[3] = {1, 1, 1};
-    xyz[iXYZ].resize(nbNode);
-    cgnsErr = cg_coord_read(cgIndexFile, cgIndexBase, iZone, xyzName,
-                            RealDouble, startInd, zoneSize, xyz[iXYZ].data());
+    xyz[iXYZ].resize(zone.nbNode);
+    cgnsErr = cg_coord_read(cgIndexFile, cgIndexBase, zone.index, xyzName,
+                            RealDouble, startInd, zone.size, xyz[iXYZ].data());
     if(cgnsErr != CG_OK) return cgnsError();
   }
 
   // create vertices
   const std::size_t vertShift = allVert.size();
-  allVert.reserve(vertShift+nbNode);
-  for(int i = 0; i < nbNode; i++) {
+  allVert.reserve(vertShift+zone.nbNode);
+  for(int i = 0; i < zone.nbNode; i++) {
     const double x = xyz[0][i] * scale;
     const double y = (dim > 1) ? xyz[1][i] * scale : 0.;
     const double z = (dim > 2) ? xyz[2][i] * scale : 0.;
@@ -686,25 +801,25 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim, double scale,
 
   // read and create elementss
   int err = 0;
-  if (zoneType == Structured) {
+  if (zone.type == Structured) {
+    const int firstDefaultBC = allBCName.size();
+    allBCName.insert(allBCName.end(), 2*dim, "");
     if(dim == 2) {
-      const int firstDefaultBC = allBCName.size();
-      allBCName.insert(allBCName.end(), 4, "");
-      err = readElementsStructured2D(cgIndexFile, cgIndexBase, iZone, vertShift,
-                                     zoneSize, allVert, allElt, elt2BC,
-                                     firstDefaultBC);
+      err = readElementsStructured<2>(cgIndexFile, cgIndexBase, zone.index,
+                                      vertShift, zone.size, allVert, allElt,
+                                      elt2BC, zone.interfaceNode,
+                                      firstDefaultBC);
     }
     else if(dim == 3) {
-      const int firstDefaultBC = allBCName.size();
-      allBCName.insert(allBCName.end(), 6, "");
-      err = readElementsStructured3D(cgIndexFile, cgIndexBase, iZone, vertShift,
-                                     zoneSize, allVert, allElt, elt2BC,
-                                     firstDefaultBC, blockBnd);
+      err = readElementsStructured<3>(cgIndexFile, cgIndexBase, zone.index,
+                                      vertShift, zone.size, allVert, allElt,
+                                      elt2BC, zone.interfaceNode,
+                                      firstDefaultBC);
     }
   }
   else {
-    err = readElementsUnstructured(cgIndexFile, cgIndexBase, iZone, vertShift,
-                                   allVert, allElt, elt2BC);
+    err = readElementsUnstructured(cgIndexFile, cgIndexBase, zone.index,
+                                   vertShift, allVert, allElt, elt2BC);
   }
   if(err == 0) return 0;
 
