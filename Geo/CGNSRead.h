@@ -19,12 +19,20 @@ class MElement;
 
 struct ZoneInfo
 {
+  // basic zone information
   int index;
   char name[CGNS_MAX_STR_LEN];
   ZoneType_t type;
   cgsize_t size[9];
   cgsize_t startNode, nbNode;
+  
+  // internal interface information
   std::vector<bool> interfaceNode;
+
+  // periodic information
+  std::vector<int> masterZone;
+  std::vector<std::vector<double> > perTransfo;
+  std::vector<std::vector<cgsize_t> > masterNode, slaveNode;
 };
 
 

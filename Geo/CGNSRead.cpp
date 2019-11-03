@@ -309,46 +309,111 @@ StructuredInd<DIM>::StructuredInd(int iZone, const cgsize_t *size, int &err)
 
 template<int DIM>
 int readOneConnectivityStructured(int cgIndexFile, int cgIndexBase, int iZone,
-                                  int iConnect, ZoneInfo &zone)
+                                  int iConnect,
+                                  const std::map<std::string, int> &name2Zone,
+                                  std::vector<ZoneInfo> &allZoneInfo)
 {
-  int cgnsErr; 
+  int cgnsErr;
+  ZoneInfo &zone = allZoneInfo[iZone];
  
   // read connection
   char connectName[CGNS_MAX_STR_LEN], donorName[CGNS_MAX_STR_LEN];
-  cgsize_t range[2*DIM], donor_range[2*DIM];
-  int transform[DIM];
-  cgnsErr = cg_1to1_read(cgIndexFile, cgIndexBase, iZone, iConnect,
-                         connectName, donorName, range, donor_range, transform);
+  cgsize_t range[2*DIM], rangeDonnor[2*DIM];
+  int indexTransfo[DIM];
+  cgnsErr = cg_1to1_read(cgIndexFile, cgIndexBase, iZone, iConnect, connectName,
+                         donorName, range, rangeDonnor, indexTransfo);
   if(cgnsErr != CG_OK) return cgnsError();
 
-  float rotationCenter[3], rotationAngle[3], translation[3];
+  bool periodic = false;
+  float rotCenter[3], rotAngle[3], translat[3];
   cgnsErr = cg_1to1_periodic_read(cgIndexFile, cgIndexBase, iZone, iConnect,
-                                  rotationCenter, rotationAngle, translation);
+                                  rotCenter, rotAngle, translat);
   if(cgnsErr != CG_NODE_NOT_FOUND) {
-    if(cgnsErr == CG_OK) return 1;
+    if(cgnsErr == CG_OK) periodic = true;
     else return cgnsError();
   }
 
-  // // store connection info in zone info structure
-  // storeConnectionInZoneInfo<DIM>(iZone, range, zone);
-
-  // number of vertices and elements (raw mesh)
+  // indexing in zone
   int err = 1;
   StructuredInd<DIM> si(iZone, zone.size, err);
   if(err == 0) return 0;
 
   // range of IJK indices
-  const cgsize_t iMin = range[0]-1, iMax = range[DIM]-1;
-  const cgsize_t jMin = range[1]-1, jMax = range[DIM+1]-1;
-  const cgsize_t kMin = (DIM == 3) ? range[2]-1 : 1;
-  const cgsize_t kMax = (DIM == 3) ? range[5]-1 : 1;
-  
-  // Mark nodes as interface
-  int ijk[3];
-  for(ijk[2] = kMin; ijk[2] <= kMax; ijk[2]++) {
-    for(ijk[1] = jMin; ijk[1] <= jMax; ijk[1]++) {
-      for(ijk[0] = iMin; ijk[0] <= iMax; ijk[0]++) {
-        zone.interfaceNode[si.Vert(ijk)] = true;
+  const cgsize_t ijkMin[3] = {range[0]-1, range[1]-1,
+                              (DIM == 3) ? range[2]-1 : 1};
+  const cgsize_t ijkMax[3] = {range[DIM]-1, range[DIM+1]-1,
+                              (DIM == 3) ? range[5]-1 : 1};
+
+  // If not periodic, mark as internal interface and return
+  if(!periodic) {
+    int ijk[3], &i = ijk[0], &j = ijk[1], &k = ijk[2];
+    for(k = ijkMin[2]; k <= ijkMax[2]; k++) {
+      for(j = ijkMin[1]; j <= ijkMax[1]; j++) {
+        for(i = ijkMin[0]; i <= ijkMax[0]; i++) {
+          zone.interfaceNode[si.Vert(ijk)] = true;
+        }
+      }
+    }
+    return 1;
+  }
+
+  // identify donnor (master) zone
+  std::map<std::string, int>::const_iterator itDN = name2Zone.find(donorName);
+  if(itDN == name2Zone.end()) {
+    Msg::Error("Donnor zone '%s' not found in structured connectivity '%s' "
+               "of zone %i ('%s')", donorName, connectName, zone.index,
+               zone.name);
+    return 0;
+  }
+  const int iZoneD = itDN->second;
+  zone.masterZone.push_back(iZoneD);
+
+  // periodic transformation
+  zone.perTransfo.push_back(std::vector<double>());
+  computeAffineTransformation(rotCenter, rotAngle, translat,
+                              zone.perTransfo.back());
+
+  // number of nodes and origin of donnor (master) interface
+  cgsize_t nijk[3] = {0, 0, 1};
+  for(int d = 0; d < DIM; d++) nijk[d] = ijkMax[d]-ijkMin[d]+1;
+  const cgsize_t nbNode = nijk[0]*nijk[1]*nijk[2];
+
+  // indexation in donnor zone
+  ZoneInfo &zoneD = allZoneInfo[iZoneD];
+  int errD = 1;
+  StructuredInd<DIM> siD(iZoneD, zoneD.size, errD);
+  if(errD == 0) return 0;
+  const cgsize_t ijkMinD[3] = {rangeDonnor[0]-1, rangeDonnor[1]-1,
+                               (DIM == 3) ? rangeDonnor[2]-1 : 1};
+
+  // IJK directions and sign for master-slave index transformation
+  int dir[3] = {-1, -1, 2};
+  for(int d = 0; d < DIM; d++) dir[d] = std::abs(indexTransfo[d])-1;
+  bool signDir[3] = {true, true, true};
+  for(int d = 0; d < DIM; d++) signDir[d] = (indexTransfo[d] > 0);
+
+  // allocate storage for node correspondence
+  zone.slaveNode.push_back(std::vector<cgsize_t>());
+  std::vector<cgsize_t> &slaveNode = zone.slaveNode.back();
+  slaveNode.reserve(nbNode);
+  zone.masterNode.push_back(std::vector<cgsize_t>());
+  std::vector<cgsize_t> &masterNode = zone.masterNode.back();
+  masterNode.reserve(nbNode);
+
+  // store periodic node correspondance
+  int ijk[3], ijkD[3];
+  for(int k = 0; k < nijk[2]; k++) {
+    ijk[2] = ijkMin[2] + k;
+    for(int j = 0; j < nijk[1]; j++) {
+      ijk[1] = ijkMin[1] + j;
+      for(int i = 0; i < nijk[0]; i++) {
+        ijk[0] = ijkMin[0] + i;
+        for(int d = 0; d < DIM; d++) ijkD[d] = ijkMinD[d];
+        ijkD[dir[0]] += signDir[dir[0]] ? i : -i;
+        ijkD[dir[1]] += signDir[dir[1]] ? j : -j;
+        ijkD[dir[2]] += signDir[dir[2]] ? k : -k;
+        slaveNode.push_back(si.Vert(ijk));
+        masterNode.push_back(siD.Vert(ijkD));
       }
     }
   }
@@ -373,11 +438,11 @@ int readConnectivitiesStructured(int cgIndexFile, int cgIndexBase, int meshDim,
     int err;
     if (meshDim == 2) {
       err = readOneConnectivityStructured<2>(cgIndexFile, cgIndexBase, iZone,
-                                             iConnect, allZoneInfo[iZone]);
+                                             iConnect, name2Zone, allZoneInfo);
     }
     else if(meshDim == 3) {
       err = readOneConnectivityStructured<3>(cgIndexFile, cgIndexBase, iZone,
-                                             iConnect, allZoneInfo[iZone]);
+                                             iConnect, name2Zone, allZoneInfo);
     }
     if(err == 0) return 0;
   }
@@ -727,7 +792,7 @@ int readAllZoneInfo(int cgIndexFile, int cgIndexBase, int meshDim,
 
     // helper variables
     offset += zone.nbNode;
-    name2Zone[std::string(zone.name)] = iZone-1;
+    name2Zone[std::string(zone.name)] = iZone;
   }
 
   // read interface and periodicity info
