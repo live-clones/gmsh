@@ -9,12 +9,16 @@
 #include "MElement.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
+#include "affineTransformation.h"
 #include "CGNSRead.h"
 
 #if defined(HAVE_LIBCGNS)
 
 
 namespace {
+
+
+// ------------------ Helper functions for unstructured zones ------------------
 
 
 void getElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
@@ -58,108 +62,6 @@ void getElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
   case TYPE_POLYH: allElt[9][entity].push_back(e); break;
   default: Msg::Error("Wrong type of element");
   }
-}
-
-
-std::size_t nameIndex(const std::string &name, std::vector<std::string> &allNames)
-{
-  for(std::size_t i = 0; i < allNames.size(); i++) {
-    if (allNames[i] == name) return i;
-  }
-  
-  allNames.push_back(name);
-  return allNames.size()-1;
-}
-
-
-// read a boundary condition in a zone
-// DBGTT: \todo: only for unstructured zone for the moment
-int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
-                          int iZoneBC, int dim, std::map<int, int> &elt2BC,
-                          std::vector<std::string> &allBCName,
-                          std::map<int, int> &bc2Family,
-                          std::vector<std::string> &allBCFamilyName)
-{
-  int cgnsErr;
-
-  // read general information on boundary condition
-  char bcName[CGNS_MAX_STR_LEN];
-  BCType_t bcType;
-  PointSetType_t ptSetType;
-  cgsize_t nbElts, normalSize;
-  DataType_t normalType;
-  int nbDataSet;
-  int normalIndex;
-  cgnsErr = cg_boco_info(cgIndexFile, cgIndexBase, iZone, iZoneBC, bcName,
-                         &bcType, &ptSetType, &nbElts, &normalIndex,
-                         &normalSize, &normalType, &nbDataSet);
-  if(cgnsErr != CG_OK) return cgnsError();
-
-  // read family linked to BC, use BC name if not present
-  std::string familyName;
-  cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "Zone_t", iZone, "ZoneBC_t",
-                    1, "BC_t", iZoneBC, "end");
-  if(cgnsErr != CG_OK) return cgnsError();
-  char tmpFamilyName[CGNS_MAX_STR_LEN];
-  cgnsErr = cg_famname_read(tmpFamilyName);
-  if(cgnsErr != CG_NODE_NOT_FOUND) {
-    if(cgnsErr == CG_OK) familyName = std::string(tmpFamilyName);
-    else return cgnsError();
-  }
-
-  // read location of bnd. condition (type of mesh entity on which it applies)
-  GridLocation_t location;
-  cgnsErr = cg_boco_gridlocation_read(cgIndexFile, cgIndexBase, iZone, iZoneBC,
-                                      &location);
-  if(cgnsErr != CG_OK) return cgnsError();
-
-  // // check that boundary condition is imposed at the correct location
-  // if((dim == 2) && (location != EdgeCenter) && (location != Vertex)) {
-  //   Msg::Warning("Boundary condition %s is specified on %s instead of edges or "
-  //                "vertices in a 2D zone, skipping", bcName,
-  //                cg_GridLocationName(location));
-  //   return 1;
-  // }
-  // else if((dim == 3) && (location != FaceCenter) && (location != EdgeCenter) &&
-  //         (location != Vertex)) {
-  //   Msg::Error("Boundary condition %s is specified on %s instead of faces, "
-  //              "edges or vertices for a 3D zone, skipping", bcName,
-  //              cg_GridLocationName(location));
-  //   return 1;
-  // }
-
-  // Associate BC name and family name with indices
-  const int indBC = nameIndex(bcName, allBCName);
-  if(familyName.length() > 0) {
-    const int indBCFamily = nameIndex(familyName, allBCFamilyName);
-    bc2Family[indBC] = indBCFamily;
-  }
-
-  // Read elements on which the BC is imposed
-  std::vector<cgsize_t> elt(nbElts);
-  cgnsErr = cg_boco_read(cgIndexFile, cgIndexBase, iZone, iZoneBC, elt.data(),
-                         0);
-  if(cgnsErr != CG_OK) return cgnsError();
-
-  switch(ptSetType) {
-  case ElementRange:
-  case PointRange:
-  case PointRangeDonor:
-    for(cgsize_t i = elt[0]; i <= elt[1]; i++) elt2BC[i] = indBC;
-    break;
-  case ElementList:
-  case PointList:
-  case PointListDonor:
-    for(cgsize_t i = 0; i < nbElts; i++) elt2BC[elt[i]] = indBC;
-    break;
-  default:
-    Msg::Error("Point set type %s is currently not supported "
-                "for boundary conditions",
-                cg_PointSetTypeName(ptSetType));
-    break;
-  }
-
-  return 1;
 }
 
 
@@ -229,6 +131,9 @@ int readElementsUnstructured(int cgIndexFile, int cgIndexBase, int iZone,
 }
 
 
+// ------------------- Helper functions for structured zones -------------------
+
+
 template<int DIM>
 cgsize_t ijk2Ind(const cgsize_t *ijk, const cgsize_t *nijk);
 
@@ -277,7 +182,7 @@ public:
   // cgsize_t nbElt() const { return nbTotFromIJK<DIM>(nbElt_); }
     
   cgsize_t Elt(const cgsize_t *ijk) const { return ijk2Ind<DIM>(ijk, nbElt_); }
-  cgsize_t Vert(const cgsize_t *ijk) const {
+  cgsize_t Node(const cgsize_t *ijk) const {
     return ijk2Ind<DIM>(ijk, nbNode_);
   }
 
@@ -350,7 +255,7 @@ int readOneConnectivityStructured(int cgIndexFile, int cgIndexBase, int iZone,
     for(k = ijkMin[2]; k <= ijkMax[2]; k++) {
       for(j = ijkMin[1]; j <= ijkMax[1]; j++) {
         for(i = ijkMin[0]; i <= ijkMax[0]; i++) {
-          zone.interfaceNode[si.Vert(ijk)] = true;
+          zone.interfaceNode[si.Node(ijk)] = true;
         }
       }
     }
@@ -396,9 +301,13 @@ int readOneConnectivityStructured(int cgIndexFile, int cgIndexBase, int iZone,
   zone.slaveNode.push_back(std::vector<cgsize_t>());
   std::vector<cgsize_t> &slaveNode = zone.slaveNode.back();
   slaveNode.reserve(nbNode);
+  zone.slaveVert.push_back(std::vector<MVertex *>());
+  zone.slaveVert.back().reserve(nbNode);
   zone.masterNode.push_back(std::vector<cgsize_t>());
   std::vector<cgsize_t> &masterNode = zone.masterNode.back();
   masterNode.reserve(nbNode);
+  zone.masterVert.push_back(std::vector<MVertex *>());
+  zone.masterVert.back().reserve(nbNode);
 
   // store periodic node correspondance
   int ijk[3], ijkD[3];
@@ -412,8 +321,8 @@ int readOneConnectivityStructured(int cgIndexFile, int cgIndexBase, int iZone,
         ijkD[dir[0]] += signDir[dir[0]] ? i : -i;
         ijkD[dir[1]] += signDir[dir[1]] ? j : -j;
         ijkD[dir[2]] += signDir[dir[2]] ? k : -k;
-        slaveNode.push_back(si.Vert(ijk));
-        masterNode.push_back(siD.Vert(ijkD));
+        slaveNode.push_back(si.Node(ijk));
+        masterNode.push_back(siD.Node(ijkD));
       }
     }
   }
@@ -484,7 +393,7 @@ void createElement<2>(const cgsize_t *ijk, const StructuredInd<2> &si,
   std::vector<MVertex *> eltVert(nbEltNode);
   for(int iN = 0; iN < nbEltNode; iN++) {
     const cgsize_t ijN[3] = {ijk[0]+s[2*iN], ijk[1]+s[2*iN+1]};
-    const int ind = vertShift + si.Vert(ijN);
+    const int ind = vertShift + si.Node(ijN);
     eltVert[iN] = allVert[ind];
   }
 
@@ -531,7 +440,7 @@ void createElement<3>(const cgsize_t *ijk, const StructuredInd<3> &si,
   for(int iN = 0; iN < nbEltNode; iN++) {
     const cgsize_t ijkN[3] = {ijk[0]+s[3*iN], ijk[1]+s[3*iN+1],
                               ijk[2]+s[3*iN+2]};
-    const cgsize_t ind = vertShift + si.Vert(ijkN);
+    const cgsize_t ind = vertShift + si.Node(ijkN);
     eltVert[iN] = allVert[ind];
   }
 
@@ -599,7 +508,7 @@ void createBndElement<3>(const cgsize_t *ijk, const int *dir,
     cgsize_t ijkN[3] = {ijk[0], ijk[1], ijk[2]};
     ijkN[dir[0]] += s[2*iN];
     ijkN[dir[1]] += s[2*iN+1];
-    const cgsize_t localInd = si.Vert(ijkN);
+    const cgsize_t localInd = si.Node(ijkN);
     isInternalInterface &= interfaceNode[localInd];
     eltVert[iN] = allVert[vertShift+localInd];
   }
@@ -709,7 +618,150 @@ int readElementsStructured(int cgIndexFile, int cgIndexBase, int iZone,
 }
 
 
+// ------------------------- Generic helper functions --------------------------
+
+
+std::size_t nameIndex(const std::string &name,
+                      std::vector<std::string> &allNames)
+{
+  for(std::size_t i = 0; i < allNames.size(); i++) {
+    if (allNames[i] == name) return i;
+  }
+  
+  allNames.push_back(name);
+  return allNames.size()-1;
 }
+
+
+// read a boundary condition in a zone
+// DBGTT: \todo: only for unstructured zone for the moment
+int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
+                          int iZoneBC, int meshDim, std::map<int, int> &elt2BC,
+                          std::vector<std::string> &allBCName,
+                          std::map<int, int> &bc2Family,
+                          std::vector<std::string> &allBCFamilyName)
+{
+  int cgnsErr;
+
+  // read general information on boundary condition
+  char bcName[CGNS_MAX_STR_LEN];
+  BCType_t bcType;
+  PointSetType_t ptSetType;
+  cgsize_t nbElts, normalSize;
+  DataType_t normalType;
+  int nbDataSet;
+  int normalIndex;
+  cgnsErr = cg_boco_info(cgIndexFile, cgIndexBase, iZone, iZoneBC, bcName,
+                         &bcType, &ptSetType, &nbElts, &normalIndex,
+                         &normalSize, &normalType, &nbDataSet);
+  if(cgnsErr != CG_OK) return cgnsError();
+
+  // read family linked to BC, use BC name if not present
+  std::string familyName;
+  cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "Zone_t", iZone, "ZoneBC_t",
+                    1, "BC_t", iZoneBC, "end");
+  if(cgnsErr != CG_OK) return cgnsError();
+  char tmpFamilyName[CGNS_MAX_STR_LEN];
+  cgnsErr = cg_famname_read(tmpFamilyName);
+  if(cgnsErr != CG_NODE_NOT_FOUND) {
+    if(cgnsErr == CG_OK) familyName = std::string(tmpFamilyName);
+    else return cgnsError();
+  }
+
+  // read location of bnd. condition (type of mesh entity on which it applies)
+  GridLocation_t location;
+  cgnsErr = cg_boco_gridlocation_read(cgIndexFile, cgIndexBase, iZone, iZoneBC,
+                                      &location);
+  if(cgnsErr != CG_OK) return cgnsError();
+
+  // // check that boundary condition is imposed at the correct location
+  // if((meshDim == 2) && (location != EdgeCenter) && (location != Vertex)) {
+  //   Msg::Warning("Boundary condition %s is specified on %s instead of edges or "
+  //                "vertices in a 2D zone, skipping", bcName,
+  //                cg_GridLocationName(location));
+  //   return 1;
+  // }
+  // else if((meshDim == 3) && (location != FaceCenter) && (location != EdgeCenter) &&
+  //         (location != Vertex)) {
+  //   Msg::Error("Boundary condition %s is specified on %s instead of faces, "
+  //              "edges or vertices for a 3D zone, skipping", bcName,
+  //              cg_GridLocationName(location));
+  //   return 1;
+  // }
+
+  // Associate BC name and family name with indices
+  const int indBC = nameIndex(bcName, allBCName);
+  if(familyName.length() > 0) {
+    const int indBCFamily = nameIndex(familyName, allBCFamilyName);
+    bc2Family[indBC] = indBCFamily;
+  }
+
+  // Read elements on which the BC is imposed
+  std::vector<cgsize_t> elt(nbElts);
+  cgnsErr = cg_boco_read(cgIndexFile, cgIndexBase, iZone, iZoneBC, elt.data(),
+                         0);
+  if(cgnsErr != CG_OK) return cgnsError();
+
+  switch(ptSetType) {
+  case ElementRange:
+  case PointRange:
+  case PointRangeDonor:
+    for(cgsize_t i = elt[0]; i <= elt[1]; i++) elt2BC[i] = indBC;
+    break;
+  case ElementList:
+  case PointList:
+  case PointListDonor:
+    for(cgsize_t i = 0; i < nbElts; i++) elt2BC[elt[i]] = indBC;
+    break;
+  default:
+    Msg::Error("Point set type %s is currently not supported "
+                "for boundary conditions",
+                cg_PointSetTypeName(ptSetType));
+    break;
+  }
+
+  return 1;
+}
+
+
+int readVertices(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone,
+                 int dim, double scale, std::vector<MVertex *> &allVert,
+                 std::size_t vertShift)
+{
+  int cgnsErr;
+
+  // read vertex coordinates
+  std::vector<double> xyz[3];
+  for(int iXYZ = 0; iXYZ < dim; iXYZ++) {
+    char xyzName[CGNS_MAX_STR_LEN];
+    DataType_t dataType;
+    cgnsErr = cg_coord_info(cgIndexFile, cgIndexBase, zone.index, iXYZ+1,
+                            &dataType, xyzName);
+    if(cgnsErr != CG_OK) return cgnsError();
+    const int startInd[3] = {1, 1, 1};
+    xyz[iXYZ].resize(zone.nbNode);
+    cgnsErr = cg_coord_read(cgIndexFile, cgIndexBase, zone.index, xyzName,
+                            RealDouble, startInd, zone.size, xyz[iXYZ].data());
+    if(cgnsErr != CG_OK) return cgnsError();
+  }
+
+  // create vertices
+  allVert.reserve(vertShift+zone.nbNode);
+  for(int i = 0; i < zone.nbNode; i++) {
+    const double x = xyz[0][i] * scale;
+    const double y = (dim > 1) ? xyz[1][i] * scale : 0.;
+    const double z = (dim > 2) ? xyz[2][i] * scale : 0.;
+    allVert.push_back(new MVertex(x, y, z));
+  }
+
+  return 1;
+}
+
+
+}   // namespace
+
+
+// ---------------------------- Generic functions ------------------------------
 
 
 double readScale()
@@ -808,7 +860,7 @@ int readAllZoneInfo(int cgIndexFile, int cgIndexBase, int meshDim,
 
 
 int readZone(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone, int dim,
-             double scale, std::vector<MVertex *> &allVert,
+             int meshDim, double scale, std::vector<MVertex *> &allVert,
              std::map<int, std::vector<MElement *> > *allElt,
              std::vector<std::string> &allBCName, std::map<int, int> &bc2Family,
              std::vector<std::string> &allBCFamilyName)
@@ -819,13 +871,13 @@ int readZone(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone, int dim,
   int dim2;
   cgnsErr = cg_ncoords(cgIndexFile, cgIndexBase, zone.index, &dim2);
   if(cgnsErr != CG_OK) return cgnsError();
-  if(dim2 > dim) {
+  if(dim2 > meshDim) {
     Msg::Warning("%i coordinates in CGNS zone %i, while base has dimension %i,"
-                 " discarding upper dimensions", dim2, zone.index, dim);
+                 " discarding upper dimensions", dim2, zone.index, meshDim);
   }
-  else if(dim2 < dim) {
+  else if(dim2 < meshDim) {
     Msg::Error("%i coordinates in CGNS zone %i, while base has dimension %i",
-               dim2, zone.index, dim);
+               dim2, zone.index, meshDim);
     return 0;
   }
 
@@ -835,47 +887,30 @@ int readZone(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone, int dim,
   cgnsErr = cg_nbocos(cgIndexFile, cgIndexBase, zone.index, &nbZoneBC);
   if(cgnsErr != CG_OK) return cgnsError();
   for(int iZoneBC = 1; iZoneBC <= nbZoneBC; iZoneBC++) {
-    readBoundaryCondition(cgIndexFile, cgIndexBase, zone.index, iZoneBC, dim,
-                          elt2BC, allBCName, bc2Family, allBCFamilyName);
+    int errBC = readBoundaryCondition(cgIndexFile, cgIndexBase, zone.index,
+                                      iZoneBC, meshDim, elt2BC, allBCName,
+                                      bc2Family, allBCFamilyName);
+    if(errBC == 0) return 0;
   }
 
-  // read vertex coordinates
-  std::vector<double> xyz[3];
-  for(int iXYZ = 0; iXYZ < dim; iXYZ++) {
-    char xyzName[CGNS_MAX_STR_LEN];
-    DataType_t dataType;
-    cgnsErr = cg_coord_info(cgIndexFile, cgIndexBase, zone.index, iXYZ+1,
-                            &dataType, xyzName);
-    if(cgnsErr != CG_OK) return cgnsError();
-    const int startInd[3] = {1, 1, 1};
-    xyz[iXYZ].resize(zone.nbNode);
-    cgnsErr = cg_coord_read(cgIndexFile, cgIndexBase, zone.index, xyzName,
-                            RealDouble, startInd, zone.size, xyz[iXYZ].data());
-    if(cgnsErr != CG_OK) return cgnsError();
-  }
-
-  // create vertices
+  // read and create vertices
   const std::size_t vertShift = allVert.size();
-  allVert.reserve(vertShift+zone.nbNode);
-  for(int i = 0; i < zone.nbNode; i++) {
-    const double x = xyz[0][i] * scale;
-    const double y = (dim > 1) ? xyz[1][i] * scale : 0.;
-    const double z = (dim > 2) ? xyz[2][i] * scale : 0.;
-    allVert.push_back(new MVertex(x, y, z));
-  }
+  int errVert = readVertices(cgIndexFile, cgIndexBase, zone, dim, scale,
+                             allVert, vertShift);
+  if(errVert == 0) return 0;
 
   // read and create elementss
   int err = 0;
   if (zone.type == Structured) {
     const int firstDefaultBC = allBCName.size();
-    allBCName.insert(allBCName.end(), 2*dim, "");
-    if(dim == 2) {
+    allBCName.insert(allBCName.end(), 2*meshDim, "");
+    if(meshDim == 2) {
       err = readElementsStructured<2>(cgIndexFile, cgIndexBase, zone.index,
                                       vertShift, zone.size, allVert, allElt,
                                       elt2BC, zone.interfaceNode,
                                       firstDefaultBC);
     }
-    else if(dim == 3) {
+    else if(meshDim == 3) {
       err = readElementsStructured<3>(cgIndexFile, cgIndexBase, zone.index,
                                       vertShift, zone.size, allVert, allElt,
                                       elt2BC, zone.interfaceNode,

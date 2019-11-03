@@ -33,6 +33,7 @@ struct ZoneInfo
   std::vector<int> masterZone;
   std::vector<std::vector<double> > perTransfo;
   std::vector<std::vector<cgsize_t> > masterNode, slaveNode;
+  std::vector<std::vector<MVertex *> > masterVert, slaveVert;
 };
 
 
@@ -42,7 +43,7 @@ int readAllZoneInfo(int cgIndexFile, int cgIndexBase, int meshDim,
                     std::vector<ZoneInfo> &allZoneInfo);
 
 int readZone(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone, int dim,
-             double scale, std::vector<MVertex *> &allVert,
+             int meshDim, double scale, std::vector<MVertex *> &allVert,
              std::map<int, std::vector<MElement *> > *allElt,
              std::vector<std::string> &allBCName, std::map<int, int> &bc2Family,
              std::vector<std::string> &allBCFamilyName);

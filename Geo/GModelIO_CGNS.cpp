@@ -48,8 +48,9 @@ int GModel::readCGNS(const std::string &name)
   cgnsErr = cg_nzones(cgIndexFile, cgIndexBase, &nbZones);
   if(cgnsErr != CG_OK) return cgnsError();
   for(int iZone = 1; iZone <= nbZones; iZone++) {
-    int err = readZone(cgIndexFile, cgIndexBase, allZoneInfo[iZone], dim, scale,
-                       allVert, allElt, allBCName, bc2Family, allBCFamilyName);
+    int err = readZone(cgIndexFile, cgIndexBase, allZoneInfo[iZone], dim,
+                       meshDim, scale, allVert, allElt, allBCName, bc2Family,
+                       allBCFamilyName);
     if(err == 0) return 0;
   }
 
