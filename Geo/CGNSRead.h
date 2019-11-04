@@ -42,8 +42,9 @@ double readScale();
 int readAllZoneInfo(int cgIndexFile, int cgIndexBase, int meshDim,
                     std::vector<ZoneInfo> &allZoneInfo);
 
-int readZone(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone, int dim,
-             int meshDim, double scale, std::vector<MVertex *> &allVert,
+int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim,
+             int meshDim, double scale, std::vector<ZoneInfo> &allZoneInfo,
+             std::vector<MVertex *> &allVert,
              std::map<int, std::vector<MElement *> > *allElt,
              std::vector<std::string> &allBCName, std::map<int, int> &bc2Family,
              std::vector<std::string> &allBCFamilyName);

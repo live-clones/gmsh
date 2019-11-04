@@ -48,8 +48,8 @@ int GModel::readCGNS(const std::string &name)
   cgnsErr = cg_nzones(cgIndexFile, cgIndexBase, &nbZones);
   if(cgnsErr != CG_OK) return cgnsError();
   for(int iZone = 1; iZone <= nbZones; iZone++) {
-    int err = readZone(cgIndexFile, cgIndexBase, allZoneInfo[iZone], dim,
-                       meshDim, scale, allVert, allElt, allBCName, bc2Family,
+    int err = readZone(cgIndexFile, cgIndexBase, iZone, dim, meshDim, scale,
+                       allZoneInfo, allVert, allElt, allBCName, bc2Family,
                        allBCFamilyName);
     if(err == 0) return 0;
   }
@@ -63,6 +63,23 @@ int GModel::readCGNS(const std::string &name)
   if(CTX::instance()->mesh.cgnsConstructTopology) createTopologyFromMeshNew();
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVert);
+
+  // add periodic vertex correspondence
+  for(int iZone = 1; iZone <= nbZones; iZone++) {
+    ZoneInfo &zone = allZoneInfo[iZone];
+    for(std::size_t iPer = 0; iPer < zone.slaveVert.size(); iPer++) {
+      std::vector<MVertex *> &slaveVert = zone.slaveVert[iPer];
+      std::vector<MVertex *> &masterVert = zone.masterVert[iPer];
+      for(std::size_t iV = 0; iV < slaveVert.size(); iV++) {
+        MVertex *sVert = slaveVert[iV], *mVert = masterVert[iV];
+        GEntity *sEnt = sVert->onWhat(), *mEnt = mVert->onWhat();
+        sEnt->correspondingVertices[sVert] = mVert;
+        if(sEnt->getMeshMaster() == sEnt) {
+          sEnt->setMeshMaster(mEnt, zone.perTransfo[iPer]);
+        }
+      }
+    }
+  }
 
   // remove potential duplicate vertices if several zones
   // TODO: disable this through option ?

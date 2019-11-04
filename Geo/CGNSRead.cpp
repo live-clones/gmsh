@@ -724,23 +724,36 @@ int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
 }
 
 
-int readVertices(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone,
-                 int dim, double scale, std::vector<MVertex *> &allVert,
-                 std::size_t vertShift)
+void periodicVertFromNode(std::size_t vertShift,
+                          const std::vector<MVertex *> &allVert,
+                          const std::vector<cgsize_t> &node,
+                          std::vector<MVertex *> &vert)
+{
+  for(std::size_t iN = 0; iN < node.size(); iN++) {
+    cgsize_t indN = node[iN];
+    vert.push_back(allVert[vertShift+indN]);
+  }
+}
+
+
+int readVertices(int cgIndexFile, int cgIndexBase, int iZone,
+                 int dim, double scale, std::vector<ZoneInfo> &allZoneInfo,
+                 std::vector<MVertex *> &allVert, std::size_t vertShift)
 {
   int cgnsErr;
+  ZoneInfo &zone = allZoneInfo[iZone];
 
   // read vertex coordinates
   std::vector<double> xyz[3];
   for(int iXYZ = 0; iXYZ < dim; iXYZ++) {
     char xyzName[CGNS_MAX_STR_LEN];
     DataType_t dataType;
-    cgnsErr = cg_coord_info(cgIndexFile, cgIndexBase, zone.index, iXYZ+1,
-                            &dataType, xyzName);
+    cgnsErr = cg_coord_info(cgIndexFile, cgIndexBase, iZone, iXYZ+1, &dataType,
+                            xyzName);
     if(cgnsErr != CG_OK) return cgnsError();
     const int startInd[3] = {1, 1, 1};
     xyz[iXYZ].resize(zone.nbNode);
-    cgnsErr = cg_coord_read(cgIndexFile, cgIndexBase, zone.index, xyzName,
+    cgnsErr = cg_coord_read(cgIndexFile, cgIndexBase, iZone, xyzName,
                             RealDouble, startInd, zone.size, xyz[iXYZ].data());
     if(cgnsErr != CG_OK) return cgnsError();
   }
@@ -752,6 +765,26 @@ int readVertices(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone,
     const double y = (dim > 1) ? xyz[1][i] * scale : 0.;
     const double z = (dim > 2) ? xyz[2][i] * scale : 0.;
     allVert.push_back(new MVertex(x, y, z));
+  }
+
+  // fill periodic slave nodes
+  for(std::size_t iPer = 0; iPer < zone.slaveNode.size(); iPer++) {
+    Msg::Info("DBGTT: add slave vert. for per. connect %i in zone %i", iPer, iZone);
+    std::vector<cgsize_t> &slaveNode = zone.slaveNode[iPer];
+    std::vector<MVertex *> &slaveVert = zone.slaveVert[iPer];
+    periodicVertFromNode(vertShift, allVert, slaveNode, slaveVert);
+  }
+
+  // fill periodic master nodes in all zones
+  for(std::size_t iZone2 = 1; iZone2 < allZoneInfo.size(); iZone2++) {
+    ZoneInfo &zone2 = allZoneInfo[iZone2];
+    for(std::size_t iPer = 0; iPer < zone2.masterZone.size(); iPer++) {
+      if (zone2.masterZone[iPer] != iZone) continue;
+      Msg::Info("DBGTT: add master vert. from zone %i for per. connect %i in master zone %i", iZone, iPer, iZone2);
+      std::vector<cgsize_t> &masterNode = zone2.masterNode[iPer];
+      std::vector<MVertex *> &masterVert = zone2.masterVert[iPer];
+      periodicVertFromNode(vertShift, allVert, masterNode, masterVert);
+    }
   }
 
   return 1;
@@ -823,7 +856,7 @@ int readAllZoneInfo(int cgIndexFile, int cgIndexBase, int meshDim,
   for(int iZone = 1; iZone <= nbZones; iZone++) {
     // index
     ZoneInfo &zone = allZoneInfo[iZone];
-    zone.index= iZone;
+    zone.index = iZone;
 
     // read zone type
     cgnsErr = cg_zone_type(cgIndexFile, cgIndexBase, iZone, &(zone.type));
@@ -859,35 +892,37 @@ int readAllZoneInfo(int cgIndexFile, int cgIndexBase, int meshDim,
 }
 
 
-int readZone(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone, int dim,
-             int meshDim, double scale, std::vector<MVertex *> &allVert,
+int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim,
+             int meshDim, double scale, std::vector<ZoneInfo> &allZoneInfo,
+             std::vector<MVertex *> &allVert,
              std::map<int, std::vector<MElement *> > *allElt,
              std::vector<std::string> &allBCName, std::map<int, int> &bc2Family,
              std::vector<std::string> &allBCFamilyName)
 {
   int cgnsErr;
+  ZoneInfo &zone = allZoneInfo[iZone];
 
   // read dimension of coordinates and check consistency with base node
-  int dim2;
-  cgnsErr = cg_ncoords(cgIndexFile, cgIndexBase, zone.index, &dim2);
+  int dimZone;
+  cgnsErr = cg_ncoords(cgIndexFile, cgIndexBase, iZone, &dimZone);
   if(cgnsErr != CG_OK) return cgnsError();
-  if(dim2 > meshDim) {
+  if(dimZone > dim) {
     Msg::Warning("%i coordinates in CGNS zone %i, while base has dimension %i,"
-                 " discarding upper dimensions", dim2, zone.index, meshDim);
+                 " discarding upper dimensions", dimZone, iZone, dim);
   }
-  else if(dim2 < meshDim) {
+  else if(dimZone < dim) {
     Msg::Error("%i coordinates in CGNS zone %i, while base has dimension %i",
-               dim2, zone.index, meshDim);
+               dimZone, iZone, dim);
     return 0;
   }
 
   // read boundary conditions for classification of mesh on geometry
   int nbZoneBC;
   std::map<int, int> elt2BC;
-  cgnsErr = cg_nbocos(cgIndexFile, cgIndexBase, zone.index, &nbZoneBC);
+  cgnsErr = cg_nbocos(cgIndexFile, cgIndexBase, iZone, &nbZoneBC);
   if(cgnsErr != CG_OK) return cgnsError();
   for(int iZoneBC = 1; iZoneBC <= nbZoneBC; iZoneBC++) {
-    int errBC = readBoundaryCondition(cgIndexFile, cgIndexBase, zone.index,
+    int errBC = readBoundaryCondition(cgIndexFile, cgIndexBase, iZone,
                                       iZoneBC, meshDim, elt2BC, allBCName,
                                       bc2Family, allBCFamilyName);
     if(errBC == 0) return 0;
@@ -895,8 +930,8 @@ int readZone(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone, int dim,
 
   // read and create vertices
   const std::size_t vertShift = allVert.size();
-  int errVert = readVertices(cgIndexFile, cgIndexBase, zone, dim, scale,
-                             allVert, vertShift);
+  int errVert = readVertices(cgIndexFile, cgIndexBase, iZone, dim, scale,
+                             allZoneInfo, allVert, vertShift);
   if(errVert == 0) return 0;
 
   // read and create elementss
@@ -905,20 +940,20 @@ int readZone(int cgIndexFile, int cgIndexBase, const ZoneInfo &zone, int dim,
     const int firstDefaultBC = allBCName.size();
     allBCName.insert(allBCName.end(), 2*meshDim, "");
     if(meshDim == 2) {
-      err = readElementsStructured<2>(cgIndexFile, cgIndexBase, zone.index,
+      err = readElementsStructured<2>(cgIndexFile, cgIndexBase, iZone,
                                       vertShift, zone.size, allVert, allElt,
                                       elt2BC, zone.interfaceNode,
                                       firstDefaultBC);
     }
     else if(meshDim == 3) {
-      err = readElementsStructured<3>(cgIndexFile, cgIndexBase, zone.index,
+      err = readElementsStructured<3>(cgIndexFile, cgIndexBase, iZone,
                                       vertShift, zone.size, allVert, allElt,
                                       elt2BC, zone.interfaceNode,
                                       firstDefaultBC);
     }
   }
   else {
-    err = readElementsUnstructured(cgIndexFile, cgIndexBase, zone.index,
+    err = readElementsUnstructured(cgIndexFile, cgIndexBase, iZone,
                                    vertShift, allVert, allElt, elt2BC);
   }
   if(err == 0) return 0;
