@@ -134,10 +134,12 @@ int readElementsUnstructured(int cgIndexFile, int cgIndexBase, int iZone,
 // ------------------- Helper functions for structured zones -------------------
 
 
+// Multi-D (IJ/IJK) to linear index conversion (indices start at 0)
 template<int DIM>
 cgsize_t ijk2Ind(const cgsize_t *ijk, const cgsize_t *nijk);
 
 
+// 2D (IJ) to linear index conversion (indices start at 0)
 template<>
 cgsize_t ijk2Ind<2>(const cgsize_t *ijk, const cgsize_t *nijk)
 {
@@ -145,6 +147,7 @@ cgsize_t ijk2Ind<2>(const cgsize_t *ijk, const cgsize_t *nijk)
 }
 
 
+// 3D (IJK) to linear index conversion (indices start at 0)
 template<>
 cgsize_t ijk2Ind<3>(const cgsize_t *ijk, const cgsize_t *nijk)
 {
@@ -170,6 +173,7 @@ cgsize_t ijk2Ind<3>(const cgsize_t *ijk, const cgsize_t *nijk)
 // }
 
 
+// Multi-D (IJ/IJK) indexing of nodes and elements in zone (indices start at 0)
 template<int DIM>
 class StructuredInd
 {
@@ -212,6 +216,7 @@ StructuredInd<DIM>::StructuredInd(int iZone, const cgsize_t *size, int &err)
 }
 
 
+// Read one periodic connection
 template<int DIM>
 int readOneConnectivityStructured(int cgIndexFile, int cgIndexBase, int iZone,
                                   int iConnect,
@@ -229,6 +234,7 @@ int readOneConnectivityStructured(int cgIndexFile, int cgIndexBase, int iZone,
                          donorName, range, rangeDonnor, indexTransfo);
   if(cgnsErr != CG_OK) return cgnsError();
 
+  // read periodic connection information
   bool periodic = false;
   float rotCenter[3], rotAngle[3], translat[3];
   cgnsErr = cg_1to1_periodic_read(cgIndexFile, cgIndexBase, iZone, iConnect,
@@ -245,11 +251,11 @@ int readOneConnectivityStructured(int cgIndexFile, int cgIndexBase, int iZone,
 
   // range of IJK indices
   const cgsize_t ijkMin[3] = {range[0]-1, range[1]-1,
-                              (DIM == 3) ? range[2]-1 : 1};
+                              (DIM == 3) ? range[2]-1 : 0};
   const cgsize_t ijkMax[3] = {range[DIM]-1, range[DIM+1]-1,
-                              (DIM == 3) ? range[5]-1 : 1};
+                              (DIM == 3) ? range[5]-1 : 0};
 
-  // If not periodic, mark as internal interface and return
+  // if not periodic, mark as internal interface and return
   if(!periodic) {
     int ijk[3], &i = ijk[0], &j = ijk[1], &k = ijk[2];
     for(k = ijkMin[2]; k <= ijkMax[2]; k++) {
@@ -279,7 +285,7 @@ int readOneConnectivityStructured(int cgIndexFile, int cgIndexBase, int iZone,
                               zone.perTransfo.back());
 
   // number of nodes and origin of donnor (master) interface
-  cgsize_t nijk[3] = {0, 0, 1};
+  cgsize_t nijk[3] = {0, 0, 0};
   for(int d = 0; d < DIM; d++) nijk[d] = ijkMax[d]-ijkMin[d]+1;
   const cgsize_t nbNode = nijk[0]*nijk[1]*nijk[2];
 
@@ -338,11 +344,12 @@ int readConnectivitiesStructured(int cgIndexFile, int cgIndexBase, int meshDim,
 {
   int cgnsErr;
 
-  // read number of connectivities
+  // read number of interfaces
   int nbConnect;
   cgnsErr = cg_n1to1(cgIndexFile, cgIndexBase, iZone, &nbConnect);
-  
   if(cgnsErr != CG_OK) return cgnsError();
+
+  // sweep over interfaces
   for(int iConnect = 1; iConnect <= nbConnect; iConnect++) {
     int err;
     if (meshDim == 2) {
@@ -618,6 +625,57 @@ int readElementsStructured(int cgIndexFile, int cgIndexBase, int iZone,
 }
 
 
+template<int DIM>
+int getBCListStruct(std::vector<cgsize_t> &bcData, int indBC,
+                    const ZoneInfo &zone, std::map<int, int> &elt2BC)
+{
+  // indexing
+  int err = 1;
+  StructuredInd<DIM> si(zone.index, zone.size, err);
+  if(err == 0) return 0;
+  
+  // fill element to BC correspondence with list of indices
+  for(std::size_t i = 0; i < bcData.size(); i += DIM) {
+    int ijk[3];
+    std::copy(bcData.data()+i, bcData.data()+i+DIM, ijk);
+    for(int d = 0; d < DIM; d++) ijk[d]--;
+    const int iElt = si.Elt(ijk);
+    elt2BC[iElt] = indBC;
+  }
+
+  return 1;
+}
+
+
+template<int DIM>
+int getBCRangeStruct(std::vector<cgsize_t> &bcData, int indBC,
+                     const ZoneInfo &zone, std::map<int, int> &elt2BC)
+{
+  // indexing
+  int err = 1;
+  StructuredInd<DIM> si(zone.index, zone.size, err);
+  if(err == 0) return 0;
+
+  // range of IJK indices
+  const cgsize_t ijkMin[3] = {bcData[0]-1, bcData[1]-1,
+                              (DIM == 3) ? bcData[2]-1 : 0};
+  const cgsize_t ijkMax[3] = {bcData[DIM]-1, bcData[DIM+1]-1,
+                              (DIM == 3) ? bcData[5]-1 : 0};
+
+  // fill element to BC correspondence with range of indices
+  int ijk[3], &i = ijk[0], &j = ijk[1], &k = ijk[2];
+  for(k = ijkMin[2]; k <= ijkMax[2]; k++) {
+    for(j = ijkMin[1]; j <= ijkMax[1]; j++) {
+      for(i = ijkMin[0]; i <= ijkMax[0]; i++) {
+        elt2BC[si.Elt(ijk)] = indBC;
+      }
+    }
+  }
+  
+  return 1;
+}
+
+
 // ------------------------- Generic helper functions --------------------------
 
 
@@ -633,10 +691,116 @@ std::size_t nameIndex(const std::string &name,
 }
 
 
+int readConnectivitiesHybrid(int cgIndexFile, int cgIndexBase, int iZone,
+                             const std::map<std::string, int> &name2Zone,
+                             std::vector<ZoneInfo> &allZoneInfo)
+{
+  int cgnsErr;
+
+  // read number of connectivities
+  int nbConnect;
+  cgnsErr = cg_nconns(cgIndexFile, cgIndexBase, iZone, &nbConnect);
+  if(cgnsErr != CG_OK) return cgnsError();
+
+  for(int iConnect = 1; iConnect <= nbConnect; iConnect++) {
+    // read connection info
+    char connectName[CGNS_MAX_STR_LEN], donorName[CGNS_MAX_STR_LEN];
+    GridLocation_t location;
+    GridConnectivityType_t connectType;
+    PointSetType_t ptSetType, ptSetTypeDonor;
+    cgsize_t connectSize, connectSizeDonor;
+    ZoneType_t zoneTypeDonor;
+    DataType_t dataTypeDonor;
+    cgnsErr = cg_conn_info(cgIndexFile, cgIndexBase, iZone, iConnect,
+                           connectName, &location, &connectType, &ptSetType,
+                           &connectSize, donorName, &zoneTypeDonor,
+                           &ptSetTypeDonor, &dataTypeDonor, &connectSizeDonor);
+    if(cgnsErr != CG_OK) return cgnsError();
+
+    // check if connection type is OK
+    if(connectType != Abutting1to1) {
+      Msg::Error("Non-conformal connection not supported in CGNS reader");
+      return 0;
+    }
+
+    // read connectivity data
+    // cg_conn_read(cgIndexFile, cgIndexBase, iZone, iConnect, tgtPts,
+    //              dataTypeDonor, srcPts);
+  }
+
+  return 1;
+}
+
+
+int storeBoundaryConditionList(std::vector<cgsize_t> &bcData, int indBC,
+                               int meshDim, const ZoneInfo &zone,
+                               std::map<int, int> &elt2BC)
+{
+  if(zone.type == Structured) {
+    int err;
+    if(meshDim == 2) err = getBCListStruct<2>(bcData, indBC, zone, elt2BC);
+    else if(meshDim == 3) err = getBCListStruct<3>(bcData, indBC, zone, elt2BC);
+    if(err == 0) return 0;
+  }
+  else {
+    for(std::size_t i = 0; i < bcData.size(); i++) elt2BC[bcData[i]-1] = indBC;
+  }
+
+  return 1;
+}
+
+
+int storeBoundaryConditionRange(std::vector<cgsize_t> &bcData, int indBC,
+                                int meshDim, const ZoneInfo &zone,
+                                std::map<int, int> &elt2BC)
+{
+  if(zone.type == Structured) {
+    int err;
+    if(meshDim == 2) err = getBCListStruct<2>(bcData, indBC, zone, elt2BC);
+    else if(meshDim == 3) err = getBCListStruct<3>(bcData, indBC, zone, elt2BC);
+    if(err == 0) return 0;
+  }
+  else {
+    for(cgsize_t i = bcData[0]-1; i <= bcData[1]-1; i++) elt2BC[i] = indBC;
+  }
+
+  return 1;
+}
+
+
+int storeBoundaryCondition(PointSetType_t ptSetType,
+                           std::vector<cgsize_t> &bcData, int indBC,
+                           int meshDim, const ZoneInfo &zone,
+                           std::map<int, int> &elt2BC)
+{
+  switch(ptSetType) {
+  case ElementRange:
+  case PointRange:
+  case PointRangeDonor:
+    storeBoundaryConditionRange(bcData, indBC, meshDim, zone, elt2BC);
+    break;
+  case ElementList:
+  case PointList:
+  case PointListDonor:
+    storeBoundaryConditionList(bcData, indBC, meshDim, zone, elt2BC);
+    break;
+  default:
+    Msg::Error("Point set type %s is currently not supported for boundary "
+               "conditions", cg_PointSetTypeName(ptSetType));
+    return 0;
+    break;
+  }
+
+  return 1;
+}
+
+
 // read a boundary condition in a zone
 // DBGTT: \todo: only for unstructured zone for the moment
 int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
-                          int iZoneBC, int meshDim, std::map<int, int> &elt2BC,
+                          int iZoneBC, int meshDim,
+                          const std::vector<ZoneInfo> &allZoneInfo,
+                          std::map<int, int> &elt2BC,
                           std::vector<std::string> &allBCName,
                           std::map<int, int> &bc2Family,
                           std::vector<std::string> &allBCFamilyName)
@@ -696,29 +860,14 @@ int readBoundaryCondition(int cgIndexFile, int cgIndexBase, int iZone,
     bc2Family[indBC] = indBCFamily;
   }
 
-  // Read elements on which the BC is imposed
-  std::vector<cgsize_t> elt(nbElts);
-  cgnsErr = cg_boco_read(cgIndexFile, cgIndexBase, iZone, iZoneBC, elt.data(),
-                         0);
+  // read and store elements on which the BC is imposed
+  const ZoneInfo &zone = allZoneInfo[iZone];
+  const cgsize_t nbVal = (zone.type == Structured) ? meshDim * nbElts : nbElts;
+  std::vector<cgsize_t> bcData(nbVal);
+  cgnsErr = cg_boco_read(cgIndexFile, cgIndexBase, iZone, iZoneBC,
+                         bcData.data(), 0);
   if(cgnsErr != CG_OK) return cgnsError();
-
-  switch(ptSetType) {
-  case ElementRange:
-  case PointRange:
-  case PointRangeDonor:
-    for(cgsize_t i = elt[0]; i <= elt[1]; i++) elt2BC[i] = indBC;
-    break;
-  case ElementList:
-  case PointList:
-  case PointListDonor:
-    for(cgsize_t i = 0; i < nbElts; i++) elt2BC[elt[i]] = indBC;
-    break;
-  default:
-    Msg::Error("Point set type %s is currently not supported "
-                "for boundary conditions",
-                cg_PointSetTypeName(ptSetType));
-    break;
-  }
+  storeBoundaryCondition(ptSetType, bcData, indBC, meshDim, zone, elt2BC);
 
   return 1;
 }
@@ -923,8 +1072,8 @@ int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim,
   if(cgnsErr != CG_OK) return cgnsError();
   for(int iZoneBC = 1; iZoneBC <= nbZoneBC; iZoneBC++) {
     int errBC = readBoundaryCondition(cgIndexFile, cgIndexBase, iZone,
-                                      iZoneBC, meshDim, elt2BC, allBCName,
-                                      bc2Family, allBCFamilyName);
+                                      iZoneBC, meshDim, allZoneInfo, elt2BC,
+                                      allBCName, bc2Family, allBCFamilyName);
     if(errBC == 0) return 0;
   }
 
