@@ -16,6 +16,15 @@ gmsh.model.mesh.removeDuplicateNodes()
 # entities (surfaces, curves and points) accordingly
 gmsh.model.mesh.classifySurfaces(math.pi/2)
 
+# Notes:
+#
+# - for more complicated surfaces `forReparametrization=True` could be specified
+# to force the creation of reparametrizable patches
+#
+# - in this simple case, since the two surfaces were simple and already colored,
+# one could have also simply used `gmsh.model.mesh.createTopology()` instead of
+# `gmsh.model.mesh.classifySurfaces()`
+
 # create a geometry for the discrete curves and surfaces (comment this if you
 # don't want to remesh the surfaces and simply use the original mesh)
 gmsh.model.mesh.createGeometry()
