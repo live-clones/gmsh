@@ -9,6 +9,9 @@
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 #include "CGNSWrite.h"
+#include "CGNSZone.h"
+#include "CGNSZoneStruct.h"
+#include "CGNSZoneUnstruct.h"
 #include "CGNSRead.h"
 
 #if defined(HAVE_LIBCGNS)
@@ -19,16 +22,16 @@ int GModel::readCGNS(const std::string &name)
   int cgnsErr;
 
   // open CGNS file and read scale
-  int cgIndexFile = 0;
-  cgnsErr = cg_open(name.c_str(), CG_MODE_READ, &cgIndexFile);
+  int fileIndex = 0;
+  cgnsErr = cg_open(name.c_str(), CG_MODE_READ, &fileIndex);
   if(cgnsErr != CG_OK) return cgnsError();
   const double scale = readScale();
 
   // read base node
-  const int cgIndexBase = 1;
+  const int baseIndex = 1;
   int dim = 0, meshDim = 0;
   char baseName[CGNS_MAX_STR_LEN];
-  cgnsErr = cg_base_read(cgIndexFile, cgIndexBase, baseName, &dim, &meshDim);
+  cgnsErr = cg_base_read(fileIndex, baseIndex, baseName, &dim, &meshDim);
   if(cgnsErr != CG_OK) return cgnsError();
 
   // define BC names and families, used for elementary and physical names resp.
@@ -36,26 +39,29 @@ int GModel::readCGNS(const std::string &name)
   std::vector<std::string> allBCName(2, "");
   std::vector<std::string> allBCFamilyName(2, "");
 
-  // read basic info (number of nodes and elements) from all zones
-  std::vector<ZoneInfo> allZoneInfo;
-  readAllZoneInfo(cgIndexFile, cgIndexBase, meshDim, allZoneInfo);
+  // read number of zones (allZones[0] is dummy because index starts at 1) 
+  int nbZone = 0;
+  cgnsErr = cg_nzones(fileIndex, baseIndex, &nbZone);
+  if(cgnsErr != CG_OK) return cgnsError();
 
-  // read mesh zones
+  // create all zones by reading basic info
+  std::vector<CGNSZone *> allZones(nbZone+1);
+  std::map<std::string, int> name2Zone;
+  createZones(fileIndex, baseIndex, meshDim, allZones, name2Zone);
+
+  // read mesh in zones
   std::vector<MVertex *> allVert;                     // all vertices
   std::map<int, std::vector<MElement *> > allElt[10]; // all elements by type
   std::map<int, int> bc2Family;                       // bc tag -> family
-  int nbZones = 0;
-  cgnsErr = cg_nzones(cgIndexFile, cgIndexBase, &nbZones);
-  if(cgnsErr != CG_OK) return cgnsError();
-  for(int iZone = 1; iZone <= nbZones; iZone++) {
-    int err = readZone(cgIndexFile, cgIndexBase, iZone, dim, meshDim, scale,
-                       allZoneInfo, allVert, allElt, allBCName, bc2Family,
-                       allBCFamilyName);
+  for(int iZone = 1; iZone <= nbZone; iZone++) {
+    CGNSZone *zone = allZones[iZone];
+    int err = zone->readMesh(dim, scale, allZones, allVert, allElt, allBCName,
+                             bc2Family, allBCFamilyName);
     if(err == 0) return 0;
   }
 
   // close file
-  cgnsErr = cg_close(cgIndexFile);
+  cgnsErr = cg_close(fileIndex);
   if(cgnsErr != CG_OK) return cgnsError();
 
   // populate data structures with elements and vertices
@@ -65,17 +71,17 @@ int GModel::readCGNS(const std::string &name)
   _storeVerticesInEntities(allVert);
 
   // add periodic vertex correspondence
-  for(int iZone = 1; iZone <= nbZones; iZone++) {
-    ZoneInfo &zone = allZoneInfo[iZone];
-    for(std::size_t iPer = 0; iPer < zone.slaveVert.size(); iPer++) {
-      std::vector<MVertex *> &slaveVert = zone.slaveVert[iPer];
-      std::vector<MVertex *> &masterVert = zone.masterVert[iPer];
+  for(int iZone = 1; iZone <= nbZone; iZone++) {
+    CGNSZone *zone = allZones[iZone];
+    for(std::size_t iPer = 0; iPer < zone->slaveVert().size(); iPer++) {
+      const std::vector<MVertex *> &slaveVert = zone->slaveVert()[iPer];
+      const std::vector<MVertex *> &masterVert = zone->masterVert()[iPer];
       for(std::size_t iV = 0; iV < slaveVert.size(); iV++) {
         MVertex *sVert = slaveVert[iV], *mVert = masterVert[iV];
         GEntity *sEnt = sVert->onWhat(), *mEnt = mVert->onWhat();
         sEnt->correspondingVertices[sVert] = mVert;
         if(sEnt->getMeshMaster() == sEnt) {
-          sEnt->setMeshMaster(mEnt, zone.perTransfo[iPer]);
+          sEnt->setMeshMaster(mEnt, zone->perTransfo()[iPer]);
         }
       }
     }
@@ -83,7 +89,7 @@ int GModel::readCGNS(const std::string &name)
 
   // remove potential duplicate vertices if several zones
   // TODO: disable this through option ?
-  if(nbZones > 1) removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
+  if(nbZone > 1) removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
 
   // set names of geometric entities from BC names
   for (int d = 0; d <= meshDim; d++) {
@@ -103,6 +109,11 @@ int GModel::readCGNS(const std::string &name)
       }
     }
     _storePhysicalTagsInEntities(d, physicalBnd);
+  }
+
+  // destroy all zones
+  for(std::size_t iZone = 0; iZone < allZones.size(); iZone++) {
+    if(allZones[iZone] != 0) delete allZones[iZone];
   }
 
   return 1;

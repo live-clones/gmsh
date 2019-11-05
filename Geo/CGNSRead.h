@@ -15,39 +15,14 @@
 
 class MVertex;
 class MElement;
-
-
-struct ZoneInfo
-{
-  // basic zone information
-  int index;
-  char name[CGNS_MAX_STR_LEN];
-  ZoneType_t type;
-  cgsize_t size[9];
-  cgsize_t startNode, nbNode;
-  
-  // internal interface information
-  std::vector<bool> interfaceNode;
-
-  // periodic information
-  std::vector<int> masterZone;
-  std::vector<std::vector<double> > perTransfo;
-  std::vector<std::vector<cgsize_t> > masterNode, slaveNode;
-  std::vector<std::vector<MVertex *> > masterVert, slaveVert;
-};
+class CGNSZone;
 
 
 double readScale();
 
-int readAllZoneInfo(int cgIndexFile, int cgIndexBase, int meshDim,
-                    std::vector<ZoneInfo> &allZoneInfo);
-
-int readZone(int cgIndexFile, int cgIndexBase, int iZone, int dim,
-             int meshDim, double scale, std::vector<ZoneInfo> &allZoneInfo,
-             std::vector<MVertex *> &allVert,
-             std::map<int, std::vector<MElement *> > *allElt,
-             std::vector<std::string> &allBCName, std::map<int, int> &bc2Family,
-             std::vector<std::string> &allBCFamilyName);
+int createZones(int fileIndex, int baseIndex, int meshDim,
+                std::vector<CGNSZone *> &allZones,
+                std::map<std::string, int> &name2Zone);
 
 
 #endif // HAVE_LIBCGNS
