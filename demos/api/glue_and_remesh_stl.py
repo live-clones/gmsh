@@ -12,11 +12,11 @@ gmsh.merge('surface2.stl')
 gmsh.option.setNumber('Geometry.Tolerance', 1e-4)
 gmsh.model.mesh.removeDuplicateNodes()
 
-# classify surface mesh accroding to given angle, and create discrete model
+# classify surface mesh according to given angle, and create discrete model
 # entities (surfaces, curves and points) accordingly
 gmsh.model.mesh.classifySurfaces(math.pi/2)
 
-# create a geometry for the discrete curves and surfaces (uncomment this if you
+# create a geometry for the discrete curves and surfaces (comment this if you
 # don't want to remesh the surfaces and simply use the original mesh)
 gmsh.model.mesh.createGeometry()
 
@@ -27,7 +27,7 @@ s = gmsh.model.getEntities(2)
 l = gmsh.model.geo.addSurfaceLoop([s[i][1] for i in range(len(s))])
 gmsh.model.geo.addVolume([l])
 
-# synchronize the geo (built-in) entities with the model
+# synchronize the new volume with the model
 gmsh.model.geo.synchronize()
 
 # mesh
