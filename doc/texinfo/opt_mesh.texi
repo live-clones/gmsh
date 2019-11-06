@@ -61,6 +61,11 @@ Reconstruct the model topology (BREP) after reading a CGNS file@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.CgnsExportCPEX0045
+Use the CPEX0045 convention when exporting a high-order mesh to CGNS@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.CharacteristicLengthExtendFromBoundary
 Extend computation of mesh element sizes from the boundaries into the interior (for 3D Delaunay, use 1: longest or 2: shortest surface edge length)@*
 Default value: @code{1}@*

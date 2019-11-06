@@ -6329,6 +6329,14 @@ double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM)
   return CTX::instance()->mesh.cgnsConstructTopology;
 }
 
+double opt_mesh_cgns_export_cpex0045(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.cgnsExportCPEX0045 = (int)val;
+  }
+  return CTX::instance()->mesh.cgnsExportCPEX0045;
+}
+
 double opt_mesh_dual(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

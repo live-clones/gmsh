@@ -1021,6 +1021,8 @@ StringXNumber MeshOptions_Number[] = {
    "(1, 2, 3)" },
   { F|O, "CgnsConstructTopology" , opt_mesh_cgns_construct_topology , 0. ,
    "Reconstruct the model topology (BREP) after reading a CGNS file" },
+  { F|O, "CgnsExportCPEX0045" , opt_mesh_cgns_export_cpex0045 , 0. ,
+   "Use the CPEX0045 convention when exporting a high-order mesh to CGNS" },
   { F|O, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
     "Extend computation of mesh element sizes from the boundaries into the interior "

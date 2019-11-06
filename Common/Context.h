@@ -51,7 +51,7 @@ struct contextMeshOptions {
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
-  int cgnsImportOrder, cgnsConstructTopology;
+  int cgnsImportOrder, cgnsConstructTopology, cgnsExportCPEX0045;
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;

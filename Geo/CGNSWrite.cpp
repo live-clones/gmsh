@@ -6,12 +6,14 @@
 #include <string>
 #include <map>
 #include <utility>
+#include "Context.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "partitionRegion.h"
 #include "partitionFace.h"
 #include "partitionEdge.h"
 #include "partitionVertex.h"
+#include "BasisFactory.h"
 #include "CGNSWrite.h"
 #include "CGNSConventions.h"
 
@@ -151,9 +153,10 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
               int meshDim, std::size_t numNodesTotal, std::size_t partition,
               const std::vector<GEntity *> &entities, int cgIndexFile,
               int cgIndexBase, std::vector<std::string> &zoneName,
-              Vertex2LocalData &interfVert2Local)
+              Vertex2LocalData &interfVert2Local, std::set<int> &eleMshTypes)
 {
   typedef std::set<MVertex *>::iterator NodeSetIter;
+  const bool useCPEX0045 = CTX::instance()->mesh.cgnsExportCPEX0045;
 
   // build set of nodes first, use elements because nodes not all in
   // GEntity::mesh_vertices if entities do not include partition interfaces
@@ -273,6 +276,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
         Msg::Error("Unhandled element type in CGNS ouput (%d)", mshType);
         break;
       }
+      if(useCPEX0045) eleMshTypes.insert(mshType);
       std::vector<int> mshNodeInd = cgns2MshNodeIndex(mshType);
       
       // build connectivity for each element
@@ -282,7 +286,8 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
       for(int j = 0; j < numEle; j++) {
         me = ge->getMeshElementByType(eleTypes[eleType], j);
         for(int k = 0; k < numNodesPerEle; k++) {
-          const int gInd = me->getVertex(mshNodeInd[k])->getIndex();
+          const int kk = useCPEX0045 ? k : mshNodeInd[k];
+          const int gInd = me->getVertex(kk)->getIndex();
           elemNodes[n] = global2Local[gInd].index;
           n++;
         }
@@ -502,6 +507,52 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
                             masterZoneName.c_str(), Unstructured,
                             PointListDonor, DataTypeNull,
                             nc.second.size(), nc.second.data(), &dum);
+    if(cgnsErr != CG_OK) return cgnsError();
+  }
+
+  return 1;
+}
+
+
+// write element high-orper point info according to CPEX0045 convention
+int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
+                     int cgIndexBase)
+{
+  int cgnsErr;
+
+  // Write family containing all node sets
+  char familyName[] = "ElementHighOrderNodes";
+  int cgIndexFam;
+  cgnsErr = cg_family_write(cgIndexFile, cgIndexBase, familyName, &cgIndexFam);
+  if(cgnsErr != CG_OK) return cgnsError();
+
+  // write node sets for each element type
+  typedef std::set<int>::iterator IntSetIter;
+  for(IntSetIter it = eleMshTypes.begin(); it != eleMshTypes.end(); ++it) {
+    // get node set
+    const int mshType = *it; 
+    const nodalBasis *basis = BasisFactory::getNodalBasis(mshType);
+    const fullMatrix<double> &mshPts = basis->getReferenceNodes();
+    
+    // convert nodes to CGNS reference element if needed
+    std::size_t nbPts = mshPts.size1();
+    std::vector<double> u(nbPts), v(nbPts), w(nbPts);
+    msh2CgnsReferenceElement(mshType, mshPts, u, v, w);
+
+    // write nodal set
+    ElementType_t cgnsType = msh2CgnsEltType(mshType);
+    std::ostringstream ossInterp("Element_");
+    ossInterp << "_" << cgnsType;
+    std::string interpName = ossInterp.str();
+    int indexInterp;
+    cgnsErr = cg_element_interpolation_write(cgIndexFile, cgIndexBase,
+                                             cgIndexFam, interpName.c_str(),
+                                             cgnsType, &indexInterp);
+    if(cgnsErr != CG_OK) return cgnsError();
+    cgnsErr = cg_element_interpolation_points_write(cgIndexFile, cgIndexBase,
+                                                    cgIndexFam, indexInterp,
+                                                    u.data(), v.data(),
+                                                    w.data());
     if(cgnsErr != CG_OK) return cgnsError();
   }
 

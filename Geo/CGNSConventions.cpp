@@ -708,6 +708,65 @@ std::vector<int> &cgns2MshNodeIndex(int mshTag)
 // }
 
 
+void msh2CgnsReferenceElement(int mshType, const fullMatrix<double> &mshPts,
+                              std::vector<double> &u, std::vector<double> &v,
+                              std::vector<double> &w)
+{
+  int parentType = ElementType::getParentType(mshType);
+
+  switch(parentType) {
+  case TYPE_PNT:
+    u[0] = mshPts(0, 0);
+    break;
+  case TYPE_LIN:  // Gmsh and CGNS both in [-1, 1]
+    for(int i = 0; i < mshPts.size1(); i++) {
+      u[i] = mshPts(i, 0);
+    }
+    break;
+  case TYPE_QUA:  // Gmsh and CGNS both in [-1, 1]
+    for(int i = 0; i < mshPts.size1(); i++) {
+      u[i] = mshPts(i, 0); v[i] = mshPts(i, 1);
+    }
+    break;
+  case TYPE_HEX:  // Gmsh and CGNS both in [-1, 1]
+    for(int i = 0; i < mshPts.size1(); i++) {
+      u[i] = mshPts(i, 0); v[i] = mshPts(i, 1); w[i] = mshPts(i, 2);
+    }
+    break;
+  case TYPE_TRI:  // Gmsh in [0, 1], CGNS in [-1, 1]
+    for(int i = 0; i < mshPts.size1(); i++) {
+      u[i] = 2. * mshPts(i, 0) - 1.;
+      v[i] = 2. * mshPts(i, 1) - 1.;
+    }
+    break;
+  case TYPE_TET:  // Gmsh in [0, 1], CGNS in [-1, 1]
+    for(int i = 0; i < mshPts.size1(); i++) {
+      u[i] = 2. * mshPts(i, 0) - 1.;
+      v[i] = 2. * mshPts(i, 1) - 1.;
+      w[i] = 2. * mshPts(i, 2) - 1.;
+    }
+    break;
+  case TYPE_PRI:  // uv: Gmsh in [0, 1] and CGNS in [-1, 1], w: both in [-1, 1]
+    for(int i = 0; i < mshPts.size1(); i++) {
+      u[i] = 2. * mshPts(i, 0) - 1.;
+      v[i] = 2. * mshPts(i, 1) - 1.;
+      w[i] = mshPts(i, 2);
+    }
+    break;
+  case TYPE_PYR:  // uv: both in [-1, 1], w: Gmsh in [0, 1] and CGNS in [-1, 1]
+    for(int i = 0; i < mshPts.size1(); i++) {
+      u[i] = mshPts(i, 0);
+      v[i] = mshPts(i, 1);
+      w[i] = 2. * mshPts(i, 2) - 1.;
+    }
+    break;
+  default:
+    Msg::Error("%s (%i) : Error CGNS element %s not yet implemented", __FILE__,
+               __LINE__, ElementType::nameOfParentType(parentType).c_str());
+  }
+}
+
+
 std::string cgnsString(const std::string &s, std::string::size_type maxLength)
 {
   std::string s2(s);

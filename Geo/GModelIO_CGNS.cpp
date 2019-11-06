@@ -172,10 +172,11 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   Msg::Info("%i periodic/interface vertices found", interfVert2Local.size());
 
   // write partitions and periodic/partition connectivities
+  std::set<int> eleMshTypes;
   if (numPart == 0) {                                   // mesh not partitioned
     int err = writeZone(this, saveAll, scalingFactor, meshDim, numNodes, 0,
                         entities, cgIndexFile, cgIndexBase, zoneName,
-                        interfVert2Local);
+                        interfVert2Local, eleMshTypes);
     if(err == 0) return 0;
     if (entitiesPer.size() > 0) {
       err = writePeriodic(entitiesPer, cgIndexFile, cgIndexBase, zoneName,
@@ -191,7 +192,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
       printProgress("Writing partition", iPart, numPart);
       int err = writeZone(this, saveAll, scalingFactor, meshDim, numNodes,
                           iPart, entitiesPart[iPart], cgIndexFile, cgIndexBase,
-                          zoneName, interfVert2Local);
+                          zoneName, interfVert2Local, eleMshTypes);
       if(err == 0) return 0;
     }             // loop on partitions
     if (entitiesPer.size() > 0) {
@@ -205,6 +206,12 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
       if(err == 0) return 0;
     }
   }   // numPart == 0
+
+  // write element high-orper point info for CPEX0045 if required
+  if(CTX::instance()->mesh.cgnsExportCPEX0045) {
+    int err = writeHOPointInfo(eleMshTypes, cgIndexFile, cgIndexBase);
+    if(err == 0) return 0;
+  }
 
   cgnsErr = cg_close(cgIndexFile);
   if(cgnsErr != CG_OK) return cgnsError();

@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <string>
+#include "fullMatrix.h"
 #include "CGNSCommon.h"
 
 #if defined(HAVE_LIBCGNS)
@@ -24,6 +25,10 @@ int cgns2MshEltType(ElementType_t);
 std::vector<int> &cgns2MshNodeIndex(int mshTag);
 
 // std::vector<int> &msh2CgnsNodeIndex(int mshTag);
+
+void msh2CgnsReferenceElement(int mshType, const fullMatrix<double> &mshPts,
+                              std::vector<double> &u, std::vector<double> &v,
+                              std::vector<double> &w);
 
 std::string cgnsString(const std::string &s,
                        std::string::size_type maxLength = CGNS_MAX_STR_LEN);
