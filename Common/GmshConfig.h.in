@@ -25,6 +25,7 @@
 #cmakedefine HAVE_KBIPACK
 #cmakedefine HAVE_LAPACK
 #cmakedefine HAVE_LIBCGNS
+#cmakedefine HAVE_LIBCGNS_CPEX0045
 #cmakedefine HAVE_LIBJPEG
 #cmakedefine HAVE_LIBPNG
 #cmakedefine HAVE_LIBZ

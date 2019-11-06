@@ -156,7 +156,11 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
               Vertex2LocalData &interfVert2Local, std::set<int> &eleMshTypes)
 {
   typedef std::set<MVertex *>::iterator NodeSetIter;
+#ifdef HAVE_LIBCGNS_CPEX0045
   const bool useCPEX0045 = CTX::instance()->mesh.cgnsExportCPEX0045;
+#else
+  static const bool useCPEX0045 = false;
+#endif 
 
   // build set of nodes first, use elements because nodes not all in
   // GEntity::mesh_vertices if entities do not include partition interfaces
@@ -518,6 +522,7 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
 int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
                      int cgIndexBase)
 {
+#ifdef HAVE_LIBCGNS_CPEX0045
   int cgnsErr;
 
   // Write family containing all node sets
@@ -557,6 +562,10 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
   }
 
   return 1;
+#else
+  Msg::Error("Gmsh is not compiled with CGNS CPEX0045 capability");
+  return 0;
+#endif
 }
 
 
