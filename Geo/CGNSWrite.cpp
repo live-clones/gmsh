@@ -374,6 +374,7 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     }
   }
 
+  // TODO: compute rotation & translation data from affine transfo.
   std::vector<float> rotCenter(3, 0.), rotAngle(3, 0.), trans(3, 0.);
 
   // write periodic interfaces

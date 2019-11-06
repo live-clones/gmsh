@@ -72,6 +72,7 @@ void createElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
                       std::vector<MVertex *> &allVert,
                       std::map<int, std::vector<MElement *> > *allElt)
 {
+  // TODO: structured coarsening to order 3 & 4 not implemented
   // node shift from (i, j, k) depending on order
   static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
   static int shiftP2[9][2] = {{0, 0}, {2, 0}, {2, 2}, {0, 2}, {1, 0}, {2, 1},
@@ -112,6 +113,7 @@ void createElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
                       std::vector<MVertex *> &allVert,
                       std::map<int, std::vector<MElement *> > *allElt)
 {
+  // TODO: structured coarsening to order 3 & 4 not implemented
   // node shift from (i, j, k) depending on order
   static int shiftP1[8][3] = {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
                               {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}};
@@ -168,7 +170,7 @@ void createBndElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
                          std::map<int, std::vector<MElement *> > *allElt,
                          const std::vector<bool> &interfaceNode)
 {
-  // TODO: to be implemented
+  // TODO: boundary elements in 2D domain not implemented
   Msg::Error("Creation of boundary elements for 2D structured blocks not "
              "implemented");
 }
@@ -181,6 +183,7 @@ void createBndElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
                          std::map<int, std::vector<MElement *> > *allElt,
                          const std::vector<bool> &interfaceNode)
 {
+  // TODO: structured coarsening to order 3 & 4 not implemented
   // node shift from (i, j, k) depending on order
   static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
   static int shiftP2[9][2] = {{0, 0}, {2, 0}, {2, 2}, {0, 2}, {1, 0}, {2, 1},
@@ -490,6 +493,7 @@ int CGNSZoneStruct<DIM>::readOneInterface(int iConnect,
     return 1;
   }
 
+  // TODO: fix periodicity in structured zones
   // // range of IJK indices
   // const cgsize_t ijkMin[3] = {range[0]-1, range[1]-1,
   //                             (DIM == 3) ? range[2]-1 : 0};
