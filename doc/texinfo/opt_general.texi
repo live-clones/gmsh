@@ -158,7 +158,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.5.0-git-ddb085020"}@*
+Default value: @code{"4.5.0-git-c53f7d272"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
