@@ -1072,6 +1072,33 @@ class model:
         return _ovectordouble(api_normals_, api_normals_n_.value)
 
     @staticmethod
+    def getParametrization(dim, tag, points):
+        """
+        Get the parametric coordinates `parametricCoord' for the points `points' on
+        the entity of dimension `dim' and tag `tag'. `points' are given as triplets
+        of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
+        `parametricCoord' returns the parametric coordinates t on the curve (if
+        `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if
+        `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+
+        Return `parametricCoord'.
+        """
+        api_points_, api_points_n_ = _ivectordouble(points)
+        api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetParametrization(
+            c_int(dim),
+            c_int(tag),
+            api_points_, api_points_n_,
+            byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetParametrization returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value)
+
+    @staticmethod
     def setVisibility(dimTags, value, recursive=False):
         """
         Set the visibility of the model entities `dimTags' to `value'. Apply the

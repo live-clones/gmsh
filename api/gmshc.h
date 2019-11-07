@@ -353,6 +353,18 @@ GMSH_API void gmshModelGetNormal(const int tag,
                                  double ** normals, size_t * normals_n,
                                  int * ierr);
 
+/* Get the parametric coordinates `parametricCoord' for the points `points' on
+ * the entity of dimension `dim' and tag `tag'. `points' are given as triplets
+ * of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
+ * `parametricCoord' returns the parametric coordinates t on the curve (if
+ * `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if
+ * `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. */
+GMSH_API void gmshModelGetParametrization(const int dim,
+                                          const int tag,
+                                          double * points, size_t points_n,
+                                          double ** parametricCoord, size_t * parametricCoord_n,
+                                          int * ierr);
+
 /* Set the visibility of the model entities `dimTags' to `value'. Apply the
  * visibility setting recursively if `recursive' is true. */
 GMSH_API void gmshModelSetVisibility(int * dimTags, size_t dimTags_n,

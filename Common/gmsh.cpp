@@ -651,7 +651,7 @@ GMSH_API void gmsh::model::getValue(const int dim, const int tag,
     }
   }
   else if(dim == 2) {
-    if(parametricCoord.size() < 2) return;
+    if(parametricCoord.size() % 2) return;
     GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
       SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
@@ -685,7 +685,7 @@ gmsh::model::getDerivative(const int dim, const int tag,
     }
   }
   else if(dim == 2) {
-    if(parametricCoord.size() < 2) return;
+    if(parametricCoord.size() % 2) return;
     GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
       SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
@@ -718,7 +718,7 @@ gmsh::model::getCurvature(const int dim, const int tag,
       curvatures.push_back(ge->curvature(parametricCoord[i]));
   }
   else if(dim == 2) {
-    if(parametricCoord.size() < 2) return;
+    if(parametricCoord.size() % 2) return;
     GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
       SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
@@ -742,7 +742,7 @@ GMSH_API void gmsh::model::getPrincipalCurvatures(
   curvaturesMin.clear();
   directionsMax.clear();
   directionsMin.clear();
-  if(parametricCoord.size() < 2) return;
+  if(parametricCoord.size() % 2) return;
   for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
     SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
     double cmin, cmax;
@@ -770,13 +770,44 @@ GMSH_API void gmsh::model::getNormal(const int tag,
     throw 2;
   }
   normals.clear();
-  if(parametricCoord.size() < 2) return;
+  if(parametricCoord.size() % 2) return;
   for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
     SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
     SVector3 n = gf->normal(param);
     normals.push_back(n.x());
     normals.push_back(n.y());
     normals.push_back(n.z());
+  }
+}
+
+GMSH_API void gmsh::model::getParametrization(const int dim, const int tag,
+                                              const std::vector<double> &points,
+                                              std::vector<double> &parametricCoord)
+{
+  if(!_isInitialized()) { throw - 1; }
+  parametricCoord.clear();
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  if(points.size() % 3) return;
+  if(dim == 1) {
+    GEdge *ge = static_cast<GEdge *>(entity);
+    for(std::size_t i = 0; i < points.size(); i += 3) {
+      SPoint3 p(points[i], points[i + 1], points[i + 2]);
+      double t = ge->parFromPoint(p);
+      parametricCoord.push_back(t);
+    }
+  }
+  else if(dim == 2) {
+    GFace *gf = static_cast<GFace *>(entity);
+    for(std::size_t i = 0; i < points.size(); i += 3) {
+      SPoint3 p(points[i], points[i + 1], points[i + 2]);
+      SPoint2 uv = gf->parFromPoint(p);
+      parametricCoord.push_back(uv.x());
+      parametricCoord.push_back(uv.y());
+    }
   }
 }
 

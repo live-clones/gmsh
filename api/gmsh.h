@@ -332,6 +332,17 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & parametricCoord,
                             std::vector<double> & normals);
 
+    // Get the parametric coordinates `parametricCoord' for the points `points' on
+    // the entity of dimension `dim' and tag `tag'. `points' are given as triplets
+    // of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
+    // `parametricCoord' returns the parametric coordinates t on the curve (if
+    // `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if
+    // `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+    GMSH_API void getParametrization(const int dim,
+                                     const int tag,
+                                     const std::vector<double> & points,
+                                     std::vector<double> & parametricCoord);
+
     // Set the visibility of the model entities `dimTags' to `value'. Apply the
     // visibility setting recursively if `recursive' is true.
     GMSH_API void setVisibility(const gmsh::vectorpair & dimTags,

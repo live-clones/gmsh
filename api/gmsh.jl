@@ -854,6 +854,30 @@ function getNormal(tag, parametricCoord)
 end
 
 """
+    gmsh.model.getParametrization(dim, tag, points)
+
+Get the parametric coordinates `parametricCoord` for the points `points` on the
+entity of dimension `dim` and tag `tag`. `points` are given as triplets of x, y,
+z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord`
+returns the parametric coordinates t on the curve (if `dim` = 1) or pairs of u
+and v coordinates concatenated on the surface (if `dim` = 2), i.e. [p1t, p2t,
+...] or [p1u, p1v, p2u, ...].
+
+Return `parametricCoord`.
+"""
+function getParametrization(dim, tag, points)
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetParametrization, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, points), length(points), api_parametricCoord_, api_parametricCoord_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetParametrization returned non-zero error code: $(ierr[])")
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    return parametricCoord
+end
+
+"""
     gmsh.model.setVisibility(dimTags, value, recursive = false)
 
 Set the visibility of the model entities `dimTags` to `value`. Apply the

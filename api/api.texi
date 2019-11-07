@@ -627,6 +627,23 @@ triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
 -
 @end table
 
+@item getParametrization
+Get the parametric coordinates @code{parametricCoord} for the points
+@code{points} on the entity of dimension @code{dim} and tag @code{tag}.
+@code{points} are given as triplets of x, y, z coordinates, concatenated: [p1x,
+p1y, p1z, p2x, ...]. @code{parametricCoord} returns the parametric coordinates t
+on the curve (if @code{dim} = 1) or pairs of u and v coordinates concatenated on
+the surface (if @code{dim} = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{points}
+@item Output:
+@code{parametricCoord}
+@item Return:
+-
+@end table
+
 @item setVisibility
 Set the visibility of the model entities @code{dimTags} to @code{value}. Apply
 the visibility setting recursively if @code{recursive} is true.
