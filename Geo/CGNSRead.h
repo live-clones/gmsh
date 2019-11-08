@@ -6,9 +6,10 @@
 #ifndef CGNS_READ_H
 #define CGNS_READ_H
 
-#include "CGNSCommon.h"
 #include <vector>
 #include <map>
+#include "fullMatrix.h"
+#include "CGNSCommon.h"
 
 #if defined(HAVE_LIBCGNS)
 
@@ -20,10 +21,13 @@ class CGNSZone;
 
 double readScale();
 
+int readHOPointInfo(int fileIndex, int baseIndex,
+                    std::map<std::string,
+                             std::vector<fullMatrix<double> > > &pointTransfo);
+
 int createZones(int fileIndex, int baseIndex, int meshDim,
                 std::vector<CGNSZone *> &allZones,
                 std::map<std::string, int> &name2Zone);
-
 
 #endif // HAVE_LIBCGNS
 
