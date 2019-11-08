@@ -203,6 +203,8 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   }
 
   // write zone CGNS node
+  // TODO: add ordinal
+  // TODO: add family name for CPEX0045
   int cgnsErr;
   int cgIndexZone = 0;
   cgsize_t cgZoneSize[3] = {numNodes, numElementsMaxDim, 0};
