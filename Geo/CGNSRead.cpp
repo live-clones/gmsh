@@ -238,6 +238,7 @@ int readHOPointInfo(int fileIndex, int baseIndex,
                     std::map<std::string,
                              std::vector<fullMatrix<double> > > &pointTransfo)
 {
+#ifdef HAVE_LIBCGNS_CPEX0045
   int cgnsErr;
 
   // read number of families
@@ -268,6 +269,10 @@ int readHOPointInfo(int fileIndex, int baseIndex,
   }
 
   return 1;
+#else
+  Msg::Error("Gmsh is not compiled with CGNS CPEX0045 capability");
+  return 0;
+#endif
 }
 
 

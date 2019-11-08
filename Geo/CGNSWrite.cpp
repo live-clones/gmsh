@@ -37,6 +37,9 @@ typedef std::map<PeriodicInterface, NodeCorrespondence> PeriodicConnection;
 typedef std::map<PartitionInterface, NodeCorrespondence> PartitionConnection;
 
 
+static const char INTERPOLATION_ZONE_NAME[] = "ElementHighOrderNodes";
+
+
 // Retrieve all nodes (possibly including high-order ones) in the elements
 // contained in the given entities
 template <bool INCLUDE_HO_NODES>
@@ -203,8 +206,6 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   }
 
   // write zone CGNS node
-  // TODO: add ordinal
-  // TODO: add family name for CPEX0045
   int cgnsErr;
   int cgIndexZone = 0;
   cgsize_t cgZoneSize[3] = {numNodes, numElementsMaxDim, 0};
@@ -216,6 +217,16 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   cgnsErr = cg_zone_write(cgIndexFile, cgIndexBase, zoneName[partition].c_str(),
                           cgZoneSize, Unstructured, &cgIndexZone);
   if(cgnsErr != CG_OK) return cgnsError();
+
+  // write ordinal (zone number) and family name for CPEX0045
+  cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone, "end");
+  if(cgnsErr != CG_OK) return cgnsError();
+  cgnsErr = cg_ordinal_write(cgIndexZone);
+  if(cgnsErr != CG_OK) return cgnsError();
+  if (useCPEX0045) {
+    cgnsErr = cg_famname_write(INTERPOLATION_ZONE_NAME);
+    if(cgnsErr != CG_OK) return cgnsError();
+  }
 
   // create a CGNS grid with x, y and z coordinates of all the nodes (that are
   // referenced by elements)
@@ -529,9 +540,9 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
   int cgnsErr;
 
   // Write family containing all node sets
-  char familyName[] = "ElementHighOrderNodes";
   int cgIndexFam;
-  cgnsErr = cg_family_write(cgIndexFile, cgIndexBase, familyName, &cgIndexFam);
+  cgnsErr = cg_family_write(cgIndexFile, cgIndexBase, INTERPOLATION_ZONE_NAME,
+                            &cgIndexFam);
   if(cgnsErr != CG_OK) return cgnsError();
 
   // write node sets for each element type
