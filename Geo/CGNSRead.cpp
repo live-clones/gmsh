@@ -126,6 +126,7 @@ int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
 }
 
 
+#ifdef HAVE_LIBCGNS_CPEX0045
 int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
                              int interpIndex,
                              std::vector<fullMatrix<double> > &cgns2MshLag)
@@ -187,6 +188,7 @@ int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
 
   return 1;
 }
+#endif
 
 
 }  // namespace

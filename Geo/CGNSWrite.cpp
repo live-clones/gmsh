@@ -247,17 +247,12 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
                            "CoordinateZ", &zcoord[0], &cgIndexCoord);
   if(cgnsErr != CG_OK) return cgnsError();
 
-  // write an element section for each entity, per element type (TODO: check if
-  // using the actual element tag in case the numbering is dense and
-  // saveAll==true would make sense/would be useful; maybe in the context of
-  // partitioned meshes?)
+  // write an element section for each entity, per element type
   cgsize_t eleStart = 0, eleEnd = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     const int entDim = ge->dim();
 
-    // FIXME: use MIXED section? -> probably less efficient
-    // 2) store physical information in a "family"?
     // get or create the name for the entity 
     std::string entityName = model->getElementaryName(ge->dim(), ge->tag());
     if(entityName.empty()) {
@@ -387,9 +382,6 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     }
   }
 
-  // TODO: compute rotation & translation data from affine transfo.
-  std::vector<float> rotCenter(3, 0.), rotAngle(3, 0.), trans(3, 0.);
-
   // write periodic interfaces
   typedef PeriodicConnection::iterator PerConnectIter;
   int cgnsErr;
@@ -422,9 +414,11 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
                             PointListDonor, DataTypeNull, nodes2.size(),
                             nodes2.data(), &connIdx);
     if(cgnsErr != CG_OK) return cgnsError();
+    float rotCenter[3], rotAngle[3], trans[3];
+    const std::vector<double> &perTransfo = entInt.first->affineTransform;
+    getAffineTransformationParameters(perTransfo, rotCenter, rotAngle, trans);
     cgnsErr = cg_conn_periodic_write(cgIndexFile, cgIndexBase, slaveZone,
-                                     connIdx, rotCenter.data(), rotAngle.data(),
-                                     trans.data());
+                                     connIdx, rotCenter, rotAngle, trans);
     if(cgnsErr != CG_OK) return cgnsError();
   }
 
