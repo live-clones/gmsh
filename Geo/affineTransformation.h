@@ -8,28 +8,33 @@
 
 #include <vector>
 
-// compute affine transformation from rotation/translation
+// compute (extended) affine transformation matrix from rotation/translation:
+// x' = t + (I-R)*x_c + R*x
+// where t is the translation vector, I is the identity matrix, and R is the 
+// matrix for an active intrinsic yaw-pitch-roll rotation (i.e. intrinsic
+// z-y'-x'' rotation or extrinsinc x-y-z rotation) with counter-clockwise angles
+template<class FLOAT>
+bool computeAffineTransformation(const FLOAT *rc, // rotation center
+                                 const FLOAT *ra, // rotation angle
+                                 const FLOAT *tr, // translation
+                                 std::vector<double> &tfo); // transformation
 
-bool computeAffineTransformation(const double *rc, // rotation center
-                                 const double *ra, // rotation angle
-                                 const double *tr, // translation
-                                 std::vector<double> &tfo // transformation
-);
-// compute affine transfomration from rotation/translation
-
-bool computeAffineTransformation(const float *rc, // rotation center
-                                 const float *ra, // rotation angle
-                                 const float *tr, // translation
-                                 std::vector<double> &tfo // transformation
-);
+// compute rotation/translation from (extended) affine transformation matrix:
+// x' = t + (I-R)*x_c + R*x
+// where t is the translation vector, I is the identity matrix, and R is the 
+// matrix for an active intrinsic yaw-pitch-roll rotation (i.e. intrinsic
+// z-y'-x'' rotation or extrinsinc x-y-z rotation) with counter-clockwise angles
+template<class FLOAT>
+bool getAffineTransformationParameters(const std::vector<double> &tfo, // trnsf.
+                                       FLOAT *rc,  // rotation center
+                                       FLOAT *ra,  // rotation angle
+                                       FLOAT *tr); // translation
 
 // invert affine transformation
-
 bool invertAffineTransformation(const std::vector<double> &tfo,
                                 std::vector<double> &newTfo);
 
 // initialize transformation with unitary one
-
 bool setUnitAffineTransformation(std::vector<double> &tfo);
 
 #endif
