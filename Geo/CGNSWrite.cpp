@@ -29,12 +29,8 @@ typedef std::map<MVertex *, MVertex *> VertVertMap;
 
 // Types for periodic and interface connectivities
 typedef std::pair<unsigned int, unsigned int> PartitionInterface;
-typedef std::pair<GEntity *, GEntity *> EntityInterface;
-typedef std::pair<PartitionInterface, EntityInterface> PeriodicInterface;
 typedef std::pair<std::vector<cgsize_t>, std::vector<cgsize_t> >
   NodeCorrespondence;
-typedef std::map<PeriodicInterface, NodeCorrespondence> PeriodicConnection;
-typedef std::map<PartitionInterface, NodeCorrespondence> PartitionConnection;
 
 
 static const char INTERPOLATION_ZONE_NAME[] = "ElementHighOrderNodes";
@@ -322,9 +318,10 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
                             entityName.c_str(), FamilySpecified, PointRange,
                             2, eleEntRange, &iZoneBC);
     if(cgnsErr != CG_OK) return cgnsError();
-    const GridLocation_t loc = (entDim == 2) ? FaceCenter :
-                               (entDim == 1) ? EdgeCenter :
-                               (entDim == 0) ? Vertex : CellCenter;
+    // const GridLocation_t loc = (entDim == 2) ? FaceCenter :
+    //                            (entDim == 1) ? EdgeCenter :
+    //                            (entDim == 0) ? Vertex : CellCenter;
+    const GridLocation_t loc = CellCenter;
     cgnsErr = cg_boco_gridlocation_write(cgIndexFile, cgIndexBase,
                                           cgIndexZone, iZoneBC, loc);
     if(cgnsErr != CG_OK) return cgnsError();
@@ -346,6 +343,11 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
                    int cgIndexBase, const std::vector<std::string> &zoneName,
                    Vertex2LocalData &interfVert2Local)
 {
+  // Types for periodic connectivity
+  typedef std::pair<GEntity *, GEntity *> EntityInterface;
+  typedef std::pair<PartitionInterface, EntityInterface> PeriodicInterface;
+  typedef std::map<PeriodicInterface, NodeCorrespondence> PeriodicConnection;
+
   // Construct interfaces [slave (entity, part.) <-> master (entity, part.)]
   // with corresponding nodes
   Msg::Info("Constructing connectivities for %i periodic entities",
@@ -392,19 +394,18 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     const PartitionInterface &partInt = perInt.first;
     const EntityInterface &entInt = perInt.second;
     const std::size_t &part1 = partInt.first;
-    const int entTag1 = entInt.first->tag();
-    const int dim1 = entInt.first->dim();
+    const GEntity *ent1 = entInt.first;
     const std::size_t &part2 = partInt.second;
-    const int entTag2 = entInt.second->tag();
-    const int dim2 = entInt.second->dim();
+    const GEntity *ent2 = entInt.second;
     const NodeCorrespondence &nc = it->second;
     const std::vector<cgsize_t> &nodes1 = nc.first;
     const std::vector<cgsize_t> &nodes2 = nc.second;
     int slaveZone = (part1 == 0) ? 1 : part1;
     const std::string &masterZoneName = zoneName[part2]; 
     std::ostringstream ossInt;
-    ossInt << "Per_" << part1 << "-" << entTypeShortStr(dim1) << entTag1 << "_"
-           << part2 << "-" << entTypeShortStr(dim2) << entTag2;
+    ossInt << "Per_" << part1 << "-" << entTypeShortStr(ent1->dim())
+           << ent1->tag() << "_" << part2 << "-"
+           << entTypeShortStr(ent2->dim()) << ent2->tag();
     const std::string interfaceName = cgnsString(ossInt.str()); 
     int connIdx;
     cgnsErr = cg_conn_write(cgIndexFile, cgIndexBase, slaveZone,
@@ -415,8 +416,26 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
                             nodes2.data(), &connIdx);
     if(cgnsErr != CG_OK) return cgnsError();
     float rotCenter[3], rotAngle[3], trans[3];
-    const std::vector<double> &perTransfo = entInt.first->affineTransform;
-    getAffineTransformationParameters(perTransfo, rotCenter, rotAngle, trans);
+    if(ent1->getMeshMaster() == ent2) {
+      const std::vector<double> &perTransfo = ent1->affineTransform;
+      getAffineTransformationParameters(perTransfo, rotCenter, rotAngle, trans);
+    }
+    else if(ent2->getMeshMaster() == ent1) {
+      const std::vector<double> &perTransfo = ent2->affineTransform;
+      getAffineTransformationParameters(perTransfo, rotCenter, rotAngle, trans);
+      for(int i = 0; i < 3; i++) {
+        rotAngle[i] = -rotAngle[i];
+        trans[i] = -trans[i];
+      }
+    }
+    else {
+      Msg::Error("Error in periodic connection between entities %i (dim %i) "
+                 "and %i (dim %i)", ent1->tag(), ent1->dim(), ent2->tag(),
+                 ent2->dim());
+      for(int i = 0; i < 3; i++) rotCenter[i] = 0.;
+      for(int i = 0; i < 3; i++) rotAngle[i] = 0.;
+      for(int i = 0; i < 3; i++) trans[i] = 0.;
+    }
     cgnsErr = cg_conn_periodic_write(cgIndexFile, cgIndexBase, slaveZone,
                                      connIdx, rotCenter, rotAngle, trans);
     if(cgnsErr != CG_OK) return cgnsError();
@@ -472,6 +491,9 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
                     const std::vector<std::string> &zoneName,
                     Vertex2LocalData &interfVert2Local)
 {
+  // type for partition connectivity
+  typedef std::map<PartitionInterface, NodeCorrespondence> PartitionConnection;
+
   // get nodes in partition interface entities
   typedef std::set<MVertex *>::iterator NodeSetIter;
   std::set<MVertex *> nodeSet;
