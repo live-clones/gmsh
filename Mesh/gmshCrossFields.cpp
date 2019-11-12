@@ -22,6 +22,7 @@
 #endif
 
 #if defined(HAVE_SOLVER)
+
 #include "dofManager.h"
 #include "laplaceTerm.h"
 #include "linearSystemCSR.h"
@@ -2548,8 +2549,10 @@ int computeCrossField(GModel *gm)
     GFace *gf = *it;
     f.push_back(gf);
   }
-  //  if (!strcmp(method,"theta"))
+#if defined(HAVE_SOLVER)
   return computeCrossField2dTheta(gm, f, "toto");
-  //  else
-  //    Msg::Error("Unknown Cross Field Computation Method %s",method);
+#else
+  Msg::Error("Cross field computation requires solver module");
+  return -1;
+#endif
 }
