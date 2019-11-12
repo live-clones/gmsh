@@ -1042,7 +1042,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CharacteristicLengthMax" , opt_mesh_lc_max, 1.e22,
     "Maximum mesh element size" },
   { F|O, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
-    "Automatically compute mesh element sizes from curvature (experimental)" },
+    "Automatically compute mesh element sizes from curvature" },
   { F|O, "CharacteristicLengthFromPoints" , opt_mesh_lc_from_points , 1. ,
     "Compute mesh element sizes from values given at geometry points" },
   { F,   "Clip" , opt_mesh_clip , 0.,
@@ -1137,7 +1137,7 @@ StringXNumber MeshOptions_Number[] = {
     "Maximum number of times meshing is retried on curves and surfaces with a "
     "pending mesh"},
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
-    "Mesh only visible entities (experimental: use with caution!)" },
+    "Mesh only visible entities (experimental)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
     "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
@@ -1285,12 +1285,15 @@ StringXNumber MeshOptions_Number[] = {
     "Number of topological optimization passes (removal of diamonds, ...) of "
     "recombined surface meshes" },
   { F|O, "Recombine3DAll" , opt_mesh_recombine3d_all , 0 ,
-    "Apply recombination3D algorithm to all volumes, ignoring per-volume spec" },
+    "Apply recombination3D algorithm to all volumes, ignoring per-volume spec "
+    "(experimental)" },
   { F|O, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,
-    "3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)" },
+    "3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids) "
+    "(experimental)" },
   { F|O, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 0 ,
     "3d recombination conformity type (0: nonconforming, 1: trihedra, "
-    "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)" },
+    "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)"
+    "(experimental)" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
   { F|O, "Renumber" , opt_mesh_renumber , 1 ,
