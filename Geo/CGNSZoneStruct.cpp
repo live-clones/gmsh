@@ -229,8 +229,11 @@ void createBndElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
 
 template<int DIM>
 CGNSZoneStruct<DIM>::CGNSZoneStruct(int fileIndex, int baseIndex, int zoneIndex,
-                                    int meshDim, cgsize_t startNode, int &err) :
-  CGNSZone(fileIndex, baseIndex, zoneIndex, meshDim, startNode, err)
+                              int meshDim, cgsize_t startNode,
+                              const Family2EltNodeTransfo &allEltNodeTransfo,
+                              int &err) :
+  CGNSZone(fileIndex, baseIndex, zoneIndex, meshDim, startNode,
+           allEltNodeTransfo, err)
 {
   // Check consistency
   bool ok = true;

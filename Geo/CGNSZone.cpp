@@ -43,15 +43,32 @@ void periodicVertFromNode(std::size_t vertShift,
 
 
 CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex, int meshDim,
-                   cgsize_t startNode, int &err) :
+                   cgsize_t startNode,
+                   const Family2EltNodeTransfo &allEltNodeTransfo, int &err) :
   fileIndex_(fileIndex), baseIndex_(baseIndex), meshDim_(meshDim),
-  zoneIndex_(zoneIndex), startNode_(startNode)
+  zoneIndex_(zoneIndex), startNode_(startNode), eltNodeTransfo_(0)
 {
+  int cgnsErr;
+
   // read zone name & size
   char name[CGNS_MAX_STR_LEN];
-  int cgnsErr = cg_zone_read(fileIndex, baseIndex, zoneIndex, name, size_);
+  cgnsErr = cg_zone_read(fileIndex, baseIndex, zoneIndex, name, size_);
   if(cgnsErr != CG_OK) err = cgnsError();
   name_ = std::string(name);
+
+  // read family name and retrieve element node tranformations (CPEX0045)
+  cgnsErr = cg_goto(fileIndex, baseIndex, "Zone_t", zoneIndex, "end");
+  if(cgnsErr != CG_OK) err = cgnsError();
+  char famName[CGNS_MAX_STR_LEN];
+  cgnsErr = cg_famname_read(famName);
+  if(cgnsErr != CG_NODE_NOT_FOUND) {
+    if(cgnsErr == CG_OK) {
+      Family2EltNodeTransfo::const_iterator it =
+        allEltNodeTransfo.find(std::string(famName));
+      if(it != allEltNodeTransfo.end()) eltNodeTransfo_ = &(it->second);
+    }
+    else err = cgnsError();
+  }
 }
 
 

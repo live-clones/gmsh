@@ -16,7 +16,8 @@ class CGNSZoneStruct : public CGNSZone
 {
 public:
   CGNSZoneStruct(int fileIndex, int baseIndex, int zoneIndex, int meshDim,
-                 cgsize_t startNode, int &err);
+                 cgsize_t startNode,
+                 const Family2EltNodeTransfo &allEltNodeTransfo, int &err);
   
   cgsize_t nbNodeIJK(int d) const { return size_[d]; }
   cgsize_t nbEltIJK(int d) const { return size_[DIM+d]; }

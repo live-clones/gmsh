@@ -34,8 +34,12 @@ int GModel::readCGNS(const std::string &name)
   cgnsErr = cg_base_read(fileIndex, baseIndex, baseName, &dim, &meshDim);
   if(cgnsErr != CG_OK) return cgnsError();
 
+  // per-element node transformation for CPEX0045
+  std::map<std::string, std::vector<fullMatrix<double> > > allEltNodeTransfo;
+  readEltNodeTransfo(fileIndex, baseIndex, allEltNodeTransfo);
+
   // define BC names and families, used for elementary and physical names resp.
-  // Index start at 1 with empty name to account for unclassified elements
+  // index start at 1 with empty name to account for unclassified elements
   std::vector<std::string> allBCName(2, "");
   std::vector<std::string> allBCFamilyName(2, "");
 
@@ -47,7 +51,8 @@ int GModel::readCGNS(const std::string &name)
   // create all zones by reading basic info
   std::vector<CGNSZone *> allZones(nbZone+1);
   std::map<std::string, int> name2Zone;
-  createZones(fileIndex, baseIndex, meshDim, allZones, name2Zone);
+  createZones(fileIndex, baseIndex, meshDim, allEltNodeTransfo, allZones,
+              name2Zone);
 
   // read mesh in zones
   std::vector<MVertex *> allVert;                     // all vertices

@@ -21,6 +21,7 @@
 namespace {
 
 
+#ifdef HAVE_LIBCGNS_CPEX0045
 int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
                       fullMatrix<double> &val)
 {
@@ -124,12 +125,12 @@ int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
 
   return 1;
 }
+#endif
 
 
 #ifdef HAVE_LIBCGNS_CPEX0045
 int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
-                             int interpIndex,
-                             std::vector<fullMatrix<double> > &cgns2MshLag)
+                             int interpIndex, ZoneEltNodeTransfo &cgns2MshLag)
 {
   int cgnsErr;
 
@@ -236,9 +237,8 @@ double readScale()
 }
 
 
-int readHOPointInfo(int fileIndex, int baseIndex,
-                    std::map<std::string,
-                             std::vector<fullMatrix<double> > > &pointTransfo)
+int readEltNodeTransfo(int fileIndex, int baseIndex,
+                       Family2EltNodeTransfo &allEltNodeTransfo)
 {
 #ifdef HAVE_LIBCGNS_CPEX0045
   int cgnsErr;
@@ -257,11 +257,15 @@ int readHOPointInfo(int fileIndex, int baseIndex,
     if(cgnsErr != CG_OK) return cgnsError();
     if(nbInterp == 0) continue;
 
-    // TODO: read family name
-    std::string famName = "";
+    // read family name
+    char famName[CGNS_MAX_STR_LEN];
+    cgnsErr = cg_goto(fileIndex, baseIndex, "Family_t", iFam, "end");
+    if(cgnsErr != CG_OK) return cgnsError();
+    cgnsErr = cg_famname_read(famName);
+    if(cgnsErr != CG_OK) return cgnsError();
 
     // read element interpolation transformations
-    std::vector<fullMatrix<double> > &cgns2MshLag = pointTransfo[famName];
+    ZoneEltNodeTransfo &cgns2MshLag = allEltNodeTransfo[std::string(famName)];
     cgns2MshLag.resize(NofValidElementTypes);
     for(int iInterp = 1; iInterp <= nbInterp; iInterp++) {
       int err = readElementInterpolation(fileIndex, baseIndex, iFam, iInterp,
@@ -272,13 +276,13 @@ int readHOPointInfo(int fileIndex, int baseIndex,
 
   return 1;
 #else
-  Msg::Error("Gmsh is not compiled with CGNS CPEX0045 capability");
-  return 0;
+  return 1;
 #endif
 }
 
 
 int createZones(int fileIndex, int baseIndex, int meshDim,
+                const Family2EltNodeTransfo &allEltNodeTransfo,
                 std::vector<CGNSZone *> &allZones,
                 std::map<std::string, int> &name2Zone)
 {
@@ -298,16 +302,19 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
     if (zoneType == Structured) {
       if(meshDim == 2) {
         allZones[iZone] = new CGNSZoneStruct<2>(fileIndex, baseIndex, iZone,
-                                                meshDim, startNode, err);
+                                                meshDim, startNode,
+                                                allEltNodeTransfo, err);
       }
       if(meshDim == 3) {
         allZones[iZone] = new CGNSZoneStruct<3>(fileIndex, baseIndex, iZone,
-                                                meshDim, startNode, err);
+                                                meshDim, startNode,
+                                                allEltNodeTransfo, err);
       }
     }
     else if (zoneType == Unstructured) {
       allZones[iZone] = new CGNSZoneUnstruct(fileIndex, baseIndex, iZone,
-                                             meshDim, startNode, err);
+                                             meshDim, startNode,
+                                             allEltNodeTransfo, err);
     }
     if(err == 0) return 0;
 

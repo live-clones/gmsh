@@ -20,7 +20,8 @@ void createElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
                    const std::vector<MVertex *> &allVert,
                    std::map<int, std::vector<MElement *> > *allElt,
                    const std::vector<cgsize_t> &sectData,
-                   std::size_t &iSectData)
+                   const ZoneEltNodeTransfo *eltNodeTransfo,
+                   const std::vector<SPoint3> &rawNode, std::size_t &iSectData)
 {
   // get element type
   ElementType_t eltType;
@@ -33,11 +34,45 @@ void createElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
   // get element vertices in Gmsh ordering
   int mshEltType = cgns2MshEltType(eltType);
   int nbEltNode = ElementType::getNumVertices(mshEltType);
-  const std::vector<int> &cgns2Msh = cgns2MshNodeIndex(mshEltType);
+
+  // element node transformation if specified (CPEX0045) 
+  const fullMatrix<double> *transfoMat = 0;
+  if((eltNodeTransfo != 0) || (eltNodeTransfo->size() > 0)) {
+    transfoMat = &((*eltNodeTransfo)[mshEltType]);
+  }
+
+  // get element vertices
   std::vector<MVertex *> eltVert(nbEltNode);
-  for (int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectData++) {
-    const int indNode = vertShift + sectData[iSectData] - 1;
-    eltVert[cgns2Msh[iEltNode]] = allVert[indNode];
+  if(transfoMat == 0) {
+    // get element vertices in Gmsh ordering from CGNS ordering
+    const std::vector<int> &cgns2Msh = cgns2MshNodeIndex(mshEltType);
+    for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectData++) {
+      const int indNode = vertShift + sectData[iSectData] - 1;
+      eltVert[cgns2Msh[iEltNode]] = allVert[indNode];
+    }
+  }
+  else {
+    // get element vertices and retrieve original node coordinates
+    fullMatrix<double> oldEltNode(nbEltNode, 3);
+    for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectData++) {
+      const int indNode = vertShift + sectData[iSectData] - 1;
+      eltVert[iEltNode] = allVert[indNode];
+      oldEltNode(iEltNode, 0) = rawNode[indNode].x();
+      oldEltNode(iEltNode, 1) = rawNode[indNode].y();
+      oldEltNode(iEltNode, 2) = rawNode[indNode].z();
+    }
+
+    // transform original into Gmsh node coordinates
+    fullMatrix<double> newEltNode(nbEltNode, 3);
+    newEltNode.gemm(*transfoMat, oldEltNode);
+    
+    // update vertices
+    for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++) {
+      const double &xNew = newEltNode(iEltNode, 0);
+      const double &yNew = newEltNode(iEltNode, 1);
+      const double &zNew = newEltNode(iEltNode, 2);
+      eltVert[iEltNode]->setXYZ(xNew, yNew, zNew);
+    }
   }
 
   // create element
@@ -65,8 +100,11 @@ void createElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
 
 
 CGNSZoneUnstruct::CGNSZoneUnstruct(int fileIndex, int baseIndex, int zoneIndex,
-                                   int meshDim, cgsize_t startNode, int &err) :
-  CGNSZone(fileIndex, baseIndex, zoneIndex, meshDim, startNode, err)
+                                int meshDim, cgsize_t startNode,
+                                const Family2EltNodeTransfo &allEltNodeTransfo,
+                                int &err) :
+  CGNSZone(fileIndex, baseIndex, zoneIndex, meshDim, startNode,
+           allEltNodeTransfo, err)
 {
   // number of nodes and elements
   nbNode_ = size_[0];
@@ -78,7 +116,9 @@ CGNSZoneUnstruct::CGNSZoneUnstruct(int fileIndex, int baseIndex, int zoneIndex,
 
 int CGNSZoneUnstruct::readSection(int iSect,
                                   const std::vector<MVertex *> &allVert,
-                                  std::map<int, std::vector<MElement *> > *allElt)
+                                  const std::vector<SPoint3> &rawNode,
+                                  std::map<int,
+                                           std::vector<MElement *> > *allElt)
 {
   int cgnsErr;
 
@@ -111,7 +151,7 @@ int CGNSZoneUnstruct::readSection(int iSect,
     const std::map<int, int>::const_iterator itBC = elt2BC_.find(iElt);
     const int entity = (itBC == elt2BC_.end()) ? 1 : itBC->second;
     createElement(sectEltType, startNode(), entity, allVert, allElt, sectData,
-                  iSectData);
+                  eltNodeTransfo(), rawNode, iSectData);
   }
 
   return 1;
@@ -124,6 +164,17 @@ int CGNSZoneUnstruct::readElements(std::vector<MVertex *> &allVert,
 {
   int cgnsErr;
 
+  // data structures for node coordinate transformation (CPEX0045)
+  // std::vector<bool> nodeUpdated;
+  std::vector<SPoint3> rawNode;
+  if(eltNodeTransfo() != 0) {
+    // nodeUpdated = std::vector<bool>(nbNode(), false);
+    rawNode.resize(nbNode());
+    for(int iN = 0; iN < nbNode(); iN++) {
+      rawNode[iN] = allVert[startNode()+iN]->point();
+    } 
+  }
+
   // read number of sections of element-vertex connectivity
   int nbSect;
   cgnsErr = cg_nsections(fileIndex(), baseIndex(), index(), &nbSect);
@@ -131,7 +182,7 @@ int CGNSZoneUnstruct::readElements(std::vector<MVertex *> &allVert,
 
   // read sections of element-vertex connectivity
   for(int iSect = 1; iSect <= nbSect; iSect++) {
-    int err = readSection(iSect, allVert, allElt);
+    int err = readSection(iSect, allVert, rawNode, allElt);
     if(err == 0) return 0;
   }
 

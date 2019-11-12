@@ -21,11 +21,11 @@ class CGNSZone;
 
 double readScale();
 
-int readHOPointInfo(int fileIndex, int baseIndex,
-                    std::map<std::string,
-                             std::vector<fullMatrix<double> > > &pointTransfo);
+int readEltNodeTransfo(int fileIndex, int baseIndex,
+                       Family2EltNodeTransfo &allEltNodeTransfo);
 
 int createZones(int fileIndex, int baseIndex, int meshDim,
+                const Family2EltNodeTransfo &allEltNodeTransfo,
                 std::vector<CGNSZone *> &allZones,
                 std::map<std::string, int> &name2Zone);
 

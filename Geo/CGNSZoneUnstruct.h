@@ -15,7 +15,8 @@ class CGNSZoneUnstruct : public CGNSZone
 {
 public:
   CGNSZoneUnstruct(int fileIndex, int baseIndex, int zoneIndex, int meshDim,
-                   cgsize_t startNode, int &err);
+                   cgsize_t startNode,
+                   const Family2EltNodeTransfo &allEltNodeTransfo, int &err);
 
   virtual cgsize_t indexDataSize(cgsize_t nbVal) { return nbVal; }
 
@@ -34,6 +35,7 @@ public:
 
 protected:
  int readSection(int iSect, const std::vector<MVertex *> &allVert,
+                 const std::vector<SPoint3> &rawNode,
                  std::map<int, std::vector<MElement *> > *allElt);
 };
 

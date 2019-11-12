@@ -6,6 +6,7 @@
 #ifndef CGNS_CGNSZONE_H
 #define CGNS_CGNSZONE_H
 
+#include "fullMatrix.h"
 #include "CGNSCommon.h"
 #include <string>
 #include <vector>
@@ -18,12 +19,18 @@ class MVertex;
 class MElement;
 
 
+// types for high-order node tranformation (CPEX0045)
+typedef std::vector<fullMatrix<double> > ZoneEltNodeTransfo;
+typedef std::map<std::string, ZoneEltNodeTransfo> Family2EltNodeTransfo;
+
+
 class CGNSZone
 {
 public:
   CGNSZone() {}
   CGNSZone(int fileIndex, int baseIndex, int zoneIndex, int meshDim,
-           cgsize_t startNode, int &err);
+           cgsize_t startNode, const Family2EltNodeTransfo &allEltNodeTransfo,
+           int &err);
   virtual ~CGNSZone() {}
 
   int index() const { return zoneIndex_; }
@@ -53,6 +60,7 @@ public:
                             std::vector<cgsize_t> &node) const = 0;
 
   std::map<cgsize_t, int> &elt2BC() { return elt2BC_; }
+  const ZoneEltNodeTransfo *eltNodeTransfo() { return eltNodeTransfo_; }
   const std::vector<bool> &interfaceNode() { return interfaceNode_; }
   const std::vector<int> &masterZone() { return masterZone_; }
   const std::vector<std::vector<double> > &perTransfo() { return perTransfo_; }
@@ -95,7 +103,6 @@ public:
 protected:
   // basic zone information
   int fileIndex_, baseIndex_, meshDim_, zoneIndex_;
-  // char name_[CGNS_MAX_STR_LEN];
   std::string name_;
   cgsize_t size_[9];
   ZoneType_t type_;
@@ -103,6 +110,9 @@ protected:
 
   // BC information
   std::map<cgsize_t, int> elt2BC_;
+
+  // transformations of high-order points per element (CPEX0045)
+  const ZoneEltNodeTransfo *eltNodeTransfo_;
   
   // internal interface information
   std::vector<bool> interfaceNode_;
