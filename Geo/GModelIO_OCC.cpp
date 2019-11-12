@@ -842,7 +842,8 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
     Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
     Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
     Handle(Geom_Circle) C = new Geom_Circle(Circ);
-    Handle(Geom_TrimmedCurve) arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
+    Handle(Geom_TrimmedCurve) arc =
+      new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
     BRepBuilderAPI_MakeEdge e(arc, start, end);
     e.Build();
     if(!e.IsDone()) {
@@ -943,7 +944,7 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
     Standard_Real Alpha2 = ElCLib::Parameter(Elips, endPnt);
     Handle(Geom_Ellipse) E = new Geom_Ellipse(Elips);
     Handle(Geom_TrimmedCurve) arc;
-    if ((Alpha2 > Alpha1 && Alpha2 - Alpha1 < M_PI) || Alpha1 - Alpha2 > M_PI)
+    if((Alpha2 > Alpha1 && Alpha2 - Alpha1 < M_PI) || Alpha1 - Alpha2 > M_PI)
       arc = new Geom_TrimmedCurve(E, Alpha1, Alpha2, true);
     else
       arc = new Geom_TrimmedCurve(E, Alpha2, Alpha1, false);
@@ -1152,12 +1153,15 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       if(weights.size() != pointTags.size()) {
         Msg::Error("Number of BSpline weights (%d) and control points (%d) "
-                   "should be equal", weights.size(), pointTags.size());
+                   "should be equal",
+                   weights.size(), pointTags.size());
         return false;
       }
       if(knots.size() != multiplicities.size()) {
-        Msg::Error("Number of BSpline knots (%d) and multiplicities (%d) should "
-                   "equal", knots.size(), multiplicities.size());
+        Msg::Error(
+          "Number of BSpline knots (%d) and multiplicities (%d) should "
+          "equal",
+          knots.size(), multiplicities.size());
         return false;
       }
       if(knots.size() < 2) {
@@ -1167,7 +1171,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       for(std::size_t i = 0; i < knots.size() - 1; i++) {
         if(knots[i] >= knots[i + 1]) {
           Msg::Error("BSpline knots should be increasing: knot %d (%g) > "
-                     "knot %d (%g)", i, knots[i], i + 1, knots[i + 1]);
+                     "knot %d (%g)",
+                     i, knots[i], i + 1, knots[i + 1]);
           return false;
         }
       }
@@ -1178,7 +1183,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         }
         if(i != 0 && i != multiplicities.size() - 1 &&
            multiplicities[i] > degree) {
-          Msg::Error("BSpline interior knot multiplicities should be <= degree");
+          Msg::Error(
+            "BSpline interior knot multiplicities should be <= degree");
           return false;
         }
         if((i == 0 || i == multiplicities.size() - 1) &&
@@ -1189,8 +1195,10 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       if(periodic) {
         if(multiplicities.front() != multiplicities.back()) {
-          Msg::Error("Periodic BSpline end knot multiplicies (%d and %d) should "
-                     "be equal", multiplicities.front(), multiplicities.back());
+          Msg::Error(
+            "Periodic BSpline end knot multiplicies (%d and %d) should "
+            "be equal",
+            multiplicities.front(), multiplicities.back());
           return false;
         }
         // TODO C++11 std::accumulate
@@ -1295,7 +1303,8 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
       int num_knots = sum_of_all_mult - 2 * d;
       if(num_knots < 2) {
         Msg::Error("Not enough control points for building BSpline of "
-                   "degree %d", d);
+                   "degree %d",
+                   d);
         return false;
       }
       k.resize(num_knots);
@@ -1569,9 +1578,10 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 }
 
 bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
-                                      const std::vector<int> &pointTags,
-                                      const std::vector<int> &surfaceTags,
-                                      const std::vector<int> &surfaceContinuity){
+                                    const std::vector<int> &pointTags,
+                                    const std::vector<int> &surfaceTags,
+                                    const std::vector<int> &surfaceContinuity)
+{
   bool snap = false;
 
   if(tag >= 0 && _tagFace.IsBound(tag)) {
@@ -1581,7 +1591,7 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
 
   TopoDS_Face result;
   try {
-    GeomPlate_BuildPlateSurface BPSurf (2,150,10);
+    GeomPlate_BuildPlateSurface BPSurf(2, 150, 10);
 
     if(!_tagWire.IsBound(wireTag)) {
       Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
@@ -1591,11 +1601,12 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
       TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
       TopExp_Explorer exp0;
       for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
-	TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
-	Handle(BRepAdaptor_HCurve) C = new BRepAdaptor_HCurve(); 
-	C->ChangeCurve().Initialize(edge); 
-	Handle(BRepFill_CurveConstraint) Cont= new BRepFill_CurveConstraint(C,0,10,.01); 
-	BPSurf.Add(Cont);
+        TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+        Handle(BRepAdaptor_HCurve) C = new BRepAdaptor_HCurve();
+        C->ChangeCurve().Initialize(edge);
+        Handle(BRepFill_CurveConstraint) Cont =
+          new BRepFill_CurveConstraint(C, 0, 10, .01);
+        BPSurf.Add(Cont);
       }
     }
 
@@ -1604,53 +1615,56 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
         Msg::Error("Unknown OpenCASCADE point with tag %d", pointTags[i]);
         return false;
       }
-      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(pointTags[i]));   
-      Handle(GeomPlate_PointConstraint) PCont= new GeomPlate_PointConstraint(BRep_Tool::Pnt(vertex),0,.1); 
+      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(pointTags[i]));
+      Handle(GeomPlate_PointConstraint) PCont =
+        new GeomPlate_PointConstraint(BRep_Tool::Pnt(vertex), 0, .1);
       BPSurf.Add(PCont);
     }
-    BPSurf.Perform(); 
+    BPSurf.Perform();
 
     printf("making the wire\n");
-    Standard_Integer MaxSeg=9; 
-    Standard_Integer MaxDegree=8; 
-    Standard_Integer CritOrder=0; 
-    Standard_Real dmax,Tol; 
-    Handle(GeomPlate_Surface) PSurf = BPSurf.Surface(); 
-    dmax = Max(0.0001,10*BPSurf.G0Error()); 
-    Tol=0.0001; 
-    GeomPlate_MakeApprox Mapp(PSurf,Tol,MaxSeg,MaxDegree,dmax,CritOrder); 
-    Handle (Geom_Surface) Surf (Mapp.Surface());
-    // create a face corresponding to the approximated Plate 
+    Standard_Integer MaxSeg = 9;
+    Standard_Integer MaxDegree = 8;
+    Standard_Integer CritOrder = 0;
+    Standard_Real dmax, Tol;
+    Handle(GeomPlate_Surface) PSurf = BPSurf.Surface();
+    dmax = Max(0.0001, 10 * BPSurf.G0Error());
+    Tol = 0.0001;
+    GeomPlate_MakeApprox Mapp(PSurf, Tol, MaxSeg, MaxDegree, dmax, CritOrder);
+    Handle(Geom_Surface) Surf(Mapp.Surface());
+    // create a face corresponding to the approximated Plate
 
-    if (snap){
+    if(snap) {
       BRepBuilderAPI_MakeWire makeWire;
       {
-	TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
-	TopExp_Explorer exp0;
-	for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
-	  TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
-	  Standard_Real first,last;
-	  printf("making the wire -a\n");
-	  Handle(Geom_Curve) ccc2 = BRep_Tool::Curve(edge,first,last);
-	  printf("making the wire -b\n");
-	  Handle(Geom_Curve) c2= GeomProjLib::Project(ccc2, Surf);
-	  printf("making the wire -c\n");
-	  TopoDS_Edge aEdgepj = BRepBuilderAPI_MakeEdge(c2, c2->FirstParameter(),c2->LastParameter());
-	  makeWire.Add(aEdgepj);
-	}
+        TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
+        TopExp_Explorer exp0;
+        for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
+          TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+          Standard_Real first, last;
+          printf("making the wire -a\n");
+          Handle(Geom_Curve) ccc2 = BRep_Tool::Curve(edge, first, last);
+          printf("making the wire -b\n");
+          Handle(Geom_Curve) c2 = GeomProjLib::Project(ccc2, Surf);
+          printf("making the wire -c\n");
+          TopoDS_Edge aEdgepj = BRepBuilderAPI_MakeEdge(
+            c2, c2->FirstParameter(), c2->LastParameter());
+          makeWire.Add(aEdgepj);
+        }
       }
       makeWire.Build();
-      
-      result = BRepBuilderAPI_MakeFace (Surf,makeWire.Wire()); 
+
+      result = BRepBuilderAPI_MakeFace(Surf, makeWire.Wire());
     }
     else {
-      Standard_Real Umin, Umax, Vmin, Vmax; 
-      PSurf->Bounds( Umin, Umax, Vmin, Vmax);
-      double DU = 0.*(Umax-Umin);
-      double DV = 0.*(Vmax-Vmin);
-      result = BRepBuilderAPI_MakeFace (Surf,Umin-DU, Umax+DU, Vmin-DV, Vmax+DV,1.e-6); 
+      Standard_Real Umin, Umax, Vmin, Vmax;
+      PSurf->Bounds(Umin, Umax, Vmin, Vmax);
+      double DU = 0. * (Umax - Umin);
+      double DV = 0. * (Vmax - Vmin);
+      result = BRepBuilderAPI_MakeFace(Surf, Umin - DU, Umax + DU, Vmin - DV,
+                                       Vmax + DV, 1.e-6);
     }
-      
+
     ShapeFix_Face fix(result);
 
     fix.SetPrecision(CTX::instance()->geom.tolerance);
@@ -1664,9 +1678,7 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  
 }
-
 
 bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
                                       const std::vector<int> &pointTags,
@@ -1704,7 +1716,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
           f.Add(edge, face, GeomAbs_G1);
       }
       else {
-	f.Add(edge, GeomAbs_C0);
+        f.Add(edge, GeomAbs_C0);
       }
       i++;
     }
@@ -1752,7 +1764,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
     return false;
   }
 
-  if(sewing){
+  if(sewing) {
     // this allows to build a shell made of surfaces that share geometrically
     // identical (but topologically different) curves.
     TopoDS_Shape result;
@@ -2299,7 +2311,7 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge)
     // detect degenerate extrusions or cycles
     ExtrudeParams *p = e;
     int recur = 0;
-    while(++recur < CTX::instance()->mesh.maxRetries){
+    while(++recur < CTX::instance()->mesh.maxRetries) {
       if(ge->tag() == p->geo.Source) {
         Msg::Info("Extrusion layer cycle detected for curve %d", ge->tag());
         e = 0;
@@ -2333,7 +2345,7 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GFace *gf)
     // detect degenerate extrusions or cycles
     ExtrudeParams *p = e;
     int recur = 0;
-    while(++recur < CTX::instance()->mesh.maxRetries){
+    while(++recur < CTX::instance()->mesh.maxRetries) {
       if(gf->tag() == p->geo.Source) {
         Msg::Info("Extrusion layer cycle detected for surface %d", gf->tag());
         e = 0;
@@ -2441,8 +2453,8 @@ bool OCC_Internals::_extrude(int mode,
       }
       result = p.Shape();
       const BRepSweep_Prism &prism(p.Prism());
-      _setExtrudedAttributes(c, (BRepSweep_Prism *)&prism, 0, e, 0., 0., 0.,
-                             dx, dy, dz, 0., 0., 0., 0.);
+      _setExtrudedAttributes(c, (BRepSweep_Prism *)&prism, 0, e, 0., 0., 0., dx,
+                             dy, dz, 0., 0., 0., 0.);
       dim = getReturnedShapes(c, (BRepSweep_Prism *)&prism, top, body, lateral);
     }
     else if(mode == 1) { // revolve
@@ -2455,8 +2467,8 @@ bool OCC_Internals::_extrude(int mode,
       }
       result = r.Shape();
       const BRepSweep_Revol &revol(r.Revol());
-      _setExtrudedAttributes(c, 0, (BRepSweep_Revol *)&revol, e, x, y, z,
-                             0., 0., 0., ax, ay, az, angle);
+      _setExtrudedAttributes(c, 0, (BRepSweep_Revol *)&revol, e, x, y, z, 0.,
+                             0., 0., ax, ay, az, angle);
       dim = getReturnedShapes(c, (BRepSweep_Revol *)&revol, top, body, lateral);
     }
     else if(mode == 2) { // pipe
@@ -2490,7 +2502,7 @@ bool OCC_Internals::_extrude(int mode,
       //   pipe.Shape() gives us "body"
       //   using pipe.Spine(), pipe.{Face,Edge}(spine, c) gives us the lateral
       //     entities
-      //dim = getReturnedShapesForPipe(c, pipe, top, body, lateral);
+      // dim = getReturnedShapesForPipe(c, pipe, top, body, lateral);
     }
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -3271,8 +3283,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
                                const Handle_XCAFDoc_MaterialTool &materialTool,
                                const TDF_Label &label,
                                const TopLoc_Location &loc,
-                               const std::string &pathName,
-                               bool isRef)
+                               const std::string &pathName, bool isRef)
 {
   std::string phys = pathName;
   Handle(TDataStd_Name) n;
@@ -3284,28 +3295,31 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
 
   TopLoc_Location partLoc = loc;
   Handle(XCAFDoc_Location) l;
-  if (label.FindAttribute(XCAFDoc_Location::GetID(), l)) {
-    if (isRef)
+  if(label.FindAttribute(XCAFDoc_Location::GetID(), l)) {
+    if(isRef)
       partLoc = partLoc * l->Get();
     else
       partLoc = l->Get();
   }
 
   TDF_Label ref;
-  if (shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
-    setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
-                       ref, partLoc, phys, true);
+  if(shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
+    setShapeAttributes(attributes, shapeTool, colorTool, materialTool, ref,
+                       partLoc, phys, true);
   }
 
-  if (shapeTool->IsSimpleShape(label) && (isRef || shapeTool->IsFree(label))) {
+  if(shapeTool->IsSimpleShape(label) && (isRef || shapeTool->IsFree(label))) {
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
     int dim =
-      (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
-      (shape.ShapeType() == TopAbs_EDGE ||
-       shape.ShapeType() == TopAbs_WIRE) ? 1 :
-      (shape.ShapeType() == TopAbs_FACE ||
-       shape.ShapeType() == TopAbs_SHELL) ? 2 : 3;
+      (shape.ShapeType() == TopAbs_VERTEX) ?
+        0 :
+        (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
+        1 :
+        (shape.ShapeType() == TopAbs_FACE ||
+         shape.ShapeType() == TopAbs_SHELL) ?
+        2 :
+        3;
 
     Handle(TCollection_HAsciiString) matName;
     Handle(TCollection_HAsciiString) matDescription;
@@ -3313,20 +3327,18 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     Handle(TCollection_HAsciiString) matDensName;
     Handle(TCollection_HAsciiString) matDensValType;
     if(materialTool->GetMaterial(label, matName, matDescription, matDensity,
-                                 matDensName, matDensValType)){
+                                 matDensName, matDensValType)) {
       if(!phys.empty()) phys += " & ";
       phys += matName->ToCString();
       Msg::Info(" - Label & material '%s' (%dD)", phys.c_str());
     }
-    else if(phys.size()){
+    else if(phys.size()) {
       Msg::Info(" - Label '%s' (%dD)", phys.c_str(), dim);
     }
-    if(phys.size()){
-      attributes->insert(new OCCAttributes(dim, shape, phys));
-    }
+    if(phys.size()) { attributes->insert(new OCCAttributes(dim, shape, phys)); }
 
     Quantity_Color col;
-    if (colorTool->GetColor(label, XCAFDoc_ColorGen, col)) {
+    if(colorTool->GetColor(label, XCAFDoc_ColorGen, col)) {
       double r = col.Red(), g = col.Green(), b = col.Blue();
       Msg::Info(" - Color (%g, %g, %g) (%dD)", r, g, b, dim);
       attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1.));
@@ -3341,10 +3353,9 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
       Msg::Info(" - Color (%g, %g, %g) (%dD & Curv)", r, g, b, dim);
       attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1, 2));
     }
-
   }
   else {
-    for (TDF_ChildIterator it(label); it.More(); it.Next()) {
+    for(TDF_ChildIterator it(label); it.More(); it.Next()) {
       setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
                          it.Value(), partLoc, phys, isRef);
     }
@@ -3377,8 +3388,8 @@ void readAttributes(OCCAttributesRTree *attributes, T &reader,
   Handle_XCAFDoc_MaterialTool materialTool =
     XCAFDoc_DocumentTool::MaterialTool(mainLabel);
   // traverse the labels recursively to set attributes on shapes
-  setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
-                     mainLabel, TopLoc_Location(), "", false);
+  setShapeAttributes(attributes, shapeTool, colorTool, materialTool, mainLabel,
+                     TopLoc_Location(), "", false);
 }
 
 #endif
@@ -3454,13 +3465,12 @@ bool OCC_Internals::importShapes(const std::string &fileName,
 
   BRepTools::Clean(result);
 
-  _healShape(result, CTX::instance()->geom.tolerance,
-             CTX::instance()->geom.occFixDegenerated,
-             CTX::instance()->geom.occFixSmallEdges,
-             CTX::instance()->geom.occFixSmallFaces,
-             CTX::instance()->geom.occSewFaces,
-             CTX::instance()->geom.occMakeSolids,
-             CTX::instance()->geom.occScaling);
+  _healShape(
+    result, CTX::instance()->geom.tolerance,
+    CTX::instance()->geom.occFixDegenerated,
+    CTX::instance()->geom.occFixSmallEdges,
+    CTX::instance()->geom.occFixSmallFaces, CTX::instance()->geom.occSewFaces,
+    CTX::instance()->geom.occMakeSolids, CTX::instance()->geom.occScaling);
 
   _multiBind(result, -1, outDimTags, highestDimOnly, true);
   return true;
@@ -3567,7 +3577,7 @@ bool OCC_Internals::getMass(int dim, int tag, double &mass)
   }
   TopoDS_Shape shape = _find(dim, tag);
   GProp_GProps System;
-  switch(dim){
+  switch(dim) {
   case 1: BRepGProp::LinearProperties(shape, System); break;
   case 2: BRepGProp::SurfaceProperties(shape, System); break;
   case 3: BRepGProp::VolumeProperties(shape, System); break;
@@ -3576,7 +3586,8 @@ bool OCC_Internals::getMass(int dim, int tag, double &mass)
   return true;
 }
 
-bool OCC_Internals::getCenterOfMass(int dim, int tag, double &x, double &y, double &z)
+bool OCC_Internals::getCenterOfMass(int dim, int tag, double &x, double &y,
+                                    double &z)
 {
   if(!_isBound(dim, tag)) {
     Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
@@ -3585,7 +3596,7 @@ bool OCC_Internals::getCenterOfMass(int dim, int tag, double &x, double &y, doub
   }
   TopoDS_Shape shape = _find(dim, tag);
   GProp_GProps System;
-  switch(dim){
+  switch(dim) {
   case 1: BRepGProp::LinearProperties(shape, System); break;
   case 2: BRepGProp::SurfaceProperties(shape, System); break;
   case 3: BRepGProp::VolumeProperties(shape, System); break;
@@ -3597,7 +3608,8 @@ bool OCC_Internals::getCenterOfMass(int dim, int tag, double &x, double &y, doub
   return true;
 }
 
-bool OCC_Internals::getMatrixOfInertia(int dim, int tag, std::vector<double> &mat)
+bool OCC_Internals::getMatrixOfInertia(int dim, int tag,
+                                       std::vector<double> &mat)
 {
   if(!_isBound(dim, tag)) {
     Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
@@ -3606,7 +3618,7 @@ bool OCC_Internals::getMatrixOfInertia(int dim, int tag, std::vector<double> &ma
   }
   TopoDS_Shape shape = _find(dim, tag);
   GProp_GProps System;
-  switch(dim){
+  switch(dim) {
   case 1: BRepGProp::LinearProperties(shape, System); break;
   case 2: BRepGProp::SurfaceProperties(shape, System); break;
   case 3: BRepGProp::VolumeProperties(shape, System); break;
@@ -3614,8 +3626,7 @@ bool OCC_Internals::getMatrixOfInertia(int dim, int tag, std::vector<double> &ma
   gp_Mat m = System.MatrixOfInertia();
   mat.clear();
   for(int i = 1; i <= 3; i++)
-    for(int j = 1; j <= 3; j++)
-      mat.push_back(m.Value(i, j));
+    for(int j = 1; j <= 3; j++) mat.push_back(m.Value(i, j));
   return true;
 }
 
@@ -3682,9 +3693,7 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(0, vertex, col, boundary)){
-      occv->setColor(col);
-    }
+    if(_attributes->getColor(0, vertex, col, boundary)) { occv->setColor(col); }
   }
   for(int i = 1; i <= _emap.Extent(); i++) {
     TopoDS_Edge edge = TopoDS::Edge(_emap(i));
@@ -3707,9 +3716,7 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(1, edge, labels);
     if(labels.size()) model->setElementaryName(1, occe->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(1, edge, col, boundary)){
-      occe->setColor(col);
-    }
+    if(_attributes->getColor(1, edge, col, boundary)) { occe->setColor(col); }
   }
   for(int i = 1; i <= _fmap.Extent(); i++) {
     TopoDS_Face face = TopoDS::Face(_fmap(i));
@@ -3730,9 +3737,9 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(2, face, labels);
     if(labels.size()) model->setElementaryName(2, occf->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(2, face, col, boundary)){
+    if(_attributes->getColor(2, face, col, boundary)) {
       occf->setColor(col);
-      if(boundary == 2){
+      if(boundary == 2) {
         std::vector<GEdge *> edges = occf->edges();
         for(std::size_t j = 0; j < edges.size(); j++) edges[j]->setColor(col);
       }
@@ -3757,13 +3764,13 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(3, region, labels);
     if(labels.size()) model->setElementaryName(3, occr->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(3, region, col, boundary)){
+    if(_attributes->getColor(3, region, col, boundary)) {
       occr->setColor(col);
-      if(boundary == 1){
+      if(boundary == 1) {
         std::vector<GFace *> faces = occr->faces();
         for(std::size_t j = 0; j < faces.size(); j++) faces[j]->setColor(col);
       }
-      else if(boundary == 2){
+      else if(boundary == 2) {
         std::vector<GEdge *> edges = occr->edges();
         for(std::size_t j = 0; j < edges.size(); j++) edges[j]->setColor(col);
       }
@@ -4310,16 +4317,16 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   Msg::Info(" - Total surface area : %g (%g)", newsurfacecont, surfacecont);
 }
 
-bool OCC_Internals::healShapes(const std::vector<std::pair<int, int> > &inDimTags,
-                               std::vector<std::pair<int, int> > &outDimTags,
-                               double tolerance, bool fixDegenerated,
-                               bool fixSmallEdges, bool fixSmallFaces,
-                               bool sewFaces, bool makeSolids)
+bool OCC_Internals::healShapes(
+  const std::vector<std::pair<int, int> > &inDimTags,
+  std::vector<std::pair<int, int> > &outDimTags, double tolerance,
+  bool fixDegenerated, bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
+  bool makeSolids)
 {
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  if(inDimTags.empty()){
+  if(inDimTags.empty()) {
     // construct a compound with all the shapes with tags
     _somap.Clear();
     _shmap.Clear();
@@ -4342,14 +4349,14 @@ bool OCC_Internals::healShapes(const std::vector<std::pair<int, int> > &inDimTag
     for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
     for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
   }
-  else{
+  else {
     // construct a compound with the given shapes
     for(std::size_t i = 0; i < inDimTags.size(); i++) {
       int dim = inDimTags[i].first;
       int tag = inDimTags[i].second;
       if(!_isBound(dim, tag)) {
-        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
-                   tag);
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                   dim, tag);
         return false;
       }
       TopoDS_Shape shape = _find(dim, tag);
