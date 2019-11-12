@@ -367,6 +367,7 @@ public:
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
   bool makeFaceSTL(const TopoDS_Face &s, std::vector<SPoint3> &vertices,
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeEdgeSTLFromFace(const TopoDS_Edge &c, const TopoDS_Face &s, std::vector<SPoint3> *vertices);
   bool makeSolidSTL(const TopoDS_Solid &s, std::vector<SPoint3> &vertices,
                     std::vector<SVector3> &normals,
                     std::vector<int> &triangles);

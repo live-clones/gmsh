@@ -397,7 +397,7 @@ public:
   piter lastElementaryName() { return _elementaryNames.end(); }
 
   // get the number of physical names
-  int numPhysicalNames() const { return _physicalNames.size(); }
+  int numPhysicalNames() const { return (int)_physicalNames.size(); }
 
   // get iterators to the last physical name of each dimension
   void getInnerPhysicalNamesIterators(std::vector<piter> &iterators);
@@ -603,7 +603,7 @@ public:
 
   // reclassify a surface mesh, using an angle threshold to tag edges and faces
   void classifySurfaces(double angleThreshold, bool includeBoundary,
-                        bool forReparametrization);
+                        bool forReparametrization, double curveAngleThreshold);
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements
@@ -680,11 +680,11 @@ public:
   int writeSTL(const std::string &name, bool binary = false,
                bool saveAll = false, double scalingFactor = 1.0,
                int oneSolidPerSurface = 0);
-  
+
   // X3D (only output from OCCT's triangulation)
-  int writeX3D(const std::string &name, 
+  int writeX3D(const std::string &name,
                bool saveAll = false, double scalingFactor = 1.0,
-               int oneSolidPerSurface = 0);
+               int x3dsurfaces = 1, int x3dedges = 0, int x3dvertices = 0);
 
   // PLY(2) format (ascii text format)
   int readPLY(const std::string &name);

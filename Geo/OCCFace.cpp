@@ -410,6 +410,16 @@ bool OCCFace::buildSTLTriangulation(bool force)
     stl_triangles.push_back(0);
     return false;
   }
+
+  // compute the triangulation of the edges which are the boundaries of this face
+  std::vector<GEdge *> const &e = edges();
+  for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end(); it++) {
+    if ((*it)->stl_vertices_xyz.size() == 0) {
+      const TopoDS_Edge *c = (TopoDS_Edge *)(*it)->getNativePtr();      
+      model()->getOCCInternals()->makeEdgeSTLFromFace(*c, s, &((*it)->stl_vertices_xyz));
+    }  
+  }
+
   return true;
 }
 

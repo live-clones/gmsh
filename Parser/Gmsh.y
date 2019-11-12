@@ -1676,6 +1676,40 @@ Shape :
       $$.Type = MSH_SEGM_SPLN;
       $$.Num = num;
     }
+  | tCompound tSpline '(' FExpr ')' tAFFECT ListOfDouble tUsing FExpr tEND
+    {
+      int num = (int)$4;
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Compound spline only available with built-in geometry kernel");
+      }
+      else{
+        r = GModel::current()->getGEOInternals()->addCompoundSpline(num, tags,
+                                                                    (int)$9);
+      }
+      if(!r) yymsg(0, "Could not add compound spline");
+      List_Delete($7);
+      $$.Type = MSH_SEGM_SPLN;
+      $$.Num = num;
+    }
+  | tCompound tBSpline '(' FExpr ')' tAFFECT ListOfDouble tUsing FExpr tEND
+    {
+      int num = (int)$4;
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Compound spline only available with built-in geometry kernel");
+      }
+      else{
+        r = GModel::current()->getGEOInternals()->addCompoundBSpline(num, tags,
+                                                                     (int)$9);
+      }
+      if(!r) yymsg(0, "Could not add compound spline");
+      List_Delete($7);
+      $$.Type = MSH_SEGM_BSPLN;
+      $$.Num = num;
+    }
   | tCircle '(' FExpr ')' tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
@@ -2263,16 +2297,26 @@ Shape :
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
-            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Curve");
+      if($2 == 1)
+        yymsg(0, "`Compound Line (...) = {...};' is deprecated: use `Compound "
+              "Spline|BSpline (...) = {...} Using ...;' instead, or the compound "
+              "meshing constraint `Compound Curve {...};'");
+      else
+        yymsg(0, "`Compound Surface (...) = {...};' is deprecated: use the "
+              "compound meshing constraint `Compound Surface {...};' instead");
       $$.Type = 0;
       $$.Num = 0;
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tSTRING
       '{' RecursiveListOfListOfDouble '}' tEND
     {
-      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
-            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Curve");
+      if($2 == 1)
+        yymsg(0, "`Compound Line (...) = {...};' is deprecated: use `Compound "
+              "Spline|BSpline (...) = {...} Using ...;' instead, or the compound "
+              "meshing constraint `Compound Curve {...};'");
+      else
+        yymsg(0, "`Compound Surface (...) = {...};' is deprecated: use the "
+              "compound meshing constraint `Compound Surface {...};' instead");
       $$.Type = 0;
       $$.Num = 0;
     }
@@ -3494,7 +3538,11 @@ Command :
     }
   | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr '}' tEND
     {
-      GModel::current()->classifySurfaces($3, $5, $7);
+      GModel::current()->classifySurfaces($3, $5, $7, M_PI);
+    }
+  | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
+    {
+      GModel::current()->classifySurfaces($3, $5, $7, $9);
     }
    | tCreateGeometry tEND
     {
@@ -6779,7 +6827,7 @@ void addPeriodicFace(int iTarget, int iSource,
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if (!target || !source) {
-    Msg::Error("Could not find curve slave %d or master %d for periodic copy",
+    Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget, iSource);
   }
   else target->setMeshMaster(source, affineTransform);
@@ -6803,7 +6851,7 @@ void addPeriodicFace(int iTarget, int iSource,
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if (!target || !source) {
-    Msg::Error("Could not find surface slave %d or master %d for periodic copy",
+    Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget,iSource);
   }
   else target->setMeshMaster(source, edgeCounterparts);
@@ -6821,7 +6869,7 @@ void addPeriodicEdge(int iTarget,int iSource,
   GEdge *target = GModel::current()->getEdgeByTag(std::abs(iTarget));
   GEdge *source = GModel::current()->getEdgeByTag(std::abs(iSource));
   if (!target || !source)
-    Msg::Error("Could not find surface %d or %d for periodic copy",
+    Msg::Error("Could not find curve %d or %d for periodic copy",
                iTarget,iSource);
   if (affineTransform.size() >= 12) {
     target->setMeshMaster(source, affineTransform);

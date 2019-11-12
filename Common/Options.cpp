@@ -2283,6 +2283,13 @@ double opt_general_system_menu_bar(OPT_ARGS_NUM)
   return CTX::instance()->systemMenuBar;
 }
 
+double opt_general_native_file_chooser(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->nativeFileChooser = (int)val;
+  return CTX::instance()->nativeFileChooser;
+}
+
 double opt_general_show_module_menu(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -9460,6 +9467,27 @@ double opt_print_x3d_precision(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->print.x3dPrecision = val;
   return CTX::instance()->print.x3dPrecision;
+}
+
+double opt_print_x3d_surfaces(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dSurfaces = (int)val;
+  return CTX::instance()->print.x3dSurfaces;
+}
+
+double opt_print_x3d_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dEdges = (int)val;
+  return CTX::instance()->print.x3dEdges;
+}
+
+double opt_print_x3d_vertices(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dVertices = (int)val;
+  return CTX::instance()->print.x3dVertices;
 }
 
 // Color option routines

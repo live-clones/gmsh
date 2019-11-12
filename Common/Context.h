@@ -165,6 +165,8 @@ public:
   int fileChooserPosition[2], extraPosition[2], extraSize[2];
   // use the system menu bar on Mac OS X?
   int systemMenuBar;
+  // use the native file chooser?
+  int nativeFileChooser;
   // show standard Gmsh menu in onelab window
   int showModuleMenu;
   // use high-resolution opengl graphics (retina Macs)
@@ -322,6 +324,7 @@ public:
     std::string parameterCommand;
     int x3dCompatibility, x3dRemoveInnerBorders;
     double x3dPrecision, x3dTransparency;
+    int x3dSurfaces, x3dEdges, x3dVertices;
   } print;
   // color options
   struct {

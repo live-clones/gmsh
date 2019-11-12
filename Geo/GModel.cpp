@@ -2931,10 +2931,13 @@ void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension,
   setPhysicalNumToEntitiesInBox(EntityDimension, PhysicalNumber, box);
 }
 
-void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
-                              bool forReparametrization)
+void GModel::classifySurfaces(double angleThreshold,
+                              bool includeBoundary,
+                              bool forReparametrization,
+                              double curveAngleThreshold)
 {
-  classifyFaces(this, angleThreshold, includeBoundary, forReparametrization);
+  classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
+                curveAngleThreshold);
 }
 
 void GModel::addHomologyRequest(const std::string &type,

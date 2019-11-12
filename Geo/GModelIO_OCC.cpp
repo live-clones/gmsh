@@ -2291,16 +2291,31 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge)
   ExtrudeParams *e =
     _attributes->getExtrudeParams(1, edge, sourceDim, sourceShape);
   if(!e) return;
+  if(e->geo.Mode == EXTRUDED_ENTITY) {
+    e->geo.Source = _getFuzzyTag(0, sourceShape);
+  }
+  else if(e->geo.Mode == COPIED_ENTITY) {
+    e->geo.Source = _getFuzzyTag(1, sourceShape);
+    // detect degenerate extrusions or cycles
+    ExtrudeParams *p = e;
+    int recur = 0;
+    while(++recur < CTX::instance()->mesh.maxRetries){
+      if(ge->tag() == p->geo.Source) {
+        Msg::Info("Extrusion layer cycle detected for curve %d", ge->tag());
+        e = 0;
+        break;
+      }
+      GEdge *src = ge->model()->getEdgeByTag(p->geo.Source);
+      if(src && src->meshAttributes.extrude &&
+         src->meshAttributes.extrude->geo.Mode == COPIED_ENTITY) {
+        p = src->meshAttributes.extrude;
+      }
+      else {
+        break;
+      }
+    }
+  }
   ge->meshAttributes.extrude = e;
-  if(ge->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
-    ge->meshAttributes.extrude->geo.Source = _getFuzzyTag(0, sourceShape);
-  }
-  else if(ge->meshAttributes.extrude->geo.Mode == COPIED_ENTITY) {
-    ge->meshAttributes.extrude->geo.Source = _getFuzzyTag(1, sourceShape);
-    if(ge->meshAttributes.extrude->geo.Source ==
-       ge->tag()) // degenerate extrusion
-      ge->meshAttributes.extrude = 0;
-  }
 }
 
 void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GFace *gf)
@@ -2310,16 +2325,31 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GFace *gf)
   ExtrudeParams *e =
     _attributes->getExtrudeParams(2, face, sourceDim, sourceShape);
   if(!e) return;
+  if(e->geo.Mode == EXTRUDED_ENTITY) {
+    e->geo.Source = _getFuzzyTag(1, sourceShape);
+  }
+  else if(e->geo.Mode == COPIED_ENTITY) {
+    e->geo.Source = _getFuzzyTag(2, sourceShape);
+    // detect degenerate extrusions or cycles
+    ExtrudeParams *p = e;
+    int recur = 0;
+    while(++recur < CTX::instance()->mesh.maxRetries){
+      if(gf->tag() == p->geo.Source) {
+        Msg::Info("Extrusion layer cycle detected for surface %d", gf->tag());
+        e = 0;
+        break;
+      }
+      GFace *src = gf->model()->getFaceByTag(p->geo.Source);
+      if(src && src->meshAttributes.extrude &&
+         src->meshAttributes.extrude->geo.Mode == COPIED_ENTITY) {
+        p = src->meshAttributes.extrude;
+      }
+      else {
+        break;
+      }
+    }
+  }
   gf->meshAttributes.extrude = e;
-  if(gf->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
-    gf->meshAttributes.extrude->geo.Source = _getFuzzyTag(1, sourceShape);
-  }
-  else if(gf->meshAttributes.extrude->geo.Mode == COPIED_ENTITY) {
-    gf->meshAttributes.extrude->geo.Source = _getFuzzyTag(2, sourceShape);
-    if(gf->meshAttributes.extrude->geo.Source ==
-       gf->tag()) // degenerate extrusion
-      gf->meshAttributes.extrude = 0;
-  }
 }
 
 void OCC_Internals::_copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr)
@@ -2329,10 +2359,10 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr)
   ExtrudeParams *e =
     _attributes->getExtrudeParams(3, solid, sourceDim, sourceShape);
   if(!e) return;
-  gr->meshAttributes.extrude = e;
-  if(gr->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
-    gr->meshAttributes.extrude->geo.Source = _getFuzzyTag(2, sourceShape);
+  if(e->geo.Mode == EXTRUDED_ENTITY) {
+    e->geo.Source = _getFuzzyTag(2, sourceShape);
   }
+  gr->meshAttributes.extrude = e;
 }
 
 template <class T>
@@ -4412,6 +4442,42 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
       triangles.push_back(start + p3 - 1);
     }
   }
+  return true;
+}
+
+bool OCC_Internals::makeEdgeSTLFromFace(const TopoDS_Edge &c,
+                                        const TopoDS_Face &s,
+                                        std::vector<SPoint3> *verticesXYZ)
+{
+  // here we compute the vertices of a discretization of an edge c
+  // that is a boundary of the face s, which we just discretized
+  // the code below is inspired in pythonocc's tesselator.cpp
+  // that is GPLv3+ Copyright 2011 Fotios Sioutis, but it was rewritten
+  // from scratch to keep Gmsh GPLv2
+
+  TopLoc_Location transf;
+  Handle(Poly_Triangulation) trian = BRep_Tool::Triangulation(s, transf);
+
+  if(trian.IsNull()) { return false; }
+
+  Handle(Poly_PolygonOnTriangulation) edgepoly =
+    BRep_Tool::PolygonOnTriangulation(c, trian, transf);
+
+  if(edgepoly.IsNull()) { return false; }
+
+  const TColgp_Array1OfPnt &trainVerts = trian->Nodes();
+  const TColStd_Array1OfInteger &edgeVerts = edgepoly->Nodes();
+
+  if(edgeVerts.Length() < 2) { return false; }
+
+  for(int node = edgeVerts.Lower(); node <= edgeVerts.Upper(); node++) {
+    int index = edgeVerts.Value(node);
+    gp_Pnt trinode = trainVerts.Value(index);
+    if(!transf.IsIdentity()) { trinode.Transform(transf); }
+
+    verticesXYZ->push_back(SPoint3(trinode.X(), trinode.Y(), trinode.Z()));
+  }
+
   return true;
 }
 

@@ -39,7 +39,7 @@
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "OpenFile.h"
-#include "WinIcon.h"
+#include "XpmIcon.h"
 #include "Options.h"
 #include "CommandLine.h"
 #include "Context.h"
@@ -50,7 +50,6 @@
 #if defined(HAVE_TOUCHBAR)
 #include "touchBar.h"
 #endif
-
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
@@ -529,6 +528,10 @@ FlGui::FlGui(int argc, char **argv, void (*error_handler)(const char *fmt, ...))
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
 
+  // FLTK >= 1.3.3 allows to set a default global window icon
+  Fl_RGB_Image icon(&gmsh_icon_pixmap);
+  Fl_Window::default_icon(&icon);
+
   // add callback to respond to Mac Finder
 #if defined(__APPLE__)
   fl_open_callback(OpenProjectMacFinder);
@@ -544,28 +547,6 @@ FlGui::FlGui(int argc, char **argv, void (*error_handler)(const char *fmt, ...))
   graph.push_back(
     new graphicWindow(true, CTX::instance()->numTiles,
                       CTX::instance()->detachedMenu ? true : false));
-#if defined(WIN32)
-  graph[0]->getWindow()->icon(
-    (const void *)LoadIcon(fl_display, MAKEINTRESOURCE(IDI_ICON)));
-#elif defined(__APPLE__)
-  // nothing to do here
-#else
-  fl_open_display();
-  static const char *gmsh32x32 =
-    "\x00\x00\x00\x00\x00\x80\x01\x00\x00\x40\x03\x00\
-    \x00\x40\x03\x00\x00\x20\x07\x00\x00\x20\x07\x00\
-    \x00\x10\x0f\x00\x00\x10\x0f\x00\x00\x08\x1f\x00\
-    \x00\x08\x1f\x00\x00\x04\x3f\x00\x00\x04\x3f\x00\
-    \x00\x02\x7f\x00\x00\x02\x7f\x00\x00\x01\xff\x00\
-    \x00\x01\xff\x00\x80\x00\xff\x01\x80\x00\xff\x01\
-    \x40\x00\xff\x03\x40\x00\xff\x03\x20\x00\xff\x07\
-    \x20\x00\xff\x07\x10\x00\xff\x0f\x10\x00\xff\x0f\
-    \x08\x00\xff\x1f\x08\x00\xff\x1f\x04\x40\xfd\x3f\
-    \x04\xa8\xea\x3f\x02\x55\x55\x7f\xa2\xaa\xaa\x7a\
-    \xff\xff\xff\xff\x00\x00\x00\x00";
-  graph[0]->getWindow()->icon((const char *)XCreateBitmapFromData(
-    fl_display, DefaultRootWindow(fl_display), gmsh32x32, 32, 32));
-#endif
 
   graph[0]->getWindow()->show(argc > 0 ? 1 : 0, argv);
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
@@ -602,9 +583,6 @@ FlGui::FlGui(int argc, char **argv, void (*error_handler)(const char *fmt, ...))
   }
   fullscreen->mode(mode);
   fullscreen->end();
-#if !defined(__APPLE__)
-  fullscreen->icon(graph[0]->getWindow()->icon());
-#endif
 
   // create all other windows
   options = new optionWindow(CTX::instance()->deltaFontSize);
@@ -685,7 +663,8 @@ int FlGui::testGlobalShortcuts(int event)
     geometry_reload_cb(0, 0);
     status = 1;
   }
-  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0')) {
+  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0') ||
+     Fl::test_shortcut('9')) { // for Bruno
     onelab_reload_cb(0, 0);
     status = 1;
   }

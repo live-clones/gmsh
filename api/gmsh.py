@@ -1072,6 +1072,33 @@ class model:
         return _ovectordouble(api_normals_, api_normals_n_.value)
 
     @staticmethod
+    def getParametrization(dim, tag, points):
+        """
+        Get the parametric coordinates `parametricCoord' for the points `points' on
+        the entity of dimension `dim' and tag `tag'. `points' are given as triplets
+        of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
+        `parametricCoord' returns the parametric coordinates t on the curve (if
+        `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if
+        `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+
+        Return `parametricCoord'.
+        """
+        api_points_, api_points_n_ = _ivectordouble(points)
+        api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetParametrization(
+            c_int(dim),
+            c_int(tag),
+            api_points_, api_points_n_,
+            byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetParametrization returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value)
+
+    @staticmethod
     def setVisibility(dimTags, value, recursive=False):
         """
         Set the visibility of the model entities `dimTags' to `value'. Apply the
@@ -2441,7 +2468,11 @@ class model:
             Set the meshes of the entities of dimension `dim' and tag `tags' as
             periodic copies of the meshes of entities `tagsMaster', using the affine
             transformation specified in `affineTransformation' (16 entries of a 4x4
-            matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
+            matrix, by row). If used after meshing, generate the periodic node
+            correspondence information assuming the meshes of entities `tags'
+            effectively match the meshes of entities `tagsMaster' (useful for
+            structured and extruded meshes). Currently only available for @code{dim} ==
+            1 and @code{dim} == 2.
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             api_tagsMaster_, api_tagsMaster_n_ = _ivectorint(tagsMaster)
@@ -2520,19 +2551,22 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def classifySurfaces(angle, boundary=True, forReparametrization=False):
+        def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi):
             """
             Classify ("color") the surface mesh based on the angle threshold `angle'
             (in radians), and create new discrete surfaces, curves and points
             accordingly. If `boundary' is set, also create discrete curves on the
             boundary if the surface is open. If `forReparametrization' is set, create
-            edges and surfaces that can be reparametrized using a single map.
+            edges and surfaces that can be reparametrized using a single map. If
+            `curveAngle' is less than Pi, also force curves to be split according to
+            `curveAngle'.
             """
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
                 c_double(angle),
                 c_int(bool(boundary)),
                 c_int(bool(forReparametrization)),
+                c_double(curveAngle),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -2908,6 +2942,52 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelGeoAddBezier returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def addCompoundSpline(curveTags, numIntervals=5, tag=-1):
+            """
+            Add a spline (Catmull-Rom) going through points sampling the curves in
+            `curveTags'. The density of sampling points on each curve is governed by
+            `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. Return the tag of the spline.
+
+            Return an integer value.
+            """
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
+            ierr = c_int()
+            api__result__ = lib.gmshModelGeoAddCompoundSpline(
+                api_curveTags_, api_curveTags_n_,
+                c_int(numIntervals),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoAddCompoundSpline returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def addCompoundBSpline(curveTags, numIntervals=20, tag=-1):
+            """
+            Add a b-spline with control points sampling the curves in `curveTags'. The
+            density of sampling points on each curve is governed by `numIntervals'. If
+            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the b-spline.
+
+            Return an integer value.
+            """
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
+            ierr = c_int()
+            api__result__ = lib.gmshModelGeoAddCompoundBSpline(
+                api_curveTags_, api_curveTags_n_,
+                c_int(numIntervals),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoAddCompoundBSpline returned non-zero error code: ",
                     ierr.value)
             return api__result__
 

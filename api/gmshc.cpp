@@ -612,6 +612,20 @@ GMSH_API void gmshModelGetNormal(const int tag, double * parametricCoord, size_t
   }
 }
 
+GMSH_API void gmshModelGetParametrization(const int dim, const int tag, double * points, size_t points_n, double ** parametricCoord, size_t * parametricCoord_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_points_(points, points + points_n);
+    std::vector<double> api_parametricCoord_;
+    gmsh::model::getParametrization(dim, tag, api_points_, api_parametricCoord_);
+    vector2ptr(api_parametricCoord_, parametricCoord, parametricCoord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelSetVisibility(int * dimTags, size_t dimTags_n, const int value, const int recursive, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1471,11 +1485,11 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag,
   }
 }
 
-GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, int * ierr)
+GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, const double curveAngle, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization);
+    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization, curveAngle);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1699,6 +1713,34 @@ GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n, const in
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
     result_api_ = gmsh::model::geo::addBezier(api_pointTags_, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelGeoAddCompoundSpline(int * curveTags, size_t curveTags_n, const int numIntervals, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    result_api_ = gmsh::model::geo::addCompoundSpline(api_curveTags_, numIntervals, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelGeoAddCompoundBSpline(int * curveTags, size_t curveTags_n, const int numIntervals, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    result_api_ = gmsh::model::geo::addCompoundBSpline(api_curveTags_, numIntervals, tag);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

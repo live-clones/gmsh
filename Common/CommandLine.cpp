@@ -24,10 +24,12 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 3)
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
+// OK
+#elif (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 3)
 // OK
 #else
-#error "Gmsh requires FLTK >= 1.3"
+#error "Gmsh requires FLTK >= 1.3.3"
 #endif
 #endif
 
@@ -183,7 +185,7 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Up arrow", "Make previous view visible"));
   s.push_back(mp("Down arrow", "Make next view visible"));
   s.push_back(mp("0", "Reload geometry"));
-  s.push_back(mp(cc + "0", "Reload full project"));
+  s.push_back(mp(cc + "0 or 9", "Reload full project"));
   s.push_back(mp("1 or F1", "Mesh lines"));
   s.push_back(mp("2 or F2", "Mesh surfaces"));
   s.push_back(mp("3 or F3", "Mesh volumes"));
@@ -270,20 +272,17 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage()
 {
   typedef std::pair<std::string, std::string> mp;
   std::vector<mp> s;
-  s.push_back(mp("Move", "- Highlight the entity under the mouse pointer and "
-                 "display its properties"));
-  s.push_back(mp("", "- Resize a lasso zoom or a lasso (un)selection"));
-  s.push_back(mp("Left button", "- Rotate"));
-  s.push_back(mp("", "- Select an entity"));
-  s.push_back(mp("", "- Accept a lasso zoom or a lasso selection"));
+  s.push_back(mp("Move", "Highlight the entity under the mouse pointer and "
+                 "display its properties / Resize a lasso zoom or a lasso "
+                 "(un)selection"));
+  s.push_back(mp("Left button", "Rotate / Select an entity / Accept a lasso "
+                 "zoom or a lasso selection"));
   s.push_back(mp("Ctrl+Left button", "Start a lasso zoom or a lasso (un)selection"));
-  s.push_back(mp("Middle button", "- Zoom"));
-  s.push_back(mp("", "- Unselect an entity"));
-  s.push_back(mp("", "- Accept a lasso zoom or a lasso unselection"));
+  s.push_back(mp("Middle button", "Zoom / Unselect an entity / Accept a lasso "
+                 "zoom or a lasso unselection"));
   s.push_back(mp("Ctrl+Middle button", "Orthogonalize display"));
-  s.push_back(mp("Right button", "- Pan"));
-  s.push_back(mp("", "- Cancel a lasso zoom or a lasso (un)selection"));
-  s.push_back(mp("", "- Pop-up menu on post-processing view button"));
+  s.push_back(mp("Right button", "Pan / Cancel a lasso zoom or a lasso "
+                 "(un)selection / Pop-up menu on post-processing view button"));
   s.push_back(mp("Ctrl+Right button", "Reset to default viewpoint"));
   return s;
 }

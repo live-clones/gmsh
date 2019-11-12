@@ -179,6 +179,9 @@ model.add('getPrincipalCurvatures',doc,None,iint('tag'),ivectordouble('parametri
 doc = '''Get the normal to the surface with tag `tag' at the parametric coordinates `parametricCoord'. `parametricCoord' are given by pairs of u and v coordinates, concatenated: [p1u, p1v, p2u, ...]. `normals' are returned as triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].'''
 model.add('getNormal',doc,None,iint('tag'),ivectordouble('parametricCoord'),ovectordouble('normals'))
 
+doc = '''Get the parametric coordinates `parametricCoord' for the points `points' on the entity of dimension `dim' and tag `tag'. `points' are given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
+model.add('getParametrization',doc,None,iint('dim'),iint('tag'),ivectordouble('points'),ovectordouble('parametricCoord'))
+
 doc = '''Set the visibility of the model entities `dimTags' to `value'. Apply the visibility setting recursively if `recursive' is true.'''
 model.add('setVisibility',doc,None,ivectorpair('dimTags'),iint('value'),ibool('recursive','false','False'))
 
@@ -366,7 +369,7 @@ mesh.add('renumberNodes',doc,None)
 doc = '''Renumber the element tags in a continuous sequence.'''
 mesh.add('renumberElements',doc,None)
 
-doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsMaster', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
+doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsMaster', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). If used after meshing, generate the periodic node correspondence information assuming the meshes of entities `tags' effectively match the meshes of entities `tagsMaster' (useful for structured and extruded meshes). Currently only available for @code{dim} == 1 and @code{dim} == 2.'''
 mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsMaster'),ivectordouble('affineTransform'))
 
 doc = '''Get the master entity `tagMaster', the node tags `nodeTags' and their corresponding master node tags `nodeTagsMaster', and the affine transform `affineTransform' for the entity of dimension `dim' and tag `tag'.'''
@@ -378,8 +381,8 @@ mesh.add('removeDuplicateNodes',doc,None)
 doc = '''Split (into two triangles) all quadrangles in surface `tag' whose quality is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.'''
 mesh.add('splitQuadrangles',doc,None,idouble('quality','1.'),iint('tag','-1'))
 
-doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create edges and surfaces that can be reparametrized using a single map.'''
-mesh.add('classifySurfaces',doc,None,idouble('angle'),ibool('boundary','true','True'),ibool('forReparametrization','false','False'))
+doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create edges and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'.'''
+mesh.add('classifySurfaces',doc,None,idouble('angle'),ibool('boundary','true','True'),ibool('forReparametrization','false','False'),idouble('curveAngle','M_PI','pi','pi'))
 
 doc = '''Create a parametrization for discrete curves and surfaces (i.e. curves and surfaces represented solely by a mesh, without an underlying CAD description), assuming that each can be parametrized with a single map.'''
 mesh.add('createGeometry',doc,None)
@@ -442,6 +445,12 @@ geo.add('addBSpline',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 
 doc = '''Add a Bezier curve with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.  Return the tag of the Bezier curve.'''
 geo.add('addBezier',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
+
+doc = '''Add a spline (Catmull-Rom) going through points sampling the curves in `curveTags'. The density of sampling points on each curve is governed by `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the spline.'''
+geo.add('addCompoundSpline',doc,oint,ivectorint('curveTags'),iint('numIntervals','5'),iint('tag','-1'))
+
+doc = '''Add a b-spline with control points sampling the curves in `curveTags'. The density of sampling points on each curve is governed by `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the b-spline.'''
+geo.add('addCompoundBSpline',doc,oint,ivectorint('curveTags'),iint('numIntervals','20'),iint('tag','-1'))
 
 doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of model enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
 geo.add('addCurveLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))

@@ -118,7 +118,7 @@ public:
 #if defined(HAVE_POST)
   void putOnView(PView *view, int comp = -1);
 #endif
-  void putOnNewView();
+  void putOnNewView(int viewTag = -1);
   virtual std::string getDescription() { return ""; }
   FieldOption *getOption(const std::string &optionName);
 };

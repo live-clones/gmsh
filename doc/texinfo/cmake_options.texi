@@ -70,8 +70,6 @@ Enable MPI (experimental, not used for meshing) (default: OFF)
 Enable static Visual C++ runtime (default: OFF)
 @item ENABLE_MUMPS
 Enable MUMPS sparse direct linear solver (default: OFF)
-@item ENABLE_NATIVE_FILE_CHOOSER
-Enable native file chooser in GUI (default: ON)
 @item ENABLE_NETGEN
 Enable Netgen 3D frontal mesh generator (default: ON)
 @item ENABLE_NUMPY

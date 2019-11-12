@@ -654,6 +654,26 @@ namespace gmsh { // Top-level functions
       normals.assign(api_normals_, api_normals_ + api_normals_n_); gmshFree(api_normals_);
     }
 
+    // Get the parametric coordinates `parametricCoord' for the points `points' on
+    // the entity of dimension `dim' and tag `tag'. `points' are given as triplets
+    // of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
+    // `parametricCoord' returns the parametric coordinates t on the curve (if
+    // `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if
+    // `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+    inline void getParametrization(const int dim,
+                                   const int tag,
+                                   const std::vector<double> & points,
+                                   std::vector<double> & parametricCoord)
+    {
+      int ierr = 0;
+      double *api_points_; size_t api_points_n_; vector2ptr(points, &api_points_, &api_points_n_);
+      double *api_parametricCoord_; size_t api_parametricCoord_n_;
+      gmshModelGetParametrization(dim, tag, api_points_, api_points_n_, &api_parametricCoord_, &api_parametricCoord_n_, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_points_);
+      parametricCoord.assign(api_parametricCoord_, api_parametricCoord_ + api_parametricCoord_n_); gmshFree(api_parametricCoord_);
+    }
+
     // Set the visibility of the model entities `dimTags' to `value'. Apply the
     // visibility setting recursively if `recursive' is true.
     inline void setVisibility(const gmsh::vectorpair & dimTags,
@@ -1652,7 +1672,11 @@ namespace gmsh { // Top-level functions
       // Set the meshes of the entities of dimension `dim' and tag `tags' as
       // periodic copies of the meshes of entities `tagsMaster', using the affine
       // transformation specified in `affineTransformation' (16 entries of a 4x4
-      // matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
+      // matrix, by row). If used after meshing, generate the periodic node
+      // correspondence information assuming the meshes of entities `tags'
+      // effectively match the meshes of entities `tagsMaster' (useful for
+      // structured and extruded meshes). Currently only available for @code{dim}
+      // == 1 and @code{dim} == 2.
       inline void setPeriodic(const int dim,
                               const std::vector<int> & tags,
                               const std::vector<int> & tagsMaster,
@@ -1712,13 +1736,16 @@ namespace gmsh { // Top-level functions
       // (in radians), and create new discrete surfaces, curves and points
       // accordingly. If `boundary' is set, also create discrete curves on the
       // boundary if the surface is open. If `forReparametrization' is set, create
-      // edges and surfaces that can be reparametrized using a single map.
+      // edges and surfaces that can be reparametrized using a single map. If
+      // `curveAngle' is less than Pi, also force curves to be split according to
+      // `curveAngle'.
       inline void classifySurfaces(const double angle,
                                    const bool boundary = true,
-                                   const bool forReparametrization = false)
+                                   const bool forReparametrization = false,
+                                   const double curveAngle = M_PI)
       {
         int ierr = 0;
-        gmshModelMeshClassifySurfaces(angle, (int)boundary, (int)forReparametrization, &ierr);
+        gmshModelMeshClassifySurfaces(angle, (int)boundary, (int)forReparametrization, curveAngle, &ierr);
         if(ierr) throw ierr;
       }
 
@@ -1976,6 +2003,38 @@ namespace gmsh { // Top-level functions
         int result_api_ = gmshModelGeoAddBezier(api_pointTags_, api_pointTags_n_, tag, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_pointTags_);
+        return result_api_;
+      }
+
+      // Add a spline (Catmull-Rom) going through points sampling the curves in
+      // `curveTags'. The density of sampling points on each curve is governed by
+      // `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a
+      // new tag is selected automatically. Return the tag of the spline.
+      inline int addCompoundSpline(const std::vector<int> & curveTags,
+                                   const int numIntervals = 5,
+                                   const int tag = -1)
+      {
+        int ierr = 0;
+        int *api_curveTags_; size_t api_curveTags_n_; vector2ptr(curveTags, &api_curveTags_, &api_curveTags_n_);
+        int result_api_ = gmshModelGeoAddCompoundSpline(api_curveTags_, api_curveTags_n_, numIntervals, tag, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_curveTags_);
+        return result_api_;
+      }
+
+      // Add a b-spline with control points sampling the curves in `curveTags'. The
+      // density of sampling points on each curve is governed by `numIntervals'. If
+      // `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the b-spline.
+      inline int addCompoundBSpline(const std::vector<int> & curveTags,
+                                    const int numIntervals = 20,
+                                    const int tag = -1)
+      {
+        int ierr = 0;
+        int *api_curveTags_; size_t api_curveTags_n_; vector2ptr(curveTags, &api_curveTags_, &api_curveTags_n_);
+        int result_api_ = gmshModelGeoAddCompoundBSpline(api_curveTags_, api_curveTags_n_, numIntervals, tag, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_curveTags_);
         return result_api_;
       }
 

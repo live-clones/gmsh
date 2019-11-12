@@ -2008,6 +2008,13 @@ next two the start and end angle. Note that OpenCASCADE does not allow
 creating ellipse arcs with the major radius smaller than the minor
 radius.
 
+@item Compound Spline | BSpline ( @var{expression} ) = @{ @var{expression-list} @} Using @var{expression};
+Creates a spline or a BSpline from control points sampled on the curves
+in @var{expression-list}. @code{Using} @var{expression} specifies the
+number of intervals on each curve to compute the sampling
+points. Compound splines and BSplines are only available with the
+built-in geometry kernel.
+
 @item Curve Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented loop of curves, i.e. a closed wire. The
 @var{expression} inside the parentheses is the curve loop's tag; the
@@ -3092,27 +3099,41 @@ curve(s) or surface(s). This is only supported with the 3D Delaunay
 algorithm. @value{SYNC}
 
 @item Periodic Curve @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
-Force mesh of curves on the left-hand side to match the mesh of
-the curves on the right-hand side (masters). @value{SYNC}
+Force the mesh of the curves on the left-hand side to match the mesh
+of the curves on the right-hand side (masters). If used after meshing,
+generate the periodic node correspondence information assuming the
+mesh of the curves on the left-hand side effectively matches the mesh
+of the curves on the right-hand side. @value{SYNC}
 
 @item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} ;
-Force mesh of the surface on the left-hand side (with boundary edges
+Force the mesh of the surface on the left-hand side (with boundary edges
 specified between braces) to match the mesh of the master surface on the
-right-hand side (with boundary edges specified between
-braces). @value{SYNC}
+right-hand side (with boundary edges specified between braces). If used
+after meshing, generate the periodic node correspondence information
+assuming the mesh of the surface on the left-hand side effectively
+matches the mesh of the master surface on the right-hand side (useful
+for structured and extruded meshes). @value{SYNC}
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Translate @{ @var{expression-list} @} ;
 Force mesh of curves or surfaces on the left-hand side to match the mesh
-of the curves on the right-hand side (masters), using prescribed
-geometrical transformations. @code{Affine} takes a 4 x 4 affine
-transformation matrix given by row (only 12 entries can be provided for
-convenience); @code{Translate} takes the 3 components of the translation
-as in @ref{Transformations}. @value{SYNC}
+of the curves or surfaces on the right-hand side (masters), using
+prescribed geometrical transformations. If used after meshing, generate
+the periodic node correspondence information assuming the mesh of the
+curves or surfaces on the left-hand side effectively matches the mesh
+of the curves or surfaces on the right-hand side (useful for structured
+and extruded meshes). @code{Affine} takes a 4 x 4 affine transformation
+matrix given by row (only 12 entries can be provided for convenience);
+@code{Translate} takes the 3 components of the translation as in
+@ref{Transformations}. @value{SYNC}
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Rotate @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} ;
-Force mesh of curves or surfaces on the left-hand side to match the mesh
-of the curves on the right-hand side (masters), using a rotation
-specified as in @ref{Transformations}. @value{SYNC}
+Force the mesh of curves or surfaces on the left-hand side to match the
+mesh of the curves on the right-hand side (masters), using a rotation
+specified as in @ref{Transformations}. If used after meshing, generate
+the periodic node correspondence information assuming the mesh of the
+curves or surfaces on the left-hand side effectively matches the mesh
+of the curves or surfaces on the right-hand side (useful for structured
+and extruded meshes). @value{SYNC}
 
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
@@ -3127,13 +3148,14 @@ Creates a parametrization for curves and surfaces that do not have one
 (i.e. discrete curves and surfaces represented solely by meshes, without
 an underlying CAD description).
 
-@item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} @};
+@item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} < , @var{expression} > @};
 Classify (``color'') the surface mesh based on an angle threshold (the
 first argument, in radians), and create new discrete surfaces, curves
 and points accordingly.  If the second argument is set, also create
 discrete curves on the boundary if the surface is open. If the third
 argument is set, create edges and surfaces than can be reparametrized
-with @code{CreateGeometry}.
+with @code{CreateGeometry}. The last optional argument sets an angle
+threshold to force splitting of the generated curves.
 
 @item RenumberMeshNodes;
 Renumbers the node tags in the current mesh in a contiunous sequence.
@@ -4126,7 +4148,7 @@ respect to the initial 4.0 version:
 @itemize @bullet
 @item
 All the @code{unsigned long} entries have been changed to
-@code{size_t}. All the entries designating counts which were previsouly
+@code{size_t}. All the entries designating counts which were previously
 encoded as @code{int} have also been changed to @code{size_t}. (This
 only impacts binary files.)
 @item

@@ -1639,6 +1639,24 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
   }
 }
 
+void MElement::writeX3D(FILE *fp, double scalingFactor)
+{
+  if(getType() != TYPE_TRI && getType() != TYPE_QUA) return;
+  int qid[3] = {0, 2, 3};
+
+  for(int j = 0; j < 3; j++)
+    fprintf(fp, "%g %g %g\n", getVertex(j)->x() * scalingFactor,
+            getVertex(j)->y() * scalingFactor,
+            getVertex(j)->z() * scalingFactor);
+  if(getNumVertices() == 4) {
+    for(int j = 0; j < 3; j++) {
+      fprintf(fp, "%g %g %g\n", getVertex(qid[j])->x() * scalingFactor,
+              getVertex(qid[j])->y() * scalingFactor,
+              getVertex(qid[j])->z() * scalingFactor);
+    }
+  }
+}
+
 void MElement::writePLY2(FILE *fp)
 {
   fprintf(fp, "3 ");

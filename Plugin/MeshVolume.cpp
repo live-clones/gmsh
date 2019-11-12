@@ -8,7 +8,7 @@
 #include "PViewOptions.h"
 
 StringXNumber MeshVolumeOptions_Number[] = {
-  {GMSH_FULLRC, "Physical", NULL, -1},
+  {GMSH_FULLRC, "PhysicalGroup", NULL, -1},
   {GMSH_FULLRC, "Dimension", NULL, 3}
 };
 
@@ -22,9 +22,9 @@ GMSH_Plugin *GMSH_RegisterMeshVolumePlugin()
 std::string GMSH_MeshVolumePlugin::getHelp() const
 {
   return "Plugin(MeshVolume) computes the volume of the mesh.\n\n"
-         "Only the elements in the physical group `Physical' "
+         "Only the elements in the physical group `PhysicalGroup' "
          "of dimension `Dimension' are taken into account, unless "
-         "'Physical' is negative, in which case all the elements of "
+         "'PhysicalGroup' is negative, in which case all the elements of "
          "the given `Dimension' are considered. If `Dimension` is "
          "negative, all the elments are considered.\n\n"
          "Plugin(MeshVolume) creates one new view.";

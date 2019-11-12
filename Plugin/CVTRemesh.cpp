@@ -53,7 +53,7 @@ std::string GMSH_CVTRemeshPlugin::getHelp() const
          "as the restricted Delaunay triangulation of the samples and the"
          "STL mesh.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Triangulate) creates one new view.";
+         "Plugin(CVTRemesh) creates one new view.";
 }
 
 int GMSH_CVTRemeshPlugin::getNbOptions() const
