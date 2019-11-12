@@ -17,17 +17,16 @@
 #include "Context.h"
 #include "meshGFaceOptimize.h"
 
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
 #include "laplaceTerm.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
-#endif
-
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
 
 static inline double lifting(double a, double _a)
 {
@@ -472,7 +471,7 @@ struct groupOfCross2d {
   groupOfCross2d(int id) : groupId(id) {}
 };
 
-/*
+#if 0
 static void duplicateNodesInCutGraph2(
   std::vector<GFace *> &f, std::map<MEdge, cross2d, Less_Edge> &C,
   std::map<MVertex *, MVertex *> &new2old,
@@ -511,7 +510,7 @@ static void duplicateNodesInCutGraph2(
     }
   }
 }
-*/
+#endif
 
 static void duplicateNodesInCutGraph(
   std::vector<GFace *> &f, std::map<MEdge, cross2d, Less_Edge> &C,
@@ -606,10 +605,10 @@ static void duplicateNodesInCutGraph(
   }
 }
 
-void print_H_and_Cross(GModel *gm, std::vector<GFace *> &f,
-                       std::map<MEdge, cross2d, Less_Edge> &C,
-                       dofManager<double> &dof,
-                       std::set<MVertex *> &singularities)
+static void print_H_and_Cross(GModel *gm, std::vector<GFace *> &f,
+                              std::map<MEdge, cross2d, Less_Edge> &C,
+                              dofManager<double> &dof,
+                              std::set<MVertex *> &singularities)
 {
   std::string ss = gm->getName();
   std::string fn = ss + ".out";
@@ -1449,7 +1448,7 @@ static void groupBoundaries(GModel *gm, std::map<MEdge, cross2d, Less_Edge> &C,
   fclose(f);
 }
 
-void fastImplementationExtrinsic(std::map<MEdge, cross2d, Less_Edge> &C)
+static void fastImplementationExtrinsic(std::map<MEdge, cross2d, Less_Edge> &C)
 {
   double *data = new double[C.size() * 6];
   size_t *graph = new size_t[C.size() * 4];
@@ -2218,12 +2217,12 @@ static void createJumpyPairs(groupOfCross2d &g,
   }
 }
 
-void analyzeGroup(std::vector<cross2d *> &group, groupOfCross2d &g,
-                  std::map<MTriangle *, SVector3> &d,
-                  std::map<MTriangle *, SVector3> &d2, v2t_cont &adj,
-                  std::set<MVertex *> &isolated_singularities,
-                  std::set<MVertex *> &boundaries,
-                  std::set<MTriangle *> &allTrianglesConsidered)
+static void analyzeGroup(std::vector<cross2d *> &group, groupOfCross2d &g,
+                         std::map<MTriangle *, SVector3> &d,
+                         std::map<MTriangle *, SVector3> &d2, v2t_cont &adj,
+                         std::set<MVertex *> &isolated_singularities,
+                         std::set<MVertex *> &boundaries,
+                         std::set<MTriangle *> &allTrianglesConsidered)
 {
   g.crosses = group;
   double MAX = 0.0;
@@ -2285,8 +2284,8 @@ void analyzeGroup(std::vector<cross2d *> &group, groupOfCross2d &g,
   }
 }
 
-int computeCrossField2dTheta(GModel *gm, std::vector<GFace *> &f,
-                             const char *outputName)
+static int computeCrossField2dTheta(GModel *gm, std::vector<GFace *> &f,
+                                    const char *outputName)
 {
   Msg::SetNumThreads(Msg::GetMaxThreads());
 
@@ -2539,6 +2538,8 @@ int computeCrossField2dTheta(GModel *gm, std::vector<GFace *> &f,
 
   return 0;
 }
+
+#endif
 
 int computeCrossField(GModel *gm)
 {
