@@ -7,6 +7,7 @@
 #include "GmshMessage.h"
 #include "MVertex.h"
 #include "MElement.h"
+#include "pointsGenerators.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 #include "CGNSZoneStruct.h"
@@ -66,13 +67,39 @@ void createElement(const cgsize_t *ijk, const cgsize_t *nijk,
                    std::map<int, std::vector<MElement *> > *allElt);
 
 
+void initLinShift(int order, int *shift)
+{
+  fullMatrix<double> mono = gmshGenerateMonomialsLine(order, false);
+  for(int i = 0; i < mono.size1(); i++) {
+    shift[i] = mono(i, 0) + 0.5; // round double 
+  }
+}
+
+
+void initQuadShift(int order, int *shift)
+{
+  fullMatrix<double> mono = gmshGenerateMonomialsQuadrangle(order, false);
+  for(int i = 0; i < mono.size1(); i++) {
+    for(int j = 0; j < 3; j++) shift[i*2+j] = mono(i, j) + 0.5; // round double 
+  }
+}
+
+
+void initHexShift(int order, int *shift)
+{
+  fullMatrix<double> mono = gmshGenerateMonomialsHexahedron(order, false);
+  for(int i = 0; i < mono.size1(); i++) {
+    for(int j = 0; j < 3; j++) shift[i*3+j] = mono(i, j) + 0.5; // round double 
+  }
+}
+
+
 template<>
 void createElement<2>(const cgsize_t *ijk, const cgsize_t *nijk, 
                       int order, std::size_t vertShift,
                       std::vector<MVertex *> &allVert,
                       std::map<int, std::vector<MElement *> > *allElt)
 {
-  // TODO: structured coarsening to order 3 & 4 not implemented
   // node shift from (i, j, k) depending on order
   static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
   static int shiftP2[9][2] = {{0, 0}, {2, 0}, {2, 2}, {0, 2}, {1, 0}, {2, 1},
@@ -113,28 +140,42 @@ void createElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
                       std::vector<MVertex *> &allVert,
                       std::map<int, std::vector<MElement *> > *allElt)
 {
-  // TODO: structured coarsening to order 3 & 4 not implemented
   // node shift from (i, j, k) depending on order
-  static int shiftP1[8][3] = {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
-                              {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}};
-  static int shiftP2[27][3] = {{0, 0, 0}, {2, 0, 0}, {2, 2, 0}, {0, 2, 0},
-                               {0, 0, 2}, {2, 0, 2}, {2, 2, 2}, {0, 2, 2},
-                               {1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {2, 1, 0},
-                               {2, 0, 1}, {1, 2, 0}, {2, 2, 1}, {0, 2, 1},
-                               {1, 0, 2}, {0, 1, 2}, {2, 1, 2}, {1, 2, 2},
-                               {1, 1, 0}, {1, 0, 1}, {0, 1, 1}, {2, 1, 1},
-                               {1, 2, 1}, {1, 1, 2}, {1, 1, 1}};
+  static bool isShiftInit[4] = {false, false, false, false};
+  static int shiftP1[8*3], shiftP2[27*3], shiftP3[64*3], shiftP4[125*3];
 
   // get element vertices
   int mshEltType;
   int *s;
-  if(order == 2) {
-    mshEltType = MSH_HEX_27;
-    s = (int*)shiftP2;
-  }
-  else {
+  switch(order)
+  {
+  case 1:
     mshEltType = MSH_HEX_8;
+    if(!isShiftInit[0]) { initHexShift(1, shiftP1); isShiftInit[0] = true; }
     s = (int*)shiftP1;
+    break;
+  case 2:
+    mshEltType = MSH_HEX_27;
+    if(!isShiftInit[1]) { initHexShift(2, shiftP2); isShiftInit[1] = true; }
+    s = (int*)shiftP2;
+    break;
+  case 3:
+    mshEltType = MSH_HEX_64;
+    if(!isShiftInit[2]) { initHexShift(3, shiftP3); isShiftInit[2] = true; }
+    s = (int*)shiftP3;
+    break;
+  case 4:
+    mshEltType = MSH_HEX_125;
+    if(!isShiftInit[3]) { initHexShift(4, shiftP4); isShiftInit[3] = true; }
+    s = (int*)shiftP4;
+    break;
+  default:
+    Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
+               "linear", order);
+    mshEltType = MSH_HEX_8;
+    if(!isShiftInit[0]) { initHexShift(1, shiftP1); isShiftInit[0] = true; }
+    s = (int*)shiftP1;
+    break;
   }
   int nbEltNode = ElementType::getNumVertices(mshEltType);
   std::vector<MVertex *> eltVert(nbEltNode);
@@ -170,9 +211,65 @@ void createBndElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
                          std::map<int, std::vector<MElement *> > *allElt,
                          const std::vector<bool> &interfaceNode)
 {
-  // TODO: boundary elements in 2D domain not implemented
   Msg::Error("Creation of boundary elements for 2D structured blocks not "
              "implemented");
+  // node shift from (i, j, k) depending on order
+  static bool isShiftInit[4] = {false, false, false, false};
+  static int shiftP1[2], shiftP2[3], shiftP3[4], shiftP4[5];
+
+  // get element vertices
+  int mshEltType;
+  int *s;
+  switch(order)
+  {
+  case 1:
+    mshEltType = MSH_LIN_2;
+    if(!isShiftInit[0]) { initLinShift(1, shiftP1); isShiftInit[0] = true; }
+    s = (int*)shiftP1;
+    break;
+  case 2:
+    mshEltType = MSH_LIN_3;
+    if(!isShiftInit[1]) { initLinShift(2, shiftP2); isShiftInit[1] = true; }
+    s = (int*)shiftP2;
+    break;
+  case 3:
+    mshEltType = MSH_LIN_4;
+    if(!isShiftInit[2]) { initLinShift(3, shiftP3); isShiftInit[2] = true; }
+    s = (int*)shiftP3;
+    break;
+  case 4:
+    mshEltType = MSH_LIN_5;
+    if(!isShiftInit[3]) { initLinShift(4, shiftP4); isShiftInit[3] = true; }
+    s = (int*)shiftP4;
+    break;
+  default:
+    Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
+               "linear", order);
+    mshEltType = MSH_LIN_2;
+    if(!isShiftInit[0]) { initLinShift(1, shiftP1); isShiftInit[0] = true; }
+    s = (int*)shiftP1;
+    break;
+  }
+  int nbEltNode = ElementType::getNumVertices(mshEltType);
+  std::vector<MVertex *> eltVert(nbEltNode);
+  bool isInternalInterface = true;
+  for(int iN = 0; iN < nbEltNode; iN++) {
+    cgsize_t ijN[2] = {ijk[0], ijk[1]};
+    ijN[dir[0]] += s[iN];
+    const cgsize_t ind = ijk2Ind<2>(ijN, nijk);
+    isInternalInterface &= interfaceNode[ind];
+    eltVert[iN] = allVert[vertShift+ind];
+  }
+
+  // do no add element if it is part of an internal interface between blocks
+  if(isInternalInterface) return;
+
+  // create element
+  MElementFactory factory;
+  MElement *e = factory.create(mshEltType, eltVert);
+
+  // add element to data structure
+  allElt[1][entity].push_back(e);
 }
 
 
@@ -183,22 +280,42 @@ void createBndElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
                          std::map<int, std::vector<MElement *> > *allElt,
                          const std::vector<bool> &interfaceNode)
 {
-  // TODO: structured coarsening to order 3 & 4 not implemented
   // node shift from (i, j, k) depending on order
-  static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
-  static int shiftP2[9][2] = {{0, 0}, {2, 0}, {2, 2}, {0, 2}, {1, 0}, {2, 1},
-                              {1, 2}, {0, 1}, {1, 1}};
+  static bool isShiftInit[4] = {false, false, false, false};
+  static int shiftP1[4*2], shiftP2[9*2], shiftP3[16*2], shiftP4[25*2];
 
   // get element vertices
   int mshEltType;
   int *s;
-  if(order == 2) {
-    mshEltType = MSH_QUA_9;
-    s = (int*)shiftP2;
-  }
-  else {
+  switch(order)
+  {
+  case 1:
     mshEltType = MSH_QUA_4;
+    if(!isShiftInit[0]) { initQuadShift(1, shiftP1); isShiftInit[0] = true; }
     s = (int*)shiftP1;
+    break;
+  case 2:
+    mshEltType = MSH_QUA_9;
+    if(!isShiftInit[1]) { initQuadShift(2, shiftP2); isShiftInit[1] = true; }
+    s = (int*)shiftP2;
+    break;
+  case 3:
+    mshEltType = MSH_QUA_16;
+    if(!isShiftInit[2]) { initQuadShift(3, shiftP3); isShiftInit[2] = true; }
+    s = (int*)shiftP3;
+    break;
+  case 4:
+    mshEltType = MSH_QUA_25;
+    if(!isShiftInit[3]) { initQuadShift(4, shiftP4); isShiftInit[3] = true; }
+    s = (int*)shiftP4;
+    break;
+  default:
+    Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
+               "linear", order);
+    mshEltType = MSH_QUA_4;
+    if(!isShiftInit[0]) { initQuadShift(1, shiftP1); isShiftInit[0] = true; }
+    s = (int*)shiftP1;
+    break;
   }
   int nbEltNode = ElementType::getNumVertices(mshEltType);
   std::vector<MVertex *> eltVert(nbEltNode);
@@ -348,7 +465,7 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
 
   // order of coarsened mesh and number of potentially coarsened (HO) elements
   int order = CTX::instance()->mesh.cgnsImportOrder;
-  if(order > 2) {
+  if(order > 4) {
     Msg::Warning("Cannot coarsen structured grid to order %i, creating linear "
                  "mesh in zone %i", order, index());
     order = 1;

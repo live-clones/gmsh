@@ -1027,8 +1027,8 @@ StringXNumber MeshOptions_Number[] = {
     "Number of points (per Pi radians) for 2D boundary layer fans" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
-   "Enable the creation of high-order mesh from CGNS structured meshes "
-   "(1, 2, 3)" },
+   "Order of the mesh to be created by coarsening CGNS structured zones (1 to "
+   "4)" },
   { F|O, "CgnsConstructTopology" , opt_mesh_cgns_construct_topology , 0. ,
    "Reconstruct the model topology (BREP) after reading a CGNS file" },
   { F|O, "CgnsExportCPEX0045" , opt_mesh_cgns_export_cpex0045 , 0. ,
