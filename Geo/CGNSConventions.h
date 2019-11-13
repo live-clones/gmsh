@@ -14,7 +14,7 @@
 #if defined(HAVE_LIBCGNS)
 
 
-static const std::string::size_type CGNS_MAX_STR_LEN = 32;
+static const std::string::size_type CGNS_MAX_STR_LEN = 33;
 
 // msh to CGNS element type
 ElementType_t msh2CgnsEltType(int mshTag);
@@ -31,7 +31,7 @@ void msh2CgnsReferenceElement(int mshType, const fullMatrix<double> &mshPts,
                               std::vector<double> &w);
 
 std::string cgnsString(const std::string &s,
-                       std::string::size_type maxLength = CGNS_MAX_STR_LEN);
+                       std::string::size_type maxLength = CGNS_MAX_STR_LEN-1);
 
 
 #endif // HAVE_LIBCGNS
