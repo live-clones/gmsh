@@ -247,7 +247,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   cgsize_t eleStart = 0, eleEnd = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
-    const int entDim = ge->dim();
+    // const int entDim = ge->dim();
 
     // get or create the name for the entity 
     std::string entityName = model->getElementaryName(ge->dim(), ge->tag());
