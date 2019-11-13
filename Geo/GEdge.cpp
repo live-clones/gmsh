@@ -136,7 +136,7 @@ void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
     return;
   }
 
-  Msg::Info("Error in transformation from curve %d (%d-%d) to %d (%d-%d)"
+  Msg::Info("Error in transformation from curve %d (%d-%d) to %d (%d-%d) "
             "(minimal transformed node distances %g %g, tolerance %g)",
             ge->tag(), ge->getBeginVertex()->tag(), ge->getEndVertex()->tag(),
             this->tag(), this->getBeginVertex()->tag(),

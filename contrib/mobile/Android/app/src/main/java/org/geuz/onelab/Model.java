@@ -34,9 +34,9 @@ class Model {
   public void setUrl(Uri url) { _url = url; }
 }
 
-class ModelComp implements Comparator<Model>{
-  @Override
-  public int compare(Model e1, Model e2) {
+class ModelComp implements Comparator<Model> {
+  @Override public int compare(Model e1, Model e2)
+  {
     return e1.getName().compareTo(e2.getName());
   }
 }

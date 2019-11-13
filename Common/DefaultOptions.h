@@ -682,6 +682,13 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "MouseInvertZoom" , opt_general_mouse_invert_zoom , 0. ,
     "Invert mouse wheel zoom direction" },
 
+  { F|S, "NativeFileChooser" , opt_general_native_file_chooser ,
+#if defined(__APPLE__) || defined(WIN32)
+    1. ,
+#else
+    0. ,
+#endif
+    "Use the native file chooser?" },
   { F|S, "NonModalWindows" , opt_general_non_modal_windows , 1. ,
     "Force all control windows to be on top of the graphic window "
     "(\"non-modal\")" },
@@ -885,7 +892,7 @@ StringXNumber GeometryOptions_Number[] = {
     "new entities with the OpenCASCADE kernel" },
   { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
     "Try to preserve the numbering of entities through OpenCASCADE boolean operations" },
-  { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
+  { F|O, "OCCDisableStl" , opt_geometry_occ_disable_stl , 0. ,
     "Disable STL creation in OpenCASCADE kernel" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
     "Fix degenerated edges/faces when importing STEP, IGES and BRep models with the "
@@ -898,6 +905,9 @@ StringXNumber GeometryOptions_Number[] = {
     "OpenCASCADE kernel" },
   { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
     "Import labels and colors when importing STEP models with the OpenCASCADE kernel" },
+  { F|O, "OCCMakeSolids" , opt_geometry_occ_make_solids , 0. ,
+    "Fix shells and make solids when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
     "Use multi-threaded OpenCASCADE boolean operators" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
@@ -1034,7 +1044,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CharacteristicLengthMax" , opt_mesh_lc_max, 1.e22,
     "Maximum mesh element size" },
   { F|O, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
-    "Automatically compute mesh element sizes from curvature (experimental)" },
+    "Automatically compute mesh element sizes from curvature" },
   { F|O, "CharacteristicLengthFromPoints" , opt_mesh_lc_from_points , 1. ,
     "Compute mesh element sizes from values given at geometry points" },
   { F,   "Clip" , opt_mesh_clip , 0.,
@@ -1129,7 +1139,7 @@ StringXNumber MeshOptions_Number[] = {
     "Maximum number of times meshing is retried on curves and surfaces with a "
     "pending mesh"},
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
-    "Mesh only visible entities (experimental: use with caution!)" },
+    "Mesh only visible entities (experimental)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
     "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
@@ -1277,12 +1287,15 @@ StringXNumber MeshOptions_Number[] = {
     "Number of topological optimization passes (removal of diamonds, ...) of "
     "recombined surface meshes" },
   { F|O, "Recombine3DAll" , opt_mesh_recombine3d_all , 0 ,
-    "Apply recombination3D algorithm to all volumes, ignoring per-volume spec" },
+    "Apply recombination3D algorithm to all volumes, ignoring per-volume spec "
+    "(experimental)" },
   { F|O, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,
-    "3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)" },
+    "3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids) "
+    "(experimental)" },
   { F|O, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 0 ,
     "3d recombination conformity type (0: nonconforming, 1: trihedra, "
-    "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)" },
+    "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)"
+    "(experimental)" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
   { F|O, "Renumber" , opt_mesh_renumber , 1 ,
@@ -1319,6 +1332,12 @@ StringXNumber MeshOptions_Number[] = {
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at nodes of a same edge (used in BAMG)" },
+  { F|O, "StlAngularDeflection" , opt_mesh_stl_angular_deflection , 0.35 ,
+    "Maximum angular deflection when creating STL representation of surfaces "
+    "(currently only used with the OpenCASCADE kernel)"},
+  { F|O, "StlLinearDeflection" , opt_mesh_stl_linear_deflection , 0.01 ,
+    "Maximum linear deflection when creating STL representation of surfaces "
+    "(currently only used with the OpenCASCADE kernel)"},
   { F|O, "StlOneSolidPerSurface" , opt_mesh_stl_one_solid_per_surface, 0. ,
     "Create one solid per surface when exporting STL files? (0: single solid, "
     "1: one solid per face, 2: one solid per physical surface)" },
@@ -1844,13 +1863,23 @@ StringXNumber PrintOptions_Number[] = {
     "Print text strings?" },
 
   { F|O, "X3dCompatibility" , opt_print_x3d_compatibility, 0. ,
-    "Produce highliy compatible X3D output (no scale bar)" },
+    "Produce highly compatible X3D output (no scale bar)" },
   { F|O, "X3dPrecision" , opt_print_x3d_precision , 1.e-9 ,
     "Precision of X3D output" },
   { F|O, "X3dRemoveInnerBorders" , opt_print_x3d_remove_inner_borders , 0. ,
     "Remove inner borders in X3D output" },
   { F|O, "X3dTransparency" , opt_print_x3d_transparency , 0. ,
     "Transparency for X3D output" },
+  { F|O, "X3dSurfaces" , opt_print_x3d_surfaces, 1. ,
+    "Save surfaces in CAD X3D output (0: no, 1: yes in a single X3D object,"
+    "2: one X3D object per geometrical surface, 3: one X3D object per"
+    "physical surface)"},
+  { F|O, "X3dEdges" , opt_print_x3d_edges, 0. ,
+    "Save edges in CAD X3D output (0: no, 1: yes in a single X3D object,"
+    "2: one X3D object per geometrical edge, 3: one X3D object per"
+    "physical edge)"},
+  { F|O, "X3dVertices" , opt_print_x3d_vertices, 0. ,
+    "Save vertices in CAD X3D output (0: no, 1: yes)"},
 
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },

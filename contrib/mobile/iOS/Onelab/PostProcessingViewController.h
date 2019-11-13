@@ -4,10 +4,11 @@
 #include <gmsh/PViewData.h>
 #include <gmsh/PViewOptions.h>
 
-@interface PostProcessingViewController : UIViewController <UIPickerViewDataSource, UIPickerViewDelegate, UITextFieldDelegate>
-{
+@interface PostProcessingViewController
+  : UIViewController <UIPickerViewDataSource, UIPickerViewDelegate,
+                      UITextFieldDelegate> {
 @private
-    PView *_pview;
+  PView *_pview;
 }
 
 @property (weak, nonatomic) IBOutlet UILabel *Name;
@@ -18,6 +19,6 @@
 
 - (IBAction)stepperValueChanged:(UIStepper *)sender;
 
-- (void)setPView:(PView*)p;
+- (void)setPView:(PView *)p;
 
 @end

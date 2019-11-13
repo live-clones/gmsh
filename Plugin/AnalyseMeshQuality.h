@@ -3,15 +3,15 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef ANALYSECURVEDMESH_H
-#define ANALYSECURVEDMESH_H
+#ifndef ANALYSEMESHQUALITY_H
+#define ANALYSEMESHQUALITY_H
 
 #include "Plugin.h"
 #include <vector>
 class MElement;
 
 extern "C" {
-GMSH_Plugin *GMSH_RegisterAnalyseCurvedMeshPlugin();
+GMSH_Plugin *GMSH_RegisterAnalyseMeshQualityPlugin();
 }
 
 class data_elementMinMax {
@@ -34,7 +34,7 @@ public:
   double minI() { return _minICN; }
 };
 
-class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin {
+class GMSH_AnalyseMeshQualityPlugin : public GMSH_PostPlugin {
 private:
   GModel *_m;
   double _threshold;
@@ -57,7 +57,7 @@ private:
   std::vector<data_elementMinMax> _data;
 
 public:
-  GMSH_AnalyseCurvedMeshPlugin()
+  GMSH_AnalyseMeshQualityPlugin()
   {
     _m = NULL;
     _threshold = -1;
@@ -70,7 +70,7 @@ public:
       _pviewICN[i] = false;
     }
   }
-  std::string getName() const { return "AnalyseCurvedMesh"; }
+  std::string getName() const { return "AnalyseMeshQuality"; }
   std::string getShortHelp() const
   {
     return "Compute validity and quality of curved elements.";

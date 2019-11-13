@@ -31,15 +31,15 @@ std::string GMSH_CrackPlugin::getHelp() const
   return "Plugin(Crack) creates a crack around the physical "
          "group `PhysicalGroup' of dimension `Dimension' (1 or 2), "
          "embedded in a mesh of dimension `Dimension' + 1. "
-         "The plugin duplicates the vertices and the elements on "
+         "The plugin duplicates the nodes and the elements on "
          "the crack and stores them in a new discrete curve "
          "(`Dimension' = 1) or surface (`Dimension' = 2). The "
          "elements touching the crack on the ``negative'' side "
-         "are modified to use the newly generated vertices."
+         "are modified to use the newly generated nodes."
          "If `OpenBoundaryPhysicalGroup' is given (> 0), its "
-         "vertices are duplicated and the crack will be left "
+         "nodes are duplicated and the crack will be left "
          "open on that (part of the) boundary. Otherwise, the "
-         "lips of the crack are sealed, i.e., its vertices are "
+         "lips of the crack are sealed, i.e., its nodes are "
          "not duplicated. For 1D cracks, `NormalX', `NormalY' and "
          "`NormalZ' provide the reference normal of the surface "
          "in which the crack is supposed to be embedded.";
@@ -115,7 +115,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
       crackElements.push_back(entities[i]->getMeshElement(j));
 
-  // get internal crack vertices and boundary vertices
+  // get internal crack nodes and boundary nodes
   std::set<MVertex *> crackVertices, bndVertices;
   if(dim == 1) {
     for(std::size_t i = 0; i < crackElements.size(); i++) {
@@ -123,7 +123,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
         MVertex *v = crackElements[i]->getVertex(j);
         crackVertices.insert(v);
       }
-      for(int j = 0; j < crackElements[i]->getNumPrimaryVertices(); j++) {
+      for(std::size_t j = 0; j < crackElements[i]->getNumPrimaryVertices(); j++) {
         MVertex *v = crackElements[i]->getVertex(j);
         if(bndVertices.find(v) == bndVertices.end())
           bndVertices.insert(v);
@@ -154,13 +154,34 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       bndVertices.insert(it->data.begin(), it->data.end());
   }
 
-  // get (forced) open boundary vertices and remove them from boundary vertices
+  // compute the boundary nodes (if any) of the "OpenBoundary" physical group
+  std::set<MVertex *> bndVerticesFromOpenBoundary;
   for(std::size_t i = 0; i < openEntities.size(); i++) {
     for(std::size_t j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
       MElement *e = openEntities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
-        bndVertices.erase(v);
+        if(bndVerticesFromOpenBoundary.find(v) == bndVerticesFromOpenBoundary.end())
+          bndVerticesFromOpenBoundary.insert(v);
+        else
+          bndVerticesFromOpenBoundary.erase(v);
+      }
+    }
+  }
+
+  if(bndVerticesFromOpenBoundary.size())
+    Msg::Info("%u nodes on boundary of OpenBoundaryPhysicalGroup",
+              bndVerticesFromOpenBoundary.size());
+
+  // get open boundary nodes and remove them from boundary nodes (if they are
+  // not on the "boundary of the open boundary" ;-)
+  for(std::size_t i = 0; i < openEntities.size(); i++) {
+    for(std::size_t j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
+      MElement *e = openEntities[i]->getMeshElement(j);
+      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+        MVertex *v = e->getVertex(k);
+        if(bndVerticesFromOpenBoundary.find(v) == bndVerticesFromOpenBoundary.end())
+          bndVertices.erase(v);
       }
     }
   }
@@ -216,6 +237,22 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   */
 
   // create new crack entity
+
+  // TODO: the new discrete entities do not have a consistent topology: we don't
+  // specify their bounding points/curves
+  //   a) This is easy to fix if there's no OpenBoundaryPhysicalGroup and
+  //      we crack a *single* elementary entity
+  //   b) If there is an open boundary, we need to create a new elementary
+  //      entity on the boundary, and correctly classify the nodes on it...
+  //      and we also need to create boundary elements
+  //   c) If we crack a group made of multiple elementary entities we might
+  //      want to create multiple crackes entities, and do the same as (b)
+  //      for all internal seams
+  //
+  // In practice, c) is not crucial - the current approach simply creates a
+  // single new surface/curve, which is probably fine as in solvers we won't use
+  // the internal seams.
+
   GEdge *crackEdge = 0;
   GFace *crackFace = 0;
   if(dim == 1) {
@@ -230,7 +267,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     crackEdge ? (GEntity *)crackEdge : (GEntity *)crackFace;
   crackEntity->physicals.push_back(physical);
 
-  // duplicate internal crack vertices
+  // duplicate internal crack nodes
   std::map<MVertex *, MVertex *> vxv;
   for(std::set<MVertex *>::iterator it = crackVertices.begin();
       it != crackVertices.end(); it++) {

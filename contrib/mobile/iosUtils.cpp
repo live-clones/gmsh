@@ -1,6 +1,6 @@
 #include "iosUtils.h"
 
-static void * objc;
+static void *objc;
 
 void getBitmapFromString(const char *text, int textsize, unsigned char **map,
                          int *height, int *width, int *realWidth)
@@ -11,5 +11,5 @@ void getBitmapFromString(const char *text, int textsize, unsigned char **map,
 void setObjCBridge(void *objcObject)
 {
   objc = objcObject;
-  Msg::SetCallback((GmshMessage*)new MobileMessage(objcObject));
+  Msg::SetCallback((GmshMessage *)new MobileMessage(objcObject));
 }

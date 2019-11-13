@@ -11,7 +11,7 @@ is located in doc/texinfo/. See the demos/ directory and the web site
 http://gmsh.info for additional examples.
 
 Building Gmsh from source code requires a C++ compiler and CMake
-(http://cmake.org). Building the graphical user interface requires FLTK 1.3.2 or
+(http://cmake.org). Building the graphical user interface requires FLTK 1.3.3 or
 higher (FLTK-dev 1.4 is required on macOS Mojave; http://fltk.org), configured
 with OpenGL support. Support for boolean operations, constructive solid geometry
 features and STEP file import requires OpenCASCADE 6.9 or higher (version 7.2 or

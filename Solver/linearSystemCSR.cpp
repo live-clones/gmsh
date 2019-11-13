@@ -356,8 +356,8 @@ static void _sort2_xkws(unsigned long n, scalar arr[], INDEX_TYPE ai[],
       aj[j - 1] = c;
       jstack += 2;
       if(jstack > NSTACK) {
-        Msg::Fatal("NSTACK too small while sorting the columns of the matrix");
-        throw;
+        Msg::Error("NSTACK too small while sorting the columns of the matrix");
+        return;
       }
       if(ir - i + 1 >= j - l) {
         istack[jstack] = ir;

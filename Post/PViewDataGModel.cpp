@@ -526,7 +526,7 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
     if(e->getNumChildren())
       return e->getNumChildren() * e->getChild(0)->getNumVertices();
     if(getAdaptiveData()) return e->getNumVertices();
-    return e->getNumPrimaryVertices();
+    return (int)e->getNumPrimaryVertices();
   }
 }
 
@@ -557,7 +557,7 @@ int PViewDataGModel::getNode(int step, int ent, int ele, int nod, double &x,
     }
     else {
       double vx[8], vy[8], vz[8];
-      for(int i = 0; i < e->getNumPrimaryVertices(); i++) {
+      for(std::size_t i = 0; i < e->getNumPrimaryVertices(); i++) {
         vx[i] = e->getVertex(i)->x();
         vy[i] = e->getVertex(i)->y();
         vz[i] = e->getVertex(i)->z();

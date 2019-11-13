@@ -236,6 +236,18 @@ List the names of all models.
 -
 @end table
 
+@item getCurrent
+Get the name of the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{name}
+@item Return:
+-
+@end table
+
 @item setCurrent
 Set the current model to the model with name @code{name}. If several models have
 the same name, select the one that was added first.
@@ -611,6 +623,23 @@ triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
 @code{tag}, @code{parametricCoord}
 @item Output:
 @code{normals}
+@item Return:
+-
+@end table
+
+@item getParametrization
+Get the parametric coordinates @code{parametricCoord} for the points
+@code{points} on the entity of dimension @code{dim} and tag @code{tag}.
+@code{points} are given as triplets of x, y, z coordinates, concatenated: [p1x,
+p1y, p1z, p2x, ...]. @code{parametricCoord} returns the parametric coordinates t
+on the curve (if @code{dim} = 1) or pairs of u and v coordinates concatenated on
+the surface (if @code{dim} = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{points}
+@item Output:
+@code{parametricCoord}
 @item Return:
 -
 @end table
@@ -1569,8 +1598,11 @@ Renumber the element tags in a continuous sequence.
 Set the meshes of the entities of dimension @code{dim} and tag @code{tags} as
 periodic copies of the meshes of entities @code{tagsMaster}, using the affine
 transformation specified in @code{affineTransformation} (16 entries of a 4x4
-matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
-2.
+matrix, by row). If used after meshing, generate the periodic node
+correspondence information assuming the meshes of entities @code{tags}
+effectively match the meshes of entities @code{tagsMaster} (useful for
+structured and extruded meshes). Currently only available for @code{dim} == 1
+and @code{dim} == 2.
 
 @table @asis
 @item Input:
@@ -1627,11 +1659,12 @@ Classify ("color") the surface mesh based on the angle threshold @code{angle}
 (in radians), and create new discrete surfaces, curves and points accordingly.
 If @code{boundary} is set, also create discrete curves on the boundary if the
 surface is open. If @code{forReparametrization} is set, create edges and
-surfaces that can be reparametrized using a single map.
+surfaces that can be reparametrized using a single map. If @code{curveAngle} is
+less than Pi, also force curves to be split according to @code{curveAngle}.
 
 @table @asis
 @item Input:
-@code{angle}, @code{boundary}, @code{forReparametrization}
+@code{angle}, @code{boundary}, @code{forReparametrization}, @code{curveAngle}
 @item Output:
 -
 @item Return:
@@ -1907,6 +1940,36 @@ Return the tag of the Bezier curve.
 @table @asis
 @item Input:
 @code{pointTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item addCompoundSpline
+Add a spline (Catmull-Rom) going through points sampling the curves in
+@code{curveTags}. The density of sampling points on each curve is governed by
+@code{numIntervals}. If @code{tag} is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the spline.
+
+@table @asis
+@item Input:
+@code{curveTags}, @code{numIntervals}, @code{tag}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item addCompoundBSpline
+Add a b-spline with control points sampling the curves in @code{curveTags}. The
+density of sampling points on each curve is governed by @code{numIntervals}. If
+@code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. Return the tag of the b-spline.
+
+@table @asis
+@item Input:
+@code{curveTags}, @code{numIntervals}, @code{tag}
 @item Output:
 -
 @item Return:
@@ -2936,7 +2999,7 @@ manual.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{tolerance}, @code{fixDegenerated}, @code{fixSmallEdges}, @code{fixSmallFaces}, @code{sewFaces}
+@code{dimTags}, @code{tolerance}, @code{fixDegenerated}, @code{fixSmallEdges}, @code{fixSmallFaces}, @code{sewFaces}, @code{makeSolids}
 @item Output:
 @code{outDimTags}
 @item Return:

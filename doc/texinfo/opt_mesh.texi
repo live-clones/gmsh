@@ -87,7 +87,7 @@ Default value: @code{1e+22}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthFromCurvature
-Automatically compute mesh element sizes from curvature (experimental)@*
+Automatically compute mesh element sizes from curvature@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -282,7 +282,7 @@ Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshOnlyVisible
-Mesh only visible entities (experimental: use with caution!)@*
+Mesh only visible entities (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -592,17 +592,17 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DAll
-Apply recombination3D algorithm to all volumes, ignoring per-volume spec@*
+Apply recombination3D algorithm to all volumes, ignoring per-volume spec (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DLevel
-3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)@*
+3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids) (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DConformity
-3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)@*
+3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)(experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -684,6 +684,16 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.SmoothRatio
 Ratio between mesh sizes at nodes of a same edge (used in BAMG)@*
 Default value: @code{1.8}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlAngularDeflection
+Maximum angular deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.35}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlLinearDeflection
+Maximum linear deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.01}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlOneSolidPerSurface

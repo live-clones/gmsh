@@ -9,7 +9,6 @@
 #define TOUCHBAR_H
 
 void showTouchBar();
-
 void updateTouchBar();
 
 #endif

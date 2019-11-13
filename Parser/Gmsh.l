@@ -34,9 +34,9 @@ void   skipline(void);
        }                                                                \
        if ( c == EOF )  {                                               \
          int ernum;                                                     \
-         const char *msg=gzerror(yyin,&ernum);                          \
+         const char *msg = gzerror(yyin,&ernum);                        \
          if (ernum)                                                     \
-            Msg::Fatal("Input in flex scanner failed");                 \
+            Msg::Error("Input in flex scanner failed");                 \
        }                                                                \
        result = n;                                                      \
      }
@@ -52,7 +52,7 @@ void   skipline(void);
 	 yylineno++;							\
        }                                                                \
        if ( c == EOF && ferror( yyin ) )				\
-	 Msg::Fatal("Input in flex scanner failed");			\
+	 Msg::Error("Input in flex scanner failed");			\
        result = n;							\
      }
 #endif

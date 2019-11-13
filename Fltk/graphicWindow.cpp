@@ -103,53 +103,45 @@ static void file_new_cb(Fl_Widget *w, void *data)
   }
 }
 
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-#  define TT "\t"
-#  define NN "\n"
-#else
-#  define TT " ("
-#  define NN ")\t"
-#endif
-
 static const char *input_formats =
-  "All Files" TT "*.*" NN
-  "Geometry - Gmsh GEO" TT "*.geo" NN
+  "All Files\t*.*\n"
+  "Geometry - Gmsh GEO\t*.geo\n"
 #if defined(HAVE_ACIS)
-  "Geometry - ACIS" TT "*.sat" NN
+  "Geometry - ACIS\t*.sat\n"
 #endif
 #if defined(HAVE_OCC)
-  "Geometry - OpenCASCADE BRep" TT "*.brep" NN
-  "Geometry - OpenCASCADE IGES" TT "*.{igs,iges}" NN
-  "Geometry - OpenCASCADE STEP" TT "*.{stp,step}" NN
+  "Geometry - OpenCASCADE BRep\t*.brep\n"
+  "Geometry - OpenCASCADE IGES\t*.{igs,iges}\n"
+  "Geometry - OpenCASCADE STEP\t*.{stp,step}\n"
 #endif
-  "Mesh - Gmsh MSH" TT "*.msh" NN
-  "Mesh - Diffpack 3D" TT "*.diff" NN
-  "Mesh - I-deas Universal" TT "*.unv" NN
+  "Mesh - Gmsh MSH\t*.msh\n"
+  "Mesh - Diffpack 3D\t*.diff\n"
+  "Mesh - I-deas Universal\t*.unv\n"
 #if defined(HAVE_MED)
-  "Mesh - MED" TT "*.{med,mmed}" NN
+  "Mesh - MED\t*.{med,mmed}\n"
 #endif
-  "Mesh - INRIA Medit" TT "*.mesh" NN
-  "Mesh - Nastran Bulk Data File" TT "*.{bdf,nas}" NN
-  "Mesh - Plot3D Structured Mesh" TT "*.p3d" NN
-  "Mesh - STL Surface" TT "*.stl" NN
-  "Mesh - VTK" TT "*.vtk" NN
-  "Mesh - VRML Surface" TT "*.{wrl,vrml}" NN
-  "Mesh - PLY2 Surface" TT "*.ply2" NN
-  "Post-processing - Gmsh POS" TT "*.pos" NN
+  "Mesh - INRIA Medit\t*.mesh\n"
+  "Mesh - Nastran Bulk Data File\t*.{bdf,nas}\n"
+  "Mesh - Plot3D Structured Mesh\t*.p3d\n"
+  "Mesh - STL Surface\t*.stl\n"
+  "Mesh - VTK\t*.vtk\n"
+  "Mesh - VRML Surface\t*.{wrl,vrml}\n"
+  "Mesh - PLY2 Surface\t*.ply2\n"
+  "Post-processing - Gmsh POS\t*.pos\n"
 #if defined(HAVE_MED)
-  "Post-processing - MED" TT "*.rmed" NN
+  "Post-processing - MED\t*.rmed\n"
 #endif
-  "Image - BMP" TT "*.bmp" NN
+  "Image - BMP\t*.bmp\n"
 #if defined(HAVE_LIBJPEG)
-  "Image - JPEG" TT "*.{jpg,jpeg}" NN
+  "Image - JPEG\t*.{jpg,jpeg}\n"
 #endif
-  "Image - PBM" TT "*.pbm" NN
-  "Image - PGM" TT "*.pgm" NN
+  "Image - PBM\t*.pbm\n"
+  "Image - PGM\t*.pgm\n"
 #if defined(HAVE_LIBPNG)
-  "Image - PNG" TT "*.png" NN
+  "Image - PNG\t*.png\n"
 #endif
-  "Image - PNM" TT "*.pnm" NN
-  "Image - PPM" TT "*.ppm" NN;
+  "Image - PNM\t*.pnm\n"
+  "Image - PPM\t*.ppm\n";
 
 static void file_open_merge_cb(Fl_Widget *w, void *data)
 {
@@ -415,64 +407,64 @@ typedef struct{
 static void file_export_cb(Fl_Widget *w, void *data)
 {
   static patXfunc formats[] = {
-    {"Guess From Extension" TT "*.*", _save_auto},
-    {"Geometry - Gmsh Options" TT "*.opt", _save_options},
-    {"Geometry - Gmsh Unrolled GEO" TT "*.geo_unrolled", _save_geo},
+    {"Guess From Extension\t*.*", _save_auto},
+    {"Geometry - Gmsh Options\t*.opt", _save_options},
+    {"Geometry - Gmsh Unrolled GEO\t*.geo_unrolled", _save_geo},
 #if defined(HAVE_OCC)
-    {"Geometry - OpenCASCADE STEP" TT "*.step", _save_step},
-    {"Geometry - OpenCASCADE BRep" TT "*.brep", _save_brep},
+    {"Geometry - OpenCASCADE STEP\t*.step", _save_step},
+    {"Geometry - OpenCASCADE BRep\t*.brep", _save_brep},
 #endif
-    {"Mesh - Gmsh MSH" TT "*.msh", _save_msh},
-    {"Mesh - Abaqus INP" TT "*.inp", _save_inp},
-    {"Mesh - LSDYNA KEY" TT "*.key", _save_key},
-    {"Mesh - CELUM" TT "*.celum", _save_celum},
+    {"Mesh - Gmsh MSH\t*.msh", _save_msh},
+    {"Mesh - Abaqus INP\t*.inp", _save_inp},
+    {"Mesh - LSDYNA KEY\t*.key", _save_key},
+    {"Mesh - CELUM\t*.celum", _save_celum},
 #if defined(HAVE_LIBCGNS)
-    {"Mesh - CGNS (Experimental)" TT "*.cgns", _save_cgns},
+    {"Mesh - CGNS (Experimental)\t*.cgns", _save_cgns},
 #endif
-    {"Mesh - Diffpack 3D" TT "*.diff", _save_diff},
-    {"Mesh - I-deas Universal" TT "*.unv", _save_unv},
-    {"Mesh - Iridum" TT "*.ir3", _save_ir3},
+    {"Mesh - Diffpack 3D\t*.diff", _save_diff},
+    {"Mesh - I-deas Universal\t*.unv", _save_unv},
+    {"Mesh - Iridum\t*.ir3", _save_ir3},
 #if defined(HAVE_MED)
-    {"Mesh - MED" TT "*.med", _save_med},
+    {"Mesh - MED\t*.med", _save_med},
 #endif
-    {"Mesh - INRIA Medit" TT "*.mesh", _save_mesh},
-    {"Mesh - CEA Triangulation" TT "*.mail", _save_mail},
-    {"Mesh - Matlab" TT "*.m", _save_matlab},
-    {"Mesh - Nastran Bulk Data File" TT "*.bdf", _save_bdf},
-    {"Mesh - Plot3D Structured Mesh" TT "*.p3d", _save_p3d},
-    {"Mesh - STL Surface" TT "*.stl", _save_stl},
-    {"Mesh - VRML Surface" TT "*.wrl", _save_vrml},
-    {"Mesh - VTK" TT "*.vtk", _save_vtk},
-    {"Mesh - Tochnog" TT "*.dat", _save_tochnog},
-    {"Mesh - PLY2 Surface" TT "*.ply2", _save_ply2},
-    {"Mesh - SU2" TT "*.su2", _save_su2},
-    {"Mesh - GAMBIT Neutral File" TT "*.neu", _save_neu},
-    {"Post-processing - Gmsh POS" TT "*.pos", _save_view_pos},
-    {"Post-processing - X3D (X3D)" TT "*.x3d", _save_view_x3d},
+    {"Mesh - INRIA Medit\t*.mesh", _save_mesh},
+    {"Mesh - CEA Triangulation\t*.mail", _save_mail},
+    {"Mesh - Matlab\t*.m", _save_matlab},
+    {"Mesh - Nastran Bulk Data File\t*.bdf", _save_bdf},
+    {"Mesh - Plot3D Structured Mesh\t*.p3d", _save_p3d},
+    {"Mesh - STL Surface\t*.stl", _save_stl},
+    {"Mesh - VRML Surface\t*.wrl", _save_vrml},
+    {"Mesh - VTK\t*.vtk", _save_vtk},
+    {"Mesh - Tochnog\t*.dat", _save_tochnog},
+    {"Mesh - PLY2 Surface\t*.ply2", _save_ply2},
+    {"Mesh - SU2\t*.su2", _save_su2},
+    {"Mesh - GAMBIT Neutral File\t*.neu", _save_neu},
+    {"Post-processing - Gmsh POS\t*.pos", _save_view_pos},
+    {"Post-processing - X3D (X3D)\t*.x3d", _save_view_x3d},
 #if defined(HAVE_MED)
-    {"Post-processing - MED" TT "*.rmed", _save_view_med},
+    {"Post-processing - MED\t*.rmed", _save_view_med},
 #endif
-    {"Post-processing - Generic TXT" TT "*.txt", _save_view_txt},
-    {"Post-processing - Mesh Statistics" TT "*.pos", _save_mesh_stat},
-    {"Post-processing - Adapted data" TT "*.pvtu", _save_view_adapt_pvtu},
-    {"Image - Encapsulated PostScript" TT "*.eps", _save_eps},
-    {"Image - GIF" TT "*.gif", _save_gif},
+    {"Post-processing - Generic TXT\t*.txt", _save_view_txt},
+    {"Post-processing - Mesh Statistics\t*.pos", _save_mesh_stat},
+    {"Post-processing - Adapted data\t*.pvtu", _save_view_adapt_pvtu},
+    {"Image - Encapsulated PostScript\t*.eps", _save_eps},
+    {"Image - GIF\t*.gif", _save_gif},
 #if defined(HAVE_LIBJPEG)
-    {"Image - JPEG" TT "*.jpg", _save_jpeg},
+    {"Image - JPEG\t*.jpg", _save_jpeg},
 #endif
-    {"Image - LaTeX" TT "*.tex", _save_tex},
-    {"Image - PDF" TT "*.pdf", _save_pdf},
+    {"Image - LaTeX\t*.tex", _save_tex},
+    {"Image - PDF\t*.pdf", _save_pdf},
 #if defined(HAVE_LIBPNG)
-    {"Image - PNG" TT "*.png", _save_png},
-    {"Image - PGF" TT "*.pgf", _save_pgf},
+    {"Image - PNG\t*.png", _save_png},
+    {"Image - PGF\t*.pgf", _save_pgf},
 #endif
-    {"Image - PostScript" TT "*.ps", _save_ps},
-    {"Image - PPM" TT "*.ppm", _save_ppm},
-    {"Image - SVG" TT "*.svg", _save_svg},
-    {"Image - TIKZ" TT "*.tikz", _save_tikz},
-    {"Image - YUV" TT "*.yuv", _save_yuv},
+    {"Image - PostScript\t*.ps", _save_ps},
+    {"Image - PPM\t*.ppm", _save_ppm},
+    {"Image - SVG\t*.svg", _save_svg},
+    {"Image - TIKZ\t*.tikz", _save_tikz},
+    {"Image - YUV\t*.yuv", _save_yuv},
 #if defined(HAVE_MPEG_ENCODE)
-    {"Movie - MPEG" TT "*.mpg", _save_mpeg},
+    {"Movie - MPEG\t*.mpg", _save_mpeg},
 #endif
   };
   int nbformats = sizeof(formats) / sizeof(formats[0]);
@@ -481,7 +473,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     pat = new char[nbformats * 256];
     strcpy(pat, formats[0].pat);
     for(int i = 1; i < nbformats; i++) {
-      strcat(pat, NN);
+      strcat(pat, "\n");
       strcat(pat, formats[i].pat);
     }
   }
@@ -504,9 +496,6 @@ static void file_export_cb(Fl_Widget *w, void *data)
     }
   }
 }
-
-#undef TT
-#undef NN
 
 static void file_options_save_cb(Fl_Widget *w, void *data)
 {

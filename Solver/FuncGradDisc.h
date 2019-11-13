@@ -41,7 +41,7 @@ public:
     double val[30];
     e->getShapeFunctions(uvw[0], uvw[1], uvw[2], val);
     double f = 0;
-    for(int i = 0; i < e->getNumShapeFunctions(); i++) {
+    for(std::size_t i = 0; i < e->getNumShapeFunctions(); i++) {
       MVertex *v = e->getShapeFunctionNode(i);
       // std::cout<<"val[i] :" << val[i] << "\n";
       // std::cout<<"ls(i) :" << (*_ls)(v->x(),v->y(),v->z()) << "\n";
@@ -62,7 +62,7 @@ public:
     //        double val[30];
     //        e->getShapeFunctions(uvw[0], uvw[1], uvw[2], val);
     //        double f = 0;
-    //        for (int i = 0; i < e->getNumShapeFunctions(); i++)
+    //        for (std::size_t i = 0; i < e->getNumShapeFunctions(); i++)
     //        {
     //           MVertex *v = e-<getShapeFunctionNode(i);
     //           f = f + (*_ls)(v->x(), v->y(), v->z()) * val[i];
@@ -97,7 +97,7 @@ public:
     dfdz = 0;
 
     if((*_ls)(x, y, z) > 0) {
-      for(int i = 0; i < e->getNumShapeFunctions(); i++) {
+      for(std::size_t i = 0; i < e->getNumShapeFunctions(); i++) {
         dNdx = invjac[0][0] * gradsuvw[i][0] + invjac[0][1] * gradsuvw[i][1] +
                invjac[0][2] * gradsuvw[i][2];
         dNdy = invjac[1][0] * gradsuvw[i][0] + invjac[1][1] * gradsuvw[i][1] +
@@ -115,7 +115,7 @@ public:
       }
     }
     else {
-      for(int i = 0; i < e->getNumShapeFunctions(); i++) {
+      for(std::size_t i = 0; i < e->getNumShapeFunctions(); i++) {
         dNdx = invjac[0][0] * gradsuvw[i][0] + invjac[0][1] * gradsuvw[i][1] +
                invjac[0][2] * gradsuvw[i][2];
         dNdy = invjac[1][0] * gradsuvw[i][0] + invjac[1][1] * gradsuvw[i][1] +
@@ -159,7 +159,7 @@ public:
   //
   //        if ((*_ls)(x,y,z)>0)
   //        {
-  //          for (int i = 0; i < e->getNumShapeFunctions(); i++)
+  //          for (std::size_t i = 0; i < e->getNumShapeFunctions(); i++)
   //          {
   //            dNdx = invjac[0][0] * gradsuvw[i][0] + invjac[0][1] *
   //            gradsuvw[i][1] + invjac[0][2] * gradsuvw[i][2]; dNdy =
@@ -175,7 +175,7 @@ public:
   //          }
   //        }else
   //        {
-  //          for (int i = 0; i < e->getNumShapeFunctions(); i++)
+  //          for (std::size_t i = 0; i < e->getNumShapeFunctions(); i++)
   //          {
   //            dNdx = invjac[0][0] * gradsuvw[i][0] + invjac[0][1] *
   //            gradsuvw[i][1] + invjac[0][2] * gradsuvw[i][2]; dNdy =

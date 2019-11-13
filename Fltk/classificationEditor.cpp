@@ -275,7 +275,8 @@ static void classify_cb(Fl_Widget *w, void *data)
   if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
     computeEdgeCut(GModel::current(), e->selected->lines, 100000);
   computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
-  classifyFaces(GModel::current());
+  double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
+  classifyFaces(GModel::current(), threshold);
 
   // remove selected, but do not delete its elements
   if(e->selected) {

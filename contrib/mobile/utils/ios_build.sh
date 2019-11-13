@@ -31,7 +31,8 @@ done
 
 ios=ios
 iphoneos=iphoneos
-iphoneos_version_min=-miphoneos-version-min=8.0
+#iphoneos_version_min=-miphoneos-version-min=8.0
+iphoneos_version_min="-target arm64-apple-ios9.0" # iOS 13 SDK
 if [ $enable_simulator != 0 ]; then
   ios=iossimulator
   iphoneos=iphonesimulator
@@ -59,8 +60,11 @@ fi
 if [ $enable_simulator != 0 ]; then
   cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=SIMULATOR -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=${buildtype} -DCMAKE_OSX_ARCHITECTURES=x86_64 -GXcode"
 else
-  cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=OS -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=${buildtype} -DCMAKE_OSX_ARCHITECTURES=armv7;armv7s;arm64 -GXcode"
+  cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=OS -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=${buildtype} -DCMAKE_OSX_ARCHITECTURES=arm64 -GXcode"
 fi
+
+# iOS 13 SDK is 64 bit only...
+# -DCMAKE_OSX_ARCHITECTURES=armv7;armv7s;arm64
 
 build_cmd="xcodebuild -target lib -configuration ${buildtype}"
 headers_cmd="xcodebuild -target get_headers -configuration ${buildtype}"
@@ -114,6 +118,12 @@ if [ $enable_simulator != 0 ]; then
   sed -e "s|lastKnownFileType = archive.ar; name = libf2clapack.a; path = ${appname}/frameworks/petsc.framework/libf2clapack.a;|lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework;|" -i "" $gmsh_git/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj;
 fi
 
-#TODO
-#xcodebuild -project "Onelab" -target "Onelab" -configuration Release
-#xcrun -sdk iphoneos PackageApplication -v "Onelab.app" -o "Onelab.ipa" --sign "iPhone Distribution: Your Signature\" --embed enterprise.mobileprovision
+# TODO:
+#
+# xcodebuild -project "Onelab" -target "Onelab" -configuration Release
+# xcrun -sdk iphoneos PackageApplication -v "Onelab.app" -o "Onelab.ipa" --sign "iPhone Distribution: Your Signature\" --embed enterprise.mobileprovision
+
+# FIXME:
+#
+# When uploading the app to the AppStore, make sure to disable sending the
+# bitcode. For some reason this leads to crashing installs (sometimes?)

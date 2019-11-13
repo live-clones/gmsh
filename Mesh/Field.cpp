@@ -3038,7 +3038,7 @@ void FieldManager::setBackgroundField(Field *BGF)
   _background_field = id;
 }
 
-void Field::putOnNewView()
+void Field::putOnNewView(int viewTag)
 {
 #if defined(HAVE_POST)
   if(GModel::current()->getMeshStatus() < 1) {
@@ -3056,7 +3056,8 @@ void Field::putOnNewView()
   }
   std::ostringstream oss;
   oss << "Field " << id;
-  PView *view = new PView(oss.str(), "NodeData", GModel::current(), d);
+  PView *view = new PView(oss.str(), "NodeData", GModel::current(), d,
+                          0, -1, viewTag);
   view->setChanged(true);
 #endif
 }

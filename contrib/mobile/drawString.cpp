@@ -25,8 +25,8 @@ drawString::drawString(std::string text, int size, float color[4])
 void drawString::setText(std::string text)
 {
   _text = text;
-  getBitmapFromString(_text.c_str(), _size, &_map,
-                      &_height, &_width, &_realWidth);
+  getBitmapFromString(_text.c_str(), _size, &_map, &_height, &_width,
+                      &_realWidth);
 }
 
 void drawString::setColor(float color[4])
@@ -51,17 +51,24 @@ void drawString::draw(float x, float y, float z, float w, float h, bool center)
   GLuint textureId;
   glGenTextures(1, &textureId);
   glBindTexture(GL_TEXTURE_2D, textureId);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _width, _height, 0,
-               GL_ALPHA, GL_UNSIGNED_BYTE, _map);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _width, _height, 0, GL_ALPHA,
+               GL_UNSIGNED_BYTE, _map);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glColor4f(_color[0], _color[1], _color[2], _color[3]);
-  if(center)
-    x -= (float)_realWidth/w/2;
+  if(center) x -= (float)_realWidth / w / 2;
   GLfloat vertex[] = {
-    x, y-_height/h+_size/h, z, // bottom left
-    x, y+(float)_height/h-_height/h+_size/h, z, // top left
-    x+(float)_width/w, y-_height/h+_size/h, z, // bottom right
-    x+(float)_width/w, y+(float)_height/h-_height/h+_size/h, z, // top right
+    x,
+    y - _height / h + _size / h,
+    z, // bottom left
+    x,
+    y + (float)_height / h - _height / h + _size / h,
+    z, // top left
+    x + (float)_width / w,
+    y - _height / h + _size / h,
+    z, // bottom right
+    x + (float)_width / w,
+    y + (float)_height / h - _height / h + _size / h,
+    z, // top right
   };
   GLfloat texture[] = {
     0.0f, 1.0f, // top left

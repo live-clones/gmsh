@@ -43,16 +43,16 @@ public:
   Dof getLocalDofR(SElement *se, int iRow) const
   {
     MElement *e = se->getMeshElement();
-    int iCompR = iRow / e->getNumShapeFunctions();
-    int ithLocalVertex = iRow % e->getNumShapeFunctions();
+    int iCompR = iRow / (int)e->getNumShapeFunctions();
+    int ithLocalVertex = iRow % (int)e->getNumShapeFunctions();
     return Dof(e->getShapeFunctionNode(ithLocalVertex)->getNum(),
                Dof::createTypeWithTwoInts(iCompR, _iFieldR));
   }
   Dof getLocalDofC(SElement *se, int iCol) const
   {
     MElement *e = se->getMeshElement();
-    int iCompC = iCol / e->getNumShapeFunctions();
-    int ithLocalVertex = iCol % e->getNumShapeFunctions();
+    int iCompC = iCol / (int)e->getNumShapeFunctions();
+    int ithLocalVertex = iCol % (int)e->getNumShapeFunctions();
     return Dof(e->getShapeFunctionNode(ithLocalVertex)->getNum(),
                Dof::createTypeWithTwoInts(iCompC, _iFieldC));
   }

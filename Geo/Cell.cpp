@@ -51,7 +51,7 @@ std::pair<Cell *, bool> Cell::createCell(MElement *element, int domain)
   cell->_immune = false;
   cell->_num = 0;
 
-  for(int i = 0; i < element->getNumPrimaryVertices(); i++)
+  for(std::size_t i = 0; i < element->getNumPrimaryVertices(); i++)
     cell->_v.push_back(element->getVertex(i));
 
   return std::make_pair(cell, cell->_sortVertexIndices());
@@ -78,7 +78,7 @@ Cell::Cell(MElement *element, int domain)
   _immune = false;
   _num = 0;
 
-  for(int i = 0; i < element->getNumPrimaryVertices(); i++)
+  for(std::size_t i = 0; i < element->getNumPrimaryVertices(); i++)
     _v.push_back(element->getVertex(i));
 
   _sortVertexIndices();

@@ -117,7 +117,7 @@ public:
     return error;
   }
   edgeColumn getColumns(MVertex *v1, MVertex *v2, int side);
-  inline int getNbColumns(MVertex *v) const { return _data.count(v); }
+  inline int getNbColumns(MVertex *v) const { return (int)_data.count(v); }
   inline const BoundaryLayerData &getColumn(MVertex *v, int iColumn) const
   {
     int count = 0;

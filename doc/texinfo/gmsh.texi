@@ -36,6 +36,11 @@
 @c merge function index into type index
 @syncodeindex fn tp
 
+@c remove \Underfull \hbox warnings
+@tex
+\global\hbadness=10000
+@end tex
+
 @c =========================================================================
 @c Info directives
 @c =========================================================================
@@ -65,7 +70,7 @@ Copyright @value{COPYRIGHT}
 
 @subtitle The documentation for Gmsh @value{GMSH-VERSION}
 @subtitle A finite element mesh generator with built-in pre- and post-processing facilities
-@subtitle
+@subtitle @w{ }
 @subtitle @today{}
 
 @author Christophe Geuzaine
@@ -879,7 +884,8 @@ parsing of the script file:
   @var{operator-unary-left} @var{expression} |
   @var{expression} @var{operator-unary-right} |
   @var{expression} @var{operator-binary} @var{expression} |
-  @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} @var{expression} |
+  @var{expression} @var{operator-ternary-left} @var{expression}
+    @var{operator-ternary-right} @var{expression} |
   @var{built-in-function} |
   @var{real-option} |
   Find(@var{expression-list-item}, @var{expression-list-item}) |
@@ -945,9 +951,9 @@ value is automatically used.
 
 @code{DefineNumber} allows to define a ONELAB variable in-line. The
 @var{expression} given as the first argument is the default value; this
-is followed by the various ONELAB options. See
-@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP}
-for more information.
+is followed by the various ONELAB options. See the
+@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
+ONELAB tutorial wiki} for more information.
 
 @cindex Expressions, lists
 
@@ -1112,9 +1118,9 @@ retrieve the name of the physical or elementary entity, if any.
 
 @code{DefineString} allows to define a ONELAB variable in-line. The
 @var{char-expression} given as the first argument is the default value;
-this is followed by the various ONELAB options. See
-@uref{https://gitlab.onelab.info/doc/tutorial/wikis/ONELAB-syntax-for-Gmsh-and-GetDP}
-for more information.
+this is followed by the various ONELAB options. See the
+@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
+ONELAB tutorial wiki} for more information.
 
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of
@@ -1642,9 +1648,9 @@ Creates a new expression identifier @var{string}, with value
 
 @item DefineConstant[ @var{string} = @{ @var{expression}|@var{char-expression}, @var{onelab-options} @} <, ...>];
 Same as the previous case, except that the variable is also exchanged
-with the ONELAB database if it has not been defined before. See
-@uref{https://gitlab.onelab.info/doc/tutorial/wikis/ONELAB-syntax-for-Gmsh-and-GetDP}
-for more information.
+with the ONELAB database if it has not been defined before. See the
+@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
+ONELAB tutorial wiki} for more information.
 
 @item SetNumber( @var{char-expression} , @var{expression} );
 Sets the value a numeric ONELAB variable @var{char-expression}.
@@ -2001,6 +2007,13 @@ the major (along the x-axis) and minor radii (along the y-axis), and the
 next two the start and end angle. Note that OpenCASCADE does not allow
 creating ellipse arcs with the major radius smaller than the minor
 radius.
+
+@item Compound Spline | BSpline ( @var{expression} ) = @{ @var{expression-list} @} Using @var{expression};
+Creates a spline or a BSpline from control points sampled on the curves
+in @var{expression-list}. @code{Using} @var{expression} specifies the
+number of intervals on each curve to compute the sampling
+points. Compound splines and BSplines are only available with the
+built-in geometry kernel.
 
 @item Curve Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented loop of curves, i.e. a closed wire. The
@@ -2456,8 +2469,10 @@ complex part. @value{SYNC}
 
 @example
 @var{transform-list}:
-  <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} |
-  Duplicata @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @} |
+  <Physical> Point | Curve | Surface | Volume
+    @{ @var{expression-list-or-all} @}; @dots{} |
+  Duplicata @{ <Physical> Point | Curve | Surface | Volume
+    @{ @var{expression-list-or-all} @}; @dots{} @} |
   @var{transform}
 @end example
 
@@ -3084,27 +3099,41 @@ curve(s) or surface(s). This is only supported with the 3D Delaunay
 algorithm. @value{SYNC}
 
 @item Periodic Curve @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
-Force mesh of curves on the left-hand side to match the mesh of
-the curves on the right-hand side (masters). @value{SYNC}
+Force the mesh of the curves on the left-hand side to match the mesh
+of the curves on the right-hand side (masters). If used after meshing,
+generate the periodic node correspondence information assuming the
+mesh of the curves on the left-hand side effectively matches the mesh
+of the curves on the right-hand side. @value{SYNC}
 
 @item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} ;
-Force mesh of the surface on the left-hand side (with boundary edges
+Force the mesh of the surface on the left-hand side (with boundary edges
 specified between braces) to match the mesh of the master surface on the
-right-hand side (with boundary edges specified between
-braces). @value{SYNC}
+right-hand side (with boundary edges specified between braces). If used
+after meshing, generate the periodic node correspondence information
+assuming the mesh of the surface on the left-hand side effectively
+matches the mesh of the master surface on the right-hand side (useful
+for structured and extruded meshes). @value{SYNC}
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Translate @{ @var{expression-list} @} ;
 Force mesh of curves or surfaces on the left-hand side to match the mesh
-of the curves on the right-hand side (masters), using prescribed
-geometrical transformations. @code{Affine} takes a 4 x 4 affine
-transformation matrix given by row (only 12 entries can be provided for
-convenience); @code{Translate} takes the 3 components of the translation
-as in @ref{Transformations}. @value{SYNC}
+of the curves or surfaces on the right-hand side (masters), using
+prescribed geometrical transformations. If used after meshing, generate
+the periodic node correspondence information assuming the mesh of the
+curves or surfaces on the left-hand side effectively matches the mesh
+of the curves or surfaces on the right-hand side (useful for structured
+and extruded meshes). @code{Affine} takes a 4 x 4 affine transformation
+matrix given by row (only 12 entries can be provided for convenience);
+@code{Translate} takes the 3 components of the translation as in
+@ref{Transformations}. @value{SYNC}
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Rotate @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} ;
-Force mesh of curves or surfaces on the left-hand side to match the mesh
-of the curves on the right-hand side (masters), using a rotation
-specified as in @ref{Transformations}. @value{SYNC}
+Force the mesh of curves or surfaces on the left-hand side to match the
+mesh of the curves on the right-hand side (masters), using a rotation
+specified as in @ref{Transformations}. If used after meshing, generate
+the periodic node correspondence information assuming the mesh of the
+curves or surfaces on the left-hand side effectively matches the mesh
+of the curves or surfaces on the right-hand side (useful for structured
+and extruded meshes). @value{SYNC}
 
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
@@ -3119,13 +3148,14 @@ Creates a parametrization for curves and surfaces that do not have one
 (i.e. discrete curves and surfaces represented solely by meshes, without
 an underlying CAD description).
 
-@item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} @};
+@item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} < , @var{expression} > @};
 Classify (``color'') the surface mesh based on an angle threshold (the
 first argument, in radians), and create new discrete surfaces, curves
 and points accordingly.  If the second argument is set, also create
 discrete curves on the boundary if the surface is open. If the third
 argument is set, create edges and surfaces than can be reparametrized
-with @code{CreateGeometry}.
+with @code{CreateGeometry}. The last optional argument sets an angle
+threshold to force splitting of the generated curves.
 
 @item RenumberMeshNodes;
 Renumbers the node tags in the current mesh in a contiunous sequence.
@@ -3233,10 +3263,10 @@ as well as the way meshes are displayed in the GUI, is given in
 @cindex Solver, module
 @cindex Module, Solver
 
-Solvers can be driven by Gmsh through the ONELAB interface (see
-@url{http://www.onelab.info}), which allows to run the solvers have
-them share parameters and modeling information.  To add a new external
-solver, you need to specify its name (@code{Solver.Name0},
+Solvers and other external codes can be driven by Gmsh through the
+ONELAB interface (see @url{http://www.onelab.info}), which allows to
+have them share parameters and modeling information.  To add a new
+external solver, you need to specify its name (@code{Solver.Name0},
 @code{Solver.Name1}, etc.) and the path to the executable
 (@code{Solver.Executable0}, @code{Solver.Executable1}, etc.).  The list
 of all the solver options is given in @ref{Solver options
@@ -3457,8 +3487,9 @@ More explicitly, the syntax for a parsed @code{View} is the following
 View "@var{string}" @{
   @var{type} ( @var{list-of-coords} ) @{ @var{list-of-values} @}; @dots{}
   < TIME @{ @var{expression-list} @}; >
-  < INTERPOLATION_SCHEME @{ @var{val-coef-matrix} @} @{ @var{val-exp-matrix} @}
-                  < @{ @var{geo-coef-matrix} @} @{ @var{geo-exp-matrix} @} > ; >
+  < INTERPOLATION_SCHEME @{ @var{val-coef-matrix} @}
+      @{ @var{val-exp-matrix} @}
+      < @{ @var{geo-coef-matrix} @} @{ @var{geo-exp-matrix} @} > ; >
 @};
 @end group
 @end example
@@ -3830,7 +3861,8 @@ $EndPartitionedEntities
 $Nodes
   numEntityBlocks(size_t) numNodes(size_t)
     minNodeTag(size_t) maxNodeTag(size_t)
-  entityDim(int) entityTag(int) parametric(int; 0 or 1) numNodesInBlock(size_t)
+  entityDim(int) entityTag(int) parametric(int; 0 or 1)
+    numNodesInBlock(size_t)
     nodeTag(size_t)
     ...
     x(double) y(double) z(double)
@@ -3844,7 +3876,8 @@ $EndNodes
 $Elements
   numEntityBlocks(size_t) numElements(size_t)
     minElementTag(size_t) maxElementTag(size_t)
-  entityDim(int) entityTag(int) elementType(int; see below) numElementsInBlock(size_t)
+  entityDim(int) entityTag(int) elementType(int; see below)
+    numElementsInBlock(size_t)
     elementTag(size_t) nodeTag(size_t) ...
     ...
   ...
@@ -3874,7 +3907,8 @@ $Parametrizations
     ...
   ...
   surfaceTag(int) numNodes(size_t) numTriangles(size_t)
-    nodeX(double) nodeY(double) nodeZ(double) nodeU(double) nodeV(double)
+    nodeX(double) nodeY(double) nodeZ(double)
+      nodeU(double) nodeV(double)
       curvMaxX(double) curvMaxY(double) curvMaxZ(double)
       curvMinX(double) curvMinY(double) curvMinZ(double)
     ...
@@ -4114,7 +4148,7 @@ respect to the initial 4.0 version:
 @itemize @bullet
 @item
 All the @code{unsigned long} entries have been changed to
-@code{size_t}. All the entries designating counts which were previsouly
+@code{size_t}. All the entries designating counts which were previously
 encoded as @code{int} have also been changed to @code{size_t}. (This
 only impacts binary files.)
 @item
@@ -4602,9 +4636,10 @@ $Elements
 @dots{}
 $EndElements
 
-[ All other sections are identical to ASCII, except that @var{node-number},
-  @var{elm-number}, @var{number-of-nodes-per-element} and @var{values} are written in
-  binary format. Beware that all the $End tags must start on a new line. ]
+[ All other sections are identical to ASCII, except that
+  @var{node-number}, @var{elm-number}, @var{number-of-nodes-per-element}
+  and @var{values} are written in binary format. Beware that all the
+  $End tags must start on a new line. ]
 @end example
 
 @noindent
@@ -5025,7 +5060,8 @@ fprintf(file, "%s %d "
   nb-scalar-pyramids, nb-vector-pyramids, nb-tensor-pyramids,
   nb-scalar-lines2, nb-vector-lines2, nb-tensor-lines2,
   nb-scalar-triangles2, nb-vector-triangles2, nb-tensor-triangles2,
-  nb-scalar-quadrangles2, nb-vector-quadrangles2, nb-tensor-quadrangles2,
+  nb-scalar-quadrangles2, nb-vector-quadrangles2,
+  nb-tensor-quadrangles2,
   nb-scalar-tetrahedra2, nb-vector-tetrahedra2, nb-tensor-tetrahedra2,
   nb-scalar-hexahedra2, nb-vector-hexahedra2, nb-tensor-hexahedra2,
   nb-scalar-prisms2, nb-vector-prisms2, nb-tensor-prisms2,
@@ -5090,7 +5126,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t1.geo, t2.geo, Tutorial, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t1.geo,t1.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t1.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t2.geo
@@ -5099,7 +5137,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t2.geo, t3.geo, t1.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t2.geo,t2.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t2.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t3.geo
@@ -5108,7 +5148,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t3.geo, t4.geo, t2.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t3.geo,t3.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t3.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t4.geo
@@ -5117,7 +5159,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t4.geo, t5.geo, t3.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t4.geo,t4.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t4.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t5.geo
@@ -5126,7 +5170,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t5.geo, t6.geo, t4.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t5.geo,t5.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t5.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t6.geo
@@ -5135,7 +5181,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t6.geo, t7.geo, t5.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t6.geo,t6.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t6.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t7.geo
@@ -5144,7 +5192,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t7.geo, t8.geo, t6.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t7.geo,t7.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t7.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t8.geo
@@ -5153,7 +5203,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t8.geo, t9.geo, t7.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t8.geo,t8.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t8.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t9.geo
@@ -5162,7 +5214,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t9.geo, t10.geo, t8.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t9.geo,t9.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t9.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t10.geo
@@ -5171,7 +5225,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t10.geo, t11.geo, t9.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t10.geo,t10.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t10.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t11.geo
@@ -5180,7 +5236,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t11.geo, t12.geo, t10.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t11.geo,t11.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t11.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t12.geo
@@ -5189,7 +5247,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t12.geo, t13.geo, t11.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t12.geo,t12.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t12.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t13.geo
@@ -5198,7 +5258,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t13.geo, t14.geo, t12.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t13.geo,t13.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t13.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t14.geo
@@ -5207,7 +5269,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t14.geo, t15.geo, t13.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t14.geo,t14.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t14.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t15.geo
@@ -5216,7 +5280,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t15.geo, t16.geo, t14.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t15.geo,t15.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t15.geo
+@end smallformat
 
 @c -------------------------------------------------------------------------
 @c t16.geo
@@ -5225,7 +5291,9 @@ system}. Screencasts that show how to use the GUI are available on
 @node t16.geo,  , t15.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t16.geo,t16.geo}
 
+@smallformat
 @verbatiminclude ../../tutorial/t16.geo
+@end smallformat
 
 @c =========================================================================
 @c Options
@@ -6302,7 +6370,9 @@ If your dataset is constant per element make sure you don't use the
 @cindex History, versions
 @cindex Changelog
 
+@smallformat
 @verbatiminclude ../../CHANGELOG.txt
+@end smallformat
 
 @c =========================================================================
 @c Copyright and credits
@@ -6316,7 +6386,9 @@ If your dataset is constant per element make sure you don't use the
 @cindex Contributors, list
 @cindex Credits
 
+@smallformat
 @verbatiminclude ../../CREDITS.txt
+@end smallformat
 
 @c =========================================================================
 @c License
@@ -6327,7 +6399,9 @@ If your dataset is constant per element make sure you don't use the
 
 @cindex License
 
+@smallformat
 @verbatiminclude ../../LICENSE.txt
+@end smallformat
 
 @c =========================================================================
 @c Concept Index (cindex)

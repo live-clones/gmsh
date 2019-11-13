@@ -1,0 +1,24 @@
+####### configuration for PETSc 3.11.2 #######
+
+################# iOS: ####
+
+export PETSC_ARCH=$PWD
+export PETSC_ARCH=ios_real
+./configure --CXX=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --CC=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --CXXFLAGS="-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -target arm64-apple-ios9.0 -arch arm64 -fembed-bitcode -DPETSC_BLASLAPACK_UNDERSCORE" --CFLAGS="-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -target arm64-apple-ios9.0 -arch arm64 -fembed-bitcode -DPETSC_BLASLAPACK_UNDERSCORE" --with-blas-lib=$HOME/src/gmsh/contrib/mobile/frameworks_ios/petsc.framework/libf2cblas.a --with-lapack-lib=$HOME/src/gmsh/contrib/mobile/frameworks_ios/petsc.framework/libf2clapack.a --with-debugging=0 --with-ssl=0 --with-shared-libraries=0 --with-x=0 --with-clanguage=cxx --with-mpi=0 --with-fc=0 --with-ios=1 --with-batch=1 --known-bits-per-byte=8 --known-endian=little --known-level1-dcache-assoc=1 --known-level1-dcache-linesize=16 --known-level1-dcache-size=4000 --known-memcmp-ok=1 --known-sizeof-char=1 --known-sizeof-double=8 --known-sizeof-float=4 --known-sizeof-int=4 --known-sizeof-long-long=8 --known-sizeof-long=8 --known-sizeof-short=2 --known-sizeof-size_t=8 --known-sizeof-void-p=8 --with-cmake=1 --download-suitesparse=yes --known-64-bit-blas-indices=0
+make
+
+# Then combine all static libs using merge_static_libs.sh and put it in petsc.framework together with libf2cblas.a and libf2clapack.a
+
+# idem for SLEPc
+
+################# Android: ####
+
+export PETSC_ARCH=android_real
+./configure --CXX=/Users/geuzaine/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android21-clang++ --CC=/Users/geuzaine/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android21-clang --AR=/Users/geuzaine/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android-ar --CXXFLAGS="-isysroot /Users/geuzaine/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/sysroot --target=aarch64-none-linux-android21 -fPIC -DBUILD_ANDROID -DPETSC_BLASLAPACK_UNDERSCORE" --CFLAGS="-isysroot /Users/geuzaine/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/sysroot --target=aarch64-none-linux-android21 -fPIC -DBUILD_ANDROID -DPETSC_BLASLAPACK_UNDERSCORE" --with-blas-lib=$HOME/src/gmsh/contrib/mobile/frameworks_android/petsc/libf2cblas.so --with-lapack-lib=$HOME/src/gmsh/contrib/mobile/frameworks_android/petsc/libf2clapack.so --with-debugging=0 --with-ssl=0 --with-shared-libraries=1 --with-x=0 --with-clanguage=cxx --with-mpi=0 --with-fc=0 --with-batch=1 --known-bits-per-byte=8 --known-endian=little --known-level1-dcache-assoc=1 --known-level1-dcache-linesize=16 --known-level1-dcache-size=4000 --known-memcmp-ok=1 --known-sizeof-char=1 --known-sizeof-double=8 --known-sizeof-float=4 --known-sizeof-int=4 --known-sizeof-long-long=8 --known-sizeof-long=8 --known-sizeof-short=2 --known-sizeof-size_t=8 --known-sizeof-void-p=8 --with-cmake=1 --download-suitesparse=yes --known-64-bit-blas-indices=0
+
+# Before compiling need to change android_real/lib/petsc/conf/petscvariables:
+# SL_LINKER_FUNCTION = -shared   # instead of -dynamiclib ....
+# SONAME_FUNCTION = $(1).$(2).so  # instead of .dylib
+# DSYMUTIL = ls  # instead of wathever tool is
+
+make

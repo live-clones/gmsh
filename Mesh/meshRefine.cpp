@@ -58,7 +58,7 @@ static void setBLData(MVertex *v)
 static bool setBLData(MElement *el)
 {
   // Check whether all low-order nodes are marked as BL nodes (only works in 2D)
-  for(int i = 0; i < el->getNumPrimaryVertices(); i++) {
+  for(std::size_t i = 0; i < el->getNumPrimaryVertices(); i++) {
     MVertex *v = el->getVertex(i);
     bool isBL = false;
     switch(v->onWhat()->dim()) {

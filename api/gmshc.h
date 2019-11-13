@@ -130,6 +130,10 @@ GMSH_API void gmshModelRemove(int * ierr);
 GMSH_API void gmshModelList(char *** names, size_t * names_n,
                             int * ierr);
 
+/* Get the name of the current model. */
+GMSH_API void gmshModelGetCurrent(char ** name,
+                                  int * ierr);
+
 /* Set the current model to the model with name `name'. If several models have
  * the same name, select the one that was added first. */
 GMSH_API void gmshModelSetCurrent(const char * name,
@@ -348,6 +352,18 @@ GMSH_API void gmshModelGetNormal(const int tag,
                                  double * parametricCoord, size_t parametricCoord_n,
                                  double ** normals, size_t * normals_n,
                                  int * ierr);
+
+/* Get the parametric coordinates `parametricCoord' for the points `points' on
+ * the entity of dimension `dim' and tag `tag'. `points' are given as triplets
+ * of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
+ * `parametricCoord' returns the parametric coordinates t on the curve (if
+ * `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if
+ * `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. */
+GMSH_API void gmshModelGetParametrization(const int dim,
+                                          const int tag,
+                                          double * points, size_t points_n,
+                                          double ** parametricCoord, size_t * parametricCoord_n,
+                                          int * ierr);
 
 /* Set the visibility of the model entities `dimTags' to `value'. Apply the
  * visibility setting recursively if `recursive' is true. */
@@ -960,7 +976,11 @@ GMSH_API void gmshModelMeshRenumberElements(int * ierr);
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as
  * periodic copies of the meshes of entities `tagsMaster', using the affine
  * transformation specified in `affineTransformation' (16 entries of a 4x4
- * matrix, by row). Currently only available for `dim' == 1 and `dim' == 2. */
+ * matrix, by row). If used after meshing, generate the periodic node
+ * correspondence information assuming the meshes of entities `tags'
+ * effectively match the meshes of entities `tagsMaster' (useful for
+ * structured and extruded meshes). Currently only available for @code{dim} ==
+ * 1 and @code{dim} == 2. */
 GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        int * tags, size_t tags_n,
                                        int * tagsMaster, size_t tagsMaster_n,
@@ -991,10 +1011,13 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality,
  * (in radians), and create new discrete surfaces, curves and points
  * accordingly. If `boundary' is set, also create discrete curves on the
  * boundary if the surface is open. If `forReparametrization' is set, create
- * edges and surfaces that can be reparametrized using a single map. */
+ * edges and surfaces that can be reparametrized using a single map. If
+ * `curveAngle' is less than Pi, also force curves to be split according to
+ * `curveAngle'. */
 GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const int boundary,
                                             const int forReparametrization,
+                                            const double curveAngle,
                                             int * ierr);
 
 /* Create a parametrization for discrete curves and surfaces (i.e. curves and
@@ -1142,6 +1165,24 @@ GMSH_API int gmshModelGeoAddBSpline(int * pointTags, size_t pointTags_n,
 GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
+
+/* Add a spline (Catmull-Rom) going through points sampling the curves in
+ * `curveTags'. The density of sampling points on each curve is governed by
+ * `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a
+ * new tag is selected automatically. Return the tag of the spline. */
+GMSH_API int gmshModelGeoAddCompoundSpline(int * curveTags, size_t curveTags_n,
+                                           const int numIntervals,
+                                           const int tag,
+                                           int * ierr);
+
+/* Add a b-spline with control points sampling the curves in `curveTags'. The
+ * density of sampling points on each curve is governed by `numIntervals'. If
+ * `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Return the tag of the b-spline. */
+GMSH_API int gmshModelGeoAddCompoundBSpline(int * curveTags, size_t curveTags_n,
+                                            const int numIntervals,
+                                            const int tag,
+                                            int * ierr);
 
 /* Add a curve loop (a closed wire) formed by the curves `curveTags'.
  * `curveTags' should contain (signed) tags of model enties of dimension 1
@@ -1872,6 +1913,7 @@ GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n,
                                      const int fixSmallEdges,
                                      const int fixSmallFaces,
                                      const int sewFaces,
+                                     const int makeSolids,
                                      int * ierr);
 
 /* Import BREP, STEP or IGES shapes from the file `fileName'. The imported

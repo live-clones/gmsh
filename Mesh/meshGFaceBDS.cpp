@@ -377,8 +377,10 @@ static void setDegeneracy(std::vector<BDS_Point *> &deg, short d)
   for(size_t i = 0; i < deg.size(); i++) deg[i]->degenerated = d;
 }
 
-static int validitiyOfGeodesics(GFace *gf, BDS_Mesh &m)
+static void splitAllEdgesConnectedToSingularity(GFace *gf, BDS_Mesh &m)
 {
+  //return 0;
+  
   std::vector<BDS_Edge *> degenerated;
   for(size_t i = 0; i < m.edges.size(); i++) {
     BDS_Edge *e = m.edges[i];
@@ -386,33 +388,27 @@ static int validitiyOfGeodesics(GFace *gf, BDS_Mesh &m)
                        (e->p1->degenerated && !e->p2->degenerated)))
       degenerated.push_back(e);
   }
-  std::vector<BDS_Edge *> toSplit;
-  for(size_t i = 0; i < degenerated.size(); i++) {
-    BDS_Edge *ed = degenerated[i];
-    double u3[2] = {ed->p1->degenerated == 1 ? ed->p2->u : ed->p1->u,
-                    ed->p1->degenerated == 2 ? ed->p2->v : ed->p1->v};
-    double u4[2] = {ed->p2->degenerated == 1 ? ed->p1->u : ed->p2->u,
-                    ed->p2->degenerated == 2 ? ed->p1->v : ed->p2->v};
-    for(size_t j = 0; j < m.edges.size(); j++) {
-      BDS_Edge *e = m.edges[j];
-      if(e->deleted || e->p1 == ed->p1 || e->p1 == ed->p2 || e->p2 == ed->p1 ||
-         e->p2 == ed->p2)
-        continue;
-      if(e->p1->degenerated + e->p2->degenerated == 0) {
-        double u1[2] = {e->p1->u, e->p1->v};
-        double u2[2] = {e->p2->u, e->p2->v};
-        double rp1 = robustPredicates::orient2d(u1, u2, u3);
-        double rp2 = robustPredicates::orient2d(u1, u2, u4);
-        double rq1 = robustPredicates::orient2d(u3, u4, u1);
-        double rq2 = robustPredicates::orient2d(u3, u4, u2);
-        if(rp1 * rp2 < 0 && rq1 * rq2 < 0) {
-          toSplit.push_back(ed);
-          break;
-        }
-      }
+  for (size_t i=0 ; i< degenerated.size(); i++){
+    BDS_Edge *e = degenerated[i];
+    if (!e->deleted && e->numfaces() == 2){
+      short d1 = e->p1->degenerated;
+      short d2 = e->p2->degenerated;
+      BDS_Point *p1 = e->p1;
+      BDS_Point *p2 = e->p2;
+      e->p1->degenerated = 0;
+      e->p2->degenerated = 0;
+      double U = 0.5 * (e->p1->u + e->p2->u);
+      double V = 0.5 * (e->p1->v + e->p2->v);
+      GPoint gpp = gf->point(U, V);
+      BDS_Point *mid = m.add_point(++m.MAXPOINTNUMBER, gpp.x(), gpp.y(), gpp.z());
+      mid->u = U;
+      mid->v = V;
+      mid->lc() = 0.5 * (e->p1->lc() + e->p2->lc());    
+      m.split_edge(e, mid);
+      p1->degenerated = d1;
+      p2->degenerated = d2;
     }
   }
-  return toSplit.size();
 }
 
 static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
@@ -761,7 +757,12 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
                    std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap,
                    std::vector<SPoint2> *true_boundary)
 {
-  //  getchar();
+#ifdef superdebug
+    outputScalarField(m.triangles, "initial.pos", 1, gf);
+    getchar();
+#endif
+
+    //  getchar();
   //  return;
   int IT = 0;
   int MAXNP = m.MAXPOINTNUMBER;
@@ -802,23 +803,24 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       ++it;
     }
   }
-
+  
   std::vector<BDS_Point *> deg;
   getDegeneracy(m, deg);
   short degType = 1;
   if(deg.size()) degType = deg[0]->degenerated;
 
-  int nbSplit = 1;
+  if(computeNodalSizeField){
+    splitAllEdgesConnectedToSingularity(gf, m);
+#ifdef superdebug
+    outputScalarField(m.triangles, "cut_all_degenerate.pos", 1, gf);
+    getchar();
+#endif
+  }  
+  
   while(1) {
-    if(nbSplit) nbSplit = validitiyOfGeodesics(gf, m);
 
-    if(nbSplit) {
-      Msg::Info("Splitting to allow geodesics close to singular points");
-      setDegeneracy(deg, degType);
-    }
-    else
-      setDegeneracy(deg, degType);
-
+    setDegeneracy(deg, degType);
+    
     // we count the number of local mesh modifs.
     int nb_split = 0;
     int nb_smooth = 0;
@@ -829,12 +831,11 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 
     double maxE = MAXE_;
     double minE = MINE_;
-    // outputScalarField(m.triangles, "initial.pos", 1, gf);
-    // getchar();
     splitEdgePass(gf, m, maxE, nb_split, true_boundary, t_spl);
     if(IT == 0) {
 #ifdef superdebug
-      outputScalarField(m.triangles, "split0.pos", 1, gf);
+      outputScalarField(m.triangles, "split00.pos", 0, gf);
+      outputScalarField(m.triangles, "split01.pos", 1, gf);
 #endif
       splitEdgePass(gf, m, maxE, nb_split, true_boundary, t_spl);
     }

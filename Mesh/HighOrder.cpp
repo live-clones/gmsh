@@ -760,7 +760,7 @@ static void getFaceVertices(GFace *gf, MElement *ele,
 
   std::vector<MVertex *> boundaryVertices;
   {
-    int nCorner = ele->getNumPrimaryVertices();
+    std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
     ele->getVertices(boundaryVertices);
     boundaryVertices.resize(nCorner);
@@ -902,7 +902,7 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
 {
   std::vector<MVertex *> boundaryVertices;
   {
-    int nCorner = ele->getNumPrimaryVertices();
+    std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
     ele->getVertices(boundaryVertices);
     boundaryVertices.resize(nCorner);
@@ -1213,10 +1213,10 @@ static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
   std::vector<T *> elements1;
   for(std::size_t i = 0; i < elements.size(); i++) {
     T *ele = elements[i];
-    int n = ele->getNumPrimaryVertices();
+    std::size_t n = ele->getNumPrimaryVertices();
     std::vector<MVertex *> v1;
     v1.reserve(n);
-    for(int j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
+    for(std::size_t j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
     elements1.push_back(new T(v1, 0, ele->getPartition()));
     delete ele;
   }
@@ -1338,6 +1338,13 @@ void FixPeriodicMesh(GModel *m)
       std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHOPoints;
       p2p.clear();
 
+      if(tgt->getNumMeshElements() && v2v.empty()){
+        Msg::Info("No periodic vertices in surface %d (maybe due to a "
+                  "structured mesh constraint on the target surface)",
+                  tgt->tag());
+        continue;
+      }
+
       std::map<MFace, MElement *, Less_Face> srcFaces;
 
       for(std::size_t i = 0; i < src->getNumMeshElements(); ++i) {
@@ -1392,8 +1399,8 @@ void FixPeriodicMesh(GModel *m)
           // underlying orientation of the geometrical surfaces)
           bool revert = dot(tgtFace.normal(), srcIter->first.normal()) < 0;
           if(revert) srcElmt->reverse();
-          for(std::size_t i = nbVtcs; i < srcElmt->getNumVertices(); i++) {
-            p2p[tgtElmt->getVertex(i)] = srcElmt->getVertex(i);
+          for(std::size_t j = nbVtcs; j < srcElmt->getNumVertices(); j++) {
+            p2p[tgtElmt->getVertex(j)] = srcElmt->getVertex(j);
           }
           if(revert) srcElmt->reverse();
         }

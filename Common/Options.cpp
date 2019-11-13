@@ -2283,6 +2283,13 @@ double opt_general_system_menu_bar(OPT_ARGS_NUM)
   return CTX::instance()->systemMenuBar;
 }
 
+double opt_general_native_file_chooser(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->nativeFileChooser = (int)val;
+  return CTX::instance()->nativeFileChooser;
+}
+
 double opt_general_show_module_menu(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4729,7 +4736,7 @@ double opt_geometry_light_two_side(OPT_ARGS_NUM)
     CTX::instance()->geom.lightTwoSide = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->geo.butt[14]->value
+    FlGui::instance()->options->geo.butt[15]->value
       (CTX::instance()->geom.lightTwoSide);
 #endif
   return CTX::instance()->geom.lightTwoSide;
@@ -4800,6 +4807,20 @@ double opt_geometry_occ_sew_faces(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->geom.occSewFaces;
+}
+
+double opt_geometry_occ_make_solids(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->geom.occMakeSolids = val ? 1 : 0;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->geo.butt[14]->value
+      (CTX::instance()->geom.occMakeSolids);
+  }
+#endif
+  return CTX::instance()->geom.occMakeSolids;
 }
 
 double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
@@ -5956,6 +5977,22 @@ double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM)
     CTX::instance()->mesh.stlOneSolidPerSurface = (int)val;
   }
   return CTX::instance()->mesh.stlOneSolidPerSurface;
+}
+
+double opt_mesh_stl_linear_deflection(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.stlLinearDeflection = val;
+  }
+  return CTX::instance()->mesh.stlLinearDeflection;
+}
+
+double opt_mesh_stl_angular_deflection(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.stlAngularDeflection = val;
+  }
+  return CTX::instance()->mesh.stlAngularDeflection;
 }
 
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
@@ -9431,6 +9468,27 @@ double opt_print_x3d_precision(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->print.x3dPrecision = val;
   return CTX::instance()->print.x3dPrecision;
+}
+
+double opt_print_x3d_surfaces(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dSurfaces = (int)val;
+  return CTX::instance()->print.x3dSurfaces;
+}
+
+double opt_print_x3d_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dEdges = (int)val;
+  return CTX::instance()->print.x3dEdges;
+}
+
+double opt_print_x3d_vertices(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dVertices = (int)val;
+  return CTX::instance()->print.x3dVertices;
 }
 
 // Color option routines

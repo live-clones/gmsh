@@ -161,6 +161,7 @@ double opt_general_polygon_offset_always(OPT_ARGS_NUM);
 double opt_general_polygon_offset_factor(OPT_ARGS_NUM);
 double opt_general_polygon_offset_units(OPT_ARGS_NUM);
 double opt_general_system_menu_bar(OPT_ARGS_NUM);
+double opt_general_native_file_chooser(OPT_ARGS_NUM);
 double opt_general_show_module_menu(OPT_ARGS_NUM);
 double opt_general_message_size(OPT_ARGS_NUM);
 double opt_general_message_fontsize(OPT_ARGS_NUM);
@@ -397,6 +398,7 @@ double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_faces(OPT_ARGS_NUM);
 double opt_geometry_occ_sew_faces(OPT_ARGS_NUM);
+double opt_geometry_occ_make_solids(OPT_ARGS_NUM);
 double opt_geometry_occ_union_unify(OPT_ARGS_NUM);
 double opt_geometry_occ_parallel(OPT_ARGS_NUM);
 double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM);
@@ -506,6 +508,8 @@ double opt_mesh_cross_field_closest_point(OPT_ARGS_NUM);
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM);
 double opt_mesh_stl_remove_duplicate_triangles(OPT_ARGS_NUM);
 double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM);
+double opt_mesh_stl_linear_deflection(OPT_ARGS_NUM);
+double opt_mesh_stl_angular_deflection(OPT_ARGS_NUM);
 double opt_mesh_boundary_layer_fan_points(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
 double opt_mesh_algo2d(OPT_ARGS_NUM);
@@ -771,6 +775,9 @@ double opt_print_x3d_compatibility(OPT_ARGS_NUM);
 double opt_print_x3d_transparency(OPT_ARGS_NUM);
 double opt_print_x3d_remove_inner_borders(OPT_ARGS_NUM);
 double opt_print_x3d_precision(OPT_ARGS_NUM);
+double opt_print_x3d_surfaces(OPT_ARGS_NUM);
+double opt_print_x3d_edges(OPT_ARGS_NUM);
+double opt_print_x3d_vertices(OPT_ARGS_NUM);
 
 // COLORS
 

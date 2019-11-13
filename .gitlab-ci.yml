@@ -92,7 +92,7 @@ windows64_msvc_ci:
   script:
     - mkdir build
     - cd build
-    - cmake -DGMSH_HOST=gmsh.info -DENABLE_NATIVE_FILE_CHOOSER=0 ${EXTRA_OPTION} ..
+    - cmake -DGMSH_HOST=gmsh.info ${EXTRA_OPTION} ..
     - make package -j 8
     - PKG=`ls gmsh-*.tar*`
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}

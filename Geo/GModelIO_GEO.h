@@ -34,6 +34,8 @@ private:
                 double ax, double ay, double az, double angle,
                 std::vector<std::pair<int, int> > &outDimTags,
                 ExtrudeParams *e = 0);
+  bool _addCompoundSpline(int &tag, const std::vector<int> &curveTags,
+                          int numPoints, bool bspline);
 
 public:
   GEO_Internals() { _allocateAll(); }
@@ -66,6 +68,10 @@ public:
   bool addBezier(int &tag, const std::vector<int> &pointTags);
   bool addBSpline(int &tag, const std::vector<int> &pointTags,
                   const std::vector<double> &seqknots = std::vector<double>());
+  bool addCompoundSpline(int &tag, const std::vector<int> &curveTags,
+                         int numPoints);
+  bool addCompoundBSpline(int &tag, const std::vector<int> &curveTags,
+                          int numPoints);
   bool addLineLoop(int &tag, const std::vector<int> &curveTags);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
   bool addDiscreteSurface(int &tag);

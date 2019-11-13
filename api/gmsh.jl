@@ -298,6 +298,24 @@ function list()
 end
 
 """
+    gmsh.model.getCurrent()
+
+Get the name of the current model.
+
+Return `name`.
+"""
+function getCurrent()
+    api_name_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetCurrent, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          api_name_, ierr)
+    ierr[] != 0 && error("gmshModelGetCurrent returned non-zero error code: $(ierr[])")
+    name = unsafe_string(api_name_[])
+    return name
+end
+
+"""
     gmsh.model.setCurrent(name)
 
 Set the current model to the model with name `name`. If several models have the
@@ -833,6 +851,30 @@ function getNormal(tag, parametricCoord)
     ierr[] != 0 && error("gmshModelGetNormal returned non-zero error code: $(ierr[])")
     normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], own=true)
     return normals
+end
+
+"""
+    gmsh.model.getParametrization(dim, tag, points)
+
+Get the parametric coordinates `parametricCoord` for the points `points` on the
+entity of dimension `dim` and tag `tag`. `points` are given as triplets of x, y,
+z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord`
+returns the parametric coordinates t on the curve (if `dim` = 1) or pairs of u
+and v coordinates concatenated on the surface (if `dim` = 2), i.e. [p1t, p2t,
+...] or [p1u, p1v, p2u, ...].
+
+Return `parametricCoord`.
+"""
+function getParametrization(dim, tag, points)
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetParametrization, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, points), length(points), api_parametricCoord_, api_parametricCoord_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetParametrization returned non-zero error code: $(ierr[])")
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    return parametricCoord
 end
 
 """
@@ -2052,8 +2094,11 @@ end
 
 Set the meshes of the entities of dimension `dim` and tag `tags` as periodic
 copies of the meshes of entities `tagsMaster`, using the affine transformation
-specified in `affineTransformation` (16 entries of a 4x4 matrix, by row).
-Currently only available for `dim` == 1 and `dim` == 2.
+specified in `affineTransformation` (16 entries of a 4x4 matrix, by row). If
+used after meshing, generate the periodic node correspondence information
+assuming the meshes of entities `tags` effectively match the meshes of entities
+`tagsMaster` (useful for structured and extruded meshes). Currently only
+available for @code{dim} == 1 and @code{dim} == 2.
 """
 function setPeriodic(dim, tags, tagsMaster, affineTransform)
     ierr = Ref{Cint}()
@@ -2122,19 +2167,20 @@ function splitQuadrangles(quality = 1., tag = -1)
 end
 
 """
-    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false)
+    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
 radians), and create new discrete surfaces, curves and points accordingly. If
 `boundary` is set, also create discrete curves on the boundary if the surface is
 open. If `forReparametrization` is set, create edges and surfaces that can be
-reparametrized using a single map.
+reparametrized using a single map. If `curveAngle` is less than Pi, also force
+curves to be split according to `curveAngle`.
 """
-function classifySurfaces(angle, boundary = true, forReparametrization = false)
+function classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClassifySurfaces, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Cint, Ptr{Cint}),
-          angle, boundary, forReparametrization, ierr)
+          (Cdouble, Cint, Cint, Cdouble, Ptr{Cint}),
+          angle, boundary, forReparametrization, curveAngle, ierr)
     ierr[] != 0 && error("gmshModelMeshClassifySurfaces returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2469,6 +2515,44 @@ function addBezier(pointTags, tag = -1)
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, pointTags), length(pointTags), tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddBezier returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
+    gmsh.model.geo.addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
+
+Add a spline (Catmull-Rom) going through points sampling the curves in
+`curveTags`. The density of sampling points on each curve is governed by
+`numIntervals`. If `tag` is positive, set the tag explicitly; otherwise a new
+tag is selected automatically. Return the tag of the spline.
+
+Return an integer value.
+"""
+function addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelGeoAddCompoundSpline, gmsh.lib), Cint,
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, curveTags), length(curveTags), numIntervals, tag, ierr)
+    ierr[] != 0 && error("gmshModelGeoAddCompoundSpline returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
+    gmsh.model.geo.addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
+
+Add a b-spline with control points sampling the curves in `curveTags`. The
+density of sampling points on each curve is governed by `numIntervals`. If `tag`
+is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. Return the tag of the b-spline.
+
+Return an integer value.
+"""
+function addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelGeoAddCompoundBSpline, gmsh.lib), Cint,
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, curveTags), length(curveTags), numIntervals, tag, ierr)
+    ierr[] != 0 && error("gmshModelGeoAddCompoundBSpline returned non-zero error code: $(ierr[])")
     return api__result__
 end
 
@@ -3849,7 +3933,7 @@ function removeAllDuplicates()
 end
 
 """
-    gmsh.model.occ.healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true)
+    gmsh.model.occ.healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true)
 
 Apply various healing procedures to the entities `dimTags` (or to all the
 entities in the model if `dimTags` is empty). Return the healed entities in
@@ -3857,15 +3941,15 @@ entities in the model if `dimTags` is empty). Return the healed entities in
 
 Return `outDimTags`.
 """
-function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true)
+function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccHealShapes, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Cdouble, Cint, Cint, Cint, Cint, Ptr{Cint}),
-          api_outDimTags_, api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, ierr)
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Cdouble, Cint, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          api_outDimTags_, api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids, ierr)
     ierr[] != 0 && error("gmshModelOccHealShapes returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
