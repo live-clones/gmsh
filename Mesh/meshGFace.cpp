@@ -2911,7 +2911,7 @@ void meshGFace::operator()(GFace *gf, bool print)
         gf->meshStatistics.status = GFace::PENDING;
         return;
       }
-      Msg::Info("Meshing surface %d (%s) as a copy of %d", gf->tag(),
+      Msg::Info("Meshing surface %d (%s) as a copy of surface %d", gf->tag(),
                 gf->getTypeString().c_str(), gf->getMeshMaster()->tag());
       copyMesh(gff, gf);
       gf->meshStatistics.status = GFace::DONE;

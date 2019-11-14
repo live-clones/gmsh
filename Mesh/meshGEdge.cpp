@@ -558,7 +558,7 @@ void meshGEdge::operator()(GEdge *ge)
   if(ge->getMeshMaster() != ge) {
     GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
     if(gef->meshStatistics.status == GEdge::PENDING) return;
-    Msg::Info("Meshing curve %d (%s) as a copy of %d", ge->tag(),
+    Msg::Info("Meshing curve %d (%s) as a copy of curve %d", ge->tag(),
               ge->getTypeString().c_str(), ge->getMeshMaster()->tag());
     copyMesh(gef, ge, ge->masterOrientation);
     ge->meshStatistics.status = GEdge::DONE;
