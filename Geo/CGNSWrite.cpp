@@ -568,6 +568,7 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
     const int mshType = *it; 
     const nodalBasis *basis = BasisFactory::getNodalBasis(mshType);
     const fullMatrix<double> &mshPts = basis->getReferenceNodes();
+    if(mshType == MSH_PNT) continue;
     
     // convert nodes to CGNS reference element if needed
     std::size_t nbPts = mshPts.size1();
