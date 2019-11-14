@@ -350,16 +350,11 @@ public:
   BDS_Edge *find_edge(BDS_Point *p1, BDS_Point *p2);
   BDS_Edge *find_edge(BDS_Point *p1, int p2);
   BDS_Edge *find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const;
-  // Triangles & Quadrangles
+  // Triangles
   BDS_Face *add_triangle(int p1, int p2, int p3);
-  //  BDS_Face *add_quadrangle(int p1, int p2, int p3, int p4);
   BDS_Face *add_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);
-  //  BDS_Face *add_quadrangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3,
-  //  BDS_Edge *e4);
   void del_face(BDS_Face *t);
   BDS_Face *find_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);
-  BDS_Face *find_quadrangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3,
-                            BDS_Edge *e4);
   // Geom entities
   void add_geom(int degree, int tag);
   BDS_GeomEntity *get_geom(int p1, int p2);
