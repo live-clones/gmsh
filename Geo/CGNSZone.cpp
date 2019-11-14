@@ -53,12 +53,12 @@ CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex, int meshDim,
   // read zone name & size
   char name[CGNS_MAX_STR_LEN];
   cgnsErr = cg_zone_read(fileIndex, baseIndex, zoneIndex, name, size_);
-  if(cgnsErr != CG_OK) err = cgnsError();
+  if(cgnsErr != CG_OK) err = cgnsError(__FILE__, __LINE__, fileIndex);
   name_ = std::string(name);
 
   // read family name and retrieve element node tranformations (CPEX0045)
   cgnsErr = cg_goto(fileIndex, baseIndex, "Zone_t", zoneIndex, "end");
-  if(cgnsErr != CG_OK) err = cgnsError();
+  if(cgnsErr != CG_OK) err = cgnsError(__FILE__, __LINE__, fileIndex);
   char famName[CGNS_MAX_STR_LEN];
   cgnsErr = cg_famname_read(famName);
   if(cgnsErr != CG_NODE_NOT_FOUND) {
@@ -67,7 +67,7 @@ CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex, int meshDim,
         allEltNodeTransfo.find(std::string(famName));
       if(it != allEltNodeTransfo.end()) eltNodeTransfo_ = &(it->second);
     }
-    else err = cgnsError();
+    else err = cgnsError(__FILE__, __LINE__, fileIndex);
   }
 }
 
@@ -92,25 +92,25 @@ int CGNSZone::readBoundaryCondition(int iZoneBC,
   cgnsErr = cg_boco_info(fileIndex(), baseIndex(), index(), iZoneBC, bcName,
                          &bcType, &ptSetType, &nbVal, &normalIndex,
                          &normalSize, &normalType, &nbDataSet);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // read family linked to BC, use BC name if not present
   std::string familyName;
   cgnsErr = cg_goto(fileIndex(), baseIndex(), "Zone_t", index(), "ZoneBC_t",
                     1, "BC_t", iZoneBC, "end");
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
   char tmpFamilyName[CGNS_MAX_STR_LEN];
   cgnsErr = cg_famname_read(tmpFamilyName);
   if(cgnsErr != CG_NODE_NOT_FOUND) {
     if(cgnsErr == CG_OK) familyName = std::string(tmpFamilyName);
-    else return cgnsError();
+    else return cgnsError(__FILE__, __LINE__, fileIndex());
   }
 
   // read location of bnd. condition (type of mesh entity on which it applies)
   GridLocation_t location;
   cgnsErr = cg_boco_gridlocation_read(fileIndex(), baseIndex(), index(), iZoneBC,
                                       &location);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // check that boundary condition is imposed on face elements 
   if((meshDim() == 2) && (location != CellCenter) && (location != EdgeCenter)) {
@@ -168,7 +168,7 @@ int CGNSZone::readVertices(int dim, double scale,
   // read dimension of coordinates and check consistency with base node
   int dimZone;
   cgnsErr = cg_ncoords(fileIndex(), baseIndex(), index(), &dimZone);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
   if(dimZone > dim) {
     Msg::Warning("%i coordinates in CGNS zone %i, while base has dimension %i,"
                  " discarding upper dimensions", dimZone, index(), dim);
@@ -186,12 +186,12 @@ int CGNSZone::readVertices(int dim, double scale,
     DataType_t dataType;
     cgnsErr = cg_coord_info(fileIndex(), baseIndex(), index(), iXYZ+1,
                             &dataType, xyzName);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
     const int startInd[3] = {1, 1, 1};
     xyz[iXYZ].resize(nbNode());
     cgnsErr = cg_coord_read(fileIndex(), baseIndex(), index(), xyzName,
                             RealDouble, startInd, size(), xyz[iXYZ].data());
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
   }
 
   // create vertices
@@ -233,7 +233,7 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
   // read number of connectivities
   int nbConnect;
   cgnsErr = cg_nconns(fileIndex(), baseIndex(), index(), &nbConnect);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   for(int iConnect = 1; iConnect <= nbConnect; iConnect++) {
     // read connection info
@@ -248,7 +248,7 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
                            connectName, &location, &connectType, &ptSetType,
                            &connectSize, donorName, &zoneTypeDonor,
                            &ptSetTypeDonor, &dataTypeDonor, &connectSizeDonor);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
     // check if connection type is OK
     if(connectType != Abutting1to1) {
@@ -277,7 +277,7 @@ int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
   // read boundary conditions for classification of mesh on geometry
   int nbZoneBC;
   cgnsErr = cg_nbocos(fileIndex(), baseIndex(), index(), &nbZoneBC);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
   for(int iZoneBC = 1; iZoneBC <= nbZoneBC; iZoneBC++) {
     int errBC = readBoundaryCondition(iZoneBC, allZones, allBCName, bc2Family,
                                       allBCFamilyName);
@@ -307,7 +307,7 @@ int CGNSZone::readBoundaryConditionRange(int iZoneBC,
   std::vector<cgsize_t> bcData(indexDataSize(2));
   cgnsErr = cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC,
                          bcData.data(), 0);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get list of elements from range data
   eltFromRange(bcData, bcElt);
@@ -325,7 +325,7 @@ int CGNSZone::readBoundaryConditionList(int iZoneBC, cgsize_t nbVal,
   std::vector<cgsize_t> bcData(indexDataSize(nbVal));
   cgnsErr = cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC,
                          bcData.data(), 0);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get list of elements from list data
   eltFromList(bcData, bcElt);

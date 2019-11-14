@@ -564,7 +564,7 @@ int CGNSZoneStruct<DIM>::readConnectivities(
   // read number of 1to1 interfaces
   int nbConnect;
   cgnsErr = cg_n1to1(fileIndex(), baseIndex(), index(), &nbConnect);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // sweep over interfaces
   for(int iConnect = 1; iConnect <= nbConnect; iConnect++) {
@@ -591,7 +591,7 @@ int CGNSZoneStruct<DIM>::readOneInterface(int iConnect,
   cgnsErr = cg_1to1_read(fileIndex(), baseIndex(), index(), iConnect,
                          connectName, donorName, range, rangeDonnor,
                          indexTransfo);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // read periodic connection information
   bool periodic = false;
@@ -600,7 +600,7 @@ int CGNSZoneStruct<DIM>::readOneInterface(int iConnect,
                                   rotCenter, rotAngle, translat);
   if(cgnsErr != CG_NODE_NOT_FOUND) {
     if(cgnsErr == CG_OK) periodic = true;
-    else return cgnsError();
+    else return cgnsError(__FILE__, __LINE__, fileIndex());
   }
 
   // if not periodic, mark as internal interface and return

@@ -139,19 +139,19 @@ int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
   ElementType_t cgnsType;
   cgnsErr = cg_element_interpolation_read(fileIndex, baseIndex, familyIndex,
                                           interpIndex, interpName, &cgnsType);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
   // get number of user interpolation points
   int nbPt;
   cgnsErr = cg_element_lagrange_interpolation_size(cgnsType, &nbPt);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
   // read user interpolation points (parametric coordinates)
   std::vector<double> u(nbPt), v(nbPt), w(nbPt);
   cgnsErr = cg_element_interpolation_points_read(fileIndex, baseIndex,
                                                  familyIndex, interpIndex,
                                                  u.data(), v.data(), w.data());
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
   
   // get Gmsh interpolation points
   const int mshType = cgns2MshEltType(cgnsType);
@@ -246,7 +246,7 @@ int readEltNodeTransfo(int fileIndex, int baseIndex,
   // read number of families
   int nbFam;
   cgnsErr = cg_nfamilies(fileIndex, baseIndex, &nbFam);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
   // sweep over families
   for(int iFam = 1; iFam <= nbFam; iFam++) {
@@ -254,15 +254,15 @@ int readEltNodeTransfo(int fileIndex, int baseIndex,
     int nbInterp;
     cgnsErr = cg_nelement_interpolation_read(fileIndex, baseIndex, iFam,
                                              &nbInterp);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
     if(nbInterp == 0) continue;
 
     // read family name
     char famName[CGNS_MAX_STR_LEN];
     cgnsErr = cg_goto(fileIndex, baseIndex, "Family_t", iFam, "end");
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
     cgnsErr = cg_famname_read(famName);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
     // read element interpolation transformations
     ZoneEltNodeTransfo &cgns2MshLag = allEltNodeTransfo[std::string(famName)];
@@ -295,7 +295,7 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
     // read zone type
     ZoneType_t zoneType;
     cgnsErr = cg_zone_type(fileIndex, baseIndex, iZone, &zoneType);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
     
     // create zone
     int err;

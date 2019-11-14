@@ -24,7 +24,7 @@ int GModel::readCGNS(const std::string &name)
   // open CGNS file and read scale
   int fileIndex = 0;
   cgnsErr = cg_open(name.c_str(), CG_MODE_READ, &fileIndex);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
   const double scale = readScale();
 
   // read base node
@@ -32,7 +32,7 @@ int GModel::readCGNS(const std::string &name)
   int dim = 0, meshDim = 0;
   char baseName[CGNS_MAX_STR_LEN];
   cgnsErr = cg_base_read(fileIndex, baseIndex, baseName, &dim, &meshDim);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
   // per-element node transformation for CPEX0045
   std::map<std::string, std::vector<fullMatrix<double> > > allEltNodeTransfo;
@@ -46,7 +46,7 @@ int GModel::readCGNS(const std::string &name)
   // read number of zones (allZones[0] is dummy because index starts at 1) 
   int nbZone = 0;
   cgnsErr = cg_nzones(fileIndex, baseIndex, &nbZone);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
   // create all zones by reading basic info
   std::vector<CGNSZone *> allZones(nbZone+1);
@@ -67,7 +67,7 @@ int GModel::readCGNS(const std::string &name)
 
   // close file
   cgnsErr = cg_close(fileIndex);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__);
 
   // populate data structures with elements and vertices
   for(int i = 0; i < 10; i++) _storeElementsInEntities(allElt[i]);
@@ -132,7 +132,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
 
   int cgIndexFile = 0;
   cgnsErr = cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write the base node
   int meshDim = getMeshDim(), dim = getDim(), cgIndexBase = 0;
@@ -142,13 +142,13 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   std::string baseName = cgnsString(name.substr(posStartName));
   cgnsErr = cg_base_write(cgIndexFile, baseName.c_str(), meshDim, dim,
                           &cgIndexBase);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write information about who generated the mesh
   cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "end");
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   cgnsErr = cg_descriptor_write("About", "Created by Gmsh");
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // Zone names
   const size_t numPart = getNumPartitions();
@@ -219,7 +219,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   }
 
   cgnsErr = cg_close(cgIndexFile);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__);
 
   return 1;
 }

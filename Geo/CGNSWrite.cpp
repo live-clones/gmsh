@@ -212,16 +212,16 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   zoneName[partition] = modelName + partSuffix;
   cgnsErr = cg_zone_write(cgIndexFile, cgIndexBase, zoneName[partition].c_str(),
                           cgZoneSize, Unstructured, &cgIndexZone);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write ordinal (zone number) and family name for CPEX0045
   cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone, "end");
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   cgnsErr = cg_ordinal_write(cgIndexZone);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   if (useCPEX0045) {
     cgnsErr = cg_famname_write(INTERPOLATION_ZONE_NAME);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
 
   // create a CGNS grid with x, y and z coordinates of all the nodes (that are
@@ -229,19 +229,19 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   int cgIndexGrid = 0;
   cgnsErr = cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone,
                           "GridCoordinates", &cgIndexGrid);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write list of coordinates
   int cgIndexCoord = 0;
   cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
                            "CoordinateX", &xcoord[0], &cgIndexCoord);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
                            "CoordinateY", &ycoord[0], &cgIndexCoord);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
                            "CoordinateZ", &zcoord[0], &cgIndexCoord);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write an element section for each entity, per element type
   cgsize_t eleStart = 0, eleEnd = 0;
@@ -308,7 +308,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
       cgnsErr = cg_section_write(cgIndexFile, cgIndexBase, cgIndexZone,
                                   ossSection.str().c_str(), cgType, eleStart,
                                   eleEnd, 0, &elemNodes[0], &cgIndexSection);
-      if(cgnsErr != CG_OK) return cgnsError();
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
 
     // write elementary entity as BC and physical name as BC family name
@@ -317,20 +317,20 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
     cgnsErr = cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
                             entityName.c_str(), FamilySpecified, PointRange,
                             2, eleEntRange, &iZoneBC);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     // const GridLocation_t loc = (entDim == 2) ? FaceCenter :
     //                            (entDim == 1) ? EdgeCenter :
     //                            (entDim == 0) ? Vertex : CellCenter;
     const GridLocation_t loc = CellCenter;
     cgnsErr = cg_boco_gridlocation_write(cgIndexFile, cgIndexBase,
                                           cgIndexZone, iZoneBC, loc);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     if(physicalName.length() > 0) {
       cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
                         "ZoneBC_t", 1, "BC_t", iZoneBC, "end");
-      if(cgnsErr != CG_OK) return cgnsError();
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
       cgnsErr = cg_famname_write(physicalName.c_str());
-      if(cgnsErr != CG_OK) return cgnsError();
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
   }
 
@@ -414,7 +414,7 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
                             masterZoneName.c_str(), Unstructured,
                             PointListDonor, DataTypeNull, nodes2.size(),
                             nodes2.data(), &connIdx);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     float rotCenter[3], rotAngle[3], trans[3];
     if(ent1->getMeshMaster() == ent2) {
       const std::vector<double> &perTransfo = ent1->affineTransform;
@@ -438,7 +438,7 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     }
     cgnsErr = cg_conn_periodic_write(cgIndexFile, cgIndexBase, slaveZone,
                                      connIdx, rotCenter, rotAngle, trans);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
 
   return 1;
@@ -541,7 +541,7 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
                             masterZoneName.c_str(), Unstructured,
                             PointListDonor, DataTypeNull,
                             nc.second.size(), nc.second.data(), &dum);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
 
   return 1;
@@ -559,7 +559,7 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
   int cgIndexFam;
   cgnsErr = cg_family_write(cgIndexFile, cgIndexBase, INTERPOLATION_ZONE_NAME,
                             &cgIndexFam);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write node sets for each element type
   typedef std::set<int>::iterator IntSetIter;
@@ -583,12 +583,12 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
     cgnsErr = cg_element_interpolation_write(cgIndexFile, cgIndexBase,
                                              cgIndexFam, interpName.c_str(),
                                              cgnsType, &indexInterp);
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     cgnsErr = cg_element_interpolation_points_write(cgIndexFile, cgIndexBase,
                                                     cgIndexFam, indexInterp,
                                                     u.data(), v.data(),
                                                     w.data());
-    if(cgnsErr != CG_OK) return cgnsError();
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
 
   return 1;

@@ -14,7 +14,7 @@ typedef int cgsize_t
 #endif
 
 
-int cgnsError(const int cgIndexFile = -1);
+int cgnsError(const char *file, const int line, const int fileIndex = -1);
 
 void printProgress(const char *cstr, std::size_t i, std::size_t num);
 

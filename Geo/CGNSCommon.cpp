@@ -9,11 +9,12 @@
 #if defined(HAVE_LIBCGNS)
 
 
-int cgnsError(const int cgIndexFile)
+int cgnsError(const char *file, const int line, const int fileIndex)
 {
-  Msg::Error("Error detected by CGNS library: %s", cg_get_error());
-  if(cgIndexFile != -1) {
-    if(cg_close(cgIndexFile)) {
+  Msg::Error("%s:%i: Error from CGNS library -- %s", file, line,
+             cg_get_error());
+  if(fileIndex != -1) {
+    if(cg_close(fileIndex)) {
       Msg::Error("Unable to close CGNS file");
     }
   }

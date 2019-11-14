@@ -130,19 +130,19 @@ int CGNSZoneUnstruct::readSection(int iSect,
   cgnsErr = cg_section_read(fileIndex(), baseIndex(), index(), iSect, sectName,
                             &sectEltType, &startElt, &endElt, &nbBnd,
                             &parentFlag);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // read connectivity data size
   cgsize_t dataSize;
   cgnsErr = cg_ElementDataSize(fileIndex(), baseIndex(), index(), iSect,
                                &dataSize);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // read connectivity data
   std::vector<cgsize_t> sectData(dataSize);
   cgnsErr = cg_elements_read(fileIndex(), baseIndex(), index(), iSect,
                              sectData.data(), 0);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // create elements
   std::size_t iSectData = 0;
@@ -178,7 +178,7 @@ int CGNSZoneUnstruct::readElements(std::vector<MVertex *> &allVert,
   // read number of sections of element-vertex connectivity
   int nbSect;
   cgnsErr = cg_nsections(fileIndex(), baseIndex(), index(), &nbSect);
-  if(cgnsErr != CG_OK) return cgnsError();
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // read sections of element-vertex connectivity
   for(int iSect = 1; iSect <= nbSect; iSect++) {
