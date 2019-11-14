@@ -249,13 +249,19 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
     GEntity *ge = entities[i];
     // const int entDim = ge->dim();
 
-    // get or create the name for the entity 
-    std::string entityName = model->getElementaryName(ge->dim(), ge->tag());
-    if(entityName.empty()) {
-      std::ostringstream s;
-      s << "Gmsh_" << entTypeStr(ge->dim()) << "_" << ge->tag();
-      entityName = s.str();
+    // get or create the name for the entity
+    std::ostringstream ossEntityName;
+    switch (ge->dim())
+    {
+    case 0: ossEntityName << "P_"; break;
+    case 1: ossEntityName << "L_"; break;
+    case 2: ossEntityName << "S_"; break;
+    case 3: ossEntityName << "V_"; break;
     }
+    ossEntityName << ge->tag();
+    std::string entityName = model->getElementaryName(ge->dim(), ge->tag());
+    if(!entityName.empty()) ossEntityName << "_" << entityName;
+    entityName = ossEntityName.str();
     entityName = cgnsString(entityName);
     std::vector<int> physicalEnt = ge->getPhysicalEntities();
     std::string physicalName;
@@ -302,8 +308,8 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
       }
 
       // write section
-      std::ostringstream ossSection(entityName);
-      ossSection << "_" << eleTypes[eleType];
+      std::ostringstream ossSection;
+      ossSection << eleTypes[eleType] << "_" << entityName;
       int cgIndexSection = 0;
       cgnsErr = cg_section_write(cgIndexFile, cgIndexBase, cgIndexZone,
                                   ossSection.str().c_str(), cgType, eleStart,
@@ -577,8 +583,8 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
 
     // write nodal set
     ElementType_t cgnsType = msh2CgnsEltType(mshType);
-    std::ostringstream ossInterp("Element_");
-    ossInterp << "_" << cgnsType;
+    std::ostringstream ossInterp;
+    ossInterp << "Element_" << cgnsType;
     std::string interpName = ossInterp.str();
     int indexInterp;
     cgnsErr = cg_element_interpolation_write(cgIndexFile, cgIndexBase,
