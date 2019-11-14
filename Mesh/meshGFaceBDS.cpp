@@ -379,8 +379,6 @@ static void setDegeneracy(std::vector<BDS_Point *> &deg, short d)
 
 static void splitAllEdgesConnectedToSingularity(GFace *gf, BDS_Mesh &m)
 {
-  //return 0;
-  
   std::vector<BDS_Edge *> degenerated;
   for(size_t i = 0; i < m.edges.size(); i++) {
     BDS_Edge *e = m.edges[i];
@@ -388,25 +386,21 @@ static void splitAllEdgesConnectedToSingularity(GFace *gf, BDS_Mesh &m)
                        (e->p1->degenerated && !e->p2->degenerated)))
       degenerated.push_back(e);
   }
-  for (size_t i=0 ; i< degenerated.size(); i++){
+  for(size_t i = 0; i < degenerated.size(); i++) {
     BDS_Edge *e = degenerated[i];
-    if (!e->deleted && e->numfaces() == 2){
-      short d1 = e->p1->degenerated;
-      short d2 = e->p2->degenerated;
-      BDS_Point *p1 = e->p1;
-      BDS_Point *p2 = e->p2;
-      e->p1->degenerated = 0;
-      e->p2->degenerated = 0;
+    if(!e->deleted && e->numfaces() == 2) {
       double U = 0.5 * (e->p1->u + e->p2->u);
       double V = 0.5 * (e->p1->v + e->p2->v);
       GPoint gpp = gf->point(U, V);
-      BDS_Point *mid = m.add_point(++m.MAXPOINTNUMBER, gpp.x(), gpp.y(), gpp.z());
+      BDS_Point *mid =
+        m.add_point(++m.MAXPOINTNUMBER, gpp.x(), gpp.y(), gpp.z());
       mid->u = U;
       mid->v = V;
-      mid->lc() = 0.5 * (e->p1->lc() + e->p2->lc());    
-      m.split_edge(e, mid);
-      p1->degenerated = d1;
-      p2->degenerated = d2;
+      mid->lc() = 0.5 * (e->p1->lc() + e->p2->lc());
+      if(!m.split_edge(e, mid, true)) {
+        m.del_point(mid);
+        return;
+      }
     }
   }
 }
@@ -732,7 +726,8 @@ void modifyInitialMeshToRemoveDegeneracies(
         if(degenerated_edges[K]->p1 == it->first ||
            degenerated_edges[K]->p2 == it->first) {
           if(degenerated_edges[K]->p1->u == degenerated_edges[K]->p2->u) {
-            Msg::Debug("Degenerated edge on u = cst axis: treated as well now!");
+            Msg::Debug(
+              "Degenerated edge on u = cst axis: treated as well now!");
             it->first->degenerated = 2;
           }
           else {
@@ -758,11 +753,11 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
                    std::vector<SPoint2> *true_boundary)
 {
 #ifdef superdebug
-    outputScalarField(m.triangles, "initial.pos", 1, gf);
-    getchar();
+  outputScalarField(m.triangles, "initial.pos", 1, gf);
+  getchar();
 #endif
 
-    //  getchar();
+  //  getchar();
   //  return;
   int IT = 0;
   int MAXNP = m.MAXPOINTNUMBER;
@@ -803,24 +798,23 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       ++it;
     }
   }
-  
+
   std::vector<BDS_Point *> deg;
   getDegeneracy(m, deg);
   short degType = 1;
   if(deg.size()) degType = deg[0]->degenerated;
 
-  if(computeNodalSizeField){
+  if(computeNodalSizeField) {
     splitAllEdgesConnectedToSingularity(gf, m);
 #ifdef superdebug
     outputScalarField(m.triangles, "cut_all_degenerate.pos", 1, gf);
     getchar();
 #endif
-  }  
-  
-  while(1) {
+  }
 
+  while(1) {
     setDegeneracy(deg, degType);
-    
+
     // we count the number of local mesh modifs.
     int nb_split = 0;
     int nb_smooth = 0;
@@ -962,16 +956,14 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
           pts[1]->config_modified = true;
           pts[2]->config_modified = true;
           bad++;
-          if(val < 0) {
-            invalid++;
-          }
+          if(val < 0) { invalid++; }
         }
       }
       if(++ITER == 10) {
         if(invalid && !computeNodalSizeField) {
           gf->meshStatistics.status = GFace::FAILED;
-          Msg::Warning("%d element%s remain invalid in surface %d",
-                       invalid, (invalid > 1) ? "s" : "", gf->tag());
+          Msg::Warning("%d element%s remain invalid in surface %d", invalid,
+                       (invalid > 1) ? "s" : "", gf->tag());
         }
         break;
       }

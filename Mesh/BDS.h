@@ -369,7 +369,7 @@ public:
                  bool force = false);
   bool collapse_edge_parametric(BDS_Edge *, BDS_Point *, bool = false);
   bool smooth_point_centroid(BDS_Point *p, GFace *gf, double thresh);
-  bool split_edge(BDS_Edge *, BDS_Point *);
+  bool split_edge(BDS_Edge *, BDS_Point *, bool check_area_param = false);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
   // Global operators
   void cleanup();
