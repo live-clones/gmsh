@@ -349,7 +349,7 @@ CGNSZoneStruct<DIM>::CGNSZoneStruct(int fileIndex, int baseIndex, int zoneIndex,
                               int meshDim, cgsize_t startNode,
                               const Family2EltNodeTransfo &allEltNodeTransfo,
                               int &err) :
-  CGNSZone(fileIndex, baseIndex, zoneIndex, meshDim, startNode,
+  CGNSZone(fileIndex, baseIndex, zoneIndex, Structured, meshDim, startNode,
            allEltNodeTransfo, err)
 {
   // Check consistency

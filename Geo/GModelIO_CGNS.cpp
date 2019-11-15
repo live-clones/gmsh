@@ -78,15 +78,15 @@ int GModel::readCGNS(const std::string &name)
   // add periodic vertex correspondence
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     CGNSZone *zone = allZones[iZone];
-    for(std::size_t iPer = 0; iPer < zone->slaveVert().size(); iPer++) {
-      const std::vector<MVertex *> &slaveVert = zone->slaveVert()[iPer];
-      const std::vector<MVertex *> &masterVert = zone->masterVert()[iPer];
+    for(int iPer = 0; iPer < zone->nbPerConnect(); iPer++) {
+      const std::vector<MVertex *> &slaveVert = zone->slaveVert(iPer);
+      const std::vector<MVertex *> &masterVert = zone->masterVert(iPer);
       for(std::size_t iV = 0; iV < slaveVert.size(); iV++) {
         MVertex *sVert = slaveVert[iV], *mVert = masterVert[iV];
         GEntity *sEnt = sVert->onWhat(), *mEnt = mVert->onWhat();
         sEnt->correspondingVertices[sVert] = mVert;
         if(sEnt->getMeshMaster() == sEnt) {
-          sEnt->setMeshMaster(mEnt, zone->perTransfo()[iPer]);
+          sEnt->setMeshMaster(mEnt, zone->perTransfo(iPer));
         }
       }
     }

@@ -14,6 +14,7 @@
 #include "partitionEdge.h"
 #include "partitionVertex.h"
 #include "BasisFactory.h"
+#include "affineTransformation.h"
 #include "CGNSWrite.h"
 #include "CGNSConventions.h"
 

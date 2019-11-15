@@ -28,9 +28,9 @@ class CGNSZone
 {
 public:
   CGNSZone() {}
-  CGNSZone(int fileIndex, int baseIndex, int zoneIndex, int meshDim,
-           cgsize_t startNode, const Family2EltNodeTransfo &allEltNodeTransfo,
-           int &err);
+  CGNSZone(int fileIndex, int baseIndex, int zoneIndex, ZoneType_t type,
+           int meshDim, cgsize_t startNode,
+           const Family2EltNodeTransfo &allEltNodeTransfo, int &err);
   virtual ~CGNSZone() {}
 
   int index() const { return zoneIndex_; }
@@ -59,23 +59,18 @@ public:
   virtual void nodeFromList(const std::vector<cgsize_t> &range,
                             std::vector<cgsize_t> &node) const = 0;
 
-  std::map<cgsize_t, int> &elt2BC() { return elt2BC_; }
-  const ZoneEltNodeTransfo *eltNodeTransfo() { return eltNodeTransfo_; }
-  const std::vector<bool> &interfaceNode() { return interfaceNode_; }
-  const std::vector<int> &masterZone() { return masterZone_; }
-  const std::vector<std::vector<double> > &perTransfo() { return perTransfo_; }
-  const std::vector<std::vector<cgsize_t> > &masterNode() { return masterNode_; }
-  const std::vector<std::vector<cgsize_t> > &slaveNode() { return slaveNode_; }
-  std::vector<std::vector<MVertex *> > &masterVert() { return masterVert_; }
-  const std::vector<std::vector<MVertex *> > &slaveVert() { return slaveVert_; }
+  const std::map<cgsize_t, int> &elt2BC() const { return elt2BC_; }
+  const ZoneEltNodeTransfo *eltNodeTransfo() const { return eltNodeTransfo_; }
+  const std::vector<bool> &interfaceNode() const { return interfaceNode_; }
+  int nbPerConnect() const { return nbPerConnect_; }
   // int &elt2BC(int iElt) { return elt2BC_[iElt]; }
   // bool interfaceNode(int iNode) { return interfaceNode_[iNode]; }
-  // int masterZone(int iPer) { return masterZone_[iPer]; }
-  // const std::vector<double> &perTransfo(int iPer) { return perTransfo_[iPer]; }
-  // const std::vector<cgsize_t> &masterNode(int iPer) { return masterNode_[iPer]; }
-  // const std::vector<cgsize_t> &slaveNode(int iPer) { return slaveNode_[iPer]; }
-  // const std::vector<MVertex *> &masterVert(int iPer) { return masterVert_[iPer]; }
-  // const std::vector<MVertex *> &slaveVert(int iPer) { return slaveVert_[iPer]; }
+  int masterZone(int iPer) const { return masterZone_[iPer]; }
+  const std::vector<double> &perTransfo(int iPer) const { return perTransfo_[iPer]; }
+  const std::vector<cgsize_t> &masterNode(int iPer) const { return masterNode_[iPer]; }
+  const std::vector<cgsize_t> &slaveNode(int iPer) const { return slaveNode_[iPer]; }
+  std::vector<MVertex *> &masterVert(int iPer) { return masterVert_[iPer]; }
+  std::vector<MVertex *> &slaveVert(int iPer) { return slaveVert_[iPer]; }
   
   int readBoundaryCondition(int iZoneBC,
                             const std::vector<CGNSZone *> &allZones,
@@ -118,6 +113,7 @@ protected:
   std::vector<bool> interfaceNode_;
 
   // periodic information
+  int nbPerConnect_;
   std::vector<int> masterZone_;
   std::vector<std::vector<double> > perTransfo_;
   std::vector<std::vector<cgsize_t> > masterNode_, slaveNode_;

@@ -15,7 +15,7 @@ bool computeAffineTransformation(const FLOAT *rc, const FLOAT *ra,
                                  const FLOAT *tr, std::vector<double> &tfo)
 {
   // rotation matrix
-  double rotData[9] = {0., 0., 1., 0., 1., 0., 0., 0., 1.};
+  double rotData[9] = {1., 0., 0., 0., 1., 0., 0., 0., 1.};
   fullMatrix<double> rot(rotData, 3, 3);
 
   // rotation about x-axis

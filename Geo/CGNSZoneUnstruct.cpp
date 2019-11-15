@@ -103,9 +103,11 @@ CGNSZoneUnstruct::CGNSZoneUnstruct(int fileIndex, int baseIndex, int zoneIndex,
                                 int meshDim, cgsize_t startNode,
                                 const Family2EltNodeTransfo &allEltNodeTransfo,
                                 int &err) :
-  CGNSZone(fileIndex, baseIndex, zoneIndex, meshDim, startNode,
+  CGNSZone(fileIndex, baseIndex, zoneIndex, Unstructured, meshDim, startNode,
            allEltNodeTransfo, err)
 {
+  if(err == 0) return;
+  
   // number of nodes and elements
   nbNode_ = size_[0];
   nbElt_ = size_[1];

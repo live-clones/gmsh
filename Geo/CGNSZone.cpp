@@ -5,6 +5,7 @@
 
 #include "GmshMessage.h"
 #include "MVertex.h"
+#include "affineTransformation.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 #include "CGNSZone.h"
@@ -42,11 +43,12 @@ void periodicVertFromNode(std::size_t vertShift,
 }
 
 
-CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex, int meshDim,
-                   cgsize_t startNode,
+CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex, ZoneType_t type,
+                   int meshDim, cgsize_t startNode,
                    const Family2EltNodeTransfo &allEltNodeTransfo, int &err) :
   fileIndex_(fileIndex), baseIndex_(baseIndex), meshDim_(meshDim),
-  zoneIndex_(zoneIndex), startNode_(startNode), eltNodeTransfo_(0)
+  zoneIndex_(zoneIndex), type_(type), startNode_(startNode), eltNodeTransfo_(0),
+  nbPerConnect_(0)
 {
   int cgnsErr;
 
@@ -69,6 +71,8 @@ CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex, int meshDim,
     }
     else err = cgnsError(__FILE__, __LINE__, fileIndex);
   }
+
+  err = 1;
 }
 
 
@@ -204,19 +208,19 @@ int CGNSZone::readVertices(int dim, double scale,
   }
 
   // fill periodic slave nodes
-  for(std::size_t iPer = 0; iPer < slaveNode().size(); iPer++) {
-    std::vector<cgsize_t> &sNode = slaveNode_[iPer];
-    std::vector<MVertex *> &sVert = slaveVert_[iPer];
+  for(int iPer = 0; iPer < nbPerConnect(); iPer++) {
+    const std::vector<cgsize_t> &sNode = slaveNode(iPer);
+    std::vector<MVertex *> &sVert = slaveVert(iPer);
     periodicVertFromNode(startNode(), allVert, sNode, sVert);
   }
 
   // fill periodic master nodes in all zones
   for(std::size_t iZone2 = 1; iZone2 < allZones.size(); iZone2++) {
     CGNSZone *zone2 = allZones[iZone2];
-    for(std::size_t iPer = 0; iPer < zone2->masterZone().size(); iPer++) {
-      if (zone2->masterZone()[iPer] != index()) continue;
-      const std::vector<cgsize_t> &masterNode = zone2->masterNode()[iPer];
-      std::vector<MVertex *> &masterVert = zone2->masterVert()[iPer];
+    for(int iPer = 0; iPer < zone2->nbPerConnect(); iPer++) {
+      if (zone2->masterZone(iPer) != index()) continue;
+      const std::vector<cgsize_t> &masterNode = zone2->masterNode(iPer);
+      std::vector<MVertex *> &masterVert = zone2->masterVert(iPer);
       periodicVertFromNode(startNode(), allVert, masterNode, masterVert);
     }
   }
@@ -235,6 +239,14 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
   cgnsErr = cg_nconns(fileIndex(), baseIndex(), index(), &nbConnect);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
+  // reserve memory for data containers
+  perTransfo_.reserve(nbConnect);
+  slaveNode_.reserve(nbConnect);
+  slaveVert_.reserve(nbConnect);
+  masterZone_.reserve(nbConnect);
+  masterNode_.reserve(nbConnect);
+  masterVert_.reserve(nbConnect);
+
   for(int iConnect = 1; iConnect <= nbConnect; iConnect++) {
     // read connection info
     char connectName[CGNS_MAX_STR_LEN], donorName[CGNS_MAX_STR_LEN];
@@ -250,15 +262,74 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
                            &ptSetTypeDonor, &dataTypeDonor, &connectSizeDonor);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
+    // read periodic info, skip if not periodic
+    float rotCenter[3], rotAngle[3], trans[3];
+    cgnsErr = cg_conn_periodic_read(fileIndex(), baseIndex(), index(),
+                                    iConnect, rotCenter, rotAngle, trans);
+    if(cgnsErr == CG_NODE_NOT_FOUND) continue;
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
+
     // check if connection type is OK
     if(connectType != Abutting1to1) {
       Msg::Error("Non-conformal connection not supported in CGNS reader");
       return 0;
     }
+    if(location != Vertex) {
+      Msg::Error("Only vertex connections are supported in CGNS reader");
+      return 0;
+    }
+
+    // get and check data on master zone
+    const std::string masterName(donorName);
+    const std::map<std::string, int>::const_iterator itMasterName = 
+                                                     name2Zone.find(masterName);
+    if(itMasterName == name2Zone.end()) {
+      Msg::Error("Zone name '%s' in not found in connection %i of zone %i",
+                 masterName, iConnect, index());
+      return 0;
+    }
+    const int masterZoneIndex = itMasterName->second;
+    CGNSZone *mZone = allZones[masterZoneIndex];
+    if(mZone->type() != zoneTypeDonor) {
+      Msg::Error("Inconsistent type for zone '%s' in connection %i of zone %i",
+                 masterName.c_str(), iConnect, index());
+      return 0;
+    }
 
     // read connectivity data
-    // cg_conn_read(cgIndexFile, cgIndexBase, iZone, iConnect, tgtPts,
-    //              dataTypeDonor, srcPts);
+    std::vector<cgsize_t> slaveData(indexDataSize(connectSize));
+    std::vector<cgsize_t> masterData(mZone->indexDataSize(connectSizeDonor));
+    cgnsErr = cg_conn_read(fileIndex(), baseIndex(), index(), iConnect,
+                           slaveData.data(), dataTypeDonor, masterData.data());
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
+
+    // get slave and master nodes
+    std::vector<cgsize_t> sNode, mNode;
+    if(ptSetType == PointRange) nodeFromRange(slaveData, sNode);
+    else if(ptSetType == PointList) nodeFromList(slaveData, sNode);
+    if(ptSetTypeDonor != PointListDonor) {
+      Msg::Error("Only PointListDonor sets are supported for donnor points for "
+                 "general connections in CGNS reader");
+      return 0;
+    }
+    mZone->nodeFromList(masterData, mNode);
+
+    // skip if inverse periodic connection exists
+    bool invExists = false;
+    for(int iPer = 0; iPer < mZone->nbPerConnect(); iPer++) {
+      if(mZone->slaveNode(iPer) == mNode) { invExists = true; break; }
+    }
+    if(invExists) continue;
+  
+    // add periodic connection
+    nbPerConnect_++;
+    perTransfo_.push_back(std::vector<double>());
+    computeAffineTransformation(rotCenter, rotAngle, trans, perTransfo_.back());
+    masterZone_.push_back(masterZoneIndex);
+    slaveNode_.push_back(sNode);
+    slaveVert_.push_back(std::vector<MVertex *>());
+    masterNode_.push_back(mNode);
+    masterVert_.push_back(std::vector<MVertex *>());
   }
 
   return 1;
