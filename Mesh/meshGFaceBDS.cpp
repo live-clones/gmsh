@@ -20,7 +20,6 @@
 #include "Numeric.h"
 #include "BDS.h"
 #include "qualityMeasures.h"
-#include "Field.h"
 #include "OS.h"
 #include "robustPredicates.h"
 
@@ -397,6 +396,7 @@ static void splitAllEdgesConnectedToSingularity(GFace *gf, BDS_Mesh &m)
       mid->u = U;
       mid->v = V;
       mid->lc() = 0.5 * (e->p1->lc() + e->p2->lc());
+      // abort if one of the splits leads to an invalid mesh in the param plane
       if(!m.split_edge(e, mid, true)) {
         m.del_point(mid);
         return;
@@ -604,14 +604,7 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q,
     std::set<BDS_Point *, PointLessThan>::iterator itp = m.points.begin();
     while(itp != m.points.end()) {
       if(neighboringModified(*itp)) {
-        // if ((*itp)->iD ==  616){
-        //  outputScalarField(m.triangles, "BEF.pos", 1, gf);
-        // }
         if(m.smooth_point_centroid(*itp, gf, threshold)) nb_smooth++;
-        // if ((*itp)->iD ==  616){
-        //   outputScalarField(m.triangles, "AFT.pos", 1, gf);
-        //   getchar();
-        // }
       }
       ++itp;
     }
@@ -757,8 +750,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   getchar();
 #endif
 
-  //  getchar();
-  //  return;
   int IT = 0;
   int MAXNP = m.MAXPOINTNUMBER;
 
@@ -779,9 +770,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     }
   }
 
-  //  if (recoverMap)outputScalarField(m.triangles, "init.pos", 1, gf);
-
-  // If asked, compute nodal size field using 1D Mesh
+  // if asked, compute nodal size field using 1D Mesh
   if(computeNodalSizeField) computeNodalSizes(gf, m, recoverMap);
 
   double t_spl = 0, t_sw = 0, t_col = 0, t_sm = 0;
@@ -822,7 +811,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     int nb_swap = 0;
 
     // split long edges
-
     double maxE = MAXE_;
     double minE = MINE_;
     splitEdgePass(gf, m, maxE, nb_split, true_boundary, t_spl);
