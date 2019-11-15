@@ -565,27 +565,7 @@ void meshGEdge::operator()(GEdge *ge)
     return;
   }
 
-  if(ge->model()->getNumEdges() > 100000) {
-    if(ge->tag() % 100000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else if(ge->model()->getNumEdges() > 10000) {
-    if(ge->tag() % 10000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else if(ge->model()->getNumEdges() > 1000) {
-    if(ge->tag() % 1000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else {
-    Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
-  }
+  Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
 
   // compute bounds
   Range<double> bounds = ge->parBounds(0);
