@@ -718,7 +718,7 @@ void modifyInitialMeshToRemoveDegeneracies(
       for(size_t K = 0; K < degenerated_edges.size(); K++) {
         if(degenerated_edges[K]->p1 == it->first ||
            degenerated_edges[K]->p2 == it->first) {
-          if(degenerated_edges[K]->p1->u == degenerated_edges[K]->p2->u) {
+          if(std::abs(degenerated_edges[K]->p1->u - degenerated_edges[K]->p2->u) < 1e-12) {
             Msg::Debug(
               "Degenerated edge on u = cst axis: treated as well now!");
             it->first->degenerated = 2;
