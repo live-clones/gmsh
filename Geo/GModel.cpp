@@ -1796,7 +1796,7 @@ int GModel::partitionMesh(int numPart)
     return 1;
   }
 #else
-  Msg::Error("Mesh module not compiled");
+  Msg::Error("Mesh or Metis module not compiled");
   return 1;
 #endif
 }
