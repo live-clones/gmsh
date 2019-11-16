@@ -95,6 +95,9 @@ public:
                std::map<int, int> &bc2Family,
                std::vector<std::string> &allBCFamilyName);
 
+  void setPeriodicVertices(const std::vector<CGNSZone *> &allZones,
+                           const std::vector<MVertex *> &allVert);
+
 protected:
   // basic zone information
   int fileIndex_, baseIndex_, meshDim_, zoneIndex_;

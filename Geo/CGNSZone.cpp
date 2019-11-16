@@ -28,18 +28,6 @@ std::size_t nameIndex(const std::string &name,
 }
 
 
-void periodicVertFromNode(std::size_t vertShift,
-                          const std::vector<MVertex *> &allVert,
-                          const std::vector<cgsize_t> &node,
-                          std::vector<MVertex *> &vert)
-{
-  for(std::size_t iN = 0; iN < node.size(); iN++) {
-    cgsize_t indN = node[iN];
-    vert.push_back(allVert[vertShift+indN]);
-  }
-}
-
-
 }
 
 
@@ -207,24 +195,6 @@ int CGNSZone::readVertices(int dim, double scale,
     allVert.push_back(new MVertex(x, y, z));
   }
 
-  // fill periodic slave nodes
-  for(int iPer = 0; iPer < nbPerConnect(); iPer++) {
-    const std::vector<cgsize_t> &sNode = slaveNode(iPer);
-    std::vector<MVertex *> &sVert = slaveVert(iPer);
-    periodicVertFromNode(startNode(), allVert, sNode, sVert);
-  }
-
-  // fill periodic master nodes in all zones
-  for(std::size_t iZone2 = 1; iZone2 < allZones.size(); iZone2++) {
-    CGNSZone *zone2 = allZones[iZone2];
-    for(int iPer = 0; iPer < zone2->nbPerConnect(); iPer++) {
-      if (zone2->masterZone(iPer) != index()) continue;
-      const std::vector<cgsize_t> &masterNode = zone2->masterNode(iPer);
-      std::vector<MVertex *> &masterVert = zone2->masterVert(iPer);
-      periodicVertFromNode(startNode(), allVert, masterNode, masterVert);
-    }
-  }
-
   return 1;
 }
 
@@ -367,6 +337,25 @@ int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
   elt2BC_.clear();
 
   return 1;
+}
+
+
+void CGNSZone::setPeriodicVertices(const std::vector<CGNSZone *> &allZones,
+                                   const std::vector<MVertex *> &allVert)
+{
+  for(int iPer = 0; iPer < nbPerConnect(); iPer++) {
+    const std::vector<cgsize_t> &sNode = slaveNode(iPer);
+    const std::vector<cgsize_t> &mNode = masterNode(iPer);
+    std::vector<MVertex *> &sVert = slaveVert(iPer);
+    std::vector<MVertex *> &mVert = masterVert(iPer);
+    CGNSZone *mZone = allZones[masterZone(iPer)];
+    for(std::size_t iN = 0; iN < sNode.size(); iN++) {
+      const cgsize_t sInd = startNode() + sNode[iN];
+      const cgsize_t mInd = mZone->startNode() + mNode[iN];
+      sVert.push_back(allVert[sInd]);
+      mVert.push_back(allVert[mInd]);
+    }
+  }
 }
 
 

@@ -65,6 +65,11 @@ int GModel::readCGNS(const std::string &name)
     if(err == 0) return 0;
   }
 
+  // set periodic vertices in each zone
+  for(int iZone = 1; iZone <= nbZone; iZone++) {
+    allZones[iZone]->setPeriodicVertices(allZones, allVert);
+  }
+
   // close file
   cgnsErr = cg_close(fileIndex);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__);
