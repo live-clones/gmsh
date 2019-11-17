@@ -239,7 +239,6 @@ std::map<std::string, std::string> &Msg::GetCommandLineStrings()
 
 void Msg::SetProgressMeterStep(int step)
 {
-  if(GetCommRank() || GetNumThreads() > 1) return;
   _progressMeterStep = step;
 }
 
@@ -250,16 +249,20 @@ int Msg::GetProgressMeterStep()
 
 void Msg::StartProgressMeter(int ntotal)
 {
-  if(GetCommRank() || GetNumThreads() > 1) return;
   _progressMeterCurrent = 0;
   _progressMeterTotal = ntotal;
 }
 
 void Msg::StopProgressMeter()
 {
-  if(GetCommRank() || GetNumThreads() > 1) return;
   _progressMeterCurrent = -1;
   _progressMeterTotal = 0;
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    FlGui::check();
+    FlGui::instance()->setProgress("", 0, 0, 1);
+  }
+#endif
 }
 
 void Msg::SetInfoCpu(bool val)
@@ -579,7 +582,7 @@ void Msg::Info(const char *fmt, ...)
 
   if(CTX::instance()->terminal){
     if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
-       _commSize == 1 && GetNumThreads() == 1)
+       _commSize == 1)
       fprintf(stdout, "Info    : [%3d %%] %s\n", _progressMeterCurrent, str);
     else if(_commSize > 1)
       fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
@@ -745,17 +748,24 @@ void Msg::Debug(const char *fmt, ...)
 
 void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 {
-  if(GetCommRank() || GetNumThreads() > 1 || GetVerbosity() < 4 ||
-     _progressMeterStep <= 0 || _progressMeterStep >= 100 ||
-     _progressMeterTotal <= 0) return;
+  if(GetCommRank() || GetVerbosity() < 4) return;
+  if(_progressMeterStep <= 0 || _progressMeterStep >= 100) return;
+  if(_progressMeterTotal <= 0) return;
 
   int N = _progressMeterTotal;
   double percent = 100. * (double)n / (double)N;
 
   if(percent >= _progressMeterCurrent || n > N - 1){
-    while(_progressMeterCurrent < percent)
-      _progressMeterCurrent += _progressMeterStep;
-    if(_progressMeterCurrent >= 100) _progressMeterCurrent = 100;
+    int p = _progressMeterCurrent;
+    while(p < percent) p += _progressMeterStep;
+    if(p >= 100) p = 100;
+
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+    {
+      _progressMeterCurrent = p;
+    }
 
     // TODO With C++11 use std::string (contiguous layout) and avoid all these C
     // problems
