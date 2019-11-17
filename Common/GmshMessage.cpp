@@ -55,6 +55,7 @@ int Msg::_commSize = 1;
 int Msg::_verbosity = 5;
 int Msg::_progressMeterStep = 10;
 int Msg::_progressMeterCurrent = -1;
+int Msg::_progressMeterTotal = 0;
 std::map<std::string, double> Msg::_timers;
 bool Msg::_infoCpu = false;
 double Msg::_startTime = 0.;
@@ -247,16 +248,18 @@ int Msg::GetProgressMeterStep()
   return _progressMeterStep;
 }
 
-void Msg::StartProgressMeter()
+void Msg::StartProgressMeter(int ntotal)
 {
   if(GetCommRank() || GetNumThreads() > 1) return;
   _progressMeterCurrent = 0;
+  _progressMeterTotal = ntotal;
 }
 
 void Msg::StopProgressMeter()
 {
   if(GetCommRank() || GetNumThreads() > 1) return;
   _progressMeterCurrent = -1;
+  _progressMeterTotal = 0;
 }
 
 void Msg::SetInfoCpu(bool val)
@@ -575,7 +578,8 @@ void Msg::Info(const char *fmt, ...)
 #endif
 
   if(CTX::instance()->terminal){
-    if(_progressMeterCurrent >= 0 && _commSize == 1 && GetNumThreads() == 1)
+    if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
+       _commSize == 1 && GetNumThreads() == 1)
       fprintf(stdout, "Info    : %s - %d %%\n", str, _progressMeterCurrent);
     else if(_commSize > 1)
       fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
@@ -739,12 +743,14 @@ void Msg::Debug(const char *fmt, ...)
   }
 }
 
-void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
+void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 {
   if(GetCommRank() || GetNumThreads() > 1 || GetVerbosity() < 4 ||
-     _progressMeterStep <= 0 || _progressMeterStep >= 100) return;
+     _progressMeterStep <= 0 || _progressMeterStep >= 100 ||
+     _progressMeterTotal <= 0) return;
 
-  double percent = 100. * (double)n/(double)N;
+  int N = _progressMeterTotal;
+  double percent = 100. * (double)n / (double)N;
 
   if(percent >= _progressMeterCurrent || n > N - 1){
     while(_progressMeterCurrent < percent)
@@ -1582,12 +1588,12 @@ MsgProgressStatus::MsgProgressStatus(int num)
     _progressMeterStep(Msg::GetProgressMeterStep())
 {
   Msg::SetProgressMeterStep(1);
-  Msg::StartProgressMeter();
+  Msg::StartProgressMeter(_totalElementToTreat);
 }
 
 MsgProgressStatus::~MsgProgressStatus()
 {
-  Msg::ProgressMeter(_totalElementToTreat, _totalElementToTreat, true, "done");
+  Msg::ProgressMeter(_totalElementToTreat, true, "done");
   Msg::SetProgressMeterStep(_progressMeterStep);
   Msg::StopProgressMeter();
 }
@@ -1611,15 +1617,15 @@ void MsgProgressStatus::next()
     const double remaining = (currentTime - _initialTime) / (_currentI + 1) *
                              (_totalElementToTreat - _currentI - 1);
     if (remaining < 60*2)
-      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+      Msg::ProgressMeter(_currentI - 1, true,
                          "%d%% (remaining time ~%g seconds)",
                          currentPercentage, remaining);
     else if (remaining < 60*60*2)
-      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+      Msg::ProgressMeter(_currentI - 1, true,
                          "%d%% (remaining time ~%g minutes)",
                          currentPercentage, remaining / 60);
     else
-      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+      Msg::ProgressMeter(_currentI - 1, true,
                          "%d%% (remaining time ~%g hours)",
                          currentPercentage, remaining / 3600);
   }

@@ -1601,21 +1601,20 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   faceContainer faceVertices;
   std::map<GEntity *, std::vector<MVertex *> > newHOVert;
 
-  Msg::StartProgressMeter();
-
   int counter = 0;
   int nTot = m->getNumEdges() + m->getNumFaces() + m->getNumRegions();
+  Msg::StartProgressMeter(nTot);
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     Msg::Info("Meshing curve %d order %d", (*it)->tag(), order);
-    Msg::ProgressMeter(++counter, nTot, false, msg);
+    Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, linear, nPts);
   }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     Msg::Info("Meshing surface %d order %d", (*it)->tag(), order);
-    Msg::ProgressMeter(++counter, nTot, false, msg);
+    Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, linear,
                  incomplete, nPts);
@@ -1624,7 +1623,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     Msg::Info("Meshing volume %d order %d", (*it)->tag(), order);
-    Msg::ProgressMeter(++counter, nTot, false, msg);
+    Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, incomplete,
                  nPts);

@@ -285,7 +285,7 @@ int GModel::_readMSH3(const std::string &name)
         return 0;
       }
       Msg::Info("%d nodes", numVertices);
-      Msg::StartProgressMeter();
+      Msg::StartProgressMeter(numVertices);
       _vertexMapCache.clear();
       _vertexVectorCache.clear();
       int maxVertex = -1;
@@ -409,7 +409,7 @@ int GModel::_readMSH3(const std::string &name)
           Msg::Warning("Skipping duplicate node %d", num);
         _vertexMapCache[num] = vertex;
         if(numVertices > 100000)
-          Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");
+          Msg::ProgressMeter(i + 1, true, "Reading nodes");
       }
       Msg::StopProgressMeter();
       // if the vertex numbering is dense, transfer the map into a vector to
@@ -443,7 +443,7 @@ int GModel::_readMSH3(const std::string &name)
         return 0;
       }
       Msg::Info("%d elements", numElements);
-      Msg::StartProgressMeter();
+      Msg::StartProgressMeter(numElements);
       for(int i = 0; i < numElements; i++) {
         int num, type, entity, numData;
         if(!binary) {
@@ -513,7 +513,7 @@ int GModel::_readMSH3(const std::string &name)
         case TYPE_POLYH: elements[10][entity].push_back(element); break;
         }
         if(numElements > 100000)
-          Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
+          Msg::ProgressMeter(i + 1, true, "Reading elements");
       }
       Msg::StopProgressMeter();
     }

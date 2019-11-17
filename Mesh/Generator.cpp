@@ -367,8 +367,7 @@ static void Mesh1D(GModel *m)
   }
 
   int nIter = 0, nTot = m->getNumEdges();
-
-  Msg::StartProgressMeter();
+  Msg::StartProgressMeter(nTot);
 
   while(1) {
     int nPending = 0;
@@ -387,7 +386,7 @@ static void Mesh1D(GModel *m)
           nPending++;
         }
       }
-      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
+      if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 1D...");
     }
 
     if(!nPending) break;
@@ -518,7 +517,7 @@ static void Mesh2D(GModel *m)
 
     int nIter = 0, nTot = m->getNumFaces();
 
-    Msg::StartProgressMeter();
+    Msg::StartProgressMeter(nTot);
 
     while(1) {
       int nPending = 0;
@@ -538,7 +537,7 @@ static void Mesh2D(GModel *m)
             nPending++;
           }
         }
-        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 2D...");
       }
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
@@ -833,8 +832,8 @@ static void Mesh3D(GModel *m)
   }
 
   if(m->getNumRegions()) {
-    Msg::StartProgressMeter();
-    Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
+    Msg::StartProgressMeter(1);
+    Msg::ProgressMeter(0, false, "Meshing 3D...");
   }
 
   // mesh the extruded volumes first
@@ -971,7 +970,7 @@ static void Mesh3D(GModel *m)
   CTX::instance()->meshTimer[2] = t2 - t1;
 
   if(m->getNumRegions()) {
-    Msg::ProgressMeter(100, 100, false, "Meshing 3D...");
+    Msg::ProgressMeter(1, false, "Meshing 3D...");
     Msg::StopProgressMeter();
   }
 

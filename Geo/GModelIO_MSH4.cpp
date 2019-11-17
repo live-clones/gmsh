@@ -492,6 +492,8 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
     new std::pair<std::size_t, MVertex *>[totalNumNodes];
 
   Msg::Info("%lu nodes", totalNumNodes);
+  Msg::StartProgressMeter(totalNumNodes);
+
   for(std::size_t i = 0; i < numBlock; i++) {
     int parametric = 0;
     int entityTag = 0, entityDim = 0;
@@ -610,7 +612,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         vertexCache[nodeRead] = std::pair<std::size_t, MVertex *>(tagNode, mv);
         nodeRead++;
         if(totalNumNodes > 100000)
-          Msg::ProgressMeter(nodeRead, totalNumNodes, true, "Reading nodes");
+          Msg::ProgressMeter(nodeRead, true, "Reading nodes");
       }
     }
     else {
@@ -671,7 +673,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         vertexCache[nodeRead] = std::pair<std::size_t, MVertex *>(tagNode, mv);
         nodeRead++;
         if(totalNumNodes > 100000)
-          Msg::ProgressMeter(nodeRead, totalNumNodes, true, "Reading nodes");
+          Msg::ProgressMeter(nodeRead, true, "Reading nodes");
       }
     }
   }
@@ -739,6 +741,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
   std::pair<std::size_t, MElement *> *elementCache =
     new std::pair<std::size_t, MElement *>[totalNumElements];
   Msg::Info("%lu elements", totalNumElements);
+  Msg::StartProgressMeter(totalNumElements);
+
   for(std::size_t i = 0; i < numBlock; i++) {
     int entityTag = 0, entityDim = 0, elmType = 0;
     std::size_t numElements = 0;
@@ -840,8 +844,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         elementRead++;
 
         if(totalNumElements > 100000)
-          Msg::ProgressMeter(elementRead, totalNumElements, true,
-                             "Reading elements");
+          Msg::ProgressMeter(elementRead, true, "Reading elements");
       }
     }
     else {
@@ -904,8 +907,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         elementRead++;
 
         if(totalNumElements > 100000)
-          Msg::ProgressMeter(elementRead, totalNumElements, true,
-                             "Reading elements");
+          Msg::ProgressMeter(elementRead, true, "Reading elements");
       }
     }
   }
@@ -1357,7 +1359,6 @@ int GModel::_readMSH4(const std::string &name)
       _vertexMapCache.clear();
       bool dense = false;
       std::size_t totalNumNodes = 0, maxNodeNum;
-      Msg::StartProgressMeter();
       std::pair<std::size_t, MVertex *> *vertexCache = readMSH4Nodes(
         this, fp, binary, dense, totalNumNodes, maxNodeNum, swap, version);
       Msg::StopProgressMeter();
@@ -1392,7 +1393,6 @@ int GModel::_readMSH4(const std::string &name)
     else if(!strncmp(&str[1], "Elements", 8)) {
       bool dense = false;
       std::size_t totalNumElements = 0, maxElementNum = 0;
-      Msg::StartProgressMeter();
       std::pair<std::size_t, MElement *> *elementCache =
         readMSH4Elements(this, fp, binary, dense, totalNumElements,
                          maxElementNum, swap, version);
