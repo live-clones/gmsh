@@ -580,7 +580,7 @@ void Msg::Info(const char *fmt, ...)
   if(CTX::instance()->terminal){
     if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
        _commSize == 1 && GetNumThreads() == 1)
-      fprintf(stdout, "Info    : %s - %d %%\n", str, _progressMeterCurrent);
+      fprintf(stdout, "Info    : [%3d %%] %s\n", _progressMeterCurrent, str);
     else if(_commSize > 1)
       fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
     else
