@@ -101,7 +101,8 @@ public:
   static void ProgressMeter(int n, int N, bool log, const char *fmt, ...);
   static void SetProgressMeterStep(int step);
   static int GetProgressMeterStep();
-  static void ResetProgressMeter();
+  static void StartProgressMeter();
+  static void StopProgressMeter();
   static void SetInfoCpu(bool val);
   static double &Timer(const std::string &str);
   static void PrintTimers();

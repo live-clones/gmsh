@@ -1601,10 +1601,10 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   faceContainer faceVertices;
   std::map<GEntity *, std::vector<MVertex *> > newHOVert;
 
-  Msg::ResetProgressMeter();
+  Msg::StartProgressMeter();
 
-  int counter = 0,
-      nTot = m->getNumEdges() + m->getNumFaces() + m->getNumRegions();
+  int counter = 0;
+  int nTot = m->getNumEdges() + m->getNumFaces() + m->getNumRegions();
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     Msg::Info("Meshing curve %d order %d", (*it)->tag(), order);
@@ -1630,6 +1630,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
                  nPts);
     if((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
   }
+
+  Msg::StopProgressMeter();
 
   // Update all high order vertices
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)

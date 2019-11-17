@@ -165,7 +165,7 @@ int GModel::readDIFF(const std::string &name)
     int num = 0;
     std::vector<std::vector<int> > elementary(numVertices);
 
-    Msg::ResetProgressMeter();
+    Msg::StartProgressMeter();
     for(int i = 0; i < numVertices; i++) {
       if(!fgets(str, sizeof(str), fp)) {
         fclose(fp);
@@ -220,6 +220,8 @@ int GModel::readDIFF(const std::string &name)
         Msg::Info("elementary[%d][%d]=%d", i + 1, j + 1, elementary[i][j + 1]);
       }
     }
+    Msg::StopProgressMeter();
+
     while(str[0] != '#') {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
@@ -230,8 +232,9 @@ int GModel::readDIFF(const std::string &name)
     }
     char eleTypec[20] = "";
     std::string eleType;
-    Msg::ResetProgressMeter();
     std::vector<int> mapping;
+
+    Msg::StartProgressMeter();
     for(int i = 1; i <= numElements; i++) {
       if(!fgets(str, sizeof(str), fp)) {
         fclose(fp);
@@ -378,6 +381,8 @@ int GModel::readDIFF(const std::string &name)
       if(numElements > 100000)
         Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
     }
+    Msg::StopProgressMeter();
+
   }
 
   // store the elements in their associated elementary entity. If the

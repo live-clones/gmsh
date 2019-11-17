@@ -1355,11 +1355,12 @@ int GModel::_readMSH4(const std::string &name)
     else if(!strncmp(&str[1], "Nodes", 5)) {
       _vertexVectorCache.clear();
       _vertexMapCache.clear();
-      Msg::ResetProgressMeter();
       bool dense = false;
       std::size_t totalNumNodes = 0, maxNodeNum;
+      Msg::StartProgressMeter();
       std::pair<std::size_t, MVertex *> *vertexCache = readMSH4Nodes(
         this, fp, binary, dense, totalNumNodes, maxNodeNum, swap, version);
+      Msg::StopProgressMeter();
       if(!vertexCache) {
         Msg::Error("Could not read nodes");
         fclose(fp);
@@ -1389,12 +1390,13 @@ int GModel::_readMSH4(const std::string &name)
       delete[] vertexCache;
     }
     else if(!strncmp(&str[1], "Elements", 8)) {
-      Msg::ResetProgressMeter();
       bool dense = false;
       std::size_t totalNumElements = 0, maxElementNum = 0;
+      Msg::StartProgressMeter();
       std::pair<std::size_t, MElement *> *elementCache =
         readMSH4Elements(this, fp, binary, dense, totalNumElements,
                          maxElementNum, swap, version);
+      Msg::StopProgressMeter();
       if(!elementCache) {
         Msg::Error("Could not read elements");
         fclose(fp);

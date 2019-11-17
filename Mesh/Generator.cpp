@@ -366,9 +366,10 @@ static void Mesh1D(GModel *m)
     temp.push_back(*it);
   }
 
-  Msg::ResetProgressMeter();
-
   int nIter = 0, nTot = m->getNumEdges();
+
+  Msg::StartProgressMeter();
+
   while(1) {
     int nPending = 0;
     const size_t sss = temp.size();
@@ -392,6 +393,8 @@ static void Mesh1D(GModel *m)
     if(!nPending) break;
     if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
+
+  Msg::StopProgressMeter();
 
   Msg::SetNumThreads(prevNumThreads);
 
@@ -513,9 +516,10 @@ static void Mesh2D(GModel *m)
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
       f.insert(*it);
 
-    Msg::ResetProgressMeter();
-
     int nIter = 0, nTot = m->getNumFaces();
+
+    Msg::StartProgressMeter();
+
     while(1) {
       int nPending = 0;
       std::vector<GFace *> temp;
@@ -542,6 +546,8 @@ static void Mesh2D(GModel *m)
       if(nIter > 2) Msg::SetNumThreads(1);
       if(nIter++ > CTX::instance()->mesh.maxRetries) break;
     }
+
+    Msg::StopProgressMeter();
   }
 
   Msg::SetNumThreads(prevNumThreads);
@@ -826,7 +832,10 @@ static void Mesh3D(GModel *m)
       Msg::SetNumThreads(1);
   }
 
-  if(m->getNumRegions()) Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
+  if(m->getNumRegions()) {
+    Msg::StartProgressMeter();
+    Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
+  }
 
   // mesh the extruded volumes first
   std::for_each(m->firstRegion(), m->lastRegion(), meshGRegionExtruded());
@@ -961,7 +970,10 @@ static void Mesh3D(GModel *m)
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
 
-  if(m->getNumRegions()) Msg::ProgressMeter(100, 100, false, "Meshing 3D...");
+  if(m->getNumRegions()) {
+    Msg::ProgressMeter(100, 100, false, "Meshing 3D...");
+    Msg::StopProgressMeter();
+  }
 
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }

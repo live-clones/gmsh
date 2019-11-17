@@ -113,7 +113,7 @@ bool PViewDataGModel::readMSH(const std::string &viewName,
 
   _steps[step]->resizeData(numEnt);
 
-  Msg::ResetProgressMeter();
+  Msg::StartProgressMeter();
   for(int i = 0; i < numEnt; i++) {
     int num;
     if(binary) {
@@ -158,7 +158,7 @@ bool PViewDataGModel::readMSH(const std::string &viewName,
     }
     if(numEnt > 100000) Msg::ProgressMeter(i + 1, numEnt, true, "Reading data");
   }
-
+  Msg::StopProgressMeter();
   if(partition >= 0) _steps[step]->getPartitions().insert(partition);
 
   finalize(false, interpolationScheme);

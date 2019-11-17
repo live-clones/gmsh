@@ -53,8 +53,8 @@
 int Msg::_commRank = 0;
 int Msg::_commSize = 1;
 int Msg::_verbosity = 5;
-int Msg::_progressMeterStep = 20;
-int Msg::_progressMeterCurrent = 0;
+int Msg::_progressMeterStep = 10;
+int Msg::_progressMeterCurrent = -1;
 std::map<std::string, double> Msg::_timers;
 bool Msg::_infoCpu = false;
 double Msg::_startTime = 0.;
@@ -247,10 +247,16 @@ int Msg::GetProgressMeterStep()
   return _progressMeterStep;
 }
 
-void Msg::ResetProgressMeter()
+void Msg::StartProgressMeter()
 {
   if(GetCommRank() || GetNumThreads() > 1) return;
   _progressMeterCurrent = 0;
+}
+
+void Msg::StopProgressMeter()
+{
+  if(GetCommRank() || GetNumThreads() > 1) return;
+  _progressMeterCurrent = -1;
 }
 
 void Msg::SetInfoCpu(bool val)
@@ -569,7 +575,9 @@ void Msg::Info(const char *fmt, ...)
 #endif
 
   if(CTX::instance()->terminal){
-    if(_commSize > 1)
+    if(_progressMeterCurrent >= 0 && _commSize == 1 && GetNumThreads() == 1)
+      fprintf(stdout, "Info    : %s - %d %%\n", str, _progressMeterCurrent);
+    else if(_commSize > 1)
       fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
     else
       fprintf(stdout, "Info    : %s\n", str);
@@ -741,6 +749,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
   if(percent >= _progressMeterCurrent || n > N - 1){
     while(_progressMeterCurrent < percent)
       _progressMeterCurrent += _progressMeterStep;
+    if(_progressMeterCurrent >= 100) _progressMeterCurrent = 100;
 
     // TODO With C++11 use std::string (contiguous layout) and avoid all these C
     // problems
@@ -1573,13 +1582,14 @@ MsgProgressStatus::MsgProgressStatus(int num)
     _progressMeterStep(Msg::GetProgressMeterStep())
 {
   Msg::SetProgressMeterStep(1);
-  Msg::ResetProgressMeter();
+  Msg::StartProgressMeter();
 }
 
 MsgProgressStatus::~MsgProgressStatus()
 {
   Msg::ProgressMeter(_totalElementToTreat, _totalElementToTreat, true, "done");
   Msg::SetProgressMeterStep(_progressMeterStep);
+  Msg::StopProgressMeter();
 }
 
 void MsgProgressStatus::next()

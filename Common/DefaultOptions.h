@@ -728,7 +728,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Polygon offset factor (offset = factor * DZ + r * units)" },
   { F|O, "PolygonOffsetUnits" , opt_general_polygon_offset_units , 1. ,
     "Polygon offset units (offset = factor * DZ + r * units)" },
-  { F|O, "ProgressMeterStep" , opt_general_progress_meter_step , 20. ,
+  { F|O, "ProgressMeterStep" , opt_general_progress_meter_step , 10. ,
     "Increment (in percent) of the progress meter bar" },
 
   { F|O, "QuadricSubdivisions" , opt_general_quadric_subdivisions, 6. ,
