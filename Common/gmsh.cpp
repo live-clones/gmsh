@@ -2022,15 +2022,15 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
     numElements += entities[i]->getNumMeshElementsByType(familyType);
   if(jacobian) {
     jacobians.clear();
-    jacobians.resize(9 * numElements * numIntegrationPoints, 0.);
+    jacobians.resize(9 * numElements * numIntegrationPoints);
   }
   if(determinant) {
     determinants.clear();
-    determinants.resize(numElements * numIntegrationPoints, 0.);
+    determinants.resize(numElements * numIntegrationPoints);
   }
   if(point) {
     points.clear();
-    points.resize(3 * numElements * numIntegrationPoints, 0.);
+    points.resize(3 * numElements * numIntegrationPoints);
   }
 }
 
