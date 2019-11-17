@@ -37,7 +37,8 @@ void createElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
 
   // element node transformation if specified (CPEX0045)
   const fullMatrix<double> *transfoMat = 0;
-  if((eltNodeTransfo != 0) && (eltNodeTransfo->size() > 0)) {
+  if((mshEltType != MSH_PNT) && (eltNodeTransfo != 0) &&
+     (eltNodeTransfo->size() > 0)) {
     transfoMat = &((*eltNodeTransfo)[mshEltType]);
   }
 

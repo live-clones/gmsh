@@ -22,8 +22,11 @@ namespace {
 
 
 #ifdef HAVE_LIBCGNS_CPEX0045
-int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
-                      fullMatrix<double> &val)
+
+
+int evalMonomialBasis(int mshType, const std::vector<double> &u,
+                      const std::vector<double> &v,
+                      const std::vector<double> &w, fullMatrix<double> &val)
 {
   // get parent type and order
   const int parentType = ElementType::getParentType(mshType);
@@ -38,14 +41,14 @@ int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
   }
 
   // compute values of monomials at given points
-  int nbPt = uvw.size1();
+  int nbPt = u.size();
   if(parentType == TYPE_PNT) {
     val(0, 0) = 1.;
   }
   else if(parentType == TYPE_LIN) {
     for(int iPt = 0; iPt < nbPt; iPt++) {
       val(0, iPt) = 1.;
-      for(int i = 1; i <= order; i++) val(i, iPt) = uvw(iPt, 0) * val(i-1, iPt); 
+      for(int i = 1; i <= order; i++) val(i, iPt) = u[iPt] * val(i-1, iPt); 
     }
   }
   else if(parentType == TYPE_TRI) {
@@ -53,8 +56,7 @@ int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
       int iSF = 0;
       for(int i = 0; i <= order; i++) {
         for (int j = 0; j <= i; j++) {
-          const int &u = uvw(iPt, 0), &v = uvw(iPt, 1);
-          val(iSF, iPt) = std::pow(u, i-j) * std::pow(v, j);
+          val(iSF, iPt) = std::pow(u[iPt], i-j) * std::pow(v[iPt], j);
           iSF++;
         }
       }
@@ -65,8 +67,7 @@ int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
       int iSF = 0;
       for(int i = 0; i <= order; i++) {
         for (int j = 0; j <= order; j++) {
-          const int &u = uvw(iPt, 0), &v = uvw(iPt, 1);
-          val(iSF, iPt) = std::pow(u, i) * std::pow(v, j);
+          val(iSF, iPt) = std::pow(u[iPt], i) * std::pow(v[iPt], j);
           iSF++;
         }
       }
@@ -78,9 +79,8 @@ int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
       for(int i = 0; i <= order; i++) {
         for (int j = 0; j <= i; j++) {
           for (int k = 0; k <= i-j; k++) {
-            const int &u = uvw(iPt, 0), &v = uvw(iPt, 1), &w = uvw(iPt, 2);
-            val(iSF, iPt) = std::pow(u, i-j-k) * std::pow(v, k) *
-                            std::pow(w, j);
+            val(iSF, iPt) = std::pow(u[iPt], i-j-k) * std::pow(v[iPt], k) *
+                            std::pow(w[iPt], j);
             iSF++;
           }
         }
@@ -95,8 +95,7 @@ int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
       for(int i = 0; i <= order; i++) {
         for (int j = 0; j <= i; j++) {
           for (int k = 0; j <= order; k++) {
-            const int &u = uvw(iPt, 0), &v = uvw(iPt, 1), &w = uvw(iPt, 2);
-            val(iSF, iPt) = std::pow(u, i-j) * std::pow(v, j) * std::pow(w, k);  // TODO: to be clarified
+            val(iSF, iPt) = std::pow(u[iPt], i-j) * std::pow(v[iPt], j) * std::pow(w[iPt], k);  // TODO: to be clarified
             iSF++;
           }
         }
@@ -109,8 +108,7 @@ int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
       for(int i = 0; i <= order; i++) {
         for (int j = 0; j <= order; j++) {
           for (int k = 0; k <= order; k++) {
-            const int &u = uvw(iPt, 0), &v = uvw(iPt, 1), &w = uvw(iPt, 2);
-            val(iSF, iPt) = std::pow(u, i) * std::pow(v, j) * std::pow(w, k);
+            val(iSF, iPt) = std::pow(u[iPt], i) * std::pow(v[iPt], j) * std::pow(w[iPt], k);
             iSF++;
           }
         }
@@ -125,10 +123,8 @@ int evalMonomialBasis(int mshType, const fullMatrix<double> &uvw,
 
   return 1;
 }
-#endif
 
 
-#ifdef HAVE_LIBCGNS_CPEX0045
 int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
                              int interpIndex, ZoneEltNodeTransfo &cgns2MshLag)
 {
@@ -155,7 +151,6 @@ int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
   
   // get Gmsh interpolation points
   const int mshType = cgns2MshEltType(cgnsType);
-  const int dim = ElementType::getDimension(mshType);
   const nodalBasis *basis = BasisFactory::getNodalBasis(mshType);
   const fullMatrix<double> &mshPts = basis->getReferenceNodes();
   if(nbPt != mshPts.size1()) {
@@ -164,31 +159,29 @@ int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
                 mshType, ElementType::getParentType(mshType));
     return 0;
   }
+  std::vector<double> uMsh(nbPt), vMsh(nbPt), wMsh(nbPt);
+  msh2CgnsReferenceElement(mshType, mshPts, uMsh, vMsh, wMsh);
 
   // compute transformation matrix from monomial to CGNS Lagrange coefficients,
   // i.e. the inverse transposed Vandermonde matrix of CGNS interpolation points
   // in the monomial basis
-  fullMatrix<double> cgnsPts(nbPt, dim);
-  for(int iPt = 0; iPt < nbPt; iPt++) {
-    cgnsPts(iPt, 0) = u[iPt];
-    if(dim > 1) cgnsPts(iPt, 1) = v[iPt];
-    if(dim > 2) cgnsPts(iPt, 2) = w[iPt];
-  }
   fullMatrix<double> mono2CGNSLag(nbPt, nbPt);
-  evalMonomialBasis(mshType, cgnsPts, mono2CGNSLag);
+  evalMonomialBasis(mshType, u, v, w, mono2CGNSLag);
   mono2CGNSLag.invertInPlace();
 
   // evaluate CGNS Lagrange base functions at Gmsh points
-  fullMatrix<double> monoVal(nbPt, nbPt), lagVal;
-  evalMonomialBasis(mshType, mshPts, monoVal);
+  fullMatrix<double> monoVal(nbPt, nbPt), lagVal(nbPt, nbPt);
+  evalMonomialBasis(mshType, uMsh, vMsh, wMsh, monoVal);
   mono2CGNSLag.mult(monoVal, lagVal);
 
   // transformation matrix from CGNS to Gmsh Lagrange coefficients
   lagVal.transposeInPlace();
-  cgns2MshLag[cgnsType] = lagVal;
+  cgns2MshLag[mshType] = lagVal;
 
   return 1;
 }
+
+
 #endif
 
 
@@ -259,9 +252,9 @@ int readEltNodeTransfo(int fileIndex, int baseIndex,
 
     // read family name
     char famName[CGNS_MAX_STR_LEN];
-    cgnsErr = cg_goto(fileIndex, baseIndex, "Family_t", iFam, "end");
-    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-    cgnsErr = cg_famname_read(famName);
+    int nbFamBC, nbGeoRef;
+    cgnsErr = cg_family_read(fileIndex, baseIndex, iFam, famName, &nbFamBC,
+                             &nbGeoRef);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
     // read element interpolation transformations

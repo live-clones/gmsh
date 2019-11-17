@@ -81,6 +81,7 @@ int GModel::readCGNS(const std::string &name)
   _storeVerticesInEntities(allVert);
 
   // add periodic vertex correspondence
+  // TODO: Fix periodicity 
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     CGNSZone *zone = allZones[iZone];
     for(int iPer = 0; iPer < zone->nbPerConnect(); iPer++) {
