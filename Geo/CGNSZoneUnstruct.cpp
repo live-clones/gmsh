@@ -56,11 +56,11 @@ void createElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
     // get element vertices and retrieve original node coordinates
     fullMatrix<double> oldEltNode(nbEltNode, 3);
     for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectData++) {
-      const int indNode = vertShift + sectData[iSectData] - 1;
-      eltVert[iEltNode] = allVert[indNode];
-      oldEltNode(iEltNode, 0) = rawNode[indNode].x();
-      oldEltNode(iEltNode, 1) = rawNode[indNode].y();
-      oldEltNode(iEltNode, 2) = rawNode[indNode].z();
+      const int indNodeZone = sectData[iSectData] - 1;
+      eltVert[iEltNode] = allVert[vertShift + indNodeZone];
+      oldEltNode(iEltNode, 0) = rawNode[indNodeZone].x();
+      oldEltNode(iEltNode, 1) = rawNode[indNodeZone].y();
+      oldEltNode(iEltNode, 2) = rawNode[indNodeZone].z();
     }
 
     // transform original into Gmsh node coordinates
