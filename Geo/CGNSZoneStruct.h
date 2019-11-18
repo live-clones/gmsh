@@ -57,8 +57,11 @@ protected:
 template<int DIM>
 inline cgsize_t CGNSZoneStruct<DIM>::nbNodeInRange(const cgsize_t *range) const
 {
-  cgsize_t nb = range[DIM] - range[0] + 1;
-  for(int d = 1; d < DIM; d++) nb *= range[DIM+d] - range[d] + 1;
+  cgsize_t nb = 1;
+  for(int d = 0; d < DIM; d++) {
+    const cgsize_t diff = range[DIM+d] - range[d];
+    nb *= (diff >= 0) ? diff + 1 : -diff + 1;
+  }
   return nb;
 }
 
