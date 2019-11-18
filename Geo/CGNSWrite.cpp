@@ -64,6 +64,38 @@ void getNodesInEntities(const std::vector<GEntity *> &entities,
 }
 
 
+void getNamesFromEntity(GEntity *ge, std::string &entityName,
+                        std::string &physicalName)
+{
+  // convenction: start name with letter identifying dimension
+  std::ostringstream ossEntityName;
+  switch (ge->dim())
+  {
+  case 0: ossEntityName << "P_"; break;
+  case 1: ossEntityName << "L_"; break;
+  case 2: ossEntityName << "S_"; break;
+  case 3: ossEntityName << "V_"; break;
+  }
+
+  // try to retrieve name from parent entity in case of partitioned entity
+  // (relevant for periodic vertices)
+  GEntity *geParent = ge->getParentEntity();
+  GEntity *geName = (geParent != 0) ? geParent : ge;
+  GModel *model = geName->model();
+
+  ossEntityName << geName->tag();
+  entityName = model->getElementaryName(geName->dim(), geName->tag());
+  if(!entityName.empty()) ossEntityName << "_" << entityName;
+  entityName = ossEntityName.str();
+  entityName = cgnsString(entityName);
+  std::vector<int> physicalEnt = geName->getPhysicalEntities();
+  if (physicalEnt.size() > 0) {
+    physicalName = model->getPhysicalName(geName->dim(), physicalEnt[0]);
+  }
+  if(physicalName.length() > 0) physicalName = cgnsString(physicalName);
+}
+
+
 } // anonymous namespace
 
 
@@ -251,25 +283,8 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
     // const int entDim = ge->dim();
 
     // get or create the name for the entity
-    std::ostringstream ossEntityName;
-    switch (ge->dim())
-    {
-    case 0: ossEntityName << "P_"; break;
-    case 1: ossEntityName << "L_"; break;
-    case 2: ossEntityName << "S_"; break;
-    case 3: ossEntityName << "V_"; break;
-    }
-    ossEntityName << ge->tag();
-    std::string entityName = model->getElementaryName(ge->dim(), ge->tag());
-    if(!entityName.empty()) ossEntityName << "_" << entityName;
-    entityName = ossEntityName.str();
-    entityName = cgnsString(entityName);
-    std::vector<int> physicalEnt = ge->getPhysicalEntities();
-    std::string physicalName;
-    if (physicalEnt.size() > 0) {
-      physicalName = model->getPhysicalName(ge->dim(), physicalEnt[0]);
-    }
-    if(physicalName.length() > 0) physicalName = cgnsString(physicalName);
+    std::string entityName, physicalName;
+    getNamesFromEntity(ge, entityName, physicalName);
 
     // retrieve element types for this geometric entity
     std::vector<int> eleTypes;

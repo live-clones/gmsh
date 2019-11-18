@@ -84,23 +84,8 @@ int GModel::readCGNS(const std::string &name)
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVert);
 
-  // add periodic vertex correspondence
-  // TODO: Fix periodicity 
-  for(int iZone = 1; iZone <= nbZone; iZone++) {
-    CGNSZone *zone = allZones[iZone];
-    for(int iPer = 0; iPer < zone->nbPerConnect(); iPer++) {
-      const std::vector<MVertex *> &slaveVert = zone->slaveVert(iPer);
-      const std::vector<MVertex *> &masterVert = zone->masterVert(iPer);
-      for(std::size_t iV = 0; iV < slaveVert.size(); iV++) {
-        MVertex *sVert = slaveVert[iV], *mVert = masterVert[iV];
-        GEntity *sEnt = sVert->onWhat(), *mEnt = mVert->onWhat();
-        sEnt->correspondingVertices[sVert] = mVert;
-        if(sEnt->getMeshMaster() == sEnt) {
-          sEnt->setMeshMaster(mEnt, zone->perTransfo(iPer));
-        }
-      }
-    }
-  }
+  // add periodic vertex correspondence and affine transformation
+  setPeriodicityInEntities(allZones);
 
   // remove potential duplicate vertices if several zones
   // TODO: disable this through option ?

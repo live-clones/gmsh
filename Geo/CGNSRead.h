@@ -29,6 +29,8 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
                 std::vector<CGNSZone *> &allZones,
                 std::map<std::string, int> &name2Zone);
 
+void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones);
+
 #endif // HAVE_LIBCGNS
 
 #endif // CGNS_READ_H

@@ -9,6 +9,7 @@
 #include "BergotBasis.h"
 #include "BasisFactory.h"
 #include "ElementType.h"
+#include "GEntity.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 #include "CGNSZone.h"
@@ -340,6 +341,41 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
   }
 
   return 1;
+}
+
+
+void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
+{
+  // data structure keeping track of connections between entities to avoid
+  // two-way connections
+  typedef std::set<std::pair<GEntity *, GEntity *> > EntConnect;
+  EntConnect entCon;
+
+  // loop over zones
+  for(std::size_t iZone = 1; iZone < allZones.size(); iZone++) {
+    CGNSZone *zone = allZones[iZone];
+    // loop over periodic connections
+    for(int iPer = 0; iPer < zone->nbPerConnect(); iPer++) {
+      // loop over slave and master vertices
+      const std::vector<MVertex *> &slaveVert = zone->slaveVert(iPer);
+      const std::vector<MVertex *> &masterVert = zone->masterVert(iPer);
+      for(std::size_t iV = 0; iV < slaveVert.size(); iV++) {
+        // get slave and master entities
+        MVertex *sVert = slaveVert[iV], *mVert = masterVert[iV];
+        GEntity *sEnt = sVert->onWhat(), *mEnt = mVert->onWhat();
+        
+        // skip if inverse connection already exists 
+        if(entCon.find(std::make_pair(mEnt, sEnt)) != entCon.end()) continue;
+        entCon.insert(std::make_pair(sEnt, mEnt));
+
+        // store corresponding vertices and set mesh master & transfo if needed
+        sEnt->correspondingVertices[sVert] = mVert;
+        if(sEnt->getMeshMaster() == sEnt) {
+          sEnt->setMeshMaster(mEnt, zone->perTransfo(iPer));
+        }
+      }
+    }
+  }
 }
 
 
