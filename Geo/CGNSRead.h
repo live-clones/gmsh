@@ -19,7 +19,7 @@ class MElement;
 class CGNSZone;
 
 
-double readScale();
+int readScale(int fileIndex, int baseIndex, double &scale);
 
 int readEltNodeTransfo(int fileIndex, int baseIndex,
                        Family2EltNodeTransfo &allEltNodeTransfo);

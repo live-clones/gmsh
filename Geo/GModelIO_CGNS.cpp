@@ -25,7 +25,6 @@ int GModel::readCGNS(const std::string &name)
   int fileIndex = 0;
   cgnsErr = cg_open(name.c_str(), CG_MODE_READ, &fileIndex);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-  const double scale = readScale();
 
   // read base node
   const int baseIndex = 1;
@@ -33,6 +32,11 @@ int GModel::readCGNS(const std::string &name)
   char baseName[CGNS_MAX_STR_LEN];
   cgnsErr = cg_base_read(fileIndex, baseIndex, baseName, &dim, &meshDim);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+  // read scale
+  double scale;
+  int scaleErr = readScale(fileIndex, baseIndex, scale);
+  if(scaleErr == 0) return 0;
 
   // per-element node transformation for CPEX0045
   std::map<std::string, std::vector<fullMatrix<double> > > allEltNodeTransfo;

@@ -6,6 +6,7 @@
 #include "GmshMessage.h"
 #include "MVertex.h"
 #include "MElement.h"
+#include "BergotBasis.h"
 #include "BasisFactory.h"
 #include "ElementType.h"
 #include "CGNSCommon.h"
@@ -87,14 +88,22 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
       }
     }
   }
-  // else if(parentType == TYPE_PYR) {
-  // }
+  else if(parentType == TYPE_PYR) {
+    int nbSF = ElementType::getNumVertices(mshType);
+    BergotBasis bb(order);
+    for(int iPt = 0; iPt < nbPt; iPt++) {
+      double oneVal[385];
+      const double ww = 0.5 * (w[iPt] + 1.);  // use Gmsh coord for BergotBasis 
+      bb.f(u[iPt], v[iPt], ww, oneVal);
+      for(int iSF = 0; iSF < nbSF; iSF++) val(iSF, iPt) = oneVal[iSF];
+    }
+  }
   else if(parentType == TYPE_PRI) {
     for(int iPt = 0; iPt < nbPt; iPt++) {
       int iSF = 0;
       for(int i = 0; i <= order; i++) {
         for (int j = 0; j <= i; j++) {
-          for (int k = 0; j <= order; k++) {
+          for (int k = 0; k <= order; k++) {
             val(iSF, iPt) = std::pow(u[iPt], i-j) * std::pow(v[iPt], j) * std::pow(w[iPt], k);  // TODO: to be clarified
             iSF++;
           }
@@ -188,16 +197,25 @@ int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
 }  // namespace
 
 
-double readScale()
+int readScale(int fileIndex, int baseIndex, double &scale)
 {
-  double scale = 1.;
+  int cgnsErr;
+  
+  scale = 1.;
 
   MassUnits_t mass;
   LengthUnits_t length;
   TimeUnits_t time;
   TemperatureUnits_t temperature;
   AngleUnits_t angle;
-  cg_units_read(&mass, &length, &time, &temperature, &angle);
+  cgnsErr = cg_goto(fileIndex, baseIndex, "end");
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+  cgnsErr = cg_units_read(&mass, &length, &time, &temperature, &angle);
+  if(cgnsErr == CG_NODE_NOT_FOUND) {
+    Msg::Info("Length unit in CGNS file not defined, therefore not rescaling");
+    return 1.;
+  }
+  else if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
   switch(length) {
   case Centimeter:
@@ -226,7 +244,7 @@ double readScale()
     break;
   }
 
-  return scale;
+  return 1;
 }
 
 
