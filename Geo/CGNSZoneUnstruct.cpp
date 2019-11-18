@@ -142,9 +142,15 @@ int CGNSZoneUnstruct::readSection(int iSect,
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // read connectivity data
-  std::vector<cgsize_t> sectData(dataSize);
-  cgnsErr = cg_elements_read(fileIndex(), baseIndex(), index(), iSect,
-                             sectData.data(), 0);
+  std::vector<cgsize_t> sectData(dataSize), offsetData(endElt-startElt+2);
+  if(sectEltType == MIXED) {
+    cgnsErr = cg_poly_elements_read(fileIndex(), baseIndex(), index(), iSect,
+                                    sectData.data(), offsetData.data(), 0);
+  }
+  else {
+    cgnsErr = cg_elements_read(fileIndex(), baseIndex(), index(), iSect,
+                               sectData.data(), 0);
+  }
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // create elements
