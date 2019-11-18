@@ -30,7 +30,7 @@ int GModel::readCGNS(const std::string &name)
   const int baseIndex = 1;
   int dim = 0, meshDim = 0;
   char baseName[CGNS_MAX_STR_LEN];
-  cgnsErr = cg_base_read(fileIndex, baseIndex, baseName, &dim, &meshDim);
+  cgnsErr = cg_base_read(fileIndex, baseIndex, baseName, &meshDim, &dim);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
   // read scale
@@ -130,7 +130,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write the base node
-  int meshDim = getMeshDim(), dim = getDim(), cgIndexBase = 0;
+  int meshDim = getMeshDim(), dim = 3, cgIndexBase = 0;
   size_t posStartName = name.find_last_of("/\\");
   if (posStartName == std::string::npos) posStartName = 0;
   else posStartName++;
