@@ -933,7 +933,7 @@ first expression in the second (both of which can be lists).
 occurrence of the second @var{char-expression}. @code{StrCmp} compares
 the two strings (returns an integer greater than, equal to, or less than
 0, according as the first string is greater than, equal to, or less than
-the second string). @code{StrCmp} returns the length of the
+the second string). @code{StrLen} returns the length of the
 string. @code{TextAttributes} creates attributes for text
 strings. @code{Exists} checks if a variable with the given name exists
 (i.e., has been defined previously), and @code{FileExists} checks if the
