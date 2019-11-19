@@ -13,7 +13,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 
-bool Less_Cell::operator()(const Cell *c1, const Cell *c2) const
+bool CellPtrLessThan::operator()(const Cell *c1, const Cell *c2) const
 {
   // If cell complex is done use enumeration (same as vertex order)
   if(c1->getNum() != 0) return (c1->getNum() < c2->getNum());
@@ -98,7 +98,7 @@ Cell::Cell(Cell *parent, int i)
 
 bool Cell::_sortVertexIndices()
 {
-  std::map<MVertex *, int, MVertexLessThanNum> si;
+  std::map<MVertex *, int, MVertexPtrLessThan> si;
 
   bool noinsert = false;
   for(std::size_t i = 0; i < _v.size(); i++)
@@ -109,7 +109,7 @@ bool Cell::_sortVertexIndices()
     return false;
   }
 
-  std::map<MVertex *, int, MVertexLessThanNum>::iterator it;
+  std::map<MVertex *, int, MVertexPtrLessThan>::iterator it;
   for(it = si.begin(); it != si.end(); it++) _si.push_back(it->second);
 
   return true;
@@ -201,13 +201,13 @@ int Cell::findBdCellOrientation(Cell *cell, int i) const
 
   int perm = 1;
   if(equalVertices(v1, v2)) return perm;
-  while(std::next_permutation(v2.begin(), v2.end(), MVertexLessThanNum())) {
+  while(std::next_permutation(v2.begin(), v2.end(), MVertexPtrLessThan())) {
     perm *= -1;
     if(equalVertices(v1, v2)) return perm;
   }
   cell->getMeshVertices(v2);
   perm = 1;
-  while(std::prev_permutation(v2.begin(), v2.end(), MVertexLessThanNum())) {
+  while(std::prev_permutation(v2.begin(), v2.end(), MVertexPtrLessThan())) {
     perm *= -1;
     if(equalVertices(v1, v2)) return perm;
   }
@@ -498,7 +498,7 @@ bool Cell::hasVertex(int vertex) const
 
 bool CombinedCell::hasVertex(int vertex) const
 {
-  for(std::map<Cell *, int, Less_Cell>::const_iterator cit = _cells.begin();
+  for(std::map<Cell *, int, CellPtrLessThan>::const_iterator cit = _cells.begin();
       cit != _cells.end(); cit++) {
     if(cit->first->hasVertex(vertex)) return true;
   }
@@ -676,7 +676,7 @@ int Cell::getCoboundarySize(bool orig)
   return size;
 }
 
-void Cell::getBoundary(std::map<Cell *, short int, Less_Cell> &boundary,
+void Cell::getBoundary(std::map<Cell *, short int, CellPtrLessThan> &boundary,
                        bool orig)
 {
   boundary.clear();
@@ -687,7 +687,7 @@ void Cell::getBoundary(std::map<Cell *, short int, Less_Cell> &boundary,
   }
 }
 
-void Cell::getCoboundary(std::map<Cell *, short int, Less_Cell> &coboundary,
+void Cell::getCoboundary(std::map<Cell *, short int, CellPtrLessThan> &coboundary,
                          bool orig)
 {
   coboundary.clear();
@@ -738,7 +738,7 @@ CombinedCell::CombinedCell(Cell *c1, Cell *c2, bool orMatch, bool co)
 
   // cells
   c1->getCells(_cells);
-  std::map<Cell *, int, Less_Cell> c2Cells;
+  std::map<Cell *, int, CellPtrLessThan> c2Cells;
   c2->getCells(c2Cells);
   for(citer cit = c2Cells.begin(); cit != c2Cells.end(); cit++) {
     if(!orMatch) (*cit).second = -1 * (*cit).second;

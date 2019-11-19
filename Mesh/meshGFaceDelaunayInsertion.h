@@ -26,7 +26,7 @@ struct bidimMeshData {
   std::vector<SMetric3> vMetricsBGM;
   std::map<MVertex *, MVertex *> *equivalence;
   std::map<MVertex *, SPoint2> *parametricCoordinates;
-  std::set<MEdge, Less_Edge> internalEdges; // embedded edges
+  std::set<MEdge, MEdgeLessThan> internalEdges; // embedded edges
   //  std::set<MVertex*> internalVertices; // embedded vertices
   inline void addVertex(MVertex *mv, double u, double v, double size,
                         double sizeBGM)
@@ -133,7 +133,7 @@ public:
 };
 
 class compareTri3Ptr {
-  Less_Face lf;
+  MFaceLessThan lf;
 
 public:
   inline bool operator()(const MTri3 *a, const MTri3 *b) const

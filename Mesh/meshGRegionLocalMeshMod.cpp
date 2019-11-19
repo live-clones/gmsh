@@ -238,7 +238,7 @@ void BuildSwapPattern7(SwapPattern *sc)
 
 bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
               const qmTetrahedron::Measures &cr,
-              const std::set<MFace, Less_Face> &embeddedFaces)
+              const std::set<MFace, MFaceLessThan> &embeddedFaces)
 {
   // static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
   int permut[6] = {0, 3, 1, 2, 5, 4};
@@ -391,7 +391,7 @@ bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
 // swap a face i.e. remove a face shared by 2 tets
 bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
               const qmTetrahedron::Measures &cr,
-              const std::set<MFace, Less_Face> &embeddedFaces)
+              const std::set<MFace, MFaceLessThan> &embeddedFaces)
 {
   MTet4 *t2 = t1->getNeigh(iLocalFace);
   if(!t2) return false;

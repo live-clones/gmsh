@@ -3375,10 +3375,10 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
     This may not be complete for special cases - for eg. periodic mesh info, if
     any, are not written.  */
 
-    std::set<GRegion *, GEntityLessThan> regions_set;
-    std::set<GFace *, GEntityLessThan> faces_set;
-    std::set<GEdge *, GEntityLessThan> edges_set;
-    std::set<GVertex *, GEntityLessThan> vertices_set;
+    std::set<GRegion *, GEntityPtrLessThan> regions_set;
+    std::set<GFace *, GEntityPtrLessThan> faces_set;
+    std::set<GEdge *, GEntityPtrLessThan> edges_set;
+    std::set<GVertex *, GEntityPtrLessThan> vertices_set;
 
     for(GModel::viter it = this->firstVertex(); it != this->lastVertex(); ++it)
       vertices_set.insert(*it);

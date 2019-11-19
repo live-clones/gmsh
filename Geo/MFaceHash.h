@@ -9,7 +9,7 @@
 #include "MFace.h"
 #include "Hash.h"
 
-struct Hash_Face : public std::unary_function<MFace, size_t> {
+struct MFaceHash : public std::unary_function<MFace, size_t> {
   size_t operator()(const MFace &f) const
   {
     const MVertex *v[4] = {0, 0, 0, 0};

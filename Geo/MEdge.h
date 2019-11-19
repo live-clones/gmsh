@@ -115,14 +115,14 @@ inline bool operator!=(const MEdge &e1, const MEdge &e2)
           e1.getMaxVertex() != e2.getMaxVertex());
 }
 
-struct Equal_Edge {
+struct MEdgeEqual {
   bool operator()(const MEdge &e1, const MEdge &e2) const
   {
     return (e1 == e2);
   }
 };
 
-struct Less_Edge {
+struct MEdgeLessThan {
   bool operator()(const MEdge &e1, const MEdge &e2) const
   {
     if(e1.getMinVertex()->getNum() < e2.getMinVertex()->getNum()) return true;

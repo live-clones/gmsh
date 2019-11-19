@@ -25,7 +25,7 @@
 
 static void getDegeneratedVertices(
   BDS_Mesh &m, std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap,
-  std::set<MVertex *, MVertexLessThanNum> &degenerated,
+  std::set<MVertex *, MVertexPtrLessThan> &degenerated,
   std::vector<BDS_Edge *> &degenerated_edges)
 {
   degenerated.clear();
@@ -705,14 +705,14 @@ void modifyInitialMeshToRemoveDegeneracies(
   GFace *gf, BDS_Mesh &m,
   std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap)
 {
-  std::set<MVertex *, MVertexLessThanNum> degenerated;
+  std::set<MVertex *, MVertexPtrLessThan> degenerated;
   std::vector<BDS_Edge *> degenerated_edges;
   getDegeneratedVertices(m, recoverMap, degenerated, degenerated_edges);
 
   for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
         recoverMap->begin();
       it != recoverMap->end(); ++it) {
-    std::set<MVertex *, MVertexLessThanNum>::iterator it2 =
+    std::set<MVertex *, MVertexPtrLessThan>::iterator it2 =
       degenerated.find(it->second);
     if(it2 != degenerated.end()) {
       for(size_t K = 0; K < degenerated_edges.size(); K++) {

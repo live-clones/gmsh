@@ -55,12 +55,12 @@ void carveHole(std::vector<T *> &elements, double distance, ANNkd_tree *kdtree)
 }
 
 template <class T>
-void addFaces(std::vector<T *> &elements, std::set<MFace, Less_Face> &faces)
+void addFaces(std::vector<T *> &elements, std::set<MFace, MFaceLessThan> &faces)
 {
   for(std::size_t i = 0; i < elements.size(); i++) {
     for(int j = 0; j < elements[i]->getNumFaces(); j++) {
       MFace f = elements[i]->getFace(j);
-      std::set<MFace, Less_Face>::iterator it = faces.find(f);
+      std::set<MFace, MFaceLessThan>::iterator it = faces.find(f);
       if(it == faces.end())
         faces.insert(f);
       else
@@ -117,7 +117,7 @@ void carveHole(GRegion *gr, int num, double distance,
   // generate discrete boundary mesh of the carved hole
   GFace *gf = m->getFaceByTag(num);
   if(!gf) return;
-  std::set<MFace, Less_Face> faces;
+  std::set<MFace, MFaceLessThan> faces;
   std::vector<GFace *> f = gr->faces();
   for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); it++) {
     addFaces((*it)->triangles, faces);
@@ -129,7 +129,7 @@ void carveHole(GRegion *gr, int num, double distance,
   addFaces(gr->pyramids, faces);
 
   std::set<MVertex *> verts;
-  for(std::set<MFace, Less_Face>::iterator it = faces.begin();
+  for(std::set<MFace, MFaceLessThan>::iterator it = faces.begin();
       it != faces.end(); it++) {
     for(std::size_t i = 0; i < it->getNumVertices(); i++) {
       it->getVertex(i)->setEntity(gf);

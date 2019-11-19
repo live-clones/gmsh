@@ -64,8 +64,8 @@ public:
     std::vector<GEdge *> const &e = gr->embeddedEdges();
     std::vector<GFace *> const &f = gr->embeddedFaces();
     if(e.empty() && f.empty()) return;
-    std::map<MEdge, GEdge *, Less_Edge> edges;
-    std::map<MFace, GFace *, Less_Face> faces;
+    std::map<MEdge, GEdge *, MEdgeLessThan> edges;
+    std::map<MFace, GFace *, MFaceLessThan> faces;
     std::vector<GEdge *>::const_iterator it = e.begin();
     std::vector<GFace *>::const_iterator itf = f.begin();
     for(; it != e.end(); ++it) {
@@ -108,7 +108,7 @@ public:
       Msg::Error("Saving the missing edges in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
-      for(std::map<MEdge, GEdge *, Less_Edge>::iterator it = edges.begin();
+      for(std::map<MEdge, GEdge *, MEdgeLessThan>::iterator it = edges.begin();
           it != edges.end(); ++it) {
         MVertex *v1 = it->first.getVertex(0);
         MVertex *v2 = it->first.getVertex(1);
@@ -128,7 +128,7 @@ public:
       Msg::Error("Saving the missing faces in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
-      for(std::map<MFace, GFace *, Less_Face>::iterator it = faces.begin();
+      for(std::map<MFace, GFace *, MFaceLessThan>::iterator it = faces.begin();
           it != faces.end(); ++it) {
         MVertex *v1 = it->first.getVertex(0);
         MVertex *v2 = it->first.getVertex(1);
@@ -511,7 +511,7 @@ static void Mesh2D(GModel *m)
   // meshes) is global as it depends on a smooth normal field generated from the
   // surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)) {
-    std::set<GFace *, GEntityLessThan> f;
+    std::set<GFace *, GEntityPtrLessThan> f;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
       f.insert(*it);
 
@@ -617,13 +617,13 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
   v0       v1
  */
 
-void buildUniqueFaces(GRegion *gr, std::set<MFace, Less_Face> &bnd)
+void buildUniqueFaces(GRegion *gr, std::set<MFace, MFaceLessThan> &bnd)
 {
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *e = gr->getMeshElement(i);
     for(int j = 0; j < e->getNumFaces(); j++) {
       MFace f = e->getFace(j);
-      std::set<MFace, Less_Face>::iterator it = bnd.find(f);
+      std::set<MFace, MFaceLessThan>::iterator it = bnd.find(f);
       if(it == bnd.end())
         bnd.insert(f);
       else
@@ -636,15 +636,15 @@ bool MakeMeshConformal(GModel *gm, int howto)
 {
   fs_cont search;
   buildFaceSearchStructure(gm, search);
-  std::set<MFace, Less_Face> bnd;
+  std::set<MFace, MFaceLessThan> bnd;
   for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     GRegion *gr = *rit;
     buildUniqueFaces(gr, bnd);
   }
   // bnd2 contains non conforming faces
 
-  std::set<MFace, Less_Face> bnd2;
-  for(std::set<MFace, Less_Face>::iterator itf = bnd.begin(); itf != bnd.end();
+  std::set<MFace, MFaceLessThan> bnd2;
+  for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin(); itf != bnd.end();
       ++itf) {
     GFace *gfound = findInFaceSearchStructure(*itf, search);
     if(!gfound) {
@@ -655,14 +655,14 @@ bool MakeMeshConformal(GModel *gm, int howto)
 
   Msg::Info("%d hanging faces", bnd2.size());
 
-  std::set<MFace, Less_Face> ncf;
-  for(std::set<MFace, Less_Face>::iterator itf = bnd2.begin();
+  std::set<MFace, MFaceLessThan> ncf;
+  for(std::set<MFace, MFaceLessThan>::iterator itf = bnd2.begin();
       itf != bnd2.end(); ++itf) {
     const MFace &f = *itf;
     if(f.getNumVertices() == 4) { // quad face
-      std::set<MFace, Less_Face>::iterator it1 =
+      std::set<MFace, MFaceLessThan>::iterator it1 =
         bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(2)));
-      std::set<MFace, Less_Face>::iterator it2 =
+      std::set<MFace, MFaceLessThan>::iterator it2 =
         bnd2.find(MFace(f.getVertex(2), f.getVertex(3), f.getVertex(0)));
       if(it1 != bnd2.end() && it2 != bnd2.end()) {
         ncf.insert(MFace(f.getVertex(1), f.getVertex(2), f.getVertex(3),
@@ -692,7 +692,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
       std::vector<MFace> faces;
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, Less_Face>::iterator it = ncf.find(f);
+        std::set<MFace, MFaceLessThan>::iterator it = ncf.find(f);
         if(it == ncf.end()) {
           faces.push_back(f);
         }
@@ -733,7 +733,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
       std::vector<MFace> faces;
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, Less_Face>::iterator it = ncf.find(f);
+        std::set<MFace, MFaceLessThan>::iterator it = ncf.find(f);
         if(it == ncf.end()) {
           faces.push_back(f);
         }
@@ -780,14 +780,14 @@ static void TestConformity(GModel *gm)
   int count = 0;
   for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     GRegion *gr = *rit;
-    std::set<MFace, Less_Face> bnd;
+    std::set<MFace, MFaceLessThan> bnd;
     double vol = 0.0;
     for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
       MElement *e = gr->getMeshElement(i);
       vol += fabs(e->getVolume());
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, Less_Face>::iterator it = bnd.find(f);
+        std::set<MFace, MFaceLessThan>::iterator it = bnd.find(f);
         if(it == bnd.end())
           bnd.insert(f);
         else
@@ -796,7 +796,7 @@ static void TestConformity(GModel *gm)
     }
     printf("vol(%d) = %12.5E\n", gr->tag(), vol);
 
-    for(std::set<MFace, Less_Face>::iterator itf = bnd.begin();
+    for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin();
         itf != bnd.end(); ++itf) {
       GFace *gfound = findInFaceSearchStructure(*itf, search);
       if(!gfound) {

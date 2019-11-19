@@ -19,7 +19,7 @@ public:
   void setBoundFaces(const std::set<int> &tagFaces);
   void setBoundFaces(const std::vector<int> &tagFaces,
                      const std::vector<int> &signFaces);
-  void findFaces(std::map<MFace, std::vector<int>, Less_Face> &map_faces);
+  void findFaces(std::map<MFace, std::vector<int>, MFaceLessThan> &map_faces);
   virtual void remesh();
 };
 

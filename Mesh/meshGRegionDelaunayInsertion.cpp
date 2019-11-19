@@ -32,8 +32,8 @@ static void testIfBoundaryIsRecovered(GRegion *gr)
   std::vector<GEdge *> const &e = gr->edges();
   std::vector<GFace *> f = gr->faces();
 
-  std::map<MEdge, GEdge *, Less_Edge> edges;
-  std::map<MFace, GFace *, Less_Face> faces;
+  std::map<MEdge, GEdge *, MEdgeLessThan> edges;
+  std::map<MFace, GFace *, MFaceLessThan> faces;
 
   std::vector<GEdge *>::const_iterator it = e.begin();
   std::vector<GFace *>::iterator itf = f.begin();
@@ -112,7 +112,7 @@ struct edgeContainerB {
 };
 
 static void createAllEmbeddedEdges(GRegion *gr,
-                                   std::set<MEdge, Less_Edge> &allEmbeddedEdges)
+                                   std::set<MEdge, MEdgeLessThan> &allEmbeddedEdges)
 {
   std::vector<GEdge *> const &e = gr->embeddedEdges();
   for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
@@ -137,7 +137,7 @@ static void createAllEmbeddedEdges(GRegion *gr, edgeContainerB &embedded)
 }
 
 static void createAllEmbeddedFaces(GRegion *gr,
-                                   std::set<MFace, Less_Face> &allEmbeddedFaces)
+                                   std::set<MFace, MFaceLessThan> &allEmbeddedFaces)
 {
   std::vector<GFace *> const &f = gr->embeddedFaces();
   for(std::vector<GFace *>::const_iterator it = f.begin(); it != f.end();
@@ -249,7 +249,7 @@ void connectTets_vector2_templ(std::size_t _size, ITER beg, ITER end,
 
 template <class ITER>
 void connectTets(ITER beg, ITER end,
-                 const std::set<MFace, Less_Face> *allEmbeddedFaces = 0)
+                 const std::set<MFace, MFaceLessThan> *allEmbeddedFaces = 0)
 {
   std::set<faceXtet> conn;
   while(beg != end) {
@@ -275,13 +275,13 @@ void connectTets(ITER beg, ITER end,
 }
 
 void connectTets(std::list<MTet4 *> &l,
-                 const std::set<MFace, Less_Face> *embeddedFaces)
+                 const std::set<MFace, MFaceLessThan> *embeddedFaces)
 {
   connectTets(l.begin(), l.end(), embeddedFaces);
 }
 
 void connectTets(std::vector<MTet4 *> &l,
-                 const std::set<MFace, Less_Face> *embeddedFaces)
+                 const std::set<MFace, MFaceLessThan> *embeddedFaces)
 {
   connectTets(l.begin(), l.end(), embeddedFaces);
 }
@@ -464,7 +464,7 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
                    std::vector<double> &vSizes, std::vector<double> &vSizesBGM,
                    MTet4 *t, MTet4Factory &myFactory,
                    std::set<MTet4 *, compareTet4Ptr> &allTets,
-                   const std::set<MFace, Less_Face> &allEmbeddedFaces)
+                   const std::set<MFace, MFaceLessThan> &allEmbeddedFaces)
 {
   std::vector<MTet4 *> new_cavity;
   new_cavity.reserve(shell.size());
@@ -520,8 +520,8 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
 }
 
 static void setLcs(MTriangle *t,
-                   std::map<MVertex *, double, MVertexLessThanNum> &vSizes,
-                   std::set<MVertex *, MVertexLessThanNum> &bndVertices)
+                   std::map<MVertex *, double, MVertexPtrLessThan> &vSizes,
+                   std::set<MVertex *, MVertexPtrLessThan> &bndVertices)
 {
   for(int i = 0; i < 3; i++) {
     bndVertices.insert(t->getVertex(i));
@@ -532,9 +532,9 @@ static void setLcs(MTriangle *t,
     double dy = vi->y() - vj->y();
     double dz = vi->z() - vj->z();
     double l = std::sqrt(dx * dx + dy * dy + dz * dz);
-    std::map<MVertex *, double, MVertexLessThanNum>::iterator iti =
+    std::map<MVertex *, double, MVertexPtrLessThan>::iterator iti =
       vSizes.find(vi);
-    std::map<MVertex *, double, MVertexLessThanNum>::iterator itj =
+    std::map<MVertex *, double, MVertexPtrLessThan>::iterator itj =
       vSizes.find(vj);
     if(CTX::instance()->mesh.lcExtendFromBoundary == 2) {
       // use smallest edge length
@@ -576,8 +576,8 @@ static void setLcs(MTriangle *t,
 }
 
 static void setLcs(MTetrahedron *t,
-                   std::map<MVertex *, double, MVertexLessThanNum> &vSizes,
-                   std::set<MVertex *, MVertexLessThanNum> &bndVertices)
+                   std::map<MVertex *, double, MVertexPtrLessThan> &vSizes,
+                   std::set<MVertex *, MVertexPtrLessThan> &bndVertices)
 {
   for(int i = 0; i < 4; i++) {
     for(int j = i + 1; j < 4; j++) {
@@ -586,7 +586,7 @@ static void setLcs(MTetrahedron *t,
 
       // smallest tet edge
       if(bndVertices.find(vi) == bndVertices.end()) {
-        std::map<MVertex *, double, MVertexLessThanNum>::iterator iti =
+        std::map<MVertex *, double, MVertexPtrLessThan>::iterator iti =
           vSizes.find(vi);
 
         double const length =
@@ -596,7 +596,7 @@ static void setLcs(MTetrahedron *t,
       }
 
       if(bndVertices.find(vj) == bndVertices.end()) {
-        std::map<MVertex *, double, MVertexLessThanNum>::iterator itj =
+        std::map<MVertex *, double, MVertexPtrLessThan>::iterator itj =
           vSizes.find(vj);
 
         double const length =
@@ -702,9 +702,9 @@ void adaptMeshGRegion::operator()(GRegion *gr)
   }
   gr->tetrahedra.clear();
 
-  std::set<MFace, Less_Face> allEmbeddedFaces;
+  std::set<MFace, MFaceLessThan> allEmbeddedFaces;
   createAllEmbeddedFaces(gr, allEmbeddedFaces);
-  std::set<MEdge, Less_Edge> allEmbeddedEdges;
+  std::set<MEdge, MEdgeLessThan> allEmbeddedEdges;
   createAllEmbeddedEdges(gr, allEmbeddedEdges);
 
   connectTets(allTets.begin(), allTets.end(), &allEmbeddedFaces);
@@ -895,10 +895,10 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   }
   gr->tetrahedra.clear();
 
-  std::set<MFace, Less_Face> allEmbeddedFaces;
+  std::set<MFace, MFaceLessThan> allEmbeddedFaces;
   createAllEmbeddedFaces(gr, allEmbeddedFaces);
 
-  std::set<MEdge, Less_Edge> allEmbeddedEdges;
+  std::set<MEdge, MEdgeLessThan> allEmbeddedEdges;
   createAllEmbeddedEdges(gr, allEmbeddedEdges);
 
   if(allEmbeddedFaces.empty()) {
@@ -1172,7 +1172,7 @@ static int isCavityCompatibleWithEmbeddedEdges(std::vector<MTet4 *> &cavity,
 
 static int isCavityCompatibleWithEmbeddedFace(
   const std::vector<MTet4 *> &cavity, const std::vector<faceXtet> &shell,
-  const std::set<MFace, Less_Face> &allEmbeddedFaces)
+  const std::set<MFace, MFaceLessThan> &allEmbeddedFaces)
 {
   if (allEmbeddedFaces.empty())return 1;
   std::vector<MFace> shellFaces;
@@ -1201,7 +1201,7 @@ static int isCavityCompatibleWithEmbeddedFace(
 
 static void _deleteUnusedVertices(GRegion *gr)
 {
-  std::set<MVertex *, MVertexLessThanNum> allverts;
+  std::set<MVertex *, MVertexPtrLessThan> allverts;
   for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     for(int j = 0; j < 4; j++) {
       if(gr->tetrahedra[i]->getVertex(j)->onWhat() == gr)
@@ -1233,8 +1233,8 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
 
   // leave this in a block so the map gets deallocated directly
   {
-    std::map<MVertex *, double, MVertexLessThanNum> vSizesMap;
-    std::set<MVertex *, MVertexLessThanNum> bndVertices;
+    std::map<MVertex *, double, MVertexPtrLessThan> vSizesMap;
+    std::set<MVertex *, MVertexPtrLessThan> bndVertices;
 
     for(GModel::riter rit = gr->model()->firstRegion();
         rit != gr->model()->lastRegion(); ++rit) {
@@ -1249,9 +1249,9 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
           double dz = vi->z() - vj->z();
           double l = std::sqrt(dx * dx + dy * dy + dz * dz);
 
-          std::map<MVertex *, double, MVertexLessThanNum>::iterator iti =
+          std::map<MVertex *, double, MVertexPtrLessThan>::iterator iti =
             vSizesMap.find(vi);
-          std::map<MVertex *, double, MVertexLessThanNum>::iterator itj =
+          std::map<MVertex *, double, MVertexPtrLessThan>::iterator itj =
             vSizesMap.find(vj);
 
           // smallest tet edge
@@ -1268,7 +1268,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
           it != vertices.end(); ++it) {
         MVertex *v = (*it)->getMeshVertex(0);
         double l = (*it)->prescribedMeshSizeAtVertex();
-        std::map<MVertex *, double, MVertexLessThanNum>::iterator itv =
+        std::map<MVertex *, double, MVertexPtrLessThan>::iterator itv =
           vSizesMap.find(v);
         if(itv == vSizesMap.end() || itv->second > l) vSizesMap[v] = l;
       }
@@ -1284,7 +1284,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
     for(std::size_t i = 0; i < gr->tetrahedra.size(); i++)
       setLcs(gr->tetrahedra[i], vSizesMap, bndVertices);
 
-    for(std::map<MVertex *, double, MVertexLessThanNum>::iterator it =
+    for(std::map<MVertex *, double, MVertexPtrLessThan>::iterator it =
           vSizesMap.begin();
         it != vSizesMap.end(); ++it) {
       it->first->setIndex(NUM++);
@@ -1370,7 +1370,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
     (*it)->setNeigh(3, 0);
   }
   // store all embedded faces
-  std::set<MFace, Less_Face> allEmbeddedFaces;
+  std::set<MFace, MFaceLessThan> allEmbeddedFaces;
   edgeContainerB allEmbeddedEdges;
   for(GModel::riter it = gr->model()->firstRegion();
       it != gr->model()->lastRegion(); ++it) {

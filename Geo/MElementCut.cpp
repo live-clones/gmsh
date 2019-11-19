@@ -828,7 +828,7 @@ static int getElementVertexNum(DI_Point *p, MElement *e)
   return -1;
 }
 
-typedef std::set<MVertex *, MVertexLessThanLexicographic> newVerticesContainer;
+typedef std::set<MVertex *, MVertexPtrLessThanLexicographic> newVerticesContainer;
 
 static void elementCutMesh(
   MElement *e, std::vector<gLevelset *> &RPN, fullMatrix<double> &verticesLs,

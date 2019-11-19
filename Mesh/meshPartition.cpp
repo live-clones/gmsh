@@ -31,28 +31,30 @@
 #define hashmapface                                                            \
   std::unordered_map<                                                          \
     MFace, std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
-    Hash_Face, Equal_Face>
+    MFaceHash, MFaceEqual>
 #define hashmapedge                                                            \
   std::unordered_map<                                                          \
     MEdge, std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
-    Hash_Edge, Equal_Edge>
+    MEdgeHash, MEdgeEqual>
 #define hashmapvertex                                                          \
   std::unordered_map<                                                          \
     MVertex *,                                                                 \
-    std::vector<std::pair<MElement *, std::vector<unsigned int> > > >
+    std::vector<std::pair<MElement *, std::vector<unsigned int> > >,           \
+    MVertexPtrHash, MVertexPtrEqual>
 #else
 #define hashmap std::map
 #define hashmapface                                                            \
   std::map<MFace,                                                              \
            std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
-           Less_Face>
+           MFaceLessThan>
 #define hashmapedge                                                            \
   std::map<MEdge,                                                              \
            std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
-           Less_Edge>
+           MEdgeLessThan>
 #define hashmapvertex                                                          \
   std::map<MVertex *,                                                          \
-           std::vector<std::pair<MElement *, std::vector<unsigned int> > > >
+           std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
+           MVertexPtrLessThan>
 #endif
 
 #if defined(HAVE_METIS)
@@ -960,10 +962,10 @@ fillConnectedElements(std::vector<std::set<MElement *> > &connectedElements,
 
 static bool
 dividedNonConnectedEntities(GModel *const model, int dim,
-                            std::set<GRegion *, GEntityLessThan> &regions,
-                            std::set<GFace *, GEntityLessThan> &faces,
-                            std::set<GEdge *, GEntityLessThan> &edges,
-                            std::set<GVertex *, GEntityLessThan> &vertices)
+                            std::set<GRegion *, GEntityPtrLessThan> &regions,
+                            std::set<GFace *, GEntityPtrLessThan> &faces,
+                            std::set<GEdge *, GEntityPtrLessThan> &edges,
+                            std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
   bool ret = false;
   // Loop over vertices
@@ -1303,10 +1305,10 @@ dividedNonConnectedEntities(GModel *const model, int dim,
 static void CreateNewEntities(GModel *const model,
                               hashmap<MElement *, unsigned int> &elmToPartition)
 {
-  std::set<GRegion *, GEntityLessThan> regions = model->getRegions();
-  std::set<GFace *, GEntityLessThan> faces = model->getFaces();
-  std::set<GEdge *, GEntityLessThan> edges = model->getEdges();
-  std::set<GVertex *, GEntityLessThan> vertices = model->getVertices();
+  std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
+  std::set<GFace *, GEntityPtrLessThan> faces = model->getFaces();
+  std::set<GEdge *, GEntityPtrLessThan> edges = model->getEdges();
+  std::set<GVertex *, GEntityPtrLessThan> vertices = model->getVertices();
 
   int elementaryNumber = model->getMaxElementaryNumber(0);
   for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it) {
@@ -1903,10 +1905,10 @@ static void CreatePartitionTopology(
   hashmapedge edgeToElement;
   hashmapvertex vertexToElement;
 
-  std::set<GRegion *, GEntityLessThan> regions = model->getRegions();
-  std::set<GFace *, GEntityLessThan> faces = model->getFaces();
-  std::set<GEdge *, GEntityLessThan> edges = model->getEdges();
-  std::set<GVertex *, GEntityLessThan> vertices = model->getVertices();
+  std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
+  std::set<GFace *, GEntityPtrLessThan> faces = model->getFaces();
+  std::set<GEdge *, GEntityPtrLessThan> edges = model->getEdges();
+  std::set<GVertex *, GEntityPtrLessThan> vertices = model->getVertices();
 
   if(meshDim >= 3) {
     Msg::Info(" - Creating partition surfaces");
@@ -2437,10 +2439,10 @@ static void assignToParent(std::set<MVertex *> &verts, PART_ENTITY *entity,
 int UnpartitionMesh(GModel *const model)
 {
   // make a copy so we can iterate safely (we will remove some entities)
-  std::set<GRegion *, GEntityLessThan> regions = model->getRegions();
-  std::set<GFace *, GEntityLessThan> faces = model->getFaces();
-  std::set<GEdge *, GEntityLessThan> edges = model->getEdges();
-  std::set<GVertex *, GEntityLessThan> vertices = model->getVertices();
+  std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
+  std::set<GFace *, GEntityPtrLessThan> faces = model->getFaces();
+  std::set<GEdge *, GEntityPtrLessThan> edges = model->getEdges();
+  std::set<GVertex *, GEntityPtrLessThan> vertices = model->getVertices();
 
   std::set<MVertex *> verts;
 

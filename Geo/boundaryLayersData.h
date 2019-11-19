@@ -55,13 +55,13 @@ public:
   // Element columns
   std::map<MElement *, MElement *> _toFirst;
   std::map<MElement *, std::vector<MElement *> > _elemColumns;
-  std::map<MFace, GFace *, Less_Face> _inverse_classification;
+  std::map<MFace, GFace *, MFaceLessThan> _inverse_classification;
   std::multimap<MVertex *, BoundaryLayerData> _data;
   size_t size() const { return _data.size(); }
   typedef std::multimap<MVertex *, BoundaryLayerData>::iterator iter;
   typedef std::map<MVertex *, BoundaryLayerFan>::iterator iterf;
   std::multimap<MVertex *, MVertex *> _non_manifold_edges;
-  std::multimap<MEdge, SVector3, Less_Edge> _normals;
+  std::multimap<MEdge, SVector3, MEdgeLessThan> _normals;
   void clearData()
   {
     _toFirst.clear();
@@ -105,7 +105,7 @@ public:
     std::map<MVertex *, BoundaryLayerFan>::const_iterator it = _fans.find(v);
     int N = getNbColumns(v);
     if(N == 1) return getColumn(v, 0);
-    Equal_Edge aaa;
+    MEdgeEqual aaa;
     if(it != _fans.end()) {
       if(aaa(it->second._e1, e))
         return getColumn(v, 0);

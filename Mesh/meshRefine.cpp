@@ -20,13 +20,13 @@
 #include "OS.h"
 #include "meshGFaceOptimize.h"
 
-typedef std::map<MFace, std::vector<MVertex *>, Less_Face> faceContainer;
+typedef std::map<MFace, std::vector<MVertex *>, MFaceLessThan> faceContainer;
 
 void subdivide_pyramid(MElement *element, GRegion *gr,
                        faceContainer &faceVertices,
                        std::vector<MHexahedron *> &dwarfs88);
 
-struct MVertexLessThanParam {
+struct MVertexPtrLessThanParam {
   bool operator()(const MVertex *v1, const MVertex *v2) const
   {
     double u1 = 0., u2 = 1.;
@@ -99,7 +99,7 @@ static void Subdivide(GEdge *ge)
 
   // 2nd order meshing destroyed the ordering of the vertices on the edge
   std::sort(ge->mesh_vertices.begin(), ge->mesh_vertices.end(),
-            MVertexLessThanParam());
+            MVertexPtrLessThanParam());
   for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++)
     ge->mesh_vertices[i]->setPolynomialOrder(1);
   ge->deleteVertexArrays();
