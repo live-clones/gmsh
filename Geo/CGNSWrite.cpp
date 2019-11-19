@@ -64,36 +64,39 @@ void getNodesInEntities(const std::vector<GEntity *> &entities,
 }
 
 
-void getNamesFromEntity(GEntity *ge, std::string &entityName,
-                        std::string &physicalName)
+void getDimStr(int dim, std::string &dimStr)
 {
-  // convenction: start name with letter identifying dimension
-  std::ostringstream ossEntityName;
-  switch (ge->dim())
+  dimStr = "";
+  switch(dim)
   {
-  case 0: ossEntityName << "P_"; break;
-  case 1: ossEntityName << "L_"; break;
-  case 2: ossEntityName << "S_"; break;
-  case 3: ossEntityName << "V_"; break;
+  case 0: dimStr = "P"; break;
+  case 1: dimStr = "L"; break;
+  case 2: dimStr = "S"; break;
+  case 3: dimStr = "V"; break;
   }
+}
 
-  // try to retrieve name from parent entity in case of partitioned entity
-  // (relevant for periodic vertices)
+
+void getNameFromEntity(GEntity *ge, std::string &entityName)
+{
+  // convention: start name with letter identifying dimension
+  std::string dimStr;
+  getDimStr(ge->dim(), dimStr);
+
+  // get parent entity and model
   GEntity *geParent = ge->getParentEntity();
-  GEntity *geName = (geParent != 0) ? geParent : ge;
-  GModel *model = geName->model();
+  GModel *model = ge->model();
 
-  ossEntityName << geName->tag();
-  entityName = model->getElementaryName(geName->dim(), geName->tag());
-  if(!entityName.empty()) ossEntityName << "_" << entityName;
-  if(geParent != 0) ossEntityName << "_" << ge->tag();
-  entityName = ossEntityName.str();
+  // name for section: use given (potentially partitioned) entity in addition to
+  // the parent entity (if it exists) in order to avoid duplicate CGNS names
+  std::ostringstream ossEnt;
+  ossEnt << dimStr;
+  if(geParent != 0) ossEnt << "_" << geParent->tag();
+  ossEnt << "_" << ge->tag();
+  entityName = model->getElementaryName(ge->dim(), ge->tag());
+  if(!entityName.empty()) ossEnt << "_" << entityName;
+  entityName = ossEnt.str();
   entityName = cgnsString(entityName);
-  std::vector<int> physicalEnt = geName->getPhysicalEntities();
-  if (physicalEnt.size() > 0) {
-    physicalName = model->getPhysicalName(geName->dim(), physicalEnt[0]);
-  }
-  if(physicalName.length() > 0) physicalName = cgnsString(physicalName);
 }
 
 
@@ -186,7 +189,8 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
               int meshDim, std::size_t numNodesTotal, std::size_t partition,
               const std::vector<GEntity *> &entities, int cgIndexFile,
               int cgIndexBase, std::vector<std::string> &zoneName,
-              Vertex2LocalData &interfVert2Local, std::set<int> &eleMshTypes)
+              Vertex2LocalData &interfVert2Local, std::set<int> &eleMshTypes,
+              std::map<GEntity *, std::string> &geomEntities)
 {
   typedef std::set<MVertex *>::iterator NodeSetIter;
 #ifdef HAVE_LIBCGNS_CPEX0045
@@ -280,12 +284,16 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
   // write an element section for each entity, per element type
   cgsize_t eleStart = 0, eleEnd = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
+    // get entities
     GEntity *ge = entities[i];
-    // const int entDim = ge->dim();
+    GEntity *geGeom = ge->getParentEntity();
+    if(geGeom == 0) geGeom = ge;
 
-    // get or create the name for the entity
-    std::string entityName, physicalName;
-    getNamesFromEntity(ge, entityName, physicalName);
+    // get or create the names for the entity
+    std::string entityName, geomEntityName;
+    getNameFromEntity(ge, entityName);
+    getNameFromEntity(geGeom, geomEntityName);
+    geomEntities[geGeom] = geomEntityName;
 
     // retrieve element types for this geometric entity
     std::vector<int> eleTypes;
@@ -334,15 +342,14 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
       if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
 
-    // write elementary entity as BC and physical name as BC family name
+    // write elementary entity as BC and geometrical entity as BC family name
     eleEntRange[1] = eleEnd;
     int iZoneBC;
-    const BCType_t bcType = (physicalName.length() > 0) ? FamilySpecified :
-                                                          BCTypeUserDefined;
     cgnsErr = cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                            entityName.c_str(), bcType, PointRange, 2,
+                            entityName.c_str(), FamilySpecified, PointRange, 2,
                             eleEntRange, &iZoneBC);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    // GridLocation not clear: can "Vertex" be understood as "point" elements?
     // const GridLocation_t loc = (entDim == 2) ? FaceCenter :
     //                            (entDim == 1) ? EdgeCenter :
     //                            (entDim == 0) ? Vertex : CellCenter;
@@ -350,13 +357,11 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
     cgnsErr = cg_boco_gridlocation_write(cgIndexFile, cgIndexBase,
                                           cgIndexZone, iZoneBC, loc);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
-    if(physicalName.length() > 0) {
-      cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
-                        "ZoneBC_t", 1, "BC_t", iZoneBC, "end");
-      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
-      cgnsErr = cg_famname_write(physicalName.c_str());
-      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
-    }
+    cgnsErr = cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
+                      "ZoneBC_t", 1, "BC_t", iZoneBC, "end");
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    cgnsErr = cg_famname_write(geomEntityName.c_str());
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
 
   return 1;
@@ -622,6 +627,47 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
   Msg::Error("Gmsh is not compiled with CGNS CPEX0045 capability");
   return 0;
 #endif
+}
+
+
+int writeGeomEntities(std::map<GEntity *, std::string> &geomEntities,
+                      int cgIndexFile, int cgIndexBase)
+{
+  int cgnsErr;
+
+  typedef std::map<GEntity *, std::string>::iterator GeomEntIter;
+  for(GeomEntIter it = geomEntities.begin(); it != geomEntities.end(); ++it) {
+    // get geometric entity
+    GEntity *ge = it->first;
+    std::string &geomName = it->second;
+    GModel *model = ge->model();
+
+    // Write family containing all node sets
+    int cgIndexFam;
+    cgnsErr = cg_family_write(cgIndexFile, cgIndexBase, geomName.c_str(),
+                              &cgIndexFam);
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
+
+    // write physical tags or names
+    std::vector<int> phys = ge->getPhysicalEntities();
+    for(std::size_t iPhys = 0; iPhys < phys.size(); iPhys++) {
+      // get name if exists, otherwise tag
+      const int physTag = phys[iPhys];
+      std::string physName = model->getPhysicalName(ge->dim(), physTag);
+      if(physName == "") {
+        std::ostringstream oss;
+        oss << physTag;
+        physName = oss.str();
+      }
+
+      // write to family name
+      cgnsErr = cg_family_name_write(cgIndexFile, cgIndexBase, cgIndexFam,
+                                     physName.c_str(), physName.c_str());
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    }
+  }
+
+  return 1;
 }
 
 

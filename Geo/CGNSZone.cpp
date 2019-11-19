@@ -67,36 +67,37 @@ CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex, ZoneType_t type,
 // read a boundary condition in a zone
 int CGNSZone::readBoundaryCondition(int iZoneBC,
                                     const std::vector<CGNSZone *> &allZones,
-                                    std::vector<std::string> &allBCName,
-                                    std::map<int, int> &bc2Family,
-                                    std::vector<std::string> &allBCFamilyName)
+                                    std::vector<std::string> &allGeomName)
 {
   int cgnsErr;
 
   // read general information on boundary condition
-  char bcName[CGNS_MAX_STR_LEN];
+  char rawBCName[CGNS_MAX_STR_LEN];
   BCType_t bcType;
   PointSetType_t ptSetType;
   cgsize_t nbVal, normalSize;
   DataType_t normalType;
   int nbDataSet;
   int normalIndex;
-  cgnsErr = cg_boco_info(fileIndex(), baseIndex(), index(), iZoneBC, bcName,
+  cgnsErr = cg_boco_info(fileIndex(), baseIndex(), index(), iZoneBC, rawBCName,
                          &bcType, &ptSetType, &nbVal, &normalIndex,
                          &normalSize, &normalType, &nbDataSet);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
-  // read family linked to BC, use BC name if not present
-  std::string familyName;
+  // get BC name from family linked to BC, use original BC name if not present,
+  // then retrieve BC index
+  std::string geomName;
   cgnsErr = cg_goto(fileIndex(), baseIndex(), "Zone_t", index(), "ZoneBC_t",
                     1, "BC_t", iZoneBC, "end");
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
-  char tmpFamilyName[CGNS_MAX_STR_LEN];
-  cgnsErr = cg_famname_read(tmpFamilyName);
+  char rawFamilyName[CGNS_MAX_STR_LEN];
+  cgnsErr = cg_famname_read(rawFamilyName);
   if(cgnsErr != CG_NODE_NOT_FOUND) {
-    if(cgnsErr == CG_OK) familyName = std::string(tmpFamilyName);
+    if(cgnsErr == CG_OK) geomName = std::string(rawFamilyName);
     else return cgnsError(__FILE__, __LINE__, fileIndex());
   }
+  else geomName = std::string(rawBCName);
+  const int indGeom = nameIndex(geomName, allGeomName);
 
   // read location of bnd. condition (type of mesh entity on which it applies)
   GridLocation_t location;
@@ -107,23 +108,16 @@ int CGNSZone::readBoundaryCondition(int iZoneBC,
   // check that boundary condition is imposed on face elements 
   if((meshDim() == 2) && (location != CellCenter) && (location != EdgeCenter)) {
     Msg::Warning("Boundary condition %s is specified on %s instead of "
-                 "CellCenter/EdgeCenter in a 2D zone, skipping", bcName,
-                 cg_GridLocationName(location));
+                 "CellCenter/EdgeCenter in a 2D zone, skipping",
+                 geomName.c_str(), cg_GridLocationName(location));
     return 1;
   }
   else if((meshDim() == 3) && (location != CellCenter) &&
           (location != FaceCenter)) {
     Msg::Warning("Boundary condition %s is specified on %s instead of "
-                 "CellCenter/FaceCenter in a 3D zone, skipping", bcName,
-                 cg_GridLocationName(location));
+                 "CellCenter/FaceCenter in a 3D zone, skipping",
+                 geomName.c_str(), cg_GridLocationName(location));
     return 1;
-  }
-
-  // associate BC name and family name with indices
-  const int indBC = nameIndex(bcName, allBCName);
-  if(familyName.length() > 0) {
-    const int indBCFamily = nameIndex(familyName, allBCFamilyName);
-    bc2Family[indBC] = indBCFamily;
   }
 
   // read and store elements on which the BC is imposed
@@ -139,12 +133,12 @@ int CGNSZone::readBoundaryCondition(int iZoneBC,
     break;
   default:
     Msg::Error("Wrong point set type %s is for boundary condition %s",
-               cg_PointSetTypeName(ptSetType), bcName);
+               cg_PointSetTypeName(ptSetType), geomName);
     return 0;
     break;
   }
   for(std::size_t iElt = 0; iElt < bcElt.size(); iElt++) {
-    elt2BC_[bcElt[iElt]] = indBC;
+    elt2Geom()[bcElt[iElt]] = indGeom;
   }
 
   return 1;
@@ -302,9 +296,7 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
 int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
                        std::vector<MVertex *> &allVert,
                        std::map<int, std::vector<MElement *> > *allElt,
-                       std::vector<std::string> &allBCName,
-                       std::map<int, int> &bc2Family,
-                       std::vector<std::string> &allBCFamilyName)
+                       std::vector<std::string> &allGeomName)
 {
   int cgnsErr;
 
@@ -313,8 +305,7 @@ int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
   cgnsErr = cg_nbocos(fileIndex(), baseIndex(), index(), &nbZoneBC);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
   for(int iZoneBC = 1; iZoneBC <= nbZoneBC; iZoneBC++) {
-    int errBC = readBoundaryCondition(iZoneBC, allZones, allBCName, bc2Family,
-                                      allBCFamilyName);
+    int errBC = readBoundaryCondition(iZoneBC, allZones, allGeomName);
     if(errBC == 0) return 0;
   }
 
@@ -323,11 +314,11 @@ int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
   if(errVert == 0) return 0;
 
   // read and create elements
-  int err = readElements(allVert, allElt, allBCName);
+  int err = readElements(allVert, allElt, allGeomName);
   if(err == 0) return 0;
 
   // cleanup unncessary memory
-  elt2BC_.clear();
+  elt2Geom().clear();
 
   return 1;
 }

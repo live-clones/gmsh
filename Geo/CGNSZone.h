@@ -59,12 +59,10 @@ public:
   virtual void nodeFromList(const std::vector<cgsize_t> &range,
                             std::vector<cgsize_t> &node) const = 0;
 
-  const std::map<cgsize_t, int> &elt2BC() const { return elt2BC_; }
+  std::map<cgsize_t, int> &elt2Geom() { return elt2Geom_; }
   const ZoneEltNodeTransfo *eltNodeTransfo() const { return eltNodeTransfo_; }
   const std::vector<bool> &interfaceNode() const { return interfaceNode_; }
   int nbPerConnect() const { return nbPerConnect_; }
-  // int &elt2BC(int iElt) { return elt2BC_[iElt]; }
-  // bool interfaceNode(int iNode) { return interfaceNode_[iNode]; }
   int masterZone(int iPer) const { return masterZone_[iPer]; }
   const std::vector<double> &perTransfo(int iPer) const { return perTransfo_[iPer]; }
   const std::vector<cgsize_t> &masterNode(int iPer) const { return masterNode_[iPer]; }
@@ -74,16 +72,14 @@ public:
   
   int readBoundaryCondition(int iZoneBC,
                             const std::vector<CGNSZone *> &allZones,
-                            std::vector<std::string> &allBCName,
-                            std::map<int, int> &bc2Family,
-                            std::vector<std::string> &allBCFamilyName);
+                            std::vector<std::string> &allGeomName);
 
   int readVertices(int dim, double scale, std::vector<CGNSZone *> &allZones,
                    std::vector<MVertex *> &allVert);
 
   virtual int readElements(std::vector<MVertex *> &allVert,
                            std::map<int, std::vector<MElement *> > *allElt,
-                           std::vector<std::string> &allBCName) = 0;
+                           std::vector<std::string> &allGeomName) = 0;
 
   virtual int readConnectivities(const std::map<std::string, int> &name2Zone,
                                  std::vector<CGNSZone *> &allZones);
@@ -91,9 +87,7 @@ public:
   int readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
                std::vector<MVertex *> &allVert,
                std::map<int, std::vector<MElement *> > *allElt,
-               std::vector<std::string> &allBCName,
-               std::map<int, int> &bc2Family,
-               std::vector<std::string> &allBCFamilyName);
+               std::vector<std::string> &allGeomName);
 
   void setPeriodicVertices(const std::vector<CGNSZone *> &allZones,
                            const std::vector<MVertex *> &allVert);
@@ -107,7 +101,7 @@ protected:
   cgsize_t startNode_, nbNode_, nbElt_;
 
   // BC information
-  std::map<cgsize_t, int> elt2BC_;
+  std::map<cgsize_t, int> elt2Geom_;
 
   // transformations of high-order points per element (CPEX0045)
   const ZoneEltNodeTransfo *eltNodeTransfo_;

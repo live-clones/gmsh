@@ -31,7 +31,7 @@ public:
 
   virtual int readElements(std::vector<MVertex *> &allVert,
                            std::map<int, std::vector<MElement *> > *allElt,
-                           std::vector<std::string> &allBCName);
+                           std::vector<std::string> &allGeomName);
 
 protected:
  int readSection(int iSect, const std::vector<MVertex *> &allVert,

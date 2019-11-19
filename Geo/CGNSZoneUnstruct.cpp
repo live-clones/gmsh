@@ -168,8 +168,8 @@ int CGNSZoneUnstruct::readSection(int iSect,
   std::size_t iSectData = 0;
   const cgsize_t iStartElt = startElt-1, iEndElt = endElt-1;
   for(int iElt = iStartElt; iElt <= iEndElt; iElt++) {
-    const std::map<int, int>::const_iterator itBC = elt2BC_.find(iElt);
-    const int entity = (itBC == elt2BC_.end()) ? 1 : itBC->second;
+    const std::map<int, int>::const_iterator it = elt2Geom().find(iElt);
+    const int entity = (it == elt2Geom().end()) ? 1 : it->second;
     createElement(sectEltType, startNode(), entity, allVert, allElt, sectData,
                   eltNodeTransfo(), rawNode, iSectData);
   }
@@ -180,7 +180,7 @@ int CGNSZoneUnstruct::readSection(int iSect,
 
 int CGNSZoneUnstruct::readElements(std::vector<MVertex *> &allVert,
                                 std::map<int, std::vector<MElement *> > *allElt,
-                                std::vector<std::string> &allBCName)
+                                std::vector<std::string> &allGeomName)
 {
   int cgnsErr;
 

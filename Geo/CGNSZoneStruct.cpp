@@ -460,11 +460,11 @@ void CGNSZoneStruct<DIM>::nodeFromList(const std::vector<cgsize_t> &list,
 template<int DIM>
 int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
                                 std::map<int, std::vector<MElement *> > *allElt,
-                                std::vector<std::string> &allBCName)
+                                std::vector<std::string> &allGeomName)
 {
   // default BC (in case none specified)
-  const int firstDefaultBC = allBCName.size();
-  allBCName.insert(allBCName.end(), 2*meshDim(), "");
+  const int firstDefaultEnt = allGeomName.size();
+  allGeomName.insert(allGeomName.end(), 2*meshDim(), "");
 
   // order of coarsened mesh and number of potentially coarsened (HO) elements
   int order = CTX::instance()->mesh.cgnsImportOrder;
@@ -503,9 +503,9 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
     for(int j = 0; j < nbEltJ; j++) {
         static const int dir[2] = {1, 2};
         cgsize_t ijk[3] = {0, j*order, k*order};
-        makeBndElement(ijk, dir, order, firstDefaultBC, allVert, allElt);
+        makeBndElement(ijk, dir, order, firstDefaultEnt, allVert, allElt);
         ijk[0] = nbNodeIJK(0)-1;
-        makeBndElement(ijk, dir, order, firstDefaultBC+1, allVert, allElt);
+        makeBndElement(ijk, dir, order, firstDefaultEnt+1, allVert, allElt);
     }
   }
 
@@ -514,9 +514,9 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
     for(int i = 0; i < nbEltI; i++) {
         static const int dir[2] = {0, 2};
         cgsize_t ijk[3] = {i*order, 0, k*order};
-        makeBndElement(ijk, dir, order, firstDefaultBC+2, allVert, allElt);
+        makeBndElement(ijk, dir, order, firstDefaultEnt+2, allVert, allElt);
         ijk[1] = nbNodeIJK(1)-1;
-        makeBndElement(ijk, dir, order, firstDefaultBC+3, allVert, allElt);
+        makeBndElement(ijk, dir, order, firstDefaultEnt+3, allVert, allElt);
     }
   }
 
@@ -526,9 +526,9 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
       for(int i = 0; i < nbEltI; i++) {
           static const int dir[2] = {0, 1};
           cgsize_t ijk[3] = {i*order, j*order, 0};
-          makeBndElement(ijk, dir, order, firstDefaultBC+4, allVert, allElt);
+          makeBndElement(ijk, dir, order, firstDefaultEnt+4, allVert, allElt);
           ijk[2] = nbNodeIJK(2)-1;
-          makeBndElement(ijk, dir, order, firstDefaultBC+5, allVert, allElt);
+          makeBndElement(ijk, dir, order, firstDefaultEnt+5, allVert, allElt);
       }
     }
   }
@@ -543,11 +543,11 @@ void CGNSZoneStruct<DIM>::makeBndElement(const cgsize_t *ijk, const int *dir,
                                          std::vector<MVertex *> &allVert,
                                 std::map<int, std::vector<MElement *> > *allElt)
 {
-  typedef std::map<cgsize_t, int>::const_iterator Elt2BCIter;
+  typedef std::map<cgsize_t, int>::const_iterator Elt2GeomIter;
   
   cgsize_t iElt = ijk2Ind<DIM>(ijk, nbNodeIJK());
-  const Elt2BCIter itBC = elt2BC_.find(iElt);
-  const int entity = (itBC == elt2BC_.end()) ? defaultEntity : itBC->second;
+  const Elt2GeomIter it = elt2Geom().find(iElt);
+  const int entity = (it == elt2Geom().end()) ? defaultEntity : it->second;
   
   createBndElement<DIM>(ijk, nbNodeIJK(), dir, order, entity, startNode(),
                         allVert, allElt, interfaceNode());

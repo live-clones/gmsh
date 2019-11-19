@@ -39,7 +39,7 @@ public:
 
   virtual int readElements(std::vector<MVertex *> &allVert,
                            std::map<int, std::vector<MElement *> > *allElt,
-                           std::vector<std::string> &allBCName);
+                           std::vector<std::string> &allGeomName);
 
   virtual int readConnectivities(const std::map<std::string, int> &name2Zone,
                                  std::vector<CGNSZone *> &allZones);

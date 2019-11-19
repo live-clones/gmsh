@@ -42,10 +42,9 @@ int GModel::readCGNS(const std::string &name)
   std::map<std::string, std::vector<fullMatrix<double> > > allEltNodeTransfo;
   readEltNodeTransfo(fileIndex, baseIndex, allEltNodeTransfo);
 
-  // define BC names and families, used for elementary and physical names resp.
+  // define names of geometrical entities
   // index start at 1 with empty name to account for unclassified elements
-  std::vector<std::string> allBCName(2, "");
-  std::vector<std::string> allBCFamilyName(2, "");
+  std::vector<std::string> allGeomName(2, "");
 
   // read number of zones (allZones[0] is dummy because index starts at 1) 
   int nbZone = 0;
@@ -61,11 +60,10 @@ int GModel::readCGNS(const std::string &name)
   // read mesh in zones
   std::vector<MVertex *> allVert;                     // all vertices
   std::map<int, std::vector<MElement *> > allElt[10]; // all elements by type
-  std::map<int, int> bc2Family;                       // bc tag -> family
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     CGNSZone *zone = allZones[iZone];
-    int err = zone->readMesh(dim, scale, allZones, allVert, allElt, allBCName,
-                             bc2Family, allBCFamilyName);
+    int err = zone->readMesh(dim, scale, allZones, allVert, allElt,
+                             allGeomName);
     if(err == 0) return 0;
   }
 
@@ -98,15 +96,8 @@ int GModel::readCGNS(const std::string &name)
     std::map<int, std::map<int, std::string> > physicalBnd;
     for(std::size_t iEnt = 0; iEnt < ent.size(); iEnt++) {
       int tag = ent[iEnt]->tag();
-      const std::string &entName = allBCName[tag];
+      const std::string &entName = allGeomName[tag];
       if(entName.length() > 0) setElementaryName(d, tag, entName);
-      const std::map<int, int>::iterator itFam = bc2Family.find(tag);
-      if(itFam != bc2Family.end()) {
-        const int family = itFam->second;
-        const std::string &familyName = allBCFamilyName[family];
-        physicalBnd[tag][tag] = familyName;
-        _physicalNames[std::make_pair(d, tag)] = familyName;
-      }
     }
     _storePhysicalTagsInEntities(d, physicalBnd);
   }
@@ -173,10 +164,11 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
 
   // write partitions and periodic/partition connectivities
   std::set<int> eleMshTypes;
+  std::map<GEntity *, std::string> geomEntities;
   if (numPart == 0) {                                   // mesh not partitioned
     int err = writeZone(this, saveAll, scalingFactor, meshDim, numNodes, 0,
                         entities, cgIndexFile, cgIndexBase, zoneName,
-                        interfVert2Local, eleMshTypes);
+                        interfVert2Local, eleMshTypes, geomEntities);
     if(err == 0) return 0;
     if (entitiesPer.size() > 0) {
       err = writePeriodic(entitiesPer, cgIndexFile, cgIndexBase, zoneName,
@@ -192,7 +184,8 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
       printProgress("Writing partition", iPart, numPart);
       int err = writeZone(this, saveAll, scalingFactor, meshDim, numNodes,
                           iPart, entitiesPart[iPart], cgIndexFile, cgIndexBase,
-                          zoneName, interfVert2Local, eleMshTypes);
+                          zoneName, interfVert2Local, eleMshTypes,
+                          geomEntities);
       if(err == 0) return 0;
     }             // loop on partitions
     if (entitiesPer.size() > 0) {
@@ -206,6 +199,11 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
       if(err == 0) return 0;
     }
   }   // numPart == 0
+
+  // write geometric entities in families
+  if(geomEntities.size() > 0) {
+    writeGeomEntities(geomEntities, cgIndexFile, cgIndexBase);
+  }
 
   // write element high-orper point info for CPEX0045 if required
   if(CTX::instance()->mesh.cgnsExportCPEX0045) {

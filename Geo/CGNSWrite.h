@@ -44,7 +44,8 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
               int meshDim, std::size_t numNodesTotal, std::size_t partition,
               const std::vector<GEntity *> &entities, int cgIndexFile,
               int cgIndexBase, std::vector<std::string> &zoneName,
-              Vertex2LocalData &interfVert2Local, std::set<int> &eleMshTypes);
+              Vertex2LocalData &interfVert2Local, std::set<int> &eleMshTypes,
+              std::map<GEntity *, std::string> &geomEntities);
 
 int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
                    int cgIndexBase, const std::vector<std::string> &zoneName,
@@ -60,6 +61,9 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
 
 int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
                      int cgIndexBase);
+
+int writeGeomEntities(std::map<GEntity *, std::string> &geomEntities,
+                      int cgIndexFile, int cgIndexBase);
 
 #endif // HAVE_LIBCGNS
 
