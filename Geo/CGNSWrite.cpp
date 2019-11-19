@@ -86,6 +86,7 @@ void getNamesFromEntity(GEntity *ge, std::string &entityName,
   ossEntityName << geName->tag();
   entityName = model->getElementaryName(geName->dim(), geName->tag());
   if(!entityName.empty()) ossEntityName << "_" << entityName;
+  if(geParent != 0) ossEntityName << "_" << ge->tag();
   entityName = ossEntityName.str();
   entityName = cgnsString(entityName);
   std::vector<int> physicalEnt = geName->getPhysicalEntities();
@@ -336,9 +337,11 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor,
     // write elementary entity as BC and physical name as BC family name
     eleEntRange[1] = eleEnd;
     int iZoneBC;
+    const BCType_t bcType = (physicalName.length() > 0) ? FamilySpecified :
+                                                          BCTypeUserDefined;
     cgnsErr = cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                            entityName.c_str(), FamilySpecified, PointRange,
-                            2, eleEntRange, &iZoneBC);
+                            entityName.c_str(), bcType, PointRange, 2,
+                            eleEntRange, &iZoneBC);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     // const GridLocation_t loc = (entDim == 2) ? FaceCenter :
     //                            (entDim == 1) ? EdgeCenter :
