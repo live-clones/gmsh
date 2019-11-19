@@ -1229,20 +1229,16 @@ void GEO_Internals::synchronize(GModel *model)
       if(c->Num >= 0) {
         GEdge *e = model->getEdgeByTag(c->Num);
 
-        printf("syncing curve %d:", c->Num);
         if(!e && c->beg && c->end) {
-          printf("case 1\n");
           e = new gmshEdge(model, c, model->getVertexByTag(c->beg->Num),
                            model->getVertexByTag(c->end->Num));
           model->add(e);
         }
         else if(!e) {
-          printf("case 2\n");
           e = new gmshEdge(model, c, 0, 0);
           model->add(e);
         }
         else {
-          printf("case 3\n");
           if(e->getNativeType() == GEntity::GmshModel) {
             if(c->beg && c->end)
               ((gmshEdge *)e)

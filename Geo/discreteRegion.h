@@ -13,6 +13,7 @@
 class discreteRegion : public GRegion {
 public:
   discreteRegion(GModel *model, int num);
+  discreteRegion(GModel *model);
   virtual ~discreteRegion() {}
   virtual GeomType geomType() const { return DiscreteVolume; }
   void setBoundFaces(const std::set<int> &tagFaces);

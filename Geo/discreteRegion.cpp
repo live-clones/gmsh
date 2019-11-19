@@ -21,6 +21,10 @@ discreteRegion::discreteRegion(GModel *model, int num) : GRegion(model, num)
   Tree_Add(model->getGEOInternals()->Volumes, &v);
 }
 
+discreteRegion::discreteRegion(GModel *model) : GRegion(model, 0)
+{
+}
+
 void discreteRegion::setBoundFaces(const std::set<int> &tagFaces)
 {
   for(std::set<int>::const_iterator it = tagFaces.begin(); it != tagFaces.end();

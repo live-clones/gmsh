@@ -1607,7 +1607,7 @@ static partitionFace *assignPartitionBoundary(
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionFace *newEntity = 0;
-  partitionFace pf(model, 1, partitions);
+  partitionFace pf(model, partitions);
   std::pair<
     std::multimap<partitionFace *, GEntity *, Less_partitionFace>::iterator,
     std::multimap<partitionFace *, GEntity *, Less_partitionFace>::iterator>
@@ -1675,7 +1675,7 @@ static partitionEdge *assignPartitionBoundary(
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionEdge *newEntity = 0;
-  partitionEdge pe(model, 1, 0, 0, partitions);
+  partitionEdge pe(model, partitions);
   std::pair<
     std::multimap<partitionEdge *, GEntity *, Less_partitionEdge>::iterator,
     std::multimap<partitionEdge *, GEntity *, Less_partitionEdge>::iterator>
@@ -1721,7 +1721,7 @@ static partitionVertex *assignPartitionBoundary(
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionVertex *newEntity = 0;
-  partitionVertex pv(model, 1, partitions);
+  partitionVertex pv(model, partitions);
   std::pair<
     std::multimap<partitionVertex *, GEntity *, Less_partitionVertex>::iterator,
     std::multimap<partitionVertex *, GEntity *, Less_partitionVertex>::iterator>

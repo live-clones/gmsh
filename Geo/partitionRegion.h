@@ -24,6 +24,11 @@ public:
     : discreteRegion(model, num), _partitions(), _parentEntity(NULL)
   {
   }
+  partitionRegion(GModel *model,
+                  const std::vector<unsigned int> &partitions)
+    : discreteRegion(model), _partitions(partitions), _parentEntity(NULL)
+  {
+  }
   virtual ~partitionRegion() {}
   virtual GeomType geomType() const { return PartitionVolume; }
   virtual void setParentEntity(GEntity *r) { _parentEntity = r; }

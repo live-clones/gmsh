@@ -18,6 +18,7 @@ private:
 public:
   discreteVertex(GModel *m, int num, double x = 0., double y = 0.,
                  double z = 0.);
+  discreteVertex(GModel *m);
   virtual ~discreteVertex();
   virtual GPoint point() const;
   virtual double x() const;
