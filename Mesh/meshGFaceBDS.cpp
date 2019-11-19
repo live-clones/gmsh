@@ -85,16 +85,16 @@ static double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
            computeEdgeLinearLength(e->p1, e->p2, f);
 }
 
-static double NewGetLc(BDS_Point *point)
+static double NewGetLc(BDS_Point *point, GFace *gf)
 {
-  return Extend1dMeshIn2dSurfaces() ? std::min(point->lc(), point->lcBGM()) :
-                                      point->lcBGM();
+  return Extend1dMeshIn2dSurfaces(gf) ? std::min(point->lc(), point->lcBGM()) :
+    point->lcBGM();
 }
 
 static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f)
 {
-  double l1 = NewGetLc(p1);
-  double l2 = NewGetLc(p2);
+  double l1 = NewGetLc(p1, f);
+  double l2 = NewGetLc(p2, f);
   double l = .5 * (l1 + l2);
 
   const double coord = 0.5;
@@ -877,8 +877,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     int LARGE = 0, SMALL = 0, TOTAL = 0;
     while(it != m.edges.end()) {
       if(!(*it)->deleted) {
-        double lone =
-          2 * (*it)->length() / (NewGetLc((*it)->p1) + NewGetLc((*it)->p2));
+        double lone = 2 * (*it)->length() /
+          (NewGetLc((*it)->p1, gf) + NewGetLc((*it)->p2, gf));
         if(lone > maxE) LARGE++;
         if(lone < minE) SMALL++;
         TOTAL++;

@@ -721,7 +721,7 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
     double lcBGM =
       ONE_THIRD * (data.vSizesBGM[index0] + data.vSizesBGM[index1] +
                    data.vSizesBGM[index2]);
-    double LL = Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM;
+    double LL = Extend1dMeshIn2dSurfaces(gf) ? std::min(lc, lcBGM) : lcBGM;
 
     lcMin = std::min(lcMin, std::min(data.vSizes[index0], data.vSizes[index1]));
     lcBGMMin = std::min(lcBGMMin, std::min(data.vSizesBGM[index0], data.vSizesBGM[index1]));
@@ -1197,7 +1197,7 @@ static double optimalPointFrontal(GFace *gf, MTri3 *worst, int active_edge,
   const double rhoM2 =
     0.5 * (data.vSizesBGM[index0] + data.vSizesBGM[index1]); // * RATIO;
   const double rhoM =
-    Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
+    Extend1dMeshIn2dSurfaces(gf) ? std::min(rhoM1, rhoM2) : rhoM2;
   const double rhoM_hat = rhoM;
 
   const double q = lengthMetric(center, midpoint, metric);
@@ -1404,7 +1404,7 @@ static void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
                        (data.vSizesBGM[index1] + data.vSizesBGM[index2]) /
                        std::sqrt(3.);
   const double rhoM =
-    Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
+    Extend1dMeshIn2dSurfaces(gf) ? std::min(rhoM1, rhoM2) : rhoM2;
 
   const double rhoM_hat =
     std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));

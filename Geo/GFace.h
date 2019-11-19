@@ -305,13 +305,26 @@ public:
     bool reverseMesh;
     // global mesh size constraint for the surface
     double meshSize, meshSizeFactor;
+    // do we force the meshing algorithm (if != 0)
+    int algorithm;
+    // do we force calculation of mesh size from boundary (if >= 0)
+    int meshSizeFromBoundary;
   } meshAttributes;
 
   int getMeshingAlgo() const;
-  void setMeshingAlgo(int) const;
-  void unsetMeshingAlgo() const;
-  int getCurvatureControlParameter() const;
-  void setCurvatureControlParameter(int);
+  void setMeshingAlgo(int val)
+  {
+    meshAttributes.algorithm = val;
+  }
+  void unsetMeshingAlgo()
+  {
+    meshAttributes.algorithm = 0;
+  }
+  int getMeshSizeFromBoundary() const;
+  void setMeshSizeFromBoundary(int val)
+  {
+    meshAttributes.meshSizeFromBoundary = val;
+  }
   virtual double getMeshSize() const
   {
     return meshAttributes.meshSize;

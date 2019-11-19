@@ -3089,6 +3089,34 @@ GMSH_API void gmsh::model::mesh::setReverse(const int dim, const int tag,
   }
 }
 
+GMSH_API void gmsh::model::mesh::setAlgorithm(const int dim, const int tag,
+                                              const int val)
+{
+  if(!_isInitialized()) { throw - 1; }
+  if(dim == 2) {
+    GFace *gf = GModel::current()->getFaceByTag(tag);
+    if(!gf) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    gf->meshAttributes.algorithm = val;
+  }
+}
+
+GMSH_API void gmsh::model::mesh::setSizeFromBoundary(const int dim, const int tag,
+                                                     const int val)
+{
+  if(!_isInitialized()) { throw - 1; }
+  if(dim == 2) {
+    GFace *gf = GModel::current()->getFaceByTag(tag);
+    if(!gf) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    gf->meshAttributes.meshSizeFromBoundary = val;
+  }
+}
+
 GMSH_API void gmsh::model::mesh::setCompound(const int dim,
                                              const std::vector<int> &tags)
 {
@@ -3906,6 +3934,20 @@ GMSH_API void gmsh::model::geo::mesh::setReverse(const int dim, const int tag,
 {
   if(!_isInitialized()) { throw - 1; }
   GModel::current()->getGEOInternals()->setReverseMesh(dim, tag, val);
+}
+
+GMSH_API void gmsh::model::geo::mesh::setAlgorithm(const int dim, const int tag,
+                                                   const int val)
+{
+  if(!_isInitialized()) { throw - 1; }
+  GModel::current()->getGEOInternals()->setMeshAlgorithm(dim, tag, val);
+}
+
+GMSH_API void gmsh::model::geo::mesh::setSizeFromBoundary(const int dim, const int tag,
+                                                          const int val)
+{
+  if(!_isInitialized()) { throw - 1; }
+  GModel::current()->getGEOInternals()->setMeshSizeFromBoundary(dim, tag, val);
 }
 
 GMSH_API void gmsh::model::geo::mesh::setSize(const vectorpair &dimTags,

@@ -1149,6 +1149,24 @@ void GEO_Internals::setReverseMesh(int dim, int tag, bool val)
   _changed = true;
 }
 
+void GEO_Internals::setMeshAlgorithm(int dim, int tag, int val)
+{
+  if(dim == 2) {
+    Surface *s = FindSurface(tag);
+    if(s) s->MeshAlgorithm = val;
+  }
+  _changed = true;
+}
+
+void GEO_Internals::setMeshSizeFromBoundary(int dim, int tag, int val)
+{
+  if(dim == 2) {
+    Surface *s = FindSurface(tag);
+    if(s) s->MeshSizeFromBoundary = val;
+  }
+  _changed = true;
+}
+
 void GEO_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing GEO_Internals with GModel");

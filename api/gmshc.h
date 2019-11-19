@@ -928,6 +928,21 @@ GMSH_API void gmshModelMeshSetReverse(const int dim,
                                       const int val,
                                       int * ierr);
 
+/* Set the meshing algorithm on the model entity of dimension `dim' and tag
+ * `tag'. Currently only supported for `dim' == 2. */
+GMSH_API void gmshModelMeshSetAlgorithm(const int dim,
+                                        const int tag,
+                                        const int val,
+                                        int * ierr);
+
+/* Force the mesh size to be extended from the boundary, or not, for the model
+ * entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
+ * == 2. */
+GMSH_API void gmshModelMeshSetSizeFromBoundary(const int dim,
+                                               const int tag,
+                                               const int val,
+                                               int * ierr);
+
 /* Set a compound meshing constraint on the model entities of dimension `dim'
  * and tags `tags'. During meshing, compound entities are treated as a single
  * discrete entity, which is automatically reparametrized. */
@@ -1409,6 +1424,21 @@ GMSH_API void gmshModelGeoMeshSetReverse(const int dim,
                                          const int tag,
                                          const int val,
                                          int * ierr);
+
+/* Set the meshing algorithm on the model entity of dimension `dim' and tag
+ * `tag'. Currently only supported for `dim' == 2. */
+GMSH_API void gmshModelGeoMeshSetAlgorithm(const int dim,
+                                           const int tag,
+                                           const int val,
+                                           int * ierr);
+
+/* Force the mesh size to be extended from the boundary, or not, for the model
+ * entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
+ * == 2. */
+GMSH_API void gmshModelGeoMeshSetSizeFromBoundary(const int dim,
+                                                  const int tag,
+                                                  const int val,
+                                                  int * ierr);
 
 /* Add a geometrical point in the OpenCASCADE CAD representation, at
  * coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint

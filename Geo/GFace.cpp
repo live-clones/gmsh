@@ -57,37 +57,20 @@ GFace::~GFace()
   GFace::deleteMesh();
 }
 
-int GFace::getCurvatureControlParameter() const
-{
-  std::map<int, int>::iterator it =
-    CTX::instance()->mesh.curvatureControlPerFace.find(tag());
-  return it == CTX::instance()->mesh.curvatureControlPerFace.end() ?
-           CTX::instance()->mesh.minCircPoints :
-           it->second;
-}
-
-void GFace::setCurvatureControlParameter(int n)
-{
-  CTX::instance()->mesh.curvatureControlPerFace[tag()] = n;
-}
-
 int GFace::getMeshingAlgo() const
 {
-  std::map<int, int>::iterator it =
-    CTX::instance()->mesh.algo2dPerFace.find(tag());
-  return it == CTX::instance()->mesh.algo2dPerFace.end() ?
-           CTX::instance()->mesh.algo2d :
-           it->second;
+  if(meshAttributes.algorithm)
+    return meshAttributes.algorithm;
+  else
+    return CTX::instance()->mesh.algo2d;
 }
 
-void GFace::setMeshingAlgo(int algo) const
+int GFace::getMeshSizeFromBoundary() const
 {
-  CTX::instance()->mesh.algo2dPerFace[tag()] = algo;
-}
-
-void GFace::unsetMeshingAlgo() const
-{
-  CTX::instance()->mesh.algo2dPerFace.erase(tag());
+  if(meshAttributes.meshSizeFromBoundary >= 0)
+    return meshAttributes.meshSizeFromBoundary;
+  else
+    return CTX::instance()->mesh.lcExtendFromBoundary;
 }
 
 void GFace::delFreeEdge(GEdge *edge)
@@ -246,6 +229,8 @@ void GFace::resetMeshAttributes()
   meshAttributes.reverseMesh = false;
   meshAttributes.meshSize = MAX_LC;
   meshAttributes.meshSizeFactor = 1.;
+  meshAttributes.algorithm = 0;
+  meshAttributes.meshSizeFromBoundary = -1;
 }
 
 SBoundingBox3d GFace::bounds(bool fast) const

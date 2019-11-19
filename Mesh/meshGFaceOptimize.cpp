@@ -192,7 +192,7 @@ bool buildMeshGenerationDataStructures(
                     data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(1))] +
                     data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(2))]);
 
-    double LL = Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM;
+    double LL = Extend1dMeshIn2dSurfaces(gf) ? std::min(lc, lcBGM) : lcBGM;
     AllTris.insert(new MTri3(gf->triangles[i], LL, 0, &data, gf));
   }
   gf->triangles.clear();
