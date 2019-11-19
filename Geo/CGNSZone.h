@@ -8,6 +8,7 @@
 
 #include "fullMatrix.h"
 #include "CGNSCommon.h"
+#include "CGNSRead.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -17,11 +18,6 @@
 
 class MVertex;
 class MElement;
-
-
-// types for high-order node tranformation (CPEX0045)
-typedef std::vector<fullMatrix<double> > ZoneEltNodeTransfo;
-typedef std::map<std::string, ZoneEltNodeTransfo> Family2EltNodeTransfo;
 
 
 class CGNSZone

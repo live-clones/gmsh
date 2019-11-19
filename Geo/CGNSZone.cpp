@@ -8,27 +8,10 @@
 #include "affineTransformation.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
+#include "CGNSRead.h"
 #include "CGNSZone.h"
 
 #if defined(HAVE_LIBCGNS)
-
-
-namespace {
-
-
-std::size_t nameIndex(const std::string &name,
-                      std::vector<std::string> &allNames)
-{
-  for(std::size_t i = 0; i < allNames.size(); i++) {
-    if (allNames[i] == name) return i;
-  }
-  
-  allNames.push_back(name);
-  return allNames.size()-1;
-}
-
-
-}
 
 
 CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex, ZoneType_t type,

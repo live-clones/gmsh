@@ -14,10 +14,19 @@
 #if defined(HAVE_LIBCGNS)
 
 
+class GModel;
 class MVertex;
 class MElement;
 class CGNSZone;
 
+
+// types for high-order node tranformation (CPEX0045)
+typedef std::vector<fullMatrix<double> > ZoneEltNodeTransfo;
+typedef std::map<std::string, ZoneEltNodeTransfo> Family2EltNodeTransfo;
+
+
+std::size_t nameIndex(const std::string &name,
+                      std::vector<std::string> &allNames);
 
 int readScale(int fileIndex, int baseIndex, double &scale);
 
@@ -30,6 +39,15 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
                 std::map<std::string, int> &name2Zone);
 
 void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones);
+
+int readPhysicals(int fileIndex, int baseIndex,
+                  std::vector<std::string> &allPhysName,
+                  std::multimap<std::string, int> &geomName2Phys);
+
+void setGeomAndPhysicalEntities(GModel *model, int meshDim,
+                                std::vector<std::string> &allGeomName,
+                                std::vector<std::string> &allPhysName,
+                                std::multimap<std::string, int> &geomName2Phys);
 
 #endif // HAVE_LIBCGNS
 

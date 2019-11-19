@@ -64,24 +64,24 @@ void getNodesInEntities(const std::vector<GEntity *> &entities,
 }
 
 
-void getDimStr(int dim, std::string &dimStr)
+std::string entTypeShortStr(int dim)
 {
-  dimStr = "";
   switch(dim)
   {
-  case 0: dimStr = "P"; break;
-  case 1: dimStr = "L"; break;
-  case 2: dimStr = "S"; break;
-  case 3: dimStr = "V"; break;
+  case 0: return "P"; break;
+  case 1: return "L"; break;
+  case 2: return "S"; break;
+  case 3: return "V"; break;
   }
+
+  return "";
 }
 
 
 void getNameFromEntity(GEntity *ge, std::string &entityName)
 {
   // convention: start name with letter identifying dimension
-  std::string dimStr;
-  getDimStr(ge->dim(), dimStr);
+  const std::string entTypeStr = entTypeShortStr(ge->dim());
 
   // get parent entity and model
   GEntity *geParent = ge->getParentEntity();
@@ -90,7 +90,7 @@ void getNameFromEntity(GEntity *ge, std::string &entityName)
   // name for section: use given (potentially partitioned) entity in addition to
   // the parent entity (if it exists) in order to avoid duplicate CGNS names
   std::ostringstream ossEnt;
-  ossEnt << dimStr;
+  ossEnt << entTypeStr;
   if(geParent != 0) ossEnt << "_" << geParent->tag();
   ossEnt << "_" << ge->tag();
   entityName = model->getElementaryName(ge->dim(), ge->tag());
@@ -166,20 +166,6 @@ void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
   for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     interfVert2Local[*itN] = std::vector<LocalData>();
   }
-}
-
-
-std::string entTypeStr(int dim)
-{
-  return (dim == 3) ? "Volume" : (dim == 2) ? "Surface" : (dim == 1) ? "Curve" :
-         (dim == 0) ? "Point" : ""; 
-}
-
-
-std::string entTypeShortStr(int dim)
-{
-  return (dim == 3) ? "V" : (dim == 2) ? "S" : (dim == 1) ? "C" :
-         (dim == 0) ? "P" : ""; 
 }
 
 

@@ -72,6 +72,12 @@ int GModel::readCGNS(const std::string &name)
     allZones[iZone]->setPeriodicVertices(allZones, allVert);
   }
 
+  // get physical names, index start at 1
+  std::multimap<std::string, int> geomName2Phys;
+  std::vector<std::string> allPhysName(1, "");
+  int errPhys = readPhysicals(fileIndex, baseIndex, allPhysName, geomName2Phys);
+  if(errPhys == 0) return 0;
+
   // close file
   cgnsErr = cg_close(fileIndex);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__);
@@ -89,19 +95,9 @@ int GModel::readCGNS(const std::string &name)
   // TODO: disable this through option ?
   if(nbZone > 1) removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
 
-  // set names of geometric entities from BC names
-  for (int d = 0; d <= meshDim; d++) {
-    std::vector<GEntity *> ent;
-    getEntities(ent, d);
-    std::map<int, std::map<int, std::string> > physicalBnd;
-    for(std::size_t iEnt = 0; iEnt < ent.size(); iEnt++) {
-      int tag = ent[iEnt]->tag();
-      const std::string &entName = allGeomName[tag];
-      if(entName.length() > 0) setElementaryName(d, tag, entName);
-    }
-    _storePhysicalTagsInEntities(d, physicalBnd);
-  }
-
+  // set names of geometric entities and physical names
+  setGeomAndPhysicalEntities(this, meshDim, allGeomName, allPhysName,
+                             geomName2Phys);
   // destroy all zones
   for(std::size_t iZone = 0; iZone < allZones.size(); iZone++) {
     if(allZones[iZone] != 0) delete allZones[iZone];

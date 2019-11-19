@@ -3,7 +3,9 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cstring>
 #include "GmshMessage.h"
+#include "GModel.h"
 #include "MVertex.h"
 #include "MElement.h"
 #include "BergotBasis.h"
@@ -198,6 +200,18 @@ int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
 }  // namespace
 
 
+std::size_t nameIndex(const std::string &name,
+                      std::vector<std::string> &allNames)
+{
+  for(std::size_t i = 0; i < allNames.size(); i++) {
+    if (allNames[i] == name) return i;
+  }
+  
+  allNames.push_back(name);
+  return allNames.size()-1;
+}
+
+
 int readScale(int fileIndex, int baseIndex, double &scale)
 {
   int cgnsErr;
@@ -260,7 +274,7 @@ int readEltNodeTransfo(int fileIndex, int baseIndex,
   cgnsErr = cg_nfamilies(fileIndex, baseIndex, &nbFam);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
-  // sweep over families
+  // loop over families
   for(int iFam = 1; iFam <= nbFam; iFam++) {
     // read number of element interpolation transformations
     int nbInterp;
@@ -301,7 +315,7 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
   const int nbZone = allZones.size() - 1;
   int cgnsErr;
 
-  // sweep over zones
+  // loop over zones
   cgsize_t startNode = 0;
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     // read zone type
@@ -373,6 +387,96 @@ void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
         if(sEnt->getMeshMaster() == sEnt) {
           sEnt->setMeshMaster(mEnt, zone->perTransfo(iPer));
         }
+      }
+    }
+  }
+}
+
+
+int readPhysicals(int fileIndex, int baseIndex,
+                  std::vector<std::string> &allPhysName,
+                  std::multimap<std::string, int> &geomName2Phys)
+{
+  int cgnsErr;
+
+  // read number of families
+  int nbFam;
+  cgnsErr = cg_nfamilies(fileIndex, baseIndex, &nbFam);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+  // loop over families
+  for(int iFam = 1; iFam <= nbFam; iFam++) {
+    // read family name (interpreted as name of geometrical entity)
+    char rawFamName[CGNS_MAX_STR_LEN];
+    int nbFamBC, nbGeoRef;
+    cgnsErr = cg_family_read(fileIndex, baseIndex, iFam, rawFamName, &nbFamBC,
+                             &nbGeoRef);
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+    const std::string geomName(rawFamName);
+
+   // read number of sub-family names (interpreted as physical names)
+    int nbFamName;
+    cgnsErr = cg_nfamily_names(fileIndex, baseIndex, iFam, &nbFamName);
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+    if(nbFamName == 0) continue;
+
+    // read sub-family names (interpreted as physical names)
+    for(int iFamName = 1; iFamName <= nbFamName; iFamName++) {
+      // read names
+      char rawNodeName[CGNS_MAX_STR_LEN];
+      cgnsErr = cg_family_name_read(fileIndex, baseIndex, iFam, iFamName,
+                                    rawNodeName, rawFamName);
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+      
+      // set physical name as sub-family name or, if empty, to node name
+      std::string physName;
+      if(std::strcmp(rawFamName, "") == 0) physName = std::string(rawNodeName);
+      else physName = std::string(rawFamName);
+
+      // store physical name and tag
+      int physTag = nameIndex(physName, allPhysName);
+      geomName2Phys.insert(std::make_pair(geomName, physTag));
+    }
+  }
+
+  return 1;
+}
+
+
+void setGeomAndPhysicalEntities(GModel *model, int meshDim,
+                                std::vector<std::string> &allGeomName,
+                                std::vector<std::string> &allPhysName,
+                                std::multimap<std::string, int> &geomName2Phys)
+{
+  typedef std::multimap<std::string, int>::iterator Geom2PhysIter;
+
+  // loop over dimensions
+  for (int d = 0; d <= meshDim; d++) {
+    // get entities fo dimension d
+    std::vector<GEntity *> ent;
+    model->getEntities(ent, d);
+
+    // loop over entities
+    for(std::size_t iEnt = 0; iEnt < ent.size(); iEnt++) {
+      // get entity tag and name
+      int geomTag = ent[iEnt]->tag();
+      if(geomTag >= (int)allGeomName.size()) continue;
+      const std::string &geomName = allGeomName[geomTag];
+
+      // set name of geometrical entity
+      model->setElementaryName(d, geomTag, geomName);
+      
+      // associate physical tags to geometrical entity and store physical names
+      std::pair<Geom2PhysIter, Geom2PhysIter> range =
+                                        geomName2Phys.equal_range(geomName);
+      for(Geom2PhysIter it = range.first; it != range.second; ++it) {
+        const int physTag = it->second;
+        std::vector<int> &entPhys = ent[iEnt]->physicals;
+        if(std::find(entPhys.begin(), entPhys.end(), physTag) ==
+                                                            entPhys.end()) {
+          entPhys.push_back(physTag);
+        }
+        model->setPhysicalName(allPhysName[physTag], d, physTag);
       }
     }
   }
