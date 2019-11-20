@@ -84,7 +84,6 @@ int GModel::readCGNS(const std::string &name)
 
   // populate data structures with elements and vertices
   for(int i = 0; i < 10; i++) _storeElementsInEntities(allElt[i]);
-  if(CTX::instance()->mesh.cgnsConstructTopology) createTopologyFromMeshNew();
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVert);
 
@@ -102,6 +101,9 @@ int GModel::readCGNS(const std::string &name)
   for(std::size_t iZone = 0; iZone < allZones.size(); iZone++) {
     if(allZones[iZone] != 0) delete allZones[iZone];
   }
+
+  // reconstruct geometrical topology if required
+  if(CTX::instance()->mesh.cgnsConstructTopology) createTopologyFromMeshNew();
 
   return 1;
 }

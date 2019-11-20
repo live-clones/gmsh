@@ -316,7 +316,8 @@ void CGNSZone::setPeriodicVertices(const std::vector<CGNSZone *> &allZones,
     std::vector<MVertex *> &sVert = slaveVert(iPer);
     std::vector<MVertex *> &mVert = masterVert(iPer);
     CGNSZone *mZone = allZones[masterZone(iPer)];
-    // Msg::Info("DBGTT: per. conn. %i in zone %i with zone %i:\n", iPer, index(), masterZone(iPer));
+    // Msg::Info("DBGTT: per. conn. %i in zone %i '%s' with zone %i '%s':\n",
+    //            iPer, index(), name().c_str(), masterZone(iPer), mZone->name().c_str());
     for(std::size_t iN = 0; iN < sNode.size(); iN++) {
       const cgsize_t sInd = startNode() + sNode[iN];
       const cgsize_t mInd = mZone->startNode() + mNode[iN];
