@@ -5,6 +5,7 @@
 //
 // Contributed by K. Hillewaert
 
+#include <cmath>
 #include <vector>
 
 #include "fullMatrix.h"
@@ -76,39 +77,18 @@ template<class FLOAT>
 bool getAffineTransformationParameters(const std::vector<double> &tfo,
                                        FLOAT *rc, FLOAT *ra, FLOAT *tr)
 {
-  // tolerance for detection of rotation
-  static const double TOL = 1e-8;
+  // rotation angles
+  ra[0] = std::atan2(-tfo[2*4+1], tfo[2*4+2]);
+  ra[1] = std::asin(tfo[2*4+0]);
+  ra[2] = std::atan2(-tfo[1*4+0], tfo[0*4+0]);
   
-  // identity minus rotation matrix and displacement
-  fullMatrix<double> idMinusRot(3, 3);
-  fullVector<double> disp(3);
-  int idx = 0;
-  for(int i = 0; i < 3; i++) {
-    for(int j = 0; j < 3; j++, idx++) idMinusRot(i, j) = -tfo[idx];
-    idMinusRot(i, i) += 1.;
-    disp(i) = tfo[idx];
-    idx++;
-  }
-  
-  // compute either rotation or translation parameters
-  if(idMinusRot.norm() > TOL) {
-    ra[0] = std::atan2(tfo[2*4+2], tfo[2*4+1]);
-    ra[1] = std::asin(-tfo[2*4+0]);
-    ra[2] = std::atan2(tfo[1*4+0], tfo[0*4+0]);
-    fullMatrix<double> invIdMinusRot(3, 3); 
-    idMinusRot.invert(invIdMinusRot);
-    fullVector<double> rotCenter(3);
-    invIdMinusRot.mult(disp, rotCenter);
-    for(int i = 0; i < 3; i++) rc[i] = rotCenter(i);
-    for(int i = 0; i < 3; i++) tr[i] = 0.;
-  }
-  else {
-    for(int i = 0; i < 3; i++) { ra[i] = 0.; rc[i] = 0.; }
-    for(int i = 0; i < 3; i++) tr[i] = disp(i);
-  }
+  // translation
+  for(int i = 0; i < 3; i++) rc[i] = 0.;
+  for(int i = 0; i < 3; i++) tr[i] = tfo[4*i+3];
 
   return true;
 }
+
 
 // explicit instantiations for float and double
 template bool getAffineTransformationParameters(const std::vector<double> &tfo,
