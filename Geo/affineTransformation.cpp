@@ -89,7 +89,6 @@ bool getAffineTransformationParameters(const std::vector<double> &tfo,
   return true;
 }
 
-
 // explicit instantiations for float and double
 template bool getAffineTransformationParameters(const std::vector<double> &tfo,
                                                 float *rc, float *ra,

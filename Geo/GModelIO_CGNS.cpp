@@ -147,7 +147,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   if (numPart > 0) {
     getPartitionInterfaceEntities(entities, entitiesInterf);
     if (entitiesInterf.size() == 0) {
-      Msg::Error("Partitioned entities not detected");
+      Msg::Warning("Partitioned entities not detected");
     }
   }
 
