@@ -3350,29 +3350,34 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
       attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 2));
     }
     // check explicit coloring of boundary entities
-    TopExp_Explorer xp2(shape, TopAbs_FACE);
-    while (xp2.More()) {
-      if (colorTool->GetColor(xp2.Current(), XCAFDoc_ColorGen, col) ||
-          colorTool->GetColor(xp2.Current(), XCAFDoc_ColorSurf, col) ||
-          colorTool->GetColor(xp2.Current(), XCAFDoc_ColorCurv, col)) {
-        double r = col.Red(), g = col.Green(), b = col.Blue();
-        Msg::Info(" - Color (%g, %g, %g) (Surface)", r, g, b);
-        attributes->insert(new OCCAttributes(2, TopoDS::Face(xp2.Current()),
-                                             r, g, b, 1.));
+    if(dim == 3) {
+      TopExp_Explorer xp2(shape, TopAbs_FACE);
+      while (xp2.More()) {
+        if (colorTool->GetColor(xp2.Current(), XCAFDoc_ColorGen, col) ||
+            colorTool->GetColor(xp2.Current(), XCAFDoc_ColorSurf, col) ||
+            colorTool->GetColor(xp2.Current(), XCAFDoc_ColorCurv, col)) {
+          double r = col.Red(), g = col.Green(), b = col.Blue();
+          Msg::Info(" - Color (%g, %g, %g) (Surface)", r, g, b);
+          TopoDS_Face face = TopoDS::Face(xp2.Current());
+          attributes->insert(new OCCAttributes(2, face,
+                                               r, g, b, 1.));
+        }
+        xp2.Next();
       }
-      xp2.Next();
     }
-    TopExp_Explorer xp1(shape, TopAbs_EDGE);
-    while (xp1.More()) {
-      if (colorTool->GetColor(xp1.Current(), XCAFDoc_ColorGen, col) ||
-          colorTool->GetColor(xp1.Current(), XCAFDoc_ColorSurf, col) ||
-          colorTool->GetColor(xp1.Current(), XCAFDoc_ColorCurv, col)) {
-        double r = col.Red(), g = col.Green(), b = col.Blue();
-        Msg::Info(" - Color (%g, %g, %g) (Curve)", r, g, b);
-        attributes->insert(new OCCAttributes(1, TopoDS::Face(xp1.Current()),
-                                             r, g, b, 1.));
+    if(dim == 2) {
+      TopExp_Explorer xp1(shape, TopAbs_EDGE);
+      while (xp1.More()) {
+        if (colorTool->GetColor(xp1.Current(), XCAFDoc_ColorGen, col) ||
+            colorTool->GetColor(xp1.Current(), XCAFDoc_ColorSurf, col) ||
+            colorTool->GetColor(xp1.Current(), XCAFDoc_ColorCurv, col)) {
+          double r = col.Red(), g = col.Green(), b = col.Blue();
+          Msg::Info(" - Color (%g, %g, %g) (Curve)", r, g, b);
+          attributes->insert(new OCCAttributes(1, TopoDS::Face(xp1.Current()),
+                                               r, g, b, 1.));
+        }
+        xp1.Next();
       }
-      xp1.Next();
     }
   }
   else {
