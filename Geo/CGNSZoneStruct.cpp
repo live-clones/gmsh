@@ -80,7 +80,7 @@ void initQuadShift(int order, int *shift)
 {
   fullMatrix<double> mono = gmshGenerateMonomialsQuadrangle(order, false);
   for(int i = 0; i < mono.size1(); i++) {
-    for(int j = 0; j < 3; j++) shift[i*2+j] = mono(i, j) + 0.5; // round double 
+    for(int j = 0; j < 2; j++) shift[i*2+j] = mono(i, j) + 0.5; // round double 
   }
 }
 
