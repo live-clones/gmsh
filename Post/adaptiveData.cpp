@@ -2502,9 +2502,8 @@ void adaptiveElements<T>::addInViewForVTK(int step, PViewData *in,
   int numNodInsert = 0;
   nodMap<T> myNodMap;
 
-  PViewDataGModel *tmpPViewDataGModel = dynamic_cast<PViewDataGModel *>(in);
-  double minVal = tmpPViewDataGModel->getMin(step);
-  double maxVal = tmpPViewDataGModel->getMax(step);
+  double minVal = in->getMin(step);
+  double maxVal = in->getMax(step);
 
   for(int ent = 0; ent < in->getNumEntities(step); ent++) {
     for(int ele = 0; ele < in->getNumElements(step, ent); ele++) {
