@@ -411,7 +411,9 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
   double t1 = Cpu();
   std::vector<std::pair<double, BDS_Edge *> > edges;
 
-  SPoint2 out(10.21982512, 10.8635436432);
+
+  SPoint2 out(gf->parBounds(0).high() + 1.21982512,
+              gf->parBounds(1).high() + 1.8635436432);
 
   for(std::set<BDS_Point *, PointLessThan>::iterator it = m.points.begin();
       it != m.points.end(); ++it) {
