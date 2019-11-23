@@ -1816,19 +1816,16 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
                                CHECK)) {
     if(!minimizeTutteEnergyProj(p, E_unmoved, RATIO, nbg, kernel, lc, gf,
                                 CHECK)) {
-      //      __COUNT3++;
       return false;
     }
     else {
       p->config_modified = true;
       E_unmoved = getTutteEnergy(p, nbg, RATIO);
       minimizeTutteEnergyProj(p, E_unmoved, RATIO, nbg, kernel, lc, gf, CHECK);
-      //      __COUNT2++;
     }
   }
   else {
     p->config_modified = true;
-    //    __COUNT1++;
   }
 
   return true;

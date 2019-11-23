@@ -558,10 +558,10 @@ int SubdivideExtrudedMesh(GModel *m)
     std::vector<GFace *> f = gr->faces();
     for(std::size_t i = 0; i < f.size(); i++){
       ExtrudeParams *ep = f[i]->meshAttributes.extrude;
-      // FIXME: this does not yet handle swapping of edges in surfaces whose
-      // mesh is copied during extrusion (the "top" surface). TODO!  PS: and we
-      // will need to distinguish the old boundary layer case if we include de
-      // "copied" meshes
+      // TODO: this does not yet handle swapping of edges in COPIED_ENTITY
+      // surfaces, whose mesh is copied during extrusion (the "top"
+      // surface). PS: we will need to distinguish the old boundary layer case
+      // if we include these "copied" meshes
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
          !ep->mesh.Recombine) {
         f[i]->meshStatistics.status = GFace::PENDING;
