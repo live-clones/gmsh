@@ -1232,6 +1232,12 @@ bool GFace::buildRepresentationCross(bool force)
       return true;
   }
 
+  if(geomType() == DiscreteSurface) {
+    // TODO if the surface has been reparametrized
+    if(cross[0].empty()) cross[0].push_back(std::vector<SPoint3>());
+    return false;
+  }
+
   Range<double> ubounds = parBounds(0);
   Range<double> vbounds = parBounds(1);
   // try to compute something better for Gmsh surfaces
@@ -1298,6 +1304,7 @@ bool GFace::buildRepresentationCross(bool force)
       }
     }
   }
+
   // if we couldn't determine a cross, add a dummy one so that we won't try
   // again unless we force the recomputation
   if(cross[0].empty()) {
