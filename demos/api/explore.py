@@ -2,7 +2,7 @@ import gmsh
 import sys
 
 if len(sys.argv) < 2:
-    print "Usage: " + sys.argv[0] + " file.msh"
+    print("Usage: " + sys.argv[0] + " file.msh")
     exit(0)
 
 gmsh.initialize()
@@ -15,22 +15,25 @@ print("Model name: " + gmsh.model.getCurrent())
 entities = gmsh.model.getEntities()
 
 for e in entities:
+    print("Entity " + str(e) + " of type " + gmsh.model.getType(e[0], e[1]))
     # get the mesh nodes for each elementary entity
     nodeTags, nodeCoords, nodeParams = gmsh.model.mesh.getNodes(e[0], e[1])
     # get the mesh elements for each elementary entity
     elemTypes, elemTags, elemNodeTags = gmsh.model.mesh.getElements(e[0], e[1])
-    # report some statistics
+    # count number of elements
     numElem = sum(len(i) for i in elemTags)
-    print str(len(nodeTags)) + " mesh nodes and " + str(numElem),\
-          "mesh elements on entity " + str(e) + " of type " + gmsh.model.getType(e[0], e[1])
+    print(" - mesh has " + str(len(nodeTags)) + " nodes and " + str(numElem) +
+          " elements")
+    boundary = gmsh.model.getBoundary([e])
+    print(" - boundary entities " + str(boundary))
     partitions = gmsh.model.getPartitions(e[0], e[1])
     if len(partitions):
-           print " - Partition tag(s): " + str(partitions) + " - parent entity" +\
-               str(gmsh.model.getParent(e[0], e[1]))
+           print(" - Partition tag(s): " + str(partitions) +
+                 " - parent entity " + str(gmsh.model.getParent(e[0], e[1])))
     for t in elemTypes:
         name, dim, order, numv, parv, _ = gmsh.model.mesh.getElementProperties(t)
-        print " - Element type: " + name + ", order " + str(order)
-        print "   with " + str(numv) + " nodes in param coord: ", parv
+        print(" - Element type: " + name + ", order " + str(order) + " (" +
+              str(numv) + " nodes in param coord: " + str(parv) + ")")
 
 # all mesh node coordinates
 nodeTags, nodeCoords, _ = gmsh.model.mesh.getNodes()
