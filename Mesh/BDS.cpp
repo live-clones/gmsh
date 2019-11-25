@@ -754,21 +754,28 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
     printf("splitting edge %d %d opp %d %d new %d\n", p1->iD, p2->iD, op[0]->iD,
            op[1]->iD, mid->iD);
-
-  //  double ori0 = fabs(surface_triangle_param(p2, p1, op[0])) +
-  //                fabs(surface_triangle_param(p2, p1, op[1]));
+  
+  double ori0 = fabs(surface_triangle_param(p2, p1, op[0])) +
+    fabs(surface_triangle_param(p2, p1, op[1]));
   //  double ori1 = fabs(surface_triangle_param(mid, p1, op[1]));
   //  double ori2 = fabs(surface_triangle_param(mid, op[1], p2));
   //  double ori3 = fabs(surface_triangle_param(mid, p2, op[0]));
   //  double ori4 = fabs(surface_triangle_param(mid, op[0], p1));
-  //
-  //  double eps = 1.e-21;
-  //  if(ori1 < eps * ori0 || ori2 < eps * ori0 || ori3 < eps * ori0 ||
-  //     ori4 < eps * ori0) {
-  //    // printf("%g %g %g %g %g\n",ori0,ori1,ori2,ori3,ori4);
-  //    return false;
-  //  }
 
+  /*
+  double ori1 = fabs(vector_triangle_parametric(mid, p1, op[1]));
+  double ori2 = fabs(vector_triangle_parametric(mid, op[1], p2));
+  double ori3 = fabs(vector_triangle_parametric(mid, p2, op[0]));
+  double ori4 = fabs(vector_triangle_parametric(mid, op[0], p1));
+
+  //
+  double eps = 1.e-8;
+  printf("%g %g %g %g %g\n",ori0,ori1,ori2,ori3,ori4);
+  if(ori1 < eps  || ori2 < eps  || ori3 < eps  ||
+     ori4 < eps ) {
+    return false;
+  }
+  */
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
     printf("%d %d %d %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD);
 
