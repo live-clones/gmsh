@@ -3167,63 +3167,89 @@ bool OCC_Internals::translate(
   const std::vector<std::pair<int, int> > &inDimTags, double dx, double dy,
   double dz)
 {
-  gp_Trsf t;
-  t.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(dx, dy, dz));
-  BRepBuilderAPI_Transform tfo(t);
-  return _transform(inDimTags, &tfo, 0);
+  try {
+    gp_Trsf t;
+    t.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(dx, dy, dz));
+    BRepBuilderAPI_Transform tfo(t);
+    return _transform(inDimTags, &tfo, 0);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
 }
 
 bool OCC_Internals::rotate(const std::vector<std::pair<int, int> > &inDimTags,
                            double x, double y, double z, double ax, double ay,
                            double az, double angle)
 {
-  gp_Trsf t;
-  gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(ax, ay, az));
-  t.SetRotation(axisOfRevolution, angle);
-  BRepBuilderAPI_Transform tfo(t);
-  return _transform(inDimTags, &tfo, 0);
+  try {
+    gp_Trsf t;
+    gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(ax, ay, az));
+    t.SetRotation(axisOfRevolution, angle);
+    BRepBuilderAPI_Transform tfo(t);
+    return _transform(inDimTags, &tfo, 0);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
 }
 
 bool OCC_Internals::dilate(const std::vector<std::pair<int, int> > &inDimTags,
                            double x, double y, double z, double a, double b,
                            double c)
 {
-  gp_GTrsf gt;
-  gt.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
-  gt.SetTranslationPart(gp_XYZ(x * (1 - a), y * (1 - b), z * (1 - c)));
-  BRepBuilderAPI_GTransform gtfo(gt);
-  return _transform(inDimTags, 0, &gtfo);
+  try {
+    gp_GTrsf gt;
+    gt.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
+    gt.SetTranslationPart(gp_XYZ(x * (1 - a), y * (1 - b), z * (1 - c)));
+    BRepBuilderAPI_GTransform gtfo(gt);
+    return _transform(inDimTags, 0, &gtfo);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
 }
 
 bool OCC_Internals::symmetry(const std::vector<std::pair<int, int> > &inDimTags,
                              double a, double b, double c, double d)
 {
-  gp_GTrsf gt;
-  double p = (a * a + b * b + c * c);
-  if(!p) p = 1e-12;
-  double f = -2.0 / p;
-  gt.SetVectorialPart(gp_Mat(1 + a * a * f, a * b * f, a * c * f, a * b * f,
-                             1. + b * b * f, b * c * f, a * c * f, b * c * f,
-                             1. + c * c * f));
-  gt.SetTranslationPart(gp_XYZ(a * d * f, b * d * f, c * d * f));
-  BRepBuilderAPI_GTransform gtfo(gt);
-  return _transform(inDimTags, 0, &gtfo);
+  try {
+    gp_GTrsf gt;
+    double p = (a * a + b * b + c * c);
+    if(!p) p = 1e-12;
+    double f = -2.0 / p;
+    gt.SetVectorialPart(gp_Mat(1 + a * a * f, a * b * f, a * c * f, a * b * f,
+                               1. + b * b * f, b * c * f, a * c * f, b * c * f,
+                               1. + c * c * f));
+    gt.SetTranslationPart(gp_XYZ(a * d * f, b * d * f, c * d * f));
+    BRepBuilderAPI_GTransform gtfo(gt);
+    return _transform(inDimTags, 0, &gtfo);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
 }
 
 bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
                            const std::vector<double> &mat)
 {
-  std::vector<double> a(mat);
-  if(a.size() < 12) {
-    Msg::Warning("%d < 12 entries in affine transform matrix", (int)a.size());
-    a.resize(12, 0.);
+  try {
+    std::vector<double> a(mat);
+    if(a.size() < 12) {
+      Msg::Warning("%d < 12 entries in affine transform matrix", (int)a.size());
+      a.resize(12, 0.);
+    }
+    gp_GTrsf gt;
+    gt.SetVectorialPart(gp_Mat(a[0], a[1], a[2],
+                               a[4], a[5], a[6],
+                               a[8], a[9], a[10]));
+    gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
+    BRepBuilderAPI_GTransform gtfo(gt);
+    return _transform(inDimTags, 0, &gtfo);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
   }
-  gp_GTrsf gt;
-  gt.SetVectorialPart(
-    gp_Mat(a[0], a[1], a[2], a[4], a[5], a[6], a[8], a[9], a[10]));
-  gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
-  BRepBuilderAPI_GTransform gtfo(gt);
-  return _transform(inDimTags, 0, &gtfo);
 }
 
 bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
