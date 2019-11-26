@@ -971,6 +971,8 @@ static void modifyInitialMeshForBoundaryLayers(
 
   filterOverlappingElements(_lines, blTris, blQuads, _columns->_elemColumns,
                             _columns->_toFirst);
+  for(std::size_t i = 0; i < blQuads.size(); i++) blQuads[i]->setPartition(0);
+  for(std::size_t i = 0; i < blTris.size(); i++) blTris[i]->setPartition(0);
 
   for(std::size_t i = 0; i < blQuads.size(); i++) {
     addOrRemove(blQuads[i]->getVertex(0), blQuads[i]->getVertex(1), bedges,
