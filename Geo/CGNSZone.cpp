@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include "Context.h"
 #include "GmshMessage.h"
 #include "MVertex.h"
 #include "affineTransformation.h"
@@ -282,15 +283,16 @@ int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
                        std::map<int, std::vector<MElement *> > *allElt,
                        std::vector<std::string> &allGeomName)
 {
-  int cgnsErr;
-
   // read boundary conditions for classification of mesh on geometry
-  int nbZoneBC;
-  cgnsErr = cg_nbocos(fileIndex(), baseIndex(), index(), &nbZoneBC);
-  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
-  for(int iZoneBC = 1; iZoneBC <= nbZoneBC; iZoneBC++) {
-    int errBC = readBoundaryCondition(iZoneBC, allZones, allGeomName);
-    if(errBC == 0) return 0;
+  if(CTX::instance()->mesh.cgnsImportIgnoreBC == 0) {
+    int cgnsErr;
+    int nbZoneBC;
+    cgnsErr = cg_nbocos(fileIndex(), baseIndex(), index(), &nbZoneBC);
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
+    for(int iZoneBC = 1; iZoneBC <= nbZoneBC; iZoneBC++) {
+      int errBC = readBoundaryCondition(iZoneBC, allZones, allGeomName);
+      if(errBC == 0) return 0;
+    }
   }
 
   // read and create vertices

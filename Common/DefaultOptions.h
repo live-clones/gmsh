@@ -1029,6 +1029,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Order of the mesh to be created by coarsening CGNS structured zones (1 to "
    "4)" },
+  { F|O, "CgnsImportIgnoreBC" , opt_mesh_cgns_import_ignore_bc , 0. ,
+   "Ignore information in ZoneBC structures when reading a CGNS file" },
   { F|O, "CgnsConstructTopology" , opt_mesh_cgns_construct_topology , 0. ,
    "Reconstruct the model topology (BREP) after reading a CGNS file" },
   { F|O, "CgnsExportCPEX0045" , opt_mesh_cgns_export_cpex0045 , 0. ,
