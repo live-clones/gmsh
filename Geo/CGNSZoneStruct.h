@@ -73,6 +73,14 @@ inline cgsize_t CGNSZoneStruct<DIM>::nbEltInRange(const cgsize_t *range) const
 }
 
 
+template<int DIM>
+inline void CGNSZoneStruct<DIM>::eltFromRange(const cgsize_t *range,
+                                              std::vector<cgsize_t> &elt) const
+{
+  return nodeFromRange(range, elt);
+}
+
+
 #endif // HAVE_LIBCGNS
 
 #endif // CGNS_CGNSZONESTRUCT_H

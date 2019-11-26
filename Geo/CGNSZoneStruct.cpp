@@ -373,32 +373,6 @@ CGNSZoneStruct<DIM>::CGNSZoneStruct(int fileIndex, int baseIndex, int zoneIndex,
 
 
 template<int DIM>
-void CGNSZoneStruct<DIM>::eltFromRange(const cgsize_t *range,
-                                       std::vector<cgsize_t> &elt) const
-{
-  elt.resize(nbEltInRange(range));
-
-  // range of IJK indices
-  const cgsize_t ijkMin[3] = {range[0]-1, range[1]-1,
-                              (DIM == 3) ? range[2]-1 : 0};
-  const cgsize_t ijkMax[3] = {range[DIM]-1, range[DIM+1]-1,
-                              (DIM == 3) ? range[5]-1 : 0};
-
-  // compute list of elements from range
-  int iElt = 0;
-  int ijk[3], &i = ijk[0], &j = ijk[1], &k = ijk[2];
-  for(k = ijkMin[2]; k <= ijkMax[2]; k++) {
-    for(j = ijkMin[1]; j <= ijkMax[1]; j++) {
-      for(i = ijkMin[0]; i <= ijkMax[0]; i++) {
-        elt[iElt] = ijk2Ind<DIM>(ijk, nbEltIJK());
-        iElt++;
-      }
-    }
-  }
-}
-
-
-template<int DIM>
 void CGNSZoneStruct<DIM>::eltFromList(const std::vector<cgsize_t> &list,
                                       std::vector<cgsize_t> &elt) const
 {

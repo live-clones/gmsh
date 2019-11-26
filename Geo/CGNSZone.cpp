@@ -88,15 +88,16 @@ int CGNSZone::readBoundaryCondition(int iZoneBC,
                                       &location);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
-  // check that boundary condition is imposed on face elements 
-  if((meshDim() == 2) && (location != CellCenter) && (location != EdgeCenter)) {
+  // check that boundary condition is imposed on face elements
+  if((type() == Unstructured) && (meshDim() == 2) &&
+     (location != CellCenter) && (location != EdgeCenter)) {
     Msg::Warning("Boundary condition %s is specified on %s instead of "
                  "CellCenter/EdgeCenter in a 2D zone, skipping",
                  geomName.c_str(), cg_GridLocationName(location));
     return 1;
   }
-  else if((meshDim() == 3) && (location != CellCenter) &&
-          (location != FaceCenter)) {
+  else if((type() == Unstructured) && (meshDim() == 3) &&
+          (location != CellCenter) && (location != FaceCenter)) {
     Msg::Warning("Boundary condition %s is specified on %s instead of "
                  "CellCenter/FaceCenter in a 3D zone, skipping",
                  geomName.c_str(), cg_GridLocationName(location));
