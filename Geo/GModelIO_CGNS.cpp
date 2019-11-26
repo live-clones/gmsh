@@ -90,7 +90,8 @@ int GModel::readCGNS(const std::string &name)
   // add periodic vertex correspondence and affine transformation
   setPeriodicityInEntities(allZones);
 
-  // remove potential duplicate vertices if several zones
+  // remove potential duplicate vertices if several zones (keeping vertices
+  // classified on entities of lowest dimension) 
   // TODO: disable this through option ?
   if(nbZone > 1) removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
 

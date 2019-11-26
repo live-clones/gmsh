@@ -2171,11 +2171,13 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   double lc = bbox.empty() ? 1. : norm(SVector3(bbox.max(), bbox.min()));
   double eps = lc * tolerance;
 
+  // get entities (in order of increasing dimensions so that topological
+  // classification of vertices remains correct)
   std::vector<GEntity *> entities;
   getEntities(entities);
 
   // re-index all vertices (don't use MVertex::getNum(), as we want to be able
-  // to remove diplicate vertices from "incorrect" meshes, where vertices with
+  // to remove duplicate vertices from "incorrect" meshes, where vertices with
   // the same number are duplicated)
   int n = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {

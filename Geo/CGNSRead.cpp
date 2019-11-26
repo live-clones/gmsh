@@ -363,7 +363,9 @@ void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
   // data structure keeping track of connections between entities to avoid
   // two-way connections
   typedef std::set<std::pair<GEntity *, GEntity *> > EntConnect;
+  typedef std::map<GEntity *, const std::vector<double> *> EntTransfo;
   EntConnect entCon;
+  EntTransfo entTfo;
 
   // loop over zones
   for(std::size_t iZone = 1; iZone < allZones.size(); iZone++) {
@@ -377,18 +379,25 @@ void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
         // get slave and master entities
         MVertex *sVert = slaveVert[iV], *mVert = masterVert[iV];
         GEntity *sEnt = sVert->onWhat(), *mEnt = mVert->onWhat();
+
+        // skip if entities of different dimensions (can happen if a zone has
+        // nodes on a boundary without elements on this boundary)
+        if(sEnt->dim() != mEnt->dim()) continue; 
         
-        // skip if inverse connection already exists 
+        // skip if inverse connection already exists, otherwise store connection
+        // and transformation and update corresponding vertices
         if(entCon.find(std::make_pair(mEnt, sEnt)) != entCon.end()) continue;
         entCon.insert(std::make_pair(sEnt, mEnt));
-
-        // store corresponding vertices and set mesh master & transfo if needed
+        entTfo[sEnt] = &(zone->perTransfo(iPer));
         sEnt->correspondingVertices[sVert] = mVert;
-        if(sEnt->getMeshMaster() == sEnt) {
-          sEnt->setMeshMaster(mEnt, zone->perTransfo(iPer));
-        }
       }
     }
+  }
+
+  // set mesh master and transformation between entities
+  for(EntConnect::iterator it = entCon.begin(); it != entCon.end(); ++it) {
+    GEntity *sEnt = it->first, *mEnt = it->second;
+    sEnt->setMeshMaster(mEnt, *(entTfo[sEnt]));
   }
 }
 
