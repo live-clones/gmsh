@@ -3167,63 +3167,89 @@ bool OCC_Internals::translate(
   const std::vector<std::pair<int, int> > &inDimTags, double dx, double dy,
   double dz)
 {
-  gp_Trsf t;
-  t.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(dx, dy, dz));
-  BRepBuilderAPI_Transform tfo(t);
-  return _transform(inDimTags, &tfo, 0);
+  try {
+    gp_Trsf t;
+    t.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(dx, dy, dz));
+    BRepBuilderAPI_Transform tfo(t);
+    return _transform(inDimTags, &tfo, 0);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
 }
 
 bool OCC_Internals::rotate(const std::vector<std::pair<int, int> > &inDimTags,
                            double x, double y, double z, double ax, double ay,
                            double az, double angle)
 {
-  gp_Trsf t;
-  gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(ax, ay, az));
-  t.SetRotation(axisOfRevolution, angle);
-  BRepBuilderAPI_Transform tfo(t);
-  return _transform(inDimTags, &tfo, 0);
+  try {
+    gp_Trsf t;
+    gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(ax, ay, az));
+    t.SetRotation(axisOfRevolution, angle);
+    BRepBuilderAPI_Transform tfo(t);
+    return _transform(inDimTags, &tfo, 0);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
 }
 
 bool OCC_Internals::dilate(const std::vector<std::pair<int, int> > &inDimTags,
                            double x, double y, double z, double a, double b,
                            double c)
 {
-  gp_GTrsf gt;
-  gt.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
-  gt.SetTranslationPart(gp_XYZ(x * (1 - a), y * (1 - b), z * (1 - c)));
-  BRepBuilderAPI_GTransform gtfo(gt);
-  return _transform(inDimTags, 0, &gtfo);
+  try {
+    gp_GTrsf gt;
+    gt.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
+    gt.SetTranslationPart(gp_XYZ(x * (1 - a), y * (1 - b), z * (1 - c)));
+    BRepBuilderAPI_GTransform gtfo(gt);
+    return _transform(inDimTags, 0, &gtfo);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
 }
 
 bool OCC_Internals::symmetry(const std::vector<std::pair<int, int> > &inDimTags,
                              double a, double b, double c, double d)
 {
-  gp_GTrsf gt;
-  double p = (a * a + b * b + c * c);
-  if(!p) p = 1e-12;
-  double f = -2.0 / p;
-  gt.SetVectorialPart(gp_Mat(1 + a * a * f, a * b * f, a * c * f, a * b * f,
-                             1. + b * b * f, b * c * f, a * c * f, b * c * f,
-                             1. + c * c * f));
-  gt.SetTranslationPart(gp_XYZ(a * d * f, b * d * f, c * d * f));
-  BRepBuilderAPI_GTransform gtfo(gt);
-  return _transform(inDimTags, 0, &gtfo);
+  try {
+    gp_GTrsf gt;
+    double p = (a * a + b * b + c * c);
+    if(!p) p = 1e-12;
+    double f = -2.0 / p;
+    gt.SetVectorialPart(gp_Mat(1 + a * a * f, a * b * f, a * c * f, a * b * f,
+                               1. + b * b * f, b * c * f, a * c * f, b * c * f,
+                               1. + c * c * f));
+    gt.SetTranslationPart(gp_XYZ(a * d * f, b * d * f, c * d * f));
+    BRepBuilderAPI_GTransform gtfo(gt);
+    return _transform(inDimTags, 0, &gtfo);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
 }
 
 bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
                            const std::vector<double> &mat)
 {
-  std::vector<double> a(mat);
-  if(a.size() < 12) {
-    Msg::Warning("%d < 12 entries in affine transform matrix", (int)a.size());
-    a.resize(12, 0.);
+  try {
+    std::vector<double> a(mat);
+    if(a.size() < 12) {
+      Msg::Warning("%d < 12 entries in affine transform matrix", (int)a.size());
+      a.resize(12, 0.);
+    }
+    gp_GTrsf gt;
+    gt.SetVectorialPart(gp_Mat(a[0], a[1], a[2],
+                               a[4], a[5], a[6],
+                               a[8], a[9], a[10]));
+    gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
+    BRepBuilderAPI_GTransform gtfo(gt);
+    return _transform(inDimTags, 0, &gtfo);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
   }
-  gp_GTrsf gt;
-  gt.SetVectorialPart(
-    gp_Mat(a[0], a[1], a[2], a[4], a[5], a[6], a[8], a[9], a[10]));
-  gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
-  BRepBuilderAPI_GTransform gtfo(gt);
-  return _transform(inDimTags, 0, &gtfo);
 }
 
 bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
@@ -3312,14 +3338,10 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
     int dim =
-      (shape.ShapeType() == TopAbs_VERTEX) ?
-        0 :
-        (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
-        1 :
-        (shape.ShapeType() == TopAbs_FACE ||
-         shape.ShapeType() == TopAbs_SHELL) ?
-        2 :
-        3;
+      (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
+      (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ? 1 :
+      (shape.ShapeType() == TopAbs_FACE || shape.ShapeType() == TopAbs_SHELL) ? 2 :
+      3;
 
     Handle(TCollection_HAsciiString) matName;
     Handle(TCollection_HAsciiString) matDescription;
@@ -3345,13 +3367,43 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     }
     else if(colorTool->GetColor(label, XCAFDoc_ColorSurf, col)) {
       double r = col.Red(), g = col.Green(), b = col.Blue();
-      Msg::Info(" - Color (%g, %g, %g) (%dD & Surf)", r, g, b, dim);
+      Msg::Info(" - Color (%g, %g, %g) (%dD & Surfaces)", r, g, b, dim);
       attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 1));
     }
     else if(colorTool->GetColor(label, XCAFDoc_ColorCurv, col)) {
       double r = col.Red(), g = col.Green(), b = col.Blue();
-      Msg::Info(" - Color (%g, %g, %g) (%dD & Curv)", r, g, b, dim);
-      attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1, 2));
+      Msg::Info(" - Color (%g, %g, %g) (%dD & Curves)", r, g, b, dim);
+      attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 2));
+    }
+    // check explicit coloring of boundary entities
+    if(dim == 3) {
+      TopExp_Explorer xp2(shape, TopAbs_FACE);
+      while (xp2.More()) {
+        if (colorTool->GetColor(xp2.Current(), XCAFDoc_ColorGen, col) ||
+            colorTool->GetColor(xp2.Current(), XCAFDoc_ColorSurf, col) ||
+            colorTool->GetColor(xp2.Current(), XCAFDoc_ColorCurv, col)) {
+          double r = col.Red(), g = col.Green(), b = col.Blue();
+          Msg::Info(" - Color (%g, %g, %g) (Surface)", r, g, b);
+          TopoDS_Face face = TopoDS::Face(xp2.Current());
+          attributes->insert(new OCCAttributes(2, face,
+                                               r, g, b, 1.));
+        }
+        xp2.Next();
+      }
+    }
+    if(dim == 2) {
+      TopExp_Explorer xp1(shape, TopAbs_EDGE);
+      while (xp1.More()) {
+        if (colorTool->GetColor(xp1.Current(), XCAFDoc_ColorGen, col) ||
+            colorTool->GetColor(xp1.Current(), XCAFDoc_ColorSurf, col) ||
+            colorTool->GetColor(xp1.Current(), XCAFDoc_ColorCurv, col)) {
+          double r = col.Red(), g = col.Green(), b = col.Blue();
+          Msg::Info(" - Color (%g, %g, %g) (Curve)", r, g, b);
+          attributes->insert(new OCCAttributes(1, TopoDS::Face(xp1.Current()),
+                                               r, g, b, 1.));
+        }
+        xp1.Next();
+      }
     }
   }
   else {
@@ -3741,7 +3793,10 @@ void OCC_Internals::synchronize(GModel *model)
       occf->setColor(col);
       if(boundary == 2) {
         std::vector<GEdge *> edges = occf->edges();
-        for(std::size_t j = 0; j < edges.size(); j++) edges[j]->setColor(col);
+        for(std::size_t j = 0; j < edges.size(); j++) {
+          // only if not specified explicitly before
+          if(!edges[j]->useColor()) edges[j]->setColor(col);
+        }
       }
     }
   }
@@ -3768,11 +3823,17 @@ void OCC_Internals::synchronize(GModel *model)
       occr->setColor(col);
       if(boundary == 1) {
         std::vector<GFace *> faces = occr->faces();
-        for(std::size_t j = 0; j < faces.size(); j++) faces[j]->setColor(col);
+        for(std::size_t j = 0; j < faces.size(); j++) {
+          // only if not specified explicitly before
+          if(!faces[j]->useColor()) faces[j]->setColor(col);
+        }
       }
       else if(boundary == 2) {
         std::vector<GEdge *> edges = occr->edges();
-        for(std::size_t j = 0; j < edges.size(); j++) edges[j]->setColor(col);
+        for(std::size_t j = 0; j < edges.size(); j++) {
+          // only if not specified explicitly before
+          if(!edges[j]->useColor()) edges[j]->setColor(col);
+        }
       }
     }
   }

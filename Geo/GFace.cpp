@@ -57,37 +57,20 @@ GFace::~GFace()
   GFace::deleteMesh();
 }
 
-int GFace::getCurvatureControlParameter() const
-{
-  std::map<int, int>::iterator it =
-    CTX::instance()->mesh.curvatureControlPerFace.find(tag());
-  return it == CTX::instance()->mesh.curvatureControlPerFace.end() ?
-           CTX::instance()->mesh.minCircPoints :
-           it->second;
-}
-
-void GFace::setCurvatureControlParameter(int n)
-{
-  CTX::instance()->mesh.curvatureControlPerFace[tag()] = n;
-}
-
 int GFace::getMeshingAlgo() const
 {
-  std::map<int, int>::iterator it =
-    CTX::instance()->mesh.algo2dPerFace.find(tag());
-  return it == CTX::instance()->mesh.algo2dPerFace.end() ?
-           CTX::instance()->mesh.algo2d :
-           it->second;
+  if(meshAttributes.algorithm)
+    return meshAttributes.algorithm;
+  else
+    return CTX::instance()->mesh.algo2d;
 }
 
-void GFace::setMeshingAlgo(int algo) const
+int GFace::getMeshSizeFromBoundary() const
 {
-  CTX::instance()->mesh.algo2dPerFace[tag()] = algo;
-}
-
-void GFace::unsetMeshingAlgo() const
-{
-  CTX::instance()->mesh.algo2dPerFace.erase(tag());
+  if(meshAttributes.meshSizeFromBoundary >= 0)
+    return meshAttributes.meshSizeFromBoundary;
+  else
+    return CTX::instance()->mesh.lcExtendFromBoundary;
 }
 
 void GFace::delFreeEdge(GEdge *edge)
@@ -246,6 +229,8 @@ void GFace::resetMeshAttributes()
   meshAttributes.reverseMesh = false;
   meshAttributes.meshSize = MAX_LC;
   meshAttributes.meshSizeFactor = 1.;
+  meshAttributes.algorithm = 0;
+  meshAttributes.meshSizeFromBoundary = -1;
 }
 
 SBoundingBox3d GFace::bounds(bool fast) const
@@ -789,7 +774,7 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg, double &max_e,
                                          double &min_e, int &nE, int &GS)
 {
 #if defined(HAVE_MESH)
-  std::set<MEdge, Less_Edge> es;
+  std::set<MEdge, MEdgeLessThan> es;
   for(std::size_t i = 0; i < getNumMeshElements(); i++) {
     MElement *e = getMeshElement(i);
     for(int j = 0; j < e->getNumEdges(); j++) es.insert(e->getEdge(j));
@@ -802,7 +787,7 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg, double &max_e,
   GS = 0;
   double oneoversqr2 = 1. / sqrt(2.);
   double sqr2 = sqrt(2.);
-  for(std::set<MEdge, Less_Edge>::const_iterator it = es.begin();
+  for(std::set<MEdge, MEdgeLessThan>::const_iterator it = es.begin();
       it != es.end(); ++it) {
     double u1, v1, u2, v2;
     MVertex *vert1 = it->getVertex(0);
@@ -1247,6 +1232,12 @@ bool GFace::buildRepresentationCross(bool force)
       return true;
   }
 
+  if(geomType() == DiscreteSurface) {
+    // TODO if the surface has been reparametrized
+    if(cross[0].empty()) cross[0].push_back(std::vector<SPoint3>());
+    return false;
+  }
+
   Range<double> ubounds = parBounds(0);
   Range<double> vbounds = parBounds(1);
   // try to compute something better for Gmsh surfaces
@@ -1313,6 +1304,7 @@ bool GFace::buildRepresentationCross(bool force)
       }
     }
   }
+
   // if we couldn't determine a cross, add a dummy one so that we won't try
   // again unless we force the recomputation
   if(cross[0].empty()) {
@@ -1492,8 +1484,8 @@ static void meshCompound(GFace *gf, bool verbose)
 
   std::vector<GFace *> triangles_tag;
 
-  std::set<GEdge*, GEntityLessThan> bnd, emb1;
-  std::set<GVertex*, GEntityLessThan> emb0;
+  std::set<GEdge*, GEntityPtrLessThan> bnd, emb1;
+  std::set<GVertex*, GEntityPtrLessThan> emb0;
   for(std::size_t i = 0; i < gf->compound.size(); i++) {
     GFace *c = (GFace *)gf->compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
@@ -1525,8 +1517,8 @@ static void meshCompound(GFace *gf, bool verbose)
     c->compoundSurface = df;
   }
 
-  std::set<GEdge*, GEntityLessThan> bndc;
-  for(std::set<GEdge*, GEntityLessThan>::iterator it = bnd.begin();
+  std::set<GEdge*, GEntityPtrLessThan> bndc;
+  for(std::set<GEdge*, GEntityPtrLessThan>::iterator it = bnd.begin();
       it != bnd.end(); it++){
     GEdge *e = *it;
     if(e->compoundCurve)
@@ -1537,11 +1529,11 @@ static void meshCompound(GFace *gf, bool verbose)
   std::vector<GEdge*> ed(bndc.begin(), bndc.end());
   df->set(ed);
 
-  for(std::set<GEdge*, GEntityLessThan>::iterator it = emb1.begin();
+  for(std::set<GEdge*, GEntityPtrLessThan>::iterator it = emb1.begin();
       it != emb1.end(); it++)
     df->addEmbeddedEdge(*it);
 
-  for(std::set<GVertex*, GEntityLessThan>::iterator it = emb0.begin();
+  for(std::set<GVertex*, GEntityPtrLessThan>::iterator it = emb0.begin();
       it != emb0.end(); it++)
     df->addEmbeddedVertex(*it);
 
@@ -1733,7 +1725,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
       m_vtxToEdge.insert(std::make_pair(std::make_pair(v0, v1), *eIter));
     }
   }
-  std::set<GVertex *, GEntityLessThan> m_embedded_vertices =
+  std::set<GVertex *, GEntityPtrLessThan> m_embedded_vertices =
     master->embeddedVertices();
   m_vertices.insert(m_embedded_vertices.begin(), m_embedded_vertices.end());
 
@@ -2228,7 +2220,7 @@ void GFace::alignElementsWithMaster()
   GEntity *master = getMeshMaster();
 
   if(master != this) {
-    std::set<MFace, Less_Face> srcFaces;
+    std::set<MFace, MFaceLessThan> srcFaces;
 
     for(std::size_t i = 0; i < master->getNumMeshElements(); i++) {
       MElement *face = master->getMeshElement(i);
@@ -2253,7 +2245,7 @@ void GFace::alignElementsWithMaster()
 
       MFace mf(vtcs);
 
-      std::set<MFace, Less_Face>::iterator sIter = srcFaces.find(mf);
+      std::set<MFace, MFaceLessThan>::iterator sIter = srcFaces.find(mf);
 
       if(sIter == srcFaces.end()) continue;
 

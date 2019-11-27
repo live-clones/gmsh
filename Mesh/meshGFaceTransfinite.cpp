@@ -253,6 +253,7 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
 
+
   std::vector<double> lengths_i;
   lengths_i.reserve(L);
 

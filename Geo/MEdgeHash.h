@@ -9,7 +9,7 @@
 #include "MEdge.h"
 #include "Hash.h"
 
-struct Hash_Edge : public std::unary_function<MEdge, size_t> {
+struct MEdgeHash : public std::unary_function<MEdge, size_t> {
   size_t operator()(const MEdge &e) const
   {
     const MVertex *v[2];

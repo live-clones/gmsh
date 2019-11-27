@@ -185,7 +185,7 @@ int GModel::_readMSH2(const std::string &name)
         return 0;
       }
       Msg::Info("%d nodes", numVertices);
-      Msg::ResetProgressMeter();
+      Msg::StartProgressMeter(numVertices);
       vertexVector.clear();
       vertexMap.clear();
       minVertex = numVertices + 1;
@@ -298,8 +298,9 @@ int GModel::_readMSH2(const std::string &name)
           Msg::Warning("Skipping duplicate node %d", num);
         vertexMap[num] = newVertex;
         if(numVertices > 100000)
-          Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");
+          Msg::ProgressMeter(i + 1, true, "Reading nodes");
       }
+      Msg::StopProgressMeter();
       // If the vertex numbering is dense, transfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices &&
@@ -332,7 +333,7 @@ int GModel::_readMSH2(const std::string &name)
       std::set<MElement *> parentsOwned;
       sscanf(str, "%d", &numElements);
       Msg::Info("%d elements", numElements);
-      Msg::ResetProgressMeter();
+      Msg::StartProgressMeter(numElements);
       if(!binary) {
         for(int i = 0; i < numElements; i++) {
           int num, type, physical = 0, elementary = 0, partition = 0,
@@ -477,7 +478,7 @@ int GModel::_readMSH2(const std::string &name)
           for(std::size_t j = 0; j < ghosts.size(); j++)
             _ghostCells.insert(std::pair<MElement *, short>(e, ghosts[j]));
           if(numElements > 100000)
-            Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
+            Msg::ProgressMeter(i + 1, true, "Reading elements");
         }
       }
       else {
@@ -562,13 +563,15 @@ int GModel::_readMSH2(const std::string &name)
                 _ghostCells.insert(
                   std::pair<MElement *, short>(e, -data[5 + j]));
             if(numElements > 100000)
-              Msg::ProgressMeter(numElementsPartial + i + 1, numElements, true,
+              Msg::ProgressMeter(numElementsPartial + i + 1, true,
                                  "Reading elements");
           }
           delete[] data;
           numElementsPartial += numElms;
         }
       }
+      Msg::StopProgressMeter();
+
       for(int i = 0; i < 10; i++) elements[i].clear();
 
       std::map<int, MElement *>::iterator ite;

@@ -338,11 +338,4 @@ public:
   virtual void sendToServer(const std::string &name);
 };
 
-class nameData {
-public:
-  std::string name;
-  std::vector<int> indices;
-  std::vector<PViewData *> data;
-};
-
 #endif

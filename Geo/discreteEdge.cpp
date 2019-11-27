@@ -34,6 +34,12 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
   CreateReversedCurve(c);
 }
 
+discreteEdge::discreteEdge(GModel *model) : GEdge(model, 0)
+{
+  // used for temporary discrete edges, that should not lead to the creation of
+  // the corresponding entity in GEO internals
+}
+
 bool discreteEdge::_orderMLines(bool isCompound)
 {
   std::size_t ss = lines.size();

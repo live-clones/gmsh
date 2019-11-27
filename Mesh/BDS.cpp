@@ -50,6 +50,7 @@ double BDS_Face_Validity(GFace *gf, BDS_Face *f)
 void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
                        GFace *gf)
 {
+  Msg::Info("Writing debug file '%s'", iii);
   if(gf && 0) {
     FILE *view_c = Fopen("param_mesh_as_it_is_in_3D.pos", "w");
     if(!view_c) {
@@ -725,7 +726,7 @@ BDS_Mesh::~BDS_Mesh()
   DESTROOOY(triangles.begin(), triangles.end());
 }
 
-bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
+bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid, bool check_area_param)
 {
   /*
         p1
@@ -755,19 +756,18 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
     printf("splitting edge %d %d opp %d %d new %d\n", p1->iD, p2->iD, op[0]->iD,
            op[1]->iD, mid->iD);
 
-  //  double ori0 = fabs(surface_triangle_param(p2, p1, op[0])) +
-  //                fabs(surface_triangle_param(p2, p1, op[1]));
-  //  double ori1 = fabs(surface_triangle_param(mid, p1, op[1]));
-  //  double ori2 = fabs(surface_triangle_param(mid, op[1], p2));
-  //  double ori3 = fabs(surface_triangle_param(mid, p2, op[0]));
-  //  double ori4 = fabs(surface_triangle_param(mid, op[0], p1));
-  //
-  //  double eps = 1.e-21;
-  //  if(ori1 < eps * ori0 || ori2 < eps * ori0 || ori3 < eps * ori0 ||
-  //     ori4 < eps * ori0) {
-  //    // printf("%g %g %g %g %g\n",ori0,ori1,ori2,ori3,ori4);
-  //    return false;
-  //  }
+  if(check_area_param) {
+    double area0 = fabs(surface_triangle_param(p2, p1, op[0])) +
+      fabs(surface_triangle_param(p2, p1, op[1]));
+    double area1 = fabs(surface_triangle_param(mid, p1, op[1])) +
+      fabs(surface_triangle_param(mid, op[1], p2)) +
+      fabs(surface_triangle_param(mid, p2, op[0])) +
+      fabs(surface_triangle_param(mid, op[0], p1));
+    // heuristic - abort if area changed too much
+    if(area1 > 1.1 * area0 || area1 < 0.9 * area0){
+      return false;
+    }
+  }
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
     printf("%d %d %d %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD);
@@ -1816,19 +1816,16 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
                                CHECK)) {
     if(!minimizeTutteEnergyProj(p, E_unmoved, RATIO, nbg, kernel, lc, gf,
                                 CHECK)) {
-      //      __COUNT3++;
       return false;
     }
     else {
       p->config_modified = true;
       E_unmoved = getTutteEnergy(p, nbg, RATIO);
       minimizeTutteEnergyProj(p, E_unmoved, RATIO, nbg, kernel, lc, gf, CHECK);
-      //      __COUNT2++;
     }
   }
   else {
     p->config_modified = true;
-    //    __COUNT1++;
   }
 
   return true;

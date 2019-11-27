@@ -254,6 +254,7 @@ Macro                   return tMacro;
 Mass                    return tMass;
 Memory                  return tMemory;
 MeshAlgorithm           return tMeshAlgorithm;
+MeshSizeFromBoundary    return tMeshSizeFromBoundary;
 Modulo                  return tModulo;
 
 N2S                     return tNameToString;

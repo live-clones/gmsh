@@ -18,11 +18,11 @@ int LaplaceSmoothing(GRegion *gr);
 
 bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
               const qmTetrahedron::Measures &cr,
-              const std::set<MFace, Less_Face> &embeddedFaces);
+              const std::set<MFace, MFaceLessThan> &embeddedFaces);
 
 bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalFace,
               const qmTetrahedron::Measures &cr,
-              const std::set<MFace, Less_Face> &embeddedFaces);
+              const std::set<MFace, MFaceLessThan> &embeddedFaces);
 
 bool smoothVertex(MTet4 *t, int iLocalVertex,
                   const qmTetrahedron::Measures &cr);

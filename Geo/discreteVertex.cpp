@@ -18,6 +18,12 @@ discreteVertex::discreteVertex(GModel *m, int num, double x, double y, double z)
   Tree_Add(m->getGEOInternals()->Points, &_v);
 }
 
+discreteVertex::discreteVertex(GModel *m) : GVertex(m, 0)
+{
+  // used for temporary discrete vertices, that should not lead to the creation
+  // of the corresponding entity in GEO internals
+}
+
 discreteVertex::~discreteVertex()
 {
 }

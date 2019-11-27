@@ -2022,15 +2022,15 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
     numElements += entities[i]->getNumMeshElementsByType(familyType);
   if(jacobian) {
     jacobians.clear();
-    jacobians.resize(9 * numElements * numIntegrationPoints, 0.);
+    jacobians.resize(9 * numElements * numIntegrationPoints);
   }
   if(determinant) {
     determinants.clear();
-    determinants.resize(numElements * numIntegrationPoints, 0.);
+    determinants.resize(numElements * numIntegrationPoints);
   }
   if(point) {
     points.clear();
-    points.resize(3 * numElements * numIntegrationPoints, 0.);
+    points.resize(3 * numElements * numIntegrationPoints);
   }
 }
 
@@ -3089,6 +3089,34 @@ GMSH_API void gmsh::model::mesh::setReverse(const int dim, const int tag,
   }
 }
 
+GMSH_API void gmsh::model::mesh::setAlgorithm(const int dim, const int tag,
+                                              const int val)
+{
+  if(!_isInitialized()) { throw - 1; }
+  if(dim == 2) {
+    GFace *gf = GModel::current()->getFaceByTag(tag);
+    if(!gf) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    gf->meshAttributes.algorithm = val;
+  }
+}
+
+GMSH_API void gmsh::model::mesh::setSizeFromBoundary(const int dim, const int tag,
+                                                     const int val)
+{
+  if(!_isInitialized()) { throw - 1; }
+  if(dim == 2) {
+    GFace *gf = GModel::current()->getFaceByTag(tag);
+    if(!gf) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    gf->meshAttributes.meshSizeFromBoundary = val;
+  }
+}
+
 GMSH_API void gmsh::model::mesh::setCompound(const int dim,
                                              const std::vector<int> &tags)
 {
@@ -3906,6 +3934,20 @@ GMSH_API void gmsh::model::geo::mesh::setReverse(const int dim, const int tag,
 {
   if(!_isInitialized()) { throw - 1; }
   GModel::current()->getGEOInternals()->setReverseMesh(dim, tag, val);
+}
+
+GMSH_API void gmsh::model::geo::mesh::setAlgorithm(const int dim, const int tag,
+                                                   const int val)
+{
+  if(!_isInitialized()) { throw - 1; }
+  GModel::current()->getGEOInternals()->setMeshAlgorithm(dim, tag, val);
+}
+
+GMSH_API void gmsh::model::geo::mesh::setSizeFromBoundary(const int dim, const int tag,
+                                                          const int val)
+{
+  if(!_isInitialized()) { throw - 1; }
+  GModel::current()->getGEOInternals()->setMeshSizeFromBoundary(dim, tag, val);
 }
 
 GMSH_API void gmsh::model::geo::mesh::setSize(const vectorpair &dimTags,
@@ -4988,13 +5030,15 @@ GMSH_API void gmsh::view::copyOptions(const int refTag, const int tag)
 }
 
 GMSH_API void gmsh::view::combine(const std::string &what,
-                                  const std::string &how, const bool remove)
+                                  const std::string &how,
+                                  const bool remove,
+                                  const bool copyOptions)
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_POST)
   bool time = (what == "steps") ? true : false; // "elements"
   int ihow = (how == "all") ? 1 : (how == "name") ? 2 : 0; // "visible"
-  PView::combine(time, ihow, remove);
+  PView::combine(time, ihow, remove, copyOptions);
 #if defined(HAVE_FLTK)
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif

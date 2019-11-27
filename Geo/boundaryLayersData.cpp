@@ -53,7 +53,7 @@ SVector3 interiorNormal(const SPoint2 &p1, const SPoint2 &p2, const SPoint2 &p3)
 
 edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2, int side)
 {
-  Equal_Edge aaa;
+  MEdgeEqual aaa;
   MEdge e(v1, v2);
   std::map<MVertex *, BoundaryLayerFan>::const_iterator it1 = _fans.find(v1);
   std::map<MVertex *, BoundaryLayerFan>::const_iterator it2 = _fans.find(v2);
@@ -158,11 +158,11 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
                               std::vector<SVector3> &_dirs, bool fan)
 {
   std::vector<SVector3> N1, N2;
-  for(std::multimap<MEdge, SVector3, Less_Edge>::iterator itm =
+  for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
         _columns->_normals.lower_bound(e1);
       itm != _columns->_normals.upper_bound(e1); ++itm)
     N1.push_back(itm->second);
-  for(std::multimap<MEdge, SVector3, Less_Edge>::iterator itm =
+  for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
         _columns->_normals.lower_bound(e2);
       itm != _columns->_normals.upper_bound(e2); ++itm)
     N2.push_back(itm->second);
@@ -224,15 +224,15 @@ static void treat3Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
                               std::vector<SVector3> &_dirs)
 {
   std::vector<SVector3> N1, N2, N3;
-  for(std::multimap<MEdge, SVector3, Less_Edge>::iterator itm =
+  for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
         _columns->_normals.lower_bound(e1);
       itm != _columns->_normals.upper_bound(e1); ++itm)
     N1.push_back(itm->second);
-  for(std::multimap<MEdge, SVector3, Less_Edge>::iterator itm =
+  for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
         _columns->_normals.lower_bound(e2);
       itm != _columns->_normals.upper_bound(e2); ++itm)
     N2.push_back(itm->second);
-  for(std::multimap<MEdge, SVector3, Less_Edge>::iterator itm =
+  for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
         _columns->_normals.lower_bound(e3);
       itm != _columns->_normals.upper_bound(e3); ++itm)
     N3.push_back(itm->second);
@@ -291,7 +291,7 @@ static bool isEdgeOfFaceBL(GFace *gf, GEdge *ge, BoundaryLayerField *blf)
 static void getEdgesData(GFace *gf, BoundaryLayerField *blf,
                          BoundaryLayerColumns *_columns,
                          std::set<MVertex *> &_vertices,
-                         std::set<MEdge, Less_Edge> &allEdges,
+                         std::set<MEdge, MEdgeLessThan> &allEdges,
                          std::multimap<MVertex *, MVertex *> &tangents)
 {
   // get all model edges
@@ -328,7 +328,7 @@ static void getEdgesData(GFace *gf, BoundaryLayerField *blf,
 
 static void getNormals(GFace *gf, BoundaryLayerField *blf,
                        BoundaryLayerColumns *_columns,
-                       std::set<MEdge, Less_Edge> &allEdges)
+                       std::set<MEdge, MEdgeLessThan> &allEdges)
 {
   // assume that the initial mesh has been created i.e. that there exist
   // triangles inside the domain. Triangles are used to define exterior normals
@@ -430,7 +430,7 @@ bool buildAdditionalPoints2D(GFace *gf)
     blf->setupFor2d(gf->tag());
 
     std::set<MVertex *> _vertices;
-    std::set<MEdge, Less_Edge> allEdges;
+    std::set<MEdge, MEdgeLessThan> allEdges;
     std::multimap<MVertex *, MVertex *> tangents;
 
     getEdgesData(gf, blf, _columns, _vertices, allEdges, tangents);
@@ -475,7 +475,7 @@ bool buildAdditionalPoints2D(GFace *gf)
       else if(_connections.size() == 1) {
         MEdge e1(*it, _connections[0]);
         std::vector<SVector3> N1;
-        std::multimap<MEdge, SVector3, Less_Edge>::iterator itm;
+        std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm;
         for(itm = _columns->_normals.lower_bound(e1);
             itm != _columns->_normals.upper_bound(e1); ++itm)
           N1.push_back(itm->second);

@@ -1347,6 +1347,28 @@ GMSH_API void gmshModelMeshSetReverse(const int dim, const int tag, const int va
   }
 }
 
+GMSH_API void gmshModelMeshSetAlgorithm(const int dim, const int tag, const int val, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setAlgorithm(dim, tag, val);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshSetSizeFromBoundary(const int dim, const int tag, const int val, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setSizeFromBoundary(dim, tag, val);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetCompound(const int dim, int * tags, size_t tags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2076,6 +2098,28 @@ GMSH_API void gmshModelGeoMeshSetReverse(const int dim, const int tag, const int
   if(ierr) *ierr = 0;
   try {
     gmsh::model::geo::mesh::setReverse(dim, tag, val);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGeoMeshSetAlgorithm(const int dim, const int tag, const int val, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::geo::mesh::setAlgorithm(dim, tag, val);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGeoMeshSetSizeFromBoundary(const int dim, const int tag, const int val, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::geo::mesh::setSizeFromBoundary(dim, tag, val);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -2962,11 +3006,11 @@ GMSH_API void gmshViewCopyOptions(const int refTag, const int tag, int * ierr)
   }
 }
 
-GMSH_API void gmshViewCombine(const char * what, const char * how, const int remove, int * ierr)
+GMSH_API void gmshViewCombine(const char * what, const char * how, const int remove, const int copyOptions, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::view::combine(what, how, remove);
+    gmsh::view::combine(what, how, remove, copyOptions);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

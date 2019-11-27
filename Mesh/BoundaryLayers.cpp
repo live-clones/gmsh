@@ -260,7 +260,7 @@ FixErasedExtrScaleFlags(GModel *m, std::map<int, bool> &faceSkipScaleCalc,
                         std::map<int, bool> &edgeSkipScaleCalc)
 {
   unsigned int num_changed = 0;
-  std::set<GRegion *, GEntityLessThan>::iterator itreg;
+  std::set<GRegion *, GEntityPtrLessThan>::iterator itreg;
   // fix all extruded faces bordering ScaleLast regions
   for(itreg = m->firstRegion(); itreg != m->lastRegion(); itreg++) {
     ExtrudeParams *r_ep = (*itreg)->meshAttributes.extrude;

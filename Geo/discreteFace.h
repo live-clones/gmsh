@@ -35,6 +35,7 @@ private:
   void _createGeometryFromSTL();
 public:
   discreteFace(GModel *model, int num);
+  discreteFace(GModel *model);
   virtual ~discreteFace() {}
   using GFace::point;
   GPoint point(double par1, double par2) const;

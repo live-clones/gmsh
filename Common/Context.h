@@ -34,8 +34,6 @@ struct contextMeshOptions {
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
-  std::map<int, int> algo2dPerFace;
-  std::map<int, int> curvatureControlPerFace;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
@@ -288,7 +286,8 @@ public:
   // post processing options
   struct {
     int draw, link, horizontalScales;
-    int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
+    int smooth, animCycle, animStep;
+    int combineTime, combineRemoveOrig, combineCopyOptions;
     int fileFormat, plugins, forceNodeData, forceElementData;
     int saveMesh, saveInterpolationMatrices;
     double animDelay;

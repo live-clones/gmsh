@@ -192,7 +192,7 @@ bool buildMeshGenerationDataStructures(
                     data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(1))] +
                     data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(2))]);
 
-    double LL = Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM;
+    double LL = Extend1dMeshIn2dSurfaces(gf) ? std::min(lc, lcBGM) : lcBGM;
     AllTris.insert(new MTri3(gf->triangles[i], LL, 0, &data, gf));
   }
   gf->triangles.clear();
@@ -853,7 +853,7 @@ static void _relocate(GFace *gf, MVertex *ver,
   ver->getParameter(1, initv);
 
   // compute the vertices connected to that one
-  std::map<MVertex *, SPoint2, MVertexLessThanNum> pts;
+  std::map<MVertex *, SPoint2, MVertexPtrLessThan> pts;
   for(std::size_t i = 0; i < lt.size(); i++) {
     for(int j = 0; j < lt[i]->getNumEdges(); j++) {
       MEdge e = lt[i]->getEdge(j);
@@ -875,7 +875,7 @@ static void _relocate(GFace *gf, MVertex *ver,
   double metric[3];
   SPoint2 after(0, 0);
   double COUNT = 0.0;
-  for(std::map<MVertex *, SPoint2, MVertexLessThanNum>::iterator it =
+  for(std::map<MVertex *, SPoint2, MVertexPtrLessThan>::iterator it =
         pts.begin();
       it != pts.end(); ++it) {
     SPoint2 adj = it->second;

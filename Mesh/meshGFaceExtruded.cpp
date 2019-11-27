@@ -340,6 +340,10 @@ int MeshExtrudedSurface(
       return 1;
     }
     copyMesh(from, gf, pos);
+    if(gf->getMeshMaster() == from) {
+      // explicit periodic constraint, to store node correspondance
+      gf->setMeshMaster(from, gf->affineTransform);
+    }
   }
 
   gf->meshStatistics.status = GFace::DONE;

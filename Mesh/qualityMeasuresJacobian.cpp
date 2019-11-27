@@ -973,7 +973,7 @@ namespace jacobianBasedQuality {
   void testAllMeasuresAllElements()
   {
     GModel *m = GModel::current();
-    std::set<GEntity *, GEntityLessThan> entities;
+    std::set<GEntity *, GEntityPtrLessThan> entities;
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       entities.insert(*it);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
@@ -981,7 +981,7 @@ namespace jacobianBasedQuality {
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
       entities.insert(*it);
 
-    std::set<GEntity *, GEntityLessThan>::iterator it;
+    std::set<GEntity *, GEntityPtrLessThan>::iterator it;
     for(it = entities.begin(); it != entities.end(); ++it) {
       unsigned num = (*it)->getNumMeshElements();
       for(unsigned i = 0; i < num; ++i) {

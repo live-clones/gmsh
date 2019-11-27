@@ -4,6 +4,7 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include "PView.h"
 #include "PViewDataList.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"

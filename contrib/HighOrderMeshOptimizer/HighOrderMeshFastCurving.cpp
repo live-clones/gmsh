@@ -53,8 +53,8 @@
 
 namespace {
 
-  typedef std::map<MEdge, std::vector<MElement *>, Less_Edge> MEdgeVecMEltMap;
-  typedef std::map<MFace, std::vector<MElement *>, Less_Face> MFaceVecMEltMap;
+  typedef std::map<MEdge, std::vector<MElement *>, MEdgeLessThan> MEdgeVecMEltMap;
+  typedef std::map<MFace, std::vector<MElement *>, MFaceLessThan> MFaceVecMEltMap;
 
   // Compute edge -> element connectivity (for 2D elements)
   void calcEdge2Elements(GEntity *entity, MEdgeVecMEltMap &ed2el)

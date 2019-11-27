@@ -303,9 +303,9 @@ SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
   return m;
 }
 
-bool Extend1dMeshIn2dSurfaces()
+bool Extend1dMeshIn2dSurfaces(GFace *gf)
 {
-  return CTX::instance()->mesh.lcExtendFromBoundary;
+  return gf->getMeshSizeFromBoundary();
 }
 
 bool Extend2dMeshIn3dVolumes()

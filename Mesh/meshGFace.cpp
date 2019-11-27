@@ -124,11 +124,11 @@ class quadMeshRemoveHalfOfOneDMesh {
 private:
   GFace *_gf;
   std::map<GEdge *, std::vector<MLine *> > _backup;
-  std::map<MEdge, MVertex *, Less_Edge> _middle;
+  std::map<MEdge, MVertex *, MEdgeLessThan> _middle;
   void _subdivide()
   {
     std::vector<MQuadrangle *> qnew;
-    std::map<MEdge, MVertex *, Less_Edge> eds;
+    std::map<MEdge, MVertex *, MEdgeLessThan> eds;
     for(std::size_t i = 0; i < _gf->triangles.size(); i++) {
       MVertex *v[3];
       SPoint2 m[3];
@@ -136,8 +136,8 @@ private:
         MEdge E = _gf->triangles[i]->getEdge(j);
         SPoint2 p1, p2;
         reparamMeshEdgeOnFace(E.getVertex(0), E.getVertex(1), _gf, p1, p2);
-        std::map<MEdge, MVertex *, Less_Edge>::iterator it = _middle.find(E);
-        std::map<MEdge, MVertex *, Less_Edge>::iterator it2 = eds.find(E);
+        std::map<MEdge, MVertex *, MEdgeLessThan>::iterator it = _middle.find(E);
+        std::map<MEdge, MVertex *, MEdgeLessThan>::iterator it2 = eds.find(E);
         m[j] = p1;
         if(it == _middle.end() && it2 == eds.end()) {
           GPoint gp = _gf->point((p1 + p2) * 0.5);
@@ -190,8 +190,8 @@ private:
         MEdge E = _gf->quadrangles[i]->getEdge(j);
         SPoint2 p1, p2;
         reparamMeshEdgeOnFace(E.getVertex(0), E.getVertex(1), _gf, p1, p2);
-        std::map<MEdge, MVertex *, Less_Edge>::iterator it = _middle.find(E);
-        std::map<MEdge, MVertex *, Less_Edge>::iterator it2 = eds.find(E);
+        std::map<MEdge, MVertex *, MEdgeLessThan>::iterator it = _middle.find(E);
+        std::map<MEdge, MVertex *, MEdgeLessThan>::iterator it2 = eds.find(E);
         m[j] = p1;
         if(it == _middle.end() && it2 == eds.end()) {
           GPoint gp = _gf->point((p1 + p2) * 0.5);
@@ -817,12 +817,12 @@ static bool recoverEdge(BDS_Mesh *m, GFace *gf, GEdge *ge,
 }
 
 static void addOrRemove(MVertex *v1, MVertex *v2,
-                        std::set<MEdge, Less_Edge> &bedges,
-                        std::set<MEdge, Less_Edge> &removed)
+                        std::set<MEdge, MEdgeLessThan> &bedges,
+                        std::set<MEdge, MEdgeLessThan> &removed)
 {
   MEdge e(v1, v2);
   if(removed.find(e) != removed.end()) return;
-  std::set<MEdge, Less_Edge>::iterator it = bedges.find(e);
+  std::set<MEdge, MEdgeLessThan>::iterator it = bedges.find(e);
   if(it == bedges.end())
     bedges.insert(e);
   else {
@@ -838,8 +838,8 @@ static void modifyInitialMeshForBoundaryLayers(
   if(!buildAdditionalPoints2D(gf)) return;
   BoundaryLayerColumns *_columns = gf->getColumns();
 
-  std::set<MEdge, Less_Edge> bedges;
-  std::set<MEdge, Less_Edge> removed;
+  std::set<MEdge, MEdgeLessThan> bedges;
+  std::set<MEdge, MEdgeLessThan> removed;
 
   std::vector<GEdge *> edges = gf->edges();
   std::vector<GEdge *> embedded_edges = gf->getEmbeddedEdges();
@@ -971,6 +971,8 @@ static void modifyInitialMeshForBoundaryLayers(
 
   filterOverlappingElements(_lines, blTris, blQuads, _columns->_elemColumns,
                             _columns->_toFirst);
+  for(std::size_t i = 0; i < blQuads.size(); i++) blQuads[i]->setPartition(0);
+  for(std::size_t i = 0; i < blTris.size(); i++) blTris[i]->setPartition(0);
 
   for(std::size_t i = 0; i < blQuads.size(); i++) {
     addOrRemove(blQuads[i]->getVertex(0), blQuads[i]->getVertex(1), bedges,
@@ -999,7 +1001,7 @@ static void modifyInitialMeshForBoundaryLayers(
 
   discreteEdge ne(gf->model(), 444444, 0, (*edges.begin())->getEndVertex());
   std::vector<GEdge *> hop;
-  std::set<MEdge, Less_Edge>::iterator it = bedges.begin();
+  std::set<MEdge, MEdgeLessThan>::iterator it = bedges.begin();
 
   FILE *ff = 0;
   if(debug) ff = Fopen("toto.pos", "w");
@@ -1132,7 +1134,7 @@ BDS2GMSH(BDS_Mesh *m, GFace *gf,
 
 static void _deleteUnusedVertices(GFace *gf)
 {
-  std::set<MVertex *, MVertexLessThanNum> allverts;
+  std::set<MVertex *, MVertexPtrLessThan> allverts;
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     for(int j = 0; j < 3; j++) {
       if(gf->triangles[i]->getVertex(j)->onWhat() == gf)
@@ -1176,7 +1178,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     replacement_edges ? *replacement_edges : gf->edges();
 
   // build a set with all points of the boundaries
-  std::set<MVertex *, MVertexLessThanNum> all_vertices, boundary;
+  std::set<MVertex *, MVertexPtrLessThan> all_vertices, boundary;
   std::vector<GEdge *>::const_iterator ite = edges.begin();
 
   FILE *fdeb = NULL;
@@ -1229,7 +1231,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     Msg::Error("The 1D mesh seems not to be forming a closed loop (%d boundary "
                "nodes are considered once)",
                boundary.size());
-    for(std::set<MVertex *, MVertexLessThanNum>::iterator it = boundary.begin();
+    for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = boundary.begin();
         it != boundary.end(); it++){
       Msg::Debug("Remaining node %lu", (*it)->getNum());
     }
@@ -1272,7 +1274,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   else if(all_vertices.size() == 3) {
     MVertex *vv[3] = {0, 0, 0};
     int i = 0;
-    for(std::set<MVertex *, MVertexLessThanNum>::iterator it =
+    for(std::set<MVertex *, MVertexPtrLessThan>::iterator it =
           all_vertices.begin();
         it != all_vertices.end(); it++) {
       vv[i++] = *it;
@@ -1289,7 +1291,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   std::vector<BDS_Point *> points(all_vertices.size());
   SBoundingBox3d bbox;
   int count = 0;
-  for(std::set<MVertex *, MVertexLessThanNum>::iterator it =
+  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it =
         all_vertices.begin();
       it != all_vertices.end(); it++) {
     MVertex *here = *it;
@@ -2911,7 +2913,7 @@ void meshGFace::operator()(GFace *gf, bool print)
         gf->meshStatistics.status = GFace::PENDING;
         return;
       }
-      Msg::Info("Meshing surface %d (%s) as a copy of %d", gf->tag(),
+      Msg::Info("Meshing surface %d (%s) as a copy of surface %d", gf->tag(),
                 gf->getTypeString().c_str(), gf->getMeshMaster()->tag());
       copyMesh(gff, gf);
       gf->meshStatistics.status = GFace::DONE;

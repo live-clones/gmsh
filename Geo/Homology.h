@@ -67,7 +67,7 @@ private:
   std::vector<Chain<int> *> _chains[4];
   std::vector<Chain<int> *> _cochains[4];
 
-  typedef std::map<Cell *, int, Less_Cell>::iterator citer;
+  typedef std::map<Cell *, int, CellPtrLessThan>::iterator citer;
 
   void _getEntities(const std::vector<int> &physicalGroups,
                     std::vector<GEntity *> &entities);
@@ -82,7 +82,7 @@ private:
   void _createCellComplex();
 
   // create and store a chain from homology solver result
-  void _createChain(std::map<Cell *, int, Less_Cell> &preChain,
+  void _createChain(std::map<Cell *, int, CellPtrLessThan> &preChain,
                     const std::string &name, bool co);
 
   void _deleteChains(std::vector<int> dim = vecN0(4));

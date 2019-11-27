@@ -205,7 +205,7 @@ struct doubleXstring{
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence
-%token tIntersect tMeshAlgorithm tReverseMesh
+%token tIntersect tMeshAlgorithm tReverseMesh tMeshSizeFromBoundary
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts
 %token tRecombLaterals tTransfQuadTri
@@ -3462,21 +3462,29 @@ Command :
     {
 #if defined(HAVE_POST)
       if(!strcmp($2, "ElementsFromAllViews"))
-	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "ElementsFromVisibleViews"))
-	PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "ElementsByViewName"))
-	PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsFromAllViews"))
-	PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsFromVisibleViews"))
-	PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsByViewName"))
-	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "Views"))
-	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeSteps"))
-	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else
 	yymsg(0, "Unknown 'Combine' command");
 #endif
@@ -4535,7 +4543,7 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Vertex %d",tag);
+	yymsg(0, "Unknown model point %d",tag);
       }
     }
   | tSetTag tCurve '(' FExpr ',' FExpr ')' tEND
@@ -4547,7 +4555,7 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Edge %d",tag);
+	yymsg(0, "Unknown model curve %d",tag);
       }
     }
   | tSetTag tSurface '(' FExpr ',' FExpr ')' tEND
@@ -4559,7 +4567,7 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Face %d",tag);
+	yymsg(0, "Unknown model surface %d",tag);
       }
     }
   | tSetTag tVolume '(' FExpr ',' FExpr ')' tEND
@@ -4571,15 +4579,40 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Region %d",tag);
+	yymsg(0, "Unknown model volume %d",tag);
       }
     }
   | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
     {
+      // mesh algorithm constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       for(int i = 0; i < List_Nbr($4); i++){
-	double d;
-	List_Read($4, i, &d);
-	CTX::instance()->mesh.algo2dPerFace[(int)d] = (int)$7;
+        double d;
+        List_Read($4, i, &d);
+        int tag = (int)d;
+        GModel::current()->getGEOInternals()->setMeshAlgorithm(2, tag, (int)$7);
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(gf) gf->setMeshingAlgo((int)$7);
+      }
+      List_Delete($4);
+    }
+  | tMeshSizeFromBoundary tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
+    {
+      // lcExtendFromBoundary onstraints are stored in GEO internals in addition
+      // to GModel, as they can be copied around during GEO operations
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      for(int i = 0; i < List_Nbr($4); i++){
+        double d;
+        List_Read($4, i, &d);
+        int tag = (int)d;
+        GModel::current()->getGEOInternals()->setMeshSizeFromBoundary(2, tag, (int)$7);
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(gf) gf->setMeshSizeFromBoundary((int)$7);
       }
       List_Delete($4);
     }

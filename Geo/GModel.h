@@ -23,11 +23,11 @@
 // TODO C++11 remove this nasty stuff
 #if __cplusplus >= 201103L
 #include <unordered_map>
-#define hashmapMFace std::unordered_map<MFace, int, Hash_Face, Equal_Face>
-#define hashmapMEdge std::unordered_map<MEdge, int, Hash_Edge, Equal_Edge>
+#define hashmapMFace std::unordered_map<MFace, int, MFaceHash, MFaceEqual>
+#define hashmapMEdge std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual>
 #else
-#define hashmapMFace std::map<MFace, int, Less_Face>
-#define hashmapMEdge std::map<MEdge, int, Less_Edge>
+#define hashmapMFace std::map<MFace, int, MFaceLessThan>
+#define hashmapMEdge std::map<MEdge, int, MEdgeLessThan>
 #endif
 
 template <class scalar> class simpleFunction;
@@ -48,10 +48,10 @@ private:
   std::multimap<std::pair<const std::vector<int>, const std::vector<int> >,
                 std::pair<const std::string, const std::vector<int> > >
     _homologyRequests;
-  std::set<GRegion *, GEntityLessThan> _chainRegions;
-  std::set<GFace *, GEntityLessThan> _chainFaces;
-  std::set<GEdge *, GEntityLessThan> _chainEdges;
-  std::set<GVertex *, GEntityLessThan> _chainVertices;
+  std::set<GRegion *, GEntityPtrLessThan> _chainRegions;
+  std::set<GFace *, GEntityPtrLessThan> _chainFaces;
+  std::set<GEdge *, GEntityPtrLessThan> _chainEdges;
+  std::set<GVertex *, GEntityPtrLessThan> _chainVertices;
   hashmapMEdge _mapEdgeNum;
   hashmapMFace _mapFaceNum;
   // the maximum vertex and element id number in the mesh
@@ -137,10 +137,10 @@ protected:
 
   // the sets of geometrical regions, faces, edges and vertices in the
   // model
-  std::set<GRegion *, GEntityLessThan> regions;
-  std::set<GFace *, GEntityLessThan> faces;
-  std::set<GEdge *, GEntityLessThan> edges;
-  std::set<GVertex *, GEntityLessThan> vertices;
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
 
   // map between the pair <dimension, elementary or physical number>
   // and an optional associated name
@@ -182,15 +182,15 @@ protected:
 
 public:
   // region, face, edge and vertex iterators
-  typedef std::set<GRegion *, GEntityLessThan>::iterator riter;
-  typedef std::set<GFace *, GEntityLessThan>::iterator fiter;
-  typedef std::set<GEdge *, GEntityLessThan>::iterator eiter;
-  typedef std::set<GVertex *, GEntityLessThan>::iterator viter;
+  typedef std::set<GRegion *, GEntityPtrLessThan>::iterator riter;
+  typedef std::set<GFace *, GEntityPtrLessThan>::iterator fiter;
+  typedef std::set<GEdge *, GEntityPtrLessThan>::iterator eiter;
+  typedef std::set<GVertex *, GEntityPtrLessThan>::iterator viter;
 
-  typedef std::set<GRegion *, GEntityLessThan>::const_iterator const_riter;
-  typedef std::set<GFace *, GEntityLessThan>::const_iterator const_fiter;
-  typedef std::set<GEdge *, GEntityLessThan>::const_iterator const_eiter;
-  typedef std::set<GVertex *, GEntityLessThan>::const_iterator const_viter;
+  typedef std::set<GRegion *, GEntityPtrLessThan>::const_iterator const_riter;
+  typedef std::set<GFace *, GEntityPtrLessThan>::const_iterator const_fiter;
+  typedef std::set<GEdge *, GEntityPtrLessThan>::const_iterator const_eiter;
+  typedef std::set<GVertex *, GEntityPtrLessThan>::const_iterator const_viter;
 
   // elementary/physical name iterator
   typedef std::map<std::pair<int, int>, std::string>::iterator piter;
@@ -314,10 +314,10 @@ public:
   const_viter lastVertex() const { return vertices.end(); }
 
   // get the set of entities
-  std::set<GRegion *, GEntityLessThan> getRegions() const { return regions; };
-  std::set<GFace *, GEntityLessThan> getFaces() const { return faces; };
-  std::set<GEdge *, GEntityLessThan> getEdges() const { return edges; };
-  std::set<GVertex *, GEntityLessThan> getVertices() const { return vertices; };
+  std::set<GRegion *, GEntityPtrLessThan> getRegions() const { return regions; };
+  std::set<GFace *, GEntityPtrLessThan> getFaces() const { return faces; };
+  std::set<GEdge *, GEntityPtrLessThan> getEdges() const { return edges; };
+  std::set<GVertex *, GEntityPtrLessThan> getVertices() const { return vertices; };
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;

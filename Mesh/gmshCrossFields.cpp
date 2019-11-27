@@ -168,7 +168,7 @@ public:
     }
   }
 
-  void finish(std::map<MEdge, cross2d, Less_Edge> &C)
+  void finish(std::map<MEdge, cross2d, MEdgeLessThan> &C)
   {
     _tgt = SVector3(1, 0, 0);
     _tgt2 = SVector3(0, 1, 0);
@@ -204,7 +204,7 @@ public:
     }
 
     for(size_t i = 0; i < _neighbors.size(); i++) {
-      std::map<MEdge, cross2d, Less_Edge>::iterator it = C.find(_neighbors[i]);
+      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(_neighbors[i]);
       if(it == C.end())
         Msg::Error("impossible situation");
       else
@@ -393,13 +393,13 @@ static void closest(const cross2d &c1, const cross2d &c2, double &a2,
 }
 
 static void computeLifting(cross2d *first, int branch,
-                           std::set<MEdge, Less_Edge> &cutG,
+                           std::set<MEdge, MEdgeLessThan> &cutG,
                            std::set<MVertex *> &sing, std::set<MVertex *> &bnd)
 {
   // store in _atemp the branch of the neighbor
   std::set<MVertex *> cg;
   {
-    std::set<MEdge, Less_Edge>::iterator it = cutG.begin();
+    std::set<MEdge, MEdgeLessThan>::iterator it = cutG.begin();
     for(; it != cutG.end(); ++it) {
       cg.insert(it->getVertex(0));
       cg.insert(it->getVertex(1));
@@ -474,10 +474,10 @@ struct groupOfCross2d {
 
 #if 0
 static void duplicateNodesInCutGraph2(
-  std::vector<GFace *> &f, std::map<MEdge, cross2d, Less_Edge> &C,
+  std::vector<GFace *> &f, std::map<MEdge, cross2d, MEdgeLessThan> &C,
   std::map<MVertex *, MVertex *> &new2old,
   std::map<MVertex *, MVertex *> &old2new,
-  std::map<MEdge, MEdge, Less_Edge> &duplicateEdges, std::set<MVertex *> &sing,
+  std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges, std::set<MVertex *> &sing,
   v2t_cont &adj, std::vector<groupOfCross2d> &G)
 {
   for(size_t i = 0; i < G.size(); i++) {
@@ -514,10 +514,10 @@ static void duplicateNodesInCutGraph2(
 #endif
 
 static void duplicateNodesInCutGraph(
-  std::vector<GFace *> &f, std::map<MEdge, cross2d, Less_Edge> &C,
+  std::vector<GFace *> &f, std::map<MEdge, cross2d, MEdgeLessThan> &C,
   std::map<MVertex *, MVertex *> &new2old,
   std::map<MVertex *, MVertex *> &old2new,
-  std::map<MEdge, MEdge, Less_Edge> &duplicateEdges, std::set<MVertex *> &sing,
+  std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges, std::set<MVertex *> &sing,
   v2t_cont &adj, std::vector<groupOfCross2d> &G)
 {
   FILE *_f = fopen("nodes.pos", "w");
@@ -543,7 +543,7 @@ static void duplicateNodesInCutGraph(
         _s.pop();
         for(int i = 0; i < 3; i++) {
           MEdge e0 = t->getEdge(i);
-          std::map<MEdge, cross2d, Less_Edge>::iterator it0 = C.find(e0);
+          std::map<MEdge, cross2d, MEdgeLessThan>::iterator it0 = C.find(e0);
           if(!it0->second.inCutGraph) {
             for(size_t j = 0; j < it0->second._t.size(); j++) {
               std::vector<MElement *>::iterator ite =
@@ -607,7 +607,7 @@ static void duplicateNodesInCutGraph(
 }
 
 static void print_H_and_Cross(GModel *gm, std::vector<GFace *> &f,
-                              std::map<MEdge, cross2d, Less_Edge> &C,
+                              std::map<MEdge, cross2d, MEdgeLessThan> &C,
                               dofManager<double> &dof,
                               std::set<MVertex *> &singularities)
 {
@@ -616,7 +616,7 @@ static void print_H_and_Cross(GModel *gm, std::vector<GFace *> &f,
 
   FILE *_f = fopen(fn.c_str(), "w");
 
-  std::set<MVertex *, MVertexLessThanNum> vs;
+  std::set<MVertex *, MVertexPtrLessThan> vs;
   for(size_t i = 0; i < f.size(); i++) {
     for(size_t j = 0; j < f[i]->triangles.size(); j++) {
       MTriangle *t = f[i]->triangles[j];
@@ -624,7 +624,7 @@ static void print_H_and_Cross(GModel *gm, std::vector<GFace *> &f,
     }
   }
   fprintf(_f, "%lu", vs.size());
-  for(std::set<MVertex *, MVertexLessThanNum>::iterator it = vs.begin();
+  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
       it != vs.end(); ++it) {
     double a;
     dof.getDofValue(*it, 0, 1, a);
@@ -636,7 +636,7 @@ static void print_H_and_Cross(GModel *gm, std::vector<GFace *> &f,
     fprintf(_f, "%lu\n", (*it)->getNum());
   }
   fprintf(_f, "%lu", C.size());
-  for(std::map<MEdge, cross2d, Less_Edge>::iterator it = C.begin();
+  for(std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
       it != C.end(); ++it) {
     fprintf(_f, "%lu %lu %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E\n",
             it->first.getVertex(0)->getNum(), it->first.getVertex(1)->getNum(),
@@ -648,7 +648,7 @@ static void print_H_and_Cross(GModel *gm, std::vector<GFace *> &f,
 
 static void
 computeUniqueVectorPerTriangle(GModel *gm, std::vector<GFace *> &f,
-                               std::map<MEdge, cross2d, Less_Edge> &C, int dir,
+                               std::map<MEdge, cross2d, MEdgeLessThan> &C, int dir,
                                std::map<MTriangle *, SVector3> &d)
 {
   for(size_t i = 0; i < f.size(); i++) {
@@ -658,7 +658,7 @@ computeUniqueVectorPerTriangle(GModel *gm, std::vector<GFace *> &f,
       int n = 0;
       for(int k = 0; k < 3; k++) {
         MEdge e = t->getEdge(k);
-        std::map<MEdge, cross2d, Less_Edge>::iterator it = C.find(e);
+        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
         if(it != C.end()) {
           if(!it->second.inCutGraph) {
             n++;
@@ -802,18 +802,18 @@ static void assembleLagrangeMultipliers(dofManager<double> &myAssembler,
 
 static void
 LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
-                     std::map<MEdge, cross2d, Less_Edge> &C,
+                     std::map<MEdge, cross2d, MEdgeLessThan> &C,
                      std::vector<std::vector<cross2d *> > &groups,
-                     std::map<MEdge, MEdge, Less_Edge> &duplicateEdges,
+                     std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges,
                      bool assemble)
 {
   for(size_t i = 0; i < groups.size(); i++) {
     size_t N = groups[i].size();
     MEdge ed = groups[i][0]->_e;
-    std::map<MEdge, MEdge, Less_Edge>::iterator ite = duplicateEdges.find(ed);
+    std::map<MEdge, MEdge, MEdgeLessThan>::iterator ite = duplicateEdges.find(ed);
     if(ite != duplicateEdges.end()) ed = ite->second;
     MVertex *v = ed.getVertex(0);
-    std::map<MEdge, cross2d, Less_Edge>::iterator it = C.find(groups[i][0]->_e);
+    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(groups[i][0]->_e);
     double S = (NUMDOF == 2) ? sin(it->second._atemp) : cos(it->second._atemp);
     if(fabs(S) > .8) {
       for(size_t j = 0; j < N; j++) {
@@ -850,10 +850,10 @@ static void createDofs(dofManager<double> &myAssembler, int NUMDOF,
 static void computePotential(GModel *gm, std::vector<GFace *> &f,
                              const char *outputName, const char *outputName2,
                              dofManager<double> &dof,
-                             std::map<MEdge, cross2d, Less_Edge> &C,
+                             std::map<MEdge, cross2d, MEdgeLessThan> &C,
                              std::map<MVertex *, MVertex *> &new2old,
                              std::vector<std::vector<cross2d *> > &groups,
-                             std::map<MEdge, MEdge, Less_Edge> &duplicateEdges,
+                             std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges,
                              std::map<MTriangle *, SVector3> &lift,
                              std::map<MTriangle *, SVector3> &lift2,
                              std::vector<groupOfCross2d> &G,
@@ -1098,13 +1098,13 @@ static bool isSingular(MVertex *v, std::vector<cross2d *> &adj, double &MAX)
   return MAX > .5;
 }
 
-static void computeSingularities(std::map<MEdge, cross2d, Less_Edge> &C,
+static void computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
                                  std::set<MVertex *> &singularities)
 {
   FILE *f_ = fopen("sing.pos", "w");
   fprintf(f_, "View \"S\"{\n");
   std::multimap<MVertex *, cross2d *> conn;
-  for(std::map<MEdge, cross2d, Less_Edge>::iterator it = C.begin();
+  for(std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
       it != C.end(); ++it) {
     std::pair<MVertex *, cross2d *> p =
       std::make_pair(it->first.getVertex(0), &it->second);
@@ -1132,8 +1132,8 @@ static void computeSingularities(std::map<MEdge, cross2d, Less_Edge> &C,
   fclose(f_);
 }
 
-static void cutGraph(std::map<MEdge, cross2d, Less_Edge> &C,
-                     dofManager<double> &dof, std::set<MEdge, Less_Edge> &cutG,
+static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
+                     dofManager<double> &dof, std::set<MEdge, MEdgeLessThan> &cutG,
                      std::set<MVertex *> &singularities,
                      std::set<MVertex *> &boundaries)
 {
@@ -1142,7 +1142,7 @@ static void cutGraph(std::map<MEdge, cross2d, Less_Edge> &C,
   std::vector<MEdge> cotree;
   std::set<std::pair<double, MTriangle *> > _distances;
   {
-    std::map<MEdge, cross2d, Less_Edge>::iterator it = C.begin();
+    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
     for(; it != C.end(); ++it) {
       if(it->second._t.size() == 1) {
         boundaries.insert(it->first.getVertex(0));
@@ -1163,7 +1163,7 @@ static void cutGraph(std::map<MEdge, cross2d, Less_Edge> &C,
 
     for(int i = 0; i < 3; i++) {
       MEdge e = t->getEdge(i);
-      std::map<MEdge, cross2d, Less_Edge>::iterator it = C.find(e);
+      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
       for(size_t j = 0; j < it->second._t.size(); j++) {
         MTriangle *tt = it->second._t[j];
         if(touched.find(tt) == touched.end()) {
@@ -1177,7 +1177,7 @@ static void cutGraph(std::map<MEdge, cross2d, Less_Edge> &C,
     }
   }
   std::sort(tree.begin(), tree.end());
-  std::map<MEdge, cross2d, Less_Edge>::iterator it = C.begin();
+  std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
   std::map<MVertex *, std::vector<MEdge> > _graph;
   std::map<MVertex *, std::vector<MEdge> > _all_graph;
   for(; it != C.end(); ++it) {
@@ -1222,7 +1222,7 @@ static void cutGraph(std::map<MEdge, cross2d, Less_Edge> &C,
   double GRR = 0;
   for (size_t i=0;i<it->second.size();i++){
 
-  std::map<MEdge,cross2d,Less_Edge >::iterator itee = C.find(it->second[i]);
+  std::map<MEdge,cross2d,MEdgeLessThan >::iterator itee = C.find(it->second[i]);
   GRR = std::max(GRR,itee->second.grad());
 
   MVertex *o = it->second[i].getVertex(0) == v ? it->second[i].getVertex(1) :
@@ -1287,7 +1287,7 @@ hV)isMax = false; if (hI < hV)isMin = false;
   }
 
   {
-    std::set<MEdge, Less_Edge>::iterator it = cutG.begin();
+    std::set<MEdge, MEdgeLessThan>::iterator it = cutG.begin();
     for(; it != cutG.end(); ++it) {
       MEdge e = *it;
       fprintf(fff, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", e.getVertex(0)->x(),
@@ -1299,14 +1299,14 @@ hV)isMax = false; if (hI < hV)isMin = false;
   fclose(fff);
 }
 
-static void groupBoundaries(GModel *gm, std::map<MEdge, cross2d, Less_Edge> &C,
+static void groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
                             std::vector<std::vector<cross2d *> > &groups,
                             std::set<MVertex *> singularities,
                             bool cutGraph = false)
 {
   std::set<MVertex *> cutgraph;
   std::set<MVertex *> boundaries;
-  for(std::map<MEdge, cross2d, Less_Edge>::iterator it = C.begin();
+  for(std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
       it != C.end(); ++it) {
     MVertex *v0 = it->first.getVertex(0);
     MVertex *v1 = it->first.getVertex(1);
@@ -1323,7 +1323,7 @@ static void groupBoundaries(GModel *gm, std::map<MEdge, cross2d, Less_Edge> &C,
   std::set<cross2d *> _all;
 
   std::multimap<MVertex *, cross2d *> conn;
-  for(std::map<MEdge, cross2d, Less_Edge>::iterator it = C.begin();
+  for(std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
       it != C.end(); ++it) {
     std::pair<MVertex *, cross2d *> p =
       std::make_pair(it->first.getVertex(0), &it->second);
@@ -1449,11 +1449,11 @@ static void groupBoundaries(GModel *gm, std::map<MEdge, cross2d, Less_Edge> &C,
   fclose(f);
 }
 
-static void fastImplementationExtrinsic(std::map<MEdge, cross2d, Less_Edge> &C)
+static void fastImplementationExtrinsic(std::map<MEdge, cross2d, MEdgeLessThan> &C)
 {
   double *data = new double[C.size() * 6];
   size_t *graph = new size_t[C.size() * 4];
-  std::map<MEdge, cross2d, Less_Edge>::iterator it = C.begin();
+  std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
   int counter = 0;
 
   for(; it != C.end(); ++it) {
@@ -1539,7 +1539,7 @@ static void fastImplementationExtrinsic(std::map<MEdge, cross2d, Less_Edge> &C)
 
 static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
                                     std::set<MVertex *> &vs,
-                                    std::map<MEdge, cross2d, Less_Edge> &C)
+                                    std::map<MEdge, cross2d, MEdgeLessThan> &C)
 {
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
@@ -1587,9 +1587,9 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
       MEdge e0 = t->getEdge(0);
       MEdge e1 = t->getEdge(1);
       MEdge e2 = t->getEdge(2);
-      std::map<MEdge, cross2d, Less_Edge>::iterator it0 = C.find(e0);
-      std::map<MEdge, cross2d, Less_Edge>::iterator it1 = C.find(e1);
-      std::map<MEdge, cross2d, Less_Edge>::iterator it2 = C.find(e2);
+      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it0 = C.find(e0);
+      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it1 = C.find(e1);
+      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it2 = C.find(e2);
 
       //      printf("%g %ag %g\n",a0,a1,a2);
 
@@ -1753,10 +1753,10 @@ static double coord1d(double a0, double a1, double a)
 static void computeIso(
   MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0, MVertex *v1,
   SPoint3 &p, std::map<MVertex *, double> &pot,
-  std::set<MEdge, Less_Edge> &visited,
-  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>, Less_Edge>
+  std::set<MEdge, MEdgeLessThan> &visited,
+  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>, MEdgeLessThan>
     &cutGraphEnds,
-  std::map<MEdge, MEdge, Less_Edge> &d1, std::vector<groupOfCross2d> &G,
+  std::map<MEdge, MEdge, MEdgeLessThan> &d1, std::vector<groupOfCross2d> &G,
   FILE *f, int COUNT)
 {
   if(v0 == vsing || v1 == vsing) return;
@@ -1823,14 +1823,14 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0,
                        MVertex *v1, SPoint3 &p,
                        std::map<MVertex *, double> *potU,
                        std::map<MVertex *, double> *potV,
-                       std::map<MEdge, MEdge, Less_Edge> &d1,
+                       std::map<MEdge, MEdge, MEdgeLessThan> &d1,
                        std::vector<groupOfCross2d> &G, FILE *f, int COUNT)
 {
   //  printf("computing startiung at %lu %lu val
   //  %12.5E\n",v0->getNum(),v1->getNum(),VAL);
 
-  std::set<MEdge, Less_Edge> visited;
-  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>, Less_Edge>
+  std::set<MEdge, MEdgeLessThan> visited;
+  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>, MEdgeLessThan>
     cutGraphEnds;
   computeIso(vsing, adj, VAL, v0, v1, p, *potU, visited, cutGraphEnds, d1, G, f,
              COUNT);
@@ -1892,7 +1892,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0,
 static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
                        std::map<MVertex *, double> &potU,
                        std::map<MVertex *, double> &potV, FILE *f,
-                       std::map<MEdge, MEdge, Less_Edge> &d1,
+                       std::map<MEdge, MEdge, MEdgeLessThan> &d1,
                        std::vector<groupOfCross2d> &G, int COUNT)
 {
   //  printf("computing an ISO for %lu\n",vsing->getNum());
@@ -1908,8 +1908,8 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     SPoint3 p0(v0->x(), v0->y(), v0->z());
     SPoint3 p1(v1->x(), v1->y(), v1->z());
     SPoint3 p2(v2->x(), v2->y(), v2->z());
-    //      std::set<MEdge,Less_Edge> visited;
-    //      std::set<MEdge,Less_Edge> cutGraphEnds;
+    //      std::set<MEdge,MEdgeLessThan> visited;
+    //      std::set<MEdge,MEdgeLessThan> cutGraphEnds;
     if(v2 == vsing && (U0 - u) * (U1 - u) <= 0) {
       double xi = coord1d(U0, U1, u);
       SPoint3 pp = p0 * (1 - xi) + p1 * xi;
@@ -1946,14 +1946,14 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
 
 static void computeIsos(GModel *gm, std::vector<GFace *> &faces,
                         std::set<MVertex *> &singularities,
-                        std::map<MEdge, cross2d, Less_Edge> &C,
+                        std::map<MEdge, cross2d, MEdgeLessThan> &C,
                         std::map<MVertex *, MVertex *> &new2old,
-                        std::map<MEdge, MEdge, Less_Edge> &duplicateEdges,
+                        std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges,
                         std::vector<std::vector<cross2d *> > &groups,
                         std::vector<std::vector<cross2d *> > &groups_cg,
                         std::map<MVertex *, double> &potU,
                         std::map<MVertex *, double> &potV,
-                        std::set<MEdge, Less_Edge> &cutG,
+                        std::set<MEdge, MEdgeLessThan> &cutG,
                         std::vector<groupOfCross2d> &G)
 {
   v2t_cont adj;
@@ -1979,7 +1979,7 @@ static void computeIsos(GModel *gm, std::vector<GFace *> &faces,
     }
   }
 
-  std::map<MEdge, MEdge, Less_Edge> d1;
+  std::map<MEdge, MEdge, MEdgeLessThan> d1;
   {
     for(size_t i = 0; i < G.size(); i++) {
       for(size_t j = 1; j < G[i].left.size(); j++) {
@@ -2290,7 +2290,7 @@ static int computeCrossField2dTheta(GModel *gm, std::vector<GFace *> &f,
 {
   Msg::SetNumThreads(Msg::GetMaxThreads());
 
-  std::map<MEdge, cross2d, Less_Edge> C;
+  std::map<MEdge, cross2d, MEdgeLessThan> C;
   std::set<MVertex *> vs;
   for(size_t i = 0; i < f.size(); i++) {
     for(size_t j = 0; j < f[i]->triangles.size(); j++) {
@@ -2301,7 +2301,7 @@ static int computeCrossField2dTheta(GModel *gm, std::vector<GFace *> &f,
         MEdge e1 = t->getEdge((k + 1) % 3);
         MEdge e2 = t->getEdge((k + 2) % 3);
         cross2d c(e, t, e1, e2);
-        std::map<MEdge, cross2d, Less_Edge>::iterator it = C.find(e);
+        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
         if(it == C.end())
           C.insert(std::make_pair(e, c));
         else {
@@ -2321,14 +2321,14 @@ static int computeCrossField2dTheta(GModel *gm, std::vector<GFace *> &f,
         for(size_t k = 0; k < e[j]->lines.size(); k++) {
           MLine *l = e[j]->lines[k];
           MEdge e = l->getEdge(0);
-          std::map<MEdge, cross2d, Less_Edge>::iterator it = C.find(e);
+          std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
           if(it != C.end()) { it->second.inBoundary = true; }
         }
       }
     }
   }
 
-  std::map<MEdge, cross2d, Less_Edge>::iterator it = C.begin();
+  std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
   for(; it != C.end(); ++it) it->second.finish(C);
   it = C.begin();
   for(; it != C.end(); ++it) it->second.finish2();
@@ -2409,7 +2409,7 @@ static int computeCrossField2dTheta(GModel *gm, std::vector<GFace *> &f,
 
   dofManager<double> *myAssembler = computeH(gm, f, vs, C);
 
-  std::set<MEdge, Less_Edge> cutG;
+  std::set<MEdge, MEdgeLessThan> cutG;
   std::set<MVertex *> singularities;
   std::set<MVertex *> boundaries;
 
@@ -2493,7 +2493,7 @@ static int computeCrossField2dTheta(GModel *gm, std::vector<GFace *> &f,
   fprintf(_f, "};\n");
   fclose(_f);
 
-  std::map<MEdge, MEdge, Less_Edge> duplicateEdges;
+  std::map<MEdge, MEdge, MEdgeLessThan> duplicateEdges;
   std::map<MVertex *, MVertex *> new2old;
   std::map<MVertex *, MVertex *> old2new;
   duplicateNodesInCutGraph(f, C, new2old, old2new, duplicateEdges,

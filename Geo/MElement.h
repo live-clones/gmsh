@@ -555,7 +555,7 @@ template <> struct DimTr<3> {
   }
 };
 
-struct Less_ElementPtr {
+struct MElementPtrLessThan {
   bool operator()(const MElement *e1, const MElement *e2) const
   {
     return e1->getNum() < e2->getNum();
