@@ -1,5 +1,6 @@
 import gmsh
 
+write_file = False
 write_one_file_per_partition = False
 partition_using_metis = False
 
@@ -27,12 +28,12 @@ else:
     gmsh.plugin.setNumber("SimplePartition", "NumSlicesX", 3.)
     gmsh.plugin.run("SimplePartition")
 
-# write the partitioned mesh to disk: if Mesh.PartitionSplitMeshFiles is set,
-# this will create one file per partition
-if write_one_file_per_partition:
-    gmsh.option.setNumber("Mesh.PartitionSplitMeshFiles", 1)
-
-gmsh.write("partition.msh")
+# write the partitioned mesh to disk?
+if write_file:
+    # create one file per partition?
+    if write_one_file_per_partition:
+        gmsh.option.setNumber("Mesh.PartitionSplitMeshFiles", 1)
+    gmsh.write("partition.msh")
 
 # iterate over partitioned entities and print some info
 entities = gmsh.model.getEntities()
