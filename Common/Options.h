@@ -596,6 +596,7 @@ double opt_post_anim_delay(OPT_ARGS_NUM);
 double opt_post_anim_cycle(OPT_ARGS_NUM);
 double opt_post_anim_step(OPT_ARGS_NUM);
 double opt_post_combine_remove_orig(OPT_ARGS_NUM);
+double opt_post_combine_copy_options(OPT_ARGS_NUM);
 double opt_post_plugins(OPT_ARGS_NUM);
 double opt_post_nb_views(OPT_ARGS_NUM);
 double opt_post_file_format(OPT_ARGS_NUM);

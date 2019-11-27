@@ -5030,13 +5030,15 @@ GMSH_API void gmsh::view::copyOptions(const int refTag, const int tag)
 }
 
 GMSH_API void gmsh::view::combine(const std::string &what,
-                                  const std::string &how, const bool remove)
+                                  const std::string &how,
+                                  const bool remove,
+                                  const bool copyOptions)
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_POST)
   bool time = (what == "steps") ? true : false; // "elements"
   int ihow = (how == "all") ? 1 : (how == "name") ? 2 : 0; // "visible"
-  PView::combine(time, ihow, remove);
+  PView::combine(time, ihow, remove, copyOptions);
 #if defined(HAVE_FLTK)
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif

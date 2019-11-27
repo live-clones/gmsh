@@ -3319,7 +3319,7 @@ original views if @code{remove} is set.
 
 @table @asis
 @item Input:
-@code{what}, @code{how}, @code{remove}
+@code{what}, @code{how}, @code{remove}, @code{copyOptions}
 @item Output:
 -
 @item Return:

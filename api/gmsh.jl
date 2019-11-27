@@ -4352,18 +4352,18 @@ function copyOptions(refTag, tag)
 end
 
 """
-    gmsh.view.combine(what, how, remove = false)
+    gmsh.view.combine(what, how, remove = true, copyOptions = true)
 
 Combine elements (if `what` == "elements") or steps (if `what` == "steps") of
 all views (`how` == "all"), all visible views (`how` == "visible") or all views
 having the same name (`how` == "name"). Remove original views if `remove` is
 set.
 """
-function combine(what, how, remove = false)
+function combine(what, how, remove = true, copyOptions = true)
     ierr = Ref{Cint}()
     ccall((:gmshViewCombine, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Ptr{Cchar}, Cint, Ptr{Cint}),
-          what, how, remove, ierr)
+          (Ptr{Cchar}, Ptr{Cchar}, Cint, Cint, Ptr{Cint}),
+          what, how, remove, copyOptions, ierr)
     ierr[] != 0 && error("gmshViewCombine returned non-zero error code: $(ierr[])")
     return nothing
 end

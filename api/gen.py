@@ -726,7 +726,7 @@ doc = '''Copy the options from the view with tag `refTag' to the view with tag `
 view.add('copyOptions',doc,None,iint('refTag'),iint('tag'))
 
 doc = '''Combine elements (if `what' == "elements") or steps (if `what' == "steps") of all views (`how' == "all"), all visible views (`how' == "visible") or all views having the same name (`how' == "name"). Remove original views if `remove' is set.'''
-view.add('combine',doc,None,istring('what'),istring('how'),ibool('remove','false','False'))
+view.add('combine',doc,None,istring('what'),istring('how'),ibool('remove','true','True'),ibool('copyOptions','true','True'))
 
 doc = '''Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only the value at step `step' is `step' is positive. Return only values with `numComp' if `numComp' is positive. Return the gradient of the `value' if `gradient' is set. Probes with a geometrical tolerance (in the reference unit cube) of `tolerance' if `tolerance' is not zero. Return the result from the element described by its coordinates if `xElementCoord', `yElementCoord' and `zElementCoord' are provided.'''
 view.add('probe',doc,None,iint('tag'),idouble('x'),idouble('y'),idouble('z'),ovectordouble('value'),iint('step','-1'),iint('numComp','-1'),ibool('gradient','false','False'),idouble('tolerance','0.'),ivectordouble('xElemCoord','std::vector<double>()',"[]","[]"),ivectordouble('yElemCoord','std::vector<double>()',"[]","[]"),ivectordouble('zElemCoord','std::vector<double>()',"[]","[]"))

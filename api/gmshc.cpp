@@ -3006,11 +3006,11 @@ GMSH_API void gmshViewCopyOptions(const int refTag, const int tag, int * ierr)
   }
 }
 
-GMSH_API void gmshViewCombine(const char * what, const char * how, const int remove, int * ierr)
+GMSH_API void gmshViewCombine(const char * what, const char * how, const int remove, const int copyOptions, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::view::combine(what, how, remove);
+    gmsh::view::combine(what, how, remove, copyOptions);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

@@ -6561,6 +6561,12 @@ double opt_post_combine_remove_orig(OPT_ARGS_NUM)
   return CTX::instance()->post.combineRemoveOrig;
 }
 
+double opt_post_combine_copy_options(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->post.combineCopyOptions = (int)val;
+  return CTX::instance()->post.combineCopyOptions;
+}
+
 double opt_post_plugins(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->post.plugins = (int)val;

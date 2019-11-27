@@ -2100,6 +2100,7 @@ GMSH_API void gmshViewCopyOptions(const int refTag,
 GMSH_API void gmshViewCombine(const char * what,
                               const char * how,
                               const int remove,
+                              const int copyOptions,
                               int * ierr);
 
 /* Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only

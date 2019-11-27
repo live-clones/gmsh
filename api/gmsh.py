@@ -5060,7 +5060,7 @@ class view:
                 ierr.value)
 
     @staticmethod
-    def combine(what, how, remove=False):
+    def combine(what, how, remove=True, copyOptions=True):
         """
         Combine elements (if `what' == "elements") or steps (if `what' == "steps")
         of all views (`how' == "all"), all visible views (`how' == "visible") or
@@ -5072,6 +5072,7 @@ class view:
             c_char_p(what.encode()),
             c_char_p(how.encode()),
             c_int(bool(remove)),
+            c_int(bool(copyOptions)),
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(

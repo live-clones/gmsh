@@ -3462,21 +3462,29 @@ Command :
     {
 #if defined(HAVE_POST)
       if(!strcmp($2, "ElementsFromAllViews"))
-	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "ElementsFromVisibleViews"))
-	PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "ElementsByViewName"))
-	PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsFromAllViews"))
-	PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsFromVisibleViews"))
-	PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsByViewName"))
-	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "Views"))
-	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeSteps"))
-	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else
 	yymsg(0, "Unknown 'Combine' command");
 #endif

@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include "PView.h"
 #include "PViewDataGModel.h"
 #include "MPoint.h"
 #include "MLine.h"

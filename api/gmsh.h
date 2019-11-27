@@ -1946,7 +1946,8 @@ namespace gmsh { // Top-level functions
     // `remove' is set.
     GMSH_API void combine(const std::string & what,
                           const std::string & how,
-                          const bool remove = false);
+                          const bool remove = true,
+                          const bool copyOptions = true);
 
     // Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
     // the value at step `step' is `step' is positive. Return only values with

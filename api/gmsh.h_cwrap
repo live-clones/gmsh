@@ -3558,10 +3558,11 @@ namespace gmsh { // Top-level functions
     // `remove' is set.
     inline void combine(const std::string & what,
                         const std::string & how,
-                        const bool remove = false)
+                        const bool remove = true,
+                        const bool copyOptions = true)
     {
       int ierr = 0;
-      gmshViewCombine(what.c_str(), how.c_str(), (int)remove, &ierr);
+      gmshViewCombine(what.c_str(), how.c_str(), (int)remove, (int)copyOptions, &ierr);
       if(ierr) throw ierr;
     }
 

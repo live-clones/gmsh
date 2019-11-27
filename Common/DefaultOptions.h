@@ -1428,6 +1428,8 @@ StringXNumber PostProcessingOptions_Number[] = {
 
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },
+  { F|O, "CombineCopyOptions" , opt_post_combine_copy_options , 1. ,
+    "Copy options during Combine operation" },
 
   { F, "DoubleClickedGraphPointX" , opt_post_double_clicked_graph_point_x , 0. ,
     "Abscissa of last double-clicked graph point" },
