@@ -362,7 +362,7 @@ void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
 {
   // data structure keeping track of connections between entities to avoid
   // two-way connections
-  typedef std::set<std::pair<GEntity *, GEntity *> > EntConnect;
+  typedef std::map<GEntity *, GEntity *> EntConnect;
   typedef std::map<GEntity *, const std::vector<double> *> EntTransfo;
   EntConnect entCon;
   EntTransfo entTfo;
@@ -384,10 +384,14 @@ void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
         // nodes on a boundary without elements on this boundary)
         if(sEnt->dim() != mEnt->dim()) continue; 
         
-        // skip if inverse connection already exists, otherwise store connection
-        // and transformation and update corresponding vertices
-        if(entCon.find(std::make_pair(mEnt, sEnt)) != entCon.end()) continue;
-        entCon.insert(std::make_pair(sEnt, mEnt));
+        // skip if another connnection with the same slave entity already
+        // exists, or if the inverse connection already exists
+        if(entCon.find(sEnt) != entCon.end()) continue;
+        EntConnect::iterator itInv = entCon.find(mEnt);
+        if((itInv != entCon.end()) && (itInv->second == sEnt)) continue;
+        
+        // store connection and transformation and update corresponding vertices
+        entCon[sEnt] = mEnt;
         entTfo[sEnt] = &(zone->perTransfo(iPer));
         sEnt->correspondingVertices[sVert] = mVert;
       }
