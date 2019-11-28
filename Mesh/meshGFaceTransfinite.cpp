@@ -401,6 +401,7 @@ int MeshTransfiniteSurface(GFace *gf)
     numSmooth = gf->meshAttributes.transfiniteSmoothing;
 
   if(corners.size() == 4 && numSmooth) {
+    printf("AAAAAAAAAa\n");
     std::vector<std::vector<double> > u(L + 1), v(L + 1);
     for(int i = 0; i <= L; i++) {
       u[i].resize(H + 1);

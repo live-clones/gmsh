@@ -1429,6 +1429,41 @@ GMSH_API void gmsh::model::mesh::getElementByCoordinates(
   w = uvw.z();
 }
 
+GMSH_API void gmsh::model::mesh::getElementsByCoordinates(
+  const double x, const double y, const double z,
+  std::vector<std::size_t> &elementTags, const int dim, const bool strict)
+{
+  if(!_isInitialized()) { throw - 1; }
+  SPoint3 xyz(x, y, z), uvw;
+  elementTags.clear();
+  std::vector<MElement *> e =
+    GModel::current()->getMeshElementsByCoord(xyz, dim, strict);
+  if(e.empty()) {
+    Msg::Error("No element found at (%g, %g, %g)", x, y, z);
+    throw 2;
+  }
+  for(std::size_t i = 0; i < e.size(); i++) {
+    elementTags.push_back(e[i]->getNum());
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getLocalCoordinatesInElement(
+  const std::size_t elementTag, const double x, const double y, const double z,
+  double &u, double &v, double &w)
+{
+  if(!_isInitialized()) { throw - 1; }
+  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  if(!e) {
+    Msg::Error("Unknown element %d", elementTag);
+    throw 2;
+  }
+  double xyz[3] = {x, y, z}, uvw[3];
+  e->xyz2uvw(xyz, uvw);
+  u = uvw[0];
+  v = uvw[1];
+  w = uvw[2];
+}
+
 template <class T>
 static void _addElements(int dim, int tag, const std::vector<MElement *> &src,
                          std::vector<T *> &dst)

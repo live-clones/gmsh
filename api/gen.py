@@ -267,6 +267,12 @@ mesh.add('getElement',doc,None,isize('elementTag'),oint('elementType'),ovectorsi
 doc = '''Search the mesh for an element located at coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a search in a spatial octree. If an element is found, return its tag, type and node tags, as well as the local coordinates (`u', `v', `w') within the element corresponding to search location. If `dim' is >= 0, only search for elements of the given dimension. If `strict' is not set, use a tolerance to find elements near the search location.'''
 mesh.add('getElementByCoordinates',doc,None,idouble('x'),idouble('y'),idouble('z'),osize('elementTag'),oint('elementType'),ovectorsize('nodeTags'),odouble('u'),odouble('v'),odouble('w'),iint('dim', '-1'),ibool('strict','false','False'))
 
+doc = '''Search the mesh for element(s) located at coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a search in a spatial octree. Return the tags all found elements in `elementTags'. Additional information about the elements can be accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim' is >= 0, only search for elements of the given dimension. If `strict' is not set, use a tolerance to find elements near the search location.'''
+mesh.add('getElementsByCoordinates',doc,None,idouble('x'),idouble('y'),idouble('z'),ovectorsize('elementTags'),iint('dim', '-1'),ibool('strict','false','False'))
+
+doc = '''Return the local coordinates (`u', `v', `w') within the element `elementTag' corresponding to the model coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a cache stored in the model.'''
+mesh.add('getLocalCoordinatesInElement',doc,None,isize('elementTag'),idouble('x'),idouble('y'),idouble('z'),odouble('u'),odouble('v'),odouble('w'))
+
 doc = '''Get the types of elements in the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
 mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
 

@@ -185,7 +185,8 @@ struct doubleXstring{
 %token tAbsolutePath tDirName tStrSub tStrLen
 %token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
 %token tTextAttributes
-%token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tCurrentDirectory
+%token tBoundingBox tDraw tSetChanged tToday tFixRelativePath
+%token tCurrentDirectory tCurrentFileName
 %token tSyncModel tNewModel tMass tCenterOfMass
 %token tOnelabAction tOnelabRun tCodeName
 %token tCpu tMemory tTotalMemory
@@ -6386,6 +6387,12 @@ StringExpr :
   | tCurrentDirectory
     {
       std::string tmp = SplitFileName(GetAbsolutePath(gmsh_yyname))[0];
+      $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
+      strcpy($$, tmp.c_str());
+    }
+  | tCurrentFileName
+    {
+      std::string tmp = GetFileNameWithoutPath(gmsh_yyname);
       $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
       strcpy($$, tmp.c_str());
     }

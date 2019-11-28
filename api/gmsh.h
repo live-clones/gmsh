@@ -557,6 +557,33 @@ namespace gmsh { // Top-level functions
                                             const int dim = -1,
                                             const bool strict = false);
 
+      // Search the mesh for element(s) located at coordinates (`x', `y', `z').
+      // This is a sometimes useful but inefficient way of accessing elements, as
+      // it relies on a search in a spatial octree. Return the tags all found
+      // elements in `elementTags'. Additional information about the elements can
+      // be accessed through `getElement' and `getLocalCoordinatesInElement'. If
+      // `dim' is >= 0, only search for elements of the given dimension. If
+      // `strict' is not set, use a tolerance to find elements near the search
+      // location.
+      GMSH_API void getElementsByCoordinates(const double x,
+                                             const double y,
+                                             const double z,
+                                             std::vector<std::size_t> & elementTags,
+                                             const int dim = -1,
+                                             const bool strict = false);
+
+      // Return the local coordinates (`u', `v', `w') within the element
+      // `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
+      // is a sometimes useful but inefficient way of accessing elements, as it
+      // relies on a cache stored in the model.
+      GMSH_API void getLocalCoordinatesInElement(const std::size_t elementTag,
+                                                 const double x,
+                                                 const double y,
+                                                 const double z,
+                                                 double & u,
+                                                 double & v,
+                                                 double & w);
+
       // Get the types of elements in the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, get all the types in the mesh.

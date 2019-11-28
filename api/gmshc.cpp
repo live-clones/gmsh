@@ -972,6 +972,30 @@ GMSH_API void gmshModelMeshGetElementByCoordinates(const double x, const double 
   }
 }
 
+GMSH_API void gmshModelMeshGetElementsByCoordinates(const double x, const double y, const double z, size_t ** elementTags, size_t * elementTags_n, const int dim, const int strict, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_;
+    gmsh::model::mesh::getElementsByCoordinates(x, y, z, api_elementTags_, dim, strict);
+    vector2ptr(api_elementTags_, elementTags, elementTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetLocalCoordinatesInElement(const size_t elementTag, const double x, const double y, const double z, double * u, double * v, double * w, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::getLocalCoordinatesInElement(elementTag, x, y, z, *u, *v, *w);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * elementTypes_n, const int dim, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;

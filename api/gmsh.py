@@ -1701,6 +1701,67 @@ class model:
                 api_w_.value)
 
         @staticmethod
+        def getElementsByCoordinates(x, y, z, dim=-1, strict=False):
+            """
+            Search the mesh for element(s) located at coordinates (`x', `y', `z'). This
+            is a sometimes useful but inefficient way of accessing elements, as it
+            relies on a search in a spatial octree. Return the tags all found elements
+            in `elementTags'. Additional information about the elements can be accessed
+            through `getElement' and `getLocalCoordinatesInElement'. If `dim' is >= 0,
+            only search for elements of the given dimension. If `strict' is not set,
+            use a tolerance to find elements near the search location.
+
+            Return `elementTags'.
+            """
+            api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementsByCoordinates(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                byref(api_elementTags_), byref(api_elementTags_n_),
+                c_int(dim),
+                c_int(bool(strict)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElementsByCoordinates returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorsize(api_elementTags_, api_elementTags_n_.value)
+
+        @staticmethod
+        def getLocalCoordinatesInElement(elementTag, x, y, z):
+            """
+            Return the local coordinates (`u', `v', `w') within the element
+            `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
+            is a sometimes useful but inefficient way of accessing elements, as it
+            relies on a cache stored in the model.
+
+            Return `u', `v', `w'.
+            """
+            api_u_ = c_double()
+            api_v_ = c_double()
+            api_w_ = c_double()
+            ierr = c_int()
+            lib.gmshModelMeshGetLocalCoordinatesInElement(
+                c_size_t(elementTag),
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                byref(api_u_),
+                byref(api_v_),
+                byref(api_w_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetLocalCoordinatesInElement returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_u_.value,
+                api_v_.value,
+                api_w_.value)
+
+        @staticmethod
         def getElementTypes(dim=-1, tag=-1):
             """
             Get the types of elements in the entity of dimension `dim' and tag `tag'.

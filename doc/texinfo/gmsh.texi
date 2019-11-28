@@ -1060,7 +1060,7 @@ Character expressions are defined as:
   "@var{string}" |
   @var{string} | @var{string}[ @var{expression} ] |
   Today | OnelabAction | GmshExecutableName |
-  CurrentDirectory | CurrentDir
+  CurrentDirectory | CurrentDir | CurrentFileName
   StrPrefix ( @var{char-expression} ) |
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} <,@dots{}> ) |
@@ -1086,12 +1086,12 @@ Character expressions are defined as:
 @code{Today} returns the current date. @code{OnelabAction} returns the
 current ONELAB action (e.g. @code{check} or
 @code{compute}). @code{GmshExecutableName} returns the full path of the
-Gmsh executable.  @code{CurrentDirectory} and @code{CurrentDir} return
-the directory of the @code{.geo} file.  @code{StrPrefix} and
-@code{StrRelative} permit to take the prefix (e.g. to remove the
-extension) or the relative path of a file name. @code{StrCat} and
-@code{Str} permit to concatenate character expressions (@code{Str} adds
-a newline character after each string except the last).
+Gmsh executable.  @code{CurrentDirectory} (or @code{CurrentDir}) and
+@code{CurrentFileName} return the directory and file name of the script
+being parsed. @code{StrPrefix} and @code{StrRelative} take the prefix
+(e.g. to remove the extension) or the relative path of a given file
+name. @code{StrCat} and @code{Str} concatenate character expressions
+(@code{Str} adds a newline character after each string except the last).
 @code{StrChoice} returns the first or second @var{char-expression}
 depending on the value of @var{expression}.  @code{StrSub} returns the
 portion of the string that starts at the character position given by the

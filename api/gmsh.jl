@@ -1428,6 +1428,53 @@ function getElementByCoordinates(x, y, z, dim = -1, strict = false)
 end
 
 """
+    gmsh.model.mesh.getElementsByCoordinates(x, y, z, dim = -1, strict = false)
+
+Search the mesh for element(s) located at coordinates (`x`, `y`, `z`). This is a
+sometimes useful but inefficient way of accessing elements, as it relies on a
+search in a spatial octree. Return the tags all found elements in `elementTags`.
+Additional information about the elements can be accessed through `getElement`
+and `getLocalCoordinatesInElement`. If `dim` is >= 0, only search for elements
+of the given dimension. If `strict` is not set, use a tolerance to find elements
+near the search location.
+
+Return `elementTags`.
+"""
+function getElementsByCoordinates(x, y, z, dim = -1, strict = false)
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementsByCoordinates, gmsh.lib), Cvoid,
+          (Cdouble, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          x, y, z, api_elementTags_, api_elementTags_n_, dim, strict, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementsByCoordinates returned non-zero error code: $(ierr[])")
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
+    return elementTags
+end
+
+"""
+    gmsh.model.mesh.getLocalCoordinatesInElement(elementTag, x, y, z)
+
+Return the local coordinates (`u`, `v`, `w`) within the element `elementTag`
+corresponding to the model coordinates (`x`, `y`, `z`). This is a sometimes
+useful but inefficient way of accessing elements, as it relies on a cache stored
+in the model.
+
+Return `u`, `v`, `w`.
+"""
+function getLocalCoordinatesInElement(elementTag, x, y, z)
+    api_u_ = Ref{Cdouble}()
+    api_v_ = Ref{Cdouble}()
+    api_w_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetLocalCoordinatesInElement, gmsh.lib), Cvoid,
+          (Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
+          elementTag, x, y, z, api_u_, api_v_, api_w_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetLocalCoordinatesInElement returned non-zero error code: $(ierr[])")
+    return api_u_[], api_v_[], api_w_[]
+end
+
+"""
     gmsh.model.mesh.getElementTypes(dim = -1, tag = -1)
 
 Get the types of elements in the entity of dimension `dim` and tag `tag`. If
