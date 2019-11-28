@@ -452,18 +452,19 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
                             PointListDonor, DataTypeNull, nodes2.size(),
                             nodes2.data(), &connIdx);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    // get parameters from transformation (CGNS transfo = inverse Gmsh transfo)
     float rotCenter[3], rotAngle[3], trans[3];
     if(ent1->getMeshMaster() == ent2) {
       const std::vector<double> &perTransfo = ent1->affineTransform;
-      getAffineTransformationParameters(perTransfo, rotCenter, rotAngle, trans);
-    }
-    else if(ent2->getMeshMaster() == ent1) {
-      const std::vector<double> &perTransfo = ent2->affineTransform;
       getAffineTransformationParameters(perTransfo, rotCenter, rotAngle, trans);
       for(int i = 0; i < 3; i++) {
         rotAngle[i] = -rotAngle[i];
         trans[i] = -trans[i];
       }
+    }
+    else if(ent2->getMeshMaster() == ent1) {
+      const std::vector<double> &perTransfo = ent2->affineTransform;
+      getAffineTransformationParameters(perTransfo, rotCenter, rotAngle, trans);
     }
     else {
       Msg::Error("Error in periodic connection between entities %i (dim %i) "

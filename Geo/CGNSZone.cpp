@@ -218,6 +218,13 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
     if(cgnsErr == CG_NODE_NOT_FOUND) continue;
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
+    // invert transformation because CGNS transformation is from current zone
+    // to donor zone, while Gmsh transformation is from master to slave
+    for(int d = 0; d < 3; d++) {
+      rotAngle[d] = -rotAngle[d];
+      trans[d] = -trans[d];
+    }
+
     // check if connection type is OK
     if(connectType != Abutting1to1) {
       Msg::Error("Non-conformal connection not supported in CGNS reader");
