@@ -144,11 +144,12 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   const size_t numNodes = indexMeshVertices(saveAll);
 
   // get entities from model
-  std::vector<GEntity *> entities, entitiesPer, entitiesInterf;
-  getEntities(entities);
-  getPeriodicEntities(entities, entitiesPer);
+  std::vector<GEntity *> allEntities, entities, entitiesPer, entitiesInterf;
+  getEntities(allEntities);
+  getEntitiesToSave(allEntities, saveAll, entities);
+  getPeriodicEntities(allEntities, entitiesPer);
   if (numPart > 0) {
-    getPartitionInterfaceEntities(entities, entitiesInterf);
+    getPartitionInterfaceEntities(allEntities, saveAll, entitiesInterf);
     if (entitiesInterf.size() == 0) {
       Msg::Warning("Partitioned entities not detected");
     }

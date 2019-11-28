@@ -104,19 +104,35 @@ void getNameFromEntity(GEntity *ge, std::string &entityName)
 
 
 // Get all partition interface entities
-void getPeriodicEntities(const std::vector<GEntity *> &entities,
+void getEntitiesToSave(const std::vector<GEntity *> &allEntities, bool saveAll,
+                       std::vector<GEntity *> &entities)
+{
+  entities.clear();
+  entities.reserve(allEntities.size());
+  for(std::size_t i = 0; i < allEntities.size(); i++) {
+    GEntity *ge = allEntities[i];
+    if(ge->getNumMeshElements() == 0) continue; 
+    if(saveAll || (ge->physicals.size() > 0)) entities.push_back(ge);
+  }
+}
+
+
+// Get all periodic entities
+void getPeriodicEntities(const std::vector<GEntity *> &allEntities,
                          std::vector<GEntity *> &entitiesPer)
 {
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *slaveEnt = entities[i];
+  entitiesPer.clear();
+  for(std::size_t i = 0; i < allEntities.size(); i++) {
+    GEntity *slaveEnt = allEntities[i];
     GEntity *masterEnt = slaveEnt->getMeshMaster();
-    if (slaveEnt != masterEnt) entitiesPer.push_back(slaveEnt);
+    if(slaveEnt != masterEnt) entitiesPer.push_back(slaveEnt);
   }
 }
 
 
 // Get all partition interface entities
 void getPartitionInterfaceEntities(const std::vector<GEntity *> &entities,
+                                   bool saveAll,
                                    std::vector<GEntity *> &entitiesInt)
 {
   for(std::size_t j = 0; j < entities.size(); j++) {
@@ -124,19 +140,24 @@ void getPartitionInterfaceEntities(const std::vector<GEntity *> &entities,
     switch(ge->geomType()) {
     case GEntity::PartitionVolume: {
       partitionRegion *pr = static_cast<partitionRegion *>(ge);
-      if (pr->getParentEntity()->dim() != pr->dim()) entitiesInt.push_back(ge);
+      const GEntity *pge = pr->getParentEntity();
+      if((pge->dim() != pr->dim()) && (saveAll || (pge->physicals.size() > 0))) entitiesInt.push_back(ge);
     } break;
     case GEntity::PartitionSurface: {
       partitionFace *pf = static_cast<partitionFace *>(ge);
-      if (pf->getParentEntity()->dim() != pf->dim()) entitiesInt.push_back(ge);
+      const GEntity *pge = pf->getParentEntity();
+      if(pf->getParentEntity()->dim() != pf->dim()) entitiesInt.push_back(ge);
+      if((pge->dim() != pf->dim()) && (saveAll || (pge->physicals.size() > 0))) entitiesInt.push_back(ge);
     } break;
     case GEntity::PartitionCurve: {
       partitionEdge *pe = static_cast<partitionEdge *>(ge);
-      if (pe->getParentEntity()->dim() != pe->dim()) entitiesInt.push_back(ge);
+      const GEntity *pge = pe->getParentEntity();
+      if((pge->dim() != pe->dim()) && (saveAll || (pge->physicals.size() > 0))) entitiesInt.push_back(ge);
     } break;
     case GEntity::PartitionPoint: {
       partitionVertex *pv = static_cast<partitionVertex *>(ge);
-      if (pv->getParentEntity()->dim() != pv->dim()) entitiesInt.push_back(ge);
+      const GEntity *pge = pv->getParentEntity();
+      if((pge->dim() != pv->dim()) && (saveAll || (pge->physicals.size() > 0))) entitiesInt.push_back(ge);
     } break;
     default:
       break;

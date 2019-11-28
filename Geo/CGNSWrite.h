@@ -30,10 +30,14 @@ struct LocalData {
 typedef std::map<MVertex *, std::vector<LocalData> > Vertex2LocalData;
 
 
-void getPeriodicEntities(const std::vector<GEntity *> &entities,
+void getEntitiesToSave(const std::vector<GEntity *> &allEntities, bool saveAll,
+                       std::vector<GEntity *> &entities);
+
+void getPeriodicEntities(const std::vector<GEntity *> &allEntities,
                          std::vector<GEntity *> &entitiesPer);
 
 void getPartitionInterfaceEntities(const std::vector<GEntity *> &entities,
+                                   bool saveAll,
                                    std::vector<GEntity *> &entitiesInt);
 
 void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
