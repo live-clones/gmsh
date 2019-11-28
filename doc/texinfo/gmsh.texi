@@ -2642,11 +2642,10 @@ anisotropic triangulations.
 For very complex curved surfaces the ``MeshAdapt'' algorithm is the most
 robust. When high element quality is important, the ``Delaunay-Frontal''
 algorithm should be tried. For very large meshes of plane surfaces the
-``Delaunay'' algorithm is the fastest.  The ``Automatic'' algorithm
-tries to select the best algorithm automatically for each surface in the
-model: ``Delaunay'' for plane surfaces and ``MeshAdapt'' for all other
-surfaces. When the ``Delaunay'' or ``Frontal-Delaunay'' algorithms fail,
-``MeshAdapt'' is automatically triggered.
+``Delaunay'' algorithm is the fastest.  When the ``Delaunay'' or
+``Frontal-Delaunay'' algorithms fail, ``MeshAdapt'' is automatically
+triggered. The ``Automatic'' algorithm uses ``Delaunay'' for plane
+surfaces and ``MeshAdapt'' for all other surfaces.
 
 Several 3D unstructured algorithms are also available:
 
