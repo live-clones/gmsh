@@ -151,7 +151,7 @@ int MeshTransfiniteSurface(GFace *gf)
 {
   if(gf->meshAttributes.method != MESH_TRANSFINITE) return 0;
 
-  Msg::Info("Meshing surface %d (transfinite)", gf->tag());
+  Msg::Info("Meshing surface %d (Transfinite)", gf->tag());
 
   // make sure that all bounding edges have begin/end points: everything in here
   // depends on it

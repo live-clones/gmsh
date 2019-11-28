@@ -81,7 +81,7 @@ int MeshExtrudedCurve(GEdge *ge)
     return 0;
   }
 
-  Msg::Info("Meshing curve %d (extruded)", ge->tag());
+  Msg::Info("Meshing curve %d (Extruded)", ge->tag());
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // curve is extruded from a point
