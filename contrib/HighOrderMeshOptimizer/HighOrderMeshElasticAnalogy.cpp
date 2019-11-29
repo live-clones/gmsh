@@ -180,7 +180,7 @@ static void addOneLayer(const std::vector<MElement *> &v,
                         std::vector<MElement *> &d,
                         std::vector<MElement *> &layer)
 {
-  std::set<MVertex *> all;
+  std::set<MVertex *, MVertexPtrLessThan> all;
   for(std::size_t i = 0; i < d.size(); i++) {
     MElement *e = d[i];
     int n = e->getNumPrimaryVertices();
@@ -308,8 +308,8 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
     gf->tag(), v.size(), minD, numBad);
 
   addOneLayer(all, v, layer);
-  std::set<MVertex *>::iterator it;
-  std::set<MVertex *> verticesToMove;
+  std::set<MVertex *, MVertexPtrLessThan>::iterator it;
+  std::set<MVertex *, MVertexPtrLessThan> verticesToMove;
 
   // on the last layer, fix displacement to 0
   for(std::size_t i = 0; i < layer.size(); i++) {
@@ -377,10 +377,10 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
 
 double highOrderTools::_smoothMetric(std::vector<MElement *> &v, GFace *gf,
                                      dofManager<double> &myAssembler,
-                                     std::set<MVertex *> &verticesToMove,
+                                     std::set<MVertex *, MVertexPtrLessThan> &verticesToMove,
                                      elasticityTerm &El)
 {
-  std::set<MVertex *>::iterator it;
+  std::set<MVertex *, MVertexPtrLessThan>::iterator it;
   double dx = 0.0;
 
   if(myAssembler.sizeOfR()) {
@@ -624,7 +624,7 @@ double highOrderTools::_applyIncrementalDisplacement(
   elasticityMixedTerm El_mixed(0, 1.0, .333, _tag);
   elasticityTerm El(0, 1.0, .333, _tag);
 
-  std::set<MVertex *> _vertices;
+  std::set<MVertex *, MVertexPtrLessThan> _vertices;
 
   // Boundary Conditions & Numbering
 
@@ -646,7 +646,7 @@ double highOrderTools::_applyIncrementalDisplacement(
     }
   }
 
-  for(std::set<MVertex *>::iterator it = _vertices.begin();
+  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
       it != _vertices.end(); ++it) {
     MVertex *vert = *it;
     std::map<MVertex *, SVector3>::iterator itt = _targetLocation.find(vert);
@@ -692,7 +692,7 @@ double highOrderTools::_applyIncrementalDisplacement(
   //fprintf(fd, "$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n"
   //            "\"tr(sigma)\"\n1\n0.0\n3\n1\n3\n%d\n",
   //            (int)_vertices.size());
-  for(std::set<MVertex *>::iterator it = _vertices.begin();
+  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
       it != _vertices.end(); ++it) {
     double ax, ay, az;
     myAssembler.getDofValue(*it, 0, _tag, ax);
@@ -717,7 +717,7 @@ double highOrderTools::_applyIncrementalDisplacement(
     getDistordedElements(v, 0.5, disto, minD);
     if(minD < thres) {
       percentage -= 10.;
-      for(std::set<MVertex *>::iterator it = _vertices.begin();
+      for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
           it != _vertices.end(); ++it) {
         double ax, ay, az;
         myAssembler.getDofValue(*it, 0, _tag, ax);
