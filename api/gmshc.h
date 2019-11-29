@@ -600,11 +600,11 @@ GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
 
 /* Search the mesh for element(s) located at coordinates (`x', `y', `z'). This
  * is a sometimes useful but inefficient way of accessing elements, as it
- * relies on a search in a spatial octree. Return the tags all found elements
- * in `elementTags'. Additional information about the elements can be accessed
- * through `getElement' and `getLocalCoordinatesInElement'. If `dim' is >= 0,
- * only search for elements of the given dimension. If `strict' is not set,
- * use a tolerance to find elements near the search location. */
+ * relies on a search in a spatial octree. Return the tags of all found
+ * elements in `elementTags'. Additional information about the elements can be
+ * accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim'
+ * is >= 0, only search for elements of the given dimension. If `strict' is
+ * not set, use a tolerance to find elements near the search location. */
 GMSH_API void gmshModelMeshGetElementsByCoordinates(const double x,
                                                     const double y,
                                                     const double z,
