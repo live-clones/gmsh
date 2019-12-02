@@ -545,6 +545,14 @@ static void file_delete_cb(Fl_Widget *w, void *data)
 
 void file_quit_cb(Fl_Widget *w, void *data)
 {
+  // hide all windows (in case they are not tracked by FlGui)...
+  std::vector<Fl_Window*> wins;
+  for (Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
+    wins.push_back(win);
+  for (std::size_t i = 0; i < wins.size(); i++)
+    wins[i]->hide();
+  // ... and destroy the GUI (don't exit(), so that we can recreate the GUI
+  // later on, e.g. in an API script)
   FlGui::instance()->destroy();
 }
 
