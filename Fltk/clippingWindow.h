@@ -6,6 +6,7 @@
 #ifndef CLIPPING_WINDOW_H
 #define CLIPPING_WINDOW_H
 
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Multi_Browser.H>

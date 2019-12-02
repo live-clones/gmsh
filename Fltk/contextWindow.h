@@ -6,6 +6,7 @@
 #ifndef CONTEXT_WINDOW_H
 #define CONTEXT_WINDOW_H
 
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Input_Choice.H>

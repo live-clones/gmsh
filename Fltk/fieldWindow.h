@@ -7,6 +7,7 @@
 #define FIELD_WINDOW_H
 
 #include <list>
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Help_View.H>

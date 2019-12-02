@@ -6,6 +6,7 @@
 #ifndef HELP_WINDOW_H
 #define HELP_WINDOW_H
 
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Browser.H>
 
