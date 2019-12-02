@@ -3189,6 +3189,19 @@ GMSH_API void gmshFltkRun(int * ierr)
   }
 }
 
+GMSH_API int gmshFltkIsAvailable(int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::fltk::isAvailable();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
 GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   int result_api_ = 0;
@@ -3376,12 +3389,12 @@ GMSH_API void gmshLoggerStop(int * ierr)
   }
 }
 
-GMSH_API double gmshLoggerTime(int * ierr)
+GMSH_API double gmshLoggerGetWallTime(int * ierr)
 {
   double result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::logger::time();
+    result_api_ = gmsh::logger::getWallTime();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -3389,12 +3402,12 @@ GMSH_API double gmshLoggerTime(int * ierr)
   return result_api_;
 }
 
-GMSH_API double gmshLoggerCputime(int * ierr)
+GMSH_API double gmshLoggerGetCpuTime(int * ierr)
 {
   double result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::logger::cputime();
+    result_api_ = gmsh::logger::getCpuTime();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

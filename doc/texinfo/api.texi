@@ -3553,6 +3553,18 @@ been initialized. Can only be called in the main thread.
 -
 @end table
 
+@item isAvailable
+Check if the user interface is available (e.g. to detect if it has been closed).
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
 @item selectEntities
 Select entities in the user interface. If @code{dim} is >= 0, return only the
 entities of the specified dimension (e.g. points if @code{dim} == 0).
@@ -3753,7 +3765,7 @@ Stop logging messages.
 -
 @end table
 
-@item time
+@item getWallTime
 Return wall clock time.
 
 @table @asis
@@ -3765,7 +3777,7 @@ Return wall clock time.
 floating point value
 @end table
 
-@item cputime
+@item getCpuTime
 Return CPU time.
 
 @table @asis

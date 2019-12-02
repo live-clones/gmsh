@@ -5250,6 +5250,16 @@ GMSH_API void gmsh::fltk::initialize()
 #endif
 }
 
+GMSH_API int gmsh::fltk::isAvailable()
+{
+  if(!_isInitialized()) { throw - 1; }
+#if defined(HAVE_FLTK)
+  return FlGui::available() ? 1 : 0;
+#else
+  return 0;
+#endif
+}
+
 GMSH_API void gmsh::fltk::wait(const double time)
 {
   if(!_isInitialized()) { throw - 1; }
@@ -5604,13 +5614,13 @@ GMSH_API void gmsh::logger::stop()
   }
 }
 
-GMSH_API double gmsh::logger::time()
+GMSH_API double gmsh::logger::getWallTime()
 {
   if(!_isInitialized()) { throw - 1; }
   return TimeOfDay();
 }
 
-GMSH_API double gmsh::logger::cputime()
+GMSH_API double gmsh::logger::getCpuTime()
 {
   if(!_isInitialized()) { throw - 1; }
   return Cpu();

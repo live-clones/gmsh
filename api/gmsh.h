@@ -2061,6 +2061,10 @@ namespace gmsh { // Top-level functions
     // been initialized. Can only be called in the main thread.
     GMSH_API void run();
 
+    // Check if the user interface is available (e.g. to detect if it has been
+    // closed).
+    GMSH_API int isAvailable();
+
     // Select entities in the user interface. If `dim' is >= 0, return only the
     // entities of the specified dimension (e.g. points if `dim' == 0).
     GMSH_API int selectEntities(gmsh::vectorpair & dimTags,
@@ -2135,10 +2139,10 @@ namespace gmsh { // Top-level functions
     GMSH_API void stop();
 
     // Return wall clock time.
-    GMSH_API double time();
+    GMSH_API double getWallTime();
 
     // Return CPU time.
-    GMSH_API double cputime();
+    GMSH_API double getCpuTime();
 
   } // namespace logger
 

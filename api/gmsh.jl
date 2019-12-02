@@ -4651,6 +4651,22 @@ function run()
 end
 
 """
+    gmsh.fltk.isAvailable()
+
+Check if the user interface is available (e.g. to detect if it has been closed).
+
+Return an integer value.
+"""
+function isAvailable()
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshFltkIsAvailable, gmsh.lib), Cint,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshFltkIsAvailable returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.fltk.selectEntities(dim = -1)
 
 Select entities in the user interface. If `dim` is >= 0, return only the
@@ -4928,34 +4944,34 @@ function stop()
 end
 
 """
-    gmsh.logger.time()
+    gmsh.logger.getWallTime()
 
 Return wall clock time.
 
 Return a floating point value.
 """
-function time()
+function getWallTime()
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshLoggerTime, gmsh.lib), Cdouble,
+    api__result__ = ccall((:gmshLoggerGetWallTime, gmsh.lib), Cdouble,
           (Ptr{Cint},),
           ierr)
-    ierr[] != 0 && error("gmshLoggerTime returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshLoggerGetWallTime returned non-zero error code: $(ierr[])")
     return api__result__
 end
 
 """
-    gmsh.logger.cputime()
+    gmsh.logger.getCpuTime()
 
 Return CPU time.
 
 Return a floating point value.
 """
-function cputime()
+function getCpuTime()
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshLoggerCputime, gmsh.lib), Cdouble,
+    api__result__ = ccall((:gmshLoggerGetCpuTime, gmsh.lib), Cdouble,
           (Ptr{Cint},),
           ierr)
-    ierr[] != 0 && error("gmshLoggerCputime returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshLoggerGetCpuTime returned non-zero error code: $(ierr[])")
     return api__result__
 end
 

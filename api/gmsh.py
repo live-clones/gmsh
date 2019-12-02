@@ -5376,6 +5376,23 @@ class fltk:
                 ierr.value)
 
     @staticmethod
+    def isAvailable():
+        """
+        Check if the user interface is available (e.g. to detect if it has been
+        closed).
+
+        Return an integer value.
+        """
+        ierr = c_int()
+        api__result__ = lib.gmshFltkIsAvailable(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshFltkIsAvailable returned non-zero error code: ",
+                ierr.value)
+        return api__result__
+
+    @staticmethod
     def selectEntities(dim=-1):
         """
         Select entities in the user interface. If `dim' is >= 0, return only the
@@ -5652,33 +5669,33 @@ class logger:
                 ierr.value)
 
     @staticmethod
-    def time():
+    def getWallTime():
         """
         Return wall clock time.
 
         Return a floating point value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshLoggerTime(
+        api__result__ = lib.gmshLoggerGetWallTime(
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(
-                "gmshLoggerTime returned non-zero error code: ",
+                "gmshLoggerGetWallTime returned non-zero error code: ",
                 ierr.value)
         return api__result__
 
     @staticmethod
-    def cputime():
+    def getCpuTime():
         """
         Return CPU time.
 
         Return a floating point value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshLoggerCputime(
+        api__result__ = lib.gmshLoggerGetCpuTime(
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(
-                "gmshLoggerCputime returned non-zero error code: ",
+                "gmshLoggerGetCpuTime returned non-zero error code: ",
                 ierr.value)
         return api__result__

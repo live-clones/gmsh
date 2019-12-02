@@ -12,7 +12,8 @@ regression for built-in kernel BSplines on non-flat geometries (Sphere,
 PolarSphere); small fixes.
 
 * Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
-  like all other mesh optimizers); new arguments to mesh/optimize,
+  like all other mesh optimizers); renamed logger/time to logger/getWallTime and
+  logger/cputime to logger/getCpuTime; new arguments to mesh/optimize,
   mesh/getElementProperties and occ/healShapes; added optional argument to
   mesh/classifySurfaces and view/combine.
 

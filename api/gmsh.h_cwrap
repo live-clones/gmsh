@@ -3763,6 +3763,16 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
     }
 
+    // Check if the user interface is available (e.g. to detect if it has been
+    // closed).
+    inline int isAvailable()
+    {
+      int ierr = 0;
+      int result_api_ = gmshFltkIsAvailable(&ierr);
+      if(ierr) throw ierr;
+      return result_api_;
+    }
+
     // Select entities in the user interface. If `dim' is >= 0, return only the
     // entities of the specified dimension (e.g. points if `dim' == 0).
     inline int selectEntities(gmsh::vectorpair & dimTags,
@@ -3933,19 +3943,19 @@ namespace gmsh { // Top-level functions
     }
 
     // Return wall clock time.
-    inline double time()
+    inline double getWallTime()
     {
       int ierr = 0;
-      double result_api_ = gmshLoggerTime(&ierr);
+      double result_api_ = gmshLoggerGetWallTime(&ierr);
       if(ierr) throw ierr;
       return result_api_;
     }
 
     // Return CPU time.
-    inline double cputime()
+    inline double getCpuTime()
     {
       int ierr = 0;
-      double result_api_ = gmshLoggerCputime(&ierr);
+      double result_api_ = gmshLoggerGetCpuTime(&ierr);
       if(ierr) throw ierr;
       return result_api_;
     }

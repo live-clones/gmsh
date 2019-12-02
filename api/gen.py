@@ -785,6 +785,9 @@ fltk.add('unlock',doc,None)
 doc = '''Run the event loop of the graphical user interface, i.e. repeatedly call `wait()'. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('run',doc,None)
 
+doc = '''Check if the user interface is available (e.g. to detect if it has been closed).'''
+fltk.add('isAvailable',doc,oint)
+
 doc = '''Select entities in the user interface. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
 fltk.add('selectEntities',doc,oint,ovectorpair('dimTags'),iint('dim','-1'))
 
@@ -839,10 +842,10 @@ doc = '''Stop logging messages.'''
 logger.add('stop',doc,None)
 
 doc = '''Return wall clock time.'''
-logger.add('time',doc,odouble)
+logger.add('getWallTime',doc,odouble)
 
 doc = '''Return CPU time.'''
-logger.add('cputime',doc,odouble)
+logger.add('getCpuTime',doc,odouble)
 
 ################################################################################
 

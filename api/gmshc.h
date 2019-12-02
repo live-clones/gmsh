@@ -2211,6 +2211,10 @@ GMSH_API void gmshFltkUnlock(int * ierr);
  * been initialized. Can only be called in the main thread. */
 GMSH_API void gmshFltkRun(int * ierr);
 
+/* Check if the user interface is available (e.g. to detect if it has been
+ * closed). */
+GMSH_API int gmshFltkIsAvailable(int * ierr);
+
 /* Select entities in the user interface. If `dim' is >= 0, return only the
  * entities of the specified dimension (e.g. points if `dim' == 0). */
 GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n,
@@ -2290,9 +2294,9 @@ GMSH_API void gmshLoggerGet(char *** log, size_t * log_n,
 GMSH_API void gmshLoggerStop(int * ierr);
 
 /* Return wall clock time. */
-GMSH_API double gmshLoggerTime(int * ierr);
+GMSH_API double gmshLoggerGetWallTime(int * ierr);
 
 /* Return CPU time. */
-GMSH_API double gmshLoggerCputime(int * ierr);
+GMSH_API double gmshLoggerGetCpuTime(int * ierr);
 
 #endif
