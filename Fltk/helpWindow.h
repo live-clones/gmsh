@@ -18,6 +18,12 @@ public:
 
 public:
   helpWindow();
+  ~helpWindow()
+  {
+    Fl::delete_widget(about);
+    Fl::delete_widget(basic);
+    Fl::delete_widget(options);
+  }
 };
 
 void help_options_cb(Fl_Widget *w, void *data);

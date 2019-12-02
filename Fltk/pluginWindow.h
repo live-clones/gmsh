@@ -23,6 +23,7 @@ public:
 
 public:
   pluginWindow(int deltaFontSize = 0);
+  ~pluginWindow() { Fl::delete_widget(win); }
   void show(int viewIndex);
   void resetViewBrowser();
 };

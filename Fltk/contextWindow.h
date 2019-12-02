@@ -26,6 +26,7 @@ public:
 
 public:
   elementaryContextWindow(int deltaFontSize = 0);
+  ~elementaryContextWindow() { Fl::delete_widget(win); }
   void show(int pane);
   void hide() { win->hide(); }
   void updatePoint(double pt[3], int which);
@@ -43,6 +44,7 @@ public:
 
 public:
   transformContextWindow(int deltaFontSize = 0);
+  ~transformContextWindow() { Fl::delete_widget(win); }
   void show(int pane, bool extrude = false, bool selection = true);
   void hide() { win->hide(); }
 };
@@ -59,6 +61,7 @@ public:
 
 public:
   physicalContextWindow(int deltaFontSize = 0);
+  ~physicalContextWindow() { Fl::delete_widget(win); }
   void show(bool remove);
   void hide() { win->hide(); }
 };
@@ -72,6 +75,7 @@ public:
 
 public:
   meshContextWindow(int deltaFontSize = 0);
+  ~meshContextWindow() { Fl::delete_widget(win); }
   void show(int pane);
   void hide() { win->hide(); }
 };

@@ -545,7 +545,7 @@ static void file_delete_cb(Fl_Widget *w, void *data)
 
 void file_quit_cb(Fl_Widget *w, void *data)
 {
-  Msg::Exit(0);
+  FlGui::instance()->destroy();
 }
 
 void file_watch_cb(Fl_Widget *w, void *data)
@@ -4328,9 +4328,8 @@ void onelabGroup::_addGmshMenus()
 
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
 
-  static bool first = true;
-  if(first){
-    first = false;
+  if(_firstBuild){
+    _firstBuild = false;
     Fl_Tree_Item *n0 = _tree->find_item("0Modules");
     for(Fl_Tree_Item *n = n0; n; n = n->next()){
       if(!n->is_root() && n->has_children() && n->depth() > 1)

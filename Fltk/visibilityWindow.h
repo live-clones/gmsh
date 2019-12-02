@@ -30,6 +30,7 @@ public:
 
 public:
   visibilityWindow(int deltaFontSize = 0);
+  ~visibilityWindow() { Fl::delete_widget(win); }
   void show(bool redrawOnly);
   void updatePerWindow(bool force = false);
 };

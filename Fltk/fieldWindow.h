@@ -38,6 +38,7 @@ public:
 
 public:
   fieldWindow(int deltaFontSize = 0);
+  ~fieldWindow() { Fl::delete_widget(win); }
   void loadFieldViewList();
   void loadFieldList();
   void saveFieldOptions();

@@ -29,6 +29,7 @@ public:
 
 public:
   highOrderToolsWindow(int deltaFontSize = 0);
+  ~highOrderToolsWindow() { Fl::delete_widget(win); }
   void show(bool redrawOnly);
 };
 

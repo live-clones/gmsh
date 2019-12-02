@@ -90,6 +90,7 @@ public:
 
 public:
   optionWindow(int deltaFontSize = 0);
+  ~optionWindow() { Fl::delete_widget(win); }
   void showGroup(int num, bool showWindow = true,
                  bool allowMultipleSelections = false);
   void resetBrowser();

@@ -16,6 +16,7 @@ public:
 
 public:
   manipWindow(int deltaFontSize);
+  ~manipWindow() { Fl::delete_widget(win); }
   void update(bool force = false);
   void show();
 };

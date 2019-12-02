@@ -24,6 +24,7 @@ public:
 
 public:
   statisticsWindow(int deltaFontSize);
+  ~statisticsWindow() { Fl::delete_widget(win); }
   void compute(bool elementQuality);
   void show();
 };
