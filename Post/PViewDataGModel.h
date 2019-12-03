@@ -274,6 +274,8 @@ public:
                         bool saveInterpolationMatrices = true,
                         bool forceNodeData = false,
                         bool forceElementData = false);
+  bool readCGNS(const std::pair<std::string, std::string> &solFieldName,
+                const std::string &fileName, int fileIndex, int baseIndex);
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);
   bool readPCH(const std::string &fileName, int fileIndex);

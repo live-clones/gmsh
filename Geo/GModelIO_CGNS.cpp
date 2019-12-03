@@ -54,8 +54,9 @@ int GModel::readCGNS(const std::string &name)
   // create all zones by reading basic info
   std::vector<CGNSZone *> allZones(nbZone+1);
   std::map<std::string, int> name2Zone;
+  bool postpro;
   createZones(fileIndex, baseIndex, meshDim, allEltNodeTransfo, allZones,
-              name2Zone);
+              name2Zone, postpro);
 
   // read mesh in zones
   std::vector<MVertex *> allVert;                     // all vertices
@@ -106,7 +107,7 @@ int GModel::readCGNS(const std::string &name)
   // reconstruct geometrical topology if required
   if(CTX::instance()->mesh.cgnsConstructTopology) createTopologyFromMeshNew();
 
-  return 1;
+  return postpro ? 2 : 1;
 }
 
 

@@ -310,12 +310,13 @@ int readEltNodeTransfo(int fileIndex, int baseIndex,
 int createZones(int fileIndex, int baseIndex, int meshDim,
                 const Family2EltNodeTransfo &allEltNodeTransfo,
                 std::vector<CGNSZone *> &allZones,
-                std::map<std::string, int> &name2Zone)
+                std::map<std::string, int> &name2Zone, bool &postpro)
 {
   const int nbZone = allZones.size() - 1;
   int cgnsErr;
 
   // loop over zones
+  postpro = false;
   cgsize_t startNode = 0;
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     // read zone type
@@ -343,6 +344,12 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
                                              allEltNodeTransfo, err);
     }
     if(err == 0) return 0;
+    
+    // check if there are flow solutions
+    int nbZoneSol;
+    cgnsErr = cg_nsols(fileIndex, baseIndex, iZone, &nbZoneSol);
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+    postpro |= (nbZoneSol > 0);
 
     // helper variables
     startNode += allZones[iZone]->nbNode();

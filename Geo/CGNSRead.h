@@ -36,7 +36,7 @@ int readEltNodeTransfo(int fileIndex, int baseIndex,
 int createZones(int fileIndex, int baseIndex, int meshDim,
                 const Family2EltNodeTransfo &allEltNodeTransfo,
                 std::vector<CGNSZone *> &allZones,
-                std::map<std::string, int> &name2Zone);
+                std::map<std::string, int> &name2Zone, bool &postpro);
 
 void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones);
 

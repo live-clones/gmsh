@@ -12,6 +12,8 @@
 #include "StringUtils.h"
 #include "OS.h"
 #include "Context.h"
+#include "CGNSCommon.h"
+#include "CGNSConventions.h"
 
 bool PViewDataGModel::addData(GModel *model,
                               const std::map<int, std::vector<double> > &data,
@@ -466,6 +468,120 @@ void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
 
   finalize();
 }
+
+#if defined(HAVE_LIBCGNS)
+
+bool PViewDataGModel::readCGNS(const std::pair<std::string,
+                                               std::string> &solFieldName,
+                               const std::string &fileName, int fileIndex,
+                               int baseIndex)
+{
+  static const int numComp = 1;
+  // _steps.push_back(new stepData<double>(GModel::current(), numComp)); // DBGTT check numComp
+  _steps.push_back(new stepData<double>(GModel::current(), numComp)); // DBGTT check numComp
+  _steps.back()->fillEntities();
+  _steps.back()->computeBoundingBox();
+  _steps.back()->setFileName(fileName);
+  _steps.back()->setFileIndex(0);
+  _steps.back()->setTime(0.);
+
+  // _steps.back()->resizeData(numEnt); // DBGTT to be optimized?
+
+  int cgnsErr;
+
+  // read number of zones
+  int nbZone = 0;
+  cgnsErr = cg_nzones(fileIndex, baseIndex, &nbZone);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+  // loop over zones
+  int num = 0;
+  for(int iZone = 1; iZone <= nbZone; iZone++) {
+    // get number of flow solutions in zone
+    int nbZoneSol;
+    cgnsErr = cg_nsols(fileIndex, baseIndex, iZone, &nbZoneSol);
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+    // loop over solution fields in each zone
+    // DBGTT: TODO: compute number of values to give resize data for optimization?
+    for(int iZoneSol = 1; iZoneSol <= nbZoneSol; iZoneSol++) {
+      // check FlowSolution name
+      char rawSolName[CGNS_MAX_STR_LEN];
+      GridLocation_t location;
+      cgnsErr = cg_sol_info(fileIndex, baseIndex, iZone, iZoneSol, rawSolName,
+                            &location);
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+      if(std::string(rawSolName) != solFieldName.first) continue;
+
+      // get number of values
+      // DBGTT: TODO: add check for zone typê
+      char zoneName[CGNS_MAX_STR_LEN];
+      cgsize_t zoneSize[9];
+      cgnsErr = cg_zone_read(fileIndex, baseIndex, iZone, zoneName, zoneSize);
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+      const int nbEnt = (getType() == ElementData) ? zoneSize[1] : zoneSize[0];
+
+      // read solution size
+      int dataDim;
+      cgsize_t solSize[3];
+      cgnsErr = cg_sol_size(fileIndex, baseIndex, iZone, iZoneSol, &dataDim,
+                            solSize);
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+      const cgsize_t dataSize = solSize[0];
+
+      // get number of fields in this FlowSolution
+      int nbField;
+      cgnsErr = cg_nfields(fileIndex, baseIndex, iZone, iZoneSol, &nbField);
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+      
+      // get names of fields
+      for(int iField = 1; iField <= nbField; iField++) {
+        // field name
+        DataType_t dataType;
+        char rawFieldName[CGNS_MAX_STR_LEN];
+        cgnsErr = cg_field_info(fileIndex, baseIndex, iZone, iZoneSol, iField,
+                                &dataType, rawFieldName);
+        if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+        if(std::string(rawFieldName) != solFieldName.second) continue;
+
+        // read field
+        cgsize_t rangeMin[3] = {1, 0, 0}, rangeMax[3] = {dataSize, 0, 0};
+        std::vector<double> data(dataSize);
+        cgnsErr = cg_field_read(fileIndex, baseIndex, iZone, iZoneSol,
+                                rawFieldName, RealDouble, rangeMin, rangeMax,
+                                static_cast<void *>(data.data()));
+        if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+        for(int iEnt = 0; iEnt < nbEnt; iEnt++) {
+          num++;
+          double *d = _steps.back()->getData(num, true, 1); // DBGTT: to be adjusted for mult
+          *d = data[iEnt];
+          // compute min/max here to avoid calling finalize(true) later:
+          // this would be very slow for large multi-step, multi-partition
+          // datasets (since we would recompute the min/max for all the
+          // previously loaded steps/partitions, and thus loop over all the
+          // elements many times)
+          // for(int j = 0; j < mult; j++) {
+          //   double val = ComputeScalarRep(numComp, &d[numComp * j]);
+          //   _steps.back()->setMin(std::min(_steps[step]->getMin(), val));
+          //   _steps.back()->setMax(std::max(_steps[step]->getMax(), val));
+          //   _min = std::min(_min, val);
+          //   _max = std::max(_max, val);
+          // }
+          _steps.back()->setMin(std::min(_steps.back()->getMin(), *d));
+          _steps.back()->setMax(std::max(_steps.back()->getMax(), *d));
+          _min = std::min(_min, *d);
+          _max = std::max(_max, *d);
+        }
+      }
+    }
+  }
+
+  finalize(false);
+  
+  return true;
+}
+
+#endif
 
 #if defined(HAVE_MED)
 

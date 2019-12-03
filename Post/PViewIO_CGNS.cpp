@@ -1,0 +1,138 @@
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+#include "GmshConfig.h"
+#include "GmshMessage.h"
+#include "PView.h"
+#include "PViewData.h"
+#include "PViewDataGModel.h"
+#include "CGNSCommon.h"
+#include "CGNSConventions.h"
+
+
+#if defined(HAVE_LIBCGNS)
+
+bool PView::readCGNS(const std::string &fileName, int fileNum)
+{
+  int cgnsErr;
+
+  // open CGNS file and read scale
+  int fileIndex = 0;
+  cgnsErr = cg_open(fileName.c_str(), CG_MODE_READ, &fileIndex);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+  // read base node
+  const int baseIndex = 1;
+  int dim = 0, meshDim = 0;
+  char baseName[CGNS_MAX_STR_LEN];
+  cgnsErr = cg_base_read(fileIndex, baseIndex, baseName, &meshDim, &dim);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+  // read number of zones
+  int nbZone = 0;
+  cgnsErr = cg_nzones(fileIndex, baseIndex, &nbZone);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+  // get flow solutions names
+  typedef std::pair<std::string, std::string> SolFieldName;
+  std::map<SolFieldName, PViewDataGModel::DataType> fields;
+  for(int iZone = 1; iZone <= nbZone; iZone++) {
+    // get number of flow solutions in zone
+    int nbZoneSol;
+    cgnsErr = cg_nsols(fileIndex, baseIndex, iZone, &nbZoneSol);
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+    // get names of solution fields in each zone
+    // DBGTT: TODO: compute number of values to give resize data for optimization?
+    for(int iZoneSol = 1; iZoneSol <= nbZoneSol; iZoneSol++) {
+      // get FlowSolution info
+      char rawSolName[CGNS_MAX_STR_LEN];
+      GridLocation_t location;
+      cgnsErr = cg_sol_info(fileIndex, baseIndex, iZone, iZoneSol, rawSolName,
+                            &location);
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+      const std::string solName(rawSolName);
+      PViewDataGModel::DataType type;
+      if(location == CellCenter) type = PViewDataGModel::ElementData;
+      else if(location == Vertex) {
+        if(nbZone > 1) {
+          Msg::Warning("Multi-zone node-based solutions not supported in CGNS "
+                       "reader, skipping '%s'", rawSolName);
+          continue;
+        }
+        else type = PViewDataGModel::NodeData;
+      }
+      else {
+        Msg::Warning("Unsupported GridLocation in CGNS solution reader, "
+                   "skipping '%s'", rawSolName);
+        continue;
+      }
+      
+      // get number of fields in this FlowSolution
+      int nbField;
+      cgnsErr = cg_nfields(fileIndex, baseIndex, iZone, iZoneSol, &nbField);
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+      
+      // get names of fields
+      for(int iField = 1; iField <= nbField; iField++) {
+        DataType_t dataType;
+        char rawFieldName[CGNS_MAX_STR_LEN];
+        cgnsErr = cg_field_info(fileIndex, baseIndex, iZone, iZoneSol, iField,
+                                &dataType, rawFieldName);
+        if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+        const std::string fieldName(rawFieldName);
+        fields[std::make_pair(solName, fieldName)] = type;
+      }
+    }
+  }
+
+  // read field data
+  typedef std::map<SolFieldName, PViewDataGModel::DataType>::iterator FieldIter;
+  for(FieldIter it = fields.begin(); it != fields.end(); ++it) {
+    // field name and type
+    const SolFieldName &solFieldName = it->first;
+    const PViewDataGModel::DataType &fieldType = it->second;
+    Msg::Info("DBGTT: flow solution found: ('%s', '%s') of type %i", solFieldName.first.c_str(), solFieldName.second.c_str(), fieldType);
+    
+    // either get existing view data, or create new one
+    const std::string fullFieldName = solFieldName.first + "_" +
+                                      solFieldName.second;
+    PView *p = getViewByName(fullFieldName, -1, -1, fileName); // DBGTT: to be checked for multi-file
+    PViewDataGModel *d;
+    bool create;
+    if(p != 0) {
+      d = dynamic_cast<PViewDataGModel *>(p->getData());
+      create = false;
+    }
+    else {
+      d = new PViewDataGModel(fieldType);
+      create = true;
+    }
+
+    // read view data
+    if(!d->readCGNS(solFieldName, fileName, fileIndex, baseIndex)) {
+      Msg::Error("Could not read data in CGNS file '%s'", fileName);
+      if(create) delete d;
+      return false;
+    }
+  }
+
+  // close file
+  cgnsErr = cg_close(fileIndex);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__);
+
+  return true;
+}
+
+#else
+
+bool PView::readCGNS(const std::string &fileName, int fileIndex)
+{
+  Msg::Error("Gmsh must be compiled with CGNS support to read '%s'",
+             fileName.c_str());
+  return false;
+}
+
+#endif

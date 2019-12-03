@@ -474,6 +474,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
       CTX::instance()->geom.matchMeshScaleFactor = 1;
       status = GModel::current()->readCGNS(fileName);
     }
+#if defined(HAVE_POST)
+    if(status > 1) status = PView::readCGNS(fileName, -1);
+#endif
   }
 #endif
 #if defined(HAVE_3M)
