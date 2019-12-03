@@ -7,6 +7,7 @@
 #define OPTION_WINDOW_H
 
 #include <vector>
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Multi_Browser.H>
@@ -90,6 +91,7 @@ public:
 
 public:
   optionWindow(int deltaFontSize = 0);
+  ~optionWindow() { Fl::delete_widget(win); }
   void showGroup(int num, bool showWindow = true,
                  bool allowMultipleSelections = false);
   void resetBrowser();

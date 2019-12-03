@@ -1,12 +1,12 @@
 // Maillage de l Hypervapotron partie solide
 
 //Mesh.Algorithm                   = 3    ;
-//Mesh.Smoothing                   = 4    ; 
+//Mesh.Smoothing                   = 4    ;
 //Mesh.CharacteristicLengthFactor  = 6  ;
 //Mesh.Algorithm3D                 = 4    ;
 
 
-lc1 = .00025 *10     ;  
+lc1 = .00025 *10     ;
 lc2 = .000392699  *10 ;
 
 r  = .0015 ;
@@ -19,10 +19,10 @@ l6 = .004  ;
 l7 = .027  ;
 l8 = .017  ;
 l9 = .019  ;
-   
+
 //Point (0)  = { 0         , 0         , 0   , lc1 } ;
-      
-Point (1) = { 0         , 2*l1      , l2+l5   , lc1 }; 
+
+Point (1) = { 0         , 2*l1      , l2+l5   , lc1 };
 Point (2) = { l1        , 2*l1      , l2+l5   , lc1 };
 Point (3) = { l1        , 2*l1+l3   , l2+l5   , lc1 };
 Point (4) = { l1+r      , 2*l1+l3+r , l2+l5   , lc1 };
@@ -72,12 +72,12 @@ Point (41) = { 0         , 2*l1+l6   , l7-l2      , lc1 } ;
 Point (42) = { 0         , l1        , l7-l2      , lc1 } ;
 Point (43) = { 0         , 0         , l7         , lc1 } ;
 Point (44) = { 0         , l8        , l7         , lc1 } ;
-    
+
 Point (45) = { l9        , 2*l1+l6   , l7-l2      , lc1 } ;
 Point (46) = { l9        , l1        , l7-l2      , lc1 } ;
 Point (47) = { l9        , 0         , l7         , lc1 } ;
 Point (48) = { l9        , l8        , l7         , lc1 } ;
-   
+
 Line (1) = {1, 2};
 Line (2) = {2, 3};
 Circle (3) = {3, 15, 4};
@@ -229,7 +229,7 @@ Surface Loop(149) = {108,-116,118,102,-84,-90,-76};
 Volume(150) = {149};
 Surface Loop(151) = {126,-124,-130,120,128,-122,102,-84,-90,108,-76,72,-106,-74,70,-104,86,78,98,100,-80,88,-82,132};
 Volume(152) = {151};
-Surface Loop(153) = {136,-144,138,-140,-142,-134};
+Surface Loop(153) = {-144,138,-140,-142,-134};
 
 
 

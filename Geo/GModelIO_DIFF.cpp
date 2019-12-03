@@ -15,7 +15,7 @@ static bool getMeshVertices(int num, int *indices,
 {
   for(int i = 0; i < num; i++) {
     if(!map.count(indices[i])) {
-      Msg::Error("Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong node index %d", indices[i]);
       return false;
     }
     else
@@ -30,7 +30,7 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
   for(int i = 0; i < num; i++) {
     if(indices[i] < minVertex ||
        indices[i] > (int)(vec.size() - 1 + minVertex)) {
-      Msg::Error("Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong node index %d", indices[i]);
       return false;
     }
     else
@@ -91,7 +91,7 @@ int GModel::readDIFF(const std::string &name)
       fclose(fp);
       return 0;
     }
-    Msg::Info("%d vertices", numVertices);
+    Msg::Info("%d nodes", numVertices);
 
     int numVerticesPerElement;
     if(!fgets(str, sizeof(str), fp) || feof(fp)) {
@@ -165,7 +165,7 @@ int GModel::readDIFF(const std::string &name)
     int num = 0;
     std::vector<std::vector<int> > elementary(numVertices);
 
-    Msg::ResetProgressMeter();
+    Msg::StartProgressMeter(numVertices);
     for(int i = 0; i < numVertices; i++) {
       if(!fgets(str, sizeof(str), fp)) {
         fclose(fp);
@@ -183,11 +183,11 @@ int GModel::readDIFF(const std::string &name)
       minVertex = std::min(minVertex, num);
       maxVertex = std::max(maxVertex, num);
       if(vertexMap.count(num))
-        Msg::Warning("Skipping duplicate vertex %d", num);
+        Msg::Warning("Skipping duplicate node %d", num);
       else
         vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
       if(numVertices > 100000)
-        Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");
+        Msg::ProgressMeter(i + 1, true, "Reading nodes");
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices &&
@@ -220,6 +220,8 @@ int GModel::readDIFF(const std::string &name)
         Msg::Info("elementary[%d][%d]=%d", i + 1, j + 1, elementary[i][j + 1]);
       }
     }
+    Msg::StopProgressMeter();
+
     while(str[0] != '#') {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
@@ -230,8 +232,9 @@ int GModel::readDIFF(const std::string &name)
     }
     char eleTypec[20] = "";
     std::string eleType;
-    Msg::ResetProgressMeter();
     std::vector<int> mapping;
+
+    Msg::StartProgressMeter(numElements);
     for(int i = 1; i <= numElements; i++) {
       if(!fgets(str, sizeof(str), fp)) {
         fclose(fp);
@@ -376,8 +379,10 @@ int GModel::readDIFF(const std::string &name)
       if(partition > getNumPartitions()) setNumPartitions(partition);
 
       if(numElements > 100000)
-        Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
+        Msg::ProgressMeter(i + 1, true, "Reading elements");
     }
+    Msg::StopProgressMeter();
+
   }
 
   // store the elements in their associated elementary entity. If the

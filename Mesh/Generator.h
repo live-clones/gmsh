@@ -9,15 +9,12 @@
 class GModel;
 class GRegion;
 
+void GenerateMesh(GModel *m, int dimension);
+void OptimizeMesh(GModel *m, const std::string &how = "", bool force = false,
+                  int niter = 1);
+void RecombineMesh(GModel *m);
+void AdaptMesh(GModel *m);
 void GetStatistics(double stat[50], double quality[4][100] = 0,
                    bool visibleOnly = false);
-void AdaptMesh(GModel *m);
-void GenerateMesh(GModel *m, int dimension);
-void OptimizeMesh(GModel *m);
-void OptimizeMeshNetgen(GModel *m);
-void OptimizeHighOrderMesh(GModel *m);
-void OptimizeHighOrderMeshElastic(GModel *m);
-void SmoothMesh(GModel *m);
-void RecombineMesh(GModel *m);
 
 #endif

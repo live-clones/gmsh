@@ -1498,6 +1498,7 @@ public:
     octree = 0;
     view_index = 0;
     view_tag = -1;
+    update_needed = true; // in case we don't set IView or ViewTag explicitely
     options["IView"] = new FieldOptionInt(
       view_index, "Post-processing view index", &update_needed);
     options["ViewTag"] =
@@ -3037,7 +3038,7 @@ void FieldManager::setBackgroundField(Field *BGF)
   _background_field = id;
 }
 
-void Field::putOnNewView()
+void Field::putOnNewView(int viewTag)
 {
 #if defined(HAVE_POST)
   if(GModel::current()->getMeshStatus() < 1) {
@@ -3055,7 +3056,8 @@ void Field::putOnNewView()
   }
   std::ostringstream oss;
   oss << "Field " << id;
-  PView *view = new PView(oss.str(), "NodeData", GModel::current(), d);
+  PView *view = new PView(oss.str(), "NodeData", GModel::current(), d,
+                          0, -1, viewTag);
   view->setChanged(true);
 #endif
 }

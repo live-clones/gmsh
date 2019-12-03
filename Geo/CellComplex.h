@@ -30,10 +30,10 @@ private:
 
   // sorted containers of unique cells in this cell complex
   // one for each dimension
-  std::set<Cell *, Less_Cell> _cells[4];
+  std::set<Cell *, CellPtrLessThan> _cells[4];
 
   // original cells of this cell complex
-  std::set<Cell *, Less_Cell> _ocells[4];
+  std::set<Cell *, CellPtrLessThan> _ocells[4];
 
   // original cells removed during reductions
   std::vector<Cell *> _removedcells;
@@ -68,8 +68,8 @@ private:
   Cell *_omitCell(Cell *cell, bool dual);
 
   // enqueue cells in queue if they are not there already
-  void enqueueCells(std::map<Cell *, short int, Less_Cell> &cells,
-                    std::queue<Cell *> &Q, std::set<Cell *, Less_Cell> &Qset);
+  void enqueueCells(std::map<Cell *, short int, CellPtrLessThan> &cells,
+                    std::queue<Cell *> &Q, std::set<Cell *, CellPtrLessThan> &Qset);
 
   // insert/remove a cell from this cell complex
   void removeCell(Cell *cell, bool other = true, bool del = false);
@@ -108,13 +108,13 @@ public:
   // domain = 0: cells in domain relative to subdomain
   // domain = 1: cells in domain
   // domain = 2: cells in subdomain
-  void getCells(std::set<Cell *, Less_Cell> &cells, int dim, int domain = 0);
+  void getCells(std::set<Cell *, CellPtrLessThan> &cells, int dim, int domain = 0);
   int getNumCells(int dim, int domain = 0);
   Cell *getACell(int dim, int domain = 0);
-  // std::set<Cell*, Less_Cell> getOrigCells(int dim){ return _ocells[dim]; }
+  // std::set<Cell*, CellPtrLessThan> getOrigCells(int dim){ return _ocells[dim]; }
 
   // iterator for the cells of same dimension
-  typedef std::set<Cell *, Less_Cell>::iterator citer;
+  typedef std::set<Cell *, CellPtrLessThan>::iterator citer;
 
   // iterators to the first and last cells of certain dimension
   citer firstCell(int dim, bool orig = false)

@@ -1358,7 +1358,7 @@ namespace onelab {
     void registerClient(client *c)
     {
       _clients.insert(c);
-      c->setId(_clients.size());
+      c->setId((int)_clients.size());
     }
     void unregisterClient(client *c) { _clients.erase(c); }
     void setChanged(int changed, const std::string &client = "")
@@ -1548,7 +1548,7 @@ namespace onelab {
       _gmshClient->SendMessage(withChoices ?
                                  GmshSocket::GMSH_PARAMETER :
                                  GmshSocket::GMSH_PARAMETER_WITHOUT_CHOICES,
-                               msg.size(), &msg[0]);
+                               (int)msg.size(), &msg[0]);
       return true;
     }
     template <class T>
@@ -1563,10 +1563,10 @@ namespace onelab {
         _gmshClient->SendMessage(
           withChoices ? GmshSocket::GMSH_PARAMETER_QUERY :
                         GmshSocket::GMSH_PARAMETER_QUERY_WITHOUT_CHOICES,
-          msg.size(), &msg[0]);
+          (int)msg.size(), &msg[0]);
       else // get all parameters
         _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY_ALL,
-                                 msg.size(), &msg[0]);
+                                 (int)msg.size(), &msg[0]);
 
       while(1) {
         // stop if we have no communications for 5 minutes
@@ -1683,7 +1683,7 @@ namespace onelab {
       if(!_gmshClient) return false;
       std::string msg = name;
       if(msg.empty()) msg = "*";
-      _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_CLEAR, msg.size(),
+      _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_CLEAR, (int)msg.size(),
                                &msg[0]);
       return true;
     }
@@ -1697,8 +1697,18 @@ namespace onelab {
     {
       return _get(ps, name);
     }
-    virtual bool setAndAppendChoices(const number &p) { return _set(p, false); }
-    virtual bool setAndAppendChoices(const string &p) { return _set(p, false); }
+    virtual bool setAndAppendChoices(const number &p)
+    {
+      // this will send the parameter without choices, using
+      // GMSH_PARAMETER_WITHOUT_CHOICES instead of GMSH_PARAMETER; the ONELAB
+      // server will then append the value to the choices server-side.
+      return _set(p, false);
+    }
+    virtual bool setAndAppendChoices(const string &p)
+    {
+      // idem
+      return _set(p, false);
+    }
     virtual bool getWithoutChoices(std::vector<number> &ps,
                                    const std::string &name = "")
     {
@@ -1750,7 +1760,7 @@ namespace onelab {
       }
 #endif
       std::string msg = name + parameter::charSep() + command;
-      _gmshClient->SendMessage(GmshSocket::GMSH_CONNECT, msg.size(), &msg[0]);
+      _gmshClient->SendMessage(GmshSocket::GMSH_CONNECT, (int)msg.size(), &msg[0]);
       _numSubClients += 1;
     }
     void runSubClient(const std::string &name, const std::string &command)

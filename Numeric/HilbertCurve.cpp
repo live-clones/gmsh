@@ -139,7 +139,7 @@ int HilbertSort::Split(MVertex **vertices, int arraysize, int GrayCode0,
         if(vertices[j]->point()[axis] < split) break;
       }
       // Is the partition finished?
-      if(i == (j + 1)) break;
+      if(i >= (j + 1)) break;
       // Swap i-th and j-th vertices.
       swapvert = vertices[i];
       vertices[i] = vertices[j];
@@ -156,7 +156,7 @@ int HilbertSort::Split(MVertex **vertices, int arraysize, int GrayCode0,
         if(vertices[j]->point()[axis] > split) break;
       }
       // Is the partition finished?
-      if(i == (j + 1)) break;
+      if(i >= (j + 1)) break;
       // Swap i-th and j-th vertices.
       swapvert = vertices[i];
       vertices[i] = vertices[j];

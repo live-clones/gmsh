@@ -25,7 +25,6 @@ public:
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return OpenCascadeModel; }
   void *getNativePtr() const { return (void *)&s; }
-  TopoDS_Solid getTopoDS_Shape() { return s; }
   void writeBREP(const char *filename);
 };
 

@@ -13,7 +13,7 @@ void elasticityTerm::createData(MElement *e) const
 {
   if(_data.find(e->getTypeForMSH()) != _data.end()) return;
   elasticityDataAtGaussPoint d;
-  int nbSF = e->getNumShapeFunctions();
+  int nbSF = (int)e->getNumShapeFunctions();
   int integrationOrder = 2 * (e->getPolynomialOrder() - 1);
   int npts;
   IntPt *GP;
@@ -45,7 +45,7 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
   MElement *e = se->getMeshElement();
   createData(e);
 
-  int nbSF = e->getNumShapeFunctions();
+  int nbSF = (int)e->getNumShapeFunctions();
   elasticityDataAtGaussPoint &d = _data[e->getTypeForMSH()];
   int npts = d.u.size();
   m.setAll(0.);
@@ -127,7 +127,7 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
 void elasticityTerm::elementVector(SElement *se, fullVector<double> &m) const
 {
   MElement *e = se->getMeshElement();
-  int nbSF = e->getNumShapeFunctions();
+  int nbSF = (int)e->getNumShapeFunctions();
   int integrationOrder = 2 * e->getPolynomialOrder();
   int npts;
   IntPt *GP;

@@ -185,7 +185,8 @@ struct doubleXstring{
 %token tAbsolutePath tDirName tStrSub tStrLen
 %token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
 %token tTextAttributes
-%token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tCurrentDirectory
+%token tBoundingBox tDraw tSetChanged tToday tFixRelativePath
+%token tCurrentDirectory tCurrentFileName
 %token tSyncModel tNewModel tMass tCenterOfMass
 %token tOnelabAction tOnelabRun tCodeName
 %token tCpu tMemory tTotalMemory
@@ -205,7 +206,7 @@ struct doubleXstring{
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence
-%token tIntersect tMeshAlgorithm tReverseMesh
+%token tIntersect tMeshAlgorithm tReverseMesh tMeshSizeFromBoundary
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts
 %token tRecombLaterals tTransfQuadTri
@@ -1676,6 +1677,40 @@ Shape :
       $$.Type = MSH_SEGM_SPLN;
       $$.Num = num;
     }
+  | tCompound tSpline '(' FExpr ')' tAFFECT ListOfDouble tUsing FExpr tEND
+    {
+      int num = (int)$4;
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Compound spline only available with built-in geometry kernel");
+      }
+      else{
+        r = GModel::current()->getGEOInternals()->addCompoundSpline(num, tags,
+                                                                    (int)$9);
+      }
+      if(!r) yymsg(0, "Could not add compound spline");
+      List_Delete($7);
+      $$.Type = MSH_SEGM_SPLN;
+      $$.Num = num;
+    }
+  | tCompound tBSpline '(' FExpr ')' tAFFECT ListOfDouble tUsing FExpr tEND
+    {
+      int num = (int)$4;
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Compound spline only available with built-in geometry kernel");
+      }
+      else{
+        r = GModel::current()->getGEOInternals()->addCompoundBSpline(num, tags,
+                                                                     (int)$9);
+      }
+      if(!r) yymsg(0, "Could not add compound spline");
+      List_Delete($7);
+      $$.Type = MSH_SEGM_BSPLN;
+      $$.Num = num;
+    }
   | tCircle '(' FExpr ')' tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
@@ -2263,16 +2298,26 @@ Shape :
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
-            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Curve");
+      if($2 == 1)
+        yymsg(0, "`Compound Line (...) = {...};' is deprecated: use `Compound "
+              "Spline|BSpline (...) = {...} Using ...;' instead, or the compound "
+              "meshing constraint `Compound Curve {...};'");
+      else
+        yymsg(0, "`Compound Surface (...) = {...};' is deprecated: use the "
+              "compound meshing constraint `Compound Surface {...};' instead");
       $$.Type = 0;
       $$.Num = 0;
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tSTRING
       '{' RecursiveListOfListOfDouble '}' tEND
     {
-      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
-            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Curve");
+      if($2 == 1)
+        yymsg(0, "`Compound Line (...) = {...};' is deprecated: use `Compound "
+              "Spline|BSpline (...) = {...} Using ...;' instead, or the compound "
+              "meshing constraint `Compound Curve {...};'");
+      else
+        yymsg(0, "`Compound Surface (...) = {...};' is deprecated: use the "
+              "compound meshing constraint `Compound Surface {...};' instead");
       $$.Type = 0;
       $$.Num = 0;
     }
@@ -3418,21 +3463,29 @@ Command :
     {
 #if defined(HAVE_POST)
       if(!strcmp($2, "ElementsFromAllViews"))
-	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "ElementsFromVisibleViews"))
-	PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "ElementsByViewName"))
-	PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsFromAllViews"))
-	PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsFromVisibleViews"))
-	PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsByViewName"))
-	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "Views"))
-	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeSteps"))
-	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else
 	yymsg(0, "Unknown 'Combine' command");
 #endif
@@ -3494,7 +3547,11 @@ Command :
     }
   | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr '}' tEND
     {
-      GModel::current()->classifySurfaces($3, $5, $7);
+      GModel::current()->classifySurfaces($3, $5, $7, M_PI);
+    }
+  | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
+    {
+      GModel::current()->classifySurfaces($3, $5, $7, $9);
     }
    | tCreateGeometry tEND
     {
@@ -4487,7 +4544,7 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Vertex %d",tag);
+	yymsg(0, "Unknown model point %d",tag);
       }
     }
   | tSetTag tCurve '(' FExpr ',' FExpr ')' tEND
@@ -4499,7 +4556,7 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Edge %d",tag);
+	yymsg(0, "Unknown model curve %d",tag);
       }
     }
   | tSetTag tSurface '(' FExpr ',' FExpr ')' tEND
@@ -4511,7 +4568,7 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Face %d",tag);
+	yymsg(0, "Unknown model surface %d",tag);
       }
     }
   | tSetTag tVolume '(' FExpr ',' FExpr ')' tEND
@@ -4523,15 +4580,40 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Region %d",tag);
+	yymsg(0, "Unknown model volume %d",tag);
       }
     }
   | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
     {
+      // mesh algorithm constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       for(int i = 0; i < List_Nbr($4); i++){
-	double d;
-	List_Read($4, i, &d);
-	CTX::instance()->mesh.algo2dPerFace[(int)d] = (int)$7;
+        double d;
+        List_Read($4, i, &d);
+        int tag = (int)d;
+        GModel::current()->getGEOInternals()->setMeshAlgorithm(2, tag, (int)$7);
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(gf) gf->setMeshingAlgo((int)$7);
+      }
+      List_Delete($4);
+    }
+  | tMeshSizeFromBoundary tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
+    {
+      // lcExtendFromBoundary onstraints are stored in GEO internals in addition
+      // to GModel, as they can be copied around during GEO operations
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      for(int i = 0; i < List_Nbr($4); i++){
+        double d;
+        List_Read($4, i, &d);
+        int tag = (int)d;
+        GModel::current()->getGEOInternals()->setMeshSizeFromBoundary(2, tag, (int)$7);
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(gf) gf->setMeshSizeFromBoundary((int)$7);
       }
       List_Delete($4);
     }
@@ -6308,6 +6390,12 @@ StringExpr :
       $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
       strcpy($$, tmp.c_str());
     }
+  | tCurrentFileName
+    {
+      std::string tmp = GetFileNameWithoutPath(gmsh_yyname);
+      $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
+      strcpy($$, tmp.c_str());
+    }
   | tDirName LP StringExprVar RP
     {
       std::string tmp = SplitFileName($3)[0];
@@ -6779,7 +6867,7 @@ void addPeriodicFace(int iTarget, int iSource,
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if (!target || !source) {
-    Msg::Error("Could not find curve slave %d or master %d for periodic copy",
+    Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget, iSource);
   }
   else target->setMeshMaster(source, affineTransform);
@@ -6803,7 +6891,7 @@ void addPeriodicFace(int iTarget, int iSource,
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if (!target || !source) {
-    Msg::Error("Could not find surface slave %d or master %d for periodic copy",
+    Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget,iSource);
   }
   else target->setMeshMaster(source, edgeCounterparts);
@@ -6821,7 +6909,7 @@ void addPeriodicEdge(int iTarget,int iSource,
   GEdge *target = GModel::current()->getEdgeByTag(std::abs(iTarget));
   GEdge *source = GModel::current()->getEdgeByTag(std::abs(iSource));
   if (!target || !source)
-    Msg::Error("Could not find surface %d or %d for periodic copy",
+    Msg::Error("Could not find curve %d or %d for periodic copy",
                iTarget,iSource);
   if (affineTransform.size() >= 12) {
     target->setMeshMaster(source, affineTransform);

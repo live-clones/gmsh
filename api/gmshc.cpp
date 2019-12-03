@@ -238,6 +238,19 @@ GMSH_API void gmshModelList(char *** names, size_t * names_n, int * ierr)
   }
 }
 
+GMSH_API void gmshModelGetCurrent(char ** name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_name_;
+    gmsh::model::getCurrent(api_name_);
+    *name = strdup(api_name_.c_str());
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelSetCurrent(const char * name, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -599,6 +612,20 @@ GMSH_API void gmshModelGetNormal(const int tag, double * parametricCoord, size_t
   }
 }
 
+GMSH_API void gmshModelGetParametrization(const int dim, const int tag, double * points, size_t points_n, double ** parametricCoord, size_t * parametricCoord_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_points_(points, points + points_n);
+    std::vector<double> api_parametricCoord_;
+    gmsh::model::getParametrization(dim, tag, api_points_, api_parametricCoord_);
+    vector2ptr(api_parametricCoord_, parametricCoord, parametricCoord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelSetVisibility(int * dimTags, size_t dimTags_n, const int value, const int recursive, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -697,11 +724,11 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshOptimize(const char * method, int * ierr)
+GMSH_API void gmshModelMeshOptimize(const char * method, const int force, const int niter, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::optimize(method);
+    gmsh::model::mesh::optimize(method, force, niter);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -724,17 +751,6 @@ GMSH_API void gmshModelMeshRefine(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::refine();
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
-GMSH_API void gmshModelMeshSmooth(int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::smooth();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -832,6 +848,19 @@ GMSH_API void gmshModelMeshGetNode(const size_t nodeTag, double ** coord, size_t
     gmsh::model::mesh::getNode(nodeTag, api_coord_, api_parametricCoord_);
     vector2ptr(api_coord_, coord, coord_n);
     vector2ptr(api_parametricCoord_, parametricCoord, parametricCoord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshSetNode(const size_t nodeTag, double * coord, size_t coord_n, double * parametricCoord, size_t parametricCoord_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    gmsh::model::mesh::setNode(nodeTag, api_coord_, api_parametricCoord_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -943,6 +972,30 @@ GMSH_API void gmshModelMeshGetElementByCoordinates(const double x, const double 
   }
 }
 
+GMSH_API void gmshModelMeshGetElementsByCoordinates(const double x, const double y, const double z, size_t ** elementTags, size_t * elementTags_n, const int dim, const int strict, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_;
+    gmsh::model::mesh::getElementsByCoordinates(x, y, z, api_elementTags_, dim, strict);
+    vector2ptr(api_elementTags_, elementTags, elementTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetLocalCoordinatesInElement(const size_t elementTag, const double x, const double y, const double z, double * u, double * v, double * w, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::getLocalCoordinatesInElement(elementTag, x, y, z, *u, *v, *w);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * elementTypes_n, const int dim, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -969,13 +1022,13 @@ GMSH_API int gmshModelMeshGetElementType(const char * familyName, const int orde
   return result_api_;
 }
 
-GMSH_API void gmshModelMeshGetElementProperties(const int elementType, char ** elementName, int * dim, int * order, int * numNodes, double ** nodeCoord, size_t * nodeCoord_n, int * ierr)
+GMSH_API void gmshModelMeshGetElementProperties(const int elementType, char ** elementName, int * dim, int * order, int * numNodes, double ** nodeCoord, size_t * nodeCoord_n, int * numPrimaryNodes, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::string api_elementName_;
     std::vector<double> api_nodeCoord_;
-    gmsh::model::mesh::getElementProperties(elementType, api_elementName_, *dim, *order, *numNodes, api_nodeCoord_);
+    gmsh::model::mesh::getElementProperties(elementType, api_elementName_, *dim, *order, *numNodes, api_nodeCoord_, *numPrimaryNodes);
     *elementName = strdup(api_elementName_.c_str());
     vector2ptr(api_nodeCoord_, nodeCoord, nodeCoord_n);
   }
@@ -1318,6 +1371,40 @@ GMSH_API void gmshModelMeshSetReverse(const int dim, const int tag, const int va
   }
 }
 
+GMSH_API void gmshModelMeshSetAlgorithm(const int dim, const int tag, const int val, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setAlgorithm(dim, tag, val);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshSetSizeFromBoundary(const int dim, const int tag, const int val, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setSizeFromBoundary(dim, tag, val);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshSetCompound(const int dim, int * tags, size_t tags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_(tags, tags + tags_n);
+    gmsh::model::mesh::setCompound(dim, api_tags_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1444,11 +1531,11 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag,
   }
 }
 
-GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, int * ierr)
+GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, const double curveAngle, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization);
+    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization, curveAngle);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1672,6 +1759,34 @@ GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n, const in
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
     result_api_ = gmsh::model::geo::addBezier(api_pointTags_, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelGeoAddCompoundSpline(int * curveTags, size_t curveTags_n, const int numIntervals, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    result_api_ = gmsh::model::geo::addCompoundSpline(api_curveTags_, numIntervals, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelGeoAddCompoundBSpline(int * curveTags, size_t curveTags_n, const int numIntervals, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    result_api_ = gmsh::model::geo::addCompoundBSpline(api_curveTags_, numIntervals, tag);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -2007,6 +2122,28 @@ GMSH_API void gmshModelGeoMeshSetReverse(const int dim, const int tag, const int
   if(ierr) *ierr = 0;
   try {
     gmsh::model::geo::mesh::setReverse(dim, tag, val);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGeoMeshSetAlgorithm(const int dim, const int tag, const int val, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::geo::mesh::setAlgorithm(dim, tag, val);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGeoMeshSetSizeFromBoundary(const int dim, const int tag, const int val, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::geo::mesh::setSizeFromBoundary(dim, tag, val);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -2669,7 +2806,7 @@ GMSH_API void gmshModelOccRemoveAllDuplicates(int * ierr)
   }
 }
 
-GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n, int * dimTags, size_t dimTags_n, const double tolerance, const int fixDegenerated, const int fixSmallEdges, const int fixSmallFaces, const int sewFaces, int * ierr)
+GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n, int * dimTags, size_t dimTags_n, const double tolerance, const int fixDegenerated, const int fixSmallEdges, const int fixSmallFaces, const int sewFaces, const int makeSolids, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -2679,7 +2816,7 @@ GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n, i
       api_dimTags_[i].first = dimTags[i * 2 + 0];
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
-    gmsh::model::occ::healShapes(api_outDimTags_, api_dimTags_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces);
+    gmsh::model::occ::healShapes(api_outDimTags_, api_dimTags_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(int api_ierr_){
@@ -2893,11 +3030,11 @@ GMSH_API void gmshViewCopyOptions(const int refTag, const int tag, int * ierr)
   }
 }
 
-GMSH_API void gmshViewCombine(const char * what, const char * how, const int remove, int * ierr)
+GMSH_API void gmshViewCombine(const char * what, const char * how, const int remove, const int copyOptions, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::view::combine(what, how, remove);
+    gmsh::view::combine(what, how, remove, copyOptions);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -3050,6 +3187,19 @@ GMSH_API void gmshFltkRun(int * ierr)
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
   }
+}
+
+GMSH_API int gmshFltkIsAvailable(int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::fltk::isAvailable();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
 }
 
 GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
@@ -3239,12 +3389,12 @@ GMSH_API void gmshLoggerStop(int * ierr)
   }
 }
 
-GMSH_API double gmshLoggerTime(int * ierr)
+GMSH_API double gmshLoggerGetWallTime(int * ierr)
 {
   double result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::logger::time();
+    result_api_ = gmsh::logger::getWallTime();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -3252,12 +3402,12 @@ GMSH_API double gmshLoggerTime(int * ierr)
   return result_api_;
 }
 
-GMSH_API double gmshLoggerCputime(int * ierr)
+GMSH_API double gmshLoggerGetCpuTime(int * ierr)
 {
   double result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::logger::cputime();
+    result_api_ = gmsh::logger::getCpuTime();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

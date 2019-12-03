@@ -235,7 +235,7 @@ void PView::setChanged(bool val)
   if(_changed) _eye = SPoint3(0., 0., 0.);
 }
 
-void PView::combine(bool time, int how, bool remove)
+void PView::combine(bool time, int how, bool remove, bool copyOptions)
 {
   // time == true: combine the timesteps (oherwise combine the elements)
   // how == 0: try to combine all visible views
@@ -268,6 +268,7 @@ void PView::combine(bool time, int how, bool remove)
       if(j == nds.size()) {
         nd.data.push_back(data);
         nd.indices.push_back(i);
+        nd.options = p->getOptions();
         nds.push_back(nd);
       }
     }
@@ -303,12 +304,14 @@ void PView::combine(bool time, int how, bool remove)
           rm.insert(list[nds[i].indices[j]]);
         PViewOptions *opt = p->getOptions();
         if(opt->adaptVisualizationGrid) {
-          // the (empty) adaptive data created in PView() must be
-          // recreated, since we added some data
+          // the (empty) adaptive data created in PView() must be recreated,
+          // since we added some data
           data->destroyAdaptiveData();
           data->initAdaptiveData(opt->timeStep, opt->maxRecursionLevel,
                                  opt->targetError);
         }
+        if(copyOptions && nds[i].options)
+          p->setOptions(new PViewOptions(*nds[i].options));
       }
       else
         delete p;

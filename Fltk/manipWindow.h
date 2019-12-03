@@ -6,6 +6,7 @@
 #ifndef MANIP_WINDOW_H
 #define MANIP_WINDOW_H
 
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Value_Input.H>
 
@@ -16,6 +17,7 @@ public:
 
 public:
   manipWindow(int deltaFontSize);
+  ~manipWindow() { Fl::delete_widget(win); }
   void update(bool force = false);
   void show();
 };

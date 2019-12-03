@@ -68,6 +68,10 @@ def compute(arg):
 gmsh.fltk.initialize()
 
 while 1:
+    # check if GUI has been closed
+    if gmsh.fltk.isAvailable() == 0:
+        break
+
     # wait for an event
     gmsh.fltk.wait()
 

@@ -249,6 +249,10 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y,
     lc = l1;
   }
 
+  // size factor from entity
+  if(ge && ge->getMeshSizeFactor() != 1.0) lc *= ge->getMeshSizeFactor();
+
+  // global size factor
   return lc * CTX::instance()->mesh.lcFactor;
 }
 
@@ -299,9 +303,9 @@ SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
   return m;
 }
 
-bool Extend1dMeshIn2dSurfaces()
+bool Extend1dMeshIn2dSurfaces(GFace *gf)
 {
-  return CTX::instance()->mesh.lcExtendFromBoundary;
+  return gf->getMeshSizeFromBoundary();
 }
 
 bool Extend2dMeshIn3dVolumes()

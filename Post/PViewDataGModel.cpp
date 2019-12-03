@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include "PView.h"
 #include "PViewDataGModel.h"
 #include "MPoint.h"
 #include "MLine.h"
@@ -526,7 +527,7 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
     if(e->getNumChildren())
       return e->getNumChildren() * e->getChild(0)->getNumVertices();
     if(getAdaptiveData()) return e->getNumVertices();
-    return e->getNumPrimaryVertices();
+    return (int)e->getNumPrimaryVertices();
   }
 }
 
@@ -557,7 +558,7 @@ int PViewDataGModel::getNode(int step, int ent, int ele, int nod, double &x,
     }
     else {
       double vx[8], vy[8], vz[8];
-      for(int i = 0; i < e->getNumPrimaryVertices(); i++) {
+      for(std::size_t i = 0; i < e->getNumPrimaryVertices(); i++) {
         vx[i] = e->getVertex(i)->x();
         vy[i] = e->getVertex(i)->y();
         vz[i] = e->getVertex(i)->z();

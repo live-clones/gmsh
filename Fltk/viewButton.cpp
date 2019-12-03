@@ -150,21 +150,12 @@ static void view_remove_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-#define TT "\t"
-#define NN "\n"
-#else
-#define TT " ("
-#define NN ")\t"
-#endif
-
 static void view_save_cb(Fl_Widget *w, void *data)
 {
   static const char *formats =
-    "Gmsh Parsed" TT "*.pos" NN "Gmsh Mesh-based" TT "*.pos" NN
-    "Gmsh Legacy ASCII" TT "*.pos" NN "Gmsh Legacy Binary" TT "*.pos" NN
-    "MED" TT "*.rmed" NN "STL Surface" TT "*.stl" NN "Generic TXT" TT
-    "*.txt" NN;
+    "Gmsh Parsed\t*.pos\nGmsh Mesh-based\t*.pos\n"
+    "Gmsh Legacy ASCII\t*.pos\nGmsh Legacy Binary\t*.pos\n"
+    "MED\t*.rmed\nSTL Surface\t*.stl\nGeneric TXT\t*.txt\n";
 
   PView *view = PView::list[(intptr_t)data];
  test:
@@ -191,9 +182,6 @@ static void view_save_cb(Fl_Widget *w, void *data)
   }
 }
 
-#undef TT
-#undef NN
-
 static void view_alias_with_options_cb(Fl_Widget *w, void *data)
 {
   const bool copyOptions = true;
@@ -204,42 +192,48 @@ static void view_alias_with_options_cb(Fl_Widget *w, void *data)
 
 static void view_combine_space_all_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_space_visible_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_space_by_name_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_all_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_visible_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_by_name_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }

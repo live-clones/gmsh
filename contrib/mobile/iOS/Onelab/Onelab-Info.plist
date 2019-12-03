@@ -2,8 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
-    <key>CFBundleExecutable</key>
-    <string>${EXECUTABLE_NAME}</string>
+    <key>CFBundleExecutable</key><string>${EXECUTABLE_NAME}</string>
     <key>CFBundleIcons</key>
     <dict>
       <key>CFBundlePrimaryIcon</key>
@@ -26,34 +25,20 @@
         </array>
       </dict>
     </dict>
-    <key>CFBundleIdentifier</key>
-    <string>org.geuz.${PRODUCT_NAME:rfc1034identifier}</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>${PRODUCT_NAME}</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>2.2.0</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
-    <key>CFBundleVersion</key>
-    <string>2.2.0.0</string>
-    <key>LSRequiresIPhoneOS</key>
-    <true/>
-    <key>UIFileSharingEnabled</key>
-    <true/>
-    <key>LSSupportsOpeningDocumentsInPlace</key>
-    <true/>
-    <key>UIMainStoryboardFile</key>
-    <string>iPhoneiPodStoryboard</string>
-    <key>UIMainStoryboardFile~ipad</key>
-    <string>iPadStoryboard</string>
-    <key>UILaunchStoryboardName</key>
-    <string>LaunchScreen</string>
-    <key>UIRequiresFullScreen</key>
-    <true/>
+    <key>CFBundleIdentifier</key><string>org.geuz.${PRODUCT_NAME:rfc1034identifier}</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleName</key><string>${PRODUCT_NAME}</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>2.3.2</string>
+    <key>CFBundleVersion</key><string>51</string>
+    <key>CFBundleSignature</key><string>????</string>
+    <key>LSRequiresIPhoneOS</key><true/>
+    <key>UIFileSharingEnabled</key><true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key><true/>
+    <key>UIMainStoryboardFile</key><string>iPhoneiPodStoryboard</string>
+    <key>UIMainStoryboardFile~ipad</key><string>iPadStoryboard</string>
+    <key>UILaunchStoryboardName</key><string>LaunchScreen</string>
+    <key>UIRequiresFullScreen</key><true/>
     <key>UIRequiredDeviceCapabilities</key>
     <array>
       <string>opengles-1</string>
@@ -76,10 +61,8 @@
     <key>CFBundleDocumentTypes</key>
     <array>
       <dict>
-        <key>CFBundleTypeName</key>
-        <string>Zip archive</string>
-        <key>CFBundleTypeRole</key>
-        <string>Editor</string>
+        <key>CFBundleTypeName</key><string>Zip archive</string>
+        <key>CFBundleTypeRole</key><string>Editor</string>
         <key>LSItemContentTypes</key>
         <array>
           <string>com.pkware.zip-archive</string>
@@ -91,8 +74,7 @@
           <key>public.mime-type</key>
           <string>application/zip</string>
         </dict>
-        <key>LSHandlerRank</key>
-        <string>Owner</string>
+        <key>LSHandlerRank</key><string>Owner</string>
       </dict>
     </array>
   </dict>

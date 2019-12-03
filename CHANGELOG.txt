@@ -1,7 +1,27 @@
-4.1.1: small improvements (transfinite with degenerate curves, renumbering for
-some mesh formats, empty MSH file sections) and bug fixes (ellipse < pi,
-orientation of compound parts, serendip pyramids, MED prism15, invalidate cache
-after mesh/addNodes).
+4.5.0 (Work-in-progress): changed default 2D algorithm to Frontal-Delaunay;
+improved handling of anisotropic surface meshes in 3D Delaunay; improved
+high-order periodic meshing; improved 2D boolean unions; improved surface mesh
+reclassification; file chooser type is now changeable at runtime; FLTK GUI can
+now be created and destroyed at will through the api; fixed regression in
+MeshAdapt for non-periodic surfaces with singularities; new X3D output for
+geometries and meshes; new compound Spline/BSpline commands; new
+MeshSizeFromBoundary command; combining views now copies options; added API
+support for mesh compounds, per-surface mesh algorithm and mesh size from
+boundary; renamed plugin AnalyseCurvedMesh to AnalyseMeshQuality; fixed
+regression for built-in kernel BSplines on non-flat geometries (Sphere,
+PolarSphere); small fixes.
+
+* Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
+  like all other mesh optimizers); renamed logger/time to logger/getWallTime and
+  logger/cputime to logger/getCpuTime; new arguments to mesh/optimize,
+  mesh/getElementProperties and occ/healShapes; added optional argument to
+  mesh/classifySurfaces and view/combine.
+
+4.4.1 (July 25, 2019): small improvements (transfinite with degenerate curves,
+renumbering for some mesh formats, empty MSH file sections, tunable accuracy of
+compound meshes) and bug fixes (ellipse < pi, orientation and reclassification
+of compound parts, serendip pyramids, periodic MeshAdapt robustness, invalidate
+cache after mesh/addNodes).
 
 4.4.0 (July 1, 2019): new STL remeshing workflow (with new ClassifySurfaces
 command in .geo files); added API support for color options, mesh optimization,
@@ -45,10 +65,9 @@ for size_t node and element tags (see the reference manual for detailed
 changes); added support for reading STEP labels and colors with OCC CAF; changed
 default "General.OCCTargetUnit" value to none (i.e. use STEP file coordinates
 as-is, without conversion); improved high-order mesh optimization; added ability
-to import groups of nodes from MED files; extruded meshes now fill-in periodic
-node information; enhanced Plugin(Distance) and Plugin(SimplePartition); removed
-unmaintained plugins; removed default dependency on PETSc; small improvements
-and bug fixes.
+to import groups of nodes from MED files; enhanced Plugin(Distance) and
+Plugin(SimplePartition); removed unmaintained plugins; removed default
+dependency on PETSc; small improvements and bug fixes.
 
 * Incompatible API changes: changed type of node and element tags from int to
   size_t to support (very) large meshes; changed logger/start,
@@ -108,8 +127,8 @@ API; small bug fixes.
 4.0.0 (August 22, 2018): new C++, C, Python and Julia API; new MSH4 format; new
 mesh partitioning code based on Metis 5; new 3D tetrahedralization algorithm as
 default; new workflow for remeshing (compound entities as meshing constraints,
-CreateGeometry for mesh reparametrization); added support for general b-splines,
-fillets and chamfers with OpenCASCADE kernel and changed default bspline
+CreateGeometry for mesh reparametrization); added support for general BSplines,
+fillets and chamfers with OpenCASCADE kernel and changed default BSpline
 parameters with the built-in kernel to match OpenCASCADE's; STEP files are now
 be default interpreted in MKS units (see General.OCCTargetUnit); improved
 meshing of surfaces with singular parametrizations (spheres, etc.); uniformized

@@ -141,7 +141,7 @@ Try to preserve the numbering of entities through OpenCASCADE boolean operations
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.OCCDisableSTL
+@item Geometry.OCCDisableStl
 Disable STL creation in OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -166,6 +166,11 @@ Import labels and colors when importing STEP models with the OpenCASCADE kernel@
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCMakeSolids
+Fix shells and make solids when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCParallel
 Use multi-threaded OpenCASCADE boolean operators@*
 Default value: @code{0}@*
@@ -179,6 +184,11 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.OCCSewFaces
 Sew faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCUnionUnify
+Try to unify faces and edges (remove internal seams) which lie on the same geometry after performing a boolean union with the OpenCASCADE kernel@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OffsetX

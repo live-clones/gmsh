@@ -6,6 +6,7 @@
 #ifndef STATISTICS_WINDOW_H
 #define STATISTICS_WINDOW_H
 
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Output.H>
 #include <FL/Fl_Button.H>
@@ -24,6 +25,7 @@ public:
 
 public:
   statisticsWindow(int deltaFontSize);
+  ~statisticsWindow() { Fl::delete_widget(win); }
   void compute(bool elementQuality);
   void show();
 };

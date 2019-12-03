@@ -33,7 +33,7 @@ closestVertexFinder::closestVertexFinder(GEntity *ge, bool closure) : nbVtcs(0)
   }
   kdtree = new ANNkd_tree(vCoord, nbVtcs, 3);
 #else
-  Msg::Warning("Gmsh must be compiled with ANN support for finding closest vertices");
+  Msg::Warning("Gmsh must be compiled with ANN support for finding closest nodes");
 #endif
 }
 

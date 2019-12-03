@@ -220,7 +220,9 @@ HXTStatus hxtTetReorder(HXTMesh* mesh)
   for (uint64_t i=0; i<nTet; i++) {
     uint64_t index = pair[i].v[1];
     uint32_t* oldNode = mesh->tetrahedra.node + 4*index;
+#if !defined(HAVE_NO_OPENMP_SIMD)
     #pragma omp simd aligned(newNode:SIMD_ALIGN) aligned(oldNode:16)
+#endif
     for (unsigned j=0; j<4; j++)
       newNode[i*4+j] = oldNode[j]; 
   }

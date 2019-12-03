@@ -492,7 +492,7 @@ static unsigned int re_string_context_at (const re_string_t *input, int idx,
 # define alloca _alloca
 # define HAVE_ALLOCA 1
 #else
-# error No alloca()
+# warning No alloca() /* error->warning for Gmsh with PGI */
 #endif
 
 #ifndef _LIBC

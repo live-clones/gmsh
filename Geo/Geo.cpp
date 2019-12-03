@@ -221,8 +221,10 @@ static void direction(Vertex *v1, Vertex *v2, double d[3])
   d[2] = v2->Pos.Z - v1->Pos.Z;
 }
 
-void EndCurve(Curve *c)
+bool EndCurve(Curve *c)
 {
+  bool ok = true;
+
   // if all control points of a curve are on the same geometry, then the curve
   // is also on the geometry
   int NN = List_Nbr(c->Control_Points);
@@ -343,12 +345,14 @@ void EndCurve(Curve *c)
     if(!R || !R2) {
       // check radius
       Msg::Error("Zero radius in circle or ellipse with tag %d", c->Num);
+      ok = false;
     }
     else if(!v[3] && fabs((R - R2) / (R + R2)) > 0.1) {
       // check cocircular pts (allow 10% error)
       Msg::Error("Control points of circle with tag %d are not cocircular: "
                  "R1=%g, R2=%g, n=[%g,%g,%g]",
                  c->Num, R, R2, n[0], n[1], n[2]);
+      ok = false;
     }
     // A1 = angle first pt
     // A3 = angle last pt
@@ -372,6 +376,7 @@ void EndCurve(Curve *c)
       sys2x2(sys, rhs, sol);
       if(sol[0] <= 0 || sol[1] <= 0) {
         Msg::Error("Ellipse with tag %d is wrong", c->Num);
+        ok = false;
         A1 = A3 = 0.;
         f1 = f2 = R;
       }
@@ -413,8 +418,11 @@ void EndCurve(Curve *c)
       Msg::Error(
         "message by selecting `Enable expert mode' in the option dialog.");
       Msg::Error("Otherwise, please subdivide the arc in smaller pieces.)");
+      ok = false;
     }
   }
+
+  return ok;
 }
 
 void EndSurface(Surface *s)
@@ -437,8 +445,9 @@ void EndSurface(Surface *s)
 }
 
 Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste, List_T *Knots,
-                   int p1, int p2, double u1, double u2)
+                   int p1, int p2, double u1, double u2, bool &ok)
 {
+  ok = true;
   double matcr[4][4] = {{-0.5, 1.5, -1.5, 0.5},
                         {1.0, -2.5, 2.0, -0.5},
                         {-0.5, 0.0, 0.5, 0.0},
@@ -511,6 +520,7 @@ Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste, List_T *Knots,
         List_Add(pC->Control_Points, &v);
       else {
         Msg::Error("Unknown control point %d in GEO curve %d", iPnt, pC->Num);
+        ok = false;
       }
     }
     if(p1 < 0) {
@@ -528,6 +538,7 @@ Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste, List_T *Knots,
       }
       else {
         Msg::Error("Unknown control point %d in GEO curve %d", p1, pC->Num);
+        ok = false;
       }
       if((v = FindPoint(p2))) {
         Msg::Info("Curve %d first control point %d ", pC->Num, v->Num);
@@ -535,9 +546,11 @@ Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste, List_T *Knots,
       }
       else {
         Msg::Error("Unknown control point %d in GEO curve %d", p2, pC->Num);
+        ok = false;
       }
     }
-    EndCurve(pC);
+    if(!EndCurve(pC))
+      ok = false;
   }
 
   return pC;
@@ -575,6 +588,8 @@ Surface *CreateSurface(int Num, int Typ)
   pS->Extrude = NULL;
   pS->geometry = NULL;
   pS->ReverseMesh = 0;
+  pS->MeshAlgorithm = 0;
+  pS->MeshSizeFromBoundary = -1;
   return (pS);
 }
 
@@ -799,7 +814,8 @@ static void CopyCurve(Curve *c, Curve *cc)
 
 Curve *DuplicateCurve(Curve *c)
 {
-  Curve *pc = CreateCurve(NEWLINE(), 0, 1, NULL, NULL, -1, -1, 0., 1.);
+  bool ok = true;
+  Curve *pc = CreateCurve(NEWLINE(), 0, 1, NULL, NULL, -1, -1, 0., 1., ok);
   CopyCurve(c, pc);
   Tree_Insert(GModel::current()->getGEOInternals()->Curves, &pc);
   for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
@@ -822,6 +838,8 @@ static void CopySurface(Surface *s, Surface *ss)
     ss->Recombine = s->Recombine;
     ss->RecombineAngle = s->RecombineAngle;
     ss->ReverseMesh = s->ReverseMesh;
+    ss->MeshAlgorithm = s->MeshAlgorithm;
+    ss->MeshSizeFromBoundary = s->MeshSizeFromBoundary;
     if(List_Nbr(s->TrsfPoints))
       Msg::Warning(
         "Only automatic transfinite surface specifications can be copied");
@@ -1079,7 +1097,8 @@ void DeletePhysicalVolume(int num)
 
 Curve *CreateReversedCurve(Curve *c)
 {
-  Curve *newc = CreateCurve(-c->Num, c->Typ, 1, NULL, NULL, -1, -1, 0., 1.);
+  bool ok = true;
+  Curve *newc = CreateCurve(-c->Num, c->Typ, 1, NULL, NULL, -1, -1, 0., 1., ok);
 
   if(List_Nbr(c->Control_Points)) {
     newc->Control_Points =
@@ -1377,12 +1396,13 @@ static void ApplyTransformationToVolume(double matrix[4][4], Volume *v)
   }
 }
 
-static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
+static bool ApplicationOnShapes(double matrix[4][4], List_T *shapes)
 {
   Vertex *v;
   Curve *c;
   Surface *s;
   Volume *vol;
+  bool ok = true;
 
   List_Reset(ListOfTransformedPoints);
 
@@ -1394,8 +1414,10 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       v = FindPoint(O.Num);
       if(v)
         ApplyTransformationToPoint(matrix, v);
-      else
+      else {
         Msg::Error("Unknown GEO point with tag %d", O.Num);
+        ok = false;
+      }
       break;
     case MSH_SEGM_LINE:
     case MSH_SEGM_SPLN:
@@ -1409,8 +1431,10 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       c = FindCurve(O.Num);
       if(c)
         ApplyTransformationToCurve(matrix, c);
-      else
+      else {
         Msg::Error("Unknown GEO curve with tag %d", O.Num);
+        ok = false;
+      }
       break;
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
@@ -1418,19 +1442,24 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       s = FindSurface(O.Num);
       if(s)
         ApplyTransformationToSurface(matrix, s);
-      else
+      else {
         Msg::Error("Unknown GEO surface with tag %d", O.Num);
+        ok = false;
+      }
       break;
     case MSH_VOLUME:
       vol = FindVolume(O.Num);
       if(vol)
         ApplyTransformationToVolume(matrix, vol);
-      else
+      else {
         Msg::Error("Unknown GEO volume with tag %d", O.Num);
+        ok = false;
+      }
       break;
     default:
       Msg::Error("Impossible to transform entity %d (of type %d)", O.Num,
                  O.Type);
+      ok = false;
       break;
     }
   }
@@ -1458,9 +1487,11 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
   }
 
   List_Reset(ListOfTransformedPoints);
+
+  return ok;
 }
 
-void TranslateShapes(double X, double Y, double Z, List_T *shapes)
+bool TranslateShapes(double X, double Y, double Z, List_T *shapes)
 {
   double T[3], matrix[4][4];
 
@@ -1468,12 +1499,14 @@ void TranslateShapes(double X, double Y, double Z, List_T *shapes)
   T[1] = Y;
   T[2] = Z;
   SetTranslationMatrix(matrix, T);
-  ApplicationOnShapes(matrix, shapes);
+  bool ok = ApplicationOnShapes(matrix, shapes);
 
   if(CTX::instance()->geom.autoCoherence) ReplaceAllDuplicates();
+
+  return ok;
 }
 
-void DilatShapes(double X, double Y, double Z, double A, double B, double C,
+bool DilatShapes(double X, double Y, double Z, double A, double B, double C,
                  List_T *shapes)
 {
   double T[3], matrix[4][4];
@@ -1482,12 +1515,14 @@ void DilatShapes(double X, double Y, double Z, double A, double B, double C,
   T[1] = Y;
   T[2] = Z;
   SetDilatationMatrix(matrix, T, A, B, C);
-  ApplicationOnShapes(matrix, shapes);
+  bool ok = ApplicationOnShapes(matrix, shapes);
 
   if(CTX::instance()->geom.autoCoherence) ReplaceAllDuplicates();
+
+  return ok;
 }
 
-void RotateShapes(double Ax, double Ay, double Az, double Px, double Py,
+bool RotateShapes(double Ax, double Ay, double Az, double Px, double Py,
                   double Pz, double alpha, List_T *shapes)
 {
   double A[3], T[3], matrix[4][4];
@@ -1496,31 +1531,35 @@ void RotateShapes(double Ax, double Ay, double Az, double Px, double Py,
   T[1] = -Py;
   T[2] = -Pz;
   SetTranslationMatrix(matrix, T);
-  ApplicationOnShapes(matrix, shapes);
+  bool ok = ApplicationOnShapes(matrix, shapes);
 
   A[0] = Ax;
   A[1] = Ay;
   A[2] = Az;
   SetRotationMatrix(matrix, A, alpha);
-  ApplicationOnShapes(matrix, shapes);
+  ok &= ApplicationOnShapes(matrix, shapes);
 
   T[0] = Px;
   T[1] = Py;
   T[2] = Pz;
   SetTranslationMatrix(matrix, T);
-  ApplicationOnShapes(matrix, shapes);
+  ok &= ApplicationOnShapes(matrix, shapes);
 
   if(CTX::instance()->geom.autoCoherence) ReplaceAllDuplicates();
+
+  return ok;
 }
 
-void SymmetryShapes(double A, double B, double C, double D, List_T *shapes)
+bool SymmetryShapes(double A, double B, double C, double D, List_T *shapes)
 {
   double matrix[4][4];
 
   SetSymmetryMatrix(matrix, A, B, C, D);
-  ApplicationOnShapes(matrix, shapes);
+  bool ok = ApplicationOnShapes(matrix, shapes);
 
   if(CTX::instance()->geom.autoCoherence) ReplaceAllDuplicates();
+
+  return ok;
 }
 
 class ShapeLessThan {
@@ -2428,18 +2467,19 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
                  ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3], d;
-  Vertex V, *pv, *newp, *chapeau;
-  Curve *c;
+  Vertex V, *newp = NULL;
+  Curve *c = NULL;
   int i;
+  bool ok = true;
 
-  pv = &V;
+  Vertex *pv = &V;
   pv->Num = ip;
   *pc = *prc = NULL;
   if(!Tree_Query(GModel::current()->getGEOInternals()->Points, &pv)) return 0;
 
   Msg::Debug("Extrude Point %d", ip);
 
-  chapeau = DuplicateVertex(pv);
+  Vertex *chapeau = DuplicateVertex(pv);
 
   switch(type) {
   case TRANSLATE:
@@ -2450,7 +2490,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
     if(!ComparePosition(&pv, &chapeau)) return pv->Num;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1., ok);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2464,7 +2504,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     chapeau->Typ = MSH_POINT_BND_LAYER;
     if(e) chapeau->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
     c =
-      CreateCurve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, NULL, NULL, -1, -1, 0., 1.);
+      CreateCurve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, NULL, NULL, -1, -1, 0., 1., ok);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2494,7 +2534,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
     if(!ComparePosition(&pv, &chapeau)) return pv->Num;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_CIRC, 1, NULL, NULL, -1, -1, 0., 1.);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_CIRC, 1, NULL, NULL, -1, -1, 0., 1., ok);
     c->Control_Points = List_Create(3, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2521,7 +2561,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
   case TRANSLATE_ROTATE:
     d = CTX::instance()->geom.extrudeSplinePoints;
     d = d ? d : 1;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_SPLN, 1, NULL, NULL, -1, -1, 0., 1.);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_SPLN, 1, NULL, NULL, -1, -1, 0., 1., ok);
     c->Control_Points = List_Create(
       CTX::instance()->geom.extrudeSplinePoints + 1, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
@@ -3151,15 +3191,16 @@ static Curve *_create_splitted_curve(Curve *c, List_T *nodes)
   List_Read(nodes, List_Nbr(nodes) - 1, &end);
   int id = NEWLINE();
   Curve *cnew = NULL;
+  bool ok = true;
   switch(c->Typ) {
   case MSH_SEGM_LINE:
-    cnew = CreateCurve(id, c->Typ, 1, nodes, NULL, -1, -1, 0., 1.);
+    cnew = CreateCurve(id, c->Typ, 1, nodes, NULL, -1, -1, 0., 1., ok);
     break;
   case MSH_SEGM_SPLN:
-    cnew = CreateCurve(id, c->Typ, 3, nodes, NULL, -1, -1, 0., 1.);
+    cnew = CreateCurve(id, c->Typ, 3, nodes, NULL, -1, -1, 0., 1., ok);
     break;
   case MSH_SEGM_BSPLN:
-    cnew = CreateCurve(id, c->Typ, 2, nodes, NULL, -1, -1, 0., 1.);
+    cnew = CreateCurve(id, c->Typ, 2, nodes, NULL, -1, -1, 0., 1., ok);
     break;
   default: // should never reach this point...
     Msg::Error("Cannot split a curve with type %i", c->Typ);
@@ -3405,7 +3446,7 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient)
   List_Delete(temp);
 }
 
-void SetSurfaceGeneratrices(Surface *s, List_T *loops)
+bool SetSurfaceGeneratrices(Surface *s, List_T *loops)
 {
   int nbLoop = List_Nbr(loops);
   List_Delete(s->Generatrices);
@@ -3422,7 +3463,7 @@ void SetSurfaceGeneratrices(Surface *s, List_T *loops)
       Msg::Error("Unknown curve loop %d in GEO surface %d", iLoop, s->Num);
       List_Delete(s->Generatrices);
       s->Generatrices = NULL;
-      return;
+      return false;
     }
     else {
       int ic;
@@ -3458,14 +3499,16 @@ void SetSurfaceGeneratrices(Surface *s, List_T *loops)
         }
         else {
           Msg::Error("Unknown curve %d", ic);
-          return;
+          return false;
         }
       }
     }
   }
+
+  return true;
 }
 
-void SetVolumeSurfaces(Volume *v, List_T *loops)
+bool SetVolumeSurfaces(Volume *v, List_T *loops)
 {
   List_Reset(v->Surfaces);
   List_Reset(v->SurfacesOrientations);
@@ -3476,7 +3519,7 @@ void SetVolumeSurfaces(Volume *v, List_T *loops)
     SurfaceLoop *sl;
     if(!(sl = FindSurfaceLoop(abs(il)))) {
       Msg::Error("Unknown surface loop %d", il);
-      return;
+      return false;
     }
     else {
       for(int j = 0; j < List_Nbr(sl->Surfaces); j++) {
@@ -3497,13 +3540,14 @@ void SetVolumeSurfaces(Volume *v, List_T *loops)
             List_Add(v->SurfacesByTag, &is);
           }
           else {
-            Msg::Error("Unknown surface %d", is);
-            return;
+            Msg::Error("Unknown surface %d in GEO volume %d", is, v->Num);
+            return false;
           }
         }
       }
     }
   }
+  return true;
 }
 
 // the following routines should be renamed and moved elsewhere

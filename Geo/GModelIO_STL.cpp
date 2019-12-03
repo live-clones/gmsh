@@ -180,7 +180,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   MVertexRTree pos(eps);
   pos.insert(vertices);
 
-  std::set<MFace, Less_Face> unique;
+  std::set<MFace, MFaceLessThan> unique;
   int nbDuplic = 0, nbDegen = 0;
   for(std::size_t i = 0; i < points.size(); i++) {
     for(std::size_t j = 0; j < points[i].size(); j += 3) {

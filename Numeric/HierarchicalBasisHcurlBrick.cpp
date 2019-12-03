@@ -5,6 +5,7 @@
 //
 // Contributed by Ismail Badia.
 
+#include <algorithm>
 #include "HierarchicalBasisHcurlBrick.h"
 
 HierarchicalBasisHcurlBrick::HierarchicalBasisHcurlBrick(int order)

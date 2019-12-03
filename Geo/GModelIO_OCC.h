@@ -110,7 +110,7 @@ private:
   // apply various healing algorithms to try to fix the shape
   void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixDegenerated,
                   bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
-                  bool makeSolids = false, double scaling = 0.0);
+                  bool makeSolids, double scaling = 0.0);
 
   // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
@@ -141,10 +141,10 @@ private:
 
   // set extruded mesh attributes
   void _setExtrudedAttributes(const TopoDS_Compound &c, BRepSweep_Prism *p,
-                              BRepSweep_Revol *r, ExtrudeParams *e,
-                              double x, double y, double z, double dx,
-                              double dy, double dz, double ax, double ay,
-                              double az, double angle);
+                              BRepSweep_Revol *r, ExtrudeParams *e, double x,
+                              double y, double z, double dx, double dy,
+                              double dz, double ax, double ay, double az,
+                              double angle);
   void _copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge);
   void _copyExtrudedAttributes(TopoDS_Face face, GFace *gf);
   void _copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr);
@@ -206,6 +206,11 @@ public:
                     double dy, double roundedRadius = 0.);
   bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
+  bool addPlateSurface(
+    int &tag, int wireTag,
+    const std::vector<int> &pointTags = std::vector<int>(),
+    const std::vector<int> &surfaceTags = std::vector<int>(),
+    const std::vector<int> &surfaceContinuity = std::vector<int>());
   bool addSurfaceFilling(
     int &tag, int wireTag,
     const std::vector<int> &pointTags = std::vector<int>(),
@@ -334,9 +339,8 @@ public:
   // apply various healing algorithms to try to fix the shapes
   bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
                   std::vector<std::pair<int, int> > &outDimTags,
-                  double tolerance, bool fixDegenerated,
-                  bool fixSmallEdges, bool fixSmallFaces,
-                  bool sewFaces);
+                  double tolerance, bool fixDegenerated, bool fixSmallEdges,
+                  bool fixSmallFaces, bool sewFaces, bool makeSolids);
 
   // set meshing constraints
   void setMeshSize(int dim, int tag, double size);
@@ -362,6 +366,8 @@ public:
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
   bool makeFaceSTL(const TopoDS_Face &s, std::vector<SPoint3> &vertices,
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeEdgeSTLFromFace(const TopoDS_Edge &c, const TopoDS_Face &s,
+                           std::vector<SPoint3> *vertices);
   bool makeSolidSTL(const TopoDS_Solid &s, std::vector<SPoint3> &vertices,
                     std::vector<SVector3> &normals,
                     std::vector<int> &triangles);
@@ -493,7 +499,8 @@ public:
   {
     return _error("add surface filling");
   }
-  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags, bool sewing)
+  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
+                      bool sewing)
   {
     return _error("add surface loop");
   }
@@ -677,9 +684,8 @@ public:
   }
   bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
                   std::vector<std::pair<int, int> > &outDimTags,
-                  double tolerance, bool fixDegenerated,
-                  bool fixSmallEdges, bool fixSmallFaces,
-                  bool sewFaces)
+                  double tolerance, bool fixDegenerated, bool fixSmallEdges,
+                  bool fixSmallFaces, bool sewFaces, bool makeSolids)
   {
     return _error("heal shapes");
   }

@@ -19,7 +19,7 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
 {
   for(int i = 0; i < num; i++) {
     if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)) {
-      Msg::Error("Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong node index %d", indices[i]);
       return false;
     }
     else
@@ -69,7 +69,7 @@ int GModel::readMESH(const std::string &name)
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbv;
         sscanf(buffer, "%d", &nbv);
-        Msg::Info("%d vertices", nbv);
+        Msg::Info("%d nodes", nbv);
         vertexVector.resize(nbv);
         for(int i = 0; i < nbv; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;

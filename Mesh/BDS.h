@@ -55,7 +55,8 @@ class BDS_Point {
 public:
   double X, Y, Z;
   double u, v;
-  bool config_modified, degenerated;
+  bool config_modified;
+  short degenerated;
   BDS_Point *_periodicCounterpart;
   int iD;
   BDS_GeomEntity *g;
@@ -74,7 +75,7 @@ public:
   std::vector<BDS_Face *> getTriangles() const;
   BDS_Point(int id, double x = 0, double y = 0, double z = 0)
     : _lcBGM(1.e22), _lcPTS(1.e22), X(x), Y(y), Z(z), u(0), v(0),
-      config_modified(true), degenerated(false), _periodicCounterpart(NULL),
+      config_modified(true), degenerated(0), _periodicCounterpart(NULL),
       iD(id), g(0)
   {
   }
@@ -349,16 +350,11 @@ public:
   BDS_Edge *find_edge(BDS_Point *p1, BDS_Point *p2);
   BDS_Edge *find_edge(BDS_Point *p1, int p2);
   BDS_Edge *find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const;
-  // Triangles & Quadrangles
+  // Triangles
   BDS_Face *add_triangle(int p1, int p2, int p3);
-  //  BDS_Face *add_quadrangle(int p1, int p2, int p3, int p4);
   BDS_Face *add_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);
-  //  BDS_Face *add_quadrangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3,
-  //  BDS_Edge *e4);
   void del_face(BDS_Face *t);
   BDS_Face *find_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);
-  BDS_Face *find_quadrangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3,
-                            BDS_Edge *e4);
   // Geom entities
   void add_geom(int degree, int tag);
   BDS_GeomEntity *get_geom(int p1, int p2);
@@ -373,7 +369,7 @@ public:
                  bool force = false);
   bool collapse_edge_parametric(BDS_Edge *, BDS_Point *, bool = false);
   bool smooth_point_centroid(BDS_Point *p, GFace *gf, double thresh);
-  bool split_edge(BDS_Edge *, BDS_Point *);
+  bool split_edge(BDS_Edge *, BDS_Point *, bool check_area_param = false);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
   // Global operators
   void cleanup();

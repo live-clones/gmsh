@@ -220,13 +220,13 @@ double qmTriangle::angles(MTriangle *e)
   double tmp[3][3];
 
   // double minAngle = 120.0;
-  for(int i = 0; i < e->getNumPrimaryVertices(); i++) {
+  for(std::size_t i = 0; i < e->getNumPrimaryVertices(); i++) {
     const double u = i == 1 ? 1 : 0;
     const double v = i == 2 ? 1 : 0;
     const double w = 0;
     e->getJacobian(u, v, w, mat);
     e->getPrimaryJacobian(u, v, w, mat2);
-    for(int j = 0; j < i; j++) {
+    for(std::size_t j = 0; j < i; j++) {
       matmat(rot, mat, tmp);
       memcpy(mat, tmp, sizeof(mat));
     }

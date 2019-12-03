@@ -72,7 +72,6 @@ public:
 public:
   std::vector<graphicWindow *> graph;
   optionWindow *options;
-  onelabWindow *onelab2;
   fieldWindow *fields;
   pluginWindow *plugins;
   statisticsWindow *stats;
@@ -89,10 +88,14 @@ public:
   openglWindow *fullscreen;
 
 public:
-  FlGui(int argc, char **argv);
-  ~FlGui() {}
+  FlGui(int argc, char **argv,
+        void (*error_handler)(const char *fmt, ...) = 0);
+  ~FlGui();
   // return the single static instance of the GUI
-  static FlGui *instance(int argc = 0, char **argv = 0);
+  static FlGui *instance(int argc = 0, char **argv = 0,
+                         void (*error_handler)(const char *fmt, ...) = 0);
+  // destroy instance
+  static void destroy();
   // check if the GUI is available
   static bool available();
   // run the GUI until there's no window left

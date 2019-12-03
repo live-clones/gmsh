@@ -17,14 +17,15 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-public class SplashScreen extends Activity{
+public class SplashScreen extends Activity {
   private final Handler handler = new Handler() {
-      public void handleMessage(Message msg) {
-        Intent i = new Intent(SplashScreen.this, ModelList.class);
-        startActivity(i);
-        finish();
-      };
+    public void handleMessage(Message msg)
+    {
+      Intent i = new Intent(SplashScreen.this, ModelList.class);
+      startActivity(i);
+      finish();
     };
+  };
 
   protected void onCreate(android.os.Bundle savedInstanceState)
   {
@@ -36,21 +37,22 @@ public class SplashScreen extends Activity{
       getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
     int codev = 0;
     try {
-      codev = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
-    }
-    catch (android.content.pm.PackageManager.NameNotFoundException e) {
+      codev =
+        getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+    } catch(android.content.pm.PackageManager.NameNotFoundException e) {
     }
     int modelsv = sharedPref.getInt("OnelabModelsVersion", 0);
     if(modelsv == 0 || modelsv != codev) {
-      Log.d("Models", "Updating models to version "+codev);
+      Log.d("Models", "Updating models to version " + codev);
       SharedPreferences.Editor editor = sharedPref.edit();
       editor.putInt("OnelabModelsVersion", codev);
       editor.commit();
       // import built-in models from from res/raw/
-      ImportZipArchive(new BufferedInputStream(getResources().openRawResource(R.raw.models)));
+      ImportZipArchive(
+        new BufferedInputStream(getResources().openRawResource(R.raw.models)));
     }
-    else{
-      Log.d("Models", "Leaving models as-is (version "+modelsv+")");
+    else {
+      Log.d("Models", "Leaving models as-is (version " + modelsv + ")");
     }
 
     // import user model
@@ -59,9 +61,9 @@ public class SplashScreen extends Activity{
     if(action != null && action.equals(Intent.ACTION_VIEW)) {
       Log.d("Models", "Importing user model " + intent.getData());
       try {
-        ImportZipArchive(getContentResolver().openInputStream(intent.getData()));
-      }
-      catch(IOException e1) {
+        ImportZipArchive(
+          getContentResolver().openInputStream(intent.getData()));
+      } catch(IOException e1) {
         e1.printStackTrace();
       }
     }
@@ -78,24 +80,23 @@ public class SplashScreen extends Activity{
       ZipInputStream zis = new ZipInputStream(stream);
       byte[] buffer = new byte[1024];
       ZipEntry ze;
-      while ((ze = zis.getNextEntry()) != null) {
+      while((ze = zis.getNextEntry()) != null) {
         String filename = ze.getName();
-        if (ze.isDirectory()) {
+        if(ze.isDirectory()) {
           File fmd = new File(path + filename);
           fmd.mkdirs();
           continue;
         }
         FileOutputStream fout = new FileOutputStream(path + filename);
         int count;
-        while ((count = zis.read(buffer)) != -1) {
+        while((count = zis.read(buffer)) != -1) {
           fout.write(buffer, 0, count);
         }
         fout.close();
         zis.closeEntry();
       }
       zis.close();
-    }
-    catch(IOException e) {
+    } catch(IOException e) {
       e.printStackTrace();
       return false;
     }

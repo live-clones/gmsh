@@ -337,10 +337,10 @@ int GmshBatch()
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear, true);
     else if(CTX::instance()->batch == 7)
       GModel::current()->classifySurfaces
-        (CTX::instance()->batchSomeValue * M_PI / 180., true, false);
+        (CTX::instance()->batchSomeValue * M_PI / 180., true, false, M_PI);
     else if(CTX::instance()->batch == 8){
       GModel::current()->classifySurfaces
-        (CTX::instance()->batchSomeValue * M_PI / 180., true, true);
+        (CTX::instance()->batchSomeValue * M_PI / 180., true, true, M_PI);
       GModel::current()->createGeometryOfDiscreteEntities();
     }
 #endif
@@ -408,7 +408,8 @@ int GmshFLTK(int argc, char **argv)
   FlGui::instance()->setFinishedProcessingCommandLine();
 
   if(CTX::instance()->post.combineTime) {
-    PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+    PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                   CTX::instance()->post.combineCopyOptions);
     FlGui::instance()->updateViews(true, true);
   }
 

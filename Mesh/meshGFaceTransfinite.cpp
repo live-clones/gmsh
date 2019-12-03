@@ -151,7 +151,7 @@ int MeshTransfiniteSurface(GFace *gf)
 {
   if(gf->meshAttributes.method != MESH_TRANSFINITE) return 0;
 
-  Msg::Info("Meshing surface %d (transfinite)", gf->tag());
+  Msg::Info("Meshing surface %d (Transfinite)", gf->tag());
 
   // make sure that all bounding edges have begin/end points: everything in here
   // depends on it
@@ -252,6 +252,7 @@ int MeshTransfiniteSurface(GFace *gf)
       return 0;
     }
   }
+
 
   std::vector<double> lengths_i;
   lengths_i.reserve(L);
@@ -400,6 +401,7 @@ int MeshTransfiniteSurface(GFace *gf)
     numSmooth = gf->meshAttributes.transfiniteSmoothing;
 
   if(corners.size() == 4 && numSmooth) {
+    printf("AAAAAAAAAa\n");
     std::vector<std::vector<double> > u(L + 1), v(L + 1);
     for(int i = 0; i <= L; i++) {
       u[i].resize(H + 1);

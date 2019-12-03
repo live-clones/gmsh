@@ -253,7 +253,7 @@ void meshGRegionExtruded::operator()(GRegion *gr)
 
   if(!ep || !ep->mesh.ExtrudeMesh || ep->geo.Mode != EXTRUDED_ENTITY) return;
 
-  Msg::Info("Meshing volume %d (extruded)", gr->tag());
+  Msg::Info("Meshing volume %d (Extruded)", gr->tag());
 
   // destroy the mesh if it exists
   deMeshGRegion dem;
@@ -304,7 +304,8 @@ static void deleteEdge(MVertex *v1, MVertex *v2,
 
 // subdivide the 3 lateral faces of each prism
 static void phase1(GRegion *gr, MVertexRTree &pos,
-                   std::set<std::pair<MVertex *, MVertex *> > &edges)
+                   std::set<std::pair<MVertex *, MVertex *> > &edges,
+                   int ntry)
 {
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   GFace *from = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
@@ -315,27 +316,28 @@ static void phase1(GRegion *gr, MVertexRTree &pos,
       for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
         std::vector<MVertex *> v;
         if(getExtrudedVertices(from->triangles[i], ep, j, k, pos, v) == 6) {
-#if 0 // old
-          if(!edgeExists(v[0], v[4], edges))
-            createEdge(v[1], v[3], edges);
-          if(!edgeExists(v[4], v[2], edges))
-            createEdge(v[1], v[5], edges);
-          if(!edgeExists(v[3], v[2], edges))
-            createEdge(v[0], v[5], edges);
-#else // new from Michel Benhamou
-          if(v[1] < v[0])
-            createEdge(v[1], v[3], edges);
-          else
-            createEdge(v[0], v[4], edges);
-          if(v[1] < v[2])
-            createEdge(v[1], v[5], edges);
-          else
-            createEdge(v[4], v[2], edges);
-          if(v[0] < v[2])
-            createEdge(v[0], v[5], edges);
-          else
-            createEdge(v[3], v[2], edges);
-#endif
+          if(ntry == 1){
+            if(!edgeExists(v[0], v[4], edges))
+              createEdge(v[1], v[3], edges);
+            if(!edgeExists(v[4], v[2], edges))
+              createEdge(v[1], v[5], edges);
+            if(!edgeExists(v[3], v[2], edges))
+              createEdge(v[0], v[5], edges);
+          }
+          else{ // from Michel Benhamou
+            if(v[1]->getNum() < v[0]->getNum())
+              createEdge(v[1], v[3], edges);
+            else
+              createEdge(v[0], v[4], edges);
+            if(v[1]->getNum() < v[2]->getNum())
+              createEdge(v[1], v[5], edges);
+            else
+              createEdge(v[4], v[2], edges);
+            if(v[0]->getNum() < v[2]->getNum())
+              createEdge(v[0], v[5], edges);
+            else
+              createEdge(v[3], v[2], edges);
+          }
         }
       }
     }
@@ -497,54 +499,83 @@ int SubdivideExtrudedMesh(GModel *m)
   }
 
   if(regions.empty()) return 0;
+
   Msg::Info("Subdividing extruded mesh");
 
-  // create edges on lateral sides of "prisms"
   std::set<std::pair<MVertex *, MVertex *> > edges;
-  for(std::size_t i = 0; i < regions.size(); i++)
-    phase1(regions[i], pos, edges);
 
-  // swap lateral edges to make them "tet-compatible"
-  int j = 0, swap;
-  std::set<std::pair<MVertex *, MVertex *> > edges_swap;
-  do {
-    swap = 0;
+  for(int ntry = 1; ntry <= 2; ntry++) {
+    // create edges on lateral sides of "prisms"
     for(std::size_t i = 0; i < regions.size(); i++)
-      phase2(regions[i], pos, edges, edges_swap, swap);
-    Msg::Info("Swapping %d", swap);
-    if(j && j == swap) {
-      Msg::Error("Unable to subdivide extruded mesh: change surface mesh or");
-      Msg::Error("recombine extrusion instead");
-      return -1;
-    }
-    j = swap;
-  } while(swap);
+      phase1(regions[i], pos, edges, ntry);
+    // swap lateral edges to make them "tet-compatible"
+    int j = 0, swap;
+    std::set<std::pair<MVertex *, MVertex *> > edges_swap;
+    do {
+      swap = 0;
+      for(std::size_t i = 0; i < regions.size(); i++)
+        phase2(regions[i], pos, edges, edges_swap, swap);
+      Msg::Info("Swapping %d", swap);
+      if(j && j == swap) {
+        if(ntry == 1) {
+          Msg::Info("Subdivision failed, trying alternative split");
+          edges.clear();
+          break;
+        }
+        else{
+          Msg::Error("Unable to subdivide extruded mesh: change surface mesh or");
+          Msg::Error("recombine extrusion instead");
+          return -1;
+        }
+      }
+      j = swap;
+    } while(swap);
+    if(!swap) break;
+  }
 
   // delete volume elements and create tetrahedra instead
   for(std::size_t i = 0; i < regions.size(); i++) {
     GRegion *gr = regions[i];
-
     for(std::size_t i = 0; i < gr->tetrahedra.size(); i++)
       delete gr->tetrahedra[i];
     gr->tetrahedra.clear();
     for(std::size_t i = 0; i < gr->hexahedra.size(); i++)
       delete gr->hexahedra[i];
     gr->hexahedra.clear();
-    for(std::size_t i = 0; i < gr->prisms.size(); i++) delete gr->prisms[i];
+    for(std::size_t i = 0; i < gr->prisms.size(); i++)
+      delete gr->prisms[i];
     gr->prisms.clear();
     for(std::size_t i = 0; i < gr->pyramids.size(); i++)
       delete gr->pyramids[i];
     gr->pyramids.clear();
     phase3(gr, pos, edges);
+  }
 
-    // re-Extrude bounding surfaces using edges as constraint
-    std::vector<GFace *> faces = gr->faces();
-    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-        it++) {
-      ExtrudeParams *ep = (*it)->meshAttributes.extrude;
+  // remesh bounding surfaces, to make them compatible with the volume mesh
+  std::set<GFace*> faces;
+  for(std::size_t i = 0; i < regions.size(); i++) {
+    GRegion *gr = regions[i];
+    std::vector<GFace *> f = gr->faces();
+    for(std::size_t i = 0; i < f.size(); i++){
+      ExtrudeParams *ep = f[i]->meshAttributes.extrude;
+      // TODO: this does not yet handle swapping of edges in COPIED_ENTITY
+      // surfaces, whose mesh is copied during extrusion (the "top"
+      // surface). PS: we will need to distinguish the old boundary layer case
+      // if we include these "copied" meshes
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
          !ep->mesh.Recombine) {
-        GFace *gf = *it;
+        f[i]->meshStatistics.status = GFace::PENDING;
+        faces.insert(f[i]);
+      }
+    }
+  }
+  int nIter = 0;
+  while(1) {
+    int nPending = 0;
+    for(std::set<GFace *>::iterator it = faces.begin(); it != faces.end();
+        it++) {
+      GFace *gf = *it;
+      if(gf->meshStatistics.status == GFace::PENDING){
         Msg::Info("Remeshing surface %d", gf->tag());
         for(std::size_t i = 0; i < gf->triangles.size(); i++)
           delete gf->triangles[i];
@@ -553,7 +584,13 @@ int SubdivideExtrudedMesh(GModel *m)
           delete gf->quadrangles[i];
         gf->quadrangles.clear();
         MeshExtrudedSurface(gf, &edges);
+        nPending++;
       }
+    }
+    if(!nPending) break;
+    if(nIter++ > 10){
+      Msg::Warning("Could not remesh all subdivided surfaces");
+      break;
     }
   }
 

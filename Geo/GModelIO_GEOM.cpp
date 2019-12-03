@@ -12,7 +12,7 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
 {
   for(int i = 0; i < num; i++) {
     if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)) {
-      Msg::Error("Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong node index %d", indices[i]);
       return false;
     }
     else
@@ -38,12 +38,12 @@ int GModel::readGEOM(const std::string &name)
   }
 
   if(!numNodes || !numElements) {
-    Msg::Warning("No vertices or elements found");
+    Msg::Warning("No nodes or elements found");
     fclose(fp);
     return 0;
   }
 
-  Msg::Info("%d vertices, %d elements", numNodes, numElements);
+  Msg::Info("%d nodes, %d elements", numNodes, numElements);
 
   std::vector<MVertex *> vertexVector;
   std::map<int, std::vector<MElement *> > elements[1];

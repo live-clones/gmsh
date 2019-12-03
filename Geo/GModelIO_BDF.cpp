@@ -174,7 +174,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
 
   // negative 'numVertices' gives the minimum required number of vertices
   if((int)fields.size() - 2 < abs(numVertices)) {
-    Msg::Error("Wrong number of vertices %d for element", fields.size() - 2);
+    Msg::Error("Wrong number of nodes %d for element", fields.size() - 2);
     return 0;
   }
 
@@ -196,7 +196,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
   for(int i = 0; i < numCheck; i++) {
     std::map<int, MVertex *>::iterator it = vertexMap.find(n[i]);
     if(it == vertexMap.end()) {
-      Msg::Error("Wrong vertex index %d", n[i]);
+      Msg::Error("Wrong node index %d", n[i]);
       return 0;
     }
     vertices.push_back(it->second);
@@ -230,7 +230,7 @@ int GModel::readBDF(const std::string &name)
       }
     }
   }
-  Msg::Info("%d vertices", vertexMap.size());
+  Msg::Info("%d nodes", vertexMap.size());
 
   rewind(fp);
   while(!feof(fp)) {

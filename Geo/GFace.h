@@ -37,7 +37,7 @@ protected:
   GRegion *r1, *r2;
   mean_plane meanPlane;
   std::vector<GEdge *> embedded_edges;
-  std::set<GVertex *, GEntityLessThan> embedded_vertices;
+  std::set<GVertex *, GEntityPtrLessThan> embedded_vertices;
 
   BoundaryLayerColumns _columns;
 
@@ -120,7 +120,7 @@ public:
 
   // direct access to embedded entities
   std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
-  std::set<GVertex *, GEntityLessThan> &embeddedVertices()
+  std::set<GVertex *, GEntityPtrLessThan> &embeddedVertices()
   {
     return embedded_vertices;
   }
@@ -304,15 +304,35 @@ public:
     // reverse mesh orientation
     bool reverseMesh;
     // global mesh size constraint for the surface
-    double meshSize;
+    double meshSize, meshSizeFactor;
+    // do we force the meshing algorithm (if != 0)
+    int algorithm;
+    // do we force calculation of mesh size from boundary (if >= 0)
+    int meshSizeFromBoundary;
   } meshAttributes;
 
   int getMeshingAlgo() const;
-  void setMeshingAlgo(int) const;
-  void unsetMeshingAlgo() const;
-  int getCurvatureControlParameter() const;
-  void setCurvatureControlParameter(int);
-  virtual double getMeshSize() const { return meshAttributes.meshSize; }
+  void setMeshingAlgo(int val)
+  {
+    meshAttributes.algorithm = val;
+  }
+  void unsetMeshingAlgo()
+  {
+    meshAttributes.algorithm = 0;
+  }
+  int getMeshSizeFromBoundary() const;
+  void setMeshSizeFromBoundary(int val)
+  {
+    meshAttributes.meshSizeFromBoundary = val;
+  }
+  virtual double getMeshSize() const
+  {
+    return meshAttributes.meshSize;
+  }
+  virtual double getMeshSizeFactor() const
+  {
+    return meshAttributes.meshSizeFactor;
+  }
 
   struct {
     mutable GEntity::MeshGenerationStatus status;

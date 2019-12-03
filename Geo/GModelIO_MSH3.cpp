@@ -284,8 +284,8 @@ int GModel::_readMSH3(const std::string &name)
         fclose(fp);
         return 0;
       }
-      Msg::Info("%d vertices", numVertices);
-      Msg::ResetProgressMeter();
+      Msg::Info("%d nodes", numVertices);
+      Msg::StartProgressMeter(numVertices);
       _vertexMapCache.clear();
       _vertexVectorCache.clear();
       int maxVertex = -1;
@@ -398,7 +398,7 @@ int GModel::_readMSH3(const std::string &name)
             vertex = new MVertex(xyz[0], xyz[1], xyz[2], gr, num);
           } break;
           default:
-            Msg::Error("Wrong entity dimension for vertex %d", num);
+            Msg::Error("Wrong entity dimension for node %d", num);
             fclose(fp);
             return 0;
           }
@@ -406,11 +406,12 @@ int GModel::_readMSH3(const std::string &name)
         minVertex = std::min(minVertex, num);
         maxVertex = std::max(maxVertex, num);
         if(_vertexMapCache.count(num))
-          Msg::Warning("Skipping duplicate vertex %d", num);
+          Msg::Warning("Skipping duplicate node %d", num);
         _vertexMapCache[num] = vertex;
         if(numVertices > 100000)
-          Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");
+          Msg::ProgressMeter(i + 1, true, "Reading nodes");
       }
+      Msg::StopProgressMeter();
       // if the vertex numbering is dense, transfer the map into a vector to
       // speed up element creation
       if((int)_vertexMapCache.size() == numVertices &&
@@ -442,7 +443,7 @@ int GModel::_readMSH3(const std::string &name)
         return 0;
       }
       Msg::Info("%d elements", numElements);
-      Msg::ResetProgressMeter();
+      Msg::StartProgressMeter(numElements);
       for(int i = 0; i < numElements; i++) {
         int num, type, entity, numData;
         if(!binary) {
@@ -512,8 +513,9 @@ int GModel::_readMSH3(const std::string &name)
         case TYPE_POLYH: elements[10][entity].push_back(element); break;
         }
         if(numElements > 100000)
-          Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
+          Msg::ProgressMeter(i + 1, true, "Reading elements");
       }
+      Msg::StopProgressMeter();
     }
 
     // $Periodical section

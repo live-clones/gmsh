@@ -34,8 +34,10 @@ private:
   // verbosity level (0: silent except fatal errors, 1: +errors, 2: +warnings,
   // 3: +direct, 4: +info, 5 (=normal): +statusbar, 99: debug)
   static int _verbosity;
-  // step (in %) of the progress meter and current progress %
+  // step (in %) of the progress meter and current progress (in %)
   static int _progressMeterStep, _progressMeterCurrent;
+  // total number of items considered in the current progress meter calculation
+  static int _progressMeterTotal;
   // timers
   static std::map<std::string, double> _timers;
   // report cpu time for each info message?
@@ -88,7 +90,6 @@ public:
   static std::map<std::string, std::string> &GetCommandLineStrings();
   static std::string PrintResources(bool printDate, bool printWallTime,
                                     bool printCpu, bool printMem);
-  static void Fatal(const char *fmt, ...);
   static void Error(const char *fmt, ...);
   static void Warning(const char *fmt, ...);
   static void Info(const char *fmt, ...);
@@ -99,10 +100,11 @@ public:
   static void StatusGl(const char *fmt, ...);
   static void SetWindowTitle(const std::string &title);
   static void Debug(const char *fmt, ...);
-  static void ProgressMeter(int n, int N, bool log, const char *fmt, ...);
+  static void StartProgressMeter(int ntotal);
+  static void ProgressMeter(int n, bool log, const char *fmt, ...);
+  static void StopProgressMeter();
   static void SetProgressMeterStep(int step);
   static int GetProgressMeterStep();
-  static void ResetProgressMeter();
   static void SetInfoCpu(bool val);
   static double &Timer(const std::string &str);
   static void PrintTimers();
