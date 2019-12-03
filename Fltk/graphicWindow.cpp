@@ -481,7 +481,12 @@ static void file_export_cb(Fl_Widget *w, void *data)
  test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Export", pat)) {
     std::string name = fileChooserGetName(1);
-    if(CTX::instance()->confirmOverwrite) {
+    bool confirmOverwrite = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+    // handled directly by the native macOS file chooser
+    if(CTX::instance()->nativeFileChooser) confirmOverwrite = false;
+#endif
+    if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
@@ -517,7 +522,12 @@ static void file_rename_cb(Fl_Widget *w, void *data)
  test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Rename", "")) {
     std::string name = fileChooserGetName(1);
-    if(CTX::instance()->confirmOverwrite) {
+    bool confirmOverwrite = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+    // handled directly by the native macOS file chooser
+    if(CTX::instance()->nativeFileChooser) confirmOverwrite = false;
+#endif
+    if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))

@@ -162,7 +162,12 @@ static void view_save_cb(Fl_Widget *w, void *data)
   if(fileChooser(FILE_CHOOSER_CREATE, "Export", formats,
                  view->getData()->getFileName().c_str())) {
     std::string name = fileChooserGetName(1);
-    if(CTX::instance()->confirmOverwrite) {
+    bool confirmOverwrite = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+    // handled directly by the native macOS file chooser
+    if(CTX::instance()->nativeFileChooser) confirmOverwrite = false;
+#endif
+    if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
