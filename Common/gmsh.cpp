@@ -2217,6 +2217,24 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       basis->generateBasis(u, v, w, vTable, eTable, fTable, bTable);
       size_t indexNumElement = 0;
       int const2 = i * numFunctionsPerElement;
+      // compute only one time the value of the edge basis functions for
+      // each possible orientations
+      std::vector<double> eTableNegativeFlag(eSize);
+      for(int r = 0; r < eSize; r++) { eTableNegativeFlag[r] = eTable[r]; }
+      if(eSize > 0) {
+        basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag);
+      }
+      // compute only one time the value of the face basis functions for
+      // each possible orientations
+      std::vector<double> quadFaceFunctionsAllOrientations(
+        basis->getnQuadFaceFunction() * 8, 0);
+      std::vector<double> triFaceFunctionsAllOrientations(
+        basis->getnTriFaceFunction() * 6, 0);
+      if(fSize > 0) {
+        basis->addAllOrientedFaceFunctions(u, v, w, fTable,
+                                           quadFaceFunctionsAllOrientations,
+                                           triFaceFunctionsAllOrientations);
+      }
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -2224,8 +2242,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           std::size_t const3 = indexNumElement * const1 + const2;
           MElement *e = ge->getMeshElementByType(familyType, j);
           std::vector<double> eTableCopy(
-            eSize); // use eTableCopy to orient the edges
-          for(int r = 0; r < eSize; r++) { eTableCopy[r] = eTable[r]; }
+            eSize, 0); // use eTableCopy to orient the edges
           if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
@@ -2237,7 +2254,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               else {
                 orientationFlag = 1;
               }
-              basis->orientEdge(orientationFlag, jj, eTableCopy);
+              basis->orientEdge(orientationFlag, jj, eTableCopy, eTable,
+                                eTableNegativeFlag);
             }
           }
           std::vector<double> fTableCopy(fSize);
@@ -2248,9 +2266,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               MFace face = e->getFaceSolin(jj);
               std::vector<int> faceOrientationFlag(3);
               face.getOrientationFlagForFace(faceOrientationFlag);
-              basis->orientFace(u, v, w, faceOrientationFlag[0],
-                                faceOrientationFlag[1], faceOrientationFlag[2],
-                                jj, fTableCopy);
+              basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1],
+                                faceOrientationFlag[2], jj,
+                                quadFaceFunctionsAllOrientations,
+                                triFaceFunctionsAllOrientations, fTableCopy);
             }
           }
           for(int k = 0; k < vSize; k++) {
@@ -2294,6 +2313,28 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       basis->generateBasis(u, v, w, vTable, eTable, fTable, bTable, fsName);
       int const2 = i * numFunctionsPerElement * numComponents;
       size_t indexNumElement = 0;
+      // compute all edge functions for all  possible orientation
+      std::vector<std::vector<double> > eTableNegativeFlag(
+        eSize, std::vector<double>(3, 0));
+      for(int r = 0; r < eSize; r++) {
+        eTableNegativeFlag[r][0] = eTable[r][0];
+        eTableNegativeFlag[r][1] = eTable[r][1];
+        eTableNegativeFlag[r][2] = eTable[r][2];
+      }
+      if(eSize > 0) {
+        basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag);
+      }
+      // compute only one time the value of the face basis functions for
+      // each possible orientations
+      std::vector<std::vector<double> > quadFaceFunctionsAllOrientations(
+        basis->getnQuadFaceFunction() * 8, std::vector<double>(3, 0));
+      std::vector<std::vector<double> > triFaceFunctionsAllOrientations(
+        basis->getnTriFaceFunction() * 6, std::vector<double>(3, 0));
+      if(fSize > 0) {
+        basis->addAllOrientedFaceFunctions(
+          u, v, w, fTable, quadFaceFunctionsAllOrientations,
+          triFaceFunctionsAllOrientations, fsName);
+      }
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -2302,11 +2343,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           MElement *e = ge->getMeshElementByType(familyType, j);
           std::vector<std::vector<double> > eTableCopy(
             eSize, std::vector<double>(3, 0.));
-          for(int r = 0; r < eSize; r++) {
-            eTableCopy[r][0] = eTable[r][0];
-            eTableCopy[r][1] = eTable[r][1];
-            eTableCopy[r][2] = eTable[r][2];
-          }
           if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
@@ -2319,25 +2355,22 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               else {
                 orientationFlag = 1;
               }
-              basis->orientEdge(orientationFlag, jj, eTableCopy);
+              basis->orientEdge(orientationFlag, jj, eTableCopy, eTable,
+                                eTableNegativeFlag);
             }
           }
           std::vector<std::vector<double> > fTableCopy(
             fSize, std::vector<double>(3, 0.));
-          for(int r = 0; r < fSize; r++) {
-            fTableCopy[r][0] = fTable[r][0];
-            fTableCopy[r][1] = fTable[r][1];
-            fTableCopy[r][2] = fTable[r][2];
-          }
           if(fSize > 0) {
             for(int jj = 0;
                 jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
               MFace face = e->getFaceSolin(jj);
               std::vector<int> faceOrientationFlag(3);
               face.getOrientationFlagForFace(faceOrientationFlag);
-              basis->orientFace(u, v, w, faceOrientationFlag[0],
-                                faceOrientationFlag[1], faceOrientationFlag[2],
-                                jj, fTableCopy, fsName);
+              basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1],
+                                faceOrientationFlag[2], jj,
+                                quadFaceFunctionsAllOrientations,
+                                triFaceFunctionsAllOrientations, fTableCopy);
             }
           }
           std::size_t const4 = const3 + prod1;
