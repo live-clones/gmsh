@@ -14,32 +14,19 @@
 
 #if defined(HAVE_LIBCGNS)
 
-bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
-                     const std::vector<std::vector<MElement *> > &eltPerZone,
-                     const std::string &fileName)
+
+namespace {
+
+
+typedef std::pair<std::string, std::string> SolFieldName;
+
+
+int readFlowSolutionNames(int fileIndex, int baseIndex, int nbZone,
+                          std::map<SolFieldName,
+                                   PViewDataGModel::DataType> &fields)
 {
   int cgnsErr;
 
-  // open CGNS file and read scale
-  int fileIndex = 0;
-  cgnsErr = cg_open(fileName.c_str(), CG_MODE_READ, &fileIndex);
-  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-
-  // read base node
-  const int baseIndex = 1;
-  int dim = 0, meshDim = 0;
-  char baseName[CGNS_MAX_STR_LEN];
-  cgnsErr = cg_base_read(fileIndex, baseIndex, baseName, &meshDim, &dim);
-  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-
-  // read number of zones
-  int nbZone = 0;
-  cgnsErr = cg_nzones(fileIndex, baseIndex, &nbZone);
-  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-
-  // get flow solutions names
-  typedef std::pair<std::string, std::string> SolFieldName;
-  std::map<SolFieldName, PViewDataGModel::DataType> fields;
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     // get number of flow solutions in zone
     int nbZoneSol;
@@ -89,8 +76,18 @@ bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
     }
   }
 
-  // read field data
-  typedef std::map<SolFieldName, PViewDataGModel::DataType>::iterator FieldIter;
+  return 1;
+}
+
+
+bool readFieldData(const std::vector<std::vector<MVertex *> > &vertPerZone,
+                   const std::vector<std::vector<MElement *> > &eltPerZone,
+                   const std::string &fileName, int fileIndex, int baseIndex,
+                   const std::map<SolFieldName,
+                                  PViewDataGModel::DataType> &fields)
+{
+  typedef std::map<SolFieldName,
+                   PViewDataGModel::DataType>::const_iterator FieldIter;
   int index = -1;
   for(FieldIter it = fields.begin(); it != fields.end(); ++it) {
     // field name and type
@@ -101,7 +98,7 @@ bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
     // either get existing view data, or create new one
     const std::string fullFieldName = solFieldName.first + "_" +
                                       solFieldName.second;
-    PView *p = getViewByName(fullFieldName, -1, -1); // DBGTT: to be checked for multi-file
+    PView *p = PView::getViewByName(fullFieldName, -1, -1); // DBGTT: to be checked for multi-file
     PViewDataGModel *d;
     bool create;
     if(p != 0) {
@@ -128,6 +125,46 @@ bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
     }
   }
 
+  return true;
+}
+
+
+}
+
+
+bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
+                     const std::vector<std::vector<MElement *> > &eltPerZone,
+                     const std::string &fileName)
+{
+  int cgnsErr;
+
+  // open CGNS file and read scale
+  int fileIndex = 0;
+  cgnsErr = cg_open(fileName.c_str(), CG_MODE_READ, &fileIndex);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+  // read base node
+  const int baseIndex = 1;
+  int dim = 0, meshDim = 0;
+  char baseName[CGNS_MAX_STR_LEN];
+  cgnsErr = cg_base_read(fileIndex, baseIndex, baseName, &meshDim, &dim);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+  // read number of zones
+  int nbZone = 0;
+  cgnsErr = cg_nzones(fileIndex, baseIndex, &nbZone);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+  // get flow solutions names
+  std::map<SolFieldName, PViewDataGModel::DataType> fields;
+  int err = readFlowSolutionNames(fileIndex, baseIndex, nbZone, fields);
+  if(err == 0) return 0;
+
+  // read field data
+  bool err2 = readFieldData(vertPerZone, eltPerZone, fileName, fileIndex,
+                            baseIndex, fields);
+  if(!err2) return false;
+
   // close file
   cgnsErr = cg_close(fileIndex);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__);
@@ -135,7 +172,9 @@ bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
   return true;
 }
 
+
 #else
+
 
 bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
                      const std::vector<std::vector<MElement *> > &eltPerZone,
@@ -145,5 +184,6 @@ bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
              fileName.c_str());
   return false;
 }
+
 
 #endif

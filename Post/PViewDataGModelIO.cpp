@@ -497,8 +497,6 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
 
   // loop over zones
   for(int iZone = 1; iZone <= nbZone; iZone++) {
-    Msg::Info("DBGTT: vertPerZone.size() = %i, vertPerZone[1].size() = %i", vertPerZone.size(), vertPerZone[1].size());
-    Msg::Info("DBGTT: eltPerZone.size() = %i, eltPerZone[1].size() = %i", eltPerZone.size(), eltPerZone[1].size());
     // get number of flow solutions in zone
     int nbZoneSol;
     cgnsErr = cg_nsols(fileIndex, baseIndex, iZone, &nbZoneSol);
@@ -596,6 +594,7 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
                         const std::vector<std::vector<MVertex *> > &vertPerZone,
                         const std::vector<std::vector<MElement *> > &eltPerZone)
 {
+  return false;
 }
 
 #endif

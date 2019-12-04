@@ -77,12 +77,9 @@ int GModel::readCGNS(const std::string &name,
     if(!postpro) {
       vertPerZone[iZone].clear();
       eltPerZone[iZone].clear();
-      Msg::Info("DBGTT: cleared vertPerZone in zone %i", iZone);
     }
     if(err == 0) return 0;
   }
-  Msg::Info("DBGTT: vertPerZone.size() = %i, vertPerZone[1].size() = %i", vertPerZone.size(), vertPerZone[1].size());
-  Msg::Info("DBGTT: eltPerZone.size() = %i, eltPerZone[1].size() = %i", eltPerZone.size(), eltPerZone[1].size());
 
   // set periodic vertices in each zone
   for(int iZone = 1; iZone <= nbZone; iZone++) {
