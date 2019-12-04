@@ -63,14 +63,14 @@ void PViewDataList::setXYZV(std::vector<double> &x, std::vector<double> &y,
 
 void PViewDataList::addStep(std::vector<double> &y)
 {
-  if(y.size() != NbSP || !NbSP) {
-    Msg::Error("Wrong number of values in addStep");
+  if(NbSP != (int)y.size()) {
+    Msg::Error("Wrong number of values while adding step in list-based view");
     return;
   }
   // This is not very efficient, but well... ;-)
   std::vector<double> tmp;
   int stride = SP.size() / NbSP;
-  for(std::size_t i = 0; i < NbSP; i++) {
+  for(int i = 0; i < NbSP; i++) {
     for(int j = 0; j < stride; j++)
       tmp.push_back(SP[i * stride + j]);
     tmp.push_back(y[i]);
