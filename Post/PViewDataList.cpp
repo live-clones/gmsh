@@ -61,6 +61,25 @@ void PViewDataList::setXYZV(std::vector<double> &x, std::vector<double> &y,
   finalize();
 }
 
+void PViewDataList::addStep(std::vector<double> &y)
+{
+  if(y.size() != NbSP || !NbSP) {
+    Msg::Error("Wrong number of values in addStep");
+    return;
+  }
+  // This is not very efficient, but well... ;-)
+  std::vector<double> tmp;
+  int stride = SP.size() / NbSP;
+  for(std::size_t i = 0; i < NbSP; i++) {
+    for(int j = 0; j < stride; j++)
+      tmp.push_back(SP[i * stride + j]);
+    tmp.push_back(y[i]);
+  }
+  SP = tmp;
+  finalize();
+}
+
+
 bool PViewDataList::finalize(bool computeMinMax,
                              const std::string &interpolationScheme)
 {

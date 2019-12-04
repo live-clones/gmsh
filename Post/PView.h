@@ -62,6 +62,8 @@ public:
   // add a new time step to a given mesh-based view
   void addStep(GModel *model, const std::map<int, std::vector<double> > &data,
                double time = 0., int numComp = -1);
+  // add a new step to a list-based scalar point dataset
+  void addStep(std::vector<double> &y);
 
   // default destructor
   ~PView();
