@@ -16,12 +16,13 @@
 namespace {
 
 
-void createElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
-                   const std::vector<MVertex *> &allVert,
-                   std::map<int, std::vector<MElement *> > *allElt,
-                   const std::vector<cgsize_t> &sectData,
-                   const ZoneEltNodeTransfo *eltNodeTransfo,
-                   const std::vector<SPoint3> &rawNode, std::size_t &iSectData)
+MElement *createElement(ElementType_t sectEltType, std::size_t vertShift,
+                        int entity, const std::vector<MVertex *> &allVert,
+                        std::map<int, std::vector<MElement *> > *allElt,
+                        const std::vector<cgsize_t> &sectData,
+                        const ZoneEltNodeTransfo *eltNodeTransfo,
+                        const std::vector<SPoint3> &rawNode,
+                        std::size_t &iSectData)
 {
   // get element type
   ElementType_t eltType;
@@ -94,6 +95,8 @@ void createElement(ElementType_t sectEltType, std::size_t vertShift, int entity,
   case TYPE_POLYH: allElt[9][entity].push_back(e); break;
   default: Msg::Error("Wrong type of element");
   }
+
+  return e;
 }
 
 
@@ -121,7 +124,8 @@ int CGNSZoneUnstruct::readSection(int iSect,
                                   const std::vector<MVertex *> &allVert,
                                   const std::vector<SPoint3> &rawNode,
                                   std::map<int,
-                                           std::vector<MElement *> > *allElt)
+                                           std::vector<MElement *> > *allElt,
+                                  std::vector<MElement *> &zoneElt)
 {
   int cgnsErr;
 
@@ -170,8 +174,10 @@ int CGNSZoneUnstruct::readSection(int iSect,
   for(int iElt = iStartElt; iElt <= iEndElt; iElt++) {
     const std::map<int, int>::const_iterator it = elt2Geom().find(iElt);
     const int entity = (it == elt2Geom().end()) ? 1 : it->second;
-    createElement(sectEltType, startNode(), entity, allVert, allElt, sectData,
-                  eltNodeTransfo(), rawNode, iSectData);
+    MElement *me = createElement(sectEltType, startNode(), entity, allVert,
+                                 allElt, sectData, eltNodeTransfo(), rawNode,
+                                 iSectData);
+    zoneElt.push_back(me);
   }
 
   return 1;
@@ -180,6 +186,7 @@ int CGNSZoneUnstruct::readSection(int iSect,
 
 int CGNSZoneUnstruct::readElements(std::vector<MVertex *> &allVert,
                                 std::map<int, std::vector<MElement *> > *allElt,
+                                std::vector<MElement *> &zoneElt,
                                 std::vector<std::string> &allGeomName)
 {
   int cgnsErr;
@@ -201,8 +208,9 @@ int CGNSZoneUnstruct::readElements(std::vector<MVertex *> &allVert,
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // read sections of element-vertex connectivity
+  zoneElt.reserve(nbElt());
   for(int iSect = 1; iSect <= nbSect; iSect++) {
-    int err = readSection(iSect, allVert, rawNode, allElt);
+    int err = readSection(iSect, allVert, rawNode, allElt, zoneElt);
     if(err == 0) return 0;
   }
 

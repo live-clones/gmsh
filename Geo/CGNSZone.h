@@ -71,10 +71,11 @@ public:
                             std::vector<std::string> &allGeomName);
 
   int readVertices(int dim, double scale, std::vector<CGNSZone *> &allZones,
-                   std::vector<MVertex *> &allVert);
+                   std::vector<MVertex *> &zoneVert);
 
   virtual int readElements(std::vector<MVertex *> &allVert,
                            std::map<int, std::vector<MElement *> > *allElt,
+                           std::vector<MElement *> &zoneElt,
                            std::vector<std::string> &allGeomName) = 0;
 
   virtual int readConnectivities(const std::map<std::string, int> &name2Zone,
@@ -83,6 +84,8 @@ public:
   int readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
                std::vector<MVertex *> &allVert,
                std::map<int, std::vector<MElement *> > *allElt,
+               std::vector<MVertex *> &zoneVert,
+               std::vector<MElement *> &zoneElt,
                std::vector<std::string> &allGeomName);
 
   void setPeriodicVertices(const std::vector<CGNSZone *> &allZones,

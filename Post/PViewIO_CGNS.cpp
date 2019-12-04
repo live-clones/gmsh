@@ -14,7 +14,9 @@
 
 #if defined(HAVE_LIBCGNS)
 
-bool PView::readCGNS(const std::string &fileName, int fileNum)
+bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
+                     const std::vector<std::vector<MElement *> > &eltPerZone,
+                     const std::string &fileName)
 {
   int cgnsErr;
 
@@ -45,7 +47,6 @@ bool PView::readCGNS(const std::string &fileName, int fileNum)
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
     // get names of solution fields in each zone
-    // DBGTT: TODO: compute number of values to give resize data for optimization?
     for(int iZoneSol = 1; iZoneSol <= nbZoneSol; iZoneSol++) {
       // get FlowSolution info
       char rawSolName[CGNS_MAX_STR_LEN];
@@ -90,16 +91,17 @@ bool PView::readCGNS(const std::string &fileName, int fileNum)
 
   // read field data
   typedef std::map<SolFieldName, PViewDataGModel::DataType>::iterator FieldIter;
+  int index = -1;
   for(FieldIter it = fields.begin(); it != fields.end(); ++it) {
     // field name and type
     const SolFieldName &solFieldName = it->first;
     const PViewDataGModel::DataType &fieldType = it->second;
-    Msg::Info("DBGTT: flow solution found: ('%s', '%s') of type %i", solFieldName.first.c_str(), solFieldName.second.c_str(), fieldType);
+    index++;
     
     // either get existing view data, or create new one
     const std::string fullFieldName = solFieldName.first + "_" +
                                       solFieldName.second;
-    PView *p = getViewByName(fullFieldName, -1, -1, fileName); // DBGTT: to be checked for multi-file
+    PView *p = getViewByName(fullFieldName, -1, -1); // DBGTT: to be checked for multi-file
     PViewDataGModel *d;
     bool create;
     if(p != 0) {
@@ -112,10 +114,17 @@ bool PView::readCGNS(const std::string &fileName, int fileNum)
     }
 
     // read view data
-    if(!d->readCGNS(solFieldName, fileName, fileIndex, baseIndex)) {
+    if(!d->readCGNS(solFieldName, fileName, fileIndex, baseIndex, vertPerZone,
+                    eltPerZone)) {
       Msg::Error("Could not read data in CGNS file '%s'", fileName);
       if(create) delete d;
       return false;
+    }
+    else {
+      d->setName(fullFieldName);
+      d->setFileName(fileName);
+      d->setFileIndex(index);
+      if(create) new PView(d);
     }
   }
 

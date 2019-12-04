@@ -39,6 +39,7 @@ public:
 
   virtual int readElements(std::vector<MVertex *> &allVert,
                            std::map<int, std::vector<MElement *> > *allElt,
+                           std::vector<MElement *> &zoneElt,
                            std::vector<std::string> &allGeomName);
 
   virtual int readConnectivities(const std::map<std::string, int> &name2Zone,
@@ -48,9 +49,9 @@ protected:
   int readOneInterface(int iConnect,
                        const std::map<std::string, int> &name2Zone,
                        std::vector<CGNSZone *> &allZones);
-  void makeBndElement(const cgsize_t *ijk, const int *dir, int order,
-                      int defaultEntity, std::vector<MVertex *> &allVert,
-                      std::map<int, std::vector<MElement *> > *allElt);
+  MElement *makeBndElement(const cgsize_t *ijk, const int *dir, int order,
+                           int defaultEntity, std::vector<MVertex *> &allVert,
+                           std::map<int, std::vector<MElement *> > *allElt);
 };
 
 

@@ -132,7 +132,7 @@ int CGNSZone::readBoundaryCondition(int iZoneBC,
 
 int CGNSZone::readVertices(int dim, double scale,
                            std::vector<CGNSZone *> &allZones,
-                           std::vector<MVertex *> &allVert)
+                           std::vector<MVertex *> &zoneVert)
 {
   int cgnsErr;
 
@@ -166,12 +166,12 @@ int CGNSZone::readVertices(int dim, double scale,
   }
 
   // create vertices
-  allVert.reserve(startNode()+nbNode());
+  zoneVert.reserve(nbNode());
   for(int i = 0; i < nbNode(); i++) {
     const double x = xyz[0][i] * scale;
     const double y = (dim > 1) ? xyz[1][i] * scale : 0.;
     const double z = (dim > 2) ? xyz[2][i] * scale : 0.;
-    allVert.push_back(new MVertex(x, y, z));
+    zoneVert.push_back(new MVertex(x, y, z));
   }
 
   return 1;
@@ -227,12 +227,12 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
 
     // check if connection type is OK
     if(connectType != Abutting1to1) {
-      Msg::Error("Non-conformal connection not supported in CGNS reader");
-      return 0;
+      Msg::Warning("Non-conformal connection not supported in CGNS reader");
+      continue;
     }
     if(location != Vertex) {
-      Msg::Error("Only vertex connections are supported in CGNS reader");
-      return 0;
+      Msg::Warning("Only vertex connections are supported in CGNS reader");
+      continue;
     }
 
     // get and check data on master zone
@@ -288,6 +288,8 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
 int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
                        std::vector<MVertex *> &allVert,
                        std::map<int, std::vector<MElement *> > *allElt,
+                       std::vector<MVertex *> &zoneVert,
+                       std::vector<MElement *> &zoneElt,
                        std::vector<std::string> &allGeomName)
 {
   // read boundary conditions for classification of mesh on geometry
@@ -303,11 +305,12 @@ int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
   }
 
   // read and create vertices
-  int errVert = readVertices(dim, scale, allZones, allVert);
+  int errVert = readVertices(dim, scale, allZones, zoneVert);
   if(errVert == 0) return 0;
+  allVert.insert(allVert.end(), zoneVert.begin(), zoneVert.end());
 
   // read and create elements
-  int err = readElements(allVert, allElt, allGeomName);
+  int err = readElements(allVert, allElt, zoneElt, allGeomName);
   if(err == 0) return 0;
 
   // cleanup unncessary memory

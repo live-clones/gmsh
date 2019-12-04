@@ -474,15 +474,16 @@ void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
 bool PViewDataGModel::readCGNS(const std::pair<std::string,
                                                std::string> &solFieldName,
                                const std::string &fileName, int fileIndex,
-                               int baseIndex)
+                               int baseIndex,
+                        const std::vector<std::vector<MVertex *> > &vertPerZone,
+                        const std::vector<std::vector<MElement *> > &eltPerZone)
 {
   static const int numComp = 1;
-  // _steps.push_back(new stepData<double>(GModel::current(), numComp)); // DBGTT check numComp
   _steps.push_back(new stepData<double>(GModel::current(), numComp)); // DBGTT check numComp
   _steps.back()->fillEntities();
   _steps.back()->computeBoundingBox();
   _steps.back()->setFileName(fileName);
-  _steps.back()->setFileIndex(0);
+  _steps.back()->setFileIndex(-1);
   _steps.back()->setTime(0.);
 
   // _steps.back()->resizeData(numEnt); // DBGTT to be optimized?
@@ -495,8 +496,9 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
   // loop over zones
-  int num = 0;
   for(int iZone = 1; iZone <= nbZone; iZone++) {
+    Msg::Info("DBGTT: vertPerZone.size() = %i, vertPerZone[1].size() = %i", vertPerZone.size(), vertPerZone[1].size());
+    Msg::Info("DBGTT: eltPerZone.size() = %i, eltPerZone[1].size() = %i", eltPerZone.size(), eltPerZone[1].size());
     // get number of flow solutions in zone
     int nbZoneSol;
     cgnsErr = cg_nsols(fileIndex, baseIndex, iZone, &nbZoneSol);
@@ -514,7 +516,6 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
       if(std::string(rawSolName) != solFieldName.first) continue;
 
       // get number of values
-      // DBGTT: TODO: add check for zone typê
       char zoneName[CGNS_MAX_STR_LEN];
       cgsize_t zoneSize[9];
       cgnsErr = cg_zone_read(fileIndex, baseIndex, iZone, zoneName, zoneSize);
@@ -552,8 +553,14 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
                                 static_cast<void *>(data.data()));
         if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
         for(int iEnt = 0; iEnt < nbEnt; iEnt++) {
-          num++;
-          double *d = _steps.back()->getData(num, true, 1); // DBGTT: to be adjusted for mult
+          int entNum = 0;
+          if(getType() == NodeData) {
+            entNum = vertPerZone[iZone][iEnt]->getNum();
+          }
+          else if(getType() == ElementData) {
+            entNum = eltPerZone[iZone][iEnt]->getNum();
+          }
+          double *d = _steps.back()->getData(entNum, true, 1); // DBGTT: to be adjusted for mult
           *d = data[iEnt];
           // compute min/max here to avoid calling finalize(true) later:
           // this would be very slow for large multi-step, multi-partition
@@ -577,7 +584,6 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
   }
 
   finalize(false);
-  
   return true;
 }
 

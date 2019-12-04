@@ -61,10 +61,10 @@ cgsize_t nbTotFromIJK<3>(const cgsize_t *nijk)
 
 
 template<int DIM>
-void createElement(const cgsize_t *ijk, const cgsize_t *nijk,
-                   int order, std::size_t vertShift,
-                   std::vector<MVertex *> &allVert,
-                   std::map<int, std::vector<MElement *> > *allElt);
+MElement *createElement(const cgsize_t *ijk, const cgsize_t *nijk,
+                        int order, std::size_t vertShift,
+                        std::vector<MVertex *> &allVert,
+                        std::map<int, std::vector<MElement *> > *allElt);
 
 
 void initLinShift(int order, int *shift)
@@ -95,10 +95,10 @@ void initHexShift(int order, int *shift)
 
 
 template<>
-void createElement<2>(const cgsize_t *ijk, const cgsize_t *nijk, 
-                      int order, std::size_t vertShift,
-                      std::vector<MVertex *> &allVert,
-                      std::map<int, std::vector<MElement *> > *allElt)
+MElement *createElement<2>(const cgsize_t *ijk, const cgsize_t *nijk, 
+                           int order, std::size_t vertShift,
+                           std::vector<MVertex *> &allVert,
+                           std::map<int, std::vector<MElement *> > *allElt)
 {
   // node shift from (i, j, k) depending on order
   static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
@@ -131,14 +131,16 @@ void createElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
   // add element to data structure
   int entity = 1;
   allElt[3][entity].push_back(e);
+
+  return e;
 }
 
 
 template<>
-void createElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
-                      int order, std::size_t vertShift,
-                      std::vector<MVertex *> &allVert,
-                      std::map<int, std::vector<MElement *> > *allElt)
+MElement *createElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
+                           int order, std::size_t vertShift,
+                           std::vector<MVertex *> &allVert,
+                           std::map<int, std::vector<MElement *> > *allElt)
 {
   // node shift from (i, j, k) depending on order
   static bool isShiftInit[4] = {false, false, false, false};
@@ -193,23 +195,27 @@ void createElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
   // add element to data structure
   int entity = 1;
   allElt[5][entity].push_back(e);
+
+  return e;
 }
 
 
 template<int DIM>
-void createBndElement(const cgsize_t *ijk, const cgsize_t *nijk, const int *dir,
-                      int order, int entity, std::size_t vertShift,
-                      std::vector<MVertex *> &allVert,
-                      std::map<int, std::vector<MElement *> > *allElt,
-                      const std::vector<bool> &interfaceNode);
+MElement *createBndElement(const cgsize_t *ijk, const cgsize_t *nijk,
+                           const int *dir, int order, int entity,
+                           std::size_t vertShift,
+                           std::vector<MVertex *> &allVert,
+                           std::map<int, std::vector<MElement *> > *allElt,
+                           const std::vector<bool> &interfaceNode);
 
 
 template<>
-void createBndElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
-                         const int *dir, int order, int entity,
-                         std::size_t vertShift, std::vector<MVertex *> &allVert,
-                         std::map<int, std::vector<MElement *> > *allElt,
-                         const std::vector<bool> &interfaceNode)
+MElement *createBndElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
+                              const int *dir, int order, int entity,
+                              std::size_t vertShift,
+                              std::vector<MVertex *> &allVert,
+                              std::map<int, std::vector<MElement *> > *allElt,
+                              const std::vector<bool> &interfaceNode)
 {
   Msg::Error("Creation of boundary elements for 2D structured blocks not "
              "implemented");
@@ -262,7 +268,7 @@ void createBndElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
   }
 
   // do no add element if it is part of an internal interface between blocks
-  if(isInternalInterface) return;
+  if(isInternalInterface) return 0;
 
   // create element
   MElementFactory factory;
@@ -270,15 +276,18 @@ void createBndElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
 
   // add element to data structure
   allElt[1][entity].push_back(e);
+
+  return e;
 }
 
 
 template<>
-void createBndElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
-                         const int *dir, int order, int entity,
-                         std::size_t vertShift, std::vector<MVertex *> &allVert,
-                         std::map<int, std::vector<MElement *> > *allElt,
-                         const std::vector<bool> &interfaceNode)
+MElement *createBndElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
+                              const int *dir, int order, int entity,
+                              std::size_t vertShift,
+                              std::vector<MVertex *> &allVert,
+                              std::map<int, std::vector<MElement *> > *allElt,
+                              const std::vector<bool> &interfaceNode)
 {
   // node shift from (i, j, k) depending on order
   static bool isShiftInit[4] = {false, false, false, false};
@@ -330,7 +339,7 @@ void createBndElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
   }
 
   // do no add element if it is part of an internal interface between blocks
-  if(isInternalInterface) return;
+  if(isInternalInterface) return 0;
 
   // create element
   MElementFactory factory;
@@ -338,6 +347,8 @@ void createBndElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
 
   // add element to data structure
   allElt[3][entity].push_back(e);
+
+  return e;
 }
 
 
@@ -434,6 +445,7 @@ void CGNSZoneStruct<DIM>::nodeFromList(const std::vector<cgsize_t> &list,
 template<int DIM>
 int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
                                 std::map<int, std::vector<MElement *> > *allElt,
+                                std::vector<MElement *> &zoneElt,
                                 std::vector<std::string> &allGeomName)
 {
   // default BC (in case none specified)
@@ -466,8 +478,9 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
     for(int j = 0; j < nbEltJ; j++) {
       for(int i = 0; i < nbEltI; i++) {
         const cgsize_t ijk[3] = {i*order, j*order, k*order};
-        createElement<DIM>(ijk, nbNodeIJK(), order, startNode(), allVert,
-                           allElt);
+        MElement *me = createElement<DIM>(ijk, nbNodeIJK(), order, startNode(),
+                                          allVert, allElt);
+        zoneElt.push_back(me);
       }
     }
   }
@@ -477,9 +490,12 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
     for(int j = 0; j < nbEltJ; j++) {
         static const int dir[2] = {1, 2};
         cgsize_t ijk[3] = {0, j*order, k*order};
-        makeBndElement(ijk, dir, order, firstDefaultEnt, allVert, allElt);
+        MElement *me;
+        me = makeBndElement(ijk, dir, order, firstDefaultEnt, allVert, allElt);
+        if(me != 0) zoneElt.push_back(me);
         ijk[0] = nbNodeIJK(0)-1;
-        makeBndElement(ijk, dir, order, firstDefaultEnt+1, allVert, allElt);
+        me = makeBndElement(ijk, dir, order, firstDefaultEnt+1, allVert, allElt);
+        if(me != 0) zoneElt.push_back(me);
     }
   }
 
@@ -488,9 +504,14 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
     for(int i = 0; i < nbEltI; i++) {
         static const int dir[2] = {0, 2};
         cgsize_t ijk[3] = {i*order, 0, k*order};
-        makeBndElement(ijk, dir, order, firstDefaultEnt+2, allVert, allElt);
+        MElement *me;
+        me = makeBndElement(ijk, dir, order, firstDefaultEnt+2, allVert,
+                            allElt);
+        if(me != 0) zoneElt.push_back(me);
         ijk[1] = nbNodeIJK(1)-1;
-        makeBndElement(ijk, dir, order, firstDefaultEnt+3, allVert, allElt);
+        me = makeBndElement(ijk, dir, order, firstDefaultEnt+3, allVert,
+                            allElt);
+        if(me != 0) zoneElt.push_back(me);
     }
   }
 
@@ -500,9 +521,14 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
       for(int i = 0; i < nbEltI; i++) {
           static const int dir[2] = {0, 1};
           cgsize_t ijk[3] = {i*order, j*order, 0};
-          makeBndElement(ijk, dir, order, firstDefaultEnt+4, allVert, allElt);
+          MElement *me;
+          me = makeBndElement(ijk, dir, order, firstDefaultEnt+4, allVert,
+                              allElt);
+          if(me != 0) zoneElt.push_back(me);
           ijk[2] = nbNodeIJK(2)-1;
-          makeBndElement(ijk, dir, order, firstDefaultEnt+5, allVert, allElt);
+          me = makeBndElement(ijk, dir, order, firstDefaultEnt+5, allVert,
+                              allElt);
+          if(me != 0) zoneElt.push_back(me);
       }
     }
   }
@@ -512,9 +538,10 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
 
 
 template<int DIM>
-void CGNSZoneStruct<DIM>::makeBndElement(const cgsize_t *ijk, const int *dir,
-                                         int order, int defaultEntity,
-                                         std::vector<MVertex *> &allVert,
+MElement *CGNSZoneStruct<DIM>::makeBndElement(const cgsize_t *ijk,
+                                              const int *dir, int order,
+                                              int defaultEntity,
+                                              std::vector<MVertex *> &allVert,
                                 std::map<int, std::vector<MElement *> > *allElt)
 {
   typedef std::map<cgsize_t, int>::const_iterator Elt2GeomIter;
@@ -523,7 +550,7 @@ void CGNSZoneStruct<DIM>::makeBndElement(const cgsize_t *ijk, const int *dir,
   const Elt2GeomIter it = elt2Geom().find(iElt);
   const int entity = (it == elt2Geom().end()) ? defaultEntity : it->second;
   
-  createBndElement<DIM>(ijk, nbNodeIJK(), dir, order, entity, startNode(),
+  return createBndElement<DIM>(ijk, nbNodeIJK(), dir, order, entity, startNode(),
                         allVert, allElt, interfaceNode());
 }
 

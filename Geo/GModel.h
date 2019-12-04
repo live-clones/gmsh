@@ -718,7 +718,9 @@ public:
                double scalingFactor = 1.0);
 
   // CFD General Notation System files
-  int readCGNS(const std::string &name);
+  int readCGNS(const std::string &name,
+               std::vector<std::vector<MVertex *> > &vertPerZone,
+               std::vector<std::vector<MElement *> > &eltPerZone);
   int writeCGNS(const std::string &name, bool saveAll = false,
                 double scalingFactor = 1.0);
 

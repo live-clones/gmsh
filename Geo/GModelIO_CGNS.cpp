@@ -17,7 +17,9 @@
 #if defined(HAVE_LIBCGNS)
 
 
-int GModel::readCGNS(const std::string &name)
+int GModel::readCGNS(const std::string &name,
+                     std::vector<std::vector<MVertex *> > &vertPerZone,
+                     std::vector<std::vector<MElement *> > &eltPerZone)
 {
   int cgnsErr;
 
@@ -58,15 +60,29 @@ int GModel::readCGNS(const std::string &name)
   createZones(fileIndex, baseIndex, meshDim, allEltNodeTransfo, allZones,
               name2Zone, postpro);
 
-  // read mesh in zones
+  // data structures for element and vertices
   std::vector<MVertex *> allVert;                     // all vertices
   std::map<int, std::vector<MElement *> > allElt[10]; // all elements by type
+  
+   // vertex and element (global) tags per zone for postpro
+  vertPerZone.resize(nbZone+1);
+  eltPerZone.resize(nbZone+1);
+
+  // read mesh in zones
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     CGNSZone *zone = allZones[iZone];
     int err = zone->readMesh(dim, scale, allZones, allVert, allElt,
+                             vertPerZone[iZone], eltPerZone[iZone],
                              allGeomName);
+    if(!postpro) {
+      vertPerZone[iZone].clear();
+      eltPerZone[iZone].clear();
+      Msg::Info("DBGTT: cleared vertPerZone in zone %i", iZone);
+    }
     if(err == 0) return 0;
   }
+  Msg::Info("DBGTT: vertPerZone.size() = %i, vertPerZone[1].size() = %i", vertPerZone.size(), vertPerZone[1].size());
+  Msg::Info("DBGTT: eltPerZone.size() = %i, eltPerZone[1].size() = %i", eltPerZone.size(), eltPerZone[1].size());
 
   // set periodic vertices in each zone
   for(int iZone = 1; iZone <= nbZone; iZone++) {

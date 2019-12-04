@@ -460,10 +460,12 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   }
 #if defined(HAVE_LIBCGNS)
   else if(ext == ".cgns" || ext == ".CGNS") {
+    std::vector<std::vector<MVertex *> > vertPerZone;
+    std::vector<std::vector<MElement *> > eltPerZone;
     if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()) {
       GModel *tmp2 = GModel::current();
       GModel *tmp = new GModel();
-      tmp->readCGNS(fileName);
+      tmp->readCGNS(fileName, vertPerZone, eltPerZone);
       tmp->scaleMesh(CTX::instance()->geom.matchMeshScaleFactor);
       status = GeomMeshMatcher::instance()->match(tmp2, tmp);
       delete tmp;
@@ -472,10 +474,10 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
     }
     else {
       CTX::instance()->geom.matchMeshScaleFactor = 1;
-      status = GModel::current()->readCGNS(fileName);
+      status = GModel::current()->readCGNS(fileName, vertPerZone, eltPerZone);
     }
 #if defined(HAVE_POST)
-    if(status > 1) status = PView::readCGNS(fileName, -1);
+    if(status > 1) status = PView::readCGNS(vertPerZone, eltPerZone, fileName);
 #endif
   }
 #endif

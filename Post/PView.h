@@ -9,6 +9,8 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "MVertex.h"
+#include "MElement.h"
 #include "SPoint3.h"
 
 class PViewData;
@@ -130,7 +132,9 @@ public:
   static bool readPOS(const std::string &fileName, int fileIndex = -1);
   static bool readMSH(const std::string &fileName, int fileIndex = -1,
                       int partitionToRead = -1);
-  static bool readCGNS(const std::string &fileName, int fileNum = -1);
+  static bool readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
+                       const std::vector<std::vector<MElement *> > &eltPerZone,
+                       const std::string &fileName);
   static bool readMED(const std::string &fileName, int fileIndex = -1);
   static bool readPCH(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);
