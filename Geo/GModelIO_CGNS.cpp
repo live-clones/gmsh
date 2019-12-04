@@ -238,7 +238,9 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
 #else
 
 
-int GModel::readCGNS(const std::string &name)
+int GModel::readCGNS(const std::string &name,
+                     std::vector<std::vector<MVertex *> > &vertPerZone,
+                     std::vector<std::vector<MElement *> > &eltPerZone)
 {
   Msg::Error("This version of Gmsh was compiled without CGNS support");
   return 0;

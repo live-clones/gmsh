@@ -137,7 +137,9 @@ bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
 
 #else
 
-bool PView::readCGNS(const std::string &fileName, int fileIndex)
+bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
+                     const std::vector<std::vector<MElement *> > &eltPerZone,
+                     const std::string &fileName)
 {
   Msg::Error("Gmsh must be compiled with CGNS support to read '%s'",
              fileName.c_str());

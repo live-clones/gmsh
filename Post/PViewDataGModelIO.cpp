@@ -587,6 +587,17 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
   return true;
 }
 
+#else
+
+bool PViewDataGModel::readCGNS(const std::pair<std::string,
+                                               std::string> &solFieldName,
+                               const std::string &fileName, int fileIndex,
+                               int baseIndex,
+                        const std::vector<std::vector<MVertex *> > &vertPerZone,
+                        const std::vector<std::vector<MElement *> > &eltPerZone)
+{
+}
+
 #endif
 
 #if defined(HAVE_MED)
