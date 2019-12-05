@@ -12,6 +12,8 @@
 #include "StringUtils.h"
 #include "OS.h"
 #include "Context.h"
+#include "polynomialBasis.h"
+#include "pyramidalBasis.h"
 #include "BasisFactory.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
@@ -153,13 +155,17 @@ int readSolutionTransfo(int fileIndex, int baseIndex,
 
 void getSolutionDataNode(int zoneIndex, int nbNode,
                       const std::vector<std::vector<MVertex *> > &vertPerZone,
+                         std::vector<cgsize_t> solEntSet,
                          const std::vector<double> &data,
                          stepData<double> *step, double &dataMin,
                          double &dataMax)
 {
+  step->resizeData(nbNode);
+  
   for(int iNode = 0; iNode < nbNode; iNode++) {
-    int entNum = vertPerZone[zoneIndex][iNode]->getNum();
-    double *d = step->getData(entNum, true, 1);
+    const cgsize_t nodeInd = (solEntSet.size() > 0) ? solEntSet[iNode] : iNode;
+    const int nodeNum = vertPerZone[zoneIndex][nodeInd]->getNum();
+    double *d = step->getData(nodeNum, true, 1);
     *d = data[iNode];
     step->setMin(std::min(step->getMin(), *d));
     step->setMax(std::max(step->getMax(), *d));
@@ -171,13 +177,17 @@ void getSolutionDataNode(int zoneIndex, int nbNode,
 
 void getSolutionDataElement(int zoneIndex, int nbElt,
                         const std::vector<std::vector<MElement *> > &eltPerZone,
-                        const std::vector<double> &data,
-                        stepData<double> *step, double &dataMin,
-                        double &dataMax)
+                            std::vector<cgsize_t> solEntSet,
+                            const std::vector<double> &data,
+                            stepData<double> *step, double &dataMin,
+                            double &dataMax)
 {
+  step->resizeData(nbElt);
+  
   for(int iElt = 0; iElt < nbElt; iElt++) {
-    int entNum = eltPerZone[zoneIndex][iElt]->getNum();
-    double *d = step->getData(entNum, true, 1);
+    const cgsize_t eltInd = (solEntSet.size() > 0) ? solEntSet[iElt] : iElt;
+    const int eltNum = eltPerZone[zoneIndex][eltInd]->getNum();
+    double *d = step->getData(eltNum, true, 1);
     *d = data[iElt];
     step->setMin(std::min(step->getMin(), *d));
     step->setMax(std::max(step->getMax(), *d));
@@ -187,36 +197,96 @@ void getSolutionDataElement(int zoneIndex, int nbElt,
 }
 
 
-void getSolutionDataElementNode(int zoneIndex, int order, int nbElt,
-                        const ZoneSolutionTransfo *zoneSolTransfo,
-                        const std::vector<std::vector<MElement *> > &eltPerZone,
-                        const std::vector<double> &data,
-                        stepData<double> *step, double &dataMin,
-                        double &dataMax)
+void getInterpolationMat(int parentType, int order,
+                         const fullMatrix<double>* &coeffMat,
+                         const fullMatrix<double>* &monoMat)
 {
-    int iData = 0;
-    for(int iElt = 0; iElt < nbElt; iElt++) {
-      MElement *me = eltPerZone[zoneIndex][iElt];
-      const int entNum = me->getNum();
-      const int mult = me->getNumVertices();
-      int parentMshType = me->getType();
-      int mshType = ElementType::getType(parentMshType, order, false);
-      // DBGTT to be completed
-      // element node transformation if specified (CPEX0045)
-      const fullMatrix<double> *transfoMat = 0;
-      if((mshType != MSH_PNT) && (zoneSolTransfo != 0) &&
-        (zoneSolTransfo->size() > 0)) {
-        transfoMat = &((*zoneSolTransfo)[mshType]);
-      }
-      double *d = step->getData(entNum, true, mult); // DBGTT: to be adjusted for mult
-      for(int j = 0; j < mult; j++, iData++, d++) {
-        *d = data[iData];
-        step->setMin(std::min(step->getMin(), *d));
-        step->setMax(std::max(step->getMax(), *d));
-        dataMin = std::min(dataMin, *d);
-        dataMax = std::max(dataMax, *d);
-      }
+  // get nodal basis
+  const int mshType = ElementType::getType(parentType, order);
+  const nodalBasis *basis = BasisFactory::getNodalBasis(mshType);
+
+  // try to get interpolation matrices from polynomial basis, if it fails then
+  // try from pyramidal basis
+  const polynomialBasis *fs = dynamic_cast<const polynomialBasis *>(basis);
+  if(fs) {
+    coeffMat = &(fs->coefficients);
+    monoMat = &(fs->monomials);
+  }
+  else {
+    const pyramidalBasis *fs = dynamic_cast<const pyramidalBasis *>(basis);
+    if(fs) {
+      coeffMat = &(fs->coefficients);
+      monoMat = &(fs->monomials);
     }
+    else {
+      coeffMat = 0;
+      monoMat = 0;
+    }
+  }
+}
+
+
+void getSolutionDataElementNode(int zoneIndex, int order, int nbElt,
+                                const ZoneSolutionTransfo *zoneSolTransfo,
+                        const std::vector<std::vector<MElement *> > &eltPerZone,
+                                std::vector<cgsize_t> solEntSet,
+                                const std::vector<double> &data,
+                                stepData<double> *step, double &dataMin,
+                                double &dataMax,
+                                std::vector<std::pair<int, int> >
+                                  &ordersByParentType)
+{
+  step->resizeData(nbElt);
+
+  // loop over elements
+  int iStartEltData = 0;
+  std::vector<bool> hasInterpolMat(100, false);
+  for(int iElt = 0; iElt < nbElt; iElt++) {
+    // get element type
+    const cgsize_t eltInd = (solEntSet.size() > 0) ? solEntSet[iElt] : iElt;
+    MElement *me = eltPerZone[zoneIndex][eltInd];
+    const int eltNum = me->getNum();
+    const int parentMshType = me->getType();
+    const int orderGeo = me->getPolynomialOrder();
+    ordersByParentType[parentMshType] = std::make_pair(orderGeo, order);
+    int mshType = ElementType::getType(parentMshType, order, false);
+    const int nbEltNode = ElementType::getNumVertices(mshType);
+
+    // element node transformation if specified (CPEX0045)
+    const fullMatrix<double> *transfoMat = 0;
+    if((mshType != MSH_PNT) && (zoneSolTransfo != 0) &&
+        (zoneSolTransfo->size() > 0)) {
+      transfoMat = &((*zoneSolTransfo)[mshType]);
+    }
+
+    // values at element nodes for data read (source) and step data (dest.)
+    double *eltData = const_cast<double*>(&(data[iStartEltData]));
+    double *stepData = step->getData(eltNum, true, nbEltNode);
+    
+    // compute values at element nodes in step data
+    if(transfoMat == 0) {
+      // no basis specified: just reorder values from CGNS to Gmsh ordering
+      const std::vector<int> &cgns2Msh = cgns2MshNodeIndex(mshType);
+      for(int i = 0; i < nbEltNode; i++) stepData[cgns2Msh[i]] = eltData[i];
+    }
+    else {
+      // transform from specified basis to Gmsh Lagrangian basis
+      const fullVector<double> dataVec(eltData, nbEltNode);
+      fullVector<double> stepDataVec(stepData, nbEltNode);
+      transfoMat->mult(dataVec, stepDataVec);
+    }
+
+    // update bounds (faster here than in finalize)
+    for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++) {
+      const double &val = stepData[iEltNode];
+      step->setMin(std::min(step->getMin(), val));
+      step->setMax(std::max(step->getMax(), val));
+      dataMin = std::min(dataMin, val);
+      dataMax = std::max(dataMax, val);
+    }
+
+    iStartEltData += nbEltNode;
+  }
 }
 
 
@@ -226,7 +296,8 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
                       const ZoneSolutionTransfo *zoneSolTransfo,
                       const std::vector<std::vector<MVertex *> > &vertPerZone,
                       const std::vector<std::vector<MElement *> > &eltPerZone,
-                      stepData<double> *step, double &dataMin, double &dataMax)
+                      stepData<double> *step, double &dataMin, double &dataMax,
+                      std::vector<std::pair<int, int> > &ordersByParentType)
 {
   int cgnsErr;
 
@@ -258,7 +329,37 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
   cgnsErr = cg_sol_interpolation_order_read(fileIndex, baseIndex, zoneIndex,
                                             zoneSolIndex, &order, &orderTime);
 #endif
-  
+
+  // read point range if it exists
+  std::vector<cgsize_t> solEntSet;
+  PointSetType_t ptSetType;
+  cgsize_t ptSetSize;
+  cgnsErr = cg_sol_ptset_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
+                              &ptSetType, &ptSetSize);
+  if(cgnsErr != CG_NODE_NOT_FOUND) {
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+    if(ptSetSize > 0) {
+      solEntSet.resize(ptSetSize);
+      cgnsErr = cg_sol_ptset_read(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
+                                  solEntSet.data());
+      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+      if(ptSetType == PointRange) {                                         // DBGTT: fi for structured grids
+        cgsize_t rangeMin = solEntSet[0]-1, rangeMax = solEntSet[1]-1;
+        cgsize_t nbVal = rangeMax-rangeMin+1;
+        solEntSet.resize(nbVal);
+        for(cgsize_t i = 0; i < nbVal; i++) solEntSet[i] = rangeMin+i;
+      }
+      else if(ptSetType == PointList) {
+        for(cgsize_t i = 0; i < ptSetSize; i++) solEntSet[i]--;
+      }
+      else {
+        Msg::Warning("PointSetType %i not supported in CGNS solution reader",
+                    ptSetType);
+        return false;
+      }
+    }
+  }
+
   // get number of fields in this FlowSolution
   int nbField;
   cgnsErr = cg_nfields(fileIndex, baseIndex, zoneIndex, zoneSolIndex, &nbField);
@@ -285,16 +386,17 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
     // scan through data to populate step (possibly converting from custom
     // nodal set) and compute min/max (faster here than in finalize)
     if(dataType == PViewDataGModel::NodeData) {
-      getSolutionDataNode(zoneIndex, zoneSize[0], vertPerZone, data, step,
-                          dataMin, dataMax);
+      getSolutionDataNode(zoneIndex, zoneSize[0], vertPerZone, solEntSet, data,
+                          step, dataMin, dataMax);
     }
     else if(dataType == PViewDataGModel::ElementData) {
-      getSolutionDataElement(zoneIndex, zoneSize[1], eltPerZone, data, step,
-                             dataMin, dataMax);
+      getSolutionDataElement(zoneIndex, zoneSize[1], eltPerZone, solEntSet, data,
+                             step, dataMin, dataMax);
     }
     else if(dataType == PViewDataGModel::ElementNodeData) {
       getSolutionDataElementNode(zoneIndex, order, zoneSize[1], zoneSolTransfo,
-                                 eltPerZone, data, step, dataMin, dataMax);
+                                 eltPerZone, solEntSet, data, step, dataMin,
+                                 dataMax, ordersByParentType);
     }
   }
 
@@ -320,13 +422,17 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
   _steps.back()->setFileIndex(-1);
   _steps.back()->setTime(0.);
 
-  // _steps.back()->resizeData(numEnt); // DBGTT to be optimized?
-
   int cgnsErr;
 
+  // read high-order node transformation (CPEX0045)
   Family2SolutionTransfo allSolutionTransfo;
   int err = readSolutionTransfo(fileIndex, baseIndex, allSolutionTransfo);
   if(err == 0) return false;
+
+  // data structure to store geometrical and solution orders by parent type
+  // (used to set interpolation matrices later)
+  static const std::pair<int, int> dumOrders(-1, -1);
+  std::vector<std::pair<int, int> > ordersByParentType(MSH_MAX_NUM, dumOrders);
 
   // read number of zones
   int nbZone = 0;
@@ -356,13 +462,32 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
     // loop over solution fields in each zone
-    // DBGTT: TODO: compute number of values to give resize data for optimization?
     for(int iZoneSol = 1; iZoneSol <= nbZoneSol; iZoneSol++) {
       bool ok = readZoneSolution(solFieldName, fileIndex, baseIndex, iZone,
                                  iZoneSol, getType(), zoneSolTransfo,
                                  vertPerZone, eltPerZone, _steps.back(), _min,
-                                 _max);
+                                 _max, ordersByParentType);
       if(!ok) return false;
+    }
+  }
+
+  // set interpolation matrices if needed (only for ElementBased solutions)
+  for(int parentType = 0; parentType < TYPE_MAX_NUM; parentType++) {
+    const int &orderGeo = ordersByParentType[parentType].first;
+    const int &order = ordersByParentType[parentType].second;
+    if(orderGeo != -1) {
+      Msg::Info("DBGTT: setting interp. mat. for parentType = %i, orderGeo = %i, order = %i", parentType, orderGeo, order);
+      // element interpolation
+      const fullMatrix<double> *coeffMatGeo, *monoMatGeo;
+      getInterpolationMat(parentType, orderGeo, coeffMatGeo, monoMatGeo);
+
+      // solution interpolation
+      const fullMatrix<double> *coeffMatSol, *monoMatSol;
+      getInterpolationMat(parentType, order, coeffMatSol, monoMatSol);
+      
+      // set interpolation in view
+      setInterpolationMatrices(parentType, *coeffMatSol, *monoMatSol,
+                               *coeffMatGeo, *monoMatGeo);
     }
   }
 
