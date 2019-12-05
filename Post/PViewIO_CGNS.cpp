@@ -52,6 +52,16 @@ int readFlowSolutionNames(int fileIndex, int baseIndex, int nbZone,
         }
         else type = PViewDataGModel::NodeData;
       }
+      else if(location == ElementBased) {
+#ifdef HAVE_LIBCGNS_CPEX0045
+        type = PViewDataGModel::ElementNodeData;
+#else
+          Msg::Warning("Gmsh must be compiled with CGNS CPEX0045 support for "
+                       "ElementBased solutions to be supported in CGNS reader, "
+                       "skipping '%s'", rawSolName);
+          continue;
+#endif
+      }
       else {
         Msg::Warning("Unsupported GridLocation in CGNS solution reader, "
                    "skipping '%s'", rawSolName);
