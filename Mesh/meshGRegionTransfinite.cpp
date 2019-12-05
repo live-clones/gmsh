@@ -219,6 +219,8 @@ public:
       for(int j = 0; j <= _hh; j++)
         _list.push_back(_gf->transfinite_vertices[i][j]);
   }
+  // returns the surface
+  GFace *getSurface() { return _gf; }
   // returns the index of the face in the reference hexahedron
   int index() const { return _index; }
   // returns true if the face is recombined
@@ -348,6 +350,12 @@ int MeshTransfiniteVolume(GRegion *gr)
     GOrientedTransfiniteFace f(*it, corners);
     if(f.index() < 0) {
       Msg::Error("Incompatible surface %d in transfinite volume %d",
+                 (*it)->tag(), gr->tag());
+      return 0;
+    }
+    else if(orientedFaces[f.index()].getSurface()) {
+      Msg::Error("Surfaces %d and %d mapped to the same index in transfinite "
+                 "volume %d", orientedFaces[f.index()].getSurface()->tag(),
                  (*it)->tag(), gr->tag());
       return 0;
     }
