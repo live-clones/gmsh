@@ -118,7 +118,7 @@ bool readFieldData(const std::vector<std::vector<MVertex *> > &vertPerZone,
     // read view data
     if(!d->readCGNS(solFieldName, fileName, fileIndex, baseIndex, vertPerZone,
                     eltPerZone)) {
-      Msg::Error("Could not read data in CGNS file '%s'", fileName);
+      Msg::Error("Could not read data in CGNS file '%s'", fileName.c_str());
       if(create) delete d;
       return false;
     }

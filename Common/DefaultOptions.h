@@ -1031,6 +1031,8 @@ StringXNumber MeshOptions_Number[] = {
    "4)" },
   { F|O, "CgnsImportIgnoreBC" , opt_mesh_cgns_import_ignore_bc , 0. ,
    "Ignore information in ZoneBC structures when reading a CGNS file" },
+  { F|O, "CgnsImportIgnoreSolution" , opt_mesh_cgns_import_ignore_solution , 0. ,
+   "Ignore solution when reading a CGNS file" },
   { F|O, "CgnsConstructTopology" , opt_mesh_cgns_construct_topology , 0. ,
    "Reconstruct the model topology (BREP) after reading a CGNS file" },
   { F|O, "CgnsExportCPEX0045" , opt_mesh_cgns_export_cpex0045 , 0. ,

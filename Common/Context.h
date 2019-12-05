@@ -50,8 +50,8 @@ struct contextMeshOptions {
   double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
-  int cgnsImportIgnoreBC, cgnsImportOrder, cgnsConstructTopology,
-      cgnsExportCPEX0045;
+  int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder,
+      cgnsConstructTopology, cgnsExportCPEX0045;
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;

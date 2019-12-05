@@ -477,7 +477,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
       status = GModel::current()->readCGNS(fileName, vertPerZone, eltPerZone);
     }
 #if defined(HAVE_POST)
-    if(status > 1) status = PView::readCGNS(vertPerZone, eltPerZone, fileName);
+    if((status > 1) && (CTX::instance()->mesh.cgnsImportIgnoreSolution == 0)) {
+      status = PView::readCGNS(vertPerZone, eltPerZone, fileName);
+    }
 #endif
   }
 #endif

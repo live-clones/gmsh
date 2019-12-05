@@ -6101,6 +6101,14 @@ double opt_mesh_cgns_import_ignore_bc(OPT_ARGS_NUM)
   return CTX::instance()->mesh.cgnsImportIgnoreBC;
 }
 
+double opt_mesh_cgns_import_ignore_solution(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.cgnsImportIgnoreSolution = (int)val;
+  }
+  return CTX::instance()->mesh.cgnsImportIgnoreSolution;
+}
+
 double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

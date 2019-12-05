@@ -74,7 +74,7 @@ int GModel::readCGNS(const std::string &name,
     int err = zone->readMesh(dim, scale, allZones, allVert, allElt,
                              vertPerZone[iZone], eltPerZone[iZone],
                              allGeomName);
-    if(!postpro) {
+    if((!postpro) || (CTX::instance()->mesh.cgnsImportIgnoreSolution != 0)) {
       vertPerZone[iZone].clear();
       eltPerZone[iZone].clear();
     }
