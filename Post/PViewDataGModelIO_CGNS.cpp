@@ -29,10 +29,10 @@ typedef std::vector<fullMatrix<double> > ZoneSolutionTransfo;
 typedef std::map<std::string, ZoneSolutionTransfo> Family2SolutionTransfo;
 
 
+#ifdef HAVE_LIBCGNS_CPEX0045
 int readSolutionInterpolation(int fileIndex, int baseIndex, int familyIndex,
                               int interpIndex, ZoneSolutionTransfo &cgns2MshLag)
 {
-#ifdef HAVE_LIBCGNS_CPEX0045
   int cgnsErr;
 
   // read solution interpolation tranformation info
@@ -103,10 +103,8 @@ int readSolutionInterpolation(int fileIndex, int baseIndex, int familyIndex,
   cgns2MshLag[mshType] = lagVal;
 
   return 1;
-#else
-  return 1;
-#endif
 }
+#endif
 
 
 int readSolutionTransfo(int fileIndex, int baseIndex,
@@ -324,8 +322,9 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
   const cgsize_t dataSize = solSize[0];
 
   // get solution order
+  int order = 1;
 #ifdef HAVE_LIBCGNS_CPEX0045
-  int order, orderTime;
+  int orderTime;
   cgnsErr = cg_sol_interpolation_order_read(fileIndex, baseIndex, zoneIndex,
                                             zoneSolIndex, &order, &orderTime);
 #endif
