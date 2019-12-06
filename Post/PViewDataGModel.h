@@ -275,7 +275,8 @@ public:
                         bool forceNodeData = false,
                         bool forceElementData = false);
   bool readCGNS(const std::pair<std::string, std::string> &solFieldName,
-                const std::string &fileName, int fileIndex, int baseIndex,
+                const std::string &fileName, int index, int fileIndex,
+                int baseIndex,
                 const std::vector<std::vector<MVertex *> > &vertPerZone,
                 const std::vector<std::vector<MElement *> > &eltPerZone);
   bool readMED(const std::string &fileName, int fileIndex);

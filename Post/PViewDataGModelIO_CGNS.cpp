@@ -342,7 +342,7 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
       cgnsErr = cg_sol_ptset_read(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
                                   solEntSet.data());
       if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-      if(ptSetType == PointRange) {                                         // DBGTT: fi for structured grids
+      if(ptSetType == PointRange) {           // DBGTT: TODO: structured grids
         cgsize_t rangeMin = solEntSet[0]-1, rangeMax = solEntSet[1]-1;
         cgsize_t nbVal = rangeMax-rangeMin+1;
         solEntSet.resize(nbVal);
@@ -408,8 +408,8 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
 
 bool PViewDataGModel::readCGNS(const std::pair<std::string,
                                                std::string> &solFieldName,
-                               const std::string &fileName, int fileIndex,
-                               int baseIndex,
+                               const std::string &fileName, int index,
+                               int fileIndex, int baseIndex,
                         const std::vector<std::vector<MVertex *> > &vertPerZone,
                         const std::vector<std::vector<MElement *> > &eltPerZone)
 {
@@ -418,7 +418,7 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
   _steps.back()->fillEntities();
   _steps.back()->computeBoundingBox();
   _steps.back()->setFileName(fileName);
-  _steps.back()->setFileIndex(-1);
+  _steps.back()->setFileIndex(index);
   _steps.back()->setTime(0.);
 
   int cgnsErr;
@@ -475,7 +475,6 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
     const int &orderGeo = ordersByParentType[parentType].first;
     const int &order = ordersByParentType[parentType].second;
     if(orderGeo != -1) {
-      Msg::Info("DBGTT: setting interp. mat. for parentType = %i, orderGeo = %i, order = %i", parentType, orderGeo, order);
       // element interpolation
       const fullMatrix<double> *coeffMatGeo, *monoMatGeo;
       getInterpolationMat(parentType, orderGeo, coeffMatGeo, monoMatGeo);

@@ -16,8 +16,9 @@
 namespace {
 
 
-MElement *createElement(ElementType_t sectEltType, std::size_t vertShift,
-                        int entity, const std::vector<MVertex *> &allVert,
+MElement *createElement(ElementType_t sectEltType, cgsize_t eltNum,
+                        std::size_t vertShift, int entity,
+                        const std::vector<MVertex *> &allVert,
                         std::map<int, std::vector<MElement *> > *allElt,
                         const std::vector<cgsize_t> &sectData,
                         const ZoneEltNodeTransfo *eltNodeTransfo,
@@ -79,7 +80,7 @@ MElement *createElement(ElementType_t sectEltType, std::size_t vertShift,
 
   // create element
   MElementFactory factory;
-  MElement *e = factory.create(mshEltType, eltVert);
+  MElement *e = factory.create(mshEltType, eltVert, eltNum);
 
   // add element to data structure
   switch(e->getType()) {
@@ -170,14 +171,15 @@ int CGNSZoneUnstruct::readSection(int iSect,
 
   // create elements
   std::size_t iSectData = 0;
+  if(endElt > (cgsize_t)zoneElt.size()) zoneElt.resize(endElt);
   const cgsize_t iStartElt = startElt-1, iEndElt = endElt-1;
   for(int iElt = iStartElt; iElt <= iEndElt; iElt++) {
     const std::map<int, int>::const_iterator it = elt2Geom().find(iElt);
     const int entity = (it == elt2Geom().end()) ? 1 : it->second;
-    MElement *me = createElement(sectEltType, startNode(), entity, allVert,
-                                 allElt, sectData, eltNodeTransfo(), rawNode,
-                                 iSectData);
-    zoneElt.push_back(me);
+    MElement *me = createElement(sectEltType, iElt+1, startNode(), entity,
+                                 allVert, allElt, sectData, eltNodeTransfo(),
+                                 rawNode, iSectData);
+    zoneElt[iElt] = me;
   }
 
   return 1;
