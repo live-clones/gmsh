@@ -125,8 +125,8 @@ private:
   inline void _sortVertexIndices();
   bool _equalVertices(const std::vector<MVertex *> &v2) const;
 
-  static std::map<GEntity *, std::set<MVertex *, MVertexLessThanNum>,
-                  GEntityLessThan>
+  static std::map<GEntity *, std::set<MVertex *, MVertexPtrLessThan>,
+                  GEntityPtrLessThan>
     _vertexCache;
 
 public:

@@ -860,6 +860,19 @@ namespace gmsh { // Top-level functions
                                const int tag,
                                const bool val = true);
 
+      // Set the meshing algorithm on the model entity of dimension `dim' and tag
+      // `tag'. Currently only supported for `dim' == 2.
+      GMSH_API void setAlgorithm(const int dim,
+                                 const int tag,
+                                 const int val);
+
+      // Force the mesh size to be extended from the boundary, or not, for the
+      // model entity of dimension `dim' and tag `tag'. Currently only supported
+      // for `dim' == 2.
+      GMSH_API void setSizeFromBoundary(const int dim,
+                                        const int tag,
+                                        const int val);
+
       // Set a compound meshing constraint on the model entities of dimension `dim'
       // and tags `tags'. During meshing, compound entities are treated as a single
       // discrete entity, which is automatically reparametrized.
@@ -1305,6 +1318,19 @@ namespace gmsh { // Top-level functions
         GMSH_API void setReverse(const int dim,
                                  const int tag,
                                  const bool val = true);
+
+        // Set the meshing algorithm on the model entity of dimension `dim' and tag
+        // `tag'. Currently only supported for `dim' == 2.
+        GMSH_API void setAlgorithm(const int dim,
+                                   const int tag,
+                                   const int val);
+
+        // Force the mesh size to be extended from the boundary, or not, for the
+        // model entity of dimension `dim' and tag `tag'. Currently only supported
+        // for `dim' == 2.
+        GMSH_API void setSizeFromBoundary(const int dim,
+                                          const int tag,
+                                          const int val);
 
       } // namespace mesh
 

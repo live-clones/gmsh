@@ -35,8 +35,6 @@ struct contextMeshOptions {
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
-  std::map<int, int> algo2dPerFace;
-  std::map<int, int> curvatureControlPerFace;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;

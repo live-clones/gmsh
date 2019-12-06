@@ -1183,6 +1183,7 @@ char FlGui::selectEntity(int type)
 
 void FlGui::setStatus(const std::string &msg, bool opengl)
 {
+  if(Msg::GetThreadNum() > 0) return;
   if(!opengl) {
     _lastStatus = msg;
     static char buff[1024];
@@ -1224,6 +1225,7 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
 
 void FlGui::setLastStatus(int col)
 {
+  if(Msg::GetThreadNum() > 0) return;
   for(std::size_t i = 0; i < graph.size(); i++) {
     if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
       if(CTX::instance()->guiColorScheme) // dark
@@ -1242,6 +1244,7 @@ void FlGui::setLastStatus(int col)
 void FlGui::setProgress(const std::string &msg, double val, double min,
                         double max)
 {
+  if(Msg::GetThreadNum() > 0) return;
   for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
     if(FlGui::instance()->graph[i]->getProgress()->value() != val)
       FlGui::instance()->graph[i]->getProgress()->value(val);

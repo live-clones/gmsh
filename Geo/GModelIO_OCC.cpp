@@ -3312,14 +3312,10 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
     int dim =
-      (shape.ShapeType() == TopAbs_VERTEX) ?
-        0 :
-        (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
-        1 :
-        (shape.ShapeType() == TopAbs_FACE ||
-         shape.ShapeType() == TopAbs_SHELL) ?
-        2 :
-        3;
+      (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
+      (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ? 1 :
+      (shape.ShapeType() == TopAbs_FACE || shape.ShapeType() == TopAbs_SHELL) ? 2 :
+      3;
 
     Handle(TCollection_HAsciiString) matName;
     Handle(TCollection_HAsciiString) matDescription;
@@ -3345,13 +3341,43 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     }
     else if(colorTool->GetColor(label, XCAFDoc_ColorSurf, col)) {
       double r = col.Red(), g = col.Green(), b = col.Blue();
-      Msg::Info(" - Color (%g, %g, %g) (%dD & Surf)", r, g, b, dim);
+      Msg::Info(" - Color (%g, %g, %g) (%dD & Surfaces)", r, g, b, dim);
       attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 1));
     }
     else if(colorTool->GetColor(label, XCAFDoc_ColorCurv, col)) {
       double r = col.Red(), g = col.Green(), b = col.Blue();
-      Msg::Info(" - Color (%g, %g, %g) (%dD & Curv)", r, g, b, dim);
-      attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1, 2));
+      Msg::Info(" - Color (%g, %g, %g) (%dD & Curves)", r, g, b, dim);
+      attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 2));
+    }
+    // check explicit coloring of boundary entities
+    if(dim == 3) {
+      TopExp_Explorer xp2(shape, TopAbs_FACE);
+      while (xp2.More()) {
+        if (colorTool->GetColor(xp2.Current(), XCAFDoc_ColorGen, col) ||
+            colorTool->GetColor(xp2.Current(), XCAFDoc_ColorSurf, col) ||
+            colorTool->GetColor(xp2.Current(), XCAFDoc_ColorCurv, col)) {
+          double r = col.Red(), g = col.Green(), b = col.Blue();
+          Msg::Info(" - Color (%g, %g, %g) (Surface)", r, g, b);
+          TopoDS_Face face = TopoDS::Face(xp2.Current());
+          attributes->insert(new OCCAttributes(2, face,
+                                               r, g, b, 1.));
+        }
+        xp2.Next();
+      }
+    }
+    if(dim == 2) {
+      TopExp_Explorer xp1(shape, TopAbs_EDGE);
+      while (xp1.More()) {
+        if (colorTool->GetColor(xp1.Current(), XCAFDoc_ColorGen, col) ||
+            colorTool->GetColor(xp1.Current(), XCAFDoc_ColorSurf, col) ||
+            colorTool->GetColor(xp1.Current(), XCAFDoc_ColorCurv, col)) {
+          double r = col.Red(), g = col.Green(), b = col.Blue();
+          Msg::Info(" - Color (%g, %g, %g) (Curve)", r, g, b);
+          attributes->insert(new OCCAttributes(1, TopoDS::Face(xp1.Current()),
+                                               r, g, b, 1.));
+        }
+        xp1.Next();
+      }
     }
   }
   else {
@@ -3741,7 +3767,10 @@ void OCC_Internals::synchronize(GModel *model)
       occf->setColor(col);
       if(boundary == 2) {
         std::vector<GEdge *> edges = occf->edges();
-        for(std::size_t j = 0; j < edges.size(); j++) edges[j]->setColor(col);
+        for(std::size_t j = 0; j < edges.size(); j++) {
+          // only if not specified explicitly before
+          if(!edges[j]->useColor()) edges[j]->setColor(col);
+        }
       }
     }
   }
@@ -3768,11 +3797,17 @@ void OCC_Internals::synchronize(GModel *model)
       occr->setColor(col);
       if(boundary == 1) {
         std::vector<GFace *> faces = occr->faces();
-        for(std::size_t j = 0; j < faces.size(); j++) faces[j]->setColor(col);
+        for(std::size_t j = 0; j < faces.size(); j++) {
+          // only if not specified explicitly before
+          if(!faces[j]->useColor()) faces[j]->setColor(col);
+        }
       }
       else if(boundary == 2) {
         std::vector<GEdge *> edges = occr->edges();
-        for(std::size_t j = 0; j < edges.size(); j++) edges[j]->setColor(col);
+        for(std::size_t j = 0; j < edges.size(); j++) {
+          // only if not specified explicitly before
+          if(!edges[j]->useColor()) edges[j]->setColor(col);
+        }
       }
     }
   }

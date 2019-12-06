@@ -492,6 +492,8 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
     new std::pair<std::size_t, MVertex *>[totalNumNodes];
 
   Msg::Info("%lu nodes", totalNumNodes);
+  Msg::StartProgressMeter(totalNumNodes);
+
   for(std::size_t i = 0; i < numBlock; i++) {
     int parametric = 0;
     int entityTag = 0, entityDim = 0;
@@ -610,7 +612,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         vertexCache[nodeRead] = std::pair<std::size_t, MVertex *>(tagNode, mv);
         nodeRead++;
         if(totalNumNodes > 100000)
-          Msg::ProgressMeter(nodeRead, totalNumNodes, true, "Reading nodes");
+          Msg::ProgressMeter(nodeRead, true, "Reading nodes");
       }
     }
     else {
@@ -671,7 +673,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         vertexCache[nodeRead] = std::pair<std::size_t, MVertex *>(tagNode, mv);
         nodeRead++;
         if(totalNumNodes > 100000)
-          Msg::ProgressMeter(nodeRead, totalNumNodes, true, "Reading nodes");
+          Msg::ProgressMeter(nodeRead, true, "Reading nodes");
       }
     }
   }
@@ -739,6 +741,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
   std::pair<std::size_t, MElement *> *elementCache =
     new std::pair<std::size_t, MElement *>[totalNumElements];
   Msg::Info("%lu elements", totalNumElements);
+  Msg::StartProgressMeter(totalNumElements);
+
   for(std::size_t i = 0; i < numBlock; i++) {
     int entityTag = 0, entityDim = 0, elmType = 0;
     std::size_t numElements = 0;
@@ -840,8 +844,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         elementRead++;
 
         if(totalNumElements > 100000)
-          Msg::ProgressMeter(elementRead, totalNumElements, true,
-                             "Reading elements");
+          Msg::ProgressMeter(elementRead, true, "Reading elements");
       }
     }
     else {
@@ -904,8 +907,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         elementRead++;
 
         if(totalNumElements > 100000)
-          Msg::ProgressMeter(elementRead, totalNumElements, true,
-                             "Reading elements");
+          Msg::ProgressMeter(elementRead, true, "Reading elements");
       }
     }
   }
@@ -1355,11 +1357,11 @@ int GModel::_readMSH4(const std::string &name)
     else if(!strncmp(&str[1], "Nodes", 5)) {
       _vertexVectorCache.clear();
       _vertexMapCache.clear();
-      Msg::ResetProgressMeter();
       bool dense = false;
       std::size_t totalNumNodes = 0, maxNodeNum;
       std::pair<std::size_t, MVertex *> *vertexCache = readMSH4Nodes(
         this, fp, binary, dense, totalNumNodes, maxNodeNum, swap, version);
+      Msg::StopProgressMeter();
       if(!vertexCache) {
         Msg::Error("Could not read nodes");
         fclose(fp);
@@ -1389,12 +1391,12 @@ int GModel::_readMSH4(const std::string &name)
       delete[] vertexCache;
     }
     else if(!strncmp(&str[1], "Elements", 8)) {
-      Msg::ResetProgressMeter();
       bool dense = false;
       std::size_t totalNumElements = 0, maxElementNum = 0;
       std::pair<std::size_t, MElement *> *elementCache =
         readMSH4Elements(this, fp, binary, dense, totalNumElements,
                          maxElementNum, swap, version);
+      Msg::StopProgressMeter();
       if(!elementCache) {
         Msg::Error("Could not read elements");
         fclose(fp);
@@ -1552,11 +1554,11 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
 static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
                               bool binary, double scalingFactor, double version)
 {
-  std::set<GEntity *, GEntityLessThan> ghost;
-  std::set<GRegion *, GEntityLessThan> regions;
-  std::set<GFace *, GEntityLessThan> faces;
-  std::set<GEdge *, GEntityLessThan> edges;
-  std::set<GVertex *, GEntityLessThan> vertices;
+  std::set<GEntity *, GEntityPtrLessThan> ghost;
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
 
   if(partition) {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
@@ -1612,7 +1614,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         tags.resize(2 * ghostSize);
         int index = 0;
-        for(std::set<GEntity *, GEntityLessThan>::iterator it = ghost.begin();
+        for(std::set<GEntity *, GEntityPtrLessThan>::iterator it = ghost.begin();
             it != ghost.end(); ++it) {
           if((*it)->geomType() == GEntity::GhostCurve) {
             tags[index] = (*it)->tag();
@@ -1801,7 +1803,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         tags.resize(2 * ghostSize);
         int index = 0;
-        for(std::set<GEntity *, GEntityLessThan>::iterator it = ghost.begin();
+        for(std::set<GEntity *, GEntityPtrLessThan>::iterator it = ghost.begin();
             it != ghost.end(); ++it) {
           if((*it)->geomType() == GEntity::GhostCurve) {
             tags[index] = (*it)->tag();
@@ -2046,19 +2048,19 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
 }
 
 static std::size_t
-getAdditionalEntities(std::set<GRegion *, GEntityLessThan> &regions,
-                      std::set<GFace *, GEntityLessThan> &faces,
-                      std::set<GEdge *, GEntityLessThan> &edges,
-                      std::set<GVertex *, GEntityLessThan> &vertices)
+getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
+                      std::set<GFace *, GEntityPtrLessThan> &faces,
+                      std::set<GEdge *, GEntityPtrLessThan> &edges,
+                      std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
   std::size_t numVertices = 0;
 
-  for(std::set<GVertex *, GEntityLessThan>::iterator it = vertices.begin();
+  for(std::set<GVertex *, GEntityPtrLessThan>::iterator it = vertices.begin();
       it != vertices.end(); ++it) {
     numVertices += (*it)->getNumMeshVertices();
   }
 
-  for(std::set<GEdge *, GEntityLessThan>::iterator it = edges.begin();
+  for(std::set<GEdge *, GEntityPtrLessThan>::iterator it = edges.begin();
       it != edges.end(); ++it) {
     numVertices += (*it)->getNumMeshVertices();
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
@@ -2100,7 +2102,7 @@ getAdditionalEntities(std::set<GRegion *, GEntityLessThan> &regions,
     }
   }
 
-  for(std::set<GFace *, GEntityLessThan>::iterator it = faces.begin();
+  for(std::set<GFace *, GEntityPtrLessThan>::iterator it = faces.begin();
       it != faces.end(); ++it) {
     numVertices += (*it)->getNumMeshVertices();
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
@@ -2142,7 +2144,7 @@ getAdditionalEntities(std::set<GRegion *, GEntityLessThan> &regions,
     }
   }
 
-  for(std::set<GRegion *, GEntityLessThan>::iterator it = regions.begin();
+  for(std::set<GRegion *, GEntityPtrLessThan>::iterator it = regions.begin();
       it != regions.end(); ++it) {
     numVertices += (*it)->getNumMeshVertices();
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
@@ -2189,10 +2191,10 @@ getAdditionalEntities(std::set<GRegion *, GEntityLessThan> &regions,
 
 static std::size_t
 getEntitiesForNodes(GModel *const model, bool partitioned, bool saveAll,
-                    std::set<GRegion *, GEntityLessThan> &regions,
-                    std::set<GFace *, GEntityLessThan> &faces,
-                    std::set<GEdge *, GEntityLessThan> &edges,
-                    std::set<GVertex *, GEntityLessThan> &vertices)
+                    std::set<GRegion *, GEntityPtrLessThan> &regions,
+                    std::set<GFace *, GEntityPtrLessThan> &faces,
+                    std::set<GEdge *, GEntityPtrLessThan> &edges,
+                    std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
   if(partitioned) {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
@@ -2253,10 +2255,10 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
                            bool binary, int saveParametric,
                            double scalingFactor, bool saveAll, double version)
 {
-  std::set<GRegion *, GEntityLessThan> regions;
-  std::set<GFace *, GEntityLessThan> faces;
-  std::set<GEdge *, GEntityLessThan> edges;
-  std::set<GVertex *, GEntityLessThan> vertices;
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
   std::size_t numNodes = getEntitiesForNodes(model, partitioned, saveAll,
                                              regions, faces, edges, vertices);
 
@@ -2336,10 +2338,10 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
 static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                               bool binary, bool saveAll, double version)
 {
-  std::set<GRegion *, GEntityLessThan> regions;
-  std::set<GFace *, GEntityLessThan> faces;
-  std::set<GEdge *, GEntityLessThan> edges;
-  std::set<GVertex *, GEntityLessThan> vertices;
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
 
   if(partitioned) {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();

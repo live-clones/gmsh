@@ -18,6 +18,7 @@ private:
 public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   discreteEdge(GModel *model, int num);
+  discreteEdge(GModel *model);
   virtual ~discreteEdge() {}
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const;

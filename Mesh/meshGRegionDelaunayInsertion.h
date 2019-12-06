@@ -215,8 +215,8 @@ public:
   }
 };
 
-void connectTets(std::list<MTet4 *> &, const std::set<MFace, Less_Face> * = 0);
-void connectTets(std::vector<MTet4 *> &, const std::set<MFace, Less_Face> * = 0);
+void connectTets(std::list<MTet4 *> &, const std::set<MFace, MFaceLessThan> * = 0);
+void connectTets(std::vector<MTet4 *> &, const std::set<MFace, MFaceLessThan> * = 0);
 void delaunayMeshIn3D(std::vector<MVertex *> &, std::vector<MTetrahedron *> &);
 void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarget,
                             bool _classify = true, splitQuadRecovery *sqr = 0);

@@ -404,7 +404,7 @@ public:
   }
 };
 
-struct GEntityLessThan {
+struct GEntityPtrLessThan {
   bool operator()(GEntity const *const ent1, GEntity const *const ent2) const
   {
     return ent1->tag() < ent2->tag();

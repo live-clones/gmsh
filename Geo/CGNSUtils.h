@@ -652,10 +652,10 @@ typedef std::vector<MVertex *> VertexVec;
 
 template <typename FaceT> struct LFaceTr;
 template <> struct LFaceTr<MEdge> {
-  typedef std::map<MEdge, FaceData, Less_Edge> BoFaceMap;
+  typedef std::map<MEdge, FaceData, MEdgeLessThan> BoFaceMap;
 };
 template <> struct LFaceTr<MFace> {
-  typedef std::map<MFace, FaceData, Less_Face> BoFaceMap;
+  typedef std::map<MFace, FaceData, MFaceLessThan> BoFaceMap;
 };
 
 /*******************************************************************************

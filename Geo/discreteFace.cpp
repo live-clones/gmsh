@@ -87,6 +87,12 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   meshStatistics.status = GFace::DONE;
 }
 
+discreteFace::discreteFace(GModel *model) : GFace(model, 0)
+{
+  // used for temporary discrete faces, that should not lead to the creation of
+  // the corresponding entity in GEO internals
+}
+
 static void sort_edges(std::vector<GEdge *> &e, std::vector<int> &dir)
 {
   if(e.empty() || dir.empty()) return;

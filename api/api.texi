@@ -1499,6 +1499,33 @@ as-is.
 -
 @end table
 
+@item setAlgorithm
+Set the meshing algorithm on the model entity of dimension @code{dim} and tag
+@code{tag}. Currently only supported for @code{dim} == 2.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setSizeFromBoundary
+Force the mesh size to be extended from the boundary, or not, for the model
+entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
+@code{dim} == 2.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item setCompound
 Set a compound meshing constraint on the model entities of dimension @code{dim}
 and tags @code{tags}. During meshing, compound entities are treated as a single
@@ -2316,6 +2343,33 @@ tag @code{tag}. If @code{val} is true, the mesh orientation will be reversed
 with respect to the natural mesh orientation (i.e. the orientation consistent
 with the orientation of the geometry). If @code{val} is false, the mesh is left
 as-is.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setAlgorithm
+Set the meshing algorithm on the model entity of dimension @code{dim} and tag
+@code{tag}. Currently only supported for @code{dim} == 2.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setSizeFromBoundary
+Force the mesh size to be extended from the boundary, or not, for the model
+entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
+@code{dim} == 2.
 
 @table @asis
 @item Input:

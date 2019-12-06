@@ -1,11 +1,13 @@
 4.5.0 (Work-in-progress): improved handling of anisotropic surface meshes in 3D
 Delaunay; improved high-order periodic meshing; improved 2D boolean unions;
-improved surface mesh reclassification; added API support for mesh compounds;
-file chooser type now changeable at runtime; fixed regression in MeshAdapt for
-non-periodic surfaces with singularities; new X3D output for geometries and
-meshes; new compound Spline/BSpline commands; renamed plugin AnalyseCurvedMesh
-to AnalyseMeshQuality; fixed regression for BSplines on geometries with built-in
-kernel (Sphere, PolarSphere); small fixes.
+improved surface mesh reclassification; file chooser type now changeable at
+runtime; fixed regression in MeshAdapt for non-periodic surfaces with
+singularities; new X3D output for geometries and meshes; new compound
+Spline/BSpline commands; new MeshSizeFromBoundary command; added API support for
+mesh compounds, per-surface mesh algorithm and mesh size from boundary; renamed
+plugin AnalyseCurvedMesh to AnalyseMeshQuality; fixed regression for BSplines on
+geometries with built-in kernel (Sphere, PolarSphere); improved import of STEP
+colors on shape boundaries; small fixes.
 
 * Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
   like all other mesh optimizers); new arguments to mesh/optimize,

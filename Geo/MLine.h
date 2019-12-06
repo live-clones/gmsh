@@ -288,18 +288,18 @@ public:
                           std::vector<double> &ts);
 };
 
-struct compareMLinePtr {
+struct MLinePtrLessThan {
   bool operator()(MLine *l1, MLine *l2) const
   {
-    static Less_Edge le;
+    static MEdgeLessThan le;
     return le(l1->getEdge(0), l2->getEdge(0));
   }
 };
 
-struct equalMLinePtr {
+struct MLinePtrEqual {
   bool operator()(MLine *l1, MLine *l2) const
   {
-    static Equal_Edge le;
+    static MEdgeEqual le;
     return le(l1->getEdge(0), l2->getEdge(0));
   }
 };

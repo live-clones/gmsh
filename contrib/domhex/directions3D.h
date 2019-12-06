@@ -32,7 +32,7 @@ private:
   static std::vector<int> labels;
   static std::map<MVertex *, STensor3> crossField;
   static std::map<MVertex *, double> crossFieldSmoothness;
-  static std::map<MEdge, double, Less_Edge> crossDist;
+  static std::map<MEdge, double, MEdgeLessThan> crossDist;
   static std::vector<MVertex *> listVertices;
 #if defined(HAVE_ANN)
   static ANNkd_tree *kd_tree;

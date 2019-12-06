@@ -6,8 +6,11 @@
 #ifndef CROSS_FIELDS_H
 #define CROSS_FIELDS_H
 
+#include <string>
 class GModel;
 
-int computeCrossField(GModel *);
+int computeQuadDecomposition(GModel *, const std::string &THETA, const std::string &H);
+int computeCrossFieldAndH   (GModel *, const std::string &THETA, const std::string &H);
+int computeCrossField       (GModel *);
 
 #endif

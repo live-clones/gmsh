@@ -125,7 +125,7 @@ Use system versions of contrib libraries, when possible (default: OFF)
 @item ENABLE_TCMALLOC
 Enable libtcmalloc (fast malloc that does not release memory) (default: OFF)
 @item ENABLE_TOUCHBAR
-Enable Apple Touch bar (default: OFF)
+Enable Apple Touch bar (default: ON)
 @item ENABLE_VISUDEV
 Enable additional visualization capabilities for development purposes (default: OFF)
 @item ENABLE_VOROPP

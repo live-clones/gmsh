@@ -155,7 +155,7 @@ namespace tetgenBR {
     std::map<int, MVertex *> _extras;
     // Get the set of vertices from GRegion.
     {
-      std::set<MVertex *, MVertexLessThanNum> all;
+      std::set<MVertex *, MVertexPtrLessThan> all;
       std::vector<GFace *> const &f = _gr->faces();
       for(std::vector<GFace *>::const_iterator it = f.begin(); it != f.end();
           ++it) {
@@ -531,8 +531,8 @@ namespace tetgenBR {
       } // it
 
       if(_sqr){
-        std::map<MFace, GFace *, Less_Face> f = _sqr->getTri();
-        for(std::map<MFace, GFace *, Less_Face>::iterator it = f.begin();
+        std::map<MFace, GFace *, MFaceLessThan> f = _sqr->getTri();
+        for(std::map<MFace, GFace *, MFaceLessThan>::iterator it = f.begin();
             it != f.end(); it++){
           const MFace &mf = it->first;
           for(int j = 0; j < 3; j++) {

@@ -933,7 +933,7 @@ first expression in the second (both of which can be lists).
 occurrence of the second @var{char-expression}. @code{StrCmp} compares
 the two strings (returns an integer greater than, equal to, or less than
 0, according as the first string is greater than, equal to, or less than
-the second string). @code{StrCmp} returns the length of the
+the second string). @code{StrLen} returns the length of the
 string. @code{TextAttributes} creates attributes for text
 strings. @code{Exists} checks if a variable with the given name exists
 (i.e., has been defined previously), and @code{FileExists} checks if the
@@ -3188,6 +3188,9 @@ default value is 45). @value{SYNC}
 
 @item MeshAlgorithm Surface @{ @var{expression-list} @} = @var{expression};
 Forces the meshing algorithm per surface.
+
+@item MeshSizeFromBoundary Surface @{ @var{expression-list} @} = @var{expression};
+Forces the mesh size to be extended from the boudnary, or not, per surface.
 
 @item Compound Curve | Surface @{ @var{expression-list-or-all} @} ;
 Treats the given entities as a single entity when meshing, i.e. perform

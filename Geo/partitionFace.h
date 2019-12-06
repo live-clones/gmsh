@@ -24,6 +24,11 @@ public:
     : discreteFace(model, num), _partitions(), _parentEntity(NULL)
   {
   }
+  partitionFace(GModel *model,
+                const std::vector<unsigned int> &partitions)
+    : discreteFace(model), _partitions(partitions), _parentEntity(NULL)
+  {
+  }
   virtual ~partitionFace() {}
   virtual GeomType geomType() const { return PartitionSurface; }
   virtual bool haveParametrization() { return false; }

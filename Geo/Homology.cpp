@@ -207,7 +207,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
       std::string generator = convertInt(i);
 
       std::string name = "H_" + dimension + domain + generator;
-      std::map<Cell *, int, Less_Cell> chain;
+      std::map<Cell *, int, CellPtrLessThan> chain;
       chainComplex.getBasisChain(chain, i, j, 3, _smoothen);
       int torsion = chainComplex.getTorsion(j, i);
       if(!chain.empty()) {
@@ -296,7 +296,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
       std::string generator = convertInt(i);
 
       std::string name = "H^" + dimension + domain + generator;
-      std::map<Cell *, int, Less_Cell> chain;
+      std::map<Cell *, int, CellPtrLessThan> chain;
       chainComplex.getBasisChain(chain, i, j, 3, false);
       int torsion = chainComplex.getTorsion(j, i);
       if(!chain.empty()) {
@@ -577,7 +577,7 @@ int Homology::eulerCharacteristic()
   return _cellComplex->eulerCharacteristic();
 }
 
-void Homology::_createChain(std::map<Cell *, int, Less_Cell> &preChain,
+void Homology::_createChain(std::map<Cell *, int, CellPtrLessThan> &preChain,
                             const std::string &name, bool co)
 {
   Chain<int> *chain = new Chain<int>();
@@ -646,7 +646,7 @@ void Homology::storeCells(CellComplex *cellComplex, int dim)
   for(CellComplex::citer cit = cellComplex->firstCell(dim);
       cit != cellComplex->lastCell(dim); cit++) {
     Cell *cell = *cit;
-    std::map<Cell *, int, Less_Cell> cells;
+    std::map<Cell *, int, CellPtrLessThan> cells;
     cell->getCells(cells);
     for(Cell::citer it = cells.begin(); it != cells.end(); it++) {
       Cell *subCell = it->first;

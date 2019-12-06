@@ -198,7 +198,7 @@ public:
   }
 };
 
-class MVertexLessThanLexicographic {
+class MVertexPtrLessThanLexicographic {
   static double tolerance;
 
 public:
@@ -206,10 +206,24 @@ public:
   bool operator()(const MVertex *v1, const MVertex *v2) const;
 };
 
-struct MVertexLessThanNum {
+struct MVertexPtrLessThan {
   bool operator()(const MVertex *v1, const MVertex *v2) const
   {
     return v1->getNum() < v2->getNum();
+  }
+};
+
+struct MVertexPtrEqual {
+  bool operator()(const MVertex *v1, const MVertex *v2) const
+  {
+    return v1->getNum() == v2->getNum();
+  }
+};
+
+struct MVertexPtrHash {
+  size_t operator()(const MVertex *v) const
+  {
+    return v->getNum();
   }
 };
 

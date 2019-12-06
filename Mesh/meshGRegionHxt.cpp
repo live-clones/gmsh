@@ -45,7 +45,7 @@ static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
                                          HXTMesh *m,
                                          std::vector<GFace *> &allFaces)
 {
-  std::set<GFace *, GEntityLessThan> allFacesSet;
+  std::set<GFace *, GEntityPtrLessThan> allFacesSet;
   if(m) {
     m->brep.numVolumes = regions.size();
     HXT_CHECK(hxtAlignedMalloc(&m->brep.numSurfacesPerVolume,
@@ -96,7 +96,7 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
   }
   uint32_t to_alloc = 0;
 
-  std::set<GEdge *, GEntityLessThan> allEdgesSet;
+  std::set<GEdge *, GEntityPtrLessThan> allEdgesSet;
   for(std::size_t i = 0; i < faces.size(); i++) {
     std::vector<GEdge *> const &f = faces[i]->edges();
     std::vector<GEdge *> const &f_e = faces[i]->embeddedEdges();

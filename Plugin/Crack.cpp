@@ -62,7 +62,7 @@ public:
   std::vector<MVertex *> data;
 };
 
-struct Less_EdgeData : public std::binary_function<EdgeData, EdgeData, bool> {
+struct MEdgeDataLessThan : public std::binary_function<EdgeData, EdgeData, bool> {
   bool operator()(const EdgeData &e1, const EdgeData &e2) const
   {
     if(e1.edge.getMinVertex() < e2.edge.getMinVertex()) return true;
@@ -133,7 +133,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     }
   }
   else {
-    std::set<EdgeData, Less_EdgeData> bnd;
+    std::set<EdgeData, MEdgeDataLessThan> bnd;
     for(std::size_t i = 0; i < crackElements.size(); i++) {
       for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
         MVertex *v = crackElements[i]->getVertex(j);
@@ -149,7 +149,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
           bnd.erase(ed);
       }
     }
-    for(std::set<EdgeData, Less_EdgeData>::iterator it = bnd.begin();
+    for(std::set<EdgeData, MEdgeDataLessThan>::iterator it = bnd.begin();
         it != bnd.end(); it++)
       bndVertices.insert(it->data.begin(), it->data.end());
   }

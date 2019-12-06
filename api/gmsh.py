@@ -2344,6 +2344,41 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def setAlgorithm(dim, tag, val):
+            """
+            Set the meshing algorithm on the model entity of dimension `dim' and tag
+            `tag'. Currently only supported for `dim' == 2.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSetAlgorithm(
+                c_int(dim),
+                c_int(tag),
+                c_int(val),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetAlgorithm returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def setSizeFromBoundary(dim, tag, val):
+            """
+            Force the mesh size to be extended from the boundary, or not, for the model
+            entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
+            == 2.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSetSizeFromBoundary(
+                c_int(dim),
+                c_int(tag),
+                c_int(val),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetSizeFromBoundary returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def setCompound(dim, tags):
             """
             Set a compound meshing constraint on the model entities of dimension `dim'
@@ -3505,6 +3540,41 @@ class model:
                 if ierr.value != 0:
                     raise ValueError(
                         "gmshModelGeoMeshSetReverse returned non-zero error code: ",
+                        ierr.value)
+
+            @staticmethod
+            def setAlgorithm(dim, tag, val):
+                """
+                Set the meshing algorithm on the model entity of dimension `dim' and tag
+                `tag'. Currently only supported for `dim' == 2.
+                """
+                ierr = c_int()
+                lib.gmshModelGeoMeshSetAlgorithm(
+                    c_int(dim),
+                    c_int(tag),
+                    c_int(val),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise ValueError(
+                        "gmshModelGeoMeshSetAlgorithm returned non-zero error code: ",
+                        ierr.value)
+
+            @staticmethod
+            def setSizeFromBoundary(dim, tag, val):
+                """
+                Force the mesh size to be extended from the boundary, or not, for the model
+                entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
+                == 2.
+                """
+                ierr = c_int()
+                lib.gmshModelGeoMeshSetSizeFromBoundary(
+                    c_int(dim),
+                    c_int(tag),
+                    c_int(val),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise ValueError(
+                        "gmshModelGeoMeshSetSizeFromBoundary returned non-zero error code: ",
                         ierr.value)
 
 

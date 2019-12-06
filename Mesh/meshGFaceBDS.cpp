@@ -20,13 +20,12 @@
 #include "Numeric.h"
 #include "BDS.h"
 #include "qualityMeasures.h"
-#include "Field.h"
 #include "OS.h"
 #include "robustPredicates.h"
 
 static void getDegeneratedVertices(
   BDS_Mesh &m, std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap,
-  std::set<MVertex *, MVertexLessThanNum> &degenerated,
+  std::set<MVertex *, MVertexPtrLessThan> &degenerated,
   std::vector<BDS_Edge *> &degenerated_edges)
 {
   degenerated.clear();
@@ -86,16 +85,16 @@ static double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
            computeEdgeLinearLength(e->p1, e->p2, f);
 }
 
-static double NewGetLc(BDS_Point *point)
+static double NewGetLc(BDS_Point *point, GFace *gf)
 {
-  return Extend1dMeshIn2dSurfaces() ? std::min(point->lc(), point->lcBGM()) :
-                                      point->lcBGM();
+  return Extend1dMeshIn2dSurfaces(gf) ? std::min(point->lc(), point->lcBGM()) :
+    point->lcBGM();
 }
 
 static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f)
 {
-  double l1 = NewGetLc(p1);
-  double l2 = NewGetLc(p2);
+  double l1 = NewGetLc(p1, f);
+  double l2 = NewGetLc(p2, f);
   double l = .5 * (l1 + l2);
 
   const double coord = 0.5;
@@ -379,8 +378,6 @@ static void setDegeneracy(std::vector<BDS_Point *> &deg, short d)
 
 static void splitAllEdgesConnectedToSingularity(GFace *gf, BDS_Mesh &m)
 {
-  //return 0;
-  
   std::vector<BDS_Edge *> degenerated;
   for(size_t i = 0; i < m.edges.size(); i++) {
     BDS_Edge *e = m.edges[i];
@@ -388,25 +385,22 @@ static void splitAllEdgesConnectedToSingularity(GFace *gf, BDS_Mesh &m)
                        (e->p1->degenerated && !e->p2->degenerated)))
       degenerated.push_back(e);
   }
-  for (size_t i=0 ; i< degenerated.size(); i++){
+  for(size_t i = 0; i < degenerated.size(); i++) {
     BDS_Edge *e = degenerated[i];
-    if (!e->deleted && e->numfaces() == 2){
-      short d1 = e->p1->degenerated;
-      short d2 = e->p2->degenerated;
-      BDS_Point *p1 = e->p1;
-      BDS_Point *p2 = e->p2;
-      e->p1->degenerated = 0;
-      e->p2->degenerated = 0;
+    if(!e->deleted && e->numfaces() == 2) {
       double U = 0.5 * (e->p1->u + e->p2->u);
       double V = 0.5 * (e->p1->v + e->p2->v);
       GPoint gpp = gf->point(U, V);
-      BDS_Point *mid = m.add_point(++m.MAXPOINTNUMBER, gpp.x(), gpp.y(), gpp.z());
+      BDS_Point *mid =
+        m.add_point(++m.MAXPOINTNUMBER, gpp.x(), gpp.y(), gpp.z());
       mid->u = U;
       mid->v = V;
-      mid->lc() = 0.5 * (e->p1->lc() + e->p2->lc());    
-      m.split_edge(e, mid);
-      p1->degenerated = d1;
-      p2->degenerated = d2;
+      mid->lc() = 0.5 * (e->p1->lc() + e->p2->lc());
+      // abort if one of the splits leads to an invalid mesh in the param plane
+      if(!m.split_edge(e, mid, true)) {
+        m.del_point(mid);
+        return;
+      }
     }
   }
 }
@@ -417,7 +411,9 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
   double t1 = Cpu();
   std::vector<std::pair<double, BDS_Edge *> > edges;
 
-  SPoint2 out(10.21982512, 10.8635436432);
+
+  SPoint2 out(gf->parBounds(0).high() + 1.21982512,
+              gf->parBounds(1).high() + 1.8635436432);
 
   for(std::set<BDS_Point *, PointLessThan>::iterator it = m.points.begin();
       it != m.points.end(); ++it) {
@@ -610,14 +606,7 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q,
     std::set<BDS_Point *, PointLessThan>::iterator itp = m.points.begin();
     while(itp != m.points.end()) {
       if(neighboringModified(*itp)) {
-        // if ((*itp)->iD ==  616){
-        //  outputScalarField(m.triangles, "BEF.pos", 1, gf);
-        // }
         if(m.smooth_point_centroid(*itp, gf, threshold)) nb_smooth++;
-        // if ((*itp)->iD ==  616){
-        //   outputScalarField(m.triangles, "AFT.pos", 1, gf);
-        //   getchar();
-        // }
       }
       ++itp;
     }
@@ -718,21 +707,22 @@ void modifyInitialMeshToRemoveDegeneracies(
   GFace *gf, BDS_Mesh &m,
   std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap)
 {
-  std::set<MVertex *, MVertexLessThanNum> degenerated;
+  std::set<MVertex *, MVertexPtrLessThan> degenerated;
   std::vector<BDS_Edge *> degenerated_edges;
   getDegeneratedVertices(m, recoverMap, degenerated, degenerated_edges);
 
   for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
         recoverMap->begin();
       it != recoverMap->end(); ++it) {
-    std::set<MVertex *, MVertexLessThanNum>::iterator it2 =
+    std::set<MVertex *, MVertexPtrLessThan>::iterator it2 =
       degenerated.find(it->second);
     if(it2 != degenerated.end()) {
       for(size_t K = 0; K < degenerated_edges.size(); K++) {
         if(degenerated_edges[K]->p1 == it->first ||
            degenerated_edges[K]->p2 == it->first) {
-          if(degenerated_edges[K]->p1->u == degenerated_edges[K]->p2->u) {
-            Msg::Debug("Degenerated edge on u = cst axis: treated as well now!");
+          if(std::abs(degenerated_edges[K]->p1->u - degenerated_edges[K]->p2->u) < 1e-12) {
+            Msg::Debug(
+              "Degenerated edge on u = cst axis: treated as well now!");
             it->first->degenerated = 2;
           }
           else {
@@ -758,12 +748,10 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
                    std::vector<SPoint2> *true_boundary)
 {
 #ifdef superdebug
-    outputScalarField(m.triangles, "initial.pos", 1, gf);
-    getchar();
+  outputScalarField(m.triangles, "initial.pos", 1, gf);
+  getchar();
 #endif
 
-    //  getchar();
-  //  return;
   int IT = 0;
   int MAXNP = m.MAXPOINTNUMBER;
 
@@ -784,9 +772,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     }
   }
 
-  //  if (recoverMap)outputScalarField(m.triangles, "init.pos", 1, gf);
-
-  // If asked, compute nodal size field using 1D Mesh
+  // if asked, compute nodal size field using 1D Mesh
   if(computeNodalSizeField) computeNodalSizes(gf, m, recoverMap);
 
   double t_spl = 0, t_sw = 0, t_col = 0, t_sm = 0;
@@ -803,24 +789,23 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       ++it;
     }
   }
-  
+
   std::vector<BDS_Point *> deg;
   getDegeneracy(m, deg);
   short degType = 1;
   if(deg.size()) degType = deg[0]->degenerated;
 
-  if(computeNodalSizeField){
+  if(computeNodalSizeField) {
     splitAllEdgesConnectedToSingularity(gf, m);
 #ifdef superdebug
     outputScalarField(m.triangles, "cut_all_degenerate.pos", 1, gf);
     getchar();
 #endif
-  }  
-  
-  while(1) {
+  }
 
+  while(1) {
     setDegeneracy(deg, degType);
-    
+
     // we count the number of local mesh modifs.
     int nb_split = 0;
     int nb_smooth = 0;
@@ -828,7 +813,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     int nb_swap = 0;
 
     // split long edges
-
     double maxE = MAXE_;
     double minE = MINE_;
     splitEdgePass(gf, m, maxE, nb_split, true_boundary, t_spl);
@@ -895,8 +879,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     int LARGE = 0, SMALL = 0, TOTAL = 0;
     while(it != m.edges.end()) {
       if(!(*it)->deleted) {
-        double lone =
-          2 * (*it)->length() / (NewGetLc((*it)->p1) + NewGetLc((*it)->p2));
+        double lone = 2 * (*it)->length() /
+          (NewGetLc((*it)->p1, gf) + NewGetLc((*it)->p2, gf));
         if(lone > maxE) LARGE++;
         if(lone < minE) SMALL++;
         TOTAL++;
@@ -962,16 +946,14 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
           pts[1]->config_modified = true;
           pts[2]->config_modified = true;
           bad++;
-          if(val < 0) {
-            invalid++;
-          }
+          if(val < 0) { invalid++; }
         }
       }
       if(++ITER == 10) {
         if(invalid && !computeNodalSizeField) {
           gf->meshStatistics.status = GFace::FAILED;
-          Msg::Warning("%d element%s remain invalid in surface %d",
-                       invalid, (invalid > 1) ? "s" : "", gf->tag());
+          Msg::Warning("%d element%s remain invalid in surface %d", invalid,
+                       (invalid > 1) ? "s" : "", gf->tag());
         }
         break;
       }

@@ -24,7 +24,7 @@ namespace nglib {
 using namespace nglib;
 
 static void getAllBoundingVertices(
-  GRegion *gr, std::set<MVertex *, MVertexLessThanNum> &allBoundingVertices)
+  GRegion *gr, std::set<MVertex *, MVertexPtrLessThan> &allBoundingVertices)
 {
   std::vector<GFace *> faces = gr->faces();
   std::vector<GFace *>::iterator it = faces.begin();
@@ -48,10 +48,10 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   Ng_Init();
   Ng_Mesh *ngmesh = Ng_NewMesh();
 
-  std::set<MVertex *, MVertexLessThanNum> allBoundingVertices;
+  std::set<MVertex *, MVertexPtrLessThan> allBoundingVertices;
   getAllBoundingVertices(gr, allBoundingVertices);
 
-  std::set<MVertex *, MVertexLessThanNum>::iterator itv =
+  std::set<MVertex *, MVertexPtrLessThan>::iterator itv =
     allBoundingVertices.begin();
   int I = 1;
   while(itv != allBoundingVertices.end()) {

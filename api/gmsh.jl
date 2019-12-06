@@ -1979,6 +1979,37 @@ function setReverse(dim, tag, val = true)
 end
 
 """
+    gmsh.model.mesh.setAlgorithm(dim, tag, val)
+
+Set the meshing algorithm on the model entity of dimension `dim` and tag `tag`.
+Currently only supported for `dim` == 2.
+"""
+function setAlgorithm(dim, tag, val)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetAlgorithm, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, val, ierr)
+    ierr[] != 0 && error("gmshModelMeshSetAlgorithm returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.setSizeFromBoundary(dim, tag, val)
+
+Force the mesh size to be extended from the boundary, or not, for the model
+entity of dimension `dim` and tag `tag`. Currently only supported for `dim` ==
+2.
+"""
+function setSizeFromBoundary(dim, tag, val)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetSizeFromBoundary, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, val, ierr)
+    ierr[] != 0 && error("gmshModelMeshSetSizeFromBoundary returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.setCompound(dim, tags)
 
 Set a compound meshing constraint on the model entities of dimension `dim` and
@@ -2997,6 +3028,37 @@ function setReverse(dim, tag, val = true)
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetReverse returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.geo.mesh.setAlgorithm(dim, tag, val)
+
+Set the meshing algorithm on the model entity of dimension `dim` and tag `tag`.
+Currently only supported for `dim` == 2.
+"""
+function setAlgorithm(dim, tag, val)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoMeshSetAlgorithm, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, val, ierr)
+    ierr[] != 0 && error("gmshModelGeoMeshSetAlgorithm returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.geo.mesh.setSizeFromBoundary(dim, tag, val)
+
+Force the mesh size to be extended from the boundary, or not, for the model
+entity of dimension `dim` and tag `tag`. Currently only supported for `dim` ==
+2.
+"""
+function setSizeFromBoundary(dim, tag, val)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoMeshSetSizeFromBoundary, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, val, ierr)
+    ierr[] != 0 && error("gmshModelGeoMeshSetSizeFromBoundary returned non-zero error code: $(ierr[])")
     return nothing
 end
 

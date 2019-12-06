@@ -26,6 +26,10 @@ public:
     : discreteEdge(model, num), _partitions(partitions), _parentEntity(NULL)
   {
   }
+  partitionEdge(GModel *model, const std::vector<unsigned int> &partitions)
+    : discreteEdge(model), _partitions(partitions), _parentEntity(NULL)
+  {
+  }
   virtual ~partitionEdge() {}
   virtual GeomType geomType() const { return PartitionCurve; }
   virtual bool haveParametrization() { return false; }
