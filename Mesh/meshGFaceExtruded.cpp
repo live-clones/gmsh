@@ -296,7 +296,7 @@ int MeshExtrudedSurface(
 
   if(!ep || !ep->mesh.ExtrudeMesh) return 0;
 
-  Msg::Info("Meshing surface %d (extruded)", gf->tag());
+  Msg::Info("Meshing surface %d (Extruded)", gf->tag());
 
   // build an rtree with all the vertices on the boundary of the face gf
   MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);

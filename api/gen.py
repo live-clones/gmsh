@@ -267,6 +267,12 @@ mesh.add('getElement',doc,None,isize('elementTag'),oint('elementType'),ovectorsi
 doc = '''Search the mesh for an element located at coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a search in a spatial octree. If an element is found, return its tag, type and node tags, as well as the local coordinates (`u', `v', `w') within the element corresponding to search location. If `dim' is >= 0, only search for elements of the given dimension. If `strict' is not set, use a tolerance to find elements near the search location.'''
 mesh.add('getElementByCoordinates',doc,None,idouble('x'),idouble('y'),idouble('z'),osize('elementTag'),oint('elementType'),ovectorsize('nodeTags'),odouble('u'),odouble('v'),odouble('w'),iint('dim', '-1'),ibool('strict','false','False'))
 
+doc = '''Search the mesh for element(s) located at coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a search in a spatial octree. Return the tags of all found elements in `elementTags'. Additional information about the elements can be accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim' is >= 0, only search for elements of the given dimension. If `strict' is not set, use a tolerance to find elements near the search location.'''
+mesh.add('getElementsByCoordinates',doc,None,idouble('x'),idouble('y'),idouble('z'),ovectorsize('elementTags'),iint('dim', '-1'),ibool('strict','false','False'))
+
+doc = '''Return the local coordinates (`u', `v', `w') within the element `elementTag' corresponding to the model coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a cache stored in the model.'''
+mesh.add('getLocalCoordinatesInElement',doc,None,isize('elementTag'),idouble('x'),idouble('y'),idouble('z'),odouble('u'),odouble('v'),odouble('w'))
+
 doc = '''Get the types of elements in the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
 mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
 
@@ -726,7 +732,7 @@ doc = '''Copy the options from the view with tag `refTag' to the view with tag `
 view.add('copyOptions',doc,None,iint('refTag'),iint('tag'))
 
 doc = '''Combine elements (if `what' == "elements") or steps (if `what' == "steps") of all views (`how' == "all"), all visible views (`how' == "visible") or all views having the same name (`how' == "name"). Remove original views if `remove' is set.'''
-view.add('combine',doc,None,istring('what'),istring('how'),ibool('remove','false','False'))
+view.add('combine',doc,None,istring('what'),istring('how'),ibool('remove','true','True'),ibool('copyOptions','true','True'))
 
 doc = '''Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only the value at step `step' is `step' is positive. Return only values with `numComp' if `numComp' is positive. Return the gradient of the `value' if `gradient' is set. Probes with a geometrical tolerance (in the reference unit cube) of `tolerance' if `tolerance' is not zero. Return the result from the element described by its coordinates if `xElementCoord', `yElementCoord' and `zElementCoord' are provided.'''
 view.add('probe',doc,None,iint('tag'),idouble('x'),idouble('y'),idouble('z'),ovectordouble('value'),iint('step','-1'),iint('numComp','-1'),ibool('gradient','false','False'),idouble('tolerance','0.'),ivectordouble('xElemCoord','std::vector<double>()',"[]","[]"),ivectordouble('yElemCoord','std::vector<double>()',"[]","[]"),ivectordouble('zElemCoord','std::vector<double>()',"[]","[]"))
@@ -778,6 +784,9 @@ fltk.add('unlock',doc,None)
 
 doc = '''Run the event loop of the graphical user interface, i.e. repeatedly call `wait()'. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('run',doc,None)
+
+doc = '''Check if the user interface is available (e.g. to detect if it has been closed).'''
+fltk.add('isAvailable',doc,oint)
 
 doc = '''Select entities in the user interface. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
 fltk.add('selectEntities',doc,oint,ovectorpair('dimTags'),iint('dim','-1'))
@@ -833,10 +842,10 @@ doc = '''Stop logging messages.'''
 logger.add('stop',doc,None)
 
 doc = '''Return wall clock time.'''
-logger.add('time',doc,odouble)
+logger.add('getWallTime',doc,odouble)
 
 doc = '''Return CPU time.'''
-logger.add('cputime',doc,odouble)
+logger.add('getCpuTime',doc,odouble)
 
 ################################################################################
 

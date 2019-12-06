@@ -162,7 +162,12 @@ static void view_save_cb(Fl_Widget *w, void *data)
   if(fileChooser(FILE_CHOOSER_CREATE, "Export", formats,
                  view->getData()->getFileName().c_str())) {
     std::string name = fileChooserGetName(1);
-    if(CTX::instance()->confirmOverwrite) {
+    bool confirmOverwrite = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+    // handled directly by the native macOS file chooser
+    if(CTX::instance()->nativeFileChooser) confirmOverwrite = false;
+#endif
+    if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
@@ -192,42 +197,48 @@ static void view_alias_with_options_cb(Fl_Widget *w, void *data)
 
 static void view_combine_space_all_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_space_visible_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_space_by_name_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_all_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_visible_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_by_name_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }

@@ -1697,8 +1697,18 @@ namespace onelab {
     {
       return _get(ps, name);
     }
-    virtual bool setAndAppendChoices(const number &p) { return _set(p, false); }
-    virtual bool setAndAppendChoices(const string &p) { return _set(p, false); }
+    virtual bool setAndAppendChoices(const number &p)
+    {
+      // this will send the parameter without choices, using
+      // GMSH_PARAMETER_WITHOUT_CHOICES instead of GMSH_PARAMETER; the ONELAB
+      // server will then append the value to the choices server-side.
+      return _set(p, false);
+    }
+    virtual bool setAndAppendChoices(const string &p)
+    {
+      // idem
+      return _set(p, false);
+    }
     virtual bool getWithoutChoices(std::vector<number> &ps,
                                    const std::string &name = "")
     {

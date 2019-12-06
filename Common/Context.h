@@ -287,7 +287,8 @@ public:
   // post processing options
   struct {
     int draw, link, horizontalScales;
-    int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
+    int smooth, animCycle, animStep;
+    int combineTime, combineRemoveOrig, combineCopyOptions;
     int fileFormat, plugins, forceNodeData, forceElementData;
     int saveMesh, saveInterpolationMatrices;
     double animDelay;

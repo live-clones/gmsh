@@ -1071,6 +1071,45 @@ namespace gmsh { // Top-level functions
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
+      // Search the mesh for element(s) located at coordinates (`x', `y', `z').
+      // This is a sometimes useful but inefficient way of accessing elements, as
+      // it relies on a search in a spatial octree. Return the tags of all found
+      // elements in `elementTags'. Additional information about the elements can
+      // be accessed through `getElement' and `getLocalCoordinatesInElement'. If
+      // `dim' is >= 0, only search for elements of the given dimension. If
+      // `strict' is not set, use a tolerance to find elements near the search
+      // location.
+      inline void getElementsByCoordinates(const double x,
+                                           const double y,
+                                           const double z,
+                                           std::vector<std::size_t> & elementTags,
+                                           const int dim = -1,
+                                           const bool strict = false)
+      {
+        int ierr = 0;
+        size_t *api_elementTags_; size_t api_elementTags_n_;
+        gmshModelMeshGetElementsByCoordinates(x, y, z, &api_elementTags_, &api_elementTags_n_, dim, (int)strict, &ierr);
+        if(ierr) throw ierr;
+        elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
+      }
+
+      // Return the local coordinates (`u', `v', `w') within the element
+      // `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
+      // is a sometimes useful but inefficient way of accessing elements, as it
+      // relies on a cache stored in the model.
+      inline void getLocalCoordinatesInElement(const std::size_t elementTag,
+                                               const double x,
+                                               const double y,
+                                               const double z,
+                                               double & u,
+                                               double & v,
+                                               double & w)
+      {
+        int ierr = 0;
+        gmshModelMeshGetLocalCoordinatesInElement(elementTag, x, y, z, &u, &v, &w, &ierr);
+        if(ierr) throw ierr;
+      }
+
       // Get the types of elements in the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, get all the types in the mesh.
@@ -3558,10 +3597,11 @@ namespace gmsh { // Top-level functions
     // `remove' is set.
     inline void combine(const std::string & what,
                         const std::string & how,
-                        const bool remove = false)
+                        const bool remove = true,
+                        const bool copyOptions = true)
     {
       int ierr = 0;
-      gmshViewCombine(what.c_str(), how.c_str(), (int)remove, &ierr);
+      gmshViewCombine(what.c_str(), how.c_str(), (int)remove, (int)copyOptions, &ierr);
       if(ierr) throw ierr;
     }
 
@@ -3721,6 +3761,16 @@ namespace gmsh { // Top-level functions
       int ierr = 0;
       gmshFltkRun(&ierr);
       if(ierr) throw ierr;
+    }
+
+    // Check if the user interface is available (e.g. to detect if it has been
+    // closed).
+    inline int isAvailable()
+    {
+      int ierr = 0;
+      int result_api_ = gmshFltkIsAvailable(&ierr);
+      if(ierr) throw ierr;
+      return result_api_;
     }
 
     // Select entities in the user interface. If `dim' is >= 0, return only the
@@ -3893,19 +3943,19 @@ namespace gmsh { // Top-level functions
     }
 
     // Return wall clock time.
-    inline double time()
+    inline double getWallTime()
     {
       int ierr = 0;
-      double result_api_ = gmshLoggerTime(&ierr);
+      double result_api_ = gmshLoggerGetWallTime(&ierr);
       if(ierr) throw ierr;
       return result_api_;
     }
 
     // Return CPU time.
-    inline double cputime()
+    inline double getCpuTime()
     {
       int ierr = 0;
-      double result_api_ = gmshLoggerCputime(&ierr);
+      double result_api_ = gmshLoggerGetCpuTime(&ierr);
       if(ierr) throw ierr;
       return result_api_;
     }

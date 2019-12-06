@@ -150,7 +150,6 @@ for num in range(1, 4):
         adjust_num_opt("General.RotationX", 10)
         set_opt("General.RotationY", option.getNumber("General.RotationX") / 3)
         adjust_num_opt("General.RotationZ", 0.1)
-        gmsh.fltk.wait(0.01) # wait for 0.01s and resume execution
         gmsh.graphics.draw()
 
         # write out the graphics scene to an image file

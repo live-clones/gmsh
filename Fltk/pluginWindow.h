@@ -6,6 +6,7 @@
 #ifndef PLUGIN_WINDOW_H
 #define PLUGIN_WINDOW_H
 
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Multi_Browser.H>
@@ -23,6 +24,7 @@ public:
 
 public:
   pluginWindow(int deltaFontSize = 0);
+  ~pluginWindow() { Fl::delete_widget(win); }
   void show(int viewIndex);
   void resetViewBrowser();
 };

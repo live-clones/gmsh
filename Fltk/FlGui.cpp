@@ -616,6 +616,25 @@ FlGui::FlGui(int argc, char **argv, void (*error_handler)(const char *fmt, ...))
 #endif
 }
 
+FlGui::~FlGui()
+{
+  for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
+  delete options;
+  delete fields;
+  delete plugins;
+  delete stats;
+  delete visibility;
+  delete highordertools;
+  delete clipping;
+  delete manip;
+  delete elementaryContext;
+  delete transformContext;
+  delete physicalContext;
+  delete meshContext;
+  delete help;
+  delete fullscreen;
+}
+
 bool FlGui::available() { return _instance != 0; }
 
 FlGui *FlGui::instance(int argc, char **argv,
@@ -638,6 +657,13 @@ FlGui *FlGui::instance(int argc, char **argv,
     SetBoundingBox();
   }
   return _instance;
+}
+
+void FlGui::destroy()
+{
+  if(!_instance) return;
+  delete _instance;
+  _instance = 0;
 }
 
 int FlGui::run()

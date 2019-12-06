@@ -62,6 +62,8 @@ public:
   // add a new time step to a given mesh-based view
   void addStep(GModel *model, const std::map<int, std::vector<double> > &data,
                double time = 0., int numComp = -1);
+  // add a new step to a list-based scalar point dataset
+  void addStep(std::vector<double> &y);
 
   // default destructor
   ~PView();
@@ -109,7 +111,7 @@ public:
 #endif
 
   // combine view
-  static void combine(bool time, int how, bool remove);
+  static void combine(bool time, int how, bool remove, bool copyOptions);
 
   // find view by name, by fileName, or by number. If timeStep >= 0, return view
   // only if it does *not* contain that timestep; if partition >= 0, return view
@@ -157,6 +159,14 @@ public:
 
   // smoothed normals
   smooth_normals *normals;
+};
+
+class nameData {
+public:
+  std::string name;
+  std::vector<int> indices;
+  std::vector<PViewData *> data;
+  PViewOptions *options;
 };
 
 // this is the maximum number of nodes of elements we actually *draw*

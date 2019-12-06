@@ -6,7 +6,6 @@
 // Contributed by Ismail Badia.
 
 #include "HierarchicalBasisHcurlQuad.h"
-
 HierarchicalBasisHcurlQuad::HierarchicalBasisHcurlQuad(int order)
 
 {
@@ -119,31 +118,46 @@ void HierarchicalBasisHcurlQuad::generateHcurlBasis(
 
 void HierarchicalBasisHcurlQuad::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &edgeFunctions)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    switch(edgeNumber) {
-    case(0): {
-      constant1 = 0;
-      constant2 = _pOrderEdge[0];
-    } break;
-    case(1): {
-      constant1 = _pOrderEdge[0] + 1;
-      constant2 = _pOrderEdge[1] + _pOrderEdge[0] + 1;
-    } break;
-    case(2): {
-      constant1 = _pOrderEdge[0] + _pOrderEdge[1] + 2;
-      constant2 = _pOrderEdge[1] + _pOrderEdge[0] + _pOrderEdge[2] + 2;
-    } break;
-    case(3): {
-      constant1 = _pOrderEdge[0] + _pOrderEdge[1] + _pOrderEdge[2] + 3;
-      constant2 =
-        _pOrderEdge[1] + _pOrderEdge[0] + _pOrderEdge[2] + _pOrderEdge[3] + 3;
-    } break;
-    default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=3");
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
+      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
     }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
+      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
+    }
+  }
+}
+void HierarchicalBasisHcurlQuad::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
     for(int k = constant1; k <= constant2; k++) {
       if((k - constant1) % 2 == 0) {
         edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
@@ -225,8 +239,7 @@ void HierarchicalBasisHcurlQuad::generateCurlBasis(
     }
   }
 }
-
-void HierarchicalBasisHcurlQuad::orientFace(
+void HierarchicalBasisHcurlQuad::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
@@ -353,6 +366,20 @@ void HierarchicalBasisHcurlQuad::orientFace(
     }
   }
 }
+void HierarchicalBasisHcurlQuad::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double> > &fTableCopy)
+{
+  int iOrientation = numberOrientationQuadFace(flag1, flag2, flag3);
+  int offset = iOrientation * _nQuadFaceFunction;
+  for(int i = 0; i < _nQuadFaceFunction; i++) {
+    fTableCopy[i][0] = quadFaceFunctionsAllOrientation[i + offset][0];
+    fTableCopy[i][1] = quadFaceFunctionsAllOrientation[i + offset][1];
+    fTableCopy[i][2] = quadFaceFunctionsAllOrientation[i + offset][2];
+  }
+}
 
 void HierarchicalBasisHcurlQuad::getKeysInfo(std::vector<int> &functionTypeInfo,
                                              std::vector<int> &orderInfo)
@@ -368,14 +395,14 @@ void HierarchicalBasisHcurlQuad::getKeysInfo(std::vector<int> &functionTypeInfo,
   for(int n1 = 0; n1 <= _pf1; n1++) {
     for(int n2 = 2; n2 <= _pf2 + 1; n2++) {
       functionTypeInfo[it] = 2;
-      orderInfo[it] = std::max(n1,n2);
+      orderInfo[it] = std::max(n1, n2);
       it++;
     }
   }
   for(int n1 = 2; n1 <= _pf1 + 1; n1++) {
     for(int n2 = 0; n2 <= _pf2; n2++) {
       functionTypeInfo[it] = 2;
-      orderInfo[it] =std::max(n1,n2);
+      orderInfo[it] = std::max(n1, n2);
       it++;
     }
   }

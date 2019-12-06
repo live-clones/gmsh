@@ -598,6 +598,34 @@ GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
                                                    const int strict,
                                                    int * ierr);
 
+/* Search the mesh for element(s) located at coordinates (`x', `y', `z'). This
+ * is a sometimes useful but inefficient way of accessing elements, as it
+ * relies on a search in a spatial octree. Return the tags of all found
+ * elements in `elementTags'. Additional information about the elements can be
+ * accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim'
+ * is >= 0, only search for elements of the given dimension. If `strict' is
+ * not set, use a tolerance to find elements near the search location. */
+GMSH_API void gmshModelMeshGetElementsByCoordinates(const double x,
+                                                    const double y,
+                                                    const double z,
+                                                    size_t ** elementTags, size_t * elementTags_n,
+                                                    const int dim,
+                                                    const int strict,
+                                                    int * ierr);
+
+/* Return the local coordinates (`u', `v', `w') within the element
+ * `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
+ * is a sometimes useful but inefficient way of accessing elements, as it
+ * relies on a cache stored in the model. */
+GMSH_API void gmshModelMeshGetLocalCoordinatesInElement(const size_t elementTag,
+                                                        const double x,
+                                                        const double y,
+                                                        const double z,
+                                                        double * u,
+                                                        double * v,
+                                                        double * w,
+                                                        int * ierr);
+
 /* Get the types of elements in the entity of dimension `dim' and tag `tag'.
  * If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
  * and `tag' are negative, get all the types in the mesh. */
@@ -2100,6 +2128,7 @@ GMSH_API void gmshViewCopyOptions(const int refTag,
 GMSH_API void gmshViewCombine(const char * what,
                               const char * how,
                               const int remove,
+                              const int copyOptions,
                               int * ierr);
 
 /* Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
@@ -2182,6 +2211,10 @@ GMSH_API void gmshFltkUnlock(int * ierr);
  * been initialized. Can only be called in the main thread. */
 GMSH_API void gmshFltkRun(int * ierr);
 
+/* Check if the user interface is available (e.g. to detect if it has been
+ * closed). */
+GMSH_API int gmshFltkIsAvailable(int * ierr);
+
 /* Select entities in the user interface. If `dim' is >= 0, return only the
  * entities of the specified dimension (e.g. points if `dim' == 0). */
 GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n,
@@ -2261,9 +2294,9 @@ GMSH_API void gmshLoggerGet(char *** log, size_t * log_n,
 GMSH_API void gmshLoggerStop(int * ierr);
 
 /* Return wall clock time. */
-GMSH_API double gmshLoggerTime(int * ierr);
+GMSH_API double gmshLoggerGetWallTime(int * ierr);
 
 /* Return CPU time. */
-GMSH_API double gmshLoggerCputime(int * ierr);
+GMSH_API double gmshLoggerGetCpuTime(int * ierr);
 
 #endif

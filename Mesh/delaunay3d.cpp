@@ -283,6 +283,7 @@ public:
   }
   aBunchOfStuff(std::size_t s) : _current(0), _nbAlloc(s)
   {
+    if(!_nbAlloc) _nbAlloc = 1;
     _all.push_back(new T[_nbAlloc]);
   }
   ~aBunchOfStuff()
