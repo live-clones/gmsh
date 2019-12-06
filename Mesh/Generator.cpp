@@ -983,6 +983,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
      how != "Netgen" &&
      how != "HighOrder" &&
      how != "HighOrderElastic" &&
+     how != "HighOrderFastCurving" &&
      how != "Laplace2D" &&
      how != "Relocate2D" &&
      how != "Relocate3D") {
