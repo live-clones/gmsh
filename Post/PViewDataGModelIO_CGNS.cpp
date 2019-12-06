@@ -418,7 +418,7 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
   _steps.back()->fillEntities();
   _steps.back()->computeBoundingBox();
   _steps.back()->setFileName(fileName);
-  _steps.back()->setFileIndex(index);
+  _steps.back()->setFileIndex(-1);
   _steps.back()->setTime(0.);
 
   int cgnsErr;
@@ -499,8 +499,8 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
 
 bool PViewDataGModel::readCGNS(const std::pair<std::string,
                                                std::string> &solFieldName,
-                               const std::string &fileName, int fileIndex,
-                               int baseIndex,
+                               const std::string &fileName,  int index,
+                               int fileIndex, int baseIndex,
                         const std::vector<std::vector<MVertex *> > &vertPerZone,
                         const std::vector<std::vector<MElement *> > &eltPerZone)
 {
