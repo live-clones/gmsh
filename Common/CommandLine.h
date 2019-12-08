@@ -25,7 +25,8 @@ std::vector<std::pair<std::string, std::string> >
 GetShortcutsUsage(const std::string &ctrl = "");
 std::vector<std::pair<std::string, std::string> > GetMouseUsage();
 void PrintUsage(const std::string &name);
-void PrintInfo();
+std::vector<std::string> GetBuildInfo();
+void PrintBuildInfo();
 void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError);
 
 #endif
