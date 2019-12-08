@@ -413,13 +413,17 @@ bool PViewDataGModel::readCGNS(const std::pair<std::string,
                         const std::vector<std::vector<MVertex *> > &vertPerZone,
                         const std::vector<std::vector<MElement *> > &eltPerZone)
 {
-  static const int numComp = 1;
-  _steps.push_back(new stepData<double>(GModel::current(), numComp)); // DBGTT check numComp
+  // create step if needed
+  if(_steps.empty()) {
+     _steps.push_back(new stepData<double>(GModel::current(), 1));
+    _steps.back()->setFileIndex(-1);
+    _steps.back()->setTime(0.);
+  }
+
+  // update step data
   _steps.back()->fillEntities();
   _steps.back()->computeBoundingBox();
   _steps.back()->setFileName(fileName);
-  _steps.back()->setFileIndex(-1);
-  _steps.back()->setTime(0.);
 
   int cgnsErr;
 
