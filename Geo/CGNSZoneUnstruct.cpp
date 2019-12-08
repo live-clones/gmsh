@@ -4,7 +4,6 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshMessage.h"
-#include "GModel.h" // DBGTT
 #include "MVertex.h"
 #include "MElement.h"
 #include "CGNSCommon.h"
@@ -43,22 +42,8 @@ MElement *createElement(ElementType_t sectEltType, std::size_t vertShift,
   if((mshEltType != MSH_PNT) && (eltNodeTransfo != 0) &&
      (eltNodeTransfo->size() > 0)) {
     nodeTransfo = &((*eltNodeTransfo)[mshEltType]);
-    Msg::Info("DBGTT: using custom node ordering for elt type %i", mshEltType);
   }
   else nodeTransfo = &(cgns2MshNodeIndex(mshEltType));
-
-  // DBGTT
-  static bool firstDBG = true;
-  if (firstDBG && (mshEltType == MSH_PRI_18)) {
-    printf("First prism:\n");
-    int iSectDataDBG = iSectData;
-    for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectDataDBG++) {
-      const int indNode = vertShift + sectData[iSectDataDBG] - 1;
-      MVertex *mv = allVert[indNode];
-      printf("  -> Vert. %lu (%g, %g, %g)\n", mv->getNum(), mv->x(), mv->y(), mv->z());
-    }
-    firstDBG = false;
-  }
 
   // get element vertices
   std::vector<MVertex *> eltVert(nbEltNode);

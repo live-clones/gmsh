@@ -20,7 +20,6 @@ int cgnsError(const char *file, const int line, const int fileIndex = -1);
 void printProgress(const char *cstr, std::size_t i, std::size_t num);
 
 #if defined(HAVE_LIBCGNS_CPEX0045)
-// DBGTT: to be refactored
 int evalMonomialBasis(int mshType, const std::vector<double> &u,
                       const std::vector<double> &v,
                       const std::vector<double> &w, fullMatrix<double> &val);

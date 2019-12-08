@@ -71,8 +71,6 @@ int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
     uvw(i, 0) = u[i]; uvw(i, 1) = v[i]; uvw(i, 2) = w[i];
     uvwMsh(i, 0) = uMsh[i]; uvwMsh(i, 1) = vMsh[i]; uvwMsh(i, 2) = wMsh[i];
   }
-  uvw.print("DBGTT: CGNS order");
-  uvwMsh.print("DBGTT: Gmsh order");
   
   // compute node correspondence between user and Gmsh interpolation nodes
   std::vector<int> transfo(nbPt);
@@ -83,7 +81,6 @@ int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
     return 0;
   }
   nodeTransfo[mshType] = transfo;
-  printf("DBGTT: transfo = \n"); for(int i = 0; i < nbPt; i++) printf("%i\n", transfo[i]);
 
   return 1;
 }

@@ -329,19 +329,11 @@ void CGNSZone::setPeriodicVertices(const std::vector<CGNSZone *> &allZones,
     std::vector<MVertex *> &sVert = slaveVert(iPer);
     std::vector<MVertex *> &mVert = masterVert(iPer);
     CGNSZone *mZone = allZones[masterZone(iPer)];
-    // Msg::Info("DBGTT: per. conn. %i in zone %i '%s' with zone %i '%s':\n",
-    //            iPer, index(), name().c_str(), masterZone(iPer), mZone->name().c_str());
     for(std::size_t iN = 0; iN < sNode.size(); iN++) {
       const cgsize_t sInd = startNode() + sNode[iN];
       const cgsize_t mInd = mZone->startNode() + mNode[iN];
       sVert.push_back(allVert[sInd]);
       mVert.push_back(allVert[mInd]);
-      // Msg::Info("DBGTT: node loc. %i, global %i, vert %i (%g, %g, %g) with "
-      //           "node loc. %i, global %i, vert %i (%g, %g, %g):\n",
-      //           sNode[iN], sInd, allVert[sInd]->getNum(), allVert[sInd]->x(),
-      //           allVert[sInd]->y(), allVert[sInd]->z(),
-      //           mNode[iN], mInd, allVert[mInd]->getNum(), allVert[mInd]->x(),
-      //           allVert[mInd]->y(), allVert[mInd]->z());
     }
   }
 }

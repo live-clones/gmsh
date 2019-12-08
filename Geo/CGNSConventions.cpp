@@ -754,7 +754,6 @@ bool computeReordering(fullMatrix<double> src, fullMatrix<double> dest,
       if(dd < TOLSQ) {
         ind[iSrc] = iDest;
         found.insert(iDest);
-        printf("DBGTT: %lu (%g, %g, %g) -> %lu (%g, %g, %g)\n", iSrc, src(iSrc, 0), src(iSrc, 1), src(iSrc, 2), iDest, dest(iDest, 0), dest(iDest, 1), dest(iDest, 2));
         break;
       }
     }
