@@ -21,7 +21,7 @@ class CGNSZone;
 
 
 // types for high-order node tranformation (CPEX0045)
-typedef std::vector<fullMatrix<double> > ZoneEltNodeTransfo;
+typedef std::vector<std::vector<int> > ZoneEltNodeTransfo;
 typedef std::map<std::string, ZoneEltNodeTransfo> Family2EltNodeTransfo;
 
 

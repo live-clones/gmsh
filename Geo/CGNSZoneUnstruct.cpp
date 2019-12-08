@@ -4,6 +4,7 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshMessage.h"
+#include "GModel.h" // DBGTT
 #include "MVertex.h"
 #include "MElement.h"
 #include "CGNSCommon.h"
@@ -36,45 +37,34 @@ MElement *createElement(ElementType_t sectEltType, std::size_t vertShift,
   int mshEltType = cgns2MshEltType(eltType);
   int nbEltNode = ElementType::getNumVertices(mshEltType);
 
-  // element node transformation if specified (CPEX0045)
-  const fullMatrix<double> *transfoMat = 0;
+  // element high-order node transformation if specified (CPEX0045), otherwise
+  // use the classic CGNS order
+  const std::vector<int> *nodeTransfo = 0;
   if((mshEltType != MSH_PNT) && (eltNodeTransfo != 0) &&
      (eltNodeTransfo->size() > 0)) {
-    transfoMat = &((*eltNodeTransfo)[mshEltType]);
+    nodeTransfo = &((*eltNodeTransfo)[mshEltType]);
+    Msg::Info("DBGTT: using custom node ordering for elt type %i", mshEltType);
+  }
+  else nodeTransfo = &(cgns2MshNodeIndex(mshEltType));
+
+  // DBGTT
+  static bool firstDBG = true;
+  if (firstDBG && (mshEltType == MSH_PRI_18)) {
+    printf("First prism:\n");
+    int iSectDataDBG = iSectData;
+    for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectDataDBG++) {
+      const int indNode = vertShift + sectData[iSectDataDBG] - 1;
+      MVertex *mv = allVert[indNode];
+      printf("  -> Vert. %lu (%g, %g, %g)\n", mv->getNum(), mv->x(), mv->y(), mv->z());
+    }
+    firstDBG = false;
   }
 
   // get element vertices
   std::vector<MVertex *> eltVert(nbEltNode);
-  if(transfoMat == 0) {
-    // get element vertices in Gmsh ordering from CGNS ordering
-    const std::vector<int> &cgns2Msh = cgns2MshNodeIndex(mshEltType);
-    for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectData++) {
-      const int indNode = vertShift + sectData[iSectData] - 1;
-      eltVert[cgns2Msh[iEltNode]] = allVert[indNode];
-    }
-  }
-  else {
-    // get element vertices and retrieve original node coordinates
-    fullMatrix<double> oldEltNode(nbEltNode, 3);
-    for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectData++) {
-      const int indNodeZone = sectData[iSectData] - 1;
-      eltVert[iEltNode] = allVert[vertShift + indNodeZone];
-      oldEltNode(iEltNode, 0) = rawNode[indNodeZone].x();
-      oldEltNode(iEltNode, 1) = rawNode[indNodeZone].y();
-      oldEltNode(iEltNode, 2) = rawNode[indNodeZone].z();
-    }
-
-    // transform original into Gmsh node coordinates
-    fullMatrix<double> newEltNode(nbEltNode, 3);
-    newEltNode.gemm(*transfoMat, oldEltNode);
-    
-    // update vertices
-    for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++) {
-      const double &xNew = newEltNode(iEltNode, 0);
-      const double &yNew = newEltNode(iEltNode, 1);
-      const double &zNew = newEltNode(iEltNode, 2);
-      eltVert[iEltNode]->setXYZ(xNew, yNew, zNew);
-    }
+  for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectData++) {
+    const int indNode = vertShift + sectData[iSectData] - 1;
+    eltVert[(*nodeTransfo)[iEltNode]] = allVert[indNode];
   }
 
   // create element

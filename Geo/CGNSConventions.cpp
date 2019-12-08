@@ -440,38 +440,6 @@ fullMatrix<double> generatePointsCGNS(int parentType, int order,
 }
 
 
-// Given two sets of parametric coordinates src and dest, that should contain
-// the same nodes in a different order, compute the reordering ind of set src
-// to set dest, i.e. src[i] = dest[ind[i]]
-bool computeReordering(fullMatrix<double> src, fullMatrix<double> dest,
-                        std::vector<int> &ind)
-{
-  static const double TOLSQ = 1e-10 * 1e-10;
-
-  const size_t nNode = src.size1(), dim = src.size2();
-  ind.resize(nNode, -1);
-
-  // Loop over src and dest nodes and check distance
-  std::set<int> found;
-  for(size_t iSrc = 0; iSrc < nNode; iSrc++) {
-    for(size_t iDest = 0; iDest < nNode; iDest++) {
-      const double xx = src(iSrc, 0) - dest(iDest, 0);
-      const double yy = (dim > 1) ? src(iSrc, 1) - dest(iDest, 1) : 0.;
-      const double zz = (dim > 2) ? src(iSrc, 2) - dest(iDest, 2) : 0.;
-      const double dd = xx * xx + yy * yy + zz * zz;
-      if(dd < TOLSQ) {
-        ind[iSrc] = iDest;
-        found.insert(iDest);
-        break;
-      }
-    }
-  }
-
-  // Check bijectivity
-  return (found.size() == nNode);
-}
-
-
 std::vector<int> cgns2MshNodeIndexInit(int mshTag)
 {
   const nodalBasis *nb = BasisFactory::getNodalBasis(mshTag);
@@ -764,6 +732,36 @@ void msh2CgnsReferenceElement(int mshType, const fullMatrix<double> &mshPts,
     Msg::Error("%s (%i) : Error CGNS element %s not yet implemented", __FILE__,
                __LINE__, ElementType::nameOfParentType(parentType).c_str());
   }
+}
+
+
+bool computeReordering(fullMatrix<double> src, fullMatrix<double> dest,
+                        std::vector<int> &ind)
+{
+  static const double TOLSQ = 1e-10 * 1e-10;
+
+  const size_t nNode = src.size1(), dim = src.size2();
+  ind.resize(nNode, -1);
+
+  // Loop over src and dest nodes and check distance
+  std::set<int> found;
+  for(size_t iSrc = 0; iSrc < nNode; iSrc++) {
+    for(size_t iDest = 0; iDest < nNode; iDest++) {
+      const double xx = src(iSrc, 0) - dest(iDest, 0);
+      const double yy = (dim > 1) ? src(iSrc, 1) - dest(iDest, 1) : 0.;
+      const double zz = (dim > 2) ? src(iSrc, 2) - dest(iDest, 2) : 0.;
+      const double dd = xx * xx + yy * yy + zz * zz;
+      if(dd < TOLSQ) {
+        ind[iSrc] = iDest;
+        found.insert(iDest);
+        printf("DBGTT: %lu (%g, %g, %g) -> %lu (%g, %g, %g)\n", iSrc, src(iSrc, 0), src(iSrc, 1), src(iSrc, 2), iDest, dest(iDest, 0), dest(iDest, 1), dest(iDest, 2));
+        break;
+      }
+    }
+  }
+
+  // Check bijectivity
+  return (found.size() == nNode);
 }
 
 

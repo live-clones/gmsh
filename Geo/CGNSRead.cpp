@@ -29,7 +29,7 @@ namespace {
 
 
 int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
-                             int interpIndex, ZoneEltNodeTransfo &cgns2MshLag)
+                             int interpIndex, ZoneEltNodeTransfo &nodeTransfo)
 {
   int cgnsErr;
 
@@ -65,21 +65,25 @@ int readElementInterpolation(int fileIndex, int baseIndex, int familyIndex,
   std::vector<double> uMsh(nbPt), vMsh(nbPt), wMsh(nbPt);
   msh2CgnsReferenceElement(mshType, mshPts, uMsh, vMsh, wMsh);
 
-  // compute transformation matrix from monomial to CGNS Lagrange coefficients,
-  // i.e. the inverse transposed Vandermonde matrix of CGNS interpolation points
-  // in the monomial basis
-  fullMatrix<double> mono2CGNSLag(nbPt, nbPt);
-  evalMonomialBasis(mshType, u, v, w, mono2CGNSLag);
-  mono2CGNSLag.invertInPlace();
-
-  // evaluate CGNS Lagrange base functions at Gmsh points
-  fullMatrix<double> monoVal(nbPt, nbPt), lagVal(nbPt, nbPt);
-  evalMonomialBasis(mshType, uMsh, vMsh, wMsh, monoVal);
-  mono2CGNSLag.mult(monoVal, lagVal);
-
-  // transformation matrix from CGNS to Gmsh Lagrange coefficients
-  lagVal.transposeInPlace();
-  cgns2MshLag[mshType] = lagVal;
+  // copy user and Gmsh interpolation nodes  to matrices for comparison
+  fullMatrix<double> uvw(nbPt, 3), uvwMsh(nbPt, 3);
+  for(int i = 0; i < nbPt; i++) {
+    uvw(i, 0) = u[i]; uvw(i, 1) = v[i]; uvw(i, 2) = w[i];
+    uvwMsh(i, 0) = uMsh[i]; uvwMsh(i, 1) = vMsh[i]; uvwMsh(i, 2) = wMsh[i];
+  }
+  uvw.print("DBGTT: CGNS order");
+  uvwMsh.print("DBGTT: Gmsh order");
+  
+  // compute node correspondence between user and Gmsh interpolation nodes
+  std::vector<int> transfo(nbPt);
+  if(!computeReordering(uvw, uvwMsh, transfo)) {
+    Msg::Error("Interpolation points '%s' cannot be converted to Gmsh for "
+               "element %i (parent type %i)", mshType,
+               ElementType::getParentType(mshType));
+    return 0;
+  }
+  nodeTransfo[mshType] = transfo;
+  printf("DBGTT: transfo = \n"); for(int i = 0; i < nbPt; i++) printf("%i\n", transfo[i]);
 
   return 1;
 }
@@ -182,11 +186,11 @@ int readEltNodeTransfo(int fileIndex, int baseIndex,
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
     // read element interpolation transformations
-    ZoneEltNodeTransfo &cgns2MshLag = allEltNodeTransfo[std::string(famName)];
-    cgns2MshLag.resize(NofValidElementTypes);
+    ZoneEltNodeTransfo &nodeTransfo = allEltNodeTransfo[std::string(famName)];
+    nodeTransfo.resize(NofValidElementTypes);
     for(int iInterp = 1; iInterp <= nbInterp; iInterp++) {
       int err = readElementInterpolation(fileIndex, baseIndex, iFam, iInterp,
-                                         cgns2MshLag);
+                                         nodeTransfo);
       if(err == 0) return 0;
     }
   }

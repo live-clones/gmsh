@@ -30,6 +30,12 @@ void msh2CgnsReferenceElement(int mshType, const fullMatrix<double> &mshPts,
                               std::vector<double> &u, std::vector<double> &v,
                               std::vector<double> &w);
 
+// Given two sets of parametric coordinates src and dest, that should contain
+// the same nodes in a different order, compute the reordering ind of set src
+// to set dest, i.e. src[i] = dest[ind[i]]
+bool computeReordering(fullMatrix<double> src, fullMatrix<double> dest,
+                        std::vector<int> &ind);
+
 std::string cgnsString(const std::string &s,
                        std::string::size_type maxLength = CGNS_MAX_STR_LEN-1);
 

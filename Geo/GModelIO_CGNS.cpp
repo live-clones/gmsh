@@ -41,7 +41,7 @@ int GModel::readCGNS(const std::string &name,
   if(scaleErr == 0) return 0;
 
   // per-element node transformation for CPEX0045
-  std::map<std::string, std::vector<fullMatrix<double> > > allEltNodeTransfo;
+  Family2EltNodeTransfo allEltNodeTransfo;
   readEltNodeTransfo(fileIndex, baseIndex, allEltNodeTransfo);
 
   // define names of geometrical entities
