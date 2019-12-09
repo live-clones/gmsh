@@ -2505,7 +2505,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
         
         for(std::size_t j = 0; j < numElementsInEntitie; ++j) {
           MElement *e = ge->getMeshElementByType(familyType, j);
-          for(int k = 0; k < e->getNumVertices(); ++k) {
+          for(size_t k = 0; k < e->getNumVertices(); ++k) {
             keys.push_back(std::pair<int, std::size_t>(0, e->getVertex(k)->getNum()));
             if (generateCoord) {
               coord.push_back(e->getVertex(k)->x());
