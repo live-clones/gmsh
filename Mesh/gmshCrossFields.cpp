@@ -1456,7 +1456,7 @@ static void groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> 
       if(it2->second->inCutGraph) { countCutGraph++; }
     }
     if(bnd.size() == 2) {
-      if(fabs(cos(bnd[0]->_atemp) - cos(bnd[1]->_atemp)) > .25) {
+      if(fabs(dot(bnd[0]->o_i,bnd[1]->o_i)) > .25) {
 	corners.insert(v);
         cutgraph.insert(v);
       }
@@ -1861,38 +1861,44 @@ static double coord1d(double a0, double a1, double a)
   return (a - a0) / (a1 - a0);
 }
 
-/*struct edgeCuts {
+
+
+/*
+struct edgeCuts {
   MEdge e;
   std::vector<double> xis;
+  std::vector<MVertex*> xis;
   int index;
   bool operator < (const basicEdgeCut &other) const {
   }
 };
-
 struct triangleCut {
   MTriangle *t;
 
 };
 */
 
-static void computeIso(MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0, MVertex *v1,
-		       SPoint3 &p, std::map<MVertex *, double> &pot,
+static void computeIso(MVertex *vsing,
+		       v2t_cont &adj,
+		       double VAL,
+		       MVertex *v0,
+		       MVertex *v1,
+		       SPoint3 &p,
+		       std::map<MVertex *, double> &pot,
 		       std::set<MEdge, MEdgeLessThan> &visited,
 		       std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>, MEdgeLessThan> &cutGraphEnds,
 		       std::map<MEdge, MEdge, MEdgeLessThan> &d1, std::vector<groupOfCross2d> &G,
-		       FILE *f, int COUNT)
+		       FILE *f,
+		       int COUNT)
 {
   if(v0 == vsing || v1 == vsing) return;
   MEdge e(v0, v1);
 
   if(visited.find(e) != visited.end()) {
-    //  printf("EDGE %lu %lu has been visited\n",v0->getNum(),v1->getNum());
     return;
   }
-  //  printf("EDGE %lu %lu\n",v0->getNum(),v1->getNum());
   visited.insert(e);
   if(d1.find(e) != d1.end()) {
-    //        printf("STREAMLINE %d coming through cutgraph %lu %lu\n",COUNT,v0->getNum(),v1->getNum());
     std::pair<std::map<MVertex *, double> *, double> aa =
       std::make_pair(&pot, VAL);
     std::pair<MEdge, std::pair<std::map<MVertex *, double> *, double> > p =
@@ -3105,7 +3111,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, std::vecto
     qLayout.computeCrossFieldAndH ();
     Msg::Info("Computing a smooth version of Theta");
     qLayout.computeCutGraph(duplicateEdges);    
-    qLayout.computeThetaUsingHCrouzeixRaviart (dataTHETA);
+    //    qLayout.computeThetaUsingHCrouzeixRaviart (dataTHETA);
   }
   if (layout){
     Msg::Info("Computing quad decomposition");
@@ -3133,8 +3139,8 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, std::vecto
     U->setName(name);
     U->setFileName(name + ".msh");
     name = gm->getName()+"_V";
-    U->setName(name);
-    U->setFileName(name + ".msh");
+    V->setName(name);
+    V->setFileName(name + ".msh");
 
     for(size_t i = 0; i < f.size(); i++) {
       for(size_t j = 0; j < f[i]->triangles.size(); j++) {
@@ -3185,8 +3191,8 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, std::vecto
   }
   d->addData(gm, dataH, 0, 0.0, 1, 1);
   d->finalize();
-  dt->addData(gm, dataTHETA, 0, 0.0, 1, 1);
-  dt->finalize();
+  //  dt->addData(gm, dataTHETA, 0, 0.0, 1, 1);
+  //  dt->finalize();
   dd->addData(gm, dataDir, 0, 0.0, 1, 3);
   dd->addData(gm, dataDirOrtho, 1, 0.0, 1, 3);
   dd->finalize();
@@ -3253,7 +3259,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     getFacesOfTheModel(gm,f);  
     
 #if defined(HAVE_SOLVER)
-    return computeCrossFieldAndH(gm,f,tags, false);
+    return computeCrossFieldAndH(gm,f,tags, true);
     //    return computeQuadLayout(gm, f);
 #else
     Msg::Error("Cross field computation requires solver module");
