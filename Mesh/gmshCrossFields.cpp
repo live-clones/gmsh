@@ -1977,7 +1977,6 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0,
 
     int ROT = 0;
     int maxCount = 0;
-    int iG = -1;
     for(size_t i = 0; i < G.size(); i++) {
       int count = 0;
       count += (std::find(G[i].left.begin(), G[i].left.end(), o.getVertex(0)) !=
@@ -1997,7 +1996,6 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0,
       count += (std::find(G[i].right.begin(), G[i].right.end(), o.getVertex(1)) !=
 		G[i].right.end() ? 1 : 0);
       if (count > maxCount){
-	iG = i;
 	maxCount = count;
 	ROT = fabs(G[i].mat[0][0]) > .6? 0 : 1;
       }
@@ -2501,11 +2499,11 @@ public :
     std::vector<cross2d *> pc;
     for(it = C.begin(); it != C.end(); ++it) pc.push_back(&(it->second));
     
-    int ITER = 0;
+    size_t ITER = 0;
     while(ITER++ < nIterLaplace) {
       if(ITER % 200 == 0) std::random_shuffle(pc.begin(), pc.end());
       for(size_t i = 0; i < pc.size(); i++) pc[i]->average_init();
-      if(ITER % 1000 == 0) printf("SIMPLE LAPLACE IT %6d\n", ITER);
+      if(ITER % 1000 == 0) printf("SIMPLE LAPLACE IT %6lu\n", ITER);
     }
     
     for(size_t i = 0; i < pc.size(); i++) pc[i]->computeVector();
