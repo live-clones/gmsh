@@ -634,9 +634,9 @@ void meshGEdge::operator()(GEdge *ge)
       SVector3 der = ge->firstDer(pt.t);
       pt.xp = der.norm();
     }
-    //    if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
-    //      a = smoothPrimitive(ge, std::sqrt(CTX::instance()->mesh.smoothRatio),
-    //                          Points);
+    if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
+      a = smoothPrimitive(ge, std::sqrt(CTX::instance()->mesh.smoothRatio),
+			  Points);
     filterMinimumN = ge->minimumMeshSegments() + 1;
     N = std::max(filterMinimumN, (int)(a + 1.99));
   }

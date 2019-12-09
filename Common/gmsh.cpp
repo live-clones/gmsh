@@ -40,6 +40,7 @@
 #include "Context.h"
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
+#include "gmshCrossFields.h"
 #include "Numeric.h"
 #include "OS.h"
 #include "HierarchicalBasisH1Quad.h"
@@ -57,7 +58,6 @@
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGFaceOptimize.h"
-#include "gmshCrossFields.h"
 #endif
 
 #if defined(HAVE_POST)
