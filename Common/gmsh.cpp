@@ -1743,37 +1743,6 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(
   }
 }
 
-static bool _getHierarchicalFunctionSpaceInfo(const std::string &fsType,
-                                              std::string &fsName,
-                                              int &basisOrder, int &fsComp)
-{
-  if(fsType.substr(0, 10) == "H1Legendre") {
-    fsComp = 1;
-    basisOrder = atoi(fsType.substr(10).c_str());
-    fsName = "H1Legendre";
-    return true;
-  }
-  if(fsType.substr(0, 14) == "GradH1Legendre") {
-    fsComp = 3;
-    basisOrder = atoi(fsType.substr(14).c_str());
-    fsName = "GradH1Legendre";
-    return true;
-  }
-  if(fsType.substr(0, 13) == "HcurlLegendre") {
-    fsComp = 3;
-    basisOrder = atoi(fsType.substr(13).c_str());
-    fsName = "HcurlLegendre";
-    return true;
-  }
-  if(fsType.substr(0, 17) == "CurlHcurlLegendre") {
-    fsComp = 3;
-    basisOrder = atoi(fsType.substr(17).c_str());
-    fsName = "CurlHcurlLegendre";
-    return true;
-  }
-  return false;
-}
-
 static bool _getFunctionSpaceInfo(const std::string &fsType,
                                   std::string &fsName, int &fsOrder,
                                   int &fsComp)
@@ -1793,6 +1762,30 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
   if(fsType == "GradIsoParametric" || fsType == "GradLagrange") {
     fsName = "GradLagrange";
     fsOrder = -1;
+    fsComp = 3;
+    return true;
+  }
+  if(fsType.substr(0, 10) == "H1Legendre") {
+    fsName = "H1Legendre";
+    fsOrder = atoi(fsType.substr(10).c_str());
+    fsComp = 1;
+    return true;
+  }
+  if(fsType.substr(0, 14) == "GradH1Legendre") {
+    fsName = "GradH1Legendre";
+    fsOrder = atoi(fsType.substr(14).c_str());
+    fsComp = 3;
+    return true;
+  }
+  if(fsType.substr(0, 13) == "HcurlLegendre") {
+    fsName = "HcurlLegendre";
+    fsOrder = atoi(fsType.substr(13).c_str());
+    fsComp = 3;
+    return true;
+  }
+  if(fsType.substr(0, 17) == "CurlHcurlLegendre") {
+    fsName = "CurlHcurlLegendre";
+    fsOrder = atoi(fsType.substr(17).c_str());
     fsComp = 3;
     return true;
   }
@@ -2131,8 +2124,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   basisFunctions.clear();
   int basisOrder = 0;
   std::string fsName = "";
-  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
-                                        numComponents)) {
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder, numComponents)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
@@ -2142,7 +2134,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   HierarchicalBasis *basis(0);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
+  if (fsName == "H1Legendre" || fsName == "GradH1Legendre") {
     switch(familyType) {
     case TYPE_HEX: {
       basis = new HierarchicalBasisH1Brick(basisOrder);
@@ -2165,7 +2157,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
-  else {
+  else if (fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre"){
     switch(familyType) {
     case TYPE_QUA: {
       basis = new HierarchicalBasisHcurlQuad(basisOrder);
@@ -2188,6 +2180,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
+  else {
+    Msg::Error("Unknown function space named '%s'", fsName.c_str());
+    throw 3;
+  }
+  
   int nq = integrationPoints.size() / 3;
   int vSize = basis->getnVertexFunction();
   int bSize = basis->getnBubbleFunction();
@@ -2416,8 +2413,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
   int order = 0;
   int numComponents = 0;
   std::string fsName = "";
-  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, fsName, order,
-                                        numComponents)) {
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, order, numComponents)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
@@ -2437,7 +2433,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
 
   else {
     HierarchicalBasis *basis(0);
-    if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
+    if (fsName == "H1Legendre" || fsName == "GradH1Legendre") {
       switch(familyType) {
       case TYPE_HEX: {
         basis = new HierarchicalBasisH1Brick(order);
@@ -2460,7 +2456,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       default: Msg::Error("Unknown familyType "); throw 2;
       }
     }
-    else {
+    else if (fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre"){
       switch(familyType) {
       case TYPE_QUA: {
         basis = new HierarchicalBasisHcurlQuad(order);
@@ -2482,6 +2478,11 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       } break;
       }
     }
+    else {
+      Msg::Error("Unknown function space named '%s'", fsName.c_str());
+      throw 3;
+    }
+    
     int vSize = basis->getnVertexFunction();
     int bSize = basis->getnBubbleFunction();
     int eSize = basis->getnEdgeFunction();
@@ -2651,14 +2652,13 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
   int basisOrder = 0;
   std::string fsName = "";
   int numComponents = 0;
-  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
-                                        numComponents)) {
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder, numComponents)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
   HierarchicalBasis *basis(0);
   int familyType = ElementType::getParentType(elementType);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
+  if (fsName == "H1Legendre" || fsName == "GradH1Legendre") {
     switch(familyType) {
     case TYPE_HEX: {
       basis = new HierarchicalBasisH1Brick(basisOrder);
@@ -2681,7 +2681,7 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
-  else {
+  else if (fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre"){
     switch(familyType) {
     case TYPE_QUA: {
       basis = new HierarchicalBasisHcurlQuad(basisOrder);
@@ -2704,6 +2704,11 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
+  else {
+    Msg::Error("Unknown function space named '%s'", fsName.c_str());
+    throw 3;
+  }
+  
   int vSize = basis->getnVertexFunction();
   int bSize = basis->getnBubbleFunction();
   int eSize = basis->getnEdgeFunction();
