@@ -2484,7 +2484,40 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       }
     }
     else if (fsName == "IsoParametric" || fsName == "Lagrange" || fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+      const nodalBasis *nodalB(0);
+      if(order == -1) { // isoparametric
+        nodalB = BasisFactory::getNodalBasis(elementType);
+      }
+      else {
+        int familyType = ElementType::getParentType(elementType);
+        int newType = ElementType::getType(familyType, order, false);
+        nodalB = BasisFactory::getNodalBasis(newType);
+      }
       
+      for(std::size_t i = 0; i < entities.size(); ++i) {
+        GEntity *ge = entities[i];
+        std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
+        
+        if(generateCoord) {
+          coord.reserve(coord.size() + numElementsInEntitie * nodalB->getNumShapeFunctions() * 3);
+        }
+        keys.reserve(keys.size() + numElementsInEntitie * nodalB->getNumShapeFunctions());
+        
+        for(std::size_t j = 0; j < numElementsInEntitie; ++j) {
+          MElement *e = ge->getMeshElementByType(familyType, j);
+          for(int k = 0; k < e->getNumVertices(); ++k) {
+            keys.push_back(std::pair<int, std::size_t>(0, e->getVertex(k)->getNum()));
+            if (generateCoord) {
+              coord.push_back(e->getVertex(k)->x());
+              coord.push_back(e->getVertex(k)->y());
+              coord.push_back(e->getVertex(k)->z());
+            }
+          }
+        }
+      }
+      
+      delete basis;
+      return;
     }
     else {
       Msg::Error("Unknown function space named '%s'", fsName.c_str());
