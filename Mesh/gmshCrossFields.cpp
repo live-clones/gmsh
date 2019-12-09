@@ -1861,25 +1861,26 @@ static double coord1d(double a0, double a1, double a)
   return (a - a0) / (a1 - a0);
 }
 
-struct basicEdgeCut {
+/*struct edgeCuts {
   MEdge e;
-  double xi;
+  std::vector<double> xis;
+  int index;
   bool operator < (const basicEdgeCut &other) const {
   }
 };
 
-struct basicCut {
+struct triangleCut {
   MTriangle *t;
-  basicEdgeCut *c0, *c1;
-};
 
+};
+*/
 
 static void computeIso(MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0, MVertex *v1,
 		       SPoint3 &p, std::map<MVertex *, double> &pot,
 		       std::set<MEdge, MEdgeLessThan> &visited,
 		       std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>, MEdgeLessThan> &cutGraphEnds,
 		       std::map<MEdge, MEdge, MEdgeLessThan> &d1, std::vector<groupOfCross2d> &G,
-		       FILE *f, int COUNT, std::)
+		       FILE *f, int COUNT)
 {
   if(v0 == vsing || v1 == vsing) return;
   MEdge e(v0, v1);
@@ -2645,10 +2646,10 @@ public :
       Dof E(it->first->getNum(), Dof::createTypeWithTwoInts(0, 1));
       _lsys->addToRightHandSide(dof->getDofNumber(E), 2.0*M_PI*(double) it->second / nbTurns);
       SSUM += 2.0*M_PI*(double) it->second / nbTurns;
-      printf("S %12.5E singularity at %lu %d %g\n",it->first->getNum(),it->second,nbTurns,SSUM);
+      //      printf("S %12.5E singularity at %lu %d %g\n",it->first->getNum(),it->second,nbTurns,SSUM);
     }
 
-    printf("%lu singularities SSUM = %12.5E SUM1 = %12.5E\n",sing.size(),SSUM,SUM1);
+    //    printf("%lu singularities SSUM = %12.5E SUM1 = %12.5E\n",sing.size(),SSUM,SUM1);
     
     _lsys->systemSolve();
     return dof;
@@ -2988,7 +2989,8 @@ public :
     
     for(size_t i = 0; i < groups_cg.size(); i++) {
       createJumpyPairs(G[i], singularities, boundaries, old2new);
-    }    
+    }
+    return 0;
   }
 
   int computeCrossFieldAndH (std::map<MVertex*, int> *s, std::map<int, std::vector<double> > &dataTHETA) {
@@ -3067,7 +3069,7 @@ static void findPhysicalGroupsForSingularities (GModel *gm, std::vector<GFace *>
     }
   }  
 }
-
+/*
 static int computeQuadDecomposition(GModel *gm, std::vector<GFace *> &f, std::vector<int> &tags){
 
   PView *H = PView::getViewByTag(tags[0]);
@@ -3080,7 +3082,7 @@ static int computeQuadDecomposition(GModel *gm, std::vector<GFace *> &f, std::ve
 
   return 0;
 }
-
+*/
 
 static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, std::vector<int> &tags, bool layout = true)
 {
