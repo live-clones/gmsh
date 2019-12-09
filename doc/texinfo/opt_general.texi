@@ -36,9 +36,14 @@ Background image file in JPEG, PNG or PDF format@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.BuildInfo
+Gmsh build information (read-only)@*
+Default value: @code{"Version: 4.5.0-git-e78b47fe0; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20191128; Build host: chrismbp.local; Build options: 64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[usr/local] OptHom Parser Plugins Png Post QuadTri Solver TetGen/BR Voro++ Zlib; FLTK version: 1.4.0; OCC version: 7.4.1; MED version: 4.0.0; Packaged by: geuzaine; Web site: http://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Saved in: @code{-}
+
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{" 64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[usr/local] OptHom Parser Plugins Png Post QuadTri Solver TetGen/BR Voro++ Zlib"}@*
+Default value: @code{"64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[usr/local] OptHom Parser Plugins Png Post QuadTri Solver TetGen/BR Voro++ Zlib"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
@@ -158,7 +163,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.5.0-git-87f53932b"}@*
+Default value: @code{"4.5.0-git-e78b47fe0"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern

@@ -303,39 +303,53 @@ void PrintUsage(const std::string &name)
   }
 }
 
-void PrintInfo()
+std::vector<std::string> GetBuildInfo()
 {
-  Msg::Direct("Version       : %s", GMSH_VERSION);
-  Msg::Direct("License       : %s", GMSH_SHORT_LICENSE);
-  Msg::Direct("Build OS      : %s", GMSH_OS);
-  Msg::Direct("Build date    : %s", GMSH_DATE);
-  Msg::Direct("Build host    : %s", GMSH_HOST);
-  Msg::Direct("Build options :%s", GMSH_CONFIG_OPTIONS);
+  std::vector<std::string> s;
+  char tmp[256];
+  s.push_back(std::string("Version       : ") + GMSH_VERSION);
+  s.push_back(std::string("License       : ") + GMSH_SHORT_LICENSE);
+  s.push_back(std::string("Build OS      : ") + GMSH_OS);
+  s.push_back(std::string("Build date    : ") + GMSH_DATE);
+  s.push_back(std::string("Build host    : ") + GMSH_HOST);
+  s.push_back(std::string("Build options :") + GMSH_CONFIG_OPTIONS);
 #if defined(HAVE_FLTK)
-  Msg::Direct("FLTK version  : %d.%d.%d", FL_MAJOR_VERSION,
-              FL_MINOR_VERSION, FL_PATCH_VERSION);
+  sprintf(tmp, "%d.%d.%d", FL_MAJOR_VERSION, FL_MINOR_VERSION,
+          FL_PATCH_VERSION);
+  s.push_back(std::string("FLTK version  : ") + tmp);
 #endif
 #if defined(HAVE_PETSC)
-  Msg::Direct("PETSc version : %d.%d.%d (%s arithmtic)", PETSC_VERSION_MAJOR,
-              PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
+  sprintf(tmp, "%d.%d.%d (%s arithmtic)", PETSC_VERSION_MAJOR,
+          PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
 #if defined(PETSC_USE_COMPLEX)
-              "complex"
+          "complex"
 #else
-              "real"
+          "real"
 #endif
-              );
+          );
+  s.push_back(std::string("PETSc version : ") + tmp);
 #endif
 #if defined(HAVE_OCC)
-  Msg::Direct("OCC version   : %d.%d.%d", OCC_VERSION_MAJOR,
-              OCC_VERSION_MINOR, OCC_VERSION_MAINTENANCE);
+  sprintf(tmp, "%d.%d.%d", OCC_VERSION_MAJOR, OCC_VERSION_MINOR,
+          OCC_VERSION_MAINTENANCE);
+  s.push_back(std::string("OCC version   : ") + tmp);
 #endif
 #if defined(HAVE_MED)
-  Msg::Direct("MED version   : %d.%d.%d", MED_NUM_MAJEUR,
-              MED_NUM_MINEUR, MED_NUM_RELEASE);
+  sprintf(tmp, "%d.%d.%d", MED_NUM_MAJEUR, MED_NUM_MINEUR,
+          MED_NUM_RELEASE);
+  s.push_back(std::string("MED version   : ") + tmp);
 #endif
-  Msg::Direct("Packaged by   : %s", GMSH_PACKAGER);
-  Msg::Direct("Web site      : http://gmsh.info");
-  Msg::Direct("Issue tracker : https://gitlab.onelab.info/gmsh/gmsh/issues");
+  s.push_back(std::string("Packaged by   : ") + GMSH_PACKAGER);
+  s.push_back("Web site      : http://gmsh.info");
+  s.push_back("Issue tracker : https://gitlab.onelab.info/gmsh/gmsh/issues");
+  return s;
+}
+
+void PrintBuildInfo()
+{
+  std::vector<std::string> s = GetBuildInfo();
+  for(std::size_t i = 0; i < s.size(); i++)
+    Msg::Direct("%s", s[i].c_str());
 }
 
 void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
@@ -1168,7 +1182,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "info") || !strcmp(argv[i] + 1, "-info")) {
-        PrintInfo();
+        PrintBuildInfo();
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {

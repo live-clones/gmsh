@@ -40,6 +40,8 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "BackgroundImageFileName" , opt_general_background_image_filename , "" ,
     "Background image file in JPEG, PNG or PDF format" },
+  { F,   "BuildInfo" , opt_general_build_info , "" ,
+    "Gmsh build information (read-only)" },
   { F,   "BuildOptions" , opt_general_build_options , "" ,
     "Gmsh build options (read-only)" },
 

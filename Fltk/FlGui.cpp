@@ -648,7 +648,7 @@ FlGui *FlGui::instance(int argc, char **argv,
     Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
     // log the following for bug reports
     Msg::Direct("-------------------------------------------------------");
-    PrintInfo();
+    PrintBuildInfo();
     Msg::Direct("-------------------------------------------------------");
     // update views (in case the GUI is created after some data has been loaded)
     _instance->updateViews(true, true);

@@ -1164,7 +1164,24 @@ std::string opt_general_version(OPT_ARGS_STR) { return GMSH_VERSION; }
 
 std::string opt_general_build_options(OPT_ARGS_STR)
 {
-  return GMSH_CONFIG_OPTIONS;
+  std::string s = GMSH_CONFIG_OPTIONS;
+  s.erase(0, 1);
+  return s;
+}
+
+std::string opt_general_build_info(OPT_ARGS_STR)
+{
+  std::vector<std::string> ss = GetBuildInfo();
+  std::string s;
+  for(std::size_t i = 0; i < ss.size(); i++) {
+    s += ReplaceSubString(" :", ":", ss[i]);
+    if(i != ss.size() - 1) s += "; ";
+  }
+  std::string::size_type pos;
+  while((pos = s.find("  ")) != std::string::npos) {
+    s.replace(pos, 2, " ");
+  }
+  return s;
 }
 
 std::string opt_general_filename(OPT_ARGS_STR)
