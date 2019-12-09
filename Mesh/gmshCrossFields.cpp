@@ -3246,7 +3246,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     getFacesOfTheModel(gm,f);  
     
 #if defined(HAVE_SOLVER)
-    return computeCrossFieldAndH(gm,f,tags);
+    return computeCrossFieldAndH(gm,f,tags, false);
     //    return computeQuadLayout(gm, f);
 #else
     Msg::Error("Cross field computation requires solver module");
