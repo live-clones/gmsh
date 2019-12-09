@@ -3091,6 +3091,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, std::vecto
   std::map<int, std::vector<double> > dataH;
   std::map<int, std::vector<double> > dataTHETA;
   std::map<int, std::vector<double> > dataDir;
+  std::map<int, std::vector<double> > dataDirOrtho;
   std::map<int, std::vector<double> > dataU;
   std::map<int, std::vector<double> > dataV;
   std::map<MVertex *, double> potU , potV;
@@ -3171,6 +3172,13 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, std::vecto
     jj.push_back(it->second.z());
     dataDir[it->first->getNum()] = jj;
   }
+  for (std::map<MTriangle*,SVector3>::iterator it = qLayout.d1.begin(); it != qLayout.d1.end();++it){
+    std::vector<double> jj;
+    jj.push_back(it->second.x());
+    jj.push_back(it->second.y());
+    jj.push_back(it->second.z());
+    dataDirOrtho[it->first->getNum()] = jj;
+  }
   for(std::set<MVertex*,MVertexPtrLessThan>::iterator it = qLayout.vs.begin(); it != qLayout.vs.end(); ++it){
     double h;
     qLayout.myAssembler->getDofValue(*it, 0, 1, h);
@@ -3182,6 +3190,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, std::vecto
   dt->addData(gm, dataTHETA, 0, 0.0, 1, 1);
   dt->finalize();
   dd->addData(gm, dataDir, 0, 0.0, 1, 3);
+  dd->addData(gm, dataDirOrtho, 1, 0.0, 1, 3);
   dd->finalize();
   PView *view = new PView(d);
   PView *viewt = new PView(dt);
