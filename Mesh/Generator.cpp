@@ -979,7 +979,7 @@ static void Mesh3D(GModel *m)
 
 void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 {
-  if(how != "" && how != "Optimize" &&
+  if(how != "" && how != "Gmsh" && how != "Optimize" &&
      how != "Netgen" &&
      how != "HighOrder" &&
      how != "HighOrderElastic" &&
@@ -991,13 +991,13 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     return;
   }
 
-  if(how == "")
+  if(how == "" || how == "Gmsh" || how == "Optimize")
     Msg::StatusBar(true, "Optimizing mesh...");
   else
     Msg::StatusBar(true, "Optimizing mesh (%s)...", how.c_str());
   double t1 = Cpu();
 
-  if(how == "") {
+  if(how == "" || how == "Gmsh" || how == "Optimize") {
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
       optimizeMeshGRegion opt;
       opt(*it, force);

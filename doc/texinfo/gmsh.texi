@@ -3071,7 +3071,12 @@ geometry. @value{SYNC}
 
 @item OptimizeMesh @var{char-expression};
 Optimizes the current mesh with the given algorithm (currently
-@code{"Gmsh"} or @code{"Netgen"}).
+@code{"Gmsh"} for default tetrahedral mesh optimizer, @code{"Netgen"}
+for Netgen optimizer, @code{"HighOrder"} for direct high-order mesh
+optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
+@code{"HighOrderFastCurving"} for fast curving algorithm,
+@code{"Laplace2D"} for Laplace smoothing, @code{"Relocate2D"} and
+@code{"Relocate3D"} for node relocation).
 
 @item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
 Performs adaptive mesh generation. Documentation not yet available.
