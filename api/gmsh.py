@@ -1212,6 +1212,26 @@ class model:
         """
 
         @staticmethod
+        def crossfield():
+            """
+            Compute a cross fields for the current mesh. The function creates 3 views,
+            the H function, the Theta function and cross directions. The function
+            returns the tags of the views
+
+            Return `viewTags'.
+            """
+            api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshCrossfield(
+                byref(api_viewTags_), byref(api_viewTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshCrossfield returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_viewTags_, api_viewTags_n_.value)
+
+        @staticmethod
         def generate(dim=3):
             """
             Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).

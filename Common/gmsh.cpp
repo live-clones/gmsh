@@ -57,6 +57,7 @@
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGFaceOptimize.h"
+#include "gmshCrossFields.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -922,6 +923,12 @@ GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
   if(!_isInitialized()) { throw - 1; }
   GModel::current()->optimizeMesh(how, force, niter);
   CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+GMSH_API void gmsh::model::mesh::crossfield(std::vector<int> &tags)
+{
+  if(!_isInitialized()) { throw - 1; }
+  if (computeCrossField(GModel::current(),tags))throw 1;
 }
 
 GMSH_API void gmsh::model::mesh::splitQuadrangles(const double quality,

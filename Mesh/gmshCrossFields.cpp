@@ -632,45 +632,6 @@ static void duplicateNodesInCutGraph(
   }
 }
 
-static void print_H_and_Cross(GModel *gm, std::vector<GFace *> &f,
-                              std::map<MEdge, cross2d, MEdgeLessThan> &C,
-                              dofManager<double> &dof,
-                              std::set<MVertex*,MVertexPtrLessThan> &singularities)
-{
-  std::string ss = gm->getName();
-  std::string fn = ss + ".out";
-
-  FILE *_f = fopen(fn.c_str(), "w");
-
-  std::set<MVertex *, MVertexPtrLessThan> vs;
-  for(size_t i = 0; i < f.size(); i++) {
-    for(size_t j = 0; j < f[i]->triangles.size(); j++) {
-      MTriangle *t = f[i]->triangles[j];
-      for(size_t k = 0; k < 3; k++) { vs.insert(t->getVertex(k)); }
-    }
-  }
-  fprintf(_f, "%lu", vs.size());
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
-      it != vs.end(); ++it) {
-    double a;
-    dof.getDofValue(*it, 0, 1, a);
-    fprintf(_f, "%lu %12.5E\n", (*it)->getNum(), a);
-  }
-  fprintf(_f, "%lu", singularities.size());
-  for(std::set<MVertex*,MVertexPtrLessThan>::iterator it = singularities.begin();
-      it != singularities.end(); ++it) {
-    fprintf(_f, "%lu\n", (*it)->getNum());
-  }
-  fprintf(_f, "%lu", C.size());
-  for(std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
-      it != C.end(); ++it) {
-    fprintf(_f, "%lu %lu %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E\n",
-	    it->first.getVertex(0)->getNum(), it->first.getVertex(1)->getNum(),
-	    it->second._nrml.x(), it->second._nrml.y(), it->second._nrml.z(),
-	    it->second.o_i.x(), it->second.o_i.y(), it->second.o_i.z());
-  }
-  fclose(_f);
-}
 
 static void
 computeUniqueVectorPerTriangle(GModel *gm, std::vector<GFace *> &f,
@@ -967,7 +928,6 @@ static void createDofs(dofManager<double> &myAssembler, int NUMDOF,
 }
 
 static void computePotential(GModel *gm, std::vector<GFace *> &f,
-                             const char *outputName, const char *outputName2,
                              dofManager<double> &dof,
                              std::map<MEdge, cross2d, MEdgeLessThan> &C,
                              std::map<MVertex *, MVertex *,MVertexPtrLessThan> &new2old,
@@ -1096,14 +1056,6 @@ static void computePotential(GModel *gm, std::vector<GFace *> &f,
   double B = Cpu();
   Msg::Info("QUAD LAYOUT : Computing potentials (%d unknowns) in %3lf seconds", myAssembler.sizeOfR(), B-A);
   
-  FILE *_f = fopen(outputName, "w");
-  fprintf(_f, "View \"V\"{\n");
-  FILE *_f1 = fopen(outputName2, "w");
-  fprintf(_f1, "View \"V\"{\n");
-
-  FILE *__f = fopen("map.pos","w");
-  fprintf(__f,"View \"\"{\n");
-
   for(size_t i = 0; i < f.size(); i++) {
     for(size_t j = 0; j < f[i]->triangles.size(); j++) {
       MTriangle *t = f[i]->triangles[j];
@@ -1121,41 +1073,8 @@ static void computePotential(GModel *gm, std::vector<GFace *> &f,
       res2[t->getVertex(0)] = a1;
       res2[t->getVertex(1)] = b1;
       res2[t->getVertex(2)] = c1;
-
-      fprintf(__f, "ST(%g,%g,0,%g,%g,0,%g,%g,0){1,1,1};\n",
-	      a,a1,b,b1,c,c1);
-      fprintf(_f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-              t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-              t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-              t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-              a, b, c);
-      fprintf(_f1, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-              t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-              t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-              t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-              a1, b1, c1);
     }
   }
-  fprintf(_f, "};\n");
-  fclose(_f);
-  fprintf(_f1, "};\n");
-  fclose(_f1);
-  fprintf(__f,"};\n");
-  fclose(__f);
-    /*
-  for (size_t i=0;i<G.size();i++){
-    printf("group %d sign %12.5E %12.5E\n",G[i].groupId,G[i].sign0,G[i].sign1);
-    for (size_t j=0;j<G[i].left.size();j++){
-      double a, b;
-      myAssembler.getDofValue(G[i].left[j], 0, 1, a);
-      myAssembler.getDofValue(G[i].right[j], 0, 2, b);
-      printf("JUMP %12.5E - %12.5E = %12.5E ",a,b,a-b);
-      myAssembler.getDofValue(G[i].left[j], 0, 2, a);
-      myAssembler.getDofValue(G[i].right[j], 0, 1, b);
-      printf("---- %12.5E - %12.5E = %12.5E\n",a,b,a-b);
-    }
-  }
-  */
 }
 
 static double distance(MTriangle *t, std::set<MVertex*,MVertexPtrLessThan> &boundaries)
@@ -1342,7 +1261,6 @@ static void computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
 }
 
 static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
-                     dofManager<double> &dof,
 		     std::set<MEdge, MEdgeLessThan> &cutG,
                      std::set<MVertex*,MVertexPtrLessThan> &singularities,
                      std::set<MVertex*,MVertexPtrLessThan> &boundaries)
@@ -1943,14 +1861,25 @@ static double coord1d(double a0, double a1, double a)
   return (a - a0) / (a1 - a0);
 }
 
-static void computeIso(
-  MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0, MVertex *v1,
-  SPoint3 &p, std::map<MVertex *, double> &pot,
-  std::set<MEdge, MEdgeLessThan> &visited,
-  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>, MEdgeLessThan>
-    &cutGraphEnds,
-  std::map<MEdge, MEdge, MEdgeLessThan> &d1, std::vector<groupOfCross2d> &G,
-  FILE *f, int COUNT)
+struct basicEdgeCut {
+  MEdge e;
+  double xi;
+  bool operator < (const basicEdgeCut &other) const {
+  }
+};
+
+struct basicCut {
+  MTriangle *t;
+  basicEdgeCut *c0, *c1;
+};
+
+
+static void computeIso(MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0, MVertex *v1,
+		       SPoint3 &p, std::map<MVertex *, double> &pot,
+		       std::set<MEdge, MEdgeLessThan> &visited,
+		       std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>, MEdgeLessThan> &cutGraphEnds,
+		       std::map<MEdge, MEdge, MEdgeLessThan> &d1, std::vector<groupOfCross2d> &G,
+		       FILE *f, int COUNT, std::)
 {
   if(v0 == vsing || v1 == vsing) return;
   MEdge e(v0, v1);
@@ -2995,7 +2924,7 @@ public :
   int computeCutGraph (std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges) {
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
     // COMPUTING CUT GRAPH
-    cutGraph(C, *myAssembler, cutG, singularities, boundaries);
+    cutGraph(C, cutG, singularities, boundaries);
     for(it = C.begin(); it != C.end(); ++it) {
       MEdge e0 = it->second._e;
       if(cutG.find(e0) != cutG.end()) it->second.inCutGraph = true;
@@ -3075,52 +3004,14 @@ public :
     
   }
   
-  int computeQuadLayout () {
+  int computeQuadLayout ( std::map<MVertex *, double> &potU,  std::map<MVertex *, double> &potV,
+			  std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges) {
     
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
-
-    if (myAssembler == NULL)
-      computeCrossFieldAndH ();
-
-
-    std::map<MEdge, MEdge, MEdgeLessThan> duplicateEdges;
-    computeCutGraph(duplicateEdges);
-    
-    std::string fn = modelName + "_lifting.pos";
-    FILE *_f = fopen(fn.c_str(), "w");
-    fprintf(_f, "View \"lifting\"{\n");
-    
-    for(size_t i = 0; i < f.size(); i++) {
-      for(size_t j = 0; j < f[i]->triangles.size(); j++) {
-	MTriangle *t = f[i]->triangles[j];
-	SVector3 a = d0[t];
-	SVector3 b = d1[t];
-	fprintf(_f,
-		"VT(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,"
-		"%g,%g,%g,%g,%g,%g,%g};\n",
-		t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-		t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-		t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-		a.x(), a.y(), a.z(), a.x(), a.y(), a.z(), a.x(), a.y(), a.z(),
-		b.x(), b.y(), b.z(), b.x(), b.y(), b.z(), b.x(), b.y(), b.z());
-      }
-    }
-    fprintf(_f, "};\n");
-    fclose(_f);
-    printf("coucou3\n");
-
-    std::map<MVertex *, double> potU, potV;
-    fn = modelName + "_potX.pos";
-    std::string fn2 = modelName + "_potY.pos";
-    computePotential(gm, f, fn.c_str(), fn2.c_str(), *myAssembler, C, new2old,
+    computePotential(gm, f, *myAssembler, C, new2old,
 		     groups, duplicateEdges, d0, d1, G, potU, potV);
     
-    printf("coucou4\n");
     computeIsos(gm, f, singularities, C, new2old, duplicateEdges, groups,
 		groups_cg, potU, potV, cutG, G);
-    //  computeIsos(gm, f, corners, C, new2old, duplicateEdges, groups,
-    //              groups_cg, potU, potV, cutG, G);
-    printf("coucou5\n");
 
     
     double MAXX = 0.;
@@ -3137,16 +3028,13 @@ public :
 	MAXD2 = std::max(D2,MAXD2);
 	MIND1 = std::min(D1,MIND1);
 	MIND2 = std::min(D2,MIND2);
-	//      printf("group %3d lr %5lu %5lu %12.5E %12.5E\n",
-	//      	     G[i].groupId,G[i].left[j]->getNum(),G[i].right[j]->getNum(), D1,D2);
       }
-      printf("group %3d DA(%12.5E %12.5E %12.5E) D2(%12.5E %12.5E %12.5E)\n",
-	     G[i].groupId,MAXD1,MIND1,MAXD1-MIND1,MAXD2,MIND2,MAXD2-MIND2);
+      Msg::Info("group %3d DA(%12.5E %12.5E %12.5E) D2(%12.5E %12.5E %12.5E)",
+		G[i].groupId,MAXD1,MIND1,MAXD1-MIND1,MAXD2,MIND2,MAXD2-MIND2);
       MAXX = std::max(MAXD2-MIND2,MAXX);
     }
     if (MAXX < 1.e-09)Msg::Info("Success in computing quad Layout");
     else Msg::Warning("Quad Layout Failure");
-    restoreInitialMesh();
     return 0;
   }  
 };
@@ -3180,43 +3068,107 @@ static void findPhysicalGroupsForSingularities (GModel *gm, std::vector<GFace *>
   }  
 }
 
-static int computeQuadLayout(GModel *gm, std::vector<GFace *> &f)
-{
-  quadLayoutData qLayout  (gm, f, gm->getName());
-  std::map<MVertex*,int> temp;
-  std::map<int, std::vector<double> > dataTHETA;
-  findPhysicalGroupsForSingularities (gm, f, temp);
-  if (temp.size())
-    qLayout.computeCrossFieldAndH(&temp, dataTHETA);
-  qLayout.computeQuadLayout();    
-  return 0;  
+static int computeQuadDecomposition(GModel *gm, std::vector<GFace *> &f, std::vector<int> &tags){
+
+  PView *H = PView::getViewByTag(tags[0]);
+  PView *T = PView::getViewByTag(tags[1]);
+  PView *D = PView::getViewByTag(tags[2]);
+  if (!H || !D) return -1;
+
+  //  stepData<double> *_h = H->getStepData (0);
+  //  stepData<double> *_d = D->getStepData (0);
+
+  return 0;
 }
 
-static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, const std::string &THETA, const std::string &H )
+
+static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, std::vector<int> &tags, bool layout = true)
 {
   quadLayoutData qLayout  (gm, f, gm->getName());
   std::map<MVertex*,int> temp;
   std::map<int, std::vector<double> > dataH;
   std::map<int, std::vector<double> > dataTHETA;
+  std::map<int, std::vector<double> > dataDir;
+  std::map<int, std::vector<double> > dataU;
+  std::map<int, std::vector<double> > dataV;
+  std::map<MVertex *, double> potU , potV;
   findPhysicalGroupsForSingularities (gm, f, temp);
-  if (temp.size())
-    qLayout.computeCrossFieldAndH(&temp, dataTHETA);  
+  std::map<MEdge, MEdge, MEdgeLessThan> duplicateEdges;
+  if (temp.size()){
+    Msg::Info("Computing cross field from %d prescribed singularities",temp.size());
+    qLayout.computeCrossFieldAndH(&temp, dataTHETA);
+    qLayout.computeCutGraph(duplicateEdges);
+  }
   else{
-    std::map<MEdge, MEdge, MEdgeLessThan> duplicateEdges;
+    Msg::Info("Computing cross field from scratch");
     qLayout.computeCrossFieldAndH ();
+    Msg::Info("Computing a smooth version of Theta");
     qLayout.computeCutGraph(duplicateEdges);    
     qLayout.computeThetaUsingHCrouzeixRaviart (dataTHETA);
-    qLayout.restoreInitialMesh();    
+  }
+  if (layout){
+    Msg::Info("Computing quad decomposition");
+    qLayout.computeQuadLayout(potU , potV,duplicateEdges);
   }
   
   PViewDataGModel *d = new PViewDataGModel;
   PViewDataGModel *dt = new PViewDataGModel(PViewDataGModel::ElementNodeData);
-  std::string name = gm->getName()+"_"+H;
+  PViewDataGModel *dd = new PViewDataGModel(PViewDataGModel::ElementData);
+  std::string name = gm->getName()+"_H";
   d->setName(name);
   d->setFileName(name + ".msh");
-  name = gm->getName()+"_"+THETA;
+  name = gm->getName()+"_Theta";
   dt->setName(name);
   dt->setFileName(name + ".msh");
+  name = gm->getName()+"_Directions";
+  dd->setName(name);
+  dd->setFileName(name + ".msh");
+  PViewDataGModel *U = NULL;
+  PViewDataGModel *V = NULL;
+  if (layout){
+    U = new PViewDataGModel(PViewDataGModel::ElementNodeData);
+    V = new PViewDataGModel(PViewDataGModel::ElementNodeData);
+    name = gm->getName()+"_U";
+    U->setName(name);
+    U->setFileName(name + ".msh");
+    name = gm->getName()+"_V";
+    U->setName(name);
+    U->setFileName(name + ".msh");
+
+    for(size_t i = 0; i < f.size(); i++) {
+      for(size_t j = 0; j < f[i]->triangles.size(); j++) {
+	MTriangle *t = f[i]->triangles[j];	
+	double a = potU[f[i]->triangles[j]->getVertex(0)];
+	double b = potU[f[i]->triangles[j]->getVertex(1)];
+	double c = potU[f[i]->triangles[j]->getVertex(2)];
+	std::vector<double> ts ;
+	ts.push_back(a);
+	ts.push_back(b);
+	ts.push_back(c);
+	dataU[t->getNum()] = ts;
+	a = potV[f[i]->triangles[j]->getVertex(0)];
+	b = potV[f[i]->triangles[j]->getVertex(1)];
+	c = potV[f[i]->triangles[j]->getVertex(2)];
+	ts.clear();
+	ts.push_back(a);
+	ts.push_back(b);
+	ts.push_back(c);
+	dataV[t->getNum()] = ts;
+      }
+    }
+    
+    U->addData(gm, dataU, 0, 0.0, 1, 1);
+    U->finalize();
+    V->addData(gm, dataV, 0, 0.0, 1, 1);
+    V->finalize();
+  }
+  for (std::map<MTriangle*,SVector3>::iterator it = qLayout.d0.begin(); it != qLayout.d0.end();++it){
+    std::vector<double> jj;
+    jj.push_back(it->second.x());
+    jj.push_back(it->second.y());
+    jj.push_back(it->second.z());
+    dataDir[it->first->getNum()] = jj;
+  }
   for(std::set<MVertex*,MVertexPtrLessThan>::iterator it = qLayout.vs.begin(); it != qLayout.vs.end(); ++it){
     double h;
     qLayout.myAssembler->getDofValue(*it, 0, 1, h);
@@ -3226,16 +3178,30 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, const std:
   d->addData(gm, dataH, 0, 0.0, 1, 1);
   d->finalize();
   dt->addData(gm, dataTHETA, 0, 0.0, 1, 1);
+  dt->finalize();
+  dd->addData(gm, dataDir, 0, 0.0, 1, 3);
+  dd->finalize();
   PView *view = new PView(d);
   PView *viewt = new PView(dt);
+  PView *viewd = new PView(dd);
+  tags.push_back(view->getTag());
+  tags.push_back(viewt->getTag());
+  tags.push_back(viewd->getTag());
+  qLayout.restoreInitialMesh();    
+
+  if(layout){
+    PView *viewU = new PView(U);
+    PView *viewV = new PView(V);
+    tags.push_back(viewU->getTag());
+    tags.push_back(viewV->getTag());
+  }
+
 #ifdef HAVE_FLTK
-  FlGui::instance()->updateViews(true, true);
+  if (FlGui::available())
+    FlGui::instance()->updateViews(true, true);
 #endif
   return 0;  
 }
-
-
-
 #endif
 
 static void getFacesOfTheModel(GModel *gm, std::vector<GFace *> &f){  
@@ -3246,11 +3212,11 @@ static void getFacesOfTheModel(GModel *gm, std::vector<GFace *> &f){
 }
 
 
-int computeCrossFieldAndH(GModel *gm, const std::string &THETA, const std::string &H){
+int computeCrossFieldAndH(GModel *gm, std::vector<int> &tags){
   std::vector<GFace *> f;
   getFacesOfTheModel(gm,f);  
 #if defined(HAVE_SOLVER)
-  return computeCrossFieldAndH(gm, f, THETA, H);
+  return computeCrossFieldAndH(gm, f, tags);
 #else
     Msg::Error("Cross field computation requires solver module");
     return -1;
@@ -3259,14 +3225,27 @@ int computeCrossFieldAndH(GModel *gm, const std::string &THETA, const std::strin
 }
 
 
-int computeCrossField(GModel *gm)
+int computeQuadLayout(GModel *gm, std::vector<int> &tags)
 {
     std::vector<GFace *> f;
     getFacesOfTheModel(gm,f);  
     
 #if defined(HAVE_SOLVER)
-    return computeCrossFieldAndH(gm,f,"THETA", "H");
-    return computeQuadLayout(gm, f);
+    return computeCrossFieldAndH(gm,f,tags, true);
+#else
+    Msg::Error("Cross field computation requires solver module");
+    return -1;
+#endif
+ }
+
+int computeCrossField(GModel *gm, std::vector<int> &tags)
+{
+    std::vector<GFace *> f;
+    getFacesOfTheModel(gm,f);  
+    
+#if defined(HAVE_SOLVER)
+    return computeCrossFieldAndH(gm,f,tags);
+    //    return computeQuadLayout(gm, f);
 #else
     Msg::Error("Cross field computation requires solver module");
     return -1;

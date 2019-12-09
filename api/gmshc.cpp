@@ -691,6 +691,19 @@ GMSH_API void gmshModelSetCoordinates(const int tag, const double x, const doubl
   }
 }
 
+GMSH_API void gmshModelMeshCrossfield(int ** viewTags, size_t * viewTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_viewTags_;
+    gmsh::model::mesh::crossfield(api_viewTags_);
+    vector2ptr(api_viewTags_, viewTags, viewTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGenerate(const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;

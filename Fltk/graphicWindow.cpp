@@ -2120,7 +2120,8 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
 
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
-  computeCrossField (GModel::current());
+  std::vector<int> tags;
+  computeCrossField (GModel::current(), tags);
   drawContext::global()->draw();
 }
 
