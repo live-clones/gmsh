@@ -1313,7 +1313,7 @@ experimental feature and will probably change in a future release.
 @item Input:
 @code{elementType}, @code{functionSpaceType}, @code{tag}, @code{returnCoord}
 @item Output:
-@code{keys}, @code{coord}
+@code{nbrKeysByElements}, @code{keys}, @code{coord}
 @item Return:
 -
 @end table

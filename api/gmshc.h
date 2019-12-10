@@ -810,6 +810,7 @@ GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
  * and will probably change in a future release. */
 GMSH_API void gmshModelMeshGetKeysForElements(const int elementType,
                                               const char * functionSpaceType,
+                                              int * nbrKeysByElements,
                                               int ** keys, size_t * keys_n,
                                               double ** coord, size_t * coord_n,
                                               const int tag,

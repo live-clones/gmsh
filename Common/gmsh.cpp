@@ -2403,7 +2403,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
 }
 
 GMSH_API void gmsh::model::mesh::getKeysForElements(
-  const int elementType, const std::string &functionSpaceType,
+  const int elementType, const std::string &functionSpaceType, int &nbrKeysByElements,
   gmsh::vectorpair &keys, std::vector<double> &coord, const int tag,
   const bool generateCoord)
 {

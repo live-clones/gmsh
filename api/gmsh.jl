@@ -1751,22 +1751,23 @@ vector contains the x, y, z coordinates locating basis functions for sorting
 purposes. Warning: this is an experimental feature and will probably change in a
 future release.
 
-Return `keys`, `coord`.
+Return `nbrKeysByElements`, `keys`, `coord`.
 """
 function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
+    api_nbrKeysByElements_ = Ref{Cint}()
     api_keys_ = Ref{Ptr{Cint}}()
     api_keys_n_ = Ref{Csize_t}()
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetKeysForElements, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          elementType, functionSpaceType, api_keys_, api_keys_n_, api_coord_, api_coord_n_, tag, returnCoord, ierr)
+          (Cint, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, api_nbrKeysByElements_, api_keys_, api_keys_n_, api_coord_, api_coord_n_, tag, returnCoord, ierr)
     ierr[] != 0 && error("gmshModelMeshGetKeysForElements returned non-zero error code: $(ierr[])")
     tmp_api_keys_ = unsafe_wrap(Array, api_keys_[], api_keys_n_[], own=true)
     keys = [ (tmp_api_keys_[i], tmp_api_keys_[i+1]) for i in 1:2:length(tmp_api_keys_) ]
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
-    return keys, coord
+    return api_nbrKeysByElements_[], keys, coord
 end
 
 """
