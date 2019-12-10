@@ -721,12 +721,12 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
     double lcBGM =
       ONE_THIRD * (data.vSizesBGM[index0] + data.vSizesBGM[index1] +
                    data.vSizesBGM[index2]);
-    double LL = Extend1dMeshIn2dSurfaces(gf) ? std::min(lc, lcBGM) : lcBGM;
+    double LL = std::min(lc, lcBGM);
 
     lcMin = std::min(lcMin, std::min(data.vSizes[index0], data.vSizes[index1]));
     lcBGMMin = std::min(lcBGMMin, std::min(data.vSizesBGM[index0], data.vSizesBGM[index1]));
 
-    MTri3 *t4 = new MTri3(t, LL, 0, &data, gf);
+    MTri3 *t4 = new MTri3(t, Extend1dMeshIn2dSurfaces(gf) ? LL : lcBGM, 0, &data, gf);
 
     if(oneNewTriangle) {
       force = true;
