@@ -380,10 +380,10 @@ namespace gmsh { // Top-level functions
 
     namespace mesh { // Mesh functions
 
-      // Compute a cross fields for the current mesh. The function creates 3 views,
-      // the H function, the Theta function and cross directions. The function
-      // returns the tags of the views
-      GMSH_API void crossfield(std::vector<int> & viewTags);
+      // Compute a cross field for the current mesh. The function creates 3 views:
+      // the H function, the Theta function and cross directions. Return the tags
+      // of the views
+      GMSH_API void computeCrossField(std::vector<int> & viewTags);
 
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or
       // 3).

@@ -40,7 +40,6 @@
 #include "Context.h"
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
-#include "gmshCrossFields.h"
 #include "Numeric.h"
 #include "OS.h"
 #include "HierarchicalBasisH1Quad.h"
@@ -55,9 +54,11 @@
 #include "HierarchicalBasisHcurlTria.h"
 #include "HierarchicalBasisHcurlTetra.h"
 #include "HierarchicalBasisHcurlPri.h"
+
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGFaceOptimize.h"
+#include "gmshCrossFields.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -925,10 +926,15 @@ GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::crossfield(std::vector<int> &tags)
+GMSH_API void gmsh::model::mesh::computeCrossField(std::vector<int> &tags)
 {
   if(!_isInitialized()) { throw - 1; }
-  if (computeCrossField(GModel::current(),tags))throw 1;
+#if defined(HAVE_MESH)
+  if(computeCrossField(GModel::current(), tags)) throw 1;
+#else
+  Msg::Error("computeCrossField requires the mesh module");
+  throw - 1;
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::splitQuadrangles(const double quality,

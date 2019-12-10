@@ -201,8 +201,8 @@ model.add('setCoordinates',doc,None,iint('tag'),idouble('x'),idouble('y'),idoubl
 
 mesh = model.add_module('mesh','mesh functions')
 
-doc = '''Compute a cross fields for the current mesh. The function creates 3 views, the H function, the Theta function and cross directions. The function returns the tags of the views'''
-mesh.add('crossfield',doc,None,ovectorint('viewTags'))
+doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views'''
+mesh.add('computeCrossField',doc,None,ovectorint('viewTags'))
 
 doc = '''Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).'''
 mesh.add('generate',doc,None,iint('dim', '3'))

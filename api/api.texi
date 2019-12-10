@@ -715,10 +715,9 @@ Set the @code{x}, @code{y}, @code{z} coordinates of a geometrical point.
 @section Namespace @code{gmsh/model/mesh}: mesh functions
 
 @ftable @code
-@item crossfield
-Compute a cross fields for the current mesh. The function creates 3 views, the H
-function, the Theta function and cross directions. The function returns the tags
-of the views
+@item computeCrossField
+Compute a cross field for the current mesh. The function creates 3 views: the H
+function, the Theta function and cross directions. Return the tags of the views
 
 @table @asis
 @item Input:

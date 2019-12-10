@@ -973,22 +973,21 @@ module mesh
 import ...gmsh
 
 """
-    gmsh.model.mesh.crossfield()
+    gmsh.model.mesh.computeCrossField()
 
-Compute a cross fields for the current mesh. The function creates 3 views, the H
-function, the Theta function and cross directions. The function returns the tags
-of the views
+Compute a cross field for the current mesh. The function creates 3 views: the H
+function, the Theta function and cross directions. Return the tags of the views
 
 Return `viewTags`.
 """
-function crossfield()
+function computeCrossField()
     api_viewTags_ = Ref{Ptr{Cint}}()
     api_viewTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshCrossfield, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshComputeCrossField, gmsh.lib), Cvoid,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_viewTags_, api_viewTags_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshCrossfield returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshComputeCrossField returned non-zero error code: $(ierr[])")
     viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
     return viewTags
 end

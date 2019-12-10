@@ -405,11 +405,11 @@ GMSH_API void gmshModelSetCoordinates(const int tag,
                                       const double z,
                                       int * ierr);
 
-/* Compute a cross fields for the current mesh. The function creates 3 views,
- * the H function, the Theta function and cross directions. The function
- * returns the tags of the views */
-GMSH_API void gmshModelMeshCrossfield(int ** viewTags, size_t * viewTags_n,
-                                      int * ierr);
+/* Compute a cross field for the current mesh. The function creates 3 views:
+ * the H function, the Theta function and cross directions. Return the tags of
+ * the views */
+GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
+                                             int * ierr);
 
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,
