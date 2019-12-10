@@ -2516,7 +2516,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
         }
       }
       
-      delete basis;
+      delete nodalB;
       return;
     }
     else {
@@ -2714,6 +2714,13 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
+  }
+  else if (fsName == "IsoParametric" || fsName == "Lagrange" || fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+    infoKeys.resize(keys.size());
+    for(size_t i = 0; i < keys.size(); ++i) {
+      infoKeys.push_back(std::pair<int, int>(0, basisOrder));
+    }
+    return;
   }
   else {
     Msg::Error("Unknown function space named '%s'", fsName.c_str());
