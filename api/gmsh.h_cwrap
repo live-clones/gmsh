@@ -1394,7 +1394,6 @@ namespace gmsh { // Top-level functions
       // experimental feature and will probably change in a future release.
       inline void getKeysForElements(const int elementType,
                                      const std::string & functionSpaceType,
-                                     int & nbrKeysByElements,
                                      gmsh::vectorpair & keys,
                                      std::vector<double> & coord,
                                      const int tag = -1,
@@ -1403,10 +1402,21 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         int *api_keys_; size_t api_keys_n_;
         double *api_coord_; size_t api_coord_n_;
-        gmshModelMeshGetKeysForElements(elementType, functionSpaceType.c_str(), &nbrKeysByElements, &api_keys_, &api_keys_n_, &api_coord_, &api_coord_n_, tag, (int)returnCoord, &ierr);
+        gmshModelMeshGetKeysForElements(elementType, functionSpaceType.c_str(), &api_keys_, &api_keys_n_, &api_coord_, &api_coord_n_, tag, (int)returnCoord, &ierr);
         if(ierr) throw ierr;
         keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+      }
+
+      // Get the number of keys by elements of type `elementType' for function
+      // space named `functionSpaceType'.
+      inline int getNumberOfKeysForElements(const int elementType,
+                                            const std::string & functionSpaceType)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelMeshGetNumberOfKeysForElements(elementType, functionSpaceType.c_str(), &ierr);
+        if(ierr) throw ierr;
+        return result_api_;
       }
 
       // Get information about the `keys'. `infoKeys' returns information about the

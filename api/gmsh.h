@@ -757,11 +757,15 @@ namespace gmsh { // Top-level functions
       // experimental feature and will probably change in a future release.
       GMSH_API void getKeysForElements(const int elementType,
                                        const std::string & functionSpaceType,
-                                       int & nbrKeysByElements,
                                        gmsh::vectorpair & keys,
                                        std::vector<double> & coord,
                                        const int tag = -1,
                                        const bool returnCoord = true);
+
+      // Get the number of keys by elements of type `elementType' for function
+      // space named `functionSpaceType'.
+      GMSH_API int getNumberOfKeysForElements(const int elementType,
+                                              const std::string & functionSpaceType);
 
       // Get information about the `keys'. `infoKeys' returns information about the
       // functions associated with the `keys'. `infoKeys[0].first' describes the

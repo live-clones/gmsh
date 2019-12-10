@@ -2403,7 +2403,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
 }
 
 GMSH_API void gmsh::model::mesh::getKeysForElements(
-  const int elementType, const std::string &functionSpaceType, int &nbrKeysByElements,
+  const int elementType, const std::string &functionSpaceType,
   gmsh::vectorpair &keys, std::vector<double> &coord, const int tag,
   const bool generateCoord)
 {
@@ -2653,6 +2653,101 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       }
     }
   }
+}
+
+GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
+  const int elementType, const std::string & functionSpaceType)
+{
+  int numberOfKeys = 0;
+  int basisOrder = 0;
+  std::string fsName = "";
+  int numComponents = 0;
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder, numComponents)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    throw 2;
+  }
+  int familyType = ElementType::getParentType(elementType);
+  if (fsName == "H1Legendre" || fsName == "GradH1Legendre") {
+    HierarchicalBasis *basis(0);
+    switch(familyType) {
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisH1Brick(basisOrder);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisH1Pri(basisOrder);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisH1Tetra(basisOrder);
+    } break;
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisH1Quad(basisOrder);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisH1Tria(basisOrder);
+    } break;
+    case TYPE_LIN: {
+      basis = new HierarchicalBasisH1Line(basisOrder);
+    } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
+    }
+    int vSize = basis->getnVertexFunction();
+    int bSize = basis->getnBubbleFunction();
+    int eSize = basis->getnEdgeFunction();
+    int quadFSize = basis->getnQuadFaceFunction();
+    int triFSize = basis->getnTriFaceFunction();
+    numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
+    delete basis;
+  }
+  else if (fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre"){
+    HierarchicalBasis *basis(0);
+    switch(familyType) {
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisHcurlQuad(basisOrder);
+    } break;
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisHcurlBrick(basisOrder);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisHcurlTria(basisOrder);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisHcurlTetra(basisOrder);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisHcurlPri(basisOrder);
+    } break;
+    case TYPE_LIN: {
+      basis = new HierarchicalBasisHcurlLine(basisOrder);
+    } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
+    }
+    int vSize = basis->getnVertexFunction();
+    int bSize = basis->getnBubbleFunction();
+    int eSize = basis->getnEdgeFunction();
+    int quadFSize = basis->getnQuadFaceFunction();
+    int triFSize = basis->getnTriFaceFunction();
+    numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
+    delete basis;
+  }
+  else if (fsName == "IsoParametric" || fsName == "Lagrange" || fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+    const nodalBasis *basis(0);
+    if(basisOrder == -1) { // isoparametric
+      basis = BasisFactory::getNodalBasis(elementType);
+    }
+    else {
+      int familyType = ElementType::getParentType(elementType);
+      int newType = ElementType::getType(familyType, basisOrder, false);
+      basis = BasisFactory::getNodalBasis(newType);
+    }
+    numberOfKeys = basis->getNumShapeFunctions();
+    delete basis;
+  }
+  else {
+    Msg::Error("Unknown function space named '%s'", fsName.c_str());
+    throw 3;
+  }
+  
+  return numberOfKeys;
 }
 
 GMSH_API void gmsh::model::mesh::getInformationForElements(

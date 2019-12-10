@@ -1313,9 +1313,22 @@ experimental feature and will probably change in a future release.
 @item Input:
 @code{elementType}, @code{functionSpaceType}, @code{tag}, @code{returnCoord}
 @item Output:
-@code{nbrKeysByElements}, @code{keys}, @code{coord}
+@code{keys}, @code{coord}
 @item Return:
 -
+@end table
+
+@item getNumberOfKeysForElements
+Get the number of keys by elements of type @code{elementType} for function space
+named @code{functionSpaceType}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{functionSpaceType}
+@item Output:
+-
+@item Return:
+integer value
 @end table
 
 @item getInformationForElements
