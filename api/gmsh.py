@@ -1273,20 +1273,23 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def optimize(method, force=False, niter=1):
+        def optimize(method, force=False, niter=1, dimTags=[]):
             """
             Optimize the mesh of the current model using `method' (empty for default
             tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
             direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
             smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
             for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation).
-            If `force' is set apply the optimization also to discrete entities.
+            If `force' is set apply the optimization also to discrete entities. If
+            `dimTags' is given, only apply the optimizer to the given entities.
             """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
             lib.gmshModelMeshOptimize(
                 c_char_p(method.encode()),
                 c_int(bool(force)),
                 c_int(niter),
+                api_dimTags_, api_dimTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

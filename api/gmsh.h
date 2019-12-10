@@ -401,10 +401,12 @@ namespace gmsh { // Top-level functions
       // elastic smoother, "HighOrderFastCurving" for fast curving algorithm,
       // "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node
       // relocation). If `force' is set apply the optimization also to discrete
+      // entities. If `dimTags' is given, only apply the optimizer to the given
       // entities.
       GMSH_API void optimize(const std::string & method,
                              const bool force = false,
-                             const int niter = 1);
+                             const int niter = 1,
+                             const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // Recombine the mesh of the current model.
       GMSH_API void recombine();

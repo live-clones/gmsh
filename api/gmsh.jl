@@ -1035,20 +1035,23 @@ function unpartition()
 end
 
 """
-    gmsh.model.mesh.optimize(method, force = false, niter = 1)
+    gmsh.model.mesh.optimize(method, force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
 
 Optimize the mesh of the current model using `method` (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
 direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
 smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
 Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If
-`force` is set apply the optimization also to discrete entities.
+`force` is set apply the optimization also to discrete entities. If `dimTags` is
+given, only apply the optimizer to the given entities.
 """
-function optimize(method, force = false, niter = 1)
+function optimize(method, force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshOptimize, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}),
-          method, force, niter, ierr)
+          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          method, force, niter, api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshOptimize returned non-zero error code: $(ierr[])")
     return nothing
 end

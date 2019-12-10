@@ -427,10 +427,12 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr);
  * direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
  * smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
  * for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation).
- * If `force' is set apply the optimization also to discrete entities. */
+ * If `force' is set apply the optimization also to discrete entities. If
+ * `dimTags' is given, only apply the optimizer to the given entities. */
 GMSH_API void gmshModelMeshOptimize(const char * method,
                                     const int force,
                                     const int niter,
+                                    int * dimTags, size_t dimTags_n,
                                     int * ierr);
 
 /* Recombine the mesh of the current model. */
