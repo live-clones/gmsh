@@ -2515,8 +2515,6 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
           }
         }
       }
-      
-      delete nodalB;
       return;
     }
     else {
@@ -2740,7 +2738,6 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
       basis = BasisFactory::getNodalBasis(newType);
     }
     numberOfKeys = basis->getNumShapeFunctions();
-    delete basis;
   }
   else {
     Msg::Error("Unknown function space named '%s'", fsName.c_str());
