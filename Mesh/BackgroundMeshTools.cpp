@@ -61,8 +61,6 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
     GEdge *ged = (GEdge *)ge;
     Crv = ged->curvature(U);
     Crv = std::max(Crv, max_surf_curvature(ged, U));
-    // printf("%g %d\n",Crv, CTX::instance()->mesh.minCircPoints);
-    // Crv = max_surf_curvature(ged, U);
   } break;
   case 2: {
     GFace *gf = (GFace *)ge;
@@ -70,7 +68,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   } break;
   }
   double lc =
-    Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minCircPoints : MAX_LC;
+    Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minElementsPerTwoPi : MAX_LC;
   return lc;
 }
 
@@ -79,7 +77,7 @@ SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
   SVector3 t = ge->firstDer(u);
   t.normalize();
   double l_t =
-    (2 * M_PI) / (fabs(ge->curvature(u)) * CTX::instance()->mesh.minCircPoints);
+    (2 * M_PI) / (fabs(ge->curvature(u)) * CTX::instance()->mesh.minElementsPerTwoPi);
   double l_n = 1.e12;
   return buildMetricTangentToCurve(t, l_t, l_n);
 }
@@ -326,7 +324,7 @@ SMetric3 max_edge_curvature_metric(const GVertex *gv)
       SVector3 t = _myGEdge->firstDer(range.low());
       t.normalize();
       double l_t = ((2 * M_PI) / (fabs(_myGEdge->curvature(range.low())) *
-                                  CTX::instance()->mesh.minCircPoints));
+                                  CTX::instance()->mesh.minElementsPerTwoPi));
       double l_n = 1.e12;
       cc = buildMetricTangentToCurve(t, l_t, l_n);
     }
@@ -334,7 +332,7 @@ SMetric3 max_edge_curvature_metric(const GVertex *gv)
       SVector3 t = _myGEdge->firstDer(range.high());
       t.normalize();
       double l_t = ((2 * M_PI) / (fabs(_myGEdge->curvature(range.high())) *
-                                  CTX::instance()->mesh.minCircPoints));
+                                  CTX::instance()->mesh.minElementsPerTwoPi));
       double l_n = 1.e12;
       cc = buildMetricTangentToCurve(t, l_t, l_n);
     }
@@ -355,9 +353,9 @@ SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v,
   if(cmin == 0) cmin = 1.e-12;
   if(cmax == 0) cmax = 1.e-12;
   double lambda1 =
-    ((2 * M_PI) / (fabs(cmin) * CTX::instance()->mesh.minCircPoints));
+    ((2 * M_PI) / (fabs(cmin) * CTX::instance()->mesh.minElementsPerTwoPi));
   double lambda2 =
-    ((2 * M_PI) / (fabs(cmax) * CTX::instance()->mesh.minCircPoints));
+    ((2 * M_PI) / (fabs(cmax) * CTX::instance()->mesh.minElementsPerTwoPi));
   SVector3 Z = crossprod(dirMax, dirMin);
   if(surface_isotropic) lambda2 = lambda1 = std::min(lambda2, lambda1);
   dirMin.normalize();

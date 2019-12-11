@@ -77,11 +77,11 @@ Set maximum mesh element size
 Set maximum anisotropy (for bamg)
 @item -smooth_ratio float
 Set smoothing ration between mesh sizes at nodes of a same edge (for bamg)
-@item -clcurv
-Automatically compute element sizes from curvatures
-@item -epslc1d
+@item -clcurv float
+Compute mesh element size from curvatures (value is the number of elements per 2*pi radians)
+@item -epslc1d float
 Set accuracy of evaluation of mesh size field for 1D mesh
-@item -swapangle
+@item -swapangle float
 Set the threshold angle (in degree) between two adjacent faces below which a swap is allowed
 @item -rand float
 Set random perturbation factor

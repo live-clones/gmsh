@@ -5968,6 +5968,17 @@ double opt_mesh_min_circ_points(OPT_ARGS_NUM)
   return CTX::instance()->mesh.minCircPoints;
 }
 
+double opt_mesh_min_elements_2pi(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.minElementsPerTwoPi)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.minElementsPerTwoPi = (int)val;
+  }
+  return CTX::instance()->mesh.minElementsPerTwoPi;
+}
+
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.allowSwapEdgeAngle = val;

@@ -7,9 +7,10 @@ MeshAdapt for non-periodic surfaces with singularities; new X3D output for
 geometries and meshes; new compound Spline/BSpline commands; new
 MeshSizeFromBoundary command; combining views now copies options; added API
 support for mesh compounds, per-surface mesh algorithm and mesh size from
-boundary; renamed plugin AnalyseCurvedMesh to AnalyseMeshQuality; fixed
-regression for built-in kernel BSplines on non-flat geometries (Sphere,
-PolarSphere); small fixes.
+boundary; renamed plugin AnalyseCurvedMesh to AnalyseMeshQuality; new separate
+option to govern curvature adapted meshes (Mesh.MinimumElementsPerTwoPi and
+"-clcurv val"); fixed regression for built-in kernel BSplines on non-flat
+geometries (Sphere, PolarSphere); small fixes.
 
 * Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
   like all other mesh optimizers); renamed logger/time to logger/getWallTime and

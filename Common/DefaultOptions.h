@@ -1155,10 +1155,12 @@ StringXNumber MeshOptions_Number[] = {
     "METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
-    "Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi "
-    "radians when the mesh size of adapted to the curvature)" },
+    "Minimum number of nodes used to mesh a circle" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
+  { F|O, "MinimumElementsPerTwoPi" , opt_mesh_min_elements_2pi, 6. ,
+    "Minimum number of elements per 2 * Pi radians when the mesh size is adapted "
+    "to the curvature" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.1 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,

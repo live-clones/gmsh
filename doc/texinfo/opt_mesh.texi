@@ -312,13 +312,18 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCirclePoints
-Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi radians when the mesh size of adapted to the curvature)@*
+Minimum number of nodes used to mesh a circle@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCurvePoints
 Minimum number of points used to mesh a (non-straight) curve@*
 Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MinimumElementsPerTwoPi
+Minimum number of elements per 2 * Pi radians when the mesh size is adapted to the curvature@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion

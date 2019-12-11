@@ -71,7 +71,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   std::vector<mp> s;
   s.push_back(mp("Geometry options:", ""));
   s.push_back(mp("-0", "Output model, then exit"));
-  s.push_back(mp("-tol float", "Set geometrical tolerance"));
+  s.push_back(mp("-tol value", "Set geometrical tolerance"));
   s.push_back(mp("-match", "Match geometries and meshes"));
   s.push_back(mp("Mesh options:", ""));
   s.push_back(mp("-1, -2, -3", "Perform 1D, 2D or 3D mesh generation, then exit"));
@@ -81,7 +81,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  GetKnownFileFormats(true) + ")"));
   s.push_back(mp("-bin", "Create binary files when possible"));
   s.push_back(mp("-refine", "Perform uniform mesh refinement, then exit"));
-  s.push_back(mp("-barycentric_refine", "Perform barycentric mesh refinement, then exit"));
+  s.push_back(mp("-barycentric_refine", "Perform barycentric mesh refinement, "
+                 "then exit"));
   s.push_back(mp("-reclassify angle", "Reclassify surface mesh, then exit"));
   s.push_back(mp("-reparam angle", "Reparametrize surface mesh, then exit"));
   s.push_back(mp("-part int", "Partition after batch mesh generation"));
@@ -92,7 +93,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part_[no_]ghosts", "Create ghost cells"));
   s.push_back(mp("-part_[no_]physicals", "Create physical groups for partitions"));
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file"));
-  s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 format"));
+  s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 "
+                 "format"));
   s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-save_parametric", "Save nodes with their parametric coordinates"));
   s.push_back(mp("-save_topology", "Save model topology"));
@@ -105,17 +107,19 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "quality less than a threshold"));
   s.push_back(mp("-optimize_ho", "Optimize high order meshes"));
   s.push_back(mp("-ho_[min,max,nlayers]", "High-order optimization parameters"));
-  s.push_back(mp("-clscale float", "Set global mesh element size scaling factor"));
-  s.push_back(mp("-clmin float", "Set minimum mesh element size"));
-  s.push_back(mp("-clmax float", "Set maximum mesh element size"));
-  s.push_back(mp("-aniso_max float", "Set maximum anisotropy (for bamg)"));
-  s.push_back(mp("-smooth_ratio float", "Set smoothing ration between mesh sizes at "
+  s.push_back(mp("-clscale value", "Set global mesh element size scaling factor"));
+  s.push_back(mp("-clmin value", "Set minimum mesh element size"));
+  s.push_back(mp("-clmax value", "Set maximum mesh element size"));
+  s.push_back(mp("-clcurv value", "Compute mesh element size from curvatures (value "
+                 "is the number of elements per 2*pi radians)"));
+  s.push_back(mp("-aniso_max value", "Set maximum anisotropy (for bamg)"));
+  s.push_back(mp("-smooth_ratio value", "Set smoothing ration between mesh sizes at "
                  "nodes of a same edge (for bamg)"));
-  s.push_back(mp("-clcurv", "Automatically compute element sizes from curvatures"));
-  s.push_back(mp("-epslc1d", "Set accuracy of evaluation of mesh size field for 1D mesh"));
-  s.push_back(mp("-swapangle", "Set the threshold angle (in degree) between two adjacent "
-                 "faces below which a swap is allowed"));
-  s.push_back(mp("-rand float", "Set random perturbation factor"));
+  s.push_back(mp("-epslc1d value", "Set accuracy of evaluation of mesh size field "
+                 "for 1D mesh"));
+  s.push_back(mp("-swapangle value", "Set the threshold angle (in degree) between "
+                 "two adjacent faces below which a swap is allowed"));
+  s.push_back(mp("-rand value", "Set random perturbation factor"));
   s.push_back(mp("-bgm file", "Load background mesh from file"));
   s.push_back(mp("-check", "Perform various consistency checks on mesh"));
   s.push_back(mp("-ignore_periocity", "Ignore periodic boundaries"));
@@ -132,7 +136,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("Display options:", ""));
   s.push_back(mp("-n", "Hide all meshes and post-processing views on startup"));
   s.push_back(mp("-nodb", "Disable double buffering"));
-  s.push_back(mp("-numsubedges", "Set num of subdivisions for high order element display"));
+  s.push_back(mp("-numsubedges", "Set num of subdivisions for high order element "
+                 "display"));
   s.push_back(mp("-fontsize int", "Specify the font size for the GUI"));
   s.push_back(mp("-theme string", "Specify FLTK GUI theme"));
   s.push_back(mp("-display string", "Specify display"));
@@ -148,11 +153,12 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-open", "Open next files"));
   s.push_back(mp("-log filename", "Log all messages to filename"));
 #if defined(HAVE_FLTK)
-  s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, solver or "
-                 "post-processing mode"));
+  s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, solver "
+                 "or post-processing mode"));
 #endif
   s.push_back(mp("-pid", "Print process id on stdout"));
-  s.push_back(mp("-watch pattern", "Pattern of files to merge as they become available"));
+  s.push_back(mp("-watch pattern", "Pattern of files to merge as they become "
+                 "available"));
   s.push_back(mp("-bg file", "Load background (image or PDF) file"));
   s.push_back(mp("-v int", "Set verbosity level"));
   s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts"));
@@ -160,7 +166,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-setnumber name value", "Set constant or option number name=value"));
   s.push_back(mp("-setstring name value", "Set constant or option string name=value"));
   s.push_back(mp("-option file", "Parse option file at startup"));
-  s.push_back(mp("-convert files", "Convert files into latest binary formats, then exit"));
+  s.push_back(mp("-convert files", "Convert files into latest binary formats, "
+                 "then exit"));
   s.push_back(mp("-nt int", "Set number of threads"));
   s.push_back(mp("-cpu", "Report CPU times for all operations"));
   s.push_back(mp("-version", "Show version number"));
@@ -1015,6 +1022,12 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "clcurv")) {
         CTX::instance()->mesh.lcFromCurvature = 1;
         i++;
+        if(argv[i])
+          CTX::instance()->mesh.minElementsPerTwoPi = atof(argv[i++]);
+        else{
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
       }
       else if(!strcmp(argv[i] + 1, "clcurviso")) {
         CTX::instance()->mesh.lcFromCurvature = 2;
