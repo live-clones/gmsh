@@ -545,7 +545,7 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
   double xmin, xmax, ymin, ymax;
   if(!getGraphData(p, x, xmin, xmax, y, ymin, ymax)) return;
 
-  PViewData *data = p->getData();
+  PViewData *data = p->getData(true); // use adaptive data if available
   PViewOptions *opt = p->getOptions();
   if(opt->rangeType == PViewOptions::Custom) {
     opt->tmpMin = opt->customMin;
