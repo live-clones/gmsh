@@ -1793,6 +1793,23 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
 end
 
 """
+    gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
+
+Get the number of keys by elements of type `elementType` for function space
+named `functionSpaceType`.
+
+Return an integer value.
+"""
+function getNumberOfKeysForElements(elementType, functionSpaceType)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelMeshGetNumberOfKeysForElements, gmsh.lib), Cint,
+          (Cint, Ptr{Cchar}, Ptr{Cint}),
+          elementType, functionSpaceType, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNumberOfKeysForElements returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.model.mesh.getInformationForElements(keys, elementType, functionSpaceType)
 
 Get information about the `keys`. `infoKeys` returns information about the

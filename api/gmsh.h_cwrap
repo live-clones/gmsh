@@ -1424,6 +1424,17 @@ namespace gmsh { // Top-level functions
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
+      // Get the number of keys by elements of type `elementType' for function
+      // space named `functionSpaceType'.
+      inline int getNumberOfKeysForElements(const int elementType,
+                                            const std::string & functionSpaceType)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelMeshGetNumberOfKeysForElements(elementType, functionSpaceType.c_str(), &ierr);
+        if(ierr) throw ierr;
+        return result_api_;
+      }
+
       // Get information about the `keys'. `infoKeys' returns information about the
       // functions associated with the `keys'. `infoKeys[0].first' describes the
       // type of function (0 for  vertex function, 1 for edge function, 2 for face

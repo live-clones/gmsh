@@ -1332,6 +1332,19 @@ experimental feature and will probably change in a future release.
 -
 @end table
 
+@item getNumberOfKeysForElements
+Get the number of keys by elements of type @code{elementType} for function space
+named @code{functionSpaceType}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{functionSpaceType}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
 @item getInformationForElements
 Get information about the @code{keys}. @code{infoKeys} returns information about
 the functions associated with the @code{keys}. @code{infoKeys[0].first}

@@ -769,6 +769,11 @@ namespace gmsh { // Top-level functions
                                        const int tag = -1,
                                        const bool returnCoord = true);
 
+      // Get the number of keys by elements of type `elementType' for function
+      // space named `functionSpaceType'.
+      GMSH_API int getNumberOfKeysForElements(const int elementType,
+                                              const std::string & functionSpaceType);
+
       // Get information about the `keys'. `infoKeys' returns information about the
       // functions associated with the `keys'. `infoKeys[0].first' describes the
       // type of function (0 for  vertex function, 1 for edge function, 2 for face

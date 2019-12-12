@@ -2138,6 +2138,25 @@ class model:
                 _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
+        def getNumberOfKeysForElements(elementType, functionSpaceType):
+            """
+            Get the number of keys by elements of type `elementType' for function space
+            named `functionSpaceType'.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelMeshGetNumberOfKeysForElements(
+                c_int(elementType),
+                c_char_p(functionSpaceType.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNumberOfKeysForElements returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
         def getInformationForElements(keys, elementType, functionSpaceType):
             """
             Get information about the `keys'. `infoKeys' returns information about the
