@@ -961,7 +961,7 @@ void Msg::SetOnelabNumber(const std::string &name, double val, bool visible,
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
-    // FIXME: why is there a get() here??
+    // get if first so we can keep its options
     std::vector<onelab::number> numbers;
     _onelabClient->get(numbers, name);
     if(numbers.empty()){
@@ -969,7 +969,7 @@ void Msg::SetOnelabNumber(const std::string &name, double val, bool visible,
       numbers[0].setName(name);
     }
     numbers[0].setValue(val);
-    numbers[0].setVisible(visible);
+    if(!visible) numbers[0].setVisible(false);
     if(persistent) numbers[0].setAttribute("Persistent", "1");
     numbers[0].setReadOnly(readOnly);
     numbers[0].setChangedValue(changedValue);
@@ -984,7 +984,7 @@ void Msg::SetOnelabNumber(const std::string &name, const std::vector<double> &va
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     onelab::number n(name, val);
-    n.setVisible(visible);
+    if(!visible) n.setVisible(false);
     _onelabClient->set(n);
   }
 #endif
@@ -996,7 +996,7 @@ void Msg::SetOnelabString(const std::string &name, const std::string &val,
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
-    // FIXME: why is there a get() here??
+    // get if first so we can keep its options
     std::vector<onelab::string> strings;
     _onelabClient->get(strings, name);
     if(strings.empty()){
@@ -1004,7 +1004,7 @@ void Msg::SetOnelabString(const std::string &name, const std::string &val,
       strings[0].setName(name);
     }
     strings[0].setValue(val);
-    strings[0].setVisible(visible);
+    if(!visible) strings[0].setVisible(false);
     if(persistent) strings[0].setAttribute("Persistent", "1");
     strings[0].setReadOnly(readOnly);
     strings[0].setChangedValue(changedValue);
