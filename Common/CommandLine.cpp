@@ -1022,8 +1022,11 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "clcurv")) {
         CTX::instance()->mesh.lcFromCurvature = 1;
         i++;
-        if(argv[i])
+        if(argv[i]) {
           CTX::instance()->mesh.minElementsPerTwoPi = atof(argv[i++]);
+          if(CTX::instance()->mesh.minElementsPerTwoPi <= 0.)
+            CTX::instance()->mesh.lcFromCurvature = 0;
+        }
         else{
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
