@@ -497,6 +497,7 @@ Views :
   | Views Text3D
   | Views InterpolationMatrix
   | Views Time
+  | Views Loop
 ;
 
 ElementCoords :
