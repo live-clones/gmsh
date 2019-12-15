@@ -2,7 +2,7 @@
 
 @ftable @code
 @item View.Attributes
-Optional string attributes@*
+Optional string attached to the view. If the string contains 'AlwaysVisible', the view will be not be hidden when new ones are merged.@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 

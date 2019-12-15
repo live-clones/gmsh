@@ -615,10 +615,13 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
   GModel::setCurrent(old);
   old->setVisibility(1);
 
-  // hide everything except the onelab X-Y graphs
+  // hide everything except onelab X-Y graphs and views with attribute
+  // "AlwaysVisible"
   if(showViews == 0) {
     for(std::size_t i = 0; i < PView::list.size(); i++) {
-      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB" &&
+         PView::list[i]->getOptions()->attributes.find("AlwaysVisible") ==
+         std::string::npos)
         PView::list[i]->getOptions()->visible = 0;
     }
   }
@@ -626,7 +629,9 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
     // if we created new views, assume we only want to see those (and the
     // onelab X-Y graphs)
     for(std::size_t i = 0; i < n; i++) {
-      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB" &&
+         PView::list[i]->getOptions()->attributes.find("AlwaysVisible") ==
+         std::string::npos)
         PView::list[i]->getOptions()->visible = 0;
     }
   }
