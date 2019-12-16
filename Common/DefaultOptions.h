@@ -276,7 +276,7 @@ StringXString PostProcessingOptions_String[] = {
 StringXString ViewOptions_String[] = {
   { F|O, "Attributes" , opt_view_attributes , "" ,
     "Optional string attached to the view. If the string contains 'AlwaysVisible', "
-    "the view will be not be hidden when new ones are merged."},
+    "the view will not be hidden when new ones are merged."},
   { F|O, "AxesFormatX" , opt_view_axes_format0 , "%.3g" ,
     "Number format for X-axis (in standard C form)" },
   { F|O, "AxesFormatY" , opt_view_axes_format1 , "%.3g" ,

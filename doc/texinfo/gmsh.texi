@@ -2714,15 +2714,16 @@ more meaningful groups, e.g. to define some mathematical (``domain'',
 grouping is done in Gmsh's geometry module (@pxref{Geometry module})
 through ``physical groups''.
 
-By default in the MSH file format (@pxref{File formats}), if physical
-groups are defined, the output mesh only contains those elements that
-belong to at least one physical group. (Other file formats each treat
-physical groups in slightly different ways, depending on their
-capability to define groups.)
+By default in the MSH file format and in most other formats (@pxref{File
+formats}), if physical groups are defined, the output mesh only contains
+those elements that belong to at least one physical group. (Different
+mesh file formats treat physical groups in slightly different ways,
+depending on their capability to define groups.)
 
 To save all mesh element wether or not physical groups are defined, use
  the @code{Mesh.SaveAll} option (@pxref{Mesh options list}) or specify
- @code{-save_all} on the command line.
+ @code{-save_all} on the command line. In some formats (e.g. MSH2),
+ setting @code{Mesh.SaveAll=1} discards all physical group definitions.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands
