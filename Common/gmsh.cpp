@@ -2201,7 +2201,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     Msg::Error("Unknown function space named '%s'", fsName.c_str());
     throw 3;
   }
-  
+
   int nq = integrationPoints.size() / 3;
   int vSize = basis->getnVertexFunction();
   int bSize = basis->getnBubbleFunction();
@@ -2439,7 +2439,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
-  
+
   if(familyType == TYPE_PNT) {
     for(unsigned int i = 0; i < entities.size(); ++i) {
       GEntity *ge = entities[i];
@@ -2510,16 +2510,16 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
         int newType = ElementType::getType(familyType, order, false);
         nodalB = BasisFactory::getNodalBasis(newType);
       }
-      
+
       for(std::size_t i = 0; i < entities.size(); ++i) {
         GEntity *ge = entities[i];
         std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
-        
+
         if(generateCoord) {
           coord.reserve(coord.size() + numElementsInEntitie * nodalB->getNumShapeFunctions() * 3);
         }
         keys.reserve(keys.size() + numElementsInEntitie * nodalB->getNumShapeFunctions());
-        
+
         for(std::size_t j = 0; j < numElementsInEntitie; ++j) {
           MElement *e = ge->getMeshElementByType(familyType, j);
           for(size_t k = 0; k < e->getNumVertices(); ++k) {
@@ -2538,7 +2538,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       Msg::Error("Unknown function space named '%s'", fsName.c_str());
       throw 3;
     }
-    
+
     int vSize = basis->getnVertexFunction();
     int bSize = basis->getnBubbleFunction();
     int eSize = basis->getnEdgeFunction();
@@ -2570,7 +2570,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
     int const3 = const1 + numTriFaceFunction;
     int const4 = bSize + std::max(const3, const2);
     delete basis;
-    
+
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
@@ -2578,7 +2578,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
         coord.reserve(coord.size() + numElementsInEntitie * numDofsPerElement * 3);
       }
       keys.reserve(keys.size() + numElementsInEntitie * numDofsPerElement);
-      
+
       for(std::size_t j = 0; j < numElementsInEntitie; j++) {
         MElement *e = ge->getMeshElementByType(familyType, j);
         // vertices
@@ -2598,7 +2598,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
             if (generateCoord) {
               MVertex *v1 = edge.getVertex(0);
               MVertex *v2 = edge.getVertex(1);
-              
+
               coordEdge[0] = (v1->x() + v2->x()) / 2;
               coordEdge[1] = (v1->y() + v2->y()) / 2;
               coordEdge[2] = (v1->z() + v2->z()) / 2;
@@ -2760,7 +2760,7 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
     Msg::Error("Unknown function space named '%s'", fsName.c_str());
     throw 3;
   }
-  
+
   return numberOfKeys;
 }
 
@@ -2835,7 +2835,7 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     Msg::Error("Unknown function space named '%s'", fsName.c_str());
     throw 3;
   }
-  
+
   int vSize = basis->getnVertexFunction();
   int bSize = basis->getnBubbleFunction();
   int eSize = basis->getnEdgeFunction();
@@ -5406,7 +5406,7 @@ GMSH_API void gmsh::fltk::initialize()
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_FLTK)
-  FlGui::instance(_argc, _argv, error_handler);
+  FlGui::instance(_argc, _argv, false, error_handler);
   FlGui::setFinishedProcessingCommandLine();
   FlGui::check(true);
 #else
@@ -5429,7 +5429,8 @@ GMSH_API void gmsh::fltk::wait(const double time)
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
+  if(!FlGui::available())
+    FlGui::instance(_argc, _argv, false, error_handler);
   if(time >= 0)
     FlGui::wait(time, true);
   else
@@ -5466,7 +5467,8 @@ GMSH_API void gmsh::fltk::update()
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
+  if(!FlGui::available())
+    FlGui::instance(_argc, _argv, false, error_handler);
   FlGui::instance()->updateViews(true, true);
 #else
   Msg::Error("Fltk not available");
@@ -5489,7 +5491,8 @@ GMSH_API void gmsh::fltk::run()
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
+  if(!FlGui::available())
+    FlGui::instance(_argc, _argv, false, error_handler);
   FlGui::instance()->run(); // this calls draw() once
 #else
   Msg::Error("Fltk not available");
@@ -5516,7 +5519,8 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
   if(!_isInitialized()) { throw - 1; }
   dimTags.clear();
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
+  if(!FlGui::available())
+    FlGui::instance(_argc, _argv, false, error_handler);
   char ret = 0;
   switch(dim) {
   case 0: ret = FlGui::instance()->selectEntity(ENT_POINT); break;
@@ -5548,7 +5552,8 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   if(!_isInitialized()) { throw - 1; }
   elementTags.clear();
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
+  if(!FlGui::available())
+    FlGui::instance(_argc, _argv, false, error_handler);
   int old = CTX::instance()->pickElements;
   CTX::instance()->pickElements = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -5567,7 +5572,8 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
   if(!_isInitialized()) { throw - 1; }
   viewTags.clear();
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, error_handler);
+  if(!FlGui::available())
+    FlGui::instance(_argc, _argv, false, error_handler);
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
   for(std::size_t i = 0; i < FlGui::instance()->selectedViews.size(); i++)
     viewTags.push_back(FlGui::instance()->selectedViews[i]->getTag());

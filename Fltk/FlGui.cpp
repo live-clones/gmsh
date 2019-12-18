@@ -450,7 +450,9 @@ static void default_fatal_error_handler(const char *fmt, ...)
   Msg::Exit(1);
 }
 
-FlGui::FlGui(int argc, char **argv, void (*error_handler)(const char *fmt, ...))
+FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
+             void (*error_handler)(const char *fmt, ...))
+  : _quitShouldExit(quitShouldExit)
 {
   if(error_handler) {
     Fl::error = error_handler;
@@ -637,11 +639,11 @@ FlGui::~FlGui()
 
 bool FlGui::available() { return _instance != 0; }
 
-FlGui *FlGui::instance(int argc, char **argv,
+FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
                        void (*error_handler)(const char *fmt, ...))
 {
   if(!_instance) {
-    _instance = new FlGui(argc, argv, error_handler);
+    _instance = new FlGui(argc, argv, quitShouldExit, error_handler);
     // set all options in the new GUI
     InitOptionsGUI(0);
     // say welcome!
