@@ -2260,7 +2260,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                            quadFaceFunctionsAllOrientations,
                                            triFaceFunctionsAllOrientations);
       }
+      
       size_t pastIndexNumElement = 0;
+      std::vector<double> eTableCopy(eSize, 0); // use eTableCopy to orient the edges
+      std::vector<double> fTableCopy(fSize, 0);
+      
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
         std::size_t numMeshElementsByType = ge->getNumMeshElementsByType(familyType);
@@ -2271,8 +2275,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         for(std::size_t j = begin; j < end; j++) {
           std::size_t const3 = indexNumElement * const1 + const2;
           MElement *e = ge->getMeshElementByType(familyType, j);
-          std::vector<double> eTableCopy(
-            eSize, 0); // use eTableCopy to orient the edges
           if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
@@ -2288,7 +2290,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                 eTableNegativeFlag);
             }
           }
-          std::vector<double> fTableCopy(fSize);
+          
           for(int r = 0; r < fSize; r++) { fTableCopy[r] = fTable[r]; }
           if(fSize > 0) {
             for(int jj = 0;
@@ -2343,13 +2345,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       basis->generateBasis(u, v, w, vTable, eTable, fTable, bTable, fsName);
       int const2 = i * numFunctionsPerElement * numComponents;
       // compute all edge functions for all  possible orientation
-      std::vector<std::vector<double> > eTableNegativeFlag(
-        eSize, std::vector<double>(3, 0));
-      for(int r = 0; r < eSize; r++) {
-        eTableNegativeFlag[r][0] = eTable[r][0];
-        eTableNegativeFlag[r][1] = eTable[r][1];
-        eTableNegativeFlag[r][2] = eTable[r][2];
-      }
+      std::vector<std::vector<double> > eTableNegativeFlag(eTable);
+
       if(eSize > 0) {
         basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag);
       }
@@ -2366,6 +2363,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       }
 
       size_t pastIndexNumElement = 0;
+      std::vector<std::vector<double> > eTableCopy(eSize, std::vector<double>(3, 0.));
+      std::vector<std::vector<double> > fTableCopy(fSize, std::vector<double>(3, 0.));
+      
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
         std::size_t numMeshElementsByType = ge->getNumMeshElementsByType(familyType);
@@ -2376,8 +2376,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         for(std::size_t j = begin; j < end; j++) {
           std::size_t const3 = indexNumElement * const1 + const2;
           MElement *e = ge->getMeshElementByType(familyType, j);
-          std::vector<std::vector<double> > eTableCopy(
-            eSize, std::vector<double>(3, 0.));
+          
           if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
@@ -2394,8 +2393,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                 eTableNegativeFlag);
             }
           }
-          std::vector<std::vector<double> > fTableCopy(
-            fSize, std::vector<double>(3, 0.));
+          
           if(fSize > 0) {
             for(int jj = 0;
                 jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
@@ -2411,25 +2409,28 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           std::size_t const4 = const3 + prod1;
           std::size_t const5 = const4 + prod2;
           std::size_t const6 = const5 + prod3;
-          for(int indexNumComp = 0; indexNumComp < numComponents;
-              indexNumComp++) {
-            for(int k = 0; k < vSize; k++) {
-              basisFunctions[const3 + k * numComponents + indexNumComp] =
-                vTable[k][indexNumComp];
-            }
-            for(int k = 0; k < eSize; k++) {
-              basisFunctions[const4 + k * numComponents + indexNumComp] =
-                eTableCopy[k][indexNumComp];
-            }
-            for(int k = 0; k < fSize; k++) {
-              basisFunctions[const5 + k * numComponents + indexNumComp] =
-                fTableCopy[k][indexNumComp];
-            }
-            for(int k = 0; k < bSize; k++) {
-              basisFunctions[const6 + k * numComponents + indexNumComp] =
-                bTable[k][indexNumComp];
+        
+          for(int k = 0; k < vSize; k++) {
+            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
+              basisFunctions[const3 + k * numComponents + indexNumComp] = vTable[k][indexNumComp];
             }
           }
+          for(int k = 0; k < eSize; k++) {
+            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
+              basisFunctions[const4 + k * numComponents + indexNumComp] = eTableCopy[k][indexNumComp];
+            }
+          }
+          for(int k = 0; k < fSize; k++) {
+            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
+              basisFunctions[const5 + k * numComponents + indexNumComp] = fTableCopy[k][indexNumComp];
+            }
+          }
+          for(int k = 0; k < bSize; k++) {
+            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
+              basisFunctions[const6 + k * numComponents + indexNumComp] = bTable[k][indexNumComp];
+            }
+          }
+          
           indexNumElement++;
         }
       }
