@@ -149,6 +149,57 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
 }
 
 
+template<int DIM>
+void StructuredIndexing<DIM>::entFromRange(const cgsize_t *range,
+                                           const cgsize_t *nbEntIJK,
+                                           std::vector<cgsize_t> &elt)
+{
+  elt.resize(nbEntInRange(range));
+
+  // range of IJK indices
+  const cgsize_t ijkStart[3] = {range[0]-1, range[1]-1,
+                                (DIM == 3) ? range[2]-1 : 0};
+  const cgsize_t ijkEnd[3] = {range[DIM]-1, range[DIM+1]-1,
+                              (DIM == 3) ? range[5]-1 : 0};
+  const cgsize_t ijkInc[3] = {(range[DIM] >= range[0]) ? 1 : -1,
+                              (range[DIM+1] >= range[1]) ? 1 : -1,
+                              ((DIM < 3) || (range[5] >= range[2])) ? 1 : -1};
+
+  // compute list of elements from range
+  int iElt = 0;
+  int ijk[3], &i = ijk[0], &j = ijk[1], &k = ijk[2];
+  for(k = ijkStart[2]; k <= ijkEnd[2]; k += ijkInc[2]) {
+    for(j = ijkStart[1]; j <= ijkEnd[1]; j += ijkInc[1]) {
+      for(i = ijkStart[0]; i <= ijkEnd[0]; i += ijkInc[0]) {
+        elt[iElt] = ijk2Ind<DIM>(ijk, nbEntIJK);
+        iElt++;
+      }
+    }
+  }
+}
+
+
+template<int DIM>
+void StructuredIndexing<DIM>::entFromList(const std::vector<cgsize_t> &list,
+                                          const cgsize_t *nbEntIJK,
+                                          std::vector<cgsize_t> &elt)
+{
+  std::size_t nb = list.size() / DIM;
+  elt.resize(nb);
+
+  for(std::size_t i = 0; i < nb; i++) {
+    cgsize_t ijk[3];
+    for(int d = 0; d < DIM; d++) ijk[d] = list[i*DIM+d] - 1;
+    elt[i] = ijk2Ind<DIM>(ijk, nbEntIJK);;
+  }
+}
+
+
+// explicit instantiation of StructuredIndexing
+template struct StructuredIndexing<2>;
+template struct StructuredIndexing<3>;
+
+
 #endif // HAVE_LIBCGNS_CPEX0045
 
 

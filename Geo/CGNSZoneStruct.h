@@ -58,19 +58,47 @@ protected:
 template<int DIM>
 inline cgsize_t CGNSZoneStruct<DIM>::nbNodeInRange(const cgsize_t *range) const
 {
-  cgsize_t nb = 1;
-  for(int d = 0; d < DIM; d++) {
-    const cgsize_t diff = range[DIM+d] - range[d];
-    nb *= (diff >= 0) ? diff + 1 : -diff + 1;
-  }
-  return nb;
+  return StructuredIndexing<DIM>::nbEntInRange(range);
 }
 
 
 template<int DIM>
 inline cgsize_t CGNSZoneStruct<DIM>::nbEltInRange(const cgsize_t *range) const
 {
-  return nbNodeInRange(range);
+  return StructuredIndexing<DIM>::nbEntInRange(range);
+}
+
+
+template<int DIM>
+inline void CGNSZoneStruct<DIM>::eltFromRange(const cgsize_t *range,
+                                              std::vector<cgsize_t> &elt) const
+{
+  StructuredIndexing<DIM>::entFromRange(range, nbEltIJK(), elt);
+}
+
+  
+template<int DIM>
+inline void CGNSZoneStruct<DIM>::eltFromList(const std::vector<cgsize_t> &list,
+                                             std::vector<cgsize_t> &elt) const
+{
+  StructuredIndexing<DIM>::entFromList(list, nbEltIJK(), elt);
+}
+
+  
+template<int DIM>
+inline void CGNSZoneStruct<DIM>::nodeFromRange(const cgsize_t *range,
+                                               std::vector<cgsize_t> &node)
+                                                                          const
+{
+  StructuredIndexing<DIM>::entFromRange(range, nbNodeIJK(), node);
+}
+
+    
+template<int DIM>
+inline void CGNSZoneStruct<DIM>::nodeFromList(const std::vector<cgsize_t> &list,
+                                              std::vector<cgsize_t> &node) const
+{
+  StructuredIndexing<DIM>::entFromList(list, nbNodeIJK(), node);
 }
 
 

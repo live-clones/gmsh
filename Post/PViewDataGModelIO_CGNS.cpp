@@ -151,17 +151,21 @@ int readSolutionTransfo(int fileIndex, int baseIndex,
 }
 
 
-void getSolutionDataNode(int zoneIndex, int nbNode,
+void getSolutionDataNode(int zoneIndex,
                       const std::vector<std::vector<MVertex *> > &vertPerZone,
                          std::vector<cgsize_t> solEntSet,
                          const std::vector<double> &data,
                          stepData<double> *step, double &dataMin,
                          double &dataMax)
 {
+  // allocate data storage
+  const int nbNode = solEntSet.size();
   step->resizeData(nbNode);
   
+  // loop over vertices to store data and update bounds (faster here than in
+  // finalize)
   for(int iNode = 0; iNode < nbNode; iNode++) {
-    const cgsize_t nodeInd = (solEntSet.size() > 0) ? solEntSet[iNode] : iNode;
+    const cgsize_t nodeInd = solEntSet[iNode];
     const int nodeNum = vertPerZone[zoneIndex][nodeInd]->getNum();
     double *d = step->getData(nodeNum, true, 1);
     *d = data[iNode];
@@ -173,17 +177,21 @@ void getSolutionDataNode(int zoneIndex, int nbNode,
 }
 
 
-void getSolutionDataElement(int zoneIndex, int nbElt,
+void getSolutionDataElement(int zoneIndex,
                         const std::vector<std::vector<MElement *> > &eltPerZone,
                             std::vector<cgsize_t> solEntSet,
                             const std::vector<double> &data,
                             stepData<double> *step, double &dataMin,
                             double &dataMax)
 {
+  // allocate data storage
+  const int nbElt = solEntSet.size();
   step->resizeData(nbElt);
   
+  // loop over elements to store data and update bounds (faster here than in
+  // finalize)
   for(int iElt = 0; iElt < nbElt; iElt++) {
-    const cgsize_t eltInd = (solEntSet.size() > 0) ? solEntSet[iElt] : iElt;
+    const cgsize_t eltInd = solEntSet[iElt];
     const int eltNum = eltPerZone[zoneIndex][eltInd]->getNum();
     double *d = step->getData(eltNum, true, 1);
     *d = data[iElt];
@@ -224,7 +232,7 @@ void getInterpolationMat(int parentType, int order,
 }
 
 
-void getSolutionDataElementNode(int zoneIndex, int order, int nbElt,
+void getSolutionDataElementNode(int zoneIndex, int order,
                                 const ZoneSolutionTransfo *zoneSolTransfo,
                         const std::vector<std::vector<MElement *> > &eltPerZone,
                                 std::vector<cgsize_t> solEntSet,
@@ -234,6 +242,8 @@ void getSolutionDataElementNode(int zoneIndex, int order, int nbElt,
                                 std::vector<std::pair<int, int> >
                                   &ordersByParentType)
 {
+  // allocate data storage
+  const int nbElt = solEntSet.size();
   step->resizeData(nbElt);
 
   // loop over elements
@@ -241,7 +251,7 @@ void getSolutionDataElementNode(int zoneIndex, int order, int nbElt,
   std::vector<bool> hasInterpolMat(100, false);
   for(int iElt = 0; iElt < nbElt; iElt++) {
     // get element type
-    const cgsize_t eltInd = (solEntSet.size() > 0) ? solEntSet[iElt] : iElt;
+    const cgsize_t eltInd = solEntSet[iElt];
     MElement *me = eltPerZone[zoneIndex][eltInd];
     const int eltNum = me->getNum();
     const int parentMshType = me->getType();
@@ -288,6 +298,49 @@ void getSolutionDataElementNode(int zoneIndex, int order, int nbElt,
 }
 
 
+// int getFullZoneEntSet(int fileIndex, int baseIndex, int zoneIndex,
+//                       int zoneSolIndex, bool isStructured, int dim,
+//                       const cgsize_t *zoneEntSize, int *solIndMin,
+//                       int *solIndMax, int &nbVal,
+//                       std::vector<cgsize_t> &solEntSet)
+// {
+//   int cgnsErr;
+
+//   // read ring data if it exists 
+//   int rind[6] = {0, 0, 0, 0, 0, 0};
+//   cgnsErr = cg_goto(fileIndex, baseIndex, "Zone_t", zoneIndex,
+//                     "FlowSolution_t", zoneSolIndex, "end");
+//   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+//   cgnsErr = cg_rind_read(rind);
+//   if(cgnsErr == CG_NODE_NOT_FOUND) std::fill(rind, rind+6, 0); 
+//   else if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+//   cgsize_t nbVal = 0;
+//   if(isStructured) {
+//     for(int i = 0; i < dim; i++) {
+//       solIndMin[i] = 1 + rind[i];
+//       solIndMax[i] = zoneEntSize[i] - rind[i];
+//     }
+//     if(dim == 2) {
+//       solIndMin[0] = 1 + rind[0];
+//       solIndMin[1] = 1 + rind[1];
+//       solIndMax[0] = zoneEntSize[0] - rind[0];
+//       solIndMax[1] = zoneEntSize[1] - rind[1];
+//       nbVal = zoneEntSize[0] * zoneEntSize[1];
+//     }
+//     else if(dim == 3) {
+//       nbVal = zoneEntSize[0] * zoneEntSize[1] * zoneEntSize[2];
+//     }
+//   }
+//   else nbVal = *zoneEntSize;
+//   solEntSet.resize(nbVal);
+//   for(cgsize_t i = 0; i < nbVal; i++) solEntSet[i] = i;
+
+//   return 1;
+// }
+
+
+
 bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
                       int fileIndex, int baseIndex, int zoneIndex,
                       int zoneSolIndex, PViewDataGModel::DataType dataType,
@@ -302,16 +355,31 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
   // check FlowSolution name
   char rawSolName[CGNS_MAX_STR_LEN];
   GridLocation_t location;
-  cgnsErr = cg_sol_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex, rawSolName,
-                        &location);
+  cgnsErr = cg_sol_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
+                        rawSolName, &location);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
   if(std::string(rawSolName) != solFieldName.first) return true;
 
-  // get number of values
+  // get zone dimension and type
+  int dim;
+  ZoneType_t zoneType;
+  cgnsErr = cg_cell_dim(fileIndex, baseIndex, &dim);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+  cgnsErr = cg_zone_type(fileIndex, baseIndex, zoneIndex, &zoneType);
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+  const bool isStructured = (zoneType == Structured);
+
+  // get total number of vertices and elements in zone
   char zoneName[CGNS_MAX_STR_LEN];
   cgsize_t zoneSize[9];
   cgnsErr = cg_zone_read(fileIndex, baseIndex, zoneIndex, zoneName, zoneSize);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+  
+  // type and total number of entities (either vertices or elements) in zone
+  const bool nodeOrEltData = (dataType == PViewDataGModel::NodeData);
+  const cgsize_t *zoneEntSize = nodeOrEltData ? zoneSize : 
+                                                isStructured ? zoneSize + dim :
+                                                               zoneSize + 1;
 
   // read solution size
   int dataDim;
@@ -319,7 +387,6 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
   cgnsErr = cg_sol_size(fileIndex, baseIndex, zoneIndex, zoneSolIndex, &dataDim,
                         solSize);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-  const cgsize_t dataSize = solSize[0];
 
   // get solution order
   int order = 1;
@@ -329,34 +396,75 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
                                             zoneSolIndex, &order, &orderTime);
 #endif
 
-  // read point range if it exists
-  std::vector<cgsize_t> solEntSet;
+  // read point range if it exists, otherwise use all entities
+  // (vertices/elements) in zone
+  std::vector<cgsize_t> ptSet, solEntSet;
   PointSetType_t ptSetType;
   cgsize_t ptSetSize;
   cgnsErr = cg_sol_ptset_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
                               &ptSetType, &ptSetSize);
-  if(cgnsErr != CG_NODE_NOT_FOUND) {
+  if((cgnsErr == CG_NODE_NOT_FOUND) || (ptSetSize == 0)) {    // no point range
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-    if(ptSetSize > 0) {
-      solEntSet.resize(ptSetSize);
-      cgnsErr = cg_sol_ptset_read(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
-                                  solEntSet.data());
-      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-      if(ptSetType == PointRange) {           // DBGTT: TODO: structured grids
-        cgsize_t rangeMin = solEntSet[0]-1, rangeMax = solEntSet[1]-1;
-        cgsize_t nbVal = rangeMax-rangeMin+1;
-        solEntSet.resize(nbVal);
-        for(cgsize_t i = 0; i < nbVal; i++) solEntSet[i] = rangeMin+i;
-      }
-      else if(ptSetType == PointList) {
-        for(cgsize_t i = 0; i < ptSetSize; i++) solEntSet[i]--;
+  }
+  else {                                              // point set is specified
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+    ptSet.resize(ptSetSize);
+    cgnsErr = cg_sol_ptset_read(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
+                                ptSet.data());
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+    if(ptSetType == PointRange) {
+      if(isStructured) {
+        if(dim == 2) {
+          cgsize_t nbVal = StructuredIndexing<2>::nbEntInRange(ptSet.data());
+          solEntSet.resize(nbVal);
+          StructuredIndexing<2>::entFromRange(ptSet.data(), zoneEntSize,
+                                              solEntSet);
+        }
+        else if(dim == 3) {
+          cgsize_t nbVal = StructuredIndexing<3>::nbEntInRange(ptSet.data());
+          solEntSet.resize(nbVal);
+          StructuredIndexing<3>::entFromRange(ptSet.data(), zoneEntSize,
+                                              solEntSet);
+        }
+        else {
+          Msg::Error("Dimension %i not supported in CGNS solution reader",
+                      dim);
+          return false;
+        }
       }
       else {
-        Msg::Warning("PointSetType %i not supported in CGNS solution reader",
-                    ptSetType);
-        return false;
+        cgsize_t nbVal = UnstructuredIndexing::nbEntInRange(ptSet.data());
+        solEntSet.resize(nbVal);
+        UnstructuredIndexing::entFromRange(ptSet.data(), solEntSet);
       }
     }
+    else if(ptSetType == PointList) {
+      if(isStructured) {
+        const cgsize_t nbVal = ptSet.size() / dim;
+        solEntSet.resize(nbVal);
+        if(dim == 2) {
+          StructuredIndexing<2>::entFromList(ptSet, zoneEntSize, solEntSet);
+        }
+        else if(dim == 3) {
+          StructuredIndexing<3>::entFromList(ptSet, zoneEntSize, solEntSet);
+        }
+        else {
+          Msg::Error("Dimension %i not supported in CGNS solution reader",
+                      dim);
+          return false;
+        }
+      }
+      else {
+        solEntSet.resize(ptSet.size());
+        UnstructuredIndexing::entFromList(ptSet, solEntSet);
+      }
+    }
+    else {
+      Msg::Warning("PointSetType %i not supported in CGNS solution reader",
+                    ptSetType);
+      return false;
+    }
+    ptSet.clear();
   }
 
   // get number of fields in this FlowSolution
@@ -375,27 +483,28 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
     if(std::string(rawFieldName) != solFieldName.second) continue;
 
     // read field data
-    cgsize_t rangeMin[3] = {1, 0, 0}, rangeMax[3] = {dataSize, 0, 0};
-    std::vector<double> data(dataSize);
+    printf("DBGTT: nbVal = %lu, sol. size = (%i, %i, %i)\n", solEntSet.size(), solSize[0], solSize[1], solSize[2]);
+    static const cgsize_t rangeMin[3] = {1, 1, 1};
+    std::vector<double> data(solEntSet.size());
     cgnsErr = cg_field_read(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
-                            rawFieldName, RealDouble, rangeMin, rangeMax,
+                            rawFieldName, RealDouble, rangeMin, solSize,
                             static_cast<void *>(data.data()));
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
     
     // scan through data to populate step (possibly converting from custom
     // nodal set) and compute min/max (faster here than in finalize)
     if(dataType == PViewDataGModel::NodeData) {
-      getSolutionDataNode(zoneIndex, zoneSize[0], vertPerZone, solEntSet, data,
-                          step, dataMin, dataMax);
+      getSolutionDataNode(zoneIndex, vertPerZone, solEntSet, data, step,
+                          dataMin, dataMax);
     }
     else if(dataType == PViewDataGModel::ElementData) {
-      getSolutionDataElement(zoneIndex, zoneSize[1], eltPerZone, solEntSet, data,
-                             step, dataMin, dataMax);
+      getSolutionDataElement(zoneIndex, eltPerZone, solEntSet, data, step,
+                             dataMin, dataMax);
     }
     else if(dataType == PViewDataGModel::ElementNodeData) {
-      getSolutionDataElementNode(zoneIndex, order, zoneSize[1], zoneSolTransfo,
-                                 eltPerZone, solEntSet, data, step, dataMin,
-                                 dataMax, ordersByParentType);
+      getSolutionDataElementNode(zoneIndex, order, zoneSolTransfo, eltPerZone,
+                                 solEntSet, data, step, dataMin, dataMax,
+                                 ordersByParentType);
     }
   }
 

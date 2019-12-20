@@ -45,38 +45,28 @@ protected:
 inline void CGNSZoneUnstruct::eltFromRange(const cgsize_t *range,
                                            std::vector<cgsize_t> &elt) const
 {
-  std::size_t nb = range[1]-range[0]+1;
-  elt.resize(nb);
-  cgsize_t iMin = range[0]-1;
-  for(std::size_t i = 0; i < nb; i++) elt[i] = iMin + i;
+  UnstructuredIndexing::entFromRange(range, elt);
 }
 
   
 inline void CGNSZoneUnstruct::eltFromList(const std::vector<cgsize_t> &list,
                                           std::vector<cgsize_t> &elt) const
 {
-  std::size_t nb = list.size();
-  elt.resize(nb);
-  for(std::size_t i = 0; i < nb; i++) elt[i] = list[i] - 1;
+  UnstructuredIndexing::entFromList(list, elt);
 }
 
   
 inline void CGNSZoneUnstruct::nodeFromRange(const cgsize_t *range,
                                             std::vector<cgsize_t> &node) const
 {
-  std::size_t nb = range[1]-range[0]+1;
-  node.resize(nb);
-  cgsize_t iMin = range[0]-1;
-  for(std::size_t i = 0; i < nb; i++) node[i] = iMin + i;
+  UnstructuredIndexing::entFromRange(range, node);
 }
 
     
 inline void CGNSZoneUnstruct::nodeFromList(const std::vector<cgsize_t> &list,
                                            std::vector<cgsize_t> &node) const
 {
-  std::size_t nb = list.size();
-  node.resize(nb);
-  for(std::size_t i = 0; i < nb; i++) node[i] = list[i] - 1;
+  UnstructuredIndexing::entFromList(list, node);
 }
 
 
