@@ -1,16 +1,17 @@
-4.5.0 (Work-in-progress): changed default 2D algorithm to Frontal-Delaunay; new
-compound Spline/BSpline commands; new MeshSizeFromBoundary command; new CGNS
-importer/exporter; new X3D output for geometries and meshes; improved handling
-of anisotropic surface meshes in 3D Delaunay; improved high-order periodic
-meshing; improved 2D boolean unions; improved surface mesh reclassification;
-file chooser type is now changeable at runtime; FLTK GUI can now be created and
-destroyed at will through the api; fixed regression in MeshAdapt for
-non-periodic surfaces with singularities; combining views now copies options;
-added API support for mesh compounds, per-surface mesh algorithm and mesh size
-from boundary; renamed plugin AnalyseCurvedMesh to AnalyseMeshQuality; new
-separate option to govern curvature adapted meshes (Mesh.MinimumElementsPerTwoPi
-and "-clcurv val"); fixed regression for built-in kernel BSplines on non-flat
-geometries (Sphere, PolarSphere); small fixes.
+4.5.0 (December 21, 2019): changed default 2D meshing algorithm to
+Frontal-Delaunay; new compound Spline/BSpline commands; new MeshSizeFromBoundary
+command; new CGNS importer/exporter; new X3D exporter for geometries and meshes;
+improved surface mesh reclassification; new separate option to govern curvature
+adapted meshes (Mesh.MinimumElementsPerTwoPi and "-clcurv val"); improved
+handling of anisotropic surface meshes in 3D Delaunay; improved high-order
+periodic meshing; improved 2D boolean unions; file chooser type is now
+changeable at runtime; FLTK GUI can now be created and destroyed at will through
+the api; fixed regression in MeshAdapt for non-periodic surfaces with
+singularities; combining views now copies options; added API support for mesh
+compounds, per-surface mesh algorithm and mesh size from boundary; renamed
+plugin AnalyseCurvedMesh to AnalyseMeshQuality; fixed regression for built-in
+kernel BSplines on non-flat geometries (Sphere, PolarSphere); small fixes and
+improvements.
 
 * Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
   like all other mesh optimizers); renamed logger/time to logger/getWallTime and
