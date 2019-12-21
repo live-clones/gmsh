@@ -149,6 +149,9 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
 }
 
 
+#endif // HAVE_LIBCGNS_CPEX0045
+
+
 template<int DIM>
 void StructuredIndexing<DIM>::entFromRange(const cgsize_t *range,
                                            const cgsize_t *nbEntIJK,
@@ -198,9 +201,6 @@ void StructuredIndexing<DIM>::entFromList(const std::vector<cgsize_t> &list,
 // explicit instantiation of StructuredIndexing
 template struct StructuredIndexing<2>;
 template struct StructuredIndexing<3>;
-
-
-#endif // HAVE_LIBCGNS_CPEX0045
 
 
 #endif // HAVE_LIBCGNS
