@@ -326,8 +326,8 @@ helpWindow::helpWindow()
       << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
       << "<p>Copyright (C) 1997-2019"
       << "<br>Christophe Geuzaine and Jean-Francois Remacle"
-      << "<p><a href=\"http://gmsh.info/doc/CREDITS.txt\">Credits</a> "
-      << "and <a href=\"http://gmsh.info/doc/LICENSE.txt\">licensing "
+      << "<p><a href=\"http://gmsh.info/CREDITS.txt\">Credits</a> "
+      << "and <a href=\"http://gmsh.info/LICENSE.txt\">licensing "
       << "information</a>"
       << "<p>Please report all issues on "
       << "<a href=\"https://gitlab.onelab.info/gmsh/gmsh/issues\">"

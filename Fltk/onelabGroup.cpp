@@ -467,7 +467,8 @@ static unsigned char gear_bits[] = {
 #endif
 
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
-  : Fl_Group(x, y, w, h, l), _stop(false), _enableTreeWidgetResize(false)
+  : Fl_Group(x, y, w, h, l), _stop(false), _enableTreeWidgetResize(false),
+    _firstBuild(true)
 {
   int col = FL_BACKGROUND2_COLOR;
   color(col);

@@ -2263,8 +2263,8 @@ static void addPhysical(GModel *const model, GEntity *entity,
   }
 }
 
-// AssignPhysicalName
-static void AssignPhysicalName(GModel *model)
+// Assign physical group information
+static void AssignPhysicals(GModel *model)
 {
   hashmap<std::string, int> nameToNumber;
   std::vector<GModel::piter> iterators;
@@ -2395,12 +2395,11 @@ int PartitionMesh(GModel *const model)
       graph.getBoundaryElements();
     CreatePartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
-    AssignPhysicalName(model);
-
     double t3 = Cpu();
     Msg::StatusBar(true, "Done creating partition topology (%g s)", t3 - t2);
   }
 
+  AssignPhysicals(model);
   AssignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
@@ -2639,10 +2638,10 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
       graph.getBoundaryElements();
     CreatePartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
-    AssignPhysicalName(model);
     Msg::StatusBar(true, "Done creating partition topology");
   }
 
+  AssignPhysicals(model);
   AssignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {

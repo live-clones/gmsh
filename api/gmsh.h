@@ -380,6 +380,11 @@ namespace gmsh { // Top-level functions
 
     namespace mesh { // Mesh functions
 
+      // Compute a cross field for the current mesh. The function creates 3 views:
+      // the H function, the Theta function and cross directions. Return the tags
+      // of the views
+      GMSH_API void computeCrossField(std::vector<int> & viewTags);
+
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or
       // 3).
       GMSH_API void generate(const int dim = 3);
@@ -393,12 +398,15 @@ namespace gmsh { // Top-level functions
       // Optimize the mesh of the current model using `method' (empty for default
       // tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
       // direct high-order mesh optimizer, "HighOrderElastic" for high-order
-      // elastic smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and
-      // "Relocate3D" for node relocation). If `force' is set apply the
-      // optimization also to discrete entities.
+      // elastic smoother, "HighOrderFastCurving" for fast curving algorithm,
+      // "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node
+      // relocation). If `force' is set apply the optimization also to discrete
+      // entities. If `dimTags' is given, only apply the optimizer to the given
+      // entities.
       GMSH_API void optimize(const std::string & method,
                              const bool force = false,
-                             const int niter = 1);
+                             const int niter = 1,
+                             const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // Recombine the mesh of the current model.
       GMSH_API void recombine();
@@ -556,6 +564,33 @@ namespace gmsh { // Top-level functions
                                             double & w,
                                             const int dim = -1,
                                             const bool strict = false);
+
+      // Search the mesh for element(s) located at coordinates (`x', `y', `z').
+      // This is a sometimes useful but inefficient way of accessing elements, as
+      // it relies on a search in a spatial octree. Return the tags of all found
+      // elements in `elementTags'. Additional information about the elements can
+      // be accessed through `getElement' and `getLocalCoordinatesInElement'. If
+      // `dim' is >= 0, only search for elements of the given dimension. If
+      // `strict' is not set, use a tolerance to find elements near the search
+      // location.
+      GMSH_API void getElementsByCoordinates(const double x,
+                                             const double y,
+                                             const double z,
+                                             std::vector<std::size_t> & elementTags,
+                                             const int dim = -1,
+                                             const bool strict = false);
+
+      // Return the local coordinates (`u', `v', `w') within the element
+      // `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
+      // is a sometimes useful but inefficient way of accessing elements, as it
+      // relies on a cache stored in the model.
+      GMSH_API void getLocalCoordinatesInElement(const std::size_t elementTag,
+                                                 const double x,
+                                                 const double y,
+                                                 const double z,
+                                                 double & u,
+                                                 double & v,
+                                                 double & w);
 
       // Get the types of elements in the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
@@ -733,6 +768,11 @@ namespace gmsh { // Top-level functions
                                        std::vector<double> & coord,
                                        const int tag = -1,
                                        const bool returnCoord = true);
+
+      // Get the number of keys by elements of type `elementType' for function
+      // space named `functionSpaceType'.
+      GMSH_API int getNumberOfKeysForElements(const int elementType,
+                                              const std::string & functionSpaceType);
 
       // Get information about the `keys'. `infoKeys' returns information about the
       // functions associated with the `keys'. `infoKeys[0].first' describes the
@@ -2034,6 +2074,10 @@ namespace gmsh { // Top-level functions
     // been initialized. Can only be called in the main thread.
     GMSH_API void run();
 
+    // Check if the user interface is available (e.g. to detect if it has been
+    // closed).
+    GMSH_API int isAvailable();
+
     // Select entities in the user interface. If `dim' is >= 0, return only the
     // entities of the specified dimension (e.g. points if `dim' == 0).
     GMSH_API int selectEntities(gmsh::vectorpair & dimTags,
@@ -2108,10 +2152,10 @@ namespace gmsh { // Top-level functions
     GMSH_API void stop();
 
     // Return wall clock time.
-    GMSH_API double time();
+    GMSH_API double getWallTime();
 
     // Return CPU time.
-    GMSH_API double cputime();
+    GMSH_API double getCpuTime();
 
   } // namespace logger
 

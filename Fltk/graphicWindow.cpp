@@ -481,7 +481,12 @@ static void file_export_cb(Fl_Widget *w, void *data)
  test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Export", pat)) {
     std::string name = fileChooserGetName(1);
-    if(CTX::instance()->confirmOverwrite) {
+    bool confirmOverwrite = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+    // handled directly by the native macOS file chooser
+    if(CTX::instance()->nativeFileChooser) confirmOverwrite = false;
+#endif
+    if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
@@ -517,7 +522,12 @@ static void file_rename_cb(Fl_Widget *w, void *data)
  test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Rename", "")) {
     std::string name = fileChooserGetName(1);
-    if(CTX::instance()->confirmOverwrite) {
+    bool confirmOverwrite = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+    // handled directly by the native macOS file chooser
+    if(CTX::instance()->nativeFileChooser) confirmOverwrite = false;
+#endif
+    if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
@@ -545,7 +555,19 @@ static void file_delete_cb(Fl_Widget *w, void *data)
 
 void file_quit_cb(Fl_Widget *w, void *data)
 {
-  Msg::Exit(0);
+  if(FlGui::instance()->quitShouldExit()) {
+    Msg::Exit(0);
+  }
+  else {
+    // hide all windows (in case they are not tracked by FlGui)...
+    std::vector<Fl_Window*> wins;
+    for (Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
+      wins.push_back(win);
+    for (std::size_t i = 0; i < wins.size(); i++)
+      wins[i]->hide();
+    // ... and destroy the GUI
+    FlGui::instance()->destroy();
+  }
 }
 
 void file_watch_cb(Fl_Widget *w, void *data)
@@ -2102,7 +2124,8 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
 
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
-  computeCrossField (GModel::current());
+  std::vector<int> tags;
+  computeCrossField (GModel::current(), tags);
   drawContext::global()->draw();
 }
 
@@ -4328,9 +4351,8 @@ void onelabGroup::_addGmshMenus()
 
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
 
-  static bool first = true;
-  if(first){
-    first = false;
+  if(_firstBuild){
+    _firstBuild = false;
     Fl_Tree_Item *n0 = _tree->find_item("0Modules");
     for(Fl_Tree_Item *n = n0; n; n = n->next()){
       if(!n->is_root() && n->has_children() && n->depth() > 1)

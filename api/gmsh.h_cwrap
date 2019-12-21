@@ -740,6 +740,18 @@ namespace gmsh { // Top-level functions
 
     namespace mesh { // Mesh functions
 
+      // Compute a cross field for the current mesh. The function creates 3 views:
+      // the H function, the Theta function and cross directions. Return the tags
+      // of the views
+      inline void computeCrossField(std::vector<int> & viewTags)
+      {
+        int ierr = 0;
+        int *api_viewTags_; size_t api_viewTags_n_;
+        gmshModelMeshComputeCrossField(&api_viewTags_, &api_viewTags_n_, &ierr);
+        if(ierr) throw ierr;
+        viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
+      }
+
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or
       // 3).
       inline void generate(const int dim = 3)
@@ -768,16 +780,21 @@ namespace gmsh { // Top-level functions
       // Optimize the mesh of the current model using `method' (empty for default
       // tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
       // direct high-order mesh optimizer, "HighOrderElastic" for high-order
-      // elastic smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and
-      // "Relocate3D" for node relocation). If `force' is set apply the
-      // optimization also to discrete entities.
+      // elastic smoother, "HighOrderFastCurving" for fast curving algorithm,
+      // "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node
+      // relocation). If `force' is set apply the optimization also to discrete
+      // entities. If `dimTags' is given, only apply the optimizer to the given
+      // entities.
       inline void optimize(const std::string & method,
                            const bool force = false,
-                           const int niter = 1)
+                           const int niter = 1,
+                           const gmsh::vectorpair & dimTags = gmsh::vectorpair())
       {
         int ierr = 0;
-        gmshModelMeshOptimize(method.c_str(), (int)force, niter, &ierr);
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshOptimize(method.c_str(), (int)force, niter, api_dimTags_, api_dimTags_n_, &ierr);
         if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
       }
 
       // Recombine the mesh of the current model.
@@ -1069,6 +1086,45 @@ namespace gmsh { // Top-level functions
         gmshModelMeshGetElementByCoordinates(x, y, z, &elementTag, &elementType, &api_nodeTags_, &api_nodeTags_n_, &u, &v, &w, dim, (int)strict, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
+      }
+
+      // Search the mesh for element(s) located at coordinates (`x', `y', `z').
+      // This is a sometimes useful but inefficient way of accessing elements, as
+      // it relies on a search in a spatial octree. Return the tags of all found
+      // elements in `elementTags'. Additional information about the elements can
+      // be accessed through `getElement' and `getLocalCoordinatesInElement'. If
+      // `dim' is >= 0, only search for elements of the given dimension. If
+      // `strict' is not set, use a tolerance to find elements near the search
+      // location.
+      inline void getElementsByCoordinates(const double x,
+                                           const double y,
+                                           const double z,
+                                           std::vector<std::size_t> & elementTags,
+                                           const int dim = -1,
+                                           const bool strict = false)
+      {
+        int ierr = 0;
+        size_t *api_elementTags_; size_t api_elementTags_n_;
+        gmshModelMeshGetElementsByCoordinates(x, y, z, &api_elementTags_, &api_elementTags_n_, dim, (int)strict, &ierr);
+        if(ierr) throw ierr;
+        elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
+      }
+
+      // Return the local coordinates (`u', `v', `w') within the element
+      // `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
+      // is a sometimes useful but inefficient way of accessing elements, as it
+      // relies on a cache stored in the model.
+      inline void getLocalCoordinatesInElement(const std::size_t elementTag,
+                                               const double x,
+                                               const double y,
+                                               const double z,
+                                               double & u,
+                                               double & v,
+                                               double & w)
+      {
+        int ierr = 0;
+        gmshModelMeshGetLocalCoordinatesInElement(elementTag, x, y, z, &u, &v, &w, &ierr);
+        if(ierr) throw ierr;
       }
 
       // Get the types of elements in the entity of dimension `dim' and tag `tag'.
@@ -1366,6 +1422,17 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
         keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+      }
+
+      // Get the number of keys by elements of type `elementType' for function
+      // space named `functionSpaceType'.
+      inline int getNumberOfKeysForElements(const int elementType,
+                                            const std::string & functionSpaceType)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelMeshGetNumberOfKeysForElements(elementType, functionSpaceType.c_str(), &ierr);
+        if(ierr) throw ierr;
+        return result_api_;
       }
 
       // Get information about the `keys'. `infoKeys' returns information about the
@@ -3724,6 +3791,16 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
     }
 
+    // Check if the user interface is available (e.g. to detect if it has been
+    // closed).
+    inline int isAvailable()
+    {
+      int ierr = 0;
+      int result_api_ = gmshFltkIsAvailable(&ierr);
+      if(ierr) throw ierr;
+      return result_api_;
+    }
+
     // Select entities in the user interface. If `dim' is >= 0, return only the
     // entities of the specified dimension (e.g. points if `dim' == 0).
     inline int selectEntities(gmsh::vectorpair & dimTags,
@@ -3894,19 +3971,19 @@ namespace gmsh { // Top-level functions
     }
 
     // Return wall clock time.
-    inline double time()
+    inline double getWallTime()
     {
       int ierr = 0;
-      double result_api_ = gmshLoggerTime(&ierr);
+      double result_api_ = gmshLoggerGetWallTime(&ierr);
       if(ierr) throw ierr;
       return result_api_;
     }
 
     // Return CPU time.
-    inline double cputime()
+    inline double getCpuTime()
     {
       int ierr = 0;
-      double result_api_ = gmshLoggerCputime(&ierr);
+      double result_api_ = gmshLoggerGetCpuTime(&ierr);
       if(ierr) throw ierr;
       return result_api_;
     }

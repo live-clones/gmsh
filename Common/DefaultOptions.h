@@ -40,6 +40,8 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "BackgroundImageFileName" , opt_general_background_image_filename , "" ,
     "Background image file in JPEG, PNG or PDF format" },
+  { F,   "BuildInfo" , opt_general_build_info , "" ,
+    "Gmsh build information (read-only)" },
   { F,   "BuildOptions" , opt_general_build_options , "" ,
     "Gmsh build options (read-only)" },
 
@@ -273,7 +275,8 @@ StringXString PostProcessingOptions_String[] = {
 
 StringXString ViewOptions_String[] = {
   { F|O, "Attributes" , opt_view_attributes , "" ,
-    "Optional string attributes" },
+    "Optional string attached to the view. If the string contains 'AlwaysVisible', "
+    "the view will not be hidden when new ones are merged."},
   { F|O, "AxesFormatX" , opt_view_axes_format0 , "%.3g" ,
     "Number format for X-axis (in standard C form)" },
   { F|O, "AxesFormatY" , opt_view_axes_format1 , "%.3g" ,
@@ -1000,7 +1003,7 @@ StringXNumber GeometryOptions_Number[] = {
 } ;
 
 StringXNumber MeshOptions_Number[] = {
-  { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_AUTO ,
+  { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_FRONTAL ,
     "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, "
     "7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
@@ -1159,10 +1162,12 @@ StringXNumber MeshOptions_Number[] = {
     "METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
-    "Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi "
-    "radians when the mesh size of adapted to the curvature)" },
+    "Minimum number of nodes used to mesh a circle" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
+  { F|O, "MinimumElementsPerTwoPi" , opt_mesh_min_elements_2pi, 6. ,
+    "Minimum number of elements per 2 * Pi radians when the mesh size is adapted "
+    "to the curvature" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.1 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,

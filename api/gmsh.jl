@@ -973,6 +973,26 @@ module mesh
 import ...gmsh
 
 """
+    gmsh.model.mesh.computeCrossField()
+
+Compute a cross field for the current mesh. The function creates 3 views: the H
+function, the Theta function and cross directions. Return the tags of the views
+
+Return `viewTags`.
+"""
+function computeCrossField()
+    api_viewTags_ = Ref{Ptr{Cint}}()
+    api_viewTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshComputeCrossField, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_viewTags_, api_viewTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshComputeCrossField returned non-zero error code: $(ierr[])")
+    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
+    return viewTags
+end
+
+"""
     gmsh.model.mesh.generate(dim = 3)
 
 Generate a mesh of the current model, up to dimension `dim` (0, 1, 2 or 3).
@@ -1015,20 +1035,23 @@ function unpartition()
 end
 
 """
-    gmsh.model.mesh.optimize(method, force = false, niter = 1)
+    gmsh.model.mesh.optimize(method, force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
 
 Optimize the mesh of the current model using `method` (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
 direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
-smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for
-node relocation). If `force` is set apply the optimization also to discrete
-entities.
+smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
+Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If
+`force` is set apply the optimization also to discrete entities. If `dimTags` is
+given, only apply the optimizer to the given entities.
 """
-function optimize(method, force = false, niter = 1)
+function optimize(method, force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshOptimize, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}),
-          method, force, niter, ierr)
+          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          method, force, niter, api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshOptimize returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1428,6 +1451,53 @@ function getElementByCoordinates(x, y, z, dim = -1, strict = false)
 end
 
 """
+    gmsh.model.mesh.getElementsByCoordinates(x, y, z, dim = -1, strict = false)
+
+Search the mesh for element(s) located at coordinates (`x`, `y`, `z`). This is a
+sometimes useful but inefficient way of accessing elements, as it relies on a
+search in a spatial octree. Return the tags of all found elements in
+`elementTags`. Additional information about the elements can be accessed through
+`getElement` and `getLocalCoordinatesInElement`. If `dim` is >= 0, only search
+for elements of the given dimension. If `strict` is not set, use a tolerance to
+find elements near the search location.
+
+Return `elementTags`.
+"""
+function getElementsByCoordinates(x, y, z, dim = -1, strict = false)
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementsByCoordinates, gmsh.lib), Cvoid,
+          (Cdouble, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          x, y, z, api_elementTags_, api_elementTags_n_, dim, strict, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementsByCoordinates returned non-zero error code: $(ierr[])")
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
+    return elementTags
+end
+
+"""
+    gmsh.model.mesh.getLocalCoordinatesInElement(elementTag, x, y, z)
+
+Return the local coordinates (`u`, `v`, `w`) within the element `elementTag`
+corresponding to the model coordinates (`x`, `y`, `z`). This is a sometimes
+useful but inefficient way of accessing elements, as it relies on a cache stored
+in the model.
+
+Return `u`, `v`, `w`.
+"""
+function getLocalCoordinatesInElement(elementTag, x, y, z)
+    api_u_ = Ref{Cdouble}()
+    api_v_ = Ref{Cdouble}()
+    api_w_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetLocalCoordinatesInElement, gmsh.lib), Cvoid,
+          (Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
+          elementTag, x, y, z, api_u_, api_v_, api_w_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetLocalCoordinatesInElement returned non-zero error code: $(ierr[])")
+    return api_u_[], api_v_[], api_w_[]
+end
+
+"""
     gmsh.model.mesh.getElementTypes(dim = -1, tag = -1)
 
 Get the types of elements in the entity of dimension `dim` and tag `tag`. If
@@ -1720,6 +1790,23 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
     keys = [ (tmp_api_keys_[i], tmp_api_keys_[i+1]) for i in 1:2:length(tmp_api_keys_) ]
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     return keys, coord
+end
+
+"""
+    gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
+
+Get the number of keys by elements of type `elementType` for function space
+named `functionSpaceType`.
+
+Return an integer value.
+"""
+function getNumberOfKeysForElements(elementType, functionSpaceType)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelMeshGetNumberOfKeysForElements, gmsh.lib), Cint,
+          (Cint, Ptr{Cchar}, Ptr{Cint}),
+          elementType, functionSpaceType, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNumberOfKeysForElements returned non-zero error code: $(ierr[])")
+    return api__result__
 end
 
 """
@@ -4604,6 +4691,22 @@ function run()
 end
 
 """
+    gmsh.fltk.isAvailable()
+
+Check if the user interface is available (e.g. to detect if it has been closed).
+
+Return an integer value.
+"""
+function isAvailable()
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshFltkIsAvailable, gmsh.lib), Cint,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshFltkIsAvailable returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.fltk.selectEntities(dim = -1)
 
 Select entities in the user interface. If `dim` is >= 0, return only the
@@ -4881,34 +4984,34 @@ function stop()
 end
 
 """
-    gmsh.logger.time()
+    gmsh.logger.getWallTime()
 
 Return wall clock time.
 
 Return a floating point value.
 """
-function time()
+function getWallTime()
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshLoggerTime, gmsh.lib), Cdouble,
+    api__result__ = ccall((:gmshLoggerGetWallTime, gmsh.lib), Cdouble,
           (Ptr{Cint},),
           ierr)
-    ierr[] != 0 && error("gmshLoggerTime returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshLoggerGetWallTime returned non-zero error code: $(ierr[])")
     return api__result__
 end
 
 """
-    gmsh.logger.cputime()
+    gmsh.logger.getCpuTime()
 
 Return CPU time.
 
 Return a floating point value.
 """
-function cputime()
+function getCpuTime()
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshLoggerCputime, gmsh.lib), Cdouble,
+    api__result__ = ccall((:gmshLoggerGetCpuTime, gmsh.lib), Cdouble,
           (Ptr{Cint},),
           ierr)
-    ierr[] != 0 && error("gmshLoggerCputime returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshLoggerGetCpuTime returned non-zero error code: $(ierr[])")
     return api__result__
 end
 

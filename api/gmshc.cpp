@@ -691,6 +691,19 @@ GMSH_API void gmshModelSetCoordinates(const int tag, const double x, const doubl
   }
 }
 
+GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_viewTags_;
+    gmsh::model::mesh::computeCrossField(api_viewTags_);
+    vector2ptr(api_viewTags_, viewTags, viewTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGenerate(const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -724,11 +737,16 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshOptimize(const char * method, const int force, const int niter, int * ierr)
+GMSH_API void gmshModelMeshOptimize(const char * method, const int force, const int niter, int * dimTags, size_t dimTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::optimize(method, force, niter);
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::optimize(method, force, niter, api_dimTags_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -972,6 +990,30 @@ GMSH_API void gmshModelMeshGetElementByCoordinates(const double x, const double 
   }
 }
 
+GMSH_API void gmshModelMeshGetElementsByCoordinates(const double x, const double y, const double z, size_t ** elementTags, size_t * elementTags_n, const int dim, const int strict, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_;
+    gmsh::model::mesh::getElementsByCoordinates(x, y, z, api_elementTags_, dim, strict);
+    vector2ptr(api_elementTags_, elementTags, elementTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetLocalCoordinatesInElement(const size_t elementTag, const double x, const double y, const double z, double * u, double * v, double * w, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::getLocalCoordinatesInElement(elementTag, x, y, z, *u, *v, *w);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * elementTypes_n, const int dim, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1165,6 +1207,19 @@ GMSH_API void gmshModelMeshGetKeysForElements(const int elementType, const char 
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
   }
+}
+
+GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType, const char * functionSpaceType, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::mesh::getNumberOfKeysForElements(elementType, functionSpaceType);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
 }
 
 GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n, const int elementType, const char * functionSpaceType, int ** infoKeys, size_t * infoKeys_n, int * ierr)
@@ -3165,6 +3220,19 @@ GMSH_API void gmshFltkRun(int * ierr)
   }
 }
 
+GMSH_API int gmshFltkIsAvailable(int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::fltk::isAvailable();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
 GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   int result_api_ = 0;
@@ -3352,12 +3420,12 @@ GMSH_API void gmshLoggerStop(int * ierr)
   }
 }
 
-GMSH_API double gmshLoggerTime(int * ierr)
+GMSH_API double gmshLoggerGetWallTime(int * ierr)
 {
   double result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::logger::time();
+    result_api_ = gmsh::logger::getWallTime();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -3365,12 +3433,12 @@ GMSH_API double gmshLoggerTime(int * ierr)
   return result_api_;
 }
 
-GMSH_API double gmshLoggerCputime(int * ierr)
+GMSH_API double gmshLoggerGetCpuTime(int * ierr)
 {
   double result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::logger::cputime();
+    result_api_ = gmsh::logger::getCpuTime();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

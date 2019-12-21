@@ -128,6 +128,7 @@ public:
   void setXY(std::vector<double> &x, std::vector<double> &y);
   void setXYZV(std::vector<double> &x, std::vector<double> &y,
                std::vector<double> &z, std::vector<double> &v);
+  void addStep(std::vector<double> &y);
   bool isListBased() { return true; }
   double getMemoryInMb();
 

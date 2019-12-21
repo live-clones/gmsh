@@ -715,6 +715,19 @@ Set the @code{x}, @code{y}, @code{z} coordinates of a geometrical point.
 @section Namespace @code{gmsh/model/mesh}: mesh functions
 
 @ftable @code
+@item computeCrossField
+Compute a cross field for the current mesh. The function creates 3 views: the H
+function, the Theta function and cross directions. Return the tags of the views
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{viewTags}
+@item Return:
+-
+@end table
+
 @item generate
 Generate a mesh of the current model, up to dimension @code{dim} (0, 1, 2 or 3).
 
@@ -755,13 +768,14 @@ Unpartition the mesh of the current model.
 Optimize the mesh of the current model using @code{method} (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
 direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
-smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for
-node relocation). If @code{force} is set apply the optimization also to discrete
-entities.
+smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
+Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If
+@code{force} is set apply the optimization also to discrete entities. If
+@code{dimTags} is given, only apply the optimizer to the given entities.
 
 @table @asis
 @item Input:
-@code{method}, @code{force}, @code{niter}
+@code{method}, @code{force}, @code{niter}, @code{dimTags}
 @item Output:
 -
 @item Return:
@@ -1050,6 +1064,40 @@ set, use a tolerance to find elements near the search location.
 -
 @end table
 
+@item getElementsByCoordinates
+Search the mesh for element(s) located at coordinates (@code{x}, @code{y},
+@code{z}). This is a sometimes useful but inefficient way of accessing elements,
+as it relies on a search in a spatial octree. Return the tags of all found
+elements in @code{elementTags}. Additional information about the elements can be
+accessed through @code{getElement} and @code{getLocalCoordinatesInElement}. If
+@code{dim} is >= 0, only search for elements of the given dimension. If
+@code{strict} is not set, use a tolerance to find elements near the search
+location.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{dim}, @code{strict}
+@item Output:
+@code{elementTags}
+@item Return:
+-
+@end table
+
+@item getLocalCoordinatesInElement
+Return the local coordinates (@code{u}, @code{v}, @code{w}) within the element
+@code{elementTag} corresponding to the model coordinates (@code{x}, @code{y},
+@code{z}). This is a sometimes useful but inefficient way of accessing elements,
+as it relies on a cache stored in the model.
+
+@table @asis
+@item Input:
+@code{elementTag}, @code{x}, @code{y}, @code{z}
+@item Output:
+@code{u}, @code{v}, @code{w}
+@item Return:
+-
+@end table
+
 @item getElementTypes
 Get the types of elements in the entity of dimension @code{dim} and tag
 @code{tag}. If @code{tag} < 0, get the types for all entities of dimension
@@ -1282,6 +1330,19 @@ experimental feature and will probably change in a future release.
 @code{keys}, @code{coord}
 @item Return:
 -
+@end table
+
+@item getNumberOfKeysForElements
+Get the number of keys by elements of type @code{elementType} for function space
+named @code{functionSpaceType}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{functionSpaceType}
+@item Output:
+-
+@item Return:
+integer value
 @end table
 
 @item getInformationForElements
@@ -3519,6 +3580,18 @@ been initialized. Can only be called in the main thread.
 -
 @end table
 
+@item isAvailable
+Check if the user interface is available (e.g. to detect if it has been closed).
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
 @item selectEntities
 Select entities in the user interface. If @code{dim} is >= 0, return only the
 entities of the specified dimension (e.g. points if @code{dim} == 0).
@@ -3719,7 +3792,7 @@ Stop logging messages.
 -
 @end table
 
-@item time
+@item getWallTime
 Return wall clock time.
 
 @table @asis
@@ -3731,7 +3804,7 @@ Return wall clock time.
 floating point value
 @end table
 
-@item cputime
+@item getCpuTime
 Return CPU time.
 
 @table @asis

@@ -30,7 +30,7 @@ struct contextMeshOptions {
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
   int flexibleTransfinite, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
-  int meshOnlyVisible, minCircPoints, minCurvPoints;
+  int meshOnlyVisible, minCircPoints, minCurvPoints, minElementsPerTwoPi;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;

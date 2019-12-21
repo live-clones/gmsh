@@ -1212,6 +1212,26 @@ class model:
         """
 
         @staticmethod
+        def computeCrossField():
+            """
+            Compute a cross field for the current mesh. The function creates 3 views:
+            the H function, the Theta function and cross directions. Return the tags of
+            the views
+
+            Return `viewTags'.
+            """
+            api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshComputeCrossField(
+                byref(api_viewTags_), byref(api_viewTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshComputeCrossField returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_viewTags_, api_viewTags_n_.value)
+
+        @staticmethod
         def generate(dim=3):
             """
             Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
@@ -1253,20 +1273,23 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def optimize(method, force=False, niter=1):
+        def optimize(method, force=False, niter=1, dimTags=[]):
             """
             Optimize the mesh of the current model using `method' (empty for default
             tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
             direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
-            smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D"
-            for node relocation). If `force' is set apply the optimization also to
-            discrete entities.
+            smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
+            for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation).
+            If `force' is set apply the optimization also to discrete entities. If
+            `dimTags' is given, only apply the optimizer to the given entities.
             """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
             lib.gmshModelMeshOptimize(
                 c_char_p(method.encode()),
                 c_int(bool(force)),
                 c_int(niter),
+                api_dimTags_, api_dimTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1701,6 +1724,67 @@ class model:
                 api_w_.value)
 
         @staticmethod
+        def getElementsByCoordinates(x, y, z, dim=-1, strict=False):
+            """
+            Search the mesh for element(s) located at coordinates (`x', `y', `z'). This
+            is a sometimes useful but inefficient way of accessing elements, as it
+            relies on a search in a spatial octree. Return the tags of all found
+            elements in `elementTags'. Additional information about the elements can be
+            accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim'
+            is >= 0, only search for elements of the given dimension. If `strict' is
+            not set, use a tolerance to find elements near the search location.
+
+            Return `elementTags'.
+            """
+            api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementsByCoordinates(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                byref(api_elementTags_), byref(api_elementTags_n_),
+                c_int(dim),
+                c_int(bool(strict)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElementsByCoordinates returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorsize(api_elementTags_, api_elementTags_n_.value)
+
+        @staticmethod
+        def getLocalCoordinatesInElement(elementTag, x, y, z):
+            """
+            Return the local coordinates (`u', `v', `w') within the element
+            `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
+            is a sometimes useful but inefficient way of accessing elements, as it
+            relies on a cache stored in the model.
+
+            Return `u', `v', `w'.
+            """
+            api_u_ = c_double()
+            api_v_ = c_double()
+            api_w_ = c_double()
+            ierr = c_int()
+            lib.gmshModelMeshGetLocalCoordinatesInElement(
+                c_size_t(elementTag),
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                byref(api_u_),
+                byref(api_v_),
+                byref(api_w_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetLocalCoordinatesInElement returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_u_.value,
+                api_v_.value,
+                api_w_.value)
+
+        @staticmethod
         def getElementTypes(dim=-1, tag=-1):
             """
             Get the types of elements in the entity of dimension `dim' and tag `tag'.
@@ -2052,6 +2136,25 @@ class model:
             return (
                 _ovectorpair(api_keys_, api_keys_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
+
+        @staticmethod
+        def getNumberOfKeysForElements(elementType, functionSpaceType):
+            """
+            Get the number of keys by elements of type `elementType' for function space
+            named `functionSpaceType'.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelMeshGetNumberOfKeysForElements(
+                c_int(elementType),
+                c_char_p(functionSpaceType.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNumberOfKeysForElements returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
 
         @staticmethod
         def getInformationForElements(keys, elementType, functionSpaceType):
@@ -5315,6 +5418,23 @@ class fltk:
                 ierr.value)
 
     @staticmethod
+    def isAvailable():
+        """
+        Check if the user interface is available (e.g. to detect if it has been
+        closed).
+
+        Return an integer value.
+        """
+        ierr = c_int()
+        api__result__ = lib.gmshFltkIsAvailable(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshFltkIsAvailable returned non-zero error code: ",
+                ierr.value)
+        return api__result__
+
+    @staticmethod
     def selectEntities(dim=-1):
         """
         Select entities in the user interface. If `dim' is >= 0, return only the
@@ -5591,33 +5711,33 @@ class logger:
                 ierr.value)
 
     @staticmethod
-    def time():
+    def getWallTime():
         """
         Return wall clock time.
 
         Return a floating point value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshLoggerTime(
+        api__result__ = lib.gmshLoggerGetWallTime(
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(
-                "gmshLoggerTime returned non-zero error code: ",
+                "gmshLoggerGetWallTime returned non-zero error code: ",
                 ierr.value)
         return api__result__
 
     @staticmethod
-    def cputime():
+    def getCpuTime():
         """
         Return CPU time.
 
         Return a floating point value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshLoggerCputime(
+        api__result__ = lib.gmshLoggerGetCpuTime(
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(
-                "gmshLoggerCputime returned non-zero error code: ",
+                "gmshLoggerGetCpuTime returned non-zero error code: ",
                 ierr.value)
         return api__result__

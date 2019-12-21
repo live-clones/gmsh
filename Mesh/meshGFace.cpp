@@ -2651,6 +2651,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     delaunayizeBDS(gf, *m, nb_swap);
   }
   else{
+    // tag points that are degenerated
     modifyInitialMeshToRemoveDegeneracies(gf, *m, &recoverMap);
 
     Msg::Debug("Delaunizing the initial mesh");

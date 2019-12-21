@@ -1060,7 +1060,7 @@ Character expressions are defined as:
   "@var{string}" |
   @var{string} | @var{string}[ @var{expression} ] |
   Today | OnelabAction | GmshExecutableName |
-  CurrentDirectory | CurrentDir
+  CurrentDirectory | CurrentDir | CurrentFileName
   StrPrefix ( @var{char-expression} ) |
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} <,@dots{}> ) |
@@ -1086,12 +1086,12 @@ Character expressions are defined as:
 @code{Today} returns the current date. @code{OnelabAction} returns the
 current ONELAB action (e.g. @code{check} or
 @code{compute}). @code{GmshExecutableName} returns the full path of the
-Gmsh executable.  @code{CurrentDirectory} and @code{CurrentDir} return
-the directory of the @code{.geo} file.  @code{StrPrefix} and
-@code{StrRelative} permit to take the prefix (e.g. to remove the
-extension) or the relative path of a file name. @code{StrCat} and
-@code{Str} permit to concatenate character expressions (@code{Str} adds
-a newline character after each string except the last).
+Gmsh executable.  @code{CurrentDirectory} (or @code{CurrentDir}) and
+@code{CurrentFileName} return the directory and file name of the script
+being parsed. @code{StrPrefix} and @code{StrRelative} take the prefix
+(e.g. to remove the extension) or the relative path of a given file
+name. @code{StrCat} and @code{Str} concatenate character expressions
+(@code{Str} adds a newline character after each string except the last).
 @code{StrChoice} returns the first or second @var{char-expression}
 depending on the value of @var{expression}.  @code{StrSub} returns the
 portion of the string that starts at the character position given by the
@@ -2642,11 +2642,10 @@ anisotropic triangulations.
 For very complex curved surfaces the ``MeshAdapt'' algorithm is the most
 robust. When high element quality is important, the ``Delaunay-Frontal''
 algorithm should be tried. For very large meshes of plane surfaces the
-``Delaunay'' algorithm is the fastest.  The ``Automatic'' algorithm
-tries to select the best algorithm automatically for each surface in the
-model: ``Delaunay'' for plane surfaces and ``MeshAdapt'' for all other
-surfaces. When the ``Delaunay'' or ``Frontal-Delaunay'' algorithms fail,
-``MeshAdapt'' is automatically triggered.
+``Delaunay'' algorithm is the fastest.  When the ``Delaunay'' or
+``Frontal-Delaunay'' algorithms fail, ``MeshAdapt'' is automatically
+triggered. The ``Automatic'' algorithm uses ``Delaunay'' for plane
+surfaces and ``MeshAdapt'' for all other surfaces.
 
 Several 3D unstructured algorithms are also available:
 
@@ -2715,15 +2714,16 @@ more meaningful groups, e.g. to define some mathematical (``domain'',
 grouping is done in Gmsh's geometry module (@pxref{Geometry module})
 through ``physical groups''.
 
-By default in the MSH file format (@pxref{File formats}), if physical
-groups are defined, the output mesh only contains those elements that
-belong to at least one physical group. (Other file formats each treat
-physical groups in slightly different ways, depending on their
-capability to define groups.)
+By default in the MSH file format and in most other formats (@pxref{File
+formats}), if physical groups are defined, the output mesh only contains
+those elements that belong to at least one physical group. (Different
+mesh file formats treat physical groups in slightly different ways,
+depending on their capability to define groups.)
 
 To save all mesh element wether or not physical groups are defined, use
  the @code{Mesh.SaveAll} option (@pxref{Mesh options list}) or specify
- @code{-save_all} on the command line.
+ @code{-save_all} on the command line. In some formats (e.g. MSH2),
+ setting @code{Mesh.SaveAll=1} discards all physical group definitions.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands
@@ -3072,7 +3072,12 @@ geometry. @value{SYNC}
 
 @item OptimizeMesh @var{char-expression};
 Optimizes the current mesh with the given algorithm (currently
-@code{"Gmsh"} or @code{"Netgen"}).
+@code{"Gmsh"} for default tetrahedral mesh optimizer, @code{"Netgen"}
+for Netgen optimizer, @code{"HighOrder"} for direct high-order mesh
+optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
+@code{"HighOrderFastCurving"} for fast curving algorithm,
+@code{"Laplace2D"} for Laplace smoothing, @code{"Relocate2D"} and
+@code{"Relocate3D"} for node relocation).
 
 @item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
 Performs adaptive mesh generation. Documentation not yet available.

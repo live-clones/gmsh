@@ -35,8 +35,8 @@ void compute(const std::string &arg)
       gmsh::fltk::unlock();
       // ask the main thread to process pending events and to update the user
       // interface, maximum 10 times per second
-      if(gmsh::logger::time() - last_refresh > 0.1){
-        last_refresh = gmsh::logger::time();
+      if(gmsh::logger::getWallTime() - last_refresh > 0.1){
+        last_refresh = gmsh::logger::getWallTime();
         gmsh::fltk::awake("update");
       }
     }
@@ -73,6 +73,10 @@ int main(int argc, char **argv)
   gmsh::fltk::initialize();
 
   while(1){
+    // check if GUI has been closed
+    if(!gmsh::fltk::isAvailable())
+      break;
+
     // wait for an event
     gmsh::fltk::wait();
 

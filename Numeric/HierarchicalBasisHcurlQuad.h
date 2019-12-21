@@ -11,7 +11,6 @@
 #ifndef HIERARCHICAL_BASIS_HCURL_QUAD_H
 #define HIERARCHICAL_BASIS_HCURL_QUAD_H
 
-#include <algorithm>
 #include "HierarchicalBasisHcurl.h"
 
 /*
@@ -54,13 +53,19 @@ public:
       throw std::string("unknown typeFunction");
     }
   };
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<std::vector<double> > &edgeBasis);
-  virtual void orientFace(double const &u, double const &v, double const &w,
-                          int const &flag1, int const &flag2, int const &flag3,
-                          int const &faceNumber,
-                          std::vector<std::vector<double> > &faceFunctions,
-                          std::string typeFunction);
+  virtual void
+  orientEdge(int const &flagOrientation, int const &edgeNumber,
+             std::vector<std::vector<double> > &edgeBasis,
+             const std::vector<std::vector<double> > &eTablePositiveFlag,
+             const std::vector<std::vector<double> > &eTableNegativeFlag);
+
+  virtual void orientEdgeFunctionsForNegativeFlag(
+    std::vector<std::vector<double> > &edgeFunctions);
+  virtual void orientFace(
+    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+    const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+    std::vector<std::vector<double> > &fTableCopy);
 
   virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
                            std::vector<int> &orderInfo);
@@ -86,6 +91,11 @@ private:
                     std::vector<std::vector<double> > &edgeBasis,
                     std::vector<std::vector<double> > &faceBasis,
                     std::vector<std::vector<double> > &bubbleBasis);
+  virtual void orientOneFace(double const &u, double const &v, double const &w,
+                             int const &flag1, int const &flag2,
+                             int const &flag3, int const &faceNumber,
+                             std::vector<std::vector<double> > &faceFunctions,
+                             std::string typeFunction);
 };
 
 #endif

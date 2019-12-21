@@ -59,6 +59,7 @@ private:
   static int _locked;
 #endif
   std::string _lastStatus;
+  bool _quitShouldExit;
 
 public:
   std::vector<GVertex *> selectedVertices;
@@ -72,7 +73,6 @@ public:
 public:
   std::vector<graphicWindow *> graph;
   optionWindow *options;
-  onelabWindow *onelab2;
   fieldWindow *fields;
   pluginWindow *plugins;
   statisticsWindow *stats;
@@ -89,12 +89,15 @@ public:
   openglWindow *fullscreen;
 
 public:
-  FlGui(int argc, char **argv,
+  FlGui(int argc, char **argv, bool quitShouldExit,
         void (*error_handler)(const char *fmt, ...) = 0);
-  ~FlGui() {}
+  ~FlGui();
   // return the single static instance of the GUI
   static FlGui *instance(int argc = 0, char **argv = 0,
+                         bool quitShouldExit = true,
                          void (*error_handler)(const char *fmt, ...) = 0);
+  // destroy instance
+  static void destroy();
   // check if the GUI is available
   static bool available();
   // run the GUI until there's no window left
@@ -159,6 +162,8 @@ public:
   void openModule(const std::string &name);
   // apply color scheme to widgets
   void applyColorScheme(bool redraw = false);
+  // should the quit callback exit the app, or just close all windows?
+  bool quitShouldExit(){ return _quitShouldExit; }
 };
 
 void redraw_cb(Fl_Widget *w, void *data);

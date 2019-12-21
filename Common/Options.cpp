@@ -1164,7 +1164,24 @@ std::string opt_general_version(OPT_ARGS_STR) { return GMSH_VERSION; }
 
 std::string opt_general_build_options(OPT_ARGS_STR)
 {
-  return GMSH_CONFIG_OPTIONS;
+  std::string s = GMSH_CONFIG_OPTIONS;
+  s.erase(0, 1);
+  return s;
+}
+
+std::string opt_general_build_info(OPT_ARGS_STR)
+{
+  std::vector<std::string> ss = GetBuildInfo();
+  std::string s;
+  for(std::size_t i = 0; i < ss.size(); i++) {
+    s += ReplaceSubString(" :", ":", ss[i]);
+    if(i != ss.size() - 1) s += "; ";
+  }
+  std::string::size_type pos;
+  while((pos = s.find("  ")) != std::string::npos) {
+    s.replace(pos, 2, " ");
+  }
+  return s;
 }
 
 std::string opt_general_filename(OPT_ARGS_STR)
@@ -5949,6 +5966,17 @@ double opt_mesh_min_circ_points(OPT_ARGS_NUM)
     CTX::instance()->mesh.minCircPoints = (int)val;
   }
   return CTX::instance()->mesh.minCircPoints;
+}
+
+double opt_mesh_min_elements_2pi(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.minElementsPerTwoPi)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.minElementsPerTwoPi = (int)val;
+  }
+  return CTX::instance()->mesh.minElementsPerTwoPi;
 }
 
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM)

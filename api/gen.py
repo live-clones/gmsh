@@ -201,6 +201,9 @@ model.add('setCoordinates',doc,None,iint('tag'),idouble('x'),idouble('y'),idoubl
 
 mesh = model.add_module('mesh','mesh functions')
 
+doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views'''
+mesh.add('computeCrossField',doc,None,ovectorint('viewTags'))
+
 doc = '''Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).'''
 mesh.add('generate',doc,None,iint('dim', '3'))
 
@@ -210,8 +213,8 @@ mesh.add('partition',doc,None,iint('numPart'))
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition',doc,None)
 
-doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If `force' is set apply the optimization also to discrete entities.'''
-mesh.add('optimize',doc,None,istring('method',''),ibool('force','false','False'),iint('niter','1'))
+doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If `force' is set apply the optimization also to discrete entities. If `dimTags' is given, only apply the optimizer to the given entities.'''
+mesh.add('optimize',doc,None,istring('method',''),ibool('force','false','False'),iint('niter','1'),ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"))
 
 doc = '''Recombine the mesh of the current model.'''
 mesh.add('recombine',doc,None)
@@ -267,6 +270,12 @@ mesh.add('getElement',doc,None,isize('elementTag'),oint('elementType'),ovectorsi
 doc = '''Search the mesh for an element located at coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a search in a spatial octree. If an element is found, return its tag, type and node tags, as well as the local coordinates (`u', `v', `w') within the element corresponding to search location. If `dim' is >= 0, only search for elements of the given dimension. If `strict' is not set, use a tolerance to find elements near the search location.'''
 mesh.add('getElementByCoordinates',doc,None,idouble('x'),idouble('y'),idouble('z'),osize('elementTag'),oint('elementType'),ovectorsize('nodeTags'),odouble('u'),odouble('v'),odouble('w'),iint('dim', '-1'),ibool('strict','false','False'))
 
+doc = '''Search the mesh for element(s) located at coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a search in a spatial octree. Return the tags of all found elements in `elementTags'. Additional information about the elements can be accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim' is >= 0, only search for elements of the given dimension. If `strict' is not set, use a tolerance to find elements near the search location.'''
+mesh.add('getElementsByCoordinates',doc,None,idouble('x'),idouble('y'),idouble('z'),ovectorsize('elementTags'),iint('dim', '-1'),ibool('strict','false','False'))
+
+doc = '''Return the local coordinates (`u', `v', `w') within the element `elementTag' corresponding to the model coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a cache stored in the model.'''
+mesh.add('getLocalCoordinatesInElement',doc,None,isize('elementTag'),idouble('x'),idouble('y'),idouble('z'),odouble('u'),odouble('v'),odouble('w'))
+
 doc = '''Get the types of elements in the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
 mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
 
@@ -305,6 +314,9 @@ mesh.add('getBasisFunctionsForElements',doc,None,iint('elementType'),ivectordoub
 
 doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeysForElements',doc,None,iint('elementType'),istring('functionSpaceType'),ovectorpair('keys'),ovectordouble('coord'),iint('tag', '-1'),ibool('returnCoord','true', 'True'))
+
+doc = '''Get the number of keys by elements of type `elementType' for function space named `functionSpaceType'.'''
+mesh.add('getNumberOfKeysForElements',doc,oint,iint('elementType'),istring('functionSpaceType'))
 
 doc = '''Get information about the `keys'. `infoKeys' returns information about the functions associated with the `keys'. `infoKeys[0].first' describes the type of function (0 for  vertex function, 1 for edge function, 2 for face function and 3 for bubble function). `infoKeys[0].second' gives the order of the function associated with the key. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getInformationForElements',doc,None,ivectorpair('keys'),iint('elementType'),istring('functionSpaceType'),ovectorpair('infoKeys'))
@@ -779,6 +791,9 @@ fltk.add('unlock',doc,None)
 doc = '''Run the event loop of the graphical user interface, i.e. repeatedly call `wait()'. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('run',doc,None)
 
+doc = '''Check if the user interface is available (e.g. to detect if it has been closed).'''
+fltk.add('isAvailable',doc,oint)
+
 doc = '''Select entities in the user interface. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
 fltk.add('selectEntities',doc,oint,ovectorpair('dimTags'),iint('dim','-1'))
 
@@ -833,10 +848,10 @@ doc = '''Stop logging messages.'''
 logger.add('stop',doc,None)
 
 doc = '''Return wall clock time.'''
-logger.add('time',doc,odouble)
+logger.add('getWallTime',doc,odouble)
 
 doc = '''Return CPU time.'''
-logger.add('cputime',doc,odouble)
+logger.add('getCpuTime',doc,odouble)
 
 ################################################################################
 

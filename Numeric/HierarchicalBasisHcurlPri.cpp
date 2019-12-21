@@ -431,7 +431,9 @@ void HierarchicalBasisHcurlPri::generateHcurlBasis(
 
 void HierarchicalBasisHcurlPri::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &edgeBasis)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
@@ -440,16 +442,45 @@ void HierarchicalBasisHcurlPri::orientEdge(
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber];
     for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
+      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
+    }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
+      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
+    }
+  }
+}
+void HierarchicalBasisHcurlPri::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
+    for(int k = constant1; k <= constant2; k++) {
       if((k - constant1) % 2 == 0) {
-        edgeBasis[k][0] = edgeBasis[k][0] * (-1);
-        edgeBasis[k][1] = edgeBasis[k][1] * (-1);
-        edgeBasis[k][2] = edgeBasis[k][2] * (-1);
+        edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
+        edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
+        edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
       }
     }
   }
 }
-
-void HierarchicalBasisHcurlPri::orientFace(
+void HierarchicalBasisHcurlPri::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
@@ -1154,6 +1185,50 @@ void HierarchicalBasisHcurlPri::orientFace(
     }
   }
 }
+void HierarchicalBasisHcurlPri::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double> > &fTableCopy)
+{
+  if(faceNumber < 3) {
+    int iterator = 0;
+    for(int i = 0; i < faceNumber; i++) {
+      iterator += (_pOrderQuadFace1[i] + 1) * _pOrderQuadFace2[i] +
+                  (_pOrderQuadFace2[i] + 1) * _pOrderQuadFace1[i];
+    }
+    int numFaceFunctions =
+      (_pOrderQuadFace1[faceNumber] + 1) * _pOrderQuadFace2[faceNumber] +
+      (_pOrderQuadFace2[faceNumber] + 1) * _pOrderQuadFace1[faceNumber];
+    int iOrientation = numberOrientationQuadFace(flag1, flag2, flag3);
+    int offset = iOrientation * _nQuadFaceFunction;
+    int offset2 = iterator + numFaceFunctions;
+    for(int i = iterator; i < offset2; i++) {
+      fTableCopy[i][0] = quadFaceFunctionsAllOrientation[i + offset][0];
+      fTableCopy[i][1] = quadFaceFunctionsAllOrientation[i + offset][1];
+      fTableCopy[i][2] = quadFaceFunctionsAllOrientation[i + offset][2];
+    }
+  }
+  else {
+    int iterator = _nQuadFaceFunction;
+    int numface = faceNumber - 3;
+    for(int i = 0; i < numface; i++) {
+      iterator += 3 * (_pOrderTriFace[i] - 1) +
+                  (_pOrderTriFace[i] - 1) * (_pOrderTriFace[i] - 2);
+    }
+    int numFaceFunctions =
+      3 * (_pOrderTriFace[numface] - 1) +
+      (_pOrderTriFace[numface] - 1) * (_pOrderTriFace[numface] - 2);
+    int iOrientation = numberOrientationTriFace(flag1, flag2);
+    int offset = iOrientation * _nTriFaceFunction - _nQuadFaceFunction;
+    int offset2 = iterator + numFaceFunctions;
+    for(int i = iterator; i < offset2; i++) {
+      fTableCopy[i][0] = triFaceFunctionsAllOrientation[i + offset][0];
+      fTableCopy[i][1] = triFaceFunctionsAllOrientation[i + offset][1];
+      fTableCopy[i][2] = triFaceFunctionsAllOrientation[i + offset][2];
+    }
+  }
+}
 
 void HierarchicalBasisHcurlPri::matrixVectorProductForCurlMapping(
   std::vector<double> &result)
@@ -1743,7 +1818,7 @@ void HierarchicalBasisHcurlPri::generateCurlBasis(
 }
 
 void HierarchicalBasisHcurlPri::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                         std::vector<int> &orderInfo)
+                                            std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int numEdge = 0; numEdge < 9; numEdge++) {
@@ -1757,14 +1832,14 @@ void HierarchicalBasisHcurlPri::getKeysInfo(std::vector<int> &functionTypeInfo,
     for(int n1 = 0; n1 <= _pOrderQuadFace1[iFace]; n1++) {
       for(int n2 = 2; n2 <= _pOrderQuadFace2[iFace] + 1; n2++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = std::max(n1,n2);
+        orderInfo[it] = std::max(n1, n2);
         it++;
       }
     }
     for(int n1 = 2; n1 <= _pOrderQuadFace1[iFace] + 1; n1++) {
       for(int n2 = 0; n2 <= _pOrderQuadFace2[iFace]; n2++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = std::max(n1,n2);
+        orderInfo[it] = std::max(n1, n2);
         it++;
       }
     }
@@ -1780,14 +1855,14 @@ void HierarchicalBasisHcurlPri::getKeysInfo(std::vector<int> &functionTypeInfo,
     for(int n1 = 1; n1 < _pOrderTriFace[iFace] - 1; n1++) {
       for(int n2 = 1; n2 <= _pOrderTriFace[iFace] - 1 - n1; n2++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = n1 + n2+1;
+        orderInfo[it] = n1 + n2 + 1;
         it++;
       }
     }
     for(int n1 = 1; n1 < _pOrderTriFace[iFace] - 1; n1++) {
       for(int n2 = 1; n2 <= _pOrderTriFace[iFace] - 1 - n1; n2++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = n1 + n2+1;
+        orderInfo[it] = n1 + n2 + 1;
         it++;
       }
     }
@@ -1796,7 +1871,7 @@ void HierarchicalBasisHcurlPri::getKeysInfo(std::vector<int> &functionTypeInfo,
     for(int n1 = 2; n1 <= _pb1; n1++) {
       for(int n2 = 2; n2 <= _pb2 + 1; n2++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(n1,n2);
+        orderInfo[it] = std::max(n1, n2);
         it++;
       }
     }
@@ -1805,7 +1880,7 @@ void HierarchicalBasisHcurlPri::getKeysInfo(std::vector<int> &functionTypeInfo,
     for(int n2 = 1; n2 <= _pb1 - 1 - n1; n2++) {
       for(int n3 = 2; n3 <= _pb2 + 1; n3++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(n1 + n2 +1, n3);
+        orderInfo[it] = std::max(n1 + n2 + 1, n3);
         it++;
       }
     }
@@ -1814,7 +1889,7 @@ void HierarchicalBasisHcurlPri::getKeysInfo(std::vector<int> &functionTypeInfo,
     for(int n2 = 1; n2 <= _pb1 - 1 - n1; n2++) {
       for(int n3 = 2; n3 <= _pb2 + 1; n3++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(n1 + n2 +1, n3);
+        orderInfo[it] = std::max(n1 + n2 + 1, n3);
         it++;
       }
     }
@@ -1823,7 +1898,7 @@ void HierarchicalBasisHcurlPri::getKeysInfo(std::vector<int> &functionTypeInfo,
     for(int n2 = 1; n2 <= _pb1 - n1; n2++) {
       for(int n3 = 0; n3 <= _pb2; n3++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(n1 + n2 +1, n3);
+        orderInfo[it] = std::max(n1 + n2 + 1, n3);
         it++;
       }
     }

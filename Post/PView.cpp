@@ -110,6 +110,15 @@ PView::PView(const std::string &xname, const std::string &yname,
   _options->axesLabel[0] = xname;
 }
 
+void PView::addStep(std::vector<double> &y)
+{
+  PViewDataList *d = dynamic_cast<PViewDataList *>(_data);
+  if(d)
+    d->addStep(y);
+  else
+    Msg::Error("Can only add step data to list-based datasets");
+}
+
 PView::PView(const std::string &name, std::vector<double> &x,
              std::vector<double> &y, std::vector<double> &z,
              std::vector<double> &v)

@@ -170,6 +170,7 @@ CreateGeometry          return tCreateGeometry;
 CreateTopology          return tCreateTopology;
 CurrentDir              return tCurrentDirectory;
 CurrentDirectory        return tCurrentDirectory;
+CurrentFileName         return tCurrentFileName;
 Curve                   return tCurve;
 Cylinder                return tCylinder;
 

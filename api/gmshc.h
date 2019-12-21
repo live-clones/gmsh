@@ -405,6 +405,12 @@ GMSH_API void gmshModelSetCoordinates(const int tag,
                                       const double z,
                                       int * ierr);
 
+/* Compute a cross field for the current mesh. The function creates 3 views:
+ * the H function, the Theta function and cross directions. Return the tags of
+ * the views */
+GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
+                                             int * ierr);
+
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);
@@ -419,12 +425,14 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr);
 /* Optimize the mesh of the current model using `method' (empty for default
  * tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
  * direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
- * smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D"
- * for node relocation). If `force' is set apply the optimization also to
- * discrete entities. */
+ * smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
+ * for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation).
+ * If `force' is set apply the optimization also to discrete entities. If
+ * `dimTags' is given, only apply the optimizer to the given entities. */
 GMSH_API void gmshModelMeshOptimize(const char * method,
                                     const int force,
                                     const int niter,
+                                    int * dimTags, size_t dimTags_n,
                                     int * ierr);
 
 /* Recombine the mesh of the current model. */
@@ -597,6 +605,34 @@ GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
                                                    const int dim,
                                                    const int strict,
                                                    int * ierr);
+
+/* Search the mesh for element(s) located at coordinates (`x', `y', `z'). This
+ * is a sometimes useful but inefficient way of accessing elements, as it
+ * relies on a search in a spatial octree. Return the tags of all found
+ * elements in `elementTags'. Additional information about the elements can be
+ * accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim'
+ * is >= 0, only search for elements of the given dimension. If `strict' is
+ * not set, use a tolerance to find elements near the search location. */
+GMSH_API void gmshModelMeshGetElementsByCoordinates(const double x,
+                                                    const double y,
+                                                    const double z,
+                                                    size_t ** elementTags, size_t * elementTags_n,
+                                                    const int dim,
+                                                    const int strict,
+                                                    int * ierr);
+
+/* Return the local coordinates (`u', `v', `w') within the element
+ * `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
+ * is a sometimes useful but inefficient way of accessing elements, as it
+ * relies on a cache stored in the model. */
+GMSH_API void gmshModelMeshGetLocalCoordinatesInElement(const size_t elementTag,
+                                                        const double x,
+                                                        const double y,
+                                                        const double z,
+                                                        double * u,
+                                                        double * v,
+                                                        double * w,
+                                                        int * ierr);
 
 /* Get the types of elements in the entity of dimension `dim' and tag `tag'.
  * If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
@@ -787,6 +823,12 @@ GMSH_API void gmshModelMeshGetKeysForElements(const int elementType,
                                               const int tag,
                                               const int returnCoord,
                                               int * ierr);
+
+/* Get the number of keys by elements of type `elementType' for function space
+ * named `functionSpaceType'. */
+GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType,
+                                                     const char * functionSpaceType,
+                                                     int * ierr);
 
 /* Get information about the `keys'. `infoKeys' returns information about the
  * functions associated with the `keys'. `infoKeys[0].first' describes the
@@ -2183,6 +2225,10 @@ GMSH_API void gmshFltkUnlock(int * ierr);
  * been initialized. Can only be called in the main thread. */
 GMSH_API void gmshFltkRun(int * ierr);
 
+/* Check if the user interface is available (e.g. to detect if it has been
+ * closed). */
+GMSH_API int gmshFltkIsAvailable(int * ierr);
+
 /* Select entities in the user interface. If `dim' is >= 0, return only the
  * entities of the specified dimension (e.g. points if `dim' == 0). */
 GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n,
@@ -2262,9 +2308,9 @@ GMSH_API void gmshLoggerGet(char *** log, size_t * log_n,
 GMSH_API void gmshLoggerStop(int * ierr);
 
 /* Return wall clock time. */
-GMSH_API double gmshLoggerTime(int * ierr);
+GMSH_API double gmshLoggerGetWallTime(int * ierr);
 
 /* Return CPU time. */
-GMSH_API double gmshLoggerCputime(int * ierr);
+GMSH_API double gmshLoggerGetCpuTime(int * ierr);
 
 #endif

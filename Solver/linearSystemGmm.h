@@ -95,10 +95,10 @@ public:
   virtual int systemSolve()
   {
 #if defined(HAVE_MUMPS)
-    if(_method == "mumps"){
+    //    if(_method == "mumps"){
       gmm::MUMPS_solve(*_a, *_x, *_b);
       return 1;
-    }
+      //    }
 #else
     //gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 25, 0.);
     gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 30, 1.e-10);

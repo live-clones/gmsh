@@ -153,7 +153,7 @@ bool GEO_Internals::addLine(int &tag, const std::vector<int> &pointTags)
     return false;
   }
   if(pointTags.size() < 2) {
-    Msg::Error("Line curve requires 2 points");
+    Msg::Error("Line requires 2 points");
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
@@ -822,7 +822,7 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
     break;
   case 1:
     type = MSH_PHYSICAL_LINE;
-    str = "line";
+    str = "curve";
     break;
   case 2:
     type = MSH_PHYSICAL_SURFACE;
