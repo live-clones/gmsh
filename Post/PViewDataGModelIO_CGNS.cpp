@@ -298,47 +298,112 @@ void getSolutionDataElementNode(int zoneIndex, int order,
 }
 
 
-// int getFullZoneEntSet(int fileIndex, int baseIndex, int zoneIndex,
-//                       int zoneSolIndex, bool isStructured, int dim,
-//                       const cgsize_t *zoneEntSize, int *solIndMin,
-//                       int *solIndMax, int &nbVal,
-//                       std::vector<cgsize_t> &solEntSet)
-// {
-//   int cgnsErr;
+int getEntInZone(int fileIndex, int baseIndex, int zoneIndex, int zoneSolIndex,
+                 bool isStructured, int dim, const cgsize_t *zoneEntSize,
+                 int *solReadRange, std::vector<cgsize_t> &solEntSet)
+{
+  // compute range and number of values to read in solution
+  cgsize_t nbVal = 0;
+  if(isStructured) {
+    for(int i = 0; i < dim; i++) {
+      solReadRange[i] = 1;
+      solReadRange[i+dim] = zoneEntSize[i];
+    }
+    if(dim == 2) nbVal = StructuredIndexing<2>::nbEntInRange(solReadRange);
+    else if(dim == 3) nbVal = StructuredIndexing<3>::nbEntInRange(solReadRange);
+  }
+  else {
+    solReadRange[0] = 1;
+    solReadRange[1] = zoneEntSize[0];
+    nbVal = UnstructuredIndexing::nbEntInRange(solReadRange);
+  }
 
-//   // read ring data if it exists 
-//   int rind[6] = {0, 0, 0, 0, 0, 0};
-//   cgnsErr = cg_goto(fileIndex, baseIndex, "Zone_t", zoneIndex,
-//                     "FlowSolution_t", zoneSolIndex, "end");
-//   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-//   cgnsErr = cg_rind_read(rind);
-//   if(cgnsErr == CG_NODE_NOT_FOUND) std::fill(rind, rind+6, 0); 
-//   else if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+  // fill set of entities
+  solEntSet.resize(nbVal);
+  for(cgsize_t i = 0; i < nbVal; i++) solEntSet[i] = i;
 
-//   cgsize_t nbVal = 0;
-//   if(isStructured) {
-//     for(int i = 0; i < dim; i++) {
-//       solIndMin[i] = 1 + rind[i];
-//       solIndMax[i] = zoneEntSize[i] - rind[i];
-//     }
-//     if(dim == 2) {
-//       solIndMin[0] = 1 + rind[0];
-//       solIndMin[1] = 1 + rind[1];
-//       solIndMax[0] = zoneEntSize[0] - rind[0];
-//       solIndMax[1] = zoneEntSize[1] - rind[1];
-//       nbVal = zoneEntSize[0] * zoneEntSize[1];
-//     }
-//     else if(dim == 3) {
-//       nbVal = zoneEntSize[0] * zoneEntSize[1] * zoneEntSize[2];
-//     }
-//   }
-//   else nbVal = *zoneEntSize;
-//   solEntSet.resize(nbVal);
-//   for(cgsize_t i = 0; i < nbVal; i++) solEntSet[i] = i;
+  return 1;
+}
 
-//   return 1;
-// }
 
+int getEntInPtSet(int fileIndex, int baseIndex, int zoneIndex, int zoneSolIndex,
+                  bool isStructured, int dim, PointSetType_t ptSetType,
+                  cgsize_t ptSetSize, const cgsize_t *zoneEntSize,
+                  int *solReadRange, std::vector<cgsize_t> &solEntSet)
+{
+  int cgnsErr;
+
+  // read point set
+  std::vector<cgsize_t> ptSet;
+  ptSet.resize(ptSetSize);
+  cgnsErr = cg_sol_ptset_read(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
+                              ptSet.data());
+  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+
+  // get number of values and entities to read in solution
+  if(ptSetType == PointRange) {
+    if(isStructured) {
+      for(int i  = 0; i < dim; i++) {
+        solReadRange[i] = 1;
+        solReadRange[i+dim] = ptSet[i+dim] - ptSet[i] + 1;
+      }
+      if(dim == 2) {
+        cgsize_t nbVal = StructuredIndexing<2>::nbEntInRange(ptSet.data());
+        solEntSet.resize(nbVal);
+        StructuredIndexing<2>::entFromRange(ptSet.data(), zoneEntSize,
+                                            solEntSet);
+      }
+      else if(dim == 3) {
+        cgsize_t nbVal = StructuredIndexing<3>::nbEntInRange(ptSet.data());
+        solEntSet.resize(nbVal);
+        StructuredIndexing<3>::entFromRange(ptSet.data(), zoneEntSize,
+                                            solEntSet);
+      }
+      else {
+        Msg::Error("Dimension %i not supported in CGNS solution reader",
+                    dim);
+        return false;
+      }
+    }
+    else {
+      solReadRange[0] = 1;
+      solReadRange[1] = ptSet[1] - ptSet[0] + 1;
+      cgsize_t nbVal = UnstructuredIndexing::nbEntInRange(ptSet.data());
+      solEntSet.resize(nbVal);
+      UnstructuredIndexing::entFromRange(ptSet.data(), solEntSet);
+    }
+  }
+  else if(ptSetType == PointList) {
+    solReadRange[0] = 1;
+    solReadRange[1] = ptSet.size();
+    if(isStructured) {
+      const cgsize_t nbVal = ptSet.size() / dim;
+      solEntSet.resize(nbVal);
+      if(dim == 2) {
+        StructuredIndexing<2>::entFromList(ptSet, zoneEntSize, solEntSet);
+      }
+      else if(dim == 3) {
+        StructuredIndexing<3>::entFromList(ptSet, zoneEntSize, solEntSet);
+      }
+      else {
+        Msg::Error("Dimension %i not supported in CGNS solution reader",
+                   dim);
+        return false;
+      }
+    }
+    else {
+      solEntSet.resize(ptSet.size());
+      UnstructuredIndexing::entFromList(ptSet, solEntSet);
+    }
+  }
+  else {
+    Msg::Warning("PointSetType %i not supported in CGNS solution reader",
+                  ptSetType);
+    return false;
+  }
+
+  return 1;
+}
 
 
 bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
@@ -381,13 +446,6 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
                                                 isStructured ? zoneSize + dim :
                                                                zoneSize + 1;
 
-  // read solution size
-  int dataDim;
-  cgsize_t solSize[3];
-  cgnsErr = cg_sol_size(fileIndex, baseIndex, zoneIndex, zoneSolIndex, &dataDim,
-                        solSize);
-  if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-
   // get solution order
   int order = 1;
 #ifdef HAVE_LIBCGNS_CPEX0045
@@ -398,73 +456,47 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
 
   // read point range if it exists, otherwise use all entities
   // (vertices/elements) in zone
-  std::vector<cgsize_t> ptSet, solEntSet;
+  std::vector<cgsize_t> solEntSet;
   PointSetType_t ptSetType;
   cgsize_t ptSetSize;
+  cgsize_t solReadRange[6];
   cgnsErr = cg_sol_ptset_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
                               &ptSetType, &ptSetSize);
+  if((cgnsErr != CG_NODE_NOT_FOUND) && (cgnsErr != CG_OK)) {
+    return cgnsError(__FILE__, __LINE__, fileIndex);
+  }
   if((cgnsErr == CG_NODE_NOT_FOUND) || (ptSetSize == 0)) {    // no point range
-    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+    int err = getEntInZone(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
+                           isStructured, dim, zoneEntSize, solReadRange,
+                           solEntSet);
+    if(err == 0) return 0;
   }
   else {                                              // point set is specified
+    int err = getEntInPtSet(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
+                            isStructured, dim, ptSetType, ptSetSize,
+                            zoneEntSize, solReadRange, solEntSet);
+    if(err == 0) return 0;
+  }
+
+  // if ElementNodeData (CPEX0045, only unstructured), read data size from
+  // field (assuming no rind), otherwise use number of entities as data size
+  cgsize_t dataSize = 0;
+  cgsize_t solReadRangeMin[3] = {1, 1, 1};
+  cgsize_t solReadRangeMax[3] = {0, 0, 0};
+  if(dataType == PViewDataGModel::ElementNodeData) {
+    int dataDim;
+    cgsize_t solSize[3];
+    cgnsErr = cg_sol_size(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
+                          &dataDim, solSize);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-    ptSet.resize(ptSetSize);
-    cgnsErr = cg_sol_ptset_read(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
-                                ptSet.data());
-    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-    if(ptSetType == PointRange) {
-      if(isStructured) {
-        if(dim == 2) {
-          cgsize_t nbVal = StructuredIndexing<2>::nbEntInRange(ptSet.data());
-          solEntSet.resize(nbVal);
-          StructuredIndexing<2>::entFromRange(ptSet.data(), zoneEntSize,
-                                              solEntSet);
-        }
-        else if(dim == 3) {
-          cgsize_t nbVal = StructuredIndexing<3>::nbEntInRange(ptSet.data());
-          solEntSet.resize(nbVal);
-          StructuredIndexing<3>::entFromRange(ptSet.data(), zoneEntSize,
-                                              solEntSet);
-        }
-        else {
-          Msg::Error("Dimension %i not supported in CGNS solution reader",
-                      dim);
-          return false;
-        }
-      }
-      else {
-        cgsize_t nbVal = UnstructuredIndexing::nbEntInRange(ptSet.data());
-        solEntSet.resize(nbVal);
-        UnstructuredIndexing::entFromRange(ptSet.data(), solEntSet);
-      }
-    }
-    else if(ptSetType == PointList) {
-      if(isStructured) {
-        const cgsize_t nbVal = ptSet.size() / dim;
-        solEntSet.resize(nbVal);
-        if(dim == 2) {
-          StructuredIndexing<2>::entFromList(ptSet, zoneEntSize, solEntSet);
-        }
-        else if(dim == 3) {
-          StructuredIndexing<3>::entFromList(ptSet, zoneEntSize, solEntSet);
-        }
-        else {
-          Msg::Error("Dimension %i not supported in CGNS solution reader",
-                      dim);
-          return false;
-        }
-      }
-      else {
-        solEntSet.resize(ptSet.size());
-        UnstructuredIndexing::entFromList(ptSet, solEntSet);
-      }
-    }
-    else {
-      Msg::Warning("PointSetType %i not supported in CGNS solution reader",
-                    ptSetType);
-      return false;
-    }
-    ptSet.clear();
+    dataSize = solSize[0];
+    solReadRangeMax[0] = solSize[0];
+  }
+  else {
+    dataSize = solEntSet.size();
+    const int indDim = isStructured ? dim : 1;
+    // std::copy(solReadRange, solReadRange+indDim, solReadRangeMin);
+    std::copy(solReadRange+indDim, solReadRange+2*indDim, solReadRangeMax);
   }
 
   // get number of fields in this FlowSolution
@@ -483,12 +515,10 @@ bool readZoneSolution(const std::pair<std::string, std::string> &solFieldName,
     if(std::string(rawFieldName) != solFieldName.second) continue;
 
     // read field data
-    printf("DBGTT: nbVal = %lu, sol. size = (%i, %i, %i)\n", solEntSet.size(), solSize[0], solSize[1], solSize[2]);
-    static const cgsize_t rangeMin[3] = {1, 1, 1};
-    std::vector<double> data(solEntSet.size());
+    std::vector<double> data(dataSize);
     cgnsErr = cg_field_read(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
-                            rawFieldName, RealDouble, rangeMin, solSize,
-                            static_cast<void *>(data.data()));
+                            rawFieldName, RealDouble, solReadRangeMin,
+                            solReadRangeMax, static_cast<void *>(data.data()));
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
     
     // scan through data to populate step (possibly converting from custom
