@@ -50,7 +50,7 @@ public:
   virtual unsigned int numPartitions() const { return _partitions.size(); }
 };
 
-struct Less_partitionEdge
+struct partitionEdgePtrLessThan
   : public std::binary_function<partitionEdge *, partitionEdge *, bool> {
   bool operator()(const partitionEdge *e1, const partitionEdge *e2) const
   {

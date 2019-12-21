@@ -1605,14 +1605,14 @@ static PART_ENTITY *createPartitionEntity(
 static partitionFace *assignPartitionBoundary(
   GModel *const model, MFace &me, MElement *reference,
   const std::vector<unsigned int> &partitions,
-  std::multimap<partitionFace *, GEntity *, Less_partitionFace> &pfaces,
+  std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan> &pfaces,
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionFace *newEntity = 0;
   partitionFace pf(model, partitions);
   std::pair<
-    std::multimap<partitionFace *, GEntity *, Less_partitionFace>::iterator,
-    std::multimap<partitionFace *, GEntity *, Less_partitionFace>::iterator>
+    std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan>::iterator,
+    std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan>::iterator>
     ret = pfaces.equal_range(&pf);
 
   partitionFace *ppf =
@@ -1673,14 +1673,14 @@ static partitionFace *assignPartitionBoundary(
 static partitionEdge *assignPartitionBoundary(
   GModel *const model, MEdge &me, MElement *reference,
   const std::vector<unsigned int> &partitions,
-  std::multimap<partitionEdge *, GEntity *, Less_partitionEdge> &pedges,
+  std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan> &pedges,
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionEdge *newEntity = 0;
   partitionEdge pe(model, partitions);
   std::pair<
-    std::multimap<partitionEdge *, GEntity *, Less_partitionEdge>::iterator,
-    std::multimap<partitionEdge *, GEntity *, Less_partitionEdge>::iterator>
+    std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan>::iterator,
+    std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan>::iterator>
     ret = pedges.equal_range(&pe);
 
   partitionEdge *ppe =
@@ -1719,14 +1719,14 @@ static partitionEdge *assignPartitionBoundary(
 static partitionVertex *assignPartitionBoundary(
   GModel *const model, MVertex *ve, MElement *reference,
   const std::vector<unsigned int> &partitions,
-  std::multimap<partitionVertex *, GEntity *, Less_partitionVertex> &pvertices,
+  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan> &pvertices,
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionVertex *newEntity = 0;
   partitionVertex pv(model, partitions);
   std::pair<
-    std::multimap<partitionVertex *, GEntity *, Less_partitionVertex>::iterator,
-    std::multimap<partitionVertex *, GEntity *, Less_partitionVertex>::iterator>
+    std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>::iterator,
+    std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>::iterator>
     ret = pvertices.equal_range(&pv);
 
   partitionVertex *ppv =
@@ -1897,9 +1897,9 @@ static void CreatePartitionTopology(
   fillElementToEntity(model, elementToEntity, -1);
   assignNewEntityBRep(meshGraph, elementToEntity);
 
-  std::multimap<partitionFace *, GEntity *, Less_partitionFace> pfaces;
-  std::multimap<partitionEdge *, GEntity *, Less_partitionEdge> pedges;
-  std::multimap<partitionVertex *, GEntity *, Less_partitionVertex> pvertices;
+  std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan> pfaces;
+  std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan> pedges;
+  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan> pvertices;
 
   hashmapface faceToElement;
   hashmapedge edgeToElement;

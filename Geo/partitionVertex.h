@@ -48,7 +48,7 @@ public:
   virtual unsigned int numPartitions() const { return _partitions.size(); }
 };
 
-struct Less_partitionVertex
+struct partitionVertexPtrLessThan
   : public std::binary_function<partitionVertex *, partitionVertex *, bool> {
   bool operator()(const partitionVertex *e1, const partitionVertex *e2) const
   {

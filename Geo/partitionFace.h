@@ -49,7 +49,7 @@ public:
   virtual unsigned int numPartitions() const { return _partitions.size(); }
 };
 
-struct Less_partitionFace
+struct partitionFacePtrLessThan
   : public std::binary_function<partitionFace *, partitionFace *, bool> {
   bool operator()(const partitionFace *e1, const partitionFace *e2) const
   {
