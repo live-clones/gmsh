@@ -11,131 +11,130 @@
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 
-
 #if defined(HAVE_LIBCGNS)
-
 
 namespace {
 
+  typedef std::pair<std::string, std::string> SolFieldName;
 
-typedef std::pair<std::string, std::string> SolFieldName;
+  int readFlowSolutionNames(
+    int fileIndex, int baseIndex, int nbZone,
+    std::map<SolFieldName, PViewDataGModel::DataType> &fields)
+  {
+    int cgnsErr;
 
-
-int readFlowSolutionNames(int fileIndex, int baseIndex, int nbZone,
-                          std::map<SolFieldName,
-                                   PViewDataGModel::DataType> &fields)
-{
-  int cgnsErr;
-
-  for(int iZone = 1; iZone <= nbZone; iZone++) {
-    // get number of flow solutions in zone
-    int nbZoneSol;
-    cgnsErr = cg_nsols(fileIndex, baseIndex, iZone, &nbZoneSol);
-    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-
-    // get names of solution fields in each zone
-    for(int iZoneSol = 1; iZoneSol <= nbZoneSol; iZoneSol++) {
-      // get FlowSolution info
-      char rawSolName[CGNS_MAX_STR_LEN];
-      GridLocation_t location;
-      cgnsErr = cg_sol_info(fileIndex, baseIndex, iZone, iZoneSol, rawSolName,
-                            &location);
+    for(int iZone = 1; iZone <= nbZone; iZone++) {
+      // get number of flow solutions in zone
+      int nbZoneSol;
+      cgnsErr = cg_nsols(fileIndex, baseIndex, iZone, &nbZoneSol);
       if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-      const std::string solName(rawSolName);
-      PViewDataGModel::DataType type;
-      if(location == CellCenter) type = PViewDataGModel::ElementData;
-      else if(location == Vertex) {
-        if(nbZone > 1) {
-          Msg::Warning("Multi-zone node-based solutions not supported in CGNS "
-                       "reader, skipping '%s'", rawSolName);
+
+      // get names of solution fields in each zone
+      for(int iZoneSol = 1; iZoneSol <= nbZoneSol; iZoneSol++) {
+        // get FlowSolution info
+        char rawSolName[CGNS_MAX_STR_LEN];
+        GridLocation_t location;
+        cgnsErr = cg_sol_info(fileIndex, baseIndex, iZone, iZoneSol, rawSolName,
+                              &location);
+        if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+        const std::string solName(rawSolName);
+        PViewDataGModel::DataType type;
+        if(location == CellCenter)
+          type = PViewDataGModel::ElementData;
+        else if(location == Vertex) {
+          if(nbZone > 1) {
+            Msg::Warning(
+              "Multi-zone node-based solutions not supported in CGNS "
+              "reader, skipping '%s'",
+              rawSolName);
+            continue;
+          }
+          else
+            type = PViewDataGModel::NodeData;
+        }
+#ifdef HAVE_LIBCGNS_CPEX0045
+        else if(location == ElementBased) {
+          type = PViewDataGModel::ElementNodeData;
+        }
+#endif
+        else {
+          Msg::Warning("Unsupported GridLocation in CGNS solution reader, "
+                       "skipping '%s'",
+                       rawSolName);
           continue;
         }
-        else type = PViewDataGModel::NodeData;
-      }
-#ifdef HAVE_LIBCGNS_CPEX0045
-      else if(location == ElementBased) {
-        type = PViewDataGModel::ElementNodeData;
-      }
-#endif
-      else {
-        Msg::Warning("Unsupported GridLocation in CGNS solution reader, "
-                   "skipping '%s'", rawSolName);
-        continue;
-      }
-      
-      // get number of fields in this FlowSolution
-      int nbField;
-      cgnsErr = cg_nfields(fileIndex, baseIndex, iZone, iZoneSol, &nbField);
-      if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-      
-      // get names of fields
-      for(int iField = 1; iField <= nbField; iField++) {
-        DataType_t dataType;
-        char rawFieldName[CGNS_MAX_STR_LEN];
-        cgnsErr = cg_field_info(fileIndex, baseIndex, iZone, iZoneSol, iField,
-                                &dataType, rawFieldName);
+
+        // get number of fields in this FlowSolution
+        int nbField;
+        cgnsErr = cg_nfields(fileIndex, baseIndex, iZone, iZoneSol, &nbField);
         if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-        const std::string fieldName(rawFieldName);
-        fields[std::make_pair(solName, fieldName)] = type;
+
+        // get names of fields
+        for(int iField = 1; iField <= nbField; iField++) {
+          DataType_t dataType;
+          char rawFieldName[CGNS_MAX_STR_LEN];
+          cgnsErr = cg_field_info(fileIndex, baseIndex, iZone, iZoneSol, iField,
+                                  &dataType, rawFieldName);
+          if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
+          const std::string fieldName(rawFieldName);
+          fields[std::make_pair(solName, fieldName)] = type;
+        }
       }
     }
+
+    return 1;
   }
 
-  return 1;
-}
+  bool
+  readFieldData(const std::vector<std::vector<MVertex *> > &vertPerZone,
+                const std::vector<std::vector<MElement *> > &eltPerZone,
+                const std::string &fileName, int fileIndex, int baseIndex,
+                const std::map<SolFieldName, PViewDataGModel::DataType> &fields)
+  {
+    typedef std::map<SolFieldName, PViewDataGModel::DataType>::const_iterator
+      FieldIter;
+    int index = -1;
+    for(FieldIter it = fields.begin(); it != fields.end(); ++it) {
+      // field name and type
+      const SolFieldName &solFieldName = it->first;
+      const PViewDataGModel::DataType &fieldType = it->second;
+      index++;
 
+      // either get existing view data, or create new one
+      const std::string fullFieldName =
+        solFieldName.first + "_" + solFieldName.second;
+      PView *p = PView::getViewByName(
+        fullFieldName, -1, -1); // DBGTT: to be checked for multi-file
+      PViewDataGModel *d;
+      bool create;
+      if(p != 0) {
+        d = dynamic_cast<PViewDataGModel *>(p->getData());
+        create = false;
+      }
+      else {
+        d = new PViewDataGModel(fieldType);
+        create = true;
+      }
 
-bool readFieldData(const std::vector<std::vector<MVertex *> > &vertPerZone,
-                   const std::vector<std::vector<MElement *> > &eltPerZone,
-                   const std::string &fileName, int fileIndex, int baseIndex,
-                   const std::map<SolFieldName,
-                                  PViewDataGModel::DataType> &fields)
-{
-  typedef std::map<SolFieldName,
-                   PViewDataGModel::DataType>::const_iterator FieldIter;
-  int index = -1;
-  for(FieldIter it = fields.begin(); it != fields.end(); ++it) {
-    // field name and type
-    const SolFieldName &solFieldName = it->first;
-    const PViewDataGModel::DataType &fieldType = it->second;
-    index++;
-    
-    // either get existing view data, or create new one
-    const std::string fullFieldName = solFieldName.first + "_" +
-                                      solFieldName.second;
-    PView *p = PView::getViewByName(fullFieldName, -1, -1); // DBGTT: to be checked for multi-file
-    PViewDataGModel *d;
-    bool create;
-    if(p != 0) {
-      d = dynamic_cast<PViewDataGModel *>(p->getData());
-      create = false;
-    }
-    else {
-      d = new PViewDataGModel(fieldType);
-      create = true;
+      // read view data
+      if(!d->readCGNS(solFieldName, fileName, index, fileIndex, baseIndex,
+                      vertPerZone, eltPerZone)) {
+        Msg::Error("Could not read data in CGNS file '%s'", fileName.c_str());
+        if(create) delete d;
+        return false;
+      }
+      else {
+        d->setName(fullFieldName);
+        d->setFileName(fileName);
+        d->setFileIndex(index);
+        if(create) new PView(d);
+      }
     }
 
-    // read view data
-    if(!d->readCGNS(solFieldName, fileName, index, fileIndex, baseIndex,
-                    vertPerZone, eltPerZone)) {
-      Msg::Error("Could not read data in CGNS file '%s'", fileName.c_str());
-      if(create) delete d;
-      return false;
-    }
-    else {
-      d->setName(fullFieldName);
-      d->setFileName(fileName);
-      d->setFileIndex(index);
-      if(create) new PView(d);
-    }
+    return true;
   }
 
-  return true;
-}
-
-
-}
-
+} // namespace
 
 bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
                      const std::vector<std::vector<MElement *> > &eltPerZone,
@@ -177,9 +176,7 @@ bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
   return true;
 }
 
-
 #else
-
 
 bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
                      const std::vector<std::vector<MElement *> > &eltPerZone,
@@ -189,6 +186,5 @@ bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
              fileName.c_str());
   return false;
 }
-
 
 #endif

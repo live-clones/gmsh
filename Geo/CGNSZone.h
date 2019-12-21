@@ -15,13 +15,10 @@
 
 #if defined(HAVE_LIBCGNS)
 
-
 class MVertex;
 class MElement;
 
-
-class CGNSZone
-{
+class CGNSZone {
 public:
   CGNSZone() {}
   CGNSZone(int fileIndex, int baseIndex, int zoneIndex, ZoneType_t type,
@@ -41,7 +38,8 @@ public:
   virtual void eltFromRange(const cgsize_t *range,
                             std::vector<cgsize_t> &elt) const = 0;
   void eltFromRange(const std::vector<cgsize_t> &range,
-                    std::vector<cgsize_t> &elt) const {
+                    std::vector<cgsize_t> &elt) const
+  {
     eltFromRange(range.data(), elt);
   }
   virtual void eltFromList(const std::vector<cgsize_t> &list,
@@ -49,7 +47,8 @@ public:
   virtual void nodeFromRange(const cgsize_t *range,
                              std::vector<cgsize_t> &node) const = 0;
   void nodeFromRange(const std::vector<cgsize_t> &range,
-                     std::vector<cgsize_t> &node) const {
+                     std::vector<cgsize_t> &node) const
+  {
     nodeFromRange(range.data(), node);
   }
   virtual void nodeFromList(const std::vector<cgsize_t> &range,
@@ -60,12 +59,21 @@ public:
   const std::vector<bool> &interfaceNode() const { return interfaceNode_; }
   int nbPerConnect() const { return nbPerConnect_; }
   int masterZone(int iPer) const { return masterZone_[iPer]; }
-  const std::vector<double> &perTransfo(int iPer) const { return perTransfo_[iPer]; }
-  const std::vector<cgsize_t> &masterNode(int iPer) const { return masterNode_[iPer]; }
-  const std::vector<cgsize_t> &slaveNode(int iPer) const { return slaveNode_[iPer]; }
+  const std::vector<double> &perTransfo(int iPer) const
+  {
+    return perTransfo_[iPer];
+  }
+  const std::vector<cgsize_t> &masterNode(int iPer) const
+  {
+    return masterNode_[iPer];
+  }
+  const std::vector<cgsize_t> &slaveNode(int iPer) const
+  {
+    return slaveNode_[iPer];
+  }
   std::vector<MVertex *> &masterVert(int iPer) { return masterVert_[iPer]; }
   std::vector<MVertex *> &slaveVert(int iPer) { return slaveVert_[iPer]; }
-  
+
   int readBoundaryCondition(int iZoneBC,
                             const std::vector<CGNSZone *> &allZones,
                             std::vector<std::string> &allGeomName);
@@ -104,7 +112,7 @@ protected:
 
   // transformations of high-order points per element (CPEX0045)
   const ZoneEltNodeTransfo *eltNodeTransfo_;
-  
+
   // internal interface information
   std::vector<bool> interfaceNode_;
 
@@ -123,7 +131,6 @@ protected:
                                 std::vector<cgsize_t> &bcElt);
   int readBoundaryConditionRange(int indBC, std::vector<cgsize_t> &bcElt);
 };
-
 
 #endif // HAVE_LIBCGNS
 

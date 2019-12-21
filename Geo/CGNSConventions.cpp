@@ -18,609 +18,589 @@
 
 #if defined(HAVE_LIBCGNS)
 
-
 namespace {
 
+  // ------------- Conversion of node ordering between CGNS and Gmsh
+  // -------------
 
-// ------------- Conversion of node ordering between CGNS and Gmsh -------------
+  void addEdgePointsCGNS(const SVector3 p0, const SVector3 p1, int order,
+                         std::vector<SVector3> &points)
+  {
+    if(order < 2) return;
 
-
-void addEdgePointsCGNS(const SVector3 p0, const SVector3 p1, int order,
-                        std::vector<SVector3> &points)
-{
-  if (order < 2) return;
-
-  double ds = 1. / order;
-  for(int i = 1; i < order; i++) {
-    double f = ds * i;
-    points.push_back(p0 * (1. - f) + p1 * f);
-  }
-}
-
-
-std::vector<SVector3> generatePointsTriCGNS(int order, bool complete);
-
-
-void addTriPointsCGNS(const SVector3 p0, const SVector3 p1, const SVector3 p2,
-                      int order, std::vector<SVector3> &points)
-{
-  if (order < 3) return;
-  
-  std::vector<SVector3> triPoints = generatePointsTriCGNS(order - 3, true);
-
-  double scale = double(order - 3) / double(order);
-  SVector3 offset(1. / order, 1. / order, 0);
-
-  for(size_t i = 0; i < triPoints.size(); i++) {
-    SVector3 ip = triPoints[i];
-    double u = ip[0] * scale + 1. / order;
-    double v = ip[1] * scale + 1. / order;
-    SVector3 pt = (1. - u - v) * p0 + u * p1 + v * p2;
-    points.push_back(pt);
-  }
-}
-
-
-void addQuaPointsCGNS(int order, std::vector<SVector3> &points)
-{
-  if(order > 2) {
-    double scale = double(order - 2) / double(order);
-
-    SVector3 corner[4] = {SVector3(-1, -1, 0), SVector3(1, -1, 0),
-                          SVector3(1, 1, 0), SVector3(-1, 1, 0)};
-
-    for(int i = 0; i < 4; i++) {
-      SVector3 c1 = corner[i];
-      SVector3 c2 = corner[(i + 1) % 4];
-      double ds = 1. / (order - 2);
-      for(int i = 0; i < order - 2; i++)
-        points.push_back((c1 * (1. - i * ds) + c2 * (i * ds)) * scale);
+    double ds = 1. / order;
+    for(int i = 1; i < order; i++) {
+      double f = ds * i;
+      points.push_back(p0 * (1. - f) + p1 * f);
     }
   }
 
-  if(order == 2 || order == 4) points.push_back(SVector3(0, 0, 0));
-}
+  std::vector<SVector3> generatePointsTriCGNS(int order, bool complete);
 
+  void addTriPointsCGNS(const SVector3 p0, const SVector3 p1, const SVector3 p2,
+                        int order, std::vector<SVector3> &points)
+  {
+    if(order < 3) return;
 
-void addQuaPointsCGNS(const SVector3 p0, const SVector3 p1, const SVector3 p2,
-                      const SVector3 p3, int order,
-                      std::vector<SVector3> &points)
-{
-  std::vector<SVector3> quaPoints;
+    std::vector<SVector3> triPoints = generatePointsTriCGNS(order - 3, true);
 
-  addQuaPointsCGNS(order, quaPoints);
+    double scale = double(order - 3) / double(order);
+    SVector3 offset(1. / order, 1. / order, 0);
 
-  for(size_t i = 0; i < quaPoints.size(); i++) {
-    SVector3 ip = quaPoints[i];
-    double u = ip[0];
-    double v = ip[1];
-    SVector3 pt = ((1. - u) * (1. - v) * p0 + (1. + u) * (1. - v) * p1 +
-                    (1. + u) * (1. + v) * p2 + (1. - u) * (1. + v) * p3) *
-                  0.25;
-    points.push_back(pt);
-  }
-}
-
-
-// void print(std::vector<SVector3> &points, const char *title, int iStart,
-//            int iEnd = -1)
-// {
-//   iEnd = iEnd == -1 ? points.size() : iEnd;
-
-//   std::cout << title << std::endl;
-//   for(int i = iStart; i < iEnd; i++) {
-//     std::cout << i << " :";
-//     for(int d = 0; d < 3; d++) std::cout << " " << points[i][d];
-//     std::cout << std::endl;
-//   }
-// }
-
-
-std::vector<SVector3> generatePointsEdgeCGNS(int order)
-{
-  std::vector<SVector3> pp;
-
-  if(order == 0) {
-    pp.push_back(SVector3(0., 0., 0.));
-    return pp;
-  }
-
-  // primary vertices
-  pp.push_back(SVector3(-1, 0, 0));
-  pp.push_back(SVector3(1, 0, 0));
-
-  // internal points
-  addEdgePointsCGNS(pp[0], pp[1], order, pp);
-
-  return pp;
-}
-
-
-std::vector<SVector3> generatePointsTriCGNS(int order, bool complete)
-{
-  std::vector<SVector3> pp;
-
-  if(order == 0) {
-    pp.push_back(SVector3(1./3., 1./3., 0.));
-    return pp;
-  }
-
-  // primary vertices
-  pp.push_back(SVector3(0, 0, 0));
-  pp.push_back(SVector3(1, 0, 0));
-  pp.push_back(SVector3(0, 1, 0));
-
-  // internal points of edges
-  for(int i = 0; i < 3; i++) {
-    addEdgePointsCGNS(pp[i], pp[(i + 1) % 3], order, pp);
-  }
-
-  // internal points
-  if(complete && order > 2) {
-    addTriPointsCGNS(pp[0], pp[1], pp[2], order, pp);
-  }
-
-  return pp;
-}
-
-
-std::vector<SVector3> generatePointsQuaCGNS(int order, bool complete)
-{
-  std::vector<SVector3> pp;
-
-  if(order == 0) {
-    pp.push_back(SVector3(0., 0., 0.));
-    return pp;
-  }
-
-  // primary vertices
-  pp.push_back(SVector3(-1, -1, 0));
-  pp.push_back(SVector3(1, -1, 0));
-  pp.push_back(SVector3(1, 1, 0));
-  pp.push_back(SVector3(-1, 1, 0));
-
-  // internal points of edges
-  for(int i = 0; i < 4; i++) {
-    addEdgePointsCGNS(pp[i], pp[(i + 1) % 4], order, pp);
-  }
-
-  // internal points
-  if(complete && order > 1) {
-    addQuaPointsCGNS(pp[0], pp[1], pp[2], pp[3], order, pp);
-  }
-
-  return pp;
-}
-
-
-std::vector<SVector3> generatePointsTetCGNS(int order, bool complete)
-{
-  std::vector<SVector3> pp;
-
-  if(order == 0) {
-    pp.push_back(SVector3(1./4., 1./4., 1./4.));
-    return pp;
-  }
-
-  // primary vertices
-  pp.push_back(SVector3(0, 0, 0));
-  pp.push_back(SVector3(1, 0, 0));
-  pp.push_back(SVector3(0, 1, 0));
-  pp.push_back(SVector3(0, 0, 1));
-
-  // internal points in edges of base triangle
-  for(int i = 0; i < 3; i++)
-    addEdgePointsCGNS(pp[i], pp[(i + 1) % 3], order, pp);
-
-  // internal points in upstanding edges
-  for(int i = 0; i < 3; i++) addEdgePointsCGNS(pp[i], pp[3], order, pp);
-
-  if(complete && order > 2) {
-    // internal points of base triangle
-    addTriPointsCGNS(pp[0], pp[1], pp[2], order, pp);
-
-    // internal points of upstanding triangles
-    for(int i = 0; i < 3; i++) {
-      addTriPointsCGNS(pp[i], pp[(i + 1) % 3], pp[3], order, pp);
+    for(size_t i = 0; i < triPoints.size(); i++) {
+      SVector3 ip = triPoints[i];
+      double u = ip[0] * scale + 1. / order;
+      double v = ip[1] * scale + 1. / order;
+      SVector3 pt = (1. - u - v) * p0 + u * p1 + v * p2;
+      points.push_back(pt);
     }
+  }
 
-    // internal points as a tet of order p-3
-    if(order > 3) {
-      std::vector<SVector3> tetPp = generatePointsTetCGNS(order - 4, true);
+  void addQuaPointsCGNS(int order, std::vector<SVector3> &points)
+  {
+    if(order > 2) {
+      double scale = double(order - 2) / double(order);
 
-      double scale = (order - 4) / order;
-      SVector3 offset(1. / order, 1. / order, 1. / order);
-      for(size_t i = 0; i < tetPp.size(); i++) {
-        SVector3 volumePoint = tetPp[i];
-        volumePoint *= scale;
-        volumePoint += offset;
-        pp.push_back(volumePoint);
+      SVector3 corner[4] = {SVector3(-1, -1, 0), SVector3(1, -1, 0),
+                            SVector3(1, 1, 0), SVector3(-1, 1, 0)};
+
+      for(int i = 0; i < 4; i++) {
+        SVector3 c1 = corner[i];
+        SVector3 c2 = corner[(i + 1) % 4];
+        double ds = 1. / (order - 2);
+        for(int i = 0; i < order - 2; i++)
+          points.push_back((c1 * (1. - i * ds) + c2 * (i * ds)) * scale);
       }
     }
+
+    if(order == 2 || order == 4) points.push_back(SVector3(0, 0, 0));
   }
 
-  return pp;
-}
+  void addQuaPointsCGNS(const SVector3 p0, const SVector3 p1, const SVector3 p2,
+                        const SVector3 p3, int order,
+                        std::vector<SVector3> &points)
+  {
+    std::vector<SVector3> quaPoints;
 
+    addQuaPointsCGNS(order, quaPoints);
 
-std::vector<SVector3> generatePointsHexCGNS(int order, bool complete)
-{
-  std::vector<SVector3> pp;
+    for(size_t i = 0; i < quaPoints.size(); i++) {
+      SVector3 ip = quaPoints[i];
+      double u = ip[0];
+      double v = ip[1];
+      SVector3 pt = ((1. - u) * (1. - v) * p0 + (1. + u) * (1. - v) * p1 +
+                     (1. + u) * (1. + v) * p2 + (1. - u) * (1. + v) * p3) *
+                    0.25;
+      points.push_back(pt);
+    }
+  }
 
-  if(order == 0) {
-    pp.push_back(SVector3(0., 0., 0.));
+  // void print(std::vector<SVector3> &points, const char *title, int iStart,
+  //            int iEnd = -1)
+  // {
+  //   iEnd = iEnd == -1 ? points.size() : iEnd;
+
+  //   std::cout << title << std::endl;
+  //   for(int i = iStart; i < iEnd; i++) {
+  //     std::cout << i << " :";
+  //     for(int d = 0; d < 3; d++) std::cout << " " << points[i][d];
+  //     std::cout << std::endl;
+  //   }
+  // }
+
+  std::vector<SVector3> generatePointsEdgeCGNS(int order)
+  {
+    std::vector<SVector3> pp;
+
+    if(order == 0) {
+      pp.push_back(SVector3(0., 0., 0.));
+      return pp;
+    }
+
+    // primary vertices
+    pp.push_back(SVector3(-1, 0, 0));
+    pp.push_back(SVector3(1, 0, 0));
+
+    // internal points
+    addEdgePointsCGNS(pp[0], pp[1], order, pp);
+
     return pp;
   }
 
-  // principal vertices
-  pp.push_back(SVector3(-1, -1, -1));
-  pp.push_back(SVector3(1, -1, -1));
-  pp.push_back(SVector3(1, 1, -1));
-  pp.push_back(SVector3(-1, 1, -1));
-  pp.push_back(SVector3(-1, -1, 1));
-  pp.push_back(SVector3(1, -1, 1));
-  pp.push_back(SVector3(1, 1, 1));
-  pp.push_back(SVector3(-1, 1, 1));
+  std::vector<SVector3> generatePointsTriCGNS(int order, bool complete)
+  {
+    std::vector<SVector3> pp;
 
-  // internal points of base quadrangle edges
-  for(int i = 0; i < 4; i++)
-    addEdgePointsCGNS(pp[i], pp[(i + 1) % 4], order, pp);
+    if(order == 0) {
+      pp.push_back(SVector3(1. / 3., 1. / 3., 0.));
+      return pp;
+    }
 
-  std::vector<SVector3> up[4];
-  // internal points of mounting edges
-  for(int i = 0; i < 4; i++) {
-    addEdgePointsCGNS(pp[i], pp[i + 4], order, up[i]);
-    pp.insert(pp.end(), up[i].begin(), up[i].end());
+    // primary vertices
+    pp.push_back(SVector3(0, 0, 0));
+    pp.push_back(SVector3(1, 0, 0));
+    pp.push_back(SVector3(0, 1, 0));
+
+    // internal points of edges
+    for(int i = 0; i < 3; i++) {
+      addEdgePointsCGNS(pp[i], pp[(i + 1) % 3], order, pp);
+    }
+
+    // internal points
+    if(complete && order > 2) {
+      addTriPointsCGNS(pp[0], pp[1], pp[2], order, pp);
+    }
+
+    return pp;
   }
 
-  // internal points of top quadrangle edges
-  for(int i = 0; i < 4; i++)
-    addEdgePointsCGNS(pp[i + 4], pp[(i + 1) % 4 + 4], order, pp);
+  std::vector<SVector3> generatePointsQuaCGNS(int order, bool complete)
+  {
+    std::vector<SVector3> pp;
 
-  if(complete && order > 1) {
-    // internal points of base quadrangle
+    if(order == 0) {
+      pp.push_back(SVector3(0., 0., 0.));
+      return pp;
+    }
+
+    // primary vertices
+    pp.push_back(SVector3(-1, -1, 0));
+    pp.push_back(SVector3(1, -1, 0));
+    pp.push_back(SVector3(1, 1, 0));
+    pp.push_back(SVector3(-1, 1, 0));
+
+    // internal points of edges
+    for(int i = 0; i < 4; i++) {
+      addEdgePointsCGNS(pp[i], pp[(i + 1) % 4], order, pp);
+    }
+
+    // internal points
+    if(complete && order > 1) {
+      addQuaPointsCGNS(pp[0], pp[1], pp[2], pp[3], order, pp);
+    }
+
+    return pp;
+  }
+
+  std::vector<SVector3> generatePointsTetCGNS(int order, bool complete)
+  {
+    std::vector<SVector3> pp;
+
+    if(order == 0) {
+      pp.push_back(SVector3(1. / 4., 1. / 4., 1. / 4.));
+      return pp;
+    }
+
+    // primary vertices
+    pp.push_back(SVector3(0, 0, 0));
+    pp.push_back(SVector3(1, 0, 0));
+    pp.push_back(SVector3(0, 1, 0));
+    pp.push_back(SVector3(0, 0, 1));
+
+    // internal points in edges of base triangle
+    for(int i = 0; i < 3; i++)
+      addEdgePointsCGNS(pp[i], pp[(i + 1) % 3], order, pp);
+
+    // internal points in upstanding edges
+    for(int i = 0; i < 3; i++) addEdgePointsCGNS(pp[i], pp[3], order, pp);
+
+    if(complete && order > 2) {
+      // internal points of base triangle
+      addTriPointsCGNS(pp[0], pp[1], pp[2], order, pp);
+
+      // internal points of upstanding triangles
+      for(int i = 0; i < 3; i++) {
+        addTriPointsCGNS(pp[i], pp[(i + 1) % 3], pp[3], order, pp);
+      }
+
+      // internal points as a tet of order p-3
+      if(order > 3) {
+        std::vector<SVector3> tetPp = generatePointsTetCGNS(order - 4, true);
+
+        double scale = (order - 4) / order;
+        SVector3 offset(1. / order, 1. / order, 1. / order);
+        for(size_t i = 0; i < tetPp.size(); i++) {
+          SVector3 volumePoint = tetPp[i];
+          volumePoint *= scale;
+          volumePoint += offset;
+          pp.push_back(volumePoint);
+        }
+      }
+    }
+
+    return pp;
+  }
+
+  std::vector<SVector3> generatePointsHexCGNS(int order, bool complete)
+  {
+    std::vector<SVector3> pp;
+
+    if(order == 0) {
+      pp.push_back(SVector3(0., 0., 0.));
+      return pp;
+    }
+
+    // principal vertices
+    pp.push_back(SVector3(-1, -1, -1));
+    pp.push_back(SVector3(1, -1, -1));
+    pp.push_back(SVector3(1, 1, -1));
+    pp.push_back(SVector3(-1, 1, -1));
+    pp.push_back(SVector3(-1, -1, 1));
+    pp.push_back(SVector3(1, -1, 1));
+    pp.push_back(SVector3(1, 1, 1));
+    pp.push_back(SVector3(-1, 1, 1));
+
+    // internal points of base quadrangle edges
+    for(int i = 0; i < 4; i++)
+      addEdgePointsCGNS(pp[i], pp[(i + 1) % 4], order, pp);
+
+    std::vector<SVector3> up[4];
+    // internal points of mounting edges
+    for(int i = 0; i < 4; i++) {
+      addEdgePointsCGNS(pp[i], pp[i + 4], order, up[i]);
+      pp.insert(pp.end(), up[i].begin(), up[i].end());
+    }
+
+    // internal points of top quadrangle edges
+    for(int i = 0; i < 4; i++)
+      addEdgePointsCGNS(pp[i + 4], pp[(i + 1) % 4 + 4], order, pp);
+
+    if(complete && order > 1) {
+      // internal points of base quadrangle
+      addQuaPointsCGNS(pp[0], pp[1], pp[2], pp[3], order, pp);
+
+      // internal points of upstanding faces
+      for(int i = 0; i < 4; i++) {
+        addQuaPointsCGNS(pp[i], pp[(i + 1) % 4], pp[(i + 1) % 4 + 4], pp[i + 4],
+                         order, pp);
+      }
+
+      // internal points of top quadrangle
+      addQuaPointsCGNS(pp[4], pp[5], pp[6], pp[7], order, pp);
+
+      // internal volume points as a succession of internal planes
+      for(int i = 0; i <= order - 2; i++) {
+        addQuaPointsCGNS(up[0][i], up[1][i], up[2][i], up[3][i], order, pp);
+      }
+    }
+
+    return pp;
+  }
+
+  std::vector<SVector3> generatePointsPriCGNS(int order, bool complete)
+  {
+    std::vector<SVector3> pp;
+
+    if(order == 0) {
+      pp.push_back(SVector3(1. / 3., 1. / 3., 0.));
+      return pp;
+    }
+
+    // principal vertices
+    pp.push_back(SVector3(0, 0, -1));
+    pp.push_back(SVector3(1, 0, -1));
+    pp.push_back(SVector3(0, 1, -1));
+    pp.push_back(SVector3(0, 0, 1));
+    pp.push_back(SVector3(1, 0, 1));
+    pp.push_back(SVector3(0, 1, 1));
+
+    // internal points in edges of base triangle
+    for(int i = 0; i < 3; i++)
+      addEdgePointsCGNS(pp[i], pp[(i + 1) % 3], order, pp);
+
+    // internal points in upstanding edges
+    std::vector<SVector3> edge[3]; // keep for definition of volume pp
+    for(int i = 0; i < 3; i++) {
+      addEdgePointsCGNS(pp[i], pp[i + 3], order, edge[i]);
+      pp.insert(pp.end(), edge[i].begin(), edge[i].end());
+    }
+
+    // internal points in edges of top triangle
+    for(int i = 0; i < 3; i++)
+      addEdgePointsCGNS(pp[i + 3], pp[(i + 1) % 3 + 3], order, pp);
+
+    if(complete) {
+      // internal vertices for base triangle
+      addTriPointsCGNS(pp[0], pp[1], pp[2], order, pp);
+
+      // internal vertices for upstanding quadrilaterals
+      for(int i = 0; i < 3; i++) {
+        addQuaPointsCGNS(pp[i], pp[(i + 1) % 3], pp[(i + 1) % 3 + 3], pp[i + 3],
+                         order, pp);
+      }
+
+      // internal points for top triangle
+      addTriPointsCGNS(pp[3], pp[4], pp[5], order, pp);
+
+      // internal points in the volume as a succession of "triangles"
+      for(int o = 0; o < order - 1; o++) {
+        addTriPointsCGNS(edge[0][o], edge[1][o], edge[2][o], order, pp);
+      }
+    }
+
+    return pp;
+  }
+
+  // WARNING: incomplete pyramid order 2 is wrong
+  std::vector<SVector3> generatePointsPyrCGNS(int order, bool complete)
+  {
+    std::vector<SVector3> pp;
+
+    if(order == 0) {
+      pp.push_back(SVector3(0., 0., 0.));
+      return pp;
+    }
+
+    // principal vertices
+    pp.push_back(SVector3(-1, -1, 0));
+    pp.push_back(SVector3(1, -1, 0));
+    pp.push_back(SVector3(1, 1, 0));
+    pp.push_back(SVector3(-1, 1, 0));
+    pp.push_back(SVector3(0, 0, 1));
+
+    // internal points in edges of base quadrilateral
+    for(int i = 0; i < 4; i++)
+      addEdgePointsCGNS(pp[i], pp[(i + 1) % 4], order, pp);
+
+    // internal points in upstanding edges
+    for(int i = 0; i < 4; i++) addEdgePointsCGNS(pp[i], pp[4], order, pp);
+
+    // internal points in base quadrilateral
     addQuaPointsCGNS(pp[0], pp[1], pp[2], pp[3], order, pp);
 
-    // internal points of upstanding faces
-    for(int i = 0; i < 4; i++) {
-      addQuaPointsCGNS(pp[i], pp[(i + 1) % 4], pp[(i + 1) % 4 + 4], pp[i + 4],
-                        order, pp);
+    // internal points in upstanding triangles
+    for(int i = 0; i < 4; i++)
+      addTriPointsCGNS(pp[i], pp[(i + 1) % 4], pp[4], order, pp);
+
+    // internal points as an internal pyramid of order p-3
+    if(order > 2) {
+      std::vector<SVector3> pyr = generatePointsPyrCGNS(order - 3, true);
+      SVector3 offset(0, 0, 1. / order);
+      double scale = double(order - 3) / double(order);
+      for(size_t i = 0; i < pyr.size(); ++i)
+        pp.push_back((pyr[i] * scale) + offset);
     }
 
-    // internal points of top quadrangle
-    addQuaPointsCGNS(pp[4], pp[5], pp[6], pp[7], order, pp);
-
-    // internal volume points as a succession of internal planes
-    for(int i = 0; i <= order - 2; i++) {
-      addQuaPointsCGNS(up[0][i], up[1][i], up[2][i], up[3][i], order, pp);
-    }
-  }
-
-  return pp;
-}
-
-
-std::vector<SVector3> generatePointsPriCGNS(int order, bool complete)
-{
-  std::vector<SVector3> pp;
-
-  if(order == 0) {
-    pp.push_back(SVector3(1./3., 1./3., 0.));
     return pp;
   }
 
-  // principal vertices
-  pp.push_back(SVector3(0, 0, -1));
-  pp.push_back(SVector3(1, 0, -1));
-  pp.push_back(SVector3(0, 1, -1));
-  pp.push_back(SVector3(0, 0, 1));
-  pp.push_back(SVector3(1, 0, 1));
-  pp.push_back(SVector3(0, 1, 1));
+  fullMatrix<double> generatePointsCGNS(int parentType, int order,
+                                        bool complete)
+  {
+    std::vector<SVector3> pts;
 
-  // internal points in edges of base triangle
-  for(int i = 0; i < 3; i++)
-    addEdgePointsCGNS(pp[i], pp[(i + 1) % 3], order, pp);
-
-  // internal points in upstanding edges
-  std::vector<SVector3> edge[3]; // keep for definition of volume pp
-  for(int i = 0; i < 3; i++) {
-    addEdgePointsCGNS(pp[i], pp[i + 3], order, edge[i]);
-    pp.insert(pp.end(), edge[i].begin(), edge[i].end());
-  }
-
-  // internal points in edges of top triangle
-  for(int i = 0; i < 3; i++)
-    addEdgePointsCGNS(pp[i + 3], pp[(i + 1) % 3 + 3], order, pp);
-
-  if(complete) {
-    // internal vertices for base triangle
-    addTriPointsCGNS(pp[0], pp[1], pp[2], order, pp);
-
-    // internal vertices for upstanding quadrilaterals
-    for(int i = 0; i < 3; i++) {
-      addQuaPointsCGNS(pp[i], pp[(i + 1) % 3], pp[(i + 1) % 3 + 3], pp[i + 3],
-                        order, pp);
+    switch(parentType) {
+    case TYPE_LIN: pts = generatePointsEdgeCGNS(order); break;
+    case TYPE_TRI: pts = generatePointsTriCGNS(order, complete); break;
+    case TYPE_QUA: pts = generatePointsQuaCGNS(order, complete); break;
+    case TYPE_TET: pts = generatePointsTetCGNS(order, complete); break;
+    case TYPE_HEX: pts = generatePointsHexCGNS(order, complete); break;
+    case TYPE_PRI: pts = generatePointsPriCGNS(order, complete); break;
+    case TYPE_PYR: pts = generatePointsPyrCGNS(order, complete); break;
+    default:
+      Msg::Error(
+        "%s (%i) : Error CGNS element %s of order %i not yet implemented",
+        __FILE__, __LINE__, ElementType::nameOfParentType(parentType).c_str(),
+        order);
     }
 
-    // internal points for top triangle
-    addTriPointsCGNS(pp[3], pp[4], pp[5], order, pp);
-
-    // internal points in the volume as a succession of "triangles"
-    for(int o = 0; o < order - 1; o++) {
-      addTriPointsCGNS(edge[0][o], edge[1][o], edge[2][o], order, pp);
+    size_t dim = 0;
+    switch(parentType) {
+    case TYPE_PNT: dim = 3; break;
+    case TYPE_LIN: dim = 1; break;
+    case TYPE_TRI:
+    case TYPE_QUA: dim = 2; break;
+    case TYPE_TET:
+    case TYPE_HEX:
+    case TYPE_PRI:
+    case TYPE_PYR: dim = 3; break;
     }
-  }
 
-  return pp;
-}
-
-
-// WARNING: incomplete pyramid order 2 is wrong
-std::vector<SVector3> generatePointsPyrCGNS(int order, bool complete)
-{
-  std::vector<SVector3> pp;
-
-  if(order == 0) {
-    pp.push_back(SVector3(0., 0., 0.));
-    return pp;
-  }
-
-  // principal vertices
-  pp.push_back(SVector3(-1, -1, 0));
-  pp.push_back(SVector3(1, -1, 0));
-  pp.push_back(SVector3(1, 1, 0));
-  pp.push_back(SVector3(-1, 1, 0));
-  pp.push_back(SVector3(0, 0, 1));
-
-  // internal points in edges of base quadrilateral
-  for(int i = 0; i < 4; i++)
-    addEdgePointsCGNS(pp[i], pp[(i + 1) % 4], order, pp);
-
-  // internal points in upstanding edges
-  for(int i = 0; i < 4; i++) addEdgePointsCGNS(pp[i], pp[4], order, pp);
-
-  // internal points in base quadrilateral
-  addQuaPointsCGNS(pp[0], pp[1], pp[2], pp[3], order, pp);
-
-  // internal points in upstanding triangles
-  for(int i = 0; i < 4; i++)
-    addTriPointsCGNS(pp[i], pp[(i + 1) % 4], pp[4], order, pp);
-
-  // internal points as an internal pyramid of order p-3
-  if (order > 2) {
-    std::vector<SVector3> pyr = generatePointsPyrCGNS(order - 3, true);
-    SVector3 offset(0, 0, 1. / order);
-    double scale = double(order - 3) / double(order);
-    for(size_t i = 0; i < pyr.size(); ++i)
-      pp.push_back((pyr[i] * scale) + offset);
-  }
-
-  return pp;
-}
-
-
-fullMatrix<double> generatePointsCGNS(int parentType, int order,
-                                      bool complete)
-{
-  std::vector<SVector3> pts;
-
-  switch(parentType) {
-  case TYPE_LIN: pts = generatePointsEdgeCGNS(order); break;
-  case TYPE_TRI: pts = generatePointsTriCGNS(order, complete); break;
-  case TYPE_QUA: pts = generatePointsQuaCGNS(order, complete); break;
-  case TYPE_TET: pts = generatePointsTetCGNS(order, complete); break;
-  case TYPE_HEX: pts = generatePointsHexCGNS(order, complete); break;
-  case TYPE_PRI: pts = generatePointsPriCGNS(order, complete); break;
-  case TYPE_PYR: pts = generatePointsPyrCGNS(order, complete); break;
-  default:
-    Msg::Error(
-      "%s (%i) : Error CGNS element %s of order %i not yet implemented",
-      __FILE__, __LINE__, ElementType::nameOfParentType(parentType).c_str(),
-      order);
-  }
-
-  size_t dim = 0;
-  switch(parentType) {
-  case TYPE_PNT: dim = 3; break;
-  case TYPE_LIN: dim = 1; break;
-  case TYPE_TRI:
-  case TYPE_QUA: dim = 2; break;
-  case TYPE_TET:
-  case TYPE_HEX:
-  case TYPE_PRI:
-  case TYPE_PYR: dim = 3; break;
-  }
-
-  fullMatrix<double> ptsCGNS(pts.size(), dim);
-  for(size_t i = 0; i < pts.size(); i++) {
-    for(size_t d = 0; d < dim; d++) ptsCGNS(i, d) = pts[i][d];
-  }
-
-  return ptsCGNS;
-}
-
-
-std::vector<int> cgns2MshNodeIndexInit(int mshTag)
-{
-  const nodalBasis *nb = BasisFactory::getNodalBasis(mshTag);
-  const int nNode = nb->points.size1();
-
-  std::vector<int> nodes(nNode);
-
-  switch(mshTag) {
-  case MSH_PNT:
-  case MSH_LIN_2:
-  case MSH_TRI_3:
-  case MSH_QUA_4:
-  case MSH_TET_4:
-  case MSH_HEX_8:
-  case MSH_PRI_6:
-  case MSH_PYR_5: // linear elements: same ordering between Gmsh and CGNS
-    for(int i = 0; i < nNode; i++) nodes[i] = i;
-    break;
-  default: // high-order elements: get reordering by comparing points
-    int parent = ElementType::getParentType(mshTag);
-    int order = ElementType::getOrder(mshTag);
-    bool complete = (ElementType::getSerendipity(mshTag) <= 1);
-    fullMatrix<double> ptsCGNS = generatePointsCGNS(parent, order, complete);
-    const bool reorderOK = computeReordering(ptsCGNS, nb->points, nodes);
-    if(!reorderOK) {
-      Msg::Error("%s (%i) : Error in computation of reordering between Gmsh "
-                  "and CGNS element nodes for MSH type %i",
-                  __FILE__, __LINE__, mshTag);
+    fullMatrix<double> ptsCGNS(pts.size(), dim);
+    for(size_t i = 0; i < pts.size(); i++) {
+      for(size_t d = 0; d < dim; d++) ptsCGNS(i, d) = pts[i][d];
     }
-    break;
+
+    return ptsCGNS;
   }
 
-  return nodes;
-}
+  std::vector<int> cgns2MshNodeIndexInit(int mshTag)
+  {
+    const nodalBasis *nb = BasisFactory::getNodalBasis(mshTag);
+    const int nNode = nb->points.size1();
 
+    std::vector<int> nodes(nNode);
 
-// ------------- Conversion of element types between CGNS and Gmsh -------------
+    switch(mshTag) {
+    case MSH_PNT:
+    case MSH_LIN_2:
+    case MSH_TRI_3:
+    case MSH_QUA_4:
+    case MSH_TET_4:
+    case MSH_HEX_8:
+    case MSH_PRI_6:
+    case MSH_PYR_5: // linear elements: same ordering between Gmsh and CGNS
+      for(int i = 0; i < nNode; i++) nodes[i] = i;
+      break;
+    default: // high-order elements: get reordering by comparing points
+      int parent = ElementType::getParentType(mshTag);
+      int order = ElementType::getOrder(mshTag);
+      bool complete = (ElementType::getSerendipity(mshTag) <= 1);
+      fullMatrix<double> ptsCGNS = generatePointsCGNS(parent, order, complete);
+      const bool reorderOK = computeReordering(ptsCGNS, nb->points, nodes);
+      if(!reorderOK) {
+        Msg::Error("%s (%i) : Error in computation of reordering between Gmsh "
+                   "and CGNS element nodes for MSH type %i",
+                   __FILE__, __LINE__, mshTag);
+      }
+      break;
+    }
 
+    return nodes;
+  }
 
-std::vector<ElementType_t> msh2CgnsEltTypeInit()
-{
-  std::vector<ElementType_t> cgnsType(MSH_MAX_NUM + 1, ElementTypeNull);
+  // ------------- Conversion of element types between CGNS and Gmsh
+  // -------------
 
-  // All orders
-  cgnsType[MSH_PNT] = NODE;
+  std::vector<ElementType_t> msh2CgnsEltTypeInit()
+  {
+    std::vector<ElementType_t> cgnsType(MSH_MAX_NUM + 1, ElementTypeNull);
 
-  // Linear elements
-  cgnsType[MSH_LIN_2] = BAR_2;
-  cgnsType[MSH_TRI_3] = TRI_3;
-  cgnsType[MSH_QUA_4] = QUAD_4;
-  cgnsType[MSH_TET_4] = TETRA_4;
-  cgnsType[MSH_PYR_5] = PYRA_5;
-  cgnsType[MSH_PRI_6] = PENTA_6;
-  cgnsType[MSH_HEX_8] = HEXA_8;
+    // All orders
+    cgnsType[MSH_PNT] = NODE;
 
-  // Quadratic elements
-  cgnsType[MSH_LIN_3] = BAR_3;
-  cgnsType[MSH_TRI_6] = TRI_6;
-  cgnsType[MSH_QUA_8] = QUAD_8;
-  cgnsType[MSH_QUA_9] = QUAD_9;
-  cgnsType[MSH_TET_10] = TETRA_10;
-  cgnsType[MSH_PYR_13] = PYRA_13;
-  cgnsType[MSH_PYR_14] = PYRA_14;
-  cgnsType[MSH_PRI_15] = PENTA_15;
-  cgnsType[MSH_PRI_18] = PENTA_18;
-  cgnsType[MSH_HEX_20] = HEXA_20;
-  cgnsType[MSH_HEX_27] = HEXA_27;
+    // Linear elements
+    cgnsType[MSH_LIN_2] = BAR_2;
+    cgnsType[MSH_TRI_3] = TRI_3;
+    cgnsType[MSH_QUA_4] = QUAD_4;
+    cgnsType[MSH_TET_4] = TETRA_4;
+    cgnsType[MSH_PYR_5] = PYRA_5;
+    cgnsType[MSH_PRI_6] = PENTA_6;
+    cgnsType[MSH_HEX_8] = HEXA_8;
 
-  // Cubic elements
-  cgnsType[MSH_LIN_4] = BAR_4;
-  cgnsType[MSH_TRI_9] = TRI_9;
-  cgnsType[MSH_TRI_10] = TRI_10;
-  cgnsType[MSH_QUA_12] = QUAD_12;
-  cgnsType[MSH_QUA_16] = QUAD_16;
-  cgnsType[MSH_TET_16] = TETRA_16;
-  cgnsType[MSH_TET_20] = TETRA_20;
-  cgnsType[MSH_PYR_21] = PYRA_21;
-  cgnsType[MSH_PYR_29] = PYRA_29;
-  cgnsType[MSH_PYR_30] = PYRA_30;
-  cgnsType[MSH_PRI_24] = PENTA_24;
-  //  cgnsType[MSH_PRI_38] = PENTA_38;
-  cgnsType[MSH_PRI_40] = PENTA_40;
-  cgnsType[MSH_HEX_32] = HEXA_32;
-  cgnsType[MSH_HEX_56] = HEXA_56;
-  cgnsType[MSH_HEX_64] = HEXA_64;
+    // Quadratic elements
+    cgnsType[MSH_LIN_3] = BAR_3;
+    cgnsType[MSH_TRI_6] = TRI_6;
+    cgnsType[MSH_QUA_8] = QUAD_8;
+    cgnsType[MSH_QUA_9] = QUAD_9;
+    cgnsType[MSH_TET_10] = TETRA_10;
+    cgnsType[MSH_PYR_13] = PYRA_13;
+    cgnsType[MSH_PYR_14] = PYRA_14;
+    cgnsType[MSH_PRI_15] = PENTA_15;
+    cgnsType[MSH_PRI_18] = PENTA_18;
+    cgnsType[MSH_HEX_20] = HEXA_20;
+    cgnsType[MSH_HEX_27] = HEXA_27;
 
-  // Quartic elements
-  cgnsType[MSH_LIN_5] = BAR_5;
-  cgnsType[MSH_TRI_12] = TRI_12;
-  cgnsType[MSH_TRI_15] = TRI_15;
-  cgnsType[MSH_QUA_16] = QUAD_16;
-  cgnsType[MSH_QUA_25] = QUAD_25;
-  cgnsType[MSH_TET_22] = TETRA_22;
-  cgnsType[MSH_TET_34] = TETRA_34;
-  cgnsType[MSH_TET_35] = TETRA_35;
-  cgnsType[MSH_PYR_29] = PYRA_29;
-  //  cgnsType[MSH_PYR_50] = PYRA_50;
-  cgnsType[MSH_PYR_55] = PYRA_55;
-  cgnsType[MSH_PRI_33] = PENTA_33;
-  //  cgnsType[MSH_PRI_66] = PENTA_66;
-  cgnsType[MSH_PRI_75] = PENTA_75;
-  cgnsType[MSH_HEX_44] = HEXA_44;
-  //  cgnsType[MSH_HEX_98] = HEXA_98;
-  cgnsType[MSH_HEX_125] = HEXA_125;
+    // Cubic elements
+    cgnsType[MSH_LIN_4] = BAR_4;
+    cgnsType[MSH_TRI_9] = TRI_9;
+    cgnsType[MSH_TRI_10] = TRI_10;
+    cgnsType[MSH_QUA_12] = QUAD_12;
+    cgnsType[MSH_QUA_16] = QUAD_16;
+    cgnsType[MSH_TET_16] = TETRA_16;
+    cgnsType[MSH_TET_20] = TETRA_20;
+    cgnsType[MSH_PYR_21] = PYRA_21;
+    cgnsType[MSH_PYR_29] = PYRA_29;
+    cgnsType[MSH_PYR_30] = PYRA_30;
+    cgnsType[MSH_PRI_24] = PENTA_24;
+    //  cgnsType[MSH_PRI_38] = PENTA_38;
+    cgnsType[MSH_PRI_40] = PENTA_40;
+    cgnsType[MSH_HEX_32] = HEXA_32;
+    cgnsType[MSH_HEX_56] = HEXA_56;
+    cgnsType[MSH_HEX_64] = HEXA_64;
 
-  return cgnsType;
-}
+    // Quartic elements
+    cgnsType[MSH_LIN_5] = BAR_5;
+    cgnsType[MSH_TRI_12] = TRI_12;
+    cgnsType[MSH_TRI_15] = TRI_15;
+    cgnsType[MSH_QUA_16] = QUAD_16;
+    cgnsType[MSH_QUA_25] = QUAD_25;
+    cgnsType[MSH_TET_22] = TETRA_22;
+    cgnsType[MSH_TET_34] = TETRA_34;
+    cgnsType[MSH_TET_35] = TETRA_35;
+    cgnsType[MSH_PYR_29] = PYRA_29;
+    //  cgnsType[MSH_PYR_50] = PYRA_50;
+    cgnsType[MSH_PYR_55] = PYRA_55;
+    cgnsType[MSH_PRI_33] = PENTA_33;
+    //  cgnsType[MSH_PRI_66] = PENTA_66;
+    cgnsType[MSH_PRI_75] = PENTA_75;
+    cgnsType[MSH_HEX_44] = HEXA_44;
+    //  cgnsType[MSH_HEX_98] = HEXA_98;
+    cgnsType[MSH_HEX_125] = HEXA_125;
 
+    return cgnsType;
+  }
 
-std::vector<int> cgns2MshEltTypeInit()
-{
-  std::vector<int> mshType(NofValidElementTypes, 0);
+  std::vector<int> cgns2MshEltTypeInit()
+  {
+    std::vector<int> mshType(NofValidElementTypes, 0);
 
-  // All orders
-  mshType[NODE] = MSH_PNT;
+    // All orders
+    mshType[NODE] = MSH_PNT;
 
-  // Linear elements
-  mshType[BAR_2] = MSH_LIN_2;
-  mshType[TRI_3] = MSH_TRI_3;
-  mshType[QUAD_4] = MSH_QUA_4;
-  mshType[TETRA_4] = MSH_TET_4;
-  mshType[PYRA_5] = MSH_PYR_5;
-  mshType[PENTA_6] = MSH_PRI_6;
-  mshType[HEXA_8] = MSH_HEX_8;
+    // Linear elements
+    mshType[BAR_2] = MSH_LIN_2;
+    mshType[TRI_3] = MSH_TRI_3;
+    mshType[QUAD_4] = MSH_QUA_4;
+    mshType[TETRA_4] = MSH_TET_4;
+    mshType[PYRA_5] = MSH_PYR_5;
+    mshType[PENTA_6] = MSH_PRI_6;
+    mshType[HEXA_8] = MSH_HEX_8;
 
-  // Quadratic elements
-  mshType[BAR_3] = MSH_LIN_3;
-  mshType[TRI_6] = MSH_TRI_6;
-  mshType[QUAD_8] = MSH_QUA_8;
-  mshType[QUAD_9] = MSH_QUA_9;
-  mshType[TETRA_10] = MSH_TET_10;
-  mshType[PYRA_13] = MSH_PYR_13;
-  mshType[PYRA_14] = MSH_PYR_14;
-  mshType[PENTA_15] = MSH_PRI_15;
-  mshType[PENTA_18] = MSH_PRI_18;
-  mshType[HEXA_20] = MSH_HEX_20;
-  mshType[HEXA_27] = MSH_HEX_27;
+    // Quadratic elements
+    mshType[BAR_3] = MSH_LIN_3;
+    mshType[TRI_6] = MSH_TRI_6;
+    mshType[QUAD_8] = MSH_QUA_8;
+    mshType[QUAD_9] = MSH_QUA_9;
+    mshType[TETRA_10] = MSH_TET_10;
+    mshType[PYRA_13] = MSH_PYR_13;
+    mshType[PYRA_14] = MSH_PYR_14;
+    mshType[PENTA_15] = MSH_PRI_15;
+    mshType[PENTA_18] = MSH_PRI_18;
+    mshType[HEXA_20] = MSH_HEX_20;
+    mshType[HEXA_27] = MSH_HEX_27;
 
-  // Cubic elements
-  mshType[BAR_4] = MSH_LIN_4;
-  mshType[TRI_9] = MSH_TRI_9;
-  mshType[TRI_10] = MSH_TRI_10;
-  mshType[QUAD_12] = MSH_QUA_12;
-  mshType[QUAD_16] = MSH_QUA_16;
-  mshType[TETRA_16] = MSH_TET_16;
-  mshType[TETRA_20] = MSH_TET_20;
-  mshType[PYRA_21] = MSH_PYR_21;
-  mshType[PYRA_29] = MSH_PYR_29;
-  mshType[PYRA_30] = MSH_PYR_30;
-  mshType[PENTA_24] = MSH_PRI_24;
-  //  mshType[PENTA_38] = MSH_PRI_38;
-  mshType[PENTA_40] = MSH_PRI_40;
-  mshType[HEXA_32] = MSH_HEX_32;
-  mshType[HEXA_56] = MSH_HEX_56;
-  mshType[HEXA_64] = MSH_HEX_64;
+    // Cubic elements
+    mshType[BAR_4] = MSH_LIN_4;
+    mshType[TRI_9] = MSH_TRI_9;
+    mshType[TRI_10] = MSH_TRI_10;
+    mshType[QUAD_12] = MSH_QUA_12;
+    mshType[QUAD_16] = MSH_QUA_16;
+    mshType[TETRA_16] = MSH_TET_16;
+    mshType[TETRA_20] = MSH_TET_20;
+    mshType[PYRA_21] = MSH_PYR_21;
+    mshType[PYRA_29] = MSH_PYR_29;
+    mshType[PYRA_30] = MSH_PYR_30;
+    mshType[PENTA_24] = MSH_PRI_24;
+    //  mshType[PENTA_38] = MSH_PRI_38;
+    mshType[PENTA_40] = MSH_PRI_40;
+    mshType[HEXA_32] = MSH_HEX_32;
+    mshType[HEXA_56] = MSH_HEX_56;
+    mshType[HEXA_64] = MSH_HEX_64;
 
-  // Quartic elements
-  mshType[BAR_5] = MSH_LIN_5;
-  mshType[TRI_12] = MSH_TRI_12;
-  mshType[TRI_15] = MSH_TRI_15;
-  mshType[QUAD_16] = MSH_QUA_16;
-  mshType[QUAD_25] = MSH_QUA_25;
-  mshType[TETRA_22] = MSH_TET_22;
-  mshType[TETRA_34] = MSH_TET_34;
-  mshType[TETRA_35] = MSH_TET_35;
-  mshType[PYRA_29] = MSH_PYR_29;
-  //  mshType[PYRA_50] = MSH_PYR_50;
-  mshType[PYRA_55] = MSH_PYR_55;
-  mshType[PENTA_33] = MSH_PRI_33;
-  //  mshType[PENTA_66] = MSH_PRI_66;
-  mshType[PENTA_75] = MSH_PRI_75;
-  mshType[HEXA_44] = MSH_HEX_44;
-  //  mshType[HEXA_98] = MSH_HEX_98;
-  mshType[HEXA_125] = MSH_HEX_125;
+    // Quartic elements
+    mshType[BAR_5] = MSH_LIN_5;
+    mshType[TRI_12] = MSH_TRI_12;
+    mshType[TRI_15] = MSH_TRI_15;
+    mshType[QUAD_16] = MSH_QUA_16;
+    mshType[QUAD_25] = MSH_QUA_25;
+    mshType[TETRA_22] = MSH_TET_22;
+    mshType[TETRA_34] = MSH_TET_34;
+    mshType[TETRA_35] = MSH_TET_35;
+    mshType[PYRA_29] = MSH_PYR_29;
+    //  mshType[PYRA_50] = MSH_PYR_50;
+    mshType[PYRA_55] = MSH_PYR_55;
+    mshType[PENTA_33] = MSH_PRI_33;
+    //  mshType[PENTA_66] = MSH_PRI_66;
+    mshType[PENTA_75] = MSH_PRI_75;
+    mshType[HEXA_44] = MSH_HEX_44;
+    //  mshType[HEXA_98] = MSH_HEX_98;
+    mshType[HEXA_125] = MSH_HEX_125;
 
-  return mshType;
-}
-
+    return mshType;
+  }
 
 } // namespace
-
 
 // msh to CGNS element type
 ElementType_t msh2CgnsEltType(int mshTag)
@@ -631,7 +611,6 @@ ElementType_t msh2CgnsEltType(int mshTag)
   return cgnsType[mshTag];
 }
 
-
 // CGNS to msh element type
 int cgns2MshEltType(ElementType_t cgnsType)
 {
@@ -641,11 +620,10 @@ int cgns2MshEltType(ElementType_t cgnsType)
   return mshType[cgnsType];
 }
 
-
 // CGNS to msh node ordering
 std::vector<int> &cgns2MshNodeIndex(int mshTag)
 {
-  static std::vector<std::vector<int> > mshInd(MSH_MAX_NUM+1);
+  static std::vector<std::vector<int> > mshInd(MSH_MAX_NUM + 1);
   static std::vector<int> dumInd;
 
   if(mshTag > MSH_MAX_NUM) return dumInd;
@@ -656,7 +634,6 @@ std::vector<int> &cgns2MshNodeIndex(int mshTag)
 
   return mshInd[mshTag];
 }
-
 
 // // msh to CGNS node ordering
 // std::vector<int> &msh2CgnsNodeIndex(int mshTag)
@@ -675,7 +652,6 @@ std::vector<int> &cgns2MshNodeIndex(int mshTag)
 //   return cgnsInd[mshTag];
 // }
 
-
 void msh2CgnsReferenceElement(int mshType, const fullMatrix<double> &mshPts,
                               std::vector<double> &u, std::vector<double> &v,
                               std::vector<double> &w)
@@ -683,45 +659,44 @@ void msh2CgnsReferenceElement(int mshType, const fullMatrix<double> &mshPts,
   int parentType = ElementType::getParentType(mshType);
 
   switch(parentType) {
-  case TYPE_PNT:
-    u[0] = mshPts(0, 0);
+  case TYPE_PNT: u[0] = mshPts(0, 0); break;
+  case TYPE_LIN: // Gmsh and CGNS both in [-1, 1]
+    for(int i = 0; i < mshPts.size1(); i++) { u[i] = mshPts(i, 0); }
     break;
-  case TYPE_LIN:  // Gmsh and CGNS both in [-1, 1]
+  case TYPE_QUA: // Gmsh and CGNS both in [-1, 1]
     for(int i = 0; i < mshPts.size1(); i++) {
       u[i] = mshPts(i, 0);
+      v[i] = mshPts(i, 1);
     }
     break;
-  case TYPE_QUA:  // Gmsh and CGNS both in [-1, 1]
+  case TYPE_HEX: // Gmsh and CGNS both in [-1, 1]
     for(int i = 0; i < mshPts.size1(); i++) {
-      u[i] = mshPts(i, 0); v[i] = mshPts(i, 1);
+      u[i] = mshPts(i, 0);
+      v[i] = mshPts(i, 1);
+      w[i] = mshPts(i, 2);
     }
     break;
-  case TYPE_HEX:  // Gmsh and CGNS both in [-1, 1]
-    for(int i = 0; i < mshPts.size1(); i++) {
-      u[i] = mshPts(i, 0); v[i] = mshPts(i, 1); w[i] = mshPts(i, 2);
-    }
-    break;
-  case TYPE_TRI:  // Gmsh in [0, 1], CGNS in [-1, 1]
+  case TYPE_TRI: // Gmsh in [0, 1], CGNS in [-1, 1]
     for(int i = 0; i < mshPts.size1(); i++) {
       u[i] = 2. * mshPts(i, 0) - 1.;
       v[i] = 2. * mshPts(i, 1) - 1.;
     }
     break;
-  case TYPE_TET:  // Gmsh in [0, 1], CGNS in [-1, 1]
+  case TYPE_TET: // Gmsh in [0, 1], CGNS in [-1, 1]
     for(int i = 0; i < mshPts.size1(); i++) {
       u[i] = 2. * mshPts(i, 0) - 1.;
       v[i] = 2. * mshPts(i, 1) - 1.;
       w[i] = 2. * mshPts(i, 2) - 1.;
     }
     break;
-  case TYPE_PRI:  // uv: Gmsh in [0, 1] and CGNS in [-1, 1], w: both in [-1, 1]
+  case TYPE_PRI: // uv: Gmsh in [0, 1] and CGNS in [-1, 1], w: both in [-1, 1]
     for(int i = 0; i < mshPts.size1(); i++) {
       u[i] = 2. * mshPts(i, 0) - 1.;
       v[i] = 2. * mshPts(i, 1) - 1.;
       w[i] = mshPts(i, 2);
     }
     break;
-  case TYPE_PYR:  // uv: both in [-1, 1], w: Gmsh in [0, 1] and CGNS in [-1, 1]
+  case TYPE_PYR: // uv: both in [-1, 1], w: Gmsh in [0, 1] and CGNS in [-1, 1]
     for(int i = 0; i < mshPts.size1(); i++) {
       u[i] = mshPts(i, 0);
       v[i] = mshPts(i, 1);
@@ -734,9 +709,8 @@ void msh2CgnsReferenceElement(int mshType, const fullMatrix<double> &mshPts,
   }
 }
 
-
 bool computeReordering(fullMatrix<double> src, fullMatrix<double> dest,
-                        std::vector<int> &ind)
+                       std::vector<int> &ind)
 {
   static const double TOLSQ = 1e-10 * 1e-10;
 
@@ -763,13 +737,11 @@ bool computeReordering(fullMatrix<double> src, fullMatrix<double> dest,
   return (found.size() == nNode);
 }
 
-
 std::string cgnsString(const std::string &s, std::string::size_type maxLength)
 {
   std::string s2(s);
   if(s2.size() > maxLength) s2.resize(maxLength);
   return s2;
 }
-
 
 #endif // HAVE_LIBCGNS

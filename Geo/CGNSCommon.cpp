@@ -10,35 +10,27 @@
 
 #if defined(HAVE_LIBCGNS)
 
-
 int cgnsError(const char *file, const int line, const int fileIndex)
 {
   Msg::Error("%s:%i: Error from CGNS library -- %s", file, line,
              cg_get_error());
   if(fileIndex != -1) {
-    if(cg_close(fileIndex)) {
-      Msg::Error("Unable to close CGNS file");
-    }
+    if(cg_close(fileIndex)) { Msg::Error("Unable to close CGNS file"); }
   }
   return 0;
 }
 
-
 void printProgress(const char *cstr, std::size_t i, std::size_t num)
 {
   if(num > 100) {
-    if(i % 100 == 1) {
-      Msg::Info("%s %d/%d", cstr, i, num);
-    }
+    if(i % 100 == 1) { Msg::Info("%s %d/%d", cstr, i, num); }
   }
   else {
     Msg::Info("%s %d/%d", cstr, i, num);
   }
 }
 
-
 #if defined(HAVE_LIBCGNS_CPEX0045)
-
 
 int evalMonomialBasis(int mshType, const std::vector<double> &u,
                       const std::vector<double> &v,
@@ -47,7 +39,7 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
   // get parent type and order
   const int parentType = ElementType::getParentType(mshType);
   const int order = ElementType::getOrder(mshType);
-  
+
   // get serendipity
   const int serend = ElementType::getSerendipity(mshType);
   if(serend > 1) {
@@ -58,21 +50,19 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
 
   // compute values of monomials at given points
   int nbPt = u.size();
-  if(parentType == TYPE_PNT) {
-    val(0, 0) = 1.;
-  }
+  if(parentType == TYPE_PNT) { val(0, 0) = 1.; }
   else if(parentType == TYPE_LIN) {
     for(int iPt = 0; iPt < nbPt; iPt++) {
       val(0, iPt) = 1.;
-      for(int i = 1; i <= order; i++) val(i, iPt) = u[iPt] * val(i-1, iPt); 
+      for(int i = 1; i <= order; i++) val(i, iPt) = u[iPt] * val(i - 1, iPt);
     }
   }
   else if(parentType == TYPE_TRI) {
     for(int iPt = 0; iPt < nbPt; iPt++) {
       int iSF = 0;
       for(int i = 0; i <= order; i++) {
-        for (int j = 0; j <= i; j++) {
-          val(iSF, iPt) = std::pow(u[iPt], i-j) * std::pow(v[iPt], j);
+        for(int j = 0; j <= i; j++) {
+          val(iSF, iPt) = std::pow(u[iPt], i - j) * std::pow(v[iPt], j);
           iSF++;
         }
       }
@@ -82,7 +72,7 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
     for(int iPt = 0; iPt < nbPt; iPt++) {
       int iSF = 0;
       for(int i = 0; i <= order; i++) {
-        for (int j = 0; j <= order; j++) {
+        for(int j = 0; j <= order; j++) {
           val(iSF, iPt) = std::pow(u[iPt], i) * std::pow(v[iPt], j);
           iSF++;
         }
@@ -93,9 +83,9 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
     for(int iPt = 0; iPt < nbPt; iPt++) {
       int iSF = 0;
       for(int i = 0; i <= order; i++) {
-        for (int j = 0; j <= i; j++) {
-          for (int k = 0; k <= i-j; k++) {
-            val(iSF, iPt) = std::pow(u[iPt], i-j-k) * std::pow(v[iPt], k) *
+        for(int j = 0; j <= i; j++) {
+          for(int k = 0; k <= i - j; k++) {
+            val(iSF, iPt) = std::pow(u[iPt], i - j - k) * std::pow(v[iPt], k) *
                             std::pow(w[iPt], j);
             iSF++;
           }
@@ -108,7 +98,7 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
     BergotBasis bb(order);
     for(int iPt = 0; iPt < nbPt; iPt++) {
       double oneVal[385];
-      const double ww = 0.5 * (w[iPt] + 1.);  // use Gmsh coord for BergotBasis 
+      const double ww = 0.5 * (w[iPt] + 1.); // use Gmsh coord for BergotBasis
       bb.f(u[iPt], v[iPt], ww, oneVal);
       for(int iSF = 0; iSF < nbSF; iSF++) val(iSF, iPt) = oneVal[iSF];
     }
@@ -117,9 +107,10 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
     for(int iPt = 0; iPt < nbPt; iPt++) {
       int iSF = 0;
       for(int i = 0; i <= order; i++) {
-        for (int j = 0; j <= i; j++) {
-          for (int k = 0; k <= order; k++) {
-            val(iSF, iPt) = std::pow(u[iPt], i-j) * std::pow(v[iPt], j) * std::pow(w[iPt], k);  // TODO: to be clarified
+        for(int j = 0; j <= i; j++) {
+          for(int k = 0; k <= order; k++) {
+            val(iSF, iPt) = std::pow(u[iPt], i - j) * std::pow(v[iPt], j) *
+                            std::pow(w[iPt], k); // TODO: to be clarified
             iSF++;
           }
         }
@@ -130,9 +121,10 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
     for(int iPt = 0; iPt < nbPt; iPt++) {
       int iSF = 0;
       for(int i = 0; i <= order; i++) {
-        for (int j = 0; j <= order; j++) {
-          for (int k = 0; k <= order; k++) {
-            val(iSF, iPt) = std::pow(u[iPt], i) * std::pow(v[iPt], j) * std::pow(w[iPt], k);
+        for(int j = 0; j <= order; j++) {
+          for(int k = 0; k <= order; k++) {
+            val(iSF, iPt) =
+              std::pow(u[iPt], i) * std::pow(v[iPt], j) * std::pow(w[iPt], k);
             iSF++;
           }
         }
@@ -141,18 +133,17 @@ int evalMonomialBasis(int mshType, const std::vector<double> &u,
   }
   else {
     Msg::Error("Element of parent type %i is not supported in CPEX0045 mode "
-               "in CGNS reader", parentType);
+               "in CGNS reader",
+               parentType);
     return 0;
   }
 
   return 1;
 }
 
-
 #endif // HAVE_LIBCGNS_CPEX0045
 
-
-template<int DIM>
+template <int DIM>
 void StructuredIndexing<DIM>::entFromRange(const cgsize_t *range,
                                            const cgsize_t *nbEntIJK,
                                            std::vector<cgsize_t> &elt)
@@ -160,12 +151,12 @@ void StructuredIndexing<DIM>::entFromRange(const cgsize_t *range,
   elt.resize(nbEntInRange(range));
 
   // range of IJK indices
-  const cgsize_t ijkStart[3] = {range[0]-1, range[1]-1,
-                                (DIM == 3) ? range[2]-1 : 0};
-  const cgsize_t ijkEnd[3] = {range[DIM]-1, range[DIM+1]-1,
-                              (DIM == 3) ? range[5]-1 : 0};
+  const cgsize_t ijkStart[3] = {range[0] - 1, range[1] - 1,
+                                (DIM == 3) ? range[2] - 1 : 0};
+  const cgsize_t ijkEnd[3] = {range[DIM] - 1, range[DIM + 1] - 1,
+                              (DIM == 3) ? range[5] - 1 : 0};
   const cgsize_t ijkInc[3] = {(range[DIM] >= range[0]) ? 1 : -1,
-                              (range[DIM+1] >= range[1]) ? 1 : -1,
+                              (range[DIM + 1] >= range[1]) ? 1 : -1,
                               ((DIM < 3) || (range[5] >= range[2])) ? 1 : -1};
 
   // compute list of elements from range
@@ -181,8 +172,7 @@ void StructuredIndexing<DIM>::entFromRange(const cgsize_t *range,
   }
 }
 
-
-template<int DIM>
+template <int DIM>
 void StructuredIndexing<DIM>::entFromList(const std::vector<cgsize_t> &list,
                                           const cgsize_t *nbEntIJK,
                                           std::vector<cgsize_t> &elt)
@@ -192,15 +182,14 @@ void StructuredIndexing<DIM>::entFromList(const std::vector<cgsize_t> &list,
 
   for(std::size_t i = 0; i < nb; i++) {
     cgsize_t ijk[3];
-    for(int d = 0; d < DIM; d++) ijk[d] = list[i*DIM+d] - 1;
-    elt[i] = ijk2Ind<DIM>(ijk, nbEntIJK);;
+    for(int d = 0; d < DIM; d++) ijk[d] = list[i * DIM + d] - 1;
+    elt[i] = ijk2Ind<DIM>(ijk, nbEntIJK);
+    ;
   }
 }
-
 
 // explicit instantiation of StructuredIndexing
 template struct StructuredIndexing<2>;
 template struct StructuredIndexing<3>;
-
 
 #endif // HAVE_LIBCGNS

@@ -14,13 +14,12 @@
 
 #if defined(HAVE_LIBCGNS)
 
-
 CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex, ZoneType_t type,
                    int meshDim, cgsize_t startNode,
-                   const Family2EltNodeTransfo &allEltNodeTransfo, int &err) :
-  fileIndex_(fileIndex), baseIndex_(baseIndex), meshDim_(meshDim),
-  zoneIndex_(zoneIndex), type_(type), startNode_(startNode), eltNodeTransfo_(0),
-  nbPerConnect_(0)
+                   const Family2EltNodeTransfo &allEltNodeTransfo, int &err)
+  : fileIndex_(fileIndex), baseIndex_(baseIndex), meshDim_(meshDim),
+    zoneIndex_(zoneIndex), type_(type), startNode_(startNode),
+    eltNodeTransfo_(0), nbPerConnect_(0)
 {
   int cgnsErr;
 
@@ -41,12 +40,12 @@ CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex, ZoneType_t type,
         allEltNodeTransfo.find(std::string(famName));
       if(it != allEltNodeTransfo.end()) eltNodeTransfo_ = &(it->second);
     }
-    else err = cgnsError(__FILE__, __LINE__, fileIndex);
+    else
+      err = cgnsError(__FILE__, __LINE__, fileIndex);
   }
 
   err = 1;
 }
-
 
 // read a boundary condition in a zone
 int CGNSZone::readBoundaryCondition(int iZoneBC,
@@ -64,34 +63,37 @@ int CGNSZone::readBoundaryCondition(int iZoneBC,
   int nbDataSet;
   int normalIndex;
   cgnsErr = cg_boco_info(fileIndex(), baseIndex(), index(), iZoneBC, rawBCName,
-                         &bcType, &ptSetType, &nbVal, &normalIndex,
-                         &normalSize, &normalType, &nbDataSet);
+                         &bcType, &ptSetType, &nbVal, &normalIndex, &normalSize,
+                         &normalType, &nbDataSet);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get BC name from family linked to BC, use original BC name if not present,
   // then retrieve BC index
   std::string geomName;
-  cgnsErr = cg_goto(fileIndex(), baseIndex(), "Zone_t", index(), "ZoneBC_t",
-                    1, "BC_t", iZoneBC, "end");
+  cgnsErr = cg_goto(fileIndex(), baseIndex(), "Zone_t", index(), "ZoneBC_t", 1,
+                    "BC_t", iZoneBC, "end");
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
   char rawFamilyName[CGNS_MAX_STR_LEN];
   cgnsErr = cg_famname_read(rawFamilyName);
   if(cgnsErr != CG_NODE_NOT_FOUND) {
-    if(cgnsErr == CG_OK) geomName = std::string(rawFamilyName);
-    else return cgnsError(__FILE__, __LINE__, fileIndex());
+    if(cgnsErr == CG_OK)
+      geomName = std::string(rawFamilyName);
+    else
+      return cgnsError(__FILE__, __LINE__, fileIndex());
   }
-  else geomName = std::string(rawBCName);
+  else
+    geomName = std::string(rawBCName);
   const int indGeom = nameIndex(geomName, allGeomName);
 
   // read location of bnd. condition (type of mesh entity on which it applies)
   GridLocation_t location;
-  cgnsErr = cg_boco_gridlocation_read(fileIndex(), baseIndex(), index(), iZoneBC,
-                                      &location);
+  cgnsErr = cg_boco_gridlocation_read(fileIndex(), baseIndex(), index(),
+                                      iZoneBC, &location);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // check that boundary condition is imposed on face elements
-  if((type() == Unstructured) && (meshDim() == 2) &&
-     (location != CellCenter) && (location != EdgeCenter)) {
+  if((type() == Unstructured) && (meshDim() == 2) && (location != CellCenter) &&
+     (location != EdgeCenter)) {
     Msg::Warning("Boundary condition %s is specified on %s instead of "
                  "CellCenter/EdgeCenter in a 2D zone, skipping",
                  geomName.c_str(), cg_GridLocationName(location));
@@ -109,13 +111,9 @@ int CGNSZone::readBoundaryCondition(int iZoneBC,
   std::vector<cgsize_t> bcElt;
   switch(ptSetType) {
   case ElementRange:
-  case PointRange:
-    readBoundaryConditionRange(iZoneBC, bcElt);
-    break;
+  case PointRange: readBoundaryConditionRange(iZoneBC, bcElt); break;
   case ElementList:
-  case PointList:
-    readBoundaryConditionList(iZoneBC, nbVal, bcElt);
-    break;
+  case PointList: readBoundaryConditionList(iZoneBC, nbVal, bcElt); break;
   default:
     Msg::Error("Wrong point set type %s is for boundary condition %s",
                cg_PointSetTypeName(ptSetType), geomName);
@@ -129,7 +127,6 @@ int CGNSZone::readBoundaryCondition(int iZoneBC,
   return 1;
 }
 
-
 int CGNSZone::readVertices(int dim, double scale,
                            std::vector<CGNSZone *> &allZones,
                            std::vector<MVertex *> &zoneVert)
@@ -142,7 +139,8 @@ int CGNSZone::readVertices(int dim, double scale,
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
   if(dimZone > dim) {
     Msg::Warning("%i coordinates in CGNS zone %i, while base has dimension %i,"
-                 " discarding upper dimensions", dimZone, index(), dim);
+                 " discarding upper dimensions",
+                 dimZone, index(), dim);
   }
   else if(dimZone < dim) {
     Msg::Error("%i coordinates in CGNS zone %i, while base has dimension %i",
@@ -155,7 +153,7 @@ int CGNSZone::readVertices(int dim, double scale,
   for(int iXYZ = 0; iXYZ < dim; iXYZ++) {
     char xyzName[CGNS_MAX_STR_LEN];
     DataType_t dataType;
-    cgnsErr = cg_coord_info(fileIndex(), baseIndex(), index(), iXYZ+1,
+    cgnsErr = cg_coord_info(fileIndex(), baseIndex(), index(), iXYZ + 1,
                             &dataType, xyzName);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
     const int startInd[3] = {1, 1, 1};
@@ -176,7 +174,6 @@ int CGNSZone::readVertices(int dim, double scale,
 
   return 1;
 }
-
 
 int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
                                  std::vector<CGNSZone *> &allZones)
@@ -213,8 +210,8 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
 
     // read periodic info, skip if not periodic
     float rotCenter[3], rotAngle[3], trans[3];
-    cgnsErr = cg_conn_periodic_read(fileIndex(), baseIndex(), index(),
-                                    iConnect, rotCenter, rotAngle, trans);
+    cgnsErr = cg_conn_periodic_read(fileIndex(), baseIndex(), index(), iConnect,
+                                    rotCenter, rotAngle, trans);
     if(cgnsErr == CG_NODE_NOT_FOUND) continue;
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
@@ -237,8 +234,8 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
 
     // get and check data on master zone
     const std::string masterName(donorName);
-    const std::map<std::string, int>::const_iterator itMasterName = 
-                                                     name2Zone.find(masterName);
+    const std::map<std::string, int>::const_iterator itMasterName =
+      name2Zone.find(masterName);
     if(itMasterName == name2Zone.end()) {
       Msg::Error("Zone name '%s' in not found in connection %i of zone %i",
                  masterName, iConnect, index());
@@ -261,15 +258,17 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
 
     // get slave and master nodes
     std::vector<cgsize_t> sNode, mNode;
-    if(ptSetType == PointRange) nodeFromRange(slaveData, sNode);
-    else if(ptSetType == PointList) nodeFromList(slaveData, sNode);
+    if(ptSetType == PointRange)
+      nodeFromRange(slaveData, sNode);
+    else if(ptSetType == PointList)
+      nodeFromList(slaveData, sNode);
     if(ptSetTypeDonor != PointListDonor) {
       Msg::Error("Only PointListDonor sets are supported for donnor points for "
                  "general connections in CGNS reader");
       return 0;
     }
     mZone->nodeFromList(masterData, mNode);
-  
+
     // add periodic connection
     nbPerConnect_++;
     perTransfo_.push_back(std::vector<double>());
@@ -283,7 +282,6 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
 
   return 1;
 }
-
 
 int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
                        std::vector<MVertex *> &allVert,
@@ -319,7 +317,6 @@ int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
   return 1;
 }
 
-
 void CGNSZone::setPeriodicVertices(const std::vector<CGNSZone *> &allZones,
                                    const std::vector<MVertex *> &allVert)
 {
@@ -338,15 +335,14 @@ void CGNSZone::setPeriodicVertices(const std::vector<CGNSZone *> &allZones,
   }
 }
 
-
 int CGNSZone::readBoundaryConditionRange(int iZoneBC,
                                          std::vector<cgsize_t> &bcElt)
 {
   int cgnsErr;
 
   std::vector<cgsize_t> bcData(indexDataSize(2));
-  cgnsErr = cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC,
-                         bcData.data(), 0);
+  cgnsErr =
+    cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC, bcData.data(), 0);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get list of elements from range data
@@ -355,7 +351,6 @@ int CGNSZone::readBoundaryConditionRange(int iZoneBC,
   return 1;
 }
 
-
 int CGNSZone::readBoundaryConditionList(int iZoneBC, cgsize_t nbVal,
                                         std::vector<cgsize_t> &bcElt)
 {
@@ -363,8 +358,8 @@ int CGNSZone::readBoundaryConditionList(int iZoneBC, cgsize_t nbVal,
 
   // read data
   std::vector<cgsize_t> bcData(indexDataSize(nbVal));
-  cgnsErr = cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC,
-                         bcData.data(), 0);
+  cgnsErr =
+    cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC, bcData.data(), 0);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get list of elements from list data
@@ -372,6 +367,5 @@ int CGNSZone::readBoundaryConditionList(int iZoneBC, cgsize_t nbVal,
 
   return 1;
 }
-
 
 #endif // HAVE_LIBCGNS

@@ -734,9 +734,7 @@ public:
     boFaceMap.clear();
     boVertMap.clear();
     zoneVertVec.clear();
-    for(int i = 0; i != MSH_MAX_NUM; ++i) {
-      zoneElemConn[i].clear();
-    }
+    for(int i = 0; i != MSH_MAX_NUM; ++i) { zoneElemConn[i].clear(); }
     numBoVert = 0;
   }
 
@@ -1114,7 +1112,7 @@ public:
                                ZoneConnMap &zoneConnMap);
 
   //--Return exterior boundary vertices (unconnected vertices at the extent of
-  //the
+  // the
   //--domain
 
   int exteriorBoundaryVertices(const int normalSource, ZoneBoVec &zoneBoVec);

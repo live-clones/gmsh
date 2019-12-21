@@ -13,17 +13,14 @@
 
 #if defined(HAVE_LIBCGNS)
 
-
 class GModel;
 class MVertex;
 class MElement;
 class CGNSZone;
 
-
 // types for high-order node tranformation (CPEX0045)
 typedef std::vector<std::vector<int> > ZoneEltNodeTransfo;
 typedef std::map<std::string, ZoneEltNodeTransfo> Family2EltNodeTransfo;
-
 
 std::size_t nameIndex(const std::string &name,
                       std::vector<std::string> &allNames);

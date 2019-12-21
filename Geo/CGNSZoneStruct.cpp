@@ -14,322 +14,359 @@
 
 #if defined(HAVE_LIBCGNS)
 
-
 namespace {
 
+  template <int DIM>
+  MElement *createElement(const cgsize_t *ijk, const cgsize_t *nijk, int order,
+                          std::size_t vertShift,
+                          std::vector<MVertex *> &allVert,
+                          std::map<int, std::vector<MElement *> > *allElt);
 
-template<int DIM>
-MElement *createElement(const cgsize_t *ijk, const cgsize_t *nijk,
-                        int order, std::size_t vertShift,
-                        std::vector<MVertex *> &allVert,
-                        std::map<int, std::vector<MElement *> > *allElt);
-
-
-void initLinShift(int order, int *shift)
-{
-  fullMatrix<double> mono = gmshGenerateMonomialsLine(order, false);
-  for(int i = 0; i < mono.size1(); i++) {
-    shift[i] = mono(i, 0) + 0.5; // round double 
-  }
-}
-
-
-void initQuadShift(int order, int *shift)
-{
-  fullMatrix<double> mono = gmshGenerateMonomialsQuadrangle(order, false);
-  for(int i = 0; i < mono.size1(); i++) {
-    for(int j = 0; j < 2; j++) shift[i*2+j] = mono(i, j) + 0.5; // round double 
-  }
-}
-
-
-void initHexShift(int order, int *shift)
-{
-  fullMatrix<double> mono = gmshGenerateMonomialsHexahedron(order, false);
-  for(int i = 0; i < mono.size1(); i++) {
-    for(int j = 0; j < 3; j++) shift[i*3+j] = mono(i, j) + 0.5; // round double 
-  }
-}
-
-
-template<>
-MElement *createElement<2>(const cgsize_t *ijk, const cgsize_t *nijk, 
-                           int order, std::size_t vertShift,
-                           std::vector<MVertex *> &allVert,
-                           std::map<int, std::vector<MElement *> > *allElt)
-{
-  // node shift from (i, j, k) depending on order
-  static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
-  static int shiftP2[9][2] = {{0, 0}, {2, 0}, {2, 2}, {0, 2}, {1, 0}, {2, 1},
-                              {1, 2}, {0, 1}, {1, 1}};
-
-  // get element vertices
-  int mshEltType;
-  int *s;
-  if(order == 2) {
-    mshEltType = MSH_QUA_9;
-    s = (int*)shiftP2;
-  }
-  else {
-    mshEltType = MSH_QUA_4;
-    s = (int*)shiftP1;
-  }
-  int nbEltNode = ElementType::getNumVertices(mshEltType);
-  std::vector<MVertex *> eltVert(nbEltNode);
-  for(int iN = 0; iN < nbEltNode; iN++) {
-    const cgsize_t ijN[3] = {ijk[0]+s[2*iN], ijk[1]+s[2*iN+1]};
-    const int ind = vertShift + ijk2Ind<2>(ijN, nijk);
-    eltVert[iN] = allVert[ind];
-  }
-
-  // create element
-  MElementFactory factory;
-  MElement *e = factory.create(mshEltType, eltVert);
-
-  // add element to data structure
-  int entity = 1;
-  allElt[3][entity].push_back(e);
-
-  return e;
-}
-
-
-template<>
-MElement *createElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
-                           int order, std::size_t vertShift,
-                           std::vector<MVertex *> &allVert,
-                           std::map<int, std::vector<MElement *> > *allElt)
-{
-  // node shift from (i, j, k) depending on order
-  static bool isShiftInit[4] = {false, false, false, false};
-  static int shiftP1[8*3], shiftP2[27*3], shiftP3[64*3], shiftP4[125*3];
-
-  // get element vertices
-  int mshEltType;
-  int *s;
-  switch(order)
+  void initLinShift(int order, int *shift)
   {
-  case 1:
-    mshEltType = MSH_HEX_8;
-    if(!isShiftInit[0]) { initHexShift(1, shiftP1); isShiftInit[0] = true; }
-    s = (int*)shiftP1;
-    break;
-  case 2:
-    mshEltType = MSH_HEX_27;
-    if(!isShiftInit[1]) { initHexShift(2, shiftP2); isShiftInit[1] = true; }
-    s = (int*)shiftP2;
-    break;
-  case 3:
-    mshEltType = MSH_HEX_64;
-    if(!isShiftInit[2]) { initHexShift(3, shiftP3); isShiftInit[2] = true; }
-    s = (int*)shiftP3;
-    break;
-  case 4:
-    mshEltType = MSH_HEX_125;
-    if(!isShiftInit[3]) { initHexShift(4, shiftP4); isShiftInit[3] = true; }
-    s = (int*)shiftP4;
-    break;
-  default:
-    Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
-               "linear", order);
-    mshEltType = MSH_HEX_8;
-    if(!isShiftInit[0]) { initHexShift(1, shiftP1); isShiftInit[0] = true; }
-    s = (int*)shiftP1;
-    break;
-  }
-  int nbEltNode = ElementType::getNumVertices(mshEltType);
-  std::vector<MVertex *> eltVert(nbEltNode);
-  for(int iN = 0; iN < nbEltNode; iN++) {
-    const cgsize_t ijkN[3] = {ijk[0]+s[3*iN], ijk[1]+s[3*iN+1],
-                              ijk[2]+s[3*iN+2]};
-    const cgsize_t ind = vertShift + ijk2Ind<3>(ijkN, nijk);
-    eltVert[iN] = allVert[ind];
+    fullMatrix<double> mono = gmshGenerateMonomialsLine(order, false);
+    for(int i = 0; i < mono.size1(); i++) {
+      shift[i] = mono(i, 0) + 0.5; // round double
+    }
   }
 
-  // create element
-  MElementFactory factory;
-  MElement *e = factory.create(mshEltType, eltVert);
-
-  // add element to data structure
-  int entity = 1;
-  allElt[5][entity].push_back(e);
-
-  return e;
-}
-
-
-template<int DIM>
-MElement *createBndElement(const cgsize_t *ijk, const cgsize_t *nijk,
-                           const int *dir, int order, int entity,
-                           std::size_t vertShift,
-                           std::vector<MVertex *> &allVert,
-                           std::map<int, std::vector<MElement *> > *allElt,
-                           const std::vector<bool> &interfaceNode);
-
-
-template<>
-MElement *createBndElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
-                              const int *dir, int order, int entity,
-                              std::size_t vertShift,
-                              std::vector<MVertex *> &allVert,
-                              std::map<int, std::vector<MElement *> > *allElt,
-                              const std::vector<bool> &interfaceNode)
-{
-  Msg::Error("Creation of boundary elements for 2D structured blocks not "
-             "implemented");
-  // node shift from (i, j, k) depending on order
-  static bool isShiftInit[4] = {false, false, false, false};
-  static int shiftP1[2], shiftP2[3], shiftP3[4], shiftP4[5];
-
-  // get element vertices
-  int mshEltType;
-  int *s;
-  switch(order)
+  void initQuadShift(int order, int *shift)
   {
-  case 1:
-    mshEltType = MSH_LIN_2;
-    if(!isShiftInit[0]) { initLinShift(1, shiftP1); isShiftInit[0] = true; }
-    s = (int*)shiftP1;
-    break;
-  case 2:
-    mshEltType = MSH_LIN_3;
-    if(!isShiftInit[1]) { initLinShift(2, shiftP2); isShiftInit[1] = true; }
-    s = (int*)shiftP2;
-    break;
-  case 3:
-    mshEltType = MSH_LIN_4;
-    if(!isShiftInit[2]) { initLinShift(3, shiftP3); isShiftInit[2] = true; }
-    s = (int*)shiftP3;
-    break;
-  case 4:
-    mshEltType = MSH_LIN_5;
-    if(!isShiftInit[3]) { initLinShift(4, shiftP4); isShiftInit[3] = true; }
-    s = (int*)shiftP4;
-    break;
-  default:
-    Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
-               "linear", order);
-    mshEltType = MSH_LIN_2;
-    if(!isShiftInit[0]) { initLinShift(1, shiftP1); isShiftInit[0] = true; }
-    s = (int*)shiftP1;
-    break;
-  }
-  int nbEltNode = ElementType::getNumVertices(mshEltType);
-  std::vector<MVertex *> eltVert(nbEltNode);
-  bool isInternalInterface = true;
-  for(int iN = 0; iN < nbEltNode; iN++) {
-    cgsize_t ijN[2] = {ijk[0], ijk[1]};
-    ijN[dir[0]] += s[iN];
-    const cgsize_t ind = ijk2Ind<2>(ijN, nijk);
-    isInternalInterface &= interfaceNode[ind];
-    eltVert[iN] = allVert[vertShift+ind];
+    fullMatrix<double> mono = gmshGenerateMonomialsQuadrangle(order, false);
+    for(int i = 0; i < mono.size1(); i++) {
+      for(int j = 0; j < 2; j++)
+        shift[i * 2 + j] = mono(i, j) + 0.5; // round double
+    }
   }
 
-  // do no add element if it is part of an internal interface between blocks
-  if(isInternalInterface) return 0;
-
-  // create element
-  MElementFactory factory;
-  MElement *e = factory.create(mshEltType, eltVert);
-
-  // add element to data structure
-  allElt[1][entity].push_back(e);
-
-  return e;
-}
-
-
-template<>
-MElement *createBndElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
-                              const int *dir, int order, int entity,
-                              std::size_t vertShift,
-                              std::vector<MVertex *> &allVert,
-                              std::map<int, std::vector<MElement *> > *allElt,
-                              const std::vector<bool> &interfaceNode)
-{
-  // node shift from (i, j, k) depending on order
-  static bool isShiftInit[4] = {false, false, false, false};
-  static int shiftP1[4*2], shiftP2[9*2], shiftP3[16*2], shiftP4[25*2];
-
-  // get element vertices
-  int mshEltType;
-  int *s;
-  switch(order)
+  void initHexShift(int order, int *shift)
   {
-  case 1:
-    mshEltType = MSH_QUA_4;
-    if(!isShiftInit[0]) { initQuadShift(1, shiftP1); isShiftInit[0] = true; }
-    s = (int*)shiftP1;
-    break;
-  case 2:
-    mshEltType = MSH_QUA_9;
-    if(!isShiftInit[1]) { initQuadShift(2, shiftP2); isShiftInit[1] = true; }
-    s = (int*)shiftP2;
-    break;
-  case 3:
-    mshEltType = MSH_QUA_16;
-    if(!isShiftInit[2]) { initQuadShift(3, shiftP3); isShiftInit[2] = true; }
-    s = (int*)shiftP3;
-    break;
-  case 4:
-    mshEltType = MSH_QUA_25;
-    if(!isShiftInit[3]) { initQuadShift(4, shiftP4); isShiftInit[3] = true; }
-    s = (int*)shiftP4;
-    break;
-  default:
-    Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
-               "linear", order);
-    mshEltType = MSH_QUA_4;
-    if(!isShiftInit[0]) { initQuadShift(1, shiftP1); isShiftInit[0] = true; }
-    s = (int*)shiftP1;
-    break;
-  }
-  int nbEltNode = ElementType::getNumVertices(mshEltType);
-  std::vector<MVertex *> eltVert(nbEltNode);
-  bool isInternalInterface = true;
-  for(int iN = 0; iN < nbEltNode; iN++) {
-    cgsize_t ijkN[3] = {ijk[0], ijk[1], ijk[2]};
-    ijkN[dir[0]] += s[2*iN];
-    ijkN[dir[1]] += s[2*iN+1];
-    const cgsize_t ind = ijk2Ind<3>(ijkN, nijk);
-    isInternalInterface &= interfaceNode[ind];
-    eltVert[iN] = allVert[vertShift+ind];
+    fullMatrix<double> mono = gmshGenerateMonomialsHexahedron(order, false);
+    for(int i = 0; i < mono.size1(); i++) {
+      for(int j = 0; j < 3; j++)
+        shift[i * 3 + j] = mono(i, j) + 0.5; // round double
+    }
   }
 
-  // do no add element if it is part of an internal interface between blocks
-  if(isInternalInterface) return 0;
+  template <>
+  MElement *createElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
+                             int order, std::size_t vertShift,
+                             std::vector<MVertex *> &allVert,
+                             std::map<int, std::vector<MElement *> > *allElt)
+  {
+    // node shift from (i, j, k) depending on order
+    static int shiftP1[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+    static int shiftP2[9][2] = {{0, 0}, {2, 0}, {2, 2}, {0, 2}, {1, 0},
+                                {2, 1}, {1, 2}, {0, 1}, {1, 1}};
 
-  // create element
-  MElementFactory factory;
-  MElement *e = factory.create(mshEltType, eltVert);
+    // get element vertices
+    int mshEltType;
+    int *s;
+    if(order == 2) {
+      mshEltType = MSH_QUA_9;
+      s = (int *)shiftP2;
+    }
+    else {
+      mshEltType = MSH_QUA_4;
+      s = (int *)shiftP1;
+    }
+    int nbEltNode = ElementType::getNumVertices(mshEltType);
+    std::vector<MVertex *> eltVert(nbEltNode);
+    for(int iN = 0; iN < nbEltNode; iN++) {
+      const cgsize_t ijN[3] = {ijk[0] + s[2 * iN], ijk[1] + s[2 * iN + 1]};
+      const int ind = vertShift + ijk2Ind<2>(ijN, nijk);
+      eltVert[iN] = allVert[ind];
+    }
 
-  // add element to data structure
-  allElt[3][entity].push_back(e);
+    // create element
+    MElementFactory factory;
+    MElement *e = factory.create(mshEltType, eltVert);
 
-  return e;
-}
+    // add element to data structure
+    int entity = 1;
+    allElt[3][entity].push_back(e);
 
+    return e;
+  }
 
-}
+  template <>
+  MElement *createElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
+                             int order, std::size_t vertShift,
+                             std::vector<MVertex *> &allVert,
+                             std::map<int, std::vector<MElement *> > *allElt)
+  {
+    // node shift from (i, j, k) depending on order
+    static bool isShiftInit[4] = {false, false, false, false};
+    static int shiftP1[8 * 3], shiftP2[27 * 3], shiftP3[64 * 3],
+      shiftP4[125 * 3];
 
+    // get element vertices
+    int mshEltType;
+    int *s;
+    switch(order) {
+    case 1:
+      mshEltType = MSH_HEX_8;
+      if(!isShiftInit[0]) {
+        initHexShift(1, shiftP1);
+        isShiftInit[0] = true;
+      }
+      s = (int *)shiftP1;
+      break;
+    case 2:
+      mshEltType = MSH_HEX_27;
+      if(!isShiftInit[1]) {
+        initHexShift(2, shiftP2);
+        isShiftInit[1] = true;
+      }
+      s = (int *)shiftP2;
+      break;
+    case 3:
+      mshEltType = MSH_HEX_64;
+      if(!isShiftInit[2]) {
+        initHexShift(3, shiftP3);
+        isShiftInit[2] = true;
+      }
+      s = (int *)shiftP3;
+      break;
+    case 4:
+      mshEltType = MSH_HEX_125;
+      if(!isShiftInit[3]) {
+        initHexShift(4, shiftP4);
+        isShiftInit[3] = true;
+      }
+      s = (int *)shiftP4;
+      break;
+    default:
+      Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
+                 "linear",
+                 order);
+      mshEltType = MSH_HEX_8;
+      if(!isShiftInit[0]) {
+        initHexShift(1, shiftP1);
+        isShiftInit[0] = true;
+      }
+      s = (int *)shiftP1;
+      break;
+    }
+    int nbEltNode = ElementType::getNumVertices(mshEltType);
+    std::vector<MVertex *> eltVert(nbEltNode);
+    for(int iN = 0; iN < nbEltNode; iN++) {
+      const cgsize_t ijkN[3] = {ijk[0] + s[3 * iN], ijk[1] + s[3 * iN + 1],
+                                ijk[2] + s[3 * iN + 2]};
+      const cgsize_t ind = vertShift + ijk2Ind<3>(ijkN, nijk);
+      eltVert[iN] = allVert[ind];
+    }
 
-template<int DIM>
-CGNSZoneStruct<DIM>::CGNSZoneStruct(int fileIndex, int baseIndex, int zoneIndex,
-                              int meshDim, cgsize_t startNode,
-                              const Family2EltNodeTransfo &allEltNodeTransfo,
-                              int &err) :
-  CGNSZone(fileIndex, baseIndex, zoneIndex, Structured, meshDim, startNode,
-           allEltNodeTransfo, err)
+    // create element
+    MElementFactory factory;
+    MElement *e = factory.create(mshEltType, eltVert);
+
+    // add element to data structure
+    int entity = 1;
+    allElt[5][entity].push_back(e);
+
+    return e;
+  }
+
+  template <int DIM>
+  MElement *createBndElement(const cgsize_t *ijk, const cgsize_t *nijk,
+                             const int *dir, int order, int entity,
+                             std::size_t vertShift,
+                             std::vector<MVertex *> &allVert,
+                             std::map<int, std::vector<MElement *> > *allElt,
+                             const std::vector<bool> &interfaceNode);
+
+  template <>
+  MElement *createBndElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
+                                const int *dir, int order, int entity,
+                                std::size_t vertShift,
+                                std::vector<MVertex *> &allVert,
+                                std::map<int, std::vector<MElement *> > *allElt,
+                                const std::vector<bool> &interfaceNode)
+  {
+    Msg::Error("Creation of boundary elements for 2D structured blocks not "
+               "implemented");
+    // node shift from (i, j, k) depending on order
+    static bool isShiftInit[4] = {false, false, false, false};
+    static int shiftP1[2], shiftP2[3], shiftP3[4], shiftP4[5];
+
+    // get element vertices
+    int mshEltType;
+    int *s;
+    switch(order) {
+    case 1:
+      mshEltType = MSH_LIN_2;
+      if(!isShiftInit[0]) {
+        initLinShift(1, shiftP1);
+        isShiftInit[0] = true;
+      }
+      s = (int *)shiftP1;
+      break;
+    case 2:
+      mshEltType = MSH_LIN_3;
+      if(!isShiftInit[1]) {
+        initLinShift(2, shiftP2);
+        isShiftInit[1] = true;
+      }
+      s = (int *)shiftP2;
+      break;
+    case 3:
+      mshEltType = MSH_LIN_4;
+      if(!isShiftInit[2]) {
+        initLinShift(3, shiftP3);
+        isShiftInit[2] = true;
+      }
+      s = (int *)shiftP3;
+      break;
+    case 4:
+      mshEltType = MSH_LIN_5;
+      if(!isShiftInit[3]) {
+        initLinShift(4, shiftP4);
+        isShiftInit[3] = true;
+      }
+      s = (int *)shiftP4;
+      break;
+    default:
+      Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
+                 "linear",
+                 order);
+      mshEltType = MSH_LIN_2;
+      if(!isShiftInit[0]) {
+        initLinShift(1, shiftP1);
+        isShiftInit[0] = true;
+      }
+      s = (int *)shiftP1;
+      break;
+    }
+    int nbEltNode = ElementType::getNumVertices(mshEltType);
+    std::vector<MVertex *> eltVert(nbEltNode);
+    bool isInternalInterface = true;
+    for(int iN = 0; iN < nbEltNode; iN++) {
+      cgsize_t ijN[2] = {ijk[0], ijk[1]};
+      ijN[dir[0]] += s[iN];
+      const cgsize_t ind = ijk2Ind<2>(ijN, nijk);
+      isInternalInterface &= interfaceNode[ind];
+      eltVert[iN] = allVert[vertShift + ind];
+    }
+
+    // do no add element if it is part of an internal interface between blocks
+    if(isInternalInterface) return 0;
+
+    // create element
+    MElementFactory factory;
+    MElement *e = factory.create(mshEltType, eltVert);
+
+    // add element to data structure
+    allElt[1][entity].push_back(e);
+
+    return e;
+  }
+
+  template <>
+  MElement *createBndElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
+                                const int *dir, int order, int entity,
+                                std::size_t vertShift,
+                                std::vector<MVertex *> &allVert,
+                                std::map<int, std::vector<MElement *> > *allElt,
+                                const std::vector<bool> &interfaceNode)
+  {
+    // node shift from (i, j, k) depending on order
+    static bool isShiftInit[4] = {false, false, false, false};
+    static int shiftP1[4 * 2], shiftP2[9 * 2], shiftP3[16 * 2], shiftP4[25 * 2];
+
+    // get element vertices
+    int mshEltType;
+    int *s;
+    switch(order) {
+    case 1:
+      mshEltType = MSH_QUA_4;
+      if(!isShiftInit[0]) {
+        initQuadShift(1, shiftP1);
+        isShiftInit[0] = true;
+      }
+      s = (int *)shiftP1;
+      break;
+    case 2:
+      mshEltType = MSH_QUA_9;
+      if(!isShiftInit[1]) {
+        initQuadShift(2, shiftP2);
+        isShiftInit[1] = true;
+      }
+      s = (int *)shiftP2;
+      break;
+    case 3:
+      mshEltType = MSH_QUA_16;
+      if(!isShiftInit[2]) {
+        initQuadShift(3, shiftP3);
+        isShiftInit[2] = true;
+      }
+      s = (int *)shiftP3;
+      break;
+    case 4:
+      mshEltType = MSH_QUA_25;
+      if(!isShiftInit[3]) {
+        initQuadShift(4, shiftP4);
+        isShiftInit[3] = true;
+      }
+      s = (int *)shiftP4;
+      break;
+    default:
+      Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
+                 "linear",
+                 order);
+      mshEltType = MSH_QUA_4;
+      if(!isShiftInit[0]) {
+        initQuadShift(1, shiftP1);
+        isShiftInit[0] = true;
+      }
+      s = (int *)shiftP1;
+      break;
+    }
+    int nbEltNode = ElementType::getNumVertices(mshEltType);
+    std::vector<MVertex *> eltVert(nbEltNode);
+    bool isInternalInterface = true;
+    for(int iN = 0; iN < nbEltNode; iN++) {
+      cgsize_t ijkN[3] = {ijk[0], ijk[1], ijk[2]};
+      ijkN[dir[0]] += s[2 * iN];
+      ijkN[dir[1]] += s[2 * iN + 1];
+      const cgsize_t ind = ijk2Ind<3>(ijkN, nijk);
+      isInternalInterface &= interfaceNode[ind];
+      eltVert[iN] = allVert[vertShift + ind];
+    }
+
+    // do no add element if it is part of an internal interface between blocks
+    if(isInternalInterface) return 0;
+
+    // create element
+    MElementFactory factory;
+    MElement *e = factory.create(mshEltType, eltVert);
+
+    // add element to data structure
+    allElt[3][entity].push_back(e);
+
+    return e;
+  }
+
+} // namespace
+
+template <int DIM>
+CGNSZoneStruct<DIM>::CGNSZoneStruct(
+  int fileIndex, int baseIndex, int zoneIndex, int meshDim, cgsize_t startNode,
+  const Family2EltNodeTransfo &allEltNodeTransfo, int &err)
+  : CGNSZone(fileIndex, baseIndex, zoneIndex, Structured, meshDim, startNode,
+             allEltNodeTransfo, err)
 {
   // Check consistency
   bool ok = true;
-  for(int d = 0; d < DIM; d++) ok &= (nbNodeIJK(d) == nbEltIJK(d)+1);
-  if (ok) err = 1;
+  for(int d = 0; d < DIM; d++) ok &= (nbNodeIJK(d) == nbEltIJK(d) + 1);
+  if(ok)
+    err = 1;
   else {
     Msg::Error("CGNS zone %i: number of vertices (%i, %i, %i) is inconsistent "
-               "with number of elements (%i, %i, %i)", zoneIndex, nbNodeIJK(0),
-               nbNodeIJK(1), (DIM == 3) ? nbNodeIJK(2) : 0, nbEltIJK(0),
-               nbEltIJK(1), (DIM == 3) ? nbEltIJK(2) : 0);
+               "with number of elements (%i, %i, %i)",
+               zoneIndex, nbNodeIJK(0), nbNodeIJK(1),
+               (DIM == 3) ? nbNodeIJK(2) : 0, nbEltIJK(0), nbEltIJK(1),
+               (DIM == 3) ? nbEltIJK(2) : 0);
     err = 0;
   }
 
@@ -340,22 +377,22 @@ CGNSZoneStruct<DIM>::CGNSZoneStruct(int fileIndex, int baseIndex, int zoneIndex,
   interfaceNode_.resize(nbNode());
 }
 
-
-template<int DIM>
-int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
-                                std::map<int, std::vector<MElement *> > *allElt,
-                                std::vector<MElement *> &zoneElt,
-                                std::vector<std::string> &allGeomName)
+template <int DIM>
+int CGNSZoneStruct<DIM>::readElements(
+  std::vector<MVertex *> &allVert,
+  std::map<int, std::vector<MElement *> > *allElt,
+  std::vector<MElement *> &zoneElt, std::vector<std::string> &allGeomName)
 {
   // default BC (in case none specified)
   const int firstDefaultEnt = allGeomName.size();
-  allGeomName.insert(allGeomName.end(), 2*meshDim(), "");
+  allGeomName.insert(allGeomName.end(), 2 * meshDim(), "");
 
   // order of coarsened mesh and number of potentially coarsened (HO) elements
   int order = CTX::instance()->mesh.cgnsImportOrder;
   if(order > 4) {
     Msg::Warning("Cannot coarsen structured grid to order %i, creating linear "
-                 "mesh in zone %i", order, index());
+                 "mesh in zone %i",
+                 order, index());
     order = 1;
   }
   else {
@@ -363,8 +400,9 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
     for(int d = 0; d < DIM; d++) orderOK &= (nbEltIJK(d) % order == 0);
     if(!orderOK) {
       Msg::Warning("Zone %i has (%i, %i, %i) vertices which cannot be coarsened"
-                   " to order %i, creating linear mesh", index(), nbNodeIJK(0),
-                   nbNodeIJK(1), (DIM == 3) ? nbNodeIJK(2) : 0, order);
+                   " to order %i, creating linear mesh",
+                   index(), nbNodeIJK(0), nbNodeIJK(1),
+                   (DIM == 3) ? nbNodeIJK(2) : 0, order);
       order = 1;
     }
   }
@@ -376,7 +414,7 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
   for(int k = 0; k < nbEltK; k++) {
     for(int j = 0; j < nbEltJ; j++) {
       for(int i = 0; i < nbEltI; i++) {
-        const cgsize_t ijk[3] = {i*order, j*order, k*order};
+        const cgsize_t ijk[3] = {i * order, j * order, k * order};
         MElement *me = createElement<DIM>(ijk, nbNodeIJK(), order, startNode(),
                                           allVert, allElt);
         zoneElt.push_back(me);
@@ -387,47 +425,48 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
   // create boundary elements for block faces i- and i+
   for(int k = 0; k < nbEltK; k++) {
     for(int j = 0; j < nbEltJ; j++) {
-        static const int dir[2] = {1, 2};
-        cgsize_t ijk[3] = {0, j*order, k*order};
-        MElement *me;
-        me = makeBndElement(ijk, dir, order, firstDefaultEnt, allVert, allElt);
-        if(me != 0) zoneElt.push_back(me);
-        ijk[0] = nbNodeIJK(0)-1;
-        me = makeBndElement(ijk, dir, order, firstDefaultEnt+1, allVert, allElt);
-        if(me != 0) zoneElt.push_back(me);
+      static const int dir[2] = {1, 2};
+      cgsize_t ijk[3] = {0, j * order, k * order};
+      MElement *me;
+      me = makeBndElement(ijk, dir, order, firstDefaultEnt, allVert, allElt);
+      if(me != 0) zoneElt.push_back(me);
+      ijk[0] = nbNodeIJK(0) - 1;
+      me =
+        makeBndElement(ijk, dir, order, firstDefaultEnt + 1, allVert, allElt);
+      if(me != 0) zoneElt.push_back(me);
     }
   }
 
   // create boundary elements for block faces j- and j+
   for(int k = 0; k < nbEltK; k++) {
     for(int i = 0; i < nbEltI; i++) {
-        static const int dir[2] = {0, 2};
-        cgsize_t ijk[3] = {i*order, 0, k*order};
-        MElement *me;
-        me = makeBndElement(ijk, dir, order, firstDefaultEnt+2, allVert,
-                            allElt);
-        if(me != 0) zoneElt.push_back(me);
-        ijk[1] = nbNodeIJK(1)-1;
-        me = makeBndElement(ijk, dir, order, firstDefaultEnt+3, allVert,
-                            allElt);
-        if(me != 0) zoneElt.push_back(me);
+      static const int dir[2] = {0, 2};
+      cgsize_t ijk[3] = {i * order, 0, k * order};
+      MElement *me;
+      me =
+        makeBndElement(ijk, dir, order, firstDefaultEnt + 2, allVert, allElt);
+      if(me != 0) zoneElt.push_back(me);
+      ijk[1] = nbNodeIJK(1) - 1;
+      me =
+        makeBndElement(ijk, dir, order, firstDefaultEnt + 3, allVert, allElt);
+      if(me != 0) zoneElt.push_back(me);
     }
   }
 
   // create boundary elements for block faces k- and k+ if 3D
-  if (DIM == 3) {
+  if(DIM == 3) {
     for(int j = 0; j < nbEltJ; j++) {
       for(int i = 0; i < nbEltI; i++) {
-          static const int dir[2] = {0, 1};
-          cgsize_t ijk[3] = {i*order, j*order, 0};
-          MElement *me;
-          me = makeBndElement(ijk, dir, order, firstDefaultEnt+4, allVert,
-                              allElt);
-          if(me != 0) zoneElt.push_back(me);
-          ijk[2] = nbNodeIJK(2)-1;
-          me = makeBndElement(ijk, dir, order, firstDefaultEnt+5, allVert,
-                              allElt);
-          if(me != 0) zoneElt.push_back(me);
+        static const int dir[2] = {0, 1};
+        cgsize_t ijk[3] = {i * order, j * order, 0};
+        MElement *me;
+        me =
+          makeBndElement(ijk, dir, order, firstDefaultEnt + 4, allVert, allElt);
+        if(me != 0) zoneElt.push_back(me);
+        ijk[2] = nbNodeIJK(2) - 1;
+        me =
+          makeBndElement(ijk, dir, order, firstDefaultEnt + 5, allVert, allElt);
+        if(me != 0) zoneElt.push_back(me);
       }
     }
   }
@@ -435,29 +474,26 @@ int CGNSZoneStruct<DIM>::readElements(std::vector<MVertex *> &allVert,
   return 1;
 }
 
-
-template<int DIM>
-MElement *CGNSZoneStruct<DIM>::makeBndElement(const cgsize_t *ijk,
-                                              const int *dir, int order,
-                                              int defaultEntity,
-                                              std::vector<MVertex *> &allVert,
-                                std::map<int, std::vector<MElement *> > *allElt)
+template <int DIM>
+MElement *CGNSZoneStruct<DIM>::makeBndElement(
+  const cgsize_t *ijk, const int *dir, int order, int defaultEntity,
+  std::vector<MVertex *> &allVert,
+  std::map<int, std::vector<MElement *> > *allElt)
 {
   typedef std::map<cgsize_t, int>::const_iterator Elt2GeomIter;
-  
+
   cgsize_t iElt = ijk2Ind<DIM>(ijk, nbNodeIJK());
   const Elt2GeomIter it = elt2Geom().find(iElt);
   const int entity = (it == elt2Geom().end()) ? defaultEntity : it->second;
-  
-  return createBndElement<DIM>(ijk, nbNodeIJK(), dir, order, entity, startNode(),
-                        allVert, allElt, interfaceNode());
+
+  return createBndElement<DIM>(ijk, nbNodeIJK(), dir, order, entity,
+                               startNode(), allVert, allElt, interfaceNode());
 }
 
-
-template<int DIM>
+template <int DIM>
 int CGNSZoneStruct<DIM>::readConnectivities(
-                                  const std::map<std::string, int> &name2Zone,
-                                  std::vector<CGNSZone *> &allZones)
+  const std::map<std::string, int> &name2Zone,
+  std::vector<CGNSZone *> &allZones)
 {
   int cgnsErr;
 
@@ -479,21 +515,20 @@ int CGNSZoneStruct<DIM>::readConnectivities(
   return 1;
 }
 
-
-template<int DIM>
-int CGNSZoneStruct<DIM>::readOneInterface(int iConnect,
-                                  const std::map<std::string, int> &name2Zone,
-                                  std::vector<CGNSZone *> &allZones)
+template <int DIM>
+int CGNSZoneStruct<DIM>::readOneInterface(
+  int iConnect, const std::map<std::string, int> &name2Zone,
+  std::vector<CGNSZone *> &allZones)
 {
   int cgnsErr;
- 
+
   // read connection
   char connectName[CGNS_MAX_STR_LEN], donorName[CGNS_MAX_STR_LEN];
-  cgsize_t range[2*DIM], rangeDonnor[2*DIM];
+  cgsize_t range[2 * DIM], rangeDonnor[2 * DIM];
   int indexTransfo[DIM];
-  cgnsErr = cg_1to1_read(fileIndex(), baseIndex(), index(), iConnect,
-                         connectName, donorName, range, rangeDonnor,
-                         indexTransfo);
+  cgnsErr =
+    cg_1to1_read(fileIndex(), baseIndex(), index(), iConnect, connectName,
+                 donorName, range, rangeDonnor, indexTransfo);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // read periodic connection information
@@ -502,8 +537,10 @@ int CGNSZoneStruct<DIM>::readOneInterface(int iConnect,
   cgnsErr = cg_1to1_periodic_read(fileIndex(), baseIndex(), index(), iConnect,
                                   rotCenter, rotAngle, translat);
   if(cgnsErr != CG_NODE_NOT_FOUND) {
-    if(cgnsErr == CG_OK) periodic = true;
-    else return cgnsError(__FILE__, __LINE__, fileIndex());
+    if(cgnsErr == CG_OK)
+      periodic = true;
+    else
+      return cgnsError(__FILE__, __LINE__, fileIndex());
   }
 
   // if not periodic, mark as internal interface and return
@@ -524,8 +561,8 @@ int CGNSZoneStruct<DIM>::readOneInterface(int iConnect,
   //                             (DIM == 3) ? range[5]-1 : 0};
 
   // // identify donnor (master) zone
-  // std::map<std::string, int>::const_iterator itDN = name2Zone.find(donorName);
-  // if(itDN == name2Zone.end()) {
+  // std::map<std::string, int>::const_iterator itDN =
+  // name2Zone.find(donorName); if(itDN == name2Zone.end()) {
   //   Msg::Error("Donnor zone '%s' not found in structured connectivity '%s' "
   //              "of zone %i ('%s')", donorName, connectName, zone.index,
   //              zone.name);
@@ -591,11 +628,9 @@ int CGNSZoneStruct<DIM>::readOneInterface(int iConnect,
   return 1;
 }
 
-
 // explicit instantiation
 
 template class CGNSZoneStruct<2>;
 template class CGNSZoneStruct<3>;
-
 
 #endif // HAVE_LIBCGNS

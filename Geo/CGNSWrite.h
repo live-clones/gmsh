@@ -14,11 +14,9 @@
 
 #if defined(HAVE_LIBCGNS)
 
-
 class GModel;
 class GEntity;
 class MVertex;
-
 
 // Type for global node index -> (partition, local node index) correspondence
 struct LocalData {
@@ -28,7 +26,6 @@ struct LocalData {
 };
 // typedef std::vector<LocalData> Global2LocalData;
 typedef std::map<MVertex *, std::vector<LocalData> > Vertex2LocalData;
-
 
 void getEntitiesToSave(const std::vector<GEntity *> &allEntities, bool saveAll,
                        std::vector<GEntity *> &entities);
@@ -44,19 +41,20 @@ void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
                                 const std::vector<GEntity *> &entitiesInterf,
                                 Vertex2LocalData &interfVert2Local);
 
-int writeZone(GModel *model, bool saveAll, double scalingFactor,
-              int meshDim, std::size_t numNodesTotal, std::size_t partition,
+int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
+              std::size_t numNodesTotal, std::size_t partition,
               const std::vector<GEntity *> &entities, int cgIndexFile,
               int cgIndexBase, std::vector<std::string> &zoneName,
               Vertex2LocalData &interfVert2Local, std::set<int> &eleMshTypes,
               std::map<GEntity *, std::string> &geomEntities);
 
 int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
-                   int cgIndexBase, const std::vector<std::string> &zoneName,
-                   Vertex2LocalData &interfVert2Local);
+                  int cgIndexBase, const std::vector<std::string> &zoneName,
+                  Vertex2LocalData &interfVert2Local);
 
-void getEntitiesInPartitions(const std::vector<GEntity *> &entities,
-                          std::vector<std::vector<GEntity *> > &entitiesPart);
+void getEntitiesInPartitions(
+  const std::vector<GEntity *> &entities,
+  std::vector<std::vector<GEntity *> > &entitiesPart);
 
 int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
                     int cgIndexFile, int cgIndexBase,

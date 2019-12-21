@@ -13,7 +13,6 @@
 
 #if defined(HAVE_LIBCGNS)
 
-
 static const std::string::size_type CGNS_MAX_STR_LEN = 33;
 
 // msh to CGNS element type
@@ -34,11 +33,10 @@ void msh2CgnsReferenceElement(int mshType, const fullMatrix<double> &mshPts,
 // the same nodes in a different order, compute the reordering ind of set src
 // to set dest, i.e. src[i] = dest[ind[i]]
 bool computeReordering(fullMatrix<double> src, fullMatrix<double> dest,
-                        std::vector<int> &ind);
+                       std::vector<int> &ind);
 
 std::string cgnsString(const std::string &s,
-                       std::string::size_type maxLength = CGNS_MAX_STR_LEN-1);
-
+                       std::string::size_type maxLength = CGNS_MAX_STR_LEN - 1);
 
 #endif // HAVE_LIBCGNS
 

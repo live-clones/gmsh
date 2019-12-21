@@ -10,17 +10,14 @@
 
 #if defined(HAVE_LIBCGNS)
 
-
-template<int DIM>
-class CGNSZoneStruct : public CGNSZone
-{
+template <int DIM> class CGNSZoneStruct : public CGNSZone {
 public:
   CGNSZoneStruct(int fileIndex, int baseIndex, int zoneIndex, int meshDim,
                  cgsize_t startNode,
                  const Family2EltNodeTransfo &allEltNodeTransfo, int &err);
-  
+
   cgsize_t nbNodeIJK(int d) const { return size_[d]; }
-  cgsize_t nbEltIJK(int d) const { return size_[DIM+d]; }
+  cgsize_t nbEltIJK(int d) const { return size_[DIM + d]; }
   const cgsize_t *nbNodeIJK() const { return size_; }
   const cgsize_t *nbEltIJK() const { return size_ + DIM; }
   cgsize_t nbNodeInRange(const cgsize_t *range) const;
@@ -54,53 +51,46 @@ protected:
                            std::map<int, std::vector<MElement *> > *allElt);
 };
 
-
-template<int DIM>
+template <int DIM>
 inline cgsize_t CGNSZoneStruct<DIM>::nbNodeInRange(const cgsize_t *range) const
 {
   return StructuredIndexing<DIM>::nbEntInRange(range);
 }
 
-
-template<int DIM>
+template <int DIM>
 inline cgsize_t CGNSZoneStruct<DIM>::nbEltInRange(const cgsize_t *range) const
 {
   return StructuredIndexing<DIM>::nbEntInRange(range);
 }
 
-
-template<int DIM>
+template <int DIM>
 inline void CGNSZoneStruct<DIM>::eltFromRange(const cgsize_t *range,
                                               std::vector<cgsize_t> &elt) const
 {
   StructuredIndexing<DIM>::entFromRange(range, nbEltIJK(), elt);
 }
 
-  
-template<int DIM>
+template <int DIM>
 inline void CGNSZoneStruct<DIM>::eltFromList(const std::vector<cgsize_t> &list,
                                              std::vector<cgsize_t> &elt) const
 {
   StructuredIndexing<DIM>::entFromList(list, nbEltIJK(), elt);
 }
 
-  
-template<int DIM>
-inline void CGNSZoneStruct<DIM>::nodeFromRange(const cgsize_t *range,
-                                               std::vector<cgsize_t> &node)
-                                                                          const
+template <int DIM>
+inline void
+CGNSZoneStruct<DIM>::nodeFromRange(const cgsize_t *range,
+                                   std::vector<cgsize_t> &node) const
 {
   StructuredIndexing<DIM>::entFromRange(range, nbNodeIJK(), node);
 }
 
-    
-template<int DIM>
+template <int DIM>
 inline void CGNSZoneStruct<DIM>::nodeFromList(const std::vector<cgsize_t> &list,
                                               std::vector<cgsize_t> &node) const
 {
   StructuredIndexing<DIM>::entFromList(list, nbNodeIJK(), node);
 }
-
 
 #endif // HAVE_LIBCGNS
 
