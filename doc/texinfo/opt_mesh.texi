@@ -52,8 +52,18 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsImportOrder
-Enable the creation of high-order mesh from CGNS structured meshes(1, 2, 4, 8, ...)@*
+Order of the mesh to be created by coarsening CGNS structured zones (1 to 4)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsImportIgnoreBC
+Ignore information in ZoneBC structures when reading a CGNS file@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsImportIgnoreSolution
+Ignore solution when reading a CGNS file@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsConstructTopology

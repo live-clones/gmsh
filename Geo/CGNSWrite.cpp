@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Thomas Toulorge
 
 #include <string>
 #include <map>

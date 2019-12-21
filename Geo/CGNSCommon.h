@@ -2,9 +2,14 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Thomas Toulorge
 
 #ifndef CGNS_COMMON_H
 #define CGNS_COMMON_H
+
+#include "GmshConfig.h"
 
 #if defined(HAVE_LIBCGNS)
 

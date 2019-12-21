@@ -2,9 +2,12 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Thomas Toulorge
 
-#ifndef CGNS_CGNSZONE_H
-#define CGNS_CGNSZONE_H
+#ifndef CGNS_ZONE_H
+#define CGNS_ZONE_H
 
 #include "fullMatrix.h"
 #include "CGNSCommon.h"
@@ -134,4 +137,4 @@ protected:
 
 #endif // HAVE_LIBCGNS
 
-#endif // CGNS_CGNSZONE_H
+#endif // CGNS_ZONE_H

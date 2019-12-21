@@ -10,27 +10,27 @@
 
 Code contributions to Gmsh have been provided by David Colignon (colormaps),
 Emilie Marchandise (old compound geometrical entities), Gaetan Bricteux (Gauss
-integration and levelsets), Jacques Lechelle (DIFFPACK mesh format), Jonathan
-Lambrechts (fields, solver, Python wrappers), Jozef Vesely (help with old Tetgen
+integration and levelsets), Jacques Lechelle (DIFFPACK export), Jonathan
+Lambrechts (mesh size fields, solver, Python wrappers), Jozef Vesely (old Tetgen
 integration), Koen Hillewaert (high order elements, generalized periodic
 meshes), Laurent Stainier (eigenvalue solvers, tensor display and help with
 MacOS port), Marc Ume (original list and tree code), Mark van Doesburg (old
-OpenCASCADE face connection), Matt Gundry (Plot3d mesh format), Matti Pellikka
-(cell complex and homology solver), Nicolas Tardieu (help with Netgen
-integration), Pascale Noyret (MED mesh format), Pierre Badel (root finding and
-minimization), Ruth Sabariego (pyramids), Stephen Guzik (CGNS and old
-partitioning code), Bastien Gorissen (parallel remote post-processing), Eric
-Bechet (solver), Gilles Marckmann (camera and stero mode, x3d views), Ashish
-Negi (Netgen CAD healing), Trevor Strickler (structured/unstructured coupling
-with pyramids), Amaury Johnen (Bezier, high-order element validity), Benjamin
-Ruard (old Java wrappers), Maxime Graulich (iOS/Android port), Francois Henrotte
-(onelab metamodels), Sebastian Eiser (PGF output), Alexis Salzman (compressed
-IO), Hang Si (TetGen/BR boundary recovery code), Fernando Lorenzo (Tochnog
-support), Larry Price (Gambit export), Anthony Royer (new partitioning code,
-MSH4 format), Darcy Beurle (code cleanup and performance improvements), Zhidong
-Han (LSDYNA output); Ismail Badia (Hierarchical basis functions); Jeremy Theler
-(mesh x3d). See comments in the sources for more information. If we forgot to
-list your contributions please send us an email!
+OpenCASCADE face connection), Matt Gundry (Plot3d export), Matti Pellikka (cell
+complex and homology solver), Nicolas Tardieu (help with Netgen integration),
+Pascale Noyret (MED mesh IO), Pierre Badel (root finding and minimization), Ruth
+Sabariego (pyramids), Stephen Guzik (old CGNS IO, old partitioning code),
+Bastien Gorissen (parallel remote post-processing), Eric Bechet (solver), Gilles
+Marckmann (camera and stero mode, X3D export), Ashish Negi (Netgen CAD healing),
+Trevor Strickler (hybrid structured mesh coupling with pyramids), Amaury Johnen
+(Bezier code, high-order element validity), Benjamin Ruard (old Java wrappers),
+Maxime Graulich (iOS/Android port), Francois Henrotte (ONELAB metamodels),
+Sebastian Eiser (PGF export), Alexis Salzman (compressed IO), Hang Si (TetGen/BR
+boundary recovery code), Fernando Lorenzo (Tochnog export), Larry Price (Gambit
+export), Anthony Royer (new partitioning code, MSH4 IO), Darcy Beurle (code
+cleanup and performance improvements), Zhidong Han (LSDYNA export); Ismail Badia
+(hierarchical basis functions); Jeremy Theler (X3D export); Thomas Toulorge
+(high order mesh optimizer, new CGNS IO). See comments in the sources for more
+information. If we forgot to list your contributions please send us an email!
 
 Thanks to the following folks who have contributed by providing fresh ideas on
 theoretical or programming topics, who have sent patches, requests for changes

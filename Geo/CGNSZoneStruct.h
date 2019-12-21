@@ -2,9 +2,12 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Thomas Toulorge
 
-#ifndef CGNS_CGNSZONESTRUCT_H
-#define CGNS_CGNSZONESTRUCT_H
+#ifndef CGNS_ZONE_STRUCT_H
+#define CGNS_ZONE_STRUCT_H
 
 #include "CGNSZone.h"
 
@@ -94,4 +97,4 @@ inline void CGNSZoneStruct<DIM>::nodeFromList(const std::vector<cgsize_t> &list,
 
 #endif // HAVE_LIBCGNS
 
-#endif // CGNS_CGNSZONESTRUCT_H
+#endif // CGNS_ZONE_STRUCT_H

@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Thomas Toulorge
 
 #include "Context.h"
 #include "GmshMessage.h"
@@ -116,7 +119,7 @@ int CGNSZone::readBoundaryCondition(int iZoneBC,
   case PointList: readBoundaryConditionList(iZoneBC, nbVal, bcElt); break;
   default:
     Msg::Error("Wrong point set type %s is for boundary condition %s",
-               cg_PointSetTypeName(ptSetType), geomName);
+               cg_PointSetTypeName(ptSetType), geomName.c_str());
     return 0;
     break;
   }
@@ -238,7 +241,7 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
       name2Zone.find(masterName);
     if(itMasterName == name2Zone.end()) {
       Msg::Error("Zone name '%s' in not found in connection %i of zone %i",
-                 masterName, iConnect, index());
+                 masterName.c_str(), iConnect, index());
       return 0;
     }
     const int masterZoneIndex = itMasterName->second;

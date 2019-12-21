@@ -2,9 +2,12 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Thomas Toulorge
 
-#ifndef CGNS_CGNSZONEUNSTRUCT_H
-#define CGNS_CGNSZONEUNSTRUCT_H
+#ifndef CGNS_ZONE_UNSTRUCT_H
+#define CGNS_ZONE_UNSTRUCT_H
 
 #include "CGNSZone.h"
 
@@ -65,4 +68,4 @@ inline void CGNSZoneUnstruct::nodeFromList(const std::vector<cgsize_t> &list,
 
 #endif // HAVE_LIBCGNS
 
-#endif // CGNS_CGNSZONEUNSTRUCT_H
+#endif // CGNS_ZONE_UNSTRUCT_H

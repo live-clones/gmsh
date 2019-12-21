@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Thomas Toulorge
 
 #include <cstring>
 #include "GmshMessage.h"
@@ -213,7 +216,7 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
     // create zone
-    int err;
+    int err = 1;
     if(zoneType == Structured) {
       if(meshDim == 2) {
         allZones[iZone] =
