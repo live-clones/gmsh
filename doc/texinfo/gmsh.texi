@@ -1506,8 +1506,8 @@ The following commands can be used anywhere in a Gmsh script:
 
 @item @var{string} = @var{expression};
 Creates a new expression identifier @var{string}, or affects
-@var{expression} to an existing expression identifier. Thirteen expression
-identifiers are predefined (hardcoded in Gmsh's parser):
+@var{expression} to an existing expression identifier. The following
+expression identifiers are predefined (hardcoded in Gmsh's parser):
 
 @ftable @code
 @item Pi
