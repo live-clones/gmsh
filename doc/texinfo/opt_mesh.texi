@@ -327,12 +327,12 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCirclePoints
-Minimum number of nodes used to mesh a circle@*
+Minimum number of nodes used to mesh circles and ellipses@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCurvePoints
-Minimum number of points used to mesh a (non-straight) curve@*
+Minimum number of points used to mesh curves other than lines, circles and ellipses@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
