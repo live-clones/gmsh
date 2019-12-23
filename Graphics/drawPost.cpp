@@ -104,6 +104,13 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
     }
   }
   else {
+
+    if(type == GL_LINES && opt->useStipple) {
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(opt->stipple[0][0], opt->stipple[0][1]);
+      gl2psEnable(GL2PS_LINE_STIPPLE);
+    }
+
     glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
     glEnableClientState(GL_VERTEX_ARRAY);
     if(useNormalArray) {
@@ -119,6 +126,12 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
+
+    if(type == GL_LINES && opt->useStipple) {
+      glDisable(GL_LINE_STIPPLE);
+      gl2psDisable(GL2PS_LINE_STIPPLE);
+    }
+
   }
 
   glDisable(GL_POLYGON_OFFSET_FILL);
