@@ -253,9 +253,11 @@ MPI_Rank                return tMPI_Rank;
 MPI_Size                return tMPI_Size;
 Macro                   return tMacro;
 Mass                    return tMass;
+Max                     return tMax;
 Memory                  return tMemory;
 MeshAlgorithm           return tMeshAlgorithm;
 MeshSizeFromBoundary    return tMeshSizeFromBoundary;
+Min                     return tMin;
 Modulo                  return tModulo;
 
 N2S                     return tNameToString;

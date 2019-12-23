@@ -657,7 +657,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple
-Stipple curves in 2D plots?@*
+Stipple curves in 2D and line plots?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

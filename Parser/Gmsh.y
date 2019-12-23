@@ -179,7 +179,7 @@ struct doubleXstring{
 
 %token tEND tAFFECT tDOTS tSCOPE tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
-%token tAtan tAtan2 tSinh tCosh tTanh tFabs tAbs tFloor tCeil tRound
+%token tAtan tAtan2 tSinh tCosh tTanh tFabs tAbs tFloor tCeil tRound tMin tMax
 %token tFmod tModulo tHypot tList tLinSpace tLogSpace tListFromFile tCatenary
 %token tPrintf tError tWarning tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tAbsolutePath tDirName tStrSub tStrLen
@@ -1440,6 +1440,14 @@ FloatParameterOption :
       Free($1);
       List_Delete($2);
     }
+  | tMin FExpr
+    {
+      floatOptions["Min"].push_back($2);
+    }
+  | tMax FExpr
+    {
+      floatOptions["Max"].push_back($2);
+    }
   | tSTRING
     {
       std::string key($1);
@@ -1467,7 +1475,6 @@ FloatParameterOption :
         Free(((doubleXstring*)List_Pointer($3, i))->s);
       List_Delete($3);
     }
-
   | tSTRING StringExpr
     {
       std::string key($1);
@@ -1476,7 +1483,6 @@ FloatParameterOption :
       Free($1);
       Free($2);
     }
-
   | tSTRING Str_BracedRecursiveListOfStringExprVar
     {
       std::string key($1);
@@ -5195,6 +5201,8 @@ FExpr :
   | tModulo LP FExpr ',' FExpr RP  { $$ = fmod($3, $5); }
   | tHypot  LP FExpr ',' FExpr RP  { $$ = sqrt($3 * $3 + $5 * $5); }
   | tRand   LP FExpr RP            { $$ = $3 * (double)rand() / (double)RAND_MAX; }
+  | tMax    LP FExpr ',' FExpr RP  { $$ = std::max($3, $5); }
+  | tMin    LP FExpr ',' FExpr RP  { $$ = std::min($3, $5); }
 ;
 
 // FIXME: add +=, -=, *= et /=

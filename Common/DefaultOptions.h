@@ -1729,7 +1729,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
   { F|O, "Stipple" , opt_view_use_stipple , 0. ,
-    "Stipple curves in 2D plots?" },
+    "Stipple curves in 2D and line plots?" },
 
   { F|O, "Tangents" , opt_view_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },
