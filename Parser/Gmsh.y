@@ -86,7 +86,6 @@ static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 static std::string struct_name, struct_namespace;
-static int flag_tSTRING_alloc = 0;
 static int dim_entity;
 
 static std::map<std::string, std::vector<double> > floatOptions;
@@ -228,8 +227,8 @@ struct doubleXstring{
 %type <i> TransfiniteArrangement RecombineAngle
 %type <i> Append AppendOrNot
 %type <u> ColorExpr
-%type <c> StringExpr StringExprVar SendToFile tSTRING_Member HomologyCommand
-%type <c> LP RP GetForcedStr_Default
+%type <c> StringExpr StringExprVar SendToFile HomologyCommand
+%type <c> LP RP tSTRING_Reserved GetForcedStr_Default
 %type <c> StringIndex String__Index
 %type <l> MultiStringExprVar SurfaceConstraints
 %type <l> RecursiveListOfStringExprVar Str_BracedRecursiveListOfStringExprVar
@@ -776,7 +775,17 @@ NumericIncrement :
 // of parentheses)
 
 LP : '(' { $$ = (char*)"("; } | '[' { $$ = (char*)"["; } ;
+
 RP : ')' { $$ = (char*)")"; } | ']' { $$ = (char*)"]"; } ;
+
+// this is to allow reserved keywords in option names, fields, structs, ...
+
+tSTRING_Reserved:
+   tSTRING   { $$ = $1; }
+ | tMin      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Min"); }
+ | tMax      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Max"); }
+ | tBox      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Box"); }
+ | tCylinder { $$ = (char *)Malloc(9 * sizeof(char)); strcpy($$, "Cylinder"); }
 
 Affectation :
 
@@ -981,13 +990,13 @@ Affectation :
 
   // Option Strings
 
-  | String__Index '.' tSTRING tAFFECT StringExpr tEND
+  | String__Index '.' tSTRING_Reserved tAFFECT StringExpr tEND
     {
       std::string tmp($5);
       StringOption(GMSH_SET|GMSH_GUI, $1, 0, $3, tmp);
       Free($1); Free($3); Free($5);
     }
-  | String__Index '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND
+  | String__Index '[' FExpr ']' '.' tSTRING_Reserved tAFFECT StringExpr tEND
     {
       std::string tmp($8);
       StringOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $6, tmp);
@@ -996,7 +1005,7 @@ Affectation :
 
   // Option Numbers
 
-  | String__Index '.' tSTRING NumericAffectation FExpr tEND
+  | String__Index '.' tSTRING_Reserved NumericAffectation FExpr tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, 0, $3, d)){
@@ -1014,7 +1023,7 @@ Affectation :
       }
       Free($1); Free($3);
     }
-  | String__Index '[' FExpr ']' '.' tSTRING NumericAffectation FExpr tEND
+  | String__Index '[' FExpr ']' '.' tSTRING_Reserved NumericAffectation FExpr tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
@@ -1032,7 +1041,7 @@ Affectation :
       }
       Free($1); Free($6);
     }
-  | String__Index '.' tSTRING NumericIncrement tEND
+  | String__Index '.' tSTRING_Reserved NumericIncrement tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, 0, $3, d)){
@@ -1041,7 +1050,7 @@ Affectation :
       }
       Free($1); Free($3);
     }
-  | String__Index '[' FExpr ']' '.' tSTRING NumericIncrement tEND
+  | String__Index '[' FExpr ']' '.' tSTRING_Reserved NumericIncrement tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
@@ -1053,12 +1062,12 @@ Affectation :
 
   // Option Colors
 
-  | String__Index '.' tColor '.' tSTRING tAFFECT ColorExpr tEND
+  | String__Index '.' tColor '.' tSTRING_Reserved tAFFECT ColorExpr tEND
     {
       ColorOption(GMSH_SET|GMSH_GUI, $1, 0, $5, $7);
       Free($1); Free($5);
     }
-  | String__Index '[' FExpr ']' '.' tColor '.' tSTRING tAFFECT ColorExpr tEND
+  | String__Index '[' FExpr ']' '.' tColor '.' tSTRING_Reserved tAFFECT ColorExpr tEND
     {
       ColorOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $8, $10);
       Free($1); Free($8);
@@ -1129,7 +1138,7 @@ Affectation :
       Free($1);
       List_Delete($4);
     }
-  | tField '[' FExpr ']' tAFFECT tSTRING tEND
+  | tField '[' FExpr ']' tAFFECT tSTRING_Reserved tEND
     {
 #if defined(HAVE_MESH)
       if(!GModel::current()->getFields()->newField((int)$3, $6))
@@ -1137,21 +1146,7 @@ Affectation :
 #endif
       Free($6);
     }
-  | tField '[' FExpr ']' tAFFECT tBox tEND
-    {
-#if defined(HAVE_MESH)
-      if(!GModel::current()->getFields()->newField((int)$3, "Box"))
-	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, "Box");
-#endif
-    }
-  | tField '[' FExpr ']' tAFFECT tCylinder tEND
-    {
-#if defined(HAVE_MESH)
-      if(!GModel::current()->getFields()->newField((int)$3, "Cylinder"))
-	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, "Cylinder");
-#endif
-    }
-  | tField '[' FExpr ']' '.' tSTRING  tAFFECT FExpr tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT FExpr tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1173,7 +1168,7 @@ Affectation :
 #endif
       Free($6);
     }
-  | tField '[' FExpr ']' '.' tSTRING  tAFFECT StringExpr tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT StringExpr tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1196,7 +1191,7 @@ Affectation :
       Free($6);
       Free($8);
     }
-  | tField '[' FExpr ']' '.' tSTRING  tAFFECT '{' RecursiveListOfDouble '}' tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT '{' RecursiveListOfDouble '}' tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1234,7 +1229,7 @@ Affectation :
       Free($6);
       List_Delete($9);
     }
-  | tField '[' FExpr ']' '.' tSTRING tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1255,7 +1250,7 @@ Affectation :
 
   // Plugins
 
-  | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND
+  | tPlugin '(' tSTRING ')' '.' tSTRING_Reserved tAFFECT FExpr tEND
     {
 #if defined(HAVE_PLUGINS)
       try {
@@ -1267,7 +1262,7 @@ Affectation :
 #endif
       Free($3); Free($6);
     }
-  | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND
+  | tPlugin '(' tSTRING ')' '.' tSTRING_Reserved tAFFECT StringExpr tEND
     {
 #if defined(HAVE_PLUGINS)
       try {
@@ -5263,7 +5258,7 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 1, 0, 0., 1);
     }
-  | tExists '(' Struct_FullName '.' tSTRING_Member ')'
+  | tExists '(' Struct_FullName '.' tSTRING_Reserved ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0, 0., 1);
     }
@@ -5271,7 +5266,7 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 1, 0, $4, 2);
     }
-  | tGetForced '(' Struct_FullName '.' tSTRING_Member GetForced_Default ')'
+  | tGetForced '(' Struct_FullName '.' tSTRING_Reserved GetForced_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0, $6, 2);
     }
@@ -5279,7 +5274,7 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 2, (int)$5, $7, 2);
     }
-  | tGetForced '(' Struct_FullName '.' tSTRING_Member LP FExpr RP GetForced_Default ')'
+  | tGetForced '(' Struct_FullName '.' tSTRING_Reserved LP FExpr RP GetForced_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, (int)$7, $9, 2);
     }
@@ -5304,7 +5299,7 @@ FExpr_Single :
       }
       Free($2);
     }
-  | '#' Struct_FullName '.' tSTRING_Member LP RP
+  | '#' Struct_FullName '.' tSTRING_Reserved LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float_getDim($2.char1, $2.char2, $4);
     }
@@ -5379,46 +5374,36 @@ FExpr_Single :
       Free($1);
     }
   // Option Strings
-/* not any more ...
-  | tSTRING '.' tSTRING
-    {
-      NumberOption(GMSH_GET, $1, 0, $3, $$);
-      Free($1); Free($3);
-    }
-*/
-//+++ ... extention to structures
-// PD: TO FIX (to avoid shift/reduce conflict)
-//  | Struct_FullName '.' tSTRING_Member
-  | String__Index '.' tSTRING_Member
+  | String__Index '.' tSTRING_Reserved
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5);
     }
-  | String__Index '.' tSTRING_Member '(' FExpr ')'
+  | String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member '(' FExpr ')'
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
     }
-  | String__Index '.' tSTRING_Member '[' FExpr ']'
+  | String__Index '.' tSTRING_Reserved '[' FExpr ']'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member '[' FExpr ']'
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved '[' FExpr ']'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
     }
-  | String__Index '[' FExpr ']' '.' tSTRING
+  | String__Index '[' FExpr ']' '.' tSTRING_Reserved
     {
       NumberOption(GMSH_GET, $1, (int)$3, $6, $$);
       Free($1); Free($6);
     }
-  | String__Index '.' tSTRING NumericIncrement
+  | String__Index '.' tSTRING_Reserved NumericIncrement
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, 0, $3, d)){
@@ -5428,7 +5413,7 @@ FExpr_Single :
       }
       Free($1); Free($3);
     }
-  | String__Index '[' FExpr ']' '.' tSTRING NumericIncrement
+  | String__Index '[' FExpr ']' '.' tSTRING_Reserved NumericIncrement
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
@@ -5541,15 +5526,6 @@ Struct_FullName :
     { $$.char1 = NULL; $$.char2 = $1; }
   | String__Index tSCOPE String__Index
     { $$.char1 = $1; $$.char2 = $3; }
-;
-
-tSTRING_Member :
-    tSTRING
-    { $$ = $1; flag_tSTRING_alloc = 1; }
-/*
-  | tType
-    { $$ = (char*)"Type"; flag_tSTRING_alloc = 0; }
-*/
 ;
 
 Append :
@@ -5855,11 +5831,11 @@ FExpr_Multi :
       }
       Free($1);
     }
-  | String__Index '.' tSTRING_Member LP RP
+  | String__Index '.' tSTRING_Reserved LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member LP RP
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat($1, $3, $5);
     }
@@ -6124,21 +6100,19 @@ StringExprVar :
       strcpy($$, val.c_str());
       Free($1);
     }
-// PD: TO FIX (to avoid shift/reduce conflict)
-//  | Struct_FullName '.' String__Index //tSTRING//_Member_Float
-  | String__Index '.' tSTRING_Member
+  | String__Index '.' tSTRING_Reserved
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5);
     }
-  | String__Index '.' tSTRING_Member '(' FExpr ')'
+  | String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3, (int)$5);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member '(' FExpr ')'
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5, (int)$7);
     }
@@ -6233,7 +6207,7 @@ StringExpr :
     {
       $$ = treat_Struct_FullName_String(NULL, $3.char2, 1, 0, $4, 2);
     }
-  | tGetForcedStr '(' Struct_FullName '.' tSTRING_Member GetForcedStr_Default ')'
+  | tGetForcedStr '(' Struct_FullName '.' tSTRING_Reserved GetForcedStr_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($3.char1, $3.char2, $5, 0, $6, 2);
     }
@@ -6515,11 +6489,11 @@ MultiStringExprVar :
       }
       Free($1);
     }
-  | String__Index '.' tSTRING_Member '(' ')'
+  | String__Index '.' tSTRING_Reserved '(' ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfString(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member '(' ')'
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved '(' ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfString($1, $3, $5);
     }
@@ -7311,7 +7285,7 @@ double treat_Struct_FullName_dot_tSTRING_Float
     break;
   }
   Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
+  Free(c3);
   return out;
 }
 
@@ -7341,7 +7315,7 @@ List_T * treat_Struct_FullName_dot_tSTRING_ListOfFloat
     break;
   }
   Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
+  Free(c3);
   return out;
 }
 
@@ -7364,7 +7338,7 @@ int treat_Struct_FullName_dot_tSTRING_Float_getDim
     break;
   }
   Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
+  Free(c3);
   return out;
 }
 
@@ -7428,7 +7402,7 @@ char* treat_Struct_FullName_dot_tSTRING_String
   char* out_c = (char*)Malloc((out->size() + 1) * sizeof(char));
   strcpy(out_c, out->c_str());
   Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
+  Free(c3);
   return out_c;
 }
 
@@ -7458,6 +7432,6 @@ List_T * treat_Struct_FullName_dot_tSTRING_ListOfString
     break;
   }
   Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
+  Free(c3);
   return out;
 }
