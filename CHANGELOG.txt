@@ -1,4 +1,4 @@
-4.5.1 (Work-in-progress): made Mesh.MinimumCirclePoints behave the same with all
+4.5.1 (Work-in-progress): Mesh.MinimumCirclePoints now behaves the same with all
 geometry kernels.
 
 4.5.0 (December 21, 2019): changed default 2D meshing algorithm to
