@@ -54,6 +54,7 @@
 #include <iostream>
 #include <fstream>
 #include <sys/timeb.h>
+#include <wchar.h>
 #endif
 
 #include "GmshMessage.h"
@@ -259,7 +260,10 @@ static void setwbuf(int i, const char *f)
   // all strings in Gmsh are supposed to be UTF8-encoded, which is natively
   // supported by Mac and Linux. Windows does not support UTF-8, but UTF-16
   // (through wchar_t), so we need to convert.
-  if(i < 0 || i > 2) return;
+  if(i < 0 || i > 2) {
+    Msg::Error("Wrong buffer index in setwbuf");
+    return;
+  }
   size_t l = strlen(f);
   unsigned int wn = utf8toUtf16(f, (unsigned int)l, NULL, 0) + 1;
   wbuf[i] = (wchar_t *)realloc(wbuf[i], sizeof(wchar_t) * wn);
@@ -280,19 +284,24 @@ FILE *Fopen(const char *f, const char *mode)
 #endif
 }
 
-const char *GetEnvironmentVar(const char *var)
+std::string GetEnvironmentVar(const std::string &var)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
-  // Should probably use the Unicode version
-  const char *tmp = getenv(var);
+  setwbuf(0, var.c_str());
+  const wchar_t *wtmp = _wgetenv(wbuf[0]);
+  if(!wtmp) return "";
+  char tmp[MAX_PATH];
+  utf8FromUtf16(tmp, MAX_PATH, wtmp, wcslen(wtmp));
   // Don't accept top dir or anything partially expanded like
-  // c:\Documents and Settings\%USERPROFILE%, etc.
-  if(!tmp || !strcmp(tmp, "/") || strstr(tmp, "%") || strstr(tmp, "$"))
-    return 0;
+  // Settings\%USERPROFILE%, etc.
+  if(!strcmp(tmp, "/") || strstr(tmp, "%") || strstr(tmp, "$"))
+    return "";
   else
-    return tmp;
+    return std::string(tmp);
 #else
-  return getenv(var);
+  const char *tmp = getenv(var.c_str());
+  if(!tmp) return "";
+  return std::string(tmp);
 #endif
 }
 

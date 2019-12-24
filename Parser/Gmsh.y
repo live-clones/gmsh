@@ -6173,10 +6173,9 @@ StringExpr :
     }
   | tGetEnv '(' StringExprVar ')'
     {
-      const char *env = GetEnvironmentVar($3);
-      if(!env) env = "";
-      $$ = (char *)Malloc((sizeof(env) + 1) * sizeof(char));
-      strcpy($$, env);
+      std::string env = GetEnvironmentVar($3);
+      $$ = (char *)Malloc((env.size() + 1) * sizeof(char));
+      strcpy($$, env.c_str());
       Free($3);
     }
   | tGetStringValue '(' StringExprVar ',' StringExprVar ')'

@@ -1531,12 +1531,12 @@ static const yytype_uint16 yyrline[] =
     5885,  5893,  5901,  5930,  5940,  5956,  5967,  5972,  5976,  5980,
     5992,  5996,  6008,  6025,  6035,  6039,  6054,  6059,  6066,  6070,
     6075,  6089,  6103,  6107,  6111,  6115,  6119,  6127,  6133,  6142,
-    6146,  6150,  6158,  6164,  6170,  6174,  6182,  6190,  6197,  6206,
-    6210,  6214,  6229,  6243,  6257,  6269,  6285,  6294,  6303,  6313,
-    6324,  6332,  6340,  6344,  6363,  6370,  6376,  6382,  6389,  6397,
-    6396,  6406,  6430,  6432,  6438,  6443,  6445,  6450,  6455,  6460,
-    6462,  6466,  6478,  6492,  6496,  6503,  6511,  6519,  6530,  6532,
-    6535
+    6146,  6150,  6158,  6164,  6170,  6174,  6181,  6189,  6196,  6205,
+    6209,  6213,  6228,  6242,  6256,  6268,  6284,  6293,  6302,  6312,
+    6323,  6331,  6339,  6343,  6362,  6369,  6375,  6381,  6388,  6396,
+    6395,  6405,  6429,  6431,  6437,  6442,  6444,  6449,  6454,  6459,
+    6461,  6465,  6477,  6491,  6495,  6502,  6510,  6518,  6529,  6531,
+    6534
 };
 #endif
 
@@ -14214,16 +14214,15 @@ yyreduce:
   case 585:
 #line 6175 "Gmsh.y"
     {
-      const char *env = GetEnvironmentVar((yyvsp[(3) - (4)].c));
-      if(!env) env = "";
-      (yyval.c) = (char *)Malloc((sizeof(env) + 1) * sizeof(char));
-      strcpy((yyval.c), env);
+      std::string env = GetEnvironmentVar((yyvsp[(3) - (4)].c));
+      (yyval.c) = (char *)Malloc((env.size() + 1) * sizeof(char));
+      strcpy((yyval.c), env.c_str());
       Free((yyvsp[(3) - (4)].c));
     ;}
     break;
 
   case 586:
-#line 6183 "Gmsh.y"
+#line 6182 "Gmsh.y"
     {
       std::string s = Msg::GetString((yyvsp[(3) - (6)].c), (yyvsp[(5) - (6)].c));
       (yyval.c) = (char *)Malloc((s.size() + 1) * sizeof(char));
@@ -14234,7 +14233,7 @@ yyreduce:
     break;
 
   case 587:
-#line 6191 "Gmsh.y"
+#line 6190 "Gmsh.y"
     {
       std::string s = Msg::GetOnelabString((yyvsp[(3) - (4)].c));
       (yyval.c) = (char *)Malloc((s.size() + 1) * sizeof(char));
@@ -14244,7 +14243,7 @@ yyreduce:
     break;
 
   case 588:
-#line 6198 "Gmsh.y"
+#line 6197 "Gmsh.y"
     {
       std::string s = Msg::GetOnelabString((yyvsp[(3) - (6)].c), (yyvsp[(5) - (6)].c));
       (yyval.c) = (char *)Malloc((s.size() + 1) * sizeof(char));
@@ -14255,21 +14254,21 @@ yyreduce:
     break;
 
   case 589:
-#line 6207 "Gmsh.y"
+#line 6206 "Gmsh.y"
     {
       (yyval.c) = treat_Struct_FullName_String(NULL, (yyvsp[(3) - (5)].c2).char2, 1, 0, (yyvsp[(4) - (5)].c), 2);
     ;}
     break;
 
   case 590:
-#line 6211 "Gmsh.y"
+#line 6210 "Gmsh.y"
     {
       (yyval.c) = treat_Struct_FullName_dot_tSTRING_String((yyvsp[(3) - (7)].c2).char1, (yyvsp[(3) - (7)].c2).char2, (yyvsp[(5) - (7)].c), 0, (yyvsp[(6) - (7)].c), 2);
     ;}
     break;
 
   case 591:
-#line 6215 "Gmsh.y"
+#line 6214 "Gmsh.y"
     {
       int size = 1;
       for(int i = 0; i < List_Nbr((yyvsp[(3) - (4)].l)); i++)
@@ -14287,7 +14286,7 @@ yyreduce:
     break;
 
   case 592:
-#line 6230 "Gmsh.y"
+#line 6229 "Gmsh.y"
     {
       (yyval.c) = (char *)Malloc((strlen((yyvsp[(3) - (4)].c)) + 1) * sizeof(char));
       int i;
@@ -14304,7 +14303,7 @@ yyreduce:
     break;
 
   case 593:
-#line 6244 "Gmsh.y"
+#line 6243 "Gmsh.y"
     {
       (yyval.c) = (char *)Malloc((strlen((yyvsp[(3) - (4)].c)) + 1) * sizeof(char));
       int i;
@@ -14321,7 +14320,7 @@ yyreduce:
     break;
 
   case 594:
-#line 6258 "Gmsh.y"
+#line 6257 "Gmsh.y"
     {
       std::string input = (yyvsp[(3) - (8)].c);
       std::string substr_old = (yyvsp[(5) - (8)].c);
@@ -14336,7 +14335,7 @@ yyreduce:
     break;
 
   case 595:
-#line 6270 "Gmsh.y"
+#line 6269 "Gmsh.y"
     {
       int size = 1;
       for(int i = 0; i < List_Nbr((yyvsp[(3) - (4)].l)); i++)
@@ -14355,7 +14354,7 @@ yyreduce:
     break;
 
   case 596:
-#line 6286 "Gmsh.y"
+#line 6285 "Gmsh.y"
     {
       int i = 0;
       while ((yyvsp[(3) - (4)].c)[i]) {
@@ -14367,7 +14366,7 @@ yyreduce:
     break;
 
   case 597:
-#line 6295 "Gmsh.y"
+#line 6294 "Gmsh.y"
     {
       int i = 0;
       while ((yyvsp[(3) - (4)].c)[i]) {
@@ -14379,7 +14378,7 @@ yyreduce:
     break;
 
   case 598:
-#line 6304 "Gmsh.y"
+#line 6303 "Gmsh.y"
     {
       int i = 0;
       while ((yyvsp[(3) - (4)].c)[i]) {
@@ -14392,7 +14391,7 @@ yyreduce:
     break;
 
   case 599:
-#line 6314 "Gmsh.y"
+#line 6313 "Gmsh.y"
     {
       if((yyvsp[(3) - (8)].d)){
         (yyval.c) = (yyvsp[(5) - (8)].c);
@@ -14406,7 +14405,7 @@ yyreduce:
     break;
 
   case 600:
-#line 6325 "Gmsh.y"
+#line 6324 "Gmsh.y"
     {
       std::string in = (yyvsp[(3) - (8)].c);
       std::string out = in.substr((int)(yyvsp[(5) - (8)].d), (int)(yyvsp[(7) - (8)].d));
@@ -14417,7 +14416,7 @@ yyreduce:
     break;
 
   case 601:
-#line 6333 "Gmsh.y"
+#line 6332 "Gmsh.y"
     {
       std::string in = (yyvsp[(3) - (6)].c);
       std::string out = in.substr((int)(yyvsp[(5) - (6)].d), std::string::npos);
@@ -14428,14 +14427,14 @@ yyreduce:
     break;
 
   case 602:
-#line 6341 "Gmsh.y"
+#line 6340 "Gmsh.y"
     {
       (yyval.c) = (yyvsp[(3) - (4)].c);
     ;}
     break;
 
   case 603:
-#line 6345 "Gmsh.y"
+#line 6344 "Gmsh.y"
     {
       char tmpstring[5000];
       int i = printListOfDouble((yyvsp[(3) - (6)].c), (yyvsp[(5) - (6)].l), tmpstring);
@@ -14457,7 +14456,7 @@ yyreduce:
     break;
 
   case 604:
-#line 6364 "Gmsh.y"
+#line 6363 "Gmsh.y"
     {
       std::string tmp = FixRelativePath(gmsh_yyname, (yyvsp[(3) - (4)].c));
       (yyval.c) = (char*)Malloc((tmp.size() + 1) * sizeof(char));
@@ -14467,7 +14466,7 @@ yyreduce:
     break;
 
   case 605:
-#line 6371 "Gmsh.y"
+#line 6370 "Gmsh.y"
     {
       std::string tmp = SplitFileName(GetAbsolutePath(gmsh_yyname))[0];
       (yyval.c) = (char*)Malloc((tmp.size() + 1) * sizeof(char));
@@ -14476,7 +14475,7 @@ yyreduce:
     break;
 
   case 606:
-#line 6377 "Gmsh.y"
+#line 6376 "Gmsh.y"
     {
       std::string tmp = GetFileNameWithoutPath(gmsh_yyname);
       (yyval.c) = (char*)Malloc((tmp.size() + 1) * sizeof(char));
@@ -14485,7 +14484,7 @@ yyreduce:
     break;
 
   case 607:
-#line 6383 "Gmsh.y"
+#line 6382 "Gmsh.y"
     {
       std::string tmp = SplitFileName((yyvsp[(3) - (4)].c))[0];
       (yyval.c) = (char*)Malloc((tmp.size() + 1) * sizeof(char));
@@ -14495,7 +14494,7 @@ yyreduce:
     break;
 
   case 608:
-#line 6390 "Gmsh.y"
+#line 6389 "Gmsh.y"
     {
       std::string tmp = GetAbsolutePath((yyvsp[(3) - (4)].c));
       (yyval.c) = (char*)Malloc((tmp.size() + 1) * sizeof(char));
@@ -14505,12 +14504,12 @@ yyreduce:
     break;
 
   case 609:
-#line 6397 "Gmsh.y"
+#line 6396 "Gmsh.y"
     { init_options(); ;}
     break;
 
   case 610:
-#line 6399 "Gmsh.y"
+#line 6398 "Gmsh.y"
     {
       std::string val((yyvsp[(3) - (6)].c));
       Msg::ExchangeOnelabParameter("", val, floatOptions, charOptions);
@@ -14521,7 +14520,7 @@ yyreduce:
     break;
 
   case 611:
-#line 6407 "Gmsh.y"
+#line 6406 "Gmsh.y"
     {
       std::string out;
       const std::string * key_struct = NULL;
@@ -14545,37 +14544,37 @@ yyreduce:
     break;
 
   case 612:
-#line 6431 "Gmsh.y"
+#line 6430 "Gmsh.y"
     { struct_namespace = std::string(""); (yyval.d) = (yyvsp[(2) - (2)].d); ;}
     break;
 
   case 613:
-#line 6433 "Gmsh.y"
+#line 6432 "Gmsh.y"
     { struct_namespace = (yyvsp[(1) - (4)].c); Free((yyvsp[(1) - (4)].c)); (yyval.d) = (yyvsp[(4) - (4)].d); ;}
     break;
 
   case 614:
-#line 6439 "Gmsh.y"
+#line 6438 "Gmsh.y"
     { (yyval.l) = (yyvsp[(3) - (4)].l); ;}
     break;
 
   case 615:
-#line 6444 "Gmsh.y"
+#line 6443 "Gmsh.y"
     { (yyval.l) = (yyvsp[(1) - (1)].l); ;}
     break;
 
   case 616:
-#line 6446 "Gmsh.y"
+#line 6445 "Gmsh.y"
     { (yyval.l) = (yyvsp[(1) - (1)].l); ;}
     break;
 
   case 617:
-#line 6451 "Gmsh.y"
+#line 6450 "Gmsh.y"
     { (yyval.l) = (yyvsp[(2) - (3)].l); ;}
     break;
 
   case 618:
-#line 6456 "Gmsh.y"
+#line 6455 "Gmsh.y"
     {
       (yyval.l) = List_Create(20,20,sizeof(char*));
       List_Add((yyval.l), &((yyvsp[(1) - (1)].c)));
@@ -14583,19 +14582,19 @@ yyreduce:
     break;
 
   case 619:
-#line 6461 "Gmsh.y"
+#line 6460 "Gmsh.y"
     { (yyval.l) = (yyvsp[(1) - (1)].l); ;}
     break;
 
   case 620:
-#line 6463 "Gmsh.y"
+#line 6462 "Gmsh.y"
     {
       List_Add((yyval.l), &((yyvsp[(3) - (3)].c)));
     ;}
     break;
 
   case 621:
-#line 6467 "Gmsh.y"
+#line 6466 "Gmsh.y"
     {
       for(int i = 0; i < List_Nbr((yyvsp[(3) - (3)].l)); i++){
 	char* c;
@@ -14607,7 +14606,7 @@ yyreduce:
     break;
 
   case 622:
-#line 6479 "Gmsh.y"
+#line 6478 "Gmsh.y"
     {
       (yyval.l) = List_Create(20, 20, sizeof(char *));
       if(!gmsh_yystringsymbols.count((yyvsp[(1) - (3)].c)))
@@ -14624,21 +14623,21 @@ yyreduce:
     break;
 
   case 623:
-#line 6493 "Gmsh.y"
+#line 6492 "Gmsh.y"
     {
       (yyval.l) = treat_Struct_FullName_dot_tSTRING_ListOfString(NULL, (yyvsp[(1) - (5)].c), (yyvsp[(3) - (5)].c));
     ;}
     break;
 
   case 624:
-#line 6497 "Gmsh.y"
+#line 6496 "Gmsh.y"
     {
       (yyval.l) = treat_Struct_FullName_dot_tSTRING_ListOfString((yyvsp[(1) - (7)].c), (yyvsp[(3) - (7)].c), (yyvsp[(5) - (7)].c));
     ;}
     break;
 
   case 625:
-#line 6504 "Gmsh.y"
+#line 6503 "Gmsh.y"
     {
       char tmpstr[256];
       sprintf(tmpstr, "_%d", (int)(yyvsp[(4) - (5)].d));
@@ -14649,7 +14648,7 @@ yyreduce:
     break;
 
   case 626:
-#line 6512 "Gmsh.y"
+#line 6511 "Gmsh.y"
     {
       char tmpstr[256];
       sprintf(tmpstr, "_%d", (int)(yyvsp[(4) - (5)].d));
@@ -14660,7 +14659,7 @@ yyreduce:
     break;
 
   case 627:
-#line 6520 "Gmsh.y"
+#line 6519 "Gmsh.y"
     {
       char tmpstr[256];
       sprintf(tmpstr, "_%d", (int)(yyvsp[(7) - (8)].d));
@@ -14671,23 +14670,23 @@ yyreduce:
     break;
 
   case 628:
-#line 6531 "Gmsh.y"
+#line 6530 "Gmsh.y"
     { (yyval.c) = (yyvsp[(1) - (1)].c); ;}
     break;
 
   case 629:
-#line 6533 "Gmsh.y"
+#line 6532 "Gmsh.y"
     { (yyval.c) = (yyvsp[(1) - (1)].c); ;}
     break;
 
   case 630:
-#line 6536 "Gmsh.y"
+#line 6535 "Gmsh.y"
     { (yyval.c) = (yyvsp[(3) - (4)].c); ;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 14691 "Gmsh.tab.cpp"
+#line 14690 "Gmsh.tab.cpp"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -14901,7 +14900,7 @@ yyreturn:
 }
 
 
-#line 6539 "Gmsh.y"
+#line 6538 "Gmsh.y"
 
 
 void assignVariable(const std::string &name, int index, int assignType,

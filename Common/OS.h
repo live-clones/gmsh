@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 FILE *Fopen(const char *f, const char *mode);
-const char *GetEnvironmentVar(const char *var);
+std::string GetEnvironmentVar(const std::string &var);
 void SetEnvironmentVar(const char *var, const char *val);
 void SleepInSeconds(double s);
 void CheckResources();
