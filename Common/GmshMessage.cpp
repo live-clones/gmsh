@@ -98,19 +98,18 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
 {
   std::string gmshPath = SplitFileName(CTX::instance()->exeFileName)[0];
   if(gmshPath.size()){
-    std::string path;
-    char *tmp = getenv(name.c_str());
-    if(tmp){
-      path = tmp;
+    std::string path, tmp = GetEnvironmentVar(name);
+    if(tmp.empty()) {
+      path = gmshPath;
+    }
+    else {
 #if defined(WIN32)
-      path += ";" + gmshPath;
+      path = tmp + ";" + gmshPath;
 #else
-      path += ":" + gmshPath;
+      path = tmp + ":" + gmshPath;
 #endif
     }
-    else
-      path = gmshPath;
-    SetEnvironmentVar(name.c_str(), path.c_str());
+    SetEnvironmentVar(name, path);
   }
 }
 

@@ -1,6 +1,6 @@
 4.5.1 (Work-in-progress): new Min and Max commands in .geo files;
 Mesh.MinimumCirclePoints now behaves the same with all geometry kernels; fixed
-issue with UTF16-encode home directories on Windows.
+issue with UTF16-encoded home directories on Windows.
 
 4.5.0 (December 21, 2019): changed default 2D meshing algorithm to
 Frontal-Delaunay; new compound Spline/BSpline commands; new MeshSizeFromBoundary

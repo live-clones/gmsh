@@ -11,7 +11,7 @@
 
 FILE *Fopen(const char *f, const char *mode);
 std::string GetEnvironmentVar(const std::string &var);
-void SetEnvironmentVar(const char *var, const char *val);
+void SetEnvironmentVar(const std::string &var, const std::string &val);
 void SleepInSeconds(double s);
 void CheckResources();
 double Cpu();
@@ -30,7 +30,6 @@ void CreatePath(const std::string &fullPath);
 int SystemCall(const std::string &command, bool blocking = false);
 int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
                   bool blocking = false);
-std::string GetCurrentWorkdir();
 void RedirectIOToConsole();
 void UnzipFile(const std::string &fileName, const std::string &prependDir = "");
 

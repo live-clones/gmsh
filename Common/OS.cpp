@@ -305,13 +305,13 @@ std::string GetEnvironmentVar(const std::string &var)
 #endif
 }
 
-void SetEnvironmentVar(const char *var, const char *val)
+void SetEnvironmentVar(const std::string &var, const std::string &val)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
-  // should probably use Unicode version here
-  _putenv((std::string(var) + "=" + std::string(val)).c_str());
+  setwbuf(0, (var + "=" + val).c_str());
+  _wputenv(wbuf[0]);
 #else
-  setenv(var, val, 1);
+  setenv(var.c_str(), val.c_str(), 1);
 #endif
 }
 
@@ -644,28 +644,6 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
 int SystemCall(const std::string &command, bool blocking)
 {
   return SystemCallExe("", command, blocking);
-}
-
-std::string GetCurrentWorkdir()
-{
-  char path[1024];
-
-#if defined(WIN32) && !defined(__CYGWIN__)
-  // should use Unicode version
-  if(!_getcwd(path, sizeof(path))) return "";
-#else
-  if(!getcwd(path, sizeof(path))) return "";
-#endif
-
-  std::string str(path);
-  // match the convention of SplitFileName that delivers directory path
-  // ending with a directory separator
-#if defined(WIN32)
-  str.append("\\");
-#else
-  str.append("/");
-#endif
-  return str;
 }
 
 void RedirectIOToConsole()
