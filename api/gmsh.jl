@@ -2547,8 +2547,8 @@ end
 Add a circle arc (strictly smaller than Pi) between the two points with tags
 `startTag` and `endTag`, with center `centertag`. If `tag` is positive, set the
 tag explicitly; otherwise a new tag is selected automatically. If (`nx`, `ny`,
-`nz`) != (0,0,0), explicitly set the plane of the circle arc. Return the tag of
-the circle arc.
+`nz`) != (0, 0, 0), explicitly set the plane of the circle arc. Return the tag
+of the circle arc.
 
 Return an integer value.
 """
@@ -2567,8 +2567,8 @@ end
 Add an ellipse arc (strictly smaller than Pi) between the two points `startTag`
 and `endTag`, with center `centerTag` and major axis point `majorTag`. If `tag`
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. If (`nx`, `ny`, `nz`) != (0,0,0), explicitly set the plane of the
-circle arc. Return the tag of the ellipse arc.
+automatically. If (`nx`, `ny`, `nz`) != (0, 0, 0), explicitly set the plane of
+the circle arc. Return the tag of the ellipse arc.
 
 Return an integer value.
 """

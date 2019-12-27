@@ -1186,7 +1186,7 @@ GMSH_API int gmshModelGeoAddLine(const int startTag,
 /* Add a circle arc (strictly smaller than Pi) between the two points with
  * tags `startTag' and `endTag', with center `centertag'. If `tag' is
  * positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly set the plane
+ * automatically. If (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane
  * of the circle arc. Return the tag of the circle arc. */
 GMSH_API int gmshModelGeoAddCircleArc(const int startTag,
                                       const int centerTag,
@@ -1200,8 +1200,9 @@ GMSH_API int gmshModelGeoAddCircleArc(const int startTag,
 /* Add an ellipse arc (strictly smaller than Pi) between the two points
  * `startTag' and `endTag', with center `centerTag' and major axis point
  * `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
- * tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly
- * set the plane of the circle arc. Return the tag of the ellipse arc. */
+ * tag is selected automatically. If (`nx', `ny', `nz') != (0, 0, 0),
+ * explicitly set the plane of the circle arc. Return the tag of the ellipse
+ * arc. */
 GMSH_API int gmshModelGeoAddEllipseArc(const int startTag,
                                        const int centerTag,
                                        const int majorTag,

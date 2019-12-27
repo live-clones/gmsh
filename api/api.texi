@@ -30,7 +30,7 @@ configuration files (gmshrc and gmsh-options).
 
 @table @asis
 @item Input:
-@code{argv}, @code{readConfigFiles}
+@code{argv = []}, @code{readConfigFiles = True}
 @item Output:
 -
 @item Return:
@@ -172,7 +172,7 @@ reference manual, with the "Color." middle string removed.
 
 @table @asis
 @item Input:
-@code{name}, @code{r}, @code{g}, @code{b}, @code{a}
+@code{name}, @code{r}, @code{g}, @code{b}, @code{a = 0}
 @item Output:
 -
 @item Return:
@@ -268,7 +268,7 @@ entities are returned as a vector of (dim, tag) integer pairs.
 
 @table @asis
 @item Input:
-@code{dim}
+@code{dim = -1}
 @item Output:
 @code{dimTags}
 @item Return:
@@ -306,7 +306,7 @@ only the entities of the specified dimension (e.g. physical points if @code{dim}
 
 @table @asis
 @item Input:
-@code{dim}
+@code{dim = -1}
 @item Output:
 @code{dimTags}
 @item Return:
@@ -346,7 +346,7 @@ tags @code{tags}. Return the tag of the physical group, equal to @code{tag} if
 
 @table @asis
 @item Input:
-@code{dim}, @code{tags}, @code{tag}
+@code{dim}, @code{tags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -387,7 +387,7 @@ recursively down to dimension 0 (i.e. to points) if @code{recursive} is true.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{combined}, @code{oriented}, @code{recursive}
+@code{dimTags}, @code{combined = True}, @code{oriented = True}, @code{recursive = False}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -402,7 +402,7 @@ dimension (e.g. points if @code{dim} == 0).
 
 @table @asis
 @item Input:
-@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}, @code{dim}
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}, @code{dim = -1}
 @item Output:
 @code{tags}
 @item Return:
@@ -446,7 +446,7 @@ overall model.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{boundary}
+@code{dim}, @code{tag = -1}, @code{boundary = []}
 @item Output:
 -
 @item Return:
@@ -459,7 +459,7 @@ true, remove all the entities on their boundaries, down to dimension 0.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{recursive}
+@code{dimTags}, @code{recursive = False}
 @item Output:
 -
 @item Return:
@@ -484,7 +484,7 @@ Remove the physical groups @code{dimTags} of the current model. If
 
 @table @asis
 @item Input:
-@code{dimTags}
+@code{dimTags = []}
 @item Output:
 -
 @item Return:
@@ -650,7 +650,7 @@ the visibility setting recursively if @code{recursive} is true.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{value}, @code{recursive}
+@code{dimTags}, @code{value}, @code{recursive = False}
 @item Output:
 -
 @item Return:
@@ -678,7 +678,7 @@ should be integers between 0 and 255. Apply the color setting recursively if
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{r}, @code{g}, @code{b}, @code{a}, @code{recursive}
+@code{dimTags}, @code{r}, @code{g}, @code{b}, @code{a = 0}, @code{recursive = False}
 @item Output:
 -
 @item Return:
@@ -720,7 +720,7 @@ Generate a mesh of the current model, up to dimension @code{dim} (0, 1, 2 or 3).
 
 @table @asis
 @item Input:
-@code{dim}
+@code{dim = 3}
 @item Output:
 -
 @item Return:
@@ -762,7 +762,7 @@ Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If
 
 @table @asis
 @item Input:
-@code{method}, @code{force}, @code{niter}, @code{dimTags}
+@code{method}, @code{force = False}, @code{niter = 1}, @code{dimTags = []}
 @item Output:
 -
 @item Return:
@@ -860,7 +860,7 @@ the entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{includeBoundary}, @code{returnParametricCoord}
+@code{dim = -1}, @code{tag = -1}, @code{includeBoundary = False}, @code{returnParametricCoord = True}
 @item Output:
 @code{nodeTags}, @code{coord}, @code{parametricCoord}
 @item Return:
@@ -874,7 +874,7 @@ of type @code{elementType}. The other arguments are treated as in
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}, @code{returnParametricCoord}
+@code{elementType}, @code{tag = -1}, @code{returnParametricCoord = True}
 @item Output:
 @code{nodeTags}, @code{coord}, @code{parametricCoord}
 @item Return:
@@ -919,7 +919,7 @@ Rebuild the node cache.
 
 @table @asis
 @item Input:
-@code{onlyIfNecessary}
+@code{onlyIfNecessary = True}
 @item Output:
 -
 @item Return:
@@ -955,7 +955,7 @@ automatically assigned to the nodes.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{nodeTags}, @code{coord}, @code{parametricCoord}
+@code{dim}, @code{tag}, @code{nodeTags}, @code{coord}, @code{parametricCoord = []}
 @item Output:
 -
 @item Return:
@@ -985,7 +985,7 @@ negative, relocate all the nodes in the mesh.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}
+@code{dim = -1}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -1009,7 +1009,7 @@ that contains the node tags of all the elements of the given type, concatenated:
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}
+@code{dim = -1}, @code{tag = -1}
 @item Output:
 @code{elementTypes}, @code{elementTags}, @code{nodeTags}
 @item Return:
@@ -1044,7 +1044,7 @@ set, use a tolerance to find elements near the search location.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dim}, @code{strict}
+@code{x}, @code{y}, @code{z}, @code{dim = -1}, @code{strict = False}
 @item Output:
 @code{elementTag}, @code{elementType}, @code{nodeTags}, @code{u}, @code{v}, @code{w}
 @item Return:
@@ -1063,7 +1063,7 @@ location.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dim}, @code{strict}
+@code{x}, @code{y}, @code{z}, @code{dim = -1}, @code{strict = False}
 @item Output:
 @code{elementTags}
 @item Return:
@@ -1093,7 +1093,7 @@ mesh.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}
+@code{dim = -1}, @code{tag = -1}
 @item Output:
 @code{elementTypes}
 @item Return:
@@ -1108,7 +1108,7 @@ corresponding serendip element type (element without interior nodes).
 
 @table @asis
 @item Input:
-@code{familyName}, @code{order}, @code{serendip}
+@code{familyName}, @code{order}, @code{serendip = False}
 @item Output:
 -
 @item Return:
@@ -1144,7 +1144,7 @@ indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}, @code{task}, @code{numTasks}
+@code{elementType}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{elementTags}, @code{nodeTags}
 @item Return:
@@ -1157,7 +1157,7 @@ Preallocate data before calling @code{getElementsByType} with @code{numTasks} >
 
 @table @asis
 @item Input:
-@code{elementType}, @code{elementTag}, @code{nodeTag}, @code{tag}
+@code{elementType}, @code{elementTag}, @code{nodeTag}, @code{tag = -1}
 @item Output:
 @code{elementTags}, @code{nodeTags}
 @item Return:
@@ -1238,7 +1238,7 @@ and return the part of the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{integrationPoints}, @code{tag}, @code{task}, @code{numTasks}
+@code{elementType}, @code{integrationPoints}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{jacobians}, @code{determinants}, @code{points}
 @item Return:
@@ -1251,7 +1251,7 @@ For C and C++ only.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{numIntegrationPoints}, @code{jacobian}, @code{determinant}, @code{point}, @code{tag}
+@code{elementType}, @code{numIntegrationPoints}, @code{jacobian}, @code{determinant}, @code{point}, @code{tag = -1}
 @item Output:
 @code{jacobians}, @code{determinants}, @code{points}
 @item Return:
@@ -1296,7 +1296,7 @@ return the part of the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag}, @code{task}, @code{numTasks}
+@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{numComponents}, @code{numFunctionsPerElements}, @code{basisFunctions}
 @item Return:
@@ -1309,7 +1309,7 @@ Preallocate data before calling @code{getBasisFunctionsForElements} with
 
 @table @asis
 @item Input:
-@code{elementType}, @code{numIntegrationPoints}, @code{functionSpaceType}, @code{tag}
+@code{elementType}, @code{numIntegrationPoints}, @code{functionSpaceType}, @code{tag = -1}
 @item Output:
 @code{basisFunctions}
 @item Return:
@@ -1326,7 +1326,7 @@ experimental feature and will probably change in a future release.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{functionSpaceType}, @code{tag}, @code{returnCoord}
+@code{elementType}, @code{functionSpaceType}, @code{tag = -1}, @code{returnCoord = True}
 @item Output:
 @code{keys}, @code{coord}
 @item Return:
@@ -1386,7 +1386,7 @@ the part of the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}, @code{fast}, @code{primary}, @code{task}, @code{numTasks}
+@code{elementType}, @code{tag}, @code{fast}, @code{primary}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{barycenters}
 @item Return:
@@ -1399,7 +1399,7 @@ For C and C++ only.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}
+@code{elementType}, @code{tag = -1}
 @item Output:
 @code{barycenters}
 @item Return:
@@ -1418,7 +1418,7 @@ indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}, @code{primary}, @code{task}, @code{numTasks}
+@code{elementType}, @code{tag = -1}, @code{primary = False}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{nodeTags}
 @item Return:
@@ -1438,7 +1438,7 @@ the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{faceType}, @code{tag}, @code{primary}, @code{task}, @code{numTasks}
+@code{elementType}, @code{faceType}, @code{tag = -1}, @code{primary = False}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{nodeTags}
 @item Return:
@@ -1479,7 +1479,7 @@ Currently supported types are "Progression" (geometrical progression with power
 
 @table @asis
 @item Input:
-@code{tag}, @code{numNodes}, @code{meshType}, @code{coef}
+@code{tag}, @code{numNodes}, @code{meshType = "Progression"}, @code{coef = 1.}
 @item Output:
 -
 @item Return:
@@ -1497,7 +1497,7 @@ its boundary.
 
 @table @asis
 @item Input:
-@code{tag}, @code{arrangement}, @code{cornerTags}
+@code{tag}, @code{arrangement = "Left"}, @code{cornerTags = []}
 @item Output:
 -
 @item Return:
@@ -1511,7 +1511,7 @@ interpolation explicitly.
 
 @table @asis
 @item Input:
-@code{tag}, @code{cornerTags}
+@code{tag}, @code{cornerTags = []}
 @item Output:
 -
 @item Return:
@@ -1554,7 +1554,7 @@ as-is.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{val}
+@code{dim}, @code{tag}, @code{val = True}
 @item Output:
 -
 @item Return:
@@ -1639,7 +1639,7 @@ points if @code{dim} == 0).
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{dim}
+@code{dimTags}, @code{dim = -1}
 @item Output:
 -
 @item Return:
@@ -1736,7 +1736,7 @@ surfaces.
 
 @table @asis
 @item Input:
-@code{quality}, @code{tag}
+@code{quality = 1.}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -1753,7 +1753,7 @@ less than Pi, also force curves to be split according to @code{curveAngle}.
 
 @table @asis
 @item Input:
-@code{angle}, @code{boundary}, @code{forReparametrization}, @code{curveAngle}
+@code{angle}, @code{boundary = True}, @code{forReparametrization = False}, @code{curveAngle = pi}
 @item Output:
 -
 @item Return:
@@ -1800,7 +1800,7 @@ as physical groups in the mesh.
 
 @table @asis
 @item Input:
-@code{domainTags}, @code{subdomainTags}, @code{dims}
+@code{domainTags = []}, @code{subdomainTags = []}, @code{dims = []}
 @item Output:
 -
 @item Return:
@@ -1819,7 +1819,7 @@ stored as physical groups in the mesh.
 
 @table @asis
 @item Input:
-@code{domainTags}, @code{subdomainTags}, @code{dims}
+@code{domainTags = []}, @code{subdomainTags = []}, @code{dims = []}
 @item Output:
 -
 @item Return:
@@ -1852,7 +1852,7 @@ the field tag.
 
 @table @asis
 @item Input:
-@code{fieldType}, @code{tag}
+@code{fieldType}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -1950,7 +1950,7 @@ the geo module.)
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{meshSize}, @code{tag}
+@code{x}, @code{y}, @code{z}, @code{meshSize = 0.}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -1964,7 +1964,7 @@ new tag is selected automatically. Return the tag of the line.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{endTag}, @code{tag}
+@code{startTag}, @code{endTag}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -1975,12 +1975,12 @@ integer value
 Add a circle arc (strictly smaller than Pi) between the two points with tags
 @code{startTag} and @code{endTag}, with center @code{centertag}. If @code{tag}
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. If (@code{nx}, @code{ny}, @code{nz}) != (0,0,0), explicitly set
+automatically. If (@code{nx}, @code{ny}, @code{nz}) != (0, 0, 0), explicitly set
 the plane of the circle arc. Return the tag of the circle arc.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag}, @code{nx}, @code{ny}, @code{nz}
+@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag = -1}, @code{nx = 0.}, @code{ny = 0.}, @code{nz = 0.}
 @item Output:
 -
 @item Return:
@@ -1992,12 +1992,12 @@ Add an ellipse arc (strictly smaller than Pi) between the two points
 @code{startTag} and @code{endTag}, with center @code{centerTag} and major axis
 point @code{majorTag}. If @code{tag} is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. If (@code{nx}, @code{ny},
-@code{nz}) != (0,0,0), explicitly set the plane of the circle arc. Return the
+@code{nz}) != (0, 0, 0), explicitly set the plane of the circle arc. Return the
 tag of the ellipse arc.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{centerTag}, @code{majorTag}, @code{endTag}, @code{tag}, @code{nx}, @code{ny}, @code{nz}
+@code{startTag}, @code{centerTag}, @code{majorTag}, @code{endTag}, @code{tag = -1}, @code{nx = 0.}, @code{ny = 0.}, @code{nz = 0.}
 @item Output:
 -
 @item Return:
@@ -2012,7 +2012,7 @@ same. Return the tag of the spline curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}
+@code{pointTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2027,7 +2027,7 @@ same. Return the tag of the b-spline curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}
+@code{pointTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2041,7 +2041,7 @@ Return the tag of the Bezier curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}
+@code{pointTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2056,7 +2056,7 @@ otherwise a new tag is selected automatically. Return the tag of the spline.
 
 @table @asis
 @item Input:
-@code{curveTags}, @code{numIntervals}, @code{tag}
+@code{curveTags}, @code{numIntervals = 5}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2071,7 +2071,7 @@ automatically. Return the tag of the b-spline.
 
 @table @asis
 @item Input:
-@code{curveTags}, @code{numIntervals}, @code{tag}
+@code{curveTags}, @code{numIntervals = 20}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2088,7 +2088,7 @@ curve loop.
 
 @table @asis
 @item Input:
-@code{curveTags}, @code{tag}
+@code{curveTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2103,7 +2103,7 @@ selected automatically. Return the tag of the surface.
 
 @table @asis
 @item Input:
-@code{wireTags}, @code{tag}
+@code{wireTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2118,7 +2118,7 @@ tag is selected automatically. Return the tag of the surface.
 
 @table @asis
 @item Input:
-@code{wireTags}, @code{tag}, @code{sphereCenterTag}
+@code{wireTags}, @code{tag = -1}, @code{sphereCenterTag = -1}
 @item Output:
 -
 @item Return:
@@ -2132,7 +2132,7 @@ automatically. Return the tag of the shell.
 
 @table @asis
 @item Input:
-@code{surfaceTags}, @code{tag}
+@code{surfaceTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2147,7 +2147,7 @@ selected automatically. Return the tag of the volume.
 
 @table @asis
 @item Input:
-@code{shellTags}, @code{tag}
+@code{shellTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2165,7 +2165,7 @@ extruded along their normal.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{dx}, @code{dy}, @code{dz}, @code{numElements}, @code{heights}, @code{recombine}
+@code{dimTags}, @code{dx}, @code{dy}, @code{dz}, @code{numElements = []}, @code{heights = []}, @code{recombine = False}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2184,7 +2184,7 @@ normalized to 1.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements}, @code{heights}, @code{recombine}
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements = []}, @code{heights = []}, @code{recombine = False}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2204,7 +2204,7 @@ normalized to 1.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements}, @code{heights}, @code{recombine}
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements = []}, @code{heights = []}, @code{recombine = False}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2285,7 +2285,7 @@ entities on their boundaries, down to dimension 0.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{recursive}
+@code{dimTags}, @code{recursive = False}
 @item Output:
 -
 @item Return:
@@ -2346,7 +2346,7 @@ Currently supported types are "Progression" (geometrical progression with power
 
 @table @asis
 @item Input:
-@code{tag}, @code{nPoints}, @code{meshType}, @code{coef}
+@code{tag}, @code{nPoints}, @code{meshType = "Progression"}, @code{coef = 1.}
 @item Output:
 -
 @item Return:
@@ -2364,7 +2364,7 @@ its boundary.
 
 @table @asis
 @item Input:
-@code{tag}, @code{arrangement}, @code{cornerTags}
+@code{tag}, @code{arrangement = "Left"}, @code{cornerTags = []}
 @item Output:
 -
 @item Return:
@@ -2378,7 +2378,7 @@ interpolation explicitly.
 
 @table @asis
 @item Input:
-@code{tag}, @code{cornerTags}
+@code{tag}, @code{cornerTags = []}
 @item Output:
 -
 @item Return:
@@ -2392,7 +2392,7 @@ recombine triangles into quadrangles) are supported.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{angle}
+@code{dim}, @code{tag}, @code{angle = 45.}
 @item Output:
 -
 @item Return:
@@ -2421,7 +2421,7 @@ as-is.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{val}
+@code{dim}, @code{tag}, @code{val = True}
 @item Output:
 -
 @item Return:
@@ -2472,7 +2472,7 @@ the occ module.)
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{meshSize}, @code{tag}
+@code{x}, @code{y}, @code{z}, @code{meshSize = 0.}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2486,7 +2486,7 @@ new tag is selected automatically. Return the tag of the line.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{endTag}, @code{tag}
+@code{startTag}, @code{endTag}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2501,7 +2501,7 @@ the circle arc.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag}
+@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2516,7 +2516,7 @@ arc between the two angles. Return the tag of the circle.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{r}, @code{tag}, @code{angle1}, @code{angle2}
+@code{x}, @code{y}, @code{z}, @code{r}, @code{tag = -1}, @code{angle1 = 0.}, @code{angle2 = 2*pi}
 @item Output:
 -
 @item Return:
@@ -2532,7 +2532,7 @@ allow creating ellipse arcs with the major radius smaller than the minor radius.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{centerTag}, @code{majorTag}, @code{endTag}, @code{tag}
+@code{startTag}, @code{centerTag}, @code{majorTag}, @code{endTag}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2551,7 +2551,7 @@ in such cases.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{r1}, @code{r2}, @code{tag}, @code{angle1}, @code{angle2}
+@code{x}, @code{y}, @code{z}, @code{r1}, @code{r2}, @code{tag = -1}, @code{angle1 = 0.}, @code{angle2 = 2*pi}
 @item Output:
 -
 @item Return:
@@ -2566,7 +2566,7 @@ same. Return the tag of the spline curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}
+@code{pointTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2583,7 +2583,7 @@ tag of the b-spline curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}, @code{degree}, @code{weights}, @code{knots}, @code{multiplicities}
+@code{pointTags}, @code{tag = -1}, @code{degree = 3}, @code{weights = []}, @code{knots = []}, @code{multiplicities = []}
 @item Output:
 -
 @item Return:
@@ -2597,7 +2597,7 @@ Return the tag of the Bezier curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}
+@code{pointTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2613,7 +2613,7 @@ wire.
 
 @table @asis
 @item Input:
-@code{curveTags}, @code{tag}, @code{checkClosed}
+@code{curveTags}, @code{tag = -1}, @code{checkClosed = False}
 @item Output:
 -
 @item Return:
@@ -2630,7 +2630,7 @@ tag of the curve loop.
 
 @table @asis
 @item Input:
-@code{curveTags}, @code{tag}
+@code{curveTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2646,7 +2646,7 @@ tag of the rectangle.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{tag}, @code{roundedRadius}
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{tag = -1}, @code{roundedRadius = 0.}
 @item Output:
 -
 @item Return:
@@ -2661,7 +2661,7 @@ tag of the disk.
 
 @table @asis
 @item Input:
-@code{xc}, @code{yc}, @code{zc}, @code{rx}, @code{ry}, @code{tag}
+@code{xc}, @code{yc}, @code{zc}, @code{rx}, @code{ry}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2676,7 +2676,7 @@ otherwise a new tag is selected automatically. Return the tag of the surface.
 
 @table @asis
 @item Input:
-@code{wireTags}, @code{tag}
+@code{wireTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2691,7 +2691,7 @@ surface to pass through the given points.
 
 @table @asis
 @item Input:
-@code{wireTag}, @code{tag}, @code{pointTags}
+@code{wireTag}, @code{tag = -1}, @code{pointTags = []}
 @item Output:
 -
 @item Return:
@@ -2707,7 +2707,7 @@ topologically different) curves.
 
 @table @asis
 @item Input:
-@code{surfaceTags}, @code{tag}, @code{sewing}
+@code{surfaceTags}, @code{tag = -1}, @code{sewing = False}
 @item Output:
 -
 @item Return:
@@ -2722,7 +2722,7 @@ tag is selected automatically. Return the tag of the volume.
 
 @table @asis
 @item Input:
-@code{shellTags}, @code{tag}
+@code{shellTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2739,7 +2739,7 @@ sphere.
 
 @table @asis
 @item Input:
-@code{xc}, @code{yc}, @code{zc}, @code{radius}, @code{tag}, @code{angle1}, @code{angle2}, @code{angle3}
+@code{xc}, @code{yc}, @code{zc}, @code{radius}, @code{tag = -1}, @code{angle1 = -pi/2}, @code{angle2 = pi/2}, @code{angle3 = 2*pi}
 @item Output:
 -
 @item Return:
@@ -2754,7 +2754,7 @@ box.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{tag}
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -2771,7 +2771,7 @@ Return the tag of the cylinder.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{r}, @code{tag}, @code{angle}
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{r}, @code{tag = -1}, @code{angle = 2*pi}
 @item Output:
 -
 @item Return:
@@ -2788,7 +2788,7 @@ opening (from 0 to 2*Pi). Return the tag of the cone.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{r1}, @code{r2}, @code{tag}, @code{angle}
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{r1}, @code{r2}, @code{tag = -1}, @code{angle = 2*pi}
 @item Output:
 -
 @item Return:
@@ -2804,7 +2804,7 @@ extent along the x-axis. Return the tag of the wedge.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{tag}, @code{ltx}
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{tag = -1}, @code{ltx = 0.}
 @item Output:
 -
 @item Return:
@@ -2820,7 +2820,7 @@ wedge.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{r1}, @code{r2}, @code{tag}, @code{angle}
+@code{x}, @code{y}, @code{z}, @code{r1}, @code{r2}, @code{tag = -1}, @code{angle = 2*pi}
 @item Output:
 -
 @item Return:
@@ -2837,7 +2837,7 @@ ruled surfaces.
 
 @table @asis
 @item Input:
-@code{wireTags}, @code{tag}, @code{makeSolid}, @code{makeRuled}
+@code{wireTags}, @code{tag = -1}, @code{makeSolid = True}, @code{makeRuled = False}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2853,7 +2853,7 @@ otherwise a new tag is selected automatically.
 
 @table @asis
 @item Input:
-@code{volumeTag}, @code{excludeSurfaceTags}, @code{offset}, @code{tag}
+@code{volumeTag}, @code{excludeSurfaceTags}, @code{offset}, @code{tag = -1}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2870,7 +2870,7 @@ normalized to 1.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{dx}, @code{dy}, @code{dz}, @code{numElements}, @code{heights}, @code{recombine}
+@code{dimTags}, @code{dx}, @code{dy}, @code{dz}, @code{numElements = []}, @code{heights = []}, @code{recombine = False}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2889,7 +2889,7 @@ strictly smaller than 2*Pi.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements}, @code{heights}, @code{recombine}
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements = []}, @code{heights = []}, @code{recombine = False}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2919,7 +2919,7 @@ Return the filleted entities in @code{outDimTags}. Remove the original volume if
 
 @table @asis
 @item Input:
-@code{volumeTags}, @code{curveTags}, @code{radii}, @code{removeVolume}
+@code{volumeTags}, @code{curveTags}, @code{radii}, @code{removeVolume = True}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2938,7 +2938,7 @@ original volume if @code{removeVolume} is set.
 
 @table @asis
 @item Input:
-@code{volumeTags}, @code{curveTags}, @code{surfaceTags}, @code{distances}, @code{removeVolume}
+@code{volumeTags}, @code{curveTags}, @code{surfaceTags}, @code{distances}, @code{removeVolume = True}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2954,7 +2954,7 @@ is set. Remove the tool if @code{removeTool} is set.
 
 @table @asis
 @item Input:
-@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@code{objectDimTags}, @code{toolDimTags}, @code{tag = -1}, @code{removeObject = True}, @code{removeTool = True}
 @item Output:
 @code{outDimTags}, @code{outDimTagsMap}
 @item Return:
@@ -2971,7 +2971,7 @@ set.
 
 @table @asis
 @item Input:
-@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@code{objectDimTags}, @code{toolDimTags}, @code{tag = -1}, @code{removeObject = True}, @code{removeTool = True}
 @item Output:
 @code{outDimTags}, @code{outDimTagsMap}
 @item Return:
@@ -2987,7 +2987,7 @@ is set. Remove the tool if @code{removeTool} is set.
 
 @table @asis
 @item Input:
-@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@code{objectDimTags}, @code{toolDimTags}, @code{tag = -1}, @code{removeObject = True}, @code{removeTool = True}
 @item Output:
 @code{outDimTags}, @code{outDimTagsMap}
 @item Return:
@@ -3004,7 +3004,7 @@ set.
 
 @table @asis
 @item Input:
-@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@code{objectDimTags}, @code{toolDimTags}, @code{tag = -1}, @code{removeObject = True}, @code{removeTool = True}
 @item Output:
 @code{outDimTags}, @code{outDimTagsMap}
 @item Return:
@@ -3099,7 +3099,7 @@ entities on their boundaries, down to dimension 0.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{recursive}
+@code{dimTags}, @code{recursive = False}
 @item Output:
 -
 @item Return:
@@ -3128,7 +3128,7 @@ manual.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{tolerance}, @code{fixDegenerated}, @code{fixSmallEdges}, @code{fixSmallFaces}, @code{sewFaces}, @code{makeSolids}
+@code{dimTags = []}, @code{tolerance = 1e-8}, @code{fixDegenerated = True}, @code{fixSmallEdges = True}, @code{fixSmallFaces = True}, @code{sewFaces = True}, @code{makeSolids = True}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -3144,7 +3144,7 @@ the file (currently "brep", "step" or "iges").
 
 @table @asis
 @item Input:
-@code{fileName}, @code{highestDimOnly}, @code{format}
+@code{fileName}, @code{highestDimOnly = True}, @code{format = ""}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -3161,7 +3161,7 @@ an invalid pointer will lead to undefined behavior.
 
 @table @asis
 @item Input:
-@code{shape}, @code{highestDimOnly}
+@code{shape}, @code{highestDimOnly = True}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -3246,7 +3246,7 @@ associate a new tag. Return the view tag.
 
 @table @asis
 @item Input:
-@code{name}, @code{tag}
+@code{name}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -3307,7 +3307,7 @@ data. @code{partition} allows to specify data in several sub-sets.
 
 @table @asis
 @item Input:
-@code{tag}, @code{step}, @code{modelName}, @code{dataType}, @code{tags}, @code{data}, @code{time}, @code{numComponents}, @code{partition}
+@code{tag}, @code{step}, @code{modelName}, @code{dataType}, @code{tags}, @code{data}, @code{time = 0.}, @code{numComponents = -1}, @code{partition = 0}
 @item Output:
 -
 @item Return:
@@ -3366,7 +3366,7 @@ already exists), otherwise associate a new tag. Return the view tag.
 
 @table @asis
 @item Input:
-@code{refTag}, @code{copyOptions}, @code{tag}
+@code{refTag}, @code{copyOptions = False}, @code{tag = -1}
 @item Output:
 -
 @item Return:
@@ -3394,7 +3394,7 @@ original views if @code{remove} is set.
 
 @table @asis
 @item Input:
-@code{what}, @code{how}, @code{remove}, @code{copyOptions}
+@code{what}, @code{how}, @code{remove = True}, @code{copyOptions = True}
 @item Output:
 -
 @item Return:
@@ -3413,7 +3413,7 @@ its coordinates if @code{xElementCoord}, @code{yElementCoord} and
 
 @table @asis
 @item Input:
-@code{tag}, @code{x}, @code{y}, @code{z}, @code{step}, @code{numComp}, @code{gradient}, @code{tolerance}, @code{xElemCoord}, @code{yElemCoord}, @code{zElemCoord}
+@code{tag}, @code{x}, @code{y}, @code{z}, @code{step = -1}, @code{numComp = -1}, @code{gradient = False}, @code{tolerance = 0.}, @code{xElemCoord = []}, @code{yElemCoord = []}, @code{zElemCoord = []}
 @item Output:
 @code{value}
 @item Return:
@@ -3426,7 +3426,7 @@ file extension. Append to the file if @code{append} is set.
 
 @table @asis
 @item Input:
-@code{tag}, @code{fileName}, @code{append}
+@code{tag}, @code{fileName}, @code{append = False}
 @item Output:
 -
 @item Return:
@@ -3521,7 +3521,7 @@ thread.
 
 @table @asis
 @item Input:
-@code{time}
+@code{time = -1.}
 @item Output:
 -
 @item Return:
@@ -3549,7 +3549,7 @@ perform an action (currently the only @code{action} allowed is "update").
 
 @table @asis
 @item Input:
-@code{action}
+@code{action = ""}
 @item Output:
 -
 @item Return:
@@ -3612,7 +3612,7 @@ entities of the specified dimension (e.g. points if @code{dim} == 0).
 
 @table @asis
 @item Input:
-@code{dim}
+@code{dim = -1}
 @item Output:
 @code{dimTags}
 @item Return:
@@ -3654,7 +3654,7 @@ Set one or more parameters in the ONELAB database, encoded in @code{format}.
 
 @table @asis
 @item Input:
-@code{data}, @code{format}
+@code{data}, @code{format = "json"}
 @item Output:
 -
 @item Return:
@@ -3667,7 +3667,7 @@ ONELAB database, encoded in @code{format}.
 
 @table @asis
 @item Input:
-@code{name}, @code{format}
+@code{name = ""}, @code{format = "json"}
 @item Output:
 @code{data}
 @item Return:
@@ -3731,7 +3731,7 @@ Clear the ONELAB database, or remove a single parameter if @code{name} is given.
 
 @table @asis
 @item Input:
-@code{name}
+@code{name = ""}
 @item Output:
 -
 @item Return:
@@ -3745,7 +3745,7 @@ might be linked to the processed input files.
 
 @table @asis
 @item Input:
-@code{name}, @code{command}
+@code{name = ""}, @code{command = ""}
 @item Output:
 -
 @item Return:
@@ -3763,7 +3763,7 @@ Write a @code{message}. @code{level} can be "info", "warning" or "error".
 
 @table @asis
 @item Input:
-@code{message}, @code{level}
+@code{message}, @code{level = "info"}
 @item Output:
 -
 @item Return:
