@@ -1421,7 +1421,7 @@ class API:
             f.write("@section Namespace @code{" + path + "}: " + module.doc + "\n\n");
             f.write("@ftable @code\n");
             for rtype, name, args, doc, special in module.fs:
-                f.write("@item " + name + "\n");
+                f.write("@item " + path + '/' + name + "\n");
                 tdoc = doc.replace("`", "@code{").replace("'", "}")
                 f.write("\n".join(textwrap.wrap(tdoc, 80)) + "\n\n")
                 f.write("@table @asis\n");
