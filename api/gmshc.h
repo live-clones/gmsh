@@ -800,7 +800,8 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
  * basis functions at the integration points for each element: [e1g1f1,...,
  * e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,...,
  * e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental
- * feature and will probably change in a future release. */
+ * feature and will probably change in a future release. If `numTasks' > 1,
+ * only compute and return the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
                                                         double * integrationPoints, size_t integrationPoints_n,
                                                         const char * functionSpaceType,
@@ -808,7 +809,18 @@ GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
                                                         int * numFunctionsPerElements,
                                                         double ** basisFunctions, size_t * basisFunctions_n,
                                                         const int tag,
+                                                        const size_t task,
+                                                        const size_t numTasks,
                                                         int * ierr);
+
+/* Preallocate data before calling `getBasisFunctionsForElements' with
+ * `numTasks' > 1. For C and C++ only. */
+GMSH_API void gmshModelMeshPreallocateBasisFunctions(const int elementType,
+                                                     const int numIntegrationPoints,
+                                                     const char * functionSpaceType,
+                                                     double ** basisFunctions, size_t * basisFunctions_n,
+                                                     const int tag,
+                                                     int * ierr);
 
 /* Generate the `keys' for the elements of type `elementType' in the entity of
  * tag `tag', for the `functionSpaceType' function space. Each key uniquely

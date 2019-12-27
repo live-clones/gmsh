@@ -2065,7 +2065,7 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
-        def getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1):
+        def getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1):
             """
             Get the element-dependent basis functions of the elements of type
             `elementType' in the entity of tag `tag'at the integration points
@@ -2079,7 +2079,8 @@ class model:
             basis functions at the integration points for each element: [e1g1f1,...,
             e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,...,
             e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental
-            feature and will probably change in a future release.
+            feature and will probably change in a future release. If `numTasks' > 1,
+            only compute and return the part of the data indexed by `task'.
 
             Return `numComponents', `numFunctionsPerElements', `basisFunctions'.
             """
@@ -2096,6 +2097,8 @@ class model:
                 byref(api_numFunctionsPerElements_),
                 byref(api_basisFunctions_), byref(api_basisFunctions_n_),
                 c_int(tag),
+                c_size_t(task),
+                c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

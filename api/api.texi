@@ -1304,13 +1304,27 @@ basis functions per element. @code{basisFunctions} returns the value of the
 basis functions at the integration points for each element: [e1g1f1,..., e1g1fN,
 e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw,
 e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental feature and will
-probably change in a future release.
+probably change in a future release. If @code{numTasks} > 1, only compute and
+return the part of the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag}
+@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag}, @code{task}, @code{numTasks}
 @item Output:
 @code{numComponents}, @code{numFunctionsPerElements}, @code{basisFunctions}
+@item Return:
+-
+@end table
+
+@item preallocateBasisFunctions
+Preallocate data before calling @code{getBasisFunctionsForElements} with
+@code{numTasks} > 1. For C and C++ only.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{numIntegrationPoints}, @code{functionSpaceType}, @code{tag}
+@item Output:
+@code{basisFunctions}
 @item Return:
 -
 @end table

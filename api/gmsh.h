@@ -747,14 +747,26 @@ namespace gmsh { // Top-level functions
       // value of the basis functions at the integration points for each element:
       // [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u,
       // e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an
-      // experimental feature and will probably change in a future release.
+      // experimental feature and will probably change in a future release. If
+      // `numTasks' > 1, only compute and return the part of the data indexed by
+      // `task'.
       GMSH_API void getBasisFunctionsForElements(const int elementType,
                                                  const std::vector<double> & integrationPoints,
                                                  const std::string & functionSpaceType,
                                                  int & numComponents,
                                                  int & numFunctionsPerElements,
                                                  std::vector<double> & basisFunctions,
-                                                 const int tag = -1);
+                                                 const int tag = -1,
+                                                 const std::size_t task = 0,
+                                                 const std::size_t numTasks = 1);
+
+      // Preallocate data before calling `getBasisFunctionsForElements' with
+      // `numTasks' > 1. For C and C++ only.
+      GMSH_API void preallocateBasisFunctions(const int elementType,
+                                              const int numIntegrationPoints,
+                                              const std::string & functionSpaceType,
+                                              std::vector<double> & basisFunctions,
+                                              const int tag = -1);
 
       // Generate the `keys' for the elements of type `elementType' in the entity
       // of tag `tag', for the `functionSpaceType' function space. Each key

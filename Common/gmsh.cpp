@@ -2136,9 +2136,18 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   const int elementType, const std::vector<double> &integrationPoints,
   const std::string &functionSpaceType, int &numComponents,
   int &numFunctionsPerElement, std::vector<double> &basisFunctions,
-  const int tag)
+  const int tag, const std::size_t task, const std::size_t numTasks)
 {
-  basisFunctions.clear();
+  if(!_isInitialized()) { throw - 1; }
+  
+  bool haveBasisFunctions = basisFunctions.size();
+  if(!haveBasisFunctions) {
+    if(numTasks > 1)
+      Msg::Warning("basisFunctions should be preallocated if numTasks > 1");
+    preallocateBasisFunctions(elementType, integrationPoints.size()/3, functionSpaceType,
+                              basisFunctions, tag);
+  }
+
   int basisOrder = 0;
   std::string fsName = "";
   if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder, numComponents)) {
@@ -2215,8 +2224,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
     numElements += numElementsInEntitie;
   }
-  basisFunctions.resize(
-    numFunctionsPerElement * numElements * numComponents * nq, 0.);
+  if(basisFunctions.size() < numFunctionsPerElement * numElements * numComponents * nq) {
+    Msg::Error("Wrong size of basisFunctions array (%d < %d)", basisFunctions.size(),
+      numFunctionsPerElement * numElements * numComponents * nq);
+    throw 4;
+  }
   int const1 = nq * numFunctionsPerElement * numComponents;
   switch(numComponents) {
   case 1: {
@@ -2229,7 +2241,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       std::vector<double> fTable(fSize); // face functions of one element
       std::vector<double> eTable(eSize); // edge functions of one element
       basis->generateBasis(u, v, w, vTable, eTable, fTable, bTable);
-      size_t indexNumElement = 0;
       int const2 = i * numFunctionsPerElement;
       // compute only one time the value of the edge basis functions for
       // each possible orientations
@@ -2249,14 +2260,21 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                            quadFaceFunctionsAllOrientations,
                                            triFaceFunctionsAllOrientations);
       }
+      
+      size_t pastIndexNumElement = 0;
+      std::vector<double> eTableCopy(eSize, 0); // use eTableCopy to orient the edges
+      std::vector<double> fTableCopy(fSize, 0);
+      
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
-        for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
-            j++) {
+        std::size_t numMeshElementsByType = ge->getNumMeshElementsByType(familyType);
+        std::size_t begin = task * numMeshElementsByType / numTasks;
+        std::size_t end = (task + 1) * numMeshElementsByType / numTasks;
+        size_t indexNumElement = pastIndexNumElement + begin;
+        pastIndexNumElement += numMeshElementsByType;
+        for(std::size_t j = begin; j < end; j++) {
           std::size_t const3 = indexNumElement * const1 + const2;
           MElement *e = ge->getMeshElementByType(familyType, j);
-          std::vector<double> eTableCopy(
-            eSize, 0); // use eTableCopy to orient the edges
           if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
@@ -2272,7 +2290,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                 eTableNegativeFlag);
             }
           }
-          std::vector<double> fTableCopy(fSize);
+          
           for(int r = 0; r < fSize; r++) { fTableCopy[r] = fTable[r]; }
           if(fSize > 0) {
             for(int jj = 0;
@@ -2326,15 +2344,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                                std::vector<double>(3, 0.));
       basis->generateBasis(u, v, w, vTable, eTable, fTable, bTable, fsName);
       int const2 = i * numFunctionsPerElement * numComponents;
-      size_t indexNumElement = 0;
       // compute all edge functions for all  possible orientation
-      std::vector<std::vector<double> > eTableNegativeFlag(
-        eSize, std::vector<double>(3, 0));
-      for(int r = 0; r < eSize; r++) {
-        eTableNegativeFlag[r][0] = eTable[r][0];
-        eTableNegativeFlag[r][1] = eTable[r][1];
-        eTableNegativeFlag[r][2] = eTable[r][2];
-      }
+      std::vector<std::vector<double> > eTableNegativeFlag(eTable);
+
       if(eSize > 0) {
         basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag);
       }
@@ -2349,14 +2361,22 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           u, v, w, fTable, quadFaceFunctionsAllOrientations,
           triFaceFunctionsAllOrientations, fsName);
       }
+
+      size_t pastIndexNumElement = 0;
+      std::vector<std::vector<double> > eTableCopy(eSize, std::vector<double>(3, 0.));
+      std::vector<std::vector<double> > fTableCopy(fSize, std::vector<double>(3, 0.));
+      
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
-        for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
-            j++) {
+        std::size_t numMeshElementsByType = ge->getNumMeshElementsByType(familyType);
+        std::size_t begin = task * numMeshElementsByType / numTasks;
+        std::size_t end = (task + 1) * numMeshElementsByType / numTasks;
+        size_t indexNumElement = pastIndexNumElement + begin;
+        pastIndexNumElement += numMeshElementsByType;
+        for(std::size_t j = begin; j < end; j++) {
           std::size_t const3 = indexNumElement * const1 + const2;
           MElement *e = ge->getMeshElementByType(familyType, j);
-          std::vector<std::vector<double> > eTableCopy(
-            eSize, std::vector<double>(3, 0.));
+          
           if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
@@ -2373,8 +2393,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                 eTableNegativeFlag);
             }
           }
-          std::vector<std::vector<double> > fTableCopy(
-            fSize, std::vector<double>(3, 0.));
+          
           if(fSize > 0) {
             for(int jj = 0;
                 jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
@@ -2390,25 +2409,28 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           std::size_t const4 = const3 + prod1;
           std::size_t const5 = const4 + prod2;
           std::size_t const6 = const5 + prod3;
-          for(int indexNumComp = 0; indexNumComp < numComponents;
-              indexNumComp++) {
-            for(int k = 0; k < vSize; k++) {
-              basisFunctions[const3 + k * numComponents + indexNumComp] =
-                vTable[k][indexNumComp];
-            }
-            for(int k = 0; k < eSize; k++) {
-              basisFunctions[const4 + k * numComponents + indexNumComp] =
-                eTableCopy[k][indexNumComp];
-            }
-            for(int k = 0; k < fSize; k++) {
-              basisFunctions[const5 + k * numComponents + indexNumComp] =
-                fTableCopy[k][indexNumComp];
-            }
-            for(int k = 0; k < bSize; k++) {
-              basisFunctions[const6 + k * numComponents + indexNumComp] =
-                bTable[k][indexNumComp];
+        
+          for(int k = 0; k < vSize; k++) {
+            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
+              basisFunctions[const3 + k * numComponents + indexNumComp] = vTable[k][indexNumComp];
             }
           }
+          for(int k = 0; k < eSize; k++) {
+            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
+              basisFunctions[const4 + k * numComponents + indexNumComp] = eTableCopy[k][indexNumComp];
+            }
+          }
+          for(int k = 0; k < fSize; k++) {
+            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
+              basisFunctions[const5 + k * numComponents + indexNumComp] = fTableCopy[k][indexNumComp];
+            }
+          }
+          for(int k = 0; k < bSize; k++) {
+            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
+              basisFunctions[const6 + k * numComponents + indexNumComp] = bTable[k][indexNumComp];
+            }
+          }
+          
           indexNumElement++;
         }
       }
@@ -2416,6 +2438,92 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     break;
   }
   }
+  delete basis;
+}
+
+GMSH_API void gmsh::model::mesh::preallocateBasisFunctions(
+  const int elementType, const int numIntegrationPoints,
+  const std::string &functionSpaceType, std::vector<double> &basisFunctions, const int tag)
+{
+  if(!_isInitialized()) { throw - 1; }
+  std::string fsName = "";
+  int basisOrder = 0;
+  int numComponents = 0;
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder, numComponents)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    throw 2;
+  }
+  
+  int dim = ElementType::getDimension(elementType);
+  std::map<int, std::vector<GEntity *> > typeEnt;
+  _getEntitiesForElementTypes(dim, tag, typeEnt);
+  HierarchicalBasis *basis(0);
+  const std::vector<GEntity *> &entities(typeEnt[elementType]);
+  int familyType = ElementType::getParentType(elementType);
+  if (fsName == "H1Legendre" || fsName == "GradH1Legendre") {
+    switch(familyType) {
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisH1Brick(basisOrder);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisH1Pri(basisOrder);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisH1Tetra(basisOrder);
+    } break;
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisH1Quad(basisOrder);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisH1Tria(basisOrder);
+    } break;
+    case TYPE_LIN: {
+      basis = new HierarchicalBasisH1Line(basisOrder);
+    } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
+    }
+  }
+  else if (fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre"){
+    switch(familyType) {
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisHcurlQuad(basisOrder);
+    } break;
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisHcurlBrick(basisOrder);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisHcurlTria(basisOrder);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisHcurlTetra(basisOrder);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisHcurlPri(basisOrder);
+    } break;
+    case TYPE_LIN: {
+      basis = new HierarchicalBasisHcurlLine(basisOrder);
+    } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
+    }
+  }
+  else {
+    Msg::Error("Unknown function space named '%s'", fsName.c_str());
+    throw 3;
+  }
+  
+  int vSize = basis->getnVertexFunction();
+  int bSize = basis->getnBubbleFunction();
+  int eSize = basis->getnEdgeFunction();
+  int fSize = basis->getnTriFaceFunction() + basis->getnQuadFaceFunction();
+  int numFunctionsPerElement = vSize + bSize + eSize + fSize;
+  // compute the number of Element :
+  std::size_t numElements = 0;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    numElements += ge->getNumMeshElementsByType(familyType);
+  }
+  basisFunctions.resize(numFunctionsPerElement * numElements * numComponents * numIntegrationPoints);
+    
   delete basis;
 }
 
