@@ -405,12 +405,6 @@ GMSH_API void gmshModelSetCoordinates(const int tag,
                                       const double z,
                                       int * ierr);
 
-/* Compute a cross field for the current mesh. The function creates 3 views:
- * the H function, the Theta function and cross directions. Return the tags of
- * the views */
-GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
-                                             int * ierr);
-
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);
@@ -1123,6 +1117,12 @@ GMSH_API void gmshModelMeshComputeHomology(int * domainTags, size_t domainTags_n
 GMSH_API void gmshModelMeshComputeCohomology(int * domainTags, size_t domainTags_n,
                                              int * subdomainTags, size_t subdomainTags_n,
                                              int * dims, size_t dims_n,
+                                             int * ierr);
+
+/* Compute a cross field for the current mesh. The function creates 3 views:
+ * the H function, the Theta function and cross directions. Return the tags of
+ * the views */
+GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
                                              int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign

@@ -740,18 +740,6 @@ namespace gmsh { // Top-level functions
 
     namespace mesh { // Mesh functions
 
-      // Compute a cross field for the current mesh. The function creates 3 views:
-      // the H function, the Theta function and cross directions. Return the tags
-      // of the views
-      inline void computeCrossField(std::vector<int> & viewTags)
-      {
-        int ierr = 0;
-        int *api_viewTags_; size_t api_viewTags_n_;
-        gmshModelMeshComputeCrossField(&api_viewTags_, &api_viewTags_n_, &ierr);
-        if(ierr) throw ierr;
-        viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
-      }
-
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or
       // 3).
       inline void generate(const int dim = 3)
@@ -1922,6 +1910,18 @@ namespace gmsh { // Top-level functions
         gmshFree(api_domainTags_);
         gmshFree(api_subdomainTags_);
         gmshFree(api_dims_);
+      }
+
+      // Compute a cross field for the current mesh. The function creates 3 views:
+      // the H function, the Theta function and cross directions. Return the tags
+      // of the views
+      inline void computeCrossField(std::vector<int> & viewTags)
+      {
+        int ierr = 0;
+        int *api_viewTags_; size_t api_viewTags_n_;
+        gmshModelMeshComputeCrossField(&api_viewTags_, &api_viewTags_n_, &ierr);
+        if(ierr) throw ierr;
+        viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
       }
 
       namespace field { // Mesh size field functions

@@ -201,9 +201,6 @@ model.add('setCoordinates',doc,None,iint('tag'),idouble('x'),idouble('y'),idoubl
 
 mesh = model.add_module('mesh','mesh functions')
 
-doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views'''
-mesh.add('computeCrossField',doc,None,ovectorint('viewTags'))
-
 doc = '''Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).'''
 mesh.add('generate',doc,None,iint('dim', '3'))
 
@@ -416,6 +413,9 @@ mesh.add('computeHomology',doc,None,ivectorint('domainTags','std::vector<int>()'
 
 doc = '''Compute a basis representation for cohomology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative cohomology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute cohomology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation cochains are stored as physical groups in the mesh.'''
 mesh.add('computeCohomology',doc,None,ivectorint('domainTags','std::vector<int>()',"[]","[]"),ivectorint('subdomainTags','std::vector<int>()',"[]","[]"),ivectorint('dims','std::vector<int>()',"[]","[]"))
+
+doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views'''
+mesh.add('computeCrossField',doc,None,ovectorint('viewTags'))
 
 ################################################################################
 

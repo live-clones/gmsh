@@ -1212,26 +1212,6 @@ class model:
         """
 
         @staticmethod
-        def computeCrossField():
-            """
-            Compute a cross field for the current mesh. The function creates 3 views:
-            the H function, the Theta function and cross directions. Return the tags of
-            the views
-
-            Return `viewTags'.
-            """
-            api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshComputeCrossField(
-                byref(api_viewTags_), byref(api_viewTags_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshComputeCrossField returned non-zero error code: ",
-                    ierr.value)
-            return _ovectorint(api_viewTags_, api_viewTags_n_.value)
-
-        @staticmethod
         def generate(dim=3):
             """
             Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
@@ -2795,6 +2775,26 @@ class model:
                 raise ValueError(
                     "gmshModelMeshComputeCohomology returned non-zero error code: ",
                     ierr.value)
+
+        @staticmethod
+        def computeCrossField():
+            """
+            Compute a cross field for the current mesh. The function creates 3 views:
+            the H function, the Theta function and cross directions. Return the tags of
+            the views
+
+            Return `viewTags'.
+            """
+            api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshComputeCrossField(
+                byref(api_viewTags_), byref(api_viewTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshComputeCrossField returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_viewTags_, api_viewTags_n_.value)
 
 
         class field:

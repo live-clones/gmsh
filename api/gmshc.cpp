@@ -691,19 +691,6 @@ GMSH_API void gmshModelSetCoordinates(const int tag, const double x, const doubl
   }
 }
 
-GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<int> api_viewTags_;
-    gmsh::model::mesh::computeCrossField(api_viewTags_);
-    vector2ptr(api_viewTags_, viewTags, viewTags_n);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
 GMSH_API void gmshModelMeshGenerate(const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1630,6 +1617,19 @@ GMSH_API void gmshModelMeshComputeCohomology(int * domainTags, size_t domainTags
     std::vector<int> api_subdomainTags_(subdomainTags, subdomainTags + subdomainTags_n);
     std::vector<int> api_dims_(dims, dims + dims_n);
     gmsh::model::mesh::computeCohomology(api_domainTags_, api_subdomainTags_, api_dims_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_viewTags_;
+    gmsh::model::mesh::computeCrossField(api_viewTags_);
+    vector2ptr(api_viewTags_, viewTags, viewTags_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

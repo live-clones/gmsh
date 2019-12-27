@@ -973,26 +973,6 @@ module mesh
 import ...gmsh
 
 """
-    gmsh.model.mesh.computeCrossField()
-
-Compute a cross field for the current mesh. The function creates 3 views: the H
-function, the Theta function and cross directions. Return the tags of the views
-
-Return `viewTags`.
-"""
-function computeCrossField()
-    api_viewTags_ = Ref{Ptr{Cint}}()
-    api_viewTags_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshComputeCrossField, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_viewTags_, api_viewTags_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshComputeCrossField returned non-zero error code: $(ierr[])")
-    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
-    return viewTags
-end
-
-"""
     gmsh.model.mesh.generate(dim = 3)
 
 Generate a mesh of the current model, up to dimension `dim` (0, 1, 2 or 3).
@@ -2376,6 +2356,26 @@ function computeCohomology(domainTags = Cint[], subdomainTags = Cint[], dims = C
           convert(Vector{Cint}, domainTags), length(domainTags), convert(Vector{Cint}, subdomainTags), length(subdomainTags), convert(Vector{Cint}, dims), length(dims), ierr)
     ierr[] != 0 && error("gmshModelMeshComputeCohomology returned non-zero error code: $(ierr[])")
     return nothing
+end
+
+"""
+    gmsh.model.mesh.computeCrossField()
+
+Compute a cross field for the current mesh. The function creates 3 views: the H
+function, the Theta function and cross directions. Return the tags of the views
+
+Return `viewTags`.
+"""
+function computeCrossField()
+    api_viewTags_ = Ref{Ptr{Cint}}()
+    api_viewTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshComputeCrossField, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_viewTags_, api_viewTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshComputeCrossField returned non-zero error code: $(ierr[])")
+    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
+    return viewTags
 end
 
 """
