@@ -33,6 +33,7 @@ class arg:
         self.julia_pre = ""
         self.julia_post = ""
         self.julia_return = name
+        self.texi = name + ((" = " + self.python_value) if self.python_value else "")
 
 # input types
 
@@ -676,6 +677,7 @@ def argcargv():
     a.python_pre = "api_argc_, api_argv_ = _iargcargv(argv)"
     a.julia_ctype = "Cint, Ptr{Ptr{Cchar}}"
     a.julia_arg = "length(argv), argv"
+    a.texi = "(argc = 0)}, @code{argv = []"
     return a
 
 class Module:
@@ -1416,8 +1418,6 @@ class API:
                 write_module(f, module, "", "", 1)
 
     def write_texi(self):
-        def parg(a):
-            return a.name + ((" = " + a.python_value) if a.python_value else "")
         def write_module(module, path, node, node_next, node_prev):
             f.write("@node " + node + ", " + node_next + ", " + node_prev + ", Gmsh API\n");
             f.write("@section Namespace @code{" + path + "}: " + module.doc + "\n\n");
@@ -1430,7 +1430,7 @@ class API:
                 iargs = list(a for a in args if not a.out)
                 oargs = list(a for a in args if a.out)
                 f.write("@item " + "Input:\n" +
-                        (", ".join(("@code{" + parg(iarg) + "}") for iarg in iargs)
+                        (", ".join(("@code{" + iarg.texi + "}") for iarg in iargs)
                          if len(iargs) else "-") + "\n")
                 f.write("@item " + "Output:\n" +
                         (", ".join(("@code{" + oarg.name + "}") for oarg in oargs)

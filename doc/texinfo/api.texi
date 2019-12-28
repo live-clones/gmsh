@@ -30,7 +30,7 @@ configuration files (gmshrc and gmsh-options).
 
 @table @asis
 @item Input:
-@code{argv = []}, @code{readConfigFiles = True}
+@code{(argc = 0)}, @code{argv = []}, @code{readConfigFiles = True}
 @item Output:
 -
 @item Return:
