@@ -1,3 +1,5 @@
+4.5.2 (Work-in-progress):
+
 4.5.1 (December 28, 2019): new Min and Max commands in .geo files;
 Mesh.MinimumCirclePoints now behaves the same with all geometry kernels; fixed
 issue with UTF16-encoded home directories on Windows.
