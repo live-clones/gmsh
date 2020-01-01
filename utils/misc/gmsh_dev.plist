@@ -8,7 +8,7 @@
     <key>CFBundleVersion</key><string></string>
     <key>CFBundleShortVersionString</key><string>dev</string>
     <key>CFBundleSignature</key><string>GMSH</string>
-    <key>CFBundleGetInfoString</key><string>Gmsh, Copyright (C) 1997-2019 C. Geuzaine and J.-F. Remacle</string>
+    <key>CFBundleGetInfoString</key><string>Gmsh, Copyright (C) 1997-2020 C. Geuzaine and J.-F. Remacle</string>
     <key>CFBundleIdentifier</key><string></string>
     <key>NSHighResolutionCapable</key><true/>
   </dict>

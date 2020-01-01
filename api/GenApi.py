@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1129,7 +1129,7 @@ def capi(s): return s[:1].upper() + s[1:]
 class API:
 
     def __init__(self, version_major, version_minor, namespace="gmsh", code="Gmsh",
-                 copyright="Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle",
+                 copyright="Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle",
                  issues="https://gitlab.onelab.info/gmsh/gmsh/issues."):
         self.version_major = version_major
         self.version_minor = version_minor
