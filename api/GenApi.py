@@ -1146,27 +1146,30 @@ class API:
         return module
 
     def write_cpp(self):
-        def write_module(module, indent):
+        def write_module(module, indent, cpp_mpath):
+            cpp_mpath += module.name + "::"
             f.write(indent + "namespace " + module.name + " { // " +
                     capi(module.doc) + "\n\n")
             indent += "  "
             for rtype, name, args, doc, special in module.fs:
+                rt = rtype.rcpp_type if rtype else "void"
+                f.write(indent + "// " + cpp_mpath + name + "\n" + indent + "//\n")
                 f.write(indent + "// " + ("\n" + indent + "// ").join(
                     textwrap.wrap(doc, 80-len(indent))) + "\n")
-                rt = rtype.rcpp_type if rtype else "void"
+
                 fnameapi = indent + ns.upper() + "_API " + rt + " " + name + "(";
                 f.write(fnameapi)
                 if args:
                     f.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
                 f.write(");\n\n")
             for m in module.submodules:
-                write_module(m, indent)
+                write_module(m, indent, cpp_mpath)
             f.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
         with open(ns + ".h", "w") as f:
             f.write(cpp_header.format(self.copyright, self.issues, ns.upper(), self.code,
                                       self.version_major, self.version_minor, ns))
             for m in self.modules:
-                write_module(m, "")
+                write_module(m, "", "")
             f.write(cpp_footer)
 
     def write_c(self):
@@ -1183,7 +1186,8 @@ class API:
                 # *c.h
                 fname = c_namespace + name[0].upper() + name[1:]
                 f.write("\n/* " + "\n * ".join(textwrap.wrap(doc, 75)) + " */\n")
-                fnameapi = ns.upper() + "_API " + (rtype.rc_type if rtype else "void") + " " + fname + "("
+                fnameapi = ns.upper() + "_API " + (rtype.rc_type if rtype else
+                                                   "void") + " " + fname + "("
                 f.write(fnameapi
                         + (",\n" + ' ' * len(fnameapi)).join(
                             list((a.c for a in args + (oint("ierr"), ))))
@@ -1293,7 +1297,8 @@ class API:
             for a in args:
                 if a.python_pre: f.write(indent + a.python_pre + "\n")
             f.write(indent + "ierr = c_int()\n")
-            f.write(indent + "api__result__ = " if ((rtype is oint) or (rtype is odouble)) else (indent))
+            f.write(indent + "api__result__ = " if ((rtype is oint) or
+                                                    (rtype is odouble)) else (indent))
             c_name = modulepath + name[0].upper() + name[1:]
             f.write("lib." + c_name + "(\n    " + indent +
                     (",\n" + indent + "    ").join(
