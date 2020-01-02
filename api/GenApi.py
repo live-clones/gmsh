@@ -1273,19 +1273,21 @@ class API:
     def write_python(self):
         def parg(a):
             return a.name + (("=" + a.python_value) if a.python_value else "")
-        def write_function(f, fun, modulepath, indent):
+        def write_function(f, fun, c_mpath, py_mpath, indent):
             (rtype, name, args, doc, special) = fun
             if "onlycc++" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
-            if modulepath != ns:
+            if c_mpath != ns:
                 f.write(indent + "@staticmethod\n")
             f.write(indent + "def " + name + "("
                    + ", ".join((parg(a) for a in iargs))
                    + "):\n")
             indent += "    "
             f.write(indent + '"""\n')
+            f.write(indent + py_mpath + name + "(" + ", ".join(parg(a) for a in iargs)
+                    + ")\n\n")
             f.write(indent + ("\n" + indent).join(textwrap.wrap(doc, 75)) + "\n")
             if rtype or oargs:
                 f.write("\n" + indent + "Return " + ", ".join(
@@ -1299,7 +1301,7 @@ class API:
             f.write(indent + "ierr = c_int()\n")
             f.write(indent + "api__result__ = " if ((rtype is oint) or
                                                     (rtype is odouble)) else (indent))
-            c_name = modulepath + name[0].upper() + name[1:]
+            c_name = c_mpath + name[0].upper() + name[1:]
             f.write("lib." + c_name + "(\n    " + indent +
                     (",\n" + indent + "    ").join(
                         tuple((a.python_arg for a in args)) + ("byref(ierr)", )) +
@@ -1316,13 +1318,15 @@ class API:
                 else:
                     f.write(indent + "return (\n" + indent + "    " +
                             (",\n" + indent + "    ").join(r) + ")\n")
-        def write_module(f, m, modulepath, indent):
-            if modulepath:
-                modulepath += m.name[0].upper() + m.name[1:]
+        def write_module(f, m, c_mpath, py_mpath, indent):
+            if c_mpath:
+                c_mpath += m.name[0].upper() + m.name[1:]
+                py_mpath += m.name + "."
             else:
-                modulepath = m.name
+                c_mpath = m.name
+                py_mpath = m.name + "."
             for fun in m.fs:
-                write_function(f, fun, modulepath, indent)
+                write_function(f, fun, c_mpath, py_mpath, indent)
             for module in m.submodules:
                 f.write("\n\n" + indent + "class " + module.name + ":\n")
                 indentm = indent + "    "
@@ -1330,13 +1334,13 @@ class API:
                 f.write(indentm + ("\n" + indentm).join
                         (textwrap.wrap(capi(module.doc), 75)) + "\n")
                 f.write(indentm + '"""\n')
-                write_module(f, module, modulepath, indentm)
+                write_module(f, module, c_mpath, py_mpath, indentm)
         with open(ns + ".py", "w") as f:
             f.write(python_header.format(self.copyright, self.issues, self.code,
                                          self.version_major, self.version_minor,
                                          ns.upper(), ns))
             for module in self.modules:
-                write_module(f, module, "", "")
+                write_module(f, module, "", "", "")
 
     def write_julia(self):
         def parg(a):
