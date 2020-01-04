@@ -12,6 +12,8 @@
 #include "linearSystem.h"
 
 #if defined(HAVE_GMM)
+
+#undef BB // can be defined by FlGui.h, and clashes with gmm arg name
 #include <gmm.h>
 
 // Consider using linearSystemCSRGmm instead: assembly is much faster
