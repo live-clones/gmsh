@@ -163,8 +163,8 @@ void StructuredIndexing<DIM>::entFromRange(const cgsize_t *range,
                               ((DIM < 3) || (range[5] >= range[2])) ? 1 : -1};
 
   // compute list of elements from range
-  int iElt = 0;
-  int ijk[3], &i = ijk[0], &j = ijk[1], &k = ijk[2];
+  std::size_t iElt = 0;
+  cgsize_t ijk[3], &i = ijk[0], &j = ijk[1], &k = ijk[2];
   for(k = ijkStart[2]; k <= ijkEnd[2]; k += ijkInc[2]) {
     for(j = ijkStart[1]; j <= ijkEnd[1]; j += ijkInc[1]) {
       for(i = ijkStart[0]; i <= ijkEnd[0]; i += ijkInc[0]) {

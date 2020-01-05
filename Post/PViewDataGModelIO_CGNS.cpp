@@ -285,7 +285,7 @@ namespace {
 
   int getEntInZone(int fileIndex, int baseIndex, int zoneIndex,
                    int zoneSolIndex, bool isStructured, int dim,
-                   const cgsize_t *zoneEntSize, int *solReadRange,
+                   const cgsize_t *zoneEntSize, cgsize_t *solReadRange,
                    std::vector<cgsize_t> &solEntSet)
   {
     // compute range and number of values to read in solution
@@ -316,7 +316,7 @@ namespace {
   int getEntInPtSet(int fileIndex, int baseIndex, int zoneIndex,
                     int zoneSolIndex, bool isStructured, int dim,
                     PointSetType_t ptSetType, cgsize_t ptSetSize,
-                    const cgsize_t *zoneEntSize, int *solReadRange,
+                    const cgsize_t *zoneEntSize, cgsize_t *solReadRange,
                     std::vector<cgsize_t> &solEntSet)
   {
     int cgnsErr;

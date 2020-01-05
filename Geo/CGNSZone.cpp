@@ -159,7 +159,7 @@ int CGNSZone::readVertices(int dim, double scale,
     cgnsErr = cg_coord_info(fileIndex(), baseIndex(), index(), iXYZ + 1,
                             &dataType, xyzName);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
-    const int startInd[3] = {1, 1, 1};
+    const cgsize_t startInd[3] = {1, 1, 1};
     xyz[iXYZ].resize(nbNode());
     cgnsErr = cg_coord_read(fileIndex(), baseIndex(), index(), xyzName,
                             RealDouble, startInd, size(), xyz[iXYZ].data());

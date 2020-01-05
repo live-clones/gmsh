@@ -146,7 +146,7 @@ int CGNSZoneUnstruct::readSection(
   if(endElt > (cgsize_t)zoneElt.size()) zoneElt.resize(endElt);
   const cgsize_t iStartElt = startElt - 1, iEndElt = endElt - 1;
   for(int iElt = iStartElt; iElt <= iEndElt; iElt++) {
-    const std::map<int, int>::const_iterator it = elt2Geom().find(iElt);
+    const std::map<cgsize_t, int>::const_iterator it = elt2Geom().find(iElt);
     const int entity = (it == elt2Geom().end()) ? 1 : it->second;
     MElement *me =
       createElement(sectEltType, startNode(), entity, allVert, allElt, sectData,
