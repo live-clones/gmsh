@@ -95,7 +95,7 @@ namespace {
     for(int j = 0; j < numMapNodes; j++) {
       const double &dPhidX = gSMatX(i, j);
       const double &dPhidY = gSMatY(i, j);
-      JDJ(i, j) = dPhidX * dydY * dzdZ + dzdX * dPhidY * dydZ +
+      JDJ(i, j) = dPhidX * dydY * dzdZ + dzdX * dPhidY * dydZ -
                   dPhidX * dzdY * dydZ - dydX * dPhidY * dzdZ;
       JDJ(i, j + numMapNodes) = dxdX * dPhidY * dzdZ + dPhidX * dzdY * dxdZ -
                                 dzdX * dPhidY * dxdZ - dPhidX * dxdY * dzdZ;
