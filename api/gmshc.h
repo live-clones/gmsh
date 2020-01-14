@@ -485,21 +485,18 @@ GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType,
                                                  int * ierr);
 
 /* Get the coordinates and the parametric coordinates (if any) of the node
- * with tag `tag'. This is a sometimes useful but inefficient way of accessing
- * nodes, as it relies on a cache stored in the model. For large meshes all
- * the nodes in the model should be numbered in a continuous sequence of tags
- * from 1 to N to maintain reasonable performance (in this case the internal
- * cache is based on a vector; otherwise it uses a map). */
+ * with tag `tag'. This function relies on an internal cache (a vector in case
+ * of dense node numbering, a map otherwise); for large meshes accessing nodes
+ * in bulk is often preferable. */
 GMSH_API void gmshModelMeshGetNode(const size_t nodeTag,
                                    double ** coord, size_t * coord_n,
                                    double ** parametricCoord, size_t * parametricCoord_n,
                                    int * ierr);
 
 /* Set the coordinates and the parametric coordinates (if any) of the node
- * with tag `tag'. This is a sometimes useful but inefficient way of accessing
- * nodes, as it relies on a cache stored in the model. For large meshes all
- * the nodes in the model should be added at once, and numbered in a
- * continuous sequence of tags from 1 to N. */
+ * with tag `tag'. This function relies on an internal cache (a vector in case
+ * of dense node numbering, a map otherwise); for large meshes accessing nodes
+ * in bulk is often preferable. */
 GMSH_API void gmshModelMeshSetNode(const size_t nodeTag,
                                    double * coord, size_t coord_n,
                                    double * parametricCoord, size_t parametricCoord_n,
@@ -569,24 +566,21 @@ GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementType
                                        const int tag,
                                        int * ierr);
 
-/* Get the type and node tags of the element with tag `tag'. This is a
- * sometimes useful but inefficient way of accessing elements, as it relies on
- * a cache stored in the model. For large meshes all the elements in the model
- * should be numbered in a continuous sequence of tags from 1 to N to maintain
- * reasonable performance (in this case the internal cache is based on a
- * vector; otherwise it uses a map). */
+/* Get the type and node tags of the element with tag `tag'. This function
+ * relies on an internal cache (a vector in case of dense element numbering, a
+ * map otherwise); for large meshes accessing elements in bulk is often
+ * preferable. */
 GMSH_API void gmshModelMeshGetElement(const size_t elementTag,
                                       int * elementType,
                                       size_t ** nodeTags, size_t * nodeTags_n,
                                       int * ierr);
 
 /* Search the mesh for an element located at coordinates (`x', `y', `z'). This
- * is a sometimes useful but inefficient way of accessing elements, as it
- * relies on a search in a spatial octree. If an element is found, return its
- * tag, type and node tags, as well as the local coordinates (`u', `v', `w')
- * within the element corresponding to search location. If `dim' is >= 0, only
- * search for elements of the given dimension. If `strict' is not set, use a
- * tolerance to find elements near the search location. */
+ * function performs a search in a spatial octree. If an element is found,
+ * return its tag, type and node tags, as well as the local coordinates (`u',
+ * `v', `w') within the element corresponding to search location. If `dim' is
+ * >= 0, only search for elements of the given dimension. If `strict' is not
+ * set, use a tolerance to find elements near the search location. */
 GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
                                                    const double y,
                                                    const double z,
@@ -601,12 +595,11 @@ GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
                                                    int * ierr);
 
 /* Search the mesh for element(s) located at coordinates (`x', `y', `z'). This
- * is a sometimes useful but inefficient way of accessing elements, as it
- * relies on a search in a spatial octree. Return the tags of all found
- * elements in `elementTags'. Additional information about the elements can be
- * accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim'
- * is >= 0, only search for elements of the given dimension. If `strict' is
- * not set, use a tolerance to find elements near the search location. */
+ * function performs a search in a spatial octree. Return the tags of all
+ * found elements in `elementTags'. Additional information about the elements
+ * can be accessed through `getElement' and `getLocalCoordinatesInElement'. If
+ * `dim' is >= 0, only search for elements of the given dimension. If `strict'
+ * is not set, use a tolerance to find elements near the search location. */
 GMSH_API void gmshModelMeshGetElementsByCoordinates(const double x,
                                                     const double y,
                                                     const double z,
@@ -617,8 +610,9 @@ GMSH_API void gmshModelMeshGetElementsByCoordinates(const double x,
 
 /* Return the local coordinates (`u', `v', `w') within the element
  * `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
- * is a sometimes useful but inefficient way of accessing elements, as it
- * relies on a cache stored in the model. */
+ * function relies on an internal cache (a vector in case of dense element
+ * numbering, a map otherwise); for large meshes accessing elements in bulk is
+ * often preferable. */
 GMSH_API void gmshModelMeshGetLocalCoordinatesInElement(const size_t elementTag,
                                                         const double x,
                                                         const double y,

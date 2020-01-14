@@ -883,11 +883,9 @@ of type @code{elementType}. The other arguments are treated as in
 
 @item gmsh/model/mesh/getNode
 Get the coordinates and the parametric coordinates (if any) of the node with tag
-@code{tag}. This is a sometimes useful but inefficient way of accessing nodes,
-as it relies on a cache stored in the model. For large meshes all the nodes in
-the model should be numbered in a continuous sequence of tags from 1 to N to
-maintain reasonable performance (in this case the internal cache is based on a
-vector; otherwise it uses a map).
+@code{tag}. This function relies on an internal cache (a vector in case of dense
+node numbering, a map otherwise); for large meshes accessing nodes in bulk is
+often preferable.
 
 @table @asis
 @item Input:
@@ -900,10 +898,9 @@ vector; otherwise it uses a map).
 
 @item gmsh/model/mesh/setNode
 Set the coordinates and the parametric coordinates (if any) of the node with tag
-@code{tag}. This is a sometimes useful but inefficient way of accessing nodes,
-as it relies on a cache stored in the model. For large meshes all the nodes in
-the model should be added at once, and numbered in a continuous sequence of tags
-from 1 to N.
+@code{tag}. This function relies on an internal cache (a vector in case of dense
+node numbering, a map otherwise); for large meshes accessing nodes in bulk is
+often preferable.
 
 @table @asis
 @item Input:
@@ -1017,12 +1014,9 @@ that contains the node tags of all the elements of the given type, concatenated:
 @end table
 
 @item gmsh/model/mesh/getElement
-Get the type and node tags of the element with tag @code{tag}. This is a
-sometimes useful but inefficient way of accessing elements, as it relies on a
-cache stored in the model. For large meshes all the elements in the model should
-be numbered in a continuous sequence of tags from 1 to N to maintain reasonable
-performance (in this case the internal cache is based on a vector; otherwise it
-uses a map).
+Get the type and node tags of the element with tag @code{tag}. This function
+relies on an internal cache (a vector in case of dense element numbering, a map
+otherwise); for large meshes accessing elements in bulk is often preferable.
 
 @table @asis
 @item Input:
@@ -1035,12 +1029,12 @@ uses a map).
 
 @item gmsh/model/mesh/getElementByCoordinates
 Search the mesh for an element located at coordinates (@code{x}, @code{y},
-@code{z}). This is a sometimes useful but inefficient way of accessing elements,
-as it relies on a search in a spatial octree. If an element is found, return its
-tag, type and node tags, as well as the local coordinates (@code{u}, @code{v},
-@code{w}) within the element corresponding to search location. If @code{dim} is
->= 0, only search for elements of the given dimension. If @code{strict} is not
-set, use a tolerance to find elements near the search location.
+@code{z}). This function performs a search in a spatial octree. If an element is
+found, return its tag, type and node tags, as well as the local coordinates
+(@code{u}, @code{v}, @code{w}) within the element corresponding to search
+location. If @code{dim} is >= 0, only search for elements of the given
+dimension. If @code{strict} is not set, use a tolerance to find elements near
+the search location.
 
 @table @asis
 @item Input:
@@ -1053,13 +1047,12 @@ set, use a tolerance to find elements near the search location.
 
 @item gmsh/model/mesh/getElementsByCoordinates
 Search the mesh for element(s) located at coordinates (@code{x}, @code{y},
-@code{z}). This is a sometimes useful but inefficient way of accessing elements,
-as it relies on a search in a spatial octree. Return the tags of all found
-elements in @code{elementTags}. Additional information about the elements can be
-accessed through @code{getElement} and @code{getLocalCoordinatesInElement}. If
-@code{dim} is >= 0, only search for elements of the given dimension. If
-@code{strict} is not set, use a tolerance to find elements near the search
-location.
+@code{z}). This function performs a search in a spatial octree. Return the tags
+of all found elements in @code{elementTags}. Additional information about the
+elements can be accessed through @code{getElement} and
+@code{getLocalCoordinatesInElement}. If @code{dim} is >= 0, only search for
+elements of the given dimension. If @code{strict} is not set, use a tolerance to
+find elements near the search location.
 
 @table @asis
 @item Input:
@@ -1073,8 +1066,9 @@ location.
 @item gmsh/model/mesh/getLocalCoordinatesInElement
 Return the local coordinates (@code{u}, @code{v}, @code{w}) within the element
 @code{elementTag} corresponding to the model coordinates (@code{x}, @code{y},
-@code{z}). This is a sometimes useful but inefficient way of accessing elements,
-as it relies on a cache stored in the model.
+@code{z}). This function relies on an internal cache (a vector in case of dense
+element numbering, a map otherwise); for large meshes accessing elements in bulk
+is often preferable.
 
 @table @asis
 @item Input:

@@ -1199,11 +1199,9 @@ end
     gmsh.model.mesh.getNode(nodeTag)
 
 Get the coordinates and the parametric coordinates (if any) of the node with tag
-`tag`. This is a sometimes useful but inefficient way of accessing nodes, as it
-relies on a cache stored in the model. For large meshes all the nodes in the
-model should be numbered in a continuous sequence of tags from 1 to N to
-maintain reasonable performance (in this case the internal cache is based on a
-vector; otherwise it uses a map).
+`tag`. This function relies on an internal cache (a vector in case of dense node
+numbering, a map otherwise); for large meshes accessing nodes in bulk is often
+preferable.
 
 Return `coord`, `parametricCoord`.
 """
@@ -1226,10 +1224,9 @@ end
     gmsh.model.mesh.setNode(nodeTag, coord, parametricCoord)
 
 Set the coordinates and the parametric coordinates (if any) of the node with tag
-`tag`. This is a sometimes useful but inefficient way of accessing nodes, as it
-relies on a cache stored in the model. For large meshes all the nodes in the
-model should be added at once, and numbered in a continuous sequence of tags
-from 1 to N.
+`tag`. This function relies on an internal cache (a vector in case of dense node
+numbering, a map otherwise); for large meshes accessing nodes in bulk is often
+preferable.
 """
 function setNode(nodeTag, coord, parametricCoord)
     ierr = Ref{Cint}()
@@ -1379,11 +1376,9 @@ end
 """
     gmsh.model.mesh.getElement(elementTag)
 
-Get the type and node tags of the element with tag `tag`. This is a sometimes
-useful but inefficient way of accessing elements, as it relies on a cache stored
-in the model. For large meshes all the elements in the model should be numbered
-in a continuous sequence of tags from 1 to N to maintain reasonable performance
-(in this case the internal cache is based on a vector; otherwise it uses a map).
+Get the type and node tags of the element with tag `tag`. This function relies
+on an internal cache (a vector in case of dense element numbering, a map
+otherwise); for large meshes accessing elements in bulk is often preferable.
 
 Return `elementType`, `nodeTags`.
 """
@@ -1403,13 +1398,12 @@ end
 """
     gmsh.model.mesh.getElementByCoordinates(x, y, z, dim = -1, strict = false)
 
-Search the mesh for an element located at coordinates (`x`, `y`, `z`). This is a
-sometimes useful but inefficient way of accessing elements, as it relies on a
-search in a spatial octree. If an element is found, return its tag, type and
-node tags, as well as the local coordinates (`u`, `v`, `w`) within the element
-corresponding to search location. If `dim` is >= 0, only search for elements of
-the given dimension. If `strict` is not set, use a tolerance to find elements
-near the search location.
+Search the mesh for an element located at coordinates (`x`, `y`, `z`). This
+function performs a search in a spatial octree. If an element is found, return
+its tag, type and node tags, as well as the local coordinates (`u`, `v`, `w`)
+within the element corresponding to search location. If `dim` is >= 0, only
+search for elements of the given dimension. If `strict` is not set, use a
+tolerance to find elements near the search location.
 
 Return `elementTag`, `elementType`, `nodeTags`, `u`, `v`, `w`.
 """
@@ -1433,13 +1427,12 @@ end
 """
     gmsh.model.mesh.getElementsByCoordinates(x, y, z, dim = -1, strict = false)
 
-Search the mesh for element(s) located at coordinates (`x`, `y`, `z`). This is a
-sometimes useful but inefficient way of accessing elements, as it relies on a
-search in a spatial octree. Return the tags of all found elements in
-`elementTags`. Additional information about the elements can be accessed through
-`getElement` and `getLocalCoordinatesInElement`. If `dim` is >= 0, only search
-for elements of the given dimension. If `strict` is not set, use a tolerance to
-find elements near the search location.
+Search the mesh for element(s) located at coordinates (`x`, `y`, `z`). This
+function performs a search in a spatial octree. Return the tags of all found
+elements in `elementTags`. Additional information about the elements can be
+accessed through `getElement` and `getLocalCoordinatesInElement`. If `dim` is >=
+0, only search for elements of the given dimension. If `strict` is not set, use
+a tolerance to find elements near the search location.
 
 Return `elementTags`.
 """
@@ -1459,9 +1452,9 @@ end
     gmsh.model.mesh.getLocalCoordinatesInElement(elementTag, x, y, z)
 
 Return the local coordinates (`u`, `v`, `w`) within the element `elementTag`
-corresponding to the model coordinates (`x`, `y`, `z`). This is a sometimes
-useful but inefficient way of accessing elements, as it relies on a cache stored
-in the model.
+corresponding to the model coordinates (`x`, `y`, `z`). This function relies on
+an internal cache (a vector in case of dense element numbering, a map
+otherwise); for large meshes accessing elements in bulk is often preferable.
 
 Return `u`, `v`, `w`.
 """
