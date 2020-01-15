@@ -40,25 +40,25 @@ public:
   inline void getInvCondNum(const fullMatrix<double> &nodesXYZ,
                             fullVector<double> &invCond) const
   {
-    getInvCondNumGeneral(_nCondNumNodes, _gradBasis->gradShapeIdealMatX,
-                         _gradBasis->gradShapeIdealMatY,
-                         _gradBasis->gradShapeIdealMatZ, nodesXYZ, invCond);
+    getInvCondNumGeneral(_nCondNumNodes, _gradBasis->dShapeIdealMat_dX,
+                         _gradBasis->dShapeIdealMat_dY,
+                         _gradBasis->dShapeIdealMat_dZ, nodesXYZ, invCond);
   }
   inline void getSignedInvCondNum(const fullMatrix<double> &nodesXYZ,
                                   const fullMatrix<double> &normals,
                                   fullVector<double> &invCond) const
   {
-    getSignedInvCondNumGeneral(_nCondNumNodes, _gradBasis->gradShapeIdealMatX,
-                               _gradBasis->gradShapeIdealMatY,
-                               _gradBasis->gradShapeIdealMatZ, nodesXYZ,
+    getSignedInvCondNumGeneral(_nCondNumNodes, _gradBasis->dShapeIdealMat_dX,
+                               _gradBasis->dShapeIdealMat_dY,
+                               _gradBasis->dShapeIdealMat_dZ, nodesXYZ,
                                normals, invCond);
   }
   inline void getInvCondNumAndGradients(const fullMatrix<double> &nodesXYZ,
                                         fullMatrix<double> &IDI) const
   {
     getInvCondNumAndGradientsGeneral(
-      _nCondNumNodes, _gradBasis->gradShapeIdealMatX,
-      _gradBasis->gradShapeIdealMatY, _gradBasis->gradShapeIdealMatZ, nodesXYZ,
+      _nCondNumNodes, _gradBasis->dShapeIdealMat_dX,
+      _gradBasis->dShapeIdealMat_dY, _gradBasis->dShapeIdealMat_dZ, nodesXYZ,
       IDI);
   }
   inline void
@@ -67,8 +67,8 @@ public:
                                   fullMatrix<double> &IDI) const
   {
     getSignedInvCondNumAndGradientsGeneral(
-      _nCondNumNodes, _gradBasis->gradShapeIdealMatX,
-      _gradBasis->gradShapeIdealMatY, _gradBasis->gradShapeIdealMatZ, nodesXYZ,
+      _nCondNumNodes, _gradBasis->dShapeIdealMat_dX,
+      _gradBasis->dShapeIdealMat_dY, _gradBasis->dShapeIdealMat_dZ, nodesXYZ,
       normals, IDI);
   }
 
