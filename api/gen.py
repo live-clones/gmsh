@@ -506,7 +506,9 @@ geo.add('rotate', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'),
 doc = '''Scale the model entities `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
 geo.add('dilate', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('a'), idouble('b'), idouble('c'))
 
-doc = '''Apply a symmetry transformation to the model entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
+doc = '''Mirror the model entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
+geo.add('mirror', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
+doc += ''' (This is a synonym for `mirror', which will be deprecated in a future release.)'''
 geo.add('symmetrize', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
 
 doc = '''Copy the entities `dimTags'; the new entities are returned in `outDimTags'.'''
@@ -517,6 +519,9 @@ geo.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false',
 
 doc = '''Remove all duplicate entities (different entities at the same geometrical location).'''
 geo.add('removeAllDuplicates', doc, None)
+
+doc = '''Split the model curve of tag `tag' on the control points `pointTags`. Return the tags `curveTags' of the newly created curves.'''
+geo.add('splitCurve', doc, None, iint('tag'), ivectorint('pointTags'), ovectorint('curveTags'))
 
 doc = '''Synchronize the built-in CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 geo.add('synchronize', doc, None)
@@ -668,6 +673,8 @@ doc = '''Scale the model entities `dimTag' by factors `a', `b' and `c' along the
 occ.add('dilate', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('a'), idouble('b'), idouble('c'))
 
 doc = '''Apply a symmetry transformation to the model entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
+occ.add('mirror', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
+doc += ''' (This is a synonym for `mirror', which will be deprecated in a future release.)'''
 occ.add('symmetrize', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
 
 doc = '''Apply a general affine transformation matrix `a' (16 entries of a 4x4 matrix, by row; only the 12 first can be provided for convenience) to the model entities `dimTag'.'''

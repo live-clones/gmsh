@@ -2016,6 +2016,22 @@ GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n, const double x
   }
 }
 
+GMSH_API void gmshModelGeoMirror(int * dimTags, size_t dimTags_n, const double a, const double b, const double c, const double d, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::geo::mirror(api_dimTags_, a, b, c, d);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelGeoSymmetrize(int * dimTags, size_t dimTags_n, const double a, const double b, const double c, const double d, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2071,6 +2087,20 @@ GMSH_API void gmshModelGeoRemoveAllDuplicates(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::geo::removeAllDuplicates();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGeoSplitCurve(const int tag, int * pointTags, size_t pointTags_n, int ** curveTags, size_t * curveTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
+    std::vector<int> api_curveTags_;
+    gmsh::model::geo::splitCurve(tag, api_pointTags_, api_curveTags_);
+    vector2ptr(api_curveTags_, curveTags, curveTags_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -2766,6 +2796,22 @@ GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n, const double x
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::occ::dilate(api_dimTags_, x, y, z, a, b, c);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccMirror(int * dimTags, size_t dimTags_n, const double a, const double b, const double c, const double d, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::occ::mirror(api_dimTags_, a, b, c, d);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

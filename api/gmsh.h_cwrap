@@ -2367,8 +2367,24 @@ namespace gmsh { // Top-level functions
         gmshFree(api_dimTags_);
       }
 
-      // Apply a symmetry transformation to the model entities `dimTag', with
-      // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+      // Mirror the model entities `dimTag', with respect to the plane of equation
+      // `a' * x + `b' * y + `c' * z + `d' = 0.
+      inline void mirror(const gmsh::vectorpair & dimTags,
+                         const double a,
+                         const double b,
+                         const double c,
+                         const double d)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelGeoMirror(api_dimTags_, api_dimTags_n_, a, b, c, d, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
+      }
+
+      // Mirror the model entities `dimTag', with respect to the plane of equation
+      // `a' * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror',
+      // which will be deprecated in a future release.)
       inline void symmetrize(const gmsh::vectorpair & dimTags,
                              const double a,
                              const double b,
@@ -2415,6 +2431,21 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         gmshModelGeoRemoveAllDuplicates(&ierr);
         if(ierr) throw ierr;
+      }
+
+      // Split the model curve of tag `tag' on the control points `pointTags`.
+      // Return the tags `curveTags' of the newly created curves.
+      inline void splitCurve(const int tag,
+                             const std::vector<int> & pointTags,
+                             std::vector<int> & curveTags)
+      {
+        int ierr = 0;
+        int *api_pointTags_; size_t api_pointTags_n_; vector2ptr(pointTags, &api_pointTags_, &api_pointTags_n_);
+        int *api_curveTags_; size_t api_curveTags_n_;
+        gmshModelGeoSplitCurve(tag, api_pointTags_, api_pointTags_n_, &api_curveTags_, &api_curveTags_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_pointTags_);
+        curveTags.assign(api_curveTags_, api_curveTags_ + api_curveTags_n_); gmshFree(api_curveTags_);
       }
 
       // Synchronize the built-in CAD representation with the current Gmsh model.
@@ -3295,6 +3326,23 @@ namespace gmsh { // Top-level functions
 
       // Apply a symmetry transformation to the model entities `dimTag', with
       // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+      inline void mirror(const gmsh::vectorpair & dimTags,
+                         const double a,
+                         const double b,
+                         const double c,
+                         const double d)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelOccMirror(api_dimTags_, api_dimTags_n_, a, b, c, d, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
+      }
+
+      // Apply a symmetry transformation to the model entities `dimTag', with
+      // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+      // (This is a synonym for `mirror', which will be deprecated in a future
+      // release.)
       inline void symmetrize(const gmsh::vectorpair & dimTags,
                              const double a,
                              const double b,

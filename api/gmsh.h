@@ -1579,10 +1579,21 @@ namespace gmsh { // Top-level functions
                            const double b,
                            const double c);
 
+      // gmsh::model::geo::mirror
+      //
+      // Mirror the model entities `dimTag', with respect to the plane of equation
+      // `a' * x + `b' * y + `c' * z + `d' = 0.
+      GMSH_API void mirror(const gmsh::vectorpair & dimTags,
+                           const double a,
+                           const double b,
+                           const double c,
+                           const double d);
+
       // gmsh::model::geo::symmetrize
       //
-      // Apply a symmetry transformation to the model entities `dimTag', with
-      // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+      // Mirror the model entities `dimTag', with respect to the plane of equation
+      // `a' * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror',
+      // which will be deprecated in a future release.)
       GMSH_API void symmetrize(const gmsh::vectorpair & dimTags,
                                const double a,
                                const double b,
@@ -1608,6 +1619,14 @@ namespace gmsh { // Top-level functions
       // Remove all duplicate entities (different entities at the same geometrical
       // location).
       GMSH_API void removeAllDuplicates();
+
+      // gmsh::model::geo::splitCurve
+      //
+      // Split the model curve of tag `tag' on the control points `pointTags`.
+      // Return the tags `curveTags' of the newly created curves.
+      GMSH_API void splitCurve(const int tag,
+                               const std::vector<int> & pointTags,
+                               std::vector<int> & curveTags);
 
       // gmsh::model::geo::synchronize
       //
@@ -2207,10 +2226,22 @@ namespace gmsh { // Top-level functions
                            const double b,
                            const double c);
 
+      // gmsh::model::occ::mirror
+      //
+      // Apply a symmetry transformation to the model entities `dimTag', with
+      // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+      GMSH_API void mirror(const gmsh::vectorpair & dimTags,
+                           const double a,
+                           const double b,
+                           const double c,
+                           const double d);
+
       // gmsh::model::occ::symmetrize
       //
       // Apply a symmetry transformation to the model entities `dimTag', with
       // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+      // (This is a synonym for `mirror', which will be deprecated in a future
+      // release.)
       GMSH_API void symmetrize(const gmsh::vectorpair & dimTags,
                                const double a,
                                const double b,

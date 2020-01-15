@@ -2139,7 +2139,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   const int tag, const std::size_t task, const std::size_t numTasks)
 {
   if(!_isInitialized()) { throw - 1; }
-  
+
   bool haveBasisFunctions = basisFunctions.size();
   if(!haveBasisFunctions) {
     if(numTasks > 1)
@@ -2260,11 +2260,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                            quadFaceFunctionsAllOrientations,
                                            triFaceFunctionsAllOrientations);
       }
-      
+
       size_t pastIndexNumElement = 0;
       std::vector<double> eTableCopy(eSize, 0); // use eTableCopy to orient the edges
       std::vector<double> fTableCopy(fSize, 0);
-      
+
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
         std::size_t numMeshElementsByType = ge->getNumMeshElementsByType(familyType);
@@ -2290,7 +2290,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                 eTableNegativeFlag);
             }
           }
-          
+
           for(int r = 0; r < fSize; r++) { fTableCopy[r] = fTable[r]; }
           if(fSize > 0) {
             for(int jj = 0;
@@ -2365,7 +2365,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       size_t pastIndexNumElement = 0;
       std::vector<std::vector<double> > eTableCopy(eSize, std::vector<double>(3, 0.));
       std::vector<std::vector<double> > fTableCopy(fSize, std::vector<double>(3, 0.));
-      
+
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
         std::size_t numMeshElementsByType = ge->getNumMeshElementsByType(familyType);
@@ -2376,7 +2376,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         for(std::size_t j = begin; j < end; j++) {
           std::size_t const3 = indexNumElement * const1 + const2;
           MElement *e = ge->getMeshElementByType(familyType, j);
-          
+
           if(eSize > 0) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
@@ -2393,7 +2393,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                 eTableNegativeFlag);
             }
           }
-          
+
           if(fSize > 0) {
             for(int jj = 0;
                 jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
@@ -2409,7 +2409,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           std::size_t const4 = const3 + prod1;
           std::size_t const5 = const4 + prod2;
           std::size_t const6 = const5 + prod3;
-        
+
           for(int k = 0; k < vSize; k++) {
             for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
               basisFunctions[const3 + k * numComponents + indexNumComp] = vTable[k][indexNumComp];
@@ -2430,7 +2430,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               basisFunctions[const6 + k * numComponents + indexNumComp] = bTable[k][indexNumComp];
             }
           }
-          
+
           indexNumElement++;
         }
       }
@@ -2453,7 +2453,7 @@ GMSH_API void gmsh::model::mesh::preallocateBasisFunctions(
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
-  
+
   int dim = ElementType::getDimension(elementType);
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
@@ -2510,7 +2510,7 @@ GMSH_API void gmsh::model::mesh::preallocateBasisFunctions(
     Msg::Error("Unknown function space named '%s'", fsName.c_str());
     throw 3;
   }
-  
+
   int vSize = basis->getnVertexFunction();
   int bSize = basis->getnBubbleFunction();
   int eSize = basis->getnEdgeFunction();
@@ -2523,7 +2523,7 @@ GMSH_API void gmsh::model::mesh::preallocateBasisFunctions(
     numElements += ge->getNumMeshElementsByType(familyType);
   }
   basisFunctions.resize(numFunctionsPerElement * numElements * numComponents * numIntegrationPoints);
-    
+
   delete basis;
 }
 
@@ -4139,7 +4139,7 @@ GMSH_API void gmsh::model::geo::dilate(const vectorpair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::geo::symmetrize(const vectorpair &dimTags,
+GMSH_API void gmsh::model::geo::mirror(const vectorpair &dimTags,
                                            const double a, const double b,
                                            const double c, const double d)
 {
@@ -4147,6 +4147,14 @@ GMSH_API void gmsh::model::geo::symmetrize(const vectorpair &dimTags,
   if(!GModel::current()->getGEOInternals()->symmetry(dimTags, a, b, c, d)) {
     throw 1;
   }
+}
+
+// will be deprecated
+GMSH_API void gmsh::model::geo::symmetrize(const vectorpair &dimTags,
+                                           const double a, const double b,
+                                           const double c, const double d)
+{
+  gmsh::model::geo::mirror(dimTags, a, b, c, d);
 }
 
 GMSH_API void gmsh::model::geo::copy(const vectorpair &dimTags,
@@ -4172,6 +4180,16 @@ GMSH_API void gmsh::model::geo::removeAllDuplicates()
 {
   if(!_isInitialized()) { throw - 1; }
   GModel::current()->getGEOInternals()->removeAllDuplicates();
+}
+
+GMSH_API void gmsh::model::geo::splitCurve(const int tag,
+                                          const std::vector<int> &pointTags,
+                                          std::vector<int> &curveTags)
+{
+  if(!_isInitialized()) { throw - 1; }
+  if(!GModel::current()->getGEOInternals()->splitCurve(tag, pointTags, curveTags)) {
+    throw 1;
+  }
 }
 
 GMSH_API void gmsh::model::geo::synchronize()
@@ -4811,15 +4829,22 @@ GMSH_API void gmsh::model::occ::dilate(const vectorpair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::symmetrize(const vectorpair &dimTags,
-                                           const double a, const double b,
-                                           const double c, const double d)
+GMSH_API void gmsh::model::occ::mirror(const vectorpair &dimTags,
+                                       const double a, const double b,
+                                       const double c, const double d)
 {
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
   if(!GModel::current()->getOCCInternals()->symmetry(dimTags, a, b, c, d)) {
     throw 1;
   }
+}
+
+GMSH_API void gmsh::model::occ::symmetrize(const vectorpair &dimTags,
+                                           const double a, const double b,
+                                           const double c, const double d)
+{
+  gmsh::model::occ::mirror(dimTags, a, b, c, d);
 }
 
 GMSH_API void gmsh::model::occ::affineTransform(const vectorpair &dimTags,

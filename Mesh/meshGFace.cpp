@@ -271,6 +271,10 @@ public:
     std::vector<GEdge *> const &edges = gf->edges();
     std::vector<GEdge *>::const_iterator ite = edges.begin();
     while(ite != edges.end()) {
+      if((*ite)->meshAttributes.method == MESH_TRANSFINITE) {
+        Msg::Warning("Full-quad recombination only compatible with "
+                     "transfinite meshes if those are performed first");
+      }
       if(!(*ite)->isMeshDegenerated()) {
         std::vector<MLine *> temp;
         (*ite)->mesh_vertices.clear();

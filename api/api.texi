@@ -2246,10 +2246,23 @@ the center of the homothetic transformation.
 -
 @end table
 
+@item gmsh/model/geo/mirror
+Mirror the model entities @code{dimTag}, with respect to the plane of equation
+@code{a} * x + @code{b} * y + @code{c} * z + @code{d} = 0.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{a}, @code{b}, @code{c}, @code{d}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item gmsh/model/geo/symmetrize
-Apply a symmetry transformation to the model entities @code{dimTag}, with
-respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
-@code{d} = 0.
+Mirror the model entities @code{dimTag}, with respect to the plane of equation
+@code{a} * x + @code{b} * y + @code{c} * z + @code{d} = 0. (This is a synonym
+for @code{mirror}, which will be deprecated in a future release.)
 
 @table @asis
 @item Input:
@@ -2295,6 +2308,20 @@ location).
 -
 @item Output:
 -
+@item Return:
+-
+@end table
+
+@item gmsh/model/geo/splitCurve
+Split the model curve of tag @code{tag} on the control points
+@code{pointTags@code{. Return the tags @code{curveTags} of the newly created
+curves.
+
+@table @asis
+@item Input:
+@code{tag}, @code{pointTags}
+@item Output:
+@code{curveTags}
 @item Return:
 -
 @end table
@@ -3046,10 +3073,25 @@ the center of the homothetic transformation.
 -
 @end table
 
-@item gmsh/model/occ/symmetrize
+@item gmsh/model/occ/mirror
 Apply a symmetry transformation to the model entities @code{dimTag}, with
 respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 @code{d} = 0.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{a}, @code{b}, @code{c}, @code{d}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/occ/symmetrize
+Apply a symmetry transformation to the model entities @code{dimTag}, with
+respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
+@code{d} = 0. (This is a synonym for @code{mirror}, which will be deprecated in
+a future release.)
 
 @table @asis
 @item Input:

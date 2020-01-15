@@ -3706,12 +3706,35 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def mirror(dimTags, a, b, c, d):
+            """
+            gmsh.model.geo.mirror(dimTags, a, b, c, d)
+
+            Mirror the model entities `dimTag', with respect to the plane of equation
+            `a' * x + `b' * y + `c' * z + `d' = 0.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelGeoMirror(
+                api_dimTags_, api_dimTags_n_,
+                c_double(a),
+                c_double(b),
+                c_double(c),
+                c_double(d),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoMirror returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def symmetrize(dimTags, a, b, c, d):
             """
             gmsh.model.geo.symmetrize(dimTags, a, b, c, d)
 
-            Apply a symmetry transformation to the model entities `dimTag', with
-            respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+            Mirror the model entities `dimTag', with respect to the plane of equation
+            `a' * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror',
+            which will be deprecated in a future release.)
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3783,6 +3806,30 @@ class model:
                 raise ValueError(
                     "gmshModelGeoRemoveAllDuplicates returned non-zero error code: ",
                     ierr.value)
+
+        @staticmethod
+        def splitCurve(tag, pointTags):
+            """
+            gmsh.model.geo.splitCurve(tag, pointTags)
+
+            Split the model curve of tag `tag' on the control points `pointTags`.
+            Return the tags `curveTags' of the newly created curves.
+
+            Return `curveTags'.
+            """
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
+            api_curveTags_, api_curveTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelGeoSplitCurve(
+                c_int(tag),
+                api_pointTags_, api_pointTags_n_,
+                byref(api_curveTags_), byref(api_curveTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoSplitCurve returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_curveTags_, api_curveTags_n_.value)
 
         @staticmethod
         def synchronize():
@@ -5069,12 +5116,36 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def mirror(dimTags, a, b, c, d):
+            """
+            gmsh.model.occ.mirror(dimTags, a, b, c, d)
+
+            Apply a symmetry transformation to the model entities `dimTag', with
+            respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelOccMirror(
+                api_dimTags_, api_dimTags_n_,
+                c_double(a),
+                c_double(b),
+                c_double(c),
+                c_double(d),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccMirror returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def symmetrize(dimTags, a, b, c, d):
             """
             gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
 
             Apply a symmetry transformation to the model entities `dimTag', with
             respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+            (This is a synonym for `mirror', which will be deprecated in a future
+            release.)
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()

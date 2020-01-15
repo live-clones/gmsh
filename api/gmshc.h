@@ -1384,8 +1384,18 @@ GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n,
                                  const double c,
                                  int * ierr);
 
-/* Apply a symmetry transformation to the model entities `dimTag', with
- * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0. */
+/* Mirror the model entities `dimTag', with respect to the plane of equation
+ * `a' * x + `b' * y + `c' * z + `d' = 0. */
+GMSH_API void gmshModelGeoMirror(int * dimTags, size_t dimTags_n,
+                                 const double a,
+                                 const double b,
+                                 const double c,
+                                 const double d,
+                                 int * ierr);
+
+/* Mirror the model entities `dimTag', with respect to the plane of equation
+ * `a' * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror',
+ * which will be deprecated in a future release.) */
 GMSH_API void gmshModelGeoSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double a,
                                      const double b,
@@ -1407,6 +1417,13 @@ GMSH_API void gmshModelGeoRemove(int * dimTags, size_t dimTags_n,
 /* Remove all duplicate entities (different entities at the same geometrical
  * location). */
 GMSH_API void gmshModelGeoRemoveAllDuplicates(int * ierr);
+
+/* Split the model curve of tag `tag' on the control points `pointTags`.
+ * Return the tags `curveTags' of the newly created curves. */
+GMSH_API void gmshModelGeoSplitCurve(const int tag,
+                                     int * pointTags, size_t pointTags_n,
+                                     int ** curveTags, size_t * curveTags_n,
+                                     int * ierr);
 
 /* Synchronize the built-in CAD representation with the current Gmsh model.
  * This can be called at any time, but since it involves a non trivial amount
@@ -1951,6 +1968,17 @@ GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
 
 /* Apply a symmetry transformation to the model entities `dimTag', with
  * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0. */
+GMSH_API void gmshModelOccMirror(int * dimTags, size_t dimTags_n,
+                                 const double a,
+                                 const double b,
+                                 const double c,
+                                 const double d,
+                                 int * ierr);
+
+/* Apply a symmetry transformation to the model entities `dimTag', with
+ * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+ * (This is a synonym for `mirror', which will be deprecated in a future
+ * release.) */
 GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double a,
                                      const double b,

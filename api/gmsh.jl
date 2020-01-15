@@ -2900,10 +2900,28 @@ function dilate(dimTags, x, y, z, a, b, c)
 end
 
 """
+    gmsh.model.geo.mirror(dimTags, a, b, c, d)
+
+Mirror the model entities `dimTag`, with respect to the plane of equation `a` *
+x + `b` * y + `c` * z + `d` = 0.
+"""
+function mirror(dimTags, a, b, c, d)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoMirror, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, a, b, c, d, ierr)
+    ierr[] != 0 && error("gmshModelGeoMirror returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.geo.symmetrize(dimTags, a, b, c, d)
 
-Apply a symmetry transformation to the model entities `dimTag`, with respect to
-the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
+Mirror the model entities `dimTag`, with respect to the plane of equation `a` *
+x + `b` * y + `c` * z + `d` = 0. (This is a synonym for `mirror`, which will be
+deprecated in a future release.)
 """
 function symmetrize(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -2968,6 +2986,26 @@ function removeAllDuplicates()
           ierr)
     ierr[] != 0 && error("gmshModelGeoRemoveAllDuplicates returned non-zero error code: $(ierr[])")
     return nothing
+end
+
+"""
+    gmsh.model.geo.splitCurve(tag, pointTags)
+
+Split the model curve of tag `tag` on the control points `pointTags`. Return the
+tags `curveTags` of the newly created curves.
+
+Return `curveTags`.
+"""
+function splitCurve(tag, pointTags)
+    api_curveTags_ = Ref{Ptr{Cint}}()
+    api_curveTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoSplitCurve, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, convert(Vector{Cint}, pointTags), length(pointTags), api_curveTags_, api_curveTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelGeoSplitCurve returned non-zero error code: $(ierr[])")
+    curveTags = unsafe_wrap(Array, api_curveTags_[], api_curveTags_n_[], own=true)
+    return curveTags
 end
 
 """
@@ -3986,10 +4024,28 @@ function dilate(dimTags, x, y, z, a, b, c)
 end
 
 """
-    gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
+    gmsh.model.occ.mirror(dimTags, a, b, c, d)
 
 Apply a symmetry transformation to the model entities `dimTag`, with respect to
 the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
+"""
+function mirror(dimTags, a, b, c, d)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccMirror, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, a, b, c, d, ierr)
+    ierr[] != 0 && error("gmshModelOccMirror returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
+
+Apply a symmetry transformation to the model entities `dimTag`, with respect to
+the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0. (This is a synonym
+for `mirror`, which will be deprecated in a future release.)
 """
 function symmetrize(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
