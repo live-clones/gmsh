@@ -13,21 +13,21 @@
 namespace {
 
   template <class T>
-  void calcMapFromIdealElement(int type, T &gSMatX, T &gSMatY, T &gSMatZ)
+  void calcMapFromIdealElement(int type, T &dSVec_dX, T &dSVec_dY, T &dSVec_dZ)
   {
     // 2D scaling
     switch(type) {
     case TYPE_QUA:
     case TYPE_HEX:
     case TYPE_PYR: { // Quad, hex, pyramid -> square with side of length 1
-      gSMatX.scale(2.);
-      gSMatY.scale(2.);
+      dSVec_dX.scale(2.);
+      dSVec_dY.scale(2.);
       break;
     }
     default: { // Tri, tet, prism: equilateral tri with side of length 1
       static const double cTri[2] = {-1. / std::sqrt(3.), 2. / std::sqrt(3.)};
-      gSMatY.scale(cTri[1]);
-      gSMatY.axpy(gSMatX, cTri[0]);
+      dSVec_dY.scale(cTri[1]);
+      dSVec_dY.axpy(dSVec_dX, cTri[0]);
       break;
     }
     }
@@ -36,21 +36,21 @@ namespace {
     switch(type) {
     case TYPE_HEX:
     case TYPE_PRI: { // Hex, prism -> side of length 1 in z
-      gSMatZ.scale(2.);
+      dSVec_dZ.scale(2.);
       break;
     }
     case TYPE_PYR: { // Pyramid -> height sqrt(2.)/2
       static const double cPyr = sqrt(2.);
-      gSMatZ.scale(cPyr);
+      dSVec_dZ.scale(cPyr);
       break;
     }
     case TYPE_TET: { // Tet: take into account (x, y) scaling to obtain regular
                      // tet
       static const double cTet[3] = {-3. / 2 / std::sqrt(6.),
                                      -1. / 2 / std::sqrt(2.), std::sqrt(1.5)};
-      gSMatZ.scale(cTet[2]);
-      gSMatZ.axpy(gSMatX, cTet[0]);
-      gSMatZ.axpy(gSMatY, cTet[1]);
+      dSVec_dZ.scale(cTet[2]);
+      dSVec_dZ.axpy(dSVec_dX, cTet[0]);
+      dSVec_dZ.axpy(dSVec_dY, cTet[1]);
       break;
     }
     }
@@ -65,71 +65,72 @@ namespace {
            M13 * (M21 * M32 - M22 * M31);
   }
 
-  // Compute signed Jacobian and its gradients w.r.t.  node positions, at one
-  // location in a 1D element
+  // Compute (signed) Jacobian determinant, and its partial derivative w.r.t.
+  // nodes coordinates, at sampling point 'i' of a 1D element (for which columns
+  // 2 and 3 of the Jacobian matrix are constant).
   inline void calcJDJ1D(double dxdX, double dxdY, double dxdZ, double dydX,
                         double dydY, double dydZ, double dzdX, double dzdY,
                         double dzdZ, int i, int numMapNodes,
-                        const fullMatrix<double> &gSMatX,
+                        const fullMatrix<double> &dShapeMat_dX,
                         fullMatrix<double> &JDJ)
   {
     for(int j = 0; j < numMapNodes; j++) {
-      const double &dPhidX = gSMatX(i, j);
-      JDJ(i, j) = dPhidX * dydY * dzdZ - dPhidX * dzdY * dydZ;
-      JDJ(i, j + numMapNodes) = dPhidX * dzdY * dxdZ - dPhidX * dxdY * dzdZ;
-      JDJ(i, j + 2 * numMapNodes) = dPhidX * dxdY * dydZ - dPhidX * dydY * dxdZ;
+      const double &dPhidX = dShapeMat_dX(i, j);
+      JDJ(i, j) =                   dPhidX * (dydY * dzdZ - dzdY * dydZ);
+      JDJ(i, j + numMapNodes) =     dPhidX * (dzdY * dxdZ - dxdY * dzdZ);
+      JDJ(i, j + 2 * numMapNodes) = dPhidX * (dxdY * dydZ - dydY * dxdZ);
     }
     JDJ(i, 3 * numMapNodes) =
       calcDet3D(dxdX, dxdY, dxdZ, dydX, dydY, dydZ, dzdX, dzdY, dzdZ);
   }
 
-  // Compute signed Jacobian and its gradients w.r.t.  node positions, at one
-  // location in a 2D element
+  // Compute (signed) Jacobian determinant, and its partial derivative w.r.t.
+  // nodes coordinates, at sampling point 'i' of a 2D element (for which column
+  // 3 of the Jacobian matrix is constant).
   inline void calcJDJ2D(double dxdX, double dxdY, double dxdZ, double dydX,
                         double dydY, double dydZ, double dzdX, double dzdY,
                         double dzdZ, int i, int numMapNodes,
-                        const fullMatrix<double> &gSMatX,
-                        const fullMatrix<double> &gSMatY,
+                        const fullMatrix<double> &dShapeMat_dX,
+                        const fullMatrix<double> &dShapeMat_dY,
                         fullMatrix<double> &JDJ)
   {
     for(int j = 0; j < numMapNodes; j++) {
-      const double &dPhidX = gSMatX(i, j);
-      const double &dPhidY = gSMatY(i, j);
-      JDJ(i, j) = dPhidX * dydY * dzdZ + dzdX * dPhidY * dydZ -
-                  dPhidX * dzdY * dydZ - dydX * dPhidY * dzdZ;
-      JDJ(i, j + numMapNodes) = dxdX * dPhidY * dzdZ + dPhidX * dzdY * dxdZ -
-                                dzdX * dPhidY * dxdZ - dPhidX * dxdY * dzdZ;
-      JDJ(i, j + 2 * numMapNodes) = dPhidX * dxdY * dydZ +
-                                    dydX * dPhidY * dxdZ -
-                                    dPhidX * dydY * dxdZ - dxdX * dPhidY * dydZ;
+      const double &dPhidX = dShapeMat_dX(i, j);
+      const double &dPhidY = dShapeMat_dY(i, j);
+      JDJ(i, j) =   dPhidX * (dydY * dzdZ - dzdY * dydZ)
+                  + dPhidY * (dzdX * dydZ - dydX * dzdZ);
+      JDJ(i, j + numMapNodes) =   dPhidX * (dzdY * dxdZ - dxdY * dzdZ)
+                                + dPhidY * (dxdX * dzdZ - dzdX * dxdZ);
+      JDJ(i, j + 2 * numMapNodes) =   dPhidX * (dxdY * dydZ - dydY * dxdZ)
+                                    + dPhidY * (dydX * dxdZ - dxdX * dydZ);
     }
     JDJ(i, 3 * numMapNodes) =
       calcDet3D(dxdX, dxdY, dxdZ, dydX, dydY, dydZ, dzdX, dzdY, dzdZ);
   }
 
-  // Compute signed Jacobian and its gradients w.r.t.  node positions, at one
-  // location in a 3D element
+  // Compute (signed) Jacobian determinant, and its partial derivative w.r.t.
+  // nodes coordinates, at sampling point 'i' of a 3D element
   inline void calcJDJ3D(double dxdX, double dxdY, double dxdZ, double dydX,
                         double dydY, double dydZ, double dzdX, double dzdY,
                         double dzdZ, int i, int numMapNodes,
-                        const fullMatrix<double> &gSMatX,
-                        const fullMatrix<double> &gSMatY,
-                        const fullMatrix<double> &gSMatZ,
+                        const fullMatrix<double> &dShapeMat_dX,
+                        const fullMatrix<double> &dShapeMat_dY,
+                        const fullMatrix<double> &dShapeMat_dZ,
                         fullMatrix<double> &JDJ)
   {
     for(int j = 0; j < numMapNodes; j++) {
-      const double &dPhidX = gSMatX(i, j);
-      const double &dPhidY = gSMatY(i, j);
-      const double &dPhidZ = gSMatZ(i, j);
-      JDJ(i, j) = dPhidX * dydY * dzdZ + dzdX * dPhidY * dydZ +
-                  dydX * dzdY * dPhidZ - dzdX * dydY * dPhidZ -
-                  dPhidX * dzdY * dydZ - dydX * dPhidY * dzdZ;
-      JDJ(i, j + numMapNodes) = dxdX * dPhidY * dzdZ + dzdX * dxdY * dPhidZ +
-                                dPhidX * dzdY * dxdZ - dzdX * dPhidY * dxdZ -
-                                dxdX * dzdY * dPhidZ - dPhidX * dxdY * dzdZ;
-      JDJ(i, j + 2 * numMapNodes) =
-        dxdX * dydY * dPhidZ + dPhidX * dxdY * dydZ + dydX * dPhidY * dxdZ -
-        dPhidX * dydY * dxdZ - dxdX * dPhidY * dydZ - dydX * dxdY * dPhidZ;
+      const double &dPhidX = dShapeMat_dX(i, j);
+      const double &dPhidY = dShapeMat_dY(i, j);
+      const double &dPhidZ = dShapeMat_dZ(i, j);
+      JDJ(i, j) =   dPhidX * (dydY * dzdZ - dzdY * dydZ)
+                  + dPhidY * (dzdX * dydZ - dydX * dzdZ)
+                  + dPhidZ * (dydX * dzdY - dzdX * dydY);
+      JDJ(i, j + numMapNodes) =   dPhidX * (dzdY * dxdZ - dxdY * dzdZ)
+                                + dPhidY * (dxdX * dzdZ - dzdX * dxdZ)
+                                + dPhidZ * (dzdX * dxdY - dxdX * dzdY);
+      JDJ(i, j + 2 * numMapNodes) =   dPhidX * (dxdY * dydZ - dydY * dxdZ)
+                                    + dPhidY * (dydX * dxdZ - dxdX * dydZ)
+                                    + dPhidZ * (dxdX * dydY - dydX * dxdY);
     }
     JDJ(i, 3 * numMapNodes) =
       calcDet3D(dxdX, dxdY, dxdZ, dydX, dydY, dydZ, dzdX, dzdY, dzdZ);
@@ -180,66 +181,66 @@ GradientBasis::GradientBasis(int elementTag, FuncSpaceData fsdata)
                       dShapeIdealMat_dZ);
 }
 
-void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
-                                          fullMatrix<double> *dxyzdX,
-                                          fullMatrix<double> *dxyzdY,
-                                          fullMatrix<double> *dxyzdZ) const
-{
-  if(dxyzdX) dShapeMat_dX.mult(nodes, *dxyzdX);
-  if(dxyzdY) dShapeMat_dY.mult(nodes, *dxyzdY);
-  if(dxyzdZ) dShapeMat_dZ.mult(nodes, *dxyzdZ);
-}
-
-void GradientBasis::getAllGradientsFromNodes(const fullMatrix<double> &nodes,
-                                             fullMatrix<double> &dxyzdXYZ) const
-{
-  fullMatrix<double> prox;
-  prox.setAsProxy(dxyzdXYZ, 0, 3);
-  dShapeMat_dX.mult(nodes, prox);
-
-  prox.setAsProxy(dxyzdXYZ, 3, 3);
-  dShapeMat_dY.mult(nodes, prox);
-
-  prox.setAsProxy(dxyzdXYZ, 6, 3);
-  dShapeMat_dZ.mult(nodes, prox);
-}
-
-void GradientBasis::getAllIdealGradientsFromNodes(
-  const fullMatrix<double> &nodes, fullMatrix<double> &dxyzdXYZ) const
-{
-  fullMatrix<double> prox;
-  prox.setAsProxy(dxyzdXYZ, 0, 3);
-  dShapeIdealMat_dX.mult(nodes, prox);
-
-  prox.setAsProxy(dxyzdXYZ, 3, 3);
-  dShapeIdealMat_dY.mult(nodes, prox);
-
-  prox.setAsProxy(dxyzdXYZ, 6, 3);
-  dShapeIdealMat_dZ.mult(nodes, prox);
-}
-
-void GradientBasis::getIdealGradientsFromNodes(const fullMatrix<double> &nodes,
+void GradientBasis::getIdealGradientsFromNodes(const fullMatrix<double> &nodesCoord,
                                                fullMatrix<double> *dxyzdX,
                                                fullMatrix<double> *dxyzdY,
                                                fullMatrix<double> *dxyzdZ) const
 {
-  if(dxyzdX) dShapeIdealMat_dX.mult(nodes, *dxyzdX);
-  if(dxyzdY) dShapeIdealMat_dY.mult(nodes, *dxyzdY);
-  if(dxyzdZ) dShapeIdealMat_dZ.mult(nodes, *dxyzdZ);
+  if(dxyzdX) dShapeIdealMat_dX.mult(nodesCoord, *dxyzdX);
+  if(dxyzdY) dShapeIdealMat_dY.mult(nodesCoord, *dxyzdY);
+  if(dxyzdZ) dShapeIdealMat_dZ.mult(nodesCoord, *dxyzdZ);
 }
 
-void GradientBasis::mapFromIdealElement(int type, fullMatrix<double> &gSMatX,
-                                        fullMatrix<double> &gSMatY,
-                                        fullMatrix<double> &gSMatZ)
+void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodesCoord,
+                                          fullMatrix<double> *dxyzdX,
+                                          fullMatrix<double> *dxyzdY,
+                                          fullMatrix<double> *dxyzdZ) const
 {
-  calcMapFromIdealElement(type, gSMatX, gSMatY, gSMatZ);
+  if(dxyzdX) dShapeMat_dX.mult(nodesCoord, *dxyzdX);
+  if(dxyzdY) dShapeMat_dY.mult(nodesCoord, *dxyzdY);
+  if(dxyzdZ) dShapeMat_dZ.mult(nodesCoord, *dxyzdZ);
 }
 
-void GradientBasis::mapFromIdealElement(int type, fullVector<double> &gSVecX,
-                                        fullVector<double> &gSVecY,
-                                        fullVector<double> &gSVecZ)
+void GradientBasis::getAllGradientsFromNodes(
+  const fullMatrix<double> &nodesCoord, fullMatrix<double> &dxyzdXYZ) const
 {
-  calcMapFromIdealElement(type, gSVecX, gSVecY, gSVecZ);
+  fullMatrix<double> prox;
+  prox.setAsProxy(dxyzdXYZ, 0, 3);
+  dShapeMat_dX.mult(nodesCoord, prox);
+
+  prox.setAsProxy(dxyzdXYZ, 3, 3);
+  dShapeMat_dY.mult(nodesCoord, prox);
+
+  prox.setAsProxy(dxyzdXYZ, 6, 3);
+  dShapeMat_dZ.mult(nodesCoord, prox);
+}
+
+void GradientBasis::getAllIdealGradientsFromNodes(
+  const fullMatrix<double> &nodesCoord, fullMatrix<double> &dxyzdXYZ) const
+{
+  fullMatrix<double> prox;
+  prox.setAsProxy(dxyzdXYZ, 0, 3);
+  dShapeIdealMat_dX.mult(nodesCoord, prox);
+
+  prox.setAsProxy(dxyzdXYZ, 3, 3);
+  dShapeIdealMat_dY.mult(nodesCoord, prox);
+
+  prox.setAsProxy(dxyzdXYZ, 6, 3);
+  dShapeIdealMat_dZ.mult(nodesCoord, prox);
+}
+
+void GradientBasis::mapFromIdealElement(int type, fullMatrix<double> &dSMat_dX,
+                                        fullMatrix<double> &dSMat_dY,
+                                        fullMatrix<double> &dSMat_dZ)
+{
+  calcMapFromIdealElement(type, dSMat_dX, dSMat_dY, dSMat_dZ);
+}
+
+void GradientBasis::mapFromIdealElement(int type, fullVector<double> &dSVec_dX,
+                                        fullVector<double> &dSVec_dY,
+                                        fullVector<double> &dSVec_dZ)
+{
+  calcMapFromIdealElement(type, dSVec_dX, dSVec_dY, dSVec_dZ);
 }
 
 void GradientBasis::mapFromIdealElement(int type, double jac[3][3])

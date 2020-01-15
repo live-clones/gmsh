@@ -24,17 +24,17 @@ public:
   inline int getPolynomialOrder() const { return _data.getSpaceOrder(); }
   int getNumSamplingPoints() const { return dShapeMat_dX.size1(); }
   int getNumMapNodes() const { return dShapeMat_dX.size2(); }
-  void getGradientsFromNodes(const fullMatrix<double> &nodes,
+  void getGradientsFromNodes(const fullMatrix<double> &nodesCoord,
                              fullMatrix<double> *dxyzdX,
                              fullMatrix<double> *dxyzdY,
                              fullMatrix<double> *dxyzdZ) const;
-  void getAllGradientsFromNodes(const fullMatrix<double> &nodes,
+  void getAllGradientsFromNodes(const fullMatrix<double> &nodesCoord,
                                 fullMatrix<double> &dxyzdXYZ) const;
-  void getIdealGradientsFromNodes(const fullMatrix<double> &nodes,
+  void getIdealGradientsFromNodes(const fullMatrix<double> &nodesCoord,
                                   fullMatrix<double> *dxyzdX,
                                   fullMatrix<double> *dxyzdY,
                                   fullMatrix<double> *dxyzdZ) const;
-  void getAllIdealGradientsFromNodes(const fullMatrix<double> &nodes,
+  void getAllIdealGradientsFromNodes(const fullMatrix<double> &nodesCoord,
                                      fullMatrix<double> &dxyzdXYZ) const;
   void mapFromIdealElement(fullMatrix<double> &dxyzdX,
                            fullMatrix<double> &dxyzdY,
@@ -48,12 +48,12 @@ public:
   {
     GradientBasis::mapFromIdealElement(_data.getType(), dxyzdX, dxyzdY, dxyzdZ);
   }
-  static void mapFromIdealElement(int type, fullMatrix<double> &gSMatX,
-                                  fullMatrix<double> &gSMatY,
-                                  fullMatrix<double> &gSMatZ);
-  static void mapFromIdealElement(int type, fullVector<double> &gSVecX,
-                                  fullVector<double> &gSVecY,
-                                  fullVector<double> &gSVecZ);
+  static void mapFromIdealElement(int type, fullMatrix<double> &dSMat_dX,
+                                  fullMatrix<double> &dSMat_dY,
+                                  fullMatrix<double> &dSMat_dZ);
+  static void mapFromIdealElement(int type, fullVector<double> &dSVec_dX,
+                                  fullVector<double> &dSVec_dY,
+                                  fullVector<double> &dSVec_dZ);
   static void mapFromIdealElement(int type, double jac[3][3]);
 };
 
