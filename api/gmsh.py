@@ -1919,6 +1919,28 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
+        def getLocalMultipliersForHcurl0(elementType, tag=-1):
+            """
+            get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+            H(curl) basis functions. Warning: this is an experimental feature and will
+            probably change in a future release.
+
+            Return `localMultipliers'.
+            """
+            api_localMultipliers_, api_localMultipliers_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetLocalMultipliersForHcurl0(
+                c_int(elementType),
+                byref(api_localMultipliers_), byref(api_localMultipliers_n_),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetLocalMultipliersForHcurl0 returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_localMultipliers_, api_localMultipliers_n_.value)
+
+        @staticmethod
         def getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1):
             """
             Get the element-dependent basis functions of the elements of type

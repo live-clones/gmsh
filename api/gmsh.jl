@@ -1602,6 +1602,27 @@ function getBasisFunctions(elementType, integrationPoints, functionSpaceType)
 end
 
 """
+    gmsh.model.mesh.getLocalMultipliersForHcurl0(elementType, tag = -1)
+
+get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+H(curl) basis functions. Warning: this is an experimental feature and will
+probably change in a future release.
+
+Return `localMultipliers`.
+"""
+function getLocalMultipliersForHcurl0(elementType, tag = -1)
+    api_localMultipliers_ = Ref{Ptr{Cint}}()
+    api_localMultipliers_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetLocalMultipliersForHcurl0, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, api_localMultipliers_, api_localMultipliers_n_, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetLocalMultipliersForHcurl0 returned non-zero error code: $(ierr[])")
+    localMultipliers = unsafe_wrap(Array, api_localMultipliers_[], api_localMultipliers_n_[], own=true)
+    return localMultipliers
+end
+
+"""
     gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
 
 Get the element-dependent basis functions of the elements of type `elementType`
