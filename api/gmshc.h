@@ -1418,7 +1418,7 @@ GMSH_API void gmshModelGeoRemove(int * dimTags, size_t dimTags_n,
  * location). */
 GMSH_API void gmshModelGeoRemoveAllDuplicates(int * ierr);
 
-/* Split the model curve of tag `tag' on the control points `pointTags`.
+/* Split the model curve of tag `tag' on the control points `pointTags'.
  * Return the tags `curveTags' of the newly created curves. */
 GMSH_API void gmshModelGeoSplitCurve(const int tag,
                                      int * pointTags, size_t pointTags_n,

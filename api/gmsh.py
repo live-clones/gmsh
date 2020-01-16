@@ -3812,7 +3812,7 @@ class model:
             """
             gmsh.model.geo.splitCurve(tag, pointTags)
 
-            Split the model curve of tag `tag' on the control points `pointTags`.
+            Split the model curve of tag `tag' on the control points `pointTags'.
             Return the tags `curveTags' of the newly created curves.
 
             Return `curveTags'.

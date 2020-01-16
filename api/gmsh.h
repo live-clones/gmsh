@@ -1622,7 +1622,7 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::geo::splitCurve
       //
-      // Split the model curve of tag `tag' on the control points `pointTags`.
+      // Split the model curve of tag `tag' on the control points `pointTags'.
       // Return the tags `curveTags' of the newly created curves.
       GMSH_API void splitCurve(const int tag,
                                const std::vector<int> & pointTags,

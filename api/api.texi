@@ -2313,9 +2313,8 @@ location).
 @end table
 
 @item gmsh/model/geo/splitCurve
-Split the model curve of tag @code{tag} on the control points
-@code{pointTags@code{. Return the tags @code{curveTags} of the newly created
-curves.
+Split the model curve of tag @code{tag} on the control points @code{pointTags}.
+Return the tags @code{curveTags} of the newly created curves.
 
 @table @asis
 @item Input:

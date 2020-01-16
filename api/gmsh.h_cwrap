@@ -2433,7 +2433,7 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
-      // Split the model curve of tag `tag' on the control points `pointTags`.
+      // Split the model curve of tag `tag' on the control points `pointTags'.
       // Return the tags `curveTags' of the newly created curves.
       inline void splitCurve(const int tag,
                              const std::vector<int> & pointTags,

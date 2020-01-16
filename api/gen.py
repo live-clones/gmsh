@@ -520,7 +520,7 @@ geo.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false',
 doc = '''Remove all duplicate entities (different entities at the same geometrical location).'''
 geo.add('removeAllDuplicates', doc, None)
 
-doc = '''Split the model curve of tag `tag' on the control points `pointTags`. Return the tags `curveTags' of the newly created curves.'''
+doc = '''Split the model curve of tag `tag' on the control points `pointTags'. Return the tags `curveTags' of the newly created curves.'''
 geo.add('splitCurve', doc, None, iint('tag'), ivectorint('pointTags'), ovectorint('curveTags'))
 
 doc = '''Synchronize the built-in CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
