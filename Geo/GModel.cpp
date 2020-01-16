@@ -1389,6 +1389,18 @@ int GModel::addMEdge(const MEdge &edge)
   return it.first->second;
 }
 
+int GModel::getEdgeNumber(const MEdge &edge)
+{
+  hashmapMEdge::iterator it=_mapEdgeNum.find(edge);
+  if (it!=_mapEdgeNum.end())
+  {
+    return _mapEdgeNum.find(edge)->second;
+  }
+  else{
+    Msg::Error("this edge does not exist in the mapEdgeNum"); throw 2;
+  }
+
+}
 int GModel::addMFace(const MFace &face)
 {
   std::pair<MFace, int> key(face, _mapFaceNum.size());

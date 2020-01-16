@@ -2030,6 +2030,18 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
 }
 
+GMSH_API void gmsh::model::mesh::getEdgeNumber(
+  const std::vector<int> & edgeVertices,std::vector<int> & edgeNum)
+{
+  edgeNum.clear();
+  int numEdges=edgeVertices.size()/2;
+  edgeNum.resize(numEdges);
+  for(int i=0;i<numEdges;i++){
+    MEdge edge(GModel::current()->getMeshVertexByTag(edgeVertices[2*i]),
+    GModel::current()->getMeshVertexByTag(edgeVertices[2*i+1]));
+    edgeNum[i]=GModel::current()->getEdgeNumber(edge);
+  }
+}
 GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
   const int elementType,std::vector<int> &localMultipliers,  const int tag)
 {

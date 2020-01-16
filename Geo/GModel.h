@@ -244,6 +244,8 @@ public:
 
   // number the edges
   int addMEdge(const MEdge &edge);
+  // get the edge number 
+  int getEdgeNumber(const MEdge &edge);
   //number the faces
   int addMFace(const MFace &face);
 

@@ -1919,9 +1919,32 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
+        def getEdgeNumber(edgeVertices):
+            """
+            Get the matching edge number using the key edge in the hashmap _mapEdgeNum
+            : `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of
+            the edge 'edgeNum[0]' .  Warning: this is an experimental feature and will
+            probably change in a future release.
+
+            Return `edgeNum'.
+            """
+            api_edgeVertices_, api_edgeVertices_n_ = _ivectorint(edgeVertices)
+            api_edgeNum_, api_edgeNum_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetEdgeNumber(
+                api_edgeVertices_, api_edgeVertices_n_,
+                byref(api_edgeNum_), byref(api_edgeNum_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetEdgeNumber returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_edgeNum_, api_edgeNum_n_.value)
+
+        @staticmethod
         def getLocalMultipliersForHcurl0(elementType, tag=-1):
             """
-            get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+            Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
             H(curl) basis functions. Warning: this is an experimental feature and will
             probably change in a future release.
 

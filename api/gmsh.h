@@ -674,7 +674,14 @@ namespace gmsh { // Top-level functions
                                       int & numComponents,
                                       std::vector<double> & basisFunctions);
 
-      // get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+      // Get the matching edge number using the key edge in the hashmap _mapEdgeNum
+      // : `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of
+      // the edge 'edgeNum[0]' .  Warning: this is an experimental feature and will
+      // probably change in a future release.
+      GMSH_API void getEdgeNumber(const std::vector<int> & edgeVertices,
+                                  std::vector<int> & edgeNum);
+
+      // Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
       // H(curl) basis functions. Warning: this is an experimental feature and will
       // probably change in a future release.
       GMSH_API void getLocalMultipliersForHcurl0(const int elementType,

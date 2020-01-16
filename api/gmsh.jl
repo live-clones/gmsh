@@ -1602,9 +1602,31 @@ function getBasisFunctions(elementType, integrationPoints, functionSpaceType)
 end
 
 """
+    gmsh.model.mesh.getEdgeNumber(edgeVertices)
+
+Get the matching edge number using the key edge in the hashmap _mapEdgeNum :
+`edgeVertices[0]` and `edgeVertices[1]` match the vertices vi and vj of the edge
+`edgeNum[0]` .  Warning: this is an experimental feature and will probably
+change in a future release.
+
+Return `edgeNum`.
+"""
+function getEdgeNumber(edgeVertices)
+    api_edgeNum_ = Ref{Ptr{Cint}}()
+    api_edgeNum_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetEdgeNumber, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cint}, edgeVertices), length(edgeVertices), api_edgeNum_, api_edgeNum_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetEdgeNumber returned non-zero error code: $(ierr[])")
+    edgeNum = unsafe_wrap(Array, api_edgeNum_[], api_edgeNum_n_[], own=true)
+    return edgeNum
+end
+
+"""
     gmsh.model.mesh.getLocalMultipliersForHcurl0(elementType, tag = -1)
 
-get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
 H(curl) basis functions. Warning: this is an experimental feature and will
 probably change in a future release.
 

@@ -1207,8 +1207,23 @@ when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
 -
 @end table
 
+@item getEdgeNumber
+Get the matching edge number using the key edge in the hashmap _mapEdgeNum :
+@code{edgeVertices[0]} and @code{edgeVertices[1]} match the vertices vi and vj
+of the edge }edgeNum[0]} .  Warning: this is an experimental feature and will
+probably change in a future release.
+
+@table @asis
+@item Input:
+@code{edgeVertices}
+@item Output:
+@code{edgeNum}
+@item Return:
+-
+@end table
+
 @item getLocalMultipliersForHcurl0
-get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
 H(curl) basis functions. Warning: this is an experimental feature and will
 probably change in a future release.
 
