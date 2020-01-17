@@ -205,31 +205,31 @@ public:
   static FuncSpaceData jacobianMatrixSpace(int type, int order);
 
 private:
-  void getJacobianGeneral(int nSamplingPnts, const fullMatrix<double> &gSMatX,
-                          const fullMatrix<double> &gSMatY,
-                          const fullMatrix<double> &gSMatZ,
+  void getJacobianGeneral(int nSamplingPnts, const fullMatrix<double> &dSMat_dX,
+                          const fullMatrix<double> &dSMat_dY,
+                          const fullMatrix<double> &dSMat_dZ,
                           const fullMatrix<double> &nodesXYZ, bool idealNorm,
                           bool scaling, fullVector<double> &jacobian,
                           const fullMatrix<double> *normals) const;
-  void getJacobianGeneral(int nSamplingPnts, const fullMatrix<double> &gSMatX,
-                          const fullMatrix<double> &gSMatY,
-                          const fullMatrix<double> &gSMatZ,
+  void getJacobianGeneral(int nSamplingPnts, const fullMatrix<double> &dSMat_dX,
+                          const fullMatrix<double> &dSMat_dY,
+                          const fullMatrix<double> &dSMat_dZ,
                           const fullMatrix<double> &nodesX,
                           const fullMatrix<double> &nodesY,
                           const fullMatrix<double> &nodesZ, bool idealNorm,
                           bool scaling, fullMatrix<double> &jacobian,
                           const fullMatrix<double> *normals) const;
   void getSignedJacAndGradientsGeneral(int nSamplingPnts,
-                                       const fullMatrix<double> &gSMatX,
-                                       const fullMatrix<double> &gSMatY,
-                                       const fullMatrix<double> &gSMatZ,
+                                       const fullMatrix<double> &dSMat_dX,
+                                       const fullMatrix<double> &dSMat_dY,
+                                       const fullMatrix<double> &dSMat_dZ,
                                        const fullMatrix<double> &nodesXYZ,
                                        const fullMatrix<double> &normals,
                                        fullMatrix<double> &JDJ) const;
   void getSignedIdealJacAndGradientsGeneral(int nSamplingPnts,
-                                            const fullMatrix<double> &gSMatX,
-                                            const fullMatrix<double> &gSMatY,
-                                            const fullMatrix<double> &gSMatZ,
+                                            const fullMatrix<double> &dSMat_dX,
+                                            const fullMatrix<double> &dSMat_dY,
+                                            const fullMatrix<double> &dSMat_dZ,
                                             const fullMatrix<double> &nodesXYZ,
                                             const fullMatrix<double> &normals,
                                             fullMatrix<double> &JDJ) const;

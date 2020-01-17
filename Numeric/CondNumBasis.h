@@ -50,8 +50,8 @@ public:
   {
     getSignedInvCondNumGeneral(_nCondNumNodes, _gradBasis->dShapeIdealMat_dX,
                                _gradBasis->dShapeIdealMat_dY,
-                               _gradBasis->dShapeIdealMat_dZ, nodesXYZ,
-                               normals, invCond);
+                               _gradBasis->dShapeIdealMat_dZ, nodesXYZ, normals,
+                               invCond);
   }
   inline void getInvCondNumAndGradients(const fullMatrix<double> &nodesXYZ,
                                         fullMatrix<double> &IDI) const
@@ -74,42 +74,42 @@ public:
 
 private:
   template <bool sign>
-  void getInvCondNumGeneral(int nCondNumNodes, const fullMatrix<double> &gSMatX,
-                            const fullMatrix<double> &gSMatY,
-                            const fullMatrix<double> &gSMatZ,
+  void getInvCondNumGeneral(int nCondNumNodes, const fullMatrix<double> &dSMat_dX,
+                            const fullMatrix<double> &dSMat_dY,
+                            const fullMatrix<double> &dSMat_dZ,
                             const fullMatrix<double> &nodesXYZ,
                             const fullMatrix<double> &normals,
                             fullVector<double> &invCond) const;
-  void getInvCondNumGeneral(int nCondNumNodes, const fullMatrix<double> &gSMatX,
-                            const fullMatrix<double> &gSMatY,
-                            const fullMatrix<double> &gSMatZ,
+  void getInvCondNumGeneral(int nCondNumNodes, const fullMatrix<double> &dSMat_dX,
+                            const fullMatrix<double> &dSMat_dY,
+                            const fullMatrix<double> &dSMat_dZ,
                             const fullMatrix<double> &nodesXYZ,
                             fullVector<double> &invCond) const;
   void getSignedInvCondNumGeneral(int nCondNumNodes,
-                                  const fullMatrix<double> &gSMatX,
-                                  const fullMatrix<double> &gSMatY,
-                                  const fullMatrix<double> &gSMatZ,
+                                  const fullMatrix<double> &dSMat_dX,
+                                  const fullMatrix<double> &dSMat_dY,
+                                  const fullMatrix<double> &dSMat_dZ,
                                   const fullMatrix<double> &nodesXYZ,
                                   const fullMatrix<double> &normals,
                                   fullVector<double> &invCond) const;
 
   template <bool sign>
   void getInvCondNumAndGradientsGeneral(int nCondNumNodes,
-                                        const fullMatrix<double> &gSMatX,
-                                        const fullMatrix<double> &gSMatY,
-                                        const fullMatrix<double> &gSMatZ,
+                                        const fullMatrix<double> &dSMat_dX,
+                                        const fullMatrix<double> &dSMat_dY,
+                                        const fullMatrix<double> &dSMat_dZ,
                                         const fullMatrix<double> &nodesXYZ,
                                         const fullMatrix<double> &normals,
                                         fullMatrix<double> &IDI) const;
   void getInvCondNumAndGradientsGeneral(
     int nCondNumNodes, // No normal given -> unsigned measure
-    const fullMatrix<double> &gSMatX, const fullMatrix<double> &gSMatY,
-    const fullMatrix<double> &gSMatZ, const fullMatrix<double> &nodesXYZ,
+    const fullMatrix<double> &dSMat_dX, const fullMatrix<double> &dSMat_dY,
+    const fullMatrix<double> &dSMat_dZ, const fullMatrix<double> &nodesXYZ,
     fullMatrix<double> &IDI) const;
   void getSignedInvCondNumAndGradientsGeneral(
     int nCondNumNodes, // Normals given -> signed measure
-    const fullMatrix<double> &gSMatX, const fullMatrix<double> &gSMatY,
-    const fullMatrix<double> &gSMatZ, const fullMatrix<double> &nodesXYZ,
+    const fullMatrix<double> &dSMat_dX, const fullMatrix<double> &dSMat_dY,
+    const fullMatrix<double> &dSMat_dZ, const fullMatrix<double> &nodesXYZ,
     const fullMatrix<double> &normals, fullMatrix<double> &IDI) const;
 };
 

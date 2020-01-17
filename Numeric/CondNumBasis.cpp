@@ -104,8 +104,8 @@ namespace {
                                    double dydY, double dzdX, double dzdY,
                                    double nx, double ny, double nz, int i,
                                    int numMapNodes,
-                                   const fullMatrix<double> &gSMatX,
-                                   const fullMatrix<double> &gSMatY,
+                                   const fullMatrix<double> &dSMat_dX,
+                                   const fullMatrix<double> &dSMat_dY,
                                    fullMatrix<double> &IDI)
   {
     const double EpsDegen = 1.e-6;
@@ -165,8 +165,8 @@ namespace {
                    nnYz = dydY * nx - dxdY * ny;
       const double fact = 2. / N;
       for(int j = 0; j < numMapNodes; j++) {
-        const double &dPhidX = gSMatX(i, j);
-        const double &dPhidY = gSMatY(i, j);
+        const double &dPhidX = dSMat_dX(i, j);
+        const double &dPhidY = dSMat_dY(i, j);
         IDI(i, j) = fact * (dPhidY * nnXx - dPhidX * nnYx);
         IDI(i, j + numMapNodes) = fact * (dPhidY * nnXy - dPhidX * nnYy);
         IDI(i, j + 2 * numMapNodes) = fact * (dPhidY * nnXz - dPhidX * nnYz);
@@ -177,8 +177,8 @@ namespace {
     const double invSqrtProd = 1. / sqrtProd;
 
     for(int j = 0; j < numMapNodes; j++) {
-      const double &dPhidX = gSMatX(i, j);
-      const double &dPhidY = gSMatY(i, j);
+      const double &dPhidX = dSMat_dX(i, j);
+      const double &dPhidY = dSMat_dY(i, j);
 
       const double ddxdXSqdxj = 2. * dPhidX * dxdX,
                    ddxdYSqdxj = 2. * dPhidY * dxdY;
@@ -257,8 +257,8 @@ namespace {
   inline void calcGradInvCondNum3D(
     double dxdX, double dxdY, double dxdZ, double dydX, double dydY,
     double dydZ, double dzdX, double dzdY, double dzdZ, int i, int numMapNodes,
-    const fullMatrix<double> &gSMatX, const fullMatrix<double> &gSMatY,
-    const fullMatrix<double> &gSMatZ, fullMatrix<double> &IDI)
+    const fullMatrix<double> &dSMat_dX, const fullMatrix<double> &dSMat_dY,
+    const fullMatrix<double> &dSMat_dZ, fullMatrix<double> &IDI)
   {
     const double normJSq = dxdX * dxdX + dxdY * dxdY + dxdZ * dxdZ +
                            dydX * dydX + dydY * dydY + dydZ * dydZ +
@@ -284,9 +284,9 @@ namespace {
     IDI(i, 3 * numMapNodes) = reverse ? -sICN : sICN;
 
     for(int j = 0; j < numMapNodes; j++) {
-      const double &dPhidX = gSMatX(i, j);
-      const double &dPhidY = gSMatY(i, j);
-      const double &dPhidZ = gSMatZ(i, j);
+      const double &dPhidX = dSMat_dX(i, j);
+      const double &dPhidY = dSMat_dY(i, j);
+      const double &dPhidZ = dSMat_dZ(i, j);
 
       const double dNormJSqdxj =
         2. * (dPhidX * dxdX + dPhidY * dxdY + dPhidZ * dxdZ);
@@ -428,8 +428,8 @@ int CondNumBasis::condNumOrder(int parentType, int order)
 // depend on the given matrices for shape function gradients.
 template <bool sign>
 inline void CondNumBasis::getInvCondNumGeneral(
-  int nCondNumNodes, const fullMatrix<double> &gSMatX,
-  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+  int nCondNumNodes, const fullMatrix<double> &dSMat_dX,
+  const fullMatrix<double> &dSMat_dY, const fullMatrix<double> &dSMat_dZ,
   const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
   fullVector<double> &condNum) const
 {
@@ -447,8 +447,8 @@ inline void CondNumBasis::getInvCondNumGeneral(
 
   case 2: {
     fullMatrix<double> dxyzdX(nCondNumNodes, 3), dxyzdY(nCondNumNodes, 3);
-    gSMatX.mult(nodesXYZ, dxyzdX);
-    gSMatY.mult(nodesXYZ, dxyzdY);
+    dSMat_dX.mult(nodesXYZ, dxyzdX);
+    dSMat_dY.mult(nodesXYZ, dxyzdY);
     for(int i = 0; i < nCondNumNodes; i++) {
       const double &dxdX = dxyzdX(i, 0), &dydX = dxyzdX(i, 1),
                    &dzdX = dxyzdX(i, 2);
@@ -469,9 +469,9 @@ inline void CondNumBasis::getInvCondNumGeneral(
     }
     fullMatrix<double> dxyzdX(nCondNumNodes, 3), dxyzdY(nCondNumNodes, 3),
       dxyzdZ(nCondNumNodes, 3);
-    gSMatX.mult(nodesXYZ, dxyzdX);
-    gSMatY.mult(nodesXYZ, dxyzdY);
-    gSMatZ.mult(nodesXYZ, dxyzdZ);
+    dSMat_dX.mult(nodesXYZ, dxyzdX);
+    dSMat_dY.mult(nodesXYZ, dxyzdY);
+    dSMat_dZ.mult(nodesXYZ, dxyzdZ);
     for(int i = 0; i < nCondNumNodes; i++) {
       const double &dxdX = dxyzdX(i, 0), &dydX = dxyzdX(i, 1),
                    &dzdX = dxyzdX(i, 2);
@@ -488,24 +488,24 @@ inline void CondNumBasis::getInvCondNumGeneral(
 }
 
 void CondNumBasis::getInvCondNumGeneral(int nCondNumNodes,
-                                        const fullMatrix<double> &gSMatX,
-                                        const fullMatrix<double> &gSMatY,
-                                        const fullMatrix<double> &gSMatZ,
+                                        const fullMatrix<double> &dSMat_dX,
+                                        const fullMatrix<double> &dSMat_dY,
+                                        const fullMatrix<double> &dSMat_dZ,
                                         const fullMatrix<double> &nodesXYZ,
                                         fullVector<double> &invCond) const
 {
   fullMatrix<double> dumNormals;
-  getInvCondNumGeneral<false>(nCondNumNodes, gSMatX, gSMatY, gSMatZ, nodesXYZ,
+  getInvCondNumGeneral<false>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ, nodesXYZ,
                               dumNormals, invCond);
 }
 
 void CondNumBasis::getSignedInvCondNumGeneral(
-  int nCondNumNodes, const fullMatrix<double> &gSMatX,
-  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+  int nCondNumNodes, const fullMatrix<double> &dSMat_dX,
+  const fullMatrix<double> &dSMat_dY, const fullMatrix<double> &dSMat_dZ,
   const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
   fullVector<double> &invCond) const
 {
-  getInvCondNumGeneral<true>(nCondNumNodes, gSMatX, gSMatY, gSMatZ, nodesXYZ,
+  getInvCondNumGeneral<true>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ, nodesXYZ,
                              normals, invCond);
 }
 
@@ -515,8 +515,8 @@ void CondNumBasis::getSignedInvCondNumGeneral(
 // function gradients.
 template <bool sign>
 inline void CondNumBasis::getInvCondNumAndGradientsGeneral(
-  int nCondNumNodes, const fullMatrix<double> &gSMatX,
-  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+  int nCondNumNodes, const fullMatrix<double> &dSMat_dX,
+  const fullMatrix<double> &dSMat_dY, const fullMatrix<double> &dSMat_dZ,
   const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
   fullMatrix<double> &IDI) const
 {
@@ -543,8 +543,8 @@ inline void CondNumBasis::getInvCondNumAndGradientsGeneral(
 
   case 2: {
     fullMatrix<double> dxyzdX(nCondNumNodes, 3), dxyzdY(nCondNumNodes, 3);
-    gSMatX.mult(nodesXYZ, dxyzdX);
-    gSMatY.mult(nodesXYZ, dxyzdY);
+    dSMat_dX.mult(nodesXYZ, dxyzdX);
+    dSMat_dY.mult(nodesXYZ, dxyzdY);
     for(int i = 0; i < nCondNumNodes; i++) {
       const double &dxdX = dxyzdX(i, 0), &dydX = dxyzdX(i, 1),
                    &dzdX = dxyzdX(i, 2);
@@ -553,7 +553,7 @@ inline void CondNumBasis::getInvCondNumAndGradientsGeneral(
       const double &nx = normals(0, 0), &ny = normals(0, 1),
                    &nz = normals(0, 2);
       calcGradInvCondNum2D<sign>(dxdX, dxdY, dydX, dydY, dzdX, dzdY, nx, ny, nz,
-                                 i, _nMapNodes, gSMatX, gSMatY, IDI);
+                                 i, _nMapNodes, dSMat_dX, dSMat_dY, IDI);
     }
     break;
   }
@@ -572,9 +572,9 @@ inline void CondNumBasis::getInvCondNumAndGradientsGeneral(
     }
     fullMatrix<double> dxyzdX(nCondNumNodes, 3), dxyzdY(nCondNumNodes, 3),
       dxyzdZ(nCondNumNodes, 3);
-    gSMatX.mult(nodesXYZ, dxyzdX);
-    gSMatY.mult(nodesXYZ, dxyzdY);
-    gSMatZ.mult(nodesXYZ, dxyzdZ);
+    dSMat_dX.mult(nodesXYZ, dxyzdX);
+    dSMat_dY.mult(nodesXYZ, dxyzdY);
+    dSMat_dZ.mult(nodesXYZ, dxyzdZ);
     for(int i = 0; i < nCondNumNodes; i++) {
       const double &dxdX = dxyzdX(i, 0), &dydX = dxyzdX(i, 1),
                    &dzdX = dxyzdX(i, 2);
@@ -583,7 +583,7 @@ inline void CondNumBasis::getInvCondNumAndGradientsGeneral(
       const double &dxdZ = dxyzdZ(i, 0), &dydZ = dxyzdZ(i, 1),
                    &dzdZ = dxyzdZ(i, 2);
       calcGradInvCondNum3D<sign>(dxdX, dxdY, dxdZ, dydX, dydY, dydZ, dzdX, dzdY,
-                                 dzdZ, i, _nMapNodes, gSMatX, gSMatY, gSMatZ,
+                                 dzdZ, i, _nMapNodes, dSMat_dX, dSMat_dY, dSMat_dZ,
                                  IDI);
     }
     break;
@@ -592,21 +592,21 @@ inline void CondNumBasis::getInvCondNumAndGradientsGeneral(
 }
 
 void CondNumBasis::getInvCondNumAndGradientsGeneral(
-  int nCondNumNodes, const fullMatrix<double> &gSMatX,
-  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+  int nCondNumNodes, const fullMatrix<double> &dSMat_dX,
+  const fullMatrix<double> &dSMat_dY, const fullMatrix<double> &dSMat_dZ,
   const fullMatrix<double> &nodesXYZ, fullMatrix<double> &IDI) const
 {
   fullMatrix<double> dumNormals;
-  getInvCondNumAndGradientsGeneral<false>(nCondNumNodes, gSMatX, gSMatY, gSMatZ,
+  getInvCondNumAndGradientsGeneral<false>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ,
                                           nodesXYZ, dumNormals, IDI);
 }
 
 void CondNumBasis::getSignedInvCondNumAndGradientsGeneral(
-  int nCondNumNodes, const fullMatrix<double> &gSMatX,
-  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+  int nCondNumNodes, const fullMatrix<double> &dSMat_dX,
+  const fullMatrix<double> &dSMat_dY, const fullMatrix<double> &dSMat_dZ,
   const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
   fullMatrix<double> &IDI) const
 {
-  getInvCondNumAndGradientsGeneral<true>(nCondNumNodes, gSMatX, gSMatY, gSMatZ,
+  getInvCondNumAndGradientsGeneral<true>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ,
                                          nodesXYZ, normals, IDI);
 }

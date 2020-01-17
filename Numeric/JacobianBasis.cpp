@@ -447,8 +447,8 @@ double JacobianBasis::getPrimJac3D(const fullMatrix<double> &nodesXYZ,
 // vectors to straight element for regularization. Evaluation points depend on
 // the given matrices for shape function gradients.
 void JacobianBasis::getJacobianGeneral(
-  int nSamplingPnts, const fullMatrix<double> &gSMatX,
-  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+  int nSamplingPnts, const fullMatrix<double> &dSMat_dX,
+  const fullMatrix<double> &dSMat_dY, const fullMatrix<double> &dSMat_dZ,
   const fullMatrix<double> &nodesXYZ, bool idealNorm, bool scaling,
   fullVector<double> &jacobian, const fullMatrix<double> *geomNormals) const
 {
@@ -472,7 +472,7 @@ void JacobianBasis::getJacobianGeneral(
       normals(0, 2) *= scale;
     }
     fullMatrix<double> dxyzdX(nSamplingPnts, 3);
-    gSMatX.mult(nodesXYZ, dxyzdX);
+    dSMat_dX.mult(nodesXYZ, dxyzdX);
     for(int i = 0; i < nSamplingPnts; i++) {
       const double &dxdX = dxyzdX(i, 0), &dydX = dxyzdX(i, 1),
                    &dzdX = dxyzdX(i, 2);
@@ -500,8 +500,8 @@ void JacobianBasis::getJacobianGeneral(
       normal(0, 2) *= scale;
     }
     fullMatrix<double> dxyzdX(nSamplingPnts, 3), dxyzdY(nSamplingPnts, 3);
-    gSMatX.mult(nodesXYZ, dxyzdX);
-    gSMatY.mult(nodesXYZ, dxyzdY);
+    dSMat_dX.mult(nodesXYZ, dxyzdX);
+    dSMat_dY.mult(nodesXYZ, dxyzdY);
     for(int i = 0; i < nSamplingPnts; i++) {
       const double &dxdX = dxyzdX(i, 0), &dydX = dxyzdX(i, 1),
                    &dzdX = dxyzdX(i, 2);
@@ -517,9 +517,9 @@ void JacobianBasis::getJacobianGeneral(
     fullMatrix<double> dum;
     fullMatrix<double> dxyzdX(nSamplingPnts, 3), dxyzdY(nSamplingPnts, 3),
       dxyzdZ(nSamplingPnts, 3);
-    gSMatX.mult(nodesXYZ, dxyzdX);
-    gSMatY.mult(nodesXYZ, dxyzdY);
-    gSMatZ.mult(nodesXYZ, dxyzdZ);
+    dSMat_dX.mult(nodesXYZ, dxyzdX);
+    dSMat_dY.mult(nodesXYZ, dxyzdY);
+    dSMat_dZ.mult(nodesXYZ, dxyzdZ);
     for(int i = 0; i < nSamplingPnts; i++) {
       const double &dxdX = dxyzdX(i, 0), &dydX = dxyzdX(i, 1),
                    &dzdX = dxyzdX(i, 2);
@@ -543,8 +543,8 @@ void JacobianBasis::getJacobianGeneral(
 // depend on the given matrices for shape function gradients.  TODO: Optimize
 // and test 1D & 2D
 void JacobianBasis::getJacobianGeneral(
-  int nSamplingPnts, const fullMatrix<double> &gSMatX,
-  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+  int nSamplingPnts, const fullMatrix<double> &dSMat_dX,
+  const fullMatrix<double> &dSMat_dY, const fullMatrix<double> &dSMat_dZ,
   const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
   const fullMatrix<double> &nodesZ, bool idealNorm, bool scaling,
   fullMatrix<double> &jacobian, const fullMatrix<double> *geomNormals) const
@@ -560,9 +560,9 @@ void JacobianBasis::getJacobianGeneral(
     fullMatrix<double> dxdX(nSamplingPnts, numEl);
     fullMatrix<double> dydX(nSamplingPnts, numEl);
     fullMatrix<double> dzdX(nSamplingPnts, numEl);
-    gSMatX.mult(nodesX, dxdX);
-    gSMatX.mult(nodesY, dydX);
-    gSMatX.mult(nodesZ, dzdX);
+    dSMat_dX.mult(nodesX, dxdX);
+    dSMat_dX.mult(nodesY, dydX);
+    dSMat_dX.mult(nodesZ, dzdX);
     for(int iEl = 0; iEl < numEl; iEl++) {
       fullMatrix<double> nodesXYZ(numPrimMapNodes, 3);
       for(int i = 0; i < numPrimMapNodes; i++) {
@@ -601,12 +601,12 @@ void JacobianBasis::getJacobianGeneral(
     fullMatrix<double> dxdY(nSamplingPnts, numEl);
     fullMatrix<double> dydY(nSamplingPnts, numEl);
     fullMatrix<double> dzdY(nSamplingPnts, numEl);
-    gSMatX.mult(nodesX, dxdX);
-    gSMatX.mult(nodesY, dydX);
-    gSMatX.mult(nodesZ, dzdX);
-    gSMatY.mult(nodesX, dxdY);
-    gSMatY.mult(nodesY, dydY);
-    gSMatY.mult(nodesZ, dzdY);
+    dSMat_dX.mult(nodesX, dxdX);
+    dSMat_dX.mult(nodesY, dydX);
+    dSMat_dX.mult(nodesZ, dzdX);
+    dSMat_dY.mult(nodesX, dxdY);
+    dSMat_dY.mult(nodesY, dydY);
+    dSMat_dY.mult(nodesZ, dzdY);
     for(int iEl = 0; iEl < numEl; iEl++) {
       fullMatrix<double> nodesXYZ(numPrimMapNodes, 3);
       for(int i = 0; i < numPrimMapNodes; i++) {
@@ -647,15 +647,15 @@ void JacobianBasis::getJacobianGeneral(
     fullMatrix<double> dxdZ(nSamplingPnts, numEl);
     fullMatrix<double> dydZ(nSamplingPnts, numEl);
     fullMatrix<double> dzdZ(nSamplingPnts, numEl);
-    gSMatX.mult(nodesX, dxdX);
-    gSMatX.mult(nodesY, dydX);
-    gSMatX.mult(nodesZ, dzdX);
-    gSMatY.mult(nodesX, dxdY);
-    gSMatY.mult(nodesY, dydY);
-    gSMatY.mult(nodesZ, dzdY);
-    gSMatZ.mult(nodesX, dxdZ);
-    gSMatZ.mult(nodesY, dydZ);
-    gSMatZ.mult(nodesZ, dzdZ);
+    dSMat_dX.mult(nodesX, dxdX);
+    dSMat_dX.mult(nodesY, dydX);
+    dSMat_dX.mult(nodesZ, dzdX);
+    dSMat_dY.mult(nodesX, dxdY);
+    dSMat_dY.mult(nodesY, dydY);
+    dSMat_dY.mult(nodesZ, dzdY);
+    dSMat_dZ.mult(nodesX, dxdZ);
+    dSMat_dZ.mult(nodesY, dydZ);
+    dSMat_dZ.mult(nodesZ, dzdZ);
     for(int iEl = 0; iEl < numEl; iEl++) {
       for(int i = 0; i < nSamplingPnts; i++)
         jacobian(i, iEl) = calcDet3D(dxdX(i, iEl), dxdY(i, iEl), dxdZ(i, iEl),
@@ -693,8 +693,8 @@ void JacobianBasis::getJacobianGeneral(
 // NB: (x, y, z) are the physical coordinates and (X, Y, Z) are the reference
 // coordinates
 void JacobianBasis::getSignedJacAndGradientsGeneral(
-  int nSamplingPnts, const fullMatrix<double> &gSMatX,
-  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+  int nSamplingPnts, const fullMatrix<double> &dSMat_dX,
+  const fullMatrix<double> &dSMat_dY, const fullMatrix<double> &dSMat_dZ,
   const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
   fullMatrix<double> &JDJ) const
 {
@@ -711,50 +711,50 @@ void JacobianBasis::getSignedJacAndGradientsGeneral(
   } break;
   case 1: {
     fullMatrix<double> dxyzdX(nSamplingPnts, 3);
-    gSMatX.mult(nodesXYZ, dxyzdX);
+    dSMat_dX.mult(nodesXYZ, dxyzdX);
     for(int i = 0; i < nSamplingPnts; i++) {
       calcJDJ1D(dxyzdX(i, 0), normals(0, 0), normals(1, 0),
                 dxyzdX(i, 1), normals(0, 1), normals(1, 1),
                 dxyzdX(i, 2), normals(0, 2), normals(1, 2),
-                i, numMapNodes, gSMatX, JDJ);
+                i, numMapNodes, dSMat_dX, JDJ);
     }
   } break;
   case 2: {
     fullMatrix<double> dxyzdX(nSamplingPnts, 3);
     fullMatrix<double> dxyzdY(nSamplingPnts, 3);
-    gSMatX.mult(nodesXYZ, dxyzdX);
-    gSMatY.mult(nodesXYZ, dxyzdY);
+    dSMat_dX.mult(nodesXYZ, dxyzdX);
+    dSMat_dY.mult(nodesXYZ, dxyzdY);
     for(int i = 0; i < nSamplingPnts; i++) {
       calcJDJ2D(dxyzdX(i, 0), dxyzdY(i, 0), normals(0, 0),
                 dxyzdX(i, 1), dxyzdY(i, 1), normals(0, 1),
                 dxyzdX(i, 2), dxyzdY(i, 2), normals(0, 2),
-                i, numMapNodes, gSMatX, gSMatY, JDJ);
+                i, numMapNodes, dSMat_dX, dSMat_dY, JDJ);
     }
   } break;
   case 3: {
     fullMatrix<double> dxyzdX(nSamplingPnts, 3);
     fullMatrix<double> dxyzdY(nSamplingPnts, 3);
     fullMatrix<double> dxyzdZ(nSamplingPnts, 3);
-    gSMatX.mult(nodesXYZ, dxyzdX);
-    gSMatY.mult(nodesXYZ, dxyzdY);
-    gSMatZ.mult(nodesXYZ, dxyzdZ);
+    dSMat_dX.mult(nodesXYZ, dxyzdX);
+    dSMat_dY.mult(nodesXYZ, dxyzdY);
+    dSMat_dZ.mult(nodesXYZ, dxyzdZ);
     for(int i = 0; i < nSamplingPnts; i++) {
       calcJDJ3D(dxyzdX(i, 0), dxyzdY(i, 0), dxyzdZ(i, 0),
                 dxyzdX(i, 1), dxyzdY(i, 1), dxyzdZ(i, 1),
                 dxyzdX(i, 2), dxyzdY(i, 2), dxyzdZ(i, 2),
-                i, numMapNodes, gSMatX, gSMatY, gSMatZ, JDJ);
+                i, numMapNodes, dSMat_dX, dSMat_dY, dSMat_dZ, JDJ);
     }
   } break;
   }
 }
 
 void JacobianBasis::getSignedIdealJacAndGradientsGeneral(
-  int nSamplingPnts, const fullMatrix<double> &gSMatX,
-  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+  int nSamplingPnts, const fullMatrix<double> &dSMat_dX,
+  const fullMatrix<double> &dSMat_dY, const fullMatrix<double> &dSMat_dZ,
   const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
   fullMatrix<double> &JDJ) const
 {
-  getSignedJacAndGradientsGeneral(nSamplingPnts, gSMatX, gSMatY, gSMatZ, nodesXYZ,
+  getSignedJacAndGradientsGeneral(nSamplingPnts, dSMat_dX, dSMat_dY, dSMat_dZ, nodesXYZ,
                                   normals, JDJ);
 }
 
