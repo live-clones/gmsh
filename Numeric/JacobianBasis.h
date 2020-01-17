@@ -78,10 +78,10 @@ public:
 
   // Get methods
   inline int getJacOrder() const { return _data.getSpaceOrder(); }
-  inline int getNumJacNodes() const { return numSamplingPnts; }
-  inline int getNumJacNodesFast() const { return numSamplingPntsFast; }
+  inline int getNumSamplingPnts() const { return numSamplingPnts; }
+  inline int getNumSamplingPntsFast() const { return numSamplingPntsFast; }
   inline int getNumMapNodes() const { return numMapNodes; }
-  inline int getNumPrimJacNodes() const { return numPrimSamplingPnts; }
+  inline int getNumPrimSamplingPnts() const { return numPrimSamplingPnts; }
   inline int getNumPrimMapNodes() const { return numPrimMapNodes; }
   inline FuncSpaceData getFuncSpaceData() const { return _data; }
 
