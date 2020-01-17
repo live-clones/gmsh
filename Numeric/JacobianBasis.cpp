@@ -181,10 +181,9 @@ GradientBasis::GradientBasis(int elementTag, FuncSpaceData fsdata)
                       dShapeIdealMat_dZ);
 }
 
-void GradientBasis::getIdealGradientsFromNodes(const fullMatrix<double> &nodesCoord,
-                                               fullMatrix<double> *dxyzdX,
-                                               fullMatrix<double> *dxyzdY,
-                                               fullMatrix<double> *dxyzdZ) const
+void GradientBasis::getIdealGradientsFromNodes(
+  const fullMatrix<double> &nodesCoord, fullMatrix<double> *dxyzdX,
+  fullMatrix<double> *dxyzdY, fullMatrix<double> *dxyzdZ) const
 {
   if(dxyzdX) dShapeIdealMat_dX.mult(nodesCoord, *dxyzdX);
   if(dxyzdY) dShapeIdealMat_dY.mult(nodesCoord, *dxyzdY);
@@ -754,8 +753,8 @@ void JacobianBasis::getSignedIdealJacAndGradientsGeneral(
   const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
   fullMatrix<double> &JDJ) const
 {
-  getSignedJacAndGradientsGeneral(nSamplingPnts, dSMat_dX, dSMat_dY, dSMat_dZ, nodesXYZ,
-                                  normals, JDJ);
+  getSignedJacAndGradientsGeneral(nSamplingPnts, dSMat_dX, dSMat_dY, dSMat_dZ,
+                                  nodesXYZ, normals, JDJ);
 }
 
 void JacobianBasis::getMetricMinAndGradients(

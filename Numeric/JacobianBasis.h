@@ -112,10 +112,10 @@ public:
                                             const fullMatrix<double> &normals,
                                             fullMatrix<double> &JDJ) const
   {
-    getSignedJacAndGradientsGeneral(numSamplingPnts, _gradBasis->dShapeIdealMat_dX,
-                                    _gradBasis->dShapeIdealMat_dY,
-                                    _gradBasis->dShapeIdealMat_dZ, nodesXYZ,
-                                    normals, JDJ);
+    getSignedJacAndGradientsGeneral(
+      numSamplingPnts, _gradBasis->dShapeIdealMat_dX,
+      _gradBasis->dShapeIdealMat_dY, _gradBasis->dShapeIdealMat_dZ, nodesXYZ,
+      normals, JDJ);
   }
   void getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
                                 const fullMatrix<double> &nodesXYZStraight,

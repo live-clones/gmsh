@@ -495,8 +495,8 @@ void CondNumBasis::getInvCondNumGeneral(int nCondNumNodes,
                                         fullVector<double> &invCond) const
 {
   fullMatrix<double> dumNormals;
-  getInvCondNumGeneral<false>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ, nodesXYZ,
-                              dumNormals, invCond);
+  getInvCondNumGeneral<false>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ,
+                              nodesXYZ, dumNormals, invCond);
 }
 
 void CondNumBasis::getSignedInvCondNumGeneral(
@@ -505,8 +505,8 @@ void CondNumBasis::getSignedInvCondNumGeneral(
   const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
   fullVector<double> &invCond) const
 {
-  getInvCondNumGeneral<true>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ, nodesXYZ,
-                             normals, invCond);
+  getInvCondNumGeneral<true>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ,
+                             nodesXYZ, normals, invCond);
 }
 
 // Calculate the inverse condition number in Frobenius norm and its gradients
@@ -583,8 +583,8 @@ inline void CondNumBasis::getInvCondNumAndGradientsGeneral(
       const double &dxdZ = dxyzdZ(i, 0), &dydZ = dxyzdZ(i, 1),
                    &dzdZ = dxyzdZ(i, 2);
       calcGradInvCondNum3D<sign>(dxdX, dxdY, dxdZ, dydX, dydY, dydZ, dzdX, dzdY,
-                                 dzdZ, i, _nMapNodes, dSMat_dX, dSMat_dY, dSMat_dZ,
-                                 IDI);
+                                 dzdZ, i, _nMapNodes, dSMat_dX, dSMat_dY,
+                                 dSMat_dZ, IDI);
     }
     break;
   }
@@ -597,8 +597,8 @@ void CondNumBasis::getInvCondNumAndGradientsGeneral(
   const fullMatrix<double> &nodesXYZ, fullMatrix<double> &IDI) const
 {
   fullMatrix<double> dumNormals;
-  getInvCondNumAndGradientsGeneral<false>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ,
-                                          nodesXYZ, dumNormals, IDI);
+  getInvCondNumAndGradientsGeneral<false>(nCondNumNodes, dSMat_dX, dSMat_dY,
+                                          dSMat_dZ, nodesXYZ, dumNormals, IDI);
 }
 
 void CondNumBasis::getSignedInvCondNumAndGradientsGeneral(
@@ -607,6 +607,6 @@ void CondNumBasis::getSignedInvCondNumAndGradientsGeneral(
   const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
   fullMatrix<double> &IDI) const
 {
-  getInvCondNumAndGradientsGeneral<true>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ,
-                                         nodesXYZ, normals, IDI);
+  getInvCondNumAndGradientsGeneral<true>(nCondNumNodes, dSMat_dX, dSMat_dY,
+                                         dSMat_dZ, nodesXYZ, normals, IDI);
 }

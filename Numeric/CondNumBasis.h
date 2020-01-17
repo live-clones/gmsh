@@ -73,13 +73,15 @@ public:
 
 private:
   template <bool sign>
-  void getInvCondNumGeneral(int nCondNumNodes, const fullMatrix<double> &dSMat_dX,
+  void getInvCondNumGeneral(int nCondNumNodes,
+                            const fullMatrix<double> &dSMat_dX,
                             const fullMatrix<double> &dSMat_dY,
                             const fullMatrix<double> &dSMat_dZ,
                             const fullMatrix<double> &nodesXYZ,
                             const fullMatrix<double> &normals,
                             fullVector<double> &invCond) const;
-  void getInvCondNumGeneral(int nCondNumNodes, const fullMatrix<double> &dSMat_dX,
+  void getInvCondNumGeneral(int nCondNumNodes,
+                            const fullMatrix<double> &dSMat_dX,
                             const fullMatrix<double> &dSMat_dY,
                             const fullMatrix<double> &dSMat_dZ,
                             const fullMatrix<double> &nodesXYZ,
