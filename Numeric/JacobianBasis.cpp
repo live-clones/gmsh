@@ -676,9 +676,22 @@ void JacobianBasis::getJacobianGeneral(
   }
 }
 
-// Calculate (signed) Jacobian and its gradients for one element, with normal
-// vectors to straight element for regularization. Evaluation points depend on
-// the given matrices for shape function gradients.
+// Calculate the (signed) Jacobian determinant (in short, J) and its partial
+// derivatives w.r.t. nodes coordinates for the element defined by
+// the given node positions, with given normal vectors to straight element
+// for regularization of 1D and 2D elements).
+// Sampling points depend on the input matrices of shape function partial
+// derivatives 'gSMat*', and only the 'nSamplingPnts' first of them
+// are computed.
+// The result is written in the matrix 'JDJ' which should be of size at
+// least "nSamplingPnts x (3 * numMapNodes + 1)".
+// For each sampling point, a row of 'JDJ' is filled with:
+// - the partial derivatives of J w.r.t. the x component of the nodes
+// - the partial derivatives of J w.r.t. the y component of the nodes
+// - the partial derivatives of J w.r.t. the z component of the nodes
+// - J
+// NB: (x, y, z) are the physical coordinates and (X, Y, Z) are the reference
+// coordinates
 void JacobianBasis::getSignedJacAndGradientsGeneral(
   int nSamplingPnts, const fullMatrix<double> &gSMatX,
   const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
@@ -697,49 +710,39 @@ void JacobianBasis::getSignedJacAndGradientsGeneral(
     }
   } break;
   case 1: {
-    fullMatrix<double> dxyzdX(nSamplingPnts, 3), dxyzdY(nSamplingPnts, 3);
+    fullMatrix<double> dxyzdX(nSamplingPnts, 3);
     gSMatX.mult(nodesXYZ, dxyzdX);
     for(int i = 0; i < nSamplingPnts; i++) {
-      const double &dxdX = dxyzdX(i, 0), &dydX = dxyzdX(i, 1),
-                   &dzdX = dxyzdX(i, 2);
-      const double &dxdY = normals(0, 0), &dydY = normals(0, 1),
-                   &dzdY = normals(0, 2);
-      const double &dxdZ = normals(1, 0), &dydZ = normals(1, 1),
-                   &dzdZ = normals(1, 2);
-      calcJDJ1D(dxdX, dxdY, dxdZ, dydX, dydY, dydZ, dzdX, dzdY, dzdZ, i,
-                numMapNodes, gSMatX, JDJ);
+      calcJDJ1D(dxyzdX(i, 0), normals(0, 0), normals(1, 0),
+                dxyzdX(i, 1), normals(0, 1), normals(1, 1),
+                dxyzdX(i, 2), normals(0, 2), normals(1, 2),
+                i, numMapNodes, gSMatX, JDJ);
     }
   } break;
   case 2: {
-    fullMatrix<double> dxyzdX(nSamplingPnts, 3), dxyzdY(nSamplingPnts, 3);
+    fullMatrix<double> dxyzdX(nSamplingPnts, 3);
+    fullMatrix<double> dxyzdY(nSamplingPnts, 3);
     gSMatX.mult(nodesXYZ, dxyzdX);
     gSMatY.mult(nodesXYZ, dxyzdY);
     for(int i = 0; i < nSamplingPnts; i++) {
-      const double &dxdX = dxyzdX(i, 0), &dydX = dxyzdX(i, 1),
-                   &dzdX = dxyzdX(i, 2);
-      const double &dxdY = dxyzdY(i, 0), &dydY = dxyzdY(i, 1),
-                   &dzdY = dxyzdY(i, 2);
-      const double &dxdZ = normals(0, 0), &dydZ = normals(0, 1),
-                   &dzdZ = normals(0, 2);
-      calcJDJ2D(dxdX, dxdY, dxdZ, dydX, dydY, dydZ, dzdX, dzdY, dzdZ, i,
-                numMapNodes, gSMatX, gSMatY, JDJ);
+      calcJDJ2D(dxyzdX(i, 0), dxyzdY(i, 0), normals(0, 0),
+                dxyzdX(i, 1), dxyzdY(i, 1), normals(0, 1),
+                dxyzdX(i, 2), dxyzdY(i, 2), normals(0, 2),
+                i, numMapNodes, gSMatX, gSMatY, JDJ);
     }
   } break;
   case 3: {
-    fullMatrix<double> dxyzdX(nSamplingPnts, 3), dxyzdY(nSamplingPnts, 3),
-      dxyzdZ(nSamplingPnts, 3);
+    fullMatrix<double> dxyzdX(nSamplingPnts, 3);
+    fullMatrix<double> dxyzdY(nSamplingPnts, 3);
+    fullMatrix<double> dxyzdZ(nSamplingPnts, 3);
     gSMatX.mult(nodesXYZ, dxyzdX);
     gSMatY.mult(nodesXYZ, dxyzdY);
     gSMatZ.mult(nodesXYZ, dxyzdZ);
     for(int i = 0; i < nSamplingPnts; i++) {
-      const double &dxdX = dxyzdX(i, 0), &dydX = dxyzdX(i, 1),
-                   &dzdX = dxyzdX(i, 2);
-      const double &dxdY = dxyzdY(i, 0), &dydY = dxyzdY(i, 1),
-                   &dzdY = dxyzdY(i, 2);
-      const double &dxdZ = dxyzdZ(i, 0), &dydZ = dxyzdZ(i, 1),
-                   &dzdZ = dxyzdZ(i, 2);
-      calcJDJ3D(dxdX, dxdY, dxdZ, dydX, dydY, dydZ, dzdX, dzdY, dzdZ, i,
-                numMapNodes, gSMatX, gSMatY, gSMatZ, JDJ);
+      calcJDJ3D(dxyzdX(i, 0), dxyzdY(i, 0), dxyzdZ(i, 0),
+                dxyzdX(i, 1), dxyzdY(i, 1), dxyzdZ(i, 1),
+                dxyzdX(i, 2), dxyzdY(i, 2), dxyzdZ(i, 2),
+                i, numMapNodes, gSMatX, gSMatY, gSMatZ, JDJ);
     }
   } break;
   }
