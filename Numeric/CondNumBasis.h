@@ -17,8 +17,7 @@ private:
 
   const int _tag, _dim, _condNumOrder;
 
-  fullVector<double> primGradShapeBarycenterX, primGradShapeBarycenterY,
-    primGradShapeBarycenterZ;
+  fullVector<double> dPrimBaryShape_dX, dPrimBaryShape_dY, dPrimBaryShape_dZ;
 
   int _nCondNumNodes;
   int _nMapNodes, _nPrimMapNodes;

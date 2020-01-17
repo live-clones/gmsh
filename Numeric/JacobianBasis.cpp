@@ -291,20 +291,20 @@ JacobianBasis::JacobianBasis(int elementTag, FuncSpaceData data)
   double(*barDPsi)[3] = new double[numPrimMapNodes][3];
   primMapBasis->df(xBar, yBar, zBar, barDPsi);
 
-  primGradShapeBaryX.resize(numPrimMapNodes);
-  primGradShapeBaryY.resize(numPrimMapNodes);
-  primGradShapeBaryZ.resize(numPrimMapNodes);
+  dPrimBaryShape_dX.resize(numPrimMapNodes);
+  dPrimBaryShape_dY.resize(numPrimMapNodes);
+  dPrimBaryShape_dZ.resize(numPrimMapNodes);
   for(int j = 0; j < numPrimMapNodes; j++) {
-    primGradShapeBaryX(j) = barDPsi[j][0];
-    primGradShapeBaryY(j) = barDPsi[j][1];
-    primGradShapeBaryZ(j) = barDPsi[j][2];
+    dPrimBaryShape_dX(j) = barDPsi[j][0];
+    dPrimBaryShape_dY(j) = barDPsi[j][1];
+    dPrimBaryShape_dZ(j) = barDPsi[j][2];
   }
 
-  primIdealGradShapeBaryX = primGradShapeBaryX;
-  primIdealGradShapeBaryY = primGradShapeBaryY;
-  primIdealGradShapeBaryZ = primGradShapeBaryZ;
+  dPrimBaryIdealShape_dX = dPrimBaryShape_dX;
+  dPrimBaryIdealShape_dY = dPrimBaryShape_dY;
+  dPrimBaryIdealShape_dZ = dPrimBaryShape_dZ;
   _gradBasis->mapFromIdealElement(
-    primIdealGradShapeBaryX, primIdealGradShapeBaryY, primIdealGradShapeBaryZ);
+    dPrimBaryIdealShape_dX, dPrimBaryIdealShape_dY, dPrimBaryIdealShape_dZ);
 
   delete[] barDPsi;
 
@@ -323,14 +323,14 @@ JacobianBasis::JacobianBasis(int elementTag, FuncSpaceData data)
   mapBasis->df(lagPointsFast, allDPsiFast);
   numMapNodes = mapBasis->getNumShapeFunctions();
 
-  gradShapeMatXFast.resize(numSamplingPntsFast, numMapNodes);
-  gradShapeMatYFast.resize(numSamplingPntsFast, numMapNodes);
-  gradShapeMatZFast.resize(numSamplingPntsFast, numMapNodes);
+  dFastShapeMat_dX.resize(numSamplingPntsFast, numMapNodes);
+  dFastShapeMat_dY.resize(numSamplingPntsFast, numMapNodes);
+  dFastShapeMat_dZ.resize(numSamplingPntsFast, numMapNodes);
   for(int i = 0; i < numSamplingPntsFast; i++) {
     for(int j = 0; j < numMapNodes; j++) {
-      gradShapeMatXFast(i, j) = allDPsiFast(3 * i + 0, j);
-      gradShapeMatYFast(i, j) = allDPsiFast(3 * i + 1, j);
-      gradShapeMatZFast(i, j) = allDPsiFast(3 * i + 2, j);
+      dFastShapeMat_dX(i, j) = allDPsiFast(3 * i + 0, j);
+      dFastShapeMat_dY(i, j) = allDPsiFast(3 * i + 1, j);
+      dFastShapeMat_dZ(i, j) = allDPsiFast(3 * i + 2, j);
     }
   }
 }
@@ -342,9 +342,9 @@ double JacobianBasis::getPrimNormals1D(const fullMatrix<double> &nodesXYZ,
 {
   fullVector<double> dxyzdXbar(3);
   for(int j = 0; j < numPrimMapNodes; j++) {
-    dxyzdXbar(0) += primGradShapeBaryX(j) * nodesXYZ(j, 0);
-    dxyzdXbar(1) += primGradShapeBaryX(j) * nodesXYZ(j, 1);
-    dxyzdXbar(2) += primGradShapeBaryX(j) * nodesXYZ(j, 2);
+    dxyzdXbar(0) += dPrimBaryShape_dX(j) * nodesXYZ(j, 0);
+    dxyzdXbar(1) += dPrimBaryShape_dX(j) * nodesXYZ(j, 1);
+    dxyzdXbar(2) += dPrimBaryShape_dX(j) * nodesXYZ(j, 2);
   }
 
   if((fabs(dxyzdXbar(0)) >= fabs(dxyzdXbar(1)) &&
@@ -388,9 +388,9 @@ double JacobianBasis::getPrimNormal2D(const fullMatrix<double> &nodesXYZ,
                                       bool ideal) const
 {
   const fullVector<double> &gSX =
-    ideal ? primIdealGradShapeBaryX : primGradShapeBaryX;
+    ideal ? dPrimBaryIdealShape_dX : dPrimBaryShape_dX;
   const fullVector<double> &gSY =
-    ideal ? primIdealGradShapeBaryY : primGradShapeBaryY;
+    ideal ? dPrimBaryIdealShape_dY : dPrimBaryShape_dY;
   fullMatrix<double> dxyzdX(1, 3), dxyzdY(1, 3);
   for(int j = 0; j < numPrimMapNodes; j++) {
     dxyzdX(0, 0) += gSX(j) * nodesXYZ(j, 0);
@@ -420,11 +420,11 @@ double JacobianBasis::getPrimJac3D(const fullMatrix<double> &nodesXYZ,
                                    bool ideal) const
 {
   const fullVector<double> &gSX =
-    ideal ? primIdealGradShapeBaryX : primGradShapeBaryX;
+    ideal ? dPrimBaryIdealShape_dX : dPrimBaryShape_dX;
   const fullVector<double> &gSY =
-    ideal ? primIdealGradShapeBaryY : primGradShapeBaryY;
+    ideal ? dPrimBaryIdealShape_dY : dPrimBaryShape_dY;
   const fullVector<double> &gSZ =
-    ideal ? primIdealGradShapeBaryZ : primGradShapeBaryZ;
+    ideal ? dPrimBaryIdealShape_dZ : dPrimBaryShape_dZ;
   fullMatrix<double> dxyzdX(1, 3), dxyzdY(1, 3), dxyzdZ(1, 3);
   for(int j = 0; j < numPrimMapNodes; j++) {
     dxyzdX(0, 0) += gSX(j) * nodesXYZ(j, 0);
@@ -681,7 +681,7 @@ void JacobianBasis::getJacobianGeneral(
 // the given node positions, with given normal vectors to straight element
 // for regularization of 1D and 2D elements).
 // Sampling points depend on the input matrices of shape function partial
-// derivatives 'gSMat*', and only the 'nSamplingPnts' first of them
+// derivatives 'dSMat_d*', and only the 'nSamplingPnts' first of them
 // are computed.
 // The result is written in the matrix 'JDJ' which should be of size at
 // least "nSamplingPnts x (3 * numMapNodes + 1)".

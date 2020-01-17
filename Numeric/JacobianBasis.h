@@ -63,10 +63,10 @@ private:
   const int _elementTag;
   const FuncSpaceData _data;
   const int _dim;
-  fullMatrix<double> gradShapeMatXFast, gradShapeMatYFast, gradShapeMatZFast;
-  fullVector<double> primGradShapeBaryX, primGradShapeBaryY, primGradShapeBaryZ;
-  fullVector<double> primIdealGradShapeBaryX, primIdealGradShapeBaryY;
-  fullVector<double> primIdealGradShapeBaryZ;
+  fullMatrix<double> dFastShapeMat_dX, dFastShapeMat_dY, dFastShapeMat_dZ;
+  fullVector<double> dPrimBaryShape_dX, dPrimBaryShape_dY, dPrimBaryShape_dZ;
+  fullVector<double> dPrimBaryIdealShape_dX, dPrimBaryIdealShape_dY;
+  fullVector<double> dPrimBaryIdealShape_dZ;
   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
   fullMatrix<double> matrixPrimJac2Jac;
   int numSamplingPnts, numPrimSamplingPnts;
@@ -104,8 +104,8 @@ public:
                                            const fullMatrix<double> &normals,
                                            fullMatrix<double> &JDJ) const
   {
-    getSignedJacAndGradientsGeneral(numSamplingPntsFast, gradShapeMatXFast,
-                                    gradShapeMatYFast, gradShapeMatZFast,
+    getSignedJacAndGradientsGeneral(numSamplingPntsFast, dFastShapeMat_dX,
+                                    dFastShapeMat_dY, dFastShapeMat_dZ,
                                     nodesXYZ, normals, JDJ);
   }
   inline void getSignedIdealJacAndGradients(const fullMatrix<double> &nodesXYZ,
@@ -180,8 +180,8 @@ public:
                         fullVector<double> &jacobian,
                         const fullMatrix<double> *normals = NULL) const
   {
-    getJacobianGeneral(numSamplingPntsFast, gradShapeMatXFast, gradShapeMatYFast,
-                       gradShapeMatZFast, nodesXYZ, false, false, jacobian,
+    getJacobianGeneral(numSamplingPntsFast, dFastShapeMat_dX, dFastShapeMat_dY,
+                       dFastShapeMat_dZ, nodesXYZ, false, false, jacobian,
                        normals);
   }
   inline void
@@ -189,8 +189,8 @@ public:
                         fullVector<double> &jacobian,
                         const fullMatrix<double> *normals = NULL) const
   {
-    getJacobianGeneral(numSamplingPntsFast, gradShapeMatXFast, gradShapeMatYFast,
-                       gradShapeMatZFast, nodesXYZ, false, true, jacobian,
+    getJacobianGeneral(numSamplingPntsFast, dFastShapeMat_dX, dFastShapeMat_dY,
+                       dFastShapeMat_dZ, nodesXYZ, false, true, jacobian,
                        normals);
   }
 

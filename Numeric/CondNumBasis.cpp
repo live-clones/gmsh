@@ -386,13 +386,13 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder)
   primMapBasis->df(xBar, yBar, zBar, barDPsi);
 
   // TODO: Make primGradShape from ideal element
-  primGradShapeBarycenterX.resize(_nPrimMapNodes);
-  primGradShapeBarycenterY.resize(_nPrimMapNodes);
-  primGradShapeBarycenterZ.resize(_nPrimMapNodes);
+  dPrimBaryShape_dX.resize(_nPrimMapNodes);
+  dPrimBaryShape_dY.resize(_nPrimMapNodes);
+  dPrimBaryShape_dZ.resize(_nPrimMapNodes);
   for(int j = 0; j < _nPrimMapNodes; j++) {
-    primGradShapeBarycenterX(j) = barDPsi[j][0];
-    primGradShapeBarycenterY(j) = barDPsi[j][1];
-    primGradShapeBarycenterZ(j) = barDPsi[j][2];
+    dPrimBaryShape_dX(j) = barDPsi[j][0];
+    dPrimBaryShape_dY(j) = barDPsi[j][1];
+    dPrimBaryShape_dZ(j) = barDPsi[j][2];
   }
 
   delete[] barDPsi;
