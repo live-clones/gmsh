@@ -133,7 +133,7 @@ namespace {
       // read element interpolation transformations
       ZoneSolutionTransfo &cgns2MshLag =
         allSolutionTransfo[std::string(famName)];
-      cgns2MshLag.resize(NofValidElementTypes);
+      cgns2MshLag.resize(MSH_MAX_NUM);
       for(int iInterp = 1; iInterp <= nbInterp; iInterp++) {
         int err = readSolutionInterpolation(fileIndex, baseIndex, iFam, iInterp,
                                             cgns2MshLag);
