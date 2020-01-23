@@ -543,7 +543,7 @@ void meshGEdge::operator()(GEdge *ge)
 
   ge->model()->setCurrentMeshEntity(ge);
 
-  if(ge->degenerate(1) {
+  if (ge->degenerate(1)) {
     ge->meshStatistics.status = GEdge::DONE;
     return;
   }
