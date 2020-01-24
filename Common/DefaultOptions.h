@@ -1061,7 +1061,7 @@ StringXNumber MeshOptions_Number[] = {
     "entity, 3: by partition)" },
   { F|O, "CompoundClassify" , opt_mesh_compound_classify , 1. ,
     "How are surface mesh elements classified on compounds? (0: on the new discrete "
-    "entity, 1: on the original geometrical entity - incompatible with e.g. high-order "
+    "surface, 1: on the original geometrical surfaces - incompatible with e.g. high-order "
     "meshing)" },
   { F|O, "CompoundCharacteristicLengthFactor" , opt_mesh_compound_lc_factor , 0.5 ,
     "Mesh size factor applied to compound parts" },
