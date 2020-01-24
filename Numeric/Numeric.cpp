@@ -1390,19 +1390,19 @@ int intersection_segments(const SPoint3 &p1, const SPoint3 &p2,
   else
     sys2x2(C, c, x);
   if(x[0] >= 0.0 && x[0] <= 1. && x[1] >= 0.0 && x[1] <= 1.) {
-    SPoint3 x1(p1.x() * (1. - x[0]) + p2.x() * x[0],
-               p1.y() * (1. - x[0]) + p2.y() * x[0],
-               p1.z() * (1. - x[0]) + p2.z() * x[0]);
-    SPoint3 x2(q1.x() * (1. - x[0]) + q2.x() * x[0],
-               q1.y() * (1. - x[0]) + q2.y() * x[0],
-               q1.z() * (1. - x[0]) + q2.z() * x[0]);
+        SPoint3 x1(p1.x() * (1. - x[0]) + p2.x() * x[0],
+                   p1.y() * (1. - x[0]) + p2.y() * x[0],
+                   p1.z() * (1. - x[0]) + p2.z() * x[0]);
+        SPoint3 x2(q1.x() * (1. - x[1]) + q2.x() * x[1],
+                   q1.y() * (1. - x[1]) + q2.y() * x[1],
+                   q1.z() * (1. - x[1]) + q2.z() * x[1]);
 
-    SVector3 d(x2, x1);
-    double nd = norm(d);
-    if(nd > EPS) {
-      x[0] = x[1] = 1.e22;
-      return false;
-    }
+        SVector3 d(x2, x1);
+        double nd = norm(d);
+        if(nd > EPS) {
+          x[0] = x[1] = 1.e22;
+          return false;
+        }
     return true;
   }
   return false;

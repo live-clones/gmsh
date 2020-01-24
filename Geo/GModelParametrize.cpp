@@ -44,7 +44,8 @@ extern "C" {
 
 static GEdge *
 getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
-             std::vector<std::pair<GEdge *, std::vector<GFace *> > > &newEdges)
+             std::vector<std::pair<GEdge *,
+	     std::vector<GFace *> > > &newEdges, size_t &MAX1)
 {
   if(gfs.size() == 2 && gfs[0] == gfs[1]) return NULL;
   for(size_t i = 0; i < newEdges.size(); i++) {
@@ -61,7 +62,7 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
   }
 
   discreteEdge *ge =
-    new discreteEdge(gm, gm->getMaxElementaryNumber(1) + 1, 0, 0);
+    new discreteEdge(gm, (MAX1++) + 1, 0, 0);
   newEdges.push_back(std::make_pair(ge, gfs));
   return ge;
 }
@@ -106,6 +107,10 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 {
 #if defined(HAVE_MESH)
 
+  size_t MAX0 = gm->getMaxElementaryNumber(0);
+  size_t MAX1 = gm->getMaxElementaryNumber(1);
+  size_t MAX2 = gm->getMaxElementaryNumber(2);
+  
   // check if mesh is high-order
   bool ho = false;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++){
@@ -183,7 +188,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       st.push(*(touched.begin()));
       touched.erase(touched.begin());
       discreteFace *gf =
-        new discreteFace(gm, gm->getMaxElementaryNumber(2) + 1);
+        new discreteFace(gm, (MAX2++) + 1);
       while(!st.empty()) {
         MTriangle *t = st.top();
         gf->triangles.push_back(t);
@@ -247,7 +252,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
         std::vector<GFace *> faces;
         for(size_t i = 0; i < it->second.size(); ++i)
           faces.push_back(reverse[it->second[i]]);
-        GEdge *ge = getModelEdge(gm, faces, newEdges);
+        GEdge *ge = getModelEdge(gm, faces, newEdges, MAX1);
         if(ge) ge->lines.push_back(*itl);
       }
     }
@@ -308,8 +313,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 
       std::map<MVertex *, GVertex *>::iterator itMV = modelVertices.find(vB);
       if(itMV == modelVertices.end()) {
-        GVertex *newGv = new discreteVertex(
-          gm, gm->getMaxElementaryNumber(0) + 1, vB->x(), vB->y(), vB->z());
+        GVertex *newGv = new discreteVertex(gm, (MAX0++) + 1, vB->x(), vB->y(), vB->z());
         newGv->mesh_vertices.push_back(vB);
         vB->setEntity(newGv);
         newGv->points.push_back(new MPoint(vB));
@@ -318,8 +322,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       }
       itMV = modelVertices.find(vE);
       if(itMV == modelVertices.end()) {
-        GVertex *newGv = new discreteVertex(
-          gm, gm->getMaxElementaryNumber(0) + 1, vE->x(), vE->y(), vE->z());
+        GVertex *newGv = new discreteVertex(gm, (MAX0++) + 1, vE->x(), vE->y(), vE->z());
         newGv->mesh_vertices.push_back(vE);
         newGv->points.push_back(new MPoint(vE));
         vE->setEntity(newGv);
@@ -327,7 +330,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
         modelVertices[vE] = newGv;
       }
 
-      GEdge *newGe = new discreteEdge(gm, gm->getMaxElementaryNumber(1) + 1,
+      GEdge *newGe = new discreteEdge(gm, (MAX1++) +1,
                                       modelVertices[vB], modelVertices[vE]);
       newGe->lines.insert(newGe->lines.end(),
                           segmentsForThisDiscreteEdge.begin(),
@@ -391,6 +394,9 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
                    bool forParametrization, double curveAngleThreshold)
 {
 #if defined(HAVE_MESH)
+
+  size_t MAX1 = gm->getMaxElementaryNumber(1);
+
   Msg::StatusBar(true, "Classifying surfaces (angle: %g)...",
                  angleThreshold * 180. / M_PI);
   double t1 = Cpu();
@@ -405,8 +411,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
                     (*it)->quadrangles.end());
   }
 
-  discreteEdge *edge =
-    new discreteEdge(gm, gm->getMaxElementaryNumber(1) + 1, 0, 0);
+  discreteEdge *edge = new discreteEdge(gm, (MAX1++) + 1, 0, 0);
   gm->add(edge);
 
   e2t_cont adj;

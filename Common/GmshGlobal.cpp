@@ -25,6 +25,8 @@ typedef unsigned long intptr_t;
 #include "Context.h"
 #include "robustPredicates.h"
 #include "BasisFactory.h"
+#include "gmshCrossFields.h"
+
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -342,6 +344,14 @@ int GmshBatch()
       GModel::current()->classifySurfaces
         (CTX::instance()->batchSomeValue * M_PI / 180., true, true, M_PI);
       GModel::current()->createGeometryOfDiscreteEntities();
+    }
+    else if(CTX::instance()->batch == 69){
+      std::vector<int> tags;
+      computeCrossField (GModel::current(), tags);
+      GoodbyeMessage();
+      CTX::instance()->batch =0;
+      // still a bug in allocation somewhere
+      exit(0);
     }
 #endif
   }

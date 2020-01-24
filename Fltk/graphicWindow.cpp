@@ -4300,7 +4300,7 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_inspect_cb} ,
   {"0Modules/Mesh/Refine by splitting",
    (Fl_Callback *)mesh_refine_cb} ,
-  {"0Modules/Mesh/Compute Cross Field",
+  {"0Modules/Mesh/Compute Quad Layout",
    (Fl_Callback *)mesh_cross_compute_cb} ,
 #if defined(HAVE_METIS)
   {"0Modules/Mesh/Partition",

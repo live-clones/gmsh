@@ -483,6 +483,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
+      else if(!strcmp(argv[i] + 1, "quadlayout")) {
+        CTX::instance()->batch = 69;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;
         if(argv[i]){
