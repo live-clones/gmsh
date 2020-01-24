@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,6 +12,8 @@
 #include "linearSystem.h"
 
 #if defined(HAVE_GMM)
+
+#undef BB // can be defined by FlGui.h, and clashes with gmm arg name
 #include <gmm.h>
 
 // Consider using linearSystemCSRGmm instead: assembly is much faster

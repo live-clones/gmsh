@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1605,14 +1605,14 @@ static PART_ENTITY *createPartitionEntity(
 static partitionFace *assignPartitionBoundary(
   GModel *const model, MFace &me, MElement *reference,
   const std::vector<unsigned int> &partitions,
-  std::multimap<partitionFace *, GEntity *, Less_partitionFace> &pfaces,
+  std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan> &pfaces,
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionFace *newEntity = 0;
   partitionFace pf(model, partitions);
   std::pair<
-    std::multimap<partitionFace *, GEntity *, Less_partitionFace>::iterator,
-    std::multimap<partitionFace *, GEntity *, Less_partitionFace>::iterator>
+    std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan>::iterator,
+    std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan>::iterator>
     ret = pfaces.equal_range(&pf);
 
   partitionFace *ppf =
@@ -1673,14 +1673,14 @@ static partitionFace *assignPartitionBoundary(
 static partitionEdge *assignPartitionBoundary(
   GModel *const model, MEdge &me, MElement *reference,
   const std::vector<unsigned int> &partitions,
-  std::multimap<partitionEdge *, GEntity *, Less_partitionEdge> &pedges,
+  std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan> &pedges,
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionEdge *newEntity = 0;
   partitionEdge pe(model, partitions);
   std::pair<
-    std::multimap<partitionEdge *, GEntity *, Less_partitionEdge>::iterator,
-    std::multimap<partitionEdge *, GEntity *, Less_partitionEdge>::iterator>
+    std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan>::iterator,
+    std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan>::iterator>
     ret = pedges.equal_range(&pe);
 
   partitionEdge *ppe =
@@ -1719,14 +1719,14 @@ static partitionEdge *assignPartitionBoundary(
 static partitionVertex *assignPartitionBoundary(
   GModel *const model, MVertex *ve, MElement *reference,
   const std::vector<unsigned int> &partitions,
-  std::multimap<partitionVertex *, GEntity *, Less_partitionVertex> &pvertices,
+  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan> &pvertices,
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionVertex *newEntity = 0;
   partitionVertex pv(model, partitions);
   std::pair<
-    std::multimap<partitionVertex *, GEntity *, Less_partitionVertex>::iterator,
-    std::multimap<partitionVertex *, GEntity *, Less_partitionVertex>::iterator>
+    std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>::iterator,
+    std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>::iterator>
     ret = pvertices.equal_range(&pv);
 
   partitionVertex *ppv =
@@ -1897,9 +1897,9 @@ static void CreatePartitionTopology(
   fillElementToEntity(model, elementToEntity, -1);
   assignNewEntityBRep(meshGraph, elementToEntity);
 
-  std::multimap<partitionFace *, GEntity *, Less_partitionFace> pfaces;
-  std::multimap<partitionEdge *, GEntity *, Less_partitionEdge> pedges;
-  std::multimap<partitionVertex *, GEntity *, Less_partitionVertex> pvertices;
+  std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan> pfaces;
+  std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan> pedges;
+  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan> pvertices;
 
   hashmapface faceToElement;
   hashmapedge edgeToElement;
@@ -2263,8 +2263,8 @@ static void addPhysical(GModel *const model, GEntity *entity,
   }
 }
 
-// AssignPhysicalName
-static void AssignPhysicalName(GModel *model)
+// Assign physical group information
+static void AssignPhysicals(GModel *model)
 {
   hashmap<std::string, int> nameToNumber;
   std::vector<GModel::piter> iterators;
@@ -2395,12 +2395,11 @@ int PartitionMesh(GModel *const model)
       graph.getBoundaryElements();
     CreatePartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
-    AssignPhysicalName(model);
-
     double t3 = Cpu();
     Msg::StatusBar(true, "Done creating partition topology (%g s)", t3 - t2);
   }
 
+  AssignPhysicals(model);
   AssignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
@@ -2639,10 +2638,10 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
       graph.getBoundaryElements();
     CreatePartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
-    AssignPhysicalName(model);
     Msg::StatusBar(true, "Done creating partition topology");
   }
 
+  AssignPhysicals(model);
   AssignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {

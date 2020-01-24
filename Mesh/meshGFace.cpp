@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -271,6 +271,10 @@ public:
     std::vector<GEdge *> const &edges = gf->edges();
     std::vector<GEdge *>::const_iterator ite = edges.begin();
     while(ite != edges.end()) {
+      if((*ite)->meshAttributes.method == MESH_TRANSFINITE) {
+        Msg::Warning("Full-quad recombination only compatible with "
+                     "transfinite meshes if those are performed first");
+      }
       if(!(*ite)->isMeshDegenerated()) {
         std::vector<MLine *> temp;
         (*ite)->mesh_vertices.clear();
@@ -3061,18 +3065,18 @@ void orientMeshGFace::operator()(GFace *gf)
 {
   if(!gf->getNumMeshElements()) return;
 
-  // Warning: it's not clear if periodic meshes should be orientated according
-  // to the orientation of the underlying CAD surface. Since we don't reorient
-  // periodic curve meshes, let's also not reorient surface meshes for now. This
-  // has implications for high-order periodic meshes: see comment in
-  // FixPeriodicMesh().
-  if(gf->getMeshMaster() != gf) return;
-
   gf->model()->setCurrentMeshEntity(gf);
 
-  if(gf->geomType() == GEntity::DiscreteSurface ||
-     gf->geomType() == GEntity::BoundaryLayerSurface) {
-    // don't do anything
+  if(gf->getMeshMaster() != gf) {
+    // It's not clear if periodic meshes should be orientated according to the
+    // orientation of the underlying CAD surface. Since we don't reorient
+    // periodic curve meshes, let's also not reorient surface meshes for
+    // now. This has implications for high-order periodic meshes: see comment in
+    // FixPeriodicMesh().
+  }
+  else if(gf->geomType() == GEntity::DiscreteSurface ||
+          gf->geomType() == GEntity::BoundaryLayerSurface) {
+    // Don't do anything
   }
   else {
     // In old versions we checked the orientation by comparing the orientation

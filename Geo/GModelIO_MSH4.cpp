@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -709,7 +709,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
                  std::size_t &totalNumElements, std::size_t &maxElementNum,
                  bool swap, double version)
 {
-  char str[1024];
+  char str[10000]; // 1000 nodes for order 9 hex, 10 digits each
   std::size_t numBlock = 0, minTag = 0, maxTag = 0;
   totalNumElements = 0;
   maxElementNum = 0;

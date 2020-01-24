@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,6 +9,8 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "MVertex.h"
+#include "MElement.h"
 #include "SPoint3.h"
 
 class PViewData;
@@ -132,6 +134,9 @@ public:
   static bool readPOS(const std::string &fileName, int fileIndex = -1);
   static bool readMSH(const std::string &fileName, int fileIndex = -1,
                       int partitionToRead = -1);
+  static bool readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
+                       const std::vector<std::vector<MElement *> > &eltPerZone,
+                       const std::string &fileName);
   static bool readMED(const std::string &fileName, int fileIndex = -1);
   static bool readPCH(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);

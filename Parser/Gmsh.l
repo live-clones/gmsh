@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -253,9 +253,11 @@ MPI_Rank                return tMPI_Rank;
 MPI_Size                return tMPI_Size;
 Macro                   return tMacro;
 Mass                    return tMass;
+Max                     return tMax;
 Memory                  return tMemory;
 MeshAlgorithm           return tMeshAlgorithm;
 MeshSizeFromBoundary    return tMeshSizeFromBoundary;
+Min                     return tMin;
 Modulo                  return tModulo;
 
 N2S                     return tNameToString;

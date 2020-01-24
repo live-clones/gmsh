@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -2654,6 +2654,11 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
     Msg::Error("%s produces empty shape", mode ? "Chamfer" : "Fillet");
     return false;
   }
+
+  // TODO: if removeVolume and CTX::instance()->geom.occBooleanPreserveNumbering
+  // are set we could use Generated(), Modified() and IsDeleted() in a similar
+  // way as what we do for boolean operation, in order to try to preserve tags
+
   _multiBind(result, -1, outDimTags, true, true);
   return true;
 }

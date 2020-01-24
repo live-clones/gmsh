@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -3409,7 +3409,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       view.butt[26] = new Fl_Check_Button(L + width - (int)(0.85 * IW) - 2 * WB,
                                           2 * WB + 4 * BH, (int)(0.85 * IW), BH,
-                                          "Stipple in 2D");
+                                          "Stipple");
       view.butt[26]->type(FL_TOGGLE_BUTTON);
       view.butt[26]->callback(view_options_ok_cb);
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -680,7 +680,9 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
     Msg::Debug("Cannot interpolate discrete curve");
     break;
 
-  default: Msg::Error("Unknown curve type %d in interpolation", c->Typ); break;
+  default:
+    Msg::Error("Unknown curve type %d in interpolation", c->Typ);
+    break;
   }
   V.u = u;
   return V;
@@ -829,8 +831,18 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     return Vertex(0., 0., 0.);
   }
 
-  for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++)
+  for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++) {
     List_Read(s->Generatrices, i, &C[i]);
+    if(C[i]->Typ == MSH_SEGM_BND_LAYER || C[i]->Typ == MSH_SEGM_DISCRETE) {
+      Msg::Error("Cannot interpolate ruled surface with discrete bounding curves");
+      return Vertex(0., 0., 0.);
+    }
+    if(!C[i]->beg || !C[i]->end) {
+      Msg::Error("Cannot interpolate ruled surface if bounding curves don't "
+                 "have end points");
+      return Vertex(0., 0., 0.);
+    }
+  }
 
   Vertex *O = 0;
   bool isSphere = true;

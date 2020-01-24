@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -275,7 +275,8 @@ StringXString PostProcessingOptions_String[] = {
 
 StringXString ViewOptions_String[] = {
   { F|O, "Attributes" , opt_view_attributes , "" ,
-    "Optional string attributes" },
+    "Optional string attached to the view. If the string contains 'AlwaysVisible', "
+    "the view will not be hidden when new ones are merged."},
   { F|O, "AxesFormatX" , opt_view_axes_format0 , "%.3g" ,
     "Number format for X-axis (in standard C form)" },
   { F|O, "AxesFormatY" , opt_view_axes_format1 , "%.3g" ,
@@ -1029,10 +1030,16 @@ StringXNumber MeshOptions_Number[] = {
     "Number of points (per Pi radians) for 2D boundary layer fans" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
-   "Enable the creation of high-order mesh from CGNS structured meshes"
-   "(1, 2, 4, 8, ...)" },
+   "Order of the mesh to be created by coarsening CGNS structured zones (1 to "
+   "4)" },
+  { F|O, "CgnsImportIgnoreBC" , opt_mesh_cgns_import_ignore_bc , 0. ,
+   "Ignore information in ZoneBC structures when reading a CGNS file" },
+  { F|O, "CgnsImportIgnoreSolution" , opt_mesh_cgns_import_ignore_solution , 0. ,
+   "Ignore solution when reading a CGNS file" },
   { F|O, "CgnsConstructTopology" , opt_mesh_cgns_construct_topology , 0. ,
    "Reconstruct the model topology (BREP) after reading a CGNS file" },
+  { F|O, "CgnsExportCPEX0045" , opt_mesh_cgns_export_cpex0045 , 0. ,
+   "Use the CPEX0045 convention when exporting a high-order mesh to CGNS" },
   { F|O, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
     "Extend computation of mesh element sizes from the boundaries into the interior "
@@ -1054,7 +1061,7 @@ StringXNumber MeshOptions_Number[] = {
     "entity, 3: by partition)" },
   { F|O, "CompoundClassify" , opt_mesh_compound_classify , 1. ,
     "How are surface mesh elements classified on compounds? (0: on the new discrete "
-    "entity, 1: on the original geometrical entity - incompatible with e.g. high-order "
+    "surface, 1: on the original geometrical surfaces - incompatible with e.g. high-order "
     "meshing)" },
   { F|O, "CompoundCharacteristicLengthFactor" , opt_mesh_compound_lc_factor , 0.5 ,
     "Mesh size factor applied to compound parts" },
@@ -1155,10 +1162,13 @@ StringXNumber MeshOptions_Number[] = {
     "METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
-    "Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi "
-    "radians when the mesh size of adapted to the curvature)" },
+    "Minimum number of nodes used to mesh circles and ellipses" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
-    "Minimum number of points used to mesh a (non-straight) curve" },
+    "Minimum number of points used to mesh curves other than lines, circles and "
+    "ellipses"},
+  { F|O, "MinimumElementsPerTwoPi" , opt_mesh_min_elements_2pi, 6. ,
+    "Minimum number of elements per 2 * Pi radians when the mesh size is adapted "
+    "to the curvature" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.1 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
@@ -1719,7 +1729,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
   { F|O, "Stipple" , opt_view_use_stipple , 0. ,
-    "Stipple curves in 2D plots?" },
+    "Stipple curves in 2D and line plots?" },
 
   { F|O, "Tangents" , opt_view_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },

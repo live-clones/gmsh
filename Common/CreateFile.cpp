@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -432,8 +432,7 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_CGNS:
     GModel::current()->writeCGNS
-      (name, CTX::instance()->mesh.zoneDefinition, CTX::instance()->cgnsOptions,
-       CTX::instance()->mesh.scalingFactor);
+      (name, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_MED:

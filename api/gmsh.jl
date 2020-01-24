@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -973,26 +973,6 @@ module mesh
 import ...gmsh
 
 """
-    gmsh.model.mesh.computeCrossField()
-
-Compute a cross field for the current mesh. The function creates 3 views: the H
-function, the Theta function and cross directions. Return the tags of the views
-
-Return `viewTags`.
-"""
-function computeCrossField()
-    api_viewTags_ = Ref{Ptr{Cint}}()
-    api_viewTags_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshComputeCrossField, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_viewTags_, api_viewTags_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshComputeCrossField returned non-zero error code: $(ierr[])")
-    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
-    return viewTags
-end
-
-"""
     gmsh.model.mesh.generate(dim = 3)
 
 Generate a mesh of the current model, up to dimension `dim` (0, 1, 2 or 3).
@@ -1035,20 +1015,23 @@ function unpartition()
 end
 
 """
-    gmsh.model.mesh.optimize(method, force = false, niter = 1)
+    gmsh.model.mesh.optimize(method, force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
 
 Optimize the mesh of the current model using `method` (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
 direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
 smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
 Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If
-`force` is set apply the optimization also to discrete entities.
+`force` is set apply the optimization also to discrete entities. If `dimTags` is
+given, only apply the optimizer to the given entities.
 """
-function optimize(method, force = false, niter = 1)
+function optimize(method, force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshOptimize, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}),
-          method, force, niter, ierr)
+          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          method, force, niter, api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshOptimize returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1216,11 +1199,9 @@ end
     gmsh.model.mesh.getNode(nodeTag)
 
 Get the coordinates and the parametric coordinates (if any) of the node with tag
-`tag`. This is a sometimes useful but inefficient way of accessing nodes, as it
-relies on a cache stored in the model. For large meshes all the nodes in the
-model should be numbered in a continuous sequence of tags from 1 to N to
-maintain reasonable performance (in this case the internal cache is based on a
-vector; otherwise it uses a map).
+`tag`. This function relies on an internal cache (a vector in case of dense node
+numbering, a map otherwise); for large meshes accessing nodes in bulk is often
+preferable.
 
 Return `coord`, `parametricCoord`.
 """
@@ -1243,10 +1224,9 @@ end
     gmsh.model.mesh.setNode(nodeTag, coord, parametricCoord)
 
 Set the coordinates and the parametric coordinates (if any) of the node with tag
-`tag`. This is a sometimes useful but inefficient way of accessing nodes, as it
-relies on a cache stored in the model. For large meshes all the nodes in the
-model should be added at once, and numbered in a continuous sequence of tags
-from 1 to N.
+`tag`. This function relies on an internal cache (a vector in case of dense node
+numbering, a map otherwise); for large meshes accessing nodes in bulk is often
+preferable.
 """
 function setNode(nodeTag, coord, parametricCoord)
     ierr = Ref{Cint}()
@@ -1396,11 +1376,9 @@ end
 """
     gmsh.model.mesh.getElement(elementTag)
 
-Get the type and node tags of the element with tag `tag`. This is a sometimes
-useful but inefficient way of accessing elements, as it relies on a cache stored
-in the model. For large meshes all the elements in the model should be numbered
-in a continuous sequence of tags from 1 to N to maintain reasonable performance
-(in this case the internal cache is based on a vector; otherwise it uses a map).
+Get the type and node tags of the element with tag `tag`. This function relies
+on an internal cache (a vector in case of dense element numbering, a map
+otherwise); for large meshes accessing elements in bulk is often preferable.
 
 Return `elementType`, `nodeTags`.
 """
@@ -1420,13 +1398,12 @@ end
 """
     gmsh.model.mesh.getElementByCoordinates(x, y, z, dim = -1, strict = false)
 
-Search the mesh for an element located at coordinates (`x`, `y`, `z`). This is a
-sometimes useful but inefficient way of accessing elements, as it relies on a
-search in a spatial octree. If an element is found, return its tag, type and
-node tags, as well as the local coordinates (`u`, `v`, `w`) within the element
-corresponding to search location. If `dim` is >= 0, only search for elements of
-the given dimension. If `strict` is not set, use a tolerance to find elements
-near the search location.
+Search the mesh for an element located at coordinates (`x`, `y`, `z`). This
+function performs a search in a spatial octree. If an element is found, return
+its tag, type and node tags, as well as the local coordinates (`u`, `v`, `w`)
+within the element corresponding to search location. If `dim` is >= 0, only
+search for elements of the given dimension. If `strict` is not set, use a
+tolerance to find elements near the search location.
 
 Return `elementTag`, `elementType`, `nodeTags`, `u`, `v`, `w`.
 """
@@ -1450,13 +1427,12 @@ end
 """
     gmsh.model.mesh.getElementsByCoordinates(x, y, z, dim = -1, strict = false)
 
-Search the mesh for element(s) located at coordinates (`x`, `y`, `z`). This is a
-sometimes useful but inefficient way of accessing elements, as it relies on a
-search in a spatial octree. Return the tags of all found elements in
-`elementTags`. Additional information about the elements can be accessed through
-`getElement` and `getLocalCoordinatesInElement`. If `dim` is >= 0, only search
-for elements of the given dimension. If `strict` is not set, use a tolerance to
-find elements near the search location.
+Search the mesh for element(s) located at coordinates (`x`, `y`, `z`). This
+function performs a search in a spatial octree. Return the tags of all found
+elements in `elementTags`. Additional information about the elements can be
+accessed through `getElement` and `getLocalCoordinatesInElement`. If `dim` is >=
+0, only search for elements of the given dimension. If `strict` is not set, use
+a tolerance to find elements near the search location.
 
 Return `elementTags`.
 """
@@ -1476,9 +1452,9 @@ end
     gmsh.model.mesh.getLocalCoordinatesInElement(elementTag, x, y, z)
 
 Return the local coordinates (`u`, `v`, `w`) within the element `elementTag`
-corresponding to the model coordinates (`x`, `y`, `z`). This is a sometimes
-useful but inefficient way of accessing elements, as it relies on a cache stored
-in the model.
+corresponding to the model coordinates (`x`, `y`, `z`). This function relies on
+an internal cache (a vector in case of dense element numbering, a map
+otherwise); for large meshes accessing elements in bulk is often preferable.
 
 Return `u`, `v`, `w`.
 """
@@ -1729,7 +1705,7 @@ function getBasisFunctions(elementType, integrationPoints, functionSpaceType)
 end
 
 """
-    gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
+    gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1, task = 0, numTasks = 1)
 
 Get the element-dependent basis functions of the elements of type `elementType`
 in the entity of tag `tag`at the integration points `integrationPoints` (given
@@ -1743,19 +1719,20 @@ element. `basisFunctions` returns the value of the basis functions at the
 integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1,
 ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
 Warning: this is an experimental feature and will probably change in a future
-release.
+release. If `numTasks` > 1, only compute and return the part of the data indexed
+by `task`.
 
 Return `numComponents`, `numFunctionsPerElements`, `basisFunctions`.
 """
-function getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
+function getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1, task = 0, numTasks = 1)
     api_numComponents_ = Ref{Cint}()
     api_numFunctionsPerElements_ = Ref{Cint}()
     api_basisFunctions_ = Ref{Ptr{Cdouble}}()
     api_basisFunctions_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctionsForElements, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_numFunctionsPerElements_, api_basisFunctions_, api_basisFunctions_n_, tag, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_numFunctionsPerElements_, api_basisFunctions_, api_basisFunctions_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: $(ierr[])")
     basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
     return api_numComponents_[], api_numFunctionsPerElements_[], basisFunctions
@@ -1787,6 +1764,23 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
     keys = [ (tmp_api_keys_[i], tmp_api_keys_[i+1]) for i in 1:2:length(tmp_api_keys_) ]
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     return keys, coord
+end
+
+"""
+    gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
+
+Get the number of keys by elements of type `elementType` for function space
+named `functionSpaceType`.
+
+Return an integer value.
+"""
+function getNumberOfKeysForElements(elementType, functionSpaceType)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelMeshGetNumberOfKeysForElements, gmsh.lib), Cint,
+          (Cint, Ptr{Cchar}, Ptr{Cint}),
+          elementType, functionSpaceType, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNumberOfKeysForElements returned non-zero error code: $(ierr[])")
+    return api__result__
 end
 
 """
@@ -2358,6 +2352,26 @@ function computeCohomology(domainTags = Cint[], subdomainTags = Cint[], dims = C
 end
 
 """
+    gmsh.model.mesh.computeCrossField()
+
+Compute a cross field for the current mesh. The function creates 3 views: the H
+function, the Theta function and cross directions. Return the tags of the views
+
+Return `viewTags`.
+"""
+function computeCrossField()
+    api_viewTags_ = Ref{Ptr{Cint}}()
+    api_viewTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshComputeCrossField, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_viewTags_, api_viewTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshComputeCrossField returned non-zero error code: $(ierr[])")
+    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
+    return viewTags
+end
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions
@@ -2526,8 +2540,8 @@ end
 Add a circle arc (strictly smaller than Pi) between the two points with tags
 `startTag` and `endTag`, with center `centertag`. If `tag` is positive, set the
 tag explicitly; otherwise a new tag is selected automatically. If (`nx`, `ny`,
-`nz`) != (0,0,0), explicitly set the plane of the circle arc. Return the tag of
-the circle arc.
+`nz`) != (0, 0, 0), explicitly set the plane of the circle arc. Return the tag
+of the circle arc.
 
 Return an integer value.
 """
@@ -2546,8 +2560,8 @@ end
 Add an ellipse arc (strictly smaller than Pi) between the two points `startTag`
 and `endTag`, with center `centerTag` and major axis point `majorTag`. If `tag`
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. If (`nx`, `ny`, `nz`) != (0,0,0), explicitly set the plane of the
-circle arc. Return the tag of the ellipse arc.
+automatically. If (`nx`, `ny`, `nz`) != (0, 0, 0), explicitly set the plane of
+the circle arc. Return the tag of the ellipse arc.
 
 Return an integer value.
 """
@@ -2886,10 +2900,28 @@ function dilate(dimTags, x, y, z, a, b, c)
 end
 
 """
+    gmsh.model.geo.mirror(dimTags, a, b, c, d)
+
+Mirror the model entities `dimTag`, with respect to the plane of equation `a` *
+x + `b` * y + `c` * z + `d` = 0.
+"""
+function mirror(dimTags, a, b, c, d)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoMirror, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, a, b, c, d, ierr)
+    ierr[] != 0 && error("gmshModelGeoMirror returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.geo.symmetrize(dimTags, a, b, c, d)
 
-Apply a symmetry transformation to the model entities `dimTag`, with respect to
-the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
+Mirror the model entities `dimTag`, with respect to the plane of equation `a` *
+x + `b` * y + `c` * z + `d` = 0. (This is a synonym for `mirror`, which will be
+deprecated in a future release.)
 """
 function symmetrize(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -2954,6 +2986,26 @@ function removeAllDuplicates()
           ierr)
     ierr[] != 0 && error("gmshModelGeoRemoveAllDuplicates returned non-zero error code: $(ierr[])")
     return nothing
+end
+
+"""
+    gmsh.model.geo.splitCurve(tag, pointTags)
+
+Split the model curve of tag `tag` on the control points `pointTags`. Return the
+tags `curveTags` of the newly created curves.
+
+Return `curveTags`.
+"""
+function splitCurve(tag, pointTags)
+    api_curveTags_ = Ref{Ptr{Cint}}()
+    api_curveTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoSplitCurve, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, convert(Vector{Cint}, pointTags), length(pointTags), api_curveTags_, api_curveTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelGeoSplitCurve returned non-zero error code: $(ierr[])")
+    curveTags = unsafe_wrap(Array, api_curveTags_[], api_curveTags_n_[], own=true)
+    return curveTags
 end
 
 """
@@ -3972,10 +4024,28 @@ function dilate(dimTags, x, y, z, a, b, c)
 end
 
 """
-    gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
+    gmsh.model.occ.mirror(dimTags, a, b, c, d)
 
 Apply a symmetry transformation to the model entities `dimTag`, with respect to
 the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
+"""
+function mirror(dimTags, a, b, c, d)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccMirror, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, a, b, c, d, ierr)
+    ierr[] != 0 && error("gmshModelOccMirror returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
+
+Apply a symmetry transformation to the model entities `dimTag`, with respect to
+the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0. (This is a synonym
+for `mirror`, which will be deprecated in a future release.)
 """
 function symmetrize(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))

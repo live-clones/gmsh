@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -59,6 +59,7 @@ private:
   static int _locked;
 #endif
   std::string _lastStatus;
+  bool _quitShouldExit;
 
 public:
   std::vector<GVertex *> selectedVertices;
@@ -88,11 +89,12 @@ public:
   openglWindow *fullscreen;
 
 public:
-  FlGui(int argc, char **argv,
+  FlGui(int argc, char **argv, bool quitShouldExit,
         void (*error_handler)(const char *fmt, ...) = 0);
   ~FlGui();
   // return the single static instance of the GUI
   static FlGui *instance(int argc = 0, char **argv = 0,
+                         bool quitShouldExit = true,
                          void (*error_handler)(const char *fmt, ...) = 0);
   // destroy instance
   static void destroy();
@@ -160,6 +162,8 @@ public:
   void openModule(const std::string &name);
   // apply color scheme to widgets
   void applyColorScheme(bool redraw = false);
+  // should the quit callback exit the app, or just close all windows?
+  bool quitShouldExit(){ return _quitShouldExit; }
 };
 
 void redraw_cb(Fl_Widget *w, void *data);

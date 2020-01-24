@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -401,7 +401,6 @@ int MeshTransfiniteSurface(GFace *gf)
     numSmooth = gf->meshAttributes.transfiniteSmoothing;
 
   if(corners.size() == 4 && numSmooth) {
-    printf("AAAAAAAAAa\n");
     std::vector<std::vector<double> > u(L + 1), v(L + 1);
     for(int i = 0; i <= L; i++) {
       u[i].resize(H + 1);

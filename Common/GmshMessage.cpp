@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -98,19 +98,18 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
 {
   std::string gmshPath = SplitFileName(CTX::instance()->exeFileName)[0];
   if(gmshPath.size()){
-    std::string path;
-    char *tmp = getenv(name.c_str());
-    if(tmp){
-      path = tmp;
+    std::string path, tmp = GetEnvironmentVar(name);
+    if(tmp.empty()) {
+      path = gmshPath;
+    }
+    else {
 #if defined(WIN32)
-      path += ";" + gmshPath;
+      path = tmp + ";" + gmshPath;
 #else
-      path += ":" + gmshPath;
+      path = tmp + ":" + gmshPath;
 #endif
     }
-    else
-      path = gmshPath;
-    SetEnvironmentVar(name.c_str(), path.c_str());
+    SetEnvironmentVar(name, path);
   }
 }
 
@@ -961,7 +960,7 @@ void Msg::SetOnelabNumber(const std::string &name, double val, bool visible,
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
-    // FIXME: why is there a get() here??
+    // get if first so we can keep its options
     std::vector<onelab::number> numbers;
     _onelabClient->get(numbers, name);
     if(numbers.empty()){
@@ -969,7 +968,7 @@ void Msg::SetOnelabNumber(const std::string &name, double val, bool visible,
       numbers[0].setName(name);
     }
     numbers[0].setValue(val);
-    numbers[0].setVisible(visible);
+    if(!visible) numbers[0].setVisible(false);
     if(persistent) numbers[0].setAttribute("Persistent", "1");
     numbers[0].setReadOnly(readOnly);
     numbers[0].setChangedValue(changedValue);
@@ -984,7 +983,7 @@ void Msg::SetOnelabNumber(const std::string &name, const std::vector<double> &va
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     onelab::number n(name, val);
-    n.setVisible(visible);
+    if(!visible) n.setVisible(false);
     _onelabClient->set(n);
   }
 #endif
@@ -996,7 +995,7 @@ void Msg::SetOnelabString(const std::string &name, const std::string &val,
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
-    // FIXME: why is there a get() here??
+    // get if first so we can keep its options
     std::vector<onelab::string> strings;
     _onelabClient->get(strings, name);
     if(strings.empty()){
@@ -1004,7 +1003,7 @@ void Msg::SetOnelabString(const std::string &name, const std::string &val,
       strings[0].setName(name);
     }
     strings[0].setValue(val);
-    strings[0].setVisible(visible);
+    if(!visible) strings[0].setVisible(false);
     if(persistent) strings[0].setAttribute("Persistent", "1");
     strings[0].setReadOnly(readOnly);
     strings[0].setChangedValue(changedValue);

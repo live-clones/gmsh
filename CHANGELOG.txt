@@ -1,15 +1,25 @@
-4.5.0 (Work-in-progress): changed default 2D algorithm to Frontal-Delaunay;
-improved handling of anisotropic surface meshes in 3D Delaunay; improved
-high-order periodic meshing; improved 2D boolean unions; improved surface mesh
-reclassification; file chooser type is now changeable at runtime; FLTK GUI can
-now be created and destroyed at will through the api; fixed regression in
-MeshAdapt for non-periodic surfaces with singularities; new X3D output for
-geometries and meshes; new compound Spline/BSpline commands; new
-MeshSizeFromBoundary command; combining views now copies options; added API
-support for mesh compounds, per-surface mesh algorithm and mesh size from
-boundary; renamed plugin AnalyseCurvedMesh to AnalyseMeshQuality; fixed
-regression for built-in kernel BSplines on non-flat geometries (Sphere,
-PolarSphere); small fixes.
+4.5.2 (Work-in-progress): periodic meshes now obey reorientation constraints;
+physical group definitions now follow compound meshing constraints; small bug
+fixes.
+
+4.5.1 (December 28, 2019): new Min and Max commands in .geo files;
+Mesh.MinimumCirclePoints now behaves the same with all geometry kernels; fixed
+issue with UTF16-encoded home directories on Windows.
+
+4.5.0 (December 21, 2019): changed default 2D meshing algorithm to
+Frontal-Delaunay; new compound Spline/BSpline commands; new MeshSizeFromBoundary
+command; new CGNS importer/exporter; new X3D exporter for geometries and meshes;
+improved surface mesh reclassification; new separate option to govern curvature
+adapted meshes (Mesh.MinimumElementsPerTwoPi and "-clcurv val"); improved
+handling of anisotropic surface meshes in 3D Delaunay; improved high-order
+periodic meshing; improved 2D boolean unions; file chooser type is now
+changeable at runtime; FLTK GUI can now be created and destroyed at will through
+the api; fixed regression in MeshAdapt for non-periodic surfaces with
+singularities; combining views now copies options; added API support for mesh
+compounds, per-surface mesh algorithm and mesh size from boundary; renamed
+plugin AnalyseCurvedMesh to AnalyseMeshQuality; fixed regression for built-in
+kernel BSplines on non-flat geometries (Sphere, PolarSphere); small fixes and
+improvements.
 
 * Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
   like all other mesh optimizers); renamed logger/time to logger/getWallTime and
@@ -63,7 +73,7 @@ to the reference manual.
 4.2.0 (March 5, 2019): new MSH4.1 revision of the MSH file format, with support
 for size_t node and element tags (see the reference manual for detailed
 changes); added support for reading STEP labels and colors with OCC CAF; changed
-default "General.OCCTargetUnit" value to none (i.e. use STEP file coordinates
+default "Geometry.OCCTargetUnit" value to none (i.e. use STEP file coordinates
 as-is, without conversion); improved high-order mesh optimization; added ability
 to import groups of nodes from MED files; enhanced Plugin(Distance) and
 Plugin(SimplePartition); removed unmaintained plugins; removed default
@@ -130,7 +140,7 @@ default; new workflow for remeshing (compound entities as meshing constraints,
 CreateGeometry for mesh reparametrization); added support for general BSplines,
 fillets and chamfers with OpenCASCADE kernel and changed default BSpline
 parameters with the built-in kernel to match OpenCASCADE's; STEP files are now
-be default interpreted in MKS units (see General.OCCTargetUnit); improved
+be default interpreted in MKS units (see Geometry.OCCTargetUnit); improved
 meshing of surfaces with singular parametrizations (spheres, etc.); uniformized
 entity naming conventions (line/curve, vertex/node, etc.); generalized handling
 of "all" entities in geo file (using {:} notation); added support for creating

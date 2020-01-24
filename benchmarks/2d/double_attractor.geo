@@ -35,14 +35,11 @@ Field[2].DistMax = 0.2;
 Field[2].StopAtDistMax = 1; // don't impose element size outside DistMax
 //Field[2].Sigmoid = 1; // use sigmoid instead of linear interpol
 
-Field[3] = Distance;
-Field[3].NodesList = {5};
-
 Field[4] = Threshold;
-Field[4].IField = 3;
-Field[4].LcMin = 0.005;
+Field[4].IField = 1;
+Field[4].LcMin = 0.01;
 Field[4].LcMax = 0.1;
-Field[4].DistMin = 0.3;
+Field[4].DistMin = 0.2;
 Field[4].DistMax = 0.5;
 
 Field[5] = Min;

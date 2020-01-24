@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -436,7 +436,8 @@ void linearSystemCSR<std::complex<double> >::getMatrix(INDEX_TYPE *&jptr,
 
 #if defined(HAVE_GMM)
 
-#include "gmm.h"
+#undef BB // can be defined by FlGui.h, and clashes with gmm arg name
+#include <gmm.h>
 
 template <> int linearSystemCSRGmm<double>::systemSolve()
 {

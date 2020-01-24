@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -740,18 +740,6 @@ namespace gmsh { // Top-level functions
 
     namespace mesh { // Mesh functions
 
-      // Compute a cross field for the current mesh. The function creates 3 views:
-      // the H function, the Theta function and cross directions. Return the tags
-      // of the views
-      inline void computeCrossField(std::vector<int> & viewTags)
-      {
-        int ierr = 0;
-        int *api_viewTags_; size_t api_viewTags_n_;
-        gmshModelMeshComputeCrossField(&api_viewTags_, &api_viewTags_n_, &ierr);
-        if(ierr) throw ierr;
-        viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
-      }
-
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or
       // 3).
       inline void generate(const int dim = 3)
@@ -783,14 +771,18 @@ namespace gmsh { // Top-level functions
       // elastic smoother, "HighOrderFastCurving" for fast curving algorithm,
       // "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node
       // relocation). If `force' is set apply the optimization also to discrete
+      // entities. If `dimTags' is given, only apply the optimizer to the given
       // entities.
       inline void optimize(const std::string & method,
                            const bool force = false,
-                           const int niter = 1)
+                           const int niter = 1,
+                           const gmsh::vectorpair & dimTags = gmsh::vectorpair())
       {
         int ierr = 0;
-        gmshModelMeshOptimize(method.c_str(), (int)force, niter, &ierr);
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshOptimize(method.c_str(), (int)force, niter, api_dimTags_, api_dimTags_n_, &ierr);
         if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
       }
 
       // Recombine the mesh of the current model.
@@ -900,11 +892,9 @@ namespace gmsh { // Top-level functions
       }
 
       // Get the coordinates and the parametric coordinates (if any) of the node
-      // with tag `tag'. This is a sometimes useful but inefficient way of
-      // accessing nodes, as it relies on a cache stored in the model. For large
-      // meshes all the nodes in the model should be numbered in a continuous
-      // sequence of tags from 1 to N to maintain reasonable performance (in this
-      // case the internal cache is based on a vector; otherwise it uses a map).
+      // with tag `tag'. This function relies on an internal cache (a vector in
+      // case of dense node numbering, a map otherwise); for large meshes accessing
+      // nodes in bulk is often preferable.
       inline void getNode(const std::size_t nodeTag,
                           std::vector<double> & coord,
                           std::vector<double> & parametricCoord)
@@ -919,10 +909,9 @@ namespace gmsh { // Top-level functions
       }
 
       // Set the coordinates and the parametric coordinates (if any) of the node
-      // with tag `tag'. This is a sometimes useful but inefficient way of
-      // accessing nodes, as it relies on a cache stored in the model. For large
-      // meshes all the nodes in the model should be added at once, and numbered in
-      // a continuous sequence of tags from 1 to N.
+      // with tag `tag'. This function relies on an internal cache (a vector in
+      // case of dense node numbering, a map otherwise); for large meshes accessing
+      // nodes in bulk is often preferable.
       inline void setNode(const std::size_t nodeTag,
                           const std::vector<double> & coord,
                           const std::vector<double> & parametricCoord)
@@ -1041,12 +1030,10 @@ namespace gmsh { // Top-level functions
         nodeTags.resize(api_nodeTags_nn_); for(size_t i = 0; i < api_nodeTags_nn_; ++i){ nodeTags[i].assign(api_nodeTags_[i], api_nodeTags_[i] + api_nodeTags_n_[i]); gmshFree(api_nodeTags_[i]); } gmshFree(api_nodeTags_); gmshFree(api_nodeTags_n_);
       }
 
-      // Get the type and node tags of the element with tag `tag'. This is a
-      // sometimes useful but inefficient way of accessing elements, as it relies
-      // on a cache stored in the model. For large meshes all the elements in the
-      // model should be numbered in a continuous sequence of tags from 1 to N to
-      // maintain reasonable performance (in this case the internal cache is based
-      // on a vector; otherwise it uses a map).
+      // Get the type and node tags of the element with tag `tag'. This function
+      // relies on an internal cache (a vector in case of dense element numbering,
+      // a map otherwise); for large meshes accessing elements in bulk is often
+      // preferable.
       inline void getElement(const std::size_t elementTag,
                              int & elementType,
                              std::vector<std::size_t> & nodeTags)
@@ -1059,12 +1046,12 @@ namespace gmsh { // Top-level functions
       }
 
       // Search the mesh for an element located at coordinates (`x', `y', `z').
-      // This is a sometimes useful but inefficient way of accessing elements, as
-      // it relies on a search in a spatial octree. If an element is found, return
-      // its tag, type and node tags, as well as the local coordinates (`u', `v',
-      // `w') within the element corresponding to search location. If `dim' is >=
-      // 0, only search for elements of the given dimension. If `strict' is not
-      // set, use a tolerance to find elements near the search location.
+      // This function performs a search in a spatial octree. If an element is
+      // found, return its tag, type and node tags, as well as the local
+      // coordinates (`u', `v', `w') within the element corresponding to search
+      // location. If `dim' is >= 0, only search for elements of the given
+      // dimension. If `strict' is not set, use a tolerance to find elements near
+      // the search location.
       inline void getElementByCoordinates(const double x,
                                           const double y,
                                           const double z,
@@ -1085,13 +1072,12 @@ namespace gmsh { // Top-level functions
       }
 
       // Search the mesh for element(s) located at coordinates (`x', `y', `z').
-      // This is a sometimes useful but inefficient way of accessing elements, as
-      // it relies on a search in a spatial octree. Return the tags of all found
-      // elements in `elementTags'. Additional information about the elements can
-      // be accessed through `getElement' and `getLocalCoordinatesInElement'. If
-      // `dim' is >= 0, only search for elements of the given dimension. If
-      // `strict' is not set, use a tolerance to find elements near the search
-      // location.
+      // This function performs a search in a spatial octree. Return the tags of
+      // all found elements in `elementTags'. Additional information about the
+      // elements can be accessed through `getElement' and
+      // `getLocalCoordinatesInElement'. If `dim' is >= 0, only search for elements
+      // of the given dimension. If `strict' is not set, use a tolerance to find
+      // elements near the search location.
       inline void getElementsByCoordinates(const double x,
                                            const double y,
                                            const double z,
@@ -1108,8 +1094,9 @@ namespace gmsh { // Top-level functions
 
       // Return the local coordinates (`u', `v', `w') within the element
       // `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
-      // is a sometimes useful but inefficient way of accessing elements, as it
-      // relies on a cache stored in the model.
+      // function relies on an internal cache (a vector in case of dense element
+      // numbering, a map otherwise); for large meshes accessing elements in bulk
+      // is often preferable.
       inline void getLocalCoordinatesInElement(const std::size_t elementTag,
                                                const double x,
                                                const double y,
@@ -1380,21 +1367,40 @@ namespace gmsh { // Top-level functions
       // value of the basis functions at the integration points for each element:
       // [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u,
       // e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an
-      // experimental feature and will probably change in a future release.
+      // experimental feature and will probably change in a future release. If
+      // `numTasks' > 1, only compute and return the part of the data indexed by
+      // `task'.
       inline void getBasisFunctionsForElements(const int elementType,
                                                const std::vector<double> & integrationPoints,
                                                const std::string & functionSpaceType,
                                                int & numComponents,
                                                int & numFunctionsPerElements,
                                                std::vector<double> & basisFunctions,
-                                               const int tag = -1)
+                                               const int tag = -1,
+                                               const std::size_t task = 0,
+                                               const std::size_t numTasks = 1)
       {
         int ierr = 0;
         double *api_integrationPoints_; size_t api_integrationPoints_n_; vector2ptr(integrationPoints, &api_integrationPoints_, &api_integrationPoints_n_);
         double *api_basisFunctions_; size_t api_basisFunctions_n_;
-        gmshModelMeshGetBasisFunctionsForElements(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &numFunctionsPerElements, &api_basisFunctions_, &api_basisFunctions_n_, tag, &ierr);
+        gmshModelMeshGetBasisFunctionsForElements(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &numFunctionsPerElements, &api_basisFunctions_, &api_basisFunctions_n_, tag, task, numTasks, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_integrationPoints_);
+        basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
+      }
+
+      // Preallocate data before calling `getBasisFunctionsForElements' with
+      // `numTasks' > 1. For C and C++ only.
+      inline void preallocateBasisFunctions(const int elementType,
+                                            const int numIntegrationPoints,
+                                            const std::string & functionSpaceType,
+                                            std::vector<double> & basisFunctions,
+                                            const int tag = -1)
+      {
+        int ierr = 0;
+        double *api_basisFunctions_; size_t api_basisFunctions_n_;
+        gmshModelMeshPreallocateBasisFunctions(elementType, numIntegrationPoints, functionSpaceType.c_str(), &api_basisFunctions_, &api_basisFunctions_n_, tag, &ierr);
+        if(ierr) throw ierr;
         basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
       }
 
@@ -1418,6 +1424,17 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
         keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+      }
+
+      // Get the number of keys by elements of type `elementType' for function
+      // space named `functionSpaceType'.
+      inline int getNumberOfKeysForElements(const int elementType,
+                                            const std::string & functionSpaceType)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelMeshGetNumberOfKeysForElements(elementType, functionSpaceType.c_str(), &ierr);
+        if(ierr) throw ierr;
+        return result_api_;
       }
 
       // Get information about the `keys'. `infoKeys' returns information about the
@@ -1890,6 +1907,18 @@ namespace gmsh { // Top-level functions
         gmshFree(api_dims_);
       }
 
+      // Compute a cross field for the current mesh. The function creates 3 views:
+      // the H function, the Theta function and cross directions. Return the tags
+      // of the views
+      inline void computeCrossField(std::vector<int> & viewTags)
+      {
+        int ierr = 0;
+        int *api_viewTags_; size_t api_viewTags_n_;
+        gmshModelMeshComputeCrossField(&api_viewTags_, &api_viewTags_n_, &ierr);
+        if(ierr) throw ierr;
+        viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
+      }
+
       namespace field { // Mesh size field functions
 
         // Add a new mesh size field of type `fieldType'. If `tag' is positive,
@@ -2000,8 +2029,8 @@ namespace gmsh { // Top-level functions
       // Add a circle arc (strictly smaller than Pi) between the two points with
       // tags `startTag' and `endTag', with center `centertag'. If `tag' is
       // positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly set the plane
-      // of the circle arc. Return the tag of the circle arc.
+      // automatically. If (`nx', `ny', `nz') != (0, 0, 0), explicitly set the
+      // plane of the circle arc. Return the tag of the circle arc.
       inline int addCircleArc(const int startTag,
                               const int centerTag,
                               const int endTag,
@@ -2019,7 +2048,7 @@ namespace gmsh { // Top-level functions
       // Add an ellipse arc (strictly smaller than Pi) between the two points
       // `startTag' and `endTag', with center `centerTag' and major axis point
       // `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
-      // tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0),
+      // tag is selected automatically. If (`nx', `ny', `nz') != (0, 0, 0),
       // explicitly set the plane of the circle arc. Return the tag of the ellipse
       // arc.
       inline int addEllipseArc(const int startTag,
@@ -2338,8 +2367,24 @@ namespace gmsh { // Top-level functions
         gmshFree(api_dimTags_);
       }
 
-      // Apply a symmetry transformation to the model entities `dimTag', with
-      // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+      // Mirror the model entities `dimTag', with respect to the plane of equation
+      // `a' * x + `b' * y + `c' * z + `d' = 0.
+      inline void mirror(const gmsh::vectorpair & dimTags,
+                         const double a,
+                         const double b,
+                         const double c,
+                         const double d)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelGeoMirror(api_dimTags_, api_dimTags_n_, a, b, c, d, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
+      }
+
+      // Mirror the model entities `dimTag', with respect to the plane of equation
+      // `a' * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror',
+      // which will be deprecated in a future release.)
       inline void symmetrize(const gmsh::vectorpair & dimTags,
                              const double a,
                              const double b,
@@ -2386,6 +2431,21 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         gmshModelGeoRemoveAllDuplicates(&ierr);
         if(ierr) throw ierr;
+      }
+
+      // Split the model curve of tag `tag' on the control points `pointTags'.
+      // Return the tags `curveTags' of the newly created curves.
+      inline void splitCurve(const int tag,
+                             const std::vector<int> & pointTags,
+                             std::vector<int> & curveTags)
+      {
+        int ierr = 0;
+        int *api_pointTags_; size_t api_pointTags_n_; vector2ptr(pointTags, &api_pointTags_, &api_pointTags_n_);
+        int *api_curveTags_; size_t api_curveTags_n_;
+        gmshModelGeoSplitCurve(tag, api_pointTags_, api_pointTags_n_, &api_curveTags_, &api_curveTags_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_pointTags_);
+        curveTags.assign(api_curveTags_, api_curveTags_ + api_curveTags_n_); gmshFree(api_curveTags_);
       }
 
       // Synchronize the built-in CAD representation with the current Gmsh model.
@@ -3266,6 +3326,23 @@ namespace gmsh { // Top-level functions
 
       // Apply a symmetry transformation to the model entities `dimTag', with
       // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+      inline void mirror(const gmsh::vectorpair & dimTags,
+                         const double a,
+                         const double b,
+                         const double c,
+                         const double d)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelOccMirror(api_dimTags_, api_dimTags_n_, a, b, c, d, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
+      }
+
+      // Apply a symmetry transformation to the model entities `dimTag', with
+      // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+      // (This is a synonym for `mirror', which will be deprecated in a future
+      // release.)
       inline void symmetrize(const gmsh::vectorpair & dimTags,
                              const double a,
                              const double b,

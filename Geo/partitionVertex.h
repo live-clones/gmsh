@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -48,7 +48,7 @@ public:
   virtual unsigned int numPartitions() const { return _partitions.size(); }
 };
 
-struct Less_partitionVertex
+struct partitionVertexPtrLessThan
   : public std::binary_function<partitionVertex *, partitionVertex *, bool> {
   bool operator()(const partitionVertex *e1, const partitionVertex *e2) const
   {

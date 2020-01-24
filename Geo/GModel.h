@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -37,7 +37,6 @@ class OCC_Internals;
 class ACIS_Internals;
 class smooth_normals;
 class FieldManager;
-class CGNSOptions;
 class gLevelset;
 class discreteFace;
 class discreteRegion;
@@ -158,10 +157,6 @@ protected:
   void _resetOCCInternals();
 
   void _deleteACISInternals();
-
-  // CGNS helpers
-  int _readCGNSStructured(const std::string &name);
-  int _readCGNSUnstructured(const std::string &name);
 
   // store the elements given in the map (indexed by elementary region
   // number) into the model, creating discrete geometrical entities on
@@ -723,9 +718,11 @@ public:
                double scalingFactor = 1.0);
 
   // CFD General Notation System files
-  int readCGNS(const std::string &name);
-  int writeCGNS(const std::string &name, int zoneDefinition,
-                const CGNSOptions &options, double scalingFactor = 1.0);
+  int readCGNS(const std::string &name,
+               std::vector<std::vector<MVertex *> > &vertPerZone,
+               std::vector<std::vector<MElement *> > &eltPerZone);
+  int writeCGNS(const std::string &name, bool saveAll = false,
+                double scalingFactor = 1.0);
 
   // Med "Modele d'Echange de Donnees" file format (the static routine
   // is allowed to load multiple models/meshes)

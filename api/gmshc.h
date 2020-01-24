@@ -1,5 +1,5 @@
 /*
- * Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+ * Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
  *
  * See the LICENSE.txt file for license information. Please report all
  * issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -405,12 +405,6 @@ GMSH_API void gmshModelSetCoordinates(const int tag,
                                       const double z,
                                       int * ierr);
 
-/* Compute a cross field for the current mesh. The function creates 3 views:
- * the H function, the Theta function and cross directions. Return the tags of
- * the views */
-GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
-                                             int * ierr);
-
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);
@@ -427,10 +421,12 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr);
  * direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
  * smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
  * for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation).
- * If `force' is set apply the optimization also to discrete entities. */
+ * If `force' is set apply the optimization also to discrete entities. If
+ * `dimTags' is given, only apply the optimizer to the given entities. */
 GMSH_API void gmshModelMeshOptimize(const char * method,
                                     const int force,
                                     const int niter,
+                                    int * dimTags, size_t dimTags_n,
                                     int * ierr);
 
 /* Recombine the mesh of the current model. */
@@ -489,21 +485,18 @@ GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType,
                                                  int * ierr);
 
 /* Get the coordinates and the parametric coordinates (if any) of the node
- * with tag `tag'. This is a sometimes useful but inefficient way of accessing
- * nodes, as it relies on a cache stored in the model. For large meshes all
- * the nodes in the model should be numbered in a continuous sequence of tags
- * from 1 to N to maintain reasonable performance (in this case the internal
- * cache is based on a vector; otherwise it uses a map). */
+ * with tag `tag'. This function relies on an internal cache (a vector in case
+ * of dense node numbering, a map otherwise); for large meshes accessing nodes
+ * in bulk is often preferable. */
 GMSH_API void gmshModelMeshGetNode(const size_t nodeTag,
                                    double ** coord, size_t * coord_n,
                                    double ** parametricCoord, size_t * parametricCoord_n,
                                    int * ierr);
 
 /* Set the coordinates and the parametric coordinates (if any) of the node
- * with tag `tag'. This is a sometimes useful but inefficient way of accessing
- * nodes, as it relies on a cache stored in the model. For large meshes all
- * the nodes in the model should be added at once, and numbered in a
- * continuous sequence of tags from 1 to N. */
+ * with tag `tag'. This function relies on an internal cache (a vector in case
+ * of dense node numbering, a map otherwise); for large meshes accessing nodes
+ * in bulk is often preferable. */
 GMSH_API void gmshModelMeshSetNode(const size_t nodeTag,
                                    double * coord, size_t coord_n,
                                    double * parametricCoord, size_t parametricCoord_n,
@@ -573,24 +566,21 @@ GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementType
                                        const int tag,
                                        int * ierr);
 
-/* Get the type and node tags of the element with tag `tag'. This is a
- * sometimes useful but inefficient way of accessing elements, as it relies on
- * a cache stored in the model. For large meshes all the elements in the model
- * should be numbered in a continuous sequence of tags from 1 to N to maintain
- * reasonable performance (in this case the internal cache is based on a
- * vector; otherwise it uses a map). */
+/* Get the type and node tags of the element with tag `tag'. This function
+ * relies on an internal cache (a vector in case of dense element numbering, a
+ * map otherwise); for large meshes accessing elements in bulk is often
+ * preferable. */
 GMSH_API void gmshModelMeshGetElement(const size_t elementTag,
                                       int * elementType,
                                       size_t ** nodeTags, size_t * nodeTags_n,
                                       int * ierr);
 
 /* Search the mesh for an element located at coordinates (`x', `y', `z'). This
- * is a sometimes useful but inefficient way of accessing elements, as it
- * relies on a search in a spatial octree. If an element is found, return its
- * tag, type and node tags, as well as the local coordinates (`u', `v', `w')
- * within the element corresponding to search location. If `dim' is >= 0, only
- * search for elements of the given dimension. If `strict' is not set, use a
- * tolerance to find elements near the search location. */
+ * function performs a search in a spatial octree. If an element is found,
+ * return its tag, type and node tags, as well as the local coordinates (`u',
+ * `v', `w') within the element corresponding to search location. If `dim' is
+ * >= 0, only search for elements of the given dimension. If `strict' is not
+ * set, use a tolerance to find elements near the search location. */
 GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
                                                    const double y,
                                                    const double z,
@@ -605,12 +595,11 @@ GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
                                                    int * ierr);
 
 /* Search the mesh for element(s) located at coordinates (`x', `y', `z'). This
- * is a sometimes useful but inefficient way of accessing elements, as it
- * relies on a search in a spatial octree. Return the tags of all found
- * elements in `elementTags'. Additional information about the elements can be
- * accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim'
- * is >= 0, only search for elements of the given dimension. If `strict' is
- * not set, use a tolerance to find elements near the search location. */
+ * function performs a search in a spatial octree. Return the tags of all
+ * found elements in `elementTags'. Additional information about the elements
+ * can be accessed through `getElement' and `getLocalCoordinatesInElement'. If
+ * `dim' is >= 0, only search for elements of the given dimension. If `strict'
+ * is not set, use a tolerance to find elements near the search location. */
 GMSH_API void gmshModelMeshGetElementsByCoordinates(const double x,
                                                     const double y,
                                                     const double z,
@@ -621,8 +610,9 @@ GMSH_API void gmshModelMeshGetElementsByCoordinates(const double x,
 
 /* Return the local coordinates (`u', `v', `w') within the element
  * `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
- * is a sometimes useful but inefficient way of accessing elements, as it
- * relies on a cache stored in the model. */
+ * function relies on an internal cache (a vector in case of dense element
+ * numbering, a map otherwise); for large meshes accessing elements in bulk is
+ * often preferable. */
 GMSH_API void gmshModelMeshGetLocalCoordinatesInElement(const size_t elementTag,
                                                         const double x,
                                                         const double y,
@@ -798,7 +788,8 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
  * basis functions at the integration points for each element: [e1g1f1,...,
  * e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,...,
  * e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental
- * feature and will probably change in a future release. */
+ * feature and will probably change in a future release. If `numTasks' > 1,
+ * only compute and return the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
                                                         double * integrationPoints, size_t integrationPoints_n,
                                                         const char * functionSpaceType,
@@ -806,7 +797,18 @@ GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
                                                         int * numFunctionsPerElements,
                                                         double ** basisFunctions, size_t * basisFunctions_n,
                                                         const int tag,
+                                                        const size_t task,
+                                                        const size_t numTasks,
                                                         int * ierr);
+
+/* Preallocate data before calling `getBasisFunctionsForElements' with
+ * `numTasks' > 1. For C and C++ only. */
+GMSH_API void gmshModelMeshPreallocateBasisFunctions(const int elementType,
+                                                     const int numIntegrationPoints,
+                                                     const char * functionSpaceType,
+                                                     double ** basisFunctions, size_t * basisFunctions_n,
+                                                     const int tag,
+                                                     int * ierr);
 
 /* Generate the `keys' for the elements of type `elementType' in the entity of
  * tag `tag', for the `functionSpaceType' function space. Each key uniquely
@@ -821,6 +823,12 @@ GMSH_API void gmshModelMeshGetKeysForElements(const int elementType,
                                               const int tag,
                                               const int returnCoord,
                                               int * ierr);
+
+/* Get the number of keys by elements of type `elementType' for function space
+ * named `functionSpaceType'. */
+GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType,
+                                                     const char * functionSpaceType,
+                                                     int * ierr);
 
 /* Get information about the `keys'. `infoKeys' returns information about the
  * functions associated with the `keys'. `infoKeys[0].first' describes the
@@ -1105,6 +1113,12 @@ GMSH_API void gmshModelMeshComputeCohomology(int * domainTags, size_t domainTags
                                              int * dims, size_t dims_n,
                                              int * ierr);
 
+/* Compute a cross field for the current mesh. The function creates 3 views:
+ * the H function, the Theta function and cross directions. Return the tags of
+ * the views */
+GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
+                                             int * ierr);
+
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. */
@@ -1166,7 +1180,7 @@ GMSH_API int gmshModelGeoAddLine(const int startTag,
 /* Add a circle arc (strictly smaller than Pi) between the two points with
  * tags `startTag' and `endTag', with center `centertag'. If `tag' is
  * positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly set the plane
+ * automatically. If (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane
  * of the circle arc. Return the tag of the circle arc. */
 GMSH_API int gmshModelGeoAddCircleArc(const int startTag,
                                       const int centerTag,
@@ -1180,8 +1194,9 @@ GMSH_API int gmshModelGeoAddCircleArc(const int startTag,
 /* Add an ellipse arc (strictly smaller than Pi) between the two points
  * `startTag' and `endTag', with center `centerTag' and major axis point
  * `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
- * tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly
- * set the plane of the circle arc. Return the tag of the ellipse arc. */
+ * tag is selected automatically. If (`nx', `ny', `nz') != (0, 0, 0),
+ * explicitly set the plane of the circle arc. Return the tag of the ellipse
+ * arc. */
 GMSH_API int gmshModelGeoAddEllipseArc(const int startTag,
                                        const int centerTag,
                                        const int majorTag,
@@ -1369,8 +1384,18 @@ GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n,
                                  const double c,
                                  int * ierr);
 
-/* Apply a symmetry transformation to the model entities `dimTag', with
- * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0. */
+/* Mirror the model entities `dimTag', with respect to the plane of equation
+ * `a' * x + `b' * y + `c' * z + `d' = 0. */
+GMSH_API void gmshModelGeoMirror(int * dimTags, size_t dimTags_n,
+                                 const double a,
+                                 const double b,
+                                 const double c,
+                                 const double d,
+                                 int * ierr);
+
+/* Mirror the model entities `dimTag', with respect to the plane of equation
+ * `a' * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror',
+ * which will be deprecated in a future release.) */
 GMSH_API void gmshModelGeoSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double a,
                                      const double b,
@@ -1392,6 +1417,13 @@ GMSH_API void gmshModelGeoRemove(int * dimTags, size_t dimTags_n,
 /* Remove all duplicate entities (different entities at the same geometrical
  * location). */
 GMSH_API void gmshModelGeoRemoveAllDuplicates(int * ierr);
+
+/* Split the model curve of tag `tag' on the control points `pointTags'.
+ * Return the tags `curveTags' of the newly created curves. */
+GMSH_API void gmshModelGeoSplitCurve(const int tag,
+                                     int * pointTags, size_t pointTags_n,
+                                     int ** curveTags, size_t * curveTags_n,
+                                     int * ierr);
 
 /* Synchronize the built-in CAD representation with the current Gmsh model.
  * This can be called at any time, but since it involves a non trivial amount
@@ -1936,6 +1968,17 @@ GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
 
 /* Apply a symmetry transformation to the model entities `dimTag', with
  * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0. */
+GMSH_API void gmshModelOccMirror(int * dimTags, size_t dimTags_n,
+                                 const double a,
+                                 const double b,
+                                 const double c,
+                                 const double d,
+                                 int * ierr);
+
+/* Apply a symmetry transformation to the model entities `dimTag', with
+ * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+ * (This is a synonym for `mirror', which will be deprecated in a future
+ * release.) */
 GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double a,
                                      const double b,

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "CGNSOptions.h"
 
 #define NUM_SOLVERS 10
 
@@ -31,7 +30,7 @@ struct contextMeshOptions {
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
   int flexibleTransfinite, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
-  int meshOnlyVisible, minCircPoints, minCurvPoints;
+  int meshOnlyVisible, minCircPoints, minCurvPoints, minElementsPerTwoPi;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
@@ -51,7 +50,8 @@ struct contextMeshOptions {
   double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
-  int cgnsImportOrder, cgnsConstructTopology;
+  int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder,
+      cgnsConstructTopology, cgnsExportCPEX0045;
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
@@ -283,7 +283,6 @@ public:
   contextGeometryOptions geom;
   // mesh options
   contextMeshOptions mesh;
-  CGNSOptions cgnsOptions;
   // post processing options
   struct {
     int draw, link, horizontalScales;

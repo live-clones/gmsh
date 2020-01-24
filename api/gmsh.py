@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -184,6 +184,8 @@ def _iargcargv(o):
 
 def initialize(argv=[], readConfigFiles=True):
     """
+    gmsh.initialize(argv=[], readConfigFiles=True)
+
     Initialize Gmsh. This must be called before any call to the other functions
     in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are
     provided, they will be handled in the same way as the command line
@@ -203,6 +205,8 @@ def initialize(argv=[], readConfigFiles=True):
 
 def finalize():
     """
+    gmsh.finalize()
+
     Finalize Gmsh. This must be called when you are done using the Gmsh API.
     """
     ierr = c_int()
@@ -215,6 +219,8 @@ def finalize():
 
 def open(fileName):
     """
+    gmsh.open(fileName)
+
     Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling
     of the file depends on its extension and/or its contents: opening a file
     with model data will create a new model.
@@ -230,6 +236,8 @@ def open(fileName):
 
 def merge(fileName):
     """
+    gmsh.merge(fileName)
+
     Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app.
     Handling of the file depends on its extension and/or its contents. Merging
     a file with model data will add the data to the current model.
@@ -245,6 +253,8 @@ def merge(fileName):
 
 def write(fileName):
     """
+    gmsh.write(fileName)
+
     Write a file. The export format is determined by the file extension.
     """
     ierr = c_int()
@@ -258,6 +268,8 @@ def write(fileName):
 
 def clear():
     """
+    gmsh.clear()
+
     Clear all loaded models and post-processing data, and add a new empty
     model.
     """
@@ -278,6 +290,8 @@ class option:
     @staticmethod
     def setNumber(name, value):
         """
+        gmsh.option.setNumber(name, value)
+
         Set a numerical option to `value'. `name' is of the form "category.option"
         or "category[num].option". Available categories and options are listed in
         the Gmsh reference manual.
@@ -295,6 +309,8 @@ class option:
     @staticmethod
     def getNumber(name):
         """
+        gmsh.option.getNumber(name)
+
         Get the `value' of a numerical option. `name' is of the form
         "category.option" or "category[num].option". Available categories and
         options are listed in the Gmsh reference manual.
@@ -316,6 +332,8 @@ class option:
     @staticmethod
     def setString(name, value):
         """
+        gmsh.option.setString(name, value)
+
         Set a string option to `value'. `name' is of the form "category.option" or
         "category[num].option". Available categories and options are listed in the
         Gmsh reference manual.
@@ -333,6 +351,8 @@ class option:
     @staticmethod
     def getString(name):
         """
+        gmsh.option.getString(name)
+
         Get the `value' of a string option. `name' is of the form "category.option"
         or "category[num].option". Available categories and options are listed in
         the Gmsh reference manual.
@@ -354,6 +374,8 @@ class option:
     @staticmethod
     def setColor(name, r, g, b, a=0):
         """
+        gmsh.option.setColor(name, r, g, b, a=0)
+
         Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
         `g', `b' and `a' should be integers between 0 and 255. `name' is of the
         form "category.option" or "category[num].option". Available categories and
@@ -376,6 +398,8 @@ class option:
     @staticmethod
     def getColor(name):
         """
+        gmsh.option.getColor(name)
+
         Get the `r', `g', `b', `a' value of a color option. `name' is of the form
         "category.option" or "category[num].option". Available categories and
         options are listed in the Gmsh reference manual, with the "Color." middle
@@ -414,6 +438,8 @@ class model:
     @staticmethod
     def add(name):
         """
+        gmsh.model.add(name)
+
         Add a new model, with name `name', and set it as the current model.
         """
         ierr = c_int()
@@ -428,6 +454,8 @@ class model:
     @staticmethod
     def remove():
         """
+        gmsh.model.remove()
+
         Remove the current model.
         """
         ierr = c_int()
@@ -441,6 +469,8 @@ class model:
     @staticmethod
     def list():
         """
+        gmsh.model.list()
+
         List the names of all models.
 
         Return `names'.
@@ -459,6 +489,8 @@ class model:
     @staticmethod
     def getCurrent():
         """
+        gmsh.model.getCurrent()
+
         Get the name of the current model.
 
         Return `name'.
@@ -477,6 +509,8 @@ class model:
     @staticmethod
     def setCurrent(name):
         """
+        gmsh.model.setCurrent(name)
+
         Set the current model to the model with name `name'. If several models have
         the same name, select the one that was added first.
         """
@@ -492,6 +526,8 @@ class model:
     @staticmethod
     def getEntities(dim=-1):
         """
+        gmsh.model.getEntities(dim=-1)
+
         Get all the entities in the current model. If `dim' is >= 0, return only
         the entities of the specified dimension (e.g. points if `dim' == 0). The
         entities are returned as a vector of (dim, tag) integer pairs.
@@ -513,6 +549,8 @@ class model:
     @staticmethod
     def setEntityName(dim, tag, name):
         """
+        gmsh.model.setEntityName(dim, tag, name)
+
         Set the name of the entity of dimension `dim' and tag `tag'.
         """
         ierr = c_int()
@@ -529,6 +567,8 @@ class model:
     @staticmethod
     def getEntityName(dim, tag):
         """
+        gmsh.model.getEntityName(dim, tag)
+
         Get the name of the entity of dimension `dim' and tag `tag'.
 
         Return `name'.
@@ -549,6 +589,8 @@ class model:
     @staticmethod
     def getPhysicalGroups(dim=-1):
         """
+        gmsh.model.getPhysicalGroups(dim=-1)
+
         Get all the physical groups in the current model. If `dim' is >= 0, return
         only the entities of the specified dimension (e.g. physical points if `dim'
         == 0). The entities are returned as a vector of (dim, tag) integer pairs.
@@ -570,6 +612,8 @@ class model:
     @staticmethod
     def getEntitiesForPhysicalGroup(dim, tag):
         """
+        gmsh.model.getEntitiesForPhysicalGroup(dim, tag)
+
         Get the tags of the model entities making up the physical group of
         dimension `dim' and tag `tag'.
 
@@ -591,6 +635,8 @@ class model:
     @staticmethod
     def getPhysicalGroupsForEntity(dim, tag):
         """
+        gmsh.model.getPhysicalGroupsForEntity(dim, tag)
+
         Get the tags of the physical groups (if any) to which the model entity of
         dimension `dim' and tag `tag' belongs.
 
@@ -612,6 +658,8 @@ class model:
     @staticmethod
     def addPhysicalGroup(dim, tags, tag=-1):
         """
+        gmsh.model.addPhysicalGroup(dim, tags, tag=-1)
+
         Add a physical group of dimension `dim', grouping the model entities with
         tags `tags'. Return the tag of the physical group, equal to `tag' if `tag'
         is positive, or a new tag if `tag' < 0.
@@ -634,6 +682,8 @@ class model:
     @staticmethod
     def setPhysicalName(dim, tag, name):
         """
+        gmsh.model.setPhysicalName(dim, tag, name)
+
         Set the name of the physical group of dimension `dim' and tag `tag'.
         """
         ierr = c_int()
@@ -650,6 +700,8 @@ class model:
     @staticmethod
     def getPhysicalName(dim, tag):
         """
+        gmsh.model.getPhysicalName(dim, tag)
+
         Get the name of the physical group of dimension `dim' and tag `tag'.
 
         Return `name'.
@@ -670,6 +722,8 @@ class model:
     @staticmethod
     def getBoundary(dimTags, combined=True, oriented=True, recursive=False):
         """
+        gmsh.model.getBoundary(dimTags, combined=True, oriented=True, recursive=False)
+
         Get the boundary of the model entities `dimTags'. Return in `outDimTags'
         the boundary of the individual entities (if `combined' is false) or the
         boundary of the combined geometrical shape formed by all input entities (if
@@ -698,6 +752,8 @@ class model:
     @staticmethod
     def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
         """
+        gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1)
+
         Get the model entities in the bounding box defined by the two points
         (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
         return only the entities of the specified dimension (e.g. points if `dim'
@@ -726,6 +782,8 @@ class model:
     @staticmethod
     def getBoundingBox(dim, tag):
         """
+        gmsh.model.getBoundingBox(dim, tag)
+
         Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
         the model entity of dimension `dim' and tag `tag'. If `dim' and `tag' are
         negative, get the bounding box of the whole model.
@@ -764,6 +822,8 @@ class model:
     @staticmethod
     def getDimension():
         """
+        gmsh.model.getDimension()
+
         Get the geometrical dimension of the current model.
 
         Return an integer value.
@@ -780,6 +840,8 @@ class model:
     @staticmethod
     def addDiscreteEntity(dim, tag=-1, boundary=[]):
         """
+        gmsh.model.addDiscreteEntity(dim, tag=-1, boundary=[])
+
         Add a discrete model entity (defined by a mesh) of dimension `dim' in the
         current model. Return the tag of the new discrete entity, equal to `tag' if
         `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags
@@ -804,6 +866,8 @@ class model:
     @staticmethod
     def removeEntities(dimTags, recursive=False):
         """
+        gmsh.model.removeEntities(dimTags, recursive=False)
+
         Remove the entities `dimTags' of the current model. If `recursive' is true,
         remove all the entities on their boundaries, down to dimension 0.
         """
@@ -821,6 +885,8 @@ class model:
     @staticmethod
     def removeEntityName(name):
         """
+        gmsh.model.removeEntityName(name)
+
         Remove the entity name `name' from the current model.
         """
         ierr = c_int()
@@ -835,6 +901,8 @@ class model:
     @staticmethod
     def removePhysicalGroups(dimTags=[]):
         """
+        gmsh.model.removePhysicalGroups(dimTags=[])
+
         Remove the physical groups `dimTags' of the current model. If `dimTags' is
         empty, remove all groups.
         """
@@ -851,6 +919,8 @@ class model:
     @staticmethod
     def removePhysicalName(name):
         """
+        gmsh.model.removePhysicalName(name)
+
         Remove the physical name `name' from the current model.
         """
         ierr = c_int()
@@ -865,6 +935,8 @@ class model:
     @staticmethod
     def getType(dim, tag):
         """
+        gmsh.model.getType(dim, tag)
+
         Get the type of the entity of dimension `dim' and tag `tag'.
 
         Return `entityType'.
@@ -885,6 +957,8 @@ class model:
     @staticmethod
     def getParent(dim, tag):
         """
+        gmsh.model.getParent(dim, tag)
+
         In a partitioned model, get the parent of the entity of dimension `dim' and
         tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and
         `parentTag' are set to -1 if the entity has no parent.
@@ -911,6 +985,8 @@ class model:
     @staticmethod
     def getPartitions(dim, tag):
         """
+        gmsh.model.getPartitions(dim, tag)
+
         In a partitioned model, return the tags of the partition(s) to which the
         entity belongs.
 
@@ -932,6 +1008,8 @@ class model:
     @staticmethod
     def getValue(dim, tag, parametricCoord):
         """
+        gmsh.model.getValue(dim, tag, parametricCoord)
+
         Evaluate the parametrization of the entity of dimension `dim' and tag `tag'
         at the parametric coordinates `parametricCoord'. Only valid for `dim' equal
         to 0 (with empty `parametricCoord'), 1 (with `parametricCoord' containing
@@ -960,6 +1038,8 @@ class model:
     @staticmethod
     def getDerivative(dim, tag, parametricCoord):
         """
+        gmsh.model.getDerivative(dim, tag, parametricCoord)
+
         Evaluate the derivative of the parametrization of the entity of dimension
         `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
         valid for `dim' equal to 1 (with `parametricCoord' containing parametric
@@ -990,6 +1070,8 @@ class model:
     @staticmethod
     def getCurvature(dim, tag, parametricCoord):
         """
+        gmsh.model.getCurvature(dim, tag, parametricCoord)
+
         Evaluate the (maximum) curvature of the entity of dimension `dim' and tag
         `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
         equal to 1 (with `parametricCoord' containing parametric coordinates on the
@@ -1016,6 +1098,8 @@ class model:
     @staticmethod
     def getPrincipalCurvatures(tag, parametricCoord):
         """
+        gmsh.model.getPrincipalCurvatures(tag, parametricCoord)
+
         Evaluate the principal curvatures of the surface with tag `tag' at the
         parametric coordinates `parametricCoord', as well as their respective
         directions. `parametricCoord' are given by pair of u and v coordinates,
@@ -1050,6 +1134,8 @@ class model:
     @staticmethod
     def getNormal(tag, parametricCoord):
         """
+        gmsh.model.getNormal(tag, parametricCoord)
+
         Get the normal to the surface with tag `tag' at the parametric coordinates
         `parametricCoord'. `parametricCoord' are given by pairs of u and v
         coordinates, concatenated: [p1u, p1v, p2u, ...]. `normals' are returned as
@@ -1074,6 +1160,8 @@ class model:
     @staticmethod
     def getParametrization(dim, tag, points):
         """
+        gmsh.model.getParametrization(dim, tag, points)
+
         Get the parametric coordinates `parametricCoord' for the points `points' on
         the entity of dimension `dim' and tag `tag'. `points' are given as triplets
         of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
@@ -1101,6 +1189,8 @@ class model:
     @staticmethod
     def setVisibility(dimTags, value, recursive=False):
         """
+        gmsh.model.setVisibility(dimTags, value, recursive=False)
+
         Set the visibility of the model entities `dimTags' to `value'. Apply the
         visibility setting recursively if `recursive' is true.
         """
@@ -1119,6 +1209,8 @@ class model:
     @staticmethod
     def getVisibility(dim, tag):
         """
+        gmsh.model.getVisibility(dim, tag)
+
         Get the visibility of the model entity of dimension `dim' and tag `tag'.
 
         Return `value'.
@@ -1139,6 +1231,8 @@ class model:
     @staticmethod
     def setColor(dimTags, r, g, b, a=0, recursive=False):
         """
+        gmsh.model.setColor(dimTags, r, g, b, a=0, recursive=False)
+
         Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
         `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
         255. Apply the color setting recursively if `recursive' is true.
@@ -1161,6 +1255,8 @@ class model:
     @staticmethod
     def getColor(dim, tag):
         """
+        gmsh.model.getColor(dim, tag)
+
         Get the color of the model entity of dimension `dim' and tag `tag'.
 
         Return `r', `g', `b', `a'.
@@ -1191,6 +1287,8 @@ class model:
     @staticmethod
     def setCoordinates(tag, x, y, z):
         """
+        gmsh.model.setCoordinates(tag, x, y, z)
+
         Set the `x', `y', `z' coordinates of a geometrical point.
         """
         ierr = c_int()
@@ -1212,28 +1310,10 @@ class model:
         """
 
         @staticmethod
-        def computeCrossField():
-            """
-            Compute a cross field for the current mesh. The function creates 3 views:
-            the H function, the Theta function and cross directions. Return the tags of
-            the views
-
-            Return `viewTags'.
-            """
-            api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshComputeCrossField(
-                byref(api_viewTags_), byref(api_viewTags_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshComputeCrossField returned non-zero error code: ",
-                    ierr.value)
-            return _ovectorint(api_viewTags_, api_viewTags_n_.value)
-
-        @staticmethod
         def generate(dim=3):
             """
+            gmsh.model.mesh.generate(dim=3)
+
             Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
             """
             ierr = c_int()
@@ -1248,6 +1328,8 @@ class model:
         @staticmethod
         def partition(numPart):
             """
+            gmsh.model.mesh.partition(numPart)
+
             Partition the mesh of the current model into `numPart' partitions.
             """
             ierr = c_int()
@@ -1262,6 +1344,8 @@ class model:
         @staticmethod
         def unpartition():
             """
+            gmsh.model.mesh.unpartition()
+
             Unpartition the mesh of the current model.
             """
             ierr = c_int()
@@ -1273,20 +1357,25 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def optimize(method, force=False, niter=1):
+        def optimize(method, force=False, niter=1, dimTags=[]):
             """
+            gmsh.model.mesh.optimize(method, force=False, niter=1, dimTags=[])
+
             Optimize the mesh of the current model using `method' (empty for default
             tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
             direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
             smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
             for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation).
-            If `force' is set apply the optimization also to discrete entities.
+            If `force' is set apply the optimization also to discrete entities. If
+            `dimTags' is given, only apply the optimizer to the given entities.
             """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
             lib.gmshModelMeshOptimize(
                 c_char_p(method.encode()),
                 c_int(bool(force)),
                 c_int(niter),
+                api_dimTags_, api_dimTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1296,6 +1385,8 @@ class model:
         @staticmethod
         def recombine():
             """
+            gmsh.model.mesh.recombine()
+
             Recombine the mesh of the current model.
             """
             ierr = c_int()
@@ -1309,6 +1400,8 @@ class model:
         @staticmethod
         def refine():
             """
+            gmsh.model.mesh.refine()
+
             Refine the mesh of the current model by uniformly splitting the elements.
             """
             ierr = c_int()
@@ -1322,6 +1415,8 @@ class model:
         @staticmethod
         def setOrder(order):
             """
+            gmsh.model.mesh.setOrder(order)
+
             Set the order of the elements in the mesh of the current model to `order'.
             """
             ierr = c_int()
@@ -1336,6 +1431,8 @@ class model:
         @staticmethod
         def getLastEntityError():
             """
+            gmsh.model.mesh.getLastEntityError()
+
             Get the last entities (if any) where a meshing error occurred. Currently
             only populated by the new 3D meshing algorithms.
 
@@ -1355,6 +1452,8 @@ class model:
         @staticmethod
         def getLastNodeError():
             """
+            gmsh.model.mesh.getLastNodeError()
+
             Get the last nodes (if any) where a meshing error occurred. Currently only
             populated by the new 3D meshing algorithms.
 
@@ -1374,6 +1473,8 @@ class model:
         @staticmethod
         def clear():
             """
+            gmsh.model.mesh.clear()
+
             Clear the mesh, i.e. delete all the nodes and elements.
             """
             ierr = c_int()
@@ -1387,6 +1488,8 @@ class model:
         @staticmethod
         def getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True):
             """
+            gmsh.model.mesh.getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True)
+
             Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
             `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
             `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the
@@ -1428,6 +1531,8 @@ class model:
         @staticmethod
         def getNodesByElementType(elementType, tag=-1, returnParametricCoord=True):
             """
+            gmsh.model.mesh.getNodesByElementType(elementType, tag=-1, returnParametricCoord=True)
+
             Get the nodes classified on the entity of tag `tag', for all the elements
             of type `elementType'. The other arguments are treated as in `getNodes'.
 
@@ -1457,12 +1562,12 @@ class model:
         @staticmethod
         def getNode(nodeTag):
             """
+            gmsh.model.mesh.getNode(nodeTag)
+
             Get the coordinates and the parametric coordinates (if any) of the node
-            with tag `tag'. This is a sometimes useful but inefficient way of accessing
-            nodes, as it relies on a cache stored in the model. For large meshes all
-            the nodes in the model should be numbered in a continuous sequence of tags
-            from 1 to N to maintain reasonable performance (in this case the internal
-            cache is based on a vector; otherwise it uses a map).
+            with tag `tag'. This function relies on an internal cache (a vector in case
+            of dense node numbering, a map otherwise); for large meshes accessing nodes
+            in bulk is often preferable.
 
             Return `coord', `parametricCoord'.
             """
@@ -1485,11 +1590,12 @@ class model:
         @staticmethod
         def setNode(nodeTag, coord, parametricCoord):
             """
+            gmsh.model.mesh.setNode(nodeTag, coord, parametricCoord)
+
             Set the coordinates and the parametric coordinates (if any) of the node
-            with tag `tag'. This is a sometimes useful but inefficient way of accessing
-            nodes, as it relies on a cache stored in the model. For large meshes all
-            the nodes in the model should be added at once, and numbered in a
-            continuous sequence of tags from 1 to N.
+            with tag `tag'. This function relies on an internal cache (a vector in case
+            of dense node numbering, a map otherwise); for large meshes accessing nodes
+            in bulk is often preferable.
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
@@ -1507,6 +1613,8 @@ class model:
         @staticmethod
         def rebuildNodeCache(onlyIfNecessary=True):
             """
+            gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary=True)
+
             Rebuild the node cache.
             """
             ierr = c_int()
@@ -1521,6 +1629,8 @@ class model:
         @staticmethod
         def getNodesForPhysicalGroup(dim, tag):
             """
+            gmsh.model.mesh.getNodesForPhysicalGroup(dim, tag)
+
             Get the nodes from all the elements belonging to the physical group of
             dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord'
             is a vector of length 3 times the length of `nodeTags' that contains the x,
@@ -1548,6 +1658,8 @@ class model:
         @staticmethod
         def addNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
             """
+            gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord=[])
+
             Add nodes classified on the model entity of dimension `dim' and tag `tag'.
             `nodeTags' contains the node tags (their unique, strictly positive
             identification numbers). `coord' is a vector of length 3 times the length
@@ -1577,6 +1689,8 @@ class model:
         @staticmethod
         def reclassifyNodes():
             """
+            gmsh.model.mesh.reclassifyNodes()
+
             Reclassify all nodes on their associated model entity, based on the
             elements. Can be used when importing nodes in bulk (e.g. by associating
             them all to a single volume), to reclassify them correctly on model
@@ -1593,6 +1707,8 @@ class model:
         @staticmethod
         def relocateNodes(dim=-1, tag=-1):
             """
+            gmsh.model.mesh.relocateNodes(dim=-1, tag=-1)
+
             Relocate the nodes classified on the entity of dimension `dim' and tag
             `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
             for all entities of dimension `dim'. If `dim' and `tag' are negative,
@@ -1611,6 +1727,8 @@ class model:
         @staticmethod
         def getElements(dim=-1, tag=-1):
             """
+            gmsh.model.mesh.getElements(dim=-1, tag=-1)
+
             Get the elements classified on the entity of dimension `dim' and tag `tag'.
             If `tag' < 0, get the elements for all entities of dimension `dim'. If
             `dim' and `tag' are negative, get all the elements in the mesh.
@@ -1650,12 +1768,12 @@ class model:
         @staticmethod
         def getElement(elementTag):
             """
-            Get the type and node tags of the element with tag `tag'. This is a
-            sometimes useful but inefficient way of accessing elements, as it relies on
-            a cache stored in the model. For large meshes all the elements in the model
-            should be numbered in a continuous sequence of tags from 1 to N to maintain
-            reasonable performance (in this case the internal cache is based on a
-            vector; otherwise it uses a map).
+            gmsh.model.mesh.getElement(elementTag)
+
+            Get the type and node tags of the element with tag `tag'. This function
+            relies on an internal cache (a vector in case of dense element numbering, a
+            map otherwise); for large meshes accessing elements in bulk is often
+            preferable.
 
             Return `elementType', `nodeTags'.
             """
@@ -1678,13 +1796,14 @@ class model:
         @staticmethod
         def getElementByCoordinates(x, y, z, dim=-1, strict=False):
             """
+            gmsh.model.mesh.getElementByCoordinates(x, y, z, dim=-1, strict=False)
+
             Search the mesh for an element located at coordinates (`x', `y', `z'). This
-            is a sometimes useful but inefficient way of accessing elements, as it
-            relies on a search in a spatial octree. If an element is found, return its
-            tag, type and node tags, as well as the local coordinates (`u', `v', `w')
-            within the element corresponding to search location. If `dim' is >= 0, only
-            search for elements of the given dimension. If `strict' is not set, use a
-            tolerance to find elements near the search location.
+            function performs a search in a spatial octree. If an element is found,
+            return its tag, type and node tags, as well as the local coordinates (`u',
+            `v', `w') within the element corresponding to search location. If `dim' is
+            >= 0, only search for elements of the given dimension. If `strict' is not
+            set, use a tolerance to find elements near the search location.
 
             Return `elementTag', `elementType', `nodeTags', `u', `v', `w'.
             """
@@ -1723,13 +1842,14 @@ class model:
         @staticmethod
         def getElementsByCoordinates(x, y, z, dim=-1, strict=False):
             """
+            gmsh.model.mesh.getElementsByCoordinates(x, y, z, dim=-1, strict=False)
+
             Search the mesh for element(s) located at coordinates (`x', `y', `z'). This
-            is a sometimes useful but inefficient way of accessing elements, as it
-            relies on a search in a spatial octree. Return the tags of all found
-            elements in `elementTags'. Additional information about the elements can be
-            accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim'
-            is >= 0, only search for elements of the given dimension. If `strict' is
-            not set, use a tolerance to find elements near the search location.
+            function performs a search in a spatial octree. Return the tags of all
+            found elements in `elementTags'. Additional information about the elements
+            can be accessed through `getElement' and `getLocalCoordinatesInElement'. If
+            `dim' is >= 0, only search for elements of the given dimension. If `strict'
+            is not set, use a tolerance to find elements near the search location.
 
             Return `elementTags'.
             """
@@ -1752,10 +1872,13 @@ class model:
         @staticmethod
         def getLocalCoordinatesInElement(elementTag, x, y, z):
             """
+            gmsh.model.mesh.getLocalCoordinatesInElement(elementTag, x, y, z)
+
             Return the local coordinates (`u', `v', `w') within the element
             `elementTag' corresponding to the model coordinates (`x', `y', `z'). This
-            is a sometimes useful but inefficient way of accessing elements, as it
-            relies on a cache stored in the model.
+            function relies on an internal cache (a vector in case of dense element
+            numbering, a map otherwise); for large meshes accessing elements in bulk is
+            often preferable.
 
             Return `u', `v', `w'.
             """
@@ -1784,6 +1907,8 @@ class model:
         @staticmethod
         def getElementTypes(dim=-1, tag=-1):
             """
+            gmsh.model.mesh.getElementTypes(dim=-1, tag=-1)
+
             Get the types of elements in the entity of dimension `dim' and tag `tag'.
             If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
             and `tag' are negative, get all the types in the mesh.
@@ -1806,6 +1931,8 @@ class model:
         @staticmethod
         def getElementType(familyName, order, serendip=False):
             """
+            gmsh.model.mesh.getElementType(familyName, order, serendip=False)
+
             Return an element type given its family name `familyName' ("point", "line",
             "triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron")
             and polynomial order `order'. If `serendip' is true, return the
@@ -1828,6 +1955,8 @@ class model:
         @staticmethod
         def getElementProperties(elementType):
             """
+            gmsh.model.mesh.getElementProperties(elementType)
+
             Get the properties of an element of type `elementType': its name
             (`elementName'), dimension (`dim'), order (`order'), number of nodes
             (`numNodes'), coordinates of the nodes in the reference element
@@ -1867,6 +1996,8 @@ class model:
         @staticmethod
         def getElementsByType(elementType, tag=-1, task=0, numTasks=1):
             """
+            gmsh.model.mesh.getElementsByType(elementType, tag=-1, task=0, numTasks=1)
+
             Get the elements of type `elementType' classified on the entity of tag
             `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a
             vector containing the tags (unique, strictly positive identifiers) of the
@@ -1901,6 +2032,8 @@ class model:
         @staticmethod
         def addElements(dim, tag, elementTypes, elementTags, nodeTags):
             """
+            gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)
+
             Add elements classified on the entity of dimension `dim' and tag `tag'.
             `types' contains the MSH types of the elements (e.g. `2' for 3-node
             triangles: see the Gmsh reference manual). `elementTags' is a vector of the
@@ -1931,6 +2064,8 @@ class model:
         @staticmethod
         def addElementsByType(tag, elementType, elementTags, nodeTags):
             """
+            gmsh.model.mesh.addElementsByType(tag, elementType, elementTags, nodeTags)
+
             Add elements of type `elementType' classified on the entity of tag `tag'.
             `elementTags' contains the tags (unique, strictly positive identifiers) of
             the elements of the corresponding type. `nodeTags' is a vector of length
@@ -1956,6 +2091,8 @@ class model:
         @staticmethod
         def getIntegrationPoints(elementType, integrationType):
             """
+            gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
+
             Get the numerical quadrature information for the given element type
             `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
             Gauss quadrature suited for integrating 4th order polynomials).
@@ -1985,6 +2122,8 @@ class model:
         @staticmethod
         def getJacobians(elementType, integrationPoints, tag=-1, task=0, numTasks=1):
             """
+            gmsh.model.mesh.getJacobians(elementType, integrationPoints, tag=-1, task=0, numTasks=1)
+
             Get the Jacobians of all the elements of type `elementType' classified on
             the entity of tag `tag', at the G integration points `integrationPoints'
             given as concatenated triplets of coordinates in the reference element
@@ -2029,6 +2168,8 @@ class model:
         @staticmethod
         def getBasisFunctions(elementType, integrationPoints, functionSpaceType):
             """
+            gmsh.model.mesh.getBasisFunctions(elementType, integrationPoints, functionSpaceType)
+
             Get the basis functions of the element of type `elementType' at the
             integration points `integrationPoints' (given as concatenated triplets of
             coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
@@ -2062,8 +2203,10 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
-        def getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1):
+        def getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1):
             """
+            gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1)
+
             Get the element-dependent basis functions of the elements of type
             `elementType' in the entity of tag `tag'at the integration points
             `integrationPoints' (given as concatenated triplets of coordinates in the
@@ -2076,7 +2219,8 @@ class model:
             basis functions at the integration points for each element: [e1g1f1,...,
             e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,...,
             e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental
-            feature and will probably change in a future release.
+            feature and will probably change in a future release. If `numTasks' > 1,
+            only compute and return the part of the data indexed by `task'.
 
             Return `numComponents', `numFunctionsPerElements', `basisFunctions'.
             """
@@ -2093,6 +2237,8 @@ class model:
                 byref(api_numFunctionsPerElements_),
                 byref(api_basisFunctions_), byref(api_basisFunctions_n_),
                 c_int(tag),
+                c_size_t(task),
+                c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -2106,6 +2252,8 @@ class model:
         @staticmethod
         def getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True):
             """
+            gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True)
+
             Generate the `keys' for the elements of type `elementType' in the entity of
             tag `tag', for the `functionSpaceType' function space. Each key uniquely
             identifies a basis function in the function space. If `returnCoord' is set,
@@ -2135,8 +2283,31 @@ class model:
                 _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
+        def getNumberOfKeysForElements(elementType, functionSpaceType):
+            """
+            gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
+
+            Get the number of keys by elements of type `elementType' for function space
+            named `functionSpaceType'.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelMeshGetNumberOfKeysForElements(
+                c_int(elementType),
+                c_char_p(functionSpaceType.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNumberOfKeysForElements returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
         def getInformationForElements(keys, elementType, functionSpaceType):
             """
+            gmsh.model.mesh.getInformationForElements(keys, elementType, functionSpaceType)
+
             Get information about the `keys'. `infoKeys' returns information about the
             functions associated with the `keys'. `infoKeys[0].first' describes the
             type of function (0 for  vertex function, 1 for edge function, 2 for face
@@ -2164,6 +2335,8 @@ class model:
         @staticmethod
         def precomputeBasisFunctions(elementType):
             """
+            gmsh.model.mesh.precomputeBasisFunctions(elementType)
+
             Precomputes the basis functions corresponding to `elementType'.
             """
             ierr = c_int()
@@ -2178,6 +2351,8 @@ class model:
         @staticmethod
         def getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1):
             """
+            gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1)
+
             Get the barycenters of all elements of type `elementType' classified on the
             entity of tag `tag'. If `primary' is set, only the primary nodes of the
             elements are taken into account for the barycenter calculation. If `fast'
@@ -2208,6 +2383,8 @@ class model:
         @staticmethod
         def getElementEdgeNodes(elementType, tag=-1, primary=False, task=0, numTasks=1):
             """
+            gmsh.model.mesh.getElementEdgeNodes(elementType, tag=-1, primary=False, task=0, numTasks=1)
+
             Get the nodes on the edges of all elements of type `elementType' classified
             on the entity of tag `tag'. `nodeTags' contains the node tags of the edges
             for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by
@@ -2238,6 +2415,8 @@ class model:
         @staticmethod
         def getElementFaceNodes(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1):
             """
+            gmsh.model.mesh.getElementFaceNodes(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1)
+
             Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
             for quadrangular faces) of all elements of type `elementType' classified on
             the entity of tag `tag'. `nodeTags' contains the node tags of the faces for
@@ -2270,6 +2449,8 @@ class model:
         @staticmethod
         def getGhostElements(dim, tag):
             """
+            gmsh.model.mesh.getGhostElements(dim, tag)
+
             Get the ghost elements `elementTags' and their associated `partitions'
             stored in the ghost entity of dimension `dim' and tag `tag'.
 
@@ -2295,6 +2476,8 @@ class model:
         @staticmethod
         def setSize(dimTags, size):
             """
+            gmsh.model.mesh.setSize(dimTags, size)
+
             Set a mesh size constraint on the model entities `dimTags'. Currently only
             entities of dimension 0 (points) are handled.
             """
@@ -2312,6 +2495,8 @@ class model:
         @staticmethod
         def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
             """
+            gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.)
+
             Set a transfinite meshing constraint on the curve `tag', with `numNodes'
             nodes distributed according to `meshType' and `coef'. Currently supported
             types are "Progression" (geometrical progression with power `coef') and
@@ -2332,6 +2517,8 @@ class model:
         @staticmethod
         def setTransfiniteSurface(tag, arrangement="Left", cornerTags=[]):
             """
+            gmsh.model.mesh.setTransfiniteSurface(tag, arrangement="Left", cornerTags=[])
+
             Set a transfinite meshing constraint on the surface `tag'. `arrangement'
             describes the arrangement of the triangles when the surface is not flagged
             as recombined: currently supported values are "Left", "Right",
@@ -2355,6 +2542,8 @@ class model:
         @staticmethod
         def setTransfiniteVolume(tag, cornerTags=[]):
             """
+            gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags=[])
+
             Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
             be used to specify the (6 or 8) corners of the transfinite interpolation
             explicitly.
@@ -2373,6 +2562,8 @@ class model:
         @staticmethod
         def setRecombine(dim, tag):
             """
+            gmsh.model.mesh.setRecombine(dim, tag)
+
             Set a recombination meshing constraint on the model entity of dimension
             `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
             triangles into quadrangles) are supported.
@@ -2390,6 +2581,8 @@ class model:
         @staticmethod
         def setSmoothing(dim, tag, val):
             """
+            gmsh.model.mesh.setSmoothing(dim, tag, val)
+
             Set a smoothing meshing constraint on the model entity of dimension `dim'
             and tag `tag'. `val' iterations of a Laplace smoother are applied.
             """
@@ -2407,6 +2600,8 @@ class model:
         @staticmethod
         def setReverse(dim, tag, val=True):
             """
+            gmsh.model.mesh.setReverse(dim, tag, val=True)
+
             Set a reverse meshing constraint on the model entity of dimension `dim' and
             tag `tag'. If `val' is true, the mesh orientation will be reversed with
             respect to the natural mesh orientation (i.e. the orientation consistent
@@ -2427,6 +2622,8 @@ class model:
         @staticmethod
         def setAlgorithm(dim, tag, val):
             """
+            gmsh.model.mesh.setAlgorithm(dim, tag, val)
+
             Set the meshing algorithm on the model entity of dimension `dim' and tag
             `tag'. Currently only supported for `dim' == 2.
             """
@@ -2444,6 +2641,8 @@ class model:
         @staticmethod
         def setSizeFromBoundary(dim, tag, val):
             """
+            gmsh.model.mesh.setSizeFromBoundary(dim, tag, val)
+
             Force the mesh size to be extended from the boundary, or not, for the model
             entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
             == 2.
@@ -2462,6 +2661,8 @@ class model:
         @staticmethod
         def setCompound(dim, tags):
             """
+            gmsh.model.mesh.setCompound(dim, tags)
+
             Set a compound meshing constraint on the model entities of dimension `dim'
             and tags `tags'. During meshing, compound entities are treated as a single
             discrete entity, which is automatically reparametrized.
@@ -2480,6 +2681,8 @@ class model:
         @staticmethod
         def setOutwardOrientation(tag):
             """
+            gmsh.model.mesh.setOutwardOrientation(tag)
+
             Set meshing constraints on the bounding surfaces of the volume of tag `tag'
             so that all surfaces are oriented with outward pointing normals. Currently
             only available with the OpenCASCADE kernel, as it relies on the STL
@@ -2497,6 +2700,8 @@ class model:
         @staticmethod
         def embed(dim, tags, inDim, inTag):
             """
+            gmsh.model.mesh.embed(dim, tags, inDim, inTag)
+
             Embed the model entities of dimension `dim' and tags `tags' in the
             (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must
             be strictly smaller than `inDim', which must be either 2 or 3. The embedded
@@ -2519,6 +2724,8 @@ class model:
         @staticmethod
         def removeEmbedded(dimTags, dim=-1):
             """
+            gmsh.model.mesh.removeEmbedded(dimTags, dim=-1)
+
             Remove embedded entities from the model entities `dimTags'. if `dim' is >=
             0, only remove embedded entities of the given dimension (e.g. embedded
             points if `dim' == 0).
@@ -2537,6 +2744,8 @@ class model:
         @staticmethod
         def reorderElements(elementType, tag, ordering):
             """
+            gmsh.model.mesh.reorderElements(elementType, tag, ordering)
+
             Reorder the elements of type `elementType' classified on the entity of tag
             `tag' according to `ordering'.
             """
@@ -2555,6 +2764,8 @@ class model:
         @staticmethod
         def renumberNodes():
             """
+            gmsh.model.mesh.renumberNodes()
+
             Renumber the node tags in a continuous sequence.
             """
             ierr = c_int()
@@ -2568,6 +2779,8 @@ class model:
         @staticmethod
         def renumberElements():
             """
+            gmsh.model.mesh.renumberElements()
+
             Renumber the element tags in a continuous sequence.
             """
             ierr = c_int()
@@ -2581,6 +2794,8 @@ class model:
         @staticmethod
         def setPeriodic(dim, tags, tagsMaster, affineTransform):
             """
+            gmsh.model.mesh.setPeriodic(dim, tags, tagsMaster, affineTransform)
+
             Set the meshes of the entities of dimension `dim' and tag `tags' as
             periodic copies of the meshes of entities `tagsMaster', using the affine
             transformation specified in `affineTransformation' (16 entries of a 4x4
@@ -2608,6 +2823,8 @@ class model:
         @staticmethod
         def getPeriodicNodes(dim, tag):
             """
+            gmsh.model.mesh.getPeriodicNodes(dim, tag)
+
             Get the master entity `tagMaster', the node tags `nodeTags' and their
             corresponding master node tags `nodeTagsMaster', and the affine transform
             `affineTransform' for the entity of dimension `dim' and tag `tag'.
@@ -2640,6 +2857,8 @@ class model:
         @staticmethod
         def removeDuplicateNodes():
             """
+            gmsh.model.mesh.removeDuplicateNodes()
+
             Remove duplicate nodes in the mesh of the current model.
             """
             ierr = c_int()
@@ -2653,6 +2872,8 @@ class model:
         @staticmethod
         def splitQuadrangles(quality=1., tag=-1):
             """
+            gmsh.model.mesh.splitQuadrangles(quality=1., tag=-1)
+
             Split (into two triangles) all quadrangles in surface `tag' whose quality
             is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.
             """
@@ -2669,6 +2890,8 @@ class model:
         @staticmethod
         def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi):
             """
+            gmsh.model.mesh.classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi)
+
             Classify ("color") the surface mesh based on the angle threshold `angle'
             (in radians), and create new discrete surfaces, curves and points
             accordingly. If `boundary' is set, also create discrete curves on the
@@ -2692,6 +2915,8 @@ class model:
         @staticmethod
         def createGeometry():
             """
+            gmsh.model.mesh.createGeometry()
+
             Create a parametrization for discrete curves and surfaces (i.e. curves and
             surfaces represented solely by a mesh, without an underlying CAD
             description), assuming that each can be parametrized with a single map.
@@ -2707,6 +2932,8 @@ class model:
         @staticmethod
         def createTopology():
             """
+            gmsh.model.mesh.createTopology()
+
             Create a boundary representation from the mesh if the model does not have
             one (e.g. when imported from mesh file formats with no BRep representation
             of the underlying model).
@@ -2722,6 +2949,8 @@ class model:
         @staticmethod
         def computeHomology(domainTags=[], subdomainTags=[], dims=[]):
             """
+            gmsh.model.mesh.computeHomology(domainTags=[], subdomainTags=[], dims=[])
+
             Compute a basis representation for homology spaces after a mesh has been
             generated. The computation domain is given in a list of physical group tags
             `domainTags'; if empty, the whole mesh is the domain. The computation
@@ -2748,6 +2977,8 @@ class model:
         @staticmethod
         def computeCohomology(domainTags=[], subdomainTags=[], dims=[]):
             """
+            gmsh.model.mesh.computeCohomology(domainTags=[], subdomainTags=[], dims=[])
+
             Compute a basis representation for cohomology spaces after a mesh has been
             generated. The computation domain is given in a list of physical group tags
             `domainTags'; if empty, the whole mesh is the domain. The computation
@@ -2771,6 +3002,28 @@ class model:
                     "gmshModelMeshComputeCohomology returned non-zero error code: ",
                     ierr.value)
 
+        @staticmethod
+        def computeCrossField():
+            """
+            gmsh.model.mesh.computeCrossField()
+
+            Compute a cross field for the current mesh. The function creates 3 views:
+            the H function, the Theta function and cross directions. Return the tags of
+            the views
+
+            Return `viewTags'.
+            """
+            api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshComputeCrossField(
+                byref(api_viewTags_), byref(api_viewTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshComputeCrossField returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_viewTags_, api_viewTags_n_.value)
+
 
         class field:
             """
@@ -2780,6 +3033,8 @@ class model:
             @staticmethod
             def add(fieldType, tag=-1):
                 """
+                gmsh.model.mesh.field.add(fieldType, tag=-1)
+
                 Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
                 the tag explicitly; otherwise a new tag is assigned automatically. Return
                 the field tag.
@@ -2800,6 +3055,8 @@ class model:
             @staticmethod
             def remove(tag):
                 """
+                gmsh.model.mesh.field.remove(tag)
+
                 Remove the field with tag `tag'.
                 """
                 ierr = c_int()
@@ -2814,6 +3071,8 @@ class model:
             @staticmethod
             def setNumber(tag, option, value):
                 """
+                gmsh.model.mesh.field.setNumber(tag, option, value)
+
                 Set the numerical option `option' to value `value' for field `tag'.
                 """
                 ierr = c_int()
@@ -2830,6 +3089,8 @@ class model:
             @staticmethod
             def setString(tag, option, value):
                 """
+                gmsh.model.mesh.field.setString(tag, option, value)
+
                 Set the string option `option' to value `value' for field `tag'.
                 """
                 ierr = c_int()
@@ -2846,6 +3107,8 @@ class model:
             @staticmethod
             def setNumbers(tag, option, value):
                 """
+                gmsh.model.mesh.field.setNumbers(tag, option, value)
+
                 Set the numerical list option `option' to value `value' for field `tag'.
                 """
                 api_value_, api_value_n_ = _ivectordouble(value)
@@ -2863,6 +3126,8 @@ class model:
             @staticmethod
             def setAsBackgroundMesh(tag):
                 """
+                gmsh.model.mesh.field.setAsBackgroundMesh(tag)
+
                 Set the field `tag' as the background mesh size field.
                 """
                 ierr = c_int()
@@ -2877,6 +3142,8 @@ class model:
             @staticmethod
             def setAsBoundaryLayer(tag):
                 """
+                gmsh.model.mesh.field.setAsBoundaryLayer(tag)
+
                 Set the field `tag' as a boundary layer size field.
                 """
                 ierr = c_int()
@@ -2897,6 +3164,8 @@ class model:
         @staticmethod
         def addPoint(x, y, z, meshSize=0., tag=-1):
             """
+            gmsh.model.geo.addPoint(x, y, z, meshSize=0., tag=-1)
+
             Add a geometrical point in the built-in CAD representation, at coordinates
             (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that
             point. If `tag' is positive, set the tag explicitly; otherwise a new tag is
@@ -2923,6 +3192,8 @@ class model:
         @staticmethod
         def addLine(startTag, endTag, tag=-1):
             """
+            gmsh.model.geo.addLine(startTag, endTag, tag=-1)
+
             Add a straight line segment between the two points with tags `startTag' and
             `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag
             is selected automatically. Return the tag of the line.
@@ -2944,10 +3215,12 @@ class model:
         @staticmethod
         def addCircleArc(startTag, centerTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
             """
+            gmsh.model.geo.addCircleArc(startTag, centerTag, endTag, tag=-1, nx=0., ny=0., nz=0.)
+
             Add a circle arc (strictly smaller than Pi) between the two points with
             tags `startTag' and `endTag', with center `centertag'. If `tag' is
             positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly set the plane
+            automatically. If (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane
             of the circle arc. Return the tag of the circle arc.
 
             Return an integer value.
@@ -2971,11 +3244,14 @@ class model:
         @staticmethod
         def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
             """
+            gmsh.model.geo.addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.)
+
             Add an ellipse arc (strictly smaller than Pi) between the two points
             `startTag' and `endTag', with center `centerTag' and major axis point
             `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
-            tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly
-            set the plane of the circle arc. Return the tag of the ellipse arc.
+            tag is selected automatically. If (`nx', `ny', `nz') != (0, 0, 0),
+            explicitly set the plane of the circle arc. Return the tag of the ellipse
+            arc.
 
             Return an integer value.
             """
@@ -2999,6 +3275,8 @@ class model:
         @staticmethod
         def addSpline(pointTags, tag=-1):
             """
+            gmsh.model.geo.addSpline(pointTags, tag=-1)
+
             Add a spline (Catmull-Rom) curve going through the points `pointTags'. If
             `tag' is positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Create a periodic curve if the first and last points are the
@@ -3021,6 +3299,8 @@ class model:
         @staticmethod
         def addBSpline(pointTags, tag=-1):
             """
+            gmsh.model.geo.addBSpline(pointTags, tag=-1)
+
             Add a cubic b-spline curve with `pointTags' control points. If `tag' is
             positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
@@ -3043,6 +3323,8 @@ class model:
         @staticmethod
         def addBezier(pointTags, tag=-1):
             """
+            gmsh.model.geo.addBezier(pointTags, tag=-1)
+
             Add a Bezier curve with `pointTags' control points. If `tag' is positive,
             set the tag explicitly; otherwise a new tag is selected automatically.
             Return the tag of the Bezier curve.
@@ -3064,6 +3346,8 @@ class model:
         @staticmethod
         def addCompoundSpline(curveTags, numIntervals=5, tag=-1):
             """
+            gmsh.model.geo.addCompoundSpline(curveTags, numIntervals=5, tag=-1)
+
             Add a spline (Catmull-Rom) going through points sampling the curves in
             `curveTags'. The density of sampling points on each curve is governed by
             `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a
@@ -3087,6 +3371,8 @@ class model:
         @staticmethod
         def addCompoundBSpline(curveTags, numIntervals=20, tag=-1):
             """
+            gmsh.model.geo.addCompoundBSpline(curveTags, numIntervals=20, tag=-1)
+
             Add a b-spline with control points sampling the curves in `curveTags'. The
             density of sampling points on each curve is governed by `numIntervals'. If
             `tag' is positive, set the tag explicitly; otherwise a new tag is selected
@@ -3110,6 +3396,8 @@ class model:
         @staticmethod
         def addCurveLoop(curveTags, tag=-1):
             """
+            gmsh.model.geo.addCurveLoop(curveTags, tag=-1)
+
             Add a curve loop (a closed wire) formed by the curves `curveTags'.
             `curveTags' should contain (signed) tags of model enties of dimension 1
             forming a closed loop: a negative tag signifies that the underlying curve
@@ -3134,6 +3422,8 @@ class model:
         @staticmethod
         def addPlaneSurface(wireTags, tag=-1):
             """
+            gmsh.model.geo.addPlaneSurface(wireTags, tag=-1)
+
             Add a plane surface defined by one or more curve loops `wireTags'. The
             first curve loop defines the exterior contour; additional curve loop define
             holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is
@@ -3156,6 +3446,8 @@ class model:
         @staticmethod
         def addSurfaceFilling(wireTags, tag=-1, sphereCenterTag=-1):
             """
+            gmsh.model.geo.addSurfaceFilling(wireTags, tag=-1, sphereCenterTag=-1)
+
             Add a surface filling the curve loops in `wireTags'. Currently only a
             single curve loop is supported; this curve loop should be composed by 3 or
             4 curves only. If `tag' is positive, set the tag explicitly; otherwise a
@@ -3179,6 +3471,8 @@ class model:
         @staticmethod
         def addSurfaceLoop(surfaceTags, tag=-1):
             """
+            gmsh.model.geo.addSurfaceLoop(surfaceTags, tag=-1)
+
             Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
             positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Return the tag of the shell.
@@ -3200,6 +3494,8 @@ class model:
         @staticmethod
         def addVolume(shellTags, tag=-1):
             """
+            gmsh.model.geo.addVolume(shellTags, tag=-1)
+
             Add a volume (a region) defined by one or more shells `shellTags'. The
             first surface loop defines the exterior boundary; additional surface loop
             define holes. If `tag' is positive, set the tag explicitly; otherwise a new
@@ -3222,6 +3518,8 @@ class model:
         @staticmethod
         def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
             """
+            gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False)
+
             Extrude the model entities `dimTags' by translation along (`dx', `dy',
             `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
             empty, also extrude the mesh: the entries in `numElements' give the number
@@ -3255,6 +3553,8 @@ class model:
         @staticmethod
         def revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
+            gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
+
             Extrude the model entities `dimTags' by rotation of `angle' radians around
             the axis of revolution defined by the point (`x', `y', `z') and the
             direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi.
@@ -3293,6 +3593,8 @@ class model:
         @staticmethod
         def twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
+            gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
+
             Extrude the model entities `dimTags' by a combined translation and rotation
             of `angle' radians, along (`dx', `dy', `dz') and around the axis of
             revolution defined by the point (`x', `y', `z') and the direction (`ax',
@@ -3335,6 +3637,8 @@ class model:
         @staticmethod
         def translate(dimTags, dx, dy, dz):
             """
+            gmsh.model.geo.translate(dimTags, dx, dy, dz)
+
             Translate the model entities `dimTags' along (`dx', `dy', `dz').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -3353,6 +3657,8 @@ class model:
         @staticmethod
         def rotate(dimTags, x, y, z, ax, ay, az, angle):
             """
+            gmsh.model.geo.rotate(dimTags, x, y, z, ax, ay, az, angle)
+
             Rotate the model entities `dimTags' of `angle' radians around the axis of
             revolution defined by the point (`x', `y', `z') and the direction (`ax',
             `ay', `az').
@@ -3377,6 +3683,8 @@ class model:
         @staticmethod
         def dilate(dimTags, x, y, z, a, b, c):
             """
+            gmsh.model.geo.dilate(dimTags, x, y, z, a, b, c)
+
             Scale the model entities `dimTag' by factors `a', `b' and `c' along the
             three coordinate axes; use (`x', `y', `z') as the center of the homothetic
             transformation.
@@ -3398,10 +3706,35 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def mirror(dimTags, a, b, c, d):
+            """
+            gmsh.model.geo.mirror(dimTags, a, b, c, d)
+
+            Mirror the model entities `dimTag', with respect to the plane of equation
+            `a' * x + `b' * y + `c' * z + `d' = 0.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelGeoMirror(
+                api_dimTags_, api_dimTags_n_,
+                c_double(a),
+                c_double(b),
+                c_double(c),
+                c_double(d),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoMirror returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def symmetrize(dimTags, a, b, c, d):
             """
-            Apply a symmetry transformation to the model entities `dimTag', with
-            respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+            gmsh.model.geo.symmetrize(dimTags, a, b, c, d)
+
+            Mirror the model entities `dimTag', with respect to the plane of equation
+            `a' * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror',
+            which will be deprecated in a future release.)
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3420,6 +3753,8 @@ class model:
         @staticmethod
         def copy(dimTags):
             """
+            gmsh.model.geo.copy(dimTags)
+
             Copy the entities `dimTags'; the new entities are returned in `outDimTags'.
 
             Return `outDimTags'.
@@ -3440,6 +3775,8 @@ class model:
         @staticmethod
         def remove(dimTags, recursive=False):
             """
+            gmsh.model.geo.remove(dimTags, recursive=False)
+
             Remove the entities `dimTags'. If `recursive' is true, remove all the
             entities on their boundaries, down to dimension 0.
             """
@@ -3457,6 +3794,8 @@ class model:
         @staticmethod
         def removeAllDuplicates():
             """
+            gmsh.model.geo.removeAllDuplicates()
+
             Remove all duplicate entities (different entities at the same geometrical
             location).
             """
@@ -3469,8 +3808,34 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def splitCurve(tag, pointTags):
+            """
+            gmsh.model.geo.splitCurve(tag, pointTags)
+
+            Split the model curve of tag `tag' on the control points `pointTags'.
+            Return the tags `curveTags' of the newly created curves.
+
+            Return `curveTags'.
+            """
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
+            api_curveTags_, api_curveTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelGeoSplitCurve(
+                c_int(tag),
+                api_pointTags_, api_pointTags_n_,
+                byref(api_curveTags_), byref(api_curveTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoSplitCurve returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_curveTags_, api_curveTags_n_.value)
+
+        @staticmethod
         def synchronize():
             """
+            gmsh.model.geo.synchronize()
+
             Synchronize the built-in CAD representation with the current Gmsh model.
             This can be called at any time, but since it involves a non trivial amount
             of processing, the number of synchronization points should normally be
@@ -3493,6 +3858,8 @@ class model:
             @staticmethod
             def setSize(dimTags, size):
                 """
+                gmsh.model.geo.mesh.setSize(dimTags, size)
+
                 Set a mesh size constraint on the model entities `dimTags'. Currently only
                 entities of dimension 0 (points) are handled.
                 """
@@ -3510,6 +3877,8 @@ class model:
             @staticmethod
             def setTransfiniteCurve(tag, nPoints, meshType="Progression", coef=1.):
                 """
+                gmsh.model.geo.mesh.setTransfiniteCurve(tag, nPoints, meshType="Progression", coef=1.)
+
                 Set a transfinite meshing constraint on the curve `tag', with `numNodes'
                 nodes distributed according to `meshType' and `coef'. Currently supported
                 types are "Progression" (geometrical progression with power `coef') and
@@ -3530,6 +3899,8 @@ class model:
             @staticmethod
             def setTransfiniteSurface(tag, arrangement="Left", cornerTags=[]):
                 """
+                gmsh.model.geo.mesh.setTransfiniteSurface(tag, arrangement="Left", cornerTags=[])
+
                 Set a transfinite meshing constraint on the surface `tag'. `arrangement'
                 describes the arrangement of the triangles when the surface is not flagged
                 as recombined: currently supported values are "Left", "Right",
@@ -3553,6 +3924,8 @@ class model:
             @staticmethod
             def setTransfiniteVolume(tag, cornerTags=[]):
                 """
+                gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags=[])
+
                 Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
                 be used to specify the (6 or 8) corners of the transfinite interpolation
                 explicitly.
@@ -3571,6 +3944,8 @@ class model:
             @staticmethod
             def setRecombine(dim, tag, angle=45.):
                 """
+                gmsh.model.geo.mesh.setRecombine(dim, tag, angle=45.)
+
                 Set a recombination meshing constraint on the model entity of dimension
                 `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
                 triangles into quadrangles) are supported.
@@ -3589,6 +3964,8 @@ class model:
             @staticmethod
             def setSmoothing(dim, tag, val):
                 """
+                gmsh.model.geo.mesh.setSmoothing(dim, tag, val)
+
                 Set a smoothing meshing constraint on the model entity of dimension `dim'
                 and tag `tag'. `val' iterations of a Laplace smoother are applied.
                 """
@@ -3606,6 +3983,8 @@ class model:
             @staticmethod
             def setReverse(dim, tag, val=True):
                 """
+                gmsh.model.geo.mesh.setReverse(dim, tag, val=True)
+
                 Set a reverse meshing constraint on the model entity of dimension `dim' and
                 tag `tag'. If `val' is true, the mesh orientation will be reversed with
                 respect to the natural mesh orientation (i.e. the orientation consistent
@@ -3626,6 +4005,8 @@ class model:
             @staticmethod
             def setAlgorithm(dim, tag, val):
                 """
+                gmsh.model.geo.mesh.setAlgorithm(dim, tag, val)
+
                 Set the meshing algorithm on the model entity of dimension `dim' and tag
                 `tag'. Currently only supported for `dim' == 2.
                 """
@@ -3643,6 +4024,8 @@ class model:
             @staticmethod
             def setSizeFromBoundary(dim, tag, val):
                 """
+                gmsh.model.geo.mesh.setSizeFromBoundary(dim, tag, val)
+
                 Force the mesh size to be extended from the boundary, or not, for the model
                 entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
                 == 2.
@@ -3667,6 +4050,8 @@ class model:
         @staticmethod
         def addPoint(x, y, z, meshSize=0., tag=-1):
             """
+            gmsh.model.occ.addPoint(x, y, z, meshSize=0., tag=-1)
+
             Add a geometrical point in the OpenCASCADE CAD representation, at
             coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint
             at that point. If `tag' is positive, set the tag explicitly; otherwise a
@@ -3693,6 +4078,8 @@ class model:
         @staticmethod
         def addLine(startTag, endTag, tag=-1):
             """
+            gmsh.model.occ.addLine(startTag, endTag, tag=-1)
+
             Add a straight line segment between the two points with tags `startTag' and
             `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag
             is selected automatically. Return the tag of the line.
@@ -3714,6 +4101,8 @@ class model:
         @staticmethod
         def addCircleArc(startTag, centerTag, endTag, tag=-1):
             """
+            gmsh.model.occ.addCircleArc(startTag, centerTag, endTag, tag=-1)
+
             Add a circle arc between the two points with tags `startTag' and `endTag',
             with center `centerTag'. If `tag' is positive, set the tag explicitly;
             otherwise a new tag is selected automatically. Return the tag of the circle
@@ -3737,6 +4126,8 @@ class model:
         @staticmethod
         def addCircle(x, y, z, r, tag=-1, angle1=0., angle2=2*pi):
             """
+            gmsh.model.occ.addCircle(x, y, z, r, tag=-1, angle1=0., angle2=2*pi)
+
             Add a circle of center (`x', `y', `z') and radius `r'. If `tag' is
             positive, set the tag explicitly; otherwise a new tag is selected
             automatically. If `angle1' and `angle2' are specified, create a circle arc
@@ -3763,6 +4154,8 @@ class model:
         @staticmethod
         def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1):
             """
+            gmsh.model.occ.addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1)
+
             Add an ellipse arc between the two points `startTag' and `endTag', with
             center `centerTag' and major axis point `majorTag'. If `tag' is positive,
             set the tag explicitly; otherwise a new tag is selected automatically.
@@ -3788,6 +4181,8 @@ class model:
         @staticmethod
         def addEllipse(x, y, z, r1, r2, tag=-1, angle1=0., angle2=2*pi):
             """
+            gmsh.model.occ.addEllipse(x, y, z, r1, r2, tag=-1, angle1=0., angle2=2*pi)
+
             Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
             x- and y-axes respectively. If `tag' is positive, set the tag explicitly;
             otherwise a new tag is selected automatically. If `angle1' and `angle2' are
@@ -3819,6 +4214,8 @@ class model:
         @staticmethod
         def addSpline(pointTags, tag=-1):
             """
+            gmsh.model.occ.addSpline(pointTags, tag=-1)
+
             Add a spline (C2 b-spline) curve going through the points `pointTags'. If
             `tag' is positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Create a periodic curve if the first and last points are the
@@ -3841,6 +4238,8 @@ class model:
         @staticmethod
         def addBSpline(pointTags, tag=-1, degree=3, weights=[], knots=[], multiplicities=[]):
             """
+            gmsh.model.occ.addBSpline(pointTags, tag=-1, degree=3, weights=[], knots=[], multiplicities=[])
+
             Add a b-spline curve of degree `degree' with `pointTags' control points. If
             `weights', `knots' or `multiplicities' are not provided, default parameters
             are computed automatically. If `tag' is positive, set the tag explicitly;
@@ -3872,6 +4271,8 @@ class model:
         @staticmethod
         def addBezier(pointTags, tag=-1):
             """
+            gmsh.model.occ.addBezier(pointTags, tag=-1)
+
             Add a Bezier curve with `pointTags' control points. If `tag' is positive,
             set the tag explicitly; otherwise a new tag is selected automatically.
             Return the tag of the Bezier curve.
@@ -3893,6 +4294,8 @@ class model:
         @staticmethod
         def addWire(curveTags, tag=-1, checkClosed=False):
             """
+            gmsh.model.occ.addWire(curveTags, tag=-1, checkClosed=False)
+
             Add a wire (open or closed) formed by the curves `curveTags'. Note that an
             OpenCASCADE wire can be made of curves that share geometrically identical
             (but topologically different) points. If `tag' is positive, set the tag
@@ -3917,6 +4320,8 @@ class model:
         @staticmethod
         def addCurveLoop(curveTags, tag=-1):
             """
+            gmsh.model.occ.addCurveLoop(curveTags, tag=-1)
+
             Add a curve loop (a closed wire) formed by the curves `curveTags'.
             `curveTags' should contain tags of curves forming a closed loop. Note that
             an OpenCASCADE curve loop can be made of curves that share geometrically
@@ -3941,6 +4346,8 @@ class model:
         @staticmethod
         def addRectangle(x, y, z, dx, dy, tag=-1, roundedRadius=0.):
             """
+            gmsh.model.occ.addRectangle(x, y, z, dx, dy, tag=-1, roundedRadius=0.)
+
             Add a rectangle with lower left corner at (`x', `y', `z') and upper right
             corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, set the tag
             explicitly; otherwise a new tag is selected automatically. Round the
@@ -3967,6 +4374,8 @@ class model:
         @staticmethod
         def addDisk(xc, yc, zc, rx, ry, tag=-1):
             """
+            gmsh.model.occ.addDisk(xc, yc, zc, rx, ry, tag=-1)
+
             Add a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis
             and `ry' along the y-axis. If `tag' is positive, set the tag explicitly;
             otherwise a new tag is selected automatically. Return the tag of the disk.
@@ -3991,6 +4400,8 @@ class model:
         @staticmethod
         def addPlaneSurface(wireTags, tag=-1):
             """
+            gmsh.model.occ.addPlaneSurface(wireTags, tag=-1)
+
             Add a plane surface defined by one or more curve loops (or closed wires)
             `wireTags'. The first curve loop defines the exterior contour; additional
             curve loop define holes. If `tag' is positive, set the tag explicitly;
@@ -4014,6 +4425,8 @@ class model:
         @staticmethod
         def addSurfaceFilling(wireTag, tag=-1, pointTags=[]):
             """
+            gmsh.model.occ.addSurfaceFilling(wireTag, tag=-1, pointTags=[])
+
             Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
             set the tag explicitly; otherwise a new tag is selected automatically.
             Return the tag of the surface. If `pointTags' are provided, force the
@@ -4037,6 +4450,8 @@ class model:
         @staticmethod
         def addSurfaceLoop(surfaceTags, tag=-1, sewing=False):
             """
+            gmsh.model.occ.addSurfaceLoop(surfaceTags, tag=-1, sewing=False)
+
             Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
             positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Return the tag of the surface loop. Setting `sewing' allows
@@ -4061,6 +4476,8 @@ class model:
         @staticmethod
         def addVolume(shellTags, tag=-1):
             """
+            gmsh.model.occ.addVolume(shellTags, tag=-1)
+
             Add a volume (a region) defined by one or more surface loops `shellTags'.
             The first surface loop defines the exterior boundary; additional surface
             loop define holes. If `tag' is positive, set the tag explicitly; otherwise
@@ -4083,6 +4500,8 @@ class model:
         @staticmethod
         def addSphere(xc, yc, zc, radius, tag=-1, angle1=-pi/2, angle2=pi/2, angle3=2*pi):
             """
+            gmsh.model.occ.addSphere(xc, yc, zc, radius, tag=-1, angle1=-pi/2, angle2=pi/2, angle3=2*pi)
+
             Add a sphere of center (`xc', `yc', `zc') and radius `r'. The optional
             `angle1' and `angle2' arguments define the polar angle opening (from -Pi/2
             to Pi/2). The optional `angle3' argument defines the azimuthal opening
@@ -4111,6 +4530,8 @@ class model:
         @staticmethod
         def addBox(x, y, z, dx, dy, dz, tag=-1):
             """
+            gmsh.model.occ.addBox(x, y, z, dx, dy, dz, tag=-1)
+
             Add a parallelepipedic box defined by a point (`x', `y', `z') and the
             extents along the x-, y- and z-axes. If `tag' is positive, set the tag
             explicitly; otherwise a new tag is selected automatically. Return the tag
@@ -4137,6 +4558,8 @@ class model:
         @staticmethod
         def addCylinder(x, y, z, dx, dy, dz, r, tag=-1, angle=2*pi):
             """
+            gmsh.model.occ.addCylinder(x, y, z, dx, dy, dz, r, tag=-1, angle=2*pi)
+
             Add a cylinder, defined by the center (`x', `y', `z') of its first circular
             face, the 3 components (`dx', `dy', `dz') of the vector defining its axis
             and its radius `r'. The optional `angle' argument defines the angular
@@ -4167,6 +4590,8 @@ class model:
         @staticmethod
         def addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, angle=2*pi):
             """
+            gmsh.model.occ.addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, angle=2*pi)
+
             Add a cone, defined by the center (`x', `y', `z') of its first circular
             face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
             and the two radii `r1' and `r2' of the faces (these radii can be zero). If
@@ -4198,6 +4623,8 @@ class model:
         @staticmethod
         def addWedge(x, y, z, dx, dy, dz, tag=-1, ltx=0.):
             """
+            gmsh.model.occ.addWedge(x, y, z, dx, dy, dz, tag=-1, ltx=0.)
+
             Add a right angular wedge, defined by the right-angle point (`x', `y', `z')
             and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag'
             is positive, set the tag explicitly; otherwise a new tag is selected
@@ -4226,6 +4653,8 @@ class model:
         @staticmethod
         def addTorus(x, y, z, r1, r2, tag=-1, angle=2*pi):
             """
+            gmsh.model.occ.addTorus(x, y, z, r1, r2, tag=-1, angle=2*pi)
+
             Add a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and
             `r2'. If `tag' is positive, set the tag explicitly; otherwise a new tag is
             selected automatically. The optional argument `angle' defines the angular
@@ -4252,6 +4681,8 @@ class model:
         @staticmethod
         def addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False):
             """
+            gmsh.model.occ.addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False)
+
             Add a volume (if the optional argument `makeSolid' is set) or surfaces
             defined through the open or closed wires `wireTags'. If `tag' is positive,
             set the tag explicitly; otherwise a new tag is selected automatically. The
@@ -4280,6 +4711,8 @@ class model:
         @staticmethod
         def addThickSolid(volumeTag, excludeSurfaceTags, offset, tag=-1):
             """
+            gmsh.model.occ.addThickSolid(volumeTag, excludeSurfaceTags, offset, tag=-1)
+
             Add a hollowed volume built from an initial volume `volumeTag' and a set of
             faces from this volume `excludeSurfaceTags', which are to be removed. The
             remaining faces of the volume become the walls of the hollowed solid, with
@@ -4307,6 +4740,8 @@ class model:
         @staticmethod
         def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
             """
+            gmsh.model.occ.extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False)
+
             Extrude the model entities `dimTags' by translation along (`dx', `dy',
             `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
             empty, also extrude the mesh: the entries in `numElements' give the number
@@ -4339,6 +4774,8 @@ class model:
         @staticmethod
         def revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
+            gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
+
             Extrude the model entities `dimTags' by rotation of `angle' radians around
             the axis of revolution defined by the point (`x', `y', `z') and the
             direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
@@ -4378,6 +4815,8 @@ class model:
         @staticmethod
         def addPipe(dimTags, wireTag):
             """
+            gmsh.model.occ.addPipe(dimTags, wireTag)
+
             Add a pipe by extruding the entities `dimTags' along the wire `wireTag'.
             Return the pipe in `outDimTags'.
 
@@ -4400,6 +4839,8 @@ class model:
         @staticmethod
         def fillet(volumeTags, curveTags, radii, removeVolume=True):
             """
+            gmsh.model.occ.fillet(volumeTags, curveTags, radii, removeVolume=True)
+
             Fillet the volumes `volumeTags' on the curves `curveTags' with radii
             `radii'. The `radii' vector can either contain a single radius, as many
             radii as `curveTags', or twice as many as `curveTags' (in which case
@@ -4430,6 +4871,8 @@ class model:
         @staticmethod
         def chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume=True):
             """
+            gmsh.model.occ.chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume=True)
+
             Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
             `distances' measured on surfaces `surfaceTags'. The `distances' vector can
             either contain a single distance, as many distances as `curveTags' and
@@ -4464,6 +4907,8 @@ class model:
         @staticmethod
         def fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
+            gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
             Compute the boolean union (the fusion) of the entities `objectDimTags' and
             `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
             positive, try to set the tag explicitly (only valid if the boolean
@@ -4497,6 +4942,8 @@ class model:
         @staticmethod
         def intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
+            gmsh.model.occ.intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
             Compute the boolean intersection (the common parts) of the entities
             `objectDimTags' and `toolDimTags'. Return the resulting entities in
             `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
@@ -4530,6 +4977,8 @@ class model:
         @staticmethod
         def cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
+            gmsh.model.occ.cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
             Compute the boolean difference between the entities `objectDimTags' and
             `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
             positive, try to set the tag explicitly (only valid if the boolean
@@ -4563,6 +5012,8 @@ class model:
         @staticmethod
         def fragment(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
+            gmsh.model.occ.fragment(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
             Compute the boolean fragments (general fuse) of the entities
             `objectDimTags' and `toolDimTags'. Return the resulting entities in
             `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
@@ -4596,6 +5047,8 @@ class model:
         @staticmethod
         def translate(dimTags, dx, dy, dz):
             """
+            gmsh.model.occ.translate(dimTags, dx, dy, dz)
+
             Translate the model entities `dimTags' along (`dx', `dy', `dz').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -4614,6 +5067,8 @@ class model:
         @staticmethod
         def rotate(dimTags, x, y, z, ax, ay, az, angle):
             """
+            gmsh.model.occ.rotate(dimTags, x, y, z, ax, ay, az, angle)
+
             Rotate the model entities `dimTags' of `angle' radians around the axis of
             revolution defined by the point (`x', `y', `z') and the direction (`ax',
             `ay', `az').
@@ -4638,6 +5093,8 @@ class model:
         @staticmethod
         def dilate(dimTags, x, y, z, a, b, c):
             """
+            gmsh.model.occ.dilate(dimTags, x, y, z, a, b, c)
+
             Scale the model entities `dimTag' by factors `a', `b' and `c' along the
             three coordinate axes; use (`x', `y', `z') as the center of the homothetic
             transformation.
@@ -4659,10 +5116,36 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def symmetrize(dimTags, a, b, c, d):
+        def mirror(dimTags, a, b, c, d):
             """
+            gmsh.model.occ.mirror(dimTags, a, b, c, d)
+
             Apply a symmetry transformation to the model entities `dimTag', with
             respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelOccMirror(
+                api_dimTags_, api_dimTags_n_,
+                c_double(a),
+                c_double(b),
+                c_double(c),
+                c_double(d),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccMirror returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def symmetrize(dimTags, a, b, c, d):
+            """
+            gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
+
+            Apply a symmetry transformation to the model entities `dimTag', with
+            respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+            (This is a synonym for `mirror', which will be deprecated in a future
+            release.)
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -4681,6 +5164,8 @@ class model:
         @staticmethod
         def affineTransform(dimTags, a):
             """
+            gmsh.model.occ.affineTransform(dimTags, a)
+
             Apply a general affine transformation matrix `a' (16 entries of a 4x4
             matrix, by row; only the 12 first can be provided for convenience) to the
             model entities `dimTag'.
@@ -4700,6 +5185,8 @@ class model:
         @staticmethod
         def copy(dimTags):
             """
+            gmsh.model.occ.copy(dimTags)
+
             Copy the entities `dimTags'; the new entities are returned in `outDimTags'.
 
             Return `outDimTags'.
@@ -4720,6 +5207,8 @@ class model:
         @staticmethod
         def remove(dimTags, recursive=False):
             """
+            gmsh.model.occ.remove(dimTags, recursive=False)
+
             Remove the entities `dimTags'. If `recursive' is true, remove all the
             entities on their boundaries, down to dimension 0.
             """
@@ -4737,6 +5226,8 @@ class model:
         @staticmethod
         def removeAllDuplicates():
             """
+            gmsh.model.occ.removeAllDuplicates()
+
             Remove all duplicate entities (different entities at the same geometrical
             location) after intersecting (using boolean fragments) all highest
             dimensional entities.
@@ -4752,6 +5243,8 @@ class model:
         @staticmethod
         def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True):
             """
+            gmsh.model.occ.healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True)
+
             Apply various healing procedures to the entities `dimTags' (or to all the
             entities in the model if `dimTags' is empty). Return the healed entities in
             `outDimTags'. Available healing options are listed in the Gmsh reference
@@ -4781,6 +5274,8 @@ class model:
         @staticmethod
         def importShapes(fileName, highestDimOnly=True, format=""):
             """
+            gmsh.model.occ.importShapes(fileName, highestDimOnly=True, format="")
+
             Import BREP, STEP or IGES shapes from the file `fileName'. The imported
             entities are returned in `outDimTags'. If the optional argument
             `highestDimOnly' is set, only import the highest dimensional entities in
@@ -4806,6 +5301,8 @@ class model:
         @staticmethod
         def setMeshSize(dimTags, size):
             """
+            gmsh.model.occ.setMeshSize(dimTags, size)
+
             Set a mesh size constraint on the model entities `dimTags'. Currently only
             entities of dimension 0 (points) are handled.
             """
@@ -4823,6 +5320,8 @@ class model:
         @staticmethod
         def getMass(dim, tag):
             """
+            gmsh.model.occ.getMass(dim, tag)
+
             Get the mass of the model entity of dimension `dim' and tag `tag'.
 
             Return `mass'.
@@ -4843,6 +5342,8 @@ class model:
         @staticmethod
         def getCenterOfMass(dim, tag):
             """
+            gmsh.model.occ.getCenterOfMass(dim, tag)
+
             Get the center of mass of the model entity of dimension `dim' and tag
             `tag'.
 
@@ -4871,6 +5372,8 @@ class model:
         @staticmethod
         def getMatrixOfInertia(dim, tag):
             """
+            gmsh.model.occ.getMatrixOfInertia(dim, tag)
+
             Get the matrix of inertia (by row) of the model entity of dimension `dim'
             and tag `tag'.
 
@@ -4892,6 +5395,8 @@ class model:
         @staticmethod
         def synchronize():
             """
+            gmsh.model.occ.synchronize()
+
             Synchronize the OpenCASCADE CAD representation with the current Gmsh model.
             This can be called at any time, but since it involves a non trivial amount
             of processing, the number of synchronization points should normally be
@@ -4914,6 +5419,8 @@ class view:
     @staticmethod
     def add(name, tag=-1):
         """
+        gmsh.view.add(name, tag=-1)
+
         Add a new post-processing view, with name `name'. If `tag' is positive use
         it (and remove the view with that tag if it already exists), otherwise
         associate a new tag. Return the view tag.
@@ -4934,6 +5441,8 @@ class view:
     @staticmethod
     def remove(tag):
         """
+        gmsh.view.remove(tag)
+
         Remove the view with tag `tag'.
         """
         ierr = c_int()
@@ -4948,6 +5457,8 @@ class view:
     @staticmethod
     def getIndex(tag):
         """
+        gmsh.view.getIndex(tag)
+
         Get the index of the view with tag `tag' in the list of currently loaded
         views. This dynamic index (it can change when views are removed) is used to
         access view options.
@@ -4967,6 +5478,8 @@ class view:
     @staticmethod
     def getTags():
         """
+        gmsh.view.getTags()
+
         Get the tags of all views.
 
         Return `tags'.
@@ -4985,6 +5498,8 @@ class view:
     @staticmethod
     def addModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0):
         """
+        gmsh.view.addModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0)
+
         Add model-based post-processing data to the view with tag `tag'.
         `modelName' identifies the model the data is attached to. `dataType'
         specifies the type of data, currently either "NodeData", "ElementData" or
@@ -5020,6 +5535,8 @@ class view:
     @staticmethod
     def getModelData(tag, step):
         """
+        gmsh.view.getModelData(tag, step)
+
         Get model-based post-processing data from the view with tag `tag' at step
         `step'. Return the `data' associated to the nodes or the elements with tags
         `tags', as well as the `dataType' and the number of components
@@ -5056,6 +5573,8 @@ class view:
     @staticmethod
     def addListData(tag, dataType, numEle, data):
         """
+        gmsh.view.addListData(tag, dataType, numEle, data)
+
         Add list-based post-processing data to the view with tag `tag'. `dataType'
         identifies the data: "SP" for scalar points, "VP", for vector points, etc.
         `numEle' gives the number of elements in the data. `data' contains the data
@@ -5077,6 +5596,8 @@ class view:
     @staticmethod
     def getListData(tag):
         """
+        gmsh.view.getListData(tag)
+
         Get list-based post-processing data from the view with tag `tag'. Return
         the types `dataTypes', the number of elements `numElements' for each data
         type and the `data' for each data type.
@@ -5105,6 +5626,8 @@ class view:
     @staticmethod
     def addAlias(refTag, copyOptions=False, tag=-1):
         """
+        gmsh.view.addAlias(refTag, copyOptions=False, tag=-1)
+
         Add a post-processing view as an `alias' of the reference view with tag
         `refTag'. If `copyOptions' is set, copy the options of the reference view.
         If `tag' is positive use it (and remove the view with that tag if it
@@ -5127,6 +5650,8 @@ class view:
     @staticmethod
     def copyOptions(refTag, tag):
         """
+        gmsh.view.copyOptions(refTag, tag)
+
         Copy the options from the view with tag `refTag' to the view with tag
         `tag'.
         """
@@ -5143,6 +5668,8 @@ class view:
     @staticmethod
     def combine(what, how, remove=True, copyOptions=True):
         """
+        gmsh.view.combine(what, how, remove=True, copyOptions=True)
+
         Combine elements (if `what' == "elements") or steps (if `what' == "steps")
         of all views (`how' == "all"), all visible views (`how' == "visible") or
         all views having the same name (`how' == "name"). Remove original views if
@@ -5163,6 +5690,8 @@ class view:
     @staticmethod
     def probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[]):
         """
+        gmsh.view.probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[])
+
         Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
         the value at step `step' is `step' is positive. Return only values with
         `numComp' if `numComp' is positive. Return the gradient of the `value' if
@@ -5201,6 +5730,8 @@ class view:
     @staticmethod
     def write(tag, fileName, append=False):
         """
+        gmsh.view.write(tag, fileName, append=False)
+
         Write the view to a file `fileName'. The export format is determined by the
         file extension. Append to the file if `append' is set.
         """
@@ -5224,6 +5755,8 @@ class plugin:
     @staticmethod
     def setNumber(name, option, value):
         """
+        gmsh.plugin.setNumber(name, option, value)
+
         Set the numerical option `option' to the value `value' for plugin `name'.
         """
         ierr = c_int()
@@ -5240,6 +5773,8 @@ class plugin:
     @staticmethod
     def setString(name, option, value):
         """
+        gmsh.plugin.setString(name, option, value)
+
         Set the string option `option' to the value `value' for plugin `name'.
         """
         ierr = c_int()
@@ -5256,6 +5791,8 @@ class plugin:
     @staticmethod
     def run(name):
         """
+        gmsh.plugin.run(name)
+
         Run the plugin `name'.
         """
         ierr = c_int()
@@ -5276,6 +5813,8 @@ class graphics:
     @staticmethod
     def draw():
         """
+        gmsh.graphics.draw()
+
         Draw all the OpenGL scenes.
         """
         ierr = c_int()
@@ -5295,6 +5834,8 @@ class fltk:
     @staticmethod
     def initialize():
         """
+        gmsh.fltk.initialize()
+
         Create the FLTK graphical user interface. Can only be called in the main
         thread.
         """
@@ -5309,6 +5850,8 @@ class fltk:
     @staticmethod
     def wait(time=-1.):
         """
+        gmsh.fltk.wait(time=-1.)
+
         Wait at most `time' seconds for user interface events and return. If `time'
         < 0, wait indefinitely. First automatically create the user interface if it
         has not yet been initialized. Can only be called in the main thread.
@@ -5325,6 +5868,8 @@ class fltk:
     @staticmethod
     def update():
         """
+        gmsh.fltk.update()
+
         Update the user interface (potentially creating new widgets and windows).
         First automatically create the user interface if it has not yet been
         initialized. Can only be called in the main thread: use `awake("update")'
@@ -5341,6 +5886,8 @@ class fltk:
     @staticmethod
     def awake(action=""):
         """
+        gmsh.fltk.awake(action="")
+
         Awake the main user interface thread and process pending events, and
         optionally perform an action (currently the only `action' allowed is
         "update").
@@ -5357,6 +5904,8 @@ class fltk:
     @staticmethod
     def lock():
         """
+        gmsh.fltk.lock()
+
         Block the current thread until it can safely modify the user interface.
         """
         ierr = c_int()
@@ -5370,6 +5919,8 @@ class fltk:
     @staticmethod
     def unlock():
         """
+        gmsh.fltk.unlock()
+
         Release the lock that was set using lock.
         """
         ierr = c_int()
@@ -5383,6 +5934,8 @@ class fltk:
     @staticmethod
     def run():
         """
+        gmsh.fltk.run()
+
         Run the event loop of the graphical user interface, i.e. repeatedly call
         `wait()'. First automatically create the user interface if it has not yet
         been initialized. Can only be called in the main thread.
@@ -5398,6 +5951,8 @@ class fltk:
     @staticmethod
     def isAvailable():
         """
+        gmsh.fltk.isAvailable()
+
         Check if the user interface is available (e.g. to detect if it has been
         closed).
 
@@ -5415,6 +5970,8 @@ class fltk:
     @staticmethod
     def selectEntities(dim=-1):
         """
+        gmsh.fltk.selectEntities(dim=-1)
+
         Select entities in the user interface. If `dim' is >= 0, return only the
         entities of the specified dimension (e.g. points if `dim' == 0).
 
@@ -5437,6 +5994,8 @@ class fltk:
     @staticmethod
     def selectElements():
         """
+        gmsh.fltk.selectElements()
+
         Select elements in the user interface.
 
         Return an integer value, `elementTags'.
@@ -5457,6 +6016,8 @@ class fltk:
     @staticmethod
     def selectViews():
         """
+        gmsh.fltk.selectViews()
+
         Select views in the user interface.
 
         Return an integer value, `viewTags'.
@@ -5483,6 +6044,8 @@ class onelab:
     @staticmethod
     def set(data, format="json"):
         """
+        gmsh.onelab.set(data, format="json")
+
         Set one or more parameters in the ONELAB database, encoded in `format'.
         """
         ierr = c_int()
@@ -5498,6 +6061,8 @@ class onelab:
     @staticmethod
     def get(name="", format="json"):
         """
+        gmsh.onelab.get(name="", format="json")
+
         Get all the parameters (or a single one if `name' is specified) from the
         ONELAB database, encoded in `format'.
 
@@ -5519,6 +6084,8 @@ class onelab:
     @staticmethod
     def setNumber(name, value):
         """
+        gmsh.onelab.setNumber(name, value)
+
         Set the value of the number parameter `name' in the ONELAB database. Create
         the parameter if it does not exist; update the value if the parameter
         exists.
@@ -5537,6 +6104,8 @@ class onelab:
     @staticmethod
     def setString(name, value):
         """
+        gmsh.onelab.setString(name, value)
+
         Set the value of the string parameter `name' in the ONELAB database. Create
         the parameter if it does not exist; update the value if the parameter
         exists.
@@ -5555,6 +6124,8 @@ class onelab:
     @staticmethod
     def getNumber(name):
         """
+        gmsh.onelab.getNumber(name)
+
         Get the value of the number parameter `name' from the ONELAB database.
         Return an empty vector if the parameter does not exist.
 
@@ -5575,6 +6146,8 @@ class onelab:
     @staticmethod
     def getString(name):
         """
+        gmsh.onelab.getString(name)
+
         Get the value of the string parameter `name' from the ONELAB database.
         Return an empty vector if the parameter does not exist.
 
@@ -5595,6 +6168,8 @@ class onelab:
     @staticmethod
     def clear(name=""):
         """
+        gmsh.onelab.clear(name="")
+
         Clear the ONELAB database, or remove a single parameter if `name' is given.
         """
         ierr = c_int()
@@ -5609,6 +6184,8 @@ class onelab:
     @staticmethod
     def run(name="", command=""):
         """
+        gmsh.onelab.run(name="", command="")
+
         Run a ONELAB client. If `name' is provided, create a new ONELAB client with
         name `name' and executes `command'. If not, try to run a client that might
         be linked to the processed input files.
@@ -5632,6 +6209,8 @@ class logger:
     @staticmethod
     def write(message, level="info"):
         """
+        gmsh.logger.write(message, level="info")
+
         Write a `message'. `level' can be "info", "warning" or "error".
         """
         ierr = c_int()
@@ -5647,6 +6226,8 @@ class logger:
     @staticmethod
     def start():
         """
+        gmsh.logger.start()
+
         Start logging messages.
         """
         ierr = c_int()
@@ -5660,6 +6241,8 @@ class logger:
     @staticmethod
     def get():
         """
+        gmsh.logger.get()
+
         Get logged messages.
 
         Return `log'.
@@ -5678,6 +6261,8 @@ class logger:
     @staticmethod
     def stop():
         """
+        gmsh.logger.stop()
+
         Stop logging messages.
         """
         ierr = c_int()
@@ -5691,6 +6276,8 @@ class logger:
     @staticmethod
     def getWallTime():
         """
+        gmsh.logger.getWallTime()
+
         Return wall clock time.
 
         Return a floating point value.
@@ -5707,6 +6294,8 @@ class logger:
     @staticmethod
     def getCpuTime():
         """
+        gmsh.logger.getCpuTime()
+
         Return CPU time.
 
         Return a floating point value.

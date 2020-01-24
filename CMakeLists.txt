@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -41,7 +41,8 @@ opt(BUILD_SHARED "Enable 'shared' target for building shared Gmsh library" OFF)
 opt(BUILD_DYNAMIC "Enable dynamic Gmsh executable (linked with shared library)" OFF)
 opt(BUILD_ANDROID "Enable Android NDK library target (experimental)" OFF)
 opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
-opt(CGNS "Enable CGNS mesh import (experimental)" ${DEFAULT})
+opt(CGNS "Enable CGNS import/export (experimental)" ${DEFAULT})
+opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (experimental)" OFF)
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
 opt(CXX11 "Enable C++11" ON)
 opt(C99 "Enable C99" ON)
@@ -100,7 +101,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
 set(GMSH_MINOR_VERSION 5)
-set(GMSH_PATCH_VERSION 0)
+set(GMSH_PATCH_VERSION 2)
 set(GMSH_EXTRA_VERSION "")
 set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
 
@@ -108,7 +109,7 @@ if(NOT GMSH_RELEASE)
   find_package(Git)
   if(GIT_FOUND)
     execute_process(COMMAND ${GIT_EXECUTABLE} log -1 --format=%h
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} ERROR_QUIET
                     OUTPUT_VARIABLE GIT_COMMIT_HASH
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()
@@ -881,9 +882,8 @@ if(ENABLE_P4EST)
   find_library(P4EST_LIB p4est)
   find_path(P4EST_INC "p4est.h" PATH_SUFFIXES src)
   if(P4EST_LIB AND P4EST_INC)
-    set_config_option(HAVE_P4EST "p4est")
+    set_config_option(HAVE_P4EST "P4est")
     list(APPEND EXTERNAL_LIBRARIES ${P4EST_LIB})
-    list(APPEND EXTERNAL_LIBRARIES ${POPPLER_CPP_LIB})
     list(APPEND EXTERNAL_INCLUDES ${P4EST_INC})
   endif()
 endif()
@@ -982,6 +982,9 @@ if(ENABLE_MED OR ENABLE_CGNS)
         set_config_option(HAVE_LIBCGNS "Cgns")
         list(APPEND EXTERNAL_LIBRARIES ${CGNS_LIB})
         list(APPEND EXTERNAL_INCLUDES ${CGNS_INC})
+        if(ENABLE_CGNS_CPEX0045)
+          set_config_option(HAVE_LIBCGNS_CPEX0045 "Cgns_CPEX0045")
+        endif()
       endif()
     endif()
     if(MED_LIB OR CGNS_LIB)

@@ -52,12 +52,27 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsImportOrder
-Enable the creation of high-order mesh from CGNS structured meshes(1, 2, 4, 8, ...)@*
+Order of the mesh to be created by coarsening CGNS structured zones (1 to 4)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsImportIgnoreBC
+Ignore information in ZoneBC structures when reading a CGNS file@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsImportIgnoreSolution
+Ignore solution when reading a CGNS file@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsConstructTopology
 Reconstruct the model topology (BREP) after reading a CGNS file@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsExportCPEX0045
+Use the CPEX0045 convention when exporting a high-order mesh to CGNS@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -312,13 +327,18 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCirclePoints
-Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi radians when the mesh size of adapted to the curvature)@*
+Minimum number of nodes used to mesh circles and ellipses@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCurvePoints
-Minimum number of points used to mesh a (non-straight) curve@*
+Minimum number of points used to mesh curves other than lines, circles and ellipses@*
 Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MinimumElementsPerTwoPi
+Minimum number of elements per 2 * Pi radians when the mesh size is adapted to the curvature@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion

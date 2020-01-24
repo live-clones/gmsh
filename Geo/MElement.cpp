@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -344,10 +344,9 @@ void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
   const JacobianBasis *jac = getJacobianFuncSpace();
-  const int numJacNodes = jac->getNumJacNodes();
   fullMatrix<double> nodesXYZ(jac->getNumMapNodes(), 3);
   getNodesCoord(nodesXYZ);
-  fullVector<double> SJi(numJacNodes);
+  fullVector<double> SJi(jac->getNumSamplingPnts());
   jac->getScaledJacobian(nodesXYZ, SJi);
   if(ge && (ge->dim() == 2) && ge->haveParametrization()) {
     // If parametrized surface entity provided...
@@ -384,10 +383,9 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
   const JacobianBasis *jac = getJacobianFuncSpace();
-  const int numJacNodes = jac->getNumJacNodes();
   fullMatrix<double> nodesXYZ(jac->getNumMapNodes(), 3);
   getNodesCoord(nodesXYZ);
-  fullVector<double> iJi(numJacNodes);
+  fullVector<double> iJi(jac->getNumSamplingPnts());
   jac->getSignedIdealJacobian(nodesXYZ, iJi);
   const int nEd = getNumEdges(), dim = getDim();
   double sumEdLength = 0.;

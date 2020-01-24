@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -5968,6 +5968,17 @@ double opt_mesh_min_circ_points(OPT_ARGS_NUM)
   return CTX::instance()->mesh.minCircPoints;
 }
 
+double opt_mesh_min_elements_2pi(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.minElementsPerTwoPi)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.minElementsPerTwoPi = (int)val;
+  }
+  return CTX::instance()->mesh.minElementsPerTwoPi;
+}
+
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.allowSwapEdgeAngle = val;
@@ -6104,14 +6115,26 @@ double opt_mesh_second_order_incomplete(OPT_ARGS_NUM)
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    int value = (int)val;
-    double order = val;
-    while(order >= 2.0) { order = order / 2.0; }
-
-    if(order != 1.0) value = 1;
+    int value = std::min((int)val, 4);
     CTX::instance()->mesh.cgnsImportOrder = value;
   }
   return CTX::instance()->mesh.cgnsImportOrder;
+}
+
+double opt_mesh_cgns_import_ignore_bc(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.cgnsImportIgnoreBC = (int)val;
+  }
+  return CTX::instance()->mesh.cgnsImportIgnoreBC;
+}
+
+double opt_mesh_cgns_import_ignore_solution(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.cgnsImportIgnoreSolution = (int)val;
+  }
+  return CTX::instance()->mesh.cgnsImportIgnoreSolution;
 }
 
 double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM)
@@ -6120,6 +6143,14 @@ double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM)
     CTX::instance()->mesh.cgnsConstructTopology = (int)val;
   }
   return CTX::instance()->mesh.cgnsConstructTopology;
+}
+
+double opt_mesh_cgns_export_cpex0045(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.cgnsExportCPEX0045 = (int)val;
+  }
+  return CTX::instance()->mesh.cgnsExportCPEX0045;
 }
 
 double opt_mesh_dual(OPT_ARGS_NUM)

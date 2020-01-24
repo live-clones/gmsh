@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file for license information. Please report all
 @c issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2019 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2020 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -1354,6 +1354,12 @@ Natural logarithm of @var{expression} (@var{expression} > 0).
 @item Log10 ( @var{expression} )
 Base 10 logarithm of @var{expression} (@var{expression} > 0).
 
+@item Max ( @var{expression}, @var{expression} )
+Maximum of the two arguments.
+
+@item Min ( @var{expression}, @var{expression} )
+Minimum of the two arguments.
+
 @item Modulo ( @var{expression}, @var{expression} )
 see @code{Fmod( @var{expression}, @var{expression} )}.
 
@@ -1506,8 +1512,8 @@ The following commands can be used anywhere in a Gmsh script:
 
 @item @var{string} = @var{expression};
 Creates a new expression identifier @var{string}, or affects
-@var{expression} to an existing expression identifier. Thirteen expression
-identifiers are predefined (hardcoded in Gmsh's parser):
+@var{expression} to an existing expression identifier. The following
+expression identifiers are predefined (hardcoded in Gmsh's parser):
 
 @ftable @code
 @item Pi
@@ -2714,15 +2720,16 @@ more meaningful groups, e.g. to define some mathematical (``domain'',
 grouping is done in Gmsh's geometry module (@pxref{Geometry module})
 through ``physical groups''.
 
-By default in the MSH file format (@pxref{File formats}), if physical
-groups are defined, the output mesh only contains those elements that
-belong to at least one physical group. (Other file formats each treat
-physical groups in slightly different ways, depending on their
-capability to define groups.)
+By default in the MSH file format and in most other formats (@pxref{File
+formats}), if physical groups are defined, the output mesh only contains
+those elements that belong to at least one physical group. (Different
+mesh file formats treat physical groups in slightly different ways,
+depending on their capability to define groups.)
 
 To save all mesh element wether or not physical groups are defined, use
  the @code{Mesh.SaveAll} option (@pxref{Mesh options list}) or specify
- @code{-save_all} on the command line.
+ @code{-save_all} on the command line. In some formats (e.g. MSH2),
+ setting @code{Mesh.SaveAll=1} discards all physical group definitions.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands

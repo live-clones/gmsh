@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -527,6 +527,7 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);
+double opt_mesh_min_elements_2pi(OPT_ARGS_NUM);
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM);
 double opt_mesh_min_curv_points(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
@@ -544,7 +545,10 @@ double opt_mesh_second_order_experimental(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM);
+double opt_mesh_cgns_import_ignore_bc(OPT_ARGS_NUM);
+double opt_mesh_cgns_import_ignore_solution(OPT_ARGS_NUM);
 double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM);
+double opt_mesh_cgns_export_cpex0045(OPT_ARGS_NUM);
 double opt_mesh_dual(OPT_ARGS_NUM);
 double opt_mesh_voronoi(OPT_ARGS_NUM);
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM);

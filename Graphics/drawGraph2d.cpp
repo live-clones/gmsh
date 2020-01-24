@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -545,7 +545,7 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
   double xmin, xmax, ymin, ymax;
   if(!getGraphData(p, x, xmin, xmax, y, ymin, ymax)) return;
 
-  PViewData *data = p->getData();
+  PViewData *data = p->getData(true); // use adaptive data if available
   PViewOptions *opt = p->getOptions();
   if(opt->rangeType == PViewOptions::Custom) {
     opt->tmpMin = opt->customMin;
