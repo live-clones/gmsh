@@ -3322,13 +3322,13 @@ public :
 	    cutTriangles (ttt,f[i],v0,f[i]->triangles[j]->getVertex ((k+2)%3), ge, ecuts, *iti, F);
 	  }
 	  else if (tcuts.count(*iti) == 2) {
-	    std::multimap<int,std::pair<MVertex*,std::pair<int, int>> >::iterator itt = tcuts.lower_bound(*iti);
+	    std::multimap<int,std::pair<MVertex*,std::pair<int, int> > >::iterator itt = tcuts.lower_bound(*iti);
 	    MVertex *v0 = itt->second.first; ++itt;
 	    MVertex *v1 = itt->second.first;
 	    cutTriangles (ttt,f[i],v0,v1,ge, ecuts, *iti, F);
 	  }
 	  else if (tcuts.count(*iti) == 3){
-	    std::multimap<int,std::pair<MVertex*,std::pair<int, int>> >::iterator itt = tcuts.lower_bound(*iti);
+	    std::multimap<int,std::pair<MVertex*,std::pair<int, int> > >::iterator itt = tcuts.lower_bound(*iti);
 	    int k0 = itt->second.second.first;
 	    int id0 = itt->second.second.second;
 	    MVertex *v0 = itt->second.first; ++itt;
@@ -3358,7 +3358,7 @@ public :
 	    }
 	  }
 	  else if (tcuts.count(*iti) == 4){
-	    std::multimap<int,std::pair<MVertex*,std::pair<int, int>> >::iterator itt = tcuts.lower_bound(*iti);
+	    std::multimap<int,std::pair<MVertex*,std::pair<int, int> > >::iterator itt = tcuts.lower_bound(*iti);
 	    int id0 = itt->second.second.second;
 	    MVertex *v0 = itt->second.first; ++itt;
 	    int id1 = itt->second.second.second;
