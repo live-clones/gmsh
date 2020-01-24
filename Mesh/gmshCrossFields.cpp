@@ -3398,7 +3398,7 @@ public :
   
     fprintf(F,"};\n");
     fclose(F);
-
+    
     F = fopen("edges.pos","w");
     fprintf(F,"View \"\"{\n");
 
