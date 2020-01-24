@@ -154,9 +154,11 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       bndVertices.insert(it->data.begin(), it->data.end());
   }
 
-  // compute the boundary nodes (if any) of the "OpenBoundary" physical group
+  // compute the boundary nodes (if any) of the "OpenBoundary" physical group if
+  // it's a curve
   std::set<MVertex *> bndVerticesFromOpenBoundary;
   for(std::size_t i = 0; i < openEntities.size(); i++) {
+    if(openEntities[i]->dim() < 1) continue;
     for(std::size_t j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
       MElement *e = openEntities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
