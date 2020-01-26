@@ -9,7 +9,7 @@
 #include <string>
 class GModel;
 
-int computeCrossField       (GModel *, std::vector<int> &tags);
+int computeCrossField(GModel *, std::vector<int> &tags);
 int computeQuadDecomposition(GModel *, std::vector<int> &tags);
 
 #endif

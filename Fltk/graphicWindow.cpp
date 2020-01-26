@@ -4300,19 +4300,13 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_degree_cb, (void*)3},
   {"0Modules/Mesh/High-order tools",
    (Fl_Callback *)highordertools_cb},
-  {"0Modules/Mesh/Inspect",
-   (Fl_Callback *)mesh_inspect_cb} ,
   {"0Modules/Mesh/Refine by splitting",
    (Fl_Callback *)mesh_refine_cb} ,
-  {"0Modules/Mesh/Compute Quad Layout",
-   (Fl_Callback *)mesh_cross_compute_cb} ,
 #if defined(HAVE_METIS)
   {"0Modules/Mesh/Partition",
    (Fl_Callback *)mesh_partition_cb} ,
   {"0Modules/Mesh/Unpartition",
     (Fl_Callback *)mesh_unpartition_cb} ,
-  {"0Modules/Mesh/Convert old partitioning",
-    (Fl_Callback *)mesh_convert_old_partitioning_cb} ,
 #endif
   {"0Modules/Mesh/Smooth 2D",
    (Fl_Callback *)mesh_smooth_cb} ,
@@ -4320,6 +4314,12 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_recombine_cb} ,
   {"0Modules/Mesh/Reclassify 2D",
    (Fl_Callback *)mesh_classify_cb} ,
+  {"0Modules/Mesh/Experimental/Compute quad layout",
+   (Fl_Callback *)mesh_cross_compute_cb} ,
+#if defined(HAVE_METIS)
+  {"0Modules/Mesh/Experimental/Convert old partitioning",
+    (Fl_Callback *)mesh_convert_old_partitioning_cb} ,
+#endif
   {"0Modules/Mesh/Delete/Elements",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
   {"0Modules/Mesh/Delete/Curves",
@@ -4328,6 +4328,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
   {"0Modules/Mesh/Delete/Volumes",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"volumes"} ,
+  {"0Modules/Mesh/Inspect",
+   (Fl_Callback *)mesh_inspect_cb} ,
   {"0Modules/Mesh/Save",
    (Fl_Callback *)mesh_save_cb} ,
 };
