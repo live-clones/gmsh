@@ -2689,7 +2689,6 @@ public :
 	CURVATURE[i] = 0.0;
       }
       double SUM = 0.0;
-      bool first = false;
       for (size_t i = 0; i< vsorted[j].size() ; ++i){	
 	MVertex *vi  = vsorted[j][i];
 	MVertex *vip = vsorted[j][(i+1)%vsorted[j].size()];
@@ -2697,7 +2696,6 @@ public :
 
 	//	SVector3 vec0 = 
 	
-	if (firsts.find(vi->onWhat()) != firsts.end())first = true;
 
 	//	double A =  distance(vi,vip);
 	//	double B = distance(vi,vim);
@@ -3324,13 +3322,13 @@ public :
 	    cutTriangles (ttt,f[i],v0,f[i]->triangles[j]->getVertex ((k+2)%3), ge, ecuts, *iti, F);
 	  }
 	  else if (tcuts.count(*iti) == 2) {
-	    std::multimap<int,std::pair<MVertex*,std::pair<int, int>> >::iterator itt = tcuts.lower_bound(*iti);
+	    std::multimap<int,std::pair<MVertex*,std::pair<int, int> > >::iterator itt = tcuts.lower_bound(*iti);
 	    MVertex *v0 = itt->second.first; ++itt;
 	    MVertex *v1 = itt->second.first;
 	    cutTriangles (ttt,f[i],v0,v1,ge, ecuts, *iti, F);
 	  }
 	  else if (tcuts.count(*iti) == 3){
-	    std::multimap<int,std::pair<MVertex*,std::pair<int, int>> >::iterator itt = tcuts.lower_bound(*iti);
+	    std::multimap<int,std::pair<MVertex*,std::pair<int, int> > >::iterator itt = tcuts.lower_bound(*iti);
 	    int k0 = itt->second.second.first;
 	    int id0 = itt->second.second.second;
 	    MVertex *v0 = itt->second.first; ++itt;
@@ -3341,15 +3339,15 @@ public :
 	    int id2 = itt->second.second.second;
 	    MVertex *v2 = itt->second.first; ;
 
-	    if (abs(id0-id1) == 1){
+	    if (abs(id0-id1) <= 2){
 	      cutTriangles (ttt,f[i],v2,f[i]->triangles[j]->getVertex ((k2+2)%3),ge, ecuts, *iti, F);
 	      cutTriangles (ttt,f[i],v0,v1,ge, ecuts, *iti, F);
 	    }
-	    else if (abs(id0-id2) == 1){
+	    else if (abs(id0-id2) <= 2 ){
 	      cutTriangles (ttt,f[i],v1,f[i]->triangles[j]->getVertex ((k1+2)%3),ge, ecuts, *iti, F);
 	      cutTriangles (ttt,f[i],v0,v2,ge, ecuts, *iti, F);
 	    }
-	    else if (abs(id1-id2) == 1){
+	    else if (abs(id1-id2) <= 2 ){
 	      cutTriangles (ttt,f[i],v0,f[i]->triangles[j]->getVertex ((k0+2)%3),ge, ecuts, *iti, F);
 	      cutTriangles (ttt,f[i],v1,v2,ge, ecuts, *iti, F);
 	    }
@@ -3360,7 +3358,7 @@ public :
 	    }
 	  }
 	  else if (tcuts.count(*iti) == 4){
-	    std::multimap<int,std::pair<MVertex*,std::pair<int, int>> >::iterator itt = tcuts.lower_bound(*iti);
+	    std::multimap<int,std::pair<MVertex*,std::pair<int, int> > >::iterator itt = tcuts.lower_bound(*iti);
 	    int id0 = itt->second.second.second;
 	    MVertex *v0 = itt->second.first; ++itt;
 	    int id1 = itt->second.second.second;
@@ -3369,15 +3367,15 @@ public :
 	    MVertex *v2 = itt->second.first; ++itt;
 	    int id3 = itt->second.second.second;
 	    MVertex *v3 = itt->second.first;
-	    if (abs(id0-id1) == 1 || abs(id2-id3) ==1){
+	    if (abs(id0-id1) <= 2 || abs(id2-id3) <=2){
 	      cutTriangles (ttt,f[i],v0,v1,ge, ecuts, *iti, F);
 	      cutTriangles (ttt,f[i],v2,v3,ge, ecuts, *iti, F);
 	    }
-	    else if (abs(id0-id2) == 1 || abs(id1-id3)== 1){
+	    else if (abs(id0-id2) <= 2 || abs(id1-id3)<= 2){
 	      cutTriangles (ttt,f[i],v0,v2,ge, ecuts, *iti, F);
 	      cutTriangles (ttt,f[i],v1,v3,ge, ecuts, *iti, F);
 	    }
-	    else if (abs(id0-id3) == 1 || abs(id1-id2)==1){
+	    else if (abs(id0-id3) <= 2 || abs(id1-id2)<=2){
 	      cutTriangles (ttt,f[i],v0,v3,ge, ecuts, *iti, F);
 	      cutTriangles (ttt,f[i],v1,v2,ge, ecuts, *iti, F);
 	    }
@@ -3672,16 +3670,17 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f, std::vecto
   }
   Msg::Info("Cutting the mesh");
   qLayout.cutMesh (cuts) ;  
-
+  
   Msg::Info("Classifying the model");
   discreteEdge *de = new discreteEdge(GModel::current(),
 				      GModel::current()->getMaxElementaryNumber(1) + 1,
 				      0, 0);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), 1000);
+  classifyFaces(GModel::current(), M_PI/4);
   GModel::current()->remove(de);
   //  delete de;
+  
   std::string mshout = gm->getName()+"_Cut.msh";
   gm->writeMSH(mshout,4.0,false,true);
 
