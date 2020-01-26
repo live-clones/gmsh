@@ -26,6 +26,9 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
+#include "ghostEdge.h"
+#include "ghostFace.h"
+#include "ghostRegion.h"
 
 // periodic nodes and entities backported from MSH3 format
 extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
@@ -683,14 +686,24 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
      && ge->getParentEntity()->dim() > ge->dim())
     return; // ignore partition boundaries
 
+  short part_orig = ele->getPartition();
   std::vector<short> ghosts;
-  if(model->getGhostCells().size()) {
+  if(model->getGhostCells().size() &&
+     (ge->geomType() == GEntity::GhostCurve ||
+      ge->geomType() == GEntity::GhostSurface ||
+      ge->geomType() == GEntity::GhostVolume)) {
     std::pair<std::multimap<MElement *, short>::iterator,
               std::multimap<MElement *, short>::iterator>
       itp = model->getGhostCells().equal_range(ele);
     for(std::multimap<MElement *, short>::iterator it = itp.first;
         it != itp.second; it++)
       ghosts.push_back(it->second);
+    if(ge->geomType() == GEntity::GhostCurve)
+      ele->setPartition(((ghostEdge*)ge)->getPartition());
+    else if(ge->geomType() == GEntity::GhostSurface)
+      ele->setPartition(((ghostFace*)ge)->getPartition());
+    else if(ge->geomType() == GEntity::GhostVolume)
+      ele->setPartition(((ghostRegion*)ge)->getPartition());
   }
 
   if(saveAll)
@@ -704,6 +717,8 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
       if(parentNum) parentNum++;
     }
   }
+
+  ele->setPartition(part_orig);
 
   model->setMeshElementIndex(ele, num); // should really be a multimap...
 
