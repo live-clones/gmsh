@@ -342,14 +342,21 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
   HXTTetMeshOptions options = {
-    .reproducible = 1,
-    .verbosity = 1,
-    .stat = 1,
-    .refine = 1,
-    .optimize = 1,
-    .qualityMin = 0.35,
-    .recoveryFun = myRecoveryFun
-    // .meshSizeFun = hxtMeshSizeGmshCallBack
+    0, // int defaultThreads;
+    0, // int delaunayThreads;
+    0, // int improveThreads;
+    1, // int reproducible;
+    1, // int verbosity;
+    1, // int stat;
+    1, // int refine;
+    1, // int optimize;
+    0.35, // double qualityMin;
+    0, // double (*qualityFun)
+    0, // void* qualityData;
+    0, // double (*meshSizeFun)
+    0, // void* meshSizeData;
+    myRecoveryFun, // HXTStatus (*recoveryFun)
+    0 // void* recoveryData;
   };
 
   //  Msg::Info("Entering hxtTetMesh3d using %d threads",nthreads);
