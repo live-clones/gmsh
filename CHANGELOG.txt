@@ -1,6 +1,6 @@
 4.5.2 (Work-in-progress): periodic meshes now obey reorientation constraints;
 physical group definitions now follow compound meshing constraints; small bug
-fixes.
+fixes and improvements.
 
 4.5.1 (December 28, 2019): new Min and Max commands in .geo files;
 Mesh.MinimumCirclePoints now behaves the same with all geometry kernels; fixed
