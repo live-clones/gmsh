@@ -5751,11 +5751,19 @@ FExpr_Multi :
       getParentTags($2, $3, $$);
       List_Delete($3);
     }
-   | GeoEntity tIn tBoundingBox
-      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
+   | GeoEntity tIn tBoundingBox ListOfDouble
     {
       $$ = List_Create(10, 10, sizeof(double));
-      getElementaryTagsInBoundingBox($1, $5, $7, $9, $11, $13, $15, $$);
+      if(List_Nbr($4) < 6) {
+        yymsg(0, "Bounding box should be {xmin, ymin, zmin, xmax, ymax, zmax}");
+      }
+      else {
+        double bb[6];
+        for(int i = 0; i < 6; i++) List_Read($4, i, &bb[i]);
+        getElementaryTagsInBoundingBox
+          ($1, bb[0], bb[1], bb[2], bb[3], bb[4], bb[5], $$);
+      }
+      List_Delete($4);
     }
    | tBoundingBox GeoEntity '{' RecursiveListOfDouble '}'
     {
