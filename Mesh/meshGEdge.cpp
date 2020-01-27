@@ -543,8 +543,12 @@ void meshGEdge::operator()(GEdge *ge)
 
   ge->model()->setCurrentMeshEntity(ge);
 
-  if(ge->degenerate(1) ||
-     (ge->geomType() == GEntity::BoundaryLayerCurve) ||
+  if (ge->degenerate(1)) {
+    ge->meshStatistics.status = GEdge::DONE;
+    return;
+  }
+
+  if ((ge->geomType() == GEntity::BoundaryLayerCurve) ||
      (ge->meshAttributes.method == MESH_NONE) ||
      (CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility())) {
     return;
