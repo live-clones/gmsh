@@ -37,9 +37,13 @@ typedef enum
 
   // INTERNAL Errors (<= HXT_STATUS_INTERNAL) => HXT_CHECK does not give trace message but returns... should be catched internally !
   HXT_STATUS_INTERNAL              = -1024,
-  HXT_STATUS_CONFLICT              = -1025,
-  HXT_STATUS_SKIP                  = -1026,
-  HXT_STATUS_TRYAGAIN              = -1027
+  HXT_STATUS_SKIP                  = -1025,
+  HXT_STATUS_TRYAGAIN              = -1026,
+  // a smoothing or topological operation can silently fail because of these
+  HXT_STATUS_CONFLICT              = -1027,
+  HXT_STATUS_CONSTRAINT            = -1028,
+  HXT_STATUS_NOTBETTER             = -1029,
+  HXT_STATUS_DOUBLE_PT             = -1030
 
 
 }HXTStatus;

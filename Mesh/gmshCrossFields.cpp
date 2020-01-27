@@ -2260,8 +2260,7 @@ static void computeIsos(
   for(; it != singularities.end(); ++it) {
     GEntity *ge = (*it)->onWhat();
     if(ge->dim() == 2 || ge->edges().size() == 0) {
-      //      printf("%lu %22.15E
-      //      %22.15E\n",singularities.size(),potU[*it],potV[*it]);
+      printf("%lu %d %d %lu %22.15E %22.15E\n",ge->edges().size(),ge->tag(),ge->dim(),singularities.size(),potU[*it],potV[*it]);
       computeIso(*it, adj, potU[*it], potU, potV, f, d1, G, 0, cuts);
       computeIso(*it, adj, potV[*it], potV, potU, f, d1, G, 1, cuts);
     }
@@ -3809,9 +3808,10 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 4);
+  classifyFaces(GModel::current(), M_PI / 2 *.99);
   GModel::current()->remove(de);
   //  delete de;
+  GModel::current()->pruneMeshVertexAssociations();
 
   std::string mshout = gm->getName() + "_Cut.msh";
   gm->writeMSH(mshout, 4.0, false, true);

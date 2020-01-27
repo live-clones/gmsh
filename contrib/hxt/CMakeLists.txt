@@ -24,22 +24,25 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/hxt_tetDelaunay.c)
 set(SRC ${SRC}
   hxt_bbox.c
   hxt_boundary_recovery.cxx
-  hxt_mesh3d.c
-  hxt_mesh3d_main.c
-  hxt_mesh_size.c
-  hxt_opt.c
-  hxt_option.c
+  hxt_edgeRemoval.c
+  hxt_mesh.c
+  hxt_smoothing.c
   hxt_sort.c
   hxt_tetColor.c
   hxt_tetDelaunay.c
   hxt_tetFlag.c
+  hxt_tetMesh.c
+  hxt_tetNodalSize.c
   hxt_tetOpti.c
   hxt_tetPostpro.c
+  hxt_tetQuality.c
+  hxt_tetRefine.c
   hxt_tetRepair.c
+  hxt_tetSync.c
   hxt_tetUtils.c
-  hxt_tet_aspect_ratio.c
   hxt_vertices.c
   hxt_octree.cpp
+  HXTSPR.c
   predicates.c
 )
 endif()

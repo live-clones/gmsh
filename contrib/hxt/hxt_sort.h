@@ -44,7 +44,6 @@ HXTStatus group3_sort_v0(HXTGroup3* triplet, const uint64_t n, const uint64_t ma
 HXTStatus group3_sort_v1(HXTGroup3* triplet, const uint64_t n, const uint64_t max);
 HXTStatus group3_sort_v2(HXTGroup3* triplet, const uint64_t n, const uint64_t max);
 
-
 /* convert from other types to uint32_t CONSERVING ORDER FOR ALL VALUES ! */
 
 static inline uint32_t i32_to_u32(int32_t v){
@@ -155,14 +154,27 @@ do{                                                                             
 }while(0)
 
 
+/* simply sort 3 values */
+#define HXTSORT_3_VALUES_INPLACE(HXTSORT_TYPE, a)                             \
+do {                                                                          \
+  HXTSORT_TYPE* _copya = (a);                                                 \
+  if(_copya[0]>_copya[1]){                                                    \
+    HXTSORT_TYPE _tmp = _copya[0]; _copya[0] = _copya[1]; _copya[1] = _tmp;   \
+  }                                                                           \
+  if(_copya[1]>_copya[2]){                                                    \
+    HXTSORT_TYPE _tmp = _copya[1]; _copya[1] = _copya[2]; _copya[2] = _tmp;   \
+    if(_copya[0]>_copya[1]){                                                  \
+      HXTSORT_TYPE _tmp = _copya[0]; _copya[0] = _copya[1]; _copya[1] = _tmp; \
+    }                                                                         \
+  }                                                                           \
+} while(0)
+
+
 /**************************************************************************************
  * To use pragma in a macro      *
  *************************************************************************************/
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
 #define _HXTSORT_PRAGMA(x) __pragma (#x);
-#define _HXTSORT_PRAGMA_ALIGNED(...)
-#elif defined(__PGI)
-#define _HXTSORT_PRAGMA(x) _Pragma (#x)
 #define _HXTSORT_PRAGMA_ALIGNED(...)
 #else
 #define _HXTSORT_PRAGMA(x) _Pragma (#x)
@@ -295,7 +307,7 @@ do{                                                                             
   int nthreads = _copyN/8192 + 1;                                                        \
   nthreads = nthreads>omp_get_max_threads()?omp_get_max_threads():nthreads;              \
   uint64_t* h_all, *h_tot;                                                               \
-  h_all = (uint64_t*) HXTSORT_MEMALIGN(2048*(nthreads+1)*sizeof(uint64_t));              \
+  HXT_CHECK( hxtAlignedMalloc(&h_all, 2048*(nthreads+1)*sizeof(uint64_t)) );             \
                                                                                          \
   _HXTSORT_PRAGMA(omp parallel num_threads(nthreads))                                    \
   {                                                                                      \
@@ -580,15 +592,15 @@ do{                                                                             
       for (uint64_t j=0; j<n; j++){                                                      \
         uint64_t key = GET_KEY(array1+j, _userData);                                     \
         _HXTSORT_PRAGMA_ALIGNED(h_this)                                                  \
-        for (unsigned k=0; k<8; k++)                                                     \
+        for (unsigned k=0; k<7; k++)                                                     \
           h_this[((key >> k*8) & 255)+k*256]++;                                          \
       }                                                                                  \
                                                                                          \
       /* exclusive scan (in place)*/                                                     \
-      uint64_t sum[8] = {0};                                                             \
+      uint64_t hxtDeclareAligned sum[7] = {0};                                           \
       for (unsigned j=0; j<256; j++){                                                    \
         _HXTSORT_PRAGMA_ALIGNED(h_this)                                                  \
-        for (unsigned k=0; k<8; k++)                                                     \
+        for (unsigned k=0; k<7; k++)                                                     \
         {                                                                                \
           uint64_t tsum = sum[k] + h_this[j+k*256];                                      \
           h_this[j+k*256] = sum[k];                                                      \
@@ -598,9 +610,27 @@ do{                                                                             
                                                                                          \
       /* copy array1 to the righ index */                                                \
       for (unsigned k=0; k<7; k++){                                                      \
-        for (uint64_t j=0; j<n; j++){                                                    \
-          uint64_t key = GET_KEY(array1+j,_userData);                                    \
-          array2[h_this[((key >> k*8) & 255) + k*256]++] = array1[j];                    \
+        for (uint64_t j=0; j<n/256; j++){                                                \
+                                                                                         \
+          uint64_t* key = h_this + 7*256;                                                \
+          for (unsigned l=0; l<256; l++) {                                               \
+            key[l] = GET_KEY(array1+256*j+l,_userData);                                  \
+          }                                                                              \
+                                                                                         \
+          _HXTSORT_PRAGMA_ALIGNED(key)                                                   \
+          for (unsigned l=0; l<256; l++) {                                               \
+            key[l] = ((key[l] >> k*8) & 255) + k*256;                                    \
+          }                                                                              \
+                                                                                         \
+          for (unsigned l=0; l<256; l++) {                                               \
+            array2[h_this[key[l]]++] = array1[256*j+l];                                  \
+          }                                                                              \
+        }                                                                                \
+                                                                                         \
+        /* remainder loop */                                                             \
+        for (uint64_t j=0; j<n%256; j++) {                                               \
+          uint64_t key = GET_KEY(array1+256*(n/256)+j,_userData);                        \
+          array2[h_this[((key >> k*8) & 255) + k*256]++] = array1[256*(n/256)+j];        \
         }                                                                                \
         HXTSORT_TYPE* tmp = array1; array1 = array2; array2 = tmp;                       \
       }                                                                                  \

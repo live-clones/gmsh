@@ -1,25 +1,22 @@
 #include "hxt_tetDelaunay.h"
 #include "predicates.h"
-#include "hxt_tetRepair.h"
-#include "hxt_tetUtils.h"
+#include "hxt_tetSync.h"
 #include "hxt_tetFlag.h"
+#include "hxt_tetRepair.h"
 #include "hxt_sort.h"
 
+
 /**
-* \file hxt_tetrahedra.c see header hxt_tetDelaunay.h.
+* \file hxt_tetDelaunay.c see header hxt_tetDelaunay.h.
 * \author Célestin Marot
 */
 
 /* compile-time parameters */
 #define SMALLEST_ROUND 2048
-#define DELETED_BUFFER_SIZE 8182
 // #define HXT_DELAUNAY_LOW_MEMORY /* doesn't use any buffer (a lot slower, except if you are at the limit of filling the RAM) */
+// #define HXT_WALK_OPTI
 
 /* usefull macros */
-#define ABS(x) ((x) >= 0 ? (x) : -(x))
-#define MAX(x,y) ((x)>(y) ? (x) : (y))
-#define MIN(x,y) ((x)<(y) ? (x) : (y))
-
 #define HXT_OMP_CHECK(status) do{ HXTStatus _tmp_ = (status); \
     if(_tmp_<0){ \
       if(_tmp_>HXT_STATUS_INTERNAL) \
@@ -31,10 +28,11 @@
 
 
 typedef struct{
-  uint32_t hxtDeclareAligned node[3];
+  uint64_t neigh; // the tet on the other side of the boundary
+  uint32_t node[3];
   uint16_t flag;
-  uint64_t neigh; // the tet on the other side of the boundar
 } cavityBnd_t;
+
 
 typedef struct {
 #ifndef HXT_DELAUNAY_LOW_MEMORY
@@ -42,23 +40,15 @@ typedef struct {
 #endif
 
   struct {
-    cavityBnd_t* bnd;
+    cavityBnd_t* array;
     uint64_t num;
     uint64_t size;
   } ball;
 
-  struct {
-    uint64_t* tetID;
-    uint64_t num;
-    uint64_t size;
-  } deleted;
-
-  struct {
-    uint64_t startDist;
-    uint64_t endDist;
-    uint32_t first;
-  } partition;
+  HXTDeleted deleted;
+  HXTPartition partition;
 } TetLocal;
+
 
 
 /***********************************
@@ -201,80 +191,31 @@ static unsigned computePasses(uint32_t passes[12], uint32_t nInserted, uint32_t 
   return npasses;
 }
 
+
+static inline HXTStatus askForBall(TetLocal* local, uint64_t needed) {
+  needed += local->ball.num;
+  if(needed>local->ball.size) {
+    HXT_CHECK( hxtAlignedRealloc(&local->ball.array, sizeof(cavityBnd_t)*2*needed) );
+    local->ball.size = 2*needed;
+  }
+  return HXT_STATUS_OK;
+}
+
 /******************************************
  * initialisation of the TetLocal structure
  ******************************************/
 static inline HXTStatus localInit(TetLocal* local){
-    local->ball.size = 1020; // accounting for the offset in aligned malloc, to avoid additional memory page
-    local->ball.num = 0;
-    local->ball.bnd = NULL;
-    local->deleted.size = DELETED_BUFFER_SIZE;
-    local->deleted.num = 0;
-    local->deleted.tetID = NULL;
+  local->ball.size = 1020;
+  local->ball.num = 0;
+  HXT_CHECK( hxtAlignedMalloc(&local->ball.array, sizeof(cavityBnd_t)*local->ball.size));
 
-    HXT_CHECK( hxtAlignedMalloc(&local->ball.bnd, local->ball.size*sizeof(cavityBnd_t)) );
-    HXT_CHECK( hxtAlignedMalloc(&local->deleted.tetID, local->deleted.size*sizeof(uint64_t)) );
-
-    return HXT_STATUS_OK;
-}
-
-/***********************************************
-           re-allocation functions
- ***********************************************/
-static HXTStatus synchronizeReallocation(HXTMesh* mesh, volatile int* toCopy, volatile int* copy){
-  // threads cant be doing something while the realloc portion happen
-  #pragma omp barrier
-  
-  // this unable us to have the same value of toCopy for everyone, as we are sure nothing happens to those variables here
-  if(toCopy!=copy){
-    *copy = *toCopy;
-  }
-
-  HXTStatus status = HXT_STATUS_OK;
-  // make reallocations in a critical section
-  #pragma omp single
-  {
-    if(mesh->tetrahedra.num > mesh->tetrahedra.size){
-      status = hxtTetrahedraDoubleSize(mesh);
-    }
-  } // implicit barrier here
-
-  if(status!=HXT_STATUS_OK)
-    HXT_TRACE(status);
-
-  return status;
-}
-
-
-// pragma atomic capture to get tetrahedra.num and update it at the same time before caling this function !
-static inline HXTStatus reserveNewTet(HXTMesh* mesh){
-  if(mesh->tetrahedra.num > mesh->tetrahedra.size){
-    HXT_CHECK( synchronizeReallocation(mesh, NULL, NULL) );
-  }
+  local->deleted.size = DELETED_BUFFER_SIZE;
+  local->deleted.num = 0;
+  HXT_CHECK( hxtAlignedMalloc(&local->deleted.array, sizeof(uint64_t)*local->deleted.size) );
 
   return HXT_STATUS_OK;
 }
 
-static inline HXTStatus reserveNewDeleted(TetLocal* local, uint64_t num){
-  num += local->deleted.num;
-  if(num > local->deleted.size){
-      HXT_CHECK( hxtAlignedRealloc(&local->deleted.tetID, 2*num*sizeof(uint64_t)) );
-      local->deleted.size = 2*num;
-  }
-
-  return HXT_STATUS_OK;
-}
-
-static inline HXTStatus reserveNewBnd(TetLocal* local, uint64_t num){
-  num += local->ball.num;
-  if(num > local->ball.size){
-      HXT_CHECK( hxtAlignedRealloc(&local->ball.bnd, 2*num*sizeof(cavityBnd_t)) );
-      local->ball.size = 2*num;
-  }
-
-  return HXT_STATUS_OK;
-}
-/***********************************************/
 
 /************************************
  * check if a tetrahedra is entirely
@@ -283,33 +224,21 @@ static inline HXTStatus reserveNewBnd(TetLocal* local, uint64_t num){
 static inline HXTStatus checkTetrahedron(HXTVertex* vertices, TetLocal* local, const uint32_t* nodes){
   /* Actually, one vertex (not more) could be in another partition without creating a conflict.
    However, all threads would have to have a verticesID array => a lot of memory space wasted.
-   Instead, we only allow the ghost vertex to be in another partition, it is handle differently in
+   Instead, we only allow the ghost vertex to be in another partition, it is handled differently in
    computeAdjacenciesFast function */
-  uint64_t rel = local->partition.endDist - local->partition.startDist;
+  uint64_t len = local->partition.lengthDist;
+  uint64_t start = local->partition.startDist;
 
-  if(local->partition.endDist==UINT64_MAX) // if we are working with one thread only
-    return HXT_STATUS_OK;
+  // if(local->partition.lengthDist==UINT64_MAX) // if we are working with one thread only
+  //   return HXT_STATUS_OK;
 
-  // unsigned wrap around is defined by the standard
-  uint64_t h0 = vertices[nodes[0]].padding.hilbertDist;
-  uint64_t h1 = vertices[nodes[1]].padding.hilbertDist;
-  uint64_t h2 = vertices[nodes[2]].padding.hilbertDist;
-  uint64_t h3 = nodes[3]==HXT_GHOST_VERTEX ? h2 : vertices[nodes[3]].padding.hilbertDist;
-
-  /* if a vertex has a hilbert index UINT64_MAX, it means that only certain volume are meshed
-   * and this vertex was outside of the bounding box. we should never go in any tetrahedra that is outside
-   * the meshed volume, so we return false... */
-  if(h0==UINT64_MAX || h1==UINT64_MAX || h2==UINT64_MAX || h3==UINT64_MAX)
-    return HXT_STATUS_INTERNAL;
-  
-  if((h0- local->partition.startDist>=rel) || 
-     (h1- local->partition.startDist>=rel) ||
-     (h2- local->partition.startDist>=rel) ||
-     (h3- local->partition.startDist>=rel))
+  if(vertexOutOfPartition(vertices, nodes[0], len, start) || 
+     vertexOutOfPartition(vertices, nodes[1], len, start) ||
+     vertexOutOfPartition(vertices, nodes[2], len, start) ||
+     (nodes[3]!=HXT_GHOST_VERTEX && vertexOutOfPartition(vertices, nodes[3], len, start)) )
     return HXT_STATUS_INTERNAL;
 
   return HXT_STATUS_OK;
-
 }
 
 
@@ -317,7 +246,7 @@ static inline HXTStatus pointIsTooClose(const double* __restrict__ p1, const dou
   double d2 = (p1[0]-p2[0])*(p1[0]-p2[0])
             + (p1[1]-p2[1])*(p1[1]-p2[1])
             + (p1[2]-p2[2])*(p1[2]-p2[2]); 
-  if (d2 < 0.8*0.8*nodalSize*nodalSize){
+  if (d2 < /*(0.94*0.94) * */nodalSize*nodalSize){
     return  HXT_STATUS_INTERNAL;
   }
 
@@ -332,7 +261,7 @@ static inline HXTStatus filterCavity (TetLocal* local, HXTMesh *mesh, const doub
 
   for (uint64_t i = 0 ; i< local->ball.num ; i++) {
     for (unsigned j=0;j<3;j++) {
-      uint32_t nodej = local->ball.bnd[i].node[j];
+      uint32_t nodej = local->ball.array[i].node[j];
 
       if (j!=3 || nodej != HXT_GHOST_VERTEX){
         double *Xj = mesh->vertices.coord + 4*nodej;
@@ -372,9 +301,77 @@ static inline HXTStatus filterTet(HXTMesh* mesh, const double *nodalSizes, const
 /* restore the structure as it was before the failed insertion attempt */
 static inline void restoreDeleted(HXTMesh* mesh, TetLocal* local, const uint64_t prevDeleted){
   for (uint64_t i=prevDeleted; i<local->deleted.num; i++)
-    unsetDeletedFlag(mesh, local->deleted.tetID[i]);
+    unsetDeletedFlag(mesh, local->deleted.array[i]);
 
   local->deleted.num = prevDeleted;
+}
+
+
+static inline int insphere_sign(const double* const __restrict__ pa, const double* const __restrict__ pb, const double* const __restrict__ pc, const double* const __restrict__ pd, const double* const __restrict__ pe) {
+  double aex, bex, cex, dex;
+  double aey, bey, cey, dey;
+  double aez, bez, cez, dez;
+  double aexbey, bexaey, bexcey, cexbey, cexdey, dexcey, dexaey, aexdey;
+  double aexcey, cexaey, bexdey, dexbey;
+  double alift, blift, clift, dlift;
+  double ab, bc, cd, da, ac, bd;
+  double abc, bcd, cda, dab;
+  double det;
+
+
+  aex = pa[0] - pe[0];
+  bex = pb[0] - pe[0];
+  cex = pc[0] - pe[0];
+  dex = pd[0] - pe[0];
+  aey = pa[1] - pe[1];
+  bey = pb[1] - pe[1];
+  cey = pc[1] - pe[1];
+  dey = pd[1] - pe[1];
+  aez = pa[2] - pe[2];
+  bez = pb[2] - pe[2];
+  cez = pc[2] - pe[2];
+  dez = pd[2] - pe[2];
+
+  aexbey = aex * bey;
+  bexaey = bex * aey;
+  ab = aexbey - bexaey;
+  bexcey = bex * cey;
+  cexbey = cex * bey;
+  bc = bexcey - cexbey;
+  cexdey = cex * dey;
+  dexcey = dex * cey;
+  cd = cexdey - dexcey;
+  dexaey = dex * aey;
+  aexdey = aex * dey;
+  da = dexaey - aexdey;
+
+  aexcey = aex * cey;
+  cexaey = cex * aey;
+  ac = aexcey - cexaey;
+  bexdey = bex * dey;
+  dexbey = dex * bey;
+  bd = bexdey - dexbey;
+
+  abc = aez * bc - bez * ac + cez * ab;
+  bcd = bez * cd - cez * bd + dez * bc;
+  cda = cez * da + dez * ac + aez * cd;
+  dab = dez * ab + aez * bd + bez * da;
+
+  alift = aex * aex + aey * aey + aez * aez;
+  blift = bex * bex + bey * bey + bez * bez;
+  clift = cex * cex + cey * cey + cez * cez;
+  dlift = dex * dex + dey * dey + dez * dez;
+
+  det = (dlift * abc - clift * dab) + (blift * cda - alift * bcd);
+
+  int ret = (det > ispstaticfilter) - (det < -ispstaticfilter);
+
+  if(ret!=0)
+    return ret;
+
+  det = insphere(pa, pb, pc, pd, pe);
+
+  return (det>0.0) - (det<0.0);
 }
 
 
@@ -382,19 +379,19 @@ static inline void restoreDeleted(HXTMesh* mesh, TetLocal* local, const uint64_t
  * insphere predicate & perturbation
  ***********************************/
 // see Perturbations and Vertex Removal in a 3D Delaunay Triangulation, O. Devillers & M. Teillaud
-static double symbolicPerturbation (uint32_t indices[5] ,  const double* __restrict__ i,
-                                                           const double* __restrict__ j,
-                                                           const double* __restrict__ k,
-                                                           const double* __restrict__ l,
-                                                           const double* __restrict__ m){
+static int symbolicPerturbation (uint32_t indices[5] ,  const double* __restrict__ i,
+                                                        const double* __restrict__ j,
+                                                        const double* __restrict__ k,
+                                                        const double* __restrict__ l,
+                                                        const double* __restrict__ m){
   double const* pt[5] = {i,j,k,l,m};
 
   // Sort the five points such that their indices are in the increasing
   //   order. An optimized bubble sort algorithm is used, i.e., it has
   //   the worst case O(n^2) runtime, but it is usually much faster.
-  int swaps = 0; // Record the total number of swaps.
+  unsigned swaps = 0; // Record the total number of swaps.
   int n = 5;
-  int count;
+  unsigned count;
   do {
     count = 0;
     n = n - 1;
@@ -418,7 +415,7 @@ static double symbolicPerturbation (uint32_t indices[5] ,  const double* __restr
   if (oriA != 0.0) {
     // Flip the sign if there are odd number of swaps.
     if ((swaps % 2) != 0) oriA = -oriA;
-    return oriA;
+    return (oriA>0.0) - (oriA<0.0);
   }
   
   double oriB = -orient3d(pt[0], pt[2], pt[3], pt[4]);
@@ -426,13 +423,13 @@ static double symbolicPerturbation (uint32_t indices[5] ,  const double* __restr
 
   // Flip the sign if there are odd number of swaps.
   if ((swaps % 2) != 0) oriB = -oriB;
-  return oriB;
+  return (oriB>0.0) - (oriB<0.0);
 }
 
 
 /* wrapper around the insphere predicate that handles
    the ghost vertex and symbolic perturbation if needed */
-double tetInsphere(HXTMesh* mesh, const uint64_t curTet, const uint32_t vta){
+static int tetInsphere(HXTMesh* mesh, const uint64_t curTet, const uint32_t vta){
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
   uint32_t* Node = mesh->tetrahedra.node + curTet;
 
@@ -445,42 +442,42 @@ double tetInsphere(HXTMesh* mesh, const uint64_t curTet, const uint32_t vta){
     double det = orient3d(a,b,c,e);
 
     if(det!=0.0){
-      return det;
+      return (det>0.0) - (det<0.0);
     }
 
     // we never go here, except when point are aligned on boundary
     // HXT_INFO("insphere using opposite vertex");
     uint32_t oppositeNode = mesh->tetrahedra.node[mesh->tetrahedra.neigh[curTet+3]];
     double* const __restrict__ oppositeVertex = vertices[oppositeNode].coord;
-    det = insphere(a,b,c,oppositeVertex,e);
+    int sign = insphere_sign(a,b,c,oppositeVertex,e);
 
-    if (det == 0.0) {
+    if (sign == 0) {
       uint32_t nn[5] = {Node[0],Node[1],Node[2],oppositeNode,vta};
       // HXT_INFO("symbolic perturbation on boundary");
-      det = symbolicPerturbation (nn, a,b,c,oppositeVertex,e);
+      sign = symbolicPerturbation (nn, a,b,c,oppositeVertex,e);
       
     }
-    return -det;
+    return -sign;
   }
 
   double* const __restrict__ d = vertices[Node[3]].coord;
 
-  double det = insphere(a,b,c,d,e);
-  if (det == 0.0) {
+  int sign = insphere_sign(a,b,c,d,e);
+  if (sign == 0) {
     uint32_t nn[5] = {Node[0],Node[1],Node[2],Node[3],vta};
     // HXT_INFO("symbolic perturbation");
-    det = symbolicPerturbation (nn, a,b,c,d,e);
+    sign = symbolicPerturbation (nn, a,b,c,d,e);
   }
-  return det;
+  return sign;
 }
 
 
 /***********************************
  * walk to cavity
  ***********************************/
-static HXTStatus walking2Cavity(HXTMesh* mesh, TetLocal* local, uint64_t* __restrict__ curTet, const uint32_t vta){
+HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, uint64_t* __restrict__ curTet, const uint32_t vta)
+{
   uint64_t nextTet = *curTet;
-  uint32_t seed = 1;
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
 
   /* if nextTet is a ghost triangle, go to the neighbor that is not a ghost triangle */
@@ -488,84 +485,147 @@ static HXTStatus walking2Cavity(HXTMesh* mesh, TetLocal* local, uint64_t* __rest
     nextTet = mesh->tetrahedra.neigh[4*nextTet+3]/4;
 
   double* const vtaCoord = vertices[vta].coord;
-  unsigned enteringFace = 4;
+  unsigned enteringFace=4;
+  uint64_t rel = partition->lengthDist;
 
-#ifndef NDEBUG
-  uint64_t TotalCount = 0;
-#endif
-  
+#ifdef HXT_WALK_OPTI
+  double minDist = DBL_MAX;
 
-  while(1){
+  {
     const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + 4*nextTet;
+    double* curCoord[4] = {
+      vertices[curNode[0]].coord,
+      vertices[curNode[1]].coord,
+      vertices[curNode[2]].coord,
+      vertices[curNode[3]].coord
+    };
+
+#ifdef __GNUC__
+    #pragma GCC ivdep
+#else
+    #pragma ivdep
+#endif
+    for (int i=0; i<4; i++) {
+      double dx = vtaCoord[0] - curCoord[i][0];
+      double dy = vtaCoord[1] - curCoord[i][1];
+      double dz = vtaCoord[2] - curCoord[i][2];
+      double dist = dx*dx+dy*dy+dz*dz;
+      if(dist<minDist)
+        minDist = dist;
+    }
+  }
+
+  while(1) {
+    unsigned index = 4;
+
     const uint64_t* __restrict__ curNeigh = mesh->tetrahedra.neigh + 4*nextTet;
 
-  #ifndef NDEBUG
+#ifndef NDEBUG
+    const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + 4*nextTet;
     if(curNode[3]==HXT_GHOST_VERTEX){
       return HXT_ERROR_MSG(HXT_STATUS_FAILED, "walked outside of the domain");
     }
-  #endif
+#endif
 
-    unsigned neigh = 4;
+    for (unsigned i=0; i<4; i++) {
+      if(i==enteringFace)
+        continue;
+
+      uint32_t node = mesh->tetrahedra.node[curNeigh[i]];
+
+      if(node==HXT_GHOST_VERTEX)
+        continue;
+      
+      const double* __restrict__ const coord = vertices[node].coord;
+
+      double dx = vtaCoord[0] - coord[0];
+      double dy = vtaCoord[1] - coord[1];
+      double dz = vtaCoord[2] - coord[2];
+      double dist = dx*dx+dy*dy+dz*dz;
+      if(dist < minDist && !vertexOutOfPartition(vertices, node, rel, partition->startDist)){
+        minDist = dist;
+        index = i;
+      }
+    }
+
+    if(index==4)
+      break;
+
+    enteringFace = curNeigh[index]&3;
+    nextTet = curNeigh[index]/4;
+  }
+#endif // ifdef HXT_WALK_OPTI
+
+  uint32_t seed = 1;
+  enteringFace = 4;
+
+  while(1) {
+    const uint64_t* __restrict__ curNeigh = mesh->tetrahedra.neigh + 4*nextTet;
+    const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + 4*nextTet;
+
+#ifndef NDEBUG
+    if(curNode[3]==HXT_GHOST_VERTEX){
+      return HXT_ERROR_MSG(HXT_STATUS_FAILED, "walked outside of the domain");
+    }
+#endif
+
+    // we should pass in orient3d mode here :p
+    unsigned index = 4;
     unsigned outside = 0;
-    uint32_t randomU = hxtReproducibleLCG(&seed);
-    for (unsigned i=0; i<4; i++)
+    unsigned randomU = hxtReproducibleLCG(&seed);
+    for (unsigned j=0; j<4; j++)
     {
-      uint32_t index = (i+randomU)%4;
-      if (index!=enteringFace) {
+      unsigned i = (j+randomU)%4;
+      if (i!=enteringFace) {
         // we walk where the volume is minimum
-        const double* __restrict__ a = vertices[curNode[getNode0FromFacet(index)]].coord;
-        const double* __restrict__ b = vertices[curNode[getNode1FromFacet(index)]].coord;
-        const double* __restrict__ c = vertices[curNode[getNode2FromFacet(index)]].coord;
+        const double* __restrict__ a = vertices[curNode[getNode0FromFacet(i)]].coord;
+        const double* __restrict__ b = vertices[curNode[getNode1FromFacet(i)]].coord;
+        const double* __restrict__ c = vertices[curNode[getNode2FromFacet(i)]].coord;
 
-        if (orient3d(a,b,c, vtaCoord) < 0.0){
-          if(curNeigh[index]==HXT_NO_ADJACENT) { // the point is outside the triangulation
-            return HXT_ERROR_MSG(HXT_STATUS_ERROR,
-                                "vertex {%f %f %f} outside the triangulation and no ghost tetrahedra",
-                                 vtaCoord[0], vtaCoord[1], vtaCoord[2]);
+        if (orient3d(vtaCoord,a,b,c) < 0){ // the point is outside the triangle
+          // if(curNeigh[i]==HXT_NO_ADJACENT) {
+          //   return HXT_ERROR_MSG(HXT_STATUS_ERROR,
+          //                       "vertex {%f %f %f} outside the triangulation and no ghost tetrahedra",
+          //                        vtaCoord[0], vtaCoord[1], vtaCoord[2]);
+          // }
+
+          outside = 1;
+          uint32_t node = mesh->tetrahedra.node[curNeigh[i]];
+
+          if(node==HXT_GHOST_VERTEX) {
+            *curTet = curNeigh[i]/4;
+            return HXT_STATUS_OK;
           }
 
-          uint64_t tet = curNeigh[index]/4;
-          const uint32_t* __restrict__ neighNodes = mesh->tetrahedra.node + tet*4;
-          if(checkTetrahedron(vertices, local, neighNodes)==HXT_STATUS_OK){
-            if(neighNodes[3]==HXT_GHOST_VERTEX){
-              *curTet = tet;
-              return HXT_STATUS_OK;
-            }
-            neigh=index;
+          if(!vertexOutOfPartition(vertices, node, rel, partition->startDist)){
+            index=i;
             break;
           }
-          outside = 1;
         }
       }
     }
 
-    if(neigh==4){
+    if(index==4){
       const double* __restrict__ a = vertices[curNode[0]].coord;
       const double* __restrict__ b = vertices[curNode[1]].coord;
       const double* __restrict__ c = vertices[curNode[2]].coord;
       const double* __restrict__ d = vertices[curNode[3]].coord;
-      if(outside ||
-         (orient3d(a,b,c,vtaCoord)>=0.0) +
-         (orient3d(a,b,vtaCoord,d)>=0.0) +
-         (orient3d(a,vtaCoord,c,d)>=0.0) +
-         (orient3d(vtaCoord,b,c,d)>=0.0)>2){
-        return HXT_STATUS_TRYAGAIN;
+      if(outside) {
+        return HXT_STATUS_CONFLICT;
+      }
+      else if( (orient3d(a,b,c,vtaCoord)>=0) +
+               (orient3d(a,b,vtaCoord,d)>=0) +
+               (orient3d(a,vtaCoord,c,d)>=0) +
+               (orient3d(vtaCoord,b,c,d)>=0)>2 ){
+        *curTet = nextTet;
+        return HXT_STATUS_DOUBLE_PT;
       }
       *curTet = nextTet;
       return HXT_STATUS_OK;
     }
 
-    //    printf("nextTet %u %g %u %u\n",nextTet,Min, count, neigh);
-    nextTet = curNeigh[neigh]/4;
-    enteringFace = curNeigh[neigh]&3;
-
-  #ifndef NDEBUG
-    if(TotalCount>mesh->tetrahedra.num){
-      return HXT_ERROR_MSG(HXT_STATUS_FAILED, "infinite walk to find the cavity");
-    }
-    // printf("%lu\n",TotalCount);
-    TotalCount++;
-  #endif
+    enteringFace = curNeigh[index]&3;
+    nextTet = curNeigh[index]/4;
   }
 }
 
@@ -579,22 +639,12 @@ static inline void bndPush( TetLocal* local, uint16_t flag,
               const uint32_t node1, const uint32_t node2,
               const uint32_t node3, const uint64_t neigh){
   uint64_t n = local->ball.num;
-  local->ball.bnd[n].node[0] = node1;
-  local->ball.bnd[n].node[1] = node2;
-  local->ball.bnd[n].node[2] = node3;
-  local->ball.bnd[n].flag = flag;
-  local->ball.bnd[n].neigh = neigh;
+  local->ball.array[n].node[0] = node1;
+  local->ball.array[n].node[1] = node2;
+  local->ball.array[n].node[2] = node3;
+  local->ball.array[n].flag = flag;
+  local->ball.array[n].neigh = neigh;
   local->ball.num++;
-}
-
-/* delete a tetrahedron being part of the cavity */
-static inline HXTStatus deletedPush(HXTMesh* mesh, TetLocal* local, const uint64_t neigh){
-  // check if 3 points of the new tetrahedra are owned by this thread
-  HXT_CHECK( checkTetrahedron((HXTVertex*) mesh->vertices.coord, local, mesh->tetrahedra.node + neigh*4) );
-  local->deleted.tetID[local->deleted.num++] = neigh;
-  setDeletedFlag(mesh, neigh);
-
-  return HXT_STATUS_OK;
 }
 
 /* check if the cavity is star shaped
@@ -606,13 +656,10 @@ static HXTStatus isStarShaped(TetLocal* local, HXTMesh* mesh, const uint32_t vta
   double *vtaCoord = vertices[vta].coord;
 
   for (uint64_t i=0; i<local->ball.num; i++) {
-    if(local->ball.bnd[i].node[2]==HXT_GHOST_VERTEX){
-
-    }
-    else{
-      double* b = vertices[local->ball.bnd[i].node[0]].coord;
-      double* c = vertices[local->ball.bnd[i].node[1]].coord;
-      double* d = vertices[local->ball.bnd[i].node[2]].coord;
+    if(local->ball.array[i].node[2]!=HXT_GHOST_VERTEX){
+      double* b = vertices[local->ball.array[i].node[0]].coord;
+      double* c = vertices[local->ball.array[i].node[1]].coord;
+      double* d = vertices[local->ball.array[i].node[2]].coord;
       if(orient3d(vtaCoord, b, c, d)>=0.0){
         *blindFaceIndex = i;
         return HXT_STATUS_INTERNAL;
@@ -626,9 +673,9 @@ static HXTStatus isStarShaped(TetLocal* local, HXTMesh* mesh, const uint32_t vta
 static HXTStatus undeleteTetrahedron(TetLocal* local, HXTMesh* mesh, uint64_t tetToUndelete) {
   // the tetrahedra should not be deleted anymore
   for (uint64_t i=local->deleted.num; ; i--) {
-    if(local->deleted.tetID[i-1]==tetToUndelete) {
+    if(local->deleted.array[i-1]==tetToUndelete) {
       local->deleted.num--;
-      local->deleted.tetID[i-1] = local->deleted.tetID[local->deleted.num];
+      local->deleted.array[i-1] = local->deleted.array[local->deleted.num];
       break;
     }
 #ifdef DEBUG
@@ -644,10 +691,10 @@ static HXTStatus undeleteTetrahedron(TetLocal* local, HXTMesh* mesh, uint64_t te
   // we should update the boundary (that's the difficult part...)
   // first remove all the boundary faces that come from the tetrahedron we just remove from the cavity
   for (uint64_t i=local->ball.num; nbndFace<4 && i>0; i--) {
-    if(mesh->tetrahedra.neigh[local->ball.bnd[i-1].neigh]/4==tetToUndelete) {
-      bndFaces[nbndFace++] = local->ball.bnd[i-1].neigh;
+    if(mesh->tetrahedra.neigh[local->ball.array[i-1].neigh]/4==tetToUndelete) {
+      bndFaces[nbndFace++] = local->ball.array[i-1].neigh;
       local->ball.num--;
-      local->ball.bnd[i-1] = local->ball.bnd[local->ball.num];
+      local->ball.array[i-1] = local->ball.array[local->ball.num];
     }
   }
 
@@ -661,7 +708,7 @@ static HXTStatus undeleteTetrahedron(TetLocal* local, HXTMesh* mesh, uint64_t te
     return HXT_ERROR_MSG(HXT_STATUS_ERROR, "found %d non-deleted tet adjacent to the tet we unremove but there should be %d %lu %lu %lu %lu", nbndFace, nbndFace2, bndFaces[0], bndFaces[1], bndFaces[2], bndFaces[3]);
 #endif
 
-  HXT_CHECK( reserveNewBnd(local, 3) );
+  HXT_CHECK( askForBall(local, 3) );
 
   if(curNeigh[0]!=bndFaces[0] && curNeigh[0]!=bndFaces[1] && curNeigh[0]!=bndFaces[2] && curNeigh[0]!=bndFaces[3])
     bndPush(local, (getFacetConstraint(mesh, tetToUndelete, 0)   ) |
@@ -700,8 +747,8 @@ static HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uin
   uint64_t blindFace = 0;
   while(isStarShaped(local, mesh, vta, &blindFace)==HXT_STATUS_INTERNAL)
   {
-    // printf("deleting %lu  cavity:%lu  ball:%lu\n",mesh->tetrahedra.neigh[local->ball.bnd[blindFace].neigh]/4, local->deleted.num-prevDeleted, local->ball.num );
-    HXT_CHECK( undeleteTetrahedron(local, mesh, mesh->tetrahedra.neigh[local->ball.bnd[blindFace].neigh]/4) );
+    // printf("deleting %lu  cavity:%lu  ball:%lu\n",mesh->tetrahedra.neigh[local->ball.array[blindFace].neigh]/4, local->deleted.num-prevDeleted, local->ball.num );
+    HXT_CHECK( undeleteTetrahedron(local, mesh, mesh->tetrahedra.neigh[local->ball.array[blindFace].neigh]/4) );
   }
   return HXT_STATUS_OK;
 }
@@ -712,12 +759,12 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
 
   // all the tetrahedron have the same color 'color', we will use that color to flag them
   for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
-    uint64_t delTet = local->deleted.tetID[i];
+    uint64_t delTet = local->deleted.array[i];
     mesh->tetrahedra.colors[delTet] = 0;
   }
 
   for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
-    uint64_t delTet = local->deleted.tetID[i];
+    uint64_t delTet = local->deleted.array[i];
     int exist = 1;
     for (int edge=0; exist && edge<6; edge++) {
       if(getEdgeConstraint(mesh, delTet, edge) && (mesh->tetrahedra.colors[delTet] & (1U<<edge))==0) {
@@ -762,7 +809,7 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
           getFacetsFromEdge(edge, &in_facet, &out_facet);
           curTet = delTet;
 
-          uint64_t tetContainingVta = local->deleted.tetID[prevDeleted];
+          uint64_t tetContainingVta = local->deleted.array[prevDeleted];
           uint64_t tetToUndelete = HXT_NO_ADJACENT;
           double distMax = 0.0;
           double* vtaCoord = mesh->vertices.coord + 4*vta;
@@ -823,7 +870,7 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
   }
 
   for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
-    uint64_t delTet = local->deleted.tetID[i];
+    uint64_t delTet = local->deleted.array[i];
     mesh->tetrahedra.colors[delTet] = color;
   }
 
@@ -833,34 +880,35 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
 
 /* this function does a Breadth-first search of the tetrahedra in the cavity
  * it add those to local->deleted
- * it also maintain a local->bnd array with all the information concerning the boundary of the cavity
+ * it also maintain a local->ball array with all the information concerning the boundary of the cavity
  */
 static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t firstTet, const uint32_t vta, int* edgeConstraint){
   // add tetrahedra to cavity
-  local->deleted.tetID[local->deleted.num++] = firstTet;
+  local->deleted.array[local->deleted.num++] = firstTet;
   setDeletedFlag(mesh, firstTet);
   local->ball.num = 0;
 
-  
+  uint64_t rel = local->partition.lengthDist;
+  HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
 
   for(uint64_t start=local->deleted.num-1; start < local->deleted.num; start++){
-    uint64_t curTet = local->deleted.tetID[start];
+    uint64_t curTet = local->deleted.array[start];
     const uint64_t* __restrict__ curNeigh = mesh->tetrahedra.neigh + 4*curTet;
     const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + 4*curTet;
 
     *edgeConstraint += isAnyEdgeConstrained(mesh, curTet)!=0;
 
-    /* here we allocate enough space for the boundary (local->bnd), the cavity (local->deleted) and the vertices (local->vertices) */
-    HXT_CHECK( reserveNewDeleted(local, 4) );
-    HXT_CHECK( reserveNewBnd(local, 4) );
+    /* here we allocate enough space for the boundary (local->ball), the cavity (local->deleted) and the vertices (local->vertices) */
+    HXT_CHECK( askForDeleted(&local->deleted, 4) );
+    HXT_CHECK( askForBall(local, 4) );
 
     // we unrolled the loop for speed (also because indices are not trivial, we would need a 4X4 array)
 
-    /* and here we push stuff to local->bnd or local->deleted, always keeping ghost tet at last place */
+    /* and here we push stuff to local->ball or local->deleted, always keeping ghost tet at last place */
     uint64_t neigh = curNeigh[0]/4;
-    if(curNeigh[0]!=HXT_NO_ADJACENT && getDeletedFlag(mesh, neigh)==0){
+    if(getDeletedFlag(mesh, neigh)==0){
       if(getFacetConstraint(mesh, curTet, 0) || 
-        tetInsphere(mesh, neigh*4, vta)>=0.0){
+        tetInsphere(mesh, neigh*4, vta)>=0){
         bndPush(local, mesh->tetrahedra.flag[curTet] & UINT16_C(0x107),
                        /* corresponds to :
                        getFacetConstraint(mesh, curTet, 0) | 
@@ -870,14 +918,18 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
                        curNode[1], curNode[2], curNode[3], curNeigh[0]);
       }
       else{
-        HXT_CHECK( deletedPush(mesh, local, neigh) );
+        uint32_t node = mesh->tetrahedra.node[curNeigh[0]];
+        if(node!=HXT_GHOST_VERTEX && vertexOutOfPartition(vertices, node, rel, local->partition.startDist))
+          return HXT_STATUS_CONFLICT;
+        local->deleted.array[local->deleted.num++] = neigh;
+        setDeletedFlag(mesh, neigh);
       }
     }
 
     neigh = curNeigh[1]/4;
-    if(curNeigh[1]!=HXT_NO_ADJACENT && getDeletedFlag(mesh, neigh)==0){
+    if(getDeletedFlag(mesh, neigh)==0){
       if(getFacetConstraint(mesh, curTet, 1) || 
-        tetInsphere(mesh, neigh*4, vta)>=0.0){
+        tetInsphere(mesh, neigh*4, vta)>=0){
         bndPush(local, (getFacetConstraint(mesh, curTet, 1)>>1) |// constraint on facet 1 goes on facet 0
                        (getEdgeConstraint(mesh, curTet, 3)>>3) | // constraint on edge 3 (facet 1 2) goes on edge 0
                        (getEdgeConstraint(mesh, curTet, 0)<<1) | // constraint on edge 0 (facet 1 0) goes on edge 1
@@ -885,14 +937,18 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
                        curNode[2], curNode[0], curNode[3], curNeigh[1]);
       }
       else{
-        HXT_CHECK( deletedPush(mesh, local, neigh) );
+        uint32_t node = mesh->tetrahedra.node[curNeigh[1]];
+        if(node!=HXT_GHOST_VERTEX && vertexOutOfPartition(vertices, node, rel, local->partition.startDist))
+          return HXT_STATUS_CONFLICT;
+        local->deleted.array[local->deleted.num++] = neigh;
+        setDeletedFlag(mesh, neigh);
       }
     }
 
     neigh = curNeigh[2]/4;
-    if(curNeigh[2]!=HXT_NO_ADJACENT && getDeletedFlag(mesh, neigh)==0){
+    if(getDeletedFlag(mesh, neigh)==0){
       if(getFacetConstraint(mesh, curTet, 2)|| 
-        tetInsphere(mesh, neigh*4, vta)>=0.0){
+        tetInsphere(mesh, neigh*4, vta)>=0){
         bndPush(local, (getFacetConstraint(mesh, curTet, 2)>>2) |// constraint on facet 2 goes on facet 0
                        (getEdgeConstraint(mesh, curTet, 1)>>1) | // constraint on edge 1 (facet 2 0) goes on edge 0
                        (getEdgeConstraint(mesh, curTet, 3)>>2) | // constraint on edge 3 (facet 2 1) goes on edge 1
@@ -900,14 +956,18 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
                        curNode[0], curNode[1], curNode[3], curNeigh[2]);
       }
       else{
-        HXT_CHECK( deletedPush(mesh, local, neigh) );
+        uint32_t node = mesh->tetrahedra.node[curNeigh[2]];
+        if(node!=HXT_GHOST_VERTEX && vertexOutOfPartition(vertices, node, rel, local->partition.startDist))
+          return HXT_STATUS_CONFLICT;
+        local->deleted.array[local->deleted.num++] = neigh;
+        setDeletedFlag(mesh, neigh);
       }
     }
 
     neigh = curNeigh[3]/4;
-    if(curNeigh[3]!=HXT_NO_ADJACENT && getDeletedFlag(mesh, neigh)==0){
+    if(getDeletedFlag(mesh, neigh)==0){
       if(getFacetConstraint(mesh, curTet, 3) || 
-        tetInsphere(mesh, neigh*4, vta)>=0.0){
+        tetInsphere(mesh, neigh*4, vta)>=0){
         
         bndPush(local, (getFacetConstraint(mesh, curTet, 3)>>3) |// constraint on facet 3 goes on facet 0
                        (getEdgeConstraint(mesh, curTet, 4)>>4) | // constraint on edge 4 (facet 3 1) goes on edge 0
@@ -917,7 +977,11 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
                        curNode[1], curNode[0], curNode[2], curNeigh[3]);
       }
       else{
-        HXT_CHECK( deletedPush(mesh, local, neigh) );
+        uint32_t node = mesh->tetrahedra.node[curNeigh[3]];
+        if(node!=HXT_GHOST_VERTEX && vertexOutOfPartition(vertices, node, rel, local->partition.startDist))
+          return HXT_STATUS_CONFLICT;
+        local->deleted.array[local->deleted.num++] = neigh;
+        setDeletedFlag(mesh, neigh);
       }
     }
   }
@@ -930,8 +994,8 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
  * compute adjacencies with a matrix O(1) insertion and search
  **************************************************************/
 #ifndef HXT_DELAUNAY_LOW_MEMORY
-static inline HXTStatus computeAdjacenciesFast(HXTMesh* mesh, TetLocal* local, uint32_t* __restrict__ verticesID, const uint64_t blength){
-  cavityBnd_t* __restrict__ bnd = local->ball.bnd;
+static inline HXTStatus computeAdjacenciesFast(HXTMesh* mesh, TetLocal* local, unsigned char* __restrict__ verticesID, const unsigned char blength){
+  cavityBnd_t* __restrict__ bnd = local->ball.array;
 
 #ifndef NDEBUG
   int ghost_is_there = 0;
@@ -940,19 +1004,17 @@ static inline HXTStatus computeAdjacenciesFast(HXTMesh* mesh, TetLocal* local, u
 HXT_ASSERT(((size_t) bnd)%SIMD_ALIGN==0);
 HXT_ASSERT(((size_t) verticesID)%SIMD_ALIGN==0);
 
-#if !defined(HAVE_NO_OPENMP_SIMD)
   #pragma omp simd aligned(verticesID,bnd:SIMD_ALIGN)
-#endif
-  for (uint32_t i=0; i<blength; i++){
-    verticesID[bnd[i].node[0]] = UINT32_MAX;
-    verticesID[bnd[i].node[1]] = UINT32_MAX;
+  for (int i=0; i<blength; i++){
+    verticesID[bnd[i].node[0]] = 255;
+    verticesID[bnd[i].node[1]] = 255;
     if(bnd[i].node[2]!=HXT_GHOST_VERTEX){
-      verticesID[bnd[i].node[2]] = UINT32_MAX;
+      verticesID[bnd[i].node[2]] = 255;
     }
   }
 
-  uint32_t npts = 1;
-  for (uint32_t i=0; i<blength; i++)
+  unsigned char npts = 1;
+  for (int i=0; i<blength; i++)
   {
     if(verticesID[bnd[i].node[0]]>npts){
       verticesID[bnd[i].node[0]] = npts++;
@@ -980,20 +1042,16 @@ HXT_ASSERT(((size_t) verticesID)%SIMD_ALIGN==0);
 
   HXT_ASSERT_MSG((npts-3+ghost_is_there)*2==blength, "Failed to compute adjacencies (f) %u (%u ghost) vertices and %u cavity boundaries", npts-1+ghost_is_there, ghost_is_there, blength); // symbol undefined
 
-#if !defined(HAVE_NO_OPENMP_SIMD)
-  #pragma omp simd aligned(verticesID:SIMD_ALIGN)
-#endif
-  for (uint32_t i=0; i<blength; i++)
+  #pragma omp simd aligned(bnd:SIMD_ALIGN)
+  for (int i=0; i<blength; i++)
   {
     local->Map[bnd[i].node[0]*32 + bnd[i].node[1]] = bnd[i].neigh + 3;
     local->Map[bnd[i].node[1]*32 + bnd[i].node[2]] = bnd[i].neigh + 1;
     local->Map[bnd[i].node[2]*32 + bnd[i].node[0]] = bnd[i].neigh + 2;
   }
 
-#if !defined(HAVE_NO_OPENMP_SIMD)
-  #pragma omp simd aligned(verticesID:SIMD_ALIGN)
-#endif
-  for (uint32_t i=0; i<blength; i++)
+  #pragma omp simd aligned(bnd:SIMD_ALIGN)
+  for (int i=0; i<blength; i++)
   {
     mesh->tetrahedra.neigh[bnd[i].neigh + 1] = local->Map[bnd[i].node[2]*32 + bnd[i].node[1]];
     mesh->tetrahedra.neigh[bnd[i].neigh + 2] = local->Map[bnd[i].node[0]*32 + bnd[i].node[2]];
@@ -1006,7 +1064,7 @@ HXT_ASSERT(((size_t) verticesID)%SIMD_ALIGN==0);
 
 
 /**************************************************************
- * compute adjacencies with a matrix O(n) insertion and search
+ * compute adjacencies with a stack O(n) insertion and search
  **************************************************************/
 static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, const uint64_t start, const uint64_t blength){
 
@@ -1016,12 +1074,12 @@ static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, c
   // N+2 point on the surface of the cavity
   // 2N triangle on the surface of the cavity, x3 (4*0.5+1) data = 6N+9 uint64_t
   // => enough place for the 3N edge x2 data = 6N uint64_t
-  uint64_t* Tmp = (uint64_t*) local->ball.bnd;
+  uint64_t* Tmp = (uint64_t*) local->ball.array;
   const unsigned index[4] = {2,3,1,2};
 
   for (uint64_t i=0; i<blength; i++)
   {
-    uint64_t curTet = local->deleted.tetID[start+ i];
+    uint64_t curTet = local->deleted.array[start+ i];
     const uint32_t* __restrict__ Node = mesh->tetrahedra.node + 4*curTet;
 
     // pointer to the position of Node[0] in the Tmp array
@@ -1034,7 +1092,6 @@ static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, c
       uint64_t k;
       for (k=0; k<tlength; k++) // this is the only nested loop... the one that cost it all
       {
-        __assume_aligned(Tmp, SIMD_ALIGN);
         if(Tmp[k]==key)
           break;
       }
@@ -1067,47 +1124,41 @@ static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, c
 /****************************************
  * filling back the cavity (DelaunayBall)
  ****************************************/
-static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, uint32_t* __restrict__ verticesID, uint64_t* __restrict__ curTet, const uint32_t vta, const uint16_t color){
+static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned char* __restrict__ verticesID, uint64_t* __restrict__ curTet, const uint32_t vta, const uint16_t color){
   uint64_t clength = local->deleted.num;
   uint64_t blength = local->ball.num;
 
   uint64_t start = clength - blength;
 
   // #pragma vector aligned
-#if !defined(HAVE_NO_OPENMP_SIMD)
-  #pragma omp simd
+#ifdef __GNUC__
+    #pragma GCC ivdep
+#else
+    #pragma ivdep
 #endif
   for (uint64_t i=0; i<blength; i++)
   {
-
-    __assume_aligned(local->deleted.tetID, SIMD_ALIGN);
-    __assume_aligned(local->ball.bnd, SIMD_ALIGN);
-    __assume_aligned(mesh->tetrahedra.colors, SIMD_ALIGN);
-    __assume_aligned(mesh->tetrahedra.flag, SIMD_ALIGN);
-    __assume_aligned(mesh->tetrahedra.node, SIMD_ALIGN);
-    __assume_aligned(mesh->tetrahedra.neigh, SIMD_ALIGN);
-
-    const uint64_t newTet = local->deleted.tetID[i + start];
+    const uint64_t newTet = local->deleted.array[i + start];
     uint32_t* __restrict__ Node = mesh->tetrahedra.node + 4*newTet;
     mesh->tetrahedra.colors[newTet] = color;
     mesh->tetrahedra.flag[newTet] = 0;
 
     /* we need to always put the ghost vertex at the fourth slot*/
     Node[0] = vta;
-    Node[1] = local->ball.bnd[i].node[0];
-    Node[2] = local->ball.bnd[i].node[1];
-    Node[3] = local->ball.bnd[i].node[2];
+    Node[1] = local->ball.array[i].node[0];
+    Node[2] = local->ball.array[i].node[1];
+    Node[3] = local->ball.array[i].node[2];
 
-    const uint64_t neigh = local->ball.bnd[i].neigh;
+    const uint64_t neigh = local->ball.array[i].neigh;
     mesh->tetrahedra.neigh[4*newTet] = neigh;
 
-    mesh->tetrahedra.flag[newTet] = local->ball.bnd[i].flag;
+    mesh->tetrahedra.flag[newTet] = local->ball.array[i].flag;
 
     // update neighbor's neighbor
     mesh->tetrahedra.neigh[neigh] = 4*newTet;
 
     // we recycle neigh to contain newTet (used in computeAdjacencies)
-    local->ball.bnd[i].neigh = 4*newTet;
+    local->ball.array[i].neigh = 4*newTet;
   }
 #ifndef HXT_DELAUNAY_LOW_MEMORY
   if(blength<=58){ // N+2<=31 => N<=29 => 2N<=58
@@ -1129,7 +1180,7 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, uint32_t*
 
 
 
-  *curTet = local->deleted.tetID[start];
+  *curTet = local->deleted.array[start];
   local->deleted.num = start;
 
   return HXT_STATUS_OK;
@@ -1139,16 +1190,17 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, uint32_t*
 /*************************************************************
  * insert a single point
  ************************************************************/
-static inline HXTStatus insertion(HXTMesh* mesh,
-                                  uint32_t* verticesID,
-                                  TetLocal* local,
-                                  const double* nodalSizes,
-                                  uint64_t* curTet,
-                                  const uint32_t vta,
-                                  int perfectlyDelaunay){
+static HXTStatus insertion(HXT2Sync* shared2sync,
+                           TetLocal* local,
+                           unsigned char* verticesID,
+                           const double* nodalSizes,
+                           uint64_t* curTet,
+                           const uint32_t vta,
+                           int perfectlyDelaunay){
   const uint64_t prevDeleted = local->deleted.num;
+  HXTMesh* mesh = shared2sync->mesh;
 
-  HXT_CHECK( walking2Cavity(mesh, local, curTet, vta) );
+  HXT_CHECK( walking2Cavity(mesh, &local->partition, curTet, vta) );
 
   if(nodalSizes!=NULL && filterTet(mesh, nodalSizes, *curTet, vta)){
     return HXT_STATUS_FALSE;
@@ -1158,9 +1210,9 @@ static inline HXTStatus insertion(HXTMesh* mesh,
   int edgeConstraint = 0;
   HXTStatus status = diggingACavity(mesh, local, *curTet, vta, &edgeConstraint);
 
-  if(status==HXT_STATUS_INTERNAL){
+  if(status==HXT_STATUS_CONFLICT){
     restoreDeleted(mesh, local, prevDeleted);
-    return HXT_STATUS_TRYAGAIN;
+    return HXT_STATUS_CONFLICT;
   }
   else{
     HXT_CHECK(status);
@@ -1170,6 +1222,7 @@ static inline HXTStatus insertion(HXTMesh* mesh,
     HXT_CHECK( respectEdgeConstraint(local, mesh, vta, color, prevDeleted) );
   }
 
+  // a simple verification that should never happen
   // uint64_t face = 0;
   // if(!perfectlyDelaunay && isStarShaped(local, mesh, vta, &face)==HXT_STATUS_INTERNAL) {
   //   restoreDeleted(mesh, local, prevDeleted);
@@ -1187,26 +1240,7 @@ static inline HXTStatus insertion(HXTMesh* mesh,
 
 
   if(local->ball.num > local->deleted.num){
-    uint64_t needed = MAX(DELETED_BUFFER_SIZE,local->ball.num)-local->deleted.num;
-
-    uint64_t ntet;
-
-    #pragma omp atomic capture
-    { ntet = mesh->tetrahedra.num; mesh->tetrahedra.num+=needed;}
-
-    reserveNewTet(mesh);
-    reserveNewDeleted(local, needed);
-
-#if !defined(HAVE_NO_OPENMP_SIMD)
-    #pragma omp simd
-#endif
-    for (uint64_t i=0; i<needed; i++){
-      local->deleted.tetID[local->deleted.num+i] = ntet+i;
-      mesh->tetrahedra.flag[ntet+i] = 0;
-      setDeletedFlag(mesh, ntet+i);
-    }
-
-    local->deleted.num+=needed;
+    HXT_CHECK( createNewDeleted(shared2sync, &local->deleted, local->ball.num) );
   }
 
   HXT_CHECK( fillingACavity(mesh, local, verticesID, curTet, vta, color) );
@@ -1236,14 +1270,14 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
 
   // that ugly cast because people want an array of double into the mesh structure
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
-  
 
   /******************************************************
           shuffle (and optimize cache locality)
   ******************************************************/
   if(noReordering){
     // shuffle nodeInfo
-    HXT_CHECK( hxtNodeInfoShuffle(nodeInfo, nToInsert) );
+    if(npasses>1)
+      HXT_CHECK( hxtNodeInfoShuffle(nodeInfo, nToInsert) );
   }
   else {
     HXT_INFO_COND(options->verbosity>1, "Reordering vertices from %u to %u", mesh->vertices.num - nToInsert, mesh->vertices.num);
@@ -1251,24 +1285,19 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
 
     if(options->nodalSizes==NULL){
       // shuffle the vertices to insert, then sort each pass except the first according to the hilbert curve...
-      HXT_CHECK( hxtVerticesShuffle(verticesToInsert, nToInsert) );
+      if(npasses>1)
+        HXT_CHECK( hxtVerticesShuffle(verticesToInsert, nToInsert) );
     }
     else{
-      HXT_CHECK( hxtNodeInfoShuffle(nodeInfo, nToInsert) );
+      if(npasses>1)
+        HXT_CHECK( hxtNodeInfoShuffle(nodeInfo, nToInsert) );
     }
-
-    uint32_t nbits = hxtAdvancedHilbertBits(options->bbox, options->minSizeStart, options->minSizeEnd,
-                                            options->numVerticesInMesh,
-                                            options->numVerticesInMesh + nToInsert,
-                                            options->numVerticesInMesh + nToInsert/4,
-                                            nToInsert/2,
-                                            maxThreads);
     
-    HXT_CHECK( hxtVerticesHilbertDist(options->bbox, verticesToInsert, nToInsert, &nbits, NULL) );
+    HXT_CHECK( hxtMoore(options->bbox, verticesToInsert, nToInsert, NULL) );
 
     if(options->nodalSizes==NULL){
       for (unsigned i=options->numVerticesInMesh < SMALLEST_ROUND; i<npasses; i++) {
-        HXT_CHECK( hxtVerticesSort(verticesToInsert+passes[i], passes[i+1]-passes[i], nbits) );
+        HXT_CHECK( hxtVerticesSort(verticesToInsert+passes[i], passes[i+1]-passes[i]) );
       }
     }
     else{
@@ -1278,7 +1307,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
       }
 
       for (unsigned i=options->numVerticesInMesh < SMALLEST_ROUND; i<npasses; i++) {
-        HXT_CHECK( hxtNodeInfoSort(nodeInfo+passes[i], passes[i+1]-passes[i], nbits) );
+        HXT_CHECK( hxtNodeInfoSort(nodeInfo+passes[i], passes[i+1]-passes[i]) );
       }
 
       const uint32_t nodalMin = mesh->vertices.num - nToInsert;
@@ -1291,7 +1320,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
       HXT_CHECK( hxtAlignedMalloc(&vertCopy, vertSize) );
       HXT_CHECK( hxtAlignedMalloc(&sizeCopy, sizeSize) );
       
-      #pragma omp parallel for
+      #pragma omp parallel for simd aligned(vertCopy,sizeCopy,nodeInfo: SIMD_ALIGN)
       for (uint32_t i=0; i<nToInsert; i++) {
         vertCopy[i] = verticesToInsert[nodeInfo[i].node-nodalMin];
         sizeCopy[i] = sizesToInsert[nodeInfo[i].node-nodalMin];
@@ -1318,11 +1347,11 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
   }
 
 
-  uint32_t*  verticesID;
+  unsigned char*  verticesID;
 #ifdef HXT_DELAUNAY_LOW_MEMORY
   verticesID = NULL; // we do not need it
 #else
-  HXT_CHECK( hxtAlignedMalloc(&verticesID, mesh->vertices.num*sizeof(uint32_t)) );
+  HXT_CHECK( hxtAlignedMalloc(&verticesID, mesh->vertices.num*sizeof(unsigned char)) );
 #endif
 
   TetLocal* Locals;
@@ -1358,78 +1387,65 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
       const uint32_t passStart = passes[p];
       const uint32_t passEnd = passes[p+1];
       const uint32_t passLength = passEnd - passStart;
+      double step = (double) passLength/nthreads;
+      double indexShift = 0.0;
 
       /******************************************************
                       choosing number of threads
       ******************************************************/
-      if(percent<140/nthreads || passLength<SMALLEST_ROUND){
-        nthreads=1;
-      }
-      else if(percent<20){
-        nthreads=(nthreads+1)/2;
-      }
-      else if(passLength < (uint32_t) nthreads*SMALLEST_ROUND)
-        nthreads=(nthreads+1)/2;
-
-
-      /******************************************************
-                      Sorting vertices
-      ******************************************************/
-      double hxtDeclareAligned bboxShift[4]={0.5,0.5,0.5,0};
-
-      if(percent<100 && nthreads>1)
-      {
-        bboxShift[0] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
-        bboxShift[1] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
-        bboxShift[2] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
-        bboxShift[3] = (double) hxtReproducibleLCG(&seed)/RAND_MAX; // this is not a bbox deformation, it's an index shift
-      }
-
-      uint32_t nbits;
-
-      if(p==0 && maxThreads<=1) {
-        nbits = hxtAdvancedHilbertBits(options->bbox, options->minSizeStart, options->minSizeEnd,
-                                       options->numVerticesInMesh,
-                                       options->numVerticesInMesh + nToInsert,
-                                       options->numVerticesInMesh,
-                                       nToInsert,
-                                       1);
-
-        HXT_CHECK( hxtVerticesHilbertDist(options->bbox, vertices, mesh->vertices.num, &nbits, bboxShift) );
-      }
-      else {
-        nbits = hxtAdvancedHilbertBits(options->bbox, options->minSizeStart, options->minSizeEnd,
-                                       options->numVerticesInMesh - passStart,
-                                       options->numVerticesInMesh - passStart + nToInsert,
-                                       options->numVerticesInMesh,
-                                       passLength,
-                                       nthreads);
-        if(noReordering){
-          HXT_CHECK( hxtVerticesHilbertDist(options->bbox, vertices, mesh->vertices.num, &nbits, bboxShift) );
+      if(maxThreads>1 || noReordering) {
+        if(percent<140/nthreads || passLength<SMALLEST_ROUND){
+          nthreads=1;
         }
-        else{
-          HXT_CHECK( hxtVerticesHilbertDist(options->bbox, vertices, mesh->vertices.num - nToInsert + passEnd, &nbits, bboxShift) );
+        else if(percent<20){
+          nthreads=(nthreads+1)/2;
+        }
+        else if(passLength < (uint32_t) nthreads*SMALLEST_ROUND)
+          nthreads=(nthreads+1)/2;
+
+
+        /******************************************************
+                        Sorting vertices
+        ******************************************************/
+        double hxtDeclareAligned bboxShift[4]={0.5,0.5,0.5,0};
+        if(percent<100 && nthreads>1)
+        {
+          bboxShift[0] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
+          bboxShift[1] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
+          bboxShift[2] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
+          bboxShift[3] = (double) hxtReproducibleLCG(&seed)/RAND_MAX; // this is not a bbox deformation, it's an index shift
+        }
+
+        step = (double) passLength/nthreads;
+        indexShift = bboxShift[3];
+        
+        if(noReordering) {
+          HXT_CHECK( hxtMoore(options->bbox, vertices, mesh->vertices.num, bboxShift) );
+        }
+        else {
+          HXT_CHECK( hxtMoore(options->bbox, vertices, mesh->vertices.num - nToInsert + passEnd, bboxShift) );
+        }
+        
+        #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
+        for (uint32_t i=passStart; i<passEnd; i++) {
+          nodeInfo[i].hilbertDist = vertices[nodeInfo[i].node].padding.hilbertDist;
+        }
+
+        if(p!=0 || n!=0 || nthreads>1 || options->numVerticesInMesh >= SMALLEST_ROUND){
+          HXT_CHECK( hxtNodeInfoSort(nodeInfo + passStart, passLength) );
+
+          // if we can only do one partition because all points are in the same cell
+          if(nodeInfo[passStart].hilbertDist==nodeInfo[passStart + passLength-1].hilbertDist)
+            nthreads = 1;
         }
       }
 
-      
-
-#if !defined(HAVE_NO_OPENMP_SIMD)
-      #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
-#endif
-      for (uint32_t i=passStart; i<passEnd; i++) {
-        nodeInfo[i].hilbertDist = vertices[nodeInfo[i].node].padding.hilbertDist;
-      }
-
-      if(p!=0 || n!=0 || nthreads>1 || options->numVerticesInMesh >= SMALLEST_ROUND){
-        HXT_CHECK( hxtNodeInfoSort(nodeInfo + passStart, passLength, nbits) );
-      }
-
-      const uint32_t step = passLength/nthreads;
-
-      uint32_t indexShift = MIN(step-1,(uint32_t) bboxShift[3]*step);
-
-      int threadFinished = 0;
+      HXT2Sync shared2sync = {.mesh = mesh,
+                              .allocMore = 8,
+                              .otherArrays = {NULL},
+                              .otherArraysElementSize = {0},
+                              .otherArraysSetDeleted = {NULL},
+                              .threadFinished = 0};
 
       #pragma omp parallel num_threads(nthreads)
       {
@@ -1451,7 +1467,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
           /******************************************************
                           Making partitions
           ******************************************************/
-          localStart = step*threadID + indexShift;
+          localStart = MIN((uint32_t) step*(threadID+1)-1, (uint32_t) (step*(threadID + indexShift)));
           uint64_t dist = nodeInfo[passStart + localStart].hilbertDist;
           
           uint32_t up = 1;
@@ -1459,64 +1475,75 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
             up++;
 
           localStart = localStart+up==passLength?0:localStart+up;
-          if(localStart > 0)
-            Locals[threadID].partition.startDist = (nodeInfo[passStart + localStart].hilbertDist
-                                                  + nodeInfo[passStart + localStart - 1].hilbertDist + 1)/2;
-          else
-            Locals[threadID].partition.startDist = nodeInfo[passStart + passLength-1].hilbertDist + (nodeInfo[passStart + localStart].hilbertDist - nodeInfo[passStart + passLength - 1].hilbertDist)/2;
-          Locals[threadID].partition.first = localStart;
+          if(localStart > 0) {
+            dist = (nodeInfo[passStart + localStart].hilbertDist
+                   + nodeInfo[passStart + localStart - 1].hilbertDist + 1)/2;
+          }
+          else {
+            dist = nodeInfo[passStart + passLength-1].hilbertDist
+                   + (nodeInfo[passStart + localStart].hilbertDist
+                   - nodeInfo[passStart + passLength - 1].hilbertDist)/2;
+          }
+          Locals[threadID].partition.startDist = dist;
+          Locals[threadID].partition.firstElem = localStart;
           // }
 
           #pragma omp barrier
 
           // if(threadID<nthreads){
-          uint32_t localEnd = Locals[(threadID+1)%nthreads].partition.first;
+          uint32_t localEnd = Locals[(threadID+1)%nthreads].partition.firstElem;
           localN = (localEnd + passLength - localStart)%passLength;
+          Locals[threadID].partition.numElem = localN;
 
-          Locals[threadID].partition.endDist = Locals[(threadID+1)%nthreads].partition.startDist;
-
-          // printf("%d) first dist: %lu, last dist: %lu startDist: %lu endDist: %lu\n", threadID, nodeInfo[passStart + localStart].hilbertDist, nodeInfo[(passStart + localStart + localN-1)%passLength].hilbertDist, Locals[threadID].partition.startDist, Locals[threadID].partition.endDist);
+          Locals[threadID].partition.lengthDist = Locals[(threadID+1)%nthreads].partition.startDist - dist;
 
 
           /******************************************************
                           find starting tetrahedron
           ******************************************************/
+          // we want to reorder tets only at the very end. Because the selected tet should not depend
+          // on the ordering of tet in reproducible mode, we have very few options...
+          // we will select the tet in the good partition that has the lowest nodes in lexicographic order
+          if(options->reproducible){
 
-          for (uint64_t i=0; i<mesh->tetrahedra.num; i++)
-          {
-            curTet = i;
-            if(getDeletedFlag(mesh, i)==0 &&
-               checkTetrahedron(vertices, &Locals[threadID], mesh->tetrahedra.node + curTet*4 )==HXT_STATUS_OK)
+            for (uint64_t i=0; i<mesh->tetrahedra.num; i++)
             {
-              foundTet = 1;
-              break;
+              if(getDeletedFlag(mesh, i)==0 &&
+                 checkTetrahedron(vertices, &Locals[threadID],
+                                  mesh->tetrahedra.node + i*4 )==HXT_STATUS_OK)
+              {
+                if(foundTet==0) {
+                  curTet = i;
+                  foundTet = 1;
+                }
+                else {
+                  uint32_t* iNode = &mesh->tetrahedra.node[4*i];
+                  uint32_t* curNode = &mesh->tetrahedra.node[4*curTet];
+
+                  // compare in lexicographic order
+                  for(int j=0; j<4; j++) {
+                    if(iNode[j]<curNode[j]){
+                      curTet = i;
+                      break;
+                    }
+                    if(iNode[j]>curNode[j])
+                      break;
+                  }
+                }
+              }
             }
           }
-
-          if(options->reproducible){
-            Locals[threadID].partition.startDist = 0;
-            Locals[threadID].partition.endDist = UINT64_MAX;
-
-            // walk in total liberty toward the first point
-            HXTStatus status = walking2Cavity(mesh, &Locals[threadID], &curTet, nodeInfo[passStart + (localStart+localN/2)%passLength].node);
-
-            if(status!=HXT_STATUS_OK && status!=HXT_STATUS_TRYAGAIN){
-              HXT_OMP_CHECK( status );
-            }
-
-            Locals[threadID].partition.startDist = nodeInfo[passStart + localStart].hilbertDist;
-            Locals[threadID].partition.endDist = nodeInfo[passStart + localEnd].hilbertDist;
-
-            if(checkTetrahedron(vertices, &Locals[threadID], mesh->tetrahedra.node + curTet*4 )!=HXT_STATUS_OK){
-              foundTet = 0;
-              // check the neighbors
-              for (unsigned i=0; i<4; i++) {
-                uint64_t tet = mesh->tetrahedra.neigh[4*curTet+i]/4;
-                if(checkTetrahedron(vertices, &Locals[threadID], mesh->tetrahedra.node + tet*4 )==HXT_STATUS_OK){
-                  foundTet = 1;
-                  curTet = tet;
-                  break;
-                }
+          else {
+            // in the standard case we can stop once we've found a correct tet.
+            for (uint64_t i=0; i<mesh->tetrahedra.num; i++)
+            {
+              if(getDeletedFlag(mesh, i)==0 &&
+                 checkTetrahedron(vertices, &Locals[threadID],
+                                  mesh->tetrahedra.node + i*4 )==HXT_STATUS_OK)
+              {
+                curTet = i;
+                foundTet = 1;
+                break;
               }
             }
           }
@@ -1535,7 +1562,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
           localStart = 0;
           localN = passLength;
           Locals[0].partition.startDist = 0;
-          Locals[0].partition.endDist = UINT64_MAX;
+          Locals[0].partition.lengthDist = UINT64_MAX;
 
           for (uint64_t i=0; i<mesh->tetrahedra.num; i++)
           { 
@@ -1588,23 +1615,28 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
             uint32_t passIndex = (localStart+i)%passLength;
             uint32_t vta = nodeInfo[passStart + passIndex].node;
             if(nodeInfo[passStart + passIndex].status==HXT_STATUS_TRYAGAIN){
-              HXTStatus status = insertion(mesh, verticesID, &Locals[threadID], options->nodalSizes, &curTet, vta, perfectlyDelaunay);
+              HXTStatus status = insertion(&shared2sync,
+                                           &Locals[threadID],
+                                           verticesID,
+                                           options->nodalSizes,
+                                           &curTet,
+                                           vta,
+                                           perfectlyDelaunay);
 
               switch(status){
-                case HXT_STATUS_TRYAGAIN:
-                  // ;
-                  if(nthreads==1){
-                    double* vtaCoord = vertices[vta].coord;
-                    HXT_WARNING("skipping supposedly duplicate vertex (%f %f %f)", vtaCoord[0], vtaCoord[1], vtaCoord[2]);
-                    nodeInfo[passStart + passIndex].status = HXT_STATUS_FALSE;
-                    break;
-                  }
+                case HXT_STATUS_DOUBLE_PT:
+                  nodeInfo[passStart + passIndex].status = HXT_STATUS_FALSE;
+                  double* vtaCoord = vertices[vta].coord;
+                  HXT_WARNING("skipping supposedly duplicate vertex (%f %f %f)", vtaCoord[0], vtaCoord[1], vtaCoord[2]);
+                  break;
+                case HXT_STATUS_CONFLICT:
+                  status = HXT_STATUS_TRYAGAIN;
                   /* fall through */
                 case HXT_STATUS_FALSE:
                 case HXT_STATUS_TRUE:
                   nodeInfo[passStart + passIndex].status = status;
                   break;
-                default: // error other than HXT_STATUS_TRYAGAIN cause the program to return
+                default: // other error status cause the program to return
                   nodeInfo[passStart + passIndex].status = HXT_STATUS_TRYAGAIN;
                   HXT_OMP_CHECK( status );
                   break;
@@ -1613,19 +1645,11 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
             else{
               nodeInfo[passStart + passIndex].status = HXT_STATUS_FALSE;
             }
-          }  
+          }
         }
         // }
 
-        #pragma omp atomic update
-        threadFinished++;
-
-        int val = 0;
-        do{
-          // threads are waiting here for a reallocation
-          HXT_OMP_CHECK( synchronizeReallocation(mesh, &threadFinished, &val) );
-        }while(val<nthreads);
-        // }while(val<maxThreads);
+        HXT_OMP_CHECK( waitForPossibleReallocation(&shared2sync, nthreads) );
       }
 
       /******************************************************
@@ -1670,15 +1694,15 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
     const int threadID = omp_get_thread_num();
     for (uint64_t i=0; i<Locals[threadID].deleted.num; i++) {
       for (int j=0; j<4; j++) {
-        mesh->tetrahedra.neigh[4*Locals[threadID].deleted.tetID[i]+j] = HXT_NO_ADJACENT;
+        mesh->tetrahedra.neigh[4*Locals[threadID].deleted.array[i]+j] = HXT_NO_ADJACENT;
       }
     }
   }
   HXT_CHECK( hxtRemoveDeleted(mesh) );
 
   for (int i=0; i<maxThreads; i++){
-    HXT_CHECK( hxtAlignedFree(&Locals[i].deleted.tetID) );
-    HXT_CHECK( hxtAlignedFree(&Locals[i].ball.bnd) );
+    HXT_CHECK( hxtAlignedFree(&Locals[i].deleted.array));
+    HXT_CHECK( hxtAlignedFree(&Locals[i].ball.array));
   }
 
   HXT_CHECK( hxtAlignedFree(&verticesID) );
@@ -1744,7 +1768,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
       }
 
       // 4th: update tetrahedra.node accordingly
-      #pragma omp for
+      #pragma omp for simd
       for (uint64_t i=0; i<4*mesh->tetrahedra.num; i++) {
         uint32_t index = mesh->tetrahedra.node[i];
         if(index>=firstShifted && index!=HXT_GHOST_VERTEX)
@@ -1763,7 +1787,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
     }
 
     if(options->verbosity>1)
-      HXT_INFO("%u vertices removed (vertices not inserted in the mesh are removed when using hxtDelaunay)\n", totalNumSkipped);
+      HXT_INFO("%u vertices removed (vertices not inserted in the mesh are removed when using hxtDelaunay)", totalNumSkipped);
 
     mesh->vertices.num = mesh->vertices.num - totalNumSkipped;
   }
@@ -1775,9 +1799,10 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
     mesh->tetrahedra.num, mesh->vertices.num);
 
   if(options->reproducible && maxThreads!=1){
-    HXT_INFO_COND(options->verbosity>1, "Reordering tetrahedra (reproducible==true)\n", mesh->vertices.num - nToInsert, mesh->vertices.num);
+    HXT_INFO_COND(options->verbosity>1, "Reordering tetrahedra (reproducible==true)", mesh->vertices.num - nToInsert, mesh->vertices.num);
     HXT_CHECK( hxtTetReorder(mesh) );
   }
+  HXT_INFO_COND(options->verbosity>1,""); // just separate stuff with a blank line
 
   return HXT_STATUS_OK;
 }
@@ -1788,36 +1813,21 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
  * when there are missing fields.
  ****************************************/
 static HXTStatus DelaunayOptionsInit(HXTMesh* mesh,
-                                HXTDelaunayOptions* userOptions,
-                                HXTDelaunayOptions* options,
-                                HXTBbox* bbox){
+                                     HXTDelaunayOptions* options,
+                                     HXTBbox* bbox){
 HXT_ASSERT(mesh!=NULL);
+HXT_ASSERT_MSG(options->numVerticesInMesh==0 || mesh->tetrahedra.num!=0,
+               "Told there was 0 vertices in the mesh, which is incompatible with the number of tetrahedra (>0)");
+  
+  const uint32_t nVert = mesh->vertices.num;
 
-  if(userOptions!=NULL){
-    options->bbox = userOptions->bbox;
-    options->nodalSizes = userOptions->nodalSizes;
-    options->verbosity = userOptions->verbosity;
-    options->minSizeStart = MAX(0.0, userOptions->minSizeStart);
-    options->minSizeEnd = MAX(options->minSizeStart, userOptions->minSizeEnd);
-    options->numVerticesInMesh = userOptions->numVerticesInMesh;
-    options->delaunayThreads = userOptions->delaunayThreads;
-    options->reproducible = userOptions->reproducible;
-  }
-  else{
+  if(options->numVerticesInMesh==0 && mesh->tetrahedra.num!=0) {
+
     HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
-
-    // default parameters
-    options->bbox = NULL;
-    options->nodalSizes = NULL;
-    options->minSizeStart = 0.0;
-    options->minSizeEnd = 0.0;
-    options->verbosity = 1;
-    options->delaunayThreads = 0;
-    options->reproducible = 0;
 
     // count the number of vertices in the mesh
     #pragma omp parallel for
-    for (uint32_t i=0; i<mesh->vertices.num; i++) {
+    for (uint32_t i=0; i<nVert; i++) {
       vertices[i].padding.index = 0;
     }
 
@@ -1832,19 +1842,19 @@ HXT_ASSERT(mesh!=NULL);
 
     uint32_t numVerticesInMesh = 0;
     #pragma omp parallel for reduction(+:numVerticesInMesh)
-    for (uint32_t i=0; i<mesh->vertices.num; i++) {
+    for (uint32_t i=0; i<nVert; i++) {
         numVerticesInMesh += vertices[i].padding.index;
     }
 
     options->numVerticesInMesh = numVerticesInMesh;
   }
 
-HXT_ASSERT(options->numVerticesInMesh <= mesh->vertices.num);
+HXT_ASSERT(options->numVerticesInMesh <= nVert);
 
   if(options->bbox==NULL){
     options->bbox = bbox;
     hxtBboxInit(bbox);
-    HXT_CHECK( hxtBboxAdd(bbox, mesh->vertices.coord, mesh->vertices.num) );
+    hxtBboxAdd(bbox, mesh->vertices.coord, nVert);
   }
 
   if(options->delaunayThreads==0)
@@ -1870,21 +1880,29 @@ HXT_ASSERT(options->numVerticesInMesh <= mesh->vertices.num);
  ****************************************/
 HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* userOptions){
   HXTDelaunayOptions options;
+  if(userOptions!=NULL)
+    options = *userOptions;
+  else
+    options = (HXTDelaunayOptions) {.bbox=NULL,
+                                    .nodalSizes=NULL,
+                                    .numVerticesInMesh=0,
+                                    .verbosity=1,
+                                    .delaunayThreads=0,
+                                    .reproducible=0};
+
   HXTBbox bbox;
-  HXT_CHECK( DelaunayOptionsInit(mesh, userOptions, &options, &bbox) );
+  HXT_CHECK( DelaunayOptionsInit(mesh, &options, &bbox) );
 
   const uint32_t nToInsert = mesh->vertices.num - options.numVerticesInMesh;
 
-  if(options.reproducible && nToInsert<2048) // not worth launching threads and having to reorder tets after...
+  if(options.reproducible && nToInsert<16554) // not worth launching threads and having to reorder tets after...
     options.delaunayThreads = 1;
 
   hxtNodeInfo* nodeInfo;
   HXT_CHECK( hxtAlignedMalloc(&nodeInfo, nToInsert*sizeof(hxtNodeInfo)) );
   
   // we fill nodeInfo with the indices of each vertices to insert...
-#if !defined(HAVE_NO_OPENMP_SIMD)
   #pragma omp parallel for simd
-#endif
   for (uint32_t i=0; i<nToInsert; i++) {
     nodeInfo[i].node = options.numVerticesInMesh + i;
     nodeInfo[i].status = HXT_STATUS_TRYAGAIN; // necessary for when foundTet = 0;
@@ -1906,10 +1924,20 @@ HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* userOptio
 HXT_ASSERT(nodeInfo!=NULL);
 
   HXTDelaunayOptions options;
-  HXTBbox bbox;
-  HXT_CHECK( DelaunayOptionsInit(mesh, userOptions, &options, &bbox) );
+  if(userOptions!=NULL)
+    options = *userOptions;
+  else
+    options = (HXTDelaunayOptions) {.bbox=NULL,
+                                    .nodalSizes=NULL,
+                                    .numVerticesInMesh=0,
+                                    .verbosity=1,
+                                    .delaunayThreads=0,
+                                    .reproducible=0};
 
-  if(options.reproducible && nToInsert<2048) // not worth launching threads and having to reorder tets after...
+  HXTBbox bbox;
+  HXT_CHECK( DelaunayOptionsInit(mesh, &options, &bbox) );
+
+  if(options.reproducible && nToInsert<16554) // not worth launching threads and having to reorder tets after...
     options.delaunayThreads = 1;
 
 HXT_ASSERT(options.numVerticesInMesh+nToInsert <= mesh->vertices.num);
@@ -1919,3 +1947,108 @@ HXT_ASSERT(options.numVerticesInMesh+nToInsert <= mesh->vertices.num);
   return HXT_STATUS_OK;
 }
 
+// typedef struct {
+//   struct {
+//     cavityBnd_t* array;
+//     uint64_t size;
+//   } ball;
+
+//   struct {
+//     unsigned char* array;
+//     uint64_t size;
+//   } verticesID;
+// } hxtDelaunayBuffer_t;
+
+
+// HXTStatus hxtDelaunayAddOne(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* vtaNodeInfo,
+//                             uint64_t** deleted, size_t* numDeleted, size_t* sizeDeleted, void** buffer)
+// {
+// HXT_ASSERT(buffer!=NULL);
+// HXT_ASSERT(deleted!=NULL);
+// HXT_ASSERT(numDeleted!=NULL);
+// HXT_ASSERT(sizeDeleted!=NULL);
+  
+//   TetLocal local;
+//   uint64_t bufSize;
+
+//   hxtDelaunayBuffer_t* buf;
+
+//   if(*buffer==NULL) {
+//     HXT_CHECK( hxtMalloc(buffer, sizeof(hxtDelaunayBuffer_t)) );
+//     buf = (hxtDelaunayBuffer_t*) *buffer;
+//     buf->verticesID.array = NULL;
+//     buf->verticesID.size = 0;
+//     buf->ball.size = 1020;
+//     HXT_CHECK( hxtAlignedMalloc(&buf->ball.array, sizeof(cavityBnd_t)*buf->ball.size) );
+//   }
+//   else {
+//     buf = (hxtDelaunayBuffer_t*) *buffer;
+//   }
+
+//   if(buf->verticesID.size < mesh->vertices.num) {
+//     size_t size = MAX(mesh->vertices.num, 2*buf->verticesID.size);
+//     HXT_CHECK( hxtAlignedRealloc(&buf->verticesID.array, size*sizeof(unsigned char)) );
+//     buf->verticesID.size = size;
+//   }
+
+//   local.ball.array = buf->ball.array;
+//   local.ball.num = 0;
+//   local.ball.size = buf->ball.size;
+
+//   local.deleted.tetID = *deleted;
+//   local.deleted.num = *numDeleted;
+//   local.deleted.size = *sizeDeleted;
+
+//   local.partition.startDist = 0;
+//   local.partition.lenghtDist = UINT64_MAX;
+
+//   uint64_t curTet = 0;
+
+//   for (uint64_t i=0; i<mesh->tetrahedra.num; i++)
+//   { 
+//     if(getDeletedFlag(mesh, i)==0){
+//       curTet = i;
+//       break;
+//     }
+//   }
+
+//   HXTStatus status = insertion(mesh, buf->verticesID.array, &local, options->nodalSizes, &curTet, vtaNodeInfo->node, 0);
+
+//   switch(status){
+//     case HXT_STATUS_TRYAGAIN:
+//       ;
+//       double* vtaCoord = mesh->vertices.coord + 4*vtaNodeInfo->node;
+//       HXT_WARNING("skipping supposedly duplicate vertex (%f %f %f)", vtaCoord[0], vtaCoord[1], vtaCoord[2]);
+//       vtaNodeInfo->status = HXT_STATUS_FALSE;
+//       break;
+//       /* fall through */
+//     case HXT_STATUS_FALSE:
+//     case HXT_STATUS_TRUE:
+//       vtaNodeInfo->status = status;
+//       break;
+//     default: // error other than HXT_STATUS_TRYAGAIN cause the program to return
+//       vtaNodeInfo->status = HXT_STATUS_TRYAGAIN;
+//       HXT_CHECK( status );
+//       break;
+//   }
+  
+//   *deleted = local.deleted.tetID;
+//   *numDeleted = local.deleted.num;
+//   *sizeDeleted = local.deleted.size;
+//   local.ball.array[0].neigh = local.ball.size;  // we store the size in the neigh field of the first member (lazy hack)
+
+//   return HXT_STATUS_OK;
+// }
+
+
+// HXTStatus hxtDelaunayFreeBuffer(void** buffer)
+// {
+//   if(buffer!=NULL && *buffer!=NULL) {
+//     hxtDelaunayBuffer_t* buf = (hxtDelaunayBuffer_t*) *buffer;
+//     HXT_CHECK(hxtAlignedFree(buf->verticesID.array));
+//     HXT_CHECK(hxtAlignedFree(buf->ball.array));
+//   }
+//   HXT_CHECK( hxtFree(buffer) );
+
+//   return HXT_STATUS_OK;
+// }

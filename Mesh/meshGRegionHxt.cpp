@@ -20,9 +20,13 @@
 #if defined(HAVE_HXT3D)
 
 extern "C" {
-#include "hxt_mesh3d_main.h"
+#include "hxt_api.h"
 #include "hxt_boundary_recovery.h"
-#include "hxt_opt.h"
+#include "hxt_tetMesh.h"
+}
+
+static HXTStatus myRecoveryFun (HXTMesh* mesh, void* userData){
+  return hxt_boundary_recovery(mesh);
 }
 
 // This is a list of regions that are simply connected
@@ -327,13 +331,6 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 {
   HXT_CHECK(hxtSetMessageCallback(hxtGmshMsgCallback));
 
-  //  int nthreads = CTX::instance()->mesh.maxNumThreads3D;
-  int optimize = 1;
-  int refine = 1;
-  int stat = 0;
-  int verbosity = 100;
-  int reproducible = 0;
-  double threshold = 0.3;
   /*******************  ^ all argument were processed *********************/
   HXTMesh *mesh;
   HXTContext *context;
@@ -344,12 +341,20 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
+  HXTTetMeshOptions options = {
+    .verbosity = 1,
+    .stat = 1,
+    .refine = 1,
+    .optimize = 1,
+    .qualityMin = 0.35,
+    .recoveryFun = myRecoveryFun,
+    .reproducible = 1    
+    //    .meshSizeFun = hxtMeshSizeGmshCallBack
+  };
+ 
+  
   //  Msg::Info("Entering hxtTetMesh3d using %d threads",nthreads);
-  HXT_CHECK(
-	    hxtTetMesh3d(mesh, 0, 0, 0, reproducible, verbosity, stat, refine, optimize,
-			 threshold, hxt_boundary_recovery,
-			 NULL, // hxtMeshSizeGmshCallBack, // FIXME does not work yet
-			 regions[0]));
+  HXT_CHECK(hxtTetMesh(mesh, &options));
 
   //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
 

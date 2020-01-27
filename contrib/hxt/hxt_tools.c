@@ -1,8 +1,24 @@
 #include "hxt_api.h"
 #include "hxt_tools.h"
 
+HXTStatus hxtNorm2V(double v[3], int size, double* norm2){
+  *norm2=0.0;
+  for(int i=0; i<size; i++)
+    *norm2+=v[i]*v[i];
+  *norm2 = sqrt(*norm2);
+  return HXT_STATUS_OK;
+}
+
 HXTStatus hxtNorm2V3(double v[3], double* norm2){
   *norm2 = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+  return HXT_STATUS_OK;
+}
+
+HXTStatus hxtNormalizeV(double *v, int size){
+  double norm=0.0;
+  hxtNorm2V(v,size,&norm);
+  for(int i=0; i<size; i++)
+    v[i] /= norm;
   return HXT_STATUS_OK;
 }
 
