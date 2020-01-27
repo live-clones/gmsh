@@ -1804,6 +1804,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     int numb = m_vtxToEdge.count(backward);
     int sign = 0;
     GEdge *masterEdge = 0;
+
     if(numf == 1){
       masterEdge = m_vtxToEdge.find(forward)->second;
       sign = 1;
@@ -1821,7 +1822,9 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
           it != ret.second; it++){
         SBoundingBox3d masterbb = it->second->bounds(true);
         masterbb.transform(tfo);
-        masterbb *= (1. + CTX::instance()->geom.tolerance);
+        double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
+        masterbb += (masterbb.min() - SPoint3(tol, tol, tol));
+        masterbb += (masterbb.max() + SPoint3(tol, tol, tol));
         if(masterbb.contains(localbb)){
           masterEdge = it->second;
           sign = 1;
@@ -1838,7 +1841,9 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
           it != ret.second; it++){
         SBoundingBox3d masterbb = it->second->bounds(true);
         masterbb.transform(tfo);
-        masterbb *= (1. + CTX::instance()->geom.tolerance);
+        double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
+        masterbb += (masterbb.min() - SPoint3(tol, tol, tol));
+        masterbb += (masterbb.max() + SPoint3(tol, tol, tol));
         if(masterbb.contains(localbb)){
           masterEdge = it->second;
           sign = -1;
@@ -1848,10 +1853,10 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     }
 
     if(!masterEdge){
-      Msg::Error("Could not find counterpart of curve with end points %d-%d "
+      Msg::Error("Could not find counterpart of curve %d with end points %d-%d "
                  "(corresponding to curve with end points %d %d) in surface %d",
-                 lPair.first->tag(), lPair.second->tag(), forward.first->tag(),
-                 forward.second->tag(), master->tag());
+                 localEdge->tag(), lPair.first->tag(), lPair.second->tag(),
+                 forward.first->tag(), forward.second->tag(), master->tag());
       return;
     }
 
