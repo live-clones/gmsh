@@ -52,14 +52,14 @@ public:
     GEdge::addLine(l);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(l, onWhichPartition));
-    model()->addGhostCells(l, onWhichPartition);
+    model()->addGhostCells(l, _partition);
   }
   void addElement(int type, MElement *e, unsigned int onWhichPartition)
   {
     GEdge::addElement(type, e);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(e, onWhichPartition));
-    model()->addGhostCells(e, onWhichPartition);
+    model()->addGhostCells(e, _partition);
   }
 
   // To make the hidden function visible in ghostEdge

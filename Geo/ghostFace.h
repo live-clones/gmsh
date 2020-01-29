@@ -56,28 +56,28 @@ public:
     GFace::addTriangle(t);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(t, onWhichPartition));
-    model()->addGhostCells(t, onWhichPartition);
+    model()->addGhostCells(t, _partition);
   }
   virtual void addQuadrangle(MQuadrangle *q, unsigned int onWhichPartition)
   {
     GFace::addQuadrangle(q);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(q, onWhichPartition));
-    model()->addGhostCells(q, onWhichPartition);
+    model()->addGhostCells(q, _partition);
   }
   virtual void addPolygon(MPolygon *p, unsigned int onWhichPartition)
   {
     GFace::addPolygon(p);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(p, onWhichPartition));
-    model()->addGhostCells(p, onWhichPartition);
+    model()->addGhostCells(p, _partition);
   }
   virtual void addElement(int type, MElement *e, unsigned int onWhichPartition)
   {
     GFace::addElement(type, e);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(e, onWhichPartition));
-    model()->addGhostCells(e, onWhichPartition);
+    model()->addGhostCells(e, _partition);
   }
 
   // To make the hidden function visible in ghostFace
