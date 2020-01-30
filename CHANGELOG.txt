@@ -1,4 +1,4 @@
-4.5.2 (Work-in-progress): periodic meshes now obey reorientation constraints;
+4.5.2 (January 30, 2020): periodic meshes now obey reorientation constraints;
 physical group definitions now follow compound meshing constraints; small bug
 fixes and improvements.
 
