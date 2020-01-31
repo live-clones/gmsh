@@ -1465,9 +1465,6 @@ endif()
 
 if(MSVC)
   add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_DEPRECATE)
-  if(HAVE_FLTK)
-    set(GMSH_SRC ${GMSH_SRC};Fltk/Win32Icon.rc)
-  endif()
 endif()
 
 # add C functions API
