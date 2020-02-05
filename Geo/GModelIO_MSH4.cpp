@@ -346,6 +346,8 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   std::size_t strl = std::max(4096, 128 * nume);
   char *str = new char[strl];
 
+  Msg::Info("%d entities", nume);
+
   for(int dim = 0; dim < 4; dim++) {
     for(std::size_t i = 0; i < numEntities[dim]; i++) {
       int tag = 0, parentDim = 0, parentTag = 0;
@@ -1206,6 +1208,9 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
     }
   }
 
+  Msg::Info("%lu parametrizations", nParamE + nParamF);
+  Msg::StartProgressMeter(nParamF);
+
   for(std::size_t edge = 0; edge < nParamE; edge++) {
     int tag;
     if(binary){
@@ -1246,7 +1251,11 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
         if(!df->readParametrization(fp, binary)) return false;
       }
     }
+    Msg::ProgressMeter(face, true, "Reading parametrizations");
   }
+
+  Msg::StopProgressMeter();
+
   return true;
 }
 
