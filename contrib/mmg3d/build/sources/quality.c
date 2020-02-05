@@ -46,7 +46,7 @@ along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 #include "mesh.h"  
 
 
-double MMG_rao(pMesh mesh,int k,int inm);
+double MMG_rao(pMesh mesh,int k,FILE *inm);
 double MMG_caltetrao(pMesh mesh,pSol sol,int iel) {
 	return(MMG_rao(mesh,iel,0));
 }
