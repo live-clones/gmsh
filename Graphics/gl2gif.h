@@ -37,24 +37,6 @@ typedef long int count_int;
              ((int)PPM_GETG(p) * (newmaxval) + (oldmaxval) / 2) / (oldmaxval), \
              ((int)PPM_GETB(p) * (newmaxval) + (oldmaxval) / 2) / (oldmaxval))
 
-/* Color histogram stuff */
-
-typedef struct colorhist_item *colorhist_vector;
-struct colorhist_item {
-  pixel color;
-  int value;
-};
-
-typedef struct colorhist_list_item *colorhist_list;
-struct colorhist_list_item {
-  struct colorhist_item ch;
-  colorhist_list next;
-};
-
-/* Color hash table stuff */
-
-typedef colorhist_list *colorhash_table;
-
 /* Public function */
 
 void create_gif(FILE *outfile, PixelBuffer *buffer, int dither, int sort,

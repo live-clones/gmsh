@@ -47,7 +47,8 @@ along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 
 
 unsigned char MMG_arfa[3][4] = { {2,0,1,3}, {1,2,0,3}, {0,1,2,3} }; 
-extern int MMG_permar[10][4];
+// defined in anularcutting.c
+extern int MMG_permar[12][4];
 extern int MMG_pointar[64][2];
 extern int ddebug;
 //insert ip on ia-ib
