@@ -53,6 +53,7 @@ StringXNumber *GMSH_TriangulatePlugin::getOption(int iopt)
 
 #if defined(HAVE_MESH)
 
+namespace {
 class PointData : public MVertex {
 public:
   std::vector<double> v;
@@ -64,6 +65,7 @@ public:
     v[2] = z;
   }
 };
+}
 
 PView *GMSH_TriangulatePlugin::execute(PView *v)
 {
