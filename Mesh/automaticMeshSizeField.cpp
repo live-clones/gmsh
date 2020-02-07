@@ -134,7 +134,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   // Gmsh2Hxt(regions, mesh, v2c, c2v);
 
   std::vector<GFace*> faces;
-  std::set<GFace *, GEntityLessThan>::iterator it = GModel::current()->firstFace();
+  std::set<GFace *, GEntityPtrLessThan>::iterator it = GModel::current()->firstFace();
 
   while(it != GModel::current()->lastFace()){
     faces.push_back(*it);
@@ -293,7 +293,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   HXTBbox           bbox_mesh;
   hxtBboxInit(&bbox_mesh);
   // Ajout de tous les points du maillage à la bounding box
-  HXT_CHECK(hxtBboxAdd(&bbox_mesh, mesh->vertices.coord, mesh->vertices.num));
+  hxtBboxAdd(&bbox_mesh, mesh->vertices.coord, mesh->vertices.num);
   for(int i = 0; i < 3; ++i){
     bbox_vertices[i  ] = bbox_mesh.min[i];
     bbox_vertices[i+3] = bbox_mesh.max[i];
@@ -447,7 +447,7 @@ static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
                                          HXTMesh *m,
                                          std::vector<GFace *> &allFaces)
 {
-  std::set<GFace *, GEntityLessThan> allFacesSet;
+  std::set<GFace *, GEntityPtrLessThan> allFacesSet;
   if(m) {
     m->brep.numVolumes = regions.size();
     HXT_CHECK(hxtAlignedMalloc(&m->brep.numSurfacesPerVolume,
@@ -498,7 +498,7 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
   }
   uint32_t to_alloc = 0;
 
-  std::set<GEdge *, GEntityLessThan> allEdgesSet;
+  std::set<GEdge *, GEntityPtrLessThan> allEdgesSet;
   for(std::size_t i = 0; i < faces.size(); i++) {
     std::vector<GEdge *> const &f = faces[i]->edges();
     std::vector<GEdge *> const &f_e = faces[i]->embeddedEdges();
