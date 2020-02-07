@@ -7,12 +7,9 @@
 
 // GMSH INCLUDES ...
 
-#include "GmshConfig.h"
 #include "SPoint3.h"
 #include "SVector3.h"
 #include "rtree.h"
-#include "GModel.h"
-#include "GRegion.h"
 
 // P4EST INCLUDES
 
@@ -30,19 +27,24 @@
 // HXT INCLUDES
 
 extern "C" {
-#include "hxt_api.h"
-#include "hxt_mesh.h"
-#include "hxt_bbox.h"
+  #include "hxt_api.h"
+  #include "hxt_mesh.h"
+  #include "hxt_bbox.h"
 }
 
 typedef struct HXTForestOptions{
+  double 				hmax;
+  double 				hmin;
+  double 				hbulk;
+  double 				gradMax;
   int                   nodePerTwoPi;
   int                   nodePerGap;
   double               *bbox;
   double               *nodalCurvature;
-  double              (*sizeFunction)(double, double, double) ;
+  double              (*sizeFunction)(double, double, double, double) ;
   RTree<uint64_t,double,3>  *triRTree;
   HXTMesh              *mesh;
+  const char           *filename;
 } HXTForestOptions;
 
 typedef struct HXTForest{
@@ -95,7 +97,7 @@ typedef struct size_fun{
 
 // API ---------------------------------------------------------------------------------------------
 
-HXTStatus hxtOctreeRefineToLevel(HXTForest *forest, int lvl);
+HXTStatus hxtOctreeRefineToLevel(HXTForest *forest);
 HXTStatus hxtOctreeComputeLaplacian(HXTForest *forest);
 HXTStatus hxtOctreeLaplacianRefine(HXTForest *forest, int nRefine);
 HXTStatus hxtOctreeSetMaxGradient(HXTForest *forest);
@@ -116,12 +118,10 @@ HXTStatus hxtOctreeComputeMaxGradientX(HXTForest *forest, double *dsdx_max);
 HXTStatus hxtOctreeComputeMaxGradientY(HXTForest *forest, double *dsdy_max);
 HXTStatus hxtOctreeComputeMaxGradientZ(HXTForest *forest, double *dsdz_max);
 HXTStatus hxtOctreeComputeMinimumSize(HXTForest *forest, double *size_min);
+HXTStatus hxtOctreeComputeMaximumSize(HXTForest *forest, double *size_max);
+
+HXTStatus hxtOctreeExport(HXTForest *forest);
 
 void write_ds_to_vtk(p4est_t *p4est, const char *filename);
-
-HXTStatus GmshFace2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-       std::map<MVertex *, int> &v2c,
-       std::vector<MVertex *> &c2v,
-       int faceID);
 
 #endif

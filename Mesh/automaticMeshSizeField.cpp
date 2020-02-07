@@ -1,6 +1,8 @@
 #include "automaticMeshSizeField.h"
 #include "GModel.h"
 #include "GRegion.h"
+#include "GFace.h"
+#include "GEntity.h"
 #include "MVertex.h"
 
 #include <inttypes.h>
@@ -10,8 +12,34 @@ extern "C" {
 #include "hxt_edge.h"
 #include "hxt_curvature.h"
 #include "hxt_bbox.h"
+#include "hxt_mesh3d.h"
+#include "hxt_mesh3d_main.h"
+#include "hxt_boundary_recovery.h"
 }
 #endif  
+
+HXTStatus Gmsh2HxtLocal(std::vector<GFace *> &faces, HXTMesh *m,
+       std::map<MVertex *, int> &v2c,
+       std::vector<MVertex *> &c2v);
+
+HXTStatus Gmsh2HxtGlobal(std::vector<GFace *> &faces, HXTMesh *m,
+       std::map<MVertex *, int> &v2c,
+       std::vector<MVertex *> &c2v);
+
+int counter = 0;
+
+static double meshSize(double x, double y, double z, void *user_data){
+  // printf("%d\n", ++counter);
+  HXTForest *forest = (HXTForest *) user_data;
+  double val = 1.e22;
+  HXTStatus s = hxtOctreeSearchOne(forest, x, y, z, &val);
+  if (s == HXT_STATUS_OK){
+    return val;
+  }
+  else Msg::Error ("Cannot find point %g %g %g in the octree",x,y,z);
+  return val;
+}
+
 
 double automaticMeshSizeField::operator()(double X, double Y, double Z, GEntity *ge) {  
 #ifdef HAVE_HXT
@@ -35,12 +63,37 @@ automaticMeshSizeField::~automaticMeshSizeField(){
 #endif
 }  
 
+void writeNodalCurvature(double *nodalCurvature, int size, const char *filename){
+
+    FILE* f = fopen(filename, "w");
+    if(f==NULL){
+    printf("Erreur : fileOutput == NULL\n");
+      exit(-1);
+    }
+
+    for(int i = 0; i < size; ++i){
+      fprintf(f, "%f %f %f %f %f %f\n",
+            nodalCurvature[6 * i + 0],
+            nodalCurvature[6 * i + 1],
+            nodalCurvature[6 * i + 2],
+            nodalCurvature[6 * i + 3],
+            nodalCurvature[6 * i + 4],
+            nodalCurvature[6 * i + 5]);
+    }
+
+    fclose(f);
+
+}
 
 #ifdef HAVE_HXT
 
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 		   std::map<MVertex *, int> &v2c,
 		   std::vector<MVertex *> &c2v);
+
+HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m,
+       std::map<MVertex *, int> &v2c,
+       std::vector<MVertex *> &c2v);
 
 static inline int node2trianglescmp(const void *p0, const void *p1)
 { 
@@ -70,125 +123,170 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   // Soit on charge un fichier avec l'octree (ma préférence)
   // Soit on calcule "en live" l'octree ici
 
+  printf("#regions = %lu \n", GModel::current()->getNumRegions());
+  printf("#faces = %lu \n", GModel::current()->getNumFaces());
   
-  // verify that only one region exists in the model
-  if (GModel::current()->getNumRegions() != 1){
-    printf("#regions = %d \n", GModel::current()->getNumRegions());
-    Msg::Error ("automaticMeshSizeField can only work for now on models with one region");
-    return HXT_STATUS_ERROR;
+  // std::vector<GRegion*> regions;
+  // regions.push_back(*(GModel::current()->firstRegion()));
+  // // create HXT mesh structure
+  // HXTMesh *mesh;
+  // HXTContext *context;
+  // HXT_CHECK(hxtContextCreate(&context));
+  // HXT_CHECK(hxtMeshCreate(context, &mesh));
+  // std::map<MVertex *, int> v2c;
+  // std::vector<MVertex *> c2v;  
+  // Gmsh2Hxt(regions, mesh, v2c, c2v);
+
+  std::vector<GFace*> faces;
+  std::set<GFace *, GEntityLessThan>::iterator it = GModel::current()->firstFace();
+
+  while(it != GModel::current()->lastFace()){
+    faces.push_back(*it);
+    ++it;
   }
-  std::vector<GRegion*> regions;
-  regions.push_back(*(GModel::current()->firstRegion()));
-  // create HXT mesh structure
+
+  // Create HXT mesh structure
   HXTMesh *mesh;
   HXTContext *context;
   HXT_CHECK(hxtContextCreate(&context));
   HXT_CHECK(hxtMeshCreate(context, &mesh));
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;  
-  Gmsh2Hxt(regions, mesh, v2c, c2v);
+  Gmsh2Hxt(faces, mesh, v2c, c2v);
 
-  printf("%d elements in the mesh \n", mesh->triangles.num);
+  printf("%lu elements in the mesh \n", mesh->triangles.num);
 
   double *nodalCurvature;
 
-  int computeCurvatureOnSeparateFaces = 0;
+  int computeCurvatureOnSeparateFaces = 1;
 
   if(computeCurvatureOnSeparateFaces){
-    printf("#faces = %d\n",regions[0]->faces().size());
 
+    // Courbure en chaque noeud (global) 
     HXT_CHECK(hxtMalloc(&nodalCurvature,6*mesh->vertices.num*sizeof(double))); 
+    for(uint64_t i = 0; i < 6*mesh->vertices.num; ++i) nodalCurvature[i] = NAN; 
 
-    for(uint64_t i = 0; i < 6*mesh->vertices.num; ++i) nodalCurvature[i] = 0.0; 
-
-    // // node2tri
-    // uint64_t *node2tri;
-    // HXT_CHECK(hxtMalloc(&node2tri,3*2*mesh->triangles.num*sizeof(uint64_t))); 
-    // uint64_t counter = 0;
-    // for (uint64_t i = 0; i<mesh->triangles.num; i++){
-    //   node2tri[counter++] = mesh->triangles.node[3*i+0];
-    //   node2tri[counter++] = i;
-    //   node2tri[counter++] = mesh->triangles.node[3*i+1];
-    //   node2tri[counter++] = i;
-    //   node2tri[counter++] = mesh->triangles.node[3*i+2];
-    //   node2tri[counter++] = i;
-    // }
+    // Create HXT mesh structure for each GFace
+    std::vector<HXTMesh *> faceMeshes;
     
-    // qsort(node2tri,3*mesh->triangles.num,2*sizeof(uint64_t),node2trianglescmp);
-
-    for(size_t j = 0; j < regions[0]->faces().size(); j++) {
-      // Create HXT mesh structure for each GFace
+    for(size_t i = 0; i < faces.size(); ++i){
       HXTMesh *meshFace;
       HXT_CHECK(hxtMeshCreate(context, &meshFace));
-      std::map<MVertex *, int> v2c2;
-      std::vector<MVertex *> c2v2;  
-      GmshFace2Hxt(regions, meshFace, v2c2, c2v2, j);
+      std::vector<GFace*> oneFace;
+      oneFace.push_back(faces[i]);
+      std::map<MVertex *, int> v2cLoc;
+      std::vector<MVertex *> c2vLoc;  
+      Gmsh2HxtLocal(oneFace, meshFace, v2cLoc, c2vLoc);
+      faceMeshes.push_back(meshFace);
+    }
+    
+    std::map<MVertex *, int> v2c2;
+    std::vector<MVertex *> c2v2;  
+    // GmshFace2Hxt2(faces, faceMeshes, v2c2, c2v2);
+    Gmsh2HxtGlobal(faces, NULL, v2c2, c2v2);
 
-      printf("%d elements on face %d \n", meshFace->triangles.num, j);
+    size_t nVertices = 0;
 
-      // Compute curvature
-      double           *curvatureCrossfieldFace;
-      double           *nodalCurvatureFace;
-      HXTEdges         *edgesFace;
+    // Boucle sur les faces
+    for(size_t j = 0; j < faces.size(); j++) {
+
+      HXTMesh *meshFace = faceMeshes[j];
+
+      // Compute curvature of the face
+      double   *curvatureCrossfieldFace;
+      double   *nodalCurvatureFace;
+      HXTEdges *edgesFace;
       HXT_CHECK(hxtEdgesCreate(meshFace,&edgesFace));
-      HXT_CHECK(hxtCurvatureRusinkiewicz(meshFace,&nodalCurvatureFace,&curvatureCrossfieldFace,edgesFace,1));
+      int debug = false;
+      HXT_CHECK(hxtCurvatureRusinkiewicz(meshFace,&nodalCurvatureFace,&curvatureCrossfieldFace,edgesFace,debug));
 
-      // node2tri local
-      uint64_t *node2triLoc;
-      HXT_CHECK(hxtMalloc(&node2triLoc,3*3*meshFace->triangles.num*sizeof(uint64_t))); 
-      uint64_t counter = 0;
-      for (uint64_t i = 0; i<meshFace->triangles.num; i++){
-        node2triLoc[counter++] = meshFace->triangles.node[3*i+0];
-        node2triLoc[counter++] = i;
-        node2triLoc[counter++] = (uint64_t) 0;
-        node2triLoc[counter++] = meshFace->triangles.node[3*i+1];
-        node2triLoc[counter++] = i;
-        node2triLoc[counter++] = (uint64_t) 1;
-        node2triLoc[counter++] = meshFace->triangles.node[3*i+2];
-        node2triLoc[counter++] = i;
-        node2triLoc[counter++] = (uint64_t) 2;
+      if(debug){
+        for(uint64_t i = 0; i < meshFace->vertices.num*6; ++i){
+          if(isnan(nodalCurvatureFace[i])){
+            printf("Après le calcul de courbure c[%lu] = %f\n", i, nodalCurvatureFace[i]);
+            printf("nVertices = %lu et *6 = %lu\n", meshFace->vertices.num, meshFace->vertices.num*6);
+          }
+        }
+
+        for(uint64_t i = 0; i < meshFace->vertices.num; ++i){
+          double norme;
+          double *v1 = nodalCurvatureFace + 6*i;
+          hxtNorm2V3(v1, &norme);
+          if(norme > 100){
+            printf("%u vertices on face %lu \n", meshFace->vertices.num, j);
+            printf(" v1 = %f \t %f \t %f - norme = %f\n", 
+              nodalCurvatureFace[6*i+0],
+              nodalCurvatureFace[6*i+1],
+              nodalCurvatureFace[6*i+2],
+              norme);
+          }
+          double *v2 = nodalCurvatureFace + 6*i + 3;
+          hxtNorm2V3(v2, &norme);
+          if(norme > 100){
+            printf("%u vertices on face %lu \n", meshFace->vertices.num, j);
+            printf(" v2 = %f \t %f \t %f - norme = %f\n\n", 
+              nodalCurvatureFace[6*i+3],
+              nodalCurvatureFace[6*i+4],
+              nodalCurvatureFace[6*i+5],
+              norme);
+          }
+        }
       }
-      qsort(node2triLoc,3*meshFace->triangles.num,3*sizeof(uint64_t),node2trianglescmp);
 
       // Replace curvature vectors on the face in global nodalCurvature structure
-      uint64_t count = 0;
-      for (uint64_t i = 0; i<9*meshFace->triangles.num; i+=3){
-        uint64_t iVertex   = node2triLoc[i];
-        uint64_t iTriangle = node2triLoc[i+1];
-        uint64_t posInTri  = node2triLoc[i+2];
-        uint64_t nodeGlobal = mesh->triangles.node[(size_t) 3*iTriangle+posInTri]; 
-        // printf("iTriangle = %d \t posInTri = %d \t nodeGlobal = %d \t iVertex = %d \n", iTriangle, posInTri, nodeGlobal, iVertex);
-        nodalCurvature[6 * nodeGlobal + 0] = fmax(nodalCurvature[6 * nodeGlobal + 0], nodalCurvatureFace[6 * count + 0]);
-        nodalCurvature[6 * nodeGlobal + 1] = fmax(nodalCurvature[6 * nodeGlobal + 1], nodalCurvatureFace[6 * count + 1]);
-        nodalCurvature[6 * nodeGlobal + 2] = fmax(nodalCurvature[6 * nodeGlobal + 2], nodalCurvatureFace[6 * count + 2]);
-        nodalCurvature[6 * nodeGlobal + 3] = fmax(nodalCurvature[6 * nodeGlobal + 3], nodalCurvatureFace[6 * count + 3]);
-        nodalCurvature[6 * nodeGlobal + 4] = fmax(nodalCurvature[6 * nodeGlobal + 4], nodalCurvatureFace[6 * count + 4]);
-        nodalCurvature[6 * nodeGlobal + 5] = fmax(nodalCurvature[6 * nodeGlobal + 5], nodalCurvatureFace[6 * count + 5]);
-        ++count;
+      for (uint64_t i = 0; i<meshFace->vertices.num; ++i){
+        uint64_t nodeGlobal = v2c[ c2v2[nVertices+i] ];
+        nodalCurvature[6 * nodeGlobal + 0] = nodalCurvatureFace[6 * i + 0];
+        nodalCurvature[6 * nodeGlobal + 1] = nodalCurvatureFace[6 * i + 1];
+        nodalCurvature[6 * nodeGlobal + 2] = nodalCurvatureFace[6 * i + 2];
+        nodalCurvature[6 * nodeGlobal + 3] = nodalCurvatureFace[6 * i + 3];
+        nodalCurvature[6 * nodeGlobal + 4] = nodalCurvatureFace[6 * i + 4];
+        nodalCurvature[6 * nodeGlobal + 5] = nodalCurvatureFace[6 * i + 5];        
       }
 
-      HXT_CHECK(hxtFree(&node2triLoc));
+      nVertices += meshFace->vertices.num;
 
       HXT_CHECK(hxtEdgesDelete(&edgesFace)       );
       HXT_CHECK(hxtFree(&curvatureCrossfieldFace));
-      HXT_CHECK(hxtFree(&nodalCurvatureFace)              );
-      HXT_CHECK(hxtMeshDelete(&meshFace)                  );
-    }
+      HXT_CHECK(hxtFree(&nodalCurvatureFace)     );
+      // HXT_CHECK(hxtMeshDelete(&meshFace)                  );
+    } // for faces.size()
+
+    // for (uint64_t i = 0; i < 6*mesh->vertices.num; ++i){
+    //   if(isnan(nodalCurvature[i])){
+    //     printf("nodalCurvature[%lu] (global) = %f\n", i, nodalCurvature[i]);
+    //   }    
+    // }
+
+    // return HXT_ERROR(HXT_STATUS_ERROR);
+    writeNodalCurvature(nodalCurvature, mesh->vertices.num, "separe.txt");
+
+    // Compute curvature
+    double *nodalCurvature2;
+    double *curvatureCrossfield;
+    HXTEdges *edges;
+    HXT_CHECK(hxtEdgesCreate(mesh,&edges));
+    HXT_CHECK(hxtCurvatureRusinkiewicz(mesh,&nodalCurvature2,&curvatureCrossfield,edges,1));
+
+    HXT_CHECK(hxtEdgesDelete(&edges));
+    HXT_CHECK(hxtFree(&curvatureCrossfield));
+
+    writeNodalCurvature(nodalCurvature2, mesh->vertices.num, "nonSepare.txt");
   }
   else{
     // Compute curvature
-    double           *curvatureCrossfield;
-    HXTEdges         *edges;
+    double *curvatureCrossfield;
+    HXTEdges *edges;
     HXT_CHECK(hxtEdgesCreate(mesh,&edges));
     HXT_CHECK(hxtCurvatureRusinkiewicz(mesh,&nodalCurvature,&curvatureCrossfield,edges,1));
 
-    HXT_CHECK(hxtEdgesDelete(&edges)       );
+    HXT_CHECK(hxtEdgesDelete(&edges));
     HXT_CHECK(hxtFree(&curvatureCrossfield));
   }
   
   // Compute rtree
   RTree<uint64_t, double, 3> triRTree;
-  HXTBbox          bbox_triangle;
+  HXTBbox bbox_triangle;
 
   for(uint64_t i = 0; i < mesh->triangles.num; ++i){
     hxtBboxInit(&bbox_triangle);
@@ -207,33 +305,47 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   double            bbox_vertices[6];
   HXTBbox           bbox_mesh;
   hxtBboxInit(&bbox_mesh);
-  // Ajout de tous les points du maillages à la bounding box
+  // Ajout de tous les points du maillage à la bounding box
   HXT_CHECK(hxtBboxAdd(&bbox_mesh, mesh->vertices.coord, mesh->vertices.num));
   for(int i = 0; i < 3; ++i){
-    bbox_vertices[i  ] = 1.1*bbox_mesh.min[i];
-    bbox_vertices[i+3] = 1.1*bbox_mesh.max[i];
+    bbox_vertices[i  ] = bbox_mesh.min[i];
+    bbox_vertices[i+3] = bbox_mesh.max[i];
   }
   
   // 1 --> OPTIONS ------------------------------------------
   HXT_CHECK(hxtForestOptionsCreate(&forestOptions));
   forestOptions->nodePerTwoPi = _nPointsPerCircle;  
+  forestOptions->hmax = _hmax;  
+  forestOptions->hmin = _hmin;  
+  forestOptions->hbulk = _hbulk;  
+  forestOptions->gradMax = _gradientMax;  
   forestOptions->bbox = bbox_vertices;
   forestOptions->nodalCurvature = nodalCurvature;
   forestOptions->triRTree = &triRTree;
   forestOptions->mesh = mesh;
   forestOptions->sizeFunction = NULL;
+  forestOptions->filename = "octreeExport.pos";
   
   // --------------------------------------------------------
   HXT_CHECK(hxtForestCreate(0, NULL, &forest, NULL, forestOptions));
-  //  return HXT_STATUS_OK;
-  // ---------------------------------------------------------
-  // aller --> niveau 3 par exemple, serait une option ...
-  HXT_CHECK(hxtOctreeRefineToLevel(forest, 4/*_nRefine*/));
-  // idéalement --> convergence
+  HXT_CHECK(hxtOctreeRefineToLevel(forest));
+
+  double sizeMin = 1e22;
+  double sizeMax = 0.0;
+
   int ITER = 0;
   if (forestOptions->nodePerTwoPi > 0){
+    printf("CURVATURE REFINE\n");
     HXT_CHECK(hxtOctreeCurvatureRefine(forest, 10/*_nRefine*/));
     // ensuite lissage du gradient 
+
+    HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
+    HXT_CHECK(hxtOctreeComputeMaximumSize(forest,&sizeMax));
+    printf("sizeMin = %f \n", sizeMin);
+    printf("sizeMax = %f \n", sizeMax);
+
+    std::string fileVTK = "/home/bawina/Code/octreeTests/cylindre/build/octree" + std::to_string(ITER);
+    write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
 
     double dsdx, dsdy, dsdz;
 
@@ -241,6 +353,8 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
       dsdx = -1;
       dsdy = -1;
       dsdz = -1;
+      sizeMin = 1e22;
+      sizeMax = 0.0;
       printf("Lissage%d \n", ITER);
       HXT_CHECK(hxtOctreeComputeGradient(forest)); 
 
@@ -253,59 +367,81 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
       printf("dsdx max = %f \n", dsdx);
       printf("dsdy max = %f \n", dsdy);
       printf("dsdz max = %f \n", dsdz);
-      // std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/smoothing_tore" + std::to_string(ITER);
+      HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
+      HXT_CHECK(hxtOctreeComputeMaximumSize(forest,&sizeMax));
+      printf("sizeMin = %f \n", sizeMin);
+      printf("sizeMax = %f \n", sizeMax);
+      // std::string fileVTK = "/home/bawina/Code/gmsh/build/Septembre_2019/smoothing_filiere" + std::to_string(ITER);
       // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
-      if(fmax(dsdx,fmax(dsdy,dsdz)) < 0.41) break;
+      if(fmax(dsdx,fmax(dsdy,dsdz)) <= 0.01 + forest->forestOptions->gradMax-1) break;
     }
   }
 
-  double sizeMin = 1e22;
-  HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
-  printf("sizeMin = %f \n", sizeMin);
+  // printf("------- Surfaces proches ------- \n");
+  // forestOptions->nodePerGap = _nPointsPerGap;
+  // HXT_CHECK(hxtOctreeSurfacesProches(forest));
 
-  forestOptions->nodePerGap = _nPointsPerGap;
-  printf("------- Surfaces proches ------- \n");
-  HXT_CHECK(hxtOctreeSurfacesProches(forest));
+  // sizeMin = 1e22;
+  // sizeMax = 0.0;
+  // HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
+  // HXT_CHECK(hxtOctreeComputeMaximumSize(forest,&sizeMax));
+  // printf("sizeMin = %f \n", sizeMin);
+  // printf("sizeMax = %f \n", sizeMax);
 
-  sizeMin = 1e22;
-  HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
-  printf("sizeMin = %f \n", sizeMin);
+  // ITER = 0;
 
-  ITER = 0;
+  // double dsdx, dsdy, dsdz;
 
-  double dsdx, dsdy, dsdz;
+  // while (ITER++ < 4*_nRefine) {
+  //   dsdx = -1; 
+  //   dsdy = -1;
+  //   dsdz = -1;
+  //   printf("Lissage après surfaces proches %d \n", ITER);
+  //   HXT_CHECK(hxtOctreeComputeGradient(forest));  
 
-  while (ITER++ < 4*_nRefine) {
-    dsdx = -1; 
-    dsdy = -1;
-    dsdz = -1;
-    printf("Lissage après surfaces proches %d \n", ITER);
-    HXT_CHECK(hxtOctreeComputeGradient(forest));  
+  //   HXT_CHECK(hxtOctreeComputeMaxGradientX(forest, &dsdx));
+  //   HXT_CHECK(hxtOctreeComputeMaxGradientY(forest, &dsdy));
+  //   HXT_CHECK(hxtOctreeComputeMaxGradientZ(forest, &dsdz));
 
-    HXT_CHECK(hxtOctreeComputeMaxGradientX(forest, &dsdx));
-    HXT_CHECK(hxtOctreeComputeMaxGradientY(forest, &dsdy));
-    HXT_CHECK(hxtOctreeComputeMaxGradientZ(forest, &dsdz));
+  //   HXT_CHECK(hxtOctreeSetMaxGradient(forest));
 
-    HXT_CHECK(hxtOctreeSetMaxGradient(forest));
+  //   printf("dsdx max = %f \n", dsdx);
+  //   printf("dsdy max = %f \n", dsdy);
+  //   printf("dsdz max = %f \n", dsdz);
 
-    printf("dsdx max = %f \n", dsdx);
-    printf("dsdy max = %f \n", dsdy);
-    printf("dsdz max = %f \n", dsdz);
-
-    // std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/smoothing_tore" + std::to_string(ITER);
-      // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
-    if(fmax(dsdx,fmax(dsdy,dsdz)) < 0.41) break;
-   }
+  //   // std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/smoothing_tore" + std::to_string(ITER);
+  //   // std::string fileVTK = "/home/bawina/Documents/paraview_octree/smoothing_2sphere_closeSurfaces" + std::to_string(ITER);
+  //   // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
+  //   if(fmax(dsdx,fmax(dsdy,dsdz)) <= 0.01 + forest->forestOptions->gradMax-1) break;
+  //  }
 
   double elemEstimation;
   HXT_CHECK(hxtOctreeElementEstimation(forest, &elemEstimation));
   printf("Estimation du nombre d'éléments : %f \n", elemEstimation);
 
-  // HXT_CHECK(hxtEdgesDelete(&edges)       );
+  // Export la carte de taille en fichier .pos
+  HXT_CHECK(hxtOctreeExport(forest));
+
+
+  // hxtTetMesh3d(mesh, 1, 0, 0, 1, 1, 0, 0, 0,1e-2, (*bnd_recovery)(HXTMesh* mesh),
+  //                     meshSize, (void*) this);
+
+  // HXTMesh *cubeTetra;
+  // HXT_CHECK( hxtMeshCreate(context, &cubeTetra));
+  // HXT_CHECK( hxtMeshReadGmsh(cubeTetra, "/home/bawina/Code/gmsh/build/Septembre_2019/sphere/sphere_fine.msh") );
+
+  // HXT_CHECK(hxtTetMesh3d(cubeTetra, 0, 0, 0, 0, 3, 1, 1, 0, 0.35, hxt_boundary_recovery, &meshSize, (void *) forest) );
+  // // HXT_CHECK(hxtTetMesh3d(cubeTetra, 0, 0, 0, 0, 3, 1, 1, 0, 0.35, hxt_boundary_recovery, NULL, NULL));
+
+  // HXT_CHECK(hxtMeshWriteGmsh(mesh, "tetMesh.msh"));
+  // HXT_CHECK(hxtMeshDelete(&cubeTetra));
+
+
+  // HXT_CHECK(hxtEdgesDelete(&edges));
   // HXT_CHECK(hxtFree(&curvatureCrossfield));
-  if(nodalCurvature) HXT_CHECK(hxtFree(&nodalCurvature)              );
-  HXT_CHECK(hxtMeshDelete(&mesh)                  );
-  HXT_CHECK(hxtContextDelete(&context)            );
+  if(nodalCurvature) HXT_CHECK(hxtFree(&nodalCurvature));
+  HXT_CHECK(hxtMeshDelete(&mesh));
+  HXT_CHECK(hxtContextDelete(&context));
 
 
   return HXT_STATUS_OK;
@@ -314,7 +450,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 }
 #endif
 
-void automaticMeshSizeField:: update(){
+void automaticMeshSizeField::update(){
 #ifdef HAVE_HXT
   HXTStatus s = updateHXT();
   if (s != HXT_STATUS_OK)Msg::Error ("Something went wrong when computing the octree");
@@ -323,3 +459,236 @@ void automaticMeshSizeField:: update(){
 #endif    
     
 };
+
+static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
+                                         HXTMesh *m,
+                                         std::vector<GFace *> &allFaces)
+{
+  std::set<GFace *, GEntityLessThan> allFacesSet;
+  if(m) {
+    m->brep.numVolumes = regions.size();
+    HXT_CHECK(hxtAlignedMalloc(&m->brep.numSurfacesPerVolume,
+                               m->brep.numVolumes * sizeof(uint32_t)));
+  }
+  uint32_t to_alloc = 0;
+  for(std::size_t i = 0; i < regions.size(); i++) {
+    std::vector<GFace *> const &f = regions[i]->faces();
+    std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
+    if(m) {
+      m->brep.numSurfacesPerVolume[i] = f.size() + f_e.size();
+      to_alloc += m->brep.numSurfacesPerVolume[i];
+    }
+    allFacesSet.insert(f.begin(), f.end());
+    allFacesSet.insert(f_e.begin(), f_e.end());
+  }
+  allFaces.insert(allFaces.begin(), allFacesSet.begin(), allFacesSet.end());
+
+  if(!m) return HXT_STATUS_OK;
+
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->brep.surfacesPerVolume, to_alloc * sizeof(uint32_t)));
+
+  uint32_t counter = 0;
+  for(std::size_t i = 0; i < regions.size(); i++) {
+    std::vector<GFace *> const &f = regions[i]->faces();
+    std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
+    for(size_t j = 0; j < f.size(); j++)
+      m->brep.surfacesPerVolume[counter++] = f[j]->tag();
+    for(size_t j = 0; j < f_e.size(); j++)
+      m->brep.surfacesPerVolume[counter++] = f_e[j]->tag();
+  }
+
+  //  printf("volume 0 has %d faces\n",m->brep.numSurfacesPerVolume[0]);
+  //  for (int i=0;i<m->brep.numSurfacesPerVolume[0];i++)printf("%d
+  //  ",m->brep.surfacesPerVolume[i]); printf("\n");
+
+  return HXT_STATUS_OK;
+}
+
+static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
+                                       std::vector<GEdge *> &allEdges)
+{
+  if(m) {
+    m->brep.numSurfaces = faces.size();
+    HXT_CHECK(hxtAlignedMalloc(&m->brep.numCurvesPerSurface,
+                               m->brep.numSurfaces * sizeof(uint32_t)));
+  }
+  uint32_t to_alloc = 0;
+
+  std::set<GEdge *, GEntityLessThan> allEdgesSet;
+  for(std::size_t i = 0; i < faces.size(); i++) {
+    std::vector<GEdge *> const &f = faces[i]->edges();
+    std::vector<GEdge *> const &f_e = faces[i]->embeddedEdges();
+    if(m) {
+      m->brep.numCurvesPerSurface[i] = f.size() + f_e.size();
+      to_alloc += m->brep.numCurvesPerSurface[i];
+    }
+    allEdgesSet.insert(f.begin(), f.end());
+    allEdgesSet.insert(f_e.begin(), f_e.end());
+  }
+  allEdges.insert(allEdges.begin(), allEdgesSet.begin(), allEdgesSet.end());
+
+  if(!m) return HXT_STATUS_OK;
+
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->brep.curvesPerSurface, to_alloc * sizeof(uint32_t)));
+
+  uint32_t counter = 0;
+  for(std::size_t i = 0; i < faces.size(); i++) {
+    std::vector<GEdge *> const &f = faces[i]->edges();
+    std::vector<GEdge *> const &f_e = faces[i]->embeddedEdges();
+    for(size_t j = 0; j < f.size(); j++)
+      m->brep.curvesPerSurface[counter++] = f[j]->tag();
+    for(size_t j = 0; j < f_e.size(); j++)
+      m->brep.curvesPerSurface[counter++] = f_e[j]->tag();
+  }
+  return HXT_STATUS_OK;
+}
+
+HXTStatus Gmsh2HxtLocal(std::vector<GFace *> &faces, HXTMesh *m,
+       std::map<MVertex *, int> &v2c,
+       std::vector<MVertex *> &c2v)
+{
+  std::vector<GEdge *> edges;
+  HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
+  std::set<MVertex *> all;
+
+
+  uint64_t ntri = 0;
+  uint64_t nedg = 0;
+
+  for(size_t j = 0; j < edges.size(); j++) {
+    GEdge *ge = edges[j];
+    nedg += ge->lines.size();
+    for(size_t i = 0; i < ge->lines.size(); i++) {
+      all.insert(ge->lines[i]->getVertex(0));
+      all.insert(ge->lines[i]->getVertex(1));
+    }
+  }
+
+  for(size_t j = 0; j < faces.size(); j++) {
+    GFace *gf = faces[j];
+    ntri += gf->triangles.size();
+    for(size_t i = 0; i < gf->triangles.size(); i++) {
+      all.insert(gf->triangles[i]->getVertex(0));
+      all.insert(gf->triangles[i]->getVertex(1));
+      all.insert(gf->triangles[i]->getVertex(2));
+    }
+  }
+
+  //  printf("%d vertices %d triangles\n",all.size(),ntri);
+
+  m->vertices.num = m->vertices.size = all.size();
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
+
+  size_t count = 0;
+  c2v.resize(all.size());
+  for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
+    m->vertices.coord[4 * count + 0] = (*it)->x();
+    m->vertices.coord[4 * count + 1] = (*it)->y();
+    m->vertices.coord[4 * count + 2] = (*it)->z();
+    m->vertices.coord[4 * count + 3] = 0.0;
+    v2c[*it] = count;
+    c2v[count++] = *it;
+  }
+  all.clear();
+
+  m->lines.num = m->lines.size = nedg;
+  uint64_t index = 0;
+
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->lines.colors, (m->lines.num) * sizeof(uint16_t)));
+
+  for(size_t j = 0; j < edges.size(); j++) {
+    GEdge *ge = edges[j];
+    for(size_t i = 0; i < ge->lines.size(); i++) {
+      m->lines.node[2 * index + 0] = v2c[ge->lines[i]->getVertex(0)];
+      m->lines.node[2 * index + 1] = v2c[ge->lines[i]->getVertex(1)];
+      m->lines.colors[index] = ge->tag();
+      index++;
+    }
+  }
+
+  m->triangles.num = m->triangles.size = ntri;
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
+                             (m->triangles.num) * 3 * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.colors,
+                             (m->triangles.num) * sizeof(uint16_t)));
+
+  index = 0;
+  for(size_t j = 0; j < faces.size(); j++) {
+    GFace *gf = faces[j];
+    for(size_t i = 0; i < gf->triangles.size(); i++) {
+      m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
+      m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
+      m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
+      m->triangles.colors[index] = gf->tag();
+      index++;
+    }
+  }
+  return HXT_STATUS_OK;
+}
+
+HXTStatus Gmsh2HxtGlobal(std::vector<GFace *> &faces, HXTMesh *m,
+       std::map<MVertex *, int> &v2c,
+       std::vector<MVertex *> &c2v)
+{
+  std::vector<GEdge *> edges;
+  HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
+  std::set<MVertex *> all;
+
+  uint64_t cumsum = 0;
+  uint64_t cumsumNoEdges = 0;
+  for(size_t j = 0; j < edges.size(); j++) {
+    GEdge *ge = edges[j];
+    cumsum += ge->lines.size();
+    for(size_t i = 0; i < ge->lines.size(); i++) {
+      all.insert(ge->lines[i]->getVertex(0));
+      all.insert(ge->lines[i]->getVertex(1));
+    }
+  }
+
+  for(size_t j = 0; j < faces.size(); j++) {
+    GFace *gf = faces[j];
+    cumsum += gf->triangles.size();
+    cumsumNoEdges += gf->triangles.size();
+    for(size_t i = 0; i < gf->triangles.size(); i++) {
+      all.insert(gf->triangles[i]->getVertex(0));
+      all.insert(gf->triangles[i]->getVertex(1));
+      all.insert(gf->triangles[i]->getVertex(2));
+    }
+  }
+  // c2v.resize(all.size());
+  c2v.resize(cumsum);
+  // printf("all.size() = %lu\n", all.size());
+  // printf("cumsum incluant les edges = %lu\n", cumsum);
+  // printf("cumsum excluant les edges = %lu\n", cumsumNoEdges);
+  all.clear();
+  
+  cumsum = 0;
+  size_t count_c2v2 = 0;
+  for(size_t j = 0; j < faces.size(); ++j){
+    // all propre à la face
+    GFace *gf = faces[j];
+    cumsum += gf->triangles.size();
+    for(size_t i = 0; i < gf->triangles.size(); i++) {
+      all.insert(gf->triangles[i]->getVertex(0));
+      all.insert(gf->triangles[i]->getVertex(1));
+      all.insert(gf->triangles[i]->getVertex(2));
+    }
+    // printf("sub all.size() = %lu\n", all.size());
+    // printf("cumsum = %lu\n", cumsum);
+
+    size_t count = 0;
+    for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
+      v2c[*it] = count++;
+      c2v[count_c2v2++] = *it;
+    }
+    all.clear();
+  }
+
+  return HXT_STATUS_OK;
+}

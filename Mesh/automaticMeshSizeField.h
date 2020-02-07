@@ -2,12 +2,15 @@
 #define _AUTOMATIC_MESH_SIZE_FIELD_H_
 
 #include "GmshConfig.h"
+#include "GModel.h"
+#include "GRegion.h"
+#include "MTriangle.h"
+#include "MLine.h"
+#include "Field.h"
 
 #ifdef HAVE_HXT
 #include "hxt_octree.h"
 #endif
-
-#include "Field.h"
 
 class automaticMeshSizeField : public Field {
   
@@ -28,12 +31,12 @@ class automaticMeshSizeField : public Field {
  public:
   ~automaticMeshSizeField();
   automaticMeshSizeField() : forest(NULL), forestOptions(NULL){
-    _nPointsPerCircle = 20;
-    _nPointsPerGap = 1;
-    _hmin = 1.e-8;// update needed
-    _hmax = 1.e+8;// update needed    
-    _hbulk = 0.1; // update needed
-    _gradientMax =1.4;
+    _nPointsPerCircle = 30;
+    _nPointsPerGap = 5;
+    _hmin = 0.05;// update needed
+    _hmax = 4;// update needed    
+    _hbulk = 4; // update needed
+    _gradientMax =1.3;
     _nRefine = 5;
     
     options["nPointsPerCircle"] = new FieldOptionInt(_nPointsPerCircle,
@@ -41,6 +44,12 @@ class automaticMeshSizeField : public Field {
     
     options["nPointsPerGap"] = new FieldOptionInt(_nPointsPerGap,
 						  "Number of points in thin layers",&update_needed);
+
+    options["hMin"] = new FieldOptionDouble(_hmin,
+               "Minimum size", &update_needed);
+
+    options["hMax"] = new FieldOptionDouble(_hmax,
+               "Maximum size", &update_needed);
     
     options["hBulk"] = new FieldOptionDouble(_hbulk,
 					     "Size everywhere no size is prescribed", &update_needed);
@@ -52,7 +61,7 @@ class automaticMeshSizeField : public Field {
 					    "Initial refinement level for the octree",&update_needed);
 
     update_needed = true;
-    update();
+    // update();
   }
 
   const char *getName() { return "AutomaticMeshSizeField"; }

@@ -148,7 +148,11 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
   //  uint64_t nEdgesBdry = mesh->lines.num;
   uint64_t nVertices   = mesh->vertices.num;
   
-  HXT_CHECK(hxtMalloc(nodalCurvatures,6*nVertices*sizeof(double))); 
+  HXT_CHECK(hxtMalloc(nodalCurvatures,6*nVertices*sizeof(double)));
+
+  for(uint64_t i = 0; i < 6*nVertices; ++i){
+    (*nodalCurvatures)[i] = NAN;
+  }
 
   uint64_t *node2tri;
   HXT_CHECK(hxtMalloc(&node2tri,3*2*nTriangles*sizeof(uint64_t))); 
@@ -278,6 +282,7 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
         solveEig(A, B, B, D, 
                   & lambda1, & v1x, &v1y, 
                   & lambda2, & v2x, & v2y );
+        // printf("currentVertex = %lu\n", currentVertex);
         (*nodalCurvatures) [6 * currentVertex + 0] = fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]);      
         (*nodalCurvatures) [6 * currentVertex + 1] = fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]);      
         (*nodalCurvatures) [6 * currentVertex + 2] = fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]);      
