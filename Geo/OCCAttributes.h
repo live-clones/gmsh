@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -241,7 +241,10 @@ public:
     double z = 0.5 * (zmin + zmax);
     double bmin[3] = {x - _tol, y - _tol, z - _tol};
     double bmax[3] = {x + _tol, y + _tol, z + _tol};
-    _rtree[v->getDim()]->Remove(bmin, bmax, v);
+    std::vector<OCCAttributes *> tmp;
+    _rtree[v->getDim()]->Search(bmin, bmax, rtree_callback, &tmp);
+    for(std::size_t i = 0; i < tmp.size(); i++)
+      _rtree[v->getDim()]->Remove(bmin, bmax, tmp[i]);
   }
   double getMeshSize(int dim, TopoDS_Shape shape)
   {
@@ -295,7 +298,7 @@ public:
           int a = (int)(col[3] * 255);
           a = (a < 0) ? 0 : (a > 255) ? 255 : a;
         }
-        color = CTX::instance()->packColor(r, b, g, a);
+        color = CTX::instance()->packColor(r, g, b, a);
         boundary = (col.size() == 5) ? col[4] : 0;
         return true;
       }

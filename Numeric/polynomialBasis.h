@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,11 +32,13 @@ public:
   virtual void f(double u, double v, double w, double *sf) const;
   virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const;
   virtual void f(double u, double v, double w, int i, double *sf) const;
-  virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const;
+  virtual void df(const fullMatrix<double> &coord,
+                  fullMatrix<double> &dfm) const;
   virtual void df(double u, double v, double w, double grads[][3]) const;
   virtual void df(double u, double v, double w, int i, double grad[3]) const;
   virtual void ddf(double u, double v, double w, double hess[][3][3]) const;
-  virtual void dddf(double u, double v, double w, double third[][3][3][3]) const;
+  virtual void dddf(double u, double v, double w,
+                    double third[][3][3][3]) const;
 
   void evaluateMonomials(double u, double v, double w, double p[]) const;
 };

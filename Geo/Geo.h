@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -125,7 +125,7 @@ public:
   // that this representation should be the only one in gmsh, so parameter
   // "Type" should disappear from the class Surface.
   gmshSurface *geometry;
-  int ReverseMesh;
+  int ReverseMesh, MeshAlgorithm, MeshSizeFromBoundary;
   bool degenerate() const;
 };
 
@@ -186,7 +186,7 @@ Vertex *CreateVertex(int Num, double X, double Y, double Z, double lc,
                      double u);
 Vertex *CreateVertex(int Num, double u, double v, gmshSurface *s, double lc);
 Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste, List_T *Knots,
-                   int p1, int p2, double u1, double u2);
+                   int p1, int p2, double u1, double u2, bool &ok);
 Curve *CreateReversedCurve(Curve *c);
 Surface *CreateSurface(int Num, int Typ);
 Volume *CreateVolume(int Num, int Typ);
@@ -194,7 +194,7 @@ EdgeLoop *CreateEdgeLoop(int Num, List_T *intlist);
 SurfaceLoop *CreateSurfaceLoop(int Num, List_T *intlist);
 PhysicalGroup *CreatePhysicalGroup(int Num, int typ, List_T *intlist);
 
-void EndCurve(Curve *c);
+bool EndCurve(Curve *c);
 void EndSurface(Surface *s);
 
 Vertex *FindPoint(int inum);
@@ -205,12 +205,12 @@ SurfaceLoop *FindSurfaceLoop(int inum);
 Volume *FindVolume(int inum);
 PhysicalGroup *FindPhysicalGroup(int inum, int type);
 
-void TranslateShapes(double X, double Y, double Z, List_T *shapes);
-void DilatShapes(double X, double Y, double Z, double A, double B, double C,
+bool TranslateShapes(double X, double Y, double Z, List_T *shapes);
+bool DilatShapes(double X, double Y, double Z, double A, double B, double C,
                  List_T *shapes);
-void RotateShapes(double Ax, double Ay, double Az, double Px, double Py,
+bool RotateShapes(double Ax, double Ay, double Az, double Px, double Py,
                   double Pz, double alpha, List_T *shapes);
-void SymmetryShapes(double A, double B, double C, double D, List_T *shapes);
+bool SymmetryShapes(double A, double B, double C, double D, List_T *shapes);
 
 Vertex *DuplicateVertex(Vertex *v);
 Curve *DuplicateCurve(Curve *c);
@@ -244,8 +244,8 @@ int RecognizeLineLoop(List_T *liste, int *loop);
 int RecognizeSurfaceLoop(List_T *liste, int *loop);
 
 void SortEdgesInLoop(int num, List_T *edges, bool orient = false);
-void SetSurfaceGeneratrices(Surface *s, List_T *loops);
-void SetVolumeSurfaces(Volume *v, List_T *loops);
+bool SetSurfaceGeneratrices(Surface *s, List_T *loops);
+bool SetVolumeSurfaces(Volume *v, List_T *loops);
 
 void SetTranslationMatrix(double matrix[4][4], double T[3]);
 void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,

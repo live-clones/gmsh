@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,6 +25,8 @@ typedef unsigned long intptr_t;
 #include "Context.h"
 #include "robustPredicates.h"
 #include "BasisFactory.h"
+#include "gmshCrossFields.h"
+
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -42,7 +44,6 @@ typedef unsigned long intptr_t;
 #endif
 
 #if defined(HAVE_MESH)
-#include "Generator.h"
 #include "Field.h"
 #include "meshPartition.h"
 #endif
@@ -56,6 +57,7 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "drawContext.h"
 #include "onelabGroup.h"
+
 #endif
 
 int GmshInitialize(int argc, char **argv, bool readConfigFiles,
@@ -330,13 +332,27 @@ int GmshBatch()
     if(CTX::instance()->batch < 4)
       GModel::current()->mesh(CTX::instance()->batch);
     else if(CTX::instance()->batch == 4)
-      AdaptMesh(GModel::current());
+      GModel::current()->adaptMesh();
     else if(CTX::instance()->batch == 5)
-      RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
+      GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
     else if(CTX::instance()->batch == 6)
-      GModel::current()->classifyAllFaces(0.7, true);
+      GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear, true);
     else if(CTX::instance()->batch == 7)
-      BarycentricRefineMesh(GModel::current());
+      GModel::current()->classifySurfaces
+        (CTX::instance()->batchSomeValue * M_PI / 180., true, false, M_PI);
+    else if(CTX::instance()->batch == 8){
+      GModel::current()->classifySurfaces
+        (CTX::instance()->batchSomeValue * M_PI / 180., true, true, M_PI);
+      GModel::current()->createGeometryOfDiscreteEntities();
+    }
+    else if(CTX::instance()->batch == 69){
+      std::vector<int> tags;
+      computeCrossField (GModel::current(), tags);
+      GoodbyeMessage();
+      CTX::instance()->batch =0;
+      // still a bug in allocation somewhere
+      exit(0);
+    }
 #endif
   }
 
@@ -402,7 +418,8 @@ int GmshFLTK(int argc, char **argv)
   FlGui::instance()->setFinishedProcessingCommandLine();
 
   if(CTX::instance()->post.combineTime) {
-    PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+    PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                   CTX::instance()->post.combineCopyOptions);
     FlGui::instance()->updateViews(true, true);
   }
 
@@ -437,6 +454,7 @@ int GmshFLTK(int argc, char **argv)
 
   // loop
   return FlGui::instance()->run();
+
 #else
   Msg::Error("GmshFLTK unavailable: please recompile with FLTK support");
   return 0;

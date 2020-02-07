@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -89,6 +89,11 @@ GEntity::GeomType gmshEdge::geomType() const
   }
 }
 
+bool gmshEdge::haveParametrization()
+{
+  return geomType() != BoundaryLayerCurve;
+}
+
 std::string gmshEdge::getAdditionalInfoString(bool multline)
 {
   if(List_Nbr(c->Control_Points) > 0) {
@@ -132,17 +137,18 @@ int gmshEdge::minimumMeshSegments() const
   int np;
   if(geomType() == Line) {
     np = GEdge::minimumMeshSegments();
-    // FIXME FOR QUADS
-    if(List_Nbr(c->Control_Points) > 2) {
-      np = 3 * (List_Nbr(c->Control_Points)) + 1;
-    }
   }
-  else if(geomType() == Circle || geomType() == Ellipse)
-    np = (int)(0.99 + fabs(c->Circle.t1 - c->Circle.t2) *
-                        ((double)CTX::instance()->mesh.minCircPoints - 1.0) /
-                        (2 * M_PI));
-  else
+  else if(geomType() == Circle || geomType() == Ellipse) {
+    double a = fabs(c->Circle.t1 - c->Circle.t2);
+    double n = CTX::instance()->mesh.minCircPoints;
+    if(a > 6.28)
+      np = n;
+    else
+      np = (int)(0.99 + (n - 1) * a / (2 * M_PI));
+  }
+  else {
     np = CTX::instance()->mesh.minCurvPoints - 1;
+  }
   return std::max(np, meshAttributes.minimumMeshSegments);
 }
 
@@ -232,7 +238,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       }
       return InterpolateCubicSpline(v, t, c->mat, t1, t2, c->geometry, 0);
     }
-    default: Msg::Error("Unknown edge type in reparamOnFace"); return SPoint2();
+    default: Msg::Error("Unknown curve type in reparamOnFace"); return SPoint2();
     }
   }
 
@@ -274,7 +280,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       U = 0;
     }
     else {
-      Msg::Info("Reparameterizing edge %d on face %d", c->Num, s->Num);
+      Msg::Info("Reparameterizing curve %d on surface %d", c->Num, s->Num);
       return GEdge::reparamOnFace(face, epar, dir);
     }
     return SPoint2(U, V);
@@ -309,7 +315,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
         V = 1;
       }
       else {
-        Msg::Info("Reparameterizing edge %d on face %d", c->Num, s->Num);
+        Msg::Info("Reparameterizing curve %d on surface %d", c->Num, s->Num);
         return GEdge::reparamOnFace(face, epar, dir);
       }
     }
@@ -344,7 +350,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
         V = hack ? 1 : U;
       }
       else {
-        Msg::Info("Reparameterizing edge %d on face %d", c->Num, s->Num);
+        Msg::Info("Reparameterizing curve %d on surface %d", c->Num, s->Num);
         return GEdge::reparamOnFace(face, epar, dir);
       }
     }

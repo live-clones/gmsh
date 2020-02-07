@@ -1,4 +1,4 @@
-# This file reimplements gmsh/tutorial/t1.geo in Python. 
+# This file reimplements gmsh/tutorial/t1.geo in Python.
 
 # For all the elementary explanations about the general philosphy of entities in
 # Gmsh, see the comments in the .geo file. Comments here focus on the specifics
@@ -74,6 +74,12 @@ gmsh.model.mesh.generate(2)
 
 # ... and save it to disk
 gmsh.write("t1.msh")
+
+# Remember that by default, if physical groups are defined, Gmsh will export in
+# the output mesh file only those elements that belong to at least one physical
+# group. To force Gmsh to save all elements, you can use
+#
+# gmsh.option.setNumber("Mesh.SaveAll", 1)
 
 # This should be called at the end:
 gmsh.finalize()

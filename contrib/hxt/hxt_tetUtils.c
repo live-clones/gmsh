@@ -14,8 +14,9 @@ HXTStatus hxtRemoveDeleted(HXTMesh* mesh)
   for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
     if(getDeletedFlag(mesh, i)){
       for (unsigned j=0; j<4; j++) {
-        uint64_t neigh = mesh->tetrahedra.neigh[4*i+j]; // neighbor of the deleted tet
-        if(neigh!=HXT_NO_ADJACENT) // the deleted tet had a neighbor pointing to him...
+        size_t index = 4*i+j;
+        uint64_t neigh = mesh->tetrahedra.neigh[index]; // neighbor of the deleted tet
+        if(neigh!=HXT_NO_ADJACENT && mesh->tetrahedra.neigh[neigh]==index) // the deleted tet had a neighbor pointing to him...
           mesh->tetrahedra.neigh[neigh] = HXT_NO_ADJACENT;
       }
     }

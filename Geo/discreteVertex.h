@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,17 +10,21 @@
 #include "GVertex.h"
 #include "MVertex.h"
 
+class Vertex;
+
 class discreteVertex : public GVertex {
 private:
-  double _x, _y, _z;
+  Vertex *_v;
 public:
   discreteVertex(GModel *m, int num, double x = 0., double y = 0.,
                  double z = 0.);
+  discreteVertex(GModel *m);
   virtual ~discreteVertex();
   virtual GPoint point() const;
   virtual double x() const;
   virtual double y() const;
   virtual double z() const;
+  virtual void setPosition(GPoint &p);
 };
 
 #endif

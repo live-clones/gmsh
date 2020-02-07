@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -481,7 +481,7 @@ public:
     if(_order == 8 && _vs.size() + 4 == 46) return MSH_TET_46;
     if(_order == 9 && _vs.size() + 4 == 52) return MSH_TET_52;
     if(_order == 10 && _vs.size() + 4 == 58) return MSH_TET_58;
-    Msg::Error("no tag matches a p%d tetrahedron with %d vertices", _order,
+    Msg::Error("No MSH type found for P%d tetrahedron with %d nodes", _order,
                4 + _vs.size());
     return 0;
   }

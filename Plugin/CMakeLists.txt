@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -24,7 +24,7 @@ set(SRC
   HarmonicToTime.cpp ModulusPhase.cpp
   HomologyComputation.cpp HomologyPostProcessing.cpp
   Distance.cpp ExtractEdges.cpp NearestNeighbor.cpp
-  AnalyseCurvedMesh.cpp
+  AnalyseMeshQuality.cpp
   CurvedBndDist.cpp
   FieldFromAmplitudePhase.cpp
   Bubbles.cpp NearToFarField.cpp
@@ -40,6 +40,7 @@ set(SRC
   GaussPoints.cpp
   VoroMetal.cpp
   Summation.cpp
+  MeshSizeFieldView.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -56,7 +56,7 @@ public: // these will become protected at some point
   std::vector<MVertex *> mesh_vertices;
 
   // a list of geometrical entities that form a compound mesh
-  std::vector<GEntity *> _compound;
+  std::vector<GEntity *> compound;
 
   // corresponding principal vertices
   std::map<GVertex *, GVertex *> vertexCounterparts;
@@ -100,7 +100,6 @@ public:
     Bezier,
     ParametricCurve,
     BoundaryLayerCurve,
-    CompoundCurve,
     DiscreteCurve,
     Plane,
     Nurb,
@@ -116,10 +115,8 @@ public:
     BoundaryLayerSurface,
     DiscreteSurface,
     DiscreteDiskSurface,
-    CompoundSurface,
     Volume,
     DiscreteVolume,
-    CompoundVolume,
     PartitionPoint,
     PartitionCurve,
     PartitionSurface,
@@ -150,7 +147,6 @@ public:
       "Bezier",
       "Parametric curve",
       "Boundary layer curve",
-      "Compound curve",
       "Discrete curve",
       "Plane",
       "Nurb",
@@ -166,10 +162,8 @@ public:
       "Boundary layer surface",
       "Discrete surface",
       "Discrete surface (parametrizable, isomorphic to a disk)",
-      "Compound surface",
       "Volume",
       "Discrete volume",
-      "Compound Volume",
       "Partition vertex",
       "Partition curve",
       "Partition surface",
@@ -192,7 +186,7 @@ public:
   virtual void mesh(bool verbose) {}
 
   // delete the mesh data
-  virtual void deleteMesh(bool onlyDeleteElements = false) {}
+  virtual void deleteMesh() {}
 
   // delete the vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();
@@ -339,9 +333,10 @@ public:
 
   // global mesh size constraint for the entity
   virtual double getMeshSize() const { return MAX_LC; }
+  virtual double getMeshSizeFactor() const { return 1.; }
 
-  // number of types of elements
-  virtual int getNumElementTypes() const { return 0; }
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const {};
 
   // get the number of mesh elements (total and by type) in the entity
   virtual std::size_t getNumMeshElements() const { return 0; }
@@ -409,7 +404,7 @@ public:
   }
 };
 
-struct GEntityLessThan {
+struct GEntityPtrLessThan {
   bool operator()(GEntity const *const ent1, GEntity const *const ent2) const
   {
     return ent1->tag() < ent2->tag();

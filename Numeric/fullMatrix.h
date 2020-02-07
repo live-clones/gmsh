@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -165,8 +165,10 @@ public:
   inline void set(int r, scalar v)
   {
 #ifdef _DEBUG
-    if(r >= _r || r < 0)
-      Msg::Fatal("invalid index to access fullVector : %i (size = %i)", r, _r);
+    if(r >= _r || r < 0) {
+      Msg::Error("Invalid index to access fullVector : %i (size = %i)", r, _r);
+      return;
+    }
 #endif
     (*this)(r) = v;
   }
@@ -243,6 +245,22 @@ public:
     _own_data = false;
     _r = original._r;
     _data = original._data + c * _r;
+  }
+
+  /**
+     @param scalar A pointer to an array of scalar;
+     @param r The number of rows.
+
+     This fullVector becomes a proxy of the array.
+
+     Previous data are lost.
+  */
+  void setAsProxy(scalar *data, int r)
+  {
+    if(_own_data && _data) delete[] _data;
+    _own_data = false;
+    _r = r;
+    _data = data;
   }
 
   /**
@@ -351,13 +369,7 @@ public:
 
      This string starts by name.
   */
-  void print(const char *name = "") const
-  {
-    printf("double %s[%d]=\n", name, size());
-    printf("{  ");
-    for(int I = 0; I < size(); I++) { printf("%12.5E ", (*this)(I)); }
-    printf("};\n");
-  }
+  void print(const std::string name = "", const std::string format = "") const;
 
   /**
      @param f A pointer to a FILE stream.
@@ -453,9 +465,11 @@ public:
   inline scalar get(int r, int c) const
   {
 #ifdef _DEBUG
-    if(r >= _r || r < 0 || c >= _c || c < 0)
-      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", r,
+    if(r >= _r || r < 0 || c >= _c || c < 0) {
+      Msg::Error("Invalid index to access fullMatrix : %i %i (size = %i %i)", r,
                  c, _r, _c);
+      return 0;
+    }
 #endif
     return (*this)(r, c);
   }
@@ -467,9 +481,11 @@ public:
   inline void set(int r, int c, scalar v)
   {
 #ifdef _DEBUG
-    if(r >= _r || r < 0 || c >= _c || c < 0)
-      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", r,
+    if(r >= _r || r < 0 || c >= _c || c < 0) {
+      Msg::Error("Invalid index to access fullMatrix : %i %i (size = %i %i)", r,
                  c, _r, _c);
+      return;
+    }
 #endif
     (*this)(r, c) = v;
   }
@@ -540,25 +556,31 @@ public:
   }
   void operator+=(const fullMatrix<scalar> &other)
   {
-    if(_r != other._r || _c != other._c)
-      Msg::Error("sum matrices of different sizes\n");
+    if(_r != other._r || _c != other._c) {
+      Msg::Error("Sum matrices of different sizes");
+      return;
+    }
     for(int i = 0; i < _r * _c; ++i) _data[i] += other._data[i];
   }
   inline scalar operator()(int i, int j) const
   {
 #ifdef _DEBUG
-    if(i >= _r || i < 0 || j >= _c || j < 0)
-      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", i,
+    if(i >= _r || i < 0 || j >= _c || j < 0) {
+      Msg::Error("Invalid index to access fullMatrix : %i %i (size = %i %i)", i,
                  j, _r, _c);
+      return 0;
+    }
 #endif
     return _data[i + _r * j];
   }
   inline scalar &operator()(int i, int j)
   {
 #ifdef _DEBUG
-    if(i >= _r || i < 0 || j >= _c || j < 0)
-      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", i,
+    if(i >= _r || i < 0 || j >= _c || j < 0) {
+      Msg::Error("Invalid index to access fullMatrix : %i %i (size = %i %i)", i,
                  j, _r, _c);
+      return _data[0];
+    }
 #endif
     return _data[i + _r * j];
   }
@@ -571,9 +593,11 @@ public:
   }
   void copy(const fullMatrix<scalar> &a)
   {
-    if(_data && !_own_data)
-      Msg::Fatal("fullMatrix::copy operation is prohibited for proxies, use "
+    if(_data && !_own_data) {
+      Msg::Error("fullMatrix::copy operation is prohibited for proxies, use "
                  "setAll instead");
+      return;
+    }
     if(_r != a._r || _c != a._c) {
       if(_data && _own_data) delete[] _data;
       _r = a._r;
@@ -636,7 +660,10 @@ public:
   void setAll(const fullMatrix<scalar> &m)
 #if !defined(HAVE_BLAS)
   {
-    if(_r != m._r || _c != m._c) Msg::Fatal("fullMatrix size does not match");
+    if(_r != m._r || _c != m._c) {
+      Msg::Error("fullMatrix size does not match");
+      return;
+    }
     for(int i = 0; i < _r * _c; i++) _data[i] = m._data[i];
   }
 #endif
@@ -695,6 +722,7 @@ public:
     if(size1() != size2()) {
       Msg::Error("Not a square matrix (size1: %d, size2: %d)", size1(),
                  size2());
+      return;
     }
     scalar t;
     for(int i = 0; i < size1(); i++)

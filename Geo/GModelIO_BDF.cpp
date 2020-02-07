@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -73,9 +73,9 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize, int *num,
   case 0: // free field
   case -1: // free field with continuation
     for(int i = 0; i < 5; i++) {
-      tmp[i][16] = '\0';
-      strncpy(tmp[i], &buffer[j + 1], 16);
-      for(int k = 0; k < 16; k++) {
+      tmp[i][31] = '\0';
+      strncpy(tmp[i], &buffer[j + 1], 31);
+      for(int k = 0; k < 31; k++) {
         if(tmp[i][k] == ',') tmp[i][k] = '\0';
       }
       j++;
@@ -86,7 +86,7 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize, int *num,
       if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
       j = 0;
       while(j < (int)strlen(buffer2) && buffer2[j] != ',') j++;
-      strncpy(tmp[4], &buffer2[j + 1], 16);
+      strncpy(tmp[4], &buffer2[j + 1], 31);
     }
     break;
   case 1: // small field
@@ -174,7 +174,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
 
   // negative 'numVertices' gives the minimum required number of vertices
   if((int)fields.size() - 2 < abs(numVertices)) {
-    Msg::Error("Wrong number of vertices %d for element", fields.size() - 2);
+    Msg::Error("Wrong number of nodes %d for element", fields.size() - 2);
     return 0;
   }
 
@@ -196,7 +196,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
   for(int i = 0; i < numCheck; i++) {
     std::map<int, MVertex *>::iterator it = vertexMap.find(n[i]);
     if(it == vertexMap.end()) {
-      Msg::Error("Wrong vertex index %d", n[i]);
+      Msg::Error("Wrong node index %d", n[i]);
       return 0;
     }
     vertices.push_back(it->second);
@@ -230,7 +230,7 @@ int GModel::readBDF(const std::string &name)
       }
     }
   }
-  Msg::Info("%d vertices", vertexMap.size());
+  Msg::Info("%d nodes", vertexMap.size());
 
   rewind(fp);
   while(!feof(fp)) {
@@ -344,7 +344,7 @@ int GModel::writeBDF(const std::string &name, int format, int elementTagType,
 
   if(noPhysicalGroups()) saveAll = true;
 
-  indexMeshVertices(saveAll);
+  indexMeshVertices(saveAll, 0, false);
 
   fprintf(fp, "$ Created by Gmsh\n");
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -39,16 +39,17 @@
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "OpenFile.h"
-#include "WinIcon.h"
+#include "XpmIcon.h"
 #include "Options.h"
 #include "CommandLine.h"
 #include "Context.h"
 #include "StringUtils.h"
-#include "Generator.h"
 #include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"
-
+#if defined(HAVE_TOUCHBAR)
+#include "touchBar.h"
+#endif
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
@@ -360,35 +361,7 @@ static void gamepad_handler(void *data)
   }
 }
 
-static void error_handler(const char *fmt, ...)
-{
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-  if(!strcmp(str, "Insufficient GL support")) { // this should be fatal
-    CTX::instance()->terminal = 1;
-    Msg::Error("%s (FLTK internal error)", str);
-    Msg::Fatal("Your system does not seem to support OpenGL - aborting");
-  }
-  else {
-    Msg::Error("%s (FLTK internal error)", str);
-  }
-}
-
-static void fatal_error_handler(const char *fmt, ...)
-{
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-  CTX::instance()->terminal = 1;
-  Msg::Fatal("%s (FLTK internal error)", str);
-}
-
-void FlGui::applyColorScheme()
+void FlGui::applyColorScheme(bool redraw)
 {
   static int first = true;
   int N = 4 + FL_NUM_GRAY;
@@ -415,9 +388,7 @@ void FlGui::applyColorScheme()
       int d = (int)(min + i * (max - min) / (FL_NUM_GRAY - 1.));
       Fl::set_color(fl_gray_ramp(i), d, d, d);
     }
-    if(available()) Fl::reload_scheme();
     Fl::set_color(FL_SELECTION_COLOR, 200, 200, 200);
-    if(available()) updateViews(true, true);
   }
   else if(!first && available() && CTX::instance()->guiColorScheme == 0) {
     // retore default colors (only if not calling the routine from the
@@ -428,24 +399,76 @@ void FlGui::applyColorScheme()
     for(int i = 0; i < FL_NUM_GRAY; i++) {
       Fl::set_color(fl_gray_ramp(i), r[4 + i], g[4 + i], b[4 + i]);
     }
-    Fl::reload_scheme();
     Fl::set_color(FL_SELECTION_COLOR, r[3], g[3], b[3]);
-    updateViews(true, true);
   }
 
   first = false;
+
+  // also change default box type here (to thin versions)
+  Fl::set_boxtype(FL_UP_BOX, FL_THIN_UP_BOX);
+  Fl::set_boxtype(FL_DOWN_BOX, FL_THIN_DOWN_BOX);
+  Fl::set_boxtype(FL_UP_FRAME, FL_THIN_UP_FRAME);
+  Fl::set_boxtype(FL_DOWN_FRAME, FL_THIN_DOWN_FRAME);
+
+  // thinner scrollbars
+  Fl::scrollbar_size(std::max(10, FL_NORMAL_SIZE));
+
+  if(redraw && available()){
+    updateViews(true, true);
+    for (Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
+      win->redraw();
+    }
+  }
 }
 
-FlGui::FlGui(int argc, char **argv)
+static void default_error_handler(const char *fmt, ...)
 {
-  Fl::error = error_handler;
-  Fl::fatal = fatal_error_handler;
+  char str[5000];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+  if(!strcmp(str, "Insufficient GL support")) { // this should be fatal
+    CTX::instance()->terminal = 1;
+    Msg::Error("%s (FLTK internal error)", str);
+    Msg::Error("Your system does not seem to support OpenGL - aborting");
+    Msg::Exit(1);
+  }
+  else {
+    Msg::Error("%s (FLTK internal error)", str);
+  }
+}
+
+static void default_fatal_error_handler(const char *fmt, ...)
+{
+  char str[5000];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+  Msg::Error("%s (FLTK internal error)", str);
+  Msg::Exit(1);
+}
+
+FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
+             void (*error_handler)(const char *fmt, ...))
+  : _quitShouldExit(quitShouldExit)
+{
+  if(error_handler) {
+    Fl::error = error_handler;
+    Fl::fatal = error_handler;
+  }
+  else {
+    Fl::error = default_error_handler;
+    Fl::fatal = default_fatal_error_handler;
+  }
 
 #if defined(__APPLE__)
   // the defaults use %@, which leads to (lowercase) gmsh
   Fl_Mac_App_Menu::about = "About Gmsh";
   Fl_Mac_App_Menu::hide = "Hide Gmsh";
   Fl_Mac_App_Menu::quit = "Quit Gmsh";
+  Fl_Mac_App_Menu::print = ""; // this sometimes crashes
 #endif
 
   // tell fltk we're (potentially) in multi-threaded mode
@@ -455,13 +478,13 @@ FlGui::FlGui(int argc, char **argv)
   if(CTX::instance()->display.size())
     Fl::display(CTX::instance()->display.c_str());
 
-  // apply color scheme before widget creation (noop if default color scheme is
-  // selected), so that there's no color "flashing"
-  applyColorScheme();
-
   // add new box types (dx dy dw dh)
   Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 0, 0, 1, 0);
   Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 0, 1, 0, 1);
+
+  // apply color scheme before widget creation (noop if default color scheme is
+  // selected), so that there's no color "flashing"
+  applyColorScheme();
 
   // add gamepad handler
   if(CTX::instance()->gamepad) Fl::add_timeout(5., gamepad_handler, (void *)0);
@@ -507,6 +530,10 @@ FlGui::FlGui(int argc, char **argv)
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
 
+  // FLTK >= 1.3.3 allows to set a default global window icon
+  Fl_RGB_Image icon(&gmsh_icon_pixmap);
+  Fl_Window::default_icon(&icon);
+
   // add callback to respond to Mac Finder
 #if defined(__APPLE__)
   fl_open_callback(OpenProjectMacFinder);
@@ -522,34 +549,12 @@ FlGui::FlGui(int argc, char **argv)
   graph.push_back(
     new graphicWindow(true, CTX::instance()->numTiles,
                       CTX::instance()->detachedMenu ? true : false));
-#if defined(WIN32)
-  graph[0]->getWindow()->icon(
-    (const void *)LoadIcon(fl_display, MAKEINTRESOURCE(IDI_ICON)));
-#elif defined(__APPLE__)
-  // nothing to do here
-#else
-  fl_open_display();
-  static const char *gmsh32x32 =
-    "\x00\x00\x00\x00\x00\x80\x01\x00\x00\x40\x03\x00\
-    \x00\x40\x03\x00\x00\x20\x07\x00\x00\x20\x07\x00\
-    \x00\x10\x0f\x00\x00\x10\x0f\x00\x00\x08\x1f\x00\
-    \x00\x08\x1f\x00\x00\x04\x3f\x00\x00\x04\x3f\x00\
-    \x00\x02\x7f\x00\x00\x02\x7f\x00\x00\x01\xff\x00\
-    \x00\x01\xff\x00\x80\x00\xff\x01\x80\x00\xff\x01\
-    \x40\x00\xff\x03\x40\x00\xff\x03\x20\x00\xff\x07\
-    \x20\x00\xff\x07\x10\x00\xff\x0f\x10\x00\xff\x0f\
-    \x08\x00\xff\x1f\x08\x00\xff\x1f\x04\x40\xfd\x3f\
-    \x04\xa8\xea\x3f\x02\x55\x55\x7f\xa2\xaa\xaa\x7a\
-    \xff\xff\xff\xff\x00\x00\x00\x00";
-  graph[0]->getWindow()->icon((const char *)XCreateBitmapFromData(
-    fl_display, DefaultRootWindow(fl_display), gmsh32x32, 32, 32));
-#endif
 
   graph[0]->getWindow()->show(argc > 0 ? 1 : 0, argv);
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
-  // re-apply color scheme (necessary for some reason to get the selection color
-  // right)
+  // re-apply color scheme (necessary after open_display to get the selection
+  // color and boxtypes right)
   applyColorScheme();
 
   // graphic window should have the initial focus (so we can e.g. directly loop
@@ -570,7 +575,7 @@ FlGui::FlGui(int argc, char **argv)
   }
   setGraphicTitle(GModel::current()->getFileName());
 
-  // create fullscreen window
+  // create window that will be used for fullscreen display
   fullscreen = new openglWindow(100, 100, 100, 100);
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
   if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
@@ -580,10 +585,6 @@ FlGui::FlGui(int argc, char **argv)
   }
   fullscreen->mode(mode);
   fullscreen->end();
-  fullscreen->fullscreen();
-#if !defined(__APPLE__)
-  fullscreen->icon(graph[0]->getWindow()->icon());
-#endif
 
   // create all other windows
   options = new optionWindow(CTX::instance()->deltaFontSize);
@@ -611,21 +612,45 @@ FlGui::FlGui(int argc, char **argv)
 
   if(CTX::instance()->showOptionsOnStartup) options->win->show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
+
+#if defined(HAVE_TOUCHBAR)
+  showTouchBar();
+#endif
+}
+
+FlGui::~FlGui()
+{
+  for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
+  delete options;
+  delete fields;
+  delete plugins;
+  delete stats;
+  delete visibility;
+  delete highordertools;
+  delete clipping;
+  delete manip;
+  delete elementaryContext;
+  delete transformContext;
+  delete physicalContext;
+  delete meshContext;
+  delete help;
+  delete fullscreen;
 }
 
 bool FlGui::available() { return _instance != 0; }
 
-FlGui *FlGui::instance(int argc, char **argv)
+FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
+                       void (*error_handler)(const char *fmt, ...))
 {
   if(!_instance) {
-    _instance = new FlGui(argc, argv);
+    _instance = new FlGui(argc, argv, quitShouldExit, error_handler);
     // set all options in the new GUI
     InitOptionsGUI(0);
     // say welcome!
     Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
     // log the following for bug reports
     Msg::Direct("-------------------------------------------------------");
-    PrintInfo();
+    PrintBuildInfo();
     Msg::Direct("-------------------------------------------------------");
     // update views (in case the GUI is created after some data has been loaded)
     _instance->updateViews(true, true);
@@ -636,10 +661,21 @@ FlGui *FlGui::instance(int argc, char **argv)
   return _instance;
 }
 
+void FlGui::destroy()
+{
+  if(!_instance) return;
+  delete _instance;
+  _instance = 0;
+}
+
 int FlGui::run()
 {
   // draw the scene
   drawContext::global()->draw();
+
+#if defined(HAVE_TOUCHBAR)
+  updateTouchBar();
+#endif
 
   return Fl::run();
 }
@@ -655,7 +691,8 @@ int FlGui::testGlobalShortcuts(int event)
     geometry_reload_cb(0, 0);
     status = 1;
   }
-  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0')) {
+  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0') ||
+     Fl::test_shortcut('9')) { // for Bruno
     onelab_reload_cb(0, 0);
     status = 1;
   }
@@ -1003,6 +1040,10 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
 
+#if defined(HAVE_TOUCHBAR)
+  updateTouchBar();
+#endif
+
   if(status == 2) {
     drawContext::global()->draw();
     return 1;
@@ -1170,6 +1211,7 @@ char FlGui::selectEntity(int type)
 
 void FlGui::setStatus(const std::string &msg, bool opengl)
 {
+  if(Msg::GetThreadNum() > 0) return;
   if(!opengl) {
     _lastStatus = msg;
     static char buff[1024];
@@ -1211,6 +1253,7 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
 
 void FlGui::setLastStatus(int col)
 {
+  if(Msg::GetThreadNum() > 0) return;
   for(std::size_t i = 0; i < graph.size(); i++) {
     if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
       if(CTX::instance()->guiColorScheme) // dark
@@ -1229,6 +1272,7 @@ void FlGui::setLastStatus(int col)
 void FlGui::setProgress(const std::string &msg, double val, double min,
                         double max)
 {
+  if(Msg::GetThreadNum() > 0) return;
   for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
     if(FlGui::instance()->graph[i]->getProgress()->value() != val)
       FlGui::instance()->graph[i]->getProgress()->value(val);
@@ -1347,6 +1391,7 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fullscreen->resize(x, y, w, h);
       FlGui::instance()->fullscreen->valid(0);
       FlGui::instance()->fullscreen->show();
+      FlGui::instance()->fullscreen->fullscreen();
       while(!FlGui::instance()->fullscreen->valid()) FlGui::wait();
       FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
@@ -1366,6 +1411,7 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
+      FlGui::instance()->fullscreen->fullscreen_off();
       FlGui::instance()->fullscreen->hide();
       drawContext::global()->draw();
       fullscreen = 0;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -3925,7 +3925,10 @@ void PostOp::pyramids1(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
     if(it1->second == 0 && it2->second == 0) {
       getVertex = find(a, b, c, d, *it);
       MVertex *vertex1 = find(a, b, c, d, *bin.begin());
-      if(!getVertex || !vertex1) Msg::Fatal("Topological error");
+      if(!getVertex || !vertex1) {
+        Msg::Error("Topological error");
+        return;
+      }
       if(getVertex == vertex1) {
         MPyramid *pyr = new MPyramid(a, b, c, d, getVertex);
         if(valid(pyr)) {
@@ -4134,13 +4137,15 @@ void PostOp::pyramids2(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
             bin2b.size() != 0 || bin3a.size() != 0 || bin3b.size() != 0 ||
             bin4a.size() != 0 || bin4b.size() != 0 || a->onWhat()->dim() > 2 ||
             b->onWhat()->dim() > 2 || c->onWhat()->dim() > 2 ||
-            d->onWhat()->dim() > 2)
-      Msg::Fatal("Topological issue: inner quad face facing something else "
+            d->onWhat()->dim() > 2) {
+      Msg::Error("Topological issue: inner quad face facing something else "
                  "than 2 triangles: %i %i %i %i %i %i %i %i dim %i %i %i",
                  bin1a.size(), bin1b.size(), bin2a.size(), bin2b.size(),
                  bin3a.size(), bin3b.size(), bin4a.size(), bin4b.size(),
                  a->onWhat()->dim(), b->onWhat()->dim(), c->onWhat()->dim(),
                  d->onWhat()->dim());
+      return;
+    }
 
     MVertex *otherV[2];
     int i = 0;
@@ -4150,7 +4155,10 @@ void PostOp::pyramids2(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
     for(it = pyramids.begin(); it != pyramids.end(); it++) {
       otherV[i++] = findInTriFace(diagA, diagB, nDiagA, nDiagB, *it);
     }
-    if(!otherV[0] || !otherV[1]) Msg::Fatal("Topological error");
+    if(!otherV[0] || !otherV[1]) {
+      Msg::Error("Topological error");
+      return;
+    }
 
     MPyramid *pyr = new MPyramid(a, b, c, d, otherV[0]);
     bool pyrOk = valid(pyr);
@@ -4216,7 +4224,7 @@ void PostOp::pyramids2(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
           erase_vertex_to_tetrahedra(*it);
         }
         else {
-          Msg::Fatal("Wrong tetrahedron");
+          Msg::Error("Wrong tetrahedron");
         }
       }
 

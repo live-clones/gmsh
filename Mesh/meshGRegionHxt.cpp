@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -20,9 +20,13 @@
 #if defined(HAVE_HXT3D)
 
 extern "C" {
-#include "hxt_mesh3d_main.h"
+#include "hxt_api.h"
 #include "hxt_boundary_recovery.h"
-#include "hxt_opt.h"
+#include "hxt_tetMesh.h"
+}
+
+static HXTStatus myRecoveryFun (HXTMesh* mesh, void* userData){
+  return hxt_boundary_recovery(mesh);
 }
 
 // This is a list of regions that are simply connected
@@ -45,7 +49,7 @@ static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
                                          HXTMesh *m,
                                          std::vector<GFace *> &allFaces)
 {
-  std::set<GFace *, GEntityLessThan> allFacesSet;
+  std::set<GFace *, GEntityPtrLessThan> allFacesSet;
   if(m) {
     m->brep.numVolumes = regions.size();
     HXT_CHECK(hxtAlignedMalloc(&m->brep.numSurfacesPerVolume,
@@ -96,7 +100,7 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
   }
   uint32_t to_alloc = 0;
 
-  std::set<GEdge *, GEntityLessThan> allEdgesSet;
+  std::set<GEdge *, GEntityPtrLessThan> allEdgesSet;
   for(std::size_t i = 0; i < faces.size(); i++) {
     std::vector<GEdge *> const &f = faces[i]->edges();
     std::vector<GEdge *> const &f_e = faces[i]->embeddedEdges();
@@ -337,13 +341,6 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 {
   HXT_CHECK(hxtSetMessageCallback(hxtGmshMsgCallback));
 
-  //  int nthreads = CTX::instance()->mesh.maxNumThreads3D;
-  int optimize = 1;
-  int refine = 1;
-  int stat = 0;
-  int verbosity = 100;
-  int reproducible = 0;
-  double threshold = 0.3;
   /*******************  ^ all argument were processed *********************/
   HXTMesh *mesh;
   HXTContext *context;
@@ -354,12 +351,26 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
+  HXTTetMeshOptions options = {
+    0, // int defaultThreads;
+    0, // int delaunayThreads;
+    0, // int improveThreads;
+    1, // int reproducible;
+    1, // int verbosity;
+    1, // int stat;
+    1, // int refine;
+    1, // int optimize;
+    0.35, // double qualityMin;
+    0, // double (*qualityFun)
+    0, // void* qualityData;
+    0, // double (*meshSizeFun)
+    0, // void* meshSizeData;
+    myRecoveryFun, // HXTStatus (*recoveryFun)
+    0 // void* recoveryData;
+  };
+
   //  Msg::Info("Entering hxtTetMesh3d using %d threads",nthreads);
-  HXT_CHECK(
-	    hxtTetMesh3d(mesh, 0, 0, 0, reproducible, verbosity, stat, refine, optimize,
-			 threshold, hxt_boundary_recovery,
-			 NULL, // hxtMeshSizeGmshCallBack, // FIXME does not work yet
-			 regions[0]));
+  HXT_CHECK(hxtTetMesh(mesh, &options));
 
   //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
 

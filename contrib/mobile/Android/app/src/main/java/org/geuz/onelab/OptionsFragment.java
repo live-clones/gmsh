@@ -11,7 +11,7 @@ import android.widget.LinearLayout;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 
-public class OptionsFragment extends Fragment{
+public class OptionsFragment extends Fragment {
   private Gmsh _gmsh;
   private int _viewN;
   private OptionsDisplayFragment _optionDisplayFragment;
@@ -26,79 +26,86 @@ public class OptionsFragment extends Fragment{
     return fragment;
   }
 
-  public OptionsFragment() { }
+  public OptionsFragment() {}
 
-  @Override
-  public void onCreate(Bundle savedInstanceState)
+  @Override public void onCreate(Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
     _gmsh = getArguments().getParcelable("Gmsh");
     _viewN = 0;
-    if(savedInstanceState != null)
-      _viewN = savedInstanceState.getInt("viewN");
+    if(savedInstanceState != null) _viewN = savedInstanceState.getInt("viewN");
   }
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState)
   {
-    LinearLayout rootView = (LinearLayout)inflater.inflate(R.layout.fragment_options,
-                                                           container, false);
+    LinearLayout rootView = (LinearLayout)inflater.inflate(
+      R.layout.fragment_options, container, false);
     _optionModelFragment = OptionsModelFragment.newInstance(_gmsh);
-    _optionModelFragment.setOnModelOptionsChangedListener
-      (new OptionsModelFragment.OnModelOptionsChangedListener() {
-          public void OnModelOptionsChanged() {
-            if(mListener != null) mListener.OnOptionsChanged();
-          }
-        });
+    _optionModelFragment.setOnModelOptionsChangedListener(
+      new OptionsModelFragment.OnModelOptionsChangedListener() {
+        public void OnModelOptionsChanged()
+        {
+          if(mListener != null) mListener.OnOptionsChanged();
+        }
+      });
     _optionDisplayFragment = OptionsDisplayFragment.newInstance(_gmsh);
-    _optionDisplayFragment.setOnModelOptionsChangedListener
-      (new OptionsDisplayFragment.OnModelOptionsChangedListener() {
-          public void OnModelOptionsChanged() {
-            if(mListener != null) mListener.OnOptionsChanged();
-          }
-        });
-    final Button optionModel = (Button) rootView.findViewById(R.id.goto_options_model);
-    final Button optionDisplay = (Button) rootView.findViewById(R.id.goto_options_display);
+    _optionDisplayFragment.setOnModelOptionsChangedListener(
+      new OptionsDisplayFragment.OnModelOptionsChangedListener() {
+        public void OnModelOptionsChanged()
+        {
+          if(mListener != null) mListener.OnOptionsChanged();
+        }
+      });
+    final Button optionModel =
+      (Button)rootView.findViewById(R.id.goto_options_model);
+    final Button optionDisplay =
+      (Button)rootView.findViewById(R.id.goto_options_display);
     if(_viewN == 0) {
       optionDisplay.setEnabled(true);
       optionModel.setEnabled(false);
-      getFragmentManager().beginTransaction().replace(R.id.options_fragment,
-                                                      _optionModelFragment).commit();
+      getFragmentManager()
+        .beginTransaction()
+        .replace(R.id.options_fragment, _optionModelFragment)
+        .commit();
     }
     else {
       optionDisplay.setEnabled(false);
       optionModel.setEnabled(true);
-      getFragmentManager().beginTransaction().replace(R.id.options_fragment,
-                                                      _optionDisplayFragment).commit();
+      getFragmentManager()
+        .beginTransaction()
+        .replace(R.id.options_fragment, _optionDisplayFragment)
+        .commit();
     }
     optionModel.setOnClickListener(new View.OnClickListener() {
-        public void onClick(View v) {
-          optionModel.setEnabled(false);
-          optionDisplay.setEnabled(true);
-          FragmentTransaction ft = getFragmentManager().beginTransaction();
-          ft.replace(R.id.options_fragment, _optionModelFragment);
-          ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-          ft.commit();
-          _viewN = 0;
-        }
-      });
+      public void onClick(View v)
+      {
+        optionModel.setEnabled(false);
+        optionDisplay.setEnabled(true);
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.replace(R.id.options_fragment, _optionModelFragment);
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        ft.commit();
+        _viewN = 0;
+      }
+    });
     optionDisplay.setOnClickListener(new View.OnClickListener() {
-        public void onClick(View v) {
-          optionDisplay.setEnabled(false);
-          optionModel.setEnabled(true);
-          FragmentTransaction ft = getFragmentManager().beginTransaction();
-          ft.replace(R.id.options_fragment, _optionDisplayFragment);
-          ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-          ft.commit();
-          _viewN = 1;
-        }
-      });
+      public void onClick(View v)
+      {
+        optionDisplay.setEnabled(false);
+        optionModel.setEnabled(true);
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.replace(R.id.options_fragment, _optionDisplayFragment);
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        ft.commit();
+        _viewN = 1;
+      }
+    });
     return rootView;
   }
 
-  @Override
-  public void onSaveInstanceState(Bundle outState)
+  @Override public void onSaveInstanceState(Bundle outState)
   {
     super.onSaveInstanceState(outState);
     outState.putInt("viewN", _viewN);
@@ -106,8 +113,8 @@ public class OptionsFragment extends Fragment{
 
   public void refresh()
   {
-    if(_optionDisplayFragment != null)_optionDisplayFragment.refresh();
-    if(_optionModelFragment != null)_optionModelFragment.refresh();
+    if(_optionDisplayFragment != null) _optionDisplayFragment.refresh();
+    if(_optionModelFragment != null) _optionModelFragment.refresh();
   }
 
   private OnOptionsChangedListener mListener;
@@ -115,8 +122,7 @@ public class OptionsFragment extends Fragment{
   {
     mListener = listener;
   }
-  public interface OnOptionsChangedListener
-  {
+  public interface OnOptionsChangedListener {
     void OnOptionsChanged();
   }
 }

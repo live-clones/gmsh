@@ -10,21 +10,3 @@ Line(4) = {1, 2};
 
 Line Loop(5) = {1, 2, 3, 4};
 Plane Surface(10) = {5};
-
-//Physical Line("wall")={1,2,3,4};
-//Physical Surface("air")={10};
-
-//----------------------
-
-//Compound Line(10)={1,2,3,4};
-//Compound Surface(100)={10};
-
-//Line {1,2,3,4} In Surface{100};
-
-//Physical Surface(100)={10};
-//Physical Line(200)={1,2,3,4};
-
-
-
-
-//Recombine Surface {10};

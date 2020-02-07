@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -93,7 +93,8 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
       p->dialogBox->value[i]->callback(plugin_input_value_cb,
                                        (void *)sxn->function);
       if(iView >= 0) {
-        p->dialogBox->value[i]->step(sxn->function(iView, 1, 0.), 1);
+        if(CTX::instance()->inputScrolling)
+          p->dialogBox->value[i]->step(sxn->function(iView, 1, 0.), 1);
         p->dialogBox->value[i]->minimum(sxn->function(iView, 2, 0.));
         p->dialogBox->value[i]->maximum(sxn->function(iView, 3, 0.));
       }
@@ -320,13 +321,9 @@ pluginWindow::pluginWindow(int deltaFontSize)
   browser->callback(plugin_browser_cb);
   browser->box(GMSH_SIMPLE_RIGHT_BOX);
   browser->has_scrollbar(Fl_Browser_::VERTICAL);
-  browser->scrollbar_size(
-    std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
 
   view_browser = new Fl_Multi_Browser(L1, 0, L2, height);
   view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
-  view_browser->scrollbar_size(
-    std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
   view_browser->callback(plugin_browser_cb);
   view_browser->box(GMSH_SIMPLE_RIGHT_BOX);
 

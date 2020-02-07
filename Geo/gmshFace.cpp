@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -140,10 +140,12 @@ void gmshFace::resetMeshAttributes()
       if(gv)
         meshAttributes.corners.push_back(gv);
       else
-        Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
+        Msg::Error("Unknown point %d in transfinite attributes", corn->Num);
     }
   }
   meshAttributes.reverseMesh = s->ReverseMesh;
+  meshAttributes.algorithm = s->MeshAlgorithm;
+  meshAttributes.meshSizeFromBoundary = s->MeshSizeFromBoundary;
 }
 
 Range<double> gmshFace::parBounds(int i) const { return Range<double>(0, 1); }
@@ -328,6 +330,11 @@ GEntity::GeomType gmshFace::geomType() const
   case MSH_SURF_BND_LAYER: return BoundaryLayerSurface;
   default: return Unknown;
   }
+}
+
+bool gmshFace::haveParametrization()
+{
+  return geomType() != BoundaryLayerSurface;
 }
 
 bool gmshFace::containsPoint(const SPoint3 &pt) const

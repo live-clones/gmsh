@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -34,14 +34,12 @@ GRegion::~GRegion()
   GRegion::deleteMesh();
 }
 
-void GRegion::deleteMesh(bool onlyDeleteElements)
+void GRegion::deleteMesh()
 {
-  if(!onlyDeleteElements) {
-    for(std::size_t i = 0; i < mesh_vertices.size(); i++)
-      delete mesh_vertices[i];
-    mesh_vertices.clear();
-    transfinite_vertices.clear();
-  }
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++)
+    delete mesh_vertices[i];
+  mesh_vertices.clear();
+  transfinite_vertices.clear();
   for(std::size_t i = 0; i < tetrahedra.size(); i++) delete tetrahedra[i];
   tetrahedra.clear();
   for(std::size_t i = 0; i < hexahedra.size(); i++) delete hexahedra[i];

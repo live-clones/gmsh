@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -143,11 +143,13 @@ public:
   }
   virtual bool getParameter(int i, double &par) const
   {
+    if(i != 0) return false;
     par = _u;
     return true;
   }
   virtual bool setParameter(int i, double par)
   {
+    if (i != 0  ) return false;
     _u = par;
     return true;
   }
@@ -172,20 +174,31 @@ public:
   }
   virtual bool getParameter(int i, double &par) const
   {
-    par = (i ? _v : _u);
-    return true;
+    if(i == 0) {
+      par = _u;
+      return true;
+    }
+    else if(i == 1) {
+      par = _v;
+      return true;
+    }
+    return false;
   }
   virtual bool setParameter(int i, double par)
   {
-    if(!i)
+    if(i == 0) {
       _u = par;
-    else
+      return true;
+    }
+    else if(i == 1) {
       _v = par;
-    return true;
+      return true;
+    }
+    return false;
   }
 };
 
-class MVertexLessThanLexicographic {
+class MVertexPtrLessThanLexicographic {
   static double tolerance;
 
 public:
@@ -193,10 +206,24 @@ public:
   bool operator()(const MVertex *v1, const MVertex *v2) const;
 };
 
-struct MVertexLessThanNum {
+struct MVertexPtrLessThan {
   bool operator()(const MVertex *v1, const MVertex *v2) const
   {
     return v1->getNum() < v2->getNum();
+  }
+};
+
+struct MVertexPtrEqual {
+  bool operator()(const MVertex *v1, const MVertex *v2) const
+  {
+    return v1->getNum() == v2->getNum();
+  }
+};
+
+struct MVertexPtrHash {
+  size_t operator()(const MVertex *v) const
+  {
+    return v->getNum();
   }
 };
 

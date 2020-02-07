@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -407,7 +407,7 @@ public:
     if(_order == 8 && _vs.size() == 21) return MSH_TRI_24;
     if(_order == 9 && _vs.size() == 24) return MSH_TRI_27;
     if(_order == 10 && _vs.size() == 27) return MSH_TRI_30;
-    Msg::Error("no tag matches a p%d triangle with %d vertices", _order,
+    Msg::Error("No MSH type found for P%d triangle with %d nodes", _order,
                3 + _vs.size());
     return 0;
   }

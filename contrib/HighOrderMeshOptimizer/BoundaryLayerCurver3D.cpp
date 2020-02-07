@@ -42,7 +42,7 @@
 #include "FlGui.h"
 #endif
 #include "Options.h"
-#include "AnalyseCurvedMesh.h"
+#include "AnalyseMeshQuality.h"
 #include "InnerVertexPlacement.h"
 
 namespace {
@@ -434,12 +434,12 @@ namespace BoundaryLayerCurver {
   void computeAdjacencies(VecPairMElemVecMElem &bndEl2column,
                           std::vector<std::pair<int, int> > &adjacencies)
   {
-    std::map<MEdge, int, Less_Edge> edge2element;
+    std::map<MEdge, int, MEdgeLessThan> edge2element;
     for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
       MElement *el = bndEl2column[i].first;
       for(std::size_t j = 0; j < el->getNumEdges(); ++j) {
         MEdge e = el->getEdge(j);
-        std::map<MEdge, int, Less_Edge>::iterator it = edge2element.find(e);
+        std::map<MEdge, int, MEdgeLessThan>::iterator it = edge2element.find(e);
         if(it != edge2element.end()) {
           adjacencies.push_back(std::make_pair(i, it->second));
           // This is for debug purpose, we expect that two elements at most

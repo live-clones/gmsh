@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -449,7 +449,8 @@ static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
     if(elements.size()) return elements[0];
   }
   else {
-    return m->getMeshElementByCoord(pt);
+    SPoint3 uvw;
+    return m->getMeshElementByCoord(pt, uvw);
   }
   return 0;
 }

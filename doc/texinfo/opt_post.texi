@@ -31,6 +31,11 @@ Remove original views after a Combine operation@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item PostProcessing.CombineCopyOptions
+Copy options during Combine operation@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item PostProcessing.DoubleClickedGraphPointX
 Abscissa of last double-clicked graph point@*
 Default value: @code{0}@*

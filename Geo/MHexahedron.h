@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -218,7 +218,7 @@ public:
   }
   virtual MFace getFaceSolin(int numFace){
     static const int fSolin[6][4] = {{0, 1, 3, 2}, {0, 1, 4, 5}, {0, 3, 4, 7},
-                                {1, 2, 5, 6}, {2, 3, 6, 7}, {4, 5, 7, 6}};
+                                {1, 2, 5, 6}, {3, 2, 7, 6}, {4, 5, 7, 6}};
     return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
                  _v[fSolin[numFace][2]], _v[fSolin[numFace][3]]);
   }
@@ -715,7 +715,7 @@ public:
     if(_order == 8 && _vs.size() + 8 == 92) return MSH_HEX_92;
     if(_order == 9 && _vs.size() + 8 == 104) return MSH_HEX_104;
 
-    Msg::Error("no tag matches a p%d hexahedron with %d vertices", _order,
+    Msg::Error("No MSH type found for P%d hexahedron with %d nodes", _order,
                8 + _vs.size());
     return 0;
   }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -190,7 +190,7 @@ class GmshSocket{
   }
   void SendString(int type, const char *str)
   {
-    SendMessage(type, strlen(str), str);
+    SendMessage(type, (int)strlen(str), str);
   }
   void Info(const char *str){ SendString(GMSH_INFO, str); }
   void Warning(const char *str){ SendString(GMSH_WARNING, str); }
@@ -290,7 +290,7 @@ class GmshClient : public GmshSocket {
       // try to connect socket to host:port
       const char *port = strstr(sockname, ":");
       int portno = atoi(port + 1);
-      int remotelen = strlen(sockname) - strlen(port);
+      int remotelen = (int)(strlen(sockname) - strlen(port));
       char *remote = strdup(sockname);
       if(remotelen > 0)
         strncpy(remote, sockname, remotelen);
@@ -403,7 +403,7 @@ class GmshServer : public GmshSocket{
         socklen_t addrlen = sizeof(addr_in);
         getsockname(tmpsock, (struct sockaddr *)&addr_in, &addrlen);
         _portno = ntohs(addr_in.sin_port);
-	int pos = _sockname.find(':'); // remove trailing ' ' or '0'
+	int pos = (int)_sockname.find(':'); // remove trailing ' ' or '0'
         char tmp[256];
 	sprintf(tmp, "%s:%d", _sockname.substr(0, pos).c_str(), _portno);
         _sockname.assign(tmp);

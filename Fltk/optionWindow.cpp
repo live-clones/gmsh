@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -37,6 +37,9 @@ typedef unsigned long intptr_t;
 #include "Context.h"
 #include "StringUtils.h"
 #include "gmshLocalNetworkClient.h"
+#if defined(HAVE_TOUCHBAR)
+#include "touchBar.h"
+#endif
 
 extern StringXColor GeneralOptions_Color[];
 extern StringXColor GeometryOptions_Color[];
@@ -479,9 +482,10 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_occ_fix_small_edges(0, GMSH_SET, o->geo.butt[11]->value());
   opt_geometry_occ_fix_small_faces(0, GMSH_SET, o->geo.butt[12]->value());
   opt_geometry_occ_sew_faces(0, GMSH_SET, o->geo.butt[13]->value());
+  opt_geometry_occ_make_solids(0, GMSH_SET, o->geo.butt[14]->value());
   opt_geometry_occ_scaling(0, GMSH_SET, o->geo.value[20]->value());
 
-  opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
+  opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[15]->value());
 
   opt_geometry_normals(0, GMSH_SET, o->geo.value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, o->geo.value[1]->value());
@@ -510,6 +514,10 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
   opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value());
 
+#if defined(HAVE_TOUCHBAR)
+  updateTouchBar();
+#endif
+
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   drawContext::global()->draw();
@@ -532,7 +540,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_optimize(0, GMSH_SET, o->mesh.butt[2]->value());
   opt_mesh_optimize_netgen(0, GMSH_SET, o->mesh.butt[24]->value());
   opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
-  opt_mesh_ho_optimize(0, GMSH_SET, o->mesh.butt[3]->value());
+  opt_mesh_ho_optimize(0, GMSH_SET, o->mesh.butt[3]->value() ? 2 : 0);
   opt_mesh_second_order_incomplete(0, GMSH_SET, o->mesh.butt[4]->value());
   opt_mesh_points(0, GMSH_SET, o->mesh.butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, o->mesh.butt[7]->value());
@@ -555,7 +563,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_light_two_side(0, GMSH_SET, o->mesh.butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, o->mesh.butt[19]->value());
   opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
-  opt_mesh_recombine3d_all(0, GMSH_SET, o->mesh.butt[22]->value());
 
   opt_mesh_nb_smoothing(0, GMSH_SET, o->mesh.value[0]->value());
   opt_mesh_lc_factor(0, GMSH_SET, o->mesh.value[2]->value());
@@ -587,7 +594,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
                   (o->mesh.choice[3]->value() == 2) ? ALGO_3D_HXT :
                   (o->mesh.choice[3]->value() == 3) ? ALGO_3D_MMG3D :
-                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_RTREE :
                   ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
@@ -595,6 +601,10 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
   opt_mesh_light_lines(0, GMSH_SET, o->mesh.choice[10]->value());
+
+#if defined(HAVE_TOUCHBAR)
+  updateTouchBar();
+#endif
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -1267,6 +1277,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
                               opt_view_color_prisms(current, GMSH_GET, 0));
         opt_view_color_pyramids(i, GMSH_SET,
                                 opt_view_color_pyramids(current, GMSH_GET, 0));
+        opt_view_color_trihedra(i, GMSH_SET,
+                                opt_view_color_trihedra(current, GMSH_GET, 0));
         opt_view_color_tangents(i, GMSH_SET,
                                 opt_view_color_tangents(current, GMSH_GET, 0));
         opt_view_color_normals(i, GMSH_SET,
@@ -1277,6 +1289,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
                               opt_view_color_text3d(current, GMSH_GET, 0));
         opt_view_color_axes(i, GMSH_SET,
                             opt_view_color_axes(current, GMSH_GET, 0));
+        opt_view_color_background2d(i, GMSH_SET,
+                                    opt_view_color_background2d(current, GMSH_GET, 0));
       }
 
       // colorbar window
@@ -1288,6 +1302,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       }
     }
   }
+
+#if defined(HAVE_TOUCHBAR)
+  updateTouchBar();
+#endif
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -1354,8 +1372,6 @@ optionWindow::optionWindow(int deltaFontSize)
   browser = new Fl_Multi_Browser(0, 0, L, height);
   browser->box(GMSH_SIMPLE_RIGHT_BOX);
   browser->has_scrollbar(Fl_Browser_::VERTICAL);
-  browser->scrollbar_size(
-    std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
   browser->add("General");
   browser->add("Geometry");
   browser->add("Mesh");
@@ -1469,7 +1485,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                             "Message verbosity");
       general.value[5]->minimum(0);
       general.value[5]->maximum(10);
-      general.value[5]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[5]->step(1);
       general.value[5]->align(FL_ALIGN_RIGHT);
       general.value[5]->callback(general_options_ok_cb);
 
@@ -1518,7 +1534,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                             "Number of threads");
       general.value[32]->minimum(0);
       general.value[32]->maximum(16);
-      general.value[32]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[32]->step(1);
       general.value[32]->align(FL_ALIGN_RIGHT);
       general.value[32]->callback(general_options_ok_cb);
 #if !defined(_OPENMP)
@@ -1564,19 +1580,19 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[17] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW / 3, BH);
       general.value[17]->minimum(0.);
-      general.value[17]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[17]->step(1);
       general.value[17]->maximum(100);
       general.value[17]->callback(general_options_ok_cb);
       general.value[18] = new Fl_Value_Input(L + 2 * WB + 1 * IW / 3,
                                              2 * WB + 2 * BH, IW / 3, BH);
       general.value[18]->minimum(0.);
-      general.value[18]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[18]->step(1);
       general.value[18]->maximum(100);
       general.value[18]->callback(general_options_ok_cb);
       general.value[19] = new Fl_Value_Input(
         L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes tics");
       general.value[19]->minimum(0.);
-      general.value[19]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[19]->step(1);
       general.value[19]->maximum(100);
       general.value[19]->align(FL_ALIGN_RIGHT);
       general.value[19]->callback(general_options_ok_cb);
@@ -1645,7 +1661,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
       general.value[26]->minimum(-2000);
       general.value[26]->maximum(2000);
-      general.value[26]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[26]->step(1);
       general.value[26]->callback(general_options_ok_cb);
       general.value[27] =
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH,
@@ -1653,7 +1669,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[27]->align(FL_ALIGN_RIGHT);
       general.value[27]->minimum(-2000);
       general.value[27]->maximum(2000);
-      general.value[27]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[27]->step(1);
       general.value[27]->callback(general_options_ok_cb);
 
       o->end();
@@ -1679,7 +1695,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                              BH, "Z-clipping distance factor");
       general.value[14]->minimum(0.1);
       general.value[14]->maximum(20.);
-      general.value[14]->step(0.1);
+      if(CTX::instance()->inputScrolling) general.value[14]->step(0.1);
       general.value[14]->align(FL_ALIGN_RIGHT);
       general.value[14]->callback(general_options_ok_cb);
 
@@ -1687,7 +1703,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH);
       general.value[15]->minimum(0.);
       general.value[15]->maximum(10.);
-      general.value[15]->step(0.01);
+      if(CTX::instance()->inputScrolling) general.value[15]->step(0.01);
       general.value[15]->align(FL_ALIGN_RIGHT);
       general.value[15]->callback(general_options_ok_cb);
 
@@ -1696,7 +1712,7 @@ optionWindow::optionWindow(int deltaFontSize)
                            "Polygon offset factor/units");
       general.value[16]->minimum(0.);
       general.value[16]->maximum(10.);
-      general.value[16]->step(0.01);
+      if(CTX::instance()->inputScrolling) general.value[16]->step(0.01);
       general.value[16]->align(FL_ALIGN_RIGHT);
       general.value[16]->callback(general_options_ok_cb);
 
@@ -1709,7 +1725,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                              BH, "Quadric subdivisions");
       general.value[11]->minimum(3);
       general.value[11]->maximum(30);
-      general.value[11]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[11]->step(1);
       general.value[11]->align(FL_ALIGN_RIGHT);
       general.value[11]->callback(general_options_ok_cb);
 
@@ -1717,7 +1733,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size");
       general.value[6]->minimum(0.1);
       general.value[6]->maximum(50);
-      general.value[6]->step(0.1);
+      if(CTX::instance()->inputScrolling) general.value[6]->step(0.1);
       general.value[6]->align(FL_ALIGN_RIGHT);
       general.value[6]->callback(general_options_ok_cb);
 
@@ -1725,7 +1741,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width");
       general.value[7]->minimum(0.1);
       general.value[7]->maximum(50);
-      general.value[7]->step(0.1);
+      if(CTX::instance()->inputScrolling) general.value[7]->step(0.1);
       general.value[7]->align(FL_ALIGN_RIGHT);
       general.value[7]->callback(general_options_ok_cb);
 
@@ -1771,7 +1787,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                              w2, BH, "Default font");
       general.value[12]->minimum(5);
       general.value[12]->maximum(40);
-      general.value[12]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[12]->step(1);
       general.value[12]->align(FL_ALIGN_RIGHT);
       general.value[12]->callback(general_options_ok_cb);
 
@@ -1783,7 +1799,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                              w2, BH, "Title font");
       general.value[28]->minimum(5);
       general.value[28]->maximum(40);
-      general.value[28]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[28]->step(1);
       general.value[28]->align(FL_ALIGN_RIGHT);
       general.value[28]->callback(general_options_ok_cb);
 
@@ -1798,21 +1814,21 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW / 3, BH);
       general.value[2]->minimum(-1.);
       general.value[2]->maximum(1.);
-      general.value[2]->step(0.01);
+      if(CTX::instance()->inputScrolling) general.value[2]->step(0.01);
       general.value[2]->callback(general_options_ok_cb, (void *)"light_value");
 
       general.value[3] =
         new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 1 * BH, IW / 3, BH);
       general.value[3]->minimum(-1.);
       general.value[3]->maximum(1.);
-      general.value[3]->step(0.01);
+      if(CTX::instance()->inputScrolling) general.value[3]->step(0.01);
       general.value[3]->callback(general_options_ok_cb, (void *)"light_value");
 
       general.value[4] = new Fl_Value_Input(
         L + 2 * WB + 2 * IW / 3, 2 * WB + 1 * BH, IW / 3, BH, "Light position");
       general.value[4]->minimum(-1.);
       general.value[4]->maximum(1.);
-      general.value[4]->step(0.01);
+      if(CTX::instance()->inputScrolling) general.value[4]->step(0.01);
       general.value[4]->align(FL_ALIGN_RIGHT);
       general.value[4]->callback(general_options_ok_cb, (void *)"light_value");
 
@@ -1820,7 +1836,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                              BH, "Light position divisor");
       general.value[13]->minimum(0.);
       general.value[13]->maximum(1.);
-      general.value[13]->step(0.01);
+      if(CTX::instance()->inputScrolling) general.value[13]->step(0.01);
       general.value[13]->align(FL_ALIGN_RIGHT);
       general.value[13]->callback(general_options_ok_cb);
 
@@ -1832,14 +1848,14 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH);
       general.value[1]->minimum(0);
       general.value[1]->maximum(10);
-      general.value[1]->step(0.1);
+      if(CTX::instance()->inputScrolling) general.value[1]->step(0.1);
       general.value[1]->callback(general_options_ok_cb);
       general.value[0] =
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 3 * BH, IW / 2, BH,
                            "Material shininess/exponent");
       general.value[0]->minimum(0);
       general.value[0]->maximum(128);
-      general.value[0]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[0]->step(1);
       general.value[0]->align(FL_ALIGN_RIGHT);
       general.value[0]->callback(general_options_ok_cb);
 
@@ -1915,7 +1931,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                              BH, "Eye separation ratio (%)");
       general.value[29]->minimum(0.1);
       general.value[29]->maximum(10.);
-      general.value[29]->step(.1);
+      if(CTX::instance()->inputScrolling) general.value[29]->step(.1);
       general.value[29]->value(CTX::instance()->eye_sep_ratio);
       general.value[29]->align(FL_ALIGN_RIGHT);
       general.value[29]->callback(general_options_ok_cb);
@@ -1924,7 +1940,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                              BH, "Focal length ratio (%)");
       general.value[30]->minimum(0.1);
       general.value[30]->maximum(10.);
-      general.value[30]->step(.1);
+      if(CTX::instance()->inputScrolling) general.value[30]->step(.1);
       general.value[30]->value(CTX::instance()->focallength_ratio);
       general.value[30]->align(FL_ALIGN_RIGHT);
       general.value[30]->callback(general_options_ok_cb);
@@ -1933,7 +1949,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                              BH, "Camera Aperture (degrees)");
       general.value[31]->minimum(10.);
       general.value[31]->maximum(120.);
-      general.value[31]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[31]->step(1);
       general.value[31]->value(CTX::instance()->camera_aperture);
       general.value[31]->align(FL_ALIGN_RIGHT);
       general.value[31]->callback(general_options_ok_cb);
@@ -1999,7 +2015,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Box *b2 =
         new Fl_Box(FL_NO_BOX, L + 2 * WB, 2 * WB + 3 * BH + 1, IW, BH,
-                   "Open CASCADE model healing options (experimental):");
+                   "Open CASCADE model healing options:");
       b2->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
 
       geo.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
@@ -2022,7 +2038,12 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[13]->type(FL_TOGGLE_BUTTON);
       geo.butt[13]->callback(geometry_options_ok_cb);
 
-      geo.value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH,
+      geo.butt[14] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Fix shells and make solids");
+      geo.butt[14]->type(FL_TOGGLE_BUTTON);
+      geo.butt[14]->callback(geometry_options_ok_cb);
+
+      geo.value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
                                          "Global model scaling");
       geo.value[20]->align(FL_ALIGN_RIGHT);
       geo.value[20]->callback(geometry_options_ok_cb);
@@ -2033,6 +2054,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[11]->deactivate();
       geo.butt[12]->deactivate();
       geo.butt[13]->deactivate();
+      geo.butt[14]->deactivate();
       geo.value[20]->deactivate();
 #endif
       o->end();
@@ -2101,7 +2123,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW / 2, BH);
       geo.value[0]->minimum(0);
       geo.value[0]->maximum(500);
-      geo.value[0]->step(1);
+      if(CTX::instance()->inputScrolling) geo.value[0]->step(1);
       geo.value[0]->align(FL_ALIGN_RIGHT);
       geo.value[0]->when(FL_WHEN_RELEASE);
       geo.value[0]->callback(geometry_options_ok_cb);
@@ -2110,7 +2132,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                         IW / 2, BH, "Normals and tangents");
       geo.value[1]->minimum(0);
       geo.value[1]->maximum(500);
-      geo.value[1]->step(1);
+      if(CTX::instance()->inputScrolling) geo.value[1]->step(1);
       geo.value[1]->align(FL_ALIGN_RIGHT);
       geo.value[1]->when(FL_WHEN_RELEASE);
       geo.value[1]->callback(geometry_options_ok_cb);
@@ -2161,7 +2183,7 @@ optionWindow::optionWindow(int deltaFontSize)
       for(int i = 7; i <= 18; i++) {
         geo.value[i]->minimum(-1.);
         geo.value[i]->maximum(1.);
-        geo.value[i]->step(0.1);
+        if(CTX::instance()->inputScrolling) geo.value[i]->step(0.1);
         geo.value[i]->align(FL_ALIGN_RIGHT);
         geo.value[i]->when(FL_WHEN_RELEASE);
         geo.value[i]->callback(geometry_options_ok_cb);
@@ -2184,7 +2206,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point size");
       geo.value[3]->minimum(0.1);
       geo.value[3]->maximum(50);
-      geo.value[3]->step(0.1);
+      if(CTX::instance()->inputScrolling) geo.value[3]->step(0.1);
       geo.value[3]->align(FL_ALIGN_RIGHT);
       geo.value[3]->callback(geometry_options_ok_cb);
 
@@ -2192,7 +2214,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                         "Selected point size");
       geo.value[5]->minimum(0.1);
       geo.value[5]->maximum(50);
-      geo.value[5]->step(0.1);
+      if(CTX::instance()->inputScrolling) geo.value[5]->step(0.1);
       geo.value[5]->align(FL_ALIGN_RIGHT);
       geo.value[5]->callback(geometry_options_ok_cb);
 
@@ -2206,7 +2228,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Curve width");
       geo.value[4]->minimum(0.1);
       geo.value[4]->maximum(50);
-      geo.value[4]->step(0.1);
+      if(CTX::instance()->inputScrolling) geo.value[4]->step(0.1);
       geo.value[4]->align(FL_ALIGN_RIGHT);
       geo.value[4]->callback(geometry_options_ok_cb);
 
@@ -2214,7 +2236,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                         "Selected curve width");
       geo.value[6]->minimum(0.1);
       geo.value[6]->maximum(50);
-      geo.value[6]->step(0.1);
+      if(CTX::instance()->inputScrolling) geo.value[6]->step(0.1);
       geo.value[6]->align(FL_ALIGN_RIGHT);
       geo.value[6]->callback(geometry_options_ok_cb);
 
@@ -2222,7 +2244,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                          "Curve subdivisions");
       geo.value[19]->minimum(1);
       geo.value[19]->maximum(50);
-      geo.value[19]->step(1);
+      if(CTX::instance()->inputScrolling) geo.value[19]->step(1);
       geo.value[19]->align(FL_ALIGN_RIGHT);
       geo.value[19]->callback(geometry_options_ok_cb);
 
@@ -2246,10 +2268,10 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[9]->tooltip("(Alt+w)");
       geo.butt[9]->callback(geometry_options_ok_cb);
 
-      geo.butt[14] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
+      geo.butt[15] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
                                          "Use two-side lighting");
-      geo.butt[14]->type(FL_TOGGLE_BUTTON);
-      geo.butt[14]->callback(geometry_options_ok_cb);
+      geo.butt[15]->type(FL_TOGGLE_BUTTON);
+      geo.butt[15]->callback(geometry_options_ok_cb);
 
       geo.butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
                                          "Highlight orphan entities");
@@ -2295,15 +2317,14 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Frontal-Delaunay", 0, 0, 0},
         {"BAMG (experimental)", 0, 0, 0},
         {"Frontal-Delaunay for Quads (experimental)", 0, 0, 0},
-        {"Packing of Parallelograms (experimental)", 0, 0, 0},
+        {"Packing of Parallelograms (experimental, planar only)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
         {"HXT (experimental)", 0, 0, 0},
-        {"MMG3D (experimental)", 0, 0, 0},
-        {"R-Tree (experimental)", 0, 0, 0},
+        {"MMG3D (experimental, single volume only)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {
@@ -2353,7 +2374,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                          "Smoothing steps");
       mesh.value[0]->minimum(0);
       mesh.value[0]->maximum(100);
-      mesh.value[0]->step(1);
+      if(CTX::instance()->inputScrolling) mesh.value[0]->step(1);
       mesh.value[0]->align(FL_ALIGN_RIGHT);
       mesh.value[0]->callback(mesh_options_ok_cb);
 
@@ -2361,7 +2382,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                           "Element size factor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
-      mesh.value[2]->step(0.01);
+      if(CTX::instance()->inputScrolling) mesh.value[2]->step(0.01);
       mesh.value[2]->align(FL_ALIGN_RIGHT);
       mesh.value[2]->callback(mesh_options_ok_cb);
 
@@ -2379,7 +2400,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                          BH, "Element order");
       mesh.value[3]->minimum(1);
       mesh.value[3]->maximum(2);
-      mesh.value[3]->step(1);
+      if(CTX::instance()->inputScrolling) mesh.value[3]->step(1);
       mesh.value[3]->align(FL_ALIGN_RIGHT);
       mesh.value[3]->callback(mesh_options_ok_cb);
 
@@ -2405,7 +2426,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[1] = new Fl_Check_Button(
         L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
-        "Compute element sizes from curvature (experimental)");
+        "Compute element sizes from curvature");
       mesh.butt[1]->type(FL_TOGGLE_BUTTON);
       mesh.butt[1]->callback(mesh_options_ok_cb);
 
@@ -2430,15 +2451,9 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[3] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                            "Optimize high-order meshes (experimental)");
+                            "Optimize high-order meshes");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
-
-      mesh.butt[22] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
-                            "Recombine tets into hex-dom mesh (experimental)");
-      mesh.butt[22]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[22]->callback(mesh_options_ok_cb);
 
       o->end();
     }
@@ -2522,7 +2537,7 @@ optionWindow::optionWindow(int deltaFontSize)
                            2 * WB + 7 * BH, IW / 3, BH, "Sampling");
       mesh.value[12]->minimum(1);
       mesh.value[12]->maximum(100);
-      mesh.value[12]->step(1);
+      if(CTX::instance()->inputScrolling) mesh.value[12]->step(1);
       mesh.value[12]->align(FL_ALIGN_RIGHT);
       mesh.value[12]->when(FL_WHEN_RELEASE);
       mesh.value[12]->callback(mesh_options_ok_cb);
@@ -2547,7 +2562,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 4, BH);
       mesh.value[4]->minimum(0);
       mesh.value[4]->maximum(1);
-      mesh.value[4]->step(0.01);
+      if(CTX::instance()->inputScrolling) mesh.value[4]->step(0.01);
       mesh.value[4]->align(FL_ALIGN_RIGHT);
       mesh.value[4]->when(FL_WHEN_RELEASE);
       mesh.value[4]->callback(mesh_options_ok_cb);
@@ -2556,7 +2571,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                          IW / 2 - IW / 4, BH);
       mesh.value[5]->minimum(0);
       mesh.value[5]->maximum(1);
-      mesh.value[5]->step(0.01);
+      if(CTX::instance()->inputScrolling) mesh.value[5]->step(0.01);
       mesh.value[5]->align(FL_ALIGN_RIGHT);
       mesh.value[5]->when(FL_WHEN_RELEASE);
       mesh.value[5]->callback(mesh_options_ok_cb);
@@ -2590,7 +2605,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW / 2, BH);
       mesh.value[8]->minimum(0);
       mesh.value[8]->maximum(500);
-      mesh.value[8]->step(1);
+      if(CTX::instance()->inputScrolling) mesh.value[8]->step(1);
       mesh.value[8]->align(FL_ALIGN_RIGHT);
       mesh.value[8]->when(FL_WHEN_RELEASE);
       mesh.value[8]->callback(mesh_options_ok_cb);
@@ -2599,7 +2614,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                           IW / 2, BH, "Normals and tangents");
       mesh.value[13]->minimum(0);
       mesh.value[13]->maximum(200);
-      mesh.value[13]->step(1.0);
+      if(CTX::instance()->inputScrolling) mesh.value[13]->step(1.0);
       mesh.value[13]->align(FL_ALIGN_RIGHT);
       mesh.value[13]->when(FL_WHEN_RELEASE);
       mesh.value[13]->callback(mesh_options_ok_cb);
@@ -2615,7 +2630,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                          "Element shrinking factor");
       mesh.value[9]->minimum(0);
       mesh.value[9]->maximum(1);
-      mesh.value[9]->step(0.01);
+      if(CTX::instance()->inputScrolling) mesh.value[9]->step(0.01);
       mesh.value[9]->align(FL_ALIGN_RIGHT);
       mesh.value[9]->when(FL_WHEN_RELEASE);
       mesh.value[9]->callback(mesh_options_ok_cb);
@@ -2630,7 +2645,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Point size");
       mesh.value[10]->minimum(0.1);
       mesh.value[10]->maximum(50);
-      mesh.value[10]->step(0.1);
+      if(CTX::instance()->inputScrolling) mesh.value[10]->step(0.1);
       mesh.value[10]->align(FL_ALIGN_RIGHT);
       mesh.value[10]->callback(mesh_options_ok_cb);
 
@@ -2638,7 +2653,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line width");
       mesh.value[11]->minimum(0.1);
       mesh.value[11]->maximum(50);
-      mesh.value[11]->step(0.1);
+      if(CTX::instance()->inputScrolling) mesh.value[11]->step(0.1);
       mesh.value[11]->align(FL_ALIGN_RIGHT);
       mesh.value[11]->callback(mesh_options_ok_cb);
 
@@ -2646,7 +2661,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                           "High-order element subdivisions");
       mesh.value[14]->minimum(1);
       mesh.value[14]->maximum(10);
-      mesh.value[14]->step(1);
+      if(CTX::instance()->inputScrolling) mesh.value[14]->step(1);
       mesh.value[14]->align(FL_ALIGN_RIGHT);
       mesh.value[14]->when(FL_WHEN_RELEASE);
       mesh.value[14]->callback(mesh_options_ok_cb);
@@ -2690,7 +2705,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                           "Smoothing threshold angle");
       mesh.value[18]->minimum(0.);
       mesh.value[18]->maximum(180.);
-      mesh.value[18]->step(1.);
+      if(CTX::instance()->inputScrolling) mesh.value[18]->step(1.);
       mesh.value[18]->align(FL_ALIGN_RIGHT);
       mesh.value[18]->when(FL_WHEN_RELEASE);
       mesh.value[18]->callback(mesh_options_ok_cb);
@@ -2798,7 +2813,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                          "Frame duration (in seconds)");
       post.value[0]->minimum(0);
       post.value[0]->maximum(10);
-      post.value[0]->step(0.01);
+      if(CTX::instance()->inputScrolling) post.value[0]->step(0.01);
       post.value[0]->align(FL_ALIGN_RIGHT);
       post.value[0]->callback(post_options_ok_cb);
 
@@ -2806,7 +2821,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                          "Animation increment step");
       post.value[1]->minimum(1);
       post.value[1]->maximum(100);
-      post.value[1]->step(1);
+      if(CTX::instance()->inputScrolling) post.value[1]->step(1);
       post.value[1]->align(FL_ALIGN_RIGHT);
       post.value[1]->callback(post_options_ok_cb);
 
@@ -2873,7 +2888,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[50]->align(FL_ALIGN_RIGHT);
       view.value[50]->minimum(0);
       view.value[50]->maximum(0);
-      view.value[50]->step(1);
+      if(CTX::instance()->inputScrolling) view.value[50]->step(1);
       view.label[0] =
         new Fl_Box(L + 2 * WB + IW, 2 * WB + 3 * BH, width / 2, BH, "Step");
       view.label[0]->box(FL_NO_BOX);
@@ -2887,7 +2902,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[30]->align(FL_ALIGN_RIGHT);
       view.value[30]->minimum(1);
       view.value[30]->maximum(256);
-      view.value[30]->step(1);
+      if(CTX::instance()->inputScrolling) view.value[30]->step(1);
       view.value[30]->when(FL_WHEN_RELEASE);
       view.value[30]->callback(view_options_ok_cb);
 
@@ -2974,7 +2989,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[33]->align(FL_ALIGN_RIGHT);
       view.value[33]->minimum(0);
       view.value[33]->maximum(6);
-      view.value[33]->step(1);
+      if(CTX::instance()->inputScrolling) view.value[33]->step(1);
       view.value[33]->when(FL_WHEN_RELEASE);
       view.value[33]->callback(view_options_ok_cb);
       view.label[1] = new Fl_Box(L + 2 * WB + IW, 2 * WB + 10 * BH, width / 2,
@@ -2987,7 +3002,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[34]->align(FL_ALIGN_RIGHT);
       view.value[34]->minimum(-1.e-4);
       view.value[34]->maximum(0.1);
-      view.value[34]->step(1.e-4);
+      if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-4);
       view.value[34]->when(FL_WHEN_RELEASE);
       view.value[34]->callback(view_options_ok_cb);
 
@@ -3016,19 +3031,19 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[3] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW / 3, BH);
       view.value[3]->minimum(0.);
-      view.value[3]->step(1);
+      if(CTX::instance()->inputScrolling) view.value[3]->step(1);
       view.value[3]->maximum(100);
       view.value[3]->callback(view_options_ok_cb);
       view.value[4] = new Fl_Value_Input(L + 2 * WB + 1 * IW / 3,
                                          2 * WB + 2 * BH, IW / 3, BH);
       view.value[4]->minimum(0.);
-      view.value[4]->step(1);
+      if(CTX::instance()->inputScrolling) view.value[4]->step(1);
       view.value[4]->maximum(100);
       view.value[4]->callback(view_options_ok_cb);
       view.value[5] = new Fl_Value_Input(
         L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes tics");
       view.value[5]->minimum(0.);
-      view.value[5]->step(1);
+      if(CTX::instance()->inputScrolling) view.value[5]->step(1);
       view.value[5]->maximum(100);
       view.value[5]->align(FL_ALIGN_RIGHT);
       view.value[5]->callback(view_options_ok_cb);
@@ -3093,7 +3108,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
       view.value[20]->minimum(-2000);
       view.value[20]->maximum(2000);
-      view.value[20]->step(0.5);
+      if(CTX::instance()->inputScrolling) view.value[20]->step(0.5);
       view.value[20]->callback(view_options_ok_cb);
       view.value[21] =
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH,
@@ -3101,14 +3116,14 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[21]->align(FL_ALIGN_RIGHT);
       view.value[21]->minimum(-2000);
       view.value[21]->maximum(2000);
-      view.value[21]->step(0.5);
+      if(CTX::instance()->inputScrolling) view.value[21]->step(0.5);
       view.value[21]->callback(view_options_ok_cb);
 
       view.value[22] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
       view.value[22]->minimum(0);
       view.value[22]->maximum(2000);
-      view.value[22]->step(0.5);
+      if(CTX::instance()->inputScrolling) view.value[22]->step(0.5);
       view.value[22]->callback(view_options_ok_cb);
       view.value[23] =
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH,
@@ -3116,7 +3131,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[23]->align(FL_ALIGN_RIGHT);
       view.value[23]->minimum(0);
       view.value[23]->maximum(2000);
-      view.value[23]->step(0.5);
+      if(CTX::instance()->inputScrolling) view.value[23]->step(0.5);
       view.value[23]->callback(view_options_ok_cb);
 
       o->end();
@@ -3187,7 +3202,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                          IW / 3, BH, "Sampling");
       view.value[6]->minimum(1);
       view.value[6]->maximum(100);
-      view.value[6]->step(1);
+      if(CTX::instance()->inputScrolling) view.value[6]->step(1);
       view.value[6]->align(FL_ALIGN_RIGHT);
       view.value[6]->when(FL_WHEN_RELEASE);
       view.value[6]->callback(view_options_ok_cb);
@@ -3209,7 +3224,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH);
       view.value[0]->minimum(0);
       view.value[0]->maximum(500);
-      view.value[0]->step(1);
+      if(CTX::instance()->inputScrolling) view.value[0]->step(1);
       view.value[0]->align(FL_ALIGN_RIGHT);
       view.value[0]->when(FL_WHEN_RELEASE);
       view.value[0]->callback(view_options_ok_cb);
@@ -3218,7 +3233,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                          IW / 2, BH, "Normals and tangents");
       view.value[1]->minimum(0);
       view.value[1]->maximum(500);
-      view.value[1]->step(1);
+      if(CTX::instance()->inputScrolling) view.value[1]->step(1);
       view.value[1]->align(FL_ALIGN_RIGHT);
       view.value[1]->when(FL_WHEN_RELEASE);
       view.value[1]->callback(view_options_ok_cb);
@@ -3254,7 +3269,7 @@ optionWindow::optionWindow(int deltaFontSize)
           new Fl_Value_Input(L + 3 * WB + IW + i * w, 2 * WB + 10 * BH, w, BH);
         view.value[70 + i]->minimum(-1);
         view.value[70 + i]->maximum(9);
-        view.value[70 + i]->step(1);
+        if(CTX::instance()->inputScrolling) view.value[70 + i]->step(1);
         view.value[70 + i]->callback(view_options_ok_cb);
       }
 
@@ -3316,7 +3331,7 @@ optionWindow::optionWindow(int deltaFontSize)
       for(int i = 51; i <= 59; i++) {
         view.value[i]->minimum(-1.);
         view.value[i]->maximum(1.);
-        view.value[i]->step(0.1);
+        if(CTX::instance()->inputScrolling) view.value[i]->step(0.1);
         view.value[i]->align(FL_ALIGN_RIGHT);
         view.value[i]->when(FL_WHEN_RELEASE);
         view.value[i]->callback(view_options_ok_cb);
@@ -3366,7 +3381,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[12] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
                                           "Element shrinking factor");
       view.value[12]->minimum(0.);
-      view.value[12]->step(0.01);
+      if(CTX::instance()->inputScrolling) view.value[12]->step(0.01);
       view.value[12]->maximum(1.);
       view.value[12]->align(FL_ALIGN_RIGHT);
       view.value[12]->when(FL_WHEN_RELEASE);
@@ -3382,7 +3397,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Point size");
       view.value[61]->minimum(0.1);
       view.value[61]->maximum(50);
-      view.value[61]->step(0.1);
+      if(CTX::instance()->inputScrolling) view.value[61]->step(0.1);
       view.value[61]->align(FL_ALIGN_RIGHT);
       view.value[61]->callback(view_options_ok_cb);
 
@@ -3394,7 +3409,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       view.butt[26] = new Fl_Check_Button(L + width - (int)(0.85 * IW) - 2 * WB,
                                           2 * WB + 4 * BH, (int)(0.85 * IW), BH,
-                                          "Stipple in 2D");
+                                          "Stipple");
       view.butt[26]->type(FL_TOGGLE_BUTTON);
       view.butt[26]->callback(view_options_ok_cb);
 
@@ -3402,7 +3417,7 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
       view.value[62]->minimum(0.1);
       view.value[62]->maximum(50);
-      view.value[62]->step(0.1);
+      if(CTX::instance()->inputScrolling) view.value[62]->step(0.1);
       view.value[62]->align(FL_ALIGN_RIGHT);
       view.value[62]->callback(view_options_ok_cb);
 
@@ -3426,14 +3441,14 @@ optionWindow::optionWindow(int deltaFontSize)
           new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW / 2, BH);
         view.value[64]->minimum(0);
         view.value[64]->maximum(500);
-        view.value[64]->step(1);
+        if(CTX::instance()->inputScrolling) view.value[64]->step(1);
         view.value[64]->align(FL_ALIGN_RIGHT);
         view.value[64]->callback(view_options_ok_cb);
         view.value[60] = new Fl_Value_Input(
           L + 2 * WB + IW / 2, 2 * WB + 7 * BH, IW / 2, BH, "Arrow size");
         view.value[60]->minimum(0);
         view.value[60]->maximum(500);
-        view.value[60]->step(1);
+        if(CTX::instance()->inputScrolling) view.value[60]->step(1);
         view.value[60]->align(FL_ALIGN_RIGHT);
         view.value[60]->callback(view_options_ok_cb);
 
@@ -3441,7 +3456,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                              BH, "Displacement factor");
         view.value[63]->minimum(0.);
         view.value[63]->maximum(1.);
-        view.value[63]->step(0.01);
+        if(CTX::instance()->inputScrolling) view.value[63]->step(0.01);
         view.value[63]->align(FL_ALIGN_RIGHT);
         view.value[63]->when(FL_WHEN_RELEASE);
         view.value[63]->callback(view_options_ok_cb);
@@ -3522,7 +3537,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[10] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                           "Smoothing threshold angle");
       view.value[10]->minimum(0.);
-      view.value[10]->step(1.);
+      if(CTX::instance()->inputScrolling) view.value[10]->step(1.);
       view.value[10]->maximum(180.);
       view.value[10]->align(FL_ALIGN_RIGHT);
       view.value[10]->when(FL_WHEN_RELEASE);
@@ -3720,7 +3735,8 @@ void optionWindow::updateViewGroup(int index)
   opt_view_axes_zmin(index, GMSH_GUI, 0);
   opt_view_axes_zmax(index, GMSH_GUI, 0);
   for(int i = 13; i <= 18; i++) {
-    view.value[i]->step(CTX::instance()->lc / 200., 1);
+    if(CTX::instance()->inputScrolling)
+      view.value[i]->step(CTX::instance()->lc / 200., 1);
     view.value[i]->minimum(-CTX::instance()->lc);
     view.value[i]->maximum(CTX::instance()->lc);
   }
@@ -3770,7 +3786,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_offset1(index, GMSH_GUI, 0);
   opt_view_offset2(index, GMSH_GUI, 0);
   for(int i = 40; i <= 42; i++) {
-    view.value[i]->step(val1 / 200., 1);
+    if(CTX::instance()->inputScrolling) view.value[i]->step(val1 / 200., 1);
     view.value[i]->minimum(-val1);
     view.value[i]->maximum(val1);
   }
@@ -3788,7 +3804,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_raise2(index, GMSH_GUI, 0);
   opt_view_normal_raise(index, GMSH_GUI, 0);
   for(int i = 43; i <= 46; i++) {
-    view.value[i]->step(val2 / 200., 1);
+    if(CTX::instance()->inputScrolling) view.value[i]->step(val2 / 200., 1);
     view.value[i]->minimum(-val2);
     view.value[i]->maximum(val2);
   }
@@ -3798,7 +3814,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_gen_raise0(index, GMSH_GUI, "");
   opt_view_gen_raise1(index, GMSH_GUI, "");
   opt_view_gen_raise2(index, GMSH_GUI, "");
-  view.value[2]->step(val2 / 200., 1);
+  if(CTX::instance()->inputScrolling) view.value[2]->step(val2 / 200., 1);
   view.value[2]->minimum(-val2);
   view.value[2]->maximum(val2);
 
@@ -3838,7 +3854,7 @@ void optionWindow::updateViewGroup(int index)
 
   opt_view_displacement_factor(index, GMSH_GUI, 0);
   double val3 = 2. * CTX::instance()->lc / maxval;
-  view.value[63]->step(val3 / 100., 1);
+  if(CTX::instance()->inputScrolling) view.value[63]->step(val3 / 100., 1);
   view.value[63]->maximum(val3);
 
   opt_view_external_view(index, GMSH_GUI, 0);
@@ -3862,6 +3878,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_color_text2d(index, GMSH_GUI, 0);
   opt_view_color_text3d(index, GMSH_GUI, 0);
   opt_view_color_axes(index, GMSH_GUI, 0);
+  opt_view_color_background2d(index, GMSH_GUI, 0);
 
   view.colorbar->update(data->getName().c_str(), data->getMin(), data->getMax(),
                         &opt->colorTable, &v->getChanged());

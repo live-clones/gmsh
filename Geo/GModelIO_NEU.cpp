@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -217,7 +217,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   fprintf(fp, "%s", ctime(&rawtime));
 
   fprintf(fp, "     NUMNP     NELEM     NGRPS    NBSETS     NDFCD     NDFVL\n");
-  fprintf(fp, " %9ld %9d %9lu %9lu %9d %9d\n", indexMeshVertices(saveAll),
+  fprintf(fp, " %9ld %9d %9lu %9lu %9d %9d\n", indexMeshVertices(saveAll, 0, false),
           numTetrahedra, elementGroups.size(), boundaryConditions.size(),
           getDim(), getDim());
   fprintf(fp, "ENDOFSECTION\n");

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -20,7 +20,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y,
                     double Z);
 SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
                         double Z);
-bool Extend1dMeshIn2dSurfaces();
+bool Extend1dMeshIn2dSurfaces(GFace *gf);
 bool Extend2dMeshIn3dVolumes();
 SMetric3 max_edge_curvature_metric(const GVertex *gv);
 SMetric3 max_edge_curvature_metric(const GEdge *ge, double u, double &l);

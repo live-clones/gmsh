@@ -38,10 +38,10 @@ int main(int argc, char **argv)
   }
   int eleType3D = eleTypes[0];
   std::string name;
-  int dim, order, numNodes;
+  int dim, order, numNodes, numPrimaryNodes;
   std::vector<double> paramCoord;
   gmsh::model::mesh::getElementProperties(eleType3D, name, dim, order,
-                                          numNodes, paramCoord);
+                                          numNodes, paramCoord, numPrimaryNodes);
   gmsh::logger::write("3D elements are of type '" + name + "' (type = " +
                       std::to_string(eleType3D) + ") ");
 
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 
     // and add new 2D elements to it, for all faces
     int eleType2D = gmsh::model::mesh::getElementType("triangle", order);
-    gmsh::model::mesh::setElementsByType(s, eleType2D, {}, nodes);
+    gmsh::model::mesh::addElementsByType(s, eleType2D, {}, nodes);
 
     // this will create two 2D elements for each face; to create unique elements
     // it would be useful to call getElementFaceNodes() with the extra `primary'
@@ -84,10 +84,11 @@ int main(int argc, char **argv)
   // iterate over all 2D elements and get integration information
   gmsh::model::mesh::getElementTypes(eleTypes, 2);
   int eleType2D = eleTypes[0];
-  std::vector<double> intpts, bf;
+  std::vector<double> uvw, q;
+  gmsh::model::mesh::getIntegrationPoints(eleType2D, "Gauss3", uvw, q);
+  std::vector<double> bf;
   int numComp;
-  gmsh::model::mesh::getBasisFunctions(eleType2D, "Gauss3", "IsoParametric",
-                                       intpts, numComp, bf);
+  gmsh::model::mesh::getBasisFunctions(eleType2D, uvw, "Lagrange", numComp, bf);
   gmsh::model::getEntities(entities, 2);
   for(std::size_t i = 0; i < entities.size(); i++){
     int s = entities[i].second;
@@ -96,7 +97,7 @@ int main(int argc, char **argv)
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements on surface " + std::to_string(s));
     std::vector<double> jac, det, pts;
-    gmsh::model::mesh::getJacobians(eleType2D, "Gauss3", jac, det, pts, s);
+    gmsh::model::mesh::getJacobians(eleType2D, uvw, jac, det, pts, s);
   }
 
   gmsh::fltk::run();

@@ -224,7 +224,9 @@ namespace {
                      const std::vector<SPoint3> &Q)
   {
     double CAij;
-    if(CA(i, j) > -1.) { CAij = CA(i, j); }
+    if(CA(i, j) > -1.) {
+      CAij = CA(i, j);
+    }
     else if(i == 0 && j == 0) {
       CA(i, j) = P[0].distance(Q[0]); // update the CA permanent
       CAij = CA(i, j); // set the current relevant value
@@ -469,7 +471,8 @@ double taylorDistanceSq2D(const GradientBasis *gb,
 double taylorDistanceEdge(MLine *l, GEdge *ge)
 {
   const int nV = l->getNumVertices();
-  const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(l));
+  const GradientBasis *gb;
+  gb = BasisFactory::getGradientBasis(l->getTypeForMSH(), FuncSpaceData(l));
 
   // Coordinates of vertices
   fullMatrix<double> nodesXYZ(nV, 3);
@@ -491,7 +494,8 @@ double taylorDistanceEdge(MLine *l, GEdge *ge)
 double taylorDistanceFace(MElement *el, GFace *gf)
 {
   const int nV = el->getNumVertices();
-  const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(el));
+  const GradientBasis *gb;
+  gb = BasisFactory::getGradientBasis(el->getTypeForMSH(), FuncSpaceData(el));
 
   // Coordinates of vertices
   fullMatrix<double> nodesXYZ(nV, 3);
@@ -516,7 +520,7 @@ double taylorDistanceFace(MElement *el, GFace *gf)
 void distanceFromElementsToGeometry(GModel *gm, int dim,
                                     std::map<MElement *, double> &distances)
 {
-  std::map<MEdge, double, Less_Edge> dist2Edge;
+  std::map<MEdge, double, MEdgeLessThan> dist2Edge;
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
     if((*it)->geomType() == GEntity::Line) continue;
     for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
@@ -526,7 +530,7 @@ void distanceFromElementsToGeometry(GModel *gm, int dim,
     }
   }
 
-  std::map<MFace, double, Less_Face> dist2Face;
+  std::map<MFace, double, MFaceLessThan> dist2Face;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     if((*it)->geomType() == GEntity::Plane) continue;
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
@@ -547,12 +551,12 @@ void distanceFromElementsToGeometry(GModel *gm, int dim,
       double d = 0.;
       for(int iEdge = 0; iEdge < element->getNumEdges(); ++iEdge) {
         MEdge e = element->getEdge(iEdge);
-        std::map<MEdge, double, Less_Edge>::iterator it = dist2Edge.find(e);
+        std::map<MEdge, double, MEdgeLessThan>::iterator it = dist2Edge.find(e);
         if(it != dist2Edge.end()) d += it->second;
       }
       for(int iFace = 0; iFace < element->getNumFaces(); ++iFace) {
         MFace f = element->getFace(iFace);
-        std::map<MFace, double, Less_Face>::iterator it = dist2Face.find(f);
+        std::map<MFace, double, MFaceLessThan>::iterator it = dist2Face.find(f);
         if(it != dist2Face.end()) d += it->second;
       }
       distances[element] = d;

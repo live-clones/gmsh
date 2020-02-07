@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,7 +14,7 @@
 
 class Cell;
 
-class Less_Cell {
+class CellPtrLessThan {
 public:
   bool operator()(const Cell *c1, const Cell *c2) const;
 };
@@ -52,8 +52,8 @@ protected:
   bool _immune;
 
   // list of cells on the boundary and on the coboundary of this cell
-  std::map<Cell *, BdInfo, Less_Cell> _bd;
-  std::map<Cell *, BdInfo, Less_Cell> _cbd;
+  std::map<Cell *, BdInfo, CellPtrLessThan> _bd;
+  std::map<Cell *, BdInfo, CellPtrLessThan> _cbd;
 
   Cell() {}
 
@@ -105,7 +105,7 @@ public:
   virtual bool hasVertex(int vertex) const;
 
   // (co)boundary cell iterator
-  typedef std::map<Cell *, BdInfo, Less_Cell>::iterator biter;
+  typedef std::map<Cell *, BdInfo, CellPtrLessThan>::iterator biter;
 
   // iterators to (first/last (co)boundary cells of this cell
   // (orig: to original (co)boundary cells of this cell)
@@ -118,9 +118,9 @@ public:
   int getCoboundarySize(bool orig = false);
 
   // get the (orig: original) cell boundary
-  void getBoundary(std::map<Cell *, short int, Less_Cell> &boundary,
+  void getBoundary(std::map<Cell *, short int, CellPtrLessThan> &boundary,
                    bool orig = false);
-  void getCoboundary(std::map<Cell *, short int, Less_Cell> &coboundary,
+  void getCoboundary(std::map<Cell *, short int, CellPtrLessThan> &coboundary,
                      bool orig = false);
 
   // add (co)boundary cell
@@ -146,8 +146,8 @@ public:
   // tools for combined cells
   bool isCombined() const { return _combined; }
 
-  typedef std::map<Cell *, int, Less_Cell>::iterator citer;
-  virtual void getCells(std::map<Cell *, int, Less_Cell> &cells)
+  typedef std::map<Cell *, int, CellPtrLessThan>::iterator citer;
+  virtual void getCells(std::map<Cell *, int, CellPtrLessThan> &cells)
   {
     cells.clear();
     cells[this] = 1;
@@ -164,7 +164,7 @@ public:
 class CombinedCell : public Cell {
 private:
   // list of cells this cell is a combination of
-  std::map<Cell *, int, Less_Cell> _cells;
+  std::map<Cell *, int, CellPtrLessThan> _cells;
 
 public:
   CombinedCell(Cell *c1, Cell *c2, bool orMatch, bool co = false);
@@ -172,7 +172,7 @@ public:
   ~CombinedCell() {}
 
   int getDim() const { return _cells.begin()->first->getDim(); }
-  void getCells(std::map<Cell *, int, Less_Cell> &cells) { cells = _cells; }
+  void getCells(std::map<Cell *, int, CellPtrLessThan> &cells) { cells = _cells; }
   int getNumCells() const { return _cells.size(); }
   bool hasVertex(int vertex) const;
 

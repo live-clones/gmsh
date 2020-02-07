@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -214,8 +214,25 @@ public:
     return f[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
-  virtual int getVertexSolin(int numEdge, int numVertex){return 0;}
-  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
+  virtual int getVertexSolin(int numEdge, int numVertex)
+  {
+    static const int eSolin[9][2] =  {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 4},
+                                      {2, 5}, {3, 4}, {3, 5}, {4, 5}};
+    return getVertex(eSolin[numEdge][numVertex])->getNum();
+  }
+  virtual MFace getFaceSolin(int numFace)
+  {
+    static const int fSolin[5][4] = {{0, 1, 3, 4}, {0, 2, 3, 5}, {1, 2, 4, 5},
+                                     {0, 1, 2, -1}, {3, 4, 5, -1}};
+    if(numFace > 2){
+      return MFace(_v[fSolin[numFace][0]],_v[fSolin[numFace][1]],
+                   _v[fSolin[numFace][2]]);
+    }
+    else{
+      return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
+                   _v[fSolin[numFace][2]], _v[fSolin[numFace][3]]);
+    }
+  }
 };
 
 /*
@@ -292,11 +309,16 @@ public:
   }
   virtual MVertex *getVertexBDF(int num)
   {
-    static const int map[15] = {0, 1, 2,  3,  4,  5,  6, 9,
-                                7, 8, 10, 11, 12, 14, 13};
+    static const int map[15] = {0, 1, 2,  3, 4, 5,  6, 9, 7,
+                                8, 10, 11,  12, 14, 13};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexINP(int num) { return getVertexBDF(num); }
+  virtual MVertex *getVertexINP(int num)
+  {
+    static const int map[15] = {0, 1, 2,  3, 4, 5,  6, 9, 7,
+                                12, 14, 13, 8, 10, 11};
+    return getVertex(map[num]);
+  }
   virtual MVertex *getVertexKEY(int num) { return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 9; }
   virtual int getNumEdgesRep(bool curved);
@@ -604,7 +626,7 @@ public:
       if(_vs.size() == 72) return MSH_PRI_78;
       break;
     }
-    Msg::Error("No tag matches a p%d prism with %d vertices", _order,
+    Msg::Error("No MSH type found for P%d prism with %d nodes", _order,
                6 + _vs.size());
     return 0;
   }

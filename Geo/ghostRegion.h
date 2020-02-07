@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -60,49 +60,49 @@ public:
     GRegion::addTetrahedron(t);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(t, onWhichPartition));
-    model()->addGhostCells(t, onWhichPartition);
+    model()->addGhostCells(t, _partition);
   }
   void addHexahedron(MHexahedron *h, unsigned int onWhichPartition)
   {
     GRegion::addHexahedron(h);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(h, onWhichPartition));
-    model()->addGhostCells(h, onWhichPartition);
+    model()->addGhostCells(h, _partition);
   }
   void addPrism(MPrism *p, unsigned int onWhichPartition)
   {
     GRegion::addPrism(p);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(p, onWhichPartition));
-    model()->addGhostCells(p, onWhichPartition);
+    model()->addGhostCells(p, _partition);
   }
   void addPyramid(MPyramid *p, unsigned int onWhichPartition)
   {
     GRegion::addPyramid(p);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(p, onWhichPartition));
-    model()->addGhostCells(p, onWhichPartition);
+    model()->addGhostCells(p, _partition);
   }
   void addPolyhedron(MPolyhedron *p, unsigned int onWhichPartition)
   {
     GRegion::addPolyhedron(p);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(p, onWhichPartition));
-    model()->addGhostCells(p, onWhichPartition);
+    model()->addGhostCells(p, _partition);
   }
   void addTrihedron(MTrihedron *t, unsigned int onWhichPartition)
   {
     GRegion::addTrihedron(t);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(t, onWhichPartition));
-    model()->addGhostCells(t, onWhichPartition);
+    model()->addGhostCells(t, _partition);
   }
   void addElement(int type, MElement *e, unsigned int onWhichPartition)
   {
     GRegion::addElement(type, e);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(e, onWhichPartition));
-    model()->addGhostCells(e, onWhichPartition);
+    model()->addGhostCells(e, _partition);
   }
 
   // To make the hidden function visible in ghostRegion

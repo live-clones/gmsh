@@ -150,7 +150,9 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
   hxtNodeInfo* nodeInfo;
   HXT_CHECK( hxtAlignedMalloc(&nodeInfo, sizeof(hxtNodeInfo)*mesh->vertices.num) );
 
+#if !defined(HAVE_NO_OPENMP_SIMD)
   #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
+#endif
   for (uint32_t i=0; i<mesh->vertices.num; i++) {
     nodeInfo[i].node = i;
     nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
@@ -164,7 +166,9 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
   delOptions->numVerticesInMesh = mesh->vertices.num;
 
 #ifdef DEBUG
+#if !defined(HAVE_NO_OPENMP_SIMD)
   #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
+#endif
   for (uint32_t i=0; i<mesh->vertices.num; i++) {
     if(nodeInfo[i].status!=HXT_STATUS_TRUE){
       HXT_WARNING("vertex %u of the empty mesh was not inserted\n", nodeInfo[i].node);

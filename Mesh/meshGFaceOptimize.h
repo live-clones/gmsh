@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,10 +26,10 @@ struct edge_angle {
 };
 
 // TODO: switch to unordered_map here & verify deterministic bahavior
-typedef std::map<MVertex *, std::vector<MElement *>, MVertexLessThanNum> v2t_cont;
+typedef std::map<MVertex *, std::vector<MElement *>, MVertexPtrLessThan> v2t_cont;
 //typedef std::unordered_map<MVertex *, std::vector<MElement *> > v2t_cont;
 
-typedef std::map<MEdge, std::pair<MElement *, MElement *>, Less_Edge> e2t_cont;
+typedef std::map<MEdge, std::pair<MElement *, MElement *>, MEdgeLessThan> e2t_cont;
 
 template <class T>
 void buildVertexToElement(std::vector<T *> const &elements, v2t_cont &adj)
@@ -48,7 +48,6 @@ void buildVertexToElement(std::vector<T *> const &elements, v2t_cont &adj)
 template <class T>
 void buildEdgeToElement(std::vector<T *> &eles, e2t_cont &adj);
 
-void buildVertexToTriangle(std::vector<MTriangle *> &, v2t_cont &adj);
 void buildEdgeToTriangle(std::vector<MTriangle *> &, e2t_cont &adj);
 void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
                           std::vector<edge_angle> &edges_lonly);
@@ -56,11 +55,6 @@ void buildEdgeToElements(std::vector<MElement *> &tris, e2t_cont &adj);
 
 void laplaceSmoothing(GFace *gf, int niter = 1, bool infinity_norm = false);
 
-enum swapCriterion { SWCR_DEL, SWCR_QUAL, SWCR_SPH };
-enum splitCriterion { SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS };
-
-int edgeSwapPass(GFace *gf, std::set<MTri3 *, compareTri3Ptr> &allTris,
-                 const swapCriterion &cr, bidimMeshData &DATA);
 bool buildMeshGenerationDataStructures(
   GFace *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data);
 void transferDataStructure(GFace *gf,

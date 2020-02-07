@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -151,7 +151,7 @@ void polynomialBasis::f(const fullMatrix<double> &coord,
 
 void polynomialBasis::f(double u, double v, double w, int i, double *sf) const
 {
-  if(i < 0 || i >= coefficients.size1()){
+  if(i < 0 || i >= coefficients.size1()) {
     Msg::Error("Node out of range for polynomial basis");
     return;
   }
@@ -237,9 +237,10 @@ void polynomialBasis::df(double u, double v, double w, double grads[][3]) const
   }
 }
 
-void polynomialBasis::df(double u, double v, double w, int i, double grad[3]) const
+void polynomialBasis::df(double u, double v, double w, int i,
+                         double grad[3]) const
 {
-  if(i < 0 || i >= coefficients.size1()){
+  if(i < 0 || i >= coefficients.size1()) {
     Msg::Error("Node out of range for polynomial basis gradient");
     return;
   }
@@ -251,8 +252,8 @@ void polynomialBasis::df(double u, double v, double w, int i, double grad[3]) co
     grad[2] = 0;
     for(int j = 0; j < coefficients.size2(); j++) {
       if(monomials(j, 0) > 0)
-        grad[0] += coefficients(i, j) *
-          pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0);
+        grad[0] += coefficients(i, j) * pow_int(u, (monomials(j, 0) - 1)) *
+                   monomials(j, 0);
     }
     break;
   case 2:
@@ -261,12 +262,11 @@ void polynomialBasis::df(double u, double v, double w, int i, double grad[3]) co
     grad[2] = 0;
     for(int j = 0; j < coefficients.size2(); j++) {
       if(monomials(j, 0) > 0)
-        grad[0] += coefficients(i, j) *
-          pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0) *
-          pow_int(v, monomials(j, 1));
+        grad[0] += coefficients(i, j) * pow_int(u, (monomials(j, 0) - 1)) *
+                   monomials(j, 0) * pow_int(v, monomials(j, 1));
       if(monomials(j, 1) > 0)
         grad[1] += coefficients(i, j) * pow_int(u, monomials(j, 0)) *
-          pow_int(v, (monomials(j, 1) - 1)) * monomials(j, 1);
+                   pow_int(v, (monomials(j, 1) - 1)) * monomials(j, 1);
     }
     break;
   case 3:
@@ -275,18 +275,17 @@ void polynomialBasis::df(double u, double v, double w, int i, double grad[3]) co
     grad[2] = 0;
     for(int j = 0; j < coefficients.size2(); j++) {
       if(monomials(j, 0) > 0)
-        grad[0] += coefficients(i, j) *
-          pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0) *
-          pow_int(v, monomials(j, 1)) *
-          pow_int(w, monomials(j, 2));
+        grad[0] += coefficients(i, j) * pow_int(u, (monomials(j, 0) - 1)) *
+                   monomials(j, 0) * pow_int(v, monomials(j, 1)) *
+                   pow_int(w, monomials(j, 2));
       if(monomials(j, 1) > 0)
         grad[1] += coefficients(i, j) * pow_int(u, monomials(j, 0)) *
-          pow_int(v, (monomials(j, 1) - 1)) * monomials(j, 1) *
-          pow_int(w, monomials(j, 2));
+                   pow_int(v, (monomials(j, 1) - 1)) * monomials(j, 1) *
+                   pow_int(w, monomials(j, 2));
       if(monomials(j, 2) > 0)
         grad[2] += coefficients(i, j) * pow_int(u, monomials(j, 0)) *
-          pow_int(v, monomials(j, 1)) *
-          pow_int(w, (monomials(j, 2) - 1)) * monomials(j, 2);
+                   pow_int(v, monomials(j, 1)) *
+                   pow_int(w, (monomials(j, 2) - 1)) * monomials(j, 2);
     }
     break;
   }

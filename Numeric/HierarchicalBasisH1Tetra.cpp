@@ -1,20 +1,24 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #include "HierarchicalBasisH1Tetra.h"
-
 HierarchicalBasisH1Tetra::HierarchicalBasisH1Tetra(int order)
 {
   _nvertex = 4;
   _nedge = 6;
-  _nface = 4;
+  _nfaceTri = 4;
+  _nfaceQuad = 0;
   _nVertexFunction = 4;
   _nEdgeFunction = 6 * order - 6;
-  _nFaceFunction = 2 * (order - 2) * (order - 1);
+  _nQuadFaceFunction = 0;
+  _nTriFaceFunction = 2 * (order - 2) * (order - 1);
   _nBubbleFunction = (order - 1) * (order - 2) * (order - 3) / 6;
   _pb = order;
   for(int i = 0; i < 4; i++) { _pOrderFace[i] = order; }
@@ -98,7 +102,7 @@ void HierarchicalBasisH1Tetra::generateBasis(double const &u, double const &v,
   edgeProduct[3] = lambda4 * lambda2;
   edgeProduct[4] = lambda4 * lambda1;
   edgeProduct[5] = lambda4 * lambda3;
-  std::vector<double> faceProduct(_nface);
+  std::vector<double> faceProduct(_nfaceTri);
   faceProduct[0] = edgeProduct[0] * lambda1;
   faceProduct[1] = edgeProduct[0] * lambda4;
   faceProduct[2] = edgeProduct[2] * lambda4;
@@ -122,7 +126,7 @@ void HierarchicalBasisH1Tetra::generateBasis(double const &u, double const &v,
   }
   // face shape functions:
   int indexFaceFunction = 0;
-  for(int iFace = 0; iFace < _nface; iFace++) {
+  for(int iFace = 0; iFace < _nfaceTri; iFace++) {
     int indexVectorTarget1 = 0;
     int indexVectorTarget2 = 0;
     switch(iFace) {
@@ -168,48 +172,105 @@ void HierarchicalBasisH1Tetra::generateBasis(double const &u, double const &v,
   }
 }
 
-void HierarchicalBasisH1Tetra::orientateEdge(int const &flagOrientation,
-                                             int const &edgeNumber,
-                                             std::vector<double> &edgeBasis)
+void HierarchicalBasisH1Tetra::orientEdge(
+  int const &flagOrientation, int const &edgeNumber,
+  std::vector<double> &edgeFunctions,
+  const std::vector<double> &eTablePositiveFlag,
+  const std::vector<double> &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    if(edgeNumber > 5) {
-      throw std::string("edgeNumber  must be : 0<=edgeNumber<=5");
-    }
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
     for(int k = constant1; k <= constant2; k++) {
-      if((k - constant1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
+      edgeFunctions[k] = eTableNegativeFlag[k];
+    }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k] = eTablePositiveFlag[k];
     }
   }
 }
-void HierarchicalBasisH1Tetra::orientateEdgeGrad(
+void HierarchicalBasisH1Tetra::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &gradientEdge)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    if(edgeNumber > 5) {
-      throw std::string("edgeNumber  must be : 0<=edgeNumber<=5");
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
+      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
     }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
+      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
+    }
+  }
+}
+
+void HierarchicalBasisH1Tetra::orientEdgeFunctionsForNegativeFlag(
+  std::vector<double> &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
     for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
     for(int k = constant1; k <= constant2; k++) {
       if((k - constant1) % 2 != 0) {
-        gradientEdge[k][0] = gradientEdge[k][0] * (-1);
-        gradientEdge[k][1] = gradientEdge[k][1] * (-1);
-        gradientEdge[k][2] = gradientEdge[k][2] * (-1);
+        edgeFunctions[k] = edgeFunctions[k] * (-1);
       }
     }
   }
 }
 
-void HierarchicalBasisH1Tetra::orientateFace(double const &u, double const &v,
+void HierarchicalBasisH1Tetra::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      if((k - constant1) % 2 != 0) {
+        edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
+        edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
+        edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
+      }
+    }
+  }
+}
+void HierarchicalBasisH1Tetra::orientOneFace(double const &u, double const &v,
                                              double const &w, int const &flag1,
                                              int const &flag2, int const &flag3,
                                              int const &faceNumber,
@@ -222,9 +283,6 @@ void HierarchicalBasisH1Tetra::orientateFace(double const &u, double const &v,
     double wc = 2 * w - 1;
     //*****
     int iterator = 0;
-    if(faceNumber > 3) {
-      throw std::string("edgeNumber  must be : 0<=faceNumber<=3");
-    }
     for(int i = 0; i < faceNumber; i++) {
       iterator += int((_pOrderFace[i] - 1) * (_pOrderFace[i] - 2) / 2);
     }
@@ -252,7 +310,7 @@ void HierarchicalBasisH1Tetra::orientateFace(double const &u, double const &v,
       break;
     }
     double product = lambda[0] * lambda[1] * lambda[2];
-    if(flag1 == 2 && flag2 == -1) {
+    if(flag1 == 1 && flag2 == -1) {
       double copy = lambda[0];
       lambda[0] = lambda[1];
       lambda[1] = copy;
@@ -262,7 +320,7 @@ void HierarchicalBasisH1Tetra::orientateFace(double const &u, double const &v,
       lambda[2] = lambda[1];
       lambda[1] = copy;
     }
-    else if(flag1 == 1 && flag2 == -1) {
+    else if(flag1 == 2 && flag2 == -1) {
       double copy = lambda[2];
       lambda[2] = lambda[0];
       lambda[0] = copy;
@@ -294,7 +352,157 @@ void HierarchicalBasisH1Tetra::orientateFace(double const &u, double const &v,
     }
   }
 }
-
+void HierarchicalBasisH1Tetra::orientOneFace(
+  double const &u, double const &v, double const &w, int const &flag1,
+  int const &flag2, int const &flag3, int const &faceNumber,
+  std::vector<std::vector<double> > &gradientFace, std::string typeFunction)
+{
+  if(!(flag1 == 0 && flag2 == 1)) {
+    // to map onto the reference domain of gmsh:
+    double uc = 2 * u - 1;
+    double vc = 2 * v - 1;
+    double wc = 2 * w - 1;
+    //*****
+    int iterator = 0;
+    for(int i = 0; i < faceNumber; i++) {
+      iterator += int((_pOrderFace[i] - 1) * (_pOrderFace[i] - 2) / 2);
+    }
+    std::vector<double> lambda(3);
+    std::vector<std::vector<double> > dlambda(3, std::vector<double>(3, 0));
+    std::vector<double> dProduct(3); // gradient of (lambdaA*lambdaB*lambdaC)
+    switch(faceNumber) {
+    case(0): {
+      lambda[0] = _affineCoordinate(2, uc, vc, wc);
+      lambda[1] = _affineCoordinate(3, uc, vc, wc);
+      lambda[2] = _affineCoordinate(1, uc, vc, wc);
+      dlambda[0][0] = -1; //* jacobian
+      dlambda[0][1] = -1; //* jacobian
+      dlambda[0][2] = -1; //* jacobian
+      dlambda[1][0] = 1; //* jacobian
+      dlambda[2][1] = 1; //* jacobian
+      double pl3l1 = lambda[1] * lambda[2];
+      dProduct[0] = lambda[2] * lambda[0] - pl3l1;
+      dProduct[1] = lambda[0] * lambda[1] - pl3l1;
+      dProduct[2] = -pl3l1; //*jacobian
+      break;
+    }
+    case(1): {
+      lambda[0] = _affineCoordinate(2, uc, vc, wc);
+      lambda[1] = _affineCoordinate(3, uc, vc, wc);
+      lambda[2] = _affineCoordinate(4, uc, vc, wc);
+      dlambda[0][0] = -1; //* jacobian
+      dlambda[0][1] = -1; //* jacobian
+      dlambda[0][2] = -1; //* jacobian
+      dlambda[1][0] = 1; //* jacobian
+      dlambda[2][2] = 1; //* jacobian
+      double pl3l4 = lambda[1] * lambda[2];
+      dProduct[0] = lambda[2] * lambda[0] - pl3l4; //*jacobian
+      dProduct[1] = -pl3l4;
+      dProduct[2] = lambda[0] * lambda[1] - pl3l4;
+      break;
+    }
+    case(2): {
+      lambda[0] = _affineCoordinate(2, uc, vc, wc);
+      lambda[1] = _affineCoordinate(1, uc, vc, wc);
+      lambda[2] = _affineCoordinate(4, uc, vc, wc);
+      dlambda[0][0] = -1; //* jacobian
+      dlambda[0][1] = -1; //* jacobian
+      dlambda[0][2] = -1; //* jacobian
+      dlambda[1][1] = 1; //* jacobian
+      dlambda[2][2] = 1; //* jacobian
+      double pl1l4 = lambda[1] * lambda[2];
+      dProduct[0] = -pl1l4;
+      dProduct[1] = lambda[0] * lambda[2] - pl1l4;
+      dProduct[2] = lambda[0] * lambda[1] - pl1l4; //*jacobian
+      break;
+    }
+    case(3): {
+      lambda[0] = _affineCoordinate(3, uc, vc, wc);
+      lambda[1] = _affineCoordinate(1, uc, vc, wc);
+      lambda[2] = _affineCoordinate(4, uc, vc, wc);
+      dlambda[0][0] = 1; //* jacobian
+      dlambda[1][1] = 1; //* jacobian
+      dlambda[2][2] = 1; //* jacobian
+      dProduct[0] = lambda[1] * lambda[2];
+      dProduct[1] = lambda[0] * lambda[2];
+      dProduct[2] = lambda[0] * lambda[1];
+      break;
+    }
+    }
+    double product = lambda[0] * lambda[1] * lambda[2];
+    if(flag1 == 1 && flag2 == -1) {
+      double copy = lambda[0];
+      lambda[0] = lambda[1];
+      lambda[1] = copy;
+      std::vector<double> dcopy = dlambda[0];
+      dlambda[0] = dlambda[1];
+      dlambda[1] = dcopy;
+    }
+    else if(flag1 == 0 && flag2 == -1) {
+      double copy = lambda[2];
+      lambda[2] = lambda[1];
+      lambda[1] = copy;
+      std::vector<double> dcopy = dlambda[2];
+      dlambda[2] = dlambda[1];
+      dlambda[1] = dcopy;
+    }
+    else if(flag1 == 2 && flag2 == -1) {
+      double copy = lambda[2];
+      lambda[2] = lambda[0];
+      lambda[0] = copy;
+      std::vector<double> dcopy = dlambda[2];
+      dlambda[2] = dlambda[0];
+      dlambda[0] = dcopy;
+    }
+    else if(flag1 == 1 && flag2 == 1) {
+      double copy = lambda[0];
+      lambda[0] = lambda[1];
+      lambda[1] = lambda[2];
+      lambda[2] = copy;
+      std::vector<double> dcopy = dlambda[0];
+      dlambda[0] = dlambda[1];
+      dlambda[1] = dlambda[2];
+      dlambda[2] = dcopy;
+    }
+    else if(flag1 == 2 && flag2 == 1) {
+      double copy = lambda[0];
+      lambda[0] = lambda[2];
+      lambda[2] = lambda[1];
+      lambda[1] = copy;
+      std::vector<double> dcopy = dlambda[0];
+      dlambda[0] = dlambda[2];
+      dlambda[2] = dlambda[1];
+      dlambda[1] = dcopy;
+    }
+    double subsBA = lambda[1] - lambda[0];
+    double subsAC = lambda[0] - lambda[2];
+    std::vector<double> dsubsBA(3);
+    std::vector<double> dsubsAC(3);
+    for(int i = 0; i < 3; i++) {
+      dsubsBA[i] = dlambda[1][i] - dlambda[0][i];
+      dsubsAC[i] = dlambda[0][i] - dlambda[2][i];
+    }
+    std::vector<double> phiSubsAC(_pOrderFace[faceNumber] - 2);
+    std::vector<double> dphiSubsAC(_pOrderFace[faceNumber] - 2);
+    for(int it = 0; it < _pOrderFace[faceNumber] - 2; it++) {
+      phiSubsAC[it] = OrthogonalPoly::EvalKernelFunction(it, subsAC);
+      dphiSubsAC[it] = OrthogonalPoly::EvalDKernelFunction(it, subsAC);
+    }
+    for(int n1 = 0; n1 < _pOrderFace[faceNumber] - 2; n1++) {
+      double phiBA = OrthogonalPoly::EvalKernelFunction(n1, subsBA);
+      double dphiBA = OrthogonalPoly::EvalDKernelFunction(n1, subsBA);
+      for(int n2 = 0; n2 < _pOrderFace[faceNumber] - 2 - n1; n2++) {
+        for(int i = 0; i < 3; i++) {
+          gradientFace[iterator][i] =
+            dProduct[i] * phiBA * phiSubsAC[n2] +
+            product * dphiBA * dsubsBA[i] * phiSubsAC[n2] +
+            product * phiBA * dsubsAC[i] * dphiSubsAC[n2];
+        }
+        iterator++;
+      }
+    }
+  }
+}
 void HierarchicalBasisH1Tetra::generateGradientBasis(
   double const &u, double const &v, double const &w,
   std::vector<std::vector<double> > &gradientVertex,
@@ -322,7 +530,7 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
   dlambda1[1] = 0.5;
   dlambda3[0] = 0.5;
   dlambda4[2] = 0.5;
-  std::vector<double> dprod(3);
+  std::vector<double> dprod(3); // d(lambda1*lambda2*lambda3*lambda4)
   dprod[0] = jacob * (lambda1 * dlambda2[0] * lambda3 * lambda4 +
                       lambda1 * lambda2 * dlambda3[0] * lambda4);
   dprod[1] = jacob * (dlambda1[1] * lambda2 * lambda3 * lambda4 +
@@ -423,14 +631,13 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
     dEdgeProduct[5][i] =
       jacob * (dlambda4[i] * lambda3 + lambda4 * dlambda3[i]);
   }
-  std::vector<double> faceProduct(_nface);
+  std::vector<double> faceProduct(_nfaceTri);
   faceProduct[0] = edgeProduct[0] * lambda1;
   faceProduct[1] = edgeProduct[0] * lambda4;
   faceProduct[2] = edgeProduct[2] * lambda4;
   faceProduct[3] = edgeProduct[1] * lambda4;
-  std::vector<std::vector<double> > dfaceProduct(_nface,
+  std::vector<std::vector<double> > dfaceProduct(_nfaceTri,
                                                  std::vector<double>(3));
-
   for(int i = 0; i < 3; i++) {
     dfaceProduct[0][i] =
       jacob * (edgeProduct[0] * dlambda1[i]) + dEdgeProduct[0][i] * lambda1;
@@ -447,16 +654,14 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
     for(int indexEdgeFunc = 0; indexEdgeFunc < _pOrderEdge[iEdge] - 1;
         indexEdgeFunc++) {
       int impact1 = 1;
-      int impact2 = 1;
       if(iEdge == 2) {
         impact1 = 1;
-        impact2 = -1;
         if(indexEdgeFunc % 2 != 0) { impact1 = -1; }
       }
       for(int i = 0; i < 3; i++) {
         gradientEdge[indexEdgeBasis][i] =
           impact1 * (dEdgeProduct[iEdge][i] * phi[iEdge][indexEdgeFunc] +
-                     impact2 * edgeProduct[iEdge] * dphi[iEdge][indexEdgeFunc] *
+                     edgeProduct[iEdge] * dphi[iEdge][indexEdgeFunc] *
                        dsubstraction[iEdge][i]);
       }
       indexEdgeBasis++;
@@ -464,7 +669,7 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
   }
   // face shape functions:
   int indexFaceFunction = 0;
-  for(int iFace = 0; iFace < _nface; iFace++) {
+  for(int iFace = 0; iFace < _nfaceTri; iFace++) {
     int indexVectorTarget1 = 0;
     int indexVectorTarget2 = 0;
     switch(iFace) {
@@ -495,7 +700,7 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
                         phi[indexVectorTarget2][n2] +
                       faceProduct[iFace] * dphi[indexVectorTarget1][n1] *
                         dsubstraction[indexVectorTarget1][i] *
-                        phi[indexVectorTarget2][n2] -
+                        phi[indexVectorTarget2][n2] +
                       faceProduct[iFace] * phi[indexVectorTarget1][n1] *
                         dsubstraction[indexVectorTarget2][i] *
                         dphi[indexVectorTarget2][n2]);
@@ -521,157 +726,81 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
     }
   }
 }
-
-void HierarchicalBasisH1Tetra::orientateFaceGrad(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &gradientFace)
+void HierarchicalBasisH1Tetra::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<double> &quadFaceFunctionsAllOrientation,
+  const std::vector<double> &triFaceFunctionsAllOrientation,
+  std::vector<double> &fTableCopy)
 {
-  if(!(flag1 == 0 && flag2 == 1)) {
-    // to map onto the reference domain of gmsh:
-    double uc = 2 * u - 1;
-    double vc = 2 * v - 1;
-    double wc = 2 * w - 1;
-    //*****
-    int iterator = 0;
-    if(faceNumber > 3) {
-      throw std::string("edgeNumber  must be : 0<=faceNumber<=3");
+  int iterator = 0;
+  for(int i = 0; i < faceNumber; i++) {
+    iterator += int((_pOrderFace[i] - 1) * (_pOrderFace[i] - 2) / 2);
+  }
+  int numFaceFunctions =
+    int((_pOrderFace[faceNumber] - 1) * (_pOrderFace[faceNumber] - 2) / 2);
+  int iOrientation = numberOrientationTriFace(flag1, flag2);
+  int offset = iOrientation * _nTriFaceFunction;
+  int offset2 = iterator + numFaceFunctions;
+  for(int i = iterator; i < offset2; i++) {
+    fTableCopy[i] = triFaceFunctionsAllOrientation[i + offset];
+  }
+}
+void HierarchicalBasisH1Tetra::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double> > &fTableCopy)
+{
+  int iterator = 0;
+  for(int i = 0; i < faceNumber; i++) {
+    iterator += int((_pOrderFace[i] - 1) * (_pOrderFace[i] - 2) / 2);
+  }
+  int numFaceFunctions =
+    int((_pOrderFace[faceNumber] - 1) * (_pOrderFace[faceNumber] - 2) / 2);
+  int iOrientation = numberOrientationTriFace(flag1, flag2);
+  int offset = iOrientation * _nTriFaceFunction;
+  int offset2 = iterator + numFaceFunctions;
+  for(int i = iterator; i < offset2; i++) {
+    fTableCopy[i][0] = triFaceFunctionsAllOrientation[i + offset][0];
+    fTableCopy[i][1] = triFaceFunctionsAllOrientation[i + offset][1];
+    fTableCopy[i][2] = triFaceFunctionsAllOrientation[i + offset][2];
+  }
+}
+
+void HierarchicalBasisH1Tetra::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                           std::vector<int> &orderInfo)
+{
+  functionTypeInfo[0] = 0;
+  functionTypeInfo[1] = 0;
+  functionTypeInfo[2] = 0;
+  functionTypeInfo[3] = 0;
+  orderInfo[0] = 1;
+  orderInfo[1] = 1;
+  orderInfo[2] = 1;
+  orderInfo[3] = 1;
+  int it = 4;
+  for(int numEdge = 0; numEdge < 6; numEdge++) {
+    for(int i = 2; i <= _pOrderEdge[numEdge]; i++) {
+      functionTypeInfo[it] = 1;
+      orderInfo[it] = i;
+      it++;
     }
-    for(int i = 0; i < faceNumber; i++) {
-      iterator += int((_pOrderFace[i] - 1) * (_pOrderFace[i] - 2) / 2);
+  }
+  for(int numFace = 0; numFace < 4; numFace++) {
+    for(int n1 = 1; n1 < _pOrderFace[numFace] - 1; n1++) {
+      for(int n2 = 1; n2 <= _pOrderFace[numFace] - 1 - n1; n2++) {
+        functionTypeInfo[it] = 2;
+        orderInfo[it] = n1 + n2 + 1;
+        it++;
+      }
     }
-    std::vector<double> lambda(3);
-    std::vector<std::vector<double> > dlambda(3, std::vector<double>(3, 0));
-    std::vector<double> dProduct(3); // gradient of (lambdaA*lambdaB*lambdaC)
-    switch(faceNumber) {
-    case(0): {
-      lambda[0] = _affineCoordinate(2, uc, vc, wc);
-      lambda[1] = _affineCoordinate(3, uc, vc, wc);
-      lambda[2] = _affineCoordinate(1, uc, vc, wc);
-      dlambda[0][0] = -1; //* jacobian
-      dlambda[0][1] = -1; //* jacobian
-      dlambda[0][2] = -1; //* jacobian
-      dlambda[1][0] = 1; //* jacobian
-      dlambda[2][1] = 1; //* jacobian
-      double pl3l1 = lambda[1] * lambda[2];
-      dProduct[0] = lambda[2] * lambda[0] - pl3l1;
-      dProduct[1] = lambda[2] * lambda[1] - pl3l1;
-      dProduct[2] = -pl3l1; //*jacobian
-      break;
-    }
-    case(1): {
-      lambda[0] = _affineCoordinate(2, uc, vc, wc);
-      lambda[1] = _affineCoordinate(3, uc, vc, wc);
-      lambda[2] = _affineCoordinate(4, uc, vc, wc);
-      dlambda[0][0] = -1; //* jacobian
-      dlambda[0][1] = -1; //* jacobian
-      dlambda[0][2] = -1; //* jacobian
-      dlambda[1][0] = 1; //* jacobian
-      dlambda[2][2] = 1; //* jacobian
-      double pl3l4 = lambda[1] * lambda[2];
-      dProduct[0] = lambda[2] * lambda[0] - pl3l4; //*jacobian
-      dProduct[1] = -pl3l4;
-      dProduct[2] = lambda[0] * lambda[1] - pl3l4;
-      break;
-    }
-    case(2): {
-      lambda[0] = _affineCoordinate(2, uc, vc, wc);
-      lambda[1] = _affineCoordinate(1, uc, vc, wc);
-      lambda[2] = _affineCoordinate(4, uc, vc, wc);
-      dlambda[0][0] = -1; //* jacobian
-      dlambda[0][1] = -1; //* jacobian
-      dlambda[0][2] = -1; //* jacobian
-      dlambda[1][1] = 1; //* jacobian
-      dlambda[2][2] = 1; //* jacobian
-      double pl1l4 = lambda[1] * lambda[2];
-      dProduct[0] = -pl1l4;
-      dProduct[1] = lambda[0] * lambda[2] - pl1l4;
-      dProduct[2] = lambda[0] * lambda[1] - pl1l4; //*jacobian
-      break;
-    }
-    case(3): {
-      lambda[0] = _affineCoordinate(3, uc, vc, wc);
-      lambda[1] = _affineCoordinate(1, uc, vc, wc);
-      lambda[2] = _affineCoordinate(4, uc, vc, wc);
-      dlambda[0][0] = 1; //* jacobian
-      dlambda[1][1] = 1; //* jacobian
-      dlambda[2][2] = 1; //* jacobian
-      dProduct[0] = lambda[1] * lambda[2];
-      dProduct[1] = lambda[0] * lambda[2];
-      dProduct[2] = lambda[0] * lambda[1];
-      break;
-    }
-    }
-    double product = lambda[0] * lambda[1] * lambda[2];
-    if(flag1 == 2 && flag2 == -1) {
-      double copy = lambda[0];
-      lambda[0] = lambda[1];
-      lambda[1] = copy;
-      std::vector<double> dcopy = dlambda[0];
-      dlambda[0] = dlambda[1];
-      dlambda[1] = dcopy;
-    }
-    else if(flag1 == 0 && flag2 == -1) {
-      double copy = lambda[2];
-      lambda[2] = lambda[1];
-      lambda[1] = copy;
-      std::vector<double> dcopy = dlambda[2];
-      dlambda[2] = dlambda[1];
-      dlambda[1] = dcopy;
-    }
-    else if(flag1 == 1 && flag2 == -1) {
-      double copy = lambda[2];
-      lambda[2] = lambda[0];
-      lambda[0] = copy;
-      std::vector<double> dcopy = dlambda[2];
-      dlambda[2] = dlambda[0];
-      dlambda[0] = dcopy;
-    }
-    else if(flag1 == 1 && flag2 == 1) {
-      double copy = lambda[0];
-      lambda[0] = lambda[1];
-      lambda[1] = lambda[2];
-      lambda[2] = copy;
-      std::vector<double> dcopy = dlambda[0];
-      dlambda[0] = dlambda[1];
-      dlambda[1] = dlambda[2];
-      dlambda[2] = dcopy;
-    }
-    else if(flag1 == 2 && flag2 == 1) {
-      double copy = lambda[0];
-      lambda[0] = lambda[2];
-      lambda[2] = lambda[1];
-      lambda[1] = copy;
-      std::vector<double> dcopy = dlambda[0];
-      dlambda[0] = dlambda[2];
-      dlambda[2] = dlambda[1];
-      dlambda[1] = dcopy;
-    }
-    double subsBA = lambda[1] - lambda[0];
-    double subsAC = lambda[0] - lambda[2];
-    std::vector<double> dsubsBA(3);
-    std::vector<double> dsubsAC(3);
-    for(int i = 0; i < 3; i++) {
-      dsubsBA[i] = dlambda[1][i] - dlambda[0][i];
-      dsubsAC[i] = dlambda[0][i] - dlambda[2][i];
-    }
-    std::vector<double> phiSubsAC(_pOrderFace[faceNumber] - 2);
-    std::vector<double> dphiSubsAC(_pOrderFace[faceNumber] - 2);
-    for(int it = 0; it < _pOrderFace[faceNumber] - 2; it++) {
-      phiSubsAC[it] = OrthogonalPoly::EvalKernelFunction(it, subsAC);
-      dphiSubsAC[it] = OrthogonalPoly::EvalDKernelFunction(it, subsAC);
-    }
-    for(int n1 = 0; n1 < _pOrderFace[faceNumber] - 2; n1++) {
-      double phiBA = OrthogonalPoly::EvalKernelFunction(n1, subsBA);
-      double dphiBA = OrthogonalPoly::EvalDKernelFunction(n1, subsBA);
-      for(int n2 = 0; n2 < _pOrderFace[faceNumber] - 2 - n1; n2++) {
-        for(int i = 0; i < 3; i++) {
-          gradientFace[iterator][i] =
-            dProduct[i] * phiBA * phiSubsAC[n2] +
-            product * dphiBA * dsubsBA[i] * phiSubsAC[n2] +
-            product * phiBA * dsubsAC[i] * dphiSubsAC[n2];
-        }
-        iterator++;
+  }
+  for(int n1 = 1; n1 < _pb - 2; n1++) {
+    for(int n2 = 1; n2 <= _pb - 2 - n1; n2++) {
+      for(int n3 = 1; n3 <= _pb - 1 - n2 - n1; n3++) {
+        functionTypeInfo[it] = 3;
+        orderInfo[it] = n1 + n2 + n3 + 1;
+        it++;
       }
     }
   }

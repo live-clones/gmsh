@@ -1,6 +1,15 @@
-#ifndef _CROSS_FIELDS_H_
-#define _CROSS_FIELDS_H_
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+#ifndef CROSS_FIELDS_H
+#define CROSS_FIELDS_H
+
+#include <string>
 class GModel;
-int computeCrossField (GModel*);
-//int computeCrossField2d (const char * method, const char * outputName, std::vector<int> &faces);
+
+int computeCrossField(GModel *, std::vector<int> &tags);
+int computeQuadDecomposition(GModel *, std::vector<int> &tags);
+
 #endif

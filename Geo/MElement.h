@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,10 +16,10 @@
 #include "MVertex.h"
 #include "MEdge.h"
 #include "MFace.h"
-#include "FuncSpaceData.h"
 #include "nodalBasis.h"
 #include "polynomialBasis.h"
 #include "GaussIntegration.h"
+#include "FuncSpaceData.h"
 
 class GModel;
 class JacobianBasis;
@@ -99,7 +99,7 @@ public:
   virtual MVertex *getVertex(int num) = 0;
   void getVertices(std::vector<MVertex *> &verts)
   {
-    int N = getNumVertices();
+    int N = (int)getNumVertices();
     verts.resize(N);
     for(int i = 0; i < N; i++) verts[i] = getVertex(i);
   }
@@ -113,10 +113,11 @@ public:
   {
     Msg::Error("Vertex information not available for this element");
   }
-  //get the face  using the local orientation defined by Solin
-  virtual MFace getFaceSolin(int numFace)=0;
-  //get the global vertex num of a edge using the local orientation defined by Solin
-  virtual int getVertexSolin(int numEdge, int numVertex)=0;
+  // get the face  using the local orientation defined by Solin
+  virtual MFace getFaceSolin(int numFace) = 0;
+  // get the global vertex num of a edge using the local orientation defined by
+  // Solin
+  virtual int getVertexSolin(int numEdge, int numVertex) = 0;
   // get the vertex using the I-deas UNV ordering
   virtual MVertex *getVertexUNV(int num) { return getVertex(num); }
 
@@ -151,7 +152,7 @@ public:
   virtual int getNumVolumeVertices() const { return 0; }
 
   // get the number of primary vertices (first-order element)
-  int getNumPrimaryVertices() const
+  std::size_t getNumPrimaryVertices() const
   {
     return getNumVertices() - getNumEdgeVertices() - getNumFaceVertices() -
            getNumVolumeVertices();
@@ -161,7 +162,7 @@ public:
   virtual int getNumEdges() const = 0;
   virtual MEdge getEdge(int num) const = 0;
   virtual MEdgeN getHighOrderEdge(int num, int sign);
-  virtual MEdgeN getHighOrderEdge(const MEdge &edge)
+  MEdgeN getHighOrderEdge(const MEdge &edge)
   {
     int num, sign;
     if(!getEdgeInfo(edge, num, sign)) return MEdgeN();
@@ -185,7 +186,7 @@ public:
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) const = 0;
   virtual MFaceN getHighOrderFace(int num, int sign, int rot);
-  virtual MFaceN getHighOrderFace(const MFace &face)
+  MFaceN getHighOrderFace(const MFace &face)
   {
     int num, sign, rot;
     if(!getFaceInfo(face, num, sign, rot)) return MFaceN();
@@ -318,9 +319,14 @@ public:
   // get the function space for the element
   virtual const nodalBasis *getFunctionSpace(int order = -1,
                                              bool serendip = false) const;
+  virtual const FuncSpaceData getFuncSpaceData(int order = -1,
+                                               bool serendip = false) const;
 
   // get the function space for the jacobian of the element
-  virtual const JacobianBasis *getJacobianFuncSpace(int order = -1) const;
+  virtual const JacobianBasis *
+  getJacobianFuncSpace(int orderElement = -1) const;
+  virtual const FuncSpaceData
+  getJacobianFuncSpaceData(int orderElement = -1) const;
 
   // return parametric coordinates (u,v,w) of a vertex
   virtual void getNode(int num, double &u, double &v, double &w) const;
@@ -342,7 +348,8 @@ public:
                                                 double s[][3][3][3],
                                                 int order = -1) const;
   // return the Jacobian of the element evaluated at point (u,v,w) in parametric
-  // coordinates
+  // coordinates: jac[i][j] = \partial x_j / \partial u_i (beware the
+  // transposition compared to the usual definition of the Jacobian)
   virtual double getJacobian(const fullMatrix<double> &gsf,
                              double jac[3][3]) const;
   // To be compatible with _vgrads of functionSpace without having to put under
@@ -374,8 +381,8 @@ public:
   }
   void getSignedJacobian(fullVector<double> &jacobian, int o = -1) const;
   void getNodesCoord(fullMatrix<double> &nodesXYZ) const;
-  virtual int getNumShapeFunctions() const { return getNumVertices(); }
-  virtual int getNumPrimaryShapeFunctions() const
+  virtual std::size_t getNumShapeFunctions() const { return getNumVertices(); }
+  virtual std::size_t getNumPrimaryShapeFunctions() const
   {
     return getNumPrimaryVertices();
   }
@@ -448,6 +455,7 @@ public:
                         int elementary = 1);
   virtual void writeSTL(FILE *fp, bool binary = false,
                         double scalingFactor = 1.0);
+  virtual void writeX3D(FILE *fp, double scalingFactor = 1.0);
   virtual void writeVRML(FILE *fp);
   virtual void writePLY2(FILE *fp);
   virtual void writeUNV(FILE *fp, int num = 0, int elementary = 1,
@@ -485,7 +493,7 @@ public:
   // return the number of vertices, as well as the element name if 'name' != 0
   static unsigned int getInfoMSH(const int typeMSH,
                                  const char **const name = 0);
-  virtual int getNumVerticesForMSH() { return getNumVertices(); }
+  virtual std::size_t getNumVerticesForMSH() { return getNumVertices(); }
   virtual void getVerticesIdForMSH(std::vector<int> &verts);
 
   // copy element and parent if any, vertexMap contains the new vertices
@@ -509,45 +517,7 @@ public:
                    GModel *model);
 };
 
-// Traits of various elements based on the dimension.  These generally define
-// the faces of 2-D elements as MEdge and 3-D elements as MFace.
-
-template <unsigned DIM> struct DimTr;
-template <> struct DimTr<2> {
-  typedef MEdge FaceT;
-  static int getNumFace(MElement *const element)
-  {
-    return element->getNumEdges();
-  }
-  static MEdge getFace(MElement *const element, const int iFace)
-  {
-    return element->getEdge(iFace);
-  }
-  static void getAllFaceVertices(MElement *const element, const int iFace,
-                                 std::vector<MVertex *> &v)
-  {
-    element->getEdgeVertices(iFace, v);
-  }
-};
-
-template <> struct DimTr<3> {
-  typedef MFace FaceT;
-  static int getNumFace(MElement *const element)
-  {
-    return element->getNumFaces();
-  }
-  static MFace getFace(MElement *const element, const int iFace)
-  {
-    return element->getFace(iFace);
-  }
-  static void getAllFaceVertices(MElement *const element, const int iFace,
-                                 std::vector<MVertex *> &v)
-  {
-    element->getFaceVertices(iFace, v);
-  }
-};
-
-struct Less_ElementPtr {
+struct MElementPtrLessThan {
   bool operator()(const MElement *e1, const MElement *e2) const
   {
     return e1->getNum() < e2->getNum();

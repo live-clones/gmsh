@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -43,17 +43,17 @@ void OCCRegion::setup()
   TopExp_Explorer exp2, exp3;
   for(exp2.Init(s, TopAbs_SHELL); exp2.More(); exp2.Next()) {
     const TopoDS_Shape &shell = exp2.Current();
-    Msg::Debug("OCC Region %d - New Shell", tag());
+    Msg::Debug("OCC volume %d - new shell", tag());
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()) {
       TopoDS_Face face = TopoDS::Face(exp3.Current());
       GFace *f = 0;
       if(model()->getOCCInternals())
         f = model()->getOCCInternals()->getFaceForOCCShape(model(), face);
       if(!f) {
-        Msg::Error("Unknown face in region %d", tag());
+        Msg::Error("Unknown surface in volume %d", tag());
       }
       else if(face.Orientation() == TopAbs_INTERNAL) {
-        Msg::Debug("Adding embedded face %d in region %d", f->tag(), tag());
+        Msg::Debug("Adding embedded surface %d in volume %d", f->tag(), tag());
         embedded_faces.push_back(f);
       }
       else {
@@ -69,10 +69,10 @@ void OCCRegion::setup()
     if(model()->getOCCInternals())
       e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
     if(!e) {
-      Msg::Error("Unknown edge in region %d", tag());
+      Msg::Error("Unknown curve in volume %d", tag());
     }
     else if(edge.Orientation() == TopAbs_INTERNAL) {
-      Msg::Debug("Adding embedded edge %d in region %d", e->tag(), tag());
+      Msg::Debug("Adding embedded curve %d in volume %d", e->tag(), tag());
       embedded_edges.push_back(e);
       // OCCEdge *occe = (OCCEdge*)e;
       // occe->setTrimmed(this);
@@ -85,15 +85,15 @@ void OCCRegion::setup()
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) {
-      Msg::Error("Unknown vertex in region %d", tag());
+      Msg::Error("Unknown point in volume %d", tag());
     }
     else if(vertex.Orientation() == TopAbs_INTERNAL) {
-      Msg::Debug("Adding embedded vertex %d in region %d", v->tag(), tag());
+      Msg::Debug("Adding embedded point %d in volume %d", v->tag(), tag());
       embedded_vertices.push_back(v);
     }
   }
 
-  Msg::Debug("OCC Region %d with %d faces", tag(), l_faces.size());
+  Msg::Debug("OCC volume %d with %d surfaces", tag(), l_faces.size());
 }
 
 SBoundingBox3d OCCRegion::bounds(bool fast) const

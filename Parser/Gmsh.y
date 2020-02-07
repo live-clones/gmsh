@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -36,7 +36,6 @@
 #include "fullMatrix.h"
 
 #if defined(HAVE_MESH)
-#include "Generator.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
 #include "HighOrder.h"
@@ -87,7 +86,6 @@ static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 static std::string struct_name, struct_namespace;
-static int flag_tSTRING_alloc = 0;
 static int dim_entity;
 
 static std::map<std::string, std::vector<double> > floatOptions;
@@ -180,17 +178,19 @@ struct doubleXstring{
 
 %token tEND tAFFECT tDOTS tSCOPE tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
-%token tAtan tAtan2 tSinh tCosh tTanh tFabs tAbs tFloor tCeil tRound
+%token tAtan tAtan2 tSinh tCosh tTanh tFabs tAbs tFloor tCeil tRound tMin tMax
 %token tFmod tModulo tHypot tList tLinSpace tLogSpace tListFromFile tCatenary
-%token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
+%token tPrintf tError tWarning tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tAbsolutePath tDirName tStrSub tStrLen
 %token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
 %token tTextAttributes
-%token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tCurrentDirectory
-%token tSyncModel tNewModel
+%token tBoundingBox tDraw tSetChanged tToday tFixRelativePath
+%token tCurrentDirectory tCurrentFileName
+%token tSyncModel tNewModel tMass tCenterOfMass
 %token tOnelabAction tOnelabRun tCodeName
 %token tCpu tMemory tTotalMemory
-%token tCreateTopology tCreateGeometry tRenumberMeshNodes tRenumberMeshElements
+%token tCreateTopology tCreateGeometry tClassifySurfaces
+%token tRenumberMeshNodes tRenumberMeshElements
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
 %token tDefineString tSetNumber tSetTag tSetString
@@ -200,12 +200,12 @@ struct doubleXstring{
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
-%token tUsing tPlugin tDegenerated tRecursive
+%token tUsing tPlugin tDegenerated tRecursive tSewing
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence
-%token tIntersect tMeshAlgorithm tReverseMesh
+%token tIntersect tMeshAlgorithm tReverseMesh tMeshSizeFromBoundary
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts
 %token tRecombLaterals tTransfQuadTri
@@ -220,14 +220,15 @@ struct doubleXstring{
 %token tNameToString tStringToName
 
 %type <d> FExpr FExpr_Single DefineStruct NameStruct_Arg GetForced_Default
+%type <d> LoopOptions
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
 %type <i> PhysicalId_per_dim_entity GeoEntity GeoEntity123 GeoEntity12 GeoEntity02
 %type <i> TransfiniteArrangement RecombineAngle
 %type <i> Append AppendOrNot
 %type <u> ColorExpr
-%type <c> StringExpr StringExprVar SendToFile tSTRING_Member HomologyCommand
-%type <c> LP RP GetForcedStr_Default
+%type <c> StringExpr StringExprVar SendToFile HomologyCommand
+%type <c> LP RP tSTRING_Reserved GetForcedStr_Default
 %type <c> StringIndex String__Index
 %type <l> MultiStringExprVar SurfaceConstraints
 %type <l> RecursiveListOfStringExprVar Str_BracedRecursiveListOfStringExprVar
@@ -335,6 +336,11 @@ Printf :
       Msg::Direct($3);
       Free($3);
     }
+  | tWarning '(' StringExprVar ')' tEND
+    {
+      Msg::Warning($3);
+      Free($3);
+    }
   | tError '(' StringExprVar ')' tEND
     {
       Msg::Error($3);
@@ -364,6 +370,19 @@ Printf :
 	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else
 	Msg::Direct(tmpstring);
+      Free($3);
+      List_Delete($5);
+    }
+  | tWarning '(' StringExprVar ',' RecursiveListOfDouble ')' tEND
+    {
+      char tmpstring[5000];
+      int i = printListOfDouble($3, $5, tmpstring);
+      if(i < 0)
+	yymsg(1, "Too few arguments in Error");
+      else if(i > 0)
+	yymsg(1, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
+      else
+	Msg::Warning(tmpstring);
       Free($3);
       List_Delete($5);
     }
@@ -477,6 +496,7 @@ Views :
   | Views Text3D
   | Views InterpolationMatrix
   | Views Time
+  | Views Loop
 ;
 
 ElementCoords :
@@ -755,7 +775,17 @@ NumericIncrement :
 // of parentheses)
 
 LP : '(' { $$ = (char*)"("; } | '[' { $$ = (char*)"["; } ;
+
 RP : ')' { $$ = (char*)")"; } | ']' { $$ = (char*)"]"; } ;
+
+// this is to allow reserved keywords in option names, fields, structs, ...
+
+tSTRING_Reserved:
+   tSTRING   { $$ = $1; }
+ | tMin      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Min"); }
+ | tMax      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Max"); }
+ | tBox      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Box"); }
+ | tCylinder { $$ = (char *)Malloc(9 * sizeof(char)); strcpy($$, "Cylinder"); }
 
 Affectation :
 
@@ -960,13 +990,13 @@ Affectation :
 
   // Option Strings
 
-  | String__Index '.' tSTRING tAFFECT StringExpr tEND
+  | String__Index '.' tSTRING_Reserved tAFFECT StringExpr tEND
     {
       std::string tmp($5);
       StringOption(GMSH_SET|GMSH_GUI, $1, 0, $3, tmp);
       Free($1); Free($3); Free($5);
     }
-  | String__Index '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND
+  | String__Index '[' FExpr ']' '.' tSTRING_Reserved tAFFECT StringExpr tEND
     {
       std::string tmp($8);
       StringOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $6, tmp);
@@ -975,7 +1005,7 @@ Affectation :
 
   // Option Numbers
 
-  | String__Index '.' tSTRING NumericAffectation FExpr tEND
+  | String__Index '.' tSTRING_Reserved NumericAffectation FExpr tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, 0, $3, d)){
@@ -993,7 +1023,7 @@ Affectation :
       }
       Free($1); Free($3);
     }
-  | String__Index '[' FExpr ']' '.' tSTRING NumericAffectation FExpr tEND
+  | String__Index '[' FExpr ']' '.' tSTRING_Reserved NumericAffectation FExpr tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
@@ -1011,7 +1041,7 @@ Affectation :
       }
       Free($1); Free($6);
     }
-  | String__Index '.' tSTRING NumericIncrement tEND
+  | String__Index '.' tSTRING_Reserved NumericIncrement tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, 0, $3, d)){
@@ -1020,7 +1050,7 @@ Affectation :
       }
       Free($1); Free($3);
     }
-  | String__Index '[' FExpr ']' '.' tSTRING NumericIncrement tEND
+  | String__Index '[' FExpr ']' '.' tSTRING_Reserved NumericIncrement tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
@@ -1032,12 +1062,12 @@ Affectation :
 
   // Option Colors
 
-  | String__Index '.' tColor '.' tSTRING tAFFECT ColorExpr tEND
+  | String__Index '.' tColor '.' tSTRING_Reserved tAFFECT ColorExpr tEND
     {
       ColorOption(GMSH_SET|GMSH_GUI, $1, 0, $5, $7);
       Free($1); Free($5);
     }
-  | String__Index '[' FExpr ']' '.' tColor '.' tSTRING tAFFECT ColorExpr tEND
+  | String__Index '[' FExpr ']' '.' tColor '.' tSTRING_Reserved tAFFECT ColorExpr tEND
     {
       ColorOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $8, $10);
       Free($1); Free($8);
@@ -1108,7 +1138,7 @@ Affectation :
       Free($1);
       List_Delete($4);
     }
-  | tField '[' FExpr ']' tAFFECT tSTRING tEND
+  | tField '[' FExpr ']' tAFFECT tSTRING_Reserved tEND
     {
 #if defined(HAVE_MESH)
       if(!GModel::current()->getFields()->newField((int)$3, $6))
@@ -1116,21 +1146,7 @@ Affectation :
 #endif
       Free($6);
     }
-  | tField '[' FExpr ']' tAFFECT tBox tEND
-    {
-#if defined(HAVE_MESH)
-      if(!GModel::current()->getFields()->newField((int)$3, "Box"))
-	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, "Box");
-#endif
-    }
-  | tField '[' FExpr ']' tAFFECT tCylinder tEND
-    {
-#if defined(HAVE_MESH)
-      if(!GModel::current()->getFields()->newField((int)$3, "Cylinder"))
-	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, "Cylinder");
-#endif
-    }
-  | tField '[' FExpr ']' '.' tSTRING  tAFFECT FExpr tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT FExpr tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1152,7 +1168,7 @@ Affectation :
 #endif
       Free($6);
     }
-  | tField '[' FExpr ']' '.' tSTRING  tAFFECT StringExpr tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT StringExpr tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1175,7 +1191,7 @@ Affectation :
       Free($6);
       Free($8);
     }
-  | tField '[' FExpr ']' '.' tSTRING  tAFFECT '{' RecursiveListOfDouble '}' tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT '{' RecursiveListOfDouble '}' tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1213,7 +1229,7 @@ Affectation :
       Free($6);
       List_Delete($9);
     }
-  | tField '[' FExpr ']' '.' tSTRING tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1234,7 +1250,7 @@ Affectation :
 
   // Plugins
 
-  | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND
+  | tPlugin '(' tSTRING ')' '.' tSTRING_Reserved tAFFECT FExpr tEND
     {
 #if defined(HAVE_PLUGINS)
       try {
@@ -1246,7 +1262,7 @@ Affectation :
 #endif
       Free($3); Free($6);
     }
-  | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND
+  | tPlugin '(' tSTRING ')' '.' tSTRING_Reserved tAFFECT StringExpr tEND
     {
 #if defined(HAVE_PLUGINS)
       try {
@@ -1419,6 +1435,14 @@ FloatParameterOption :
       Free($1);
       List_Delete($2);
     }
+  | tMin FExpr
+    {
+      floatOptions["Min"].push_back($2);
+    }
+  | tMax FExpr
+    {
+      floatOptions["Max"].push_back($2);
+    }
   | tSTRING
     {
       std::string key($1);
@@ -1446,7 +1470,6 @@ FloatParameterOption :
         Free(((doubleXstring*)List_Pointer($3, i))->s);
       List_Delete($3);
     }
-
   | tSTRING StringExpr
     {
       std::string key($1);
@@ -1455,7 +1478,6 @@ FloatParameterOption :
       Free($1);
       Free($2);
     }
-
   | tSTRING Str_BracedRecursiveListOfStringExprVar
     {
       std::string key($1);
@@ -1592,6 +1614,15 @@ CircleOptions :
     }
 ;
 
+LoopOptions :
+    {
+      $$ = 0;
+    }
+  | tUsing tSewing
+    {
+      $$ = 1;
+    }
+
 Shape :
     tPoint '(' FExpr ')' tAFFECT VExpr tEND
     {
@@ -1648,6 +1679,40 @@ Shape :
       $$.Type = MSH_SEGM_SPLN;
       $$.Num = num;
     }
+  | tCompound tSpline '(' FExpr ')' tAFFECT ListOfDouble tUsing FExpr tEND
+    {
+      int num = (int)$4;
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Compound spline only available with built-in geometry kernel");
+      }
+      else{
+        r = GModel::current()->getGEOInternals()->addCompoundSpline(num, tags,
+                                                                    (int)$9);
+      }
+      if(!r) yymsg(0, "Could not add compound spline");
+      List_Delete($7);
+      $$.Type = MSH_SEGM_SPLN;
+      $$.Num = num;
+    }
+  | tCompound tBSpline '(' FExpr ')' tAFFECT ListOfDouble tUsing FExpr tEND
+    {
+      int num = (int)$4;
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Compound spline only available with built-in geometry kernel");
+      }
+      else{
+        r = GModel::current()->getGEOInternals()->addCompoundBSpline(num, tags,
+                                                                     (int)$9);
+      }
+      if(!r) yymsg(0, "Could not add compound spline");
+      List_Delete($7);
+      $$.Type = MSH_SEGM_BSPLN;
+      $$.Num = num;
+    }
   | tCircle '(' FExpr ')' tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
@@ -1692,13 +1757,13 @@ Shape :
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        if(tags.size() == 3){
+        if(tags.size() == 3){ // keep this for backward compatibility
           r = GModel::current()->getOCCInternals()->addEllipseArc
-            (num, tags[0], tags[1], tags[2]);
+            (num, tags[0], tags[1], tags[0], tags[2]);
         }
         else if(tags.size() == 4){
           r = GModel::current()->getOCCInternals()->addEllipseArc
-            (num, tags[0], tags[1], tags[3]);
+            (num, tags[0], tags[1], tags[2], tags[3]);
         }
         else if(param.size() >= 5 && param.size() <= 7){
           double a1 = (param.size() == 7) ? param[5] : 0.;
@@ -1708,11 +1773,15 @@ Shape :
             (num, param[0], param[1], param[2], param[3], param[4], a1, a2);
         }
         else{
-          yymsg(0, "Ellipse requires 3 or 4 points, or 5 to 7 parameters");
+          yymsg(0, "Ellipse requires 4 points, or 5 to 7 parameters");
         }
       }
       else{
-        if(tags.size() == 4){
+        if(tags.size() == 3){ // to match occ
+          r = GModel::current()->getGEOInternals()->addEllipseArc
+            (num, tags[0], tags[1], tags[0], tags[2], $7[0], $7[1], $7[2]);
+        }
+        else if(tags.size() == 4){
           r = GModel::current()->getGEOInternals()->addEllipseArc
             (num, tags[0], tags[1], tags[2], tags[3], $7[0], $7[1], $7[2]);
         }
@@ -2160,13 +2229,13 @@ Shape :
       if(!r) yymsg(0, "Could not add thick solid");
       List_Delete($6);
     }
-  | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble LoopOptions tEND
     {
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        r = GModel::current()->getOCCInternals()->addSurfaceLoop(num, tags);
+        r = GModel::current()->getOCCInternals()->addSurfaceLoop(num, tags, $8);
       }
       else{
         r = GModel::current()->getGEOInternals()->addSurfaceLoop(num, tags);
@@ -2231,16 +2300,26 @@ Shape :
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
-            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Curve");
+      if($2 == 1)
+        yymsg(0, "`Compound Line (...) = {...};' is deprecated: use `Compound "
+              "Spline|BSpline (...) = {...} Using ...;' instead, or the compound "
+              "meshing constraint `Compound Curve {...};'");
+      else
+        yymsg(0, "`Compound Surface (...) = {...};' is deprecated: use the "
+              "compound meshing constraint `Compound Surface {...};' instead");
       $$.Type = 0;
       $$.Num = 0;
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tSTRING
       '{' RecursiveListOfListOfDouble '}' tEND
     {
-      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
-            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Curve");
+      if($2 == 1)
+        yymsg(0, "`Compound Line (...) = {...};' is deprecated: use `Compound "
+              "Spline|BSpline (...) = {...} Using ...;' instead, or the compound "
+              "meshing constraint `Compound Curve {...};'");
+      else
+        yymsg(0, "`Compound Surface (...) = {...};' is deprecated: use the "
+              "compound meshing constraint `Compound Surface {...};' instead");
       $$.Type = 0;
       $$.Num = 0;
     }
@@ -3386,21 +3465,29 @@ Command :
     {
 #if defined(HAVE_POST)
       if(!strcmp($2, "ElementsFromAllViews"))
-	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "ElementsFromVisibleViews"))
-	PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "ElementsByViewName"))
-	PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsFromAllViews"))
-	PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsFromVisibleViews"))
-	PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeStepsByViewName"))
-	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "Views"))
-	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else if(!strcmp($2, "TimeSteps"))
-	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                       CTX::instance()->post.combineCopyOptions);
       else
 	yymsg(0, "Unknown 'Combine' command");
 #endif
@@ -3459,6 +3546,14 @@ Command :
    | tCreateTopology tEND
     {
       GModel::current()->createTopologyFromMesh();
+    }
+  | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr '}' tEND
+    {
+      GModel::current()->classifySurfaces($3, $5, $7, M_PI);
+    }
+  | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
+    {
+      GModel::current()->classifySurfaces($3, $5, $7, $9);
     }
    | tCreateGeometry tEND
     {
@@ -4451,7 +4546,7 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Vertex %d",tag);
+	yymsg(0, "Unknown model point %d",tag);
       }
     }
   | tSetTag tCurve '(' FExpr ',' FExpr ')' tEND
@@ -4463,7 +4558,7 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Edge %d",tag);
+	yymsg(0, "Unknown model curve %d",tag);
       }
     }
   | tSetTag tSurface '(' FExpr ',' FExpr ')' tEND
@@ -4475,7 +4570,7 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Face %d",tag);
+	yymsg(0, "Unknown model surface %d",tag);
       }
     }
   | tSetTag tVolume '(' FExpr ',' FExpr ')' tEND
@@ -4487,15 +4582,40 @@ Constraints :
 	gf->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown Model Region %d",tag);
+	yymsg(0, "Unknown model volume %d",tag);
       }
     }
   | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
     {
+      // mesh algorithm constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       for(int i = 0; i < List_Nbr($4); i++){
-	double d;
-	List_Read($4, i, &d);
-	CTX::instance()->mesh.algo2dPerFace[(int)d] = (int)$7;
+        double d;
+        List_Read($4, i, &d);
+        int tag = (int)d;
+        GModel::current()->getGEOInternals()->setMeshAlgorithm(2, tag, (int)$7);
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(gf) gf->setMeshingAlgo((int)$7);
+      }
+      List_Delete($4);
+    }
+  | tMeshSizeFromBoundary tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
+    {
+      // lcExtendFromBoundary onstraints are stored in GEO internals in addition
+      // to GModel, as they can be copied around during GEO operations
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      for(int i = 0; i < List_Nbr($4); i++){
+        double d;
+        List_Read($4, i, &d);
+        int tag = (int)d;
+        GModel::current()->getGEOInternals()->setMeshSizeFromBoundary(2, tag, (int)$7);
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(gf) gf->setMeshSizeFromBoundary((int)$7);
       }
       List_Delete($4);
     }
@@ -5076,6 +5196,8 @@ FExpr :
   | tModulo LP FExpr ',' FExpr RP  { $$ = fmod($3, $5); }
   | tHypot  LP FExpr ',' FExpr RP  { $$ = sqrt($3 * $3 + $5 * $5); }
   | tRand   LP FExpr RP            { $$ = $3 * (double)rand() / (double)RAND_MAX; }
+  | tMax    LP FExpr ',' FExpr RP  { $$ = std::max($3, $5); }
+  | tMin    LP FExpr ',' FExpr RP  { $$ = std::min($3, $5); }
 ;
 
 // FIXME: add +=, -=, *= et /=
@@ -5136,7 +5258,7 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 1, 0, 0., 1);
     }
-  | tExists '(' Struct_FullName '.' tSTRING_Member ')'
+  | tExists '(' Struct_FullName '.' tSTRING_Reserved ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0, 0., 1);
     }
@@ -5144,7 +5266,7 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 1, 0, $4, 2);
     }
-  | tGetForced '(' Struct_FullName '.' tSTRING_Member GetForced_Default ')'
+  | tGetForced '(' Struct_FullName '.' tSTRING_Reserved GetForced_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0, $6, 2);
     }
@@ -5152,7 +5274,7 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 2, (int)$5, $7, 2);
     }
-  | tGetForced '(' Struct_FullName '.' tSTRING_Member LP FExpr RP GetForced_Default ')'
+  | tGetForced '(' Struct_FullName '.' tSTRING_Reserved LP FExpr RP GetForced_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, (int)$7, $9, 2);
     }
@@ -5177,12 +5299,10 @@ FExpr_Single :
       }
       Free($2);
     }
-
-  | '#' Struct_FullName '.' tSTRING_Member LP RP
+  | '#' Struct_FullName '.' tSTRING_Reserved LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float_getDim($2.char1, $2.char2, $4);
     }
-
   | tDimNameSpace LP String__Index RP
     {
       std::string struct_namespace($3);
@@ -5194,7 +5314,6 @@ FExpr_Single :
       std::string struct_namespace(std::string(""));
       $$ = (double)gmsh_yynamespaces[struct_namespace].size();
     }
-
   | String__Index NumericIncrement
     {
       if(!gmsh_yysymbols.count($1)){
@@ -5234,7 +5353,6 @@ FExpr_Single :
       }
       Free($1);
     }
-
   | String__Index '(' FExpr ')' NumericIncrement
     {
       int index = (int)$3;
@@ -5255,51 +5373,37 @@ FExpr_Single :
       }
       Free($1);
     }
-
   // Option Strings
-/* not any more ...
-  | tSTRING '.' tSTRING
-    {
-      NumberOption(GMSH_GET, $1, 0, $3, $$);
-      Free($1); Free($3);
-    }
-*/
-
-//+++ ... extention to structures
-// PD: TO FIX (to avoid shift/reduce conflict)
-//  | Struct_FullName '.' tSTRING_Member
-  | String__Index '.' tSTRING_Member
+  | String__Index '.' tSTRING_Reserved
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5);
     }
-
-  | String__Index '.' tSTRING_Member '(' FExpr ')'
+  | String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member '(' FExpr ')'
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
     }
-  | String__Index '.' tSTRING_Member '[' FExpr ']'
+  | String__Index '.' tSTRING_Reserved '[' FExpr ']'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member '[' FExpr ']'
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved '[' FExpr ']'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
     }
-
-  | String__Index '[' FExpr ']' '.' tSTRING
+  | String__Index '[' FExpr ']' '.' tSTRING_Reserved
     {
       NumberOption(GMSH_GET, $1, (int)$3, $6, $$);
       Free($1); Free($6);
     }
-  | String__Index '.' tSTRING NumericIncrement
+  | String__Index '.' tSTRING_Reserved NumericIncrement
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, 0, $3, d)){
@@ -5309,7 +5413,7 @@ FExpr_Single :
       }
       Free($1); Free($3);
     }
-  | String__Index '[' FExpr ']' '.' tSTRING NumericIncrement
+  | String__Index '[' FExpr ']' '.' tSTRING_Reserved NumericIncrement
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
@@ -5422,15 +5526,6 @@ Struct_FullName :
     { $$.char1 = NULL; $$.char2 = $1; }
   | String__Index tSCOPE String__Index
     { $$.char1 = $1; $$.char2 = $3; }
-;
-
-tSTRING_Member :
-    tSTRING
-    { $$ = $1; flag_tSTRING_alloc = 1; }
-/*
-  | tType
-    { $$ = (char*)"Type"; flag_tSTRING_alloc = 0; }
-*/
 ;
 
 Append :
@@ -5656,17 +5751,51 @@ FExpr_Multi :
       getParentTags($2, $3, $$);
       List_Delete($3);
     }
-   | GeoEntity tIn tBoundingBox
-      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
+   | GeoEntity tIn tBoundingBox ListOfDouble
     {
       $$ = List_Create(10, 10, sizeof(double));
-      getElementaryTagsInBoundingBox($1, $5, $7, $9, $11, $13, $15, $$);
+      if(List_Nbr($4) < 6) {
+        yymsg(0, "Bounding box should be {xmin, ymin, zmin, xmax, ymax, zmax}");
+      }
+      else {
+        double bb[6];
+        for(int i = 0; i < 6; i++) List_Read($4, i, &bb[i]);
+        getElementaryTagsInBoundingBox
+          ($1, bb[0], bb[1], bb[2], bb[3], bb[4], bb[5], $$);
+      }
+      List_Delete($4);
     }
    | tBoundingBox GeoEntity '{' RecursiveListOfDouble '}'
     {
       $$ = List_Create(10, 10, sizeof(double));
       getBoundingBox($2, $4, $$);
       List_Delete($4);
+    }
+   | tMass GeoEntity123 '{' FExpr '}'
+    {
+      $$ = List_Create(1, 1, sizeof(double));
+      double m = 0;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->getMass($2, (int)$4, m);
+      }
+      else{
+        yymsg(0, "Mass only available with OpenCASCADE geometry kernel");
+      }
+      List_Add($$, &m);
+    }
+   | tCenterOfMass GeoEntity123 '{' FExpr '}'
+    {
+      $$ = List_Create(3, 1, sizeof(double));
+      double x = 0., y = 0., z = 0.;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->getCenterOfMass($2, (int)$4, x, y, z);
+      }
+      else{
+        yymsg(0, "CenterOfMass only available with OpenCASCADE geometry kernel");
+      }
+      List_Add($$, &x);
+      List_Add($$, &y);
+      List_Add($$, &z);
     }
   | Transform
     {
@@ -5710,11 +5839,11 @@ FExpr_Multi :
       }
       Free($1);
     }
-  | String__Index '.' tSTRING_Member LP RP
+  | String__Index '.' tSTRING_Reserved LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member LP RP
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat($1, $3, $5);
     }
@@ -5979,21 +6108,19 @@ StringExprVar :
       strcpy($$, val.c_str());
       Free($1);
     }
-// PD: TO FIX (to avoid shift/reduce conflict)
-//  | Struct_FullName '.' String__Index //tSTRING//_Member_Float
-  | String__Index '.' tSTRING_Member
+  | String__Index '.' tSTRING_Reserved
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5);
     }
-  | String__Index '.' tSTRING_Member '(' FExpr ')'
+  | String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3, (int)$5);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member '(' FExpr ')'
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5, (int)$7);
     }
@@ -6054,10 +6181,9 @@ StringExpr :
     }
   | tGetEnv '(' StringExprVar ')'
     {
-      const char *env = GetEnvironmentVar($3);
-      if(!env) env = "";
-      $$ = (char *)Malloc((sizeof(env) + 1) * sizeof(char));
-      strcpy($$, env);
+      std::string env = GetEnvironmentVar($3);
+      $$ = (char *)Malloc((env.size() + 1) * sizeof(char));
+      strcpy($$, env.c_str());
       Free($3);
     }
   | tGetStringValue '(' StringExprVar ',' StringExprVar ')'
@@ -6088,7 +6214,7 @@ StringExpr :
     {
       $$ = treat_Struct_FullName_String(NULL, $3.char2, 1, 0, $4, 2);
     }
-  | tGetForcedStr '(' Struct_FullName '.' tSTRING_Member GetForcedStr_Default ')'
+  | tGetForcedStr '(' Struct_FullName '.' tSTRING_Reserved GetForcedStr_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($3.char1, $3.char2, $5, 0, $6, 2);
     }
@@ -6254,6 +6380,12 @@ StringExpr :
       $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
       strcpy($$, tmp.c_str());
     }
+  | tCurrentFileName
+    {
+      std::string tmp = GetFileNameWithoutPath(gmsh_yyname);
+      $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
+      strcpy($$, tmp.c_str());
+    }
   | tDirName LP StringExprVar RP
     {
       std::string tmp = SplitFileName($3)[0];
@@ -6364,11 +6496,11 @@ MultiStringExprVar :
       }
       Free($1);
     }
-  | String__Index '.' tSTRING_Member '(' ')'
+  | String__Index '.' tSTRING_Reserved '(' ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfString(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member '(' ')'
+  | String__Index tSCOPE String__Index '.' tSTRING_Reserved '(' ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfString($1, $3, $5);
     }
@@ -6725,7 +6857,7 @@ void addPeriodicFace(int iTarget, int iSource,
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if (!target || !source) {
-    Msg::Error("Could not find curve slave %d or master %d for periodic copy",
+    Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget, iSource);
   }
   else target->setMeshMaster(source, affineTransform);
@@ -6749,7 +6881,7 @@ void addPeriodicFace(int iTarget, int iSource,
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if (!target || !source) {
-    Msg::Error("Could not find surface slave %d or master %d for periodic copy",
+    Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget,iSource);
   }
   else target->setMeshMaster(source, edgeCounterparts);
@@ -6767,7 +6899,7 @@ void addPeriodicEdge(int iTarget,int iSource,
   GEdge *target = GModel::current()->getEdgeByTag(std::abs(iTarget));
   GEdge *source = GModel::current()->getEdgeByTag(std::abs(iSource));
   if (!target || !source)
-    Msg::Error("Could not find surface %d or %d for periodic copy",
+    Msg::Error("Could not find curve %d or %d for periodic copy",
                iTarget,iSource);
   if (affineTransform.size() >= 12) {
     target->setMeshMaster(source, affineTransform);
@@ -7160,7 +7292,7 @@ double treat_Struct_FullName_dot_tSTRING_Float
     break;
   }
   Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
+  Free(c3);
   return out;
 }
 
@@ -7190,7 +7322,7 @@ List_T * treat_Struct_FullName_dot_tSTRING_ListOfFloat
     break;
   }
   Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
+  Free(c3);
   return out;
 }
 
@@ -7213,7 +7345,7 @@ int treat_Struct_FullName_dot_tSTRING_Float_getDim
     break;
   }
   Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
+  Free(c3);
   return out;
 }
 
@@ -7277,7 +7409,7 @@ char* treat_Struct_FullName_dot_tSTRING_String
   char* out_c = (char*)Malloc((out->size() + 1) * sizeof(char));
   strcpy(out_c, out->c_str());
   Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
+  Free(c3);
   return out_c;
 }
 
@@ -7307,6 +7439,6 @@ List_T * treat_Struct_FullName_dot_tSTRING_ListOfString
     break;
   }
   Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
+  Free(c3);
   return out;
 }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -641,5 +641,27 @@ void fullMatrix<int>::print(const std::string &name,
     else
       printf("}\n");
   }
+  printf("};\n");
+}
+
+template <>
+void fullVector<double>::print(const std::string name,
+                               const std::string format) const
+{
+  std::string rformat = (format == "") ? "%12.5E " : format;
+  printf("double %s[%d]=\n", name.c_str(), size());
+  printf("{  ");
+  for(int I = 0; I < size(); I++) { printf(rformat.c_str(), (*this)(I)); }
+  printf("};\n");
+}
+
+template <>
+void fullVector<int>::print(const std::string name,
+                            const std::string format) const
+{
+  std::string rformat = (format == "") ? "%12d " : format;
+  printf("double %s[%d]=\n", name.c_str(), size());
+  printf("{  ");
+  for(int I = 0; I < size(); I++) { printf(rformat.c_str(), (*this)(I)); }
   printf("};\n");
 }

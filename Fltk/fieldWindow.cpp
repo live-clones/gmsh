@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -170,9 +170,6 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 
   background_btn = new Fl_Round_Button(x, y + h - BH - WB, w - BB - WB, BH,
                                        "Set as background field");
-  background_btn->tooltip(
-    "Only a single field can be set as background field.\n"
-    "To combine multiple fields use the Min or Max fields.");
   options_tab->end();
 
   Fl_Group *help_tab = new Fl_Group(x, y, w, h, "Help");
@@ -355,8 +352,19 @@ void fieldWindow::loadFieldOptions()
     (*input)->clear_changed();
     input++;
   }
-  background_btn->value(GModel::current()->getFields()->getBackgroundField() ==
-                        f->id);
+  if(dynamic_cast<BoundaryLayerField*>(f)){
+    background_btn->value(0);
+    background_btn->deactivate();
+    background_btn->tooltip("Boundary layer fields cannot be assigned in the "
+                            "graphical user interface: edit the file directly.");
+  }
+  else{
+    background_btn->value(GModel::current()->getFields()->getBackgroundField() ==
+                          f->id);
+    background_btn->activate();
+    background_btn->tooltip("Only a single field can be set as background field.\n"
+                            "To combine multiple fields use the Min or Max fields.");
+  }
 }
 
 void fieldWindow::editField(Field *f)

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -66,9 +66,7 @@ void HilbertSort::ComputeGrayCode(int n)
   mask = (n == 2) ? 3 : 7;
 
   // Generate the Gray code sequence.
-  for(i = 0; i < N; i++) {
-    gc[i] = i ^ (i >> 1);
-  }
+  for(i = 0; i < N; i++) { gc[i] = i ^ (i >> 1); }
 
   for(e = 0; e < N; e++) {
     for(d = 0; d < n; d++) {
@@ -93,9 +91,7 @@ void HilbertSort::ComputeGrayCode(int n)
   for(i = 1; i < N; i++) {
     v = ~i; // Count the 0s.
     v = (v ^ (v - 1)) >> 1; // Set v's trailing 0s to 1s and zero rest
-    for(c = 0; v; c++) {
-      v >>= 1;
-    }
+    for(c = 0; v; c++) { v >>= 1; }
     tsb1mod3[i] = c % n;
   }
 }
@@ -116,9 +112,7 @@ int HilbertSort::Split(MVertex **vertices, int arraysize, int GrayCode0,
   axis = (GrayCode0 ^ GrayCode1) >> 1;
 
   // Calulate the split position along the axis.
-  if(axis == 0) {
-    split = 0.5 * (BoundingBoxXmin + BoundingBoxXmax);
-  }
+  if(axis == 0) { split = 0.5 * (BoundingBoxXmin + BoundingBoxXmax); }
   else if(axis == 1) {
     split = 0.5 * (BoundingBoxYmin + BoundingBoxYmax);
   }
@@ -145,7 +139,7 @@ int HilbertSort::Split(MVertex **vertices, int arraysize, int GrayCode0,
         if(vertices[j]->point()[axis] < split) break;
       }
       // Is the partition finished?
-      if(i == (j + 1)) break;
+      if(i >= (j + 1)) break;
       // Swap i-th and j-th vertices.
       swapvert = vertices[i];
       vertices[i] = vertices[j];
@@ -162,7 +156,7 @@ int HilbertSort::Split(MVertex **vertices, int arraysize, int GrayCode0,
         if(vertices[j]->point()[axis] > split) break;
       }
       // Is the partition finished?
-      if(i == (j + 1)) break;
+      if(i >= (j + 1)) break;
       // Swap i-th and j-th vertices.
       swapvert = vertices[i];
       vertices[i] = vertices[j];
@@ -220,17 +214,13 @@ void HilbertSort::Sort(MVertex **vertices, int arraysize, int e, int d,
     p[6];
 
   if(maxDepth > 0) {
-    if((depth + 1) == maxDepth) {
-      return;
-    }
+    if((depth + 1) == maxDepth) { return; }
   }
 
   // Recursively sort the points in sub-boxes.
   for(w = 0; w < 8; w++) {
     if((p[w + 1] - p[w]) > Limit) {
-      if(w == 0) {
-        e_w = 0;
-      }
+      if(w == 0) { e_w = 0; }
       else {
         k = 2 * ((w - 1) / 2);
         e_w = k ^ (k >> 1);
@@ -238,9 +228,7 @@ void HilbertSort::Sort(MVertex **vertices, int arraysize, int e, int d,
       k = e_w;
       e_w = ((k << (d + 1)) & mask) | ((k >> (n - d - 1)) & mask);
       ei = e ^ e_w;
-      if(w == 0) {
-        d_w = 0;
-      }
+      if(w == 0) { d_w = 0; }
       else {
         d_w = ((w % 2) == 0) ? tsb1mod3[w - 1] : tsb1mod3[w];
       }

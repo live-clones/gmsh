@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -28,7 +28,7 @@ set(SRC
     GModelIO_UNV.cpp GModelIO_BDF.cpp GModelIO_IR3.cpp GModelIO_DIFF.cpp
     GModelIO_GEOM.cpp GModelIO_INP.cpp GModelIO_KEY.cpp GModelIO_MAIL.cpp GModelIO_P3D.cpp
     GModelIO_CELUM.cpp GModelIO_NEU.cpp GModelIO_ACTRAN.cpp GModelIO_SU2.cpp
-    GModelIO_SAMCEF.cpp GModelIO_MATLAB.cpp GModelIO_POS.cpp
+    GModelIO_SAMCEF.cpp GModelIO_MATLAB.cpp GModelIO_POS.cpp GModelIO_X3D.cpp
   ExtrudeParams.cpp
   Geo.cpp
   GeoStringInterface.cpp GeoInterpolation.cpp
@@ -44,7 +44,12 @@ set(SRC
     MHexahedron.cpp MPrism.cpp MPyramid.cpp MTrihedron.cpp MElementCut.cpp MSubElement.cpp
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
   MVertexBoundaryLayerData.cpp
-  CGNSUtils.cpp
+  CGNSCommon.cpp
+  CGNSConventions.cpp
+  CGNSZone.cpp
+    CGNSZoneStruct.cpp CGNSZoneUnstruct.cpp
+  CGNSRead.cpp
+  CGNSWrite.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

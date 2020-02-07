@@ -80,7 +80,7 @@ HXTStatus hxtFilterVertices(HXTMesh* mesh, double* nodalSizes){
 
   if(mesh->tetrahedra.node!=NULL){
     #pragma omp parallel for
-    for (uint32_t i=0; i<mesh->tetrahedra.num; i++) {
+    for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
       vertices[mesh->tetrahedra.node[4*i+0]].padding.status = HXT_STATUS_TRUE;
       vertices[mesh->tetrahedra.node[4*i+1]].padding.status = HXT_STATUS_TRUE;
       vertices[mesh->tetrahedra.node[4*i+2]].padding.status = HXT_STATUS_TRUE;
@@ -90,7 +90,7 @@ HXTStatus hxtFilterVertices(HXTMesh* mesh, double* nodalSizes){
 
   if(mesh->triangles.node!=NULL){
     #pragma omp parallel for
-    for (uint32_t i=0; i<mesh->triangles.num; i++) {
+    for (uint64_t i=0; i<mesh->triangles.num; i++) {
       vertices[mesh->triangles.node[3*i+0]].padding.status = HXT_STATUS_TRUE;
       vertices[mesh->triangles.node[3*i+1]].padding.status = HXT_STATUS_TRUE;
       vertices[mesh->triangles.node[3*i+2]].padding.status = HXT_STATUS_TRUE;
@@ -99,7 +99,7 @@ HXTStatus hxtFilterVertices(HXTMesh* mesh, double* nodalSizes){
 
   if(mesh->lines.node!=NULL){
     #pragma omp parallel for
-    for (uint32_t i=0; i<mesh->lines.num; i++) {
+    for (uint64_t i=0; i<mesh->lines.num; i++) {
       vertices[mesh->lines.node[2*i+0]].padding.status = HXT_STATUS_TRUE;
       vertices[mesh->lines.node[2*i+1]].padding.status = HXT_STATUS_TRUE;
     }

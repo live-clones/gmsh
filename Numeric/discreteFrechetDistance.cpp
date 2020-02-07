@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,9 +16,7 @@ static double c(int i, int j, fullMatrix<double> &CA,
                 const std::vector<SPoint3> &P, const std::vector<SPoint3> &Q)
 {
   double CAij;
-  if(CA(i, j) > -1) {
-    CAij = CA(i, j);
-  }
+  if(CA(i, j) > -1) { CAij = CA(i, j); }
   else if(i == 0 && j == 0) {
     CA(i, j) = distance(P[0], Q[0]); // update the CA permanent
     CAij = CA(i, j); // set the current relevant value

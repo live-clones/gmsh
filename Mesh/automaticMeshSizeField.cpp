@@ -16,7 +16,7 @@ extern "C" {
 #include "hxt_mesh3d_main.h"
 #include "hxt_boundary_recovery.h"
 }
-#endif  
+#endif
 
 HXTStatus Gmsh2HxtLocal(std::vector<GFace *> &faces, HXTMesh *m,
        std::map<MVertex *, int> &v2c,
@@ -40,28 +40,27 @@ static double meshSize(double x, double y, double z, void *user_data){
   return val;
 }
 
-
 double automaticMeshSizeField::operator()(double X, double Y, double Z, GEntity *ge) {  
 #ifdef HAVE_HXT
-  // return .2;
   double val = 1.e22;
+#if defined(HAVE_HXT) && defined(HAVE_P4EST)
   HXTStatus s = hxtOctreeSearchOne(forest, X, Y, Z, &val);
   if (s == HXT_STATUS_OK){
     return val;
   }
   else Msg::Error ("Cannot find point %g %g %g in the octree",X,Y,Z);
-  return val;
 #else
-  Msg::Error ("Gmsh has to be compiled with HXT for using automaticMeshSizeField");
-#endif  
+  Msg::Error ("Gmsh has to be compiled with HXT and P4EST for using automaticMeshSizeField");
+#endif
+  return val;
 }
 
 automaticMeshSizeField::~automaticMeshSizeField(){
-#ifdef HAVE_P4EST
-  if (forest)hxtForestDelete(&forest);  
+#if defined(HAVE_HXT) && defined(HAVE_P4EST)
+  if (forest)hxtForestDelete(&forest);
   if (forestOptions)hxtForestOptionsDelete(&forestOptions);
 #endif
-}  
+}
 
 void writeNodalCurvature(double *nodalCurvature, int size, const char *filename){
 
@@ -85,7 +84,7 @@ void writeNodalCurvature(double *nodalCurvature, int size, const char *filename)
 
 }
 
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT) && defined(HAVE_P4EST)
 
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 		   std::map<MVertex *, int> &v2c,
@@ -106,18 +105,15 @@ static inline int node2trianglescmp(const void *p0, const void *p1)
 }
 
 HXTStatus automaticMeshSizeField:: updateHXT(){
-#ifdef HAVE_P4EST
 
-  printf("%d points per circle\n",_nPointsPerCircle);
+  //  printf("%d points per circle\n",_nPointsPerCircle);
 
-  if(!update_needed){
-    printf("No update needed\n");
+  if(!update_needed)
     return HXT_STATUS_OK;
-  }
+  
   if (forest)        HXT_CHECK(hxtForestDelete(&forest));  
   if (forestOptions) HXT_CHECK(hxtForestOptionsDelete(&forestOptions));
 
-  
   update_needed = false;
   // --------------------------------------------------------
   // Soit on charge un fichier avec l'octree (ma préférence)
@@ -128,7 +124,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   
   // std::vector<GRegion*> regions;
   // regions.push_back(*(GModel::current()->firstRegion()));
-  // // create HXT mesh structure
+
   // HXTMesh *mesh;
   // HXTContext *context;
   // HXT_CHECK(hxtContextCreate(&context));
@@ -182,7 +178,6 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     
     std::map<MVertex *, int> v2c2;
     std::vector<MVertex *> c2v2;  
-    // GmshFace2Hxt2(faces, faceMeshes, v2c2, c2v2);
     Gmsh2HxtGlobal(faces, NULL, v2c2, c2v2);
 
     size_t nVertices = 0;
@@ -249,16 +244,8 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
       HXT_CHECK(hxtEdgesDelete(&edgesFace)       );
       HXT_CHECK(hxtFree(&curvatureCrossfieldFace));
       HXT_CHECK(hxtFree(&nodalCurvatureFace)     );
-      // HXT_CHECK(hxtMeshDelete(&meshFace)                  );
     } // for faces.size()
 
-    // for (uint64_t i = 0; i < 6*mesh->vertices.num; ++i){
-    //   if(isnan(nodalCurvature[i])){
-    //     printf("nodalCurvature[%lu] (global) = %f\n", i, nodalCurvature[i]);
-    //   }    
-    // }
-
-    // return HXT_ERROR(HXT_STATUS_ERROR);
     writeNodalCurvature(nodalCurvature, mesh->vertices.num, "separe.txt");
 
     // Compute curvature
@@ -300,7 +287,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     }
     triRTree.Insert(bbox_triangle.min,bbox_triangle.max, i);
   }
-  
+
   // compute bbox of the mesh
   double            bbox_vertices[6];
   HXTBbox           bbox_mesh;
@@ -311,7 +298,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     bbox_vertices[i  ] = bbox_mesh.min[i];
     bbox_vertices[i+3] = bbox_mesh.max[i];
   }
-  
+
   // 1 --> OPTIONS ------------------------------------------
   HXT_CHECK(hxtForestOptionsCreate(&forestOptions));
   forestOptions->nodePerTwoPi = _nPointsPerCircle;  
@@ -325,7 +312,6 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   forestOptions->mesh = mesh;
   forestOptions->sizeFunction = NULL;
   forestOptions->filename = "octreeExport.pos";
-  
   // --------------------------------------------------------
   HXT_CHECK(hxtForestCreate(0, NULL, &forest, NULL, forestOptions));
   HXT_CHECK(hxtOctreeRefineToLevel(forest));
@@ -335,17 +321,17 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
   int ITER = 0;
   if (forestOptions->nodePerTwoPi > 0){
-    printf("CURVATURE REFINE\n");
+    // Refine the octree based on curvature of the surface mesh
     HXT_CHECK(hxtOctreeCurvatureRefine(forest, 10/*_nRefine*/));
-    // ensuite lissage du gradient 
+    // Smooth the size gradient
 
-    HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
-    HXT_CHECK(hxtOctreeComputeMaximumSize(forest,&sizeMax));
-    printf("sizeMin = %f \n", sizeMin);
-    printf("sizeMax = %f \n", sizeMax);
+    // HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
+    // HXT_CHECK(hxtOctreeComputeMaximumSize(forest,&sizeMax));
+    // printf("sizeMin = %f \n", sizeMin);
+    // printf("sizeMax = %f \n", sizeMax);
 
-    std::string fileVTK = "/home/bawina/Code/octreeTests/cylindre/build/octree" + std::to_string(ITER);
-    write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
+    // std::string fileVTK = "/home/bawina/Code/octreeTests/cylindre/build/octree" + std::to_string(ITER);
+    // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
 
     double dsdx, dsdy, dsdz;
 
@@ -355,7 +341,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
       dsdz = -1;
       sizeMin = 1e22;
       sizeMax = 0.0;
-      printf("Lissage%d \n", ITER);
+      // printf("Lissage%d \n", ITER);
       HXT_CHECK(hxtOctreeComputeGradient(forest)); 
 
       HXT_CHECK(hxtOctreeComputeMaxGradientX(forest, &dsdx));
@@ -364,13 +350,13 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
       HXT_CHECK(hxtOctreeSetMaxGradient(forest));
 
-      printf("dsdx max = %f \n", dsdx);
-      printf("dsdy max = %f \n", dsdy);
-      printf("dsdz max = %f \n", dsdz);
-      HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
-      HXT_CHECK(hxtOctreeComputeMaximumSize(forest,&sizeMax));
-      printf("sizeMin = %f \n", sizeMin);
-      printf("sizeMax = %f \n", sizeMax);
+      // printf("dsdx max = %f \n", dsdx);
+      // printf("dsdy max = %f \n", dsdy);
+      // printf("dsdz max = %f \n", dsdz);
+      // HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
+      // HXT_CHECK(hxtOctreeComputeMaximumSize(forest,&sizeMax));
+      // printf("sizeMin = %f \n", sizeMin);
+      // printf("sizeMax = %f \n", sizeMax);
       // std::string fileVTK = "/home/bawina/Code/gmsh/build/Septembre_2019/smoothing_filiere" + std::to_string(ITER);
       // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
       if(fmax(dsdx,fmax(dsdy,dsdz)) <= 0.01 + forest->forestOptions->gradMax-1) break;
@@ -378,48 +364,48 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   }
 
   // printf("------- Surfaces proches ------- \n");
-  // forestOptions->nodePerGap = _nPointsPerGap;
-  // HXT_CHECK(hxtOctreeSurfacesProches(forest));
+  forestOptions->nodePerGap = _nPointsPerGap;
+  HXT_CHECK(hxtOctreeSurfacesProches(forest));
 
-  // sizeMin = 1e22;
-  // sizeMax = 0.0;
+  sizeMin = 1e22;
+  sizeMax = 0.0;
   // HXT_CHECK(hxtOctreeComputeMinimumSize(forest,&sizeMin));
   // HXT_CHECK(hxtOctreeComputeMaximumSize(forest,&sizeMax));
   // printf("sizeMin = %f \n", sizeMin);
   // printf("sizeMax = %f \n", sizeMax);
 
-  // ITER = 0;
+  ITER = 0;
 
-  // double dsdx, dsdy, dsdz;
+  double dsdx, dsdy, dsdz;
 
-  // while (ITER++ < 4*_nRefine) {
-  //   dsdx = -1; 
-  //   dsdy = -1;
-  //   dsdz = -1;
-  //   printf("Lissage après surfaces proches %d \n", ITER);
-  //   HXT_CHECK(hxtOctreeComputeGradient(forest));  
+  while (ITER++ < 4*_nRefine) {
+    dsdx = -1; 
+    dsdy = -1;
+    dsdz = -1;
+    // printf("Lissage après surfaces proches %d \n", ITER);
+    HXT_CHECK(hxtOctreeComputeGradient(forest));  
 
-  //   HXT_CHECK(hxtOctreeComputeMaxGradientX(forest, &dsdx));
-  //   HXT_CHECK(hxtOctreeComputeMaxGradientY(forest, &dsdy));
-  //   HXT_CHECK(hxtOctreeComputeMaxGradientZ(forest, &dsdz));
+    HXT_CHECK(hxtOctreeComputeMaxGradientX(forest, &dsdx));
+    HXT_CHECK(hxtOctreeComputeMaxGradientY(forest, &dsdy));
+    HXT_CHECK(hxtOctreeComputeMaxGradientZ(forest, &dsdz));
 
-  //   HXT_CHECK(hxtOctreeSetMaxGradient(forest));
+    HXT_CHECK(hxtOctreeSetMaxGradient(forest));
 
-  //   printf("dsdx max = %f \n", dsdx);
-  //   printf("dsdy max = %f \n", dsdy);
-  //   printf("dsdz max = %f \n", dsdz);
+    // printf("dsdx max = %f \n", dsdx);
+    // printf("dsdy max = %f \n", dsdy);
+    // printf("dsdz max = %f \n", dsdz);
 
-  //   // std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/smoothing_tore" + std::to_string(ITER);
-  //   // std::string fileVTK = "/home/bawina/Documents/paraview_octree/smoothing_2sphere_closeSurfaces" + std::to_string(ITER);
-  //   // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
-  //   if(fmax(dsdx,fmax(dsdy,dsdz)) <= 0.01 + forest->forestOptions->gradMax-1) break;
-  //  }
+    // std::string fileVTK = "/home/bawina/Downloads/IMR Templates/Templates-IMR28/LaTeX/Pictures/smoothing_tore" + std::to_string(ITER);
+    // std::string fileVTK = "/home/bawina/Documents/paraview_octree/smoothing_2sphere_closeSurfaces" + std::to_string(ITER);
+    // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
+    if(fmax(dsdx,fmax(dsdy,dsdz)) <= 0.01 + forest->forestOptions->gradMax-1) break;
+   }
 
   double elemEstimation;
   HXT_CHECK(hxtOctreeElementEstimation(forest, &elemEstimation));
   printf("Estimation du nombre d'éléments : %f \n", elemEstimation);
 
-  // Export la carte de taille en fichier .pos
+  // Export size field in .pos file
   HXT_CHECK(hxtOctreeExport(forest));
 
 
@@ -436,9 +422,6 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   // HXT_CHECK(hxtMeshWriteGmsh(mesh, "tetMesh.msh"));
   // HXT_CHECK(hxtMeshDelete(&cubeTetra));
 
-
-  // HXT_CHECK(hxtEdgesDelete(&edges));
-  // HXT_CHECK(hxtFree(&curvatureCrossfield));
   if(nodalCurvature) HXT_CHECK(hxtFree(&nodalCurvature));
   HXT_CHECK(hxtMeshDelete(&mesh));
   HXT_CHECK(hxtContextDelete(&context));
@@ -448,16 +431,16 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
 #endif //ifdef HAVE_P4EST
 }
+
 #endif
 
 void automaticMeshSizeField::update(){
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT) && defined(HAVE_P4EST)
   HXTStatus s = updateHXT();
   if (s != HXT_STATUS_OK)Msg::Error ("Something went wrong when computing the octree");
 #else
-  Msg::Error ("Gmsh has to be compiled with HXT for using automaticMeshSizeField");
-#endif    
-    
+  Msg::Error ("Gmsh has to be compiled with HXT and P4EST to use automaticMeshSizeField");
+#endif
 };
 
 static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,

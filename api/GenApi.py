@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -33,6 +33,7 @@ class arg:
         self.julia_pre = ""
         self.julia_post = ""
         self.julia_return = name
+        self.texi = name + ((" = " + self.python_value) if self.python_value else "")
 
 # input types
 
@@ -140,7 +141,7 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = _ivectordouble(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cdouble}, Csize_t"
-    a.julia_arg = name + ", length(" + name + ")"
+    a.julia_arg = "convert(Vector{Cdouble}, " + name + "), length(" + name + ")"
     return a
 
 def ivectorstring(name, value=None, python_value=None, julia_value=None):
@@ -186,8 +187,9 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorpair(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
-    a.julia_arg = ("convert(Vector{Cint}, collect(Cint, Iterators.flatten(" + name + "))), " +
-                   "2 * length(" + name + ")")
+    a.julia_pre = (api_name + " = collect(Cint, Iterators.flatten(" + name + "))\n    " +
+                   api_name_n + " = length(" + api_name + ")")
+    a.julia_arg = (api_name + ", " + api_name_n)
     return a
 
 def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
@@ -675,6 +677,7 @@ def argcargv():
     a.python_pre = "api_argc_, api_argv_ = _iargcargv(argv)"
     a.julia_ctype = "Cint, Ptr{Ptr{Cchar}}"
     a.julia_arg = "length(argv), argv"
+    a.texi = "(argc = 0)}, @code{argv = []"
     return a
 
 class Module:
@@ -686,11 +689,10 @@ class Module:
         self.submodules = []
 
     def add(self, name, doc, rtype, *args):
-        self.fs.append((rtype, name, args, doc, ''))
+        self.fs.append((rtype, name, args, doc, []))
 
-    # a raw C implementation of the function is available
-    def add_rawc(self, name, doc, rtype, *args):
-        self.fs.append((rtype, name, args, doc, 'rawc'))
+    def add_special(self, name, doc, special, rtype, *args):
+        self.fs.append((rtype, name, args, doc, special))
 
     def add_module(self, name, doc):
         module = Module(name, doc)
@@ -1026,7 +1028,7 @@ def _ovectorvectorint(ptr, size, n):
     return v
 
 def _ovectorvectorsize(ptr, size, n):
-    v = [_ovectorint(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
+    v = [_ovectorsize(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
     lib.{6}Free(size)
     lib.{6}Free(ptr)
     return v
@@ -1122,10 +1124,12 @@ julia_header = """# {0}
 # types. See `demos/api' for examples.
 """
 
+def capi(s): return s[:1].upper() + s[1:]
+
 class API:
 
     def __init__(self, version_major, version_minor, namespace="gmsh", code="Gmsh",
-                 copyright="Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle",
+                 copyright="Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle",
                  issues="https://gitlab.onelab.info/gmsh/gmsh/issues."):
         self.version_major = version_major
         self.version_minor = version_minor
@@ -1142,26 +1146,30 @@ class API:
         return module
 
     def write_cpp(self):
-        def write_module(module, indent):
-            f.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
+        def write_module(module, indent, cpp_mpath):
+            cpp_mpath += module.name + "::"
+            f.write(indent + "namespace " + module.name + " { // " +
+                    capi(module.doc) + "\n\n")
             indent += "  "
             for rtype, name, args, doc, special in module.fs:
+                rt = rtype.rcpp_type if rtype else "void"
+                f.write(indent + "// " + cpp_mpath + name + "\n" + indent + "//\n")
                 f.write(indent + "// " + ("\n" + indent + "// ").join(
                     textwrap.wrap(doc, 80-len(indent))) + "\n")
-                rt = rtype.rcpp_type if rtype else "void"
+
                 fnameapi = indent + ns.upper() + "_API " + rt + " " + name + "(";
                 f.write(fnameapi)
                 if args:
                     f.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
                 f.write(");\n\n")
             for m in module.submodules:
-                write_module(m, indent)
+                write_module(m, indent, cpp_mpath)
             f.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
         with open(ns + ".h", "w") as f:
             f.write(cpp_header.format(self.copyright, self.issues, ns.upper(), self.code,
                                       self.version_major, self.version_minor, ns))
             for m in self.modules:
-                write_module(m, "")
+                write_module(m, "", "")
             f.write(cpp_footer)
 
     def write_c(self):
@@ -1171,18 +1179,20 @@ class API:
                 c_namespace += module.name[0].upper() + module.name[1:]
             else:
                 c_namespace = module.name
-            fcwrap.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
+            fcwrap.write(indent + "namespace " + module.name + " { // " +
+                         capi(module.doc) + "\n\n")
             indent += "  "
             for rtype, name, args, doc, special in module.fs:
                 # *c.h
                 fname = c_namespace + name[0].upper() + name[1:]
                 f.write("\n/* " + "\n * ".join(textwrap.wrap(doc, 75)) + " */\n")
-                fnameapi = ns.upper() + "_API " + (rtype.rc_type if rtype else "void") + " " + fname + "("
+                fnameapi = ns.upper() + "_API " + (rtype.rc_type if rtype else
+                                                   "void") + " " + fname + "("
                 f.write(fnameapi
                         + (",\n" + ' ' * len(fnameapi)).join(
                             list((a.c for a in args + (oint("ierr"), ))))
                         + ");\n")
-                if special != 'rawc':
+                if "rawc" not in special:
                     # *c.cpp
                     fc.write(ns.upper() + "_API " + (rtype.rc_type if rtype else "void"))
                     fc.write(" " + fname + "(" +
@@ -1263,18 +1273,21 @@ class API:
     def write_python(self):
         def parg(a):
             return a.name + (("=" + a.python_value) if a.python_value else "")
-        def write_function(f, fun, modulepath, indent):
+        def write_function(f, fun, c_mpath, py_mpath, indent):
             (rtype, name, args, doc, special) = fun
+            if "onlycc++" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
-            if modulepath != ns:
+            if c_mpath != ns:
                 f.write(indent + "@staticmethod\n")
             f.write(indent + "def " + name + "("
                    + ", ".join((parg(a) for a in iargs))
                    + "):\n")
             indent += "    "
             f.write(indent + '"""\n')
+            f.write(indent + py_mpath + name + "(" + ", ".join(parg(a) for a in iargs)
+                    + ")\n\n")
             f.write(indent + ("\n" + indent).join(textwrap.wrap(doc, 75)) + "\n")
             if rtype or oargs:
                 f.write("\n" + indent + "Return " + ", ".join(
@@ -1286,8 +1299,9 @@ class API:
             for a in args:
                 if a.python_pre: f.write(indent + a.python_pre + "\n")
             f.write(indent + "ierr = c_int()\n")
-            f.write(indent + "api__result__ = " if ((rtype is oint) or (rtype is odouble)) else (indent))
-            c_name = modulepath + name[0].upper() + name[1:]
+            f.write(indent + "api__result__ = " if ((rtype is oint) or
+                                                    (rtype is odouble)) else (indent))
+            c_name = c_mpath + name[0].upper() + name[1:]
             f.write("lib." + c_name + "(\n    " + indent +
                     (",\n" + indent + "    ").join(
                         tuple((a.python_arg for a in args)) + ("byref(ierr)", )) +
@@ -1304,32 +1318,36 @@ class API:
                 else:
                     f.write(indent + "return (\n" + indent + "    " +
                             (",\n" + indent + "    ").join(r) + ")\n")
-        def write_module(f, m, modulepath, indent):
-            if modulepath:
-                modulepath += m.name[0].upper() + m.name[1:]
+        def write_module(f, m, c_mpath, py_mpath, indent):
+            if c_mpath:
+                c_mpath += m.name[0].upper() + m.name[1:]
+                py_mpath += m.name + "."
             else:
-                modulepath = m.name
+                c_mpath = m.name
+                py_mpath = m.name + "."
             for fun in m.fs:
-                write_function(f, fun, modulepath, indent)
+                write_function(f, fun, c_mpath, py_mpath, indent)
             for module in m.submodules:
                 f.write("\n\n" + indent + "class " + module.name + ":\n")
                 indentm = indent + "    "
                 f.write(indentm + '"""\n')
-                f.write(indentm + ("\n" + indentm).join(textwrap.wrap(module.doc, 75)) + "\n")
+                f.write(indentm + ("\n" + indentm).join
+                        (textwrap.wrap(capi(module.doc), 75)) + "\n")
                 f.write(indentm + '"""\n')
-                write_module(f, module, modulepath, indentm)
+                write_module(f, module, c_mpath, py_mpath, indentm)
         with open(ns + ".py", "w") as f:
             f.write(python_header.format(self.copyright, self.issues, self.code,
                                          self.version_major, self.version_minor,
                                          ns.upper(), ns))
             for module in self.modules:
-                write_module(f, module, "", "")
+                write_module(f, module, "", "", "")
 
     def write_julia(self):
         def parg(a):
             return a.name + ((" = " + a.julia_value) if a.julia_value else "")
         def write_function(f, fun, c_mpath, jl_mpath):
             (rtype, name, args, doc, special) = fun
+            if "onlycc++" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write('\n"""\n    ')
@@ -1373,7 +1391,7 @@ class API:
         def write_module(f, m, c_mpath, jl_mpath, level):
             f.write('\n"""\n    ')
             f.write("module " + jl_mpath + m.name + "\n\n")
-            f.write("\n".join(textwrap.wrap(m.doc, 80)) + "\n")
+            f.write("\n".join(textwrap.wrap(capi(m.doc), 80)) + "\n")
             f.write('"""\n')
             f.write("module " + m.name + "\n\n")
             if level == 1:
@@ -1409,19 +1427,19 @@ class API:
                 write_module(f, module, "", "", 1)
 
     def write_texi(self):
-        def write_module(module, parent):
-            full = parent + "/" + module.name
-            f.write("@heading Module @code{" + full + "}\n");
+        def write_module(module, path, node, node_next, node_prev):
+            f.write("@node " + node + ", " + node_next + ", " + node_prev + ", Gmsh API\n");
+            f.write("@section Namespace @code{" + path + "}: " + module.doc + "\n\n");
             f.write("@ftable @code\n");
             for rtype, name, args, doc, special in module.fs:
-                f.write("@item " + name + "\n");
+                f.write("@item " + path + '/' + name + "\n");
                 tdoc = doc.replace("`", "@code{").replace("'", "}")
                 f.write("\n".join(textwrap.wrap(tdoc, 80)) + "\n\n")
                 f.write("@table @asis\n");
                 iargs = list(a for a in args if not a.out)
                 oargs = list(a for a in args if a.out)
                 f.write("@item " + "Input:\n" +
-                        (", ".join(("@code{" + iarg.name + "}") for iarg in iargs)
+                        (", ".join(("@code{" + iarg.texi + "}") for iarg in iargs)
                          if len(iargs) else "-") + "\n")
                 f.write("@item " + "Output:\n" +
                         (", ".join(("@code{" + oarg.name + "}") for oarg in oargs)
@@ -1430,9 +1448,24 @@ class API:
                         (rtype.rtexi_type if rtype else "-") + "\n")
                 f.write("@end table\n\n");
             f.write("@end ftable\n\n");
-            for m in module.submodules:
-                write_module(m, full)
         with open("api.texi", "w") as f:
             f.write("@c This file was generated by api/gen.py: do not edit manually!\n\n")
+            def flatten_module(flat, module, path):
+                p = path + ("/" if len(path) else "") + module.name
+                flat.append((module, p))
+                for m in module.submodules:
+                    flatten_module(flat, m, p)
+            def node_name(n):
+                return "Namespace " + n[1]
+            flat = []
             for m in self.modules:
-                write_module(m, "")
+                flatten_module(flat, m, "")
+            N = len(flat)
+            f.write("@menu\n")
+            for i in range(N):
+                f.write("* " + node_name(flat[i]) + "::\n")
+            f.write("@end menu\n\n")
+            for i in range(N):
+                write_module(flat[i][0], flat[i][1], node_name(flat[i]),
+                             "" if i == N - 1 else node_name(flat[i+1]),
+                             "" if i == 0 else node_name(flat[i-1]))

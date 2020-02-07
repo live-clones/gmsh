@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -69,7 +69,7 @@ void pyramidalBasis::f(double u, double v, double w, double *val) const
 {
   if(!bergot) return;
 
-  const int N = bergot->size();
+  const int N = points.size1();
 
   double *fval = new double[N];
   bergot->f(u, v, w, fval);
@@ -87,7 +87,7 @@ void pyramidalBasis::f(const fullMatrix<double> &coord,
 {
   if(!bergot) return;
 
-  const int N = bergot->size(), NPts = coord.size1();
+  const int N = points.size1(), NPts = coord.size1();
 
   sf.resize(NPts, N);
   double *fval = new double[N];
@@ -108,19 +108,18 @@ void pyramidalBasis::f(double u, double v, double w, int i, double *val) const
 {
   if(!bergot) return;
 
-  if(i < 0 || i >= bergotCoefficients.size1()){
+  if(i < 0 || i >= bergotCoefficients.size1()) {
     Msg::Error("Node out of range for pyramidal basis");
     return;
   }
 
-  const int N = bergot->size();
+  const int N = points.size1();
 
   double *fval = new double[N];
   bergot->f(u, v, w, fval);
 
   *val = 0.;
-  for(int j = 0; j < N; j++)
-    *val += bergotCoefficients(i, j) * fval[j];
+  for(int j = 0; j < N; j++) *val += bergotCoefficients(i, j) * fval[j];
 
   delete[] fval;
 }
@@ -129,7 +128,7 @@ void pyramidalBasis::df(double u, double v, double w, double grads[][3]) const
 {
   if(!bergot) return;
 
-  const int N = bergot->size();
+  const int N = points.size1();
 
   double(*dfval)[3] = new double[N][3];
   bergot->df(u, v, w, dfval);
@@ -153,7 +152,7 @@ void pyramidalBasis::df(const fullMatrix<double> &coord,
 {
   if(!bergot) return;
 
-  const int N = bergot->size(), NPts = coord.size1();
+  const int N = points.size1(), NPts = coord.size1();
 
   double(*dfv)[3] = new double[N][3];
   dfm.resize(3 * NPts, N, false);
@@ -170,16 +169,17 @@ void pyramidalBasis::df(const fullMatrix<double> &coord,
   delete[] dfv;
 }
 
-void pyramidalBasis::df(double u, double v, double w, int i, double grad[3]) const
+void pyramidalBasis::df(double u, double v, double w, int i,
+                        double grad[3]) const
 {
   if(!bergot) return;
 
-  if(i < 0 || i >= bergotCoefficients.size1()){
+  if(i < 0 || i >= bergotCoefficients.size1()) {
     Msg::Error("Node out of range for pyramidal basis gradient");
     return;
   }
 
-  const int N = bergot->size();
+  const int N = points.size1();
 
   double(*dfval)[3] = new double[N][3];
   bergot->df(u, v, w, dfval);

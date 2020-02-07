@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,7 +10,11 @@
 typedef unsigned long intptr_t;
 #endif
 #include <string>
+#if __cplusplus >= 201103L
+#include <regex>
+#endif
 #include <sstream>
+#include <algorithm>
 #include <map>
 #include <vector>
 #include <string.h>
@@ -55,6 +59,37 @@ public:
   virtual char getVisibility() const = 0;
   virtual void setVisibility(char val, bool recursive = false,
                              bool allmodels = false) = 0;
+  std::string getBrowserLine(bool tabs = true)
+  {
+    std::ostringstream sstream;
+    if(tabs)
+      sstream << "\t" << getType() << "\t" << getTag() << "\t" << getName();
+    else
+      sstream << " " << getType() << " " << getTag() << " " << getName();
+    return sstream.str();
+  }
+  bool match(const std::string &pattern)
+  {
+    if(pattern.empty()) return true;
+    std::string line(getBrowserLine(false));
+#if __cplusplus >= 201103L
+    try{
+      // icase for case-insensitive search
+      if(std::regex_search(line, std::regex(pattern, std::regex_constants::icase)))
+        return true;
+    }
+    catch(...) {
+      return false;
+    }
+#else
+    std::transform(line.begin(), line.end(), line.begin(), ::tolower);
+    std::string pat(pattern);
+    std::transform(pat.begin(), pat.end(), pat.begin(), ::tolower);
+    if(line.find(pat) != std::string::npos)
+      return true;
+#endif
+    return false;
+  }
 };
 
 class VisModel : public Vis {
@@ -225,7 +260,7 @@ public:
     }
   };
   // repopulate the list with current data of the given type
-  void update(VisibilityType type)
+  void update(VisibilityType type, const std::string &search)
   {
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
@@ -240,11 +275,14 @@ public:
     for(std::size_t i = 0; i < _entities.size(); i++) delete _entities[i];
     _entities.clear();
     GModel *m = GModel::current();
+
     if(type == Models) {
       for(std::size_t i = 0; i < GModel::list.size(); i++) {
         std::string name = GModel::list[i]->getName();
         if(GModel::list[i] == GModel::current()) name += " (Current Model)";
-        _entities.push_back(new VisModel(GModel::list[i], i, name));
+        Vis *v = new VisModel(GModel::list[i], i, name);
+        if(v->match(search)) _entities.push_back(v);
+        else delete v;
       }
     }
     else if(type == ElementaryEntities) {
@@ -254,7 +292,9 @@ public:
         GEntity *ge = entities[i];
         std::string name = m->getElementaryName(ge->dim(), ge->tag());
         if(name.empty()) name = oldLabels[ge->tag()];
-        _entities.push_back(new VisElementary(ge, name));
+        Vis *v = new VisElementary(ge, name);
+        if(v->match(search)) _entities.push_back(v);
+        else delete v;
       }
     }
     else if(type == PhysicalEntities) {
@@ -266,13 +306,18 @@ public:
         for(; it != groups[i].end(); ++it) {
           std::string name = m->getPhysicalName(i, it->first);
           if(name.empty()) name = oldLabels[it->first];
-          _entities.push_back(new VisPhysical(it->first, i, it->second, name));
+          Vis *v = new VisPhysical(it->first, i, it->second, name);
+          if(v->match(search)) _entities.push_back(v);
+          else delete v;
         }
       }
     }
     else if(type == MeshPartitions) {
-      for(std::size_t part = 0; part < m->getNumPartitions(); part++)
-        _entities.push_back(new VisPartition(part + 1));
+      for(std::size_t part = 0; part < m->getNumPartitions(); part++){
+        Vis *v = new VisPartition(part + 1);
+        if(v->match(search)) _entities.push_back(v);
+        else delete v;
+      }
     }
     std::sort(_entities.begin(), _entities.end(), VisLessThan());
   }
@@ -313,13 +358,7 @@ public:
   // get the tag of the nth entity in the list
   int getTag(int n) { return _entities[n]->getTag(); }
   // get the browser line for the nth entity in the list
-  std::string getBrowserLine(int n)
-  {
-    std::ostringstream sstream;
-    sstream << "\t" << _entities[n]->getType() << "\t" << _entities[n]->getTag()
-            << "\t" << _entities[n]->getName();
-    return sstream.str();
-  }
+  std::string getBrowserLine(int n) { return _entities[n]->getBrowserLine(); }
   // set the sort mode
   void setSortMode(int mode) { _sortMode = (_sortMode != mode) ? mode : -mode; }
   // get the sort mode
@@ -341,10 +380,12 @@ static void _rebuild_list_browser()
   default: type = VisibilityList::ElementaryEntities; break;
   }
 
-  VisibilityList::instance()->update(type);
+  std::string search = FlGui::instance()->visibility->search->value();
+  VisibilityList::instance()->update(type, search);
+
   for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++) {
-    FlGui::instance()->visibility->browser->add(
-      VisibilityList::instance()->getBrowserLine(i).c_str());
+    FlGui::instance()->visibility->browser->add
+      (VisibilityList::instance()->getBrowserLine(i).c_str());
     if(VisibilityList::instance()->getVisibility(i))
       FlGui::instance()->visibility->browser->select(i + 1);
   }
@@ -419,21 +460,9 @@ static void visibility_sort_cb(Fl_Widget *w, void *data)
       if(!state[i]) FlGui::instance()->visibility->browser->select(i + 1);
     delete[] state;
   }
-  else if(val == -2) { // create new parameter name for selection
-    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++) {
-      if(FlGui::instance()->visibility->browser->selected(i + 1)) {
-        static char tmpstr[256];
-        sprintf(tmpstr, "%d", VisibilityList::instance()->getTag(i));
-        FlGui::instance()->elementaryContext->input[1]->value(tmpstr);
-        break;
-      }
-    }
-    FlGui::instance()->elementaryContext->input[0]->value("NewName");
-    FlGui::instance()->elementaryContext->show(0);
-  }
   else { // set new sorting mode
     VisibilityList::instance()->setSortMode(val);
-    visibility_cb(NULL, (void *)"redraw_only");
+    visibility_cb(NULL, (void *)"list_only");
   }
 }
 
@@ -451,7 +480,7 @@ class listBrowser : public Fl_Browser {
       }
       else if(Fl::test_shortcut(FL_Enter) || Fl::test_shortcut(FL_KP_Enter)) {
         visibility_browser_apply_cb(NULL, NULL);
-        Fl_Browser_::select(l);
+        if(l) Fl_Browser_::select(l);
         return 1;
       }
       else if(Fl::test_shortcut(FL_Up)) {
@@ -769,16 +798,19 @@ public:
 
 void visibility_cb(Fl_Widget *w, void *data)
 {
-  // get the visibility info from the model, and update the browser
-  // accordingly
-  const char *str = (const char *)data;
-  if(str && !strcmp(str, "redraw_only"))
+  // get the visibility info from the model, and update the browser accordingly
+  std::string tmp;
+  if(data) tmp = (const char *)data;
+  if(tmp.find("redraw_only") != std::string::npos)
     FlGui::instance()->visibility->show(true);
   else
     FlGui::instance()->visibility->show(false);
 
   _rebuild_list_browser();
-  _rebuild_tree_browser(false);
+
+  if(tmp.find("list_only") == std::string::npos)
+    _rebuild_tree_browser(false);
+
   FlGui::instance()->visibility->updatePerWindow(true);
 }
 
@@ -1169,10 +1201,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int CC = (int)(1.18 * BB);
+  int CC = BB;
 
   static int cols[5] = {3 * WB, CC, CC, 2 * CC, 0};
-  int width = cols[0] + cols[1] + cols[2] + cols[3] + 7 * WB;
+  int width = cols[0] + cols[1] + cols[2] + cols[3] + 4 * WB;
   int height = 18 * BH;
   int brw = width - 4 * WB;
 
@@ -1184,53 +1216,54 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
   {
     Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB,
-                               height - 3 * WB - 2 * BH, "List browser");
+                               height - 3 * WB - 2 * BH, "List");
 
     {
       Fl_Group *gg = new Fl_Group(
-        2 * WB, WB + BH, cols[0] + cols[1] + cols[2] + cols[3] / 2, BH);
-      gg->resizable(NULL);
+        2 * WB, WB + BH, cols[0] + cols[1] + cols[2] + cols[3], BH);
 
       Fl_Button *o0 = new Fl_Button(2 * WB, 2 * WB + BH, cols[0], BH / 2, "*");
-      o0->box(FL_THIN_UP_BOX);
+      o0->box(FL_THIN_DOWN_BOX);
+      o0->color(FL_BACKGROUND2_COLOR);
+      o0->labelfont(FL_BOLD);
       o0->align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
       o0->tooltip("Select/unselect all");
       o0->callback(visibility_sort_cb, (void *)"*");
 
       Fl_Button *o1 =
         new Fl_Button(2 * WB, 2 * WB + BH + BH / 2, cols[0], BH - BH / 2, "-");
-      o1->box(FL_THIN_UP_BOX);
+      o1->box(FL_THIN_DOWN_BOX);
+      o1->color(FL_BACKGROUND2_COLOR);
+      o1->labelfont(FL_BOLD);
       o1->tooltip("Invert selection");
       o1->callback(visibility_sort_cb, (void *)"-");
 
       Fl_Button *o2 =
         new Fl_Button(2 * WB + cols[0], 2 * WB + BH, cols[1], BH, "Type");
-      o2->box(FL_THIN_UP_BOX);
+      o2->box(FL_THIN_DOWN_BOX);
+      o2->color(FL_BACKGROUND2_COLOR);
       o2->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       o2->tooltip("Sort by type");
       o2->callback(visibility_sort_cb, (void *)"type");
 
       Fl_Button *o3 = new Fl_Button(2 * WB + cols[0] + cols[1], 2 * WB + BH,
                                     cols[2], BH, "Number");
-      o3->box(FL_THIN_UP_BOX);
+      o3->box(FL_THIN_DOWN_BOX);
+      o3->color(FL_BACKGROUND2_COLOR);
       o3->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       o3->tooltip("Sort by number");
       o3->callback(visibility_sort_cb, (void *)"number");
 
       Fl_Button *o4 = new Fl_Button(2 * WB + cols[0] + cols[1] + cols[2],
                                     2 * WB + BH, cols[3], BH, "Name");
-      o4->box(FL_THIN_UP_BOX);
+      o4->box(FL_THIN_DOWN_BOX);
+      o4->color(FL_BACKGROUND2_COLOR);
       o4->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       o4->tooltip("Sort by name");
       o4->callback(visibility_sort_cb, (void *)"name");
 
+      gg->resizable(o4);
       gg->end();
-
-      Fl_Button *o5 =
-        new Fl_Button(width - 5 * WB, 2 * WB + BH, 3 * WB, BH, "+");
-      o5->box(FL_THIN_UP_BOX);
-      o5->tooltip("Add parameter name for first selected item");
-      o5->callback(visibility_sort_cb, (void *)"+");
     }
     {
       Fl_Group *gg =
@@ -1241,25 +1274,44 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       browser->type(FL_MULTI_BROWSER);
       browser->textsize(FL_NORMAL_SIZE - 1);
       browser->column_widths(cols);
-      browser->scrollbar_size(
-        std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
 
       gg->end();
       Fl_Group::current()->resizable(gg);
     }
 
     static Fl_Menu_Item browser_type_table[] = {
-      {"Models", 0, (Fl_Callback *)visibility_cb},
-      {"Elementary entities", 0, (Fl_Callback *)visibility_cb},
-      {"Physical groups", 0, (Fl_Callback *)visibility_cb},
-      {"Mesh partitions", 0, (Fl_Callback *)visibility_cb},
+      {"Models", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
+      {"Elementary entities", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
+      {"Physical groups", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
+      {"Mesh partitions", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
       {0}};
+
+    double w1 = 1.7 * CC;
+    double w3 = CC;
+    double w2 = (width - 6 * WB - w1 - w3);
     browser_type =
-      new Fl_Choice(2 * WB, height - 2 * BH - 3 * WB, (width - 3 * WB) / 2, BH);
+      new Fl_Choice(2 * WB, height - 2 * BH - 3 * WB, w1, BH);
     browser_type->menu(browser_type_table);
 
+    Fl_Group *o = new Fl_Group(2 * WB + w1 + WB, height - 2 * BH - 3 * WB,
+                               w2, BH);
+#if __cplusplus >= 201103L
+    o->tooltip("Filter list using regular expression");
+#else
+    o->tooltip("Filter list");
+#endif
+    o->box(FL_DOWN_BOX);
+    o->color(FL_BACKGROUND2_COLOR);
+    search = new Fl_Input(2 * WB + w1 + WB + BH, height - 2 * BH - 3 * WB + 2,
+                          w2 - BH - 2, BH - 4, "@gmsh_search");
+    search->box(FL_FLAT_BOX);
+    search->callback(visibility_cb, (void *)"list_only");
+    search->when(FL_WHEN_CHANGED);
+    o->resizable(search);
+    o->end();
+
     Fl_Return_Button *b1 = new Fl_Return_Button(
-      width - 1 * CC - 2 * WB, height - 2 * BH - 3 * WB, CC, BH, "Apply");
+    width - 2 * WB - w3, height - 2 * BH - 3 * WB, w3, BH, "Apply");
     b1->callback(visibility_browser_apply_cb);
 
     g->end();
@@ -1267,14 +1319,12 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   }
   {
     Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB,
-                               height - 3 * WB - 2 * BH, "Tree browser");
+                               height - 3 * WB - 2 * BH, "Tree");
 
     tree = new treeBrowser(2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH);
     tree->labelsize(FL_NORMAL_SIZE - 1);
     tree->selectmode(FL_TREE_SELECT_MULTI);
     tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
-    tree->scrollbar_size(
-      std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
     tree->hide();
 
     tree_create =
@@ -1299,19 +1349,19 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     int yy = 2 * WB + BH;
     for(int i = 0; i < 10; i++) {
       if(i == 0) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 2) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 6) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
@@ -1372,19 +1422,19 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     int yy = 2 * WB + BH;
     for(int i = 0; i < 9; i++) {
       if(i == 0) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 1) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 5) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups");
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
@@ -1451,8 +1501,6 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     per_window =
       new Fl_Multi_Browser(2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH);
     per_window->callback(visibility_per_window_cb, (void *)"item");
-    per_window->scrollbar_size(
-      std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
 
     Fl_Button *b1 = new Fl_Button(
       width - 1 * CC - 2 * WB, height - 2 * BH - 3 * WB, CC, BH, "Reset all");
@@ -1468,29 +1516,28 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
   {
     int aw = (int)(3.5 * FL_NORMAL_SIZE);
-    int ww = (width - 5 * WB - aw) / 4;
 
     Fl_Group *g =
-      new Fl_Group(WB, height - BH - WB, width - 2 * WB - 2 * ww, BH);
+      new Fl_Group(WB, height - BH - WB, width - 2 * WB - CC, BH);
     g->resizable(NULL);
 
     Fl_Box *b = new Fl_Box(WB, height - BH - WB, aw, BH, "Apply");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
-    butt[0] = new Fl_Check_Button(WB + aw + WB, height - BH - WB, ww, BH,
+    butt[0] = new Fl_Check_Button(WB + aw + WB, height - BH - WB, 2 * aw, BH,
                                   "recursively");
     butt[0]->type(FL_TOGGLE_BUTTON);
     butt[0]->value(1);
 
-    butt[1] = new Fl_Check_Button(WB + aw + WB + ww, height - BH - WB, ww + WB,
+    butt[1] = new Fl_Check_Button(WB + 3 * aw + 2 * WB, height - BH - WB, 3 * aw,
                                   BH, "to all models");
     butt[1]->type(FL_TOGGLE_BUTTON);
     butt[1]->value(1);
 
     g->end();
 
-    Fl_Button *o1 = new Fl_Button(width - 2 * ww - WB, height - BH - WB, 2 * ww,
-                                  BH, "Save current visibility");
+    Fl_Button *o1 = new Fl_Button(width - CC - WB, height - BH - WB, CC,
+                                  BH, "Save");
     o1->callback(visibility_save_cb);
   }
 

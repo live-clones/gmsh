@@ -73,15 +73,47 @@ type: float@*
 default value: @code{0.5}
 @end table
 
+@item AutomaticMeshSizeField
+Compute a mesh size field that is quite automatic Takes into account surface curvatures and closeness of objects@*
+Options:@*
+@table @code
+@item NRefine
+Initial refinement level for the octree@*
+type: integer@*
+default value: @code{5}
+@item gradientMax
+Maximun gradient of the size field@*
+type: float@*
+default value: @code{1.4}
+@item hBulk
+Size everywhere no size is prescribed@*
+type: float@*
+default value: @code{0.1}
+@item nPointsPerCircle
+Number of points per circle (adapt to curvature of surfaces)@*
+type: integer@*
+default value: @code{55}
+@item nPointsPerGap
+Number of points in thin layers@*
+type: integer@*
+default value: @code{5}
+@end table
+
 @item Ball
 The value of this field is VIn inside a spherical ball, VOut outside. The ball is defined by@*
 @*
   ||dX||^2 < R^2 &&@*
   dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2@*
+@*
+If Thickness is > 0, the mesh size is interpolated between VIn and VOut in a layer around the ball of the prescribed thickness.@*
 Options:@*
 @table @code
 @item Radius
 Radius@*
+type: float@*
+default value: @code{0}
+@item Thickness
+Thickness of a transition layer outside the ball@*
 type: float@*
 default value: @code{0}
 @item VIn
@@ -161,13 +193,19 @@ default value: @code{0.01}
 @end table
 
 @item Box
-The value of this field is VIn inside the box, VOut outside the box. The box is given by@*
+The value of this field is VIn inside the box, VOut outside the box. The box is defined by@*
 @*
   Xmin <= x <= XMax &&@*
   YMin <= y <= YMax &&@*
   ZMin <= z <= ZMax@*
+@*
+If Thickness is > 0, the mesh size is interpolated between VIn and VOut in a layer around the box of the prescribed thickness.@*
 Options:@*
 @table @code
+@item Thickness
+Thickness of a transition layer outside the box@*
+type: float@*
+default value: @code{0}
 @item VIn
 Value inside the box@*
 type: float@*

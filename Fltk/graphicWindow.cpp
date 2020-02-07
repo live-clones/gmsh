@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -57,13 +57,14 @@ typedef unsigned long intptr_t;
 #include "Options.h"
 #include "Context.h"
 #include "StringUtils.h"
-#include "Generator.h"
-#include "HighOrder.h"
 #include "OS.h"
 #include "onelabUtils.h"
 #include "gmshCrossFields.h"
 #if defined(HAVE_3M)
 #include "3M.h"
+#endif
+#if defined(HAVE_TOUCHBAR)
+#include "touchBar.h"
 #endif
 
 static void file_new_cb(Fl_Widget *w, void *data)
@@ -102,53 +103,45 @@ static void file_new_cb(Fl_Widget *w, void *data)
   }
 }
 
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-#  define TT "\t"
-#  define NN "\n"
-#else
-#  define TT " ("
-#  define NN ")\t"
-#endif
-
 static const char *input_formats =
-  "All Files" TT "*.*" NN
-  "Geometry - Gmsh GEO" TT "*.geo" NN
+  "All Files\t*.*\n"
+  "Geometry - Gmsh GEO\t*.geo\n"
 #if defined(HAVE_ACIS)
-  "Geometry - ACIS" TT "*.sat" NN
+  "Geometry - ACIS\t*.sat\n"
 #endif
 #if defined(HAVE_OCC)
-  "Geometry - OpenCASCADE BRep" TT "*.brep" NN
-  "Geometry - OpenCASCADE IGES" TT "*.{igs,iges}" NN
-  "Geometry - OpenCASCADE STEP" TT "*.{stp,step}" NN
+  "Geometry - OpenCASCADE BRep\t*.brep\n"
+  "Geometry - OpenCASCADE IGES\t*.{igs,iges}\n"
+  "Geometry - OpenCASCADE STEP\t*.{stp,step}\n"
 #endif
-  "Mesh - Gmsh MSH" TT "*.msh" NN
-  "Mesh - Diffpack 3D" TT "*.diff" NN
-  "Mesh - I-deas Universal" TT "*.unv" NN
+  "Mesh - Gmsh MSH\t*.msh\n"
+  "Mesh - Diffpack 3D\t*.diff\n"
+  "Mesh - I-deas Universal\t*.unv\n"
 #if defined(HAVE_MED)
-  "Mesh - MED" TT "*.{med,mmed}" NN
+  "Mesh - MED\t*.{med,mmed}\n"
 #endif
-  "Mesh - INRIA Medit" TT "*.mesh" NN
-  "Mesh - Nastran Bulk Data File" TT "*.{bdf,nas}" NN
-  "Mesh - Plot3D Structured Mesh" TT "*.p3d" NN
-  "Mesh - STL Surface" TT "*.stl" NN
-  "Mesh - VTK" TT "*.vtk" NN
-  "Mesh - VRML Surface" TT "*.{wrl,vrml}" NN
-  "Mesh - PLY2 Surface" TT "*.ply2" NN
-  "Post-processing - Gmsh POS" TT "*.pos" NN
+  "Mesh - INRIA Medit\t*.mesh\n"
+  "Mesh - Nastran Bulk Data File\t*.{bdf,nas}\n"
+  "Mesh - Plot3D Structured Mesh\t*.p3d\n"
+  "Mesh - STL Surface\t*.stl\n"
+  "Mesh - VTK\t*.vtk\n"
+  "Mesh - VRML Surface\t*.{wrl,vrml}\n"
+  "Mesh - PLY2 Surface\t*.ply2\n"
+  "Post-processing - Gmsh POS\t*.pos\n"
 #if defined(HAVE_MED)
-  "Post-processing - MED" TT "*.rmed" NN
+  "Post-processing - MED\t*.rmed\n"
 #endif
-  "Image - BMP" TT "*.bmp" NN
+  "Image - BMP\t*.bmp\n"
 #if defined(HAVE_LIBJPEG)
-  "Image - JPEG" TT "*.{jpg,jpeg}" NN
+  "Image - JPEG\t*.{jpg,jpeg}\n"
 #endif
-  "Image - PBM" TT "*.pbm" NN
-  "Image - PGM" TT "*.pgm" NN
+  "Image - PBM\t*.pbm\n"
+  "Image - PGM\t*.pgm\n"
 #if defined(HAVE_LIBPNG)
-  "Image - PNG" TT "*.png" NN
+  "Image - PNG\t*.png\n"
 #endif
-  "Image - PNM" TT "*.pnm" NN
-  "Image - PPM" TT "*.ppm" NN;
+  "Image - PNM\t*.pnm\n"
+  "Image - PPM\t*.ppm\n";
 
 static void file_open_merge_cb(Fl_Widget *w, void *data)
 {
@@ -414,64 +407,64 @@ typedef struct{
 static void file_export_cb(Fl_Widget *w, void *data)
 {
   static patXfunc formats[] = {
-    {"Guess From Extension" TT "*.*", _save_auto},
-    {"Geometry - Gmsh Options" TT "*.opt", _save_options},
-    {"Geometry - Gmsh Unrolled GEO" TT "*.geo_unrolled", _save_geo},
+    {"Guess From Extension\t*.*", _save_auto},
+    {"Geometry - Gmsh Options\t*.opt", _save_options},
+    {"Geometry - Gmsh Unrolled GEO\t*.geo_unrolled", _save_geo},
 #if defined(HAVE_OCC)
-    {"Geometry - OpenCASCADE STEP" TT "*.step", _save_step},
-    {"Geometry - OpenCASCADE BRep" TT "*.brep", _save_brep},
+    {"Geometry - OpenCASCADE STEP\t*.step", _save_step},
+    {"Geometry - OpenCASCADE BRep\t*.brep", _save_brep},
 #endif
-    {"Mesh - Gmsh MSH" TT "*.msh", _save_msh},
-    {"Mesh - Abaqus INP" TT "*.inp", _save_inp},
-    {"Mesh - LSDYNA KEY" TT "*.key", _save_key},
-    {"Mesh - CELUM" TT "*.celum", _save_celum},
+    {"Mesh - Gmsh MSH\t*.msh", _save_msh},
+    {"Mesh - Abaqus INP\t*.inp", _save_inp},
+    {"Mesh - LSDYNA KEY\t*.key", _save_key},
+    {"Mesh - CELUM\t*.celum", _save_celum},
 #if defined(HAVE_LIBCGNS)
-    {"Mesh - CGNS (Experimental)" TT "*.cgns", _save_cgns},
+    {"Mesh - CGNS (Experimental)\t*.cgns", _save_cgns},
 #endif
-    {"Mesh - Diffpack 3D" TT "*.diff", _save_diff},
-    {"Mesh - I-deas Universal" TT "*.unv", _save_unv},
-    {"Mesh - Iridum" TT "*.ir3", _save_ir3},
+    {"Mesh - Diffpack 3D\t*.diff", _save_diff},
+    {"Mesh - I-deas Universal\t*.unv", _save_unv},
+    {"Mesh - Iridum\t*.ir3", _save_ir3},
 #if defined(HAVE_MED)
-    {"Mesh - MED" TT "*.med", _save_med},
+    {"Mesh - MED\t*.med", _save_med},
 #endif
-    {"Mesh - INRIA Medit" TT "*.mesh", _save_mesh},
-    {"Mesh - CEA Triangulation" TT "*.mail", _save_mail},
-    {"Mesh - Matlab" TT "*.m", _save_matlab},
-    {"Mesh - Nastran Bulk Data File" TT "*.bdf", _save_bdf},
-    {"Mesh - Plot3D Structured Mesh" TT "*.p3d", _save_p3d},
-    {"Mesh - STL Surface" TT "*.stl", _save_stl},
-    {"Mesh - VRML Surface" TT "*.wrl", _save_vrml},
-    {"Mesh - VTK" TT "*.vtk", _save_vtk},
-    {"Mesh - Tochnog" TT "*.dat", _save_tochnog},
-    {"Mesh - PLY2 Surface" TT "*.ply2", _save_ply2},
-    {"Mesh - SU2" TT "*.su2", _save_su2},
-    {"Mesh - GAMBIT Neutral File" TT "*.neu", _save_neu},
-    {"Post-processing - Gmsh POS" TT "*.pos", _save_view_pos},
-    {"Post-processing - X3D (X3D)" TT "*.x3d", _save_view_x3d},
+    {"Mesh - INRIA Medit\t*.mesh", _save_mesh},
+    {"Mesh - CEA Triangulation\t*.mail", _save_mail},
+    {"Mesh - Matlab\t*.m", _save_matlab},
+    {"Mesh - Nastran Bulk Data File\t*.bdf", _save_bdf},
+    {"Mesh - Plot3D Structured Mesh\t*.p3d", _save_p3d},
+    {"Mesh - STL Surface\t*.stl", _save_stl},
+    {"Mesh - VRML Surface\t*.wrl", _save_vrml},
+    {"Mesh - VTK\t*.vtk", _save_vtk},
+    {"Mesh - Tochnog\t*.dat", _save_tochnog},
+    {"Mesh - PLY2 Surface\t*.ply2", _save_ply2},
+    {"Mesh - SU2\t*.su2", _save_su2},
+    {"Mesh - GAMBIT Neutral File\t*.neu", _save_neu},
+    {"Post-processing - Gmsh POS\t*.pos", _save_view_pos},
+    {"Post-processing - X3D (X3D)\t*.x3d", _save_view_x3d},
 #if defined(HAVE_MED)
-    {"Post-processing - MED" TT "*.rmed", _save_view_med},
+    {"Post-processing - MED\t*.rmed", _save_view_med},
 #endif
-    {"Post-processing - Generic TXT" TT "*.txt", _save_view_txt},
-    {"Post-processing - Mesh Statistics" TT "*.pos", _save_mesh_stat},
-    {"Post-processing - Adapted data" TT "*.pvtu", _save_view_adapt_pvtu},
-    {"Image - Encapsulated PostScript" TT "*.eps", _save_eps},
-    {"Image - GIF" TT "*.gif", _save_gif},
+    {"Post-processing - Generic TXT\t*.txt", _save_view_txt},
+    {"Post-processing - Mesh Statistics\t*.pos", _save_mesh_stat},
+    {"Post-processing - Adapted data\t*.pvtu", _save_view_adapt_pvtu},
+    {"Image - Encapsulated PostScript\t*.eps", _save_eps},
+    {"Image - GIF\t*.gif", _save_gif},
 #if defined(HAVE_LIBJPEG)
-    {"Image - JPEG" TT "*.jpg", _save_jpeg},
+    {"Image - JPEG\t*.jpg", _save_jpeg},
 #endif
-    {"Image - LaTeX" TT "*.tex", _save_tex},
-    {"Image - PDF" TT "*.pdf", _save_pdf},
+    {"Image - LaTeX\t*.tex", _save_tex},
+    {"Image - PDF\t*.pdf", _save_pdf},
 #if defined(HAVE_LIBPNG)
-    {"Image - PNG" TT "*.png", _save_png},
-    {"Image - PGF" TT "*.pgf", _save_pgf},
+    {"Image - PNG\t*.png", _save_png},
+    {"Image - PGF\t*.pgf", _save_pgf},
 #endif
-    {"Image - PostScript" TT "*.ps", _save_ps},
-    {"Image - PPM" TT "*.ppm", _save_ppm},
-    {"Image - SVG" TT "*.svg", _save_svg},
-    {"Image - TIKZ" TT "*.tikz", _save_tikz},
-    {"Image - YUV" TT "*.yuv", _save_yuv},
+    {"Image - PostScript\t*.ps", _save_ps},
+    {"Image - PPM\t*.ppm", _save_ppm},
+    {"Image - SVG\t*.svg", _save_svg},
+    {"Image - TIKZ\t*.tikz", _save_tikz},
+    {"Image - YUV\t*.yuv", _save_yuv},
 #if defined(HAVE_MPEG_ENCODE)
-    {"Movie - MPEG" TT "*.mpg", _save_mpeg},
+    {"Movie - MPEG\t*.mpg", _save_mpeg},
 #endif
   };
   int nbformats = sizeof(formats) / sizeof(formats[0]);
@@ -480,7 +473,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     pat = new char[nbformats * 256];
     strcpy(pat, formats[0].pat);
     for(int i = 1; i < nbformats; i++) {
-      strcat(pat, NN);
+      strcat(pat, "\n");
       strcat(pat, formats[i].pat);
     }
   }
@@ -488,7 +481,12 @@ static void file_export_cb(Fl_Widget *w, void *data)
  test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Export", pat)) {
     std::string name = fileChooserGetName(1);
-    if(CTX::instance()->confirmOverwrite) {
+    bool confirmOverwrite = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+    // handled directly by the native macOS file chooser
+    if(CTX::instance()->nativeFileChooser) confirmOverwrite = false;
+#endif
+    if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
@@ -503,9 +501,6 @@ static void file_export_cb(Fl_Widget *w, void *data)
     }
   }
 }
-
-#undef TT
-#undef NN
 
 static void file_options_save_cb(Fl_Widget *w, void *data)
 {
@@ -527,7 +522,12 @@ static void file_rename_cb(Fl_Widget *w, void *data)
  test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Rename", "")) {
     std::string name = fileChooserGetName(1);
-    if(CTX::instance()->confirmOverwrite) {
+    bool confirmOverwrite = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+    // handled directly by the native macOS file chooser
+    if(CTX::instance()->nativeFileChooser) confirmOverwrite = false;
+#endif
+    if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
@@ -555,7 +555,19 @@ static void file_delete_cb(Fl_Widget *w, void *data)
 
 void file_quit_cb(Fl_Widget *w, void *data)
 {
-  Msg::Exit(0);
+  if(FlGui::instance()->quitShouldExit()) {
+    Msg::Exit(0);
+  }
+  else {
+    // hide all windows (in case they are not tracked by FlGui)...
+    std::vector<Fl_Window*> wins;
+    for (Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
+      wins.push_back(win);
+    for (std::size_t i = 0; i < wins.size(); i++)
+      wins[i]->hide();
+    // ... and destroy the GUI
+    FlGui::instance()->destroy();
+  }
 }
 
 void file_watch_cb(Fl_Widget *w, void *data)
@@ -2093,16 +2105,8 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
 static void mesh_degree_cb(Fl_Widget *w, void *data)
 {
   int degree = (intptr_t)data;
-  if(degree == 2)
-    SetOrderN(GModel::current(), 2, CTX::instance()->mesh.secondOrderLinear,
-              CTX::instance()->mesh.secondOrderIncomplete);
-  else if (degree == 1)
-    SetOrder1(GModel::current());
-  else // For now, use the same options as for second order meshes
-    SetOrderN(GModel::current(), degree,
-	      CTX::instance()->mesh.secondOrderLinear,
-              CTX::instance()->mesh.secondOrderIncomplete);
-  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  GModel::current()->setOrderN(degree, CTX::instance()->mesh.secondOrderLinear,
+                               CTX::instance()->mesh.secondOrderIncomplete);
   drawContext::global()->draw();
 }
 
@@ -2113,33 +2117,33 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
     return;
   }
   CTX::instance()->lock = 1;
-  OptimizeMesh(GModel::current());
+  GModel::current()->optimizeMesh("");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
 }
 
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
-  computeCrossField (GModel::current());
+  std::vector<int> tags;
+  computeCrossField (GModel::current(), tags);
   drawContext::global()->draw();
 }
 
 static void mesh_refine_cb(Fl_Widget *w, void *data)
 {
-  RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
+  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
   drawContext::global()->draw();
 }
 
 static void mesh_smooth_cb(Fl_Widget *w, void *data)
 {
-  SmoothMesh(GModel::current());
+  GModel::current()->optimizeMesh("Laplace2D");
   drawContext::global()->draw();
 }
 
-
 static void mesh_recombine_cb(Fl_Widget *w, void *data)
 {
-  RecombineMesh(GModel::current());
+  GModel::current()->recombineMesh();
   drawContext::global()->draw();
 }
 
@@ -2151,7 +2155,7 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
     return;
   }
   CTX::instance()->lock = 1;
-  OptimizeMeshNetgen(GModel::current());
+  GModel::current()->optimizeMesh("Netgen");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
 }
@@ -2998,6 +3002,10 @@ void quick_access_cb(Fl_Widget *w, void *data)
       opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, 0);
     }
   }
+
+#if defined(HAVE_TOUCHBAR)
+  updateTouchBar();
+#endif
 }
 
 static void model_switch_cb(Fl_Widget* w, void *data)
@@ -3471,7 +3479,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #endif
       _bar = new Fl_Menu_Bar(0, 0, width, BH);
       _bar->menu(bar_table);
-      _bar->box(FL_UP_BOX);
       _bar->global();
       fillRecentHistoryMenu();
 #if defined(__APPLE__)
@@ -3533,11 +3540,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   if(main){
     _browser = new messageBrowser(twidth, mh + glheight, glwidth, mheight);
     int s = CTX::instance()->msgFontSize;
-#if defined(WIN32) // screen font on Windows is really small
-    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE : s);
-#else
     _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 2 : s);
-#endif
     _browser->callback(message_browser_cb, this);
     _browser->search_callback(message_menu_search_cb, this);
     _browser->autoscroll_callback(message_menu_autoscroll_cb, this);
@@ -4083,11 +4086,7 @@ void graphicWindow::copySelectedMessagesToClipboard()
 void graphicWindow::setMessageFontSize(int size)
 {
   if(!_browser) return;
-#if defined(WIN32) // screen font on Windows is really small
-  _browser->textsize(size <= 0 ? FL_NORMAL_SIZE - 1 : size);
-#else
   _browser->textsize(size <= 0 ? FL_NORMAL_SIZE - 2 : size);
-#endif
   _browser->redraw();
 }
 
@@ -4301,19 +4300,13 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_degree_cb, (void*)3},
   {"0Modules/Mesh/High-order tools",
    (Fl_Callback *)highordertools_cb},
-  {"0Modules/Mesh/Inspect",
-   (Fl_Callback *)mesh_inspect_cb} ,
   {"0Modules/Mesh/Refine by splitting",
    (Fl_Callback *)mesh_refine_cb} ,
-  {"0Modules/Mesh/Compute Cross Field",
-   (Fl_Callback *)mesh_cross_compute_cb} ,
 #if defined(HAVE_METIS)
   {"0Modules/Mesh/Partition",
    (Fl_Callback *)mesh_partition_cb} ,
   {"0Modules/Mesh/Unpartition",
     (Fl_Callback *)mesh_unpartition_cb} ,
-  {"0Modules/Mesh/Convert old partitioning",
-    (Fl_Callback *)mesh_convert_old_partitioning_cb} ,
 #endif
   {"0Modules/Mesh/Smooth 2D",
    (Fl_Callback *)mesh_smooth_cb} ,
@@ -4321,6 +4314,12 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_recombine_cb} ,
   {"0Modules/Mesh/Reclassify 2D",
    (Fl_Callback *)mesh_classify_cb} ,
+  {"0Modules/Mesh/Experimental/Compute quad layout",
+   (Fl_Callback *)mesh_cross_compute_cb} ,
+#if defined(HAVE_METIS)
+  {"0Modules/Mesh/Experimental/Convert old partitioning",
+    (Fl_Callback *)mesh_convert_old_partitioning_cb} ,
+#endif
   {"0Modules/Mesh/Delete/Elements",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
   {"0Modules/Mesh/Delete/Curves",
@@ -4329,6 +4328,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
   {"0Modules/Mesh/Delete/Volumes",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"volumes"} ,
+  {"0Modules/Mesh/Inspect",
+   (Fl_Callback *)mesh_inspect_cb} ,
   {"0Modules/Mesh/Save",
    (Fl_Callback *)mesh_save_cb} ,
 };
@@ -4352,9 +4353,8 @@ void onelabGroup::_addGmshMenus()
 
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
 
-  static bool first = true;
-  if(first){
-    first = false;
+  if(_firstBuild){
+    _firstBuild = false;
     Fl_Tree_Item *n0 = _tree->find_item("0Modules");
     for(Fl_Tree_Item *n = n0; n; n = n->next()){
       if(!n->is_root() && n->has_children() && n->depth() > 1)

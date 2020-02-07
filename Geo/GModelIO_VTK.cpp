@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -246,7 +246,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
         if(n[j] >= 0 && n[j] < (int)vertices.size())
           cells[i].push_back(vertices[n[j]]);
         else
-          Msg::Error("Bad vertex index");
+          Msg::Error("Wrong node index %d", n[j]);
       }
     }
 

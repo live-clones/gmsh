@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,6 +10,7 @@
 #include <vector>
 #include <stdio.h>
 #include "GmshMessage.h"
+#include "GmshDefines.h"
 #include "GEntity.h"
 #include "GVertex.h"
 #include "SVector3.h"
@@ -38,17 +39,21 @@ public:
 
   std::vector<MLine *> lines;
 
-  // when a compound of edges is created, both meshes should be kept alive this
-  // is due to Gmsh's flow and it only applies to model edges
-  GEdge *compound_edge;
+  // when a compound of curves is created, both meshes should be kept alive
+  // (because the 2D meshing procedure will need to access the mesh of each of
+  // the original curves, in addition to the mesh of the compound curve)
+  GEdge *compoundCurve;
 
+  // the STL discretization
+  std::vector<SPoint3> stl_vertices_xyz;
+  
 public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   GEdge(GModel *model, int tag);
   virtual ~GEdge();
 
   // delete mesh data
-  virtual void deleteMesh(bool onlyDeleteElements = false);
+  virtual void deleteMesh();
 
   // get the start/end vertices of the edge
   void setBeginVertex(GVertex *gv) { v0 = gv; }
@@ -162,15 +167,19 @@ public:
   void setTooSmall(bool const b) { _tooSmall = b; }
   virtual bool isMeshDegenerated() const
   {
-    if(_tooSmall) Msg::Debug("degenerated mesh on edge %d: too small", tag());
-    if(v0 == v1 && mesh_vertices.size() < 2)
-      Msg::Debug("degenerated mesh on edge %d: %d mesh vertices", tag(),
+    if(_tooSmall) Msg::Debug("Degenerated mesh on curve %d: too small", tag());
+    if(v0 && v0 == v1 && mesh_vertices.size() < 2)
+      Msg::Debug("Degenerated mesh on curve %d: %d mesh nodes", tag(),
                  (int)mesh_vertices.size());
-    return _tooSmall || (v0 == v1 && mesh_vertices.size() < 2);
+    return _tooSmall || (v0 && v0 == v1 && mesh_vertices.size() < 2);
   }
 
-  // number of types of elements
-  int getNumElementTypes() const { return 1; }
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const
+  {
+    types.clear();
+    types.push_back(TYPE_LIN);
+  };
 
   // get total/by-type number of elements in the mesh
   std::size_t getNumMeshElements() const { return lines.size(); }
@@ -221,7 +230,7 @@ public:
   struct {
     char method;
     double coeffTransfinite;
-    double meshSize;
+    double meshSize, meshSizeFactor;
     int nbPointsTransfinite;
     int typeTransfinite;
     int minimumMeshSegments;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,6 +12,10 @@
 /*
  * MLine
  *
+ *         v
+ *         ^
+ *         |
+ *         |
  *   0-----+-----1 --> u
  *
  */
@@ -109,14 +113,20 @@ public:
     return ((other->getType() == TYPE_LIN || other->getType() == TYPE_PNT) ? 1 :
                                                                              2);
   }
-  virtual int getVertexSolin(int numEdge, int numVertex){return 0;}
+  virtual int getVertexSolin(int numEdge, int numVertex){
+    return getVertex(numVertex)->getNum();
+  }
   virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
 };
 
 /*
  * MLine3
  *
- *   0-----2----1
+ *         v
+ *         ^
+ *         |
+ *         |
+ *   0-----2-----1 --> u
  *
  */
 class MLine3 : public MLine {
@@ -189,7 +199,11 @@ public:
 /*
  * MLineN
  *
- *   0---2---...-(N-1)-1
+ *         v
+ *         ^
+ *         |
+ *         |
+ *  0--2--...--(N-1)--1 --> u
  *
  */
 class MLineN : public MLine {
@@ -253,7 +267,7 @@ public:
     case 8: return MSH_LIN_10;
     case 9: return MSH_LIN_11;
     default:
-      Msg::Error("no tag matches a line with %d vertices", 8 + _vs.size());
+      Msg::Error("No MSH type found for line with %d nodes", 8 + _vs.size());
       return 0;
     }
   }
@@ -274,18 +288,18 @@ public:
                           std::vector<double> &ts);
 };
 
-struct compareMLinePtr {
+struct MLinePtrLessThan {
   bool operator()(MLine *l1, MLine *l2) const
   {
-    static Less_Edge le;
+    static MEdgeLessThan le;
     return le(l1->getEdge(0), l2->getEdge(0));
   }
 };
 
-struct equalMLinePtr {
+struct MLinePtrEqual {
   bool operator()(MLine *l1, MLine *l2) const
   {
-    static Equal_Edge le;
+    static MEdgeEqual le;
     return le(l1->getEdge(0), l2->getEdge(0));
   }
 };

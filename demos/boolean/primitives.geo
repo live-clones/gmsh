@@ -63,7 +63,7 @@ Circle(newl) = {x++,y,0, 0.3, Pi/3};
 Circle(newl) = {x++,y,0, 0.3, -Pi/3, Pi/3};
 
 p = newp; Point(p) = {x++,y,0}; Point(p+1) = {x-0.5,y,0}; Point(p+2) = {x-1,y+0.2,0};
-Ellipse(newl) = {p+1,p,p+2};
+Ellipse(newl) = {p+1,p,p+1,p+2};
 Ellipse(newl) = {x++,y,0, 0.4,0.1};
 Ellipse(newl) = {x++,y,0, 0.4,0.1, Pi/3};
 Ellipse(newl) = {x++,y,0, 0.4,0.1, -Pi/3, Pi/3};

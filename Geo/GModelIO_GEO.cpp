@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,6 +10,7 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "Geo.h"
+#include "GeoInterpolation.h"
 #include "OS.h"
 #include "OpenFile.h"
 #include "Numeric.h"
@@ -130,6 +131,7 @@ bool GEO_Internals::addVertex(int &tag, double x, double y,
     return false;
   }
   if(tag < 0) tag = getMaxTag(0) + 1;
+  if(!lc) lc = MAX_LC;
   Vertex *v = CreateVertex(tag, x, y, surface, lc);
   Tree_Add(Points, &v);
   _changed = true;
@@ -151,7 +153,7 @@ bool GEO_Internals::addLine(int &tag, const std::vector<int> &pointTags)
     return false;
   }
   if(pointTags.size() < 2) {
-    Msg::Error("Line curve requires 2 points");
+    Msg::Error("Line requires 2 points");
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
@@ -160,12 +162,13 @@ bool GEO_Internals::addLine(int &tag, const std::vector<int> &pointTags)
     int t = pointTags[i];
     List_Add(tmp, &t);
   }
-  Curve *c = CreateCurve(tag, MSH_SEGM_LINE, 1, tmp, NULL, -1, -1, 0., 1.);
+  bool ok = true;
+  Curve *c = CreateCurve(tag, MSH_SEGM_LINE, 1, tmp, NULL, -1, -1, 0., 1., ok);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::addCircleArc(int &tag, int startTag, int centerTag,
@@ -180,7 +183,8 @@ bool GEO_Internals::addCircleArc(int &tag, int startTag, int centerTag,
   List_Add(tmp, &startTag);
   List_Add(tmp, &centerTag);
   List_Add(tmp, &endTag);
-  Curve *c = CreateCurve(tag, MSH_SEGM_CIRC, 2, tmp, NULL, -1, -1, 0., 1.);
+  bool ok = true;
+  Curve *c = CreateCurve(tag, MSH_SEGM_CIRC, 2, tmp, NULL, -1, -1, 0., 1., ok);
   if(nx || ny || nz) {
     c->Circle.n[0] = nx;
     c->Circle.n[1] = ny;
@@ -197,7 +201,7 @@ bool GEO_Internals::addCircleArc(int &tag, int startTag, int centerTag,
   }
   List_Delete(tmp);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
@@ -214,7 +218,8 @@ bool GEO_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
   List_Add(tmp, &centerTag);
   List_Add(tmp, &majorTag);
   List_Add(tmp, &endTag);
-  Curve *c = CreateCurve(tag, MSH_SEGM_ELLI, 2, tmp, NULL, -1, -1, 0., 1.);
+  bool ok = true;
+  Curve *c = CreateCurve(tag, MSH_SEGM_ELLI, 2, tmp, NULL, -1, -1, 0., 1., ok);
   if(nx || ny || nz) {
     c->Circle.n[0] = nx;
     c->Circle.n[1] = ny;
@@ -231,7 +236,7 @@ bool GEO_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
   }
   List_Delete(tmp);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
@@ -250,12 +255,13 @@ bool GEO_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
     int t = pointTags[i];
     List_Add(tmp, &t);
   }
-  Curve *c = CreateCurve(tag, MSH_SEGM_SPLN, 3, tmp, NULL, -1, -1, 0., 1.);
+  bool ok = true;
+  Curve *c = CreateCurve(tag, MSH_SEGM_SPLN, 3, tmp, NULL, -1, -1, 0., 1., ok);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::addBezier(int &tag, const std::vector<int> &pointTags)
@@ -274,12 +280,13 @@ bool GEO_Internals::addBezier(int &tag, const std::vector<int> &pointTags)
     int t = pointTags[i];
     List_Add(tmp, &t);
   }
-  Curve *c = CreateCurve(tag, MSH_SEGM_BEZIER, 2, tmp, NULL, -1, -1, 0., 1.);
+  bool ok = true;
+  Curve *c = CreateCurve(tag, MSH_SEGM_BEZIER, 2, tmp, NULL, -1, -1, 0., 1., ok);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
@@ -299,9 +306,10 @@ bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
     int t = pointTags[i];
     List_Add(tmp, &t);
   }
-  Curve *c;
+  Curve *c = NULL;
+  bool ok = true;
   if(seqknots.empty()) {
-    c = CreateCurve(tag, MSH_SEGM_BSPLN, 2, tmp, NULL, -1, -1, 0., 1.);
+    c = CreateCurve(tag, MSH_SEGM_BSPLN, 2, tmp, NULL, -1, -1, 0., 1., ok);
   }
   else {
     int order = seqknots.size() - pointTags.size() - 1;
@@ -310,13 +318,70 @@ bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
       double d = seqknots[i];
       List_Add(knotsList, &d);
     }
-    c = CreateCurve(tag, MSH_SEGM_NURBS, order, tmp, knotsList, -1, -1, 0., 1.);
+    c = CreateCurve(tag, MSH_SEGM_NURBS, order, tmp, knotsList, -1, -1, 0., 1., ok);
   }
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
   _changed = true;
-  return true;
+  return ok;
+}
+
+bool GEO_Internals::_addCompoundSpline(int &tag, const std::vector<int> &curveTags,
+                                       int numIntervals, bool bspline)
+{
+  if(tag >= 0 && FindCurve(tag)) {
+    Msg::Error("GEO curve with tag %d already exists", tag);
+    return false;
+  }
+  if(curveTags.empty()) {
+    Msg::Error("Compound spline curve requires at least 1 input curve");
+    return false;
+  }
+  if(numIntervals < 0) {
+    Msg::Error("Negative number of intervals in compound spline");
+    return false;
+  }
+  if(tag < 0) tag = getMaxTag(1) + 1;
+
+  List_T *tmp = List_Create((numIntervals + 1) * curveTags.size(), 2, sizeof(int));
+  for(std::size_t i = 0; i < curveTags.size(); i++) {
+    Curve *c = FindCurve(curveTags[i]);
+    if(i == 0 && c->beg) List_Add(tmp, &c->beg->Num);
+    for(int j = 1; j < numIntervals; j++) {
+      double u = (double)j / (double)(numIntervals);
+      Vertex V = InterpolateCurve(c, u, 0);
+      double lc = (1 - u) * c->beg->lc + u * c->end->lc;
+      int tag = getMaxTag(0) + 1;
+      Vertex *v = CreateVertex(tag, V.Pos.X, V.Pos.Y, V.Pos.Z, lc, 1.0);
+      Tree_Add(Points, &v);
+      List_Add(tmp, &v->Num);
+    }
+    if(c->end) List_Add(tmp, &c->end->Num);
+  }
+  bool ok = true;
+  Curve *c;
+  if(bspline)
+    c = CreateCurve(tag, MSH_SEGM_BSPLN, 2, tmp, NULL, -1, -1, 0., 1., ok);
+  else //often too oscillatory for non-uniform distribution of control points
+    c = CreateCurve(tag, MSH_SEGM_SPLN, 3, tmp, NULL, -1, -1, 0., 1., ok);
+  Tree_Add(Curves, &c);
+  CreateReversedCurve(c);
+  List_Delete(tmp);
+  _changed = true;
+  return ok;
+}
+
+bool GEO_Internals::addCompoundSpline(int &tag, const std::vector<int> &curveTags,
+                                      int numIntervals)
+{
+  return _addCompoundSpline(tag, curveTags, numIntervals, false);
+}
+
+bool GEO_Internals::addCompoundBSpline(int &tag, const std::vector<int> &curveTags,
+                                      int numIntervals)
+{
+  return _addCompoundSpline(tag, curveTags, numIntervals, true);
 }
 
 bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
@@ -356,12 +421,12 @@ bool GEO_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
     List_Add(tmp, &t);
   }
   Surface *s = CreateSurface(tag, MSH_SURF_PLAN);
-  SetSurfaceGeneratrices(s, tmp);
+  bool ok = SetSurfaceGeneratrices(s, tmp);
   List_Delete(tmp);
   EndSurface(s);
   Tree_Add(Surfaces, &s);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::addDiscreteSurface(int &tag)
@@ -412,18 +477,19 @@ bool GEO_Internals::addSurfaceFilling(int &tag,
     List_Add(tmp, &t);
   }
   Surface *s = CreateSurface(tag, type);
-  SetSurfaceGeneratrices(s, tmp);
+  bool ok = SetSurfaceGeneratrices(s, tmp);
   List_Delete(tmp);
   EndSurface(s);
   if(sphereCenterTag >= 0) {
     s->InSphereCenter = FindPoint(sphereCenterTag);
     if(!s->InSphereCenter) {
-      Msg::Error("Unknown sphere center vertex %d", sphereCenterTag);
+      Msg::Error("Unknown sphere center point %d", sphereCenterTag);
+      ok = false;
     }
   }
   Tree_Add(Surfaces, &s);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::addSurfaceLoop(int &tag,
@@ -461,11 +527,11 @@ bool GEO_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
     List_Add(tmp, &t);
   }
   Volume *v = CreateVolume(tag, MSH_VOLUME);
-  SetVolumeSurfaces(v, tmp);
+  bool ok = SetVolumeSurfaces(v, tmp);
   List_Delete(tmp);
   Tree_Add(Volumes, &v);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::_extrude(int mode,
@@ -574,15 +640,16 @@ bool GEO_Internals::_transform(int mode,
     s.Num = tag;
     List_Add(list, &s);
   }
+  bool ok = true;
   switch(mode) {
-  case 0: TranslateShapes(dx, dy, dz, list); break;
-  case 1: RotateShapes(dx, dy, dz, x, y, z, a, list); break;
-  case 2: DilatShapes(x, y, z, a, b, c, list); break;
-  case 3: SymmetryShapes(a, b, c, d, list); break;
+  case 0: ok = TranslateShapes(dx, dy, dz, list); break;
+  case 1: ok = RotateShapes(dx, dy, dz, x, y, z, a, list); break;
+  case 2: ok = DilatShapes(x, y, z, a, b, c, list); break;
+  case 3: ok = SymmetryShapes(a, b, c, d, list); break;
   }
   List_Delete(list);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::translate(const std::vector<std::pair<int, int> > &dimTags,
@@ -620,7 +687,7 @@ bool GEO_Internals::splitCurve(int tag, const std::vector<int> &pointTags,
     List_Add(tmp, &t);
   }
   List_T *curves = List_Create(10, 10, sizeof(Curve *));
-  SplitCurve(tag, tmp, curves);
+  bool ok = SplitCurve(tag, tmp, curves);
   for(int i = 0; i < List_Nbr(curves); i++) {
     Curve *c;
     List_Read(curves, i, &c);
@@ -629,7 +696,7 @@ bool GEO_Internals::splitCurve(int tag, const std::vector<int> &pointTags,
   List_Delete(tmp);
   List_Delete(curves);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::intersectCurvesWithSurface(
@@ -642,7 +709,7 @@ bool GEO_Internals::intersectCurvesWithSurface(
     double d = curveTags[i];
     List_Add(curves, &d);
   }
-  IntersectCurvesWithSurface(curves, surfaceTag, shapes);
+  bool ok = IntersectCurvesWithSurface(curves, surfaceTag, shapes);
   for(int i = 0; i < List_Nbr(shapes); i++) {
     Shape s;
     List_Read(shapes, i, &s);
@@ -653,13 +720,13 @@ bool GEO_Internals::intersectCurvesWithSurface(
     }
   }
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
-  bool ret = true;
+  bool ok = true;
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
@@ -667,7 +734,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       Vertex *v = FindPoint(tag);
       if(!v) {
         Msg::Error("Unknown GEO point with tag %d", tag);
-        ret = false;
+        ok = false;
       }
       else {
         Vertex *newv = DuplicateVertex(v);
@@ -678,7 +745,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       Curve *c = FindCurve(tag);
       if(!c) {
         Msg::Error("Unknown GEO curve with tag %d", tag);
-        ret = false;
+        ok = false;
       }
       else {
         Curve *newc = DuplicateCurve(c);
@@ -689,7 +756,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       Surface *s = FindSurface(tag);
       if(!s) {
         Msg::Error("Unknown GEO surface with tag %d", tag);
-        ret = false;
+        ok = false;
       }
       else {
         Surface *news = DuplicateSurface(s);
@@ -700,7 +767,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       Volume *v = FindVolume(tag);
       if(!v) {
         Msg::Error("Unknown GEO volume with tag %d", tag);
-        ret = false;
+        ok = false;
       }
       else {
         Volume *newv = DuplicateVolume(v);
@@ -709,7 +776,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
     }
   }
   _changed = true;
-  return ret;
+  return ok;
 }
 
 bool GEO_Internals::remove(int dim, int tag, bool recursive)
@@ -755,7 +822,7 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
     break;
   case 1:
     type = MSH_PHYSICAL_LINE;
-    str = "line";
+    str = "curve";
     break;
   case 2:
     type = MSH_PHYSICAL_SURFACE;
@@ -1082,6 +1149,24 @@ void GEO_Internals::setReverseMesh(int dim, int tag, bool val)
   _changed = true;
 }
 
+void GEO_Internals::setMeshAlgorithm(int dim, int tag, int val)
+{
+  if(dim == 2) {
+    Surface *s = FindSurface(tag);
+    if(s) s->MeshAlgorithm = val;
+  }
+  _changed = true;
+}
+
+void GEO_Internals::setMeshSizeFromBoundary(int dim, int tag, int val)
+{
+  if(dim == 2) {
+    Surface *s = FindSurface(tag);
+    if(s) s->MeshSizeFromBoundary = val;
+  }
+  _changed = true;
+}
+
 void GEO_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing GEO_Internals with GModel");
@@ -1161,6 +1246,7 @@ void GEO_Internals::synchronize(GModel *model)
       List_Read(curves, i, &c);
       if(c->Num >= 0) {
         GEdge *e = model->getEdgeByTag(c->Num);
+
         if(!e && c->beg && c->end) {
           e = new gmshEdge(model, c, model->getVertexByTag(c->beg->Num),
                            model->getVertexByTag(c->end->Num));
@@ -1246,18 +1332,17 @@ void GEO_Internals::synchronize(GModel *model)
       case MSH_PHYSICAL_VOLUME: ge = model->getRegionByTag(tag); break;
       }
       int pnum = CTX::instance()->geom.orientedPhysicals ?
-                   (gmsh_sign(num) * p->Num) :
-                   p->Num;
+        (gmsh_sign(num) * p->Num) :
+        p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-                 ge->physicals.end())
+         ge->physicals.end())
         ge->physicals.push_back(pnum);
     }
   }
 
   // we might want to store mesh compounds directly in GModel; but this is OK
   // for now.
-  for(std::multimap<int, std::vector<int> >::iterator it =
-        _meshCompounds.begin();
+  for(std::multimap<int, std::vector<int> >::iterator it = _meshCompounds.begin();
       it != _meshCompounds.end(); ++it) {
     int dim = it->first;
     std::vector<int> compound = it->second;
@@ -1269,21 +1354,21 @@ void GEO_Internals::synchronize(GModel *model)
       case 1: ent = model->getEdgeByTag(tag); break;
       case 2: ent = model->getFaceByTag(tag); break;
       case 3: ent = model->getRegionByTag(tag); break;
-      default: Msg::Error("compound mesh with dimension %d", dim);
+      default: Msg::Error("Compound mesh constraint with dimension %d", dim);
       }
       if(ent) ents.push_back(ent);
     }
-    for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->_compound = ents; }
+    for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->compound = ents; }
   }
 
   // recompute global boundind box in CTX
   SetBoundingBox();
 
   Msg::Debug("GModel imported:");
-  Msg::Debug("%d vertices", model->getNumVertices());
-  Msg::Debug("%d edges", model->getNumEdges());
-  Msg::Debug("%d faces", model->getNumFaces());
-  Msg::Debug("%d regions", model->getNumRegions());
+  Msg::Debug("%d points", model->getNumVertices());
+  Msg::Debug("%d curves", model->getNumEdges());
+  Msg::Debug("%d surfaces", model->getNumFaces());
+  Msg::Debug("%d volumes", model->getNumRegions());
 
   _changed = false;
 }
@@ -1558,14 +1643,14 @@ int GModel::exportDiscreteGEOInternals()
 
   for(eiter it = firstEdge(); it != lastEdge(); it++) {
     if((*it)->geomType() == GEntity::DiscreteCurve) {
+      bool ok = true;
       Curve *c = CreateCurve((*it)->tag(), MSH_SEGM_DISCRETE, 1, NULL, NULL, -1,
-                             -1, 0., 1.);
+                             -1, 0., 1., ok);
       List_T *points = Tree2List(_geo_internals->Points);
       GVertex *gvb = (*it)->getBeginVertex();
       GVertex *gve = (*it)->getEndVertex();
-
       if(!gvb || !gve) {
-        Msg::Error("Discrete Edge %d has NULL endpoint(s) : %p %p",
+        Msg::Error("Discrete curve %d has NULL endpoint(s): %p %p",
                    (*it)->tag(), gvb, gve);
       }
       int nb = 2;
@@ -1613,9 +1698,9 @@ int GModel::exportDiscreteGEOInternals()
   _geo_internals->setMaxTag(3, maxv);
 
   Msg::Debug("Geo internal model has:");
-  Msg::Debug("%d Vertices", Tree_Nbr(_geo_internals->Points));
-  Msg::Debug("%d Edges", Tree_Nbr(_geo_internals->Curves));
-  Msg::Debug("%d Faces", Tree_Nbr(_geo_internals->Surfaces));
+  Msg::Debug("%d points", Tree_Nbr(_geo_internals->Points));
+  Msg::Debug("%d curves", Tree_Nbr(_geo_internals->Curves));
+  Msg::Debug("%d surfaces", Tree_Nbr(_geo_internals->Surfaces));
 
   return 1;
 }

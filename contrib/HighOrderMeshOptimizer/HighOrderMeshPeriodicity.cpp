@@ -65,7 +65,7 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
 
       std::vector<double> tfo = _inverse(slave->affineTransform);
 
-      Msg::Info("Relocating vertices of master face %i using slave %i",
+      Msg::Info("Relocating nodes of master surface %i using slave %i",
                 master->tag(), slave->tag());
 
       std::map<MVertex *, MVertex *> &vertS2M = slave->correspondingVertices;
@@ -115,7 +115,7 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
         std::vector<double> tfo = _inverse(slave->affineTransform);
 
         Msg::Info(
-          "Relocating %d main and %d high order vertices for %d points "
+          "Relocating %d main and %d high order nodes for %d nodes "
           "of master edge %i (%i-%i) using slave %i (%i-%i)",
           slave->correspondingVertices.size(),
           slave->correspondingHOPoints.size(), master->getNumMeshVertices(),
@@ -184,7 +184,7 @@ void HighOrderMeshPeriodicity::_copyBackMasterVertices()
       GFace *master = dynamic_cast<GFace *>(it->first);
       GFace *slave = dynamic_cast<GFace *>(it->second);
 
-      Msg::Info("Copying master vertices from face %d to %d", master->tag(),
+      Msg::Info("Copying master nodes from surface %d to %d", master->tag(),
                 slave->tag());
 
       const std::vector<double> &tfo = slave->affineTransform;
@@ -226,7 +226,7 @@ void HighOrderMeshPeriodicity::_copyBackMasterVertices()
       GEdge *master = dynamic_cast<GEdge *>(it->first);
       GEdge *slave = dynamic_cast<GEdge *>(it->second);
 
-      Msg::Info("Copying master vertices from edge %d to %d", master->tag(),
+      Msg::Info("Copying master nodes from curve %d to %d", master->tag(),
                 slave->tag());
 
       const std::vector<double> tfo = slave->affineTransform;

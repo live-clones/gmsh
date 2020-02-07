@@ -53,7 +53,7 @@ std::string GMSH_CVTRemeshPlugin::getHelp() const
          "as the restricted Delaunay triangulation of the samples and the"
          "STL mesh.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Triangulate) creates one new view.";
+         "Plugin(CVTRemesh) creates one new view.";
 }
 
 int GMSH_CVTRemeshPlugin::getNbOptions() const
@@ -89,8 +89,8 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
   unsigned int offset = 0;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     (*it)->buildSTLTriangulation();
-    for(std::size_t i = 0; i < (*it)->stl_vertices.size(); ++i) {
-      GPoint p = (*it)->point((*it)->stl_vertices[i]);
+    for(std::size_t i = 0; i < (*it)->stl_vertices_uv.size(); ++i) {
+      GPoint p = (*it)->point((*it)->stl_vertices_uv[i]);
       vertices.push_back(p.x());
       vertices.push_back(p.y());
       vertices.push_back(p.z());
@@ -98,7 +98,7 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
     for(std::size_t i = 0; i < (*it)->stl_triangles.size(); ++i) {
       faces.push_back((*it)->stl_triangles[i] + offset);
     }
-    offset += (*it)->stl_vertices.size();
+    offset += (*it)->stl_vertices_uv.size();
   }
 
   Revoropt::MeshBuilder<3> mesh;

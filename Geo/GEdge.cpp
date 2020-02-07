@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -24,7 +24,7 @@
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), v0(_v0),
-    v1(_v1), masterOrientation(0), compound_edge(NULL)
+    v1(_v1), masterOrientation(0), compoundCurve(NULL)
 {
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);
@@ -34,7 +34,7 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
 
 GEdge::GEdge(GModel *model, int tag)
   : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), v0(0), v1(0),
-    masterOrientation(0), compound_edge(NULL)
+    masterOrientation(0), compoundCurve(NULL)
 {
   meshStatistics.status = GEdge::PENDING;
   GEdge::resetMeshAttributes();
@@ -48,13 +48,11 @@ GEdge::~GEdge()
   GEdge::deleteMesh();
 }
 
-void GEdge::deleteMesh(bool onlyDeleteElements)
+void GEdge::deleteMesh()
 {
-  if(!onlyDeleteElements) {
-    for(std::size_t i = 0; i < mesh_vertices.size(); i++)
-      delete mesh_vertices[i];
-    mesh_vertices.clear();
-  }
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++)
+    delete mesh_vertices[i];
+  mesh_vertices.clear();
   for(std::size_t i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
   deleteVertexArrays();
@@ -138,7 +136,7 @@ void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
     return;
   }
 
-  Msg::Info("Error in transformation from edge %d (%d-%d) to %d (%d-%d)"
+  Msg::Info("Error in transformation from curve %d (%d-%d) to %d (%d-%d) "
             "(minimal transformed node distances %g %g, tolerance %g)",
             ge->tag(), ge->getBeginVertex()->tag(), ge->getEndVertex()->tag(),
             this->tag(), this->getBeginVertex()->tag(),
@@ -209,6 +207,7 @@ void GEdge::resetMeshAttributes()
   meshAttributes.typeTransfinite = 0;
   meshAttributes.extrude = 0;
   meshAttributes.meshSize = MAX_LC;
+  meshAttributes.meshSizeFactor = 1.;
   meshAttributes.minimumMeshSegments = 1;
   meshAttributes.reverseMesh = false;
 }
@@ -232,7 +231,7 @@ SBoundingBox3d GEdge::bounds(bool fast) const
   if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve &&
      geomType() != PartitionCurve) {
     Range<double> tr = parBounds(0);
-    const int N = 10;
+    const int N = fast ? 3 : 10;
     for(int i = 0; i < N; i++) {
       double t =
         tr.low() + (double)i / (double)(N - 1) * (tr.high() - tr.low());
@@ -602,9 +601,8 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z, double &u,
 
   u = errorVsParameter.begin()->second;
   if(first) {
-    Msg::Warning("Could not converge parametrisation of (%g,%g,%g) on edge %d, "
-                 "taking parameter with lowest error ",
-                 X, Y, Z, tag());
+    Msg::Warning("Could not converge parametrisation of (%g,%g,%g) on curve %d, "
+                 "taking parameter with lowest error", X, Y, Z, tag());
   }
 
   return false;
@@ -694,7 +692,7 @@ void GEdge::addElement(int type, MElement *e)
 {
   switch(type) {
   case TYPE_LIN: addLine(reinterpret_cast<MLine *>(e)); break;
-  default: Msg::Error("Trying to add unsupported element in edge");
+  default: Msg::Error("Trying to add unsupported element in curve %d", tag());
   }
 }
 
@@ -706,7 +704,7 @@ void GEdge::removeElement(int type, MElement *e)
       std::find(lines.begin(), lines.end(), reinterpret_cast<MLine *>(e));
     if(it != lines.end()) lines.erase(it);
   } break;
-  default: Msg::Error("Trying to remove unsupported element in edge");
+  default: Msg::Error("Trying to remove unsupported element in curve %d", tag());
   }
 }
 
@@ -736,34 +734,53 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,
 #if defined(HAVE_MESH)
 static void meshCompound(GEdge *ge)
 {
-  std::vector<MLine *> lines;
-  for(std::size_t i = 0; i < ge->_compound.size(); i++) {
-    GEdge *c = (GEdge *)ge->_compound[i];
-    for(std::size_t j = 0; j < c->lines.size(); j++) {
-      lines.push_back(
-        new MLine(c->lines[j]->getVertex(0), c->lines[j]->getVertex(1)));
-    }
-  }
-  discreteEdge *de =
-    new discreteEdge(ge->model(), ge->tag() + 100000, NULL, NULL);
+  // store all line elements of the compound in a new (compound) discrete curve;
+  // no new mesh nodes are created here
+  discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000);
   ge->model()->add(de);
-  de->lines = lines;
-  de->createGeometry();
+  std::vector<int> phys;
+  for(std::size_t i = 0; i < ge->compound.size(); i++) {
+    GEdge *c = (GEdge *)ge->compound[i];
+    // cannot use the same line elements, as they get deleted in createGeometry
+    for(std::size_t j = 0; j < c->lines.size(); j++) {
+      de->lines.push_back(new MLine(c->lines[j]->getVertex(0),
+                                    c->lines[j]->getVertex(1)));
+    }
+    c->compoundCurve = de;
+    phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
+    c->physicals.clear();
+  }
+  // create the geometry of the compound
+  de->createGeometry(true);
+  // once the geometry is created, delete the newly created mesh elements and
+  // reset the mesh - because meshGEdge would delete the mesh
+  for(std::size_t j = 0; j < de->lines.size(); j++)
+    delete de->lines[j];
+  de->lines.clear();
+  de->mesh_vertices.clear();
+  de->deleteVertexArrays();
+  // mesh the compound
   de->mesh(false);
-  ge->compound_edge = de;
+  de->physicals = phys;
 }
 #endif
 
 void GEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
+  if(compound.size())
+    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
+
   meshGEdge mesher;
   mesher(this);
-  if(_compound.size()) { // Some faces are meshed together
-    if(_compound[0] == this) { // I'm the one that makes the compound job
+
+  if(compound.size()) { // Some edges are meshed together
+    meshAttributes.meshSizeFactor = 1.0;
+
+    if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
-      for(std::size_t i = 0; i < _compound.size(); i++) {
-        GEdge *ge = (GEdge *)_compound[i];
+      for(std::size_t i = 0; i < compound.size(); i++) {
+        GEdge *ge = (GEdge *)compound[i];
         ok &= (ge->meshStatistics.status == GEdge::DONE);
       }
       if(!ok) { meshStatistics.status = GEdge::PENDING; }

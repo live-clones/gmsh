@@ -10,8 +10,7 @@
 #include "iosUtils.h"
 #endif
 
-class drawString
-{
+class drawString {
 private:
   std::string _text; // Text to draw
   float _color[4]; // Text color
@@ -20,13 +19,16 @@ private:
   unsigned char *_map;
 
 public:
-  drawString(std::string text, int size=12, float *color=NULL);
-  ~drawString(){ if(_map) free(_map); }
+  drawString(std::string text, int size = 12, float *color = NULL);
+  ~drawString()
+  {
+    if(_map) free(_map);
+  }
 
   void setText(std::string text);
   void setColor(float *color);
   void setColor(float r, float g, float b, float a);
-  void draw(float x, float y, float z, float w, float h, bool center=true);
+  void draw(float x, float y, float z, float w, float h, bool center = true);
 };
 
 #endif

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <stdio.h>
+#include "GmshDefines.h"
 #include "GEntity.h"
 #include "GPoint.h"
 #include "SPoint2.h"
@@ -29,7 +30,7 @@ public:
   virtual ~GVertex();
 
   // delete mesh data
-  virtual void deleteMesh(bool onlyDeleteElements = false);
+  virtual void deleteMesh();
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -82,6 +83,13 @@ public:
 
   // export in GEO format
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");
+
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const
+  {
+    types.clear();
+    types.push_back(TYPE_PNT);
+  };
 
   // get number of elements in the mesh
   std::size_t getNumMeshElements() const { return points.size(); }

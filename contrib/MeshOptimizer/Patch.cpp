@@ -32,6 +32,7 @@
 #include "CADDistances.h"
 #include "qualityMeasures.h"
 #include "Patch.h"
+#include "bezierBasis.h"
 
 Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
              const std::map<MElement *, GEntity *> &bndEl2Ent,
@@ -94,7 +95,7 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
   }
 
   if(nonGeoMove)
-    Msg::Warning("Some vertices will be moved along local lines "
+    Msg::Warning("Some nodes will be moved along local lines "
                  "or planes, they may not remain on the exact geometry");
 
   // Initialize boundary elements and related connectivity if required
@@ -134,8 +135,7 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
       }
     }
     if(unknownVert)
-      Msg::Error("Unknown vertices in boundary element "
-                 "at patch initialization");
+      Msg::Error("Unknown nodes in boundary element at patch initialization");
   }
 
   // Initial coordinates
@@ -330,7 +330,7 @@ void Patch::initScaledJac()
   if(_nBezEl.empty()) {
     _nBezEl.resize(nEl());
     for(int iEl = 0; iEl < nEl(); iEl++)
-      _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
+      _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumSamplingPnts();
   }
 
   // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
@@ -355,7 +355,7 @@ void Patch::initMetricMin()
   if(_nBezEl.empty()) {
     _nBezEl.resize(nEl());
     for(int iEl = 0; iEl < nEl(); iEl++)
-      _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
+      _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumSamplingPnts();
   }
 }
 
@@ -412,10 +412,9 @@ void Patch::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
                                   std::vector<double> &gSJ)
 {
   const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
-  const int &numJacNodes = _nBezEl[iEl];
+  const int &numSamplingPnts = _nBezEl[iEl];
   const int &numMapNodes = _nNodEl[iEl];
-  fullMatrix<double> JDJ(numJacNodes, 3 * numMapNodes + 1),
-    BDB(numJacNodes, 3 * numMapNodes + 1);
+  fullMatrix<double> JDJ(numSamplingPnts, 3 * numMapNodes + 1);
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(numMapNodes, 3), normals(_dim, 3);
@@ -432,24 +431,24 @@ void Patch::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
   if(_dim == 3) JDJ.scale(_invStraightJac[iEl]);
 
   // Transform Jacobian and gradients from Lagrangian to Bezier basis
-  jacBasis->lag2Bez(JDJ, BDB);
+  bezierCoeff BDB(jacBasis->getFuncSpaceData(), JDJ);
 
   // Scaled jacobian
-  for(int l = 0; l < numJacNodes; l++) sJ[l] = BDB(l, 3 * numMapNodes);
+  for(int l = 0; l < numSamplingPnts; l++) sJ[l] = BDB(l, 3 * numMapNodes);
 
   // Gradients of the scaled jacobian
   int iPC = 0;
-  std::vector<SPoint3> gXyzV(numJacNodes);
-  std::vector<SPoint3> gUvwV(numJacNodes);
+  std::vector<SPoint3> gXyzV(numSamplingPnts);
+  std::vector<SPoint3> gUvwV(numSamplingPnts);
   for(int i = 0; i < numMapNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if(iFVi >= 0) {
-      for(int l = 0; l < numJacNodes; l++)
+      for(int l = 0; l < numSamplingPnts; l++)
         gXyzV[l] =
           SPoint3(BDB(l, i + 0 * numMapNodes), BDB(l, i + 1 * numMapNodes),
                   BDB(l, i + 2 * numMapNodes));
       _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi], gXyzV, gUvwV);
-      for(int l = 0; l < numJacNodes; l++) {
+      for(int l = 0; l < numSamplingPnts; l++) {
         gSJ[indGSJ(iEl, l, iPC)] = gUvwV[l][0];
         if(_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl, l, iPC + 1)] = gUvwV[l][1];
         if(_nPCFV[iFVi] == 3) gSJ[indGSJ(iEl, l, iPC + 2)] = gUvwV[l][2];
@@ -463,12 +462,12 @@ void Patch::metricMinAndGradients(int iEl, std::vector<double> &lambda,
                                   std::vector<double> &gradLambda)
 {
   const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
-  const int &numJacNodes = jacBasis->getNumJacNodes();
+  const int &numSamplingPnts = jacBasis->getNumSamplingPnts();
   const int &numMapNodes = jacBasis->getNumMapNodes();
   const int &numPrimMapNodes = jacBasis->getNumPrimMapNodes();
-  fullVector<double> lambdaJ(numJacNodes), lambdaB(numJacNodes);
-  fullMatrix<double> gradLambdaJ(numJacNodes, 2 * numMapNodes);
-  fullMatrix<double> gradLambdaB(numJacNodes, 2 * numMapNodes);
+  fullVector<double> lambdaJ(numSamplingPnts), lambdaB(numSamplingPnts);
+  fullMatrix<double> gradLambdaJ(numSamplingPnts, 2 * numMapNodes);
+  fullMatrix<double> gradLambdaB(numSamplingPnts, 2 * numMapNodes);
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(numMapNodes, 3),
@@ -494,19 +493,21 @@ void Patch::metricMinAndGradients(int iEl, std::vector<double> &lambda,
   gradLambdaB = gradLambdaJ;
 
   int iPC = 0;
-  std::vector<SPoint3> gXyzV(numJacNodes);
-  std::vector<SPoint3> gUvwV(numJacNodes);
-  for(int l = 0; l < numJacNodes; l++) { lambda[l] = lambdaB(l); }
+  std::vector<SPoint3> gXyzV(numSamplingPnts);
+  std::vector<SPoint3> gUvwV(numSamplingPnts);
+  for(int l = 0; l < numSamplingPnts; l++) {
+    lambda[l] = lambdaB(l);
+  }
   for(int i = 0; i < numMapNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if(iFVi >= 0) {
-      for(int l = 0; l < numJacNodes; l++) {
+      for(int l = 0; l < numSamplingPnts; l++) {
         gXyzV[l] =
           SPoint3(gradLambdaB(l, i + 0 * numMapNodes),
                   gradLambdaB(l, i + 1 * numMapNodes), /*BDB(l,i+2*nbNod)*/ 0.);
       }
       _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi], gXyzV, gUvwV);
-      for(int l = 0; l < numJacNodes; l++) {
+      for(int l = 0; l < numSamplingPnts; l++) {
         gradLambda[indGSJ(iEl, l, iPC)] = gUvwV[l][0];
         if(_nPCFV[iFVi] >= 2) gradLambda[indGSJ(iEl, l, iPC + 1)] = gUvwV[l][1];
         if(_nPCFV[iFVi] == 3) gradLambda[indGSJ(iEl, l, iPC + 2)] = gUvwV[l][2];
@@ -562,7 +563,9 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF,
         nodes[i] = _xyz[_el2V[iEl][closure[i]]];
         onedge[i] = element->getVertex(closure[i])->onWhat() == edge &&
                     _el2FV[iEl][closure[i]] >= 0;
-        if(onedge[i]) { params[i] = _uvw[_el2FV[iEl][closure[i]]].x(); }
+        if(onedge[i]) {
+          params[i] = _uvw[_el2FV[iEl][closure[i]]].x();
+        }
         else
           reparamMeshVertexOnEdge(element->getVertex(closure[i]), edge,
                                   params[i]);
@@ -583,8 +586,9 @@ void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
 {
   const std::vector<int> &iV = _bndEl2V[iBndEl], &iFV = _bndEl2FV[iBndEl];
   const int nV = iV.size();
-  const GradientBasis *gb =
-    BasisFactory::getGradientBasis(FuncSpaceData(_bndEl[iBndEl]));
+  const GradientBasis *gb;
+  const int tag = _bndEl[iBndEl]->getTypeForMSH();
+  gb = BasisFactory::getGradientBasis(tag, FuncSpaceData(_bndEl[iBndEl]));
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(nV, 3);
@@ -764,7 +768,7 @@ void Patch::initIdealJac()
   if(_nIJacEl.empty()) {
     _nIJacEl.resize(nEl());
     for(int iEl = 0; iEl < nEl(); iEl++)
-      _nIJacEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
+      _nIJacEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumSamplingPnts();
   }
 
   // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
@@ -791,10 +795,9 @@ void Patch::idealJacAndGradients(int iEl, std::vector<double> &iJ,
                                  std::vector<double> &gIJ)
 {
   const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
-  const int &numJacNodes = _nIJacEl[iEl];
+  const int &numSamplingPnts = _nIJacEl[iEl];
   const int &numMapNodes = _nNodEl[iEl];
-  fullMatrix<double> JDJ(numJacNodes, 3 * numMapNodes + 1),
-    BDB(numJacNodes, 3 * numMapNodes + 1);
+  fullMatrix<double> JDJ(numSamplingPnts, 3 * numMapNodes + 1);
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(numMapNodes, 3), normals(_dim, 3);
@@ -811,23 +814,23 @@ void Patch::idealJacAndGradients(int iEl, std::vector<double> &iJ,
   if(_dim == 3) JDJ.scale(_invIJac[iEl]);
 
   // Transform Jacobian and gradients from Lagrangian to Bezier basis
-  jacBasis->lag2Bez(JDJ, BDB);
+  bezierCoeff BDB(jacBasis->getFuncSpaceData(), JDJ);
 
   // Scaled jacobian
-  for(int l = 0; l < numJacNodes; l++) iJ[l] = BDB(l, 3 * numMapNodes);
+  for(int l = 0; l < numSamplingPnts; l++) iJ[l] = BDB(l, 3 * numMapNodes);
 
   // Gradients of the scaled jacobian
   int iPC = 0;
-  std::vector<SPoint3> gXyzV(numJacNodes);
-  std::vector<SPoint3> gUvwV(numJacNodes);
+  std::vector<SPoint3> gXyzV(numSamplingPnts);
+  std::vector<SPoint3> gUvwV(numSamplingPnts);
   for(int i = 0; i < numMapNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if(iFVi >= 0) {
-      for(int l = 0; l < numJacNodes; l++)
+      for(int l = 0; l < numSamplingPnts; l++)
         gXyzV[l] = SPoint3(BDB(l, i), BDB(l, i + numMapNodes),
                            BDB(l, i + 2 * numMapNodes));
       _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi], gXyzV, gUvwV);
-      for(int l = 0; l < numJacNodes; l++) {
+      for(int l = 0; l < numSamplingPnts; l++) {
         gIJ[indGIJac(iEl, l, iPC)] = gUvwV[l][0];
         if(_nPCFV[iFVi] >= 2) gIJ[indGIJac(iEl, l, iPC + 1)] = gUvwV[l][1];
         if(_nPCFV[iFVi] == 3) gIJ[indGIJac(iEl, l, iPC + 2)] = gUvwV[l][2];

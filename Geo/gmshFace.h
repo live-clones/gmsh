@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -31,6 +31,7 @@ public:
   virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &,
                          SVector3 &) const;
   virtual GEntity::GeomType geomType() const;
+  virtual bool haveParametrization();
   ModelType getNativeType() const { return GmshModel; }
   void *getNativePtr() const { return s; }
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;

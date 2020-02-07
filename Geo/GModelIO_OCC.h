@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -108,17 +108,14 @@ private:
   void _addShapeToMaps(const TopoDS_Shape &shape);
 
   // apply various healing algorithms to try to fix the shape
-  void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixdegenerated,
-                  bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
-                  bool makesolids = false, double scaling = 0.0);
+  void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixDegenerated,
+                  bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
+                  bool makeSolids, double scaling = 0.0);
 
   // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
                   BRepBuilderAPI_Transform *tfo,
                   BRepBuilderAPI_GTransform *gtfo);
-
-  // add circle or ellipse arc
-  bool _addArc(int &tag, int startTag, int centerTag, int endTag, int mode);
 
   // add bspline
   bool _addBSpline(int &tag, const std::vector<int> &pointTags, int mode,
@@ -144,10 +141,10 @@ private:
 
   // set extruded mesh attributes
   void _setExtrudedAttributes(const TopoDS_Compound &c, BRepSweep_Prism *p,
-                              BRepSweep_Revol *r, ExtrudeParams *e,
-                              double x, double y, double z, double dx,
-                              double dy, double dz, double ax, double ay,
-                              double az, double angle);
+                              BRepSweep_Revol *r, ExtrudeParams *e, double x,
+                              double y, double z, double dx, double dy,
+                              double dz, double ax, double ay, double az,
+                              double angle);
   void _copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge);
   void _copyExtrudedAttributes(TopoDS_Face face, GFace *gf);
   void _copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr);
@@ -192,7 +189,8 @@ public:
   bool addCircleArc(int &tag, int startTag, int centerTag, int endTag);
   bool addCircle(int &tag, double x, double y, double z, double r,
                  double angle1, double angle2);
-  bool addEllipseArc(int &tag, int startTag, int centerTag, int endTag);
+  bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
+                     int endTag);
   bool addEllipse(int &tag, double x, double y, double z, double r1, double r2,
                   double angle1, double angle2);
   bool addSpline(int &tag, const std::vector<int> &pointTags);
@@ -208,12 +206,18 @@ public:
                     double dy, double roundedRadius = 0.);
   bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
+  bool addPlateSurface(
+    int &tag, int wireTag,
+    const std::vector<int> &pointTags = std::vector<int>(),
+    const std::vector<int> &surfaceTags = std::vector<int>(),
+    const std::vector<int> &surfaceContinuity = std::vector<int>());
   bool addSurfaceFilling(
     int &tag, int wireTag,
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>());
-  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags);
+  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
+                      bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
   bool addSphere(int &tag, double xc, double yc, double zc, double radius,
                  double angle1, double angle2, double angle3);
@@ -332,6 +336,12 @@ public:
   bool exportShapes(const std::string &fileName,
                     const std::string &format = "");
 
+  // apply various healing algorithms to try to fix the shapes
+  bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
+                  std::vector<std::pair<int, int> > &outDimTags,
+                  double tolerance, bool fixDegenerated, bool fixSmallEdges,
+                  bool fixSmallFaces, bool sewFaces, bool makeSolids);
+
   // set meshing constraints
   void setMeshSize(int dim, int tag, double size);
 
@@ -340,6 +350,9 @@ public:
 
   // queries
   bool getVertex(int tag, double &x, double &y, double &z);
+  bool getMass(int dim, int tag, double &mass);
+  bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z);
+  bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat);
   GVertex *getVertexForOCCShape(GModel *model, const TopoDS_Vertex &toFind);
   GEdge *getEdgeForOCCShape(GModel *model, const TopoDS_Edge &toFind);
   GFace *getFaceForOCCShape(GModel *model, const TopoDS_Face &toFind);
@@ -353,6 +366,8 @@ public:
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
   bool makeFaceSTL(const TopoDS_Face &s, std::vector<SPoint3> &vertices,
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeEdgeSTLFromFace(const TopoDS_Edge &c, const TopoDS_Face &s,
+                           std::vector<SPoint3> *vertices);
   bool makeSolidSTL(const TopoDS_Solid &s, std::vector<SPoint3> &vertices,
                     std::vector<SVector3> &normals,
                     std::vector<int> &triangles);
@@ -429,7 +444,8 @@ public:
   {
     return _error("add circle");
   }
-  bool addEllipseArc(int &tag, int startTag, int centerTag, int endTag)
+  bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
+                     int endTag)
   {
     return _error("add ellipse arc");
   }
@@ -483,7 +499,8 @@ public:
   {
     return _error("add surface filling");
   }
-  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags)
+  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
+                      bool sewing)
   {
     return _error("add surface loop");
   }
@@ -665,9 +682,25 @@ public:
   {
     return _error("export shape");
   }
+  bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
+                  std::vector<std::pair<int, int> > &outDimTags,
+                  double tolerance, bool fixDegenerated, bool fixSmallEdges,
+                  bool fixSmallFaces, bool sewFaces, bool makeSolids)
+  {
+    return _error("heal shapes");
+  }
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}
   bool getVertex(int tag, double &x, double &y, double &z) { return false; }
+  bool getMass(int dim, int tag, double &mass) { return false; }
+  bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z)
+  {
+    return false;
+  }
+  bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat)
+  {
+    return false;
+  }
   bool makeRectangleSTL(double x, double y, double z, double dx, double dy,
                         double roundedRadius, std::vector<SPoint3> &vertices,
                         std::vector<SVector3> &normals,

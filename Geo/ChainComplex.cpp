@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -58,7 +58,7 @@ ChainComplex::ChainComplex(CellComplex *cellComplex, int domain)
       mpz_t elem;
       mpz_init(elem);
       _hMatrix[dim] = create_gmp_matrix_zero(rows, cols);
-      for(std::set<Cell *, Less_Cell>::iterator cit =
+      for(std::set<Cell *, CellPtrLessThan>::iterator cit =
             cellComplex->firstCell(dim);
           cit != cellComplex->lastCell(dim); cit++) {
         Cell *cell = *cit;
@@ -449,7 +449,7 @@ gmp_matrix *ChainComplex::getBasis(int dim, int basis)
     return NULL;
 }
 
-void ChainComplex::getBasisChain(std::map<Cell *, int, Less_Cell> &chain,
+void ChainComplex::getBasisChain(std::map<Cell *, int, CellPtrLessThan> &chain,
                                  int num, int dim, int basis, bool deform)
 {
   if(basis < 0 || basis > 3) return;
@@ -476,7 +476,7 @@ void ChainComplex::getBasisChain(std::map<Cell *, int, Less_Cell> &chain,
     elemli = mpz_get_si(elem);
     elemi = elemli;
     if(elemli != 0) {
-      std::map<Cell *, int, Less_Cell> subCells;
+      std::map<Cell *, int, CellPtrLessThan> subCells;
       cell->getCells(subCells);
       for(Cell::citer it = subCells.begin(); it != subCells.end(); it++) {
         Cell *subCell = it->first;
@@ -522,9 +522,9 @@ int ChainComplex::getTorsion(int dim, int num)
     return _torsion[dim].at(num - 1);
 }
 
-bool ChainComplex::deform(std::map<Cell *, int, Less_Cell> &cells,
-                          std::map<Cell *, int, Less_Cell> &cellsInChain,
-                          std::map<Cell *, int, Less_Cell> &cellsNotInChain)
+bool ChainComplex::deform(std::map<Cell *, int, CellPtrLessThan> &cells,
+                          std::map<Cell *, int, CellPtrLessThan> &cellsInChain,
+                          std::map<Cell *, int, CellPtrLessThan> &cellsNotInChain)
 {
   std::vector<int> cc;
   std::vector<int> bc;
@@ -575,15 +575,15 @@ bool ChainComplex::deform(std::map<Cell *, int, Less_Cell> &cells,
   return true;
 }
 
-bool ChainComplex::deformChain(std::map<Cell *, int, Less_Cell> &cells,
+bool ChainComplex::deformChain(std::map<Cell *, int, CellPtrLessThan> &cells,
                                std::pair<Cell *, int> cell, bool bend)
 {
   Cell *c1 = cell.first;
   int dim = c1->getDim();
   for(Cell::biter cit = c1->firstCoboundary(true); cit != c1->lastCoboundary();
       cit++) {
-    std::map<Cell *, int, Less_Cell> cellsInChain;
-    std::map<Cell *, int, Less_Cell> cellsNotInChain;
+    std::map<Cell *, int, CellPtrLessThan> cellsInChain;
+    std::map<Cell *, int, CellPtrLessThan> cellsNotInChain;
     Cell *c1CbdCell = cit->first;
 
     for(Cell::biter cit2 = c1CbdCell->firstBoundary(true);
@@ -642,7 +642,7 @@ bool ChainComplex::deformChain(std::map<Cell *, int, Less_Cell> &cells,
   return false;
 }
 
-void ChainComplex::smoothenChain(std::map<Cell *, int, Less_Cell> &cells)
+void ChainComplex::smoothenChain(std::map<Cell *, int, CellPtrLessThan> &cells)
 {
   if(!_cellComplex->simplicial() || cells.size() < 2) return;
   int dim = cells.begin()->first->getDim();
@@ -676,7 +676,7 @@ void ChainComplex::smoothenChain(std::map<Cell *, int, Less_Cell> &cells)
              size);
 }
 
-void ChainComplex::eraseNullCells(std::map<Cell *, int, Less_Cell> &cells)
+void ChainComplex::eraseNullCells(std::map<Cell *, int, CellPtrLessThan> &cells)
 {
   std::vector<Cell *> toRemove;
   for(citer cit = cells.begin(); cit != cells.end(); cit++) {
@@ -685,7 +685,7 @@ void ChainComplex::eraseNullCells(std::map<Cell *, int, Less_Cell> &cells)
   for(std::size_t i = 0; i < toRemove.size(); i++) cells.erase(toRemove[i]);
 }
 
-void ChainComplex::deImmuneCells(std::map<Cell *, int, Less_Cell> &cells)
+void ChainComplex::deImmuneCells(std::map<Cell *, int, CellPtrLessThan> &cells)
 {
   for(citer cit = cells.begin(); cit != cells.end(); cit++) {
     Cell *cell = (*cit).first;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -364,9 +364,8 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
   }
   else {
     // large field format (8 char first/last field, 16 char middle, 6 per line)
-    fprintf(fp, "GRID*   %-16ld%-16d%-16.9G%-16.9G*N%-6ld\n", _index, 0, x1, y1,
-            _index);
-    fprintf(fp, "*N%-6ld%-16.9G\n", _index, z1);
+    fprintf(fp, "GRID*   %-16ld%-16d%-16.9G%-16.9G\n", _index, 0, x1, y1);
+    fprintf(fp, "*       %-16.9G\n", z1);
   }
 }
 
@@ -406,12 +405,12 @@ void MVertex::writeSU2(FILE *fp, int dim, double scalingFactor)
             y() * scalingFactor, z() * scalingFactor, _index - 1);
 }
 
-double MVertexLessThanLexicographic::tolerance = 1.e-6;
+double MVertexPtrLessThanLexicographic::tolerance = 1.e-6;
 
-double MVertexLessThanLexicographic::getTolerance() { return tolerance; }
+double MVertexPtrLessThanLexicographic::getTolerance() { return tolerance; }
 
-bool MVertexLessThanLexicographic::operator()(const MVertex *v1,
-                                              const MVertex *v2) const
+bool MVertexPtrLessThanLexicographic::operator()(const MVertex *v1,
+                                                 const MVertex *v2) const
 {
   // you should not use this unless you know what you are doing; to create
   // unique vertices, use MVertexRTree
@@ -524,6 +523,12 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
 bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
+  if(!v->onWhat()){
+    Msg::Error("Mesh node %d is not classified: cannot reparametrize",
+               v->getNum());
+    return false;
+  }
+
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve) {
     param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -57,7 +57,7 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
       GVertex *v2 = ge->getEndVertex();
       if(v1 == gv) return GEdgeSigned(1, ge);
       if(v2 == gv) return GEdgeSigned(-1, ge);
-      Msg::Error("Something wrong in edge loop 1");
+      Msg::Error("Something wrong in curve loop 1");
       thisOne->print();
     }
     ++it;
@@ -74,7 +74,7 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
       GVertex *v2 = ge->getEndVertex();
       if(v1 == gv) return GEdgeSigned(1, ge);
       if(v2 == gv) return GEdgeSigned(-1, ge);
-      Msg::Error("Something wrong in edge loop 2");
+      Msg::Error("Something wrong in curve loop 2");
       thisOne->print();
     }
     ++it;
@@ -112,8 +112,7 @@ static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,
     else
       ges = nextOne(prevOne, wire);
     if(ges.getSign() == 0) { // oops
-      Msg::Warning("Something wrong in edge loop of size=%d, no sign!",
-                   wire.size());
+      Msg::Debug("no sign in wire of size=%d: aborting loop construction");
       break;
     }
     prevOne = &ges;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -50,15 +50,15 @@ CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
   _reduced = false;
 
   Msg::Debug("Cells in domain:");
-  Msg::Debug(" %d volumes, %d faces %d edges, and %d vertices",
+  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
              getNumCells(3, 1), getNumCells(2, 1), getNumCells(1, 1),
              getNumCells(0, 1));
   Msg::Debug("Cells in subdomain:");
-  Msg::Debug(" %d volumes, %d faces %d edges, and %d vertices",
+  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
              getNumCells(3, 2), getNumCells(2, 2), getNumCells(1, 2),
              getNumCells(0, 2));
   Msg::Debug("Cells in relative domain:");
-  Msg::Debug(" %d volumes, %d faces %d edges, and %d vertices",
+  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
              getNumCells(3, 0), getNumCells(2, 0), getNumCells(1, 0),
              getNumCells(0, 0));
 }
@@ -160,7 +160,7 @@ bool CellComplex::_removeCells(std::vector<MElement *> &elements, int domain)
   if(elements.empty()) return true;
   Msg::Debug("Removing %d elements and their subcells from the cell complex.",
              (int)elements.size());
-  std::set<Cell *, Less_Cell> removed[4];
+  std::set<Cell *, CellPtrLessThan> removed[4];
 
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *element = elements.at(i);
@@ -204,7 +204,7 @@ bool CellComplex::_removeCells(std::vector<MElement *> &elements, int domain)
     }
   }
   Msg::Debug("Removed %d volumes, %d faces, %d edges, and %d vertices from the "
-             "cell complex.",
+             "cell complex",
              (int)removed[3].size(), (int)removed[2].size(),
              (int)removed[1].size(), (int)removed[0].size());
   return true;
@@ -255,18 +255,18 @@ void CellComplex::insertCell(Cell *cell)
 
 void CellComplex::removeCell(Cell *cell, bool other, bool del)
 {
-  std::map<Cell *, short int, Less_Cell> coboundary;
+  std::map<Cell *, short int, CellPtrLessThan> coboundary;
   cell->getCoboundary(coboundary);
-  std::map<Cell *, short int, Less_Cell> boundary;
+  std::map<Cell *, short int, CellPtrLessThan> boundary;
   cell->getBoundary(boundary);
 
-  for(std::map<Cell *, short int, Less_Cell>::iterator it = coboundary.begin();
+  for(std::map<Cell *, short int, CellPtrLessThan>::iterator it = coboundary.begin();
       it != coboundary.end(); it++) {
     Cell *cbdCell = (*it).first;
     cbdCell->removeBoundaryCell(cell, other);
   }
 
-  for(std::map<Cell *, short int, Less_Cell>::iterator it = boundary.begin();
+  for(std::map<Cell *, short int, CellPtrLessThan>::iterator it = boundary.begin();
       it != boundary.end(); it++) {
     Cell *bdCell = (*it).first;
     bdCell->removeCoboundaryCell(cell, other);
@@ -286,11 +286,11 @@ void CellComplex::removeCell(Cell *cell, bool other, bool del)
     _removedcells.push_back(cell);
 }
 
-void CellComplex::enqueueCells(std::map<Cell *, short int, Less_Cell> &cells,
+void CellComplex::enqueueCells(std::map<Cell *, short int, CellPtrLessThan> &cells,
                                std::queue<Cell *> &Q,
-                               std::set<Cell *, Less_Cell> &Qset)
+                               std::set<Cell *, CellPtrLessThan> &Qset)
 {
-  for(std::map<Cell *, short int, Less_Cell>::iterator cit = cells.begin();
+  for(std::map<Cell *, short int, CellPtrLessThan>::iterator cit = cells.begin();
       cit != cells.end(); cit++) {
     Cell *cell = (*cit).first;
     citer it = Qset.find(cell);
@@ -307,13 +307,13 @@ int CellComplex::coreduction(Cell *startCell, int omit,
   int coreductions = 0;
 
   std::queue<Cell *> Q;
-  std::set<Cell *, Less_Cell> Qset;
+  std::set<Cell *, CellPtrLessThan> Qset;
 
   Q.push(startCell);
   Qset.insert(startCell);
 
-  std::map<Cell *, short int, Less_Cell> bd_s;
-  std::map<Cell *, short int, Less_Cell> cbd_c;
+  std::map<Cell *, short int, CellPtrLessThan> bd_s;
+  std::map<Cell *, short int, CellPtrLessThan> cbd_c;
 
   Cell *s;
   while(!Q.empty()) {
@@ -674,8 +674,8 @@ int CellComplex::combine(int dim)
   double t1 = Cpu();
 
   std::queue<Cell *> Q;
-  std::set<Cell *, Less_Cell> Qset;
-  std::map<Cell *, short int, Less_Cell> bd_c;
+  std::set<Cell *, CellPtrLessThan> Qset;
+  std::map<Cell *, short int, CellPtrLessThan> bd_c;
   int count = 0;
 
   for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
@@ -752,8 +752,8 @@ int CellComplex::cocombine(int dim)
   double t1 = Cpu();
 
   std::queue<Cell *> Q;
-  std::set<Cell *, Less_Cell> Qset;
-  std::map<Cell *, short int, Less_Cell> cbd_c;
+  std::set<Cell *, CellPtrLessThan> Qset;
+  std::map<Cell *, short int, CellPtrLessThan> cbd_c;
   int count = 0;
 
   for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
@@ -826,9 +826,9 @@ bool CellComplex::coherent()
   for(int i = 0; i < 4; i++) {
     for(citer cit = firstCell(i); cit != lastCell(i); cit++) {
       Cell *cell = *cit;
-      std::map<Cell *, short int, Less_Cell> boundary;
+      std::map<Cell *, short int, CellPtrLessThan> boundary;
       cell->getBoundary(boundary);
-      for(std::map<Cell *, short int, Less_Cell>::iterator it =
+      for(std::map<Cell *, short int, CellPtrLessThan>::iterator it =
             boundary.begin();
           it != boundary.end(); it++) {
         Cell *bdCell = (*it).first;
@@ -845,9 +845,9 @@ bool CellComplex::coherent()
           coherent = false;
         }
       }
-      std::map<Cell *, short int, Less_Cell> coboundary;
+      std::map<Cell *, short int, CellPtrLessThan> coboundary;
       cell->getCoboundary(coboundary);
-      for(std::map<Cell *, short int, Less_Cell>::iterator it =
+      for(std::map<Cell *, short int, CellPtrLessThan>::iterator it =
             coboundary.begin();
           it != coboundary.end(); it++) {
         Cell *cbdCell = (*it).first;
@@ -882,7 +882,7 @@ bool CellComplex::hasCell(Cell *cell, bool orig)
     return true;
 }
 
-void CellComplex::getCells(std::set<Cell *, Less_Cell> &cells, int dim,
+void CellComplex::getCells(std::set<Cell *, CellPtrLessThan> &cells, int dim,
                            int domain)
 {
   cells.clear();

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -106,14 +106,14 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
     m->pruneMeshVertexAssociations();
   }
   else if(outputdim == 1) { // create line elements for mesh edges
-    std::set<MEdge, Less_Edge> edges;
+    std::set<MEdge, MEdgeLessThan> edges;
     for(std::size_t i = 0; i < elements.size(); i++) {
       for(int j = 0; j < elements[i]->getNumEdges(); j++) {
         MEdge e = elements[i]->getEdge(j);
         edges.insert(e);
       }
     }
-    for(std::set<MEdge, Less_Edge>::const_iterator it = edges.begin();
+    for(std::set<MEdge, MEdgeLessThan>::const_iterator it = edges.begin();
         it != edges.end(); ++it) {
       const MEdge &e = *it;
       GEdge *ge = 0;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -20,28 +20,20 @@ CTX::CTX() : debugSurface(-1), gamepad(0)
   short int word = 0x0001;
   char *byte = (char*)&word;
   bigEndian = (byte[0] ? 0 : 1);
-  const char *tmp;
-  if((tmp = GetEnvironmentVar("GMSH_HOME")))
-    homeDir = tmp;
+
+  if(homeDir.empty()) homeDir = GetEnvironmentVar("GMSH_HOME");
 #if defined(WIN32)
-  else if((tmp = GetEnvironmentVar("APPDATA")))
-    homeDir = tmp;
+  if(homeDir.empty()) homeDir = GetEnvironmentVar("APPDATA");
 #else
-  else if((tmp = GetEnvironmentVar("HOME")))
-    homeDir = tmp;
+  if(homeDir.empty()) homeDir = GetEnvironmentVar("HOME");
 #endif
-  else if((tmp = GetEnvironmentVar("TMP")))
-    homeDir = tmp;
-  else if((tmp = GetEnvironmentVar("TEMP")))
-    homeDir = tmp;
-  else
-    homeDir = "";
+  if(homeDir.empty()) homeDir = GetEnvironmentVar("TMP");
+  if(homeDir.empty()) homeDir = GetEnvironmentVar("TEMP");
   int len = homeDir.size();
-  if(len && homeDir[len - 1] != '/')
-    homeDir += "/";
+  if(len && homeDir[len - 1] != '/') homeDir += "/";
 
   batch = batchAfterMesh = 0;
-  meshDiscrete = 0;
+  batchSomeValue = 0;
   outputFileName = "";
   bgmFileName = "";
   createAppendMeshStatReport = 0;

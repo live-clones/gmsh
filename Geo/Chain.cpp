@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -34,16 +34,16 @@ std::string convertInt(int number)
   return stream.str();
 }
 
-std::map<GEntity *, std::set<MVertex *, MVertexLessThanNum>, GEntityLessThan>
+std::map<GEntity *, std::set<MVertex *, MVertexPtrLessThan>, GEntityPtrLessThan>
   ElemChain::_vertexCache;
 
 inline void ElemChain::_sortVertexIndices()
 {
-  std::map<MVertex *, int, MVertexLessThanNum> si;
+  std::map<MVertex *, int, MVertexPtrLessThan> si;
 
   for(std::size_t i = 0; i < _v.size(); i++) si[_v[i]] = i;
 
-  std::map<MVertex *, int, MVertexLessThanNum>::iterator it;
+  std::map<MVertex *, int, MVertexPtrLessThan>::iterator it;
   for(it = si.begin(); it != si.end(); it++) _si.push_back(it->second);
 }
 
@@ -83,7 +83,7 @@ bool ElemChain::_equalVertices(const std::vector<MVertex *> &v2) const
 ElemChain::ElemChain(MElement *e)
 {
   _dim = e->getDim();
-  for(int i = 0; i < e->getNumPrimaryVertices(); i++)
+  for(std::size_t i = 0; i < e->getNumPrimaryVertices(); i++)
     _v.push_back(e->getVertex(i));
   _sortVertexIndices();
 }
@@ -140,13 +140,13 @@ int ElemChain::compareOrientation(const ElemChain &c2) const
 
   int perm = 1;
   if(this->_equalVertices(v2)) return perm;
-  while(std::next_permutation(v2.begin(), v2.end(), MVertexLessThanNum())) {
+  while(std::next_permutation(v2.begin(), v2.end(), MVertexPtrLessThan())) {
     perm *= -1;
     if(this->_equalVertices(v2)) return perm;
   }
   c2.getMeshVertices(v2);
   perm = 1;
-  while(std::prev_permutation(v2.begin(), v2.end(), MVertexLessThanNum())) {
+  while(std::prev_permutation(v2.begin(), v2.end(), MVertexPtrLessThan())) {
     perm *= -1;
     if(this->_equalVertices(v2)) return perm;
   }

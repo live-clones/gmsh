@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "CGNSOptions.h"
 
 #define NUM_SOLVERS 10
 
@@ -26,30 +25,33 @@ struct contextMeshOptions {
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
   double anisoMax, smoothRatio;
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
-  int nbSmoothing, algo2d, algo3d, algoSubdivide;
+  int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
-  int recombine3DAll, recombine3DLevel;
-  int recombine3DConformity, flexibleTransfinite;
+  int recombine3DAll, recombine3DLevel, recombine3DConformity;
+  int flexibleTransfinite, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
-  int meshOnlyVisible, minCircPoints, minCurvPoints;
+  int meshOnlyVisible, minCircPoints, minCurvPoints, minElementsPerTwoPi;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
+  int hoDistCAD;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
-  std::map<int, int> algo2dPerFace;
-  std::map<int, int> curvatureControlPerFace;
-  int NewtonConvergenceTestXYZ;
+  int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
-  int renumber;
+  int renumber, compoundClassify;
+  double compoundLcFactor;
+  unsigned int randomSeed;
   // mesh IO
   int fileFormat;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
+  double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
-  int cgnsImportOrder, cgnsConstructTopology;
+  int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder,
+      cgnsConstructTopology, cgnsExportCPEX0045;
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
@@ -60,6 +62,8 @@ struct contextMeshOptions {
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
+  int metisObjective, metisMinConn;
+  double metisMaxLoadImbalance;
   // mesh display
   int draw, changed, light, lightTwoSide, lightLines, pointType;
   int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
@@ -78,15 +82,15 @@ struct contextGeometryOptions {
   int autoCoherence;
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occParallel, occBooleanPreserveNumbering;
-  int occDisableSTL, occImportLabels;
+  int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
+  int occDisableSTL, occImportLabels, occUnionUnify;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
   double matchMeshScaleFactor;
   double matchMeshTolerance;
-  int hideCompounds, orientedPhysicals;
+  int orientedPhysicals;
   int reparamOnFaceRobust;
   // geometry display
   int draw, light, lightTwoSide, points, curves, surfaces, volumes;
@@ -147,6 +151,8 @@ public:
   std::string watchFilePattern;
   // show tootips in the GUI?
   int tooltips;
+  // enable input field scrolling (moving the mouse to change numbers)
+  int inputScrolling;
   // position and size of various windows in the GUI
   int glPosition[2], glSize[2], msgSize, menuPosition[2], menuSize[2],
     detachedMenu;
@@ -157,6 +163,8 @@ public:
   int fileChooserPosition[2], extraPosition[2], extraSize[2];
   // use the system menu bar on Mac OS X?
   int systemMenuBar;
+  // use the native file chooser?
+  int nativeFileChooser;
   // show standard Gmsh menu in onelab window
   int showModuleMenu;
   // use high-resolution opengl graphics (retina Macs)
@@ -167,8 +175,8 @@ public:
   int batch;
   // batch operations to apply after meshing (1: partition mesh)
   int batchAfterMesh;
-  // mesh discrete faces / edges
-  int meshDiscrete;
+  // some option for batch processing
+  double batchSomeValue;
   // initial menu (0: automatic, 1: geom, 2: mesh, 3: solver, 4: post)
   int initialContext;
   // show some windows on startup?
@@ -193,8 +201,8 @@ public:
   double min[3], max[3];
   // "center of mass" of the current geometry, used for graphics only
   double cg[3];
-  // characteristic length for the whole problem (never used in mesh
-  // generation ->only for geo/post)
+  // characteristic length for the whole problem, measuring the overall bounding
+  // box (used to set tolerances relative to the overall model size)
   double lc;
   // double buffer/antialias/stereo graphics?
   int db, antialiasing, stereo, camera;
@@ -275,11 +283,11 @@ public:
   contextGeometryOptions geom;
   // mesh options
   contextMeshOptions mesh;
-  CGNSOptions cgnsOptions;
   // post processing options
   struct {
     int draw, link, horizontalScales;
-    int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
+    int smooth, animCycle, animStep;
+    int combineTime, combineRemoveOrig, combineCopyOptions;
     int fileFormat, plugins, forceNodeData, forceElementData;
     int saveMesh, saveInterpolationMatrices;
     double animDelay;
@@ -314,6 +322,7 @@ public:
     std::string parameterCommand;
     int x3dCompatibility, x3dRemoveInnerBorders;
     double x3dPrecision, x3dTransparency;
+    int x3dSurfaces, x3dEdges, x3dVertices;
   } print;
   // color options
   struct {

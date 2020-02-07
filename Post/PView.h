@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,6 +9,8 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "MVertex.h"
+#include "MElement.h"
 #include "SPoint3.h"
 
 class PViewData;
@@ -48,7 +50,7 @@ public:
   // construct a new view using the given data
   PView(PViewData *data, int tag = -1);
   // construct a new view, alias of the view "ref"
-  PView(PView *ref, bool copyOptions = true);
+  PView(PView *ref, bool copyOptions = true, int tag = -1);
   // construct a new list-based view from a simple 2D point dataset
   PView(const std::string &xname, const std::string &yname,
         std::vector<double> &x, std::vector<double> &y);
@@ -62,6 +64,8 @@ public:
   // add a new time step to a given mesh-based view
   void addStep(GModel *model, const std::map<int, std::vector<double> > &data,
                double time = 0., int numComp = -1);
+  // add a new step to a list-based scalar point dataset
+  void addStep(std::vector<double> &y);
 
   // default destructor
   ~PView();
@@ -109,7 +113,7 @@ public:
 #endif
 
   // combine view
-  static void combine(bool time, int how, bool remove);
+  static void combine(bool time, int how, bool remove, bool copyOptions);
 
   // find view by name, by fileName, or by number. If timeStep >= 0, return view
   // only if it does *not* contain that timestep; if partition >= 0, return view
@@ -130,6 +134,9 @@ public:
   static bool readPOS(const std::string &fileName, int fileIndex = -1);
   static bool readMSH(const std::string &fileName, int fileIndex = -1,
                       int partitionToRead = -1);
+  static bool readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
+                       const std::vector<std::vector<MElement *> > &eltPerZone,
+                       const std::string &fileName);
   static bool readMED(const std::string &fileName, int fileIndex = -1);
   static bool readPCH(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);
@@ -157,6 +164,14 @@ public:
 
   // smoothed normals
   smooth_normals *normals;
+};
+
+class nameData {
+public:
+  std::string name;
+  std::vector<int> indices;
+  std::vector<PViewData *> data;
+  PViewOptions *options;
 };
 
 // this is the maximum number of nodes of elements we actually *draw*

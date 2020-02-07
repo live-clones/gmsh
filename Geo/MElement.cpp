@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,6 +26,8 @@
 #include "Numeric.h"
 #include "CondNumBasis.h"
 #include "Context.h"
+#include "FuncSpaceData.h"
+#include "bezierBasis.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasuresJacobian.h"
@@ -181,11 +183,11 @@ char MElement::getVisibility() const
 MEdgeN MElement::getHighOrderEdge(int num, int sign)
 {
   const int order = getPolynomialOrder();
-  std::vector<MVertex *> vertices((unsigned int)order + 1);
+  std::vector<MVertex *> vertices(static_cast<std::size_t>(order) + 1);
   vertices[0] = getVertex(numEdge2numVertex(num, sign > 0 ? 0 : 1));
   vertices[1] = getVertex(numEdge2numVertex(num, sign > 0 ? 1 : 0));
-  const int start = getNumPrimaryVertices() + num * (order - 1);
-  const int end = getNumPrimaryVertices() + (num + 1) * (order - 1);
+  const int start = (int)getNumPrimaryVertices() + num * (order - 1);
+  const int end = (int)getNumPrimaryVertices() + (num + 1) * (order - 1);
   int k = 1;
   if(sign > 0) {
     for(int i = start; i < end; ++i) {
@@ -342,10 +344,9 @@ void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
   const JacobianBasis *jac = getJacobianFuncSpace();
-  const int numJacNodes = jac->getNumJacNodes();
   fullMatrix<double> nodesXYZ(jac->getNumMapNodes(), 3);
   getNodesCoord(nodesXYZ);
-  fullVector<double> SJi(numJacNodes), Bi(numJacNodes);
+  fullVector<double> SJi(jac->getNumSamplingPnts());
   jac->getScaledJacobian(nodesXYZ, SJi);
   if(ge && (ge->dim() == 2) && ge->haveParametrization()) {
     // If parametrized surface entity provided...
@@ -371,9 +372,9 @@ void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
                         geoNorm(2) * elNorm(0, 2);
     if(scal < 0.) SJi.scale(-1.);
   }
-  jac->lag2Bez(SJi, Bi);
-  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
-  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
+  bezierCoeff Bi(jac->getFuncSpaceData(), SJi);
+  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
+  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
 #endif
 }
 
@@ -382,10 +383,9 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
   const JacobianBasis *jac = getJacobianFuncSpace();
-  const int numJacNodes = jac->getNumJacNodes();
   fullMatrix<double> nodesXYZ(jac->getNumMapNodes(), 3);
   getNodesCoord(nodesXYZ);
-  fullVector<double> iJi(numJacNodes), Bi(numJacNodes);
+  fullVector<double> iJi(jac->getNumSamplingPnts());
   jac->getSignedIdealJacobian(nodesXYZ, iJi);
   const int nEd = getNumEdges(), dim = getDim();
   double sumEdLength = 0.;
@@ -425,10 +425,9 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
                       geoNorm(2) * elNorm(0, 2);
     if(dp < 0.) scale = -scale;
   }
-  iJi.scale(scale);
-  jac->lag2Bez(iJi, Bi);
-  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
-  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
+  bezierCoeff Bi(jac->getFuncSpaceData(), iJi);
+  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
+  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
 #endif
 }
 
@@ -452,7 +451,7 @@ void MElement::signedInvCondNumRange(double &iCNMin, double &iCNMax,
     // If parametrized surface entity provided...
     SVector3 geoNorm(0., 0., 0.);
     // ... correct Jacobian sign with geometrical normal
-    for(int i = 0; i < getNumPrimaryVertices(); i++) {
+    for(std::size_t i = 0; i < getNumPrimaryVertices(); i++) {
       const MVertex *vert = getVertex(i);
       if(vert->onWhat() == ge) {
         double u, v;
@@ -566,8 +565,8 @@ SPoint3 MElement::barycenter_infty() const
 SPoint3 MElement::barycenter(bool primary) const
 {
   SPoint3 p(0., 0., 0.);
-  int n = primary ? getNumPrimaryVertices() : getNumVertices();
-  for(int i = 0; i < n; i++) {
+  std::size_t n = primary ? getNumPrimaryVertices() : getNumVertices();
+  for(std::size_t i = 0; i < n; i++) {
     const MVertex *v = getVertex(i);
     p[0] += v->x();
     p[1] += v->y();
@@ -582,8 +581,8 @@ SPoint3 MElement::barycenter(bool primary) const
 SPoint3 MElement::fastBarycenter(bool primary) const
 {
   SPoint3 p(0., 0., 0.);
-  int n = primary ? getNumPrimaryVertices() : getNumVertices();
-  for(int i = 0; i < n; i++) {
+  std::size_t n = primary ? getNumPrimaryVertices() : getNumVertices();
+  for(std::size_t i = 0; i < n; i++) {
     const MVertex *v = getVertex(i);
     p[0] += v->x();
     p[1] += v->y();
@@ -714,11 +713,24 @@ const nodalBasis *MElement::getFunctionSpace(int order, bool serendip) const
   return type ? BasisFactory::getNodalBasis(type) : NULL;
 }
 
-const JacobianBasis *MElement::getJacobianFuncSpace(int order) const
+const FuncSpaceData MElement::getFuncSpaceData(int order, bool serendip) const
 {
-  if(order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  int tag = ElementType::getType(getType(), order);
-  return BasisFactory::getJacobianBasis(tag);
+  if(order == -1) return FuncSpaceData(this);
+  return FuncSpaceData(this, order, serendip);
+}
+
+const JacobianBasis *MElement::getJacobianFuncSpace(int orderElement) const
+{
+  if(orderElement == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
+  int tag = ElementType::getType(getType(), orderElement);
+  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+}
+
+const FuncSpaceData MElement::getJacobianFuncSpaceData(int orderElement) const
+{
+  if(orderElement == -1) orderElement = getPolynomialOrder();
+  int orderJac = JacobianBasis::jacobianOrder(this->getType(), orderElement);
+  return FuncSpaceData(this, orderJac, false);
 }
 
 static double _computeDeterminantAndRegularize(const MElement *ele,
@@ -886,7 +898,7 @@ double MElement::getJacobian(double u, double v, double w,
 
   double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf);
-  for(int i = 0; i < getNumShapeFunctions(); i++) {
+  for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     const MVertex *ver = getShapeFunctionNode(i);
     double *gg = gsf[i];
     for(int j = 0; j < getDim(); j++) {
@@ -907,8 +919,8 @@ double MElement::getJacobian(const fullMatrix<double> &gsf,
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
   if(gsf.size2() > 3) return 0;
 
-  const int numShapeFunctions = getNumShapeFunctions();
-  for(int i = 0; i < numShapeFunctions; i++) {
+  const std::size_t numShapeFunctions = getNumShapeFunctions();
+  for(std::size_t i = 0; i < numShapeFunctions; i++) {
     const MVertex *v = getShapeFunctionNode(i);
     for(int j = 0; j < gsf.size2(); j++) {
       jac[j][0] += v->x() * gsf(i, j);
@@ -968,10 +980,10 @@ double MElement::getPrimaryJacobian(double u, double v, double w,
 
   double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf, 1);
-  for(int i = 0; i < getNumPrimaryShapeFunctions(); i++) {
+  for(std::size_t i = 0; i < getNumPrimaryShapeFunctions(); i++) {
     const MVertex *v = getShapeFunctionNode(i);
     double *gg = gsf[i];
-    for(int j = 0; j < 3; j++) {
+    for(std::size_t j = 0; j < 3; j++) {
       jac[j][0] += v->x() * gg[j];
       jac[j][1] += v->y() * gg[j];
       jac[j][2] += v->z() * gg[j];
@@ -1055,7 +1067,7 @@ void MElement::pnt(double u, double v, double w, SPoint3 &p) const
   double x = 0., y = 0., z = 0.;
   double sf[1256];
   getShapeFunctions(u, v, w, sf);
-  for(int j = 0; j < getNumShapeFunctions(); j++) {
+  for(std::size_t j = 0; j < getNumShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
     y += sf[j] * v->y();
@@ -1069,7 +1081,7 @@ void MElement::pnt(double u, double v, double w, double *p) const
   double x = 0., y = 0., z = 0.;
   double sf[1256];
   getShapeFunctions(u, v, w, sf);
-  for(int j = 0; j < getNumShapeFunctions(); j++) {
+  for(std::size_t j = 0; j < getNumShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
     y += sf[j] * v->y();
@@ -1083,7 +1095,7 @@ void MElement::pnt(double u, double v, double w, double *p) const
 void MElement::pnt(const std::vector<double> &sf, SPoint3 &p) const
 {
   double x = 0., y = 0., z = 0.;
-  for(int j = 0; j < getNumShapeFunctions(); j++) {
+  for(std::size_t j = 0; j < getNumShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
     y += sf[j] * v->y();
@@ -1097,7 +1109,7 @@ void MElement::primaryPnt(double u, double v, double w, SPoint3 &p)
   double x = 0., y = 0., z = 0.;
   double sf[1256];
   getShapeFunctions(u, v, w, sf, 1);
-  for(int j = 0; j < getNumPrimaryShapeFunctions(); j++) {
+  for(std::size_t j = 0; j < getNumPrimaryShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
     y += sf[j] * v->y();
@@ -1120,7 +1132,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
     double distNearer = (v->x() - xyz[0]) * (v->x() - xyz[0]) +
                         (v->y() - xyz[1]) * (v->y() - xyz[1]) +
                         (v->z() - xyz[2]) * (v->z() - xyz[2]);
-    for(int i = 1; i < getNumShapeFunctions(); i++) {
+    for(std::size_t i = 1; i < getNumShapeFunctions(); i++) {
       const MVertex *v = getShapeFunctionNode(i);
       double dist = (v->x() - xyz[0]) * (v->x() - xyz[0]) +
                     (v->y() - xyz[1]) * (v->y() - xyz[1]) +
@@ -1146,7 +1158,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
     double xn = 0., yn = 0., zn = 0.;
     double sf[1256];
     getShapeFunctions(uvw[0], uvw[1], uvw[2], sf);
-    for(int i = 0; i < getNumShapeFunctions(); i++) {
+    for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
       const MVertex *v = getShapeFunctionNode(i);
       xn += v->x() * sf[i];
       yn += v->y() * sf[i];
@@ -1203,7 +1215,7 @@ double MElement::interpolate(double val[], double u, double v, double w,
   int j = 0;
   double sf[1256];
   getShapeFunctions(u, v, w, sf, order);
-  for(int i = 0; i < getNumShapeFunctions(); i++) {
+  for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     sum += val[j] * sf[i];
     j += stride;
   }
@@ -1218,7 +1230,7 @@ void MElement::interpolateGrad(double val[], double u, double v, double w,
   int j = 0;
   double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf, order);
-  for(int i = 0; i < getNumShapeFunctions(); i++) {
+  for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     dfdu[0] += val[j] * gsf[i][0];
     dfdu[1] += val[j] * gsf[i][1];
     dfdu[2] += val[j] * gsf[i][2];
@@ -1429,8 +1441,9 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
     // tags change from element to element (third-party codes can
     // still write MSH file optimized for reading speed, by grouping
     // elements with the same number of tags in blobs)
-    int blob[60] = {type,          1,          numTags,       num ? num : (int)_num,
-                    abs(physical), elementary, 1 + numGhosts, _partition};
+    int blob[60] = {
+      type,          1,          numTags,       num ? num : (int)_num,
+      abs(physical), elementary, 1 + numGhosts, _partition};
     if(ghosts)
       for(int i = 0; i < numGhosts; i++) blob[8 + i] = -(*ghosts)[i];
     if(par) blob[8 + numGhosts] = parentNum;
@@ -1624,6 +1637,24 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
   }
 }
 
+void MElement::writeX3D(FILE *fp, double scalingFactor)
+{
+  if(getType() != TYPE_TRI && getType() != TYPE_QUA) return;
+  int qid[3] = {0, 2, 3};
+
+  for(int j = 0; j < 3; j++)
+    fprintf(fp, "%g %g %g\n", getVertex(j)->x() * scalingFactor,
+            getVertex(j)->y() * scalingFactor,
+            getVertex(j)->z() * scalingFactor);
+  if(getNumVertices() == 4) {
+    for(int j = 0; j < 3; j++) {
+      fprintf(fp, "%g %g %g\n", getVertex(qid[j])->x() * scalingFactor,
+              getVertex(qid[j])->y() * scalingFactor,
+              getVertex(qid[j])->z() * scalingFactor);
+    }
+  }
+}
+
 void MElement::writePLY2(FILE *fp)
 {
   fprintf(fp, "3 ");
@@ -1660,7 +1691,8 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
   if(binary) {
     int verts[60];
     verts[0] = n;
-    for(int i = 0; i < n; i++) verts[i + 1] = (int)getVertexVTK(i)->getIndex() - 1;
+    for(int i = 0; i < n; i++)
+      verts[i + 1] = (int)getVertexVTK(i)->getIndex() - 1;
     // VTK always expects big endian binary data
     if(!bigEndian) SwapBytes((char *)verts, sizeof(int), n + 1);
     fwrite(verts, sizeof(int), n + 1, fp);
@@ -1813,12 +1845,25 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType,
       fprintf(fp, ",0.,0.,0.");
     fprintf(fp, "\n");
   }
-  else { // small or large field format
+  else if(format == 1) { // small field format
     fprintf(fp, "%-8s%-8lu%-8d", str, _num, tag);
     for(int i = 0; i < n; i++) {
       fprintf(fp, "%-8ld", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)) {
         fprintf(fp, "+%s%-6lu\n+%s%-6lu", cont[ncont], _num, cont[ncont], _num);
+        ncont++;
+      }
+    }
+    if(n == 2) // CBAR
+      fprintf(fp, "%-8s%-8s%-8s", "0.", "0.", "0.");
+    fprintf(fp, "\n");
+  }
+  else{ // large field format
+    fprintf(fp, "%-8s%-8lu%-8d", str, _num, tag);
+    for(int i = 0; i < n; i++) {
+      fprintf(fp, "%-8ld", getVertexBDF(i)->getIndex());
+      if(i != n - 1 && !((i + 3) % 8)) {
+        fprintf(fp, "\n        ");
         ncont++;
       }
     }
@@ -2416,10 +2461,9 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
 }
 
 MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
-                                  std::size_t num,
-                                  int part, bool owner, int parent,
-                                  MElement *parent_ptr, MElement *d1,
-                                  MElement *d2)
+                                  std::size_t num, int part, bool owner,
+                                  int parent, MElement *parent_ptr,
+                                  MElement *d1, MElement *d2)
 {
   switch(type) {
   case MSH_PNT: return new MPoint(v, num, part);
@@ -2572,7 +2616,7 @@ MElement *MElementFactory::create(int num, int type,
         vertices[i] = v;
       }
       else {
-        Msg::Error("Unknown vertex %d in element %d", numVertex, num);
+        Msg::Error("Unknown node %d in element %d", numVertex, num);
         return 0;
       }
     }

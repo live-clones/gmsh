@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -336,13 +336,6 @@ public:
   virtual void importLists(int N[24], std::vector<double> *V[24]);
   virtual void getListPointers(int N[24], std::vector<double> *V[24]);
   virtual void sendToServer(const std::string &name);
-};
-
-class nameData {
-public:
-  std::string name;
-  std::vector<int> indices;
-  std::vector<PViewData *> data;
 };
 
 #endif

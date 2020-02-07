@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -262,7 +262,6 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
 
 static void classify_cb(Fl_Widget *w, void *data)
 {
-  //  printf("cpoc<<<\n");
   classificationEditor *e = (classificationEditor *)data;
 
   if(!e->selected) {
@@ -271,18 +270,13 @@ static void classify_cb(Fl_Widget *w, void *data)
                        GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
     GModel::current()->add(e->selected);
   }
-  //  printf("cpoc<<<\n");
 
-  std::map<MVertex* , std::pair<SVector3, SVector3> > CURVATURES;
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
-    computeDiscreteCurvatures(GModel::current(), CURVATURES );
+  computeDiscreteCurvatures(GModel::current());
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
     computeEdgeCut(GModel::current(), e->selected->lines, 100000);
-  }
-  //  printf("cpoc<<<\n");
-
   computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
-  
-  GModel::current()->classifyFaces();
+  double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
+  classifyFaces(GModel::current(), threshold);
 
   // remove selected, but do not delete its elements
   if(e->selected) {
@@ -291,22 +285,16 @@ static void classify_cb(Fl_Widget *w, void *data)
     delete e->selected;
     e->selected = 0;
   }
-  //  printf("cpoc<<<\n");
+
+  GModel::current()->pruneMeshVertexAssociations();
 
   e->elements.clear();
   e->edges_detected.clear();
-  GModel::current()->pruneMeshVertexAssociations();
+
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
+    GModel::current()->createGeometryOfDiscreteEntities();
+
   NoElementsSelectedMode(e);
-
-  //  printf("cpoc<<< PARAMETRIZE\n");
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
-    //    printf("ZAZOU\n");
-    parametrizeAllGEdge(GModel::current());
-    //    printf("ZAZOU\n");
-    parametrizeAllGFace(GModel::current(), &CURVATURES);
-  }
-  //  printf("cpoc<<<\n");
-
 }
 
 classificationEditor::classificationEditor() : selected(0)
@@ -367,8 +355,8 @@ classificationEditor::classificationEditor() : selected(0)
     inputs[CLASS_VALUE_ANGLE]->value(40);
     inputs[CLASS_VALUE_ANGLE]->maximum(180);
     inputs[CLASS_VALUE_ANGLE]->minimum(0);
+    if(CTX::instance()->inputScrolling) inputs[CLASS_VALUE_ANGLE]->step(1);
     inputs[CLASS_VALUE_ANGLE]->align(FL_ALIGN_RIGHT);
-    inputs[CLASS_VALUE_ANGLE]->step(1);
     inputs[CLASS_VALUE_ANGLE]->when(FL_WHEN_RELEASE);
     inputs[CLASS_VALUE_ANGLE]->callback(update_edges_cb, this);
 
@@ -410,20 +398,20 @@ classificationEditor::classificationEditor() : selected(0)
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     x += WB;
-    y += BH;
-
-    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button(
-      (int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
-    buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
-    buttons[CLASS_BUTTON_CLASSIFY]->activate();
-
-    x -= WB;
 
     y += BH;
     toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES] = new Fl_Check_Button(
       x, y, width - x - 2 * WB, BH, "Create parametrized discrete model");
     toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->type(
       FL_TOGGLE_BUTTON);
+
+    y += BH;
+    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button(
+      (int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
+    buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
+    buttons[CLASS_BUTTON_CLASSIFY]->activate();
+
+    x -= WB;
   }
 
   window->end();

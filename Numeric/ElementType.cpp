@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -486,8 +486,7 @@ int ElementType::getNumVertices(int mshtype)
   case MSH_TRI_21I: return 21;
   case MSH_TRI_24: return 24;
   case MSH_TRI_27: return 27;
-  case MSH_TRI_30:
-    return 30;
+  case MSH_TRI_30: return 30;
   // case MSH_TRI_MINI  : return 0;
   // case MSH_POLYG_  : return 0;
   // case MSH_POLYG_B : return 0;
@@ -509,8 +508,7 @@ int ElementType::getNumVertices(int mshtype)
   case MSH_TET_40: return 40;
   case MSH_TET_46: return 46;
   case MSH_TET_52: return 52;
-  case MSH_TET_58:
-    return 58;
+  case MSH_TET_58: return 58;
   // case MSH_TET_MINI  : return 0;
   case MSH_QUA_1: return 1;
   case MSH_QUA_4: return 4;
@@ -586,8 +584,7 @@ int ElementType::getNumVertices(int mshtype)
   case MSH_PYR_53: return 53;
   case MSH_PYR_61: return 61;
   case MSH_PYR_69: return 69;
-  case MSH_TRIH_4:
-    return 4;
+  case MSH_TRIH_4: return 4;
   // case MSH_POLYH_ : return 0;
   default: Msg::Warning("Unknown element MSH type %d", mshtype); return 0;
   }
@@ -636,9 +633,7 @@ int ElementType::getSerendipity(int mshtype)
 
   case MSH_POLYG_:
   case MSH_POLYG_B:
-  case MSH_POLYH_:
-
-    return 1; // Serendipity or not
+  case MSH_POLYH_: return 1; // Serendipity or not
 
   case MSH_TRI_10:
   case MSH_TRI_15:
@@ -695,9 +690,7 @@ int ElementType::getSerendipity(int mshtype)
   case MSH_PYR_285:
   case MSH_PYR_385:
 
-  case MSH_TRIH_4:
-
-    return 0; // Not Serendipity
+  case MSH_TRIH_4: return 0; // Not Serendipity
 
   case MSH_TRI_9:
   case MSH_TRI_12:
@@ -752,9 +745,7 @@ int ElementType::getSerendipity(int mshtype)
   case MSH_PYR_45:
   case MSH_PYR_53:
   case MSH_PYR_61:
-  case MSH_PYR_69:
-
-    return 2; // Only Serendipity
+  case MSH_PYR_69: return 2; // Only Serendipity
 
   default:
     Msg::Warning("Unknown element MSH type %d, assuming not serendipity.",
@@ -888,23 +879,22 @@ int ElementType::getPrimaryType(int mshtype)
   return getType(getParentType(mshtype), 1);
 }
 
-std::string ElementType::nameOfParentType(int parentType)
+std::string ElementType::nameOfParentType(int parentType, bool plural)
 {
   switch(parentType) {
-  case TYPE_PNT: return std::string("point"); break;
-  case TYPE_LIN: return std::string("line"); break;
-  case TYPE_TRI: return std::string("triangle"); break;
-  case TYPE_QUA: return std::string("quadrangle"); break;
-  case TYPE_TET: return std::string("tetrahedron"); break;
-  case TYPE_PYR: return std::string("pyramid"); break;
-  case TYPE_PRI: return std::string("prism"); break;
-  case TYPE_HEX: return std::string("hexahedron"); break;
-  case TYPE_POLYG: return std::string("polygon"); break;
-  case TYPE_POLYH: return std::string("polyhedron"); break;
-  case TYPE_XFEM: return std::string("xfem"); break;
-  case TYPE_MINI: return std::string("mini"); break;
-  case TYPE_TRIH: return std::string("trihedron"); break;
+  case TYPE_PNT: return plural ? "points" : "point";
+  case TYPE_LIN: return plural ? "lines" : "line";
+  case TYPE_TRI: return plural ? "triangles" : "triangle";
+  case TYPE_QUA: return plural ? "quadrangles" : "quadrangle";
+  case TYPE_TET: return plural ? "tetrahedra" : "tetrahedron";
+  case TYPE_PYR: return plural ? "pyramids" : "pyramid";
+  case TYPE_PRI: return plural ? "prisms" : "prism";
+  case TYPE_HEX: return plural ? "hexahedra" : "hexahedron";
+  case TYPE_POLYG: return plural ? "polygons" : "polygon";
+  case TYPE_POLYH: return plural ? "polyhedra" : "polyhedron";
+  case TYPE_XFEM: return "xfem";
+  case TYPE_MINI: return "mini";
+  case TYPE_TRIH: return plural ? "trihedra" : "trihedron";
+  default: return "undefined";
   }
-
-  return std::string("undefined");
 }

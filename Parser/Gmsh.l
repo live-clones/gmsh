@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -34,9 +34,9 @@ void   skipline(void);
        }                                                                \
        if ( c == EOF )  {                                               \
          int ernum;                                                     \
-         const char *msg=gzerror(yyin,&ernum);                          \
+         const char *msg = gzerror(yyin,&ernum);                        \
          if (ernum)                                                     \
-            Msg::Fatal("Input in flex scanner failed");                 \
+            Msg::Error("Input in flex scanner failed");                 \
        }                                                                \
        result = n;                                                      \
      }
@@ -52,7 +52,7 @@ void   skipline(void);
 	 yylineno++;							\
        }                                                                \
        if ( c == EOF && ferror( yyin ) )				\
-	 Msg::Fatal("Input in flex scanner failed");			\
+	 Msg::Error("Input in flex scanner failed");			\
        result = n;							\
      }
 #endif
@@ -148,9 +148,11 @@ Call                    return tCall;
 Catenary                return tCatenary;
 CatmullRom		return tSpline;
 Ceil                    return tCeil;
+CenterOfMass            return tCenterOfMass;
 Chamfer                 return tChamfer;
 Characteristic          return tCharacteristic;
 Circle                  return tCircle;
+ClassifySurfaces        return tClassifySurfaces;
 CodeName                return tCodeName;
 Coherence               return tCoherence;
 Cohomology              return tCohomology;
@@ -168,6 +170,7 @@ CreateGeometry          return tCreateGeometry;
 CreateTopology          return tCreateTopology;
 CurrentDir              return tCurrentDirectory;
 CurrentDirectory        return tCurrentDirectory;
+CurrentFileName         return tCurrentFileName;
 Curve                   return tCurve;
 Cylinder                return tCylinder;
 
@@ -249,8 +252,12 @@ LowerCaseIn             return tLowerCaseIn;
 MPI_Rank                return tMPI_Rank;
 MPI_Size                return tMPI_Size;
 Macro                   return tMacro;
+Mass                    return tMass;
+Max                     return tMax;
 Memory                  return tMemory;
 MeshAlgorithm           return tMeshAlgorithm;
+MeshSizeFromBoundary    return tMeshSizeFromBoundary;
+Min                     return tMin;
 Modulo                  return tModulo;
 
 N2S                     return tNameToString;
@@ -303,6 +310,7 @@ SetTag                  return tSetTag;
 SetNumber               return tSetNumber;
 SetPartition            return tSetPartition;
 SetString               return tSetString;
+Sewing                  return tSewing;
 ShapeFromFile           return tShapeFromFile;
 Show                    return tShow;
 Sin                     return tSin;
@@ -353,6 +361,7 @@ Using                   return tUsing;
 
 Volume                  return tVolume;
 
+Warning                 return tWarning;
 Wedge                   return tWedge;
 Wire                    return tWire;
 

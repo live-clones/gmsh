@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -197,7 +197,7 @@ static bool isActive(MTri3 *t, double limit_, int &active)
 }
 
 static bool isActive(MTri3 *t, double limit_, int &i,
-                     std::set<MEdge, Less_Edge> *front)
+                     std::set<MEdge, MEdgeLessThan> *front)
 {
   if(t->isDeleted()) return false;
   for(i = 0; i < 3; i++) {
@@ -215,7 +215,7 @@ static bool isActive(MTri3 *t, double limit_, int &i,
 }
 
 static void updateActiveEdges(MTri3 *t, double limit_,
-                              std::set<MEdge, Less_Edge> &front)
+                              std::set<MEdge, MEdgeLessThan> &front)
 {
   if(t->isDeleted()) return;
   for(int active = 0; active < 3; active++) {
@@ -579,7 +579,7 @@ static void recurFindCavityAniso(GFace *gf, std::list<edgeXface> &shell,
     MTri3 *neigh = t->getNeigh(i);
     edgeXface exf(t, i);
     // take care of untouchable internal edges
-    std::set<MEdge, Less_Edge>::iterator it =
+    std::set<MEdge, MEdgeLessThan>::iterator it =
       data.internalEdges.find(MEdge(exf._v(0), exf._v(1)));
     if(!neigh || it != data.internalEdges.end())
       shell.push_back(exf);
@@ -696,11 +696,8 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
   std::list<edgeXface>::iterator it = shell.begin();
 
   bool onePointIsTooClose = false;
-  double lcMin = std::numeric_limits<double>::infinity();
-  double lcBGMMin = std::numeric_limits<double>::infinity();
-  // int vIndex = data.getIndex(v);
-  // double lcVertex = data.vSizes[vIndex];
-  // double lcBGMVertex = data.vSizesBGM[vIndex];
+
+
   while(it != shell.end()) {
     MVertex *v0, *v1;
     if(it->ori > 0) {
@@ -716,23 +713,21 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
     int index1 = data.getIndex(t->getVertex(1));
     int index2 = data.getIndex(t->getVertex(2));
     const double ONE_THIRD = 1. / 3.;
-    double lc = ONE_THIRD * (data.vSizes[index0] + data.vSizes[index1] +
+    double lc = ONE_THIRD * (data.vSizes[index0] +
+                             data.vSizes[index1] +
                              data.vSizes[index2]);
-    double lcBGM =
-      ONE_THIRD * (data.vSizesBGM[index0] + data.vSizesBGM[index1] +
-                   data.vSizesBGM[index2]);
-    double LL = Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM;
+    double lcBGM = ONE_THIRD * (data.vSizesBGM[index0] +
+                                data.vSizesBGM[index1] +
+                                data.vSizesBGM[index2]);
+    double LL = std::min(lc, lcBGM);
 
-    lcMin = std::min(lcMin, std::min(data.vSizes[index0], data.vSizes[index1]));
-    lcBGMMin = std::min(lcBGMMin, std::min(data.vSizesBGM[index0], data.vSizesBGM[index1]));
-
-    MTri3 *t4 = new MTri3(t, LL, 0, &data, gf);
+    MTri3 *t4 = new MTri3(t, Extend1dMeshIn2dSurfaces(gf) ? LL : lcBGM,
+                          0, &data, gf);
 
     if(oneNewTriangle) {
       force = true;
       *oneNewTriangle = t4;
     }
-    // double din = t->getInnerRadius();
 
     double d1 = distance(v0, v);
     double d2 = distance(v1, v);
@@ -1197,7 +1192,7 @@ static double optimalPointFrontal(GFace *gf, MTri3 *worst, int active_edge,
   const double rhoM2 =
     0.5 * (data.vSizesBGM[index0] + data.vSizesBGM[index1]); // * RATIO;
   const double rhoM =
-    Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
+    Extend1dMeshIn2dSurfaces(gf) ? std::min(rhoM1, rhoM2) : rhoM2;
   const double rhoM_hat = rhoM;
 
   const double q = lengthMetric(center, midpoint, metric);
@@ -1404,7 +1399,7 @@ static void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
                        (data.vSizesBGM[index1] + data.vSizesBGM[index2]) /
                        std::sqrt(3.);
   const double rhoM =
-    Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
+    Extend1dMeshIn2dSurfaces(gf) ? std::min(rhoM1, rhoM2) : rhoM2;
 
   const double rhoM_hat =
     std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));
@@ -1506,7 +1501,7 @@ void bowyerWatsonFrontalLayers(
   int ITER = 0, active_edge;
   // compute active triangle
   std::set<MTri3 *, compareTri3Ptr>::iterator it = AllTris.begin();
-  std::set<MEdge, Less_Edge> _front;
+  std::set<MEdge, MEdgeLessThan> _front;
   for(; it != AllTris.end(); ++it) {
     if(isActive(*it, LIMIT_, active_edge)) {
       ActiveTris.insert(*it);
@@ -1633,7 +1628,7 @@ void bowyerWatsonParallelograms(
     return;
   }
 
-  // std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
+  // std::sort(packed.begin(), packed.end(), MVertexPtrLessThanLexicographic());
   SortHilbert(packed);
 
   MTri3 *oneNewTriangle = 0;
@@ -1698,7 +1693,7 @@ void bowyerWatsonParallelogramsConstrained(
     return;
   }
 
-  std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
+  std::sort(packed.begin(), packed.end(), MVertexPtrLessThanLexicographic());
 
   MTri3 *oneNewTriangle = 0;
   for(std::size_t i = 0; i < packed.size();) {
@@ -1943,7 +1938,7 @@ static bool recoverEdgeBySwaps(std::vector<MTri3 *> &t, MVertex *mv1,
         if(diffend(v1, v2, mv1, mv2)) {
           if(intersection_segments(p1, p2, pv1, pv2, xcc)) {
             // if
-            // (std::binary_search(edges.begin(),edges.end(),MEdge(v1,v2),Less_Edge)){
+            // (std::binary_search(edges.begin(),edges.end(),MEdge(v1,v2),MEdgeLessThan)){
             //  Msg::Error("1D mesh self intersects");
             //	    }
             if(!intersection_segments(po, p3, pv1, pv2, xcc) ||
@@ -1963,9 +1958,9 @@ static bool recoverEdgeBySwaps(std::vector<MTri3 *> &t, MVertex *mv1,
 
 void recoverEdges(std::vector<MTri3 *> &t, std::vector<MEdge> &edges)
 {
-  Less_Edge le;
+  MEdgeLessThan le;
   std::sort(edges.begin(), edges.end(), le);
-  std::set<MEdge, Less_Edge> setOfMeshEdges;
+  std::set<MEdge, MEdgeLessThan> setOfMeshEdges;
   for(size_t i = 0; i < t.size(); i++) {
     for(int j = 0; j < 3; j++) {
       setOfMeshEdges.insert(t[i]->tri()->getEdge(j));

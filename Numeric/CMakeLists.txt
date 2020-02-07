@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -44,10 +44,18 @@ set(SRC
   HierarchicalBasisH1Quad.cpp
   HierarchicalBasisH1Tria.cpp
   HierarchicalBasisH1Line.cpp
-  HierarchicalBasisH1Brick.cpp	
+  HierarchicalBasisH1Brick.cpp
   HierarchicalBasisH1Tetra.cpp
-
+  HierarchicalBasisH1Pri.cpp
+  HierarchicalBasis.cpp
+  HierarchicalBasisHcurl.cpp
+  HierarchicalBasisHcurlQuad.cpp
+  HierarchicalBasisHcurlBrick.cpp
+  HierarchicalBasisHcurlTria.cpp
+  HierarchicalBasisHcurlTetra.cpp
+  HierarchicalBasisHcurlPri.cpp
+  HierarchicalBasisHcurlLine.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(Numeric "${SRC};${HDR}")

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,6 +12,8 @@
 #include "StringUtils.h"
 #include "OS.h"
 #include "Context.h"
+#include "CGNSCommon.h"
+#include "CGNSConventions.h"
 
 bool PViewDataGModel::addData(GModel *model,
                               const std::map<int, std::vector<double> > &data,
@@ -113,7 +115,7 @@ bool PViewDataGModel::readMSH(const std::string &viewName,
 
   _steps[step]->resizeData(numEnt);
 
-  Msg::ResetProgressMeter();
+  Msg::StartProgressMeter(numEnt);
   for(int i = 0; i < numEnt; i++) {
     int num;
     if(binary) {
@@ -156,9 +158,9 @@ bool PViewDataGModel::readMSH(const std::string &viewName,
       _min = std::min(_min, val);
       _max = std::max(_max, val);
     }
-    if(numEnt > 100000) Msg::ProgressMeter(i + 1, numEnt, true, "Reading data");
+    if(numEnt > 100000) Msg::ProgressMeter(i + 1, true, "Reading data");
   }
-
+  Msg::StopProgressMeter();
   if(partition >= 0) _steps[step]->getPartitions().insert(partition);
 
   finalize(false, interpolationScheme);
@@ -265,7 +267,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
           if(_steps[step]->getData(i)) {
             MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
             if(!v) {
-              Msg::Error("Unknown vertex %d in data", i);
+              Msg::Error("Unknown node %d in data", i);
               fclose(fp);
               return false;
             }
@@ -928,7 +930,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
-        Msg::Error("Unknown vertex %d in data", i);
+        Msg::Error("Unknown node %d in data", i);
         return false;
       }
       profile.push_back(v->getIndex());
@@ -1080,7 +1082,7 @@ void PViewDataGModel::sendToServer(const std::string &name)
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
-        Msg::Error("Unknown vertex %d in data", i);
+        Msg::Error("Unknown node %d in data", i);
         return;
       }
       int num = v->getNum();

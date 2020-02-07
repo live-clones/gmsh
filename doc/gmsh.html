@@ -19,6 +19,7 @@ CAO, OpenGL, GL2PS, Gmesh">
 <style type="text/css"><!--
   div.small { font-size:80%; }
   ul.small { margin-top:1ex; margin-bottom:1ex; }
+  img.title { height:1em; }
 --></style>
 
 </head>
@@ -29,16 +30,19 @@ CAO, OpenGL, GL2PS, Gmesh">
 
 <div id="banner">
   <img src="http://gmsh.info/gallery/a319_4_small.png" alt="">
-  <img src="http://gmsh.info/gallery/Zylkopf3D_small.png" alt="">
-  <img src="http://gmsh.info/gallery/gmsh_quad2_small.png" alt="">
+  <img src="http://gmsh.info/gallery/bunny.png" alt="">
+  <img src="http://gmsh.info/gallery/Block3d_1_small.png" alt="">
   <img src="http://gmsh.info/gallery/spheres3_small.png" alt="">
+  <img src="http://gmsh.info/gallery/Zylkopf3D_small.png" alt="">
   <img src="http://gmsh.info/gallery/gbr_small.png" alt="">
+  <img src="http://gmsh.info/gallery/gmsh_quad2_small.png" alt="">
   <img src="http://gmsh.info/gallery/hex_small.png" alt="">
   <img src="http://gmsh.info/gallery/remesh.png" alt="">
 </div>
 
-<h1>A three-dimensional finite element mesh generator
-  with built-in pre- and post-processing facilities</h1>
+<h1>A three-dimensional finite element mesh generator with built-in pre- and
+  post-processing facilities&nbsp;<img class="title"
+  src="http://gmsh.info/gallery/gmsh_title.png" alt=""></h1>
 
 <h4>Christophe Geuzaine and Jean-François Remacle</h4>
 
@@ -56,53 +60,60 @@ CAO, OpenGL, GL2PS, Gmesh">
 </div>
 
 <p>
-Gmsh is a free 3D finite element mesh generator with a built-in CAD engine and
-post-processor. Its design goal is to provide a fast, light and user-friendly
-meshing tool with parametric input and advanced visualization capabilities.
-Gmsh is built around four modules: geometry, mesh, solver and
+Gmsh is an open source 3D finite element mesh generator with a built-in CAD
+engine and post-processor. Its design goal is to provide a fast, light and
+user-friendly meshing tool with parametric input and advanced visualization
+capabilities.  Gmsh is built around four modules: geometry, mesh, solver and
 post-processing. The specification of any input to these modules is done either
 interactively using the graphical user interface, in ASCII text files using
-Gmsh's own scripting language (<code>.geo</code> files), or using the
-<a href="doc/texinfo/gmsh.html#Gmsh-API">C++, C, Python or Julia API</a>.
+Gmsh's own scripting language (<code>.geo</code> files), or using the C++, C,
+Python or Julia Application Programming Interface (API).
 </p>
 
 <p>
-See the screencasts for a <a href="screencasts/">quick tour of Gmsh's graphical
-user interface</a>, or the reference manual for a more thorough
-<a href="doc/texinfo/gmsh.html#Overview">overview of Gmsh's capabilities</a> and
+See this <a href="doc/course/general_overview.pdf">general presentation</a> for
+a high-level overview of Gmsh and recent developments,
+the <a href="screencasts/">screencasts</a> for a quick tour of Gmsh's graphical
+user interface, and the <a href="doc/texinfo/gmsh.html">reference manual</a> for
+a more thorough overview of
+Gmsh's <a href="doc/texinfo/gmsh.html#Overview">capabilities</a>,
 some <a href="doc/texinfo/gmsh.html#Frequently-asked-questions">frequently asked
-questions</a>. The source code contains many examples written using both the
-<a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial">built-in</a>
-<a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean">scripting</a>
-language and the
-<a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api">C++, C,
-Python or Julia API</a>.
+questions</a> and the documentation of
+the <a href="doc/texinfo/gmsh.html#Gmsh-API">C++, C, Python and Julia API</a>.
+</p>
+
+<p>
+The <a href="https://gitlab.onelab.info/gmsh/gmsh/">source code repository</a>
+contains many examples written using both the built-in script language (see
+e.g. the <a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial">tutorials</a>
+and <a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean">demos</a>)
+and the <a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api">API</a>.
 </p>
 
 <h2><a name="Download"></a>Download</h2>
 
 <p>
-Gmsh is distributed under the terms of the <a href="doc/LICENSE.txt">GNU General
+Gmsh is distributed under the terms of the <a href="LICENSE.txt">GNU General
 Public License (GPL)</a>:
 </p>
 <ul>
   <li>
     <div class="highlight">
-      Current stable release (version 4.2.3, 3 April 2019):
+      Current stable release (version 4.5.2, 30 January 2020):
       <ul>
         <li>Download Gmsh for
-          <a href="bin/Windows/gmsh-4.2.3-Windows64.zip">Windows 64-bit</a>,
-          <a href="bin/Windows/gmsh-4.2.3-Windows32.zip">Windows 32-bit</a>,
-          <a href="bin/Linux/gmsh-4.2.3-Linux64.tgz">Linux 64-bit</a>,
-          <a href="bin/Linux/gmsh-4.2.3-Linux32.tgz">Linux 32-bit</a> or
-          <a href="bin/MacOSX/gmsh-4.2.3-MacOSX.dmg">MacOS</a>
-        <li>Download the <a href="src/gmsh-4.2.3-source.tgz">source code</a>
+          <a href="bin/Windows/gmsh-4.5.2-Windows64.zip">Windows 64-bit</a>,
+          <a href="bin/Windows/gmsh-4.5.2-Windows32.zip">Windows 32-bit</a>,
+          <a href="bin/Linux/gmsh-4.5.2-Linux64.tgz">Linux 64-bit</a>,
+          <a href="bin/Linux/gmsh-4.5.2-Linux32.tgz">Linux 32-bit</a> or
+          <a href="bin/MacOSX/gmsh-4.5.2-MacOSX.dmg">MacOS</a>
+        <li>Download the <a href="src/gmsh-4.5.2-source.tgz">source code</a>
         <li>Download the Software Development Kit (SDK) for
-          <a href="bin/Windows/gmsh-4.2.3-Windows64-sdk.zip">Windows 64-bit</a>,
-          <a href="bin/Windows/gmsh-4.2.3-Windows32-sdk.zip">Windows 32-bit</a>,
-          <a href="bin/Linux/gmsh-4.2.3-Linux64-sdk.tgz">Linux 64-bit</a>,
-          <a href="bin/Linux/gmsh-4.2.3-Linux32-sdk.tgz">Linux 32-bit</a> or
-          <a href="bin/MacOSX/gmsh-4.2.3-MacOSX-sdk.tgz">MacOS</a>
+          <a href="bin/Windows/gmsh-4.5.2-Windows64-sdk.zip">Windows 64-bit</a>,
+          <a href="bin/Windows/gmsh-4.5.2-Windows32-sdk.zip">Windows 32-bit</a>,
+          <a href="bin/Linux/gmsh-4.5.2-Linux64-sdk.tgz">Linux 64-bit</a>,
+          <a href="bin/Linux/gmsh-4.5.2-Linux32-sdk.tgz">Linux 32-bit</a> or
+          <a href="bin/MacOSX/gmsh-4.5.2-MacOSX-sdk.tgz">MacOS</a>
       </ul>
     </div>
     <p>
@@ -165,6 +176,8 @@ algorithms</a>.
 <h2><a name="Documentation"></a>Documentation</h2>
 
 <ul>
+  <li><a href="doc/course/general_overview.pdf">General presentation</a> with
+    high-level overview of Gmsh and recent developments
   <li><a href="doc/texinfo/gmsh.html">Gmsh reference manual (stable release)</a>
       (also available in
       <a href="doc/texinfo/gmsh.pdf">PDF</a> and in
@@ -180,7 +193,7 @@ algorithms</a>.
     <a href="https://gitlab.onelab.info/gmsh/gmsh/commits/master">time line</a>
     of changes and the <a href="https://gitlab.onelab.info/gmsh/gmsh/issues">bug
     tracking</a> database
-  <li><a href="CHANGELOG.txt">Changelog</a>
+  <li><a href="https://gitlab.onelab.info/gmsh/gmsh/blob/master/CHANGELOG.txt">Changelog</a>
   <li>Mailing lists:
     <ul>
       <li><a href="http://onelab.info/mailman/listinfo/gmsh/">gmsh</a>
@@ -213,7 +226,7 @@ on <a href="https://gitlab.onelab.info/gmsh/gmsh/issues"
 <h2><a name="Licensing"></a>Licensing</h2>
 
 <p>
-Gmsh is copyright (C) 1997-2019 by
+Gmsh is copyright (C) 1997-2020 by
 <a href="http://www.montefiore.ulg.ac.be/~geuzaine">C. Geuzaine</a> and
 <a href="http://perso.uclouvain.be/jean-francois.remacle/">J.-F. Remacle</a>
 (see the <a href="CREDITS.txt">CREDITS</a> file for more information) and
@@ -269,7 +282,7 @@ information.
   <li>Gmsh's high quality vector PostScript, PDF and SVG output is produced
     by <a href="http://geuz.org/gl2ps/">GL2PS</a>.
   <li>Gmsh implements a <a href="http://onelab.info">ONELAB</a> server to drive
-    external solvers such as the open source finite
+    external solvers such as the open source finite element
     solver <a href="http://getdp.info">GetDP</a>. Gmsh and GetDP are bundled in
     the ONELAB app for
     <a href="https://itunes.apple.com/us/app/onelab/id845930897">iPhone, iPad</a> and

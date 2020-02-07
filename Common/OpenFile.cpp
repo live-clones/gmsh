@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -373,12 +373,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
     GModel::current()->setName(SplitFileName(fileName)[1]);
   }
 
-  bool mesh = false;
-
   if(ext == ".stl" || ext == ".STL") {
     status =
       GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
-    mesh = true;
   }
   else if(ext == ".brep" || ext == ".rle" || ext == ".brp" || ext == ".BRP") {
     status = GModel::current()->readOCCBREP(fileName);
@@ -394,24 +391,19 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   }
   else if(ext == ".unv" || ext == ".UNV") {
     status = GModel::current()->readUNV(fileName);
-    mesh = true;
   }
   else if(ext == ".vtk" || ext == ".VTK") {
     status = GModel::current()->readVTK(fileName, CTX::instance()->bigEndian);
-    mesh = true;
   }
   else if(ext == ".wrl" || ext == ".WRL" || ext == ".vrml" || ext == ".VRML" ||
           ext == ".iv" || ext == ".IV") {
     status = GModel::current()->readVRML(fileName);
-    mesh = true;
   }
   else if(ext == ".mesh" || ext == ".MESH") {
     status = GModel::current()->readMESH(fileName);
-    mesh = true;
   }
   else if(ext == ".diff" || ext == ".DIFF") {
     status = GModel::current()->readDIFF(fileName);
-    mesh = true;
   }
   else if(ext == ".med" || ext == ".MED" || ext == ".mmed" || ext == ".MMED" ||
           ext == ".rmed" || ext == ".RMED") {
@@ -419,14 +411,12 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
       status = GModel::current()->readMED(fileName, 0);
     else
       status = GModel::readMED(fileName);
-    mesh = true;
 #if defined(HAVE_POST)
     if(status > 1) status = PView::readMED(fileName);
 #endif
   }
   else if(ext == ".bdf" || ext == ".BDF" || ext == ".nas" || ext == ".NAS") {
     status = GModel::current()->readBDF(fileName);
-    mesh = true;
   }
   else if(ext == ".dat" || ext == ".DAT") {
     if(!strncmp(header, "BEGIN ACTRAN", 12))
@@ -436,11 +426,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
       status = GModel::current()->readSAMCEF(fileName);
     else
       status = GModel::current()->readBDF(fileName);
-    mesh = true;
   }
   else if(ext == ".p3d" || ext == ".P3D") {
     status = GModel::current()->readP3D(fileName);
-    mesh = true;
   }
 #if defined(HAVE_FLTK)
   else if(ext == ".pnm" || ext == ".PNM" || ext == ".pbm" || ext == ".PBM" ||
@@ -463,22 +451,21 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 #endif
   else if(ext == ".ply2" || ext == ".PLY2") {
     status = GModel::current()->readPLY2(fileName);
-    mesh = true;
   }
   else if(ext == ".ply" || ext == ".PLY") {
     status = GModel::current()->readPLY(fileName);
-    mesh = true;
   }
   else if(ext == ".geom" || ext == ".GEOM") {
     status = GModel::current()->readGEOM(fileName);
-    mesh = true;
   }
 #if defined(HAVE_LIBCGNS)
   else if(ext == ".cgns" || ext == ".CGNS") {
+    std::vector<std::vector<MVertex *> > vertPerZone;
+    std::vector<std::vector<MElement *> > eltPerZone;
     if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()) {
       GModel *tmp2 = GModel::current();
       GModel *tmp = new GModel();
-      tmp->readCGNS(fileName);
+      tmp->readCGNS(fileName, vertPerZone, eltPerZone);
       tmp->scaleMesh(CTX::instance()->geom.matchMeshScaleFactor);
       status = GeomMeshMatcher::instance()->match(tmp2, tmp);
       delete tmp;
@@ -487,9 +474,13 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
     }
     else {
       CTX::instance()->geom.matchMeshScaleFactor = 1;
-      status = GModel::current()->readCGNS(fileName);
+      status = GModel::current()->readCGNS(fileName, vertPerZone, eltPerZone);
     }
-    mesh = true;
+#if defined(HAVE_POST)
+    if((status > 1) && (CTX::instance()->mesh.cgnsImportIgnoreSolution == 0)) {
+      status = PView::readCGNS(vertPerZone, eltPerZone, fileName);
+    }
+#endif
   }
 #endif
 #if defined(HAVE_3M)
@@ -519,7 +510,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
         CTX::instance()->geom.matchMeshScaleFactor = 1;
         status = GModel::current()->readMSH(fileName);
       }
-      mesh = true;
 #if defined(HAVE_POST)
       if(status > 1) status = PView::readMSH(fileName, -1, partitionToRead);
 #endif
@@ -552,9 +542,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
                 GModel::current()->getMaxElementaryNumber(3)));
 
   if(setBoundingBox) SetBoundingBox();
-
-  if(mesh && CTX::instance()->meshDiscrete)
-    GModel::current()->createGeometryOfDiscreteEntities();
 
   CTX::instance()->geom.draw = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -635,10 +622,13 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
   GModel::setCurrent(old);
   old->setVisibility(1);
 
-  // hide everything except the onelab X-Y graphs
+  // hide everything except onelab X-Y graphs and views with attribute
+  // "AlwaysVisible"
   if(showViews == 0) {
     for(std::size_t i = 0; i < PView::list.size(); i++) {
-      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB" &&
+         PView::list[i]->getOptions()->attributes.find("AlwaysVisible") ==
+         std::string::npos)
         PView::list[i]->getOptions()->visible = 0;
     }
   }
@@ -646,7 +636,9 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
     // if we created new views, assume we only want to see those (and the
     // onelab X-Y graphs)
     for(std::size_t i = 0; i < n; i++) {
-      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB" &&
+         PView::list[i]->getOptions()->attributes.find("AlwaysVisible") ==
+         std::string::npos)
         PView::list[i]->getOptions()->visible = 0;
     }
   }

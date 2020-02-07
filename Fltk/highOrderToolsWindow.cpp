@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -31,24 +31,6 @@
 #include "HighOrderMeshFastCurving.h"
 #endif
 
-// static void change_completeness_cb(Fl_Widget *w, void *data)
-//{
-//  highOrderToolsWindow *o = FlGui::instance()->highordertools;
-//  bool onlyVisible = (bool)o->butt[1]->value();
-//  if (!o->complete){
-//    // BOF BOF BOF -- CG
-//    SetHighOrderComplete(GModel::current(), onlyVisible);
-//    o->complete = 1;
-//  }
-//  else if (o->complete){
-//    // BOF BOF BOF -- CG
-//    SetHighOrderIncomplete(GModel::current(), onlyVisible);
-//    o->complete = 0;
-//  }
-//  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-//  drawContext::global()->draw();
-//}
-
 static void highordertools_runp_cb(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
@@ -62,6 +44,8 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
     SetOrder1(GModel::current());
   else
     SetOrderN(GModel::current(), order, linear, incomplete, onlyVisible);
+
+  FixPeriodicMesh(GModel::current());
 
   /*
   distanceFromMeshToGeometry_t dist;
@@ -232,6 +216,8 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
 
+  FixPeriodicMesh(GModel::current());
+
   CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
 }
@@ -289,7 +275,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[0] = new Fl_Value_Input(x, y, IW, BH, "Polynomial order");
   value[0]->minimum(1);
   value[0]->maximum(10);
-  value[0]->step(1);
+  if(CTX::instance()->inputScrolling) value[0]->step(1);
   value[0]->align(FL_ALIGN_RIGHT);
   value[0]->value(meshOrder);
 
@@ -345,7 +331,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[1] = new Fl_Value_Input(x, y, IW / 2.0, BH);
   value[1]->minimum(0);
   value[1]->maximum(1);
-  value[1]->step(.01);
+  if(CTX::instance()->inputScrolling) value[1]->step(.01);
   value[1]->align(FL_ALIGN_RIGHT);
   value[1]->value(CTX::instance()->mesh.hoThresholdMin);
 
@@ -353,7 +339,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     new Fl_Value_Input(x + IW / 2.0, y, IW / 2.0, BH, "Target Jacobian range");
   value[8]->minimum(1);
   value[8]->maximum(10);
-  value[8]->step(.01);
+  if(CTX::instance()->inputScrolling) value[8]->step(.01);
   value[8]->align(FL_ALIGN_RIGHT);
   value[8]->value(CTX::instance()->mesh.hoThresholdMax);
 
@@ -361,7 +347,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[2] = new Fl_Value_Input(x, y, IW, BH, "Number of layers");
   value[2]->minimum(1);
   value[2]->maximum(20);
-  value[2]->step(1);
+  if(CTX::instance()->inputScrolling) value[2]->step(1);
   value[2]->align(FL_ALIGN_RIGHT);
   value[2]->value(CTX::instance()->mesh.hoNLayers);
 
@@ -369,7 +355,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[7] = new Fl_Value_Input(x, y, IW, BH, "Distance factor");
   value[7]->minimum(1);
   value[7]->maximum(20000);
-  value[7]->step(1);
+  if(CTX::instance()->inputScrolling) value[7]->step(1);
   value[7]->align(FL_ALIGN_RIGHT);
   value[7]->value(12);
 
@@ -389,7 +375,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[3] = new Fl_Value_Input(x, y, IW, BH, "Maximum number of iterations");
   value[3]->minimum(1);
   value[3]->maximum(10000);
-  value[3]->step(10);
+  if(CTX::instance()->inputScrolling) value[3]->step(10);
   value[3]->align(FL_ALIGN_RIGHT);
   value[3]->value(CTX::instance()->mesh.hoIterMax);
 
@@ -397,7 +383,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[4] = new Fl_Value_Input(x, y, IW, BH, "Max. number of barrier updates");
   value[4]->minimum(1);
   value[4]->maximum(100);
-  value[4]->step(1);
+  if(CTX::instance()->inputScrolling) value[4]->step(1);
   value[4]->align(FL_ALIGN_RIGHT);
   value[4]->value(CTX::instance()->mesh.hoPassMax);
 
@@ -417,7 +403,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     new Fl_Value_Input(x, y, IW, BH, "Max. number of patch adaptation iter.");
   value[9]->minimum(1);
   value[9]->maximum(100);
-  value[9]->step(1);
+  if(CTX::instance()->inputScrolling) value[9]->step(1);
   value[9]->align(FL_ALIGN_RIGHT);
   value[9]->value(2);
   value[9]->deactivate();
@@ -427,7 +413,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[10]->align(FL_ALIGN_RIGHT);
   value[10]->minimum(1);
   value[10]->maximum(100);
-  value[10]->step(1);
+  if(CTX::instance()->inputScrolling) value[10]->step(1);
   value[10]->value(2);
   value[10]->deactivate();
 
@@ -436,6 +422,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[11]->align(FL_ALIGN_RIGHT);
   value[11]->minimum(1.);
   value[11]->maximum(100.);
+  if(CTX::instance()->inputScrolling) value[11]->step(1.);
   value[11]->value(2.);
   value[11]->deactivate();
 

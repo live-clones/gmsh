@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -69,13 +69,13 @@ public:
   std::string getTypeName()
   {
     switch(getType()) {
-    case FIELD_OPTION_INT: return "integer"; break;
-    case FIELD_OPTION_DOUBLE: return "float"; break;
-    case FIELD_OPTION_BOOL: return "boolean"; break;
-    case FIELD_OPTION_PATH: return "path"; break;
-    case FIELD_OPTION_STRING: return "string"; break;
-    case FIELD_OPTION_LIST: return "list"; break;
-    case FIELD_OPTION_LIST_DOUBLE: return "list_double"; break;
+    case FIELD_OPTION_INT: return "integer";
+    case FIELD_OPTION_DOUBLE: return "float";
+    case FIELD_OPTION_BOOL: return "boolean";
+    case FIELD_OPTION_PATH: return "path";
+    case FIELD_OPTION_STRING: return "string";
+    case FIELD_OPTION_LIST: return "list";
+    case FIELD_OPTION_LIST_DOUBLE: return "list_double";
     default: return "unknown";
     }
   }
@@ -118,7 +118,7 @@ public:
 #if defined(HAVE_POST)
   void putOnView(PView *view, int comp = -1);
 #endif
-  void putOnNewView();
+  void putOnNewView(int viewTag = -1);
   virtual std::string getDescription() { return ""; }
   FieldOption *getOption(const std::string &optionName);
 };

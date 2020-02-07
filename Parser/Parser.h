@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -305,14 +305,9 @@ public:
     const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
     if (structs_P && struct_P) {
       switch (struct_P->getMember(key_member, out, index)) {
-      case 0:
-        break;
-      case 1:
-        out = 0.; return 2; // 2: Error: Unknown member of Struct
-        break;
-      case 2:
-        out = 0.; return 3; // 3: // Error: Index out of range
-        break;
+      case 0: break;
+      case 1: out = 0.; return 2; // 2: Error: Unknown member of Struct
+      case 2: out = 0.; return 3; // 3: // Error: Index out of range
       }
     }
     else  {
@@ -329,14 +324,9 @@ public:
     const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
     if (structs_P && struct_P) {
       switch (struct_P->getMember(key_member, out, index)) {
-      case 0:
-        break;
-      case 1:
-        out = NULL; return 2; // 2: Error: Unknown member of Struct
-        break;
-      case 2:
-        out = NULL; return 3; // 3: // Error: Index out of range
-        break;
+      case 0: break;
+      case 1: out = NULL; return 2; // 2: Error: Unknown member of Struct
+      case 2: out = NULL; return 3; // 3: // Error: Index out of range
       }
     }
     else  {
@@ -352,11 +342,8 @@ public:
     const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
     if (structs_P && struct_P) {
       switch (struct_P->getMember_Dim(key_member, out)) {
-      case 0:
-        break;
-      case 1:
-        out = 0; return 2; // 2: Error: Unknown member of Struct
-        break;
+      case 0: break;
+      case 1: out = 0; return 2; // 2: Error: Unknown member of Struct
       }
     }
     else  {
@@ -372,11 +359,8 @@ public:
     const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
     if (structs_P && struct_P) {
       switch (struct_P->getMember_Vector(key_member, out_vector)) {
-      case 0:
-        break;
-      case 1:
-        out_vector = NULL; return 2; // 2: Error: Unknown member of Struct
-        break;
+      case 0: break;
+      case 1: out_vector = NULL; return 2; // 2: Error: Unknown member of Struct
       }
     }
     else  {
@@ -392,11 +376,8 @@ public:
     const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
     if (structs_P && struct_P) {
       switch (struct_P->getMember_Vector(key_member, out_vector)) {
-      case 0:
-        break;
-      case 1:
-        out_vector = NULL; return 2; // 2: Error: Unknown member of Struct
-        break;
+      case 0: break;
+      case 1: out_vector = NULL; return 2; // 2: Error: Unknown member of Struct
       }
     }
     else  {

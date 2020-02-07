@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -33,15 +33,16 @@ public:
   bool forwardRenumbering(const fullMatrix<double> &otherPoints, int *renum,
                           int elemenType = -1) const;
 
-  void getReferenceNodesForBezier(fullMatrix<double> &nodes) const;
-
   // Basis functions & gradients evaluation
   virtual void f(double u, double v, double w, double *sf) const = 0;
-  virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const = 0;
+  virtual void f(const fullMatrix<double> &coord,
+                 fullMatrix<double> &sf) const = 0;
   virtual void f(double u, double v, double w, int i, double *sf) const = 0;
   virtual void df(double u, double v, double w, double grads[][3]) const = 0;
-  virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const = 0;
-  virtual void df(double u, double v, double w, int i, double grad[3]) const = 0;
+  virtual void df(const fullMatrix<double> &coord,
+                  fullMatrix<double> &dfm) const = 0;
+  virtual void df(double u, double v, double w, int i,
+                  double grad[3]) const = 0;
   virtual void ddf(double u, double v, double w, double grads[][3][3]) const
   {
     Msg::Error("ddf not implemented for this basis");

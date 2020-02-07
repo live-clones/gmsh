@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,7 +7,8 @@
 #define POINTSGENERATORS_H
 
 #include "fullMatrix.h"
-#include "FuncSpaceData.h"
+
+class FuncSpaceData;
 
 // Functions to generate point distributions on the references elements, for all
 // orders and functions generating exponents of Pascal monomials in the same
@@ -68,5 +69,14 @@ fullMatrix<double> gmshGenerateMonomialsPyramidSerendipity(int order);
 fullMatrix<double>
 gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij, int nk,
                                     bool forSerendipPoints = false);
+
+// Ordered points and monomials
+
+void gmshGenerateOrderedPointsLine(int order, fullVector<double> &);
+
+void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
+                               bool bezierSpace = false);
+
+void gmshGenerateOrderedMonomials(FuncSpaceData, fullMatrix<double> &);
 
 #endif

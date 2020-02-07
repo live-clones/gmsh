@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,7 +18,6 @@
 #include "BackgroundMeshTools.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
-#include "Generator.h"
 #include "Context.h"
 #include "OS.h"
 #include "SVector3.h"
@@ -126,8 +125,8 @@ bool buildMeshGenerationDataStructures(
   // take care of embedded vertices
   std::set<MVertex *> embeddedVertices;
   {
-    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
+    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+    std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       if((*itvx)->mesh_vertices.size()) {
         MVertex *v = *((*itvx)->mesh_vertices.begin());
@@ -141,7 +140,7 @@ bool buildMeshGenerationDataStructures(
 
   // take good care of embedded edges
   {
-    std::vector<GEdge *> const &embedded_edges = gf->embeddedEdges();
+    std::vector<GEdge *> embedded_edges = gf->getEmbeddedEdges();
     std::vector<GEdge *>::const_iterator ite = embedded_edges.begin();
     while(ite != embedded_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
@@ -193,7 +192,7 @@ bool buildMeshGenerationDataStructures(
                     data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(1))] +
                     data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(2))]);
 
-    double LL = Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM;
+    double LL = Extend1dMeshIn2dSurfaces(gf) ? std::min(lc, lcBGM) : lcBGM;
     AllTris.insert(new MTri3(gf->triangles[i], LL, 0, &data, gf));
   }
   gf->triangles.clear();
@@ -349,12 +348,6 @@ void transferDataStructure(GFace *gf,
   }
   splitEquivalentTriangles(gf, data);
   computeEquivalences(gf, data);
-}
-
-void buildVertexToTriangle(std::vector<MTriangle *> &eles, v2t_cont &adj)
-{
-  adj.clear();
-  buildVertexToElement(eles, adj);
 }
 
 template <class T>
@@ -541,7 +534,7 @@ int removeTwoQuadsNodes(GFace *gf)
     if(!x) break;
     nbRemove += x;
   }
-  Msg::Debug("%i two-quadrangles vertices removed", nbRemove);
+  Msg::Debug("%i two-quadrangles nodes removed", nbRemove);
   return nbRemove;
 }
 
@@ -860,7 +853,7 @@ static void _relocate(GFace *gf, MVertex *ver,
   ver->getParameter(1, initv);
 
   // compute the vertices connected to that one
-  std::map<MVertex *, SPoint2, MVertexLessThanNum> pts;
+  std::map<MVertex *, SPoint2, MVertexPtrLessThan> pts;
   for(std::size_t i = 0; i < lt.size(); i++) {
     for(int j = 0; j < lt[i]->getNumEdges(); j++) {
       MEdge e = lt[i]->getEdge(j);
@@ -882,7 +875,7 @@ static void _relocate(GFace *gf, MVertex *ver,
   double metric[3];
   SPoint2 after(0, 0);
   double COUNT = 0.0;
-  for(std::map<MVertex *, SPoint2, MVertexLessThanNum>::iterator it =
+  for(std::map<MVertex *, SPoint2, MVertexPtrLessThan>::iterator it =
         pts.begin();
       it != pts.end(); ++it) {
     SPoint2 adj = it->second;
@@ -959,10 +952,11 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
 {
   if(gf->triangles.empty()) return;
+  if(gf->compound.size()) return;
 
   std::vector<MVertex *> emb_edgeverts;
   {
-    std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
+    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
     std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
     while(ite != emb_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
@@ -1274,7 +1268,8 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
       while(nbTwoQuadNodes || nbDiamonds) {
         Msg::Debug("Topological optimization of quad mesh: pass %d", iter);
         nbTwoQuadNodes = removeTwoQuadsNodes(gf);
-        nbDiamonds = removeDiamonds(gf);
+        // removeDiamonds uses the parametrization or searches for closest point
+        nbDiamonds = haveParam ? removeDiamonds(gf) : 0;
         if(haveParam && nodeRepositioning)
           RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
         iter++;

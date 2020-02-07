@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -121,6 +121,13 @@ public:
        y <= MaxPt.y() && z <= MaxPt.z())
       return true;
     return false;
+  }
+  bool transform(const std::vector<double> &tfo)
+  {
+    if(tfo.size() != 16) return false;
+    MinPt.transform(tfo);
+    MaxPt.transform(tfo);
+    return true;
   }
 };
 

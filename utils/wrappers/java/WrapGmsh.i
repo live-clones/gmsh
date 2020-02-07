@@ -72,17 +72,17 @@ namespace std {
 //wrap Set from std
 %include "setWrapperGmsh.h"
 
-%template (GVertexSetWrapper) SetWrapperGmsh<GVertex*, GEntityLessThan>;
-%template (GVertexSetIterator) SetIteratorGmsh<GVertex*, GEntityLessThan>;
+%template (GVertexSetWrapper) SetWrapperGmsh<GVertex*, GEntityPtrLessThan>;
+%template (GVertexSetIterator) SetIteratorGmsh<GVertex*, GEntityPtrLessThan>;
 
-%template (GEdgeSetWrapper) SetWrapperGmsh<GEdge*, GEntityLessThan>;
-%template (GEdgeSetIterator) SetIteratorGmsh<GEdge*, GEntityLessThan>;
+%template (GEdgeSetWrapper) SetWrapperGmsh<GEdge*, GEntityPtrLessThan>;
+%template (GEdgeSetIterator) SetIteratorGmsh<GEdge*, GEntityPtrLessThan>;
 
-%template (GFaceSetWrapper) SetWrapperGmsh<GFace*, GEntityLessThan>;
-%template (GFaceSetIterator) SetIteratorGmsh<GFace*, GEntityLessThan>;
+%template (GFaceSetWrapper) SetWrapperGmsh<GFace*, GEntityPtrLessThan>;
+%template (GFaceSetIterator) SetIteratorGmsh<GFace*, GEntityPtrLessThan>;
 
-%template (GRegionSetWrapper) SetWrapperGmsh<GRegion*, GEntityLessThan>;
-%template (GRegionSetIterator) SetIteratorGmsh<GRegion*, GEntityLessThan>;
+%template (GRegionSetWrapper) SetWrapperGmsh<GRegion*, GEntityPtrLessThan>;
+%template (GRegionSetIterator) SetIteratorGmsh<GRegion*, GEntityPtrLessThan>;
 
 
 //wrap List from std

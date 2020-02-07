@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -337,7 +337,7 @@ public:
     if(_order == 7 && _vs.size() + 5 == 53) return MSH_PYR_53;
     if(_order == 8 && _vs.size() + 5 == 61) return MSH_PYR_61;
     if(_order == 9 && _vs.size() + 5 == 69) return MSH_PYR_69;
-    Msg::Error("no tag matches a p%d pyramid with %d vertices", _order,
+    Msg::Error("No MSH type found for P%d pyramid with %d nodes", _order,
                5 + _vs.size());
     return 0;
   }

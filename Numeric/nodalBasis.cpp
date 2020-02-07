@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -345,9 +345,7 @@ namespace ClosureGen {
     closureRef.resize(24);
     for(int i = 0; i < 24; i++) closureRef[i] = 0;
     if(order == 0) {
-      for(int i = 0; i < 24; i++) {
-        closureFull[i].push_back(0);
-      }
+      for(int i = 0; i < 24; i++) { closureFull[i].push_back(0); }
       return;
     }
     // Mapping for the p1 nodes
@@ -516,9 +514,7 @@ namespace ClosureGen {
     // is so simple.
     int nNodes =
       isTriangle ? (order - 2) * (order - 1) / 2 : (order - 1) * (order - 1);
-    for(int i = 0; i < nNodes; ++i, ++idx, ++start) {
-      closure[idx] = start;
-    }
+    for(int i = 0; i < nNodes; ++i, ++idx, ++start) { closure[idx] = start; }
   }
 
   void reorderFaceClosure(int iSign, int iRotate, nodalBasis::closure &closure,
@@ -863,24 +859,6 @@ nodalBasis::nodalBasis(int tag)
   }
 }
 
-void nodalBasis::getReferenceNodesForBezier(fullMatrix<double> &nodes) const
-{
-  if(parentType != TYPE_PYR && !serendip) {
-    nodes = points;
-  }
-  else {
-    const bool serendipSpace = false;
-    if(parentType != TYPE_PYR) {
-      FuncSpaceData data(true, type, order, &serendipSpace);
-      gmshGeneratePoints(data, nodes);
-    }
-    else {
-      FuncSpaceData data(true, type, false, order, order, &serendipSpace);
-      gmshGeneratePoints(data, nodes);
-    }
-  }
-}
-
 bool nodalBasis::forwardTransformation(const fullMatrix<double> &nodes,
                                        fullMatrix<double> &projection,
                                        int elementType) const
@@ -927,9 +905,7 @@ bool nodalBasis::forwardRenumbering(const fullMatrix<double> &nodes, int *renum,
         idx = j;
         nbOnes++;
       }
-      if(fabs(tfo(i, j)) < tol) {
-        nbZeroes++;
-      }
+      if(fabs(tfo(i, j)) < tol) { nbZeroes++; }
     }
     if(nbOnes != 1) return false;
     if(nbZeroes != nodes.size1() - 1) return false;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,6 +7,7 @@
 //   Brian Helenbrook
 //
 
+#include "GModel.h"
 #include "HighOrder.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -17,14 +18,15 @@
 #include "MPyramid.h"
 #include "GmshMessage.h"
 #include "OS.h"
-#include "Context.h"
 #include "meshGFaceOptimize.h"
+
+typedef std::map<MFace, std::vector<MVertex *>, MFaceLessThan> faceContainer;
 
 void subdivide_pyramid(MElement *element, GRegion *gr,
                        faceContainer &faceVertices,
                        std::vector<MHexahedron *> &dwarfs88);
 
-struct MVertexLessThanParam {
+struct MVertexPtrLessThanParam {
   bool operator()(const MVertex *v1, const MVertex *v2) const
   {
     double u1 = 0., u2 = 1.;
@@ -56,7 +58,7 @@ static void setBLData(MVertex *v)
 static bool setBLData(MElement *el)
 {
   // Check whether all low-order nodes are marked as BL nodes (only works in 2D)
-  for(int i = 0; i < el->getNumPrimaryVertices(); i++) {
+  for(std::size_t i = 0; i < el->getNumPrimaryVertices(); i++) {
     MVertex *v = el->getVertex(i);
     bool isBL = false;
     switch(v->onWhat()->dim()) {
@@ -97,7 +99,7 @@ static void Subdivide(GEdge *ge)
 
   // 2nd order meshing destroyed the ordering of the vertices on the edge
   std::sort(ge->mesh_vertices.begin(), ge->mesh_vertices.end(),
-            MVertexLessThanParam());
+            MVertexPtrLessThanParam());
   for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++)
     ge->mesh_vertices[i]->setPolynomialOrder(1);
   ge->deleteVertexArrays();
@@ -195,24 +197,28 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
     std::vector<MTetrahedron *> tetrahedra2;
     for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
       MTetrahedron *t = gr->tetrahedra[i];
-      // FIXME: we should choose the template to maximize the quality
+      // Use a template that maximizes the quality, which is a modification of
+      // Algorithm RedRefinement3D in: Bey, Jürgen. "Simplicial grid refinement:
+      // on Freudenthal's algorithm and the optimal number of congruence
+      // classes." Numerische Mathematik 85.1 (2000): 1-29. Contributed by Jose
+      // Paulo Moitinho de Almeida, April 2019.
       if(t->getNumVertices() == 10) {
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(0), t->getVertex(4), t->getVertex(7), t->getVertex(6)));
+          t->getVertex(0), t->getVertex(4), t->getVertex(6), t->getVertex(7)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(1), t->getVertex(4), t->getVertex(5), t->getVertex(9)));
+          t->getVertex(4), t->getVertex(1), t->getVertex(5), t->getVertex(9)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(2), t->getVertex(5), t->getVertex(6), t->getVertex(8)));
+          t->getVertex(6), t->getVertex(5), t->getVertex(2), t->getVertex(8)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(3), t->getVertex(7), t->getVertex(9), t->getVertex(8)));
+          t->getVertex(7), t->getVertex(9), t->getVertex(8), t->getVertex(3)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(5), t->getVertex(8), t->getVertex(7), t->getVertex(9)));
+          t->getVertex(4), t->getVertex(6), t->getVertex(7), t->getVertex(9)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(5), t->getVertex(7), t->getVertex(4), t->getVertex(9)));
+          t->getVertex(4), t->getVertex(9), t->getVertex(5), t->getVertex(6)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(7), t->getVertex(8), t->getVertex(5), t->getVertex(6)));
+          t->getVertex(6), t->getVertex(7), t->getVertex(9), t->getVertex(8)));
         tetrahedra2.push_back(new MTetrahedron(
-          t->getVertex(4), t->getVertex(7), t->getVertex(5), t->getVertex(6)));
+          t->getVertex(6), t->getVertex(8), t->getVertex(9), t->getVertex(5)));
         setBLData(t);
       }
       delete t;
@@ -481,7 +487,6 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
   // Check all 3D elements for negative volume and reverse if needed
   m->setAllVolumesPositive();
 
-  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done refining mesh (%g s)", t2 - t1);
 }
@@ -543,8 +548,6 @@ void BarycentricRefineMesh(GModel *m)
       gr->deleteVertexArrays();
     }
   }
-
-  CTX::instance()->mesh.changed = ENT_ALL;
 
   double t2 = Cpu();
   Msg::StatusBar(true, "Done barycentrically refining mesh (%g s)", t2 - t1);

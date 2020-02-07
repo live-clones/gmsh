@@ -1,14 +1,16 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #ifndef HIERARCHICAL_BASIS_H1_QUAD_H
 #define HIERARCHICAL_BASIS_H1_QUAD_H
 
-#include <algorithm>
 #include "HierarchicalBasisH1.h"
 
 /*
@@ -16,17 +18,17 @@
  *         v
  *         ^
  *         |+1
- *   3<----------2
- *   |     |     ^
+ *    ---------->2
+ *   ^     |     ^
  *   |     |     |
  * -1|     +---- |+1 --> u
  *   |           |
- *   v           |
+ *   |           |
  *   0---------->1
  *	   -1
  *
  * Oriented Edges:
- *  e0={v0;v1}    e1={v1;v2}  e2={v2;v3}  e3={v3;v4}
+ *  e0={v0;v1}    e1={v1;v2}  e2={v3;v2}  e3={v0;v3}
  *  pe3,pe1<=pf2       pe0,pe2<=pf1
  *
  */
@@ -43,28 +45,46 @@ public:
                              std::vector<double> &edgeBasis,
                              std::vector<double> &faceBasis,
                              std::vector<double> &bubbleBasis);
-  virtual void
-  generateGradientBasis(double const &u, double const &v, double const &w,
-                        std::vector<std::vector<double> > &gradientVertex,
-                        std::vector<std::vector<double> > &gradientEdge,
-                        std::vector<std::vector<double> > &gradientFace,
-                        std::vector<std::vector<double> > &gradientBubble);
-  virtual void orientateEdge(int const &flagOrientation, int const &edgeNumber,
-                             std::vector<double> &edgeBasis);
-  virtual void
-  orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,
-                    std::vector<std::vector<double> > &gradientEdge);
 
-  virtual void orientateFace(double const &u, double const &v, double const &w,
-                             int const &flag1, int const &flag2,
-                             int const &flag3, int const &faceNumber,
-                             std::vector<double> &faceBasis){};
+  virtual void generateBasis(double const &u, double const &v, double const &w,
+                             std::vector<std::vector<double> > &vertexBasis,
+                             std::vector<std::vector<double> > &edgeBasis,
+                             std::vector<std::vector<double> > &faceBasis,
+                             std::vector<std::vector<double> > &bubbleBasis,
+                             std::string typeFunction = "GradH1Legendre")
+  {
+    generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
+                          bubbleBasis);
+  }
+
+  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                          std::vector<double> &edgeFunctions,
+                          const std::vector<double> &eTablePositiveFlag,
+                          const std::vector<double> &eTableNegativeFlag);
+  virtual void
+  orientEdge(int const &flagOrientation, int const &edgeNumber,
+             std::vector<std::vector<double> > &edgeBasis,
+             const std::vector<std::vector<double> > &eTablePositiveFlag,
+             const std::vector<std::vector<double> > &eTableNegativeFlag);
 
   virtual void
-  orientateFaceGrad(double const &u, double const &v, double const &w,
-                    int const &flag1, int const &flag2, int const &flag3,
-                    int const &faceNumber,
-                    std::vector<std::vector<double> > &gradientFace){};
+  orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions);
+  virtual void orientEdgeFunctionsForNegativeFlag(
+    std::vector<std::vector<double> > &edgeFunctions);
+  virtual void
+  orientFace(int const &flag1, int const &flag2, int const &flag3,
+             int const &faceNumber,
+             const std::vector<double> &quadFaceFunctionsAllOrientation,
+             const std::vector<double> &triFaceFunctionsAllOrientation,
+             std::vector<double> &fTableCopy);
+  virtual void orientFace(
+    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+    const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+    std::vector<std::vector<double> > &fTableCopy);
+
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo);
 
 private:
   int _pf1; // face function order in  direction u
@@ -74,6 +94,22 @@ private:
   static double
   _affineCoordinate(int const &j, double const &u,
                     double const &v); // affine coordinate lambdaj j=1..4
+
+  void generateGradientBasis(double const &u, double const &v, double const &w,
+                             std::vector<std::vector<double> > &gradientVertex,
+                             std::vector<std::vector<double> > &gradientEdge,
+                             std::vector<std::vector<double> > &gradientFace,
+                             std::vector<std::vector<double> > &gradientBubble);
+
+  virtual void orientOneFace(double const &u, double const &v, double const &w,
+                             int const &flag1, int const &flag2,
+                             int const &flag3, int const &faceNumber,
+                             std::vector<double> &faceBasis);
+  virtual void orientOneFace(double const &u, double const &v, double const &w,
+                             int const &flag1, int const &flag2,
+                             int const &flag3, int const &faceNumber,
+                             std::vector<std::vector<double> > &faceFunctions,
+                             std::string typeFunction = "GradH1Legendre");
 };
 
 #endif

@@ -12,8 +12,7 @@ import android.view.WindowManager;
 public class OptionsActivity extends Activity {
   boolean _compute;
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState)
+  @Override protected void onCreate(Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -25,12 +24,13 @@ public class OptionsActivity extends Activity {
     getActionBar().setDisplayHomeAsUpEnabled(true);
     getActionBar().setTitle(R.string.title_activity_options);
     OptionsFragment optionsFragment = OptionsFragment.newInstance(gmsh);
-    getFragmentManager().beginTransaction().replace
-      (R.id.model_fragment, optionsFragment).commit();
+    getFragmentManager()
+      .beginTransaction()
+      .replace(R.id.model_fragment, optionsFragment)
+      .commit();
   }
 
-  @Override
-  public boolean onCreateOptionsMenu(Menu menu)
+  @Override public boolean onCreateOptionsMenu(Menu menu)
   {
     if(_compute) return super.onCreateOptionsMenu(menu);
     MenuItem runStopMenuItem = menu.add(R.string.menu_run);
@@ -38,8 +38,7 @@ public class OptionsActivity extends Activity {
     return super.onCreateOptionsMenu(menu);
   }
 
-  @Override
-  public boolean onMenuItemSelected(int featureId, MenuItem item)
+  @Override public boolean onMenuItemSelected(int featureId, MenuItem item)
   {
     if(item.getTitle().equals(getString(R.string.menu_run))) {
       Intent returnIntent = new Intent();

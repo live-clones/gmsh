@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -40,6 +40,8 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "BackgroundImageFileName" , opt_general_background_image_filename , "" ,
     "Background image file in JPEG, PNG or PDF format" },
+  { F,   "BuildInfo" , opt_general_build_info , "" ,
+    "Gmsh build information (read-only)" },
   { F,   "BuildOptions" , opt_general_build_options , "" ,
     "Gmsh build options (read-only)" },
 
@@ -273,7 +275,8 @@ StringXString PostProcessingOptions_String[] = {
 
 StringXString ViewOptions_String[] = {
   { F|O, "Attributes" , opt_view_attributes , "" ,
-    "Optional string attributes" },
+    "Optional string attached to the view. If the string contains 'AlwaysVisible', "
+    "the view will not be hidden when new ones are merged."},
   { F|O, "AxesFormatX" , opt_view_axes_format0 , "%.3g" ,
     "Number format for X-axis (in standard C form)" },
   { F|O, "AxesFormatY" , opt_view_axes_format1 , "%.3g" ,
@@ -572,6 +575,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "InitialModule", opt_general_initial_context, 0. ,
     "Module launched on startup (0: automatic, 1: geometry, 2: mesh, 3: solver, "
     "4: post-processing) " },
+  { F|O, "InputScrolling" , opt_general_input_scrolling , 1. ,
+    "Enable numerical input scrolling in user interface (moving the mouse to change "
+    "numbers)" },
 
   { F|O, "Light0" , opt_general_light0 , 1. ,
     "Enable light source 0" },
@@ -662,8 +668,6 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the (detached) menu tree" },
   { F|S, "MenuPositionY" , opt_general_menu_position1 , 400. ,
     "Vertical position (in pixels) of the (detached) menu tree" },
-  { F|O, "MeshDiscrete" , opt_general_meshdiscrete , 0. ,
-    "Mesh discrete surfaces through automatic parametrization (0)" },
   { F|O, "MessageFontSize" , opt_general_message_fontsize , -1. ,
     "Size of the font in the message window, in pixels (-1: automatic)" },
   { F|S, "MessageHeight" , opt_general_message_size , 300. ,
@@ -681,6 +685,13 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "MouseInvertZoom" , opt_general_mouse_invert_zoom , 0. ,
     "Invert mouse wheel zoom direction" },
 
+  { F|S, "NativeFileChooser" , opt_general_native_file_chooser ,
+#if defined(__APPLE__) || defined(WIN32)
+    1. ,
+#else
+    0. ,
+#endif
+    "Use the native file chooser?" },
   { F|S, "NonModalWindows" , opt_general_non_modal_windows , 1. ,
     "Force all control windows to be on top of the graphic window "
     "(\"non-modal\")" },
@@ -720,7 +731,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Polygon offset factor (offset = factor * DZ + r * units)" },
   { F|O, "PolygonOffsetUnits" , opt_general_polygon_offset_units , 1. ,
     "Polygon offset units (offset = factor * DZ + r * units)" },
-  { F|O, "ProgressMeterStep" , opt_general_progress_meter_step , 20. ,
+  { F|O, "ProgressMeterStep" , opt_general_progress_meter_step , 10. ,
     "Increment (in percent) of the progress meter bar" },
 
   { F|O, "QuadricSubdivisions" , opt_general_quadric_subdivisions, 6. ,
@@ -827,8 +838,9 @@ StringXNumber GeneralOptions_Number[] = {
 
 StringXNumber GeometryOptions_Number[] = {
   { F|O, "AutoCoherence" , opt_geometry_auto_coherence , 1. ,
-    "Should all duplicate entities be automatically removed? (If AutoCoherence == 2, "
-    "also remove degenerate entities)" },
+    "Should all duplicate entities be automatically removed with the built-in "
+    "geometry kernel? (If AutoCoherence == 2, also remove degenerate entities.) The "
+    "option has no effect with the OpenCASCADE kernel"},
 
   { F,   "Clip" , opt_geometry_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
@@ -879,26 +891,36 @@ StringXNumber GeometryOptions_Number[] = {
     "Number of edge subdivisions between control points when displaying curves" },
 
   { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
-    "Automatically fix orientation of wires, faces, shells and volumes when creating"
-    " new entities" },
+    "Automatically fix orientation of wires, faces, shells and volumes when creating "
+    "new entities with the OpenCASCADE kernel" },
   { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
-    "Try to preserve numbering of entities through OCC boolean operations" },
-  { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
-    "Disable STL computation" },
+    "Try to preserve the numbering of entities through OpenCASCADE boolean operations" },
+  { F|O, "OCCDisableStl" , opt_geometry_occ_disable_stl , 0. ,
+    "Disable STL creation in OpenCASCADE kernel" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
-    "Fix degenerated edges/faces in STEP, IGES and BRep models" },
+    "Fix degenerated edges/faces when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 0. ,
-    "Fix small edges in STEP, IGES and BRep models" },
+    "Fix small edges when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCFixSmallFaces" , opt_geometry_occ_fix_small_faces , 0. ,
-    "Fix small faces in STEP, IGES and BRep models" },
+    "Fix small faces when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
-    "Import labels and colors from STEP models" },
+    "Import labels and colors when importing STEP models with the OpenCASCADE kernel" },
+  { F|O, "OCCMakeSolids" , opt_geometry_occ_make_solids , 0. ,
+    "Fix shells and make solids when importing STEP, IGES and BRep models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
-    "Use multi-threaded OCC boolean operators" },
+    "Use multi-threaded OpenCASCADE boolean operators" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
-    "Scale STEP, IGES and BRep model by given factor" },
+    "Scale STEP, IGES and BRep models by the given factor when importing them with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. ,
-    "Sew faces in STEP, IGES and BRep models" },
+    "Sew faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel" },
+  { F|O, "OCCUnionUnify" , opt_geometry_occ_union_unify , 1. ,
+    "Try to unify faces and edges (remove internal seams) which lie on the same geometry "
+    "after performing a boolean union with the OpenCASCADE kernel" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. ,
     "Model display offset along X-axis (in model coordinates)" },
   { F,   "OffsetY" , opt_geometry_offset1 , 0. ,
@@ -981,11 +1003,14 @@ StringXNumber GeometryOptions_Number[] = {
 } ;
 
 StringXNumber MeshOptions_Number[] = {
-  { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_AUTO ,
+  { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_FRONTAL ,
     "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, "
     "7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
     "3D mesh algorithm (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)" },
+  { F|O, "AlgorithmSwitchOnFailure" , opt_mesh_algo_switch_on_failure , 1 ,
+    "Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based "
+    "algorithms, switching to MeshAdapt)"},
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
@@ -1002,13 +1027,19 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
   { F|O, "BoundaryLayerFanPoints" , opt_mesh_boundary_layer_fan_points, 5. ,
-    "Number of points (per Pi rad) for 2D boundary layer fans" },
+    "Number of points (per Pi radians) for 2D boundary layer fans" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
-   "Enable the creation of high-order mesh from CGNS structured meshes"
-   "(1, 2, 4, 8, ...)" },
+   "Order of the mesh to be created by coarsening CGNS structured zones (1 to "
+   "4)" },
+  { F|O, "CgnsImportIgnoreBC" , opt_mesh_cgns_import_ignore_bc , 0. ,
+   "Ignore information in ZoneBC structures when reading a CGNS file" },
+  { F|O, "CgnsImportIgnoreSolution" , opt_mesh_cgns_import_ignore_solution , 0. ,
+   "Ignore solution when reading a CGNS file" },
   { F|O, "CgnsConstructTopology" , opt_mesh_cgns_construct_topology , 0. ,
    "Reconstruct the model topology (BREP) after reading a CGNS file" },
+  { F|O, "CgnsExportCPEX0045" , opt_mesh_cgns_export_cpex0045 , 0. ,
+   "Use the CPEX0045 convention when exporting a high-order mesh to CGNS" },
   { F|O, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
     "Extend computation of mesh element sizes from the boundaries into the interior "
@@ -1020,7 +1051,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CharacteristicLengthMax" , opt_mesh_lc_max, 1.e22,
     "Maximum mesh element size" },
   { F|O, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
-    "Automatically compute mesh element sizes from curvature (experimental)" },
+    "Automatically compute mesh element sizes from curvature" },
   { F|O, "CharacteristicLengthFromPoints" , opt_mesh_lc_from_points , 1. ,
     "Compute mesh element sizes from values given at geometry points" },
   { F,   "Clip" , opt_mesh_clip , 0.,
@@ -1028,6 +1059,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
     "Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical "
     "entity, 3: by partition)" },
+  { F|O, "CompoundClassify" , opt_mesh_compound_classify , 1. ,
+    "How are surface mesh elements classified on compounds? (0: on the new discrete "
+    "surface, 1: on the original geometrical surfaces - incompatible with e.g. high-order "
+    "meshing)" },
+  { F|O, "CompoundCharacteristicLengthFactor" , opt_mesh_compound_lc_factor , 0.5 ,
+    "Mesh size factor applied to compound parts" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
 
@@ -1058,7 +1095,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
     "Number of layers around a problematic element to consider for high-order optimization"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
-    "Optimize high-order meshes? (-1: elastic smoothing, 1: optimization, 2: both)" },
+    "Optimize high-order meshes? (0: none, 1: optimization, 2: elastic+optimization, "
+    "3: elastic, 4: fast curving)" },
   { F|O, "HighOrderPassMax", opt_mesh_ho_pass_max, 25,
     "Maximum number of high-order optimization passes (moving barrier)"},
   { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
@@ -1068,6 +1106,8 @@ StringXNumber MeshOptions_Number[] = {
     "(between -1.0 and 0.5, excluded)"},
   { F|O, "HighOrderPrimSurfMesh", opt_mesh_ho_prim_surf_mesh, 0,
     "Try to fix flipped surface mesh elements in high-order optimizer?"},
+  { F|O, "HighOrderDistCAD", opt_mesh_ho_dist_cad, 0,
+    "Try to optimize distance to CAD in high-order optimizer?"},
   { F|O, "HighOrderThresholdMin", opt_mesh_ho_threshold_min, 0.1,
     "Minimum threshold for high-order element optimization"},
   { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,
@@ -1093,26 +1133,42 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "LineWidth" , opt_mesh_line_width , 1.0 ,
     "Display width of mesh lines (in pixels)" },
 
+  { F|O, "MaxIterDelaunay3D" , opt_mesh_max_iter_delaunay_3d, 0,
+    "Maximum number of point insertion iterations in 3D Delaunay mesher "
+    "(0: unlimited)" },
   { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
     "Maximum number of threads for 1D meshing (0: use default)" },
   { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
     "Maximum number of threads for 2D meshing (0: use default)" },
   { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
     "Maximum number of threads for 3D meshing (0: use default)" },
+  { F|O, "MaxRetries" , opt_mesh_max_retries , 10 ,
+    "Maximum number of times meshing is retried on curves and surfaces with a "
+    "pending mesh"},
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
-    "Mesh only visible entities (experimental: use with caution!)" },
+    "Mesh only visible entities (experimental)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
-    "METIS partitioning algorithm (1: Recursive, 2: K-way)" },
+    "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
-    "METIS edge matching type (1: Random, 2: Sorted Heavy-Edge)" },
+    "METIS edge matching type 'ctype' (1: Random, 2: Sorted Heavy-Edge)" },
+  { F|O, "MetisMaxLoadImbalance" , opt_mesh_partition_metis_max_load_imbalance, -1. ,
+    "METIS maximum load imbalance 'ufactor' (-1: default, i.e. 30 for K-way and 1 "
+    "for Recursive)" },
+  { F|O, "MetisObjective" , opt_mesh_partition_metis_objective, 1. ,
+    "METIS objective type 'objtype' (1: min. edge-cut, 2: min. communication volume)" },
+  { F|O, "MetisMinConn" , opt_mesh_partition_metis_min_conn, -1. ,
+    "METIS minimize maximum connectivity of partitions 'minconn' (-1: default)" },
   { F|O, "MetisRefinementAlgorithm" , opt_mesh_partition_metis_refinement_algorithm, 2. ,
-    "METIS algorithm for k-way refinement (1: FM-based cut, 2: Greedy, "
+    "METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
-    "Minimum number of nodes used to mesh a circle (and number of nodes per 2*pi "
-    "radians when the mesh size of adapted to the curvature)" },
+    "Minimum number of nodes used to mesh circles and ellipses" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
-    "Minimum number of points used to mesh a (non-straight) curve" },
+    "Minimum number of points used to mesh curves other than lines, circles and "
+    "ellipses"},
+  { F|O, "MinimumElementsPerTwoPi" , opt_mesh_min_elements_2pi, 6. ,
+    "Minimum number of elements per 2 * Pi radians when the mesh size is adapted "
+    "to the curvature" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.1 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
@@ -1219,11 +1275,14 @@ StringXNumber MeshOptions_Number[] = {
     "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
   { F|O, "RandomFactor3D" , opt_mesh_rand_factor3d , 1.e-12 ,
     "Random factor used in the 3D meshing algorithm" },
+
+  { F|O, "RandomSeed" , opt_mesh_random_seed , 1. ,
+    "Seed of pseudo-random number generator" },
   { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 0. ,
-    "Ignore alignment of periodic boundaries when reading the mesh "
+    "Ignore alignment of periodic boundaries when reading the mesh in MSH2 format "
     "(used by ParaView plugin)"},
 #if defined(HAVE_BLOSSOM)
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 1 ,
@@ -1238,12 +1297,15 @@ StringXNumber MeshOptions_Number[] = {
     "Number of topological optimization passes (removal of diamonds, ...) of "
     "recombined surface meshes" },
   { F|O, "Recombine3DAll" , opt_mesh_recombine3d_all , 0 ,
-    "Apply recombination3D algorithm to all volumes, ignoring per-volume spec" },
+    "Apply recombination3D algorithm to all volumes, ignoring per-volume spec "
+    "(experimental)" },
   { F|O, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,
-    "3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)" },
+    "3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids) "
+    "(experimental)" },
   { F|O, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 0 ,
     "3d recombination conformity type (0: nonconforming, 1: trihedra, "
-    "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)" },
+    "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)"
+    "(experimental)" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
   { F|O, "Renumber" , opt_mesh_renumber , 1 ,
@@ -1280,6 +1342,12 @@ StringXNumber MeshOptions_Number[] = {
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at nodes of a same edge (used in BAMG)" },
+  { F|O, "StlAngularDeflection" , opt_mesh_stl_angular_deflection , 0.35 ,
+    "Maximum angular deflection when creating STL representation of surfaces "
+    "(currently only used with the OpenCASCADE kernel)"},
+  { F|O, "StlLinearDeflection" , opt_mesh_stl_linear_deflection , 0.01 ,
+    "Maximum linear deflection when creating STL representation of surfaces "
+    "(currently only used with the OpenCASCADE kernel)"},
   { F|O, "StlOneSolidPerSurface" , opt_mesh_stl_one_solid_per_surface, 0. ,
     "Create one solid per surface when exporting STL files? (0: single solid, "
     "1: one solid per face, 2: one solid per physical surface)" },
@@ -1372,6 +1440,8 @@ StringXNumber PostProcessingOptions_Number[] = {
 
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },
+  { F|O, "CombineCopyOptions" , opt_post_combine_copy_options , 1. ,
+    "Copy options during Combine operation" },
 
   { F, "DoubleClickedGraphPointX" , opt_post_double_clicked_graph_point_x , 0. ,
     "Abscissa of last double-clicked graph point" },
@@ -1659,7 +1729,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
   { F|O, "Stipple" , opt_view_use_stipple , 0. ,
-    "Stipple curves in 2D plots?" },
+    "Stipple curves in 2D and line plots?" },
 
   { F|O, "Tangents" , opt_view_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },
@@ -1805,13 +1875,23 @@ StringXNumber PrintOptions_Number[] = {
     "Print text strings?" },
 
   { F|O, "X3dCompatibility" , opt_print_x3d_compatibility, 0. ,
-    "Produce highliy compatible X3D output (no scale bar)" },
+    "Produce highly compatible X3D output (no scale bar)" },
   { F|O, "X3dPrecision" , opt_print_x3d_precision , 1.e-9 ,
     "Precision of X3D output" },
   { F|O, "X3dRemoveInnerBorders" , opt_print_x3d_remove_inner_borders , 0. ,
     "Remove inner borders in X3D output" },
   { F|O, "X3dTransparency" , opt_print_x3d_transparency , 0. ,
     "Transparency for X3D output" },
+  { F|O, "X3dSurfaces" , opt_print_x3d_surfaces, 1. ,
+    "Save surfaces in CAD X3D output (0: no, 1: yes in a single X3D object,"
+    "2: one X3D object per geometrical surface, 3: one X3D object per"
+    "physical surface)"},
+  { F|O, "X3dEdges" , opt_print_x3d_edges, 0. ,
+    "Save edges in CAD X3D output (0: no, 1: yes in a single X3D object,"
+    "2: one X3D object per geometrical edge, 3: one X3D object per"
+    "physical edge)"},
+  { F|O, "X3dVertices" , opt_print_x3d_vertices, 0. ,
+    "Save vertices in CAD X3D output (0: no, 1: yes)"},
 
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },

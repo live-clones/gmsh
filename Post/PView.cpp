@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -68,9 +68,9 @@ PView::PView(PViewData *data, int tag)
                             _options->targetError);
 }
 
-PView::PView(PView *ref, bool copyOptions)
+PView::PView(PView *ref, bool copyOptions, int tag)
 {
-  _init();
+  _init(tag);
 
   if(ref->getAliasOf() >= 0) { // alias of an alias
     PView *orig = getViewByTag(ref->getAliasOf());
@@ -108,6 +108,15 @@ PView::PView(const std::string &xname, const std::string &yname,
   _options->lineWidth = 2.;
   _options->pointSize = 4.;
   _options->axesLabel[0] = xname;
+}
+
+void PView::addStep(std::vector<double> &y)
+{
+  PViewDataList *d = dynamic_cast<PViewDataList *>(_data);
+  if(d)
+    d->addStep(y);
+  else
+    Msg::Error("Can only add step data to list-based datasets");
 }
 
 PView::PView(const std::string &name, std::vector<double> &x,
@@ -235,7 +244,7 @@ void PView::setChanged(bool val)
   if(_changed) _eye = SPoint3(0., 0., 0.);
 }
 
-void PView::combine(bool time, int how, bool remove)
+void PView::combine(bool time, int how, bool remove, bool copyOptions)
 {
   // time == true: combine the timesteps (oherwise combine the elements)
   // how == 0: try to combine all visible views
@@ -268,6 +277,7 @@ void PView::combine(bool time, int how, bool remove)
       if(j == nds.size()) {
         nd.data.push_back(data);
         nd.indices.push_back(i);
+        nd.options = p->getOptions();
         nds.push_back(nd);
       }
     }
@@ -303,12 +313,14 @@ void PView::combine(bool time, int how, bool remove)
           rm.insert(list[nds[i].indices[j]]);
         PViewOptions *opt = p->getOptions();
         if(opt->adaptVisualizationGrid) {
-          // the (empty) adaptive data created in PView() must be
-          // recreated, since we added some data
+          // the (empty) adaptive data created in PView() must be recreated,
+          // since we added some data
           data->destroyAdaptiveData();
           data->initAdaptiveData(opt->timeStep, opt->maxRecursionLevel,
                                  opt->targetError);
         }
+        if(copyOptions && nds[i].options)
+          p->setOptions(new PViewOptions(*nds[i].options));
       }
       else
         delete p;

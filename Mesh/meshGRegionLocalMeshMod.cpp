@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -238,7 +238,7 @@ void BuildSwapPattern7(SwapPattern *sc)
 
 bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
               const qmTetrahedron::Measures &cr,
-              const std::set<MFace, Less_Face> &embeddedFaces)
+              const std::set<MFace, MFaceLessThan> &embeddedFaces)
 {
   // static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
   int permut[6] = {0, 3, 1, 2, 5, 4};
@@ -391,7 +391,7 @@ bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
 // swap a face i.e. remove a face shared by 2 tets
 bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
               const qmTetrahedron::Measures &cr,
-              const std::set<MFace, Less_Face> &embeddedFaces)
+              const std::set<MFace, MFaceLessThan> &embeddedFaces)
 {
   MTet4 *t2 = t1->getNeigh(iLocalFace);
   if(!t2) return false;
@@ -499,7 +499,7 @@ void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
     }
   }
   if(iV == -1) {
-    Msg::Error("Trying to build a cavity of tets for a vertex that does not "
+    Msg::Error("Trying to build a cavity of tets for a node that does not "
                "belong to this tet");
     return;
   }
@@ -531,7 +531,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
                     const localMeshModAction action, double *minQual)
 {
   if(t->isDeleted()) {
-    Msg::Warning("Impossible to collapse vertex");
+    Msg::Warning("Impossible to collapse node");
     return false;
   }
 
@@ -624,7 +624,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
 bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
 {
   if(t->isDeleted()) {
-    Msg::Warning("Impossible to collapse vertex");
+    Msg::Warning("Impossible to collapse node");
     return false;
   }
   if(t->tet()->getVertex(iVertex)->onWhat()->dim() < 3) return false;

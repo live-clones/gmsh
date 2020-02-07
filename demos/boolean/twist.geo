@@ -13,10 +13,10 @@ Point(3) = {-a*Cos(Pi/6), -a*Sin(Pi/6), 0, lc2};
 Point(4) = {b*Sin(Pi/6), -b*Cos(Pi/6), 0, lc2};
 Point(5) = {0, 0, 0, lc2};
 
-Ellipse(1) = {3, 5, 2};
-Ellipse(2) = {3, 5, 4};
-Ellipse(3) = {1, 5, 4};
-Ellipse(4) = {1, 5, 2};
+Ellipse(1) = {3, 5, 3, 2};
+Ellipse(2) = {3, 5, 3, 4};
+Ellipse(3) = {1, 5, 1, 4};
+Ellipse(4) = {1, 5, 1, 2};
 l~{1}() = {1:4};
 Curve Loop(1) = l~{1}();
 

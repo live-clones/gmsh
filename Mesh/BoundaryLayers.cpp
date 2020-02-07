@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -13,6 +13,7 @@
 #include "meshGFace.h"
 #include "GmshMessage.h"
 #include "Field.h"
+#include "Context.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -260,7 +261,7 @@ FixErasedExtrScaleFlags(GModel *m, std::map<int, bool> &faceSkipScaleCalc,
                         std::map<int, bool> &edgeSkipScaleCalc)
 {
   unsigned int num_changed = 0;
-  std::set<GRegion *, GEntityLessThan>::iterator itreg;
+  std::set<GRegion *, GEntityPtrLessThan>::iterator itreg;
   // fix all extruded faces bordering ScaleLast regions
   for(itreg = m->firstRegion(); itreg != m->lastRegion(); itreg++) {
     ExtrudeParams *r_ep = (*itreg)->meshAttributes.extrude;
@@ -431,14 +432,22 @@ int Mesh2DWithBoundaryLayers(GModel *m)
       otherFaces.insert(*it);
 
   // mesh source surfaces (and dependencies)
-  for(int i = 0; i < 10; i++) { // FIXME: should check PENDING status instead!
+  int nIter = 0;
+  while(1) {
+    int nPending = 0;
     for(std::set<GFace *>::iterator it = sourceFacesDependencies.begin();
-        it != sourceFacesDependencies.end(); it++)
-      (*it)->mesh(false);
+        it != sourceFacesDependencies.end(); it++) {
+      if((*it)->meshStatistics.status == GFace::PENDING) {
+        (*it)->mesh(true);
+        nPending++;
+      }
+    }
+    if(!nPending) break;
+    if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
   for(std::set<GFace *>::iterator it = sourceFaces.begin();
       it != sourceFaces.end(); it++)
-    (*it)->mesh(false);
+    (*it)->mesh(true);
 
   // make sure the source surfaces for the boundary layers are oriented
   // correctly (normally we do this only after the 3D mesh is done; but here
@@ -487,7 +496,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   std::for_each(otherFaces.begin(), otherFaces.end(), deMeshGFace());
   for(std::set<GEdge *>::iterator it = otherEdges.begin();
       it != otherEdges.end(); it++)
-    (*it)->mesh(false);
+    (*it)->mesh(true);
 
   // mesh the curves bounding the boundary layers by extrusion using the smooth
   // normal field
@@ -511,7 +520,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   // mesh non-source surfaces
   for(std::set<GFace *>::iterator it = otherFaces.begin();
       it != otherFaces.end(); it++)
-    (*it)->mesh(false);
+    (*it)->mesh(true);
 
   // mesh the surfaces bounding the boundary layers by extrusion using the
   // smooth normal field

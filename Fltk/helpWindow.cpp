@@ -1,10 +1,14 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
 #include <algorithm>
+#include <string>
+#if __cplusplus >= 201103L
+#include <regex>
+#endif
 #include <FL/Fl_Help_View.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
@@ -91,7 +95,7 @@ double numberOrStringOptionChooser(const std::string &category, int index,
       d.name = name;
       number->minimum(minimum);
       number->maximum(maximum);
-      number->step(step, 1);
+      if(CTX::instance()->inputScrolling) number->step(step, 1);
       number->callback(interactive_cb, (void *)&d);
       number->when(FL_WHEN_RELEASE);
     }
@@ -283,10 +287,20 @@ void help_options_cb(Fl_Widget *w, void *data)
       FlGui::instance()->help->browser->add(s0[i].c_str(), d);
     }
     else {
+#if __cplusplus >= 201103L
+      try{
+        // icase for case-insensitive search
+        if(std::regex_search(s0[i], std::regex(search, std::regex_constants::icase)))
+          FlGui::instance()->help->browser->add(s0[i].c_str(), d);
+      }
+      catch(...) {
+      }
+#else
       std::string tmp(s0[i]);
       std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
       if(tmp.find(search) != std::string::npos)
         FlGui::instance()->help->browser->add(s0[i].c_str(), d);
+#endif
     }
   }
   FlGui::instance()->help->browser->topline(top);
@@ -310,10 +324,10 @@ helpWindow::helpWindow()
     std::ostringstream sstream;
     sstream
       << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
-      << "<p>Copyright (C) 1997-2019"
+      << "<p>Copyright (C) 1997-2020"
       << "<br>Christophe Geuzaine and Jean-Francois Remacle"
-      << "<p><a href=\"http://gmsh.info/doc/CREDITS.txt\">Credits</a> "
-      << "and <a href=\"http://gmsh.info/doc/LICENSE.txt\">licensing "
+      << "<p><a href=\"http://gmsh.info/CREDITS.txt\">Credits</a> "
+      << "and <a href=\"http://gmsh.info/LICENSE.txt\">licensing "
       << "information</a>"
       << "<p>Please report all issues on "
       << "<a href=\"https://gitlab.onelab.info/gmsh/gmsh/issues\">"
@@ -434,7 +448,11 @@ helpWindow::helpWindow()
     showhelp->tooltip("Show help strings");
 
     Fl_Group *o = new Fl_Group(3 * WB + 2 * BW, WB, BW, BH);
-    o->tooltip("Filter values");
+#if __cplusplus >= 201103L
+    o->tooltip("Filter list using regular expression");
+#else
+    o->tooltip("Filter list");
+#endif
     o->box(FL_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
     search = new Fl_Input(3 * WB + 2 * BW + BH, WB + 2, BW - BH - 2, BH - 4,
@@ -449,13 +467,15 @@ helpWindow::helpWindow()
 
     browser = new Fl_Browser(0, BH + 2 * WB, width, height - 2 * BH - 4 * WB);
     browser->box(GMSH_SIMPLE_TOP_BOX);
+#if defined(WIN32) // FL_SCREEN seems to be too tiny on most Windows setups
+    browser->textfont(FL_COURIER);
+#else
     browser->textfont(FL_SCREEN);
+#endif
     browser->textsize(FL_NORMAL_SIZE - 2);
     browser->type(FL_MULTI_BROWSER);
     browser->callback(browser_cb);
     browser->tooltip("Double-click to edit value");
-    browser->scrollbar_size(
-      std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
 
     {
       Fl_Group *g = new Fl_Group(0, height - BH - WB, width, BH);

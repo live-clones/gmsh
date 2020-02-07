@@ -1,9 +1,12 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #include "HierarchicalBasisH1Line.h"
 
@@ -11,12 +14,14 @@ HierarchicalBasisH1Line::HierarchicalBasisH1Line(int pe)
 {
   _nvertex = 2;
   _nedge = 1;
-  _nface = 0;
+  _nfaceTri = 0;
+  _nfaceQuad = 0;
   _nVertexFunction = 2;
   _nEdgeFunction = (pe - 1);
-  _nFaceFunction = 0;
+  _nQuadFaceFunction = 0;
+  _nTriFaceFunction = 0;
   _nBubbleFunction = 0;
-  _pe=pe;
+  _pe = pe;
 }
 
 HierarchicalBasisH1Line::~HierarchicalBasisH1Line() {}
@@ -37,9 +42,8 @@ void HierarchicalBasisH1Line::generateBasis(double const &u, double const &v,
                                             std::vector<double> &faceBasis,
                                             std::vector<double> &bubbleBasis)
 {
-  int uc = 2 * u - 1; // for transformation [-1;1] -> [0,1]
-  double lambda1 = _affineCoordinate(1, uc);
-  double lambda2 = _affineCoordinate(2, uc);
+  double lambda1 = _affineCoordinate(1, u);
+  double lambda2 = _affineCoordinate(2, u);
   double product = lambda1 * lambda2;
   double substraction = lambda1 - lambda2;
   // vertex shape functions:
@@ -59,17 +63,76 @@ void HierarchicalBasisH1Line::generateGradientBasis(
   std::vector<std::vector<double> > &gradientFace,
   std::vector<std::vector<double> > &gradientBubble)
 {
-  int uc = 2 * u - 1; // for transformation [-1;1] -> [0,1]
   double dlambda1 = 0.5;
   double dlambda2 = -0.5;
-  double detJacob = _getDetJacobian();
   // vertex gradient functions:
-  gradientVertex[0][0] = detJacob * dlambda2;
-  gradientVertex[1][0] = detJacob * dlambda1;
+  gradientVertex[0][0] = dlambda2;
+  gradientVertex[1][0] = dlambda1;
   for(int k = 2; k <= _pe; k++) {
-    gradientEdge[k - 2][0] =
-      OrthogonalPoly::EvalDLobatto(k, uc) * _getDetJacobian();
+    gradientEdge[k - 2][0] = OrthogonalPoly::EvalDLobatto(k, u);
   }
 }
 
-double HierarchicalBasisH1Line::_getDetJacobian() { return 2; }
+void HierarchicalBasisH1Line::orientEdge(
+  int const &flagOrientation, int const &edgeNumber,
+  std::vector<double> &edgeFunctions,
+  const std::vector<double> &eTablePositiveFlag,
+  const std::vector<double> &eTableNegativeFlag)
+{
+  if(flagOrientation == -1) {
+    for(int k = 0; k <= _pe - 2; k++) {
+      edgeFunctions[k] = eTableNegativeFlag[k];
+    }
+  }
+  else {
+    for(int k = 0; k <= _pe - 2; k++) {
+      edgeFunctions[k] = eTablePositiveFlag[k];
+    }
+  }
+}
+
+void HierarchicalBasisH1Line::orientEdge(
+  int const &flagOrientation, int const &edgeNumber,
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
+{
+  if(flagOrientation == -1) {
+    for(int k = 0; k <= _pe - 2; k++) {
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+    }
+  }
+  else {
+    for(int k = 0; k <= _pe - 2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+    }
+  }
+}
+void HierarchicalBasisH1Line::orientEdgeFunctionsForNegativeFlag(
+  std::vector<double> &edgeFunctions)
+{
+  for(int k = 0; k <= _pe - 2; k++) {
+    if(k % 2 != 0) { edgeFunctions[k] = edgeFunctions[k] * (-1); }
+  }
+}
+
+void HierarchicalBasisH1Line::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  for(int k = 0; k <= _pe - 2; k++) {
+    if(k % 2 != 0) { edgeFunctions[k][0] = edgeFunctions[k][0] * (-1); }
+  }
+}
+
+void HierarchicalBasisH1Line::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                          std::vector<int> &orderInfo)
+{
+  functionTypeInfo[0] = 0;
+  orderInfo[0] = 1;
+  functionTypeInfo[1] = 0;
+  orderInfo[1] = 1;
+  for(int k = 2; k <= _pe; k++) {
+    orderInfo[k] = k;
+    functionTypeInfo[k] = 1;
+  }
+}

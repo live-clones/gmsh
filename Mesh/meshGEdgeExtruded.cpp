@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,6 +8,21 @@
 #include "MLine.h"
 #include "ExtrudeParams.h"
 #include "GmshMessage.h"
+
+static void createElements(GEdge *ge)
+{
+  // create elements
+  for(std::size_t i = 0; i < ge->mesh_vertices.size() + 1; i++) {
+    MVertex *v0 = (i == 0) ?
+      ge->getBeginVertex()->mesh_vertices[0] :
+      ge->mesh_vertices[i - 1];
+    MVertex *v1 = (i == ge->mesh_vertices.size()) ?
+      ge->getEndVertex()->mesh_vertices[0] :
+      ge->mesh_vertices[i];
+    MLine *newElem = new MLine(v0, v1);
+    ge->lines.push_back(newElem);
+  }
+}
 
 static void extrudeMesh(GVertex *from, GEdge *to)
 {
@@ -26,11 +41,7 @@ static void extrudeMesh(GVertex *from, GEdge *to)
       }
     }
   }
-  to->getEndVertex()->correspondingVertices[to->getEndVertex()->mesh_vertices[0]] = v;
-
-  std::vector<double> tfo;
-  //ep->GetAffineTransform(tfo); // TODO: check transform
-  to->getEndVertex()->GEntity::setMeshMaster(from, tfo, false);
+  createElements(to);
 }
 
 static void copyMesh(GEdge *from, GEdge *to)
@@ -54,12 +65,9 @@ static void copyMesh(GEdge *from, GEdge *to)
     double newu = (direction > 0) ? u : (u_max - u + u_min);
     MEdgeVertex *newv = new MEdgeVertex(x, y, z, to, newu);
     to->mesh_vertices.push_back(newv);
-    to->correspondingVertices[newv] = v;
   }
 
-  std::vector<double> tfo;
-  //ep->GetAffineTransform(tfo); // TODO: check transform
-  to->GEntity::setMeshMaster(from, tfo, false);
+  createElements(to);
 }
 
 int MeshExtrudedCurve(GEdge *ge)
@@ -73,7 +81,7 @@ int MeshExtrudedCurve(GEdge *ge)
     return 0;
   }
 
-  Msg::Info("Meshing curve %d (extruded)", ge->tag());
+  Msg::Info("Meshing curve %d (Extruded)", ge->tag());
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // curve is extruded from a point
@@ -91,19 +99,12 @@ int MeshExtrudedCurve(GEdge *ge)
       // cannot mesh this edge yet: will do it later
       return 1;
     }
-    copyMesh(from, ge);
-  }
 
-  // create elements
-  for(std::size_t i = 0; i < ge->mesh_vertices.size() + 1; i++) {
-    MVertex *v0 = (i == 0) ?
-      ge->getBeginVertex()->mesh_vertices[0] :
-      ge->mesh_vertices[i - 1];
-    MVertex *v1 = (i == ge->mesh_vertices.size()) ?
-      ge->getEndVertex()->mesh_vertices[0] :
-      ge->mesh_vertices[i];
-    MLine *newElem = new MLine(v0, v1);
-    ge->lines.push_back(newElem);
+    copyMesh(from, ge);
+    if(ge->getMeshMaster() == from) {
+      // explicit periodic constraint, to store node correspondance
+      ge->setMeshMaster(from, ge->affineTransform);
+    }
   }
 
   ge->meshStatistics.status = GEdge::DONE;

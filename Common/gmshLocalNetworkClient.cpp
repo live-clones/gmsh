@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -251,7 +251,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     if(getFather()) {
       std::string reply = getName(); // reply is dummy
       getFather()->getGmshServer()->SendMessage(GmshSocket::GMSH_STOP,
-                                                reply.size(), &reply[0]);
+                                                (int)reply.size(), &reply[0]);
     }
     break;
   case GmshSocket::GMSH_PARAMETER:
@@ -357,13 +357,13 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       Msg::Error("Unknown ONELAB parameter type in query: %s", ptype.c_str());
 
     if(reply.size()) {
-      getGmshServer()->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(),
-                                   &reply[0]);
+      getGmshServer()->SendMessage(GmshSocket::GMSH_PARAMETER,
+                                   (int)reply.size(), &reply[0]);
     }
     else {
       reply = name;
       getGmshServer()->SendMessage(GmshSocket::GMSH_PARAMETER_NOT_FOUND,
-                                   reply.size(), &reply[0]);
+                                   (int)reply.size(), &reply[0]);
     }
   } break;
   case GmshSocket::GMSH_PARAMETER_QUERY_ALL: {
@@ -393,10 +393,10 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 
     for(std::size_t i = 0; i < replies.size(); i++)
       getGmshServer()->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY_ALL,
-                                   replies[i].size(), &replies[i][0]);
+                                   (int)replies[i].size(), &replies[i][0]);
     reply = "Sent all ONELAB " + ptype + "s";
     getGmshServer()->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY_END,
-                                 reply.size(), &reply[0]);
+                                 (int)reply.size(), &reply[0]);
   } break;
   case GmshSocket::GMSH_PARAMETER_CLEAR:
     clear(message == "*" ? "" : message);
@@ -492,8 +492,8 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     reply =
       onelab::server::instance()->getChanged(clientName) ? "true" : "false";
 #endif
-    getGmshServer()->SendMessage(GmshSocket::GMSH_OLPARSE, reply.size(),
-                                 &reply[0]);
+    getGmshServer()->SendMessage(GmshSocket::GMSH_OLPARSE,
+                                 (int)reply.size(), &reply[0]);
   } break;
   case GmshSocket::GMSH_CLIENT_CHANGED: {
     std::string::size_type first = 0;
@@ -503,7 +503,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       std::string reply =
         onelab::server::instance()->getChanged(name) ? "true" : "false";
       getGmshServer()->SendMessage(GmshSocket::GMSH_CLIENT_CHANGED,
-                                   reply.size(), &reply[0]);
+                                   (int)reply.size(), &reply[0]);
     }
     else if(command == "set") {
       std::string changed = onelab::parameter::getNextToken(message, first);

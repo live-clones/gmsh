@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,9 +15,6 @@ class MEdge {
 private:
   MVertex *_v[2];
   char _si[2]; // sorted indices
-
-public:
-  typedef std::vector<int>::size_type size_type;
 
 public:
   MEdge()
@@ -38,9 +35,9 @@ public:
       _si[1] = 1;
     }
   }
-  size_type getNumVertices() const { return 2; }
-  MVertex *getVertex(const int i) const { return _v[i]; }
-  MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
+  std::size_t getNumVertices() const { return 2; }
+  MVertex *getVertex(std::size_t i) const { return _v[i]; }
+  MVertex *getSortedVertex(std::size_t i) const { return _v[int(_si[i])]; }
   MVertex *getMinVertex() const { return _v[int(_si[0])]; }
   MVertex *getMaxVertex() const { return _v[int(_si[1])]; }
 
@@ -118,14 +115,14 @@ inline bool operator!=(const MEdge &e1, const MEdge &e2)
           e1.getMaxVertex() != e2.getMaxVertex());
 }
 
-struct Equal_Edge {
+struct MEdgeEqual {
   bool operator()(const MEdge &e1, const MEdge &e2) const
   {
     return (e1 == e2);
   }
 };
 
-struct Less_Edge {
+struct MEdgeLessThan {
   bool operator()(const MEdge &e1, const MEdge &e2) const
   {
     if(e1.getMinVertex()->getNum() < e2.getMinVertex()->getNum()) return true;
@@ -144,15 +141,12 @@ private:
   std::vector<MVertex *> _v;
 
 public:
-  typedef std::vector<MVertex *>::size_type size_type;
-
-public:
   MEdgeN() {}
   MEdgeN(const std::vector<MVertex *> &v);
-  size_type getNumVertices() const { return (int)_v.size(); }
-  MVertex *getVertex(int i) const { return _v[i]; }
+  std::size_t getNumVertices() const { return _v.size(); }
+  MVertex *getVertex(std::size_t i) const { return _v[i]; }
   const std::vector<MVertex *> &getVertices() const { return _v; }
-  int getPolynomialOrder() const { return getNumVertices() - 1; }
+  int getPolynomialOrder() const { return (int)(getNumVertices() - 1); }
 
   MEdge getEdge() const;
 
