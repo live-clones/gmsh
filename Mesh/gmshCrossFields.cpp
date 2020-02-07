@@ -23,6 +23,10 @@
 #include "Numeric.h"
 #include "GModelParametrize.h"
 
+#ifdef HAVE_QUADMESHINGTOOLS
+#include "quad_meshing_tools.h"
+#endif
+
 #ifdef HAVE_FLTK
 #include "FlGui.h"
 #endif
@@ -2673,11 +2677,45 @@ public:
 
   int computeCrossFieldAndH()
   {
+#if defined(HAVE_SOLVER)
+#else
+    Msg::Error("Module SOLVER NOT found, but required");
+    return -1;
+#endif
+#if defined(HAVE_QUADMESHINGTOOLS)
+    int nb_iter = 10;
+    int cf_tag;
+    std::map<std::pair<size_t,size_t>,double> edge_to_angle;
+    bool okcf = QMT::compute_cross_field_with_heat("default",cf_tag,nb_iter,&edge_to_angle);
+    if (!okcf) {
+      Msg::Error("Failed to compute cross field");
+      return -1;
+    }
+
+    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
+    std::vector<cross2d *> pc;
+    for(it = C.begin(); it != C.end(); ++it) pc.push_back(&(it->second));
+    for(it = C.begin(); it != C.end(); ++it) {
+      std::pair<size_t,size_t> edge = std::make_pair(it->first.getMinVertex()->getIndex(),
+            it->first.getMaxVertex()->getIndex());
+      std::map<std::pair<size_t,size_t>,double>::iterator itr = edge_to_angle.find(edge);
+      if (itr == edge_to_angle.end()) {
+        Msg::Error("Edge not found in result");
+        return -1;
+      }
+      it->second._a = itr->second;
+      it->second.computeVector();
+      /* issue from here I guess: theta transfer not sufficient ? */
+    }
+#else
     computeCrossFieldExtrinsic(1.e-9);
+#endif
+    Msg::Info("Computing H ...");
     myAssembler = computeH(gm, f, vs, C);
-    //    printScalar(myAssembler,'H');
+    // printScalar(myAssembler,'H');
+    Msg::Info("Computing singularities ...");
     computeSingularities(C, singularities, indices, myAssembler);
-    //    print_H_and_Cross(gm, f, C, *myAssembler, singularities);
+    // print_H_and_Cross(gm, f, C, *myAssembler, singularities);
     return 1;
   }
 
@@ -3699,7 +3737,8 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   }
   else {
     Msg::Info("Computing a cross field");
-    qLayout.computeCrossFieldAndH();
+    int cf_status = qLayout.computeCrossFieldAndH();
+    if (cf_status == -1) return cf_status;
     qLayout.computeCutGraph(duplicateEdges);
     qLayout.computeThetaUsingHCrouzeixRaviart(dataTHETA);
   }
@@ -3883,7 +3922,46 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   getFacesOfTheModel(gm, f);
 
 #if defined(HAVE_SOLVER)
-  return computeCrossFieldAndH(gm, f, tags, true);
+  int cf_status = computeCrossFieldAndH(gm, f, tags, true);
+  return 0;
+  if (cf_status != 0) return cf_status;
+
+#if defined(HAVE_QUADMESHINGTOOLS)
+  std::string quad_layout_name = gm->getName();
+  int H_tag = tags.size() > 0 ? tags[0] : -1;
+  // double size_min = 0.1;
+  double size_min = CTX::instance()->mesh.lcMin;
+  double size_max = CTX::instance()->mesh.lcMax;
+  if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
+    size_min *= CTX::instance()->mesh.lcFactor;
+  }
+  if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
+    size_max *= CTX::instance()->mesh.lcFactor;
+  }
+  QMT::QMesh Q;
+  bool okg = QMT::generate_quad_mesh_from_gmsh_colored_triangulation(
+    quad_layout_name, H_tag, size_min, size_max, Q);
+  if (!okg) {
+    Msg::Error("Failed to generate quad mesh");
+    return -1;
+  }
+
+  double hc = 0.9 * size_min;
+  if (size_min == 0.) hc = 0.9 * size_max;
+  bool oks = QMT::simplify_quad_mesh(Q, hc);
+  if (!oks) {
+    Msg::Error("Failed to simplify quad mesh");
+    return -1;
+  }
+
+  bool oke = QMT::export_qmesh_to_gmsh_mesh(Q, "quad_mesh");
+  if (!oke) {
+    Msg::Error("Failed to export quad mesh");
+    return -1;
+  }
+#endif
+
+  return cf_status;
   //    return computeQuadLayout(gm, f);
 #else
   Msg::Error("Cross field computation requires solver module");
