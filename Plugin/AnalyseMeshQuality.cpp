@@ -289,19 +289,10 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
     case 2:
       Msg::StatusBar(true, "Surface %d: checking the Jacobian of %d elements",
                      entity->tag(), num);
-      if(entity->geomType() == GEntity::Plane &&
-         entity->haveParametrization()) {
-        double u = entity->parBounds(0).low();
-        double v = entity->parBounds(1).low();
-        SVector3 n = dynamic_cast<GFace *>(entity)->normal(SPoint2(u, v));
-        normals = new fullMatrix<double>(1, 3);
-        normals->set(0, 0, n[0]);
-        normals->set(0, 1, n[1]);
-        normals->set(0, 2, n[2]);
-      }
-      else if(entity->geomType() == GEntity::DiscreteSurface) {
+      // check the classical case of 2D planar meshes in the z=0 plane to issue
+      // a warning of the mesh is oriented along -z
+      if(entity->geomType() == GEntity::DiscreteSurface) {
         SBoundingBox3d bb = entity->bounds();
-        // If we don't have the CAD, check if the mesh is 2D:
         if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
           normals = new fullMatrix<double>(1, 3);
           normals->set(0, 0, 0);
@@ -313,43 +304,6 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
     case 1:
       Msg::StatusBar(true, "Line %d: checking the Jacobian of %d elements",
                      entity->tag(), num);
-      if(entity->geomType() == GEntity::Line && entity->haveParametrization()) {
-        double u = entity->parBounds(0).low();
-        SVector3 t = dynamic_cast<GEdge *>(entity)->firstDer(u);
-        SVector3 dum = SVector3(0, 0, 0);
-        if(t[0] == 0.)
-          dum[0] = 1;
-        else if(t[1] == 0.)
-          dum[1] = 1;
-        else
-          dum[2] = 1;
-        SVector3 n1, n2;
-        n1 = crossprod(t, dum);
-        n1.normalize();
-        n2 = crossprod(t, n1);
-        n2.normalize();
-        normals = new fullMatrix<double>(2, 3);
-        normals->set(0, 0, n1[0]);
-        normals->set(0, 1, n1[1]);
-        normals->set(0, 2, n1[2]);
-        normals->set(1, 0, n2[0]);
-        normals->set(1, 1, n2[1]);
-        normals->set(1, 2, n2[2]);
-      }
-      else if(entity->geomType() == GEntity::DiscreteCurve) {
-        SBoundingBox3d bb = entity->bounds();
-        // If we don't have the CAD, check if the mesh is 1D:
-        if(!bb.empty() && bb.max().y() - bb.min().y() == .0 &&
-           bb.max().z() - bb.min().z() == .0) {
-          normals = new fullMatrix<double>(2, 3);
-          normals->set(0, 0, 0);
-          normals->set(0, 1, 1);
-          normals->set(0, 2, 0);
-          normals->set(1, 0, 0);
-          normals->set(1, 1, 0);
-          normals->set(1, 2, 1);
-        }
-      }
       break;
     default: break;
     }
@@ -369,7 +323,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
       _computePointwiseQuantities(el, normals);
 #endif
     }
-    delete normals;
+    if(normals) delete normals;
   }
   if(cntInverted) {
     Msg::Warning("%d elements are completely inverted", cntInverted);

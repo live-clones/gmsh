@@ -17,8 +17,6 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "meshGFaceOptimize.h"
-#include "PView.h"
-#include "PViewDataGModel.h"
 #include "discreteEdge.h"
 #include "Numeric.h"
 #include "GModelParametrize.h"
@@ -27,15 +25,17 @@
 #include "quad_meshing_tools.h"
 #endif
 
-#ifdef HAVE_FLTK
-#include "FlGui.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewDataGModel.h"
 #endif
 
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
 
-#if defined(HAVE_SOLVER)
+#if defined(HAVE_SOLVER) && defined(HAVE_POST)
 
 #include "dofManager.h"
 #include "laplaceTerm.h"
@@ -1735,7 +1735,6 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
                                     std::set<MVertex *, MVertexPtrLessThan> &vs,
                                     std::map<MEdge, cross2d, MEdgeLessThan> &C)
 {
-#if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
   linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
@@ -1743,7 +1742,6 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
   linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
 #else
   linearSystemFull<double> *_lsys = new linearSystemFull<double>;
-#endif
 #endif
 
   dofManager<double> *myAssembler = new dofManager<double>(_lsys);
@@ -2677,11 +2675,6 @@ public:
 
   int computeCrossFieldAndH()
   {
-#if defined(HAVE_SOLVER)
-#else
-    Msg::Error("Module SOLVER NOT found, but required");
-    return -1;
-#endif
 #if defined(HAVE_QUADMESHINGTOOLS)
     int nb_iter = 10;
     int cf_tag;
@@ -2710,12 +2703,10 @@ public:
 #else
     computeCrossFieldExtrinsic(1.e-9);
 #endif
-    Msg::Info("Computing H ...");
     myAssembler = computeH(gm, f, vs, C);
     // printScalar(myAssembler,'H');
-    Msg::Info("Computing singularities ...");
     computeSingularities(C, singularities, indices, myAssembler);
-    // print_H_and_Cross(gm, f, C, *myAssembler, singularities);
+    //    print_H_and_Cross(gm, f, C, *myAssembler, singularities);
     return 1;
   }
 
@@ -2881,14 +2872,12 @@ public:
   void computeThetaUsingHCrouzeixRaviart(
     std::map<int, std::vector<double> > &dataTHETA)
   {
-#if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
     linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
     linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
 #else
     linearSystemFull<double> *_lsys = new linearSystemFull<double>;
-#endif
 #endif
     dofManager<double> *theta = new dofManager<double>(_lsys);
 
@@ -3737,8 +3726,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   }
   else {
     Msg::Info("Computing a cross field");
-    int cf_status = qLayout.computeCrossFieldAndH();
-    if (cf_status == -1) return cf_status;
+    qLayout.computeCrossFieldAndH();
     qLayout.computeCutGraph(duplicateEdges);
     qLayout.computeThetaUsingHCrouzeixRaviart(dataTHETA);
   }
@@ -3895,10 +3883,10 @@ int computeCrossFieldAndH(GModel *gm, std::vector<int> &tags)
 {
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
-#if defined(HAVE_SOLVER)
+#if defined(HAVE_SOLVER) && defined(HAVE_POST)
   return computeCrossFieldAndH(gm, f, tags);
 #else
-  Msg::Error("Cross field computation requires solver module");
+  Msg::Error("Cross field computation requires solver and post-pro module");
   return -1;
 #endif
 }
@@ -3908,10 +3896,10 @@ int computeQuadLayout(GModel *gm, std::vector<int> &tags)
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
 
-#if defined(HAVE_SOLVER)
+#if defined(HAVE_SOLVER) && defined(HAVE_POST)
   return computeCrossFieldAndH(gm, f, tags, true);
 #else
-  Msg::Error("Cross field computation requires solver module");
+  Msg::Error("Cross field computation requires solver and post-pro module");
   return -1;
 #endif
 }
@@ -3921,15 +3909,13 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
 
-#if defined(HAVE_SOLVER)
+#if defined(HAVE_SOLVER) && defined(HAVE_POST)
   int cf_status = computeCrossFieldAndH(gm, f, tags, true);
-  return 0;
-  if (cf_status != 0) return cf_status;
-
+  if (cf_status == -1) return cf_status;
+  //    return computeQuadLayout(gm, f);
 #if defined(HAVE_QUADMESHINGTOOLS)
   std::string quad_layout_name = gm->getName();
   int H_tag = tags.size() > 0 ? tags[0] : -1;
-  // double size_min = 0.1;
   double size_min = CTX::instance()->mesh.lcMin;
   double size_max = CTX::instance()->mesh.lcMax;
   if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
@@ -3960,11 +3946,9 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     return -1;
   }
 #endif
-
   return cf_status;
-  //    return computeQuadLayout(gm, f);
 #else
-  Msg::Error("Cross field computation requires solver module");
+  Msg::Error("Cross field computation requires solver and post-pro module");
   return -1;
 #endif
 }

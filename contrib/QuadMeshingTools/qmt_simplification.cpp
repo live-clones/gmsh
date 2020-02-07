@@ -984,8 +984,11 @@ namespace QMT {
     gmsh::initialize(0, 0, false);
 
     if (size_min == 0 && size_max == 1.e22) {
-      error("cannot generate quad mesh with size_min = {} and size_max = {}", size_min, size_max);
-      return false;
+      double xmin, ymin, zmin, xmax, ymax, zmax;
+      gmsh::model::getBoundingBox(-1,-1,xmin,ymin,zmin,xmax,ymax,zmax);
+      double h = 0.08 * length({xmax-xmin,ymax-ymin,zmax-zmin});
+      warn("size_min = {} and size_max = {}, using size_min = {} (0.08 of bounding box diagonal)", size_min, size_max, h);
+      size_min = h;
     }
 
     gmsh::model::setCurrent(modelName);
