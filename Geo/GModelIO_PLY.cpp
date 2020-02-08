@@ -30,15 +30,6 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
   return true;
 }
 
-//static void replaceCommaByDot(const std::string &name)
-//{
-//  char myCommand[1000], myCommand2[1000];
-//  sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
-//  SystemCall(myCommand, true);
-//  sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
-//  SystemCall(myCommand2, true);
-//}
-
 #if defined(HAVE_POST)
 static bool getProperties(int num, int *indices, std::vector<double> &vec,
                           std::vector<double> &properties)
@@ -57,9 +48,6 @@ static bool getProperties(int num, int *indices, std::vector<double> &vec,
 
 int GModel::readPLY(const std::string &name)
 {
-  // this is crazy!?
-  //replaceCommaByDot(name);
-
   FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
@@ -89,9 +77,9 @@ int GModel::readPLY(const std::string &name)
       if(!strcmp(str, "format") && strcmp(str2, "ascii")) {
         Msg::Warning("Reading binary PLY files is experimental");
         binary = true;
-        if (!strcmp(str2, "binary_big_endian")) {
-            Msg::Debug("Reading binary PLY file as big-endian");
-            swap = true;
+        if(!strcmp(str2, "binary_big_endian")) {
+          Msg::Debug("Reading binary PLY file as big-endian");
+          swap = true;
         }
       }
       if(!strcmp(str, "property") && strcmp(str2, "list")) {
@@ -145,12 +133,15 @@ int GModel::readPLY(const std::string &name)
         else { // binary
           std::size_t num_coords = 3 * nbv;
           std::vector<float> coord(num_coords);
-          if(fread(&coord[0], sizeof(float), num_coords, fp) != num_coords) { return 0; }
+          if(fread(&coord[0], sizeof(float), num_coords, fp) != num_coords) {
+            return 0;
+          }
           for(int i = 0; i < nbv; i++) {
-            vertexVector[i] = new MVertex(coord[3*i], coord[3*i+1], coord[3*i+2]);
+            vertexVector[i] =
+              new MVertex(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
           }
           // TODO add properties
-          for (int i = 0; i < nbf; i++)  {
+          for(int i = 0; i < nbf; i++) {
             unsigned char nbe;
             int n[3]; // only handle triangles
             if(fread(&nbe, sizeof(char), 1, fp) != 1) {

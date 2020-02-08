@@ -29,8 +29,9 @@ boundary recovery code), Fernando Lorenzo (Tochnog export), Larry Price (Gambit
 export), Anthony Royer (new partitioning code, MSH4 IO), Darcy Beurle (code
 cleanup and performance improvements), Zhidong Han (LSDYNA export); Ismail Badia
 (hierarchical basis functions); Jeremy Theler (X3D export); Thomas Toulorge
-(high order mesh optimizer, new CGNS IO). See comments in the sources for more
-information. If we forgot to list your contributions please send us an email!
+(high order mesh optimizer, new CGNS IO); Max Orok (binary PLY). See comments in
+the sources for more information. If we forgot to list your contributions please
+send us an email!
 
 Thanks to the following folks who have contributed by providing fresh ideas on
 theoretical or programming topics, who have sent patches, requests for changes
