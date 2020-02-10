@@ -2662,6 +2662,9 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       case TYPE_LIN: {
         basis = new HierarchicalBasisH1Line(order);
       } break;
+      case TYPE_PNT: {
+        basis = new HierarchicalBasisH1Point();
+      } break;
       default: Msg::Error("Unknown familyType "); throw 2;
       }
     }
