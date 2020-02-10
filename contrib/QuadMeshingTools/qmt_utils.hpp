@@ -10,6 +10,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <array>
 #include <algorithm>
@@ -24,7 +25,8 @@ namespace QMT_Utils {
     std::ostream& operator<<(std::ostream& os, const std::vector<T>& values) { 
       os << "[";
       for (size_t i = 0; i < values.size(); ++i) {
-        os << values[i];
+	const  T & x = values[i];
+	os << "cannot compile that";//x;
         if (i != values.size() - 1) {
           os << ", ";
         }

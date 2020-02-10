@@ -964,6 +964,7 @@ void createExtraConnexions (dofManager<double> &myAssembler,
 void assembleExtraConnexions (dofManager<double> &myAssembler,
 			    std::vector<groupOfCross2d> &G,
 			    std::vector<cutGraphPassage> &passages){
+  return;
   int nConn = 2;
   int groups [2][2] = {{14,1},
 		       {13,2}};
@@ -2777,17 +2778,18 @@ public:
         Msg::Error("Edge not found in result");
         return -1;
       }
-      it->second._a = itr->second;
-      it->second.computeVector();
-      /* issue from here I guess: theta transfer not sufficient ? */
+      it->second._a = it->second._atemp = itr->second;
+      it->second.o_i = it->second._tgt * cos(it->second._atemp) + it->second._tgt2 * sin(it->second._atemp);
+      it->second.o_i.normalize();
+      //      it->second.computeVector();
+      //it->second.computeAngle();
+ /* issue from here I guess: theta transfer not sufficient ? */
     }
 #else
     computeCrossFieldExtrinsic(1.e-9);
 #endif
     myAssembler = computeH(gm, f, vs, C);
-    // printScalar(myAssembler,'H');
     computeSingularities(C, singularities, indices, myAssembler);
-    //    print_H_and_Cross(gm, f, C, *myAssembler, singularities);
     return 1;
   }
 
@@ -3969,7 +3971,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 4 * .999);
+  classifyFaces(GModel::current(), M_PI / 2 * .999);
   GModel::current()->remove(de);
   //  delete de;
   GModel::current()->pruneMeshVertexAssociations();
