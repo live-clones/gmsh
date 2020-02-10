@@ -2186,7 +2186,7 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
       if (pot == passages[k]._uv && cutGraphId == passages[k]._id)count++;
     }
     
-    if (count > 20){
+    if (count > 3){
       printf("CYCLE DETECTED for SING %lu : ",vsing->getNum());
       for (size_t k=0;k<passages.size();k++)printf("(%d,%d) ",passages[k]._id,passages[k]._uv);
       printf("\n");
@@ -2757,7 +2757,7 @@ public:
 
   int computeCrossFieldAndH()
   {
-#if defined(HAVE_QUADMESHINGTOOLS)
+#if defined(HAVE_QUADMESHINGTOOLS2)
     int nb_iter = 10;
     int cf_tag;
     std::map<std::pair<size_t,size_t>,double> edge_to_angle;
@@ -2810,14 +2810,19 @@ public:
 
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
     std::vector<MEdge> edges;
+    std::set<MVertex*> boundaries;
     for(; it != C.end(); ++it) {
-      if(it->second.inBoundary) { edges.push_back(it->first); }
+      if(it->second.inBoundary) {
+	edges.push_back(it->first);
+	boundaries.insert(it->first.getVertex(0));
+	boundaries.insert(it->first.getVertex(1));
+      }
     }
     std::vector<std::vector<MVertex *> > vsorted;
     SortEdgeConsecutive(edges, vsorted);
 
     // AVERAGE
-    dof->numberVertex(*vs.begin(), 1, 1);
+    //    dof->numberVertex(*vs.begin(), 1, 1);
 
     for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
         it != vs.end(); ++it){
@@ -2895,13 +2900,17 @@ public:
       //      printf("%22.15E %22.15E\n",SUM, CORR );
       for(size_t i = 0; i < vsorted[j].size(); ++i) {
         Dof E(vsorted[j][i]->getNum(), Dof::createTypeWithTwoInts(0, 1));
-        _lsys->addToRightHandSide(dof->getDofNumber(E),CURVATURE[i]);
+	//        _lsys->addToRightHandSide(dof->getDofNumber(E),CURVATURE[i]);
       }
     }
 
+    double sum1 = 0;
     for(std::map<MVertex *, double>::iterator it = gaussianCurvatures.begin();it != gaussianCurvatures.end(); ++it){
       Dof E(it->first->getNum(), Dof::createTypeWithTwoInts(0, 1));
-      //_lsys->addToRightHandSide(dof->getDofNumber(E),-it->second);
+      //      printf("%12.5E\n",it->second);
+      double XXX = boundaries.find(it->first) == boundaries.end() ? -2*M_PI+it->second : -M_PI+it->second;
+      _lsys->addToRightHandSide(dof->getDofNumber(E),XXX);
+      sum1 += XXX;
     }
 
     double SSUM = 0;
@@ -2913,6 +2922,8 @@ public:
       SSUM += 2.0 * M_PI * (double)it->second / nbTurns;
     }
 
+    printf("%12.5E %12.5E\n",sum1,SSUM);
+    
     // FIX DE LA MORT
     // AVERAGE
     Dof EAVG((*vs.begin())->getNum(), Dof::createTypeWithTwoInts(1, 1));
@@ -3156,8 +3167,8 @@ public:
 	  SVector3 v2 (vk2->x()-vk->x(),vk2->y()-vk->y(),vk2->z()-vk->z());
 	  double CURV = angle(v1,v2);
 	  std::map<MVertex *, double>::iterator itg = gaussianCurvatures.find(vk);
-	  if (itg == gaussianCurvatures.end()) gaussianCurvatures[vk] = 2*M_PI - CURV;
-	  else itg->second -= CURV;
+	  if (itg == gaussianCurvatures.end())  gaussianCurvatures[vk] = CURV;
+	  else itg->second += CURV;
 	  //---------------------------------------------------------------------
 
           cross2d c(e, t, e1, e2);
@@ -3189,16 +3200,17 @@ public:
     for(; it != C.end(); ++it) it->second.finish(C);
     it = C.begin();
     for(; it != C.end(); ++it) it->second.finish2();
-    FILE *F = fopen("gc.pos","w");
-    fprintf(F,"View\"\"{\n");
-    double dd = 0;
-    for (std::map<MVertex*,double>:: iterator it = gaussianCurvatures.begin(); it != gaussianCurvatures.end() ; ++it){
-      fprintf(F,"SP(%g,%g,%g){%g};\n",it->first->x(),it->first->y(),it->first->z(),it->second);
-      dd += it->second;      
-    }
-    printf("%22.15E %22.15E\n",dd,dd-4*M_PI);
-    fprintf(F,"};\n");
-    fclose(F);
+
+    //    FILE *F = fopen("gc.pos","w");
+    //    fprintf(F,"View\"\"{\n");
+    //    double dd = 0;
+    //    for (std::map<MVertex*,double>:: iterator it = gaussianCurvatures.begin(); it != gaussianCurvatures.end() ; ++it){
+    //      fprintf(F,"SP(%g,%g,%g){%g};\n",it->first->x(),it->first->y(),it->first->z(),it->second);
+    //      dd += it->second;      
+    //    }
+    //    printf("%22.15E %22.15E\n",dd,dd-4*M_PI);
+    //    fprintf(F,"};\n");
+    //    fclose(F);
   }
 
   void restoreInitialMesh()
