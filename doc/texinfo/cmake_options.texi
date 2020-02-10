@@ -25,7 +25,9 @@ Enable Android NDK library target (experimental) (default: OFF)
 @item ENABLE_BUILD_IOS
 Enable iOS library target (experimental) (default: OFF)
 @item ENABLE_CGNS
-Enable CGNS mesh import (experimental) (default: ON)
+Enable CGNS import/export (experimental) (default: ON)
+@item ENABLE_CGNS_CPEX0045
+Enable high-order CGNS import/export following CPEX0045 (experimental) (default: OFF)
 @item ENABLE_CAIRO
 Enable Cairo to render fonts (experimental) (default: ON)
 @item ENABLE_CXX11
@@ -100,6 +102,8 @@ Enable OS-specific (e.g. app bundle) installation (default: OFF)
 Enable OSMesa for offscreen rendering (experimental) (default: OFF)
 @item ENABLE_P4EST
 Enable p4est for enabling automatic mesh size firld (experimental) (default: OFF)
+@item ENABLE_PACKAGE_STRIP
+Strip symbols in install packages to reduce install size (default: ON)
 @item ENABLE_PARSER
 Enable GEO file parser (required for .geo/.pos files) (default: ON)
 @item ENABLE_PETSC

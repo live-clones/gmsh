@@ -43,6 +43,7 @@ StringXNumber *GMSH_TetrahedralizePlugin::getOption(int iopt)
 
 #if defined(HAVE_MESH)
 
+namespace {
 class PointData : public MVertex {
 public:
   std::vector<double> val;
@@ -51,6 +52,7 @@ public:
     val.resize(numVal);
   }
 };
+}
 
 PView *GMSH_TetrahedralizePlugin::execute(PView *v)
 {

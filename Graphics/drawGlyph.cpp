@@ -747,6 +747,7 @@ void drawContext::drawVector(int Type, int Fill, double x, double y, double z,
   }
 }
 
+namespace {
 class point {
 public:
   double x, y, z;
@@ -783,6 +784,7 @@ public:
       return point();
   }
 };
+}
 
 void drawContext::drawBox(double xmin, double ymin, double zmin, double xmax,
                           double ymax, double zmax, bool labels)

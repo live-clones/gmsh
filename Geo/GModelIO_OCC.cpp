@@ -59,6 +59,7 @@
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
 #include <GeomPlate_BuildPlateSurface.hxx>
+#include <GeomPlate_PointConstraint.hxx>
 #include <GeomAPI_Interpolate.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_BSplineSurface.hxx>
@@ -73,6 +74,7 @@
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
 #include <Interface_Static.hxx>
+#include <Poly_PolygonOnTriangulation.hxx>
 #include <Poly_Triangulation.hxx>
 #include <Poly_Triangle.hxx>
 #include <STEPControl_Reader.hxx>

@@ -686,24 +686,20 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
      && ge->getParentEntity()->dim() > ge->dim())
     return; // ignore partition boundaries
 
-  short part_orig = ele->getPartition();
-  std::vector<short> ghosts;
-  if(model->getGhostCells().size() &&
+  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
      (ge->geomType() == GEntity::GhostCurve ||
       ge->geomType() == GEntity::GhostSurface ||
-      ge->geomType() == GEntity::GhostVolume)) {
+      ge->geomType() == GEntity::GhostVolume))
+    return; // ignore ghost entities
+
+  std::vector<short> ghosts;
+  if(model->getGhostCells().size()) {
     std::pair<std::multimap<MElement *, short>::iterator,
               std::multimap<MElement *, short>::iterator>
       itp = model->getGhostCells().equal_range(ele);
     for(std::multimap<MElement *, short>::iterator it = itp.first;
         it != itp.second; it++)
       ghosts.push_back(it->second);
-    if(ge->geomType() == GEntity::GhostCurve)
-      ele->setPartition(((ghostEdge*)ge)->getPartition());
-    else if(ge->geomType() == GEntity::GhostSurface)
-      ele->setPartition(((ghostFace*)ge)->getPartition());
-    else if(ge->geomType() == GEntity::GhostVolume)
-      ele->setPartition(((ghostRegion*)ge)->getPartition());
   }
 
   if(saveAll)
@@ -717,8 +713,6 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
       if(parentNum) parentNum++;
     }
   }
-
-  ele->setPartition(part_orig);
 
   model->setMeshElementIndex(ele, num); // should really be a multimap...
 
@@ -736,6 +730,12 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge,
   if(CTX::instance()->mesh.partitionOldStyleMsh2 && ge->getParentEntity()
      && ge->getParentEntity()->dim() > ge->dim())
     return; // ignore partition boundaries
+
+  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
+     (ge->geomType() == GEntity::GhostCurve ||
+      ge->geomType() == GEntity::GhostSurface ||
+      ge->geomType() == GEntity::GhostVolume))
+    return; // ignore ghost entities
 
   // Hack to save each partition as a separate physical entity
   if(saveSinglePartition < 0) {
@@ -778,6 +778,12 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
   if(CTX::instance()->mesh.partitionOldStyleMsh2 && ge->getParentEntity()
      && ge->getParentEntity()->dim() > ge->dim())
     return 0; // ignore partition boundaries
+
+  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
+     (ge->geomType() == GEntity::GhostCurve ||
+      ge->geomType() == GEntity::GhostSurface ||
+      ge->geomType() == GEntity::GhostVolume))
+    return 0; // ignore ghost entities
 
   int n = 0, p = saveAll ? 1 : ge->physicals.size();
 
