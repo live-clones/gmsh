@@ -2766,7 +2766,8 @@ public:
       Msg::Error("Failed to compute cross field");
       return -1;
     }
-    return -1; /* TODO for testing */
+    // Msg::Error("DEBUG: stop afrer cross field");
+    // return -1;
 
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
     std::vector<cross2d *> pc;
@@ -4072,6 +4073,13 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     Msg::Error("Failed to generate quad mesh");
     return -1;
   }
+  bool oke1 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_init");
+  if (!oke1) {
+    Msg::Error("Failed to export quad mesh");
+    return -1;
+  }
+  GmshWriteFile(gm->getName()+"_qmesh_init.msh");
+
 
   double hc = 0.9 * size_min;
   if (size_min == 0.) hc = 0.9 * size_max;
@@ -4081,11 +4089,19 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     return -1;
   }
 
-  bool oke = QMT::export_qmesh_to_gmsh_mesh(Q, "quad_mesh");
-  if (!oke) {
+  bool oke2 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_simplified");
+  if (!oke2) {
     Msg::Error("Failed to export quad mesh");
     return -1;
   }
+
+  bool oksm = QMT::smooth_quad_mesh(Q, 10);
+  if (!oksm) {
+    Msg::Error("Failed to smooth quad mesh");
+    return -1;
+  }
+
+  GmshWriteFile(gm->getName()+"_qmesh_simplified.msh");
 #endif
   return cf_status;
 #else

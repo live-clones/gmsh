@@ -98,6 +98,15 @@ namespace QMT {
       _lsys->addToRightHandSide(i, rhs[i]);
     }
 
+    // // print matrix
+    // F(i,x.size()) F(j,x.size()) {
+    //   double coef = 0.;
+    //   _lsys->getFromMatrix(i,j,coef);
+    //   if (coef != 0.) {
+    //     info("{} {} = {}", i, j, coef);
+    //   }
+    // }
+
     int ok = _lsys->systemSolve();
     if (!ok) {
       error("systemSolve() failed");
@@ -131,20 +140,22 @@ namespace QMT {
 
   struct LS_state {
 #if defined(HAVE_PETSC)
-    linearSystemPETSc<double> *sys;
+    linearSystemPETSc<double> *sys = new linearSystemPETSc<double>;
 #elif defined(HAVE_MUMPS)
-    linearSystemMUMPS<double> *sys;
+    linearSystemMUMPS<double> *sys = new linearSystemMUMPS<double>;
 #elif defined(HAVE_GMM)
-    linearSystemGmm<double> *sys;
+    linearSystemGmm<double> *sys = new linearSystemGmm<double>;
 #else
-    linearSystemFull<double> *sys;
+    linearSystemFull<double> *sys = new linearSystemFull<double>;
 #endif
+    size_t nb_rows = 0;
   };
 
   bool create_linear_system(size_t nb_rows, void** data) {
 #if defined(HAVE_SOLVER)
     LS_state *state = new LS_state;
     state->sys->allocate(nb_rows);
+    state->nb_rows = nb_rows;
     *data = state;
     return true;
 #else
@@ -187,6 +198,15 @@ namespace QMT {
 
   bool solve(std::vector<double>& x, void* data) {
     LS_state* state = (LS_state*) (data);
+    // // print matrix
+    // F(i,state->nb_rows) F(j,state->nb_rows) {
+    //   double coef = 0.;
+    //   state->sys->getFromMatrix(i,j,coef);
+    //   if (coef != 0.) {
+    //     info("{} {} = {}", i, j, coef);
+    //   }
+    // }
+
     int ok = state->sys->systemSolve();
     if (!ok) {
       error("systemSolve() failed");
