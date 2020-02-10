@@ -776,7 +776,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     va_end(args);
     int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-    sprintf(str2, "%3d%%    : %s", _progressMeterCurrent, str);
+    sprintf(str2, "Info    : [%3d %%] %s", _progressMeterCurrent, str);
 
     if(_client) _client->Progress(str2);
 
