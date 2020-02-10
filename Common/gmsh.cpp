@@ -2557,7 +2557,7 @@ GMSH_API void gmsh::model::mesh::preallocateBasisFunctions(
       basis = new HierarchicalBasisH1Line(basisOrder);
     } break;
     case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Line();
+      basis = new HierarchicalBasisH1Point();
     } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
@@ -2889,6 +2889,9 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
     } break;
     case TYPE_LIN: {
       basis = new HierarchicalBasisH1Line(basisOrder);
+    } break;
+    case TYPE_PNT: {
+      basis = new HierarchicalBasisH1Point();
     } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
