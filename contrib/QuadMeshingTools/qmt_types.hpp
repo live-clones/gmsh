@@ -63,7 +63,7 @@ namespace QMT {
   /* vec3 math */
   inline double dot      (const vec3& a, const vec3& b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
   inline double length2  (const vec3& a) { return dot(a,a); }
-  inline double length   (const vec3& a) { return std::sqrt(length2(a)); }
+  inline double length   (const vec3& a) { return sqrt(length2(a)); }
   inline vec3 operator-(const vec3& a, const vec3& b) { return {a[0]-b[0], a[1]-b[1], a[2]-b[2]}; }
   inline vec3 operator+(const vec3& a, const vec3& b) { return {a[0]+b[0], a[1]+b[1], a[2]+b[2]}; }
   inline vec3 operator*(const double& a, const vec3& b) { return {a*b[0], a*b[1], a*b[2]}; }
