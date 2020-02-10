@@ -378,8 +378,13 @@ namespace QMT {
       const vector<id2>& uIEdges,
       const vector<vector<id>>& uIEdgeToOld,
       const vector<double>& x) {
+    vector<vec3> vertAvg(M.points.size(),{0.,0.,0.});
+    vector<double> vsum(M.points.size(),0.);
+
     std::vector<double> data_VP;
     std::vector<double> data_VP_rep;
+    vec3 rep_ex = {1.,0.,0.};
+    vec3 rep_ey = {0.,1.,0.};
     F(e,uIEdges.size()) {
       /* Average normal */
       vec3 N = triangle_normal(M,uIEdgeToOld[e][0]/3);
@@ -400,11 +405,34 @@ namespace QMT {
         F(d,3) data_VP.push_back(cross1[d]);
         F(d,3) data_VP.push_back(p[d]);
         F(d,3) data_VP.push_back(cross2[d]);
-        F(d,3) data_VP_rep.push_back(p[d]);
+
+        { /* representation vector averaging (code only in planar case) */
+          vec3 cr1 = cos(theta) * edg + sin(theta) * edgo;
+          double rep_theta = atan2(dot(cr1,rep_ey),dot(cr1,rep_ex));
+          vec3 vrep = cos(4.*rep_theta) * rep_ex + sin(4.*rep_theta) * rep_ey;
+          // F(d,3) data_VP_rep.push_back(p[d]);
+          // F(d,3) data_VP_rep.push_back(vrep[d]);
+          F(lv,2) {
+            id v = uIEdges[e][lv];
+            vsum[v] += 1.;
+            vertAvg[v] = vertAvg[v] + vrep;
+          }
+        }
+
       }
     }
     int view = gmsh::view::add(name);
     gmsh::view::addListData(view, "VP", data_VP.size()/6, data_VP);
+
+    FC(v,M.points.size(),vsum[v] > 0.) {
+      vec3 p = M.points[v];
+      vec3 rep = (1./vsum[v]) * vertAvg[v];
+      F(d,3) data_VP_rep.push_back(p[d]);
+      F(d,3) data_VP_rep.push_back(rep[d]);
+    }
+    int viewv = gmsh::view::add(name+"_rep_planar");
+    gmsh::view::addListData(viewv, "VP", data_VP_rep.size()/6, data_VP_rep);
+
     return true;
   }
 
@@ -523,8 +551,8 @@ namespace QMT {
     }
     
     info("heat diffusion and projection loop ({} iterations, {} unknowns) ...", nbIter, 2*uIEdges.size());
-    double dtFinal = emax*emax;
-    double dtInitial = 10.* dtFinal;
+    double dtFinal = emin*emin;
+    double dtInitial = emax*emax;
     x = rhs;
     nbIter = 10;
     F(iter,nbIter) {
@@ -546,7 +574,7 @@ namespace QMT {
         }
       }
 
-      info("  iter {}/{} | solving linear system ...", iter+1, nbIter);
+      info("  iter {}/{} | dt = {}, solving linear system ...", iter+1, nbIter, dt);
       bool oks = solve_sparse_linear_system(Acol, Aval, B, x);
       if (!oks) {
         error("failed to solve linear system");

@@ -16,4 +16,17 @@ namespace QMT {
       const std::vector<double>& rhs,
       std::vector<double>& x);
 
+
+  /* Decomposed functions for more efficient usage */
+  bool create_linear_system(size_t nb_rows, void** data);
+  bool destroy_linear_system(void** data);
+  bool add_sparse_coefficients(
+      const std::vector<std::vector<size_t>>& columns,
+      const std::vector<std::vector<double>>& values,
+      void* data);
+  bool set_rhs_values(
+      const std::vector<double>& rhs,
+      void* data);
+  bool solve(std::vector<double>& x, void* data);
+
 }

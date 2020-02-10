@@ -2684,6 +2684,7 @@ public:
       Msg::Error("Failed to compute cross field");
       return -1;
     }
+    return -1; /* TODO for testing */
 
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
     std::vector<cross2d *> pc;
@@ -3726,7 +3727,11 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   }
   else {
     Msg::Info("Computing a cross field");
-    qLayout.computeCrossFieldAndH();
+    int cf_status = qLayout.computeCrossFieldAndH();
+    if (cf_status == -1) {
+      Msg::Error("failed to compute cross field");
+      return -1;
+    }
     qLayout.computeCutGraph(duplicateEdges);
     qLayout.computeThetaUsingHCrouzeixRaviart(dataTHETA);
   }

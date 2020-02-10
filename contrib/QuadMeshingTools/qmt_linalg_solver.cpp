@@ -22,6 +22,7 @@
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
+#include "linearSystemMUMPS.h"
 
 #endif
 
@@ -73,6 +74,8 @@ namespace QMT {
 #if defined(HAVE_PETSC)
     // info("solver: PETSc");
     linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_MUMPS)
+    linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
 #elif defined(HAVE_GMM)
     // info("solver: Gmm (mumps ?)");
     linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
@@ -126,5 +129,73 @@ namespace QMT {
 #endif
   }
 
+  struct LS_state {
+#if defined(HAVE_PETSC)
+    linearSystemPETSc<double> *sys;
+#elif defined(HAVE_MUMPS)
+    linearSystemMUMPS<double> *sys;
+#elif defined(HAVE_GMM)
+    linearSystemGmm<double> *sys;
+#else
+    linearSystemFull<double> *sys;
+#endif
+  };
+
+  bool create_linear_system(size_t nb_rows, void** data) {
+#if defined(HAVE_SOLVER)
+    LS_state *state = new LS_state;
+    state->sys->allocate(nb_rows);
+    *data = state;
+    return true;
+#else
+    error("module SOLVER required");
+    return false;
+#endif
+  }
+
+  bool destroy_linear_system(void** data) {
+    if (*data == NULL) return false;
+    LS_state* state = (LS_state*) (*data);
+    delete state;
+    *data = NULL;
+    return true;
+  }
+
+  bool add_sparse_coefficients(
+      const std::vector<std::vector<size_t>>& columns,
+      const std::vector<std::vector<double>>& values,
+      void* data) {
+    LS_state* state = (LS_state*) (data);
+    F(i,columns.size()) {
+      F(j,columns[i].size()) {
+        state->sys->addToMatrix(i, columns[i][j], values[i][j]);
+      }
+    }
+    return true;
+  }
+
+  bool set_rhs_values(
+      const std::vector<double>& rhs,
+      void* data) {
+    LS_state* state = (LS_state*) (data);
+    state->sys->zeroRightHandSide();
+    F(i, rhs.size()) {
+      state->sys->addToRightHandSide(i, rhs[i]);
+    }
+    return true;
+  }
+
+  bool solve(std::vector<double>& x, void* data) {
+    LS_state* state = (LS_state*) (data);
+    int ok = state->sys->systemSolve();
+    if (!ok) {
+      error("systemSolve() failed");
+      return false;
+    }
+    F(i,x.size()) {
+      state->sys->getFromSolution(i, x[i]);
+    }
+    return true;
+  }
 
 }
