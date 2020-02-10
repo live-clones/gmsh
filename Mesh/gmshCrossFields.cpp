@@ -2789,7 +2789,33 @@ public:
     computeCrossFieldExtrinsic(1.e-9);
 #endif
     myAssembler = computeH(gm, f, vs, C);
+
     computeSingularities(C, singularities, indices, myAssembler);
+
+#if defined(HAVE_QUADMESHINGTOOLS)
+    bool SHOW_H = true;
+    if (SHOW_H) {
+      std::string name = gm->getName() + "_H";
+      PViewDataGModel *d = new PViewDataGModel;
+      d->setName(name);
+      d->setFileName(name + ".msh");
+      std::map<int, std::vector<double> > dataH;
+      for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin(); it != vs.end(); ++it) {
+        double h;
+        myAssembler->getDofValue(*it, 0, 1, h);
+        std::vector<double> jj;
+        jj.push_back(h);
+        dataH[(*it)->getNum()] = jj;
+      }
+      d->addData(gm, dataH, 0, 0.0, 1, 1);
+      d->finalize();
+      std::string posout = "/tmp/H.pos";
+      d->writePOS(posout, false, true, false);
+      GmshMergeFile(posout);
+      // return -1;
+    }
+#endif
+
     return 1;
   }
 
@@ -3872,7 +3898,11 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   }
   else {
     Msg::Info("Computing a cross field");
-    qLayout.computeCrossFieldAndH();
+    int cf_status = qLayout.computeCrossFieldAndH();
+    if (cf_status == -1) {
+      Msg::Error("failed to compute cross field");
+      return -1;
+    }
     qLayout.computeCutGraph(duplicateEdges);
     qLayout.computeThetaUsingHCrouzeixRaviart(dataTHETA);
   }
@@ -4079,6 +4109,13 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     Msg::Error("Failed to generate quad mesh");
     return -1;
   }
+  bool oke1 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_init");
+  if (!oke1) {
+    Msg::Error("Failed to export quad mesh");
+    return -1;
+  }
+  GmshWriteFile(gm->getName()+"_qmesh_init.msh");
+
 
   double hc = 0.9 * size_min;
   if (size_min == 0.) hc = 0.9 * size_max;
@@ -4088,11 +4125,19 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     return -1;
   }
 
-  bool oke = QMT::export_qmesh_to_gmsh_mesh(Q, "quad_mesh");
-  if (!oke) {
+  bool oke2 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_simplified");
+  if (!oke2) {
     Msg::Error("Failed to export quad mesh");
     return -1;
   }
+
+  bool oksm = QMT::smooth_quad_mesh(Q, 10);
+  if (!oksm) {
+    Msg::Error("Failed to smooth quad mesh");
+    return -1;
+  }
+
+  GmshWriteFile(gm->getName()+"_qmesh_simplified.msh");
 #endif
   return cf_status;
 #else

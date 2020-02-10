@@ -378,8 +378,13 @@ namespace QMT {
       const vector<id2>& uIEdges,
       const vector<vector<id>>& uIEdgeToOld,
       const vector<double>& x) {
+    vector<vec3> vertAvg(M.points.size(),{0.,0.,0.});
+    vector<double> vsum(M.points.size(),0.);
+
     std::vector<double> data_VP;
     std::vector<double> data_VP_rep;
+    vec3 rep_ex = {1.,0.,0.};
+    vec3 rep_ey = {0.,1.,0.};
     F(e,uIEdges.size()) {
       /* Average normal */
       vec3 N = triangle_normal(M,uIEdgeToOld[e][0]/3);
@@ -400,12 +405,55 @@ namespace QMT {
         F(d,3) data_VP.push_back(cross1[d]);
         F(d,3) data_VP.push_back(p[d]);
         F(d,3) data_VP.push_back(cross2[d]);
-        F(d,3) data_VP_rep.push_back(p[d]);
+
+        { /* representation vector averaging (code only in planar case) */
+          vec3 cr1 = cos(theta) * edg + sin(theta) * edgo;
+          double rep_theta = atan2(dot(cr1,rep_ey),dot(cr1,rep_ex));
+          vec3 vrep = cos(4.*rep_theta) * rep_ex + sin(4.*rep_theta) * rep_ey;
+          // F(d,3) data_VP_rep.push_back(p[d]);
+          // F(d,3) data_VP_rep.push_back(vrep[d]);
+          F(lv,2) {
+            id v = uIEdges[e][lv];
+            vsum[v] += 1.;
+            vertAvg[v] = vertAvg[v] + vrep;
+          }
+        }
+
       }
     }
     int view = gmsh::view::add(name);
     gmsh::view::addListData(view, "VP", data_VP.size()/6, data_VP);
+
+    double Nmin = DBL_MAX;
+    vec3 ptNmin;
+    FC(v,M.points.size(),vsum[v] > 0.) {
+      vec3 p = M.points[v];
+      vec3 rep = (1./vsum[v]) * vertAvg[v];
+      if (length(rep) < Nmin) {
+        Nmin = length(rep);
+        ptNmin = p;
+      }
+      F(d,3) data_VP_rep.push_back(p[d]);
+      F(d,3) data_VP_rep.push_back(rep[d]);
+    }
+    int viewv = gmsh::view::add(name+"_rep_planar");
+    gmsh::view::addListData(viewv, "VP", data_VP_rep.size()/6, data_VP_rep);
+    info("minimum norm = {} at pt = {} (length = {})", Nmin, ptNmin, length(ptNmin));
+
     return true;
+  }
+
+  double bbox_diag(const TMesh& M) {
+    vec3 mi = {DBL_MAX,DBL_MAX,DBL_MAX};
+    vec3 ma = {-DBL_MAX,-DBL_MAX,-DBL_MAX};
+    F(t,M.triangles.size()) F(lv,3) {
+      vec3 pt = M.points[M.triangles[t][lv]];
+      F(d,3) {
+        mi[d] = std::min(pt[d],mi[d]);
+        ma[d] = std::max(pt[d],ma[d]);
+      }
+    }
+    return length(ma-mi);
   }
 
   bool compute_cross_field_with_heat(
@@ -432,11 +480,13 @@ namespace QMT {
       return false;
     }
 
-    info("input: {} points, {} lines, {} triangles, {} internal edges", M.points.size(),M.lines.size(),M.triangles.size(),uIEdges.size());
+    double diag = bbox_diag(M);
+    info("input: {} points, {} lines, {} triangles, {} internal edges, bbox diag = {}", M.points.size(),M.lines.size(),M.triangles.size(),uIEdges.size(), diag);
     if (uIEdges.size() == 0) {
       error("no internal edges");
       return false;
     }
+
 
     size_t nbc = 0;
     vector<bool> dirichletEdge(uIEdges.size(),false);
@@ -512,61 +562,126 @@ namespace QMT {
         error("failed to prepare system");
         return false;
       }
-      if (DBG_VERBOSE) {
-        F(i,K_columns.size()) {
-          info("-");
-          info("row {}, j: {}", i, K_columns[i]);
-          info("row {}, v: {}", i, K_values[i]);
-        }
-        info("rhs: {}",rhs);
-      }
     }
     
-    info("heat diffusion and projection loop ({} iterations, {} unknowns) ...", nbIter, 2*uIEdges.size());
-    double dtFinal = emax*emax;
-    double dtInitial = 10.* dtFinal;
-    x = rhs;
+    double dtInitial = (0.5*diag)*(0.5*diag);
+    double dtFinal = (2.*emin)*(2.*emin);
+    info("heat diffusion and projection loop ({} iterations, {} unknowns, dt = {} ... {}) ...", nbIter, 2*uIEdges.size(),dtInitial, dtFinal);
+    double wti = gmsh::logger::getWallTime();
+    F(e,uIEdges.size()) { /* constant cross field at initialization */
+      x[2*e+0] = 1.;
+      x[2*e+1] = 0.;
+    }
+
+    vector<double> steps;
     nbIter = 10;
-    F(iter,nbIter) {
-      double dt = dtInitial + (dtFinal-dtInitial) * (iter/(nbIter-1));
+    F(i,nbIter) { /* resolution transition */
+      double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbIter-1);
+      steps.push_back(dt);
+    }
+    steps.push_back(dtFinal); /* repeat last time step */
+
+    constexpr bool UPDATE_LINEAR_SYSTEM = true;
+    if (UPDATE_LINEAR_SYSTEM) {
+      info("using system update");
+      /* Initialize system (I + dt/M_i * L) x_(i+1) = x_i     (Ax = B) */
       const vector<vector<size_t>>& Acol = K_columns;
-      vector<vector<double>> Aval = K_values;
+      vector<vector<double>> Aval_sum = K_values; /* to get sparsity pattern */
+      vector<vector<double>> Aval_add = K_values; /* to get sparsity pattern */
+      F(i,Aval_add.size()) std::fill(Aval_sum[i].begin(),Aval_sum[i].end(),0.);
+      F(i,Aval_add.size()) std::fill(Aval_add[i].begin(),Aval_add[i].end(),0.);
       vector<double> B = x;
-      F(i,Aval.size()) {
-        if (!dirichletEdge[i/2]) {
-          F(j,Acol[i].size()) {
-            if (Acol[i][j] == i) { /* diagonal term */
-              Aval[i][j] = 1. + dt / Mass[i] * K_values[i][j];
+      double dt = dtInitial;
+      vector<double> norms(uIEdges.size(),0.);
+
+      void* data;
+      create_linear_system(2*uIEdges.size(),&data);
+      F(iter,steps.size()) {
+        double dt = steps[iter];
+        info("  iter {}/{} | dt = {}, solving linear system ...", iter+1, steps.size(), dt);
+        B = x;
+        F(i,Acol.size()) {
+          if (!dirichletEdge[i/2]) {
+            F(j,Acol[i].size()) {
+              if (Acol[i][j] == i) { /* diagonal term */
+                Aval_add[i][j] = -Aval_sum[i][j] + 1. + dt / Mass[i] * K_values[i][j];
+                Aval_sum[i][j] += Aval_add[i][j];
+              } else {
+                Aval_add[i][j] = -Aval_sum[i][j] + dt / Mass[i] * K_values[i][j];
+                Aval_sum[i][j] += Aval_add[i][j];
+              }
+            }
+          } else {
+            if (iter == 0) {
+              Aval_add[i] = {1.};
             } else {
-              Aval[i][j] = dt / Mass[i] * K_values[i][j];
+              Aval_add[i] = {0.};
             }
           }
-        } else {
-          Aval[i] = {1.};
+        }
+        bool oku = add_sparse_coefficients(Acol, Aval_add, data);
+        if (!oku) {
+          error("failed to update linear system");
+          return false;
+        }
+        set_rhs_values(B, data);
+        bool oks = solve(x, data);
+        if (!oks) {
+          error("failed to solve linear system");
+          return false;
+        }
+        // create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
+        F(e,uIEdges.size()) {
+          norms[e] = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
+          if (!dirichletEdge[e] && norms[e] > EPS) {
+            x[2*e+0] /= norms[e];
+            x[2*e+1] /= norms[e];
+          }
         }
       }
 
-      info("  iter {}/{} | solving linear system ...", iter+1, nbIter);
-      bool oks = solve_sparse_linear_system(Acol, Aval, B, x);
-      if (!oks) {
-        error("failed to solve linear system");
-        return false;
-      }
-      if (DBG_VERBOSE) {
-        info("  -> x: {}",x);
-        create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
-      }
-      if (DBG_VERBOSE) info("  iter {}/{} | normalize crosses ...", iter+1,nbIter);
+      destroy_linear_system(&data);
+    } else {
+      info("using new linear solve");
+      const vector<vector<size_t>>& Acol = K_columns;
+      vector<vector<double>> Aval = K_values;
+      vector<double> B = x;
       vector<double> norms(uIEdges.size(),0.);
-      F(e,uIEdges.size()) {
-        norms[e] = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
-        if (!dirichletEdge[e] && norms[e] > EPS) {
-          x[2*e+0] /= norms[e];
-          x[2*e+1] /= norms[e];
+      F(iter,nbIter) {
+        double dt = dtInitial + (dtFinal-dtInitial) * ((double)iter/double(nbIter-1));
+        B = x;
+        F(i,Aval.size()) {
+          if (!dirichletEdge[i/2]) {
+            F(j,Acol[i].size()) {
+              if (Acol[i][j] == i) { /* diagonal term */
+                Aval[i][j] = 1. + dt / Mass[i] * K_values[i][j];
+              } else {
+                Aval[i][j] = dt / Mass[i] * K_values[i][j];
+              }
+            }
+          } else {
+            Aval[i] = {1.};
+          }
+        }
+
+        info("  iter {}/{} | dt = {}, solving linear system ...", iter+1, nbIter, dt);
+        bool oks = solve_sparse_linear_system(Acol, Aval, B, x);
+        if (!oks) {
+          error("failed to solve linear system");
+          return false;
+        }
+        // create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
+        F(e,uIEdges.size()) {
+          norms[e] = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
+          if (!dirichletEdge[e] && norms[e] > EPS) {
+            x[2*e+0] /= norms[e];
+            x[2*e+1] /= norms[e];
+          }
         }
       }
-      if (DBG_VERBOSE) info("  -> norms: {}",norms);
     }
+    double et = gmsh::logger::getWallTime() - wti;
+    info("elapsed time: {}", et);
 
     {
       info("create visualization view with crosses");
