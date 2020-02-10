@@ -565,7 +565,7 @@ namespace QMT {
     }
     
     double dtInitial = (0.5*diag)*(0.5*diag);
-    double dtFinal = (3.*emin)*(3.*emin);
+    double dtFinal = (2.*emin)*(2.*emin);
     info("heat diffusion and projection loop ({} iterations, {} unknowns, dt = {} ... {}) ...", nbIter, 2*uIEdges.size(),dtInitial, dtFinal);
     double wti = gmsh::logger::getWallTime();
     F(e,uIEdges.size()) { /* constant cross field at initialization */
@@ -579,6 +579,7 @@ namespace QMT {
       double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbIter-1);
       steps.push_back(dt);
     }
+    steps.push_back(dtFinal); /* repeat last time step */
 
     constexpr bool UPDATE_LINEAR_SYSTEM = true;
     if (UPDATE_LINEAR_SYSTEM) {

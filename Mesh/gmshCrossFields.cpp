@@ -2766,8 +2766,6 @@ public:
       Msg::Error("Failed to compute cross field");
       return -1;
     }
-    // Msg::Error("DEBUG: stop afrer cross field");
-    // return -1;
 
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
     std::vector<cross2d *> pc;
@@ -2791,7 +2789,33 @@ public:
     computeCrossFieldExtrinsic(1.e-9);
 #endif
     myAssembler = computeH(gm, f, vs, C);
+
     computeSingularities(C, singularities, indices, myAssembler);
+
+#if defined(HAVE_QUADMESHINGTOOLS)
+    bool SHOW_H = true;
+    if (SHOW_H) {
+      std::string name = gm->getName() + "_H";
+      PViewDataGModel *d = new PViewDataGModel;
+      d->setName(name);
+      d->setFileName(name + ".msh");
+      std::map<int, std::vector<double> > dataH;
+      for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin(); it != vs.end(); ++it) {
+        double h;
+        myAssembler->getDofValue(*it, 0, 1, h);
+        std::vector<double> jj;
+        jj.push_back(h);
+        dataH[(*it)->getNum()] = jj;
+      }
+      d->addData(gm, dataH, 0, 0.0, 1, 1);
+      d->finalize();
+      std::string posout = "/tmp/H.pos";
+      d->writePOS(posout, false, true, false);
+      GmshMergeFile(posout);
+      // return -1;
+    }
+#endif
+
     return 1;
   }
 
