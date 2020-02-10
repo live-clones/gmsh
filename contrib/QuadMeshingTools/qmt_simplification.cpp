@@ -70,6 +70,34 @@ namespace QMT_SMP_Utils {
     }
   };
 
+  void show_qmesh_in_view(const QMesh& M, const std::string& viewName, bool use_width_as_color = false) {
+    std::vector<double> data;
+    size_t nbq = 0;
+    F(c,M.quads.size()) {
+      if (M.quads[c][0] == NO_ID) continue;
+      nbq += 1;
+      F(d,3) {
+        F(lv,4) {
+          id v = M.quads[c][lv];
+          data.push_back(M.points[v][d]);
+        }
+      }
+      double color = M.color[c];
+      if (use_width_as_color) {
+        color = 0.25 * (
+            length(M.points[M.quads[c][1]] - M.points[M.quads[c][0]])
+            + length(M.points[M.quads[c][2]] - M.points[M.quads[c][1]])
+            + length(M.points[M.quads[c][3]] - M.points[M.quads[c][2]])
+            + length(M.points[M.quads[c][0]] - M.points[M.quads[c][3]]));
+      }
+      F(lv,4) {
+        data.push_back(color);
+      }
+    }
+    int view = gmsh::view::add(viewName);
+    gmsh::view::addListData(view, "SQ", nbq, data);
+  }
+
 
   bool getOrderedVerticesFromEdges(id vStart, const vector<id2>& edges, vector<id>& orderedVertices) {
     orderedVertices.clear();
@@ -652,7 +680,7 @@ namespace QMT {
           vert[4] = M.quads[q2][(le2+3)%4];
           vert[5] = M.quads[q2][(le2+2)%4];
         } else {
-          error("failed to found double quad config ..., quad1 = {}, quad2 = {}", M.quads[q1], M.quads[q2]);
+          error("failed to found double quad config ..., quad[{}] = {}, quad[{}] = {}", q1, M.quads[q1], q2, M.quads[q2]);
           return false;
         }
         n1 = neigh1[(le1+2)%4];
@@ -947,6 +975,7 @@ namespace QMT {
       bool okc = collapse_double_quad_to_line(M, double_quads[i][0], double_quads[i][1], v2quads);
       if (!okc) {
         error("failed to collapse double quad to one line ...");
+        show_qmesh_in_view(M, "failed_double_quad_to_line");
         return false;
       }
     }
@@ -1311,7 +1340,7 @@ namespace QMT {
   }
 
   bool simplify_quad_mesh(QMesh& M, double size_collapse, int nb_collapse_max) {
-    info("quad mesh simplification ...");
+    info("quad mesh simplification (size_collapse = {}) ...", size_collapse);
     // constexpr bool SHOW_COLLAPSED_CHORDS = true;
     vector<int> valence(M.points.size(),0);
 
