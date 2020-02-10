@@ -3,15 +3,14 @@
 
 @class ModelListController;
 
-@interface ParametersViewController : UITableViewController
-{
-    @private
-    NSMutableArray *_sections;
-    NSMutableArray *_sectionstitle;
-    NSDate *_lastRefresh;
-    UIBarButtonItem *runButton;
-    UIBarButtonItem *stopButton;
-    UISegmentedControl *control;
+@interface ParametersViewController : UITableViewController {
+@private
+  NSMutableArray *_sections;
+  NSMutableArray *_sectionstitle;
+  NSDate *_lastRefresh;
+  UIBarButtonItem *runButton;
+  UIBarButtonItem *stopButton;
+  UISegmentedControl *control;
 }
 
 @property (strong, nonatomic) ModelListController *modelListController;

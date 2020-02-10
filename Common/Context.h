@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "CGNSOptions.h"
 
 #define NUM_SOLVERS 10
 
@@ -26,31 +25,33 @@ struct contextMeshOptions {
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
   double anisoMax, smoothRatio;
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
-  int nbSmoothing, algo2d, algo3d, algoSubdivide;
+  int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
-  int recombine3DAll, recombine3DLevel;
-  int recombine3DConformity, flexibleTransfinite;
+  int recombine3DAll, recombine3DLevel, recombine3DConformity;
+  int flexibleTransfinite, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
-  int meshOnlyVisible, minCircPoints, minCurvPoints;
+  int meshOnlyVisible, minCircPoints, minCurvPoints, minElementsPerTwoPi;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
-  std::map<int, int> algo2dPerFace;
-  std::map<int, int> curvatureControlPerFace;
-  int NewtonConvergenceTestXYZ;
+  int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
   int renumber, compoundClassify;
+  double compoundLcFactor;
+  unsigned int randomSeed;
   // mesh IO
   int fileFormat;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
+  double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
-  int cgnsImportOrder, cgnsConstructTopology;
+  int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder,
+      cgnsConstructTopology, cgnsExportCPEX0045;
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
@@ -81,8 +82,8 @@ struct contextGeometryOptions {
   int autoCoherence;
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occParallel, occBooleanPreserveNumbering;
-  int occDisableSTL, occImportLabels;
+  int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
+  int occDisableSTL, occImportLabels, occUnionUnify;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
@@ -162,6 +163,8 @@ public:
   int fileChooserPosition[2], extraPosition[2], extraSize[2];
   // use the system menu bar on Mac OS X?
   int systemMenuBar;
+  // use the native file chooser?
+  int nativeFileChooser;
   // show standard Gmsh menu in onelab window
   int showModuleMenu;
   // use high-resolution opengl graphics (retina Macs)
@@ -280,11 +283,11 @@ public:
   contextGeometryOptions geom;
   // mesh options
   contextMeshOptions mesh;
-  CGNSOptions cgnsOptions;
   // post processing options
   struct {
     int draw, link, horizontalScales;
-    int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
+    int smooth, animCycle, animStep;
+    int combineTime, combineRemoveOrig, combineCopyOptions;
     int fileFormat, plugins, forceNodeData, forceElementData;
     int saveMesh, saveInterpolationMatrices;
     double animDelay;
@@ -319,6 +322,7 @@ public:
     std::string parameterCommand;
     int x3dCompatibility, x3dRemoveInnerBorders;
     double x3dPrecision, x3dTransparency;
+    int x3dSurfaces, x3dEdges, x3dVertices;
   } print;
   // color options
   struct {

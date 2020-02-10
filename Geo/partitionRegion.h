@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,6 +22,11 @@ public:
   }
   partitionRegion(GModel *model, int num)
     : discreteRegion(model, num), _partitions(), _parentEntity(NULL)
+  {
+  }
+  partitionRegion(GModel *model,
+                  const std::vector<unsigned int> &partitions)
+    : discreteRegion(model), _partitions(partitions), _parentEntity(NULL)
   {
   }
   virtual ~partitionRegion() {}

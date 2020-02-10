@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -6,6 +6,7 @@
 #ifndef HELP_WINDOW_H
 #define HELP_WINDOW_H
 
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Browser.H>
 
@@ -18,6 +19,12 @@ public:
 
 public:
   helpWindow();
+  ~helpWindow()
+  {
+    Fl::delete_widget(about);
+    Fl::delete_widget(basic);
+    Fl::delete_widget(options);
+  }
 };
 
 void help_options_cb(Fl_Widget *w, void *data);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -24,7 +24,7 @@ namespace nglib {
 using namespace nglib;
 
 static void getAllBoundingVertices(
-  GRegion *gr, std::set<MVertex *, MVertexLessThanNum> &allBoundingVertices)
+  GRegion *gr, std::set<MVertex *, MVertexPtrLessThan> &allBoundingVertices)
 {
   std::vector<GFace *> faces = gr->faces();
   std::vector<GFace *>::iterator it = faces.begin();
@@ -48,10 +48,10 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   Ng_Init();
   Ng_Mesh *ngmesh = Ng_NewMesh();
 
-  std::set<MVertex *, MVertexLessThanNum> allBoundingVertices;
+  std::set<MVertex *, MVertexPtrLessThan> allBoundingVertices;
   getAllBoundingVertices(gr, allBoundingVertices);
 
-  std::set<MVertex *, MVertexLessThanNum>::iterator itv =
+  std::set<MVertex *, MVertexPtrLessThan>::iterator itv =
     allBoundingVertices.begin();
   int I = 1;
   while(itv != allBoundingVertices.end()) {

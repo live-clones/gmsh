@@ -22,48 +22,53 @@ class mGLSurfaceView extends GLSurfaceView {
     super(context);
     _renderer = renderer;
     gesture = new GestureDetector(context, new GestureListener());
-    scaleGesture = new ScaleGestureDetector(context, new OnScaleGestureListener() {
+    scaleGesture =
+      new ScaleGestureDetector(context, new OnScaleGestureListener() {
         public void onScaleEnd(ScaleGestureDetector detector)
         {
           _renderer.endInteraction(detector.getFocusX(), detector.getFocusY());
         }
         public boolean onScaleBegin(ScaleGestureDetector detector)
         {
-          _renderer.startInteraction(detector.getFocusX(), detector.getFocusY());
+          _renderer.startInteraction(detector.getFocusX(),
+                                     detector.getFocusY());
           return true;
         }
         public boolean onScale(ScaleGestureDetector detector)
         {
           scaleFactor *= detector.getScaleFactor();
-          scaleFactor = Math.max(0.1f, Math.min(scaleFactor, 50.0f)); // limit the scale factor
+          scaleFactor = Math.max(
+            0.1f, Math.min(scaleFactor, 50.0f)); // limit the scale factor
           _renderer.scaleModel(scaleFactor);
           requestRender();
           return true;
-
         }
       });
   }
 
-  @Override
-  public boolean onTouchEvent(MotionEvent event)
+  @Override public boolean onTouchEvent(MotionEvent event)
   {
     scaleGesture.onTouchEvent(event);
     return gesture.onTouchEvent(event);
   }
 
-  private class GestureListener implements OnGestureListener, OnDoubleTapListener{
+  private class GestureListener
+    implements OnGestureListener, OnDoubleTapListener {
     public boolean onDown(MotionEvent e)
     {
-      _renderer.startInteraction(e.getX(),e.getY());
+      _renderer.startInteraction(e.getX(), e.getY());
       return true;
     }
     // UNUSED Auto-generated method stub
-    public boolean onFling(MotionEvent e1, MotionEvent e2,
-                           float velocityX, float velocityY) { return false; }
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+                           float velocityY)
+    {
+      return false;
+    }
     // UNUSED Auto-generated method stub
-    public void onLongPress(MotionEvent e) { }
-    public boolean onScroll(MotionEvent e1, MotionEvent e2,
-                            float distanceX, float distanceY)
+    public void onLongPress(MotionEvent e) {}
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
+                            float distanceY)
     {
       if(e1.getPointerCount() > 1 || e2.getPointerCount() > 1) return false;
       if(_rotate)
@@ -74,7 +79,7 @@ class mGLSurfaceView extends GLSurfaceView {
       return true;
     }
     // UNUSED Auto-generated method stub
-    public void onShowPress(MotionEvent e) { }
+    public void onShowPress(MotionEvent e) {}
     // UNUSED Auto-generated method stub
     public boolean onSingleTapUp(MotionEvent e) { return false; }
     // UNUSED Auto-generated method stub
@@ -88,7 +93,6 @@ class mGLSurfaceView extends GLSurfaceView {
     }
     // UNUSED Auto-generated method stub
     public boolean onSingleTapConfirmed(MotionEvent e) { return false; }
-
   }
   public boolean getRotate() { return _rotate; }
   public void setRotate(boolean r) { _rotate = r; }

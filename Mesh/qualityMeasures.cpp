@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -220,13 +220,13 @@ double qmTriangle::angles(MTriangle *e)
   double tmp[3][3];
 
   // double minAngle = 120.0;
-  for(int i = 0; i < e->getNumPrimaryVertices(); i++) {
+  for(std::size_t i = 0; i < e->getNumPrimaryVertices(); i++) {
     const double u = i == 1 ? 1 : 0;
     const double v = i == 2 ? 1 : 0;
     const double w = 0;
     e->getJacobian(u, v, w, mat);
     e->getPrimaryJacobian(u, v, w, mat2);
-    for(int j = 0; j < i; j++) {
+    for(std::size_t j = 0; j < i; j++) {
       matmat(rot, mat, tmp);
       memcpy(mat, tmp, sizeof(mat));
     }

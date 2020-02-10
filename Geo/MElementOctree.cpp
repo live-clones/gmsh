@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -112,7 +112,6 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
         Octree_Insert(entities[i]->getMeshElement(j), _octree);
     }
   }
-  // exit(1);
   Octree_Arrange(_octree);
 }
 
@@ -122,7 +121,6 @@ MElementOctree::MElementOctree(const std::vector<MElement *> &v)
   SBoundingBox3d bb;
   for(std::size_t i = 0; i < v.size(); i++) {
     for(std::size_t j = 0; j < v[i]->getNumVertices(); j++) {
-      // if (!_gm) _gm = v[i]->getVertex(j)->onWhat()->model();
       bb += SPoint3(v[i]->getVertex(j)->x(), v[i]->getVertex(j)->y(),
                     v[i]->getVertex(j)->z());
     }

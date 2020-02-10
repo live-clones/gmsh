@@ -5,8 +5,7 @@
 extern "C" {
 #endif
 
-#include "hxt_mesh.h"
-#include "hxt_vertices.h"
+#include "hxt_tetPartition.h"
 
 /**
 * \file hxt_tetDelaunay.h Delaunay tetrahedrization
@@ -35,14 +34,7 @@ typedef struct {
                                *  \warning a segmentation fault will occur if a vertex
                                * doesn't have a corresponding mesh size */
 
-  double minSizeStart;         /**< estimate of the minimum mesh size at the moment of the call. 
-                                * 0 if the mesh is empty or if the distribution is uniform
-                                * (the mesh size is then guessed with the number of point) */
-  double minSizeEnd;           /**< estimate of the minimum mesh size when all points are inserted in the Delaunay. 
-                                * 0 if the distribution is uniform
-                                * (the mesh size is then guessed with the number of point) */
-
-  uint32_t numVerticesInMesh; /**< The number of vertices in the mesh */
+  uint32_t numVerticesInMesh; /**< The number of vertices in the mesh (all vertices below this point are not (re-)inserted */
 
   int verbosity;              /**<
                                *  - if verbosity<=0: don't print information.
@@ -80,9 +72,9 @@ typedef struct {
  *  - mesh->vertices.coord[4*i+3] will change
  *
  * \param mesh: a valid Delaunay mesh
- * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions
+ * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions (here options->numVerticesInMesh is useless)
  * \param[in, out] nodeInfo: the indices of the vertices to insert in the tetrahedral mesh.
- * \param nToInset: the number of element in nodeInfo, hence the number of vertices to insert.
+ * \param nToInsert: the number of element in nodeInfo, hence the number of vertices to insert.
  */
 HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* nodeInfo, uint64_t nToInsert);
 
@@ -103,6 +95,38 @@ HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, 
  * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions
  */
 HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* options);
+
+
+/**
+ * \brief just add one vertex in the mesh
+ * \details This perform the single insertion of the vertex vta (vertex to add) in the mesh given by mesh
+ *          To avoid repetitive allocations and effort to directly eliminate deleted tetrahedra from the mesh,
+ *          an array of deleted tetrahedra must be given in argument.
+ *          When all insertions are performed, you may remove deleted tetrahedra from the mesh using
+ *          hxtRemoveDeleted(mesh), and free the array using hxtAlignedFree(deleted);
+ *          This function only works on one thread and is always reproducible
+ *          => options->reproducible and options->delaunayThreads are useless
+ *
+ * \param mesh: a valid Delaunay mesh
+ * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions (here options->numVerticesInMesh is useless)
+ * \param vtaNodeInfo[in, out]: the index of the vertex to insert in the tetrahedral mesh
+ *                              (see \ref hxtDelaunaySteadyVertices to understand how it gets filled)
+ * \param deleted: a valid pointer to an array of deleted tetrahedra (that must be marked as deleted as well => see hxt_tetFlag.c)
+ *                 If the array is not NULL, it must have been allocated with hxtAlignedMalloc.
+ *                 In cases where the size of the array is not enough, the array may be reallocated
+ *                 and moved to another location by hxtDelaunayAddOne.
+ * \param numDeleted: valid pointer to the number of deleted tetrahedra in the array
+ * \param sizeDeleted: valid pointer to the allocated size (in element => nbr. byte/8) of the deleted array
+ * \param buffer: a buffer reused by hxtDelaunayAddOne. The first time you use it, buffer should point to NULL
+ *                when you will not used hxtDelaunayAddOne anymore, use hxtDelaunayFreeBuffer to free it
+ */
+// HXTStatus hxtDelaunayAddOne(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* vtaNodeInfo,
+//                             uint64_t** deleted, size_t* numDeleted, size_t* sizeDeleted, void** buffer);
+
+// HXTStatus hxtDelaunayFreeBuffer(void** buffer);
+
+
+HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, uint64_t* __restrict__ curTet, const uint32_t vta);
 
 
 #ifdef __cplusplus

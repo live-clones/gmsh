@@ -2,7 +2,6 @@
 #define _MESSAGE_H_
 
 #include "hxt_api.h"
-
 #include "hxt_omp.h"
 
 #define STR(x) #x
@@ -31,6 +30,8 @@
       return _tmp_;                             \
     }                                           \
   } while(0)
+
+
 #define HXT_CHECK(status)             HXT_CHECK_MSG(status,NULL)
 
 /* use to check some expression inside of function, throw error if exp is not true */

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -460,10 +460,12 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   }
 #if defined(HAVE_LIBCGNS)
   else if(ext == ".cgns" || ext == ".CGNS") {
+    std::vector<std::vector<MVertex *> > vertPerZone;
+    std::vector<std::vector<MElement *> > eltPerZone;
     if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()) {
       GModel *tmp2 = GModel::current();
       GModel *tmp = new GModel();
-      tmp->readCGNS(fileName);
+      tmp->readCGNS(fileName, vertPerZone, eltPerZone);
       tmp->scaleMesh(CTX::instance()->geom.matchMeshScaleFactor);
       status = GeomMeshMatcher::instance()->match(tmp2, tmp);
       delete tmp;
@@ -472,8 +474,13 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
     }
     else {
       CTX::instance()->geom.matchMeshScaleFactor = 1;
-      status = GModel::current()->readCGNS(fileName);
+      status = GModel::current()->readCGNS(fileName, vertPerZone, eltPerZone);
     }
+#if defined(HAVE_POST)
+    if((status > 1) && (CTX::instance()->mesh.cgnsImportIgnoreSolution == 0)) {
+      status = PView::readCGNS(vertPerZone, eltPerZone, fileName);
+    }
+#endif
   }
 #endif
 #if defined(HAVE_3M)
@@ -615,10 +622,13 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
   GModel::setCurrent(old);
   old->setVisibility(1);
 
-  // hide everything except the onelab X-Y graphs
+  // hide everything except onelab X-Y graphs and views with attribute
+  // "AlwaysVisible"
   if(showViews == 0) {
     for(std::size_t i = 0; i < PView::list.size(); i++) {
-      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB" &&
+         PView::list[i]->getOptions()->attributes.find("AlwaysVisible") ==
+         std::string::npos)
         PView::list[i]->getOptions()->visible = 0;
     }
   }
@@ -626,7 +636,9 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
     // if we created new views, assume we only want to see those (and the
     // onelab X-Y graphs)
     for(std::size_t i = 0; i < n; i++) {
-      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB" &&
+         PView::list[i]->getOptions()->attributes.find("AlwaysVisible") ==
+         std::string::npos)
         PView::list[i]->getOptions()->visible = 0;
     }
   }

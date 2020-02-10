@@ -1,12 +1,12 @@
 # run this with the android toolchain file, e.g.
 #
 # mkdir build
-# cmake -DCMAKE_TOOLCHAIN_FILE=/Users/geuzaine/Library/Android/sdk/ndk-bundle/build/cmake/android.toolchain.cmake ..
+# cmake -DCMAKE_TOOLCHAIN_FILE=/Users/geuzaine/Library/Android/sdk/ndk-bundle/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a OU armeabi-v7a ..
 
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(f2cblaslapack C)
 
-add_definitions(-D_GLIBCXX_USE_C99_MATH=1)
+add_definitions(-D_GLIBCXX_USE_C99_MATH=1 -fPIC)
 find_file(CMAKE_TOOLCHAIN_FILE "android.toolchain.cmake")
 if(NOT CMAKE_TOOLCHAIN_FILE)
   message(FATAL_ERROR "Cannot compile f2cblaslapack for android without android-cmake")
@@ -30,5 +30,5 @@ endforeach()
 
 add_library(f2cblas SHARED ${BLAS_SRC})
 add_library(f2clapack SHARED ${LAPACK_SRC})
-target_link_libraries(f2clapack f2cblas)
-
+target_link_libraries(f2cblas -lm)
+target_link_libraries(f2clapack f2cblas -lm)

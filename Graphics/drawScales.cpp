@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -302,10 +302,10 @@ void drawContext::drawScales()
 
     if(!opt->autoPosition) {
       double w = opt->size[0], h = opt->size[1];
-      double x = opt->position[0], y = opt->position[1] - h;
+      double x = opt->position[0], y = opt->position[1];
       int c = fix2dCoordinates(&x, &y);
       if(c & 1) x -= w / 2.;
-      if(c & 2) y += h / 2.;
+      if(c & 2) y -= h / 2.;
       drawScale(this, p, x, y, w, h, tic,
                 CTX::instance()->post.horizontalScales);
     }

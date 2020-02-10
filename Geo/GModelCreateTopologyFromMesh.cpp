@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -128,8 +128,8 @@ void assignFace(GFace *gf, std::set<MElement *> &_f)
 
 void ensureManifoldFace(GFace *gf)
 {
-  std::map<MEdge, std::pair<MElement *, MElement *>, Less_Edge> _pairs;
-  std::set<MEdge, Less_Edge> _nonManifold;
+  std::map<MEdge, std::pair<MElement *, MElement *>, MEdgeLessThan> _pairs;
+  std::set<MEdge, MEdgeLessThan> _nonManifold;
 
   std::set<MElement *> _allFaces;
 
@@ -139,7 +139,7 @@ void ensureManifoldFace(GFace *gf)
     for(int j = 0; j < e->getNumEdges(); j++) {
       MEdge ed = e->getEdge(j);
       if(_nonManifold.find(ed) == _nonManifold.end()) {
-        std::map<MEdge, std::pair<MElement *, MElement *>, Less_Edge>::iterator
+        std::map<MEdge, std::pair<MElement *, MElement *>, MEdgeLessThan>::iterator
           it = _pairs.find(ed);
         if(it == _pairs.end()) {
           _pairs[ed] = std::make_pair(e, (MElement *)NULL);
@@ -170,7 +170,7 @@ void ensureManifoldFace(GFace *gf)
         MEdge ed = e->getEdge(j);
         if(_nonManifold.find(ed) == _nonManifold.end()) {
           std::map<MEdge, std::pair<MElement *, MElement *>,
-                   Less_Edge>::iterator it = _pairs.find(ed);
+                   MEdgeLessThan>::iterator it = _pairs.find(ed);
           if(it->second.second != NULL) {
             MElement *other =
               it->second.second == e ? it->second.first : it->second.second;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1393,9 +1393,9 @@ int intersection_segments(const SPoint3 &p1, const SPoint3 &p2,
     SPoint3 x1(p1.x() * (1. - x[0]) + p2.x() * x[0],
                p1.y() * (1. - x[0]) + p2.y() * x[0],
                p1.z() * (1. - x[0]) + p2.z() * x[0]);
-    SPoint3 x2(q1.x() * (1. - x[0]) + q2.x() * x[0],
-               q1.y() * (1. - x[0]) + q2.y() * x[0],
-               q1.z() * (1. - x[0]) + q2.z() * x[0]);
+    SPoint3 x2(q1.x() * (1. - x[1]) + q2.x() * x[1],
+               q1.y() * (1. - x[1]) + q2.y() * x[1],
+               q1.z() * (1. - x[1]) + q2.z() * x[1]);
 
     SVector3 d(x2, x1);
     double nd = norm(d);
@@ -1579,7 +1579,7 @@ bool catenary(double x0, double x1, double y0, double y1, double ys, int N,
     for(int i = 0; i < N; i++) {
       double r = x0 + (i + 1) * (x1 - x0) / (N + 1);
       yp[i] = a + 1 / x(0) * cosh(x(0) * (r - x(1)));
-      if(yp[i] > std::max(y0, y1) + toly || yp[i] < ys - toly){
+      if(yp[i] > std::max(y0, y1) + toly || yp[i] < ys - toly) {
         physical = false;
         break;
       }
@@ -1588,8 +1588,6 @@ bool catenary(double x0, double x1, double y0, double y1, double ys, int N,
   if(physical) return true;
 
   // could not solve: return linear interpolation
-  for(int i = 0; i < N; i++) {
-    yp[i] = y0 + (i + 1) * (y1 - y0) / (N + 1);
-  }
+  for(int i = 0; i < N; i++) { yp[i] = y0 + (i + 1) * (y1 - y0) / (N + 1); }
   return false;
 }

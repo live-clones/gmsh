@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "GmshDefines.h"
 #include "GEntity.h"
 #include "GPoint.h"
 #include "GEdgeLoop.h"
@@ -37,7 +38,7 @@ protected:
   GRegion *r1, *r2;
   mean_plane meanPlane;
   std::vector<GEdge *> embedded_edges;
-  std::set<GVertex *, GEntityLessThan> embedded_vertices;
+  std::set<GVertex *, GEntityPtrLessThan> embedded_vertices;
 
   BoundaryLayerColumns _columns;
 
@@ -120,7 +121,7 @@ public:
 
   // direct access to embedded entities
   std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
-  std::set<GVertex *, GEntityLessThan> &embeddedVertices()
+  std::set<GVertex *, GEntityPtrLessThan> &embeddedVertices()
   {
     return embedded_vertices;
   }
@@ -244,8 +245,14 @@ public:
                         double &z) const;
   void getMeanPlaneData(double plan[3][3]) const;
 
-  // number of types of elements
-  int getNumElementTypes() const { return 3; }
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const
+  {
+    types.clear();
+    types.push_back(TYPE_TRI);
+    types.push_back(TYPE_QUA);
+    types.push_back(TYPE_POLYG);
+  };
 
   // get total/by-type number of elements in the mesh
   std::size_t getNumMeshElements() const;
@@ -304,15 +311,35 @@ public:
     // reverse mesh orientation
     bool reverseMesh;
     // global mesh size constraint for the surface
-    double meshSize;
+    double meshSize, meshSizeFactor;
+    // do we force the meshing algorithm (if != 0)
+    int algorithm;
+    // do we force calculation of mesh size from boundary (if >= 0)
+    int meshSizeFromBoundary;
   } meshAttributes;
 
   int getMeshingAlgo() const;
-  void setMeshingAlgo(int) const;
-  void unsetMeshingAlgo() const;
-  int getCurvatureControlParameter() const;
-  void setCurvatureControlParameter(int);
-  virtual double getMeshSize() const { return meshAttributes.meshSize; }
+  void setMeshingAlgo(int val)
+  {
+    meshAttributes.algorithm = val;
+  }
+  void unsetMeshingAlgo()
+  {
+    meshAttributes.algorithm = 0;
+  }
+  int getMeshSizeFromBoundary() const;
+  void setMeshSizeFromBoundary(int val)
+  {
+    meshAttributes.meshSizeFromBoundary = val;
+  }
+  virtual double getMeshSize() const
+  {
+    return meshAttributes.meshSize;
+  }
+  virtual double getMeshSizeFactor() const
+  {
+    return meshAttributes.meshSizeFactor;
+  }
 
   struct {
     mutable GEntity::MeshGenerationStatus status;

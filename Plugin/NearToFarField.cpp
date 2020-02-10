@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -424,7 +424,7 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
   double dPhi = (_phiEnd - _phiStart) / _nbPhi;
   double dTheta = (_thetaEnd - _thetaStart) / _nbThe;
   double ffmin = 1e200, ffmax = -1e200;
-  Msg::ResetProgressMeter();
+  Msg::StartProgressMeter(_nbPhi);
   for(int i = 0; i <= _nbPhi; i++) {
     for(int j = 0; j <= _nbThe; j++) {
       phi[i][j] = _phiStart + i * dPhi;
@@ -447,8 +447,9 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
       ffmin = std::min(ffmin, farField[i][j]);
       ffmax = std::max(ffmax, farField[i][j]);
     }
-    Msg::ProgressMeter(i, _nbPhi, true, "Computing far field");
+    Msg::ProgressMeter(i, true, "Computing far field");
   }
+  Msg::StopProgressMeter();
   for(std::size_t i = 0; i < allElems.size(); i++) delete allElems[i];
 
   if(_normalize) {

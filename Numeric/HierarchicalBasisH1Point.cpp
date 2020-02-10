@@ -43,7 +43,7 @@ void HierarchicalBasisH1Point::generateGradientBasis(
   std::vector<std::vector<double> > &gradientFace,
   std::vector<std::vector<double> > &gradientBubble)
 {
-  gradientVertex[0][0] = 0;
+  gradientVertex[0][0] = 1;
 }
 
 void HierarchicalBasisH1Point::getKeysInfo(std::vector<int> &functionTypeInfo,

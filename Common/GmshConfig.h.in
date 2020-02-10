@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,6 +25,7 @@
 #cmakedefine HAVE_KBIPACK
 #cmakedefine HAVE_LAPACK
 #cmakedefine HAVE_LIBCGNS
+#cmakedefine HAVE_LIBCGNS_CPEX0045
 #cmakedefine HAVE_LIBJPEG
 #cmakedefine HAVE_LIBPNG
 #cmakedefine HAVE_LIBZ
@@ -37,7 +38,6 @@
 #cmakedefine HAVE_MPEG_ENCODE
 #cmakedefine HAVE_MPI
 #cmakedefine HAVE_MUMPS
-#cmakedefine HAVE_NATIVE_FILE_CHOOSER
 #cmakedefine HAVE_NETGEN
 #cmakedefine HAVE_NUMPY
 #cmakedefine HAVE_NO_INTPTR_T

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -87,13 +87,13 @@ double MSubTetrahedron::getPrimaryJacobian(double u, double v, double w,
   return 0;
 }
 
-int MSubTetrahedron::getNumShapeFunctions() const
+std::size_t MSubTetrahedron::getNumShapeFunctions() const
 {
   if(_orig) return _orig->getNumShapeFunctions();
   return 0;
 }
 
-int MSubTetrahedron::getNumPrimaryShapeFunctions() const
+std::size_t MSubTetrahedron::getNumPrimaryShapeFunctions() const
 {
   if(_orig) return _orig->getNumPrimaryShapeFunctions();
   return 0;
@@ -259,7 +259,7 @@ void MSubTriangle::getGradShapeFunctions(double u, double v, double w,
   if(_orig->getDim() == getDim())
     return _orig->getGradShapeFunctions(u, v, w, s, order);
 
-  int nsf = getNumShapeFunctions();
+  std::size_t nsf = getNumShapeFunctions();
   double gradsuvw[1256][3];
   _orig->getGradShapeFunctions(u, v, w, gradsuvw, order);
 
@@ -280,7 +280,7 @@ void MSubTriangle::getGradShapeFunctions(double u, double v, double w,
 
   double gradxyz[3];
   double projgradxyz[3];
-  for(int i = 0; i < nsf; ++i) {
+  for(std::size_t i = 0; i < nsf; ++i) {
     // (i) get the cartesian coordinates of the gradient
     gradxyz[0] = invjac[0][0] * gradsuvw[i][0] + invjac[0][1] * gradsuvw[i][1] +
                  invjac[0][2] * gradsuvw[i][2];
@@ -348,13 +348,13 @@ double MSubTriangle::getPrimaryJacobian(double u, double v, double w,
   return 0;
 }
 
-int MSubTriangle::getNumShapeFunctions() const
+std::size_t MSubTriangle::getNumShapeFunctions() const
 {
   if(_orig) return _orig->getNumShapeFunctions();
   return 0;
 }
 
-int MSubTriangle::getNumPrimaryShapeFunctions() const
+std::size_t MSubTriangle::getNumPrimaryShapeFunctions() const
 {
   if(_orig) return _orig->getNumPrimaryShapeFunctions();
   return 0;
@@ -517,7 +517,7 @@ void MSubLine::getGradShapeFunctions(double u, double v, double w,
   if(_orig->getDim() == getDim())
     return _orig->getGradShapeFunctions(u, v, w, s, order);
 
-  int nsf = _orig->getNumShapeFunctions();
+  std::size_t nsf = _orig->getNumShapeFunctions();
   double gradsuvw[1256][3];
   _orig->getGradShapeFunctions(u, v, w, gradsuvw, order);
 
@@ -530,7 +530,7 @@ void MSubLine::getGradShapeFunctions(double u, double v, double w,
 
   double gradxyz[3];
   double projgradxyz[3];
-  for(int i = 0; i < nsf; ++i) {
+  for(std::size_t i = 0; i < nsf; ++i) {
     // (i) get the cartesian coordinates of the gradient
     gradxyz[0] = invjac[0][0] * gradsuvw[i][0] + invjac[0][1] * gradsuvw[i][1] +
                  invjac[0][2] * gradsuvw[i][2];
@@ -595,13 +595,13 @@ double MSubLine::getPrimaryJacobian(double u, double v, double w,
   return 0;
 }
 
-int MSubLine::getNumShapeFunctions() const
+std::size_t MSubLine::getNumShapeFunctions() const
 {
   if(_orig) return _orig->getNumShapeFunctions();
   return 0;
 }
 
-int MSubLine::getNumPrimaryShapeFunctions() const
+std::size_t MSubLine::getNumPrimaryShapeFunctions() const
 {
   if(_orig) return _orig->getNumPrimaryShapeFunctions();
   return 0;
@@ -801,13 +801,13 @@ double MSubPoint::getPrimaryJacobian(double u, double v, double w,
   return 0;
 }
 
-int MSubPoint::getNumShapeFunctions() const
+std::size_t MSubPoint::getNumShapeFunctions() const
 {
   if(_orig) return _orig->getNumShapeFunctions();
   return 0;
 }
 
-int MSubPoint::getNumPrimaryShapeFunctions() const
+std::size_t MSubPoint::getNumPrimaryShapeFunctions() const
 {
   if(_orig) return _orig->getNumPrimaryShapeFunctions();
   return 0;

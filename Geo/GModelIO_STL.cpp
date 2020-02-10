@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -180,7 +180,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   MVertexRTree pos(eps);
   pos.insert(vertices);
 
-  std::set<MFace, Less_Face> unique;
+  std::set<MFace, MFaceLessThan> unique;
   int nbDuplic = 0, nbDegen = 0;
   for(std::size_t i = 0; i < points.size(); i++) {
     for(std::size_t j = 0; j < points[i].size(); j += 3) {

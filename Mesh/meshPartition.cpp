@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -31,28 +31,30 @@
 #define hashmapface                                                            \
   std::unordered_map<                                                          \
     MFace, std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
-    Hash_Face, Equal_Face>
+    MFaceHash, MFaceEqual>
 #define hashmapedge                                                            \
   std::unordered_map<                                                          \
     MEdge, std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
-    Hash_Edge, Equal_Edge>
+    MEdgeHash, MEdgeEqual>
 #define hashmapvertex                                                          \
   std::unordered_map<                                                          \
     MVertex *,                                                                 \
-    std::vector<std::pair<MElement *, std::vector<unsigned int> > > >
+    std::vector<std::pair<MElement *, std::vector<unsigned int> > >,           \
+    MVertexPtrHash, MVertexPtrEqual>
 #else
 #define hashmap std::map
 #define hashmapface                                                            \
   std::map<MFace,                                                              \
            std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
-           Less_Face>
+           MFaceLessThan>
 #define hashmapedge                                                            \
   std::map<MEdge,                                                              \
            std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
-           Less_Edge>
+           MEdgeLessThan>
 #define hashmapvertex                                                          \
   std::map<MVertex *,                                                          \
-           std::vector<std::pair<MElement *, std::vector<unsigned int> > > >
+           std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
+           MVertexPtrLessThan>
 #endif
 
 #if defined(HAVE_METIS)
@@ -466,10 +468,10 @@ static void fillElementsToNodesMap(Graph &graph, const GEntity *const entity,
                                    ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
-    const int numVertices = (*it)->getNumPrimaryVertices();
+    const std::size_t numVertices = (*it)->getNumPrimaryVertices();
     graph.element(eptrIndex++, *it);
     graph.eptr(eptrIndex, graph.eptr(eptrIndex - 1) + numVertices);
-    for(int i = 0; i < numVertices; i++) {
+    for(std::size_t i = 0; i < numVertices; i++) {
       if(graph.vertex((*it)->getVertex(i)->getNum() - 1) == -1) {
         graph.vertex((*it)->getVertex(i)->getNum() - 1, numVertex++);
       }
@@ -960,10 +962,10 @@ fillConnectedElements(std::vector<std::set<MElement *> > &connectedElements,
 
 static bool
 dividedNonConnectedEntities(GModel *const model, int dim,
-                            std::set<GRegion *, GEntityLessThan> &regions,
-                            std::set<GFace *, GEntityLessThan> &faces,
-                            std::set<GEdge *, GEntityLessThan> &edges,
-                            std::set<GVertex *, GEntityLessThan> &vertices)
+                            std::set<GRegion *, GEntityPtrLessThan> &regions,
+                            std::set<GFace *, GEntityPtrLessThan> &faces,
+                            std::set<GEdge *, GEntityPtrLessThan> &edges,
+                            std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
   bool ret = false;
   // Loop over vertices
@@ -1303,10 +1305,10 @@ dividedNonConnectedEntities(GModel *const model, int dim,
 static void CreateNewEntities(GModel *const model,
                               hashmap<MElement *, unsigned int> &elmToPartition)
 {
-  std::set<GRegion *, GEntityLessThan> regions = model->getRegions();
-  std::set<GFace *, GEntityLessThan> faces = model->getFaces();
-  std::set<GEdge *, GEntityLessThan> edges = model->getEdges();
-  std::set<GVertex *, GEntityLessThan> vertices = model->getVertices();
+  std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
+  std::set<GFace *, GEntityPtrLessThan> faces = model->getFaces();
+  std::set<GEdge *, GEntityPtrLessThan> edges = model->getEdges();
+  std::set<GVertex *, GEntityPtrLessThan> vertices = model->getVertices();
 
   int elementaryNumber = model->getMaxElementaryNumber(0);
   for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it) {
@@ -1603,14 +1605,14 @@ static PART_ENTITY *createPartitionEntity(
 static partitionFace *assignPartitionBoundary(
   GModel *const model, MFace &me, MElement *reference,
   const std::vector<unsigned int> &partitions,
-  std::multimap<partitionFace *, GEntity *, Less_partitionFace> &pfaces,
+  std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan> &pfaces,
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionFace *newEntity = 0;
-  partitionFace pf(model, 1, partitions);
+  partitionFace pf(model, partitions);
   std::pair<
-    std::multimap<partitionFace *, GEntity *, Less_partitionFace>::iterator,
-    std::multimap<partitionFace *, GEntity *, Less_partitionFace>::iterator>
+    std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan>::iterator,
+    std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan>::iterator>
     ret = pfaces.equal_range(&pf);
 
   partitionFace *ppf =
@@ -1671,14 +1673,14 @@ static partitionFace *assignPartitionBoundary(
 static partitionEdge *assignPartitionBoundary(
   GModel *const model, MEdge &me, MElement *reference,
   const std::vector<unsigned int> &partitions,
-  std::multimap<partitionEdge *, GEntity *, Less_partitionEdge> &pedges,
+  std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan> &pedges,
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionEdge *newEntity = 0;
-  partitionEdge pe(model, 1, 0, 0, partitions);
+  partitionEdge pe(model, partitions);
   std::pair<
-    std::multimap<partitionEdge *, GEntity *, Less_partitionEdge>::iterator,
-    std::multimap<partitionEdge *, GEntity *, Less_partitionEdge>::iterator>
+    std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan>::iterator,
+    std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan>::iterator>
     ret = pedges.equal_range(&pe);
 
   partitionEdge *ppe =
@@ -1717,14 +1719,14 @@ static partitionEdge *assignPartitionBoundary(
 static partitionVertex *assignPartitionBoundary(
   GModel *const model, MVertex *ve, MElement *reference,
   const std::vector<unsigned int> &partitions,
-  std::multimap<partitionVertex *, GEntity *, Less_partitionVertex> &pvertices,
+  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan> &pvertices,
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionVertex *newEntity = 0;
-  partitionVertex pv(model, 1, partitions);
+  partitionVertex pv(model, partitions);
   std::pair<
-    std::multimap<partitionVertex *, GEntity *, Less_partitionVertex>::iterator,
-    std::multimap<partitionVertex *, GEntity *, Less_partitionVertex>::iterator>
+    std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>::iterator,
+    std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>::iterator>
     ret = pvertices.equal_range(&pv);
 
   partitionVertex *ppv =
@@ -1895,18 +1897,18 @@ static void CreatePartitionTopology(
   fillElementToEntity(model, elementToEntity, -1);
   assignNewEntityBRep(meshGraph, elementToEntity);
 
-  std::multimap<partitionFace *, GEntity *, Less_partitionFace> pfaces;
-  std::multimap<partitionEdge *, GEntity *, Less_partitionEdge> pedges;
-  std::multimap<partitionVertex *, GEntity *, Less_partitionVertex> pvertices;
+  std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan> pfaces;
+  std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan> pedges;
+  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan> pvertices;
 
   hashmapface faceToElement;
   hashmapedge edgeToElement;
   hashmapvertex vertexToElement;
 
-  std::set<GRegion *, GEntityLessThan> regions = model->getRegions();
-  std::set<GFace *, GEntityLessThan> faces = model->getFaces();
-  std::set<GEdge *, GEntityLessThan> edges = model->getEdges();
-  std::set<GVertex *, GEntityLessThan> vertices = model->getVertices();
+  std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
+  std::set<GFace *, GEntityPtrLessThan> faces = model->getFaces();
+  std::set<GEdge *, GEntityPtrLessThan> edges = model->getEdges();
+  std::set<GVertex *, GEntityPtrLessThan> vertices = model->getVertices();
 
   if(meshDim >= 3) {
     Msg::Info(" - Creating partition surfaces");
@@ -2053,7 +2055,7 @@ static void CreatePartitionTopology(
       for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
         for(std::set<MElement *>::iterator it = boundaryElements[i].begin();
             it != boundaryElements[i].end(); ++it) {
-          for(int j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
+          for(std::size_t j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
             vertexToElement[(*it)->getVertex(j)].push_back(
               std::pair<MElement *, std::vector<unsigned int> >(
                 *it, std::vector<unsigned int>(1, i + 1)));
@@ -2093,7 +2095,7 @@ static void CreatePartitionTopology(
       for(unsigned int i = 0; i < mapOfPartitionsTag; i++) {
         for(std::set<MElement *>::iterator it = subBoundaryElements[i].begin();
             it != subBoundaryElements[i].end(); ++it) {
-          for(int j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
+          for(std::size_t j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
             vertexToElement[(*it)->getVertex(j)].push_back(
               std::pair<MElement *, std::vector<unsigned int> >(
                 *it, mapOfPartitions[i]));
@@ -2261,8 +2263,8 @@ static void addPhysical(GModel *const model, GEntity *entity,
   }
 }
 
-// AssignPhysicalName
-static void AssignPhysicalName(GModel *model)
+// Assign physical group information
+static void AssignPhysicals(GModel *model)
 {
   hashmap<std::string, int> nameToNumber;
   std::vector<GModel::piter> iterators;
@@ -2393,12 +2395,11 @@ int PartitionMesh(GModel *const model)
       graph.getBoundaryElements();
     CreatePartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
-    AssignPhysicalName(model);
-
     double t3 = Cpu();
     Msg::StatusBar(true, "Done creating partition topology (%g s)", t3 - t2);
   }
 
+  AssignPhysicals(model);
   AssignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
@@ -2437,10 +2438,10 @@ static void assignToParent(std::set<MVertex *> &verts, PART_ENTITY *entity,
 int UnpartitionMesh(GModel *const model)
 {
   // make a copy so we can iterate safely (we will remove some entities)
-  std::set<GRegion *, GEntityLessThan> regions = model->getRegions();
-  std::set<GFace *, GEntityLessThan> faces = model->getFaces();
-  std::set<GEdge *, GEntityLessThan> edges = model->getEdges();
-  std::set<GVertex *, GEntityLessThan> vertices = model->getVertices();
+  std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
+  std::set<GFace *, GEntityPtrLessThan> faces = model->getFaces();
+  std::set<GEdge *, GEntityPtrLessThan> edges = model->getEdges();
+  std::set<GVertex *, GEntityPtrLessThan> vertices = model->getVertices();
 
   std::set<MVertex *> verts;
 
@@ -2637,10 +2638,10 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
       graph.getBoundaryElements();
     CreatePartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
-    AssignPhysicalName(model);
     Msg::StatusBar(true, "Done creating partition topology");
   }
 
+  AssignPhysicals(model);
   AssignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,6 +16,12 @@ discreteVertex::discreteVertex(GModel *m, int num, double x, double y, double z)
 {
   _v = CreateVertex(num, x, y, z, 0, 0);
   Tree_Add(m->getGEOInternals()->Points, &_v);
+}
+
+discreteVertex::discreteVertex(GModel *m) : GVertex(m, 0)
+{
+  // used for temporary discrete vertices, that should not lead to the creation
+  // of the corresponding entity in GEO internals
 }
 
 discreteVertex::~discreteVertex()

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -24,10 +24,12 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 3)
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
+// OK
+#elif (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 3)
 // OK
 #else
-#error "Gmsh requires FLTK >= 1.3"
+#error "Gmsh requires FLTK >= 1.3.3"
 #endif
 #endif
 
@@ -69,7 +71,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   std::vector<mp> s;
   s.push_back(mp("Geometry options:", ""));
   s.push_back(mp("-0", "Output model, then exit"));
-  s.push_back(mp("-tol float", "Set geometrical tolerance"));
+  s.push_back(mp("-tol value", "Set geometrical tolerance"));
   s.push_back(mp("-match", "Match geometries and meshes"));
   s.push_back(mp("Mesh options:", ""));
   s.push_back(mp("-1, -2, -3", "Perform 1D, 2D or 3D mesh generation, then exit"));
@@ -79,7 +81,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  GetKnownFileFormats(true) + ")"));
   s.push_back(mp("-bin", "Create binary files when possible"));
   s.push_back(mp("-refine", "Perform uniform mesh refinement, then exit"));
-  s.push_back(mp("-barycentric_refine", "Perform barycentric mesh refinement, then exit"));
+  s.push_back(mp("-barycentric_refine", "Perform barycentric mesh refinement, "
+                 "then exit"));
   s.push_back(mp("-reclassify angle", "Reclassify surface mesh, then exit"));
   s.push_back(mp("-reparam angle", "Reparametrize surface mesh, then exit"));
   s.push_back(mp("-part int", "Partition after batch mesh generation"));
@@ -90,7 +93,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part_[no_]ghosts", "Create ghost cells"));
   s.push_back(mp("-part_[no_]physicals", "Create physical groups for partitions"));
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file"));
-  s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 format"));
+  s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 "
+                 "format"));
   s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-save_parametric", "Save nodes with their parametric coordinates"));
   s.push_back(mp("-save_topology", "Save model topology"));
@@ -103,17 +107,19 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "quality less than a threshold"));
   s.push_back(mp("-optimize_ho", "Optimize high order meshes"));
   s.push_back(mp("-ho_[min,max,nlayers]", "High-order optimization parameters"));
-  s.push_back(mp("-clscale float", "Set global mesh element size scaling factor"));
-  s.push_back(mp("-clmin float", "Set minimum mesh element size"));
-  s.push_back(mp("-clmax float", "Set maximum mesh element size"));
-  s.push_back(mp("-aniso_max float", "Set maximum anisotropy (for bamg)"));
-  s.push_back(mp("-smooth_ratio float", "Set smoothing ration between mesh sizes at "
+  s.push_back(mp("-clscale value", "Set global mesh element size scaling factor"));
+  s.push_back(mp("-clmin value", "Set minimum mesh element size"));
+  s.push_back(mp("-clmax value", "Set maximum mesh element size"));
+  s.push_back(mp("-clcurv value", "Compute mesh element size from curvatures (value "
+                 "is the number of elements per 2*pi radians)"));
+  s.push_back(mp("-aniso_max value", "Set maximum anisotropy (for bamg)"));
+  s.push_back(mp("-smooth_ratio value", "Set smoothing ration between mesh sizes at "
                  "nodes of a same edge (for bamg)"));
-  s.push_back(mp("-clcurv", "Automatically compute element sizes from curvatures"));
-  s.push_back(mp("-epslc1d", "Set accuracy of evaluation of mesh size field for 1D mesh"));
-  s.push_back(mp("-swapangle", "Set the threshold angle (in degree) between two adjacent "
-                 "faces below which a swap is allowed"));
-  s.push_back(mp("-rand float", "Set random perturbation factor"));
+  s.push_back(mp("-epslc1d value", "Set accuracy of evaluation of mesh size field "
+                 "for 1D mesh"));
+  s.push_back(mp("-swapangle value", "Set the threshold angle (in degree) between "
+                 "two adjacent faces below which a swap is allowed"));
+  s.push_back(mp("-rand value", "Set random perturbation factor"));
   s.push_back(mp("-bgm file", "Load background mesh from file"));
   s.push_back(mp("-check", "Perform various consistency checks on mesh"));
   s.push_back(mp("-ignore_periocity", "Ignore periodic boundaries"));
@@ -130,7 +136,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("Display options:", ""));
   s.push_back(mp("-n", "Hide all meshes and post-processing views on startup"));
   s.push_back(mp("-nodb", "Disable double buffering"));
-  s.push_back(mp("-numsubedges", "Set num of subdivisions for high order element display"));
+  s.push_back(mp("-numsubedges", "Set num of subdivisions for high order element "
+                 "display"));
   s.push_back(mp("-fontsize int", "Specify the font size for the GUI"));
   s.push_back(mp("-theme string", "Specify FLTK GUI theme"));
   s.push_back(mp("-display string", "Specify display"));
@@ -146,11 +153,12 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-open", "Open next files"));
   s.push_back(mp("-log filename", "Log all messages to filename"));
 #if defined(HAVE_FLTK)
-  s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, solver or "
-                 "post-processing mode"));
+  s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, solver "
+                 "or post-processing mode"));
 #endif
   s.push_back(mp("-pid", "Print process id on stdout"));
-  s.push_back(mp("-watch pattern", "Pattern of files to merge as they become available"));
+  s.push_back(mp("-watch pattern", "Pattern of files to merge as they become "
+                 "available"));
   s.push_back(mp("-bg file", "Load background (image or PDF) file"));
   s.push_back(mp("-v int", "Set verbosity level"));
   s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts"));
@@ -158,7 +166,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-setnumber name value", "Set constant or option number name=value"));
   s.push_back(mp("-setstring name value", "Set constant or option string name=value"));
   s.push_back(mp("-option file", "Parse option file at startup"));
-  s.push_back(mp("-convert files", "Convert files into latest binary formats, then exit"));
+  s.push_back(mp("-convert files", "Convert files into latest binary formats, "
+                 "then exit"));
   s.push_back(mp("-nt int", "Set number of threads"));
   s.push_back(mp("-cpu", "Report CPU times for all operations"));
   s.push_back(mp("-version", "Show version number"));
@@ -183,7 +192,7 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Up arrow", "Make previous view visible"));
   s.push_back(mp("Down arrow", "Make next view visible"));
   s.push_back(mp("0", "Reload geometry"));
-  s.push_back(mp(cc + "0", "Reload full project"));
+  s.push_back(mp(cc + "0 or 9", "Reload full project"));
   s.push_back(mp("1 or F1", "Mesh lines"));
   s.push_back(mp("2 or F2", "Mesh surfaces"));
   s.push_back(mp("3 or F3", "Mesh volumes"));
@@ -270,20 +279,17 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage()
 {
   typedef std::pair<std::string, std::string> mp;
   std::vector<mp> s;
-  s.push_back(mp("Move", "- Highlight the entity under the mouse pointer and "
-                 "display its properties"));
-  s.push_back(mp("", "- Resize a lasso zoom or a lasso (un)selection"));
-  s.push_back(mp("Left button", "- Rotate"));
-  s.push_back(mp("", "- Select an entity"));
-  s.push_back(mp("", "- Accept a lasso zoom or a lasso selection"));
+  s.push_back(mp("Move", "Highlight the entity under the mouse pointer and "
+                 "display its properties / Resize a lasso zoom or a lasso "
+                 "(un)selection"));
+  s.push_back(mp("Left button", "Rotate / Select an entity / Accept a lasso "
+                 "zoom or a lasso selection"));
   s.push_back(mp("Ctrl+Left button", "Start a lasso zoom or a lasso (un)selection"));
-  s.push_back(mp("Middle button", "- Zoom"));
-  s.push_back(mp("", "- Unselect an entity"));
-  s.push_back(mp("", "- Accept a lasso zoom or a lasso unselection"));
+  s.push_back(mp("Middle button", "Zoom / Unselect an entity / Accept a lasso "
+                 "zoom or a lasso unselection"));
   s.push_back(mp("Ctrl+Middle button", "Orthogonalize display"));
-  s.push_back(mp("Right button", "- Pan"));
-  s.push_back(mp("", "- Cancel a lasso zoom or a lasso (un)selection"));
-  s.push_back(mp("", "- Pop-up menu on post-processing view button"));
+  s.push_back(mp("Right button", "Pan / Cancel a lasso zoom or a lasso "
+                 "(un)selection / Pop-up menu on post-processing view button"));
   s.push_back(mp("Ctrl+Right button", "Reset to default viewpoint"));
   return s;
 }
@@ -304,39 +310,53 @@ void PrintUsage(const std::string &name)
   }
 }
 
-void PrintInfo()
+std::vector<std::string> GetBuildInfo()
 {
-  Msg::Direct("Version       : %s", GMSH_VERSION);
-  Msg::Direct("License       : %s", GMSH_SHORT_LICENSE);
-  Msg::Direct("Build OS      : %s", GMSH_OS);
-  Msg::Direct("Build date    : %s", GMSH_DATE);
-  Msg::Direct("Build host    : %s", GMSH_HOST);
-  Msg::Direct("Build options :%s", GMSH_CONFIG_OPTIONS);
+  std::vector<std::string> s;
+  char tmp[256];
+  s.push_back(std::string("Version       : ") + GMSH_VERSION);
+  s.push_back(std::string("License       : ") + GMSH_SHORT_LICENSE);
+  s.push_back(std::string("Build OS      : ") + GMSH_OS);
+  s.push_back(std::string("Build date    : ") + GMSH_DATE);
+  s.push_back(std::string("Build host    : ") + GMSH_HOST);
+  s.push_back(std::string("Build options :") + GMSH_CONFIG_OPTIONS);
 #if defined(HAVE_FLTK)
-  Msg::Direct("FLTK version  : %d.%d.%d", FL_MAJOR_VERSION,
-              FL_MINOR_VERSION, FL_PATCH_VERSION);
+  sprintf(tmp, "%d.%d.%d", FL_MAJOR_VERSION, FL_MINOR_VERSION,
+          FL_PATCH_VERSION);
+  s.push_back(std::string("FLTK version  : ") + tmp);
 #endif
 #if defined(HAVE_PETSC)
-  Msg::Direct("PETSc version : %d.%d.%d (%s arithmtic)", PETSC_VERSION_MAJOR,
-              PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
+  sprintf(tmp, "%d.%d.%d (%s arithmtic)", PETSC_VERSION_MAJOR,
+          PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
 #if defined(PETSC_USE_COMPLEX)
-              "complex"
+          "complex"
 #else
-              "real"
+          "real"
 #endif
-              );
+          );
+  s.push_back(std::string("PETSc version : ") + tmp);
 #endif
 #if defined(HAVE_OCC)
-  Msg::Direct("OCC version   : %d.%d.%d", OCC_VERSION_MAJOR,
-              OCC_VERSION_MINOR, OCC_VERSION_MAINTENANCE);
+  sprintf(tmp, "%d.%d.%d", OCC_VERSION_MAJOR, OCC_VERSION_MINOR,
+          OCC_VERSION_MAINTENANCE);
+  s.push_back(std::string("OCC version   : ") + tmp);
 #endif
 #if defined(HAVE_MED)
-  Msg::Direct("MED version   : %d.%d.%d", MED_NUM_MAJEUR,
-              MED_NUM_MINEUR, MED_NUM_RELEASE);
+  sprintf(tmp, "%d.%d.%d", MED_NUM_MAJEUR, MED_NUM_MINEUR,
+          MED_NUM_RELEASE);
+  s.push_back(std::string("MED version   : ") + tmp);
 #endif
-  Msg::Direct("Packaged by   : %s", GMSH_PACKAGER);
-  Msg::Direct("Web site      : http://gmsh.info");
-  Msg::Direct("Issue tracker : https://gitlab.onelab.info/gmsh/gmsh/issues");
+  s.push_back(std::string("Packaged by   : ") + GMSH_PACKAGER);
+  s.push_back("Web site      : http://gmsh.info");
+  s.push_back("Issue tracker : https://gitlab.onelab.info/gmsh/gmsh/issues");
+  return s;
+}
+
+void PrintBuildInfo()
+{
+  std::vector<std::string> s = GetBuildInfo();
+  for(std::size_t i = 0; i < s.size(); i++)
+    Msg::Direct("%s", s[i].c_str());
 }
 
 void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
@@ -470,6 +490,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
+      else if(!strcmp(argv[i] + 1, "quadlayout")) {
+        CTX::instance()->batch = 69;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;
         if(argv[i]){
@@ -531,7 +555,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         opt_mesh_partition_split_mesh_files(0, GMSH_SET, 1.);
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "preserveNumberingMsh2")) {
+      else if(!strcmp(argv[i] + 1, "preserve_numbering_msh2") ||
+              !strcmp(argv[i] + 1, "preserveNumberingMsh2")) {
         opt_mesh_preserve_numbering_msh2(0, GMSH_SET, 1.);
         i++;
       }
@@ -1001,6 +1026,15 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "clcurv")) {
         CTX::instance()->mesh.lcFromCurvature = 1;
         i++;
+        if(argv[i]) {
+          CTX::instance()->mesh.minElementsPerTwoPi = atof(argv[i++]);
+          if(CTX::instance()->mesh.minElementsPerTwoPi <= 0.)
+            CTX::instance()->mesh.lcFromCurvature = 0;
+        }
+        else{
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
       }
       else if(!strcmp(argv[i] + 1, "clcurviso")) {
         CTX::instance()->mesh.lcFromCurvature = 2;
@@ -1168,12 +1202,12 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "info") || !strcmp(argv[i] + 1, "-info")) {
-        PrintInfo();
+        PrintBuildInfo();
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
         Msg::Direct("Gmsh, a 3D mesh generator with pre- and post-processing facilities");
-        Msg::Direct("Copyright (C) 1997-2019 C. Geuzaine and J.-F. Remacle");
+        Msg::Direct("Copyright (C) 1997-2020 C. Geuzaine and J.-F. Remacle");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -136,7 +136,7 @@ void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
     return;
   }
 
-  Msg::Info("Error in transformation from curve %d (%d-%d) to %d (%d-%d)"
+  Msg::Info("Error in transformation from curve %d (%d-%d) to %d (%d-%d) "
             "(minimal transformed node distances %g %g, tolerance %g)",
             ge->tag(), ge->getBeginVertex()->tag(), ge->getEndVertex()->tag(),
             this->tag(), this->getBeginVertex()->tag(),
@@ -207,6 +207,7 @@ void GEdge::resetMeshAttributes()
   meshAttributes.typeTransfinite = 0;
   meshAttributes.extrude = 0;
   meshAttributes.meshSize = MAX_LC;
+  meshAttributes.meshSizeFactor = 1.;
   meshAttributes.minimumMeshSegments = 1;
   meshAttributes.reverseMesh = false;
 }
@@ -737,6 +738,7 @@ static void meshCompound(GEdge *ge)
   // no new mesh nodes are created here
   discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000);
   ge->model()->add(de);
+  std::vector<int> phys;
   for(std::size_t i = 0; i < ge->compound.size(); i++) {
     GEdge *c = (GEdge *)ge->compound[i];
     // cannot use the same line elements, as they get deleted in createGeometry
@@ -745,6 +747,8 @@ static void meshCompound(GEdge *ge)
                                     c->lines[j]->getVertex(1)));
     }
     c->compoundCurve = de;
+    phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
+    c->physicals.clear();
   }
   // create the geometry of the compound
   de->createGeometry(true);
@@ -757,15 +761,22 @@ static void meshCompound(GEdge *ge)
   de->deleteVertexArrays();
   // mesh the compound
   de->mesh(false);
+  de->physicals = phys;
 }
 #endif
 
 void GEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
+  if(compound.size())
+    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
+
   meshGEdge mesher;
   mesher(this);
+
   if(compound.size()) { // Some edges are meshed together
+    meshAttributes.meshSizeFactor = 1.0;
+
     if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
       for(std::size_t i = 0; i < compound.size(); i++) {

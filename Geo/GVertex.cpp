@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,7 +32,7 @@ void GVertex::resetMeshAttributes() { meshSize = MAX_LC; }
 
 void GVertex::setPosition(GPoint &p)
 {
-  Msg::Error("Cannot set position of this kind of vertex");
+  Msg::Error("Cannot set position of this kind of point");
 }
 
 void GVertex::addEdge(GEdge *e)
@@ -162,7 +162,7 @@ void GVertex::addElement(int type, MElement *e)
 {
   switch(type) {
   case TYPE_PNT: addPoint(reinterpret_cast<MPoint *>(e)); break;
-  default: Msg::Error("Trying to add unsupported element in vertex");
+  default: Msg::Error("Trying to add unsupported element in point");
   }
 }
 
@@ -174,7 +174,7 @@ void GVertex::removeElement(int type, MElement *e)
       std::find(points.begin(), points.end(), reinterpret_cast<MPoint *>(e));
     if(it != points.end()) points.erase(it);
   } break;
-  default: Msg::Error("Trying to remove unsupported element in vertex");
+  default: Msg::Error("Trying to remove unsupported element in point");
   }
 }
 

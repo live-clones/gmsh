@@ -38,10 +38,10 @@ int main(int argc, char **argv)
   }
   int eleType3D = eleTypes[0];
   std::string name;
-  int dim, order, numNodes;
+  int dim, order, numNodes, numPrimaryNodes;
   std::vector<double> paramCoord;
   gmsh::model::mesh::getElementProperties(eleType3D, name, dim, order,
-                                          numNodes, paramCoord);
+                                          numNodes, paramCoord, numPrimaryNodes);
   gmsh::logger::write("3D elements are of type '" + name + "' (type = " +
                       std::to_string(eleType3D) + ") ");
 

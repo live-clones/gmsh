@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -67,7 +67,7 @@ private:
   std::vector<Chain<int> *> _chains[4];
   std::vector<Chain<int> *> _cochains[4];
 
-  typedef std::map<Cell *, int, Less_Cell>::iterator citer;
+  typedef std::map<Cell *, int, CellPtrLessThan>::iterator citer;
 
   void _getEntities(const std::vector<int> &physicalGroups,
                     std::vector<GEntity *> &entities);
@@ -82,7 +82,7 @@ private:
   void _createCellComplex();
 
   // create and store a chain from homology solver result
-  void _createChain(std::map<Cell *, int, Less_Cell> &preChain,
+  void _createChain(std::map<Cell *, int, CellPtrLessThan> &preChain,
                     const std::string &name, bool co);
 
   void _deleteChains(std::vector<int> dim = vecN0(4));

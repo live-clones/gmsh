@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -137,17 +137,18 @@ int gmshEdge::minimumMeshSegments() const
   int np;
   if(geomType() == Line) {
     np = GEdge::minimumMeshSegments();
-    // FIXME FOR QUADS
-    if(List_Nbr(c->Control_Points) > 2) {
-      np = 3 * (List_Nbr(c->Control_Points)) + 1;
-    }
   }
-  else if(geomType() == Circle || geomType() == Ellipse)
-    np = (int)(0.99 + fabs(c->Circle.t1 - c->Circle.t2) *
-                        ((double)CTX::instance()->mesh.minCircPoints - 1.0) /
-                        (2 * M_PI));
-  else
+  else if(geomType() == Circle || geomType() == Ellipse) {
+    double a = fabs(c->Circle.t1 - c->Circle.t2);
+    double n = CTX::instance()->mesh.minCircPoints;
+    if(a > 6.28)
+      np = n;
+    else
+      np = (int)(0.99 + (n - 1) * a / (2 * M_PI));
+  }
+  else {
     np = CTX::instance()->mesh.minCurvPoints - 1;
+  }
   return std::max(np, meshAttributes.minimumMeshSegments);
 }
 

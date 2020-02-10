@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -36,24 +36,6 @@ typedef long int count_int;
              ((int)PPM_GETR(p) * (newmaxval) + (oldmaxval) / 2) / (oldmaxval), \
              ((int)PPM_GETG(p) * (newmaxval) + (oldmaxval) / 2) / (oldmaxval), \
              ((int)PPM_GETB(p) * (newmaxval) + (oldmaxval) / 2) / (oldmaxval))
-
-/* Color histogram stuff */
-
-typedef struct colorhist_item *colorhist_vector;
-struct colorhist_item {
-  pixel color;
-  int value;
-};
-
-typedef struct colorhist_list_item *colorhist_list;
-struct colorhist_list_item {
-  struct colorhist_item ch;
-  colorhist_list next;
-};
-
-/* Color hash table stuff */
-
-typedef colorhist_list *colorhash_table;
 
 /* Public function */
 

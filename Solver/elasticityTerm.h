@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -43,16 +43,16 @@ public:
   Dof getLocalDofR(SElement *se, int iRow) const
   {
     MElement *e = se->getMeshElement();
-    int iCompR = iRow / e->getNumShapeFunctions();
-    int ithLocalVertex = iRow % e->getNumShapeFunctions();
+    int iCompR = iRow / (int)e->getNumShapeFunctions();
+    int ithLocalVertex = iRow % (int)e->getNumShapeFunctions();
     return Dof(e->getShapeFunctionNode(ithLocalVertex)->getNum(),
                Dof::createTypeWithTwoInts(iCompR, _iFieldR));
   }
   Dof getLocalDofC(SElement *se, int iCol) const
   {
     MElement *e = se->getMeshElement();
-    int iCompC = iCol / e->getNumShapeFunctions();
-    int ithLocalVertex = iCol % e->getNumShapeFunctions();
+    int iCompC = iCol / (int)e->getNumShapeFunctions();
+    int ithLocalVertex = iCol % (int)e->getNumShapeFunctions();
     return Dof(e->getShapeFunctionNode(ithLocalVertex)->getNum(),
                Dof::createTypeWithTwoInts(iCompC, _iFieldC));
   }

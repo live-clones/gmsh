@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -232,6 +232,39 @@ static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
 // Uniform BSplines
 static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
 {
+#if 1 // bypass regression in Gmsh 4 for bsplines on geometry (see #685)
+  if(Curve->geometry){
+    bool periodic = (Curve->end == Curve->beg);
+    int NbControlPoints = List_Nbr(Curve->Control_Points);
+    int NbCurves = NbControlPoints + (periodic ? -1 : 1);
+    int iCurve = (int)floor(u * (double)NbCurves);
+    if(iCurve == NbCurves) iCurve -= 1; // u = 1
+    double t1 = (double)(iCurve) / (double)(NbCurves);
+    double t2 = (double)(iCurve + 1) / (double)(NbCurves);
+    double t = (u - t1) / (t2 - t1);
+    Vertex *v[4];
+    for(int i = 0; i < 4; i++) {
+      int k;
+      if(periodic) {
+        k = (iCurve - 1 + i) % (NbControlPoints - 1);
+        if(k < 0) k += NbControlPoints - 1;
+      }
+      else {
+        k = std::max(0, std::min(iCurve - 2 + i, NbControlPoints - 1));
+      }
+      List_Read(Curve->Control_Points, k, &v[i]);
+    }
+    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, t1, t2,
+                                        Curve->geometry, derivee);
+    SPoint3 pt = Curve->geometry->point(pp);
+    Vertex V;
+    V.Pos.X = pt.x();
+    V.Pos.Y = pt.y();
+    V.Pos.Z = pt.z();
+    return V;
+  }
+#endif
+
   // Mat for 2 control points (=> linear)
   static double mat2[4][4] = {
     {0, 0, 0, 0}, {0, 0, 0, 0}, {-1, 1, 0, 0}, {1, 0, 0, 0}};
@@ -342,6 +375,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     }
   }
 
+#if 0  // bypass regression in Gmsh 4 for bsplines on geometry (see #685)
   if(Curve->geometry) {
     SPoint2 pp =
       InterpolateCubicSpline(v, t, *matrix, t1, t2, Curve->geometry, derivee);
@@ -352,9 +386,8 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     V.Pos.Z = pt.z();
     return V;
   }
-  else {
-    return InterpolateCubicSpline(v, t, *matrix, derivee, t1, t2);
-  }
+#endif
+  return InterpolateCubicSpline(v, t, *matrix, derivee, t1, t2);
 }
 
 // Non Uniform BSplines
@@ -647,7 +680,9 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
     Msg::Debug("Cannot interpolate discrete curve");
     break;
 
-  default: Msg::Error("Unknown curve type %d in interpolation", c->Typ); break;
+  default:
+    Msg::Error("Unknown curve type %d in interpolation", c->Typ);
+    break;
   }
   V.u = u;
   return V;
@@ -796,8 +831,18 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     return Vertex(0., 0., 0.);
   }
 
-  for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++)
+  for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++) {
     List_Read(s->Generatrices, i, &C[i]);
+    if(C[i]->Typ == MSH_SEGM_BND_LAYER || C[i]->Typ == MSH_SEGM_DISCRETE) {
+      Msg::Error("Cannot interpolate ruled surface with discrete bounding curves");
+      return Vertex(0., 0., 0.);
+    }
+    if(!C[i]->beg || !C[i]->end) {
+      Msg::Error("Cannot interpolate ruled surface if bounding curves don't "
+                 "have end points");
+      return Vertex(0., 0., 0.);
+    }
+  }
 
   Vertex *O = 0;
   bool isSphere = true;

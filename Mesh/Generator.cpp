@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -34,6 +34,7 @@
 #include "HighOrder.h"
 #include "Field.h"
 #include "Options.h"
+#include "Generator.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -48,6 +49,7 @@
 #if defined(HAVE_OPTHOM)
 #include "HighOrderMeshOptimizer.h"
 #include "HighOrderMeshElasticAnalogy.h"
+#include "HighOrderMeshFastCurving.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -62,8 +64,8 @@ public:
     std::vector<GEdge *> const &e = gr->embeddedEdges();
     std::vector<GFace *> const &f = gr->embeddedFaces();
     if(e.empty() && f.empty()) return;
-    std::map<MEdge, GEdge *, Less_Edge> edges;
-    std::map<MFace, GFace *, Less_Face> faces;
+    std::map<MEdge, GEdge *, MEdgeLessThan> edges;
+    std::map<MFace, GFace *, MFaceLessThan> faces;
     std::vector<GEdge *>::const_iterator it = e.begin();
     std::vector<GFace *>::const_iterator itf = f.begin();
     for(; it != e.end(); ++it) {
@@ -106,7 +108,7 @@ public:
       Msg::Error("Saving the missing edges in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
-      for(std::map<MEdge, GEdge *, Less_Edge>::iterator it = edges.begin();
+      for(std::map<MEdge, GEdge *, MEdgeLessThan>::iterator it = edges.begin();
           it != edges.end(); ++it) {
         MVertex *v1 = it->first.getVertex(0);
         MVertex *v2 = it->first.getVertex(1);
@@ -126,7 +128,7 @@ public:
       Msg::Error("Saving the missing faces in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
-      for(std::map<MFace, GFace *, Less_Face>::iterator it = faces.begin();
+      for(std::map<MFace, GFace *, MFaceLessThan>::iterator it = faces.begin();
           it != faces.end(); ++it) {
         MVertex *v1 = it->first.getVertex(0);
         MVertex *v2 = it->first.getVertex(1);
@@ -364,9 +366,9 @@ static void Mesh1D(GModel *m)
     temp.push_back(*it);
   }
 
-  Msg::ResetProgressMeter();
-
   int nIter = 0, nTot = m->getNumEdges();
+  Msg::StartProgressMeter(nTot);
+
   while(1) {
     int nPending = 0;
     const size_t sss = temp.size();
@@ -384,12 +386,14 @@ static void Mesh1D(GModel *m)
           nPending++;
         }
       }
-      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
+      if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 1D...");
     }
 
     if(!nPending) break;
-    if(nIter++ > 10) break;
+    if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
+
+  Msg::StopProgressMeter();
 
   Msg::SetNumThreads(prevNumThreads);
 
@@ -507,13 +511,14 @@ static void Mesh2D(GModel *m)
   // meshes) is global as it depends on a smooth normal field generated from the
   // surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)) {
-    std::set<GFace *, GEntityLessThan> f;
+    std::set<GFace *, GEntityPtrLessThan> f;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
       f.insert(*it);
 
-    Msg::ResetProgressMeter();
-
     int nIter = 0, nTot = m->getNumFaces();
+
+    Msg::StartProgressMeter(nTot);
+
     while(1) {
       int nPending = 0;
       std::vector<GFace *> temp;
@@ -532,14 +537,16 @@ static void Mesh2D(GModel *m)
             nPending++;
           }
         }
-        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 2D...");
       }
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
       // serialize (self-intersections of 1D meshes are not thread safe)!
       if(nIter > 2) Msg::SetNumThreads(1);
-      if(nIter++ > 10) break;
+      if(nIter++ > CTX::instance()->mesh.maxRetries) break;
     }
+
+    Msg::StopProgressMeter();
   }
 
   Msg::SetNumThreads(prevNumThreads);
@@ -590,8 +597,9 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
     connected.push_back(temp2);
     delaunay = temp1;
   }
-  Msg::Info("3D Meshing %d volumes with %d connected components",
-            nbVolumes, connected.size());
+  Msg::Info("3D Meshing %d volume%s with %d connected component%s",
+            nbVolumes, nbVolumes > 1 ? "s" : "", connected.size(),
+            connected.size() > 1 ? "s" : "");
 }
 
 // JFR : use hex-splitting to resolve non conformity
@@ -609,13 +617,13 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
   v0       v1
  */
 
-void buildUniqueFaces(GRegion *gr, std::set<MFace, Less_Face> &bnd)
+void buildUniqueFaces(GRegion *gr, std::set<MFace, MFaceLessThan> &bnd)
 {
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *e = gr->getMeshElement(i);
     for(int j = 0; j < e->getNumFaces(); j++) {
       MFace f = e->getFace(j);
-      std::set<MFace, Less_Face>::iterator it = bnd.find(f);
+      std::set<MFace, MFaceLessThan>::iterator it = bnd.find(f);
       if(it == bnd.end())
         bnd.insert(f);
       else
@@ -628,15 +636,15 @@ bool MakeMeshConformal(GModel *gm, int howto)
 {
   fs_cont search;
   buildFaceSearchStructure(gm, search);
-  std::set<MFace, Less_Face> bnd;
+  std::set<MFace, MFaceLessThan> bnd;
   for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     GRegion *gr = *rit;
     buildUniqueFaces(gr, bnd);
   }
   // bnd2 contains non conforming faces
 
-  std::set<MFace, Less_Face> bnd2;
-  for(std::set<MFace, Less_Face>::iterator itf = bnd.begin(); itf != bnd.end();
+  std::set<MFace, MFaceLessThan> bnd2;
+  for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin(); itf != bnd.end();
       ++itf) {
     GFace *gfound = findInFaceSearchStructure(*itf, search);
     if(!gfound) {
@@ -647,14 +655,14 @@ bool MakeMeshConformal(GModel *gm, int howto)
 
   Msg::Info("%d hanging faces", bnd2.size());
 
-  std::set<MFace, Less_Face> ncf;
-  for(std::set<MFace, Less_Face>::iterator itf = bnd2.begin();
+  std::set<MFace, MFaceLessThan> ncf;
+  for(std::set<MFace, MFaceLessThan>::iterator itf = bnd2.begin();
       itf != bnd2.end(); ++itf) {
     const MFace &f = *itf;
     if(f.getNumVertices() == 4) { // quad face
-      std::set<MFace, Less_Face>::iterator it1 =
+      std::set<MFace, MFaceLessThan>::iterator it1 =
         bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(2)));
-      std::set<MFace, Less_Face>::iterator it2 =
+      std::set<MFace, MFaceLessThan>::iterator it2 =
         bnd2.find(MFace(f.getVertex(2), f.getVertex(3), f.getVertex(0)));
       if(it1 != bnd2.end() && it2 != bnd2.end()) {
         ncf.insert(MFace(f.getVertex(1), f.getVertex(2), f.getVertex(3),
@@ -684,7 +692,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
       std::vector<MFace> faces;
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, Less_Face>::iterator it = ncf.find(f);
+        std::set<MFace, MFaceLessThan>::iterator it = ncf.find(f);
         if(it == ncf.end()) {
           faces.push_back(f);
         }
@@ -725,7 +733,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
       std::vector<MFace> faces;
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, Less_Face>::iterator it = ncf.find(f);
+        std::set<MFace, MFaceLessThan>::iterator it = ncf.find(f);
         if(it == ncf.end()) {
           faces.push_back(f);
         }
@@ -772,14 +780,14 @@ static void TestConformity(GModel *gm)
   int count = 0;
   for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     GRegion *gr = *rit;
-    std::set<MFace, Less_Face> bnd;
+    std::set<MFace, MFaceLessThan> bnd;
     double vol = 0.0;
     for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
       MElement *e = gr->getMeshElement(i);
       vol += fabs(e->getVolume());
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, Less_Face>::iterator it = bnd.find(f);
+        std::set<MFace, MFaceLessThan>::iterator it = bnd.find(f);
         if(it == bnd.end())
           bnd.insert(f);
         else
@@ -788,7 +796,7 @@ static void TestConformity(GModel *gm)
     }
     printf("vol(%d) = %12.5E\n", gr->tag(), vol);
 
-    for(std::set<MFace, Less_Face>::iterator itf = bnd.begin();
+    for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin();
         itf != bnd.end(); ++itf) {
       GFace *gfound = findInFaceSearchStructure(*itf, search);
       if(!gfound) {
@@ -823,7 +831,10 @@ static void Mesh3D(GModel *m)
       Msg::SetNumThreads(1);
   }
 
-  if(m->getNumRegions()) Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
+  if(m->getNumRegions()) {
+    Msg::StartProgressMeter(1);
+    Msg::ProgressMeter(0, false, "Meshing 3D...");
+  }
 
   // mesh the extruded volumes first
   std::for_each(m->firstRegion(), m->lastRegion(), meshGRegionExtruded());
@@ -958,83 +969,106 @@ static void Mesh3D(GModel *m)
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
 
-  if(m->getNumRegions()) Msg::ProgressMeter(100, 100, false, "Meshing 3D...");
+  if(m->getNumRegions()) {
+    Msg::ProgressMeter(1, false, "Meshing 3D...");
+    Msg::StopProgressMeter();
+  }
 
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }
 
-void OptimizeMesh(GModel *m)
+void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 {
-  Msg::StatusBar(true, "Optimizing 3D mesh...");
-  double t1 = Cpu();
-
-  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegion());
-  // Ensure that all volume Jacobians are positive
-  m->setAllVolumesPositive();
-
-  if(Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
-
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);
-}
-
-void OptimizeMeshNetgen(GModel *m)
-{
-  Msg::StatusBar(true, "Optimizing 3D mesh with Netgen...");
-  double t1 = Cpu();
-
-  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
-
-  // ensure that all volume Jacobians are positive
-  m->setAllVolumesPositive();
-
-  if(Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
-
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);
-}
-
-void OptimizeHighOrderMesh(GModel *m)
-{
-#if defined(HAVE_OPTHOM)
-  OptHomParameters p;
-  p.nbLayers = CTX::instance()->mesh.hoNLayers;
-  p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;
-  p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
-  p.itMax = CTX::instance()->mesh.hoIterMax;
-  p.optPassMax = CTX::instance()->mesh.hoPassMax;
-  p.dim = GModel::current()->getDim();
-  p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
-  p.optCAD = CTX::instance()->mesh.hoDistCAD;
-  HighOrderMeshOptimizer(GModel::current(), p);
-#else
-  Msg::Error("High-order mesh optimization requires the OPTHOM module");
-#endif
-}
-
-void OptimizeHighOrderMeshElastic(GModel *m)
-{
-#if defined(HAVE_OPTHOM)
-  HighOrderMeshElasticAnalogy(m, false);
-#else
-  Msg::Error("High-order mesh optimization requires the OPTHOM module");
-#endif
-}
-
-void SmoothMesh(GModel *m)
-{
-  Msg::StatusBar(true, "Smoothing 2D mesh...");
-  double t1 = Cpu();
-
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    GFace *gf = *it;
-    laplaceSmoothing(gf);
+  if(how != "" && how != "Gmsh" && how != "Optimize" &&
+     how != "Netgen" &&
+     how != "HighOrder" &&
+     how != "HighOrderElastic" &&
+     how != "HighOrderFastCurving" &&
+     how != "Laplace2D" &&
+     how != "Relocate2D" &&
+     how != "Relocate3D") {
+    Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
+    return;
   }
 
+  if(how == "" || how == "Gmsh" || how == "Optimize")
+    Msg::StatusBar(true, "Optimizing mesh...");
+  else
+    Msg::StatusBar(true, "Optimizing mesh (%s)...", how.c_str());
+  double t1 = Cpu();
+
+  if(how == "" || how == "Gmsh" || how == "Optimize") {
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+      optimizeMeshGRegion opt;
+      opt(*it, force);
+    }
+    m->setAllVolumesPositive();
+  }
+  else if(how == "Netgen") {
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+      optimizeMeshGRegionNetgen opt;
+      opt(*it, force);
+    }
+    m->setAllVolumesPositive();
+  }
+  else if(how == "HighOrder") {
+#if defined(HAVE_OPTHOM)
+    OptHomParameters p;
+    p.nbLayers = CTX::instance()->mesh.hoNLayers;
+    p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;
+    p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
+    p.itMax = CTX::instance()->mesh.hoIterMax;
+    p.optPassMax = CTX::instance()->mesh.hoPassMax;
+    p.dim = m->getDim();
+    p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
+    p.optCAD = CTX::instance()->mesh.hoDistCAD;
+    HighOrderMeshOptimizer(m, p);
+#else
+    Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
+  }
+  else if(how == "HighOrderElastic") {
+#if defined(HAVE_OPTHOM)
+    HighOrderMeshElasticAnalogy(m, false);
+#else
+    Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
+  }
+  else if(how == "HighOrderFastCurving") {
+#if defined(HAVE_OPTHOM)
+    FastCurvingParameters p;
+    p.dim = m->getMeshDim();
+    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
+    p.thickness = false;
+    HighOrderMeshFastCurving(m, p, true);
+#else
+    Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
+  }
+  else if(how == "Laplace2D") {
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+      GFace *gf = *it;
+      laplaceSmoothing(gf, niter);
+    }
+  }
+  else if(how == "Relocate2D") {
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+      GFace *gf = *it;
+      RelocateVertices(gf, niter);
+    }
+  }
+  else if(how == "Relocate3D") {
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+      GRegion *gr = *it;
+      RelocateVertices(gr, niter);
+    }
+  }
+
+  if(Msg::GetVerbosity() > 98)
+    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
+
   double t2 = Cpu();
-  Msg::StatusBar(true, "Done smoothing 2D mesh (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done optimizing mesh (%g s)", t2 - t1);
 }
 
 void AdaptMesh(GModel *m)
@@ -1085,10 +1119,11 @@ void GenerateMesh(GModel *m, int ask)
   int old = m->getMeshStatus(false);
 
   // Initialize pseudo random mesh generator with the same seed
-  srand(1);
+  srand(CTX::instance()->mesh.randomSeed);
 
   // Change any high order elements back into first order ones
   SetOrder1(m);
+  FixPeriodicMesh(m);
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
@@ -1122,7 +1157,7 @@ void GenerateMesh(GModel *m, int ask)
                                 CTX::instance()->mesh.optimizeNetgen);
         i++) {
       if(CTX::instance()->mesh.optimize > i) OptimizeMesh(m);
-      if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMeshNetgen(m);
+      if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMesh(m, "Netgen");
     }
   }
 
@@ -1132,21 +1167,30 @@ void GenerateMesh(GModel *m, int ask)
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);
 
-  // Create high order elements
-  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1)
+  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1){
+    // Create high order elements
     SetOrderN(m, CTX::instance()->mesh.order,
               CTX::instance()->mesh.secondOrderLinear,
               CTX::instance()->mesh.secondOrderIncomplete);
 
-  // Optimize high order elements
-  if(CTX::instance()->mesh.hoOptimize < 0 ||
-     CTX::instance()->mesh.hoOptimize >= 2)
-    OptimizeHighOrderMeshElastic(GModel::current());
+    // Optimize high order elements
+    if(CTX::instance()->mesh.hoOptimize == 2 ||
+       CTX::instance()->mesh.hoOptimize == 3)
+      OptimizeMesh(m, "HighOrderElastic");
 
-  if(CTX::instance()->mesh.hoOptimize >= 1)
-    OptimizeHighOrderMesh(GModel::current());
+    if(CTX::instance()->mesh.hoOptimize == 1 ||
+       CTX::instance()->mesh.hoOptimize == 2)
+      OptimizeMesh(m, "HighOrder");
 
-  Msg::Info("%d vertices %d elements", m->getNumMeshVertices(),
+    if(CTX::instance()->mesh.hoOptimize == 4)
+      OptimizeMesh(m, "HighOrderFastCurving");
+  }
+
+  // make sure periodic meshes are actually periodic and store periodic node
+  // correspondances
+  FixPeriodicMesh(m);
+
+  Msg::Info("%d nodes %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());
 
   Msg::PrintErrorCounter("Mesh generation error summary");

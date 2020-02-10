@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,6 +26,9 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
+#include "ghostEdge.h"
+#include "ghostFace.h"
+#include "ghostRegion.h"
 
 // periodic nodes and entities backported from MSH3 format
 extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
@@ -39,7 +42,7 @@ static bool getMeshVertices(int num, int *indices,
 {
   for(int i = 0; i < num; i++) {
     if(!map.count(indices[i])) {
-      Msg::Error("Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong node index %d", indices[i]);
       return false;
     }
     else
@@ -54,7 +57,7 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
   for(int i = 0; i < num; i++) {
     if(indices[i] < minVertex ||
        indices[i] > (int)(vec.size() - 1 + minVertex)) {
-      Msg::Error("Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong node index %d", indices[i]);
       return false;
     }
     else
@@ -184,8 +187,8 @@ int GModel::_readMSH2(const std::string &name)
         fclose(fp);
         return 0;
       }
-      Msg::Info("%d vertices", numVertices);
-      Msg::ResetProgressMeter();
+      Msg::Info("%d nodes", numVertices);
+      Msg::StartProgressMeter(numVertices);
       vertexVector.clear();
       vertexMap.clear();
       minVertex = numVertices + 1;
@@ -295,11 +298,12 @@ int GModel::_readMSH2(const std::string &name)
         minVertex = std::min(minVertex, num);
         maxVertex = std::max(maxVertex, num);
         if(vertexMap.count(num))
-          Msg::Warning("Skipping duplicate vertex %d", num);
+          Msg::Warning("Skipping duplicate node %d", num);
         vertexMap[num] = newVertex;
         if(numVertices > 100000)
-          Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");
+          Msg::ProgressMeter(i + 1, true, "Reading nodes");
       }
+      Msg::StopProgressMeter();
       // If the vertex numbering is dense, transfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices &&
@@ -332,7 +336,7 @@ int GModel::_readMSH2(const std::string &name)
       std::set<MElement *> parentsOwned;
       sscanf(str, "%d", &numElements);
       Msg::Info("%d elements", numElements);
-      Msg::ResetProgressMeter();
+      Msg::StartProgressMeter(numElements);
       if(!binary) {
         for(int i = 0; i < numElements; i++) {
           int num, type, physical = 0, elementary = 0, partition = 0,
@@ -477,7 +481,7 @@ int GModel::_readMSH2(const std::string &name)
           for(std::size_t j = 0; j < ghosts.size(); j++)
             _ghostCells.insert(std::pair<MElement *, short>(e, ghosts[j]));
           if(numElements > 100000)
-            Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
+            Msg::ProgressMeter(i + 1, true, "Reading elements");
         }
       }
       else {
@@ -562,13 +566,15 @@ int GModel::_readMSH2(const std::string &name)
                 _ghostCells.insert(
                   std::pair<MElement *, short>(e, -data[5 + j]));
             if(numElements > 100000)
-              Msg::ProgressMeter(numElementsPartial + i + 1, numElements, true,
+              Msg::ProgressMeter(numElementsPartial + i + 1, true,
                                  "Reading elements");
           }
           delete[] data;
           numElementsPartial += numElms;
         }
       }
+      Msg::StopProgressMeter();
+
       for(int i = 0; i < 10; i++) elements[i].clear();
 
       std::map<int, MElement *>::iterator ite;
@@ -680,6 +686,12 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
      && ge->getParentEntity()->dim() > ge->dim())
     return; // ignore partition boundaries
 
+  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
+     (ge->geomType() == GEntity::GhostCurve ||
+      ge->geomType() == GEntity::GhostSurface ||
+      ge->geomType() == GEntity::GhostVolume))
+    return; // ignore ghost entities
+
   std::vector<short> ghosts;
   if(model->getGhostCells().size()) {
     std::pair<std::multimap<MElement *, short>::iterator,
@@ -718,6 +730,12 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge,
   if(CTX::instance()->mesh.partitionOldStyleMsh2 && ge->getParentEntity()
      && ge->getParentEntity()->dim() > ge->dim())
     return; // ignore partition boundaries
+
+  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
+     (ge->geomType() == GEntity::GhostCurve ||
+      ge->geomType() == GEntity::GhostSurface ||
+      ge->geomType() == GEntity::GhostVolume))
+    return; // ignore ghost entities
 
   // Hack to save each partition as a separate physical entity
   if(saveSinglePartition < 0) {
@@ -760,6 +778,12 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
   if(CTX::instance()->mesh.partitionOldStyleMsh2 && ge->getParentEntity()
      && ge->getParentEntity()->dim() > ge->dim())
     return 0; // ignore partition boundaries
+
+  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
+     (ge->geomType() == GEntity::GhostCurve ||
+      ge->geomType() == GEntity::GhostSurface ||
+      ge->geomType() == GEntity::GhostVolume))
+    return 0; // ignore ghost entities
 
   int n = 0, p = saveAll ? 1 : ge->physicals.size();
 

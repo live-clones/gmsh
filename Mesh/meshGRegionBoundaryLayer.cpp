@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -189,11 +189,11 @@ public:
   blyr_manager(GRegion *gr, std::vector<GFace *> &bls, double t)
     : _thickness(t), _gr(gr), _faces(bls)
   {
-    std::map<MFace, SVector3, Less_Face> t_normals;
+    std::map<MFace, SVector3, MFaceLessThan> t_normals;
     for(size_t i = 0; i < _gr->tetrahedra.size(); i++) {
       for(int j = 0; j < 4; j++) {
         MFace f = _gr->tetrahedra[i]->getFace(j);
-        std::map<MFace, SVector3, Less_Face>::iterator it = t_normals.find(f);
+        std::map<MFace, SVector3, MFaceLessThan>::iterator it = t_normals.find(f);
         if(it == t_normals.end()) {
           SVector3 n = f.normal();
           MVertex *v = _gr->tetrahedra[i]->getVertex(3 - j);
@@ -260,7 +260,7 @@ public:
     for(size_t i = 0; i < bls.size(); i++) {
       for(size_t j = 0; j < bls[i]->triangles.size(); j++) {
         MTriangle *t = bls[i]->triangles[j];
-        std::map<MFace, SVector3, Less_Face>::iterator it =
+        std::map<MFace, SVector3, MFaceLessThan>::iterator it =
           t_normals.find(t->getFace(0));
         SVector3 n;
         if(it == t_normals.end())

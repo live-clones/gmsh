@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -58,7 +58,7 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
     for(std::size_t i = 0; i < faces.size(); i++){
       GFace *gf = faces[i];
       for(std::size_t j = 0; j < gf->quadrangles.size(); j++){
-        std::map<MFace, MVertex *, Less_Face>::iterator it2 =
+        std::map<MFace, MVertex *, MFaceLessThan>::iterator it2 =
           _quad.find(gf->quadrangles[j]->getFace(0));
         if(it2 != _quad.end()){
           npyram++;
@@ -100,13 +100,30 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
   GRegion *gr = regions[0];
   std::vector<GFace *> faces = gr->faces();
-  std::set<GFace *, GEntityLessThan> allFacesSet;
+
+  std::set<GFace *, GEntityPtrLessThan> allFacesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GFace *> const &f = regions[i]->faces();
     std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
     allFacesSet.insert(f.begin(), f.end());
     allFacesSet.insert(f_e.begin(), f_e.end());
   }
+
+  // replace faces with compounds if elements from compound surface meshes are
+  // not reclassified on the original surfaces
+  if(CTX::instance()->mesh.compoundClassify == 0){
+    std::set<GFace *, GEntityPtrLessThan> comp;
+    for(std::set<GFace *, GEntityPtrLessThan>::iterator it = allFacesSet.begin();
+        it != allFacesSet.end(); it++){
+      GFace *gf = *it;
+      if(!gf->compoundSurface)
+        comp.insert(gf);
+      else if(gf->compoundSurface)
+        comp.insert(gf->compoundSurface);
+    }
+    allFacesSet = comp;
+  }
+
   std::vector<GFace *> allFaces(allFacesSet.begin(), allFacesSet.end());
   gr->set(allFaces);
 
@@ -141,8 +158,22 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     ++itf;
   }
 
-  // restore the initial set of faces and embedded edges/vertices
-  gr->set(faces);
+  // restore set of faces and embedded edges/vertices
+  if(CTX::instance()->mesh.compoundClassify == 0){
+    std::set<GFace *, GEntityPtrLessThan> comp;
+    for(std::size_t i = 0; i < faces.size(); i++) {
+      GFace *gf = faces[i];
+      if(!gf->compoundSurface)
+        comp.insert(gf);
+      else if(gf->compoundSurface)
+        comp.insert(gf->compoundSurface);
+    }
+    std::vector<GFace *> lcomp(comp.begin(), comp.end());
+    gr->set(lcomp);
+  }
+  else{
+    gr->set(faces);
+  }
   gr->embeddedEdges() = oldEmbEdges;
   gr->embeddedVertices() = oldEmbVertices;
 
@@ -153,7 +184,8 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     refineMeshMMG(gr);
   }
   else{
-    insertVerticesInRegion(gr, 2000000000, true, &sqr);
+    insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D,
+                           1., true, &sqr);
 
     if(sqr.buildPyramids(gr->model())){
       Msg::Info("Optimizing pyramids for hybrid mesh...");
@@ -167,6 +199,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     // bool createBoundaryLayerOneLayer(GRegion *gr, std::vector<GFace *> & bls);
     // createBoundaryLayerOneLayer(gr, allFaces);
   }
+
 }
 
 void deMeshGRegion::operator()(GRegion *gr)

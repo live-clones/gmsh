@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,7 +21,7 @@ static bool getMeshVertices(GModel *m, int num, int *n,
   for(int i = 0; i < num; i++) {
     MVertex *v = m->getMeshVertexByTag(n[i]);
     if(!v) {
-      Msg::Error("Wrong vertex number %d", n[i]);
+      Msg::Error("Wrong node number %d", n[i]);
       return false;
     }
     else
@@ -56,7 +56,7 @@ int GModel::readSAMCEF(const std::string &name)
           return 0;
         _vertexMapCache[num] = new MVertex(x, y, z, 0, num);
       }
-      Msg::Info("Read %d mesh vertices", (int)_vertexMapCache.size());
+      Msg::Info("Read %d mesh nodes", (int)_vertexMapCache.size());
     }
     else if(!strncmp(buffer, ".MAI", 4)) {
       while(!feof(fp)) {

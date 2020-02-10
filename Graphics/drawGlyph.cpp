@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -747,6 +747,7 @@ void drawContext::drawVector(int Type, int Fill, double x, double y, double z,
   }
 }
 
+namespace {
 class point {
 public:
   double x, y, z;
@@ -783,6 +784,7 @@ public:
       return point();
   }
 };
+}
 
 void drawContext::drawBox(double xmin, double ymin, double zmin, double xmax,
                           double ymax, double zmax, bool labels)

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -43,6 +43,7 @@ StringXNumber *GMSH_TetrahedralizePlugin::getOption(int iopt)
 
 #if defined(HAVE_MESH)
 
+namespace {
 class PointData : public MVertex {
 public:
   std::vector<double> val;
@@ -51,6 +52,7 @@ public:
     val.resize(numVal);
   }
 };
+}
 
 PView *GMSH_TetrahedralizePlugin::execute(PView *v)
 {

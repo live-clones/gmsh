@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,11 +18,11 @@ int LaplaceSmoothing(GRegion *gr);
 
 bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
               const qmTetrahedron::Measures &cr,
-              const std::set<MFace, Less_Face> &embeddedFaces);
+              const std::set<MFace, MFaceLessThan> &embeddedFaces);
 
 bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalFace,
               const qmTetrahedron::Measures &cr,
-              const std::set<MFace, Less_Face> &embeddedFaces);
+              const std::set<MFace, MFaceLessThan> &embeddedFaces);
 
 bool smoothVertex(MTet4 *t, int iLocalVertex,
                   const qmTetrahedron::Measures &cr);

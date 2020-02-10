@@ -36,9 +36,14 @@ Background image file in JPEG, PNG or PDF format@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.BuildInfo
+Gmsh build information (read-only)@*
+Default value: @code{"Version: 4.5.2-git-9ed03412d; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20200129; Build host: Christophes-MacBook-Pro.local; Build options: 64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[usr/local] OptHom P4est Parser Plugins Png Post QuadTri Solver TetGen/BR Voro++ Zlib; FLTK version: 1.4.0; OCC version: 7.4.1; MED version: 4.0.0; Packaged by: geuzaine; Web site: http://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Saved in: @code{-}
+
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{" 64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg[fltk] Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[MacPorts] OptHom Parser Plugins Png[fltk] Post QuadTri Revoropt Solver TetGen/BR TouchBar Voro++ Zlib"}@*
+Default value: @code{"64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[usr/local] OptHom P4est Parser Plugins Png Post QuadTri Solver TetGen/BR Voro++ Zlib"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
@@ -158,7 +163,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.4.0-git-abf7d3375"}@*
+Default value: @code{"4.5.2-git-9ed03412d"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -906,6 +911,11 @@ Invert mouse wheel zoom direction@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.NativeFileChooser
+Use the native file chooser?@*
+Default value: @code{1}@*
+Saved in: @code{General.SessionFileName}
+
 @item General.NonModalWindows
 Force all control windows to be on top of the graphic window ("non-modal")@*
 Default value: @code{1}@*
@@ -978,7 +988,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.ProgressMeterStep
 Increment (in percent) of the progress meter bar@*
-Default value: @code{20}@*
+Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.QuadricSubdivisions

@@ -3,11 +3,16 @@
 @ftable @code
 @item Mesh.Algorithm
 2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)@*
-Default value: @code{2}@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
 3D mesh algorithm (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.AlgorithmSwitchOnFailure
+Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based algorithms, switching to MeshAdapt)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -47,12 +52,27 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsImportOrder
-Enable the creation of high-order mesh from CGNS structured meshes(1, 2, 4, 8, ...)@*
+Order of the mesh to be created by coarsening CGNS structured zones (1 to 4)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsImportIgnoreBC
+Ignore information in ZoneBC structures when reading a CGNS file@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsImportIgnoreSolution
+Ignore solution when reading a CGNS file@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsConstructTopology
 Reconstruct the model topology (BREP) after reading a CGNS file@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsExportCPEX0045
+Use the CPEX0045 convention when exporting a high-order mesh to CGNS@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -77,7 +97,7 @@ Default value: @code{1e+22}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthFromCurvature
-Automatically compute mesh element sizes from curvature (experimental)@*
+Automatically compute mesh element sizes from curvature@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -97,8 +117,13 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CompoundClassify
-How are surface mesh elements classified on compounds? (0: on the new discrete entity, 1: on the original geometrical entity)@*
+How are surface mesh elements classified on compounds? (0: on the new discrete surface, 1: on the original geometrical surfaces - incompatible with e.g. high-order meshing)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CompoundCharacteristicLengthFactor
+Mesh size factor applied to compound parts@*
+Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CpuTime
@@ -157,7 +182,7 @@ Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderOptimize
-Optimize high-order meshes? (-1: elastic smoothing, 1: optimization, 2: both)@*
+Optimize high-order meshes? (0: none, 1: optimization, 2: elastic+optimization, 3: elastic, 4: fast curving)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -241,6 +266,11 @@ Display width of mesh lines (in pixels)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MaxIterDelaunay3D
+Maximum number of point insertion iterations in 3D Delaunay mesher (0: unlimited)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MaxNumThreads1D
 Maximum number of threads for 1D meshing (0: use default)@*
 Default value: @code{0}@*
@@ -256,8 +286,13 @@ Maximum number of threads for 3D meshing (0: use default)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MaxRetries
+Maximum number of times meshing is retried on curves and surfaces with a pending mesh@*
+Default value: @code{10}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MeshOnlyVisible
-Mesh only visible entities (experimental: use with caution!)@*
+Mesh only visible entities (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -292,13 +327,18 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCirclePoints
-Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi radians when the mesh size of adapted to the curvature)@*
+Minimum number of nodes used to mesh circles and ellipses@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCurvePoints
-Minimum number of points used to mesh a (non-straight) curve@*
+Minimum number of points used to mesh curves other than lines, circles and ellipses@*
 Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MinimumElementsPerTwoPi
+Minimum number of elements per 2 * Pi radians when the mesh size is adapted to the curvature@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
@@ -536,6 +576,11 @@ Random factor used in the 3D meshing algorithm@*
 Default value: @code{1e-12}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.RandomSeed
+Seed of pseudo-random number generator@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PreserveNumberingMsh2
 Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)@*
 Default value: @code{0}@*
@@ -562,17 +607,17 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DAll
-Apply recombination3D algorithm to all volumes, ignoring per-volume spec@*
+Apply recombination3D algorithm to all volumes, ignoring per-volume spec (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DLevel
-3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)@*
+3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids) (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DConformity
-3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)@*
+3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)(experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -654,6 +699,16 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.SmoothRatio
 Ratio between mesh sizes at nodes of a same edge (used in BAMG)@*
 Default value: @code{1.8}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlAngularDeflection
+Maximum angular deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.35}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlLinearDeflection
+Maximum linear deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.01}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlOneSolidPerSurface

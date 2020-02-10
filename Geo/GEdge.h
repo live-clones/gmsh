@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,6 +10,7 @@
 #include <vector>
 #include <stdio.h>
 #include "GmshMessage.h"
+#include "GmshDefines.h"
 #include "GEntity.h"
 #include "GVertex.h"
 #include "SVector3.h"
@@ -43,6 +44,9 @@ public:
   // the original curves, in addition to the mesh of the compound curve)
   GEdge *compoundCurve;
 
+  // the STL discretization
+  std::vector<SPoint3> stl_vertices_xyz;
+  
 public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   GEdge(GModel *model, int tag);
@@ -170,8 +174,12 @@ public:
     return _tooSmall || (v0 && v0 == v1 && mesh_vertices.size() < 2);
   }
 
-  // number of types of elements
-  int getNumElementTypes() const { return 1; }
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const
+  {
+    types.clear();
+    types.push_back(TYPE_LIN);
+  };
 
   // get total/by-type number of elements in the mesh
   std::size_t getNumMeshElements() const { return lines.size(); }
@@ -222,7 +230,7 @@ public:
   struct {
     char method;
     double coeffTransfinite;
-    double meshSize;
+    double meshSize, meshSizeFactor;
     int nbPointsTransfinite;
     int typeTransfinite;
     int minimumMeshSegments;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -23,11 +23,11 @@
 // TODO C++11 remove this nasty stuff
 #if __cplusplus >= 201103L
 #include <unordered_map>
-#define hashmapMFace std::unordered_map<MFace, int, Hash_Face, Equal_Face>
-#define hashmapMEdge std::unordered_map<MEdge, int, Hash_Edge, Equal_Edge>
+#define hashmapMFace std::unordered_map<MFace, int, MFaceHash, MFaceEqual>
+#define hashmapMEdge std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual>
 #else
-#define hashmapMFace std::map<MFace, int, Less_Face>
-#define hashmapMEdge std::map<MEdge, int, Less_Edge>
+#define hashmapMFace std::map<MFace, int, MFaceLessThan>
+#define hashmapMEdge std::map<MEdge, int, MEdgeLessThan>
 #endif
 
 template <class scalar> class simpleFunction;
@@ -37,7 +37,6 @@ class OCC_Internals;
 class ACIS_Internals;
 class smooth_normals;
 class FieldManager;
-class CGNSOptions;
 class gLevelset;
 class discreteFace;
 class discreteRegion;
@@ -49,10 +48,10 @@ private:
   std::multimap<std::pair<const std::vector<int>, const std::vector<int> >,
                 std::pair<const std::string, const std::vector<int> > >
     _homologyRequests;
-  std::set<GRegion *, GEntityLessThan> _chainRegions;
-  std::set<GFace *, GEntityLessThan> _chainFaces;
-  std::set<GEdge *, GEntityLessThan> _chainEdges;
-  std::set<GVertex *, GEntityLessThan> _chainVertices;
+  std::set<GRegion *, GEntityPtrLessThan> _chainRegions;
+  std::set<GFace *, GEntityPtrLessThan> _chainFaces;
+  std::set<GEdge *, GEntityPtrLessThan> _chainEdges;
+  std::set<GVertex *, GEntityPtrLessThan> _chainVertices;
   hashmapMEdge _mapEdgeNum;
   hashmapMFace _mapFaceNum;
   // the maximum vertex and element id number in the mesh
@@ -138,10 +137,10 @@ protected:
 
   // the sets of geometrical regions, faces, edges and vertices in the
   // model
-  std::set<GRegion *, GEntityLessThan> regions;
-  std::set<GFace *, GEntityLessThan> faces;
-  std::set<GEdge *, GEntityLessThan> edges;
-  std::set<GVertex *, GEntityLessThan> vertices;
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
 
   // map between the pair <dimension, elementary or physical number>
   // and an optional associated name
@@ -158,10 +157,6 @@ protected:
   void _resetOCCInternals();
 
   void _deleteACISInternals();
-
-  // CGNS helpers
-  int _readCGNSStructured(const std::string &name);
-  int _readCGNSUnstructured(const std::string &name);
 
   // store the elements given in the map (indexed by elementary region
   // number) into the model, creating discrete geometrical entities on
@@ -187,15 +182,15 @@ protected:
 
 public:
   // region, face, edge and vertex iterators
-  typedef std::set<GRegion *, GEntityLessThan>::iterator riter;
-  typedef std::set<GFace *, GEntityLessThan>::iterator fiter;
-  typedef std::set<GEdge *, GEntityLessThan>::iterator eiter;
-  typedef std::set<GVertex *, GEntityLessThan>::iterator viter;
+  typedef std::set<GRegion *, GEntityPtrLessThan>::iterator riter;
+  typedef std::set<GFace *, GEntityPtrLessThan>::iterator fiter;
+  typedef std::set<GEdge *, GEntityPtrLessThan>::iterator eiter;
+  typedef std::set<GVertex *, GEntityPtrLessThan>::iterator viter;
 
-  typedef std::set<GRegion *, GEntityLessThan>::const_iterator const_riter;
-  typedef std::set<GFace *, GEntityLessThan>::const_iterator const_fiter;
-  typedef std::set<GEdge *, GEntityLessThan>::const_iterator const_eiter;
-  typedef std::set<GVertex *, GEntityLessThan>::const_iterator const_viter;
+  typedef std::set<GRegion *, GEntityPtrLessThan>::const_iterator const_riter;
+  typedef std::set<GFace *, GEntityPtrLessThan>::const_iterator const_fiter;
+  typedef std::set<GEdge *, GEntityPtrLessThan>::const_iterator const_eiter;
+  typedef std::set<GVertex *, GEntityPtrLessThan>::const_iterator const_viter;
 
   // elementary/physical name iterator
   typedef std::map<std::pair<int, int>, std::string>::iterator piter;
@@ -321,10 +316,10 @@ public:
   const_viter lastVertex() const { return vertices.end(); }
 
   // get the set of entities
-  std::set<GRegion *, GEntityLessThan> getRegions() const { return regions; };
-  std::set<GFace *, GEntityLessThan> getFaces() const { return faces; };
-  std::set<GEdge *, GEntityLessThan> getEdges() const { return edges; };
-  std::set<GVertex *, GEntityLessThan> getVertices() const { return vertices; };
+  std::set<GRegion *, GEntityPtrLessThan> getRegions() const { return regions; };
+  std::set<GFace *, GEntityPtrLessThan> getFaces() const { return faces; };
+  std::set<GEdge *, GEntityPtrLessThan> getEdges() const { return edges; };
+  std::set<GVertex *, GEntityPtrLessThan> getVertices() const { return vertices; };
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
@@ -399,7 +394,7 @@ public:
   piter lastElementaryName() { return _elementaryNames.end(); }
 
   // get the number of physical names
-  int numPhysicalNames() const { return _physicalNames.size(); }
+  int numPhysicalNames() const { return (int)_physicalNames.size(); }
 
   // get iterators to the last physical name of each dimension
   void getInnerPhysicalNamesIterators(std::vector<piter> &iterators);
@@ -594,10 +589,8 @@ public:
   int refineMesh(int linear, bool barycentric = false);
 
   // optimize the mesh
-  int optimizeMesh(const std::string &how);
-
-  // smooth the mesh
-  int smoothMesh();
+  int optimizeMesh(const std::string &how, bool force = false,
+                   int niter = 1);
 
   // recombine the mesh
   int recombineMesh();
@@ -607,7 +600,7 @@ public:
 
   // reclassify a surface mesh, using an angle threshold to tag edges and faces
   void classifySurfaces(double angleThreshold, bool includeBoundary,
-                        bool forReparametrization);
+                        bool forReparametrization, double curveAngleThreshold);
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements
@@ -685,6 +678,11 @@ public:
                bool saveAll = false, double scalingFactor = 1.0,
                int oneSolidPerSurface = 0);
 
+  // X3D (only output from OCCT's triangulation)
+  int writeX3D(const std::string &name,
+               bool saveAll = false, double scalingFactor = 1.0,
+               int x3dsurfaces = 1, int x3dedges = 0, int x3dvertices = 0);
+
   // PLY(2) format (ascii text format)
   int readPLY(const std::string &name);
   int readPLY2(const std::string &name);
@@ -722,9 +720,11 @@ public:
                double scalingFactor = 1.0);
 
   // CFD General Notation System files
-  int readCGNS(const std::string &name);
-  int writeCGNS(const std::string &name, int zoneDefinition,
-                const CGNSOptions &options, double scalingFactor = 1.0);
+  int readCGNS(const std::string &name,
+               std::vector<std::vector<MVertex *> > &vertPerZone,
+               std::vector<std::vector<MElement *> > &eltPerZone);
+  int writeCGNS(const std::string &name, bool saveAll = false,
+                double scalingFactor = 1.0);
 
   // Med "Modele d'Echange de Donnees" file format (the static routine
   // is allowed to load multiple models/meshes)

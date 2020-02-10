@@ -257,7 +257,7 @@ namespace jacobianBasedQuality {
 
     // Sample jacobian determinant
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-    fullVector<double> coeffLag(jfs->getNumJacNodes());
+    fullVector<double> coeffLag(jfs->getNumSamplingPnts());
     el->getNodesCoord(nodesXYZ);
     jfs->getSignedJacobian(nodesXYZ, coeffLag, normals);
 
@@ -302,7 +302,7 @@ namespace jacobianBasedQuality {
 
     // Sample gradients and jacobian determinant
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-    fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
+    fullVector<double> coeffDetLag(jacBasis->getNumSamplingPnts());
     fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
     el->getNodesCoord(nodesXYZ);
     jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag, normals);
@@ -348,7 +348,7 @@ namespace jacobianBasedQuality {
 
     // Sample gradients and jacobian determinant
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-    fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
+    fullVector<double> coeffDetLag(jacBasis->getNumSamplingPnts());
     fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
     el->getNodesCoord(nodesXYZ);
     jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDetLag, normals);
@@ -427,7 +427,7 @@ namespace jacobianBasedQuality {
     // Sample jacobian determinant
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
-    jac.resize(jacBasis->getNumJacNodes());
+    jac.resize(jacBasis->getNumSamplingPnts());
     jacBasis->getSignedJacobian(nodesXYZ, jac, normals);
   }
 
@@ -444,7 +444,7 @@ namespace jacobianBasedQuality {
 
     // Sample gradients and jacobian determinant
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-    fullVector<double> determinant(jacBasis->getNumJacNodes());
+    fullVector<double> determinant(jacBasis->getNumSamplingPnts());
     fullMatrix<double> gradients(gradBasis->getNumSamplingPoints(), 9);
     el->getNodesCoord(nodesXYZ);
     jacBasis->getSignedJacobian(nodesXYZ, determinant);
@@ -471,7 +471,7 @@ namespace jacobianBasedQuality {
 
     // Sample gradients and jacobian determinant
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-    fullVector<double> determinant(jacBasis->getNumJacNodes());
+    fullVector<double> determinant(jacBasis->getNumSamplingPnts());
     fullMatrix<double> gradients(gradBasis->getNumSamplingPoints(), 9);
     el->getNodesCoord(nodesXYZ);
     jacBasis->getSignedIdealJacobian(nodesXYZ, determinant);
@@ -973,7 +973,7 @@ namespace jacobianBasedQuality {
   void testAllMeasuresAllElements()
   {
     GModel *m = GModel::current();
-    std::set<GEntity *, GEntityLessThan> entities;
+    std::set<GEntity *, GEntityPtrLessThan> entities;
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       entities.insert(*it);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
@@ -981,7 +981,7 @@ namespace jacobianBasedQuality {
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
       entities.insert(*it);
 
-    std::set<GEntity *, GEntityLessThan>::iterator it;
+    std::set<GEntity *, GEntityPtrLessThan>::iterator it;
     for(it = entities.begin(); it != entities.end(); ++it) {
       unsigned num = (*it)->getNumMeshElements();
       for(unsigned i = 0; i < num; ++i) {

@@ -21,7 +21,7 @@
 @section Namespace @code{gmsh}: top-level functions
 
 @ftable @code
-@item initialize
+@item gmsh/initialize
 Initialize Gmsh. This must be called before any call to the other functions in
 the API. If @code{argc} and @code{argv} (or just @code{argv} in Python or Julia)
 are provided, they will be handled in the same way as the command line arguments
@@ -30,14 +30,14 @@ configuration files (gmshrc and gmsh-options).
 
 @table @asis
 @item Input:
-@code{argv}, @code{readConfigFiles}
+@code{(argc = 0)}, @code{argv = []}, @code{readConfigFiles = True}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item finalize
+@item gmsh/finalize
 Finalize Gmsh. This must be called when you are done using the Gmsh API.
 
 @table @asis
@@ -49,7 +49,7 @@ Finalize Gmsh. This must be called when you are done using the Gmsh API.
 -
 @end table
 
-@item open
+@item gmsh/open
 Open a file. Equivalent to the @code{File->Open} menu in the Gmsh app. Handling
 of the file depends on its extension and/or its contents: opening a file with
 model data will create a new model.
@@ -63,7 +63,7 @@ model data will create a new model.
 -
 @end table
 
-@item merge
+@item gmsh/merge
 Merge a file. Equivalent to the @code{File->Merge} menu in the Gmsh app.
 Handling of the file depends on its extension and/or its contents. Merging a
 file with model data will add the data to the current model.
@@ -77,7 +77,7 @@ file with model data will add the data to the current model.
 -
 @end table
 
-@item write
+@item gmsh/write
 Write a file. The export format is determined by the file extension.
 
 @table @asis
@@ -89,7 +89,7 @@ Write a file. The export format is determined by the file extension.
 -
 @end table
 
-@item clear
+@item gmsh/clear
 Clear all loaded models and post-processing data, and add a new empty model.
 
 @table @asis
@@ -107,7 +107,7 @@ Clear all loaded models and post-processing data, and add a new empty model.
 @section Namespace @code{gmsh/option}: option handling functions
 
 @ftable @code
-@item setNumber
+@item gmsh/option/setNumber
 Set a numerical option to @code{value}. @code{name} is of the form
 "category.option" or "category[num].option". Available categories and options
 are listed in the Gmsh reference manual.
@@ -121,7 +121,7 @@ are listed in the Gmsh reference manual.
 -
 @end table
 
-@item getNumber
+@item gmsh/option/getNumber
 Get the @code{value} of a numerical option. @code{name} is of the form
 "category.option" or "category[num].option". Available categories and options
 are listed in the Gmsh reference manual.
@@ -135,7 +135,7 @@ are listed in the Gmsh reference manual.
 -
 @end table
 
-@item setString
+@item gmsh/option/setString
 Set a string option to @code{value}. @code{name} is of the form
 "category.option" or "category[num].option". Available categories and options
 are listed in the Gmsh reference manual.
@@ -149,7 +149,7 @@ are listed in the Gmsh reference manual.
 -
 @end table
 
-@item getString
+@item gmsh/option/getString
 Get the @code{value} of a string option. @code{name} is of the form
 "category.option" or "category[num].option". Available categories and options
 are listed in the Gmsh reference manual.
@@ -163,7 +163,7 @@ are listed in the Gmsh reference manual.
 -
 @end table
 
-@item setColor
+@item gmsh/option/setColor
 Set a color option to the RGBA value (@code{r}, @code{g}, @code{b}, @code{a}),
 where where @code{r}, @code{g}, @code{b} and @code{a} should be integers between
 0 and 255. @code{name} is of the form "category.option" or
@@ -172,14 +172,14 @@ reference manual, with the "Color." middle string removed.
 
 @table @asis
 @item Input:
-@code{name}, @code{r}, @code{g}, @code{b}, @code{a}
+@code{name}, @code{r}, @code{g}, @code{b}, @code{a = 0}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item getColor
+@item gmsh/option/getColor
 Get the @code{r}, @code{g}, @code{b}, @code{a} value of a color option.
 @code{name} is of the form "category.option" or "category[num].option".
 Available categories and options are listed in the Gmsh reference manual, with
@@ -200,7 +200,7 @@ the "Color." middle string removed.
 @section Namespace @code{gmsh/model}: model functions
 
 @ftable @code
-@item add
+@item gmsh/model/add
 Add a new model, with name @code{name}, and set it as the current model.
 
 @table @asis
@@ -212,7 +212,7 @@ Add a new model, with name @code{name}, and set it as the current model.
 -
 @end table
 
-@item remove
+@item gmsh/model/remove
 Remove the current model.
 
 @table @asis
@@ -224,7 +224,7 @@ Remove the current model.
 -
 @end table
 
-@item list
+@item gmsh/model/list
 List the names of all models.
 
 @table @asis
@@ -236,7 +236,19 @@ List the names of all models.
 -
 @end table
 
-@item setCurrent
+@item gmsh/model/getCurrent
+Get the name of the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{name}
+@item Return:
+-
+@end table
+
+@item gmsh/model/setCurrent
 Set the current model to the model with name @code{name}. If several models have
 the same name, select the one that was added first.
 
@@ -249,21 +261,21 @@ the same name, select the one that was added first.
 -
 @end table
 
-@item getEntities
+@item gmsh/model/getEntities
 Get all the entities in the current model. If @code{dim} is >= 0, return only
 the entities of the specified dimension (e.g. points if @code{dim} == 0). The
 entities are returned as a vector of (dim, tag) integer pairs.
 
 @table @asis
 @item Input:
-@code{dim}
+@code{dim = -1}
 @item Output:
 @code{dimTags}
 @item Return:
 -
 @end table
 
-@item setEntityName
+@item gmsh/model/setEntityName
 Set the name of the entity of dimension @code{dim} and tag @code{tag}.
 
 @table @asis
@@ -275,7 +287,7 @@ Set the name of the entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item getEntityName
+@item gmsh/model/getEntityName
 Get the name of the entity of dimension @code{dim} and tag @code{tag}.
 
 @table @asis
@@ -287,21 +299,21 @@ Get the name of the entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item getPhysicalGroups
+@item gmsh/model/getPhysicalGroups
 Get all the physical groups in the current model. If @code{dim} is >= 0, return
 only the entities of the specified dimension (e.g. physical points if @code{dim}
 == 0). The entities are returned as a vector of (dim, tag) integer pairs.
 
 @table @asis
 @item Input:
-@code{dim}
+@code{dim = -1}
 @item Output:
 @code{dimTags}
 @item Return:
 -
 @end table
 
-@item getEntitiesForPhysicalGroup
+@item gmsh/model/getEntitiesForPhysicalGroup
 Get the tags of the model entities making up the physical group of dimension
 @code{dim} and tag @code{tag}.
 
@@ -314,7 +326,7 @@ Get the tags of the model entities making up the physical group of dimension
 -
 @end table
 
-@item getPhysicalGroupsForEntity
+@item gmsh/model/getPhysicalGroupsForEntity
 Get the tags of the physical groups (if any) to which the model entity of
 dimension @code{dim} and tag @code{tag} belongs.
 
@@ -327,21 +339,21 @@ dimension @code{dim} and tag @code{tag} belongs.
 -
 @end table
 
-@item addPhysicalGroup
+@item gmsh/model/addPhysicalGroup
 Add a physical group of dimension @code{dim}, grouping the model entities with
 tags @code{tags}. Return the tag of the physical group, equal to @code{tag} if
 @code{tag} is positive, or a new tag if @code{tag} < 0.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tags}, @code{tag}
+@code{dim}, @code{tags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item setPhysicalName
+@item gmsh/model/setPhysicalName
 Set the name of the physical group of dimension @code{dim} and tag @code{tag}.
 
 @table @asis
@@ -353,7 +365,7 @@ Set the name of the physical group of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item getPhysicalName
+@item gmsh/model/getPhysicalName
 Get the name of the physical group of dimension @code{dim} and tag @code{tag}.
 
 @table @asis
@@ -365,7 +377,7 @@ Get the name of the physical group of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item getBoundary
+@item gmsh/model/getBoundary
 Get the boundary of the model entities @code{dimTags}. Return in
 @code{outDimTags} the boundary of the individual entities (if @code{combined} is
 false) or the boundary of the combined geometrical shape formed by all input
@@ -375,14 +387,14 @@ recursively down to dimension 0 (i.e. to points) if @code{recursive} is true.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{combined}, @code{oriented}, @code{recursive}
+@code{dimTags}, @code{combined = True}, @code{oriented = True}, @code{recursive = False}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item getEntitiesInBoundingBox
+@item gmsh/model/getEntitiesInBoundingBox
 Get the model entities in the bounding box defined by the two points
 (@code{xmin}, @code{ymin}, @code{zmin}) and (@code{xmax}, @code{ymax},
 @code{zmax}). If @code{dim} is >= 0, return only the entities of the specified
@@ -390,14 +402,14 @@ dimension (e.g. points if @code{dim} == 0).
 
 @table @asis
 @item Input:
-@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}, @code{dim}
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}, @code{dim = -1}
 @item Output:
 @code{tags}
 @item Return:
 -
 @end table
 
-@item getBoundingBox
+@item gmsh/model/getBoundingBox
 Get the bounding box (@code{xmin}, @code{ymin}, @code{zmin}), (@code{xmax},
 @code{ymax}, @code{zmax}) of the model entity of dimension @code{dim} and tag
 @code{tag}. If @code{dim} and @code{tag} are negative, get the bounding box of
@@ -412,7 +424,7 @@ the whole model.
 -
 @end table
 
-@item getDimension
+@item gmsh/model/getDimension
 Get the geometrical dimension of the current model.
 
 @table @asis
@@ -424,7 +436,7 @@ Get the geometrical dimension of the current model.
 integer value
 @end table
 
-@item addDiscreteEntity
+@item gmsh/model/addDiscreteEntity
 Add a discrete model entity (defined by a mesh) of dimension @code{dim} in the
 current model. Return the tag of the new discrete entity, equal to @code{tag} if
 @code{tag} is positive, or a new tag if @code{tag} < 0. @code{boundary}
@@ -434,27 +446,27 @@ overall model.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{boundary}
+@code{dim}, @code{tag = -1}, @code{boundary = []}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item removeEntities
+@item gmsh/model/removeEntities
 Remove the entities @code{dimTags} of the current model. If @code{recursive} is
 true, remove all the entities on their boundaries, down to dimension 0.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{recursive}
+@code{dimTags}, @code{recursive = False}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item removeEntityName
+@item gmsh/model/removeEntityName
 Remove the entity name @code{name} from the current model.
 
 @table @asis
@@ -466,20 +478,20 @@ Remove the entity name @code{name} from the current model.
 -
 @end table
 
-@item removePhysicalGroups
+@item gmsh/model/removePhysicalGroups
 Remove the physical groups @code{dimTags} of the current model. If
 @code{dimTags} is empty, remove all groups.
 
 @table @asis
 @item Input:
-@code{dimTags}
+@code{dimTags = []}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item removePhysicalName
+@item gmsh/model/removePhysicalName
 Remove the physical name @code{name} from the current model.
 
 @table @asis
@@ -491,7 +503,7 @@ Remove the physical name @code{name} from the current model.
 -
 @end table
 
-@item getType
+@item gmsh/model/getType
 Get the type of the entity of dimension @code{dim} and tag @code{tag}.
 
 @table @asis
@@ -503,7 +515,7 @@ Get the type of the entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item getParent
+@item gmsh/model/getParent
 In a partitioned model, get the parent of the entity of dimension @code{dim} and
 tag @code{tag}, i.e. from which the entity is a part of, if any.
 @code{parentDim} and @code{parentTag} are set to -1 if the entity has no parent.
@@ -517,7 +529,7 @@ tag @code{tag}, i.e. from which the entity is a part of, if any.
 -
 @end table
 
-@item getPartitions
+@item gmsh/model/getPartitions
 In a partitioned model, return the tags of the partition(s) to which the entity
 belongs.
 
@@ -530,7 +542,7 @@ belongs.
 -
 @end table
 
-@item getValue
+@item gmsh/model/getValue
 Evaluate the parametrization of the entity of dimension @code{dim} and tag
 @code{tag} at the parametric coordinates @code{parametricCoord}. Only valid for
 @code{dim} equal to 0 (with empty @code{parametricCoord}), 1 (with
@@ -548,7 +560,7 @@ coordinates in @code{points}, concatenated: [p1x, p1y, p1z, p2x, ...].
 -
 @end table
 
-@item getDerivative
+@item gmsh/model/getDerivative
 Evaluate the derivative of the parametrization of the entity of dimension
 @code{dim} and tag @code{tag} at the parametric coordinates
 @code{parametricCoord}. Only valid for @code{dim} equal to 1 (with
@@ -569,7 +581,7 @@ derivate with respect to u and v: [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux,
 -
 @end table
 
-@item getCurvature
+@item gmsh/model/getCurvature
 Evaluate the (maximum) curvature of the entity of dimension @code{dim} and tag
 @code{tag} at the parametric coordinates @code{parametricCoord}. Only valid for
 @code{dim} equal to 1 (with @code{parametricCoord} containing parametric
@@ -585,7 +597,7 @@ u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).
 -
 @end table
 
-@item getPrincipalCurvatures
+@item gmsh/model/getPrincipalCurvatures
 Evaluate the principal curvatures of the surface with tag @code{tag} at the
 parametric coordinates @code{parametricCoord}, as well as their respective
 directions. @code{parametricCoord} are given by pair of u and v coordinates,
@@ -600,7 +612,7 @@ concatenated: [p1u, p1v, p2u, ...].
 -
 @end table
 
-@item getNormal
+@item gmsh/model/getNormal
 Get the normal to the surface with tag @code{tag} at the parametric coordinates
 @code{parametricCoord}. @code{parametricCoord} are given by pairs of u and v
 coordinates, concatenated: [p1u, p1v, p2u, ...]. @code{normals} are returned as
@@ -615,20 +627,37 @@ triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
 -
 @end table
 
-@item setVisibility
+@item gmsh/model/getParametrization
+Get the parametric coordinates @code{parametricCoord} for the points
+@code{points} on the entity of dimension @code{dim} and tag @code{tag}.
+@code{points} are given as triplets of x, y, z coordinates, concatenated: [p1x,
+p1y, p1z, p2x, ...]. @code{parametricCoord} returns the parametric coordinates t
+on the curve (if @code{dim} = 1) or pairs of u and v coordinates concatenated on
+the surface (if @code{dim} = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{points}
+@item Output:
+@code{parametricCoord}
+@item Return:
+-
+@end table
+
+@item gmsh/model/setVisibility
 Set the visibility of the model entities @code{dimTags} to @code{value}. Apply
 the visibility setting recursively if @code{recursive} is true.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{value}, @code{recursive}
+@code{dimTags}, @code{value}, @code{recursive = False}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item getVisibility
+@item gmsh/model/getVisibility
 Get the visibility of the model entity of dimension @code{dim} and tag
 @code{tag}.
 
@@ -641,7 +670,7 @@ Get the visibility of the model entity of dimension @code{dim} and tag
 -
 @end table
 
-@item setColor
+@item gmsh/model/setColor
 Set the color of the model entities @code{dimTags} to the RGBA value (@code{r},
 @code{g}, @code{b}, @code{a}), where @code{r}, @code{g}, @code{b} and @code{a}
 should be integers between 0 and 255. Apply the color setting recursively if
@@ -649,14 +678,14 @@ should be integers between 0 and 255. Apply the color setting recursively if
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{r}, @code{g}, @code{b}, @code{a}, @code{recursive}
+@code{dimTags}, @code{r}, @code{g}, @code{b}, @code{a = 0}, @code{recursive = False}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item getColor
+@item gmsh/model/getColor
 Get the color of the model entity of dimension @code{dim} and tag @code{tag}.
 
 @table @asis
@@ -668,7 +697,7 @@ Get the color of the model entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item setCoordinates
+@item gmsh/model/setCoordinates
 Set the @code{x}, @code{y}, @code{z} coordinates of a geometrical point.
 
 @table @asis
@@ -686,19 +715,19 @@ Set the @code{x}, @code{y}, @code{z} coordinates of a geometrical point.
 @section Namespace @code{gmsh/model/mesh}: mesh functions
 
 @ftable @code
-@item generate
+@item gmsh/model/mesh/generate
 Generate a mesh of the current model, up to dimension @code{dim} (0, 1, 2 or 3).
 
 @table @asis
 @item Input:
-@code{dim}
+@code{dim = 3}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item partition
+@item gmsh/model/mesh/partition
 Partition the mesh of the current model into @code{numPart} partitions.
 
 @table @asis
@@ -710,7 +739,7 @@ Partition the mesh of the current model into @code{numPart} partitions.
 -
 @end table
 
-@item unpartition
+@item gmsh/model/mesh/unpartition
 Unpartition the mesh of the current model.
 
 @table @asis
@@ -722,22 +751,25 @@ Unpartition the mesh of the current model.
 -
 @end table
 
-@item optimize
+@item gmsh/model/mesh/optimize
 Optimize the mesh of the current model using @code{method} (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
 direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
-smoother).
+smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
+Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If
+@code{force} is set apply the optimization also to discrete entities. If
+@code{dimTags} is given, only apply the optimizer to the given entities.
 
 @table @asis
 @item Input:
-@code{method}
+@code{method}, @code{force = False}, @code{niter = 1}, @code{dimTags = []}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item recombine
+@item gmsh/model/mesh/recombine
 Recombine the mesh of the current model.
 
 @table @asis
@@ -749,7 +781,7 @@ Recombine the mesh of the current model.
 -
 @end table
 
-@item refine
+@item gmsh/model/mesh/refine
 Refine the mesh of the current model by uniformly splitting the elements.
 
 @table @asis
@@ -761,19 +793,7 @@ Refine the mesh of the current model by uniformly splitting the elements.
 -
 @end table
 
-@item smooth
-Smooth the mesh of the current model.
-
-@table @asis
-@item Input:
--
-@item Output:
--
-@item Return:
--
-@end table
-
-@item setOrder
+@item gmsh/model/mesh/setOrder
 Set the order of the elements in the mesh of the current model to @code{order}.
 
 @table @asis
@@ -785,7 +805,7 @@ Set the order of the elements in the mesh of the current model to @code{order}.
 -
 @end table
 
-@item getLastEntityError
+@item gmsh/model/mesh/getLastEntityError
 Get the last entities (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
 
@@ -798,7 +818,7 @@ populated by the new 3D meshing algorithms.
 -
 @end table
 
-@item getLastNodeError
+@item gmsh/model/mesh/getLastNodeError
 Get the last nodes (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
 
@@ -811,7 +831,7 @@ populated by the new 3D meshing algorithms.
 -
 @end table
 
-@item clear
+@item gmsh/model/mesh/clear
 Clear the mesh, i.e. delete all the nodes and elements.
 
 @table @asis
@@ -823,7 +843,7 @@ Clear the mesh, i.e. delete all the nodes and elements.
 -
 @end table
 
-@item getNodes
+@item gmsh/model/mesh/getNodes
 Get the nodes classified on the entity of dimension @code{dim} and tag
 @code{tag}. If @code{tag} < 0, get the nodes for all entities of dimension
 @code{dim}. If @code{dim} and @code{tag} are negative, get all the nodes in the
@@ -840,34 +860,32 @@ the entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{includeBoundary}, @code{returnParametricCoord}
+@code{dim = -1}, @code{tag = -1}, @code{includeBoundary = False}, @code{returnParametricCoord = True}
 @item Output:
 @code{nodeTags}, @code{coord}, @code{parametricCoord}
 @item Return:
 -
 @end table
 
-@item getNodesByElementType
+@item gmsh/model/mesh/getNodesByElementType
 Get the nodes classified on the entity of tag @code{tag}, for all the elements
 of type @code{elementType}. The other arguments are treated as in
 @code{getNodes}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}, @code{returnParametricCoord}
+@code{elementType}, @code{tag = -1}, @code{returnParametricCoord = True}
 @item Output:
 @code{nodeTags}, @code{coord}, @code{parametricCoord}
 @item Return:
 -
 @end table
 
-@item getNode
+@item gmsh/model/mesh/getNode
 Get the coordinates and the parametric coordinates (if any) of the node with tag
-@code{tag}. This is a sometimes useful but inefficient way of accessing nodes,
-as it relies on a cache stored in the model. For large meshes all the nodes in
-the model should be numbered in a continuous sequence of tags from 1 to N to
-maintain reasonable performance (in this case the internal cache is based on a
-vector; otherwise it uses a map).
+@code{tag}. This function relies on an internal cache (a vector in case of dense
+node numbering, a map otherwise); for large meshes accessing nodes in bulk is
+often preferable.
 
 @table @asis
 @item Input:
@@ -878,19 +896,34 @@ vector; otherwise it uses a map).
 -
 @end table
 
-@item rebuildNodeCache
-Rebuild the node cache.
+@item gmsh/model/mesh/setNode
+Set the coordinates and the parametric coordinates (if any) of the node with tag
+@code{tag}. This function relies on an internal cache (a vector in case of dense
+node numbering, a map otherwise); for large meshes accessing nodes in bulk is
+often preferable.
 
 @table @asis
 @item Input:
-@code{onlyIfNecessary}
+@code{nodeTag}, @code{coord}, @code{parametricCoord}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item getNodesForPhysicalGroup
+@item gmsh/model/mesh/rebuildNodeCache
+Rebuild the node cache.
+
+@table @asis
+@item Input:
+@code{onlyIfNecessary = True}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/getNodesForPhysicalGroup
 Get the nodes from all the elements belonging to the physical group of dimension
 @code{dim} and tag @code{tag}. @code{nodeTags} contains the node tags;
 @code{coord} is a vector of length 3 times the length of @code{nodeTags} that
@@ -906,7 +939,7 @@ n2x, ...].
 -
 @end table
 
-@item addNodes
+@item gmsh/model/mesh/addNodes
 Add nodes classified on the model entity of dimension @code{dim} and tag
 @code{tag}. @code{nodeTags} contains the node tags (their unique, strictly
 positive identification numbers). @code{coord} is a vector of length 3 times the
@@ -919,14 +952,14 @@ automatically assigned to the nodes.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{nodeTags}, @code{coord}, @code{parametricCoord}
+@code{dim}, @code{tag}, @code{nodeTags}, @code{coord}, @code{parametricCoord = []}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item reclassifyNodes
+@item gmsh/model/mesh/reclassifyNodes
 Reclassify all nodes on their associated model entity, based on the elements.
 Can be used when importing nodes in bulk (e.g. by associating them all to a
 single volume), to reclassify them correctly on model surfaces, curves, etc.
@@ -941,7 +974,7 @@ after the elements have been set.
 -
 @end table
 
-@item relocateNodes
+@item gmsh/model/mesh/relocateNodes
 Relocate the nodes classified on the entity of dimension @code{dim} and tag
 @code{tag} using their parametric coordinates. If @code{tag} < 0, relocate the
 nodes for all entities of dimension @code{dim}. If @code{dim} and @code{tag} are
@@ -949,14 +982,14 @@ negative, relocate all the nodes in the mesh.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}
+@code{dim = -1}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item getElements
+@item gmsh/model/mesh/getElements
 Get the elements classified on the entity of dimension @code{dim} and tag
 @code{tag}. If @code{tag} < 0, get the elements for all entities of dimension
 @code{dim}. If @code{dim} and @code{tag} are negative, get all the elements in
@@ -973,20 +1006,17 @@ that contains the node tags of all the elements of the given type, concatenated:
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}
+@code{dim = -1}, @code{tag = -1}
 @item Output:
 @code{elementTypes}, @code{elementTags}, @code{nodeTags}
 @item Return:
 -
 @end table
 
-@item getElement
-Get the type and node tags of the element with tag @code{tag}. This is a
-sometimes useful but inefficient way of accessing elements, as it relies on a
-cache stored in the model. For large meshes all the elements in the model should
-be numbered in a continuous sequence of tags from 1 to N to maintain reasonable
-performance (in this case the internal cache is based on a vector; otherwise it
-uses a map).
+@item gmsh/model/mesh/getElement
+Get the type and node tags of the element with tag @code{tag}. This function
+relies on an internal cache (a vector in case of dense element numbering, a map
+otherwise); for large meshes accessing elements in bulk is often preferable.
 
 @table @asis
 @item Input:
@@ -997,25 +1027,59 @@ uses a map).
 -
 @end table
 
-@item getElementByCoordinates
+@item gmsh/model/mesh/getElementByCoordinates
 Search the mesh for an element located at coordinates (@code{x}, @code{y},
-@code{z}). This is a sometimes useful but inefficient way of accessing elements,
-as it relies on a search in a spatial octree. If an element is found, return its
-tag, type and node tags, as well as the local coordinates (@code{u}, @code{v},
-@code{w}) within the element corresponding to search location. If @code{dim} is
->= 0, only search for elements of the given dimension. If @code{strict} is not
-set, use a tolerance to find elements near the search location.
+@code{z}). This function performs a search in a spatial octree. If an element is
+found, return its tag, type and node tags, as well as the local coordinates
+(@code{u}, @code{v}, @code{w}) within the element corresponding to search
+location. If @code{dim} is >= 0, only search for elements of the given
+dimension. If @code{strict} is not set, use a tolerance to find elements near
+the search location.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dim}, @code{strict}
+@code{x}, @code{y}, @code{z}, @code{dim = -1}, @code{strict = False}
 @item Output:
 @code{elementTag}, @code{elementType}, @code{nodeTags}, @code{u}, @code{v}, @code{w}
 @item Return:
 -
 @end table
 
-@item getElementTypes
+@item gmsh/model/mesh/getElementsByCoordinates
+Search the mesh for element(s) located at coordinates (@code{x}, @code{y},
+@code{z}). This function performs a search in a spatial octree. Return the tags
+of all found elements in @code{elementTags}. Additional information about the
+elements can be accessed through @code{getElement} and
+@code{getLocalCoordinatesInElement}. If @code{dim} is >= 0, only search for
+elements of the given dimension. If @code{strict} is not set, use a tolerance to
+find elements near the search location.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{dim = -1}, @code{strict = False}
+@item Output:
+@code{elementTags}
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/getLocalCoordinatesInElement
+Return the local coordinates (@code{u}, @code{v}, @code{w}) within the element
+@code{elementTag} corresponding to the model coordinates (@code{x}, @code{y},
+@code{z}). This function relies on an internal cache (a vector in case of dense
+element numbering, a map otherwise); for large meshes accessing elements in bulk
+is often preferable.
+
+@table @asis
+@item Input:
+@code{elementTag}, @code{x}, @code{y}, @code{z}
+@item Output:
+@code{u}, @code{v}, @code{w}
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/getElementTypes
 Get the types of elements in the entity of dimension @code{dim} and tag
 @code{tag}. If @code{tag} < 0, get the types for all entities of dimension
 @code{dim}. If @code{dim} and @code{tag} are negative, get all the types in the
@@ -1023,14 +1087,14 @@ mesh.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}
+@code{dim = -1}, @code{tag = -1}
 @item Output:
 @code{elementTypes}
 @item Return:
 -
 @end table
 
-@item getElementType
+@item gmsh/model/mesh/getElementType
 Return an element type given its family name @code{familyName} ("point", "line",
 "triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron") and
 polynomial order @code{order}. If @code{serendip} is true, return the
@@ -1038,29 +1102,30 @@ corresponding serendip element type (element without interior nodes).
 
 @table @asis
 @item Input:
-@code{familyName}, @code{order}, @code{serendip}
+@code{familyName}, @code{order}, @code{serendip = False}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item getElementProperties
+@item gmsh/model/mesh/getElementProperties
 Get the properties of an element of type @code{elementType}: its name
 (@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
-nodes (@code{numNodes}) and coordinates of the nodes in the reference element
-(@code{nodeCoord} vector, of length @code{dim} times @code{numNodes}).
+nodes (@code{numNodes}), coordinates of the nodes in the reference element
+(@code{nodeCoord} vector, of length @code{dim} times @code{numNodes}) and number
+of primary (first order) nodes (@code{numPrimaryNodes}).
 
 @table @asis
 @item Input:
 @code{elementType}
 @item Output:
-@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{nodeCoord}
+@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{nodeCoord}, @code{numPrimaryNodes}
 @item Return:
 -
 @end table
 
-@item getElementsByType
+@item gmsh/model/mesh/getElementsByType
 Get the elements of type @code{elementType} classified on the entity of tag
 @code{tag}. If @code{tag} < 0, get the elements for all entities.
 @code{elementTags} is a vector containing the tags (unique, strictly positive
@@ -1073,27 +1138,27 @@ indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}, @code{task}, @code{numTasks}
+@code{elementType}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{elementTags}, @code{nodeTags}
 @item Return:
 -
 @end table
 
-@item preallocateElementsByType
+@item gmsh/model/mesh/preallocateElementsByType
 Preallocate data before calling @code{getElementsByType} with @code{numTasks} >
 1. For C and C++ only.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{elementTag}, @code{nodeTag}, @code{tag}
+@code{elementType}, @code{elementTag}, @code{nodeTag}, @code{tag = -1}
 @item Output:
 @code{elementTags}, @code{nodeTags}
 @item Return:
 -
 @end table
 
-@item addElements
+@item gmsh/model/mesh/addElements
 Add elements classified on the entity of dimension @code{dim} and tag
 @code{tag}. @code{types} contains the MSH types of the elements (e.g. @code{2}
 for 3-node triangles: see the Gmsh reference manual). @code{elementTags} is a
@@ -1114,7 +1179,7 @@ e1nN, e2n1, ...].
 -
 @end table
 
-@item addElementsByType
+@item gmsh/model/mesh/addElementsByType
 Add elements of type @code{elementType} classified on the entity of tag
 @code{tag}. @code{elementTags} contains the tags (unique, strictly positive
 identifiers) of the elements of the corresponding type. @code{nodeTags} is a
@@ -1132,7 +1197,7 @@ are automatically assigned to the elements.
 -
 @end table
 
-@item getIntegrationPoints
+@item gmsh/model/mesh/getIntegrationPoints
 Get the numerical quadrature information for the given element type
 @code{elementType} and integration rule @code{integrationType} (e.g. "Gauss4"
 for a Gauss quadrature suited for integrating 4th order polynomials).
@@ -1149,7 +1214,7 @@ points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
 -
 @end table
 
-@item getJacobians
+@item gmsh/model/mesh/getJacobians
 Get the Jacobians of all the elements of type @code{elementType} classified on
 the entity of tag @code{tag}, at the G integration points
 @code{integrationPoints} given as concatenated triplets of coordinates in the
@@ -1167,27 +1232,27 @@ and return the part of the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{integrationPoints}, @code{tag}, @code{task}, @code{numTasks}
+@code{elementType}, @code{integrationPoints}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{jacobians}, @code{determinants}, @code{points}
 @item Return:
 -
 @end table
 
-@item preallocateJacobians
+@item gmsh/model/mesh/preallocateJacobians
 Preallocate data before calling @code{getJacobians} with @code{numTasks} > 1.
 For C and C++ only.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{numIntegrationPoints}, @code{jacobian}, @code{determinant}, @code{point}, @code{tag}
+@code{elementType}, @code{numIntegrationPoints}, @code{jacobian}, @code{determinant}, @code{point}, @code{tag = -1}
 @item Output:
 @code{jacobians}, @code{determinants}, @code{points}
 @item Return:
 -
 @end table
 
-@item getBasisFunctions
+@item gmsh/model/mesh/getBasisFunctions
 Get the basis functions of the element of type @code{elementType} at the
 integration points @code{integrationPoints} (given as concatenated triplets of
 coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for
@@ -1207,7 +1272,7 @@ when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
 -
 @end table
 
-@item getEdgeNumber
+@item gmsh/model/mesh/getEdgeNumber
 Get the matching edge number using the key edge in the hashmap _mapEdgeNum :
 @code{edgeVertices[0]} and @code{edgeVertices[1]} match the vertices vi and vj
 of the edge }edgeNum[0]} .  Warning: this is an experimental feature and will
@@ -1222,21 +1287,21 @@ probably change in a future release.
 -
 @end table
 
-@item getLocalMultipliersForHcurl0
+@item gmsh/model/mesh/getLocalMultipliersForHcurl0
 Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
 H(curl) basis functions. Warning: this is an experimental feature and will
 probably change in a future release.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}
+@code{elementType}, @code{tag = -1}
 @item Output:
 @code{localMultipliers}
 @item Return:
 -
 @end table
 
-@item getBasisFunctionsForElements
+@item gmsh/model/mesh/getBasisFunctionsForElements
 Get the element-dependent basis functions of the elements of type
 @code{elementType} in the entity of tag @code{tag}at the integration points
 @code{integrationPoints} (given as concatenated triplets of coordinates in the
@@ -1249,18 +1314,32 @@ basis functions per element. @code{basisFunctions} returns the value of the
 basis functions at the integration points for each element: [e1g1f1,..., e1g1fN,
 e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw,
 e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental feature and will
-probably change in a future release.
+probably change in a future release. If @code{numTasks} > 1, only compute and
+return the part of the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag}
+@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{numComponents}, @code{numFunctionsPerElements}, @code{basisFunctions}
 @item Return:
 -
 @end table
 
-@item getKeysForElements
+@item gmsh/model/mesh/preallocateBasisFunctions
+Preallocate data before calling @code{getBasisFunctionsForElements} with
+@code{numTasks} > 1. For C and C++ only.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{numIntegrationPoints}, @code{functionSpaceType}, @code{tag = -1}
+@item Output:
+@code{basisFunctions}
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/getKeysForElements
 Generate the @code{keys} for the elements of type @code{elementType} in the
 entity of tag @code{tag}, for the @code{functionSpaceType} function space. Each
 key uniquely identifies a basis function in the function space. If
@@ -1270,14 +1349,27 @@ experimental feature and will probably change in a future release.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{functionSpaceType}, @code{tag}, @code{returnCoord}
+@code{elementType}, @code{functionSpaceType}, @code{tag = -1}, @code{returnCoord = True}
 @item Output:
 @code{keys}, @code{coord}
 @item Return:
 -
 @end table
 
-@item getInformationForElements
+@item gmsh/model/mesh/getNumberOfKeysForElements
+Get the number of keys by elements of type @code{elementType} for function space
+named @code{functionSpaceType}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{functionSpaceType}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item gmsh/model/mesh/getInformationForElements
 Get information about the @code{keys}. @code{infoKeys} returns information about
 the functions associated with the @code{keys}. @code{infoKeys[0].first}
 describes the type of function (0 for  vertex function, 1 for edge function, 2
@@ -1294,7 +1386,7 @@ experimental feature and will probably change in a future release.
 -
 @end table
 
-@item precomputeBasisFunctions
+@item gmsh/model/mesh/precomputeBasisFunctions
 Precomputes the basis functions corresponding to @code{elementType}.
 
 @table @asis
@@ -1306,7 +1398,7 @@ Precomputes the basis functions corresponding to @code{elementType}.
 -
 @end table
 
-@item getBarycenters
+@item gmsh/model/mesh/getBarycenters
 Get the barycenters of all elements of type @code{elementType} classified on the
 entity of tag @code{tag}. If @code{primary} is set, only the primary nodes of
 the elements are taken into account for the barycenter calculation. If
@@ -1317,27 +1409,27 @@ the part of the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}, @code{fast}, @code{primary}, @code{task}, @code{numTasks}
+@code{elementType}, @code{tag}, @code{fast}, @code{primary}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{barycenters}
 @item Return:
 -
 @end table
 
-@item preallocateBarycenters
+@item gmsh/model/mesh/preallocateBarycenters
 Preallocate data before calling @code{getBarycenters} with @code{numTasks} > 1.
 For C and C++ only.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}
+@code{elementType}, @code{tag = -1}
 @item Output:
 @code{barycenters}
 @item Return:
 -
 @end table
 
-@item getElementEdgeNodes
+@item gmsh/model/mesh/getElementEdgeNodes
 Get the nodes on the edges of all elements of type @code{elementType} classified
 on the entity of tag @code{tag}. @code{nodeTags} contains the node tags of the
 edges for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by
@@ -1349,14 +1441,14 @@ indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{tag}, @code{primary}, @code{task}, @code{numTasks}
+@code{elementType}, @code{tag = -1}, @code{primary = False}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{nodeTags}
 @item Return:
 -
 @end table
 
-@item getElementFaceNodes
+@item gmsh/model/mesh/getElementFaceNodes
 Get the nodes on the faces of type @code{faceType} (3 for triangular faces, 4
 for quadrangular faces) of all elements of type @code{elementType} classified on
 the entity of tag @code{tag}. @code{nodeTags} contains the node tags of the
@@ -1369,14 +1461,14 @@ the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{faceType}, @code{tag}, @code{primary}, @code{task}, @code{numTasks}
+@code{elementType}, @code{faceType}, @code{tag = -1}, @code{primary = False}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{nodeTags}
 @item Return:
 -
 @end table
 
-@item getGhostElements
+@item gmsh/model/mesh/getGhostElements
 Get the ghost elements @code{elementTags} and their associated @code{partitions}
 stored in the ghost entity of dimension @code{dim} and tag @code{tag}.
 
@@ -1389,7 +1481,7 @@ stored in the ghost entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item setSize
+@item gmsh/model/mesh/setSize
 Set a mesh size constraint on the model entities @code{dimTags}. Currently only
 entities of dimension 0 (points) are handled.
 
@@ -1402,7 +1494,7 @@ entities of dimension 0 (points) are handled.
 -
 @end table
 
-@item setTransfiniteCurve
+@item gmsh/model/mesh/setTransfiniteCurve
 Set a transfinite meshing constraint on the curve @code{tag}, with
 @code{numNodes} nodes distributed according to @code{meshType} and @code{coef}.
 Currently supported types are "Progression" (geometrical progression with power
@@ -1410,14 +1502,14 @@ Currently supported types are "Progression" (geometrical progression with power
 
 @table @asis
 @item Input:
-@code{tag}, @code{numNodes}, @code{meshType}, @code{coef}
+@code{tag}, @code{numNodes}, @code{meshType = "Progression"}, @code{coef = 1.}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item setTransfiniteSurface
+@item gmsh/model/mesh/setTransfiniteSurface
 Set a transfinite meshing constraint on the surface @code{tag}.
 @code{arrangement} describes the arrangement of the triangles when the surface
 is not flagged as recombined: currently supported values are "Left", "Right",
@@ -1428,28 +1520,28 @@ its boundary.
 
 @table @asis
 @item Input:
-@code{tag}, @code{arrangement}, @code{cornerTags}
+@code{tag}, @code{arrangement = "Left"}, @code{cornerTags = []}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item setTransfiniteVolume
+@item gmsh/model/mesh/setTransfiniteVolume
 Set a transfinite meshing constraint on the surface @code{tag}.
 @code{cornerTags} can be used to specify the (6 or 8) corners of the transfinite
 interpolation explicitly.
 
 @table @asis
 @item Input:
-@code{tag}, @code{cornerTags}
+@code{tag}, @code{cornerTags = []}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item setRecombine
+@item gmsh/model/mesh/setRecombine
 Set a recombination meshing constraint on the model entity of dimension
 @code{dim} and tag @code{tag}. Currently only entities of dimension 2 (to
 recombine triangles into quadrangles) are supported.
@@ -1463,7 +1555,7 @@ recombine triangles into quadrangles) are supported.
 -
 @end table
 
-@item setSmoothing
+@item gmsh/model/mesh/setSmoothing
 Set a smoothing meshing constraint on the model entity of dimension @code{dim}
 and tag @code{tag}. @code{val} iterations of a Laplace smoother are applied.
 
@@ -1476,12 +1568,25 @@ and tag @code{tag}. @code{val} iterations of a Laplace smoother are applied.
 -
 @end table
 
-@item setReverse
+@item gmsh/model/mesh/setReverse
 Set a reverse meshing constraint on the model entity of dimension @code{dim} and
 tag @code{tag}. If @code{val} is true, the mesh orientation will be reversed
 with respect to the natural mesh orientation (i.e. the orientation consistent
 with the orientation of the geometry). If @code{val} is false, the mesh is left
 as-is.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val = True}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/setAlgorithm
+Set the meshing algorithm on the model entity of dimension @code{dim} and tag
+@code{tag}. Currently only supported for @code{dim} == 2.
 
 @table @asis
 @item Input:
@@ -1492,7 +1597,35 @@ as-is.
 -
 @end table
 
-@item setOutwardOrientation
+@item gmsh/model/mesh/setSizeFromBoundary
+Force the mesh size to be extended from the boundary, or not, for the model
+entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
+@code{dim} == 2.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/setCompound
+Set a compound meshing constraint on the model entities of dimension @code{dim}
+and tags @code{tags}. During meshing, compound entities are treated as a single
+discrete entity, which is automatically reparametrized.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tags}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/setOutwardOrientation
 Set meshing constraints on the bounding surfaces of the volume of tag @code{tag}
 so that all surfaces are oriented with outward pointing normals. Currently only
 available with the OpenCASCADE kernel, as it relies on the STL triangulation.
@@ -1506,7 +1639,7 @@ available with the OpenCASCADE kernel, as it relies on the STL triangulation.
 -
 @end table
 
-@item embed
+@item gmsh/model/mesh/embed
 Embed the model entities of dimension @code{dim} and tags @code{tags} in the
 (@code{inDim}, @code{inTag}) model entity. The dimension @code{dim} can 0, 1 or
 2 and must be strictly smaller than @code{inDim}, which must be either 2 or 3.
@@ -1522,21 +1655,21 @@ The embedded entities should not be part of the boundary of the entity
 -
 @end table
 
-@item removeEmbedded
+@item gmsh/model/mesh/removeEmbedded
 Remove embedded entities from the model entities @code{dimTags}. if @code{dim}
 is >= 0, only remove embedded entities of the given dimension (e.g. embedded
 points if @code{dim} == 0).
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{dim}
+@code{dimTags}, @code{dim = -1}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item reorderElements
+@item gmsh/model/mesh/reorderElements
 Reorder the elements of type @code{elementType} classified on the entity of tag
 @code{tag} according to @code{ordering}.
 
@@ -1549,7 +1682,7 @@ Reorder the elements of type @code{elementType} classified on the entity of tag
 -
 @end table
 
-@item renumberNodes
+@item gmsh/model/mesh/renumberNodes
 Renumber the node tags in a continuous sequence.
 
 @table @asis
@@ -1561,7 +1694,7 @@ Renumber the node tags in a continuous sequence.
 -
 @end table
 
-@item renumberElements
+@item gmsh/model/mesh/renumberElements
 Renumber the element tags in a continuous sequence.
 
 @table @asis
@@ -1573,12 +1706,15 @@ Renumber the element tags in a continuous sequence.
 -
 @end table
 
-@item setPeriodic
+@item gmsh/model/mesh/setPeriodic
 Set the meshes of the entities of dimension @code{dim} and tag @code{tags} as
 periodic copies of the meshes of entities @code{tagsMaster}, using the affine
 transformation specified in @code{affineTransformation} (16 entries of a 4x4
-matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
-2.
+matrix, by row). If used after meshing, generate the periodic node
+correspondence information assuming the meshes of entities @code{tags}
+effectively match the meshes of entities @code{tagsMaster} (useful for
+structured and extruded meshes). Currently only available for @code{dim} == 1
+and @code{dim} == 2.
 
 @table @asis
 @item Input:
@@ -1589,7 +1725,7 @@ matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
 -
 @end table
 
-@item getPeriodicNodes
+@item gmsh/model/mesh/getPeriodicNodes
 Get the master entity @code{tagMaster}, the node tags @code{nodeTags} and their
 corresponding master node tags @code{nodeTagsMaster}, and the affine transform
 @code{affineTransform} for the entity of dimension @code{dim} and tag
@@ -1604,7 +1740,7 @@ corresponding master node tags @code{nodeTagsMaster}, and the affine transform
 -
 @end table
 
-@item removeDuplicateNodes
+@item gmsh/model/mesh/removeDuplicateNodes
 Remove duplicate nodes in the mesh of the current model.
 
 @table @asis
@@ -1616,37 +1752,38 @@ Remove duplicate nodes in the mesh of the current model.
 -
 @end table
 
-@item splitQuadrangles
+@item gmsh/model/mesh/splitQuadrangles
 Split (into two triangles) all quadrangles in surface @code{tag} whose quality
 is lower than @code{quality}. If @code{tag} < 0, split quadrangles in all
 surfaces.
 
 @table @asis
 @item Input:
-@code{quality}, @code{tag}
+@code{quality = 1.}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item classifySurfaces
+@item gmsh/model/mesh/classifySurfaces
 Classify ("color") the surface mesh based on the angle threshold @code{angle}
 (in radians), and create new discrete surfaces, curves and points accordingly.
 If @code{boundary} is set, also create discrete curves on the boundary if the
 surface is open. If @code{forReparametrization} is set, create edges and
-surfaces that can be reparametrized using a single map.
+surfaces that can be reparametrized using a single map. If @code{curveAngle} is
+less than Pi, also force curves to be split according to @code{curveAngle}.
 
 @table @asis
 @item Input:
-@code{angle}, @code{boundary}, @code{forReparametrization}
+@code{angle}, @code{boundary = True}, @code{forReparametrization = False}, @code{curveAngle = pi}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item createGeometry
+@item gmsh/model/mesh/createGeometry
 Create a parametrization for discrete curves and surfaces (i.e. curves and
 surfaces represented solely by a mesh, without an underlying CAD description),
 assuming that each can be parametrized with a single map.
@@ -1660,7 +1797,7 @@ assuming that each can be parametrized with a single map.
 -
 @end table
 
-@item createTopology
+@item gmsh/model/mesh/createTopology
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
 underlying model).
@@ -1674,7 +1811,7 @@ underlying model).
 -
 @end table
 
-@item computeHomology
+@item gmsh/model/mesh/computeHomology
 Compute a basis representation for homology spaces after a mesh has been
 generated. The computation domain is given in a list of physical group tags
 @code{domainTags}; if empty, the whole mesh is the domain. The computation
@@ -1686,14 +1823,14 @@ as physical groups in the mesh.
 
 @table @asis
 @item Input:
-@code{domainTags}, @code{subdomainTags}, @code{dims}
+@code{domainTags = []}, @code{subdomainTags = []}, @code{dims = []}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item computeCohomology
+@item gmsh/model/mesh/computeCohomology
 Compute a basis representation for cohomology spaces after a mesh has been
 generated. The computation domain is given in a list of physical group tags
 @code{domainTags}; if empty, the whole mesh is the domain. The computation
@@ -1705,9 +1842,22 @@ stored as physical groups in the mesh.
 
 @table @asis
 @item Input:
-@code{domainTags}, @code{subdomainTags}, @code{dims}
+@code{domainTags = []}, @code{subdomainTags = []}, @code{dims = []}
 @item Output:
 -
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/computeCrossField
+Compute a cross field for the current mesh. The function creates 3 views: the H
+function, the Theta function and cross directions. Return the tags of the views
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{viewTags}
 @item Return:
 -
 @end table
@@ -1718,21 +1868,21 @@ stored as physical groups in the mesh.
 @section Namespace @code{gmsh/model/mesh/field}: mesh size field functions
 
 @ftable @code
-@item add
+@item gmsh/model/mesh/field/add
 Add a new mesh size field of type @code{fieldType}. If @code{tag} is positive,
 assign the tag explicitly; otherwise a new tag is assigned automatically. Return
 the field tag.
 
 @table @asis
 @item Input:
-@code{fieldType}, @code{tag}
+@code{fieldType}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item remove
+@item gmsh/model/mesh/field/remove
 Remove the field with tag @code{tag}.
 
 @table @asis
@@ -1744,7 +1894,7 @@ Remove the field with tag @code{tag}.
 -
 @end table
 
-@item setNumber
+@item gmsh/model/mesh/field/setNumber
 Set the numerical option @code{option} to value @code{value} for field
 @code{tag}.
 
@@ -1757,7 +1907,7 @@ Set the numerical option @code{option} to value @code{value} for field
 -
 @end table
 
-@item setString
+@item gmsh/model/mesh/field/setString
 Set the string option @code{option} to value @code{value} for field @code{tag}.
 
 @table @asis
@@ -1769,7 +1919,7 @@ Set the string option @code{option} to value @code{value} for field @code{tag}.
 -
 @end table
 
-@item setNumbers
+@item gmsh/model/mesh/field/setNumbers
 Set the numerical list option @code{option} to value @code{value} for field
 @code{tag}.
 
@@ -1782,7 +1932,7 @@ Set the numerical list option @code{option} to value @code{value} for field
 -
 @end table
 
-@item setAsBackgroundMesh
+@item gmsh/model/mesh/field/setAsBackgroundMesh
 Set the field @code{tag} as the background mesh size field.
 
 @table @asis
@@ -1794,7 +1944,7 @@ Set the field @code{tag} as the background mesh size field.
 -
 @end table
 
-@item setAsBoundaryLayer
+@item gmsh/model/mesh/field/setAsBoundaryLayer
 Set the field @code{tag} as a boundary layer size field.
 
 @table @asis
@@ -1812,7 +1962,7 @@ Set the field @code{tag} as a boundary layer size field.
 @section Namespace @code{gmsh/model/geo}: built-in CAD kernel functions
 
 @ftable @code
-@item addPoint
+@item gmsh/model/geo/addPoint
 Add a geometrical point in the built-in CAD representation, at coordinates
 (@code{x}, @code{y}, @code{z}). If @code{meshSize} is > 0, add a meshing
 constraint at that point. If @code{tag} is positive, set the tag explicitly;
@@ -1823,61 +1973,61 @@ the geo module.)
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{meshSize}, @code{tag}
+@code{x}, @code{y}, @code{z}, @code{meshSize = 0.}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addLine
+@item gmsh/model/geo/addLine
 Add a straight line segment between the two points with tags @code{startTag} and
 @code{endTag}. If @code{tag} is positive, set the tag explicitly; otherwise a
 new tag is selected automatically. Return the tag of the line.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{endTag}, @code{tag}
+@code{startTag}, @code{endTag}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addCircleArc
+@item gmsh/model/geo/addCircleArc
 Add a circle arc (strictly smaller than Pi) between the two points with tags
 @code{startTag} and @code{endTag}, with center @code{centertag}. If @code{tag}
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. If (@code{nx}, @code{ny}, @code{nz}) != (0,0,0), explicitly set
+automatically. If (@code{nx}, @code{ny}, @code{nz}) != (0, 0, 0), explicitly set
 the plane of the circle arc. Return the tag of the circle arc.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag}, @code{nx}, @code{ny}, @code{nz}
+@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag = -1}, @code{nx = 0.}, @code{ny = 0.}, @code{nz = 0.}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addEllipseArc
+@item gmsh/model/geo/addEllipseArc
 Add an ellipse arc (strictly smaller than Pi) between the two points
 @code{startTag} and @code{endTag}, with center @code{centerTag} and major axis
 point @code{majorTag}. If @code{tag} is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. If (@code{nx}, @code{ny},
-@code{nz}) != (0,0,0), explicitly set the plane of the circle arc. Return the
+@code{nz}) != (0, 0, 0), explicitly set the plane of the circle arc. Return the
 tag of the ellipse arc.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{centerTag}, @code{majorTag}, @code{endTag}, @code{tag}, @code{nx}, @code{ny}, @code{nz}
+@code{startTag}, @code{centerTag}, @code{majorTag}, @code{endTag}, @code{tag = -1}, @code{nx = 0.}, @code{ny = 0.}, @code{nz = 0.}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addSpline
+@item gmsh/model/geo/addSpline
 Add a spline (Catmull-Rom) curve going through the points @code{pointTags}. If
 @code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Create a periodic curve if the first and last points are the
@@ -1885,14 +2035,14 @@ same. Return the tag of the spline curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}
+@code{pointTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addBSpline
+@item gmsh/model/geo/addBSpline
 Add a cubic b-spline curve with @code{pointTags} control points. If @code{tag}
 is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Creates a periodic curve if the first and last points are the
@@ -1900,28 +2050,58 @@ same. Return the tag of the b-spline curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}
+@code{pointTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addBezier
+@item gmsh/model/geo/addBezier
 Add a Bezier curve with @code{pointTags} control points. If @code{tag} is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the Bezier curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}
+@code{pointTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addCurveLoop
+@item gmsh/model/geo/addCompoundSpline
+Add a spline (Catmull-Rom) going through points sampling the curves in
+@code{curveTags}. The density of sampling points on each curve is governed by
+@code{numIntervals}. If @code{tag} is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the spline.
+
+@table @asis
+@item Input:
+@code{curveTags}, @code{numIntervals = 5}, @code{tag = -1}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item gmsh/model/geo/addCompoundBSpline
+Add a b-spline with control points sampling the curves in @code{curveTags}. The
+density of sampling points on each curve is governed by @code{numIntervals}. If
+@code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. Return the tag of the b-spline.
+
+@table @asis
+@item Input:
+@code{curveTags}, @code{numIntervals = 20}, @code{tag = -1}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item gmsh/model/geo/addCurveLoop
 Add a curve loop (a closed wire) formed by the curves @code{curveTags}.
 @code{curveTags} should contain (signed) tags of model enties of dimension 1
 forming a closed loop: a negative tag signifies that the underlying curve is
@@ -1931,14 +2111,14 @@ curve loop.
 
 @table @asis
 @item Input:
-@code{curveTags}, @code{tag}
+@code{curveTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addPlaneSurface
+@item gmsh/model/geo/addPlaneSurface
 Add a plane surface defined by one or more curve loops @code{wireTags}. The
 first curve loop defines the exterior contour; additional curve loop define
 holes. If @code{tag} is positive, set the tag explicitly; otherwise a new tag is
@@ -1946,14 +2126,14 @@ selected automatically. Return the tag of the surface.
 
 @table @asis
 @item Input:
-@code{wireTags}, @code{tag}
+@code{wireTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addSurfaceFilling
+@item gmsh/model/geo/addSurfaceFilling
 Add a surface filling the curve loops in @code{wireTags}. Currently only a
 single curve loop is supported; this curve loop should be composed by 3 or 4
 curves only. If @code{tag} is positive, set the tag explicitly; otherwise a new
@@ -1961,28 +2141,28 @@ tag is selected automatically. Return the tag of the surface.
 
 @table @asis
 @item Input:
-@code{wireTags}, @code{tag}, @code{sphereCenterTag}
+@code{wireTags}, @code{tag = -1}, @code{sphereCenterTag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addSurfaceLoop
+@item gmsh/model/geo/addSurfaceLoop
 Add a surface loop (a closed shell) formed by @code{surfaceTags}.  If @code{tag}
 is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Return the tag of the shell.
 
 @table @asis
 @item Input:
-@code{surfaceTags}, @code{tag}
+@code{surfaceTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addVolume
+@item gmsh/model/geo/addVolume
 Add a volume (a region) defined by one or more shells @code{shellTags}. The
 first surface loop defines the exterior boundary; additional surface loop define
 holes. If @code{tag} is positive, set the tag explicitly; otherwise a new tag is
@@ -1990,14 +2170,14 @@ selected automatically. Return the tag of the volume.
 
 @table @asis
 @item Input:
-@code{shellTags}, @code{tag}
+@code{shellTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item extrude
+@item gmsh/model/geo/extrude
 Extrude the model entities @code{dimTags} by translation along (@code{dx},
 @code{dy}, @code{dz}). Return extruded entities in @code{outDimTags}. If
 @code{numElements} is not empty, also extrude the mesh: the entries in
@@ -2008,14 +2188,14 @@ extruded along their normal.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{dx}, @code{dy}, @code{dz}, @code{numElements}, @code{heights}, @code{recombine}
+@code{dimTags}, @code{dx}, @code{dy}, @code{dz}, @code{numElements = []}, @code{heights = []}, @code{recombine = False}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item revolve
+@item gmsh/model/geo/revolve
 Extrude the model entities @code{dimTags} by rotation of @code{angle} radians
 around the axis of revolution defined by the point (@code{x}, @code{y},
 @code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). The angle should
@@ -2027,14 +2207,14 @@ normalized to 1.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements}, @code{heights}, @code{recombine}
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements = []}, @code{heights = []}, @code{recombine = False}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item twist
+@item gmsh/model/geo/twist
 Extrude the model entities @code{dimTags} by a combined translation and rotation
 of @code{angle} radians, along (@code{dx}, @code{dy}, @code{dz}) and around the
 axis of revolution defined by the point (@code{x}, @code{y}, @code{z}) and the
@@ -2047,14 +2227,14 @@ normalized to 1.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements}, @code{heights}, @code{recombine}
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements = []}, @code{heights = []}, @code{recombine = False}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item translate
+@item gmsh/model/geo/translate
 Translate the model entities @code{dimTags} along (@code{dx}, @code{dy},
 @code{dz}).
 
@@ -2067,7 +2247,7 @@ Translate the model entities @code{dimTags} along (@code{dx}, @code{dy},
 -
 @end table
 
-@item rotate
+@item gmsh/model/geo/rotate
 Rotate the model entities @code{dimTags} of @code{angle} radians around the axis
 of revolution defined by the point (@code{x}, @code{y}, @code{z}) and the
 direction (@code{ax}, @code{ay}, @code{az}).
@@ -2081,7 +2261,7 @@ direction (@code{ax}, @code{ay}, @code{az}).
 -
 @end table
 
-@item dilate
+@item gmsh/model/geo/dilate
 Scale the model entities @code{dimTag} by factors @code{a}, @code{b} and
 @code{c} along the three coordinate axes; use (@code{x}, @code{y}, @code{z}) as
 the center of the homothetic transformation.
@@ -2095,10 +2275,9 @@ the center of the homothetic transformation.
 -
 @end table
 
-@item symmetrize
-Apply a symmetry transformation to the model entities @code{dimTag}, with
-respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
-@code{d} = 0.
+@item gmsh/model/geo/mirror
+Mirror the model entities @code{dimTag}, with respect to the plane of equation
+@code{a} * x + @code{b} * y + @code{c} * z + @code{d} = 0.
 
 @table @asis
 @item Input:
@@ -2109,7 +2288,21 @@ respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 -
 @end table
 
-@item copy
+@item gmsh/model/geo/symmetrize
+Mirror the model entities @code{dimTag}, with respect to the plane of equation
+@code{a} * x + @code{b} * y + @code{c} * z + @code{d} = 0. (This is a synonym
+for @code{mirror}, which will be deprecated in a future release.)
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{a}, @code{b}, @code{c}, @code{d}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/geo/copy
 Copy the entities @code{dimTags}; the new entities are returned in
 @code{outDimTags}.
 
@@ -2122,20 +2315,20 @@ Copy the entities @code{dimTags}; the new entities are returned in
 -
 @end table
 
-@item remove
+@item gmsh/model/geo/remove
 Remove the entities @code{dimTags}. If @code{recursive} is true, remove all the
 entities on their boundaries, down to dimension 0.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{recursive}
+@code{dimTags}, @code{recursive = False}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item removeAllDuplicates
+@item gmsh/model/geo/removeAllDuplicates
 Remove all duplicate entities (different entities at the same geometrical
 location).
 
@@ -2148,7 +2341,20 @@ location).
 -
 @end table
 
-@item synchronize
+@item gmsh/model/geo/splitCurve
+Split the model curve of tag @code{tag} on the control points @code{pointTags}.
+Return the tags @code{curveTags} of the newly created curves.
+
+@table @asis
+@item Input:
+@code{tag}, @code{pointTags}
+@item Output:
+@code{curveTags}
+@item Return:
+-
+@end table
+
+@item gmsh/model/geo/synchronize
 Synchronize the built-in CAD representation with the current Gmsh model. This
 can be called at any time, but since it involves a non trivial amount of
 processing, the number of synchronization points should normally be minimized.
@@ -2168,7 +2374,7 @@ processing, the number of synchronization points should normally be minimized.
 @section Namespace @code{gmsh/model/geo/mesh}: built-in CAD kernel meshing constraints
 
 @ftable @code
-@item setSize
+@item gmsh/model/geo/mesh/setSize
 Set a mesh size constraint on the model entities @code{dimTags}. Currently only
 entities of dimension 0 (points) are handled.
 
@@ -2181,7 +2387,7 @@ entities of dimension 0 (points) are handled.
 -
 @end table
 
-@item setTransfiniteCurve
+@item gmsh/model/geo/mesh/setTransfiniteCurve
 Set a transfinite meshing constraint on the curve @code{tag}, with
 @code{numNodes} nodes distributed according to @code{meshType} and @code{coef}.
 Currently supported types are "Progression" (geometrical progression with power
@@ -2189,14 +2395,14 @@ Currently supported types are "Progression" (geometrical progression with power
 
 @table @asis
 @item Input:
-@code{tag}, @code{nPoints}, @code{meshType}, @code{coef}
+@code{tag}, @code{nPoints}, @code{meshType = "Progression"}, @code{coef = 1.}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item setTransfiniteSurface
+@item gmsh/model/geo/mesh/setTransfiniteSurface
 Set a transfinite meshing constraint on the surface @code{tag}.
 @code{arrangement} describes the arrangement of the triangles when the surface
 is not flagged as recombined: currently supported values are "Left", "Right",
@@ -2207,42 +2413,42 @@ its boundary.
 
 @table @asis
 @item Input:
-@code{tag}, @code{arrangement}, @code{cornerTags}
+@code{tag}, @code{arrangement = "Left"}, @code{cornerTags = []}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item setTransfiniteVolume
+@item gmsh/model/geo/mesh/setTransfiniteVolume
 Set a transfinite meshing constraint on the surface @code{tag}.
 @code{cornerTags} can be used to specify the (6 or 8) corners of the transfinite
 interpolation explicitly.
 
 @table @asis
 @item Input:
-@code{tag}, @code{cornerTags}
+@code{tag}, @code{cornerTags = []}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item setRecombine
+@item gmsh/model/geo/mesh/setRecombine
 Set a recombination meshing constraint on the model entity of dimension
 @code{dim} and tag @code{tag}. Currently only entities of dimension 2 (to
 recombine triangles into quadrangles) are supported.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{angle}
+@code{dim}, @code{tag}, @code{angle = 45.}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item setSmoothing
+@item gmsh/model/geo/mesh/setSmoothing
 Set a smoothing meshing constraint on the model entity of dimension @code{dim}
 and tag @code{tag}. @code{val} iterations of a Laplace smoother are applied.
 
@@ -2255,12 +2461,39 @@ and tag @code{tag}. @code{val} iterations of a Laplace smoother are applied.
 -
 @end table
 
-@item setReverse
+@item gmsh/model/geo/mesh/setReverse
 Set a reverse meshing constraint on the model entity of dimension @code{dim} and
 tag @code{tag}. If @code{val} is true, the mesh orientation will be reversed
 with respect to the natural mesh orientation (i.e. the orientation consistent
 with the orientation of the geometry). If @code{val} is false, the mesh is left
 as-is.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val = True}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/geo/mesh/setAlgorithm
+Set the meshing algorithm on the model entity of dimension @code{dim} and tag
+@code{tag}. Currently only supported for @code{dim} == 2.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/geo/mesh/setSizeFromBoundary
+Force the mesh size to be extended from the boundary, or not, for the model
+entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
+@code{dim} == 2.
 
 @table @asis
 @item Input:
@@ -2277,7 +2510,7 @@ as-is.
 @section Namespace @code{gmsh/model/occ}: OpenCASCADE CAD kernel functions
 
 @ftable @code
-@item addPoint
+@item gmsh/model/occ/addPoint
 Add a geometrical point in the OpenCASCADE CAD representation, at coordinates
 (@code{x}, @code{y}, @code{z}). If @code{meshSize} is > 0, add a meshing
 constraint at that point. If @code{tag} is positive, set the tag explicitly;
@@ -2288,28 +2521,28 @@ the occ module.)
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{meshSize}, @code{tag}
+@code{x}, @code{y}, @code{z}, @code{meshSize = 0.}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addLine
+@item gmsh/model/occ/addLine
 Add a straight line segment between the two points with tags @code{startTag} and
 @code{endTag}. If @code{tag} is positive, set the tag explicitly; otherwise a
 new tag is selected automatically. Return the tag of the line.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{endTag}, @code{tag}
+@code{startTag}, @code{endTag}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addCircleArc
+@item gmsh/model/occ/addCircleArc
 Add a circle arc between the two points with tags @code{startTag} and
 @code{endTag}, with center @code{centerTag}. If @code{tag} is positive, set the
 tag explicitly; otherwise a new tag is selected automatically. Return the tag of
@@ -2317,14 +2550,14 @@ the circle arc.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag}
+@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addCircle
+@item gmsh/model/occ/addCircle
 Add a circle of center (@code{x}, @code{y}, @code{z}) and radius @code{r}. If
 @code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. If @code{angle1} and @code{angle2} are specified, create a circle
@@ -2332,14 +2565,14 @@ arc between the two angles. Return the tag of the circle.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{r}, @code{tag}, @code{angle1}, @code{angle2}
+@code{x}, @code{y}, @code{z}, @code{r}, @code{tag = -1}, @code{angle1 = 0.}, @code{angle2 = 2*pi}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addEllipseArc
+@item gmsh/model/occ/addEllipseArc
 Add an ellipse arc between the two points @code{startTag} and @code{endTag},
 with center @code{centerTag} and major axis point @code{majorTag}. If @code{tag}
 is positive, set the tag explicitly; otherwise a new tag is selected
@@ -2348,14 +2581,14 @@ allow creating ellipse arcs with the major radius smaller than the minor radius.
 
 @table @asis
 @item Input:
-@code{startTag}, @code{centerTag}, @code{majorTag}, @code{endTag}, @code{tag}
+@code{startTag}, @code{centerTag}, @code{majorTag}, @code{endTag}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addEllipse
+@item gmsh/model/occ/addEllipse
 Add an ellipse of center (@code{x}, @code{y}, @code{z}) and radii @code{r1} and
 @code{r2} along the x- and y-axes respectively. If @code{tag} is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. If
@@ -2367,14 +2600,14 @@ in such cases.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{r1}, @code{r2}, @code{tag}, @code{angle1}, @code{angle2}
+@code{x}, @code{y}, @code{z}, @code{r1}, @code{r2}, @code{tag = -1}, @code{angle1 = 0.}, @code{angle2 = 2*pi}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addSpline
+@item gmsh/model/occ/addSpline
 Add a spline (C2 b-spline) curve going through the points @code{pointTags}. If
 @code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Create a periodic curve if the first and last points are the
@@ -2382,14 +2615,14 @@ same. Return the tag of the spline curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}
+@code{pointTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addBSpline
+@item gmsh/model/occ/addBSpline
 Add a b-spline curve of degree @code{degree} with @code{pointTags} control
 points. If @code{weights}, @code{knots} or @code{multiplicities} are not
 provided, default parameters are computed automatically. If @code{tag} is
@@ -2399,28 +2632,28 @@ tag of the b-spline curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}, @code{degree}, @code{weights}, @code{knots}, @code{multiplicities}
+@code{pointTags}, @code{tag = -1}, @code{degree = 3}, @code{weights = []}, @code{knots = []}, @code{multiplicities = []}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addBezier
+@item gmsh/model/occ/addBezier
 Add a Bezier curve with @code{pointTags} control points. If @code{tag} is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the Bezier curve.
 
 @table @asis
 @item Input:
-@code{pointTags}, @code{tag}
+@code{pointTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addWire
+@item gmsh/model/occ/addWire
 Add a wire (open or closed) formed by the curves @code{curveTags}. Note that an
 OpenCASCADE wire can be made of curves that share geometrically identical (but
 topologically different) points. If @code{tag} is positive, set the tag
@@ -2429,14 +2662,14 @@ wire.
 
 @table @asis
 @item Input:
-@code{curveTags}, @code{tag}, @code{checkClosed}
+@code{curveTags}, @code{tag = -1}, @code{checkClosed = False}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addCurveLoop
+@item gmsh/model/occ/addCurveLoop
 Add a curve loop (a closed wire) formed by the curves @code{curveTags}.
 @code{curveTags} should contain tags of curves forming a closed loop. Note that
 an OpenCASCADE curve loop can be made of curves that share geometrically
@@ -2446,14 +2679,14 @@ tag of the curve loop.
 
 @table @asis
 @item Input:
-@code{curveTags}, @code{tag}
+@code{curveTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addRectangle
+@item gmsh/model/occ/addRectangle
 Add a rectangle with lower left corner at (@code{x}, @code{y}, @code{z}) and
 upper right corner at (@code{x} + @code{dx}, @code{y} + @code{dy}, @code{z}). If
 @code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
@@ -2462,14 +2695,14 @@ tag of the rectangle.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{tag}, @code{roundedRadius}
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{tag = -1}, @code{roundedRadius = 0.}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addDisk
+@item gmsh/model/occ/addDisk
 Add a disk with center (@code{xc}, @code{yc}, @code{zc}) and radius @code{rx}
 along the x-axis and @code{ry} along the y-axis. If @code{tag} is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
@@ -2477,14 +2710,14 @@ tag of the disk.
 
 @table @asis
 @item Input:
-@code{xc}, @code{yc}, @code{zc}, @code{rx}, @code{ry}, @code{tag}
+@code{xc}, @code{yc}, @code{zc}, @code{rx}, @code{ry}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addPlaneSurface
+@item gmsh/model/occ/addPlaneSurface
 Add a plane surface defined by one or more curve loops (or closed wires)
 @code{wireTags}. The first curve loop defines the exterior contour; additional
 curve loop define holes. If @code{tag} is positive, set the tag explicitly;
@@ -2492,14 +2725,14 @@ otherwise a new tag is selected automatically. Return the tag of the surface.
 
 @table @asis
 @item Input:
-@code{wireTags}, @code{tag}
+@code{wireTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addSurfaceFilling
+@item gmsh/model/occ/addSurfaceFilling
 Add a surface filling the curve loops in @code{wireTags}. If @code{tag} is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the surface. If @code{pointTags} are provided, force the
@@ -2507,14 +2740,14 @@ surface to pass through the given points.
 
 @table @asis
 @item Input:
-@code{wireTag}, @code{tag}, @code{pointTags}
+@code{wireTag}, @code{tag = -1}, @code{pointTags = []}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addSurfaceLoop
+@item gmsh/model/occ/addSurfaceLoop
 Add a surface loop (a closed shell) formed by @code{surfaceTags}.  If @code{tag}
 is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Return the tag of the surface loop. Setting @code{sewing} allows
@@ -2523,14 +2756,14 @@ topologically different) curves.
 
 @table @asis
 @item Input:
-@code{surfaceTags}, @code{tag}, @code{sewing}
+@code{surfaceTags}, @code{tag = -1}, @code{sewing = False}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addVolume
+@item gmsh/model/occ/addVolume
 Add a volume (a region) defined by one or more surface loops @code{shellTags}.
 The first surface loop defines the exterior boundary; additional surface loop
 define holes. If @code{tag} is positive, set the tag explicitly; otherwise a new
@@ -2538,14 +2771,14 @@ tag is selected automatically. Return the tag of the volume.
 
 @table @asis
 @item Input:
-@code{shellTags}, @code{tag}
+@code{shellTags}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addSphere
+@item gmsh/model/occ/addSphere
 Add a sphere of center (@code{xc}, @code{yc}, @code{zc}) and radius @code{r}.
 The optional @code{angle1} and @code{angle2} arguments define the polar angle
 opening (from -Pi/2 to Pi/2). The optional @code{angle3} argument defines the
@@ -2555,14 +2788,14 @@ sphere.
 
 @table @asis
 @item Input:
-@code{xc}, @code{yc}, @code{zc}, @code{radius}, @code{tag}, @code{angle1}, @code{angle2}, @code{angle3}
+@code{xc}, @code{yc}, @code{zc}, @code{radius}, @code{tag = -1}, @code{angle1 = -pi/2}, @code{angle2 = pi/2}, @code{angle3 = 2*pi}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addBox
+@item gmsh/model/occ/addBox
 Add a parallelepipedic box defined by a point (@code{x}, @code{y}, @code{z}) and
 the extents along the x-, y- and z-axes. If @code{tag} is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. Return the tag of the
@@ -2570,14 +2803,14 @@ box.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{tag}
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addCylinder
+@item gmsh/model/occ/addCylinder
 Add a cylinder, defined by the center (@code{x}, @code{y}, @code{z}) of its
 first circular face, the 3 components (@code{dx}, @code{dy}, @code{dz}) of the
 vector defining its axis and its radius @code{r}. The optional @code{angle}
@@ -2587,14 +2820,14 @@ Return the tag of the cylinder.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{r}, @code{tag}, @code{angle}
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{r}, @code{tag = -1}, @code{angle = 2*pi}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addCone
+@item gmsh/model/occ/addCone
 Add a cone, defined by the center (@code{x}, @code{y}, @code{z}) of its first
 circular face, the 3 components of the vector (@code{dx}, @code{dy}, @code{dz})
 defining its axis and the two radii @code{r1} and @code{r2} of the faces (these
@@ -2604,14 +2837,14 @@ opening (from 0 to 2*Pi). Return the tag of the cone.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{r1}, @code{r2}, @code{tag}, @code{angle}
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{r1}, @code{r2}, @code{tag = -1}, @code{angle = 2*pi}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addWedge
+@item gmsh/model/occ/addWedge
 Add a right angular wedge, defined by the right-angle point (@code{x}, @code{y},
 @code{z}) and the 3 extends along the x-, y- and z-axes (@code{dx}, @code{dy},
 @code{dz}). If @code{tag} is positive, set the tag explicitly; otherwise a new
@@ -2620,14 +2853,14 @@ extent along the x-axis. Return the tag of the wedge.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{tag}, @code{ltx}
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{tag = -1}, @code{ltx = 0.}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addTorus
+@item gmsh/model/occ/addTorus
 Add a torus, defined by its center (@code{x}, @code{y}, @code{z}) and its 2
 radii @code{r} and @code{r2}. If @code{tag} is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. The optional argument
@@ -2636,14 +2869,14 @@ wedge.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}, @code{r1}, @code{r2}, @code{tag}, @code{angle}
+@code{x}, @code{y}, @code{z}, @code{r1}, @code{r2}, @code{tag = -1}, @code{angle = 2*pi}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item addThruSections
+@item gmsh/model/occ/addThruSections
 Add a volume (if the optional argument @code{makeSolid} is set) or surfaces
 defined through the open or closed wires @code{wireTags}. If @code{tag} is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
@@ -2653,14 +2886,14 @@ ruled surfaces.
 
 @table @asis
 @item Input:
-@code{wireTags}, @code{tag}, @code{makeSolid}, @code{makeRuled}
+@code{wireTags}, @code{tag = -1}, @code{makeSolid = True}, @code{makeRuled = False}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item addThickSolid
+@item gmsh/model/occ/addThickSolid
 Add a hollowed volume built from an initial volume @code{volumeTag} and a set of
 faces from this volume @code{excludeSurfaceTags}, which are to be removed. The
 remaining faces of the volume become the walls of the hollowed solid, with
@@ -2669,14 +2902,14 @@ otherwise a new tag is selected automatically.
 
 @table @asis
 @item Input:
-@code{volumeTag}, @code{excludeSurfaceTags}, @code{offset}, @code{tag}
+@code{volumeTag}, @code{excludeSurfaceTags}, @code{offset}, @code{tag = -1}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item extrude
+@item gmsh/model/occ/extrude
 Extrude the model entities @code{dimTags} by translation along (@code{dx},
 @code{dy}, @code{dz}). Return extruded entities in @code{outDimTags}. If
 @code{numElements} is not empty, also extrude the mesh: the entries in
@@ -2686,14 +2919,14 @@ normalized to 1.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{dx}, @code{dy}, @code{dz}, @code{numElements}, @code{heights}, @code{recombine}
+@code{dimTags}, @code{dx}, @code{dy}, @code{dz}, @code{numElements = []}, @code{heights = []}, @code{recombine = False}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item revolve
+@item gmsh/model/occ/revolve
 Extrude the model entities @code{dimTags} by rotation of @code{angle} radians
 around the axis of revolution defined by the point (@code{x}, @code{y},
 @code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). Return extruded
@@ -2705,14 +2938,14 @@ strictly smaller than 2*Pi.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements}, @code{heights}, @code{recombine}
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements = []}, @code{heights = []}, @code{recombine = False}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item addPipe
+@item gmsh/model/occ/addPipe
 Add a pipe by extruding the entities @code{dimTags} along the wire
 @code{wireTag}. Return the pipe in @code{outDimTags}.
 
@@ -2725,7 +2958,7 @@ Add a pipe by extruding the entities @code{dimTags} along the wire
 -
 @end table
 
-@item fillet
+@item gmsh/model/occ/fillet
 Fillet the volumes @code{volumeTags} on the curves @code{curveTags} with radii
 @code{radii}. The @code{radii} vector can either contain a single radius, as
 many radii as @code{curveTags}, or twice as many as @code{curveTags} (in which
@@ -2735,14 +2968,14 @@ Return the filleted entities in @code{outDimTags}. Remove the original volume if
 
 @table @asis
 @item Input:
-@code{volumeTags}, @code{curveTags}, @code{radii}, @code{removeVolume}
+@code{volumeTags}, @code{curveTags}, @code{radii}, @code{removeVolume = True}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item chamfer
+@item gmsh/model/occ/chamfer
 Chamfer the volumes @code{volumeTags} on the curves @code{curveTags} with
 distances @code{distances} measured on surfaces @code{surfaceTags}. The
 @code{distances} vector can either contain a single distance, as many distances
@@ -2754,14 +2987,14 @@ original volume if @code{removeVolume} is set.
 
 @table @asis
 @item Input:
-@code{volumeTags}, @code{curveTags}, @code{surfaceTags}, @code{distances}, @code{removeVolume}
+@code{volumeTags}, @code{curveTags}, @code{surfaceTags}, @code{distances}, @code{removeVolume = True}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item fuse
+@item gmsh/model/occ/fuse
 Compute the boolean union (the fusion) of the entities @code{objectDimTags} and
 @code{toolDimTags}. Return the resulting entities in @code{outDimTags}. If
 @code{tag} is positive, try to set the tag explicitly (only valid if the boolean
@@ -2770,14 +3003,14 @@ is set. Remove the tool if @code{removeTool} is set.
 
 @table @asis
 @item Input:
-@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@code{objectDimTags}, @code{toolDimTags}, @code{tag = -1}, @code{removeObject = True}, @code{removeTool = True}
 @item Output:
 @code{outDimTags}, @code{outDimTagsMap}
 @item Return:
 -
 @end table
 
-@item intersect
+@item gmsh/model/occ/intersect
 Compute the boolean intersection (the common parts) of the entities
 @code{objectDimTags} and @code{toolDimTags}. Return the resulting entities in
 @code{outDimTags}. If @code{tag} is positive, try to set the tag explicitly
@@ -2787,14 +3020,14 @@ set.
 
 @table @asis
 @item Input:
-@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@code{objectDimTags}, @code{toolDimTags}, @code{tag = -1}, @code{removeObject = True}, @code{removeTool = True}
 @item Output:
 @code{outDimTags}, @code{outDimTagsMap}
 @item Return:
 -
 @end table
 
-@item cut
+@item gmsh/model/occ/cut
 Compute the boolean difference between the entities @code{objectDimTags} and
 @code{toolDimTags}. Return the resulting entities in @code{outDimTags}. If
 @code{tag} is positive, try to set the tag explicitly (only valid if the boolean
@@ -2803,14 +3036,14 @@ is set. Remove the tool if @code{removeTool} is set.
 
 @table @asis
 @item Input:
-@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@code{objectDimTags}, @code{toolDimTags}, @code{tag = -1}, @code{removeObject = True}, @code{removeTool = True}
 @item Output:
 @code{outDimTags}, @code{outDimTagsMap}
 @item Return:
 -
 @end table
 
-@item fragment
+@item gmsh/model/occ/fragment
 Compute the boolean fragments (general fuse) of the entities
 @code{objectDimTags} and @code{toolDimTags}. Return the resulting entities in
 @code{outDimTags}. If @code{tag} is positive, try to set the tag explicitly
@@ -2820,14 +3053,14 @@ set.
 
 @table @asis
 @item Input:
-@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@code{objectDimTags}, @code{toolDimTags}, @code{tag = -1}, @code{removeObject = True}, @code{removeTool = True}
 @item Output:
 @code{outDimTags}, @code{outDimTagsMap}
 @item Return:
 -
 @end table
 
-@item translate
+@item gmsh/model/occ/translate
 Translate the model entities @code{dimTags} along (@code{dx}, @code{dy},
 @code{dz}).
 
@@ -2840,7 +3073,7 @@ Translate the model entities @code{dimTags} along (@code{dx}, @code{dy},
 -
 @end table
 
-@item rotate
+@item gmsh/model/occ/rotate
 Rotate the model entities @code{dimTags} of @code{angle} radians around the axis
 of revolution defined by the point (@code{x}, @code{y}, @code{z}) and the
 direction (@code{ax}, @code{ay}, @code{az}).
@@ -2854,7 +3087,7 @@ direction (@code{ax}, @code{ay}, @code{az}).
 -
 @end table
 
-@item dilate
+@item gmsh/model/occ/dilate
 Scale the model entities @code{dimTag} by factors @code{a}, @code{b} and
 @code{c} along the three coordinate axes; use (@code{x}, @code{y}, @code{z}) as
 the center of the homothetic transformation.
@@ -2868,7 +3101,7 @@ the center of the homothetic transformation.
 -
 @end table
 
-@item symmetrize
+@item gmsh/model/occ/mirror
 Apply a symmetry transformation to the model entities @code{dimTag}, with
 respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 @code{d} = 0.
@@ -2882,7 +3115,22 @@ respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 -
 @end table
 
-@item affineTransform
+@item gmsh/model/occ/symmetrize
+Apply a symmetry transformation to the model entities @code{dimTag}, with
+respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
+@code{d} = 0. (This is a synonym for @code{mirror}, which will be deprecated in
+a future release.)
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{a}, @code{b}, @code{c}, @code{d}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/occ/affineTransform
 Apply a general affine transformation matrix @code{a} (16 entries of a 4x4
 matrix, by row; only the 12 first can be provided for convenience) to the model
 entities @code{dimTag}.
@@ -2896,7 +3144,7 @@ entities @code{dimTag}.
 -
 @end table
 
-@item copy
+@item gmsh/model/occ/copy
 Copy the entities @code{dimTags}; the new entities are returned in
 @code{outDimTags}.
 
@@ -2909,20 +3157,20 @@ Copy the entities @code{dimTags}; the new entities are returned in
 -
 @end table
 
-@item remove
+@item gmsh/model/occ/remove
 Remove the entities @code{dimTags}. If @code{recursive} is true, remove all the
 entities on their boundaries, down to dimension 0.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{recursive}
+@code{dimTags}, @code{recursive = False}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item removeAllDuplicates
+@item gmsh/model/occ/removeAllDuplicates
 Remove all duplicate entities (different entities at the same geometrical
 location) after intersecting (using boolean fragments) all highest dimensional
 entities.
@@ -2936,7 +3184,7 @@ entities.
 -
 @end table
 
-@item healShapes
+@item gmsh/model/occ/healShapes
 Apply various healing procedures to the entities @code{dimTags} (or to all the
 entities in the model if @code{dimTags} is empty). Return the healed entities in
 @code{outDimTags}. Available healing options are listed in the Gmsh reference
@@ -2944,14 +3192,14 @@ manual.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{tolerance}, @code{fixDegenerated}, @code{fixSmallEdges}, @code{fixSmallFaces}, @code{sewFaces}
+@code{dimTags = []}, @code{tolerance = 1e-8}, @code{fixDegenerated = True}, @code{fixSmallEdges = True}, @code{fixSmallFaces = True}, @code{sewFaces = True}, @code{makeSolids = True}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item importShapes
+@item gmsh/model/occ/importShapes
 Import BREP, STEP or IGES shapes from the file @code{fileName}. The imported
 entities are returned in @code{outDimTags}. If the optional argument
 @code{highestDimOnly} is set, only import the highest dimensional entities in
@@ -2960,14 +3208,14 @@ the file (currently "brep", "step" or "iges").
 
 @table @asis
 @item Input:
-@code{fileName}, @code{highestDimOnly}, @code{format}
+@code{fileName}, @code{highestDimOnly = True}, @code{format = ""}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item importShapesNativePointer
+@item gmsh/model/occ/importShapesNativePointer
 Imports an OpenCASCADE @code{shape} by providing a pointer to a native
 OpenCASCADE @code{TopoDS_Shape} object (passed as a pointer to void). The
 imported entities are returned in @code{outDimTags}. If the optional argument
@@ -2977,14 +3225,14 @@ an invalid pointer will lead to undefined behavior.
 
 @table @asis
 @item Input:
-@code{shape}, @code{highestDimOnly}
+@code{shape}, @code{highestDimOnly = True}
 @item Output:
 @code{outDimTags}
 @item Return:
 -
 @end table
 
-@item setMeshSize
+@item gmsh/model/occ/setMeshSize
 Set a mesh size constraint on the model entities @code{dimTags}. Currently only
 entities of dimension 0 (points) are handled.
 
@@ -2997,7 +3245,7 @@ entities of dimension 0 (points) are handled.
 -
 @end table
 
-@item getMass
+@item gmsh/model/occ/getMass
 Get the mass of the model entity of dimension @code{dim} and tag @code{tag}.
 
 @table @asis
@@ -3009,7 +3257,7 @@ Get the mass of the model entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item getCenterOfMass
+@item gmsh/model/occ/getCenterOfMass
 Get the center of mass of the model entity of dimension @code{dim} and tag
 @code{tag}.
 
@@ -3022,7 +3270,7 @@ Get the center of mass of the model entity of dimension @code{dim} and tag
 -
 @end table
 
-@item getMatrixOfInertia
+@item gmsh/model/occ/getMatrixOfInertia
 Get the matrix of inertia (by row) of the model entity of dimension @code{dim}
 and tag @code{tag}.
 
@@ -3035,7 +3283,7 @@ and tag @code{tag}.
 -
 @end table
 
-@item synchronize
+@item gmsh/model/occ/synchronize
 Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This
 can be called at any time, but since it involves a non trivial amount of
 processing, the number of synchronization points should normally be minimized.
@@ -3055,21 +3303,21 @@ processing, the number of synchronization points should normally be minimized.
 @section Namespace @code{gmsh/view}: post-processing view functions
 
 @ftable @code
-@item add
+@item gmsh/view/add
 Add a new post-processing view, with name @code{name}. If @code{tag} is positive
 use it (and remove the view with that tag if it already exists), otherwise
 associate a new tag. Return the view tag.
 
 @table @asis
 @item Input:
-@code{name}, @code{tag}
+@code{name}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item remove
+@item gmsh/view/remove
 Remove the view with tag @code{tag}.
 
 @table @asis
@@ -3081,7 +3329,7 @@ Remove the view with tag @code{tag}.
 -
 @end table
 
-@item getIndex
+@item gmsh/view/getIndex
 Get the index of the view with tag @code{tag} in the list of currently loaded
 views. This dynamic index (it can change when views are removed) is used to
 access view options.
@@ -3095,7 +3343,7 @@ access view options.
 integer value
 @end table
 
-@item getTags
+@item gmsh/view/getTags
 Get the tags of all views.
 
 @table @asis
@@ -3107,7 +3355,7 @@ Get the tags of all views.
 -
 @end table
 
-@item addModelData
+@item gmsh/view/addModelData
 Add model-based post-processing data to the view with tag @code{tag}.
 @code{modelName} identifies the model the data is attached to. @code{dataType}
 specifies the type of data, currently either "NodeData", "ElementData" or
@@ -3123,14 +3371,14 @@ data. @code{partition} allows to specify data in several sub-sets.
 
 @table @asis
 @item Input:
-@code{tag}, @code{step}, @code{modelName}, @code{dataType}, @code{tags}, @code{data}, @code{time}, @code{numComponents}, @code{partition}
+@code{tag}, @code{step}, @code{modelName}, @code{dataType}, @code{tags}, @code{data}, @code{time = 0.}, @code{numComponents = -1}, @code{partition = 0}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item getModelData
+@item gmsh/view/getModelData
 Get model-based post-processing data from the view with tag @code{tag} at step
 @code{step}. Return the @code{data} associated to the nodes or the elements with
 tags @code{tags}, as well as the @code{dataType} and the number of components
@@ -3145,7 +3393,7 @@ tags @code{tags}, as well as the @code{dataType} and the number of components
 -
 @end table
 
-@item addListData
+@item gmsh/view/addListData
 Add list-based post-processing data to the view with tag @code{tag}.
 @code{dataType} identifies the data: "SP" for scalar points, "VP", for vector
 points, etc. @code{numEle} gives the number of elements in the data. @code{data}
@@ -3160,7 +3408,7 @@ contains the data for the @code{numEle} elements.
 -
 @end table
 
-@item getListData
+@item gmsh/view/getListData
 Get list-based post-processing data from the view with tag @code{tag}. Return
 the types @code{dataTypes}, the number of elements @code{numElements} for each
 data type and the @code{data} for each data type.
@@ -3174,7 +3422,7 @@ data type and the @code{data} for each data type.
 -
 @end table
 
-@item addAlias
+@item gmsh/view/addAlias
 Add a post-processing view as an @code{alias} of the reference view with tag
 @code{refTag}. If @code{copyOptions} is set, copy the options of the reference
 view. If @code{tag} is positive use it (and remove the view with that tag if it
@@ -3182,14 +3430,14 @@ already exists), otherwise associate a new tag. Return the view tag.
 
 @table @asis
 @item Input:
-@code{refTag}, @code{copyOptions}, @code{tag}
+@code{refTag}, @code{copyOptions = False}, @code{tag = -1}
 @item Output:
 -
 @item Return:
 integer value
 @end table
 
-@item copyOptions
+@item gmsh/view/copyOptions
 Copy the options from the view with tag @code{refTag} to the view with tag
 @code{tag}.
 
@@ -3202,7 +3450,7 @@ Copy the options from the view with tag @code{refTag} to the view with tag
 -
 @end table
 
-@item combine
+@item gmsh/view/combine
 Combine elements (if @code{what} == "elements") or steps (if @code{what} ==
 "steps") of all views (@code{how} == "all"), all visible views (@code{how} ==
 "visible") or all views having the same name (@code{how} == "name"). Remove
@@ -3210,14 +3458,14 @@ original views if @code{remove} is set.
 
 @table @asis
 @item Input:
-@code{what}, @code{how}, @code{remove}
+@code{what}, @code{how}, @code{remove = True}, @code{copyOptions = True}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item probe
+@item gmsh/view/probe
 Probe the view @code{tag} for its @code{value} at point (@code{x}, @code{y},
 @code{z}). Return only the value at step @code{step} is @code{step} is positive.
 Return only values with @code{numComp} if @code{numComp} is positive. Return the
@@ -3229,20 +3477,20 @@ its coordinates if @code{xElementCoord}, @code{yElementCoord} and
 
 @table @asis
 @item Input:
-@code{tag}, @code{x}, @code{y}, @code{z}, @code{step}, @code{numComp}, @code{gradient}, @code{tolerance}, @code{xElemCoord}, @code{yElemCoord}, @code{zElemCoord}
+@code{tag}, @code{x}, @code{y}, @code{z}, @code{step = -1}, @code{numComp = -1}, @code{gradient = False}, @code{tolerance = 0.}, @code{xElemCoord = []}, @code{yElemCoord = []}, @code{zElemCoord = []}
 @item Output:
 @code{value}
 @item Return:
 -
 @end table
 
-@item write
+@item gmsh/view/write
 Write the view to a file @code{fileName}. The export format is determined by the
 file extension. Append to the file if @code{append} is set.
 
 @table @asis
 @item Input:
-@code{tag}, @code{fileName}, @code{append}
+@code{tag}, @code{fileName}, @code{append = False}
 @item Output:
 -
 @item Return:
@@ -3255,7 +3503,7 @@ file extension. Append to the file if @code{append} is set.
 @section Namespace @code{gmsh/plugin}: plugin functions
 
 @ftable @code
-@item setNumber
+@item gmsh/plugin/setNumber
 Set the numerical option @code{option} to the value @code{value} for plugin
 @code{name}.
 
@@ -3268,7 +3516,7 @@ Set the numerical option @code{option} to the value @code{value} for plugin
 -
 @end table
 
-@item setString
+@item gmsh/plugin/setString
 Set the string option @code{option} to the value @code{value} for plugin
 @code{name}.
 
@@ -3281,7 +3529,7 @@ Set the string option @code{option} to the value @code{value} for plugin
 -
 @end table
 
-@item run
+@item gmsh/plugin/run
 Run the plugin @code{name}.
 
 @table @asis
@@ -3299,7 +3547,7 @@ Run the plugin @code{name}.
 @section Namespace @code{gmsh/graphics}: graphics functions
 
 @ftable @code
-@item draw
+@item gmsh/graphics/draw
 Draw all the OpenGL scenes.
 
 @table @asis
@@ -3317,7 +3565,7 @@ Draw all the OpenGL scenes.
 @section Namespace @code{gmsh/fltk}: FLTK graphical user interface functions
 
 @ftable @code
-@item initialize
+@item gmsh/fltk/initialize
 Create the FLTK graphical user interface. Can only be called in the main thread.
 
 @table @asis
@@ -3329,7 +3577,7 @@ Create the FLTK graphical user interface. Can only be called in the main thread.
 -
 @end table
 
-@item wait
+@item gmsh/fltk/wait
 Wait at most @code{time} seconds for user interface events and return. If
 @code{time} < 0, wait indefinitely. First automatically create the user
 interface if it has not yet been initialized. Can only be called in the main
@@ -3337,14 +3585,14 @@ thread.
 
 @table @asis
 @item Input:
-@code{time}
+@code{time = -1.}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item update
+@item gmsh/fltk/update
 Update the user interface (potentially creating new widgets and windows). First
 automatically create the user interface if it has not yet been initialized. Can
 only be called in the main thread: use @code{awake("update")} to trigger an
@@ -3359,20 +3607,20 @@ update of the user interface from another thread.
 -
 @end table
 
-@item awake
+@item gmsh/fltk/awake
 Awake the main user interface thread and process pending events, and optionally
 perform an action (currently the only @code{action} allowed is "update").
 
 @table @asis
 @item Input:
-@code{action}
+@code{action = ""}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item lock
+@item gmsh/fltk/lock
 Block the current thread until it can safely modify the user interface.
 
 @table @asis
@@ -3384,7 +3632,7 @@ Block the current thread until it can safely modify the user interface.
 -
 @end table
 
-@item unlock
+@item gmsh/fltk/unlock
 Release the lock that was set using lock.
 
 @table @asis
@@ -3396,8 +3644,8 @@ Release the lock that was set using lock.
 -
 @end table
 
-@item run
-Run the event loop of the graphical user interface, i.e. repeatedly calls
+@item gmsh/fltk/run
+Run the event loop of the graphical user interface, i.e. repeatedly call
 @code{wait()}. First automatically create the user interface if it has not yet
 been initialized. Can only be called in the main thread.
 
@@ -3410,20 +3658,32 @@ been initialized. Can only be called in the main thread.
 -
 @end table
 
-@item selectEntities
+@item gmsh/fltk/isAvailable
+Check if the user interface is available (e.g. to detect if it has been closed).
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item gmsh/fltk/selectEntities
 Select entities in the user interface. If @code{dim} is >= 0, return only the
 entities of the specified dimension (e.g. points if @code{dim} == 0).
 
 @table @asis
 @item Input:
-@code{dim}
+@code{dim = -1}
 @item Output:
 @code{dimTags}
 @item Return:
 integer value
 @end table
 
-@item selectElements
+@item gmsh/fltk/selectElements
 Select elements in the user interface.
 
 @table @asis
@@ -3435,7 +3695,7 @@ Select elements in the user interface.
 integer value
 @end table
 
-@item selectViews
+@item gmsh/fltk/selectViews
 Select views in the user interface.
 
 @table @asis
@@ -3453,32 +3713,32 @@ integer value
 @section Namespace @code{gmsh/onelab}: ONELAB server functions
 
 @ftable @code
-@item set
+@item gmsh/onelab/set
 Set one or more parameters in the ONELAB database, encoded in @code{format}.
 
 @table @asis
 @item Input:
-@code{data}, @code{format}
+@code{data}, @code{format = "json"}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item get
+@item gmsh/onelab/get
 Get all the parameters (or a single one if @code{name} is specified) from the
 ONELAB database, encoded in @code{format}.
 
 @table @asis
 @item Input:
-@code{name}, @code{format}
+@code{name = ""}, @code{format = "json"}
 @item Output:
 @code{data}
 @item Return:
 -
 @end table
 
-@item setNumber
+@item gmsh/onelab/setNumber
 Set the value of the number parameter @code{name} in the ONELAB database. Create
 the parameter if it does not exist; update the value if the parameter exists.
 
@@ -3491,7 +3751,7 @@ the parameter if it does not exist; update the value if the parameter exists.
 -
 @end table
 
-@item setString
+@item gmsh/onelab/setString
 Set the value of the string parameter @code{name} in the ONELAB database. Create
 the parameter if it does not exist; update the value if the parameter exists.
 
@@ -3504,7 +3764,7 @@ the parameter if it does not exist; update the value if the parameter exists.
 -
 @end table
 
-@item getNumber
+@item gmsh/onelab/getNumber
 Get the value of the number parameter @code{name} from the ONELAB database.
 Return an empty vector if the parameter does not exist.
 
@@ -3517,7 +3777,7 @@ Return an empty vector if the parameter does not exist.
 -
 @end table
 
-@item getString
+@item gmsh/onelab/getString
 Get the value of the string parameter @code{name} from the ONELAB database.
 Return an empty vector if the parameter does not exist.
 
@@ -3530,26 +3790,26 @@ Return an empty vector if the parameter does not exist.
 -
 @end table
 
-@item clear
+@item gmsh/onelab/clear
 Clear the ONELAB database, or remove a single parameter if @code{name} is given.
 
 @table @asis
 @item Input:
-@code{name}
+@code{name = ""}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item run
+@item gmsh/onelab/run
 Run a ONELAB client. If @code{name} is provided, create a new ONELAB client with
 name @code{name} and executes @code{command}. If not, try to run a client that
 might be linked to the processed input files.
 
 @table @asis
 @item Input:
-@code{name}, @code{command}
+@code{name = ""}, @code{command = ""}
 @item Output:
 -
 @item Return:
@@ -3562,19 +3822,19 @@ might be linked to the processed input files.
 @section Namespace @code{gmsh/logger}: information logging functions
 
 @ftable @code
-@item write
+@item gmsh/logger/write
 Write a @code{message}. @code{level} can be "info", "warning" or "error".
 
 @table @asis
 @item Input:
-@code{message}, @code{level}
+@code{message}, @code{level = "info"}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item start
+@item gmsh/logger/start
 Start logging messages.
 
 @table @asis
@@ -3586,7 +3846,7 @@ Start logging messages.
 -
 @end table
 
-@item get
+@item gmsh/logger/get
 Get logged messages.
 
 @table @asis
@@ -3598,7 +3858,7 @@ Get logged messages.
 -
 @end table
 
-@item stop
+@item gmsh/logger/stop
 Stop logging messages.
 
 @table @asis
@@ -3610,7 +3870,7 @@ Stop logging messages.
 -
 @end table
 
-@item time
+@item gmsh/logger/getWallTime
 Return wall clock time.
 
 @table @asis
@@ -3622,7 +3882,7 @@ Return wall clock time.
 floating point value
 @end table
 
-@item cputime
+@item gmsh/logger/getCpuTime
 Return CPU time.
 
 @table @asis

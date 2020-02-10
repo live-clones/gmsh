@@ -1,9 +1,10 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include "PView.h"
 #include "PViewDataList.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
@@ -59,6 +60,25 @@ void PViewDataList::setXYZV(std::vector<double> &x, std::vector<double> &y,
   }
   finalize();
 }
+
+void PViewDataList::addStep(std::vector<double> &y)
+{
+  if(NbSP != (int)y.size()) {
+    Msg::Error("Wrong number of values while adding step in list-based view");
+    return;
+  }
+  // This is not very efficient, but well... ;-)
+  std::vector<double> tmp;
+  int stride = SP.size() / NbSP;
+  for(int i = 0; i < NbSP; i++) {
+    for(int j = 0; j < stride; j++)
+      tmp.push_back(SP[i * stride + j]);
+    tmp.push_back(y[i]);
+  }
+  SP = tmp;
+  finalize();
+}
+
 
 bool PViewDataList::finalize(bool computeMinMax,
                              const std::string &interpolationScheme)

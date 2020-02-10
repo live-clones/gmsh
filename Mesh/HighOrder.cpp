@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,6 +10,7 @@
 #include <sstream>
 #include <vector>
 #include "GmshConfig.h"
+#include "GModel.h"
 #include "HighOrder.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -24,11 +25,21 @@
 #include "BasisFactory.h"
 #include "InnerVertexPlacement.h"
 #include "Context.h"
+#include "MFace.h"
 
 #if defined(HAVE_OPTHOM)
-#include "HighOrderMeshFastCurving.h"
 #include "HighOrderMeshPeriodicity.h"
 #endif
+
+// for each pair of vertices (an edge), we build a list of vertices that are the
+// high order representation of the edge. The ordering of vertices in the list
+// is supposed to be (by construction) consistent with the ordering of the pair.
+typedef std::map<std::pair<MVertex *, MVertex *>, std::vector<MVertex *> >
+  edgeContainer;
+
+// for each face (a list of vertices) we build a list of vertices that are the
+// high order representation of the face
+typedef std::map<MFace, std::vector<MVertex *>, MFaceLessThan> faceContainer;
 
 // Functions that help optimizing placement of points on geometry
 
@@ -749,7 +760,7 @@ static void getFaceVertices(GFace *gf, MElement *ele,
 
   std::vector<MVertex *> boundaryVertices;
   {
-    int nCorner = ele->getNumPrimaryVertices();
+    std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
     ele->getVertices(boundaryVertices);
     boundaryVertices.resize(nCorner);
@@ -891,7 +902,7 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
 {
   std::vector<MVertex *> boundaryVertices;
   {
-    int nCorner = ele->getNumPrimaryVertices();
+    std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
     ele->getVertices(boundaryVertices);
     boundaryVertices.resize(nCorner);
@@ -1202,10 +1213,10 @@ static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
   std::vector<T *> elements1;
   for(std::size_t i = 0; i < elements.size(); i++) {
     T *ele = elements[i];
-    int n = ele->getNumPrimaryVertices();
+    std::size_t n = ele->getNumPrimaryVertices();
     std::vector<MVertex *> v1;
     v1.reserve(n);
-    for(int j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
+    for(std::size_t j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
     elements1.push_back(new T(v1, 0, ele->getPartition()));
     delete ele;
   }
@@ -1230,7 +1241,7 @@ static void updateHighOrderVertices(GEntity *e,
   e->deleteVertexArrays();
 }
 
-static void updatePeriodicEdgesAndFaces(GModel *m)
+void FixPeriodicMesh(GModel *m)
 {
   // Edges
 
@@ -1250,7 +1261,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       Msg::Info("Reconstructing periodicity for curve connection %d - %d",
                 tgt->tag(), src->tag());
 
-      std::map<MEdge, MLine *, Less_Edge> srcEdges;
+      std::map<MEdge, MLine *, MEdgeLessThan> srcEdges;
       for(std::size_t i = 0; i < src->getNumMeshElements(); i++) {
         MLine *srcLine = dynamic_cast<MLine *>(src->getMeshElement(i));
         if(!srcLine) {
@@ -1282,7 +1293,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
             vtcs[iVtx] = tIter->second;
         }
 
-        std::map<MEdge, MLine *, Less_Edge>::iterator srcIter =
+        std::map<MEdge, MLine *, MEdgeLessThan>::iterator srcIter =
           srcEdges.find(MEdge(vtcs[0], vtcs[1]));
         if(srcIter == srcEdges.end()) {
           Msg::Error("Can't find periodic counterpart of mesh edge %d-%d "
@@ -1294,7 +1305,6 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         }
         else {
           MLine *srcLine = srcIter->second;
-          if(tgtLine->getNumVertices() != srcLine->getNumVertices()) throw;
           for(std::size_t i = 2; i < tgtLine->getNumVertices(); i++)
             p2p[tgtLine->getVertex(i)] = srcLine->getVertex(i);
         }
@@ -1328,7 +1338,14 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHOPoints;
       p2p.clear();
 
-      std::map<MFace, MElement *, Less_Face> srcFaces;
+      if(tgt->getNumMeshElements() && v2v.empty()){
+        Msg::Info("No periodic vertices in surface %d (maybe due to a "
+                  "structured mesh constraint on the target surface)",
+                  tgt->tag());
+        continue;
+      }
+
+      std::map<MFace, MElement *, MFaceLessThan> srcFaces;
 
       for(std::size_t i = 0; i < src->getNumMeshElements(); ++i) {
         MElement *srcElmt = src->getMeshElement(i);
@@ -1363,8 +1380,9 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
             vtcs.push_back(tIter->second);
         }
 
-        std::map<MFace, MElement *, Less_Face>::iterator srcIter =
-          srcFaces.find(MFace(vtcs));
+        MFace tgtFace(vtcs);
+        std::map<MFace, MElement *, MFaceLessThan>::iterator srcIter =
+          srcFaces.find(tgtFace);
         if(srcIter == srcFaces.end()) {
           std::ostringstream faceDef;
           for(int iVtx = 0; iVtx < nbVtcs; iVtx++)
@@ -1376,9 +1394,15 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         }
         else {
           MElement *srcElmt = srcIter->second;
-          for(std::size_t i = nbVtcs; i < srcElmt->getNumVertices(); i++) {
-            p2p[tgtElmt->getVertex(i)] = srcElmt->getVertex(i);
+          // Warning: this check is made in case the source and target surface
+          // meshes are oriented differently (e.g. to be consistent with the
+          // underlying orientation of the geometrical surfaces)
+          bool revert = dot(tgtFace.normal(), srcIter->first.normal()) < 0;
+          if(revert) srcElmt->reverse();
+          for(std::size_t j = nbVtcs; j < srcElmt->getNumVertices(); j++) {
+            p2p[tgtElmt->getVertex(j)] = srcElmt->getVertex(j);
           }
+          if(revert) srcElmt->reverse();
         }
       }
     }
@@ -1425,8 +1449,6 @@ void SetOrder1(GModel *m, bool onlyVisible)
     updateHighOrderVertices(*it, newHOVert, onlyVisible);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     updateHighOrderVertices(*it, newHOVert, onlyVisible);
-
-  updatePeriodicEdgesAndFaces(m);
 }
 
 void checkHighOrderTriangles(const char *cc, GModel *m,
@@ -1579,21 +1601,20 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   faceContainer faceVertices;
   std::map<GEntity *, std::vector<MVertex *> > newHOVert;
 
-  Msg::ResetProgressMeter();
-
-  int counter = 0,
-      nTot = m->getNumEdges() + m->getNumFaces() + m->getNumRegions();
+  int counter = 0;
+  int nTot = m->getNumEdges() + m->getNumFaces() + m->getNumRegions();
+  Msg::StartProgressMeter(nTot);
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     Msg::Info("Meshing curve %d order %d", (*it)->tag(), order);
-    Msg::ProgressMeter(++counter, nTot, false, msg);
+    Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, linear, nPts);
   }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     Msg::Info("Meshing surface %d order %d", (*it)->tag(), order);
-    Msg::ProgressMeter(++counter, nTot, false, msg);
+    Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, linear,
                  incomplete, nPts);
@@ -1602,12 +1623,14 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     Msg::Info("Meshing volume %d order %d", (*it)->tag(), order);
-    Msg::ProgressMeter(++counter, nTot, false, msg);
+    Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, incomplete,
                  nPts);
     if((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
   }
+
+  Msg::StopProgressMeter();
 
   // Update all high order vertices
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
@@ -1617,154 +1640,13 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     updateHighOrderVertices(*it, newHOVert[*it], onlyVisible);
 
-  if(CTX::instance()->mesh.hoOptimize) {
-#if defined(HAVE_OPTHOM)
-    // Determine mesh dimension and curve BL elements
-    FastCurvingParameters p;
-    p.dim = 0;
-    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
-    p.thickness = false;
-    // p.optimizeGeometry = true;
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
-      if((*it)->getNumMeshElements() > 0) {
-        p.dim = 3;
-        break;
-      }
-    if(p.dim == 0)
-      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-        if((*it)->getNumMeshElements() > 0) {
-          p.dim = 2;
-          break;
-        }
-    if(p.dim == 2) HighOrderMeshFastCurving(GModel::current(), p, true);
-#else
-  // Msg::Error("High-order mesh optimization requires the OPTHOM module");
-#endif
-  }
-
-  updatePeriodicEdgesAndFaces(m);
-
   double t2 = Cpu();
 
   std::vector<MElement *> bad;
   double worst;
   checkHighOrderTriangles("Surface mesh", m, bad, worst);
   checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
-  // FIXME : add other element check
+  // FIXME: add other element check
 
   Msg::StatusBar(true, "Done meshing order %d (%g s)", order, t2 - t1);
-}
-
-void SetHighOrderComplete(GModel *m, bool onlyVisible)
-{
-  faceContainer faceVertices;
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    if(onlyVisible && !(*it)->getVisibility()) continue;
-    std::vector<MVertex *> dumNewHOVert;
-    std::vector<MTriangle *> newT;
-    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
-      MTriangle *t = (*it)->triangles[i];
-      std::vector<MVertex *> vv;
-      for(std::size_t j = 3; j < t->getNumVertices() - t->getNumFaceVertices();
-          j++)
-        vv.push_back(t->getVertex(j));
-      int nPts = t->getPolynomialOrder() - 1;
-      getFaceVertices(*it, t, vv, dumNewHOVert, faceVertices, false, nPts);
-      newT.push_back(new MTriangleN(t->getVertex(0), t->getVertex(1),
-                                    t->getVertex(2), vv, nPts + 1, 0,
-                                    t->getPartition()));
-      delete t;
-    }
-    (*it)->triangles = newT;
-
-    std::vector<MQuadrangle *> newQ;
-    for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++) {
-      MQuadrangle *t = (*it)->quadrangles[i];
-
-      std::vector<MVertex *> vv;
-      vv.reserve(t->getNumVertices() - t->getNumFaceVertices() - 4);
-
-      for(std::size_t j = 4; j < t->getNumVertices() - t->getNumFaceVertices();
-          j++)
-        vv.push_back(t->getVertex(j));
-
-      int nPts = t->getPolynomialOrder() - 1;
-      getFaceVertices(*it, t, vv, dumNewHOVert, faceVertices, false, nPts);
-      newQ.push_back(new MQuadrangleN(t->getVertex(0), t->getVertex(1),
-                                      t->getVertex(2), t->getVertex(3), vv,
-                                      nPts + 1, 0, t->getPartition()));
-      delete t;
-    }
-    (*it)->quadrangles = newQ;
-
-    std::set<MVertex *> newV;
-    for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i) {
-      MElement *e = (*it)->getMeshElement(i);
-      for(std::size_t j = 0; j < e->getNumVertices(); j++)
-        newV.insert(e->getVertex(j));
-    }
-    (*it)->mesh_vertices.clear();
-    (*it)->mesh_vertices.insert((*it)->mesh_vertices.begin(), newV.begin(),
-                                newV.end());
-  }
-
-  updatePeriodicEdgesAndFaces(m);
-}
-
-void SetHighOrderIncomplete(GModel *m, bool onlyVisible)
-{
-  std::set<MVertex *> toDelete;
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    if(onlyVisible && !(*it)->getVisibility()) continue;
-    std::vector<MTriangle *> newT;
-
-    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
-      MTriangle *t = (*it)->triangles[i];
-      std::vector<MVertex *> vt;
-      int order = t->getPolynomialOrder();
-      for(std::size_t j = 3; j < t->getNumVertices() - t->getNumFaceVertices();
-          j++)
-        vt.push_back(t->getVertex(j));
-      for(std::size_t j = t->getNumVertices() - t->getNumFaceVertices();
-          j < t->getNumVertices(); j++)
-        toDelete.insert(t->getVertex(j));
-      newT.push_back(new MTriangleN(t->getVertex(0), t->getVertex(1),
-                                    t->getVertex(2), vt, order, 0,
-                                    t->getPartition()));
-      delete t;
-    }
-    (*it)->triangles = newT;
-
-    std::vector<MQuadrangle *> newQ;
-    for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++) {
-      MQuadrangle *q = (*it)->quadrangles[i];
-      std::vector<MVertex *> vt;
-      int nPts = q->getPolynomialOrder() - 1;
-      for(std::size_t j = 4; j < q->getNumVertices() - q->getNumFaceVertices();
-          j++)
-        vt.push_back(q->getVertex(j));
-      for(std::size_t j = q->getNumVertices() - q->getNumFaceVertices();
-          j < q->getNumVertices(); j++)
-        toDelete.insert(q->getVertex(j));
-      newQ.push_back(new MQuadrangleN(q->getVertex(0), q->getVertex(1),
-                                      q->getVertex(2), q->getVertex(3), vt,
-                                      nPts + 1, 0, q->getPartition()));
-      delete q;
-    }
-    (*it)->quadrangles = newQ;
-
-    std::vector<MVertex *> newV;
-    int numd = 0;
-    for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); ++i) {
-      if(toDelete.find((*it)->mesh_vertices[i]) == toDelete.end())
-        newV.push_back((*it)->mesh_vertices[i]);
-      else {
-        delete(*it)->mesh_vertices[i];
-        numd++;
-      }
-    }
-    (*it)->mesh_vertices = newV;
-  }
-
-  updatePeriodicEdgesAndFaces(m);
 }

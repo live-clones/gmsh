@@ -220,7 +220,7 @@ HXTStatus hxtTetReorder(HXTMesh* mesh)
   for (uint64_t i=0; i<nTet; i++) {
     uint64_t index = pair[i].v[1];
     uint32_t* oldNode = mesh->tetrahedra.node + 4*index;
-    #pragma omp simd aligned(newNode:SIMD_ALIGN) aligned(oldNode:16)
+    #pragma omp simd aligned(newNode:SIMD_ALIGN)
     for (unsigned j=0; j<4; j++)
       newNode[i*4+j] = oldNode[j]; 
   }
@@ -334,6 +334,12 @@ HXTStatus hxtTetVerify(HXTMesh* mesh)
 
       if(neigh>=mesh->tetrahedra.num) {
         HXT_ERROR_MSG(HXT_STATUS_ERROR, "%uth neighbor of tet %lu does not exist", j, i);
+        errorOccured=1;
+        continue;
+      }
+
+      if(getDeletedFlag(mesh, neigh)) {
+        HXT_ERROR_MSG(HXT_STATUS_ERROR, "%uth neighbor of tet %lu is deleted", j, i);
         errorOccured=1;
         continue;
       }

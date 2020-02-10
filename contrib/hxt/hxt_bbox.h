@@ -1,24 +1,20 @@
-#ifndef        _HXT_BBOX_H_
+#ifndef _HXT_BBOX_H_
 #define _HXT_BBOX_H_
 
+#include <hxt_tools.h> // for stdint.h and hxtDeclareAligned32 only
 #include <float.h>
-#include "hxt_api.h"
-#include "hxt_mesh.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+// the fourth member is unused...
 typedef struct hxtBboxStruct{
-    double hxtDeclareAligned min[3];
-    double hxtDeclareAligned max[3];
+  double hxtDeclareAligned32 min[3];
+  uint64_t pad_u64; // padding U can use however you want
+  double hxtDeclareAligned32 max[3];
+  double pad_double; // padding U can use however you want
 } HXTBbox;
-
-// /* create a new bounding box */
-// HXTStatus hxtBboxCreate(HXTBbox** bboxP);
-
-// /* delete a bounding box */
-// HXTStatus hxtBboxDelete(HXTBbox** bboxP);
 
 static inline void hxtBboxInit(HXTBbox* bbox){
   bbox->min[0] = DBL_MAX;
@@ -29,14 +25,45 @@ static inline void hxtBboxInit(HXTBbox* bbox){
   bbox->max[2] = -DBL_MAX;
 }
 
+static inline void hxtBboxFrom(HXTBbox* bbox,
+                               double* coord)
+{
+  for (unsigned i=0; i<3; i++)
+  {
+    bbox->min[i] = coord[i];
+    bbox->max[i] = coord[i];
+  }
+}
+
 /* update the bounding box with one new vertex */
-HXTStatus hxtBboxAddOne(HXTBbox* bbox, double* coord);
+static inline void hxtBboxAddOne(HXTBbox* bbox,
+                                 double* coord)
+{
+  for (unsigned i=0; i<3; i++)
+  {
+    if(coord[i]<bbox->min[i])
+      bbox->min[i] = coord[i];
+    if(coord[i]>bbox->max[i])
+      bbox->max[i] = coord[i];
+  }
+}
 
 /* update the bounding box with an array of n vertices at once (far quicker) */
-HXTStatus hxtBboxAdd(HXTBbox* bbox, double* coord, uint32_t n);
+void hxtBboxAdd(HXTBbox* bbox, double* coord, const uint32_t n);
+
+static inline int hxtBboxesIntersect(HXTBbox* bb0, HXTBbox* bb1) {
+  if(bb0->min[0] > bb1->max[0] ||
+     bb0->min[1] > bb1->max[1] ||
+     bb0->min[2] > bb1->max[2] ||
+     bb0->max[0] < bb1->min[0] ||
+     bb0->max[1] < bb1->min[1] ||
+     bb0->max[2] < bb1->min[2])
+    return 0;
+  return 1;
+}
 
 /* merge two bbox  (result can be a pointer to bbox1 or bbox2) */
-HXTStatus hxtBboxMerge(HXTBbox* bbox1, HXTBbox* bbox2, HXTBbox* bboxResult);
+// void hxtBboxMerge(HXTBbox* bbox1, HXTBbox* bbox2, HXTBbox* bboxResult);
 
 #ifdef __cplusplus
 }

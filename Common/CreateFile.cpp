@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -331,6 +331,15 @@ void CreateOutputFile(const std::string &fileName, int format,
        CTX::instance()->mesh.stlOneSolidPerSurface);
     break;
 
+  case FORMAT_X3D:
+    GModel::current()->writeX3D
+      (name, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.scalingFactor,
+       CTX::instance()->print.x3dSurfaces,
+       CTX::instance()->print.x3dEdges,
+       CTX::instance()->print.x3dVertices);
+    break;
+    
   case FORMAT_VRML:
     GModel::current()->writeVRML
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
@@ -423,8 +432,7 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_CGNS:
     GModel::current()->writeCGNS
-      (name, CTX::instance()->mesh.zoneDefinition, CTX::instance()->cgnsOptions,
-       CTX::instance()->mesh.scalingFactor);
+      (name, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_MED:

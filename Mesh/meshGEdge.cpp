@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -324,8 +324,9 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
 void deMeshGEdge::operator()(GEdge *ge)
 {
   if(ge->geomType() == GEntity::DiscreteCurve){
-    if(!static_cast<discreteEdge *>(ge)->haveParametrization())
+    if(!static_cast<discreteEdge *>(ge)->haveParametrization()){
       return;
+    }
   }
   ge->deleteMesh();
   ge->meshStatistics.status = GEdge::PENDING;
@@ -542,10 +543,16 @@ void meshGEdge::operator()(GEdge *ge)
 
   ge->model()->setCurrentMeshEntity(ge);
 
-  if(ge->degenerate(1)) return;
-  if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
-  if(ge->meshAttributes.method == MESH_NONE) return;
-  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
+  if (ge->degenerate(1)) {
+    ge->meshStatistics.status = GEdge::DONE;
+    return;
+  }
+
+  if ((ge->geomType() == GEntity::BoundaryLayerCurve) ||
+     (ge->meshAttributes.method == MESH_NONE) ||
+     (CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility())) {
+    return;
+  }
 
   deMeshGEdge dem;
   dem(ge);
@@ -555,34 +562,14 @@ void meshGEdge::operator()(GEdge *ge)
   if(ge->getMeshMaster() != ge) {
     GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
     if(gef->meshStatistics.status == GEdge::PENDING) return;
-    Msg::Info("Meshing curve %d (%s) as a copy of %d", ge->tag(),
+    Msg::Info("Meshing curve %d (%s) as a copy of curve %d", ge->tag(),
               ge->getTypeString().c_str(), ge->getMeshMaster()->tag());
     copyMesh(gef, ge, ge->masterOrientation);
     ge->meshStatistics.status = GEdge::DONE;
     return;
   }
 
-  if(ge->model()->getNumEdges() > 100000) {
-    if(ge->tag() % 100000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else if(ge->model()->getNumEdges() > 10000) {
-    if(ge->tag() % 10000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else if(ge->model()->getNumEdges() > 1000) {
-    if(ge->tag() % 1000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else {
-    Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
-  }
+  Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
 
   // compute bounds
   Range<double> bounds = ge->parBounds(0);
@@ -653,7 +640,7 @@ void meshGEdge::operator()(GEdge *ge)
     }
     if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
       a = smoothPrimitive(ge, std::sqrt(CTX::instance()->mesh.smoothRatio),
-                          Points);
+			  Points);
     filterMinimumN = ge->minimumMeshSegments() + 1;
     N = std::max(filterMinimumN, (int)(a + 1.99));
   }

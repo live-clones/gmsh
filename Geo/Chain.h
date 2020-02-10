@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -125,8 +125,8 @@ private:
   inline void _sortVertexIndices();
   bool _equalVertices(const std::vector<MVertex *> &v2) const;
 
-  static std::map<GEntity *, std::set<MVertex *, MVertexLessThanNum>,
-                  GEntityLessThan>
+  static std::map<GEntity *, std::set<MVertex *, MVertexPtrLessThan>,
+                  GEntityPtrLessThan>
     _vertexCache;
 
 public:

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -275,7 +275,8 @@ static void classify_cb(Fl_Widget *w, void *data)
   if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
     computeEdgeCut(GModel::current(), e->selected->lines, 100000);
   computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
-  classifyFaces(GModel::current());
+  double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
+  classifyFaces(GModel::current(), threshold);
 
   // remove selected, but do not delete its elements
   if(e->selected) {

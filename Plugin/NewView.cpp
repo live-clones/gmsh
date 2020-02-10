@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -56,7 +56,7 @@ StringXString *GMSH_NewViewPlugin::getOptionStr(int iopt)
 PView *GMSH_NewViewPlugin::execute(PView *v)
 {
   int numComp = (int)NewViewOptions_Number[0].def;
-  int value = NewViewOptions_Number[1].def;
+  double value = NewViewOptions_Number[1].def;
   int tag = (int)NewViewOptions_Number[2].def;
   std::string type = NewViewOptions_String[0].def;
 

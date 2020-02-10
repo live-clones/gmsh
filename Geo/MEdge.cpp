@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,10 +15,10 @@
 // remove that when MElementCut is removed
 bool MEdge::isInside(MVertex *v) const
 {
-  double tol = MVertexLessThanLexicographic::getTolerance();
+  double tol = MVertexPtrLessThanLexicographic::getTolerance();
   MVertex *v0 = _v[0];
   MVertex *v1 = _v[1];
-  MVertexLessThanLexicographic lt;
+  MVertexPtrLessThanLexicographic lt;
   if(lt(v0, v1)) {
     v0 = _v[1];
     v1 = _v[0];

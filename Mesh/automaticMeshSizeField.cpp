@@ -103,7 +103,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   HXTBbox           bbox_mesh;
   hxtBboxInit(&bbox_mesh);
   // Ajout de tous les points du maillages à la bounding box
-  HXT_CHECK(hxtBboxAdd(&bbox_mesh, mesh->vertices.coord, mesh->vertices.num));
+  hxtBboxAdd(&bbox_mesh, mesh->vertices.coord, mesh->vertices.num);
   for(int i = 0; i < 3; ++i){
     bbox_vertices[i  ] = 1.3*bbox_mesh.min[i];
     bbox_vertices[i+3] = 1.3*bbox_mesh.max[i];

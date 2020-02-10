@@ -331,8 +331,10 @@ static HXTStatus matchVolumes(HXTMesh* mesh, uint16_t* numSurfacesPerVolume, uin
                               mesh->brep.surfacesPerVolume, theirPairs) );
 
   // now that we sorted every volumes, see if they match
-  // ourPair contains all volumes, while ourPairs can skip some volumes...
+  // ourPairs contains all volumes, while theirPairs can skip some volumes...
   int ourIndex = 0;
+
+  // TODO: maybe volumes that do not correspond should be set to UINT16_MAX
   int volNotCorresponding = theirNumVolumes;
   for (int theirIndex=0; theirIndex<theirNumVolumes; theirIndex++) {
     while (1) {
@@ -457,6 +459,13 @@ HXTStatus setFlagsToProcessOnlyVolumesInBrep(HXTMesh* mesh)
   for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
     if(mesh->tetrahedra.colors[i]>=mesh->brep.numVolumes) {
       setProcessedFlag(mesh, i);
+    }
+    else {
+#ifndef NDEBUG
+      if(mesh->tetrahedra.node[4*i+3]==HXT_GHOST_VERTEX)
+        exit( HXT_ERROR_MSG(HXT_STATUS_ERROR, "ghost tetrahedra should have exterior color") );
+#endif
+      unsetProcessedFlag(mesh, i);
     }
   }
 

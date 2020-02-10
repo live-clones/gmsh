@@ -12,6 +12,11 @@ extern "C" {
 * \author Célestin Marot
 */
 
+/* usefull macros */
+#define ABS(x) ((x) >= 0 ? (x) : -(x))
+#define MAX(x,y) ((x)>(y) ? (x) : (y))
+#define MIN(x,y) ((x)<(y) ? (x) : (y))
+
 /**
  * Reserve memory space for tetrahedra assuming ntet tetrahedra will be added to the triangulation
  * it is efficient to give ntet = ~8 times the number of vertices to be added
@@ -26,10 +31,6 @@ static inline HXTStatus hxtTetrahedraReserve(HXTMesh* mesh, uint64_t totalTet){
     mesh->tetrahedra.size = totalTet;
   }
   return HXT_STATUS_OK;
-}
-
-static inline HXTStatus hxtTetrahedraDoubleSize(HXTMesh* mesh) {
-  return hxtTetrahedraReserve(mesh, 2*mesh->tetrahedra.num);
 }
 
 

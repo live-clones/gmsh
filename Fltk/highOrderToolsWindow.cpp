@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -31,24 +31,6 @@
 #include "HighOrderMeshFastCurving.h"
 #endif
 
-// static void change_completeness_cb(Fl_Widget *w, void *data)
-//{
-//  highOrderToolsWindow *o = FlGui::instance()->highordertools;
-//  bool onlyVisible = (bool)o->butt[1]->value();
-//  if (!o->complete){
-//    // BOF BOF BOF -- CG
-//    SetHighOrderComplete(GModel::current(), onlyVisible);
-//    o->complete = 1;
-//  }
-//  else if (o->complete){
-//    // BOF BOF BOF -- CG
-//    SetHighOrderIncomplete(GModel::current(), onlyVisible);
-//    o->complete = 0;
-//  }
-//  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-//  drawContext::global()->draw();
-//}
-
 static void highordertools_runp_cb(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
@@ -62,6 +44,8 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
     SetOrder1(GModel::current());
   else
     SetOrderN(GModel::current(), order, linear, incomplete, onlyVisible);
+
+  FixPeriodicMesh(GModel::current());
 
   /*
   distanceFromMeshToGeometry_t dist;
@@ -231,6 +215,8 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
 #else
   Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
+
+  FixPeriodicMesh(GModel::current());
 
   CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();

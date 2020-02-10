@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -482,9 +482,10 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_occ_fix_small_edges(0, GMSH_SET, o->geo.butt[11]->value());
   opt_geometry_occ_fix_small_faces(0, GMSH_SET, o->geo.butt[12]->value());
   opt_geometry_occ_sew_faces(0, GMSH_SET, o->geo.butt[13]->value());
+  opt_geometry_occ_make_solids(0, GMSH_SET, o->geo.butt[14]->value());
   opt_geometry_occ_scaling(0, GMSH_SET, o->geo.value[20]->value());
 
-  opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
+  opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[15]->value());
 
   opt_geometry_normals(0, GMSH_SET, o->geo.value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, o->geo.value[1]->value());
@@ -1276,6 +1277,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
                               opt_view_color_prisms(current, GMSH_GET, 0));
         opt_view_color_pyramids(i, GMSH_SET,
                                 opt_view_color_pyramids(current, GMSH_GET, 0));
+        opt_view_color_trihedra(i, GMSH_SET,
+                                opt_view_color_trihedra(current, GMSH_GET, 0));
         opt_view_color_tangents(i, GMSH_SET,
                                 opt_view_color_tangents(current, GMSH_GET, 0));
         opt_view_color_normals(i, GMSH_SET,
@@ -1286,6 +1289,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
                               opt_view_color_text3d(current, GMSH_GET, 0));
         opt_view_color_axes(i, GMSH_SET,
                             opt_view_color_axes(current, GMSH_GET, 0));
+        opt_view_color_background2d(i, GMSH_SET,
+                                    opt_view_color_background2d(current, GMSH_GET, 0));
       }
 
       // colorbar window
@@ -2033,7 +2038,12 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[13]->type(FL_TOGGLE_BUTTON);
       geo.butt[13]->callback(geometry_options_ok_cb);
 
-      geo.value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH,
+      geo.butt[14] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Fix shells and make solids");
+      geo.butt[14]->type(FL_TOGGLE_BUTTON);
+      geo.butt[14]->callback(geometry_options_ok_cb);
+
+      geo.value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
                                          "Global model scaling");
       geo.value[20]->align(FL_ALIGN_RIGHT);
       geo.value[20]->callback(geometry_options_ok_cb);
@@ -2044,6 +2054,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[11]->deactivate();
       geo.butt[12]->deactivate();
       geo.butt[13]->deactivate();
+      geo.butt[14]->deactivate();
       geo.value[20]->deactivate();
 #endif
       o->end();
@@ -2257,10 +2268,10 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[9]->tooltip("(Alt+w)");
       geo.butt[9]->callback(geometry_options_ok_cb);
 
-      geo.butt[14] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
+      geo.butt[15] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
                                          "Use two-side lighting");
-      geo.butt[14]->type(FL_TOGGLE_BUTTON);
-      geo.butt[14]->callback(geometry_options_ok_cb);
+      geo.butt[15]->type(FL_TOGGLE_BUTTON);
+      geo.butt[15]->callback(geometry_options_ok_cb);
 
       geo.butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
                                          "Highlight orphan entities");
@@ -3398,7 +3409,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       view.butt[26] = new Fl_Check_Button(L + width - (int)(0.85 * IW) - 2 * WB,
                                           2 * WB + 4 * BH, (int)(0.85 * IW), BH,
-                                          "Stipple in 2D");
+                                          "Stipple");
       view.butt[26]->type(FL_TOGGLE_BUTTON);
       view.butt[26]->callback(view_options_ok_cb);
 
@@ -3867,6 +3878,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_color_text2d(index, GMSH_GUI, 0);
   opt_view_color_text3d(index, GMSH_GUI, 0);
   opt_view_color_axes(index, GMSH_GUI, 0);
+  opt_view_color_background2d(index, GMSH_GUI, 0);
 
   view.colorbar->update(data->getName().c_str(), data->getMin(), data->getMax(),
                         &opt->colorTable, &v->getChanged());

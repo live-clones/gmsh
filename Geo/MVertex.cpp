@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -405,12 +405,12 @@ void MVertex::writeSU2(FILE *fp, int dim, double scalingFactor)
             y() * scalingFactor, z() * scalingFactor, _index - 1);
 }
 
-double MVertexLessThanLexicographic::tolerance = 1.e-6;
+double MVertexPtrLessThanLexicographic::tolerance = 1.e-6;
 
-double MVertexLessThanLexicographic::getTolerance() { return tolerance; }
+double MVertexPtrLessThanLexicographic::getTolerance() { return tolerance; }
 
-bool MVertexLessThanLexicographic::operator()(const MVertex *v1,
-                                              const MVertex *v2) const
+bool MVertexPtrLessThanLexicographic::operator()(const MVertex *v1,
+                                                 const MVertex *v2) const
 {
   // you should not use this unless you know what you are doing; to create
   // unique vertices, use MVertexRTree
