@@ -48,6 +48,7 @@
 #include "HierarchicalBasisH1Brick.h"
 #include "HierarchicalBasisH1Tetra.h"
 #include "HierarchicalBasisH1Pri.h"
+#include "HierarchicalBasisH1Point.h"
 #include "HierarchicalBasisHcurlLine.h"
 #include "HierarchicalBasisHcurlQuad.h"
 #include "HierarchicalBasisHcurlBrick.h"
@@ -2142,6 +2143,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     case TYPE_LIN: {
       basis = new HierarchicalBasisH1Line(basisOrder);
     } break;
+    case TYPE_PNT: {
+      basis = new HierarchicalBasisH1Point();
+    } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
@@ -2410,9 +2414,11 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
     GEntity *ge = entities[0];
     MElement *e = ge->getMeshElementByType(familyType, 0);
     keys.push_back(std::pair<int, std::size_t>(0, e->getVertex(0)->getNum()));
+    if(generateCoord) {
     coord.push_back(e->getVertex(0)->x());
     coord.push_back(e->getVertex(0)->y());
     coord.push_back(e->getVertex(0)->z());
+    }
   }
 
   else {
@@ -2657,6 +2663,9 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     } break;
     case TYPE_LIN: {
       basis = new HierarchicalBasisH1Line(basisOrder);
+    } break;
+    case TYPE_PNT: {
+      basis = new HierarchicalBasisH1Point();
     } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
