@@ -2848,7 +2848,7 @@ public:
       std::string posout = "/tmp/H.pos";
       d->writePOS(posout, false, true, false);
       GmshMergeFile(posout);
-      // return -1;
+      return -1;
     }
 #endif
 
@@ -4138,6 +4138,13 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
     size_max *= CTX::instance()->mesh.lcFactor;
   }
+  if (size_min == 0 && size_max == 1.e22) {
+    SBoundingBox3d bbox = gm->bounds();
+    size_min = 0.1 * bbox.diag();
+    Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal");
+  }
+
+  /* Generation */
   QMT::QMesh Q;
   bool okg = QMT::generate_quad_mesh_from_gmsh_colored_triangulation(
     quad_layout_name, H_tag, size_min, size_max, Q);
@@ -4145,6 +4152,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     Msg::Error("Failed to generate quad mesh");
     return -1;
   }
+
   bool oke1 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_init");
   if (!oke1) {
     Msg::Error("Failed to export quad mesh");
@@ -4152,7 +4160,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   }
   GmshWriteFile(gm->getName()+"_qmesh_init.msh");
 
-
+  /* Simplification */
   double hc = 0.9 * size_min;
   if (size_min == 0.) hc = 0.9 * size_max;
   bool oks = QMT::simplify_quad_mesh(Q, hc);
@@ -4160,20 +4168,27 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     Msg::Error("Failed to simplify quad mesh");
     return -1;
   }
-
   bool oke2 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_simplified");
   if (!oke2) {
     Msg::Error("Failed to export quad mesh");
     return -1;
   }
+  GmshWriteFile(gm->getName()+"_qmesh_simplified.msh");
 
+  /* Smoothing */
   bool oksm = QMT::smooth_quad_mesh(Q, 10);
   if (!oksm) {
     Msg::Error("Failed to smooth quad mesh");
     return -1;
   }
 
-  GmshWriteFile(gm->getName()+"_qmesh_simplified.msh");
+  bool oke3 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_smoothed");
+  if (!oke3) {
+    Msg::Error("Failed to export quad mesh");
+    return -1;
+  }
+  GmshWriteFile(gm->getName()+"_qmesh_smoothed.msh");
+
 #endif
   return cf_status;
 #else

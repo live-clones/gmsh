@@ -72,15 +72,13 @@ namespace QMT {
       std::vector<double>& x) {
     size_t nb_rows = columns.size();
 #if defined(HAVE_PETSC)
-    // info("solver: PETSc");
     linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_MUMPS)
     linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
 #elif defined(HAVE_GMM)
-    // info("solver: Gmm (mumps ?)");
     linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
 #else
-    // info("solver: Full");
+    warn("using solver Full (very slow ?)");
     linearSystemFull<double> *_lsys = new linearSystemFull<double>;
 #endif
 
@@ -97,15 +95,6 @@ namespace QMT {
     F(i, rhs.size()) {
       _lsys->addToRightHandSide(i, rhs[i]);
     }
-
-    // // print matrix
-    // F(i,x.size()) F(j,x.size()) {
-    //   double coef = 0.;
-    //   _lsys->getFromMatrix(i,j,coef);
-    //   if (coef != 0.) {
-    //     info("{} {} = {}", i, j, coef);
-    //   }
-    // }
 
     int ok = _lsys->systemSolve();
     if (!ok) {
@@ -144,7 +133,7 @@ namespace QMT {
 #elif defined(HAVE_MUMPS)
     linearSystemMUMPS<double> *sys = new linearSystemMUMPS<double>;
 #elif defined(HAVE_GMM)
-    linearSystemGmm<double> *sys = new linearSystemGmm<double>;
+    linearSystemCSRGmm<double> *sys = new linearSystemCSRGmm<double>;
 #else
     linearSystemFull<double> *sys = new linearSystemFull<double>;
 #endif
@@ -157,6 +146,15 @@ namespace QMT {
     state->sys->allocate(nb_rows);
     state->nb_rows = nb_rows;
     *data = state;
+#if defined(HAVE_PETSC)
+    info("using PETSc");
+#elif defined(HAVE_MUMPS)
+    info("using MUMPS (direct)");
+#elif defined(HAVE_GMM)
+    info("using Gmm (iterative)");
+#else
+    info("using Full");
+#endif
     return true;
 #else
     error("module SOLVER required");

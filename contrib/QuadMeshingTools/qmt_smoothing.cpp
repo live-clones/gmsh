@@ -174,6 +174,7 @@ namespace QMT {
 
   bool smooth_quad_mesh(QMesh& M, size_t iter_max) {
     info("winslow smoothing (explicit, {} iterations) ...", iter_max);
+    warn("  current smoothing shrinks the geometry !");
 
     vector<vector<id>> v2v(M.points.size());
     vector<vector<id>> v2quads(M.points.size());
@@ -234,7 +235,7 @@ namespace QMT {
     }
 
     F(k, iter_max) {
-      if (k >= 50 && k % iter_max / 10 == 0) info("  {} / {} iter", k, iter_max);
+      if (k >= 50 && k % (iter_max / 10) == 0) info("  {} / {} iter", k, iter_max);
       /* Winslow smoothing of interior vertices */
       FC(v,M.points.size(),!M.onBoundary[v]) {
         if (M.onCorner[v]) continue;
