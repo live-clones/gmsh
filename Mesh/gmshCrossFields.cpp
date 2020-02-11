@@ -2812,7 +2812,7 @@ public:
       std::string posout = "/tmp/H.pos";
       d->writePOS(posout, false, true, false);
       GmshMergeFile(posout);
-      // return -1;
+      return -1;
     }
 #endif
 

@@ -581,14 +581,11 @@ namespace QMT {
     }
     steps.push_back(dtFinal); /* repeat last time step */
 
-    constexpr bool UPDATE_LINEAR_SYSTEM = true;
-    if (UPDATE_LINEAR_SYSTEM) {
-      info("using system update");
-      /* Initialize system (I + dt/M_i * L) x_(i+1) = x_i     (Ax = B) */
-      const vector<vector<size_t>>& Acol = K_columns;
-      vector<vector<double>> Aval_sum = K_values; /* to get sparsity pattern */
+    {
+      /* Initialize system (I/dt + M^-1 * L) x_(i+1) = 1/dt * x_i     (Ax = B) */
+      
+      vector<vector<size_t>> Acol = K_columns;
       vector<vector<double>> Aval_add = K_values; /* to get sparsity pattern */
-      F(i,Aval_add.size()) std::fill(Aval_sum[i].begin(),Aval_sum[i].end(),0.);
       F(i,Aval_add.size()) std::fill(Aval_add[i].begin(),Aval_add[i].end(),0.);
       vector<double> B = x;
       double dt = dtInitial;
@@ -596,27 +593,32 @@ namespace QMT {
 
       void* data;
       create_linear_system(2*uIEdges.size(),&data);
+
+      vector<double> diag_sum(2*uIEdges.size(), 0.);
+      F(i,Acol.size()) {
+        if (!dirichletEdge[i/2]) {
+          F(j,Acol[i].size()) {
+            Aval_add[i][j] = 1. / Mass[i] * K_values[i][j];
+          }
+        } else {
+          Aval_add[i] = {1.};
+        }
+      }
+      add_sparse_coefficients(Acol, Aval_add, data);
+      F(i,Aval_add.size()) Aval_add[i].clear();
+      F(i,Acol.size()) Acol[i].clear();
+
+
       F(iter,steps.size()) {
         double dt = steps[iter];
         info("  iter {}/{} | dt = {}, solving linear system ...", iter+1, steps.size(), dt);
         B = x;
+        FC(i,B.size(),!dirichletEdge[i/2]) B[i] /= dt;
         F(i,Acol.size()) {
           if (!dirichletEdge[i/2]) {
-            F(j,Acol[i].size()) {
-              if (Acol[i][j] == i) { /* diagonal term */
-                Aval_add[i][j] = -Aval_sum[i][j] + 1. + dt / Mass[i] * K_values[i][j];
-                Aval_sum[i][j] += Aval_add[i][j];
-              } else {
-                Aval_add[i][j] = -Aval_sum[i][j] + dt / Mass[i] * K_values[i][j];
-                Aval_sum[i][j] += Aval_add[i][j];
-              }
-            }
-          } else {
-            if (iter == 0) {
-              Aval_add[i] = {1.};
-            } else {
-              Aval_add[i] = {0.};
-            }
+            Acol[i] = {i};
+            Aval_add[i] = {-diag_sum[i] + 1./dt};
+            diag_sum[i] = 1./dt;
           }
         }
         bool oku = add_sparse_coefficients(Acol, Aval_add, data);
@@ -630,6 +632,7 @@ namespace QMT {
           error("failed to solve linear system");
           return false;
         }
+        FC(i,x.size(),!dirichletEdge[i/2]) x[i] *= dt;
         // create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
         F(e,uIEdges.size()) {
           norms[e] = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
@@ -641,44 +644,6 @@ namespace QMT {
       }
 
       destroy_linear_system(&data);
-    } else {
-      info("using new linear solve");
-      const vector<vector<size_t>>& Acol = K_columns;
-      vector<vector<double>> Aval = K_values;
-      vector<double> B = x;
-      vector<double> norms(uIEdges.size(),0.);
-      F(iter,nbIter) {
-        double dt = dtInitial + (dtFinal-dtInitial) * ((double)iter/double(nbIter-1));
-        B = x;
-        F(i,Aval.size()) {
-          if (!dirichletEdge[i/2]) {
-            F(j,Acol[i].size()) {
-              if (Acol[i][j] == i) { /* diagonal term */
-                Aval[i][j] = 1. + dt / Mass[i] * K_values[i][j];
-              } else {
-                Aval[i][j] = dt / Mass[i] * K_values[i][j];
-              }
-            }
-          } else {
-            Aval[i] = {1.};
-          }
-        }
-
-        info("  iter {}/{} | dt = {}, solving linear system ...", iter+1, nbIter, dt);
-        bool oks = solve_sparse_linear_system(Acol, Aval, B, x);
-        if (!oks) {
-          error("failed to solve linear system");
-          return false;
-        }
-        // create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
-        F(e,uIEdges.size()) {
-          norms[e] = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
-          if (!dirichletEdge[e] && norms[e] > EPS) {
-            x[2*e+0] /= norms[e];
-            x[2*e+1] /= norms[e];
-          }
-        }
-      }
     }
     double et = gmsh::logger::getWallTime() - wti;
     info("elapsed time: {}", et);
