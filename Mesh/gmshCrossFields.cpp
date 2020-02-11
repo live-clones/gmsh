@@ -937,11 +937,59 @@ LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
 }
 
 struct cutGraphPassage {
-  int _id;
-  int _uv;
-  SPoint3 _p;
-  cutGraphPassage (int id, int uv, const SPoint3 &p) : _id(id), _uv(uv), _p(p){
+  std::vector<std::pair<int,int> > cuts;
+  MVertex *sing;
+  int COUNTER;
+  cutGraphPassage (int C, MVertex *s) : COUNTER(C), sing(s)
+  {
   }
+
+  void addPassage (int pot, int id) {
+    if (cuts.empty() || id != cuts[cuts.size() - 1].second){
+      cuts.push_back(std::make_pair(pot,id));
+    }
+  }
+
+  bool isCyclic() const {
+
+    if (cuts.size() > 50){
+      printf("DETECTING CYCLE %d: ", COUNTER);
+      for (size_t i=0;i<cuts.size();i++){
+	printf("%d ",cuts[i].second);	
+      }
+      printf("\n");
+      return true;
+    }
+    return false;
+    
+    int lastIndex = cuts[cuts.size() - 1].second;
+    std::vector<int> cycle ;
+    std::vector<int> cycle2;
+    cycle.push_back(lastIndex);
+    for (size_t i= cuts.size() - 2 ; i < cuts.size() ; i--){
+      int id = cuts[i].second;
+      if (id == lastIndex){
+	if (!cycle2.empty())break;
+	cycle2 = cycle;
+	cycle.clear();
+	cycle.push_back(lastIndex);
+      }
+    }
+
+    
+    if (cycle.size() && cycle2.size()){
+      if (cycle.size() != cycle2.size())return false;
+      for (size_t i=0;i<cycle.size();i++)if (cycle[i] !=cycle2[i])return false;
+      printf("CYCLE DETECTED : ");
+      for (size_t i=0;i<cycle.size();i++){
+	printf("%d ",cycle[i]);	
+      }
+      printf("\n");
+      return true;
+    }    
+    return false;
+  }
+  
 };
 
 
@@ -2116,9 +2164,10 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
   computeOneIsoRecur(vsing, adj, VAL, v0, v1, p, *potU, visited, cutGraphEnds,
 		     d1, G, f, COUNT, cuts, NB, circular);
 
+  cutGraphPassage passage (COUNT , vsing);
   
   int XX = 1;
-  passages.clear();
+
   while(!cutGraphEnds.empty()) {
     MEdge e = (*cutGraphEnds.begin()).first;
     std::map<MVertex *, double> *POT = (*cutGraphEnds.begin()).second.first;
@@ -2179,25 +2228,9 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     }
     if(maxCount == 0) printf("IMPOSSIBLE\n");
 
-    int pot = POT == potU ? 0 : 1;
-    //    printf(" --> cutting cut graph %5d %5d\n",cutGraphId, pot,passages.size());
-    int count = 0;
-    for (int k=0;k<passages.size();k++){
-      if (pot == passages[k]._uv && cutGraphId == passages[k]._id)count++;
-    }
-    
-    if (count > 3){
-      printf("CYCLE DETECTED for SING %lu : ",vsing->getNum());
-      for (size_t k=0;k<passages.size();k++)printf("(%d,%d) ",passages[k]._id,passages[k]._uv);
-      printf("\n");
-      return -1;
-    }
-    
-    if (passages.empty() || 
-	passages[passages.size()-1]._uv != pot ||
-	passages[passages.size()-1]._id != cutGraphId){
-      passages.push_back(cutGraphPassage(cutGraphId,pot,p));
-    }
+    passage.addPassage (POT == potU ? 0 : 1, cutGraphId);
+
+    if (passage.isCyclic()) break;
     
     if(ROT) { POT = (POT == potU ? potV : potU); }
     else {
@@ -2212,6 +2245,9 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
 				  visited, cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular);
     if(XX > 1200) break;
   }
+
+  passages.push_back(passage);
+
   return circular;
 }
 
@@ -2757,7 +2793,7 @@ public:
 
   int computeCrossFieldAndH()
   {
-#if defined(HAVE_QUADMESHINGTOOLS2)
+#if defined(HAVE_QUADMESHINGTOOLS)
     int nb_iter = 10;
     int cf_tag;
     std::map<std::pair<size_t,size_t>,double> edge_to_angle;
