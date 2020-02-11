@@ -23,6 +23,7 @@
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
 #include "linearSystemMUMPS.h"
+#include "linearSystemMUMPS2.h"
 
 #endif
 
@@ -58,6 +59,11 @@ namespace QMT_LA_Utils {
   /************************************/
 }
 
+
+#if defined(HAVE_MUMPS)
+
+
+#endif
 
 
 namespace QMT {
@@ -127,11 +133,17 @@ namespace QMT {
 #endif
   }
 
+#define USE_MUMPS2 1
+
   struct LS_state {
-#if defined(HAVE_PETSC)
+#if defined(HAVE_MUMPS)
+  #ifdef USE_MUMPS2
+      linearSystemMUMPS2<double> *sys = new linearSystemMUMPS2<double>;
+  #else
+      linearSystemMUMPS<double> *sys = new linearSystemMUMPS<double>;
+  #endif
+#elif defined(HAVE_PETSC)
     linearSystemPETSc<double> *sys = new linearSystemPETSc<double>;
-#elif defined(HAVE_MUMPS)
-    linearSystemMUMPS<double> *sys = new linearSystemMUMPS<double>;
 #elif defined(HAVE_GMM)
     linearSystemCSRGmm<double> *sys = new linearSystemCSRGmm<double>;
 #else
@@ -146,14 +158,17 @@ namespace QMT {
     state->sys->allocate(nb_rows);
     state->nb_rows = nb_rows;
     *data = state;
-#if defined(HAVE_PETSC)
-    info("using PETSc");
-#elif defined(HAVE_MUMPS)
+#if defined(HAVE_MUMPS)
     info("using MUMPS (direct)");
+#elif defined(HAVE_PETSC)
+    info("using PETSc");
+    warn("please consider using the MUMPS version (much faster, factorization computed one time per timestep)")
 #elif defined(HAVE_GMM)
     info("using Gmm (iterative)");
+    warn("please consider using the MUMPS version (much faster, factorization computed one time per timestep)")
 #else
     info("using Full");
+    warn("please consider using the MUMPS version (much faster, factorization computed one time per timestep)")
 #endif
     return true;
 #else
@@ -165,6 +180,9 @@ namespace QMT {
   bool destroy_linear_system(void** data) {
     if (*data == NULL) return false;
     LS_state* state = (LS_state*) (*data);
+#if defined(HAVE_MUMPS) && USE_MUMPS2
+    state->sys->systemDestroy();
+#endif
     delete state;
     *data = NULL;
     return true;
@@ -194,6 +212,17 @@ namespace QMT {
     return true;
   }
 
+  bool factorize(void* data) {
+#if defined(HAVE_MUMPS) && USE_MUMPS2
+    LS_state* state = (LS_state*) (data);
+    int ok = state->sys->systemFactorize();
+    return true;
+#else
+    warn("nothing to factorize (only available with MUMPS)");
+    return false;
+#endif
+  }
+
   bool solve(std::vector<double>& x, void* data) {
     LS_state* state = (LS_state*) (data);
     // // print matrix
@@ -205,7 +234,13 @@ namespace QMT {
     //   }
     // }
 
+#if defined(HAVE_MUMPS) && USE_MUMPS2
+    int ok = state->sys->systemComputeSolution();
+#else
     int ok = state->sys->systemSolve();
+#endif
+
+
     if (!ok) {
       error("systemSolve() failed");
       return false;
