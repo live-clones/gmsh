@@ -162,13 +162,13 @@ namespace QMT {
     info("using MUMPS (direct)");
 #elif defined(HAVE_PETSC)
     info("using PETSc");
-    warn("please consider using the MUMPS version (much faster, factorization computed one time per timestep)")
+    warn("please consider enabling the MUMPS solver (much faster solver and implementation, factorization computed one time per timestep)");
 #elif defined(HAVE_GMM)
     info("using Gmm (iterative)");
-    warn("please consider using the MUMPS version (much faster, factorization computed one time per timestep)")
+    warn("please consider enabling the MUMPS solver (much faster solver and implementation, factorization computed one time per timestep)");
 #else
     info("using Full");
-    warn("please consider using the MUMPS version (much faster, factorization computed one time per timestep)")
+    warn("please consider enabling the MUMPS solver (much faster solver and implementation, factorization computed one time per timestep)");
 #endif
     return true;
 #else
@@ -212,13 +212,24 @@ namespace QMT {
     return true;
   }
 
+  bool preprocess_sparsity_pattern(void* data) {
+#if defined(HAVE_MUMPS) && USE_MUMPS2
+    LS_state* state = (LS_state*) (data);
+    int ok = state->sys->systemAnalysis();
+    return true;
+#else
+    warn("nothing to analyze (only available with custom MUMPS interface)");
+    return false;
+#endif
+  }
+
   bool factorize(void* data) {
 #if defined(HAVE_MUMPS) && USE_MUMPS2
     LS_state* state = (LS_state*) (data);
     int ok = state->sys->systemFactorize();
     return true;
 #else
-    warn("nothing to factorize (only available with MUMPS)");
+    warn("nothing to factorize (only available with custom MUMPS interface)");
     return false;
 #endif
   }

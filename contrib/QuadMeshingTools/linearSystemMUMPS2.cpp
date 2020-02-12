@@ -144,7 +144,8 @@ int linearSystemMUMPS2<double>::systemSolve()
 
   return 1;
 }
-int linearSystemMUMPS2<double>::systemFactorize() {
+
+int linearSystemMUMPS2<double>::systemAnalysis() {
   id.par = 1;
   const std::string sym = getParameter("symmetry");
   if(sym == "spd")
@@ -179,8 +180,26 @@ int linearSystemMUMPS2<double>::systemFactorize() {
   id.icntl[5 - 1] = 0;
   id.icntl[18 - 1] = 0;
 
-  Msg::Debug("MUMPS analysis, LU factorization");
-  id.job = 4;
+  Msg::Debug("MUMPS analysis");
+  id.job = 1;
+  dmumps_c(&id);
+  mumpserror2(id.info[0], id.info[1]);
+
+  for(std::size_t i = 0; i < _irn.size(); i++) _irn[i]--;
+  for(std::size_t i = 0; i < _jcn.size(); i++) _jcn[i]--;
+
+  return 1;
+
+}
+
+
+int linearSystemMUMPS2<double>::systemFactorize() {
+  // Fortran indices start from 1
+  for(std::size_t i = 0; i < _irn.size(); i++) _irn[i]++;
+  for(std::size_t i = 0; i < _jcn.size(); i++) _jcn[i]++;
+
+  Msg::Debug("MUMPS LU factorization");
+  id.job = 2;
   dmumps_c(&id);
   mumpserror2(id.info[0], id.info[1]);
 
@@ -221,6 +240,7 @@ int linearSystemMUMPS2<double>::systemDestroy() {
   mumpserror2(id.info[0], id.info[1]);
   return 1;
 }
+
 void linearSystemMUMPS2<double>::insertInSparsityPattern(int row, int col) {}
 
 double linearSystemMUMPS2<double>::normInfRightHandSide() const

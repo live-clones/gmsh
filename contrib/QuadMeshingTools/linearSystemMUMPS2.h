@@ -70,6 +70,7 @@ public:
 
   virtual void zeroRightHandSide();
   virtual void zeroSolution();
+  virtual int systemAnalysis();
   virtual int systemFactorize();
   virtual int systemComputeSolution();
   virtual int systemSolve();

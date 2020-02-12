@@ -29,5 +29,6 @@ namespace QMT {
       void* data);
   bool solve(std::vector<double>& x, void* data);
 
+  bool preprocess_sparsity_pattern(void* data); /* only with custom MUMPS */
   bool factorize(void* data); /* only with custom MUMPS */
 }

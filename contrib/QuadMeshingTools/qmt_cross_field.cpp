@@ -574,19 +574,9 @@ namespace QMT {
     }
 
     vector<double> steps;
-    if (true) {
-      nbIter = 4;
-      F(i,nbIter) { /* resolution transition */
-        double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbIter-1);
-        steps.push_back(dt);
-      }
-    } else {
-      nbIter = 10;
-      F(i,nbIter) { /* resolution transition */
-        double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbIter-1);
-        steps.push_back(dt);
-      }
-      steps.push_back(dtFinal); /* repeat last time step */
+    F(i,nbIter) { /* resolution transition */
+      double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbIter-1);
+      steps.push_back(dt);
     }
 
     {
@@ -614,6 +604,7 @@ namespace QMT {
       add_sparse_coefficients(Acol, Aval_add, data);
       F(i,Aval_add.size()) Aval_add[i].clear();
       F(i,Acol.size()) Acol[i].clear();
+      preprocess_sparsity_pattern(data);
 
 
       double prev_dt = DBL_MAX;
@@ -649,7 +640,6 @@ namespace QMT {
           FC(i,B.size(),!dirichletEdge[i/2]) B[i] /= dt;
           set_rhs_values(B, data);
 
-          /* Solve linear system */
           // info("           | solve ...");
           bool oks = solve(x, data);
           if (!oks) {
