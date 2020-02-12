@@ -223,8 +223,8 @@ public:
     if(_t.size() == 1) { inBoundary = true; }
     else if(_t.size() >= 2) {
       if(inBoundary) {
-        inBoundary = false;
-        inInternalBoundary = true;
+	//        inBoundary = false;
+	//        inInternalBoundary = true;
       }
     }
 
@@ -945,51 +945,40 @@ struct cutGraphPassage {
   }
 
   void addPassage (int pot, int id) {
-    if (cuts.empty() || id != cuts[cuts.size() - 1].second){
+    if (cuts.empty() || id != cuts[cuts.size() - 1].second)
       cuts.push_back(std::make_pair(pot,id));
-    }
   }
 
-  bool isCyclic() const {
+  bool isCyclic(const std::vector<SPoint3> & pts) const {
 
-    if (cuts.size() > 50){
-      printf("DETECTING CYCLE %d: ", COUNTER);
-      for (size_t i=0;i<cuts.size();i++){
-	printf("%d ",cuts[i].second);	
-      }
-      printf("\n");
-      return true;
+    bool cycle = false;
+    for (size_t i=0 ; i < cuts.size()-1 ; i+=2){
+      if (cuts[i] == cuts[cuts.size()-1]) cycle = true;
     }
-    return false;
     
-    int lastIndex = cuts[cuts.size() - 1].second;
-    std::vector<int> cycle ;
-    std::vector<int> cycle2;
-    cycle.push_back(lastIndex);
-    for (size_t i= cuts.size() - 2 ; i < cuts.size() ; i--){
-      int id = cuts[i].second;
-      if (id == lastIndex){
-	if (!cycle2.empty())break;
-	cycle2 = cycle;
-	cycle.clear();
-	cycle.push_back(lastIndex);
+    if (cycle){
+      double angle = 0;
+      for (size_t i=1;i<pts.size()-1;i++){
+	SVector3 v1 (pts[i-1],pts[i]);
+	SVector3 v2 (pts[i],pts[i+1]);
+        v1.normalize();
+        v2.normalize();
+        SVector3 xx = crossprod(v1, v2);
+        double ccos = dot(v1, v2);
+        double ANGLE = atan2(xx.norm(), ccos);
+	angle += ANGLE;
+      }
+      if (angle > 250*M_PI) {
+	printf("ANGLE (%d) = %12.5E\n",COUNTER,angle);
+	for (size_t i=0;i<cuts.size();i++){
+	  printf("%d ",cuts[i].second);
+	}
+	printf("\n");
+	return true;
       }
     }
-
-    
-    if (cycle.size() && cycle2.size()){
-      if (cycle.size() != cycle2.size())return false;
-      for (size_t i=0;i<cycle.size();i++)if (cycle[i] !=cycle2[i])return false;
-      printf("CYCLE DETECTED : ");
-      for (size_t i=0;i<cycle.size();i++){
-	printf("%d ",cycle[i]);	
-      }
-      printf("\n");
-      return true;
-    }    
     return false;
   }
-  
 };
 
 
@@ -2067,10 +2056,13 @@ static void computeOneIsoRecur(
   MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0, MVertex *v1,
   SPoint3 &p, std::map<MVertex *, double> &pot,
   std::map<MEdge, int, MEdgeLessThan> &visited,
-  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>,
-  MEdgeLessThan> &cutGraphEnds,
+  //  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>,
+  //  MEdgeLessThan> &cutGraphEnds,
+  std::vector< std::pair<MEdge, std::pair<std::map<MVertex *, double> *, double> > >
+  &cutGraphEnds,
   std::map<MEdge, MEdge, MEdgeLessThan> &d1, std::vector<groupOfCross2d> &G,
-  FILE *f, int COUNT, std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts, int &NB, int &circular)
+  FILE *f, int COUNT, std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts, int &NB,
+  int &circular, std::vector<SPoint3> &pts)
 {
   MEdge e(v0, v1);
 
@@ -2084,6 +2076,8 @@ static void computeOneIsoRecur(
   bool added = addCut(p, e, COUNT, NB, cuts);
   if(!added) return;
 
+  pts.push_back(p);
+  
   NB++;
 
   //  visited[e] = NB;
@@ -2091,9 +2085,7 @@ static void computeOneIsoRecur(
   if(d1.find(e) != d1.end()) {
     std::pair<std::map<MVertex *, double> *, double> aa =
       std::make_pair(&pot, VAL);
-    std::pair<MEdge, std::pair<std::map<MVertex *, double> *, double> > p =
-      std::make_pair(e, aa);
-    cutGraphEnds.insert(p);
+    cutGraphEnds.push_back(std::make_pair(e, aa));
   }
   std::vector<MElement *> lst = adj[v0];
 
@@ -2127,7 +2119,7 @@ static void computeOneIsoRecur(
         fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", p.x(), p.y(), p.z(),
                 pp.x(), pp.y(), pp.z(), COUNT, COUNT);
         computeOneIsoRecur(vsing, adj, VAL, v0, vs[i], pp, pot, visited,
-			   cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular);
+			   cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular, pts);
       }
       else if((U[1] - VAL) * (U2 - VAL) <= 0) {
         double xi = coord1d(U[1], U2, VAL);
@@ -2135,7 +2127,7 @@ static void computeOneIsoRecur(
         fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", p.x(), p.y(), p.z(),
                 pp.x(), pp.y(), pp.z(), COUNT, COUNT);
         computeOneIsoRecur(vsing, adj, VAL, v1, vs[i], pp, pot, visited,
-			   cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular);
+			   cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular, pts);
       }
       else {
         printf("strange\n");
@@ -2155,14 +2147,19 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
 			 std::vector<cutGraphPassage> & passages)
 {
   std::map<MEdge, int, MEdgeLessThan> visited;
-  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>,
-           MEdgeLessThan>
+  //  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>,
+  //           MEdgeLessThan>
+  //    cutGraphEnds;
+
+  std::vector<std::pair<MEdge, std::pair<std::map<MVertex *, double> *, double> > >
     cutGraphEnds;
   int NB = 0;
   int circular = 0;
 
+  std::vector<SPoint3> pts;
+  
   computeOneIsoRecur(vsing, adj, VAL, v0, v1, p, *potU, visited, cutGraphEnds,
-		     d1, G, f, COUNT, cuts, NB, circular);
+		     d1, G, f, COUNT, cuts, NB, circular, pts);
 
   cutGraphPassage passage (COUNT , vsing);
   
@@ -2177,9 +2174,7 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     p[0] = (1. - xi) * e.getVertex(0)->x() + xi * e.getVertex(1)->x();
     p[1] = (1. - xi) * e.getVertex(0)->y() + xi * e.getVertex(1)->y();
     p[2] = (1. - xi) * e.getVertex(0)->z() + xi * e.getVertex(1)->z();
-    //    printf("cutgaphends %lu
-    //    %lu\n",o.getVertex(0)->getNum(),o.getVertex(1)->getNum()); printf("%lu
-    //    ends to the cutgraph\n",cutGraphEnds.size());
+    //        printf("cutgaphends %lu %lu\n",o.getVertex(0)->getNum(),o.getVertex(1)->getNum());
     cutGraphEnds.erase(cutGraphEnds.begin());
     // visited.clear();
 
@@ -2230,22 +2225,34 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
 
     passage.addPassage (POT == potU ? 0 : 1, cutGraphId);
 
-    if (passage.isCyclic()) break;
+    if (passage.isCyclic(pts)) break;
     
     if(ROT) { POT = (POT == potU ? potV : potU); }
     else {
     }
     XX += ROT;
-    // printf("XX = %d ROT = %d %lu\n",XX,ROT,cutGraphEnds.size());
     if(distance(e.getVertex(0), o.getVertex(0)) < 1.e-12)
       VAL = (1. - xi) * (*POT)[o.getVertex(0)] + xi * (*POT)[o.getVertex(1)];
     else
       VAL = (1. - xi) * (*POT)[o.getVertex(1)] + xi * (*POT)[o.getVertex(0)];
     computeOneIsoRecur(vsing, adj, VAL, o.getVertex(0), o.getVertex(1), p, *POT,
-				  visited, cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular);
+		       visited, cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular, pts);
     if(XX > 1200) break;
   }
 
+  {
+    char name[245];
+    sprintf(name,"p_%d.pos",COUNT);
+    FILE *F = fopen(name,"w");
+    fprintf(F,"View\"\"{\n");
+    for (size_t i=1;i<pts.size();i++){
+      fprintf(F,"SL(%g,%g,%g,%g,%g,%g) {%lu,%lu};\n",pts[i-1].x(),pts[i-1].y(),pts[i-1].z(),pts[i].x(),pts[i].y(),pts[i].z(),i,i);
+    }
+    fprintf(F,"};\n");
+    fclose(F);
+  }
+  
+  
   passages.push_back(passage);
 
   return circular;
@@ -2800,7 +2807,7 @@ public:
     bool okcf = QMT::compute_cross_field_with_heat("default",cf_tag,nb_iter,&edge_to_angle);
     if (!okcf) {
       Msg::Error("Failed to compute cross field");
-      return -1;
+      //      return -1;
     }
 
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
@@ -3935,10 +3942,10 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   else {
     Msg::Info("Computing a cross field");
     int cf_status = qLayout.computeCrossFieldAndH();
-    if (cf_status == -1) {
-      Msg::Error("failed to compute cross field");
-      return -1;
-    }
+    //    if (cf_status == -1) {
+      //      Msg::Error("failed to compute cross field");
+      //      return -1;
+    //    }
     qLayout.computeCutGraph(duplicateEdges);
     qLayout.computeThetaUsingHCrouzeixRaviart(dataTHETA);
   }

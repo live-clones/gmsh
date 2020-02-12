@@ -149,6 +149,10 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       prev = temp;
       if(current == start) { v.push_back(current); }
     } while(current != start && current != NULL);
+    if (v.size() > 2 && v[v.size()-2] == v[v.size()-1]){
+      printf("coucou\n");
+      v.erase(v.begin()+v.size()-1);
+    }
     vs.push_back(v);
   }
   return true;

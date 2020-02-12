@@ -286,25 +286,35 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
     std::vector<MEdge> allEdges;
     
     //    printf("Edge %d has %lu faces with %lu segments\n",ite->first->tag(),ite->second.size(),ite->first->lines.size());
-    
+#if 1    
     for(std::size_t i = 0; i < ite->first->lines.size(); i++) {
       allEdges.push_back(MEdge(ite->first->lines[i]->getVertex(0),ite->first->lines[i]->getVertex(1)));
       delete ite->first->lines[i];      
     }
     ite->first->lines.clear();
     std::vector<std::vector<MVertex *> > vs_;
+    
     SortEdgeConsecutive(allEdges,vs_);
+    //    printf("%lu edges %lu vertices\n",allEdges.size(),vs_[0].size());
+    //    for (size_t j=0;j<vs_[0].size();j++){
+    //      printf("%lu ",vs_[0][j]->getNum());
+    //    }
+    //    printf("\n");
+
     std::vector<std::vector<MVertex *> > vs;
     for (size_t i=0;i<vs_.size();i++){
 
       bool periodic = (vs_[i][ vs_[i].size() - 1] == vs_[i][0]);
 
+      //      printf("periodic(%lu) = %d\n",i,periodic);
+      
       if (periodic){
 	for (size_t j=0;j<vs_[i].size()-1;j++){
 	  MVertex *v0 = vs_[i][j == 0 ? vs_[i].size()-1 : j-1];
 	  MVertex *v1 = vs_[i][j];
 	  MVertex *v2 = vs_[i][j+1];
 	  if (breakForLargeAngle(v0,v1,v2,curveAngleThreshold)){
+	    //	    printf("breaking @ %lu\n",j);
 	    std::vector<MVertex*> temp;
 	    for (size_t k=j;k<vs_[i].size()+j;k++){
 	      temp.push_back(vs_[i][k%vs_[i].size()]);
@@ -328,7 +338,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 
       MVertex *first = vs_[i][cuts_[0]];
       for (size_t k=1;k<cuts_.size();k++){
-	//	printf("CUT %lu :",k);
+	//	printf("CUT %lu (%lu %lu):",k,cuts_[k-1],cuts_[k]);
 	std::vector<MVertex*> vv_;
 	for (size_t j=cuts_[k-1];j<=cuts_[k];j++){
 	  if (j == cuts_[k-1] || vs_[i][j] != vs_[i][j-1]){
@@ -336,7 +346,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 	    //	    printf("%lu ",vs_[i][j]->getNum());
 	  }
 	}
-	if (periodic && k == cuts_.size() - 1){
+	if (periodic && k == cuts_.size() - 1 && cuts_.size() > 2){
 	  vv_.push_back(first);
 	  //	  printf("%lu ",first->getNum());
 	}
@@ -349,6 +359,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       MVertex *vB = vs[i][0];
       MVertex *vE = vs[i][vs[i].size()-1];
 
+ 
       std::map<MVertex *, GVertex *>::iterator itMV = modelVertices.find(vB);
       if(itMV == modelVertices.end()) {
         GVertex *newGv = new discreteVertex(gm, (MAX0++) + 1, vB->x(), vB->y(), vB->z());
@@ -370,12 +381,16 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 
       GEdge *newGe = new discreteEdge(gm, (MAX1++) +1,
                                       modelVertices[vB], modelVertices[vE]);
+
+      //      printf("%lu segments for this discrete edge\n",vs[i].size()-1);
       for (size_t j=1;j<vs[i].size();j++){
 	MVertex *v1 = vs[i][j-1];
 	MVertex *v2 = vs[i][j];
 	newGe->lines.push_back( new MLine(v1,v2) );
+	//	printf("(%lu %lu)",v1->getNum(),v2->getNum());
       }
-
+      //      printf("\n");
+      
       for(size_t j=0;j< newGe->lines.size(); j++) {
 	MLine *l = newGe->lines[j];
         if(l->getVertex(0)->onWhat()) {
@@ -390,13 +405,18 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
         if(gf1) newFaceTopology[gf1].push_back(newGe->tag());
       }
     }
-  }
-  /*	
-	while(!allSegments.empty()) {
-	std::list<MLine *> segmentsForThisDiscreteEdge;
-	MVertex *vB = (*allSegments.begin())->getVertex(0);
-	MVertex *vE = (*allSegments.begin())->getVertex(1);
-	segmentsForThisDiscreteEdge.push_back(*allSegments.begin());
+#else
+    std::list<MLine *> allSegments;
+
+    for(std::size_t i = 0; i < ite->first->lines.size(); i++) {
+      allSegments.push_back(ite->first->lines[i]);
+    }
+
+    while(!allSegments.empty()) {
+      std::list<MLine *> segmentsForThisDiscreteEdge;
+      MVertex *vB = (*allSegments.begin())->getVertex(0);
+      MVertex *vE = (*allSegments.begin())->getVertex(1);
+      segmentsForThisDiscreteEdge.push_back(*allSegments.begin());
 	
       allSegments.erase(allSegments.begin());
       while(1) {
@@ -459,20 +479,24 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       for(std::list<MLine *>::iterator itL =
             segmentsForThisDiscreteEdge.begin();
           itL != segmentsForThisDiscreteEdge.end(); ++itL) {
+	MVertex *v1 = (*itL)->getVertex(0);
+	MVertex *v2 = (*itL)->getVertex(1);
+	printf("(%lu %lu)",v1->getNum(),v2->getNum());
+
         if((*itL)->getVertex(0)->onWhat()) {
           newGe->mesh_vertices.push_back((*itL)->getVertex(0));
           (*itL)->getVertex(0)->setEntity(newGe);
         }
       }
-
+      printf("\n");
       gm->add(newGe);
       for(size_t K = 0; K < ite->second.size(); K++) {
         discreteFace *gf1 = dynamic_cast<discreteFace *>(ite->second[K]);
         if(gf1) newFaceTopology[gf1].push_back(newGe->tag());
 	}
     }
-    }
-  */
+#endif
+  }
   
   std::map<discreteFace *, std::vector<int> >::iterator itFT =
     newFaceTopology.begin();
