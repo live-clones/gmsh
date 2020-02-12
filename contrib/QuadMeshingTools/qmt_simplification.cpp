@@ -98,6 +98,31 @@ namespace QMT_SMP_Utils {
     gmsh::view::addListData(view, "SQ", nbq, data);
   }
 
+  void show_chord_in_view(const QMesh& M, const vector<Chord>& chords, const std::string& view) {
+    std::vector<double> data_SL;
+    F(ch,chords.size()) {
+      const Chord& chord = chords[ch];
+      F(i,chord.size()) {
+        id q = chord[i] / 2;
+        if (M.quads[q][0] == NO_ID) continue;
+        id le1 = chord[i] % 2;
+        id le2 = le1 + 2;
+        vec3 p1 = 0.5 * (M.points[M.quads[q][le1]]
+            + M.points[M.quads[q][(le1+1)%4]]);
+        vec3 p2 = 0.5 * (M.points[M.quads[q][le2]]
+            + M.points[M.quads[q][(le2+1)%4]]);
+        for (size_t d = 0; d < 3; ++d) {
+          data_SL.push_back(p1[d]);
+          data_SL.push_back(p2[d]);
+        }
+        data_SL.push_back(double(ch));
+        data_SL.push_back(double(ch));
+      }
+    }
+    int vi = gmsh::view::add(view);
+    gmsh::view::addListData(vi, "SL", data_SL.size()/(6+2), data_SL);
+  }
+
 
   bool getOrderedVerticesFromEdges(id vStart, const vector<id2>& edges, vector<id>& orderedVertices) {
     orderedVertices.clear();
@@ -539,24 +564,26 @@ namespace QMT {
     return true;
   }
 
-  bool chord_is_collapsible(const QMesh& M, const Chord& chord) {
-    // TODO: do not collapse valence != 4 to the boundary ?
+  bool chord_is_collapsible(const QMesh& M, const Chord& chord, const vector<int>* valence = NULL) {
+    if (valence && valence->size() != M.points.size()) {
+      error("M.points.size() = {} and valence.size() = {}", M.points.size(), valence->size());
+      return false;
+    }
+    bool collapse_val3_on_bdr = false;
+    bool collapse_val5_on_bdr = false;
+
     F(i, chord.size()) {
       id q = chord[i] / 2;
       id side = chord[i] % 2;
       if (M.quads[q][0] == NO_ID) continue;
 
       sid4 neighs = M.quad_neighbors[q];
-      size_t nb_bdr_side = 0;
-      FC(le, 4, le%2 == side+1) { /* chord sides */
-        if (neighs[le] == NO_ID) nb_bdr_side += 1;
-      }
-      if (nb_bdr_side == 2) {
+      if (neighs[(side+1)%4] == NO_SID && neighs[(side+3)%4] == NO_SID) {
         /* collapse would remove a part of the model */
         return false;
       }
 
-      if (neighs[side+1] != NO_ID && neighs[(side+3)%4] != NO_ID) {
+      if (neighs[(side+1)%4] != NO_SID && neighs[(side+3)%4] != NO_SID) {
         /* exclude case where both neighbors are adjacent (making a loop)
          * not supported because two distinct edges would have the same pair of vertices
          * and datastructures assume there is only one edge for a pair of vertices v1-v2 */
@@ -569,15 +596,19 @@ namespace QMT {
       }
 
       FC(le, 4, le%2 == side) { /* chord propagation dir */
-        if (M.onCorner[M.quads[q][le]] && M.onCorner[M.quads[q][(le+1)%4]]) {
+        id v1 = M.quads[q][le];
+        id v2 = M.quads[q][(le+1)%4];
+        if (M.onCorner[v1] && M.onCorner[v2]) {
           return false;
         }
-        if (M.onBoundary[M.quads[q][le]] && M.onCorner[M.quads[q][(le+1)%4]] && !M.onBoundary[M.quads[q][(le+1)%4]]) {
+        if (valence && !collapse_val3_on_bdr && (*valence)[v1] == 3 && !M.onBoundary[v1] && M.onBoundary[v2])
           return false;
-        }
-        if (M.onCorner[M.quads[q][le]] && !M.onBoundary[M.quads[q][le]] && M.onBoundary[M.quads[q][(le+1)%4]]) {
+        if (valence && !collapse_val3_on_bdr && (*valence)[v2] == 3 && !M.onBoundary[v2] && M.onBoundary[v1])
           return false;
-        }
+        if (valence && !collapse_val5_on_bdr && (*valence)[v1] == 5 && !M.onBoundary[v1] && M.onBoundary[v2])
+          return false;
+        if (valence && !collapse_val5_on_bdr && (*valence)[v2] == 5 && !M.onBoundary[v2] && M.onBoundary[v1])
+          return false;
 
         sid qe = neighs[le];
         if (qe == NO_ID) continue;
@@ -587,12 +618,12 @@ namespace QMT {
         }
         id aq = qe / 4;
         id ale = qe % 4;
-        id v1 = M.quads[aq][ale];
-        id v2 = M.quads[aq][(ale+1)%4];
+        id av1 = M.quads[aq][ale];
+        id av2 = M.quads[aq][(ale+1)%4];
 
         /* Reject collapse of edges if both nodes are on
          * the boundary and not an bdr edge */
-        if (M.onBoundary[v1] && M.onBoundary[v2] && neighs[le] != NO_ID) {
+        if (M.onBoundary[av1] && M.onBoundary[av2] && neighs[le] != NO_ID) {
           return false;
         }
       }
@@ -1341,10 +1372,11 @@ namespace QMT {
 
   bool simplify_quad_mesh(QMesh& M, double size_collapse, int nb_collapse_max) {
     info("quad mesh simplification (size_collapse = {}) ...", size_collapse);
-    // constexpr bool SHOW_COLLAPSED_CHORDS = true;
-    vector<int> valence(M.points.size(),0);
 
-    { /* Update valence */
+    constexpr bool SHOW_DETAILS = false; /* Show low of intermediate stuff in views, only for debugging */
+
+    vector<int> valence(M.points.size(),0);
+    { /* Init valence */
       valence.resize(M.points.size());
       std::fill(valence.begin(),valence.end(),0.);
       F(q,M.quads.size()) FC(lv,4,M.quads[q][lv] != NO_ID) valence[M.quads[q][lv]] = valence[M.quads[q][lv]] + 1;
@@ -1405,18 +1437,25 @@ namespace QMT {
       }
       if (nbmax / 10 > 0 && iter % (nbmax / 10) == 0) info("  {} / {} (collapse max)", iter, nbmax);
 
-      /* Update valence */
-      { 
+      { /* Update valence and onBoundary */
         valence.resize(M.points.size());
         std::fill(valence.begin(),valence.end(),0.);
-        F(q,M.quads.size()) FC(lv,4,M.quads[q][lv] != NO_ID) valence[M.quads[q][lv]] = valence[M.quads[q][lv]] + 1;
+        F(q,M.quads.size()) {
+          if (M.quads[q][0] == NO_ID) continue;
+          FC(lv,4,M.quads[q][lv] != NO_ID) valence[M.quads[q][lv]] = valence[M.quads[q][lv]] + 1;
+          FC(le,4,M.quad_neighbors[q][le] == NO_SID) {
+            M.onBoundary[M.quads[q][le]] = true;
+            M.onBoundary[M.quads[q][(le+1)%4]] = true;
+          }
+        }
       }
 
       Chord chord = chord_to_collapse[0].second;
       chord_to_collapse.erase(chord_to_collapse.begin());
 
-      if (!chord_is_collapsible(M, chord)) {
+      if (!chord_is_collapsible(M, chord, &valence)) {
         warn("  chord not collapsible, continue");
+        if (SHOW_DETAILS) show_chord_in_view(M, {chord}, "_i" + std::to_string(iter)+"_ch_rej_nc");
         continue;;
       }
 
@@ -1425,19 +1464,20 @@ namespace QMT {
       bool oks = chord_width_statistics(M, chord, wmin, wavg, wmax);
       if (!oks) {
         warn("  failed to evaluate chord width (sizemap issue ?)");
+        if (SHOW_DETAILS) show_chord_in_view(M, {chord}, "_i" + std::to_string(iter)+"_ch_rej_eval");
         continue;
       }
       if (wavg > size_collapse) continue; /* filter on average width */
 
-      // if (opt.show_intermediate) chord_visualization(M, {chord}, "chord_" + std::to_string(iter));
+      if (SHOW_DETAILS) show_chord_in_view(M, {chord}, "_i" + std::to_string(iter)+"_chord");
 
       bool okc = apply_chord_collapse(M, chord);
       if (!okc) {
         error("iter {}, failed to collapse (should not happen) !", iter);
         return false;
       }
+      if (SHOW_DETAILS) show_qmesh_in_view(M, "_i" + std::to_string(iter)+"_M");
 
-      // if (SHOW_COLLAPSED_CHORDS) collapsed_chords.push_back(chord);
       nbc += 1;
     }
     info("simplification done, collapsed {} chords", nbc);

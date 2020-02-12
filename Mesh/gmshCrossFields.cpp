@@ -4056,7 +4056,8 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 2 * .999);
+  // classifyFaces(GModel::current(), M_PI / 2 * .999);
+  classifyFaces(GModel::current(), 2. * M_PI);
   GModel::current()->remove(de);
   //  delete de;
   GModel::current()->pruneMeshVertexAssociations();
@@ -4182,19 +4183,22 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   }
   GmshWriteFile(gm->getName()+"_qmesh_simplified.msh");
 
-  /* Smoothing */
-  bool oksm = QMT::smooth_quad_mesh(Q, 10);
-  if (!oksm) {
-    Msg::Error("Failed to smooth quad mesh");
-    return -1;
+  if (true) {
+    Msg::Warning("Smoothing disabled for the moment");
+  } else {
+    /* Smoothing */
+    bool oksm = QMT::smooth_quad_mesh(Q, 10);
+    if (!oksm) {
+      Msg::Error("Failed to smooth quad mesh");
+      return -1;
+    }
+    bool oke3 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_smoothed");
+    if (!oke3) {
+      Msg::Error("Failed to export quad mesh");
+      return -1;
+    }
+    GmshWriteFile(gm->getName()+"_qmesh_smoothed.msh");
   }
-
-  bool oke3 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_smoothed");
-  if (!oke3) {
-    Msg::Error("Failed to export quad mesh");
-    return -1;
-  }
-  GmshWriteFile(gm->getName()+"_qmesh_smoothed.msh");
 
 #endif
   return cf_status;
