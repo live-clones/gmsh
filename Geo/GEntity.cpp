@@ -54,6 +54,12 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
   std::ostringstream sstream;
   sstream << getTypeString() << " " << tag();
 
+  switch(getNativeType()) {
+  case OpenCascadeModel: sstream << " (OCC)"; break;
+  case AcisModel: sstream << " (ACIS)"; break;
+  default: break;
+  }
+
   if(additional) {
     std::string info = getAdditionalInfoString(multiline);
     if(info.size()) {
@@ -111,8 +117,6 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
       sstream << ", ";
     sstream << "Color (" << r << ", " << g << ", " << b << ")";
   }
-
-
 
   return sstream.str();
 }
