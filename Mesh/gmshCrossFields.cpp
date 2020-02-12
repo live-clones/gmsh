@@ -2801,7 +2801,7 @@ public:
   int computeCrossFieldAndH()
   {
 #if defined(HAVE_QUADMESHINGTOOLS)
-    int nb_iter = 10;
+    int nb_iter = 4;
     int cf_tag;
     std::map<std::pair<size_t,size_t>,double> edge_to_angle;
     bool okcf = QMT::compute_cross_field_with_heat("default",cf_tag,nb_iter,&edge_to_angle);
