@@ -223,8 +223,8 @@ public:
     if(_t.size() == 1) { inBoundary = true; }
     else if(_t.size() >= 2) {
       if(inBoundary) {
-        inBoundary = false;
-        inInternalBoundary = true;
+	//        inBoundary = false;
+	//        inInternalBoundary = true;
       }
     }
 
@@ -937,10 +937,47 @@ LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
 }
 
 struct cutGraphPassage {
-  int _id;
-  int _uv;
-  SPoint3 _p;
-  cutGraphPassage (int id, int uv, const SPoint3 &p) : _id(id), _uv(uv), _p(p){
+  std::vector<std::pair<int,int> > cuts;
+  MVertex *sing;
+  int COUNTER;
+  cutGraphPassage (int C, MVertex *s) : COUNTER(C), sing(s)
+  {
+  }
+
+  void addPassage (int pot, int id) {
+    if (cuts.empty() || id != cuts[cuts.size() - 1].second)
+      cuts.push_back(std::make_pair(pot,id));
+  }
+
+  bool isCyclic(const std::vector<SPoint3> & pts) const {
+
+    bool cycle = false;
+    for (size_t i=0 ; i < cuts.size()-1 ; i+=2){
+      if (cuts[i] == cuts[cuts.size()-1]) cycle = true;
+    }
+    
+    if (cycle){
+      double angle = 0;
+      for (size_t i=1;i<pts.size()-1;i++){
+	SVector3 v1 (pts[i-1],pts[i]);
+	SVector3 v2 (pts[i],pts[i+1]);
+        v1.normalize();
+        v2.normalize();
+        SVector3 xx = crossprod(v1, v2);
+        double ccos = dot(v1, v2);
+        double ANGLE = atan2(xx.norm(), ccos);
+	angle += ANGLE;
+      }
+      if (angle > 250*M_PI) {
+	printf("ANGLE (%d) = %12.5E\n",COUNTER,angle);
+	for (size_t i=0;i<cuts.size();i++){
+	  printf("%d ",cuts[i].second);
+	}
+	printf("\n");
+	return true;
+      }
+    }
+    return false;
   }
 };
 
@@ -2019,10 +2056,13 @@ static void computeOneIsoRecur(
   MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0, MVertex *v1,
   SPoint3 &p, std::map<MVertex *, double> &pot,
   std::map<MEdge, int, MEdgeLessThan> &visited,
-  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>,
-  MEdgeLessThan> &cutGraphEnds,
+  //  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>,
+  //  MEdgeLessThan> &cutGraphEnds,
+  std::vector< std::pair<MEdge, std::pair<std::map<MVertex *, double> *, double> > >
+  &cutGraphEnds,
   std::map<MEdge, MEdge, MEdgeLessThan> &d1, std::vector<groupOfCross2d> &G,
-  FILE *f, int COUNT, std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts, int &NB, int &circular)
+  FILE *f, int COUNT, std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts, int &NB,
+  int &circular, std::vector<SPoint3> &pts)
 {
   MEdge e(v0, v1);
 
@@ -2036,6 +2076,8 @@ static void computeOneIsoRecur(
   bool added = addCut(p, e, COUNT, NB, cuts);
   if(!added) return;
 
+  pts.push_back(p);
+  
   NB++;
 
   //  visited[e] = NB;
@@ -2043,9 +2085,7 @@ static void computeOneIsoRecur(
   if(d1.find(e) != d1.end()) {
     std::pair<std::map<MVertex *, double> *, double> aa =
       std::make_pair(&pot, VAL);
-    std::pair<MEdge, std::pair<std::map<MVertex *, double> *, double> > p =
-      std::make_pair(e, aa);
-    cutGraphEnds.insert(p);
+    cutGraphEnds.push_back(std::make_pair(e, aa));
   }
   std::vector<MElement *> lst = adj[v0];
 
@@ -2079,7 +2119,7 @@ static void computeOneIsoRecur(
         fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", p.x(), p.y(), p.z(),
                 pp.x(), pp.y(), pp.z(), COUNT, COUNT);
         computeOneIsoRecur(vsing, adj, VAL, v0, vs[i], pp, pot, visited,
-			   cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular);
+			   cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular, pts);
       }
       else if((U[1] - VAL) * (U2 - VAL) <= 0) {
         double xi = coord1d(U[1], U2, VAL);
@@ -2087,7 +2127,7 @@ static void computeOneIsoRecur(
         fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", p.x(), p.y(), p.z(),
                 pp.x(), pp.y(), pp.z(), COUNT, COUNT);
         computeOneIsoRecur(vsing, adj, VAL, v1, vs[i], pp, pot, visited,
-			   cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular);
+			   cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular, pts);
       }
       else {
         printf("strange\n");
@@ -2107,18 +2147,24 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
 			 std::vector<cutGraphPassage> & passages)
 {
   std::map<MEdge, int, MEdgeLessThan> visited;
-  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>,
-           MEdgeLessThan>
+  //  std::map<MEdge, std::pair<std::map<MVertex *, double> *, double>,
+  //           MEdgeLessThan>
+  //    cutGraphEnds;
+
+  std::vector<std::pair<MEdge, std::pair<std::map<MVertex *, double> *, double> > >
     cutGraphEnds;
   int NB = 0;
   int circular = 0;
 
+  std::vector<SPoint3> pts;
+  
   computeOneIsoRecur(vsing, adj, VAL, v0, v1, p, *potU, visited, cutGraphEnds,
-		     d1, G, f, COUNT, cuts, NB, circular);
+		     d1, G, f, COUNT, cuts, NB, circular, pts);
 
+  cutGraphPassage passage (COUNT , vsing);
   
   int XX = 1;
-  passages.clear();
+
   while(!cutGraphEnds.empty()) {
     MEdge e = (*cutGraphEnds.begin()).first;
     std::map<MVertex *, double> *POT = (*cutGraphEnds.begin()).second.first;
@@ -2128,9 +2174,7 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     p[0] = (1. - xi) * e.getVertex(0)->x() + xi * e.getVertex(1)->x();
     p[1] = (1. - xi) * e.getVertex(0)->y() + xi * e.getVertex(1)->y();
     p[2] = (1. - xi) * e.getVertex(0)->z() + xi * e.getVertex(1)->z();
-    //    printf("cutgaphends %lu
-    //    %lu\n",o.getVertex(0)->getNum(),o.getVertex(1)->getNum()); printf("%lu
-    //    ends to the cutgraph\n",cutGraphEnds.size());
+    //        printf("cutgaphends %lu %lu\n",o.getVertex(0)->getNum(),o.getVertex(1)->getNum());
     cutGraphEnds.erase(cutGraphEnds.begin());
     // visited.clear();
 
@@ -2179,39 +2223,38 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     }
     if(maxCount == 0) printf("IMPOSSIBLE\n");
 
-    int pot = POT == potU ? 0 : 1;
-    //    printf(" --> cutting cut graph %5d %5d\n",cutGraphId, pot,passages.size());
-    int count = 0;
-    for (int k=0;k<passages.size();k++){
-      if (pot == passages[k]._uv && cutGraphId == passages[k]._id)count++;
-    }
-    
-    if (count > 20){
-      printf("CYCLE DETECTED for SING %lu : ",vsing->getNum());
-      for (size_t k=0;k<passages.size();k++)printf("(%d,%d) ",passages[k]._id,passages[k]._uv);
-      printf("\n");
-      return -1;
-    }
-    
-    if (passages.empty() || 
-	passages[passages.size()-1]._uv != pot ||
-	passages[passages.size()-1]._id != cutGraphId){
-      passages.push_back(cutGraphPassage(cutGraphId,pot,p));
-    }
+    passage.addPassage (POT == potU ? 0 : 1, cutGraphId);
+
+    if (passage.isCyclic(pts)) break;
     
     if(ROT) { POT = (POT == potU ? potV : potU); }
     else {
     }
     XX += ROT;
-    // printf("XX = %d ROT = %d %lu\n",XX,ROT,cutGraphEnds.size());
     if(distance(e.getVertex(0), o.getVertex(0)) < 1.e-12)
       VAL = (1. - xi) * (*POT)[o.getVertex(0)] + xi * (*POT)[o.getVertex(1)];
     else
       VAL = (1. - xi) * (*POT)[o.getVertex(1)] + xi * (*POT)[o.getVertex(0)];
     computeOneIsoRecur(vsing, adj, VAL, o.getVertex(0), o.getVertex(1), p, *POT,
-				  visited, cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular);
+		       visited, cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular, pts);
     if(XX > 1200) break;
   }
+
+  {
+    char name[245];
+    sprintf(name,"p_%d.pos",COUNT);
+    FILE *F = fopen(name,"w");
+    fprintf(F,"View\"\"{\n");
+    for (size_t i=1;i<pts.size();i++){
+      fprintf(F,"SL(%g,%g,%g,%g,%g,%g) {%lu,%lu};\n",pts[i-1].x(),pts[i-1].y(),pts[i-1].z(),pts[i].x(),pts[i].y(),pts[i].z(),i,i);
+    }
+    fprintf(F,"};\n");
+    fclose(F);
+  }
+  
+  
+  passages.push_back(passage);
+
   return circular;
 }
 
@@ -2764,7 +2807,7 @@ public:
     bool okcf = QMT::compute_cross_field_with_heat("default",cf_tag,nb_iter,&edge_to_angle);
     if (!okcf) {
       Msg::Error("Failed to compute cross field");
-      return -1;
+      //      return -1;
     }
 
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
@@ -2836,14 +2879,19 @@ public:
 
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
     std::vector<MEdge> edges;
+    std::set<MVertex*> boundaries;
     for(; it != C.end(); ++it) {
-      if(it->second.inBoundary) { edges.push_back(it->first); }
+      if(it->second.inBoundary) {
+	edges.push_back(it->first);
+	boundaries.insert(it->first.getVertex(0));
+	boundaries.insert(it->first.getVertex(1));
+      }
     }
     std::vector<std::vector<MVertex *> > vsorted;
     SortEdgeConsecutive(edges, vsorted);
 
     // AVERAGE
-    dof->numberVertex(*vs.begin(), 1, 1);
+    //    dof->numberVertex(*vs.begin(), 1, 1);
 
     for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
         it != vs.end(); ++it){
@@ -2921,13 +2969,17 @@ public:
       //      printf("%22.15E %22.15E\n",SUM, CORR );
       for(size_t i = 0; i < vsorted[j].size(); ++i) {
         Dof E(vsorted[j][i]->getNum(), Dof::createTypeWithTwoInts(0, 1));
-        _lsys->addToRightHandSide(dof->getDofNumber(E),CURVATURE[i]);
+	//        _lsys->addToRightHandSide(dof->getDofNumber(E),CURVATURE[i]);
       }
     }
 
+    double sum1 = 0;
     for(std::map<MVertex *, double>::iterator it = gaussianCurvatures.begin();it != gaussianCurvatures.end(); ++it){
       Dof E(it->first->getNum(), Dof::createTypeWithTwoInts(0, 1));
-      //_lsys->addToRightHandSide(dof->getDofNumber(E),-it->second);
+      //      printf("%12.5E\n",it->second);
+      double XXX = boundaries.find(it->first) == boundaries.end() ? -2*M_PI+it->second : -M_PI+it->second;
+      _lsys->addToRightHandSide(dof->getDofNumber(E),XXX);
+      sum1 += XXX;
     }
 
     double SSUM = 0;
@@ -2939,6 +2991,8 @@ public:
       SSUM += 2.0 * M_PI * (double)it->second / nbTurns;
     }
 
+    printf("%12.5E %12.5E\n",sum1,SSUM);
+    
     // FIX DE LA MORT
     // AVERAGE
     Dof EAVG((*vs.begin())->getNum(), Dof::createTypeWithTwoInts(1, 1));
@@ -3182,8 +3236,8 @@ public:
 	  SVector3 v2 (vk2->x()-vk->x(),vk2->y()-vk->y(),vk2->z()-vk->z());
 	  double CURV = angle(v1,v2);
 	  std::map<MVertex *, double>::iterator itg = gaussianCurvatures.find(vk);
-	  if (itg == gaussianCurvatures.end()) gaussianCurvatures[vk] = 2*M_PI - CURV;
-	  else itg->second -= CURV;
+	  if (itg == gaussianCurvatures.end())  gaussianCurvatures[vk] = CURV;
+	  else itg->second += CURV;
 	  //---------------------------------------------------------------------
 
           cross2d c(e, t, e1, e2);
@@ -3215,16 +3269,17 @@ public:
     for(; it != C.end(); ++it) it->second.finish(C);
     it = C.begin();
     for(; it != C.end(); ++it) it->second.finish2();
-    FILE *F = fopen("gc.pos","w");
-    fprintf(F,"View\"\"{\n");
-    double dd = 0;
-    for (std::map<MVertex*,double>:: iterator it = gaussianCurvatures.begin(); it != gaussianCurvatures.end() ; ++it){
-      fprintf(F,"SP(%g,%g,%g){%g};\n",it->first->x(),it->first->y(),it->first->z(),it->second);
-      dd += it->second;      
-    }
-    printf("%22.15E %22.15E\n",dd,dd-4*M_PI);
-    fprintf(F,"};\n");
-    fclose(F);
+
+    //    FILE *F = fopen("gc.pos","w");
+    //    fprintf(F,"View\"\"{\n");
+    //    double dd = 0;
+    //    for (std::map<MVertex*,double>:: iterator it = gaussianCurvatures.begin(); it != gaussianCurvatures.end() ; ++it){
+    //      fprintf(F,"SP(%g,%g,%g){%g};\n",it->first->x(),it->first->y(),it->first->z(),it->second);
+    //      dd += it->second;      
+    //    }
+    //    printf("%22.15E %22.15E\n",dd,dd-4*M_PI);
+    //    fprintf(F,"};\n");
+    //    fclose(F);
   }
 
   void restoreInitialMesh()
@@ -3887,10 +3942,10 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   else {
     Msg::Info("Computing a cross field");
     int cf_status = qLayout.computeCrossFieldAndH();
-    if (cf_status == -1) {
-      Msg::Error("failed to compute cross field");
-      return -1;
-    }
+    //    if (cf_status == -1) {
+      //      Msg::Error("failed to compute cross field");
+      //      return -1;
+    //    }
     qLayout.computeCutGraph(duplicateEdges);
     qLayout.computeThetaUsingHCrouzeixRaviart(dataTHETA);
   }
