@@ -29,4 +29,5 @@ namespace QMT {
       void* data);
   bool solve(std::vector<double>& x, void* data);
 
+  bool factorize(void* data); /* only with custom MUMPS */
 }

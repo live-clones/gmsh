@@ -564,9 +564,9 @@ namespace QMT {
       }
     }
     
-    double dtInitial = (0.5*diag)*(0.5*diag);
-    double dtFinal = (2.*emin)*(2.*emin);
-    info("heat diffusion and projection loop ({} iterations, {} unknowns, dt = {} ... {}) ...", nbIter, 2*uIEdges.size(),dtInitial, dtFinal);
+    double dtInitial = (0.1*diag)*(0.1*diag);
+    double dtFinal = (3.*emin)*(3.*emin);
+    info("heat diffusion and projection loop ({} steps, {} unknowns, dt = {} .. {}) ...", nbIter, 2*uIEdges.size(),dtInitial, dtFinal);
     double wti = gmsh::logger::getWallTime();
     F(e,uIEdges.size()) { /* constant cross field at initialization */
       x[2*e+0] = 1.;
@@ -574,22 +574,29 @@ namespace QMT {
     }
 
     vector<double> steps;
-    nbIter = 10;
-    F(i,nbIter) { /* resolution transition */
-      double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbIter-1);
-      steps.push_back(dt);
+    if (true) {
+      nbIter = 4;
+      F(i,nbIter) { /* resolution transition */
+        double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbIter-1);
+        steps.push_back(dt);
+      }
+    } else {
+      nbIter = 10;
+      F(i,nbIter) { /* resolution transition */
+        double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbIter-1);
+        steps.push_back(dt);
+      }
+      steps.push_back(dtFinal); /* repeat last time step */
     }
-    steps.push_back(dtFinal); /* repeat last time step */
 
     {
       /* Initialize system (I/dt + M^-1 * L) x_(i+1) = 1/dt * x_i     (Ax = B) */
-      
       vector<vector<size_t>> Acol = K_columns;
       vector<vector<double>> Aval_add = K_values; /* to get sparsity pattern */
       F(i,Aval_add.size()) std::fill(Aval_add[i].begin(),Aval_add[i].end(),0.);
       vector<double> B = x;
-      double dt = dtInitial;
       vector<double> norms(uIEdges.size(),0.);
+      vector<double> prevNorms = norms;
 
       void* data;
       create_linear_system(2*uIEdges.size(),&data);
@@ -609,11 +616,15 @@ namespace QMT {
       F(i,Acol.size()) Acol[i].clear();
 
 
-      F(iter,steps.size()) {
+      double prev_dt = DBL_MAX;
+      for (int iter = 0; iter < steps.size(); ++iter) {
+        if (iter > 0 && steps[iter] > prev_dt) continue;
         double dt = steps[iter];
-        info("  iter {}/{} | dt = {}, solving linear system ...", iter+1, steps.size(), dt);
-        B = x;
-        FC(i,B.size(),!dirichletEdge[i/2]) B[i] /= dt;
+        prev_dt = dt;
+
+        info("  step {}/{} | dt = {}, linear system loop ...", iter+1, steps.size(), dt);
+
+        /* Update matrix with the new timestep */
         F(i,Acol.size()) {
           if (!dirichletEdge[i/2]) {
             Acol[i] = {i};
@@ -626,21 +637,61 @@ namespace QMT {
           error("failed to update linear system");
           return false;
         }
-        set_rhs_values(B, data);
-        bool oks = solve(x, data);
-        if (!oks) {
-          error("failed to solve linear system");
-          return false;
-        }
-        FC(i,x.size(),!dirichletEdge[i/2]) x[i] *= dt;
-        // create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
-        F(e,uIEdges.size()) {
-          norms[e] = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
-          if (!dirichletEdge[e] && norms[e] > EPS) {
-            x[2*e+0] /= norms[e];
-            x[2*e+1] /= norms[e];
+        factorize(data);
+
+        /* Loop at fixed time step */
+        constexpr size_t subiter_max = 25;
+        F(subiter, subiter_max) {
+          prevNorms = norms;
+
+          /* Update RHS */
+          B = x;
+          FC(i,B.size(),!dirichletEdge[i/2]) B[i] /= dt;
+          set_rhs_values(B, data);
+
+          /* Solve linear system */
+          // info("           | solve ...");
+          bool oks = solve(x, data);
+          if (!oks) {
+            error("failed to solve linear system");
+            return false;
+          }
+          FC(i,x.size(),!dirichletEdge[i/2]) x[i] *= dt;
+
+          // create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
+          
+          /* Normalize cross field and gather norm stats */
+          double nmi = DBL_MAX;
+          double nma = -DBL_MAX;
+          F(e,uIEdges.size()) {
+            norms[e] = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
+            nmi = std::min(nmi,norms[e]);
+            nma = std::max(nma,norms[e]);
+            if (!dirichletEdge[e] && norms[e] > EPS) {
+              x[2*e+0] /= norms[e];
+              x[2*e+1] /= norms[e];
+            }
+          }
+          // info("            |   norm, min = {}, max = {}", nmi, nma);
+          if (nma > 1. + EPS) {
+            steps[iter] /= 10;
+            dt = steps[iter];
+            iter -= 1;
+            warn("           |   max(norm)={} (should be 1.), solve failed, new time step: dt = {}", nma, dt);
+            break;
+          }
+          if (subiter > 0 || iter > 0) {
+            double linf = 0.;
+            FC(i,norms.size(),!dirichletEdge[i]) {
+              linf = std::max(linf,norms[i]-prevNorms[i]);
+            }
+            info("           |   system solved, norm diff max: {}", linf);
+            if (linf < 1.e-3) break;
+          } else {
+            info("           |   system solved");
           }
         }
+        // create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
       }
 
       destroy_linear_system(&data);
