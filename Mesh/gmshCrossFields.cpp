@@ -779,7 +779,7 @@ static void assembleLagrangeMultipliers(dofManager<double> &myAssembler,
   //    g.mat[1][1]=-1;
   //  }
 
-  
+
   //    printf("GROUP %d\n",g.groupId);
   //    printf("LEFT --- RIGHT\n");
   //    printf("%3lu %3lu\n",g.left[0]->getNum(),g.right[0]->getNum());
@@ -832,7 +832,7 @@ static void assembleLagrangeMultipliers(dofManager<double> &myAssembler,
 	   Dof::createTypeWithTwoInts(0, 3 + 10000 * g.groupId));
     Dof U1(g.left[0]->getNum(), Dof::createTypeWithTwoInts(0, 2));
     Dof U2(g.right[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
-    
+
   }
 
   for(size_t K = 1; K < g.left.size(); K++) {
@@ -953,7 +953,7 @@ void createExtraConnexions (dofManager<double> &myAssembler,
 			    std::vector<cutGraphPassage> &passages){
   return;
   // give a number to the equation ...
-  myAssembler.numberVertex(G[0].left[0], 0, 10201020 );    
+  myAssembler.numberVertex(G[0].left[0], 0, 10201020 );
 }
 
 void assembleExtraConnexions (dofManager<double> &myAssembler,
@@ -962,9 +962,9 @@ void assembleExtraConnexions (dofManager<double> &myAssembler,
   int nConn = 2;
   int groups [2][2] = {{14,1},
 		       {13,2}};
-  
+
   Dof E(G[0].left[0]->getNum(), Dof::createTypeWithTwoInts(0, 10201020));
-  
+
   for (int i=0 ; i < nConn ; i++){
     groupOfCross2d &g = G[groups[i][0]];
     int index = groups[i][1];
@@ -1021,7 +1021,7 @@ static void computePotential(
   LagrangeMultipliers2(myAssembler, 2, C, groups, duplicateEdges, false, lift2);
 
   createExtraConnexions (myAssembler, G, passages);
-  
+
   for(size_t i = 0; i < G.size(); i++) {
     createLagrangeMultipliers(myAssembler, G[i]);
     LagrangeMultipliers3(myAssembler, G[i], lift, false);
@@ -1036,7 +1036,7 @@ static void computePotential(
 
   assembleExtraConnexions (myAssembler, G, passages);
 
-  
+
   simpleFunction<double> ONE(1.0);
   laplaceTerm l(NULL, 1, &ONE);
   laplaceTerm l2(NULL, 2, &ONE);
@@ -1454,7 +1454,7 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   }
 
 
-  
+
   FILE *fff = fopen("cotree.pos", "w");
   fprintf(fff, "View \"sides\"{\n");
   {
@@ -2110,7 +2110,7 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
   computeOneIsoRecur(vsing, adj, VAL, v0, v1, p, *potU, visited, cutGraphEnds,
 		     d1, G, f, COUNT, cuts, NB, circular);
 
-  
+
   int XX = 1;
   passages.clear();
   while(!cutGraphEnds.empty()) {
@@ -2176,23 +2176,23 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     int pot = POT == potU ? 0 : 1;
     //    printf(" --> cutting cut graph %5d %5d\n",cutGraphId, pot,passages.size());
     int count = 0;
-    for (int k=0;k<passages.size();k++){
+    for (std::size_t k=0;k<passages.size();k++){
       if (pot == passages[k]._uv && cutGraphId == passages[k]._id)count++;
     }
-    
+
     if (count > 20){
       printf("CYCLE DETECTED for SING %lu : ",vsing->getNum());
       for (size_t k=0;k<passages.size();k++)printf("(%d,%d) ",passages[k]._id,passages[k]._uv);
       printf("\n");
       return -1;
     }
-    
-    if (passages.empty() || 
+
+    if (passages.empty() ||
 	passages[passages.size()-1]._uv != pot ||
 	passages[passages.size()-1]._id != cutGraphId){
       passages.push_back(cutGraphPassage(cutGraphId,pot,p));
     }
-    
+
     if(ROT) { POT = (POT == potU ? potV : potU); }
     else {
     }
@@ -2787,7 +2787,7 @@ public:
         it != vs.end(); ++it){
       dof->numberVertex(*it, 0, 1);
     }
-    
+
     simpleFunction<double> ONE(1.0);
     laplaceTerm l(0, 1, &ONE);
 
@@ -2880,7 +2880,7 @@ public:
     // FIX DE LA MORT
     // AVERAGE
     Dof EAVG((*vs.begin())->getNum(), Dof::createTypeWithTwoInts(1, 1));
-    
+
     for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
         it != vs.end(); ++it){
       Dof E((*it)->getNum(), Dof::createTypeWithTwoInts(0, 1));
@@ -2888,7 +2888,7 @@ public:
       dof->assemble(E, EAVG, 1);
     }
 
-    
+
     _lsys->systemSolve();
     return dof;
   }
@@ -3158,7 +3158,7 @@ public:
     double dd = 0;
     for (std::map<MVertex*,double>:: iterator it = gaussianCurvatures.begin(); it != gaussianCurvatures.end() ; ++it){
       fprintf(F,"SP(%g,%g,%g){%g};\n",it->first->x(),it->first->y(),it->first->z(),it->second);
-      dd += it->second;      
+      dd += it->second;
     }
     printf("%22.15E %22.15E\n",dd,dd-4*M_PI);
     fprintf(F,"};\n");
@@ -3585,7 +3585,7 @@ public:
               int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
               tcuts.lower_bound(*iti);
 	    std::pair<int,MVertex*> id[10];
-	    for (int kk=0;kk< tcuts.count(*iti);kk++){
+	    for (std::size_t kk=0;kk< tcuts.count(*iti);kk++){
 	      id[kk] = std::make_pair(itt->second.second.second, itt->second.first);
 	      ++itt;
 	    }
@@ -3687,7 +3687,7 @@ public:
     while (1){
       computePotential(gm, f, *myAssembler, C, new2old, groups, duplicateEdges,
 		       d0, d1, G, potU, potV, passages);
-      
+
       if (computeIsos(gm, f, singularities, C, new2old, duplicateEdges, groups,
 		      groups_cg, potU, potV, cutG, G, cuts, passages)==true){
 	printf("COMPUTE ISOS DONE\n");
@@ -3701,7 +3701,7 @@ public:
     double MAXX = 0.;
     //    double SUM_LEFT = 0 , SUM_RIGHT = 0;
     for(size_t i = 0; i < groups_cg.size(); i++) {
-      double MAXD1 = -1.e22, MIND1 = 1.e22, MAXD2 = -1.e22, MIND2 = 1.e22;      
+      double MAXD1 = -1.e22, MIND1 = 1.e22, MAXD2 = -1.e22, MIND2 = 1.e22;
       for(size_t j = 0; j < G[i].left.size(); j++) {
 	/*	if (G[i].groupId == 5 || G[i].groupId == 6){
 	  printf("%lu %lu %12.5E %12.5E %12.5E %12.5E\n",G[i].left[j]->getNum(),G[i].right[j]->getNum(),
@@ -3719,7 +3719,7 @@ public:
         MAXD2 = std::max(D2, MAXD2);
         MIND1 = std::min(D1, MIND1);
         MIND2 = std::min(D2, MIND2);
-	
+
       }
       //      SUM_LEFT += MAXD1;
       //      SUM_RIGHT += MAXD2;
@@ -3912,7 +3912,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   }
   //  return 0;
   Msg::Info("Cutting the mesh");
-  
+
   qLayout.cutMesh(cuts);
 
   Msg::Info("Classifying the model");
