@@ -637,13 +637,9 @@ void GEdge::relocateMeshVertices()
   }
 }
 
-SPoint3 GEdge::closestPoint(SPoint3 &p, double tolerance)
+SPoint3 GEdge::closestPointWithTol(SPoint3 &p, double tolerance)
 {
   if(!_cp || _cp->tol() != tolerance) {
-    if(_cp)
-      printf("coucou %12.15E %22.15E \n", tolerance, _cp->tol());
-    else
-      printf("coucou %12.5E \n", tolerance);
     if(_cp) delete _cp;
     _cp = new closestPointFinder(this, tolerance);
   }

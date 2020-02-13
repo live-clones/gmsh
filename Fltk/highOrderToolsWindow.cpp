@@ -23,6 +23,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "Context.h"
+#include "Generator.h"
 #include "HighOrder.h"
 
 #if defined(HAVE_OPTHOM)

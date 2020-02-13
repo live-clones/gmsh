@@ -1100,7 +1100,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderPassMax", opt_mesh_ho_pass_max, 25,
     "Maximum number of high-order optimization passes (moving barrier)"},
   { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
-    "Correct high-order optimization for periodic connections?" },
+    "Force location of nodes for periodic meshes using periodicity transform (0: "
+    "assume identical parametrisations, 1: invert parametrisations, 2: compute "
+    "closest point" },
   { F|O, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,
     "Poisson ratio of the material used in the elastic smoother for high-order meshes "
     "(between -1.0 and 0.5, excluded)"},

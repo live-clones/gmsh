@@ -14,6 +14,7 @@ void OptimizeMesh(GModel *m, const std::string &how = "", bool force = false,
                   int niter = 1);
 void RecombineMesh(GModel *m);
 void AdaptMesh(GModel *m);
+void FixPeriodicMesh(GModel *m);
 void GetStatistics(double stat[50], double quality[4][100] = 0,
                    bool visibleOnly = false);
 
