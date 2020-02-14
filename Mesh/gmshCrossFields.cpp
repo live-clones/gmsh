@@ -223,8 +223,9 @@ public:
     if(_t.size() == 1) { inBoundary = true; }
     else if(_t.size() >= 2) {
       if(inBoundary) {
-	//        inBoundary = false;
-	//        inInternalBoundary = true;
+	//	printf("Internal boundary\n");
+	inBoundary = false;
+	inInternalBoundary = true;
       }
     }
 
@@ -520,7 +521,7 @@ struct groupOfCross2d {
               side[i]->getVertex(2)->z(), groupId, groupId, groupId);
     }
   };
-  groupOfCross2d(int id) : groupId(id){}
+  groupOfCross2d(int id) : groupId(id) {}
 };
 
 static void unDuplicateNodesInCutGraph(
@@ -703,9 +704,9 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
                                  bool assemble)
 {
   return;
+  // internal boundaries --> constant u or v on each side 
   if(g.crosses[0]->inInternalBoundary) {
     if(!assemble) {
-      //      printf("group %d is internal\n",g.groupId);
       for(size_t K = 1; K < g.left.size(); K++) {
         myAssembler.numberVertex(g.left[K], 0, 12 + 100 * g.groupId);
         myAssembler.numberVertex(g.left[K], 0, 13 + 100 * g.groupId);
@@ -723,7 +724,7 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
       dir1 = d0[t0];
     }
 
-    printf("%12.5E %12.5E\n", fabs(dot(g.crosses[0]->_tgt, dir0)),
+    printf("GROUP %d %12.5E %12.5E\n",g.groupId, fabs(dot(g.crosses[0]->_tgt, dir0)),
            fabs(dot(g.crosses[0]->_tgt, dir1)));
 
     Dof U1R(g.left[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
@@ -740,7 +741,7 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
       Dof V1(g.left[K]->getNum(), Dof::createTypeWithTwoInts(0, 2));
       Dof V2(g.right[K]->getNum(), Dof::createTypeWithTwoInts(0, 2));
 
-      if(fabs(dot(g.crosses[0]->_tgt, dir0)) > .5) {
+      if(fabs(dot(g.crosses[0]->_tgt, dir0)) < .2) {
         myAssembler.assemble(E1, U1, 1.0);
         myAssembler.assemble(U1, E1, 1.0);
         myAssembler.assemble(E1, U1R, -1.0);
@@ -753,7 +754,7 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
         myAssembler.assemble(V1R, E1, -1.0);
       }
 
-      if(fabs(dot(g.crosses[0]->_tgt, dir1)) > .5) {
+      if(fabs(dot(g.crosses[0]->_tgt, dir1)) < .2) {
         //	printf("HAHAHA %d\n",g.groupId);
         myAssembler.assemble(E2, U2, 1.0);
         myAssembler.assemble(U2, E2, 1.0);
@@ -950,10 +951,10 @@ struct cutGraphPassage {
   }
 
   bool isCyclic(const std::vector<SPoint3> & pts) const {
-
+    return false;
     bool cycle = false;
     for (size_t i=0 ; i < cuts.size()-1 ; i+=2){
-      if (cuts[i] == cuts[cuts.size()-1]) cycle = true;
+      if (cuts[0] == cuts[cuts.size()-1]) cycle = true;
     }
     
     if (cycle){
@@ -968,7 +969,7 @@ struct cutGraphPassage {
         double ANGLE = atan2(xx.norm(), ccos);
 	angle += ANGLE;
       }
-      if (angle > 250*M_PI) {
+      if (angle > 10*M_PI) {
 	printf("ANGLE (%d) = %12.5E\n",COUNTER,angle);
 	for (size_t i=0;i<cuts.size();i++){
 	  printf("%d ",cuts[i].second);
@@ -993,7 +994,7 @@ static void createDofs(dofManager<double> &myAssembler, int NUMDOF,
 void createExtraConnexions (dofManager<double> &myAssembler,
 			    std::vector<groupOfCross2d> &G,
 			    std::vector<cutGraphPassage> &passages){
-  return;
+    return;
   // give a number to the equation ...
   myAssembler.numberVertex(G[0].left[0], 0, 10201020 );    
 }
@@ -1001,9 +1002,9 @@ void createExtraConnexions (dofManager<double> &myAssembler,
 void assembleExtraConnexions (dofManager<double> &myAssembler,
 			    std::vector<groupOfCross2d> &G,
 			    std::vector<cutGraphPassage> &passages){
-  return;
-  int nConn = 2;
-  int groups [2][2] = {{14,1},
+    return;
+  int nConn = 1;
+  int groups [2][2] = {{1,2},
 		       {13,2}};
   
   Dof E(G[0].left[0]->getNum(), Dof::createTypeWithTwoInts(0, 10201020));
@@ -1517,6 +1518,7 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   {
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
     for(; it != C.end(); ++it) {
+      // FIXME!!!!!!
       if(it->second._t.size() > 1 && it->second.inInternalBoundary) {
         cutG.insert(it->second._e);
       }
@@ -2240,7 +2242,7 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     if(XX > 1200) break;
   }
 
-  {
+  if(0){
     char name[245];
     sprintf(name,"p_%d.pos",COUNT);
     FILE *F = fopen(name,"w");
@@ -2372,6 +2374,21 @@ static bool computeIsos(
       }
     }
   }
+
+
+  if(0){
+    std::string fn2 = gm->getName() + "_CYCLES.pos";
+    FILE *f2 = fopen(fn2.c_str(), "w");
+    fprintf(f2, "View\"Cuts\"{\n");
+    for(size_t i = 0; i < G.size(); i++) {
+      MVertex *vvv = G[i].left[G[i].left.size()/2];
+      computeIso(vvv, adj, potU[vvv], potU, potV, f2, d1, G, 0, cuts, passages);      
+      computeIso(vvv, adj, potV[vvv], potV, potU, f2, d1, G, 1, cuts, passages);      
+    }
+    fprintf(f2, "};\n");
+    fclose(f2);
+  }
+  
   std::string fn = gm->getName() + "_QLayoutResults.pos";
   FILE *f = fopen(fn.c_str(), "w");
   fprintf(f, "View\"Big Cut\"{\n");
@@ -2800,8 +2817,8 @@ public:
 
   int computeCrossFieldAndH()
   {
-#if defined(HAVE_QUADMESHINGTOOLS)
-    int nb_iter = 10;
+#if defined(HAVE_QUADMESHINGTOOLS1)
+    int nb_iter = 20;
     int cf_tag;
     std::map<std::pair<size_t,size_t>,double> edge_to_angle;
     bool okcf = QMT::compute_cross_field_with_heat("default",cf_tag,nb_iter,&edge_to_angle);
@@ -2836,7 +2853,7 @@ public:
     computeSingularities(C, singularities, indices, myAssembler);
 
 #if defined(HAVE_QUADMESHINGTOOLS)
-    bool SHOW_H = true;
+    bool SHOW_H = false;
     if (SHOW_H) {
       std::string name = gm->getName() + "_H";
       PViewDataGModel *d = new PViewDataGModel;
@@ -4056,7 +4073,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 2 * .999);
+  classifyFaces(GModel::current(), M_PI / 2 * .6);
   GModel::current()->remove(de);
   //  delete de;
   GModel::current()->pruneMeshVertexAssociations();
