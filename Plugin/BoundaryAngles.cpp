@@ -42,7 +42,7 @@ struct Less_EdgeEle {
   bool operator()(const std::pair<MEdge, MElement*> &e1,
                   const std::pair<MEdge, MElement*> &e2) const
   {
-    Less_Edge le;
+    MEdgeLessThan le;
     return le(e1.first, e2.first);
   }
 };
