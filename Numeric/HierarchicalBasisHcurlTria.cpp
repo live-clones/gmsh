@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -185,26 +185,46 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
 
 void HierarchicalBasisHcurlTria::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &edgeFunctions)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
     int constant2 = 0;
-    switch(edgeNumber) {
-    case(0): {
-      constant1 = 0;
-      constant2 = _pOrderEdge[0];
-    } break;
-    case(1): {
-      constant1 = _pOrderEdge[0] + 1;
-      constant2 = _pOrderEdge[1] + _pOrderEdge[0] + 1;
-    } break;
-    case(2): {
-      constant1 = _pOrderEdge[0] + _pOrderEdge[1] + 2;
-      constant2 = _pOrderEdge[1] + _pOrderEdge[0] + _pOrderEdge[2] + 2;
-    } break;
-    default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=2");
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
+      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
     }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
+      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
+    }
+  }
+}
+void HierarchicalBasisHcurlTria::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
     for(int k = constant1; k <= constant2; k++) {
       if((k - constant1) % 2 == 0) {
         edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
@@ -398,7 +418,7 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlTria::orientFace(
+void HierarchicalBasisHcurlTria::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
@@ -722,6 +742,20 @@ void HierarchicalBasisHcurlTria::orientFace(
     }
   }
 }
+void HierarchicalBasisHcurlTria::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double> > &fTableCopy)
+{
+  int iOrientation = numberOrientationTriFace(flag1, flag2);
+  int offset = iOrientation * _nQuadFaceFunction;
+  for(int i = 0; i < _nTriFaceFunction; i++) {
+    fTableCopy[i][0] = triFaceFunctionsAllOrientation[i + offset][0];
+    fTableCopy[i][1] = triFaceFunctionsAllOrientation[i + offset][1];
+    fTableCopy[i][2] = triFaceFunctionsAllOrientation[i + offset][2];
+  }
+}
 
 void HierarchicalBasisHcurlTria::getKeysInfo(std::vector<int> &functionTypeInfo,
                                              std::vector<int> &orderInfo)
@@ -744,14 +778,14 @@ void HierarchicalBasisHcurlTria::getKeysInfo(std::vector<int> &functionTypeInfo,
   for(int n1 = 1; n1 < _pf - 1; n1++) {
     for(int n2 = 1; n2 <= _pf - 1 - n1; n2++) {
       functionTypeInfo[it] = 2;
-      orderInfo[it] =  n1 + n2 +1;
+      orderInfo[it] = n1 + n2 + 1;
       it++;
     }
   }
   for(int n1 = 1; n1 < _pf - 1; n1++) {
     for(int n2 = 1; n2 <= _pf - 1 - n1; n2++) {
       functionTypeInfo[it] = 2;
-      orderInfo[it] = n1 + n2 +1;
+      orderInfo[it] = n1 + n2 + 1;
       it++;
     }
   }

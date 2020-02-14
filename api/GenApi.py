@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -33,6 +33,7 @@ class arg:
         self.julia_pre = ""
         self.julia_post = ""
         self.julia_return = name
+        self.texi = name + ((" = " + self.python_value) if self.python_value else "")
 
 # input types
 
@@ -676,6 +677,7 @@ def argcargv():
     a.python_pre = "api_argc_, api_argv_ = _iargcargv(argv)"
     a.julia_ctype = "Cint, Ptr{Ptr{Cchar}}"
     a.julia_arg = "length(argv), argv"
+    a.texi = "(argc = 0)}, @code{argv = []"
     return a
 
 class Module:
@@ -1127,7 +1129,7 @@ def capi(s): return s[:1].upper() + s[1:]
 class API:
 
     def __init__(self, version_major, version_minor, namespace="gmsh", code="Gmsh",
-                 copyright="Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle",
+                 copyright="Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle",
                  issues="https://gitlab.onelab.info/gmsh/gmsh/issues."):
         self.version_major = version_major
         self.version_minor = version_minor
@@ -1144,27 +1146,30 @@ class API:
         return module
 
     def write_cpp(self):
-        def write_module(module, indent):
+        def write_module(module, indent, cpp_mpath):
+            cpp_mpath += module.name + "::"
             f.write(indent + "namespace " + module.name + " { // " +
                     capi(module.doc) + "\n\n")
             indent += "  "
             for rtype, name, args, doc, special in module.fs:
+                rt = rtype.rcpp_type if rtype else "void"
+                f.write(indent + "// " + cpp_mpath + name + "\n" + indent + "//\n")
                 f.write(indent + "// " + ("\n" + indent + "// ").join(
                     textwrap.wrap(doc, 80-len(indent))) + "\n")
-                rt = rtype.rcpp_type if rtype else "void"
+
                 fnameapi = indent + ns.upper() + "_API " + rt + " " + name + "(";
                 f.write(fnameapi)
                 if args:
                     f.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
                 f.write(");\n\n")
             for m in module.submodules:
-                write_module(m, indent)
+                write_module(m, indent, cpp_mpath)
             f.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
         with open(ns + ".h", "w") as f:
             f.write(cpp_header.format(self.copyright, self.issues, ns.upper(), self.code,
                                       self.version_major, self.version_minor, ns))
             for m in self.modules:
-                write_module(m, "")
+                write_module(m, "", "")
             f.write(cpp_footer)
 
     def write_c(self):
@@ -1181,7 +1186,8 @@ class API:
                 # *c.h
                 fname = c_namespace + name[0].upper() + name[1:]
                 f.write("\n/* " + "\n * ".join(textwrap.wrap(doc, 75)) + " */\n")
-                fnameapi = ns.upper() + "_API " + (rtype.rc_type if rtype else "void") + " " + fname + "("
+                fnameapi = ns.upper() + "_API " + (rtype.rc_type if rtype else
+                                                   "void") + " " + fname + "("
                 f.write(fnameapi
                         + (",\n" + ' ' * len(fnameapi)).join(
                             list((a.c for a in args + (oint("ierr"), ))))
@@ -1267,19 +1273,21 @@ class API:
     def write_python(self):
         def parg(a):
             return a.name + (("=" + a.python_value) if a.python_value else "")
-        def write_function(f, fun, modulepath, indent):
+        def write_function(f, fun, c_mpath, py_mpath, indent):
             (rtype, name, args, doc, special) = fun
             if "onlycc++" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
-            if modulepath != ns:
+            if c_mpath != ns:
                 f.write(indent + "@staticmethod\n")
             f.write(indent + "def " + name + "("
                    + ", ".join((parg(a) for a in iargs))
                    + "):\n")
             indent += "    "
             f.write(indent + '"""\n')
+            f.write(indent + py_mpath + name + "(" + ", ".join(parg(a) for a in iargs)
+                    + ")\n\n")
             f.write(indent + ("\n" + indent).join(textwrap.wrap(doc, 75)) + "\n")
             if rtype or oargs:
                 f.write("\n" + indent + "Return " + ", ".join(
@@ -1291,8 +1299,9 @@ class API:
             for a in args:
                 if a.python_pre: f.write(indent + a.python_pre + "\n")
             f.write(indent + "ierr = c_int()\n")
-            f.write(indent + "api__result__ = " if ((rtype is oint) or (rtype is odouble)) else (indent))
-            c_name = modulepath + name[0].upper() + name[1:]
+            f.write(indent + "api__result__ = " if ((rtype is oint) or
+                                                    (rtype is odouble)) else (indent))
+            c_name = c_mpath + name[0].upper() + name[1:]
             f.write("lib." + c_name + "(\n    " + indent +
                     (",\n" + indent + "    ").join(
                         tuple((a.python_arg for a in args)) + ("byref(ierr)", )) +
@@ -1309,13 +1318,15 @@ class API:
                 else:
                     f.write(indent + "return (\n" + indent + "    " +
                             (",\n" + indent + "    ").join(r) + ")\n")
-        def write_module(f, m, modulepath, indent):
-            if modulepath:
-                modulepath += m.name[0].upper() + m.name[1:]
+        def write_module(f, m, c_mpath, py_mpath, indent):
+            if c_mpath:
+                c_mpath += m.name[0].upper() + m.name[1:]
+                py_mpath += m.name + "."
             else:
-                modulepath = m.name
+                c_mpath = m.name
+                py_mpath = m.name + "."
             for fun in m.fs:
-                write_function(f, fun, modulepath, indent)
+                write_function(f, fun, c_mpath, py_mpath, indent)
             for module in m.submodules:
                 f.write("\n\n" + indent + "class " + module.name + ":\n")
                 indentm = indent + "    "
@@ -1323,13 +1334,13 @@ class API:
                 f.write(indentm + ("\n" + indentm).join
                         (textwrap.wrap(capi(module.doc), 75)) + "\n")
                 f.write(indentm + '"""\n')
-                write_module(f, module, modulepath, indentm)
+                write_module(f, module, c_mpath, py_mpath, indentm)
         with open(ns + ".py", "w") as f:
             f.write(python_header.format(self.copyright, self.issues, self.code,
                                          self.version_major, self.version_minor,
                                          ns.upper(), ns))
             for module in self.modules:
-                write_module(f, module, "", "")
+                write_module(f, module, "", "", "")
 
     def write_julia(self):
         def parg(a):
@@ -1421,14 +1432,14 @@ class API:
             f.write("@section Namespace @code{" + path + "}: " + module.doc + "\n\n");
             f.write("@ftable @code\n");
             for rtype, name, args, doc, special in module.fs:
-                f.write("@item " + name + "\n");
+                f.write("@item " + path + '/' + name + "\n");
                 tdoc = doc.replace("`", "@code{").replace("'", "}")
                 f.write("\n".join(textwrap.wrap(tdoc, 80)) + "\n\n")
                 f.write("@table @asis\n");
                 iargs = list(a for a in args if not a.out)
                 oargs = list(a for a in args if a.out)
                 f.write("@item " + "Input:\n" +
-                        (", ".join(("@code{" + iarg.name + "}") for iarg in iargs)
+                        (", ".join(("@code{" + iarg.texi + "}") for iarg in iargs)
                          if len(iargs) else "-") + "\n")
                 f.write("@item " + "Output:\n" +
                         (", ".join(("@code{" + oarg.name + "}") for oarg in oargs)

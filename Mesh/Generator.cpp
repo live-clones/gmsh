@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -64,8 +64,8 @@ public:
     std::vector<GEdge *> const &e = gr->embeddedEdges();
     std::vector<GFace *> const &f = gr->embeddedFaces();
     if(e.empty() && f.empty()) return;
-    std::map<MEdge, GEdge *, Less_Edge> edges;
-    std::map<MFace, GFace *, Less_Face> faces;
+    std::map<MEdge, GEdge *, MEdgeLessThan> edges;
+    std::map<MFace, GFace *, MFaceLessThan> faces;
     std::vector<GEdge *>::const_iterator it = e.begin();
     std::vector<GFace *>::const_iterator itf = f.begin();
     for(; it != e.end(); ++it) {
@@ -108,7 +108,7 @@ public:
       Msg::Error("Saving the missing edges in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
-      for(std::map<MEdge, GEdge *, Less_Edge>::iterator it = edges.begin();
+      for(std::map<MEdge, GEdge *, MEdgeLessThan>::iterator it = edges.begin();
           it != edges.end(); ++it) {
         MVertex *v1 = it->first.getVertex(0);
         MVertex *v2 = it->first.getVertex(1);
@@ -128,7 +128,7 @@ public:
       Msg::Error("Saving the missing faces in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
-      for(std::map<MFace, GFace *, Less_Face>::iterator it = faces.begin();
+      for(std::map<MFace, GFace *, MFaceLessThan>::iterator it = faces.begin();
           it != faces.end(); ++it) {
         MVertex *v1 = it->first.getVertex(0);
         MVertex *v2 = it->first.getVertex(1);
@@ -366,9 +366,9 @@ static void Mesh1D(GModel *m)
     temp.push_back(*it);
   }
 
-  Msg::ResetProgressMeter();
-
   int nIter = 0, nTot = m->getNumEdges();
+  Msg::StartProgressMeter(nTot);
+
   while(1) {
     int nPending = 0;
     const size_t sss = temp.size();
@@ -386,12 +386,14 @@ static void Mesh1D(GModel *m)
           nPending++;
         }
       }
-      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
+      if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 1D...");
     }
 
     if(!nPending) break;
     if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
+
+  Msg::StopProgressMeter();
 
   Msg::SetNumThreads(prevNumThreads);
 
@@ -509,13 +511,14 @@ static void Mesh2D(GModel *m)
   // meshes) is global as it depends on a smooth normal field generated from the
   // surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)) {
-    std::set<GFace *, GEntityLessThan> f;
+    std::set<GFace *, GEntityPtrLessThan> f;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
       f.insert(*it);
 
-    Msg::ResetProgressMeter();
-
     int nIter = 0, nTot = m->getNumFaces();
+
+    Msg::StartProgressMeter(nTot);
+
     while(1) {
       int nPending = 0;
       std::vector<GFace *> temp;
@@ -534,7 +537,7 @@ static void Mesh2D(GModel *m)
             nPending++;
           }
         }
-        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 2D...");
       }
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
@@ -542,6 +545,8 @@ static void Mesh2D(GModel *m)
       if(nIter > 2) Msg::SetNumThreads(1);
       if(nIter++ > CTX::instance()->mesh.maxRetries) break;
     }
+
+    Msg::StopProgressMeter();
   }
 
   Msg::SetNumThreads(prevNumThreads);
@@ -612,13 +617,13 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
   v0       v1
  */
 
-void buildUniqueFaces(GRegion *gr, std::set<MFace, Less_Face> &bnd)
+void buildUniqueFaces(GRegion *gr, std::set<MFace, MFaceLessThan> &bnd)
 {
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *e = gr->getMeshElement(i);
     for(int j = 0; j < e->getNumFaces(); j++) {
       MFace f = e->getFace(j);
-      std::set<MFace, Less_Face>::iterator it = bnd.find(f);
+      std::set<MFace, MFaceLessThan>::iterator it = bnd.find(f);
       if(it == bnd.end())
         bnd.insert(f);
       else
@@ -631,15 +636,15 @@ bool MakeMeshConformal(GModel *gm, int howto)
 {
   fs_cont search;
   buildFaceSearchStructure(gm, search);
-  std::set<MFace, Less_Face> bnd;
+  std::set<MFace, MFaceLessThan> bnd;
   for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     GRegion *gr = *rit;
     buildUniqueFaces(gr, bnd);
   }
   // bnd2 contains non conforming faces
 
-  std::set<MFace, Less_Face> bnd2;
-  for(std::set<MFace, Less_Face>::iterator itf = bnd.begin(); itf != bnd.end();
+  std::set<MFace, MFaceLessThan> bnd2;
+  for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin(); itf != bnd.end();
       ++itf) {
     GFace *gfound = findInFaceSearchStructure(*itf, search);
     if(!gfound) {
@@ -650,14 +655,14 @@ bool MakeMeshConformal(GModel *gm, int howto)
 
   Msg::Info("%d hanging faces", bnd2.size());
 
-  std::set<MFace, Less_Face> ncf;
-  for(std::set<MFace, Less_Face>::iterator itf = bnd2.begin();
+  std::set<MFace, MFaceLessThan> ncf;
+  for(std::set<MFace, MFaceLessThan>::iterator itf = bnd2.begin();
       itf != bnd2.end(); ++itf) {
     const MFace &f = *itf;
     if(f.getNumVertices() == 4) { // quad face
-      std::set<MFace, Less_Face>::iterator it1 =
+      std::set<MFace, MFaceLessThan>::iterator it1 =
         bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(2)));
-      std::set<MFace, Less_Face>::iterator it2 =
+      std::set<MFace, MFaceLessThan>::iterator it2 =
         bnd2.find(MFace(f.getVertex(2), f.getVertex(3), f.getVertex(0)));
       if(it1 != bnd2.end() && it2 != bnd2.end()) {
         ncf.insert(MFace(f.getVertex(1), f.getVertex(2), f.getVertex(3),
@@ -687,7 +692,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
       std::vector<MFace> faces;
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, Less_Face>::iterator it = ncf.find(f);
+        std::set<MFace, MFaceLessThan>::iterator it = ncf.find(f);
         if(it == ncf.end()) {
           faces.push_back(f);
         }
@@ -728,7 +733,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
       std::vector<MFace> faces;
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, Less_Face>::iterator it = ncf.find(f);
+        std::set<MFace, MFaceLessThan>::iterator it = ncf.find(f);
         if(it == ncf.end()) {
           faces.push_back(f);
         }
@@ -775,14 +780,14 @@ static void TestConformity(GModel *gm)
   int count = 0;
   for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     GRegion *gr = *rit;
-    std::set<MFace, Less_Face> bnd;
+    std::set<MFace, MFaceLessThan> bnd;
     double vol = 0.0;
     for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
       MElement *e = gr->getMeshElement(i);
       vol += fabs(e->getVolume());
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, Less_Face>::iterator it = bnd.find(f);
+        std::set<MFace, MFaceLessThan>::iterator it = bnd.find(f);
         if(it == bnd.end())
           bnd.insert(f);
         else
@@ -791,7 +796,7 @@ static void TestConformity(GModel *gm)
     }
     printf("vol(%d) = %12.5E\n", gr->tag(), vol);
 
-    for(std::set<MFace, Less_Face>::iterator itf = bnd.begin();
+    for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin();
         itf != bnd.end(); ++itf) {
       GFace *gfound = findInFaceSearchStructure(*itf, search);
       if(!gfound) {
@@ -826,7 +831,10 @@ static void Mesh3D(GModel *m)
       Msg::SetNumThreads(1);
   }
 
-  if(m->getNumRegions()) Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
+  if(m->getNumRegions()) {
+    Msg::StartProgressMeter(1);
+    Msg::ProgressMeter(0, false, "Meshing 3D...");
+  }
 
   // mesh the extruded volumes first
   std::for_each(m->firstRegion(), m->lastRegion(), meshGRegionExtruded());
@@ -961,17 +969,21 @@ static void Mesh3D(GModel *m)
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
 
-  if(m->getNumRegions()) Msg::ProgressMeter(100, 100, false, "Meshing 3D...");
+  if(m->getNumRegions()) {
+    Msg::ProgressMeter(1, false, "Meshing 3D...");
+    Msg::StopProgressMeter();
+  }
 
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }
 
 void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 {
-  if(how != "" && how != "Optimize" &&
+  if(how != "" && how != "Gmsh" && how != "Optimize" &&
      how != "Netgen" &&
      how != "HighOrder" &&
      how != "HighOrderElastic" &&
+     how != "HighOrderFastCurving" &&
      how != "Laplace2D" &&
      how != "Relocate2D" &&
      how != "Relocate3D") {
@@ -979,13 +991,13 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     return;
   }
 
-  if(how == "")
+  if(how == "" || how == "Gmsh" || how == "Optimize")
     Msg::StatusBar(true, "Optimizing mesh...");
   else
     Msg::StatusBar(true, "Optimizing mesh (%s)...", how.c_str());
   double t1 = Cpu();
 
-  if(how == "") {
+  if(how == "" || how == "Gmsh" || how == "Optimize") {
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
       optimizeMeshGRegion opt;
       opt(*it, force);

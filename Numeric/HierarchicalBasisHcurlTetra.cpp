@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -435,7 +435,9 @@ void HierarchicalBasisHcurlTetra::generateHcurlBasis(
 
 void HierarchicalBasisHcurlTetra::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &edgeBasis)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
@@ -444,16 +446,45 @@ void HierarchicalBasisHcurlTetra::orientEdge(
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber];
     for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
+      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
+    }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
+      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
+    }
+  }
+}
+void HierarchicalBasisHcurlTetra::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber];
+    for(int k = constant1; k <= constant2; k++) {
       if((k - constant1) % 2 == 0) {
-        edgeBasis[k][0] = edgeBasis[k][0] * (-1);
-        edgeBasis[k][1] = edgeBasis[k][1] * (-1);
-        edgeBasis[k][2] = edgeBasis[k][2] * (-1);
+        edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
+        edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
+        edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
       }
     }
   }
 }
-
-void HierarchicalBasisHcurlTetra::orientFace(
+void HierarchicalBasisHcurlTetra::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
@@ -883,6 +914,29 @@ void HierarchicalBasisHcurlTetra::orientFace(
     else {
       throw std::string("unknown typeFunction");
     }
+  }
+}
+void HierarchicalBasisHcurlTetra::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double> > &fTableCopy)
+{
+  int iterator = 0;
+  for(int i = 0; i < faceNumber; i++) {
+    iterator +=
+      3 * (_pOrderFace[i] - 1) + (_pOrderFace[i] - 2) * (_pOrderFace[i] - 1);
+  }
+  int numFaceFunctions =
+    3 * (_pOrderFace[faceNumber] - 1) +
+    (_pOrderFace[faceNumber] - 2) * (_pOrderFace[faceNumber] - 1);
+  int iOrientation = numberOrientationTriFace(flag1, flag2);
+  int offset = iOrientation * _nTriFaceFunction;
+  int offset2 = iterator + numFaceFunctions;
+  for(int i = iterator; i < offset2; i++) {
+    fTableCopy[i][0] = triFaceFunctionsAllOrientation[i + offset][0];
+    fTableCopy[i][1] = triFaceFunctionsAllOrientation[i + offset][1];
+    fTableCopy[i][2] = triFaceFunctionsAllOrientation[i + offset][2];
   }
 }
 
@@ -1520,14 +1574,14 @@ void HierarchicalBasisHcurlTetra::getKeysInfo(
     for(int n1 = 1; n1 < _pOrderFace[numFace] - 1; n1++) {
       for(int n2 = 1; n2 <= _pOrderFace[numFace] - 1 - n1; n2++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = n1 + n2+1;
+        orderInfo[it] = n1 + n2 + 1;
         it++;
       }
     }
     for(int n1 = 1; n1 < _pOrderFace[numFace] - 1; n1++) {
-      for(int n2 = 1; n2 <=_pOrderFace[numFace] - 1 - n1; n2++) {
+      for(int n2 = 1; n2 <= _pOrderFace[numFace] - 1 - n1; n2++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = n1 + n2+1;
+        orderInfo[it] = n1 + n2 + 1;
         it++;
       }
     }
@@ -1536,7 +1590,7 @@ void HierarchicalBasisHcurlTetra::getKeysInfo(
     for(int n1 = 1; n1 < _pb - 1; n1++) {
       for(int n2 = 1; n2 <= _pb - 1 - n1; n2++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = n1 + n2+1;
+        orderInfo[it] = n1 + n2 + 1;
         it++;
       }
     }
@@ -1546,7 +1600,7 @@ void HierarchicalBasisHcurlTetra::getKeysInfo(
       for(int n2 = 1; n2 <= _pb - 2 - n1; n2++) {
         for(int n3 = 1; n3 <= _pb - 1 - n2 - n1; n3++) {
           functionTypeInfo[it] = 3;
-          orderInfo[it] =  n1 + n2 + n3 +1;
+          orderInfo[it] = n1 + n2 + n3 + 1;
           it++;
         }
       }

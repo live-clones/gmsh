@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -155,7 +155,7 @@ namespace tetgenBR {
     std::map<int, MVertex *> _extras;
     // Get the set of vertices from GRegion.
     {
-      std::set<MVertex *, MVertexLessThanNum> all;
+      std::set<MVertex *, MVertexPtrLessThan> all;
       std::vector<GFace *> const &f = _gr->faces();
       for(std::vector<GFace *>::const_iterator it = f.begin(); it != f.end();
           ++it) {
@@ -531,8 +531,8 @@ namespace tetgenBR {
       } // it
 
       if(_sqr){
-        std::map<MFace, GFace *, Less_Face> f = _sqr->getTri();
-        for(std::map<MFace, GFace *, Less_Face>::iterator it = f.begin();
+        std::map<MFace, GFace *, MFaceLessThan> f = _sqr->getTri();
+        for(std::map<MFace, GFace *, MFaceLessThan>::iterator it = f.begin();
             it != f.end(); it++){
           const MFace &mf = it->first;
           for(int j = 0; j < 3; j++) {

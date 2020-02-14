@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -6,7 +6,7 @@
 #ifndef HASH_H
 #define HASH_H
 
-//--FNV hashing parameters
+// FNV (Fowler–Noll–Vo) hashing parameters
 
 #if defined(HAVE_64BIT_SIZE_T)
 #define FNV_PRIME 1099511628211UL
@@ -16,7 +16,7 @@
 #define FNV_OFFSET_BASIS 2166136261UL
 #endif
 
-//--Hash FNV1a implemented via for loop.  "key" has size "len" bytes.
+// Hash FNV1a implemented via for loop.  "key" has size "len" bytes.
 
 inline size_t hash_FNV1a(const void *const key, const int len)
 {
@@ -26,9 +26,9 @@ inline size_t hash_FNV1a(const void *const key, const int len)
   return hash;
 }
 
-//--Hash FNV1a implemented via template-metaprogramming loop.  This should be
-//--used if the length N is known at compile time.  "key" has size "N" bytes.
-//--Use the entry point HashFNV1a<N>::eval(key).
+// Hash FNV1a implemented via template-metaprogramming loop.  This should be
+// used if the length N is known at compile time.  "key" has size "N" bytes.
+// Use the entry point HashFNV1a<N>::eval(key).
 
 template <int N> struct Hash1FNV1a {
   static size_t eval(size_t hash, const unsigned char *p)

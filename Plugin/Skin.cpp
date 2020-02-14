@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -191,8 +191,8 @@ static void getBoundaryFromMesh(GModel *m, int visible)
   int dim = m->getDim();
   std::vector<GEntity *> entities;
   m->getEntities(entities);
-  std::set<MFace, Less_Face> bndFaces;
-  std::set<MEdge, Less_Edge> bndEdges;
+  std::set<MFace, MFaceLessThan> bndFaces;
+  std::set<MEdge, MEdgeLessThan> bndEdges;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     if(ge->dim() != dim) continue;
@@ -224,7 +224,7 @@ static void getBoundaryFromMesh(GModel *m, int visible)
     discreteEdge *e =
       new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, 0, 0);
     m->add(e);
-    for(std::set<MEdge, Less_Edge>::iterator it = bndEdges.begin();
+    for(std::set<MEdge, MEdgeLessThan>::iterator it = bndEdges.begin();
         it != bndEdges.end(); it++) {
       e->lines.push_back(new MLine(it->getVertex(0), it->getVertex(1)));
     }
@@ -232,7 +232,7 @@ static void getBoundaryFromMesh(GModel *m, int visible)
   else if(dim == 3) {
     discreteFace *f = new discreteFace(m, m->getMaxElementaryNumber(2) + 1);
     m->add(f);
-    for(std::set<MFace, Less_Face>::iterator it = bndFaces.begin();
+    for(std::set<MFace, MFaceLessThan>::iterator it = bndFaces.begin();
         it != bndFaces.end(); it++) {
       if(it->getNumVertices() == 3)
         f->triangles.push_back(

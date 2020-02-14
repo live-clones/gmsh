@@ -59,7 +59,7 @@ private:
   }
   double _smoothMetric(std::vector<MElement *> &v, GFace *gf,
                        dofManager<double> &myAssembler,
-                       std::set<MVertex *> &verticesToMove,
+                       std::set<MVertex *, MVertexPtrLessThan> &verticesToMove,
                        elasticityTerm &El);
   void _computeMetricInfo(GFace *gf, MElement *e, fullMatrix<double> &J,
                           fullMatrix<double> &JT, fullVector<double> &D);

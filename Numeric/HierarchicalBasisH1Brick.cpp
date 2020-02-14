@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -421,9 +421,11 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Brick::orientEdge(int const &flagOrientation,
-                                          int const &edgeNumber,
-                                          std::vector<double> &edgeBasis)
+void HierarchicalBasisH1Brick::orientEdge(
+  int const &flagOrientation, int const &edgeNumber,
+  std::vector<double> &edgeFunctions,
+  const std::vector<double> &eTablePositiveFlag,
+  const std::vector<double> &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
@@ -432,14 +434,26 @@ void HierarchicalBasisH1Brick::orientEdge(int const &flagOrientation,
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
     for(int k = constant1; k <= constant2; k++) {
-      if((k - constant1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
+      edgeFunctions[k] = eTableNegativeFlag[k];
+    }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k] = eTablePositiveFlag[k];
     }
   }
 }
 
 void HierarchicalBasisH1Brick::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &gradientEdge)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
@@ -448,20 +462,70 @@ void HierarchicalBasisH1Brick::orientEdge(
     constant2 = constant2 - 1;
     constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
     for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
+      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
+    }
+  }
+  else {
+    int constant1 = 0;
+    int constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
+      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
+    }
+  }
+}
+
+void HierarchicalBasisH1Brick::orientEdgeFunctionsForNegativeFlag(
+  std::vector<double> &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
       if((k - constant1) % 2 != 0) {
-        gradientEdge[k][0] = gradientEdge[k][0] * (-1);
-        gradientEdge[k][1] = gradientEdge[k][1] * (-1);
-        gradientEdge[k][2] = gradientEdge[k][2] * (-1);
+        edgeFunctions[k] = edgeFunctions[k] * (-1);
       }
     }
   }
 }
 
-void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
-                                          double const &w, int const &flag1,
-                                          int const &flag2, int const &flag3,
-                                          int const &faceNumber,
-                                          std::vector<double> &faceBasis)
+void HierarchicalBasisH1Brick::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  int constant1 = 0;
+  int constant2 = 0;
+  for(int edgeNumber = 0; edgeNumber < _nedge; edgeNumber++) {
+    constant2 = 0;
+    constant2 = 0;
+    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] - 1; }
+    constant2 = constant2 - 1;
+    constant1 = constant2 - _pOrderEdge[edgeNumber] + 2;
+    for(int k = constant1; k <= constant2; k++) {
+      if((k - constant1) % 2 != 0) {
+        edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
+        edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
+        edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
+      }
+    }
+  }
+}
+
+void HierarchicalBasisH1Brick::orientOneFace(double const &u, double const &v,
+                                             double const &w, int const &flag1,
+                                             int const &flag2, int const &flag3,
+                                             int const &faceNumber,
+                                             std::vector<double> &faceBasis)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -539,7 +603,7 @@ void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
     }
   }
 }
-void HierarchicalBasisH1Brick::orientFace(
+void HierarchicalBasisH1Brick::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &gradientFace, std::string typeFunction)
@@ -648,6 +712,47 @@ void HierarchicalBasisH1Brick::orientFace(
   }
 }
 
+void HierarchicalBasisH1Brick::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<double> &quadFaceFunctionsAllOrientation,
+  const std::vector<double> &triFaceFunctionsAllOrientation,
+  std::vector<double> &fTableCopy)
+{
+  int iterator = 0;
+  for(int i = 0; i < faceNumber; i++) {
+    iterator += (_pOrderFace1[i] - 1) * (_pOrderFace2[i] - 1);
+  }
+  int numFaceFunctions =
+    (_pOrderFace1[faceNumber] - 1) * (_pOrderFace2[faceNumber] - 1);
+  int iOrientation = numberOrientationQuadFace(flag1, flag2, flag3);
+  int offset = iOrientation * _nQuadFaceFunction;
+  int offset2 = iterator + numFaceFunctions;
+  for(int i = iterator; i < offset2; i++) {
+    fTableCopy[i] = quadFaceFunctionsAllOrientation[i + offset];
+  }
+}
+void HierarchicalBasisH1Brick::orientFace(
+  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double> > &fTableCopy)
+{
+  int iterator = 0;
+  for(int i = 0; i < faceNumber; i++) {
+    iterator += (_pOrderFace1[i] - 1) * (_pOrderFace2[i] - 1);
+  }
+  int numFaceFunctions =
+    (_pOrderFace1[faceNumber] - 1) * (_pOrderFace2[faceNumber] - 1);
+  int iOrientation = numberOrientationQuadFace(flag1, flag2, flag3);
+  int offset = iOrientation * _nQuadFaceFunction;
+  int offset2 = iterator + numFaceFunctions;
+  for(int i = iterator; i < offset2; i++) {
+    fTableCopy[i][0] = quadFaceFunctionsAllOrientation[i + offset][0];
+    fTableCopy[i][1] = quadFaceFunctionsAllOrientation[i + offset][1];
+    fTableCopy[i][2] = quadFaceFunctionsAllOrientation[i + offset][2];
+  }
+}
+
 void HierarchicalBasisH1Brick::getKeysInfo(std::vector<int> &functionTypeInfo,
                                            std::vector<int> &orderInfo)
 {
@@ -667,16 +772,16 @@ void HierarchicalBasisH1Brick::getKeysInfo(std::vector<int> &functionTypeInfo,
     for(int n1 = 2; n1 <= _pOrderFace1[numFace]; n1++) {
       for(int n2 = 2; n2 <= _pOrderFace2[numFace]; n2++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = std::max(n1,n2);
+        orderInfo[it] = std::max(n1, n2);
         it++;
       }
     }
   }
-  for(int ipb1 = 2; ipb1 <= _pb1 ; ipb1++) {
-    for(int ipb2 = 2; ipb2 <= _pb2 ; ipb2++) {
+  for(int ipb1 = 2; ipb1 <= _pb1; ipb1++) {
+    for(int ipb2 = 2; ipb2 <= _pb2; ipb2++) {
       for(int ipb3 = 2; ipb3 <= _pb3; ipb3++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(std::max(ipb1,ipb2),ipb3);
+        orderInfo[it] = std::max(std::max(ipb1, ipb2), ipb3);
         it++;
       }
     }

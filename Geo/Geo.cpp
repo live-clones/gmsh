@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -588,6 +588,8 @@ Surface *CreateSurface(int Num, int Typ)
   pS->Extrude = NULL;
   pS->geometry = NULL;
   pS->ReverseMesh = 0;
+  pS->MeshAlgorithm = 0;
+  pS->MeshSizeFromBoundary = -1;
   return (pS);
 }
 
@@ -836,6 +838,8 @@ static void CopySurface(Surface *s, Surface *ss)
     ss->Recombine = s->Recombine;
     ss->RecombineAngle = s->RecombineAngle;
     ss->ReverseMesh = s->ReverseMesh;
+    ss->MeshAlgorithm = s->MeshAlgorithm;
+    ss->MeshSizeFromBoundary = s->MeshSizeFromBoundary;
     if(List_Nbr(s->TrsfPoints))
       Msg::Warning(
         "Only automatic transfinite surface specifications can be copied");

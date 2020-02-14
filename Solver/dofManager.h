@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -159,6 +159,14 @@ public:
   {
     fixDof(Dof(ent, type), value);
   }
+  inline void associateDof(long int ent_from, int type_from,
+			   long int ent_to, int type_to)
+  {
+    Dof from (ent_from, type_from);
+    Dof to   (ent_to, type_to);
+    std::pair<Dof,Dof> p = std::make_pair(from,to);
+    associatedWith.insert(p);
+  }
   void fixVertex(MVertex const *v, int iComp, int iField, const dataVec &value)
   {
     fixDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
@@ -204,6 +212,7 @@ public:
   }
   virtual inline void numberDof(Dof key)
   {
+    if(associatedWith.find(key) != associatedWith.end()) return;
     if(fixed.find(key) != fixed.end()) return;
     if(constraints.find(key) != constraints.end()) return;
     if(ghostByDof.find(key) != ghostByDof.end()) return;
@@ -226,6 +235,11 @@ public:
   virtual inline void getDofValue(std::vector<Dof> &keys,
                                   std::vector<dataVec> &Vals)
   {
+    for(std::size_t i = 0; i < keys.size(); i++) {
+      std::map<Dof, Dof>::iterator it = associatedWith.find(keys[i]);
+      if (it != associatedWith.end())keys[i] = it->second;
+    }
+
     int ndofs = keys.size();
     size_t originalSize = Vals.size();
     Vals.resize(originalSize + ndofs);
@@ -258,6 +272,18 @@ public:
 
   virtual inline void getDofValue(Dof key, dataVec &val) const
   {
+    {      
+      typename std::map<Dof, Dof>::const_iterator it = associatedWith.find(key);
+      if (it != associatedWith.end()){
+	//	  printf("ass to %d\n",it->second.getEntity());
+	std::map<Dof, int>::const_iterator itx = unknown.find(it->second);
+	if(itx != unknown.end()) {
+	  _current->getFromSolution(itx->second, val);
+	  return;
+	}
+	key = it->second;
+      }
+    }
     {
       typename std::map<Dof, dataVec>::const_iterator it = ghostValue.find(key);
       if(it != ghostValue.end()) {
@@ -395,7 +421,17 @@ public:
   {
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
+    printf("coucou\n");
 
+    for(std::size_t i = 0; i < R.size(); i++) {
+      std::map<Dof, Dof>::iterator it = associatedWith.find(R[i]);
+      if (it != associatedWith.end())R[i] = it->second;
+    }
+    for(std::size_t i = 0; i < C.size(); i++) {
+      std::map<Dof, Dof>::iterator it = associatedWith.find(C[i]);
+      if (it != associatedWith.end())C[i] = it->second;
+    }
+    
     std::vector<int> NR(R.size()), NC(C.size());
 
     for(std::size_t i = 0; i < R.size(); i++) {
@@ -445,6 +481,14 @@ public:
   {
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
+    printf("coucou RHS\n");
+
+    for(std::size_t i = 0; i < R.size(); i++) {
+      std::map<Dof, Dof>::iterator it = associatedWith.find(R[i]);
+      if (it != associatedWith.end())R[i] = it->second;
+    }
+
+
     std::vector<int> NR(R.size());
     for(std::size_t i = 0; i < R.size(); i++) {
       std::map<Dof, int>::iterator itR = unknown.find(R[i]);
@@ -477,6 +521,11 @@ public:
   {
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
+    for(std::size_t i = 0; i < R.size(); i++) {
+      std::map<Dof, Dof>::iterator it = associatedWith.find(R[i]);
+      if (it != associatedWith.end())R[i] = it->second;
+    }
+
     std::vector<int> NR(R.size());
     for(std::size_t i = 0; i < R.size(); i++) {
       std::map<Dof, int>::iterator itR = unknown.find(R[i]);
@@ -656,8 +705,14 @@ public:
     }
   }
 
-  virtual int getDofNumber(const Dof &key)
+  virtual int getDofNumber(const Dof &ky)
   {
+    Dof key = ky;
+    {
+      std::map<Dof, Dof>::iterator it = associatedWith.find(ky);
+      if (it != associatedWith.end())key = it->second;
+    }
+    
     std::map<Dof, int>::iterator it = unknown.find(key);
     if(it == unknown.end()) {
       return -1;

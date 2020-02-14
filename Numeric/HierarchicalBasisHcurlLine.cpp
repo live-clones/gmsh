@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -86,22 +86,39 @@ void HierarchicalBasisHcurlLine::generateHcurlBasis(
     }
   }
 }
-
 void HierarchicalBasisHcurlLine::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &edgeFunctions)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     for(int k = 0; k <= _pe; k++) {
-      if(k % 2 == 0) {
-        edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
-        edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
-        edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
-      }
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
+      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
+      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
+    }
+  }
+  else {
+    for(int k = 0; k <= _pe; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
+      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
     }
   }
 }
 
+void HierarchicalBasisHcurlLine::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  for(int k = 0; k <= _pe; k++) {
+    if(k % 2 == 0) {
+      edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
+      edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
+      edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
+    }
+  }
+}
 void HierarchicalBasisHcurlLine::generateCurlBasis(
   double const &u, double const &v, double const &w,
   std::vector<std::vector<double> > &edgeBasis,

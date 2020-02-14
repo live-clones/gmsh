@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,7 +19,7 @@
 #include "CutSphere.h"
 #include "CutBox.h"
 #include "Skin.h"
-#include "AnalyseCurvedMesh.h"
+#include "AnalyseMeshQuality.h"
 #include "CurvedBndDist.h"
 #include "MathEval.h"
 #include "ExtractElements.h"
@@ -68,6 +68,7 @@
 #include "VoroMetal.h"
 #include "Summation.h"
 #include "BoundaryAngles.h"
+#include "MeshSizeFieldView.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -275,11 +276,13 @@ void PluginManager::registerDefaultPlugins()
       "BoundaryAngles", GMSH_RegisterBoundaryAnglesPlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
-      "AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
+      "AnalyseMeshQuality", GMSH_RegisterAnalyseMeshQualityPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "VoroMetal", GMSH_RegisterVoroMetalPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
+      "MeshSizeFieldView", GMSH_RegisterMeshSizeFieldViewPlugin()));
 #endif
 #if defined(HAVE_REVOROPT)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(

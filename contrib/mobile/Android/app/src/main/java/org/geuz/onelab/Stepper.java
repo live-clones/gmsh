@@ -8,7 +8,7 @@ import android.widget.EditText;
 import android.text.TextWatcher;
 import android.text.Editable;
 
-class Stepper extends LinearLayout{
+class Stepper extends LinearLayout {
   private int _min, _max, _val;
   private Button _incBtn, _decBtn;
   private EditText _valTxt;
@@ -28,41 +28,41 @@ class Stepper extends LinearLayout{
     this.addView(_valTxt);
     this.addView(_incBtn);
     _incBtn.setOnClickListener(new OnClickListener() {
-        public void onClick(View v) {
-          inc();
-        }
-      });
+      public void onClick(View v) { inc(); }
+    });
     _decBtn.setOnClickListener(new OnClickListener() {
-        public void onClick(View v) {
-          dec();
-        }
-      });
+      public void onClick(View v) { dec(); }
+    });
     _valTxt.addTextChangedListener(new TextWatcher() {
-        public void afterTextChanged(Editable s){}
-        public void beforeTextChanged(CharSequence s, int start, int count, int after){}
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-          try {
-            setValueButText(Integer.parseInt(s.toString()));
-          }
-          catch (NumberFormatException e) {}
+      public void afterTextChanged(Editable s) {}
+      public void beforeTextChanged(CharSequence s, int start, int count,
+                                    int after)
+      {
+      }
+      public void onTextChanged(CharSequence s, int start, int before,
+                                int count)
+      {
+        try {
+          setValueButText(Integer.parseInt(s.toString()));
+        } catch(NumberFormatException e) {
         }
-      });
+      }
+    });
   }
 
-  public interface OnValueChangedListener
-  {
+  public interface OnValueChangedListener {
     public void onValueChanged();
   }
 
-  public void inc(){setValue(_val+1);}
-  public void dec(){setValue(_val-1);}
+  public void inc() { setValue(_val + 1); }
+  public void dec() { setValue(_val - 1); }
 
   public void setOnValueChangedListener(OnValueChangedListener listener)
   {
     _listener = listener;
   }
-  public void setMaximum(int max){_max = max;}
-  public void setMinimum(int min){_min = min;}
+  public void setMaximum(int max) { _max = max; }
+  public void setMinimum(int min) { _min = min; }
   public void setValue(int val)
   {
     setValueButText(val);
@@ -71,14 +71,19 @@ class Stepper extends LinearLayout{
   public void setValueButText(int val)
   {
     if(_max > _min) {
-      if(val == _max) _incBtn.setEnabled(false);
-      else if(val == _min) _decBtn.setEnabled(false);
-      else {_incBtn.setEnabled(true); _decBtn.setEnabled(true);}
+      if(val == _max)
+        _incBtn.setEnabled(false);
+      else if(val == _min)
+        _decBtn.setEnabled(false);
+      else {
+        _incBtn.setEnabled(true);
+        _decBtn.setEnabled(true);
+      }
     }
     _val = val;
     if(_listener != null) _listener.onValueChanged();
   }
-  public int getMaximum(){ return _max; }
-  public int getMinimum(){ return _min; }
-  public int getValue(){ return _val; }
+  public int getMaximum() { return _max; }
+  public int getMinimum() { return _min; }
+  public int getValue() { return _val; }
 }

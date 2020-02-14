@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -53,8 +53,9 @@
 int Msg::_commRank = 0;
 int Msg::_commSize = 1;
 int Msg::_verbosity = 5;
-int Msg::_progressMeterStep = 20;
-int Msg::_progressMeterCurrent = 0;
+int Msg::_progressMeterStep = 10;
+int Msg::_progressMeterCurrent = -1;
+int Msg::_progressMeterTotal = 0;
 std::map<std::string, double> Msg::_timers;
 bool Msg::_infoCpu = false;
 double Msg::_startTime = 0.;
@@ -97,19 +98,18 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
 {
   std::string gmshPath = SplitFileName(CTX::instance()->exeFileName)[0];
   if(gmshPath.size()){
-    std::string path;
-    char *tmp = getenv(name.c_str());
-    if(tmp){
-      path = tmp;
+    std::string path, tmp = GetEnvironmentVar(name);
+    if(tmp.empty()) {
+      path = gmshPath;
+    }
+    else {
 #if defined(WIN32)
-      path += ";" + gmshPath;
+      path = tmp + ";" + gmshPath;
 #else
-      path += ":" + gmshPath;
+      path = tmp + ":" + gmshPath;
 #endif
     }
-    else
-      path = gmshPath;
-    SetEnvironmentVar(name.c_str(), path.c_str());
+    SetEnvironmentVar(name, path);
   }
 }
 
@@ -238,7 +238,6 @@ std::map<std::string, std::string> &Msg::GetCommandLineStrings()
 
 void Msg::SetProgressMeterStep(int step)
 {
-  if(GetCommRank() || GetNumThreads() > 1) return;
   _progressMeterStep = step;
 }
 
@@ -247,10 +246,22 @@ int Msg::GetProgressMeterStep()
   return _progressMeterStep;
 }
 
-void Msg::ResetProgressMeter()
+void Msg::StartProgressMeter(int ntotal)
 {
-  if(GetCommRank() || GetNumThreads() > 1) return;
   _progressMeterCurrent = 0;
+  _progressMeterTotal = ntotal;
+}
+
+void Msg::StopProgressMeter()
+{
+  _progressMeterCurrent = -1;
+  _progressMeterTotal = 0;
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    FlGui::check();
+    FlGui::instance()->setProgress("", 0, 0, 1);
+  }
+#endif
 }
 
 void Msg::SetInfoCpu(bool val)
@@ -456,54 +467,6 @@ std::string Msg::PrintResources(bool printDate, bool printWallTime,
   return str;
 }
 
-void Msg::Fatal(const char *fmt, ...)
-{
-  _errorCount++;
-  _atLeastOneErrorInRun = 1;
-
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
-
-  if(_logFile) fprintf(_logFile, "Fatal: %s\n", str);
-  if(_callback) (*_callback)("Fatal", str);
-  if(_client) _client->Error(str);
-
-#if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    FlGui::check();
-    std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
-    FlGui::instance()->addMessage(tmp.c_str());
-    if(_firstError.empty()) _firstError = str;
-    FlGui::instance()->setLastStatus
-      (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
-    FlGui::instance()->saveMessages
-      ((CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
-    fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
-             "The error messages have been saved in the following file:\n\n%s",
-             (CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
-  }
-#endif
-
-  if(CTX::instance()->terminal){
-    const char *c0 = "", *c1 = "";
-    if(!streamIsFile(stderr) && streamIsVT100(stderr)){
-      c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
-    }
-    if(_commSize > 1)
-      fprintf(stderr, "%sFatal   : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
-    else
-      fprintf(stderr, "%sFatal   : %s%s\n", c0, str, c1);
-    fflush(stderr);
-  }
-
-  // only exit if a callback is not provided
-  if(!_callback) Exit(1);
-}
-
 void Msg::Error(const char *fmt, ...)
 {
   _errorCount++;
@@ -617,7 +580,10 @@ void Msg::Info(const char *fmt, ...)
 #endif
 
   if(CTX::instance()->terminal){
-    if(_commSize > 1)
+    if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
+       _commSize == 1)
+      fprintf(stdout, "Info    : [%3d %%] %s\n", _progressMeterCurrent, str);
+    else if(_commSize > 1)
       fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
     else
       fprintf(stdout, "Info    : %s\n", str);
@@ -779,16 +745,26 @@ void Msg::Debug(const char *fmt, ...)
   }
 }
 
-void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
+void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 {
-  if(GetCommRank() || GetNumThreads() > 1 || GetVerbosity() < 4 ||
-     _progressMeterStep <= 0 || _progressMeterStep >= 100) return;
+  if(GetCommRank() || GetVerbosity() < 4) return;
+  if(_progressMeterStep <= 0 || _progressMeterStep >= 100) return;
+  if(_progressMeterTotal <= 0) return;
 
-  double percent = 100. * (double)n/(double)N;
+  int N = _progressMeterTotal;
+  double percent = 100. * (double)n / (double)N;
 
   if(percent >= _progressMeterCurrent || n > N - 1){
-    while(_progressMeterCurrent < percent)
-      _progressMeterCurrent += _progressMeterStep;
+    int p = _progressMeterCurrent;
+    while(p < percent) p += _progressMeterStep;
+    if(p >= 100) p = 100;
+
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+    {
+      _progressMeterCurrent = p;
+    }
 
     // TODO With C++11 use std::string (contiguous layout) and avoid all these C
     // problems
@@ -800,7 +776,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
     va_end(args);
     int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-    sprintf(str2, "%3d%%    : %s", _progressMeterCurrent, str);
+    sprintf(str2, "Info    : [%3d %%] %s", _progressMeterCurrent, str);
 
     if(_client) _client->Progress(str2);
 
@@ -984,7 +960,7 @@ void Msg::SetOnelabNumber(const std::string &name, double val, bool visible,
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
-    // FIXME: why is there a get() here??
+    // get if first so we can keep its options
     std::vector<onelab::number> numbers;
     _onelabClient->get(numbers, name);
     if(numbers.empty()){
@@ -992,7 +968,7 @@ void Msg::SetOnelabNumber(const std::string &name, double val, bool visible,
       numbers[0].setName(name);
     }
     numbers[0].setValue(val);
-    numbers[0].setVisible(visible);
+    if(!visible) numbers[0].setVisible(false);
     if(persistent) numbers[0].setAttribute("Persistent", "1");
     numbers[0].setReadOnly(readOnly);
     numbers[0].setChangedValue(changedValue);
@@ -1007,7 +983,7 @@ void Msg::SetOnelabNumber(const std::string &name, const std::vector<double> &va
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     onelab::number n(name, val);
-    n.setVisible(visible);
+    if(!visible) n.setVisible(false);
     _onelabClient->set(n);
   }
 #endif
@@ -1019,7 +995,7 @@ void Msg::SetOnelabString(const std::string &name, const std::string &val,
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
-    // FIXME: why is there a get() here??
+    // get if first so we can keep its options
     std::vector<onelab::string> strings;
     _onelabClient->get(strings, name);
     if(strings.empty()){
@@ -1027,7 +1003,7 @@ void Msg::SetOnelabString(const std::string &name, const std::string &val,
       strings[0].setName(name);
     }
     strings[0].setValue(val);
-    strings[0].setVisible(visible);
+    if(!visible) strings[0].setVisible(false);
     if(persistent) strings[0].setAttribute("Persistent", "1");
     strings[0].setReadOnly(readOnly);
     strings[0].setChangedValue(changedValue);
@@ -1621,13 +1597,14 @@ MsgProgressStatus::MsgProgressStatus(int num)
     _progressMeterStep(Msg::GetProgressMeterStep())
 {
   Msg::SetProgressMeterStep(1);
-  Msg::ResetProgressMeter();
+  Msg::StartProgressMeter(_totalElementToTreat);
 }
 
 MsgProgressStatus::~MsgProgressStatus()
 {
-  Msg::ProgressMeter(_totalElementToTreat, _totalElementToTreat, true, "done");
+  Msg::ProgressMeter(_totalElementToTreat, true, "done");
   Msg::SetProgressMeterStep(_progressMeterStep);
+  Msg::StopProgressMeter();
 }
 
 void MsgProgressStatus::next()
@@ -1649,15 +1626,15 @@ void MsgProgressStatus::next()
     const double remaining = (currentTime - _initialTime) / (_currentI + 1) *
                              (_totalElementToTreat - _currentI - 1);
     if (remaining < 60*2)
-      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+      Msg::ProgressMeter(_currentI - 1, true,
                          "%d%% (remaining time ~%g seconds)",
                          currentPercentage, remaining);
     else if (remaining < 60*60*2)
-      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+      Msg::ProgressMeter(_currentI - 1, true,
                          "%d%% (remaining time ~%g minutes)",
                          currentPercentage, remaining / 60);
     else
-      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+      Msg::ProgressMeter(_currentI - 1, true,
                          "%d%% (remaining time ~%g hours)",
                          currentPercentage, remaining / 3600);
   }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,10 +15,10 @@
 // remove that when MElementCut is removed
 bool MEdge::isInside(MVertex *v) const
 {
-  double tol = MVertexLessThanLexicographic::getTolerance();
+  double tol = MVertexPtrLessThanLexicographic::getTolerance();
   MVertex *v0 = _v[0];
   MVertex *v1 = _v[1];
-  MVertexLessThanLexicographic lt;
+  MVertexPtrLessThanLexicographic lt;
   if(lt(v0, v1)) {
     v0 = _v[1];
     v1 = _v[0];
@@ -94,7 +94,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       else {
         Msg::Debug("Wrong topology for a list of edges");
         Msg::Debug("Node %d is adjacent to more than 2 nodes %d %d",
-                   v1->getNum(),it1->second.first->getNum(),
+                   v1->getNum(), it1->second.first->getNum(),
                    it1->second.second->getNum());
         return false;
       }
@@ -149,6 +149,9 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       prev = temp;
       if(current == start) { v.push_back(current); }
     } while(current != start && current != NULL);
+    if(v.size() > 2 && v[v.size() - 2] == v[v.size() - 1]) {
+      v.erase(v.begin() + v.size() - 1);
+    }
     vs.push_back(v);
   }
   return true;

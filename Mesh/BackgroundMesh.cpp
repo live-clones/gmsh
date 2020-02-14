@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -531,7 +531,7 @@ void backgroundMesh::updateSizes(GFace *_gf)
   // do not allow large variations in the size field
   // (Int. J. Numer. Meth. Engng. 43, 1143-1165 (1998) MESH GRADATION
   // CONTROL, BOROUCHAKI, HECHT, FREY)
-  std::set<MEdge, Less_Edge> edges;
+  std::set<MEdge, MEdgeLessThan> edges;
   for(std::size_t i = 0; i < _triangles.size(); i++) {
     for(int j = 0; j < _triangles[i]->getNumEdges(); j++) {
       edges.insert(_triangles[i]->getEdge(j));
@@ -539,7 +539,7 @@ void backgroundMesh::updateSizes(GFace *_gf)
   }
   const double _beta = 1.3;
   for(int i = 0; i < 3; i++) {
-    std::set<MEdge, Less_Edge>::iterator it = edges.begin();
+    std::set<MEdge, MEdgeLessThan>::iterator it = edges.begin();
     for(; it != edges.end(); ++it) {
       MVertex *v0 = it->getVertex(0);
       MVertex *v1 = it->getVertex(1);

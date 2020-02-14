@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -24,6 +24,11 @@ public:
     : discreteFace(model, num), _partitions(), _parentEntity(NULL)
   {
   }
+  partitionFace(GModel *model,
+                const std::vector<unsigned int> &partitions)
+    : discreteFace(model), _partitions(partitions), _parentEntity(NULL)
+  {
+  }
   virtual ~partitionFace() {}
   virtual GeomType geomType() const { return PartitionSurface; }
   virtual bool haveParametrization() { return false; }
@@ -44,7 +49,7 @@ public:
   virtual unsigned int numPartitions() const { return _partitions.size(); }
 };
 
-struct Less_partitionFace
+struct partitionFacePtrLessThan
   : public std::binary_function<partitionFace *, partitionFace *, bool> {
   bool operator()(const partitionFace *e1, const partitionFace *e2) const
   {

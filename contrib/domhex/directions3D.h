@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,7 +32,7 @@ private:
   static std::vector<int> labels;
   static std::map<MVertex *, STensor3> crossField;
   static std::map<MVertex *, double> crossFieldSmoothness;
-  static std::map<MEdge, double, Less_Edge> crossDist;
+  static std::map<MEdge, double, MEdgeLessThan> crossDist;
   static std::vector<MVertex *> listVertices;
 #if defined(HAVE_ANN)
   static ANNkd_tree *kd_tree;

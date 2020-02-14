@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -150,11 +150,11 @@ public:
   {
     if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
   }
-  virtual int getNumShapeFunctions() const
+  virtual std::size_t getNumShapeFunctions() const
   {
     return (_orig ? _orig->getNumShapeFunctions() : 0);
   }
-  virtual int getNumPrimaryShapeFunctions() const
+  virtual std::size_t getNumPrimaryShapeFunctions() const
   {
     return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
   }
@@ -180,10 +180,10 @@ public:
   virtual int getNumChildren() const { return _parts.size(); }
   virtual MElement *getChild(int i) const { return _parts[i]; }
   virtual bool ownsParent() const { return _owner; }
-  virtual int getNumVerticesForMSH() { return _parts.size() * 4; }
+  virtual std::size_t getNumVerticesForMSH() { return _parts.size() * 4; }
   virtual void getVerticesIdForMSH(std::vector<int> &verts)
   {
-    int n = getNumVerticesForMSH();
+    std::size_t n = getNumVerticesForMSH();
     verts.resize(n);
     for(std::size_t i = 0; i < _parts.size(); i++)
       for(int j = 0; j < 4; j++)
@@ -325,11 +325,11 @@ public:
   {
     if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
   }
-  virtual int getNumShapeFunctions() const
+  virtual std::size_t getNumShapeFunctions() const
   {
     return (_orig ? _orig->getNumShapeFunctions() : 0);
   }
-  virtual int getNumPrimaryShapeFunctions() const
+  virtual std::size_t getNumPrimaryShapeFunctions() const
   {
     return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
   }
@@ -346,10 +346,10 @@ public:
   // the coordinates in the local parent element.
   virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-  virtual int getNumVerticesForMSH() { return _parts.size() * 3; }
+  virtual std::size_t getNumVerticesForMSH() { return _parts.size() * 3; }
   virtual void getVerticesIdForMSH(std::vector<int> &verts)
   {
-    int n = getNumVerticesForMSH();
+    std::size_t n = getNumVerticesForMSH();
     verts.resize(n);
     for(std::size_t i = 0; i < _parts.size(); i++)
       for(int j = 0; j < 3; j++)

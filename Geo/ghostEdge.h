@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -52,14 +52,14 @@ public:
     GEdge::addLine(l);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(l, onWhichPartition));
-    model()->addGhostCells(l, onWhichPartition);
+    model()->addGhostCells(l, _partition);
   }
   void addElement(int type, MElement *e, unsigned int onWhichPartition)
   {
     GEdge::addElement(type, e);
     _ghostCells.insert(
       std::pair<MElement *, unsigned int>(e, onWhichPartition));
-    model()->addGhostCells(e, onWhichPartition);
+    model()->addGhostCells(e, _partition);
   }
 
   // To make the hidden function visible in ghostEdge

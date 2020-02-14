@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,6 +21,10 @@
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Choice.H>
+#include <FL/Fl_Native_File_Chooser.H>
+#include <FL/Fl_File_Chooser.H>
+#include <FL/Fl_Window.H>
+#include <FL/Fl_File_Input.H>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
@@ -36,19 +40,7 @@
 #include "PViewOptions.h"
 #include <iostream>
 
-// File chooser
-
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-
-#include <FL/Fl_Native_File_Chooser.H>
-static Fl_Native_File_Chooser *fc = 0;
-
-#else
-
-#include <FL/Fl_File_Chooser.H>
-#include <FL/Fl_Window.H>
-#include <FL/Fl_File_Input.H>
-
+// basic file chooser
 class flFileChooser : public Fl_File_Chooser {
   // we derive our own so we can set its position (The original file
   // chooser doesn't expose its window to the world, so we need to use
@@ -101,12 +93,14 @@ public:
 
 static flFileChooser *fc = 0;
 
-#endif
+// native file chooser
+static Fl_Native_File_Chooser *nfc = 0;
 
 int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
                 const char *fname)
 {
-  static char thefilter[1024] = "";
+  static char thefilter[2000] = "";
+  static char thefilter2[2000] = "";
   static int thefilterindex = 0;
 
   // reset the filter and the selection if the filter has changed
@@ -114,6 +108,13 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     strncpy(thefilter, filter, sizeof(thefilter) - 1);
     thefilter[sizeof(thefilter) - 1] = '\0';
     thefilterindex = 0;
+    // for the basic file chooser, we should replace
+    //  * "\t" with " ("
+    //  * "\n" with ")\t"
+    std::string tmp(thefilter);
+    ReplaceSubStringInPlace("\t", " (", tmp);
+    ReplaceSubStringInPlace("\n", ")\t", tmp);
+    strncpy(thefilter2, tmp.c_str(), sizeof(thefilter2) - 1);
   }
 
   // determine where to start
@@ -128,112 +129,124 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
   std::vector<std::string> split = SplitFileName(thepath);
   if(split[0].empty()) thepath = std::string("./") + thepath;
 
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-  if(!fc) fc = new Fl_Native_File_Chooser();
-  switch(type) {
-  case FILE_CHOOSER_MULTI:
-    fc->type(Fl_Native_File_Chooser::BROWSE_MULTI_FILE);
-    break;
-  case FILE_CHOOSER_CREATE:
-    fc->type(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
-    break;
-  case FILE_CHOOSER_DIRECTORY:
-    fc->type(Fl_Native_File_Chooser::BROWSE_DIRECTORY);
-    break;
-  default: fc->type(Fl_Native_File_Chooser::BROWSE_FILE); break;
-  }
-  fc->title(message);
-  fc->filter(filter);
-  fc->filter_value(thefilterindex);
+  if(CTX::instance()->nativeFileChooser) {
+    if(!nfc) nfc = new Fl_Native_File_Chooser();
+    switch(type) {
+    case FILE_CHOOSER_MULTI:
+      nfc->type(Fl_Native_File_Chooser::BROWSE_MULTI_FILE);
+      break;
+    case FILE_CHOOSER_CREATE:
+      nfc->type(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
+      break;
+    case FILE_CHOOSER_DIRECTORY:
+      nfc->type(Fl_Native_File_Chooser::BROWSE_DIRECTORY);
+      break;
+    default: nfc->type(Fl_Native_File_Chooser::BROWSE_FILE); break;
+    }
+    nfc->title(message);
+    nfc->filter(thefilter);
+    nfc->filter_value(thefilterindex);
 
-  static bool first = true;
-  if(first) {
-    // preset the path and the file only the first time in a given
-    // session. Afterwards, always reuse the last directory
-    fc->preset_file(thepath.c_str());
-    first = false;
+    static bool first = true;
+    if(first) {
+      // preset the path and the file only the first time in a given
+      // session. Afterwards, always reuse the last directory
+      nfc->preset_file(thepath.c_str());
+      first = false;
+    }
+    else {
+      std::string name = split[1] + split[2];
+      nfc->preset_file(name.c_str());
+    }
+
+    int ret = 0;
+    switch(nfc->show()) {
+    case -1: break; // error
+    case 1: break; // cancel
+    default:
+      if(nfc->filename()) ret = nfc->count();
+      break;
+    }
+    thefilterindex = nfc->filter_value();
+    // hack to clear the KEYDOWN state that remains when calling the
+    // file chooser on Mac and Windows using a keyboard shortcut
+    Fl::e_state = 0;
+    return ret;
   }
   else {
-    std::string name = split[1] + split[2];
-    fc->preset_file(name.c_str());
+    Fl_File_Chooser::show_label = "Format:";
+    Fl_File_Chooser::all_files_label = "All files (*)";
+    if(!fc) {
+      fc =
+        new flFileChooser(getenv("PWD") ? "." : CTX::instance()->homeDir.c_str(),
+                          thefilter2, Fl_File_Chooser::SINGLE, message);
+      fc->position(CTX::instance()->fileChooserPosition[0],
+                   CTX::instance()->fileChooserPosition[1]);
+    }
+    switch(type) {
+    case FILE_CHOOSER_MULTI: fc->type(Fl_File_Chooser::MULTI); break;
+    case FILE_CHOOSER_CREATE: fc->type(Fl_File_Chooser::CREATE); break;
+    case FILE_CHOOSER_DIRECTORY: fc->type(Fl_File_Chooser::DIRECTORY); break;
+    default: fc->type(Fl_File_Chooser::SINGLE); break;
+    }
+    fc->label(message);
+    fc->filter(thefilter2);
+    fc->filter_value(thefilterindex);
+    static bool first = true;
+    if(first) {
+      // preset the path and the file only the first time in a given
+      // session. Afterwards, always reuse the last directory
+      fc->value(thepath.c_str());
+      first = false;
+    }
+    else {
+      std::string name = split[1] + split[2];
+      fc->value(name.c_str());
+    }
+    fc->show();
+    while(fc->shown()) Fl::wait();
+    thefilterindex = fc->filter_value();
+    if(fc->value())
+      return fc->count();
+    else
+      return 0;
   }
-
-  int ret = 0;
-  switch(fc->show()) {
-  case -1: break; // error
-  case 1: break; // cancel
-  default:
-    if(fc->filename()) ret = fc->count();
-    break;
-  }
-  thefilterindex = fc->filter_value();
-  // hack to clear the KEYDOWN state that remains when calling the
-  // file chooser on Mac and Windows using a keyboard shortcut
-  Fl::e_state = 0;
-  return ret;
-#else
-  Fl_File_Chooser::show_label = "Format:";
-  Fl_File_Chooser::all_files_label = "All files (*)";
-  if(!fc) {
-    fc =
-      new flFileChooser(getenv("PWD") ? "." : CTX::instance()->homeDir.c_str(),
-                        thefilter, Fl_File_Chooser::SINGLE, message);
-    fc->position(CTX::instance()->fileChooserPosition[0],
-                 CTX::instance()->fileChooserPosition[1]);
-  }
-  switch(type) {
-  case FILE_CHOOSER_MULTI: fc->type(Fl_File_Chooser::MULTI); break;
-  case FILE_CHOOSER_CREATE: fc->type(Fl_File_Chooser::CREATE); break;
-  case FILE_CHOOSER_DIRECTORY: fc->type(Fl_File_Chooser::DIRECTORY); break;
-  default: fc->type(Fl_File_Chooser::SINGLE); break;
-  }
-  fc->label(message);
-  fc->filter(thefilter);
-  fc->filter_value(thefilterindex);
-  static bool first = true;
-  if(first) {
-    // preset the path and the file only the first time in a given
-    // session. Afterwards, always reuse the last directory
-    fc->value(thepath.c_str());
-    first = false;
-  }
-  else {
-    std::string name = split[1] + split[2];
-    fc->value(name.c_str());
-  }
-  fc->show();
-  while(fc->shown()) Fl::wait();
-  thefilterindex = fc->filter_value();
-  if(fc->value())
-    return fc->count();
-  else
-    return 0;
-#endif
 }
 
 std::string fileChooserGetName(int num)
 {
-  if(!fc) return "";
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-  return std::string(fc->filename(num - 1));
-#else
-  return std::string(fc->value(num));
-#endif
+  if(CTX::instance()->nativeFileChooser) {
+    if(!nfc) return "";
+    return std::string(nfc->filename(num - 1));
+  }
+  else {
+    if(!fc) return "";
+    return std::string(fc->value(num));
+  }
 }
 
 int fileChooserGetFilter()
 {
-  if(!fc) return 0;
-  return fc->filter_value();
+  if(CTX::instance()->nativeFileChooser) {
+    if(!nfc) return 0;
+    return nfc->filter_value();
+  }
+  else {
+    if(!fc) return 0;
+    return fc->filter_value();
+  }
 }
 
 void fileChooserGetPosition(int *x, int *y)
 {
-  if(!fc) return;
-#if !defined(HAVE_NATIVE_FILE_CHOOSER)
-  *x = fc->x();
-  *y = fc->y();
-#endif
+  if(CTX::instance()->nativeFileChooser) {
+    // not available
+  }
+  else {
+    if(!fc) return;
+    *x = fc->x();
+    *y = fc->y();
+  }
 }
 
 // Generic save bitmap dialog
@@ -2017,465 +2030,8 @@ int genericViewFileDialog(const char *name, const char *title, int format)
   return 0;
 }
 
-#if defined(HAVE_LIBCGNS)
-
-// Forward declarations of some callbacks
-void cgnsw_gc_location_cb(Fl_Widget *widget, void *data);
-void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data);
-void cgnsw_write_structured_mesh_cb(Fl_Widget *widget, void *data);
-void cgnsw_bc_location_cb(Fl_Widget *widget, void *data);
-void cgnsw_write_normals_cb(Fl_Widget *widget, void *data);
-void cgnsw_normal_source_cb(Fl_Widget *widget, void *data);
-
-// Pointers to required widgets
-struct CGNSWriteDialog {
-  Fl_Window *window;
-  Fl_Choice *choiceZoneDef;
-  Fl_Input *inputBaseName;
-  Fl_Input *inputZoneName;
-  Fl_Input *inputInterfaceName;
-  Fl_Input *inputPatchName;
-  Fl_Round_Button *roundButton0GCatVertex;
-  Fl_Round_Button *roundButton1GCatFace;
-  Fl_Check_Button *checkButtonWriteBC;
-  Fl_Round_Button *roundButton0BCatVertex;
-  Fl_Round_Button *roundButton1BCatFace;
-  Fl_Check_Button *checkButtonWriteNormals;
-  Fl_Round_Button *roundButton0NormalGeo;
-  Fl_Round_Button *roundButton1NormalElem;
-  Fl_Check_Button *checkButtonWriteStructuredMesh;
-  Fl_Choice *choiceVecDim;
-  Fl_Check_Button *checkButtonUnknownUserDef;
-  const char *filename;
-  int status;
-  void write_all_options()
-  {
-    opt_mesh_zone_definition(0, GMSH_SET | GMSH_GUI, choiceZoneDef->value());
-    CTX::instance()->cgnsOptions.baseName = inputBaseName->value();
-    CTX::instance()->cgnsOptions.zoneName = inputZoneName->value();
-    CTX::instance()->cgnsOptions.interfaceName = inputInterfaceName->value();
-    CTX::instance()->cgnsOptions.patchName = inputPatchName->value();
-    CTX::instance()->cgnsOptions.gridConnectivityLocation =
-      roundButton1GCatFace->value();
-    CTX::instance()->cgnsOptions.writeBC = checkButtonWriteBC->value();
-    CTX::instance()->cgnsOptions.bocoLocation = roundButton1BCatFace->value();
-    CTX::instance()->cgnsOptions.normalSource =
-      (checkButtonWriteNormals->value()) ? roundButton1NormalElem->value() + 1 :
-                                           0;
-    CTX::instance()->cgnsOptions.vectorDim = choiceVecDim->value() + 2;
-    CTX::instance()->cgnsOptions.structuredMesh =
-      (checkButtonWriteStructuredMesh->value()) ? 1 : 0;
-    CTX::instance()->cgnsOptions.writeUserDef =
-      checkButtonUnknownUserDef->value();
-  }
-  void read_all_options()
-  {
-    choiceZoneDef->value(CTX::instance()->mesh.zoneDefinition);
-    inputBaseName->value(CTX::instance()->cgnsOptions.baseName.c_str());
-    inputZoneName->value(CTX::instance()->cgnsOptions.zoneName.c_str());
-    inputInterfaceName->value(
-      CTX::instance()->cgnsOptions.interfaceName.c_str());
-    inputPatchName->value(CTX::instance()->cgnsOptions.patchName.c_str());
-    checkButtonWriteBC->value(CTX::instance()->cgnsOptions.writeBC);
-    checkButtonWriteNormals->value(CTX::instance()->cgnsOptions.normalSource);
-    checkButtonWriteStructuredMesh->value(
-      CTX::instance()->cgnsOptions.structuredMesh);
-    choiceVecDim->value(CTX::instance()->cgnsOptions.vectorDim - 2);
-    checkButtonUnknownUserDef->value(CTX::instance()->cgnsOptions.writeUserDef);
-
-    // Call all callbacks to ensure consistent options
-    cgnsw_gc_location_cb(
-      (CTX::instance()->cgnsOptions.gridConnectivityLocation) ?
-        roundButton1GCatFace :
-        roundButton0GCatVertex,
-      this);
-    // The order of the next 4 is important
-    cgnsw_normal_source_cb((CTX::instance()->cgnsOptions.normalSource == 2) ?
-                             roundButton1NormalElem :
-                             roundButton0NormalGeo,
-                           this);
-    cgnsw_write_normals_cb(checkButtonWriteNormals, this);
-    cgnsw_bc_location_cb((CTX::instance()->cgnsOptions.bocoLocation) ?
-                           roundButton1BCatFace :
-                           roundButton0BCatVertex,
-                         this);
-    cgnsw_write_dummy_bc_cb(checkButtonWriteBC, this);
-    cgnsw_write_structured_mesh_cb(checkButtonWriteStructuredMesh, this);
-  }
-};
-
-void cgnsw_gc_location_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
-  if(widget == dlg->roundButton0GCatVertex) {
-    dlg->roundButton0GCatVertex->set();
-    dlg->roundButton1GCatFace->clear();
-  }
-  else {
-    dlg->roundButton0GCatVertex->clear();
-    dlg->roundButton1GCatFace->set();
-  }
-}
-
-void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
-  if(dlg->checkButtonWriteBC->value()) {
-    dlg->roundButton0BCatVertex->activate();
-    // dlg->roundButton1BCatFace->activate();  //**Tmp
-    dlg->checkButtonWriteNormals->activate();
-    if(dlg->checkButtonWriteNormals->value()) {
-      if(dlg->roundButton0BCatVertex->value())
-        dlg->roundButton0NormalGeo->activate();
-      dlg->roundButton1NormalElem->activate();
-    }
-  }
-  else {
-    dlg->roundButton0BCatVertex->deactivate();
-    dlg->roundButton1BCatFace->deactivate();
-    dlg->checkButtonWriteNormals->deactivate();
-    dlg->roundButton0NormalGeo->deactivate();
-    dlg->roundButton1NormalElem->deactivate();
-  }
-}
-
-void cgnsw_write_structured_mesh_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
-  if(dlg->checkButtonWriteStructuredMesh->value()) {
-    dlg->checkButtonWriteBC->deactivate();
-    dlg->roundButton0BCatVertex->deactivate();
-    dlg->roundButton1BCatFace->deactivate();
-    dlg->checkButtonWriteNormals->deactivate();
-    dlg->roundButton0NormalGeo->deactivate();
-    dlg->roundButton1NormalElem->deactivate();
-  }
-  else {
-    if(dlg->checkButtonWriteBC->value()) {
-      dlg->checkButtonWriteBC->activate();
-      dlg->roundButton0BCatVertex->activate();
-      dlg->checkButtonWriteNormals->activate();
-      if(dlg->checkButtonWriteNormals->value()) {
-        if(dlg->roundButton0BCatVertex->value())
-          dlg->roundButton0NormalGeo->activate();
-        dlg->roundButton1NormalElem->activate();
-      }
-    }
-  }
-}
-
-void cgnsw_bc_location_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
-  if(widget == dlg->roundButton0BCatVertex) {
-    dlg->roundButton0BCatVertex->set();
-    dlg->roundButton1BCatFace->clear();
-    if(dlg->checkButtonWriteNormals->value())
-      dlg->roundButton0NormalGeo->activate();
-  }
-  else {
-    dlg->roundButton0BCatVertex->clear();
-    dlg->roundButton1BCatFace->set();
-    dlg->roundButton0NormalGeo->clear();
-    dlg->roundButton0NormalGeo->deactivate();
-    dlg->roundButton1NormalElem->set();
-  }
-}
-
-void cgnsw_write_normals_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
-  if(dlg->checkButtonWriteNormals->value()) {
-    if(dlg->roundButton0BCatVertex->value())
-      dlg->roundButton0NormalGeo->activate();
-    dlg->roundButton1NormalElem->activate();
-  }
-  else {
-    dlg->roundButton0NormalGeo->deactivate();
-    dlg->roundButton1NormalElem->deactivate();
-  }
-}
-
-void cgnsw_normal_source_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
-  if(widget == dlg->roundButton0NormalGeo) {
-    dlg->roundButton0NormalGeo->set();
-    dlg->roundButton1NormalElem->clear();
-  }
-  else {
-    dlg->roundButton0NormalGeo->clear();
-    dlg->roundButton1NormalElem->set();
-  }
-}
-
-void cgnsw_defaults_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
-  CTX::instance()->cgnsOptions.setDefaults();
-  dlg->read_all_options();
-}
-
-void cgnsw_write_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
-
-  // Write all options
-  dlg->write_all_options();
-  dlg->window->hide();
-
-  // Write the data
-  CreateOutputFile(dlg->filename, FORMAT_CGNS);
-  dlg->status = 1;
-}
-
-void cgnsw_cancel_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
-  dlg->window->hide();
-  dlg->status = 0;
-}
-
-int cgnsFileDialog(const char *filename)
-{
-  static CGNSWriteDialog dlg;
-  dlg.filename = filename;
-
-  static Fl_Menu_Item zoneDefMenu[] = {{"Single zone", 0, 0, 0},
-                                       {"Partition", 0, 0, 0},
-                                       {"Physical", 0, 0, 0},
-                                       {0}};
-
-  static Fl_Menu_Item vectorDimMenu[] = {{"2", 0, 0, 0}, {"3", 0, 0, 0}, {0}};
-
-  const int RBH = 3 * FL_NORMAL_SIZE / 2; // radio button height
-  const int col1 = WB; // Start of left column
-  const int col2 = 2 * WB + 2 * BB; // Start of right column
-  const int hcol1 = 5 * WB + 2 * RBH + 4 * BH;
-  // Height of left column
-  const int hcol2 = 4 * WB + 4 * RBH + 2 * BH;
-  // Height of right column
-
-  const int h = 4 + 8 * WB + 5 * BH + std::max(hcol1, hcol2);
-  // Window height
-  const int w = 3 * WB + 4 * BB; // Window width
-  int y = WB;
-
-  dlg.window = new Fl_Double_Window(w, h, "CGNS Options");
-  dlg.window->box(GMSH_WINDOW_BOX);
-  dlg.window->set_modal();
-  dlg.window->callback((Fl_Callback *)cgnsw_cancel_cb, &dlg);
-
-  // Zone definition
-  dlg.choiceZoneDef = new Fl_Choice(col1, y, IW, BH, "Zone definition");
-  dlg.choiceZoneDef->menu(zoneDefMenu);
-  dlg.choiceZoneDef->align(FL_ALIGN_RIGHT);
-  y += BH + WB;
-
-  // Box (line) [0]
-  {
-    Fl_Box *const o = new Fl_Box(WB, y, w - 2 * WB, 2);
-    o->box(FL_ENGRAVED_FRAME);
-    o->labeltype(FL_NO_LABEL);
-  }
-  y += 2 + WB;
-
-  // Base name
-  dlg.inputBaseName = new Fl_Input(col1, y, BB, BH, "Base name");
-  dlg.inputBaseName->align(FL_ALIGN_RIGHT);
-  // Zone name
-  dlg.inputZoneName = new Fl_Input(col2, y, BB, BH, "Zone name");
-  dlg.inputZoneName->align(FL_ALIGN_RIGHT);
-  y += BH + WB;
-  // Interface name
-  dlg.inputInterfaceName = new Fl_Input(col1, y, BB, BH, "Interface name");
-  dlg.inputInterfaceName->align(FL_ALIGN_RIGHT);
-  // BC Patch name
-  dlg.inputPatchName = new Fl_Input(col2, y, BB, BH, "BC patch name");
-  dlg.inputPatchName->align(FL_ALIGN_RIGHT);
-  y += BH + WB;
-
-  //--Left column
-
-  int yl = y;
-  {
-    Fl_Box *const o = new Fl_Box(col1, yl, 0, BH, "Grid connectivity location");
-    o->align(FL_ALIGN_RIGHT);
-    yl += BH;
-  }
-  {
-    Fl_Box *const o = new Fl_Box(col1, yl, 2 * BB, 2 * WB + 2 * RBH);
-    o->box(FL_ENGRAVED_FRAME);
-    o->labeltype(FL_NO_LABEL);
-    yl += WB;
-  }
-  // Grid connectivity location
-  {
-    const int GH = 2 * RBH + 2 * WB;
-    Fl_Group *g = new Fl_Group(col1, yl, 2 * BB, GH);
-    dlg.roundButton0GCatVertex =
-      new Fl_Round_Button(col1 + WB, yl, RBH, RBH, "Vertex");
-    dlg.roundButton0GCatVertex->callback((Fl_Callback *)cgnsw_gc_location_cb,
-                                         &dlg);
-    dlg.roundButton0GCatVertex->align(FL_ALIGN_RIGHT);
-    yl += RBH;
-    dlg.roundButton1GCatFace =
-      new Fl_Round_Button(col1 + WB, yl, RBH, RBH, "Face");
-    dlg.roundButton1GCatFace->callback((Fl_Callback *)cgnsw_gc_location_cb,
-                                       &dlg);
-    dlg.roundButton1GCatFace->align(FL_ALIGN_RIGHT);
-    dlg.roundButton1GCatFace->deactivate(); //**Tmp
-    yl += RBH + 2 * WB;
-    g->end();
-    g->show();
-  }
-
-  // 2D Vector Dim
-  yl += WB;
-  dlg.choiceVecDim = new Fl_Choice(WB, yl, BB / 2, BH, "Vector Dimension");
-  dlg.choiceVecDim->menu(vectorDimMenu);
-  dlg.choiceVecDim->align(FL_ALIGN_RIGHT);
-  yl += BH;
-  {
-    Fl_Box *const o =
-      new Fl_Box(col1, yl, 0, BH, "(only affects 2-D mesh output)");
-    o->align(FL_ALIGN_RIGHT);
-    yl += BH + WB;
-  }
-
-  //--Right column
-
-  int yr = y;
-
-  // Write exterior BC
-  dlg.checkButtonWriteBC =
-    new Fl_Check_Button(col2, yr, RBH, BH, "Write dummy BC");
-  dlg.checkButtonWriteBC->callback((Fl_Callback *)cgnsw_write_dummy_bc_cb,
-                                   &dlg);
-  dlg.checkButtonWriteBC->align(FL_ALIGN_RIGHT);
-  yr += BH;
-  {
-    Fl_Box *const o = new Fl_Box(col2, yr, 2 * BB, BH + 4 * RBH + 3 * WB);
-    o->box(FL_ENGRAVED_FRAME);
-    o->labeltype(FL_NO_LABEL);
-    yr += WB;
-  }
-
-  // BC location
-  {
-    const int GH = 2 * RBH + WB;
-    Fl_Group *g = new Fl_Group(col2, yr, 2 * BB, GH);
-    dlg.roundButton0BCatVertex =
-      new Fl_Round_Button(col2 + WB, yr, RBH, RBH, "Vertex");
-    dlg.roundButton0BCatVertex->callback((Fl_Callback *)cgnsw_bc_location_cb,
-                                         &dlg);
-    dlg.roundButton0BCatVertex->align(FL_ALIGN_RIGHT);
-    yr += RBH;
-    dlg.roundButton1BCatFace =
-      new Fl_Round_Button(col2 + WB, yr, RBH, RBH, "Face");
-    dlg.roundButton1BCatFace->callback((Fl_Callback *)cgnsw_bc_location_cb,
-                                       &dlg);
-    dlg.roundButton1BCatFace->align(FL_ALIGN_RIGHT);
-    dlg.roundButton1BCatFace->deactivate(); //**Tmp
-    yr += RBH + WB;
-    g->end();
-    g->show();
-  }
-
-  // Write normals
-  dlg.checkButtonWriteNormals =
-    new Fl_Check_Button(col2 + WB, yr, RBH, BH, "Write normals");
-  dlg.checkButtonWriteNormals->callback((Fl_Callback *)cgnsw_write_normals_cb,
-                                        &dlg);
-  dlg.checkButtonWriteNormals->align(FL_ALIGN_RIGHT);
-  yr += BH;
-
-  // Normal source
-  {
-    const int GH = 2 * RBH + WB;
-    Fl_Group *g = new Fl_Group(col2, yr, 2 * BB, GH);
-    dlg.roundButton0NormalGeo =
-      new Fl_Round_Button(col2 + 2 * WB, yr, RBH, RBH, "From geometry");
-    dlg.roundButton0NormalGeo->callback((Fl_Callback *)cgnsw_normal_source_cb,
-                                        &dlg);
-    dlg.roundButton0NormalGeo->align(FL_ALIGN_RIGHT);
-    yr += RBH;
-    dlg.roundButton1NormalElem =
-      new Fl_Round_Button(col2 + 2 * WB, yr, RBH, RBH, "From elements");
-    dlg.roundButton1NormalElem->callback((Fl_Callback *)cgnsw_normal_source_cb,
-                                         &dlg);
-    dlg.roundButton1NormalElem->align(FL_ALIGN_RIGHT);
-    yr += RBH + 2 * WB;
-    g->end();
-    g->show();
-  }
-
-  // Structured or U-Structured Mesh option
-  dlg.checkButtonWriteStructuredMesh =
-    new Fl_Check_Button(col1, yl, RBH, BH, "Write Structured Mesh");
-  dlg.checkButtonWriteStructuredMesh->callback(
-    (Fl_Callback *)cgnsw_write_structured_mesh_cb, &dlg);
-  dlg.checkButtonWriteStructuredMesh->align(FL_ALIGN_RIGHT);
-  yl += BH;
-
-  y = std::max(yl, yr);
-  // User defined
-  dlg.checkButtonUnknownUserDef = new Fl_Check_Button(
-    col1, y, RBH, BH, "Write user-defined elements for unsupported types");
-  dlg.checkButtonUnknownUserDef->align(FL_ALIGN_RIGHT);
-  dlg.checkButtonUnknownUserDef->deactivate(); //**Tmp
-  y += BH + WB;
-
-  // Dialog termination group
-  {
-    const int GH = 2 + BH + 2 * WB;
-    Fl_Group *g = new Fl_Group(0, y, w, GH);
-    // Box (line) [0]
-    {
-      Fl_Box *const o = new Fl_Box(WB, y, w - 2 * WB, 2);
-      o->box(FL_ENGRAVED_FRAME);
-      o->labeltype(FL_NO_LABEL);
-    }
-    y += 2 + WB;
-    // Defaults Button [1]
-    {
-      Fl_Button *const o = new Fl_Button(WB, y, BB, BH, "Defaults");
-      o->callback((Fl_Callback *)cgnsw_defaults_cb, &dlg);
-    }
-    // Write Button [2]
-    {
-      Fl_Return_Button *const o =
-        new Fl_Return_Button(w - 2 * (WB + BB), y, BB, BH, "Write");
-      o->callback((Fl_Callback *)cgnsw_write_cb, &dlg);
-    }
-    // Cancel Button [3]
-    {
-      Fl_Button *const o = new Fl_Button(w - (WB + BB), y, BB, BH, "Cancel");
-      o->callback((Fl_Callback *)cgnsw_cancel_cb, &dlg);
-    }
-    y += BH + WB;
-    g->end();
-    g->show();
-  }
-
-  dlg.window->end();
-  dlg.window->hotspot(dlg.window);
-
-  dlg.read_all_options();
-  dlg.window->show();
-
-  // Wait here for status
-  while(dlg.window->shown()) Fl::wait();
-  delete dlg.window;
-  return dlg.status;
-}
-
-#else
-
 int cgnsFileDialog(const char *filename)
 {
   CreateOutputFile(filename, FORMAT_CGNS);
   return 1;
 }
-
-#endif // compiling CGNS write dialog

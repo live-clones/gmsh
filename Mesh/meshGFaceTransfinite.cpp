@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -151,7 +151,7 @@ int MeshTransfiniteSurface(GFace *gf)
 {
   if(gf->meshAttributes.method != MESH_TRANSFINITE) return 0;
 
-  Msg::Info("Meshing surface %d (transfinite)", gf->tag());
+  Msg::Info("Meshing surface %d (Transfinite)", gf->tag());
 
   // make sure that all bounding edges have begin/end points: everything in here
   // depends on it
@@ -252,6 +252,7 @@ int MeshTransfiniteSurface(GFace *gf)
       return 0;
     }
   }
+
 
   std::vector<double> lengths_i;
   lengths_i.reserve(L);

@@ -13,12 +13,12 @@ Mesh.QualityType = 0;
 Mesh 2;
 
 // Check out the quality of the mesh
-Plugin(AnalyseCurvedMesh).ICNMeasure = 1;
-Plugin(AnalyseCurvedMesh).JacobianDeterminant = 0;
-Plugin(AnalyseCurvedMesh).IGEMeasure = 0;
-Plugin(AnalyseCurvedMesh).DrawPView = 1;
-Plugin(AnalyseCurvedMesh).DimensionOfElements = 2;
-Plugin(AnalyseCurvedMesh).Run;
+Plugin(AnalyseMeshQuality).ICNMeasure = 1;
+Plugin(AnalyseMeshQuality).JacobianDeterminant = 0;
+Plugin(AnalyseMeshQuality).IGEMeasure = 0;
+Plugin(AnalyseMeshQuality).DrawPView = 1;
+Plugin(AnalyseMeshQuality).DimensionOfElements = 2;
+Plugin(AnalyseMeshQuality).Run;
 
 minquality = View[PostProcessing.NbViews-1].Min;
 If (minquality < 0.4)

@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -295,6 +295,24 @@ function list()
     tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own=true)
     names = [unsafe_string(tmp_api_names_[i]) for i in 1:length(tmp_api_names_) ]
     return names
+end
+
+"""
+    gmsh.model.getCurrent()
+
+Get the name of the current model.
+
+Return `name`.
+"""
+function getCurrent()
+    api_name_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetCurrent, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          api_name_, ierr)
+    ierr[] != 0 && error("gmshModelGetCurrent returned non-zero error code: $(ierr[])")
+    name = unsafe_string(api_name_[])
+    return name
 end
 
 """
@@ -836,6 +854,30 @@ function getNormal(tag, parametricCoord)
 end
 
 """
+    gmsh.model.getParametrization(dim, tag, points)
+
+Get the parametric coordinates `parametricCoord` for the points `points` on the
+entity of dimension `dim` and tag `tag`. `points` are given as triplets of x, y,
+z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord`
+returns the parametric coordinates t on the curve (if `dim` = 1) or pairs of u
+and v coordinates concatenated on the surface (if `dim` = 2), i.e. [p1t, p2t,
+...] or [p1u, p1v, p2u, ...].
+
+Return `parametricCoord`.
+"""
+function getParametrization(dim, tag, points)
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetParametrization, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, points), length(points), api_parametricCoord_, api_parametricCoord_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetParametrization returned non-zero error code: $(ierr[])")
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    return parametricCoord
+end
+
+"""
     gmsh.model.setVisibility(dimTags, value, recursive = false)
 
 Set the visibility of the model entities `dimTags` to `value`. Apply the
@@ -973,20 +1015,23 @@ function unpartition()
 end
 
 """
-    gmsh.model.mesh.optimize(method, force = false, niter = 1)
+    gmsh.model.mesh.optimize(method, force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
 
 Optimize the mesh of the current model using `method` (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
 direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
-smoother, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for
-node relocation). If `force` is set apply the optimization also to discrete
-entities.
+smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
+Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If
+`force` is set apply the optimization also to discrete entities. If `dimTags` is
+given, only apply the optimizer to the given entities.
 """
-function optimize(method, force = false, niter = 1)
+function optimize(method, force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshOptimize, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}),
-          method, force, niter, ierr)
+          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          method, force, niter, api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshOptimize returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1154,11 +1199,9 @@ end
     gmsh.model.mesh.getNode(nodeTag)
 
 Get the coordinates and the parametric coordinates (if any) of the node with tag
-`tag`. This is a sometimes useful but inefficient way of accessing nodes, as it
-relies on a cache stored in the model. For large meshes all the nodes in the
-model should be numbered in a continuous sequence of tags from 1 to N to
-maintain reasonable performance (in this case the internal cache is based on a
-vector; otherwise it uses a map).
+`tag`. This function relies on an internal cache (a vector in case of dense node
+numbering, a map otherwise); for large meshes accessing nodes in bulk is often
+preferable.
 
 Return `coord`, `parametricCoord`.
 """
@@ -1181,10 +1224,9 @@ end
     gmsh.model.mesh.setNode(nodeTag, coord, parametricCoord)
 
 Set the coordinates and the parametric coordinates (if any) of the node with tag
-`tag`. This is a sometimes useful but inefficient way of accessing nodes, as it
-relies on a cache stored in the model. For large meshes all the nodes in the
-model should be added at once, and numbered in a continuous sequence of tags
-from 1 to N.
+`tag`. This function relies on an internal cache (a vector in case of dense node
+numbering, a map otherwise); for large meshes accessing nodes in bulk is often
+preferable.
 """
 function setNode(nodeTag, coord, parametricCoord)
     ierr = Ref{Cint}()
@@ -1334,11 +1376,9 @@ end
 """
     gmsh.model.mesh.getElement(elementTag)
 
-Get the type and node tags of the element with tag `tag`. This is a sometimes
-useful but inefficient way of accessing elements, as it relies on a cache stored
-in the model. For large meshes all the elements in the model should be numbered
-in a continuous sequence of tags from 1 to N to maintain reasonable performance
-(in this case the internal cache is based on a vector; otherwise it uses a map).
+Get the type and node tags of the element with tag `tag`. This function relies
+on an internal cache (a vector in case of dense element numbering, a map
+otherwise); for large meshes accessing elements in bulk is often preferable.
 
 Return `elementType`, `nodeTags`.
 """
@@ -1358,13 +1398,12 @@ end
 """
     gmsh.model.mesh.getElementByCoordinates(x, y, z, dim = -1, strict = false)
 
-Search the mesh for an element located at coordinates (`x`, `y`, `z`). This is a
-sometimes useful but inefficient way of accessing elements, as it relies on a
-search in a spatial octree. If an element is found, return its tag, type and
-node tags, as well as the local coordinates (`u`, `v`, `w`) within the element
-corresponding to search location. If `dim` is >= 0, only search for elements of
-the given dimension. If `strict` is not set, use a tolerance to find elements
-near the search location.
+Search the mesh for an element located at coordinates (`x`, `y`, `z`). This
+function performs a search in a spatial octree. If an element is found, return
+its tag, type and node tags, as well as the local coordinates (`u`, `v`, `w`)
+within the element corresponding to search location. If `dim` is >= 0, only
+search for elements of the given dimension. If `strict` is not set, use a
+tolerance to find elements near the search location.
 
 Return `elementTag`, `elementType`, `nodeTags`, `u`, `v`, `w`.
 """
@@ -1383,6 +1422,52 @@ function getElementByCoordinates(x, y, z, dim = -1, strict = false)
     ierr[] != 0 && error("gmshModelMeshGetElementByCoordinates returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     return api_elementTag_[], api_elementType_[], nodeTags, api_u_[], api_v_[], api_w_[]
+end
+
+"""
+    gmsh.model.mesh.getElementsByCoordinates(x, y, z, dim = -1, strict = false)
+
+Search the mesh for element(s) located at coordinates (`x`, `y`, `z`). This
+function performs a search in a spatial octree. Return the tags of all found
+elements in `elementTags`. Additional information about the elements can be
+accessed through `getElement` and `getLocalCoordinatesInElement`. If `dim` is >=
+0, only search for elements of the given dimension. If `strict` is not set, use
+a tolerance to find elements near the search location.
+
+Return `elementTags`.
+"""
+function getElementsByCoordinates(x, y, z, dim = -1, strict = false)
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementsByCoordinates, gmsh.lib), Cvoid,
+          (Cdouble, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          x, y, z, api_elementTags_, api_elementTags_n_, dim, strict, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementsByCoordinates returned non-zero error code: $(ierr[])")
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
+    return elementTags
+end
+
+"""
+    gmsh.model.mesh.getLocalCoordinatesInElement(elementTag, x, y, z)
+
+Return the local coordinates (`u`, `v`, `w`) within the element `elementTag`
+corresponding to the model coordinates (`x`, `y`, `z`). This function relies on
+an internal cache (a vector in case of dense element numbering, a map
+otherwise); for large meshes accessing elements in bulk is often preferable.
+
+Return `u`, `v`, `w`.
+"""
+function getLocalCoordinatesInElement(elementTag, x, y, z)
+    api_u_ = Ref{Cdouble}()
+    api_v_ = Ref{Cdouble}()
+    api_w_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetLocalCoordinatesInElement, gmsh.lib), Cvoid,
+          (Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
+          elementTag, x, y, z, api_u_, api_v_, api_w_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetLocalCoordinatesInElement returned non-zero error code: $(ierr[])")
+    return api_u_[], api_v_[], api_w_[]
 end
 
 """
@@ -1620,7 +1705,7 @@ function getBasisFunctions(elementType, integrationPoints, functionSpaceType)
 end
 
 """
-    gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
+    gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1, task = 0, numTasks = 1)
 
 Get the element-dependent basis functions of the elements of type `elementType`
 in the entity of tag `tag`at the integration points `integrationPoints` (given
@@ -1634,19 +1719,20 @@ element. `basisFunctions` returns the value of the basis functions at the
 integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1,
 ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
 Warning: this is an experimental feature and will probably change in a future
-release.
+release. If `numTasks` > 1, only compute and return the part of the data indexed
+by `task`.
 
 Return `numComponents`, `numFunctionsPerElements`, `basisFunctions`.
 """
-function getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
+function getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1, task = 0, numTasks = 1)
     api_numComponents_ = Ref{Cint}()
     api_numFunctionsPerElements_ = Ref{Cint}()
     api_basisFunctions_ = Ref{Ptr{Cdouble}}()
     api_basisFunctions_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctionsForElements, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_numFunctionsPerElements_, api_basisFunctions_, api_basisFunctions_n_, tag, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_numFunctionsPerElements_, api_basisFunctions_, api_basisFunctions_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: $(ierr[])")
     basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
     return api_numComponents_[], api_numFunctionsPerElements_[], basisFunctions
@@ -1678,6 +1764,23 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
     keys = [ (tmp_api_keys_[i], tmp_api_keys_[i+1]) for i in 1:2:length(tmp_api_keys_) ]
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     return keys, coord
+end
+
+"""
+    gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
+
+Get the number of keys by elements of type `elementType` for function space
+named `functionSpaceType`.
+
+Return an integer value.
+"""
+function getNumberOfKeysForElements(elementType, functionSpaceType)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelMeshGetNumberOfKeysForElements, gmsh.lib), Cint,
+          (Cint, Ptr{Cchar}, Ptr{Cint}),
+          elementType, functionSpaceType, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNumberOfKeysForElements returned non-zero error code: $(ierr[])")
+    return api__result__
 end
 
 """
@@ -1937,6 +2040,37 @@ function setReverse(dim, tag, val = true)
 end
 
 """
+    gmsh.model.mesh.setAlgorithm(dim, tag, val)
+
+Set the meshing algorithm on the model entity of dimension `dim` and tag `tag`.
+Currently only supported for `dim` == 2.
+"""
+function setAlgorithm(dim, tag, val)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetAlgorithm, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, val, ierr)
+    ierr[] != 0 && error("gmshModelMeshSetAlgorithm returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.setSizeFromBoundary(dim, tag, val)
+
+Force the mesh size to be extended from the boundary, or not, for the model
+entity of dimension `dim` and tag `tag`. Currently only supported for `dim` ==
+2.
+"""
+function setSizeFromBoundary(dim, tag, val)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetSizeFromBoundary, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, val, ierr)
+    ierr[] != 0 && error("gmshModelMeshSetSizeFromBoundary returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.setCompound(dim, tags)
 
 Set a compound meshing constraint on the model entities of dimension `dim` and
@@ -2052,8 +2186,11 @@ end
 
 Set the meshes of the entities of dimension `dim` and tag `tags` as periodic
 copies of the meshes of entities `tagsMaster`, using the affine transformation
-specified in `affineTransformation` (16 entries of a 4x4 matrix, by row).
-Currently only available for `dim` == 1 and `dim` == 2.
+specified in `affineTransformation` (16 entries of a 4x4 matrix, by row). If
+used after meshing, generate the periodic node correspondence information
+assuming the meshes of entities `tags` effectively match the meshes of entities
+`tagsMaster` (useful for structured and extruded meshes). Currently only
+available for @code{dim} == 1 and @code{dim} == 2.
 """
 function setPeriodic(dim, tags, tagsMaster, affineTransform)
     ierr = Ref{Cint}()
@@ -2122,19 +2259,20 @@ function splitQuadrangles(quality = 1., tag = -1)
 end
 
 """
-    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false)
+    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
 radians), and create new discrete surfaces, curves and points accordingly. If
 `boundary` is set, also create discrete curves on the boundary if the surface is
 open. If `forReparametrization` is set, create edges and surfaces that can be
-reparametrized using a single map.
+reparametrized using a single map. If `curveAngle` is less than Pi, also force
+curves to be split according to `curveAngle`.
 """
-function classifySurfaces(angle, boundary = true, forReparametrization = false)
+function classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClassifySurfaces, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Cint, Ptr{Cint}),
-          angle, boundary, forReparametrization, ierr)
+          (Cdouble, Cint, Cint, Cdouble, Ptr{Cint}),
+          angle, boundary, forReparametrization, curveAngle, ierr)
     ierr[] != 0 && error("gmshModelMeshClassifySurfaces returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2211,6 +2349,26 @@ function computeCohomology(domainTags = Cint[], subdomainTags = Cint[], dims = C
           convert(Vector{Cint}, domainTags), length(domainTags), convert(Vector{Cint}, subdomainTags), length(subdomainTags), convert(Vector{Cint}, dims), length(dims), ierr)
     ierr[] != 0 && error("gmshModelMeshComputeCohomology returned non-zero error code: $(ierr[])")
     return nothing
+end
+
+"""
+    gmsh.model.mesh.computeCrossField()
+
+Compute a cross field for the current mesh. The function creates 3 views: the H
+function, the Theta function and cross directions. Return the tags of the views
+
+Return `viewTags`.
+"""
+function computeCrossField()
+    api_viewTags_ = Ref{Ptr{Cint}}()
+    api_viewTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshComputeCrossField, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_viewTags_, api_viewTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshComputeCrossField returned non-zero error code: $(ierr[])")
+    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
+    return viewTags
 end
 
 """
@@ -2382,8 +2540,8 @@ end
 Add a circle arc (strictly smaller than Pi) between the two points with tags
 `startTag` and `endTag`, with center `centertag`. If `tag` is positive, set the
 tag explicitly; otherwise a new tag is selected automatically. If (`nx`, `ny`,
-`nz`) != (0,0,0), explicitly set the plane of the circle arc. Return the tag of
-the circle arc.
+`nz`) != (0, 0, 0), explicitly set the plane of the circle arc. Return the tag
+of the circle arc.
 
 Return an integer value.
 """
@@ -2402,8 +2560,8 @@ end
 Add an ellipse arc (strictly smaller than Pi) between the two points `startTag`
 and `endTag`, with center `centerTag` and major axis point `majorTag`. If `tag`
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. If (`nx`, `ny`, `nz`) != (0,0,0), explicitly set the plane of the
-circle arc. Return the tag of the ellipse arc.
+automatically. If (`nx`, `ny`, `nz`) != (0, 0, 0), explicitly set the plane of
+the circle arc. Return the tag of the ellipse arc.
 
 Return an integer value.
 """
@@ -2469,6 +2627,44 @@ function addBezier(pointTags, tag = -1)
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, pointTags), length(pointTags), tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddBezier returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
+    gmsh.model.geo.addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
+
+Add a spline (Catmull-Rom) going through points sampling the curves in
+`curveTags`. The density of sampling points on each curve is governed by
+`numIntervals`. If `tag` is positive, set the tag explicitly; otherwise a new
+tag is selected automatically. Return the tag of the spline.
+
+Return an integer value.
+"""
+function addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelGeoAddCompoundSpline, gmsh.lib), Cint,
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, curveTags), length(curveTags), numIntervals, tag, ierr)
+    ierr[] != 0 && error("gmshModelGeoAddCompoundSpline returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
+    gmsh.model.geo.addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
+
+Add a b-spline with control points sampling the curves in `curveTags`. The
+density of sampling points on each curve is governed by `numIntervals`. If `tag`
+is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. Return the tag of the b-spline.
+
+Return an integer value.
+"""
+function addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelGeoAddCompoundBSpline, gmsh.lib), Cint,
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, curveTags), length(curveTags), numIntervals, tag, ierr)
+    ierr[] != 0 && error("gmshModelGeoAddCompoundBSpline returned non-zero error code: $(ierr[])")
     return api__result__
 end
 
@@ -2704,10 +2900,28 @@ function dilate(dimTags, x, y, z, a, b, c)
 end
 
 """
+    gmsh.model.geo.mirror(dimTags, a, b, c, d)
+
+Mirror the model entities `dimTag`, with respect to the plane of equation `a` *
+x + `b` * y + `c` * z + `d` = 0.
+"""
+function mirror(dimTags, a, b, c, d)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoMirror, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, a, b, c, d, ierr)
+    ierr[] != 0 && error("gmshModelGeoMirror returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.geo.symmetrize(dimTags, a, b, c, d)
 
-Apply a symmetry transformation to the model entities `dimTag`, with respect to
-the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
+Mirror the model entities `dimTag`, with respect to the plane of equation `a` *
+x + `b` * y + `c` * z + `d` = 0. (This is a synonym for `mirror`, which will be
+deprecated in a future release.)
 """
 function symmetrize(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -2772,6 +2986,26 @@ function removeAllDuplicates()
           ierr)
     ierr[] != 0 && error("gmshModelGeoRemoveAllDuplicates returned non-zero error code: $(ierr[])")
     return nothing
+end
+
+"""
+    gmsh.model.geo.splitCurve(tag, pointTags)
+
+Split the model curve of tag `tag` on the control points `pointTags`. Return the
+tags `curveTags` of the newly created curves.
+
+Return `curveTags`.
+"""
+function splitCurve(tag, pointTags)
+    api_curveTags_ = Ref{Ptr{Cint}}()
+    api_curveTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoSplitCurve, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, convert(Vector{Cint}, pointTags), length(pointTags), api_curveTags_, api_curveTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelGeoSplitCurve returned non-zero error code: $(ierr[])")
+    curveTags = unsafe_wrap(Array, api_curveTags_[], api_curveTags_n_[], own=true)
+    return curveTags
 end
 
 """
@@ -2913,6 +3147,37 @@ function setReverse(dim, tag, val = true)
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetReverse returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.geo.mesh.setAlgorithm(dim, tag, val)
+
+Set the meshing algorithm on the model entity of dimension `dim` and tag `tag`.
+Currently only supported for `dim` == 2.
+"""
+function setAlgorithm(dim, tag, val)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoMeshSetAlgorithm, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, val, ierr)
+    ierr[] != 0 && error("gmshModelGeoMeshSetAlgorithm returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.geo.mesh.setSizeFromBoundary(dim, tag, val)
+
+Force the mesh size to be extended from the boundary, or not, for the model
+entity of dimension `dim` and tag `tag`. Currently only supported for `dim` ==
+2.
+"""
+function setSizeFromBoundary(dim, tag, val)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoMeshSetSizeFromBoundary, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, val, ierr)
+    ierr[] != 0 && error("gmshModelGeoMeshSetSizeFromBoundary returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -3759,10 +4024,28 @@ function dilate(dimTags, x, y, z, a, b, c)
 end
 
 """
-    gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
+    gmsh.model.occ.mirror(dimTags, a, b, c, d)
 
 Apply a symmetry transformation to the model entities `dimTag`, with respect to
 the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
+"""
+function mirror(dimTags, a, b, c, d)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccMirror, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, a, b, c, d, ierr)
+    ierr[] != 0 && error("gmshModelOccMirror returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
+
+Apply a symmetry transformation to the model entities `dimTag`, with respect to
+the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0. (This is a synonym
+for `mirror`, which will be deprecated in a future release.)
 """
 function symmetrize(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -3849,7 +4132,7 @@ function removeAllDuplicates()
 end
 
 """
-    gmsh.model.occ.healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true)
+    gmsh.model.occ.healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true)
 
 Apply various healing procedures to the entities `dimTags` (or to all the
 entities in the model if `dimTags` is empty). Return the healed entities in
@@ -3857,15 +4140,15 @@ entities in the model if `dimTags` is empty). Return the healed entities in
 
 Return `outDimTags`.
 """
-function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true)
+function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccHealShapes, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Cdouble, Cint, Cint, Cint, Cint, Ptr{Cint}),
-          api_outDimTags_, api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, ierr)
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Cdouble, Cint, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          api_outDimTags_, api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids, ierr)
     ierr[] != 0 && error("gmshModelOccHealShapes returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -4206,18 +4489,18 @@ function copyOptions(refTag, tag)
 end
 
 """
-    gmsh.view.combine(what, how, remove = false)
+    gmsh.view.combine(what, how, remove = true, copyOptions = true)
 
 Combine elements (if `what` == "elements") or steps (if `what` == "steps") of
 all views (`how` == "all"), all visible views (`how` == "visible") or all views
 having the same name (`how` == "name"). Remove original views if `remove` is
 set.
 """
-function combine(what, how, remove = false)
+function combine(what, how, remove = true, copyOptions = true)
     ierr = Ref{Cint}()
     ccall((:gmshViewCombine, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Ptr{Cchar}, Cint, Ptr{Cint}),
-          what, how, remove, ierr)
+          (Ptr{Cchar}, Ptr{Cchar}, Cint, Cint, Ptr{Cint}),
+          what, how, remove, copyOptions, ierr)
     ierr[] != 0 && error("gmshViewCombine returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -4455,6 +4738,22 @@ function run()
           ierr)
     ierr[] != 0 && error("gmshFltkRun returned non-zero error code: $(ierr[])")
     return nothing
+end
+
+"""
+    gmsh.fltk.isAvailable()
+
+Check if the user interface is available (e.g. to detect if it has been closed).
+
+Return an integer value.
+"""
+function isAvailable()
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshFltkIsAvailable, gmsh.lib), Cint,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshFltkIsAvailable returned non-zero error code: $(ierr[])")
+    return api__result__
 end
 
 """
@@ -4735,34 +5034,34 @@ function stop()
 end
 
 """
-    gmsh.logger.time()
+    gmsh.logger.getWallTime()
 
 Return wall clock time.
 
 Return a floating point value.
 """
-function time()
+function getWallTime()
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshLoggerTime, gmsh.lib), Cdouble,
+    api__result__ = ccall((:gmshLoggerGetWallTime, gmsh.lib), Cdouble,
           (Ptr{Cint},),
           ierr)
-    ierr[] != 0 && error("gmshLoggerTime returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshLoggerGetWallTime returned non-zero error code: $(ierr[])")
     return api__result__
 end
 
 """
-    gmsh.logger.cputime()
+    gmsh.logger.getCpuTime()
 
 Return CPU time.
 
 Return a floating point value.
 """
-function cputime()
+function getCpuTime()
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshLoggerCputime, gmsh.lib), Cdouble,
+    api__result__ = ccall((:gmshLoggerGetCpuTime, gmsh.lib), Cdouble,
           (Ptr{Cint},),
           ierr)
-    ierr[] != 0 && error("gmshLoggerCputime returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshLoggerGetCpuTime returned non-zero error code: $(ierr[])")
     return api__result__
 end
 

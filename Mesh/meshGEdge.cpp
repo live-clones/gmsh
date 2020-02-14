@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -273,7 +273,18 @@ static double Integration(GEdge *ge, double t1, double t2, function f,
   return Points.back().p;
 }
 
-void copyMesh(GEdge *from, GEdge *to, int direction)
+static SPoint3 transform(MVertex *vsource, const std::vector<double> &tfo)
+{
+  double ps[4] = {vsource->x(), vsource->y(), vsource->z(), 1.};
+  double res[4] = {0., 0., 0., 0.};
+  int idx = 0;
+  for(int i = 0; i < 4; i++)
+    for(int j = 0; j < 4; j++) res[i] += tfo[idx++] * ps[j];
+
+  return SPoint3(res[0], res[1], res[2]);
+}
+
+static void copyMesh(GEdge *from, GEdge *to, int direction)
 {
   if(!from->getBeginVertex() || !from->getEndVertex() ||
      !to->getBeginVertex() || !to->getEndVertex()){
@@ -289,10 +300,8 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   double to_u_min = to_u_bounds.low();
 
   // include begin and end point to avoid conflicts when realigning
-
   MVertex *vt0 = to->getBeginVertex()->mesh_vertices[0];
   MVertex *vt1 = to->getEndVertex()->mesh_vertices[0];
-
   MVertex *vs0 = from->getBeginVertex()->mesh_vertices[0];
   MVertex *vs1 = from->getEndVertex()->mesh_vertices[0];
 
@@ -302,11 +311,23 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
-    double u;
-    v->getParameter(0, u);
-    double newu =
-      (direction > 0) ? (u - u_min + to_u_min) : (u_max - u + to_u_min);
-    GPoint gp = to->point(newu);
+    GPoint gp;
+    double newu;
+    if(to->affineTransform.size() < 16) {
+      // assume identical parametrisations (dangerous...)
+      double u;
+      v->getParameter(0, u);
+      newu =
+        (direction > 0) ? (u - u_min + to_u_min) : (u_max - u + to_u_min);
+      gp = to->point(newu);
+    }
+    else {
+      SPoint3 p = transform(v, to->affineTransform);
+      // for non-exact periodic curves we could use closestPoint; just use
+      // Mesh.HighOrderPeriodic=2, which will do that
+      newu = to->parFromPoint(p);
+      gp = to->point(newu);
+    }
     MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), to, newu);
     to->mesh_vertices.push_back(vv);
     to->correspondingVertices[vv] = v;
@@ -543,8 +564,12 @@ void meshGEdge::operator()(GEdge *ge)
 
   ge->model()->setCurrentMeshEntity(ge);
 
-  if(ge->degenerate(1) ||
-     (ge->geomType() == GEntity::BoundaryLayerCurve) ||
+  if (ge->degenerate(1)) {
+    ge->meshStatistics.status = GEdge::DONE;
+    return;
+  }
+
+  if ((ge->geomType() == GEntity::BoundaryLayerCurve) ||
      (ge->meshAttributes.method == MESH_NONE) ||
      (CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility())) {
     return;
@@ -558,34 +583,14 @@ void meshGEdge::operator()(GEdge *ge)
   if(ge->getMeshMaster() != ge) {
     GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
     if(gef->meshStatistics.status == GEdge::PENDING) return;
-    Msg::Info("Meshing curve %d (%s) as a copy of %d", ge->tag(),
+    Msg::Info("Meshing curve %d (%s) as a copy of curve %d", ge->tag(),
               ge->getTypeString().c_str(), ge->getMeshMaster()->tag());
     copyMesh(gef, ge, ge->masterOrientation);
     ge->meshStatistics.status = GEdge::DONE;
     return;
   }
 
-  if(ge->model()->getNumEdges() > 100000) {
-    if(ge->tag() % 100000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else if(ge->model()->getNumEdges() > 10000) {
-    if(ge->tag() % 10000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else if(ge->model()->getNumEdges() > 1000) {
-    if(ge->tag() % 1000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else {
-    Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
-  }
+  Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
 
   // compute bounds
   Range<double> bounds = ge->parBounds(0);
@@ -656,7 +661,7 @@ void meshGEdge::operator()(GEdge *ge)
     }
     if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
       a = smoothPrimitive(ge, std::sqrt(CTX::instance()->mesh.smoothRatio),
-                          Points);
+			  Points);
     filterMinimumN = ge->minimumMeshSegments() + 1;
     N = std::max(filterMinimumN, (int)(a + 1.99));
   }

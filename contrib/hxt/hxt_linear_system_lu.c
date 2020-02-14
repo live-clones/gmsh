@@ -395,7 +395,7 @@ HXTStatus hxtLinearSystemLUCreate(HXTLinearSystemLU **pSystem, int nElements, in
 
 HXTStatus hxtLinearSystemLUAddToMatrix(HXTLinearSystemLU *system, int el0, int el1, const double *localMatrix){
   if(system->flaglu==1)
-    HXT_ERROR_MSG(HXT_STATUS_FAILED, "the system has been already factorised!");
+    return HXT_ERROR_MSG(HXT_STATUS_FAILED, "the system has been already factorised!");
   int nn = system->nNodesByElement;
   uint32_t *e0 = system->elements + el0*nn;
   uint32_t *e1 = system->elements + el1*nn;
@@ -477,9 +477,9 @@ HXTStatus hxtLinearSystemLUSetRhsEntry(HXTLinearSystemLU *system, double *rhs, i
 HXTStatus hxtLinearSystemLUAddMatrixEntry(HXTLinearSystemLU *system, int node0, int field0, int node1, int field1, double v)
 {
   if(system->flaglu==1)
-    HXT_ERROR_MSG(HXT_STATUS_FAILED, "the system has been already factorised!");
+    return HXT_ERROR_MSG(HXT_STATUS_FAILED, "the system has been already factorised!");
   if (system->nodeMap[node0] < 0 || system->nodeMap[node1] < 0)
-    HXT_ERROR_MSG(HXT_STATUS_FAILED, "node %i or %i not in the domain", node0, node1);
+    return HXT_ERROR_MSG(HXT_STATUS_FAILED, "node %i or %i not in the domain", node0, node1);
   int row0 = system->nodeMap[node0]*system->nFields + field0;
   int col1 = system->nodeMap[node1]*system->nFields + field1;
 

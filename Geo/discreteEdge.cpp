@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,6 +32,12 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
   Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1., ok);
   Tree_Add(model->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
+}
+
+discreteEdge::discreteEdge(GModel *model) : GEdge(model, 0)
+{
+  // used for temporary discrete edges, that should not lead to the creation of
+  // the corresponding entity in GEO internals
 }
 
 bool discreteEdge::_orderMLines(bool isCompound)

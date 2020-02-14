@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1046,7 +1046,7 @@ void Frame_field::save_dist(const std::string &filename)
   std::ofstream file(filename.c_str());
   file << "View \"Distance\" {\n";
 
-  for(std::map<MEdge, double, Less_Edge>::iterator it = crossDist.begin();
+  for(std::map<MEdge, double, MEdgeLessThan>::iterator it = crossDist.begin();
       it != crossDist.end(); it++) {
     MVertex *pVerta = it->first.getVertex(0);
     MVertex *pVertb = it->first.getVertex(1);
@@ -1118,7 +1118,7 @@ void Frame_field::save_energy(GRegion *gr, const std::string &filename)
         matvec(inv, gsf[nod1], grd1);
         matvec(inv, gsf[nod2], grd2);
         SVector3 esf = sf[nod1] * SVector3(grd2) - sf[nod2] * SVector3(grd1);
-        std::map<MEdge, double, Less_Edge>::iterator it =
+        std::map<MEdge, double, MEdgeLessThan>::iterator it =
           crossDist.find(pTet->getEdge(k));
         sum += it->second * esf;
         // sum += (pTet->getVertex(nod2)->z() - pTet->getVertex(nod1)->z()) *
@@ -1752,7 +1752,7 @@ std::vector<std::pair<SPoint3, STensor3> > Frame_field::field;
 std::vector<int> Frame_field::labels;
 std::map<MVertex *, STensor3> Frame_field::crossField;
 std::map<MVertex *, double> Frame_field::crossFieldSmoothness;
-std::map<MEdge, double, Less_Edge> Frame_field::crossDist;
+std::map<MEdge, double, MEdgeLessThan> Frame_field::crossDist;
 std::map<MVertex *, std::set<MVertex *> > Frame_field::vertex_to_vertices;
 std::map<MVertex *, std::set<MElement *> > Frame_field::vertex_to_elements;
 std::vector<MVertex *> Frame_field::listVertices;

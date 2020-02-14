@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -59,7 +59,7 @@ private:
 
   // index to cell map
   // matrix indices correspond to these cells in _cellComplex
-  std::map<Cell *, int, Less_Cell> _cellIndices[4];
+  std::map<Cell *, int, CellPtrLessThan> _cellIndices[4];
 
   // set the matrices
   void setHMatrix(int dim, gmp_matrix *matrix)
@@ -132,14 +132,14 @@ private:
   }
 
   // local deformation tools for chains
-  bool deformChain(std::map<Cell *, int, Less_Cell> &cells,
+  bool deformChain(std::map<Cell *, int, CellPtrLessThan> &cells,
                    std::pair<Cell *, int> cell, bool bend);
-  bool deform(std::map<Cell *, int, Less_Cell> &cells,
-              std::map<Cell *, int, Less_Cell> &cellsInChain,
-              std::map<Cell *, int, Less_Cell> &cellsNotInChain);
-  void smoothenChain(std::map<Cell *, int, Less_Cell> &cells);
-  void eraseNullCells(std::map<Cell *, int, Less_Cell> &cells);
-  void deImmuneCells(std::map<Cell *, int, Less_Cell> &cells);
+  bool deform(std::map<Cell *, int, CellPtrLessThan> &cells,
+              std::map<Cell *, int, CellPtrLessThan> &cellsInChain,
+              std::map<Cell *, int, CellPtrLessThan> &cellsNotInChain);
+  void smoothenChain(std::map<Cell *, int, CellPtrLessThan> &cells);
+  void eraseNullCells(std::map<Cell *, int, CellPtrLessThan> &cells);
+  void deImmuneCells(std::map<Cell *, int, CellPtrLessThan> &cells);
 
 public:
   // domain = 0 : relative chain space
@@ -183,7 +183,7 @@ public:
   // Compute bases for the homology groups of this chain complex
   void computeHomology(bool dual = false);
 
-  typedef std::map<Cell *, int, Less_Cell>::iterator citer;
+  typedef std::map<Cell *, int, CellPtrLessThan>::iterator citer;
   citer firstCell(int dim) { return _cellIndices[dim].begin(); }
   citer lastCell(int dim) { return _cellIndices[dim].end(); }
   // get the cell index
@@ -202,7 +202,7 @@ public:
   // (deform: with local deformations to make chain smoother and to have
   // smaller support, deformed chain is homologous to the old one,
   // only works for chains of the primary chain complex)
-  void getBasisChain(std::map<Cell *, int, Less_Cell> &chain, int num, int dim,
+  void getBasisChain(std::map<Cell *, int, CellPtrLessThan> &chain, int num, int dim,
                      int basis, bool deform = false);
   // get rank of a basis
   int getBasisSize(int dim, int basis);
@@ -216,7 +216,7 @@ public:
       gmp_matrix_right_mult(_hbasis[dim], T);
     }
   }
-  // void printBasisChain(std::map<Cell*, int, Less_Cell>& chain);
+  // void printBasisChain(std::map<Cell*, int, CellPtrLessThan>& chain);
 
   // debugging aid
   int printMatrix(gmp_matrix *matrix)

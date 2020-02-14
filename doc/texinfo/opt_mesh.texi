@@ -3,7 +3,7 @@
 @ftable @code
 @item Mesh.Algorithm
 2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)@*
-Default value: @code{2}@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
@@ -52,12 +52,27 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsImportOrder
-Enable the creation of high-order mesh from CGNS structured meshes(1, 2, 4, 8, ...)@*
+Order of the mesh to be created by coarsening CGNS structured zones (1 to 4)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsImportIgnoreBC
+Ignore information in ZoneBC structures when reading a CGNS file@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsImportIgnoreSolution
+Ignore solution when reading a CGNS file@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsConstructTopology
 Reconstruct the model topology (BREP) after reading a CGNS file@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsExportCPEX0045
+Use the CPEX0045 convention when exporting a high-order mesh to CGNS@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -82,7 +97,7 @@ Default value: @code{1e+22}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthFromCurvature
-Automatically compute mesh element sizes from curvature (experimental)@*
+Automatically compute mesh element sizes from curvature@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -102,7 +117,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CompoundClassify
-How are surface mesh elements classified on compounds? (0: on the new discrete entity, 1: on the original geometrical entity - incompatible with e.g. high-order meshing)@*
+How are surface mesh elements classified on compounds? (0: on the new discrete surface, 1: on the original geometrical surfaces - incompatible with e.g. high-order meshing)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -277,7 +292,7 @@ Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshOnlyVisible
-Mesh only visible entities (experimental: use with caution!)@*
+Mesh only visible entities (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -312,13 +327,18 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCirclePoints
-Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi radians when the mesh size of adapted to the curvature)@*
+Minimum number of nodes used to mesh circles and ellipses@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCurvePoints
-Minimum number of points used to mesh a (non-straight) curve@*
+Minimum number of points used to mesh curves other than lines, circles and ellipses@*
 Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MinimumElementsPerTwoPi
+Minimum number of elements per 2 * Pi radians when the mesh size is adapted to the curvature@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
@@ -587,17 +607,17 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DAll
-Apply recombination3D algorithm to all volumes, ignoring per-volume spec@*
+Apply recombination3D algorithm to all volumes, ignoring per-volume spec (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DLevel
-3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)@*
+3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids) (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DConformity
-3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)@*
+3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)(experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

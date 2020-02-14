@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,6 +14,7 @@
 #include "MPoint.h"
 #include "MElementOctree.h"
 #include "Octree.h"
+#include "Context.h"
 
 #if defined(HAVE_HXT)
 extern "C" {
@@ -58,9 +59,10 @@ bool discreteFace::param::checkPlanar()
   projectPointsToPlane(v, vp, mp);
   for(size_t i = 0; i < v.size(); i++) {
     double F = mp.a * v[i].x() + mp.b * v[i].y() + mp.c * v[i].z() - mp.d;
-    // double d = v[i].distance (vp[i]);
-    if(fabs(F) > 1.e-3 * bb.diag()) {
-      // printf("distance is too large %G vs %g\n",d,bb.diag());
+    // this is maybe a bit strict, but it's better this way: wrongly identifying
+    // a very thin (but curved) surface as plane will lead to complete meshing
+    // failure (see e.g. mmbendo.stl in #641)
+    if(fabs(F) > CTX::instance()->geom.matchMeshTolerance * bb.diag()) {
       return false;
     }
   }
@@ -85,6 +87,12 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   Surface *s = CreateSurface(num, MSH_SURF_DISCRETE);
   Tree_Add(model->getGEOInternals()->Surfaces, &s);
   meshStatistics.status = GFace::DONE;
+}
+
+discreteFace::discreteFace(GModel *model) : GFace(model, 0)
+{
+  // used for temporary discrete faces, that should not lead to the creation of
+  // the corresponding entity in GEO internals
 }
 
 static void sort_edges(std::vector<GEdge *> &e, std::vector<int> &dir)

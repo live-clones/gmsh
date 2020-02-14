@@ -2,7 +2,7 @@
 
 @ftable @code
 @item View.Attributes
-Optional string attributes@*
+Optional string attached to the view. If the string contains 'AlwaysVisible', the view will not be hidden when new ones are merged.@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -657,7 +657,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple
-Stipple curves in 2D plots?@*
+Stipple curves in 2D and line plots?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

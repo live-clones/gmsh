@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -335,8 +335,8 @@ public:
   virtual double getMeshSize() const { return MAX_LC; }
   virtual double getMeshSizeFactor() const { return 1.; }
 
-  // number of types of elements
-  virtual int getNumElementTypes() const { return 0; }
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const {};
 
   // get the number of mesh elements (total and by type) in the entity
   virtual std::size_t getNumMeshElements() const { return 0; }
@@ -404,7 +404,7 @@ public:
   }
 };
 
-struct GEntityLessThan {
+struct GEntityPtrLessThan {
   bool operator()(GEntity const *const ent1, GEntity const *const ent2) const
   {
     return ent1->tag() < ent2->tag();

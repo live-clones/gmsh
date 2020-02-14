@@ -32,7 +32,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-public class MainActivity extends Activity{
+public class MainActivity extends Activity {
   private Gmsh _gmsh;
   private boolean _compute, _twoPane, _notify;
   private MenuItem _runStopMenuItem, _switchFragmentMenuItem;
@@ -40,10 +40,9 @@ public class MainActivity extends Activity{
   private OptionsFragment _optionsFragment;
   private Dialog _errorDialog;
 
-  public MainActivity() { }
+  public MainActivity() {}
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState)
+  @Override protected void onCreate(Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -54,10 +53,11 @@ public class MainActivity extends Activity{
     _notify = false;
     ActionBar actionBar = getActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
-    actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#64000000")));
+    actionBar.setBackgroundDrawable(
+      new ColorDrawable(Color.parseColor("#64000000")));
     Intent intent = getIntent();
     Bundle extras = intent.getExtras();
-    if(savedInstanceState != null){
+    if(savedInstanceState != null) {
       // nothing
     }
     else if(extras != null) {
@@ -67,68 +67,67 @@ public class MainActivity extends Activity{
       String tmp = extras.getString("file");
       _gmsh.load(tmp);
     }
-    else{
+    else {
       this.finish();
     }
     _twoPane = (findViewById(R.id.parameter_fragment) != null);
     _modelFragment = ModelFragment.newInstance(_gmsh);
-    getFragmentManager().beginTransaction().replace
-      (R.id.model_fragment, _modelFragment).commit();
+    getFragmentManager()
+      .beginTransaction()
+      .replace(R.id.model_fragment, _modelFragment)
+      .commit();
     if(_twoPane) {
       _optionsFragment = OptionsFragment.newInstance(_gmsh);
-      getFragmentManager().beginTransaction().replace
-        (R.id.parameter_fragment, _optionsFragment).commit();
-      _optionsFragment.setOnOptionsChangedListener
-        (new OptionsFragment.OnOptionsChangedListener(){
-            public void OnOptionsChanged() {
-              _modelFragment.requestRender();
-            }
-          });
+      getFragmentManager()
+        .beginTransaction()
+        .replace(R.id.parameter_fragment, _optionsFragment)
+        .commit();
+      _optionsFragment.setOnOptionsChangedListener(
+        new OptionsFragment.OnOptionsChangedListener() {
+          public void OnOptionsChanged() { _modelFragment.requestRender(); }
+        });
     }
   }
 
-  @Override
-  protected void onSaveInstanceState(Bundle outState)
+  @Override protected void onSaveInstanceState(Bundle outState)
   {
     outState.putBoolean("Compute", _compute);
     super.onSaveInstanceState(outState);
   }
 
-  @Override
-  public boolean onCreateOptionsMenu(Menu menu)
+  @Override public boolean onCreateOptionsMenu(Menu menu)
   {
     super.onCreateOptionsMenu(menu);
     if(!_twoPane) {
       _switchFragmentMenuItem = menu.add(R.string.menu_parameters);
       _switchFragmentMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
     }
-    _runStopMenuItem = menu.add((_compute)?R.string.menu_stop:R.string.menu_run);
+    _runStopMenuItem =
+      menu.add((_compute) ? R.string.menu_stop : R.string.menu_run);
     _runStopMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
     return true;
   }
 
-  @Override
-  public boolean onMenuOpened(int featureId, Menu menu)
+  @Override public boolean onMenuOpened(int featureId, Menu menu)
   {
     _modelFragment.postDelay();
     return super.onMenuOpened(featureId, menu);
   }
 
-  @Override
-  public boolean onMenuItemSelected(int featureId, MenuItem item)
+  @Override public boolean onMenuItemSelected(int featureId, MenuItem item)
   {
-    if (item.getTitle().equals(getString(R.string.menu_parameters))) {
+    if(item.getTitle().equals(getString(R.string.menu_parameters))) {
       Intent intent = new Intent(this, OptionsActivity.class);
       intent.putExtra("Gmsh", (Parcelable)_gmsh);
       intent.putExtra("Compute", _compute);
       startActivityForResult(intent, 1);
       _modelFragment.requestRender();
     }
-    else if(item.getTitle().equals(getString(R.string.menu_run))){
+    else if(item.getTitle().equals(getString(R.string.menu_run))) {
       if(_modelFragment != null) _modelFragment.hideControlBar();
       new Run().execute();
     }
-    else if(item.getTitle().equals(getString(R.string.menu_stop))){
+    else if(item.getTitle().equals(getString(R.string.menu_stop))) {
       _runStopMenuItem.setEnabled(false);
       _gmsh.onelabCB("stop");
     }
@@ -136,12 +135,16 @@ public class MainActivity extends Activity{
       if(this._compute) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         dialogBuilder.setTitle("Cannot show the model list")
-          .setMessage("The computation has to complete before you can select another model")
-          .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-              public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-              }
-            })
+          .setMessage(
+            "The computation has to complete before you can select another model")
+          .setPositiveButton("OK",
+                             new DialogInterface.OnClickListener() {
+                               public void onClick(DialogInterface dialog,
+                                                   int which)
+                               {
+                                 dialog.dismiss();
+                               }
+                             })
           .show();
       }
       else
@@ -154,32 +157,30 @@ public class MainActivity extends Activity{
   protected void onActivityResult(int requestCode, int resultCode, Intent data)
   {
     super.onActivityResult(requestCode, resultCode, data);
-    switch (requestCode) {
+    switch(requestCode) {
     case 1:
       if(resultCode == RESULT_OK)
-        if(!_compute && data.getBooleanExtra("Compute", false)) new Run().execute();
+        if(!_compute && data.getBooleanExtra("Compute", false))
+          new Run().execute();
       break;
     }
   }
 
   private class Run extends AsyncTask<Void, Void, Integer[]> {
-    @Override
-    protected void onPreExecute()
+    @Override protected void onPreExecute()
     {
       _compute = true;
       _runStopMenuItem.setTitle(R.string.menu_stop);
       super.onPreExecute();
     }
 
-    @Override
-    protected Integer[] doInBackground(Void... params)
+    @Override protected Integer[] doInBackground(Void... params)
     {
       _gmsh.onelabCB("compute");
       return new Integer[] {1};
     }
 
-    @Override
-    protected void onPostExecute(Integer[] result)
+    @Override protected void onPostExecute(Integer[] result)
     {
       //(Vibrator) getSystemService(Context.VIBRATOR_SERVICE).vibrate(350);
       _runStopMenuItem.setTitle(R.string.menu_run);
@@ -196,60 +197,62 @@ public class MainActivity extends Activity{
     // show only first error
     if(_errorDialog != null && _errorDialog.isShowing()) return;
     // remove doc path from message
-    String str = msg.replace(this.getFilesDir().getAbsolutePath() + File.separator, "");
+    String str =
+      msg.replace(this.getFilesDir().getAbsolutePath() + File.separator, "");
     AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
     _errorDialog = dialogBuilder.setTitle("Error")
-      .setMessage(str)
-      .setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
-          public void onClick(DialogInterface dialog, int which) {
-            dialog.dismiss();
-          }
-        })
-      .show();
+                     .setMessage(str)
+                     .setPositiveButton("Dismiss",
+                                        new DialogInterface.OnClickListener() {
+                                          public void onClick(
+                                            DialogInterface dialog, int which)
+                                          {
+                                            dialog.dismiss();
+                                          }
+                                        })
+                     .show();
   }
-  @Override
-  protected void onPause()
+  @Override protected void onPause()
   {
     if(_compute) notifyComputing();
     super.onPause();
     _notify = true;
   }
 
-  @Override
-  protected void onResume()
+  @Override protected void onResume()
   {
     super.onResume();
     NotificationManager mNotificationManager =
-      (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+      (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
     mNotificationManager.cancel(1337);
     _notify = false;
   }
 
-  @Override
-  protected void onStop()
+  @Override protected void onStop()
   {
     super.onStop();
     if(_compute) notifyComputing();
     _notify = true;
   }
 
-  @Override
-  public void onLowMemory()
+  @Override public void onLowMemory()
   {
     if(!_compute) return;
     _gmsh.onelabCB("stop");
-    Toast.makeText(this, "Low memory! Computation is going to stop",
-                   Toast.LENGTH_LONG).show();
+    Toast
+      .makeText(this, "Low memory! Computation is going to stop",
+                Toast.LENGTH_LONG)
+      .show();
     super.onLowMemory();
   }
 
-  @Override
-  public void onTrimMemory(int level)
+  @Override public void onTrimMemory(int level)
   {
     if(!_compute) return;
-    if(level == Activity.TRIM_MEMORY_COMPLETE){
+    if(level == Activity.TRIM_MEMORY_COMPLETE) {
       _gmsh.onelabCB("stop");
-      notifyEndComputing("The computation had to stop because your device ran out of memory");
+      notifyEndComputing(
+        "The computation had to stop because your device ran out of memory");
       _notify = false;
     }
     else if(level == Activity.TRIM_MEMORY_MODERATE) {
@@ -261,9 +264,10 @@ public class MainActivity extends Activity{
   private void notifyComputing(String msg, boolean alert)
   {
     Intent intent = new Intent(this, MainActivity.class);
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-    PendingIntent pendingIntent = PendingIntent.getActivity
-      (this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    PendingIntent pendingIntent = PendingIntent.getActivity(
+      this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
     Notification.Builder notifyBuilder = new Notification.Builder(this);
     notifyBuilder.setContentTitle("ONELAB")
       .setContentIntent(pendingIntent)
@@ -273,8 +277,8 @@ public class MainActivity extends Activity{
     if(alert)
       notifyBuilder.setDefaults(Notification.DEFAULT_SOUND |
                                 Notification.DEFAULT_VIBRATE);
-    NotificationManager mNotificationManager = (NotificationManager)
-      getSystemService(Context.NOTIFICATION_SERVICE);
+    NotificationManager mNotificationManager =
+      (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
     mNotificationManager.notify(1337, notifyBuilder.getNotification());
   }
 
@@ -283,51 +287,50 @@ public class MainActivity extends Activity{
     notifyComputing("Computation in progress", false);
   }
 
-  private void notifyEndComputing()
-  {
-    notifyEndComputing("Computation done!");
-  }
+  private void notifyEndComputing() { notifyEndComputing("Computation done!"); }
 
   private void notifyEndComputing(String msg)
   {
     Intent intent = new Intent(this, MainActivity.class);
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-    PendingIntent pendingIntent = PendingIntent.getActivity
-      (this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-    Notification.Builder notifyBuilder = new Notification.Builder(this)
-      .setSmallIcon(R.drawable.ic_launcher)
-      .setContentIntent(pendingIntent)
-      .setContentTitle("ONELAB")
-      .setDefaults(Notification.DEFAULT_ALL)
-      .setAutoCancel(true)
-      .setProgress(0, 0, false)
-      .setContentText(msg);
-    NotificationManager mNotificationManager = (NotificationManager)
-      getSystemService(Context.NOTIFICATION_SERVICE);
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    PendingIntent pendingIntent = PendingIntent.getActivity(
+      this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+    Notification.Builder notifyBuilder =
+      new Notification.Builder(this)
+        .setSmallIcon(R.drawable.ic_launcher)
+        .setContentIntent(pendingIntent)
+        .setContentTitle("ONELAB")
+        .setDefaults(Notification.DEFAULT_ALL)
+        .setAutoCancel(true)
+        .setProgress(0, 0, false)
+        .setContentText(msg);
+    NotificationManager mNotificationManager =
+      (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
     mNotificationManager.notify(1337, notifyBuilder.getNotification());
   }
 
-  private final Handler mainHandler = new Handler(){
-      public void handleMessage(android.os.Message msg) {
-    		switch (msg.what) {
-        case 0: // we get a message from gmsh library
-          showError((String)msg.obj);
-          break;
-        case 1: // request render from gmsh library
-          if(_modelFragment != null) _modelFragment.requestRender();
-          if(_optionsFragment != null) _optionsFragment.refresh();
-          break;
-        case 2: // we get a message for loading
-          if(_modelFragment != null) _modelFragment.showProgress((String)msg.obj);
-          break;
-        case 3: // we get a progress for loading
-          //loading.setProgress(msg.arg1);
-          break;
-        default:
-          break;
-        }
-      };
+  private final Handler mainHandler = new Handler() {
+    public void handleMessage(android.os.Message msg)
+    {
+      switch(msg.what) {
+      case 0: // we get a message from gmsh library
+        showError((String)msg.obj);
+        break;
+      case 1: // request render from gmsh library
+        if(_modelFragment != null) _modelFragment.requestRender();
+        if(_optionsFragment != null) _optionsFragment.refresh();
+        break;
+      case 2: // we get a message for loading
+        if(_modelFragment != null) _modelFragment.showProgress((String)msg.obj);
+        break;
+      case 3: // we get a progress for loading
+        // loading.setProgress(msg.arg1);
+        break;
+      default: break;
+      }
     };
+  };
 
   public boolean isComputing() { return _compute; }
 }

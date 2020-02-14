@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -828,7 +828,7 @@ static int getElementVertexNum(DI_Point *p, MElement *e)
   return -1;
 }
 
-typedef std::set<MVertex *, MVertexLessThanLexicographic> newVerticesContainer;
+typedef std::set<MVertex *, MVertexPtrLessThanLexicographic> newVerticesContainer;
 
 static void elementCutMesh(
   MElement *e, std::vector<gLevelset *> &RPN, fullMatrix<double> &verticesLs,
@@ -1040,7 +1040,7 @@ static void elementCutMesh(
           it != itr.second; it++) {
         MElement *tb = it->second;
         int match = 0;
-        for(int i = 0; i < p1->getNumPrimaryVertices(); i++) {
+        for(std::size_t i = 0; i < p1->getNumPrimaryVertices(); i++) {
           if(tb->getVertex(0) == p1->getVertex(i) ||
              tb->getVertex(1) == p1->getVertex(i) ||
              tb->getVertex(2) == p1->getVertex(i))
@@ -1297,7 +1297,7 @@ static void elementCutMesh(
           it != itr.second; ++it) {
         MElement *lb = it->second;
         int match = 0;
-        for(int i = 0; i < p1->getNumPrimaryVertices(); i++) {
+        for(std::size_t i = 0; i < p1->getNumPrimaryVertices(); i++) {
           if(lb->getVertex(0) == p1->getVertex(i) ||
              lb->getVertex(1) == p1->getVertex(i))
             match++;

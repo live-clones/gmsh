@@ -2,31 +2,19 @@
 #include "hxt_tetFlag.h"
 
 
-static inline void sort3ints(uint32_t i[3]){
-  if(i[0]>i[1]){
-    uint32_t tmp = i[0]; i[0] = i[1]; i[1] = tmp;
-  }
-
-  if(i[1]>i[2]){
-    uint32_t tmp1 = i[1]; i[1] = i[2]; i[2] = tmp1;
-
-    if(i[0]>i[1]){
-      uint32_t tmp2 = i[0]; i[0] = i[1]; i[1] = tmp2;
-    }
-  }
-}
-// just a function such that:
-// if hashedCompare(a,b)==true
-// then hashedCompare(b,a)==false
-//
-// BUT hashedCompare(a,b)==true and hashedCompare(b,c)==true
-// doesn't imply that hashedCompare(a,c)==true
-// and inversely if you replace true with false (no transitivity)
-static inline uint64_t hashedCompare(uint64_t a, uint64_t b) {
+/* just a function such that:
+ * if hashLess(a,b)==true
+ * then hashLess(b,a)==false
+ *
+ * BUT hashLess(a,b)==true and hashLess(b,c)==true
+ * doesn't imply that hashLess(a,c)==true
+ * and inversely if you replace true with false (no transitivity) */
+static inline uint64_t hashLess(uint64_t a, uint64_t b) {
   return ((a^b)&1)^(a<b);
 }
 
-
+/* good hash function for non-cryptographic purpose
+ * see https://stackoverflow.com/a/12996028 */
 static inline uint64_t hash64(uint64_t x) {
     x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
     x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
@@ -34,16 +22,32 @@ static inline uint64_t hash64(uint64_t x) {
     return x;
 }
 
-// just a function such that:
-// if transitiveHashedCmp(a,b)==true
-// then transitiveHashedCmp(b,a)==false
-//
-// AND transitiveHashedCmp(a,b)==true and transitiveHashedCmp(b,c)==true
-// imply that transitiveHashedCmp(a,c)==true
-// and inversely if you replace true with false (the relation is transitive)
-static inline uint64_t transitiveHashedCmp(uint64_t a, uint64_t b) {
+/* just a function such that:
+ * if transitiveHashLess(a,b)==true
+ * then transitiveHashLess(b,a)==false
+ *
+ * AND transitiveHashLess(a,b)==true and transitiveHashLess(b,c)==true
+ * imply that transitiveHashLess(a,c)==true
+ * and inversely if you replace true with false (the relation is transitive) */
+static inline uint64_t transitiveHashLess(uint64_t a, uint64_t b) {
   return hash64(a) < hash64(b);
 }
+
+
+#ifndef NDEBUG
+static inline uint64_t countBoundaries(HXTMesh* mesh) {
+  uint64_t nBoundaries=0;
+
+  #pragma omp parallel for reduction(+:nBoundaries)
+  for (uint64_t i=0; i<4*mesh->tetrahedra.num; i++) {
+    if(mesh->tetrahedra.neigh[i]==HXT_NO_ADJACENT)
+      nBoundaries++;
+  }
+
+  return nBoundaries;
+}
+#endif
+
 
 /**************************************************************************************
  *   Lines --> Triangles   MAPPING  (for each line, get 3*tri+e)
@@ -71,7 +75,7 @@ HXTStatus hxtGetLines2TriMap(HXTMesh* mesh, uint64_t* lines2TriMap, uint64_t* mi
         edgeKey[i].v[0] = v0*n + v1;
         edgeKey[i].v[1] = 2*i;
       }
-      else if(v0<v1){
+      else if(v0>v1){
         edgeKey[i].v[0] = v1*n + v0;
         edgeKey[i].v[1] = 2*i;
       }
@@ -88,7 +92,7 @@ HXTStatus hxtGetLines2TriMap(HXTMesh* mesh, uint64_t* lines2TriMap, uint64_t* mi
                        mesh->triangles.node[3*i+1],
                        mesh->triangles.node[3*i+2]};
 
-      sort3ints(v);
+      HXTSORT_3_VALUES_INPLACE(uint32_t, v);
 
       edgeKey[mesh->lines.num+3*i].v[0] = v[0]*n + v[1];
       edgeKey[mesh->lines.num+3*i].v[1] = 2*(3*i)+1;
@@ -112,7 +116,7 @@ HXTStatus hxtGetLines2TriMap(HXTMesh* mesh, uint64_t* lines2TriMap, uint64_t* mi
         if(i!=numEdgesTotal-1 && edgeKey[i].v[0]==edgeKey[i+1].v[0]) {
         #ifndef NDEBUG
           if(edgeKey[i+1].v[1]%2==0) {
-            HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated line in mesh->lines (%lu & %lu)\n"
+            HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated line in mesh->lines (" HXTu64 " & " HXTu64 ")\n"
                                            "\tThis case is not handled in Release mode, FIX IT !!",
                                            edgeKey[i].v[1]/2, edgeKey[i+1].v[1]/2);
             exit(EXIT_FAILURE);
@@ -158,6 +162,12 @@ HXTStatus hxtGetLines2TetMap(HXTMesh* mesh, uint64_t* lines2TetMap, uint64_t* mi
 HXT_ASSERT( lines2TetMap!=NULL );
 HXT_ASSERT( mesh!=NULL );
 
+#ifndef NDEBUG
+    if(countBoundaries(mesh)!=0)
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "a tetrahedron has no neighbor. Add ghosts tetrahedra to use this function");
+#endif
+
+
   const int maxThreads = omp_get_max_threads();
   const uint64_t n = mesh->vertices.num;
   HXTStatus status = HXT_STATUS_OK;
@@ -177,8 +187,9 @@ HXT_ASSERT( mesh!=NULL );
     uint64_t localNum = 0;
 
     #pragma omp for schedule(static)
-    for (uint64_t tet=0; tet<mesh->tetrahedra.num; tet++) { // for each tetrahedra
+    for (uint64_t tet=0; tet<mesh->tetrahedra.num; tet++) {
       for (int edge=0; edge<6; edge++) {
+        // get some info on the edge (adjacent facets and nodes)
 
         unsigned in_facet, out_facet;
         getFacetsFromEdge(edge, &in_facet, &out_facet);
@@ -194,8 +205,11 @@ HXT_ASSERT( mesh!=NULL );
         if(p0==HXT_GHOST_VERTEX || p1==HXT_GHOST_VERTEX)
           continue;
 
+        /* visit tetrahedra `tet` by turning around the edge
+           we only want the edge to be registered once,
+           thus we stop as soon as `transitiveHashLess(curTet, tet)==true`
+        */
         int truth = 1;
-
         uint64_t curTet = tet;
         do
         {
@@ -206,7 +220,7 @@ HXT_ASSERT( mesh!=NULL );
           curTet = neigh/4;
           in_facet = neigh%4;
 
-          if(transitiveHashedCmp(curTet, tet)) {
+          if(transitiveHashLess(curTet, tet)) {
             truth=0;
             break;
           }
@@ -218,6 +232,7 @@ HXT_ASSERT( mesh!=NULL );
 
         } while (curTet!=tet);
 
+        // only the tetrahedron with the biggest hash will register the edge
         if(truth){
           edgeFlag[tet] |= 1U<<edge;
           localNum++;
@@ -230,6 +245,7 @@ HXT_ASSERT( mesh!=NULL );
     #pragma omp barrier
     #pragma omp single
     {
+      // exclusive scan used to compute starting indices
       int nthreads = omp_get_num_threads();
       numEdgesTotal = mesh->lines.num;
       for (int i=0; i<nthreads; i++) {
@@ -318,7 +334,7 @@ HXT_ASSERT( mesh!=NULL );
         if(i!=numEdgesTotal-1 && edgeKey[i].v[0]==edgeKey[i+1].v[0]) {
         #ifndef NDEBUG
           if(edgeKey[i+1].v[1]%2==0) {
-            HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated line in mesh->lines (%lu & %lu)\n"
+            HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated line in mesh->lines (" HXTu64 " & " HXTu64 ")\n"
                                            "\tThis case is not handled in Release mode, FIX IT !!",
                                            edgeKey[i].v[1]/2, edgeKey[i+1].v[1]/2);
             exit(EXIT_FAILURE);
@@ -379,6 +395,7 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
 
 #ifndef NDEBUG
   uint64_t nGhosts = 0;
+  uint64_t nBoundaries = countBoundaries(mesh);
 
   #pragma omp parallel for reduction(+:nGhosts)
   for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
@@ -387,10 +404,10 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
   }
 
   if(n <= 2642246){
-    HXT_CHECK( hxtAlignedMalloc(&triKey, (2*mesh->tetrahedra.num-3*nGhosts/2+mesh->triangles.num)*sizeof(HXTGroup2)) );
+    HXT_CHECK( hxtAlignedMalloc(&triKey, (2*(mesh->tetrahedra.num+nBoundaries)-3*(nGhosts+nBoundaries)/2+mesh->triangles.num)*sizeof(HXTGroup2)) );
   }
   else{
-    HXT_CHECK( hxtAlignedMalloc(&pairKey, (2*mesh->tetrahedra.num-3*nGhosts/2+mesh->triangles.num)*sizeof(HXTGroup3)) );
+    HXT_CHECK( hxtAlignedMalloc(&pairKey, (2*(mesh->tetrahedra.num+nBoundaries)-3*(nGhosts+nBoundaries)/2+mesh->triangles.num)*sizeof(HXTGroup3)) );
   }
 #endif
 
@@ -404,9 +421,9 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
     for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
       if(mesh->tetrahedra.node[4*i+3]!=HXT_GHOST_VERTEX) {
         for (int j=0; j<4; j++) {
-          uint64_t neigh = mesh->tetrahedra.neigh[4*i+j]/4;
-          if(hashedCompare(i, neigh) || 
-             mesh->tetrahedra.node[neigh*4+3]==HXT_GHOST_VERTEX)
+          uint64_t neigh = mesh->tetrahedra.neigh[4*i+j];
+          if(neigh==HXT_NO_ADJACENT || hashLess(i, neigh/4) || 
+             mesh->tetrahedra.node[neigh]==HXT_GHOST_VERTEX)
             localNum++;
         }
       }
@@ -417,6 +434,7 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
     #pragma omp barrier
     #pragma omp single
     {
+      // exclusive scan used to compute starting indices
       int nthreads = omp_get_num_threads();
       numTrianglesTotal = mesh->triangles.num;
       for (int i=0; i<nthreads; i++) {
@@ -426,9 +444,11 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
       }
 
     #ifndef NDEBUG
-      if(numTrianglesTotal!=2*mesh->tetrahedra.num-3*nGhosts/2+mesh->triangles.num){
-        HXT_ERROR_MSG(HXT_STATUS_ERROR, "you should never go here... (%lu!=2*%lu+3*%lu/2",numTrianglesTotal-mesh->triangles.num,
-                                                                                                mesh->tetrahedra.num, nGhosts);
+      if(numTrianglesTotal!=2*(mesh->tetrahedra.num+nBoundaries)-3*(nGhosts+nBoundaries)/2+mesh->triangles.num){
+        HXT_ERROR_MSG(HXT_STATUS_ERROR, "you should never go here..."
+                                        " (" HXTu64 "!=2*" HXTu64 "+(" HXTu64 "-3*" HXTu64 ")/2",
+                                        numTrianglesTotal-mesh->triangles.num,
+                                        mesh->tetrahedra.num, nBoundaries, nGhosts);
         exit(EXIT_FAILURE);
       }
     #else
@@ -449,7 +469,7 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
           uint32_t v[3] = {mesh->triangles.node[3*i+0],
                            mesh->triangles.node[3*i+1],
                            mesh->triangles.node[3*i+2]};
-          sort3ints(v);
+          HXTSORT_3_VALUES_INPLACE(uint32_t, v);
           triKey[i].v[1] = 2*i;
           triKey[i].v[0] = v[0]*(n-1)*n + v[1]*n + v[2];
         }
@@ -460,7 +480,7 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
           uint32_t v[3] = {mesh->triangles.node[3*i+0],
                            mesh->triangles.node[3*i+1],
                            mesh->triangles.node[3*i+2]};
-          sort3ints(v);
+          HXTSORT_3_VALUES_INPLACE(uint32_t, v);
           pairKey[i].v[2] = 2*i;
           pairKey[i].v[1] = v[0]*(n-1) + v[1];
           pairKey[i].v[0] = v[2];
@@ -474,13 +494,13 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
         for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
           if(mesh->tetrahedra.node[4*i+3]!=HXT_GHOST_VERTEX){
             for (int j=0; j<4; j++) {
-              uint64_t neigh = mesh->tetrahedra.neigh[4*i+j]/4;
-              if(hashedCompare(i, neigh) || 
-                 mesh->tetrahedra.node[neigh*4+3]==HXT_GHOST_VERTEX) {
+              uint64_t neigh = mesh->tetrahedra.neigh[4*i+j];
+              if(neigh==HXT_NO_ADJACENT || hashLess(i, neigh/4) || 
+                 mesh->tetrahedra.node[neigh]==HXT_GHOST_VERTEX) {
                 uint32_t v[3] = {mesh->tetrahedra.node[4*i+((j+1)&3)],
                                  mesh->tetrahedra.node[4*i+((j+2)&3)],
                                  mesh->tetrahedra.node[4*i+((j+3)&3)]};
-                sort3ints(v);
+                HXTSORT_3_VALUES_INPLACE(uint32_t, v);
                 triKey[localNum].v[1] = 2*(4*i+j)+1;
                 triKey[localNum].v[0] = v[0]*(n-1)*n + v[1]*n + v[2]; // max: (n-3)(n-1)n + (n-2)n + (n-1)
                                                                       //    = (n-2)(n-1)n - 1
@@ -495,13 +515,13 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
         for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
           if(mesh->tetrahedra.node[4*i+3]!=HXT_GHOST_VERTEX){
             for (int j=0; j<4; j++) {
-              uint64_t neigh = mesh->tetrahedra.neigh[4*i+j]/4;
-              if(hashedCompare(i, neigh) || 
-                 mesh->tetrahedra.node[neigh*4+3]==HXT_GHOST_VERTEX) {
+              uint64_t neigh = mesh->tetrahedra.neigh[4*i+j];
+              if(neigh==HXT_NO_ADJACENT || hashLess(i, neigh/4) || 
+                 mesh->tetrahedra.node[neigh]==HXT_GHOST_VERTEX) {
                 uint32_t v[3] = {mesh->tetrahedra.node[4*i+((j+1)&3)],
                                  mesh->tetrahedra.node[4*i+((j+2)&3)],
                                  mesh->tetrahedra.node[4*i+((j+3)&3)]};
-                sort3ints(v);
+                HXTSORT_3_VALUES_INPLACE(uint32_t, v);
                 pairKey[localNum].v[2] = 2*(4*i+j)+1;
                 pairKey[localNum].v[1] = v[0]*(n-1) + v[1]; // max: (n-3)(n-1) + (n-2) = (n-2)(n-1) - 1
                 pairKey[localNum].v[0] = v[2];              // max: n-1
@@ -539,7 +559,7 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
           if(i!=numTrianglesTotal-1 && triKey[i].v[0]==triKey[i+1].v[0]) {
           #ifndef NDEBUG
             if(triKey[i+1].v[1]%2==0) {
-              HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated triangle in mesh->triangles (%lu & %lu)\n"
+              HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated triangle in mesh->triangles (" HXTu64 " & " HXTu64 ")\n"
                                              "\tThis case is not handled in Release mode, FIX IT !!",
                                              triKey[i].v[1]/2, triKey[i+1].v[1]/2);
               exit(EXIT_FAILURE);
@@ -564,7 +584,7 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
           if(i!=numTrianglesTotal-1 && pairKey[i].v[0]==pairKey[i+1].v[0] && pairKey[i].v[1]==pairKey[i+1].v[1]) {
           #ifndef NDEBUG
             if(pairKey[i+1].v[2]%2==0) {
-              HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated triangle in mesh->triangles (%lu & %lu)\n"
+              HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated triangle in mesh->triangles (" HXTu64 " & " HXTu64 ")\n"
                                              "\tThis case is not handled in Release mode, FIX IT !!",
                                              pairKey[i].v[2]/2, pairKey[i+1].v[2]/2);
               exit(EXIT_FAILURE);
@@ -611,12 +631,6 @@ HXTStatus hxtConstrainTriangles(HXTMesh* mesh, uint64_t* tri2TetMap)
 {
   HXT_ASSERT(tri2TetMap!=NULL);
   HXT_ASSERT(mesh!=NULL);
-#ifdef DEBUG
-  for (uint64_t i=0; i<mesh->triangles.num; i++) {
-    if(tri2TetMap[i]==HXT_NO_ADJACENT)
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "There are missing mappings in tri2TetMap");
-  }
-#endif
 
   char* faceFlag;
   HXT_CHECK( hxtAlignedMalloc(&faceFlag, 4*mesh->tetrahedra.num*sizeof(char)) );
@@ -625,8 +639,10 @@ HXTStatus hxtConstrainTriangles(HXTMesh* mesh, uint64_t* tri2TetMap)
   // fill faceFlag
   #pragma omp parallel for
   for (uint64_t i=0; i<mesh->triangles.num; i++) {
-    faceFlag[tri2TetMap[i]] = 1;
-    faceFlag[mesh->tetrahedra.neigh[tri2TetMap[i]]] = 1;
+    if(tri2TetMap[i]!=HXT_NO_ADJACENT) {
+      faceFlag[tri2TetMap[i]] = 1;
+      faceFlag[mesh->tetrahedra.neigh[tri2TetMap[i]]] = 1;
+    }
   }
 
   // constrain corresponding flag, teetrahedron by tetrahedron to avoid race conditions
@@ -645,6 +661,49 @@ HXTStatus hxtConstrainTriangles(HXTMesh* mesh, uint64_t* tri2TetMap)
 }
 
 
+/*********************************************************
+ *   Constrain an edge in all tetrahedra surrounding it
+ *********************************************************
+ * In single-thread cases, put edgeFlag==NULL.
+ * This function will directly set the contraint bit corresponding to the edge
+ * '6*firstTet+edge' on all tetrahedra surrounding this edge.
+ *
+ * In multi-threaded case, if multiple thread modify different edges of the
+ * same tetrahedra, modifying the same flag would resuld in a race condition.
+ * Therefore, in parallel section, you must give an array with a char per edge.
+ * This function will set the edges corresponding to '6*firstTet+edge' to 1.
+ */
+HXTStatus hxtConstrainLine(HXTMesh* mesh, uint64_t tet, int edge, char* edgeFlag)
+{
+  uint64_t curTet = tet;
+  unsigned in_facet, out_facet;
+  getFacetsFromEdge(edge, &in_facet, &out_facet);
+
+  // turn around the edge to set edgeFlag of all tetrahedra to 1...
+  do
+  {
+    if(edgeFlag)
+      edgeFlag[6*curTet + getEdgeFromFacets(in_facet, out_facet)] = 1;
+    else
+      setEdgeConstraint(mesh, curTet, getEdgeFromFacets(in_facet, out_facet));
+
+    uint32_t newV = mesh->tetrahedra.node[4*curTet + in_facet];
+
+    // go into the neighbor through out_facet
+    uint64_t neigh = mesh->tetrahedra.neigh[4*curTet + out_facet];
+    curTet = neigh/4;
+    in_facet = neigh%4;
+    uint32_t* nodes = mesh->tetrahedra.node + 4*curTet;
+    for (out_facet=0; out_facet<3; out_facet++)
+      if(nodes[out_facet]==newV)
+        break;
+
+  } while (curTet!=tet);
+
+  return HXT_STATUS_OK;
+}
+
+
 
 /**************************************************************************************
  *   Constrain edge of tetrahedron if it is in lines2TetMap but not in lines2TriMap
@@ -655,13 +714,6 @@ HXTStatus hxtConstrainLinesNotInTriangles(HXTMesh* mesh, uint64_t* lines2TetMap,
   HXT_ASSERT(lines2TriMap!=NULL);
   HXT_ASSERT(mesh!=NULL);
 
-#ifdef DEBUG
-  for (uint64_t i=0; i<mesh->lines.num; i++) {
-    if(lines2TetMap[i]==HXT_NO_ADJACENT && mesh->lines.node[2*i]!=mesh->lines.node[2*i+1])
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "There are missing mappings in lines2TetMap");
-  }
-#endif
-
   char* edgeFlag;
   HXT_CHECK( hxtAlignedMalloc(&edgeFlag, 6*mesh->tetrahedra.num*sizeof(char)) );
   memset(edgeFlag, 0, 6*mesh->tetrahedra.num*sizeof(char));
@@ -669,30 +721,7 @@ HXTStatus hxtConstrainLinesNotInTriangles(HXTMesh* mesh, uint64_t* lines2TetMap,
   #pragma omp parallel for
   for (uint64_t i=0; i<mesh->lines.num; i++) {
     if(lines2TriMap[i]==HXT_NO_ADJACENT && lines2TetMap[i]!=HXT_NO_ADJACENT) {
-      // turn around the edge to set edgeFlag of all tetrahedra to 1...
-      uint64_t firstTet = lines2TetMap[i]/6;
-      uint64_t curTet = firstTet;
-      int edge = lines2TetMap[i]%6;
-
-      unsigned in_facet, out_facet;
-      getFacetsFromEdge(edge, &in_facet, &out_facet);
-
-      do
-      {
-        edgeFlag[6*curTet + getEdgeFromFacets(in_facet, out_facet)] = 1;
-
-        uint32_t newV = mesh->tetrahedra.node[4*curTet + in_facet];
-
-        // go into the neighbor through out_facet
-        uint64_t neigh = mesh->tetrahedra.neigh[4*curTet + out_facet];
-        curTet = neigh/4;
-        in_facet = neigh%4;
-        uint32_t* nodes = mesh->tetrahedra.node + 4*curTet;
-        for (out_facet=0; out_facet<3; out_facet++)
-          if(nodes[out_facet]==newV)
-            break;
-
-      } while (curTet!=firstTet);
+      hxtConstrainLine(mesh, lines2TetMap[i]/6, lines2TetMap[i]%6, edgeFlag);
     }
   }
 

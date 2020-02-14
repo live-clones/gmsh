@@ -52,10 +52,13 @@ if [ -f ${models_dir}/cleanup.sh ]; then
   cd ${models_dir} && ./cleanup.sh
 fi
 
+cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
+
 if [ $enable_simulator != 0 ]; then
-  cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release -DANDROID_ABI=x86_64"
+  cmake_default="${cmake_default} -DANDROID_ABI=x86_64"
 else
-  cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
+  cmake_default="${cmake_default} -DANDROID_ABI=arm64-v8a"
+  # for old 32 bit app: -DANDROID_ABI=armeabi-v7a
 fi
 
 cmake_thread=6

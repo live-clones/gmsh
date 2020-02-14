@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -37,6 +37,7 @@ std::string opt_general_background_image_filename(OPT_ARGS_STR);
 std::string opt_general_display(OPT_ARGS_STR);
 std::string opt_general_version(OPT_ARGS_STR);
 std::string opt_general_build_options(OPT_ARGS_STR);
+std::string opt_general_build_info(OPT_ARGS_STR);
 std::string opt_general_filename(OPT_ARGS_STR);
 std::string opt_general_executable_filename(OPT_ARGS_STR);
 std::string opt_general_default_filename(OPT_ARGS_STR);
@@ -161,6 +162,7 @@ double opt_general_polygon_offset_always(OPT_ARGS_NUM);
 double opt_general_polygon_offset_factor(OPT_ARGS_NUM);
 double opt_general_polygon_offset_units(OPT_ARGS_NUM);
 double opt_general_system_menu_bar(OPT_ARGS_NUM);
+double opt_general_native_file_chooser(OPT_ARGS_NUM);
 double opt_general_show_module_menu(OPT_ARGS_NUM);
 double opt_general_message_size(OPT_ARGS_NUM);
 double opt_general_message_fontsize(OPT_ARGS_NUM);
@@ -397,6 +399,7 @@ double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_faces(OPT_ARGS_NUM);
 double opt_geometry_occ_sew_faces(OPT_ARGS_NUM);
+double opt_geometry_occ_make_solids(OPT_ARGS_NUM);
 double opt_geometry_occ_union_unify(OPT_ARGS_NUM);
 double opt_geometry_occ_parallel(OPT_ARGS_NUM);
 double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM);
@@ -524,6 +527,7 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);
+double opt_mesh_min_elements_2pi(OPT_ARGS_NUM);
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM);
 double opt_mesh_min_curv_points(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
@@ -541,7 +545,10 @@ double opt_mesh_second_order_experimental(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM);
+double opt_mesh_cgns_import_ignore_bc(OPT_ARGS_NUM);
+double opt_mesh_cgns_import_ignore_solution(OPT_ARGS_NUM);
 double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM);
+double opt_mesh_cgns_export_cpex0045(OPT_ARGS_NUM);
 double opt_mesh_dual(OPT_ARGS_NUM);
 double opt_mesh_voronoi(OPT_ARGS_NUM);
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM);
@@ -594,6 +601,7 @@ double opt_post_anim_delay(OPT_ARGS_NUM);
 double opt_post_anim_cycle(OPT_ARGS_NUM);
 double opt_post_anim_step(OPT_ARGS_NUM);
 double opt_post_combine_remove_orig(OPT_ARGS_NUM);
+double opt_post_combine_copy_options(OPT_ARGS_NUM);
 double opt_post_plugins(OPT_ARGS_NUM);
 double opt_post_nb_views(OPT_ARGS_NUM);
 double opt_post_file_format(OPT_ARGS_NUM);
@@ -772,6 +780,9 @@ double opt_print_x3d_compatibility(OPT_ARGS_NUM);
 double opt_print_x3d_transparency(OPT_ARGS_NUM);
 double opt_print_x3d_remove_inner_borders(OPT_ARGS_NUM);
 double opt_print_x3d_precision(OPT_ARGS_NUM);
+double opt_print_x3d_surfaces(OPT_ARGS_NUM);
+double opt_print_x3d_edges(OPT_ARGS_NUM);
+double opt_print_x3d_vertices(OPT_ARGS_NUM);
 
 // COLORS
 

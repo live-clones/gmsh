@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -150,28 +150,24 @@ static void view_remove_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-#define TT "\t"
-#define NN "\n"
-#else
-#define TT " ("
-#define NN ")\t"
-#endif
-
 static void view_save_cb(Fl_Widget *w, void *data)
 {
   static const char *formats =
-    "Gmsh Parsed" TT "*.pos" NN "Gmsh Mesh-based" TT "*.pos" NN
-    "Gmsh Legacy ASCII" TT "*.pos" NN "Gmsh Legacy Binary" TT "*.pos" NN
-    "MED" TT "*.rmed" NN "STL Surface" TT "*.stl" NN "Generic TXT" TT
-    "*.txt" NN;
+    "Gmsh Parsed\t*.pos\nGmsh Mesh-based\t*.pos\n"
+    "Gmsh Legacy ASCII\t*.pos\nGmsh Legacy Binary\t*.pos\n"
+    "MED\t*.rmed\nSTL Surface\t*.stl\nGeneric TXT\t*.txt\n";
 
   PView *view = PView::list[(intptr_t)data];
  test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Export", formats,
                  view->getData()->getFileName().c_str())) {
     std::string name = fileChooserGetName(1);
-    if(CTX::instance()->confirmOverwrite) {
+    bool confirmOverwrite = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+    // handled directly by the native macOS file chooser
+    if(CTX::instance()->nativeFileChooser) confirmOverwrite = false;
+#endif
+    if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
@@ -191,9 +187,6 @@ static void view_save_cb(Fl_Widget *w, void *data)
   }
 }
 
-#undef TT
-#undef NN
-
 static void view_alias_with_options_cb(Fl_Widget *w, void *data)
 {
   const bool copyOptions = true;
@@ -204,42 +197,48 @@ static void view_alias_with_options_cb(Fl_Widget *w, void *data)
 
 static void view_combine_space_all_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_space_visible_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_space_by_name_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_all_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_visible_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_by_name_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+  PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
+                 CTX::instance()->post.combineCopyOptions);
   FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -57,7 +57,7 @@ int SubdivideExtrudedMesh(GModel *m);
 void carveHole(GRegion *gr, int num, double distance,
                std::vector<int> &surfaces);
 
-typedef std::map<MFace, GFace *, Less_Face> fs_cont;
+typedef std::map<MFace, GFace *, MFaceLessThan> fs_cont;
 typedef std::multimap<MVertex *, std::pair<MLine *, GEdge *> > es_cont;
 GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
                                  const fs_cont &search);
@@ -70,13 +70,13 @@ bool buildEdgeSearchStructure(GModel *model, es_cont &search);
 // hybrid mesh recovery structure
 class splitQuadRecovery {
 private:
-  std::map<MFace, MVertex *, Less_Face> _quad;
-  std::map<MFace, GFace *, Less_Face> _tri;
+  std::map<MFace, MVertex *, MFaceLessThan> _quad;
+  std::map<MFace, GFace *, MFaceLessThan> _tri;
 public:
   splitQuadRecovery() {}
   void add(const MFace &f, MVertex *v, GFace *gf);
-  std::map<MFace, GFace *, Less_Face> &getTri() { return _tri; }
-  std::map<MFace, MVertex *, Less_Face> &getQuad() { return _quad; }
+  std::map<MFace, GFace *, MFaceLessThan> &getTri() { return _tri; }
+  std::map<MFace, MVertex *, MFaceLessThan> &getQuad() { return _quad; }
   int buildPyramids(GModel *gm);
 };
 

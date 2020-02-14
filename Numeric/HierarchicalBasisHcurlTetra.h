@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,7 +12,6 @@
 #define HIERARCHICAL_BASIS_HCURL_TETRA_H
 
 #include "HierarchicalBasisHcurl.h"
-#include <algorithm>
 #include <math.h>
 
 /*
@@ -72,13 +71,18 @@ public:
     }
   }
 
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<std::vector<double> > &edgeBasis);
-  virtual void orientFace(double const &u, double const &v, double const &w,
-                          int const &flag1, int const &flag2, int const &flag3,
-                          int const &faceNumber,
-                          std::vector<std::vector<double> > &faceFunctions,
-                          std::string typeFunction);
+  virtual void
+  orientEdge(int const &flagOrientation, int const &edgeNumber,
+             std::vector<std::vector<double> > &edgeBasis,
+             const std::vector<std::vector<double> > &eTablePositiveFlag,
+             const std::vector<std::vector<double> > &eTableNegativeFlag);
+  virtual void orientEdgeFunctionsForNegativeFlag(
+    std::vector<std::vector<double> > &edgeFunctions);
+  virtual void orientFace(
+    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+    const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+    std::vector<std::vector<double> > &fTableCopy);
   virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
                            std::vector<int> &orderInfo);
 
@@ -112,6 +116,11 @@ private:
   inline void curlFunction(const double &a, const std::vector<double> &nD,
                            const std::vector<double> &grad,
                            std::vector<double> &result);
+  virtual void orientOneFace(double const &u, double const &v, double const &w,
+                             int const &flag1, int const &flag2,
+                             int const &flag3, int const &faceNumber,
+                             std::vector<std::vector<double> > &faceFunctions,
+                             std::string typeFunction);
 };
 
 #endif

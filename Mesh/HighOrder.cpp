@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -39,7 +39,7 @@ typedef std::map<std::pair<MVertex *, MVertex *>, std::vector<MVertex *> >
 
 // for each face (a list of vertices) we build a list of vertices that are the
 // high order representation of the face
-typedef std::map<MFace, std::vector<MVertex *>, Less_Face> faceContainer;
+typedef std::map<MFace, std::vector<MVertex *>, MFaceLessThan> faceContainer;
 
 // Functions that help optimizing placement of points on geometry
 
@@ -760,7 +760,7 @@ static void getFaceVertices(GFace *gf, MElement *ele,
 
   std::vector<MVertex *> boundaryVertices;
   {
-    int nCorner = ele->getNumPrimaryVertices();
+    std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
     ele->getVertices(boundaryVertices);
     boundaryVertices.resize(nCorner);
@@ -902,7 +902,7 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
 {
   std::vector<MVertex *> boundaryVertices;
   {
-    int nCorner = ele->getNumPrimaryVertices();
+    std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
     ele->getVertices(boundaryVertices);
     boundaryVertices.resize(nCorner);
@@ -1213,10 +1213,10 @@ static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
   std::vector<T *> elements1;
   for(std::size_t i = 0; i < elements.size(); i++) {
     T *ele = elements[i];
-    int n = ele->getNumPrimaryVertices();
+    std::size_t n = ele->getNumPrimaryVertices();
     std::vector<MVertex *> v1;
     v1.reserve(n);
-    for(int j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
+    for(std::size_t j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
     elements1.push_back(new T(v1, 0, ele->getPartition()));
     delete ele;
   }
@@ -1261,7 +1261,7 @@ void FixPeriodicMesh(GModel *m)
       Msg::Info("Reconstructing periodicity for curve connection %d - %d",
                 tgt->tag(), src->tag());
 
-      std::map<MEdge, MLine *, Less_Edge> srcEdges;
+      std::map<MEdge, MLine *, MEdgeLessThan> srcEdges;
       for(std::size_t i = 0; i < src->getNumMeshElements(); i++) {
         MLine *srcLine = dynamic_cast<MLine *>(src->getMeshElement(i));
         if(!srcLine) {
@@ -1293,7 +1293,7 @@ void FixPeriodicMesh(GModel *m)
             vtcs[iVtx] = tIter->second;
         }
 
-        std::map<MEdge, MLine *, Less_Edge>::iterator srcIter =
+        std::map<MEdge, MLine *, MEdgeLessThan>::iterator srcIter =
           srcEdges.find(MEdge(vtcs[0], vtcs[1]));
         if(srcIter == srcEdges.end()) {
           Msg::Error("Can't find periodic counterpart of mesh edge %d-%d "
@@ -1338,7 +1338,14 @@ void FixPeriodicMesh(GModel *m)
       std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHOPoints;
       p2p.clear();
 
-      std::map<MFace, MElement *, Less_Face> srcFaces;
+      if(tgt->getNumMeshElements() && v2v.empty()){
+        Msg::Info("No periodic vertices in surface %d (maybe due to a "
+                  "structured mesh constraint on the target surface)",
+                  tgt->tag());
+        continue;
+      }
+
+      std::map<MFace, MElement *, MFaceLessThan> srcFaces;
 
       for(std::size_t i = 0; i < src->getNumMeshElements(); ++i) {
         MElement *srcElmt = src->getMeshElement(i);
@@ -1374,7 +1381,7 @@ void FixPeriodicMesh(GModel *m)
         }
 
         MFace tgtFace(vtcs);
-        std::map<MFace, MElement *, Less_Face>::iterator srcIter =
+        std::map<MFace, MElement *, MFaceLessThan>::iterator srcIter =
           srcFaces.find(tgtFace);
         if(srcIter == srcFaces.end()) {
           std::ostringstream faceDef;
@@ -1392,8 +1399,8 @@ void FixPeriodicMesh(GModel *m)
           // underlying orientation of the geometrical surfaces)
           bool revert = dot(tgtFace.normal(), srcIter->first.normal()) < 0;
           if(revert) srcElmt->reverse();
-          for(std::size_t i = nbVtcs; i < srcElmt->getNumVertices(); i++) {
-            p2p[tgtElmt->getVertex(i)] = srcElmt->getVertex(i);
+          for(std::size_t j = nbVtcs; j < srcElmt->getNumVertices(); j++) {
+            p2p[tgtElmt->getVertex(j)] = srcElmt->getVertex(j);
           }
           if(revert) srcElmt->reverse();
         }
@@ -1594,21 +1601,20 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   faceContainer faceVertices;
   std::map<GEntity *, std::vector<MVertex *> > newHOVert;
 
-  Msg::ResetProgressMeter();
-
-  int counter = 0,
-      nTot = m->getNumEdges() + m->getNumFaces() + m->getNumRegions();
+  int counter = 0;
+  int nTot = m->getNumEdges() + m->getNumFaces() + m->getNumRegions();
+  Msg::StartProgressMeter(nTot);
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     Msg::Info("Meshing curve %d order %d", (*it)->tag(), order);
-    Msg::ProgressMeter(++counter, nTot, false, msg);
+    Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, linear, nPts);
   }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     Msg::Info("Meshing surface %d order %d", (*it)->tag(), order);
-    Msg::ProgressMeter(++counter, nTot, false, msg);
+    Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, linear,
                  incomplete, nPts);
@@ -1617,12 +1623,14 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     Msg::Info("Meshing volume %d order %d", (*it)->tag(), order);
-    Msg::ProgressMeter(++counter, nTot, false, msg);
+    Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, incomplete,
                  nPts);
     if((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
   }
+
+  Msg::StopProgressMeter();
 
   // Update all high order vertices
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)

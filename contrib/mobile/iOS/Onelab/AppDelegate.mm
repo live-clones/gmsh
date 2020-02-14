@@ -4,32 +4,37 @@
 
 @implementation AppDelegate
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+- (BOOL)application:(UIApplication *)application
+  didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
   // Override point for customization after application launch.
-  self.modelListController = (ModelListController *)self.window.rootViewController;
+  self.modelListController =
+    (ModelListController *)self.window.rootViewController;
   if([[UIDevice currentDevice].model isEqualToString:@"iPad"] ||
      [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]) {
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"iPadStoryboard" bundle:nil];
-    self.splitViewController = [storyboard instantiateViewControllerWithIdentifier:@"SplitViewController"];
+    UIStoryboard *storyboard =
+      [UIStoryboard storyboardWithName:@"iPadStoryboard" bundle:nil];
+    self.splitViewController = [storyboard
+      instantiateViewControllerWithIdentifier:@"SplitViewController"];
   }
   compute = false;
   // Copy resource files if the version of the app has changed
   NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
   NSString *prefsv = [prefs stringForKey:@"OnelabModelsVersion"];
-  NSString *bundlev = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-  if (!prefsv || ![prefsv isEqualToString:bundlev]) {
+  NSString *bundlev =
+    [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+  if(!prefsv || ![prefsv isEqualToString:bundlev]) {
     NSLog(@"Updating models to version %@", bundlev);
     [prefs setObject:bundlev forKey:@"OnelabModelsVersion"];
     [prefs synchronize];
     [Utils copyRes];
   }
-  else{
+  else {
     NSLog(@"Leaving models as-is (version %@)", prefsv);
   }
 
   // Check if there is a model to extract (unzip)
-  NSURL* url = [launchOptions objectForKey:UIApplicationLaunchOptionsURLKey];
+  NSURL *url = [launchOptions objectForKey:UIApplicationLaunchOptionsURLKey];
   if(url) [Utils openModelURL:url];
 
   return YES;
@@ -74,7 +79,8 @@
   // Restart any tasks that were paused (or not yet started) while the
   // application was inactive. If the application was previously in the
   // background, optionally refresh the user interface.
-  [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+  [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
+                                                      object:nil];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -83,7 +89,8 @@
   // appropriate. See also applicationDidEnterBackground:.
 }
 
--(void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
+- (void)application:(UIApplication *)application
+  didReceiveLocalNotification:(UILocalNotification *)notification
 {
   application.applicationIconBadgeNumber = -1;
   [UIApplication sharedApplication].applicationIconBadgeNumber = -1;

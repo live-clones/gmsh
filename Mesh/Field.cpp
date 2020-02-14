@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -3038,7 +3038,7 @@ void FieldManager::setBackgroundField(Field *BGF)
   _background_field = id;
 }
 
-void Field::putOnNewView()
+void Field::putOnNewView(int viewTag)
 {
 #if defined(HAVE_POST)
   if(GModel::current()->getMeshStatus() < 1) {
@@ -3056,7 +3056,8 @@ void Field::putOnNewView()
   }
   std::ostringstream oss;
   oss << "Field " << id;
-  PView *view = new PView(oss.str(), "NodeData", GModel::current(), d);
+  PView *view = new PView(oss.str(), "NodeData", GModel::current(), d,
+                          0, -1, viewTag);
   view->setChanged(true);
 #endif
 }

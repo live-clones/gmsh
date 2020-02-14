@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -6,6 +6,7 @@
 #ifndef STATISTICS_WINDOW_H
 #define STATISTICS_WINDOW_H
 
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Output.H>
 #include <FL/Fl_Button.H>
@@ -24,6 +25,7 @@ public:
 
 public:
   statisticsWindow(int deltaFontSize);
+  ~statisticsWindow() { Fl::delete_widget(win); }
   void compute(bool elementQuality);
   void show();
 };

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -289,10 +289,20 @@ int OCCEdge::minimumMeshSegments() const
   // if it is a seam, then return 1
   if(l_faces.size() == 1 && isSeam(l_faces[0])) return 1;
 
-  if(geomType() == Line)
+  if(geomType() == Line) {
     np = GEdge::minimumMeshSegments();
-  else
+  }
+  else if(geomType() == Circle || geomType() == Ellipse) {
+    double a = fabs(s0 - s1);
+    double n = CTX::instance()->mesh.minCircPoints;
+    if(a > 6.28)
+      np = n;
+    else
+      np = (int)(0.99 + (n - 1) * a / (2 * M_PI));
+  }
+  else {
     np = CTX::instance()->mesh.minCurvPoints - 1;
+  }
 
   // if the edge is closed, ensure that at least 3 points are generated in the
   // 1D mesh (4 segments, one of which is degenerated)

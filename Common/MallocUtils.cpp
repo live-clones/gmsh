@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,8 +15,8 @@ void *Malloc(size_t size)
 
   if(!size) return (NULL);
   ptr = malloc(size);
-  if(ptr == NULL) Msg::Fatal("Out of memory (buy some more RAM!)");
-  return (ptr);
+  if(ptr == NULL) Msg::Error("Out of memory (buy some more RAM!)");
+  return ptr;
 }
 
 void *Calloc(size_t num, size_t size)
@@ -25,16 +25,16 @@ void *Calloc(size_t num, size_t size)
 
   if(!size) return (NULL);
   ptr = calloc(num, size);
-  if(ptr == NULL) Msg::Fatal("Out of memory (buy some more RAM!)");
-  return (ptr);
+  if(ptr == NULL) Msg::Error("Out of memory (buy some more RAM!)");
+  return ptr;
 }
 
 void *Realloc(void *ptr, size_t size)
 {
   if(!size) return (NULL);
   ptr = realloc(ptr, size);
-  if(ptr == NULL) Msg::Fatal("Out of memory (buy some more RAM!)");
-  return (ptr);
+  if(ptr == NULL) Msg::Error("Out of memory (buy some more RAM!)");
+  return ptr;
 }
 
 void Free(void *ptr)

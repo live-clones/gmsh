@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -53,6 +53,12 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
 {
   std::ostringstream sstream;
   sstream << getTypeString() << " " << tag();
+
+  switch(getNativeType()) {
+  case OpenCascadeModel: sstream << " (OCC)"; break;
+  case AcisModel: sstream << " (ACIS)"; break;
+  default: break;
+  }
 
   if(additional) {
     std::string info = getAdditionalInfoString(multiline);
@@ -111,8 +117,6 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
       sstream << ", ";
     sstream << "Color (" << r << ", " << g << ", " << b << ")";
   }
-
-
 
   return sstream.str();
 }

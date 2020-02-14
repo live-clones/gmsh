@@ -43,44 +43,17 @@ typedef struct {
 
 
 /**
- * \brief Evaluate the number of bits for the Hilbert/Moore indices
- * \param n: number of points
- * \return number of bits of Hilbert/Moore indices for a good enough resolution of points coordinates
- *
- * \details This function is aimed to work with Delaunay insertion.
- * Given a number of points from a supposedly almost uniform distribution,
- * this function guess what is the level of the Hilbert/Moore curve
- * needed such that the Delaunay insertion performs well.
- */
-uint32_t hxtAdvisedHilbertBits(const uint32_t n);
-
-/**
- * Same as hxtAdvisedHilbertBits() but with much more information
- * \param bbox: the bounding box of the mesh
- * \param sizeStart: estimated mesh size at a previous time Tstart
- * \param sizeEnd: estimated mesh size in the future time Tend
- * \param numStart: number of vertices in the mesh at Tstart
- * \param numStart: number of vertices in the mesh at Tend
- * \param numInMesh: number of vertices in the mesh now
- * \param numToSort: number of point to insert/sort at this insertion step
- */
-uint32_t hxtAdvancedHilbertBits(HXTBbox* bbox, double sizeStart, double sizeEnd, uint32_t numStart, uint32_t numEnd, uint32_t numInMesh, uint32_t numToSort, uint32_t nthreads);
-
-/**
  * \brief Compute the Hilbert/Moore index of each vertex in `vertices`
  * \param bbox: a bounding box that contain all the given vertices
  * \param vertices: the vertices coordinates
  * \param n: the number of vertices
- * \param[in,out] nbits: Sugested number of bits of the resulting Hilbert/Moore indices. The real number of bits used is returned.
  * \param shift[3]: a value between 0 and 1 that commands how the Hilbert/Moore curve is deformed in each dimension.
  *  {0.5, 0.5, 0.5} is the underformed Hilbert/Moore curve.
  *
  * \details Compute the Hilbert/Moore index of each vertex in its \ref HXTVertex.padding.hilbertDist structure member.
- *          The size of the Hilbert/Moore index in bits can be suggested. Use nbits=0 if you don't want to suggest anything.
- *          If the size of the resulting Hilbert/Moore indices differ, the value of nbits is set to the real size in bits.
  *          A deformation of the Hilbert/Moore curve can be done with the shift parameter
  */
-HXTStatus hxtVerticesHilbertDist(HXTBbox* bbox, HXTVertex* vertices, const uint32_t n, uint32_t* nbits, const double shift[3]);
+HXTStatus hxtMoore(HXTBbox* bbox, HXTVertex* vertices, const uint32_t n, const double shift[3]);
 
 
 /**
@@ -90,12 +63,12 @@ HXTStatus hxtVerticesHilbertDist(HXTBbox* bbox, HXTVertex* vertices, const uint3
  * \param n: number of vertices in the array
  * \param nbits: the maximum number of bits set in the \ref HXTVertex.padding.hilbertDist structure member.
  */
-HXTStatus hxtVerticesSort(HXTVertex* const vertices, const uint32_t n, uint32_t nbits);
+HXTStatus hxtVerticesSort(HXTVertex* const vertices, const uint32_t n);
 
 /**
  * Same as hxtVerticesSort(), but sort \ref hxtNodeInfo following their hilbertDist structure member.
  */
-HXTStatus hxtNodeInfoSort(hxtNodeInfo* const array, const uint32_t n, uint32_t nbits);
+HXTStatus hxtNodeInfoSort(hxtNodeInfo* const array, const uint32_t n);
 
 /**
  * Shuffle vertices given in an array of \ref HXTVertex in a pseudo-random fashion (always the same random sequence).

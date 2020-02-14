@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -73,25 +73,54 @@ void HierarchicalBasisH1Line::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Line::orientEdge(int const &flagOrientation,
-                                         int const &edgeNumber,
-                                         std::vector<double> &edgeBasis)
+void HierarchicalBasisH1Line::orientEdge(
+  int const &flagOrientation, int const &edgeNumber,
+  std::vector<double> &edgeFunctions,
+  const std::vector<double> &eTablePositiveFlag,
+  const std::vector<double> &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     for(int k = 0; k <= _pe - 2; k++) {
-      if(k % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
+      edgeFunctions[k] = eTableNegativeFlag[k];
+    }
+  }
+  else {
+    for(int k = 0; k <= _pe - 2; k++) {
+      edgeFunctions[k] = eTablePositiveFlag[k];
     }
   }
 }
 
 void HierarchicalBasisH1Line::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &gradientEdge)
+  std::vector<std::vector<double> > &edgeFunctions,
+  const std::vector<std::vector<double> > &eTablePositiveFlag,
+  const std::vector<std::vector<double> > &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     for(int k = 0; k <= _pe - 2; k++) {
-      if(k % 2 != 0) { gradientEdge[k][0] = gradientEdge[k][0] * (-1); }
+      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
     }
+  }
+  else {
+    for(int k = 0; k <= _pe - 2; k++) {
+      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
+    }
+  }
+}
+void HierarchicalBasisH1Line::orientEdgeFunctionsForNegativeFlag(
+  std::vector<double> &edgeFunctions)
+{
+  for(int k = 0; k <= _pe - 2; k++) {
+    if(k % 2 != 0) { edgeFunctions[k] = edgeFunctions[k] * (-1); }
+  }
+}
+
+void HierarchicalBasisH1Line::orientEdgeFunctionsForNegativeFlag(
+  std::vector<std::vector<double> > &edgeFunctions)
+{
+  for(int k = 0; k <= _pe - 2; k++) {
+    if(k % 2 != 0) { edgeFunctions[k][0] = edgeFunctions[k][0] * (-1); }
   }
 }
 

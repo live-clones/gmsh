@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -198,7 +198,7 @@ public:
   }
 };
 
-class MVertexLessThanLexicographic {
+class MVertexPtrLessThanLexicographic {
   static double tolerance;
 
 public:
@@ -206,10 +206,24 @@ public:
   bool operator()(const MVertex *v1, const MVertex *v2) const;
 };
 
-struct MVertexLessThanNum {
+struct MVertexPtrLessThan {
   bool operator()(const MVertex *v1, const MVertex *v2) const
   {
     return v1->getNum() < v2->getNum();
+  }
+};
+
+struct MVertexPtrEqual {
+  bool operator()(const MVertex *v1, const MVertex *v2) const
+  {
+    return v1->getNum() == v2->getNum();
+  }
+};
+
+struct MVertexPtrHash {
+  size_t operator()(const MVertex *v) const
+  {
+    return v->getNum();
   }
 };
 

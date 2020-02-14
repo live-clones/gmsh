@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -52,6 +52,25 @@
 
 #define HASH_SIZE 20023
 #define ppm_hashpixel(p) (((int)(p)&0x7fffffff) % HASH_SIZE)
+
+/* Color histogram stuff */
+namespace {
+    typedef struct colorhist_item *colorhist_vector;
+    struct colorhist_item {
+      pixel color;
+      int value;
+    };
+
+    typedef struct colorhist_list_item *colorhist_list;
+    struct colorhist_list_item {
+      struct colorhist_item ch;
+      colorhist_list next;
+    };
+}
+
+/* Color hash table stuff */
+
+typedef colorhist_list *colorhash_table;
 
 static int static_red[MAX_GIFCOLORS];
 static int static_green[MAX_GIFCOLORS];

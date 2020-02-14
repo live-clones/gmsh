@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -103,6 +103,8 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
             MVertex *newv = 0;
             if(to->geomType() != GEntity::DiscreteSurface &&
                to->geomType() != GEntity::BoundaryLayerSurface) {
+              // This can be inefficient, and sometimes useless. We could add an
+              // option to disable it.
               SPoint3 xyz(x, y, z);
               SPoint2 uv = to->parFromPoint(xyz);
               newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
@@ -199,13 +201,8 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
       newv = new MVertex(x, y, z, to);
     }
     to->mesh_vertices.push_back(newv);
-    to->correspondingVertices[newv] = v;
     pos.insert(newv);
   }
-
-  std::vector<double> tfo;
-  //ep->GetAffineTransform(tfo); // TODO: check transform
-  to->GEntity::setMeshMaster(from, tfo, false);
 
 #if defined(HAVE_QUADTRI)
   // if performing QuadToTri mesh, cannot simply copy the mesh from the source.
@@ -299,7 +296,7 @@ int MeshExtrudedSurface(
 
   if(!ep || !ep->mesh.ExtrudeMesh) return 0;
 
-  Msg::Info("Meshing surface %d (extruded)", gf->tag());
+  Msg::Info("Meshing surface %d (Extruded)", gf->tag());
 
   // build an rtree with all the vertices on the boundary of the face gf
   MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);
@@ -343,6 +340,10 @@ int MeshExtrudedSurface(
       return 1;
     }
     copyMesh(from, gf, pos);
+    if(gf->getMeshMaster() == from) {
+      // explicit periodic constraint, to store node correspondance
+      gf->setMeshMaster(from, gf->affineTransform);
+    }
   }
 
   gf->meshStatistics.status = GFace::DONE;
