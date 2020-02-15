@@ -20,8 +20,12 @@ class GMSH_BoundaryAnglesPlugin : public GMSH_PostPlugin {
 public:
   GMSH_BoundaryAnglesPlugin() {}
   std::string getName() const { return "BoundaryAngles"; }
-  std::string getShortHelp() const { return "Compute angles on boundaries of 2D surface meshes"; }
+  std::string getShortHelp() const
+  {
+    return "Compute angles on boundaries of 2D surface meshes";
+  }
   std::string getHelp() const;
+  std::string getAuthor() const { return "Bertrand Thierry"; }
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
