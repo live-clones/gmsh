@@ -113,10 +113,10 @@ int CGNSZoneUnstruct::readSection(
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
     // check for compatibility with MIXED element sections
-#if CGNS_VERSION < 3400
+#if CGNS_VERSION < 4000
   if(sectEltType == MIXED) {
     Msg::Error("Reading MIXED element sections requires CGNS library version"
-               "3.4 or superior");
+               "4 or superior");
     return 0;
   }
 #endif
@@ -130,7 +130,7 @@ int CGNSZoneUnstruct::readSection(
   // read connectivity data
   std::vector<cgsize_t> sectData(dataSize), offsetData(endElt - startElt + 2);
   if(sectEltType == MIXED) {
-#if CGNS_VERSION >= 3400
+#if CGNS_VERSION >= 4000
     cgnsErr = cg_poly_elements_read(fileIndex(), baseIndex(), index(), iSect,
                                     sectData.data(), offsetData.data(), 0);
 #endif
