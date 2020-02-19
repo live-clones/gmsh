@@ -26,6 +26,17 @@ for t in range(1, 6):
 
 ov, ovv = factory.fragment([(3,3)], holes)
 
+# ov contains all the generated entities of the same dimension as the input
+# entities:
+print("fragment produced volumes:")
+for e in ov:
+    print(e)
+
+# ovv contains the father-child relationships for all the input entities:
+print("before/after volume relations:")
+for e in zip([(3,3)] + holes, ovv):
+    print("parent " + str(e[0]) + " -> child " + str(e[1]))
+
 factory.synchronize()
 
 lcar1 = .1
