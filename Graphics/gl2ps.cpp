@@ -3362,16 +3362,17 @@ static void gl2psPrintTeXHeader(void)
           GL2PS_PATCH_VERSION, GL2PS_EXTRA_VERSION, GL2PS_COPYRIGHT,
           gl2ps->producer, ctime(&now));
 
+  GLfloat s = gl2ps->tex_scaling;
+  if(s <= 0.) s = 1.;
   fprintf(gl2ps->stream,
-          "\\setlength{\\unitlength}{1pt}\n"
+          "\\setlength{\\unitlength}{%gpt}\n"
           "\\begin{picture}(0,0)\n"
           "\\includegraphics[scale=%g]{%s}\n"
           "\\end{picture}%%\n"
           "%s\\begin{picture}(%d,%d)(0,0)\n",
-          gl2ps->tex_scaling,
-          name, (gl2ps->options & GL2PS_LANDSCAPE) ? "\\rotatebox{90}{" : "",
-          (int)(gl2ps->viewport[2] * gl2ps->tex_scaling),
-          (int)(gl2ps->viewport[3] * gl2ps->tex_scaling));
+          s, s, name,
+          (gl2ps->options & GL2PS_LANDSCAPE) ? "\\rotatebox{90}{" : "",
+          (int)(gl2ps->viewport[2]), (int)(gl2ps->viewport[3]));
 }
 
 static void gl2psPrintTeXPrimitive(void *data)
@@ -3386,8 +3387,8 @@ static void gl2psPrintTeXPrimitive(void *data)
       fprintf(gl2ps->stream, "\\fontsize{%d}{0}\\selectfont",
               prim->data.text->fontsize);
     fprintf(gl2ps->stream, "\\put(%g,%g)",
-            gl2ps->tex_scaling * prim->verts[0].xyz[0],
-            gl2ps->tex_scaling * prim->verts[0].xyz[1]);
+            prim->verts[0].xyz[0],
+            prim->verts[0].xyz[1]);
     if(prim->data.text->angle)
       fprintf(gl2ps->stream, "{\\rotatebox{%g}", prim->data.text->angle);
     fprintf(gl2ps->stream, "{\\makebox(0,0)");
