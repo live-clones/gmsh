@@ -3,9 +3,6 @@
 #include <math.h>
 #include <iostream>
 
-#define MAX_DIFF 0.05 // La difference de taille max absolue sur un quadrant pour raffiner
-#define D2S_TOL 0.05
-
 double ALPHA;
 
 #define P8EST_QMAXLEVEL 8
@@ -13,9 +10,8 @@ double ALPHA;
 
 #ifdef HAVE_P4EST
 
-// int counter = 0;
+int globCount = 0;
 
-// p4est_connectivity_t *p8est_connectivity_new_cube (double cMax, double cMin);
 p4est_connectivity_t *p8est_connectivity_new_cube (HXTForestOptions *forestOptions);
   
 static double hxtOctreeBulkSize(double x, double y, double z, double hBulk){
@@ -73,6 +69,7 @@ static HXTStatus hxtOctreeGetOctantSize(p4est_t *p4est, p4est_topidx_t which_tre
   #endif
                           max);
   
+  // h designe la longueur d'un cote de l'octant
   // Normalement les trois côtés ont la même taille
   *h = fmax(max[0] - min[0],fmax(max[1] - min[1],max[2] - min[2]));
 
@@ -155,10 +152,6 @@ HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char*
     p4est_init(NULL, SC_LP_PRODUCTION);
 
     /* Create a forest from the bounding box */
-    // double coordMin = fmin(fmin(forestOptions->bbox[0],forestOptions->bbox[1]),forestOptions->bbox[2]);
-    // double coordMax = fmax(fmax(forestOptions->bbox[3],forestOptions->bbox[4]),forestOptions->bbox[5]);
-
-    // connect = p8est_connectivity_new_cube(coordMax, coordMin);
     connect = p8est_connectivity_new_cube(forestOptions);
 
     if(connect == NULL)return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
@@ -197,14 +190,14 @@ HXTStatus hxtForestDelete(HXTForest **forest){
     return HXT_STATUS_OK;
 }
 
-static int hxtOctreeRefineToLevelCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
+static int refineToBulkSizeCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
   HXTForestOptions *forestOptions = (HXTForestOptions *) p4est->user_pointer;
   size_data_t *data = (size_data_t *) q->p.user_data;
   return data->h > forestOptions->hbulk;
 }
 
-HXTStatus hxtOctreeRefineToLevel(HXTForest *forest){
-  p4est_refine(forest->p4est, 1, hxtOctreeRefineToLevelCallback, hxtOctreeSetInitialSize);
+HXTStatus hxtOctreeRefineToBulkSize(HXTForest *forest){
+  p4est_refine(forest->p4est, 1, refineToBulkSizeCallback, hxtOctreeSetInitialSize);
   return HXT_STATUS_OK;
 }
 
@@ -236,7 +229,7 @@ static void hxtOctreeComputeGradientCenter(p4est_iter_face_info_t * info, void *
             // Indice dans side[] de la face opposée
             iOpp = 1 - i;
 
-            which_face_opp = side[iOpp]->face;     /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
+            which_face_opp = side[iOpp]->face; /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
 
             s_avg = 0;
             if (side[i]->is_hanging) {
@@ -1127,19 +1120,9 @@ int finalizeP4est(p4est_t *p4est, p4est_connectivity_t *connect)
     return mpiret;
 }
 
-
-// double myFun(double x, double y, double z, void *user_data){
-//     return  *(double*) user_data;
-// }
-
-// int search_quadrant_fn(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
-
-//     // double *point_to_find = (double *) point;
-//     std::cout<<"search_quadrant_fn"<<std::endl;
-
-//     return 1;
-
-// }
+inline static bool isPoint(double x, double y, double z, size_point_t *p){
+  return (fabs(p->x - x) < 1e-12 && fabs(p->y - y) < 1e-12 && fabs(p->z - z) < 1e-12);
+}
 
 static int hxtOctreeSearchCallback(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
 
@@ -1160,15 +1143,17 @@ static int hxtOctreeSearchCallback(p4est_t * p4est, p4est_topidx_t which_tree, p
     double center[3];
     hxtOctreeGetCenter(p4est, which_tree, q, center);
 
-    double epsilon = 1e-12;
-    in_box  = (p->x < center[0] + h/2 + epsilon) && (p->x > center[0] - h/2 - epsilon);
-    in_box &= (p->y < center[1] + h/2 + epsilon) && (p->y > center[1] - h/2 - epsilon);
+    double epsilon = 1e-13;
+    in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
+    in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
 #ifdef P4_TO_P8
-    in_box &= (p->z < center[2] + h/2 + epsilon) && (p->z > center[2] - h/2 - epsilon);
+    in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
 #endif
 
+    // A point can be on the exact boundary of two cells, hence we take the min.
     if(in_box && is_leaf){
-        p->size = data->size;
+        p->size = fmin(p->size, data->size);
+        p->isFound = true;
     }
 
     return in_box;
@@ -1184,10 +1169,12 @@ HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, do
   p->x = x;
   p->y = y;
   p->z = z;
-  p->size = -1.0;
-
+  p->size = 1.0e22;
+  p->isFound = false;
+  
   p4est_search(forest->p4est, NULL, hxtOctreeSearchCallback, points);
 
+  if(!p->isFound) printf("Point (%f,%f,%f) n'a pas été trouvé dans l'octree 8-|\n", x,y,z);
   *size = p->size;
 
   sc_array_destroy(points);
@@ -1214,7 +1201,7 @@ static int hxtOctreeReplaceCallback(p4est_t * p4est, p4est_topidx_t which_tree, 
     double center[3];
     hxtOctreeGetCenter(p4est, which_tree, q, center);
 
-    double epsilon = 1e-12;
+    double epsilon = 1e-13;
     in_box  = (p->x < center[0] + h/2 + epsilon) && (p->x > center[0] - h/2 - epsilon);
     in_box &= (p->y < center[1] + h/2 + epsilon) && (p->y > center[1] - h/2 - epsilon);
 #ifdef P4_TO_P8
@@ -1222,7 +1209,7 @@ static int hxtOctreeReplaceCallback(p4est_t * p4est, p4est_topidx_t which_tree, 
 #endif
 
     if(in_box && is_leaf){
-        data->size = p->size;
+        data->size = fmin(data->size, p->size);
         data->refineFlag = p->surfaceFlag;
         // printf("Taille remplacée dans l'octree à la position %f - %f - %f \n",p->x,p->y,p->z);
         // printf("dans le quadrant centré en %f - %f - %f de côté %f \n", center[0], center[1], center[2], h);
@@ -1295,11 +1282,12 @@ static void hxtOctreeAssignSizeAfterRefinement(p4est_iter_volume_info_t * info, 
           hxtNorm2V3(v2, &k2);
 
           kmax = fmax(kmax,fmax(k1,k2));
-          if(kmax > 100) printf("%f\n", kmax);
+          // if(kmax > 100) printf("%f\n", kmax);
         }
     }
     data->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, 2*M_PI/(forestOptions->nodePerTwoPi * kmax)));
     // data->size = kmax;
+    // data->size = 1.0;
   }
   else{
     data->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, data->size));
@@ -1470,7 +1458,7 @@ static int hxtCurvatureCoarsenCallback(p4est_t *p4est, p4est_topidx_t which_tree
     }
 
     // On ne coarsen pas si le nouvel élément sera plus grand que hbulk
-    if(data->h > forestOptions->hbulk / 2.0){
+    if(2.0*data->h > forestOptions->hbulk){
       flag = 0;
     }
   }
@@ -1492,8 +1480,8 @@ HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax){
 
   // Print octree in VTK
   // std::string fileVTK = "/Users/arthur/Documents/Code/Mesh_octree/results_octree/dummy_3D_rtree_curvature_refine" + std::to_string(i);
-  std::string fileVTK = "/home/bawina/Documents/paraview_octree/curvature_refine_2sphere_fixed";
-  write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
+  // std::string fileVTK = "/home/bawina/Documents/paraview_octree/curvature_refine_2sphere_fixed";
+  // write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
 
   p4est_iterate(forest->p4est, NULL, forest->forestOptions, hxtOctreeAssignSizeAfterRefinement, NULL, NULL, NULL);
 
@@ -1618,7 +1606,7 @@ void signedDistancePointTriangle2(const SPoint3 &p1, const SPoint3 &p2,
  }
 }
 
-HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, const SPoint3 &p, double &d){
+HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, const SPoint3 &p, double &d, uint64_t &closestTri){
 
   SPoint3 p1 = SPoint3();
   SPoint3 p2 = SPoint3();
@@ -1650,6 +1638,7 @@ HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<uint64_t> *candi
 
     double d_tmp;
     signedDistancePointTriangle2(p1, p2, p3, p, d_tmp, closePt);
+    if(d_tmp <= d) closestTri = *tri;
     d = fmin(d, fabs(d_tmp));
   }
 
@@ -1661,77 +1650,95 @@ HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<uint64_t> *candi
 // qui sont proches de node par rapport a la topologie de la triangulation (!= distance euclidienne)
 // In : - candidates, le vecteur des triangles qui intersectent la boite de cote h autour de node
 //      - node, le noeud courant dans SurfacesProches
-void hxtBFSTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, int node, double size){
+void hxtBFSTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, int node){
 
+  double *n = forest->forestOptions->nodeNormals + 3*node;
+  // printf("Normale au noeud : (%f, %f, %f)\n", n[0], n[1], n[2]);
   // Contient des noeuds (il faut partir de node)
   std::queue<int> q; 
+  // Determiner toutes les couleurs du noeud
+  int currentColor;
+  std::vector<int> nodeColors, allColors;
+  for(std::vector<uint64_t>::iterator tri = candidates->begin(); tri != candidates->end(); ++tri){
+    currentColor = forest->forestOptions->mesh->triangles.colors[(size_t)(*tri)];
+    if(std::find(allColors.begin(), allColors.end(), currentColor) == allColors.end())
+      allColors.push_back(currentColor);
+    for(int i = 0; i < 3; ++i){
+      if(forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i] == node){
+        if(std::find(nodeColors.begin(), nodeColors.end(), currentColor) == nodeColors.end()){
+          nodeColors.push_back(currentColor);
+        }
+      }
+    }
+  }
+  // printf("Nombre de couleurs pour le noeud %d : %d\n", node, nodeColors.size());
+  std::vector<uint64_t> savedCandidates;
   // Partir de node (ajouter dans la file)
-  int count = 0;
-
- //  // Essai : on définit la taille caractéristique autour du noeud comme la taille h_loc du premier triangle contenant 'node'.
- //  // Ensuite, on estime qu'il faut size/h_loc elements pour remplir un rayon ?
- //  double hloc = 0.0;
- //  for(int i = 0; i < (*candidates).size(); ++i){
-	//   uint64_t n1 = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*candidates->begin()+i)+0];
-	//   uint64_t n2 = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*candidates->begin()+i)+1];
-	//   // uint64_t n3 = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+2];
-
-	//   double x1 = forest->forestOptions->mesh->vertices.coord[(size_t) 4*n1];
-	//   double y1 = forest->forestOptions->mesh->vertices.coord[(size_t) 4*n1+1];
-	//   double z1 = forest->forestOptions->mesh->vertices.coord[(size_t) 4*n1+2];
-	//   double x2 = forest->forestOptions->mesh->vertices.coord[(size_t) 4*n2];
-	//   double y2 = forest->forestOptions->mesh->vertices.coord[(size_t) 4*n2+1];
-	//   double z2 = forest->forestOptions->mesh->vertices.coord[(size_t) 4*n2+2];
-
-	//   hloc += sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
-	// }
- //  hloc /= (*candidates).size();
- //  double estim = sqrt(3) * size/hloc;
-
   q.push(node);
   while(!q.empty()){
-    // if(count > 5) break;
     // Prendre tous les triangles de candidates qui contiennent node, puis les retirer de candidates. 
     // Prendre tous les noeuds de ces triangles et les ajouter dans la file
     for(std::vector<uint64_t>::iterator tri = candidates->begin(); tri != candidates->end(); ){
 
-      // C'est de la triche :
-      // uint64_t n1 = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)];
-      // double z = forest->forestOptions->mesh->vertices.coord[(size_t) 4*n1+2];
-      // if(z > 0.15) break;
+      // std::cout << "Couleur = " << forest->forestOptions->mesh->triangles.colors[(size_t) (*tri)] << std::endl;
+      currentColor = forest->forestOptions->mesh->triangles.colors[(size_t)(*tri)];
 
       bool flag = false;
       for(int i = 0; i < 3; ++i){
         int local_node = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
         if(local_node == q.front()) flag = true;
       }
-      // Si q.front() est dans le triangle courant, on ajoute les deux autres sommets et on le retire de la liste
+
+      // Si q.front() est dans le triangle courant, on ajoute les deux autres sommets et on retire le triangle de la liste
       if(flag){
         for(int i = 0; i < 3; ++i){
           int local_node = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
           if(local_node != q.front()) q.push(local_node);
         }
 
-        // if(!containsNode && distanceToTriangle > size){
-	        tri = candidates->erase(tri);
-    	// }
-      }
-      else{
+        if(std::count(nodeColors.begin(), nodeColors.end(), currentColor) == 0){
+          savedCandidates.push_back(*tri);
+        }
+        
+        tri = candidates->erase(tri);
+
+      } else{
         ++tri;
       }
     }
     q.pop();
-    ++count;
   }
 
-  // printf("%d - %f - %f \n",count,estim, count/estim);
+  if(allColors.size() > 2){
+    for(std::vector<uint64_t>::iterator it = savedCandidates.begin(); it < savedCandidates.end(); ++it){
+      candidates->push_back(*it);
+    }
+  }
 
-  // if(candidates.size()){
-  //     p.setPosition(x,y,z);
-  //     hxtDistanceToTriangles(forest, &candidates, p, size);
-  //     size /= forest->forestOptions->nodePerGap;
-  //     printf("Taille corrigée au noeud %d = %f \n", i+1, size);
-  //   }
+  for(std::vector<uint64_t>::iterator it = candidates->begin(); it < candidates->end(); ){
+    double *v0 = &forest->forestOptions->nodeNormals[3*forest->forestOptions->mesh->triangles.node[3*(*it)+0]];
+    double *v1 = &forest->forestOptions->nodeNormals[3*forest->forestOptions->mesh->triangles.node[3*(*it)+1]];
+    double *v2 = &forest->forestOptions->nodeNormals[3*forest->forestOptions->mesh->triangles.node[3*(*it)+2]];
+
+    double cos0 = v0[0]*n[0] + v0[1]*n[1] + v0[2]*n[2]; // Les normales sont censees etre unitaires
+    double cos1 = v1[0]*n[0] + v1[1]*n[1] + v1[2]*n[2]; // Les normales sont censees etre unitaires
+    double cos2 = v2[0]*n[0] + v2[1]*n[1] + v2[2]*n[2]; // Les normales sont censees etre unitaires
+
+    double cosMin = 0.7; // Plus grand que sqrt(2)/2 pour les coins à 45° ?
+    int areNormalsNotAligned = (fabs(cos0) < cosMin) + (fabs(cos1) < cosMin) + (fabs(cos2) < cosMin);
+    int areNormalsInRightDirection = (cos0 > 0) + (cos1 > 0) + (cos2 > 0);
+
+    if(areNormalsNotAligned >= 1 || areNormalsInRightDirection >= 1){
+      it = candidates->erase(it);
+    }else{
+      ++it;
+    }
+  }
+
+  if(!candidates->empty()){
+    globCount++;
+  }
+
 
    // std::cout<<"Elements restants"<<std::endl;
    // for(auto &val : *candidates)
@@ -1750,6 +1757,15 @@ HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
   double size, x, y, z; 
   double min[3], max[3];
 
+  bool debug = true;
+  FILE* file = fopen("pointsConnectesAvecAngles.pos", "w");
+    if(file==NULL)
+      return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
+  if(debug){
+    fprintf(file, "View \"pointsConnectesAvecAngles\" {\n");
+  }
+
+  int percents = 10, steps = forest->forestOptions->mesh->vertices.num / 10;
   for(uint64_t i = 0; i < forest->forestOptions->mesh->vertices.num; ++i){
     p_tmp = (size_point_t *) sc_array_index(points, 0);
 
@@ -1759,10 +1775,7 @@ HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
 
     HXT_CHECK(hxtOctreeSearchOne(forest, x, y, z, &size));
 
-    // printf("Point %d - taille initiale = %f \n", i+1, size);
-
-    // Boite autour du point de taille h  -> PAS UNE BOULE ?
-    
+    // Boite autour du point de taille h
     min[0] = x - size; max[0] = x + size;
     min[1] = y - size; max[1] = y + size;
     min[2] = z - size; max[2] = z + size;
@@ -1771,33 +1784,53 @@ HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
 
     if(!candidates.empty()){
 
-      hxtBFSTriangles(forest, &candidates, i, size);
-
-      // printf("=========  Test\n");
-      // for(std::vector<int>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri)
-      //   std::cout<<*tri<<std::endl;
-      // std::sort(candidates.begin(),candidates.end());
-      // std::unique(candidates.begin(),candidates.end());
-      // printf("=========  Unique\n");
-      // for(std::vector<int>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri)
-      //   std::cout<<(*tri)+1<<std::endl;
-      // printf("=========  BFS\n");
-      // printf("Candidates.size = %d \n", candidates.size());
+      hxtBFSTriangles(forest, &candidates, i);
 
       if(!candidates.empty()){
+        uint64_t closestTri;
         p.setPosition(x,y,z);
-        hxtDistanceToTriangles(forest, &candidates, p, size);
+        hxtDistanceToTriangles(forest, &candidates, p, size, closestTri);
+
+        if(debug){
+          double x_avg, y_avg, z_avg;
+          // for(std::vector<uint64_t>::iterator it = candidates.begin(); it < candidates.end(); ++it){
+            x_avg = y_avg = z_avg = 0.0;
+            for(int i = 0; i < 3; ++i){
+              // uint64_t node = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*it)+i];
+              uint64_t node = forest->forestOptions->mesh->triangles.node[(size_t) 3*closestTri+i];
+              x_avg += 1.0/3.0 * forest->forestOptions->mesh->vertices.coord[(size_t) 4*node];
+              y_avg += 1.0/3.0 * forest->forestOptions->mesh->vertices.coord[(size_t) 4*node+1];
+              z_avg += 1.0/3.0 * forest->forestOptions->mesh->vertices.coord[(size_t) 4*node+2];
+            }
+            fprintf(file, "SL(%f,%f,%f,%f,%f,%f){%f,%f};\n", x, y, z, x_avg, y_avg, z_avg, size, size);
+          // }
+        }
+
         size = fmin(size, size/forest->forestOptions->nodePerGap);
         size = fmax(size, forest->forestOptions->hmin);
         // printf("Taille corrigée au noeud %d = %f \n", i+1, size);
         p_tmp->size = size;
+        // p_tmp->size = 0.0;
         p_tmp->surfaceFlag = 2;
 
         // On cherche dans l'octree et on remplace dans les quadrants associes aux noeuds
         p4est_search(forest->p4est, NULL, hxtOctreeReplaceCallback, points);
       }
     }
+
+    if(i%steps==0){
+      printf("[%d%]\n", percents);
+      percents += 10;
+    }
+
   }
+
+  if(debug){
+    fprintf(file, "};");
+    fclose(file);
+  }
+
+  printf("%d listes non vides\n", globCount);
 
   sc_array_destroy(points);
 

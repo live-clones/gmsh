@@ -41,6 +41,7 @@ typedef struct HXTForestOptions{
   int                   nodePerGap;
   double               *bbox;
   double               *nodalCurvature;
+  double               *nodeNormals;
   double              (*sizeFunction)(double, double, double, double) ;
   RTree<uint64_t,double,3>  *triRTree;
   HXTMesh              *mesh;
@@ -75,8 +76,6 @@ typedef struct size_data{
 
   double hMin;
   
-  // Pour raffiner sur la courbure : pas possible de donner un user_pointer
-  //  à p4est_refine ?
   int refineFlag; 
   int coarsenFlag; 
   
@@ -89,6 +88,7 @@ typedef struct size_point{
   double z;
   double size;
   int surfaceFlag;
+  bool isFound;
 } size_point_t;
 
 typedef struct size_fun{
@@ -96,32 +96,28 @@ typedef struct size_fun{
 } size_fun_t;
 
 // API ---------------------------------------------------------------------------------------------
-
-HXTStatus hxtOctreeRefineToLevel(HXTForest *forest);
-HXTStatus hxtOctreeComputeLaplacian(HXTForest *forest);
-HXTStatus hxtOctreeLaplacianRefine(HXTForest *forest, int nRefine);
-HXTStatus hxtOctreeSetMaxGradient(HXTForest *forest);
-HXTStatus hxtOctreeSmoothGradient(HXTForest *forest, int nMax);
-HXTStatus hxtForestOptionsCreate(HXTForestOptions **forestOptions);
-HXTStatus hxtForestOptionsDelete(HXTForestOptions **forestOptions);
 HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char* filename, HXTForestOptions *forestOptions);
 HXTStatus hxtForestDelete(HXTForest **forest);
-HXTStatus hxtOctreeRTreeIntersection(HXTForest *forest);
+HXTStatus hxtForestOptionsCreate(HXTForestOptions **forestOptions);
+HXTStatus hxtForestOptionsDelete(HXTForestOptions **forestOptions);
+
+HXTStatus hxtOctreeRefineToBulkSize(HXTForest *forest);
 HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax);
-HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, double *size);
-HXTStatus hxtOctreeSurfacesProches(HXTForest *forest);
-HXTStatus hxtOctreeElementEstimation(HXTForest *forest, double *elemEstimate);
 
 HXTStatus hxtOctreeComputeGradient(HXTForest *forest);
-
+HXTStatus hxtOctreeSetMaxGradient(HXTForest *forest);
 HXTStatus hxtOctreeComputeMaxGradientX(HXTForest *forest, double *dsdx_max);
 HXTStatus hxtOctreeComputeMaxGradientY(HXTForest *forest, double *dsdy_max);
 HXTStatus hxtOctreeComputeMaxGradientZ(HXTForest *forest, double *dsdz_max);
 HXTStatus hxtOctreeComputeMinimumSize(HXTForest *forest, double *size_min);
 HXTStatus hxtOctreeComputeMaximumSize(HXTForest *forest, double *size_max);
 
-HXTStatus hxtOctreeExport(HXTForest *forest);
+HXTStatus hxtOctreeSmoothGradient(HXTForest *forest, int nMax);
 
-void write_ds_to_vtk(p4est_t *p4est, const char *filename);
+HXTStatus hxtOctreeSurfacesProches(HXTForest *forest);
+HXTStatus hxtOctreeElementEstimation(HXTForest *forest, double *elemEstimate);
+HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, double *size);
+
+HXTStatus hxtOctreeExport(HXTForest *forest);
 
 #endif

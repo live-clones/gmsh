@@ -26,6 +26,7 @@ class automaticMeshSizeField : public Field {
   double _hbulk;
   double _gradientMax;
   int _nRefine;
+  bool _smoothing, _gaps;
 
  public:
   ~automaticMeshSizeField();
@@ -34,13 +35,15 @@ class automaticMeshSizeField : public Field {
   forest(NULL), forestOptions(NULL)
 #endif
   {
-    _nPointsPerCircle = 30;
+    _nPointsPerCircle = 20;
     _nPointsPerGap = 5;
-    _hmin = 1.e-8;// update needed
-    _hmax = 1.e+8;// update needed    
-    _hbulk = 4; // update needed
-    _gradientMax =1.3;
+    _hmin  = -1.0;// update needed
+    _hmax  = -1.0;// update needed    
+    _hbulk = -1.0; // update needed
+    _gradientMax = 1.4;
     _nRefine = 5;
+    _smoothing = true;
+    _gaps = true;
 
     options["nPointsPerCircle"] = new FieldOptionInt(_nPointsPerCircle,
 						     "Number of points per circle (adapt to curvature of surfaces)",&update_needed);
@@ -62,6 +65,12 @@ class automaticMeshSizeField : public Field {
   
     options["NRefine"] = new FieldOptionInt(_nRefine,
 					    "Initial refinement level for the octree",&update_needed);
+
+    options["Smoothing"] = new FieldOptionBool(_smoothing,
+              "Lissage ?",&update_needed);
+
+    options["Gaps"] = new FieldOptionBool(_gaps,
+              "Tenir compte des gaps ?",&update_needed);
 
     update_needed = true;
     // update();
