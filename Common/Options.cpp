@@ -9073,6 +9073,18 @@ double opt_print_tex_as_equation(OPT_ARGS_NUM)
   return CTX::instance()->print.texAsEquation;
 }
 
+double opt_print_tex_force_fontsize(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.texForceFontSize = (int)val;
+  return CTX::instance()->print.texForceFontSize;
+}
+
+double opt_print_tex_width_in_mm(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.texWidthInMm = val;
+  return CTX::instance()->print.texWidthInMm;
+}
+
 double opt_print_composite_windows(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->print.compositeWindows = (int)val;

@@ -181,6 +181,16 @@ Print all TeX strings as equations@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.TexForceFontSize
+Force font size of TeX strings to fontsize in the graphic window@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.TexWidthInMm
+Width of tex graphics in mm (use 0 for the natural width inferred from the image width in pixels)@*
+Default value: @code{150}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.Text
 Print text strings?@*
 Default value: @code{1}@*
