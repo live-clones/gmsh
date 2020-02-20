@@ -312,7 +312,8 @@ public:
     int epsOcclusionCulling, epsBestRoot;
     double epsLineWidthFactor, epsPointSizeFactor;
     int jpegQuality, jpegSmoothing, geoLabels, geoOnlyPhysicals;
-    int text, texAsEquation;
+    int text, texAsEquation, texForceFontSize;
+    double texWidthInMm;
     int gifDither, gifSort, gifInterlace, gifTransparent;
     int posElementary, posElement, posGamma, posEta, posSICN, posSIGE, posDisto;
     int compositeWindows, deleteTmpFiles, background;

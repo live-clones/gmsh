@@ -229,6 +229,9 @@ typedef struct {
   /* for image map list */
   GL2PSimagemap *imagemap_head;
   GL2PSimagemap *imagemap_tail;
+
+  /* for TEX scaling */
+  GLfloat tex_scaling;
 } GL2PScontext;
 
 typedef struct {
@@ -3362,11 +3365,13 @@ static void gl2psPrintTeXHeader(void)
   fprintf(gl2ps->stream,
           "\\setlength{\\unitlength}{1pt}\n"
           "\\begin{picture}(0,0)\n"
-          "\\includegraphics{%s}\n"
+          "\\includegraphics[scale=%g]{%s}\n"
           "\\end{picture}%%\n"
           "%s\\begin{picture}(%d,%d)(0,0)\n",
+          gl2ps->tex_scaling,
           name, (gl2ps->options & GL2PS_LANDSCAPE) ? "\\rotatebox{90}{" : "",
-          (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
+          (int)(gl2ps->viewport[2] * gl2ps->tex_scaling),
+          (int)(gl2ps->viewport[3] * gl2ps->tex_scaling));
 }
 
 static void gl2psPrintTeXPrimitive(void *data)
@@ -3377,10 +3382,12 @@ static void gl2psPrintTeXPrimitive(void *data)
 
   switch(prim->type){
   case GL2PS_TEXT :
-    fprintf(gl2ps->stream, "\\fontsize{%d}{0}\n\\selectfont",
-            prim->data.text->fontsize);
+    if(!(gl2ps->options & GL2PS_NO_TEX_FONTSIZE))
+      fprintf(gl2ps->stream, "\\fontsize{%d}{0}\\selectfont",
+              prim->data.text->fontsize);
     fprintf(gl2ps->stream, "\\put(%g,%g)",
-            prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+            gl2ps->tex_scaling * prim->verts[0].xyz[0],
+            gl2ps->tex_scaling * prim->verts[0].xyz[1]);
     if(prim->data.text->angle)
       fprintf(gl2ps->stream, "{\\rotatebox{%g}", prim->data.text->angle);
     fprintf(gl2ps->stream, "{\\makebox(0,0)");
@@ -6151,6 +6158,8 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
     gl2ps->buffersize = 0;
   }
 
+  gl2ps->tex_scaling = 1.;
+
   return GL2PS_SUCCESS;
 }
 
@@ -6568,6 +6577,10 @@ GL2PSDLL_API const char *gl2psGetFormatDescription(GLint format)
 
 GL2PSDLL_API GLint gl2psGetFileFormat()
 {
+  if(!gl2ps) {
+    return GL2PS_UNINITIALIZED;
+  }
+
   return gl2ps->format;
 }
 
@@ -6586,6 +6599,17 @@ GL2PSDLL_API GLint gl2psForceRasterPos(GL2PSvertex *vert)
   gl2ps->rasterpos.rgba[1] = vert->rgba[1];
   gl2ps->rasterpos.rgba[2] = vert->rgba[2];
   gl2ps->rasterpos.rgba[3] = vert->rgba[3];
+
+  return GL2PS_SUCCESS;
+}
+
+GL2PSDLL_API GLint gl2psSetTexScaling(GLfloat scaling)
+{
+
+  if(!gl2ps) {
+    return GL2PS_UNINITIALIZED;
+  }
+  gl2ps->tex_scaling = scaling;
 
   return GL2PS_SUCCESS;
 }
