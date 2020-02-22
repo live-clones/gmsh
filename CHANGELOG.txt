@@ -1,4 +1,4 @@
-4.5.3 (Work-in-progress): improved positioning of corresponding nodes on
+4.5.3 (February 22, 2020): improved positioning of corresponding nodes on
 periodic entities; improved LaTeX output; improved curve splitting in
 reparametrization; new binary PLY reader; small compilation fixes.
 
