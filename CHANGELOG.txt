@@ -1,5 +1,6 @@
-4.5.3 (Work-in-progress): improve positioning of corresponding nodes on periodic
-entities; small compilation fixes.
+4.5.3 (Work-in-progress): improved positioning of corresponding nodes on
+periodic entities; improved LaTeX output; improved curve splitting in
+reparametrization; new binary PLY reader; small compilation fixes.
 
 4.5.2 (January 30, 2020): periodic meshes now obey reorientation constraints;
 physical group definitions now follow compound meshing constraints; small bug
