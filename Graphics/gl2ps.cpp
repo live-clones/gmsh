@@ -2418,12 +2418,12 @@ static void gl2psParseFeedbackBuffer(GLint used)
       case GL2PS_LINE_CAP_TOKEN :
         current += 2;
         used -= 2;
-        lcap = current[1];
+        lcap = (GLint)current[1];
         break;
       case GL2PS_LINE_JOIN_TOKEN :
         current += 2;
         used -= 2;
-        ljoin = current[1];
+        ljoin = (GLint)current[1];
         break;
       case GL2PS_LINE_WIDTH_TOKEN :
         current += 2;
@@ -3336,6 +3336,7 @@ static void gl2psPrintTeXHeader(void)
   char name[256];
   time_t now;
   int i;
+  GLfloat s;
 
   if(gl2ps->filename && strlen(gl2ps->filename) < 256){
     for(i = (int)strlen(gl2ps->filename) - 1; i >= 0; i--){
@@ -3362,7 +3363,7 @@ static void gl2psPrintTeXHeader(void)
           GL2PS_PATCH_VERSION, GL2PS_EXTRA_VERSION, GL2PS_COPYRIGHT,
           gl2ps->producer, ctime(&now));
 
-  GLfloat s = gl2ps->tex_scaling;
+  s = gl2ps->tex_scaling;
   if(s <= 0.) s = 1.;
   fprintf(gl2ps->stream,
           "\\setlength{\\unitlength}{%gpt}\n"
