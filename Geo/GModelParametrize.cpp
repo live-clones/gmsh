@@ -354,9 +354,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
         MVertex *v1 = vs[i][j - 1];
         MVertex *v2 = vs[i][j];
         newGe->lines.push_back(new MLine(v1, v2));
-        //	printf("(%lu %lu)",v1->getNum(),v2->getNum());
       }
-      //      printf("\n");
 
       for(size_t j = 0; j < newGe->lines.size(); j++) {
         MLine *l = newGe->lines[j];

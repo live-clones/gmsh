@@ -11,7 +11,7 @@
 void GEdgeSigned::print() const
 {
   if(getBeginVertex() && getEndVertex())
-    Msg::Info("Curve %d sign %d, ordered points %d, %d", ge->tag(),
+    Msg::Info("Curve %d sign %d, begin point %d, end point %d", ge->tag(),
               _sign, getBeginVertex()->tag(), getEndVertex()->tag());
   else
     Msg::Info("Curve %d sign %d, no begin or end points", ge->tag(),
@@ -86,14 +86,34 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
 
 int GEdgeLoop::count(GEdge *ge) const
 {
-  GEdgeLoop::citer it = begin();
-  GEdgeLoop::citer ite = end();
   int count = 0;
-  while(it != ite) {
+  for(GEdgeLoop::citer it = begin(); it != end(); ++it) {
     if(it->ge == ge) count++;
-    ++it;
   }
   return count;
+}
+
+void GEdgeLoop::print() const
+{
+  for(GEdgeLoop::citer it = begin(); it != end(); ++it) {
+    it->print();
+  }
+}
+
+void GEdgeLoop::getEdges(std::vector<GEdge*> &edges) const
+{
+  edges.clear();
+  for(GEdgeLoop::citer it = begin(); it != end(); ++it) {
+    edges.push_back(it->getEdge());
+  }
+}
+
+void GEdgeLoop::getSigns(std::vector<int> &signs) const
+{
+  signs.clear();
+  for(GEdgeLoop::citer it = begin(); it != end(); ++it) {
+    signs.push_back(it->getSign());
+  }
 }
 
 static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,

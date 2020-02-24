@@ -732,37 +732,78 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,
 }
 
 #if defined(HAVE_MESH)
+
+static bool recreateConsecutiveElements(GEdge *ge)
+{
+  std::size_t ss = ge->lines.size();
+  if(!ss) return true;
+
+  std::vector<MEdge> ed;
+  std::vector<std::vector<MVertex *> > vs;
+  for(std::size_t i = 0; i < ge->lines.size(); i++) {
+    ed.push_back(MEdge(ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1)));
+  }
+  ge->lines.clear();
+
+  if(!SortEdgeConsecutive(ed, vs))
+    Msg::Warning("Line elements on curve %d cannot be ordered", ge->tag());
+
+  if(vs.size() != 1)
+    Msg::Warning("Mesh of curve %d is mutiply connected", ge->tag());
+
+  std::size_t start = 0;
+  for(; start < vs[0].size(); start++)
+    if(vs[0][start]->onWhat()->dim() == 0) break;
+
+  if(start == vs[0].size())
+    Msg::Warning("Mesh topology of curve %d is wrong", ge->tag());
+
+  std::size_t i = start;
+  while(ge->lines.size() != ss) {
+    if(vs[0][i % vs[0].size()] != vs[0][(i + 1) % vs[0].size()])
+      ge->lines.push_back(
+        new MLine(vs[0][i % vs[0].size()], vs[0][(i + 1) % vs[0].size()]));
+    i++;
+  }
+
+  ge->mesh_vertices.clear();
+  for(std::size_t i = 0; i < ge->lines.size() - 1; ++i) {
+    MVertex *v11 = ge->lines[i]->getVertex(1);
+    if(v11->onWhat() == ge || !v11->onWhat()){
+      v11->setEntity(ge);
+      ge->mesh_vertices.push_back(v11);
+    }
+  }
+
+  return true;
+}
+
 static void meshCompound(GEdge *ge)
 {
-  // store all line elements of the compound in a new (compound) discrete curve;
-  // no new mesh nodes are created here
   discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000);
   ge->model()->add(de);
   std::vector<int> phys;
   for(std::size_t i = 0; i < ge->compound.size(); i++) {
     GEdge *c = (GEdge *)ge->compound[i];
-    // cannot use the same line elements, as they get deleted in createGeometry
-    for(std::size_t j = 0; j < c->lines.size(); j++) {
-      de->lines.push_back(new MLine(c->lines[j]->getVertex(0),
-                                    c->lines[j]->getVertex(1)));
-    }
+    de->lines.insert(de->lines.end(), c->lines.begin(), c->lines.end());
     c->compoundCurve = de;
     phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
     c->physicals.clear();
   }
-  // create the geometry of the compound
-  de->createGeometry(true);
-  // once the geometry is created, delete the newly created mesh elements and
-  // reset the mesh - because meshGEdge would delete the mesh
-  for(std::size_t j = 0; j < de->lines.size(); j++)
-    delete de->lines[j];
+
+  // recreate a 1D mesh with consecutive elements (this creates new MLines)
+  recreateConsecutiveElements(de);
+  // create the geometry
+  de->createGeometry();
+  // delete the MLines just created above
+  for(std::size_t i = 0; i < de->lines.size(); i++)
+    delete de->lines[i];
   de->lines.clear();
   de->mesh_vertices.clear();
-  de->deleteVertexArrays();
-  // mesh the compound
   de->mesh(false);
   de->physicals = phys;
 }
+
 #endif
 
 void GEdge::mesh(bool verbose)

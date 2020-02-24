@@ -15,6 +15,7 @@
 #include "MElementOctree.h"
 #include "Octree.h"
 #include "Context.h"
+#include "GEdgeLoop.h"
 
 #if defined(HAVE_HXT)
 extern "C" {
@@ -95,58 +96,22 @@ discreteFace::discreteFace(GModel *model) : GFace(model, 0)
   // the corresponding entity in GEO internals
 }
 
-static void sort_edges(std::vector<GEdge *> &e, std::vector<int> &dir)
-{
-  if(e.empty() || dir.empty()) return;
-  std::vector<GEdge *> result;
-  result.push_back(e[0]);
-  e.erase(e.begin());
-  dir.clear();
-  dir.push_back(1);
-  while(!e.empty()) {
-    bool found = false;
-    GEdge *ge = result[result.size() - 1];
-    GVertex *gv =
-      dir[dir.size() - 1] == 1 ? ge->getEndVertex() : ge->getBeginVertex();
-    for(size_t i = 0; i < e.size(); i++) {
-      if(e[i]->getBeginVertex() == gv) {
-        found = true;
-        result.push_back(e[i]);
-        e.erase(e.begin() + i);
-        dir.push_back(1);
-        break;
-      }
-      if(e[i]->getEndVertex() == gv) {
-        found = true;
-        result.push_back(e[i]);
-        e.erase(e.begin() + i);
-        dir.push_back(-1);
-        break;
-      }
-    }
-    if(!found && !e.empty()) {
-      result.push_back(e[0]);
-      e.erase(e.begin());
-      dir.push_back(1);
-    }
-  }
-  e = result;
-}
-
 void discreteFace::setBoundEdges(const std::vector<int> &tagEdges)
 {
+  std::vector<GEdge*> e;
   for(std::size_t i = 0; i != tagEdges.size(); i++) {
     GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge) {
-      l_edges.push_back(ge);
-      l_dirs.push_back(1);
+      e.push_back(ge);
       ge->addFace(this);
     }
     else {
       Msg::Error("Unknown curve %d in discrete surface %d", tagEdges[i], tag());
     }
   }
-  sort_edges(l_edges, l_dirs);
+  GEdgeLoop el(e);
+  el.getEdges(l_edges);
+  el.getSigns(l_dirs);
 }
 
 void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
@@ -167,7 +132,6 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
       Msg::Error("Unknown curve %d in discrete surface %d", tagEdges[i], tag());
     }
   }
-  sort_edges(l_edges, l_dirs);
 }
 
 int discreteFace::trianglePosition(double par1, double par2, double &u,
@@ -321,12 +285,12 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
 GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,
                                   const double initialGuess[2]) const
 {
-  return closestPoint(queryPoint, 0.1);
+  return closestPoint(queryPoint, 1e-1);
 }
 
 SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
-  GPoint gp = closestPoint(p, 0.000001);
+  GPoint gp = closestPoint(p, 1e-6);
   return SPoint2(gp.u(), gp.v());
 }
 
