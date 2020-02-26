@@ -15,6 +15,20 @@
 #include "MPyramid.h"
 #include "StringUtils.h"
 
+static std::string physicalName(GModel *m, int dim, int num)
+{
+  std::string name = m->getPhysicalName(dim, num);
+  if(name.empty()){
+    char tmp[256];
+    sprintf(tmp, "%s%d", (dim == 3) ? "PhysicalVolume" :
+            (dim == 2) ? "PhysicalSurface" : "PhysicalLine", num);
+    name = tmp;
+  }
+  for(unsigned int i = 0; i < name.size(); i++)
+    if(name[i] == ' ') name[i] = '_';
+  return name;
+}
+
 int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
                      double scalingFactor, bool bigEndian)
 {
@@ -94,6 +108,62 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
     }
   }
 
+  // count and write elements "CellEntityIds" (BCs) in ascii or binary
+  int ndime = getDim();
+  int unsigned numEntities = 0, bcTypeTag= 0;
+  std::map<int, std::vector<GEntity*> > groups;
+  std::map<MElement *, unsigned int> element2tag;
+
+  for(unsigned int i = 0; i < entities.size(); i++)
+    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) numEntities++;
+
+  // Build markers for physical groups of dimension (ndime - 1)
+  Msg::Info(" Build markers for physical groups of dimension (%luD)", ndime-1);
+  getPhysicalGroups(ndime-1,groups);
+  for(std::map<int, std::vector<GEntity*> >::iterator it = groups.begin(); it != groups.end(); it++)
+  {
+    bcTypeTag++;
+    Msg::Info("+BCs: PhysicalName %s is VTK tag %lu", physicalName(this, ndime - 1, it->first).c_str(), bcTypeTag - 1);
+    std::vector<GEntity *> &entities = it->second;
+    for(unsigned int i = 0; i < entities.size(); i++)
+    {
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
+      {
+        MElement *element = entities[i]->getMeshElement(j);
+        element2tag[element]=bcTypeTag;
+      }
+    }         
+  }
+
+  fprintf(fp, "\n");
+  if(saveAll) numElements = numEntities;
+  fprintf(fp, "CELL_DATA %d\n", numElements);
+  fprintf(fp, "SCALARS CellEntityIds int 1 \n");
+  fprintf(fp, "LOOKUP_TABLE default \n");
+
+  int countPrintedCells = 0;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      MElement *element = entities[i]->getMeshElement(j);
+      unsigned int type = element2tag[element];
+      if(type){ // if id > 0 print
+        type -= 1; // For VTK standard
+        if(binary){
+          // VTK always expects big endian binary data
+          if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
+          fwrite(&type, sizeof(int), 1, fp);
+        }
+        else
+          fprintf(fp, "%d\n", type);
+        countPrintedCells++;  
+      }
+      else
+        if(entities[i]->dim() == ndime && countPrintedCells < numElements){ //print in case of -1, namely without BCs (in order to print surface element in 2D or volume element in 3D)
+          fprintf(fp, "%d\n", -1);
+          countPrintedCells++;
+        }  
+    }
+  }
   fclose(fp);
   return 1;
 }
