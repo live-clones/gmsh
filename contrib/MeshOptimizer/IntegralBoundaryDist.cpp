@@ -136,7 +136,7 @@ double computeBndDistH(GEdge *edge,
   double maxDist = 0.0;
   for(std::size_t i = 0; i < dpts.size(); i++) {
     maxDist = std::max(
-      maxDist, dpts[i].distance(edge->closestPoint(dpts[i], tolerance)));
+      maxDist, dpts[i].distance(edge->closestPointWithTol(dpts[i], tolerance)));
   }
   return maxDist;
 }

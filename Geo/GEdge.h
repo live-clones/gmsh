@@ -46,7 +46,7 @@ public:
 
   // the STL discretization
   std::vector<SPoint3> stl_vertices_xyz;
-  
+
 public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   GEdge(GModel *model, int tag);
@@ -250,7 +250,7 @@ public:
 
   virtual void discretize(double tol, std::vector<SPoint3> &dpts,
                           std::vector<double> &ts);
-  SPoint3 closestPoint(SPoint3 &p, double tolerance);
+  SPoint3 closestPointWithTol(SPoint3 &p, double tolerance);
   virtual void mesh(bool verbose);
 
   virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);

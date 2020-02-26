@@ -14,7 +14,6 @@ class MElement;
 void SetOrder1(GModel *m, bool onlyVisible = false);
 void SetOrderN(GModel *m, int order, bool linear = true,
                bool incomplete = false, bool onlyVisible = false);
-void FixPeriodicMesh(GModel *m);
 void checkHighOrderTriangles(const char *cc, GModel *m,
                              std::vector<MElement *> &bad, double &minJGlob);
 void checkHighOrderTetrahedron(const char *cc, GModel *m,
