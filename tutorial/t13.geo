@@ -7,7 +7,7 @@
  *********************************************************************/
 
 // Let's merge an STL mesh that we would like to remesh.
-Merge "t13.stl";
+Merge "t13_data.stl";
 
 // We first classify ("color") the surfaces by splitting the original surface
 // along sharp geometrical features. This will create new discrete surfaces,

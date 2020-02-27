@@ -18,9 +18,8 @@
 # By design, the Gmsh API is purely functional, and only uses elementary types
 # from the target language.
 #
-# See `demos/api' for examples on how to use the Gmsh API. In particular,
-# `demos/api' contains C++, C, Python and Julia versions of several of the
-# `.geo' tutorials from `tutorials'.
+# See `tutorial/{c++,c,python,julia}' and `demos/api' for examples on how to
+# use the Gmsh API.
 
 import os
 from GenApi import *
