@@ -91,18 +91,18 @@ View "comments" {
   // after a `@' symbol in the form `widthxheight' (if one of `width' or
   // `height' is zero, natural scaling is used; if both are zero, original image
   // dimensions in pixels are used):
-  T3(0, 0.09, 0, TextAttributes("Align", "Center")){ "file://image.png@0.01x0" };
+  T3(0, 0.09, 0, TextAttributes("Align", "Center")){ "file://t4_image.png@0.01x0" };
 
   // The 3D orientation of the image can be specified by proving the direction
   // of the bottom and left edge of the image in model space:
-  T3(-0.01, 0.09, 0, 0){ "file://image.png@0.01x0,0,0,1,0,1,0" };
+  T3(-0.01, 0.09, 0, 0){ "file://t4_image.png@0.01x0,0,0,1,0,1,0" };
 
   // The image can also be drawn in "billboard" mode, i.e. always parallel to
   // the camera, by using the `#' symbol:
-  T3(0, 0.12, 0, TextAttributes("Align", "Center")){ "file://image.png@0.01x0#" };
+  T3(0, 0.12, 0, TextAttributes("Align", "Center")){ "file://t4_image.png@0.01x0#" };
 
   // The size of 2D annotations is given directly in pixels:
-  T2(350, -7, 0){ "file://image.png@20x0" };
+  T2(350, -7, 0){ "file://t4_image.png@20x0" };
 };
 
 // Views and geometrical entities can be made to respond to double-click events:

@@ -14,7 +14,7 @@
 Merge "t1.geo";
 
 // Merge a post-processing view containing the target mesh sizes
-Merge "bgmesh.pos";
+Merge "t7_bgmesh.pos";
 
 // Apply the view as the current background mesh
 Background Mesh View[0];
