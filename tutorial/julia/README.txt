@@ -28,3 +28,5 @@ To run the tutorials, you need the Gmsh dynamic library and the Julia module
     export JULIA_LOAD_PATH=${JULIA_LOAD_PATH}:/usr/local/lib
 
 You can then run e.g. "julia t1.jl"
+
+For other Julia API examples, see the `demos/api' directory.

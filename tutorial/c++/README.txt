@@ -41,3 +41,5 @@ header file (`gmsh.h'). These can be either obtained
 
     g++ -o t1 t1.cpp -lgmsh
     ./t1
+
+For other C++ API examples, see the `demos/api' directory.

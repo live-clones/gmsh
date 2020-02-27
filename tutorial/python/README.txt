@@ -31,3 +31,5 @@ To run the tutorials, you need the Gmsh dynamic library and the Python module
     export PYTHONPATH=${PYTHONPATH}:/usr/local/lib
 
 You can then run e.g. "python t1.py"
+
+For other Python API examples, see the `demos/api' directory.

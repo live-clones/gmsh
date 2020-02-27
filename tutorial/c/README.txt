@@ -30,3 +30,5 @@ header file (`gmshc.h'). These can be either obtained
 
     gcc -o t1 t1.c -lgmsh
     ./t1
+
+For other C API examples, see the `demos/api' directory.
