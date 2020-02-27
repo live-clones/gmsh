@@ -1,7 +1,8 @@
 import gmsh
 import math
+import sys
 
-gmsh.initialize()
+gmsh.initialize(sys.argv)
 gmsh.option.setNumber('General.Terminal', 1)
 
 gmsh.model.add("terrain");
@@ -35,37 +36,37 @@ gmsh.model.geo.addPoint(1, 1, coords[3*tag(N,N)-1])
 gmsh.model.geo.addPoint(0, 1, coords[3*tag(0,N)-1])
 gmsh.model.geo.synchronize()
 
-# create 4 diecrete bounding curves, with boundary points
+# create 4 discrete bounding curves, with their boundary points
 for i in range(4):
     gmsh.model.addDiscreteEntity(1, i+1, [i+1 , i+2 if i < N else 1])
 
-# create one discrete surface, with bounding curves
+# create one discrete surface, with its bounding curves
 gmsh.model.addDiscreteEntity(2, 1, [1, 2, 3, 4])
 
-# add all the nodes on the surface (for simplicity)
+# add all the nodes on the surface (for simplicity... see below)
 gmsh.model.mesh.addNodes(2, 1, nodes, coords)
 
-# add elements on the points, the lines and the surface
+# add elements on the 4 points, the 4 curves and the surface
 for i in range(4):
     gmsh.model.mesh.addElementsByType(i + 1, 15, [], [pnt[i]])
     gmsh.model.mesh.addElementsByType(i + 1, 1, [], lin[i])
 gmsh.model.mesh.addElementsByType(1, 2, [], tris)
 
-# reclassify nodes on curves and points (since we put all the nodes on the
-# surface first for simplicity)
+# reclassify the nodes on the curves and the points (since we put them all on
+# the surface before for simplicity)
 gmsh.model.mesh.reclassifyNodes()
 
 # note that for more complicated meshes, e.g. for on input unstructured STL, we
 # could use gmsh.model.mesh.classifySurfaces() to automatically create the
-# discrete entities and the topology
+# discrete entities and the topology; but we would have to extract the
+# boundaries afterwards
 
 # create a geometry for the discrete curves and surfaces, so that we can remesh
 # them
 gmsh.model.mesh.createGeometry()
 
-# create other CAD entities, and connect them to the discrete entities just
-# created for the terrain
-
+# create other CAD entities to form one volume below the terrain surface, and
+# one volume on top
 p1 = gmsh.model.geo.addPoint(0, 0, -0.5)
 p2 = gmsh.model.geo.addPoint(1, 0, -0.5)
 p3 = gmsh.model.geo.addPoint(1, 1, -0.5)
