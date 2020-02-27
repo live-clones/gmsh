@@ -1,4 +1,4 @@
-This directory contains the Gmsh tutorial written using the Gmsh Python API.
+This directory contains the Gmsh tutorial rewritten using the Gmsh Python API.
 
 To run the tutorials, you need the Gmsh dynamic library and the Python module
 (`gmsh.py'). These can be either obtained
@@ -11,10 +11,8 @@ To run the tutorials, you need the Gmsh dynamic library and the Python module
 
     export PYTHONPATH=${PYTHONPATH}:${PWD}/lib
 
-- using `pip install gmsh-sdk' (beware the the version might be older than the
-  one available in the SDK from the website), which will download the bindary
-  SDK automatically, and install the files in the appropriate system
-  directories.
+- using `pip install gmsh-sdk', which will download the binary SDK
+  automatically, and install the files in the appropriate system directories.
 
 - by compiling the Gmsh source code. Follow these steps in the top-level
   directory of the Gmsh source code:

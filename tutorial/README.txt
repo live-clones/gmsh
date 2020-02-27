@@ -21,7 +21,7 @@ them.
 A binary Software Development Kit (SDK) for Windows, Linux and macOS, that
 contains the dynamic Gmsh library and the associated header and module files,
 can be downloaded from http://gmsh.info. Several Linux distributions also ship
-the Gmsh SDK. See the top-level README.txt in the Gmsh source code for
+the Gmsh SDK. See the top-level `README.txt' in the Gmsh source code for
 instructions on how to compile the dynamic Gmsh library from source.
 
 Each subdirectory contains additional information on how to run the examples for

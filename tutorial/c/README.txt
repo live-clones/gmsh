@@ -1,18 +1,18 @@
-This directory contains (parts of the) Gmsh tutorial, written using the Gmsh C
+This directory contains (parts of the) Gmsh tutorial, rewritten using the Gmsh C
 API.
 
-To run the tutorials, you need the Gmsh dynamic library and the associated
-header file (`gmshc.h'). These can be either obtained
+To compile and run the tutorials, you need the Gmsh dynamic library and the
+associated header file (`gmshc.h'). These can be either obtained
 
 - from the binary Software Development Kit (SDK) available on the Gmsh website
   http://gmsh.info/bin/, for Windows, Linux and macOS. Download and uncompress
   the relevant gmsh*-sdk.* archive for your operating system. To compile the
-  first tutorial using, assuming that you are currently in the root directory of
-  the SDK, and that you are using the gcc compiler:
+  first tutorial, assuming that you are currently in the root directory of the
+  SDK and that you are using the gcc compiler:
 
     gcc -o t1 -Iinclude share/doc/gmsh/tutorial/c/t1.c -Llib -lgmsh
 
-  then run
+  Then run
 
     ./t1
 

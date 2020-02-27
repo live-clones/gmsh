@@ -1,4 +1,4 @@
-This directory contains (parts of the) Gmsh tutorial, written using the Gmsh
+This directory contains (parts of the) Gmsh tutorial, rewritten using the Gmsh
 Julia API.
 
 To run the tutorials, you need the Gmsh dynamic library and the Julia module
