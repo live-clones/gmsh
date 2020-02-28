@@ -48,6 +48,7 @@
 #include "HierarchicalBasisH1Brick.h"
 #include "HierarchicalBasisH1Tetra.h"
 #include "HierarchicalBasisH1Pri.h"
+#include "HierarchicalBasisH1Point.h"
 #include "HierarchicalBasisHcurlLine.h"
 #include "HierarchicalBasisHcurlQuad.h"
 #include "HierarchicalBasisHcurlBrick.h"
@@ -2132,6 +2133,78 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
 }
 
+GMSH_API void gmsh::model::mesh::getEdgeNumber(
+  const std::vector<int> & edgeVertices,std::vector<int> & edgeNum)
+{
+  edgeNum.clear();
+  int numEdges=edgeVertices.size()/2;
+  edgeNum.resize(numEdges);
+  for(int i=0;i<numEdges;i++){
+    MEdge edge(GModel::current()->getMeshVertexByTag(edgeVertices[2*i]),
+    GModel::current()->getMeshVertexByTag(edgeVertices[2*i+1]));
+    edgeNum[i]=GModel::current()->getEdgeNumber(edge);
+  }
+}
+GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
+  const int elementType,std::vector<int> &localMultipliers,  const int tag)
+{
+  localMultipliers.clear();
+  int basisOrder = 0;
+  std::string fsName = "";
+  int dim = ElementType::getDimension(elementType);
+  std::map<int, std::vector<GEntity *> > typeEnt;
+  _getEntitiesForElementTypes(dim, tag, typeEnt);
+  HierarchicalBasis *basis(0);
+  const std::vector<GEntity *> &entities(typeEnt[elementType]);
+  int familyType = ElementType::getParentType(elementType);
+  switch(familyType) {
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisHcurlQuad(basisOrder);
+    } break;
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisHcurlBrick(basisOrder);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisHcurlTria(basisOrder);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisHcurlTetra(basisOrder);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisHcurlPri(basisOrder);
+    } break;
+    case TYPE_LIN: {
+      basis = new HierarchicalBasisHcurlLine(basisOrder);
+    } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
+  }
+  // compute the number of Element :
+  std::size_t numElements = 0;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
+    numElements += numElementsInEntitie;
+  }
+  int numberEdge=basis->getNumEdge();
+  localMultipliers.resize(numElements * numberEdge, 1);
+  size_t indexNumElement=0;
+  for(std::size_t ii = 0; ii < entities.size(); ii++) {
+      GEntity *ge = entities[ii];
+      for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
+          j++) {
+        MElement *e = ge->getMeshElementByType(familyType, j);
+        for(int iEdge = 0; iEdge < basis->getNumEdge(); iEdge++) {
+            MEdge edge = e->getEdge(iEdge);
+            if(edge.getMinVertex()->getNum() !=
+               unsigned(e->getVertexSolin(iEdge, 0))) {
+              localMultipliers[indexNumElement*numberEdge+iEdge]=-1;
+            }
+          }
+          indexNumElement++;
+        }
+      }
+  delete basis;
+}
 GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   const int elementType, const std::vector<double> &integrationPoints,
   const std::string &functionSpaceType, int &numComponents,
@@ -2179,6 +2252,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     } break;
     case TYPE_LIN: {
       basis = new HierarchicalBasisH1Line(basisOrder);
+    } break;
+    case TYPE_PNT: {
+      basis = new HierarchicalBasisH1Point();
     } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
@@ -2480,6 +2556,9 @@ GMSH_API void gmsh::model::mesh::preallocateBasisFunctions(
     case TYPE_LIN: {
       basis = new HierarchicalBasisH1Line(basisOrder);
     } break;
+    case TYPE_PNT: {
+      basis = new HierarchicalBasisH1Point();
+    } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
@@ -2582,6 +2661,9 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       } break;
       case TYPE_LIN: {
         basis = new HierarchicalBasisH1Line(order);
+      } break;
+      case TYPE_PNT: {
+        basis = new HierarchicalBasisH1Point();
       } break;
       default: Msg::Error("Unknown familyType "); throw 2;
       }
@@ -2811,6 +2893,9 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
     case TYPE_LIN: {
       basis = new HierarchicalBasisH1Line(basisOrder);
     } break;
+    case TYPE_PNT: {
+      basis = new HierarchicalBasisH1Point();
+    } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
     int vSize = basis->getnVertexFunction();
@@ -2905,6 +2990,9 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     } break;
     case TYPE_LIN: {
       basis = new HierarchicalBasisH1Line(basisOrder);
+    } break;
+    case TYPE_PNT: {
+      basis = new HierarchicalBasisH1Point();
     } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
