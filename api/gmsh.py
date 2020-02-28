@@ -2203,22 +2203,21 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
-        def getEdgeNumber(edgeVertices):
+        def getEdgeNumber(edgeNodes):
             """
-            gmsh.model.mesh.getEdgeNumber(edgeVertices)
+            gmsh.model.mesh.getEdgeNumber(edgeNodes)
 
-            Get the matching edge number using the key edge in the hashmap _mapEdgeNum
-            : `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of
-            the edge 'edgeNum[0]' .  Warning: this is an experimental feature and will
-            probably change in a future release.
+            Get the global edge identifier `edgeNum' for an input list of node pairs,
+            concatenated in the vector `edgeNodes'.  Warning: this is an experimental
+            feature and will probably change in a future release.
 
             Return `edgeNum'.
             """
-            api_edgeVertices_, api_edgeVertices_n_ = _ivectorint(edgeVertices)
+            api_edgeNodes_, api_edgeNodes_n_ = _ivectorint(edgeNodes)
             api_edgeNum_, api_edgeNum_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetEdgeNumber(
-                api_edgeVertices_, api_edgeVertices_n_,
+                api_edgeNodes_, api_edgeNodes_n_,
                 byref(api_edgeNum_), byref(api_edgeNum_n_),
                 byref(ierr))
             if ierr.value != 0:

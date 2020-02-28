@@ -896,11 +896,10 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getEdgeNumber
       //
-      // Get the matching edge number using the key edge in the hashmap _mapEdgeNum
-      // : `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of
-      // the edge 'edgeNum[0]' .  Warning: this is an experimental feature and will
-      // probably change in a future release.
-      GMSH_API void getEdgeNumber(const std::vector<int> & edgeVertices,
+      // Get the global edge identifier `edgeNum' for an input list of node pairs,
+      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
+      // feature and will probably change in a future release.
+      GMSH_API void getEdgeNumber(const std::vector<int> & edgeNodes,
                                   std::vector<int> & edgeNum);
 
       // gmsh::model::mesh::getLocalMultipliersForHcurl0

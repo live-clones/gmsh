@@ -1355,19 +1355,18 @@ namespace gmsh { // Top-level functions
         basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
       }
 
-      // Get the matching edge number using the key edge in the hashmap _mapEdgeNum
-      // : `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of
-      // the edge 'edgeNum[0]' .  Warning: this is an experimental feature and will
-      // probably change in a future release.
-      inline void getEdgeNumber(const std::vector<int> & edgeVertices,
+      // Get the global edge identifier `edgeNum' for an input list of node pairs,
+      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
+      // feature and will probably change in a future release.
+      inline void getEdgeNumber(const std::vector<int> & edgeNodes,
                                 std::vector<int> & edgeNum)
       {
         int ierr = 0;
-        int *api_edgeVertices_; size_t api_edgeVertices_n_; vector2ptr(edgeVertices, &api_edgeVertices_, &api_edgeVertices_n_);
+        int *api_edgeNodes_; size_t api_edgeNodes_n_; vector2ptr(edgeNodes, &api_edgeNodes_, &api_edgeNodes_n_);
         int *api_edgeNum_; size_t api_edgeNum_n_;
-        gmshModelMeshGetEdgeNumber(api_edgeVertices_, api_edgeVertices_n_, &api_edgeNum_, &api_edgeNum_n_, &ierr);
+        gmshModelMeshGetEdgeNumber(api_edgeNodes_, api_edgeNodes_n_, &api_edgeNum_, &api_edgeNum_n_, &ierr);
         if(ierr) throw ierr;
-        gmshFree(api_edgeVertices_);
+        gmshFree(api_edgeNodes_);
         edgeNum.assign(api_edgeNum_, api_edgeNum_ + api_edgeNum_n_); gmshFree(api_edgeNum_);
       }
 
