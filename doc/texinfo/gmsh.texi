@@ -5108,11 +5108,11 @@ the
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}
 directory of the Gmsh distribution. C++, C, Python or Julia versions of
 several of these tutorials are also available in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/tutorial/c,tutorial/c},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/tutorial/c++,tutorial/c++},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/tutorial/python,tutorial/python}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c,tutorial/c},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++,tutorial/c++},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python,tutorial/python}
 and
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/tutorial/julia,tutorial/julia}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia,tutorial/julia}
 directories.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
@@ -5470,11 +5470,11 @@ The Gmsh Application Programming Interface (API) allows you to integrate
 the Gmsh library in your own application.  C++, C, Python and Julia
 versions of several of the @code{.geo} tutorials from @ref{Tutorial} are
 available in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/tutorial/c,tutorial/c},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/tutorial/c++,tutorial/c++},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/tutorial/python,tutorial/python}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c,tutorial/c},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++,tutorial/c++},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python,tutorial/python}
 and
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/tutorial/julia,tutorial/julia}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia,tutorial/julia}
 directories.  Other API examples are available in the
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
 directory.
