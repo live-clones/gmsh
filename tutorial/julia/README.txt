@@ -1,8 +1,8 @@
-This directory contains (parts of the) Gmsh tutorial, rewritten using the Gmsh
-Julia API.
+This directory contains Julia versions of some of the tutorials, written using
+the Gmsh API.
 
-To run the tutorials, you need the Gmsh dynamic library and the Julia module
-(`gmsh.jl'). These can be either obtained
+To run the Julia tutorials, you need the Gmsh dynamic library and the Julia
+module (`gmsh.jl'). These can be either obtained
 
 - from the binary Software Development Kit (SDK) available on the Gmsh website
   http://gmsh.info/bin/, for Windows, Linux and macOS. Download and uncompress
