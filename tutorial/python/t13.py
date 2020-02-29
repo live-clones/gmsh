@@ -10,7 +10,8 @@ gmsh.initialize()
 
 gmsh.option.setNumber("General.Terminal", 1)
 
-# Let's merge an STL mesh that we would like to remesh.
+# Let's merge an STL mesh that we would like to remesh (from the parent
+# directory):
 path = os.path.dirname(os.path.abspath(__file__))
 gmsh.merge(os.path.join(path, '..', 't13_data.stl'))
 
