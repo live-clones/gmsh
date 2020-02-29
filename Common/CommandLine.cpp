@@ -628,11 +628,11 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "saveall") ||
               !strcmp(argv[i] + 1, "save_all")) {
-        CTX::instance()->mesh.saveAll = 1;
+        opt_mesh_save_all(0, GMSH_SET, 1);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "switch_tags")) {
-        CTX::instance()->mesh.switchElementTags = 1;
+        opt_mesh_switch_elem_tags(0, GMSH_SET, 1);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "optimize")) {
@@ -641,7 +641,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
 	Msg::Warning("Use '-optimize_threshold threshold' to "
                      "control which elements are optimized");
 	Msg::Warning("Option '-optimize_threshold 0' leads to no optimization");
-        CTX::instance()->mesh.optimize = 1;
+        opt_mesh_optimize(0, GMSH_SET, 1);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "optimize_threshold")) {
@@ -654,7 +654,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         }
       }
       else if(!strcmp(argv[i] + 1, "optimize_netgen")) {
-        CTX::instance()->mesh.optimizeNetgen = 1;
+        opt_mesh_optimize_netgen(0, GMSH_SET, 1);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "optimize_ho") ||
@@ -816,7 +816,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
               !strcmp(argv[i] + 1, "anisoMax")) {
         i++;
         if(argv[i])
-          CTX::instance()->mesh.anisoMax = atof(argv[i++]);
+          opt_mesh_aniso_max(0, GMSH_SET, atof(argv[i++]));
         else{
           Msg::Error("Missing anisotropy ratio");
           if(exitOnError) Msg::Exit(1);
@@ -826,7 +826,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
               !strcmp(argv[i] + 1, "smoothRatio")) {
         i++;
         if(argv[i])
-          CTX::instance()->mesh.smoothRatio = atof(argv[i++]);
+          opt_mesh_smooth_ratio(0, GMSH_SET, atof(argv[i++]));
         else{
           Msg::Error("Missing smooth ratio");
           if(exitOnError) Msg::Exit(1);
@@ -862,7 +862,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "vmsh")) {
         i++;
         if(argv[i]){
-          CTX::instance()->mesh.mshFileVersion = atof(argv[i++]);
+          opt_mesh_msh_file_version(0, GMSH_SET, atof(argv[i++]));
         }
         else{
           Msg::Error("Missing number");
@@ -896,7 +896,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "tol")) {
         i++;
         if(argv[i])
-          CTX::instance()->geom.tolerance = atof(argv[i++]);
+          opt_geometry_tolerance(0, GMSH_SET, atof(argv[i++]));
         else{
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
@@ -909,7 +909,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "scale")) {
         i++;
         if(argv[i])
-          CTX::instance()->geom.scalingFactor = atof(argv[i++]);
+          opt_geometry_scaling_factor(0, GMSH_SET, atof(argv[i++]));
         else{
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
@@ -918,7 +918,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "meshscale")) {
         i++;
         if(argv[i])
-          CTX::instance()->mesh.scalingFactor = atof(argv[i++]);
+          opt_mesh_scaling_factor(0, GMSH_SET, atof(argv[i++]));
         else{
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
@@ -927,7 +927,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "rand")) {
         i++;
         if(argv[i])
-          CTX::instance()->mesh.randFactor = atof(argv[i++]);
+          opt_mesh_rand_factor(0, GMSH_SET, atof(argv[i++]));
         else{
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
@@ -936,8 +936,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "clscale")) {
         i++;
         if(argv[i]) {
-          CTX::instance()->mesh.lcFactor = atof(argv[i++]);
-          if(CTX::instance()->mesh.lcFactor <= 0.0){
+          opt_mesh_lc_factor(0, GMSH_SET, atof(argv[i++]));
+          if(CTX::instance()->mesh.lcFactor <= 0.0) {
             Msg::Error("Mesh element size factor must be > 0");
             if(exitOnError) Msg::Exit(1);
           }
@@ -949,13 +949,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "clmin")) {
         i++;
-        if(argv[i]) {
-          CTX::instance()->mesh.lcMin = atof(argv[i++]);
-          if(CTX::instance()->mesh.lcMin <= 0.0){
-            Msg::Error("Minimum length size must be > 0");
-            if(exitOnError) Msg::Exit(1);
-          }
-        }
+        if(argv[i])
+          opt_mesh_lc_min(0, GMSH_SET, atof(argv[i++]));
         else{
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
@@ -964,7 +959,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "clmax")) {
         i++;
         if(argv[i]) {
-          CTX::instance()->mesh.lcMax = atof(argv[i++]);
+          opt_mesh_lc_max(0, GMSH_SET, atof(argv[i++]));
           if(CTX::instance()->mesh.lcMax <= 0.0){
             Msg::Error("Maximum length size must be > 0");
             if(exitOnError) Msg::Exit(1);
@@ -982,14 +977,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "edgelmin")) {
         i++;
-        if(argv[i]) {
-          CTX::instance()->mesh.toleranceEdgeLength = atof(argv[i++]);
-          if(CTX::instance()->mesh.toleranceEdgeLength <= 0.0){
-            Msg::Error("Tolerance for model curve length must be > 0 (here %g)",
-                       CTX::instance()->mesh.toleranceEdgeLength);
-            if(exitOnError) Msg::Exit(1);
-          }
-        }
+        if(argv[i])
+          opt_mesh_tolerance_edge_length(0, GMSH_SET, atof(argv[i++]));
         else{
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
@@ -998,7 +987,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "epslc1d")) {
         i++;
         if(argv[i]) {
-          CTX::instance()->mesh.lcIntegrationPrecision = atof(argv[i++]);
+          opt_mesh_lc_integration_precision(0, GMSH_SET, atof(argv[i++]));
           if(CTX::instance()->mesh.lcIntegrationPrecision <= 0.0){
             Msg::Error("Integration accuracy must be > 0");
             if(exitOnError) Msg::Exit(1);
@@ -1011,25 +1000,18 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "swapangle")) {
         i++;
-        if(argv[i]) {
-          CTX::instance()->mesh.allowSwapEdgeAngle = atof(argv[i++]);
-          if(CTX::instance()->mesh.allowSwapEdgeAngle <= 0.0){
-            Msg::Error("Threshold angle for edge swap must be > 0");
-            if(exitOnError) Msg::Exit(1);
-          }
-        }
+        if(argv[i])
+          opt_mesh_allow_swap_edge_angle(0, GMSH_SET, atof(argv[i++]));
         else{
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
         }
       }
       else if(!strcmp(argv[i] + 1, "clcurv")) {
-        CTX::instance()->mesh.lcFromCurvature = 1;
         i++;
         if(argv[i]) {
-          CTX::instance()->mesh.minElementsPerTwoPi = atof(argv[i++]);
-          if(CTX::instance()->mesh.minElementsPerTwoPi <= 0.)
-            CTX::instance()->mesh.lcFromCurvature = 0;
+          opt_mesh_lc_from_curvature(0, GMSH_SET, 1);
+          opt_mesh_min_elements_2pi(0, GMSH_SET, atof(argv[i++]));
         }
         else{
           Msg::Error("Missing number");
@@ -1037,13 +1019,13 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         }
       }
       else if(!strcmp(argv[i] + 1, "clcurviso")) {
-        CTX::instance()->mesh.lcFromCurvature = 2;
+        opt_mesh_lc_from_curvature(0, GMSH_SET, 2);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "smooth")) {
         i++;
         if(argv[i])
-          CTX::instance()->mesh.nbSmoothing = atoi(argv[i++]);
+          opt_mesh_nb_smoothing(0, GMSH_SET, atoi(argv[i++]));
         else{
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
@@ -1089,17 +1071,17 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "bin")) {
         i++;
-        CTX::instance()->mesh.binary = 1;
+        opt_mesh_binary(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "save_parametric") ||
               !strcmp(argv[i] + 1, "parametric")) {
         i++;
-        CTX::instance()->mesh.saveParametric = 1;
+        opt_mesh_save_parametric(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "save_topology") ||
               !strcmp(argv[i] + 1, "save_entities")) {
         i++;
-        CTX::instance()->mesh.saveTopology = 1;
+        opt_mesh_save_topology(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;
@@ -1140,8 +1122,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         }
       }
       else if(!strcmp(argv[i] + 1, "quad")) {
-        CTX::instance()->mesh.recombineAll = 1;
-        CTX::instance()->mesh.algoRecombine = 2;
+        opt_mesh_recombine_all(0, GMSH_SET, 1);
+        opt_mesh_algo_recombine(0, GMSH_SET, 2);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
@@ -1296,7 +1278,6 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "camera")) {
         opt_general_camera_mode(0, GMSH_SET, 1.);
-	//        CTX::instance()->camera = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "stereo")) {

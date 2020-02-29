@@ -4938,6 +4938,10 @@ double opt_mesh_lc_factor(OPT_ARGS_NUM)
       if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.lcFactor)
         Msg::SetOnelabChanged(2);
       CTX::instance()->mesh.lcFactor = val;
+      if(CTX::instance()->mesh.lcFactor <= 0.0){
+        Msg::Error("Mesh element size factor must be > 0");
+        CTX::instance()->mesh.lcFactor = 1.;
+      }
     }
   }
 #if defined(HAVE_FLTK)
@@ -5009,9 +5013,11 @@ double opt_mesh_lc_from_curvature(OPT_ARGS_NUM)
     CTX::instance()->mesh.lcFromCurvature = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
+  if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->mesh.butt[1]->value(
       CTX::instance()->mesh.lcFromCurvature ? 1 : 0);
+    FlGui::instance()->options->activate("mesh_curvature");
+  }
 #endif
   return CTX::instance()->mesh.lcFromCurvature;
 }
@@ -5976,6 +5982,11 @@ double opt_mesh_min_elements_2pi(OPT_ARGS_NUM)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.minElementsPerTwoPi = (int)val;
   }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.value[1]->value(
+      CTX::instance()->mesh.minElementsPerTwoPi);
+#endif
   return CTX::instance()->mesh.minElementsPerTwoPi;
 }
 
