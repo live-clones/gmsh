@@ -4,6 +4,7 @@
 
 import gmsh
 import math
+import os
 
 model = gmsh.model
 factory = model.geo
@@ -26,7 +27,8 @@ factory.addPlaneSurface([1], 1)
 factory.synchronize()
 
 # add a post-processing view to use as a size field
-gmsh.merge("../t17_bgmesh.pos")
+path = os.path.dirname(os.path.abspath(__file__))
+gmsh.merge(os.path.join(path, '..', 't17_bgmesh.pos'))
 
 bg_field = model.mesh.field.add("PostView")
 model.mesh.field.setAsBackgroundMesh(bg_field)

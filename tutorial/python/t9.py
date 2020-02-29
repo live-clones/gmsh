@@ -3,6 +3,7 @@
 # Post-processing plugins (levelsets, sections, annotations)
 
 import gmsh
+import os
 
 model = gmsh.model
 factory = model.geo
@@ -11,7 +12,8 @@ gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
 
 # add a three-dimensional scalar view to work on:
-gmsh.merge("../view3.pos")
+path = os.path.dirname(os.path.abspath(__file__))
+gmsh.merge(os.path.join(path, '..', 'view3.pos'))
 
 # set plugin options
 plugin = gmsh.plugin

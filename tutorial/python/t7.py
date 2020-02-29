@@ -3,6 +3,7 @@
 # Background mesh
 
 import gmsh
+import os
 
 model = gmsh.model
 factory = model.geo
@@ -31,7 +32,8 @@ model.setPhysicalName(2, 6, "My surface")
 factory.synchronize()
 
 # add the background mesh file as a view
-gmsh.merge("../t7_bgmesh.pos")
+path = os.path.dirname(os.path.abspath(__file__))
+gmsh.merge(os.path.join(path, '..', 't7_bgmesh.pos'))
 
 # add the post-processing view as a new size field
 bg_field = model.mesh.field.add("PostView")

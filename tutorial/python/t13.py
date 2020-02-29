@@ -4,13 +4,15 @@
 
 import gmsh
 import math
+import os
 
 gmsh.initialize()
 
 gmsh.option.setNumber("General.Terminal", 1)
 
 # Let's merge an STL mesh that we would like to remesh.
-gmsh.merge("../t13_data.stl")
+path = os.path.dirname(os.path.abspath(__file__))
+gmsh.merge(os.path.join(path, '..', 't13_data.stl'))
 
 # We first classify ("color") the surfaces by splitting the original surface
 # along sharp geometrical features. This will create new discrete surfaces,

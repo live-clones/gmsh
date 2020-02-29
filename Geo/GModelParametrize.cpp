@@ -281,6 +281,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
     for(size_t i = 0; i < vs_.size(); i++) {
       bool periodic = (vs_[i][vs_[i].size() - 1] == vs_[i][0]);
       if(periodic) {
+        printf("hha periodic first=%g %g %g\n", vs_[i][0]->x(), vs_[i][0]->y(), vs_[i][0]->z());
         for(size_t j = 0; j < vs_[i].size() - 1; j++) {
           MVertex *v0 = vs_[i][j == 0 ? vs_[i].size() - 1 : j - 1];
           MVertex *v1 = vs_[i][j];
@@ -288,12 +289,16 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
           if(breakForLargeAngle(v0, v1, v2, curveAngleThreshold)) {
             std::vector<MVertex *> temp;
             for(size_t k = j; k < vs_[i].size() + j; k++) {
+              printf("adding %d to temp\n", k);
               temp.push_back(vs_[i][k % vs_[i].size()]);
             }
             vs_[i] = temp;
             break;
           }
         }
+      }
+      else{
+        printf("nonperiodic\n");
       }
 
       std::vector<size_t> cuts_;
@@ -306,6 +311,10 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
           cuts_.push_back(j);
       }
       cuts_.push_back(vs_[i].size() - 1);
+
+      printf("cuts = ");
+      for(int kk = 0; kk < cuts_.size(); kk++) printf("%d ", cuts_[kk]);
+      printf("\n");
 
       MVertex *first = vs_[i][cuts_[0]];
       for(size_t k = 1; k < cuts_.size(); k++) {
