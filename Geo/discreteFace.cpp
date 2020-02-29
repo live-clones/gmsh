@@ -531,8 +531,8 @@ int discreteFace::createGeometry()
 void discreteFace::_computeSTLNormals()
 {
   stl_normals.clear();
-  int T = stl_triangles.size() / 3;
-  int N = stl_vertices_xyz.size();
+  std::size_t T = stl_triangles.size() / 3;
+  std::size_t N = stl_vertices_xyz.size();
   if(!N || !T) return;
   stl_normals.resize(N);
   for(std::size_t i = 0; i < T; i++) {
