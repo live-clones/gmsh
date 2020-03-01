@@ -5,7 +5,7 @@
 #include <queue>
 #include <vector>
 
-// GMSH INCLUDES ...
+// GMSH INCLUDES
 
 #include "SPoint3.h"
 #include "SVector3.h"
@@ -37,57 +37,46 @@ typedef struct HXTForestOptions{
   double 				hmin;
   double 				hbulk;
   double 				gradMax;
-  int                   nodePerTwoPi;
-  int                   nodePerGap;
-  double               *bbox;
-  double               *nodalCurvature;
-  double               *nodeNormals;
-  double              (*sizeFunction)(double, double, double, double) ;
+  int           nRefine;
+  int           nodePerTwoPi;
+  int           nodePerGap;
+  double       *bbox;
+  double       *nodalCurvature;
+  double       *nodeNormals;
+  double      (*sizeFunction)(double, double, double, double);
   RTree<uint64_t,double,3>  *triRTree;
-  HXTMesh              *mesh;
-  const char           *filename;
+  HXTMesh      *mesh;
+  const char   *filename;
 } HXTForestOptions;
 
 typedef struct HXTForest{
 #ifdef HAVE_P4EST
-  p4est_t          *p4est;
+  p4est_t *p4est;
 #endif 
-  HXTForestOptions  *forestOptions;
+  HXTForestOptions *forestOptions;
 } HXTForest;
 
-// Donnees disponibles sur chaque quadrant
+// Data available on each tree cell
 typedef struct size_data{
   double size;
 #ifdef HAVE_P4EST
+  // Size gradient
   double ds[P4EST_DIM];
 #endif 
-  double d2s; // Laplacien
-
   double h;
-  // Les tailles pour les differences finies
+  // Half cell length for finite differences
   double h_xL, h_xR;
   double h_yD, h_yU;
-  
-  double h_xavg;
-  double h_yavg;
-  
   double h_zB, h_zT;
-  double h_zavg;
-
-  double hMin;
-  
-  int refineFlag; 
-  int coarsenFlag; 
-  
+  int isBoundary;
 } size_data_t;
 
-// Un point pour la recherche dans l'arbre
+// A node to search in the tree
 typedef struct size_point{
   double x;
   double y;
   double z;
   double size;
-  int surfaceFlag;
   bool isFound;
 } size_point_t;
 
@@ -96,28 +85,20 @@ typedef struct size_fun{
 } size_fun_t;
 
 // API ---------------------------------------------------------------------------------------------
-HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char* filename, HXTForestOptions *forestOptions);
-HXTStatus hxtForestDelete(HXTForest **forest);
 HXTStatus hxtForestOptionsCreate(HXTForestOptions **forestOptions);
 HXTStatus hxtForestOptionsDelete(HXTForestOptions **forestOptions);
 
-HXTStatus hxtOctreeRefineToBulkSize(HXTForest *forest);
-HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax);
+HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char* filename, HXTForestOptions *forestOptions);
+HXTStatus hxtForestDelete(HXTForest **forest);
 
-HXTStatus hxtOctreeComputeGradient(HXTForest *forest);
-HXTStatus hxtOctreeSetMaxGradient(HXTForest *forest);
-HXTStatus hxtOctreeComputeMaxGradientX(HXTForest *forest, double *dsdx_max);
-HXTStatus hxtOctreeComputeMaxGradientY(HXTForest *forest, double *dsdy_max);
-HXTStatus hxtOctreeComputeMaxGradientZ(HXTForest *forest, double *dsdz_max);
-HXTStatus hxtOctreeComputeMinimumSize(HXTForest *forest, double *size_min);
-HXTStatus hxtOctreeComputeMaximumSize(HXTForest *forest, double *size_max);
+HXTStatus hxtForestExport(HXTForest *forest);
+HXTStatus hxtForestLoad(HXTForest **forest, const char* filename);
 
-HXTStatus hxtOctreeSmoothGradient(HXTForest *forest, int nMax);
-
+HXTStatus hxtForestRefine(HXTForest *forest);
+HXTStatus hxtForestSizeSmoothing(HXTForest *forest);
 HXTStatus hxtOctreeSurfacesProches(HXTForest *forest);
+
 HXTStatus hxtOctreeElementEstimation(HXTForest *forest, double *elemEstimate);
 HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, double *size);
-
-HXTStatus hxtOctreeExport(HXTForest *forest);
 
 #endif

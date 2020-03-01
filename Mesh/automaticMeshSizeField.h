@@ -20,13 +20,14 @@ class automaticMeshSizeField : public Field {
   HXTStatus updateHXT();
 #endif
 
+  std::string _forestFile;
   int _nPointsPerCircle;
   int _nPointsPerGap;
   double _hmin, _hmax;
   double _hbulk;
   double _gradientMax;
   int _nRefine;
-  bool _smoothing, _gaps;
+  bool _smoothing, _gaps,_tetMesh;
 
  public:
   ~automaticMeshSizeField();
@@ -35,15 +36,20 @@ class automaticMeshSizeField : public Field {
   forest(NULL), forestOptions(NULL)
 #endif
   {
+    _forestFile = "";
     _nPointsPerCircle = 20;
     _nPointsPerGap = 5;
     _hmin  = -1.0;// update needed
     _hmax  = -1.0;// update needed    
     _hbulk = -1.0; // update needed
     _gradientMax = 1.4;
-    _nRefine = 5;
+    _nRefine = 10;
     _smoothing = true;
     _gaps = true;
+    _tetMesh = false;
+
+    options["FileToLoad"] = new FieldOptionString(_forestFile,
+                 "p4est file containing the size field",&update_needed);    
 
     options["nPointsPerCircle"] = new FieldOptionInt(_nPointsPerCircle,
 						     "Number of points per circle (adapt to curvature of surfaces)",&update_needed);
@@ -71,6 +77,9 @@ class automaticMeshSizeField : public Field {
 
     options["Gaps"] = new FieldOptionBool(_gaps,
               "Tenir compte des gaps ?",&update_needed);
+
+    // options["TetMesh"] = new FieldOptionBool(_tetMesh,
+    //           "Generate 3D mesh ? (choose if surface mesh has already been recomputed)",&update_needed);
 
     update_needed = true;
     // update();
