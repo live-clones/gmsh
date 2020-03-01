@@ -1687,61 +1687,12 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
 {
   if(!getTypeForVTK()) return;
 
-  int type = getTypeForVTK();
   int n = getNumVertices();
-  int vertexOrder[60];
-  // Gmsh cells are mostly ordered like VTK, with a few exceptions
-  if(type == 13){
-    vertexOrder[0] = 0;
-    vertexOrder[1] = 2;
-    vertexOrder[2] = 1;
-    vertexOrder[3] = 3;
-    vertexOrder[4] = 5;
-    vertexOrder[5] = 4;
-  }
-  else if(type == 24){
-    vertexOrder[0] = 0;
-    vertexOrder[1] = 1;
-    vertexOrder[2] = 2;
-    vertexOrder[3] = 3;
-    vertexOrder[4] = 4;
-    vertexOrder[5] = 5;
-    vertexOrder[6] = 6;
-    vertexOrder[7] = 7;
-    vertexOrder[8] = 9;
-    vertexOrder[9] = 8;
-  }
-  else if(type == 25){
-    vertexOrder[0] = 0;
-    vertexOrder[1] = 1;
-    vertexOrder[2] = 2;
-    vertexOrder[3] = 3;
-    vertexOrder[4] = 4;
-    vertexOrder[5] = 5;
-    vertexOrder[6] = 6;
-    vertexOrder[7] = 7;
-    vertexOrder[8] = 8;
-    vertexOrder[9] = 11;
-    vertexOrder[10] = 13;
-    vertexOrder[11] = 9;
-    vertexOrder[12] = 16;
-    vertexOrder[13] = 18;
-    vertexOrder[14] = 19;
-    vertexOrder[15] = 17;
-    vertexOrder[16] = 10;
-    vertexOrder[17] = 12;
-    vertexOrder[18] = 14;
-    vertexOrder[19] = 15;
-  }
-  else{
-    for(int j = 0; j < n; j++)
-      vertexOrder[j] = j;
-  }
   if(binary) {
     int verts[60];
     verts[0] = n;
     for(int i = 0; i < n; i++)
-      verts[i + 1] = (int)getVertexVTK(vertexOrder[i])->getIndex() - 1;
+      verts[i + 1] = (int)getVertexVTK(i)->getIndex() - 1;
     // VTK always expects big endian binary data
     if(!bigEndian) SwapBytes((char *)verts, sizeof(int), n + 1);
     fwrite(verts, sizeof(int), n + 1, fp);
@@ -1749,7 +1700,7 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
   else {
     fprintf(fp, "%d", n);
     for(int i = 0; i < n; i++)
-      fprintf(fp, " %ld", getVertexVTK(vertexOrder[i])->getIndex() - 1);
+      fprintf(fp, " %ld", getVertexVTK(i)->getIndex() - 1);
     fprintf(fp, "\n");
   }
 }
