@@ -10,6 +10,7 @@ docker build -f Dockerfile.debian.wheezy.32bit -t onelab/debian.wheezy.32bit --b
 
 docker login
 docker push onelab/ubuntu18.10
+docker push onelab/ubuntu20.04
 docker push onelab/debian.wheezy.64bit
 docker push onelab/debian.wheezy.32bit
 
