@@ -250,7 +250,8 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace*> &faces, bool binary,
   }
   else {
     char header[80];
-    strncpy(header, name.c_str(), 80);
+    strncpy(header, name.c_str(), 79);
+    header[79] = '\0';
     fwrite(header, sizeof(char), 80, fp);
     fwrite(&nfacets, sizeof(unsigned int), 1, fp);
   }
