@@ -63,6 +63,11 @@ static double atofBDF(char *str)
   return atof(tmp);
 }
 
+static void copyChar(char *out, const char *in, int num)
+{
+  for(int i = 0; i < num; i++) out[i] = in[i];
+}
+
 static int readVertexBDF(FILE *fp, char *buffer, int keySize, int *num,
                          double *x, double *y, double *z)
 {
@@ -74,7 +79,7 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize, int *num,
   case -1: // free field with continuation
     for(int i = 0; i < 5; i++) {
       tmp[i][31] = '\0';
-      strncpy(tmp[i], &buffer[j + 1], 31);
+      copyChar(tmp[i], &buffer[j + 1], 31);
       for(int k = 0; k < 31; k++) {
         if(tmp[i][k] == ',') tmp[i][k] = '\0';
       }
@@ -86,25 +91,25 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize, int *num,
       if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
       j = 0;
       while(j < (int)strlen(buffer2) && buffer2[j] != ',') j++;
-      strncpy(tmp[4], &buffer2[j + 1], 31);
+      copyChar(tmp[4], &buffer2[j + 1], 31);
     }
     break;
   case 1: // small field
     for(int i = 0; i < 5; i++) tmp[i][8] = '\0';
-    strncpy(tmp[0], &buffer[8], 8);
-    strncpy(tmp[2], &buffer[24], 8);
-    strncpy(tmp[3], &buffer[32], 8);
-    strncpy(tmp[4], &buffer[40], 8);
+    copyChar(tmp[0], &buffer[8], 8);
+    copyChar(tmp[2], &buffer[24], 8);
+    copyChar(tmp[3], &buffer[32], 8);
+    copyChar(tmp[4], &buffer[40], 8);
     break;
   case 2: // long field
     for(int i = 0; i < 5; i++) tmp[i][16] = '\0';
-    strncpy(tmp[0], &buffer[8], 16);
-    strncpy(tmp[2], &buffer[40], 16);
-    strncpy(tmp[3], &buffer[56], 16);
+    copyChar(tmp[0], &buffer[8], 16);
+    copyChar(tmp[2], &buffer[40], 16);
+    copyChar(tmp[3], &buffer[56], 16);
     char buffer2[256];
     for(std::size_t i = 0; i < sizeof(buffer2); i++) buffer2[i] = '\0';
     if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
-    strncpy(tmp[4], &buffer2[8], 16);
+    copyChar(tmp[4], &buffer2[8], 16);
     break;
   default:
     return 0;
@@ -181,12 +186,12 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
   int n[30], cmax = (format == 2) ? 16 : 8; // max char per (center) field
   char tmp[32];
   tmp[cmax] = '\0';
-  strncpy(tmp, fields[0], cmax);
+  copyChar(tmp, fields[0], cmax);
   num = atoi(tmp);
-  strncpy(tmp, fields[1], cmax);
+  copyChar(tmp, fields[1], cmax);
   region = atoi(tmp);
   for(std::size_t i = 2; i < fields.size(); i++) {
-    strncpy(tmp, fields[i], cmax);
+    copyChar(tmp, fields[i], cmax);
     n[i - 2] = atoi(tmp);
   }
 
