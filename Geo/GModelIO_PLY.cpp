@@ -9,6 +9,7 @@
 #include "GModel.h"
 #include "MTriangle.h"
 #include "OS.h"
+#include "StringUtils.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -29,15 +30,6 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
   return true;
 }
 
-static void replaceCommaByDot(const std::string &name)
-{
-  char myCommand[1000], myCommand2[1000];
-  sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
-  SystemCall(myCommand, true);
-  sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
-  SystemCall(myCommand2, true);
-}
-
 #if defined(HAVE_POST)
 static bool getProperties(int num, int *indices, std::vector<double> &vec,
                           std::vector<double> &properties)
@@ -56,10 +48,7 @@ static bool getProperties(int num, int *indices, std::vector<double> &vec,
 
 int GModel::readPLY(const std::string &name)
 {
-  // this is crazy!?
-  replaceCommaByDot(name);
-
-  FILE *fp = Fopen(name.c_str(), "r");
+  FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -76,6 +65,8 @@ int GModel::readPLY(const std::string &name)
   int nbprop = 0;
   int nbView = 0;
   std::vector<std::string> propName;
+  bool binary = false;
+  bool swap = false;
   while(!feof(fp)) {
     if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(buffer[0] != '#') { // skip comments
@@ -84,9 +75,12 @@ int GModel::readPLY(const std::string &name)
         sscanf(buffer, "%s %s %d", str, str2, &nbv);
       }
       if(!strcmp(str, "format") && strcmp(str2, "ascii")) {
-        Msg::Error("Only reading of ascii PLY files implemented");
-        fclose(fp);
-        return 0;
+        Msg::Warning("Reading binary PLY files is experimental");
+        binary = true;
+        if(!strcmp(str2, "binary_big_endian")) {
+          Msg::Debug("Reading binary PLY file as big-endian");
+          swap = true;
+        }
       }
       if(!strcmp(str, "property") && strcmp(str2, "list")) {
         nbprop++;
@@ -101,39 +95,71 @@ int GModel::readPLY(const std::string &name)
         Msg::Info("%d elements", nbv);
         Msg::Info("%d triangles", nbf);
         Msg::Info("%d properties", nbView);
-
         vertexVector.resize(nbv);
-        for(int i = 0; i < nbv; i++) {
-          double x, y, z;
-          char line[10000], *pEnd, *pEnd2, *pEnd3;
-          if(!fgets(line, sizeof(line), fp)) {
-            fclose(fp);
-            return 0;
-          }
-          x = strtod(line, &pEnd);
-          y = strtod(pEnd, &pEnd2);
-          z = strtod(pEnd2, &pEnd3);
-          vertexVector[i] = new MVertex(x, y, z);
+        if(!binary) {
+          for(int i = 0; i < nbv; i++) {
+            double x, y, z;
+            char line[10000], *pEnd, *pEnd2, *pEnd3;
+            if(!fgets(line, sizeof(line), fp)) {
+              fclose(fp);
+              return 0;
+            }
+            x = strtod(line, &pEnd);
+            y = strtod(pEnd, &pEnd2);
+            z = strtod(pEnd2, &pEnd3);
+            vertexVector[i] = new MVertex(x, y, z);
 
-          pEnd = pEnd3;
-          std::vector<double> prop(nbView);
-          for(int k = 0; k < nbView; k++) {
-            prop[k] = strtod(pEnd, &pEnd2);
-            pEnd = pEnd2;
-            properties[k].push_back(prop[k]);
+            pEnd = pEnd3;
+            std::vector<double> prop(nbView);
+            for(int k = 0; k < nbView; k++) {
+              prop[k] = strtod(pEnd, &pEnd2);
+              pEnd = pEnd2;
+              properties[k].push_back(prop[k]);
+            }
+          }
+
+          for(int i = 0; i < nbf; i++) {
+            if(!fgets(buffer, sizeof(buffer), fp)) break;
+            int n[3], nbe;
+            sscanf(buffer, "%d %d %d %d", &nbe, &n[0], &n[1], &n[2]);
+            std::vector<MVertex *> vertices;
+            if(!getMeshVertices(3, n, vertexVector, vertices)) {
+              fclose(fp);
+              return 0;
+            }
+            elements[0][elementary].push_back(new MTriangle(vertices));
           }
         }
-
-        for(int i = 0; i < nbf; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[3], nbe;
-          sscanf(buffer, "%d %d %d %d", &nbe, &n[0], &n[1], &n[2]);
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(3, n, vertexVector, vertices)) {
-            fclose(fp);
+        else { // binary
+          std::size_t num_coords = 3 * nbv;
+          std::vector<float> coord(num_coords);
+          if(fread(&coord[0], sizeof(float), num_coords, fp) != num_coords) {
             return 0;
           }
-          elements[0][elementary].push_back(new MTriangle(vertices));
+          for(int i = 0; i < nbv; i++) {
+            vertexVector[i] =
+              new MVertex(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
+          }
+          // TODO add properties
+          for(int i = 0; i < nbf; i++) {
+            unsigned char nbe;
+            int n[3]; // only handle triangles
+            if(fread(&nbe, sizeof(char), 1, fp) != 1) {
+              fclose(fp);
+              return 0;
+            }
+            if(fread(n, sizeof(int), 3, fp) != 3) {
+              fclose(fp);
+              return 0;
+            }
+            if(swap) SwapBytes((char *)n, sizeof(int), 3);
+            std::vector<MVertex *> vertices;
+            if(!getMeshVertices(3, n, vertexVector, vertices)) {
+              fclose(fp);
+              return 0;
+            }
+            elements[0][elementary].push_back(new MTriangle(vertices));
+          }
         }
       }
     }
