@@ -26,6 +26,7 @@ static p4est_connectivity_t * p8est_connectivity_new_cube(HXTForestOptions *fore
   double scalingFactor = 1.5; // The octree is this times bigger than the surface mesh's bounding box
   double c = scalingFactor * fmax(fmax(cX,cY),cZ);
 
+  // TODO : Compute any bounding box, not necessarily aligned with the axes
   const double vertices[8 * 3] = {
     centreX-c, centreY-c, centreZ-c,
     centreX+c, centreY-c, centreZ-c,
@@ -911,7 +912,7 @@ HXTStatus hxtForestSizeSmoothing(HXTForest *forest){
     HXT_CHECK( hxtForestGetMaxGradient(forest, gradMax) );
     gradLinf = fmax( gradMax[0], fmax( gradMax[1], gradMax[2]) );
   }
-  printf("Max gradient after smoothing : (%f - %f - %f)\n", gradMax[0], gradMax[1], gradMax[2]);
+  Msg::Info("Max gradient after smoothing : (%f - %f - %f)", gradMax[0], gradMax[1], gradMax[2]);
 
   return HXT_STATUS_OK;
 }
@@ -977,7 +978,7 @@ HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, do
   
   p4est_search(forest->p4est, NULL, searchCallback, points);
 
-  if(!p->isFound) printf("Point (%f,%f,%f) n'a pas été trouvé dans l'octree 8-|\n", x,y,z);
+  if(!p->isFound) Msg::Info("Point (%f,%f,%f) n'a pas été trouvé dans l'octree 8-|", x,y,z);
   *size = p->size;
 
   sc_array_destroy(points);
@@ -1467,23 +1468,22 @@ void exportToHexCallback(p4est_iter_volume_info_t * info, void *user_data){
 }
 
 HXTStatus hxtForestExport(HXTForest *forest){
-
   FILE* f = fopen(forest->forestOptions->filename, "w");
   if(f==NULL)
     return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-
   fprintf(f, "View \"sizeField\" {\n");
-  
   p4est_iterate(forest->p4est, NULL, (void*) f, exportToHexCallback, NULL,
             #ifdef P4_TO_P8
                         NULL,
             #endif
                         NULL);
-
   fprintf(f, "};");
   fclose(f);
+}
 
+HXTStatus hxtForestSave(HXTForest *forest){
   p4est_save_ext("octreeExport.p4est", forest->p4est, true, false);
+  return HXT_STATUS_OK;
 }
 
 #else // HAVE_P4EST

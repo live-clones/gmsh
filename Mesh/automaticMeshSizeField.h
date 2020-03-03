@@ -37,13 +37,13 @@ class automaticMeshSizeField : public Field {
 #endif
   {
     _forestFile = "";
-    _nPointsPerCircle = 20;
-    _nPointsPerGap = 5;
+    _nPointsPerCircle = 30;
+    _nPointsPerGap = 4;
     _hmin  = -1.0;// update needed
     _hmax  = -1.0;// update needed    
     _hbulk = -1.0; // update needed
-    _gradientMax = 1.4;
-    _nRefine = 10;
+    _gradientMax = 1.1;
+    _nRefine = 20;
     _smoothing = true;
     _gaps = true;
     _tetMesh = false;
