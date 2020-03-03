@@ -31,9 +31,9 @@ class automaticMeshSizeField : public Field {
 
  public:
   ~automaticMeshSizeField();
-  automaticMeshSizeField(std::string fFile = "") : 
+  automaticMeshSizeField(std::string fFile = "")  
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
-  forest(NULL), forestOptions(NULL)
+  :  forest(NULL), forestOptions(NULL)
 #endif
   {
     _forestFile = fFile;
