@@ -7,15 +7,17 @@
 
 #pragma once
 
+#include <cstddef>
+#include <ostream>
 #include <string>
 #include <sstream>
-#include <iostream>
 #include <sstream>
 #include <vector>
 #include <array>
 #include <algorithm>
 
 namespace QMT_Utils {
+  using std::size_t;
   template<class T1,class T2>
     std::ostream& operator<<(std::ostream& os, const std::pair<T1,T2>& val) { 
       return os << "(" << val.first << "," << val.second << ")";

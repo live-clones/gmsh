@@ -7,8 +7,25 @@
 - Discretization: one cross per edge (Crouzeix-Raviart), with vector representation (cos(4*theta),sin(4*theta))
 - Boundary conditions: fixed crosses on mesh open boundary, on lines and on non-manifold surface edges
 - Scheme: successive heat diffusion (ie (M+dt*L) u_i+1 = M u_i) followed by cross projection (normalization of the vectors)
-- Time-step `dt` starts large (~10 * h^2) and decreases linearly to the final value (~h^2)
-- Implementation in `qmt_cross_field.cpp`
+- WARNING: optimizations (one sparsity analysis, one factorization per time-step) are only done when using the MUMPS solver. 
+See detailed algorithm.  Install and enable MUMPS for fast computations. 
+- Main implementation in `qmt_cross_field.cpp`, linear system calls in `qmt_linalg_solver.cpp`, custom MUMPS interface (to call analysis and factorization) in `linearSystemMUMPS2.cpp`.
+- Detailed algorithm:
+
+    - assemble M^(-1)*K (Crouzeix-Raviat coefficients)
+    - sparsity analysis of M^(-1)*K  (if MUMPS)
+    - dt_init = 0.1 * bbox diagonal
+    - dt_f = (2*edge_min)^2
+    - for each step i:
+      - dt = dt_init + (dt_f-dt_init) * i/(nbSteps-1)
+      - update matrix to get (I/dt+M^(-1)*K) x_i = x_(i-1)/dt
+      - factorize matrix (if MUMPS)
+      - while dnorm_max > 1.e-3:
+        - update rhs
+        - solve linear system (if MUMPS: almost free as matrix factorized, else: full solver cost)
+        - project crosses (i.e. normalize representation vectors)
+        - dnorm_max = max(norm_crosses-previous_norm_crosses)
+
 
 ### 2. Quad mesh generation from quadrilateral patches
 
