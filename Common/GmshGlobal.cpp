@@ -26,6 +26,7 @@ typedef unsigned long intptr_t;
 #include "robustPredicates.h"
 #include "BasisFactory.h"
 #include "gmshCrossFields.h"
+#include "automaticMeshSizeField.h"
 
 
 #if defined(HAVE_PARSER)
@@ -303,11 +304,17 @@ int GmshBatch()
 
 #if defined(HAVE_POST) && defined(HAVE_MESH)
   if(!CTX::instance()->bgmFileName.empty()) {
-    MergePostProcessingFile(CTX::instance()->bgmFileName);
-    if(PView::list.size())
-      GModel::current()->getFields()->setBackgroundMesh(PView::list.size() - 1);
-    else
-      Msg::Error("Invalid background mesh (no view)");
+    if(CTX::instance()->bgmFileName.substr(CTX::instance()->bgmFileName.find_last_of(".") + 1) == "p4est"){
+      automaticMeshSizeField * a = new automaticMeshSizeField (CTX::instance()->bgmFileName);
+      GModel::current()->getFields()->setBackgroundField(a);	
+    }
+    else {
+      MergePostProcessingFile(CTX::instance()->bgmFileName);
+      if(PView::list.size())
+	GModel::current()->getFields()->setBackgroundMesh(PView::list.size() - 1);
+      else
+	Msg::Error("Invalid background mesh (no view)");
+    }
   }
 #endif
 
@@ -436,11 +443,23 @@ int GmshFLTK(int argc, char **argv)
 
   // read background mesh if any
   if(!CTX::instance()->bgmFileName.empty()) {
-    MergePostProcessingFile(CTX::instance()->bgmFileName);
-    if(PView::list.size())
-      GModel::current()->getFields()->setBackgroundMesh(PView::list.size() - 1);
-    else
-      Msg::Error("Invalid background mesh (no view)");
+
+    // If the background mesh is an octree (we us p4est), then we load the  background mesh
+    // as an automaticMeshSizeField 
+    if(CTX::instance()->bgmFileName.substr(CTX::instance()->bgmFileName.find_last_of(".") + 1) == "p4est"){
+      automaticMeshSizeField * a = new automaticMeshSizeField (CTX::instance()->bgmFileName);
+      //      int newId = GModel::current()->getFields()->newId();
+      //      (*GModel::current()->getFields())[newId] = a;
+      //      printf("loading %s\n",CTX::instance()->bgmFileName.c_str());
+      GModel::current()->getFields()->setBackgroundField(a);	
+    }
+    else {
+      MergePostProcessingFile(CTX::instance()->bgmFileName);
+      if(PView::list.size())
+	GModel::current()->getFields()->setBackgroundMesh(PView::list.size() - 1);
+      else
+	Msg::Error("Invalid background mesh (no view)");
+    }
   }
 
   // listen to external solvers

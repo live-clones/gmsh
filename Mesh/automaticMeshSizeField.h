@@ -31,12 +31,12 @@ class automaticMeshSizeField : public Field {
 
  public:
   ~automaticMeshSizeField();
-  automaticMeshSizeField() : 
+  automaticMeshSizeField(std::string fFile = "") : 
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   forest(NULL), forestOptions(NULL)
 #endif
   {
-    _forestFile = "";
+    _forestFile = fFile;
     _nPointsPerCircle = 30;
     _nPointsPerGap = 4;
     _hmin  = -1.0;// update needed
@@ -82,7 +82,8 @@ class automaticMeshSizeField : public Field {
     //           "Generate 3D mesh ? (choose if surface mesh has already been recomputed)",&update_needed);
 
     update_needed = true;
-    // update();
+    
+    if (fFile != "") update();
   }
 
   const char *getName() { return "AutomaticMeshSizeField"; }
