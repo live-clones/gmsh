@@ -115,6 +115,7 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     ReplaceSubStringInPlace("\t", " (", tmp);
     ReplaceSubStringInPlace("\n", ")\t", tmp);
     strncpy(thefilter2, tmp.c_str(), sizeof(thefilter2) - 1);
+    thefilter2[sizeof(thefilter2) - 1] = '\0';
   }
 
   // determine where to start
