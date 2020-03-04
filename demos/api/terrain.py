@@ -129,19 +129,19 @@ v2 = gmsh.model.geo.addVolume([sl2])
 gmsh.model.geo.synchronize()
 
 # set this to True to build a fully hex mesh
-transfinite = True
-#transfinite = False
+#transfinite = True
+transfinite = False
 
 if transfinite:
     NN = 30
     for c in gmsh.model.getEntities(1):
         gmsh.model.mesh.setTransfiniteCurve(c[1], NN)
-        for s in gmsh.model.getEntities(2):
-            gmsh.model.mesh.setTransfiniteSurface(s[1])
-            gmsh.model.mesh.setRecombine(s[0], s[1])
-            gmsh.model.mesh.setSmoothing(s[0], s[1], 100)
-            gmsh.model.mesh.setTransfiniteVolume(v1)
-            gmsh.model.mesh.setTransfiniteVolume(v2)
+    for s in gmsh.model.getEntities(2):
+        gmsh.model.mesh.setTransfiniteSurface(s[1])
+        gmsh.model.mesh.setRecombine(s[0], s[1])
+        gmsh.model.mesh.setSmoothing(s[0], s[1], 100)
+    gmsh.model.mesh.setTransfiniteVolume(v1)
+    gmsh.model.mesh.setTransfiniteVolume(v2)
 else:
     gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.05)
     gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.05)
