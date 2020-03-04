@@ -1,6 +1,8 @@
 #include <math.h>
 #include <time.h>
 #include "hxt_curvature.h"
+#include "hxt_api.h"
+#include <assert.h>
 
 #define tolerance 0.1e-20
  
@@ -189,8 +191,15 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
   uint64_t nTriangles  = mesh->triangles.num;
   //  uint64_t nEdgesBdry = mesh->lines.num;
   uint64_t nVertices   = mesh->vertices.num;
-  
-  HXT_CHECK(hxtMalloc(nodalCurvatures,6*nVertices*sizeof(double))); 
+
+  // printf("nVertices = %d\n", nVertices);
+    
+  HXT_CHECK(hxtMalloc(nodalCurvatures,6*nVertices*sizeof(double)));
+  for(uint64_t i = 0; i < 6*nVertices; ++i){ (*nodalCurvatures)[i] = NAN; }
+
+  double *nodalCurvatures2;
+  HXT_CHECK(hxtMalloc(&nodalCurvatures2,6*nVertices*sizeof(double)));
+  for(uint64_t i = 0; i < 6*nVertices; ++i){ nodalCurvatures2[i] = NAN; }
 
   uint64_t *node2tri;
   HXT_CHECK(hxtMalloc(&node2tri,3*2*nTriangles*sizeof(uint64_t))); 
@@ -202,7 +211,7 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
   uint64_t counter = 0;
 
   double n[3],surf;
-  
+
   for (uint64_t i = 0; i<nTriangles; i++){
     node2tri[counter++] = mesh->triangles.node[3*i+0];// first node of triangle i
     node2tri[counter++] = i;// index of current triangle
@@ -222,13 +231,24 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
       n2[i1]+=n[i1];
     }
   }
-  for (uint64_t i = 0; i<nVertices; i++)normalize(&nodeNormals[3*i]);  
+
+  for (uint64_t i = 0; i<nVertices; i++){ normalize(&nodeNormals[3*i]); }
+  
   if (debug) saveNodalField (mesh,nodeNormals, 3, "normals.pos");
   
   qsort(node2tri,3*nTriangles,2*sizeof(uint64_t),node2trianglescmp);
-  for (uint64_t i = 0; i<nTriangles; i++){
-    
-  }
+
+  // for (uint64_t i = 0; i<3*nTriangles; i++){
+  //   if(node2tri[2*i+0] == nVertices-1){
+  //     printf("====================== FOUND ======================\n");
+  //   }
+  //   printf("node2tri[%d] = %lu\n", 2*i+0, node2tri[2*i+0]);
+  //   printf("node2tri[%d] = %lu\n", 2*i+1, node2tri[2*i+1]);
+  //   if(node2tri[2*i+0] == nVertices-1){
+  //     printf("====================== FOUND ======================\n");
+  //   }
+  // }
+
 
   // --> COMPUTE THE SECOND FUNDAMENTAL TENSOR ON EACH TRIANGLE USING LEAST SQUARES  
 
@@ -303,12 +323,80 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
     CURV[4*i+1] = CURV[4*i+2] = 0.5* (CURV[4*i+1] + CURV[4*i+2]);
   }
 
-  // Getting vertex curvatures by averaging triangle curvatures
+  // // Getting vertex curvatures by averaging triangle curvatures
+  // uint64_t currentVertex = node2tri[0];
+  // uint64_t count = 0;
+  // double uP[3],vP[3], A, B, D;
+  // uint64_t iVertex   = node2tri[2*0+0];
+  // uint64_t iTriangle = node2tri[2*0+1];
+  
+  // for(uint64_t i = 1; i<3*nTriangles; ++i){    
+  //   printf("i = %d/%d\t iTriangle = %d \t iVertex = %d\n",i,3*nTriangles,iTriangle,iVertex);
+    
+  //   // printf("%lu: %lu (%lu) |-> %lu\n",i,node2tri[2*i+0],currentVertex,node2tri[2*i+1]);
+
+  //   // if(currentVertex == iVertex){
+  //     // computing each curvature around a vertex
+  //     unitNormal2Triangle ( mesh->vertices.coord + 4*mesh->triangles.node[3*iTriangle+0],
+  //                           mesh->vertices.coord + 4*mesh->triangles.node[3*iTriangle+1],
+  //                           mesh->vertices.coord + 4*mesh->triangles.node[3*iTriangle+2], n, &surf);
+  //     double uF[3],vF[3];
+  //     makevector (mesh->vertices.coord + 4*mesh->triangles.node[3*iTriangle+0],
+  //                 mesh->vertices.coord + 4*mesh->triangles.node[3*iTriangle+1],uF);
+  //     normalize(uF);
+  //     crossprod(n,uF,vF);    
+  //     double *c = &CURV[4*iTriangle];       
+  //     double UP[3] = {dotprod (uP,uF),dotprod (uP,vF),0};
+  //     normalize(UP);
+  //     double VP[3] = {dotprod (vP,uF),dotprod (vP,vF),0};
+  //     normalize(VP);
+  //     A += (UP[0]*UP[0]*c[0] + 2*UP[0]*UP[1]*c[1] + UP[1]*UP[1]*c[3]) ;
+  //     D += (VP[0]*VP[0]*c[0] + 2*VP[0]*VP[1]*c[1] + VP[1]*VP[1]*c[3]) ;
+  //     B += (VP[0]*UP[0]*c[0] + (VP[1]*UP[0]+VP[0]*UP[1])*c[1] + VP[1]*UP[1]*c[3]) ;
+  //     count++;
+  //   // }
+
+  //   // turning around a vertex
+  //   iVertex = node2tri[2*i+0];
+  //   iTriangle = node2tri[2*i+1];
+  //   // if all triangles have been explored: computing the corresponding nodal curvature
+  //   if (currentVertex != iVertex || i+1==3*nTriangles){
+  //     printf("%d contributions pour le sommet %d\n",count,currentVertex);
+  //     printf("currentvertex = %d \t iVertex = %d\n", currentVertex, iVertex);
+  //     // compute the real stuff
+  //     // printf("_%lu vs %lu (%lu)\n",currentVertex,iVertex,nVertices+1);
+  //     //        printf("%g %g %g %d \n",A,B,D,count);
+  //     A /= (double) count;
+  //     B /= (double) count;
+  //     D /= (double) count;
+  //     printf("count = %d\n", count);
+  //     double lambda1, lambda2, v1x, v1y, v2x, v2y;
+  //     solveEig(A, B, B, D, 
+	 //       & lambda1, & v1x, &v1y, 
+	 //       & lambda2, & v2x, & v2y );
+  //     // printf("__%lu vs %lu\n",6*currentVertex,6*nVertices);
+  //     (*nodalCurvatures) [6 * currentVertex + 0] = fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]);      
+  //     (*nodalCurvatures) [6 * currentVertex + 1] = fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]);      
+  //     (*nodalCurvatures) [6 * currentVertex + 2] = fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]);      
+  //     (*nodalCurvatures) [6 * currentVertex + 3] = fabs(lambda2) * (v2x * uP[0] + v2y * vP[0]);      
+  //     (*nodalCurvatures) [6 * currentVertex + 4] = fabs(lambda2) * (v2x * uP[1] + v2y * vP[1]);      
+  //     (*nodalCurvatures) [6 * currentVertex + 5] = fabs(lambda2) * (v2x * uP[2] + v2y * vP[2]);  
+      
+  //     count = 0;
+  //     A = 0.0;
+  //     B = 0.0;
+  //     D = 0.0;
+  //     computeLocalFrame (&nodeNormals[3*iVertex], uP, vP);
+  //     currentVertex = iVertex;
+  //   }// end if currentVertex != uVertex
+
+  // }
   uint64_t currentVertex = node2tri[0];
   uint64_t count = 0;
-  double uP[3],vP[3], A, B, D;
+  double uP[3],vP[3], A = 0, B = 0, D = 0;
   uint64_t iVertex   = node2tri[2*0+0];
   uint64_t iTriangle = node2tri[2*0+1];
+  computeLocalFrame (&nodeNormals[3*iVertex], uP, vP);
   for (uint64_t i = 1; i<3*nTriangles; i++){    
     
     // printf("%lu: %lu (%lu) |-> %lu\n",i,node2tri[2*i+0],currentVertex,node2tri[2*i+1]);
@@ -345,8 +433,8 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
       D /= (double) count;
       double lambda1, lambda2, v1x, v1y, v2x, v2y;
       solveEig(A, B, B, D, 
-	       & lambda1, & v1x, &v1y, 
-	       & lambda2, & v2x, & v2y );
+         & lambda1, & v1x, &v1y, 
+         & lambda2, & v2x, & v2y );
       // printf("__%lu vs %lu\n",6*currentVertex,6*nVertices);
       (*nodalCurvatures) [6 * currentVertex + 0] = fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]);      
       (*nodalCurvatures) [6 * currentVertex + 1] = fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]);      
@@ -365,11 +453,73 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
 
   }
 
+  int ind = 0;
+  count = 0;
+  A = 0.0;
+  B = 0.0;
+  D = 0.0;
+  for(uint64_t iVert = 0; iVert < nVertices; ++iVert){
+    count = 0;
+    A = 0.0;
+    B = 0.0;
+    D = 0.0;
+    // if(ind < 3*nTriangles){
+    assert(ind < 3*nTriangles);
+    while(node2tri[2*ind+0] == iVert){
+      iTriangle = node2tri[2*ind+1];
+      computeLocalFrame (&nodeNormals[3*iVert], uP, vP);
+      // printf("iTriangle = %d\n",iTriangle);
+      // computing each curvature around a vertex
+      unitNormal2Triangle ( mesh->vertices.coord + 4*mesh->triangles.node[3*iTriangle+0],
+                            mesh->vertices.coord + 4*mesh->triangles.node[3*iTriangle+1],
+                            mesh->vertices.coord + 4*mesh->triangles.node[3*iTriangle+2], n, &surf);
+      double uF[3],vF[3];
+      makevector (mesh->vertices.coord + 4*mesh->triangles.node[3*iTriangle+0],
+                  mesh->vertices.coord + 4*mesh->triangles.node[3*iTriangle+1],uF);
+      normalize(uF);
+      crossprod(n,uF,vF);    
+      double *c = &CURV[4*iTriangle];       
+      double UP[3] = {dotprod (uP,uF),dotprod (uP,vF),0};
+      normalize(UP);
+      double VP[3] = {dotprod (vP,uF),dotprod (vP,vF),0};
+      normalize(VP);
+      A += (UP[0]*UP[0]*c[0] + 2*UP[0]*UP[1]*c[1] + UP[1]*UP[1]*c[3]) ;
+      D += (VP[0]*VP[0]*c[0] + 2*VP[0]*VP[1]*c[1] + VP[1]*VP[1]*c[3]) ;
+      B += (VP[0]*UP[0]*c[0] + (VP[1]*UP[0]+VP[0]*UP[1])*c[1] + VP[1]*UP[1]*c[3]) ;
+      ++count;
+      ++ind;
+      if(ind >= 3*nTriangles) break;
+    }
+    // }
+    // printf("ind = %d - %d contributions pour le sommet %d\n", ind, count, iVert);
+
+    A /= (double) count;
+    B /= (double) count;
+    D /= (double) count;
+    // printf("count = %d\n", count);
+    double lambda1, lambda2, v1x, v1y, v2x, v2y;
+    solveEig(A, B, B, D, 
+       & lambda1, & v1x, &v1y, 
+       & lambda2, & v2x, & v2y );
+    // printf("Writing from %d to %d (available = %d)\n",6*iVert,6*iVert+5,6*nVertices-1);
+    nodalCurvatures2[6 * iVert + 0] = fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]);      
+    nodalCurvatures2[6 * iVert + 1] = fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]);      
+    nodalCurvatures2[6 * iVert + 2] = fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]);      
+    nodalCurvatures2[6 * iVert + 3] = fabs(lambda2) * (v2x * uP[0] + v2y * vP[0]);      
+    nodalCurvatures2[6 * iVert + 4] = fabs(lambda2) * (v2x * uP[1] + v2y * vP[1]);      
+    nodalCurvatures2[6 * iVert + 5] = fabs(lambda2) * (v2x * uP[2] + v2y * vP[2]); 
+    // printf("Done writing\n"); 
+    computeLocalFrame (&nodeNormals[3*iVertex], uP, vP);
+  } // for iVert
+
+  for(int i = 0; i < nVertices*6; ++i){
+    // printf("nC1 = %+4.6e \t nC2 = %+4.6e \t |nC1 - nC2| = %+4.6e\n", (*nodalCurvatures)[i], nodalCurvatures2[i], fabs((*nodalCurvatures)[i] - nodalCurvatures2[i]) );
+    (*nodalCurvatures)[i] = nodalCurvatures2[i];
+  }
   //if (debug)
   saveNodalField (mesh,*nodalCurvatures,  6, "curvaturesMax.pos");
   //if (debug)
   saveNodalField (mesh,*nodalCurvatures, -6, "curvaturesMin.pos");
-
   //-----------------------------------------------------------------------------
   //            C R O S S    F I E L D    
   //-----------------------------------------------------------------------------
@@ -419,10 +569,10 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
   //-----------------------------------------------------------------------------
   //            E N D    C R O S S    F I E L D    
   //-----------------------------------------------------------------------------
-
   HXT_CHECK(hxtFree(&node2tri)); 
   HXT_CHECK(hxtFree(&nodeNormals)); 
-  HXT_CHECK(hxtFree(&CURV)); 
+  HXT_CHECK(hxtFree(&CURV));
+  HXT_CHECK(hxtFree(&nodalCurvatures2));
 
   clock_t T2 = clock();
 

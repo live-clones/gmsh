@@ -82,7 +82,7 @@ class automaticMeshSizeField : public Field {
     //           "Generate 3D mesh ? (choose if surface mesh has already been recomputed)",&update_needed);
 
     update_needed = true;
-    
+
     if (fFile != "") update();
   }
 

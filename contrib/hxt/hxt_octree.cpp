@@ -1,4 +1,5 @@
 #include <hxt_octree.h>
+#include "hxt_boundary_recovery.h"
 #include "hxt_tools.h"
 #include <iostream>
 
@@ -112,8 +113,6 @@ static inline void initializeCell(p4est_t* p4est, p4est_topidx_t which_tree, p4e
 
   double center[3]; 
   getCellCenter(p4est, which_tree, q, center);
-
-  // double (*size_fun)(double, double, double, double) = (double (*)(double, double, double, double)) forestOptions->sizeFunction;
 
   // Set cell size 
   data->size = forestOptions->sizeFunction(center[0], center[1], center[2], forestOptions->hbulk);
@@ -1050,6 +1049,23 @@ HXTStatus hxtOctreeSearch(HXTForest *forest, std::vector<double> *x, std::vector
   return HXT_STATUS_OK;
 }
 
+// static HXTStatus recoveryFun(HXTMesh* mesh, void* userData) {
+//   HXT_UNUSED(userData);
+//   HXT_CHECK( hxt_boundary_recovery(mesh) );
+//   return HXT_STATUS_OK;
+// }
+
+// static double meshSize(double x, double y, double z, void *user_data){
+//   HXTForest *forest = (HXTForest *) user_data;
+//   double val = 1.e22;
+//   HXTStatus s = hxtOctreeSearchOne(forest, x, y, z, &val);
+//   if (s == HXT_STATUS_OK){
+//     return val;
+//   }
+//   else Msg::Error ("Cannot find point %g %g %g in the octree",x,y,z);
+//   return val;
+// }
+
 /* ========================================================================================================
    CLOSE SURFACES DETECTION
    ======================================================================================================== */
@@ -1292,7 +1308,7 @@ HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
   double size, x, y, z; 
   double min[3], max[3];
 
-  bool debug = false;
+  bool debug = true;
   FILE* file = fopen("pointsConnectesAvecAngles.pos", "w");
     if(file==NULL)
       return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
@@ -1468,7 +1484,8 @@ void exportToHexCallback(p4est_iter_volume_info_t * info, void *user_data){
 }
 
 HXTStatus hxtForestExport(HXTForest *forest){
-  FILE* f = fopen(forest->forestOptions->filename, "w");
+  std::string fFile = std::string(forest->forestOptions->forestFile) + ".pos";
+  FILE* f = fopen(fFile.c_str(), "w");
   if(f==NULL)
     return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
   fprintf(f, "View \"sizeField\" {\n");
@@ -1482,7 +1499,8 @@ HXTStatus hxtForestExport(HXTForest *forest){
 }
 
 HXTStatus hxtForestSave(HXTForest *forest){
-  p4est_save_ext("octreeExport.p4est", forest->p4est, true, false);
+  std::string fFile = std::string(forest->forestOptions->forestFile) + ".p4est";
+  p4est_save_ext(fFile.c_str(), forest->p4est, true, false);
   return HXT_STATUS_OK;
 }
 

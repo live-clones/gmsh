@@ -41,19 +41,19 @@ typedef struct HXTForestOptions{
   int           nodePerTwoPi;
   int           nodePerGap;
   double       *bbox;
-  double       *nodalCurvature;
-  double       *nodeNormals;
   double      (*sizeFunction)(double, double, double, double);
+  const char   *forestFile;
   RTree<uint64_t,double,3>  *triRTree;
-  HXTMesh      *mesh;
-  const char   *filename;
+  HXTMesh                   *mesh;
+  double                    *nodalCurvature;
+  double                    *nodeNormals;
 } HXTForestOptions;
 
 typedef struct HXTForest{
 #ifdef HAVE_P4EST
   p4est_t *p4est;
 #endif 
-  HXTForestOptions *forestOptions;
+  HXTForestOptions          *forestOptions;
 } HXTForest;
 
 // Data available on each tree cell
