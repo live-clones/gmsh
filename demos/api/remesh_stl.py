@@ -1,5 +1,6 @@
 import gmsh
 import math
+import os
 
 gmsh.initialize()
 
@@ -9,7 +10,8 @@ gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.75);
 gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.75);
 
 # load STL file
-gmsh.merge("object.stl")
+path = os.path.dirname(os.path.abspath(__file__))
+gmsh.merge(os.path.join(path, "object.stl"))
 
 # split input surface mesh based on an angle threshold of 40 degrees between
 # triangles, and generate new discrete surfaces suitable for reparametrization

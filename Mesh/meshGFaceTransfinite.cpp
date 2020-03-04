@@ -88,6 +88,7 @@ static void computeEdgeLoops(const GFace *gf,
 {
   std::vector<GEdge *> const &e = gf->edges();
   std::vector<int> const &o = gf->orientations();
+
   std::vector<GEdge *> edges;
   std::vector<int> ori;
   for(std::size_t i = 0; i < e.size(); i++){
@@ -99,7 +100,6 @@ static void computeEdgeLoops(const GFace *gf,
 
   std::vector<GEdge *>::const_iterator it = edges.begin();
   std::vector<int>::const_iterator ito = ori.begin();
-
   indices.push_back(0);
   GVertex *start =
     ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
@@ -238,8 +238,8 @@ int MeshTransfiniteSurface(GFace *gf)
   if(corners.size() == 4) {
     int Lb = N4 - N3, Hb = m_vertices.size() - N4;
     if(Lb != L || Hb != H) {
-      Msg::Error("Surface %d cannot be meshed using the transfinite algo",
-                 gf->tag());
+      Msg::Error("Surface %d cannot be meshed using the transfinite algo "
+                 "(divisions %d != %d or %d != %d)", gf->tag(), Lb, L, Hb, H);
       return 0;
     }
   }
@@ -247,8 +247,8 @@ int MeshTransfiniteSurface(GFace *gf)
     int Lb = m_vertices.size() - N3;
     if(Lb != L) {
       Msg::Error(
-        "Surface %d cannot be meshed using the transfinite algo %d != %d",
-        gf->tag(), L, Lb);
+        "Surface %d cannot be meshed using the transfinite algo "
+        "(divisions %d != %d)", gf->tag(), L, Lb);
       return 0;
     }
   }

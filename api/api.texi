@@ -1272,15 +1272,14 @@ when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
 -
 @end table
 
-@item gmsh/model/mesh/getEdgeNumbers
-Get the numbers of the edges defined by the vertices @code{edgeVertices}:
-@code{edgeVertices[0]} and @code{edgeVertices[1]} match the vertices vi and vj
-of the edge }edgeNum[0]} .  Warning: this is an experimental feature and will
-probably change in a future release.
+@item gmsh/model/mesh/getEdgeNumber
+Get the global edge identifier @code{edgeNum} for an input list of node pairs,
+concatenated in the vector @code{edgeNodes}.  Warning: this is an experimental
+feature and will probably change in a future release.
 
 @table @asis
 @item Input:
-@code{edgeVertices}
+@code{edgeNodes}
 @item Output:
 @code{edgeNum}
 @item Return:

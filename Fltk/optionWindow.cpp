@@ -535,6 +535,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   o->activate((const char *)data);
 
   opt_mesh_lc_from_curvature(0, GMSH_SET, o->mesh.butt[1]->value());
+  opt_mesh_min_elements_2pi(0, GMSH_SET, o->mesh.value[1]->value());
   opt_mesh_lc_from_points(0, GMSH_SET, o->mesh.butt[5]->value());
   opt_mesh_lc_extend_from_boundary(0, GMSH_SET, o->mesh.butt[16]->value());
   opt_mesh_optimize(0, GMSH_SET, o->mesh.butt[2]->value());
@@ -2424,24 +2425,32 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[5]->type(FL_TOGGLE_BUTTON);
       mesh.butt[5]->callback(mesh_options_ok_cb);
 
-      mesh.butt[1] = new Fl_Check_Button(
-        L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
+      mesh.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
         "Compute element sizes from curvature");
       mesh.butt[1]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[1]->callback(mesh_options_ok_cb);
+      mesh.butt[1]->callback(mesh_options_ok_cb, (void *)"mesh_curvature");
 
-      mesh.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
+      mesh.value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH,
+                                         "Number of elements per 2 pi radians");
+      mesh.value[1]->minimum(3);
+      mesh.value[1]->maximum(50);
+      if(CTX::instance()->inputScrolling) mesh.value[1]->step(1);
+      mesh.value[1]->align(FL_ALIGN_RIGHT);
+      mesh.value[1]->deactivate();
+      mesh.value[1]->callback(mesh_options_ok_cb);
+
+      mesh.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                                           "Extend element sizes from boundary");
       mesh.butt[16]->type(FL_TOGGLE_BUTTON);
       mesh.butt[16]->callback(mesh_options_ok_cb);
 
-      mesh.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
+      mesh.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
                                          "Optimize quality of tetrahedra");
       mesh.butt[2]->type(FL_TOGGLE_BUTTON);
       mesh.butt[2]->callback(mesh_options_ok_cb);
 
       mesh.butt[24] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
                             "Optimize quality of tetrahedra with Netgen");
       mesh.butt[24]->type(FL_TOGGLE_BUTTON);
 #if !defined(HAVE_NETGEN)
@@ -2450,7 +2459,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[24]->callback(mesh_options_ok_cb);
 
       mesh.butt[3] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
                             "Optimize high-order meshes");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
@@ -4065,6 +4074,14 @@ void optionWindow::activate(const char *what)
       mesh.butt[19]->deactivate();
       mesh.choice[10]->deactivate();
       mesh.value[18]->deactivate();
+    }
+  }
+  else if(!strcmp(what, "mesh_curvature")) {
+    if(mesh.butt[1]->value()) {
+      mesh.value[1]->activate();
+    }
+    else {
+      mesh.value[1]->deactivate();
     }
   }
   else if(!strcmp(what, "view_light")) {

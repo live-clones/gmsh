@@ -192,7 +192,7 @@ Default value: @code{25}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderPeriodic
-Correct high-order optimization for periodic connections?@*
+Force location of nodes for periodic meshes using periodicity transform (0: assume identical parametrisations, 1: invert parametrisations, 2: compute closest point@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

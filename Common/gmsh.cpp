@@ -2133,20 +2133,20 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getEdgeNumbers(
-  const std::vector<int> & edgeVertices,std::vector<int> & edgeNum)
+GMSH_API void gmsh::model::mesh::getEdgeNumber(
+  const std::vector<int> & edgeNodes, std::vector<int> & edgeNum)
 {
   edgeNum.clear();
-  int numEdges=edgeVertices.size()/2;
+  int numEdges = edgeNodes.size() / 2;
   edgeNum.resize(numEdges);
-  for(int i=0;i<numEdges;i++){
-    MEdge edge(GModel::current()->getMeshVertexByTag(edgeVertices[2*i]),
-    GModel::current()->getMeshVertexByTag(edgeVertices[2*i+1]));
-    edgeNum[i]=GModel::current()->getEdgeNumber(edge);
+  for(int i = 0; i < numEdges; i++){
+    MEdge edge(GModel::current()->getMeshVertexByTag(edgeNodes[2 * i]),
+               GModel::current()->getMeshVertexByTag(edgeNodes[2 * i + 1]));
+    edgeNum[i] = GModel::current()->getEdgeNumber(edge);
   }
 }
 GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
-  const int elementType,std::vector<int> &localMultipliers,  const int tag)
+  const int elementType, std::vector<int> &localMultipliers, const int tag)
 {
   localMultipliers.clear();
   int basisOrder = 0;
@@ -2185,26 +2185,26 @@ GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
     std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
     numElements += numElementsInEntitie;
   }
-  int numberEdge=basis->getNumEdge();
+  int numberEdge = basis->getNumEdge();
   localMultipliers.resize(numElements * numberEdge, 1);
-  size_t indexNumElement=0;
+  size_t indexNumElement = 0;
   for(std::size_t ii = 0; ii < entities.size(); ii++) {
-      GEntity *ge = entities[ii];
-      for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
-          j++) {
-        MElement *e = ge->getMeshElementByType(familyType, j);
-        for(int iEdge = 0; iEdge < basis->getNumEdge(); iEdge++) {
-            MEdge edge = e->getEdge(iEdge);
-            if(edge.getMinVertex()->getNum() !=
-               unsigned(e->getVertexSolin(iEdge, 0))) {
-              localMultipliers[indexNumElement*numberEdge+iEdge]=-1;
-            }
-          }
-          indexNumElement++;
+    GEntity *ge = entities[ii];
+    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
+      MElement *e = ge->getMeshElementByType(familyType, j);
+      for(int iEdge = 0; iEdge < basis->getNumEdge(); iEdge++) {
+        MEdge edge = e->getEdge(iEdge);
+        if(edge.getMinVertex()->getNum() !=
+           unsigned(e->getVertexSolin(iEdge, 0))) {
+          localMultipliers[indexNumElement * numberEdge + iEdge] = -1;
         }
       }
+      indexNumElement++;
+    }
+  }
   delete basis;
 }
+
 GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   const int elementType, const std::vector<double> &integrationPoints,
   const std::string &functionSpaceType, int &numComponents,

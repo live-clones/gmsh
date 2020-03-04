@@ -965,7 +965,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "SurfaceNumbers" , opt_geometry_surfaces_num , 0. ,
     "Display surface numbers?" },
   { F|O, "SurfaceType" , opt_geometry_surface_type , 0. ,
-    "Surface display type (0: cross, 1: wireframe, 2: solid)" },
+    "Surface display type (0: cross, 1: wireframe, 2: solid). Wireframe and solid "
+    "are not available with the built-in geometry kernel." },
 
   { F|O, "Tangents" , opt_geometry_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },
@@ -1100,7 +1101,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderPassMax", opt_mesh_ho_pass_max, 25,
     "Maximum number of high-order optimization passes (moving barrier)"},
   { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
-    "Correct high-order optimization for periodic connections?" },
+    "Force location of nodes for periodic meshes using periodicity transform (0: "
+    "assume identical parametrisations, 1: invert parametrisations, 2: compute "
+    "closest point" },
   { F|O, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,
     "Poisson ratio of the material used in the elastic smoother for high-order meshes "
     "(between -1.0 and 0.5, excluded)"},
@@ -1871,6 +1874,11 @@ StringXNumber PrintOptions_Number[] = {
 
   { F|O, "TexAsEquation" , opt_print_tex_as_equation , 0. ,
     "Print all TeX strings as equations" },
+  { F|O, "TexForceFontSize" , opt_print_tex_force_fontsize , 0. ,
+    "Force font size of TeX strings to fontsize in the graphic window" },
+  { F|O, "TexWidthInMm" , opt_print_tex_width_in_mm , 150. ,
+    "Width of tex graphics in mm (use 0 for the natural width inferred from the "
+    "image width in pixels)" },
   { F|O, "Text" , opt_print_text , 1. ,
     "Print text strings?" },
 

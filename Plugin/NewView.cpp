@@ -60,7 +60,7 @@ PView *GMSH_NewViewPlugin::execute(PView *v)
   int tag = (int)NewViewOptions_Number[2].def;
   std::string type = NewViewOptions_String[0].def;
 
-  if(GModel::current()->getMeshStatus() < 1) {
+  if(GModel::current()->getMeshStatus() < 0) {
     Msg::Error("No mesh available to create the view: please mesh your model!");
     return v;
   }

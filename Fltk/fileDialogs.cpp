@@ -115,6 +115,7 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     ReplaceSubStringInPlace("\t", " (", tmp);
     ReplaceSubStringInPlace("\n", ")\t", tmp);
     strncpy(thefilter2, tmp.c_str(), sizeof(thefilter2) - 1);
+    thefilter2[sizeof(thefilter2) - 1] = '\0';
   }
 
   // determine where to start
@@ -453,28 +454,43 @@ int latexFileDialog(const char *name)
 {
   struct _latexFileDialog {
     Fl_Window *window;
-    Fl_Check_Button *b;
+    Fl_Check_Button *b[2];
+    Fl_Value_Input *v;
     Fl_Button *ok, *cancel;
   };
   static _latexFileDialog *dialog = NULL;
 
   if(!dialog) {
     dialog = new _latexFileDialog;
-    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "LaTeX Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->b =
+    dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print strings as equations");
+    dialog->b[0]->type(FL_TOGGLE_BUTTON);
     y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->b[1] =
+      new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Force font size");
+    dialog->b[1]->type(FL_TOGGLE_BUTTON);
+    y += BH;
+    dialog->v = new Fl_Value_Input(WB, y, BB / 2, BH, "Graphics width in mm");
+    dialog->v->minimum(0);
+    dialog->v->maximum(5000);
+    if(CTX::instance()->inputScrolling) dialog->v->step(1);
+    dialog->v->align(FL_ALIGN_RIGHT);
+    dialog->v->tooltip("Set value to 0 to use the natural width inferred from "
+                       "the width in pixels");
+    y += BH;
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
 
-  dialog->b->value(CTX::instance()->print.texAsEquation);
+  dialog->b[0]->value(CTX::instance()->print.texAsEquation);
+  dialog->b[1]->value(CTX::instance()->print.texForceFontSize);
+  dialog->v->value(CTX::instance()->print.texWidthInMm);
   dialog->window->show();
 
   while(dialog->window->shown()) {
@@ -484,7 +500,11 @@ int latexFileDialog(const char *name)
       if(!o) break;
       if(o == dialog->ok) {
         opt_print_tex_as_equation(0, GMSH_SET | GMSH_GUI,
-                                  (int)dialog->b->value());
+                                  (int)dialog->b[0]->value());
+        opt_print_tex_force_fontsize(0, GMSH_SET | GMSH_GUI,
+                                     (int)dialog->b[1]->value());
+        opt_print_tex_width_in_mm(0, GMSH_SET | GMSH_GUI,
+                                  dialog->v->value());
         CreateOutputFile(name, FORMAT_TEX);
         dialog->window->hide();
         return 1;
