@@ -105,7 +105,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
     }
   }
 
-  if(havePhysicals && numElements && (int)physicals.size()) {
+  if(havePhysicals && numElements == (int)physicals.size()) {
     fprintf(fp, "\n");
     fprintf(fp, "CELL_DATA %d\n", numElements);
     fprintf(fp, "SCALARS CellEntityIds int 1\n");
