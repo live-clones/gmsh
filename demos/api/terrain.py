@@ -30,10 +30,10 @@ for i in range(N + 1):
 pnt = [tag(0, 0), tag(N, 0), tag(N, N), tag(0, N)] # corner points element
 
 # create 4 corner points
-gmsh.model.geo.addPoint(0, 0, coords[3*tag(0,0)-1])
-gmsh.model.geo.addPoint(1, 0, coords[3*tag(N,0)-1])
-gmsh.model.geo.addPoint(1, 1, coords[3*tag(N,N)-1])
-gmsh.model.geo.addPoint(0, 1, coords[3*tag(0,N)-1])
+gmsh.model.geo.addPoint(0, 0, coords[3*tag(0,0)-1], 1)
+gmsh.model.geo.addPoint(1, 0, coords[3*tag(N,0)-1], 2)
+gmsh.model.geo.addPoint(1, 1, coords[3*tag(N,N)-1], 3)
+gmsh.model.geo.addPoint(0, 1, coords[3*tag(0,N)-1], 4)
 gmsh.model.geo.synchronize()
 
 # create 4 discrete bounding curves, with their boundary points
@@ -41,7 +41,7 @@ for i in range(4):
     gmsh.model.addDiscreteEntity(1, i+1, [i+1 , i+2 if i < N else 1])
 
 # create one discrete surface, with its bounding curves
-gmsh.model.addDiscreteEntity(2, 1, [1, 2, 3, 4])
+gmsh.model.addDiscreteEntity(2, 1, [1, 2, -3, -4])
 
 # add all the nodes on the surface (for simplicity... see below)
 gmsh.model.mesh.addNodes(2, 1, nodes, coords)
@@ -107,9 +107,9 @@ ll3 = gmsh.model.geo.addCurveLoop([c1,c11,-1,-c10])
 s3 = gmsh.model.geo.addPlaneSurface([ll3])
 ll4 = gmsh.model.geo.addCurveLoop([c2,c12,-2,-c11])
 s4 = gmsh.model.geo.addPlaneSurface([ll4])
-ll5 = gmsh.model.geo.addCurveLoop([c3,c13,-3,-c12])
+ll5 = gmsh.model.geo.addCurveLoop([c3,c13,3,-c12])
 s5 = gmsh.model.geo.addPlaneSurface([ll5])
-ll6 = gmsh.model.geo.addCurveLoop([c4,c10,-4,-c13])
+ll6 = gmsh.model.geo.addCurveLoop([c4,c10,4,-c13])
 s6 = gmsh.model.geo.addPlaneSurface([ll6])
 sl1 = gmsh.model.geo.addSurfaceLoop([s1, s3, s4, s5, s6, 1])
 v1 = gmsh.model.geo.addVolume([sl1])
@@ -119,18 +119,35 @@ ll7 = gmsh.model.geo.addCurveLoop([c5,-c15,-1,c14])
 s7 = gmsh.model.geo.addPlaneSurface([ll7])
 ll8 = gmsh.model.geo.addCurveLoop([c6,-c16,-2,c15])
 s8 = gmsh.model.geo.addPlaneSurface([ll8])
-ll9 = gmsh.model.geo.addCurveLoop([c7,-c17,-3,c16])
+ll9 = gmsh.model.geo.addCurveLoop([c7,-c17,3,c16])
 s9 = gmsh.model.geo.addPlaneSurface([ll9])
-ll10 = gmsh.model.geo.addCurveLoop([c8,-c14,-4,c17])
+ll10 = gmsh.model.geo.addCurveLoop([c8,-c14,4,c17])
 s10 = gmsh.model.geo.addPlaneSurface([ll10])
 sl2 = gmsh.model.geo.addSurfaceLoop([s2, s7, s8, s9, s10, 1])
 v2 = gmsh.model.geo.addVolume([sl2])
 
 gmsh.model.geo.synchronize()
 
-gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.05)
-gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.05)
+# set this to True to build a fully hex mesh
+transfinite = True
+#transfinite = False
+
+if transfinite:
+    NN = 30
+    for c in gmsh.model.getEntities(1):
+        gmsh.model.mesh.setTransfiniteCurve(c[1], NN)
+        for s in gmsh.model.getEntities(2):
+            gmsh.model.mesh.setTransfiniteSurface(s[1])
+            gmsh.model.mesh.setRecombine(s[0], s[1])
+            gmsh.model.mesh.setSmoothing(s[0], s[1], 100)
+            gmsh.model.mesh.setTransfiniteVolume(v1)
+            gmsh.model.mesh.setTransfiniteVolume(v2)
+else:
+    gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.05)
+    gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.05)
 
 gmsh.fltk.run()
+#gmsh.model.mesh.generate(2)
+#gmsh.write('terrain.msh')
 
 gmsh.finalize()
