@@ -1705,23 +1705,23 @@ function getBasisFunctions(elementType, integrationPoints, functionSpaceType)
 end
 
 """
-    gmsh.model.mesh.getEdgeNumber(edgeVertices)
+    gmsh.model.mesh.getEdgeNumbers(edgeVertices)
 
-Get the matching edge number using the key edge in the hashmap _mapEdgeNum :
+Get the numbers of the edges defined by the vertices `edgeVertices`:
 `edgeVertices[0]` and `edgeVertices[1]` match the vertices vi and vj of the edge
 `edgeNum[0]` .  Warning: this is an experimental feature and will probably
 change in a future release.
 
 Return `edgeNum`.
 """
-function getEdgeNumber(edgeVertices)
+function getEdgeNumbers(edgeVertices)
     api_edgeNum_ = Ref{Ptr{Cint}}()
     api_edgeNum_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetEdgeNumber, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetEdgeNumbers, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           convert(Vector{Cint}, edgeVertices), length(edgeVertices), api_edgeNum_, api_edgeNum_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetEdgeNumber returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshGetEdgeNumbers returned non-zero error code: $(ierr[])")
     edgeNum = unsafe_wrap(Array, api_edgeNum_[], api_edgeNum_n_[], own=true)
     return edgeNum
 end

@@ -776,13 +776,13 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              double ** basisFunctions, size_t * basisFunctions_n,
                                              int * ierr);
 
-/* Get the matching edge number using the key edge in the hashmap _mapEdgeNum
- * : `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of
- * the edge 'edgeNum[0]' .  Warning: this is an experimental feature and will
+/* Get the numbers of the edges defined by the vertices `edgeVertices':
+ * `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of the
+ * edge 'edgeNum[0]' .  Warning: this is an experimental feature and will
  * probably change in a future release. */
-GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeVertices, size_t edgeVertices_n,
-                                         int ** edgeNum, size_t * edgeNum_n,
-                                         int * ierr);
+GMSH_API void gmshModelMeshGetEdgeNumbers(int * edgeVertices, size_t edgeVertices_n,
+                                          int ** edgeNum, size_t * edgeNum_n,
+                                          int * ierr);
 
 /* Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
  * H(curl) basis functions. Warning: this is an experimental feature and will

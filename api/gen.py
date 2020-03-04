@@ -306,8 +306,8 @@ mesh.add_special('preallocateJacobians', doc, ['onlycc++'], None, iint('elementT
 doc = '''Get the basis functions of the element of type `elementType' at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element). `numComponents' returns the number C of components of a basis function. `basisFunctions' returns the value of the N basis functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.'''
 mesh.add('getBasisFunctions', doc, None, iint('elementType'), ivectordouble('integrationPoints'), istring('functionSpaceType'), oint('numComponents'), ovectordouble('basisFunctions'))
 
-doc = '''Get the matching edge number using the key edge in the hashmap _mapEdgeNum : `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of the edge 'edgeNum[0]' .  Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getEdgeNumber',doc,None,ivectorint('edgeVertices'),ovectorint('edgeNum'))
+doc = '''Get the numbers of the edges defined by the vertices `edgeVertices': `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of the edge 'edgeNum[0]' .  Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getEdgeNumbers',doc,None,ivectorint('edgeVertices'),ovectorint('edgeNum'))
 
 doc = '''Get the local multipliers (to guarantee H(curl)-conformity) of the order 0 H(curl) basis functions. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getLocalMultipliersForHcurl0',doc,None,iint('elementType'),ovectorint('localMultipliers'),iint('tag','-1'))

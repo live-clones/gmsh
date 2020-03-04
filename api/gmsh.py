@@ -2203,13 +2203,13 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
-        def getEdgeNumber(edgeVertices):
+        def getEdgeNumbers(edgeVertices):
             """
-            gmsh.model.mesh.getEdgeNumber(edgeVertices)
+            gmsh.model.mesh.getEdgeNumbers(edgeVertices)
 
-            Get the matching edge number using the key edge in the hashmap _mapEdgeNum
-            : `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of
-            the edge 'edgeNum[0]' .  Warning: this is an experimental feature and will
+            Get the numbers of the edges defined by the vertices `edgeVertices':
+            `edgeVertices[0]' and `edgeVertices[1]' match the vertices vi and vj of the
+            edge 'edgeNum[0]' .  Warning: this is an experimental feature and will
             probably change in a future release.
 
             Return `edgeNum'.
@@ -2217,13 +2217,13 @@ class model:
             api_edgeVertices_, api_edgeVertices_n_ = _ivectorint(edgeVertices)
             api_edgeNum_, api_edgeNum_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetEdgeNumber(
+            lib.gmshModelMeshGetEdgeNumbers(
                 api_edgeVertices_, api_edgeVertices_n_,
                 byref(api_edgeNum_), byref(api_edgeNum_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetEdgeNumber returned non-zero error code: ",
+                    "gmshModelMeshGetEdgeNumbers returned non-zero error code: ",
                     ierr.value)
             return _ovectorint(api_edgeNum_, api_edgeNum_n_.value)
 

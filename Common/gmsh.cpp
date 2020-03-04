@@ -2133,7 +2133,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getEdgeNumber(
+GMSH_API void gmsh::model::mesh::getEdgeNumbers(
   const std::vector<int> & edgeVertices,std::vector<int> & edgeNum)
 {
   edgeNum.clear();
