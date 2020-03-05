@@ -56,10 +56,11 @@ public:
 private:
   static void spanningTree(EdgeSet& edge, size_t nVertex,
                            std::list<std::pair<int, int> >& tree);
-  static void getAllMElement(GModel& model, int dim, int physical,
-                             ElementSet& element);
+
+  static void getAllMElement(GModel& model, int physical, ElementSet& element);
   static void getAllMEdge(ElementSet& element, EdgeSet& edge);
   static void addToModel(GModel& model, std::list<std::pair<int, int> >& tree);
+
   static std::pair<int, int> minmax(const std::pair<int, int>& p);
 };
 

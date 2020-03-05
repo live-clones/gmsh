@@ -12,8 +12,7 @@ using namespace std;
 #include "OS.h"
 
 StringXNumber SpanningTreeOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalGroup", NULL, 7},
-  {GMSH_FULLRC, "Dimension",     NULL, 2}
+  {GMSH_FULLRC, "PhysicalGroup", NULL, -1},
 };
 
 extern "C"{
@@ -53,14 +52,19 @@ void GMSH_SpanningTreePlugin::run(void){
   // Get data
   double start = Cpu();
   int physical = (int)SpanningTreeOptions_Number[0].def;
-  int dim      = (int)SpanningTreeOptions_Number[1].def;
 
   // Get model
   GModel *model = GModel::current();
 
-  // Get all elements of given dimension and physical
+  // Get all elements in physical
   ElementSet element;
-  getAllMElement(*model, dim, physical, element);
+  getAllMElement(*model, physical, element);
+
+  // Check if we have something
+  if(element.empty()){
+    Msg::Warning("No elements found in physcial %d: abording!", physical);
+    return;
+  }
 
   // Get all edges from elements
   EdgeSet edge;
@@ -68,7 +72,6 @@ void GMSH_SpanningTreePlugin::run(void){
 
   // Build spanning tree and save into the model
   list<pair<int, int> > tree;
-  cout << model->getNumMeshVertices() << endl;
   spanningTree(edge, model->getNumMeshVertices(), tree);
   addToModel(*model, tree);
 
@@ -97,13 +100,18 @@ void GMSH_SpanningTreePlugin::spanningTree(EdgeSet& edge, size_t nv,
   }
 }
 
-void GMSH_SpanningTreePlugin::getAllMElement(GModel& model, int dim,
+void GMSH_SpanningTreePlugin::getAllMElement(GModel& model,
                                              int physical, ElementSet& element){
   vector<GEntity *> entities;
-  map<int, vector<GEntity *> > groups;
 
-  model.getPhysicalGroups(dim, groups);
-  entities = groups[physical];
+  if(physical == -1){
+    model.getEntities(entities, -1);
+  }
+  else{
+    map<int, vector<GEntity *> > groups;
+    model.getPhysicalGroups(-1, groups);
+    entities = groups[physical];
+  }
 
   for(size_t i = 0; i < entities.size(); i++)
     for(size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
