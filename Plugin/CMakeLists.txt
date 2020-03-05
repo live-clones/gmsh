@@ -31,6 +31,7 @@ set(SRC
   DiscretizationError.cpp
   Scal2Tens.cpp Scal2Vec.cpp
   CutMesh.cpp
+  SpanningTree.cpp
   NewView.cpp
   SimplePartition.cpp Crack.cpp
   MeshSubEntities.cpp
