@@ -7,9 +7,14 @@
 #define CROSS_FIELDS_H
 
 #include <string>
+#include <map>
+#include <vector>
 class GModel;
 
-int computeCrossField(GModel *, std::vector<int> &tags);
-int computeQuadDecomposition(GModel *, std::vector<int> &tags);
+int computeCrossField    (GModel *, std::vector<int> &tags);
+int computeCrossFieldAndH(GModel *gm,
+			  std::map<int, std::vector<double> > &dataH,
+			  std::map<int, std::vector<double> > &dataDir,
+			  std::map<int, std::vector<double> > &dataDirOrtho);
 
 #endif

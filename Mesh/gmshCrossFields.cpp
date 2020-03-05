@@ -4285,6 +4285,37 @@ public:
       Msg::Warning("Quad Layout Failure");
     return success;
   }
+  void getH (std::map<int, std::vector<double> > & dataH){
+    for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
+	it != vs.end(); ++it) {
+      double h;
+      myAssembler->getDofValue(*it, 0, 1, h);
+      std::vector<double> jj;
+      jj.push_back(h);
+      //    printf("adding data for %lu\n",(*it)->getNum());
+      dataH[(*it)->getNum()] = jj;
+    }
+  }
+
+  void getDir (std::map<int, std::vector<double> > &dataDir,
+	       std::map<int, std::vector<double> > &dataDirOrtho){
+    for(std::map<MTriangle *, SVector3>::iterator it = d0.begin();
+	it != d0.end(); ++it) {
+      std::vector<double> jj;
+      jj.push_back(it->second.x());
+      jj.push_back(it->second.y());
+      jj.push_back(it->second.z());
+      dataDir[it->first->getNum()] = jj;
+    }
+    for(std::map<MTriangle *, SVector3>::iterator it = d1.begin();
+	it != d1.end(); ++it) {
+      std::vector<double> jj;
+      jj.push_back(it->second.x());
+      jj.push_back(it->second.y());
+      jj.push_back(it->second.z());
+      dataDirOrtho[it->first->getNum()] = jj;
+    }
+  }
 };
 
 static void findPhysicalGroupsForSingularities(GModel *gm,
@@ -4328,21 +4359,6 @@ static void findPhysicalGroupsForSingularities(GModel *gm,
     }
   }
 }
-/*
-static int computeQuadDecomposition(GModel *gm, std::vector<GFace *> &f,
-std::vector<int> &tags){
-
-  PView *H = PView::getViewByTag(tags[0]);
-  PView *T = PView::getViewByTag(tags[1]);
-  PView *D = PView::getViewByTag(tags[2]);
-  if (!H || !D) return -1;
-
-  //  stepData<double> *_h = H->getStepData (0);
-  //  stepData<double> *_d = D->getStepData (0);
-
-  return 0;
-}
-*/
 
 static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
                                  std::vector<int> &tags, bool layout = true)
@@ -4368,10 +4384,6 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   else {
     Msg::Info("Computing a cross field");
     int cf_status = qLayout.computeCrossFieldAndH();
-    //    if (cf_status == -1) {
-      //      Msg::Error("failed to compute cross field");
-      //      return -1;
-    //    }
     qLayout.computeCutGraph(duplicateEdges);
     qLayout.computeThetaUsingHCrouzeixRaviart(dataTHETA);
   }
@@ -4398,9 +4410,9 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
       passages[i].Print("All : ");
       //      passages[i].PrintFile();
     }
-  }
 #endif
-  
+  }
+
   PViewDataGModel *d = new PViewDataGModel;
   PViewDataGModel *dt = new PViewDataGModel(PViewDataGModel::ElementNodeData);
   PViewDataGModel *dd = new PViewDataGModel(PViewDataGModel::ElementData);
@@ -4452,32 +4464,9 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     V->addData(gm, dataV, 0, 0.0, 1, 1);
     V->finalize();
   }
-  for(std::map<MTriangle *, SVector3>::iterator it = qLayout.d0.begin();
-      it != qLayout.d0.end(); ++it) {
-    std::vector<double> jj;
-    jj.push_back(it->second.x());
-    jj.push_back(it->second.y());
-    jj.push_back(it->second.z());
-    dataDir[it->first->getNum()] = jj;
-  }
-  for(std::map<MTriangle *, SVector3>::iterator it = qLayout.d1.begin();
-      it != qLayout.d1.end(); ++it) {
-    std::vector<double> jj;
-    jj.push_back(it->second.x());
-    jj.push_back(it->second.y());
-    jj.push_back(it->second.z());
-    dataDirOrtho[it->first->getNum()] = jj;
-  }
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = qLayout.vs.begin();
-      it != qLayout.vs.end(); ++it) {
-    double h;
-    qLayout.myAssembler->getDofValue(*it, 0, 1, h);
-    std::vector<double> jj;
-    jj.push_back(h);
-    //    printf("adding data for %lu\n",(*it)->getNum());
-    dataH[(*it)->getNum()] = jj;
-  }
-
+  qLayout.getH (dataH);
+  qLayout.getDir (dataDir,dataDirOrtho);
+  
   d->addData(gm, dataH, 0, 0.0, 1, 1);
   d->finalize();
   dt->addData(gm, dataTHETA, 0, 0.0, 1, 1);
@@ -4540,7 +4529,9 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
 
   return 0;
 }
-#endif
+
+#endif // from the beginning of the file
+
 
 static void getFacesOfTheModel(GModel *gm, std::vector<GFace *> &f)
 {
@@ -4550,25 +4541,46 @@ static void getFacesOfTheModel(GModel *gm, std::vector<GFace *> &f)
   }
 }
 
-int computeCrossFieldAndH(GModel *gm, std::vector<int> &tags)
+
+int computeCrossFieldAndH(GModel *gm,
+			  std::map<int, std::vector<double> > &dataH,
+			  std::map<int, std::vector<double> > &dataDir,
+			  std::map<int, std::vector<double> > &dataDirOrtho)
 {
+#if defined(HAVE_SOLVER) && defined(HAVE_POST)
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
-#if defined(HAVE_SOLVER) && defined(HAVE_POST)
-  return computeCrossFieldAndH(gm, f, tags);
+  quadLayoutData qLayout(gm, f, gm->getName());
+  std::map<MVertex *, int> temp;
+  findPhysicalGroupsForSingularities(gm, f, temp);
+  if(temp.size()) {
+    Msg::Info("Computing cross field from %d prescribed singularities",
+              temp.size());
+    std::map<int, std::vector<double> > dataTHETA;
+    qLayout.computeCrossFieldAndH(&temp, dataTHETA);
+  }
+  else {
+    Msg::Info("Computing a cross field");
+    qLayout.computeCrossFieldAndH();
+  }
+  qLayout.getH (dataH);
+  qLayout.getDir (dataDir,dataDirOrtho);
+  return 0;
 #else
   Msg::Error("Cross field computation requires solver and post-pro module");
   return -1;
 #endif
 }
 
-int computeQuadLayout(GModel *gm, std::vector<int> &tags)
+int computeCrossFieldAndH(GModel *gm)
 {
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
 
+  std::vector<int> tags;
+  
 #if defined(HAVE_SOLVER) && defined(HAVE_POST)
-  return computeCrossFieldAndH(gm, f, tags, true);
+  return computeCrossFieldAndH(gm, f, tags, false);
 #else
   Msg::Error("Cross field computation requires solver and post-pro module");
   return -1;
@@ -4583,7 +4595,6 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
 #if defined(HAVE_SOLVER) && defined(HAVE_POST)
   int cf_status = computeCrossFieldAndH(gm, f, tags, true);
   if (cf_status == -1) return cf_status;
-  //    return computeQuadLayout(gm, f);
 #if defined(HAVE_QUADMESHINGTOOLS)
   std::string quad_layout_name = gm->getName();
   int H_tag = tags.size() > 0 ? tags[0] : -1;

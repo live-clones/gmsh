@@ -16,6 +16,7 @@
 #include "MLine.h"
 #include "GmshMessage.h"
 #include "BackgroundMeshTools.h"
+#include "GModel.h"
 
 #if defined(HAVE_HXT3D)
 
@@ -130,9 +131,9 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
-                          std::map<MVertex *, int> &v2c,
-                          std::vector<MVertex *> &c2v)
+HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
+		   std::map<MVertex *, int> &v2c,
+		   std::vector<MVertex *> &c2v)
 {
   std::vector<GFace *> allFaces;
   std::vector<GEdge *> allEdges;
@@ -238,16 +239,14 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
+
+HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces,
+		   std::vector<GEdge *> &edges,
+		   HXTMesh *m,
 		   std::map<MVertex *, int> &v2c,
 		   std::vector<MVertex *> &c2v)
 {
   std::set<MVertex *> all;
-  std::vector<GFace *> faces;
-  std::vector<GEdge *> edges;
-
-  HXT_CHECK(getAllFacesOfAllRegions(regions, m, faces));
-  HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
 
   uint64_t ntri = 0;
   uint64_t nedg = 0;
@@ -326,6 +325,33 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   }
   return HXT_STATUS_OK;
 }
+
+HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
+		   std::map<MVertex *, int> &v2c,
+		   std::vector<MVertex *> &c2v)
+{
+  std::vector<GFace *> faces;
+  std::vector<GEdge *> edges;
+  HXT_CHECK(getAllFacesOfAllRegions(regions, m, faces));
+  HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
+  HXT_CHECK(Gmsh2Hxt(faces,edges,m,v2c,c2v));
+  return HXT_STATUS_OK;
+}
+
+HXTStatus Gmsh2Hxt(GModel*gm, HXTMesh *m,
+		   std::map<MVertex *, int> &v2c,
+		   std::vector<MVertex *> &c2v)
+{
+  std::vector<GFace *> faces;
+  std::vector<GEdge *> edges;
+  faces.insert(faces.begin(), gm->firstFace(), gm->lastFace());
+  edges.insert(edges.begin(), gm->firstEdge(), gm->lastEdge());
+  HXT_CHECK(Gmsh2Hxt(faces,edges,m,v2c,c2v));
+  return HXT_STATUS_OK;
+}
+
+
+
 
 static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 {
