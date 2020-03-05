@@ -1,7 +1,8 @@
 SetFactory("OpenCASCADE");
 
-// load volume from step file
+// load volume(s) from step file
 v() = ShapeFromFile("component8.step");
+//v() = ShapeFromFile("as1-tu-203.stp");
 
 // get bounding box of volume
 bbox() = BoundingBox Volume{v()};
@@ -25,19 +26,20 @@ EndFor
 // fragment (i.e. "intersect") the volume with all the cutting planes
 BooleanFragments{ Volume{v()}; Delete; }{ Surface{1000+1:1000+N-1}; Delete; }
 
-// delete all resulting surfaces that are not on the boundary of a volume, all
-// curves that are not on the boundary of a surface, and all points that are not
-// on the boundary of a curve
+// delete all surfaces that are not on the boundary of a volume, all curves that
+// are not on the boundary of a surface, and all points that are not on the
+// boundary of a curve
 Delete { Surface{:}; Curve{:}; Point{:}; }
 
-// Et voila :-)
+// get surfaces in bounding boxes around the cutting planes
+eps = 1e-4;
+s() = {};
+For i In {1:N-1}
+  s() += Surface In BoundingBox{xmin-eps,ymin-eps,zmin + i * dz - eps,
+                                xmax+eps,ymax+eps,zmin + i * dz + eps};
+EndFor
 
-// To slice the mesh instead the CAD, one can use the "SimplePartition" Plugin:
-/*
-  Plugin("SimplePartition").NumSlicesX = 1;
-  Plugin("SimplePartition").NumSlicesY = 1;
-  Plugin("SimplePartition").NumSlicesZ = N;
-  Plugin("SimplePartition").Run
-*/
-
-// For general mesh partitions of course, use "PartitionMesh N;"
+// delete all other entities
+dels = Surface{:};
+dels -= s();
+Delete { Volume{:}; Surface{dels()}; Curve{:}; Point{:}; }
