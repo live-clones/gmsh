@@ -83,8 +83,8 @@ void GMSH_SpanningTreePlugin::run(void){
     getAllMEdge(elementStartOn, edgeStartOn);
 
   // Build spanning tree and save into the model (begin with startOn if defined)
-  DSU                   vertex(model->getNumMeshVertices());
-  list<pair<int, int> > tree;
+  DSU  vertex(model->getNumMeshVertices());
+  Tree tree;
   if(startOn >= 0)
     spanningTree(edgeStartOn, vertex, tree);
 
@@ -95,8 +95,8 @@ void GMSH_SpanningTreePlugin::run(void){
   Msg::Info("Spanning tree built! (%g s)", Cpu() - time);
 }
 
-void GMSH_SpanningTreePlugin::spanningTree(EdgeSet& edge, DSU& vertex,
-                                           list<pair<int, int> >& tree){
+void GMSH_SpanningTreePlugin::spanningTree(EdgeSet& edge,
+                                           DSU& vertex, Tree& tree){
   // Kruskal's algorithm, without edge sorting, since we don't weight them //
   ///////////////////////////////////////////////////////////////////////////
 
@@ -141,16 +141,15 @@ void GMSH_SpanningTreePlugin::getAllMEdge(ElementSet& element, EdgeSet& edge){
                                  (*it)->getEdge(i).getVertex(1)->getNum() - 1));
 }
 
-void GMSH_SpanningTreePlugin::addToModel(GModel& model,
-                                         list<pair<int, int> >& tree){
+void GMSH_SpanningTreePlugin::addToModel(GModel& model, Tree& tree){
   // Transform Tree into MLines //
   ////////////////////////////////
   // Future MElements
   vector<MElement*> line(tree.size());
 
   // Populate
-  list<pair<int, int> >::iterator end = tree.end();
-  list<pair<int, int> >::iterator  it = tree.begin();
+  Tree::iterator end = tree.end();
+  Tree::iterator  it = tree.begin();
 
   for(int i = 0; it != end; i++, it++)
     line[i] = new MLine(model.getMeshVertexByTag(it->first  + 1),
