@@ -4382,7 +4382,9 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     for (size_t i=0 ; i< passages.size() ; ++i){
       passages[i].analyze(potU, potV, qLayout.G, qLayout.new2old);
     }
-    
+
+    // IN CONSTRUCTION ...
+#if 0       
     for (int I=0;I<1;I++){
       std::sort(passages.begin(), passages.end());
       qLayout.computeQuadLayout(potU, potV, duplicateEdges, cuts, passages);
@@ -4397,7 +4399,8 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
       //      passages[i].PrintFile();
     }
   }
-
+#endif
+  
   PViewDataGModel *d = new PViewDataGModel;
   PViewDataGModel *dt = new PViewDataGModel(PViewDataGModel::ElementNodeData);
   PViewDataGModel *dd = new PViewDataGModel(PViewDataGModel::ElementData);
