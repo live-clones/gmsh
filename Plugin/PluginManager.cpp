@@ -67,6 +67,7 @@
 #include "GaussPoints.h"
 #include "VoroMetal.h"
 #include "Summation.h"
+#include "BoundaryAngles.h"
 #include "MeshSizeFieldView.h"
 
 // for testing purposes only :-)
@@ -271,6 +272,8 @@ void PluginManager::registerDefaultPlugins()
       "GaussPoints", GMSH_RegisterGaussPointsPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "Summation", GMSH_RegisterSummationPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
+      "BoundaryAngles", GMSH_RegisterBoundaryAnglesPlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "AnalyseMeshQuality", GMSH_RegisterAnalyseMeshQualityPlugin()));

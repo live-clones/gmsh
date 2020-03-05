@@ -190,13 +190,19 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double y = points[i][j + k].y();
         double z = points[i][j + k].z();
         v[k] = pos.find(x, y, z);
+        if(!v[k])
+          Msg::Error("Could not find node at position (%g, %g, %g) with tol=%g",
+                     x, y, z, eps);
       }
-      if(v[0] == v[1] || v[0] == v[2] || v[1] == v[2]){
+      if(!v[0] || !v[1] || !v[2]) {
+        // error
+      }
+      else if(v[0] == v[1] || v[0] == v[2] || v[1] == v[2]) {
         Msg::Debug("Skipping degenerated triangle %lu %lu %lu",
                    v[0]->getNum(), v[1]->getNum(), v[2]->getNum());
         nbDegen++;
       }
-      else if(CTX::instance()->mesh.stlRemoveDuplicateTriangles){
+      else if(CTX::instance()->mesh.stlRemoveDuplicateTriangles) {
         MFace mf(v[0], v[1], v[2]);
         if(unique.find(mf) == unique.end()) {
           faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
@@ -244,7 +250,8 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace*> &faces, bool binary,
   }
   else {
     char header[80];
-    strncpy(header, name.c_str(), 80);
+    strncpy(header, name.c_str(), 79);
+    header[79] = '\0';
     fwrite(header, sizeof(char), 80, fp);
     fwrite(&nfacets, sizeof(unsigned int), 1, fp);
   }

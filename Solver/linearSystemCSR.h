@@ -181,7 +181,7 @@ private:
 
 public:
   linearSystemCSRGmm(const std::string &method = "gmres", double tol = 1e-8,
-                     int noisy = 1)
+                     int noisy = 0)
     : _method(method), _tol(tol), _noisy(noisy) {}
   virtual ~linearSystemCSRGmm() {}
   void setPrec(double p) { _tol = p; }

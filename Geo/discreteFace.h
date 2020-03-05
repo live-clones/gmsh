@@ -33,6 +33,7 @@ private:
   };
   param _param;
   void _createGeometryFromSTL();
+  void _computeSTLNormals();
 public:
   discreteFace(GModel *model, int num);
   discreteFace(GModel *model);

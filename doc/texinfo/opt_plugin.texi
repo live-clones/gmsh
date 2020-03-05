@@ -75,6 +75,14 @@ Default value: @code{14}
 Default value: @code{-1}
 @end table
 
+@item Plugin(BoundaryAngles)
+Plugin(BoundaryAngles) computes the (interior) angles between the line elements on the boundary of all surfaces. The angles, computed modulo 2*Pi, are stored in a new post-processing view, one for each surface. The plugin currently only works for planar surfaces.
+Numeric options:
+@table @code
+@item View
+Default value: @code{-1}
+@end table
+
 @item Plugin(Bubbles)
 Plugin(Bubbles) constructs a geometry consisting of `bubbles' inscribed in the Voronoi of an input triangulation. `ShrinkFactor' allows to change the size of the bubbles. The plugin expects a triangulation in the `z = 0' plane to exist in the current model.@*
 @*

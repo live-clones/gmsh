@@ -3,7 +3,7 @@
  *  Gmsh tutorial 2
  *
  *  Includes, geometrical transformations, extruded geometries,
- *  elementary entities (volumes), physical entities (volumes)
+ *  elementary entities (volumes), physical groups (volumes)
  *
  *********************************************************************/
 

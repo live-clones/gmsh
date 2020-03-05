@@ -5107,8 +5107,13 @@ The following examples introduce new features gradually, starting with
 the
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}
 directory of the Gmsh distribution. C++, C, Python or Julia versions of
-several of these tutorials are also available in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api,demos/api}.
+several of these tutorials are also available in the
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c,tutorial/c},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++,tutorial/c++},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python,tutorial/python}
+and
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia,tutorial/julia}
+directories.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
@@ -5462,12 +5467,17 @@ the compilation of common dependencies.
 @cindex Programming, API
 
 The Gmsh Application Programming Interface (API) allows you to integrate
-the Gmsh library in your own application. Examples on how to use the API
-are available in the
+the Gmsh library in your own application.  C++, C, Python and Julia
+versions of several of the @code{.geo} tutorials from @ref{Tutorial} are
+available in the
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c,tutorial/c},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++,tutorial/c++},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python,tutorial/python}
+and
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia,tutorial/julia}
+directories.  Other API examples are available in the
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
-directory. In particular, this directory contains C++, C, Python and
-Julia versions of several of the @code{.geo} tutorials from
-@ref{Tutorial}.
+directory.
 
 By design, the Gmsh API is purely functional, and only uses elementary
 types from the target language. Currently supported languages are C++,

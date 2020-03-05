@@ -390,6 +390,11 @@ public:
     }
   }
 
+  virtual inline void assembleSym(const Dof &R, const Dof &C, const dataMat &value){
+    assemble(R, C, value);
+    assemble(C, R, value);
+  }
+
   virtual inline void assemble(const Dof &R, const Dof &C, const dataMat &value)
   {
     if(_isParallel && !_parallelFinalized) _parallelFinalize();

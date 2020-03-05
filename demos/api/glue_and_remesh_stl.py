@@ -1,12 +1,14 @@
 import gmsh
 import math
+import os
 
 gmsh.initialize()
 gmsh.option.setNumber('General.Terminal', 1)
 
 # load two STL surfaces
-gmsh.merge('surface1.stl')
-gmsh.merge('surface2.stl')
+path = os.path.dirname(os.path.abspath(__file__))
+gmsh.merge(os.path.join(path, 'surface1.stl'))
+gmsh.merge(os.path.join(path, 'surface2.stl'))
 
 # merge nodes that are at the same position up to some tol
 gmsh.option.setNumber('Geometry.Tolerance', 1e-4)

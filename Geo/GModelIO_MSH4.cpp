@@ -1208,7 +1208,8 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
     }
   }
 
-  Msg::Info("%lu parametrizations", nParamE + nParamF);
+  // only report surface parametrizations
+  Msg::Info("%lu parametrizations", nParamF);
   Msg::StartProgressMeter(nParamF);
 
   for(std::size_t edge = 0; edge < nParamE; edge++) {
@@ -1251,7 +1252,7 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
         if(!df->readParametrization(fp, binary)) return false;
       }
     }
-    Msg::ProgressMeter(face, true, "Reading parametrizations");
+    Msg::ProgressMeter(face, true, "Processing parametrizations");
   }
 
   Msg::StopProgressMeter();

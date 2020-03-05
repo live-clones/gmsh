@@ -40,6 +40,7 @@ set(SRC
   GaussPoints.cpp
   VoroMetal.cpp
   Summation.cpp
+  BoundaryAngles.cpp
   MeshSizeFieldView.cpp
 )
 

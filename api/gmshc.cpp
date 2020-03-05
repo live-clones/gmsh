@@ -1167,6 +1167,33 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, double * int
   }
 }
 
+GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n, int ** edgeNum, size_t * edgeNum_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_edgeNodes_(edgeNodes, edgeNodes + edgeNodes_n);
+    std::vector<int> api_edgeNum_;
+    gmsh::model::mesh::getEdgeNumber(api_edgeNodes_, api_edgeNum_);
+    vector2ptr(api_edgeNum_, edgeNum, edgeNum_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType, int ** localMultipliers, size_t * localMultipliers_n, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_localMultipliers_;
+    gmsh::model::mesh::getLocalMultipliersForHcurl0(elementType, api_localMultipliers_, tag);
+    vector2ptr(api_localMultipliers_, localMultipliers, localMultipliers_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int * numComponents, int * numFunctionsPerElements, double ** basisFunctions, size_t * basisFunctions_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
 {
   if(ierr) *ierr = 0;

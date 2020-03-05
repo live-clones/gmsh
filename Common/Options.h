@@ -768,6 +768,8 @@ double opt_print_pgf_export_axis(OPT_ARGS_NUM);
 double opt_print_pgf_horiz_bar(OPT_ARGS_NUM);
 double opt_print_text(OPT_ARGS_NUM);
 double opt_print_tex_as_equation(OPT_ARGS_NUM);
+double opt_print_tex_force_fontsize(OPT_ARGS_NUM);
+double opt_print_tex_width_in_mm(OPT_ARGS_NUM);
 double opt_print_composite_windows(OPT_ARGS_NUM);
 double opt_print_delete_tmp_files(OPT_ARGS_NUM);
 double opt_print_height(OPT_ARGS_NUM);

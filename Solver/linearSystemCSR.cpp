@@ -461,6 +461,9 @@ template <> int linearSystemCSRGmm<double>::systemSolve()
     gmm::gmres(M, *_x, *_b, P, 100, iter);
   else
     gmm::cg(M, *_x, *_b, P, iter);
+  if(!iter.converged())
+    Msg::Warning("Iterative linear solver has not converged (res = %g)",
+                 iter.get_res());
   return 1;
 }
 

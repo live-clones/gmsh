@@ -3,7 +3,7 @@
  *  Gmsh tutorial 1
  *
  *  Variables, elementary entities (points, curves, surfaces), physical
- *  entities (points, curves, surfaces)
+ *  groups (points, curves, surfaces)
  *
  *********************************************************************/
 

@@ -103,6 +103,7 @@ static bool breakForLargeAngle(MVertex *vprev, MVertex *vmid, MVertex *vpos, dou
   return false;
 }
 
+/*
 static bool breakForLargeAngle(MLine *prev, MLine *curr, double threshold)
 {
   if(threshold >= M_PI - 1e-12) return false;
@@ -119,7 +120,7 @@ static bool breakForLargeAngle(MLine *prev, MLine *curr, double threshold)
   }
   return false;
 }
-
+*/
 void classifyFaces(GModel *gm, double curveAngleThreshold)
 {
 #if defined(HAVE_MESH)
@@ -302,27 +303,22 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
     //    printf("\n");
 
     std::vector<std::vector<MVertex *> > vs;
-    for (size_t i=0;i<vs_.size();i++){
-
-      bool periodic = (vs_[i][ vs_[i].size() - 1] == vs_[i][0]);
-
-      //      printf("periodic(%lu) = %d\n",i,periodic);
-      
-      if (periodic){
-	for (size_t j=0;j<vs_[i].size()-1;j++){
-	  MVertex *v0 = vs_[i][j == 0 ? vs_[i].size()-1 : j-1];
-	  MVertex *v1 = vs_[i][j];
-	  MVertex *v2 = vs_[i][j+1];
-	  if (breakForLargeAngle(v0,v1,v2,curveAngleThreshold)){
-	    //	    printf("breaking @ %lu\n",j);
-	    std::vector<MVertex*> temp;
-	    for (size_t k=j;k<vs_[i].size()+j;k++){
-	      temp.push_back(vs_[i][k%vs_[i].size()]);
-	    }
-	    vs_[i] = temp;
-	    break;
-	  }
-	}
+    for(size_t i = 0; i < vs_.size(); i++) {
+      bool periodic = (vs_[i][vs_[i].size() - 1] == vs_[i][0]);
+      if(periodic) {
+        for(size_t j = 0; j < vs_[i].size() - 1; j++) {
+          MVertex *v0 = vs_[i][j == 0 ? (vs_[i].size() - 2) : (j - 1)];
+          MVertex *v1 = vs_[i][j];
+          MVertex *v2 = vs_[i][j + 1];
+          if(breakForLargeAngle(v0, v1, v2, curveAngleThreshold)) {
+            std::vector<MVertex *> temp;
+            for(size_t k = j; k < vs_[i].size() + j; k++) {
+              temp.push_back(vs_[i][k % vs_[i].size()]);
+            }
+            vs_[i] = temp;
+            break;
+          }
+        }
       }
 
       std::vector<size_t> cuts_;
@@ -382,17 +378,14 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       GEdge *newGe = new discreteEdge(gm, (MAX1++) +1,
                                       modelVertices[vB], modelVertices[vE]);
 
-      //      printf("%lu segments for this discrete edge\n",vs[i].size()-1);
-      for (size_t j=1;j<vs[i].size();j++){
-	MVertex *v1 = vs[i][j-1];
-	MVertex *v2 = vs[i][j];
-	newGe->lines.push_back( new MLine(v1,v2) );
-	//	printf("(%lu %lu)",v1->getNum(),v2->getNum());
+      for(size_t j = 1; j < vs[i].size(); j++) {
+        MVertex *v1 = vs[i][j - 1];
+        MVertex *v2 = vs[i][j];
+        newGe->lines.push_back(new MLine(v1, v2));
       }
-      //      printf("\n");
-      
-      for(size_t j=0;j< newGe->lines.size(); j++) {
-	MLine *l = newGe->lines[j];
+
+      for(size_t j = 0; j < newGe->lines.size(); j++) {
+        MLine *l = newGe->lines[j];
         if(l->getVertex(0)->onWhat()) {
           newGe->mesh_vertices.push_back(l->getVertex(0));
           l->getVertex(0)->setEntity(newGe);

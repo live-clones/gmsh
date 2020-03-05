@@ -40,6 +40,7 @@
 #include "dofManager.h"
 #include "laplaceTerm.h"
 #include "linearSystemGmm.h"
+#include "linearSystemMUMPS.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
@@ -696,15 +697,24 @@ static void createLagrangeMultipliers(dofManager<double> &myAssembler,
   // return;
   //  if (g.crosses[0]->inInternalBoundary)return;
 
-  if(g.singularities.size() == 1) {
-    myAssembler.numberVertex(g.singularities[0], 0, 33);
-    myAssembler.numberVertex(g.singularities[0], 0, 34);
-  }
+  if (g.left[0]  == g.right[0])printf("ARGGGGGGGG\n"); 
   
-  for(size_t K = 1 ; K < g.left.size(); K++) {
-    if (g.left[K] != g.left[0]){
-      myAssembler.numberVertex(g.left[K], 0, 3 + 100 * g.groupId);
-      myAssembler.numberVertex(g.left[K], 0, 4 + 100 * g.groupId);
+  if(g.singularities.size() == 11221) {
+    myAssembler.numberVertex(g.singularities[0], 0, 33+ 100 * (g.groupId+1));
+    myAssembler.numberVertex(g.singularities[0], 0, 34+ 100 * (g.groupId+1));
+    for(size_t K = 1 ; K < g.left.size(); K++) {
+      if (g.left[K] != g.singularities[0]){
+	myAssembler.numberVertex(g.left[K], 0, 3 + 100 * (g.groupId+1));
+	myAssembler.numberVertex(g.left[K], 0, 4 + 100 * (g.groupId+1));
+      }
+    }
+  }
+  else {
+    for(size_t K = 1 ; K < g.left.size(); K++) {
+      if (g.left[K] != g.left[0]){
+	myAssembler.numberVertex(g.left[K], 0, 3 + 100 * (g.groupId+1));
+	myAssembler.numberVertex(g.left[K], 0, 4 + 100 * (g.groupId+1));
+      }
     }
   }
 }
@@ -714,7 +724,7 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
                                  std::map<MTriangle *, SVector3> &d0,
                                  bool assemble)
 {
-  //   return;
+  //return;
   // internal boundaries --> constant u or v on each side 
   if(g.crosses[0]->inInternalBoundary) {
     if(!assemble) {
@@ -760,31 +770,31 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
       Dof V2(g.right[K]->getNum(), Dof::createTypeWithTwoInts(0, 2));
 
       if(fabs(dot(g.crosses[0]->_tgt, dir0)) < .2) {
-        myAssembler.assemble(E1, U1, 1.0);
-        myAssembler.assemble(U1, E1, 1.0);
-        myAssembler.assemble(E1, U1R, -1.0);
-        myAssembler.assemble(U1R, E1, -1.0);
+        myAssembler.assembleSym(E1, U1, 1.0);
+	//        myAssembler.assemble(U1, E1, 1.0);
+        myAssembler.assembleSym(E1, U1R, -1.0);
+	//        myAssembler.assemble(U1R, E1, -1.0);
       }
       else {
-        myAssembler.assemble(E1, V1, 1.0);
-        myAssembler.assemble(V1, E1, 1.0);
-        myAssembler.assemble(E1, V1R, -1.0);
-        myAssembler.assemble(V1R, E1, -1.0);
+        myAssembler.assembleSym(E1, V1, 1.0);
+	//        myAssembler.assemble(V1, E1, 1.0);
+        myAssembler.assembleSym(E1, V1R, -1.0);
+	//        myAssembler.assemble(V1R, E1, -1.0);
       }
 
       if(fabs(dot(g.crosses[0]->_tgt, dir1)) < .2) {
         //	printf("HAHAHA %d\n",g.groupId);
-        myAssembler.assemble(E2, U2, 1.0);
-        myAssembler.assemble(U2, E2, 1.0);
-        myAssembler.assemble(E2, U2R, -1.0);
-        myAssembler.assemble(U2R, E2, -1.0);
+        myAssembler.assembleSym(E2, U2, 1.0);
+	//        myAssembler.assemble(U2, E2, 1.0);
+        myAssembler.assembleSym(E2, U2R, -1.0);
+	//        myAssembler.assemble(U2R, E2, -1.0);
       }
       else {
         //	printf("HAHAHO %d\n",g.groupId);
-        myAssembler.assemble(E2, V2, 1.0);
-        myAssembler.assemble(V2, E2, 1.0);
-        myAssembler.assemble(E2, V2R, -1.0);
-        myAssembler.assemble(V2R, E2, -1.0);
+        myAssembler.assembleSym(E2, V2, 1.0);
+	//        myAssembler.assemble(V2, E2, 1.0);
+        myAssembler.assembleSym(E2, V2R, -1.0);
+	//        myAssembler.assemble(V2R, E2, -1.0);
       }
     }
     printf("\n");
@@ -794,6 +804,7 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
 static void assembleLagrangeMultipliers(dofManager<double> &myAssembler,
                                         groupOfCross2d &g)
 {
+  //  printf("group %d\n",g.groupId);
   Dof U1R(g.left[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
   Dof V1R(g.left[0]->getNum(), Dof::createTypeWithTwoInts(0, 2));
   Dof U2R(g.right[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
@@ -805,53 +816,40 @@ static void assembleLagrangeMultipliers(dofManager<double> &myAssembler,
   //  }
 
   if(g.singularities.size() == 1) {
-    Dof E1(g.singularities[0]->getNum(), Dof::createTypeWithTwoInts(0, 33));
-    Dof E2(g.singularities[0]->getNum(), Dof::createTypeWithTwoInts(0, 34));
+    //    printf("%lu %lu --> %lu\n",g.left[0]->getNum(),g.right[0]->getNum(),
+    //	   g.singularities[0]->getNum());
+    Dof E1(g.singularities[0]->getNum(), Dof::createTypeWithTwoInts(0, 33+ 100 * (g.groupId+1)));
+    Dof E2(g.singularities[0]->getNum(), Dof::createTypeWithTwoInts(0, 34+ 100 * (g.groupId+1)));
     Dof U(g.singularities[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
     Dof V(g.singularities[0]->getNum(), Dof::createTypeWithTwoInts(0, 2));
 
-    myAssembler.assemble(E1, U, 1.0);
-    myAssembler.assemble(E1, U1R, -1.0);
+    //    myAssembler.assemble(E1, E1, 1.e-12);
+    //    myAssembler.assemble(E2, E2, 1.e-12);
+    
+    myAssembler.assembleSym(E1, U, 1.0);
+    myAssembler.assembleSym(E1, U1R, -1.0);
 
-    myAssembler.assemble(E1, U, -g.mat[0][0]);
-    myAssembler.assemble(E1, V, -g.mat[0][1]);
-    myAssembler.assemble(E1, U2R, g.mat[0][0]);
-    myAssembler.assemble(E1, V2R, g.mat[0][1]);
+    myAssembler.assembleSym(E1, U, -g.mat[0][0]);
+    myAssembler.assembleSym(E1, V, -g.mat[0][1]);
+    myAssembler.assembleSym(E1, U2R, g.mat[0][0]);
+    myAssembler.assembleSym(E1, V2R, g.mat[0][1]);
 
-    myAssembler.assemble(E2, V, 1.0);
-    myAssembler.assemble(E2, V1R, -1.0);
+    myAssembler.assembleSym(E2, V, 1.0);
+    myAssembler.assembleSym(E2, V1R, -1.0);
 
-    myAssembler.assemble(E2, U, -g.mat[1][0]);
-    myAssembler.assemble(E2, V, -g.mat[1][1]);
-    myAssembler.assemble(E2, U2R, g.mat[1][0]);
-    myAssembler.assemble(E2, V2R, g.mat[1][1]);
-
-    // sym
-
-    myAssembler.assemble(U, E1, 1.0);
-    myAssembler.assemble(U1R, E1, -1.0);
-
-    myAssembler.assemble(U, E1, -g.mat[0][0]);
-    myAssembler.assemble(V, E1, -g.mat[0][1]);
-    myAssembler.assemble(U2R, E1, g.mat[0][0]);
-    myAssembler.assemble(V2R, E1, g.mat[0][1]);
-
-    myAssembler.assemble(V, E2, 1.0);
-    myAssembler.assemble(V1R, E2, -1.0);
-
-    myAssembler.assemble(U, E2, -g.mat[1][0]);
-    myAssembler.assemble(V, E2, -g.mat[1][1]);
-    myAssembler.assemble(U2R, E2, g.mat[1][0]);
-    myAssembler.assemble(V2R, E2, g.mat[1][1]);
+    myAssembler.assembleSym(E2, U, -g.mat[1][0]);
+    myAssembler.assembleSym(E2, V, -g.mat[1][1]);
+    myAssembler.assembleSym(E2, U2R, g.mat[1][0]);
+    myAssembler.assembleSym(E2, V2R, g.mat[1][1]);
   }
 
   for(size_t K = 1; K < g.left.size(); K++) {
-    //     printf("%3lu %3lu\n",g.left[K]->getNum(),g.right[K]->getNum());
+    //    printf("%3lu %3lu\n",g.left[K]->getNum(),g.right[K]->getNum());
     // EQUATION IDS (Lagrange multipliers)
     Dof E1(g.left[K]->getNum(),
-           Dof::createTypeWithTwoInts(0, 3 + 100 * g.groupId));
+           Dof::createTypeWithTwoInts(0, 3 + 100 * (g.groupId+1)));
     Dof E2(g.left[K]->getNum(),
-           Dof::createTypeWithTwoInts(0, 4 + 100 * g.groupId));
+           Dof::createTypeWithTwoInts(0, 4 + 100 * (g.groupId+1)));
 
     // DOF IDS
     Dof U1(g.left[K]->getNum(), Dof::createTypeWithTwoInts(0, 1));
@@ -859,37 +857,21 @@ static void assembleLagrangeMultipliers(dofManager<double> &myAssembler,
     Dof U2(g.right[K]->getNum(), Dof::createTypeWithTwoInts(0, 1));
     Dof V2(g.right[K]->getNum(), Dof::createTypeWithTwoInts(0, 2));
 
-    myAssembler.assemble(E1, U1, 1.0);
-    myAssembler.assemble(E1, U1R, -1.0);
+    myAssembler.assembleSym(E1, U1, 1.0);
+    myAssembler.assembleSym(E1, U1R, -1.0);
 
-    myAssembler.assemble(E1, U2, -g.mat[0][0]);
-    myAssembler.assemble(E1, V2, -g.mat[0][1]);
-    myAssembler.assemble(E1, U2R, g.mat[0][0]);
-    myAssembler.assemble(E1, V2R, g.mat[0][1]);
+    myAssembler.assembleSym(E1, U2, -g.mat[0][0]);
+    myAssembler.assembleSym(E1, V2, -g.mat[0][1]);
+    myAssembler.assembleSym(E1, U2R, g.mat[0][0]);
+    myAssembler.assembleSym(E1, V2R, g.mat[0][1]);
 
-    myAssembler.assemble(E2, V1, 1.0);
-    myAssembler.assemble(E2, V1R, -1.0);
+    myAssembler.assembleSym(E2, V1, 1.0);
+    myAssembler.assembleSym(E2, V1R, -1.0);
 
-    myAssembler.assemble(E2, U2, -g.mat[1][0]);
-    myAssembler.assemble(E2, V2, -g.mat[1][1]);
-    myAssembler.assemble(E2, U2R, g.mat[1][0]);
-    myAssembler.assemble(E2, V2R, g.mat[1][1]);
-
-    // sym
-
-    myAssembler.assemble(U1, E1, 1.0);
-    myAssembler.assemble(U1R, E1, -1.0);
-    myAssembler.assemble(U2, E1, -g.mat[0][0]);
-    myAssembler.assemble(V2, E1, -g.mat[0][1]);
-    myAssembler.assemble(U2R, E1, g.mat[0][0]);
-    myAssembler.assemble(V2R, E1, g.mat[0][1]);
-
-    myAssembler.assemble(V1, E2, 1.0);
-    myAssembler.assemble(V1R, E2, -1.0);
-    myAssembler.assemble(U2, E2, -g.mat[1][0]);
-    myAssembler.assemble(V2, E2, -g.mat[1][1]);
-    myAssembler.assemble(U2R, E2, g.mat[1][0]);
-    myAssembler.assemble(V2R, E2, g.mat[1][1]);
+    myAssembler.assembleSym(E2, U2, -g.mat[1][0]);
+    myAssembler.assembleSym(E2, V2, -g.mat[1][1]);
+    myAssembler.assembleSym(E2, U2R, g.mat[1][0]);
+    myAssembler.assembleSym(E2, V2R, g.mat[1][1]);
   }
 }
 
@@ -929,10 +911,10 @@ LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
                        Dof::createTypeWithTwoInts(0, 5 + 100 * i));
               Dof Uref(vk->getNum(), Dof::createTypeWithTwoInts(0, NUMDOF));
               Dof U(v->getNum(), Dof::createTypeWithTwoInts(0, NUMDOF));
-              myAssembler.assemble(Eref, Uref, 1.0);
-              myAssembler.assemble(Eref, U, -1.0);
-              myAssembler.assemble(Uref, Eref, 1.0);
-              myAssembler.assemble(U, Eref, -1.0);
+              myAssembler.assembleSym(Eref, Uref, 1.0);
+              myAssembler.assembleSym(Eref, U, -1.0);
+	      //              myAssembler.assemble(Uref, Eref, 1.0);
+	      //              myAssembler.assemble(U, Eref, -1.0);
             }
           }
         }
@@ -941,7 +923,7 @@ LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
   }
 }
 
-const size_t MAX_PASSAGES = 200;
+const size_t MAX_PASSAGES = 30;
 
 struct cutGraphPassage {
   int COUNTER;
@@ -958,6 +940,7 @@ struct cutGraphPassage {
   MVertex *sing_conn, *V2;
   bool close;
   double diff;
+  int max_passages;
   int true_passages;
   cutGraphPassage (int C, int D, MVertex *s) : COUNTER(C), DIR(D), sing(s), V1(NULL), sing_conn(NULL), V2(NULL), 
 					       close(false), diff (1.e22),true_passages(0)
@@ -987,7 +970,8 @@ struct cutGraphPassage {
     return angle;
   }
   void create(dofManager<double> &myAssembler, std::vector<groupOfCross2d> &G){
-    if (eds.size() > MAX_PASSAGES)return;
+    if (V1 == V2 && pts.size() < 3)return;
+    if (max_passages < MAX_PASSAGES)return;
     if (eds.empty() && sing == sing_conn)return;
     if (!sing_conn) return;
     if (DIR == 0)
@@ -998,11 +982,14 @@ struct cutGraphPassage {
   
   void assemble(dofManager<double> &myAssembler, std::vector<groupOfCross2d> &G){
 
-    if (eds.size() > MAX_PASSAGES)return;
+    printf("MAX : %d\n",max_passages);
+    
+    if (V1 == V2 && pts.size() < 3)return;
+    if (max_passages < MAX_PASSAGES)return;
     //    if (eds.empty())return;
     if (!sing_conn) return;
 
-    Print();
+    Print("Assembling");
     
     Dof E1(G[0].left[0]->getNum(), Dof::createTypeWithTwoInts(COUNTER, 10201020));    
     Dof E2(G[0].left[0]->getNum(), Dof::createTypeWithTwoInts(COUNTER, 10201021));    
@@ -1016,10 +1003,10 @@ struct cutGraphPassage {
     Dof DOF_UR(sing_conn->getNum(), Dof::createTypeWithTwoInts(0, 1));    
     Dof DOF_VR(sing_conn->getNum(), Dof::createTypeWithTwoInts(0, 2));    
 
-    myAssembler.assemble(E1, DOF_UL,  -1.0);
-    myAssembler.assemble(E2, DOF_VL,  -1.0 );
-    myAssembler.assemble(DOF_UL, E1,  -1.0);
-    myAssembler.assemble(DOF_VL, E2,  -1.0);
+    myAssembler.assembleSym(E1, DOF_UL,  -1.0);
+    myAssembler.assembleSym(E2, DOF_VL,  -1.0 );
+    //    myAssembler.assemble(DOF_UL, E1,  -1.0);
+    //    myAssembler.assemble(DOF_VL, E2,  -1.0);
     
     bool _U = DIR == 0;
 
@@ -1062,15 +1049,15 @@ struct cutGraphPassage {
       //      printf("coucou %d %lu %d %d %lu %lu\n",COUNTER,i,GROUP,SIGN,
       //	     ref_LEFT->getNum(),ref_RIGHT->getNum());
 
-      myAssembler.assemble(E1, DOF_ULEFT , M[0][0]);
-      myAssembler.assemble(E1, DOF_VLEFT,  M[0][1]);
-      myAssembler.assemble(E2, DOF_ULEFT,  M[1][0]);
-      myAssembler.assemble(E2, DOF_VLEFT,  M[1][1]);
-      myAssembler.assemble(E1, DOF_URIGHT, -m00);
-      myAssembler.assemble(E1, DOF_VRIGHT, -m01);
-      myAssembler.assemble(E2, DOF_URIGHT, -m10);
-      myAssembler.assemble(E2, DOF_VRIGHT, -m11);
-      
+      myAssembler.assembleSym(E1, DOF_ULEFT , M[0][0]);
+      myAssembler.assembleSym(E1, DOF_VLEFT,  M[0][1]);
+      myAssembler.assembleSym(E2, DOF_ULEFT,  M[1][0]);
+      myAssembler.assembleSym(E2, DOF_VLEFT,  M[1][1]);
+      myAssembler.assembleSym(E1, DOF_URIGHT, -m00);
+      myAssembler.assembleSym(E1, DOF_VRIGHT, -m01);
+      myAssembler.assembleSym(E2, DOF_URIGHT, -m10);
+      myAssembler.assembleSym(E2, DOF_VRIGHT, -m11);
+      /*
       myAssembler.assemble(DOF_ULEFT , E1, M[0][0]);
       myAssembler.assemble(DOF_VLEFT ,E1,  M[0][1]);
       myAssembler.assemble(DOF_ULEFT, E2,  M[1][0]);
@@ -1079,7 +1066,7 @@ struct cutGraphPassage {
       myAssembler.assemble(DOF_VRIGHT,E1, -m01);
       myAssembler.assemble(DOF_URIGHT,E2, -m10);
       myAssembler.assemble(DOF_VRIGHT,E2, -m11);
-
+      */
       
       M[0][0] = m00;M[1][0] = m10;M[0][1] = m01;M[1][1] = m11;
     }
@@ -1087,16 +1074,16 @@ struct cutGraphPassage {
     //    printf("FINISH WITH %g %g %g %g\n",
     //	   M[0][0],M[0][1],M[1][0],M[1][1]);
     
-    myAssembler.assemble(E1, DOF_UR,  M[0][0]);
-    myAssembler.assemble(E1, DOF_VR,  M[0][1]);
-    myAssembler.assemble(E2, DOF_UR,  M[1][0]);
-    myAssembler.assemble(E2, DOF_VR,  M[1][1]);
-
+    myAssembler.assembleSym(E1, DOF_UR,  M[0][0]);
+    myAssembler.assembleSym(E1, DOF_VR,  M[0][1]);
+    myAssembler.assembleSym(E2, DOF_UR,  M[1][0]);
+    myAssembler.assembleSym(E2, DOF_VR,  M[1][1]);
+    /*
     myAssembler.assemble(DOF_UR,E1,  M[0][0]);
     myAssembler.assemble(DOF_VR,E1,  M[0][1]);
     myAssembler.assemble(DOF_UR,E2,  M[1][0]);
     myAssembler.assemble(DOF_VR,E2,  M[1][1]);
-    
+    */
 
   }
 
@@ -1107,12 +1094,7 @@ struct cutGraphPassage {
 		std::map<MVertex *, MVertex *, MVertexPtrLessThan> &new2old){
     V1 =  (new2old.find(sing) == new2old.end()) ? sing : new2old[sing];
     
-
-    //    if (COUNTER == 156411){
-    //      printf("%lu passages \n",eds.size());
-    //    }
-
-    if (eds.size() > MAX_PASSAGES)return;
+    //    if (max_passages > MAX_PASSAGES)return;
 
     bool _U = DIR == 0;
         
@@ -1196,7 +1178,7 @@ struct cutGraphPassage {
   }
 
   void PrintFile () const {
-    if (diff > 1.e-10)return;
+    //    if (diff > 1.e-10)return;
     char name[245];
     sprintf(name,"p_%d.pos",COUNTER);
     FILE *F = fopen(name,"w");
@@ -1210,17 +1192,19 @@ struct cutGraphPassage {
   }
 
   
-  void Print () const {
-    if (eds.size() > MAX_PASSAGES){
-      printf("ISO %8d (%8lu,NULL) : %c --> NOTHING \n", COUNTER, V1->getNum(), DIR ? 'U' : 'V');
+  void Print (const char *t) const {
+    if (V1 == V2 && pts.size() < 3)return;
+    if (max_passages > MAX_PASSAGES){
+      printf("%s : ISO %8d (%8lu,NULL) : %c --> NOTHING \n", t, COUNTER, V1->getNum(), DIR ? 'U' : 'V');
       return;
     }
     
     if (V1 && V2)
-      printf("ISO %8d (%8lu,%8lu) : %c --> %c -- diff %22.15E %4d passages\n",
-	     COUNTER, V1->getNum(), V2->getNum(), DIR==0 ? 'U' : 'V', DIR_CONN==0 ? 'U' : 'V', diff, true_passages);
+      printf("%s : ISO %8d (%8lu,%8lu) : %c --> %c -- diff %22.15E %4d passages %4d %4d points\n",t,
+	     COUNTER, V1->getNum(), V2->getNum(), DIR==0 ? 'U' : 'V', DIR_CONN==0 ? 'U' : 'V', diff, true_passages,max_passages,
+	     pts.size());
     else
-      printf("ISO %8d (%8lu,BDRY) %4d passages\n",COUNTER,V1->getNum(),true_passages);      
+      printf("%s : ISO %8d (%8lu,BDRY) %4d passages\n",t,COUNTER,V1->getNum(),true_passages);      
     
   }
 
@@ -1265,18 +1249,16 @@ static void createDofs(dofManager<double> &myAssembler, int NUMDOF,
     myAssembler.numberVertex(*it, 0, NUMDOF);
 }
 
-int nbExtra = 11;
-
 void createExtraConnexions (dofManager<double> &myAssembler,
 			    std::vector<groupOfCross2d> &G,
 			    std::vector<cutGraphPassage> &passages){
   // TRY WITH THE FIRST PASSAGE
-  //  return;
+  //return;
   if (passages.empty())return;
   for (int i=0;i<passages.size();i++){
-    if (passages[i].diff < 1.e-9)
-      passages[i].create (myAssembler,G);
-    else if (i && passages[i-1] == passages[i]){
+    //    if (passages[i].diff < 1.e-9)
+    //      passages[i].create (myAssembler,G);
+    if (i && passages[i-1] == passages[i]){
       passages[i].create (myAssembler,G);
     }
   }
@@ -1287,10 +1269,11 @@ void assembleExtraConnexions (dofManager<double> &myAssembler,
 			      std::vector<cutGraphPassage> &passages){
   if (passages.empty())return;
   for (int i=0;i<passages.size();i++){
-    if (passages[i].diff < 1.e-9)
-      passages[i].assemble (myAssembler,G);
-    else if (i && passages[i-1] == passages[i]){
-      passages[i-1].Print();
+    //    if (passages[i].diff < 1.e-9)
+    //      passages[i].assemble (myAssembler,G);
+    if (i && passages[i-1] == passages[i]){
+      //      passages[i].Print("Friend 1");
+      //      passages[i-1].Print("Friend 2");
       passages[i].assemble (myAssembler,G);
     }
   }
@@ -1310,7 +1293,7 @@ static bool computePotential(
   std::vector<cutGraphPassage> &passages)
 {
   
-  gm->writeMSH("split.msh", 4.0, false, true);
+  //  gm->writeMSH("split.msh", 4.0, false, true);
 
   
   double a[3];
@@ -1324,10 +1307,11 @@ static bool computePotential(
 
 #if defined(HAVE_PETSC)
   linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_GMM)
-  // linearSystemFull<double> *_lsys = new linearSystemFull<double>;
-  linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
-  ///  _lsys->setPrec(2.e-7);
+#elif defined(HAVE_MUMPS)
+  //linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
+  linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
+  //  _lsys->setParameter("symmetry","symmetric");
+
 #else
   linearSystemFull<double> *_lsys = new linearSystemFull<double>;
 #endif
@@ -1336,18 +1320,38 @@ static bool computePotential(
 
   //  int NUMDOF = dir+1;
 
+
+  
   createDofs(myAssembler, 1, vs);
   createDofs(myAssembler, 2, vs);
   LagrangeMultipliers2(myAssembler, 1, C, groups, duplicateEdges, false, lift);
   LagrangeMultipliers2(myAssembler, 2, C, groups, duplicateEdges, false, lift2);
 
   createExtraConnexions (myAssembler, G, passages);
-  
+
   for(size_t i = 0; i < G.size(); i++) {
     createLagrangeMultipliers(myAssembler, G[i]);
     LagrangeMultipliers3(myAssembler, G[i], lift, false);
   }
 
+#if 1
+  // AVERAGE
+  myAssembler.numberVertex(*vs.begin(), 9696, 1);
+  myAssembler.numberVertex(*vs.begin(), 9696, 2);
+  Dof EAVG1((*vs.begin())->getNum(), Dof::createTypeWithTwoInts(9696, 1));
+  Dof EAVG2((*vs.begin())->getNum(), Dof::createTypeWithTwoInts(9696, 2));
+
+  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
+      it != vs.end(); ++it){
+    Dof E1((*it)->getNum(), Dof::createTypeWithTwoInts(0, 1));
+    Dof E2((*it)->getNum(), Dof::createTypeWithTwoInts(0, 2));
+
+    myAssembler.assembleSym(EAVG1, E1, 1.0);
+    myAssembler.assembleSym(EAVG2, E2, 1.0);
+  }
+#endif
+  
+  
   LagrangeMultipliers2(myAssembler, 1, C, groups, duplicateEdges, true, lift);
   LagrangeMultipliers2(myAssembler, 2, C, groups, duplicateEdges, true, lift2);
   for(size_t i = 0; i < G.size(); i++) {
@@ -1420,6 +1424,7 @@ static bool computePotential(
       int num31 = myAssembler.getDofNumber(l2.getLocalDofR(&se, 2));
 
       double V = t->getVolume();
+      //      printf("%12.5E %12.5E %12.5E\n",RHS1,RHS2,RHS3);
       _lsys->addToRightHandSide(num1, RHS1 * V);
       _lsys->addToRightHandSide(num2, RHS2 * V);
       _lsys->addToRightHandSide(num3, RHS3 * V);
@@ -1435,7 +1440,7 @@ static bool computePotential(
   catch (...){
     Msg::Info("Computing potentials (%d unknowns) failed",
 	      myAssembler.sizeOfR());
-    return false;
+    //    return false;
   }
   double B = Cpu();
   Msg::Info("Computing potentials (%d unknowns) in %3lf seconds",
@@ -1796,7 +1801,7 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   }
 
 
-  
+
   FILE *fff = fopen("cotree.pos", "w");
   fprintf(fff, "View \"sides\"{\n");
   {
@@ -2108,9 +2113,8 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
 {
 #if defined(HAVE_PETSC)
   linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_GMM)
-  // MUMPS !!!
-  linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
+#elif defined(HAVE_MUMPS)
+  linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
 #else
   linearSystemFull<double> *_lsys = new linearSystemFull<double>;
 #endif
@@ -2352,7 +2356,8 @@ static void computeOneIsoRecur(
   double VAL,
   MVertex *v0,
   MVertex *v1,
-  SPoint3 &p, std::map<MVertex *, double> &pot,
+  SPoint3 &p,
+  std::map<MVertex *, double> &pot,
   std::map<MEdge, int, MEdgeLessThan> &visited,
   std::vector< std::pair<MEdge, std::pair<std::map<MVertex *, double> *, double> > > &cutGraphEnds,
   std::map<MEdge, MEdge, MEdgeLessThan> &d1,
@@ -2361,41 +2366,48 @@ static void computeOneIsoRecur(
   int COUNT,
   std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
   int &NB,
-  int &circular, cutGraphPassage &passage,
+  int &circular,
+  cutGraphPassage &passage,
   std::set<MVertex *, MVertexPtrLessThan> &singularities,
   MElement **before)
 {
   MEdge e(v0, v1);
 
-  MVertex vvv(p.x(), p.y(), p.z());
+  //  if (COUNT == 1210) 
+  //    printf("%lu %lu\n",v0->getNum(),v1->getNum()); 
 
+  
+  MVertex vvv(p.x(), p.y(), p.z());
+  //// -------------- W O R K    I N    P R O G R E S S ----------------------------
+  //// -----------------------------------------------------------------------------
   {    
     std::set<MVertex *, MVertexPtrLessThan>::iterator it = singularities.begin();
     for ( ; it != singularities.end(); ++it){
       double d = vvv.distance (*it);
       if (d < 1.e-10){
-	//	if (*it != vsing)
-	//	  printf("%d connects 2 singularities exactly\n", COUNT); 
-	passage.pts.push_back(p);
-	passage.vals.push_back (VAL);  
-	passage.sing_conn = *it;
+	if (!passage.close){
+	  passage.pts.push_back(p);
+	  passage.vals.push_back (VAL);  
+	  passage.sing_conn = *it;
+	  printf("%d --> CONNECTING %lu %lu %lu \n",COUNT,(*it)->getNum(), vsing->getNum(), passage.pts.size()); 
+	}
 	circular ++;
 	return;
       }
-      else if (!passage.close && d < 2e-2){
+      else if (!passage.close && d < 3e-2 && passage.pts.size() > 4){
 	passage.sing_conn = *it;
 	passage.pts.push_back(p);
 	passage.vals.push_back (VAL);  
-	//	printf("CIRCULAR %d %lu!!\n", COUNT,passage.pts.size()); 
 	passage.setClose(true);
-	//	return;
       }
     }
   }
+  //// -----------------------------------------------------------------------------
+
   
   bool added = addCut(p, e, COUNT, NB, cuts);
   if(!added) {
-    //    if (COUNT == 358900)printf("already there\n");
+    if (COUNT == 454710) printf("--> Already there %12.5E %12.5E \n",p.x(),p.y());
     return;
   }
 
@@ -2421,7 +2433,7 @@ static void computeOneIsoRecur(
   int count = 0;
   MElement *next = NULL;
   for(size_t i = 0; i < lst.size(); i++) {
-    //    if (lst[i] != *before){
+        if (lst[i] != *before){
       if((lst[i]->getVertex(0) == v0 && lst[i]->getVertex(1) == v1) ||
 	 (lst[i]->getVertex(0) == v1 && lst[i]->getVertex(1) == v0)) {
 	next = lst[i];
@@ -2437,10 +2449,10 @@ static void computeOneIsoRecur(
 	next = lst[i];
 	vs[count++] = lst[i]->getVertex(0);
       }
-      //    }
+          }
   }
 
-  //  if (count == 0)printf("OOPS %d\n", COUNT);
+  //if (count == 0)printf("OOPS %d\n", COUNT);
   
   //  if (COUNT == 500) printf("%d %p %p\n",count,before, next);
 
@@ -2456,7 +2468,6 @@ static void computeOneIsoRecur(
       if((U[0] - VAL) * (U2 - VAL) <= 0) {
         double xi = coord1d(U[0], U2, VAL);
         SPoint3 pp = p0 * (1. - xi) + ppp * xi;
-	//	if (!passage.close)
 	fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", p.x(), p.y(), p.z(),
 		pp.x(), pp.y(), pp.z(), COUNT, COUNT);
         computeOneIsoRecur(vsing, adj, VAL, v0, vs[i], pp, pot, visited,
@@ -2466,7 +2477,6 @@ static void computeOneIsoRecur(
       else if((U[1] - VAL) * (U2 - VAL) <= 0) {
         double xi = coord1d(U[1], U2, VAL);
         SPoint3 pp = p1 * (1. - xi) + ppp * xi;
-	//	if (!passage.close)
 	fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", p.x(), p.y(), p.z(),
 		pp.x(), pp.y(), pp.z(), COUNT, COUNT);
         computeOneIsoRecur(vsing, adj, VAL, v1, vs[i], pp, pot, visited,
@@ -2508,6 +2518,7 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
   computeOneIsoRecur(vsing, adj, VAL, v0, v1, p, *potU, visited, cutGraphEnds,
 		     d1, G, f, COUNT, cuts, NB, circular, passage, singularities, &first);
   
+  if (COUNT == 1210)printf("%lu\n",cutGraphEnds.size());
   
   int XX = 1;
 
@@ -2523,7 +2534,6 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     p[2] = (1. - xi) * e.getVertex(0)->z() + xi * e.getVertex(1)->z();
     cutGraphEnds.erase(cutGraphEnds.begin());
 
-    //    if (COUNT == 358900)printf("%lu\n",cutGraphEnds.size());
     
     // visited.clear();
 
@@ -2579,17 +2589,22 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     }
 
     if(ROT) { POT = (POT == potU ? potV : potU); }
-    if(distance(e.getVertex(0), o.getVertex(0)) < 1.e-12)
+    if(distance(e.getVertex(0), o.getVertex(0)) < 1.e-10)
       VAL = (1. - xi) * (*POT)[o.getVertex(0)] + xi * (*POT)[o.getVertex(1)];
     else
       VAL = (1. - xi) * (*POT)[o.getVertex(1)] + xi * (*POT)[o.getVertex(0)];
     computeOneIsoRecur(vsing, adj, VAL, o.getVertex(0), o.getVertex(1), p, *POT,
 		       visited, cutGraphEnds, d1, G, f, COUNT, cuts, NB, circular, passage,
 		       singularities, &first);
-    if(XX++ > MAX_PASSAGES+1) break;
+    passage.max_passages = XX;
+    if(XX++ > MAX_PASSAGES+1) {
+      passage.max_passages = MAX_PASSAGES+1;
+      //      printf("argh\n");
+      break;
+    }
   }
-  
   if (passage.angleTot() > 10*M_PI)circular = -1;
+  else circular = 0;
   
   passages.push_back(passage);
 
@@ -2682,7 +2697,30 @@ static bool computeIsos(
 
   std::map<MEdge, MEdge, MEdgeLessThan> d1;
   {
+    FILE *fdf = fopen("debug_lines.pos","w");
+    fprintf(fdf,"View \"\"{\n");
     for(size_t i = 0; i < G.size(); i++) {
+      // This should work now
+      
+      if (G[i].groupId == 124){
+	for(size_t j = 0; j < G[i].left.size(); j++) {
+	  printf("LR ; %lu %lu \n",G[i].left[j]->getNum(),
+		 G[i].right[j]->getNum());
+	}
+      }
+	
+      for(size_t j = 1; j < G[i].left.size(); j++) {
+	MEdge l(G[i].left[j-1], G[i].left[j]);
+	MEdge r(G[i].right[j-1], G[i].right[j]);
+	fprintf(fdf,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
+		G[i].left[j-1]->x(),G[i].left[j-1]->y(),G[i].left[j-1]->z(),
+		G[i].left[j]->x(),G[i].left[j]->y(),G[i].left[j]->z(),
+		G[i].groupId,G[i].groupId) ;
+	d1[l] = r;
+	d1[r] = l;
+      }
+      
+      /*
       for(size_t j = 0; j < G[i].side.size(); j++) {
         for(size_t k = 0; k < 3; k++) {
           MVertex *v0 = G[i].side[j]->getVertex(k);
@@ -2695,12 +2733,17 @@ static bool computeIsos(
           if(I >= 0 && J >= 0 && abs(I-J) == 1) {
             MEdge l(G[i].left[I], G[i].left[J]);
             MEdge r(G[i].right[I], G[i].right[J]);
+	    fprintf(fdf,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
+		    G[i].left[I]->x(),G[i].left[I]->y(),G[i].left[I]->z(),
+		    G[i].left[J]->x(),G[i].left[J]->y(),G[i].left[J]->z(),
+		    G[i].groupId,G[i].groupId) ;
             d1[l] = r;
             d1[r] = l;
-          }
-        }
+	    }
+	    }
       }
-      if(G[i].singularities.size() == 1) {
+      */
+      if(G[i].singularities.size() == 101001) {
         MEdge l(G[i].singularities[0], G[i].left[G[i].left.size() - 1]);
         MEdge r(G[i].singularities[0], G[i].right[G[i].right.size() - 1]);
 	//        MEdge l2(G[i].singularities[0], G[i].left[0]);
@@ -2711,22 +2754,12 @@ static bool computeIsos(
 	//        d1[r2] = l2;
       }
     }
+    fprintf(fdf,"};\n");
+    fclose(fdf);
+
   }
 
 
-  if(0){
-    std::string fn2 = gm->getName() + "_CYCLES.pos";
-    FILE *f2 = fopen(fn2.c_str(), "w");
-    fprintf(f2, "View\"Cuts\"{\n");
-    for(size_t i = 0; i < G.size(); i++) {
-      MVertex *vvv = G[i].left[G[i].left.size()/2];
-      computeIso(vvv, adj, potU[vvv], potU, potV, f2, d1, G, 0, cuts, passages, singularities);      
-      computeIso(vvv, adj, potV[vvv], potV, potU, f2, d1, G, 1, cuts, passages, singularities);      
-    }
-    fprintf(f2, "};\n");
-    fclose(f2);
-  }
-  
   std::string fn = gm->getName() + "_QLayoutResults.pos";
   FILE *f = fopen(fn.c_str(), "w");
   fprintf(f, "View\"Big Cut\"{\n");
@@ -2856,6 +2889,10 @@ static void createJumpyPairs(
   for(size_t i = 0; i < g.crosses.size(); ++i) {
     cross2d *c = g.crosses[i];
     edges.push_back(c->_e);
+    if (g.groupId == 124){
+      printf("%lu %lu\n",c->_e.getVertex(0)->getNum(),
+	     c->_e.getVertex(1)->getNum());
+    }
   }
   SortEdgeConsecutive(edges, vsorted);
 
@@ -2874,12 +2911,17 @@ static void createJumpyPairs(
       }
     }
   }
-  
+  if (g.groupId == 124){
+    printf("THEN\n");
+  }
   std::vector<cross2d *> ccc;
   //  printf("group %d\n",g.groupId);
   for(size_t j = 0; j < vsorted[0].size(); ++j) {
     MVertex *v0a = vsorted[0][j ? j-1 : j+1 ];
     MVertex *vv = vsorted[0][j];
+    if (g.groupId == 124){
+      printf("%lu %lu\n",v0a->getNum(),vv->getNum());
+    }
     for(size_t i = 0; i < g.crosses.size(); ++i) {
       cross2d *c = g.crosses[i];
       if ( (c->_e.getVertex(0) == v0a && c->_e.getVertex(1) == vv ) ||
@@ -2931,15 +2973,18 @@ static void createJumpyPairs(
         }
         if(!v1 || !v0) Msg::Error("error in JumpyPairs 3");
         if(computeLeftRight(g, &v0, &v1)) {
-          if(boundaries.find(vv) != boundaries.end()) {
-            g.left.insert(g.left.begin(), v0);
-            g.right.insert(g.right.begin(), v1);
-          }
-          else {
-            g.left.push_back(v0);
-            g.right.push_back(v1);
-          }
-	  //	  printf("VERTEX %lu %lu --> %lu %lu \n",vv->getNum(),v0a->getNum(),v0->getNum(),v1->getNum());
+	  //          if(0 && boundaries.find(vv) != boundaries.end()) {
+	  //            g.left.insert(g.left.begin(), v0);
+	  //            g.right.insert(g.right.begin(), v1);
+	  //          }
+	  //          else {
+	  g.left.push_back(v0);
+	  g.right.push_back(v1);
+	  if (g.groupId == 124){
+	    printf("VERTEX %lu --> LEFT(%lu) RIGHT(%lu) \n",vv->getNum(),v0->getNum(),v1->getNum());
+	    //	    //printf("DISTANCE %12.5E %12.5E%\n",v0->distance(vv),v1->distance(vv));
+	  }
+	  //          }
         }
         else
           Msg::Error("error in jumpy pairs %lu \n", vv->getNum());
@@ -2949,86 +2994,16 @@ static void createJumpyPairs(
       }
     }
   }
-  return;
-  
-  std::set<MVertex *, MVertexPtrLessThan> touched;
-  //  printf("GROUP %d \n",g.groupId);
-  for(size_t i = 0; i < g.crosses.size(); ++i) {
-    cross2d *c = g.crosses[i];
-    for(size_t j = 0; j < 2; j++) {
-      MVertex *vv = c->_e.getVertex(j);
-      if(touched.find(vv) == touched.end()) {
-        touched.insert(vv);
-        MTriangle *t1 = c->_t[0];
-        MTriangle *t2 = c->_t[1];
-        MVertex *v0 = NULL;
-        MVertex *v1 = NULL;
-        if(t1->getVertex(0) == vv || t1->getVertex(1) == vv ||
-           t1->getVertex(2) == vv) {
-          if(v0 == NULL)
-            v0 = vv;
-          else if(v1 == NULL)
-            v1 = vv;
-          else
-            Msg::Error("error in JumpyPairs 1");
-        }
-        if(t2->getVertex(0) == vv || t2->getVertex(1) == vv ||
-           t2->getVertex(2) == vv) {
-          if(v0 == NULL)
-            v0 = vv;
-          else if(v1 == NULL)
-            v1 = vv;
-          else
-            Msg::Error("error in JumpyPairs 1");
-        }
-        for(std::multimap<MVertex *, MVertex *>::iterator it =
-              old2new.lower_bound(vv);
-            it != old2new.upper_bound(vv); ++it) {
-          MVertex *vvv = it->second;
-          if(t1->getVertex(0) == vvv || t1->getVertex(1) == vvv ||
-             t1->getVertex(2) == vvv) {
-            if(v0 == NULL)
-              v0 = vvv;
-            else if(v1 == NULL)
-              v1 = vvv;
-            else
-              Msg::Error("error in JumpyPairs 1");
-          }
-          if(t2->getVertex(0) == vvv || t2->getVertex(1) == vvv ||
-             t2->getVertex(2) == vvv) {
-            if(v0 == NULL)
-              v0 = vvv;
-            else if(v1 == NULL)
-              v1 = vvv;
-            else
-              Msg::Error("error in JumpyPairs 2");
-          }
-        }
-        if(!v1 || !v0) Msg::Error("error in JumpyPairs 3");
-        if(computeLeftRight(g, &v0, &v1)) {
-          if(boundaries.find(vv) != boundaries.end()) {
-            g.left.insert(g.left.begin(), v0);
-            g.right.insert(g.right.begin(), v1);
-          }
-          else {
-            g.left.push_back(v0);
-            g.right.push_back(v1);
-          }
-        }
-        else
-          Msg::Error("error in jumpy pairs %lu \n", vv->getNum());
-      }
-      else if(singularities.find(vv) != singularities.end()) {
-        g.singularities.push_back(vv);
-      }
-      //	else if (singularities.find(vv) == singularities.end()){
-      //	  printf("ERROR --> no counterpart vertex in the cut graph\n");
-      //	}
-    }
+  if (g.left[0] == g.right[0]){
+    std::reverse(std::begin(g.left), std::end(g.left));
+    std::reverse(std::begin(g.right), std::end(g.right));
   }
-  //    printf("GRoup %d mat [%g,%g] [%g,%g] %lu nodes on each side \n"
-  //  	 ,g.groupId,g.mat[0][0],g.mat[0][1],g.mat[1][0],g.mat[1][1],
-  //    	 g.left.size());
+  if (g.groupId == 124){
+    for(size_t j = 0; j < g.left.size(); j++) {
+      printf("LR : %lu %lu \n",g.left[j]->getNum(),
+	       g.right[j]->getNum());
+    }
+  }    
 }
 
 static void
@@ -3249,7 +3224,7 @@ public:
 
   int computeCrossFieldAndH()
   {
-#if defined(HAVE_QUADMESHINGTOOLS1)
+#if defined(HAVE_QUADMESHINGTOOLS)
     int nb_iter = 10;
     int cf_tag;
     std::map<std::pair<size_t,size_t>,double> edge_to_angle;
@@ -3282,6 +3257,8 @@ public:
       //it->second.computeAngle();
  /* issue from here I guess: theta transfer not sufficient ? */
     }
+    //    fastImplementationExtrinsic(C,1.e-9);
+    //    for(it = C.begin(); it != C.end(); ++it) it->second.computeAngle();
 #else
     computeCrossFieldExtrinsic(1.e-9);
 #endif
@@ -3328,8 +3305,8 @@ public:
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
     linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_GMM)
-    linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
+#elif defined(HAVE_MUMPS)
+  linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
 #else
     linearSystemFull<double> *_lsys = new linearSystemFull<double>;
 #endif
@@ -3357,7 +3334,7 @@ public:
         it != vs.end(); ++it){
       dof->numberVertex(*it, 0, 1);
     }
-    
+
     simpleFunction<double> ONE(1.0);
     laplaceTerm l(0, 1, &ONE);
 
@@ -3451,20 +3428,20 @@ public:
       SSUM += 2.0 * M_PI * (double)it->second / nbTurns;
     }
 
-    printf("%12.5E %12.5E\n",sum1,SSUM);
+    //    printf("%12.5E %12.5E\n",sum1,SSUM);
     
     // FIX DE LA MORT
     // AVERAGE
     Dof EAVG((*vs.begin())->getNum(), Dof::createTypeWithTwoInts(1, 1));
-    
+
     for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
         it != vs.end(); ++it){
       Dof E((*it)->getNum(), Dof::createTypeWithTwoInts(0, 1));
-      dof->assemble(EAVG, E, 1);
-      dof->assemble(E, EAVG, 1);
+      dof->assembleSym(EAVG, E, 1);
+      //      dof->assemble(E, EAVG, 1);
     }
 
-    
+
     _lsys->systemSolve();
     return dof;
   }
@@ -3487,8 +3464,8 @@ public:
   {
 #if defined(HAVE_PETSC)
     linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_GMM)
-    linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
+#elif defined(HAVE_MUMPS)
+  linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
 #else
     linearSystemFull<double> *_lsys = new linearSystemFull<double>;
 #endif
@@ -3729,7 +3706,6 @@ public:
     for(; it != C.end(); ++it) it->second.finish(C);
     it = C.begin();
     for(; it != C.end(); ++it) it->second.finish2();
-
     //    FILE *F = fopen("gc.pos","w");
     //    fprintf(F,"View\"\"{\n");
     //    double dd = 0;
@@ -4162,7 +4138,7 @@ public:
               int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
               tcuts.lower_bound(*iti);
 	    std::pair<int,MVertex*> id[10];
-	    for (int kk=0;kk< tcuts.count(*iti);kk++){
+	    for (std::size_t kk=0;kk< tcuts.count(*iti);kk++){
 	      id[kk] = std::make_pair(itt->second.second.second, itt->second.first);
 	      ++itt;
 	    }
@@ -4276,7 +4252,7 @@ public:
     double MAXX = 0.;
     //    double SUM_LEFT = 0 , SUM_RIGHT = 0;
     for(size_t i = 0; i < groups_cg.size(); i++) {
-      double MAXD1 = -1.e22, MIND1 = 1.e22, MAXD2 = -1.e22, MIND2 = 1.e22;      
+      double MAXD1 = -1.e22, MIND1 = 1.e22, MAXD2 = -1.e22, MIND2 = 1.e22;
       for(size_t j = 0; j < G[i].left.size(); j++) {
         double Ul = potU[G[i].left[j]];
         double Ur = potU[G[i].right[j]];
@@ -4288,7 +4264,7 @@ public:
         MAXD2 = std::max(D2, MAXD2);
         MIND1 = std::min(D1, MIND1);
         MIND2 = std::min(D2, MIND2);
-	
+
       }
       double ROT = 0;
       if (G[i].mat[0][0] == 1) ROT = 0;
@@ -4406,7 +4382,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     for (size_t i=0 ; i< passages.size() ; ++i){
       passages[i].analyze(potU, potV, qLayout.G, qLayout.new2old);
     }
-
+    
     for (int I=0;I<1;I++){
       std::sort(passages.begin(), passages.end());
       qLayout.computeQuadLayout(potU, potV, duplicateEdges, cuts, passages);
@@ -4414,10 +4390,11 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
 	passages[i].analyze(potU, potV, qLayout.G, qLayout.new2old);
       }
     }
+    
     std::sort(passages.begin(), passages.end());
     for (size_t i=0 ; i< passages.size() ; ++i){
-      passages[i].Print();
-      passages[i].PrintFile();
+      passages[i].Print("All : ");
+      //      passages[i].PrintFile();
     }
   }
 
@@ -4518,7 +4495,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   }
   //  return 0;
   Msg::Info("Cutting the mesh");
-  
+
   qLayout.cutMesh(cuts);
 
   Msg::Info("Classifying the model");
