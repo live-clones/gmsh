@@ -54,8 +54,8 @@ public:
   void run(void);
 
 private:
-  static void spanningTree(EdgeSet& edge, size_t nVertex,
-                           std::list<std::pair<int, int> >& tree);
+  static void spanningTree(EdgeSet& edge,
+                           DSU& vertex, std::list<std::pair<int, int> >& tree);
 
   static void getAllMElement(GModel& model, int physical, ElementSet& element);
   static void getAllMEdge(ElementSet& element, EdgeSet& edge);

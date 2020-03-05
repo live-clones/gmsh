@@ -13,6 +13,7 @@ using namespace std;
 
 StringXNumber SpanningTreeOptions_Number[] = {
   {GMSH_FULLRC, "PhysicalGroup", NULL, -1},
+  {GMSH_FULLRC, "StartingOn",    NULL, -1},
 };
 
 extern "C"{
@@ -50,8 +51,9 @@ StringXNumber *GMSH_SpanningTreePlugin::getOption(int iopt){
 
 void GMSH_SpanningTreePlugin::run(void){
   // Get data
-  double start = Cpu();
+  double time  = Cpu();
   int physical = (int)SpanningTreeOptions_Number[0].def;
+  int startOn  = (int)SpanningTreeOptions_Number[1].def;
 
   // Get model
   GModel *model = GModel::current();
@@ -60,8 +62,13 @@ void GMSH_SpanningTreePlugin::run(void){
   ElementSet element;
   getAllMElement(*model, physical, element);
 
+  // Get all elements in startOn (if defined)
+  ElementSet elementStartOn;
+  if(startOn >= 0)
+    getAllMElement(*model, startOn, elementStartOn);
+
   // Check if we have something
-  if(element.empty()){
+  if(element.empty() && elementStartOn.empty()){
     Msg::Warning("No elements found in physcial %d: abording!", physical);
     return;
   }
@@ -70,32 +77,38 @@ void GMSH_SpanningTreePlugin::run(void){
   EdgeSet edge;
   getAllMEdge(element, edge);
 
-  // Build spanning tree and save into the model
+  // Get all edges from startOn (if defined)
+  EdgeSet edgeStartOn;
+  if(startOn >= 0)
+    getAllMEdge(elementStartOn, edgeStartOn);
+
+  // Build spanning tree and save into the model (begin with startOn if defined)
+  DSU                   vertex(model->getNumMeshVertices());
   list<pair<int, int> > tree;
-  spanningTree(edge, model->getNumMeshVertices(), tree);
+  if(startOn >= 0)
+    spanningTree(edgeStartOn, vertex, tree);
+
+  spanningTree(edge, vertex, tree);
   addToModel(*model, tree);
 
   // Done
-  double stop = Cpu();
-  Msg::Info("Spanning tree built! (%g s)", stop - start);
+  Msg::Info("Spanning tree built! (%g s)", Cpu() - time);
 }
 
-void GMSH_SpanningTreePlugin::spanningTree(EdgeSet& edge, size_t nv,
+void GMSH_SpanningTreePlugin::spanningTree(EdgeSet& edge, DSU& vertex,
                                            list<pair<int, int> >& tree){
   // Kruskal's algorithm, without edge sorting, since we don't weight them //
   ///////////////////////////////////////////////////////////////////////////
-
-  // Initiate forest with each vertex being a tree
-  DSU set(nv);
 
   // Iterate on edges
   EdgeSet::iterator end = edge.end();
   EdgeSet::iterator  it = edge.begin();
 
-  for(; it != end; it++){
-    if(set.find(it->first) != set.find(it->second)){ // If this edge connects
-      tree.push_back(*it);                           // two disjoint tree,
-      set.join(it->first, it->second);               // use it and joint :)!
+  for(; it != end; it++){                                  // Loop on edges:
+    if(vertex.find(it->first) != vertex.find(it->second)){ // if the current
+      tree.push_back(*it);                                 // edge connects two
+      vertex.join(it->first, it->second);                  // disjoint trees,
+                                                           // use it and joint!
     }
   }
 }
