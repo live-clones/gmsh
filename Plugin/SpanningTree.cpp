@@ -12,9 +12,9 @@ using namespace std;
 #include "OS.h"
 
 StringXNumber SpanningTreeOptions_Number[] = {
-  {GMSH_FULLRC, "InputPhysicalGroup",  NULL, -1},
-  {GMSH_FULLRC, "InputStartingOn",     NULL, -1},
-  {GMSH_FULLRC, "OutputPhysicalGroup", NULL, -1},
+  {GMSH_FULLRC, "PhysicalGroup",  NULL, -1},
+  {GMSH_FULLRC, "StartingOn",     NULL, -1},
+  {GMSH_FULLRC, "OutputPhysical", NULL, -1},
 };
 
 extern "C"{
@@ -35,7 +35,23 @@ string GMSH_SpanningTreePlugin::getShortHelp(void) const{
 }
 
 string GMSH_SpanningTreePlugin::getHelp(void) const{
-  return "Plugin(SpanningTree) builds a tree spanning every vertex of a mesh.";
+  return
+    "Plugin(SpanningTree) builds a tree spanning every vertex of a mesh.\n"
+    "Optionally, this tree can be built by starting on a specific part.\n"
+    "The generated tree is stored directly in the model.\n"
+    "\n"
+    "Parameters\n"
+    "- PhysicalGroup: physical group upon which the tree must be built "
+    "(-1 means the whole mesh).\n"
+    "- StartingOn: physical group used to start the tree construction "
+    "(-1 deactivates this feature).\n"
+    "- OutputPhysical: physical tag of the generated tree "
+    "(-1 will select a new tag automatically).\n"
+    "\n"
+    "Remark - This plugin does not overwrite a physical group."
+    "Therefore, if an existing physical tag is used in OutputPhysical, "
+    "the edges of the tree will be /added/ to the specified group.\n"
+    "Limitation - Unknown behaviour with curved meshes.";
 }
 
 string GMSH_SpanningTreePlugin::getAuthor(void) const{
