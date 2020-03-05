@@ -12,8 +12,9 @@ using namespace std;
 #include "OS.h"
 
 StringXNumber SpanningTreeOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalGroup", NULL, -1},
-  {GMSH_FULLRC, "StartingOn",    NULL, -1},
+  {GMSH_FULLRC, "InputPhysicalGroup",  NULL, -1},
+  {GMSH_FULLRC, "InputStartingOn",     NULL, -1},
+  {GMSH_FULLRC, "OutputPhysicalGroup", NULL, -1},
 };
 
 extern "C"{
@@ -54,6 +55,7 @@ void GMSH_SpanningTreePlugin::run(void){
   double time  = Cpu();
   int physical = (int)SpanningTreeOptions_Number[0].def;
   int startOn  = (int)SpanningTreeOptions_Number[1].def;
+  int output   = (int)SpanningTreeOptions_Number[2].def;
 
   // Get model
   GModel *model = GModel::current();
@@ -89,7 +91,7 @@ void GMSH_SpanningTreePlugin::run(void){
     spanningTree(edgeStartOn, vertex, tree);
 
   spanningTree(edge, vertex, tree);
-  addToModel(*model, tree);
+  addToModel(*model, tree, output);
 
   // Done
   Msg::Info("Spanning tree built! (%g s)", Cpu() - time);
@@ -141,7 +143,7 @@ void GMSH_SpanningTreePlugin::getAllMEdge(ElementSet& element, EdgeSet& edge){
                                  (*it)->getEdge(i).getVertex(1)->getNum() - 1));
 }
 
-void GMSH_SpanningTreePlugin::addToModel(GModel& model, Tree& tree){
+void GMSH_SpanningTreePlugin::addToModel(GModel& model, Tree& tree, int tag){
   // Transform Tree into MLines //
   ////////////////////////////////
   // Future MElements
@@ -157,23 +159,35 @@ void GMSH_SpanningTreePlugin::addToModel(GModel& model, Tree& tree){
 
   // Add Elements as a Chain in GModel (see Chain::addToModel in Geo/Chain.h) //
   //////////////////////////////////////////////////////////////////////////////
-  // Get entity number, physcial number and name
-  string name = "";
-  int    max[4];
+  string      name = "";
+  int    entityNum;
+  int  physicalNum;
+  int        max[4];
+
+  // Get entity number
   for(int i = 0; i < 4; i++)
     max[i] = model.getMaxElementaryNumber(i);
-  int entityNum = *std::max_element(max, max + 4) + 1;
+  entityNum = *std::max_element(max, max + 4) + 1;
 
-  for(int i = 0; i < 4; i++)
-    max[i] = model.getMaxPhysicalNumber(i);
-  int physicalNum = *std::max_element(max, max + 4) + 1;
+  // Get physcial number if not specified
+  if(tag < 0){
+    for(int i = 0; i < 4; i++)
+      max[i] = model.getMaxPhysicalNumber(i);
+    physicalNum = *std::max_element(max, max + 4) + 1;
+  }
+  else{
+    physicalNum = tag;
+  }
 
+  // Add MLines to new entity
   map<int, vector<MElement *> > entityMap;
   entityMap[entityNum] = line;
 
+  // Name new physical
   map<int, string> physicalInfo;
   physicalInfo[physicalNum] = name;
 
+  // Add new physical to new entity
   map<int, map<int, string> > physicalMap;
   physicalMap[entityNum] = physicalInfo;
 

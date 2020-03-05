@@ -59,7 +59,7 @@ private:
 
   static void getAllMElement(GModel& model, int physical, ElementSet& element);
   static void getAllMEdge(ElementSet& element, EdgeSet& edge);
-  static void addToModel(GModel& model, Tree& tree);
+  static void addToModel(GModel& model, Tree& tree, int tag);
 
   static std::pair<int, int> minmax(const std::pair<int, int>& p);
 };
