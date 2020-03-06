@@ -37,7 +37,7 @@ double automaticMeshSizeField::operator()(double X, double Y, double Z, GEntity 
 #ifdef HAVE_HXT
   double val = 1.e22;
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
-  HXTStatus s = hxtOctreeSearchOne(forest, X, Y, Z, &val);
+  HXTStatus s = hxtForestSearchOne(forest, X, Y, Z, &val, true);
   if (s == HXT_STATUS_OK){
     return val;
   }
@@ -121,7 +121,15 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   // Loading .p4est file if given a valid file name
   if(!_forestFile.empty()){
     std::cout << "Loading size field file " << _forestFile << std::endl;
-    HXT_CHECK( hxtForestLoad(&forest, _forestFile.c_str()) );
+
+    HXT_CHECK(hxtForestOptionsCreate(&forestOptions));
+    // Should be saved in the forest but I dont know how...
+    _hmin = (_hmin < 0) ? 1e-10 : _hmin;
+    _hmax = (_hmax < 0) ? 1e22  : _hmax;
+    forestOptions->hmax = _hmax;
+    forestOptions->hmin = _hmin;
+
+    HXT_CHECK( hxtForestLoad(&forest, _forestFile.c_str(), forestOptions) );
 
   } else{ // Computing the size field
     // printf("#regions = %lu \n", GModel::current()->getNumRegions());
@@ -138,9 +146,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     //   // ++it;
     // }
 
-    HXT_CHECK( getAllFacesOfAllRegions(regions,
-                                         NULL,
-                                         faces) );
+    HXT_CHECK( getAllFacesOfAllRegions(regions, NULL, faces) );
 
     // Create HXT mesh structure
     HXTMesh *mesh;
@@ -348,7 +354,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     forestOptions->hmax = _hmax;  
     forestOptions->hmin = _hmin;  
     forestOptions->hbulk = _hbulk;  
-    forestOptions->gradMax = _gradientMax;  
+    forestOptions->gradMax = _gradientMax;
     forestOptions->nRefine = _nRefine;
     forestOptions->nodePerTwoPi = _nPointsPerCircle;
     forestOptions->nodePerGap = _nPointsPerGap;
@@ -376,7 +382,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     
     if(_gaps){
       Msg::Info("Detecting gaps");
-      HXT_CHECK(hxtOctreeSurfacesProches(forest));
+      HXT_CHECK(hxtForestCloseSurfaces(forest));
 
       if(_smoothing){
         Msg::Info("Smoothing");
@@ -389,7 +395,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     Msg::Info("Estimate number of terahedra in the bounding box : %ld", (uint64_t) ceil(elemEstimation));
 
     // Export size field in .pos file
-    // HXT_CHECK(hxtForestExport(forest));
+    HXT_CHECK(hxtForestExport(forest));
 
     // Save forest in .p4est file
     HXT_CHECK(hxtForestSave(forest));

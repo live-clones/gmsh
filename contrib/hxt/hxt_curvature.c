@@ -454,10 +454,6 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
   }
 
   int ind = 0;
-  count = 0;
-  A = 0.0;
-  B = 0.0;
-  D = 0.0;
   for(uint64_t iVert = 0; iVert < nVertices; ++iVert){
     count = 0;
     A = 0.0;

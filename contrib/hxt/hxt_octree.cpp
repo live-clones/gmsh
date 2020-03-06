@@ -1,12 +1,23 @@
-#include <hxt_octree.h>
+#include <iostream>
+#include <queue>
+#include <vector>
+
+#include "SPoint3.h"
+#include "SVector3.h"
+
+#include "hxt_octree.h"
 #include "hxt_boundary_recovery.h"
 #include "hxt_tools.h"
-#include <iostream>
 
-// double alpha;
+#ifdef HAVE_P4EST
+#include <p4est_to_p8est.h>
+#include <p8est_iterate.h>
+#include <p8est_extended.h>
+#include <p8est_search.h>
+#endif
 
-#define P8EST_QMAXLEVEL 8
-#define P4EST_QMAXLEVEL 8
+#define P8EST_QMAXLEVEL 20
+#define P4EST_QMAXLEVEL 20
 
 #ifdef HAVE_P4EST
 
@@ -145,7 +156,7 @@ HXTStatus hxtForestOptionsDelete(HXTForestOptions **forestOptions){
 } 
 
 /* Creates a (sequential) forest structure by loading a p4est file. */
-HXTStatus hxtForestLoad(HXTForest **forest, const char* filename){
+HXTStatus hxtForestLoad(HXTForest **forest, const char* filename, HXTForestOptions *forestOptions){
   if(filename == NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
   HXT_CHECK( hxtMalloc(forest, sizeof(HXTForest)) );
   if(*forest == NULL) return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
@@ -156,7 +167,11 @@ HXTStatus hxtForestLoad(HXTForest **forest, const char* filename){
   int autopartition = true;
   int broadcasthead = true;
 
-  (*forest)->p4est = p4est_load_ext(filename, mpicomm, sizeof(size_data_t), load_data, autopartition, broadcasthead, NULL, &connect);
+  (*forest)->p4est = p4est_load_ext(filename, mpicomm, sizeof(size_data_t), load_data, autopartition, broadcasthead, (void*) forestOptions, &connect);
+
+  HXTForestOptions *fO = (HXTForestOptions*) (*forest)->p4est->user_pointer;
+
+  assert(fO != NULL);
 
   return HXT_STATUS_OK;
 }
@@ -207,7 +222,7 @@ HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char*
     // Assign bulkSize callback if no sizeFunction is specified.
     if(forestOptions->sizeFunction == NULL) forestOptions->sizeFunction = &bulkSize;
 
-    (*forest)->p4est = p4est_new(mpicomm, connect, sizeof(size_data_t), initializeCell, (void *)forestOptions);
+    (*forest)->p4est = p4est_new(mpicomm, connect, sizeof(size_data_t), initializeCell, (void*) forestOptions);
     (*forest)->forestOptions = forestOptions;
 
     return HXT_STATUS_OK;
@@ -276,19 +291,15 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
     getCellSize(p4est, which_tree, q, &h);
 
     // No curvature : should be OK because of refineToBulk ?
-    if(fabs(kmin) < 1e-3 && fabs(kmax) < 1e-3){
-      if(2*h > forestOptions->hbulk){
-        return 1;
-      } else{
+    if(fabs(kmax) < 1e-3){
         return 0;
-      }
     } else{
       // There is curvature : the cell size should accurately represent the surface
       // Cell is refined according to the chosen density of nodes
       double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
-      int nElemPerCell = 1;
+      int nElemPerCell = 2;
 
-      if(2*h > nElemPerCell * hc){
+      if(h > hc/nElemPerCell){
         return 1;
       } else{
         return 0;
@@ -365,14 +376,12 @@ HXTStatus hxtForestRefine(HXTForest *forest){
   /* Refine recursively the tree until all cells' size is at most hbulk. */
   p4est_refine_ext(forest->p4est, 1, P4EST_QMAXLEVEL, refineToBulkSizeCallback, initializeCell, NULL);
   // Refine recursively with respect to the curvature
-  // p4est_refine_ext(forest->p4est, 1, P4EST_QMAXLEVEL, curvatureRefineCallback, initializeCell, hxtOctreeCurvatureReplaceOctants);
   p4est_refine_ext(forest->p4est, 1, P4EST_QMAXLEVEL, curvatureRefineCallback, initializeCell, NULL);
   // Coarsen
   p4est_coarsen_ext(forest->p4est, 1, 0, coarsenCallback, initializeCell, NULL);
   // Balance the octree to get 2:1 ratio between adjacent cells
-  // p4est_balance_ext(forest->p4est, P4EST_CONNECT_FACE, initializeCell, hxtOctreeCurvatureReplaceOctants);
   p4est_balance_ext(forest->p4est, P4EST_CONNECT_FACE, initializeCell, NULL);
-
+  // Assign size on the new cells
   p4est_iterate(forest->p4est, NULL, forest->forestOptions, assignSizeAfterRefinement, NULL, NULL, NULL);
 
   return HXT_STATUS_OK;
@@ -912,6 +921,7 @@ HXTStatus hxtForestSizeSmoothing(HXTForest *forest){
     gradLinf = fmax( gradMax[0], fmax( gradMax[1], gradMax[2]) );
   }
   Msg::Info("Max gradient after smoothing : (%f - %f - %f)", gradMax[0], gradMax[1], gradMax[2]);
+  printf("Max gradient after smoothing : (%f - %f - %f)\n", gradMax[0], gradMax[1], gradMax[2]);
 
   return HXT_STATUS_OK;
 }
@@ -924,7 +934,7 @@ inline static bool isPoint(double x, double y, double z, size_point_t *p, double
   return (fabs(p->x - x) < tol && fabs(p->y - y) < tol && fabs(p->z - z) < tol);
 }
 
-static int searchCallback(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
+static int searchAndAssignConstant(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
 
     bool in_box;
     int is_match;
@@ -932,6 +942,46 @@ static int searchCallback(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quad
     
     size_data_t  *data = (size_data_t *) q->p.user_data;
     size_point_t *p    = (size_point_t *) point;
+
+    HXTForestOptions *forestOptions = (HXTForestOptions *) p4est->user_pointer;
+
+    // We have to recompute the cell dimension h for the root (non leaves) octants 
+    // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
+    double h;
+    if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
+    else h = data->h;
+
+    double center[3];
+    getCellCenter(p4est, which_tree, q, center);
+
+    double epsilon = 1e-8;
+    in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
+    in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
+#ifdef P4_TO_P8
+    in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
+#endif
+
+    // A point can be on the exact boundary of two cells, hence we take the min.
+    if(in_box && is_leaf){
+      p->size = fmin(p->size, data->size);
+      // p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
+      assert(p->size >= 0);
+      p->isFound = true;
+    }
+
+    return in_box;
+}
+
+static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
+
+    bool in_box;
+    int is_match;
+    int is_leaf = local_num >= 0;
+    
+    size_data_t  *data = (size_data_t *) q->p.user_data;
+    size_point_t *p    = (size_point_t *) point;
+
+    HXTForestOptions *forestOptions = (HXTForestOptions *) p4est->user_pointer;
 
     // We have to recompute the cell dimension h for the root (non leaves) octants 
     // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
@@ -952,20 +1002,18 @@ static int searchCallback(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quad
     // A point can be on the exact boundary of two cells, hence we take the min.
     if(in_box && is_leaf){
         // Approximation lineaire a partir du gradient au centre
-      // printf("Gradient : %f - %f - %f\n", data->ds[0], data->ds[1], data->ds[2]);
-      // printf("Size = %f - Corrigee = %f\n", data->size, data->size + data->ds[0]*(p->x - center[0]) + data->ds[1]*(p->y - center[1]) + data->ds[2]*(p->z - center[2]) );
-        p->size = fmin(p->size, data->size + data->ds[0]*(p->x - center[0]) + data->ds[1]*(p->y - center[1]) + data->ds[2]*(p->z - center[2]) );
-        // p->size = fmin(p->size, data->size);
-        p->isFound = true;
+      p->size = fmin(p->size, data->size + data->ds[0]*(p->x - center[0]) + data->ds[1]*(p->y - center[1]) + data->ds[2]*(p->z - center[2]) );
+      // p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
+      assert(p->size >= 0);
+      p->isFound = true;
     }
 
     return in_box;
 }
 
 /* Search for a single point in the tree structure and returns its size.
-   See searchCallback for the detailed comments. */
-HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, double *size){
-  
+   See searchAndAssign for the detailed comments. */
+HXTStatus hxtForestSearchOne(HXTForest *forest, double x, double y, double z, double *size, int linear){
   sc_array_t *points = sc_array_new_size(sizeof(size_point_t), 1);
 
   size_point_t *p = (size_point_t *) sc_array_index(points, 0);
@@ -975,7 +1023,11 @@ HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, do
   p->size = 1.0e22;
   p->isFound = false;
   
-  p4est_search(forest->p4est, NULL, searchCallback, points);
+  if(linear){
+    p4est_search(forest->p4est, NULL, searchAndAssignLinear, points);
+  }else{
+    p4est_search(forest->p4est, NULL, searchAndAssignConstant, points);
+  }
 
   if(!p->isFound) Msg::Info("Point (%f,%f,%f) n'a pas été trouvé dans l'octree 8-|", x,y,z);
   *size = p->size;
@@ -1020,7 +1072,7 @@ static int hxtOctreeReplaceCallback(p4est_t * p4est, p4est_topidx_t which_tree, 
     return in_box;
 }
 
-HXTStatus hxtOctreeSearch(HXTForest *forest, std::vector<double> *x, std::vector<double> *y, std::vector<double> *z, std::vector<double> *size){
+HXTStatus hxtForestSearch(HXTForest *forest, std::vector<double> *x, std::vector<double> *y, std::vector<double> *z, std::vector<double> *size){
   
   // Array of size_point_t to search in the tree
   sc_array_t *points = sc_array_new_size(sizeof(size_point_t), (*x).size());
@@ -1035,7 +1087,7 @@ HXTStatus hxtOctreeSearch(HXTForest *forest, std::vector<double> *x, std::vector
   }
   
   // Search on all cells
-  p4est_search(forest->p4est, NULL, searchCallback, points);
+  p4est_search(forest->p4est, NULL, searchAndAssignLinear, points);
 
   // Get the sizes
   for(int i = 0; i < (*x).size(); ++i){ 
@@ -1058,7 +1110,7 @@ HXTStatus hxtOctreeSearch(HXTForest *forest, std::vector<double> *x, std::vector
 // static double meshSize(double x, double y, double z, void *user_data){
 //   HXTForest *forest = (HXTForest *) user_data;
 //   double val = 1.e22;
-//   HXTStatus s = hxtOctreeSearchOne(forest, x, y, z, &val);
+//   HXTStatus s = hxtForestSearchOne(forest, x, y, z, &val, true);
 //   if (s == HXT_STATUS_OK){
 //     return val;
 //   }
@@ -1201,7 +1253,7 @@ HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<uint64_t> *candi
 // qui sont proches de node par rapport a la topologie de la triangulation (!= distance euclidienne)
 // In : - candidates, le vecteur des triangles qui intersectent la boite de cote h autour de node
 //      - node, le noeud courant dans SurfacesProches
-void hxtBFSTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, int node){
+void eliminateTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, int node){
 
   double *n = forest->forestOptions->nodeNormals + 3*node;
   // printf("Normale au noeud : (%f, %f, %f)\n", n[0], n[1], n[2]);
@@ -1296,7 +1348,7 @@ void hxtBFSTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, int n
      // std::cout<<val<<std::endl;
 }
 
-HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
+HXTStatus hxtForestCloseSurfaces(HXTForest *forest){
 
   // Pour chaque noeud : recuperer sa taille dans l'octree et prendre les triangles dans la boule de rayon h
   SPoint3 p = SPoint3();
@@ -1324,7 +1376,7 @@ HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
     p_tmp->y = y = forest->forestOptions->mesh->vertices.coord[(size_t) 4*i+1];
     p_tmp->z = z = forest->forestOptions->mesh->vertices.coord[(size_t) 4*i+2];
 
-    HXT_CHECK(hxtOctreeSearchOne(forest, x, y, z, &size));
+    HXT_CHECK(hxtForestSearchOne(forest, x, y, z, &size, false));
 
     // Boite autour du point de taille h
     min[0] = x - size; max[0] = x + size;
@@ -1335,7 +1387,7 @@ HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
 
     if(!candidates.empty()){
 
-      hxtBFSTriangles(forest, &candidates, i);
+      eliminateTriangles(forest, &candidates, i);
 
       if(!candidates.empty()){
         uint64_t closestTri;
@@ -1486,8 +1538,8 @@ void exportToHexCallback(p4est_iter_volume_info_t * info, void *user_data){
 HXTStatus hxtForestExport(HXTForest *forest){
   std::string fFile = std::string(forest->forestOptions->forestFile) + ".pos";
   FILE* f = fopen(fFile.c_str(), "w");
-  if(f==NULL)
-    return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
+  if(f==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
+
   fprintf(f, "View \"sizeField\" {\n");
   p4est_iterate(forest->p4est, NULL, (void*) f, exportToHexCallback, NULL,
             #ifdef P4_TO_P8
@@ -1496,16 +1548,19 @@ HXTStatus hxtForestExport(HXTForest *forest){
                         NULL);
   fprintf(f, "};");
   fclose(f);
+  return HXT_STATUS_OK;
 }
 
 HXTStatus hxtForestSave(HXTForest *forest){
+  // int memUsage = p4est_memory_used(forest->p4est);
+  // Msg::Info("Memory used by the forest : %d bytes", memUsage);
   std::string fFile = std::string(forest->forestOptions->forestFile) + ".p4est";
   p4est_save_ext(fFile.c_str(), forest->p4est, true, false);
   return HXT_STATUS_OK;
 }
 
 #else // HAVE_P4EST
-HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, double *size) {
+HXTStatus hxtForestSearchOne(HXTForest *forest, double x, double y, double z, double *size, int linear) {
 
   *size = 1.e22;
   static int count = 0;

@@ -1,30 +1,13 @@
 #ifndef HXT_OCTREE_H
 #define HXT_OCTREE_H
 
-// STD INCLUDES
-#include <queue>
-#include <vector>
-
 // GMSH INCLUDES
-
-#include "SPoint3.h"
-#include "SVector3.h"
 #include "rtree.h"
-
-// P4EST INCLUDES
 
 #ifdef HAVE_P4EST
 #include <p4est_to_p8est.h>
-#include <p8est_bits.h>
-#include <p8est_ghost.h>
-#include <p8est_nodes.h>
-#include <p8est_vtk.h>
-#include <p8est_iterate.h>
 #include <p8est_extended.h>
-#include <p8est_search.h>
-#endif 
-
-// HXT INCLUDES
+#endif
 
 extern "C" {
   #include "hxt_api.h"
@@ -32,6 +15,7 @@ extern "C" {
   #include "hxt_bbox.h"
 }
 
+// Information needed to create and compute an HXTForest
 typedef struct HXTForestOptions{
   double 				hmax;
   double 				hmin;
@@ -49,11 +33,12 @@ typedef struct HXTForestOptions{
   double                    *nodeNormals;
 } HXTForestOptions;
 
+// The structure containing the size field information
 typedef struct HXTForest{
 #ifdef HAVE_P4EST
   p4est_t *p4est;
 #endif 
-  HXTForestOptions          *forestOptions;
+  HXTForestOptions *forestOptions;
 } HXTForest;
 
 // Data available on each tree cell
@@ -62,7 +47,7 @@ typedef struct size_data{
 #ifdef HAVE_P4EST
   // Size gradient
   double ds[P4EST_DIM];
-#endif 
+#endif
   double h;
   // Half cell length for finite differences
   double h_xL, h_xR;
@@ -80,8 +65,9 @@ typedef struct size_point{
   bool isFound;
 } size_point_t;
 
+// Additional user-defined size function : currently not used
 typedef struct size_fun{
-  double (*myFun)(double, double, double);
+  double (*myFun)(double, double, double, double);
 } size_fun_t;
 
 // API ---------------------------------------------------------------------------------------------
@@ -93,13 +79,13 @@ HXTStatus hxtForestDelete(HXTForest **forest);
 
 HXTStatus hxtForestSave(HXTForest *forest);
 HXTStatus hxtForestExport(HXTForest *forest);
-HXTStatus hxtForestLoad(HXTForest **forest, const char* filename);
+HXTStatus hxtForestLoad(HXTForest **forest, const char* filename, HXTForestOptions *forestOptions);
 
 HXTStatus hxtForestRefine(HXTForest *forest);
 HXTStatus hxtForestSizeSmoothing(HXTForest *forest);
-HXTStatus hxtOctreeSurfacesProches(HXTForest *forest);
+HXTStatus hxtForestCloseSurfaces(HXTForest *forest);
 
 HXTStatus hxtOctreeElementEstimation(HXTForest *forest, double *elemEstimate);
-HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, double *size);
+HXTStatus hxtForestSearchOne(HXTForest *forest, double x, double y, double z, double *size, int linear);
 
 #endif
