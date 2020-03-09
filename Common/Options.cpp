@@ -6082,13 +6082,6 @@ double opt_mesh_ho_poisson(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoPoissonRatio;
 }
 
-double opt_mesh_second_order_experimental(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.secondOrderExperimental = (int)val;
-  return CTX::instance()->mesh.secondOrderExperimental;
-}
-
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

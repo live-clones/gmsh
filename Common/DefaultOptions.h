@@ -1060,7 +1060,7 @@ StringXNumber MeshOptions_Number[] = {
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
     "Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical "
-    "entity, 3: by partition)" },
+    "group, 3: by mesh partition)" },
   { F|O, "CompoundClassify" , opt_mesh_compound_classify , 1. ,
     "How are surface mesh elements classified on compounds? (0: on the new discrete "
     "surface, 1: on the original geometrical surfaces - incompatible with e.g. high-order "
@@ -1329,8 +1329,6 @@ StringXNumber MeshOptions_Number[] = {
     "mesh formats)" },
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
-  { F|O, "SecondOrderExperimental" , opt_mesh_second_order_experimental , 0. ,
-    "Use experimental code to generate second order mesh" },
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,
     "Create incomplete second order elements? (8-node quads, 20-node hexas, etc.)" },
   { F|O, "SecondOrderLinear" , opt_mesh_second_order_linear , 0. ,

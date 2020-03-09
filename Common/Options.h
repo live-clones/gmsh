@@ -541,7 +541,6 @@ double opt_mesh_ho_prim_surf_mesh(OPT_ARGS_NUM);
 double opt_mesh_ho_dist_cad(OPT_ARGS_NUM);
 double opt_mesh_ho_iter_max(OPT_ARGS_NUM);
 double opt_mesh_ho_pass_max(OPT_ARGS_NUM);
-double opt_mesh_second_order_experimental(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM);

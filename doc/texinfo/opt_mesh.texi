@@ -112,7 +112,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.ColorCarousel
-Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical entity, 3: by partition)@*
+Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical group, 3: by mesh partition)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -659,11 +659,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.ScalingFactor
 Global scaling factor applied to the saved mesh@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.SecondOrderExperimental
-Use experimental code to generate second order mesh@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SecondOrderIncomplete

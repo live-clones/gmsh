@@ -2444,35 +2444,41 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.choice[2] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "2D algorithm");
+      mesh.choice[2]->tooltip("Mesh.Algorithm");
       mesh.choice[2]->menu(menu_2d_algo);
       mesh.choice[2]->align(FL_ALIGN_RIGHT);
       mesh.choice[2]->callback(mesh_options_ok_cb);
 
       mesh.choice[3] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "3D algorithm");
+      mesh.choice[3]->tooltip("Mesh.Algorithm3D");
       mesh.choice[3]->menu(menu_3d_algo);
       mesh.choice[3]->align(FL_ALIGN_RIGHT);
       mesh.choice[3]->callback(mesh_options_ok_cb);
 
       mesh.choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 3 * BH, IW, BH,
                                      "2D recombination algorithm");
+      mesh.choice[1]->tooltip("Mesh.RecombinationAlgorithm");
       mesh.choice[1]->menu(menu_recombination_algo);
       mesh.choice[1]->align(FL_ALIGN_RIGHT);
       mesh.choice[1]->callback(mesh_options_ok_cb);
 
       mesh.butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                                           "Recombine all triangular meshes");
+      mesh.butt[21]->tooltip("Mesh.RecombineAll");
       mesh.butt[21]->type(FL_TOGGLE_BUTTON);
       mesh.butt[21]->callback(mesh_options_ok_cb);
 
       mesh.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                      "Subdivision algorithm");
+      mesh.choice[5]->tooltip("Mesh.SubdivisionAlgorithm");
       mesh.choice[5]->menu(menu_subdivision_algo);
       mesh.choice[5]->align(FL_ALIGN_RIGHT);
       mesh.choice[5]->callback(mesh_options_ok_cb);
 
       mesh.value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
                                          "Smoothing steps");
+      mesh.value[0]->tooltip("Mesh.Smoothing");
       mesh.value[0]->minimum(0);
       mesh.value[0]->maximum(100);
       if(CTX::instance()->inputScrolling) mesh.value[0]->step(1);
@@ -2481,6 +2487,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.value[2] = new inputValueFloat(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
                                           "Element size factor");
+      mesh.value[2]->tooltip("Mesh.CharacteristicLengthFactor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
       if(CTX::instance()->inputScrolling) mesh.value[2]->step(0.01);
@@ -2489,16 +2496,19 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.value[25] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH);
+      mesh.value[25]->tooltip("Mesh.CharacteristicLengthMin");
       mesh.value[25]->align(FL_ALIGN_RIGHT);
       mesh.value[25]->callback(mesh_options_ok_cb);
 
       mesh.value[26] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 8 * BH,
                                           IW / 2, BH, "Min/Max element size");
+      mesh.value[26]->tooltip("Mesh.CharacteristicLengthMax");
       mesh.value[26]->align(FL_ALIGN_RIGHT);
       mesh.value[26]->callback(mesh_options_ok_cb);
 
       mesh.value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 3,
                                          BH, "Element order");
+      mesh.value[3]->tooltip("Mesh.ElementOrder");
       mesh.value[3]->minimum(1);
       mesh.value[3]->maximum(2);
       if(CTX::instance()->inputScrolling) mesh.value[3]->step(1);
@@ -2508,6 +2518,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[4] =
         new Fl_Check_Button(L + 2 * WB + 1.25 * IW, 2 * WB + 9 * BH, BW, BH,
                             "Use incomplete elements");
+      mesh.butt[4]->tooltip("Mesh.SecondOrderIncomplete");
       mesh.butt[4]->type(FL_TOGGLE_BUTTON);
       mesh.butt[4]->callback(mesh_options_ok_cb);
 
@@ -2522,16 +2533,19 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[5] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH,
                             "Compute element sizes using point values");
+      mesh.butt[5]->tooltip("Mesh.CharacteristicLengthFromPoints");
       mesh.butt[5]->type(FL_TOGGLE_BUTTON);
       mesh.butt[5]->callback(mesh_options_ok_cb);
 
       mesh.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
         "Compute element sizes from curvature");
+      mesh.butt[1]->tooltip("Mesh.CharacteristicLengthFromCurvature");
       mesh.butt[1]->type(FL_TOGGLE_BUTTON);
       mesh.butt[1]->callback(mesh_options_ok_cb, (void *)"mesh_curvature");
 
       mesh.value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH,
                                          "Number of elements per 2 pi radians");
+      mesh.value[1]->tooltip("Mesh.MinimumElementsPerTwoPi");
       mesh.value[1]->minimum(3);
       mesh.value[1]->maximum(50);
       if(CTX::instance()->inputScrolling) mesh.value[1]->step(1);
@@ -2541,17 +2555,20 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                                           "Extend element sizes from boundary");
+      mesh.butt[16]->tooltip("Mesh.CharacteristicLengthExtendFromBoundary");
       mesh.butt[16]->type(FL_TOGGLE_BUTTON);
       mesh.butt[16]->callback(mesh_options_ok_cb);
 
       mesh.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
                                          "Optimize quality of tetrahedra");
+      mesh.butt[2]->tooltip("Mesh.Optimize");
       mesh.butt[2]->type(FL_TOGGLE_BUTTON);
       mesh.butt[2]->callback(mesh_options_ok_cb);
 
       mesh.butt[24] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
                             "Optimize quality of tetrahedra with Netgen");
+      mesh.butt[24]->tooltip("Mesh.OptimizeNetgen");
       mesh.butt[24]->type(FL_TOGGLE_BUTTON);
 #if !defined(HAVE_NETGEN)
       mesh.butt[24]->deactivate();
@@ -2561,6 +2578,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[3] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
                             "Optimize high-order meshes");
+      mesh.butt[3]->tooltip("Mesh.HighOrderOptimize");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
 
@@ -2573,70 +2591,75 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH,
                                          BW / 2 - WB, BH, "Nodes");
-      mesh.butt[6]->tooltip("(Alt+Shift+p)");
+      mesh.butt[6]->tooltip("Mesh.Points (Alt+Shift+p)");
       mesh.butt[6]->type(FL_TOGGLE_BUTTON);
       mesh.butt[6]->callback(mesh_options_ok_cb);
 
       mesh.butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH,
                                          BW / 2 - WB, BH, "1D elements");
-      mesh.butt[7]->tooltip("(Alt+Shift+l)");
+      mesh.butt[7]->tooltip("Mesh.Lines (Alt+Shift+l)");
       mesh.butt[7]->type(FL_TOGGLE_BUTTON);
       mesh.butt[7]->callback(mesh_options_ok_cb);
 
       mesh.butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH,
                                          BW / 2 - WB, BH, "2D element edges");
-      mesh.butt[8]->tooltip("(Alt+Shift+s)");
+      mesh.butt[8]->tooltip("Mesh.SurfaceEdges (Alt+Shift+s)");
       mesh.butt[8]->type(FL_TOGGLE_BUTTON);
       mesh.butt[8]->callback(mesh_options_ok_cb);
 
       mesh.butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH,
                                          BW / 2 - WB, BH, "2D element faces");
-      mesh.butt[9]->tooltip("(Alt+Shift+d)");
+      mesh.butt[9]->tooltip("Mesh.SurfaceFaces (Alt+Shift+d)");
       mesh.butt[9]->type(FL_TOGGLE_BUTTON);
       mesh.butt[9]->callback(mesh_options_ok_cb);
 
       mesh.butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH,
                                           BW / 2 - WB, BH, "3D element edges");
-      mesh.butt[10]->tooltip("(Alt+Shift+v)");
+      mesh.butt[10]->tooltip("Mesh.VolumeEdges (Alt+Shift+v)");
       mesh.butt[10]->type(FL_TOGGLE_BUTTON);
       mesh.butt[10]->callback(mesh_options_ok_cb);
 
       mesh.butt[11] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH,
                                           BW / 2 - WB, BH, "3D element faces");
-      mesh.butt[11]->tooltip("(Alt+Shift+b)");
+      mesh.butt[11]->tooltip("Mesh.VolumeFaces (Alt+Shift+b)");
       mesh.butt[11]->type(FL_TOGGLE_BUTTON);
       mesh.butt[11]->callback(mesh_options_ok_cb);
 
       mesh.butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
                                           BW / 2 - WB, BH, "Node labels");
+      mesh.butt[12]->tooltip("Mesh.PointNumbers");
       mesh.butt[12]->type(FL_TOGGLE_BUTTON);
       mesh.butt[12]->callback(mesh_options_ok_cb);
 
       mesh.butt[13] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH,
                                           BW / 2 - WB, BH, "1D element labels");
+      mesh.butt[13]->tooltip("Mesh.LineNumbers");
       mesh.butt[13]->type(FL_TOGGLE_BUTTON);
       mesh.butt[13]->callback(mesh_options_ok_cb);
 
       mesh.butt[14] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH,
                                           BW / 2 - WB, BH, "2D element labels");
+      mesh.butt[14]->tooltip("Mesh.SurfaceNumbers");
       mesh.butt[14]->type(FL_TOGGLE_BUTTON);
       mesh.butt[14]->callback(mesh_options_ok_cb);
 
       mesh.butt[15] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
                                           BW / 2 - WB, BH, "3D element labels");
+      mesh.butt[15]->tooltip("Mesh.VolumeNumbers");
       mesh.butt[15]->type(FL_TOGGLE_BUTTON);
       mesh.butt[15]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_label_type[] = {
         {"Node/element tag", 0, 0, 0},
         {"Elementary entity tag", 0, 0, 0},
-        {"Physical group tag", 0, 0, 0},
+        {"Physical group tag(s)", 0, 0, 0},
         {"Mesh partition", 0, 0, 0},
         {"Coordinates", 0, 0, 0},
         {0}
       };
       mesh.choice[7] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Label type");
+      mesh.choice[7]->tooltip("Mesh.LabelType");
       mesh.choice[7]->menu(menu_label_type);
       mesh.choice[7]->align(FL_ALIGN_RIGHT);
       mesh.choice[7]->callback(mesh_options_ok_cb);
@@ -2644,6 +2667,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[12] =
         new Fl_Value_Input(L + width - (int)(0.85 * IW) - 2 * WB,
                            2 * WB + 7 * BH, IW / 3, BH, "Sampling");
+      mesh.value[12]->tooltip("Mesh.LabelSampling");
       mesh.value[12]->minimum(1);
       mesh.value[12]->maximum(100);
       if(CTX::instance()->inputScrolling) mesh.value[12]->step(1);
@@ -2664,11 +2688,14 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.menu =
         new Fl_Menu_Button(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Elements");
+      mesh.menu->tooltip("Mesh.Triangles, Mesh.Quadrangles, Mesh.Tetrahedra, "
+                         "Mesh.Hexahedra, Mesh.Prisms, Mesh.Pyramids, Mesh.Trihedra");
       mesh.menu->menu(menu_mesh_element_types);
       mesh.menu->callback(mesh_options_ok_cb);
 
       mesh.value[4] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 4, BH);
+      mesh.value[4]->tooltip("Mesh.QualityInf");
       mesh.value[4]->minimum(0);
       mesh.value[4]->maximum(1);
       if(CTX::instance()->inputScrolling) mesh.value[4]->step(0.01);
@@ -2678,6 +2705,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.value[5] = new Fl_Value_Input(L + 2 * WB + IW / 4, 2 * WB + 9 * BH,
                                          IW / 2 - IW / 4, BH);
+      mesh.value[5]->tooltip("Mesh.QualitySup");
       mesh.value[5]->minimum(0);
       mesh.value[5]->maximum(1);
       if(CTX::instance()->inputScrolling) mesh.value[5]->step(0.01);
@@ -2694,24 +2722,28 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       mesh.choice[6] = new Fl_Choice(L + 2 * WB + IW / 2, 2 * WB + 9 * BH,
                                      IW / 2, BH, "Quality range");
+      mesh.choice[6]->tooltip("Mesh.QualityType");
       mesh.choice[6]->menu(menu_quality_type);
       mesh.choice[6]->align(FL_ALIGN_RIGHT);
       mesh.choice[6]->callback(mesh_options_ok_cb);
 
       mesh.value[6] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
+      mesh.value[6]->tooltip("Mesh.RadiusInf");
       mesh.value[6]->align(FL_ALIGN_RIGHT);
       mesh.value[6]->when(FL_WHEN_RELEASE);
       mesh.value[6]->callback(mesh_options_ok_cb);
 
       mesh.value[7] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH,
                                          IW / 2, BH, "Size range");
+      mesh.value[7]->tooltip("Mesh.RadiusSup");
       mesh.value[7]->align(FL_ALIGN_RIGHT);
       mesh.value[7]->when(FL_WHEN_RELEASE);
       mesh.value[7]->callback(mesh_options_ok_cb);
 
       mesh.value[8] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW / 2, BH);
+      mesh.value[8]->tooltip("Mesh.Normals");
       mesh.value[8]->minimum(0);
       mesh.value[8]->maximum(500);
       if(CTX::instance()->inputScrolling) mesh.value[8]->step(1);
@@ -2721,6 +2753,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.value[13] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 11 * BH,
                                           IW / 2, BH, "Normals and tangents");
+      mesh.value[13]->tooltip("Mesh.Tangents");
       mesh.value[13]->minimum(0);
       mesh.value[13]->maximum(200);
       if(CTX::instance()->inputScrolling) mesh.value[13]->step(1.0);
@@ -2737,6 +2770,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.value[9] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
                                          "Element shrinking factor");
+      mesh.value[9]->tooltip("Mesh.Explode");
       mesh.value[9]->minimum(0);
       mesh.value[9]->maximum(1);
       if(CTX::instance()->inputScrolling) mesh.value[9]->step(0.01);
@@ -2746,12 +2780,14 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.choice[0] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
+      mesh.choice[0]->tooltip("Mesh.PointType");
       mesh.choice[0]->menu(menu_point_display);
       mesh.choice[0]->align(FL_ALIGN_RIGHT);
       mesh.choice[0]->callback(mesh_options_ok_cb);
 
       mesh.value[10] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Point size");
+      mesh.value[10]->tooltip("Mesh.PointSize");
       mesh.value[10]->minimum(0.1);
       mesh.value[10]->maximum(50);
       if(CTX::instance()->inputScrolling) mesh.value[10]->step(0.1);
@@ -2760,6 +2796,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.value[11] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line width");
+      mesh.value[11]->tooltip("Mesh.LineWidth");
       mesh.value[11]->minimum(0.1);
       mesh.value[11]->maximum(50);
       if(CTX::instance()->inputScrolling) mesh.value[11]->step(0.1);
@@ -2768,6 +2805,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.value[14] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                           "High-order element subdivisions");
+      mesh.value[14]->tooltip("Mesh.NumSubEdges");
       mesh.value[14]->minimum(1);
       mesh.value[14]->maximum(10);
       if(CTX::instance()->inputScrolling) mesh.value[14]->step(1);
@@ -2784,7 +2822,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[17] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH,
                                           "Enable lighting");
-      mesh.butt[17]->tooltip("(Alt+w)");
+      mesh.butt[17]->tooltip("Mesh.Light (Alt+w)");
       mesh.butt[17]->type(FL_TOGGLE_BUTTON);
       mesh.butt[17]->callback(mesh_options_ok_cb, (void *)"mesh_light");
 
@@ -2796,22 +2834,26 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       mesh.choice[10] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Edge lighting");
+      mesh.choice[10]->tooltip("Mesh.LightLines");
       mesh.choice[10]->menu(menu_mesh_light_lines);
       mesh.choice[10]->align(FL_ALIGN_RIGHT);
       mesh.choice[10]->callback(mesh_options_ok_cb);
 
       mesh.butt[18] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
                                           "Use two-side lighting");
+      mesh.butt[18]->tooltip("Mesh.LightTwoSide");
       mesh.butt[18]->type(FL_TOGGLE_BUTTON);
       mesh.butt[18]->callback(mesh_options_ok_cb);
 
       mesh.butt[19] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                                           "Smooth normals");
+      mesh.butt[19]->tooltip("Mesh.SmoothNormals");
       mesh.butt[19]->type(FL_TOGGLE_BUTTON);
       mesh.butt[19]->callback(mesh_options_ok_cb);
 
       mesh.value[18] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                           "Smoothing threshold angle");
+      mesh.value[18]->tooltip("Mesh.AngleSmoothNormals");
       mesh.value[18]->minimum(0.);
       mesh.value[18]->maximum(180.);
       if(CTX::instance()->inputScrolling) mesh.value[18]->step(1.);
@@ -2828,6 +2870,7 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       mesh.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Coloring mode");
+      mesh.choice[4]->tooltip("Mesh.ColorCarousel");
       mesh.choice[4]->menu(menu_mesh_color);
       mesh.choice[4]->align(FL_ALIGN_RIGHT);
       mesh.choice[4]->callback(mesh_options_ok_cb);
