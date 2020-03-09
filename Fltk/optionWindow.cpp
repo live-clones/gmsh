@@ -2909,27 +2909,32 @@ optionWindow::optionWindow(int deltaFontSize)
 
         solver.input[0] =
           new Fl_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Base socket name");
+        solver.input[0]->tooltip("Solver.SocketName");
         solver.input[0]->align(FL_ALIGN_RIGHT);
         solver.input[0]->callback(solver_options_ok_cb);
 
         solver.value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW,
                                              BH, "Timeout (in seconds)");
+        solver.value[0]->tooltip("Solver.Timout");
         solver.value[0]->align(FL_ALIGN_RIGHT);
         solver.value[0]->callback(solver_options_ok_cb);
 
         solver.butt[0] =
           new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
                               "Always listen to incoming connection requests");
+        solver.butt[0]->tooltip("Solver.AlwaysListen");
         solver.butt[0]->type(FL_TOGGLE_BUTTON);
         solver.butt[0]->callback(solver_options_ok_cb);
 
         solver.input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
                                        "Python interpreter");
+        solver.input[1]->tooltip("Solver.PythonInterpreter");
         solver.input[1]->align(FL_ALIGN_RIGHT);
         solver.input[1]->callback(solver_options_ok_cb);
 
         solver.input[2] = new Fl_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                        "Octave interpreter");
+        solver.input[2]->tooltip("Solver.OctaveInterpreter");
         solver.input[2]->align(FL_ALIGN_RIGHT);
         solver.input[2]->callback(solver_options_ok_cb);
 
