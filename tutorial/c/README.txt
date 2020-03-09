@@ -1,7 +1,7 @@
-This directory contains (parts of the) Gmsh tutorial, rewritten using the Gmsh C
-API.
+This directory contains C versions of some of the tutorials, written using the
+Gmsh API.
 
-To compile and run the tutorials, you need the Gmsh dynamic library and the
+To compile and run the C tutorials, you need the Gmsh dynamic library and the
 associated header file (`gmshc.h'). These can be either obtained
 
 - from the binary Software Development Kit (SDK) available on the Gmsh website

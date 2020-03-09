@@ -1,5 +1,8 @@
-4.5.4 (Work-in-progress): periodic meshing now ensures that the master mesh is
-not modified; code cleanup.
+4.5.5 (Work-in-progress): tooltips in GUI to help discovery of scripting
+options; small bug fixes.
+
+4.5.4 (February 29, 2020): periodic mesh optimization now ensures that the
+master mesh is not modified; code cleanup; API tutorials; small bug fixes.
 
 4.5.3 (February 22, 2020): improved positioning of corresponding nodes on
 periodic entities; improved LaTeX output; improved curve splitting in

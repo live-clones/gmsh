@@ -1,7 +1,8 @@
-This directory contains the Gmsh tutorial rewritten using the Gmsh Python API.
+This directory contains Python versions of the tutorials, written using the Gmsh
+API.
 
-To run the tutorials, you need the Gmsh dynamic library and the Python module
-(`gmsh.py'). These can be either obtained
+To run the Python tutorials, you need the Gmsh dynamic library and the Python
+module (`gmsh.py'). These can be either obtained
 
 - from the binary Software Development Kit (SDK) available on the Gmsh website
   http://gmsh.info/bin/, for Windows, Linux and macOS. Download and uncompress

@@ -1272,6 +1272,34 @@ when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
 -
 @end table
 
+@item gmsh/model/mesh/getEdgeNumber
+Get the global edge identifier @code{edgeNum} for an input list of node pairs,
+concatenated in the vector @code{edgeNodes}.  Warning: this is an experimental
+feature and will probably change in a future release.
+
+@table @asis
+@item Input:
+@code{edgeNodes}
+@item Output:
+@code{edgeNum}
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/getLocalMultipliersForHcurl0
+Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+H(curl) basis functions. Warning: this is an experimental feature and will
+probably change in a future release.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{tag = -1}
+@item Output:
+@code{localMultipliers}
+@item Return:
+-
+@end table
+
 @item gmsh/model/mesh/getBasisFunctionsForElements
 Get the element-dependent basis functions of the elements of type
 @code{elementType} in the entity of tag @code{tag}at the integration points

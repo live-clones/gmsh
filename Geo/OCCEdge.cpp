@@ -214,6 +214,11 @@ GPoint OCCEdge::point(double par) const
     gp_Pnt pnt = curve->Value(par);
     return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, par);
   }
+  else if(degenerate(0)) {
+    return GPoint(getBeginVertex()->x(),
+                  getBeginVertex()->y(),
+                  getBeginVertex()->z());
+  }
   else {
     Msg::Warning("OCC curve %d is neither a 3D curve not a trimmed curve",
                  tag());

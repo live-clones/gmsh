@@ -3,6 +3,7 @@
 # Post-processing, scripting, animations, options
 
 import gmsh
+import os
 
 model = gmsh.model
 factory = model.geo
@@ -31,9 +32,10 @@ model.setPhysicalName(2, 6, "My surface")
 factory.synchronize()
 
 # add post-processing views to work on
-gmsh.merge("../view1.pos")
-gmsh.merge("../view1.pos")
-gmsh.merge("../view4.pos") # contains 2 views inside
+path = os.path.dirname(os.path.abspath(__file__))
+gmsh.merge(os.path.join(path, '..', 'view1.pos'))
+gmsh.merge(os.path.join(path, '..', 'view1.pos'))
+gmsh.merge(os.path.join(path, '..', 'view4.pos')) # contains 2 views inside
 
 # set general options
 option = gmsh.option

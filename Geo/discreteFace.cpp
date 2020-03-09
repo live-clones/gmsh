@@ -485,14 +485,12 @@ int discreteFace::createGeometry()
   int nv, ne;
   HXT_CHECK(hxtMeanValuesGetData(param, NULL, NULL, &uvc, &nv, &ne, 1));
   stl_vertices_uv.clear();
-  stl_vertices_uv.resize(nv);
   stl_vertices_xyz.clear();
-  stl_vertices_xyz.resize(nv);
   stl_curvatures.clear();
-  if(model()->getCurvatures().size()) stl_curvatures.resize(2 * nv);
-  stl_normals.clear();
-  stl_normals.resize(nv);
 
+  stl_vertices_uv.resize(nv);
+  stl_vertices_xyz.resize(nv);
+  if(model()->getCurvatures().size()) stl_curvatures.resize(2 * nv);
   for(int iv = 0; iv < nv; iv++) {
     if(model()->getCurvatures().size()) {
       MVertex *v = c2v[iv];
@@ -511,7 +509,6 @@ int discreteFace::createGeometry()
     stl_vertices_xyz[iv] =
       SPoint3(m->vertices.coord[4 * iv + 0], m->vertices.coord[4 * iv + 1],
               m->vertices.coord[4 * iv + 2]);
-    stl_normals[iv] = SVector3(1, 0, 0);
   }
   stl_triangles.clear();
   stl_triangles.resize(3 * ne);
@@ -521,6 +518,7 @@ int discreteFace::createGeometry()
     stl_triangles[3 * ie + 2] = m->triangles.node[3 * ie + 2];
   }
 
+  _computeSTLNormals();
   _createGeometryFromSTL();
 
   HXT_CHECK(hxtMeshDelete(&m));
@@ -528,6 +526,30 @@ int discreteFace::createGeometry()
   HXT_CHECK(hxtFree(&uvc));
 #endif
   return 0;
+}
+
+void discreteFace::_computeSTLNormals()
+{
+  stl_normals.clear();
+  std::size_t T = stl_triangles.size() / 3;
+  std::size_t N = stl_vertices_xyz.size();
+  if(!N || !T) return;
+  stl_normals.resize(N);
+  for(std::size_t i = 0; i < T; i++) {
+    int a = stl_triangles[3 * i + 0];
+    int b = stl_triangles[3 * i + 1];
+    int c = stl_triangles[3 * i + 2];
+    SPoint3 pa(stl_vertices_xyz[a]);
+    SPoint3 pb(stl_vertices_xyz[b]);
+    SPoint3 pc(stl_vertices_xyz[c]);
+    SVector3 vba = pb - pa;
+    SVector3 vca = pc - pa;
+    SVector3 n = crossprod(vba, vca);
+    stl_normals[a] += n;
+    stl_normals[b] += n;
+    stl_normals[c] += n;
+  }
+  for(std::size_t i = 0; i < N; i++) stl_normals[i].normalize();
 }
 
 void discreteFace::_createGeometryFromSTL()
@@ -789,7 +811,6 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
 {
   stl_vertices_xyz.clear();
   stl_vertices_uv.clear();
-  stl_normals.clear();
   stl_curvatures.clear();
   stl_triangles.clear();
 
@@ -804,7 +825,6 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
   std::vector<double> d(11 * N);
   stl_vertices_xyz.resize(N);
   stl_vertices_uv.resize(N);
-  stl_normals.resize(N);
   stl_curvatures.resize(2 * N);
   stl_triangles.resize(3 * T);
 
@@ -834,28 +854,13 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
   for(std::size_t i = 0; i < N; i++) {
     stl_vertices_xyz[i] = SPoint3(d[11 * i + 0], d[11 * i + 1], d[11 * i + 2]);
     stl_vertices_uv[i] = SPoint2(d[11 * i + 3], d[11 * i + 4]);
-    stl_normals[i] = SVector3(0, 0, 0);
     stl_curvatures[2 * i + 0] =
       SVector3(d[11 * i + 5], d[11 * i + 6], d[11 * i + 7]);
     stl_curvatures[2 * i + 1] =
       SVector3(d[11 * i + 8], d[11 * i + 9], d[11 * i + 10]);
   }
-  for(std::size_t i = 0; i < T; i++) {
-    int a = stl_triangles[3 * i + 0];
-    int b = stl_triangles[3 * i + 1];
-    int c = stl_triangles[3 * i + 2];
-    SPoint3 pa(stl_vertices_xyz[a]);
-    SPoint3 pb(stl_vertices_xyz[b]);
-    SPoint3 pc(stl_vertices_xyz[c]);
-    SVector3 vba = pb - pa;
-    SVector3 vca = pc - pa;
-    SVector3 n = crossprod(vba, vca);
-    stl_normals[a] += n;
-    stl_normals[b] += n;
-    stl_normals[c] += n;
-  }
-  for(std::size_t i = 0; i < N; i++) stl_normals[i].normalize();
 
+  _computeSTLNormals();
   _createGeometryFromSTL();
   return true;
 }

@@ -282,7 +282,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       bool periodic = (vs_[i][vs_[i].size() - 1] == vs_[i][0]);
       if(periodic) {
         for(size_t j = 0; j < vs_[i].size() - 1; j++) {
-          MVertex *v0 = vs_[i][j == 0 ? vs_[i].size() - 1 : j - 1];
+          MVertex *v0 = vs_[i][j == 0 ? (vs_[i].size() - 2) : (j - 1)];
           MVertex *v1 = vs_[i][j];
           MVertex *v2 = vs_[i][j + 1];
           if(breakForLargeAngle(v0, v1, v2, curveAngleThreshold)) {

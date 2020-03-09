@@ -21,7 +21,7 @@
 
 // action is a combination of GMSH_SET, GMSH_GET, GMSH_GUI
 
-#define OPT_ARGS_STR int num, int action, std::string val
+#define OPT_ARGS_STR int num, int action, const std::string &val
 #define OPT_ARGS_NUM int num, int action, double val
 #define OPT_ARGS_COL int num, int action, unsigned int val
 
@@ -866,7 +866,7 @@ typedef struct {
 typedef struct {
   int level;
   const char *str;
-  std::string (*function)(int num, int action, std::string val);
+  std::string (*function)(int num, int action, const std::string &val);
   std::string def;
   const char *help;
 } StringXString;

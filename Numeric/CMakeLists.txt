@@ -47,6 +47,7 @@ set(SRC
   HierarchicalBasisH1Brick.cpp
   HierarchicalBasisH1Tetra.cpp
   HierarchicalBasisH1Pri.cpp
+  HierarchicalBasisH1Point.cpp
   HierarchicalBasis.cpp
   HierarchicalBasisHcurl.cpp
   HierarchicalBasisHcurlQuad.cpp

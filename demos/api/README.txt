@@ -1,9 +1,7 @@
 This directory contains examples written using the Gmsh Application Programming
-Interface (API) for C++, C, Python and Julia.
+Interface (API), in C++, C, Python and Julia.
 
-To learn of to use the Gmsh API, see the `python', `julia', `c++' and `c'
-subdirectories of the `gmsh/tutorial' directory.
-
-These subdirectories contain contain reimplementations of the `.geo' tutorials
-using the API, as well as detailed instructions on how to run the examples (and
-compile the C++ and C files).
+To learn how to use the Gmsh API, first check out the `python', `julia', `c++'
+and `c' subdirectories of `gmsh/tutorial': these subdirectories contain Python,
+Julia, C++ and C versions of (some of) the `.geo' tutorials, as well as detailed
+instructions on how to run the examples (and compile the C++ and C files).

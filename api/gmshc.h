@@ -776,6 +776,21 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              double ** basisFunctions, size_t * basisFunctions_n,
                                              int * ierr);
 
+/* Get the global edge identifier `edgeNum' for an input list of node pairs,
+ * concatenated in the vector `edgeNodes'.  Warning: this is an experimental
+ * feature and will probably change in a future release. */
+GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n,
+                                         int ** edgeNum, size_t * edgeNum_n,
+                                         int * ierr);
+
+/* Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+ * H(curl) basis functions. Warning: this is an experimental feature and will
+ * probably change in a future release. */
+GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType,
+                                                        int ** localMultipliers, size_t * localMultipliers_n,
+                                                        const int tag,
+                                                        int * ierr);
+
 /* Get the element-dependent basis functions of the elements of type
  * `elementType' in the entity of tag `tag'at the integration points
  * `integrationPoints' (given as concatenated triplets of coordinates in the
