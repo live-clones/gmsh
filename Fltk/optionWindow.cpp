@@ -2064,12 +2064,14 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
                                         "Geometry tolerance");
+      geo.value[2]->tooltip("Geometry.Tolerance");
       geo.value[2]->align(FL_ALIGN_RIGHT);
       geo.value[2]->callback(geometry_options_ok_cb);
 
       geo.butt[8] = new Fl_Check_Button(
         L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
         "Remove duplicate entities in GEO model transforms");
+      geo.butt[8]->tooltip("Geometry.AutoCoherence");
       geo.butt[8]->type(FL_TOGGLE_BUTTON);
       geo.butt[8]->callback(geometry_options_ok_cb);
 
@@ -2084,31 +2086,37 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                                          "Remove degenerated edges and faces");
+      geo.butt[16]->tooltip("Geometry.OCCFixDegenerated");
       geo.butt[16]->type(FL_TOGGLE_BUTTON);
       geo.butt[16]->callback(geometry_options_ok_cb);
 
       geo.butt[11] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
                                          "Remove small edges");
+      geo.butt[11]->tooltip("Geometry.OCCFixSmallEdges");
       geo.butt[11]->type(FL_TOGGLE_BUTTON);
       geo.butt[11]->callback(geometry_options_ok_cb);
 
       geo.butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
                                          "Remove small faces");
+      geo.butt[12]->tooltip("Geometry.OCCFixSmallFaces");
       geo.butt[12]->type(FL_TOGGLE_BUTTON);
       geo.butt[12]->callback(geometry_options_ok_cb);
 
       geo.butt[13] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Sew faces");
+      geo.butt[13]->tooltip("Geometry.OCCFixSewFaces");
       geo.butt[13]->type(FL_TOGGLE_BUTTON);
       geo.butt[13]->callback(geometry_options_ok_cb);
 
       geo.butt[14] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Fix shells and make solids");
+      geo.butt[14]->tooltip("Geometry.OCCMakeSolids");
       geo.butt[14]->type(FL_TOGGLE_BUTTON);
       geo.butt[14]->callback(geometry_options_ok_cb);
 
       geo.value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
                                          "Global model scaling");
+      geo.value[20]->tooltip("Geometry.OCCScaling");
       geo.value[20]->align(FL_ALIGN_RIGHT);
       geo.value[20]->callback(geometry_options_ok_cb);
 
@@ -2129,62 +2137,68 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH,
                                         BW / 2 - WB, BH, "Points");
-      geo.butt[0]->tooltip("(Alt+p)");
+      geo.butt[0]->tooltip("Geometry.Points (Alt+p)");
       geo.butt[0]->type(FL_TOGGLE_BUTTON);
       geo.butt[0]->callback(geometry_options_ok_cb);
 
       geo.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH,
                                         BW / 2 - WB, BH, "Curves");
-      geo.butt[1]->tooltip("(Alt+l)");
+      geo.butt[1]->tooltip("Geometry.Lines (Alt+l)");
       geo.butt[1]->type(FL_TOGGLE_BUTTON);
       geo.butt[1]->callback(geometry_options_ok_cb);
 
       geo.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH,
                                         BW / 2 - WB, BH, "Surfaces");
-      geo.butt[2]->tooltip("(Alt+s)");
+      geo.butt[2]->tooltip("Geometry.Surfaces (Alt+s)");
       geo.butt[2]->type(FL_TOGGLE_BUTTON);
       geo.butt[2]->callback(geometry_options_ok_cb);
 
       geo.butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH,
                                         BW / 2 - WB, BH, "Volumes");
-      geo.butt[3]->tooltip("(Alt+v)");
+      geo.butt[3]->tooltip("Geometry.Volumes (Alt+v)");
       geo.butt[3]->type(FL_TOGGLE_BUTTON);
       geo.butt[3]->callback(geometry_options_ok_cb);
 
       geo.butt[4] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
                                         BW / 2 - WB, BH, "Point labels");
+      geo.butt[4]->tooltip("Geometry.PointNumbers");
       geo.butt[4]->type(FL_TOGGLE_BUTTON);
       geo.butt[4]->callback(geometry_options_ok_cb);
 
       geo.butt[5] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH,
                                         BW / 2 - WB, BH, "Curve labels");
+      geo.butt[5]->tooltip("Geometry.LineNumbers");
       geo.butt[5]->type(FL_TOGGLE_BUTTON);
       geo.butt[5]->callback(geometry_options_ok_cb);
 
       geo.butt[6] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH,
                                         BW / 2 - WB, BH, "Surface labels");
+      geo.butt[6]->tooltip("Geometry.SurfaceNumbers");
       geo.butt[6]->type(FL_TOGGLE_BUTTON);
       geo.butt[6]->callback(geometry_options_ok_cb);
 
       geo.butt[7] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
                                         BW / 2 - WB, BH, "Volume labels");
+      geo.butt[7]->tooltip("Geometry.VolumeNumbers");
       geo.butt[7]->type(FL_TOGGLE_BUTTON);
       geo.butt[7]->callback(geometry_options_ok_cb);
 
       static Fl_Menu_Item menu_label_type[] = {
         {"Description", 0, 0, 0},
-        {"Elementary tags", 0, 0, 0},
-        {"Physical tags", 0, 0, 0},
+        {"Elementary tag", 0, 0, 0},
+        {"Physical tag(s)", 0, 0, 0},
         {0}
       };
       geo.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Label type");
+      geo.choice[4]->tooltip("Geometry.LabelType");
       geo.choice[4]->menu(menu_label_type);
       geo.choice[4]->align(FL_ALIGN_RIGHT);
       geo.choice[4]->callback(geometry_options_ok_cb);
 
       geo.value[0] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW / 2, BH);
+      geo.value[0]->tooltip("Geometry.Normals");
       geo.value[0]->minimum(0);
       geo.value[0]->maximum(500);
       if(CTX::instance()->inputScrolling) geo.value[0]->step(1);
@@ -2194,6 +2208,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.value[1] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 6 * BH,
                                         IW / 2, BH, "Normals and tangents");
+      geo.value[1]->tooltip("Geometry.Tangents");
       geo.value[1]->minimum(0);
       geo.value[1]->maximum(500);
       if(CTX::instance()->inputScrolling) geo.value[1]->step(1);
@@ -2215,34 +2230,47 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       geo.choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
                                     "Main window transform");
+      geo.choice[3]->tooltip("Geometry.Transform");
       geo.choice[3]->menu(menu_transform);
       geo.choice[3]->align(FL_ALIGN_RIGHT);
       geo.choice[3]->callback(geometry_options_ok_cb, (void *)"geo_transform");
 
       int ss = 2 * IW / 3 / 3 + 4;
       geo.value[7] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, ss, BH);
+      geo.value[7]->tooltip("Geometry.TransformXX");
       geo.value[8] =
         new Fl_Value_Input(L + 2 * WB + ss, 2 * WB + 2 * BH, ss, BH);
+      geo.value[8]->tooltip("Geometry.TransformXY");
       geo.value[9] =
         new Fl_Value_Input(L + 2 * WB + 2 * ss, 2 * WB + 2 * BH, ss, BH, " X");
+      geo.value[9]->tooltip("Geometry.TransformXZ");
       geo.value[10] =
         new Fl_Value_Input(L + 2 * WB + IW, 2 * WB + 2 * BH, 7 * IW / 10, BH);
+      geo.value[10]->tooltip("Geometry.OffsetX");
 
       geo.value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, ss, BH);
+      geo.value[11]->tooltip("Geometry.TransformYX");
       geo.value[12] =
         new Fl_Value_Input(L + 2 * WB + ss, 2 * WB + 3 * BH, ss, BH);
+      geo.value[12]->tooltip("Geometry.TransformYY");
       geo.value[13] = new Fl_Value_Input(L + 2 * WB + 2 * ss, 2 * WB + 3 * BH,
                                          ss, BH, " Y +");
+      geo.value[13]->tooltip("Geometry.TransformYZ");
       geo.value[14] =
         new Fl_Value_Input(L + 2 * WB + IW, 2 * WB + 3 * BH, 7 * IW / 10, BH);
+      geo.value[14]->tooltip("Geometry.OffsetY");
 
       geo.value[15] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, ss, BH);
+      geo.value[15]->tooltip("Geometry.TransformZX");
       geo.value[16] =
         new Fl_Value_Input(L + 2 * WB + ss, 2 * WB + 4 * BH, ss, BH);
+      geo.value[16]->tooltip("Geometry.TransformZY");
       geo.value[17] =
         new Fl_Value_Input(L + 2 * WB + 2 * ss, 2 * WB + 4 * BH, ss, BH, " Z");
+      geo.value[17]->tooltip("Geometry.TransformZZ");
       geo.value[18] =
         new Fl_Value_Input(L + 2 * WB + IW, 2 * WB + 4 * BH, 7 * IW / 10, BH);
+      geo.value[18]->tooltip("Geometry.OffsetZ");
 
       for(int i = 7; i <= 18; i++) {
         geo.value[i]->minimum(-1.);
@@ -2262,12 +2290,14 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.choice[0] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Point display");
+      geo.choice[0]->tooltip("Geometry.PointType");
       geo.choice[0]->menu(menu_point_display);
       geo.choice[0]->align(FL_ALIGN_RIGHT);
       geo.choice[0]->callback(geometry_options_ok_cb);
 
       geo.value[3] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point size");
+      geo.value[3]->tooltip("Geometry.PointSize");
       geo.value[3]->minimum(0.1);
       geo.value[3]->maximum(50);
       if(CTX::instance()->inputScrolling) geo.value[3]->step(0.1);
@@ -2276,6 +2306,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.value[5] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH,
                                         "Selected point size");
+      geo.value[5]->tooltip("Geometry.PointSelectSize");
       geo.value[5]->minimum(0.1);
       geo.value[5]->maximum(50);
       if(CTX::instance()->inputScrolling) geo.value[5]->step(0.1);
@@ -2284,12 +2315,14 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.choice[1] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Curve display");
+      geo.choice[1]->tooltip("Geometry.LineType");
       geo.choice[1]->menu(menu_line_display);
       geo.choice[1]->align(FL_ALIGN_RIGHT);
       geo.choice[1]->callback(geometry_options_ok_cb);
 
       geo.value[4] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Curve width");
+      geo.value[4]->tooltip("Geometry.LineWidth");
       geo.value[4]->minimum(0.1);
       geo.value[4]->maximum(50);
       if(CTX::instance()->inputScrolling) geo.value[4]->step(0.1);
@@ -2298,6 +2331,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
                                         "Selected curve width");
+      geo.value[6]->tooltip("Geometry.LineSelectWidth");
       geo.value[6]->minimum(0.1);
       geo.value[6]->maximum(50);
       if(CTX::instance()->inputScrolling) geo.value[6]->step(0.1);
@@ -2306,6 +2340,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.value[19] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
                                          "Curve subdivisions");
+      geo.value[19]->tooltip("Geometry.NumSubEdges");
       geo.value[19]->minimum(1);
       geo.value[19]->maximum(50);
       if(CTX::instance()->inputScrolling) geo.value[19]->step(1);
@@ -2314,7 +2349,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.choice[2] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Surface display");
-      geo.choice[2]->tooltip("(Alt+d)");
+      geo.choice[2]->tooltip("Geometry.SurfaceType (Alt+d)");
       geo.choice[2]->menu(menu_surface_display);
       geo.choice[2]->align(FL_ALIGN_RIGHT);
       geo.choice[2]->callback(geometry_options_ok_cb);
@@ -2328,17 +2363,19 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH,
                                         "Enable lighting");
-      geo.butt[9]->tooltip("(Alt+w)");
+      geo.butt[9]->tooltip("Geometry.Light (Alt+w)");
       geo.butt[9]->type(FL_TOGGLE_BUTTON);
       geo.butt[9]->callback(geometry_options_ok_cb);
 
       geo.butt[15] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
                                          "Use two-side lighting");
+      geo.butt[15]->tooltip("Geometry.LightTwoSide");
       geo.butt[15]->type(FL_TOGGLE_BUTTON);
       geo.butt[15]->callback(geometry_options_ok_cb);
 
       geo.butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
                                          "Highlight orphan entities");
+      geo.butt[10]->tooltip("Geometry.HighlightOrphans");
       geo.butt[10]->type(FL_TOGGLE_BUTTON);
       geo.butt[10]->callback(geometry_options_ok_cb);
 

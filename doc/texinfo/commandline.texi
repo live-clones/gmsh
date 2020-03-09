@@ -71,7 +71,7 @@ Optimize high order meshes (Mesh.HighOrderOptimize)
 @item -ho_[min,max,nlayers]
 High-order optimization parameters (Mesh.HighOrderThreshold[Min,Max], Mesh.HighOrderNumLayers)
 @item -clscale value
-Set global mesh element size scaling factor (Mesh.CharacteristicLengthFactor)
+Set mesh element size factor (Mesh.CharacteristicLengthFactor)
 @item -clmin value
 Set minimum mesh element size (Mesh.CharacteristicLengthMin)
 @item -clmax value

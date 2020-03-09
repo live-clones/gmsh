@@ -861,7 +861,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Highlight orphan entities (lines connected to a single surface, etc.)?" },
 
   { F|O, "LabelType" , opt_geometry_label_type , 0. ,
-    "Type of entity label (0: description, 1: elementary number, 2: physical number)" },
+    "Type of entity label (0: description, 1: elementary entity tag, "
+    "2: physical group tag)" },
   { F|O, "Light" , opt_geometry_light , 1. ,
     "Enable lighting for the geometry" },
   { F|O, "LightTwoSide" , opt_geometry_light_two_side , 1. ,
@@ -869,7 +870,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "Lines" , opt_geometry_curves , 1. ,
     "Display geometry curves?" },
   { F|O, "LineNumbers" , opt_geometry_curves_num , 0. ,
-    "Display curve numbers?" },
+    "Display curve labels?" },
   { F|O, "LineSelectWidth" , opt_geometry_curve_sel_width , 3. ,
     "Display width of selected curves (in pixels)" },
   { F|O, "LineType" , opt_geometry_curve_type , 0. ,
@@ -938,7 +939,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "Points" , opt_geometry_points , 1. ,
     "Display geometry points?" },
   { F|O, "PointNumbers" , opt_geometry_points_num , 0. ,
-    "Display points numbers?" },
+    "Display points labels?" },
   { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 6. ,
     "Display size of selected points (in pixels)" },
   { F|O, "PointSize" , opt_geometry_point_size , 4. ,
@@ -963,7 +964,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "Surfaces" , opt_geometry_surfaces , 0. ,
     "Display geometry surfaces?" },
   { F|O, "SurfaceNumbers" , opt_geometry_surfaces_num , 0. ,
-    "Display surface numbers?" },
+    "Display surface labels?" },
   { F|O, "SurfaceType" , opt_geometry_surface_type , 0. ,
     "Surface display type (0: cross, 1: wireframe, 2: solid). Wireframe and solid "
     "are not available with the built-in geometry kernel." },
@@ -996,9 +997,9 @@ StringXNumber GeometryOptions_Number[] = {
     "Element (3,3) of the 3x3 model display transformation matrix" },
 
   { F|O, "Volumes" , opt_geometry_volumes , 0. ,
-    "Display geometry volumes? (not implemented yet)" },
+    "Display geometry volumes?" },
   { F|O, "VolumeNumbers" , opt_geometry_volumes_num , 0. ,
-    "Display volume numbers? (not implemented yet)" },
+    "Display volume labels?" },
 
   { 0, 0 , 0 , 0. , 0 }
 } ;
@@ -1119,8 +1120,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },
   { F|O, "LabelType" , opt_mesh_label_type , 0. ,
-    "Type of element label (0: element number, 1: elementary entity number, "
-    "2: physical entity number, 3: partition number, 4: coordinates)" },
+    "Type of element label (0: node/element tag, 1: elementary entity tag, "
+    "2: physical entity tag, 3: partition, 4: coordinates)" },
   { F|O, "LcIntegrationPrecision" , opt_mesh_lc_integration_precision, 1.e-9 ,
     "Accuracy of evaluation of the LC field for 1D mesh generation" },
   { F|O, "Light" , opt_mesh_light , 1. ,
@@ -1132,7 +1133,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Lines" , opt_mesh_lines , 0. ,
     "Display mesh lines (1D elements)?" },
   { F|O, "LineNumbers" , opt_mesh_lines_num , 0. ,
-    "Display mesh line numbers?" },
+    "Display mesh line labels?" },
   { F|O, "LineWidth" , opt_mesh_line_width , 1.0 ,
     "Display width of mesh lines (in pixels)" },
 
@@ -1246,7 +1247,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Points" , opt_mesh_points , 0. ,
     "Display mesh nodes (vertices)?" },
   { F|O, "PointNumbers" , opt_mesh_points_num , 0. ,
-    "Display mesh node numbers?" },
+    "Display mesh node labels?" },
   { F|O, "PointSize" , opt_mesh_point_size , 4. ,
     "Display size of mesh nodes (in pixels)" },
   { F|O, "PointType" , opt_mesh_point_type , 0. ,
@@ -1363,7 +1364,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SurfaceFaces" , opt_mesh_surfaces_faces , 0. ,
     "Display faces of surface mesh?" },
   { F|O, "SurfaceNumbers" , opt_mesh_surfaces_num , 0. ,
-    "Display surface mesh element numbers?" },
+    "Display surface mesh element labels?" },
   { F|O, "SwitchElementTags", opt_mesh_switch_elem_tags, 0. ,
     "Invert elementary and physical tags when reading the mesh"},
 
@@ -1388,7 +1389,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "VolumeFaces" , opt_mesh_volumes_faces , 0. ,
     "Display faces of volume mesh?" },
   { F|O, "VolumeNumbers" , opt_mesh_volumes_num , 0. ,
-    "Display volume mesh element numbers?" },
+    "Display volume mesh element labels?" },
   { F|O, "Voronoi" , opt_mesh_voronoi , 0. ,
     "Display the voronoi diagram" },
 
@@ -1852,7 +1853,7 @@ StringXNumber PrintOptions_Number[] = {
     "Save elementary region tags in mesh statistics exported as "
     "post-processing views" },
   { F|O, "PostElement" , opt_print_pos_element , 0. ,
-    "Save element numbers in mesh statistics exported as post-processing views" },
+    "Save element tags in mesh statistics exported as post-processing views" },
   { F|O, "PostGamma" , opt_print_pos_gamma , 0. ,
     "Save Gamma quality measure in mesh statistics exported as "
     "post-processing views" },
