@@ -147,7 +147,11 @@ private:
       if(requireColor && tmp[i]->getColor().empty()) continue;
       Bnd_Box box2;
       BRepBndLib::Add(tmp[i]->getShape(), box2);
-      if(box.Distance(box2) < _tol) {
+      double xmin2, ymin2, zmin2, xmax2, ymax2, zmax2;
+      box2.Get(xmin2, ymin2, zmin2, xmax2, ymax2, zmax2);
+      if(std::abs(xmin - xmin2) < _tol && std::abs(xmax - xmax2) < _tol &&
+         std::abs(ymin - ymin2) < _tol && std::abs(ymax - ymax2) < _tol &&
+         std::abs(zmin - zmin2) < _tol && std::abs(zmax - zmax2) < _tol) {
         attr.push_back(tmp[i]);
       }
     }
