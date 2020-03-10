@@ -845,7 +845,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F,   "Clip" , opt_geometry_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "CopyMeshingMethod" , opt_geometry_copy_meshing_method, 0. ,
-    "Copy meshing method (unstructured or transfinite) when duplicating geometrical entities?" },
+    "Copy meshing method (unstructured or transfinite) when duplicating geometrical "
+    "entities with built-in geometry kernel?" },
   { F, "DoubleClickedEntityTag" , opt_geometry_double_clicked_entity_tag, 0. ,
     "Tag of last double-clicked geometrical entity" },
 
