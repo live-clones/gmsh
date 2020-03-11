@@ -1167,7 +1167,7 @@ void GEO_Internals::setMeshSizeFromBoundary(int dim, int tag, int val)
   _changed = true;
 }
 
-void GEO_Internals::synchronize(GModel *model)
+void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
 {
   Msg::Debug("Syncing GEO_Internals with GModel");
 
@@ -1232,7 +1232,7 @@ void GEO_Internals::synchronize(GModel *model)
       else {
         if(v->getNativeType() == GEntity::GmshModel)
           ((gmshVertex *)v)->resetNativePtr(p);
-        v->resetMeshAttributes();
+        if(resetMeshAttributes) v->resetMeshAttributes();
       }
     }
     List_Delete(points);
@@ -1240,13 +1240,11 @@ void GEO_Internals::synchronize(GModel *model)
 
   if(Tree_Nbr(Curves)) {
     List_T *curves = Tree2List(Curves);
-    // generate all curves except compounds
     for(int i = 0; i < List_Nbr(curves); i++) {
       Curve *c;
       List_Read(curves, i, &c);
       if(c->Num >= 0) {
         GEdge *e = model->getEdgeByTag(c->Num);
-
         if(!e && c->beg && c->end) {
           e = new gmshEdge(model, c, model->getVertexByTag(c->beg->Num),
                            model->getVertexByTag(c->end->Num));
@@ -1265,7 +1263,7 @@ void GEO_Internals::synchronize(GModel *model)
             else
               ((gmshEdge *)e)->resetNativePtr(c, 0, 0);
           }
-          e->resetMeshAttributes();
+          if(resetMeshAttributes) e->resetMeshAttributes();
         }
         if(c->degenerated) e->setTooSmall(true);
       }
@@ -1286,7 +1284,7 @@ void GEO_Internals::synchronize(GModel *model)
       else {
         if(f->getNativeType() == GEntity::GmshModel)
           ((gmshFace *)f)->resetNativePtr(s);
-        f->resetMeshAttributes();
+        if(resetMeshAttributes) f->resetMeshAttributes();
       }
     }
     List_Delete(surfaces);
@@ -1305,7 +1303,7 @@ void GEO_Internals::synchronize(GModel *model)
       else {
         if(r->getNativeType() == GEntity::GmshModel)
           ((gmshRegion *)r)->resetNativePtr(v);
-        r->resetMeshAttributes();
+        if(resetMeshAttributes) r->resetMeshAttributes();
       }
     }
     List_Delete(volumes);

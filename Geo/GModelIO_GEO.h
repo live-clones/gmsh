@@ -149,7 +149,7 @@ public:
   void setMeshSizeFromBoundary(int dim, int tag, int val);
 
   // synchronize internal CAD data with the given GModel
-  void synchronize(GModel *model);
+  void synchronize(GModel *model, bool resetMeshAttributes = true);
 
   // queries
   bool getVertex(int tag, double &x, double &y, double &z);

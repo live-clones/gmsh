@@ -382,7 +382,8 @@ GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
   // GEOInternals, because some operations in the built-in kernel directly
   // manipulate physicals (most notably Coherence). Until we fully move the
   // physicals to GModel, we need to add the physicals in GEOInternals and
-  // perform a hidden sync.
+  // perform a hidden sync (which should not reset the mesh attributes of the
+  // entities of they have already been created...).
   if(!_isInitialized()) { throw - 1; }
   int outTag = tag;
   if(outTag < 0) {
@@ -395,7 +396,7 @@ GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
                                                                 tags)) {
     throw 1;
   }
-  GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  GModel::current()->getGEOInternals()->synchronize(GModel::current(), false);
   return outTag;
 }
 
