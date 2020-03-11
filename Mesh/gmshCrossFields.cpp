@@ -2087,12 +2087,6 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
       it != vs.end(); ++it)
     myAssembler->numberVertex(*it, 0, 1);
 
-  std::string ss = gm->getName();
-  std::string fn = ss + "_grad.pos";
-
-  FILE *_f = fopen(fn.c_str(), "w");
-  fprintf(_f, "View \"grad\"{\n");
-
   simpleFunction<double> ONE(1.0);
   laplaceTerm l(0, 1, &ONE);
 
@@ -2119,8 +2113,6 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
       std::map<MEdge, cross2d, MEdgeLessThan>::iterator it0 = C.find(e0);
       std::map<MEdge, cross2d, MEdgeLessThan>::iterator it1 = C.find(e1);
       std::map<MEdge, cross2d, MEdgeLessThan>::iterator it2 = C.find(e2);
-
-      //      printf("%g %ag %g\n",a0,a1,a2);
 
       double a0 = it0->second._a;
       double A1 =
@@ -2150,12 +2142,6 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
       compat_orientation_extrinsic(o_i, xx, o_1, xx, x0, x1);
       compat_orientation_extrinsic(o_i, xx, o_2, xx, x2, x3);
 
-      //      compat_orientation_extrinsic
-      //      (it0->second.o_i,it0->second._nrml,it1->second.o_i,it1->second._nrml,x0,x1);
-      //      compat_orientation_extrinsic
-      //      (it0->second.o_i,it0->second._nrml,it2->second.o_i,it2->second._nrml,x2,x3);
-      //      a0 = atan2(dot(it0->second._tgt2,it0->second.o_i),
-      //		 dot(it0->second._tgt,it0->second.o_i));
       a0 = atan2(dot(t_i, o_i), dot(it0->second._tgt, o_i));
 
       x0 -= xx * dot(xx, x0);
@@ -2169,44 +2155,18 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
 
       it0->second.normalize(a0);
       it0->second._a = a0;
-      //      A1 = atan2(dot(it0->second._tgt2,x1),
-      //		 dot(it0->second._tgt,x1));
-      //      A2 = atan2(dot(it0->second._tgt2,x3),
-      //		 dot(it0->second._tgt,x3));
       A1 = atan2(dot(t_i, x1), dot(it0->second._tgt, x1));
       A2 = atan2(dot(t_i, x3), dot(it0->second._tgt, x3));
       it0->second.normalize(A1);
       a1 = it0->second.lifting(A1);
       it0->second.normalize(A2);
       a2 = it0->second.lifting(A2);
-      //      it0->second.normalize(a1);
-      //      it0->second.normalize(a2);
-      //      it0->second._a = a0 = 0;
-      //      a1 = it0->second.lifting(A1);
-      //      a2 = it0->second.lifting(A2);
 
       double a[3] = {a0 + a2 - a1, a0 + a1 - a2, a1 + a2 - a0};
       double g[3] = {0, 0, 0};
       t->interpolateGrad(a, 0, 0, 0, g);
       gradients_of_theta[t] = SVector3(g[0], g[1], g[2]);
       SPoint3 pp = t->barycenter();
-
-      //      fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",pp.x(),pp.y(),pp.z(),
-      //	      x0.x(),x0.y(),x0.z());
-      //      fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",pp.x(),pp.y(),pp.z(),
-      //	      x1.x(),x1.y(),x1.z());
-      //      fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",pp.x(),pp.y(),pp.z(),
-      //	      x2.x(),x2.y(),x2.z());
-      //      fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",pp.x(),pp.y(),pp.z(),
-      //	      x3.x(),x3.y(),x3.z());
-
-      fprintf(_f, "VP(%g,%g,%g){%g,%g,%g};\n", pp.x(), pp.y(), pp.z(), g[0],
-              g[1], g[2]);
-      //      fprintf(_f, "VP(%g,%g,%g){%g,%g,%g};\n", pp.x(), pp.y(), pp.z(),
-      //      -g[1],
-      //	      g[0], g[2]);
-      //      printf("A %g vs %g\n",sqrt(
-      //      g[1]*g[1]+g[0]*g[0]), 1./(sqrt((pp.x())*(pp.x())+(pp.y())*(pp.y()))));
 
       SVector3 G(g[0], g[1], g[2]);
       SVector3 GT = crossprod(G, xx);
@@ -2217,19 +2177,16 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
       a[2] = 0;
       t->interpolateGrad(a, 0, 0, 0, g1);
       double RHS1 = g1[0] * GT.x() + g1[1] * GT.y() + g1[2] * GT.z();
-      // double RHS1 = g1[0]*g[0]+g1[1]*g[1]+g1[2]*g[2];
       a[0] = 0;
       a[1] = 1;
       a[2] = 0;
       t->interpolateGrad(a, 0, 0, 0, g1);
       double RHS2 = g1[0] * GT.x() + g1[1] * GT.y() + g1[2] * GT.z();
-      // double RHS2 = g1[0]*g[0]+g1[1]*g[1]+g1[2]*g[2];
       a[0] = 0;
       a[1] = 0;
       a[2] = 1;
       t->interpolateGrad(a, 0, 0, 0, g1);
       double RHS3 = g1[0] * GT.x() + g1[1] * GT.y() + g1[2] * GT.z();
-      // double RHS3 = g1[0]*g[0]+g1[1]*g[1]+g1[2]*g[2];
       int num1 = myAssembler->getDofNumber(l.getLocalDofR(&se, 0));
       int num2 = myAssembler->getDofNumber(l.getLocalDofR(&se, 1));
       int num3 = myAssembler->getDofNumber(l.getLocalDofR(&se, 2));
@@ -2239,10 +2196,10 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
       _lsys->addToRightHandSide(num3, RHS3 * V);
     }
   }
-  fprintf(_f, "};\n");
-  fclose(_f);
   _lsys->systemSolve();
-
+  Msg::Info("Conformal Factor Computed (%d unknowns)",
+	    myAssembler->sizeOfR());
+  
   return myAssembler;
 }
 
