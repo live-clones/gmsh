@@ -35,13 +35,6 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
   Msg::Debug("Adding `%s' to file `%s'", text.c_str(), fileName.c_str());
   std::vector<std::string> split = SplitFileName(fileName);
   std::string noExt = split[0] + split[1], ext = split[2];
-#if defined(HAVE_COMPRESSED_IO) && defined(HAVE_LIBZ)
-  bool compressed = false;
-  if(ext == ".gz") {
-    ext = SplitFileName(noExt)[2];
-    compressed = true;
-  }
-#endif
   // make sure we don't add stuff in a non-geo file
   static bool proceed = false;
   if(!CTX::instance()->expertMode && !proceed) {
