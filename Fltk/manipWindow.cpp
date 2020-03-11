@@ -57,14 +57,25 @@ manipWindow::manipWindow(int deltaFontSize)
   }
 
   value[0] = new Fl_Value_Input(WB + 1 * BB, 1 * WB + 1 * BH, BB, BH);
+  value[0]->tooltip("General.RotationX");
   value[1] = new Fl_Value_Input(WB + 2 * BB, 1 * WB + 1 * BH, BB, BH);
+  value[1]->tooltip("General.RotationY");
   value[2] = new Fl_Value_Input(WB + 3 * BB, 1 * WB + 1 * BH, BB, BH);
+  value[2]->tooltip("General.RotationZ");
+
   value[3] = new Fl_Value_Input(WB + 1 * BB, 1 * WB + 2 * BH, BB, BH);
+  value[3]->tooltip("General.TranslationX");
   value[4] = new Fl_Value_Input(WB + 2 * BB, 1 * WB + 2 * BH, BB, BH);
+  value[4]->tooltip("General.TranslationY");
   value[5] = new Fl_Value_Input(WB + 3 * BB, 1 * WB + 2 * BH, BB, BH);
+  value[5]->tooltip("General.TranslationZ");
+
   value[6] = new Fl_Value_Input(WB + 1 * BB, 1 * WB + 3 * BH, BB, BH);
+  value[6]->tooltip("General.ScaleX");
   value[7] = new Fl_Value_Input(WB + 2 * BB, 1 * WB + 3 * BH, BB, BH);
+  value[7]->tooltip("General.ScaleY");
   value[8] = new Fl_Value_Input(WB + 3 * BB, 1 * WB + 3 * BH, BB, BH);
+  value[8]->tooltip("General.ScaleZ");
 
   for(int i = 0; i < 9; i++) {
     if(i < 3) {

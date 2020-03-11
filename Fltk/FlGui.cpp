@@ -502,7 +502,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   if(CTX::instance()->guiTheme.size())
     Fl::scheme(CTX::instance()->guiTheme.c_str());
   Fl_Tooltip::size(FL_NORMAL_SIZE);
-  Fl_Tooltip::delay(0.5);
 
   // use retina resolution if available
 #if(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)

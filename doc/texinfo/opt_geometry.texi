@@ -37,7 +37,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Geometry.CopyMeshingMethod
-Copy meshing method (unstructured or transfinite) when duplicating geometrical entities?@*
+Copy meshing method (unstructured or transfinite) when duplicating geometrical entities with built-in geometry kernel?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -67,7 +67,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LabelType
-Type of entity label (0: description, 1: elementary number, 2: physical number)@*
+Type of entity label (0: description, 1: elementary entity tag, 2: physical group tag)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -87,7 +87,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LineNumbers
-Display curve numbers?@*
+Display curve labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -227,7 +227,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointNumbers
-Display points numbers?@*
+Display points labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -282,7 +282,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceNumbers
-Display surface numbers?@*
+Display surface labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -357,12 +357,12 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item Geometry.Volumes
-Display geometry volumes? (not implemented yet)@*
+Display geometry volumes?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.VolumeNumbers
-Display volume numbers? (not implemented yet)@*
+Display volume labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
