@@ -494,6 +494,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         CTX::instance()->batch = 69;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "remesh2d")) {
+        CTX::instance()->batch = 68;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;
         if(argv[i]){

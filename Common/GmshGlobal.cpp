@@ -26,6 +26,7 @@ typedef unsigned long intptr_t;
 #include "robustPredicates.h"
 #include "BasisFactory.h"
 #include "gmshCrossFields.h"
+#include "meshGFaceHxt.h"
 
 
 #if defined(HAVE_PARSER)
@@ -344,6 +345,10 @@ int GmshBatch()
       GModel::current()->classifySurfaces
         (CTX::instance()->batchSomeValue * M_PI / 180., true, true, M_PI);
       GModel::current()->createGeometryOfDiscreteEntities();
+    }
+    else if(CTX::instance()->batch == 68){
+      // global surface remeshing
+      meshGFaceHxt(GModel::current());
     }
     else if(CTX::instance()->batch == 69){
       std::vector<int> tags;
