@@ -1,6 +1,7 @@
 4.5.5 (Work-in-progress): tooltips in GUI to help discovery of scripting
 options; fixed MED IO of high-order elements; fixed OCC attribute search by
-bounding box; fix parsing of mac-encoded scripts; small bug fixes.
+bounding box; fix parsing of mac-encoded scripts; new RecombineMesh command;
+small bug fixes.
 
 4.5.4 (February 29, 2020): periodic mesh optimization now ensures that the
 master mesh is not modified; code cleanup; API tutorials; small bug fixes.

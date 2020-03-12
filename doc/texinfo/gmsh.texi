@@ -3093,6 +3093,9 @@ Relocates the mesh nodes on the given entities using the parametric
 coordinates stored in the nodes. Useful for creating perturbation of
 meshes e.g. for sensitivity analyzes. @value{SYNC}
 
+@item RecombineMesh;
+Recombine the current mesh into quadrangles. @value{SYNC}
+
 @item SetOrder @var{expression};
 Changes the order of the elements in the current mesh.
 

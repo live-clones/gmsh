@@ -197,7 +197,8 @@ struct doubleXstring{
 %token tPoint tCircle tEllipse tCurve tSphere tPolarSphere tSurface tSpline tVolume
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
-%token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
+%token tCharacteristic tLength tParametric tElliptic
+%token tRefineMesh tRecombineMesh tAdaptMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive tSewing
@@ -3575,6 +3576,15 @@ Command :
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
+    }
+   | tRecombineMesh tEND
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      GModel::current()->recombineMesh();
     }
   | tAdaptMesh '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
                '{' RecursiveListOfListOfDouble '}' '{' FExpr ',' FExpr '}' tEND

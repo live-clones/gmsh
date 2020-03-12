@@ -269,6 +269,7 @@ Recomb[lL]aterals       return tRecombLaterals;
 Recombine               return tRecombine;
 Rectangle               return tRectangle;
 Recursive               return tRecursive;
+RecombineMesh           return tRecombineMesh;
 RefineMesh              return tRefineMesh;
 RelocateMesh            return tRelocateMesh;
 ReorientMesh            return tReorientMesh;
