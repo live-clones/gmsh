@@ -336,7 +336,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
         it != groups[dim].end(); it++) {
       std::vector<GEntity *> &entities = it->second;
 
-      std::set<MVertex *> nodes;
+      std::set<MVertex *, MVertexPtrLessThan> nodes;
       if(saveGroupsOfNodes) {
         for(std::size_t i = 0; i < entities.size(); i++) {
           for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
@@ -357,7 +357,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
 
       if(saveGroupsOfNodes) {
         int row = 0;
-        for(std::set<MVertex *>::iterator it2 = nodes.begin();
+        for(std::set<MVertex *, MVertexPtrLessThan>::iterator it2 = nodes.begin();
             it2 != nodes.end(); it2++) {
           if(row == 2) {
             fprintf(fp, "\n");

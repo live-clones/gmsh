@@ -143,7 +143,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     for(int dim = 0; dim <= 3; dim++) {
       for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++) {
-        std::set<MVertex *> nodes;
+        std::set<MVertex *, MVertexPtrLessThan> nodes;
         std::vector<GEntity *> &entities = it->second;
         for(std::size_t i = 0; i < entities.size(); i++) {
           for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
@@ -155,7 +155,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
         fprintf(fp, "*NSET,NSET=%s\n",
                 physicalName(this, dim, it->first).c_str());
         int n = 0;
-        for(std::set<MVertex *>::iterator it2 = nodes.begin();
+        for(std::set<MVertex *, MVertexPtrLessThan>::iterator it2 = nodes.begin();
             it2 != nodes.end(); it2++) {
           if(n && !(n % 10)) fprintf(fp, "\n");
           fprintf(fp, "%ld, ", (*it2)->getIndex());
@@ -170,7 +170,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     std::vector<GEntity *> entities;
     getEntities(entities, -saveGroupsOfNodes);
     for(std::size_t i = 0; i < entities.size(); i++) {
-      std::set<MVertex *> nodes;
+      std::set<MVertex *, MVertexPtrLessThan> nodes;
       for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
         MElement *e = entities[i]->getMeshElement(j);
         for(std::size_t k = 0; k < e->getNumVertices(); k++)
@@ -179,7 +179,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
       fprintf(fp, "*NSET,NSET=%s\n",
               elementaryName(this, entities[i]->dim(), entities[i]->tag()).c_str());
       int n = 0;
-      for(std::set<MVertex *>::iterator it2 = nodes.begin();
+      for(std::set<MVertex *, MVertexPtrLessThan>::iterator it2 = nodes.begin();
           it2 != nodes.end(); it2++) {
         if(n && !(n % 10)) fprintf(fp, "\n");
         fprintf(fp, "%ld, ", (*it2)->getIndex());
