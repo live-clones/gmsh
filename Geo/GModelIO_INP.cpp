@@ -51,8 +51,27 @@ static std::string physicalName(GModel *m, int dim, int num)
   return name;
 }
 
+static std::string elementaryName(GModel *m, int dim, int num)
+{
+  std::string name = m->getElementaryName(dim, num);
+  if(name.empty()) {
+    char tmp[256];
+    sprintf(tmp, "%s%d",
+            (dim == 3) ? "Volume" :
+            (dim == 2) ? "Surface" :
+            (dim == 1) ? "Line" :
+            "Point",
+            num);
+    name = tmp;
+  }
+  for(std::size_t i = 0; i < name.size(); i++)
+    if(name[i] == ' ') name[i] = '_';
+  return name;
+}
+
 int GModel::writeINP(const std::string &name, bool saveAll,
-                     bool saveGroupsOfNodes, double scalingFactor)
+                     int saveGroupsOfElements, int saveGroupsOfNodes,
+                     double scalingFactor)
 {
   FILE *fp = Fopen(name.c_str(), "w");
   if(!fp) {
@@ -95,30 +114,32 @@ int GModel::writeINP(const std::string &name, bool saveAll,
   std::map<int, std::vector<GEntity *> > groups[4];
   getPhysicalGroups(groups);
 
-  // save elements sets for each physical group (currently we don't save point
-  // elements: is there this concept in Abaqus?)
-  for(int dim = 1; dim <= 3; dim++) {
-    for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
-        it != groups[dim].end(); it++) {
-      std::vector<GEntity *> &entities = it->second;
-      fprintf(fp, "*ELSET,ELSET=%s\n",
-              physicalName(this, dim, it->first).c_str());
-      int n = 0;
-      for(std::size_t i = 0; i < entities.size(); i++) {
-        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-          MElement *e = entities[i]->getMeshElement(j);
-          if(n && !(n % 10)) fprintf(fp, "\n");
-          fprintf(fp, "%lu, ", e->getNum());
-          n++;
+  if(saveGroupsOfElements) {
+    // save elements sets for each physical group (currently we don't save point
+    // elements: is there this concept in Abaqus?)
+    for(int dim = 1; dim <= 3; dim++) {
+      for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
+          it != groups[dim].end(); it++) {
+        std::vector<GEntity *> &entities = it->second;
+        fprintf(fp, "*ELSET,ELSET=%s\n",
+                physicalName(this, dim, it->first).c_str());
+        int n = 0;
+        for(std::size_t i = 0; i < entities.size(); i++) {
+          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+            MElement *e = entities[i]->getMeshElement(j);
+            if(n && !(n % 10)) fprintf(fp, "\n");
+            fprintf(fp, "%lu, ", e->getNum());
+            n++;
+          }
         }
+        fprintf(fp, "\n");
       }
-      fprintf(fp, "\n");
     }
   }
 
-  // save node sets for each physical group (here we include node sets on
-  // physical points)
-  if(saveGroupsOfNodes) {
+  if(saveGroupsOfNodes > 0) {
+    // save a node set for each physical group (here we include node sets on
+    // physical points)
     for(int dim = 0; dim <= 3; dim++) {
       for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++) {
@@ -143,6 +164,30 @@ int GModel::writeINP(const std::string &name, bool saveAll,
         fprintf(fp, "\n");
       }
     }
+  }
+  else if(saveGroupsOfNodes < 0) {
+    // save a node set for each entity of dimension == (-saveGroupsOfNodes)
+    std::vector<GEntity *> entities;
+    getEntities(entities, -saveGroupsOfNodes);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      std::set<MVertex *> nodes;
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+        MElement *e = entities[i]->getMeshElement(j);
+        for(std::size_t k = 0; k < e->getNumVertices(); k++)
+          nodes.insert(e->getVertex(k));
+      }
+      fprintf(fp, "*NSET,NSET=%s\n",
+              elementaryName(this, entities[i]->dim(), entities[i]->tag()).c_str());
+      int n = 0;
+      for(std::set<MVertex *>::iterator it2 = nodes.begin();
+          it2 != nodes.end(); it2++) {
+        if(n && !(n % 10)) fprintf(fp, "\n");
+        fprintf(fp, "%ld, ", (*it2)->getIndex());
+        n++;
+      }
+      fprintf(fp, "\n");
+    }
+
   }
 
   fclose(fp);

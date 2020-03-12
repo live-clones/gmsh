@@ -1181,6 +1181,28 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
+@item Plugin(SpanningTree)
+Plugin(SpanningTree) builds a tree spanning every vertex of a mesh.@*
+Optionally, this tree can be built by starting on a specific part.@*
+The generated tree is stored directly in the model.@*
+@*
+Parameters@*
+- PhysicalGroup: physical group upon which the tree must be built (-1 means the whole mesh).@*
+- StartingOn: physical group used to start the tree construction (-1 deactivates this feature).@*
+- OutputPhysical: physical tag of the generated tree (-1 will select a new tag automatically).@*
+@*
+Remark - This plugin does not overwrite a physical group.Therefore, if an existing physical tag is used in OutputPhysical, the edges of the tree will be /added/ to the specified group.@*
+Limitation - Unknown behaviour with curved meshes.
+Numeric options:
+@table @code
+@item PhysicalGroup
+Default value: @code{-1}
+@item StartingOn
+Default value: @code{-1}
+@item OutputPhysical
+Default value: @code{-1}
+@end table
+
 @item Plugin(SphericalRaise)
 Plugin(SphericalRaise) transforms the coordinates of the elements in the view `View' using the values associated with the `TimeStep'-th time step.@*
 @*
