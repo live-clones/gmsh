@@ -1360,7 +1360,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "StlRemoveDuplicateTriangles" , opt_mesh_stl_remove_duplicate_triangles, 0. ,
     "Remove duplicate triangles when importing STL files?" },
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,
-    "Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra)" },
+    "Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, "
+    "3: barycentric)" },
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. ,
     "Display edges of surface mesh?" },
   { F|O, "SurfaceFaces" , opt_mesh_surfaces_faces , 0. ,

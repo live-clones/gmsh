@@ -1230,11 +1230,12 @@ int GModel::adaptMesh(std::vector<int> technique,
 #endif
 }
 
-int GModel::refineMesh(int linear, bool barycentric)
+int GModel::refineMesh(int linear, bool splitIntoQuads, bool splitIntoHexas,
+                       bool barycentric)
 {
 #if defined(HAVE_MESH)
   if(!barycentric){
-    RefineMesh(this, linear);
+    RefineMesh(this, linear, splitIntoQuads, splitIntoHexas);
   }
   else{
     BarycentricRefineMesh(this);

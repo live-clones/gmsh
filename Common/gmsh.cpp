@@ -909,7 +909,10 @@ GMSH_API void gmsh::model::mesh::unpartition()
 GMSH_API void gmsh::model::mesh::refine()
 {
   if(!_isInitialized()) { throw - 1; }
-  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
+  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
+                                CTX::instance()->mesh.algoSubdivide == 1,
+                                CTX::instance()->mesh.algoSubdivide == 2,
+                                CTX::instance()->mesh.algoSubdivide == 3);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 

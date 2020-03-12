@@ -3575,7 +3575,10 @@ Command :
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
-      GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
+      GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
+                                    CTX::instance()->mesh.algoSubdivide == 1,
+                                    CTX::instance()->mesh.algoSubdivide == 2,
+                                    CTX::instance()->mesh.algoSubdivide == 3);
     }
    | tRecombineMesh tEND
     {

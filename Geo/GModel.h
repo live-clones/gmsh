@@ -586,7 +586,8 @@ public:
   int setOrderN(int order, int linear, int incomplete);
 
   // refine the mesh by splitting all elements
-  int refineMesh(int linear, bool barycentric = false);
+  int refineMesh(int linear, bool splitIntoQuads = false,
+                 bool splitIntoHexas = false, bool barycentric = false);
 
   // optimize the mesh
   int optimizeMesh(const std::string &how, bool force = false,
