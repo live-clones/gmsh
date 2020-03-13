@@ -19,6 +19,7 @@ public:
   nodalBasis(int tag);
   virtual ~nodalBasis() {}
   virtual int getNumShapeFunctions() const = 0;
+  int getNumBubbleShapeFunctions() const;
   void getReferenceNodes(fullMatrix<double> &nodes) const { nodes = points; }
   const fullMatrix<double> &getReferenceNodes() const { return points; }
 
