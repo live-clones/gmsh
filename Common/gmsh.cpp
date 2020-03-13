@@ -3035,8 +3035,8 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
       int newType = ElementType::getType(familyType, basisOrder, false);
       basis = BasisFactory::getNodalBasis(newType);
     }
-    int numberOfKeys = basis->getNumShapeFunctions();
-    int numberOfBubble = basis->getNumBubbleShapeFunctions();
+    std::size_t numberOfKeys = basis->getNumShapeFunctions();
+    std::size_t numberOfBubble = basis->getNumBubbleShapeFunctions();
     int dim = ElementType::getDimension(elementType);
     
     if(numberOfBubble > numberOfKeys) {
