@@ -100,19 +100,21 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
           double x = v->x(), y = v->y(), z = v->z();
           ep->Extrude(j, k + 1, x, y, z);
           if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1) {
-            MVertex *newv = 0;
-            if(to->geomType() != GEntity::DiscreteSurface &&
-               to->geomType() != GEntity::BoundaryLayerSurface) {
-              // This can be inefficient, and sometimes useless. We could add an
-              // option to disable it.
-              SPoint3 xyz(x, y, z);
-              SPoint2 uv = to->parFromPoint(xyz);
-              newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
+            MVertex *newv = pos.find(x, y, z);
+            if(!newv) {
+              if(to->geomType() != GEntity::DiscreteSurface &&
+                 to->geomType() != GEntity::BoundaryLayerSurface) {
+                // This can be inefficient, and sometimes useless. We could add an
+                // option to disable it.
+                SPoint3 xyz(x, y, z);
+                SPoint2 uv = to->parFromPoint(xyz);
+                newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
+              }
+              else {
+                newv = new MVertex(x, y, z, to);
+              }
+              to->mesh_vertices.push_back(newv);
             }
-            else {
-              newv = new MVertex(x, y, z, to);
-            }
-            to->mesh_vertices.push_back(newv);
             pos.insert(newv);
             extruded_vertices.push_back(newv);
           }
@@ -190,18 +192,20 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                 x, y, z);
-    MVertex *newv = 0;
-    if(to->geomType() != GEntity::DiscreteSurface &&
-       to->geomType() != GEntity::BoundaryLayerSurface) {
-      SPoint3 xyz(x, y, z);
-      SPoint2 uv = to->parFromPoint(xyz);
-      newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
+    MVertex *newv = pos.find(x, y, z);
+    if(!newv) {
+      if(to->geomType() != GEntity::DiscreteSurface &&
+         to->geomType() != GEntity::BoundaryLayerSurface) {
+        SPoint3 xyz(x, y, z);
+        SPoint2 uv = to->parFromPoint(xyz);
+        newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
+      }
+      else {
+        newv = new MVertex(x, y, z, to);
+      }
+      to->mesh_vertices.push_back(newv);
+      pos.insert(newv);
     }
-    else {
-      newv = new MVertex(x, y, z, to);
-    }
-    to->mesh_vertices.push_back(newv);
-    pos.insert(newv);
   }
 
 #if defined(HAVE_QUADTRI)
@@ -298,24 +302,20 @@ int MeshExtrudedSurface(
 
   Msg::Info("Meshing surface %d (Extruded)", gf->tag());
 
-  // build an rtree with all the vertices on the boundary of the face gf
+  // build an rtree with all the vertices on the face and its boundary
   MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);
+  pos.insert(gf->mesh_vertices);
   std::vector<GEdge *> const &edges = gf->edges();
-  std::vector<GEdge *>::const_iterator it = edges.begin();
-  while(it != edges.end()) {
+  for(std::vector<GEdge *>::const_iterator it = edges.begin();
+      it != edges.end(); it++) {
     pos.insert((*it)->mesh_vertices);
     if((*it)->getBeginVertex())
       pos.insert((*it)->getBeginVertex()->mesh_vertices);
     if((*it)->getEndVertex())
       pos.insert((*it)->getEndVertex()->mesh_vertices);
-    ++it;
   }
-
-  // if the edges of the mesh are constrained, the vertices already
-  // exist on the face--so we add them to the set
-  if(constrainedEdges) {
-    pos.insert(gf->mesh_vertices);
-  }
+  std::vector<MVertex*> embedded = gf->getEmbeddedMeshVertices();
+  pos.insert(embedded);
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // surface is extruded from a curve
