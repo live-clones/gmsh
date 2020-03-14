@@ -1,5 +1,6 @@
 
 Merge "hybrid_part.msh";
+CreateTopology;
 CreateGeometry;
 
 lc = 1e-2;
