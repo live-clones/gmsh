@@ -2417,28 +2417,26 @@ static int getReturnedShapes(const TopoDS_Compound &c, T *sweep,
   return 0;
 }
 
-bool OCC_Internals::_extrude(int mode,
-                             const std::vector<std::pair<int, int> > &inDimTags,
-                             double x, double y, double z, double dx, double dy,
-                             double dz, double ax, double ay, double az,
-                             double angle, int wireTag,
-                             std::vector<std::pair<int, int> > &outDimTags,
-                             ExtrudeParams *e)
+bool OCC_Internals::_extrudePerDim(int mode, int inDim,
+                                   const std::vector<int> &inTags,
+                                   double x, double y, double z, double dx, double dy,
+                                   double dz, double ax, double ay, double az,
+                                   double angle, int wireTag,
+                                   std::vector<std::pair<int, int> > &outDimTags,
+                                   ExtrudeParams *e)
 {
   // build a single compound shape, so that we won't duplicate internal
   // boundaries
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(std::size_t i = 0; i < inDimTags.size(); i++) {
-    int dim = inDimTags[i].first;
-    int tag = inDimTags[i].second;
-    if(!_isBound(dim, tag)) {
-      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
-                 tag);
+  for(std::size_t i = 0; i < inTags.size(); i++) {
+    if(!_isBound(inDim, inTags[i])) {
+      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", inDim,
+                 inTags[i]);
       return false;
     }
-    TopoDS_Shape shape = _find(dim, tag);
+    TopoDS_Shape shape = _find(inDim, inTags[i]);
     b.Add(c, shape);
   }
   TopoDS_Shape result;
@@ -2514,7 +2512,7 @@ bool OCC_Internals::_extrude(int mode,
   _multiBind(result, -1, outDimTags, true, true);
 
   // return entities in the same order as the built-in kernel extrusion
-  if(dim >= 1 && dim <= 3 && top.size() == inDimTags.size() &&
+  if(dim >= 1 && dim <= 3 && top.size() == inTags.size() &&
      top.size() == body.size()) {
     outDimTags.clear();
     for(std::size_t i = 0; i < top.size(); i++) {
@@ -2530,6 +2528,35 @@ bool OCC_Internals::_extrude(int mode,
             outDimTags.push_back(
               std::pair<int, int>(dim - 1, _find(dim - 1, lateral[i][j])));
         }
+      }
+    }
+  }
+  return true;
+}
+
+bool OCC_Internals::_extrude(int mode,
+                             const std::vector<std::pair<int, int> > &inDimTags,
+                             double x, double y, double z, double dx, double dy,
+                             double dz, double ax, double ay, double az,
+                             double angle, int wireTag,
+                             std::vector<std::pair<int, int> > &outDimTags,
+                             ExtrudeParams *e)
+{
+  std::vector<int> inTags[4];
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
+    int dim = inDimTags[i].first;
+    if(dim < 0 || dim > 3) {
+      Msg::Error("Wrong input dimension in extrusion");
+      return false;
+    }
+    inTags[dim].push_back(inDimTags[i].second);
+  }
+  for(int dim = 0; dim < 4; dim++) {
+    if(!inTags[dim].empty()) {
+      std::vector<std::pair<int, int> > out;
+      if(_extrudePerDim(mode, dim, inTags[dim], x, y, z, dx, dy, dz, ax, ay, az,
+                        angle, wireTag, out, e)) {
+        outDimTags.insert(outDimTags.end(), out.begin(), out.end());
       }
     }
   }
