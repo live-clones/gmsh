@@ -839,8 +839,8 @@ StringXNumber GeneralOptions_Number[] = {
 StringXNumber GeometryOptions_Number[] = {
   { F|O, "AutoCoherence" , opt_geometry_auto_coherence , 1. ,
     "Should all duplicate entities be automatically removed with the built-in "
-    "geometry kernel? (If AutoCoherence == 2, also remove degenerate entities.) The "
-    "option has no effect with the OpenCASCADE kernel"},
+    "geometry kernel? If Geometry.AutoCoherence = 2, also remove degenerate "
+    "entities. The option has no effect with the OpenCASCADE kernel"},
 
   { F,   "Clip" , opt_geometry_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
@@ -1325,9 +1325,12 @@ StringXNumber MeshOptions_Number[] = {
     "Save model topology in MSH2 output files (this is always saved in MSH3)" },
   { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
     "Save parametric coordinates of nodes" },
+  { F|O, "SaveGroupsOfElements" , opt_mesh_save_groups_of_elements , 1. ,
+    "Save groups of elements for each physical group (for INP mesh format)" },
   { F|O, "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. ,
-    "Save groups of nodes for each physical line and surface (for UNV, INP and Tochnog "
-    "mesh formats)" },
+    "Save groups of nodes for each physical group (for UNV, INP and Tochnog "
+    "mesh formats). For the INP format, a negative value will save a group of node "
+    "for each entity of dimension = (-Mesh.SaveGroupsOfNodes)"},
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,
@@ -1357,7 +1360,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "StlRemoveDuplicateTriangles" , opt_mesh_stl_remove_duplicate_triangles, 0. ,
     "Remove duplicate triangles when importing STL files?" },
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,
-    "Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra)" },
+    "Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, "
+    "3: barycentric)" },
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. ,
     "Display edges of surface mesh?" },
   { F|O, "SurfaceFaces" , opt_mesh_surfaces_faces , 0. ,

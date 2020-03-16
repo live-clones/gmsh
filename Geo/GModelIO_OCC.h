@@ -125,6 +125,11 @@ private:
                    const std::vector<int> &multiplicities = std::vector<int>());
 
   // apply extrusion-like operations
+  bool _extrudePerDim(int mode, int inDim, const std::vector<int> &inTags,
+                      double x, double y, double z, double dx, double dy,
+                      double dz, double ax, double ay, double az, double angle,
+                      int wireTag, std::vector<std::pair<int, int> > &outDimTags,
+                      ExtrudeParams *e);
   bool _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
                 double x, double y, double z, double dx, double dy, double dz,
                 double ax, double ay, double az, double angle, int wireTag,

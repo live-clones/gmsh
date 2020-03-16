@@ -651,8 +651,13 @@ Save parametric coordinates of nodes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.SaveGroupsOfElements
+Save groups of elements for each physical group (for INP mesh format)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveGroupsOfNodes
-Save groups of nodes for each physical line and surface (for UNV, INP and Tochnog mesh formats)@*
+Save groups of nodes for each physical group (for UNV, INP and Tochnog mesh formats). For the INP format, a negative value will save a group of node for each entity of dimension = (-Mesh.SaveGroupsOfNodes)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -717,7 +722,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SubdivisionAlgorithm
-Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra)@*
+Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, 3: barycentric)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

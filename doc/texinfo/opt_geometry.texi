@@ -27,7 +27,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.AutoCoherence
-Should all duplicate entities be automatically removed with the built-in geometry kernel? (If AutoCoherence == 2, also remove degenerate entities.) The option has no effect with the OpenCASCADE kernel@*
+Should all duplicate entities be automatically removed with the built-in geometry kernel? If Geometry.AutoCoherence = 2, also remove degenerate entities. The option has no effect with the OpenCASCADE kernel@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
