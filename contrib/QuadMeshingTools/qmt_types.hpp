@@ -31,15 +31,18 @@ namespace QMT {
   struct QMesh {
     /* one value per vertex */
     std::vector<vec3> points;
-    std::vector<bool> onCorner;
-    std::vector<bool> onBoundary;
+    // std::vector<bool> onCorner;
+    // std::vector<bool> onBoundary;
     std::vector<double> size;
+    // std::vector<std::pair<int,int>> geoEntity;
+    std::vector<std::pair<int,int>> entity;
 
     /* one value per quad */
     std::vector<id4> quads;
     std::vector<id> color;
     std::vector<sid4> quad_neighbors;
     std::vector<std::vector<id>> nm_quad_neighbors;
+    std::vector<int> quadEntity;
   };
 
   /* Triangular mesh data structure */
@@ -52,10 +55,11 @@ namespace QMT {
 
     /* one value per line */
     std::vector<id2> lines;
+    std::vector<id> line_colors;
 
     /* one value per triangle */
     std::vector<id3> triangles;
-    std::vector<id> color;
+    std::vector<id> tri_colors;
     std::vector<sid3> triangle_neighbors;
     std::vector<std::vector<id>> nm_triangle_neighbors;
   };

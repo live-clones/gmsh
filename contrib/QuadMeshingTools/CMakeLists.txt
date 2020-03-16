@@ -3,6 +3,7 @@ set(QMT_SRC
     qmt_smoothing.cpp
     qmt_linalg_solver.cpp
     qmt_cross_field.cpp
+    qmt_projection.cpp
     linearSystemMUMPS2.cpp
  )
 

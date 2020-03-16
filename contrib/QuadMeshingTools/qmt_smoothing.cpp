@@ -7,8 +7,6 @@
 
 #include "quad_meshing_tools.h"
 
-#include "qmt_utils.hpp"
-
 #include <cfloat>
 #include <map>
 #include <unordered_map>
@@ -20,6 +18,7 @@
 #include <iostream>
 
 #include "gmsh.h"
+#include "qmt_utils.hpp"
 
 /* - Shortcuts for loops */
 #define F(_VAR,_NB) for(size_t _VAR = 0; _VAR < (size_t) _NB; ++_VAR)
@@ -172,9 +171,11 @@ namespace QMT {
 
 
 
-  bool smooth_quad_mesh(QMesh& M, size_t iter_max) {
+  bool smooth_quad_mesh(QMesh& M, size_t iter_max,
+      const BoundaryProjector* projector) {
     info("winslow smoothing (explicit, {} iterations) ...", iter_max);
-    warn("  current smoothing shrinks the geometry !");
+    if (projector != NULL) info("- projector available, using iterative projection on surfaces and curves");
+
 
     vector<vector<id>> v2v(M.points.size());
     vector<vector<id>> v2quads(M.points.size());
@@ -189,6 +190,8 @@ namespace QMT {
     F(v,M.points.size()) sort_unique(v2v[v]);
 
 
+
+    /* Build the vertex stencils */
     vector<id> stencils(8*M.points.size(),NO_ID);
     F(v,M.points.size()) {
       if (v2quads[v].size() == 4) {
@@ -209,7 +212,10 @@ namespace QMT {
           return false;
         }
         F(k,8) stencils[8*v+k] = orderedVertices[k];
-      } else if (M.onBoundary[v] && !M.onCorner[v] && v2quads[v].size() == 2) {
+      } else if (v2quads[v].size() == 2) { // TODO: do the same for feature curves !
+        if (M.entity[v].first != 1) {
+          warn(" v = {}, pt = {}, v2quads[v].size()={}, M.entity[v]={}",v,M.points[v],v2quads[v].size(),M.entity[v]);
+        }
         vector<id2> edges;
         F(lq,2) F(le,4) {
           id v2 = M.quads[v2quads[v][lq]][le];
@@ -234,11 +240,12 @@ namespace QMT {
       }
     }
 
+    /* Explicit smoothing loop */
     F(k, iter_max) {
       if (k >= 50 && k % (iter_max / 10) == 0) info("  {} / {} iter", k, iter_max);
-      /* Winslow smoothing of interior vertices */
-      FC(v,M.points.size(),!M.onBoundary[v]) {
-        if (M.onCorner[v]) continue;
+
+      /* A. Winslow smoothing of interior vertices */
+      FC(v,M.points.size(),M.entity[v].first == 2) {
         if (v2v[v].size() < 3) {
           continue;
         } else if (v2v[v].size() == 4) {
@@ -272,9 +279,25 @@ namespace QMT {
           avg  = avg * double(1. / v2v[v].size());
           M.points[v] = avg;
         }
+        /* Projection on surface */
+        if (projector != NULL && M.entity[v].second != -1) {
+          vec3 proj;
+          bool okp = projector->project(M.entity[v].first,M.entity[v].second,M.points[v],proj);
+          if (okp) {
+            if (proj[0] == DBL_MAX) {
+              error("wrong projected point: {}", proj);
+              continue;
+            }
+            M.points[v] = proj;
+          } else {
+            error("failed to project point {} on {}", M.points[v], M.entity[v]);
+            return false;
+          }
+        }
       }
-      /* Boundary orthogonality correction */
-      FC(v,M.points.size(),M.onBoundary[v] && !M.onCorner[v] && v2quads[v].size() == 2) {
+
+      /* B. Boundary orthogonality correction */
+      FC(v,M.points.size(),v2quads[v].size() == 2) { // TODO do the same for feature curves
         vec3 ptsStencil[6];
         F(k,6) {
           ptsStencil[k] = M.points[stencils[8*v+k]];
@@ -287,7 +310,25 @@ namespace QMT {
          *   |   |   |
          * Orth. correction: project 3 on {5,0,1}
          */
-        M.points[v] = project_point_on_curve(ptsStencil[3],{ptsStencil[1],ptsStencil[0],ptsStencil[5]});
+        if (projector != NULL && M.entity[v].first != -1) {
+          /* Projection on underlying curve */
+          vec3 query = ptsStencil[3];
+          vec3 proj;
+          bool okp = projector->project(M.entity[v].first,M.entity[v].second,query,proj);
+          if (okp) {
+            if (proj[0] == DBL_MAX) {
+              error("wrong projected point: {}", proj);
+              continue;
+            }
+            M.points[v] = proj;
+          } else {
+            error("failed to project point {} on {}", M.points[v], M.entity[v]);
+            return false;
+          }
+        } else {
+          /* Projection on boundary stencil */
+          M.points[v] = project_point_on_curve(ptsStencil[3],{ptsStencil[1],ptsStencil[0],ptsStencil[5]});
+        }
       }
     }
 

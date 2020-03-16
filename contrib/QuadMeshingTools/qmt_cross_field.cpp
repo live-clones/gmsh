@@ -37,6 +37,8 @@ using gmsh::vectorpair;
 constexpr double EPS = 1.e-14; /* to detect 0 */
 
 namespace QMT_CF_Utils {
+  bool global_gmsh_initialized = false;
+
   using namespace QMT;
   using namespace QMT_Utils;
   /************************************/
@@ -159,7 +161,14 @@ namespace QMT {
   }
 
   bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M) {
-    // TODO: meshName not used
+    if (!QMT_CF_Utils::global_gmsh_initialized) {
+      gmsh::initialize(0, 0, false);
+      QMT_CF_Utils::global_gmsh_initialized = true;
+    }
+
+    if (meshName != "current") {
+      gmsh::model::setCurrent(meshName);
+    }
     
     { /* vertices */
       std::vector<std::size_t> nodeTags;
@@ -173,19 +182,40 @@ namespace QMT {
         M.points[v] = {coord[3*i+0],coord[3*i+1],coord[3*i+2]};
       }
     }
-    { /* elements */
-      std::vector<int> elementTypes;
-      std::vector<std::vector<size_t>> elementTags;
-      std::vector<std::vector<size_t>> nodeTags;
-      gmsh::model::mesh::getElements(elementTypes,elementTags,nodeTags,-1,-1);
-      F(i,elementTypes.size()) {
-        if (elementTypes[i] == 1) { /* lines */
-          F(j,elementTags[i].size()) {
-            M.lines.push_back({id(nodeTags[i][2*j+0]),id(nodeTags[i][2*j+1])});
+
+    { /* lines */
+      vectorpair curves;
+      gmsh::model::getEntities(curves, 1);
+      F(k,curves.size()) {
+        std::vector<int> elementTypes;
+        std::vector<std::vector<size_t>> elementTags;
+        std::vector<std::vector<size_t>> nodeTags;
+        gmsh::model::mesh::getElements(elementTypes,elementTags,nodeTags,curves[k].first,curves[k].second);
+        F(i,elementTypes.size()) {
+          if (elementTypes[i] == 1) { /* lines */
+            F(j,elementTags[i].size()) {
+              M.lines.push_back({id(nodeTags[i][2*j+0]),id(nodeTags[i][2*j+1])});
+              M.line_colors.push_back(id(curves[k].second));
+            }
           }
-        } else if (elementTypes[i] == 2) { /* triangles */
-          F(j,elementTags[i].size()) {
-            M.triangles.push_back({id(nodeTags[i][3*j+0]),id(nodeTags[i][3*j+1]),id(nodeTags[i][3*j+2])});
+        }
+      }
+    }
+
+    { /* triangles */
+      vectorpair surfs;
+      gmsh::model::getEntities(surfs, 2);
+      F(k,surfs.size()) {
+        std::vector<int> elementTypes;
+        std::vector<std::vector<size_t>> elementTags;
+        std::vector<std::vector<size_t>> nodeTags;
+        gmsh::model::mesh::getElements(elementTypes,elementTags,nodeTags,surfs[k].first,surfs[k].second);
+        F(i,elementTypes.size()) {
+          if (elementTypes[i] == 2) { /* triangles */
+            F(j,elementTags[i].size()) {
+              M.triangles.push_back({id(nodeTags[i][3*j+0]),id(nodeTags[i][3*j+1]),id(nodeTags[i][3*j+2])});
+              M.tri_colors.push_back(id(surfs[k].second));
+            }
           }
         }
       }
@@ -424,21 +454,24 @@ namespace QMT {
     int view = gmsh::view::add(name);
     gmsh::view::addListData(view, "VP", data_VP.size()/6, data_VP);
 
-    double Nmin = DBL_MAX;
-    vec3 ptNmin;
-    FC(v,M.points.size(),vsum[v] > 0.) {
-      vec3 p = M.points[v];
-      vec3 rep = (1./vsum[v]) * vertAvg[v];
-      if (length(rep) < Nmin) {
-        Nmin = length(rep);
-        ptNmin = p;
+    bool show_representation_vector = false; /* only relevant for planar cases */
+    if (show_representation_vector) {
+      double Nmin = DBL_MAX;
+      vec3 ptNmin;
+      FC(v,M.points.size(),vsum[v] > 0.) {
+        vec3 p = M.points[v];
+        vec3 rep = (1./vsum[v]) * vertAvg[v];
+        if (length(rep) < Nmin) {
+          Nmin = length(rep);
+          ptNmin = p;
+        }
+        F(d,3) data_VP_rep.push_back(p[d]);
+        F(d,3) data_VP_rep.push_back(rep[d]);
       }
-      F(d,3) data_VP_rep.push_back(p[d]);
-      F(d,3) data_VP_rep.push_back(rep[d]);
+      int viewv = gmsh::view::add(name+"_rep_planar");
+      gmsh::view::addListData(viewv, "VP", data_VP_rep.size()/6, data_VP_rep);
+      info("minimum norm = {} at pt = {} (length = {})", Nmin, ptNmin, length(ptNmin));
     }
-    int viewv = gmsh::view::add(name+"_rep_planar");
-    gmsh::view::addListData(viewv, "VP", data_VP_rep.size()/6, data_VP_rep);
-    info("minimum norm = {} at pt = {} (length = {})", Nmin, ptNmin, length(ptNmin));
 
     return true;
   }
@@ -461,7 +494,10 @@ namespace QMT {
       int& crossFieldTag,
       int nbIter,
       std::map<std::pair<size_t,size_t>,double>* edge_to_angle) {
-    gmsh::initialize(0, 0, false);
+    if (!QMT_CF_Utils::global_gmsh_initialized) {
+      gmsh::initialize(0, 0, false);
+      QMT_CF_Utils::global_gmsh_initialized = true;
+    }
     info("compute cross field with successive heat diffusion and projection ...");
 
     TMesh M;
