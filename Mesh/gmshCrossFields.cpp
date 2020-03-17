@@ -910,6 +910,8 @@ LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
 const size_t MAX_PASSAGES = 200;
 
 struct cutGraphPassage {
+  enum TYPE {SING_TO_SING,SING_TO_BDRY,SING_TO_NOTHING,REDUNDANT,UNKNOWN};
+  TYPE _type;
   int COUNTER;
   int DIR;
   int DIR_CONN;
@@ -924,9 +926,8 @@ struct cutGraphPassage {
   MVertex *sing_conn, *V2;
   bool close;
   double diff,d;
-  int max_passages;
   int true_passages;
-  cutGraphPassage (int C, int D, MVertex *s) : COUNTER(C), DIR(D), sing(s), V1(NULL), sing_conn(NULL), V2(NULL), 
+  cutGraphPassage (int C, int D, MVertex *s) : _type(UNKNOWN),COUNTER(C), DIR(D), sing(s), V1(NULL), sing_conn(NULL), V2(NULL), 
 					       close(false), diff (1.e22),true_passages(0)
   {
   }
@@ -955,7 +956,6 @@ struct cutGraphPassage {
   }
   void create(dofManager<double> &myAssembler, std::vector<groupOfCross2d> &G){
     if (V1 == V2 && pts.size() < 3)return;
-    //    if (max_passages < MAX_PASSAGES)return;
     if (eds.empty() && sing == sing_conn)return;
     if (!sing_conn) return;
     if (DIR == 0)
@@ -967,7 +967,6 @@ struct cutGraphPassage {
   void assemble(dofManager<double> &myAssembler, std::vector<groupOfCross2d> &G){
 
     if (V1 == V2 && pts.size() < 3)return;
-    //    if (max_passages < MAX_PASSAGES)return;
     if (!sing_conn) return;
 
     Print("Assembling");
@@ -1052,8 +1051,6 @@ struct cutGraphPassage {
 		std::map<MVertex *, MVertex *, MVertexPtrLessThan> &new2old){
     V1 =  (new2old.find(sing) == new2old.end()) ? sing : new2old[sing];
     
-    //    if (max_passages > MAX_PASSAGES)return;
-
     bool _U = DIR == 0;
         
     double U_INIT = potU [sing];
@@ -1161,13 +1158,20 @@ struct cutGraphPassage {
 
   
   void Print (const char *t) const {
-    if (V1 && V2)
-      printf("%s : ISO %8d connects (%8lu,%8lu) : %c --> %c -- diff %22.15E %4d passages %4d %4lu points L = %12.5E DIST %12.5E\n",t,
-	     COUNTER, V1->getNum(), V2->getNum(), DIR==0 ? 'U' : 'V', DIR_CONN==0 ? 'U' : 'V', diff, true_passages,max_passages,
+    if (_type == cutGraphPassage::SING_TO_SING && V1 && V2)
+      printf("%s : ISO %8d exactly connects (%8lu,%8lu) : %c --> %c -- diff %22.15E %4d passages %4d points L = %12.5E DIST %12.5E\n",t,
+	     COUNTER, V1->getNum(), V2->getNum(), DIR==0 ? 'U' : 'V', DIR_CONN==0 ? 'U' : 'V', diff, true_passages,
 	     pts.size(),length(),d);
-    else
+    else if (_type == cutGraphPassage::SING_TO_NOTHING && V1 && V2)
+      printf("%s : ISO %8d approximatively connects (%8lu,%8lu) : %c --> %c -- diff %22.15E %4d passages %4d points L = %12.5E DIST %12.5E\n",t,
+	     COUNTER, V1->getNum(), V2->getNum(), DIR==0 ? 'U' : 'V', DIR_CONN==0 ? 'U' : 'V', diff, true_passages,
+	     pts.size(),length(),d);
+    else if (_type == cutGraphPassage::SING_TO_BDRY)
       printf("%s : ISO %8d (%8lu,BDRY) %4d passages\n",t,COUNTER,V1->getNum(),true_passages);      
-    
+    else if (_type == cutGraphPassage::REDUNDANT)
+      printf("%s : ISO %8d is redundant\n",t,COUNTER);      
+    else
+      printf("%s : ISO %8d is strange %d %p %p\n",t,COUNTER,_type,V1,V2);      
   }
 
   bool operator == (const cutGraphPassage & g) const{
@@ -1185,6 +1189,9 @@ struct cutGraphPassage {
   }
 
   bool operator < (const cutGraphPassage & g) const{
+    return COUNTER < g.COUNTER;
+    if (_type < g._type) return false; 
+    if (_type > g._type) return true; 
     if (V1 && V2 && g.V1 && g.V2){
       size_t a[2] = {std::max(V1->getNum(),V2->getNum()),std::min(V1->getNum(),V2->getNum())};
       size_t b[2] = {std::max(g.V1->getNum(),g.V2->getNum()),std::min(g.V1->getNum(),g.V2->getNum())};
@@ -1200,7 +1207,6 @@ struct cutGraphPassage {
     if (V1 && V2)return true;
     if (g.V1 && g.V2)return false;
     
-    return COUNTER < g.COUNTER;
   }
 
 };
@@ -1221,11 +1227,7 @@ void createExtraConnexions (dofManager<double> &myAssembler,
   //return;
   if (passages.empty())return;
   for (int i=0;i<passages.size();i++){
-    if (passages[i].diff < 1.e-9)
-      passages[i].create (myAssembler,G);
-    if (i && passages[i-1] == passages[i]){
-      passages[i].create (myAssembler,G);
-    }
+    passages[i].create (myAssembler,G);
   }
 }
 
@@ -1234,11 +1236,7 @@ void assembleExtraConnexions (dofManager<double> &myAssembler,
 			      std::vector<cutGraphPassage> &passages){
   if (passages.empty())return;
   for (int i=0;i<passages.size();i++){
-    if (passages[i].diff < 1.e-9)
-      passages[i].assemble (myAssembler,G);
-    if (i && passages[i-1] == passages[i]){
-      passages[i].assemble (myAssembler,G);
-    }
+    passages[i].assemble (myAssembler,G);
   }
 }
 
@@ -2203,13 +2201,6 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
   return myAssembler;
 }
 
-/*
-  1) find u_i and v_i of all singularities
-  2) compute [MAX,MIN] max of u's and v's
-  3) Divide this interval into
-
-*/
-
 static double coord1d(double a0, double a1, double a)
 {
   if(a1 == a0) return 0.0;
@@ -2268,14 +2259,22 @@ static bool addCut(const SPoint3 &p, const MEdge &e, int COUNT, int ID,
   }
 }
 
-static bool inSingularZone (MVertex *sing, MEdge &e, v2t_cont &adj ){
-  std::vector<MElement *> lst = adj[sing];
-  for(size_t i = 0; i < lst.size(); i++) {
-    for(size_t j = 0; j < 3; j++) {
-      if (e == lst[i]->getEdge (j))return true;
+static MVertex* inSingularZone (std::set<MVertex *, MVertexPtrLessThan> &singularities,SPoint3 &p,
+				MEdge &e, v2t_cont &adj, double &d ){
+  MVertex vvv(p.x(), p.y(), p.z());
+  std::set<MVertex *, MVertexPtrLessThan>::iterator it = singularities.begin();
+  for ( ; it != singularities.end(); ++it){
+    std::vector<MElement *> lst = adj[*it];
+    for(size_t i = 0; i < lst.size(); i++) {
+      for(size_t j = 0; j < 3; j++) {
+	if (e == lst[i]->getEdge (j)){
+	  d = vvv.distance (*it);
+	  return *it;
+	}
+      }
     }
   }
-  return false;
+  return NULL;
 }
 
 static MVertex* inSingularZone (std::set<MVertex *, MVertexPtrLessThan> &singularities,
@@ -2309,16 +2308,21 @@ static void computeOneIsoTillNextCutGraph(
   std::vector<cutGraphPassage> &passages,
   std::set<MVertex *, MVertexPtrLessThan> &singularities)
 {
+  bool start = true;
   while (1){
     MEdge e(v0, v1);  
 
     //// -------------- W O R K    I N    P R O G R E S S ----------------------------
     //// -----------------------------------------------------------------------------
-    {    
-      double d;
-      MVertex *close = inSingularZone (singularities, p, d);
+    if (!start){    
+      double d=1.e12;
+      //      MVertex *close = inSingularZone (singularities, p, d);
+      MVertex *close = inSingularZone (singularities, p, e, adj, d);
       if (d < 1.e-10){
-	printf("PERFECT CONNEXION %d\n",COUNT);
+	passage._type = cutGraphPassage::SING_TO_SING;
+	passage.close = true;
+	passage.sing_conn = close;
+	passage.d=d;	  
 	return;
       }
 
@@ -2336,6 +2340,9 @@ static void computeOneIsoTillNextCutGraph(
       
     bool added = addCut(p, e, COUNT, NB, cuts);
     if(!added) {
+      if (passage._type != cutGraphPassage::SING_TO_SING &&
+	  passage._type != cutGraphPassage::SING_TO_BDRY)	  
+	passage._type = cutGraphPassage::REDUNDANT;
       return;
     }    
     
@@ -2345,6 +2352,15 @@ static void computeOneIsoTillNextCutGraph(
     }
     
     NB++;
+    
+    if(d1.find(e) != d1.end()) {
+      std::pair<std::map<MVertex *, double> *, double> aa =
+	std::make_pair(&pot, VAL);
+      cutGraphEnds.push_back(std::make_pair(e, aa));
+      if (!start) return;
+    }
+
+    start = false;
     
     std::vector<MElement *> lst = adj[v0];
     
@@ -2412,27 +2428,9 @@ static void computeOneIsoTillNextCutGraph(
       }
     }
     if (TOTAL == 0){
-      passage.sing_conn = NULL;
+      passage._type = cutGraphPassage::SING_TO_BDRY;
     }
     if (TOTAL > 1 )printf("ERRROOR %d\n",TOTAL);
-    MEdge ee (v0,v1);
-    if(d1.find(ee) != d1.end()) {
-      addCut(p, ee, COUNT, NB, cuts);
-      NB++;
-      std::pair<std::map<MVertex *, double> *, double> aa =
-	std::make_pair(&pot, VAL);
-      double d;
-      MVertex *close = inSingularZone (singularities, p, d);
-      if (close){
-	passage.pts.push_back(p);
-	passage.vals.push_back (VAL);  
-	passage.sing_conn = close;
-	passage.close = true;
-	passage.d=d;
-      }
-      cutGraphEnds.push_back(std::make_pair(ee, aa));
-      return;
-    }
   }  
   return;
 }
@@ -2671,9 +2669,8 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     computeOneIsoTillNextCutGraph(adj, VAL, o.getVertex(0), o.getVertex(1), p, psing, *POT,
 				  cutGraphEnds, d1, f, COUNT, cuts, NB, passage, passages,
 				  singularities);
-    passage.max_passages = XX;
-    if(XX++ > MAX_PASSAGES+1) {
-      passage.max_passages = MAX_PASSAGES+1;
+    if(XX++ > MAX_PASSAGES) {
+      passage._type = cutGraphPassage::SING_TO_NOTHING;
       break;
     }
   }
@@ -2682,16 +2679,16 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
 
 }
 
-static bool computeIso(MVertex *vsing, v2t_cont &adj, double u,
+static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
                        std::map<MVertex *, double> &potU,
                        std::map<MVertex *, double> &potV, FILE *f,
                        std::map<MEdge, MEdge, MEdgeLessThan> &d1,
-                       std::vector<groupOfCross2d> &G, int DIR,
+                       std::vector<groupOfCross2d> &G, int DIR, int &COUNT,
                        std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
 		       std::vector<cutGraphPassage> &passages,
 		       std::set<MVertex *, MVertexPtrLessThan> &singularities)
 {
-  int COUNT = 100 * vsing->getNum() + 10 * DIR;
+  
   std::vector<MElement *> faces = adj[vsing];
   for(size_t i = 0; i < faces.size(); i++) {
     MVertex *v0 = faces[i]->getVertex(0);
@@ -2723,7 +2720,6 @@ static bool computeIso(MVertex *vsing, v2t_cont &adj, double u,
 		    cuts, passages, singularities);
     }
   }
-  return true;
 }
 
 static bool computeIsos(
@@ -2806,15 +2802,19 @@ static bool computeIsos(
   fprintf(f, "View\"Big Cut\"{\n");
 
   bool success = true;
+
+  std::map<size_t,int> COUNTS;
   
   std::set<MVertex *, MVertexPtrLessThan>::iterator it = singularities.begin();
   for(; it != singularities.end(); ++it) {
     GEntity *ge = (*it)->onWhat();
     if(ge->dim() == 2 || ge->edges().size() == 0) {
-      //     printf("%lu %d %d %lu %22.15E %22.15E\n",ge->edges().size(),ge->tag(),
-      //	     ge->dim(),singularities.size(),potU[*it],potV[*it]);
-      success &= computeIso(*it, adj, potU[*it], potU, potV, f, d1, G, 0, cuts, passages, singularities);
-      success &= computeIso(*it, adj, potV[*it], potV, potU, f, d1, G, 1, cuts, passages, singularities);
+      MVertex *vvv = new2old.find(*it) == new2old.end() ?  *it : new2old[*it];
+      if (COUNTS.find(vvv->getNum()) == COUNTS.end())COUNTS [vvv->getNum()] = 1000 * vvv->getNum();
+      int COUNT = COUNTS [vvv->getNum()];      
+      computeIso(*it, adj, potU[*it], potU, potV, f, d1, G, 0, COUNT, cuts, passages, singularities);
+      computeIso(*it, adj, potV[*it], potV, potU, f, d1, G, 1, COUNT, cuts, passages, singularities);
+      COUNTS [vvv->getNum()] = COUNT;      
     }
   }
   fprintf(f, "};\n");
@@ -2930,10 +2930,6 @@ static void createJumpyPairs(
   for(size_t i = 0; i < g.crosses.size(); ++i) {
     cross2d *c = g.crosses[i];
     edges.push_back(c->_e);
-    if (g.groupId == 124){
-      printf("%lu %lu\n",c->_e.getVertex(0)->getNum(),
-	     c->_e.getVertex(1)->getNum());
-    }
   }
   SortEdgeConsecutive(edges, vsorted);
 
@@ -2952,17 +2948,11 @@ static void createJumpyPairs(
       }
     }
   }
-  if (g.groupId == 124){
-    printf("THEN\n");
-  }
   std::vector<cross2d *> ccc;
   //  printf("group %d\n",g.groupId);
   for(size_t j = 0; j < vsorted[0].size(); ++j) {
     MVertex *v0a = vsorted[0][j ? j-1 : j+1 ];
     MVertex *vv = vsorted[0][j];
-    if (g.groupId == 124){
-      printf("%lu %lu\n",v0a->getNum(),vv->getNum());
-    }
     for(size_t i = 0; i < g.crosses.size(); ++i) {
       cross2d *c = g.crosses[i];
       if ( (c->_e.getVertex(0) == v0a && c->_e.getVertex(1) == vv ) ||
@@ -3014,18 +3004,8 @@ static void createJumpyPairs(
         }
         if(!v1 || !v0) Msg::Error("error in JumpyPairs 3");
         if(computeLeftRight(g, &v0, &v1)) {
-	  //          if(0 && boundaries.find(vv) != boundaries.end()) {
-	  //            g.left.insert(g.left.begin(), v0);
-	  //            g.right.insert(g.right.begin(), v1);
-	  //          }
-	  //          else {
 	  g.left.push_back(v0);
 	  g.right.push_back(v1);
-	  if (g.groupId == 124){
-	    printf("VERTEX %lu --> LEFT(%lu) RIGHT(%lu) \n",vv->getNum(),v0->getNum(),v1->getNum());
-	    //	    //printf("DISTANCE %12.5E %12.5E%\n",v0->distance(vv),v1->distance(vv));
-	  }
-	  //          }
         }
         else
           Msg::Error("error in jumpy pairs %lu \n", vv->getNum());
@@ -3039,12 +3019,6 @@ static void createJumpyPairs(
     std::reverse(std::begin(g.left), std::end(g.left));
     std::reverse(std::begin(g.right), std::end(g.right));
   }
-  if (g.groupId == 124){
-    for(size_t j = 0; j < g.left.size(); j++) {
-      printf("LR : %lu %lu \n",g.left[j]->getNum(),
-	       g.right[j]->getNum());
-    }
-  }    
 }
 
 static void
@@ -4389,6 +4363,25 @@ static void findPhysicalGroupsForSingularities(GModel *gm,
   }
 }
 
+static void computeValidPassages ( std::vector<cutGraphPassage> &passages) {
+  // sorted with respect to ids.
+  std::vector<cutGraphPassage> todo;
+    
+  for (size_t i=0; i< passages.size(); ++i){
+    if (passages[i].diff<1.e-12)todo.push_back(passages[i]);
+    else {
+      for (size_t j=i+1; j< passages.size(); ++j){
+	if (passages[i] == passages [j]){
+	  todo.push_back(passages[i]);
+	}
+      }
+    }
+  }
+  printf("%lu %lu\n",passages.size(),todo.size());
+  passages = todo;
+}
+
+  
 static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
                                  std::vector<int> &tags, bool layout = true,
                                  std::map<std::pair<int,int>,std::pair<int,int> >* entityToInitialEntity = NULL)
@@ -4424,27 +4417,18 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     int ITER = 0;
     while (1){
       qLayout.computeQuadLayout(potU, potV, duplicateEdges, cuts, passages);
-      int nbInfinite = 0;
       for (size_t i=0 ; i< passages.size() ; ++i){
-	passages[i].analyze(potU, potV, qLayout.G, qLayout.new2old);
-	if (passages[i].max_passages > MAX_PASSAGES){
-	  //	  passages[i].Print("Looping: ");
-	  nbInfinite++;
-	}
+	passages[i].analyze(potU,potV,qLayout.G,qLayout.new2old);
+	passages[i].Print("All ");
+	passages[i].PrintFile();
       }
-      std::sort(passages.begin(), passages.end());
-      for (size_t i=0 ; i< passages.size() ; ++i){
-	passages[i].Print("Iter : ");
-      }
-      printf("%d unclosed loops\n",nbInfinite);
-      if (nbInfinite == 0)break;
-      if (ITER++ == 0)break;
+      computeValidPassages( passages );
+      if (ITER++ ==0)break;
     }
-    
-    for (size_t i=0 ; i< passages.size() ; ++i){
-      passages[i].Print("All : ");
-      passages[i].PrintFile();
-    }
+    //    for (size_t i=0 ; i< passages.size() ; ++i){
+    //      passages[i].Print("All ");
+    //      passages[i].PrintFile();
+    //    }
   }
 
   PViewDataGModel *d = new PViewDataGModel;
@@ -4570,7 +4554,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 2 * .6);
+  classifyFaces(GModel::current(), M_PI / 2 * .99);
   GModel::current()->remove(de);
   //  delete de;
   GModel::current()->pruneMeshVertexAssociations();
