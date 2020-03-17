@@ -2220,10 +2220,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
 
   bool haveBasisFunctions = basisFunctions.size();
   if(!haveBasisFunctions) {
-    if(numTasks > 1)
+    if(numTasks > 1) {
       Msg::Warning("basisFunctions should be preallocated if numTasks > 1");
-    preallocateBasisFunctions(elementType, integrationPoints.size()/3, functionSpaceType,
-                              basisFunctions, tag);
+    }
+    preallocateBasisFunctions(elementType, integrationPoints.size()/3, functionSpaceType, basisFunctions, tag);
   }
 
   int basisOrder = 0;
@@ -2232,10 +2232,12 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
+  
   int dim = ElementType::getDimension(elementType);
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   HierarchicalBasis *basis(0);
+  
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
   if (fsName == "H1Legendre" || fsName == "GradH1Legendre") {
@@ -2292,233 +2294,229 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     throw 3;
   }
 
-  int nq = integrationPoints.size() / 3;
-  int vSize = basis->getnVertexFunction();
-  int bSize = basis->getnBubbleFunction();
-  int eSize = basis->getnEdgeFunction();
-  int fSize = basis->getnTriFaceFunction() + basis->getnQuadFaceFunction();
+  const unsigned numberOfGaussPoints = integrationPoints.size() / 3;
+  const unsigned vSize = basis->getnVertexFunction();
+  const unsigned bSize = basis->getnBubbleFunction();
+  const unsigned eSize = basis->getnEdgeFunction();
+  const unsigned fSize = basis->getnTriFaceFunction() + basis->getnQuadFaceFunction();
   numFunctionsPerElement = vSize + bSize + eSize + fSize;
-  // compute the number of Element :
+
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
-    std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
-    numElements += numElementsInEntitie;
+    numElements += ge->getNumMeshElementsByType(familyType);
   }
-  if(basisFunctions.size() < numFunctionsPerElement * numElements * numComponents * nq) {
-    Msg::Error("Wrong size of basisFunctions array (%d < %d)", basisFunctions.size(),
-      numFunctionsPerElement * numElements * numComponents * nq);
+  
+  if(basisFunctions.size() < numFunctionsPerElement * numElements * numComponents * numberOfGaussPoints) {
+    Msg::Error("Wrong size of basisFunctions array (%d < %d)", basisFunctions.size(), numFunctionsPerElement * numElements * numComponents * numberOfGaussPoints);
     throw 4;
   }
-  int const1 = nq * numFunctionsPerElement * numComponents;
+  
   switch(numComponents) {
   case 1: {
-    for(int i = 0; i < nq; i++) {
-      double u = integrationPoints[3 * i];
-      double v = integrationPoints[3 * i + 1];
-      double w = integrationPoints[3 * i + 2];
-      std::vector<double> vTable(vSize); // Vertex functions of one element
-      std::vector<double> bTable(bSize); // bubble functions of one element
-      std::vector<double> fTable(fSize); // face functions of one element
-      std::vector<double> eTable(eSize); // edge functions of one element
-      basis->generateBasis(u, v, w, vTable, eTable, fTable, bTable);
-      int const2 = i * numFunctionsPerElement;
-      // compute only one time the value of the edge basis functions for
-      // each possible orientations
-      std::vector<double> eTableNegativeFlag(eSize);
-      for(int r = 0; r < eSize; r++) { eTableNegativeFlag[r] = eTable[r]; }
-      if(eSize > 0) {
-        basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag);
+    std::vector< std::vector< double > > vTable(numberOfGaussPoints, std::vector< double >(vSize)); // Vertex functions of one element
+    std::vector< std::vector< double > > bTable(numberOfGaussPoints, std::vector< double >(bSize)); // bubble functions of one element
+    std::vector< std::vector< double > > fTable(numberOfGaussPoints, std::vector< double >(fSize)); // face functions of one element
+    std::vector< std::vector< double > > eTable(numberOfGaussPoints, std::vector< double >(eSize)); // edge functions of one element
+      
+    for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+      const double u = integrationPoints[3 * q];
+      const double v = integrationPoints[3 * q + 1];
+      const double w = integrationPoints[3 * q + 2];
+      
+      basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q], bTable[q]);
+    }
+    // compute only one time the value of the edge basis functions for
+    // each possible orientations
+    std::vector< std::vector< double > > eTableNegativeFlag(eTable);
+    if(eSize != 0) {
+      for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+        basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag[q]);
       }
-      // compute only one time the value of the face basis functions for
-      // each possible orientations
-      std::vector<double> quadFaceFunctionsAllOrientations(
-        basis->getnQuadFaceFunction() * 8, 0);
-      std::vector<double> triFaceFunctionsAllOrientations(
-        basis->getnTriFaceFunction() * 6, 0);
-      if(fSize > 0) {
-        basis->addAllOrientedFaceFunctions(u, v, w, fTable,
-                                           quadFaceFunctionsAllOrientations,
-                                           triFaceFunctionsAllOrientations);
+    }
+
+    // compute only one time the value of the face basis functions for
+    // each possible orientations
+    std::vector< std::vector< double > > quadFaceFunctionsAllOrientations(numberOfGaussPoints, std::vector< double >(basis->getnQuadFaceFunction() * 8, 0));
+    std::vector< std::vector< double > > triFaceFunctionsAllOrientations(numberOfGaussPoints, std::vector< double >(basis->getnTriFaceFunction() * 6, 0));
+    if(fSize != 0) {
+      for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+        const double u = integrationPoints[3 * q];
+        const double v = integrationPoints[3 * q + 1];
+        const double w = integrationPoints[3 * q + 2];
+        
+        basis->addAllOrientedFaceFunctions(u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q]);
       }
-
-      size_t pastIndexNumElement = 0;
-      std::vector<double> eTableCopy(eSize, 0); // use eTableCopy to orient the edges
-      std::vector<double> fTableCopy(fSize, 0);
-
-      for(std::size_t ii = 0; ii < entities.size(); ii++) {
-        GEntity *ge = entities[ii];
-        std::size_t numMeshElementsByType = ge->getNumMeshElementsByType(familyType);
-        std::size_t begin = task * numMeshElementsByType / numTasks;
-        std::size_t end = (task + 1) * numMeshElementsByType / numTasks;
-        size_t indexNumElement = pastIndexNumElement + begin;
-        pastIndexNumElement += numMeshElementsByType;
-        for(std::size_t j = begin; j < end; j++) {
-          std::size_t const3 = indexNumElement * const1 + const2;
-          MElement *e = ge->getMeshElementByType(familyType, j);
-          if(eSize > 0) {
-            for(int jj = 0; jj < basis->getNumEdge(); jj++) {
-              MEdge edge = e->getEdge(jj);
-              int orientationFlag = 1;
-              if(edge.getMinVertex()->getNum() !=
-                 unsigned(e->getVertexSolin(jj, 0))) {
-                orientationFlag = -1;
-              }
-              else {
-                orientationFlag = 1;
-              }
-              basis->orientEdge(orientationFlag, jj, eTableCopy, eTable,
-                                eTableNegativeFlag);
+    }
+    
+    std::vector< std::vector< double > > eTableCopy(numberOfGaussPoints, std::vector< double >(eSize, 0)); // use eTableCopy to orient the edges
+    std::vector< std::vector< double > > fTableCopy(numberOfGaussPoints, std::vector< double >(fSize, 0)); // use fTableCopy to orient the faces
+    
+    unsigned int cumulativeNumberOfElements = 0;
+    for(std::size_t iEntity = 0; iEntity < entities.size(); ++iEntity) {
+      GEntity *ge = entities[iEntity];
+      const std::size_t numMeshElementsByType = ge->getNumMeshElementsByType(familyType);
+      const std::size_t begin = task * numMeshElementsByType / numTasks;
+      const std::size_t end = (task + 1) * numMeshElementsByType / numTasks;
+      
+      for(std::size_t iElement = begin; iElement < end; ++iElement) {
+        MElement *e = ge->getMeshElementByType(familyType, iElement);
+        if(eSize != 0) {
+          for(unsigned int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
+            MEdge edge = e->getEdge(iEdge);
+            const int orientationFlag = (edge.getMinVertex()->getNum() != unsigned(e->getVertexSolin(iEdge, 0)) ? 1 : -1);
+            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+              basis->orientEdge(orientationFlag, iEdge, eTableCopy[q], eTable[q], eTableNegativeFlag[q]);
             }
           }
-
-          for(int r = 0; r < fSize; r++) { fTableCopy[r] = fTable[r]; }
-          if(fSize > 0) {
-            for(int jj = 0;
-                jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
-              MFace face = e->getFaceSolin(jj);
-              std::vector<int> faceOrientationFlag(3);
-              face.getOrientationFlagForFace(faceOrientationFlag);
-              basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1],
-                                faceOrientationFlag[2], jj,
-                                quadFaceFunctionsAllOrientations,
-                                triFaceFunctionsAllOrientations, fTableCopy);
+        }
+        
+        if(fSize != 0) {
+          fTableCopy = fTable;
+          for(unsigned int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
+            MFace face = e->getFaceSolin(iFace);
+            std::vector< int > faceOrientationFlag(3);
+            face.getOrientationFlagForFace(faceOrientationFlag);
+            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+              basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1], faceOrientationFlag[2], iFace, quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q], fTableCopy[q]);
             }
           }
-          for(int k = 0; k < vSize; k++) {
-            basisFunctions[const3 + k] = vTable[k];
-          }
-          std::size_t const4 = const3 + vSize;
-          for(int k = 0; k < eSize; k++) {
-            basisFunctions[const4 + k] = eTableCopy[k];
-          }
-          std::size_t const5 = const4 + eSize;
-          for(int k = 0; k < fSize; k++) {
-            basisFunctions[const5 + k] = fTableCopy[k];
-          }
-          std::size_t const6 = const5 + fSize;
-          for(int k = 0; k < bSize; k++) {
-            basisFunctions[const6 + k] = bTable[k];
-          }
+        }
 
-          indexNumElement++;
+        const std::size_t offsetEntity = cumulativeNumberOfElements * numberOfGaussPoints * numFunctionsPerElement;
+        const std::size_t offsetElement = iElement * numberOfGaussPoints * numFunctionsPerElement;
+        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+          const std::size_t offsetGP = q * numFunctionsPerElement;
+          const std::size_t globalOffset = offsetEntity + offsetElement + offsetGP;
+          
+          for(unsigned int i = 0; i < vSize; ++i) {
+            basisFunctions[globalOffset + i] = vTable[q][i];
+          }
+          unsigned int offset = vSize;
+          for(unsigned int i = 0; i < eSize; ++i) {
+            basisFunctions[globalOffset + offset + i] = eTableCopy[q][i];
+          }
+          offset += eSize;
+          for(unsigned int i = 0; i < fSize; ++i) {
+            basisFunctions[globalOffset + offset + i] = fTableCopy[q][i];
+          }
+          offset += fSize;
+          for(unsigned int i = 0; i < bSize; ++i) {
+            basisFunctions[globalOffset + offset + i] = bTable[q][i];
+          }
         }
       }
+      cumulativeNumberOfElements += numMeshElementsByType;
     }
     break;
   }
   case 3: {
-    int prod1 = vSize * numComponents;
-    int prod2 = eSize * numComponents;
-    int prod3 = fSize * numComponents;
-    for(int i = 0; i < nq; i++) {
-      double u = integrationPoints[3 * i];
-      double v = integrationPoints[3 * i + 1];
-      double w = integrationPoints[3 * i + 2];
-      std::vector<std::vector<double> > vTable(vSize,
-                                               std::vector<double>(3, 0.));
-      std::vector<std::vector<double> > eTable(eSize,
-                                               std::vector<double>(3, 0.));
-      std::vector<std::vector<double> > fTable(fSize,
-                                               std::vector<double>(3, 0.));
-      std::vector<std::vector<double> > bTable(bSize,
-                                               std::vector<double>(3, 0.));
-      basis->generateBasis(u, v, w, vTable, eTable, fTable, bTable, fsName);
-      int const2 = i * numFunctionsPerElement * numComponents;
-      // compute all edge functions for all  possible orientation
-      std::vector<std::vector<double> > eTableNegativeFlag(eTable);
-
-      if(eSize > 0) {
-        basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag);
+    std::vector< std::vector< std::vector< double > > > vTable(numberOfGaussPoints, std::vector< std::vector< double > >(vSize, std::vector< double >(3, 0.))); // Vertex functions of one element
+    std::vector< std::vector< std::vector< double > > > bTable(numberOfGaussPoints, std::vector< std::vector< double > >(bSize, std::vector< double >(3, 0.))); // bubble functions of one element
+    std::vector< std::vector< std::vector< double > > > fTable(numberOfGaussPoints, std::vector< std::vector< double > >(fSize, std::vector< double >(3, 0.))); // face functions of one element
+    std::vector< std::vector< std::vector< double > > > eTable(numberOfGaussPoints, std::vector< std::vector< double > >(eSize, std::vector< double >(3, 0.))); // edge functions of one element
+      
+    for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+      const double u = integrationPoints[3 * q];
+      const double v = integrationPoints[3 * q + 1];
+      const double w = integrationPoints[3 * q + 2];
+      
+      basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q], bTable[q], fsName);
+    }
+    // compute only one time the value of the edge basis functions for
+    // each possible orientations
+    std::vector< std::vector< std::vector< double > > > eTableNegativeFlag(eTable);
+    if(eSize != 0) {
+      for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+        basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag[q]);
       }
-      // compute only one time the value of the face basis functions for
-      // each possible orientations
-      std::vector<std::vector<double> > quadFaceFunctionsAllOrientations(
-        basis->getnQuadFaceFunction() * 8, std::vector<double>(3, 0));
-      std::vector<std::vector<double> > triFaceFunctionsAllOrientations(
-        basis->getnTriFaceFunction() * 6, std::vector<double>(3, 0));
-      if(fSize > 0) {
-        basis->addAllOrientedFaceFunctions(
-          u, v, w, fTable, quadFaceFunctionsAllOrientations,
-          triFaceFunctionsAllOrientations, fsName);
+    }
+
+    // compute only one time the value of the face basis functions for
+    // each possible orientations
+    std::vector< std::vector< std::vector< double > > > quadFaceFunctionsAllOrientations(numberOfGaussPoints, std::vector< std::vector< double > >(basis->getnQuadFaceFunction() * 8, std::vector< double >(3, 0.)));
+    std::vector< std::vector< std::vector< double > > > triFaceFunctionsAllOrientations(numberOfGaussPoints, std::vector< std::vector< double > >(basis->getnTriFaceFunction() * 6, std::vector< double >(3, 0.)));
+    if(fSize != 0) {
+      for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+        const double u = integrationPoints[3 * q];
+        const double v = integrationPoints[3 * q + 1];
+        const double w = integrationPoints[3 * q + 2];
+        
+        basis->addAllOrientedFaceFunctions(u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q], fsName);
       }
-
-      size_t pastIndexNumElement = 0;
-      std::vector<std::vector<double> > eTableCopy(eSize, std::vector<double>(3, 0.));
-      std::vector<std::vector<double> > fTableCopy(fSize, std::vector<double>(3, 0.));
-
-      for(std::size_t ii = 0; ii < entities.size(); ii++) {
-        GEntity *ge = entities[ii];
-        std::size_t numMeshElementsByType = ge->getNumMeshElementsByType(familyType);
-        std::size_t begin = task * numMeshElementsByType / numTasks;
-        std::size_t end = (task + 1) * numMeshElementsByType / numTasks;
-        size_t indexNumElement = pastIndexNumElement + begin;
-        pastIndexNumElement += numMeshElementsByType;
-        for(std::size_t j = begin; j < end; j++) {
-          std::size_t const3 = indexNumElement * const1 + const2;
-          MElement *e = ge->getMeshElementByType(familyType, j);
-
-          if(eSize > 0) {
-            for(int jj = 0; jj < basis->getNumEdge(); jj++) {
-              MEdge edge = e->getEdge(jj);
-              int orientationFlag = 1;
-
-              if(edge.getMinVertex()->getNum() !=
-                 unsigned(e->getVertexSolin(jj, 0))) {
-                orientationFlag = -1;
-              }
-              else {
-                orientationFlag = 1;
-              }
-              basis->orientEdge(orientationFlag, jj, eTableCopy, eTable,
-                                eTableNegativeFlag);
+    }
+    
+    std::vector< std::vector< std::vector< double > > > eTableCopy(numberOfGaussPoints, std::vector< std::vector< double > >(eSize, std::vector< double >(3, 0.))); // use eTableCopy to orient the edges
+    std::vector< std::vector< std::vector< double > > > fTableCopy(numberOfGaussPoints, std::vector< std::vector< double > >(fSize, std::vector< double >(3, 0.))); // use fTableCopy to orient the faces
+    
+    unsigned int cumulativeNumberOfElements = 0;
+    for(std::size_t iEntity = 0; iEntity < entities.size(); ++iEntity) {
+      GEntity *ge = entities[iEntity];
+      const std::size_t numMeshElementsByType = ge->getNumMeshElementsByType(familyType);
+      const std::size_t begin = task * numMeshElementsByType / numTasks;
+      const std::size_t end = (task + 1) * numMeshElementsByType / numTasks;
+      
+      for(std::size_t iElement = begin; iElement < end; ++iElement) {
+        MElement *e = ge->getMeshElementByType(familyType, iElement);
+        if(eSize != 0) {
+          for(unsigned int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
+            MEdge edge = e->getEdge(iEdge);
+            const int orientationFlag = (edge.getMinVertex()->getNum() != unsigned(e->getVertexSolin(iEdge, 0)) ? 1 : -1);
+            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+              basis->orientEdge(orientationFlag, iEdge, eTableCopy[q], eTable[q], eTableNegativeFlag[q]);
             }
           }
-
-          if(fSize > 0) {
-            for(int jj = 0;
-                jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
-              MFace face = e->getFaceSolin(jj);
-              std::vector<int> faceOrientationFlag(3);
-              face.getOrientationFlagForFace(faceOrientationFlag);
-              basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1],
-                                faceOrientationFlag[2], jj,
-                                quadFaceFunctionsAllOrientations,
-                                triFaceFunctionsAllOrientations, fTableCopy);
+        }
+        
+        if(fSize != 0) {
+          fTableCopy = fTable;
+          for(unsigned int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
+            MFace face = e->getFaceSolin(iFace);
+            std::vector< int > faceOrientationFlag(3);
+            face.getOrientationFlagForFace(faceOrientationFlag);
+            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+              basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1], faceOrientationFlag[2], iFace, quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q], fTableCopy[q]);
             }
           }
-          std::size_t const4 = const3 + prod1;
-          std::size_t const5 = const4 + prod2;
-          std::size_t const6 = const5 + prod3;
-
-          for(int k = 0; k < vSize; k++) {
-            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
-              basisFunctions[const3 + k * numComponents + indexNumComp] = vTable[k][indexNumComp];
-            }
+        }
+        
+        const std::size_t offsetEntity = cumulativeNumberOfElements * numberOfGaussPoints * numFunctionsPerElement * 3;
+        const std::size_t offsetElement = iElement * numberOfGaussPoints * numFunctionsPerElement * 3;
+        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+          const std::size_t offsetGP = q * numFunctionsPerElement * 3;
+          const std::size_t globalOffset = offsetEntity + offsetElement + offsetGP;
+          
+          for(unsigned int i = 0; i < vSize; ++i) {
+            basisFunctions[globalOffset + 3*i  ] = vTable[q][i][0];
+            basisFunctions[globalOffset + 3*i+1] = vTable[q][i][1];
+            basisFunctions[globalOffset + 3*i+2] = vTable[q][i][2];
           }
-          for(int k = 0; k < eSize; k++) {
-            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
-              basisFunctions[const4 + k * numComponents + indexNumComp] = eTableCopy[k][indexNumComp];
-            }
+          unsigned int offset = 3 * vSize;
+          for(unsigned int i = 0; i < eSize; ++i) {
+            basisFunctions[globalOffset + offset + 3*i  ] = eTableCopy[q][i][0];
+            basisFunctions[globalOffset + offset + 3*i+1] = eTableCopy[q][i][1];
+            basisFunctions[globalOffset + offset + 3*i+2] = eTableCopy[q][i][2];
           }
-          for(int k = 0; k < fSize; k++) {
-            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
-              basisFunctions[const5 + k * numComponents + indexNumComp] = fTableCopy[k][indexNumComp];
-            }
+          offset += 3 * eSize;
+          for(unsigned int i = 0; i < fSize; ++i) {
+            basisFunctions[globalOffset + offset + 3*i  ] = fTableCopy[q][i][0];
+            basisFunctions[globalOffset + offset + 3*i+1] = fTableCopy[q][i][1];
+            basisFunctions[globalOffset + offset + 3*i+2] = fTableCopy[q][i][2];
           }
-          for(int k = 0; k < bSize; k++) {
-            for(int indexNumComp = 0; indexNumComp < numComponents; ++indexNumComp) {
-              basisFunctions[const6 + k * numComponents + indexNumComp] = bTable[k][indexNumComp];
-            }
+          offset += 3 * fSize;
+          for(unsigned int i = 0; i < bSize; ++i) {
+            basisFunctions[globalOffset + offset + 3*i  ] = bTable[q][i][0];
+            basisFunctions[globalOffset + offset + 3*i+1] = bTable[q][i][1];
+            basisFunctions[globalOffset + offset + 3*i+2] = bTable[q][i][2];
           }
-
-          indexNumElement++;
         }
       }
+      cumulativeNumberOfElements += numMeshElementsByType;
     }
     break;
   }
   }
+  
   delete basis;
 }
 
