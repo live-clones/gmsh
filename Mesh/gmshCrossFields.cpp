@@ -2320,6 +2320,9 @@ static void computeOneIsoTillNextCutGraph(
       MVertex *close = inSingularZone (singularities, p, e, adj, d);
       if (d < 1.e-10){
 	passage._type = cutGraphPassage::SING_TO_SING;
+	passage.close = true;
+	passage.sing_conn = close;
+	passage.d=d;	  
 	return;
       }
 
@@ -2337,7 +2340,8 @@ static void computeOneIsoTillNextCutGraph(
       
     bool added = addCut(p, e, COUNT, NB, cuts);
     if(!added) {
-      if (passage._type != cutGraphPassage::SING_TO_SING)
+      if (passage._type != cutGraphPassage::SING_TO_SING &&
+	  passage._type != cutGraphPassage::SING_TO_BDRY)	  
 	passage._type = cutGraphPassage::REDUNDANT;
       return;
     }    
@@ -4550,7 +4554,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 2 * .6);
+  classifyFaces(GModel::current(), M_PI / 2 * .99);
   GModel::current()->remove(de);
   //  delete de;
   GModel::current()->pruneMeshVertexAssociations();
