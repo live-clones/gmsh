@@ -134,6 +134,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
                           std::map<MVertex *, int> &v2c,
                           std::vector<MVertex *> &c2v)
 {
+  Msg::Debug("Start Hxt2Gmsh");
   std::vector<GFace *> allFaces;
   std::vector<GEdge *> allEdges;
   HXT_CHECK(getAllFacesOfAllRegions(regions, NULL, allFaces));
@@ -222,7 +223,6 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
       MVertex *vv[4];
       GRegion *gr = regions[c];
       for(int j = 0; j < 4; j++) {
-        //	printf("%d %d %d %d\n",i,j,i0[j],c);
         MVertex *v0 = c2v[i0[j]];
         if(!v0) {
           double *x = &m->vertices.coord[4 * i0[j]];
@@ -232,9 +232,12 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
         }
         vv[j] = v0;
       }
-      gr->tetrahedra.push_back(new MTetrahedron(vv[0], vv[1], vv[2], vv[3]));
+      // this is very slow for large meshes - weird (and it's not the push_back)
+      MTetrahedron *tt = new MTetrahedron(vv[0], vv[1], vv[2], vv[3]);
+      gr->tetrahedra.push_back(tt);
     }
   }
+  Msg::Debug("End Hxt2Gmsh");
   return HXT_STATUS_OK;
 }
 
