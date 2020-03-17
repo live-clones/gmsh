@@ -23,20 +23,6 @@ namespace QMT_Utils {
       return os << "(" << val.first << "," << val.second << ")";
     }
 
-  template<class T>
-    std::ostream& operator<<(std::ostream& os, const std::vector<T>& values) { 
-      os << "[";
-      for (size_t i = 0; i < values.size(); ++i) {
-	const  T & x = values[i];
-	os << "cannot compile that";//x;
-        if (i != values.size() - 1) {
-          os << ", ";
-        }
-      }
-      os << "]";
-      return os;
-    }
-
   template<class T,size_t N>
     std::ostream& operator<<(std::ostream& os, const std::array<T,N>& values) { 
       os << "(";
@@ -47,6 +33,20 @@ namespace QMT_Utils {
         }
       }
       os << ")";
+      return os;
+    }
+
+  template<class T>
+    std::ostream& operator<<(std::ostream& os, const std::vector<T>& values) { 
+      os << "[";
+      for (size_t i = 0; i < values.size(); ++i) {
+        const  T & x = values[i];
+        os << x;
+        if (i != values.size() - 1) {
+          os << ", ";
+        }
+      }
+      os << "]";
       return os;
     }
 

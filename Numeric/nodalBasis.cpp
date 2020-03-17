@@ -859,6 +859,69 @@ nodalBasis::nodalBasis(int tag)
   }
 }
 
+int nodalBasis::getNumBubbleShapeFunctions() const
+{
+  int numBubble = -1;
+  switch(parentType) {
+  case TYPE_PNT:
+    numBubble = 0;
+    break;
+  case TYPE_LIN:
+    numBubble = ElementType::getNumVertices(type) - 2;
+    break;
+  case TYPE_TRI:
+    if(serendip) {
+      numBubble = 0;
+    }
+    else {
+      numBubble = (order - 1) * (order - 2) / 2;
+    }
+    break;
+  case TYPE_QUA:
+    if(serendip) {
+      numBubble = 0;
+    }
+    else {
+      numBubble = (order - 1) * (order - 1);
+    }
+    break;
+  case TYPE_TET:
+    if(serendip) {
+      numBubble = 0;
+    }
+    else {
+      numBubble = ((order - 1) * (order - 2) * (order - 3)) / 6;
+    }
+    break;
+  case TYPE_PRI:
+    if(serendip) {
+      numBubble = 0;
+    }
+    else {
+      numBubble = (order - 1) * (((order - 1) - 1) * (order - 1) / 2);
+    }
+    break;
+  case TYPE_HEX:
+    if(serendip) {
+      numBubble = 0;
+    }
+    else {
+      numBubble = (order - 1) * (order - 1) * (order - 1);
+    }
+    break;
+  case TYPE_PYR:
+    if(serendip) {
+      numBubble = 0;
+    }
+    else {
+      numBubble = (order - 2) * ((order - 2) + 1) * (2 * (order - 2) + 1) / 6;
+    }
+    break;
+  }
+  
+  return numBubble;
+}
+
 bool nodalBasis::forwardTransformation(const fullMatrix<double> &nodes,
                                        fullMatrix<double> &projection,
                                        int elementType) const

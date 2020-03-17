@@ -239,7 +239,7 @@ public:
 
   // number the edges
   int addMEdge(const MEdge &edge);
-  // get the edge number 
+  // get the edge number
   int getEdgeNumber(const MEdge &edge);
   //number the faces
   int addMFace(const MFace &face);
@@ -586,7 +586,8 @@ public:
   int setOrderN(int order, int linear, int incomplete);
 
   // refine the mesh by splitting all elements
-  int refineMesh(int linear, bool barycentric = false);
+  int refineMesh(int linear, bool splitIntoQuads = false,
+                 bool splitIntoHexas = false, bool barycentric = false);
 
   // optimize the mesh
   int optimizeMesh(const std::string &how, bool force = false,
@@ -755,7 +756,8 @@ public:
 
   // Abaqus
   int writeINP(const std::string &name, bool saveAll = false,
-               bool saveGroupsOfNodes = false, double scalingFactor = 1.0);
+               int saveGroupsOfElements = 1, int saveGroupsOfNodes = 0,
+               double scalingFactor = 1.0);
 
   // LSDYNA
   int writeKEY(const std::string &name, int saveAll = 0,

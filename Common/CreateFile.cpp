@@ -405,7 +405,9 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_INP:
     GModel::current()->writeINP
-      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
+      (name, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.saveGroupsOfElements,
+       CTX::instance()->mesh.saveGroupsOfNodes,
        CTX::instance()->mesh.scalingFactor);
     break;
 

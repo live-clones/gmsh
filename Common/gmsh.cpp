@@ -382,7 +382,8 @@ GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
   // GEOInternals, because some operations in the built-in kernel directly
   // manipulate physicals (most notably Coherence). Until we fully move the
   // physicals to GModel, we need to add the physicals in GEOInternals and
-  // perform a hidden sync.
+  // perform a hidden sync (which should not reset the mesh attributes of the
+  // entities of they have already been created...).
   if(!_isInitialized()) { throw - 1; }
   int outTag = tag;
   if(outTag < 0) {
@@ -395,7 +396,7 @@ GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
                                                                 tags)) {
     throw 1;
   }
-  GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  GModel::current()->getGEOInternals()->synchronize(GModel::current(), false);
   return outTag;
 }
 
@@ -908,7 +909,10 @@ GMSH_API void gmsh::model::mesh::unpartition()
 GMSH_API void gmsh::model::mesh::refine()
 {
   if(!_isInitialized()) { throw - 1; }
-  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
+  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
+                                CTX::instance()->mesh.algoSubdivide == 1,
+                                CTX::instance()->mesh.algoSubdivide == 2,
+                                CTX::instance()->mesh.algoSubdivide == 3);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
@@ -2995,7 +2999,7 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     case TYPE_PNT: {
       basis = new HierarchicalBasisH1Point();
     } break;
-    default: Msg::Error("Unknown familyType "); throw 2;
+    default: Msg::Error("Unknown familyType "); throw 3;
     }
   }
   else if (fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre"){
@@ -3018,19 +3022,41 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(basisOrder);
     } break;
-    default: Msg::Error("Unknown familyType "); throw 2;
+    default: Msg::Error("Unknown familyType "); throw 3;
     }
   }
   else if (fsName == "IsoParametric" || fsName == "Lagrange" || fsName == "GradIsoParametric" || fsName == "GradLagrange") {
-    infoKeys.resize(keys.size());
-    for(size_t i = 0; i < keys.size(); ++i) {
-      infoKeys.push_back(std::pair<int, int>(0, basisOrder));
+    const nodalBasis *basis(0);
+    if(basisOrder == -1) { // isoparametric
+      basis = BasisFactory::getNodalBasis(elementType);
+    }
+    else {
+      int familyType = ElementType::getParentType(elementType);
+      int newType = ElementType::getType(familyType, basisOrder, false);
+      basis = BasisFactory::getNodalBasis(newType);
+    }
+    std::size_t numberOfKeys = basis->getNumShapeFunctions();
+    std::size_t numberOfBubble = basis->getNumBubbleShapeFunctions();
+    int dim = ElementType::getDimension(elementType);
+    
+    if(numberOfBubble > numberOfKeys) {
+      throw 4;
+    }
+  
+    infoKeys.reserve(keys.size());
+    for(size_t i = 0; i < keys.size() / numberOfKeys; ++i) {
+      for(size_t j = 0; j < numberOfKeys - numberOfBubble; ++j) {
+        infoKeys.push_back(std::pair<int, int>(0, basisOrder));
+      }
+      for(size_t j = 0; j < numberOfBubble; ++j) {
+        infoKeys.push_back(std::pair<int, int>(dim, basisOrder));
+      }
     }
     return;
   }
   else {
     Msg::Error("Unknown function space named '%s'", fsName.c_str());
-    throw 3;
+    throw 5;
   }
 
   int vSize = basis->getnVertexFunction();

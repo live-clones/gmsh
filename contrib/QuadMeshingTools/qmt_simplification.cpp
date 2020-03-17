@@ -6,7 +6,6 @@
 // Author: Maxence Reberol
 
 #include "quad_meshing_tools.h"
-#include "qmt_utils.hpp"
 
 #include <cfloat>
 #include <map>
@@ -17,8 +16,11 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 
 #include "gmsh.h"
+
+#include "qmt_utils.hpp"
 
 /* - Shortcuts for loops */
 #define F(_VAR,_NB) for(size_t _VAR = 0; _VAR < (size_t) _NB; ++_VAR)
@@ -61,6 +63,11 @@ namespace QMT_SMP_Utils {
       gmsh::logger::write("QMT | Simplification | " + stream.str(), "info");
     }
   /************************************/
+
+  bool is_file(const char *fileName) {
+    std::ifstream in(fileName);
+    return in.good();
+  }
 
   inline id2 sorted(id v1, id v2) { if (v1 < v2) { return {v1,v2}; } else { return {v2,v1}; } }
 
@@ -285,20 +292,33 @@ namespace QMT_SMP_Utils {
     return true;
   }
 
-  id add_vertex(QMesh& M, vec3 pt, bool onBdr = false, bool onCorner = false, double size = DBL_MAX) {
+  id add_vertex(QMesh& M, vec3 pt, double size = DBL_MAX, std::pair<int,int> entity = {-1,-1}) {
     id v = M.points.size();
     M.points.push_back(pt);
-    M.onBoundary.push_back(onBdr);
-    M.onCorner.push_back(onCorner);
     M.size.push_back(size);
+    M.entity.push_back(entity);
     return v;
   }
 
-  size_t add_quad(QMesh& M, id4 vert, id color) {
+  // id add_vertex(QMesh& M, vec3 pt, bool onBdr = false, bool onCorner = false, double size = DBL_MAX, std::pair<int,int> entity = {-1,-1}) {
+  //   id v = M.points.size();
+  //   M.points.push_back(pt);
+  //   // M.onBoundary.push_back(onBdr);
+  //   // M.onCorner.push_back(onCorner);
+  //   M.size.push_back(size);
+  //   // M.geoEntity.push_back(entity);
+  //   M.entity.push_back(entity);
+  //   // info("add_vertex | pt = {}, onBdr = {}, onCorner = {}, size = {}, entity = {}", pt, onBdr, onCorner, size, entity);
+  //   return v;
+  // }
+
+  size_t add_quad(QMesh& M, id4 vert, id color, int ent) {
     id q = M.quads.size();
     M.quads.push_back(vert);
     M.color.push_back(color);
     M.quad_neighbors.push_back({NO_SID,NO_SID,NO_SID,NO_SID});
+    M.quadEntity.push_back(ent);
+    // info("add_quad | vert = {}, color = {}, ent = {}", vert, color, ent);
     return q;
   }
 
@@ -598,16 +618,16 @@ namespace QMT {
       FC(le, 4, le%2 == side) { /* chord propagation dir */
         id v1 = M.quads[q][le];
         id v2 = M.quads[q][(le+1)%4];
-        if (M.onCorner[v1] && M.onCorner[v2]) {
+        if (M.entity[v1].first == 0 && M.entity[v2].first == 0) { /* both on corner */
           return false;
         }
-        if (valence && !collapse_val3_on_bdr && (*valence)[v1] == 3 && !M.onBoundary[v1] && M.onBoundary[v2])
+        if (valence && !collapse_val3_on_bdr && (*valence)[v1] == 3 && M.entity[v1].first == 2 && M.entity[v2].first <= 1)
           return false;
-        if (valence && !collapse_val3_on_bdr && (*valence)[v2] == 3 && !M.onBoundary[v2] && M.onBoundary[v1])
+        if (valence && !collapse_val3_on_bdr && (*valence)[v2] == 3 && M.entity[v2].first == 2 && M.entity[v1].first <= 1)
           return false;
-        if (valence && !collapse_val5_on_bdr && (*valence)[v1] == 5 && !M.onBoundary[v1] && M.onBoundary[v2])
+        if (valence && !collapse_val5_on_bdr && (*valence)[v1] == 5 && M.entity[v1].first == 2 && M.entity[v2].first <= 1)
           return false;
-        if (valence && !collapse_val5_on_bdr && (*valence)[v2] == 5 && !M.onBoundary[v2] && M.onBoundary[v1])
+        if (valence && !collapse_val5_on_bdr && (*valence)[v2] == 5 && M.entity[v2].first == 2 && M.entity[v1].first <= 1)
           return false;
 
         sid qe = neighs[le];
@@ -623,7 +643,7 @@ namespace QMT {
 
         /* Reject collapse of edges if both nodes are on
          * the boundary and not an bdr edge */
-        if (M.onBoundary[av1] && M.onBoundary[av2] && neighs[le] != NO_ID) {
+        if (M.entity[av1].first <= 1 && M.entity[av2].first <= 1 && neighs[le] != NO_ID) {
           return false;
         }
       }
@@ -724,15 +744,16 @@ namespace QMT {
       error("collapse_double_quad_to_line | matching config not found");
       return false;
     }
-    if (M.onCorner[vert[0]] || M.onCorner[vert[3]] || M.onCorner[vert[4]] || M.onCorner[vert[5]]) {
+    if (M.entity[vert[0]].first == 0 || M.entity[vert[3]].first == 0 
+        || M.entity[vert[4]].first == 0 || M.entity[vert[5]].first == 0) {
       error("collapse_double_quad_to_line | 'to collapse' vertex is locked");
       return false;
     }
-    if (M.onBoundary[vert[0]] && M.onBoundary[vert[3]]) {
+    if (M.entity[vert[0]].first <= 1 && M.entity[vert[3]].first <= 1) {
       error("collapse_double_quad_to_line | 0-3 on boundary not supported");
       return false;
     }
-    if (M.onBoundary[vert[4]] && M.onBoundary[vert[5]]) {
+    if (M.entity[vert[4]].first <= 1 && M.entity[vert[5]].first <= 1) {
       error("collapse_double_quad_to_line | 4-5 on boundary not supported");
       return false;
     }
@@ -786,7 +807,7 @@ namespace QMT {
     /* Verify it can be collapsed */
     id4 vert = M.quads[q];
     vector<id> locked_vert;
-    FC(lv,4,M.onCorner[vert[lv]]) {
+    FC(lv,4,M.entity[vert[lv]].first == 0) {
       target = vert[lv];
       locked_vert.push_back(vert[lv]);
     }
@@ -797,9 +818,9 @@ namespace QMT {
     }
 
     /* Check diagonals */
-    if (M.onBoundary[vert[0]] && M.onBoundary[vert[2]]) {
+    if (M.entity[vert[0]].first <= 1 && M.entity[vert[2]].first <= 1) {
       return false;
-    } else if (M.onBoundary[vert[1]] && M.onBoundary[vert[3]]) {
+    } else if (M.entity[vert[1]].first <= 1 && M.entity[vert[3]].first <= 1) {
       return false;
     }
 
@@ -807,14 +828,19 @@ namespace QMT {
     if (target == NO_ID) {
       bool newPtOnBdr = true;
       double targetSize = DBL_MAX;
-      bool onBdr[4] = {M.onBoundary[vert[0]], M.onBoundary[vert[1]], M.onBoundary[vert[2]], M.onBoundary[vert[3]]};
+      bool onBdr[4] = {M.entity[vert[0]].first <= 1, M.entity[vert[1]].first <= 1, M.entity[vert[2]].first <= 1, M.entity[vert[3]].first <= 1};
       size_t nbOnBdr = (size_t) onBdr[0] + (size_t) onBdr[1] + (size_t) onBdr[2] + (size_t) onBdr[3];
+      pair<int,int> ent = {-1,-1};
+      int entityDim = -1;
+      int entityTag = -1;
       if (nbOnBdr == 0) {
         pt = 0.25 * (M.points[M.quads[q][0]] + M.points[M.quads[q][1]]
             + M.points[M.quads[q][2]] + M.points[M.quads[q][3]]);
         newPtOnBdr = false;
         targetSize = 0.25 * (M.size[M.quads[q][0]] + M.size[M.quads[q][1]]
             + M.size[M.quads[q][2]] + M.size[M.quads[q][3]]);
+        entityDim = 2;
+        entityTag = M.quadEntity[q];
       } else if (nbOnBdr == 1) {
         FC(lv,4,onBdr[lv]) {
           target = vert[lv];
@@ -823,6 +849,15 @@ namespace QMT {
         FC(lv,4,onBdr[lv] && onBdr[(lv+1)%4]) {
           pt = 0.5 * (M.points[vert[lv]] + M.points[vert[(lv+1)%4]]);
           targetSize = 0.5 * (M.size[vert[lv]] + M.size[vert[(lv+1)%4]]);
+          entityDim = 1;
+          if (M.entity[vert[lv]].first == 1) {
+            entityTag = M.entity[vert[lv]].second;
+          } else if (M.entity[vert[(lv+1)%4]].first == 1) {
+            entityTag = M.entity[vert[(lv+1)%4]].second;
+          } else {
+            entityTag = -1;
+            //warn("case not supported, collapse extremities on bdr but not on curve entity");
+          }
         }
       } else if (nbOnBdr == 3) {
         FC(lv,4,onBdr[lv] && onBdr[(lv+1)%4] && onBdr[(lv+2)%4]) {
@@ -833,7 +868,9 @@ namespace QMT {
         return false;
       }
       if (target == NO_ID) {
-        target = add_vertex(M, pt, newPtOnBdr, false, targetSize);
+        // target = add_vertex(M, pt, newPtOnBdr, false, targetSize, {entityDim,entityTag});
+        target = add_vertex(M, pt, targetSize, {entityDim,entityTag});
+        // if (entityTag == -1) warn("collapse_quad_to_vertex | target = {}, entityDim = {}, entityTag = {}", target, entityDim, entityTag);
         v2q.resize(M.points.size());
       }
     }
@@ -897,28 +934,45 @@ namespace QMT {
     F(i,2) {
       id a = (i == 0) ? vert[0] : vert[2];
       id b = (i == 0) ? vert[1] : vert[3];
-      if (a != b && M.onCorner[a] && M.onCorner[b]) {
+      if (a != b && M.entity[a].first == 0 && M.entity[b].first == 0) {
         error("both edge extrimities locked, cannot collapse");
         return false;
       }
 
+      int entityDim = -1;
+      int entityTag = -1;
       if (a == b) {
         targets[i] = a;
-      } else if (M.onBoundary[a] && M.onBoundary[b]) {
-        if (M.onCorner[a]) {
+      } else if (M.entity[a].first <= 1 && M.entity[b].first <= 1) {
+        if (M.entity[a].first == 0) {
           targets[i] = a;
-        } else if (M.onCorner[b]) {
+        } else if (M.entity[b].first == 0) {
           targets[i] = b;
-        } 
-      } else if (M.onBoundary[a] && !M.onBoundary[b]) {
+        } else {
+          if (M.entity[a].first == 1) {
+            entityDim = 1;
+            entityTag = M.entity[a].second;
+          } else if (M.entity[b].first == 1) {
+            entityDim = 1;
+            entityTag = M.entity[b].second;
+          } else {
+            entityDim = 1;
+            entityTag = -1; /* both vertices are corners, curve tag unknown ... */
+          }
+        }
+      } else if (M.entity[a].first <= 1 && M.entity[b].first == 2) {
         targets[i] = a;
-      } else if (!M.onBoundary[a] && M.onBoundary[b]) {
+      } else if (M.entity[a].first == 2 && M.entity[b].first <= 1) {
         targets[i] = b;
+      } else {
+        entityDim = 2;
+        entityTag = M.quadEntity[q];
       }
       if (targets[i] == NO_ID) {
         vec3 pt = 0.5*(M.points[a] + M.points[b]);
         double targetSize = 0.5*(M.size[a] + M.size[b]);
-        id nv = add_vertex(M, pt, M.onBoundary[a] && M.onBoundary[b], false, targetSize);
+        // id nv = add_vertex(M, pt, pOnBdr, false, targetSize, {entityDim,entityTag});
+        id nv = add_vertex(M, pt, targetSize, {entityDim,entityTag});
         targets[i] = nv;
         v2q.resize(M.points.size());
       }
@@ -1034,12 +1088,146 @@ namespace QMT {
     return true;
   }
 
+  bool project_points_via_discrete_projector(QMesh& M,
+      const BoundaryProjector& projector,
+      bool onCurves = true,
+      bool onSurfaces = true) {
+    info("project points on discrete curves and triangulated surfaces ...");
+    F(v,M.points.size()) {
+      vec3 pt = M.points[v];
+      if (M.entity[v].first == 1 || M.entity[v].first == 2) {
+        pair<int,int> oldEntity = M.entity[v];
+        if (oldEntity.second == -1) {
+          int dim = M.entity[v].first;
+          int tag = -1;
+          double dist;
+          bool okc = projector.closestEntity({pt}, dist, dim, tag);
+          if (okc) {
+            oldEntity = {dim,tag};
+            warn("v = {}, mapping from entity ({},{}) to initial one not found, using closest entity ({},{}), dist = {}", v, M.entity[v].first, M.entity[v].second, dim, tag, dist);
+          } else {
+            warn("v = {}, mapping from entity ({},{}) to initial one not found", v, M.entity[v].first, M.entity[v].second);
+            continue;
+          }
+        }
+        if ((onCurves && oldEntity.first == 1) || (onSurfaces && oldEntity.first == 2)) {
+          vec3 proj;
+          bool okp = projector.project(oldEntity.first,oldEntity.second,pt,proj);
+          if (okp) {
+            if (proj[0] == DBL_MAX) {
+              error("wrong projected point: {}", proj);
+              continue;
+            }
+            M.points[v] = proj;
+          } else {
+            warn("failed to project point {} on {}", M.points[v], oldEntity);
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  bool fill_missing_entries_in_entity_mapping(QMesh& M,
+      const BoundaryProjector& projector,
+      std::map<std::pair<int,int>,std::pair<int,int>>& entityToInitialEntity) {
+    info("fill missing entries in entity mapping to initial geometry ...");
+
+    std::map<std::pair<int,int>,vector<vec3> > entityToPoints;
+    F(v,M.points.size()) {
+      vec3 pt = M.points[v];
+      if (M.entity[v].first == 1 || M.entity[v].first == 2) {
+        auto it = entityToInitialEntity.find(M.entity[v]);
+        if (it == entityToInitialEntity.end()) {
+          entityToPoints[M.entity[v]].push_back(pt);
+        }
+      }
+    }
+    F(f,M.quads.size()) {
+      pair<int,int> ent = {2,M.quadEntity[f]};
+      auto it = entityToInitialEntity.find(ent);
+      if (it == entityToInitialEntity.end()) {
+        auto& it2 = entityToPoints[ent];
+        it2.push_back(M.points[M.quads[f][0]]);
+        it2.push_back(M.points[M.quads[f][1]]);
+        it2.push_back(M.points[M.quads[f][2]]);
+        it2.push_back(M.points[M.quads[f][3]]);
+      }
+    }
+    for (const auto& kv: entityToPoints) {
+      pair<int,int> entity = kv.first;
+      int dim = -1;
+      int tag = -1;
+      double dist = DBL_MAX;
+      bool okc = projector.closestEntity(kv.second, dist, dim, tag);
+      if (okc) {
+        entityToInitialEntity[entity] = {dim,tag};
+        warn("  entity {} ({} points) had no mapping to initial entity, set to closest one {} (dist={})", entity, kv.second.size(), std::make_pair(dim,tag), dist);
+      } else {
+        error("  entity {} ({} points) had no mapping to initial entity, did NOT found a closest entity", entity, kv.second.size());
+      }
+    }
+
+    return true;
+  }
+
+  bool project_points_on_geo_entities(QMesh& M,
+      const std::string& initialGeometryName,
+      std::map<std::pair<int,int>,std::pair<int,int>>* entityToInitialEntity) {
+    std::string current;
+    gmsh::model::getCurrent(current);
+
+    bool from_disk = false;
+    if (is_file(initialGeometryName.c_str())) {
+      warn("horrible temporary solution, loading geometry from disk: {}",initialGeometryName);
+      gmsh::model::add("tmp_geometry");
+      gmsh::merge(initialGeometryName);
+      from_disk = true;
+    } else {
+      gmsh::model::setCurrent(initialGeometryName);
+    }
+
+    map<pair<int,int>, pair<vector<id>,vector<double> > > entity_to_vertices;
+    F(v,M.points.size()) {
+      vec3 pt = M.points[v];
+      if (M.entity[v].first == 1 || M.entity[v].first == 2) {
+        pair<int,int> oldEntity = M.entity[v];;
+        auto& ref = entity_to_vertices[oldEntity];
+        ref.first.push_back(v);
+        ref.second.push_back(pt[0]);
+        ref.second.push_back(pt[1]);
+        ref.second.push_back(pt[2]);
+      }
+    }
+    for (auto& kv: entity_to_vertices) {
+      int dim = kv.first.first;
+      int tag = kv.first.second;
+      info("---- {},{}", dim, tag);
+      vector<double> pCoords;
+      info("getParametrization ...");
+      gmsh::model::getParametrization(dim, tag, kv.second.second, pCoords);
+      vector<double> points;
+      info("getValue ...");
+      gmsh::model::getValue(dim, tag, pCoords, points);
+      F(lv,kv.second.first.size()) {
+        id v = kv.second.first[lv];
+        M.points[v] = {points[3*lv],points[3*lv+1],points[3*lv+2]};
+      }
+    }
+    gmsh::model::setCurrent(current);
+
+    return true;
+  }
+
+
   bool generate_quad_mesh_from_gmsh_colored_triangulation(
       const std::string& modelName,
       int H_tag,
       double size_min,
       double size_max,
-      QMesh& M) {
+      QMesh& M,
+      const BoundaryProjector* projector,
+      const std::map<std::pair<int,int>,std::pair<int,int>>* entityToInitialEntity) {
     /* gmsh initialization */
     gmsh::initialize(0, 0, false);
 
@@ -1059,7 +1247,9 @@ namespace QMT {
 
     /* 1. Import the patchs from gmsh and store the relevant information */
     vector<id4> patches;
+    vector<int> patchEntity;
     unordered_map<id2,vector<vec3>,id2Hash> pairToPoints;
+    unordered_map<id2,int,id2Hash> pairToEntity;
 
     std::map<int,id> nodeToMeshVertex; /* mapping from geometric node to gmsh mesh vertex */
     std::map<int,id> meshVertexToV; /* mapping from gmsh mesh vertex to QMesh vertex */
@@ -1078,9 +1268,11 @@ namespace QMT {
           return false;
         }
         vec3 pt = {coords[0],coords[1],coords[2]};
-
         double size = sizemap.eval(pt); /* call the gmsh API */
-        id nv = add_vertex(M, pt, false, false, size);
+        pair<int,int> entity = {-1,-1};
+        auto it = entityToInitialEntity->find({0,node});
+        if (it != entityToInitialEntity->end()) entity = it->second;
+        id nv = add_vertex(M, pt, size, entity);
         nodeToMeshVertex[node] = vertices[0];
         meshVertexToV[vertices[0]] = nv;
       }
@@ -1108,6 +1300,7 @@ namespace QMT {
         id2 scurve = sorted(node1,node2);
         if (scurve[0] != node1) std::reverse(points.begin(),points.end());
         pairToPoints[scurve] = points;
+        pairToEntity[scurve] = curve;
       }
     }
 
@@ -1143,11 +1336,12 @@ namespace QMT {
           F(k,4) vert.push_back(quad[k]);
           sort_unique(vert);
           if (vert.size() != 4) {
-            error("surface {}: wrong quad:", surfaces[s].second, quad);
+            error("surface {}: wrong quad: {}", surfaces[s].second, quad);
             return false;
           }
         }
         patches.push_back(quad);
+        patchEntity.push_back(surfaces[s].second);
       }
       if (!ok) return false;
     }
@@ -1240,10 +1434,14 @@ namespace QMT {
           error("  ! failed to sample curve, N={}", nb_ipts);
           return false;
         }
+        int curve = pairToEntity[edges[j]];
+        pair<int,int> entity = {-1,-1};
+        auto itt = entityToInitialEntity->find({1,curve});
+        if (itt != entityToInitialEntity->end()) entity = itt->second;
         vector<id> nvert;
         F(k,ipts.size()) {
           double size = sizemap.eval(ipts[k]); /* call the gmsh API */
-          id nv = add_vertex(M, ipts[k], false, false, size);
+          id nv = add_vertex(M, ipts[k], size, entity);
           nvert.push_back(nv);
         }
         pairToNewVertices[edges[j]] = nvert;
@@ -1280,10 +1478,14 @@ namespace QMT {
           return false;
         }
       }
+      pair<int,int> entity = {-1,-1};
+      auto itt = entityToInitialEntity->find({2,patchEntity[c]});
+      if (itt != entityToInitialEntity->end()) entity = itt->second;
+
       vector<id> qVertices(ipts.size(),NO_ID);
       F(i,ipts.size()) {
         double size = sizemap.eval(ipts[i]); /* call the gmsh API */
-        id nv = add_vertex(M, ipts[i], false, false, size);
+        id nv = add_vertex(M, ipts[i], size, entity);
         qVertices[i] = nv;
       }
 
@@ -1313,13 +1515,46 @@ namespace QMT {
         vert[1] = allVertices[1+i][j];
         vert[2] = allVertices[1+i][1+j];
         vert[3] = allVertices[i][1+j];
-        add_quad(M, vert, c);
+        add_quad(M, vert, c, entity.second);
       }
     }
 
     compute_quad_adjacencies(M.quads, M.quad_neighbors, M.nm_quad_neighbors);
 
     info("quad mesh: {} vertices, {} quads", M.points.size(), M.quads.size());
+
+    // std::string initialGeometryName = "no_geometry";
+    // if (initialGeometryName != "no_geometry") {
+    //   info("project points on initial geometry ...");
+    //   bool okp = project_points_on_geo_entities(M, initialGeometryName, entityToInitialEntity);
+    //   if (!okp) {
+    //     error("failed to project point on initial geometry");
+    //   }
+    // } else {
+    //   warn("cannot project on initial geometry, initialGeometryName = {}", initialGeometryName);
+    // }
+    
+    if (projector != NULL) {
+      size_t nac = 0;
+      size_t nas = 0;
+      FC(v,M.points.size(),M.entity[v].first == -1 || M.entity[v].second == -1) {
+        int dim = M.entity[v].first;
+        int tag = -1;
+        double dist;
+        bool okc = projector->closestEntity({M.points[v]}, dist, dim, tag);
+        if (!okc || dim == -1 || tag == -1) {
+          warn("failed to find closest entity for v = {}", v);
+        } else {
+          M.entity[v] = {dim,tag};
+          if (dim == 1) {nac += 1;} else if (dim == 2){nas += 1;}
+        }
+      }
+      if (nac + nas > 0) warn("{} vertices assigned to closest entities ({} to curves and {} to surfaces)", nac+nas, nac, nas);
+      bool okp = project_points_via_discrete_projector(M, *projector);
+      if (!okp) {
+        error("failed to project point on initial geometry");
+      }
+    }
 
     return true;
   }
@@ -1370,7 +1605,8 @@ namespace QMT {
     return true;
   }
 
-  bool simplify_quad_mesh(QMesh& M, double size_collapse, int nb_collapse_max) {
+  bool simplify_quad_mesh(QMesh& M, double size_collapse, int nb_collapse_max,
+      const BoundaryProjector* projector) {
     info("quad mesh simplification (size_collapse = {}) ...", size_collapse);
 
     constexpr bool SHOW_DETAILS = false; /* Show low of intermediate stuff in views, only for debugging */
@@ -1392,7 +1628,7 @@ namespace QMT {
         F(lv,4) inside[M.quads[c][lv]] = true;
       }
       FC(v,M.points.size(), inside[v]) nbv += 1;
-      FC(v,M.points.size(), inside[v] && !M.onBoundary[v] && valence[v] != 4)  nbirr += 1;
+      FC(v,M.points.size(), inside[v] && M.entity[v].first == 2 && valence[v] != 4)  nbirr += 1;
       info("input: {} vertices ({} irregular), {} quads", nbv, nbirr, nbq);
     }
 
@@ -1444,8 +1680,9 @@ namespace QMT {
           if (M.quads[q][0] == NO_ID) continue;
           FC(lv,4,M.quads[q][lv] != NO_ID) valence[M.quads[q][lv]] = valence[M.quads[q][lv]] + 1;
           FC(le,4,M.quad_neighbors[q][le] == NO_SID) {
-            M.onBoundary[M.quads[q][le]] = true;
-            M.onBoundary[M.quads[q][(le+1)%4]] = true;
+            // !!!! TODO: how to replace these ones ? !!!!!!
+            // M.onBoundary[M.quads[q][le]] = true;
+            // M.onBoundary[M.quads[q][(le+1)%4]] = true;
           }
         }
       }
@@ -1492,8 +1729,41 @@ namespace QMT {
         F(lv,4) inside[M.quads[c][lv]] = true;
       }
       FC(v,M.points.size(), inside[v]) nbv += 1;
-      FC(v,M.points.size(), inside[v] && !M.onBoundary[v] && valence[v] != 4) nbirr += 1;
+      FC(v,M.points.size(), inside[v] && M.entity[v].first == 2 && valence[v] != 4) nbirr += 1;
       info("output: {} vertices ({} irregular), {} quads", nbv, nbirr, nbq);
+    }
+
+    if (projector != NULL) {
+      size_t nc = 0;
+      double dmax = 0.;
+      FC(v,M.points.size(),M.entity[v].first == -1 || M.entity[v].second == -1) {
+        if (M.entity[v].first == -1) {
+          error("cannot deal with vertex v={}, M.entity[v] = {}", M.entity[v]);
+          return false;
+        }
+        int dim = M.entity[v].first;
+        int tag = -1;
+        double dist;
+        bool okc = projector->closestEntity({M.points[v]}, dist, dim, tag);
+        if (okc) {
+          // warn("  v = {}, pt = {}, M.entity[v] = {} -> {}", v, M.points[v], M.entity[v], std::make_pair(dim,tag));
+          M.entity[v] = {dim,tag};
+          nc += 1;
+          dmax = std::max(dmax,dist);
+        } else {
+          warn("v = {}, mapping from entity ({},{}) to initial one not found", v, M.entity[v].first, M.entity[v].second);
+          continue;
+        }
+      }
+      if (nc > 0) {
+        warn("{} vertices got closest entity assigned (dist max = {})", nc, dmax);
+      }
+
+
+      bool okp = project_points_via_discrete_projector(M, *projector);
+      if (!okp) {
+        error("failed to project point on initial geometry");
+      }
     }
 
     return true;
