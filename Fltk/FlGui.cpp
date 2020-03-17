@@ -22,6 +22,7 @@
 #include "statisticsWindow.h"
 #include "visibilityWindow.h"
 #include "highOrderToolsWindow.h"
+#include "quadMeshingToolsWindow.h"
 #include "clippingWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
@@ -592,6 +593,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   stats = new statisticsWindow(CTX::instance()->deltaFontSize);
   visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
   highordertools = new highOrderToolsWindow(CTX::instance()->deltaFontSize);
+  quadmeshingtools = new quadMeshingToolsWindow(CTX::instance()->deltaFontSize);
   clipping = new clippingWindow(CTX::instance()->deltaFontSize);
   manip = new manipWindow(CTX::instance()->deltaFontSize);
   elementaryContext =
@@ -626,6 +628,7 @@ FlGui::~FlGui()
   delete stats;
   delete visibility;
   delete highordertools;
+  delete quadmeshingtools;
   delete clipping;
   delete manip;
   delete elementaryContext;
@@ -1361,6 +1364,8 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->visibility->win->iconize();
     if(FlGui::instance()->highordertools->win->shown())
       FlGui::instance()->highordertools->win->iconize();
+    if(FlGui::instance()->quadmeshingtools->win->shown())
+      FlGui::instance()->quadmeshingtools->win->iconize();
     if(FlGui::instance()->clipping->win->shown())
       FlGui::instance()->clipping->win->iconize();
     if(FlGui::instance()->manip->win->shown())
@@ -1438,6 +1443,8 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->visibility->win->show();
     if(FlGui::instance()->highordertools->win->shown())
       FlGui::instance()->highordertools->win->show();
+    if(FlGui::instance()->quadmeshingtools->win->shown())
+      FlGui::instance()->quadmeshingtools->win->show();
     if(FlGui::instance()->clipping->win->shown())
       FlGui::instance()->clipping->win->show();
     if(FlGui::instance()->manip->win->shown())

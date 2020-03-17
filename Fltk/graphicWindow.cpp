@@ -66,6 +66,9 @@ typedef unsigned long intptr_t;
 #if defined(HAVE_TOUCHBAR)
 #include "touchBar.h"
 #endif
+#if defined(HAVE_QUADMESHINGTOOLS)
+#include "quadMeshingToolsWindow.h"
+#endif
 
 static void file_new_cb(Fl_Widget *w, void *data)
 {
@@ -4319,6 +4322,10 @@ static menuItem static_modules[] = {
 #if defined(HAVE_METIS)
   {"0Modules/Mesh/Experimental/Convert old partitioning",
     (Fl_Callback *)mesh_convert_old_partitioning_cb} ,
+#endif
+#if defined(HAVE_QUADMESHINGTOOLS)
+  {"0Modules/Mesh/Experimental/Quad meshing tools",
+   (Fl_Callback *)quadmeshingtools_cb},
 #endif
   {"0Modules/Mesh/Delete/Elements",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,

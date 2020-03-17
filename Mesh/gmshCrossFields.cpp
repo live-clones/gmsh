@@ -3280,14 +3280,14 @@ public:
     for(it = C.begin(); it != C.end(); ++it) pc.push_back(&(it->second));
     for(it = C.begin(); it != C.end(); ++it) {
       std::pair<size_t,size_t> edge = std::make_pair(it->first.getMinVertex()->getIndex(),
-            it->first.getMaxVertex()->getIndex());
+          it->first.getMaxVertex()->getIndex());
       std::map<std::pair<size_t,size_t>,double>::iterator itr = edge_to_angle.find(edge);
       double A = 0;
       if (itr == edge_to_angle.end()) {
         Msg::Warning("Edge not found in result");
       }
       else{
-	A = itr->second;
+        A = itr->second;
       }
       //      it->second.normalize(itr->second);
       it->second._a = it->second._atemp = A;
@@ -3296,7 +3296,7 @@ public:
       it->second._btemp = itr->second;
       //      it->second.computeVector();
       //it->second.computeAngle();
- /* issue from here I guess: theta transfer not sufficient ? */
+      /* issue from here I guess: theta transfer not sufficient ? */
     }
     //    fastImplementationExtrinsic(C,1.e-9);
     //    for(it = C.begin(); it != C.end(); ++it) it->second.computeAngle();
