@@ -23,6 +23,7 @@
 
 #ifdef HAVE_QUADMESHINGTOOLS
 #include "quad_meshing_tools.h"
+#include "qmt_utils.hpp" /* for debug print macro */
 #endif
 
 
@@ -1617,6 +1618,9 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
     p = std::make_pair(it->first.getVertex(1), &it->second);
     conn.insert(p);
   }
+  size_t nb_pos = 0;
+  size_t nb_neg = 0;
+  size_t nb_unknown = 0;
   MVertex *v = NULL;
   std::vector<cross2d *> adj;
   for(std::multimap<MVertex *, cross2d *, MVertexPtrLessThan>::iterator it =
@@ -1635,9 +1639,17 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
           indices[v] = 1;
         else if(isMin)
           indices[v] = -1;
-        else
-          printf("ERROR -- \n");
+        // else
+        //   printf("ERROR -- \n");
+
         fprintf(f_, "SP(%g,%g,%g){%d};\n", v->x(), v->y(), v->z(), indices[v]);
+        if (isMax) {
+          nb_pos += 1;
+        } else if (isMin) {
+          nb_neg += 1;
+        } else {
+          nb_unknown += 1;
+        }
       }
       adj.clear();
       if (it != conn.end()){
@@ -1649,6 +1661,7 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   }
   fprintf(f_, "};\n");
   fclose(f_);
+  printf("singularity dection: %li with positive index, %li with negative, %li unknown\n", nb_pos, nb_neg, nb_unknown);
 }
 
 
@@ -3253,12 +3266,16 @@ public:
     std::vector<cross2d *> pc;
     for(it = C.begin(); it != C.end(); ++it) pc.push_back(&(it->second));
     for(it = C.begin(); it != C.end(); ++it) {
-      std::pair<size_t,size_t> edge = std::make_pair(it->first.getMinVertex()->getIndex(),
-          it->first.getMaxVertex()->getIndex());
+      std::pair<size_t,size_t> edge = std::make_pair(it->first.getMinVertex()->getNum(),
+          it->first.getMaxVertex()->getNum());
+      if (edge.first == edge.second) continue;
       std::map<std::pair<size_t,size_t>,double>::iterator itr = edge_to_angle.find(edge);
       double A = 0;
       if (itr == edge_to_angle.end()) {
-        Msg::Warning("Edge not found in result");
+        Msg::Error("Edge (%i,%i) not found in result", edge.first, edge.second);
+        abort();
+        // TODO debug this error when starting from .geo input
+        return -1;
       }
       else{
         A = itr->second;
@@ -3669,23 +3686,23 @@ public:
           MEdge e1 = t->getEdge((k + 1) % 3);
           MEdge e2 = t->getEdge((k + 2) % 3);
 
-	  // Gaussian Curvatures
-	  MVertex *vk = t->getVertex(k);
-	  MVertex *vk1 = t->getVertex((k + 1) % 3);
-	  MVertex *vk2 = t->getVertex((k + 2) % 3);
-	  SVector3 v1 (vk1->x()-vk->x(),vk1->y()-vk->y(),vk1->z()-vk->z());
-	  SVector3 v2 (vk2->x()-vk->x(),vk2->y()-vk->y(),vk2->z()-vk->z());
-	  double CURV = angle(v1,v2);
-	  std::map<MVertex *, double>::iterator itg = gaussianCurvatures.find(vk);
-	  if (itg == gaussianCurvatures.end())  gaussianCurvatures[vk] = CURV;
-	  else itg->second += CURV;
-	  //---------------------------------------------------------------------
+          // Gaussian Curvatures
+          MVertex *vk = t->getVertex(k);
+          MVertex *vk1 = t->getVertex((k + 1) % 3);
+          MVertex *vk2 = t->getVertex((k + 2) % 3);
+          SVector3 v1 (vk1->x()-vk->x(),vk1->y()-vk->y(),vk1->z()-vk->z());
+          SVector3 v2 (vk2->x()-vk->x(),vk2->y()-vk->y(),vk2->z()-vk->z());
+          double CURV = angle(v1,v2);
+          std::map<MVertex *, double>::iterator itg = gaussianCurvatures.find(vk);
+          if (itg == gaussianCurvatures.end())  gaussianCurvatures[vk] = CURV;
+          else itg->second += CURV;
+          //---------------------------------------------------------------------
 
           cross2d c(e, t, e1, e2);
           std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
-          if(it == C.end())
+          if(it == C.end()) {
             C.insert(std::make_pair(e, c));
-          else {
+          } else {
             it->second._t.push_back(t);
             it->second._neighbors.push_back(e1);
             it->second._neighbors.push_back(e2);
@@ -4525,7 +4542,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
         Msg::Debug("  entity (%i,%i): %li vertices", edim,etag,entities[i]->mesh_vertices.size());
         for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
           MVertex *v = entities[i]->mesh_vertices[j];
-          vertInitialEntity[v->getIndex()] = {edim,etag};
+          vertInitialEntity[v->getNum()] = {edim,etag};
         }
       }
     }
@@ -4572,7 +4589,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
         std::map<std::pair<int,int>,size_t> old_entity_common;
         for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
           MVertex *v = entities[i]->mesh_vertices[j];
-          auto it = vertInitialEntity.find(v->getIndex());
+          auto it = vertInitialEntity.find(v->getNum());
           if (it == vertInitialEntity.end()) continue;
           std::pair<int,int> oldEntity = it->second;
           old_entity_common[oldEntity] += 1;

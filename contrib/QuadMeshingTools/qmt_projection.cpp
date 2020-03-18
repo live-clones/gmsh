@@ -436,20 +436,30 @@ namespace QMT {
     }
   }
 
+  bool BoundaryProjector::projectionOnEntityAvailable(int dim, int tag) const {
+    if (tag < 0 || dim < 1 || dim > 2) return false;
+    if (dim == 1 && tag >= curve_tree.size()) {
+      return false;
+    } else if (dim == 2 && tag >= curve_tree.size()) {
+      return false;
+    } else if (dim == 1 && curve_tree[tag] == NULL) {
+      return false;
+    } else if (dim == 2 && surface_tree[tag] == NULL) {
+      return false;
+    }
+    return true;
+  }
+
   bool BoundaryProjector::project(int dim, int tag, vec3 query, vec3& projection) const {
     projection = {DBL_MAX,DBL_MAX,DBL_MAX};
     static_kd_tree_t* tree = NULL;
+    if (!projectionOnEntityAvailable(dim,tag)) {
+      error("no kdtree available for entity ({},{})", dim, tag);
+      return false;
+    }
     if (dim == 1) {
-      if (tag >= curve_tree.size()) {
-        error("no kdtree found for curve {}", tag);
-        return false;
-      }
       tree = (static_kd_tree_t*) curve_tree[tag];
     } else if (dim == 2) {
-      if (tag >= surface_tree.size()) {
-        error("no kdtree found for surface {}", tag);
-        return false;
-      }
       tree = (static_kd_tree_t*) surface_tree[tag];
     } else {
       return false;
