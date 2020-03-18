@@ -17,6 +17,7 @@ set(SRC
     statisticsWindow.cpp
     visibilityWindow.cpp
     highOrderToolsWindow.cpp
+    quadMeshingToolsWindow.cpp
     clippingWindow.cpp
     manipWindow.cpp
     contextWindow.cpp

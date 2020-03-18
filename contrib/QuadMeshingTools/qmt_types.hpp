@@ -56,10 +56,12 @@ namespace QMT {
     /* one value per line */
     std::vector<id2> lines;
     std::vector<id> line_colors;
+    std::vector<id> line_elt_tags;
 
     /* one value per triangle */
     std::vector<id3> triangles;
     std::vector<id> tri_colors;
+    std::vector<id> tri_elt_tags;
     std::vector<sid3> triangle_neighbors;
     std::vector<std::vector<id>> nm_triangle_neighbors;
   };

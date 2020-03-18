@@ -1537,9 +1537,12 @@ namespace QMT {
     if (projector != NULL) {
       size_t nac = 0;
       size_t nas = 0;
-      FC(v,M.points.size(),M.entity[v].first == -1 || M.entity[v].second == -1) {
+      F(v,M.points.size()) {
         int dim = M.entity[v].first;
-        int tag = -1;
+        int tag = M.entity[v].second;
+        if (projector->projectionOnEntityAvailable(dim,tag)) continue;
+        dim = -1;
+        tag = -1;
         double dist;
         bool okc = projector->closestEntity({M.points[v]}, dist, dim, tag);
         if (!okc || dim == -1 || tag == -1) {

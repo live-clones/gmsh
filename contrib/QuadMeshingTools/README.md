@@ -49,6 +49,7 @@ See detailed algorithm.  Install and enable MUMPS for fast computations.
 - Communication with gmsh mainly via the C++ API, with direct access to gmsh for the linear algebra solver
 - To link `gmsh` with the MPI-free version of `mumps` on ArchLinux (`mumps-seq-shared` package in AUR), use the following CMake
 command: cmake .. -DCMAKE_CXX_FLAGS=-I/usr/include/mumps-seq-shared -DENABLE_MUMPS=YES -DSMUMPS_INC=/usr/include/mumps-seq-shared -DSMUMPS_INC=/usr/include/mumps-seq-shared -DCMUMPS_INC=/usr/include/mumps-seq-shared -DZMUMPS_INC=/usr/include/mumps-seq-shared -DDMUMPS_INC=/usr/include/mumps-seq-shared
+- On Ubuntu, use the package `libmumps-seq-5.1.2` and adapt the CMake command
 
 ## Authors
 

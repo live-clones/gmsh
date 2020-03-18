@@ -196,6 +196,7 @@ namespace QMT {
             F(j,elementTags[i].size()) {
               M.lines.push_back({id(nodeTags[i][2*j+0]),id(nodeTags[i][2*j+1])});
               M.line_colors.push_back(id(curves[k].second));
+              M.line_elt_tags.push_back(id(elementTags[i][j]));
             }
           }
         }
@@ -215,6 +216,7 @@ namespace QMT {
             F(j,elementTags[i].size()) {
               M.triangles.push_back({id(nodeTags[i][3*j+0]),id(nodeTags[i][3*j+1]),id(nodeTags[i][3*j+2])});
               M.tri_colors.push_back(id(surfs[k].second));
+              M.tri_elt_tags.push_back(id(elementTags[i][j]));
             }
           }
         }
@@ -223,6 +225,7 @@ namespace QMT {
 
     return true;
   }
+
 
   inline double triangle_area(const TMesh& M, id t) {
     vec3 N = cross(M.points[M.triangles[t][2]]-M.points[M.triangles[t][0]],
@@ -725,7 +728,7 @@ namespace QMT {
     double et = gmsh::logger::getWallTime() - wti;
     info("elapsed time: {}", et);
 
-    {
+    if (false) {
       info("create visualization view with crosses");
       create_view_with_crosses("crosses", M, uIEdges, uIEdgeToOld, x);
     }
@@ -737,6 +740,41 @@ namespace QMT {
         double theta = (len > EPS) ? 1./4*atan2(x[2*e+1]/len,x[2*e]/len) : 0.;
         (*edge_to_angle)[std::make_pair(uIEdges[e][0],uIEdges[e][1])] = theta;
       }
+    }
+
+    { /* create the theta view */
+      std::string cname;
+      gmsh::model::getCurrent(cname);
+      std::vector<std::size_t> keys;
+      std::vector<std::vector<double> > values;
+      F(f,M.triangles.size()) {
+        keys.push_back(M.tri_elt_tags[f]);
+        std::vector<double> vals;
+        F(le,3) {
+          id v1 = M.triangles[f][le];
+          id v2 = M.triangles[f][(le+1)%3];
+          id e = old2IEdge[3*f+le];
+          double len = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
+          double theta = (len > EPS) ? 1./4*atan2(x[2*e+1]/len,x[2*e]/len) : 0.;
+          id2 edge = uIEdges[e];
+          if (v1 == edge[0] && v2 == edge[1]) {
+            vals.push_back(theta);
+          } else if (v1 == edge[1] && v2 == edge[0]) {
+            vals.push_back(-theta);
+          } else {
+            error("problem with triangle {}, local edge {}: v1={},v2={} but edge={}", f, le, v1, v2, edge);
+            return false;
+          }
+        }
+        values.push_back(vals);
+      }
+      if (crossFieldTag < 0) {
+        info("create the 'theta' view");
+        crossFieldTag = gmsh::view::add("theta");
+      } else {
+        info("fill theta in the given view (tag = {})", crossFieldTag);
+      }
+      gmsh::view::addModelData(crossFieldTag, 0, cname, "ElementData", keys, values);
     }
 
     info("... done");
