@@ -2289,9 +2289,9 @@ int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
   for(std::size_t i = 0; i < candidates.size(); i++) {
     if(_isBound(dim, candidates[i])) { num++; }
   }
-  Msg::Info("Extruded mesh constraint fuzzy search: found %d candidates "
-            "(dim=%d, %d bound)",
-            (int)candidates.size(), dim, num);
+  Msg::Debug("Extruded mesh constraint fuzzy search: found %d candidates "
+             "(dim=%d, %d bound)",
+             (int)candidates.size(), dim, num);
   for(std::size_t i = 0; i < candidates.size(); i++) {
     if(_isBound(dim, candidates[i])) { return _find(dim, candidates[i]); }
   }
