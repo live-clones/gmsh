@@ -2348,7 +2348,7 @@ std::vector< int > &basisFunctionsIndex, const int tag)
     for(std::size_t iElement = 0; iElement < numElements; ++iElement) {
       MElement *e = entities[0]->getMeshElementByType(familyType, iElement);
       if(eSize != 0) {
-        for(unsigned int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
+        for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
           MEdge edge = e->getEdge(iEdge);
           const int orientationFlag = (edge.getMinVertex()->getNum() != unsigned(e->getVertexSolin(iEdge, 0)) ? 1 : -1);
           for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
@@ -2359,11 +2359,11 @@ std::vector< int > &basisFunctionsIndex, const int tag)
         
       if(fSize != 0) {
         for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
-          for(unsigned int j = 0; j < fSize; ++j) {
+          for(int j = 0; j < fSize; ++j) {
             fTableCopy[i][j] = fTable[i][j];
           }
         }
-        for(unsigned int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
+        for(int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
           MFace face = e->getFaceSolin(iFace);
           std::vector< int > faceOrientationFlag(3);
           face.getOrientationFlagForFace(faceOrientationFlag);
@@ -2466,7 +2466,7 @@ std::vector< int > &basisFunctionsIndex, const int tag)
     for(std::size_t iElement = 0; iElement < numElements; ++iElement) {
       MElement *e = entities[0]->getMeshElementByType(familyType, iElement);
       if(eSize != 0) {
-        for(unsigned int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
+        for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
           MEdge edge = e->getEdge(iEdge);
           const int orientationFlag = (edge.getMinVertex()->getNum() != unsigned(e->getVertexSolin(iEdge, 0)) ? 1 : -1);
           for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
@@ -2477,13 +2477,13 @@ std::vector< int > &basisFunctionsIndex, const int tag)
         
       if(fSize != 0) {
         for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
-          for(unsigned int j = 0; j < fSize; ++j) {
+          for(int j = 0; j < fSize; ++j) {
             for(unsigned int k = 0; k < 3; ++k) {
               fTableCopy[i][j][k] = fTable[i][j][k];
             }
           }
         }
-        for(unsigned int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
+        for(int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
           MFace face = e->getFaceSolin(iFace);
           std::vector< int > faceOrientationFlag(3);
           face.getOrientationFlagForFace(faceOrientationFlag);
@@ -2707,7 +2707,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       for(std::size_t iElement = begin; iElement < end; ++iElement) {
         MElement *e = ge->getMeshElementByType(familyType, iElement);
         if(eSize != 0) {
-          for(unsigned int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
+          for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
             MEdge edge = e->getEdge(iEdge);
             const int orientationFlag = (edge.getMinVertex()->getNum() != unsigned(e->getVertexSolin(iEdge, 0)) ? 1 : -1);
             for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
@@ -2718,11 +2718,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         
         if(fSize != 0) {
           for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
-            for(unsigned int j = 0; j < fSize; ++j) {
+            for(int j = 0; j < fSize; ++j) {
               fTableCopy[i][j] = fTable[i][j];
             }
           }
-          for(unsigned int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
+          for(int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
             MFace face = e->getFaceSolin(iFace);
             std::vector< int > faceOrientationFlag(3);
             face.getOrientationFlagForFace(faceOrientationFlag);
@@ -2808,7 +2808,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       for(std::size_t iElement = begin; iElement < end; ++iElement) {
         MElement *e = ge->getMeshElementByType(familyType, iElement);
         if(eSize != 0) {
-          for(unsigned int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
+          for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
             MEdge edge = e->getEdge(iEdge);
             const int orientationFlag = (edge.getMinVertex()->getNum() != unsigned(e->getVertexSolin(iEdge, 0)) ? 1 : -1);
             for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
@@ -2819,13 +2819,13 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         
         if(fSize != 0) {
           for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
-            for(unsigned int j = 0; j < fSize; ++j) {
+            for(int j = 0; j < fSize; ++j) {
               for(unsigned int k = 0; k < 3; ++k) {
                 fTableCopy[i][j][k] = fTable[i][j][k];
               }
             }
           }
-          for(unsigned int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
+          for(int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
             MFace face = e->getFaceSolin(iFace);
             std::vector< int > faceOrientationFlag(3);
             face.getOrientationFlagForFace(faceOrientationFlag);
