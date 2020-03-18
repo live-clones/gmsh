@@ -30,9 +30,17 @@
 #include "quad_meshing_tools.h"
 #endif
 
-static void qmt_crossfield_cb(Fl_Widget *w, void *data)
+static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 {
-  // int status = computeCrossField(GModel::current());
+  int status = computeCrossField(GModel::current());
+  if (status != 0) {
+    Msg::Error("failed to compute cross field");
+  }
+  drawContext::global()->draw();
+}
+
+static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
+{
   drawContext::global()->draw();
 }
 
@@ -64,8 +72,13 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     Fl_Box *b =
       new Fl_Box(x - WB, y, width, BH, "1. Generation of cross-field");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-    push[0] = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Generate");
-    push[0]->callback(qmt_crossfield_cb);
+    y += BH;
+    push_crossfield_gen = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Generate");
+    push_crossfield_gen->callback(qmt_crossfield_generate_cb);
+    y += BH;
+    push_crossfield_show = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Show");
+    push_crossfield_show->callback(qmt_crossfield_show_cb);
+    if (!crossfield) push_crossfield_show->clear_active();
   }
 
   win->end();
@@ -76,6 +89,11 @@ void quadMeshingToolsWindow::show(bool redrawOnly) {
   if(win->shown() && redrawOnly)
     win->redraw();
   else {
+    if (crossfield) {
+      push_crossfield_show->activate();
+    } else {
+      push_crossfield_show->clear_active();
+    }
     win->show();
   }
 }

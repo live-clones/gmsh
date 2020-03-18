@@ -4859,3 +4859,23 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   return -1;
 #endif
 }
+
+/* API call, generate a view named 'theta' with 3 values per triangle */
+int computeCrossField(GModel * gm) {
+#if defined(HAVE_QUADMESHINGTOOLS)
+  int nb_iter = 8;
+  int cf_tag = -1;
+  PView* theta = PView::getViewByName("theta");
+  if (theta) cf_tag = theta->getTag();
+
+  bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,NULL);
+  if (!okcf) {
+    Msg::Error("Failed to compute cross field");
+    return -1;
+  }
+#else
+  Msg::Error("This Cross field computation requires the QuadMeshingTools module");
+  return -1;
+#endif
+  return 0;
+}

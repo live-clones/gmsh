@@ -26,6 +26,8 @@ public:
   Fl_Value_Input *value[12];
   Fl_Choice *choice[4];
   Fl_Button *push[2];
+  Fl_Button *push_crossfield_gen;
+  Fl_Button *push_crossfield_show;
 
 public:
   quadMeshingToolsWindow(int deltaFontSize = 0);
