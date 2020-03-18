@@ -319,9 +319,35 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
         case 22: elements[2][1].push_back(new MTriangle6(cells[i])); break;
         case 23: elements[3][1].push_back(new MQuadrangle8(cells[i])); break;
         case 28: elements[3][1].push_back(new MQuadrangle9(cells[i])); break;
-        case 24: elements[4][1].push_back(new MTetrahedron10(cells[i])); break;
-        case 25: elements[5][1].push_back(new MHexahedron20(cells[i])); break;
-        case 29: elements[5][1].push_back(new MHexahedron27(cells[i])); break;
+        case 24: elements[4][1].push_back(new MTetrahedron10(
+           cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
+           cells[i][5], cells[i][6], cells[i][7], cells[i][9], cells[i][8]));
+          break;
+        case 25: elements[5][1].push_back(new MHexahedron20(
+           cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
+           cells[i][5], cells[i][6], cells[i][7], cells[i][8], cells[i][11],
+           cells[i][13], cells[i][9], cells[i][16], cells[i][18], cells[i][19],
+           cells[i][17], cells[i][10], cells[i][12], cells[i][14], cells[i][15]));
+          break;
+        case 29: elements[5][1].push_back(new MHexahedron27(
+           cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
+           cells[i][5], cells[i][6], cells[i][7], cells[i][8], cells[i][11],
+           cells[i][13], cells[i][9], cells[i][16], cells[i][18], cells[i][19],
+           cells[i][17], cells[i][10], cells[i][12], cells[i][14], cells[i][15],
+           cells[i][22], cells[i][23], cells[i][21], cells[i][24], cells[i][20],
+           cells[i][25], cells[i][26]));
+          break;
+        case 26: elements[6][1].push_back(new MPrism15(
+           cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
+           cells[i][5], cells[i][6], cells[i][9], cells[i][7], cells[i][12],
+           cells[i][14], cells[i][13], cells[i][8], cells[i][10], cells[i][11]));
+          break;
+        case 32: elements[6][1].push_back(new MPrism18(
+           cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
+           cells[i][5], cells[i][6], cells[i][9], cells[i][7], cells[i][12],
+           cells[i][14], cells[i][13], cells[i][8], cells[i][10], cells[i][11],
+           cells[i][15], cells[i][17], cells[i][16]));
+          break;
         default: Msg::Error("Unknown type of cell %d", type); break;
         }
       }
