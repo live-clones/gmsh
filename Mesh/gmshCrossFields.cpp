@@ -1804,6 +1804,7 @@ static void
 groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
                 std::vector<std::vector<cross2d *> > &groups,
                 std::set<MVertex *, MVertexPtrLessThan> singularities,
+		std::map<MVertex *, double> &gaussianCurvatures,
                 std::set<MVertex *, MVertexPtrLessThan> &corners,
                 bool cutGraph = false)
 {
@@ -1846,7 +1847,9 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
       if(it2->second->inCutGraph) { countCutGraph++; }
     }
     if(bnd.size() == 2) {
-      if(fabs(dot(bnd[0]->o_i, bnd[1]->o_i)) < .25) {
+      //      printf("%lu %12.5E\n",v->getNum(),gaussianCurvatures[*it]);
+      if(gaussianCurvatures[*it] < 3*M_PI/4 ) {
+	printf("coucou\n");
         corners.insert(v);
         cutgraph.insert(v);
       }
@@ -3768,8 +3771,8 @@ public:
       if(cutG.find(e0) != cutG.end()) it->second.inCutGraph = true;
     }
 
-    groupBoundaries(gm, C, groups, singularities, corners, false);
-    groupBoundaries(gm, C, groups_cg, singularities, corners, true);
+    groupBoundaries(gm, C, groups, singularities, gaussianCurvatures,corners, false);
+    groupBoundaries(gm, C, groups_cg, singularities, gaussianCurvatures,corners, true);
 
     v2t_cont adj;
     for(size_t i = 0; i < f.size(); i++) {
@@ -4080,19 +4083,19 @@ public:
             MVertex *v2 = itt->second.first;
             ;
 
-            if(abs(id0 - id1) <= 2) {
+            if(abs(id0 - id1) == 1) {
               cutTriangles(ttt, f[i], v2,
                            f[i]->triangles[j]->getVertex((k2 + 2) % 3), ge,
                            ecuts, *iti, F);
               cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F);
             }
-            else if(abs(id0 - id2) <= 2) {
+            else if(abs(id0 - id2) == 1) {
               cutTriangles(ttt, f[i], v1,
                            f[i]->triangles[j]->getVertex((k1 + 2) % 3), ge,
                            ecuts, *iti, F);
               cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F);
             }
-            else if(abs(id1 - id2) <= 2) {
+            else if(abs(id1 - id2) == 1) {
               cutTriangles(ttt, f[i], v0,
                            f[i]->triangles[j]->getVertex((k0 + 2) % 3), ge,
                            ecuts, *iti, F);
@@ -4120,15 +4123,15 @@ public:
             ++itt;
             int id3 = itt->second.second.second;
             MVertex *v3 = itt->second.first;
-            if(abs(id0 - id1) <= 2 || abs(id2 - id3) <= 2) {
+            if(abs(id0 - id1) == 1 || abs(id2 - id3) == 1) {
               cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F);
               cutTriangles(ttt, f[i], v2, v3, ge, ecuts, *iti, F);
             }
-            else if(abs(id0 - id2) <= 2 || abs(id1 - id3) <= 2) {
+            else if(abs(id0 - id2) == 1 || abs(id1 - id3) == 1) {
               cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F);
               cutTriangles(ttt, f[i], v1, v3, ge, ecuts, *iti, F);
             }
-            else if(abs(id0 - id3) <= 2 || abs(id1 - id2) <= 2) {
+            else if(abs(id0 - id3) == 1 || abs(id1 - id2) == 1) {
               cutTriangles(ttt, f[i], v0, v3, ge, ecuts, *iti, F);
               cutTriangles(ttt, f[i], v1, v2, ge, ecuts, *iti, F);
             }
@@ -4554,7 +4557,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 2 * .99);
+  classifyFaces(GModel::current(), M_PI / 4);
   GModel::current()->remove(de);
   //  delete de;
   GModel::current()->pruneMeshVertexAssociations();
