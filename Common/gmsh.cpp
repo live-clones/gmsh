@@ -2359,7 +2359,7 @@ std::vector< int > &basisFunctionsIndex, const int tag)
         
       if(fSize != 0) {
         for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
-          for(int j = 0; j < fSize; ++j) {
+          for(unsigned int j = 0; j < fSize; ++j) {
             fTableCopy[i][j] = fTable[i][j];
           }
         }
@@ -2477,7 +2477,7 @@ std::vector< int > &basisFunctionsIndex, const int tag)
         
       if(fSize != 0) {
         for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
-          for(int j = 0; j < fSize; ++j) {
+          for(unsigned int j = 0; j < fSize; ++j) {
             for(unsigned int k = 0; k < 3; ++k) {
               fTableCopy[i][j][k] = fTable[i][j][k];
             }
@@ -2718,7 +2718,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         
         if(fSize != 0) {
           for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
-            for(int j = 0; j < fSize; ++j) {
+            for(unsigned int j = 0; j < fSize; ++j) {
               fTableCopy[i][j] = fTable[i][j];
             }
           }
@@ -2819,7 +2819,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         
         if(fSize != 0) {
           for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
-            for(int j = 0; j < fSize; ++j) {
+            for(unsigned int j = 0; j < fSize; ++j) {
               for(unsigned int k = 0; k < 3; ++k) {
                 fTableCopy[i][j][k] = fTable[i][j][k];
               }
