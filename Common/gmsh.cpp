@@ -2358,7 +2358,11 @@ std::vector< int > &basisFunctionsIndex, const int tag)
       }
         
       if(fSize != 0) {
-        fTableCopy = fTable;
+        for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
+          for(unsigned int j = 0; j < fSize; ++j) {
+            fTableCopy[i][j] = fTable[i][j];
+          }
+        }
         for(unsigned int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
           MFace face = e->getFaceSolin(iFace);
           std::vector< int > faceOrientationFlag(3);
@@ -2472,7 +2476,13 @@ std::vector< int > &basisFunctionsIndex, const int tag)
       }
         
       if(fSize != 0) {
-        fTableCopy = fTable;
+        for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
+          for(unsigned int j = 0; j < fSize; ++j) {
+            for(unsigned int k = 0; k < 3; ++k) {
+              fTableCopy[i][j][k] = fTable[i][j][k];
+            }
+          }
+        }
         for(unsigned int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
           MFace face = e->getFaceSolin(iFace);
           std::vector< int > faceOrientationFlag(3);
@@ -2707,7 +2717,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         }
         
         if(fSize != 0) {
-          fTableCopy = fTable;
+          for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
+            for(unsigned int j = 0; j < fSize; ++j) {
+              fTableCopy[i][j] = fTable[i][j];
+            }
+          }
           for(unsigned int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
             MFace face = e->getFaceSolin(iFace);
             std::vector< int > faceOrientationFlag(3);
@@ -2804,7 +2818,13 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         }
         
         if(fSize != 0) {
-          fTableCopy = fTable;
+          for(unsigned int i = 0; i < numberOfGaussPoints; ++i) {
+            for(unsigned int j = 0; j < fSize; ++j) {
+              for(unsigned int k = 0; k < 3; ++k) {
+                fTableCopy[i][j][k] = fTable[i][j][k];
+              }
+            }
+          }
           for(unsigned int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
             MFace face = e->getFaceSolin(iFace);
             std::vector< int > faceOrientationFlag(3);
