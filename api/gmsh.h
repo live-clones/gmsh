@@ -911,6 +911,34 @@ namespace gmsh { // Top-level functions
                                                  std::vector<int> & localMultipliers,
                                                  const int tag = -1);
 
+      // gmsh::model::mesh::getCompressedBasisFunctionsForElements
+      //
+      // Get the element-dependent basis functions of the elements of type
+      // `elementType' in the entity of tag `tag' at the integration points
+      // `integrationPoints' (given as concatenated triplets of coordinates in the
+      // reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
+      // space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
+      // order hierarchical H1 Legendre functions or their gradient, in the u, v, w
+      // coordinates of the reference elements). `numComponents' returns the number
+      // C of components of a basis function. `numBasisFunctions' returns the
+      // number N of basis functions per element. `basisFunctions' returns the
+      // value of the basis functions at the integration points for all
+      // oritentations that exist for element of type `elementType' in entity
+      // `tag': [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or
+      // [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
+      // `basisFunctionsIndex' returns the index of the basis function such that
+      // element `i' between have basis functions store at place i in
+      // `basisFunctions' array. Warning: this is an experimental feature and will
+      // probably change in a future release.
+      GMSH_API void getCompressedBasisFunctionsForElements(const int elementType,
+                                                           const std::vector<double> & integrationPoints,
+                                                           const std::string & functionSpaceType,
+                                                           int & numComponents,
+                                                           int & numFunctionsPerElements,
+                                                           std::vector<double> & basisFunctions,
+                                                           std::vector<int> & basisFunctionsIndex,
+                                                           const int tag = -1);
+
       // gmsh::model::mesh::getBasisFunctionsForElements
       //
       // Get the element-dependent basis functions of the elements of type
