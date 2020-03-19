@@ -328,6 +328,8 @@ namespace QMT {
 
   BoundaryProjector::BoundaryProjector(const TMesh& mesh) : M(mesh) {
     trace("BoundaryProjector constructor call");
+    size_t nc = 0;
+    size_t ns = 0;
     /* Build edge kd-trees */
     {
       trace("building curve kdtrees");
@@ -362,6 +364,7 @@ namespace QMT {
         pcas.push_back((void*)pca);
         static_kd_tree_t* tree = new static_kd_tree_t(3, *pca, KDTreeSingleIndexAdaptorParams(10));
         tree->buildIndex();
+        nc += 1;
         curve_tree[tag] = (void*) tree;
         cTreeIdToEdges[tag].resize(curve_count[tag]);
         FC(v,curve_o2n[tag].size(),curve_o2n[tag][v] != NO_ID) {
@@ -406,6 +409,7 @@ namespace QMT {
         pcas.push_back((void*)pca);
         static_kd_tree_t* tree = new static_kd_tree_t(3, *pca, KDTreeSingleIndexAdaptorParams(10));
         tree->buildIndex();
+        ns += 1;
         surface_tree[tag] = (void*) tree;
         sTreeIdToTris[tag].resize(surf_count[tag]);
         FC(v,surf_o2n[tag].size(),surf_o2n[tag][v] != NO_ID) {
@@ -415,6 +419,7 @@ namespace QMT {
         }
       }
     }
+    info("built BoundaryProjector with {} curve kdtrees and {} surface kdtrees", nc, ns);
   }
 
   BoundaryProjector::~BoundaryProjector() {
@@ -440,7 +445,7 @@ namespace QMT {
     if (tag < 0 || dim < 1 || dim > 2) return false;
     if (dim == 1 && tag >= curve_tree.size()) {
       return false;
-    } else if (dim == 2 && tag >= curve_tree.size()) {
+    } else if (dim == 2 && tag >= surface_tree.size()) {
       return false;
     } else if (dim == 1 && curve_tree[tag] == NULL) {
       return false;
@@ -523,8 +528,8 @@ namespace QMT {
         F(j,queries.size()) {
           vec3 query = queries[j];
           vec3 proj;
-          bool okp = project(1,i, query, proj);
-          if (!okp || proj[0] == DBL_MAX) continue;
+          bool okp = project(1, i, query, proj);
+          if (!okp || proj[0] == DBL_MAX) return false;
           double d2 = length2(query-proj);
           if (d2 > d2max) {
             d2max = d2;
@@ -545,7 +550,7 @@ namespace QMT {
           vec3 query = queries[j];
           vec3 proj;
           bool okp = project(2, i, query, proj);
-          if (!okp || proj[0] == DBL_MAX) continue;
+          if (!okp || proj[0] == DBL_MAX) return false;
           double d2 = length2(query-proj);
           if (d2 > d2max) {
             d2max = d2;

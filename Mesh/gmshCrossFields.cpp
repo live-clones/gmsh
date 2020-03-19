@@ -3124,6 +3124,98 @@ public:
   std::map<MTriangle *, SVector3> d0, d1;
   std::vector<groupOfCross2d> G;
 
+  int loadThetaFromView(int viewTag) {
+    PView* view = PView::getViewByTag(viewTag);
+    if (view == NULL) {
+      Msg::Error("loadThetaFromView: view %i not found", viewTag);
+      return -1;
+    }
+    PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(view->getData());
+    if(!d) {
+      Msg::Error("View with tag %d does not contain model data", viewTag);
+      return -1;
+    }
+    int ntri = d->getNumTriangles();
+    if (ntri == 0) {
+      Msg::Error("View with tag %d does not contain triangles");
+      return -1;
+    }
+    stepData<double> *s = d->getStepData(0);
+    if(!s) {
+      Msg::Error("View with tag %d does not contain model data for step %d", viewTag, 0);
+      return -1;
+    }
+    std::vector<std::size_t> tags;
+    std::vector<double> data;
+    int numComponents = s->getNumComponents();
+    if (numComponents != 3) {
+      Msg::Error("View with tag %d does not contain model data with 3 components", viewTag);
+      return -1;
+    }
+    int numEnt = 0;
+    for(std::size_t i = 0; i < s->getNumData(); i++) {
+      if(s->getData(i)) numEnt++;
+    }
+    if(!numEnt) {
+      Msg::Error("View with tag %d does not contain entities");
+      return -1;
+    }
+    /* Mapping from num to MTriangle*, from the model */
+    std::map<std::size_t,MTriangle*> t2mt;
+    for(size_t i = 0; i < f.size(); i++) {
+      for(size_t j = 0; j < f[i]->triangles.size(); j++) {
+        MTriangle *t = f[i]->triangles[j];
+        t2mt[t->getNum()] = t;
+      }
+    }
+    /* Assign theta value for each internal edge */
+    std::map<std::pair<size_t,size_t>,double> edgeToTheta;
+    for(std::size_t i = 0; i < s->getNumData(); i++) {
+      double *dd = s->getData(i);
+      if(dd) {
+        auto it = t2mt.find(i);
+        if (it == t2mt.end()) {
+          Msg::Error("triangle not found");
+          return -1;
+        }
+        MTriangle* t = it->second;
+        for (size_t k = 0; k < 3; ++k) {
+          MEdge edge = t->getEdge(k);
+          size_t v1 = edge.getVertex(0)->getNum();
+          size_t v2 = edge.getVertex(1)->getNum();
+          std::pair<size_t,size_t> se = (v1 < v2) ? std::make_pair(v1,v2) : std::make_pair(v2,v1);
+          if (edgeToTheta.find(se) == edgeToTheta.end()) {
+            edgeToTheta[se] = (v1 < v2) ? dd[k] : -dd[k];
+          }
+        }
+      }
+    }
+    /* Fill the info in quadLayoutData */
+    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
+    std::vector<cross2d *> pc;
+    for(it = C.begin(); it != C.end(); ++it) pc.push_back(&(it->second));
+    for(it = C.begin(); it != C.end(); ++it) {
+      std::pair<size_t,size_t> edge = std::make_pair(it->first.getMinVertex()->getNum(),
+          it->first.getMaxVertex()->getNum());
+      std::map<std::pair<size_t,size_t>,double>::iterator itr = edgeToTheta.find(edge);
+      double A = 0;
+      if (itr == edgeToTheta.end()) {
+        Msg::Error("Edge (%i,%i) not found in result", edge.first, edge.second);
+        return -1;
+      }
+      else{
+        A = itr->second;
+      }
+      it->second._a = it->second._atemp = A;
+      it->second.o_i = it->second._tgt * cos(it->second._atemp) + it->second._tgt2 * sin(it->second._atemp);
+      it->second.o_i.normalize();
+      it->second._btemp = itr->second;
+    }
+    Msg::Info("cross field loaded from view 'theta'");
+
+    return 0;
+  }
+
   void printTheta(const char *name)
   {
     std::string fn = modelName + "_" + name + ".pos";
@@ -4885,4 +4977,62 @@ int computeCrossField(GModel * gm) {
   return -1;
 #endif
   return 0;
+}
+
+int computeH(GModel * gm) {
+  PView* theta = PView::getViewByName("theta");
+  if (!theta) {
+    Msg::Error("Cannot compute H from crosses, view 'theta' not found");
+    return -1;
+  }
+  int cf_tag = theta->getTag();
+
+  std::vector<GFace *> f;
+  getFacesOfTheModel(gm, f);
+  quadLayoutData qLayout(gm, f, gm->getName());
+  int sload = qLayout.loadThetaFromView(cf_tag);
+  if (sload != 0) {
+    return -1;
+  }
+  dofManager<double> *myAssembler = computeH(gm, f, qLayout.vs, qLayout.C);
+  if (myAssembler == NULL) {
+    Msg::Error("Failed to compute H from cross field");
+    return -1;
+  }
+
+  /* Create a view with 'H' */
+  int h_tag = -1;
+  PView* vH = PView::getViewByName("H");
+  if (vH) {
+    Msg::Info("overwrite the current view 'H'");
+    h_tag = theta->getTag();
+  } else {
+    Msg::Info("create a view 'H'");
+    vH = new PView();
+    vH->getData()->setName("H");
+    h_tag = vH->getTag();
+  }
+  PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(vH->getData());
+  if(!d) { // change the view type
+    delete vH->getData();
+    d = new PViewDataGModel(PViewDataGModel::NodeData);
+    d->setName("H");
+    vH->setData(d);
+  }
+
+  std::map<int, std::vector<double> > dataH;
+  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = qLayout.vs.begin(); it != qLayout.vs.end(); ++it) {
+    double h;
+    myAssembler->getDofValue(*it, 0, 1, h);
+    std::vector<double> jj;
+    jj.push_back(h);
+    dataH[(*it)->getNum()] = jj;
+  }
+  d->addData(gm, dataH, 0, 0.0, 1, 1);
+
+  return 0;
+}
+
+int showScaledCrosses(GModel* gm) {
+  return -1;
 }
