@@ -324,7 +324,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
 
   if(meshAttributes.method == MESH_TRANSFINITE ||
      (meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh) ||
-     meshAttributes.reverseMesh) {
+     meshAttributes.reverseMesh ||
+     (getMeshMaster() && getMeshMaster() != this)) {
     sstream << "Mesh attributes:";
     if(meshAttributes.method == MESH_TRANSFINITE) {
       sstream << " transfinite " << meshAttributes.nbPointsTransfinite;
@@ -338,6 +339,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
     if(meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)
       sstream << " extruded";
     if(meshAttributes.reverseMesh) sstream << " reversed";
+    if(getMeshMaster() && getMeshMaster() != this)
+      sstream << " periodic copy of curve " << getMeshMaster()->tag();
   }
   std::string str = sstream.str();
   if(str.size() && (str[str.size() - 1] == '\n' || str[str.size() - 1] == ' '))

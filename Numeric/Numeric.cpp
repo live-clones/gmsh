@@ -1558,7 +1558,7 @@ bool catenary(double x0, double x1, double y0, double y1, double ys, int N,
   // Three parameters a, b, c determined by imposing
   // - left point: y0 = y(x0) = a + 1/b cosh(b(x0-c))
   // - right point: y1 = y(x1) = a + 1/b cosh(b(x1-c))
-  // - lowest point (sag): ys = y(c) = a + 1/b , i.e. a = ys - 1/b
+  // - lowest point: ys = y(c) = a + 1/b , i.e. a = ys - 1/b
   //
   // Thus solve syst of 2 nl equations with 2 unknowns b and c:
   //
