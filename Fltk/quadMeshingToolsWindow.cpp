@@ -93,12 +93,12 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     y += BH;
     push_compute_H = new Fl_Button(width - BB - 4 * WB, y, BB, BH, "Compute H from crosses");
     push_compute_H->callback(qmt_compute_H_cb);
-    if (!crossfield) push_crossfield_show->clear_active();
+    //    if (!crossfield) push_crossfield_show->clear_active();
 
     y += BH;
     push_crossfield_show = new Fl_Button(width - BB - 4 * WB, y, BB, BH, "Show scaled crosses");
     push_crossfield_show->callback(qmt_crossfield_show_cb);
-    if (!crossfield || !H) push_crossfield_show->clear_active();
+    //    if (!crossfield || !H) push_crossfield_show->clear_active();
   }
 
   win->end();
@@ -112,7 +112,7 @@ void quadMeshingToolsWindow::show(bool redrawOnly) {
     if (crossfield) {
       push_crossfield_show->activate();
     } else {
-      push_crossfield_show->clear_active();
+      //      push_crossfield_show->clear_active();
     }
     win->show();
   }
