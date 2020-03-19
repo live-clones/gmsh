@@ -1121,6 +1121,7 @@ namespace QMT {
             M.points[v] = proj;
           } else {
             warn("failed to project point {} on {}", M.points[v], oldEntity);
+            return false;
           }
         }
       }
@@ -1540,6 +1541,8 @@ namespace QMT {
       F(v,M.points.size()) {
         int dim = M.entity[v].first;
         int tag = M.entity[v].second;
+        dim = -1;
+        tag = -1;
         if (projector->projectionOnEntityAvailable(dim,tag)) continue;
         dim = -1;
         tag = -1;
@@ -1556,6 +1559,7 @@ namespace QMT {
       bool okp = project_points_via_discrete_projector(M, *projector);
       if (!okp) {
         error("failed to project point on initial geometry");
+        return false;
       }
     }
 
@@ -1766,6 +1770,7 @@ namespace QMT {
       bool okp = project_points_via_discrete_projector(M, *projector);
       if (!okp) {
         error("failed to project point on initial geometry");
+        return false;
       }
     }
 

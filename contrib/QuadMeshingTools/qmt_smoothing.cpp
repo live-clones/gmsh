@@ -208,13 +208,22 @@ namespace QMT {
         vector<id> orderedVertices;
         bool oko = getOrderedVerticesFromEdges(v2v[v][0], edges, orderedVertices);
         if (!oko || orderedVertices.size() != 8) {
-          error("failed to get orderedVertices = {}", orderedVertices);
+          error("failed to get a stencil, v = {}, v2quads[v].size()={}, orderedVertices = {}", v, v2quads[v].size(), orderedVertices);
           return false;
         }
         F(k,8) stencils[8*v+k] = orderedVertices[k];
       } else if (v2quads[v].size() == 2) { // TODO: do the same for feature curves !
-        if (M.entity[v].first != 1) {
-          warn(" v = {}, pt = {}, v2quads[v].size()={}, M.entity[v]={}",v,M.points[v],v2quads[v].size(),M.entity[v]);
+        if (M.entity[v].first != 1) { /* Valence 2 but not on curve ? */
+          int dim = 1;
+          int tag = -1;
+          double dist;
+          bool okc = projector->closestEntity({M.points[v]}, dist, dim, tag);
+          if (!okc || dim == -1 || tag == -1) {
+            warn("failed to find closest entity for v = {}, okc = {}, dim = {}, tag = {}", v, okc, dim, tag);
+          } else {
+            M.entity[v] = {dim,tag};
+            warn(" v = {}, pt = {}, v2quads[v].size()={}, M.entity[v]={} corrected to {}",v,M.points[v],v2quads[v].size(),M.entity[v], std::make_pair(dim,tag));
+          }
         }
         vector<id2> edges;
         F(lq,2) F(le,4) {
@@ -233,7 +242,7 @@ namespace QMT {
         vector<id> orderedVertices;
         bool oko = getOrderedVerticesFromEdges(v, edges, orderedVertices);
         if (!oko || orderedVertices.size() != 6) {
-          error("failed to get orderedVertices = {}", orderedVertices);
+          error("failed to get a stencil, v = {}, v2quads[v].size()={}, orderedVertices = {}", v, v2quads[v].size(), orderedVertices);
           return false;
         }
         F(k,6) stencils[8*v+k] = orderedVertices[k];
