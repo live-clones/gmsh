@@ -2299,7 +2299,7 @@ static MVertex* inSingularZone (std::set<MVertex *, MVertexPtrLessThan> &singula
   std::set<MVertex *, MVertexPtrLessThan>::iterator it = singularities.begin();
   for ( ; it != singularities.end(); ++it){
     d = vvv.distance (*it);
-    if (d < 1.e-2){
+    if (d < 1.e-8){
       return *it;
     }
   }
@@ -2332,8 +2332,8 @@ static void computeOneIsoTillNextCutGraph(
     //// -----------------------------------------------------------------------------
     if (!start){    
       double d=1.e12;
-      //      MVertex *close = inSingularZone (singularities, p, d);
-      MVertex *close = inSingularZone (singularities, p, e, adj, d);
+      MVertex *close = inSingularZone (singularities, p, d);
+      //MVertex *close = inSingularZone (singularities, p, e, adj, d);
       if (d < 1.e-10){
 	passage._type = cutGraphPassage::SING_TO_SING;
 	passage.close = true;
@@ -2614,7 +2614,6 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
 
   while(!cutGraphEnds.empty()) {
     MEdge e = (*cutGraphEnds.begin()).first;
-    //    if (COUNT == 91010)printf("CUT GRAPH ENDS %lu\n",cutGraphEnds.size());
 
     std::map<MVertex *, double> *POT = (*cutGraphEnds.begin()).second.first;
     VAL = (*cutGraphEnds.begin()).second.second;
@@ -2672,6 +2671,7 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     if(maxCount == 0) printf("IMPOSSIBLE\n");
 
     if (!passage.close) {
+      if (COUNT == 5523001)printf("ADDING to %d cut graph part %d\n",COUNT,cutGraphId);
       passage.addPassage (POT == potU ? 0 : 1, cutGraphId);
       passage.eds.push_back(e);
       passage.pts_on_eds.push_back(p);
@@ -3257,7 +3257,7 @@ public:
   {
 #if defined(HAVE_QUADMESHINGTOOLS)
     int nb_iter = 10;
-    int cf_tag;
+    int cf_tag = -1;
     std::map<std::pair<size_t,size_t>,double> edge_to_angle;
     bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,&edge_to_angle);
     if (!okcf) {
@@ -4156,7 +4156,7 @@ public:
 	      printf("%d %d %d %d\n",id0,id1,id2,id3);
 	    }
 	  }
-          else if(tcuts.count(*iti) == 6) {
+          else if(tcuts.count(*iti) == 6) {	    
             std::multimap<
               int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
               tcuts.lower_bound(*iti);
@@ -4574,7 +4574,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 4);
+  classifyFaces(GModel::current(), M_PI / 4, false);
   GModel::current()->remove(de);
   //  delete de;
   GModel::current()->pruneMeshVertexAssociations();

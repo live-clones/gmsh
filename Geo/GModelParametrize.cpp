@@ -121,7 +121,7 @@ static bool breakForLargeAngle(MLine *prev, MLine *curr, double threshold)
   return false;
 }
 */
-void classifyFaces(GModel *gm, double curveAngleThreshold)
+void classifyFaces(GModel *gm, double curveAngleThreshold, bool splitInternalCurves)
 {
 #if defined(HAVE_MESH)
 
@@ -284,6 +284,11 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
   
   for(std::vector<std::pair<GEdge *, std::vector<GFace *> > >::iterator ite =
         newEdges.begin(); ite != newEdges.end(); ++ite) {
+
+    bool allowSplit = splitInternalCurves || ite->second.size() == 1;
+    
+    if (!allowSplit)printf("NOT ALLOWING SPLIT %d %lu\n",ite->first->tag(), ite->second.size());
+    
     std::vector<MEdge> allEdges;
     
     //    printf("Edge %d has %lu faces with %lu segments\n",ite->first->tag(),ite->second.size(),ite->first->lines.size());
@@ -310,7 +315,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
           MVertex *v0 = vs_[i][j == 0 ? (vs_[i].size() - 2) : (j - 1)];
           MVertex *v1 = vs_[i][j];
           MVertex *v2 = vs_[i][j + 1];
-          if(breakForLargeAngle(v0, v1, v2, curveAngleThreshold)) {
+          if(allowSplit && breakForLargeAngle(v0, v1, v2, curveAngleThreshold)) {
             std::vector<MVertex *> temp;
             for(size_t k = j; k < vs_[i].size() + j; k++) {
               temp.push_back(vs_[i][k % vs_[i].size()]);
@@ -327,7 +332,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 	MVertex *v0 = vs_[i][j-1];
 	MVertex *v1 = vs_[i][j];
 	MVertex *v2 = vs_[i][j+1];
-	if (breakForLargeAngle(v0,v1,v2,curveAngleThreshold))cuts_.push_back(j);
+	if (allowSplit && breakForLargeAngle(v0,v1,v2,curveAngleThreshold))cuts_.push_back(j);
       }
       cuts_.push_back(vs_[i].size()-1);
 
@@ -529,7 +534,8 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 }
 
 void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
-                   bool forParametrization, double curveAngleThreshold)
+                   bool forParametrization, double curveAngleThreshold,
+		   bool splitInternalCurves)
 {
 #if defined(HAVE_MESH)
 
@@ -571,7 +577,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
   computeDiscreteCurvatures(gm);
   if(forParametrization) computeEdgeCut(gm, edge->lines, 100000);
   computeNonManifoldEdges(gm, edge->lines, true);
-  classifyFaces(gm, curveAngleThreshold);
+  classifyFaces(gm, curveAngleThreshold,splitInternalCurves);
 
   gm->remove(edge);
   edge->lines.clear();
