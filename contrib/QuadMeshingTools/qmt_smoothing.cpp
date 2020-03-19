@@ -190,6 +190,7 @@ namespace QMT {
     F(v,M.points.size()) sort_unique(v2v[v]);
 
 
+    vector<id> projectionEltCache(M.points.size(),NO_ID);
 
     /* Build the vertex stencils */
     vector<id> stencils(8*M.points.size(),NO_ID);
@@ -291,7 +292,7 @@ namespace QMT {
         /* Projection on surface */
         if (projector != NULL && M.entity[v].second != -1) {
           vec3 proj;
-          bool okp = projector->project(M.entity[v].first,M.entity[v].second,M.points[v],proj);
+          bool okp = projector->project(M.entity[v].first,M.entity[v].second,M.points[v],proj,projectionEltCache[v]);
           if (okp) {
             if (proj[0] == DBL_MAX) {
               error("wrong projected point: {}", proj);
@@ -323,7 +324,7 @@ namespace QMT {
           /* Projection on underlying curve */
           vec3 query = ptsStencil[3];
           vec3 proj;
-          bool okp = projector->project(M.entity[v].first,M.entity[v].second,query,proj);
+          bool okp = projector->project(M.entity[v].first,M.entity[v].second,query,proj,projectionEltCache[v]);
           if (okp) {
             if (proj[0] == DBL_MAX) {
               error("wrong projected point: {}", proj);

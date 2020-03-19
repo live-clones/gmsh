@@ -456,6 +456,11 @@ namespace QMT {
   }
 
   bool BoundaryProjector::project(int dim, int tag, vec3 query, vec3& projection) const {
+    id cache = NO_ID;
+    return project(dim,tag,query,projection,cache);
+  }
+
+  bool BoundaryProjector::project(int dim, int tag, vec3 query, vec3& projection, id& cache) const {
     projection = {DBL_MAX,DBL_MAX,DBL_MAX};
     static_kd_tree_t* tree = NULL;
     if (!projectionOnEntityAvailable(dim,tag)) {
@@ -469,13 +474,49 @@ namespace QMT {
     } else {
       return false;
     }
+
+    std::unordered_set<size_t> done;
+
+    /* try the cached element */
+    if (cache != NO_ID) {
+      if (dim == 1 && cache < M.lines.size()) {
+        vec3 p1 = M.points[M.lines[cache][0]];
+        vec3 p2 = M.points[M.lines[cache][1]];
+        double lambda;
+        vec3 cproj;
+        /* strict inequality because lambda is clamped [0.,1.] in project_point_segment_l2 */
+        double d2 = project_point_segment_l2(query, p1, p2, cproj, lambda);
+        if (lambda > 0. && lambda < 1.) {
+          projection = cproj;
+          return true;
+        }
+        done.insert(cache);
+      } else if (dim == 2 && cache < M.triangles.size()) {
+        vec3 p1 = M.points[M.triangles[cache][0]];
+        vec3 p2 = M.points[M.triangles[cache][1]];
+        vec3 p3 = M.points[M.triangles[cache][2]];
+        double lambda[3];
+        vec3 cproj;
+        double d2 = project_point_triangle_l2(query, p1, p2, p3, cproj, lambda);
+        /* strict inequality because lambda is clamped [0.,1.] in project_point_triangle_l2 */
+        if (lambda[0] > 0. && lambda[1] > 0. && lambda[2] > 0.
+            && lambda[0] < 1. && lambda[1] < 1. && lambda[2] < 1.) {
+          projection = cproj;
+          return true;
+        }
+        done.insert(cache);
+      }
+    }
+
+
+    /* kdtree search (closest vertex) then loop on adjacent elements */
     std::vector<size_t> ids(N_search);
     std::vector<double> dists(N_search);
     size_t Nf = tree->knnSearch(query.data(), N_search, &ids[0], &dists[0]);
     if (Nf == 0) return false;
 
     double d2min = DBL_MAX;
-    std::unordered_set<size_t> done;
+    id elem = NO_ID;
     F(i,Nf) {
       size_t cur = ids[i];
       if (dim == 1) {
@@ -488,9 +529,11 @@ namespace QMT {
           vec3 cproj;
           double d2 = project_point_segment_l2(query, p1, p2, cproj, lambda);
           if (d2 < d2min) {
+            elem = e;
             d2min = d2;
             projection = cproj;
           }
+          done.insert(e);
         }
       } else if (dim == 2) {
         F(lf,sTreeIdToTris[tag][cur].size()) {
@@ -503,14 +546,15 @@ namespace QMT {
           vec3 cproj;
           double d2 = project_point_triangle_l2(query, p1, p2, p3, cproj, lambda);
           if (d2 < d2min) {
+            elem = f;
             d2min = d2;
             projection = cproj;
           }
+          done.insert(f);
         }
-
       }
     }
-
+    cache = elem;
     return true;
   }
 
