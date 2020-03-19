@@ -3258,6 +3258,8 @@ public:
 #if defined(HAVE_QUADMESHINGTOOLS)
     int nb_iter = 10;
     int cf_tag = -1;
+    PView* theta = PView::getViewByName("theta");
+    if (theta) cf_tag = theta->getTag();
     std::map<std::pair<size_t,size_t>,double> edge_to_angle;
     bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,&edge_to_angle);
     if (!okcf) {
