@@ -428,8 +428,10 @@ namespace QMT {
         int numComponents;
         gmsh::view::getModelData(H_tag, 0, dataType, tags, data, time, numComponents);
         F(i,data.size()) {
-          Hmin = std::min(Hmin, data[i][0]);
-          Hmax = std::max(Hmax, data[i][0]);
+          F(j,data[i].size()) {
+            Hmin = std::min(Hmin, data[i][j]);
+            Hmax = std::max(Hmax, data[i][j]);
+          }
         }
       } else {
         std::vector<std::string> dataType;
