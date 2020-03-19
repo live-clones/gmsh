@@ -479,6 +479,47 @@ namespace QMT {
     return true;
   }
 
+  bool create_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagH, const std::string& viewName, int& viewTag) {
+    if (!QMT_CF_Utils::global_gmsh_initialized) {
+      gmsh::initialize(0, 0, false);
+      QMT_CF_Utils::global_gmsh_initialized = true;
+    }
+
+    /* Get the mesh and internal edges */
+    TMesh M;
+    bool oki = import_TMesh_from_gmsh(meshName, M);
+    if (!oki) {
+      error("failed to get mesh grom gmsh API");
+      return false;
+    }
+    vector<id2> uIEdges;
+    vector<id> old2IEdge;
+    vector<vector<id>> uIEdgeToOld;
+    bool oka = compute_triangle_adjacencies(M.triangles, M.triangle_neighbors, M.nm_triangle_neighbors, uIEdges, old2IEdge, uIEdgeToOld);
+    if (!oka) {
+      error("failed to compute mesh adjacencies");
+      return false;
+    }
+
+    /* Get theta for each edge */
+    vector<double> ue2theta(uIEdges.size(),0.);
+    vector<double> H(M.points.size(),0.);
+    double Hmin = -DBL_MAX;
+    double Hmax =  DBL_MAX;
+    {
+      std::string dataType;
+      std::vector<std::size_t> tags;
+      std::vector<std::vector<double> > data;
+      double time;
+      int numComponents;
+      gmsh::view::getModelData(tagH, 0, dataType, tags, data, time, numComponents);
+      // TODO here
+    }
+
+
+    return true;
+  }
+
   double bbox_diag(const TMesh& M) {
     vec3 mi = {DBL_MAX,DBL_MAX,DBL_MAX};
     vec3 ma = {-DBL_MAX,-DBL_MAX,-DBL_MAX};

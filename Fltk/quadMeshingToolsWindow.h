@@ -28,7 +28,6 @@ public:
   Fl_Button *push[2];
   Fl_Button *push_crossfield_gen;
   Fl_Button *push_crossfield_show;
-  Fl_Button *push_compute_H;
   Fl_Button *push_compute_uv;
   Fl_Button *push_build_layout;
   Fl_Button *push_quad_generate;

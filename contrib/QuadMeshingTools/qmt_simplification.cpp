@@ -419,15 +419,29 @@ namespace QMT {
     };
 
     bool compute_Hmin_Hmax() {
-      std::vector<std::string> dataType;
-      std::vector<int> numElements;
-      std::vector<std::vector<double> > data;
-      gmsh::view::getListData(H_tag, dataType, numElements, data);
-      Hmin = DBL_MAX;
-      Hmax = -DBL_MAX;
-      F(i,data[0].size()) {
-        Hmin = std::min(Hmin, data[0][i]);
-        Hmax = std::max(Hmax, data[0][i]);
+      bool fromModelData = true;
+      if (fromModelData) {
+        std::string dataType;
+        std::vector<std::size_t> tags;
+        std::vector<std::vector<double> > data;
+        double time;
+        int numComponents;
+        gmsh::view::getModelData(H_tag, 0, dataType, tags, data, time, numComponents);
+        F(i,data.size()) {
+          Hmin = std::min(Hmin, data[i][0]);
+          Hmax = std::max(Hmax, data[i][0]);
+        }
+      } else {
+        std::vector<std::string> dataType;
+        std::vector<int> numElements;
+        std::vector<std::vector<double> > data;
+        gmsh::view::getListData(H_tag, dataType, numElements, data);
+        Hmin = DBL_MAX;
+        Hmax = -DBL_MAX;
+        F(i,data[0].size()) {
+          Hmin = std::min(Hmin, data[0][i]);
+          Hmax = std::max(Hmax, data[0][i]);
+        }
       }
       if (Hmin == DBL_MAX || Hmax == -DBL_MAX) {
         error("Hmin = {}, Hmax = {}", Hmin, Hmax);

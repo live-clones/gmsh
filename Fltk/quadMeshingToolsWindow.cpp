@@ -36,18 +36,15 @@ static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
   if (status != 0) {
     Msg::Error("failed to compute cross field");
   }
-  drawContext::global()->draw();
-}
-
-static void qmt_compute_H_cb(Fl_Widget *w, void *data)
-{
-  int status = computeH(GModel::current());
-  if (status != 0) {
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  int statusH = computeH(GModel::current());
+  if (statusH != 0) {
     Msg::Error("failed to compute H from cross field");
   }
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
+
 
 static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
 {
@@ -87,16 +84,11 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
       new Fl_Box(x - WB, y, width, BH, "1. Generation of cross-field");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
     y += BH;
-    push_crossfield_gen = new Fl_Button(width - BB - 4 * WB, y, BB, BH, "Compute crosses");
+    push_crossfield_gen = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Compute");
     push_crossfield_gen->callback(qmt_crossfield_generate_cb);
 
     y += BH;
-    push_compute_H = new Fl_Button(width - BB - 4 * WB, y, BB, BH, "Compute H from crosses");
-    push_compute_H->callback(qmt_compute_H_cb);
-    if (!crossfield) push_crossfield_show->clear_active();
-
-    y += BH;
-    push_crossfield_show = new Fl_Button(width - BB - 4 * WB, y, BB, BH, "Show scaled crosses");
+    push_crossfield_show = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Show");
     push_crossfield_show->callback(qmt_crossfield_show_cb);
     if (!crossfield || !H) push_crossfield_show->clear_active();
   }

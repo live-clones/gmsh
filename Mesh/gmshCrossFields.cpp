@@ -24,6 +24,7 @@
 #ifdef HAVE_QUADMESHINGTOOLS
 #include "quad_meshing_tools.h"
 #include "qmt_utils.hpp" /* for debug print macro */
+#include "gmsh.h"
 #endif
 
 

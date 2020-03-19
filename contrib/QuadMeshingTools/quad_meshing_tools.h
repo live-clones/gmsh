@@ -112,6 +112,9 @@ namespace QMT {
    * @return True if the import succeed
    */
   bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M);
+
+
+  bool create_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagH, const std::string& viewName, int& viewTag);
 }
 
 
