@@ -286,9 +286,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold, bool splitInternalCur
         newEdges.begin(); ite != newEdges.end(); ++ite) {
 
     bool allowSplit = splitInternalCurves || ite->second.size() == 1;
-    
-    if (!allowSplit)printf("NOT ALLOWING SPLIT %d %lu\n",ite->first->tag(), ite->second.size());
-    
+        
     std::vector<MEdge> allEdges;
     
     //    printf("Edge %d has %lu faces with %lu segments\n",ite->first->tag(),ite->second.size(),ite->first->lines.size());

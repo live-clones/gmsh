@@ -1861,9 +1861,10 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
     }
     if(bnd.size() == 2) {
       //      printf("%lu %12.5E\n",v->getNum(),gaussianCurvatures[*it]);
-      if(gaussianCurvatures[*it] < 3*M_PI/4 ) {
-	printf("coucou\n");
-        corners.insert(v);
+      double KURV = gaussianCurvatures[*it];
+      if(KURV < 3*M_PI/4 || KURV > 5*M_PI/4) {
+	if (KURV > 5*M_PI/4)
+	  corners.insert(v);
         cutgraph.insert(v);
       }
       if(countCutGraph == 1) {
@@ -2749,7 +2750,8 @@ static bool computeIsos(
   std::map<MVertex *, double> &potU, std::map<MVertex *, double> &potV,
   std::set<MEdge, MEdgeLessThan> &cutG, std::vector<groupOfCross2d> &G,
   std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
-  std::vector<cutGraphPassage> &passages)
+  std::vector<cutGraphPassage> &passages,
+  std::set<MVertex *, MVertexPtrLessThan> &corners)
 {
   passages.clear();
   v2t_cont adj;
@@ -2765,8 +2767,8 @@ static bool computeIsos(
         singularities.insert(it->first);
       }
     }
+    singularities.insert(corners.begin(), corners.end());
   }
-
 
   std::set<MVertex *, MVertexPtrLessThan> boundaries;
   for(std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
@@ -4270,7 +4272,7 @@ public:
 			  d0, d1, G, potU, potV, passages))return false;
     
     bool success = computeIsos(gm, f, singularities, C, new2old, duplicateEdges, groups,
-			       groups_cg, potU, potV, cutG, G, cuts, passages);
+			       groups_cg, potU, potV, cutG, G, cuts, passages, corners);
     
     correctionOnCutGraph(cuts, new2old);
     
@@ -4442,7 +4444,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
       for (size_t i=0 ; i< passages.size() ; ++i){
 	passages[i].analyze(potU,potV,qLayout.G,qLayout.new2old);
 	passages[i].Print("All ");
-	passages[i].PrintFile();
+	//	passages[i].PrintFile();
       }
       computeValidPassages( passages );
       if (ITER++ ==0)break;
