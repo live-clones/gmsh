@@ -4993,6 +4993,10 @@ int computeH(GModel * gm) {
     return -1;
   }
   dofManager<double> *myAssembler = computeH(gm, f, qLayout.vs, qLayout.C);
+  if (myAssembler == NULL) {
+    Msg::Error("Failed to compute H from cross field");
+    return -1;
+  }
 
   /* Create a view with 'H' */
   int h_tag = -1;
@@ -5006,23 +5010,23 @@ int computeH(GModel * gm) {
     vH->getData()->setName("H");
     h_tag = vH->getTag();
   }
-  // PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(vH->getData());
-  // if(!d) { // change the view type
-  //   delete vH->getData();
-  //   d = new PViewDataGModel(PViewDataGModel::NodeData);
-  //   d->setName("H");
-  //   vH->setData(d);
-  // }
+  PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(vH->getData());
+  if(!d) { // change the view type
+    delete vH->getData();
+    d = new PViewDataGModel(PViewDataGModel::NodeData);
+    d->setName("H");
+    vH->setData(d);
+  }
 
-  // std::map<int, std::vector<double> > dataH;
-  // for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = qLayout.vs.begin(); it != qLayout.vs.end(); ++it) {
-  //   double h;
-  //   myAssembler->getDofValue(*it, 0, 1, h);
-  //   std::vector<double> jj;
-  //   jj.push_back(h);
-  //   dataH[(*it)->getNum()] = jj;
-  // }
-  // d->addData(gm, dataH, 0, 0.0, 1, 1);
+  std::map<int, std::vector<double> > dataH;
+  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = qLayout.vs.begin(); it != qLayout.vs.end(); ++it) {
+    double h;
+    myAssembler->getDofValue(*it, 0, 1, h);
+    std::vector<double> jj;
+    jj.push_back(h);
+    dataH[(*it)->getNum()] = jj;
+  }
+  d->addData(gm, dataH, 0, 0.0, 1, 1);
 
   return 0;
 }

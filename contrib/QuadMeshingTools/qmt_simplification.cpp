@@ -1023,9 +1023,12 @@ namespace QMT {
     return true;
   }
 
-  bool apply_chord_collapse(QMesh& M, const Chord& chord) {
+  bool apply_chord_collapse(QMesh& M, const Chord& chord,
+      vector<vector<id>>& q2qs,
+      vector<vector<id>>& v2quads) {
     /* Mark quads */
-    vector<vector<id>> q2qs(M.quads.size());
+    q2qs.resize(M.quads.size());
+    FC(q,q2qs.size(),q2qs[q].size()>0) q2qs[q].clear();
     F(i,chord.size()) {
       id q = chord[i] / 2;
       q2qs[q].push_back(chord[i]);
@@ -1051,7 +1054,9 @@ namespace QMT {
     }
     sort_unique(double_quads);
 
-    vector<vector<id>> v2quads(M.points.size());
+    /* Update v2quads */
+    v2quads.resize(M.points.size());
+    FC(v,M.points.size(),v2quads[v].size()>0) v2quads[v].clear();
     FC(q,M.quads.size(),M.quads[q][0] != NO_ID) F(lv,4) v2quads[M.quads[q][lv]].push_back(q);
     F(v,M.points.size()) sort_unique(v2quads[v]);
 
@@ -1541,8 +1546,6 @@ namespace QMT {
       F(v,M.points.size()) {
         int dim = M.entity[v].first;
         int tag = M.entity[v].second;
-        dim = -1;
-        tag = -1;
         if (projector->projectionOnEntityAvailable(dim,tag)) continue;
         dim = -1;
         tag = -1;
@@ -1666,6 +1669,10 @@ namespace QMT {
       info("precomputation: {} chord collapse candidates", chord_to_collapse.size());
     }
 
+    /* Memory optimization */
+    vector<vector<id>> q2qs(M.quads.size());     /* outside loop for re-use */
+    vector<vector<id>> v2quads(M.points.size()); /* outside loop for re-use */
+
     /* Simplification loop */
     info("simplification loop in progress ...");
     id iter = 0;
@@ -1715,7 +1722,7 @@ namespace QMT {
 
       if (SHOW_DETAILS) show_chord_in_view(M, {chord}, "_i" + std::to_string(iter)+"_chord");
 
-      bool okc = apply_chord_collapse(M, chord);
+      bool okc = apply_chord_collapse(M, chord, q2qs, v2quads);
       if (!okc) {
         error("iter {}, failed to collapse (should not happen) !", iter);
         return false;
