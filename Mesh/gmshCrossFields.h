@@ -44,4 +44,7 @@ int simplifyQuadMesh(GModel * gm);
 /* smooth the current quad mesh geometry */
 int smoothQuadMesh(GModel * gm);
 
+/* generate a view "crosses" with crosses scaled by H */
+int showScaledCrosses(GModel* gm);
+
 #endif
