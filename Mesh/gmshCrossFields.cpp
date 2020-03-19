@@ -1862,9 +1862,10 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
     }
     if(bnd.size() == 2) {
       //      printf("%lu %12.5E\n",v->getNum(),gaussianCurvatures[*it]);
-      if(gaussianCurvatures[*it] < 3*M_PI/4 ) {
-	printf("coucou\n");
-        corners.insert(v);
+      double KURV = gaussianCurvatures[*it];
+      if(KURV < 3*M_PI/4 || KURV > 5*M_PI/4) {
+	if (KURV > 5*M_PI/4)
+	  corners.insert(v);
         cutgraph.insert(v);
       }
       if(countCutGraph == 1) {
@@ -2695,7 +2696,30 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
   passages.push_back(passage);
 
 }
-
+/*
+void computeTwoVectorsOfCorner (MVertex *vsing, std::vector<MElement *> &faces,
+				SVector3 &v1, SVector3 &v2) {
+  std::set<MEdge, MEdgeLessThan> eds;
+  for(size_t i = 0; i < faces.size(); i++) {
+    for(size_t j = 0; j < 3; j++) {
+      MEdge e = faces[i]->getEdge(j);
+      if (e.getVertex(0) == vsing || e.getVertex(1) == vsing){
+	std::set<MEdge, MEdgeLessThan>::iterator it = eds.find(e);
+	if (it == eds.end())eds.insert(e);
+	else eds.erase(it);
+      }
+    }
+  }
+  if (eds.size() == 2){
+    std::set<MEdge, MEdgeLessThan>::iterator it = eds.begin();
+    v1 = *it; ++it;
+    v2 = *it;     
+  }
+  else {
+    Msg::Error("Not a corner %lu",eds.size());
+  }
+}
+*/
 static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
                        std::map<MVertex *, double> &potU,
                        std::map<MVertex *, double> &potV, FILE *f,
@@ -2703,10 +2727,16 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
                        std::vector<groupOfCross2d> &G, int DIR, int &COUNT,
                        std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
 		       std::vector<cutGraphPassage> &passages,
-		       std::set<MVertex *, MVertexPtrLessThan> &singularities)
+		       std::set<MVertex *, MVertexPtrLessThan> &singularities,
+		       bool corner)
 {
   
   std::vector<MElement *> faces = adj[vsing];
+
+  /*  SVector3 v1, v2;
+  if (corner)
+    computeTwoVectorsOfCorner (vsing, faces,v1,v2);
+  */
   for(size_t i = 0; i < faces.size(); i++) {
     MVertex *v0 = faces[i]->getVertex(0);
     MVertex *v1 = faces[i]->getVertex(1);
@@ -2720,21 +2750,27 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
 
     if(v2 == vsing && (U0 - u) * (U1 - u) <= 0) {
       double xi = coord1d(U0, U1, u);
-      SPoint3 pp = p0 * (1 - xi) + p1 * xi;
-      computeOneIso(vsing, adj, u, v0, v1, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
-		    cuts, passages, singularities);
+      if (!corner || (xi > 1.e-12 && xi < 1-1.e-12)){
+	SPoint3 pp = p0 * (1 - xi) + p1 * xi;
+	computeOneIso(vsing, adj, u, v0, v1, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
+		      cuts, passages, singularities);
+      }
     }
     else if(v1 == vsing && (U0 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U0, U2, u);
-      SPoint3 pp = p0 * (1 - xi) + p2 * xi;
-      computeOneIso(vsing, adj, u, v0, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
-		    cuts, passages, singularities);
+      if (!corner || (xi > 1.e-12 && xi < 1-1.e-12)){
+	SPoint3 pp = p0 * (1 - xi) + p2 * xi;
+	computeOneIso(vsing, adj, u, v0, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
+		      cuts, passages, singularities);
+      }
     }
     else if(v0 == vsing && (U1 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U1, U2, u);
-      SPoint3 pp = p1 * (1 - xi) + p2 * xi;
-      computeOneIso(vsing, adj, u, v1, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
-		    cuts, passages, singularities);
+      if (!corner || (xi > 1.e-12 && xi < 1-1.e-12)){
+	SPoint3 pp = p1 * (1 - xi) + p2 * xi;
+	computeOneIso(vsing, adj, u, v1, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
+		      cuts, passages, singularities);
+      }
     }
   }
 }
@@ -2750,7 +2786,8 @@ static bool computeIsos(
   std::map<MVertex *, double> &potU, std::map<MVertex *, double> &potV,
   std::set<MEdge, MEdgeLessThan> &cutG, std::vector<groupOfCross2d> &G,
   std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
-  std::vector<cutGraphPassage> &passages)
+  std::vector<cutGraphPassage> &passages,
+  std::set<MVertex *, MVertexPtrLessThan> &corners)
 {
   passages.clear();
   v2t_cont adj;
@@ -2766,8 +2803,8 @@ static bool computeIsos(
         singularities.insert(it->first);
       }
     }
+    singularities.insert(corners.begin(), corners.end());
   }
-
 
   std::set<MVertex *, MVertexPtrLessThan> boundaries;
   for(std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
@@ -2829,8 +2866,11 @@ static bool computeIsos(
       MVertex *vvv = new2old.find(*it) == new2old.end() ?  *it : new2old[*it];
       if (COUNTS.find(vvv->getNum()) == COUNTS.end())COUNTS [vvv->getNum()] = 1000 * vvv->getNum();
       int COUNT = COUNTS [vvv->getNum()];      
-      computeIso(*it, adj, potU[*it], potU, potV, f, d1, G, 0, COUNT, cuts, passages, singularities);
-      computeIso(*it, adj, potV[*it], potV, potU, f, d1, G, 1, COUNT, cuts, passages, singularities);
+
+      bool corner = corners.find(*it) != corners.end();
+
+      computeIso(*it, adj, potU[*it], potU, potV, f, d1, G, 0, COUNT, cuts, passages, singularities, corner);
+      computeIso(*it, adj, potV[*it], potV, potU, f, d1, G, 1, COUNT, cuts, passages, singularities, corner);
       COUNTS [vvv->getNum()] = COUNT;      
     }
   }
@@ -3393,7 +3433,6 @@ public:
     computeCrossFieldExtrinsic(1.e-9);
 #endif
     myAssembler = computeH(gm, f, vs, C);
-
     
     computeSingularities(C, singularities, indices, myAssembler);
 
@@ -4363,7 +4402,7 @@ public:
 			  d0, d1, G, potU, potV, passages))return false;
     
     bool success = computeIsos(gm, f, singularities, C, new2old, duplicateEdges, groups,
-			       groups_cg, potU, potV, cutG, G, cuts, passages);
+			       groups_cg, potU, potV, cutG, G, cuts, passages, corners);
     
     correctionOnCutGraph(cuts, new2old);
     
@@ -4535,7 +4574,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
       for (size_t i=0 ; i< passages.size() ; ++i){
 	passages[i].analyze(potU,potV,qLayout.G,qLayout.new2old);
 	passages[i].Print("All ");
-	passages[i].PrintFile();
+	//	passages[i].PrintFile();
       }
       computeValidPassages( passages );
       if (ITER++ ==0)break;
@@ -4790,7 +4829,13 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     Msg::Info("Partitioned mesh has been saved in %s", mshout.c_str());
     Msg::Info("Result of computations have been saved in %s", posout.c_str());
   }
-  delete d;
+
+  //
+
+  //  delete d;
+  PView *HHH = new PView (d,69);
+  tags.push_back(69);
+
   delete dd;
   delete dt;
   if(layout) {

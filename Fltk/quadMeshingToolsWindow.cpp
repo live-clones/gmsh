@@ -45,7 +45,6 @@ static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-
 static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
 {
   int status = showScaledCrosses(GModel::current());
@@ -90,7 +89,7 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     y += BH;
     push_crossfield_show = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Show");
     push_crossfield_show->callback(qmt_crossfield_show_cb);
-    if (!crossfield || !H) push_crossfield_show->clear_active();
+    // if (!crossfield || !H) push_crossfield_show->clear_active();
   }
 
   win->end();
@@ -104,7 +103,7 @@ void quadMeshingToolsWindow::show(bool redrawOnly) {
     if (crossfield) {
       push_crossfield_show->activate();
     } else {
-      push_crossfield_show->clear_active();
+      // push_crossfield_show->clear_active();
     }
     win->show();
   }
