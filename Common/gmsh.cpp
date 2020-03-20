@@ -2677,7 +2677,7 @@ GMSH_API void gmsh::model::mesh::preallocateCompressedBasisFunctions(
     vertices[i] = new MVertex(0., 0., 0., 0, i);
   }
   std::sort(vertices.begin(), vertices.end());
-  MElement *element = nullptr;
+  MElement *element = 0;
   switch(familyType) {
   case TYPE_HEX: {
     element = new MHexahedron(vertices);
