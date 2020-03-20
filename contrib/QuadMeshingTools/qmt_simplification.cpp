@@ -507,12 +507,6 @@ namespace QMT {
     /* Size map size(t) */
     vector<double> size(pts.size(),0.);
     F(i, size.size()) size[i] = sizemap.eval(pts[i]);
-    GeoLog log;
-    std::string name = "sc_" + std::to_string(N) + "_" + std::to_string(int(10000*pts[1][0]));
-    F(i,pts.size()-1) {
-      log.add({pts[i],pts[i+1]},{size[i],size[i+1]},name);
-    }
-    log.toGmsh();
 
     vector<double> Pri(pts.size(),0.);
     /* Integral of inverse, Pri = int(1/size(t),t) */
@@ -1526,28 +1520,10 @@ namespace QMT {
       }
       wavg /= avg_sum;
 
-      // GeoLog log;
-      // F(j, edges.size()) {
-      //     id node1 = edges[j][0];
-      //     id node2 = edges[j][1];
-      //     id v1 = meshVertexToV[nodeToMeshVertex[node1]];
-      //     id v2 = meshVertexToV[nodeToMeshVertex[node2]];
-      //     vec3 p1 = M.points[v1];
-      //     vec3 p2 = M.points[v2];
-      //     log.add({p1,p2},edge_len[j],"c"+std::to_string(i)+"_ie");
-      // }
-      // log.toGmsh();
-
       /* Assign number of points */
-      double minWidth = *std::min_element(edge_len.begin(),edge_len.end());
       size_t nb_ipts = 0;
       nb_ipts = std::round(wavg / denom);
-      nb_ipts = std::round(minWidth / denom);
       info("  chord {}, avg. scaled width: {}, {} interior points", i, wavg, nb_ipts);
-
-      // info("   details: edge_np = {}", edge_np);
-      // info("            edge_len = {}", edge_len);
-      // info("            edges = {}", edges);
 
       /* Sample the curves */
       F(j, edges.size()) {
