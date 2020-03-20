@@ -2750,7 +2750,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
 
     if(v2 == vsing && (U0 - u) * (U1 - u) <= 0) {
       double xi = coord1d(U0, U1, u);
-      if (!corner || (xi > 1.e-12 && xi < 1-1.e-12)){
+      if (!corner || (xi > 1.e-10 && xi < 1-1.e-10)){
 	SPoint3 pp = p0 * (1 - xi) + p1 * xi;
 	computeOneIso(vsing, adj, u, v0, v1, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
 		      cuts, passages, singularities);
@@ -2758,7 +2758,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     }
     else if(v1 == vsing && (U0 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U0, U2, u);
-      if (!corner || (xi > 1.e-12 && xi < 1-1.e-12)){
+      if (!corner || (xi > 1.e-10 && xi < 1-1.e-10)){
 	SPoint3 pp = p0 * (1 - xi) + p2 * xi;
 	computeOneIso(vsing, adj, u, v0, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
 		      cuts, passages, singularities);
@@ -2766,7 +2766,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     }
     else if(v0 == vsing && (U1 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U1, U2, u);
-      if (!corner || (xi > 1.e-12 && xi < 1-1.e-12)){
+      if (!corner || (xi > 1.e-10 && xi < 1-1.e-10)){
 	SPoint3 pp = p1 * (1 - xi) + p2 * xi;
 	computeOneIso(vsing, adj, u, v1, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
 		      cuts, passages, singularities);
@@ -2796,6 +2796,7 @@ static bool computeIsos(
   }
 
   {
+    singularities.insert(corners.begin(), corners.end());
     std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator it =
       new2old.begin();
     for(; it != new2old.end(); ++it) {
@@ -2803,7 +2804,6 @@ static bool computeIsos(
         singularities.insert(it->first);
       }
     }
-    singularities.insert(corners.begin(), corners.end());
   }
 
   std::set<MVertex *, MVertexPtrLessThan> boundaries;
@@ -3388,7 +3388,7 @@ public:
 
   int computeCrossFieldAndH()
   {
-#if defined(HAVE_QUADMESHINGTOOLS)
+#if defined(HAVE_QUADMESHINGTOOLS1)
     int nb_iter = 10;
     int cf_tag = -1;
     PView* theta = PView::getViewByName("theta");
@@ -4662,9 +4662,9 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   }
   //  return 0;
 
-  int tag_H = GmshMergePostProcessingFile (temp_);
-  tags.push_back(tag_H);
-  
+  GmshMergePostProcessingFile (temp_);
+  tags.push_back(PView::list.size() - 1);
+
   /* After the cut, the 'theta' and 'H' views are no longer valid
    * deleting them for the moment ... */
   PView* viewTheta = PView::getViewByName("theta");
