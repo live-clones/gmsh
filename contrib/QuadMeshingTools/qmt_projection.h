@@ -30,7 +30,7 @@ namespace QMT {
 
     protected:
       const TMesh M;
-      size_t N_search = 3;
+      size_t N_search = 5;
 
       std::vector<void*> curve_tree;
       std::vector<std::vector<std::vector<id>>> cTreeIdToEdges;

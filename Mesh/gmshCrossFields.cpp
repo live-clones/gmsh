@@ -4658,6 +4658,15 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     V->writePOS(posout, false, true, true);
   }
   //  return 0;
+
+
+  /* After the cut, the 'theta' and 'H' views are no longer valid
+   * deleting them for the moment ... */
+  PView* viewTheta = PView::getViewByName("theta");
+  if (viewTheta) delete viewTheta;
+  PView* viewH = PView::getViewByName("H");
+  if (viewH) delete viewH;
+  // TODO BUG FIXME the field PViewDataGModel* d must be updated by Cut to be probed by the simplification !
   
   Msg::Info("Cutting the mesh");
   qLayout.cutMesh(cuts);
@@ -4832,9 +4841,9 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
 
   //
 
-  //  delete d;
+  // delete d;
   PView *HHH = new PView (d,69);
-  tags.push_back(69);
+  tags.push_back(69); /* TODO: not OK because mesh has been changed */
 
   delete dd;
   delete dt;

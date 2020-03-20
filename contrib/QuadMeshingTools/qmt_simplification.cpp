@@ -471,6 +471,31 @@ namespace QMT {
     }
   };
 
+  bool polyline_length(const std::vector<vec3>& pts, bool use_sizemap, const SizeMap& sizemap, double& curveLen) {
+    /* Size map size(t) */
+    vector<double> size(pts.size(),0.);
+    if (use_sizemap) {
+      F(i, size.size()) size[i] = sizemap.eval(pts[i]);
+    }
+
+    vector<double> Pri(pts.size(),0.);
+    /* Integral of inverse, Pri = int(1/size(t),t) */
+    double totalLen = 0.;
+    F(i,pts.size()-1.) {
+      double len = length(pts[i+1]-pts[i]);
+      totalLen += len;
+      if (use_sizemap) {
+        Pri[i+1] = Pri[i] + 0.5 * (1./double(size[i]) + 1./double(size[i+1])) * len;
+      }
+    }
+    if (use_sizemap) {
+      curveLen = Pri.back();
+    } else {
+      curveLen = totalLen;
+    }
+
+    return true;
+  }
 
   /* warning: call the gmsh API (via sizemap.eval()) */
   bool sample_curve(const std::vector<vec3>& pts, size_t N, const SizeMap& sizemap, vector<vec3>& newPts) {
@@ -483,8 +508,11 @@ namespace QMT {
 
     vector<double> Pri(pts.size(),0.);
     /* Integral of inverse, Pri = int(1/size(t),t) */
+    double totalLen = 0.;
     F(i,pts.size()-1.) {
-      Pri[i+1] = Pri[i] + 1./(0.5*(size[i]+size[i+1])) * length(pts[i+1]-pts[i]);
+      double len = length(pts[i+1]-pts[i]);
+      totalLen += len;
+      Pri[i+1] = Pri[i] + 0.5 * (1./double(size[i]) + 1./double(size[i+1])) * len;
     }
 
     vector<double> targetLens(N, 0.);
@@ -503,27 +531,57 @@ namespace QMT {
         len_j = len_jp1;
       }
     }
+    // info("--- N = {}", N);
+    // info("size:        {}", size);
+    // info("Pri:         {}", Pri);
+    // info("targetLens:  {}", targetLens);
+    // vector<double> targetLensN = targetLens;
+    // F(i,targetLensN.size()) targetLensN[i] /= totalLen;
+    // info("targetLensN: {}", targetLensN);
+    // vector<double> edgeLen(targetLens.size(),0.);
+    // edgeLen[0] = targetLens[0];
+    // FC(i,targetLens.size(),i>0) edgeLen[i] = targetLens[i+1]-targetLens[i];
+    // info("edgeLen:     {}", edgeLen);
 
+    constexpr bool NAIVE = false;
     size_t prev_j = 0;
     double prev_acc = 0.;
     F(i,N) {
       double targetLen = targetLens[i];
 
       bool found = false;
-      double acc = prev_acc;
-      for(size_t j = prev_j; j < pts.size()-1; ++j) {
-        double len_j = acc;
-        acc += length(pts[j+1]-pts[j]);
-        double len_jp1 = acc;
+      if (NAIVE) {
+        double len_j = 0.;
+        for(size_t j = 0; j < pts.size()-1; ++j) {
+          double acc = length(pts[j+1]-pts[j]);
+          double len_jp1 = len_j + acc;
 
-        if (len_j < targetLen && targetLen <= len_jp1) {
-          double lambda = (targetLen - len_j) / (len_jp1 - len_j);
-          vec3 pt = (1.-lambda) * pts[j] + lambda * pts[j+1];
-          newPts.push_back(pt);
-          found = true;
-          prev_j = j;
-          prev_acc = len_j;
-          break;
+          if (len_j < targetLen && targetLen <= len_jp1) {
+            double lambda = (targetLen - len_j) / (len_jp1 - len_j);
+            vec3 pt = (1.-lambda) * pts[j] + lambda * pts[j+1];
+            newPts.push_back(pt);
+            found = true;
+            break;
+          }
+
+          len_j = len_jp1;
+        }
+      } else {
+        double acc = prev_acc;
+        for(size_t j = prev_j; j < pts.size()-1; ++j) {
+          double len_j = acc;
+          acc += length(pts[j+1]-pts[j]);
+          double len_jp1 = acc;
+
+          if (len_j < targetLen && targetLen <= len_jp1) {
+            double lambda = (targetLen - len_j) / (len_jp1 - len_j);
+            vec3 pt = (1.-lambda) * pts[j] + lambda * pts[j+1];
+            newPts.push_back(pt);
+            found = true;
+            prev_j = j;
+            prev_acc = len_j;
+            break;
+          }
         }
       }
       if (!found) {
@@ -1395,34 +1453,52 @@ namespace QMT {
       const vector<id>& chord = chords[i];
       vector<id2> edges;
       extract_chord_internal_edges(patches, chord, edges);
+      constexpr bool USE_FULL_CURVE = true;
       double wavg = 0.;
       double avg_sum = 0.;
       F(j, edges.size()) {
-        id node1 = edges[j][0];
-        id node2 = edges[j][1];
-        if (nodeToMeshVertex.find(node1) == nodeToMeshVertex.end()) {
-          error("node1={} not found in nodeToMeshVertex", node1);
-          return false;
+        if (USE_FULL_CURVE) {
+          /* Use the edge in the triangulated mesh to get a good sampling */
+          auto it = pairToPoints.find(edges[j]);
+          if (it == pairToPoints.end()) {
+            error("curve {} not found in pairToPoints", edges[j]);
+            return false;
+          }
+          const vector<vec3>& pts = it->second;
+          double clen = 0.;
+          bool okl = polyline_length(pts, true, sizemap, clen);
+          if (!okl) {
+            error("curve {}, failed compute length from polyline", edges[j]);
+            return false;
+          }
+          wavg += clen;
+          avg_sum += 1;
+        } else {
+          id node1 = edges[j][0];
+          id node2 = edges[j][1];
+          if (nodeToMeshVertex.find(node1) == nodeToMeshVertex.end()) {
+            error("node1={} not found in nodeToMeshVertex", node1);
+            return false;
+          }
+          if (nodeToMeshVertex.find(node2) == nodeToMeshVertex.end()) {
+            error("node2={} not found in nodeToMeshVertex", node2);
+            return false;
+          }
+          id v1 = meshVertexToV[nodeToMeshVertex[node1]];
+          id v2 = meshVertexToV[nodeToMeshVertex[node2]];
+          vec3 p1 = M.points[v1];
+          vec3 p2 = M.points[v2];
+          double clen = length(p2-p1);
+          double s1 = M.size[v1];
+          double s2 = M.size[v2];
+          if (s1 == DBL_MAX || s2 == DBL_MAX) {
+            warn("sizemap probe failed at node1={} or node2={}", node1, node2);
+            continue;
+          }
+          clen *= 0.5 * (1./s1 + 1./s2);
+          wavg += clen;
+          avg_sum += 1.;
         }
-        if (nodeToMeshVertex.find(node2) == nodeToMeshVertex.end()) {
-          error("node2={} not found in nodeToMeshVertex", node2);
-          return false;
-        }
-        id v1 = meshVertexToV[nodeToMeshVertex[node1]];
-        id v2 = meshVertexToV[nodeToMeshVertex[node2]];
-        vec3 p1 = M.points[v1];
-        vec3 p2 = M.points[v2];
-        double clen = length(p2-p1);
-        /* warning: sizemap call the gmsh api (probe function) */
-        double s1 = M.size[v1];
-        double s2 = M.size[v2];
-        if (s1 == DBL_MAX || s2 == DBL_MAX) {
-          warn("sizemap probe failed at node1={} or node2={}", node1, node2);
-          continue;
-        }
-        clen *= 1. / (0.5 * (s1 + s2));
-        wavg += clen;
-        avg_sum += 1.;
       }
       if (avg_sum == 0.) {
         error("avg_sum = 0., no edge in chord ?");
@@ -1438,7 +1514,7 @@ namespace QMT {
         denom = size_max;
       }
       size_t nb_ipts = 0;
-      nb_ipts = wavg / denom;
+      nb_ipts = std::round(wavg / denom);
       info("  chord {}, avg. scaled width: {}, {} interior points", i, wavg, nb_ipts);
 
       /* Sample the curves */
