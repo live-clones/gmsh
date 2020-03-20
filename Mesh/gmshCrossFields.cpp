@@ -4658,6 +4658,15 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     V->writePOS(posout, false, true, true);
   }
   //  return 0;
+
+
+  /* After the cut, the 'theta' and 'H' views are no longer valid
+   * deleting them for the moment ... */
+  PView* viewTheta = PView::getViewByName("theta");
+  if (viewTheta) delete viewTheta;
+  PView* viewH = PView::getViewByName("H");
+  if (viewH) delete viewH;
+  // TODO BUG FIXME the field PViewDataGModel* d must be updated by Cut to be probed by the simplification !
   
   Msg::Info("Cutting the mesh");
   qLayout.cutMesh(cuts);
@@ -4832,9 +4841,9 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
 
   //
 
-  //  delete d;
+  // delete d;
   PView *HHH = new PView (d,69);
-  tags.push_back(69);
+  tags.push_back(69); /* TODO: not OK because mesh has been changed */
 
   delete dd;
   delete dt;
@@ -4905,6 +4914,7 @@ int computeCrossFieldAndH(GModel *gm)
 
 int computeCrossField(GModel *gm, std::vector<int> &tags)
 {
+  const bool WRITE_MESHES = false;
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
 
@@ -4960,7 +4970,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     Msg::Error("Failed to export quad mesh");
     return -1;
   }
-  GmshWriteFile(gm->getName()+"_qmesh_init.msh");
+  if (WRITE_MESHES) GmshWriteFile(gm->getName()+"_qmesh_init.msh");
 
   /* Simplification */
   double hc = 0.9 * size_min;
@@ -4975,7 +4985,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     Msg::Error("Failed to export quad mesh");
     return -1;
   }
-  GmshWriteFile(gm->getName()+"_qmesh_simplified.msh");
+  if (WRITE_MESHES) GmshWriteFile(gm->getName()+"_qmesh_simplified.msh");
 
   if (false) {
     Msg::Warning("Smoothing disabled for the moment");
@@ -4992,8 +5002,11 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
       Msg::Error("Failed to export quad mesh");
       return -1;
     }
-    GmshWriteFile(gm->getName()+"_qmesh_smoothed.msh");
+    if (WRITE_MESHES) GmshWriteFile(gm->getName()+"_qmesh_smoothed.msh");
   }
+
+  PView* hhh = PView::getViewByTag(69);
+  if (hhh) delete hhh;
 
 #endif
   return cf_status;
