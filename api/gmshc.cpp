@@ -1194,14 +1194,30 @@ GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType, i
   }
 }
 
-GMSH_API void gmshModelMeshGetCompressedBasisFunctionsForElements(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int * numComponents, int * numFunctionsPerElements, double ** basisFunctions, size_t * basisFunctions_n, int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n, const int tag, int * ierr)
+GMSH_API void gmshModelMeshGetCompressedBasisFunctionsForElements(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int * numComponents, int * numFunctionsPerElements, double ** basisFunctions, size_t * basisFunctions_n, int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
     std::vector<double> api_basisFunctions_;
     std::vector<int> api_basisFunctionsIndex_;
-    gmsh::model::mesh::getCompressedBasisFunctionsForElements(elementType, api_integrationPoints_, functionSpaceType, *numComponents, *numFunctionsPerElements, api_basisFunctions_, api_basisFunctionsIndex_, tag);
+    gmsh::model::mesh::getCompressedBasisFunctionsForElements(elementType, api_integrationPoints_, functionSpaceType, *numComponents, *numFunctionsPerElements, api_basisFunctions_, api_basisFunctionsIndex_, tag, task, numTasks);
+    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
+    vector2ptr(api_basisFunctionsIndex_, basisFunctionsIndex, basisFunctionsIndex_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshPreallocateCompressedBasisFunctions(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, double ** basisFunctions, size_t * basisFunctions_n, int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
+    std::vector<double> api_basisFunctions_;
+    std::vector<int> api_basisFunctionsIndex_;
+    gmsh::model::mesh::preallocateCompressedBasisFunctions(elementType, api_integrationPoints_, functionSpaceType, api_basisFunctions_, api_basisFunctionsIndex_, tag);
     vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
     vector2ptr(api_basisFunctionsIndex_, basisFunctionsIndex, basisFunctionsIndex_n);
   }

@@ -53,6 +53,11 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int order)
 
 HierarchicalBasisH1Quad::~HierarchicalBasisH1Quad() {}
 
+unsigned int HierarchicalBasisH1Quad::getNumberOfOrientations() const
+{
+  return 24; // factorial 4
+}
+
 double HierarchicalBasisH1Quad::_affineCoordinate(int const &j, double const &u,
                                                   double const &v)
 {

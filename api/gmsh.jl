@@ -1747,7 +1747,7 @@ function getLocalMultipliersForHcurl0(elementType, tag = -1)
 end
 
 """
-    gmsh.model.mesh.getCompressedBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
+    gmsh.model.mesh.getCompressedBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1, task = 0, numTasks = 1)
 
 Get the element-dependent basis functions of the elements of type `elementType`
 in the entity of tag `tag` at the integration points `integrationPoints` (given
@@ -1764,11 +1764,12 @@ when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
 `basisFunctionsIndex` returns the index of the basis function such that element
 `i` between have basis functions store at place i in `basisFunctions` array.
 Warning: this is an experimental feature and will probably change in a future
-release.
+release. If `numTasks` > 1, only compute and return the part of the data indexed
+by `task`.
 
 Return `numComponents`, `numFunctionsPerElements`, `basisFunctions`, `basisFunctionsIndex`.
 """
-function getCompressedBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
+function getCompressedBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1, task = 0, numTasks = 1)
     api_numComponents_ = Ref{Cint}()
     api_numFunctionsPerElements_ = Ref{Cint}()
     api_basisFunctions_ = Ref{Ptr{Cdouble}}()
@@ -1777,8 +1778,8 @@ function getCompressedBasisFunctionsForElements(elementType, integrationPoints, 
     api_basisFunctionsIndex_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetCompressedBasisFunctionsForElements, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_numFunctionsPerElements_, api_basisFunctions_, api_basisFunctions_n_, api_basisFunctionsIndex_, api_basisFunctionsIndex_n_, tag, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_numFunctionsPerElements_, api_basisFunctions_, api_basisFunctions_n_, api_basisFunctionsIndex_, api_basisFunctionsIndex_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetCompressedBasisFunctionsForElements returned non-zero error code: $(ierr[])")
     basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
     basisFunctionsIndex = unsafe_wrap(Array, api_basisFunctionsIndex_[], api_basisFunctionsIndex_n_[], own=true)

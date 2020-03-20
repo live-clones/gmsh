@@ -28,6 +28,11 @@ HierarchicalBasisHcurlQuad::HierarchicalBasisHcurlQuad(int order)
 
 HierarchicalBasisHcurlQuad::~HierarchicalBasisHcurlQuad() {}
 
+unsigned int HierarchicalBasisHcurlQuad::getNumberOfOrientations() const
+{
+  return 24; // factorial 4
+}
+
 double HierarchicalBasisHcurlQuad::_affineCoordinate(int const &j,
                                                      double const &u,
                                                      double const &v)

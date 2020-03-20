@@ -929,7 +929,8 @@ namespace gmsh { // Top-level functions
       // `basisFunctionsIndex' returns the index of the basis function such that
       // element `i' between have basis functions store at place i in
       // `basisFunctions' array. Warning: this is an experimental feature and will
-      // probably change in a future release.
+      // probably change in a future release. If `numTasks' > 1, only compute and
+      // return the part of the data indexed by `task'.
       GMSH_API void getCompressedBasisFunctionsForElements(const int elementType,
                                                            const std::vector<double> & integrationPoints,
                                                            const std::string & functionSpaceType,
@@ -937,7 +938,20 @@ namespace gmsh { // Top-level functions
                                                            int & numFunctionsPerElements,
                                                            std::vector<double> & basisFunctions,
                                                            std::vector<int> & basisFunctionsIndex,
-                                                           const int tag = -1);
+                                                           const int tag = -1,
+                                                           const std::size_t task = 0,
+                                                           const std::size_t numTasks = 1);
+
+      // gmsh::model::mesh::preallocateCompressedBasisFunctions
+      //
+      // Preallocate data before calling `getCompressedBasisFunctionsForElements'
+      // with `numTasks' > 1. For C and C++ only.
+      GMSH_API void preallocateCompressedBasisFunctions(const int elementType,
+                                                        const std::vector<double> & integrationPoints,
+                                                        const std::string & functionSpaceType,
+                                                        std::vector<double> & basisFunctions,
+                                                        std::vector<int> & basisFunctionsIndex,
+                                                        const int tag = -1);
 
       // gmsh::model::mesh::getBasisFunctionsForElements
       //

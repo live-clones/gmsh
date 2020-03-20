@@ -34,6 +34,12 @@ HierarchicalBasisHcurlTetra::HierarchicalBasisHcurlTetra(int order)
 
 HierarchicalBasisHcurlTetra::~HierarchicalBasisHcurlTetra() {}
 
+unsigned int HierarchicalBasisHcurlTetra::getNumberOfOrientations() const
+{
+  return 24; // factorial 4
+}
+
+
 double HierarchicalBasisHcurlTetra::_affineCoordinate(const int &j,
                                                       const double &u,
                                                       const double &v,

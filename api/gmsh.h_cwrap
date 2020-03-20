@@ -1400,7 +1400,8 @@ namespace gmsh { // Top-level functions
       // `basisFunctionsIndex' returns the index of the basis function such that
       // element `i' between have basis functions store at place i in
       // `basisFunctions' array. Warning: this is an experimental feature and will
-      // probably change in a future release.
+      // probably change in a future release. If `numTasks' > 1, only compute and
+      // return the part of the data indexed by `task'.
       inline void getCompressedBasisFunctionsForElements(const int elementType,
                                                          const std::vector<double> & integrationPoints,
                                                          const std::string & functionSpaceType,
@@ -1408,13 +1409,35 @@ namespace gmsh { // Top-level functions
                                                          int & numFunctionsPerElements,
                                                          std::vector<double> & basisFunctions,
                                                          std::vector<int> & basisFunctionsIndex,
-                                                         const int tag = -1)
+                                                         const int tag = -1,
+                                                         const std::size_t task = 0,
+                                                         const std::size_t numTasks = 1)
       {
         int ierr = 0;
         double *api_integrationPoints_; size_t api_integrationPoints_n_; vector2ptr(integrationPoints, &api_integrationPoints_, &api_integrationPoints_n_);
         double *api_basisFunctions_; size_t api_basisFunctions_n_;
         int *api_basisFunctionsIndex_; size_t api_basisFunctionsIndex_n_;
-        gmshModelMeshGetCompressedBasisFunctionsForElements(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &numFunctionsPerElements, &api_basisFunctions_, &api_basisFunctions_n_, &api_basisFunctionsIndex_, &api_basisFunctionsIndex_n_, tag, &ierr);
+        gmshModelMeshGetCompressedBasisFunctionsForElements(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &numFunctionsPerElements, &api_basisFunctions_, &api_basisFunctions_n_, &api_basisFunctionsIndex_, &api_basisFunctionsIndex_n_, tag, task, numTasks, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_integrationPoints_);
+        basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
+        basisFunctionsIndex.assign(api_basisFunctionsIndex_, api_basisFunctionsIndex_ + api_basisFunctionsIndex_n_); gmshFree(api_basisFunctionsIndex_);
+      }
+
+      // Preallocate data before calling `getCompressedBasisFunctionsForElements'
+      // with `numTasks' > 1. For C and C++ only.
+      inline void preallocateCompressedBasisFunctions(const int elementType,
+                                                      const std::vector<double> & integrationPoints,
+                                                      const std::string & functionSpaceType,
+                                                      std::vector<double> & basisFunctions,
+                                                      std::vector<int> & basisFunctionsIndex,
+                                                      const int tag = -1)
+      {
+        int ierr = 0;
+        double *api_integrationPoints_; size_t api_integrationPoints_n_; vector2ptr(integrationPoints, &api_integrationPoints_, &api_integrationPoints_n_);
+        double *api_basisFunctions_; size_t api_basisFunctions_n_;
+        int *api_basisFunctionsIndex_; size_t api_basisFunctionsIndex_n_;
+        gmshModelMeshPreallocateCompressedBasisFunctions(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &api_basisFunctions_, &api_basisFunctions_n_, &api_basisFunctionsIndex_, &api_basisFunctionsIndex_n_, tag, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_integrationPoints_);
         basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);

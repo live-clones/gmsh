@@ -49,6 +49,11 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
 }
 HierarchicalBasisH1Tria::~HierarchicalBasisH1Tria() {}
 
+unsigned int HierarchicalBasisH1Tria::getNumberOfOrientations() const
+{
+  return 6; // factorial 3
+}
+
 double HierarchicalBasisH1Tria::_affineCoordinate(int const &j, double const &u,
                                                   double const &v)
 {

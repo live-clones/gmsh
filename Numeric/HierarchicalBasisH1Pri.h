@@ -51,6 +51,7 @@ class HierarchicalBasisH1Pri : public HierarchicalBasisH1 {
 public:
   HierarchicalBasisH1Pri(int order);
   virtual ~HierarchicalBasisH1Pri();
+  virtual unsigned int getNumberOfOrientations() const;
   // vertexBasis=[v0,...,v5]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
   // faceBasis=[\Quad

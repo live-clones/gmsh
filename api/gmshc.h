@@ -806,7 +806,8 @@ GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType,
  * e1g2f1u,..., e2g1f1u, ...]. `basisFunctionsIndex' returns the index of the
  * basis function such that element `i' between have basis functions store at
  * place i in `basisFunctions' array. Warning: this is an experimental feature
- * and will probably change in a future release. */
+ * and will probably change in a future release. If `numTasks' > 1, only
+ * compute and return the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetCompressedBasisFunctionsForElements(const int elementType,
                                                                   double * integrationPoints, size_t integrationPoints_n,
                                                                   const char * functionSpaceType,
@@ -815,7 +816,19 @@ GMSH_API void gmshModelMeshGetCompressedBasisFunctionsForElements(const int elem
                                                                   double ** basisFunctions, size_t * basisFunctions_n,
                                                                   int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n,
                                                                   const int tag,
+                                                                  const size_t task,
+                                                                  const size_t numTasks,
                                                                   int * ierr);
+
+/* Preallocate data before calling `getCompressedBasisFunctionsForElements'
+ * with `numTasks' > 1. For C and C++ only. */
+GMSH_API void gmshModelMeshPreallocateCompressedBasisFunctions(const int elementType,
+                                                               double * integrationPoints, size_t integrationPoints_n,
+                                                               const char * functionSpaceType,
+                                                               double ** basisFunctions, size_t * basisFunctions_n,
+                                                               int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n,
+                                                               const int tag,
+                                                               int * ierr);
 
 /* Get the element-dependent basis functions of the elements of type
  * `elementType' in the entity of tag `tag'at the integration points

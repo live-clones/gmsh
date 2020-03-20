@@ -2251,9 +2251,9 @@ class model:
             return _ovectorint(api_localMultipliers_, api_localMultipliers_n_.value)
 
         @staticmethod
-        def getCompressedBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1):
+        def getCompressedBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getCompressedBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1)
+            gmsh.model.mesh.getCompressedBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1)
 
             Get the element-dependent basis functions of the elements of type
             `elementType' in the entity of tag `tag' at the integration points
@@ -2270,7 +2270,8 @@ class model:
             e1g2f1u,..., e2g1f1u, ...]. `basisFunctionsIndex' returns the index of the
             basis function such that element `i' between have basis functions store at
             place i in `basisFunctions' array. Warning: this is an experimental feature
-            and will probably change in a future release.
+            and will probably change in a future release. If `numTasks' > 1, only
+            compute and return the part of the data indexed by `task'.
 
             Return `numComponents', `numFunctionsPerElements', `basisFunctions', `basisFunctionsIndex'.
             """
@@ -2289,6 +2290,8 @@ class model:
                 byref(api_basisFunctions_), byref(api_basisFunctions_n_),
                 byref(api_basisFunctionsIndex_), byref(api_basisFunctionsIndex_n_),
                 c_int(tag),
+                c_size_t(task),
+                c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

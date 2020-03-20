@@ -25,6 +25,10 @@ HierarchicalBasisH1Point::HierarchicalBasisH1Point()
 
 HierarchicalBasisH1Point::~HierarchicalBasisH1Point() {}
 
+unsigned int HierarchicalBasisH1Point::getNumberOfOrientations() const
+{
+  return 1; // factorial 1
+}
 
 void HierarchicalBasisH1Point::generateBasis(double const &u, double const &v,
                                             double const &w,
