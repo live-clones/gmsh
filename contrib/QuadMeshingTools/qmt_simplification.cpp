@@ -21,6 +21,7 @@
 #include "gmsh.h"
 
 #include "qmt_utils.hpp"
+#include "geolog.h"
 
 /* - Shortcuts for loops */
 #define F(_VAR,_NB) for(size_t _VAR = 0; _VAR < (size_t) _NB; ++_VAR)
@@ -378,6 +379,7 @@ namespace QMT_SMP_Utils {
 namespace QMT {
   using namespace QMT_Utils;
   using namespace QMT_SMP_Utils;
+  using namespace GLog;
 
   struct SizeMap {
     double hmin = 0.;
@@ -485,7 +487,7 @@ namespace QMT {
       double len = length(pts[i+1]-pts[i]);
       totalLen += len;
       if (use_sizemap) {
-        Pri[i+1] = Pri[i] + 0.5 * (1./double(size[i]) + 1./double(size[i+1])) * len;
+        Pri[i+1] = Pri[i] + 0.5 * (1./size[i] + 1./size[i+1]) * len;
       }
     }
     if (use_sizemap) {
@@ -1449,11 +1451,21 @@ namespace QMT {
     info("creating points on curves (via chord expansion) ...");
     unordered_map<id2,vector<id>,id2Hash> pairToNewVertices;
     F(i, chords.size()) {
+      double denom = 1.;
+      if (size_min != 0.) {
+        denom = size_min;
+      } else if (size_max != 1.e22) {
+        denom = size_max;
+      }
+
       /* Compute chord average width (taking sizemap into account) */
       const vector<id>& chord = chords[i];
       vector<id2> edges;
       extract_chord_internal_edges(patches, chord, edges);
+
       constexpr bool USE_FULL_CURVE = true;
+      vector<size_t> edge_np(edges.size());
+      vector<double> edge_len(edges.size());
       double wavg = 0.;
       double avg_sum = 0.;
       F(j, edges.size()) {
@@ -1471,6 +1483,8 @@ namespace QMT {
             error("curve {}, failed compute length from polyline", edges[j]);
             return false;
           }
+          edge_np[j] = std::round(clen/denom);
+          edge_len[j] = clen;
           wavg += clen;
           avg_sum += 1;
         } else {
@@ -1506,16 +1520,28 @@ namespace QMT {
       }
       wavg /= avg_sum;
 
+      // GeoLog log;
+      // F(j, edges.size()) {
+      //     id node1 = edges[j][0];
+      //     id node2 = edges[j][1];
+      //     id v1 = meshVertexToV[nodeToMeshVertex[node1]];
+      //     id v2 = meshVertexToV[nodeToMeshVertex[node2]];
+      //     vec3 p1 = M.points[v1];
+      //     vec3 p2 = M.points[v2];
+      //     log.add({p1,p2},edge_len[j],"c"+std::to_string(i)+"_ie");
+      // }
+      // log.toGmsh();
+
       /* Assign number of points */
-      double denom = 1.;
-      if (size_min != 0.) {
-        denom = size_min;
-      } else if (size_max != 1.e22) {
-        denom = size_max;
-      }
+      double minWidth = *std::min_element(edge_len.begin(),edge_len.end());
       size_t nb_ipts = 0;
       nb_ipts = std::round(wavg / denom);
+      nb_ipts = std::round(minWidth / denom);
       info("  chord {}, avg. scaled width: {}, {} interior points", i, wavg, nb_ipts);
+
+      // info("   details: edge_np = {}", edge_np);
+      // info("            edge_len = {}", edge_len);
+      // info("            edges = {}", edges);
 
       /* Sample the curves */
       F(j, edges.size()) {

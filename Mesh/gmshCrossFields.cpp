@@ -4914,6 +4914,7 @@ int computeCrossFieldAndH(GModel *gm)
 
 int computeCrossField(GModel *gm, std::vector<int> &tags)
 {
+  const bool WRITE_MESHES = false;
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
 
@@ -4969,7 +4970,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     Msg::Error("Failed to export quad mesh");
     return -1;
   }
-  GmshWriteFile(gm->getName()+"_qmesh_init.msh");
+  if (WRITE_MESHES) GmshWriteFile(gm->getName()+"_qmesh_init.msh");
 
   /* Simplification */
   double hc = 0.9 * size_min;
@@ -4984,7 +4985,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     Msg::Error("Failed to export quad mesh");
     return -1;
   }
-  GmshWriteFile(gm->getName()+"_qmesh_simplified.msh");
+  if (WRITE_MESHES) GmshWriteFile(gm->getName()+"_qmesh_simplified.msh");
 
   if (false) {
     Msg::Warning("Smoothing disabled for the moment");
@@ -5001,8 +5002,11 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
       Msg::Error("Failed to export quad mesh");
       return -1;
     }
-    GmshWriteFile(gm->getName()+"_qmesh_smoothed.msh");
+    if (WRITE_MESHES) GmshWriteFile(gm->getName()+"_qmesh_smoothed.msh");
   }
+
+  PView* hhh = PView::getViewByTag(69);
+  if (hhh) delete hhh;
 
 #endif
   return cf_status;
