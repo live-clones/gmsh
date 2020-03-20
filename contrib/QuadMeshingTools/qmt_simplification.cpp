@@ -421,7 +421,7 @@ namespace QMT {
     };
 
     bool compute_Hmin_Hmax() {
-      bool fromModelData = true;
+      bool fromModelData = false;
       if (fromModelData) {
         std::string dataType;
         std::vector<std::size_t> tags;
@@ -1577,7 +1577,6 @@ namespace QMT {
         pairToNewVertices[edges[j]] = nvert;
       }
     }
-    return false;
 
     info("creating points inside the {} patches (transfinite interpolation) and building the subdivided quads ...", patches.size());
     F(c,patches.size()) {
