@@ -15,6 +15,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "Context.h"
+#include "SBoundingBox3d.h"
 
 // helper routines for list-based views
 
@@ -37,6 +38,15 @@ static void minmax(int n, double *X, double *Y, double *Z, double *min,
   }
 
   // make bounding boxes larger up to (absolute) geometrical tolerance
+  SBoundingBox3d bb(min[0],min[1],min[2],max[0],max[1],max[2]);
+  bb *= 1.1;
+  max[0] = bb.max().x();
+  max[1] = bb.max().y();
+  max[2] = bb.max().z();
+  min[0] = bb.min().x();
+  min[1] = bb.min().y();
+  min[2] = bb.min().z();
+
   double eps = CTX::instance()->geom.tolerance;
   for(int i = 0; i < 3; i++) {
     min[i] -= eps;

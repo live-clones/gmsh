@@ -3388,7 +3388,7 @@ public:
 
   int computeCrossFieldAndH()
   {
-#if defined(HAVE_QUADMESHINGTOOLS)
+#if defined(HAVE_QUADMESHINGTOOLS1)
     int nb_iter = 10;
     int cf_tag = -1;
     PView* theta = PView::getViewByName("theta");

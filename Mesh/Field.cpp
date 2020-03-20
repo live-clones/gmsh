@@ -1550,6 +1550,7 @@ public:
     double l = 0.;
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
+    /// FIXME THIS DOES NOT WORK 
     if(!octree->searchScalarWithTol(x, y, z, &l, 0, 0, 0.05))
       Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
     if(l <= 0 && crop_negative_values) return MAX_LC;
