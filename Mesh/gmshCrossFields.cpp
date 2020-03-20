@@ -2748,9 +2748,10 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     SPoint3 p1(v1->x(), v1->y(), v1->z());
     SPoint3 p2(v2->x(), v2->y(), v2->z());
 
+    double EPS = 1.e-7;
     if(v2 == vsing && (U0 - u) * (U1 - u) <= 0) {
       double xi = coord1d(U0, U1, u);
-      if (!corner || (xi > 1.e-10 && xi < 1-1.e-10)){
+      if (!corner || (xi > EPS && xi < 1-EPS)){
 	SPoint3 pp = p0 * (1 - xi) + p1 * xi;
 	computeOneIso(vsing, adj, u, v0, v1, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
 		      cuts, passages, singularities);
@@ -2758,7 +2759,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     }
     else if(v1 == vsing && (U0 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U0, U2, u);
-      if (!corner || (xi > 1.e-10 && xi < 1-1.e-10)){
+      if (!corner || (xi > EPS && xi < 1-EPS)){
 	SPoint3 pp = p0 * (1 - xi) + p2 * xi;
 	computeOneIso(vsing, adj, u, v0, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
 		      cuts, passages, singularities);
@@ -2766,7 +2767,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     }
     else if(v0 == vsing && (U1 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U1, U2, u);
-      if (!corner || (xi > 1.e-10 && xi < 1-1.e-10)){
+      if (!corner || (xi > EPS && xi < 1-EPS)){
 	SPoint3 pp = p1 * (1 - xi) + p2 * xi;
 	computeOneIso(vsing, adj, u, v1, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
 		      cuts, passages, singularities);
