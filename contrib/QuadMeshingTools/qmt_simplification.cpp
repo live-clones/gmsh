@@ -1381,6 +1381,13 @@ namespace QMT {
         }
         id2 scurve = sorted(node1,node2);
         if (scurve[0] != node1) std::reverse(points.begin(),points.end());
+        auto it = pairToEntity.find(scurve);
+        if (it != pairToEntity.end()) {
+          if (it->second != curve) {
+            error("curve {} (node1={},node2={}}): there is already a curve (tag = {}) with the same extremities, case not supported", curve, node1,node2, it->second);
+            return false;
+          }
+        }
         pairToPoints[scurve] = points;
         pairToEntity[scurve] = curve;
       }
