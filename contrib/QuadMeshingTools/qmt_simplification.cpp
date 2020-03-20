@@ -421,7 +421,7 @@ namespace QMT {
     };
 
     bool compute_Hmin_Hmax() {
-      bool fromModelData = true;
+      bool fromModelData = false;
       if (fromModelData) {
         std::string dataType;
         std::vector<std::size_t> tags;

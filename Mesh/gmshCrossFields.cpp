@@ -3388,7 +3388,7 @@ public:
 
   int computeCrossFieldAndH()
   {
-#if defined(HAVE_QUADMESHINGTOOLS1)
+#if defined(HAVE_QUADMESHINGTOOLS)
     int nb_iter = 10;
     int cf_tag = -1;
     PView* theta = PView::getViewByName("theta");
@@ -4648,18 +4648,23 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   dd->finalize();
 
   std::string posout = gm->getName() + "_QLayoutResults.pos";
-
+  std::string temp_  = gm->getName() + "_temp.pos";
+  
   qLayout.restoreInitialMesh();
   dt->writePOS(posout, false, true, true);
   dd->writePOS(posout, false, true, true);
   d->writePOS(posout, false, true, true);
+  // a temporary file
+  d->writePOS(temp_, false, true, false);
   if(layout) {
     U->writePOS(posout, false, true, true);
     V->writePOS(posout, false, true, true);
   }
   //  return 0;
 
-
+  int tag_H = GmshMergePostProcessingFile (temp_);
+  tags.push_back(tag_H);
+  
   /* After the cut, the 'theta' and 'H' views are no longer valid
    * deleting them for the moment ... */
   PView* viewTheta = PView::getViewByName("theta");
@@ -4841,10 +4846,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
 
   //
 
-  // delete d;
-  PView *HHH = new PView (d,69);
-  tags.push_back(69); /* TODO: not OK because mesh has been changed */
-
+  delete d;
   delete dd;
   delete dt;
   if(layout) {
@@ -4914,7 +4916,7 @@ int computeCrossFieldAndH(GModel *gm)
 
 int computeCrossField(GModel *gm, std::vector<int> &tags)
 {
-  const bool WRITE_MESHES = false;
+  const bool WRITE_MESHES = true;
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
 
@@ -5005,8 +5007,8 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     if (WRITE_MESHES) GmshWriteFile(gm->getName()+"_qmesh_smoothed.msh");
   }
 
-  PView* hhh = PView::getViewByTag(69);
-  if (hhh) delete hhh;
+  //  PView* hhh = PView::getViewByTag(69);
+  //  if (hhh) delete hhh;
 
 #endif
   return cf_status;
