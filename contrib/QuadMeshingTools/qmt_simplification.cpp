@@ -507,6 +507,12 @@ namespace QMT {
     /* Size map size(t) */
     vector<double> size(pts.size(),0.);
     F(i, size.size()) size[i] = sizemap.eval(pts[i]);
+    GeoLog log;
+    std::string name = "sc_" + std::to_string(N) + "_" + std::to_string(int(10000*pts[1][0]));
+    F(i,pts.size()-1) {
+      log.add({pts[i],pts[i+1]},{size[i],size[i+1]},name);
+    }
+    log.toGmsh();
 
     vector<double> Pri(pts.size(),0.);
     /* Integral of inverse, Pri = int(1/size(t),t) */
@@ -1571,6 +1577,7 @@ namespace QMT {
         pairToNewVertices[edges[j]] = nvert;
       }
     }
+    return false;
 
     info("creating points inside the {} patches (transfinite interpolation) and building the subdivided quads ...", patches.size());
     F(c,patches.size()) {

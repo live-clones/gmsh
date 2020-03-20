@@ -4961,6 +4961,8 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   bool okg = QMT::generate_quad_mesh_from_gmsh_colored_triangulation(
     quad_layout_name, H_tag, size_min, size_max, Q, &projector, &entityToInitialEntity);
   if (!okg) {
+    PView* hhh = PView::getViewByTag(69);
+    if (hhh) delete hhh;
     Msg::Error("Failed to generate quad mesh");
     return -1;
   }
