@@ -110,7 +110,7 @@ linux64_official_snapshot:
     - cd build
     - VERSION=`cat version.txt`
     - echo ${VERSION}
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64.tgz gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
+    - ssh geuzaine@gmsh.info cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz
   except:
     - tags
 
@@ -135,6 +135,11 @@ linux64-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread'"
   <<: *linux_official
+  after_script:
+    - cd build
+    - VERSION=`cat version.txt`
+    - echo ${VERSION}
+    - ssh geuzaine@gmsh.info cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz
   only:
     - /^gmsh_.*$/
 
