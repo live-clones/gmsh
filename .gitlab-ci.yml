@@ -370,7 +370,7 @@ source_official_release:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *source_official
   after_script:
-    - cd build
+    - cd build_src
     - VERSION=`cat version.txt`
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source.tgz && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
   only:
