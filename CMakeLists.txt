@@ -102,7 +102,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
 set(GMSH_MINOR_VERSION 5)
-set(GMSH_PATCH_VERSION 5)
+set(GMSH_PATCH_VERSION 6)
 set(GMSH_EXTRA_VERSION "")
 set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
 
@@ -1562,6 +1562,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
 # change when the actual version is changed - not for each git hash)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
                ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
+
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt
+     ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION})
 
 # process cmake environment variables so we can append them to the -I include
 # commands. This is not recommended (we should only use the cache variables) but
