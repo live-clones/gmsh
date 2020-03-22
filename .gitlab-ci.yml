@@ -200,7 +200,7 @@ windows64_official_snapshot:
   <<: *windows_official
   after_script:
     - cd build
-    - bash -c 'VERSION=`/usr/bin/cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
+    - bash -c 'VERSION=4.5.5 && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
   tags:
     - windows64
     - official
@@ -213,7 +213,7 @@ windows64_official_release:
   <<: *windows_official
   after_script:
     - cd build
-    - bash -c 'VERSION=`/usr/bin/cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
+    - bash -c 'VERSION=`cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
   tags:
     - windows64
     - official
