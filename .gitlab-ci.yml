@@ -198,9 +198,6 @@ linux32-sdk_official_release:
 
 windows64_official_snapshot:
   <<: *windows_official
-  after_script:
-    - cd build
-    - bash -c 'VERSION=4.5.5 && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
   tags:
     - windows64
     - official
@@ -213,7 +210,7 @@ windows64_official_release:
   <<: *windows_official
   after_script:
     - cd build
-    - bash -c 'VERSION=`cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
+    - bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
   tags:
     - windows64
     - official
@@ -236,7 +233,7 @@ windows64-sdk_official_release:
   <<: *windows_official
   after_script:
     - cd build
-    - bash -c 'VERSION=`/usr/bin/cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64-sdk.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"'
+    - bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64-sdk.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"'
   tags:
     - windows64
     - official
@@ -257,7 +254,7 @@ windows32_official_release:
   <<: *windows_official
   after_script:
     - cd build
-    - bash -c 'VERSION=`/usr/bin/cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows32.zip && ln -s gmsh-${VERSION}-Windows32.zip gmsh-stable-Windows32.zip"'
+    - bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows32.zip && ln -s gmsh-${VERSION}-Windows32.zip gmsh-stable-Windows32.zip"'
   tags:
     - windows32
     - official
@@ -280,7 +277,7 @@ windows32-sdk_official_release:
   <<: *windows_official
   after_script:
     - cd build
-    - bash -c 'VERSION=`/usr/bin/cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows32-sdk.zip && ln -s gmsh-${VERSION}-Windows32-sdk.zip gmsh-stable-Windows32-sdk.zip"'
+    - bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows32-sdk.zip && ln -s gmsh-${VERSION}-Windows32-sdk.zip gmsh-stable-Windows32-sdk.zip"'
   tags:
     - windows32
     - official
