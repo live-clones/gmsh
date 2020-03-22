@@ -106,11 +106,6 @@ linux64_official_snapshot:
   variables:
     EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  after_script:
-    - cd build
-    - VERSION=`cat version.txt`
-    - echo ${VERSION}
-    - ssh geuzaine@gmsh.info cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz
   except:
     - tags
 
@@ -119,6 +114,10 @@ linux64_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
+  after_script:
+    - cd build
+    - VERSION=`cat version.txt`
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz"
   only:
     - /^gmsh_.*$/
 
@@ -138,8 +137,7 @@ linux64-sdk_official_release:
   after_script:
     - cd build
     - VERSION=`cat version.txt`
-    - echo ${VERSION}
-    - ssh geuzaine@gmsh.info cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
   only:
     - /^gmsh_.*$/
 
@@ -156,6 +154,10 @@ linux32_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
+  after_script:
+    - cd build
+    - VERSION=`cat version.txt`
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux32.tgz && ln -s gmsh-${VERSION}-Linux32.tgz gmsh-stable-Linux32.tgz"
   only:
     - /^gmsh_.*$/
 
@@ -172,6 +174,10 @@ linux32-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread'"
   <<: *linux_official
+  after_script:
+    - cd build
+    - VERSION=`cat version.txt`
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux32-sdk.tgz && ln -s gmsh-${VERSION}-Linux32-sdk.tgz gmsh-stable-Linux32-sdk.tgz"
   only:
     - /^gmsh_.*$/
 
@@ -192,6 +198,9 @@ linux32-sdk_official_release:
 
 windows64_official_snapshot:
   <<: *windows_official
+  after_script:
+    - cd build
+    - bash -c 'VERSION=`/usr/bin/cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
   tags:
     - windows64
     - official
@@ -202,6 +211,9 @@ windows64_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *windows_official
+  after_script:
+    - cd build
+    - bash -c 'VERSION=`/usr/bin/cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
   tags:
     - windows64
     - official
@@ -222,6 +234,9 @@ windows64-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
+  after_script:
+    - cd build
+    - bash -c 'VERSION=`/usr/bin/cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64-sdk.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"'
   tags:
     - windows64
     - official
@@ -240,6 +255,9 @@ windows32_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *windows_official
+  after_script:
+    - cd build
+    - bash -c 'VERSION=`/usr/bin/cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows32.zip && ln -s gmsh-${VERSION}-Windows32.zip gmsh-stable-Windows32.zip"'
   tags:
     - windows32
     - official
@@ -260,6 +278,9 @@ windows32-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
+  after_script:
+    - cd build
+    - bash -c 'VERSION=`/usr/bin/cat version.txt` && /usr/bin/ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows32-sdk.zip && ln -s gmsh-${VERSION}-Windows32-sdk.zip gmsh-stable-Windows32-sdk.zip"'
   tags:
     - windows32
     - official
@@ -297,6 +318,10 @@ macos64_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *macos_official
+  after_script:
+    - cd build
+    - VERSION=`cat version.txt`
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg"
   only:
     - /^gmsh_.*$/
 
@@ -311,6 +336,10 @@ macos64-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *macos_official
+  after_script:
+    - cd build
+    - VERSION=`cat version.txt`
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX-sdk.tgz && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
   only:
     - /^gmsh_.*$/
 
@@ -343,6 +372,10 @@ source_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *source_official
+  after_script:
+    - cd build
+    - VERSION=`cat version.txt`
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source.tgz && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
   only:
     - /^gmsh_.*$/
 
@@ -362,7 +395,7 @@ doc_official_snapshot:
     - cmake ${EXTRA_OPTION} ..
     - make doc
     - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh geuzaine@gmsh.info 'cd .wwwgmsh/dev && tar zxvf ../doc.tgz'
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/dev && tar zxvf ../doc.tgz"
   tags:
     - linux64
     - docker
@@ -383,7 +416,7 @@ doc_official_release:
     - cmake ${EXTRA_OPTION} ..
     - make doc
     - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh geuzaine@gmsh.info 'cd .wwwgmsh && tar zxvf doc.tgz'
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh && tar zxvf doc.tgz"
     - scp ../doc/gmsh.html geuzaine@gmsh.info:.wwwgmsh/
   tags:
     - linux64
