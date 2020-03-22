@@ -109,7 +109,8 @@ linux64_official_snapshot:
   after_script:
     - cd build
     - VERSION=`cat version.txt`
-    - ssh geuzaine@gmsh.info 'cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64.tgz gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz'
+    - echo ${VERSION}
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64.tgz gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
   except:
     - tags
 
