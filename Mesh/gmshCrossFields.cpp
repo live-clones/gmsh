@@ -5096,3 +5096,53 @@ int computeH(GModel * gm) {
 int showScaledCrosses(GModel* gm) {
   return -1;
 }
+
+int generateQuadMesh(GModel * gm) {
+#if defined(HAVE_QUADMESHINGTOOLS)
+  // TODO: projector from initial geometry, should be in another model name
+  QMT::TMesh boundary;
+  bool oki = QMT::import_TMesh_from_gmsh(gm->getName(),boundary);
+  if (!oki) {
+    Msg::Error("Failed to import triangular mesh");
+    return -1;
+  }
+  QMT::BoundaryProjector projector(boundary);
+
+  QMT::QMesh Q;
+  int sizemapTag = -1;
+  std::string quad_layout_name = gm->getName();
+  double size_min = CTX::instance()->mesh.lcMin;
+  double size_max = CTX::instance()->mesh.lcMax;
+  if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
+    size_min *= CTX::instance()->mesh.lcFactor;
+  }
+  if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
+    size_max *= CTX::instance()->mesh.lcFactor;
+  }
+  if (size_min == 0 && size_max == 1.e22) {
+    SBoundingBox3d bbox = gm->bounds();
+    size_min = 0.1 * bbox.diag();
+    Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal");
+  }
+  
+  std::map<std::pair<int,int>,std::pair<int,int>> entityToInitialEntity;
+  bool okg = QMT::generate_quad_mesh_via_tmesh_quantization(
+      quad_layout_name, sizemapTag, size_min, size_max, Q, &projector, &entityToInitialEntity);
+  if (!okg) {
+    Msg::Error("Failed to generate quad mesh");
+    return -1;
+  }
+
+  bool oke1 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_init");
+  if (!oke1) {
+    Msg::Error("Failed to export quad mesh");
+    return -1;
+  }
+
+#else
+  Msg::Error("Quad mesh generation requires the QuadMeshingTools module");
+  return -1;
+#endif
+
+  return 0;
+}

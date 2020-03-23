@@ -26,6 +26,7 @@ namespace QMT {
 
   constexpr QMT::id   NO_ID  = (QMT::id) -1;
   constexpr QMT::sid  NO_SID = (QMT::sid) NO_ID;
+  constexpr uint8_t   NO_U8 = (uint8_t) -1;
 
   /* Quad mesh data structure */
   struct QMesh {
@@ -65,6 +66,38 @@ namespace QMT {
     std::vector<sid3> triangle_neighbors;
     std::vector<std::vector<id>> nm_triangle_neighbors;
   };
+
+
+  /* Quad mesh with T junctions, brep representation */
+  struct TVertex {
+    vec3 pt;
+    std::pair<int,int> entity;
+    int origin;
+  };
+
+  struct TEdge {
+    id2 vertices;
+    std::vector<vec3> pts;
+    std::pair<int,int> entity;
+    int origin;
+  };
+
+  struct TFace {
+    std::vector<id> edges;
+    std::vector<uint8_t> edge_sides;
+    std::vector<bool> edge_orient_invert;
+    std::pair<int,int> entity;
+    int origin;
+  };
+
+  struct QTMesh {
+    std::vector<TVertex> vertices;
+    std::vector<TEdge> edges;
+    std::vector<TFace> faces;
+    std::vector<std::vector<id>> vertToEdges;
+    std::vector<std::vector<id>> edgeToFaces;
+  };
+
 
   /* vec3 math */
   inline double dot      (const vec3& a, const vec3& b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }

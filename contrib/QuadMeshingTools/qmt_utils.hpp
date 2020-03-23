@@ -44,7 +44,6 @@ namespace QMT_Utils {
       os << "[";
       for (size_t i = 0; i < values.size(); ++i) {
         const  T & x = values[i];
-	      // os << "cannot compile that";//x;
         os << x;
         if (i != values.size() - 1) {
           os << ", ";

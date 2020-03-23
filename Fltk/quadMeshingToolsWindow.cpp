@@ -54,6 +54,15 @@ static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void qmt_quad_generate(Fl_Widget *w, void *data)
+{
+  int status = generateQuadMesh(GModel::current());
+  if (status != 0) {
+    Msg::Error("failed to generate initial quad mesh (quantization)");
+  }
+  drawContext::global()->draw();
+}
+
 quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
   FL_NORMAL_SIZE -= deltaFontSize;
   int width = 3 * IW + 4 * WB;
@@ -70,7 +79,7 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
   box->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   y += BH;
 
-  {
+  { /* Seperator */
     y += BH / 2;
     Fl_Box *b = new Fl_Box(x, y + BH - WB, width - 4 * WB, 2);
     b->box(FL_ENGRAVED_FRAME);
@@ -90,6 +99,23 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     push_crossfield_show = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Show");
     push_crossfield_show->callback(qmt_crossfield_show_cb);
     // if (!crossfield || !H) push_crossfield_show->clear_active();
+  }
+
+  { /* Seperator */
+    y += BH / 2;
+    Fl_Box *b = new Fl_Box(x, y + BH - WB, width - 4 * WB, 2);
+    b->box(FL_ENGRAVED_FRAME);
+    b->labeltype(FL_NO_LABEL);
+  }
+
+  { /* Quad mesh box */
+    y += BH;
+    Fl_Box *b =
+      new Fl_Box(x - WB, y, width, BH, "3. Generation of quad mesh");
+    b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+    y += BH;
+    push_quad_generate = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Generate");
+    push_quad_generate->callback(qmt_quad_generate);
   }
 
   win->end();

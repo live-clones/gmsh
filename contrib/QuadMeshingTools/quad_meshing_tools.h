@@ -114,6 +114,18 @@ namespace QMT {
   bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M);
 
 
+  /* very experimental */
+  bool generate_quad_mesh_via_tmesh_quantization(
+      const std::string& modelName,
+      int sizemapTag,
+      double size_min,
+      double size_max,
+      QMesh& M,
+      const BoundaryProjector* projector,
+      const std::map<std::pair<int,int>,std::pair<int,int>>* entityToInitialEntity);
+
+
+
   bool create_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagH, const std::string& viewName, int& viewTag);
 }
 

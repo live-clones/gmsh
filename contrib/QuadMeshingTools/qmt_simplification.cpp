@@ -1749,6 +1749,16 @@ namespace QMT {
       info("input: {} vertices ({} irregular), {} quads", nbv, nbirr, nbq);
     }
 
+    { /* Update adjacencies if necessary */
+      if (M.quad_neighbors.size() == 0.) {
+        bool oka = compute_quad_adjacencies(M.quads, M.quad_neighbors, M.nm_quad_neighbors);
+        if (!oka) {
+          error("failed to compute quad adjacencies");
+          return false;
+        }
+      }
+    }
+
     /* Precompute a list of chord collapse candidates */
     vector<pair<double,Chord>> chord_to_collapse;
     {
