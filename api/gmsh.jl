@@ -1755,8 +1755,7 @@ function. `numBasisFunctions` returns the number N of basis functions per
 element. `basisFunctions` returns the value of the basis functions at the
 integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1,
 ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
-Warning: this is an experimental feature and will probably change in a future
-release.
+Warning: This function will be removed soon!
 
 Return `numComponents`, `numFunctionsPerElement`, `basisFunctions`.
 """
