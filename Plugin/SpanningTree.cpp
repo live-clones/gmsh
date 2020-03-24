@@ -4,7 +4,9 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 // Contributed by Nicolas Marsic.
 
-#include <regex>
+#include <sstream>
+#include <algorithm>
+
 #include "SpanningTree.h"
 #include "GModel.h"
 #include "MLine.h"
@@ -58,6 +60,7 @@ string GMSH_SpanningTreePlugin::getHelp(void) const
          "- OutputPhysical: physical tag of the generated tree "
          "(-1 will select a new tag automatically).\n"
          "\n"
+         "Note - Lists must be comma separated integers.\n"
          "Remark - This plugin does not overwrite a physical group."
          "Therefore, if an existing physical tag is used in OutputPhysical, "
          "the edges of the tree will be /added/ to the specified group.\n"
@@ -100,9 +103,9 @@ void GMSH_SpanningTreePlugin::run(void)
 
   // Parse physical tags
   vector<list<int> > physical(3);
-  parse(curve,   physical[0]);
-  parse(surface, physical[1]);
-  parse(volume,  physical[2]);
+  curve   = parse(curve,   physical[0]);
+  surface = parse(surface, physical[1]);
+  volume  = parse(volume,  physical[2]);
 
   // Dimensions
   int dim[3] = {1, 2, 3};
@@ -121,6 +124,12 @@ void GMSH_SpanningTreePlugin::run(void)
     Msg::Warning("No elements found in the given physcials: abording!");
     return;
   }
+
+  // Display physicals (as [poorly] parsed) //
+  Msg::Info("--> PhysicalVolumes:  %s",  volume.c_str());
+  Msg::Info("--> PhysicalSurfaces: %s", surface.c_str());
+  Msg::Info("--> PhysicalCurves:   %s",   curve.c_str());
+  Msg::Info("--> OutputPhysical:   %d",  output);
 
   // Get all edges from elements for each dimension
   vector<EdgeSet> edge(3);
@@ -157,27 +166,48 @@ void GMSH_SpanningTreePlugin::spanningTree(EdgeSet &edge, DSU &vertex,
   }
 }
 
-void GMSH_SpanningTreePlugin::parse(string str, list<int>& physical)
+string GMSH_SpanningTreePlugin::parse(string str, list<int>& physical)
 {
-  regex             re("[0-9]+");
-  sregex_iterator next(str.begin(), str.end(), re);
-  sregex_iterator  end;
-  for(; next != end; next++)
-    physical.push_back(atoi(next->str().c_str()));
+  // Remove spaces //
+  str.erase(remove(str.begin(), str.end(), ' '), str.end());
+
+  // Replace commas by spaces //
+  replace(str.begin(), str.end(), ',', ' ');
+
+  // Init string stream //
+  stringstream stream;
+  stream << str;
+
+  // Parse stream for integers //
+  int    tag;
+  string tmp;
+  while(!stream.eof()){
+    stream >> tmp; // Take next 'word'
+    if(sscanf(tmp.c_str(), "%d", &tag) > 0)
+      physical.push_back(tag);
+  }
+
+  // Return modified string //
+  return str;
 }
 
 void GMSH_SpanningTreePlugin::getAllMElement(GModel &model, int physical,
                                              int dim, ElementSet &element)
 {
-  std::map<int, std::vector<GEntity*> > groups;
-  std::vector<GEntity *>              entities;
+  std::map<int, std::vector<GEntity*> >            group;
+  std::map<int, std::vector<GEntity*> >::iterator entity;
 
-  model.getPhysicalGroups(dim, groups);
-  entities = groups[physical];
+  // Get groups //
+  model.getPhysicalGroups(dim, group);
 
-  for(size_t i = 0; i < entities.size(); i++)
-    for(size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
-      element.insert(entities[i]->getMeshElement(j));
+  // Get entities, if any //
+  entity = group.find(physical);
+  if(entity == group.end())
+    return;
+
+  for(size_t i = 0; i < entity->second.size(); i++)
+    for(size_t j = 0; j < entity->second[i]->getNumMeshElements(); j++)
+      element.insert(entity->second[i]->getMeshElement(j));
 }
 
 void GMSH_SpanningTreePlugin::getAllMEdge(ElementSet &element, EdgeSet &edge)
