@@ -1267,12 +1267,12 @@ when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
 @item Input:
 @code{elementType}, @code{integrationPoints}, @code{functionSpaceType}
 @item Output:
-@code{numComponents}, @code{numFunctionsPerElements}, @code{basisFunctions}
+@code{numComponents}, @code{numOrientations}, @code{basisFunctions}, @code{numFunctionsPerElement}
 @item Return:
 -
 @end table
 
-@item gmsh/model/mesh/getBasisFunctionsIndexForElements
+@item gmsh/model/mesh/getBasisFunctionsOrientationForElements
 Get the element-dependent basis functions of the elements of type
 @code{elementType} in the entity of tag @code{tag} at the integration points
 @code{integrationPoints} (given as concatenated triplets of coordinates in the
@@ -1295,20 +1295,44 @@ compute and return the part of the data indexed by @code{task}.
 @item Input:
 @code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
-@code{basisFunctionsIndex}
+@code{basisFunctionsOrientation}
 @item Return:
 -
 @end table
 
-@item gmsh/model/mesh/preallocateBasisFunctionsIndexForElements
-Preallocate data before calling @code{getBasisFunctionsIndexForElements} with
-@code{numTasks} > 1. For C and C++ only.
+@item gmsh/model/mesh/preallocateBasisFunctionsOrientationForElements
+Preallocate data before calling @code{getBasisFunctionsOrientationForElements}
+with @code{numTasks} > 1. For C and C++ only.
 
 @table @asis
 @item Input:
 @code{elementType}, @code{tag = -1}
 @item Output:
-@code{basisFunctionsIndex}
+@code{basisFunctionsOrientation}
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/getBasisFunctionsForElements
+Get the element-dependent basis functions of the elements of type
+@code{elementType} in the entity of tag @code{tag}at the integration points
+@code{integrationPoints} (given as concatenated triplets of coordinates in the
+reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
+@code{functionSpaceType} (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order
+hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates
+of the reference elements). @code{numComponents} returns the number C of
+components of a basis function. @code{numBasisFunctions} returns the number N of
+basis functions per element. @code{basisFunctions} returns the value of the
+basis functions at the integration points for each element: [e1g1f1,..., e1g1fN,
+e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw,
+e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental feature and will
+probably change in a future release.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag = -1}
+@item Output:
+@code{numComponents}, @code{numFunctionsPerElement}, @code{basisFunctions}
 @item Return:
 -
 @end table
