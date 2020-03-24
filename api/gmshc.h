@@ -773,23 +773,9 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              double * integrationPoints, size_t integrationPoints_n,
                                              const char * functionSpaceType,
                                              int * numComponents,
+                                             int * numFunctionsPerElements,
                                              double ** basisFunctions, size_t * basisFunctions_n,
                                              int * ierr);
-
-/* Get the global edge identifier `edgeNum' for an input list of node pairs,
- * concatenated in the vector `edgeNodes'.  Warning: this is an experimental
- * feature and will probably change in a future release. */
-GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n,
-                                         int ** edgeNum, size_t * edgeNum_n,
-                                         int * ierr);
-
-/* Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
- * H(curl) basis functions. Warning: this is an experimental feature and will
- * probably change in a future release. */
-GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType,
-                                                        int ** localMultipliers, size_t * localMultipliers_n,
-                                                        const int tag,
-                                                        int * ierr);
 
 /* Get the element-dependent basis functions of the elements of type
  * `elementType' in the entity of tag `tag' at the integration points
@@ -808,61 +794,36 @@ GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType,
  * place i in `basisFunctions' array. Warning: this is an experimental feature
  * and will probably change in a future release. If `numTasks' > 1, only
  * compute and return the part of the data indexed by `task'. */
-GMSH_API void gmshModelMeshGetCompressedBasisFunctionsForElements(const int elementType,
-                                                                  double * integrationPoints, size_t integrationPoints_n,
-                                                                  const char * functionSpaceType,
-                                                                  int * numComponents,
-                                                                  int * numFunctionsPerElements,
-                                                                  double ** basisFunctions, size_t * basisFunctions_n,
-                                                                  int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n,
-                                                                  const int tag,
-                                                                  const size_t task,
-                                                                  const size_t numTasks,
-                                                                  int * ierr);
+GMSH_API void gmshModelMeshGetBasisFunctionsIndexForElements(const int elementType,
+                                                             double * integrationPoints, size_t integrationPoints_n,
+                                                             const char * functionSpaceType,
+                                                             int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n,
+                                                             const int tag,
+                                                             const size_t task,
+                                                             const size_t numTasks,
+                                                             int * ierr);
 
-/* Preallocate data before calling `getCompressedBasisFunctionsForElements'
- * with `numTasks' > 1. For C and C++ only. */
-GMSH_API void gmshModelMeshPreallocateCompressedBasisFunctions(const int elementType,
-                                                               double * integrationPoints, size_t integrationPoints_n,
-                                                               const char * functionSpaceType,
-                                                               double ** basisFunctions, size_t * basisFunctions_n,
-                                                               int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n,
-                                                               const int tag,
-                                                               int * ierr);
-
-/* Get the element-dependent basis functions of the elements of type
- * `elementType' in the entity of tag `tag'at the integration points
- * `integrationPoints' (given as concatenated triplets of coordinates in the
- * reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
- * space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
- * order hierarchical H1 Legendre functions or their gradient, in the u, v, w
- * coordinates of the reference elements). `numComponents' returns the number
- * C of components of a basis function. `numBasisFunctions' returns the number
- * N of basis functions per element. `basisFunctions' returns the value of the
- * basis functions at the integration points for each element: [e1g1f1,...,
- * e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,...,
- * e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental
- * feature and will probably change in a future release. If `numTasks' > 1,
- * only compute and return the part of the data indexed by `task'. */
-GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
-                                                        double * integrationPoints, size_t integrationPoints_n,
-                                                        const char * functionSpaceType,
-                                                        int * numComponents,
-                                                        int * numFunctionsPerElements,
-                                                        double ** basisFunctions, size_t * basisFunctions_n,
-                                                        const int tag,
-                                                        const size_t task,
-                                                        const size_t numTasks,
-                                                        int * ierr);
-
-/* Preallocate data before calling `getBasisFunctionsForElements' with
+/* Preallocate data before calling `getBasisFunctionsIndexForElements' with
  * `numTasks' > 1. For C and C++ only. */
-GMSH_API void gmshModelMeshPreallocateBasisFunctions(const int elementType,
-                                                     const int numIntegrationPoints,
-                                                     const char * functionSpaceType,
-                                                     double ** basisFunctions, size_t * basisFunctions_n,
-                                                     const int tag,
-                                                     int * ierr);
+GMSH_API void gmshModelMeshPreallocateBasisFunctionsIndexForElements(const int elementType,
+                                                                     int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n,
+                                                                     const int tag,
+                                                                     int * ierr);
+
+/* Get the global edge identifier `edgeNum' for an input list of node pairs,
+ * concatenated in the vector `edgeNodes'.  Warning: this is an experimental
+ * feature and will probably change in a future release. */
+GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n,
+                                         int ** edgeNum, size_t * edgeNum_n,
+                                         int * ierr);
+
+/* Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+ * H(curl) basis functions. Warning: this is an experimental feature and will
+ * probably change in a future release. */
+GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType,
+                                                        int ** localMultipliers, size_t * localMultipliers_n,
+                                                        const int tag,
+                                                        int * ierr);
 
 /* Generate the `keys' for the elements of type `elementType' in the entity of
  * tag `tag', for the `functionSpaceType' function space. Each key uniquely
@@ -895,10 +856,6 @@ GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n,
                                                      const char * functionSpaceType,
                                                      int ** infoKeys, size_t * infoKeys_n,
                                                      int * ierr);
-
-/* Precomputes the basis functions corresponding to `elementType'. */
-GMSH_API void gmshModelMeshPrecomputeBasisFunctions(const int elementType,
-                                                    int * ierr);
 
 /* Get the barycenters of all elements of type `elementType' classified on the
  * entity of tag `tag'. If `primary' is set, only the primary nodes of the

@@ -1153,14 +1153,41 @@ GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType, const int
   }
 }
 
-GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int * numComponents, double ** basisFunctions, size_t * basisFunctions_n, int * ierr)
+GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int * numComponents, int * numFunctionsPerElements, double ** basisFunctions, size_t * basisFunctions_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
     std::vector<double> api_basisFunctions_;
-    gmsh::model::mesh::getBasisFunctions(elementType, api_integrationPoints_, functionSpaceType, *numComponents, api_basisFunctions_);
+    gmsh::model::mesh::getBasisFunctions(elementType, api_integrationPoints_, functionSpaceType, *numComponents, *numFunctionsPerElements, api_basisFunctions_);
     vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetBasisFunctionsIndexForElements(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
+    std::vector<int> api_basisFunctionsIndex_;
+    gmsh::model::mesh::getBasisFunctionsIndexForElements(elementType, api_integrationPoints_, functionSpaceType, api_basisFunctionsIndex_, tag, task, numTasks);
+    vector2ptr(api_basisFunctionsIndex_, basisFunctionsIndex, basisFunctionsIndex_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshPreallocateBasisFunctionsIndexForElements(const int elementType, int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_basisFunctionsIndex_;
+    gmsh::model::mesh::preallocateBasisFunctionsIndexForElements(elementType, api_basisFunctionsIndex_, tag);
+    vector2ptr(api_basisFunctionsIndex_, basisFunctionsIndex, basisFunctionsIndex_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1188,65 +1215,6 @@ GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType, i
     std::vector<int> api_localMultipliers_;
     gmsh::model::mesh::getLocalMultipliersForHcurl0(elementType, api_localMultipliers_, tag);
     vector2ptr(api_localMultipliers_, localMultipliers, localMultipliers_n);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
-GMSH_API void gmshModelMeshGetCompressedBasisFunctionsForElements(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int * numComponents, int * numFunctionsPerElements, double ** basisFunctions, size_t * basisFunctions_n, int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
-    std::vector<double> api_basisFunctions_;
-    std::vector<int> api_basisFunctionsIndex_;
-    gmsh::model::mesh::getCompressedBasisFunctionsForElements(elementType, api_integrationPoints_, functionSpaceType, *numComponents, *numFunctionsPerElements, api_basisFunctions_, api_basisFunctionsIndex_, tag, task, numTasks);
-    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
-    vector2ptr(api_basisFunctionsIndex_, basisFunctionsIndex, basisFunctionsIndex_n);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
-GMSH_API void gmshModelMeshPreallocateCompressedBasisFunctions(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, double ** basisFunctions, size_t * basisFunctions_n, int ** basisFunctionsIndex, size_t * basisFunctionsIndex_n, const int tag, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
-    std::vector<double> api_basisFunctions_;
-    std::vector<int> api_basisFunctionsIndex_;
-    gmsh::model::mesh::preallocateCompressedBasisFunctions(elementType, api_integrationPoints_, functionSpaceType, api_basisFunctions_, api_basisFunctionsIndex_, tag);
-    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
-    vector2ptr(api_basisFunctionsIndex_, basisFunctionsIndex, basisFunctionsIndex_n);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
-GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int * numComponents, int * numFunctionsPerElements, double ** basisFunctions, size_t * basisFunctions_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
-    std::vector<double> api_basisFunctions_;
-    gmsh::model::mesh::getBasisFunctionsForElements(elementType, api_integrationPoints_, functionSpaceType, *numComponents, *numFunctionsPerElements, api_basisFunctions_, tag, task, numTasks);
-    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
-GMSH_API void gmshModelMeshPreallocateBasisFunctions(const int elementType, const int numIntegrationPoints, const char * functionSpaceType, double ** basisFunctions, size_t * basisFunctions_n, const int tag, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_basisFunctions_;
-    gmsh::model::mesh::preallocateBasisFunctions(elementType, numIntegrationPoints, functionSpaceType, api_basisFunctions_, tag);
-    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1293,17 +1261,6 @@ GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n, 
     gmsh::vectorpair api_infoKeys_;
     gmsh::model::mesh::getInformationForElements(api_keys_, elementType, functionSpaceType, api_infoKeys_);
     vectorpair2intptr(api_infoKeys_, infoKeys, infoKeys_n);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
-GMSH_API void gmshModelMeshPrecomputeBasisFunctions(const int elementType, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::precomputeBasisFunctions(elementType);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

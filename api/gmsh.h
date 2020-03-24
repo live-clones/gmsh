@@ -892,26 +892,10 @@ namespace gmsh { // Top-level functions
                                       const std::vector<double> & integrationPoints,
                                       const std::string & functionSpaceType,
                                       int & numComponents,
+                                      int & numFunctionsPerElements,
                                       std::vector<double> & basisFunctions);
 
-      // gmsh::model::mesh::getEdgeNumber
-      //
-      // Get the global edge identifier `edgeNum' for an input list of node pairs,
-      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-      // feature and will probably change in a future release.
-      GMSH_API void getEdgeNumber(const std::vector<int> & edgeNodes,
-                                  std::vector<int> & edgeNum);
-
-      // gmsh::model::mesh::getLocalMultipliersForHcurl0
-      //
-      // Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
-      // H(curl) basis functions. Warning: this is an experimental feature and will
-      // probably change in a future release.
-      GMSH_API void getLocalMultipliersForHcurl0(const int elementType,
-                                                 std::vector<int> & localMultipliers,
-                                                 const int tag = -1);
-
-      // gmsh::model::mesh::getCompressedBasisFunctionsForElements
+      // gmsh::model::mesh::getBasisFunctionsIndexForElements
       //
       // Get the element-dependent basis functions of the elements of type
       // `elementType' in the entity of tag `tag' at the integration points
@@ -931,64 +915,38 @@ namespace gmsh { // Top-level functions
       // `basisFunctions' array. Warning: this is an experimental feature and will
       // probably change in a future release. If `numTasks' > 1, only compute and
       // return the part of the data indexed by `task'.
-      GMSH_API void getCompressedBasisFunctionsForElements(const int elementType,
-                                                           const std::vector<double> & integrationPoints,
-                                                           const std::string & functionSpaceType,
-                                                           int & numComponents,
-                                                           int & numFunctionsPerElements,
-                                                           std::vector<double> & basisFunctions,
-                                                           std::vector<int> & basisFunctionsIndex,
-                                                           const int tag = -1,
-                                                           const std::size_t task = 0,
-                                                           const std::size_t numTasks = 1);
+      GMSH_API void getBasisFunctionsIndexForElements(const int elementType,
+                                                      const std::vector<double> & integrationPoints,
+                                                      const std::string & functionSpaceType,
+                                                      std::vector<int> & basisFunctionsIndex,
+                                                      const int tag = -1,
+                                                      const std::size_t task = 0,
+                                                      const std::size_t numTasks = 1);
 
-      // gmsh::model::mesh::preallocateCompressedBasisFunctions
+      // gmsh::model::mesh::preallocateBasisFunctionsIndexForElements
       //
-      // Preallocate data before calling `getCompressedBasisFunctionsForElements'
-      // with `numTasks' > 1. For C and C++ only.
-      GMSH_API void preallocateCompressedBasisFunctions(const int elementType,
-                                                        const std::vector<double> & integrationPoints,
-                                                        const std::string & functionSpaceType,
-                                                        std::vector<double> & basisFunctions,
-                                                        std::vector<int> & basisFunctionsIndex,
-                                                        const int tag = -1);
-
-      // gmsh::model::mesh::getBasisFunctionsForElements
-      //
-      // Get the element-dependent basis functions of the elements of type
-      // `elementType' in the entity of tag `tag'at the integration points
-      // `integrationPoints' (given as concatenated triplets of coordinates in the
-      // reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
-      // space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
-      // order hierarchical H1 Legendre functions or their gradient, in the u, v, w
-      // coordinates of the reference elements). `numComponents' returns the number
-      // C of components of a basis function. `numBasisFunctions' returns the
-      // number N of basis functions per element. `basisFunctions' returns the
-      // value of the basis functions at the integration points for each element:
-      // [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u,
-      // e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an
-      // experimental feature and will probably change in a future release. If
-      // `numTasks' > 1, only compute and return the part of the data indexed by
-      // `task'.
-      GMSH_API void getBasisFunctionsForElements(const int elementType,
-                                                 const std::vector<double> & integrationPoints,
-                                                 const std::string & functionSpaceType,
-                                                 int & numComponents,
-                                                 int & numFunctionsPerElements,
-                                                 std::vector<double> & basisFunctions,
-                                                 const int tag = -1,
-                                                 const std::size_t task = 0,
-                                                 const std::size_t numTasks = 1);
-
-      // gmsh::model::mesh::preallocateBasisFunctions
-      //
-      // Preallocate data before calling `getBasisFunctionsForElements' with
+      // Preallocate data before calling `getBasisFunctionsIndexForElements' with
       // `numTasks' > 1. For C and C++ only.
-      GMSH_API void preallocateBasisFunctions(const int elementType,
-                                              const int numIntegrationPoints,
-                                              const std::string & functionSpaceType,
-                                              std::vector<double> & basisFunctions,
-                                              const int tag = -1);
+      GMSH_API void preallocateBasisFunctionsIndexForElements(const int elementType,
+                                                              std::vector<int> & basisFunctionsIndex,
+                                                              const int tag = -1);
+
+      // gmsh::model::mesh::getEdgeNumber
+      //
+      // Get the global edge identifier `edgeNum' for an input list of node pairs,
+      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
+      // feature and will probably change in a future release.
+      GMSH_API void getEdgeNumber(const std::vector<int> & edgeNodes,
+                                  std::vector<int> & edgeNum);
+
+      // gmsh::model::mesh::getLocalMultipliersForHcurl0
+      //
+      // Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+      // H(curl) basis functions. Warning: this is an experimental feature and will
+      // probably change in a future release.
+      GMSH_API void getLocalMultipliersForHcurl0(const int elementType,
+                                                 std::vector<int> & localMultipliers,
+                                                 const int tag = -1);
 
       // gmsh::model::mesh::getKeysForElements
       //
@@ -1024,11 +982,6 @@ namespace gmsh { // Top-level functions
                                               const int elementType,
                                               const std::string & functionSpaceType,
                                               gmsh::vectorpair & infoKeys);
-
-      // gmsh::model::mesh::precomputeBasisFunctions
-      //
-      // Precomputes the basis functions corresponding to `elementType'.
-      GMSH_API void precomputeBasisFunctions(const int elementType);
 
       // gmsh::model::mesh::getBarycenters
       //

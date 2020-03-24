@@ -2181,10 +2181,11 @@ class model:
             g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw,
             g2f1u, ...] when C == 3.
 
-            Return `numComponents', `basisFunctions'.
+            Return `numComponents', `numFunctionsPerElements', `basisFunctions'.
             """
             api_integrationPoints_, api_integrationPoints_n_ = _ivectordouble(integrationPoints)
             api_numComponents_ = c_int()
+            api_numFunctionsPerElements_ = c_int()
             api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetBasisFunctions(
@@ -2192,6 +2193,7 @@ class model:
                 api_integrationPoints_, api_integrationPoints_n_,
                 c_char_p(functionSpaceType.encode()),
                 byref(api_numComponents_),
+                byref(api_numFunctionsPerElements_),
                 byref(api_basisFunctions_), byref(api_basisFunctions_n_),
                 byref(ierr))
             if ierr.value != 0:
@@ -2200,7 +2202,51 @@ class model:
                     ierr.value)
             return (
                 api_numComponents_.value,
+                api_numFunctionsPerElements_.value,
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
+
+        @staticmethod
+        def getBasisFunctionsIndexForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1):
+            """
+            gmsh.model.mesh.getBasisFunctionsIndexForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1)
+
+            Get the element-dependent basis functions of the elements of type
+            `elementType' in the entity of tag `tag' at the integration points
+            `integrationPoints' (given as concatenated triplets of coordinates in the
+            reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
+            space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
+            order hierarchical H1 Legendre functions or their gradient, in the u, v, w
+            coordinates of the reference elements). `numComponents' returns the number
+            C of components of a basis function. `numBasisFunctions' returns the number
+            N of basis functions per element. `basisFunctions' returns the value of the
+            basis functions at the integration points for all oritentations that exist
+            for element of type `elementType' in entity `tag': [e1g1f1,..., e1g1fN,
+            e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw,
+            e1g2f1u,..., e2g1f1u, ...]. `basisFunctionsIndex' returns the index of the
+            basis function such that element `i' between have basis functions store at
+            place i in `basisFunctions' array. Warning: this is an experimental feature
+            and will probably change in a future release. If `numTasks' > 1, only
+            compute and return the part of the data indexed by `task'.
+
+            Return `basisFunctionsIndex'.
+            """
+            api_integrationPoints_, api_integrationPoints_n_ = _ivectordouble(integrationPoints)
+            api_basisFunctionsIndex_, api_basisFunctionsIndex_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetBasisFunctionsIndexForElements(
+                c_int(elementType),
+                api_integrationPoints_, api_integrationPoints_n_,
+                c_char_p(functionSpaceType.encode()),
+                byref(api_basisFunctionsIndex_), byref(api_basisFunctionsIndex_n_),
+                c_int(tag),
+                c_size_t(task),
+                c_size_t(numTasks),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetBasisFunctionsIndexForElements returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_basisFunctionsIndex_, api_basisFunctionsIndex_n_.value)
 
         @staticmethod
         def getEdgeNumber(edgeNodes):
@@ -2249,106 +2295,6 @@ class model:
                     "gmshModelMeshGetLocalMultipliersForHcurl0 returned non-zero error code: ",
                     ierr.value)
             return _ovectorint(api_localMultipliers_, api_localMultipliers_n_.value)
-
-        @staticmethod
-        def getCompressedBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1):
-            """
-            gmsh.model.mesh.getCompressedBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1)
-
-            Get the element-dependent basis functions of the elements of type
-            `elementType' in the entity of tag `tag' at the integration points
-            `integrationPoints' (given as concatenated triplets of coordinates in the
-            reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
-            space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
-            order hierarchical H1 Legendre functions or their gradient, in the u, v, w
-            coordinates of the reference elements). `numComponents' returns the number
-            C of components of a basis function. `numBasisFunctions' returns the number
-            N of basis functions per element. `basisFunctions' returns the value of the
-            basis functions at the integration points for all oritentations that exist
-            for element of type `elementType' in entity `tag': [e1g1f1,..., e1g1fN,
-            e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw,
-            e1g2f1u,..., e2g1f1u, ...]. `basisFunctionsIndex' returns the index of the
-            basis function such that element `i' between have basis functions store at
-            place i in `basisFunctions' array. Warning: this is an experimental feature
-            and will probably change in a future release. If `numTasks' > 1, only
-            compute and return the part of the data indexed by `task'.
-
-            Return `numComponents', `numFunctionsPerElements', `basisFunctions', `basisFunctionsIndex'.
-            """
-            api_integrationPoints_, api_integrationPoints_n_ = _ivectordouble(integrationPoints)
-            api_numComponents_ = c_int()
-            api_numFunctionsPerElements_ = c_int()
-            api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
-            api_basisFunctionsIndex_, api_basisFunctionsIndex_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetCompressedBasisFunctionsForElements(
-                c_int(elementType),
-                api_integrationPoints_, api_integrationPoints_n_,
-                c_char_p(functionSpaceType.encode()),
-                byref(api_numComponents_),
-                byref(api_numFunctionsPerElements_),
-                byref(api_basisFunctions_), byref(api_basisFunctions_n_),
-                byref(api_basisFunctionsIndex_), byref(api_basisFunctionsIndex_n_),
-                c_int(tag),
-                c_size_t(task),
-                c_size_t(numTasks),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetCompressedBasisFunctionsForElements returned non-zero error code: ",
-                    ierr.value)
-            return (
-                api_numComponents_.value,
-                api_numFunctionsPerElements_.value,
-                _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value),
-                _ovectorint(api_basisFunctionsIndex_, api_basisFunctionsIndex_n_.value))
-
-        @staticmethod
-        def getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1):
-            """
-            gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1, task=0, numTasks=1)
-
-            Get the element-dependent basis functions of the elements of type
-            `elementType' in the entity of tag `tag'at the integration points
-            `integrationPoints' (given as concatenated triplets of coordinates in the
-            reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
-            space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
-            order hierarchical H1 Legendre functions or their gradient, in the u, v, w
-            coordinates of the reference elements). `numComponents' returns the number
-            C of components of a basis function. `numBasisFunctions' returns the number
-            N of basis functions per element. `basisFunctions' returns the value of the
-            basis functions at the integration points for each element: [e1g1f1,...,
-            e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,...,
-            e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental
-            feature and will probably change in a future release. If `numTasks' > 1,
-            only compute and return the part of the data indexed by `task'.
-
-            Return `numComponents', `numFunctionsPerElements', `basisFunctions'.
-            """
-            api_integrationPoints_, api_integrationPoints_n_ = _ivectordouble(integrationPoints)
-            api_numComponents_ = c_int()
-            api_numFunctionsPerElements_ = c_int()
-            api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetBasisFunctionsForElements(
-                c_int(elementType),
-                api_integrationPoints_, api_integrationPoints_n_,
-                c_char_p(functionSpaceType.encode()),
-                byref(api_numComponents_),
-                byref(api_numFunctionsPerElements_),
-                byref(api_basisFunctions_), byref(api_basisFunctions_n_),
-                c_int(tag),
-                c_size_t(task),
-                c_size_t(numTasks),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: ",
-                    ierr.value)
-            return (
-                api_numComponents_.value,
-                api_numFunctionsPerElements_.value,
-                _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
         def getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True):
@@ -2432,22 +2378,6 @@ class model:
                     "gmshModelMeshGetInformationForElements returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_infoKeys_, api_infoKeys_n_.value)
-
-        @staticmethod
-        def precomputeBasisFunctions(elementType):
-            """
-            gmsh.model.mesh.precomputeBasisFunctions(elementType)
-
-            Precomputes the basis functions corresponding to `elementType'.
-            """
-            ierr = c_int()
-            lib.gmshModelMeshPrecomputeBasisFunctions(
-                c_int(elementType),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshPrecomputeBasisFunctions returned non-zero error code: ",
-                    ierr.value)
 
         @staticmethod
         def getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1):
