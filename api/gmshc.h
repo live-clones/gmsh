@@ -773,9 +773,9 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              double * integrationPoints, size_t integrationPoints_n,
                                              const char * functionSpaceType,
                                              int * numComponents,
-                                             int * numOrientations,
                                              double ** basisFunctions, size_t * basisFunctions_n,
                                              int * numFunctionsPerElement,
+                                             int * numOrientations,
                                              int * ierr);
 
 /* Get the element-dependent basis functions of the elements of type

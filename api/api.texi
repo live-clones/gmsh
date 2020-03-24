@@ -1267,7 +1267,7 @@ when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
 @item Input:
 @code{elementType}, @code{integrationPoints}, @code{functionSpaceType}
 @item Output:
-@code{numComponents}, @code{numOrientations}, @code{basisFunctions}, @code{numFunctionsPerElement}
+@code{numComponents}, @code{basisFunctions}, @code{numFunctionsPerElement}, @code{numOrientations}
 @item Return:
 -
 @end table

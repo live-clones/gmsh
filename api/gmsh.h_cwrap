@@ -1344,14 +1344,14 @@ namespace gmsh { // Top-level functions
                                     const std::vector<double> & integrationPoints,
                                     const std::string & functionSpaceType,
                                     int & numComponents,
-                                    int & numOrientations,
                                     std::vector<double> & basisFunctions,
-                                    int & numFunctionsPerElement)
+                                    int & numFunctionsPerElement,
+                                    int & numOrientations)
       {
         int ierr = 0;
         double *api_integrationPoints_; size_t api_integrationPoints_n_; vector2ptr(integrationPoints, &api_integrationPoints_, &api_integrationPoints_n_);
         double *api_basisFunctions_; size_t api_basisFunctions_n_;
-        gmshModelMeshGetBasisFunctions(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &numOrientations, &api_basisFunctions_, &api_basisFunctions_n_, &numFunctionsPerElement, &ierr);
+        gmshModelMeshGetBasisFunctions(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &api_basisFunctions_, &api_basisFunctions_n_, &numFunctionsPerElement, &numOrientations, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_integrationPoints_);
         basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);

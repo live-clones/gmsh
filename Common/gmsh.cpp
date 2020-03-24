@@ -2090,8 +2090,8 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
 GMSH_API void gmsh::model::mesh::getBasisFunctions(
   const int elementType, const std::vector<double> &integrationPoints,
   const std::string &functionSpaceType, int &numComponents,
-  int &numOrientations, std::vector<double> &basisFunctions,
-  int &numFunctionsPerElement)
+  std::vector<double> &basisFunctions, int &numFunctionsPerElement,
+  int &numOrientations)
 {
   if(!_isInitialized()) { throw - 1; }
   numComponents = 0;
