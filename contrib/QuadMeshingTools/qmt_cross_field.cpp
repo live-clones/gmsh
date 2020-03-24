@@ -479,7 +479,9 @@ namespace QMT {
     return true;
   }
 
-  bool create_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagH, const std::string& viewName, int& viewTag) {
+  bool create_scaled_cross_field_view(const std::string& meshName, 
+      int tagCrossField, int tagH, bool viewIsModelData, 
+      const std::string& viewName, int& viewTag) {
     if (!QMT_CF_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_CF_Utils::global_gmsh_initialized = true;
@@ -501,21 +503,103 @@ namespace QMT {
       return false;
     }
 
-    /* Get theta for each edge */
-    vector<double> ue2theta(uIEdges.size(),0.);
+    /* Get H for each vertex */
     vector<double> H(M.points.size(),0.);
-    double Hmin = -DBL_MAX;
-    double Hmax =  DBL_MAX;
-    {
+    double Hmin =  DBL_MAX;
+    double Hmax = -DBL_MAX;
+    if (viewIsModelData) {
       std::string dataType;
       std::vector<std::size_t> tags;
       std::vector<std::vector<double> > data;
       double time;
       int numComponents;
       gmsh::view::getModelData(tagH, 0, dataType, tags, data, time, numComponents);
-      // TODO here
+      if (dataType == "NodeData" && tags.size() <= M.points.size()) {
+        F(i,tags.size()) {
+          id v = tags[i];
+          if (v >= M.points.size()) {
+            error("tag[{}]={} but {} points in mesh", i, v, M.points.size());
+            return false;
+          }
+          H[v] = data[i][0];
+          Hmin = std::min(Hmin,H[v]);
+          Hmax = std::max(Hmax,H[v]);
+        }
+      } else {
+        error("problem");
+        DBG("H view");
+        DBG(dataType);
+        DBG(M.points.size(), tags.size());
+      }
+    } else { /* use probing */
+      error("H from probing not implemented yet");
+      return false;
     }
 
+    /* Get theta for each edge */
+    vector<double> ue2theta(uIEdges.size(),DBL_MAX);
+    {
+      std::string dataType;
+      std::vector<std::size_t> tags;
+      std::vector<std::vector<double> > data;
+      double time;
+      int numComponents;
+      gmsh::view::getModelData(tagCrossField, 0, dataType, tags, data, time, numComponents);
+      if (dataType == "ElementData" && tags.size() == M.triangles.size()) {
+        F(f,M.triangles.size()) {
+          if (data[f].size() != 3) {
+            error("data size should be 3");
+            return false;
+          }
+          F(le,3) {
+            id ue = old2IEdge[3*f+le];
+            double val = data[f][le];
+            if (ue2theta[ue] == DBL_MAX) {
+              ue2theta[ue] = val;
+            }
+          }
+        }
+      } else {
+        error("problem with 'theta' view, mesh contains {} triangles but {} tags in view", M.triangles.size(), tags.size());
+        return false;
+      }
+    }
+
+    std::vector<double> data_VP;
+    F(ue,ue2theta.size()) {
+      double v1 = uIEdges[ue][0];
+      double v2 = uIEdges[ue][1];
+      vec3 p1 = M.points[v1];
+      vec3 p2 = M.points[v2];
+      double theta = ue2theta[ue];
+      double val = 0.5*(H[v1] + H[v2]);
+      double h = (exp(-val)/exp(-Hmin));
+
+      vec3 p = 0.5*(p1+p2);
+      vec3 edg = normalize(p2-p1);
+      vec3 N = triangle_normal(M,uIEdgeToOld[ue][0]/3);
+      vec3 edgo = normalize(cross(N,edg));
+      vec3 cross1 = cos(theta) * edg + sin(theta) * edgo;
+      vec3 cross2 = cross(N,cross1);
+      cross1 = h * cross1;
+      cross2 = h * cross2;
+      F(d,3) data_VP.push_back(p[d]);
+      F(d,3) data_VP.push_back(cross1[d]);
+      F(d,3) data_VP.push_back(p[d]);
+      F(d,3) data_VP.push_back(-cross1[d]);
+      F(d,3) data_VP.push_back(p[d]);
+      F(d,3) data_VP.push_back(cross2[d]);
+      F(d,3) data_VP.push_back(p[d]);
+      F(d,3) data_VP.push_back(-cross2[d]);
+    }
+
+    if (viewTag < 0) {
+      info("create view '{}'",viewName);
+      viewTag = gmsh::view::add(viewName);
+    } else {
+      info("overwrite view with tag {}",viewTag);
+    }
+    gmsh::view::addListData(viewTag, "VP", data_VP.size()/6, data_VP);
 
     return true;
   }
@@ -819,6 +903,11 @@ namespace QMT {
     }
 
     info("... done");
+
+    return true;
+  }
+
+  bool detect_cross_field_singularities(int crossFieldTag, std::vector<std::pair<size_t,int>>& sings) {
 
     return true;
   }

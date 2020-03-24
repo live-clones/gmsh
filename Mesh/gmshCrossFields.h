@@ -23,6 +23,12 @@ int computeCrossFieldAndH(GModel *gm,
 /* Attempt at an API callable step-by-step from the GUI */
 /********************************************************/
 
+struct QuadMeshingOptions {
+  int cross_field_iter        = 6;
+  double simplify_size_factor = 0.9;
+  int smoothing_explicit_iter = 100;
+};
+
 /* generate a view named 'theta' with 3 values per triangle */
 int computeCrossField(GModel * gm);
 

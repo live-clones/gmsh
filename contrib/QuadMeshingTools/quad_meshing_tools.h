@@ -114,7 +114,13 @@ namespace QMT {
   bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M);
 
 
-  /* very experimental */
+
+
+
+  /****************************************************************************************/
+  /******************************* prototypes, not ready **********************************/
+  /****************************************************************************************/
+
   bool generate_quad_mesh_via_tmesh_quantization(
       const std::string& modelName,
       int sizemapTag,
@@ -126,7 +132,9 @@ namespace QMT {
 
 
 
-  bool create_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagH, const std::string& viewName, int& viewTag);
+  bool create_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagH, bool viewIsModelData, const std::string& viewName, int& viewTag);
+
+  bool detect_cross_field_singularities(int crossFieldTag, std::vector<std::pair<size_t,int>>& sings, bool create_view = true);
 }
 
 

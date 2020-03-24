@@ -706,6 +706,7 @@ namespace QMT {
     vector<array<bool,4>> face_side_done(M.faces.size(),{false,false,false,false});
     vector<bool> reached(M.edges.size(), false);
     vector<id> parent(M.edges.size(), NO_ID);
+    // TODO: which heuristic for the priority queue ?
     // std::priority_queue<std::pair<double,id>, std::vector<std::pair<double,id>>, std::greater<std::pair<double,id>>> Q; 
     std::priority_queue<std::pair<double,id>, std::vector<std::pair<double,id> > > Q; 
 

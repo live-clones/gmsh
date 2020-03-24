@@ -865,6 +865,16 @@ int FlGui::testGlobalShortcuts(int event)
     }
     status = 1;
   }
+  else if(Fl::test_shortcut(FL_SHIFT + 'q')) {
+#if defined(HAVE_QUADMESHINGTOOLS)
+    if (FlGui::instance()->quadmeshingtools->win->shown()) {
+      FlGui::instance()->quadmeshingtools->win->hide();
+    } else {
+      FlGui::instance()->quadmeshingtools->win->show();
+    }
+    status = 1;
+#endif
+  }
   else if(Fl::test_shortcut(FL_ALT + 'f')) {
     opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
                             !opt_general_fast_redraw(0, GMSH_GET, 0));
