@@ -4,47 +4,57 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 // Contributed by Nicolas Marsic.
 
+#include <regex>
 #include "SpanningTree.h"
 #include "GModel.h"
 #include "MLine.h"
 #include "OS.h"
 
+using namespace std;
+
 StringXNumber SpanningTreeOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalGroup", NULL, -1},
-  {GMSH_FULLRC, "StartingOn", NULL, -1},
   {GMSH_FULLRC, "OutputPhysical", NULL, -1},
 };
 
+StringXString SpanningTreeOptions_String[] = {
+  {GMSH_FULLRC, "PhysicalVolumes",  NULL, ""},
+  {GMSH_FULLRC, "PhysicalSurfaces", NULL, ""},
+  {GMSH_FULLRC, "PhysicalCurves",   NULL, ""},
+};
+
 extern "C" {
-GMSH_Plugin *GMSH_RegisterSpanningTreePlugin(void)
-{
-  return new GMSH_SpanningTreePlugin();
-}
+  GMSH_Plugin *GMSH_RegisterSpanningTreePlugin(void)
+  {
+    return new GMSH_SpanningTreePlugin();
+  }
 }
 
 GMSH_SpanningTreePlugin::GMSH_SpanningTreePlugin(void) {}
 
-std::string GMSH_SpanningTreePlugin::getName(void) const
+string GMSH_SpanningTreePlugin::getName(void) const
 {
   return "SpanningTree";
 }
 
-std::string GMSH_SpanningTreePlugin::getShortHelp(void) const
+string GMSH_SpanningTreePlugin::getShortHelp(void) const
 {
   return "Builds a tree spanning every vertex of a mesh";
 }
 
-std::string GMSH_SpanningTreePlugin::getHelp(void) const
+string GMSH_SpanningTreePlugin::getHelp(void) const
 {
-  return "Plugin(SpanningTree) builds a tree spanning every vertex of a mesh.\n"
-         "Optionally, this tree can be built by starting on a specific part.\n"
-         "The generated tree is stored directly in the model.\n"
+  return "Plugin(SpanningTree) builds a tree spanning every vertex of a mesh "
+         "and stores it directly in the model.\n"
+         "The tree is constructed by starting first on the curves, "
+         "then on the surfaces and finally on the volumes.\n"
          "\n"
          "Parameters\n"
-         "- PhysicalGroup: physical group upon which the tree must be built "
-         "(-1 means the whole mesh).\n"
-         "- StartingOn: physical group used to start the tree construction "
-         "(-1 deactivates this feature).\n"
+         "- PhysicalVolumes: list of the physical volumes "
+         "upon which the tree must be built.\n"
+         "- PhysicalSurfaces: list of the physical surfaces "
+         "upon which the tree must be built.\n"
+         "- PhysicalCurves: list of the physical curves "
+          "upon which the tree must be built.\n"
          "- OutputPhysical: physical tag of the generated tree "
          "(-1 will select a new tag automatically).\n"
          "\n"
@@ -54,7 +64,7 @@ std::string GMSH_SpanningTreePlugin::getHelp(void) const
          "Limitation - Unknown behaviour with curved meshes.";
 }
 
-std::string GMSH_SpanningTreePlugin::getAuthor(void) const
+string GMSH_SpanningTreePlugin::getAuthor(void) const
 {
   return "N. Marsic";
 }
@@ -69,45 +79,60 @@ StringXNumber *GMSH_SpanningTreePlugin::getOption(int iopt)
   return &SpanningTreeOptions_Number[iopt];
 }
 
+int GMSH_SpanningTreePlugin::getNbOptionsStr() const
+{
+  return sizeof(SpanningTreeOptions_String) / sizeof(StringXString);
+}
+
+StringXString *GMSH_SpanningTreePlugin::getOptionStr(int iopt)
+{
+  return &SpanningTreeOptions_String[iopt];
+}
+
 void GMSH_SpanningTreePlugin::run(void)
 {
   // Get data
-  double time = Cpu();
-  int physical = (int)SpanningTreeOptions_Number[0].def;
-  int startOn = (int)SpanningTreeOptions_Number[1].def;
-  int output = (int)SpanningTreeOptions_Number[2].def;
+  double    time = Cpu();
+  int     output = (int)SpanningTreeOptions_Number[0].def;
+  string  volume =      SpanningTreeOptions_String[0].def;
+  string surface =      SpanningTreeOptions_String[1].def;
+  string   curve =      SpanningTreeOptions_String[2].def;
+
+  // Parse physical tags
+  vector<list<int> > physical(3);
+  parse(curve,   physical[0]);
+  parse(surface, physical[1]);
+  parse(volume,  physical[2]);
+
+  // Dimensions
+  int dim[3] = {1, 2, 3};
 
   // Get model
   GModel *model = GModel::current();
 
-  // Get all elements in physical
-  ElementSet element;
-  getAllMElement(*model, physical, element);
-
-  // Get all elements in startOn (if defined)
-  ElementSet elementStartOn;
-  if(startOn >= 0) getAllMElement(*model, startOn, elementStartOn);
+  // Get all elements in physicals for each dimension
+  vector<ElementSet> element(3);
+  for(int i = 0; i < 3; i++)
+    for(list<int>::iterator j = physical[i].begin(); j!= physical[i].end(); j++)
+      getAllMElement(*model, *j, dim[i], element[i]);
 
   // Check if we have something
-  if(element.empty() && elementStartOn.empty()) {
-    Msg::Warning("No elements found in physcial %d: abording!", physical);
+  if(element[0].empty() && element[1].empty() && element[2].empty()) {
+    Msg::Warning("No elements found in the given physcials: abording!");
     return;
   }
 
-  // Get all edges from elements
-  EdgeSet edge;
-  getAllMEdge(element, edge);
+  // Get all edges from elements for each dimension
+  vector<EdgeSet> edge(3);
+  for(int i = 0; i < 3; i++)
+    getAllMEdge(element[i], edge[i]);
 
-  // Get all edges from startOn (if defined)
-  EdgeSet edgeStartOn;
-  if(startOn >= 0) getAllMEdge(elementStartOn, edgeStartOn);
-
-  // Build spanning tree and save into the model (begin with startOn if defined)
+  // Build spanning tree (in ascending dimension order) and save into the model
   DSU vertex(model->getNumMeshVertices());
   Tree tree;
-  if(startOn >= 0) spanningTree(edgeStartOn, vertex, tree);
+  for(int i = 0; i < 3; i++)
+    spanningTree(edge[i], vertex, tree);
 
-  spanningTree(edge, vertex, tree);
   addToModel(*model, tree, output);
 
   // Done
@@ -132,17 +157,23 @@ void GMSH_SpanningTreePlugin::spanningTree(EdgeSet &edge, DSU &vertex,
   }
 }
 
-void GMSH_SpanningTreePlugin::getAllMElement(GModel &model, int physical,
-                                             ElementSet &element)
+void GMSH_SpanningTreePlugin::parse(string str, list<int>& physical)
 {
-  std::vector<GEntity *> entities;
+  regex             re("[0-9]+");
+  sregex_iterator next(str.begin(), str.end(), re);
+  sregex_iterator  end;
+  for(; next != end; next++)
+    physical.push_back(atoi(next->str().c_str()));
+}
 
-  if(physical == -1) { model.getEntities(entities, -1); }
-  else {
-    std::map<int, std::vector<GEntity *> > groups;
-    model.getPhysicalGroups(-1, groups);
-    entities = groups[physical];
-  }
+void GMSH_SpanningTreePlugin::getAllMElement(GModel &model, int physical,
+                                             int dim, ElementSet &element)
+{
+  std::map<int, std::vector<GEntity*> > groups;
+  std::vector<GEntity *>              entities;
+
+  model.getPhysicalGroups(dim, groups);
+  entities = groups[physical];
 
   for(size_t i = 0; i < entities.size(); i++)
     for(size_t j = 0; j < entities[i]->getNumMeshElements(); j++)

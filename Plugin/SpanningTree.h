@@ -25,10 +25,10 @@ private:
     std::vector<int> rank;
 
   public:
-    DSU(size_t n);
+     DSU(size_t n);
     ~DSU(void);
 
-    int find(int a);
+    int  find(int a);
     void join(int a, int b);
   };
 
@@ -37,9 +37,9 @@ private:
                     const std::pair<int, int> &b) const;
   };
 
-  typedef std::set<const MElement *, MElementPtrLessThan> ElementSet;
-  typedef std::set<std::pair<int, int>, Sort> EdgeSet;
-  typedef std::list<std::pair<int, int> > Tree;
+  typedef  std::set<const MElement *, MElementPtrLessThan> ElementSet;
+  typedef  std::set<std::pair<int, int>, Sort>             EdgeSet;
+  typedef std::list<std::pair<int, int> >                  Tree;
 
 public:
   GMSH_SpanningTreePlugin(void);
@@ -52,12 +52,17 @@ public:
   int getNbOptions(void) const;
   StringXNumber *getOption(int iopt);
 
+  int getNbOptionsStr() const;
+  StringXString *getOptionStr(int iopt);
+
   void run(void);
 
 private:
   static void spanningTree(EdgeSet &edge, DSU &vertex, Tree &tree);
 
-  static void getAllMElement(GModel &model, int physical, ElementSet &element);
+  static void parse(std::string str, std::list<int>& physical);
+  static void getAllMElement(GModel &model, int physical,
+                             int dim, ElementSet &element);
   static void getAllMEdge(ElementSet &element, EdgeSet &edge);
   static void addToModel(GModel &model, Tree &tree, int tag);
 
