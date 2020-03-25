@@ -419,16 +419,21 @@ static void closest(const cross2d &c1, const cross2d &c2, double &a2,
   double D2 = dot(d, d2);
   double D3 = dot(d, d3);
   double D4 = dot(d, d4);
-  diff = acos(D1);
-  if(D1 > D2 && D1 > D3 && D1 > D4) { a2 = c2._atemp; }
+  if(D1 > D2 && D1 > D3 && D1 > D4) {
+    a2 = c2._atemp;
+    diff = acos(D1);
+  }
   else if(D2 > D1 && D2 > D3 && D2 > D4) {
     a2 = c2._atemp + P;
+    diff = acos(D2);
   }
   else if(D3 > D1 && D3 > D2 && D3 > D4) {
     a2 = c2._atemp + 2 * P;
+    diff = acos(D3);
   }
   else {
     a2 = c2._atemp + 3 * P;
+    diff = acos(D4);
   }
 }
 
@@ -863,19 +868,45 @@ static void assembleLagrangeMultipliers(dofManager<double> &myAssembler,
   }
 }
 
+
+static MEdge get2Vertices (cross2d * c,
+			   std::map<MVertex *, MVertex *, MVertexPtrLessThan> &new2old){
+  MTriangle *t = c->_t[0];
+  MVertex *v0 = new2old.find (t->getVertex(0)) == new2old.end() ? t->getVertex(0) : new2old[t->getVertex(0)];
+  MVertex *v1 = new2old.find (t->getVertex(1)) == new2old.end() ? t->getVertex(1) : new2old[t->getVertex(1)];
+  MVertex *v2 = new2old.find (t->getVertex(2)) == new2old.end() ? t->getVertex(2) : new2old[t->getVertex(2)];
+  MEdge e0 (v0,v1);
+  MEdge e1 (v1,v2);
+  MEdge e2 (v2,v0);
+  if (e0 == c->_e)return MEdge (t->getVertex(0),t->getVertex(1));
+  else if (e1 == c->_e)return MEdge (t->getVertex(1),t->getVertex(2));
+  else if (e2 == c->_e)return MEdge (t->getVertex(2),t->getVertex(0));
+  else {
+    Msg::Error ("Error in potential computation");
+    return MEdge (NULL,NULL);
+  }
+}
+
+
 static void
 LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
                      std::map<MEdge, cross2d, MEdgeLessThan> &C,
                      std::vector<std::vector<cross2d *> > &groups,
-                     std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges,
-                     bool assemble, std::map<MTriangle *, SVector3> &lift)
+                     bool assemble, std::map<MTriangle *, SVector3> &lift,
+		     std::map<MVertex *, MVertex *, MVertexPtrLessThan> &new2old  )
 {
   for(size_t i = 0; i < groups.size(); i++) {
     size_t N = groups[i].size();
-    MEdge ed = groups[i][0]->_e;
+
+    MEdge ed = get2Vertices(groups[i][0],new2old);
+
+    /*
+    MEdge ed = groups[i][0]->_e;    
     std::map<MEdge, MEdge, MEdgeLessThan>::iterator ite =
-      duplicateEdges.find(ed);
+    duplicateEdges.find(ed);
     if(ite != duplicateEdges.end()) ed = ite->second;
+    */
+    
     MVertex *v = ed.getVertex(0);
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it =
       C.find(groups[i][0]->_e);
@@ -883,13 +914,15 @@ LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
 
     double S = fabs(dot(it->second._tgt, aaa));
 
-    //    printf("DIR %d S = %12.5E\n",NUMDOF, S);
+    //    if (i == 20)    printf("DIR %d S = %12.5E %d edges reference vertex %lu\n",NUMDOF, S, N,v->getNum());
 
     if(S < .2 /*sqrt(2)/2.0*/) {
       for(size_t j = 0; j < N; j++) {
-        ed = groups[i][j]->_e;
-        ite = duplicateEdges.find(ed);
-        if(ite != duplicateEdges.end()) ed = ite->second;
+	MEdge ed = get2Vertices(groups[i][j],new2old);
+	//        ed = groups[i][j]->_e;
+	//        ite = duplicateEdges.find(ed);
+	//        if(ite != duplicateEdges.end()) ed = ite->second;
+	//	if (i == 20)    printf("%lu %lu\n",ed.getVertex(0)->getNum(),ed.getVertex(1)->getNum());
         for(int k = 0; k < 2; k++) {
           MVertex *vk = ed.getVertex(k);
           if(vk != v) {
@@ -1163,11 +1196,11 @@ struct cutGraphPassage {
   
   void Print (const char *t) const {
     if (_type == cutGraphPassage::SING_TO_SING && V1 && V2)
-      printf("%s : ISO %8d exactly connects (%8lu,%8lu) : %c --> %c -- diff %22.15E %4d passages %4d points L = %12.5E DIST %12.5E\n",t,
+      printf("%s : ISO %8d exactly connects (%8lu,%8lu) : %c --> %c -- diff %22.15E %4d passages %4lu points L = %12.5E DIST %12.5E\n",t,
 	     COUNTER, V1->getNum(), V2->getNum(), DIR==0 ? 'U' : 'V', DIR_CONN==0 ? 'U' : 'V', diff, true_passages,
 	     pts.size(),length(),d);
     else if (_type == cutGraphPassage::SING_TO_NOTHING && V1 && V2)
-      printf("%s : ISO %8d approximatively connects (%8lu,%8lu) : %c --> %c -- diff %22.15E %4d passages %4d points L = %12.5E DIST %12.5E\n",t,
+      printf("%s : ISO %8d approximatively connects (%8lu,%8lu) : %c --> %c -- diff %22.15E %4d passages %4lu points L = %12.5E DIST %12.5E\n",t,
 	     COUNTER, V1->getNum(), V2->getNum(), DIR==0 ? 'U' : 'V', DIR_CONN==0 ? 'U' : 'V', diff, true_passages,
 	     pts.size(),length(),d);
     else if (_type == cutGraphPassage::SING_TO_BDRY)
@@ -1250,7 +1283,6 @@ static bool computePotential(
   std::map<MEdge, cross2d, MEdgeLessThan> &C,
   std::map<MVertex *, MVertex *, MVertexPtrLessThan> &new2old,
   std::vector<std::vector<cross2d *> > &groups,
-  std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges,
   std::map<MTriangle *, SVector3> &lift, std::map<MTriangle *, SVector3> &lift2,
   std::vector<groupOfCross2d> &G,
   std::map<MVertex *, double> &res,
@@ -1258,7 +1290,7 @@ static bool computePotential(
   std::vector<cutGraphPassage> &passages)
 {
   
-  //  gm->writeMSH("split.msh", 4.0, false, true);
+  gm->writeMSH("split.msh", 4.0, false, true);
 
   
   double a[3];
@@ -1289,8 +1321,8 @@ static bool computePotential(
   
   createDofs(myAssembler, 1, vs);
   createDofs(myAssembler, 2, vs);
-  LagrangeMultipliers2(myAssembler, 1, C, groups, duplicateEdges, false, lift);
-  LagrangeMultipliers2(myAssembler, 2, C, groups, duplicateEdges, false, lift2);
+  LagrangeMultipliers2(myAssembler, 1, C, groups, false, lift, new2old);
+  LagrangeMultipliers2(myAssembler, 2, C, groups, false, lift2, new2old);
 
   createExtraConnexions (myAssembler, G, passages);
 
@@ -1317,8 +1349,8 @@ static bool computePotential(
 #endif
   
   
-  LagrangeMultipliers2(myAssembler, 1, C, groups, duplicateEdges, true, lift);
-  LagrangeMultipliers2(myAssembler, 2, C, groups, duplicateEdges, true, lift2);
+  LagrangeMultipliers2(myAssembler, 1, C, groups, true, lift, new2old);
+  LagrangeMultipliers2(myAssembler, 2, C, groups, true, lift2, new2old);
   for(size_t i = 0; i < G.size(); i++) {
     assembleLagrangeMultipliers(myAssembler, G[i]);
     LagrangeMultipliers3(myAssembler, G[i], lift, true);
@@ -1492,7 +1524,7 @@ struct temp_comp {
   bool operator<(const temp_comp &other) const { return a < other.a; }
 };
 
-static bool isSingular(MVertex *v, std::vector<cross2d *> &adj, double &MAX)
+/*static bool isSingular(MVertex *v, std::vector<cross2d *> &adj, double &MAX)
 {
   const std::size_t TEST = 0;
   if(v->getNum() == TEST) printf("VERTEX %lu\n", v->getNum());
@@ -1581,7 +1613,8 @@ static bool isSingular(MVertex *v, std::vector<cross2d *> &adj, double &MAX)
   //  v->getNum(), adj.size(), MAX,dot(ref,ref0));
   return MAX > .5;
 }
-
+*/
+/*
 void isMinMax(MVertex *v, std::vector<cross2d *> adj, dofManager<double> *dof,
               bool &isMin, bool &isMax)
 {
@@ -1604,7 +1637,8 @@ void isMinMax(MVertex *v, std::vector<cross2d *> adj, dofManager<double> *dof,
     if(a > aa) isMax = false;
   }
 }
-
+*/
+/*
 static void
 computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
                      std::set<MVertex *, MVertexPtrLessThan> &singularities,
@@ -1635,7 +1669,7 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
       if (v){
 	isMinMax(v, adj, dof, isMin, isMax);
       }      
-      if(v && (isSingular(v, adj, MAX))  /*isMin || isMax*/) {
+      if(v && (isSingular(v, adj, MAX))  ) {
         singularities.insert(v);
 	//        isMinMax(v, adj, dof, isMin, isMax);
         if(isMax)
@@ -1665,6 +1699,95 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   fprintf(f_, "};\n");
   fclose(f_);
   printf("singularity dection: %li with positive index, %li with negative, %li unknown\n", nb_pos, nb_neg, nb_unknown);
+}
+*/
+/*
+static SVector3 computeAverage (cross2d &c0, cross2d &c1, cross2d &c2){
+
+  double angle = c0._atemp;
+  double diff;
+  
+  SVector3 a0 = c0._tgt * cos(angle) + c0._tgt2 * sin(angle);  
+  closest (c0, c1, angle, diff);
+  SVector3 a1 = c1._tgt * cos(angle) + c1._tgt2 * sin(angle);
+  closest (c0, c2, angle, diff);
+  SVector3 a2 = c2._tgt * cos(angle) + c2._tgt2 * sin(angle);
+  
+  SVector3 a = a0+a1+a2;
+  a.normalize();
+  return a;  
+}
+*/
+
+static void
+computeSingularities2(std::map<MEdge, cross2d, MEdgeLessThan> &C,
+		      std::set<MVertex *, MVertexPtrLessThan> &singularities,
+		      std::map<MVertex *, int> &indices,
+		      v2t_cont &adj)
+{
+  FILE *f_ = fopen("sing.pos", "w");
+  fprintf(f_, "View \"S\"{\n");
+
+  v2t_cont::iterator it = adj.begin();
+  while(it != adj.end()) {
+    MVertex *v = it->first;
+    const std::vector<MElement *> &lt = it->second;
+    std::vector<MEdge> contour;
+    for (size_t i=0;i<lt.size();++i){
+      for (size_t j=0;j<3;++j){
+	MEdge e = lt[i]->getEdge (j);
+	if (e.getVertex(0) !=v && e.getVertex(1) !=v)
+	  contour.push_back(e);
+      }
+    }
+    std::vector<std::vector<MVertex *> > vsorted;
+    SortEdgeConsecutive(contour, vsorted);
+    // should be periodic
+    if (vsorted[0][0] == vsorted[0][vsorted[0].size()-1]){
+      vsorted[0].resize(vsorted[0].size()-1);
+      double diffs = 0.0;
+      //      if (v->getNum() == 3448){
+      //	printf("vertex %lu %lu neighbpors\n",v->getNum(),
+      //	       vsorted[0].size());
+      //      }
+      for(size_t i = 0; i < vsorted[0].size(); ++i) {
+	MVertex *v0 = vsorted[0][i%vsorted[0].size()];
+	MVertex *v1 = vsorted[0][(i+1)%vsorted[0].size()];
+	MVertex *v2 = vsorted[0][(i+2)%vsorted[0].size()];
+	MEdge e0  (v0,v);
+	MEdge e1  (v1,v);
+	MEdge e2  (v2,v);
+	MEdge e01 (v0,v1);
+	MEdge e12 (v1,v2);
+	std::map<MEdge, cross2d, MEdgeLessThan>::iterator it0 = C.find(e0);
+	std::map<MEdge, cross2d, MEdgeLessThan>::iterator it1 = C.find(e1);
+	std::map<MEdge, cross2d, MEdgeLessThan>::iterator it2 = C.find(e2);
+	std::map<MEdge, cross2d, MEdgeLessThan>::iterator it01 = C.find(e01);
+	std::map<MEdge, cross2d, MEdgeLessThan>::iterator it12 = C.find(e12);
+	if (it0 != C.end() && it1 != C.end() && it2 != C.end()
+	    && it01 != C.end()  && it12 != C.end() ){
+	  //	  SVector3 avg0 = computeAverage (it1->second,it0->second,it01->second);
+	  //	  SVector3 avg1 = computeAverage (it1->second,it12->second,it2->second);
+	  //	  double diff2 = acos (dot(avg0,avg1));
+	  double diff;
+	  double angle;
+	  closest (it01->second, it12->second, angle, diff); 
+	  //	  if (v->getNum() == 3448){
+	  //	    printf("%lu %lu %lu --> diffs %12.5E %12.5E\n",
+	  //		   v0->getNum(),v1->getNum(),v2->getNum(),diff,diff2);
+	  //	  }
+	  diffs += (diff);
+	}
+      }
+      if (fabs(diffs) > .95*M_PI/2) {
+	fprintf(f_, "SP(%g,%g,%g){%12.5E};\n", v->x(), v->y(), v->z(), diffs);
+	singularities.insert(v);
+      }
+    }
+    ++it;
+  }
+  fprintf(f_, "};\n");
+  fclose(f_);
 }
 
 
@@ -2279,7 +2402,7 @@ static bool addCut(const SPoint3 &p, const MEdge &e, int COUNT, int ID,
   }
 }
 
-static MVertex* inSingularZone (std::set<MVertex *, MVertexPtrLessThan> &singularities,SPoint3 &p,
+/*static MVertex* inSingularZone (std::set<MVertex *, MVertexPtrLessThan> &singularities,SPoint3 &p,
 				MEdge &e, v2t_cont &adj, double &d ){
   MVertex vvv(p.x(), p.y(), p.z());
   std::set<MVertex *, MVertexPtrLessThan>::iterator it = singularities.begin();
@@ -2296,7 +2419,7 @@ static MVertex* inSingularZone (std::set<MVertex *, MVertexPtrLessThan> &singula
   }
   return NULL;
 }
-
+*/
 static MVertex* inSingularZone (std::set<MVertex *, MVertexPtrLessThan> &singularities,
 				SPoint3 &p, double &d){
   MVertex vvv(p.x(), p.y(), p.z());
@@ -2457,6 +2580,7 @@ static void computeOneIsoTillNextCutGraph(
 
 
 
+/*
 static void computeOneIsoRecur(
   MVertex *vsing,
   v2t_cont &adj,
@@ -2586,6 +2710,7 @@ static void computeOneIsoRecur(
   }
   return;
 }
+*/
 
 static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
 			  MVertex *v0, MVertex *v1, SPoint3 &p,
@@ -2730,7 +2855,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
                        std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
 		       std::vector<cutGraphPassage> &passages,
 		       std::set<MVertex *, MVertexPtrLessThan> &singularities,
-		       bool corner)
+		       bool corner, bool fake)
 {
   
   std::vector<MElement *> faces = adj[vsing];
@@ -2750,29 +2875,44 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     SPoint3 p1(v1->x(), v1->y(), v1->z());
     SPoint3 p2(v2->x(), v2->y(), v2->z());
 
-    double EPS = 1.e-7;
+    double EPS = 1.e-6;
     if(v2 == vsing && (U0 - u) * (U1 - u) <= 0) {
       double xi = coord1d(U0, U1, u);
       if (!corner || (xi > EPS && xi < 1-EPS)){
-	SPoint3 pp = p0 * (1 - xi) + p1 * xi;
-	computeOneIso(vsing, adj, u, v0, v1, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
-		      cuts, passages, singularities);
+	if (fake){
+	  COUNT++;
+	}
+	else {
+	  SPoint3 pp = p0 * (1 - xi) + p1 * xi;
+	  computeOneIso(vsing, adj, u, v0, v1, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
+			cuts, passages, singularities);
+	}
       }
     }
     else if(v1 == vsing && (U0 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U0, U2, u);
       if (!corner || (xi > EPS && xi < 1-EPS)){
-	SPoint3 pp = p0 * (1 - xi) + p2 * xi;
-	computeOneIso(vsing, adj, u, v0, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
-		      cuts, passages, singularities);
+	if (fake){
+	  COUNT++;
+	}
+	else {
+	  SPoint3 pp = p0 * (1 - xi) + p2 * xi;
+	  computeOneIso(vsing, adj, u, v0, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
+			cuts, passages, singularities);
+	}
       }
     }
     else if(v0 == vsing && (U1 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U1, U2, u);
       if (!corner || (xi > EPS && xi < 1-EPS)){
-	SPoint3 pp = p1 * (1 - xi) + p2 * xi;
-	computeOneIso(vsing, adj, u, v1, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
-		      cuts, passages, singularities);
+	if (fake){
+	  COUNT++;
+	}
+	else {
+	  SPoint3 pp = p1 * (1 - xi) + p2 * xi;
+	  computeOneIso(vsing, adj, u, v1, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
+			cuts, passages, singularities);
+	}
       }
     }
   }
@@ -2790,7 +2930,8 @@ static bool computeIsos(
   std::set<MEdge, MEdgeLessThan> &cutG, std::vector<groupOfCross2d> &G,
   std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
   std::vector<cutGraphPassage> &passages,
-  std::set<MVertex *, MVertexPtrLessThan> &corners)
+  std::set<MVertex *, MVertexPtrLessThan> &corners,
+  std::map<size_t,int> &COUNTS)
 {
   passages.clear();
   v2t_cont adj;
@@ -2860,25 +3001,42 @@ static bool computeIsos(
 
   bool success = true;
 
-  std::map<size_t,int> COUNTS;
-  
+  std::map<size_t,int> COUNTS_FAKE;
   std::set<MVertex *, MVertexPtrLessThan>::iterator it = singularities.begin();
   for(; it != singularities.end(); ++it) {
     GEntity *ge = (*it)->onWhat();
     if(ge->dim() == 2 || ge->edges().size() == 0) {
       MVertex *vvv = new2old.find(*it) == new2old.end() ?  *it : new2old[*it];
-      if (COUNTS.find(vvv->getNum()) == COUNTS.end())COUNTS [vvv->getNum()] = 1000 * vvv->getNum();
-      int COUNT = COUNTS [vvv->getNum()];      
-
+      if (COUNTS_FAKE.find(vvv->getNum()) == COUNTS_FAKE.end())COUNTS_FAKE [vvv->getNum()] = 1000 * vvv->getNum();
+      int COUNT = COUNTS_FAKE [vvv->getNum()];      
       bool corner = corners.find(*it) != corners.end();
-
-      computeIso(*it, adj, potU[*it], potU, potV, f, d1, G, 0, COUNT, cuts, passages, singularities, corner);
-      computeIso(*it, adj, potV[*it], potV, potU, f, d1, G, 1, COUNT, cuts, passages, singularities, corner);
-      COUNTS [vvv->getNum()] = COUNT;      
+      computeIso(*it, adj, potU[*it], potU, potV, f, d1, G, 0, COUNT, cuts, passages, singularities, corner, true);
+      computeIso(*it, adj, potV[*it], potV, potU, f, d1, G, 1, COUNT, cuts, passages, singularities, corner, true);
+      COUNTS_FAKE [vvv->getNum()] = COUNT;      
     }
   }
+
+  it = singularities.begin();
+  for(; it != singularities.end(); ++it) {
+    GEntity *ge = (*it)->onWhat();
+    if(ge->dim() == 2 || ge->edges().size() == 0) {
+      MVertex *vvv = new2old.find(*it) == new2old.end() ?  *it : new2old[*it];
+      int COUNT_FAKE = COUNTS_FAKE[vvv->getNum()];
+      bool corner = corners.find(*it) != corners.end();
+
+      if (corner || COUNT_FAKE-vvv->getNum()*1000 != 4){      
+	if (COUNTS.find(vvv->getNum()) == COUNTS.end())COUNTS [vvv->getNum()] = 1000 * vvv->getNum();
+	int COUNT = COUNTS [vvv->getNum()];      
+	computeIso(*it, adj, potU[*it], potU, potV, f, d1, G, 0, COUNT, cuts, passages, singularities, corner, false);
+	computeIso(*it, adj, potV[*it], potV, potU, f, d1, G, 1, COUNT, cuts, passages, singularities, corner, false);
+	COUNTS [vvv->getNum()] = COUNT;
+      }
+    }
+  }
+
   fprintf(f, "};\n");
   fclose(f);
+
   return success;
 }
 
@@ -3116,23 +3274,33 @@ analyzeGroup(std::vector<cross2d *> &group, groupOfCross2d &g,
   g.vertices.insert(g.vertices.begin(), all.begin(), all.end());
 
   // compute which rotation ...
+  g.mat[0][0] = g.mat[0][1] = g.mat[1][0] = g.mat[1][1] = 0.0; 
+  double div = 0.0;
   for(size_t i = 0; i < g.crosses.size(); ++i) {
     cross2d *c = g.crosses[i];
     if(c->_t.size() == 2) {
       if(t.find(c->_t[0]) != t.end()) {
-        g.mat[0][0] = dot(d[c->_t[0]], d[c->_t[1]]);
-        g.mat[0][1] = dot(d[c->_t[0]], d2[c->_t[1]]);
-        g.mat[1][0] = dot(d2[c->_t[0]], d[c->_t[1]]);
-        g.mat[1][1] = dot(d2[c->_t[0]], d2[c->_t[1]]);
+	div += 1.0;
+        g.mat[0][0] += dot(d[c->_t[0]], d[c->_t[1]]);
+        g.mat[0][1] += dot(d[c->_t[0]], d2[c->_t[1]]);
+        g.mat[1][0] += dot(d2[c->_t[0]], d[c->_t[1]]);
+        g.mat[1][1] += dot(d2[c->_t[0]], d2[c->_t[1]]);
       }
       else if(t.find(c->_t[1]) != t.end()) {
-        g.mat[0][0] = dot(d[c->_t[0]], d[c->_t[1]]);
-        g.mat[1][0] = dot(d[c->_t[0]], d2[c->_t[1]]);
-        g.mat[0][1] = dot(d2[c->_t[0]], d[c->_t[1]]);
-        g.mat[1][1] = dot(d2[c->_t[0]], d2[c->_t[1]]);
+	div += 1.0;
+        g.mat[0][0] += dot(d[c->_t[0]], d[c->_t[1]]);
+        g.mat[1][0] += dot(d[c->_t[0]], d2[c->_t[1]]);
+        g.mat[0][1] += dot(d2[c->_t[0]], d[c->_t[1]]);
+        g.mat[1][1] += dot(d2[c->_t[0]], d2[c->_t[1]]);
       }
     }
   }
+  g.mat[0][0] /= div;
+  g.mat[0][1] /= div;
+  g.mat[1][0] /= div;
+  g.mat[1][1] /= div;
+
+
   for(int j = 0; j < 2; j++) {
     for(int k = 0; k < 2; k++) {
       if(g.mat[j][k] > .7)
@@ -3142,6 +3310,8 @@ analyzeGroup(std::vector<cross2d *> &group, groupOfCross2d &g,
       else
         g.mat[j][k] = 0;
     }
+  }
+  if (g.groupId == 62){
   }
 }
 
@@ -3432,13 +3602,23 @@ public:
     }
     //    fastImplementationExtrinsic(C,1.e-9);
     //    for(it = C.begin(); it != C.end(); ++it) it->second.computeAngle();
+
+    printCross("test.pos");
+
 #else
     computeCrossFieldExtrinsic(1.e-9);
 #endif
     myAssembler = computeH(gm, f, vs, C);
-    
-    computeSingularities(C, singularities, indices, myAssembler);
 
+    {
+      v2t_cont adj;
+      for(size_t i = 0; i < f.size(); i++) {
+	buildVertexToElement(f[i]->triangles, adj);
+      }
+      computeSingularities2(C, singularities, indices, adj);
+      //      computeSingularities(C, singularities, indices, myAssembler);
+    }
+    
 #if 0
     myAssembler = computeHFromSingularities(indices,  4);
 #endif
@@ -4023,7 +4203,10 @@ public:
 
     SVector3 a = crossprod(e1e2, e1v1);
     double b = dot(e1v1, e2v1);
-    if(a.norm() < 1.e-10 && b < 0) return v1;
+    if(a.norm() < 1.e-12 && b < 0) {
+      //      printf("COUOUC\n");
+      return v1;
+    }
 
     if(!v2) {
       //      Msg::Error("Error In CutMesh");
@@ -4195,6 +4378,13 @@ public:
           }
         }
 
+	if (f[i]->triangles[j]->getNum() == 20766){
+	  printf("%lu %lu %lu %lu\n",f[i]->triangles[j]->getVertex(0)->getNum(),
+		 f[i]->triangles[j]->getVertex(1)->getNum(),
+		 f[i]->triangles[j]->getVertex(2)->getNum(),indices.size());
+	}
+
+	
         std::set<int>::iterator iti = indices.begin();
         std::vector<MTriangle *> ttt;
         ttt.push_back(f[i]->triangles[j]);
@@ -4237,19 +4427,19 @@ public:
             MVertex *v2 = itt->second.first;
             ;
 
-            if(abs(id0 - id1) == 1) {
+            if(abs(id0 - id1) <= 2) {
               cutTriangles(ttt, f[i], v2,
                            f[i]->triangles[j]->getVertex((k2 + 2) % 3), ge,
                            ecuts, *iti, F);
               cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F);
             }
-            else if(abs(id0 - id2) == 1) {
+            else if(abs(id0 - id2) <= 2) {
               cutTriangles(ttt, f[i], v1,
                            f[i]->triangles[j]->getVertex((k1 + 2) % 3), ge,
                            ecuts, *iti, F);
               cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F);
             }
-            else if(abs(id1 - id2) == 1) {
+            else if(abs(id1 - id2) <= 2) {
               cutTriangles(ttt, f[i], v0,
                            f[i]->triangles[j]->getVertex((k0 + 2) % 3), ge,
                            ecuts, *iti, F);
@@ -4277,20 +4467,20 @@ public:
             ++itt;
             int id3 = itt->second.second.second;
             MVertex *v3 = itt->second.first;
-            if(abs(id0 - id1) == 1 || abs(id2 - id3) == 1) {
+            if(abs(id0 - id1) <= 2 || abs(id2 - id3) <= 2) {
               cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F);
               cutTriangles(ttt, f[i], v2, v3, ge, ecuts, *iti, F);
             }
-            else if(abs(id0 - id2) == 1 || abs(id1 - id3) == 1) {
+            else if(abs(id0 - id2) <= 2 || abs(id1 - id3) <= 2) {
               cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F);
               cutTriangles(ttt, f[i], v1, v3, ge, ecuts, *iti, F);
             }
-            else if(abs(id0 - id3) == 1 || abs(id1 - id2) == 1) {
+            else if(abs(id0 - id3) <= 2 || abs(id1 - id2) <= 2) {
               cutTriangles(ttt, f[i], v0, v3, ge, ecuts, *iti, F);
               cutTriangles(ttt, f[i], v1, v2, ge, ecuts, *iti, F);
             }
 	    else{
-	      printf("%d %d %d %d\n",id0,id1,id2,id3);
+	      printf("ERRROOOOR IN 4 CUTS %d %d %d %d\n",id0,id1,id2,id3);
 	    }
 	  }
           else if(tcuts.count(*iti) == 6) {	    
@@ -4401,11 +4591,51 @@ public:
     potV.clear();
     cuts.clear();
     
-    if (!computePotential(gm, f, *myAssembler, C, new2old, groups, duplicateEdges,
+    if (!computePotential(gm, f, *myAssembler, C, new2old, groups,
 			  d0, d1, G, potU, potV, passages))return false;
     
+    std::map<size_t,int> COUNTS;
     bool success = computeIsos(gm, f, singularities, C, new2old, duplicateEdges, groups,
-			       groups_cg, potU, potV, cutG, G, cuts, passages, corners);
+			       groups_cg, potU, potV, cutG, G, cuts, passages, corners, COUNTS);
+
+
+    double chi_sing = 0.0;
+    for (std::map<size_t,int>::iterator it = COUNTS.begin(); it != COUNTS.end(); ++it){
+      MVertex *cor = gm->getMeshVertexByTag(it->first);
+      if (corners.find(cor) == corners.end()){
+	int diff = 4 - (it->second-it->first*1000);
+	chi_sing += (double)diff/4.0;
+      }
+    }
+    
+    double chi_curv = 0;
+    for(std::map<MVertex *, double>::iterator it = gaussianCurvatures.begin();it != gaussianCurvatures.end(); ++it){
+      bool bnd = boundaries.find(it->first) != boundaries.end();
+      double XXX =  !bnd ? 2*M_PI-it->second : M_PI-it->second;
+      chi_curv += XXX;
+      if (bnd){
+	double angle = M_PI-it->second; 
+	if (angle < -M_PI/4)chi_sing += 0.25;
+	else if (angle > M_PI/4 && angle < 3*M_PI/4){
+	  int N = COUNTS[it->first->getNum()];
+	  if (N == 2)
+	    chi_sing -= 0.25;
+	}
+	else if (angle > 3*M_PI/4){
+	  int N = COUNTS[it->first->getNum()];
+	  if (N == 3)
+	    chi_sing -= 0.5;
+	}
+      }
+    }
+
+    if (fabs (chi_sing-chi_curv/2/M_PI) < 1.e-8)
+      Msg::Info("Compatibility test SUCCEDED : POINCARE CHARACTERISTIC %12.5E",chi_sing);  
+    else{
+      Msg::Info("Compatibility test FAILED %12.5E (singularities) vs %12.5E (curvature/exact)",chi_sing,chi_curv/2/M_PI);
+      success = false;
+      return success;
+    }
     
     correctionOnCutGraph(cuts, new2old);
     
@@ -4576,7 +4806,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
       qLayout.computeQuadLayout(potU, potV, duplicateEdges, cuts, passages);
       for (size_t i=0 ; i< passages.size() ; ++i){
 	passages[i].analyze(potU,potV,qLayout.G,qLayout.new2old);
-	passages[i].Print("All ");
+	//	passages[i].Print("All ");
 	//	passages[i].PrintFile();
       }
       computeValidPassages( passages );
@@ -4904,6 +5134,7 @@ int computeCrossFieldAndH(GModel *gm,
 
 int computeCrossFieldAndH(GModel *gm)
 {
+
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
 
@@ -4919,6 +5150,9 @@ int computeCrossFieldAndH(GModel *gm)
 
 int computeCrossField(GModel *gm, std::vector<int> &tags)
 {
+
+  if(gm->getMeshStatus(true) < 2)gm->mesh(2);
+     
   const bool WRITE_MESHES = true;
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
