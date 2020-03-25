@@ -29,7 +29,14 @@ int main(int argc, char **argv)
   factory::synchronize();
 
   // add the background mesh file as a view
-  gmsh::merge("../t7_bgmesh.pos");
+  try {
+    gmsh::merge("../t7_bgmesh.pos");
+  }
+  catch(...) {
+    gmsh::logger::write("Could not load background mesh: bye!");
+    gmsh::finalize();
+    return 0;
+  }
 
   // add the post-processing view as a new size field
   int bg_field = model::mesh::field::add("PostView");
