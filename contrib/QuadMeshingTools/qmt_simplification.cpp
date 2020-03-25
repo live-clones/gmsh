@@ -442,9 +442,12 @@ namespace QMT {
         gmsh::view::getListData(H_tag, dataType, numElements, data);
         Hmin = DBL_MAX;
         Hmax = -DBL_MAX;
-        F(i,data[0].size()) {
-          Hmin = std::min(Hmin, data[0][i]);
-          Hmax = std::max(Hmax, data[0][i]);
+        for(int ele = 0; ele < numElements[0]; ele++) {
+          for(int nod = 0; nod < 3; nod++) {
+            double val = data[0][12*ele+3*3+nod];
+            Hmin = std::min(Hmin, val);
+            Hmax = std::max(Hmax, val);
+          }
         }
       }
       if (Hmin == DBL_MAX || Hmax == -DBL_MAX) {

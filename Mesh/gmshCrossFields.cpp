@@ -5386,37 +5386,102 @@ int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt) {
     Msg::Info("view 'H' not found");
     return -1;
   }
-  PViewData *data = vH->getData();
+  PViewData *vhd = vH->getData();
   if (vH == NULL) {
     Msg::Info("view 'H' has no data");
     return -1;
   }
 
-  /* Restrict to boundary curves if possible */
   double Hmin = DBL_MAX;
   double Hmax = -DBL_MAX;
-  const std::set<GEdge*, GEntityPtrLessThan>& edges =  gm->getEdges();
-  for (const auto& edge : edges) {
-    for (size_t i = 0; edge->getNumMeshVertices(); ++i) {
-      SPoint3 pt = edge->getMeshVertex(i)->point();
-      double val = 0.;
-      double *qx = 0, *qy = 0, *qz = 0;
-      int qn = 0;
-      bool gradient = false;
-      double tolerance = 0.;
-      bool found = data->searchScalarWithTol(pt.x(), pt.y(), pt.z(), &val, 0, 0, tolerance, qn,
-          qx, qy, qz, gradient);
-      if (found) {
-        Hmin = std::min(Hmin,val);
-        Hmax = std::max(Hmax,val);
+  {
+    /* Restrict to boundary curves if possible */
+    const std::set<GEdge*, GEntityPtrLessThan>& edges =  gm->getEdges();
+    for (const auto& edge : edges) {
+      for (size_t i = 0; i < edge->getNumMeshVertices(); ++i) {
+        SPoint3 pt = edge->getMeshVertex(i)->point();
+        double val = 0.;
+        double *qx = 0, *qy = 0, *qz = 0;
+        int qn = 0;
+        bool gradient = false;
+        double tolerance = 0.;
+        bool found = vhd->searchScalarWithTol(pt.x(), pt.y(), pt.z(), &val, 0, 0, tolerance, qn,
+            qx, qy, qz, gradient);
+        if (found) {
+          Hmin = std::min(Hmin,val);
+          Hmax = std::max(Hmax,val);
+        }
       }
     }
+
+    /* Global min / max if no curves */
+    if (Hmin == DBL_MAX) Hmin = vhd->getMin();
+    if (Hmax == -DBL_MAX) Hmax = vhd->getMax();
   }
 
-  /* Global min / max if no curves */
-  if (Hmin == DBL_MAX) Hmin = data->getMin();
-  if (Hmax == -DBL_MAX) Hmax = data->getMax();
 
+  // PViewDataList* d = dynamic_cast<PViewDataList*>(vS->getData());
+  // if(!d) { // change the view type
+  //   delete vS->getData();
+  //   d = new PViewDataList();
+  //   d->setName("s");
+  //   vS->setData(d);
+  // }
+
+  // PViewDataList* dh = dynamic_cast<PViewDataList*>(vH->getData());
+  // if (dh == NULL) {
+  //   Msg::Error("missing PViewDataList for view 'H'");
+  //   return -1;
+  // }
+
+  double size_min = CTX::instance()->mesh.lcMin;
+  double size_max = CTX::instance()->mesh.lcMax;
+  if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
+    size_min *= CTX::instance()->mesh.lcFactor;
+  }
+  if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
+    size_max *= CTX::instance()->mesh.lcFactor;
+  }
+  if (size_min == 0 && size_max == 1.e22) {
+    SBoundingBox3d bbox = gm->bounds();
+    size_min = 0.1 * bbox.diag() * CTX::instance()->mesh.lcFactor;
+    Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal*clscale");
+  }
+
+
+  double integral = 0.;
+  
+  std::vector<std::string> dataType;
+  std::vector<int> numElements;
+  std::vector<std::vector<double> > data;
+  gmsh::view::getListData(vH->getTag(), dataType, numElements, data);
+  for(int ele = 0; ele < numElements[0]; ele++) {
+    double values[3] = {0,0,0};
+    SVector3 pts[3];
+    for(int nod = 0; nod < 3; nod++) {
+      double& val = data[0][12*ele+3*3+nod];
+      if (size_min != 0.) {
+        val = size_min * (exp(-val)/exp(-Hmax));
+      } else if (size_max != 1.e22) {
+        val = size_max * (exp(-val)/exp(-Hmin));
+      }
+      values[nod] = val;
+      pts[nod] = SVector3(
+          data[0][12*ele+nod],
+          data[0][12*ele+3+nod],
+          data[0][12*ele+6+nod]);
+    }
+    double area = 0.5 * crossprod(pts[2]-pts[0],pts[1]-pts[0]).norm();
+    integral += area * 1. / std::pow(1./3. * (values[0] + values[1] + values[2]),2);
+  }
+
+  PView* vS = PView::getViewByName("s");
+  if (vS) {delete vS; vS = NULL;}
+
+  Msg::Info("create a view 's'");
+  int vi = gmsh::view::add("s");
+  gmsh::view::addListData(vi, "ST", numElements[0], data[0]);
+  Msg::Info("size map: integeral value is: %.3f", integral);
 
   return 0;
 }

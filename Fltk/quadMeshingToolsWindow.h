@@ -32,6 +32,7 @@ public:
   Fl_Button *push_crossfield_show;
   Fl_Button *push_compute_uv;
   Fl_Button *push_build_layout;
+  Fl_Button *push_quad_sizemap;
   Fl_Button *push_quad_generate;
   Fl_Button *push_quad_simplify;
   Fl_Button *push_quad_smooth;

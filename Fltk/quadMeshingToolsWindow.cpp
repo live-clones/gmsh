@@ -56,6 +56,16 @@ static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void qmt_quad_sizemap(Fl_Widget *w, void *data)
+{
+  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  int status = computeQuadSizeMap(GModel::current(), opt);
+  if (status != 0) {
+    Msg::Error("failed to compute quad sizemap");
+  }
+  drawContext::global()->draw();
+}
+
 static void qmt_quad_generate(Fl_Widget *w, void *data)
 {
   const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
@@ -192,7 +202,10 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     fli_name_qinit->align(FL_ALIGN_RIGHT);
     fli_name_qinit->value("quad");
 
-    // y += BH;
+    push_quad_sizemap = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Size Map");
+    push_quad_sizemap->callback(qmt_quad_sizemap);
+
+    y += BH;
     push_quad_generate = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Generate");
     push_quad_generate->callback(qmt_quad_generate);
   }
