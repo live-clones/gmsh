@@ -5123,22 +5123,22 @@ system}. Screencasts that show how to use the GUI are available on
 @uref{http://gmsh.info/screencasts/}.
 
 @menu
-* t1.geo::
-* t2.geo::
-* t3.geo::
-* t4.geo::
-* t5.geo::
-* t6.geo::
-* t7.geo::
-* t8.geo::
-* t9.geo::
-* t10.geo::
-* t11.geo::
-* t12.geo::
-* t13.geo::
-* t14.geo::
-* t15.geo::
-* t16.geo::
+* t1.geo:: Geometry basics, elementary entities, physical groups
+* t2.geo:: Transformations, extruded geometries, volumes
+* t3.geo:: Extruded meshes, input parameters, options
+* t4.geo:: Built-in functions, surface holes, annotations, mesh colors
+* t5.geo:: Characteristic lengths, arrays of variables, macros, loops
+* t6.geo:: Transfinite meshes
+* t7.geo:: Background meshes
+* t8.geo:: Post-processing, scripting, animations, options
+* t9.geo:: Post-processing plugins (levelsets, sections, annotations)
+* t10.geo:: Mesh size fields
+* t11.geo:: Unstructured quadrangular meshes
+* t12.geo:: Cross-patch meshing with compounds
+* t13.geo:: Remeshing a STL file without an underlying CAD model
+* t14.geo:: Homology and cohomology computation
+* t15.geo:: Embedded points, lines and surfaces
+* t16.geo:: Constructive Solid Geometry, OpenCASCADE geometry kernel
 @end menu
 
 @c -------------------------------------------------------------------------
