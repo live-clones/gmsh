@@ -353,11 +353,11 @@ int GmshBatch()
     }
     else if(CTX::instance()->batch == 69){
       std::vector<int> tags;
-      computeCrossField (GModel::current(), tags);
+      int result = computeCrossField (GModel::current(), tags);
       GoodbyeMessage();
       CTX::instance()->batch =0;
       // still a bug in allocation somewhere
-      exit(0);
+      exit(result);
     }
 #endif
   }
