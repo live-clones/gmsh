@@ -32,12 +32,13 @@
 
 static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 {
-  int status = computeCrossField(GModel::current());
+  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  int status = computeCrossField(GModel::current(), opt);
   if (status != 0) {
     Msg::Error("failed to compute cross field");
   }
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
-  int statusH = computeH(GModel::current());
+  int statusH = computeH(GModel::current(), opt);
   if (statusH != 0) {
     Msg::Error("failed to compute H from cross field");
   }
@@ -47,7 +48,8 @@ static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 
 static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
 {
-  int status = showScaledCrosses(GModel::current());
+  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  int status = showScaledCrosses(GModel::current(), opt);
   if (status != 0) {
     Msg::Error("failed to show scaled crosses");
   }
@@ -56,7 +58,8 @@ static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
 
 static void qmt_quad_generate(Fl_Widget *w, void *data)
 {
-  int status = generateQuadMesh(GModel::current());
+  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  int status = generateQuadMesh(GModel::current(), opt);
   if (status != 0) {
     Msg::Error("failed to generate initial quad mesh (quantization)");
   }
@@ -65,7 +68,8 @@ static void qmt_quad_generate(Fl_Widget *w, void *data)
 
 static void qmt_compute_uv(Fl_Widget *w, void *data)
 {
-  int status = computeUV(GModel::current());
+  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  int status = computeUV(GModel::current(), opt);
   if (status != 0) {
     Msg::Error("failed to generate compute uv parametrisation");
   }
