@@ -4377,13 +4377,6 @@ public:
             }
           }
         }
-
-	if (f[i]->triangles[j]->getNum() == 20766){
-	  printf("%lu %lu %lu %lu\n",f[i]->triangles[j]->getVertex(0)->getNum(),
-		 f[i]->triangles[j]->getVertex(1)->getNum(),
-		 f[i]->triangles[j]->getVertex(2)->getNum(),indices.size());
-	}
-
 	
         std::set<int>::iterator iti = indices.begin();
         std::vector<MTriangle *> ttt;
@@ -4607,6 +4600,8 @@ public:
 	chi_sing += (double)diff/4.0;
       }
     }
+
+    //    printf("chi_sing ...%12.5E\n",chi_sing);
     
     double chi_curv = 0;
     for(std::map<MVertex *, double>::iterator it = gaussianCurvatures.begin();it != gaussianCurvatures.end(); ++it){
@@ -4614,10 +4609,13 @@ public:
       double XXX =  !bnd ? 2*M_PI-it->second : M_PI-it->second;
       chi_curv += XXX;
       if (bnd){
-	double angle = M_PI-it->second; 
-	if (angle < -M_PI/4)chi_sing += 0.25;
+	double angle = it->second-M_PI; 
+	if (angle < -M_PI/4){
+	  chi_sing += 0.25;
+	}
 	else if (angle > M_PI/4 && angle < 3*M_PI/4){
-	  int N = COUNTS[it->first->getNum()];
+	  int N = COUNTS[it->first->getNum()] - 1000*it->first->getNum();
+	  //	  printf("anticorner %12.5E %d\n",angle, N);
 	  if (N == 2)
 	    chi_sing -= 0.25;
 	}
@@ -4633,8 +4631,6 @@ public:
       Msg::Info("Compatibility test SUCCEDED : POINCARE CHARACTERISTIC %12.5E",chi_sing);  
     else{
       Msg::Info("Compatibility test FAILED %12.5E (singularities) vs %12.5E (curvature/exact)",chi_sing,chi_curv/2/M_PI);
-      success = false;
-      return success;
     }
     
     correctionOnCutGraph(cuts, new2old);
@@ -4764,7 +4760,6 @@ static void computeValidPassages ( std::vector<cutGraphPassage> &passages) {
       }
     }
   }
-  printf("%lu %lu\n",passages.size(),todo.size());
   passages = todo;
 }
 
