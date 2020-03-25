@@ -5027,9 +5027,9 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
 }
 
 /* API call, generate a view named 'theta' with 3 values per triangle */
-int computeCrossField(GModel * gm) {
+int computeCrossField(GModel * gm, const QuadMeshingOptions& opt) {
 #if defined(HAVE_QUADMESHINGTOOLS)
-  int nb_iter = 8;
+  int nb_iter = opt.cross_field_iter;
   int cf_tag = -1;
   PView* theta = PView::getViewByName("theta");
   if (theta) {delete theta; theta = NULL;}
@@ -5050,7 +5050,7 @@ int computeCrossField(GModel * gm) {
   return 0;
 }
 
-int computeH(GModel * gm) {
+int computeH(GModel * gm, const QuadMeshingOptions& opt) {
   PView* theta = PView::getViewByName("theta");
   if (!theta) {
     Msg::Error("Cannot compute H from crosses, view 'theta' not found");
@@ -5150,7 +5150,48 @@ int computeH(GModel * gm) {
   return 0;
 }
 
-int showScaledCrosses(GModel* gm) {
+int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt) {
+  PView* vH = PView::getViewByName("H");
+  if (vH == NULL) {
+    Msg::Info("view 'H' not found");
+    return -1;
+  }
+  PViewData *data = vH->getData();
+  if (vH == NULL) {
+    Msg::Info("view 'H' has no data");
+    return -1;
+  }
+
+  /* Restrict to boundary curves if possible */
+  double Hmin = DBL_MAX;
+  double Hmax = -DBL_MAX;
+  const std::set<GEdge*, GEntityPtrLessThan>& edges =  gm->getEdges();
+  for (const auto& edge : edges) {
+    for (size_t i = 0; edge->getNumMeshVertices(); ++i) {
+      SPoint3 pt = edge->getMeshVertex(i)->point();
+      double val = 0.;
+      double *qx = 0, *qy = 0, *qz = 0;
+      int qn = 0;
+      bool gradient = false;
+      double tolerance = 0.;
+      bool found = data->searchScalarWithTol(pt.x(), pt.y(), pt.z(), &val, 0, 0, tolerance, qn,
+          qx, qy, qz, gradient);
+      if (found) {
+        Hmin = std::min(Hmin,val);
+        Hmax = std::max(Hmax,val);
+      }
+    }
+  }
+
+  /* Global min / max if no curves */
+  if (Hmin == DBL_MAX) Hmin = data->getMin();
+  if (Hmax == -DBL_MAX) Hmax = data->getMax();
+
+
+  return 0;
+}
+
+int showScaledCrosses(GModel* gm, const QuadMeshingOptions& opt) {
   /* Get view tags */
   PView* vH = PView::getViewByName("H");
   if (vH == NULL) {
@@ -5186,11 +5227,11 @@ int showScaledCrosses(GModel* gm) {
 }
 
 /* generate two views, named 'U' and 'V', with 3 values per triangle */
-int computeUV(GModel * gm) {
+int computeUV(GModel * gm, const QuadMeshingOptions& opt) {
   return -1;
 }
 
-int generateQuadMesh(GModel * gm) {
+int generateQuadMesh(GModel * gm, const QuadMeshingOptions& opt) {
 #if defined(HAVE_QUADMESHINGTOOLS)
   // TODO: projector from initial geometry, should be in another model name
   QMT::TMesh boundary;

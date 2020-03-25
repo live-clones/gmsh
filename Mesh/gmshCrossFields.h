@@ -30,27 +30,30 @@ struct QuadMeshingOptions {
 };
 
 /* generate a view named 'theta' with 3 values per triangle */
-int computeCrossField(GModel * gm);
+int computeCrossField(GModel * gm, const QuadMeshingOptions& opt);
 
-/* generate a view named 'H' with 1 value per vertex */
-int computeH(GModel * gm);
+/* generate a datalist view named 'H' with P1 triangles */
+int computeH(GModel * gm, const QuadMeshingOptions& opt);
+
+/* generate a datalist view named 's' with P1 triangles */
+int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt);
 
 /* generate two views, named 'U' and 'V', with 3 values per triangle */
-int computeUV(GModel * gm);
+int computeUV(GModel * gm, const QuadMeshingOptions& opt);
 
 /* cut the current mesh triangles and classify the triangles */
-int computeQuadLayout(GModel * gm);
+int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt);
 
 /* replace the current mesh by an initial quad mesh */
-int generateQuadMesh(GModel * gm);
+int generateQuadMesh(GModel * gm, const QuadMeshingOptions& opt);
 
 /* simplify the current quad mesh connectivity */
-int simplifyQuadMesh(GModel * gm);
+int simplifyQuadMesh(GModel * gm, const QuadMeshingOptions& opt);
 
 /* smooth the current quad mesh geometry */
-int smoothQuadMesh(GModel * gm);
+int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt);
 
 /* generate a view "crosses" with crosses scaled by H */
-int showScaledCrosses(GModel* gm);
+int showScaledCrosses(GModel* gm, const QuadMeshingOptions& opt);
 
 #endif
