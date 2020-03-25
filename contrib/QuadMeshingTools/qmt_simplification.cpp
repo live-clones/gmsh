@@ -1381,6 +1381,13 @@ namespace QMT {
         }
         id2 scurve = sorted(node1,node2);
         if (scurve[0] != node1) std::reverse(points.begin(),points.end());
+        auto it = pairToEntity.find(scurve);
+        if (it != pairToEntity.end()) {
+          if (it->second != curve) {
+            error("curve {} (node1={},node2={}}): there is already a curve (tag = {}) with the same extremities, case not supported", curve, node1,node2, it->second);
+            return false;
+          }
+        }
         pairToPoints[scurve] = points;
         pairToEntity[scurve] = curve;
       }
@@ -1520,28 +1527,10 @@ namespace QMT {
       }
       wavg /= avg_sum;
 
-      // GeoLog log;
-      // F(j, edges.size()) {
-      //     id node1 = edges[j][0];
-      //     id node2 = edges[j][1];
-      //     id v1 = meshVertexToV[nodeToMeshVertex[node1]];
-      //     id v2 = meshVertexToV[nodeToMeshVertex[node2]];
-      //     vec3 p1 = M.points[v1];
-      //     vec3 p2 = M.points[v2];
-      //     log.add({p1,p2},edge_len[j],"c"+std::to_string(i)+"_ie");
-      // }
-      // log.toGmsh();
-
       /* Assign number of points */
-      double minWidth = *std::min_element(edge_len.begin(),edge_len.end());
       size_t nb_ipts = 0;
       nb_ipts = std::round(wavg / denom);
-      nb_ipts = std::round(minWidth / denom);
       info("  chord {}, avg. scaled width: {}, {} interior points", i, wavg, nb_ipts);
-
-      // info("   details: edge_np = {}", edge_np);
-      // info("            edge_len = {}", edge_len);
-      // info("            edges = {}", edges);
 
       /* Sample the curves */
       F(j, edges.size()) {
@@ -1758,6 +1747,16 @@ namespace QMT {
       FC(v,M.points.size(), inside[v]) nbv += 1;
       FC(v,M.points.size(), inside[v] && M.entity[v].first == 2 && valence[v] != 4)  nbirr += 1;
       info("input: {} vertices ({} irregular), {} quads", nbv, nbirr, nbq);
+    }
+
+    { /* Update adjacencies if necessary */
+      if (M.quad_neighbors.size() == 0.) {
+        bool oka = compute_quad_adjacencies(M.quads, M.quad_neighbors, M.nm_quad_neighbors);
+        if (!oka) {
+          error("failed to compute quad adjacencies");
+          return false;
+        }
+      }
     }
 
     /* Precompute a list of chord collapse candidates */

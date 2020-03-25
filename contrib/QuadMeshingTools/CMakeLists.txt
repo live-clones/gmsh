@@ -4,6 +4,7 @@ set(QMT_SRC
     qmt_linalg_solver.cpp
     qmt_cross_field.cpp
     qmt_projection.cpp
+    qmt_quantization.cpp
     geolog.cpp
     linearSystemMUMPS2.cpp
  )

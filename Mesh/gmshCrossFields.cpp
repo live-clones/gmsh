@@ -30,6 +30,7 @@
 
 #if defined(HAVE_POST)
 #include "PView.h"
+#include "PViewOptions.h"
 #include "PViewDataGModel.h"
 #endif
 
@@ -3389,7 +3390,7 @@ public:
       if(dd) {
         auto it = t2mt.find(i);
         if (it == t2mt.end()) {
-          Msg::Error("triangle not found");
+          Msg::Error("triangle %i not found (view has numData=%li)", i, s->getNumData());
           return -1;
         }
         MTriangle* t = it->second;
@@ -5148,6 +5149,11 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   int cf_status = computeCrossFieldAndH(gm, f, tags, true, &entityToInitialEntity);
   if (cf_status == -1) return cf_status;
 #if defined(HAVE_QUADMESHINGTOOLS)
+  if (QMT_Utils::env_var("qstop") == "cf") {
+    Msg::Warning("qstop=cf, stop after cross field computation");
+    return -1;
+  }
+
   std::string quad_layout_name = gm->getName();
   int H_tag = tags.size() > 0 ? tags[0] : -1;
   double size_min = CTX::instance()->mesh.lcMin;
@@ -5230,12 +5236,16 @@ int computeCrossField(GModel * gm) {
   int nb_iter = 8;
   int cf_tag = -1;
   PView* theta = PView::getViewByName("theta");
-  if (theta) cf_tag = theta->getTag();
+  if (theta) {delete theta; theta = NULL;}
 
   bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,NULL);
   if (!okcf) {
     Msg::Error("Failed to compute cross field");
     return -1;
+  }
+  {
+    PView* view = PView::getViewByName("theta");
+    if (view) view->getOptions()->visible = 0;
   }
 #else
   Msg::Error("This Cross field computation requires the QuadMeshingTools module");
@@ -5268,10 +5278,8 @@ int computeH(GModel * gm) {
   /* Create a view with 'H' */
   int h_tag = -1;
   PView* vH = PView::getViewByName("H");
-  if (vH) {
-    Msg::Info("overwrite the current view 'H'");
-    h_tag = theta->getTag();
-  } else {
+  if (vH) {delete vH; vH = NULL;}
+  if (!vH) {
     Msg::Info("create a view 'H'");
     vH = new PView();
     vH->getData()->setName("H");
@@ -5295,9 +5303,97 @@ int computeH(GModel * gm) {
   }
   d->addData(gm, dataH, 0, 0.0, 1, 1);
 
+  {
+    PView* view = PView::getViewByName("H");
+    if (view) view->getOptions()->visible = 0;
+  }
+
   return 0;
 }
 
 int showScaledCrosses(GModel* gm) {
+  /* Get view tags */
+  PView* vH = PView::getViewByName("H");
+  if (vH == NULL) {
+    Msg::Info("view 'H' not found");
+    return -1;
+  }
+  PView* theta = PView::getViewByName("theta");
+  if (!theta) {
+    Msg::Error("view 'theta' not found");
+    return -1;
+  }
+  int h_tag = vH->getTag();
+  int cf_tag = theta->getTag();
+
+  std::string vname = "scaled_crosses";
+  int view_tag = -1;
+  PView* view_scaled_cf = PView::getViewByName(vname);
+  if (view_scaled_cf != NULL) {
+    delete view_scaled_cf;
+    view_scaled_cf = NULL;
+  }
+
+  bool okv = QMT::create_scaled_cross_field_view(gm->getName(), cf_tag, h_tag, true, "scaled_crosses", view_tag);
+  if (!okv) {
+    Msg::Error("Failed to create view with scaled crosses");
+    return -1;
+  }
+
+  return 0;
+}
+
+/* generate two views, named 'U' and 'V', with 3 values per triangle */
+int computeUV(GModel * gm) {
   return -1;
+}
+
+int generateQuadMesh(GModel * gm) {
+#if defined(HAVE_QUADMESHINGTOOLS)
+  // TODO: projector from initial geometry, should be in another model name
+  QMT::TMesh boundary;
+  bool oki = QMT::import_TMesh_from_gmsh(gm->getName(),boundary);
+  if (!oki) {
+    Msg::Error("Failed to import triangular mesh");
+    return -1;
+  }
+  QMT::BoundaryProjector projector(boundary);
+
+  QMT::QMesh Q;
+  int sizemapTag = -1;
+  std::string quad_layout_name = gm->getName();
+  double size_min = CTX::instance()->mesh.lcMin;
+  double size_max = CTX::instance()->mesh.lcMax;
+  if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
+    size_min *= CTX::instance()->mesh.lcFactor;
+  }
+  if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
+    size_max *= CTX::instance()->mesh.lcFactor;
+  }
+  if (size_min == 0 && size_max == 1.e22) {
+    SBoundingBox3d bbox = gm->bounds();
+    size_min = 0.1 * bbox.diag();
+    Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal");
+  }
+  
+  std::map<std::pair<int,int>,std::pair<int,int>> entityToInitialEntity;
+  bool okg = QMT::generate_quad_mesh_via_tmesh_quantization(
+      quad_layout_name, sizemapTag, size_min, size_max, Q, &projector, &entityToInitialEntity);
+  if (!okg) {
+    Msg::Error("Failed to generate quad mesh");
+    return -1;
+  }
+
+  bool oke1 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_init");
+  if (!oke1) {
+    Msg::Error("Failed to export quad mesh");
+    return -1;
+  }
+
+#else
+  Msg::Error("Quad mesh generation requires the QuadMeshingTools module");
+  return -1;
+#endif
+
+  return 0;
 }

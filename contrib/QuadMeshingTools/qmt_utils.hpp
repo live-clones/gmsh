@@ -44,7 +44,6 @@ namespace QMT_Utils {
       os << "[";
       for (size_t i = 0; i < values.size(); ++i) {
         const  T & x = values[i];
-	      // os << "cannot compile that";//x;
         os << x;
         if (i != values.size() - 1) {
           os << ", ";
@@ -167,6 +166,16 @@ namespace QMT_Utils {
           pcomma + 1,
           std::forward<T>(rest)...);
     }
+
+  static std::string env_var(std::string const & key) {
+    char * var;
+    var = getenv(key.c_str());
+    std::string strvar = "";
+    if (var != NULL) {
+      strvar = std::string(var);
+    }
+    return strvar;
+  }
 }
 
 

@@ -17,15 +17,17 @@
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Output.H>
 
+struct QuadMeshingOptions;
+
 class quadMeshingToolsWindow {
 public:
   bool CAD, mesh, crossfield, H, uv, layout, quad;
   Fl_Window *win;
-  Fl_Box *box;
-  Fl_Check_Button *butt[4];
-  Fl_Value_Input *value[12];
-  Fl_Choice *choice[4];
-  Fl_Button *push[2];
+  // Fl_Box *box;
+  // Fl_Check_Button *butt[4];
+  // Fl_Value_Input *value[12];
+  // Fl_Choice *choice[4];
+  // Fl_Button *push[2];
   Fl_Button *push_crossfield_gen;
   Fl_Button *push_crossfield_show;
   Fl_Button *push_compute_uv;
@@ -33,10 +35,11 @@ public:
   Fl_Button *push_quad_generate;
   Fl_Button *push_quad_simplify;
   Fl_Button *push_quad_smooth;
+  QuadMeshingOptions* opt;
 
 public:
   quadMeshingToolsWindow(int deltaFontSize = 0);
-  ~quadMeshingToolsWindow() { Fl::delete_widget(win); }
+  ~quadMeshingToolsWindow();
   void show(bool redrawOnly);
 };
 
