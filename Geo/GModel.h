@@ -616,6 +616,9 @@ public:
                           const std::vector<int> &dim);
   void computeHomology();
 
+  // compute automatic sizing field from curvature
+  void computeSizeField();
+
   // access global cache of discrete curvatures
   std::map<MVertex *, std::pair<SVector3, SVector3> > &getCurvatures()
   {

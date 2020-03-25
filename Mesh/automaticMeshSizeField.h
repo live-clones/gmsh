@@ -7,6 +7,7 @@
 #include "MTriangle.h"
 #include "MLine.h"
 #include "Field.h"
+#include "Context.h"
 
 #ifdef HAVE_HXT
 #include "hxt_octree.h"
@@ -25,28 +26,40 @@ class automaticMeshSizeField : public Field {
   int _nPointsPerGap;
   double _hmin, _hmax;
   double _hbulk;
-  double _gradientMax;
+  double _gradation;
   int _nRefine;
-  bool _smoothing, _gaps,_tetMesh;
+  bool _smoothing, _gaps;
 
  public:
   ~automaticMeshSizeField();
-  automaticMeshSizeField(std::string fFile = "")  
+  automaticMeshSizeField(std::string fFile = "",
+                         int minElementsPerTwoPi = CTX::instance()->mesh.minElementsPerTwoPi,
+                         int nLayersPerGap       = CTX::instance()->mesh.nLayersPerGap,
+                         double gradation        = CTX::instance()->mesh.gradation,
+                         double hmin = -1.0,
+                         double hmax = -1.0,
+                         double hbulk = -1.0,
+                         int nRefine = 20,
+                         int smoothing = true,
+                         int gaps = true)  
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   :  forest(NULL), forestOptions(NULL)
 #endif
   {
-    _forestFile = fFile;
-    _nPointsPerCircle = 30;
-    _nPointsPerGap = 4;
-    _hmin  = -1.0;// update needed
-    _hmax  = -1.0;// update needed    
-    _hbulk = -1.0; // update needed
-    _gradientMax = 1.1;
-    _nRefine = 20;
-    _smoothing = true;
-    _gaps = true;
-    _tetMesh = false;
+    _forestFile       = fFile;
+    _nPointsPerCircle = minElementsPerTwoPi ? minElementsPerTwoPi : 20;
+    _nPointsPerGap    = nLayersPerGap ? nLayersPerGap : 2;
+    _hmin             = hmin;
+    _hmax             = hmax;   
+    _hbulk            = hbulk;
+    _gradation        = (int) gradation ? gradation : 1.1;
+    _nRefine          = nRefine;
+    _smoothing        = smoothing;
+    _gaps             = gaps;
+
+    printf("density = %d\n", _nPointsPerCircle);
+    printf("gaps = %d\n", _nPointsPerGap);
+    printf("gradation = %f\n", _gradation);
 
     options["FileToLoad"] = new FieldOptionString(_forestFile,
                  "p4est file containing the size field",&update_needed);    
@@ -66,7 +79,7 @@ class automaticMeshSizeField : public Field {
     options["hBulk"] = new FieldOptionDouble(_hbulk,
 					     "Size everywhere no size is prescribed", &update_needed);
 
-    options["gradientMax"] = new FieldOptionDouble(_gradientMax,
+    options["gradation"] = new FieldOptionDouble(_gradation,
 						   "Maximum gradient of the size field",&update_needed);
   
     options["NRefine"] = new FieldOptionInt(_nRefine,

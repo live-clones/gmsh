@@ -34,7 +34,7 @@ HXTStatus Gmsh2HxtGlobal(std::vector<GFace *> &faces, HXTMesh *m,
        std::vector<MVertex *> &c2v);
 
 double automaticMeshSizeField::operator()(double X, double Y, double Z, GEntity *ge) {  
-#ifdef HAVE_HXT
+// #ifdef HAVE_HXT
   double val = 1.e22;
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   HXTStatus s = hxtForestSearchOne(forest, X, Y, Z, &val, true);
@@ -50,7 +50,7 @@ double automaticMeshSizeField::operator()(double X, double Y, double Z, GEntity 
 
 automaticMeshSizeField::~automaticMeshSizeField(){
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
-  if (forest)hxtForestDelete(&forest);
+  if (forest) hxtForestDelete(&forest);
   if (forestOptions)hxtForestOptionsDelete(&forestOptions);
 #endif
 }
@@ -118,35 +118,31 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
   update_needed = false;
 
-  // Loading .p4est file if given a valid file name
   if(!_forestFile.empty()){
-    std::cout << "Loading size field file " << _forestFile << std::endl;
-
+    // Loading .p4est file if given a valid file name
+    Msg::Info("Loading size field from %s", _forestFile);
     HXT_CHECK(hxtForestOptionsCreate(&forestOptions));
-    // Should be saved in the forest but I dont know how...
-    _hmin = (_hmin < 0) ? 1e-10 : _hmin;
-    _hmax = (_hmax < 0) ? 1e22  : _hmax;
-    forestOptions->hmax = _hmax;
-    forestOptions->hmin = _hmin;
-
+    size_t lastindex = _forestFile.find_last_of("."); 
+    std::string root = _forestFile.substr(0, lastindex); 
+    forestOptions->forestFile = root.c_str();
     HXT_CHECK( hxtForestLoad(&forest, _forestFile.c_str(), forestOptions) );
 
-  } else{ // Computing the size field
-    // printf("#regions = %lu \n", GModel::current()->getNumRegions());
-    // printf("#faces = %lu \n", GModel::current()->getNumFaces());
+  } else{ 
+    // Computing the size field
     std::vector<GRegion*> regions;
     for(std::set<GRegion*, GEntityPtrLessThan>::iterator it = GModel::current()->firstRegion(); it != GModel::current()->lastRegion(); ++it){
       regions.push_back(*it);
-      // ++it;
     }
     std::vector<GFace*> faces;
 
-    // for(std::set<GFace*, GEntityPtrLessThan>::iterator it = GModel::current()->firstFace(); it != GModel::current()->lastFace(); ++it){
-    //   faces.push_back(*it);
-    //   // ++it;
-    // }
-
-    HXT_CHECK( getAllFacesOfAllRegions(regions, NULL, faces) );
+    if(!regions.empty()){
+      HXT_CHECK( getAllFacesOfAllRegions(regions, NULL, faces) );
+    } else{
+      Msg::Info("Regions est vide : boucle sur les faces");
+      for(std::set<GFace*, GEntityPtrLessThan>::iterator it = GModel::current()->firstFace(); it != GModel::current()->lastFace(); ++it){
+        faces.push_back(*it);
+      }
+    }
 
     // Create HXT mesh structure
     HXTMesh *mesh;
@@ -156,6 +152,13 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     std::map<MVertex *, int> v2c;
     std::vector<MVertex *> c2v;  
     Gmsh2Hxt(faces, mesh, v2c, c2v);
+
+    if(mesh->vertices.num == 0){
+      Msg::Error("Surface mesh is empty");
+      HXT_CHECK(hxtMeshDelete(&mesh));
+      HXT_CHECK(hxtContextDelete(&context));
+      Msg::Exit(1);
+    }
 
     double *nodalCurvature;
 
@@ -189,6 +192,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     // int* replaceVec = (int*) malloc(mesh->vertices.num*sizeof(int));
     // for(int i = 0; i < mesh->vertices.num; ++i){ replaceVec[i] = 0; }
 
+    Msg::Info("Computing curvature");
     // Loop on the faces
     for(size_t j = 0; j < faces.size(); j++) {
       HXTMesh *meshFace = faceMeshes[j];
@@ -354,7 +358,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     forestOptions->hmax = _hmax;  
     forestOptions->hmin = _hmin;  
     forestOptions->hbulk = _hbulk;  
-    forestOptions->gradMax = _gradientMax;
+    forestOptions->gradation = _gradation;
     forestOptions->nRefine = _nRefine;
     forestOptions->nodePerTwoPi = _nPointsPerCircle;
     forestOptions->nodePerGap = _nPointsPerGap;
@@ -375,30 +379,37 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
       // Smooth the size gradient
       if(_smoothing){
-        Msg::Info("Smoothing"); 
+        Msg::Info("Smoothing size gradient..."); 
         HXT_CHECK( hxtForestSizeSmoothing(forest));
       }
     }
     
     if(_gaps){
-      Msg::Info("Detecting gaps");
+      Msg::Info("Detecting gaps and close surfaces...");
       HXT_CHECK(hxtForestCloseSurfaces(forest));
 
       if(_smoothing){
-        Msg::Info("Smoothing");
+        Msg::Info("Smoothing size gradient...");
         HXT_CHECK( hxtForestSizeSmoothing(forest));
       }
     }
 
     double elemEstimation;
     HXT_CHECK(hxtOctreeElementEstimation(forest, &elemEstimation));
-    Msg::Info("Estimate number of terahedra in the bounding box : %ld", (uint64_t) ceil(elemEstimation));
+    Msg::Info("Estimated number of terahedra in the bounding box : %ld", (uint64_t) ceil(elemEstimation));
 
     // Export size field in .pos file
-    HXT_CHECK(hxtForestExport(forest));
+    // HXT_CHECK(hxtForestExport(forest));
 
     // Save forest in .p4est file
-    HXT_CHECK(hxtForestSave(forest));
+
+    // This line seems to be buggy
+    // std::string fFile = std::string(forest->forestOptions->forestFile) + ".p4est";
+    // Let's do this instead...
+    std::string fFile = std::string(forest->forestOptions->forestFile);
+    fFile += ".p4est";
+    Msg::Info("Saving size field in %s", fFile.c_str());
+    HXT_CHECK(hxtForestSave(forest, fFile.c_str()));
 
     // Maillage 2D ?
     // printf("Meshing 2D\n");
@@ -466,7 +477,6 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
   return HXT_STATUS_OK;
   
-  #endif //ifdef HAVE_P4EST
 }
 
 #endif

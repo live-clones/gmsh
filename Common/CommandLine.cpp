@@ -121,6 +121,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "two adjacent faces below which a swap is allowed"));
   s.push_back(mp("-rand value", "Set random perturbation factor"));
   s.push_back(mp("-bgm file", "Load background mesh from file"));
+  s.push_back(mp("-size_field value", "Compute size field from surface curvature"));
   s.push_back(mp("-check", "Perform various consistency checks on mesh"));
   s.push_back(mp("-ignore_periocity", "Ignore periodic boundaries"));
 #if defined(HAVE_FLTK)
@@ -838,6 +839,37 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           CTX::instance()->bgmFileName = argv[i++];
         else{
           Msg::Error("Missing file name");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
+      else if(!strcmp(argv[i] + 1, "size_field")) {
+        i++;
+        if(argv[i]){
+          CTX::instance()->mesh.nLayersPerGap = atoi(argv[i++]);
+          CTX::instance()->batch = 9;
+        }
+        else{
+          Msg::Error("Missing number of layers per gap");
+          if(exitOnError) Msg::Exit(1);
+        }
+        if(argv[i]){
+          CTX::instance()->mesh.minElementsPerTwoPi = atoi(argv[i++]);
+          if(CTX::instance()->mesh.minElementsPerTwoPi <= 0.)
+            CTX::instance()->mesh.lcFromCurvature = 0;
+        }
+        else{
+          Msg::Error("Missing number of elements density");
+          if(exitOnError) Msg::Exit(1);
+        }
+        if(argv[i]){
+          CTX::instance()->mesh.gradation = atof(argv[i++]);
+          if(CTX::instance()->mesh.gradation <= 1.){
+            CTX::instance()->mesh.gradation = 1.05;
+            Msg::Info("Gradation must be > 1 : set to 1.05");
+          }
+        }
+        else{
+          Msg::Error("Missing gradation");
           if(exitOnError) Msg::Exit(1);
         }
       }

@@ -352,6 +352,9 @@ int GmshBatch()
         (CTX::instance()->batchSomeValue * M_PI / 180., true, true, M_PI);
       GModel::current()->createGeometryOfDiscreteEntities();
     }
+    else if(CTX::instance()->batch == 9){
+      GModel::current()->computeSizeField();
+    }
     else if(CTX::instance()->batch == 69){
       std::vector<int> tags;
       computeCrossField (GModel::current(), tags);

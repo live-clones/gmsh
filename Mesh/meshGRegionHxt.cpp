@@ -363,8 +363,8 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     0.35, // double qualityMin;
     0, // double (*qualityFun)
     0, // void* qualityData;
-    0, // double (*meshSizeFun)
-    0, // void* meshSizeData;
+    &hxtMeshSizeGmshCallBack, // double (*meshSizeFun)
+    regions[0], // void* meshSizeData;
     myRecoveryFun, // HXTStatus (*recoveryFun)
     0 // void* recoveryData;
   };

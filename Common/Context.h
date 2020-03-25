@@ -41,6 +41,8 @@ struct contextMeshOptions {
   int renumber, compoundClassify;
   double compoundLcFactor;
   unsigned int randomSeed;
+  int nLayersPerGap;
+  double gradation;
   // mesh IO
   int fileFormat;
   double mshFileVersion, medFileMinorVersion, scalingFactor;

@@ -20,7 +20,7 @@ typedef struct HXTForestOptions{
   double 				hmax;
   double 				hmin;
   double 				hbulk;
-  double 				gradMax;
+  double 				gradation;
   int           nRefine;
   int           nodePerTwoPi;
   int           nodePerGap;
@@ -77,7 +77,7 @@ HXTStatus hxtForestOptionsDelete(HXTForestOptions **forestOptions);
 HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char* filename, HXTForestOptions *forestOptions);
 HXTStatus hxtForestDelete(HXTForest **forest);
 
-HXTStatus hxtForestSave(HXTForest *forest);
+HXTStatus hxtForestSave(HXTForest *forest, const char* fFile);
 HXTStatus hxtForestExport(HXTForest *forest);
 HXTStatus hxtForestLoad(HXTForest **forest, const char* filename, HXTForestOptions *forestOptions);
 

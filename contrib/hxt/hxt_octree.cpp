@@ -16,8 +16,8 @@
 #include <p8est_search.h>
 #endif
 
-#define P8EST_QMAXLEVEL 20
-#define P4EST_QMAXLEVEL 20
+#define P8EST_QMAXLEVEL 10
+#define P4EST_QMAXLEVEL 10
 
 #ifdef HAVE_P4EST
 
@@ -144,7 +144,7 @@ static inline void initializeCell(p4est_t* p4est, p4est_topidx_t which_tree, p4e
 
 /* Creates (allocates) the forestOptions structure. */
 HXTStatus hxtForestOptionsCreate(HXTForestOptions **forestOptions){
-  HXT_CHECK( hxtMalloc (forestOptions, sizeof(HXTForestOptions)) );
+  HXT_CHECK( hxtAlignedMalloc (forestOptions, sizeof(HXTForestOptions)) );
     if(*forestOptions == NULL) return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
   return HXT_STATUS_OK;
 }
@@ -153,13 +153,31 @@ HXTStatus hxtForestOptionsCreate(HXTForestOptions **forestOptions){
 HXTStatus hxtForestOptionsDelete(HXTForestOptions **forestOptions){
   HXT_CHECK(hxtFree(forestOptions));
   return HXT_STATUS_OK;
-} 
+}
+
+HXTStatus loadGlobalData(HXTForestOptions *forestOptions, const char *filename){
+
+  FILE* f = fopen(filename,"r");
+  char buf[BUFSIZ]={""};
+  if(fgets(buf,BUFSIZ,f) == NULL){
+    return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
+  }
+  sscanf(buf, "%lf %lf", &forestOptions->hmin, &forestOptions->hmax);
+  fclose(f);
+  Msg::Info("Loaded global data from %s",filename);
+  Msg::Info("Min size = %f", forestOptions->hmin);
+  Msg::Info("Max size = %f", forestOptions->hmax);
+  return HXT_STATUS_OK;
+}
 
 /* Creates a (sequential) forest structure by loading a p4est file. */
 HXTStatus hxtForestLoad(HXTForest **forest, const char* filename, HXTForestOptions *forestOptions){
   if(filename == NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
   HXT_CHECK( hxtMalloc(forest, sizeof(HXTForest)) );
   if(*forest == NULL) return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+
+  std::string globalDataFile = std::string(forestOptions->forestFile) + ".data";
+  HXT_CHECK(loadGlobalData(forestOptions, globalDataFile.c_str()));
 
   p4est_connectivity_t *connect;
   sc_MPI_Comm mpicomm = sc_MPI_COMM_WORLD;
@@ -168,6 +186,8 @@ HXTStatus hxtForestLoad(HXTForest **forest, const char* filename, HXTForestOptio
   int broadcasthead = true;
 
   (*forest)->p4est = p4est_load_ext(filename, mpicomm, sizeof(size_data_t), load_data, autopartition, broadcasthead, (void*) forestOptions, &connect);
+
+  // p4est_search((*forest)->p4est, loadMinSize, NULL, NULL);
 
   HXTForestOptions *fO = (HXTForestOptions*) (*forest)->p4est->user_pointer;
 
@@ -204,8 +224,8 @@ HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char*
     /* These functions are optional.  If called they store the MPI rank as a
      * static variable so subsequent global p4est log messages are only issued
      * from processor zero.  Here we turn off most of the logging; see sc.h. */
-    sc_init(mpicomm, 1, 1, NULL, SC_LP_ESSENTIAL);
-    p4est_init(NULL, SC_LP_PRODUCTION);
+    // sc_init(mpicomm, 1, 1, NULL, SC_LP_ESSENTIAL);
+    // p4est_init(NULL, SC_LP_PRODUCTION);
 
     /* Create a connectivity from the bounding box */
     connect = p8est_connectivity_new_cube(forestOptions);
@@ -235,7 +255,7 @@ HXTStatus hxtForestDelete(HXTForest **forest){
     p4est_destroy((*forest)->p4est);
     /* Verify that allocations internal to p4est and sc do not leak memory.
      * This should be called if sc_init () has been called earlier. */
-    sc_finalize();
+    // sc_finalize();
     /* This is standard MPI programs.  Without --enable-mpi, this is a dummy. */
     int mpiret = sc_MPI_Finalize();
     SC_CHECK_MPI(mpiret);
@@ -362,6 +382,7 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
       }
     }
     data->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, 2*M_PI/(forestOptions->nodePerTwoPi * kmax)));
+    // data->size = kmax;
   }
   else{
     data->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, data->size));
@@ -767,7 +788,7 @@ void smoothSize(p4est_iter_face_info_t * info, void *user_data){
     int                iOpp;
 
     HXTForestOptions  *forestOptions = (HXTForestOptions*) user_data;
-    double             alpha = forestOptions->gradMax;
+    double             alpha = forestOptions->gradation - 1.0;
 
     side[0] = p4est_iter_fside_array_index_int (sides, 0);
     side[1] = p4est_iter_fside_array_index_int (sides, 1);
@@ -788,27 +809,27 @@ void smoothSize(p4est_iter_face_info_t * info, void *user_data){
 
             data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
 
-            if(fabs(data->ds[which_dir]) > alpha-1){
+            if(fabs(data->ds[which_dir]) > alpha){
 
               if(data->size > data_opp1->size){
                   // data->size = fmin(data->size, data_opp1->size + (alpha-1) * data_opp1->hMin);
                 switch(which_face_opp){
-                  case 0 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_xL + data->h_xR)); break;
-                  case 1 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_xR + data->h_xL)); break;
-                  case 2 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_yD + data->h_yU)); break;
-                  case 3 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_yU + data->h_yD)); break;
-                  case 4 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_zB + data->h_zT)); break;
-                  case 5 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_zT + data->h_zB)); break;
+                  case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xL + data->h_xR)); break;
+                  case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xR + data->h_xL)); break;
+                  case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yD + data->h_yU)); break;
+                  case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yU + data->h_yD)); break;
+                  case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zB + data->h_zT)); break;
+                  case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zT + data->h_zB)); break;
                 }
               }else{
                   // data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * data->hMin);
                 switch(which_face_opp){
-                  case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_xL + data->h_xR)); break;
-                  case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_xR + data->h_xL)); break;
-                  case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_yD + data->h_yU)); break;
-                  case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_yU + data->h_yD)); break;
-                  case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_zB + data->h_zT)); break;
-                  case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_zT + data->h_zB)); break;
+                  case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xL + data->h_xR)); break;
+                  case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xR + data->h_xL)); break;
+                  case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yD + data->h_yU)); break;
+                  case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yU + data->h_yD)); break;
+                  case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zB + data->h_zT)); break;
+                  case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zT + data->h_zB)); break;
                 }
               }
             } // if ds > alpha-1
@@ -830,24 +851,24 @@ void smoothSize(p4est_iter_face_info_t * info, void *user_data){
                     // data->size = fmin(data->size, data_opp1->size + (alpha-1) * data_opp1->hMin);
                     // data->size = fmin(data->size, size_data_opp2->size + (alpha-1) * size_data_opp2->hMin);
                   switch(which_face_opp){
-                    case 0 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_xL + data->h_xR)); break;
-                    case 1 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_xR + data->h_xL)); break;
-                    case 2 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_yD + data->h_yU)); break;
-                    case 3 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_yU + data->h_yD)); break;
-                    case 4 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_zB + data->h_zT)); break;
-                    case 5 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_zT + data->h_zB)); break;
+                    case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xL + data->h_xR)); break;
+                    case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xR + data->h_xL)); break;
+                    case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yD + data->h_yU)); break;
+                    case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yU + data->h_yD)); break;
+                    case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zB + data->h_zT)); break;
+                    case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zT + data->h_zB)); break;
                   }
                 }
                 else{
                     // data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * data->hMin);
                     // size_data_opp2->size = fmin(size_data_opp2->size, data->size + (alpha-1) * data->hMin);
                   switch(which_face_opp){
-                    case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_xL + data->h_xR)); break;
-                    case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_xR + data->h_xL)); break;
-                    case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_yD + data->h_yU)); break;
-                    case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_yU + data->h_yD)); break;
-                    case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_zB + data->h_zT)); break;
-                    case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_zT + data->h_zB)); break;
+                    case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xL + data->h_xR)); break;
+                    case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xR + data->h_xL)); break;
+                    case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yD + data->h_yU)); break;
+                    case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yU + data->h_yD)); break;
+                    case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zB + data->h_zT)); break;
+                    case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zT + data->h_zB)); break;
                   }
                 }
               }
@@ -859,23 +880,23 @@ void smoothSize(p4est_iter_face_info_t * info, void *user_data){
                 if(data->size > data_opp1->size){
                     // data->size = fmin(data->size, data_opp1->size + (alpha-1) * data_opp1->hMin);
                   switch(which_face_opp){
-                    case 0 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_xL + data->h_xR)); break;
-                    case 1 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_xR + data->h_xL)); break;
-                    case 2 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_yD + data->h_yU)); break;
-                    case 3 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_yU + data->h_yD)); break;
-                    case 4 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_zB + data->h_zT)); break;
-                    case 5 : data->size = fmin(data->size, data_opp1->size + (alpha-1) * (data_opp1->h_zT + data->h_zB)); break;
+                    case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xL + data->h_xR)); break;
+                    case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xR + data->h_xL)); break;
+                    case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yD + data->h_yU)); break;
+                    case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yU + data->h_yD)); break;
+                    case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zB + data->h_zT)); break;
+                    case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zT + data->h_zB)); break;
                   }
                 }
                 else{
                     // data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * data->hMin);
                   switch(which_face_opp){
-                    case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_xL + data->h_xR)); break;
-                    case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_xR + data->h_xL)); break;
-                    case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_yD + data->h_yU)); break;
-                    case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_yU + data->h_yD)); break;
-                    case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_zB + data->h_zT)); break;
-                    case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * (data_opp1->h_zT + data->h_zB)); break;
+                    case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xL + data->h_xR)); break;
+                    case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xR + data->h_xL)); break;
+                    case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yD + data->h_yU)); break;
+                    case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yU + data->h_yD)); break;
+                    case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zB + data->h_zT)); break;
+                    case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zT + data->h_zB)); break;
                   }
                 }
             }  
@@ -908,11 +929,11 @@ HXTStatus hxtForestSetMaxGradient(HXTForest *forest){
 HXTStatus hxtForestSizeSmoothing(HXTForest *forest){
   double gradMax[3], tol = 1e-2, gradLinf = 1e22;
   int iter = 0;
-  while(iter++ < forest->forestOptions->nRefine && gradLinf > tol + forest->forestOptions->gradMax-1.0){
+  while(iter++ < forest->forestOptions->nRefine && gradLinf > tol + forest->forestOptions->gradation - 1.0){
     for(int i = 0; i < 3; ++i) gradMax[i] = 0.0;
     // Compute gradient
     HXT_CHECK( hxtForestComputeGradient(forest) );
-    // Smooth large sizes to limit gradient to foresOptions->gradMax-1
+    // Smooth large sizes to limit gradient to foresOptions->gradMax
     HXT_CHECK( hxtForestSetMaxGradient(forest) );
     // Gradient needs to be recomputed after size is smoothed
     HXT_CHECK( hxtForestComputeGradient(forest) );
@@ -921,8 +942,6 @@ HXTStatus hxtForestSizeSmoothing(HXTForest *forest){
     gradLinf = fmax( gradMax[0], fmax( gradMax[1], gradMax[2]) );
   }
   Msg::Info("Max gradient after smoothing : (%f - %f - %f)", gradMax[0], gradMax[1], gradMax[2]);
-  printf("Max gradient after smoothing : (%f - %f - %f)\n", gradMax[0], gradMax[1], gradMax[2]);
-
   return HXT_STATUS_OK;
 }
 
@@ -964,7 +983,7 @@ static int searchAndAssignConstant(p4est_t * p4est, p4est_topidx_t which_tree, p
     // A point can be on the exact boundary of two cells, hence we take the min.
     if(in_box && is_leaf){
       p->size = fmin(p->size, data->size);
-      // p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
+      p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
       assert(p->size >= 0);
       p->isFound = true;
     }
@@ -992,18 +1011,26 @@ static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4e
     double center[3];
     getCellCenter(p4est, which_tree, q, center);
 
-    double epsilon = 1e-8;
+    double epsilon = 1e-14;
     in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
     in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
 #ifdef P4_TO_P8
     in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
 #endif
 
+//     in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
+//     in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
+// #ifdef P4_TO_P8
+//     in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
+// #endif
+
     // A point can be on the exact boundary of two cells, hence we take the min.
     if(in_box && is_leaf){
         // Approximation lineaire a partir du gradient au centre
       p->size = fmin(p->size, data->size + data->ds[0]*(p->x - center[0]) + data->ds[1]*(p->y - center[1]) + data->ds[2]*(p->z - center[2]) );
-      // p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
+      p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
+      // double gradmax = fmax( data->ds[0], fmax( data->ds[1], data->ds[2]));
+      // assert(gradmax <= (data->size - forestOptions->hmin) / h * 2.0/3.0);
       assert(p->size >= 0);
       p->isFound = true;
     }
@@ -1257,8 +1284,6 @@ void eliminateTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, in
 
   double *n = forest->forestOptions->nodeNormals + 3*node;
   // printf("Normale au noeud : (%f, %f, %f)\n", n[0], n[1], n[2]);
-  // Contient des noeuds (il faut partir de node)
-  std::queue<int> q; 
   // Determiner toutes les couleurs du noeud
   int currentColor;
   std::vector<int> nodeColors, allColors;
@@ -1276,13 +1301,13 @@ void eliminateTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, in
   }
   // printf("Nombre de couleurs pour le noeud %d : %d\n", node, nodeColors.size());
   std::vector<uint64_t> savedCandidates;
-  // Partir de node (ajouter dans la file)
+  // Contient les noeuds (il faut partir de node)
+  std::queue<int> q; 
   q.push(node);
   while(!q.empty()){
     // Prendre tous les triangles de candidates qui contiennent node, puis les retirer de candidates. 
     // Prendre tous les noeuds de ces triangles et les ajouter dans la file
     for(std::vector<uint64_t>::iterator tri = candidates->begin(); tri != candidates->end(); ){
-
       // std::cout << "Couleur = " << forest->forestOptions->mesh->triangles.colors[(size_t) (*tri)] << std::endl;
       currentColor = forest->forestOptions->mesh->triangles.colors[(size_t)(*tri)];
 
@@ -1471,6 +1496,16 @@ HXTStatus hxtOctreeElementEstimation(HXTForest *forest, double *elemEstimate){
    EXPORT
    ======================================================================================================== */
 
+HXTStatus saveGlobalData(HXTForest *forest, const char *filename){
+
+  FILE* f = fopen(filename, "w");
+  if(f==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
+  fprintf(f, "%f %f\n", forest->forestOptions->hmin, forest->forestOptions->hmax);
+  fclose(f);
+  Msg::Info("Saved global size field data to %s", filename);
+  return HXT_STATUS_OK;
+}
+
 void exportToTetraCallback(p4est_iter_volume_info_t * info, void *user_data){
   p4est_quadrant_t   *q = info->quad;
   size_data_t        *data = (size_data_t *) q->p.user_data;
@@ -1551,11 +1586,20 @@ HXTStatus hxtForestExport(HXTForest *forest){
   return HXT_STATUS_OK;
 }
 
-HXTStatus hxtForestSave(HXTForest *forest){
+HXTStatus hxtForestSave(HXTForest *forest, const char *fFile){
   // int memUsage = p4est_memory_used(forest->p4est);
   // Msg::Info("Memory used by the forest : %d bytes", memUsage);
-  std::string fFile = std::string(forest->forestOptions->forestFile) + ".p4est";
-  p4est_save_ext(fFile.c_str(), forest->p4est, true, false);
+  // p4est_iterate(forest->p4est, NULL, NULL, saveMinSize, NULL,
+  //           #ifdef P4_TO_P8
+  //                       NULL,
+  //           #endif
+  //                       NULL);
+
+  // p4est_search(forest->p4est, saveMinSize, NULL, NULL);
+  std::string globalDataFile = std::string(forest->forestOptions->forestFile) + ".data";
+  HXT_CHECK( saveGlobalData(forest, globalDataFile.c_str()) );
+
+  p4est_save_ext(fFile, forest->p4est, true, false);
   return HXT_STATUS_OK;
 }
 
