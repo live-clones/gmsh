@@ -19,24 +19,21 @@ StringXNumber SpanningTreeOptions_Number[] = {
 };
 
 StringXString SpanningTreeOptions_String[] = {
-  {GMSH_FULLRC, "PhysicalVolumes",  NULL, ""},
+  {GMSH_FULLRC, "PhysicalVolumes", NULL, ""},
   {GMSH_FULLRC, "PhysicalSurfaces", NULL, ""},
-  {GMSH_FULLRC, "PhysicalCurves",   NULL, ""},
+  {GMSH_FULLRC, "PhysicalCurves", NULL, ""},
 };
 
 extern "C" {
-  GMSH_Plugin *GMSH_RegisterSpanningTreePlugin(void)
-  {
-    return new GMSH_SpanningTreePlugin();
-  }
+GMSH_Plugin *GMSH_RegisterSpanningTreePlugin(void)
+{
+  return new GMSH_SpanningTreePlugin();
+}
 }
 
 GMSH_SpanningTreePlugin::GMSH_SpanningTreePlugin(void) {}
 
-string GMSH_SpanningTreePlugin::getName(void) const
-{
-  return "SpanningTree";
-}
+string GMSH_SpanningTreePlugin::getName(void) const { return "SpanningTree"; }
 
 string GMSH_SpanningTreePlugin::getShortHelp(void) const
 {
@@ -56,7 +53,7 @@ string GMSH_SpanningTreePlugin::getHelp(void) const
          "- PhysicalSurfaces: list of the physical surfaces "
          "upon which the tree must be built.\n"
          "- PhysicalCurves: list of the physical curves "
-          "upon which the tree must be built.\n"
+         "upon which the tree must be built.\n"
          "- OutputPhysical: physical tag of the generated tree "
          "(-1 will select a new tag automatically).\n"
          "\n"
@@ -68,10 +65,7 @@ string GMSH_SpanningTreePlugin::getHelp(void) const
          "Limitation - Unknown behaviour with curved meshes.";
 }
 
-string GMSH_SpanningTreePlugin::getAuthor(void) const
-{
-  return "N. Marsic";
-}
+string GMSH_SpanningTreePlugin::getAuthor(void) const { return "N. Marsic"; }
 
 int GMSH_SpanningTreePlugin::getNbOptions(void) const
 {
@@ -96,17 +90,17 @@ StringXString *GMSH_SpanningTreePlugin::getOptionStr(int iopt)
 void GMSH_SpanningTreePlugin::run(void)
 {
   // Get data
-  double    time = Cpu();
-  int     output = (int)SpanningTreeOptions_Number[0].def;
-  string  volume =      SpanningTreeOptions_String[0].def;
-  string surface =      SpanningTreeOptions_String[1].def;
-  string   curve =      SpanningTreeOptions_String[2].def;
+  double time = Cpu();
+  int output = (int)SpanningTreeOptions_Number[0].def;
+  string volume = SpanningTreeOptions_String[0].def;
+  string surface = SpanningTreeOptions_String[1].def;
+  string curve = SpanningTreeOptions_String[2].def;
 
   // Parse physical tags
   vector<list<int> > physical(3);
-  curve   = parse(curve,   physical[0]);
+  curve = parse(curve, physical[0]);
   surface = parse(surface, physical[1]);
-  volume  = parse(volume,  physical[2]);
+  volume = parse(volume, physical[2]);
 
   // Dimensions
   int dim[3] = {1, 2, 3};
@@ -117,7 +111,8 @@ void GMSH_SpanningTreePlugin::run(void)
   // Get all elements in physicals for each dimension
   vector<ElementSet> element(3);
   for(int i = 0; i < 3; i++)
-    for(list<int>::iterator j = physical[i].begin(); j!= physical[i].end(); j++)
+    for(list<int>::iterator j = physical[i].begin(); j != physical[i].end();
+        j++)
       getAllMElement(*model, *j, dim[i], element[i]);
 
   // Check if we have something
@@ -127,21 +122,19 @@ void GMSH_SpanningTreePlugin::run(void)
   }
 
   // Display physicals (as [poorly] parsed) //
-  Msg::Info("--> PhysicalVolumes:  %s",  volume.c_str());
+  Msg::Info("--> PhysicalVolumes:  %s", volume.c_str());
   Msg::Info("--> PhysicalSurfaces: %s", surface.c_str());
-  Msg::Info("--> PhysicalCurves:   %s",   curve.c_str());
-  Msg::Info("--> OutputPhysical:   %d",  output);
+  Msg::Info("--> PhysicalCurves:   %s", curve.c_str());
+  Msg::Info("--> OutputPhysical:   %d", output);
 
   // Get all edges from elements for each dimension
   vector<EdgeSet> edge(3);
-  for(int i = 0; i < 3; i++)
-    getAllMEdge(element[i], edge[i]);
+  for(int i = 0; i < 3; i++) getAllMEdge(element[i], edge[i]);
 
   // Build spanning tree (in ascending dimension order) and save into the model
   DSU vertex(model->getNumMeshVertices());
   Tree tree;
-  for(int i = 0; i < 3; i++)
-    spanningTree(edge[i], vertex, tree);
+  for(int i = 0; i < 3; i++) spanningTree(edge[i], vertex, tree);
 
   addToModel(*model, tree, output);
 
@@ -167,7 +160,7 @@ void GMSH_SpanningTreePlugin::spanningTree(EdgeSet &edge, DSU &vertex,
   }
 }
 
-string GMSH_SpanningTreePlugin::parse(string str, list<int>& physical)
+string GMSH_SpanningTreePlugin::parse(string str, list<int> &physical)
 {
   // Remove spaces //
   str.erase(remove(str.begin(), str.end(), ' '), str.end());
@@ -180,12 +173,11 @@ string GMSH_SpanningTreePlugin::parse(string str, list<int>& physical)
   stream << str;
 
   // Parse stream for integers //
-  int    tag;
+  int tag;
   string tmp;
-  while(!stream.eof()){
+  while(!stream.eof()) {
     stream >> tmp; // Take next 'word'
-    if(sscanf(tmp.c_str(), "%d", &tag) > 0)
-      physical.push_back(tag);
+    if(sscanf(tmp.c_str(), "%d", &tag) > 0) physical.push_back(tag);
   }
 
   // Return modified string //
@@ -195,16 +187,15 @@ string GMSH_SpanningTreePlugin::parse(string str, list<int>& physical)
 void GMSH_SpanningTreePlugin::getAllMElement(GModel &model, int physical,
                                              int dim, ElementSet &element)
 {
-  std::map<int, std::vector<GEntity*> >            group;
-  std::map<int, std::vector<GEntity*> >::iterator entity;
+  std::map<int, std::vector<GEntity *> > group;
+  std::map<int, std::vector<GEntity *> >::iterator entity;
 
   // Get groups //
   model.getPhysicalGroups(dim, group);
 
   // Get entities, if any //
   entity = group.find(physical);
-  if(entity == group.end())
-    return;
+  if(entity == group.end()) return;
 
   for(size_t i = 0; i < entity->second.size(); i++)
     for(size_t j = 0; j < entity->second[i]->getNumMeshElements(); j++)
