@@ -62,8 +62,6 @@ int main(int argc, char **argv)
 
   gmsh::model::mesh::generate(3);
 
-  gmsh::fltk::run();
-
   gmsh::finalize();
   return 0;
 }

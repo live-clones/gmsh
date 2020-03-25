@@ -53,8 +53,6 @@ int main(int argc, char **argv)
   // set compound surface from surfaces 1, 5, 10
   gmsh::model::mesh::setCompound(2, {1, 5, 10});
 
-  gmsh::fltk::run();
-
   gmsh::finalize();
 
   return 0;

@@ -53,7 +53,6 @@ int main(int argc, char **argv)
   // gmsh::option::setNumber("Mesh.RecombinationAlgorithm", 2); // or 3
   // gmsh::model::mesh::generate(2);
 
-  gmsh::fltk::run();
   gmsh::finalize();
   return 0;
 }
