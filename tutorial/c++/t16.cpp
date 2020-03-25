@@ -17,7 +17,15 @@ int main(int argc, char **argv)
 
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
-  factory::addBox(0,0,0, 1,1,1, 1);
+
+  try {
+    factory::addBox(0,0,0, 1,1,1, 1);
+  }
+  catch(...) {
+    gmsh::logger::write("Could not create OpenCASCADE shapes: bye!");
+    return 0;
+  }
+
   factory::addBox(0,0,0, 0.5,0.5,0.5, 2);
   factory::cut({{3,1}}, {{3,2}}, ov, ovv, 3);
   double x = 0, y = 0.75, z = 0, r = 0.09 ;
