@@ -532,8 +532,28 @@ namespace QMT {
         DBG(M.points.size(), tags.size());
       }
     } else { /* use probing */
-      error("H from probing not implemented yet");
-      return false;
+      std::vector<std::string> dataType;
+      std::vector<int> numElements;
+      std::vector<std::vector<double> > data;
+      gmsh::view::getListData(tagH, dataType, numElements, data);
+      Hmin = DBL_MAX;
+      Hmax = -DBL_MAX;
+      F(i,data[0].size()) {
+        Hmin = std::min(Hmin, data[0][i]);
+        Hmax = std::max(Hmax, data[0][i]);
+      }
+      vector<bool> used(M.points.size(),false);
+      F(ue,uIEdges.size()) F(lv,2) used[uIEdges[ue][lv]] = true;
+      FC(v,M.points.size(),used[v]) {
+        vec3 pt = M.points[v];
+        vector<double> values;
+        gmsh::view::probe(tagH, pt[0], pt[1], pt[2], values);
+        if (values.size() == 0) {
+          error("probe failed at pt = {}", pt);
+          return DBL_MAX;
+        }
+        H[v] = values[0];
+      }
     }
 
     /* Get theta for each edge */

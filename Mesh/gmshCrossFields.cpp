@@ -32,6 +32,7 @@
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewDataGModel.h"
+#include "PViewDataList.h"
 #endif
 
 #if defined(_OPENMP)
@@ -5080,25 +5081,68 @@ int computeH(GModel * gm) {
     vH->getData()->setName("H");
     h_tag = vH->getTag();
   }
-  PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(vH->getData());
+
+  // PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(vH->getData());
+  PViewDataList* d = dynamic_cast<PViewDataList*>(vH->getData());
   if(!d) { // change the view type
     delete vH->getData();
-    d = new PViewDataGModel(PViewDataGModel::NodeData);
+    // d = new PViewDataGModel(PViewDataGModel::NodeData);
+    d = new PViewDataList();
     d->setName("H");
     vH->setData(d);
   }
 
-  std::map<int, std::vector<double> > dataH;
+  // std::map<int, std::vector<double> > dataH;
+  std::map<int, double> dataH;
   for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = qLayout.vs.begin(); it != qLayout.vs.end(); ++it) {
     double h;
     myAssembler->getDofValue(*it, 0, 1, h);
-    std::vector<double> jj;
-    jj.push_back(h);
-    dataH[(*it)->getNum()] = jj;
+    // std::vector<double> jj;
+    // jj.push_back(h);
+    // dataH[(*it)->getNum()] = jj;
+    dataH[(*it)->getNum()] = h;
   }
-  d->addData(gm, dataH, 0, 0.0, 1, 1);
 
-  {
+
+  std::vector<double> data;
+  size_t numElements = 0;
+  for(size_t i = 0; i < f.size(); i++) {
+    for(size_t j = 0; j < f[i]->triangles.size(); j++) {
+      MTriangle *t = f[i]->triangles[j];
+      size_t vs[3] = {t->getVertex(0)->getNum(),
+        t->getVertex(1)->getNum(), t->getVertex(2)->getNum()};
+      SPoint3 ps[3] = {t->getVertex(0)->point(),
+        t->getVertex(1)->point(), t->getVertex(2)->point()};
+      double hs[3];
+      for (size_t lv = 0; lv < 3; ++lv) {
+        auto it = dataH.find(vs[lv]);
+        if (it == dataH.end()) {
+          Msg::Error("H value not found for vertex num = {}", vs[lv]);
+          return -1;
+        }
+        hs[lv] = it->second;
+      }
+      for (size_t d = 0; d < 3; ++d) {
+        for (size_t lv = 0; lv < 3; ++lv) {
+          data.push_back(ps[lv][d]);
+        }
+      }
+      for (size_t lv = 0; lv < 3; ++lv) {
+        data.push_back(hs[lv]);
+      }
+      numElements += 1;
+    }
+  }
+  const char *types[] = {"SP", "VP", "TP", "SL", "VL", "TL", "ST", "VT",
+                         "TT", "SQ", "VQ", "TQ", "SS", "VS", "TS", "SH",
+                         "VH", "TH", "SI", "VI", "TI", "SY", "VY", "TY"};
+  for(int idxtype = 0; idxtype < 24; idxtype++) {
+    if("ST" == std::string(types[idxtype])) {
+      d->importList(idxtype, numElements, data, true);
+    }
+  }
+
+  { /* view not shown by default */
     PView* view = PView::getViewByName("H");
     if (view) view->getOptions()->visible = 0;
   }
@@ -5129,7 +5173,10 @@ int showScaledCrosses(GModel* gm) {
     view_scaled_cf = NULL;
   }
 
-  bool okv = QMT::create_scaled_cross_field_view(gm->getName(), cf_tag, h_tag, true, "scaled_crosses", view_tag);
+  PViewDataGModel *_d = dynamic_cast<PViewDataGModel *>(vH->getData());
+  bool isModelData = (_d != NULL);
+
+  bool okv = QMT::create_scaled_cross_field_view(gm->getName(), cf_tag, h_tag, isModelData, "scaled_crosses", view_tag);
   if (!okv) {
     Msg::Error("Failed to create view with scaled crosses");
     return -1;
