@@ -85,6 +85,9 @@ int main(int argc, char **argv)
   //
   // gmsh::option::setNumber("Mesh.SaveAll", 1);
 
+  // We could run the graphical user interface with
+  // gmsh::fltk::run();
+
   // This should be called at the end:
   gmsh::finalize();
   return 0;

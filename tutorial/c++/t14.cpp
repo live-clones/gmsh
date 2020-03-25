@@ -128,7 +128,6 @@ int main(int argc, char **argv)
   // Generate the mesh and perform the requested homology computations
   gmsh::model::mesh::generate(3);
 
-  gmsh::fltk::run();
   gmsh::finalize();
   return 0;
 }

@@ -16,8 +16,8 @@ gmsh.model.occ.synchronize()
 path = os.path.dirname(os.path.abspath(__file__))
 gmsh.merge(os.path.join(path, '..', 't17_bgmesh.pos'))
 
-bg_field = model.mesh.field.add("PostView")
-model.mesh.field.setAsBackgroundMesh(bg_field)
+bg_field = gmsh.model.mesh.field.add("PostView")
+gmsh.model.mesh.field.setAsBackgroundMesh(bg_field)
 
 # use bamg
 gmsh.option.setNumber("Mesh.SmoothRatio", 3)
