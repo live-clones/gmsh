@@ -4,8 +4,9 @@
 // (co)homology space bases using a mesh of a model.  The representative basis
 // chains are stored in the mesh as physical groups of Gmsh, one for each chain.
 
-#include <gmsh.h_cwrap>
+#include <gmsh.h>
 #include <math.h>
+#include <algorithm>
 
 namespace factory = gmsh::model::geo;
 
@@ -117,7 +118,7 @@ int main(int argc, char **argv)
                                        {terminals_physical_tag},
                                        {0,1,2,3});
 
-  // more examples
+  // More examples:
   // gmsh::model::mesh::computeHomology();
   // gmsh::model::mesh::computeHomology({domain_physical_tag});
   // gmsh::model::mesh::computeHomology({domain_physical_tag},
@@ -127,16 +128,6 @@ int main(int argc, char **argv)
   // Generate the mesh and perform the requested homology computations
   gmsh::model::mesh::generate(3);
 
-  // Find physical tags of a certain homology or cohomology space chains
-  /*
-  physicals = gmsh::model::getPhysicalGroups();
-for pi in physicals:
-    name = gmsh::model::getPhysicalName(pi{0}, pi{1});
-    if(name.find("H^1"); == 0);: # find tags of all cohomology chains of dimension 1
-       print("H^1 tag: " + str(pi{1}); + ", name: " + name);
-
-gmsh.write("t14.msh");
-  */
   gmsh::fltk::run();
   gmsh::finalize();
   return 0;
