@@ -2090,8 +2090,7 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
 GMSH_API void gmsh::model::mesh::getBasisFunctions(
   const int elementType, const std::vector<double> &integrationPoints,
   const std::string &functionSpaceType, int &numComponents,
-  std::vector<double> &basisFunctions, int &numFunctionsPerElement,
-  int &numOrientations)
+  std::vector<double> &basisFunctions, int &numOrientations)
 {
   if(!_isInitialized()) { throw - 1; }
   numComponents = 0;
@@ -2120,7 +2119,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     }
     if(basis) {
       const std::size_t n = basis->getNumShapeFunctions();
-      numFunctionsPerElement = n;
       basisFunctions.resize(n * numComponents * numberOfGaussPoints, 0.);
       double s[1256], ds[1256][3];
       for(std::size_t i = 0; i < numberOfGaussPoints; i++) {
@@ -2208,7 +2206,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       basis->getnTriFaceFunction() + basis->getnQuadFaceFunction();
     const std::size_t maxOrientation = basis->getNumberOfOrientations();
     numOrientations = maxOrientation;
-    numFunctionsPerElement = vSize + bSize + eSize + fSize;
+    const std::size_t numFunctionsPerElement = vSize +
+                                               bSize +
+                                               eSize +
+                                               fSize;
 
     basisFunctions.resize(maxOrientation * numberOfGaussPoints *
                           numFunctionsPerElement * numComponents);

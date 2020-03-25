@@ -1689,21 +1689,20 @@ function. `basisFunctions` returns the value of the N basis functions at the
 integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
 [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
 
-Return `numComponents`, `basisFunctions`, `numFunctionsPerElement`, `numOrientations`.
+Return `numComponents`, `basisFunctions`, `numOrientations`.
 """
 function getBasisFunctions(elementType, integrationPoints, functionSpaceType)
     api_numComponents_ = Ref{Cint}()
     api_basisFunctions_ = Ref{Ptr{Cdouble}}()
     api_basisFunctions_n_ = Ref{Csize_t}()
-    api_numFunctionsPerElement_ = Ref{Cint}()
     api_numOrientations_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctions, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
-          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, api_numFunctionsPerElement_, api_numOrientations_, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, api_numOrientations_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctions returned non-zero error code: $(ierr[])")
     basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
-    return api_numComponents_[], basisFunctions, api_numFunctionsPerElement_[], api_numOrientations_[]
+    return api_numComponents_[], basisFunctions, api_numOrientations_[]
 end
 
 """

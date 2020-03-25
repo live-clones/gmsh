@@ -2181,12 +2181,11 @@ class model:
             g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw,
             g2f1u, ...] when C == 3.
 
-            Return `numComponents', `basisFunctions', `numFunctionsPerElement', `numOrientations'.
+            Return `numComponents', `basisFunctions', `numOrientations'.
             """
             api_integrationPoints_, api_integrationPoints_n_ = _ivectordouble(integrationPoints)
             api_numComponents_ = c_int()
             api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
-            api_numFunctionsPerElement_ = c_int()
             api_numOrientations_ = c_int()
             ierr = c_int()
             lib.gmshModelMeshGetBasisFunctions(
@@ -2195,7 +2194,6 @@ class model:
                 c_char_p(functionSpaceType.encode()),
                 byref(api_numComponents_),
                 byref(api_basisFunctions_), byref(api_basisFunctions_n_),
-                byref(api_numFunctionsPerElement_),
                 byref(api_numOrientations_),
                 byref(ierr))
             if ierr.value != 0:
@@ -2205,7 +2203,6 @@ class model:
             return (
                 api_numComponents_.value,
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value),
-                api_numFunctionsPerElement_.value,
                 api_numOrientations_.value)
 
         @staticmethod

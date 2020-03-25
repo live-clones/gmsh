@@ -893,7 +893,6 @@ namespace gmsh { // Top-level functions
                                       const std::string & functionSpaceType,
                                       int & numComponents,
                                       std::vector<double> & basisFunctions,
-                                      int & numFunctionsPerElement,
                                       int & numOrientations);
 
       // gmsh::model::mesh::getBasisFunctionsOrientationForElements
