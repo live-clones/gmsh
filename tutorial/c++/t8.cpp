@@ -11,7 +11,7 @@ int main(int argc, char **argv)
   gmsh::initialize();
   gmsh::option::setNumber("General.Terminal", 1);
 
-  model::add("t7");
+  model::add("t8");
 
   // Copied from t1.cpp...
   double lc = 1e-2;
@@ -35,6 +35,7 @@ int main(int argc, char **argv)
   }
   catch(...) {
     gmsh::logger::write("Could not load post-processing views: bye!");
+    gmsh::finalize();
     return 0;
   }
 

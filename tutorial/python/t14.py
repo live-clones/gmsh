@@ -1,13 +1,5 @@
 # This file reimplements gmsh/tutorial/t14.geo in Python.
 
-# /*********************************************************************
-#  *
-#  *  Gmsh tutorial 14
-#  *
-#  *  Homology and cohomology computation
-#  *
-#  *********************************************************************/
-
 # Homology computation in Gmsh finds representative chains of (relative)
 # (co)homology space bases using a mesh of a model.  The representative basis
 # chains are stored in the mesh as physical groups of Gmsh, one for each chain.
@@ -90,32 +82,44 @@ for tag in terminal_tags:
 
 # Whole domain surface
 boundary_physical_tag = 2002
-gmsh.model.addPhysicalGroup(dim=2, tags=boundary_tags, tag=boundary_physical_tag)
-gmsh.model.setPhysicalName(dim=2, tag=boundary_physical_tag, name="Boundary")
+gmsh.model.addPhysicalGroup(dim=2, tags=boundary_tags,
+                            tag=boundary_physical_tag)
+gmsh.model.setPhysicalName(dim=2, tag=boundary_physical_tag,
+                           name="Boundary")
 
 # Complement of the domain surface respect to the four terminals
 complement_physical_tag = 2003
-gmsh.model.addPhysicalGroup(dim=2, tags=complement_tags, tag=complement_physical_tag)
-gmsh.model.setPhysicalName(dim=2, tag=complement_physical_tag, name="Complement")
+gmsh.model.addPhysicalGroup(dim=2, tags=complement_tags,
+                            tag=complement_physical_tag)
+gmsh.model.setPhysicalName(dim=2, tag=complement_physical_tag,
+                           name="Complement")
 
 gmsh.model.geo.synchronize()
 
 # Find bases for relative homology spaces of the domain modulo the four
 # terminals.
-gmsh.model.mesh.computeHomology(domainTags=[domain_physical_tag], subdomainTags=[terminals_physical_tag], dims=[0,1,2,3])
+gmsh.model.mesh.computeHomology(domainTags=[domain_physical_tag],
+                                subdomainTags=[terminals_physical_tag],
+                                dims=[0,1,2,3])
 
 # Find homology space bases isomorphic to the previous bases: homology spaces
 # modulo the non-terminal domain surface, a.k.a the thin cuts.
-gmsh.model.mesh.computeHomology(domainTags=[domain_physical_tag], subdomainTags=[complement_physical_tag], dims=[0,1,2,3])
+gmsh.model.mesh.computeHomology(domainTags=[domain_physical_tag],
+                                subdomainTags=[complement_physical_tag],
+                                dims=[0,1,2,3])
 
 # Find cohomology space bases isomorphic to the previous bases: cohomology
 # spaces of the domain modulo the four terminals, a.k.a the thick cuts.
-gmsh.model.mesh.computeCohomology(domainTags=[domain_physical_tag], subdomainTags=[terminals_physical_tag], dims=[0,1,2,3])
+gmsh.model.mesh.computeCohomology(domainTags=[domain_physical_tag],
+                                  subdomainTags=[terminals_physical_tag],
+                                  dims=[0,1,2,3])
 
 # more examples
-#gmsh.model.mesh.computeHomology()
-#gmsh.model.mesh.computeHomology(domainTags=[domain_physical_tag])
-#gmsh.model.mesh.computeHomology(domainTags=[domain_physical_tag], subdomainTags=[boundary_physical_tag], dims=[0,1,2,3])
+# gmsh.model.mesh.computeHomology()
+# gmsh.model.mesh.computeHomology(domainTags=[domain_physical_tag])
+# gmsh.model.mesh.computeHomology(domainTags=[domain_physical_tag],
+#                                 subdomainTags=[boundary_physical_tag],
+#                                 dims=[0,1,2,3])
 
 # Generate the mesh and perform the requested homology computations
 gmsh.model.mesh.generate(3)

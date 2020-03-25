@@ -1,4 +1,4 @@
-4.5.6 (Work-in-progress): small bug fixes.
+4.5.6 (Work-in-progress): API tutorials; small bug fixes.
 
 4.5.5 (March 21, 2020): tooltips in GUI to help discovery of scripting options;
 fixed MED IO of high-order elements; fixed OCC attribute search by bounding box;
@@ -6,7 +6,7 @@ fix parsing of mac-encoded scripts; new RecombineMesh command; added support for
 extrusion of mixed-dimension entities with OCC; small bug fixes.
 
 4.5.4 (February 29, 2020): periodic mesh optimization now ensures that the
-master mesh is not modified; code cleanup; API tutorials; small bug fixes.
+master mesh is not modified; code cleanup; small bug fixes.
 
 4.5.3 (February 22, 2020): improved positioning of corresponding nodes on
 periodic entities; improved LaTeX output; improved curve splitting in
