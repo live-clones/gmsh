@@ -1873,8 +1873,6 @@ if(ENABLE_BUILD_LIB)
 endif()
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
-  # FIXME once we cleanup the installation of the python module
-  install(TARGETS shared DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/api OPTIONAL)
 endif()
 
 if(ENABLE_ONELAB)
