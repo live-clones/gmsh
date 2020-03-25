@@ -1988,6 +1988,7 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
     if(bnd.size() == 2) {
       //      printf("%lu %12.5E\n",v->getNum(),gaussianCurvatures[*it]);
       double KURV = gaussianCurvatures[*it];
+      if (v->onWhat()->dim() == 0)corners.insert(v);
       if(KURV < 3*M_PI/4 || KURV > 5*M_PI/4) {
 	if (KURV > 5*M_PI/4)
 	  corners.insert(v);
