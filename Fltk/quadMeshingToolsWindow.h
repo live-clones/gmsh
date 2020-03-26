@@ -18,6 +18,7 @@
 #include <FL/Fl_Output.H>
 
 struct QuadMeshingOptions;
+struct QuadMeshingState;
 
 class quadMeshingToolsWindow {
 public:
@@ -36,7 +37,14 @@ public:
   Fl_Button *push_quad_generate;
   Fl_Button *push_quad_simplify;
   Fl_Button *push_quad_smooth;
+  Fl_Check_Button *check_cf_use_prescribed;
+  Fl_Value_Input* flv_cross_field_iter;
+  Fl_Value_Input* flv_simplify_factor;
+  Fl_Input* fli_name_cut;
+  Fl_Input* fli_name_qinit;
+  Fl_Input* fli_name_qsmp;
   QuadMeshingOptions* opt;
+  QuadMeshingState* qstate;
 
 public:
   quadMeshingToolsWindow(int deltaFontSize = 0);

@@ -32,62 +32,86 @@
 
 static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 {
-  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  int status = computeCrossField(GModel::current(), opt);
+  QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  opt.cross_field_iter = FlGui::instance()->quadmeshingtools->flv_cross_field_iter->value();
+  opt.cross_field_use_prescribed_if_available = FlGui::instance()->quadmeshingtools->check_cf_use_prescribed->value();
+  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  int status = computeCrossField(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to compute cross field");
   }
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
-  int statusH = computeH(GModel::current(), opt);
-  if (statusH != 0) {
-    Msg::Error("failed to compute H from cross field");
-  }
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+
   drawContext::global()->draw();
 }
 
 static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
 {
   const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  int status = showScaledCrosses(GModel::current(), opt);
+  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  int status = showScaledCrosses(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to show scaled crosses");
   }
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void qmt_quad_sizemap(Fl_Widget *w, void *data)
 {
   const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  int status = computeQuadSizeMap(GModel::current(), opt);
+  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  int status = computeQuadSizeMap(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to compute quad sizemap");
   }
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void qmt_quad_generate(Fl_Widget *w, void *data)
 {
   const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  int status = generateQuadMesh(GModel::current(), opt);
+  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  int status = generateQuadMesh(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to generate initial quad mesh (quantization)");
   }
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void qmt_compute_uv(Fl_Widget *w, void *data)
 {
   const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  int status = computeUV(GModel::current(), opt);
+  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  int status = computeUV(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to generate compute uv parametrisation");
   }
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
+static void qmt_cut_with_uv_isos(Fl_Widget *w, void *data)
+{
+  quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
+  QuadMeshingOptions& opt = *win->opt;
+  QuadMeshingState& state = *win->qstate;
+  opt.model_cut = std::string(win->fli_name_cut->value());
+
+  int status = computeQuadLayout(GModel::current(), opt, state);
+  if (status != 0) {
+    Msg::Error("failed to generate compute uv parametrisation");
+  }
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  drawContext::global()->draw();
+}
+
+
 quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
   opt = new QuadMeshingOptions;
+  qstate = new QuadMeshingState;
 
   FL_NORMAL_SIZE -= deltaFontSize;
   int width = int(3.5 * IW) + 4 * WB;
@@ -110,7 +134,6 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     push_crossfield_gen = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Compute");
     push_crossfield_gen->callback(qmt_crossfield_generate_cb);
 
-    Fl_Value_Input* flv_cross_field_iter; /* auto delete ? */
     flv_cross_field_iter = new Fl_Value_Input(x, y, IW, BH, "Diffusion/projection steps");
     flv_cross_field_iter->minimum(1);
     flv_cross_field_iter->maximum(100);
@@ -119,6 +142,10 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     flv_cross_field_iter->value(opt->cross_field_iter);
 
     y += BH;
+    check_cf_use_prescribed = new Fl_Check_Button(x, y, width - 4 * WB, BH, "Use prescribed singularities (if available)");
+    check_cf_use_prescribed->type(FL_TOGGLE_BUTTON);
+    check_cf_use_prescribed->value(opt->cross_field_use_prescribed_if_available);
+
     push_crossfield_show = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Show");
     push_crossfield_show->callback(qmt_crossfield_show_cb);
     // if (!crossfield || !H) push_crossfield_show->clear_active();
@@ -158,8 +185,7 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
 
   { /* cutting */
     y += BH;
-    Fl_Box *b =
-      new Fl_Box(x - WB, y, width, BH, "Mesh cutting from UV-parametrisation");
+    Fl_Box *b = new Fl_Box(x - WB, y, width, BH, "Mesh cutting from UV-parametrisation");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     y += BH;
@@ -168,14 +194,13 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     b2->label("- require a UV-parametrisation");
 
     y += BH;
-    Fl_Input* fli_name_cut;
     fli_name_cut = new Fl_Input(x, y, IW, BH, "New model name");
     fli_name_cut->align(FL_ALIGN_RIGHT);
     fli_name_cut->value("cut");
 
     // y += BH;
     push_compute_uv = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Cut");
-    push_compute_uv->callback(qmt_compute_uv);
+    push_compute_uv->callback(qmt_cut_with_uv_isos);
   }
 
   { /* Seperator */
@@ -197,7 +222,6 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     b2->label("- require a classified triangulation");
 
     y += BH;
-    Fl_Input* fli_name_qinit;
     fli_name_qinit = new Fl_Input(x, y, IW, BH, "New model name");
     fli_name_qinit->align(FL_ALIGN_RIGHT);
     fli_name_qinit->value("quad");
@@ -229,7 +253,6 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     b2->label("- require a quad mesh");
 
     y += BH;
-    Fl_Value_Input* flv_simplify_factor; /* auto delete ? */
     flv_simplify_factor = new Fl_Value_Input(x, y, IW, BH, "Collapse size factor");
     flv_simplify_factor->minimum(0.1);
     flv_simplify_factor->maximum(3.);
@@ -238,7 +261,6 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     flv_simplify_factor->value(opt->simplify_size_factor);
 
     y += BH;
-    Fl_Input* fli_name_qsmp;
     fli_name_qsmp = new Fl_Input(x, y, IW, BH, "New model name");
     fli_name_qsmp->align(FL_ALIGN_RIGHT);
     fli_name_qsmp->value("quad_simplified");
@@ -286,7 +308,8 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
 
 quadMeshingToolsWindow::~quadMeshingToolsWindow() { 
   Fl::delete_widget(win);
-  delete opt;
+  if (opt) delete opt;
+  if (qstate) delete qstate;
 }
 
 void quadMeshingToolsWindow::show(bool redrawOnly) {

@@ -233,6 +233,10 @@ namespace QMT {
     return length(N) / 2.;
   }
 
+  inline vec3 triangle_center(const TMesh& M, id t) {
+    return 1./3.*(M.points[M.triangles[t][0]]+M.points[M.triangles[t][1]]+M.points[M.triangles[t][2]]);
+  }
+
   inline vec3 triangle_normal(const TMesh& M, id t) {
     vec3 N = cross(M.points[M.triangles[t][2]]-M.points[M.triangles[t][0]],
         M.points[M.triangles[t][1]]-M.points[M.triangles[t][0]]);
@@ -479,6 +483,7 @@ namespace QMT {
     return true;
   }
 
+  // TODO: verify this function, not sure if it works (see qmt cross field on smile2 model)
   bool create_scaled_cross_field_view(const std::string& meshName, 
       int tagCrossField, int tagH, bool viewIsModelData, 
       const std::string& viewName, int& viewTag) {
@@ -927,8 +932,4 @@ namespace QMT {
     return true;
   }
 
-  bool detect_cross_field_singularities(int crossFieldTag, std::vector<std::pair<size_t,int>>& sings) {
-
-    return true;
-  }
 }
