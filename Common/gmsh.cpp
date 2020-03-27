@@ -2210,12 +2210,14 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
                                                bSize +
                                                eSize +
                                                fSize;
+    const unsigned int numVertices =
+      ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
 
     basisFunctions.resize(maxOrientation * numberOfGaussPoints *
                           numFunctionsPerElement * numComponents);
 
-    std::vector<MVertex *> vertices(vSize);
-    for(unsigned int i = 0; i < vSize; ++i) {
+    std::vector<MVertex *> vertices(numVertices);
+    for(unsigned int i = 0; i < numVertices; ++i) {
       vertices[i] = new MVertex(0., 0., 0., 0, i + 1);
     }
     MElement *element = 0;
@@ -2364,7 +2366,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
 
         MVertexPtrLessThan comp;
         std::next_permutation(vertices.begin(), vertices.end(), comp);
-        for(unsigned int i = 0; i < vSize; ++i) {
+        for(unsigned int i = 0; i < numVertices; ++i) {
           element->setVertex(i, vertices[i]);
         }
       }
@@ -2521,7 +2523,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
 
         MVertexPtrLessThan comp;
         std::next_permutation(vertices.begin(), vertices.end(), comp);
-        for(unsigned int i = 0; i < vSize; ++i) {
+        for(unsigned int i = 0; i < numVertices; ++i) {
           element->setVertex(i, vertices[i]);
         }
       }
