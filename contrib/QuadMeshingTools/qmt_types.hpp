@@ -53,6 +53,7 @@ namespace QMT {
     std::vector<bool> onCorner;
     std::vector<bool> onBoundary;
     std::vector<double> size;
+    std::vector<id> pt_color;
 
     /* one value per line */
     std::vector<id2> lines;

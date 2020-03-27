@@ -31,6 +31,8 @@ struct QuadMeshingOptions {
   double simplify_size_factor = 0.9;
   int smoothing_explicit_iter = 100;
   std::string model_cut = "cut";
+  std::string model_quad_init = "quad_init";
+  std::string model_quad = "quad";
 };
 
 /* Values filled by the API calls, useful for GUI feedback */
@@ -59,12 +61,13 @@ struct QuadMeshingState {
 
   /* cut model, triangulation */
   std::string model_cut = "";
+  void* data_boundary_projector = NULL;
 
   /* quad mesh model, initial quantization */
-  std::string model_quad_init = {};
+  std::string model_quad_init = "";
 
   /* quad mesh model, final output */
-  std::string model_quad = {};
+  std::string model_quad = "";
 
   /* destructor required to delete the (void*) data */
   ~QuadMeshingState();

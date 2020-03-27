@@ -57,30 +57,6 @@ static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void qmt_quad_sizemap(Fl_Widget *w, void *data)
-{
-  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
-  int status = computeQuadSizeMap(GModel::current(), opt, state);
-  if (status != 0) {
-    Msg::Error("failed to compute quad sizemap");
-  }
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
-  drawContext::global()->draw();
-}
-
-static void qmt_quad_generate(Fl_Widget *w, void *data)
-{
-  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
-  int status = generateQuadMesh(GModel::current(), opt, state);
-  if (status != 0) {
-    Msg::Error("failed to generate initial quad mesh (quantization)");
-  }
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
-  drawContext::global()->draw();
-}
-
 static void qmt_compute_uv(Fl_Widget *w, void *data)
 {
   const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
@@ -103,6 +79,61 @@ static void qmt_cut_with_uv_isos(Fl_Widget *w, void *data)
   int status = computeQuadLayout(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to generate compute uv parametrisation");
+  }
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  drawContext::global()->draw();
+}
+
+static void qmt_quad_sizemap(Fl_Widget *w, void *data)
+{
+  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  int status = computeQuadSizeMap(GModel::current(), opt, state);
+  if (status != 0) {
+    Msg::Error("failed to compute quad sizemap");
+  }
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  drawContext::global()->draw();
+}
+
+static void qmt_quad_generate(Fl_Widget *w, void *data)
+{
+  QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
+  opt.model_quad_init = std::string(win->fli_name_qinit->value());
+  int status = generateQuadMesh(GModel::current(), opt, state);
+  if (status != 0) {
+    Msg::Error("failed to generate initial quad mesh (quantization)");
+  }
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  drawContext::global()->draw();
+}
+
+static void qmt_quad_simplify(Fl_Widget *w, void *data)
+{
+  quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
+  QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  opt.simplify_size_factor = win->flv_simplify_factor->value();
+  opt.model_quad = std::string(win->fli_name_qsmp->value());
+  int status = simplifyQuadMesh(GModel::current(), opt, state);
+  if (status != 0) {
+    Msg::Error("failed to simplify quad mesh");
+  }
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  drawContext::global()->draw();
+}
+
+static void qmt_quad_smooth(Fl_Widget *w, void *data)
+{
+  quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
+  QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  opt.smoothing_explicit_iter = win->flv_smoothing_iter->value();
+  int status = smoothQuadMesh(GModel::current(), opt, state);
+  if (status != 0) {
+    Msg::Error("failed to smooth quad mesh");
   }
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
@@ -267,7 +298,7 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
 
     // y += BH;
     push_quad_simplify = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Simplify");
-    push_quad_simplify->callback(qmt_quad_generate);
+    push_quad_simplify->callback(qmt_quad_simplify);
   }
 
   { /* Seperator */
@@ -289,7 +320,6 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     b2->label("- require a quad mesh");
 
     y += BH;
-    Fl_Value_Input* flv_smoothing_iter; /* auto delete ? */
     flv_smoothing_iter = new Fl_Value_Input(x, y, IW, BH, "Explicit iterations");
     flv_smoothing_iter->minimum(1);
     flv_smoothing_iter->maximum(10000);
@@ -299,7 +329,7 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
 
     // y += BH;
     push_quad_smooth = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Smooth");
-    push_quad_smooth->callback(qmt_quad_generate);
+    push_quad_smooth->callback(qmt_quad_smooth);
   }
 
   win->end();

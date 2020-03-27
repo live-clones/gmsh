@@ -121,6 +121,10 @@ namespace QMT {
   /******************************* prototypes, not ready **********************************/
   /****************************************************************************************/
 
+  bool import_QMesh_from_gmsh(const std::string& meshName, QMesh& M);
+
+  bool fill_vertex_sizes_from_sizemap(QMesh& M, int sizemapTag);
+
   bool generate_quad_mesh_via_tmesh_quantization(
       const std::string& modelName,
       int sizemapTag,

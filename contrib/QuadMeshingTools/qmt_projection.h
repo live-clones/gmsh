@@ -27,9 +27,12 @@ namespace QMT {
       bool project(int dim, int tag, vec3 query, vec3& projection) const;
       bool project(int dim, int tag, vec3 query, vec3& projection, id& cache) const;
       bool closestEntity(const std::vector<vec3>& queries, double& dist, int& dim, int& tag) const;
+      bool closestEntity(const vec3& query, double& dist, int& dim, int& tag) const;
 
     protected:
-      const TMesh M;
+      const TMesh M; /* deep copy */
+
+      std::vector<vec3> nodes;
       size_t N_search = 5;
 
       std::vector<void*> curve_tree;
@@ -41,5 +44,7 @@ namespace QMT {
       std::vector<void*> pcs;
       std::vector<void*> pcas;
   };
+
+  bool assignClosestEntities(QMesh& M, const BoundaryProjector& projector);
 
 }

@@ -285,7 +285,7 @@ namespace QMT {
           h_uniform = 0.1;
         }
       } else {
-        warn("SizeMapR constructor, using field from tag {}", tag);
+        info("SizeMapR constructor, using field from tag {}", tag);
         h_uniform = 0.;
       }
     }
@@ -542,7 +542,9 @@ namespace QMT {
         error("face {}: failed to compute quad sides", f);
         return false;
       }
-      info("  face {}: {}", f, M.faces[f]);
+      if (M.faces[f].edges.size() > 4) {
+        info("  face {} with T-junctions: {}", f, M.faces[f]);
+      }
     }
 
     gmsh::model::setCurrent(cname);
@@ -718,7 +720,7 @@ namespace QMT {
     vector<id> finished(M.edgeToFaces[eStart].size(), NO_ID);
 
     constexpr bool VERB = false;
-    if (VERB) info("---- tchord from eStart = {}", eStart);
+    if (VERB) info("====== tchord from eStart = {} ======", eStart);
     /* Propagation */
     bool all_finished = false;
     while (Q.size() > 0.) {
@@ -750,6 +752,7 @@ namespace QMT {
           parent[oe] = e;
           Q.push({edge_nx[oe],oe});
           direction[oe] = (e == eStart) ? lf : direction[e];
+          reached[oe] = true;
           if (VERB) info("---- Q+=({},{})",edge_nx[oe],oe);
           prop = true;
         }
@@ -759,7 +762,7 @@ namespace QMT {
       if (all_finished) break;
       if (!prop) {
         finished[direction[e]] = e;
-        if (VERB) info("---- ! no prop, finished[{}] = {}", direction[e], e);
+        if (VERB) info("---- ! NO PROP, finished[{}] = {}", direction[e], e);
       }
       all_finished = true;
       FC(i,finished.size(),finished[i] == NO_ID) all_finished = false;
@@ -767,7 +770,7 @@ namespace QMT {
     }
 
     if (!all_finished) {
-      error("failed to build the t-chord");
+      error("failed to build the t-chord (not all sides are finished)");
       if (VERB) F(i,finished.size()) info("- finished[{}]={}",i,finished[i]);
       return false;
     }
@@ -1059,5 +1062,34 @@ namespace QMT {
 
     return true;
   }
+
+  bool fill_vertex_sizes_from_sizemap(QMesh& M, int sizemapTag) {
+    if (!QMT_QZ_Utils::global_gmsh_initialized) {
+      gmsh::initialize(0, 0, false);
+      QMT_QZ_Utils::global_gmsh_initialized = true;
+    }
+    if (sizemapTag < 0) {
+      error("wrong size map tag: {}", sizemapTag);
+      return false;
+    }
+
+    double target_edge_len = 0.;
+    SizeMapR sizemap(sizemapTag,target_edge_len);
+
+    vector<bool> used(M.points.size(),false);
+    FC(c,M.quads.size(),M.quads[c][0] != NO_ID)  F(lv,4) used[M.quads[c][lv]] = true;
+
+    FC(v,M.points.size(),used[v]) {
+      vec3 pt = M.points[v];
+      double val = sizemap.eval(pt);
+      if (val == DBL_MAX) {
+        error("size map probing failed at pt = {}", pt);
+      }
+      M.size[v] = val;
+    }
+
+    return true;
+  }
 }
+
 

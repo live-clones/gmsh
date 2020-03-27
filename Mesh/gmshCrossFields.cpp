@@ -5380,10 +5380,16 @@ int compute_H_from_cross_field_view(GModel * gm,
 /********************************************************/
 
 QuadMeshingState::~QuadMeshingState() {
+  Msg::Debug("QuadMeshingState destructor call");
   if (this->data_uv_cuts != NULL) {
     std::map<MEdge, edgeCuts, MEdgeLessThan>* ptr = static_cast<std::map<MEdge, edgeCuts, MEdgeLessThan>*>(this->data_uv_cuts);
     delete ptr;
     this->data_uv_cuts = NULL;
+  }
+  if (this->data_boundary_projector != NULL) {
+    QMT::BoundaryProjector* ptr = static_cast<QMT::BoundaryProjector*>(this->data_boundary_projector);
+    delete ptr;
+    this->data_boundary_projector = NULL;
   }
 }
 
@@ -5778,63 +5784,28 @@ int computeUV(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& stat
       state.data_uv_cuts = NULL;
     }
     state.data_uv_cuts = (void*) (cutsPtr);
+    Msg::Debug("saved cuts map pointer in QuadMeshingState");
   }
-
-  return 0;
-}
-
-int generateQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& state) {
-#if defined(HAVE_QUADMESHINGTOOLS)
-  // TODO: projector from initial geometry, should be in another model name
-  QMT::TMesh boundary;
-  bool oki = QMT::import_TMesh_from_gmsh(gm->getName(),boundary);
-  if (!oki) {
-    Msg::Error("Failed to import triangular mesh");
-    return -1;
-  }
-  QMT::BoundaryProjector projector(boundary);
-
-  QMT::QMesh Q;
-  int sizemapTag = -1;
-  std::string quad_layout_name = gm->getName();
-  double size_min = CTX::instance()->mesh.lcMin;
-  double size_max = CTX::instance()->mesh.lcMax;
-  if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
-    size_min *= CTX::instance()->mesh.lcFactor;
-  }
-  if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
-    size_max *= CTX::instance()->mesh.lcFactor;
-  }
-  if (size_min == 0 && size_max == 1.e22) {
-    SBoundingBox3d bbox = gm->bounds();
-    size_min = 0.1 * bbox.diag();
-    Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal");
-  }
-  
-  std::map<std::pair<int,int>,std::pair<int,int>> entityToInitialEntity;
-  bool okg = QMT::generate_quad_mesh_via_tmesh_quantization(
-      quad_layout_name, sizemapTag, size_min, size_max, Q, &projector, &entityToInitialEntity);
-  if (!okg) {
-    Msg::Error("Failed to generate quad mesh");
-    return -1;
-  }
-
-  bool oke1 = QMT::export_qmesh_to_gmsh_mesh(Q, "qmesh_init");
-  if (!oke1) {
-    Msg::Error("Failed to export quad mesh");
-    return -1;
-  }
-
-#else
-  Msg::Error("Quad mesh generation requires the QuadMeshingTools module");
-  return -1;
-#endif
 
   return 0;
 }
 
 /* generata a new model with cut triangles and classified triangles */
 int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& state) {
+  { /* Input verification */
+    bool have_triangles = false;
+    bool have_quads = false;
+    std::vector<GFace *> f;
+    getFacesOfTheModel(gm, f);
+    for(size_t i = 0; i < f.size(); i++) {
+      if (f[i]->triangles.size() > 0) have_triangles = true;
+      if (f[i]->quadrangles.size() > 0) have_quads = true;
+    }
+    if (!have_triangles || have_quads) {
+      Msg::Error("Input model '%s' is not a triangulation", gm->getName().c_str());
+      return -1;
+    }
+  }
   PView* view_U = PView::getViewByName("U");
   PView* view_V = PView::getViewByName("V");
   if (view_U == NULL || view_V == NULL) {
@@ -5851,20 +5822,34 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     return -1;
   }
 
+  /* create a boundary projector for futur use,
+   * not clean but for the moment it is hard to transfer
+   * CAD information from model to model */
+  {
+#if defined(HAVE_QUADMESHINGTOOLS)
+    if (state.data_boundary_projector == NULL) {
+      QMT::TMesh boundary;
+      bool oki = QMT::import_TMesh_from_gmsh(gm->getName(),boundary);
+      if (!oki) {
+        Msg::Error("Failed to import triangular mesh");
+        return -1;
+      }
+      state.data_boundary_projector = (void*) new QMT::BoundaryProjector(boundary);
+      Msg::Debug("saved QMT::BoundaryProjector* in QuadMeshingState");
+    }
+#endif
+  }
 
-  /* change to a new model */
+
+  /* change to a new model (created via disk write/read, not good but ...) */
+  Msg::Info("create a new model '%s'", opt.model_cut.c_str());
   std::string tmp_path = "tmp_mesh.msh";
   GmshWriteFile(tmp_path);
-  // PViewDataGModel *dU = dynamic_cast<PViewDataGModel*>(view_U->getData());
-  // PViewDataGModel *dV = dynamic_cast<PViewDataGModel*>(view_V->getData());
-  // dU->setName("U_cut");
-  // dV->setName("V_cut");
-  // dU->writeMSH(tmp_path,CTX::instance()->mesh.mshFileVersion,CTX::instance()->mesh.binary,false,true);
-  // dV->writeMSH(tmp_path,CTX::instance()->mesh.mshFileVersion,CTX::instance()->mesh.binary,false,true);
-  // dU->setName("U");
-  // dV->setName("V");
   GModel* gcc = GModel::findByName(opt.model_cut);
-  if (gcc) delete gcc;
+  if (gcc) {
+    Msg::Warning("already a model with the same name, deleting it");
+    delete gcc;
+  }
   gcc = new GModel(opt.model_cut);
   GModel::setCurrent(gcc);
   GmshMergeFile(tmp_path);
@@ -5953,6 +5938,7 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
       GModel::current()->getNumFaces());
   }
 
+  /* Remove temporary mesh file */
   if (remove(tmp_path.c_str()) != 0) {
     Msg::Error("failed to remove file '%s'", tmp_path.c_str());
   }
@@ -5960,4 +5946,248 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
   CTX::instance()->mesh.changed = ENT_ALL;
 
   return 0;
+}
+
+int generateQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& state) {
+  { /* Input verification */
+    bool have_triangles = false;
+    bool have_quads = false;
+    std::vector<GFace *> f;
+    getFacesOfTheModel(gm, f);
+    for(size_t i = 0; i < f.size(); i++) {
+      if (f[i]->triangles.size() > 0) have_triangles = true;
+      if (f[i]->quadrangles.size() > 0) have_quads = true;
+    }
+    if (!have_triangles || have_quads) {
+      Msg::Error("Input model '%s' is not a triangulation", gm->getName().c_str());
+      return -1;
+    }
+  }
+
+#if defined(HAVE_QUADMESHINGTOOLS)
+  QMT::BoundaryProjector* projector = NULL;
+  if (state.data_boundary_projector == NULL) {
+    Msg::Warning("BoundaryProjector* not found in QuadMeshingState (this one is created by the Cut step). Proceed to quantization without projection.");
+  } 
+  if (state.data_boundary_projector != NULL) {
+    projector = static_cast<QMT::BoundaryProjector*>(state.data_boundary_projector);
+  }
+
+  int sizemapTag = -1;
+  if (sizemapTag == -1) {
+    PView* view_s = PView::getViewByName("s");
+    if (view_s) {
+      sizemapTag = view_s->getTag();
+    }
+  }
+
+  std::string quad_layout_name = gm->getName();
+  double size_min = CTX::instance()->mesh.lcMin;
+  double size_max = CTX::instance()->mesh.lcMax;
+  if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
+    size_min *= CTX::instance()->mesh.lcFactor;
+  }
+  if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
+    size_max *= CTX::instance()->mesh.lcFactor;
+  }
+  if (size_min == 0 && size_max == 1.e22) {
+    SBoundingBox3d bbox = gm->bounds();
+    size_min = 0.1 * bbox.diag() * CTX::instance()->mesh.lcFactor;
+    Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal*clscale");
+  }
+  
+  std::map<std::pair<int,int>,std::pair<int,int>> entityToInitialEntity;
+  QMT::QMesh Q;
+  bool okg = QMT::generate_quad_mesh_via_tmesh_quantization(
+      quad_layout_name, sizemapTag, size_min, size_max, Q, projector, &entityToInitialEntity);
+  if (!okg) {
+    Msg::Error("Failed to generate quad mesh");
+    return -1;
+  }
+
+  {
+    Msg::Info("create a new model '%s'",opt.model_quad_init.c_str());
+    GModel* gg = GModel::findByName(opt.model_quad_init);
+    if (gg) {
+      Msg::Warning("already a model with the same name, deleting it");
+      delete gg;
+    }
+  }
+  bool oke1 = QMT::export_qmesh_to_gmsh_mesh(Q, opt.model_quad_init);
+  if (!oke1) {
+    Msg::Error("Failed to export quad mesh");
+    return -1;
+  }
+
+  CTX::instance()->mesh.changed = ENT_ALL;
+
+#else
+  Msg::Error("Quad mesh generation requires the QuadMeshingTools module");
+  return -1;
+#endif
+
+  return 0;
+}
+
+/* simplify the current quad mesh connectivity */
+int simplifyQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& state) {
+  { /* Input verification */
+    bool have_triangles = false;
+    bool have_quads = false;
+    std::vector<GFace *> f;
+    getFacesOfTheModel(gm, f);
+    for(size_t i = 0; i < f.size(); i++) {
+      if (f[i]->triangles.size() > 0) have_triangles = true;
+      if (f[i]->quadrangles.size() > 0) have_quads = true;
+    }
+    if (have_triangles || !have_quads) {
+      Msg::Error("Input model '%s' is not a quadrangulation", gm->getName().c_str());
+      return -1;
+    }
+  }
+
+#if defined(HAVE_QUADMESHINGTOOLS)
+  QMT::BoundaryProjector* projector = NULL;
+  if (state.data_boundary_projector != NULL) {
+    projector = static_cast<QMT::BoundaryProjector*>(state.data_boundary_projector);
+  }
+  if (projector == NULL) {
+    Msg::Error("BoundaryProjector* not found in QuadMeshingState. This one is created by the Cut step.");
+    return -1;
+  }
+
+  /* Simplification sizes */
+  double size_min = CTX::instance()->mesh.lcMin;
+  double size_max = CTX::instance()->mesh.lcMax;
+  if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
+    size_min *= CTX::instance()->mesh.lcFactor;
+  }
+  if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
+    size_max *= CTX::instance()->mesh.lcFactor;
+  }
+  if (size_min == 0 && size_max == 1.e22) {
+    SBoundingBox3d bbox = gm->bounds();
+    size_min = 0.1 * bbox.diag();
+    Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal");
+  }
+  double hc = opt.simplify_size_factor * size_min;
+  if (size_min == 0.) hc = opt.simplify_size_factor * size_max;
+
+  /* Import current quad mesh */
+  QMT::QMesh Q;
+  bool oki = QMT::import_QMesh_from_gmsh(gm->getName(),Q);
+  if (!oki) {
+    Msg::Error("Failed to simplify quad mesh");
+    return -1;
+  }
+
+  /* Temporary solution because CAD not transfered */
+  bool oka = QMT::assignClosestEntities(Q, *projector);
+  if (!oka) {
+    Msg::Error("Failed to assign quad vertices to closest entities in the BoundaryProjector");
+    return -1;
+  }
+
+  /* Fill size map values in Q */
+  int sizemapTag = -1;
+  if (sizemapTag == -1) {
+    PView* view_s = PView::getViewByName("s");
+    if (view_s) {
+      sizemapTag = view_s->getTag();
+    }
+  }
+
+  bool oksm = QMT::fill_vertex_sizes_from_sizemap(Q, sizemapTag);
+  if (!oksm) {
+    Msg::Error("Failed to evaluate size map on quad mesh");
+    return -1;
+  }
+
+  /* Apply simplification */
+  bool oks = QMT::simplify_quad_mesh(Q, opt.simplify_size_factor, -1, projector);
+  if (!oks) {
+    Msg::Error("Failed to simplify quad mesh");
+    return -1;
+  }
+
+  /* Export simplified quad mesh to new gmsh model */
+  {
+    Msg::Info("create a new model '%s'",opt.model_quad.c_str());
+    GModel* gg = GModel::findByName(opt.model_quad);
+    if (gg) {
+      Msg::Warning("already a model with the same name, deleting it");
+      delete gg;
+    }
+  }
+  bool oke2 = QMT::export_qmesh_to_gmsh_mesh(Q, opt.model_quad);
+  if (!oke2) {
+    Msg::Error("Failed to export quad mesh");
+    return -1;
+  }
+
+  CTX::instance()->mesh.changed = ENT_ALL;
+
+  return 0;
+#else
+  Msg::Error("Quad mesh simplification requires the QuadMeshingTools module");
+  return -1;
+#endif
+}
+
+/* smooth the current quad mesh geometry */
+int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& state) {
+#if defined(HAVE_QUADMESHINGTOOLS)
+  QMT::BoundaryProjector* projector = NULL;
+  if (state.data_boundary_projector != NULL) {
+    projector = static_cast<QMT::BoundaryProjector*>(state.data_boundary_projector);
+  }
+  if (projector == NULL) {
+    Msg::Error("BoundaryProjector* not found in QuadMeshingState. This one is created by the Cut step.");
+    return -1;
+  }
+
+  /* Import current quad mesh */
+  QMT::QMesh Q;
+  bool oki = QMT::import_QMesh_from_gmsh(gm->getName(),Q);
+  if (!oki) {
+    Msg::Error("Failed to simplify quad mesh");
+    return -1;
+  }
+
+  /* Temporary solution because CAD not transfered */
+  bool oka = QMT::assignClosestEntities(Q, *projector);
+  if (!oka) {
+    Msg::Error("Failed to assign quad vertices to closest entities in the BoundaryProjector");
+    return -1;
+  }
+
+  /* Smoothing */
+  size_t smoothing_iter = opt.smoothing_explicit_iter;
+  bool oksm = QMT::smooth_quad_mesh(Q, smoothing_iter, projector);
+  if (!oksm) {
+    Msg::Error("Failed to smooth quad mesh");
+    return -1;
+  }
+
+  /* Replace current mesh with smoothed quad */
+  {
+    Msg::Info("create a new model '%s'",opt.model_quad.c_str());
+
+  }
+  std::string cname = gm->getName();
+  delete gm;
+  gm = NULL;
+  bool oke3 = QMT::export_qmesh_to_gmsh_mesh(Q, cname);
+  gm = GModel::current();
+  if (!oke3) {
+    Msg::Error("Failed to export quad mesh");
+    return -1;
+  }
+
+  CTX::instance()->mesh.changed = ENT_ALL;
+  return 0;
+#else
+  Msg::Error("Quad mesh simplification requires the QuadMeshingTools module");
+  return -1;
+#endif
 }

@@ -176,10 +176,33 @@ namespace QMT {
       std::vector<double> parametricCoords;
       gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoords);
       M.points.resize(nodeTags.size());
+      M.pt_color.resize(nodeTags.size(),0);
       F(i,nodeTags.size()) {
         id v = nodeTags[i];
-        if (v >= M.points.size()) M.points.resize(v+1);
+        if (v >= M.points.size()) {
+          M.points.resize(v+1);
+          M.pt_color.resize(v+1,0);
+        }
         M.points[v] = {coord[3*i+0],coord[3*i+1],coord[3*i+2]};
+      }
+    }
+
+    { /* nodes */
+      vectorpair nodes;
+      gmsh::model::getEntities(nodes, 0);
+      F(k,nodes.size()) {
+        std::vector<int> elementTypes;
+        std::vector<std::vector<size_t>> elementTags;
+        std::vector<std::vector<size_t>> nodeTags;
+        gmsh::model::mesh::getElements(elementTypes,elementTags,nodeTags,nodes[k].first,nodes[k].second);
+        F(i,elementTypes.size()) {
+          if (elementTypes[i] == 0) { /* nodes */
+            F(j,elementTags[i].size()) {
+              id v = nodeTags[i][j];
+              M.pt_color[v] = nodes[k].second;
+            }
+          }
+        }
       }
     }
 
