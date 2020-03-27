@@ -225,7 +225,7 @@ void GEdge::delFace(GFace *f)
   if(it != l_faces.end()) l_faces.erase(it);
 }
 
-SBoundingBox3d GEdge::bounds(bool fast) const
+SBoundingBox3d GEdge::bounds(bool fast)
 {
   SBoundingBox3d bbox;
   if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve &&

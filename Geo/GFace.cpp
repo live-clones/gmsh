@@ -233,7 +233,7 @@ void GFace::resetMeshAttributes()
   meshAttributes.meshSizeFromBoundary = -1;
 }
 
-SBoundingBox3d GFace::bounds(bool fast) const
+SBoundingBox3d GFace::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != PartitionSurface) {

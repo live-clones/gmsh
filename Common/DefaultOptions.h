@@ -897,6 +897,8 @@ StringXNumber GeometryOptions_Number[] = {
     "new entities with the OpenCASCADE kernel" },
   { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
     "Try to preserve the numbering of entities through OpenCASCADE boolean operations" },
+  { F|O, "OCCBoundsUseStl" , opt_geometry_occ_bounds_use_stl , 1. ,
+    "Use STL mesh for computing bounds of OpenCASCADE shapes (more accurate, but slower)" },
   { F|O, "OCCDisableStl" , opt_geometry_occ_disable_stl , 0. ,
     "Disable STL creation in OpenCASCADE kernel" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,

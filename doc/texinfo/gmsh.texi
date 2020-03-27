@@ -5139,6 +5139,8 @@ system}. Screencasts that show how to use the GUI are available on
 * t14.geo:: Homology and cohomology computation
 * t15.geo:: Embedded points, lines and surfaces
 * t16.geo:: Constructive Solid Geometry, OpenCASCADE geometry kernel
+* t17.geo:: Anisotropic background mesh
+* t18.geo:: Periodic meshes
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5310,11 +5312,33 @@ system}. Screencasts that show how to use the GUI are available on
 @c t16.geo
 @c -------------------------------------------------------------------------
 
-@node t16.geo,  , t15.geo, Tutorial
+@node t16.geo, t17.geo, t15.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t16.geo,t16.geo}
 
 @smallformat
 @verbatiminclude ../../tutorial/t16.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t17.geo
+@c -------------------------------------------------------------------------
+
+@node t17.geo, t18.geo, t16.geo, Tutorial
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t17.geo,t17.geo}
+
+@smallformat
+@verbatiminclude ../../tutorial/t17.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t18.geo
+@c -------------------------------------------------------------------------
+
+@node t18.geo,  , t17.geo, Tutorial
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t18.geo,t18.geo}
+
+@smallformat
+@verbatiminclude ../../tutorial/t18.geo
 @end smallformat
 
 @c =========================================================================
