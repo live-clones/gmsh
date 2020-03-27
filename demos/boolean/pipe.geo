@@ -19,6 +19,7 @@ Spline(1) = {1:npts};
 Wire(1) = {1};
 
 Disk(1) = {1,0,0, rd};
+
 Rectangle(2) = {1+2*rd,-rd,0, 2*rd,2*rd,rd/5};
 Rotate {{1, 0, 0}, {0, 0, 0}, Pi/2} { Surface{1,2}; }
 
