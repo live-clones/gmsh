@@ -26,6 +26,9 @@ Point(1) = {0, 0, 0, lc};
 // mesh size Fields (see `t10.geo'). A particular case is the use of a
 // background mesh (see `t7.geo').
 
+// If no target mesh size of provided, a default uniform coarse size will be
+// used for the model, corresponding to the overall model size divided by 10.
+
 // We can then define some additional points. All points should have different
 // tags:
 
@@ -107,7 +110,7 @@ Physical Surface("My surface") = {1};
 // successively defining 4 points, 4 curves and 1 curve loop, one can define the
 // rectangular surface directly with
 //
-//   Rectangle(2) = {.2, 0, 0, 0.1, 0.3};
+//   Rectangle(2) = {.2, 0, 0, .1, .3};
 //
 // The underlying curves and points can be accessed with the Boundary or
 // CombinedBoundary operators.

@@ -45,31 +45,32 @@ Sphere(16) = {x, y+1, z+1, 0.35};
 Sphere(17) = {x+1, y, z+1, 0.35};
 Sphere(18) = {x+1, y+1, z+1, 0.35};
 
-// We first fragment all the volumes, which will cut some spheres:
+// We first fragment all the volumes, which will leave parts of spheres
+// protruding outside the cube:
 v() = BooleanFragments { Volume{10}; Delete; }{ Volume{11:18}; Delete; };
 
-// We then retrieve all the volumes in bounding box of the original cube, and
-// delete all the parts outside it:
+// We then retrieve all the volumes in the bounding box of the original cube,
+// and delete all the parts outside it:
 eps = 1e-3;
 vin() = Volume In BoundingBox {2-eps,-eps,-eps, 2+1+eps,1+eps,1+eps};
 v() -= vin();
 Recursive Delete{ Volume{v()}; }
 
-// We now set some non-uniform mesh size constraint (again to check results
+// We now set some a non-uniform mesh size constraint (again to check results
 // visually):
 Characteristic Length { PointsOf{ Volume{vin()}; }} = 0.1;
 p() = Point In BoundingBox{2-eps, -eps, -eps, 2+eps, eps, eps};
 Characteristic Length {p()} = 0.001;
 
 // We now identify corresponding surfaces on the left and right sides of the
-// geometry.
+// geometry automatically.
 
-// First we get all surfaces on the left
+// First we get all surfaces on the left:
 e = 1e-3;
 Sxmin() = Surface In BoundingBox{2-e, -e, -e, 2+e, 1+e, 1+e};
 
 For i In {0:#Sxmin()-1}
-  // We get the bounding box of each left surface
+  // Then we get the bounding box of each left surface
   bb() = BoundingBox Surface { Sxmin(i) };
   // We translate the bounding box to the right...
   bbe() = { bb(0)-e+1, bb(1)-e, bb(2)-e, bb(3)+e+1, bb(4)+e, bb(5)+e };
