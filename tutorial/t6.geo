@@ -6,10 +6,10 @@
  *
  *******************************************************************************/
 
-// Let's use the geometry from the first tutorial as a basis for this one
+// Let's use the geometry from the first tutorial as a basis for this one:
 Include "t1.geo";
 
-// Delete the left line and replace it with 3 new ones
+// Delete the left line and replace it with 3 new ones:
 Delete{ Surface{1}; Curve{4}; }
 
 p1 = newp; Point(p1) = {-0.05, 0.05, 0, lc};
@@ -19,7 +19,7 @@ l1 = newl; Line(l1) = {1, p1};
 l2 = newl; Line(l2) = {p1, p2};
 l3 = newl; Line(l3) = {p2, 4};
 
-// Create surface
+// Create a surface:
 Curve Loop(2) = {2, -1, l1, l2, l3, -3};
 Plane Surface(1) = {-2};
 
@@ -29,15 +29,15 @@ Plane Surface(1) = {-2};
 // points):
 Transfinite Curve{2} = 20;
 
-// Put 20 points total on combination of curves l1, l2 and l3 (beware that the
-// points p1 and p2 are shared by the curves, so we do not create 6 + 6 + 10 =
-// 22 nodes, but 20!)
+// Let's put 20 points total on combination of curves `l1', `l2' and `l3'
+// (beware that the points `p1' and `p2' are shared by the curves, so we do not
+// create 6 + 6 + 10 = 22 nodes, but 20!)
 Transfinite Curve{l1} = 6;
 Transfinite Curve{l2} = 6;
 Transfinite Curve{l3} = 10;
 
-// Put 30 nodes following a geometric progression on curve 1 (reversed) and on
-// curve 3
+// Finally, we put 30 nodes following a geometric progression on curve 1
+// (reversed) and on curve 3:
 Transfinite Curve{-1, 3} = 30 Using Progression 1.2;
 
 // The `Transfinite Surface' meshing constraint uses a transfinite interpolation
@@ -64,7 +64,7 @@ Line(12) = {10, 7};
 Line(13) = {7, 8};
 Curve Loop(14) = {13, 10, 11, 12};
 Plane Surface(15) = {14};
-Transfinite Curve {10:13} = 10; // 10:13 creates the list {10, 11, 12, 13}
+Transfinite Curve {10:13} = 10;
 Transfinite Surface{15};
 
 // The way triangles are generated can be controlled by appending "Left",

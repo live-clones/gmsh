@@ -51,8 +51,10 @@ Line(2)  = {17, 16};
 
 Circle(3) = {14,15,16};
 
-// Note that, in Gmsh, circle arcs should always be smaller than Pi. We can then
-// define additional lines and circles, as well as a new surface:
+// Note that, in Gmsh, circle arcs should always be smaller than Pi. The
+// OpenCASCADE geometry kernel does not have this limitation.
+
+// We can then define additional lines and circles, as well as a new surface:
 
 Line(4)  = {14, 13}; Line(5)   = {13, 12};   Line(6)    = {12, 11};
 Line(7)  = {11, 10}; Circle(8) = {8, 9, 10}; Line(9)    = {8, 7};
@@ -80,7 +82,7 @@ Plane Surface(24) = {23, 21};
 
 View "comments" {
   // Add a text string in window coordinates, 10 pixels from the left and 10
-  // pixels from the bottom, using the StrCat function to concatenate strings:
+  // pixels from the bottom, using the `StrCat' function to concatenate strings:
   T2(10, -10, 0){ StrCat("Created on ", Today, " with Gmsh") };
 
   // Add a text string in model coordinates centered at (X,Y,Z) = (0, 0.11, 0):
@@ -106,10 +108,11 @@ View "comments" {
 };
 
 // This post-processing view is in the "parsed" format, i.e. it is interpreted
-// using the same parser as the .geo file. For large post-processing datasets,
+// using the same parser as the `.geo' file. For large post-processing datasets,
 // that contain actual field values defined on a mesh, you should use the MSH
-// file format, which allows to store continuous or discontinuous scalar, vector
-// and tensor fields, or arbitrary polynomial order, directly on the mesh.
+// file format instead, which allows to efficiently store continuous or
+// discontinuous scalar, vector and tensor fields, or arbitrary polynomial
+// order.
 
 // Views and geometrical entities can be made to respond to double-click events,
 // here to print some messages to the console:

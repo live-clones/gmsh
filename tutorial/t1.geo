@@ -13,10 +13,10 @@
 lc = 1e-2;
 
 // This variable can then be used in the definition of Gmsh's simplest
-// `elementary entity', a `Point'. A Point is identified by a tag (a stricly
-// positive integer; here `1') and defined by a list of four numbers: three
-// coordinates (X, Y and Z), and a characteristic length (lc) that sets the
-// target element size at the point:
+// `elementary entity', a `Point'. A Point is uniquely identified by a tag (a
+// strictly positive integer; here `1') and defined by a list of four numbers:
+// three coordinates (X, Y and Z), and a characteristic length (lc) that sets
+// the target element size at the point:
 
 Point(1) = {0, 0, 0, lc};
 
@@ -27,7 +27,7 @@ Point(1) = {0, 0, 0, lc};
 // background mesh (see `t7.geo').
 
 // If no target mesh size of provided, a default uniform coarse size will be
-// used for the model, corresponding to the overall model size divided by 10.
+// used for the model, based on the overall model size.
 
 // We can then define some additional points. All points should have different
 // tags:
@@ -36,10 +36,10 @@ Point(2) = {.1, 0,  0, lc};
 Point(3) = {.1, .3, 0, lc};
 Point(4) = {0,  .3, 0, lc};
 
-// Curves are Gmsh's second type of elementery entities, and, amongst curves,
+// Curves are Gmsh's second type of elementary entities, and, amongst curves,
 // straight lines are the simplest. A straight line is identified by a tag and
-// is defined by a list of point tags. In the commands below, for example, the
-// line 1 starts at point 1 and ends at point 2.
+// is defined by a list of two point tags. In the commands below, for example,
+// the line 1 starts at point 1 and ends at point 2.
 //
 // Note that curve tags are separate from point tags - hence we can reuse tag
 // `1' for our first curve. And as a general rule, elementary entity tags in
@@ -76,7 +76,7 @@ Plane Surface(1) = {1};
 // belong to at least one physical group. (To force Gmsh to save all elements,
 // whether they belong to physical groups or not, set `Mesh.SaveAll=1;', or
 // specify `-save_all' on the command line.) Physical groups are also identified
-// by tags, i.e. stricly positive integers, that should be unique per dimension
+// by tags, i.e. strictly positive integers, that should be unique per dimension
 // (0D, 1D, 2D or 3D). Physical groups can also be given names.
 //
 // Here we define a physical curve that groups the left, bottom and right curves
@@ -87,24 +87,24 @@ Physical Curve(5) = {1, 2, 4};
 Physical Surface("My surface") = {1};
 
 // Now that the geometry is complete, you can
-// - either open this file with Gmsh and select `2D' in the Mesh module to
-//   create a mesh; then select `Save' to save it disk in the default format (or
-//   use `File->Export' to export in other formats);
-// - run `gmsh t1.geo -2` to mesh in batch mode from the command line
+// - either open this file with Gmsh and select `2D' in the `Mesh' module to
+//   create a mesh; then select `Save' to save it to disk in the default format
+//   (or use `File->Export' to export in other formats);
+// - or run `gmsh t1.geo -2` to mesh in batch mode on the command line.
 
-// You could also uncomment the following line:
+// You could also uncomment the following line in this script:
 
-// Mesh 2;
+//   Mesh 2;
 
-// which would lead Gmsh to mesh everytime the file is parsed. (To simply parse
-// the file from the command line, you can use `gmsh t1.geo -'
+// which would lead Gmsh to mesh every time the file is parsed. (To simply parse
+// the file from the command line, you can use `gmsh t1.geo -')
 
 // Note that starting with Gmsh 3.0, models can be built using other geometry
 // kernels than the default built-in kernel. By specifying
 //
 //   SetFactory("OpenCASCADE");
 //
-// any subsequent command in the .geo file would be handled by the OpenCASCADE
+// any subsequent command in the `.geo' file would be handled by the OpenCASCADE
 // geometry kernel instead of the built-in kernel. Different geometry kernels
 // have different features. With OpenCASCADE, instead of defining the surface by
 // successively defining 4 points, 4 curves and 1 curve loop, one can define the
@@ -112,8 +112,8 @@ Physical Surface("My surface") = {1};
 //
 //   Rectangle(2) = {.2, 0, 0, .1, .3};
 //
-// The underlying curves and points can be accessed with the Boundary or
-// CombinedBoundary operators.
+// The underlying curves and points could be accessed with the `Boundary' or
+// `CombinedBoundary' operators.
 //
-// See tutorial/t16.geo for a complete example based on OpenCASCADE, and
-// demos/boolean for more.
+// See `t16.geo', `t17.geo' or `t18.geo' for complete examples based on
+// OpenCASCADE, and `demos/boolean' for more.

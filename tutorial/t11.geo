@@ -6,10 +6,10 @@
  *
  *******************************************************************************/
 
-// We have seen in tutorials t3 and t6 that extruded and transfinite meshes can
-// be "recombined" into quads/prisms/hexahedra by using the "Recombine"
-// keyword. Unstructured meshes can be recombined in the same way. Let's define
-// a simple geometry with an analytical mesh size field:
+// We have seen in tutorials `t3.geo' and `t6.geo' that extruded and transfinite
+// meshes can be "recombined" into quads/prisms/hexahedra by using the
+// "Recombine" keyword. Unstructured meshes can be recombined in the same
+// way. Let's define a simple geometry with an analytical mesh size field:
 
 Point(1) = {-1.25, -.5, 0}; Point(2) = {1.25, -.5, 0};
 Point(3) = {1.25, 1.25, 0};  Point(4) = {-1.25, 1.25, 0};
@@ -26,7 +26,7 @@ Background Field = 1;
 // To generate quadrangles instead of triangles, we can simply add
 Recombine Surface{100};
 
-// If we'd had several surfaces, we could have used 'Recombine Surface {:};'.
+// If we'd had several surfaces, we could have used `Recombine Surface {:};'.
 // Yet another way would be to specify the global option "Mesh.RecombineAll =
 // 1;".
 
@@ -54,7 +54,7 @@ Recombine Surface{100};
 // to generate full-quad meshes, you can either subdivide the resulting hybrid
 // mesh (with Mesh.SubdivisionAlgorithm = 1), or use the full-quad recombination
 // algorithm, which will automatically perform a coarser mesh followed by
-// recombination, smoothing and subdivision. Uncomment the following line to
-// try the full-quad algorithm:
+// recombination, smoothing and subdivision. Uncomment the following line to try
+// the full-quad algorithm:
 //
 // Mesh.RecombinationAlgorithm = 2; // or 3

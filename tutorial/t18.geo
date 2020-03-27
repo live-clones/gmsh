@@ -27,11 +27,11 @@ Periodic Surface {2} = {1} Translate {1, 0, 0};
 
 // During mesh generation, the mesh on surface 2 will be created by copying the
 // mesh from surface 1.  Periodicity constraints can be specified with a
-// `Translation', a `Rotation' or a general `Affine' tranform.
+// `Translation', a `Rotation' or a general `Affine' transform.
 
 // For more complicated cases, finding the corresponding surfaces by hand can be
 // tedious, especially when geometries are created through solid
-// modelling. Let's contruct a slightly more complicated geometry.
+// modelling. Let's construct a slightly more complicated geometry.
 
 // We start with a cube and some spheres:
 Box(10) = {2, 0, 0, 1, 1, 1};

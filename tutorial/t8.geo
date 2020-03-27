@@ -104,7 +104,7 @@ For num In {1:3}
     // Sleep for 0.01 second
     Sleep 0.01;
 
-    // Draw the scene (one could use DrawForceChanged instead to force the
+    // Draw the scene (one could use `DrawForceChanged' instead to force the
     // reconstruction of the vertex arrays, e.g. if changing element clipping)
     Draw;
 

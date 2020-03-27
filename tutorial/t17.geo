@@ -6,7 +6,7 @@
  *
  *******************************************************************************/
 
-// Characteristic lengths can be specified very accuractely by providing a
+// Characteristic lengths can be specified very accurately by providing a
 // background mesh, i.e., a post-processing view that contains the target mesh
 // sizes.
 

@@ -14,7 +14,7 @@
 // at mesh generation time Gmsh
 //  1. meshes the underlying elementary geometrical entities, individually
 //  2. creates a discrete entity that combines all the individual meshes
-//  3. computes a discrete parametrization (i.e. a piecewise linear mapping)
+//  3. computes a discrete parametrization (i.e. a piece-wise linear mapping)
 //     on this discrete entity
 //  4. meshes the discrete entity using this discrete parametrization instead
 //     of the underlying geometrical description of the underlying elementary
@@ -26,14 +26,14 @@
 // combination of the individual meshes can be reparametrized, i.e. if the shape
 // is "simple enough". If the shape is not amenable to reparametrization, you
 // should create a full mesh of the geometry and first re-classify it to
-// generate patches amenable to reparametrization (see t13.geo).
+// generate patches amenable to reparametrization (see `t13.geo').
 
 // The mesh of the individual entities performed in Step 1. should usually be
 // finer than the desired final mesh; this can be controlled with the
-// Mesh.CompoundCharacteristicLengthFactor option.
+// `Mesh.CompoundCharacteristicLengthFactor' option.
 
 // The optional reclassification on the underlying elementary entities in Step
-// 5. is governed by the Mesh.CompoundClassify option.
+// 5. is governed by the `Mesh.CompoundClassify' option.
 
 lc = 0.1;
 

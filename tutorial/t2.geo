@@ -17,7 +17,7 @@ Include "t1.geo";
 Point(5) = {0, .4, 0, lc};
 Line(5) = {4, 5};
 
-// But Gmsh also provides tools to tranform (translate, rotate, etc.)
+// But Gmsh also provides tools to transform (translate, rotate, etc.)
 // elementary entities or copies of elementary entities. For example, the point
 // 3 can be moved by 0.05 to the left with:
 
@@ -40,7 +40,7 @@ Plane Surface(11) = {10};
 
 // To automate the workflow, instead of using the graphical user interface to
 // obtain the tags of newly created entities, one can use the return value of
-// the transformation commands directly. For example, the Translate command
+// the transformation commands directly. For example, the `Translate' command
 // returns a list containing the tags of the translated entities. Let's
 // translate copies of the two surfaces 6 and 11 to the right with the following
 // command:
@@ -82,7 +82,7 @@ Surface Loop(128) = {127, 119, 121, 123, 125, 11};
 Volume(129) = {128};
 
 // When a volume can be extruded from a surface, it is usually easier to use the
-// Extrude command directly instead of creating all the points, curves and
+// `Extrude' command directly instead of creating all the points, curves and
 // surfaces by hand. For example, the following command extrudes the surface 11
 // along the z axis and automatically creates a new volume (as well as all the
 // needed points, curves and surfaces):
@@ -118,8 +118,9 @@ Physical Volume("The volume", 1) = {129,130};
 //
 // in the script. (OpenCASCADE geometries can also be exported to STEP.)
 
-// It is important to note that Gmsh never translate geometry data into a common
-// representation: all the operations on a geometrical entity are performed
-// natively with the associated geometry kernel. Consequently, one cannot export
-// a geometry constructed with the built-in kernel as an OpenCASCADE BRep
-// file; or export an OpenCASCADE model as an Unrolled GEO file.
+// It is important to note that Gmsh never translates geometry data into a
+// common representation: all the operations on a geometrical entity are
+// performed natively with the associated geometry kernel. Consequently, one
+// cannot export a geometry constructed with the built-in kernel as an
+// OpenCASCADE BRep file; or export an OpenCASCADE model as an Unrolled GEO
+// file.

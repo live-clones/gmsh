@@ -12,7 +12,7 @@
 
 SetFactory("OpenCASCADE");
 
-// And let's build the same model as in t5.geo, but using constructive solid
+// And let's build the same model as in `t5.geo', but using constructive solid
 // geometry.
 
 // We first create two cubes:
@@ -44,7 +44,7 @@ v() = BooleanFragments{ Volume{3}; Delete; }{ Volume{3 + 1 : 3 + 5}; Delete; };
 // When the boolean operation leads to simple modifications of entities, and if
 // you delete the original entities with `Delete', Gmsh tries assign the same
 // tag to the new entities. This is governed by the
-// Geometry.OCCBooleanPreserveNumbering option.
+// `Geometry.OCCBooleanPreserveNumbering' option.
 
 // Here the `Physical Volume' definitions given above will thus still work, as
 // the five spheres (volumes 4, 5, 6, 7 and 8), which will be deleted by the
@@ -52,7 +52,7 @@ v() = BooleanFragments{ Volume{3}; Delete; }{ Volume{3 + 1 : 3 + 5}; Delete; };
 // with the same tags.
 
 // The tag of the cube will change though, so we need to access it
-// programatically:
+// programmatically:
 Physical Volume(10) = v(#v()-1);
 
 // Creating entities using constructive solid geometry is very powerful, but can

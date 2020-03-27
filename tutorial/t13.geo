@@ -17,7 +17,7 @@ angle = DefineNumber[40, Min 20, Max 120, Step 1,
 
 // For complex geometries, patches can be too complex, too elongated or too
 // large to be parametrized; setting the following option will force the
-// creation of pacthes that are amenable to reparametrization:
+// creation of patches that are amenable to reparametrization:
 forceParametrizablePatches = DefineNumber[0, Choices{0,1},
   Name "Parameters/Create surfaces guaranteed to be parametrizable"];
 
@@ -34,8 +34,8 @@ ClassifySurfaces{angle * Pi/180, includeBoundary, forceParametrizablePatches,
 // computing a parametrization for each one
 CreateGeometry;
 
-// In batch mode the two steps above can be performed with "gmsh t13.stl
-// -reparam 40", which will save "t13.msh" containing the parametrizations, and
+// In batch mode the two steps above can be performed with `gmsh t13.stl
+// -reparam 40', which will save `t13.msh' containing the parametrizations, and
 // which can thus subsequently be remeshed.
 
 // Create a volume as usual
