@@ -49,6 +49,10 @@ Sphere(18) = {x+1, y+1, z+1, 0.35};
 // protruding outside the cube:
 v() = BooleanFragments { Volume{10}; Delete; }{ Volume{11:18}; Delete; };
 
+// Ask OpenCASCADE to compute more accurate bounding boxes of entities using the
+// STL mesh:
+Geometry.OCCBoundsUseStl = 1;
+
 // We then retrieve all the volumes in the bounding box of the original cube,
 // and delete all the parts outside it:
 eps = 1e-3;
