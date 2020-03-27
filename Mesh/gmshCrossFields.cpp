@@ -6136,6 +6136,21 @@ int simplifyQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
 
 /* smooth the current quad mesh geometry */
 int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& state) {
+  { /* Input verification */
+    bool have_triangles = false;
+    bool have_quads = false;
+    std::vector<GFace *> f;
+    getFacesOfTheModel(gm, f);
+    for(size_t i = 0; i < f.size(); i++) {
+      if (f[i]->triangles.size() > 0) have_triangles = true;
+      if (f[i]->quadrangles.size() > 0) have_quads = true;
+    }
+    if (have_triangles || !have_quads) {
+      Msg::Error("Input model '%s' is not a quadrangulation", gm->getName().c_str());
+      return -1;
+    }
+  }
+
 #if defined(HAVE_QUADMESHINGTOOLS)
   QMT::BoundaryProjector* projector = NULL;
   if (state.data_boundary_projector != NULL) {
