@@ -1,10 +1,10 @@
-/*********************************************************************
+/*******************************************************************************
  *
- *  Gmsh tutorial 5
+ *  Gmsh GEO tutorial 5
  *
  *  Characteristic lengths, arrays of variables, macros, loops
  *
- *********************************************************************/
+ *******************************************************************************/
 
 // We start by defining some target mesh sizes:
 
@@ -19,13 +19,13 @@ lcar3 = .055;
 //
 // > gmsh t5.geo -clscale 1
 //
-// this input file produces a mesh of approximately 1,300 nodes and 11,000
+// this input file produces a mesh of approximately 3000 nodes and 14,000
 // tetrahedra. With
 //
 // > gmsh t5.geo -clscale 0.2
 //
-// the mesh counts approximately 350,000 nodes and 2.1 million tetrahedra. You
-// can check mesh statistics in the graphical user interface with the
+// the mesh counts approximately 231,000 nodes and 1,360,000 tetrahedra. You can
+// check mesh statistics in the graphical user interface with the
 // `Tools->Statistics' menu.
 
 // We proceed by defining some elementary entities describing a truncated cube:
@@ -158,6 +158,15 @@ Physical Volume (10) = 186 ;
 // Hide {:}
 // Recursive Show { Volume{129}; }
 // Mesh.MeshOnlyVisible=1;
+
+// Meshing algorithms can changed globally using options:
+
+Mesh.Algorithm = 6; // 2D algorithm set to Frontal-Delaunay
+Mesh.Algorithm3D = 1; // 3D algorithm set to Delaunay
+
+// They can also be set for individual surfaces, e.g.
+
+MeshAlgorithm Surface {31, 35} = 1; // MeshAdapt on surfaces 31 and 35
 
 // To generate a curvilinear mesh and optimize it to produce provably valid
 // curved elements (see A. Johnen, J.-F. Remacle and C. Geuzaine. Geometric

@@ -1,10 +1,10 @@
-/*********************************************************************
+/*******************************************************************************
  *
- *  Gmsh tutorial 3
+ *  Gmsh GEO tutorial 3
  *
  *  Extruded meshes, parameters, options
  *
- *********************************************************************/
+ *******************************************************************************/
 
 // Again, we start by including the first tutorial:
 
@@ -31,14 +31,33 @@ Extrude { {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
   Surface{28}; Layers{7}; Recombine;
 }
 
+// Using the built-in geometry kernel, only rotations with angles < Pi are
+// supported. To do a full turn, you will thus need to apply at least 3
+// rotations. The OpenCASCADE geometry kernel does not have this limitation.
+
 // Note that a translation ({-2*h,0,0}) and a rotation ({1,0,0}, {0,0.15,0.25},
-// Pi/2) can also be combined. Here the angle is specified as a 'parameter',
-// using the 'DefineConstant' syntax.  This parameter can be modified
-// insteractively in the GUI, and can be exchanged with other codes using the
-// ONELAB framework:
+// Pi/2) can also be combined to form a "twist". Here the angle is specified as
+// a 'parameter', using the 'DefineConstant' syntax.  This parameter can be
+// modified insteractively in the GUI, and can be exchanged with other codes
+// connected to the same ONELAB server:
 
 DefineConstant[ angle = {90, Min 0, Max 120, Step 1,
                          Name "Parameters/Twisting angle"} ];
+
+// In more details, `DefineConstant' allows you to assign the value of the
+// ONELAB parameter "Parameters/Twisting angle" the variable `angle'. If the
+// ONELAB variable does not exist, it will create it and assign the default
+// value `90'. Moreover, if the variable angle was defined before the call to
+// `DefineConstant', the `DefineConstant' call would simply be skipped. This
+// allows to build generic parametric models, whose parameters can be fixed from
+// the outside - the parameters ceasing to be parameters.
+//
+// An interesting use of this feature is in conjunction with the `-setnumber
+// name value' command line switch, which defines a variable `name' with value
+// `value'. Calling `gmsh t2.geo -setnumber angle 30' would define `angle'
+// before the `DefineConstant', making `t2.geo' non-parametric
+// ("Parameters/Twisting angle" will not be created in the ONELAB database and
+// will not be available for modification in the graphical user interface).
 
 out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , angle * Pi / 180 } {
   Surface{50}; Layers{10}; Recombine;

@@ -1,10 +1,10 @@
-/*********************************************************************
+/*******************************************************************************
  *
- *  Gmsh tutorial 4
+ *  Gmsh GEO tutorial 4
  *
  *  Built-in functions, surface holes, annotations, mesh colors
  *
- *********************************************************************/
+ *******************************************************************************/
 
 // As usual, we start by defining some variables:
 
@@ -54,22 +54,22 @@ Circle(3) = {14,15,16};
 // Note that, in Gmsh, circle arcs should always be smaller than Pi. We can then
 // define additional lines and circles, as well as a new surface:
 
-Line(4)  = {14,13}; Line(5)   = {13,12};  Line(6)  = {12,11};
-Line(7)  = {11,10}; Circle(8) = {8,9,10}; Line(9)  = {8,7};
-Line(10) = {7,6};   Line(11)  = {6,5};    Circle(12) = {3,4,5};
-Line(13) = {3,2};   Line(14)  = {2,1};    Line(15) = {18,19};
-Circle(16) = {21,20,24}; Circle(17) = {24,20,19};
-Circle(18) = {18,23,25}; Circle(19) = {25,23,22};
+Line(4)  = {14, 13}; Line(5)   = {13, 12};   Line(6)    = {12, 11};
+Line(7)  = {11, 10}; Circle(8) = {8, 9, 10}; Line(9)    = {8, 7};
+Line(10) = {7, 6};   Line(11)  = {6, 5};     Circle(12) = {3, 4, 5};
+Line(13) = {3, 2};   Line(14)  = {2, 1};     Line(15)   = {18, 19};
+Circle(16) = {21, 20, 24}; Circle(17) = {24, 20, 19};
+Circle(18) = {18, 23, 25}; Circle(19) = {25, 23, 22};
 Line(20) = {21,22};
 
-Curve Loop(21) = {17,-15,18,19,-20,16};
+Curve Loop(21) = {17, -15, 18, 19, -20, 16};
 Plane Surface(22) = {21};
 
 // But we still need to define the exterior surface. Since this surface has a
 // hole, its definition now requires two curves loops:
 
-Curve Loop(23) = {11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10};
-Plane Surface(24) = {23,21};
+Curve Loop(23) = {11, -12, 13, 14, 1, 2, -3, 4, 5, 6, 7, -8, 9, 10};
+Plane Surface(24) = {23, 21};
 
 // As a general rule, if a surface has N holes, it is defined by N+1 curve loops:
 // the first loop defines the exterior boundary; the other loops define the
@@ -105,7 +105,14 @@ View "comments" {
   T2(350, -7, 0){ "file://t4_image.png@20x0" };
 };
 
-// Views and geometrical entities can be made to respond to double-click events:
+// This post-processing view is in the "parsed" format, i.e. it is interpreted
+// using the same parser as the .geo file. For large post-processing datasets,
+// that contain actual field values defined on a mesh, you should use the MSH
+// file format, which allows to store continuous or discontinuous scalar, vector
+// and tensor fields, or arbitrary polynomial order, directly on the mesh.
+
+// Views and geometrical entities can be made to respond to double-click events,
+// here to print some messages to the console:
 
 View[0].DoubleClickedCommand = "Printf('View[0] has been double-clicked!');";
 Geometry.DoubleClickedLineCommand = "Printf('Curve %g has been double-clicked!',

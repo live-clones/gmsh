@@ -1,16 +1,18 @@
-/*********************************************************************
+/*******************************************************************************
  *
- *  Gmsh tutorial 17
+ *  Gmsh GEO tutorial 17
  *
  *  Anisotropic background mesh
  *
- *********************************************************************/
+ *******************************************************************************/
 
 // Characteristic lengths can be specified very accuractely by providing a
 // background mesh, i.e., a post-processing view that contains the target mesh
-// sizes. Here, the background mesh is represented as a metric tensor field
-// defined on a square. One should use bamg as 2d mesh generator to enable
-// anisotropic meshes in 2D.
+// sizes.
+
+// Here, the background mesh is represented as a metric tensor field defined on
+// a square. One should use bamg as 2d mesh generator to enable anisotropic
+// meshes in 2D.
 
 SetFactory("OpenCASCADE");
 

@@ -1,10 +1,10 @@
-/*********************************************************************
+/*******************************************************************************
  *
- *  Gmsh tutorial 14
+ *  Gmsh GEO tutorial 14
  *
  *  Homology and cohomology computation
  *
- *********************************************************************/
+ *******************************************************************************/
 
 // Homology computation in Gmsh finds representative chains of (relative)
 // (co)homology space bases using a mesh of a model.  The representative basis

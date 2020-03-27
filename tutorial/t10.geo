@@ -1,14 +1,14 @@
-/*********************************************************************
+/*******************************************************************************
  *
- *  Gmsh tutorial 10
+ *  Gmsh GEO tutorial 10
  *
  *  General mesh size fields
  *
- *********************************************************************/
+ *******************************************************************************/
 
-// In addition to specifying target mesh sizes at the points of the
-// geometry (see t1) or using a background mesh (see t7), you can use
-// general mesh size "Fields".
+// In addition to specifying target mesh sizes at the points of the geometry
+// (see t1) or using a background mesh (see t7), you can use general mesh size
+// "Fields".
 
 // Let's create a simple rectangular geometry
 lc = .15;
