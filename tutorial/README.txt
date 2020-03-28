@@ -10,7 +10,7 @@ mode).
 Binary versions of the Gmsh app for Windows, Linux and macOS can be downloaded
 from http://gmsh.info. Several Linux distributions also ship the Gmsh app. See
 the top-level `README.txt' file in the Gmsh source code for instructions on how
-compile the app from source.
+to compile the app from source.
 
 The `c++', `c', `python' and `julia' subdirectories contain C++, C, Python and
 Julia versions of (some of these) tutorials, written using the Gmsh Application
