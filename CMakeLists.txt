@@ -2085,9 +2085,9 @@ if(NOT DISABLE_GMSH_TESTS)
   file(GLOB_RECURSE TESTFILES
        tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
        benchmarks/occ/*.geo)
-  # disable this on our Linux32 machine - the current config crashes on the
-  # OCC STL generation
-  if(NOT ${GMSH_OS} MATCHES "Linux32")
+  # disable this test for now on our Linux32 machine - the current config
+  # crashes on the OCC STL generation
+  if(${GMSH_OS} MATCHES "Linux32")
     list(REMOVE_ITEM TESTFILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/t18.geo)
   endif()
   foreach(TESTFILE ${TESTFILES})

@@ -5141,6 +5141,7 @@ system}. Screencasts that show how to use the GUI are available on
 * t16.geo:: Constructive Solid Geometry, OpenCASCADE geometry kernel
 * t17.geo:: Anisotropic background mesh
 * t18.geo:: Periodic meshes
+* t19.geo:: Thrusections, fillets, pipes, mesh size from curvature
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5334,11 +5335,22 @@ system}. Screencasts that show how to use the GUI are available on
 @c t18.geo
 @c -------------------------------------------------------------------------
 
-@node t18.geo,  , t17.geo, Tutorial
+@node t18.geo, t19.geo, t17.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t18.geo,t18.geo}
 
 @smallformat
 @verbatiminclude ../../tutorial/t18.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t19.geo
+@c -------------------------------------------------------------------------
+
+@node t19.geo,  , t18.geo, Tutorial
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t19.geo,t19.geo}
+
+@smallformat
+@verbatiminclude ../../tutorial/t19.geo
 @end smallformat
 
 @c =========================================================================
