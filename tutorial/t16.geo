@@ -42,11 +42,11 @@ EndFor
 v() = BooleanFragments{ Volume{3}; Delete; }{ Volume{3 + 1 : 3 + 5}; Delete; };
 
 // When the boolean operation leads to simple modifications of entities, and if
-// you delete the original entities with `Delete', Gmsh tries assign the same
-// tag to the new entities. This is governed by the
-// `Geometry.OCCBooleanPreserveNumbering' option.
+// one deletes the original entities with `Delete', Gmsh tries to assign the 
+// same tag to the new entities. (This behavior is governed by the
+// `Geometry.OCCBooleanPreserveNumbering' option.)
 
-// Here the `Physical Volume' definitions given above will thus still work, as
+// Here the `Physical Volume' definitions made above will thus still work, as
 // the five spheres (volumes 4, 5, 6, 7 and 8), which will be deleted by the
 // fragment operations, will be recreated identically (albeit with new surfaces)
 // with the same tags.
@@ -59,8 +59,8 @@ Physical Volume(10) = v(#v()-1);
 // lead to small pratical issues for e.g. setting mesh sizes at points, or
 // identifying boundaries.
 
-// To set mesh sizes at the points of the model you can take advantage of the
-// `PointfOf' (a special case of the more general `Boundary' command) and the
+// To identify point or other bounding entities you can take advantage of the
+// `PointfsOf' (a special case of the more general `Boundary' command) and the
 // `In BoundingBox' commands.
 lcar1 = .1;
 lcar2 = .0005;
@@ -73,7 +73,7 @@ Characteristic Length{ PointsOf{ Volume{:}; } } = lcar1;
 // Override this constraint on the points of the five spheres:
 Characteristic Length{ PointsOf{ Volume{3 + 1 : 3 + 5}; } } = lcar3;
 
-// Select the corner point by searching for points geometrically:
+// Select the corner point by searching for it geometrically:
 p() = Point In BoundingBox{0.5-eps, 0.5-eps, 0.5-eps,
                            0.5+eps, 0.5+eps, 0.5+eps};
 Characteristic Length{ p() } = lcar2;
