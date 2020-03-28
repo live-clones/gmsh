@@ -93,6 +93,7 @@ namespace QMT {
    *                    nbSteps = 4 is a good trade-off.
    * @param[in,out] edge_to_angle If not NULL, the function will fill the map with the cross angle (relative to the edge vector)
    *                              for each edge [v1,v2] (with v1 < v2) of the triangulation.
+   * @param[in] bc_expansion_layers If non-zero, expand Dirichlet boundary conditions to adjacent layers of edges.
    * @warning this function calls the gmsh API
    * @return True if the computation succeed
    */
@@ -100,7 +101,8 @@ namespace QMT {
       const std::string& meshName,
       int& crossFieldTag,
       int nbSteps = 4,
-      std::map<std::pair<size_t,size_t>,double>* edge_to_angle = NULL);
+      std::map<std::pair<size_t,size_t>,double>* edge_to_angle = NULL,
+      int bc_expansion_layers = 0);
 
 
   /**

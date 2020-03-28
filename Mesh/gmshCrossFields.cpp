@@ -5473,7 +5473,7 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     PView* theta = PView::getViewByName("theta");
     if (theta) {delete theta; theta = NULL;}
 
-    bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,NULL);
+    bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,NULL,opt.cross_field_bc_expansion);
     if (!okcf) {
       Msg::Error("Failed to compute cross field");
       return -1;

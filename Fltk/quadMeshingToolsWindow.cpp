@@ -34,6 +34,7 @@ static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 {
   QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
   opt.cross_field_iter = FlGui::instance()->quadmeshingtools->flv_cross_field_iter->value();
+  opt.cross_field_bc_expansion = FlGui::instance()->quadmeshingtools->flv_bc_expansion->value();
   opt.cross_field_use_prescribed_if_available = FlGui::instance()->quadmeshingtools->check_cf_use_prescribed->value();
   QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
   int status = computeCrossField(GModel::current(), opt, state);
@@ -160,10 +161,7 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     // y += BH;
     Fl_Box *b = new Fl_Box(x - WB, y, width, BH, "Cross field computation");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-    y += BH;
-
-    push_crossfield_gen = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Compute");
-    push_crossfield_gen->callback(qmt_crossfield_generate_cb);
+    y += BH; /* ---------------------------- new line ---------------------------------*/
 
     flv_cross_field_iter = new Fl_Value_Input(x, y, IW, BH, "Diffusion/projection steps");
     flv_cross_field_iter->minimum(1);
@@ -171,8 +169,19 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     if(CTX::instance()->inputScrolling) flv_cross_field_iter->step(1);
     flv_cross_field_iter->align(FL_ALIGN_RIGHT);
     flv_cross_field_iter->value(opt->cross_field_iter);
+    y += BH; /* ---------------------------- new line ---------------------------------*/
 
-    y += BH;
+    flv_bc_expansion = new Fl_Value_Input(x, y, IW, BH, "Boundary repulsion");
+    flv_bc_expansion->minimum(0);
+    flv_bc_expansion->maximum(10);
+    if(CTX::instance()->inputScrolling) flv_bc_expansion->step(1);
+    flv_bc_expansion->align(FL_ALIGN_RIGHT);
+    flv_bc_expansion->value(opt->cross_field_bc_expansion);
+
+    push_crossfield_gen = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Compute");
+    push_crossfield_gen->callback(qmt_crossfield_generate_cb);
+
+    y += BH; /* ---------------------------- new line ---------------------------------*/
     check_cf_use_prescribed = new Fl_Check_Button(x, y, width - 4 * WB, BH, "Use prescribed singularities (if available)");
     check_cf_use_prescribed->type(FL_TOGGLE_BUTTON);
     check_cf_use_prescribed->value(opt->cross_field_use_prescribed_if_available);

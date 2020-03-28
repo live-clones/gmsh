@@ -28,6 +28,7 @@ int computeCrossFieldAndH(GModel *gm,
 struct QuadMeshingOptions {
   bool cross_field_use_prescribed_if_available = true;
   int cross_field_iter        = 6;
+  int cross_field_bc_expansion = 0;
   double simplify_size_factor = 0.9;
   int smoothing_explicit_iter = 100;
   std::string model_cut = "cut";

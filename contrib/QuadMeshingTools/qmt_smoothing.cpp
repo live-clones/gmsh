@@ -215,7 +215,7 @@ namespace QMT {
         F(k,8) stencils[8*v+k] = orderedVertices[k];
       } else if (v2quads[v].size() == 2) { // TODO: do the same for feature curves !
         if (M.entity[v].first != 1) { /* Valence 2 but not on curve ? */
-          int dim = 1;
+          int dim = 1; /* look for closest curve */
           int tag = -1;
           double dist;
           bool okc = projector->closestEntity({M.points[v]}, dist, dim, tag);

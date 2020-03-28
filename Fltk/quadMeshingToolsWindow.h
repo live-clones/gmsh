@@ -39,6 +39,7 @@ public:
   Fl_Button *push_quad_smooth;
   Fl_Check_Button *check_cf_use_prescribed;
   Fl_Value_Input* flv_cross_field_iter;
+  Fl_Value_Input* flv_bc_expansion;
   Fl_Value_Input* flv_simplify_factor;
   Fl_Value_Input* flv_smoothing_iter; 
   Fl_Input* fli_name_cut;

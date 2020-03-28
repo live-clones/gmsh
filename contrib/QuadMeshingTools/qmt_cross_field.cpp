@@ -507,6 +507,7 @@ namespace QMT {
   }
 
   // TODO: verify this function, not sure if it works (see qmt cross field on smile2 model)
+  // -> fixed by checking edge v1 < v2 or v2 > v1 and changing angle sign ?
   bool create_scaled_cross_field_view(const std::string& meshName, 
       int tagCrossField, int tagH, bool viewIsModelData, 
       const std::string& viewName, int& viewTag) {
@@ -601,9 +602,18 @@ namespace QMT {
           }
           F(le,3) {
             id ue = old2IEdge[3*f+le];
-            double val = data[f][le];
             if (ue2theta[ue] == DBL_MAX) {
-              ue2theta[ue] = val;
+              id2 tri_edge = {M.triangles[f][le],M.triangles[f][(le+1)%3]};
+              id2 glo_edge = uIEdges[ue];
+              double val = data[f][le];
+              if (tri_edge == glo_edge) {
+                ue2theta[ue] = val;
+              } else if (tri_edge[0] == glo_edge[1] && tri_edge[1] == glo_edge[0]) {
+                ue2theta[ue] = -val;
+              } else {
+                error("global edge and triangle edge are not matching: {} - {}", tri_edge, glo_edge);
+                return -1;
+              }
             }
           }
         }
@@ -665,11 +675,111 @@ namespace QMT {
     return length(ma-mi);
   }
 
+  bool expand_dirichlet_boundary_conditions(
+      const TMesh& M,
+      const vector<id2>& uIEdges,
+      const vector<id>& old2IEdge,
+      const vector<vector<id>>& uIEdgeToOld,
+      size_t nb_layers,
+      vector<bool>& dirichletEdge,
+      vector<vec2>& dirichletValue) {
+    /* Look for expanded BC edges */
+    vector<bool> extDirichletEdge = dirichletEdge;
+    vector<id> new_edges;
+    F(layer,nb_layers) {
+      FC(e,uIEdges.size(),extDirichletEdge[e]) {
+        F(i,uIEdgeToOld[e].size()) {
+          id t = uIEdgeToOld[e][i] / 3;
+          F(le,3) {
+            id oe2 = 3*t+le;
+            id e2 = old2IEdge[oe2];
+            if (!extDirichletEdge[e2]) {
+              new_edges.push_back(e2);
+            }
+          }
+        }
+      }
+      sort_unique(new_edges);
+      F(i,new_edges.size()) extDirichletEdge[new_edges[i]] = true;
+    }
+    if (new_edges.size() == 0) {
+      warn("no new edges to expand dirichlet boundary conditions");
+      return false;
+    }
+    info("Dirichlet B.C. expansion: added {} edges (for {} layers)", new_edges.size(), nb_layers);
+
+    /* Small system for BC expansion */
+    vector<IJV> K_coefs;
+    F(k,new_edges.size()) {
+      id e = new_edges[k];
+      vector<IV> iv;
+      vector<IJV> ijv;
+      bool oks = stiffness_coefficient(M, e, uIEdges, old2IEdge, uIEdgeToOld, iv, ijv);
+      if (!oks || iv.size() != 2 || iv[0].i != 2*e || iv[1].i != 2*e+1) {
+        error("failed to get stiffness coefficients for edge e = {}", e);
+        return false;
+      }
+      /* Add coefficients for interaction i-j of edges in extDirichletEdge */
+      FC(l,ijv.size(),extDirichletEdge[ijv[l].ij[1]/2]) K_coefs.push_back(ijv[l]);
+    }
+    vector<IV> K_diag;
+    vector<vector<size_t>> A_col(2*uIEdges.size());
+    vector<vector<double>> A_coef(2*uIEdges.size());
+    bool okp = prepare_system(K_diag, K_coefs, A_col, A_coef);
+    if (!okp) {
+      error("failed to prepare system");
+      return false;
+    }
+
+    /* Explicit solver (local smoothing) */
+    FC(e,uIEdges.size(),extDirichletEdge[e] && !dirichletEdge[e]) {
+      dirichletValue[e] = {0.,0.};
+    }
+    constexpr double EPS = 1.e-14;
+    F(iter,nb_layers*10) {
+      FC(e,uIEdges.size(),extDirichletEdge[e] && !dirichletEdge[e]) {
+        // if (iter == 0) { DBG("---"); DBG(iter,e); }
+        F(d,2) {
+          id i = 2*e+d;
+          dirichletValue[e][d] = 0.;
+          // if (iter == 0) { DBG(" ", d,i); }
+          F(l,A_col[i].size()) {
+            id j = A_col[i][l];
+            if (!extDirichletEdge[j/2]) continue;
+            // if (length(dirichletValue[j/2]) < 0.1) continue;
+            double w = A_coef[i][l];
+            dirichletValue[e][d] += -1. * w * dirichletValue[j/2][j%2];
+            // if (iter == 0) { DBG("   ", l, j, w, dirichletValue[j/2][j%2]); }
+          }
+          // dirichletValue[e][d] /= sum;
+          // if (iter == 0) { DBG(" =>", dirichletValue[e][d]); }
+        }
+        double n2 = length(dirichletValue[e]);
+        if (n2 < EPS) {
+          continue;
+          // error("cannot project ! n2 = {}, dirichletValue[e] = {},{}", n2, dirichletValue[e][0], dirichletValue[e][1]);
+          // return false;
+        }
+        dirichletValue[e][0] /= n2;
+        dirichletValue[e][1] /= n2;
+        // if (iter == 0) DBG("=>",n2,dirichletValue[e][0],dirichletValue[e][1]);
+      }
+    }
+
+    /* Set expanded edges as Dirichlet edges */
+    FC(e,uIEdges.size(),extDirichletEdge[e] && !dirichletEdge[e] && length(dirichletValue[e]) > EPS) {
+      dirichletEdge[e] = true;
+    }
+
+    return true;
+  }
+
   bool compute_cross_field_with_heat(
       const std::string& meshName,
       int& crossFieldTag,
       int nbIter,
-      std::map<std::pair<size_t,size_t>,double>* edge_to_angle) {
+      std::map<std::pair<size_t,size_t>,double>* edge_to_angle,
+      int bc_expansion_layers) {
     if (!QMT_CF_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_CF_Utils::global_gmsh_initialized = true;
@@ -699,11 +809,18 @@ namespace QMT {
       return false;
     }
 
+    /* System unknowns: cos(4t),sin(4t) for each edge */
+    vector<double> x(2*uIEdges.size(),0.);
 
+    /* Initial Dirichlet boundary conditions 
+     * alignement of crosses with edges (relative angle = 0) 
+     * theta_e = 0 => (cos4t/sin4t) = (1,0) */
     size_t nbc = 0;
     vector<bool> dirichletEdge(uIEdges.size(),false);
+    vector<vec2> dirichletValue(uIEdges.size(),{1.,0.});
     FC(e,uIEdges.size(),uIEdgeToOld[e].size() != 2) {
       dirichletEdge[e] = true;
+      dirichletValue[e] = {1.,0.};
       nbc += 1;
     }
     F(l,M.lines.size()) { /* mark the lines as boundary conditions */
@@ -712,11 +829,26 @@ namespace QMT {
       if (it != uIEdges.end()) {
         id e = id(it - uIEdges.begin());
         dirichletEdge[e] = true;
+        dirichletValue[e] = {1.,0.};
         nbc += 1;
       }
     }
     info("boundary conditions: {} crosses fixed on edges", nbc);
 
+    bool DBG_AVOID_SOLVE = false;
+    if (bc_expansion_layers > 0) {
+      bool oke = expand_dirichlet_boundary_conditions(M, uIEdges, old2IEdge, uIEdgeToOld, bc_expansion_layers, dirichletEdge, dirichletValue);
+      if (!oke) {
+        warn("failed to expand dirichlet boundary conditions");
+      }
+      F(e,uIEdges.size()) { 
+        x[2*e+0] = dirichletValue[e][0];
+        x[2*e+1] = dirichletValue[e][1];
+      }
+      // DBG_AVOID_SOLVE = true;
+    }
+
+    if (!DBG_AVOID_SOLVE) {
     info("compute stiffness matrix coefficients (Crouzeix-Raviart) ...");
     vector<IV> K_diag;
     vector<IJV> K_coefs;
@@ -738,11 +870,10 @@ namespace QMT {
         Mass[2*e+0] = 1./3 * (area1 + area2);
         Mass[2*e+1] = 1./3 * (area1 + area2);
       } else { /* Dirichlet BC */
-        /* theta_e = 0 => (cos4t/sin4t) = (1,0) */
         K_diag.push_back({id(2*e+0),1.});
-        rhs[2*e+0] = 1.;
+        rhs[2*e+0] = dirichletValue[e][0];
         K_diag.push_back({id(2*e+1),1.});
-        rhs[2*e+1] = 0.;
+        rhs[2*e+1] = dirichletValue[e][1];
         if (DBG_VERBOSE) {
           info(" dirichlet: x[{}]={} (edge {}, p1={}, p2 = {}])",2*e,1.,e,M.points[uIEdges[e][0]],M.points[uIEdges[e][1]]);
           info(" dirichlet: x[{}]={} (edge {})",2*e+1,0.,e);
@@ -767,7 +898,6 @@ namespace QMT {
     /* prepare system */
     vector<vector<size_t>> K_columns(2*uIEdges.size());
     vector<vector<double>> K_values(2*uIEdges.size());
-    vector<double> x(2*uIEdges.size(),0.);
     {
       bool okp = prepare_system(K_diag, K_coefs, K_columns, K_values);
       if (!okp) {
@@ -780,9 +910,9 @@ namespace QMT {
     double dtFinal = (3.*emin)*(3.*emin);
     info("heat diffusion and projection loop ({} steps, {} unknowns, dt = {} .. {}) ...", nbIter, 2*uIEdges.size(),dtInitial, dtFinal);
     double wti = gmsh::logger::getWallTime();
-    F(e,uIEdges.size()) { /* constant cross field at initialization */
-      x[2*e+0] = 1.;
-      x[2*e+1] = 0.;
+    F(e,uIEdges.size()) { 
+      x[2*e+0] = dirichletValue[e][0];
+      x[2*e+1] = dirichletValue[e][1];
     }
 
     vector<double> steps;
@@ -914,6 +1044,7 @@ namespace QMT {
         (*edge_to_angle)[std::make_pair(uIEdges[e][0],uIEdges[e][1])] = theta;
       }
     }
+    } /* END OF DBG_AVOID_SOLVE */
 
     { /* create the theta view */
       std::string cname;

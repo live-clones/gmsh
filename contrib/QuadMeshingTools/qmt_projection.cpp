@@ -580,6 +580,7 @@ namespace QMT {
     constexpr double EPS = 1.e-12;
     dist = DBL_MAX;
     double d2min = DBL_MAX;
+    int initDim = dim;
     tag = -1;
     dim = -1;
 
@@ -596,7 +597,7 @@ namespace QMT {
         tag = i;
       }
     }
-    if (dim == 0 && d2min < EPS) {
+    if (dim == 0 && (initDim == 0 || d2min < EPS)) {
       dist = std::sqrt(d2min);
       return true;
     }
@@ -614,7 +615,7 @@ namespace QMT {
         tag = i;
       }
     }
-    if (dim == 1 && d2min < EPS) {
+    if (dim == 1 && (initDim == 1 || d2min < EPS)) {
       dist = std::sqrt(d2min);
       return true;
     }
