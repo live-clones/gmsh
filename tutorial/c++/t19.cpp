@@ -10,6 +10,7 @@
 // modelling.
 
 #include <cmath>
+#include <cstdlib>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
@@ -50,7 +51,7 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > e;
   gmsh::model::getBoundary(f, e, false);
   std::vector<int> c;
-  for(std::size_t i = 0; i < e.size(); i++) c.push_back(std::abs(e[i].second));
+  for(std::size_t i = 0; i < e.size(); i++) c.push_back(abs(e[i].second));
   gmsh::model::occ::fillet({out[0].second}, c, {0.1}, out);
   gmsh::model::occ::synchronize();
 
