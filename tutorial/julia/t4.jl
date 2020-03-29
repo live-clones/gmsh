@@ -1,4 +1,4 @@
-# This file reimplements gmsh/tutorial/t4.geo in Julia.
+# See the corresponding Python tutorial for detailed comments.
 
 import gmsh
 
@@ -49,7 +49,7 @@ factory.addPoint( 0  , h1+h3+h4, 0, Lc2, 20)
 factory.addPoint( R2 , h1+h3+h4, 0, Lc2, 21)
 factory.addPoint( R2 , h1+h3   , 0, Lc2, 22)
 factory.addPoint( 0  , h1+h3   , 0, Lc2, 23)
-                                                
+
 factory.addPoint( 0, h1+h3+h4+R2, 0, Lc2, 24)
 factory.addPoint( 0, h1+h3-R2,    0, Lc2, 25)
 
@@ -79,7 +79,6 @@ factory.addCurveLoop([17,-15,18,19,-20,16], 21)
 factory.addPlaneSurface([21], 22)
 factory.addCurveLoop([11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10], 23)
 
-# A surface with one hole is specified using 2 curve loops:
 factory.addPlaneSurface([23,21], 24)
 
 # FIXME: this will be implemented through the gmshView API
