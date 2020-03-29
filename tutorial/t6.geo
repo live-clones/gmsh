@@ -9,7 +9,7 @@
 // Let's use the geometry from the first tutorial as a basis for this one:
 Include "t1.geo";
 
-// Delete the left line and replace it with 3 new ones:
+// Delete the surface and the left line, and replace the line with 3 new ones:
 Delete{ Surface{1}; Curve{4}; }
 
 p1 = newp; Point(p1) = {-0.05, 0.05, 0, lc};

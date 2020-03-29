@@ -70,25 +70,23 @@ Characteristic Length {p()} = 0.001;
 // geometry automatically.
 
 // First we get all surfaces on the left:
-e = 1e-3;
-Sxmin() = Surface In BoundingBox{2-e, -e, -e, 2+e, 1+e, 1+e};
+Sxmin() = Surface In BoundingBox{2-eps, -eps, -eps, 2+eps, 1+eps, 1+eps};
 
 For i In {0:#Sxmin()-1}
   // Then we get the bounding box of each left surface
   bb() = BoundingBox Surface { Sxmin(i) };
-  // We translate the bounding box to the right...
-  bbe() = { bb(0)-e+1, bb(1)-e, bb(2)-e, bb(3)+e+1, bb(4)+e, bb(5)+e };
-  // ...and look for surfaces inside it
-  Sxmax() = Surface In BoundingBox { bbe() };
+  // We translate the bounding box to the right and look for surfaces inside i
+  Sxmax() = Surface In BoundingBox { bb(0)-eps+1, bb(1)-eps, bb(2)-eps,
+                                     bb(3)+eps+1, bb(4)+eps, bb(5)+eps };
   // For all the matches, we compare the corresponding bounding boxes...
   For j In {0:#Sxmax()-1}
     bb2() = BoundingBox Surface { Sxmax(j) };
     bb2(0) -= 1;
     bb2(3) -= 1;
     // ...and if they match, we apply the periodicity constraint
-    If(Fabs(bb2(0)-bb(0)) < e && Fabs(bb2(1)-bb(1)) < e &&
-       Fabs(bb2(2)-bb(2)) < e && Fabs(bb2(3)-bb(3)) < e &&
-       Fabs(bb2(4)-bb(4)) < e && Fabs(bb2(5)-bb(5)) < e)
+    If(Fabs(bb2(0)-bb(0)) < eps && Fabs(bb2(1)-bb(1)) < eps &&
+       Fabs(bb2(2)-bb(2)) < eps && Fabs(bb2(3)-bb(3)) < eps &&
+       Fabs(bb2(4)-bb(4)) < eps && Fabs(bb2(5)-bb(5)) < eps)
       Periodic Surface {Sxmax(j)} = {Sxmin(i)} Translate {1,0,0};
     EndIf
   EndFor

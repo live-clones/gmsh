@@ -115,5 +115,5 @@ Physical Surface("My surface") = {1};
 // The underlying curves and points could be accessed with the `Boundary' or
 // `CombinedBoundary' operators.
 //
-// See `t16.geo', `t17.geo' or `t18.geo' for complete examples based on
+// See e.g. `t16.geo', `t18.geo' or `t19.geo' for complete examples based on
 // OpenCASCADE, and `demos/boolean' for more.

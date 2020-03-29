@@ -68,7 +68,7 @@ out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , angle * Pi / 180 } {
 // programmatically by using the return value (a list) of the `Extrude'
 // command. This list contains the "top" of the extruded surface (in `out[0]'),
 // the newly created volume (in `out[1]') and the tags of the lateral surfaces
-// (in `out[2]', `out[3]', ...)
+// (in `out[2]', `out[3]', ...).
 
 // We can then define a new physical volume (with tag 101) to group all the
 // elementary volumes:

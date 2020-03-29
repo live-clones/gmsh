@@ -1,4 +1,19 @@
-// This file reimplements gmsh/tutorial/t9.geo in C++.
+/*******************************************************************************
+ *
+ *  Gmsh C++ tutorial 9
+ *
+ *  Post-processing plugins (levelsets, sections, annotations)
+ *
+ *******************************************************************************/
+
+// Plugins can be added to Gmsh in order to extend its capabilities. For
+// example, post-processing plugins can modify views, or create new views based
+// on previously loaded views. Several default plugins are statically linked
+// with Gmsh, e.g. Isosurface, CutPlane, CutSphere, Skin, Transform or Smooth.
+//
+// Plugins can be controlled through the API functions in the `gmsh::plugin'
+// namespace, or from the graphical interface (right click on the view button,
+// then `Plugins').
 
 #include <gmsh.h>
 
@@ -9,7 +24,7 @@ int main(int argc, char **argv)
 
   gmsh::model::add("t9");
 
-  // add a three-dimensional scalar view to work on:
+  // Let us for example include a three-dimensional scalar view:
   try {
     gmsh::merge("../view3.pos");
   }
@@ -19,12 +34,14 @@ int main(int argc, char **argv)
     return 0;
   }
 
-  // First plugin is Isosurface
-  gmsh::plugin::setNumber("Isosurface", "Value", 0.67);
-  gmsh::plugin::setNumber("Isosurface", "View", 0);
-  gmsh::plugin::run("Isosurface");
+  // We then set some options for the `Isosurface' plugin (which extracts an
+  // isosurface from a 3D scalar view), and run it:
+  gmsh::plugin::setNumber("Isosurface", "Value", 0.67); // Iso-value level
+  gmsh::plugin::setNumber("Isosurface", "View", 0); // Source view is View[0]
+  gmsh::plugin::run("Isosurface"); // Run the plugin!
 
-  // Second is CutPlane
+  // We also set some options for the `CutPlane' plugin (which computes a
+  // section of a 3D view using the plane A*x+B*y+C*z+D=0), and then run it:
   gmsh::plugin::setNumber("CutPlane", "A", 0);
   gmsh::plugin::setNumber("CutPlane", "B", 0.2);
   gmsh::plugin::setNumber("CutPlane", "C", 1);
@@ -32,9 +49,10 @@ int main(int argc, char **argv)
   gmsh::plugin::setNumber("CutPlane", "View", 0);
   gmsh::plugin::run("CutPlane");
 
-  // Third is Annotate
+  // Add a title (By convention, for window coordinates a value greater than
+  // 99999 represents the center. We could also use `General.GraphicsWidth / 2',
+  // but that would only center the string for the current window size.):
   gmsh::plugin::setString("Annotate", "Text", "A nice title");
-  // By convention, window coordinates larger than 99999 represent the center
   gmsh::plugin::setNumber("Annotate", "X", 1.e5);
   gmsh::plugin::setNumber("Annotate", "Y", 50);
   gmsh::plugin::setString("Annotate", "Font", "Times-BoldItalic");
@@ -49,7 +67,7 @@ int main(int argc, char **argv)
   gmsh::plugin::setNumber("Annotate", "FontSize", 12);
   gmsh::plugin::run("Annotate");
 
-  // set some general options
+  // We finish by setting some options:
   gmsh::option::setNumber("View[0].Light", 1);
   gmsh::option::setNumber("View[0].IntervalsType", 1);
   gmsh::option::setNumber("View[0].NbIso", 6);

@@ -1,4 +1,18 @@
-// This file reimplements gmsh/tutorial/t17.geo in C++.
+/*******************************************************************************
+ *
+ *  Gmsh C++ tutorial 17
+ *
+ *  Anisotropic background mesh
+ *
+ *******************************************************************************/
+
+// Characteristic lengths can be specified very accurately by providing a
+// background mesh, i.e., a post-processing view that contains the target mesh
+// sizes.
+
+// Here, the background mesh is represented as a metric tensor field defined on
+// a square. One should use bamg as 2d mesh generator to enable anisotropic
+// meshes in 2D.
 
 #include <gmsh.h>
 #include <math.h>
@@ -11,10 +25,13 @@ int main(int argc, char **argv)
   gmsh::initialize();
   gmsh::option::setNumber("General.Terminal", 1);
 
+  gmsh::model::add("t17");
+
+  // Create a square
   gmsh::model::occ::addRectangle(-1, -1, 0, 2, 2);
   gmsh::model::occ::synchronize();
 
-  // add a post-processing view to use as a size field
+  // Merge a post-processing view containing the target anisotropic mesh sizes
   try {
     gmsh::merge("../t17_bgmesh.pos");
   }
@@ -24,10 +41,11 @@ int main(int argc, char **argv)
     return 0;
   }
 
+  // Apply the view as the current background mesh
   int bg_field = gmsh::model::mesh::field::add("PostView");
   gmsh::model::mesh::field::setAsBackgroundMesh(bg_field);
 
-  // use bamg
+  // Use bamg
   gmsh::option::setNumber("Mesh.SmoothRatio", 3);
   gmsh::option::setNumber("Mesh.AnisoMax", 1000);
   gmsh::option::setNumber("Mesh.Algorithm", 7);

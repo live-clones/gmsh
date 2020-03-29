@@ -16,7 +16,7 @@
 
 SetFactory("OpenCASCADE");
 
-// the square
+// Create a square
 Rectangle(1) = {-1, -1, 0, 2, 2};
 
 // Merge a post-processing view containing the target anisotropic mesh sizes

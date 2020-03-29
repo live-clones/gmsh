@@ -2,7 +2,7 @@
  *
  *  Gmsh GEO tutorial 4
  *
- *  Built-in functions, surface holes, annotations, mesh colors
+ *  Built-in functions, holes in surfaces, annotations, entity colors
  *
  *******************************************************************************/
 
@@ -121,7 +121,7 @@ View[0].DoubleClickedCommand = "Printf('View[0] has been double-clicked!');";
 Geometry.DoubleClickedLineCommand = "Printf('Curve %g has been double-clicked!',
   Geometry.DoubleClickedEntityTag);";
 
-// We can also change the color of some mesh entities:
+// We can also change the color of some entities:
 
 Color Grey50{ Surface{ 22 }; }
 Color Purple{ Surface{ 24 }; }

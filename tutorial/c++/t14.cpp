@@ -1,4 +1,10 @@
-// This file reimplements gmsh/tutorial/t14.geo in Python.
+/*******************************************************************************
+ *
+ *  Gmsh C++ tutorial 14
+ *
+ *  Homology and cohomology computation
+ *
+ *******************************************************************************/
 
 // Homology computation in Gmsh finds representative chains of (relative)
 // (co)homology space bases using a mesh of a model.  The representative basis
@@ -16,6 +22,8 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t14");
+
+  // Create an example geometry
 
   double m = 0.5; // mesh characteristic length
   double h = 2; // geometry height in the z-direction
@@ -127,6 +135,10 @@ int main(int argc, char **argv)
 
   // Generate the mesh and perform the requested homology computations
   gmsh::model::mesh::generate(3);
+
+  // For more information, see M. Pellikka, S. Suuriniemi, L. Kettunen and
+  // C. Geuzaine. Homology and cohomology computation in finite element
+  // modeling. SIAM Journal on Scientific Computing 35(5), pp. 1195-1214, 2013.
 
   gmsh::finalize();
   return 0;

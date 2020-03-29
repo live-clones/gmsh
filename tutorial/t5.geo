@@ -2,7 +2,7 @@
  *
  *  Gmsh GEO tutorial 5
  *
- *  Characteristic lengths, arrays of variables, macros, loops
+ *  Characteristic lengths, macros, loops, holes in volumes
  *
  *******************************************************************************/
 
@@ -169,8 +169,8 @@ Volume(186) = {theloops[]};
 // same geometry could be built quite differently: see `t16.geo'.
 
 // We finally define a physical volume for the elements discretizing the cube,
-// without the holes (whose elements were already tagged with numbers 1 to 5 in
-// the `For' loop):
+// without the holes (for which physical groups were already created in the
+// `For' loop):
 
 Physical Volume (10) = 186;
 

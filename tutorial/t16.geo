@@ -8,11 +8,11 @@
 
 // Instead of constructing a model in a bottom-up fashion with Gmsh's built-in
 // geometry kernel, starting with version 3 Gmsh allows you to directly use
-// alternative geometry kernels. Let us use the OpenCASCADE kernel:
+// alternative geometry kernels. Here we use the OpenCASCADE kernel:
 
 SetFactory("OpenCASCADE");
 
-// And let's build the same model as in `t5.geo', but using constructive solid
+// Let's build the same model as in `t5.geo', but using constructive solid
 // geometry.
 
 // We first create two cubes:
@@ -26,7 +26,7 @@ BooleanDifference(3) = { Volume{1}; Delete; }{ Volume{2}; Delete; };
 // `Delete' in the arguments allows to automatically delete the original
 // entities.
 
-// We then create the five spheres
+// We then create the five spheres:
 x = 0 ; y = 0.75 ; z = 0 ; r = 0.09 ;
 For t In {1:5}
   x += 0.166 ;
@@ -42,7 +42,7 @@ EndFor
 v() = BooleanFragments{ Volume{3}; Delete; }{ Volume{3 + 1 : 3 + 5}; Delete; };
 
 // When the boolean operation leads to simple modifications of entities, and if
-// one deletes the original entities with `Delete', Gmsh tries to assign the 
+// one deletes the original entities with `Delete', Gmsh tries to assign the
 // same tag to the new entities. (This behavior is governed by the
 // `Geometry.OCCBooleanPreserveNumbering' option.)
 
@@ -79,4 +79,5 @@ p() = Point In BoundingBox{0.5-eps, 0.5-eps, 0.5-eps,
 Characteristic Length{ p() } = lcar2;
 
 // Additional examples created with the OpenCASCADE geometry kernel are
-// available in the `demos/boolean' directory.
+// available in `t18.geo', `t19.geo' as well as in the `demos/boolean'
+// directory.

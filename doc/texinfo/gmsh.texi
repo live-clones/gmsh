@@ -5126,8 +5126,8 @@ system}. Screencasts that show how to use the GUI are available on
 * t1.geo:: Geometry basics, elementary entities, physical groups
 * t2.geo:: Transformations, extruded geometries, volumes
 * t3.geo:: Extruded meshes, input parameters, options
-* t4.geo:: Built-in functions, surface holes, annotations, mesh colors
-* t5.geo:: Characteristic lengths, arrays of variables, macros, loops
+* t4.geo:: Built-in functions, holes in surfaces, annotations, entity colors
+* t5.geo:: Characteristic lengths, macros, loops, holes in volumes
 * t6.geo:: Transfinite meshes
 * t7.geo:: Background meshes
 * t8.geo:: Post-processing, scripting, animations, options

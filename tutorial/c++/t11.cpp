@@ -1,4 +1,10 @@
-// This file reimplements gmsh/tutorial/t11.geo in C++.
+/*******************************************************************************
+ *
+ *  Gmsh C++ tutorial 11
+ *
+ *  Unstructured quadrangular meshes
+ *
+ *******************************************************************************/
 
 #include <gmsh.h>
 
@@ -8,6 +14,11 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t11");
+
+  // We have seen in tutorials `t3.cpp' and `t6.cpp' that extruded and
+  // transfinite meshes can be "recombined" into quads/prisms/hexahedra by using
+  // the "Recombine" keyword. Unstructured meshes can be recombined in the same
+  // way. Let's define a simple geometry with an analytical mesh size field:
 
   int p1 = gmsh::model::geo::addPoint(-1.25, -.5, 0);
   int p2 = gmsh::model::geo::addPoint(1.25, -.5, 0);
@@ -24,34 +35,61 @@ int main(int argc, char **argv)
 
   gmsh::model::geo::synchronize();
 
-  // add an analytical size field with tag 1
   gmsh::model::mesh::field::add("MathEval", 1);
   gmsh::model::mesh::field::setString
     (1, "F", "0.01*(1.0+30.*(y-x*x)*(y-x*x) + (1-x)*(1-x))");
   gmsh::model::mesh::field::setAsBackgroundMesh(1);
 
-  // to generate quadrangles instead of triangles for the plane surface, add the
-  // recombine constraint before meshing
+  // To generate quadrangles instead of triangles, we can simply add
   gmsh::model::mesh::setRecombine(2, pl);
+
+  // If we'd had several surfaces, we could have used the global option
+  // "Mesh.RecombineAll":
+  //
+  // gmsh::option::setNumber("Mesh.RecombineAll", 1);
+
+  // The default recombination algorithm is called "Blossom": it uses a minimum
+  // cost perfect matching algorithm to generate fully quadrilateral meshes from
+  // triangulations. More details about the algorithm can be found in the
+  // following paper: J.-F. Remacle, J. Lambrechts, B. Seny, E. Marchandise,
+  // A. Johnen and C. Geuzaine, "Blossom-Quad: a non-uniform quadrilateral mesh
+  // generator using a minimum cost perfect matching algorithm", International
+  // Journal for Numerical Methods in Engineering 89, pp. 1102-1119, 2012.
+
+  // For even better 2D (planar) quadrilateral meshes, you can try the
+  // experimental "Frontal-Delaunay for quads" meshing algorithm, which is a
+  // triangulation algorithm that enables to create right triangles almost
+  // everywhere: J.-F. Remacle, F. Henrotte, T. Carrier-Baudouin, E. Bechet,
+  // E. Marchandise, C. Geuzaine and T. Mouton. A frontal Delaunay quad mesh
+  // generator using the L^inf norm. International Journal for Numerical Methods
+  // in Engineering, 94, pp. 494-512, 2013. Uncomment the following line to try
+  // the Frontal-Delaunay algorithms for quads:
+  //
+  // gmsh::option::setNumber("Mesh.Algorithm", 8);
+
+  // The default recombination algorithm might leave some triangles in the mesh,
+  // if recombining all the triangles leads to badly shaped quads. In such cases,
+  // to generate full-quad meshes, you can either subdivide the resulting hybrid
+  // mesh (with Mesh.SubdivisionAlgorithm = 1), or use the full-quad recombination
+  // algorithm, which will automatically perform a coarser mesh followed by
+  // recombination, smoothing and subdivision. Uncomment the following line to try
+  // the full-quad algorithm:
+  //
+  // gmsh::option::setNumber("Mesh.RecombinationAlgorithm", 2); // or 3
+
+  // You can also set the subdivision step alone, with
+  //
+  // gmsh::option::setNumber("Mesh.SubdivisionAlgorithm", 1);
+
   gmsh::model::mesh::generate(2);
 
-  // you could also set the option "Mesh.RecombineAll"
-  // gmsh::option::setNumber("Mesh.RecombineAll", 1);
-  // gmsh::model::mesh::generate(2);
-
-  // You could also apply the recombination algo after meshing
+  // Note that you could also apply the recombination algorithm and/or the
+  // subdivision step explicitly after meshing, as follows:
+  //
   // gmsh::model::mesh::generate(2);
   // gmsh::model::mesh::recombine();
-
-  // Better 2D planar quadrilateral meshes with the Frontal-Delaunay for quads
-  // algorithm:
-  // gmsh::option::setNumber("Mesh.Algorithm", 8);
-  // gmsh::model::mesh::generate(2);
-
-  // Force a full-quad mesh with either option
   // gmsh::option::setNumber("Mesh.SubdivisionAlgorithm", 1);
-  // gmsh::option::setNumber("Mesh.RecombinationAlgorithm", 2); // or 3
-  // gmsh::model::mesh::generate(2);
+  // gmsh::model::mesh::refine();
 
   gmsh::finalize();
   return 0;
