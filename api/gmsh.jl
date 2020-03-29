@@ -4498,6 +4498,53 @@ function getListData(tag)
 end
 
 """
+    gmsh.view.addListDataString(tag, coord, data, style = [])
+
+Add a string to a list-based post-processing view with tag `tag`. If `coord`
+contains 3 coordinates the string is positioned in the 3D model space ("3D
+string"); if it contains 2 coordinates it is positioned in the 2D graphics
+viewport ("2D string"). `data` contains one or more (for multistep views)
+strings. `style` contains pairs of styling parameters, concatenated.
+"""
+function addListDataString(tag, coord, data, style = [])
+    ierr = Ref{Cint}()
+    ccall((:gmshViewAddListDataString, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cchar}}, Csize_t, Ptr{Ptr{Cchar}}, Csize_t, Ptr{Cint}),
+          tag, convert(Vector{Cdouble}, coord), length(coord), data, length(data), style, length(style), ierr)
+    ierr[] != 0 && error("gmshViewAddListDataString returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.view.getListDataStrings(tag, dim)
+
+Get list-based post-processing data strings (2D strings if `dim` = 2, 3D strings
+if `dim` = 3) from the view with tag `tag`. Return the coordinates in `coord`,
+the strings in `data` and the styles in `style`.
+
+Return `coord`, `data`, `style`.
+"""
+function getListDataStrings(tag, dim)
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_data_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_data_n_ = Ref{Csize_t}()
+    api_style_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_style_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshViewGetListDataStrings, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, dim, api_coord_, api_coord_n_, api_data_, api_data_n_, api_style_, api_style_n_, ierr)
+    ierr[] != 0 && error("gmshViewGetListDataStrings returned non-zero error code: $(ierr[])")
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    tmp_api_data_ = unsafe_wrap(Array, api_data_[], api_data_n_[], own=true)
+    data = [unsafe_string(tmp_api_data_[i]) for i in 1:length(tmp_api_data_) ]
+    tmp_api_style_ = unsafe_wrap(Array, api_style_[], api_style_n_[], own=true)
+    style = [unsafe_string(tmp_api_style_[i]) for i in 1:length(tmp_api_style_) ]
+    return coord, data, style
+end
+
+"""
     gmsh.view.addAlias(refTag, copyOptions = false, tag = -1)
 
 Add a post-processing view as an `alias` of the reference view with tag

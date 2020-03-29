@@ -3688,6 +3688,47 @@ namespace gmsh { // Top-level functions
       data.resize(api_data_nn_); for(size_t i = 0; i < api_data_nn_; ++i){ data[i].assign(api_data_[i], api_data_[i] + api_data_n_[i]); gmshFree(api_data_[i]); } gmshFree(api_data_); gmshFree(api_data_n_);
     }
 
+    // Add a string to a list-based post-processing view with tag `tag'. If `coord'
+    // contains 3 coordinates the string is positioned in the 3D model space ("3D
+    // string"); if it contains 2 coordinates it is positioned in the 2D graphics
+    // viewport ("2D string"). `data' contains one or more (for multistep views)
+    // strings. `style' contains pairs of styling parameters, concatenated.
+    inline void addListDataString(const int tag,
+                                  const std::vector<double> & coord,
+                                  const std::vector<std::string> & data,
+                                  const std::vector<std::string> & style = std::vector<std::string>())
+    {
+      int ierr = 0;
+      double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+      char **api_data_; size_t api_data_n_; vectorstring2charptrptr(data, &api_data_, &api_data_n_);
+      char **api_style_; size_t api_style_n_; vectorstring2charptrptr(style, &api_style_, &api_style_n_);
+      gmshViewAddListDataString(tag, api_coord_, api_coord_n_, api_data_, api_data_n_, api_style_, api_style_n_, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_coord_);
+      for(size_t i = 0; i < api_data_n_; ++i){ gmshFree(api_data_[i]); } gmshFree(api_data_);
+      for(size_t i = 0; i < api_style_n_; ++i){ gmshFree(api_style_[i]); } gmshFree(api_style_);
+    }
+
+    // Get list-based post-processing data strings (2D strings if `dim' = 2, 3D
+    // strings if `dim' = 3) from the view with tag `tag'. Return the coordinates
+    // in `coord', the strings in `data' and the styles in `style'.
+    inline void getListDataStrings(const int tag,
+                                   const int dim,
+                                   std::vector<double> & coord,
+                                   std::vector<std::string> & data,
+                                   std::vector<std::string> & style)
+    {
+      int ierr = 0;
+      double *api_coord_; size_t api_coord_n_;
+      char **api_data_; size_t api_data_n_;
+      char **api_style_; size_t api_style_n_;
+      gmshViewGetListDataStrings(tag, dim, &api_coord_, &api_coord_n_, &api_data_, &api_data_n_, &api_style_, &api_style_n_, &ierr);
+      if(ierr) throw ierr;
+      coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+      data.resize(api_data_n_); for(size_t i = 0; i < api_data_n_; ++i){ data[i] = std::string(api_data_[i]); gmshFree(api_data_[i]); } gmshFree(api_data_);
+      style.resize(api_style_n_); for(size_t i = 0; i < api_style_n_; ++i){ style[i] = std::string(api_style_[i]); gmshFree(api_style_[i]); } gmshFree(api_style_);
+    }
+
     // Add a post-processing view as an `alias' of the reference view with tag
     // `refTag'. If `copyOptions' is set, copy the options of the reference view.
     // If `tag' is positive use it (and remove the view with that tag if it already

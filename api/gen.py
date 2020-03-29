@@ -746,6 +746,12 @@ view.add('addListData', doc, None, iint('tag'), istring('dataType'), iint('numEl
 doc = '''Get list-based post-processing data from the view with tag `tag'. Return the types `dataTypes', the number of elements `numElements' for each data type and the `data' for each data type.'''
 view.add('getListData', doc, None, iint('tag'), ovectorstring('dataType'), ovectorint('numElements'), ovectorvectordouble('data'))
 
+doc = '''Add a string to a list-based post-processing view with tag `tag'. If `coord' contains 3 coordinates the string is positioned in the 3D model space ("3D string"); if it contains 2 coordinates it is positioned in the 2D graphics viewport ("2D string"). `data' contains one or more (for multistep views) strings. `style' contains pairs of styling parameters, concatenated.'''
+view.add('addListDataString', doc, None, iint('tag'), ivectordouble('coord'), ivectorstring('data'), ivectorstring('style', 'std::vector<std::string>()', "[]", "[]"))
+
+doc = '''Get list-based post-processing data strings (2D strings if `dim' = 2, 3D strings if `dim' = 3) from the view with tag `tag'. Return the coordinates in `coord', the strings in `data' and the styles in `style'.'''
+view.add('getListDataStrings', doc, None, iint('tag'), iint('dim'), ovectordouble('coord'), ovectorstring('data'), ovectorstring('style'))
+
 doc = '''Add a post-processing view as an `alias' of the reference view with tag `refTag'. If `copyOptions' is set, copy the options of the reference view. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''
 view.add('addAlias', doc, oint, iint('refTag'), ibool('copyOptions', 'false', 'False'), iint('tag', '-1'))
 

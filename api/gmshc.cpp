@@ -3124,6 +3124,37 @@ GMSH_API void gmshViewGetListData(const int tag, char *** dataType, size_t * dat
   }
 }
 
+GMSH_API void gmshViewAddListDataString(const int tag, double * coord, size_t coord_n, char ** data, size_t data_n, char ** style, size_t style_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<std::string> api_data_(data, data + data_n);
+    std::vector<std::string> api_style_(style, style + style_n);
+    gmsh::view::addListDataString(tag, api_coord_, api_data_, api_style_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshViewGetListDataStrings(const int tag, const int dim, double ** coord, size_t * coord_n, char *** data, size_t * data_n, char *** style, size_t * style_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_;
+    std::vector<std::string> api_data_;
+    std::vector<std::string> api_style_;
+    gmsh::view::getListDataStrings(tag, dim, api_coord_, api_data_, api_style_);
+    vector2ptr(api_coord_, coord, coord_n);
+    vectorstring2charptrptr(api_data_, data, data_n);
+    vectorstring2charptrptr(api_style_, style, style_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API int gmshViewAddAlias(const int refTag, const int copyOptions, const int tag, int * ierr)
 {
   int result_api_ = 0;
