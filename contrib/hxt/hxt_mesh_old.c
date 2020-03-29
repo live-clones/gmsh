@@ -192,7 +192,6 @@ HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m){
   rewind (fp);
 
   m->lines.num = 0;
-  m->points.num = 0;
   m->triangles.num = 0;
   m->quads.num = 0;
   m->tetrahedra.num = 0;
@@ -233,7 +232,6 @@ HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m){
         }
         else if(etype==POINTID){ // points
           //          ++(m->lines.num);
-          ++(m->points.num);
         }
       }      
       break;
@@ -293,11 +291,6 @@ HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m){
     if (m->lines.colors == NULL)return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
     m->lines.size = m->lines.num;
   }
-  if (m->points.num){
-    HXT_CHECK( hxtAlignedMalloc(&m->points.node, (m->points.num)*sizeof(uint32_t)) );
-    if (m->points.node == NULL)return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
-    m->points.size = m->points.num;
-  }
         
   while( fgets(buf, BUFSIZ, fp )){
 
@@ -313,7 +306,6 @@ HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m){
       m->triangles.num=0;
       m->quads.num=0;
       m->lines.num=0;
-      m->points.num=0;
       
       for(k=0;k<tmpK;++k){
         int etype = 0, ntags;
@@ -408,11 +400,9 @@ HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m){
           if(ntags==2){ // 
             int a;
             sscanf(buf, "%*d %*d %*d %*d %*d  %d",&a);
-            m->points.node[m->points.num] = a-1;
             //            m->lines.node[2*m->lines.num+0] = a-1;
             //            m->lines.node[2*m->lines.num+1] = b-1;
           }
-          ++m->points.num;
         }
         if(etype==LINEID){ // lines
           if(ntags==2){ // 
