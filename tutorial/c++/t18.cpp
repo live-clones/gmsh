@@ -8,6 +8,7 @@
 
 // Periodic meshing constraints can be imposed on surfaces and curves.
 
+#include <algorithm>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
