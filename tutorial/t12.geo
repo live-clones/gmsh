@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 12
- *
- *  Cross-patch meshing with compounds
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 12
+//
+//  Cross-patch meshing with compounds
+//
+// -----------------------------------------------------------------------------
 
 // "Compound" meshing constraints allow to generate meshes across surface
 // boundaries, which can be useful e.g. for imported CAD models (e.g. STEP) with

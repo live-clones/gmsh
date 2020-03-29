@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh tutorial 7 - appendix
- *
- *  2D scalar background mesh (in parsed format)
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh tutorial 7 - appendix
+//
+//  2D scalar background mesh (in parsed format)
+//
+// -----------------------------------------------------------------------------
 
 // This post-processing view contains scalar triangles. The values represent the
 // target characteristic mesh element sizes to be applied to the first tutorial,

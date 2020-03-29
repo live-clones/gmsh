@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 10
- *
- *  General mesh size fields
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 10
+//
+//  General mesh size fields
+//
+// -----------------------------------------------------------------------------
 
 // In addition to specifying target mesh sizes at the points of the geometry
 // (see `t1.geo') or using a background mesh (see `t7.geo'), you can use general

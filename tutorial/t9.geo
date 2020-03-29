@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 9
- *
- *  Post-processing plugins (levelsets, sections, annotations)
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 9
+//
+//  Post-processing plugins (levelsets, sections, annotations)
+//
+// -----------------------------------------------------------------------------
 
 // Plugins can be added to Gmsh in order to extend its capabilities. For
 // example, post-processing plugins can modify views, or create new views based

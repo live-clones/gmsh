@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 4
- *
- *  Built-in functions, holes in surfaces, annotations, entity colors
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 4
+//
+//  Built-in functions, holes in surfaces, annotations, entity colors
+//
+// -----------------------------------------------------------------------------
 
 // As usual, we start by defining some variables:
 

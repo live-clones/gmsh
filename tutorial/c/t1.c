@@ -1,11 +1,11 @@
-/*******************************************************************************
- *
- *  Gmsh C++ tutorial 1
- *
- *  Elementary entities (points, curves, surfaces), physical groups (points,
- *  curves, surfaces)
- *
- *******************************************************************************/
+/* ---------------------------------------------------------------------------
+
+   Gmsh C tutorial 1
+
+   Elementary entities (points, curves, surfaces), physical groups (points,
+   curves, surfaces)
+
+   --------------------------------------------------------------------------- */
 
 /* The Gmsh C API is entirely defined in the `gmshc.h' header (which contains
    the full documentation of all the functions in the API): */

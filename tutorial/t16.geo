@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 16
- *
- *  Constructive Solid Geometry, OpenCASCADE geometry kernel
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 16
+//
+//  Constructive Solid Geometry, OpenCASCADE geometry kernel
+//
+// -----------------------------------------------------------------------------
 
 // Instead of constructing a model in a bottom-up fashion with Gmsh's built-in
 // geometry kernel, starting with version 3 Gmsh allows you to directly use

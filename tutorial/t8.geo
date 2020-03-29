@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 8
- *
- *  Post-processing, scripting, animations, options
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 8
+//
+//  Post-processing, scripting, animations, options
+//
+// -----------------------------------------------------------------------------
 
 // In addition to creating geometries and meshes, GEO scripts can also be used
 // to manipulate post-processing datasets (called "views" in Gmsh).

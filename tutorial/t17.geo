@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 17
- *
- *  Anisotropic background mesh
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 17
+//
+//  Anisotropic background mesh
+//
+// -----------------------------------------------------------------------------
 
 // Characteristic lengths can be specified very accurately by providing a
 // background mesh, i.e., a post-processing view that contains the target mesh

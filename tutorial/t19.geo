@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 19
- *
- *  Thrusections, fillets, pipes, mesh size from curvature
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 19
+//
+//  Thrusections, fillets, pipes, mesh size from curvature
+//
+// -----------------------------------------------------------------------------
 
 // The OpenCASCADE geometry kernel supports several useful features for solid
 // modelling.

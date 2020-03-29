@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh C++ extended tutorial 1
- *
- *  Accessing geometrical and mesh data
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh C++ extended tutorial 1
+//
+//  Accessing geometrical and mesh data
+//
+// -----------------------------------------------------------------------------
 
 // The C++ API allows to do much more than what can be done in .geo files. These
 // additional features are introduced gradually in the extended tutorials,

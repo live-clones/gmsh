@@ -1,11 +1,11 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 2
- *
- *  Includes, geometrical transformations, extruded geometries, elementary
- *  entities (volumes), physical groups (volumes)
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 2
+//
+//  Includes, geometrical transformations, extruded geometries, elementary
+//  entities (volumes), physical groups (volumes)
+//
+// -----------------------------------------------------------------------------
 
 // We first include the previous tutorial file, in order to use it as a basis
 // for this one. Including a file is equivalent to copy-pasting its contents:

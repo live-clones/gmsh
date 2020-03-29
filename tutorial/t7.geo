@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 7
- *
- *  Background mesh
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 7
+//
+//  Background mesh
+//
+// -----------------------------------------------------------------------------
 
 // Mesh sizes can be specified very accurately by providing a background mesh,
 // i.e., a post-processing view that contains the target characteristic lengths.

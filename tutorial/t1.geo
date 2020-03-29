@@ -1,11 +1,11 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 1
- *
- *  Variables, elementary entities (points, curves, surfaces), physical groups
- *  (points, curves, surfaces)
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 1
+//
+//  Variables, elementary entities (points, curves, surfaces), physical groups
+//  (points, curves, surfaces)
+//
+// -----------------------------------------------------------------------------
 
 // The simplest construction in Gmsh's scripting language is the
 // `affectation'. The following command defines a new variable `lc':

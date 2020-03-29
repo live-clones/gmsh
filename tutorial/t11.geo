@@ -1,10 +1,10 @@
-/*******************************************************************************
- *
- *  Gmsh GEO tutorial 11
- *
- *  Unstructured quadrangular meshes
- *
- *******************************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 11
+//
+//  Unstructured quadrangular meshes
+//
+// -----------------------------------------------------------------------------
 
 // We have seen in tutorials `t3.geo' and `t6.geo' that extruded and transfinite
 // meshes can be "recombined" into quads/prisms/hexahedra by using the
