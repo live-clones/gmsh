@@ -151,6 +151,20 @@ namespace QMT_Utils {
       return s3;
     }
 
+  template <typename T>
+    bool inVector(const T& value, const std::vector<T> &vec) {
+      if (vec.size() == 0) return false;
+      auto it = std::find(vec.begin(), vec.end(), value);
+      return (it != vec.end()) ? true : false;
+    }
+
+  template <typename T, size_t N>
+    bool inArray(const T& value, const std::array<T,N> &vec) {
+      if (vec.size() == 0) return false;
+      auto it = std::find(vec.begin(), vec.end(), value);
+      return (it != vec.end()) ? true : false;
+    }
+
   /* For debug prints */
   template<typename H1>
     std::ostream& show(std::ostream& out, const char* label, H1&& value) {

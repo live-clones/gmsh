@@ -75,6 +75,20 @@ namespace QMT {
     os << "]";
     return os;
   }
+
+  std::ostream& operator<<(std::ostream& os, const QMT::QTMesh& M) { 
+    os << "------ QTMesh" << std::endl;
+    os << M.vertices.size() << " vertices" << std::endl;
+    os << M.edges.size() << " edges:" << std::endl;
+    F(e,M.edges.size()) {
+      os << "  " << e << ": " << M.edges[e] << std::endl;
+    }
+    os << M.faces.size() << " faces:" << std::endl;
+    F(f,M.faces.size()) {
+      os << "  " << f << ": " << M.faces[f] << std::endl;
+    }
+    return os;
+  }
 }
 
 namespace QMT_QZ_Utils {
@@ -242,6 +256,89 @@ namespace QMT_QZ_Utils {
     return true;
   }
 
+  double curve_length(const vector<vec3>& pts) {
+    if (pts.size() <= 1) return 0.;
+    double L = 0.;
+    F(i,pts.size()-1) L += length(pts[i+1]-pts[i]);
+    return L;
+  }
+
+  vector<double> curve_ts(const vector<vec3>& pts, double curveLength = DBL_MAX) {
+    vector<double> ts;
+    if (pts.size() <= 1) return {};
+    if (curveLength == DBL_MAX) curveLength = curve_length(pts);
+    double L = 0.;
+    ts.push_back(0.);
+    F(i,pts.size()-1) {
+      L += length(pts[i+1]-pts[i]);
+      ts.push_back(L/curveLength);
+    }
+    ts.back() = 1.;
+    return ts;
+  }
+
+  vector<vec3> curve_interpolate(const vector<vec3>& pts, const vector<double>& ts, double curveLength = DBL_MAX) {
+    if (curveLength == DBL_MAX) curveLength = curve_length(pts);
+    vector<double> targetLens(ts.size(),0.);
+    F(i, ts.size()) {
+      double t = ts[i];
+      if (t < 0. || t > 1.) {
+        error("cannot interpolate on curve at i = {}, t = {} (must be in [0,1])", i, t);
+        return {};
+      }
+      targetLens[i] = t * curveLength;
+    }
+    vector<double> uniqueTargetLens;
+    vector<size_t> old2new;
+    QMT_Utils::sort_unique_with_perm(targetLens, uniqueTargetLens, old2new);
+
+    vector<vec3> ipts;
+    size_t prev_j = 0;
+    double prev_acc = 0.;
+    F(i,uniqueTargetLens.size()) {
+      double targetLen = uniqueTargetLens[i];
+      bool found = false;
+      double acc = prev_acc;
+      for(size_t j = prev_j; j < pts.size()-1; ++j) {
+        double len_j = acc;
+        acc += length(pts[j+1]-pts[j]);
+        double len_jp1 = acc;
+
+        if (len_j < targetLen && targetLen <= len_jp1) {
+          double lambda = (targetLen - len_j) / (len_jp1 - len_j);
+          vec3 pt = (1.-lambda) * pts[j] + lambda * pts[j+1];
+          ipts.push_back(pt);
+          found = true;
+          prev_j = j;
+          prev_acc = len_j;
+          break;
+        } else if (len_j == targetLen) {
+          ipts.push_back(pts[j]);
+          found = true;
+          prev_j = j;
+          prev_acc = len_j;
+          break;
+        }
+      }
+      if (!found) {
+        error("curve_interpolate | {}-th point (t = {}, targetLen = {}, curveLength = {}) not found !", 
+            i, ts[i], targetLen, curveLength);
+        return {};
+      }
+    }
+    if (uniqueTargetLens.size() != ipts.size()) {
+      error("curve_interpolate | wrong sizes");
+      return {};
+    }
+
+    vector<vec3> opts(ts.size());
+    F(i,old2new.size()) {
+      opts[i] = ipts[old2new[i]];
+    }
+    return opts;
+  }
+
+
   inline id add_vertex(QMesh& M, vec3 pt, double size = DBL_MAX, std::pair<int,int> entity = {-1,-1}) {
     id v = M.points.size();
     M.points.push_back(pt);
@@ -306,6 +403,7 @@ namespace QMT {
     vector<id>& edges = M.faces[f].edges;
     vector<uint8_t>& sides = M.faces[f].edge_sides;
     if (edges.size() < 4) {
+      error("compute sides | face {}: edges = {}", f, edges);
       return false;
     } else if (edges.size() == 4) {
       F(le,edges.size()) sides[le] = le;
@@ -379,10 +477,220 @@ namespace QMT {
     return true;
   }
 
+  bool split_TEdge(QTMesh& M, id e, id& nv) {
+    TEdge te = M.edges[e];
+    id2 vert = te.vertices;
+
+    /* Create midpoint vertex */
+    TVertex ntv;
+    ntv.origin = -1;
+    ntv.entity = te.entity;
+    double clen = curve_length(te.pts);
+    vector<double> ts = curve_ts(te.pts,clen);
+    vector<vec3> ipts = curve_interpolate(te.pts, {0.5}, clen);
+    if (ipts.size() != 1) return false;
+    vec3 mid = ipts[0];
+    ntv.pt = mid;
+    nv = M.vertices.size();
+
+    /* Create 2 TEdge */
+    TEdge te1;
+    TEdge te2;
+    te1.entity = te.entity;
+    te2.entity = te.entity;
+    te1.origin = te.origin;
+    te2.origin = te.origin;
+    vector<vec3> pts1;
+    vector<vec3> pts2;
+    pts2.push_back(mid);
+    F(i,ts.size()) {
+      if (ts[i] < 0.5) {
+        pts1.push_back(te.pts[i]);
+      } else if (ts[i] > 0.5){
+        pts2.push_back(te.pts[i]);
+      }
+    }
+    pts1.push_back(mid);
+    te1.pts = pts1;
+    te1.vertices[0] = te.vertices[0];
+    te1.vertices[1] = nv;
+    te2.pts = pts2;
+    te2.vertices[0] = nv;
+    te2.vertices[1] = te.vertices[1];
+
+    /* Update the QTMesh datastructure */
+    M.vertices.push_back(ntv);
+    id e1 = e;
+    M.edges[e] = te1;
+    id e2 = M.edges.size();
+    M.edges.push_back(te2);
+
+    F(f,M.faces.size()) {
+      vector<id>& edges = M.faces[f].edges;
+      vector<uint8_t>& sides = M.faces[f].edge_sides;
+      vector<bool>& orient = M.faces[f].edge_orient_invert;
+      bool update_sides = false;
+      F(le,edges.size()) {
+        if (edges[le] != e) continue;
+        if (M.faces[f].edge_orient_invert[le]) {
+          edges.insert(edges.begin()+le,e2);
+          sides.insert(sides.begin()+le,NO_U8);
+          orient.insert(orient.begin()+le,true);
+        } else {
+          edges.insert(edges.begin()+le+1,e2);
+          sides.insert(sides.begin()+le+1,NO_U8);
+          orient.insert(orient.begin()+le+1,false);
+        }
+        update_sides = true;
+        break;
+      }
+      if (update_sides) {
+        F(le,sides.size()) sides[le] = NO_U8;
+      }
+    }
+
+    return true;
+  }
+
+  bool split_TFace(QTMesh& M, id f) {
+    /* Split edges, warning: will change QTMesh M ! */
+    vector<id> edges = M.faces[f].edges; /* deep copy ! else changed by split edge */
+    vector<bool> invorient = M.faces[f].edge_orient_invert;
+    vector<id> corners;
+    vector<id> nvs;
+    F(le,edges.size()) {
+      id e = edges[le];
+      id cv = (invorient[le]) ? M.edges[e].vertices[1] : M.edges[e].vertices[0];
+      corners.push_back(cv);
+      id nv = NO_ID;
+      bool ok = split_TEdge(M, edges[le],nv);
+      if (!ok) {
+        error("face {}: failed to split edge {}: {}", f, edges[le], M.edges[edges[le]]);
+        return false;
+      }
+      nvs.push_back(nv);
+    }
+
+    /* Create midpoint */
+    TVertex tvm;
+    tvm.entity = M.faces[f].entity;
+    tvm.origin = -1;
+    tvm.pt = {0.,0.,0.};
+    F(i,nvs.size()) {
+      tvm.pt = tvm.pt + M.vertices[nvs[i]].pt;
+    }
+    tvm.pt = 1./double(nvs.size()) * tvm.pt;
+    id vmid = M.vertices.size();
+    M.vertices.push_back(tvm);
+
+    /* Create edges to midpoint */
+    map<id,id> nvToNe;
+    F(i,nvs.size()) {
+      TEdge te;
+      te.vertices = {nvs[i],vmid};
+      te.entity = M.faces[f].entity;
+      te.origin = -1;
+      te.pts = {M.vertices[nvs[i]].pt, M.vertices[vmid].pt};
+      id ne = M.edges.size();
+      nvToNe[nvs[i]] = ne;
+      M.edges.push_back(te);
+    }
+
+    /* Create subdivided faces */
+    edges = M.faces[f].edges; /* get new version, after split */
+    invorient = M.faces[f].edge_orient_invert;
+    vector<TFace> ntfaces;
+    F(le,edges.size()) {
+      id2 vertc = edge_vertices(M.edges[edges[le]],invorient[le]);
+      if (!inVector(vertc[0],corners)) continue;
+      id lep = (edges.size() + le - 1) % edges.size();
+      id2 vertp = edge_vertices(M.edges[edges[lep]],invorient[lep]);
+      if (vertc[0] == vertp[1] && inVector(vertc[0],corners) && inVector(vertp[0],nvs) && inVector(vertc[1],nvs)) {
+        TFace ntf;
+        ntf.entity = M.faces[f].entity;
+        ntf.origin = -1;
+
+        ntf.edges.push_back(edges[lep]);
+        ntf.edge_orient_invert.push_back(invorient[lep]);
+        ntf.edge_sides.push_back(NO_U8);
+
+        ntf.edges.push_back(edges[le]);
+        ntf.edge_orient_invert.push_back(invorient[le]);
+        ntf.edge_sides.push_back(NO_U8);
+
+        ntf.edges.push_back(nvToNe[vertc[1]]);
+        ntf.edge_orient_invert.push_back(false);
+        ntf.edge_sides.push_back(NO_U8);
+
+        ntf.edges.push_back(nvToNe[vertp[0]]);
+        ntf.edge_orient_invert.push_back(true);
+        ntf.edge_sides.push_back(NO_U8);
+
+        ntfaces.push_back(ntf);
+      } else {
+        error("failed to subdivide face {}: edges = {}", f, edges);
+        F(j,edges.size()) {
+          error("  edge {}, io = {} | {}", edges[j],invorient[j], M.edges[edges[j]]);
+        }
+        DBG(le);
+        DBG(vertc);
+        DBG(vertp);
+        DBG(inVector(vertc[0],corners));
+        DBG(inVector(vertp[0],nvs));
+        DBG(inVector(vertc[1],nvs));
+        return false;
+      }
+    }
+
+    /* Update QTMesh datastructure */
+    M.vertices.push_back(tvm);
+    M.faces[f] = ntfaces[0];
+    FC(i,ntfaces.size(),i>0) {
+      M.faces.push_back(ntfaces[i]);
+    }
+
+    return true;
+  }
+
+  bool subdivide_degenerate_faces(QTMesh& M) {
+    size_t nf = 0;
+    bool remaining = true;
+    while(remaining) {
+      remaining = false;
+      FC(f,M.faces.size(),M.faces[f].edges.size() < 4) {
+        vector<id>& edges = M.faces[f].edges;
+        if (edges.size() == 0) {
+          error("face {}: no boundary curves, cannot fix it", f);
+          return false;
+        } else if (edges.size() == 1) {
+          error("face {}: 1 boundary curves {}, split not supported yet", f, edges);
+          return false;
+        } else if (edges.size() == 2) {
+          error("face {}: 2 boundary curves {}, split not supported yet", f, edges);
+          return false;
+        } else if (edges.size() == 3) {
+          info("face {}: 3 boundary curves {}, applying midpoint subdivision", f, edges);
+          bool oks = split_TFace(M, f);
+          if (!oks) {
+            error("failed to fix degenerate face {}", f);
+            return false;
+          }
+          nf += 1;
+          remaining = true;
+          break;
+        }
+      }
+    }
+    if (nf > 0) info("fixed {} degenerate faces via QTMesh splitting", nf);
+
+    return true;
+  }
+
   bool generate_qtmesh_from_gmsh_colored_triangulation(
       const std::string& modelName,
       QTMesh& M,
-      const std::map<std::pair<int,int>,std::pair<int,int>>* entityToInitialEntity) {
+      const std::map<std::pair<int,int>,std::pair<int,int>>* entityToInitialEntity,
+      bool accept_degenerate_faces = false) {
     if (!QMT_QZ_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_QZ_Utils::global_gmsh_initialized = true;
@@ -475,6 +783,7 @@ namespace QMT {
 
     std::vector<bool> edgeUsed(M.edges.size(),false);
     std::unordered_map<id,id> surfaceToTFace;;
+    bool has_degenerate_faces = false;
     { /* Loop over Geometry Surfaces (should be quad patches) */
       vectorpair surfaces;
       gmsh::model::getEntities(surfaces,2);
@@ -488,9 +797,14 @@ namespace QMT {
         vectorpair sBdr;
         gmsh::model::getBoundary({surfaces[s]}, sBdr, false, true, false);
         if (sBdr.size() < 4) {
-          error("surface {}: not enough boundary curves (min. is 4): {}", surfaces[s], sBdr);
-          ok = false;
-          continue;
+          if (accept_degenerate_faces) {
+            warn("surface {}: not enough boundary curves: {}", surfaces[s], sBdr);
+            has_degenerate_faces = true;
+          } else {
+            error("surface {}: not enough boundary curves (min. is 4): {}", surfaces[s], sBdr);
+            ok = false;
+            continue;
+          }
         }
         /* Loop over boundaries of patch surfaces[s] */ 
         TFace tf;
@@ -525,6 +839,14 @@ namespace QMT {
       return false;
     }
 
+    if (accept_degenerate_faces && has_degenerate_faces) {
+      bool oks = subdivide_degenerate_faces(M);
+      if (!oks) {
+        error("failed to fix degenerate faces by subdivision");
+        return false;
+      }
+    }
+
     /* B. Fill missing info in the QTMesh data structure */
     M.vertToEdges.resize(M.vertices.size());
     M.edgeToFaces.resize(M.edges.size());
@@ -534,6 +856,7 @@ namespace QMT {
     F(i,M.faces.size()) F(le,M.faces[i].edges.size()) {
       M.edgeToFaces[M.faces[i].edges[le]].push_back(i);
     }
+
 
     /* Compute the edge_sides info from angles */
     F(f,M.faces.size()) {
@@ -547,11 +870,17 @@ namespace QMT {
       }
     }
 
+    info("QTMesh construction: {} vertices, {} edges, {} faces", M.vertices.size(), M.edges.size(), M.faces.size());
+
+    // std::cout << M << std::endl; // for debug
+
     gmsh::model::setCurrent(cname);
     return true;
   }
 
   bool edge_pts_length(const std::vector<vec3>& pts, bool use_sizemap, const SizeMapR& sizemap, double& curveLen) {
+    if (pts.size() < 2) return false;
+
     /* Size map size(t) */
     vector<double> size(pts.size(),0.);
     if (use_sizemap) {
@@ -803,7 +1132,7 @@ namespace QMT {
       double clen = 0.;
       bool okl = edge_pts_length(M.edges[e].pts, true, sizemap, clen);
       if (!okl) {
-        error("curve {}: failed to compute polyline length", e);
+        error("TEdge {}: failed to compute polyline length, details: {}", e, M.edges[e]);
         return false;
       }
       // double nx = clen / target_edge_len;
@@ -1032,7 +1361,7 @@ namespace QMT {
     }
 
     QTMesh tM;
-    bool okq = generate_qtmesh_from_gmsh_colored_triangulation(modelName, tM, entityToInitialEntity);
+    bool okq = generate_qtmesh_from_gmsh_colored_triangulation(modelName, tM, entityToInitialEntity, true);
     if (!okq) {
       error("failed to generate QTMesh (quad mesh with T-junctions)");
       return false;
@@ -1050,7 +1379,7 @@ namespace QMT {
 
     vector<id> edge_n(tM.edges.size(),0);
     bool okqt = quantization_greedy_approach(tM, sizemap, edge_n);
-    if (!okq) {
+    if (!okqt) {
       error("failed to compute quantization of QTMesh");
       return false;
     }
