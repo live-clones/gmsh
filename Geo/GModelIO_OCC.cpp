@@ -3774,7 +3774,8 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(occv);
     }
     double lc = _attributes->getMeshSize(0, vertex);
-    occv->setPrescribedMeshSizeAtVertex(lc);
+    if(lc != MAX_LC)
+      occv->setPrescribedMeshSizeAtVertex(lc);
     std::vector<std::string> labels;
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
