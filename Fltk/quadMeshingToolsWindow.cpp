@@ -147,7 +147,7 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
 
   FL_NORMAL_SIZE -= deltaFontSize;
   int width = int(3.5 * IW) + 4 * WB;
-  int height = 24 * BH;
+  int height = 28 * BH;
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
                           "Quad meshing tools");
