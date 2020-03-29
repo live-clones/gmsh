@@ -76,7 +76,7 @@ doc = '''Get the `value' of a string option. `name' is of the form "category.opt
 option.add('getString', doc, None, istring('name'), ostring('value'))
 
 doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
-option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '0'))
+option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
 
 doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
 option.add('getColor', doc, None, istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
@@ -188,7 +188,7 @@ doc = '''Get the visibility of the model entity of dimension `dim' and tag `tag'
 model.add('getVisibility', doc, None, iint('dim'), iint('tag'), oint('value'))
 
 doc = '''Set the color of the model entities `dimTags' to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255. Apply the color setting recursively if `recursive' is true.'''
-model.add('setColor', doc, None, ivectorpair('dimTags'), iint('r'), iint('g'), iint('b'), iint('a', '0'), ibool('recursive', 'false', 'False'))
+model.add('setColor', doc, None, ivectorpair('dimTags'), iint('r'), iint('g'), iint('b'), iint('a', '255'), ibool('recursive', 'false', 'False'))
 
 doc = '''Get the color of the model entity of dimension `dim' and tag `tag'.'''
 model.add('getColor', doc, None, iint('dim'), iint('tag'), oint('r'), oint('g'), oint('b'), oint('a'))

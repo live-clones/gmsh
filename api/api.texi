@@ -172,7 +172,7 @@ reference manual, with the "Color." middle string removed.
 
 @table @asis
 @item Input:
-@code{name}, @code{r}, @code{g}, @code{b}, @code{a = 0}
+@code{name}, @code{r}, @code{g}, @code{b}, @code{a = 255}
 @item Output:
 -
 @item Return:
@@ -678,7 +678,7 @@ should be integers between 0 and 255. Apply the color setting recursively if
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{r}, @code{g}, @code{b}, @code{a = 0}, @code{recursive = False}
+@code{dimTags}, @code{r}, @code{g}, @code{b}, @code{a = 255}, @code{recursive = False}
 @item Output:
 -
 @item Return:

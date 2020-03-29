@@ -372,9 +372,9 @@ class option:
         return _ostring(api_value_)
 
     @staticmethod
-    def setColor(name, r, g, b, a=0):
+    def setColor(name, r, g, b, a=255):
         """
-        gmsh.option.setColor(name, r, g, b, a=0)
+        gmsh.option.setColor(name, r, g, b, a=255)
 
         Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
         `g', `b' and `a' should be integers between 0 and 255. `name' is of the
@@ -1229,9 +1229,9 @@ class model:
         return api_value_.value
 
     @staticmethod
-    def setColor(dimTags, r, g, b, a=0, recursive=False):
+    def setColor(dimTags, r, g, b, a=255, recursive=False):
         """
-        gmsh.model.setColor(dimTags, r, g, b, a=0, recursive=False)
+        gmsh.model.setColor(dimTags, r, g, b, a=255, recursive=False)
 
         Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
         `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and

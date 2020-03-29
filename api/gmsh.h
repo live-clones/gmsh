@@ -134,7 +134,7 @@ namespace gmsh { // Top-level functions
                            const int r,
                            const int g,
                            const int b,
-                           const int a = 0);
+                           const int a = 255);
 
     // gmsh::option::getColor
     //
@@ -456,7 +456,7 @@ namespace gmsh { // Top-level functions
                            const int r,
                            const int g,
                            const int b,
-                           const int a = 0,
+                           const int a = 255,
                            const bool recursive = false);
 
     // gmsh::model::getColor

@@ -206,7 +206,7 @@ namespace gmsh { // Top-level functions
                          const int r,
                          const int g,
                          const int b,
-                         const int a = 0)
+                         const int a = 255)
     {
       int ierr = 0;
       gmshOptionSetColor(name.c_str(), r, g, b, a, &ierr);
@@ -705,7 +705,7 @@ namespace gmsh { // Top-level functions
                          const int r,
                          const int g,
                          const int b,
-                         const int a = 0,
+                         const int a = 255,
                          const bool recursive = false)
     {
       int ierr = 0;

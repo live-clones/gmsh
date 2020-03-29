@@ -198,7 +198,7 @@ function getString(name)
 end
 
 """
-    gmsh.option.setColor(name, r, g, b, a = 0)
+    gmsh.option.setColor(name, r, g, b, a = 255)
 
 Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where where `r`, `g`,
 `b` and `a` should be integers between 0 and 255. `name` is of the form
@@ -206,7 +206,7 @@ Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where where `r`, `g`,
 are listed in the Gmsh reference manual, with the "Color." middle string
 removed.
 """
-function setColor(name, r, g, b, a = 0)
+function setColor(name, r, g, b, a = 255)
     ierr = Ref{Cint}()
     ccall((:gmshOptionSetColor, gmsh.lib), Cvoid,
           (Ptr{Cchar}, Cint, Cint, Cint, Cint, Ptr{Cint}),
@@ -912,13 +912,13 @@ function getVisibility(dim, tag)
 end
 
 """
-    gmsh.model.setColor(dimTags, r, g, b, a = 0, recursive = false)
+    gmsh.model.setColor(dimTags, r, g, b, a = 255, recursive = false)
 
 Set the color of the model entities `dimTags` to the RGBA value (`r`, `g`, `b`,
 `a`), where `r`, `g`, `b` and `a` should be integers between 0 and 255. Apply
 the color setting recursively if `recursive` is true.
 """
-function setColor(dimTags, r, g, b, a = 0, recursive = false)
+function setColor(dimTags, r, g, b, a = 255, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
