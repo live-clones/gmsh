@@ -2,7 +2,7 @@
 //
 //  Gmsh C++ extended tutorial 1
 //
-//  Accessing geometrical and mesh data
+//  Access basic geometrical and mesh data
 //
 // -----------------------------------------------------------------------------
 
@@ -25,6 +25,9 @@ int main(int argc, char **argv)
 
   gmsh::initialize();
   gmsh::option::setNumber("General.Terminal", 1);
+
+  // You can run this tutorial on any file that Gmsh can read, e.g. a mesh file
+  // in the MSH format: `t1.exe file.msh'
   gmsh::open(argv[1]);
 
   // Geometrical data is made of elementary model `entities', called `points'

@@ -1,5 +1,5 @@
-4.5.6 (Work-in-progress): better calculation of OCC bounding boxes using STL;
-API tutorials; small bug fixes.
+4.5.6 (March 30, 2020): better calculation of OCC bounding boxes using STL; API
+tutorials; small bug fixes.
 
 4.5.5 (March 21, 2020): tooltips in GUI to help discovery of scripting options;
 fixed MED IO of high-order elements; fixed OCC attribute search by bounding box;
