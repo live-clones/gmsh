@@ -105,9 +105,17 @@ int meshGFaceHxt(GModel *gm)
   HXTMesh *fmesh;
   HXT_CHECK(hxtContextCreate(&fcontext));
   HXT_CHECK(hxtMeshCreate(fcontext, &fmesh));
- 
-  HXT_CHECK(hxtGmshPointGenMain(mesh,data,fmesh));
 
+  // TODO 
+  HXTPointGenOptions opt = { .verbosity = 0,
+                             .generateLines = 1,
+                             .generateSurfaces = 1,
+                             .generateVolumes = 1,
+                             .remeshSurfaces = 1,
+                             .dirType = 1,
+                             .areaThreshold = 0};
+  
+  HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data,fmesh));
   HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
   
   HXT_CHECK(hxtMeshDelete(&fmesh));

@@ -3,6 +3,7 @@
 
 #include "hxt_api.h"
 #include "hxt_mesh.h"
+#include "hxt_point_gen_options.h"
 
 /**
  * \brief Generate points on an initial mesh, given a crossfield and a sizemap.
@@ -16,6 +17,7 @@
  */
 
 HXTStatus hxtGmshPointGenMain(HXTMesh *mesh, 
+                              HXTPointGenOptions *opt,
                               double *data,
                               HXTMesh *fmesh);
 

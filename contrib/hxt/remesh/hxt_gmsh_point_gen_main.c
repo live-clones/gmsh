@@ -5,20 +5,12 @@
 
 
 HXTStatus hxtGmshPointGenMain(HXTMesh *mesh, 
+                              HXTPointGenOptions *opt,
                               double *data,
                               HXTMesh *fmesh)
 {
 
-  HXTPointGenOptions options = { .verbosity = 0,
-                                 .generateLines = 1,
-                                 .generateSurfaces = 1,
-                                 .generateVolumes = 1,
-                                 .remeshSurfaces = 1,
-                                 .dirType = 1,
-                                 .areaThreshold = 0};
-
   double uniformSize = 0.1;
-
 
   double *directions;
   HXT_CHECK(hxtMalloc(&directions,9*mesh->vertices.num*sizeof(double)));
@@ -42,7 +34,7 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
   HXT_CHECK(hxtPointGenWriteDirections(mesh,directions,"GMSH_TEST_directionsPoints.pos"));
   HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,h_function,"GMSH_TEST_hfunction.pos"));
   
-  HXT_CHECK(hxtGeneratePointsMain(mesh,&options,sizemap,directions,fmesh));
+  HXT_CHECK(hxtGeneratePointsMain(mesh,opt,sizemap,directions,fmesh));
 
 
   HXT_CHECK(hxtFree(&directions));
