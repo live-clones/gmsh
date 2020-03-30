@@ -26,8 +26,8 @@ int meshGFaceHxt(GModel *gm)
   std::map<int, std::vector<double> > dataH;
   std::map<int, std::vector<double> > dataDir;
   std::map<int, std::vector<double> > dataDirOrtho;
-  computeCrossFieldAndH(gm,dataH,dataH,dataDirOrtho);
-
+  computeCrossFieldAndH(gm,dataH,dataDir,dataDirOrtho);
+  
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
@@ -48,6 +48,8 @@ int meshGFaceHxt(GModel *gm)
     
     for (int i=0;i< e->getNumVertices();i++){
       MVertex *v = e->getVertex (i);
+      if (v2c.find(v)  == v2c.end())Msg::Error ("FILE %s LINE %d Cannot find vertex %lu",__FILE__,__LINE__,v->getNum()); 
+      if (v2c[v] >= v2c.size())Msg::Error ("FILE %s LINE %d Bad numbering v2c[%lu] = %lu",__FILE__,__LINE__,v->getNum(),v2c[v]); 
       double *nn = data+7*v2c[v];
       nn[0] += n[0];
       nn[1] += n[1];
@@ -86,9 +88,15 @@ int meshGFaceHxt(GModel *gm)
     n[0] = t.x();n[1] = t.y();n[2] = t.z();
     t = SVector3(n[3],n[4],n[5]); t.normalize();
     n[3] = t.x();n[4] = t.y();n[5] = t.z();
-    n[6] = dataH[c2v[i]->getNum()][0];
-  }
     
+    if (dataH.find(c2v[i]->getNum()) != dataH.end()){    
+      n[6] = dataH[c2v[i]->getNum()][0];
+    }
+    else {
+      Msg::Warning ("Vertex %lu has no value for H",c2v[i]->getNum());
+    }
+  }
+  
   ///// HERE WE NEED THE CODE TO THE REMESHING STUFF
 
   ///// END OF HERE WE NEED THE CODE TO THE REMESHING STUFF

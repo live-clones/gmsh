@@ -5186,6 +5186,9 @@ int computeCrossFieldAndH(GModel *gm,
     Msg::Info("Computing a cross field");
     qLayout.computeCrossFieldAndH();
   }
+
+  qLayout.computeUniqueVectorsPerTriangle();
+
   qLayout.getH (dataH);
   qLayout.getDir (dataDir,dataDirOrtho);
   return 0;
