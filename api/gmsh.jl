@@ -1684,24 +1684,84 @@ points `integrationPoints` (given as concatenated triplets of coordinates in the
 reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
 `functionSpaceType` (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
 functions or their gradient, in the u, v, w coordinates of the reference
-element). `numComponents` returns the number C of components of a basis
-function. `basisFunctions` returns the value of the N basis functions at the
-integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
-[g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
+element; or "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
+Legendre functions). `numComponents` returns the number C of components of a
+basis function. `basisFunctions` returns the value of the N basis functions at
+the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
+[g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
+functions that depend on the orientation of the elements, all values for the
+first orientation are returned first, followed by values for the secondd, etc.
+`numOrientations` returns the overall number of orientations.
 
-Return `numComponents`, `basisFunctions`.
+Return `numComponents`, `basisFunctions`, `numOrientations`.
 """
 function getBasisFunctions(elementType, integrationPoints, functionSpaceType)
     api_numComponents_ = Ref{Cint}()
     api_basisFunctions_ = Ref{Ptr{Cdouble}}()
     api_basisFunctions_n_ = Ref{Csize_t}()
+    api_numOrientations_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctions, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, api_numOrientations_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctions returned non-zero error code: $(ierr[])")
     basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
-    return api_numComponents_[], basisFunctions
+    return api_numComponents_[], basisFunctions, api_numOrientations_[]
+end
+
+"""
+    gmsh.model.mesh.getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+
+Get the orientation index of the elements of type `elementType` in the entity of
+tag `tag`. The arguments have the same meaning as in `getBasisFunctions`.
+`basisFunctionsOrientation` is a vector giving for each element the orientation
+index in the values returned by `getBasisFunctions`. For Lagrange basis
+functions the call is superfluous as it will return a vector of zeros.
+
+Return `basisFunctionsOrientation`.
+"""
+function getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+    api_basisFunctionsOrientation_ = Ref{Ptr{Cint}}()
+    api_basisFunctionsOrientation_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetBasisFunctionsOrientationForElements, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, functionSpaceType, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_, tag, task, numTasks, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsOrientationForElements returned non-zero error code: $(ierr[])")
+    basisFunctionsOrientation = unsafe_wrap(Array, api_basisFunctionsOrientation_[], api_basisFunctionsOrientation_n_[], own=true)
+    return basisFunctionsOrientation
+end
+
+"""
+    gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
+
+Get the element-dependent basis functions of the elements of type `elementType`
+in the entity of tag `tag` at the integration points `integrationPoints` (given
+as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w,
+..., gGu, gGv, gGw]), for the function space `functionSpaceType` (e.g.
+"H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre
+functions or their gradient, in the u, v, w coordinates of the reference
+elements). `numComponents` returns the number C of components of a basis
+function. `numBasisFunctions` returns the number N of basis functions per
+element. `basisFunctions` returns the value of the basis functions at the
+integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1,
+...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
+Warning: This function is deprecated - use `getBasisFunctions` instead.
+
+Return `numComponents`, `numFunctionsPerElement`, `basisFunctions`.
+"""
+function getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
+    api_numComponents_ = Ref{Cint}()
+    api_numFunctionsPerElement_ = Ref{Cint}()
+    api_basisFunctions_ = Ref{Ptr{Cdouble}}()
+    api_basisFunctions_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetBasisFunctionsForElements, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_numFunctionsPerElement_, api_basisFunctions_, api_basisFunctions_n_, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: $(ierr[])")
+    basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
+    return api_numComponents_[], api_numFunctionsPerElement_[], basisFunctions
 end
 
 """
@@ -1744,40 +1804,6 @@ function getLocalMultipliersForHcurl0(elementType, tag = -1)
     ierr[] != 0 && error("gmshModelMeshGetLocalMultipliersForHcurl0 returned non-zero error code: $(ierr[])")
     localMultipliers = unsafe_wrap(Array, api_localMultipliers_[], api_localMultipliers_n_[], own=true)
     return localMultipliers
-end
-
-"""
-    gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1, task = 0, numTasks = 1)
-
-Get the element-dependent basis functions of the elements of type `elementType`
-in the entity of tag `tag`at the integration points `integrationPoints` (given
-as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w,
-..., gGu, gGv, gGw]), for the function space `functionSpaceType` (e.g.
-"H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre
-functions or their gradient, in the u, v, w coordinates of the reference
-elements). `numComponents` returns the number C of components of a basis
-function. `numBasisFunctions` returns the number N of basis functions per
-element. `basisFunctions` returns the value of the basis functions at the
-integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1,
-...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
-Warning: this is an experimental feature and will probably change in a future
-release. If `numTasks` > 1, only compute and return the part of the data indexed
-by `task`.
-
-Return `numComponents`, `numFunctionsPerElements`, `basisFunctions`.
-"""
-function getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1, task = 0, numTasks = 1)
-    api_numComponents_ = Ref{Cint}()
-    api_numFunctionsPerElements_ = Ref{Cint}()
-    api_basisFunctions_ = Ref{Ptr{Cdouble}}()
-    api_basisFunctions_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetBasisFunctionsForElements, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_numFunctionsPerElements_, api_basisFunctions_, api_basisFunctions_n_, tag, task, numTasks, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: $(ierr[])")
-    basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
-    return api_numComponents_[], api_numFunctionsPerElements_[], basisFunctions
 end
 
 """
@@ -1850,20 +1876,6 @@ function getInformationForElements(keys, elementType, functionSpaceType)
     tmp_api_infoKeys_ = unsafe_wrap(Array, api_infoKeys_[], api_infoKeys_n_[], own=true)
     infoKeys = [ (tmp_api_infoKeys_[i], tmp_api_infoKeys_[i+1]) for i in 1:2:length(tmp_api_infoKeys_) ]
     return infoKeys
-end
-
-"""
-    gmsh.model.mesh.precomputeBasisFunctions(elementType)
-
-Precomputes the basis functions corresponding to `elementType`.
-"""
-function precomputeBasisFunctions(elementType)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshPrecomputeBasisFunctions, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cint}),
-          elementType, ierr)
-    ierr[] != 0 && error("gmshModelMeshPrecomputeBasisFunctions returned non-zero error code: $(ierr[])")
-    return nothing
 end
 
 """

@@ -36,6 +36,11 @@ double HierarchicalBasisHcurlTria::dotProduct(const std::vector<double> &u,
 
 HierarchicalBasisHcurlTria::~HierarchicalBasisHcurlTria() {}
 
+unsigned int HierarchicalBasisHcurlTria::getNumberOfOrientations() const
+{
+  return 6; // factorial 3
+}
+
 double HierarchicalBasisHcurlTria::_affineCoordinate(int const &j,
                                                      double const &u,
                                                      double const &v)
