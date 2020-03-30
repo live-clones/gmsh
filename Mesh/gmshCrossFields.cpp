@@ -4433,6 +4433,7 @@ public:
 
   void cutMesh(std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts)
   {
+    
     std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it = cuts.begin();
     std::map<MEdge, int, MEdgeLessThan> ecuts;
 
@@ -4442,10 +4443,22 @@ public:
 
     for(size_t i = 0; i < f.size(); i++) {
       std::vector<MTriangle *> newT;
+
+      // create an inverse classification for all edges.
+      std::map<MEdge,GEdge*,MEdgeLessThan> inverse_classification;
+      std::vector<GEdge*> ed_of_fi = f[i]->edges();
+      for (size_t j=0;j<ed_of_fi.size();j++){
+	for (size_t k=0;k<ed_of_fi[j]->lines.size();k++){
+	  MEdge e (ed_of_fi[j]->lines[k]->getVertex(0),
+		   ed_of_fi[j]->lines[k]->getVertex(1));
+	  inverse_classification[e] = ed_of_fi[j];
+	}
+      }
+      
       for(size_t j = 0; j < f[i]->triangles.size(); j++) {
         std::set<int> indices;
         std::multimap<int, std::pair<MVertex *, std::pair<int, int> > > tcuts;
-
+	
         for(size_t k = 0; k < 3; k++) {
           MEdge e = f[i]->triangles[j]->getEdge(k);
           std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it = cuts.find(e);
