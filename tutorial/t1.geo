@@ -92,12 +92,33 @@ Physical Surface("My surface") = {1};
 //   (or use `File->Export' to export in other formats);
 // - or run `gmsh t1.geo -2` to mesh in batch mode on the command line.
 
-// You could also uncomment the following line in this script:
-
+// You could also uncomment the following lines in this script:
+//
 //   Mesh 2;
+//   Save "t1.msh";
+//
+// which would lead Gmsh to mesh and save the mesh every time the file is
+// parsed. (To simply parse the file from the command line, you can use `gmsh
+// t1.geo -')
 
-// which would lead Gmsh to mesh every time the file is parsed. (To simply parse
-// the file from the command line, you can use `gmsh t1.geo -')
+// By default, Gmsh saves meshes in the latest version of the Gmsh mesh file
+// format (the `MSH' format). You can save meshes in other mesh formats by
+// specifying a filename with a different extension in the GUI, on the command
+// line or in scripts. For example
+//
+//   Save "t1.unv";
+//
+// will save the mesh in the UNV format. You can also save the mesh in older
+// versions of the MSH format:
+//
+// - In the GUI: open `File->Export', enter your `filename.msh' and then pick
+//   the version in the dropdown menu.
+// - On the command line: use the `-format' option (e.g. `gmsh file.geo -format
+//   msh2 -2').
+// - In a `.geo' script: add `Mesh.MshFileVersion = x.y;' for any version
+//   number `x.y'.
+// - As an alternative method, you can also not specify the format explicitly,
+//   and just choose a filename with the `.msh2' or `.msh4' extension.
 
 // Note that starting with Gmsh 3.0, models can be built using other geometry
 // kernels than the default built-in kernel. By specifying
