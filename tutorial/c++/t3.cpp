@@ -31,10 +31,9 @@ int main(int argc, char **argv)
   factory::addLine(4, 1, 4);
   factory::addCurveLoop({4, 1, -2, 3}, 1);
   factory::addPlaneSurface({1}, 1);
-  model::addPhysicalGroup(0, {1, 2}, 1);
-  model::addPhysicalGroup(1, {1, 2}, 2);
-  model::addPhysicalGroup(2, {1}, 6);
-  model::setPhysicalName(2, 6, "My surface");
+  model::addPhysicalGroup(1, {1, 2, 4}, 5);
+  int ps = model::addPhysicalGroup(2, {1});
+  model::setPhysicalName(2, ps, "My surface");
 
   // As in `t2.cpp', we plan to perform an extrusion along the z axis.  But
   // here, instead of only extruding the geometry, we also want to extrude the
@@ -59,7 +58,7 @@ int main(int argc, char **argv)
   // supported. To do a full turn, you will thus need to apply at least 3
   // rotations. The OpenCASCADE geometry kernel does not have this limitation.
 
-  // A translation (-2*h, 0, 0) and a rotation ((0,0.15,0.25}, (1,0,0), Pi/2)
+  // A translation (-2*h, 0, 0) and a rotation ((0,0.15,0.25), (1,0,0), Pi/2)
   // can also be combined to form a "twist".  The last (optional) argument for
   // the extrude() and twist() functions specifies whether the extruded mesh
   // should be recombined or not.

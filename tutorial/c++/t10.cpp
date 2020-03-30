@@ -7,8 +7,8 @@
 // -----------------------------------------------------------------------------
 
 // In addition to specifying target mesh sizes at the points of the geometry
-// (see `t1.cpp') or using a background mesh (see `t7.cppq'), you can use
-// general mesh size "Fields".
+// (see `t1.cpp') or using a background mesh (see `t7.cpp'), you can use general
+// mesh size "Fields".
 
 #include <gmsh.h>
 #include <sstream>
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 
   model::add("t10");
 
-  // Let's create a simple rectangular geometry
+  // Let's create a simple rectangular geometry:
   double lc = .15;
   factory::addPoint(0.0,0.0,0,lc, 1);
   factory::addPoint(1,0.0,0,lc, 2);
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
   // interface by selecting `Define->Fields' in the `Mesh' module.
 
   // Finally, let's use the minimum of all the fields as the background mesh
-  // field
+  // field:
   model::mesh::field::add("Min", 7);
   model::mesh::field::setNumbers(7, "FieldsList", {2, 3, 5, 6});
 
@@ -139,6 +139,9 @@ int main(int argc, char **argv)
 
   model::mesh::generate(2);
   gmsh::write("t10.msh");
+
+  // gmsh::fltk::run();
+
   gmsh::finalize();
   return 0;
 }

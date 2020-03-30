@@ -1,4 +1,10 @@
-# This file reimplements gmsh/tutorial/t5.geo in Python.
+# ------------------------------------------------------------------------------
+#
+#  Gmsh Python tutorial 5
+#
+#  Characteristic lengths, holes in volumes
+#
+# ------------------------------------------------------------------------------
 
 import gmsh
 import math
@@ -14,6 +20,28 @@ model.add("t5")
 lcar1 = .1
 lcar2 = .0005
 lcar3 = .055
+
+# If we wanted to change these mesh sizes globally (without changing the above
+# definitions), we could give a global scaling factor for all characteristic
+# lengths with e.g.
+#
+# gmsh.option.setNumber("Mesh.CharacteristicLengthFactor", 0.1);
+#
+# Since we pass `argc' and `argv' to `gmsh.initialize()', we can also give the
+# option on the command line with the `-clscale' switch. For example, with:
+#
+# > ./t5.exe -clscale 1
+#
+# this tutorial produces a mesh of approximately 3000 nodes and 14,000
+# tetrahedra. With
+#
+# > ./t5.exe -clscale 0.2
+#
+# the mesh counts approximately 231,000 nodes and 1,360,000 tetrahedra. You can
+# check mesh statistics in the graphical user interface (gmsh.fltk.run()) with
+# the `Tools->Statistics' menu.
+
+# We proceed by defining some elementary entities describing a truncated cube:
 
 factory.addPoint(0.5,0.5,0.5, lcar2, 1)
 factory.addPoint(0.5,0.5,0, lcar1, 2)
@@ -63,11 +91,13 @@ factory.addPlaneSurface([38], 39)
 
 shells = []
 
-# When the tag is not specified, a new one is automatically provided
 sl = factory.addSurfaceLoop([35,31,29,37,33,23,39,25,27])
 shells.append(sl)
 
 def cheeseHole(x, y, z, r, lc, shells):
+    # This function will create a spherical hole in a volume. We don't specify
+    # tags manually, and let the functions return them automatically:
+
     p1 = factory.addPoint(x,  y,  z,   lc)
     p2 = factory.addPoint(x+r,y,  z,   lc)
     p3 = factory.addPoint(x,  y+r,z,   lc)
@@ -98,6 +128,17 @@ def cheeseHole(x, y, z, r, lc, shells):
     l7 = factory.addCurveLoop([-c2,-c7,-c12])
     l8 = factory.addCurveLoop([-c6,-c9,c2])
 
+    # We need non-plane surfaces to define the spherical holes. Here we use the
+    # `gmsh.model.geo.addSurfaceFilling()' function, which can be used for
+    # surfaces with 3 or 4 curves on their boundary. With the he built-in
+    # kernel, if the curves are circle arcs, ruled surfaces are created;
+    # otherwise transfinite interpolation is used.
+    #
+    # With the OpenCASCADE kernel, `gmsh.model.occ.addSurfaceFilling()' uses a
+    # much more general generic surface filling algorithm, creating a BSpline
+    # surface passing through an arbitrary number of boundary curves. The
+    # `gmsh.model.geo.addThruSections()' allows to create ruled surfaces.
+
     s1 = factory.addSurfaceFilling([l1])
     s2 = factory.addSurfaceFilling([l2])
     s3 = factory.addSurfaceFilling([l3])
@@ -112,6 +153,7 @@ def cheeseHole(x, y, z, r, lc, shells):
     shells.append(sl)
     return v
 
+# We create five holes in the cube:
 x = 0; y = 0.75; z = 0; r = 0.09
 for t in range(1, 6):
     x += 0.166
@@ -119,12 +161,49 @@ for t in range(1, 6):
     v = cheeseHole(x, y, z, r, lcar3, shells)
     model.addPhysicalGroup(3, [v], t)
 
+# The volume of the cube, without the 5 holes, is defined by 6 surface loops:
+# the first surface loop defines the exterior surface; the surface loops other
+# than the first one define holes:
 factory.addVolume(shells, 186)
 
+# Note that using solid modelling with the OpenCASCADE geometry kernel, the same
+# geometry could be built quite differently: see `t16.py'.
+
+# We finally define a physical volume for the elements discretizing the cube,
+# without the holes (for which physical groups were already defined in the
+# `cheeseHole()' function):
 model.addPhysicalGroup(3, [186], 10)
+
 factory.synchronize()
+
+# We could make only part of the model visible to only mesh this subset:
+# ent = gmsh.model.getEntities()
+# gmsh.model.setVisibility(ent, False)
+# gmsh.model.setVisibility([(3, 5(], True, True)
+# gmsh.option.setNumber("Mesh.MeshOnlyVisible", 1)
+
+# Meshing algorithms can changed globally using options:
+gmsh.option.setNumber("Mesh.Algorithm", 6) # 2D algorithm set to Frontal-Delaunay
+gmsh.option.setNumber("Mesh.Algorithm3D", 1) # 3D algorithm set to Delaunay
+
+# They can also be set for individual surfaces, e.g. for using `MeshAdapt' on
+# surface 1:
+gmsh.model.mesh.setAlgorithm(2, 33, 1)
+
+# To generate a curvilinear mesh and optimize it to produce provably valid
+# curved elements (see A. Johnen, J.-F. Remacle and C. Geuzaine. Geometric
+# validity of curvilinear finite elements. Journal of Computational Physics
+# 233, pp. 359-372, 2013; and T. Toulorge, C. Geuzaine, J.-F. Remacle,
+# J. Lambrechts. Robust untangling of curvilinear meshes. Journal of
+# Computational Physics 254, pp. 8-26, 2013), you can uncomment the following
+# lines:
+#
+# gmsh.option.setNumber("Mesh.ElementOrder", 2)
+# gmsh.option.setNumber("Mesh.HighOrderOptimize", 2)
 
 model.mesh.generate(3)
 gmsh.write("t5.msh")
+
+# gmsh.fltk.run()
 
 gmsh.finalize()

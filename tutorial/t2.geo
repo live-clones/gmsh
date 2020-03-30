@@ -42,7 +42,7 @@ Plane Surface(11) = {10};
 // obtain the tags of newly created entities, one can use the return value of
 // the transformation commands directly. For example, the `Translate' command
 // returns a list containing the tags of the translated entities. Let's
-// translate copies of the two surfaces 6 and 11 to the right with the following
+// translate copies of the two surfaces 1 and 11 to the right with the following
 // command:
 
 my_new_surfs[] = Translate {0.12, 0, 0} { Duplicata{ Surface{1, 11}; } };

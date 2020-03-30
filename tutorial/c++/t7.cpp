@@ -52,6 +52,9 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(2);
   gmsh::write("t7.msh");
 
+  // Show the mesh
+  // gmsh::fltk::run();
+
   gmsh::finalize();
   return 0;
 }

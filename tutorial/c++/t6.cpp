@@ -48,7 +48,7 @@ int main(int argc, char **argv)
   // location of the nodes on the curve. For example, the following command
   // forces 20 uniformly placed nodes on curve 2 (including the nodes on the two
   // end points):
-  factory::mesh::setTransfiniteCurve(2, 20, "Bump", 0.05);
+  factory::mesh::setTransfiniteCurve(2, 20);
 
   // Let's put 20 points total on combination of curves `l1', `l2' and `l3'
   // (beware that the points `p1' and `p2' are shared by the curves, so we do

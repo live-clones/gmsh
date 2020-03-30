@@ -93,7 +93,7 @@ int main(int argc, char **argv)
      representing the external contour, since there are no holes): */
   gmshModelGeoAddPlaneSurface(s1, sizeof(s1)/sizeof(s1[0]), 1, &ierr);
 
-  /* At this level, Gmsh knows everything to display the rectangular surface 6
+  /* At this level, Gmsh knows everything to display the rectangular surface 1
      and to mesh it. An optional step is needed if we want to group elementary
      geometrical entities into more meaningful groups, e.g. to define some
      mathematical ("domain", "boundary"), functional ("left wing", "fuselage")
@@ -137,7 +137,23 @@ int main(int argc, char **argv)
      gmshOptionSetNumber("Mesh.SaveAll", 1);
   */
 
-  /* We could run the graphical user interface with:
+  /* By default, Gmsh saves meshes in the latest version of the Gmsh mesh file
+     format (the `MSH' format). You can save meshes in other mesh formats by
+     specifying a filename with a different extension. For example
+
+     gmshWrite("t1.unv");
+
+     will save the mesh in the UNV format. You can also save the mesh in older
+     versions of the MSH format: simply set
+
+     gmshOptionSetString("Mesh.MshFileVersion", "x.y");
+
+     for any version number `x.y'. As an alternative, you can also not specify
+     the format explicitly, and just choose a filename with the `.msh2' or
+     `.msh4' extension. */
+
+  /* To visualize the model we could run the graphical user interface with:
+
      gmsh::fltk::run();
   */
 

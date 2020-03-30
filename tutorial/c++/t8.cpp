@@ -36,8 +36,8 @@ int main(int argc, char **argv)
   factory::addPlaneSurface({1}, 1);
   factory::synchronize();
 
+  // We merge some post-processing views to work on
   try {
-    // We merge some post-processing views to work on
     gmsh::merge("../view1.pos");
     gmsh::merge("../view1.pos");
     gmsh::merge("../view4.pos"); // contains 2 views inside
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
   int black[3] = {0, 0, 0};
   option::setColor("General.Background", white[0], white[1], white[2]);
 
-  // We could make our own shorter versions of repetitive methods
+  // We can make our own shorter versions of repetitive methods
   auto set_color = [] (std::string name, int c[3]) -> void
                    { option::setColor(name, c[0], c[1], c[2]); };
   set_color("General.Foreground", black);

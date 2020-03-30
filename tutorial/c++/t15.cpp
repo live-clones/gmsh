@@ -38,10 +38,6 @@ int main(int argc, char **argv)
   factory::addLine(4, 1, 4);
   factory::addCurveLoop({4, 1, -2, 3}, 1);
   factory::addPlaneSurface({1}, 1);
-  model::addPhysicalGroup(0, {1, 2}, 1);
-  model::addPhysicalGroup(1, {1, 2}, 2);
-  model::addPhysicalGroup(2, {1}, 6);
-  model::setPhysicalName(2, 6, "My surface");
 
   // We change the mesh size to generate a coarser mesh
   lc *=  4;

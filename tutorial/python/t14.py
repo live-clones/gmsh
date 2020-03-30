@@ -1,4 +1,10 @@
-# This file reimplements gmsh/tutorial/t14.geo in Python.
+# ------------------------------------------------------------------------------
+#
+#  Gmsh Python tutorial 14
+#
+#  Homology and cohomology computation
+#
+# ------------------------------------------------------------------------------
 
 # Homology computation in Gmsh finds representative chains of (relative)
 # (co)homology space bases using a mesh of a model.  The representative basis
@@ -124,12 +130,9 @@ gmsh.model.mesh.computeCohomology(domainTags=[domain_physical_tag],
 # Generate the mesh and perform the requested homology computations
 gmsh.model.mesh.generate(3)
 
-# Find physical tags of a certain homology or cohomology space chains
-physicals = gmsh.model.getPhysicalGroups()
-for pi in physicals:
-    name = gmsh.model.getPhysicalName(pi[0], pi[1])
-    if(name.find("H^1") == 0): # find tags of all cohomology chains of dimension 1
-       print("H^1 tag: " + str(pi[1]) + ", name: " + name)
+# For more information, see M. Pellikka, S. Suuriniemi, L. Kettunen and
+# C. Geuzaine. Homology and cohomology computation in finite element
+# modeling. SIAM Journal on Scientific Computing 35(5), pp. 1195-1214, 2013.
 
 gmsh.write("t14.msh")
 gmsh.finalize()

@@ -75,6 +75,9 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("View[1].IntervalsType", 2);
   gmsh::option::setNumber("View[2].IntervalsType", 2);
 
+  // show the GUI at the end
+  // gmsh::fltk::run();
+
   gmsh::finalize();
   return 0;
 }

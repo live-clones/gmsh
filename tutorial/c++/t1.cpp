@@ -132,7 +132,23 @@ int main(int argc, char **argv)
   //
   // gmsh::option::setNumber("Mesh.SaveAll", 1);
 
+  // By default, Gmsh saves meshes in the latest version of the Gmsh mesh file
+  // format (the `MSH' format). You can save meshes in other mesh formats by
+  // specifying a filename with a different extension. For example
+  //
+  //   gmsh::write("t1.unv");
+  //
+  // will save the mesh in the UNV format. You can also save the mesh in older
+  // versions of the MSH format: simply set
+  //
+  //   gmsh::option::setString("Mesh.MshFileVersion", "x.y");
+  //
+  // for any version number `x.y'. As an alternative, you can also not specify
+  // the format explicitly, and just choose a filename with the `.msh2' or
+  // `.msh4' extension.
+
   // To visualize the model we could run the graphical user interface with:
+  //
   // gmsh::fltk::run();
 
   // Note that starting with Gmsh 3.0, models can be built using other geometry

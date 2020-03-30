@@ -16,9 +16,9 @@ int main(int argc, char **argv)
   gmsh::model::add("t11");
 
   // We have seen in tutorials `t3.cpp' and `t6.cpp' that extruded and
-  // transfinite meshes can be "recombined" into quads/prisms/hexahedra by using
-  // the "Recombine" keyword. Unstructured meshes can be recombined in the same
-  // way. Let's define a simple geometry with an analytical mesh size field:
+  // transfinite meshes can be "recombined" into quads, prisms or
+  // hexahedra. Unstructured meshes can be recombined in the same way. Let's
+  // define a simple geometry with an analytical mesh size field:
 
   int p1 = gmsh::model::geo::addPoint(-1.25, -.5, 0);
   int p2 = gmsh::model::geo::addPoint(1.25, -.5, 0);
@@ -68,12 +68,12 @@ int main(int argc, char **argv)
   // gmsh::option::setNumber("Mesh.Algorithm", 8);
 
   // The default recombination algorithm might leave some triangles in the mesh,
-  // if recombining all the triangles leads to badly shaped quads. In such cases,
-  // to generate full-quad meshes, you can either subdivide the resulting hybrid
-  // mesh (with Mesh.SubdivisionAlgorithm = 1), or use the full-quad recombination
-  // algorithm, which will automatically perform a coarser mesh followed by
-  // recombination, smoothing and subdivision. Uncomment the following line to try
-  // the full-quad algorithm:
+  // if recombining all the triangles leads to badly shaped quads. In such
+  // cases, to generate full-quad meshes, you can either subdivide the resulting
+  // hybrid mesh (with `Mesh.SubdivisionAlgorithm' set to 1), or use the
+  // full-quad recombination algorithm, which will automatically perform a
+  // coarser mesh followed by recombination, smoothing and
+  // subdivision. Uncomment the following line to try the full-quad algorithm:
   //
   // gmsh::option::setNumber("Mesh.RecombinationAlgorithm", 2); // or 3
 
@@ -90,6 +90,8 @@ int main(int argc, char **argv)
   // gmsh::model::mesh::recombine();
   // gmsh::option::setNumber("Mesh.SubdivisionAlgorithm", 1);
   // gmsh::model::mesh::refine();
+
+  // gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

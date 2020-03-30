@@ -78,7 +78,6 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > in;
   gmsh::model::getEntitiesInBoundingBox(2-eps,-eps,-eps, 2+1+eps,1+eps,1+eps,
                                         in, 3);
-  std::vector<int> boundary_tags, complement_tags;
   for(auto it = in.begin(); it != in.end(); ++it) {
     auto it2 = std::find(out.begin(), out.end(), *it);
     if(it2 != out.end()) out.erase(it2);

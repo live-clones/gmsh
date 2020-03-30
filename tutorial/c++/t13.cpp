@@ -48,7 +48,7 @@ int main(int argc, char **argv)
   gmsh::model::mesh::classifySurfaces(angle * M_PI / 180.,
                                       includeBoundary,
                                       forceParametrizablePatches,
-                                      curveAngle);
+                                      curveAngle * M_PI / 180.);
 
   // Create a geometry for all the discrete curves and surfaces in the mesh, by
   // computing a parametrization for each one
@@ -74,6 +74,8 @@ int main(int argc, char **argv)
   gmsh::model::mesh::field::setAsBackgroundMesh(f);
 
   gmsh::model::mesh::generate(3);
+
+  // gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;
