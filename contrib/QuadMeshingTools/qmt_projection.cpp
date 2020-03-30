@@ -328,8 +328,21 @@ namespace QMT {
 
   BoundaryProjector::BoundaryProjector(const TMesh& mesh) : M(mesh) {
     trace("BoundaryProjector constructor call");
+    size_t nn = 0;
     size_t nc = 0;
     size_t ns = 0;
+
+    { /* Save nodes */
+      FC(v,M.points.size(),M.pt_color[v] > 0) {
+        id nodeTag = M.pt_color[v];
+        if (nodeTag >= nodes.size()) {
+          nodes.resize(nodeTag+1,vec3{DBL_MAX,DBL_MAX,DBL_MAX});
+        }
+        nodes[nodeTag] = M.points[v];
+        nn += 1;
+      }
+    }
+
     /* Build edge kd-trees */
     {
       trace("building curve kdtrees");
@@ -419,7 +432,7 @@ namespace QMT {
         }
       }
     }
-    info("built BoundaryProjector with {} curve kdtrees and {} surface kdtrees", nc, ns);
+    info("BoundaryProjector built, contains: {} nodes, {} curve kdtrees and {} surface kdtrees", nn, nc, ns);
   }
 
   BoundaryProjector::~BoundaryProjector() {
@@ -442,8 +455,10 @@ namespace QMT {
   }
 
   bool BoundaryProjector::projectionOnEntityAvailable(int dim, int tag) const {
-    if (tag < 0 || dim < 1 || dim > 2) return false;
-    if (dim == 1 && tag >= curve_tree.size()) {
+    if (tag < 0 || dim < 0 || dim > 2) return false;
+    if (dim == 0 && tag >= nodes.size()) {
+      return false;
+    } else if (dim == 1 && tag >= curve_tree.size()) {
       return false;
     } else if (dim == 2 && tag >= surface_tree.size()) {
       return false;
@@ -467,7 +482,10 @@ namespace QMT {
       error("no kdtree available for entity ({},{})", dim, tag);
       return false;
     }
-    if (dim == 1) {
+    if (dim == 0) {
+      projection = nodes[tag];
+      return true;
+    } else if (dim == 1) {
       tree = (static_kd_tree_t*) curve_tree[tag];
     } else if (dim == 2) {
       tree = (static_kd_tree_t*) surface_tree[tag];
@@ -558,6 +576,70 @@ namespace QMT {
     return true;
   }
 
+  bool BoundaryProjector::closestEntity(const vec3& query, double& dist, int& dim, int& tag) const {
+    constexpr double EPS = 1.e-12;
+    dist = DBL_MAX;
+    double d2min = DBL_MAX;
+    int initDim = dim;
+    tag = -1;
+    dim = -1;
+
+
+    /* Test nodes */
+    F(i,nodes.size()) {
+      vec3 proj;
+      bool okp = project(0, i, query, proj);
+      if (!okp || proj[0] == DBL_MAX) continue;
+      double d2 = length2(query-proj);
+      if (d2 < d2min) {
+        d2min = d2;
+        dim = 0;
+        tag = i;
+      }
+    }
+    if (dim == 0 && (initDim == 0 || d2min < EPS)) {
+      dist = std::sqrt(d2min);
+      return true;
+    }
+
+    /* Test curves */
+    FC(i,curve_tree.size(),curve_tree[i] != NULL) {
+      vec3 proj;
+      bool okp = project(1, i, query, proj);
+      if (!okp || proj[0] == DBL_MAX) continue;
+      double d2 = length2(query-proj);
+      if (d2 < d2min) {
+        if (dim == 0 && d2 + EPS > d2min) continue; /* epsilon priority to nodes */
+        d2min = d2;
+        dim = 1;
+        tag = i;
+      }
+    }
+    if (dim == 1 && (initDim == 1 || d2min < EPS)) {
+      dist = std::sqrt(d2min);
+      return true;
+    }
+
+    /* Test surfaces */
+    FC(i,surface_tree.size(),surface_tree[i] != NULL) {
+      vec3 proj;
+      bool okp = project(2, i, query, proj);
+      if (!okp || proj[0] == DBL_MAX) continue;
+      double d2 = length2(query-proj);
+      if (d2 < d2min) {
+        if (dim == 1 && d2 + 1.1 * EPS > d2min) continue; /* epsilon priority to curves */
+        d2min = d2;
+        dim = 2;
+        tag = i;
+      }
+    }
+
+    if (dim == -1) return false;
+    dist = std::sqrt(d2min);
+
+    return true;
+  }
+
   bool BoundaryProjector::closestEntity(const std::vector<vec3>& queries, double& dist, int& dim, int& tag) const {
     constexpr double EPS = 1.e-12;
     dist = DBL_MAX;
@@ -610,6 +692,31 @@ namespace QMT {
     }
     if (dim == -1) return false;
     dist = std::sqrt(mind2max);
+    return true;
+  }
+
+  bool assignClosestEntities(QMesh& M, const BoundaryProjector& projector) {
+    vector<bool> used(M.points.size(),false);
+    F(f,M.quads.size()) 
+      FC(lv,4,M.quads[f][lv] < M.points.size()) used[M.quads[f][lv]] = true;
+
+    size_t nb[3] = {0,0,0};
+    size_t nv = 0;
+    FC(v,M.points.size(),used[v]) {
+      int dim = -1;
+      int tag = -1;
+      double dist = DBL_MAX;
+      bool okc = projector.closestEntity(M.points[v],dist,dim,tag);
+      if (okc) {
+        M.entity[v] = {dim,tag};
+        nb[dim] += 1;
+        nv += 1;
+      } else {
+        error("failed to assign closest entity to M.points[{}]={}",v,M.points[v]);
+        return false;
+      }
+    }
+    info("vertex to entity assignement: {} vertices -> {} to nodes, {} to curves and {} to surfaces",nv,nb[0],nb[1],nb[2]);
     return true;
   }
 }

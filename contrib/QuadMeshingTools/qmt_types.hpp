@@ -53,6 +53,7 @@ namespace QMT {
     std::vector<bool> onCorner;
     std::vector<bool> onBoundary;
     std::vector<double> size;
+    std::vector<id> pt_color;
 
     /* one value per line */
     std::vector<id2> lines;
@@ -112,4 +113,9 @@ namespace QMT {
   inline double clamp(double x, double lower, double upper) { return std::min(upper, std::max(x, lower)); }
   inline double angle_nvectors(vec3 a, vec3 b) { return acos(clamp(dot(a,b),-1.,1.)); }
   inline double angle_vectors(vec3 a, vec3 b) { a = normalize(a); b = normalize(b); return angle_nvectors(a,b); }
+
+  /* vec2 math */
+  inline double dot      (const vec2& a, const vec2& b) { return a[0]*b[0]+a[1]*b[1]; }
+  inline double length2  (const vec2& a) { return dot(a,a); }
+  inline double length   (const vec2& a) { return sqrt(length2(a)); }
 }

@@ -40,6 +40,7 @@ namespace QMT_SMP_Utils {
   using namespace QMT;
   using namespace QMT_Utils;
 
+  bool global_gmsh_initialized = false;
 
   /************************************/
   /* Formatting and Logging functions */
@@ -1177,9 +1178,10 @@ namespace QMT {
       bool onCurves = true,
       bool onSurfaces = true) {
     info("project points on discrete curves and triangulated surfaces ...");
+    size_t nbp[3] = {0,0,0};
     F(v,M.points.size()) {
       vec3 pt = M.points[v];
-      if (M.entity[v].first == 1 || M.entity[v].first == 2) {
+      if (M.entity[v].first == 0 || M.entity[v].first == 1 || M.entity[v].first == 2) {
         pair<int,int> oldEntity = M.entity[v];
         if (oldEntity.second == -1) {
           int dim = M.entity[v].first;
@@ -1188,7 +1190,8 @@ namespace QMT {
           bool okc = projector.closestEntity({pt}, dist, dim, tag);
           if (okc) {
             oldEntity = {dim,tag};
-            warn("v = {}, mapping from entity ({},{}) to initial one not found, using closest entity ({},{}), dist = {}", v, M.entity[v].first, M.entity[v].second, dim, tag, dist);
+            nbp[dim] += 1;
+            // warn("v = {}, mapping from entity ({},{}) to initial one not found, using closest entity ({},{}), dist = {}", v, M.entity[v].first, M.entity[v].second, dim, tag, dist);
           } else {
             warn("v = {}, mapping from entity ({},{}) to initial one not found", v, M.entity[v].first, M.entity[v].second);
             continue;
@@ -1210,6 +1213,7 @@ namespace QMT {
         }
       }
     }
+    if (nbp[0] + nbp[1] + nbp[2] > 0) warn("missing entity assignement: {} assigned to closest nodes, {} to closest curves, {} to closest surfaces", nbp[0], nbp[1],nbp[2]);
     return true;
   }
 
@@ -1314,7 +1318,10 @@ namespace QMT {
       const BoundaryProjector* projector,
       const std::map<std::pair<int,int>,std::pair<int,int>>* entityToInitialEntity) {
     /* gmsh initialization */
-    gmsh::initialize(0, 0, false);
+    if (!QMT_SMP_Utils::global_gmsh_initialized) {
+      gmsh::initialize(0, 0, false);
+      QMT_SMP_Utils::global_gmsh_initialized = true;
+    }
 
     if (size_min == 0 && size_max == 1.e22) {
       double xmin, ymin, zmin, xmax, ymax, zmax;
@@ -1725,6 +1732,68 @@ namespace QMT {
     return true;
   }
 
+  bool import_QMesh_from_gmsh(const std::string& meshName, QMesh& M) {
+    if (!QMT_SMP_Utils::global_gmsh_initialized) {
+      gmsh::initialize(0, 0, false);
+      QMT_SMP_Utils::global_gmsh_initialized = true;
+    }
+
+    if (meshName != "current") {
+      gmsh::model::setCurrent(meshName);
+    }
+    
+    { /* vertices */
+      std::vector<std::size_t> nodeTags;
+      std::vector<double> coord;
+      std::vector<double> parametricCoords;
+      gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoords);
+      M.points.resize(nodeTags.size());
+      M.size.resize(nodeTags.size(),DBL_MAX);
+      M.entity.resize(nodeTags.size(),{-1,-1});
+      F(i,nodeTags.size()) {
+        id v = nodeTags[i];
+        if (v >= M.points.size()) {
+          M.points.resize(v+1);
+          M.size.resize(v+1,DBL_MAX);
+          M.entity.resize(v+1,{-1,-1});
+        }
+        M.points[v] = {coord[3*i+0],coord[3*i+1],coord[3*i+2]};
+      }
+    }
+
+    { /* quads */
+      vectorpair surfs;
+      gmsh::model::getEntities(surfs, 2);
+      F(k,surfs.size()) {
+        std::vector<int> elementTypes;
+        std::vector<std::vector<size_t>> elementTags;
+        std::vector<std::vector<size_t>> nodeTags;
+        gmsh::model::mesh::getElements(elementTypes,elementTags,nodeTags,surfs[k].first,surfs[k].second);
+        F(i,elementTypes.size()) {
+          if (elementTypes[i] == 3) { /* quads */
+            F(j,elementTags[i].size()) {
+              M.quads.push_back(
+                  {id(nodeTags[i][4*j+0]),id(nodeTags[i][4*j+1]),
+                  id(nodeTags[i][4*j+2]), id(nodeTags[i][4*j+3])});
+              M.quadEntity.push_back(-1);
+              M.color.push_back(surfs[k].second);
+            }
+          }
+        }
+      }
+    }
+
+    bool okn = compute_quad_adjacencies(M.quads, M.quad_neighbors, M.nm_quad_neighbors);
+    if (!okn) {
+      error("failed to compute quad patch adjacencies");
+      return false;
+    }
+
+    info("quad mesh import: {} quads", M.quads.size());
+
+    return true;
+  }
+
   bool simplify_quad_mesh(QMesh& M, double size_collapse, int nb_collapse_max,
       const BoundaryProjector* projector) {
     info("quad mesh simplification (size_collapse = {}) ...", size_collapse);
@@ -1765,6 +1834,8 @@ namespace QMT {
     /* Precompute a list of chord collapse candidates */
     vector<pair<double,Chord>> chord_to_collapse;
     {
+      double wming = DBL_MAX;
+      double wmaxg = -DBL_MAX;
       vector<Chord> chords;
       bool okc = build_chords(M.quads, M.quad_neighbors, chords);
       if (!okc) {
@@ -1780,13 +1851,15 @@ namespace QMT {
           warn("failed to evaluate chord width (problem with sizemap ?)");
           continue;
         }
+        wming = std::min(wming,wavg);
+        wmaxg = std::max(wmaxg,wavg);
         if (wmin > size_collapse) continue; /* filter on minimum width */
         chord_to_collapse.push_back({wavg,chords[i]}); /* sort by average width */
       }
       std::sort(chord_to_collapse.begin(), chord_to_collapse.end(),
           [](const pair<double,Chord>& a, const pair<double,Chord>& b) {
           return a.first < b.first; });
-      info("precomputation: {} chord collapse candidates", chord_to_collapse.size());
+      info("precomputation: {} chord collapse candidates. Chord avg. width stats: min={}, max={}", chord_to_collapse.size(), wming, wmaxg);
     }
 
     /* Memory optimization */
@@ -1868,11 +1941,13 @@ namespace QMT {
     }
 
     if (projector != NULL) {
+      vector<bool> used(M.points.size(),false);
+      FC(c,M.quads.size(),M.quads[c][0] != NO_ID)  F(lv,4) used[M.quads[c][lv]] = true;
       size_t nc = 0;
       double dmax = 0.;
-      FC(v,M.points.size(),M.entity[v].first == -1 || M.entity[v].second == -1) {
+      FC(v,M.points.size(),used[v] && (M.entity[v].first == -1 || M.entity[v].second == -1)) {
         if (M.entity[v].first == -1) {
-          error("cannot deal with vertex v={}, M.entity[v] = {}", M.entity[v]);
+          error("cannot deal with vertex v={}, M.entity[v] = {}", v, M.entity[v]);
           return false;
         }
         int dim = M.entity[v].first;
@@ -1892,7 +1967,6 @@ namespace QMT {
       if (nc > 0) {
         warn("{} vertices got closest entity assigned (dist max = {})", nc, dmax);
       }
-
 
       bool okp = project_points_via_discrete_projector(M, *projector);
       if (!okp) {

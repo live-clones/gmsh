@@ -93,6 +93,7 @@ namespace QMT {
    *                    nbSteps = 4 is a good trade-off.
    * @param[in,out] edge_to_angle If not NULL, the function will fill the map with the cross angle (relative to the edge vector)
    *                              for each edge [v1,v2] (with v1 < v2) of the triangulation.
+   * @param[in] bc_expansion_layers If non-zero, expand Dirichlet boundary conditions to adjacent layers of edges.
    * @warning this function calls the gmsh API
    * @return True if the computation succeed
    */
@@ -100,7 +101,8 @@ namespace QMT {
       const std::string& meshName,
       int& crossFieldTag,
       int nbSteps = 4,
-      std::map<std::pair<size_t,size_t>,double>* edge_to_angle = NULL);
+      std::map<std::pair<size_t,size_t>,double>* edge_to_angle = NULL,
+      int bc_expansion_layers = 0);
 
 
   /**
@@ -121,6 +123,10 @@ namespace QMT {
   /******************************* prototypes, not ready **********************************/
   /****************************************************************************************/
 
+  bool import_QMesh_from_gmsh(const std::string& meshName, QMesh& M);
+
+  bool fill_vertex_sizes_from_sizemap(QMesh& M, int sizemapTag);
+
   bool generate_quad_mesh_via_tmesh_quantization(
       const std::string& modelName,
       int sizemapTag,
@@ -132,9 +138,9 @@ namespace QMT {
 
 
 
+  // TODO: verify this function, not sure if it works (see qmt cross field on smile2 model)
   bool create_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagH, bool viewIsModelData, const std::string& viewName, int& viewTag);
 
-  bool detect_cross_field_singularities(int crossFieldTag, std::vector<std::pair<size_t,int>>& sings, bool create_view = true);
 }
 
 

@@ -101,12 +101,6 @@ struct hxtMeshStruct {
     uint64_t num;
     uint64_t size;
   } lines;
-  struct {
-    uint32_t* node;
-    uint16_t* colors;
-    uint32_t num;
-    uint32_t size;
-  } points;
 
   // boundary representation
   struct {
