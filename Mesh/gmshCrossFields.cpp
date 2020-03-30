@@ -5773,8 +5773,8 @@ int computeUV(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& stat
     V->addData(gm, dataV, 0, 0.0, 1, 1);
     V->finalize();
 
-    double minval = std::min(U->getMin(),U->getMin());
-    double maxval = std::max(V->getMax(),V->getMax());
+    double minval = std::min(U->getMin(),V->getMin());
+    double maxval = std::max(U->getMax(),V->getMax());
 
     view_U = new PView();
     view_U->setData(U);
