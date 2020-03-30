@@ -11,7 +11,10 @@
 #if defined(HAVE_HXT)
 extern "C" {
 #include "hxt_api.h"
+#include "remesh/hxt_gmsh_point_gen_main.h"
+#include "remesh/hxt_point_gen_options.h"
 }
+
 
 int meshGFaceHxt(GModel *gm)
 {
@@ -27,14 +30,13 @@ int meshGFaceHxt(GModel *gm)
   std::map<int, std::vector<double> > dataDir;
   std::map<int, std::vector<double> > dataDirOrtho;
   computeCrossFieldAndH(gm,dataH,dataDir,dataDirOrtho);
-  
+
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
 
   /// put the cross field and conformal factor into a big vector
-  double *data = (double*)malloc (c2v.size()*sizeof(double)*7);
-  
+  double *data = (double*)malloc(c2v.size()*sizeof(double)*7);
   for (size_t i = 0; i< c2v.size()*7 ; i++)data [i] = 0.0;
   
   std::map<int, std::vector<double> > :: iterator it = dataDir.begin();
@@ -98,6 +100,18 @@ int meshGFaceHxt(GModel *gm)
   }
   
   ///// HERE WE NEED THE CODE TO THE REMESHING STUFF
+   
+  HXTContext *fcontext;
+  HXTMesh *fmesh;
+  HXT_CHECK(hxtContextCreate(&fcontext));
+  HXT_CHECK(hxtMeshCreate(fcontext, &fmesh));
+ 
+  HXT_CHECK(hxtGmshPointGenMain(mesh,data,fmesh));
+  
+  HXT_CHECK(hxtMeshDelete(&fmesh));
+  HXT_CHECK(hxtContextDelete(&fcontext));
+ 
+
 
   ///// END OF HERE WE NEED THE CODE TO THE REMESHING STUFF
 
