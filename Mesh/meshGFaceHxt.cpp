@@ -110,7 +110,7 @@ int meshGFaceHxt(GModel *gm)
   HXTPointGenOptions opt = { .verbosity = 0,
                              .generateLines = 1,
                              .generateSurfaces = 1,
-                             .generateVolumes = 1,
+                             .generateVolumes = 0,
                              .remeshSurfaces = 1,
                              .dirType = 1,
                              .areaThreshold = 0};

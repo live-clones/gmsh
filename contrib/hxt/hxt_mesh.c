@@ -77,6 +77,12 @@ HXTStatus  hxtMeshCreate ( HXTContext* ctx, HXTMesh** mesh) {
   (*mesh)->lines.num = 0;
   (*mesh)->lines.size = 0;
 
+  // points
+  (*mesh)->points.node = NULL;
+  (*mesh)->points.colors = NULL;
+  (*mesh)->points.num = 0;
+  (*mesh)->points.size = 0;
+
   // boundary representation
   (*mesh)->brep.numVolumes = 0;
   (*mesh)->brep.numSurfacesPerVolume = NULL;
