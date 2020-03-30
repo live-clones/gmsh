@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   // connected curves, a sign being associated with each curve (depending on the
   // orientation of the curve to form a loop). The API function to create curve
   // loops takes a vector of integers as first argument, and the curve loop tag
-  // (which must ne unique amongst curve loops) as the second (optional)
+  // (which must be unique amongst curve loops) as the second (optional)
   // argument:
   gmsh::model::geo::addCurveLoop({4, 1, -2, 3}, 1);
 
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
   // for an example of a surface with a hole):
   gmsh::model::geo::addPlaneSurface({1}, 1);
 
-  // At this level, Gmsh knows everything to display the rectangular surface 6
+  // At this level, Gmsh knows everything to display the rectangular surface 1
   // and to mesh it. An optional step is needed if we want to group elementary
   // geometrical entities into more meaningful groups, e.g. to define some
   // mathematical ("domain", "boundary"), functional ("left wing", "fuselage")
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
   //
   // gmsh::option::setNumber("Mesh.SaveAll", 1);
 
-  // We could run the graphical user interface with:
+  // To visualize the model we could run the graphical user interface with:
   // gmsh::fltk::run();
 
   // Note that starting with Gmsh 3.0, models can be built using other geometry
