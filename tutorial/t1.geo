@@ -65,7 +65,7 @@ Curve Loop(1) = {4, 1, -2, 3};
 
 Plane Surface(1) = {1};
 
-// At this level, Gmsh knows everything to display the rectangular surface 6 and
+// At this level, Gmsh knows everything to display the rectangular surface 1 and
 // to mesh it. An optional step is needed if we want to group elementary
 // geometrical entities into more meaningful groups, e.g. to define some
 // mathematical ("domain", "boundary"), functional ("left wing", "fuselage") or
