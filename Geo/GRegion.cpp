@@ -174,7 +174,7 @@ void GRegion::resetMeshAttributes()
   meshAttributes.QuadTri = NO_QUADTRI;
 }
 
-SBoundingBox3d GRegion::bounds(bool fast) const
+SBoundingBox3d GRegion::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteVolume && geomType() != PartitionVolume) {

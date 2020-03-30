@@ -141,6 +141,11 @@ Try to preserve the numbering of entities through OpenCASCADE boolean operations
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCBoundsUseStl
+Use STL mesh for computing bounds of OpenCASCADE shapes (more accurate, but slower)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCDisableStl
 Disable STL creation in OpenCASCADE kernel@*
 Default value: @code{0}@*

@@ -372,9 +372,9 @@ class option:
         return _ostring(api_value_)
 
     @staticmethod
-    def setColor(name, r, g, b, a=0):
+    def setColor(name, r, g, b, a=255):
         """
-        gmsh.option.setColor(name, r, g, b, a=0)
+        gmsh.option.setColor(name, r, g, b, a=255)
 
         Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
         `g', `b' and `a' should be integers between 0 and 255. `name' is of the
@@ -1229,9 +1229,9 @@ class model:
         return api_value_.value
 
     @staticmethod
-    def setColor(dimTags, r, g, b, a=0, recursive=False):
+    def setColor(dimTags, r, g, b, a=255, recursive=False):
         """
-        gmsh.model.setColor(dimTags, r, g, b, a=0, recursive=False)
+        gmsh.model.setColor(dimTags, r, g, b, a=255, recursive=False)
 
         Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
         `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
@@ -5670,6 +5670,64 @@ class view:
             _ovectorstring(api_dataType_, api_dataType_n_.value),
             _ovectorint(api_numElements_, api_numElements_n_.value),
             _ovectorvectordouble(api_data_, api_data_n_, api_data_nn_))
+
+    @staticmethod
+    def addListDataString(tag, coord, data, style=[]):
+        """
+        gmsh.view.addListDataString(tag, coord, data, style=[])
+
+        Add a string to a list-based post-processing view with tag `tag'. If
+        `coord' contains 3 coordinates the string is positioned in the 3D model
+        space ("3D string"); if it contains 2 coordinates it is positioned in the
+        2D graphics viewport ("2D string"). `data' contains one or more (for
+        multistep views) strings. `style' contains pairs of styling parameters,
+        concatenated.
+        """
+        api_coord_, api_coord_n_ = _ivectordouble(coord)
+        api_data_, api_data_n_ = _ivectorstring(data)
+        api_style_, api_style_n_ = _ivectorstring(style)
+        ierr = c_int()
+        lib.gmshViewAddListDataString(
+            c_int(tag),
+            api_coord_, api_coord_n_,
+            api_data_, api_data_n_,
+            api_style_, api_style_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshViewAddListDataString returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def getListDataStrings(tag, dim):
+        """
+        gmsh.view.getListDataStrings(tag, dim)
+
+        Get list-based post-processing data strings (2D strings if `dim' = 2, 3D
+        strings if `dim' = 3) from the view with tag `tag'. Return the coordinates
+        in `coord', the strings in `data' and the styles in `style'.
+
+        Return `coord', `data', `style'.
+        """
+        api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+        api_data_, api_data_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        api_style_, api_style_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        ierr = c_int()
+        lib.gmshViewGetListDataStrings(
+            c_int(tag),
+            c_int(dim),
+            byref(api_coord_), byref(api_coord_n_),
+            byref(api_data_), byref(api_data_n_),
+            byref(api_style_), byref(api_style_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshViewGetListDataStrings returned non-zero error code: ",
+                ierr.value)
+        return (
+            _ovectordouble(api_coord_, api_coord_n_.value),
+            _ovectorstring(api_data_, api_data_n_.value),
+            _ovectorstring(api_style_, api_style_n_.value))
 
     @staticmethod
     def addAlias(refTag, copyOptions=False, tag=-1):

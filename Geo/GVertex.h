@@ -70,7 +70,7 @@ public:
   virtual void setPrescribedMeshSizeAtVertex(double l) { meshSize = l; }
 
   // get the bounding box
-  virtual SBoundingBox3d bounds(bool fast = false) const
+  virtual SBoundingBox3d bounds(bool fast = false)
   {
     return SBoundingBox3d(SPoint3(x(), y(), z()));
   }

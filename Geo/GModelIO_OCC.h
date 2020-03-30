@@ -408,6 +408,8 @@ public:
                     double angle, std::vector<SPoint3> &vertices,
                     std::vector<SVector3> &normals,
                     std::vector<int> &triangles);
+  void fixSTLBounds(double &xmin, double &ymin, double &zmin,
+                    double &xmax, double &ymax, double &zmax);
 };
 
 #else

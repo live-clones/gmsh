@@ -57,7 +57,7 @@ OCCEdge::~OCCEdge()
     model()->getOCCInternals()->unbind(c, tag()); // potentially slow
 }
 
-SBoundingBox3d OCCEdge::bounds(bool fast) const
+SBoundingBox3d OCCEdge::bounds(bool fast)
 {
   Bnd_Box b;
   try {
@@ -68,6 +68,10 @@ SBoundingBox3d OCCEdge::bounds(bool fast) const
   }
   double xmin, ymin, zmin, xmax, ymax, zmax;
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+
+  if(CTX::instance()->geom.occBoundsUseSTL)
+    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
+
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
 }

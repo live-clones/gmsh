@@ -99,7 +99,7 @@ public:
   virtual bool isSeam(const GFace *face) const { return false; }
 
   // get the bounding box
-  virtual SBoundingBox3d bounds(bool fast = false) const;
+  virtual SBoundingBox3d bounds(bool fast = false);
 
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();

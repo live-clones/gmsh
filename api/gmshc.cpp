@@ -45,7 +45,8 @@ void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_
 {
   *p = (char**)gmshMalloc(sizeof(char*) * v.size());
   for(size_t i = 0; i < v.size(); ++i){
-    (*p)[i] = strdup(v[i].c_str());
+    (*p)[i] = (char*)gmshMalloc(sizeof(char) * (v[i].size() + 1));
+    strcpy((*p)[i], v[i].c_str());
   }
   *size = v.size();
 }
@@ -3117,6 +3118,37 @@ GMSH_API void gmshViewGetListData(const int tag, char *** dataType, size_t * dat
     vectorstring2charptrptr(api_dataType_, dataType, dataType_n);
     vector2ptr(api_numElements_, numElements, numElements_n);
     vectorvector2ptrptr(api_data_, data, data_n, data_nn);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshViewAddListDataString(const int tag, double * coord, size_t coord_n, char ** data, size_t data_n, char ** style, size_t style_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<std::string> api_data_(data, data + data_n);
+    std::vector<std::string> api_style_(style, style + style_n);
+    gmsh::view::addListDataString(tag, api_coord_, api_data_, api_style_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshViewGetListDataStrings(const int tag, const int dim, double ** coord, size_t * coord_n, char *** data, size_t * data_n, char *** style, size_t * style_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_;
+    std::vector<std::string> api_data_;
+    std::vector<std::string> api_style_;
+    gmsh::view::getListDataStrings(tag, dim, api_coord_, api_data_, api_style_);
+    vector2ptr(api_coord_, coord, coord_n);
+    vectorstring2charptrptr(api_data_, data, data_n);
+    vectorstring2charptrptr(api_style_, style, style_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

@@ -908,7 +908,8 @@ template<typename t>
 {{
   *p = (char**){0}Malloc(sizeof(char*) * v.size());
   for(size_t i = 0; i < v.size(); ++i){{
-    (*p)[i] = strdup(v[i].c_str());
+    (*p)[i] = (char*){0}Malloc(sizeof(char) * (v[i].size() + 1));
+    strcpy((*p)[i], v[i].c_str());
   }}
   *size = v.size();
 }}

@@ -32,7 +32,7 @@ protected:
 public:
   OCCFace(GModel *m, TopoDS_Face s, int num);
   virtual ~OCCFace();
-  virtual SBoundingBox3d bounds(bool fast = false) const;
+  virtual SBoundingBox3d bounds(bool fast = false);
   Range<double> parBounds(int i) const;
   virtual GPoint point(double par1, double par2) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint,

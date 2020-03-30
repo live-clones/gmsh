@@ -127,7 +127,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   std::vector<GFace *> allFaces(allFacesSet.begin(), allFacesSet.end());
   gr->set(allFaces);
 
-  std::set<GEdge *> allEmbEdgesSet;
+  std::set<GEdge *, GEntityPtrLessThan> allEmbEdgesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GEdge *> const &e = regions[i]->embeddedEdges();
     allEmbEdgesSet.insert(e.begin(), e.end());

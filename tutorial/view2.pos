@@ -1,10 +1,10 @@
-/********************************************************************* 
- *
- *  Gmsh tutorial 1 - appendix 2
- * 
- *  Vector post-processing view
- *
- *********************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh tutorial 1 - appendix 2
+//
+//  Vector post-processing view (in parsed format)
+//
+// -----------------------------------------------------------------------------
 
 // This view contains a vector field defined on points, with 5 time steps.
 
