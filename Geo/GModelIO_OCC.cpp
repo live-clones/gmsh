@@ -3774,7 +3774,8 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(occv);
     }
     double lc = _attributes->getMeshSize(0, vertex);
-    occv->setPrescribedMeshSizeAtVertex(lc);
+    if(lc != MAX_LC)
+      occv->setPrescribedMeshSizeAtVertex(lc);
     std::vector<std::string> labels;
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
@@ -4718,6 +4719,28 @@ bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1,
   if(!makeTorus(result, x, y, z, r1, r2, angle)) return false;
   if(!makeSolidSTL(result, vertices, normals, triangles)) return false;
   return true;
+}
+
+void OCC_Internals::fixSTLBounds(double &xmin, double &ymin, double &zmin,
+                                 double &xmax, double &ymax, double &zmax)
+{
+  // When an STL exists, OCC enlarges the bounding box by the allowed linear
+  // deflection given to BRepMesh_IncrementalMesh. This is "safe", but on simple
+  // polyhedral geometries (a cube!) it will consistently lead to enlarging the
+  // bounding box by twice this value in all directions. Since we use bounds()
+  // mostly for locating entities, it's better to remove the tolerance (with the
+  // risk that the bbox is a bit too small for curved boundaries - but that's
+  // fine)
+  double eps = CTX::instance()->mesh.stlLinearDeflection;
+  // OCC also enlarges the bounding box by Precision::Confusion(): remove it as
+  // well
+  eps += Precision::Confusion();
+  xmin += eps;
+  xmax -= eps;
+  ymin += eps;
+  ymax -= eps;
+  zmin += eps;
+  zmax -= eps;
 }
 
 #endif

@@ -2933,11 +2933,11 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   switch(gf->getMeshingAlgo()) {
   case ALGO_2D_MESHADAPT: algo = "MeshAdapt"; break;
-  case ALGO_2D_FRONTAL: algo = "Frontal"; break;
-  case ALGO_2D_FRONTAL_QUAD: algo = "Frontal Quad"; break;
+  case ALGO_2D_FRONTAL: algo = "Frontal-Delaunay"; break;
+  case ALGO_2D_FRONTAL_QUAD: algo = "Frontal-Delaunay for Quads"; break;
   case ALGO_2D_DELAUNAY: algo = "Delaunay"; break;
   case ALGO_2D_BAMG: algo = "Bamg"; break;
-  case ALGO_2D_PACK_PRLGRMS: algo = "Square Packing"; break;
+  case ALGO_2D_PACK_PRLGRMS: algo = "Packing of Parallelograms"; break;
   case ALGO_2D_AUTO:
     algo = (gf->geomType() == GEntity::Plane) ? "Delaunay" : "MeshAdapt";
     break;

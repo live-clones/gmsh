@@ -1,17 +1,24 @@
-// This file reimplements gmsh/tutorial/t2.geo in C++. Comments focus on the new
-// API functions used, compared to the ones introduced in t1.cpp.
+// -----------------------------------------------------------------------------
+//
+//  Gmsh C++ tutorial 2
+//
+//  Geometrical transformations, extruded geometries, elementary entities
+//  (volumes), physical groups (volumes)
+//
+// -----------------------------------------------------------------------------
 
 #include <gmsh.h>
 
-// give nice shortcuts for some namespaces
+// We start by giving some nice shortcuts for some namespaces
 namespace model = gmsh::model;
 namespace factory = gmsh::model::geo;
 
 int main(int argc, char **argv)
 {
-  // If argc/argv are passed, Gmsh will parse the commandline in the same way as
-  // the standalone Gmsh app.
+  // If argc/argv are passed to gmsh::initialize(), Gmsh will parse the
+  // commandline in the same way as the standalone Gmsh app:
   gmsh::initialize(argc, argv);
+
   gmsh::option::setNumber("General.Terminal", 1);
 
   model::add("t2");
@@ -28,37 +35,52 @@ int main(int argc, char **argv)
   factory::addLine(4, 1, 4);
   factory::addCurveLoop({4, 1, -2, 3}, 1);
   factory::addPlaneSurface({1}, 1);
-  model::addPhysicalGroup(0, {1, 2}, 1);
-  model::addPhysicalGroup(1, {1, 2}, 2);
-  model::addPhysicalGroup(2, {1}, 6);
-  model::setPhysicalName(2, 6, "My surface");
-  // ...end of copy
+  model::addPhysicalGroup(1, {1, 2, 4}, 5);
+  int ps = model::addPhysicalGroup(2, {1});
+  model::setPhysicalName(2, ps, "My surface");
 
+  // We can then add new points and curves in the same way as we did in
+  // `t1.cpp':
   factory::addPoint(0, .4, 0, lc, 5);
   factory::addLine(4, 5, 5);
 
-  // Geometrical transformations take a vector of pairs of integers as first
-  // argument, which contains the list of entities, represented by (dimension,
-  // tag) pairs. Here we thus translate point 3 (dimension=0, tag=3), by
-  // dx=-0.05, dy=0, dz=0.
+  // But Gmsh also provides tools to transform (translate, rotate, etc.)
+  // elementary entities or copies of elementary entities.  Geometrical
+  // transformations take a vector of pairs of integers as first argument, which
+  // contains the list of entities, represented by (dimension, tag) pairs.  For
+  // example, the point 3 (dimension=0, tag=3) can be moved by 0.05 to the left
+  // (dx=-0.05, dy=0, dz=0) with
   factory::translate({{0, 3}}, -0.05, 0, 0);
 
-  // The "Duplicata" functionality in .geo files is handled by
+  // Note that there are no units in Gmsh: coordinates are just numbers - it's
+  // up to the user to associate a meaning to them.
+
+  // The resulting point can also be duplicated and translated by 0.1 along the
+  // y axis. The "Duplicata" functionality in .geo files is handled by
   // model::geo::copy(), which takes a vector of (dim, tag) pairs as input, and
-  // returns another vector of (dim, tag) pairs.
+  // returns another vector of (dim, tag) pairs:
   std::vector<std::pair<int, int> > ov;
   factory::copy({{0, 3}}, ov);
   factory::translate(ov, 0, 0.1, 0);
 
+  // The new point tag is available in ov[0].second, and can be used to create
+  // new lines:
   factory::addLine(3, ov[0].second, 7);
   factory::addLine(ov[0].second, 5, 8);
   factory::addCurveLoop({5,-8,-7,3}, 10);
   factory::addPlaneSurface({10}, 11);
 
+  // In the same way, we can translate copies of the two surfaces 6 and 11 to
+  // the right with the following command:
   factory::copy({{2, 1}, {2, 11}}, ov);
   factory::translate(ov, 0.12, 0, 0);
 
   std::printf("New surfaces '%d' and '%d'\n", ov[0].second, ov[1].second);
+
+  // Volumes are the fourth type of elementary entities in Gmsh. In the same way
+  // one defines curve loops to build surfaces, one has to define surface loops
+  // (i.e. `shells') to build volumes. The following volume does not have holes
+  // and thus consists of a single surface loop:
 
   factory::addPoint(0., 0.3, 0.13, lc, 100);
   factory::addPoint(0.08, 0.3, 0.1, lc, 101);
@@ -85,29 +107,57 @@ int main(int argc, char **argv)
   factory::addCurveLoop({115, 116, 117, 114}, 126);
   factory::addPlaneSurface({126}, 127);
 
-  // The API to create surface loops ("shells") and volumes is similar to the
-  // one used to create curve loops and surfaces.
   factory::addSurfaceLoop({127, 119, 121, 123, 125, 11}, 128);
   factory::addVolume({128}, 129);
 
-  // Extrusion works as expected, by providing a vector of (dim, tag) pairs as
-  // input, the translation vector, and a vector of (dim, tag) pairs as output.
+  // When a volume can be extruded from a surface, it is usually easier to use
+  // the `extrude()' function directly instead of creating all the points,
+  // curves and surfaces by hand. For example, the following command extrudes
+  // the surface 11 along the z axis and automatically creates a new volume (as
+  // well as all the needed points, curves and surfaces). As expected, the
+  // function takes a vector of (dim, tag) pairs as input as well as the
+  // translation vector, and returns a vector of (dim, tag) pairs as output:
   std::vector<std::pair<int, int> > ov2;
   factory::extrude({ov[1]}, 0, 0, 0.12, ov2);
 
   // Mesh sizes associated to geometrical points can be set by passing a vector
-  // of (dim, tag) pairs for the corresponding points.
+  // of (dim, tag) pairs for the corresponding points:
   factory::mesh::setSize({{0,103}, {0,105}, {0,109}, {0,102}, {0,28},
                           {0, 24}, {0,6}, {0,5}}, lc * 3);
 
-  model::addPhysicalGroup(3, {129,130}, 1);
+  // We finally group volumes 129 and 130 in a single physical group with tag
+  // `1' and name "The volume":
+  model::addPhysicalGroup(3, {129, 130}, 1);
   model::setPhysicalName(3, 1, "The volume");
 
+  // We finish by synchronizing the data from the built-in geometry kernel with
+  // the Gmsh model, and by generating and saving the mesh:
   factory::synchronize();
-
   model::mesh::generate(3);
-
   gmsh::write("t2.msh");
+
+  // Note that, if the transformation tools are handy to create complex
+  // geometries, it is also sometimes useful to generate the `flat' geometry, with
+  // an explicit representation of all the elementary entities.
+  //
+  // With the built-in geometry kernel, this can be achieved by saving the model
+  // in the `Gmsh Unrolled GEO' format:
+  //
+  // gmsh::write("t2.geo_unrolled");
+  //
+  // With the OpenCASCADE geometry kernel, unrolling the geometry can be
+  // achieved by exporting in the `OpenCASCADE BRep' format:
+  //
+  // gmsh::write("t2.brep");
+  //
+  // (OpenCASCADE geometries can also be exported as STEP files.)
+
+  // It is important to note that Gmsh never translates geometry data into a
+  // common representation: all the operations on a geometrical entity are
+  // performed natively with the associated geometry kernel. Consequently, one
+  // cannot export a geometry constructed with the built-in kernel as an
+  // OpenCASCADE BRep file; or export an OpenCASCADE model as an Unrolled GEO
+  // file.
 
   gmsh::finalize();
   return 0;

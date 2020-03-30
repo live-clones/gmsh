@@ -102,7 +102,7 @@ private:
     if(dim < 0 || dim > 3) return;
     Bnd_Box box;
     try {
-      BRepBndLib::Add(shape, box);
+      BRepBndLib::Add(shape, box, Standard_False);
       if(box.IsVoid()) {
         Msg::Debug(
           "Searching for (null or degenerate) shape with void bounding box");
@@ -146,7 +146,7 @@ private:
       if(requireLabel && tmp[i]->getLabel().empty()) continue;
       if(requireColor && tmp[i]->getColor().empty()) continue;
       Bnd_Box box2;
-      BRepBndLib::Add(tmp[i]->getShape(), box2);
+      BRepBndLib::Add(tmp[i]->getShape(), box2, Standard_False);
       double xmin2, ymin2, zmin2, xmax2, ymax2, zmax2;
       box2.Get(xmin2, ymin2, zmin2, xmax2, ymax2, zmax2);
       if(std::abs(xmin - xmin2) < _tol && std::abs(xmax - xmax2) < _tol &&
@@ -204,7 +204,7 @@ public:
     if(v->getDim() < 0 || v->getDim() > 3) return;
     Bnd_Box box;
     try {
-      BRepBndLib::Add(v->getShape(), box);
+      BRepBndLib::Add(v->getShape(), box, Standard_False);
       if(box.IsVoid()) {
         Msg::Debug("Inserting (null or degenerate) shape with void bounding box");
         // BRepTools::Dump(v->getShape(), std::cout);
@@ -228,7 +228,7 @@ public:
     if(v->getDim() < 0 || v->getDim() > 3) return;
     Bnd_Box box;
     try {
-      BRepBndLib::Add(v->getShape(), box);
+      BRepBndLib::Add(v->getShape(), box, Standard_False);
       if(box.IsVoid()) {
         Msg::Debug("Removing (null or degenerate) shape with void bounding box");
         // BRepTools::Dump(v->getShape(), std::cout);

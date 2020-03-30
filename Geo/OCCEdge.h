@@ -33,7 +33,7 @@ protected:
 public:
   OCCEdge(GModel *model, TopoDS_Edge _e, int num, GVertex *v1, GVertex *v2);
   virtual ~OCCEdge();
-  virtual SBoundingBox3d bounds(bool fast = false) const;
+  virtual SBoundingBox3d bounds(bool fast = false);
   virtual Range<double> parBounds(int i) const;
   virtual Range<double> parBoundsOnFace(GFace *face = NULL) const;
   virtual GeomType geomType() const;

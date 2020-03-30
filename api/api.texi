@@ -172,7 +172,7 @@ reference manual, with the "Color." middle string removed.
 
 @table @asis
 @item Input:
-@code{name}, @code{r}, @code{g}, @code{b}, @code{a = 0}
+@code{name}, @code{r}, @code{g}, @code{b}, @code{a = 255}
 @item Output:
 -
 @item Return:
@@ -678,7 +678,7 @@ should be integers between 0 and 255. Apply the color setting recursively if
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{r}, @code{g}, @code{b}, @code{a = 0}, @code{recursive = False}
+@code{dimTags}, @code{r}, @code{g}, @code{b}, @code{a = 255}, @code{recursive = False}
 @item Output:
 -
 @item Return:
@@ -3417,6 +3417,37 @@ data type and the @code{data} for each data type.
 @code{tag}
 @item Output:
 @code{dataType}, @code{numElements}, @code{data}
+@item Return:
+-
+@end table
+
+@item gmsh/view/addListDataString
+Add a string to a list-based post-processing view with tag @code{tag}. If
+@code{coord} contains 3 coordinates the string is positioned in the 3D model
+space ("3D string"); if it contains 2 coordinates it is positioned in the 2D
+graphics viewport ("2D string"). @code{data} contains one or more (for multistep
+views) strings. @code{style} contains pairs of styling parameters, concatenated.
+
+@table @asis
+@item Input:
+@code{tag}, @code{coord}, @code{data}, @code{style = []}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/view/getListDataStrings
+Get list-based post-processing data strings (2D strings if @code{dim} = 2, 3D
+strings if @code{dim} = 3) from the view with tag @code{tag}. Return the
+coordinates in @code{coord}, the strings in @code{data} and the styles in
+@code{style}.
+
+@table @asis
+@item Input:
+@code{tag}, @code{dim}
+@item Output:
+@code{coord}, @code{data}, @code{style}
 @item Return:
 -
 @end table

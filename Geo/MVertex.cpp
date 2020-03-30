@@ -381,7 +381,7 @@ void MVertex::writeKEY(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
-  fprintf(fp, "%ld, %.14g, %.14g, %.14g\n", _index, x() * scalingFactor,
+  fprintf(fp, "%ld, %.12g, %.12g, %.12g\n", _index, x() * scalingFactor,
           y() * scalingFactor, z() * scalingFactor);
 }
 

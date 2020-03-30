@@ -1,5 +1,4 @@
-This directory contains C++ versions of some of the tutorials, written using
-the Gmsh API.
+This directory contains the Gmsh C++ tutorials, written using the Gmsh C++ API.
 
 To compile and run the C++ tutorials, you need the Gmsh dynamic library and the
 associated header file (`gmsh.h'). These can be either obtained
