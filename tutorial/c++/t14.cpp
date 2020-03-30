@@ -67,7 +67,7 @@ int main(int argc, char **argv)
   gmsh::model::geo::extrude({{2,15}}, 0, 0, h, ext_tags);
 
   // Create physical groups, which are used to define the domain of the
-  // (co);homology computation and the subdomain of the relative (co);homology
+  // (co)homology computation and the subdomain of the relative (co)homology
   // computation.
 
   // Whole domain

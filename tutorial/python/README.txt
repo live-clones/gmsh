@@ -1,4 +1,4 @@
-This directory contains Python versions of the tutorials, written using the Gmsh
+This directory contains the Gmsh Python tutorials, written using the Gmsh Python
 API.
 
 To run the Python tutorials, you need the Gmsh dynamic library and the Python

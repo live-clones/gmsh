@@ -133,6 +133,7 @@ int main(int argc, char **argv)
   // gmsh::option::setNumber("Mesh.SaveAll", 1);
 
   // To visualize the model we could run the graphical user interface with:
+  //
   // gmsh::fltk::run();
 
   // Note that starting with Gmsh 3.0, models can be built using other geometry

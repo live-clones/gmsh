@@ -1,6 +1,10 @@
-# This file reimplements gmsh/tutorial/t13.geo in Python.
-
-# Remeshing without an underlying CAD model
+# ------------------------------------------------------------------------------
+#
+#  Gmsh Python tutorial 13
+#
+#  Remeshing without an underlying CAD model
+#
+# ------------------------------------------------------------------------------
 
 import gmsh
 import math
@@ -18,29 +22,37 @@ gmsh.merge(os.path.join(path, '..', 't13_data.stl'))
 # We first classify ("color") the surfaces by splitting the original surface
 # along sharp geometrical features. This will create new discrete surfaces,
 # curves and points.
-
 angle = 40 # Angle for surface detection
-forceParametrizablePatches = False # Create surfaces guaranteed to be parametrizable?
+
+# For complex geometries, patches can be too complex, too elongated or too large
+# to be parametrized; setting the following option will force the creation of
+# patches that are amenable to reparametrization:
+forceParametrizablePatches = False
+
+# For open surfaces include the boundary edges in the classification process.
 includeBoundary = True
+
+# Force curves to be split on given angle:
+curveAngle = 180;
 
 gmsh.model.mesh.classifySurfaces(angle * math.pi/180.,
                                  includeBoundary,
-                                 forceParametrizablePatches)
+                                 forceParametrizablePatches,
+                                 curveAngle * math.pi/180.)
 
 # Create a geometry for all the discrete curves and surfaces in the mesh, by
 # computing a parametrization for each one
 gmsh.model.mesh.createGeometry()
 
-# Create a volume as usual
+# Create a volume from all the surfaces
 s = gmsh.model.getEntities(2)
 l = gmsh.model.geo.addSurfaceLoop([s[i][1] for i in range(len(s))])
 gmsh.model.geo.addVolume([l])
 
 gmsh.model.geo.synchronize()
 
-# element size imposed by a size field, just because we can :-)
+# We specify element sizes imposed by a size field, just because we can :-)
 funny = False
-
 f = gmsh.model.mesh.field.add("MathEval");
 if funny:
   gmsh.model.mesh.field.setString(f, "F", "2*Sin((x+y)/5) + 3")
@@ -50,6 +62,6 @@ gmsh.model.mesh.field.setAsBackgroundMesh(f)
 
 gmsh.model.mesh.generate(3)
 
-gmsh.fltk.run()
+# gmsh.fltk.run()
 
 gmsh.finalize()

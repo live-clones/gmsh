@@ -6,6 +6,10 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <gmsh.h>
+
+namespace factory = gmsh::model::geo;
+
 // "Compound" meshing constraints allow to generate meshes across surface
 // boundaries, which can be useful e.g. for imported CAD models (e.g. STEP) with
 // undesired small features.
@@ -34,10 +38,6 @@
 
 // The optional reclassification on the underlying elementary entities in Step
 // 5. is governed by the `Mesh.CompoundClassify' option.
-
-#include <gmsh.h>
-
-namespace factory = gmsh::model::geo;
 
 int main(int argc, char **argv)
 {

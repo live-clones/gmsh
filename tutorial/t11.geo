@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 // We have seen in tutorials `t3.geo' and `t6.geo' that extruded and transfinite
-// meshes can be "recombined" into quads/prisms/hexahedra by using the
+// meshes can be "recombined" into quads, prisms or hexahedra by using the
 // "Recombine" keyword. Unstructured meshes can be recombined in the same
 // way. Let's define a simple geometry with an analytical mesh size field:
 

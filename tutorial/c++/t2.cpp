@@ -15,8 +15,8 @@ namespace factory = gmsh::model::geo;
 
 int main(int argc, char **argv)
 {
-  // If argc/argv are passed to gmsh::initialize(), Gmsh will parse the
-  // commandline in the same way as the standalone Gmsh app:
+  // If argc/argv are passed to gmsh::initialize(), Gmsh will parse the command
+  // line in the same way as the standalone Gmsh app:
   gmsh::initialize(argc, argv);
 
   gmsh::option::setNumber("General.Terminal", 1);
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
   factory::addCurveLoop({5,-8,-7,3}, 10);
   factory::addPlaneSurface({10}, 11);
 
-  // In the same way, we can translate copies of the two surfaces 6 and 11 to
+  // In the same way, we can translate copies of the two surfaces 1 and 11 to
   // the right with the following command:
   factory::copy({{2, 1}, {2, 11}}, ov);
   factory::translate(ov, 0.12, 0, 0);

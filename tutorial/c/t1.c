@@ -93,7 +93,7 @@ int main(int argc, char **argv)
      representing the external contour, since there are no holes): */
   gmshModelGeoAddPlaneSurface(s1, sizeof(s1)/sizeof(s1[0]), 1, &ierr);
 
-  /* At this level, Gmsh knows everything to display the rectangular surface 6
+  /* At this level, Gmsh knows everything to display the rectangular surface 1
      and to mesh it. An optional step is needed if we want to group elementary
      geometrical entities into more meaningful groups, e.g. to define some
      mathematical ("domain", "boundary"), functional ("left wing", "fuselage")
@@ -137,7 +137,8 @@ int main(int argc, char **argv)
      gmshOptionSetNumber("Mesh.SaveAll", 1);
   */
 
-  /* We could run the graphical user interface with:
+  /* To visualize the model we could run the graphical user interface with:
+
      gmsh::fltk::run();
   */
 

@@ -45,8 +45,8 @@ int main(int argc, char **argv)
   factory::cut({{3,1}}, {{3,2}}, ov, ovv, 3);
 
   // Boolean operations with OpenCASCADE always create new entities. By default
-  // the extra arguments `removeObject' and `removeTool' in `occ::cut()' are set
-  // to `true', which will delete the original entities.
+  // the extra arguments `removeObject' and `removeTool' in `cut()' are set to
+  // `true', which will delete the original entities.
 
   // We then create the five spheres:
   double x = 0, y = 0.75, z = 0, r = 0.09 ;
@@ -63,6 +63,27 @@ int main(int argc, char **argv)
   // mesh of the cube: we thus use `fragment()', which intersects all volumes in
   // a conformal manner (without creating duplicate interfaces):
   factory::fragment({{3,3}}, holes, ov, ovv);
+
+  // ov contains all the generated entities of the same dimension as the input
+  // entities:
+  gmsh::logger::write("fragment produced volumes:");
+  for(std::size_t i = 0; i < ov.size(); i++)
+    gmsh::logger::write("(" + std::to_string(ov[i].first) + "," +
+                        std::to_string(ov[i].second) + ")");
+
+  // ovv contains the parent-child relationships for all the input entities:
+  gmsh::logger::write("before/after volume relations:");
+  std::vector<std::pair<int, int> > in(1, std::pair<int, int>(3, 3));
+  in.insert(in.end(), holes.begin(), holes.end());
+  for(std::size_t i = 0; i < in.size(); i++) {
+    std::string s = "parent (" + std::to_string(in[i].first) + "," +
+      std::to_string(in[i].second) + ") -> child";
+    for(std::size_t j = 0; j < ovv[i].size(); j++) {
+      s += " (" + std::to_string(ovv[i][j].first) + "," +
+        std::to_string(ovv[i][j].second) + ")";
+    }
+    gmsh::logger::write(s);
+  }
 
   factory::synchronize();
 
@@ -115,10 +136,14 @@ int main(int argc, char **argv)
   // Additional examples created with the OpenCASCADE geometry kernel are
   // available in `t18.cpp', `t19.cpp' as well as in the `demos/api' directory.
 
+  // Inspect the log:
   std::vector<std::string> log;
   gmsh::logger::get(log);
   std::cout << "Logger has recorded " << log.size() << " lines" << std::endl;
   gmsh::logger::stop();
+
+  // Show the GUI:
+  // gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;
