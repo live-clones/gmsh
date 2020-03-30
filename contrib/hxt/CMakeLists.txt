@@ -3,6 +3,7 @@
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+
 # HXT (reparametrization)
 set(SRC
   hxt_context.c
@@ -46,6 +47,34 @@ set(SRC ${SRC}
   predicates.c
 )
 endif()
+
+
+# HXT (remesh)
+set(SRC ${SRC}
+  remesh/hxt_gmsh_point_gen_main.c
+  remesh/hxt_point_gen_numerics.c
+  remesh/hxt_point_gen_io.c
+  remesh/hxt_point_gen_1d.c
+  remesh/hxt_point_gen_2d.c
+  remesh/hxt_point_gen_3d.c
+
+  remesh/hxt_collapse_edge.c
+  remesh/hxt_eigenvectors.cpp
+  remesh/hxt_gmsh_point_gen_main.c
+  remesh/hxt_orientation3d_tools.c
+  remesh/hxt_point_gen.c
+  remesh/hxt_point_gen_optim.c
+  remesh/hxt_point_gen_orientation.c
+  remesh/hxt_point_gen_realloc.c
+  remesh/hxt_point_gen_utils.c
+  remesh/hxt_rtree_wrapper.cpp
+  remesh/hxt_split_edge.c
+  remesh/hxt_split_triangle.c
+  remesh/hxt_surface_mesh.c
+  remesh/hxt_surface_mesh_collapse.c
+  remesh/hxt_swap_edge.c
+  remesh/hxt_triangle_quality.c
+)
 
 # do not use arithmetic contraction in predicates.c
 if("x${CMAKE_C_COMPILER_ID}" STREQUAL "xMSVC" )
