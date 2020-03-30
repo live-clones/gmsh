@@ -33,4 +33,13 @@ HXTStatus Gmsh2Hxt(GModel *gm,
 		   std::map<MVertex *, int> &v2c,
 		   std::vector<MVertex *> &c2v);
 
+HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
+		   std::map<MVertex *, int> &v2c,
+		   std::vector<MVertex *> &c2v);
+  
+
+HXTStatus Hxt2Gmsh(GModel *gm, HXTMesh *m,
+		   std::map<MVertex *, int> &v2c,
+		   std::vector<MVertex *> &c2v);
+
 #endif

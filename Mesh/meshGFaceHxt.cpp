@@ -107,18 +107,22 @@ int meshGFaceHxt(GModel *gm)
   HXT_CHECK(hxtMeshCreate(fcontext, &fmesh));
  
   HXT_CHECK(hxtGmshPointGenMain(mesh,data,fmesh));
+
+  HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
   
   HXT_CHECK(hxtMeshDelete(&fmesh));
   HXT_CHECK(hxtContextDelete(&fcontext));
  
 
-
+  
+  
   ///// END OF HERE WE NEED THE CODE TO THE REMESHING STUFF
 
   free (data);
   HXT_CHECK(hxtMeshDelete(&mesh));
   HXT_CHECK(hxtContextDelete(&context));
   
+
   return 0;
 }
 

@@ -131,15 +131,15 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
+
+HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
+		   std::vector<GFace *> allFaces,
+		   std::vector<GEdge *> allEdges,
+		   HXTMesh *m,
 		   std::map<MVertex *, int> &v2c,
 		   std::vector<MVertex *> &c2v)
 {
   Msg::Debug("Start Hxt2Gmsh");
-  std::vector<GFace *> allFaces;
-  std::vector<GEdge *> allEdges;
-  HXT_CHECK(getAllFacesOfAllRegions(regions, NULL, allFaces));
-  HXT_CHECK(getAllEdgesOfAllFaces(allFaces, NULL, allEdges));
   std::map<int, GEdge *> i2e;
   std::map<int, GFace *> i2f;
   for(size_t i = 0; i < allFaces.size(); i++)
@@ -240,6 +240,35 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   }
   Msg::Debug("End Hxt2Gmsh");
   return HXT_STATUS_OK;
+}
+
+
+HXTStatus Hxt2Gmsh(GModel *gm,
+		   HXTMesh *m,
+		   std::map<MVertex *, int> &v2c,
+		   std::vector<MVertex *> &c2v)
+{
+  std::vector<GRegion *> regions;
+  std::vector<GFace *> faces;
+  std::vector<GEdge *> edges;
+  regions.insert(regions.begin(), gm->firstRegion(), gm->lastRegion());
+  faces.insert(faces.begin(), gm->firstFace(), gm->lastFace());
+  edges.insert(edges.begin(), gm->firstEdge(), gm->lastEdge());
+  HXT_CHECK(Hxt2Gmsh(regions,faces,edges,m,v2c,c2v));
+  return HXT_STATUS_OK;  
+}
+
+HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
+		   HXTMesh *m,
+		   std::map<MVertex *, int> &v2c,
+		   std::vector<MVertex *> &c2v)
+{
+  std::vector<GFace *> allFaces;
+  std::vector<GEdge *> allEdges;
+  HXT_CHECK(getAllFacesOfAllRegions(regions, NULL, allFaces));
+  HXT_CHECK(getAllEdgesOfAllFaces(allFaces, NULL, allEdges));
+  HXT_CHECK(Hxt2Gmsh(regions,allFaces,allEdges,m,v2c,c2v));
+  return HXT_STATUS_OK;  
 }
 
 
