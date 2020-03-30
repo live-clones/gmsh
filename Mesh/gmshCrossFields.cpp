@@ -5712,7 +5712,7 @@ int computeUV(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& stat
     for(size_t i = 0; i < f.size(); i++) {
       buildVertexToElement(f[i]->triangles, adj);
     }
-    computeSingularities2(qLayout.C, qLayout.singularities, qLayout.indices, adj);
+    computeSingularities(qLayout.C, qLayout.singularities, qLayout.indices, f);
   }
 
   /* cut-graph and cross field projection */
