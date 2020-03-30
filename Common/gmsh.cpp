@@ -5947,6 +5947,145 @@ GMSH_API void gmsh::view::getListData(const int tag,
 #endif
 }
 
+static double getStringStyle(const std::vector<std::string> &style)
+{
+  if(style.empty()) return 0.;
+  int align = 0, font = 0, fontsize = CTX::instance()->glFontSize;
+  if(style.size() % 2){
+    Msg::Error("Number of string style attributes should be even");
+  }
+  else{
+    for(std::size_t i = 0 ; i < style.size(); i += 2){
+      std::string key = style[i], val = style[i + 1];
+#if defined(HAVE_OPENGL)
+      if(key == "Font")
+        font = drawContext::global()->getFontIndex(val.c_str());
+      else if(key == "FontSize")
+        fontsize = atoi(val.c_str());
+      else if(key == "Align")
+        align = drawContext::global()->getFontAlign(val.c_str());
+#endif
+    }
+  }
+  return (double)((align<<16)|(font<<8)|(fontsize));
+}
+
+GMSH_API void gmsh::view::addListDataString(const int tag,
+                                            const std::vector<double> &coord,
+                                            const std::vector<std::string> &data,
+                                            const std::vector<std::string> &style)
+{
+  if(!_isInitialized()) { throw - 1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view) {
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+  PViewDataList *d = dynamic_cast<PViewDataList *>(view->getData());
+  if(!d) { // change the view type
+    std::string name = view->getData()->getName();
+    delete view->getData();
+    d = new PViewDataList();
+    d->setName(name);
+    d->setFileName(name + ".pos");
+    view->setData(d);
+  }
+  if(coord.size() == 3) {
+    d->T3D.push_back(coord[0]);
+    d->T3D.push_back(coord[1]);
+    d->T3D.push_back(coord[2]);
+    d->T3D.push_back(getStringStyle(style)),
+    d->T3D.push_back(d->T3C.size());
+    d->NbT3++;
+    for(std::size_t i = 0; i < data.size(); i++) {
+      for(std::size_t j = 0; j < data[i].size(); j++) {
+        d->T3C.push_back(data[i][j]);
+      }
+      d->T3C.push_back('\0');
+    }
+  }
+  else if(coord.size() == 2) {
+    d->T2D.push_back(coord[0]);
+    d->T2D.push_back(coord[1]);
+    d->T2D.push_back(getStringStyle(style)),
+    d->T2D.push_back(d->T2C.size());
+    d->NbT2++;
+    for(std::size_t i = 0; i < data.size(); i++) {
+      for(std::size_t j = 0; j < data[i].size(); j++) {
+        d->T2C.push_back(data[i][j]);
+      }
+      d->T2C.push_back('\0');
+    }
+  }
+  d->finalize();
+#else
+  Msg::Error("Views require the post-processing module");
+  throw - 1;
+#endif
+}
+
+GMSH_API void gmsh::view::getListDataStrings(const int tag, const int dim,
+                                             std::vector<double> &coord,
+                                             std::vector<std::string> &data,
+                                             std::vector<std::string> &style)
+{
+  if(!_isInitialized()) { throw - 1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view) {
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+  PViewDataList *d = dynamic_cast<PViewDataList *>(view->getData());
+  if(!d) {
+    Msg::Error("View with tag %d does not contain list data", tag);
+    return;
+  }
+  int nstep = d->getNumTimeSteps();
+  if(dim == 3) {
+    int ns = d->getNumStrings3D();
+    for(int i = 0; i < ns; i++) {
+      for(int j = 0; j < nstep; j++) {
+        double x, y, z, styl;
+        std::string s;
+        d->getString3D(i, j, s, x, y, z, styl);
+        if(i == 0) {
+          coord.push_back(x);
+          coord.push_back(y);
+          coord.push_back(z);
+        }
+        data.push_back(s);
+        // TODO convert style to strings, pad with empty strings so that all
+        // strings return the same number of styling pairs
+        style.push_back("");
+      }
+    }
+  }
+  else if(dim == 2) {
+    int ns = d->getNumStrings2D();
+    for(int i = 0; i < ns; i++) {
+      for(int j = 0; j < nstep; j++) {
+        double x, y, styl;
+        std::string s;
+        d->getString2D(i, j, s, x, y, styl);
+        if(i == 0) {
+          coord.push_back(x);
+          coord.push_back(y);
+        }
+        data.push_back(s);
+        // TODO convert style to strings, pad with empty strings so that all
+        // strings return the same number of styling pairs
+        style.push_back("");
+      }
+    }
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+  throw - 1;
+#endif
+}
+
 GMSH_API int gmsh::view::addAlias(const int refTag, const bool copyOptions,
                                   const int tag)
 {

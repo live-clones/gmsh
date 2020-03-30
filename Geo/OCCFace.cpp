@@ -155,8 +155,11 @@ void OCCFace::setup()
   }
 }
 
-SBoundingBox3d OCCFace::bounds(bool fast) const
+SBoundingBox3d OCCFace::bounds(bool fast)
 {
+  if(CTX::instance()->geom.occBoundsUseSTL)
+    buildSTLTriangulation();
+
   Bnd_Box b;
   try {
     BRepBndLib::Add(s, b);
@@ -166,6 +169,10 @@ SBoundingBox3d OCCFace::bounds(bool fast) const
   }
   double xmin, ymin, zmin, xmax, ymax, zmax;
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+
+  if(CTX::instance()->geom.occBoundsUseSTL)
+    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
+
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
 }
@@ -415,9 +422,9 @@ bool OCCFace::buildSTLTriangulation(bool force)
   std::vector<GEdge *> const &e = edges();
   for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end(); it++) {
     if ((*it)->stl_vertices_xyz.size() == 0) {
-      const TopoDS_Edge *c = (TopoDS_Edge *)(*it)->getNativePtr();      
+      const TopoDS_Edge *c = (TopoDS_Edge *)(*it)->getNativePtr();
       model()->getOCCInternals()->makeEdgeSTLFromFace(*c, s, &((*it)->stl_vertices_xyz));
-    }  
+    }
   }
 
   return true;

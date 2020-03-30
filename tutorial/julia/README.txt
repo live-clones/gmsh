@@ -1,5 +1,5 @@
-This directory contains Julia versions of some of the tutorials, written using
-the Gmsh API.
+This directory contains the Gmsh Julia tutorials, written using the Gmsh Julia
+API.
 
 To run the Julia tutorials, you need the Gmsh dynamic library and the Julia
 module (`gmsh.jl'). These can be either obtained

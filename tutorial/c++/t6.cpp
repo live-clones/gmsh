@@ -1,4 +1,10 @@
-// This file reimplements gmsh/tutorial/t6.geo in C++.
+// -----------------------------------------------------------------------------
+//
+//  Gmsh C++ tutorial 6
+//
+//  Transfinite meshes
+//
+// -----------------------------------------------------------------------------
 
 #include <gmsh.h>
 
@@ -24,54 +30,51 @@ int main(int argc, char **argv)
   factory::addLine(4, 1, 4);
   factory::addCurveLoop({4, 1, -2, 3}, 1);
   factory::addPlaneSurface({1}, 1);
-  model::addPhysicalGroup(0, {1, 2}, 1);
-  model::addPhysicalGroup(1, {1, 2}, 2);
-  model::addPhysicalGroup(2, {1}, 6);
-  model::setPhysicalName(2, 6, "My surface");
-  // ...end of copy
 
-  // Delete surface 1 and left boundary (curve 4)
+  // Delete the surface and the left line, and replace the line with 3 new ones:
   factory::remove({{2,1}, {1,4}});
 
-  // Replace left boundary with 3 new lines
   int p1 = factory::addPoint(-0.05, 0.05, 0, lc);
   int p2 = factory::addPoint(-0.05, 0.1, 0, lc);
   int l1 = factory::addLine(1, p1);
   int l2 = factory::addLine(p1, p2);
   int l3 = factory::addLine(p2, 4);
 
-  // Recreate surface
+  // Create surface:
   factory::addCurveLoop({2, -1, l1, l2, l3, -3}, 2);
   factory::addPlaneSurface({-2}, 1);
 
-  // Put 20 points with a refinement toward the extremities on curve 2
-  factory::mesh::setTransfiniteCurve(2, 20, "Bump", 0.05);
+  // The `setTransfiniteCurve()' meshing constraints explicitly specifies the
+  // location of the nodes on the curve. For example, the following command
+  // forces 20 uniformly placed nodes on curve 2 (including the nodes on the two
+  // end points):
+  factory::mesh::setTransfiniteCurve(2, 20);
 
-  // Put 20 points total on combination of curves l1, l2 and l3 (beware that the
-  // points p1 and p2 are shared by the curves, so we do not create 6 + 6 + 10 =
-  // 22 points, but 20!)
+  // Let's put 20 points total on combination of curves `l1', `l2' and `l3'
+  // (beware that the points `p1' and `p2' are shared by the curves, so we do
+  // not create 6 + 6 + 10 = 22 nodes, but 20!)
   factory::mesh::setTransfiniteCurve(l1, 6);
   factory::mesh::setTransfiniteCurve(l2, 6);
   factory::mesh::setTransfiniteCurve(l3, 10);
 
-  // Put 30 points following a geometric progression on curve 1 (reversed) and
-  // on curve 3
+  // Finally, we put 30 nodes following a geometric progression on curve 1
+  // (reversed) and on curve 3: Put 30 points following a geometric progression
   factory::mesh::setTransfiniteCurve(1, 30, "Progression", -1.2);
   factory::mesh::setTransfiniteCurve(3, 30, "Progression", 1.2);
 
-  // Define the Surface as transfinite, by specifying the four corners of the
-  // transfinite interpolation
+  // The `setTransfiniteSurface()' meshing constraint uses a transfinite
+  // interpolation algorithm in the parametric plane of the surface to connect
+  // the nodes on the boundary using a structured grid. If the surface has more
+  // than 4 corner points, the corners of the transfinite interpolation have to
+  // be specified by hand:
   factory::mesh::setTransfiniteSurface(1, "Left", {1,2,3,4});
 
-  // Recombine the triangles into quads
+  // To create quadrangles instead of triangles, one can use the `setRecombine'
+  // constraint:
   factory::mesh::setRecombine(2, 1);
 
-  // Apply an elliptic smoother to the grid
-  gmsh::option::setNumber("Mesh.Smoothing", 100);
-  model::addPhysicalGroup(2, {1}, 1);
-
-  // When the surface has only 3 or 4 control points, the transfinite constraint
-  // can be applied automatically (without specifying the corners explictly).
+  // When the surface has only 3 or 4 points on its boundary the list of corners
+  // can be omitted in the `setTransfiniteSurface()' call:
   factory::addPoint(0.2, 0.2, 0, 1.0, 7);
   factory::addPoint(0.2, 0.1, 0, 1.0, 8);
   factory::addPoint(0, 0.3, 0, 1.0, 9);
@@ -87,7 +90,14 @@ int main(int argc, char **argv)
     factory::mesh::setTransfiniteCurve(i, 10);
   factory::mesh::setTransfiniteSurface(15);
 
-  model::addPhysicalGroup(2, {15}, 2);
+  // The way triangles are generated can be controlled by specifying "Left",
+  // "Right" or "Alternate" in `setTransfiniteSurface()' command. Try e.g.
+  //
+  // factory::mesh::setTransfiniteSurface(15, "Alternate");
+
+  // Finally we apply an elliptic smoother to the grid to have a more regular
+  // mesh:
+  gmsh::option::setNumber("Mesh.Smoothing", 100);
 
   factory::synchronize();
   model::mesh::generate(2);

@@ -134,7 +134,7 @@ namespace gmsh { // Top-level functions
                            const int r,
                            const int g,
                            const int b,
-                           const int a = 0);
+                           const int a = 255);
 
     // gmsh::option::getColor
     //
@@ -456,7 +456,7 @@ namespace gmsh { // Top-level functions
                            const int r,
                            const int g,
                            const int b,
-                           const int a = 0,
+                           const int a = 255,
                            const bool recursive = false);
 
     // gmsh::model::getColor
@@ -2481,6 +2481,29 @@ namespace gmsh { // Top-level functions
                               std::vector<std::string> & dataType,
                               std::vector<int> & numElements,
                               std::vector<std::vector<double> > & data);
+
+    // gmsh::view::addListDataString
+    //
+    // Add a string to a list-based post-processing view with tag `tag'. If `coord'
+    // contains 3 coordinates the string is positioned in the 3D model space ("3D
+    // string"); if it contains 2 coordinates it is positioned in the 2D graphics
+    // viewport ("2D string"). `data' contains one or more (for multistep views)
+    // strings. `style' contains pairs of styling parameters, concatenated.
+    GMSH_API void addListDataString(const int tag,
+                                    const std::vector<double> & coord,
+                                    const std::vector<std::string> & data,
+                                    const std::vector<std::string> & style = std::vector<std::string>());
+
+    // gmsh::view::getListDataStrings
+    //
+    // Get list-based post-processing data strings (2D strings if `dim' = 2, 3D
+    // strings if `dim' = 3) from the view with tag `tag'. Return the coordinates
+    // in `coord', the strings in `data' and the styles in `style'.
+    GMSH_API void getListDataStrings(const int tag,
+                                     const int dim,
+                                     std::vector<double> & coord,
+                                     std::vector<std::string> & data,
+                                     std::vector<std::string> & style);
 
     // gmsh::view::addAlias
     //

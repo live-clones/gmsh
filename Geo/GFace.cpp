@@ -233,7 +233,7 @@ void GFace::resetMeshAttributes()
   meshAttributes.meshSizeFromBoundary = -1;
 }
 
-SBoundingBox3d GFace::bounds(bool fast) const
+SBoundingBox3d GFace::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != PartitionSurface) {
@@ -429,13 +429,16 @@ std::string GFace::getAdditionalInfoString(bool multline)
 
   if(meshAttributes.recombine || meshAttributes.method == MESH_TRANSFINITE ||
      (meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh) ||
-     meshAttributes.reverseMesh) {
+     meshAttributes.reverseMesh ||
+     (getMeshMaster() && getMeshMaster() != this)) {
     sstream << "Mesh attributes:";
     if(meshAttributes.recombine) sstream << " recombined";
     if(meshAttributes.method == MESH_TRANSFINITE) sstream << " transfinite";
     if(meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)
       sstream << " extruded";
     if(meshAttributes.reverseMesh) sstream << " reverse";
+    if(getMeshMaster() && getMeshMaster() != this)
+      sstream << " periodic copy of surface " << getMeshMaster()->tag();
   }
   std::string str = sstream.str();
   if(str.size() && (str[str.size() - 1] == '\n' || str[str.size() - 1] == ' '))
@@ -1130,9 +1133,8 @@ void bfgs_callback(const alglib::real_1d_array &x, double &func,
   grad[1] = -(p.x() - pnt.x()) * der.right().x() -
             (p.y() - pnt.y()) * der.right().y() -
             (p.z() - pnt.z()) * der.right().z();
-  //  printf("func %22.15E Gradients %22.15E %22.15E der %g %g %g\n",
-  //         func, grad[0],
-  //         grad[1],der.left().x(),der.left().y(),der.left().z());
+  // printf("func %22.15E Gradients %22.15E %22.15E der %g %g %g\n", func,
+  //         grad[0], grad[1],der.left().x(),der.left().y(),der.left().z());
 }
 #endif
 
@@ -1167,33 +1169,40 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint,
     }
   }
 
-  // Set up optimisation problem
-  alglib::ae_int_t dim = 2;
-  alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
-  alglib::minlbfgsstate state;
-  alglib::real_1d_array x;
-  const double initialCond[2] = {min_u, min_v};
-  x.setcontent(dim, initialCond);
-  minlbfgscreate(2, corr, x, state);
+  try {
+    // Set up optimisation problem
+    alglib::ae_int_t dim = 2;
+    alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
+    alglib::minlbfgsstate state;
+    alglib::real_1d_array x;
+    const double initialCond[2] = {min_u, min_v};
+    x.setcontent(dim, initialCond);
+    minlbfgscreate(2, corr, x, state);
 
-  // Set stopping criteria
-  const double epsg = 1.e-12;
-  const double epsf = 0.;
-  const double epsx = 0.;
-  const alglib::ae_int_t maxits = 500;
-  minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+    // Set stopping criteria
+    const double epsg = 1.e-12;
+    const double epsf = 0.;
+    const double epsx = 0.;
+    const alglib::ae_int_t maxits = 500;
+    minlbfgssetcond(state, epsg, epsf, epsx, maxits);
 
-  // Solve problem
-  data_wrapper w;
-  w.set_point(queryPoint);
-  w.set_face(this);
-  minlbfgsoptimize(state, bfgs_callback, NULL, &w);
+    // Solve problem
+    data_wrapper w;
+    w.set_point(queryPoint);
+    w.set_face(this);
+    minlbfgsoptimize(state, bfgs_callback, NULL, &w);
 
-  // Get results
-  alglib::minlbfgsreport rep;
-  minlbfgsresults(state, x, rep);
-  GPoint pntF = point(x[0], x[1]);
-  return pntF;
+    // Get results
+    alglib::minlbfgsreport rep;
+    minlbfgsresults(state, x, rep);
+    GPoint pntF = point(x[0], x[1]);
+    return pntF;
+  }
+  catch(...) {
+    Msg::Warning("Closest point failed, computing from parametric coordinate");
+    SPoint2 p = parFromPoint(queryPoint, false);
+    return point(p);
+  }
 
 #else
   Msg::Error("Closest point not implemented for this type of surface");
