@@ -14,6 +14,7 @@
 #include "MTetrahedron.h"
 #include "MTriangle.h"
 #include "MLine.h"
+#include "MPoint.h"
 #include "GmshMessage.h"
 #include "BackgroundMeshTools.h"
 #include "GModel.h"
@@ -274,6 +275,7 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
 
 HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces,
 		   std::vector<GEdge *> &edges,
+		   std::vector<GVertex*> &vertices,
 		   HXTMesh *m,
 		   std::map<MVertex *, int> &v2c,
 		   std::vector<MVertex *> &c2v)
@@ -282,6 +284,16 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces,
 
   uint64_t ntri = 0;
   uint64_t nedg = 0;
+  uint64_t npts = 0;
+
+
+  for(size_t j = 0; j < vertices.size(); j++) {
+    GVertex *gv = vertices[j];
+    npts ++;
+    for(size_t i = 0; i < gv->points.size(); i++) {
+      all.insert(gv->points[i]->getVertex(0));
+    }
+  }
 
   for(size_t j = 0; j < edges.size(); j++) {
     GEdge *ge = edges[j];
@@ -320,8 +332,27 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces,
   }
   all.clear();
 
-  m->lines.num = m->lines.size = nedg;
+
+  m->points.num = m->points.size = npts;
   uint64_t index = 0;
+
+  HXT_CHECK(
+	    hxtAlignedMalloc(&m->points.node, (m->points.num) * 1 * sizeof(uint32_t)));
+  HXT_CHECK(
+	    hxtAlignedMalloc(&m->points.colors, (m->points.num) * sizeof(uint16_t)));
+  
+  for(size_t j = 0; j < vertices.size(); j++) {
+    GVertex *gv = vertices[j];
+    for(size_t i = 0; i < gv->points.size(); i++) {
+      m->points.node[index] = v2c[gv->points[i]->getVertex(0)];
+      m->points.colors[index] = gv->tag();
+      index++;
+    }
+  }
+
+  
+  m->lines.num = m->lines.size = nedg;
+  index = 0;
 
   HXT_CHECK(
     hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
@@ -364,9 +395,10 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 {
   std::vector<GFace *> faces;
   std::vector<GEdge *> edges;
+  std::vector<GVertex *> vertices;
   HXT_CHECK(getAllFacesOfAllRegions(regions, m, faces));
   HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
-  HXT_CHECK(Gmsh2Hxt(faces,edges,m,v2c,c2v));
+  HXT_CHECK(Gmsh2Hxt(faces,edges,vertices,m,v2c,c2v));
   return HXT_STATUS_OK;
 }
 
@@ -376,9 +408,11 @@ HXTStatus Gmsh2Hxt(GModel*gm, HXTMesh *m,
 {
   std::vector<GFace *> faces;
   std::vector<GEdge *> edges;
+  std::vector<GVertex *> vertices;
   faces.insert(faces.begin(), gm->firstFace(), gm->lastFace());
   edges.insert(edges.begin(), gm->firstEdge(), gm->lastEdge());
-  HXT_CHECK(Gmsh2Hxt(faces,edges,m,v2c,c2v));
+  vertices.insert(vertices.begin(), gm->firstVertex(), gm->lastVertex());
+  HXT_CHECK(Gmsh2Hxt(faces,edges,vertices,m,v2c,c2v));
   return HXT_STATUS_OK;
 }
 
