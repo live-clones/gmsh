@@ -883,11 +883,16 @@ namespace gmsh { // Top-level functions
       // coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
       // for the function space `functionSpaceType' (e.g. "Lagrange" or
       // "GradLagrange" for Lagrange basis functions or their gradient, in the u,
-      // v, w coordinates of the reference element). `numComponents' returns the
-      // number C of components of a basis function. `basisFunctions' returns the
-      // value of the N basis functions at the integration points, i.e. [g1f1,
-      // g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u,
-      // ..., g1fNw, g2f1u, ...] when C == 3.
+      // v, w coordinates of the reference element; or "H1Legendre3" or
+      // "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions).
+      // `numComponents' returns the number C of components of a basis function.
+      // `basisFunctions' returns the value of the N basis functions at the
+      // integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
+      // [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For
+      // basis functions that depend on the orientation of the elements, all values
+      // for the first orientation are returned first, followed by values for the
+      // secondd, etc. `numOrientations' returns the overall number of
+      // orientations.
       GMSH_API void getBasisFunctions(const int elementType,
                                       const std::vector<double> & integrationPoints,
                                       const std::string & functionSpaceType,
@@ -897,26 +902,13 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getBasisFunctionsOrientationForElements
       //
-      // Get the element-dependent basis functions of the elements of type
-      // `elementType' in the entity of tag `tag' at the integration points
-      // `integrationPoints' (given as concatenated triplets of coordinates in the
-      // reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
-      // space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
-      // order hierarchical H1 Legendre functions or their gradient, in the u, v, w
-      // coordinates of the reference elements). `numComponents' returns the number
-      // C of components of a basis function. `numBasisFunctions' returns the
-      // number N of basis functions per element. `basisFunctions' returns the
-      // value of the basis functions at the integration points for all
-      // oritentations that exist for element of type `elementType' in entity
-      // `tag': [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or
-      // [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
-      // `basisFunctionsIndex' returns the index of the basis function such that
-      // element `i' between have basis functions store at place i in
-      // `basisFunctions' array. Warning: this is an experimental feature and will
-      // probably change in a future release. If `numTasks' > 1, only compute and
-      // return the part of the data indexed by `task'.
+      // Get the orientation index of the elements of type `elementType' in the
+      // entity of tag `tag'. The arguments have the same meaning as in
+      // `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
+      // each element the orientation index in the values returned by
+      // `getBasisFunctions'. For Lagrange basis functions the call is superfluous
+      // as it will return a vector of zeros.
       GMSH_API void getBasisFunctionsOrientationForElements(const int elementType,
-                                                            const std::vector<double> & integrationPoints,
                                                             const std::string & functionSpaceType,
                                                             std::vector<int> & basisFunctionsOrientation,
                                                             const int tag = -1,
@@ -934,7 +926,7 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getBasisFunctionsForElements
       //
       // Get the element-dependent basis functions of the elements of type
-      // `elementType' in the entity of tag `tag'at the integration points
+      // `elementType' in the entity of tag `tag' at the integration points
       // `integrationPoints' (given as concatenated triplets of coordinates in the
       // reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
       // space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
@@ -945,7 +937,7 @@ namespace gmsh { // Top-level functions
       // value of the basis functions at the integration points for each element:
       // [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u,
       // e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: This function
-      // will be removed soon!
+      // is deprecated - use `getBasisFunctions' instead.
       GMSH_API void getBasisFunctionsForElements(const int elementType,
                                                  const std::vector<double> & integrationPoints,
                                                  const std::string & functionSpaceType,

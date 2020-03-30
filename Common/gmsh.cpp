@@ -2538,8 +2538,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
 }
 
 GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
-  const int elementType, const std::vector<double> &integrationPoints,
-  const std::string &functionSpaceType,
+  const int elementType, const std::string &functionSpaceType,
   std::vector<int> &basisFunctionsOrientation, const int tag,
   const std::size_t task, const std::size_t numTasks)
 {
