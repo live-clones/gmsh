@@ -1720,14 +1720,21 @@ static SVector3 computeAverage (cross2d &c0, cross2d &c1, cross2d &c2){
 */
 
 static void
-computeSingularities2(std::map<MEdge, cross2d, MEdgeLessThan> &C,
-		      std::set<MVertex *, MVertexPtrLessThan> &singularities,
-		      std::map<MVertex *, int> &indices,
-		      v2t_cont &adj)
+computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
+		     std::set<MVertex *, MVertexPtrLessThan> &singularities,
+		     std::map<MVertex *, int> &indices,
+		     std::vector<GFace*> &f)
 {
   FILE *f_ = fopen("sing.pos", "w");
   fprintf(f_, "View \"S\"{\n");
 
+  v2t_cont adj;
+  for(size_t i = 0; i < f.size(); i++) {
+    buildVertexToElement(f[i]->triangles, adj);
+  }
+
+  std::map<MVertex *, double> diffs_internal;
+  
   v2t_cont::iterator it = adj.begin();
   while(it != adj.end()) {
     MVertex *v = it->first;
@@ -1745,11 +1752,8 @@ computeSingularities2(std::map<MEdge, cross2d, MEdgeLessThan> &C,
     // should be periodic
     if (vsorted[0][0] == vsorted[0][vsorted[0].size()-1]){
       vsorted[0].resize(vsorted[0].size()-1);
-      double diffs = 0.0;
-      //      if (v->getNum() == 3448){
-      //	printf("vertex %lu %lu neighbpors\n",v->getNum(),
-      //	       vsorted[0].size());
-      //      }
+      double diffs_external = 0.0;
+      double diffs_internal_ = 0.0;
       for(size_t i = 0; i < vsorted[0].size(); ++i) {
 	MVertex *v0 = vsorted[0][i%vsorted[0].size()];
 	MVertex *v1 = vsorted[0][(i+1)%vsorted[0].size()];
@@ -1776,18 +1780,60 @@ computeSingularities2(std::map<MEdge, cross2d, MEdgeLessThan> &C,
 	  //	    printf("%lu %lu %lu --> diffs %12.5E %12.5E\n",
 	  //		   v0->getNum(),v1->getNum(),v2->getNum(),diff,diff2);
 	  //	  }
-	  diffs += (diff);
+	  diffs_external += diff;
+	  closest (it0->second, it1->second, angle, diff); 
+	  diffs_internal_ += diff;
 	}
       }
-      if (fabs(diffs) > .95*M_PI/2) {
-	fprintf(f_, "SP(%g,%g,%g){%12.5E};\n", v->x(), v->y(), v->z(), diffs);
+      diffs_internal[v] = diffs_internal_;
+      if (fabs(diffs_external) > .95*M_PI/2) {
+	//	printf("DIFFS (%lu) = %12.5E %12.5E\n",diffs_external,diffs_internal_);
 	singularities.insert(v);
       }
     }
     ++it;
   }
+  
+  for(size_t i = 0; i < f.size(); i++) {
+    for (size_t j=0 ; j< f[i]->triangles.size();j++){
+      MVertex *v0 = f[i]->triangles[j]->getVertex(0);
+      MVertex *v1 = f[i]->triangles[j]->getVertex(1);
+      MVertex *v2 = f[i]->triangles[j]->getVertex(2);
+      if (singularities.find(v0) != singularities.end() &&
+	  singularities.find(v1) != singularities.end() &&
+	  singularities.find(v2) != singularities.end()){
+	double s0 = diffs_internal [v0];
+	double s1 = diffs_internal [v1];
+	double s2 = diffs_internal [v2];
+	Msg::Info("Singular Triangle %lu\n",f[i]->triangles[j]->getNum());
+	/*
+	if (s0 > s1 && s0 > s2){
+	  singularities.erase(v1);
+	  singularities.erase(v2);
+	}
+	else if (s1 > s0 && s1 > s2){
+	  singularities.erase(v0);
+	  singularities.erase(v2);
+	}
+	else {
+	  singularities.erase(v1);
+	  singularities.erase(v0);
+	}
+	*/
+      }	  
+    }
+  }
+
+  std::set<MVertex *, MVertexPtrLessThan>::iterator its = singularities.begin();
+  for (; its != singularities.end(); ++its){
+    MVertex *v = *its;
+    fprintf(f_, "SP(%g,%g,%g){%12.5E};\n", v->x(), v->y(), v->z(), diffs_internal[v]);    
+  }
+  
   fprintf(f_, "};\n");
   fclose(f_);
+
+  
 }
 
 
@@ -1988,10 +2034,12 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
     if(bnd.size() == 2) {
       //      printf("%lu %12.5E\n",v->getNum(),gaussianCurvatures[*it]);
       double KURV = gaussianCurvatures[*it];
-      if (v->onWhat()->dim() == 0)corners.insert(v);
+      if (v->onWhat()->dim() == 0){
+   	corners.insert(v);
+      }
+      if (KURV > 5*M_PI/4 || cutgraph.find(v) != cutgraph.end())
+	corners.insert(v);
       if(KURV < 3*M_PI/4 || KURV > 5*M_PI/4) {
-	if (KURV > 5*M_PI/4)
-	  corners.insert(v);
         cutgraph.insert(v);
       }
       if(countCutGraph == 1) {
@@ -2876,9 +2924,10 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     SPoint3 p1(v1->x(), v1->y(), v1->z());
     SPoint3 p2(v2->x(), v2->y(), v2->z());
 
-    double EPS = 1.e-6;
+    double EPS = 1.e-8;
     if(v2 == vsing && (U0 - u) * (U1 - u) <= 0) {
       double xi = coord1d(U0, U1, u);
+      //      if(corner)printf("%lu %12.5E %12.5E %12.5E  %12.5E\n",vsing->getNum(),xi,U0, U1,u);
       if (!corner || (xi > EPS && xi < 1-EPS)){
 	if (fake){
 	  COUNT++;
@@ -2892,6 +2941,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     }
     else if(v1 == vsing && (U0 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U0, U2, u);
+      //      if(corner)printf("%lu %12.5E %12.5E %12.5E  %12.5E\n",vsing->getNum(),xi,U0, U2, u);
       if (!corner || (xi > EPS && xi < 1-EPS)){
 	if (fake){
 	  COUNT++;
@@ -2905,6 +2955,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     }
     else if(v0 == vsing && (U1 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U1, U2, u);
+      //      if(corner)printf("%lu %12.5E %12.5E %12.5E %12.5E\n",vsing->getNum(),xi,U1, U2, u);
       if (!corner || (xi > EPS && xi < 1-EPS)){
 	if (fake){
 	  COUNT++;
@@ -2941,9 +2992,16 @@ static bool computeIsos(
   }
 
   {
-    singularities.insert(corners.begin(), corners.end());
     std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator it =
       new2old.begin();
+    for(; it != new2old.end(); ++it) {
+      if(corners.find(it->second) != corners.end()) {
+        corners.insert(it->first);
+      }
+    }
+
+    singularities.insert(corners.begin(), corners.end());
+    it = new2old.begin();
     for(; it != new2old.end(); ++it) {
       if(singularities.find(it->second) != singularities.end()) {
         singularities.insert(it->first);
@@ -3611,14 +3669,7 @@ public:
 #endif
     myAssembler = computeH(gm, f, vs, C);
 
-    {
-      v2t_cont adj;
-      for(size_t i = 0; i < f.size(); i++) {
-	buildVertexToElement(f[i]->triangles, adj);
-      }
-      computeSingularities2(C, singularities, indices, adj);
-      //      computeSingularities(C, singularities, indices, myAssembler);
-    }
+    computeSingularities(C, singularities, indices,f);
     
 #if 0
     myAssembler = computeHFromSingularities(indices,  4);
@@ -4600,6 +4651,10 @@ public:
 	int diff = 4 - (it->second-it->first*1000);
 	chi_sing += (double)diff/4.0;
       }
+      else {
+	int diff = 1 - (it->second-it->first*1000);
+	chi_sing += (double)diff/4.0;
+      }
     }
 
     //    printf("chi_sing ...%12.5E\n",chi_sing);
@@ -4609,23 +4664,6 @@ public:
       bool bnd = boundaries.find(it->first) != boundaries.end();
       double XXX =  !bnd ? 2*M_PI-it->second : M_PI-it->second;
       chi_curv += XXX;
-      if (bnd){
-	double angle = it->second-M_PI; 
-	if (angle < -M_PI/4){
-	  chi_sing += 0.25;
-	}
-	else if (angle > M_PI/4 && angle < 3*M_PI/4){
-	  int N = COUNTS[it->first->getNum()] - 1000*it->first->getNum();
-	  //	  printf("anticorner %12.5E %d\n",angle, N);
-	  if (N == 2)
-	    chi_sing -= 0.25;
-	}
-	else if (angle > 3*M_PI/4){
-	  int N = COUNTS[it->first->getNum()];
-	  if (N == 3)
-	    chi_sing -= 0.5;
-	}
-      }
     }
 
     if (fabs (chi_sing-chi_curv/2/M_PI) < 1.e-8)
@@ -4951,7 +4989,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 4, false);
+  classifyFaces(GModel::current(), M_PI / 6, false);
   GModel::current()->remove(de);
   //  delete de;
   GModel::current()->pruneMeshVertexAssociations();
