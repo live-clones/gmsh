@@ -113,7 +113,8 @@ int meshGFaceHxt(GModel *gm)
                              .generateVolumes = 0,
                              .remeshSurfaces = 1,
                              .dirType = 1,
-                             .areaThreshold = 0};
+                             .areaThreshold = 0,
+                             .uniformSize = 0.1};
   
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data,fmesh));
   HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));

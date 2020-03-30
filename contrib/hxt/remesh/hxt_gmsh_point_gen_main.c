@@ -11,8 +11,6 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
                               HXTMesh *fmesh)
 {
 
-  double uniformSize = 0.1;
-
   double *directions;
   HXT_CHECK(hxtMalloc(&directions,9*mesh->vertices.num*sizeof(double)));
   for (uint32_t i=0; i<9*mesh->vertices.num; i++) directions[i] = 0.0;
@@ -32,9 +30,9 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
     HXT_CHECK(myNormalizedCrossprod(&directions[9*i+0],&directions[9*i+3],&directions[9*i+6]));
 
     h_function[i] = data[7*i+6];
-    sizemap[3*i+0] = (1./exp(data[7*i+6]))*uniformSize;
-    sizemap[3*i+1] = (1./exp(data[7*i+6]))*uniformSize;
-    sizemap[3*i+2] = (1./exp(data[7*i+6]))*uniformSize;
+    sizemap[3*i+0] = (1./exp(data[7*i+6]))*opt->uniformSize;
+    sizemap[3*i+1] = (1./exp(data[7*i+6]))*opt->uniformSize;
+    sizemap[3*i+2] = (1./exp(data[7*i+6]))*opt->uniformSize;
   }
 
   HXT_CHECK(hxtPointGenWriteDirections(mesh,directions,"GMSH_TEST_directionsPoints.pos"));

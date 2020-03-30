@@ -28,6 +28,8 @@ typedef struct {
 
   double areaThreshold;       
 
+  double uniformSize; 
+
 
 }HXTPointGenOptions;
 
