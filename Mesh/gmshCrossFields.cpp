@@ -2400,31 +2400,68 @@ static double coord1d(double a0, double a1, double a)
 }
 
 struct edgeCuts {
+  std::vector<double> xis;
   std::vector<SPoint3> ps;
   std::vector<MVertex *> vs;
   std::vector<int> indexOfCuts;
   std::vector<int> idsOfCuts;
-  bool add(const SPoint3 &p, int ind, int id)
+  bool add(const SPoint3 &p, int ind, int id, double xi)
   {
     for(size_t i = 0; i < ps.size(); i++) {
       SVector3 v(ps[i], p);
       if(v.norm() < 1.e-10) { return false; }
     }
     ps.push_back(p);
+    xis.push_back(xi);
     indexOfCuts.push_back(ind);
     idsOfCuts.push_back(id);
     return true;
   }
-  void finish(GModel *gm, FILE *f = NULL)
+  void finish(GModel *gm, GEdge *mother, MVertex *v0, MVertex *v1, FILE *f)
   {
+    double x0=0,x1=0;
+    if (mother){
+
+      reparamMeshVertexOnEdge (v0,mother,x0);
+      reparamMeshVertexOnEdge (v1,mother,x1);
+
+      if(mother->periodic(0) && mother->getEndVertex() &&
+	 mother->getEndVertex()->getNumMeshVertices() > 0 &&
+	 v0 == mother->getEndVertex()->mesh_vertices[0]){
+	double u0 = mother->parBounds(0).low();
+	double u1 = mother->parBounds(0).high();
+	if (fabs (u0 - x1) > fabs (u1 - x1))x0 = u1;
+	else x0 = u0;
+      }
+      if(mother->periodic(0) && mother->getEndVertex() &&
+	 mother->getEndVertex()->getNumMeshVertices() > 0 &&
+	 v1 == mother->getEndVertex()->mesh_vertices[0]){
+	double u0 = mother->parBounds(0).low();
+	double u1 = mother->parBounds(0).high();
+	if (fabs (u0 - x0) > fabs (u1 - x0))x1 = u1;
+	else x1 = u0;
+      }
+    }
+    
     for(size_t i = 0; i < ps.size(); i++) {
       GEdge *ge = gm->getEdgeByTag(indexOfCuts[i]);
       if(!ge) {
         ge = new discreteEdge(gm, indexOfCuts[i]);
         gm->add(ge);
       }
+      double xi = 0.0;
+      if (mother){// FIXME
+	//	SPoint3 p0 (v0->x(),v0->y(),v0->z());
+	//	SPoint3 p1 (v1->x(),v1->y(),v1->z());
+	//	double XI = p1.distance(ps[i])/p0.distance(p1);
+	//	xi = x0*(1.-XI)+x1*XI;
+	//	Msg::Info("CUT MESH INFO: a new point is created on model edge %d at coordinate xi = %12.5E (%12.5E  %12.5E  %12.5E)",mother->tag(),xi, xis[i], x0, x1);
+	//	GPoint gp = mother->closestPoint(ps[i], xi);
+	//	GPoint gp = mother->point (xi);
+	//	ps[i] = SPoint3(gp.x(),gp.y(),gp.z());
+      }  
       MEdgeVertex *v =
-        new MEdgeVertex(ps[i].x(), ps[i].y(), ps[i].z(), ge, 0.0);
+        new MEdgeVertex(ps[i].x(), ps[i].y(), ps[i].z(), ge, xi);
       if(f)
         fprintf(f, "SP(%g,%g,%g){%d};\n", ps[i].x(), ps[i].y(), ps[i].z(),
                 ge->tag());
@@ -2436,16 +2473,16 @@ struct edgeCuts {
 };
 
 static bool addCut(const SPoint3 &p, const MEdge &e, int COUNT, int ID,
-                   std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts)
+                   std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts, double xi)
 {
   std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator itc = cuts.find(e);
   if(itc != cuts.end()) {
-    if(!itc->second.add(p, COUNT, ID)) return false;
+    if(!itc->second.add(p, COUNT, ID, xi)) return false;
     return true;
   }
   else {
     edgeCuts cc;
-    if(!cc.add(p, COUNT, ID)) return false;
+    if(!cc.add(p, COUNT, ID, xi)) return false;
     cuts[e] = cc;
     return true;
   }
@@ -2498,7 +2535,8 @@ static void computeOneIsoTillNextCutGraph(
   int &NB,
   cutGraphPassage &passage,
   std::vector<cutGraphPassage> &passages,
-  std::set<MVertex *, MVertexPtrLessThan> &singularities)
+  std::set<MVertex *, MVertexPtrLessThan> &singularities,
+  double xi)
 {
   bool start = true;
   while (1){
@@ -2530,7 +2568,7 @@ static void computeOneIsoTillNextCutGraph(
     }
     //// -----------------------------------------------------------------------------
       
-    bool added = addCut(p, e, COUNT, NB, cuts);
+    bool added = addCut(p, e, COUNT, NB, cuts, xi);
     if(!added) {
       if (passage._type != cutGraphPassage::SING_TO_SING &&
 	  passage._type != cutGraphPassage::SING_TO_BDRY)	  
@@ -2588,8 +2626,8 @@ static void computeOneIsoTillNextCutGraph(
 	double U2 = pot[vs[i]];
 	SPoint3 ppp(vs[i]->x(), vs[i]->y(), vs[i]->z());
 	if((U[0] - VAL) * (U2 - VAL) <= 0) {
-	  double xi = coord1d(U[0], U2, VAL);
-	  SPoint3 pp = p0 * (1. - xi) + ppp * xi;
+	  double XI = coord1d(U[0], U2, VAL);
+	  SPoint3 pp = p0 * (1. - XI) + ppp * XI;
 	  SVector3 d = pp - p;
 	  if (dot(dprec,d) >0){
 	    TOTAL++;
@@ -2598,11 +2636,12 @@ static void computeOneIsoTillNextCutGraph(
 	    v1 = vs[i];
 	    pprec = p;
 	    p = pp;
+	    xi = XI;
 	  }
 	}
 	else if((U[1] - VAL) * (U2 - VAL) <= 0) {
-	  double xi = coord1d(U[1], U2, VAL);
-	  SPoint3 pp = p1 * (1. - xi) + ppp * xi;
+	  double XI = coord1d(U[1], U2, VAL);
+	  SPoint3 pp = p1 * (1. - XI) + ppp * XI;
 	  SVector3 d = pp - p;
 	  if (dot(dprec,d) >0){
 	    TOTAL++;
@@ -2612,6 +2651,7 @@ static void computeOneIsoTillNextCutGraph(
 	    v1 = vs[i];
 	    pprec = p;
 	    p = pp;
+	    xi = XI;
 	  }
 	}
 	else {
@@ -2769,7 +2809,8 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
 			  std::vector<groupOfCross2d> &G, FILE *f, int COUNT, int DIR,
 			  std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
 			  std::vector<cutGraphPassage> & passages,
-			  std::set<MVertex *, MVertexPtrLessThan> &singularities)
+			  std::set<MVertex *, MVertexPtrLessThan> &singularities,
+			  double xi)
 {
   
   std::vector<std::pair<MEdge, std::pair<std::map<MVertex *, double> *, double> > >
@@ -2786,7 +2827,7 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
 
   
   computeOneIsoTillNextCutGraph(adj, VAL, v0, v1, p, psing, *potU, cutGraphEnds,
-				d1, f, COUNT, cuts, NB, passage, passages, singularities);
+				d1, f, COUNT, cuts, NB, passage, passages, singularities, xi);
   
   int XX = 1;
 
@@ -2795,7 +2836,7 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
 
     std::map<MVertex *, double> *POT = (*cutGraphEnds.begin()).second.first;
     VAL = (*cutGraphEnds.begin()).second.second;
-    double xi = coord1d((*POT)[e.getVertex(0)], (*POT)[e.getVertex(1)], VAL);
+    xi = coord1d((*POT)[e.getVertex(0)], (*POT)[e.getVertex(1)], VAL);
     MEdge o = d1[e];
     p[0] = (1. - xi) * e.getVertex(0)->x() + xi * e.getVertex(1)->x();
     p[1] = (1. - xi) * e.getVertex(0)->y() + xi * e.getVertex(1)->y();
@@ -2862,7 +2903,7 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
       VAL = (1. - xi) * (*POT)[o.getVertex(1)] + xi * (*POT)[o.getVertex(0)];
     computeOneIsoTillNextCutGraph(adj, VAL, o.getVertex(0), o.getVertex(1), p, psing, *POT,
 				  cutGraphEnds, d1, f, COUNT, cuts, NB, passage, passages,
-				  singularities);
+				  singularities, xi);
     if(XX++ > MAX_PASSAGES) {
       passage._type = cutGraphPassage::SING_TO_NOTHING;
       break;
@@ -2935,7 +2976,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
 	else {
 	  SPoint3 pp = p0 * (1 - xi) + p1 * xi;
 	  computeOneIso(vsing, adj, u, v0, v1, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
-			cuts, passages, singularities);
+			cuts, passages, singularities, xi);
 	}
       }
     }
@@ -2949,7 +2990,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
 	else {
 	  SPoint3 pp = p0 * (1 - xi) + p2 * xi;
 	  computeOneIso(vsing, adj, u, v0, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
-			cuts, passages, singularities);
+			cuts, passages, singularities, xi);
 	}
       }
     }
@@ -2963,7 +3004,7 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
 	else {
 	  SPoint3 pp = p1 * (1 - xi) + p2 * xi;
 	  computeOneIso(vsing, adj, u, v1, v2, pp, &potU, &potV, d1, G, f, COUNT++,DIR,
-			cuts, passages, singularities);
+			cuts, passages, singularities, xi);
 	}
       }
     }
@@ -4331,10 +4372,22 @@ public:
     }
   }
 
+  void splitEdge (MVertex *v1, MVertex *v2, MVertex* v12,
+		  std::map<MEdge,GEdge*,MEdgeLessThan> &inverseClassificationEdges){
+    MEdge e (v1,v2);
+    std::map<MEdge,GEdge*,MEdgeLessThan>::iterator it = inverseClassificationEdges.find(e);
+    if (it != inverseClassificationEdges.end()){
+      MEdge e1 (v1,v12);
+      MEdge e2 (v12,v2);
+      inverseClassificationEdges[e1] = it->second;
+      inverseClassificationEdges[e2] = it->second;
+    }
+  }
+  
   void cutTriangles(std::vector<MTriangle *> &ts, GFace *gf, MVertex *v1,
                     MVertex *v2, GEdge *ge,
                     std::map<MEdge, int, MEdgeLessThan> &ecuts, int index,
-                    FILE *f)
+                    FILE *f, std::map<MEdge,GEdge*,MEdgeLessThan> &inverseClassificationEdges)
   {
     std::map<MEdge, MVertex *, MEdgeLessThan> e_cut;
     std::vector<MTriangle *> newt;
@@ -4356,6 +4409,10 @@ public:
         vs[j] = e_cut[e];
       }
 
+      if (vs[0])splitEdge (ts[i]->getVertex(0), ts[i]->getVertex(1), vs[0],inverseClassificationEdges);
+      if (vs[1])splitEdge (ts[i]->getVertex(1), ts[i]->getVertex(2), vs[1],inverseClassificationEdges);
+      if (vs[2])splitEdge (ts[i]->getVertex(2), ts[i]->getVertex(0), vs[2],inverseClassificationEdges);      
+      
       if(!vs[0] && !vs[1] && !vs[2])
         newt.push_back(ts[i]);
       else if(vs[0] && !vs[1] && !vs[2]) {
@@ -4367,6 +4424,8 @@ public:
         cut_edge(ecuts, ts[i]->getVertex(0), ts[i]->getVertex(1), vs[0]);
         MEdge ed(ts[i]->getVertex(2), vs[0]);
         ecuts[ed] = index;
+
+
       }
       else if(!vs[0] && vs[1] && !vs[2]) {
         //	printf("coucouc\n");
@@ -4431,29 +4490,41 @@ public:
     ts = newt;
   }
 
-  void cutMesh(std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts)
+  void cutMesh(std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
+	       std::map<MEdge, GEdge*, MEdgeLessThan> &inverseClassificationEdges)
   {
-    
-    std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it = cuts.begin();
-    std::map<MEdge, int, MEdgeLessThan> ecuts;
 
-    FILE *F = fopen("addedpoints.pos", "w");
-    fprintf(F, "View \"\"{\n");
-    for(; it != cuts.end(); ++it) { it->second.finish(gm, F); }
-
+    // create an inverse classification for current mesh edges.
+   
     for(size_t i = 0; i < f.size(); i++) {
-      std::vector<MTriangle *> newT;
-
-      // create an inverse classification for all edges.
-      std::map<MEdge,GEdge*,MEdgeLessThan> inverse_classification;
       std::vector<GEdge*> ed_of_fi = f[i]->edges();
       for (size_t j=0;j<ed_of_fi.size();j++){
 	for (size_t k=0;k<ed_of_fi[j]->lines.size();k++){
 	  MEdge e (ed_of_fi[j]->lines[k]->getVertex(0),
 		   ed_of_fi[j]->lines[k]->getVertex(1));
-	  inverse_classification[e] = ed_of_fi[j];
+	  inverseClassificationEdges[e] = ed_of_fi[j];
 	}
       }
+    }
+    
+    std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it = cuts.begin();
+    std::map<MEdge, int, MEdgeLessThan> ecuts;
+    
+    FILE *F = fopen("addedpoints.pos", "w");
+    fprintf(F, "View \"\"{\n");
+    for(; it != cuts.end(); ++it) {
+      
+      std::map<MEdge,GEdge*,MEdgeLessThan>::iterator ite =inverseClassificationEdges.find(it->first);
+      if (ite != inverseClassificationEdges.end() && ite->second->haveParametrization()){
+	it->second.finish(gm, ite->second, it->first.getVertex(0), it->first.getVertex(1), F);
+      }
+      else {
+	it->second.finish(gm, NULL ,0, 0, F);
+      }
+    }
+
+    for(size_t i = 0; i < f.size(); i++) {
+      std::vector<MTriangle *> newT;
       
       for(size_t j = 0; j < f[i]->triangles.size(); j++) {
         std::set<int> indices;
@@ -4489,7 +4560,7 @@ public:
             int k = itt->second.second.first;
             cutTriangles(ttt, f[i], v0,
                          f[i]->triangles[j]->getVertex((k + 2) % 3), ge, ecuts,
-                         *iti, F);
+                         *iti, F, inverseClassificationEdges);
           }
           else if(tcuts.count(*iti) == 2) {
             std::multimap<
@@ -4498,7 +4569,7 @@ public:
             MVertex *v0 = itt->second.first;
             ++itt;
             MVertex *v1 = itt->second.first;
-            cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F);
+            cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F, inverseClassificationEdges);
           }
           else if(tcuts.count(*iti) == 3) {
             std::multimap<
@@ -4520,20 +4591,20 @@ public:
             if(abs(id0 - id1) <= 2) {
               cutTriangles(ttt, f[i], v2,
                            f[i]->triangles[j]->getVertex((k2 + 2) % 3), ge,
-                           ecuts, *iti, F);
-              cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F);
+                           ecuts, *iti, F, inverseClassificationEdges);
+              cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F, inverseClassificationEdges);
             }
             else if(abs(id0 - id2) <= 2) {
               cutTriangles(ttt, f[i], v1,
                            f[i]->triangles[j]->getVertex((k1 + 2) % 3), ge,
-                           ecuts, *iti, F);
-              cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F);
+                           ecuts, *iti, F, inverseClassificationEdges);
+              cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F, inverseClassificationEdges);
             }
             else if(abs(id1 - id2) <= 2) {
               cutTriangles(ttt, f[i], v0,
                            f[i]->triangles[j]->getVertex((k0 + 2) % 3), ge,
-                           ecuts, *iti, F);
-              cutTriangles(ttt, f[i], v1, v2, ge, ecuts, *iti, F);
+                           ecuts, *iti, F, inverseClassificationEdges);
+              cutTriangles(ttt, f[i], v1, v2, ge, ecuts, *iti, F, inverseClassificationEdges);
             }
             else {
               printf("BAD BEHAVIOR 3\n");
@@ -4558,16 +4629,16 @@ public:
             int id3 = itt->second.second.second;
             MVertex *v3 = itt->second.first;
             if(abs(id0 - id1) <= 2 || abs(id2 - id3) <= 2) {
-              cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F);
-              cutTriangles(ttt, f[i], v2, v3, ge, ecuts, *iti, F);
+              cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F, inverseClassificationEdges);
+              cutTriangles(ttt, f[i], v2, v3, ge, ecuts, *iti, F, inverseClassificationEdges);
             }
             else if(abs(id0 - id2) <= 2 || abs(id1 - id3) <= 2) {
-              cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F);
-              cutTriangles(ttt, f[i], v1, v3, ge, ecuts, *iti, F);
+              cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F, inverseClassificationEdges);
+              cutTriangles(ttt, f[i], v1, v3, ge, ecuts, *iti, F, inverseClassificationEdges);
             }
             else if(abs(id0 - id3) <= 2 || abs(id1 - id2) <= 2) {
-              cutTriangles(ttt, f[i], v0, v3, ge, ecuts, *iti, F);
-              cutTriangles(ttt, f[i], v1, v2, ge, ecuts, *iti, F);
+              cutTriangles(ttt, f[i], v0, v3, ge, ecuts, *iti, F, inverseClassificationEdges);
+              cutTriangles(ttt, f[i], v1, v2, ge, ecuts, *iti, F, inverseClassificationEdges);
             }
 	    else{
 	      printf("ERRROOOOR IN 4 CUTS %d %d %d %d\n",id0,id1,id2,id3);
@@ -4583,9 +4654,9 @@ public:
 	      ++itt;
 	    }
 	    std::sort(id,id+6);
-	    cutTriangles(ttt, f[i], id[0].second, id[1].second, ge, ecuts, *iti, F);
-	    cutTriangles(ttt, f[i], id[2].second, id[3].second, ge, ecuts, *iti, F);
-	    cutTriangles(ttt, f[i], id[4].second, id[5].second, ge, ecuts, *iti, F);
+	    cutTriangles(ttt, f[i], id[0].second, id[1].second, ge, ecuts, *iti, F, inverseClassificationEdges);
+	    cutTriangles(ttt, f[i], id[2].second, id[3].second, ge, ecuts, *iti, F, inverseClassificationEdges);
+	    cutTriangles(ttt, f[i], id[4].second, id[5].second, ge, ecuts, *iti, F, inverseClassificationEdges);
 	    printf("%d %d %d %d %d %d\n",id[0].first,id[1].first,id[2].first,id[3].first,id[4].first,id[5].first);
           }
           else {
@@ -4983,8 +5054,17 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   if (viewTheta) delete viewTheta;
   
   Msg::Info("Cutting the mesh");
-  qLayout.cutMesh(cuts);
+  std::map<MEdge,GEdge*,MEdgeLessThan> inverseClassificationEdges;
+  qLayout.cutMesh(cuts,inverseClassificationEdges);
 
+  /* FOR MAXENCE
+
+     --> tu trouveras normalement ce qu'il te faut ici
+     1) --> 
+
+   */
+
+  
   /* Store initial geo entity of each vertex (before reclassify), 
    * used to build the map from initial entity to reclassified entity */
   std::map<int,std::pair<int,int>> vertInitialEntity;
@@ -5005,24 +5085,6 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
           vertInitialEntity[v->getNum()] = {edim,etag};
         }
       }
-    }
-    if (false) { /* line / triangle approach */
-      // DO NOT WORK because: cutMesh changes entities
-      // printf("---- BEFORE RECLASSIFY\n");
-      // for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
-      //   std::vector<MLine*> lines = (*it)->lines;;
-      //   for (size_t l = 0; l < lines.size(); ++l) {
-      //     edgeInitialEntity[lines[l]->getNum()] = {(*it)->dim(),(*it)->tag()};
-      //   }
-      //   printf("  (%i,%i): %li elements\n", (*it)->dim(),(*it)->tag(), lines.size());
-      // }
-      // for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-      //   std::vector<MTriangle*> tris = (*it)->triangles;;
-      //   for (size_t f = 0; f < tris.size(); ++f) {
-      //     triangleInitialEntity[tris[f]->getNum()] = {(*it)->dim(),(*it)->tag()};
-      //   }
-      //   printf("  (%i,%i): %li elements\n", (*it)->dim(),(*it)->tag(), tris.size());
-      // }
     }
   }
 
@@ -5965,7 +6027,8 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
   /* Cutting the gcc mesh */
   quadLayoutData qLayout(gcc, f, gcc->getName());
   Msg::Info("Cutting the mesh");
-  qLayout.cutMesh(cuts);
+  std::map<MEdge,GEdge*,MEdgeLessThan> inverseClassificationEdges;
+  qLayout.cutMesh(cuts, inverseClassificationEdges);
 
   /* Classify the cut mesh */
   Msg::Info("Classifying the model");
