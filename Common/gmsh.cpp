@@ -2594,6 +2594,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
     std::vector<MVertex *> vertices(numVertices);
     std::vector<unsigned int> verticesOrder(numVertices);
     const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
+    
+    std::string entityOffset = 0;
 
     for(std::size_t iEntity = 0; iEntity < entities.size(); ++iEntity) {
       const GEntity *ge = entities[iEntity];
@@ -2632,8 +2634,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
           }
         }
 
-        basisFunctionsOrientation[iElement] = (int)elementOrientation;
+        basisFunctionsOrientation[entityOffset + iElement] = (int)elementOrientation;
       }
+      
+      entityOffset += localNumElements;
     }
   }
 
