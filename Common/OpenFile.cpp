@@ -324,15 +324,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   std::string noExt = split[0] + split[1], ext = split[2];
 
   if(ext == ".gz") {
-#if defined(HAVE_COMPRESSED_IO) && defined(HAVE_LIBZ)
-    std::vector<std::string> subsplit = SplitFileName(noExt);
-    ext = subsplit[2];
-    if(ext != ".geo" && ext != ".GEO" && ext != ".unv" && ext != ".UNV") {
-      if(doSystemUncompress(fileName, noExt)) return MergeFile(noExt, false);
-    }
-#else
     if(doSystemUncompress(fileName, noExt)) return MergeFile(noExt, false);
-#endif
   }
 
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading

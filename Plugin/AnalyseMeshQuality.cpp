@@ -446,10 +446,10 @@ void GMSH_AnalyseMeshQualityPlugin::_printStatJacobian()
   Msg::Info("minJ      = %8.3g, %8.3g, %8.3g (min, avg, max)", infminJ, avgminJ,
             supminJ);
   if(countc && countc < count)
-    Msg::Info("minJ/maxJ =           %8.3f           (avg on the %d "
+    Msg::Info("minJ/maxJ =           %8.3g           (avg on the %d "
               "non-constant elements)",
               avgratJc, countc);
-  Msg::Info("minJ/maxJ = %8.3f, %8.3f, %8.3f (worst, avg, best)", infratJ,
+  Msg::Info("minJ/maxJ = %8.3g, %8.3g, %8.3g (worst, avg, best)", infratJ,
             avgratJ, supratJ);
 }
 
@@ -469,7 +469,7 @@ void GMSH_AnalyseMeshQualityPlugin::_printStatIGE()
   }
   avgminS /= _data.size();
 
-  Msg::Info("IGE       = %8.3f, %8.3f, %8.3f (worst, avg, best)", infminS,
+  Msg::Info("IGE       = %8.3g, %8.3g, %8.3g (worst, avg, best)", infminS,
             avgminS, supminS);
 }
 
@@ -489,7 +489,7 @@ void GMSH_AnalyseMeshQualityPlugin::_printStatICN()
   }
   avgminI /= _data.size();
 
-  Msg::Info("ICN       = %8.3f, %8.3f, %8.3f (worst, avg, best)", infminI,
+  Msg::Info("ICN       = %8.3g, %8.3g, %8.3g (worst, avg, best)", infminI,
             avgminI, supminI);
 }
 

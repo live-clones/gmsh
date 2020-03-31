@@ -112,7 +112,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.ColorCarousel
-Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical entity, 3: by partition)@*
+Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical group, 3: by mesh partition)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -227,7 +227,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelType
-Type of element label (0: element number, 1: elementary entity number, 2: physical entity number, 3: partition number, 4: coordinates)@*
+Type of element label (0: node/element tag, 1: elementary entity tag, 2: physical entity tag, 3: partition, 4: coordinates)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -257,7 +257,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LineNumbers
-Display mesh line numbers?@*
+Display mesh line labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -507,7 +507,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointNumbers
-Display mesh node numbers?@*
+Display mesh node labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -651,19 +651,19 @@ Save parametric coordinates of nodes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.SaveGroupsOfElements
+Save groups of elements for each physical group (for INP mesh format)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveGroupsOfNodes
-Save groups of nodes for each physical line and surface (for UNV, INP and Tochnog mesh formats)@*
+Save groups of nodes for each physical group (for UNV, INP and Tochnog mesh formats). For the INP format, a negative value will save a group of node for each entity of dimension = (-Mesh.SaveGroupsOfNodes)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ScalingFactor
 Global scaling factor applied to the saved mesh@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.SecondOrderExperimental
-Use experimental code to generate second order mesh@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SecondOrderIncomplete
@@ -722,7 +722,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SubdivisionAlgorithm
-Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra)@*
+Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, 3: barycentric)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -737,7 +737,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SurfaceNumbers
-Display surface mesh element numbers?@*
+Display surface mesh element labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -787,7 +787,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.VolumeNumbers
-Display volume mesh element numbers?@*
+Display volume mesh element labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

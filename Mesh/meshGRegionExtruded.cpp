@@ -174,9 +174,11 @@ static void extrudeMesh(GFace *from, GRegion *to, MVertexRTree &pos)
         double x = v->x(), y = v->y(), z = v->z();
         ep->Extrude(j, k + 1, x, y, z);
         if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1) {
-          MVertex *newv = new MVertex(x, y, z, to);
-          to->mesh_vertices.push_back(newv);
-          pos.insert(newv);
+          if(!pos.find(x, y, z)) {
+            MVertex *newv = new MVertex(x, y, z, to);
+            to->mesh_vertices.push_back(newv);
+            pos.insert(newv);
+          }
         }
       }
     }
@@ -223,23 +225,23 @@ static void extrudeMesh(GFace *from, GRegion *to, MVertexRTree &pos)
 static void insertAllVertices(GRegion *gr, MVertexRTree &pos)
 {
   pos.insert(gr->mesh_vertices);
+  std::vector<MVertex*> embedded = gr->getEmbeddedMeshVertices();
+  pos.insert(embedded);
   std::vector<GFace *> faces = gr->faces();
-  std::vector<GFace *>::iterator itf = faces.begin();
-  while(itf != faces.end()) {
+  for(std::vector<GFace *>::iterator itf = faces.begin(); itf != faces.end();
+      itf++) {
     pos.insert((*itf)->mesh_vertices);
     std::vector<MVertex *> embedded = (*itf)->getEmbeddedMeshVertices();
     pos.insert(embedded);
     std::vector<GEdge *> const &edges = (*itf)->edges();
-    std::vector<GEdge *>::const_iterator ite = edges.begin();
-    while(ite != edges.end()) {
+    for(std::vector<GEdge *>::const_iterator ite = edges.begin(); ite != edges.end();
+        ite++) {
       pos.insert((*ite)->mesh_vertices);
       if((*ite)->getBeginVertex())
         pos.insert((*ite)->getBeginVertex()->mesh_vertices);
       if((*ite)->getEndVertex())
-         pos.insert((*ite)->getEndVertex()->mesh_vertices);
-      ++ite;
+        pos.insert((*ite)->getEndVertex()->mesh_vertices);
     }
-    ++itf;
   }
 }
 

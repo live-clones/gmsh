@@ -67,6 +67,9 @@ med_geometrie_element msh2medElementType(int msh)
   case MSH_QUA_8: return MED_QUAD8;
   case MSH_HEX_20: return MED_HEXA20;
   case MSH_PRI_15: return MED_PENTA15;
+#if(MED_MAJOR_NUM >= 4)
+  case MSH_PRI_18: return MED_PENTA18;
+#endif
   case MSH_PYR_13: return MED_PYRA13;
 #if(MED_MAJOR_NUM >= 3)
   case MSH_QUA_9: return MED_QUAD9;
@@ -93,6 +96,9 @@ int med2mshElementType(med_geometrie_element med)
   case MED_QUAD8: return MSH_QUA_8;
   case MED_HEXA20: return MSH_HEX_20;
   case MED_PENTA15: return MSH_PRI_15;
+#if(MED_MAJOR_NUM >= 4)
+  case MED_PENTA18: return MSH_PRI_18;
+#endif
   case MED_PYRA13: return MSH_PYR_13;
 #if(MED_MAJOR_NUM >= 3)
   case MED_QUAD9: return MSH_QUA_9;
@@ -102,8 +108,9 @@ int med2mshElementType(med_geometrie_element med)
   }
 }
 
-int med2mshNodeIndex(med_geometrie_element med, int k)
+int msh2medNodeIndex(int msh, int k)
 {
+  med_geometrie_element med = msh2medElementType(msh);
   switch(med) {
   case MED_POINT1:
   case MED_SEG2:
@@ -129,17 +136,16 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
     return map[k];
   }
   case MED_HEXA20: {
-    //~ static const int map[20] = {0,  1,  3,  2,  4,  5,  6,  7,  8,  9,
-                                //~ 10, 11, 16, 17, 18, 19, 12, 13, 14, 15};
-    static const int map[20] = {0, 3, 2, 1, 4, 7, 6, 5, 9, 13,
+    static const int map[20] = {0,  3, 2,  1,  4,  7,  6,  5,  9,  13,
                                 11, 8, 17, 19, 18, 16, 10, 15, 14, 12};
+
     return map[k];
   }
 #if(MED_MAJOR_NUM >= 3)
   case MED_HEXA27: {
-    static const int map[27] = {0,  1,  3,  2,  4,  5,  6,  7,  8,
-                                9,  10, 11, 16, 17, 18, 19, 12, 13,
-                                14, 15, 20, 22, 21, 23, 24, 25, 26};
+    static const int map[27] = {0,  3,  2,  1,  4,  7,  6,  5,  9,
+                                13, 11, 8,  17, 19, 18, 16, 10, 15,
+                                14, 12, 20, 22, 24, 23, 21, 25, 26};
     return map[k];
   }
 #endif
@@ -148,22 +154,84 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
     return map[k];
   }
   case MED_PENTA15: {
-    static const int map[15] = {0, 2, 1, 3, 5, 4,
-                                7, 9, 6, 13, 14, 12, 8, 11, 10};
+    static const int map[15] = {0, 2,  1,  3,  5, 4,  7, 9,
+                                6, 13, 14, 12, 8, 11, 10};
     return map[k];
   }
+#if(MED_MAJOR_NUM >= 4)
+  case MED_PENTA18: {
+    static const int map[18] = {0,  2,  1,  3, 5,  4,  7,  9,  6,
+                                13, 14, 12, 8, 11, 10, 16, 17, 15};
+    return map[k];
+  }
+#endif
   case MED_PYRA5: {
     static const int map[5] = {0, 3, 2, 1, 4};
     return map[k];
   }
   case MED_PYRA13: {
-    //~ static const int map[13] = {0, 3, 2, 1, 4, 8, 5, 9, 7, 12, 6, 11, 10};
     static const int map[13] = {0, 3, 2, 1, 4, 6, 10, 8, 5, 7, 12, 11, 9};
     return map[k];
   }
   default: Msg::Error("Unknown MED element type"); return k;
   }
 }
+
+int med2mshNodeIndex(med_geometrie_element med, int k)
+{
+  switch(med) {
+  case MED_POINT1:
+  case MED_SEG2:
+  case MED_SEG3:
+  case MED_TRIA3:
+  case MED_TRIA6:
+  case MED_QUAD4:
+  case MED_QUAD8:
+#if(MED_MAJOR_NUM >= 3)
+  case MED_QUAD9:
+#endif
+    return k; // same node numbering as in Gmsh
+  case MED_TETRA4:
+  case MED_TETRA10:
+  case MED_HEXA8:
+  case MED_PENTA6:
+  case MED_PYRA5:
+    return msh2medNodeIndex(med2mshElementType(med), k); // symmetric
+  case MED_HEXA20: {
+    static const int map[20] = {0, 3, 2, 1, 4, 7, 6, 5, 11, 8, 16,
+                                10, 19, 9, 18, 17, 15, 12, 14, 13};
+    return map[k];
+  }
+#if(MED_MAJOR_NUM >= 3)
+  case MED_HEXA27: {
+    static const int map[27] = {0, 3, 2, 1, 4, 7, 6, 5, 11, 8, 16,
+                                10, 19, 9, 18, 17, 15, 12, 14, 13,
+                                20, 24, 21, 23, 22, 25, 26};
+    return map[k];
+  }
+#endif
+  case MED_PENTA15: {
+    static const int map[15] = {0, 2, 1, 3, 5, 4,
+                                8, 6, 12, 7, 14, 13, 11, 9, 10};
+    return map[k];
+  }
+#if(MED_MAJOR_NUM >= 4)
+  case MED_PENTA18: {
+    static const int map[18] = {0, 2, 1, 3, 5, 4,
+                                8, 6, 12, 7, 14, 13, 11, 9, 10,
+                                17, 15, 16};
+    return map[k];
+  }
+#endif
+  case MED_PYRA13: {
+    static const int map[13] = {0, 3, 2, 1,
+                                4, 8, 5, 9, 7, 12, 6, 11, 10};
+    return map[k];
+  }
+  default: Msg::Error("Unknown MED element type"); return k;
+  }
+}
+
 
 int GModel::readMED(const std::string &name)
 {
@@ -332,8 +400,8 @@ int GModel::readMED(const std::string &name, int meshIndex)
 
   std::vector<med_int> nodeFamily(numNodes, 0);
 #if(MED_MAJOR_NUM >= 3)
-  MEDmeshEntityFamilyNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT,
-                              MED_NODE, MED_NONE, &nodeFamily[0]);
+  MEDmeshEntityFamilyNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT, MED_NODE,
+                              MED_NONE, &nodeFamily[0]);
 #else
   MEDfamLire(fid, meshName, &nodeFamily[0], numEle, MED_NOEUD, MED_NONE);
 #endif
@@ -371,9 +439,11 @@ int GModel::readMED(const std::string &name, int meshIndex)
     if(MEDmeshEntityFamilyNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT,
                                    MED_CELL, type, &elementFamily[0]) < 0) {
 #else
-    if(MEDfamLire(fid, meshName, &elementFamily[0], numEle, MED_MAILLE, type) < 0) {
+    if(MEDfamLire(fid, meshName, &elementFamily[0], numEle, MED_MAILLE, type) <
+       0) {
 #endif
-      Msg::Info("No family number for elements: using 0 as default family number");
+      Msg::Info(
+        "No family number for elements: using 0 as default family number");
     }
     std::vector<med_int> eleTags(numEle);
 #if(MED_MAJOR_NUM >= 3)
@@ -485,20 +555,20 @@ int GModel::readMED(const std::string &name, int meshIndex)
         }
       }
     }
-    else if(familyNum > 0 && CTX::instance()->mesh.medImportGroupsOfNodes){
+    else if(familyNum > 0 && CTX::instance()->mesh.medImportGroupsOfNodes) {
       // the concept of node family does not exist in Gmsh, so we simply create
       // a geometrical point for each node (with a single point element); and we
       // classify the node on the geometrical point if the node is not already
       // classified on another entity. This is expensive, and should be disabled
       // for large groups of nodes.
-      std::vector<GVertex*> newPoints;
-      for(int j = 0; j < numNodes; j++){
-        if(nodeFamily[j] == familyNum){
-          discreteVertex *gv = new discreteVertex
-            (this, getMaxElementaryNumber(0) + 1, verts[j]->x(), verts[j]->y(),
-             verts[j]->z());
+      std::vector<GVertex *> newPoints;
+      for(int j = 0; j < numNodes; j++) {
+        if(nodeFamily[j] == familyNum) {
+          discreteVertex *gv =
+            new discreteVertex(this, getMaxElementaryNumber(0) + 1,
+                               verts[j]->x(), verts[j]->y(), verts[j]->z());
           add(gv);
-          if(!verts[j]->onWhat()){
+          if(!verts[j]->onWhat()) {
             verts[j]->setEntity(gv);
             gv->mesh_vertices.push_back(verts[j]);
           }
@@ -544,7 +614,8 @@ static void fillElementsMED(med_int family, std::vector<T *> &elements,
                             med_geometrie_element &type)
 {
   if(elements.empty()) return;
-  type = msh2medElementType(elements[0]->getTypeForMSH());
+  int msh = elements[0]->getTypeForMSH();
+  type = msh2medElementType(msh);
   if(type == MED_NONE) {
     Msg::Warning("Unsupported element type in MED format");
     return;
@@ -553,7 +624,7 @@ static void fillElementsMED(med_int family, std::vector<T *> &elements,
     elements[i]->setVolumePositive();
     for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++)
       conn.push_back(
-        elements[i]->getVertex(med2mshNodeIndex(type, j))->getIndex());
+        elements[i]->getVertex(msh2medNodeIndex(msh, j))->getIndex());
     fam.push_back(family);
   }
 }
@@ -582,13 +653,14 @@ int GModel::writeMED(const std::string &name, bool saveAll,
 {
 #if(MED_MAJOR_NUM >= 3) && (MED_MINOR_NUM >= 3)
   // MEDfileVersionOpen actually appeared in MED 3.2.1
-  med_int major = MED_MAJOR_NUM, minor = MED_MINOR_NUM, release = MED_RELEASE_NUM;
-  if(CTX::instance()->mesh.medFileMinorVersion >= 0){
+  med_int major = MED_MAJOR_NUM, minor = MED_MINOR_NUM,
+          release = MED_RELEASE_NUM;
+  if(CTX::instance()->mesh.medFileMinorVersion >= 0) {
     minor = (int)CTX::instance()->mesh.medFileMinorVersion;
     Msg::Info("Forcing MED file version to %d.%d", major, minor);
   }
-  med_idt fid = MEDfileVersionOpen((char *)name.c_str(), MED_ACC_CREAT,
-                                   major, minor, release);
+  med_idt fid = MEDfileVersionOpen((char *)name.c_str(), MED_ACC_CREAT, major,
+                                   minor, release);
 #else
   med_idt fid = MEDouvrir((char *)name.c_str(), MED_CREATION);
 #endif
@@ -638,7 +710,7 @@ int GModel::writeMED(const std::string &name, bool saveAll,
   std::map<GEntity *, int> families;
   // write the families
   {
-  // always create a "0" family, with no groups or attributes
+    // always create a "0" family, with no groups or attributes
 #if(MED_MAJOR_NUM >= 3)
     if(MEDfamilyCr(fid, meshName, "F_0", 0, 0, "") < 0)
 #else

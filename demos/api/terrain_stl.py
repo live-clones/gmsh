@@ -26,7 +26,7 @@ c = gmsh.model.getBoundary(s)
 if(len(c) != 4):
     gmsh.logger.write('Should have 4 boundary curves!', level='error')
 
-z = -200
+z = -1000
 
 p = []
 xyz = []
@@ -66,6 +66,24 @@ sl1 = gmsh.model.geo.addSurfaceLoop([s1, s3, s4, s5, s6, s[0][1]])
 v1 = gmsh.model.geo.addVolume([sl1])
 
 gmsh.model.geo.synchronize()
+
+# set this to True to build a fully hex mesh
+#transfinite = True
+transfinite = False
+
+if transfinite:
+    NN = 30
+    for c in gmsh.model.getEntities(1):
+        gmsh.model.mesh.setTransfiniteCurve(c[1], NN)
+    for s in gmsh.model.getEntities(2):
+        gmsh.model.mesh.setTransfiniteSurface(s[1])
+        gmsh.model.mesh.setRecombine(s[0], s[1])
+        gmsh.model.mesh.setSmoothing(s[0], s[1], 100)
+    gmsh.model.mesh.setTransfiniteVolume(v1)
+else:
+    gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 100)
+    gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 100)
+
 
 gmsh.fltk.run()
 

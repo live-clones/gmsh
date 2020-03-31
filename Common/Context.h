@@ -29,7 +29,7 @@ struct contextMeshOptions {
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
   int flexibleTransfinite, maxRetries;
-  int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
+  int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, minCircPoints, minCurvPoints, minElementsPerTwoPi;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD;
@@ -45,7 +45,8 @@ struct contextMeshOptions {
   int fileFormat;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
-  int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
+  int saveAll, saveTri, saveGroupsOfNodes, saveGroupsOfElements;
+  int binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
   double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
@@ -83,7 +84,7 @@ struct contextGeometryOptions {
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
-  int occDisableSTL, occImportLabels, occUnionUnify;
+  int occBoundsUseSTL, occDisableSTL, occImportLabels, occUnionUnify;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;

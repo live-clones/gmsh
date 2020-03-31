@@ -26,6 +26,11 @@ HierarchicalBasisH1Line::HierarchicalBasisH1Line(int pe)
 
 HierarchicalBasisH1Line::~HierarchicalBasisH1Line() {}
 
+unsigned int HierarchicalBasisH1Line::getNumberOfOrientations() const
+{
+  return 2; // factorial 2
+}
+
 double HierarchicalBasisH1Line::_affineCoordinate(int j, double u)
 {
   switch(j) {

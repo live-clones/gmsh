@@ -72,7 +72,8 @@ namespace gmsh {
   {
     *p = (char**)gmshMalloc(sizeof(char*) * v.size());
     for(size_t i = 0; i < v.size(); ++i){
-      (*p)[i] = strdup(v[i].c_str());
+      (*p)[i] = (char*)gmshMalloc(sizeof(char) * (v[i].size() + 1));
+      strcpy((*p)[i], v[i].c_str());
     }
     *size = v.size();
   }
@@ -205,7 +206,7 @@ namespace gmsh { // Top-level functions
                          const int r,
                          const int g,
                          const int b,
-                         const int a = 0)
+                         const int a = 255)
     {
       int ierr = 0;
       gmshOptionSetColor(name.c_str(), r, g, b, a, &ierr);
@@ -704,7 +705,7 @@ namespace gmsh { // Top-level functions
                          const int r,
                          const int g,
                          const int b,
-                         const int a = 0,
+                         const int a = 255,
                          const bool recursive = false)
     {
       int ierr = 0;
@@ -1335,21 +1336,90 @@ namespace gmsh { // Top-level functions
       // coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
       // for the function space `functionSpaceType' (e.g. "Lagrange" or
       // "GradLagrange" for Lagrange basis functions or their gradient, in the u,
-      // v, w coordinates of the reference element). `numComponents' returns the
-      // number C of components of a basis function. `basisFunctions' returns the
-      // value of the N basis functions at the integration points, i.e. [g1f1,
-      // g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u,
-      // ..., g1fNw, g2f1u, ...] when C == 3.
+      // v, w coordinates of the reference element; or "H1Legendre3" or
+      // "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions).
+      // `numComponents' returns the number C of components of a basis function.
+      // `basisFunctions' returns the value of the N basis functions at the
+      // integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
+      // [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For
+      // basis functions that depend on the orientation of the elements, all values
+      // for the first orientation are returned first, followed by values for the
+      // secondd, etc. `numOrientations' returns the overall number of
+      // orientations.
       inline void getBasisFunctions(const int elementType,
                                     const std::vector<double> & integrationPoints,
                                     const std::string & functionSpaceType,
                                     int & numComponents,
-                                    std::vector<double> & basisFunctions)
+                                    std::vector<double> & basisFunctions,
+                                    int & numOrientations)
       {
         int ierr = 0;
         double *api_integrationPoints_; size_t api_integrationPoints_n_; vector2ptr(integrationPoints, &api_integrationPoints_, &api_integrationPoints_n_);
         double *api_basisFunctions_; size_t api_basisFunctions_n_;
-        gmshModelMeshGetBasisFunctions(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &api_basisFunctions_, &api_basisFunctions_n_, &ierr);
+        gmshModelMeshGetBasisFunctions(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &api_basisFunctions_, &api_basisFunctions_n_, &numOrientations, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_integrationPoints_);
+        basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
+      }
+
+      // Get the orientation index of the elements of type `elementType' in the
+      // entity of tag `tag'. The arguments have the same meaning as in
+      // `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
+      // each element the orientation index in the values returned by
+      // `getBasisFunctions'. For Lagrange basis functions the call is superfluous
+      // as it will return a vector of zeros.
+      inline void getBasisFunctionsOrientationForElements(const int elementType,
+                                                          const std::string & functionSpaceType,
+                                                          std::vector<int> & basisFunctionsOrientation,
+                                                          const int tag = -1,
+                                                          const std::size_t task = 0,
+                                                          const std::size_t numTasks = 1)
+      {
+        int ierr = 0;
+        int *api_basisFunctionsOrientation_; size_t api_basisFunctionsOrientation_n_;
+        gmshModelMeshGetBasisFunctionsOrientationForElements(elementType, functionSpaceType.c_str(), &api_basisFunctionsOrientation_, &api_basisFunctionsOrientation_n_, tag, task, numTasks, &ierr);
+        if(ierr) throw ierr;
+        basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
+      }
+
+      // Preallocate data before calling `getBasisFunctionsOrientationForElements'
+      // with `numTasks' > 1. For C and C++ only.
+      inline void preallocateBasisFunctionsOrientationForElements(const int elementType,
+                                                                  std::vector<int> & basisFunctionsOrientation,
+                                                                  const int tag = -1)
+      {
+        int ierr = 0;
+        int *api_basisFunctionsOrientation_; size_t api_basisFunctionsOrientation_n_;
+        gmshModelMeshPreallocateBasisFunctionsOrientationForElements(elementType, &api_basisFunctionsOrientation_, &api_basisFunctionsOrientation_n_, tag, &ierr);
+        if(ierr) throw ierr;
+        basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
+      }
+
+      // Get the element-dependent basis functions of the elements of type
+      // `elementType' in the entity of tag `tag' at the integration points
+      // `integrationPoints' (given as concatenated triplets of coordinates in the
+      // reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
+      // space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
+      // order hierarchical H1 Legendre functions or their gradient, in the u, v, w
+      // coordinates of the reference elements). `numComponents' returns the number
+      // C of components of a basis function. `numBasisFunctions' returns the
+      // number N of basis functions per element. `basisFunctions' returns the
+      // value of the basis functions at the integration points for each element:
+      // [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u,
+      // e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: This function
+      // is deprecated - use `getBasisFunctions' instead.
+      inline void getBasisFunctionsForElements(const int elementType,
+                                               const std::vector<double> & integrationPoints,
+                                               const std::string & functionSpaceType,
+                                               int & numComponents,
+                                               int & numFunctionsPerElement,
+                                               std::vector<double> & basisFunctions,
+                                               const int tag = -1)
+      {
+        int ierr = 0;
+        double *api_integrationPoints_; size_t api_integrationPoints_n_; vector2ptr(integrationPoints, &api_integrationPoints_, &api_integrationPoints_n_);
+        double *api_basisFunctions_; size_t api_basisFunctions_n_;
+        gmshModelMeshGetBasisFunctionsForElements(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &numFunctionsPerElement, &api_basisFunctions_, &api_basisFunctions_n_, tag, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_integrationPoints_);
         basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
@@ -1382,55 +1452,6 @@ namespace gmsh { // Top-level functions
         gmshModelMeshGetLocalMultipliersForHcurl0(elementType, &api_localMultipliers_, &api_localMultipliers_n_, tag, &ierr);
         if(ierr) throw ierr;
         localMultipliers.assign(api_localMultipliers_, api_localMultipliers_ + api_localMultipliers_n_); gmshFree(api_localMultipliers_);
-      }
-
-      // Get the element-dependent basis functions of the elements of type
-      // `elementType' in the entity of tag `tag'at the integration points
-      // `integrationPoints' (given as concatenated triplets of coordinates in the
-      // reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
-      // space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
-      // order hierarchical H1 Legendre functions or their gradient, in the u, v, w
-      // coordinates of the reference elements). `numComponents' returns the number
-      // C of components of a basis function. `numBasisFunctions' returns the
-      // number N of basis functions per element. `basisFunctions' returns the
-      // value of the basis functions at the integration points for each element:
-      // [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u,
-      // e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an
-      // experimental feature and will probably change in a future release. If
-      // `numTasks' > 1, only compute and return the part of the data indexed by
-      // `task'.
-      inline void getBasisFunctionsForElements(const int elementType,
-                                               const std::vector<double> & integrationPoints,
-                                               const std::string & functionSpaceType,
-                                               int & numComponents,
-                                               int & numFunctionsPerElements,
-                                               std::vector<double> & basisFunctions,
-                                               const int tag = -1,
-                                               const std::size_t task = 0,
-                                               const std::size_t numTasks = 1)
-      {
-        int ierr = 0;
-        double *api_integrationPoints_; size_t api_integrationPoints_n_; vector2ptr(integrationPoints, &api_integrationPoints_, &api_integrationPoints_n_);
-        double *api_basisFunctions_; size_t api_basisFunctions_n_;
-        gmshModelMeshGetBasisFunctionsForElements(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &numFunctionsPerElements, &api_basisFunctions_, &api_basisFunctions_n_, tag, task, numTasks, &ierr);
-        if(ierr) throw ierr;
-        gmshFree(api_integrationPoints_);
-        basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
-      }
-
-      // Preallocate data before calling `getBasisFunctionsForElements' with
-      // `numTasks' > 1. For C and C++ only.
-      inline void preallocateBasisFunctions(const int elementType,
-                                            const int numIntegrationPoints,
-                                            const std::string & functionSpaceType,
-                                            std::vector<double> & basisFunctions,
-                                            const int tag = -1)
-      {
-        int ierr = 0;
-        double *api_basisFunctions_; size_t api_basisFunctions_n_;
-        gmshModelMeshPreallocateBasisFunctions(elementType, numIntegrationPoints, functionSpaceType.c_str(), &api_basisFunctions_, &api_basisFunctions_n_, tag, &ierr);
-        if(ierr) throw ierr;
-        basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
       }
 
       // Generate the `keys' for the elements of type `elementType' in the entity
@@ -1484,14 +1505,6 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
         gmshFree(api_keys_);
         infoKeys.resize(api_infoKeys_n_ / 2); for(size_t i = 0; i < api_infoKeys_n_ / 2; ++i){ infoKeys[i].first = api_infoKeys_[i * 2 + 0]; infoKeys[i].second = api_infoKeys_[i * 2 + 1]; } gmshFree(api_infoKeys_);
-      }
-
-      // Precomputes the basis functions corresponding to `elementType'.
-      inline void precomputeBasisFunctions(const int elementType)
-      {
-        int ierr = 0;
-        gmshModelMeshPrecomputeBasisFunctions(elementType, &ierr);
-        if(ierr) throw ierr;
       }
 
       // Get the barycenters of all elements of type `elementType' classified on
@@ -3685,6 +3698,47 @@ namespace gmsh { // Top-level functions
       dataType.resize(api_dataType_n_); for(size_t i = 0; i < api_dataType_n_; ++i){ dataType[i] = std::string(api_dataType_[i]); gmshFree(api_dataType_[i]); } gmshFree(api_dataType_);
       numElements.assign(api_numElements_, api_numElements_ + api_numElements_n_); gmshFree(api_numElements_);
       data.resize(api_data_nn_); for(size_t i = 0; i < api_data_nn_; ++i){ data[i].assign(api_data_[i], api_data_[i] + api_data_n_[i]); gmshFree(api_data_[i]); } gmshFree(api_data_); gmshFree(api_data_n_);
+    }
+
+    // Add a string to a list-based post-processing view with tag `tag'. If `coord'
+    // contains 3 coordinates the string is positioned in the 3D model space ("3D
+    // string"); if it contains 2 coordinates it is positioned in the 2D graphics
+    // viewport ("2D string"). `data' contains one or more (for multistep views)
+    // strings. `style' contains pairs of styling parameters, concatenated.
+    inline void addListDataString(const int tag,
+                                  const std::vector<double> & coord,
+                                  const std::vector<std::string> & data,
+                                  const std::vector<std::string> & style = std::vector<std::string>())
+    {
+      int ierr = 0;
+      double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+      char **api_data_; size_t api_data_n_; vectorstring2charptrptr(data, &api_data_, &api_data_n_);
+      char **api_style_; size_t api_style_n_; vectorstring2charptrptr(style, &api_style_, &api_style_n_);
+      gmshViewAddListDataString(tag, api_coord_, api_coord_n_, api_data_, api_data_n_, api_style_, api_style_n_, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_coord_);
+      for(size_t i = 0; i < api_data_n_; ++i){ gmshFree(api_data_[i]); } gmshFree(api_data_);
+      for(size_t i = 0; i < api_style_n_; ++i){ gmshFree(api_style_[i]); } gmshFree(api_style_);
+    }
+
+    // Get list-based post-processing data strings (2D strings if `dim' = 2, 3D
+    // strings if `dim' = 3) from the view with tag `tag'. Return the coordinates
+    // in `coord', the strings in `data' and the styles in `style'.
+    inline void getListDataStrings(const int tag,
+                                   const int dim,
+                                   std::vector<double> & coord,
+                                   std::vector<std::string> & data,
+                                   std::vector<std::string> & style)
+    {
+      int ierr = 0;
+      double *api_coord_; size_t api_coord_n_;
+      char **api_data_; size_t api_data_n_;
+      char **api_style_; size_t api_style_n_;
+      gmshViewGetListDataStrings(tag, dim, &api_coord_, &api_coord_n_, &api_data_, &api_data_n_, &api_style_, &api_style_n_, &ierr);
+      if(ierr) throw ierr;
+      coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+      data.resize(api_data_n_); for(size_t i = 0; i < api_data_n_; ++i){ data[i] = std::string(api_data_[i]); gmshFree(api_data_[i]); } gmshFree(api_data_);
+      style.resize(api_style_n_); for(size_t i = 0; i < api_style_n_; ++i){ style[i] = std::string(api_style_[i]); gmshFree(api_style_[i]); } gmshFree(api_style_);
     }
 
     // Add a post-processing view as an `alias' of the reference view with tag

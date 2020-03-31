@@ -21,7 +21,7 @@ protected:
 public:
   OCCRegion(GModel *m, TopoDS_Solid s, int num);
   virtual ~OCCRegion();
-  virtual SBoundingBox3d bounds(bool fast = false) const;
+  virtual SBoundingBox3d bounds(bool fast = false);
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return OpenCascadeModel; }
   void *getNativePtr() const { return (void *)&s; }

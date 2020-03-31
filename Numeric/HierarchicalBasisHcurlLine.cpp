@@ -26,6 +26,11 @@ HierarchicalBasisHcurlLine::HierarchicalBasisHcurlLine(int order)
 
 HierarchicalBasisHcurlLine::~HierarchicalBasisHcurlLine() {}
 
+unsigned int HierarchicalBasisHcurlLine::getNumberOfOrientations() const
+{
+  return 2; // factorial 2
+}
+
 double HierarchicalBasisHcurlLine::_affineCoordinate(int j, double u)
 {
   switch(j) {

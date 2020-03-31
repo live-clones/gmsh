@@ -149,6 +149,12 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
 
 void gmshVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
 {
-  fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n", v->Num, v->Pos.X,
-          v->Pos.Y, v->Pos.Z, v->lc);
+  if(meshSizeParameter.size())
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %s};\n", tag(), x(), y(),
+            z(), meshSizeParameter.c_str());
+  else if(v->lc != MAX_LC)
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n", tag(), x(), y(),
+            z(), v->lc);
+  else
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g};\n", tag(), x(), y(), z());
 }

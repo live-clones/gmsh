@@ -38,6 +38,7 @@ public:
   HierarchicalBasisH1Tria(int pf, int pe0, int pe1, int pe2);
   HierarchicalBasisH1Tria(int order);
   virtual ~HierarchicalBasisH1Tria();
+  virtual unsigned int getNumberOfOrientations() const;
   // vertexBasis=[v0,...,v2]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
   // faceBasis=[phief_{1,1},...,phief_{1,pf-2},phief_{2,1},...,phief_{2,pf2-3},phief_{1,1}...]

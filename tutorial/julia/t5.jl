@@ -1,4 +1,4 @@
-# This file reimplements gmsh/tutorial/t5.geo in Julia.
+# See the corresponding Python tutorial for detailed comments.
 
 import gmsh
 

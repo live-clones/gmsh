@@ -27,7 +27,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.AutoCoherence
-Should all duplicate entities be automatically removed with the built-in geometry kernel? (If AutoCoherence == 2, also remove degenerate entities.) The option has no effect with the OpenCASCADE kernel@*
+Should all duplicate entities be automatically removed with the built-in geometry kernel? If Geometry.AutoCoherence = 2, also remove degenerate entities. The option has no effect with the OpenCASCADE kernel@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -37,7 +37,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Geometry.CopyMeshingMethod
-Copy meshing method (unstructured or transfinite) when duplicating geometrical entities?@*
+Copy meshing method (unstructured or transfinite) when duplicating geometrical entities with built-in geometry kernel?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -67,7 +67,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LabelType
-Type of entity label (0: description, 1: elementary number, 2: physical number)@*
+Type of entity label (0: description, 1: elementary entity tag, 2: physical group tag)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -87,7 +87,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LineNumbers
-Display curve numbers?@*
+Display curve labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -139,6 +139,11 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.OCCBooleanPreserveNumbering
 Try to preserve the numbering of entities through OpenCASCADE boolean operations@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCBoundsUseStl
+Use STL mesh for computing bounds of OpenCASCADE shapes (more accurate, but slower)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCDisableStl
@@ -227,7 +232,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointNumbers
-Display points numbers?@*
+Display points labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -282,12 +287,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceNumbers
-Display surface numbers?@*
+Display surface labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceType
-Surface display type (0: cross, 1: wireframe, 2: solid)@*
+Surface display type (0: cross, 1: wireframe, 2: solid). Wireframe and solid are not available with the built-in geometry kernel.@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -357,12 +362,12 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item Geometry.Volumes
-Display geometry volumes? (not implemented yet)@*
+Display geometry volumes?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.VolumeNumbers
-Display volume numbers? (not implemented yet)@*
+Display volume labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

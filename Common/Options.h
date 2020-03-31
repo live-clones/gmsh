@@ -21,7 +21,7 @@
 
 // action is a combination of GMSH_SET, GMSH_GET, GMSH_GUI
 
-#define OPT_ARGS_STR int num, int action, std::string val
+#define OPT_ARGS_STR int num, int action, const std::string &val
 #define OPT_ARGS_NUM int num, int action, double val
 #define OPT_ARGS_COL int num, int action, unsigned int val
 
@@ -394,6 +394,7 @@ double opt_geometry_surface_type(OPT_ARGS_NUM);
 double opt_geometry_light(OPT_ARGS_NUM);
 double opt_geometry_light_two_side(OPT_ARGS_NUM);
 double opt_geometry_occ_auto_fix(OPT_ARGS_NUM);
+double opt_geometry_occ_bounds_use_stl(OPT_ARGS_NUM);
 double opt_geometry_occ_disable_stl(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM);
@@ -541,7 +542,6 @@ double opt_mesh_ho_prim_surf_mesh(OPT_ARGS_NUM);
 double opt_mesh_ho_dist_cad(OPT_ARGS_NUM);
 double opt_mesh_ho_iter_max(OPT_ARGS_NUM);
 double opt_mesh_ho_pass_max(OPT_ARGS_NUM);
-double opt_mesh_second_order_experimental(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM);
@@ -556,6 +556,7 @@ double opt_mesh_save_all(OPT_ARGS_NUM);
 double opt_mesh_save_element_tag_type(OPT_ARGS_NUM);
 double opt_mesh_save_parametric(OPT_ARGS_NUM);
 double opt_mesh_save_topology(OPT_ARGS_NUM);
+double opt_mesh_save_groups_of_elements(OPT_ARGS_NUM);
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM);
 double opt_mesh_color_carousel(OPT_ARGS_NUM);
 double opt_mesh_compound_classify(OPT_ARGS_NUM);
@@ -866,7 +867,7 @@ typedef struct {
 typedef struct {
   int level;
   const char *str;
-  std::string (*function)(int num, int action, std::string val);
+  std::string (*function)(int num, int action, const std::string &val);
   std::string def;
   const char *help;
 } StringXString;

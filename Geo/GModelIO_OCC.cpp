@@ -2289,9 +2289,9 @@ int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
   for(std::size_t i = 0; i < candidates.size(); i++) {
     if(_isBound(dim, candidates[i])) { num++; }
   }
-  Msg::Info("Extruded mesh constraint fuzzy search: found %d candidates "
-            "(dim=%d, %d bound)",
-            (int)candidates.size(), dim, num);
+  Msg::Debug("Extruded mesh constraint fuzzy search: found %d candidates "
+             "(dim=%d, %d bound)",
+             (int)candidates.size(), dim, num);
   for(std::size_t i = 0; i < candidates.size(); i++) {
     if(_isBound(dim, candidates[i])) { return _find(dim, candidates[i]); }
   }
@@ -2417,28 +2417,26 @@ static int getReturnedShapes(const TopoDS_Compound &c, T *sweep,
   return 0;
 }
 
-bool OCC_Internals::_extrude(int mode,
-                             const std::vector<std::pair<int, int> > &inDimTags,
-                             double x, double y, double z, double dx, double dy,
-                             double dz, double ax, double ay, double az,
-                             double angle, int wireTag,
-                             std::vector<std::pair<int, int> > &outDimTags,
-                             ExtrudeParams *e)
+bool OCC_Internals::_extrudePerDim(int mode, int inDim,
+                                   const std::vector<int> &inTags,
+                                   double x, double y, double z, double dx, double dy,
+                                   double dz, double ax, double ay, double az,
+                                   double angle, int wireTag,
+                                   std::vector<std::pair<int, int> > &outDimTags,
+                                   ExtrudeParams *e)
 {
   // build a single compound shape, so that we won't duplicate internal
   // boundaries
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(std::size_t i = 0; i < inDimTags.size(); i++) {
-    int dim = inDimTags[i].first;
-    int tag = inDimTags[i].second;
-    if(!_isBound(dim, tag)) {
-      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
-                 tag);
+  for(std::size_t i = 0; i < inTags.size(); i++) {
+    if(!_isBound(inDim, inTags[i])) {
+      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", inDim,
+                 inTags[i]);
       return false;
     }
-    TopoDS_Shape shape = _find(dim, tag);
+    TopoDS_Shape shape = _find(inDim, inTags[i]);
     b.Add(c, shape);
   }
   TopoDS_Shape result;
@@ -2514,7 +2512,7 @@ bool OCC_Internals::_extrude(int mode,
   _multiBind(result, -1, outDimTags, true, true);
 
   // return entities in the same order as the built-in kernel extrusion
-  if(dim >= 1 && dim <= 3 && top.size() == inDimTags.size() &&
+  if(dim >= 1 && dim <= 3 && top.size() == inTags.size() &&
      top.size() == body.size()) {
     outDimTags.clear();
     for(std::size_t i = 0; i < top.size(); i++) {
@@ -2530,6 +2528,35 @@ bool OCC_Internals::_extrude(int mode,
             outDimTags.push_back(
               std::pair<int, int>(dim - 1, _find(dim - 1, lateral[i][j])));
         }
+      }
+    }
+  }
+  return true;
+}
+
+bool OCC_Internals::_extrude(int mode,
+                             const std::vector<std::pair<int, int> > &inDimTags,
+                             double x, double y, double z, double dx, double dy,
+                             double dz, double ax, double ay, double az,
+                             double angle, int wireTag,
+                             std::vector<std::pair<int, int> > &outDimTags,
+                             ExtrudeParams *e)
+{
+  std::vector<int> inTags[4];
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
+    int dim = inDimTags[i].first;
+    if(dim < 0 || dim > 3) {
+      Msg::Error("Wrong input dimension in extrusion");
+      return false;
+    }
+    inTags[dim].push_back(inDimTags[i].second);
+  }
+  for(int dim = 0; dim < 4; dim++) {
+    if(!inTags[dim].empty()) {
+      std::vector<std::pair<int, int> > out;
+      if(_extrudePerDim(mode, dim, inTags[dim], x, y, z, dx, dy, dz, ax, ay, az,
+                        angle, wireTag, out, e)) {
+        outDimTags.insert(outDimTags.end(), out.begin(), out.end());
       }
     }
   }
@@ -3747,7 +3774,8 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(occv);
     }
     double lc = _attributes->getMeshSize(0, vertex);
-    occv->setPrescribedMeshSizeAtVertex(lc);
+    if(lc != MAX_LC)
+      occv->setPrescribedMeshSizeAtVertex(lc);
     std::vector<std::string> labels;
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
@@ -4691,6 +4719,28 @@ bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1,
   if(!makeTorus(result, x, y, z, r1, r2, angle)) return false;
   if(!makeSolidSTL(result, vertices, normals, triangles)) return false;
   return true;
+}
+
+void OCC_Internals::fixSTLBounds(double &xmin, double &ymin, double &zmin,
+                                 double &xmax, double &ymax, double &zmax)
+{
+  // When an STL exists, OCC enlarges the bounding box by the allowed linear
+  // deflection given to BRepMesh_IncrementalMesh. This is "safe", but on simple
+  // polyhedral geometries (a cube!) it will consistently lead to enlarging the
+  // bounding box by twice this value in all directions. Since we use bounds()
+  // mostly for locating entities, it's better to remove the tolerance (with the
+  // risk that the bbox is a bit too small for curved boundaries - but that's
+  // fine)
+  double eps = CTX::instance()->mesh.stlLinearDeflection;
+  // OCC also enlarges the bounding box by Precision::Confusion(): remove it as
+  // well
+  eps += Precision::Confusion();
+  xmin += eps;
+  xmax -= eps;
+  ymin += eps;
+  ymax -= eps;
+  zmin += eps;
+  zmax -= eps;
 }
 
 #endif

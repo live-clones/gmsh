@@ -1,18 +1,19 @@
-/*********************************************************************
- *
- *  Gmsh tutorial 9
- *
- *  Post-processing plugins (levelsets, sections, annotations)
- *
- *********************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 9
+//
+//  Post-processing plugins (levelsets, sections, annotations)
+//
+// -----------------------------------------------------------------------------
 
 // Plugins can be added to Gmsh in order to extend its capabilities. For
-// example, post-processing plugins can modify a view, or create a new view
-// based on previously loaded views. Several default plugins are statically
-// linked with Gmsh, e.g. Isosurface, CutPlane, CutSphere, Skin, Transform or
-// Smooth.  Plugins can be controlled in the same way as other options: either
-// from the graphical interface (right click on the view button, then
-// `Plugins'), or from the command file.
+// example, post-processing plugins can modify views, or create new views based
+// on previously loaded views. Several default plugins are statically linked
+// with Gmsh, e.g. Isosurface, CutPlane, CutSphere, Skin, Transform or Smooth.
+//
+// Plugins can be controlled in the same way as other options: either from the
+// graphical interface (right click on the view button, then `Plugins'), or from
+// the command file.
 
 // Let us for example include a three-dimensional scalar view:
 
@@ -21,9 +22,9 @@ Include "view3.pos" ;
 // We then set some options for the `Isosurface' plugin (which extracts an
 // isosurface from a 3D scalar view), and run it:
 
-Plugin(Isosurface).Value = 0.67 ; // iso-value level
-Plugin(Isosurface).View = 0 ; // source view is View[0]
-Plugin(Isosurface).Run ; // run the plugin!
+Plugin(Isosurface).Value = 0.67 ; // Iso-value level
+Plugin(Isosurface).View = 0 ; // Source view is View[0]
+Plugin(Isosurface).Run ; // Run the plugin!
 
 // We also set some options for the `CutPlane' plugin (which computes a section
 // of a 3D view using the plane A*x+B*y+C*z+D=0), and then run it:

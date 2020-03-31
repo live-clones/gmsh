@@ -46,6 +46,7 @@ class HierarchicalBasisHcurlBrick : public HierarchicalBasisHcurl {
 public:
   HierarchicalBasisHcurlBrick(int order);
   virtual ~HierarchicalBasisHcurlBrick();
+  virtual unsigned int getNumberOfOrientations() const;
 
   virtual void generateBasis(double const &u, double const &v, double const &w,
                              std::vector<std::vector<double> > &vertexBasis,

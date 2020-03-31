@@ -46,6 +46,7 @@ public:
   int getNumTriFace() const;
   int getNumQuadFace() const;
   int getNumEdge() const;
+  virtual unsigned int getNumberOfOrientations() const = 0;
   virtual void generateBasis(double const &u, double const &v, double const &w,
                              std::vector<double> &vertexBasis,
                              std::vector<double> &edgeBasis,

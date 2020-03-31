@@ -176,7 +176,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
     for(int dim = 0; dim <= 3; dim++) {
       for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++) {
-        std::set<MVertex *> nodes;
+        std::set<MVertex *, MVertexPtrLessThan> nodes;
         std::vector<GEntity *> &entities = it->second;
         for(std::size_t i = 0; i < entities.size(); i++) {
           for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
@@ -190,7 +190,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
                 physicalName(this, dim, it->first).c_str());
         fprintf(fp, "\n");
         int n = 0;
-        for(std::set<MVertex *>::iterator it2 = nodes.begin();
+        for(std::set<MVertex *, MVertexPtrLessThan>::iterator it2 = nodes.begin();
             it2 != nodes.end(); it2++) {
           if(n && !(n % 10)) fprintf(fp, "\n");
           fprintf(fp, "%ld ", (*it2)->getIndex());

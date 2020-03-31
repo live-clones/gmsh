@@ -76,7 +76,7 @@ doc = '''Get the `value' of a string option. `name' is of the form "category.opt
 option.add('getString', doc, None, istring('name'), ostring('value'))
 
 doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
-option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '0'))
+option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
 
 doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
 option.add('getColor', doc, None, istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
@@ -188,7 +188,7 @@ doc = '''Get the visibility of the model entity of dimension `dim' and tag `tag'
 model.add('getVisibility', doc, None, iint('dim'), iint('tag'), oint('value'))
 
 doc = '''Set the color of the model entities `dimTags' to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255. Apply the color setting recursively if `recursive' is true.'''
-model.add('setColor', doc, None, ivectorpair('dimTags'), iint('r'), iint('g'), iint('b'), iint('a', '0'), ibool('recursive', 'false', 'False'))
+model.add('setColor', doc, None, ivectorpair('dimTags'), iint('r'), iint('g'), iint('b'), iint('a', '255'), ibool('recursive', 'false', 'False'))
 
 doc = '''Get the color of the model entity of dimension `dim' and tag `tag'.'''
 model.add('getColor', doc, None, iint('dim'), iint('tag'), oint('r'), oint('g'), oint('b'), oint('a'))
@@ -302,20 +302,23 @@ mesh.add('getJacobians', doc, None, iint('elementType'), ivectordouble('integrat
 doc = '''Preallocate data before calling `getJacobians' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateJacobians', doc, ['onlycc++'], None, iint('elementType'), iint('numIntegrationPoints'), ibool('jacobian'), ibool('determinant'), ibool('point'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('points'), iint('tag', '-1'))
 
-doc = '''Get the basis functions of the element of type `elementType' at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element). `numComponents' returns the number C of components of a basis function. `basisFunctions' returns the value of the N basis functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.'''
-mesh.add('getBasisFunctions', doc, None, iint('elementType'), ivectordouble('integrationPoints'), istring('functionSpaceType'), oint('numComponents'), ovectordouble('basisFunctions'))
+doc = '''Get the basis functions of the element of type `elementType' at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element; or "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions). `numComponents' returns the number C of components of a basis function. `basisFunctions' returns the value of the N basis functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis functions that depend on the orientation of the elements, all values for the first orientation are returned first, followed by values for the secondd, etc. `numOrientations' returns the overall number of orientations.'''
+mesh.add('getBasisFunctions', doc, None, iint('elementType'), ivectordouble('integrationPoints'), istring('functionSpaceType'), oint('numComponents'), ovectordouble('basisFunctions'), oint('numOrientations'))
+
+doc = '''Get the orientation index of the elements of type `elementType' in the entity of tag `tag'. The arguments have the same meaning as in `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for each element the orientation index in the values returned by `getBasisFunctions'. For Lagrange basis functions the call is superfluous as it will return a vector of zeros.'''
+mesh.add('getBasisFunctionsOrientationForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorint('basisFunctionsOrientation'), iint('tag','-1'), isize('task', '0'), isize('numTasks', '1'))
+
+doc = '''Preallocate data before calling `getBasisFunctionsOrientationForElements' with `numTasks' > 1. For C and C++ only.'''
+mesh.add_special('preallocateBasisFunctionsOrientationForElements', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
+
+doc = '''Get the element-dependent basis functions of the elements of type `elementType' in the entity of tag `tag' at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates of the reference elements). `numComponents' returns the number C of components of a basis function. `numBasisFunctions' returns the number N of basis functions per element. `basisFunctions' returns the value of the basis functions at the integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: This function is deprecated - use `getBasisFunctions' instead.'''
+mesh.add('getBasisFunctionsForElements', doc, None, iint('elementType'), ivectordouble('integrationPoints'), istring('functionSpaceType'), oint('numComponents'), oint('numFunctionsPerElement'), ovectordouble('basisFunctions'), iint('tag','-1'))
 
 doc = '''Get the global edge identifier `edgeNum' for an input list of node pairs, concatenated in the vector `edgeNodes'.  Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getEdgeNumber',doc,None,ivectorint('edgeNodes'),ovectorint('edgeNum'))
 
 doc = '''Get the local multipliers (to guarantee H(curl)-conformity) of the order 0 H(curl) basis functions. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getLocalMultipliersForHcurl0',doc,None,iint('elementType'),ovectorint('localMultipliers'),iint('tag','-1'))
-
-doc = '''Get the element-dependent basis functions of the elements of type `elementType' in the entity of tag `tag'at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates of the reference elements). `numComponents' returns the number C of components of a basis function. `numBasisFunctions' returns the number N of basis functions per element. `basisFunctions' returns the value of the basis functions at the integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental feature and will probably change in a future release. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
-mesh.add('getBasisFunctionsForElements', doc, None, iint('elementType'), ivectordouble('integrationPoints'), istring('functionSpaceType'), oint('numComponents'), oint('numFunctionsPerElements'), ovectordouble('basisFunctions'), iint('tag','-1'), isize('task', '0'), isize('numTasks', '1'))
-
-doc = '''Preallocate data before calling `getBasisFunctionsForElements' with `numTasks' > 1. For C and C++ only.'''
-mesh.add_special('preallocateBasisFunctions', doc, ['onlycc++'], None, iint('elementType'), iint('numIntegrationPoints'), istring('functionSpaceType'), ovectordouble('basisFunctions'), iint('tag', '-1'))
 
 doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
@@ -325,9 +328,6 @@ mesh.add('getNumberOfKeysForElements', doc, oint, iint('elementType'), istring('
 
 doc = '''Get information about the `keys'. `infoKeys' returns information about the functions associated with the `keys'. `infoKeys[0].first' describes the type of function (0 for  vertex function, 1 for edge function, 2 for face function and 3 for bubble function). `infoKeys[0].second' gives the order of the function associated with the key. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getInformationForElements', doc, None, ivectorpair('keys'), iint('elementType'), istring('functionSpaceType'), ovectorpair('infoKeys'))
-
-doc = '''Precomputes the basis functions corresponding to `elementType'. '''
-mesh.add('precomputeBasisFunctions', doc, None, iint('elementType'))
 
 doc = '''Get the barycenters of all elements of type `elementType' classified on the entity of tag `tag'. If `primary' is set, only the primary nodes of the elements are taken into account for the barycenter calculation. If `fast' is set, the function returns the sum of the primary node coordinates (without normalizing by the number of nodes). If `tag' < 0, get the barycenters for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getBarycenters', doc, None, iint('elementType'), iint('tag'), ibool('fast'), ibool('primary'), ovectordouble('barycenters'), isize('task', '0'), isize('numTasks', '1'))
@@ -745,6 +745,12 @@ view.add('addListData', doc, None, iint('tag'), istring('dataType'), iint('numEl
 
 doc = '''Get list-based post-processing data from the view with tag `tag'. Return the types `dataTypes', the number of elements `numElements' for each data type and the `data' for each data type.'''
 view.add('getListData', doc, None, iint('tag'), ovectorstring('dataType'), ovectorint('numElements'), ovectorvectordouble('data'))
+
+doc = '''Add a string to a list-based post-processing view with tag `tag'. If `coord' contains 3 coordinates the string is positioned in the 3D model space ("3D string"); if it contains 2 coordinates it is positioned in the 2D graphics viewport ("2D string"). `data' contains one or more (for multistep views) strings. `style' contains pairs of styling parameters, concatenated.'''
+view.add('addListDataString', doc, None, iint('tag'), ivectordouble('coord'), ivectorstring('data'), ivectorstring('style', 'std::vector<std::string>()', "[]", "[]"))
+
+doc = '''Get list-based post-processing data strings (2D strings if `dim' = 2, 3D strings if `dim' = 3) from the view with tag `tag'. Return the coordinates in `coord', the strings in `data' and the styles in `style'.'''
+view.add('getListDataStrings', doc, None, iint('tag'), iint('dim'), ovectordouble('coord'), ovectorstring('data'), ovectorstring('style'))
 
 doc = '''Add a post-processing view as an `alias' of the reference view with tag `refTag'. If `copyOptions' is set, copy the options of the reference view. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''
 view.add('addAlias', doc, oint, iint('refTag'), ibool('copyOptions', 'false', 'False'), iint('tag', '-1'))

@@ -11,6 +11,7 @@
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "OCCRegion.h"
+#include "Context.h"
 
 #if defined(HAVE_OCC)
 
@@ -96,8 +97,16 @@ void OCCRegion::setup()
   Msg::Debug("OCC volume %d with %d surfaces", tag(), l_faces.size());
 }
 
-SBoundingBox3d OCCRegion::bounds(bool fast) const
+SBoundingBox3d OCCRegion::bounds(bool fast)
 {
+  if(CTX::instance()->geom.occBoundsUseSTL) {
+    // if a triangulation exist on a shape, OCC will use it to compute more
+    // accurate bounds
+    std::vector<GFace *> f = faces();
+    for(std::size_t i = 0; i < f.size(); i++)
+      f[i]->buildSTLTriangulation();
+  }
+
   Bnd_Box b;
   try {
     BRepBndLib::Add(s, b);
@@ -107,6 +116,10 @@ SBoundingBox3d OCCRegion::bounds(bool fast) const
   }
   double xmin, ymin, zmin, xmax, ymax, zmax;
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+
+  if(CTX::instance()->geom.occBoundsUseSTL)
+    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
+
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
 }

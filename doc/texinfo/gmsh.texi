@@ -1843,7 +1843,7 @@ the same time.
 Geometries can be constructed in Gmsh using different underlying CAD
 kernels. Selecting the CAD kernel in @code{.geo} files is done with the
 @code{SetFactory} command. In the Gmsh API, the kernel appears
-explicitely in all the relevant functions from the @code{gmsh/model}
+explicitly in all the relevant functions from the @code{gmsh/model}
 namespace, with @code{geo} or @code{occ} prefixes for the built-in and
 OpenCASCADE kernel, respectively.
 
@@ -3092,6 +3092,9 @@ Performs adaptive mesh generation. Documentation not yet available.
 Relocates the mesh nodes on the given entities using the parametric
 coordinates stored in the nodes. Useful for creating perturbation of
 meshes e.g. for sensitivity analyzes. @value{SYNC}
+
+@item RecombineMesh;
+Recombine the current mesh into quadrangles. @value{SYNC}
 
 @item SetOrder @var{expression};
 Changes the order of the elements in the current mesh.
@@ -5120,22 +5123,25 @@ system}. Screencasts that show how to use the GUI are available on
 @uref{http://gmsh.info/screencasts/}.
 
 @menu
-* t1.geo::
-* t2.geo::
-* t3.geo::
-* t4.geo::
-* t5.geo::
-* t6.geo::
-* t7.geo::
-* t8.geo::
-* t9.geo::
-* t10.geo::
-* t11.geo::
-* t12.geo::
-* t13.geo::
-* t14.geo::
-* t15.geo::
-* t16.geo::
+* t1.geo:: Geometry basics, elementary entities, physical groups
+* t2.geo:: Transformations, extruded geometries, volumes
+* t3.geo:: Extruded meshes, input parameters, options
+* t4.geo:: Built-in functions, holes in surfaces, annotations, entity colors
+* t5.geo:: Characteristic lengths, macros, loops, holes in volumes
+* t6.geo:: Transfinite meshes
+* t7.geo:: Background meshes
+* t8.geo:: Post-processing, scripting, animations, options
+* t9.geo:: Post-processing plugins (levelsets, sections, annotations)
+* t10.geo:: Mesh size fields
+* t11.geo:: Unstructured quadrangular meshes
+* t12.geo:: Cross-patch meshing with compounds
+* t13.geo:: Remeshing a STL file without an underlying CAD model
+* t14.geo:: Homology and cohomology computation
+* t15.geo:: Embedded points, lines and surfaces
+* t16.geo:: Constructive Solid Geometry, OpenCASCADE geometry kernel
+* t17.geo:: Anisotropic background mesh
+* t18.geo:: Periodic meshes
+* t19.geo:: Thrusections, fillets, pipes, mesh size from curvature
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5307,11 +5313,44 @@ system}. Screencasts that show how to use the GUI are available on
 @c t16.geo
 @c -------------------------------------------------------------------------
 
-@node t16.geo,  , t15.geo, Tutorial
+@node t16.geo, t17.geo, t15.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t16.geo,t16.geo}
 
 @smallformat
 @verbatiminclude ../../tutorial/t16.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t17.geo
+@c -------------------------------------------------------------------------
+
+@node t17.geo, t18.geo, t16.geo, Tutorial
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t17.geo,t17.geo}
+
+@smallformat
+@verbatiminclude ../../tutorial/t17.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t18.geo
+@c -------------------------------------------------------------------------
+
+@node t18.geo, t19.geo, t17.geo, Tutorial
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t18.geo,t18.geo}
+
+@smallformat
+@verbatiminclude ../../tutorial/t18.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t19.geo
+@c -------------------------------------------------------------------------
+
+@node t19.geo,  , t18.geo, Tutorial
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t19.geo,t19.geo}
+
+@smallformat
+@verbatiminclude ../../tutorial/t19.geo
 @end smallformat
 
 @c =========================================================================
@@ -5330,7 +5369,7 @@ second set of options can be saved (automatically or manually with
 the `File->Save Options->As Default' menu) in a per-user ``option'' file
 (cf. ``Saved in: @code{General.OptionsFileName}'' in the lists below),
 automatically loaded by Gmsh every time it starts up. Finally, other
-options are only saved to disk manually, either by explicitely saving an
+options are only saved to disk manually, either by explicitly saving an
 option file with `File->Export', or when saving per-model options with
 `File->Save Options->For Current File' (cf. ``Saved in: @code{-}'' in
 the lists below).
@@ -6186,7 +6225,7 @@ In the API: @code{gmsh::option::setNumber("Mesh.MshFileVersion", x.y)}.
 @end itemize
 
 As an alternative method, you can also not specify the format
-explicitely, and just choose a filename with the @code{.msh2} or
+explicitly, and just choose a filename with the @code{.msh2} or
 @code{.msh4} extension.
 
 @item Why isn't neighboring element information stored in the MSH file?

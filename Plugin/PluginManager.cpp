@@ -59,6 +59,7 @@
 #include "Scal2Tens.h"
 #include "Scal2Vec.h"
 #include "CutMesh.h"
+#include "SpanningTree.h"
 #include "NewView.h"
 #include "MeshSubEntities.h"
 #include "MeshVolume.h"
@@ -306,6 +307,8 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "CutMesh", GMSH_RegisterCutMeshPlugin()));
 #endif
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
+      "SpanningTree", GMSH_RegisterSpanningTreePlugin()));
   }
 
 #if defined(HAVE_FLTK)

@@ -1,14 +1,13 @@
-/*********************************************************************
- *
- *  Gmsh tutorial 7
- *
- *  Background mesh
- *
- *********************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 7
+//
+//  Background mesh
+//
+// -----------------------------------------------------------------------------
 
-// Characteristic lengths can be specified very accuractely by providing a
-// background mesh, i.e., a post-processing view that contains the target mesh
-// sizes.
+// Mesh sizes can be specified very accurately by providing a background mesh,
+// i.e., a post-processing view that contains the target characteristic lengths.
 
 // Merge the first tutorial
 Merge "t1.geo";

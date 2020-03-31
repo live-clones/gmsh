@@ -2,16 +2,19 @@
 
 @ftable @code
 @end ftable
- Geometry options:
+ (Related option names, if any, are given between parentheses)
+@ftable @code
+@end ftable
+ Geometry:
 @ftable @code
 @item -0
 Output model, then exit
 @item -tol value
-Set geometrical tolerance
+Set geometrical tolerance (Geometry.Tolerance)
 @item -match
 Match geometries and meshes
 @end ftable
- Mesh options:
+ Mesh:
 @ftable @code
 @item -1, -2, -3
 Perform 1D, 2D or 3D mesh generation, then exit
@@ -20,9 +23,9 @@ Save mesh, then exit
 @item -o file
 Specify output file name
 @item -format string
-Select output mesh format (auto, msh1, msh2, msh22, msh3, msh4, msh40, msh41, msh, unv, vtk, wrl, mail, stl, p3d, mesh, bdf, cgns, med, diff, ir3, inp, ply2, celum, su2, x3d, dat, neu, m, key)
+Select output mesh format: auto, msh1, msh2, msh22, msh3, msh4, msh40, msh41, msh, unv, vtk, wrl, mail, stl, p3d, mesh, bdf, cgns, med, diff, ir3, inp, ply2, celum, su2, x3d, dat, neu, m, key (Mesh.Format)
 @item -bin
-Create binary files when possible
+Create binary files when possible (Mesh.Binary)
 @item -refine
 Perform uniform mesh refinement, then exit
 @item -barycentric_refine
@@ -32,106 +35,106 @@ Reclassify surface mesh, then exit
 @item -reparam angle
 Reparametrize surface mesh, then exit
 @item -part int
-Partition after batch mesh generation
-@item -part_weight tri|quad|tet|hex|pri|pyr|trih int
-Weight of a triangle/quad/etc. during partitioning
+Partition after batch mesh generation (Mesh.NbPartitions)
+@item -part_weight [tri,quad,tet,hex,pri,pyr,trih] int
+Weight of a triangle/quad/etc. during partitioning (Mesh.Partition[Tri,Quad,...]Weight)
 @item -part_split
-Save mesh partitions in separate files
+Save mesh partitions in separate files (Mesh.PartitionSplitMeshFiles)
 @item -part_[no_]topo
-Create the partition topology
+Create the partition topology (Mesh.PartitionCreateTopology)
 @item -part_[no_]ghosts
-Create ghost cells
+Create ghost cells (Mesh.PartitionCreateGhostCells)
 @item -part_[no_]physicals
-Create physical groups for partitions
+Create physical groups for partitions (Mesh.PartitionCreatePhysicals)
 @item -part_topo_pro
-Save the partition topology .pro file
+Save the partition topology .pro file (Mesh.PartitionTopologyFile)
 @item -preserve_numbering_msh2
-Preserve element numbering in MSH2 format
+Preserve element numbering in MSH2 format (Mesh.PreserveNumberingMsh2)
 @item -save_all
-Save all elements (discard physical group definitions)
+Save all elements (Mesh.SaveAll)
 @item -save_parametric
-Save nodes with their parametric coordinates
+Save nodes with their parametric coordinates (Mesh.SaveParametric)
 @item -save_topology
-Save model topology
+Save model topology (Mesh.SaveTopology)
 @item -algo string
-Select mesh algorithm (meshadapt, del2d, front2d, delquad, del3d, front3d, mmg3d, pack, hxt)
+Select mesh algorithm: auto, meshadapt, del2d, front2d, delquad, pack, del3d, front3d, mmg3d, hxt (Mesh.Algorithm andMesh.Algorithm3D)
 @item -smooth int
-Set number of mesh smoothing steps
+Set number of mesh smoothing steps (Mesh.Smoothing)
 @item -order int
-Set mesh order (1, ..., 5)
+Set mesh order (Mesh.ElementOrder)
 @item -optimize[_netgen]
-Optimize quality of tetrahedral elements
+Optimize quality of tetrahedral elements (Mesh.Optimize[Netgen])
 @item -optimize_threshold
-Optimize tetrahedral elements that have a quality less than a threshold
+Optimize tetrahedral elements that have a quality less than a threshold (Mesh.OptimizeThreshold)
 @item -optimize_ho
-Optimize high order meshes
+Optimize high order meshes (Mesh.HighOrderOptimize)
 @item -ho_[min,max,nlayers]
-High-order optimization parameters
+High-order optimization parameters (Mesh.HighOrderThreshold[Min,Max], Mesh.HighOrderNumLayers)
 @item -clscale value
-Set global mesh element size scaling factor
+Set mesh element size factor (Mesh.CharacteristicLengthFactor)
 @item -clmin value
-Set minimum mesh element size
+Set minimum mesh element size (Mesh.CharacteristicLengthMin)
 @item -clmax value
-Set maximum mesh element size
+Set maximum mesh element size (Mesh.CharacteristicLengthMax)
 @item -clcurv value
-Compute mesh element size from curvatures (value is the number of elements per 2*pi radians)
+Compute mesh element size from curvature, with given minimum number of elements per 2*pi radians (Mesh.CharacteristicLengthFromCurvature and Mesh.MinimumElementsPerTwoPi)
 @item -aniso_max value
-Set maximum anisotropy (for bamg)
+Set maximum anisotropy for bamg (Mesh.AnisoMax)
 @item -smooth_ratio value
-Set smoothing ration between mesh sizes at nodes of a same edge (for bamg)
+Set smoothing ration between mesh sizes at nodes of a same edge for bamg (Mesh.SmoothRatio)
 @item -epslc1d value
-Set accuracy of evaluation of mesh size field for 1D mesh
+Set accuracy of evaluation of mesh size field for 1D mesh (Mesh.LcIntegrationPrecision)
 @item -swapangle value
-Set the threshold angle (in degree) between two adjacent faces below which a swap is allowed
+Set the threshold angle (in degrees) between two adjacent faces below which a swap is allowed (Mesh.AllowSwapAngle)
 @item -rand value
-Set random perturbation factor
+Set random perturbation factor (Mesh.RandomFactor)
 @item -bgm file
 Load background mesh from file
 @item -check
 Perform various consistency checks on mesh
 @item -ignore_periocity
-Ignore periodic boundaries
+Ignore periodic boundaries (Mesh.IgnorePeriodicity)
 @end ftable
- Post-processing options:
+ Post-processing:
 @ftable @code
 @item -link int
-Select link mode between views (0, 1, 2, 3, 4)
+Select link mode between views (PostProcessing.Link)
 @item -combine
 Combine views having identical names into multi-time-step views
 @end ftable
- Solver options:
+ Solver:
 @ftable @code
 @item -listen
-Always listen to incoming connection requests
+Always listen to incoming connection requests (Solver.AlwaysListen)
 @item -minterpreter string
-Name of Octave interpreter
+Name of Octave interpreter (Solver.OctaveInterpreter)
 @item -pyinterpreter string
-Name of Python interpreter
+Name of Python interpreter (Solver.OctaveInterpreter)
 @item -run
 Run ONELAB solver(s)
 @end ftable
- Display options:
+ Display:
 @ftable @code
 @item -n
-Hide all meshes and post-processing views on startup
+Hide all meshes and post-processing views on startup (View.Visible, Mesh.[Points,Lines,SurfaceEdges,...])
 @item -nodb
-Disable double buffering
+Disable double buffering (General.DoubleBuffer)
 @item -numsubedges
-Set num of subdivisions for high order element display
+Set num of subdivisions for high order element display (Mesh.NumSubEdges)
 @item -fontsize int
-Specify the font size for the GUI
+Specify the font size for the GUI (General.FontSize)
 @item -theme string
-Specify FLTK GUI theme
+Specify FLTK GUI theme (General.FltkTheme)
 @item -display string
-Specify display
+Specify display (General.Display)
 @item -camera
-Use camera mode view;
+Use camera mode view (General.CameraMode)
 @item -stereo
-OpenGL quad-buffered stereo rendering (requires special graphics card)
+OpenGL quad-buffered stereo rendering (General.Stereo)
 @item -gamepad
 Use gamepad controller if available
 @end ftable
- Other options:
+ Other:
 @ftable @code
 @item -, -parse_and_exit
 Parse input files, then exit
@@ -144,17 +147,17 @@ Open next files
 @item -log filename
 Log all messages to filename
 @item -a, -g, -m, -s, -p
-Start in automatic, geometry, mesh, solver or post-processing mode
+Start in automatic, geometry, mesh, solver or post-processing mode (General.InitialModule)
 @item -pid
 Print process id on stdout
 @item -watch pattern
-Pattern of files to merge as they become available
+Pattern of files to merge as they become available (General.WatchFilePattern)
 @item -bg file
-Load background (image or PDF) file
+Load background (image or PDF) file (General.BackgroundImageFileName)
 @item -v int
-Set verbosity level
+Set verbosity level (General.Verbosity)
 @item -nopopup
-Don't popup dialog windows in scripts
+Don't popup dialog windows in scripts (General.NoPopup)
 @item -string "string"
 Parse command string at startup
 @item -setnumber name value
@@ -166,7 +169,7 @@ Parse option file at startup
 @item -convert files
 Convert files into latest binary formats, then exit
 @item -nt int
-Set number of threads
+Set number of threads (General.NumThreads)
 @item -cpu
 Report CPU times for all operations
 @item -version

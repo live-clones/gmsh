@@ -29,6 +29,10 @@
 #include "StringUtils.h"
 #include "OS.h"
 
+#if defined(HAVE_PLUGINS)
+#include "PluginManager.h"
+#endif
+
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
 #include "onelabUtils.h"
@@ -373,6 +377,9 @@ void Msg::Exit(int level)
   MPI_Finalized(&finalized);
   if (!finalized)
     MPI_Finalize();
+#endif
+#if defined(HAVE_PLUGINS)
+  delete PluginManager::instance();
 #endif
   FinalizeOnelab();
   exit(_atLeastOneErrorInRun);

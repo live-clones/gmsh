@@ -109,7 +109,7 @@ double GMSH_AnnotatePlugin::callback(int num, int action, double value,
 }
 
 std::string GMSH_AnnotatePlugin::callbackStr(int num, int action,
-                                             std::string value,
+                                             const std::string &value,
                                              std::string &opt)
 {
   opt = value;
@@ -159,19 +159,19 @@ double GMSH_AnnotatePlugin::callbackFontSize(int num, int action, double value)
 }
 
 std::string GMSH_AnnotatePlugin::callbackText(int num, int action,
-                                              std::string value)
+                                              const std::string &value)
 {
   return callbackStr(num, action, value, AnnotateOptions_String[0].def);
 }
 
 std::string GMSH_AnnotatePlugin::callbackFont(int num, int action,
-                                              std::string value)
+                                              const std::string &value)
 {
   return callbackStr(num, action, value, AnnotateOptions_String[1].def);
 }
 
 std::string GMSH_AnnotatePlugin::callbackAlign(int num, int action,
-                                               std::string value)
+                                               const std::string &value)
 {
   return callbackStr(num, action, value, AnnotateOptions_String[2].def);
 }
