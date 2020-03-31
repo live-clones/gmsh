@@ -639,7 +639,7 @@ void HierarchicalBasisHcurlTria::orientOneFace(
       n3[0] = dlambda[1][0];
       n3[1] = dlambda[1][1];
       std::vector<std::vector<double> > dsub(3, std::vector<double>(2, 0));
-      for(int p = 0; p < 3; p++) {
+      for(int p = 0; p < 2; p++) {
         dsub[0][p] = dlambda[1][p] - dlambda[0][p];
         dsub[1][p] = dlambda[2][p] - dlambda[1][p];
         dsub[2][p] = dlambda[0][p] - dlambda[2][p];
