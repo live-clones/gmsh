@@ -552,23 +552,19 @@ namespace QMT {
     return true;
   }
 
-  bool split_TFace(QTMesh& M, id f) {
-    /* Split edges, warning: will change QTMesh M ! */
-    vector<id> edges = M.faces[f].edges; /* deep copy ! else changed by split edge */
-    vector<bool> invorient = M.faces[f].edge_orient_invert;
+  bool split_TFace(QTMesh& M, id f, const vector<bool>& vertexFromEdgeSplit) {
+    vector<id>& edges = M.faces[f].edges; 
+    vector<bool>& invorient = M.faces[f].edge_orient_invert;
     vector<id> corners;
     vector<id> nvs;
     F(le,edges.size()) {
       id e = edges[le];
       id cv = (invorient[le]) ? M.edges[e].vertices[1] : M.edges[e].vertices[0];
-      corners.push_back(cv);
-      id nv = NO_ID;
-      bool ok = split_TEdge(M, edges[le],nv);
-      if (!ok) {
-        error("face {}: failed to split edge {}: {}", f, edges[le], M.edges[edges[le]]);
-        return false;
+      if (!vertexFromEdgeSplit[cv]) {
+        corners.push_back(cv);
+      } else {
+        nvs.push_back(cv);
       }
-      nvs.push_back(nv);
     }
 
     /* Create midpoint */
@@ -654,32 +650,42 @@ namespace QMT {
 
   bool subdivide_degenerate_faces(QTMesh& M) {
     size_t nf = 0;
-    bool remaining = true;
-    while(remaining) {
-      remaining = false;
-      FC(f,M.faces.size(),M.faces[f].edges.size() < 4) {
-        vector<id>& edges = M.faces[f].edges;
-        if (edges.size() == 0) {
-          error("face {}: no boundary curves, cannot fix it", f);
-          return false;
-        } else if (edges.size() == 1) {
-          error("face {}: 1 boundary curves {}, split not supported yet", f, edges);
-          return false;
-        } else if (edges.size() == 2) {
-          error("face {}: 2 boundary curves {}, split not supported yet", f, edges);
-          return false;
-        } else if (edges.size() == 3) {
-          info("face {}: 3 boundary curves {}, applying midpoint subdivision", f, edges);
-          bool oks = split_TFace(M, f);
-          if (!oks) {
-            error("failed to fix degenerate face {}", f);
-            return false;
-          }
-          nf += 1;
-          remaining = true;
-          break;
-        }
+
+    /* Collect edges and faces ti split */
+    vector<id> edges_to_split;
+    vector<id> faces_to_split;
+    FC(f,M.faces.size(),M.faces[f].edges.size() == 3) {
+      faces_to_split.push_back(f);
+      F(le,M.faces[f].edges.size()) {
+        edges_to_split.push_back(M.faces[f].edges[le]);
       }
+      nf += 1;
+    }
+    sort_unique(edges_to_split);
+
+    /* Split edges and flag new vertices */
+    vector<bool> vertexFromEdgeSplit(M.vertices.size(),false);
+    F(i,edges_to_split.size()) {
+      id e = edges_to_split[i];
+      id nv = NO_ID;
+      bool okse = split_TEdge(M, e, nv);
+      if (!okse || nv == NO_ID) {
+        error("failed to split edge {}", e);
+        return false;
+      }
+      vertexFromEdgeSplit.resize(M.vertices.size(),false);
+      vertexFromEdgeSplit[nv] = true;
+    }
+
+    /* Split faces (midpoint subdivision) */
+    F(lf,faces_to_split.size()) {
+      id f = faces_to_split[lf];
+      bool oksf = split_TFace(M, f, vertexFromEdgeSplit);
+      if (!oksf) {
+        error("failed to split face {}", f);
+        return false;
+      }
+      vertexFromEdgeSplit.resize(M.vertices.size(),false);
     }
     if (nf > 0) info("fixed {} degenerate faces via QTMesh splitting", nf);
 
