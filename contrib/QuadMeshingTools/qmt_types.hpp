@@ -68,6 +68,26 @@ namespace QMT {
     std::vector<std::vector<id>> nm_triangle_neighbors;
   };
 
+  /* Simplex mesh data structure */
+  struct SMesh {
+    /* one value per vertex */
+    std::vector<vec3> points;
+    std::vector<std::pair<int,int>> vEntity;
+
+    /* one value per line */
+    std::vector<id2> lines;
+    std::vector<std::pair<int,int>> lEntity;
+
+    /* one value per triangle */
+    std::vector<id3> triangles;
+    std::vector<std::pair<int,int>> triEntity;
+
+    /* one value per tetrahedron */
+    std::vector<id3> tetrahedra;
+    std::vector<std::pair<int,int>> tetEntity;
+
+  };
+
 
   /* Quad mesh with T junctions, brep representation */
   struct TVertex {

@@ -4920,8 +4920,7 @@ static void computeValidPassages ( std::vector<cutGraphPassage> &passages) {
 
   
 static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
-                                 std::vector<int> &tags, bool layout = true,
-                                 std::map<std::pair<int,int>,std::pair<int,int> >* entityToInitialEntity = NULL)
+                                 std::vector<int> &tags, bool layout = true)
 {
   quadLayoutData qLayout(gm, f, gm->getName());
   std::map<MVertex *, int> temp;
@@ -5047,157 +5046,35 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
 
   GmshMergePostProcessingFile (temp_);
   tags.push_back(PView::list.size() - 1);
+  PView::list[PView::list.size()-1]->getData()->setName("H");
 
-  /* After the cut, the 'theta' and 'H' views are no longer valid
+  /* After the cut, the 'theta' view is no longer valid
    * deleting them for the moment ... */
   PView* viewTheta = PView::getViewByName("theta");
   if (viewTheta) delete viewTheta;
-  
+
   Msg::Info("Cutting the mesh");
   std::map<MEdge,GEdge*,MEdgeLessThan> inverseClassificationEdges;
   qLayout.cutMesh(cuts,inverseClassificationEdges);
 
-  /* FOR MAXENCE
-
-     --> tu trouveras normalement ce qu'il te faut ici
-     1) --> 
-
-   */
-
-  
-  /* Store initial geo entity of each vertex (before reclassify), 
-   * used to build the map from initial entity to reclassified entity */
-  std::map<int,std::pair<int,int>> vertInitialEntity;
-  std::map<int,std::pair<int,int>> triangleInitialEntity;
-  std::map<int,std::pair<int,int>> edgeInitialEntity;
-  if (entityToInitialEntity) {
-    Msg::Info("Saving initial geometry info");
-    if (true) { /* vertex approach (not sufficient because sometime no interior vertex in entity) */
-      std::vector<GEntity *> entities;
-      std::set<MVertex *, MVertexPtrLessThan> vertSet;
-      gm->getEntities(entities);
-      for(std::size_t i = 0; i < entities.size(); i++) {
-        int edim = entities[i]->dim();
-        int etag = entities[i]->tag();
-        Msg::Debug("  entity (%i,%i): %li vertices", edim,etag,entities[i]->mesh_vertices.size());
-        for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-          MVertex *v = entities[i]->mesh_vertices[j];
-          vertInitialEntity[v->getNum()] = {edim,etag};
-        }
-      }
-    }
+  constexpr bool do_reclassify = false; /* no longer needed, done by QMT */
+  if (do_reclassify) {
+    Msg::Info("Classifying the model");
+    discreteEdge *de = new discreteEdge(
+        GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+    GModel::current()->add(de);
+    computeNonManifoldEdges(GModel::current(), de->lines, true);
+    classifyFaces(GModel::current(), M_PI / 6, false);
+    GModel::current()->remove(de);
+    //  delete de;
+    GModel::current()->pruneMeshVertexAssociations();
   }
 
-  Msg::Info("Classifying the model");
-  discreteEdge *de = new discreteEdge(
-    GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
-  GModel::current()->add(de);
-  computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 6, false);
-  GModel::current()->remove(de);
-  //  delete de;
-  GModel::current()->pruneMeshVertexAssociations();
-
-  /* Build the map from reclassified entity to initial entity */
-  if (entityToInitialEntity) {
-    Msg::Info("Build entity mapping from reclassified geometry to initial one");
-    if (true) {
-      std::vector<GEntity *> entities;
-      std::set<MVertex *, MVertexPtrLessThan> vertSet;
-      gm->getEntities(entities);
-      for(std::size_t i = 0; i < entities.size(); i++) {
-        int edim = entities[i]->dim();
-        int etag = entities[i]->tag();
-        std::map<std::pair<int,int>,size_t> old_entity_common;
-        for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-          MVertex *v = entities[i]->mesh_vertices[j];
-          auto it = vertInitialEntity.find(v->getNum());
-          if (it == vertInitialEntity.end()) continue;
-          std::pair<int,int> oldEntity = it->second;
-          old_entity_common[oldEntity] += 1;
-        }
-        size_t nmax = 0;
-        std::pair<int,int> olde;
-        for (auto kv: old_entity_common) {
-          // Msg::Debug("  - new entity (%i,%i) and old entity (%i,%i) have %i common vertices", edim, etag, kv.first.first, kv.first.second, kv.second);
-          if (kv.second > nmax) {
-            nmax = kv.second;
-            olde = kv.first;
-          }
-        }
-        if (edim == 0 && olde.first == 2) { /* Node mapped to surface */
-          olde = {-1,-1};
-        }
-        if (nmax > 0) {
-          Msg::Debug("- new entity (%i,%i) mapped to old one (%i,%i), %i common vertices", edim,etag, olde.first, olde.second, nmax);
-          (*entityToInitialEntity)[std::make_pair(edim,etag)] = olde;
-        }
-      }
-    }
-    // // DO NOT WORK IN CURRENT STATE
-    // { /* line / triangle approach */
-    //   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
-    //     std::vector<MLine*> lines = (*it)->lines;;
-    //     int edim = (*it)->dim();
-    //     int etag = (*it)->tag();
-    //     std::map<std::pair<int,int>,size_t> old_entity_common;
-    //     for (size_t l = 0; l < lines.size(); ++l) {
-    //       MLine* line = lines[l];
-    //       auto it = edgeInitialEntity.find(line->getNum());
-    //       if (it == edgeInitialEntity.end()) {
-    //         // printf("   ! edge %li not found in edgeInitialEntity\n",line->getNum());
-    //         continue;
-    //       }
-    //       std::pair<int,int> oldEntity = it->second;
-    //       old_entity_common[oldEntity] += 1;
-    //       // printf("   ! edge %li FOUND in edgeInitialEntity: (%i,%i)\n",line->getNum(), oldEntity.first, oldEntity.second);
-    //     }
-    //     size_t nmax = 0;
-    //     std::pair<int,int> olde;
-    //     for (auto kv: old_entity_common) {
-    //       printf("   (%i,%i)    (%i,%i), nb_common=%li\n", (*it)->dim(),(*it)->tag(), kv.first.first, kv.first.second, kv.second);
-    //       if (kv.second > nmax) {
-    //         nmax = kv.second;
-    //         olde = kv.first;
-    //       }
-    //     }
-    //     printf("  (%i,%i): %li elements, ----> (%i,%i)\n", (*it)->dim(),(*it)->tag(), lines.size(),olde.first, olde.second);
-    //     if (nmax > 0 && olde.first > 0) {
-    //       Msg::Debug("- new entity (%i,%i) mapped to old one (%i,%i), %i common vertices", edim,etag, olde.first, olde.second, nmax);
-    //       (*entityToInitialEntity)[std::make_pair(edim,etag)] = olde;
-    //     }
-    //   }
-    //   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    //     std::vector<MTriangle*> tris = (*it)->triangles;;
-    //     int edim = (*it)->dim();
-    //     int etag = (*it)->tag();
-    //     std::map<std::pair<int,int>,size_t> old_entity_common;
-    //     for (size_t f = 0; f < tris.size(); ++f) {
-    //       MTriangle* tri = tris[f];
-    //       std::pair<int,int> oldEntity = triangleInitialEntity[tri->getNum()];
-    //       old_entity_common[oldEntity] += 1;
-    //     }
-    //     size_t nmax = 0;
-    //     std::pair<int,int> olde;
-    //     for (auto kv: old_entity_common) {
-    //       if (kv.second > nmax) {
-    //         nmax = kv.second;
-    //         olde = kv.first;
-    //       }
-    //     }
-    //     printf("  (%i,%i): %li elements, ----> (%i,%i)\n", (*it)->dim(),(*it)->tag(), tris.size(),olde.first, olde.second);
-    //     if (nmax > 0 && olde.first > 0) {
-    //       Msg::Debug("- new entity (%i,%i) mapped to old one (%i,%i), %i common vertices", edim,etag, olde.first, olde.second, nmax);
-    //       (*entityToInitialEntity)[std::make_pair(edim,etag)] = olde;
-    //     }
-    //   }
-    // }
-  }
-  // abort();
-
+  /* Debug export */
   std::string mshout = gm->getName() + "_Cut.msh";
   gm->writeMSH(mshout, 4.0, false, true);
 
+  /* Validity check */
   int countError = 0;
   for(GModel::fiter it = GModel::current()->firstFace();
       it != GModel::current()->lastFace(); it++) {
@@ -5214,8 +5091,6 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     Msg::Info("Partitioned mesh has been saved in %s", mshout.c_str());
     Msg::Info("Result of computations have been saved in %s", posout.c_str());
   }
-
-  //
 
   delete d;
   delete dd;
@@ -5316,8 +5191,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
 // #endif
 
 #if defined(HAVE_SOLVER) && defined(HAVE_POST)
-  std::map<std::pair<int,int>,std::pair<int,int>> entityToInitialEntity;
-  int cf_status = computeCrossFieldAndH(gm, f, tags, true, &entityToInitialEntity);
+  int cf_status = computeCrossFieldAndH(gm, f, tags, true);
   if (cf_status == -1) return cf_status;
 #if defined(HAVE_QUADMESHINGTOOLS)
   if (QMT_Utils::env_var("qstop") == "cf") {
@@ -5342,9 +5216,32 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   }
 
   /* Generation */
+  // QMT::QMesh Q;
+  // bool okg = QMT::generate_quad_mesh_from_gmsh_colored_triangulation(
+  //   quad_layout_name, H_tag, size_min, size_max, Q, &projector, &entityToInitialEntity);
+
+  QuadMeshingOptions opt;
+  QuadMeshingState state;
+  int status_sizemap = computeQuadSizeMap(gm, opt, state);
+  if (status_sizemap != 0) {
+    Msg::Error("failed to compute size map");
+    return -1;
+  }
+  int sizemapTag = -1;
+  if (sizemapTag == -1) {
+    PView* view_s = PView::getViewByName("s");
+    if (view_s) {
+      sizemapTag = view_s->getTag();
+    }
+  }
+  if (sizemapTag == -1) {
+    Msg::Error("Quad size map (view 's') not found but required");
+    return -1;
+  }
+
   QMT::QMesh Q;
-  bool okg = QMT::generate_quad_mesh_from_gmsh_colored_triangulation(
-    quad_layout_name, H_tag, size_min, size_max, Q, &projector, &entityToInitialEntity);
+  bool okg = QMT::generate_quad_mesh_via_tmesh_quantization(
+      quad_layout_name, sizemapTag, size_min, size_max, Q, &projector);
   if (!okg) {
     Msg::Error("Failed to generate quad mesh");
     return -1;
@@ -5690,39 +5587,67 @@ int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSt
   std::vector<int> numElements;
   std::vector<std::vector<double> > data;
   gmsh::view::getListData(vH->getTag(), dataType, numElements, data);
-  for(int ele = 0; ele < numElements[0]; ele++) {
-    double values[3] = {0,0,0};
-    SVector3 pts[3];
-    for(int nod = 0; nod < 3; nod++) {
-      double& val = data[0][12*ele+3*3+nod];
-      if (size_min != 0.) {
-        val = size_min * (exp(-val)/exp(-Hmax));
-      } else if (size_max != 1.e22) {
-        val = size_max * (exp(-val)/exp(-Hmin));
+  size_t et_tri = 1e6;
+  for(size_t et = 0; et < numElements.size(); ++et)  {
+    if (numElements[et] == 0 || data[et].size() != numElements[et]*12) continue;
+    et_tri = et;
+    for(size_t ele = 0; ele < numElements[et]; ele++) {
+      double values[3] = {0,0,0};
+      SVector3 pts[3];
+      for(size_t nod = 0; nod < 3; nod++) {
+        double& val = data[et][12*ele+3*3+nod];
+        if (size_min != 0.) {
+          val = size_min * (exp(-val)/exp(-Hmax));
+        } else if (size_max != 1.e22) {
+          val = size_max * (exp(-val)/exp(-Hmin));
+        }
+        values[nod] = val;
+        smin = std::min(smin,val);
+        smax = std::max(smax,val);
+        pts[nod] = SVector3(
+            data[et][12*ele+nod],
+            data[et][12*ele+3+nod],
+            data[et][12*ele+6+nod]);
       }
-      values[nod] = val;
-      smin = std::min(smin,val);
-      smax = std::max(smax,val);
-      pts[nod] = SVector3(
-          data[0][12*ele+nod],
-          data[0][12*ele+3+nod],
-          data[0][12*ele+6+nod]);
+      double area = 0.5 * crossprod(pts[2]-pts[0],pts[1]-pts[0]).norm();
+      integral += area * 1. / std::pow(1./3. * (values[0] + values[1] + values[2]),2);
     }
-    double area = 0.5 * crossprod(pts[2]-pts[0],pts[1]-pts[0]).norm();
-    integral += area * 1. / std::pow(1./3. * (values[0] + values[1] + values[2]),2);
   }
+  if (et_tri == 1e6) {
+    Msg::Error("failed to find scalar on triangles");
+    return -1;
+  }
+
+  DBG(opt.sizemap_nb_quads);
+  double FAC = 1.;
+  if (opt.sizemap_nb_quads != 0) { /* target number of quads */
+    FAC = double(opt.sizemap_nb_quads) / integral;
+    double sf = 1./std::sqrt(FAC);
+    DBG(FAC,sf);
+    smin = DBL_MAX;
+    smax = -DBL_MAX;
+    for(size_t ele = 0; ele < numElements[et_tri]; ele++) {
+      for(size_t nod = 0; nod < 3; nod++) {
+        double& val = data[et_tri][12*ele+3*3+nod];
+        val = sf * val;
+        smin = std::min(smin,val);
+        smax = std::max(smax,val);
+      }
+    }
+  }
+
 
   PView* vS = PView::getViewByName("s");
   if (vS) {delete vS; vS = NULL;}
 
-  Msg::Info("create a view 's'");
+  Msg::Info("create a view 's' with %li triangles", numElements[et_tri]);
   int vi = gmsh::view::add("s");
-  gmsh::view::addListData(vi, "ST", numElements[0], data[0]);
+  gmsh::view::addListData(vi, "ST", numElements[et_tri], data[et_tri]);
 
   state.s_tag = vi;
   state.s_min = smin;
   state.s_max = smax;
-  state.s_nb_quad_estimate = (size_t) (0.5 + integral);
+  state.s_nb_quad_estimate = (size_t) (0.5 + FAC * integral);
   Msg::Info("size map: min=%.3f, max=%.3f, estimated number of quads: %li", state.s_min, state.s_max, state.s_nb_quad_estimate);
 
   return 0;
@@ -6030,16 +5955,19 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
   std::map<MEdge,GEdge*,MEdgeLessThan> inverseClassificationEdges;
   qLayout.cutMesh(cuts, inverseClassificationEdges);
 
-  /* Classify the cut mesh */
-  Msg::Info("Classifying the model");
-  discreteEdge *de = new discreteEdge(
-    GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
-  GModel::current()->add(de);
-  computeNonManifoldEdges(GModel::current(), de->lines, true);
-  classifyFaces(GModel::current(), M_PI / 4, false);
-  GModel::current()->remove(de);
-  //  delete de;
-  GModel::current()->pruneMeshVertexAssociations();
+  constexpr bool do_reclassify = false; /* no longer needed, done by QMT */
+  if (do_reclassify) {
+    /* Classify the cut mesh */
+    Msg::Info("Classifying the model");
+    discreteEdge *de = new discreteEdge(
+        GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+    GModel::current()->add(de);
+    computeNonManifoldEdges(GModel::current(), de->lines, true);
+    classifyFaces(GModel::current(), M_PI / 4, false);
+    GModel::current()->remove(de);
+    //  delete de;
+    GModel::current()->pruneMeshVertexAssociations();
+  }
 
   int countError = 0;
   for(GModel::fiter it = GModel::current()->firstFace();
@@ -6097,6 +6025,10 @@ int generateQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
       sizemapTag = view_s->getTag();
     }
   }
+  if (sizemapTag == -1) {
+    Msg::Error("Quad size map (view 's') not found but required");
+    return -1;
+  }
 
   std::string quad_layout_name = gm->getName();
   double size_min = CTX::instance()->mesh.lcMin;
@@ -6113,10 +6045,9 @@ int generateQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
     Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal*clscale");
   }
   
-  std::map<std::pair<int,int>,std::pair<int,int>> entityToInitialEntity;
   QMT::QMesh Q;
   bool okg = QMT::generate_quad_mesh_via_tmesh_quantization(
-      quad_layout_name, sizemapTag, size_min, size_max, Q, projector, &entityToInitialEntity);
+      quad_layout_name, sizemapTag, size_min, size_max, Q, projector);
   if (!okg) {
     Msg::Error("Failed to generate quad mesh");
     return -1;

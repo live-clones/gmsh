@@ -87,13 +87,17 @@ static void qmt_cut_with_uv_isos(Fl_Widget *w, void *data)
 
 static void qmt_quad_sizemap(Fl_Widget *w, void *data)
 {
-  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
+  QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
   QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
+  opt.sizemap_nb_quads = size_t(win->flv_sizemap_nb_quads->value());
   int status = computeQuadSizeMap(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to compute quad sizemap");
   }
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  opt.sizemap_nb_quads = state.s_nb_quad_estimate;
+  win->flv_sizemap_nb_quads->value(opt.sizemap_nb_quads);
   drawContext::global()->draw();
 }
 
@@ -252,24 +256,32 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
   }
 
   { /* Quantization box */
-    y += BH;
+    y += BH; /* ---------------------------- new line ---------------------------------*/
     Fl_Box *b = new Fl_Box(x - WB, y, width, BH, "Quad mesh generation via quantization");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
-    y += BH;
+    y += BH; /* ---------------------------- new line ---------------------------------*/
     Fl_Box *b2 = new Fl_Box(x, y, width - 4 * WB, BH);
     b2->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-    b2->label("- require a classified triangulation");
+    b2->label("- require a cut mesh (internal lines)");
 
-    y += BH;
-    fli_name_qinit = new Fl_Input(x, y, IW, BH, "New model name");
-    fli_name_qinit->align(FL_ALIGN_RIGHT);
-    fli_name_qinit->value("quad");
+
+    y += BH; /* ---------------------------- new line ---------------------------------*/
+    flv_sizemap_nb_quads = new Fl_Value_Input(x, y, IW, BH, "Nb quads (approx.)");
+    flv_sizemap_nb_quads->minimum(1);
+    flv_sizemap_nb_quads->maximum(1e7);
+    if(CTX::instance()->inputScrolling) flv_sizemap_nb_quads->step(10);
+    flv_sizemap_nb_quads->align(FL_ALIGN_RIGHT);
+    flv_sizemap_nb_quads->value(opt->sizemap_nb_quads);
 
     push_quad_sizemap = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Size Map");
     push_quad_sizemap->callback(qmt_quad_sizemap);
 
-    y += BH;
+    y += BH; /* ---------------------------- new line ---------------------------------*/
+    fli_name_qinit = new Fl_Input(x, y, IW, BH, "New model name");
+    fli_name_qinit->align(FL_ALIGN_RIGHT);
+    fli_name_qinit->value("quad");
+
     push_quad_generate = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Generate");
     push_quad_generate->callback(qmt_quad_generate);
   }

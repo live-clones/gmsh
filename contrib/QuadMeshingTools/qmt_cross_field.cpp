@@ -160,7 +160,7 @@ namespace QMT {
     return true;
   }
 
-  bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M) {
+  bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M, bool compute_adjacencies) {
     if (!QMT_CF_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_CF_Utils::global_gmsh_initialized = true;
@@ -243,6 +243,17 @@ namespace QMT {
             }
           }
         }
+      }
+    }
+
+    if (compute_adjacencies) {
+      vector<id2> uIEdges;
+      vector<id> old2IEdge;
+      vector<vector<id>> uIEdgeToOld;
+      bool oka = compute_triangle_adjacencies(M.triangles, M.triangle_neighbors, M.nm_triangle_neighbors, uIEdges, old2IEdge, uIEdgeToOld);
+      if (!oka) {
+        error("failed to compute mesh adjacencies");
+        return false;
       }
     }
 

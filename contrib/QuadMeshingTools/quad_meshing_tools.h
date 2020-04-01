@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 #include "qmt_types.hpp"
 #include "qmt_projection.h"
@@ -113,7 +114,7 @@ namespace QMT {
    * @param[out] M Output mesh containing lines and triangles
    * @return True if the import succeed
    */
-  bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M);
+  bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M, bool compute_adjacencies = false);
 
 
 
@@ -133,8 +134,7 @@ namespace QMT {
       double size_min,
       double size_max,
       QMesh& M,
-      const BoundaryProjector* projector,
-      const std::map<std::pair<int,int>,std::pair<int,int>>* entityToInitialEntity);
+      const BoundaryProjector* projector = NULL);
 
 
 

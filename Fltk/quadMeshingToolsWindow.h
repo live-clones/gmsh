@@ -42,6 +42,7 @@ public:
   Fl_Value_Input* flv_bc_expansion;
   Fl_Value_Input* flv_simplify_factor;
   Fl_Value_Input* flv_smoothing_iter; 
+  Fl_Value_Input* flv_sizemap_nb_quads; 
   Fl_Input* fli_name_cut;
   Fl_Input* fli_name_qinit;
   Fl_Input* fli_name_qsmp;

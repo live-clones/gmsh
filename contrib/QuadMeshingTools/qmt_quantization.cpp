@@ -10,6 +10,7 @@
 #include <cfloat>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <queue>
 #include <algorithm>
 
@@ -134,6 +135,51 @@ namespace QMT_QZ_Utils {
     }
   };
 
+  bool edgesToOrderedAndSignedPositions(const vector<id2>& edges, vector<int>& pos) {
+    if (edges.size() < 2) return false;
+    pos.clear();
+    int eStart = 0;
+    id vStart = edges[eStart][0];
+
+    size_t iter = 0;
+    id e = eStart;
+    id v = vStart;
+    while (true) {
+      iter += 1;
+      if (iter > 100000) {
+        error("infinite loop ? iter = {}", iter);
+        return false;
+      }
+      if (edges[e][0] == v) {
+        pos.push_back(e);
+      } else if (edges[e][1] == v) {
+        pos.push_back(-e);
+      } else {
+        error("should not happen");
+        return false;
+      }
+
+      id next_v = (edges[e][0]  != v) ? edges[e][0] : edges[e][1];
+      if (next_v == vStart) { /* closed chain */
+        break;
+      }
+      id next_e = NO_ID;
+      FC(ee,edges.size(),ee!=e) FC(lv,2,edges[ee][lv] == next_v) {
+        next_e = ee;
+        break;
+      }
+      v = next_v;
+      e = next_e;
+    }
+
+    if (edges.size() != pos.size()) {
+      error("edgesToOrderedAndSignedPositions: edges = {}, pos = {}", edges, pos);
+      return false;
+    }
+
+    return true;
+  }
+
   bool getOrderedVerticesFromEdges(id vStart, const vector<id2>& edges, vector<id>& orderedVertices) {
     orderedVertices.clear();
     id eStart = NO_ID;
@@ -174,9 +220,124 @@ namespace QMT_QZ_Utils {
     return true;
   }
 
+  bool computeEdgeLoops(
+      const vector<id2>& edges, 
+      const vector<vector<id>>& v2e,
+      const vector<bool>& isCorner,
+      vector<vector<id>>& loop_edges,
+      vector<vector<id>>& loop_vertices) {
+    loop_edges.clear();
+    loop_vertices.clear();
+    if (v2e.size() != isCorner.size()) {
+      return false;
+    }
+
+    /* Look for loops */
+    vector<bool> done(edges.size(),false);
+    bool remaining = true;
+    while (remaining)  {
+      remaining = false;
+      vector<id> orderedVertices;
+      vector<id> orderedEdges;
+      id vStart = NO_ID;
+      id eStart = NO_ID;
+      FC(v,isCorner.size(),isCorner[v]) { /* Loops starting at corners */
+        FC(le,v2e[v].size(),!done[v2e[v][le]]) {
+          vStart = v;
+          eStart = v2e[v][le];
+          break;
+        }
+        if (vStart != NO_ID) break;
+      }
+
+      if (vStart == NO_ID) { /* Remaing closed loops ? */
+        FC(e,edges.size(),!done[e]) {
+          eStart = e;
+          vStart = edges[e][0];
+          break;
+        }
+      }
+
+      if (vStart == NO_ID || eStart == NO_ID) {
+        break;
+      }
+
+      size_t iter = 0;
+      id e = eStart;
+      id v = vStart;
+      while (true) {
+        done[e] = true;
+
+        /* Check infinite loop */
+        iter += 1;
+        if (iter > 1e6 - 100) {
+          warn("  e={},v={}",e,v);
+        }
+        if (iter > 1e6) {
+          error("infinite loop ? iter = {}", iter);
+          return false;
+        }
+
+        /* Push */
+        orderedVertices.push_back(v);
+        orderedEdges.push_back(e);
+
+        /* Get next */
+        id next_v = (edges[e][0]  != v) ? edges[e][0] : edges[e][1];
+        id next_e = NO_ID;
+        F(le,v2e[next_v].size()) {
+          id ee = v2e[next_v][le];
+          if (ee != e && !done[ee]) {
+            next_e = ee;
+            break;
+          }
+        }
+
+        /* Check end of loop */
+        if (isCorner[next_v]) { /* reached another corner */
+          orderedVertices.push_back(next_v);
+          break;
+        } else if (next_v == vStart) { /* closed loop */
+          orderedVertices.push_back(next_v);
+          break;
+        }
+
+        if (next_e == NO_ID || next_v == NO_ID) {
+          error("edge loop issue: next_e = {}, next_v = {}, isCorner[next_v] = {}, v2e[next_v] = {}", next_e, next_v, isCorner[next_v], v2e[next_v]);
+          return false;
+        }
+
+        /* Propagate */
+        v = next_v;
+        e = next_e;
+      } /* end of while loop */
+
+      if (orderedVertices.size() >= 2) {
+        remaining = true;
+        loop_vertices.push_back(orderedVertices);
+        loop_edges.push_back(orderedEdges);
+      }
+    }
+    return true;
+  }
+
+  bool getSurfaceTriangles(int tag, vector<id>& triangleNums) {
+    std::vector<int> elementTypes;
+    std::vector<std::vector<size_t>> elementTags;
+    std::vector<std::vector<size_t>> nodeTags;
+    gmsh::model::mesh::getElements(elementTypes,elementTags,nodeTags,2,tag);
+    if (elementTypes.size() != 1) {
+      error("elementTypes.size() = {}", elementTypes.size());
+      return false;
+    }
+    F(i,elementTags[0].size()) {
+      triangleNums.push_back(elementTags[0][i]);
+    }
+    return true;
+  }
 
   /* warning: call gmsh API */
-  bool getCurveOrderedVertices(int curve, vector<id>& vertices, vector<vec3>& points, id vStart) {
+  bool getCurveOrderedVertices(int curve, vector<id>& vertices, vector<vec3>& points, vector<id>& lines, id vStart) {
     /* Points in the curve */
     std::vector<size_t> vert;
     std::vector<double> coords;
@@ -191,6 +352,13 @@ namespace QMT_QZ_Utils {
     if (elementTypes.size() != 1) {
       error("elementTypes.size() = {}", elementTypes.size());
       return false;
+    }
+    if (elementTags[0].size() != nodeTags[0].size()/2) {
+      error("getCurveOrderedVertices | elementTags[0].size() = {}, nodeTags[0].size()");
+      return false;
+    }
+    F(i,elementTags[0].size()) {
+      lines.push_back(elementTags[0][i]);
     }
     vector<id2> edges;
     F(i,nodeTags[0].size()/2) {
@@ -695,7 +863,6 @@ namespace QMT {
   bool generate_qtmesh_from_gmsh_colored_triangulation(
       const std::string& modelName,
       QTMesh& M,
-      const std::map<std::pair<int,int>,std::pair<int,int>>* entityToInitialEntity,
       bool accept_degenerate_faces = false) {
     if (!QMT_QZ_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
@@ -729,9 +896,6 @@ namespace QMT {
           return false;
         }
         pair<int,int> entity = {-1,-1};
-        auto it = entityToInitialEntity->find({0,node});
-        if (it != entityToInitialEntity->end()) entity = it->second;
-
         TVertex tv;
         tv.pt = {coords[0],coords[1],coords[2]};
         tv.entity = entity;
@@ -762,7 +926,8 @@ namespace QMT {
         id v1 = nodeToMeshVertex[node1];
         vector<id> vertices;
         vector<vec3> points;
-        bool okc = getCurveOrderedVertices(std::abs(curve), vertices, points, v1);
+        vector<id> lines;
+        bool okc = getCurveOrderedVertices(std::abs(curve), vertices, points, lines, v1);
         if (!okc) {
           error("curve = {}, failed to get curve vertices ...", curve);
           return false;
@@ -772,9 +937,6 @@ namespace QMT {
           return false;
         }
         pair<int,int> entity = {-1,-1};
-        auto it = entityToInitialEntity->find(curves[i]);
-        if (it != entityToInitialEntity->end()) entity = it->second;
-
         TEdge te;
         te.vertices[0] = nodeToTVertex[node1];
         te.vertices[1] = nodeToTVertex[node2];
@@ -829,8 +991,6 @@ namespace QMT {
         }
 
         pair<int,int> entity = {-1,-1};
-        auto it = entityToInitialEntity->find(surfaces[s]);
-        if (it != entityToInitialEntity->end()) entity = it->second;
         tf.entity = entity;
         tf.origin = surfaces[s].second;
 
@@ -883,6 +1043,205 @@ namespace QMT {
     gmsh::model::setCurrent(cname);
     return true;
   }
+
+  bool build_qtmesh_from_cut_mesh(const TMesh& M, QTMesh& Q) {
+    vector<vector<id>> v2l(M.points.size());
+    F(l,M.lines.size()) F(lv,2) v2l[M.lines[l][lv]].push_back(l);
+
+    /* Build TVertex */
+    vector<id> v2TVertex(M.points.size(), NO_ID);
+    vector<bool> isCorner(M.points.size(),false);
+    F(v,v2l.size()) {
+      if (v2l[v].size() != 2) {
+        isCorner[v] = true;
+      } else if (v2l[v].size() == 2) {
+        if (M.line_colors[v2l[v][0]] != M.line_colors[v2l[v][1]]) {
+          isCorner[v] = true;
+        }
+      }
+      if (isCorner[v]) {
+        TVertex tv;
+        tv.pt = M.points[v];
+        if (M.pt_color[v] != 0) {
+          tv.entity = {0,M.pt_color[v]};
+        } else {
+          tv.entity = {-1,-1};
+        }
+        tv.origin = v;
+        id tvId = Q.vertices.size();
+        Q.vertices.push_back(tv);
+        v2TVertex[v] = tvId;
+      }
+    }
+
+    /* Build TEdges */
+    vector<id> l2TEdge(M.points.size(), NO_ID);
+    vector<vector<id>> loop_edges;
+    vector<vector<id>> loop_vertices;
+    bool okl = computeEdgeLoops(M.lines, v2l, isCorner, loop_edges, loop_vertices);
+    RFC(!okl,"failed to compute edge loops");
+    F(i,loop_vertices.size()) {
+      vector<id>& vert = loop_vertices[i];
+      if (vert.front() == vert.back()) {
+        error("loop {}: got closed loop, should not happen, vert: {}" , i, vert);
+        return false;
+      }
+
+      vector<vec3> pts(vert.size());
+      F(j,vert.size()) pts[j] = M.points[vert[j]];
+
+      id tv1 = v2TVertex[vert.front()];
+      id tv2 = v2TVertex[vert.back()];
+      if (tv1 == NO_ID || tv2 == NO_ID) {
+        error("loop {}: extremities not found in TVertex, vert: {}" , i, vert);
+        return false;
+      }
+
+      TEdge te;
+      te.vertices[0] = tv1;
+      te.vertices[1] = tv2;
+      te.pts = pts;
+      te.entity = {-1,-1}; /* todo: check if change of color on adj. triangles */
+      te.origin = -1;
+      id teId = Q.edges.size();
+      Q.edges.push_back(te);
+      F(j,loop_edges[i].size()) {
+        l2TEdge[loop_edges[i][j]] = teId;
+      }
+    }
+
+    /* Build TFaces */
+    std::unordered_map<id2,id,id2Hash> ibdr;
+    F(l,M.lines.size()) {
+      id2 sedge = sorted(M.lines[l][0],M.lines[l][1]);
+      ibdr[sedge] = l;
+    }
+    vector<id> color(M.triangles.size(),NO_ID);
+    vector<vector<id>> colorToTris;
+    id ccol = 0;
+    FC(fi,M.triangles.size(),color[fi] == NO_ID) {
+      ccol += 1;
+      vector<id> tris;
+      std::queue<id> Q;
+      Q.push(fi);
+      color[fi] = ccol;
+      while (Q.size()) {
+        id f = Q.front();
+        Q.pop();
+        tris.push_back(f);
+
+        F(le,3) {
+          sid neig = M.triangle_neighbors[f][le];
+          if (neig < 0 || neig == NO_SID) continue; /* non-manifold edge or boundary */
+          id af = (id) neig / 3;
+          if (color[af] != NO_ID) continue;
+          if (M.tri_colors[f] != M.tri_colors[af]) continue;
+          id2 sedge = sorted(M.triangles[f][le],M.triangles[f][(le+1)%3]);
+          if (ibdr.find(sedge) != ibdr.end()) continue; /* internal line */
+          color[af] = ccol;
+          Q.push(af);
+        }
+      }
+      sort_unique(tris);
+      if (ccol >= colorToTris.size())  colorToTris.resize(ccol+1);
+      colorToTris[ccol] = tris;
+    }
+    FC(col,colorToTris.size(),colorToTris[col].size() > 0) {
+      /* Collect colored face bdr edges */
+      vector<id> tedges;
+      F(lf,colorToTris[col].size()) {
+        id f = colorToTris[col][lf];
+        F(le,3) {
+          sid neig = M.triangle_neighbors[f][le];
+          if (neig < 0 || neig == NO_SID || color[f] != color[neig/3]) {
+            id2 sedge = sorted(M.triangles[f][le],M.triangles[f][(le+1)%3]);
+            auto it = ibdr.find(sedge);
+            if (it != ibdr.end()) {
+              id te = l2TEdge[it->second];
+              tedges.push_back(te);
+            } else {
+              error("color {}: tri {}, le={}, neig={}, edge {} not found in lines", col, f, le, neig, sedge);
+              return false;
+            }
+          }
+        }
+      }
+      sort_unique(tedges);
+      vector<id2> teVertices(tedges.size());
+      F(i,tedges.size()) teVertices[i] = Q.edges[tedges[i]].vertices;
+      vector<int> pos;
+      bool oke = edgesToOrderedAndSignedPositions(teVertices, pos);
+      RFC(!oke, "failed to get ordered/signed positions");
+
+      TFace tf;
+      F(i,pos.size()) {
+        tf.edges.push_back(tedges[std::abs(pos[i])]);
+        tf.edge_sides.push_back(NO_U8);
+        tf.edge_orient_invert.push_back(pos[i] < 0);
+      }
+      tf.entity = {2,M.tri_colors[colorToTris[col][0]]};
+      tf.origin = M.tri_colors[colorToTris[col][0]];
+      id tfId = Q.faces.size();
+      Q.faces.push_back(tf);
+    }
+
+    return true;
+  }
+
+  bool generate_qtmesh_from_cut_mesh(
+      const std::string& modelName,
+      QTMesh& M,
+      bool accept_degenerate_faces = false) {
+    if (!QMT_QZ_Utils::global_gmsh_initialized) {
+      gmsh::initialize(0, 0, false);
+      QMT_QZ_Utils::global_gmsh_initialized = true;
+    }
+    info("generate QTMesh (quad w/ T-jonctions) from gmsh cut mesh ...");
+
+    std::string cname;
+    gmsh::model::getCurrent(cname);
+    gmsh::model::setCurrent(modelName);
+
+    TMesh T;
+    bool compute_adjacencies = true;
+    bool oki = import_TMesh_from_gmsh(modelName, T, compute_adjacencies);
+    RFC(!oki,"failed to import TMesh from gmsh");
+
+    bool okcs = build_qtmesh_from_cut_mesh(T, M);
+    RFC(!okcs,"failed to classify cut mesh");
+
+    /* B. Fill missing info in the QTMesh data structure */
+    M.vertToEdges.resize(M.vertices.size());
+    M.edgeToFaces.resize(M.edges.size());
+    F(i,M.edges.size()) F(lv,2) {
+      M.vertToEdges[M.edges[i].vertices[lv]].push_back(i);
+    }
+    F(i,M.faces.size()) F(le,M.faces[i].edges.size()) {
+      M.edgeToFaces[M.faces[i].edges[le]].push_back(i);
+    }
+
+    /* Compute the edge_sides info from angles */
+    F(f,M.faces.size()) {
+      bool oks = compute_edge_sides_from_angles(M,f);
+      if (!oks) {
+        error("face {}: failed to compute quad sides", f);
+        return false;
+      }
+      if (M.faces[f].edges.size() > 4) {
+        info("  face {} with T-junctions: {}", f, M.faces[f]);
+      }
+    }
+
+    info("QTMesh construction: {} vertices, {} edges, {} faces", M.vertices.size(), M.edges.size(), M.faces.size());
+
+    std::cout << M << std::endl; // for debug
+
+    gmsh::model::setCurrent(cname);
+    return true;
+  }
+
+
+
 
   bool edge_pts_length(const std::vector<vec3>& pts, bool use_sizemap, const SizeMapR& sizemap, double& curveLen) {
     if (pts.size() < 2) return false;
@@ -1153,7 +1512,7 @@ namespace QMT {
       id e = nx_edge[i].second;
       if (edge_n[e] != 0) continue;
       // TODO: also append value if edge_n[e] different from rounded nx ? 
-      
+
       vector<id> tchord;
       bool oktc = tchord_propagation(M, edge_nx, e, tchord);
       if (!oktc || tchord.size() == 0) {
@@ -1351,8 +1710,7 @@ namespace QMT {
       double size_min,
       double size_max,
       QMesh& M,
-      const BoundaryProjector* projector,
-      const std::map<std::pair<int,int>,std::pair<int,int>>* entityToInitialEntity) {
+      const BoundaryProjector* projector) {
     if (!QMT_QZ_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_QZ_Utils::global_gmsh_initialized = true;
@@ -1367,10 +1725,19 @@ namespace QMT {
     }
 
     QTMesh tM;
-    bool okq = generate_qtmesh_from_gmsh_colored_triangulation(modelName, tM, entityToInitialEntity, true);
-    if (!okq) {
-      error("failed to generate QTMesh (quad mesh with T-junctions)");
-      return false;
+    constexpr bool NEW_VERSION = true;
+    if (NEW_VERSION) {
+      bool okq = generate_qtmesh_from_cut_mesh(modelName, tM);
+      if (!okq) {
+        error("failed to generate QTMesh (quad mesh with T-junctions)");
+        return false;
+      }
+    } else {
+      bool okq = generate_qtmesh_from_gmsh_colored_triangulation(modelName, tM, true);
+      if (!okq) {
+        error("failed to generate QTMesh (quad mesh with T-junctions)");
+        return false;
+      }
     }
 
     double target_edge_len = 1.;
