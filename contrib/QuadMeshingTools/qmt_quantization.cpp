@@ -876,6 +876,7 @@ namespace QMT {
       QMT_QZ_Utils::global_gmsh_initialized = true;
     }
     info("generate QTMesh (quad w/ T-jonctions) from gmsh colored triangulation ...");
+    RF("obselete");
 
     M.vertices.clear();
     M.edges.clear();
@@ -1058,7 +1059,7 @@ namespace QMT {
     /* Build TVertex */
     vector<id> v2TVertex(M.points.size(), NO_ID);
     vector<bool> isCorner(M.points.size(),false);
-    F(v,v2l.size()) {
+    FC(v,v2l.size(),v2l[v].size() > 0) {
       if (v2l[v].size() != 2) {
         isCorner[v] = true;
       } else if (v2l[v].size() == 2) {
@@ -1287,7 +1288,7 @@ namespace QMT {
   }
 
   /* warning: call the gmsh API (via sizemap.eval()) */
-  bool compute_subdivided_edge_internal_points(const std::vector<vec3>& pts, size_t N, const SizeMapR& sizemap, vector<vec3>& newPts) {
+  bool compute_subdivided_edge_internal_points(const std::vector<vec3>& pts, size_t N, const SizeMapR& sizemap, vector<vec3>& newPts, vector<double>& newSizes) {
     newPts.clear();
     if (N == 0) return true;
 
@@ -1337,7 +1338,9 @@ namespace QMT {
           if (len_j < targetLen && targetLen <= len_jp1) {
             double lambda = (targetLen - len_j) / (len_jp1 - len_j);
             vec3 pt = (1.-lambda) * pts[j] + lambda * pts[j+1];
+            double h = (1.-lambda) * size[j] + lambda * size[j+1];
             newPts.push_back(pt);
+            newSizes.push_back(h);
             found = true;
             break;
           }
@@ -1354,7 +1357,9 @@ namespace QMT {
           if (len_j < targetLen && targetLen <= len_jp1) {
             double lambda = (targetLen - len_j) / (len_jp1 - len_j);
             vec3 pt = (1.-lambda) * pts[j] + lambda * pts[j+1];
+            double h = (1.-lambda) * size[j] + lambda * size[j+1];
             newPts.push_back(pt);
+            newSizes.push_back(h);
             found = true;
             prev_j = j;
             prev_acc = len_j;
@@ -1582,8 +1587,9 @@ namespace QMT {
       size_t nb_ipts = edge_n[e] - 1;
       const vector<vec3>& pts = M.edges[e].pts;
       vector<vec3> ipts;
+      vector<double> newSizes;
       /* warning: call the gmsh API (via sizemap.eval()) */
-      bool oks = compute_subdivided_edge_internal_points(pts, nb_ipts, sizemap, ipts);
+      bool oks = compute_subdivided_edge_internal_points(pts, nb_ipts, sizemap, ipts, newSizes);
       if (!oks) {
         error("failed to sample edge {}, nb_ipts={}", e, nb_ipts);
         return false;
@@ -1591,7 +1597,7 @@ namespace QMT {
       pair<int,int> entity = M.edges[e].entity;
       vector<id> nvert;
       F(k,ipts.size()) {
-        double h = sizemap.eval(ipts[k]); /* call the gmsh API */
+        double h = newSizes[k];
         id nv = add_vertex(Q, ipts[k], h, entity);
         nvert.push_back(nv);
       }

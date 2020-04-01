@@ -3778,7 +3778,8 @@ public:
     PView* theta = PView::getViewByName("theta");
     if (theta) cf_tag = theta->getTag();
     std::map<std::pair<size_t,size_t>,double> edge_to_angle;
-    bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,&edge_to_angle);
+    int bc_expansion_layers = 1;
+    bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,&edge_to_angle, bc_expansion_layers);
     if (!okcf) {
       Msg::Error("Failed to compute cross field");
       //      return -1;
