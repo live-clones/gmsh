@@ -120,6 +120,13 @@ namespace QMT_QZ_Utils {
       sformat(stream, format, args...);
       gmsh::logger::write("QMT | Quantization | " + stream.str(), "info");
     }
+  
+  template <typename... Args>
+    void debug(const char* format, const Args & ... args) {
+      std::ostringstream stream;
+      sformat(stream, format, args...);
+      gmsh::logger::write("QMT | Quantization | " + stream.str(), "debug");
+    }
   /************************************/
 
   bool is_file(const char *fileName) {
@@ -1535,7 +1542,7 @@ namespace QMT {
     }
 
     F(e,M.edges.size()) {
-      info("  e={},edge={} | nx = {} -> n = {}]", e, M.edges[e], edge_nx[e], edge_n[e]);
+      debug("  e={},edge={} | nx = {} -> n = {}]", e, M.edges[e], edge_nx[e], edge_n[e]);
     }
 
     return true;

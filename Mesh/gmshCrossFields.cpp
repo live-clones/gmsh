@@ -5380,8 +5380,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   
 
   /* Simplification */
-  double hc = 0.9 * size_min;
-  if (size_min == 0.) hc = 0.9 * size_max;
+  double hc = 0.9;
   bool oks = QMT::simplify_quad_mesh(Q, hc, -1, &projector);
   if (!oks) {
     Msg::Error("Failed to simplify quad mesh");

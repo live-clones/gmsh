@@ -6121,6 +6121,8 @@ GMSH_API void gmsh::logger::write(const std::string &message,
     Msg::Error("%s", message.c_str());
   else if(level == "warning")
     Msg::Warning("%s", message.c_str());
+  else if(level == "debug")
+    Msg::Debug("%s", message.c_str());
   else
     Msg::Info("%s", message.c_str());
 }
