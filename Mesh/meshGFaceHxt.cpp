@@ -122,9 +122,7 @@ int meshGFaceHxt(GModel *gm)
   HXT_CHECK(hxtMeshDelete(&fmesh));
   HXT_CHECK(hxtContextDelete(&fcontext));
  
-
-  
-  
+ 
   ///// END OF HERE WE NEED THE CODE TO THE REMESHING STUFF
 
   free (data);
