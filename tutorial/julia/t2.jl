@@ -30,11 +30,11 @@ model.setPhysicalName(2, 6, "My surface")
 factory.addPoint(0, .4, 0, lc, 5)
 factory.addLine(4, 5, 5)
 
-factory.translate([(0, 3)], -0.05, 0, 0)
+factory.translate([(0, 5)], -0.02, 0, 0)
+factory.rotate([(0, 5)], 0,0.3,0, 0,0,1, -pi/4)
 
 ov = factory.copy([(0, 3)])
-
-factory.translate(ov, 0, 0.1, 0)
+factory.translate(ov, 0, 0.05, 0)
 
 factory.addLine(3, ov[1][2], 7)
 factory.addLine(ov[1][2], 5, 8)
@@ -46,10 +46,13 @@ factory.translate(ov, 0.12, 0, 0)
 
 println("New surfaces ", ov[1][2], " and ", ov[2][2])
 
-factory.addPoint(0., 0.3, 0.13, lc, 100)
-factory.addPoint(0.08, 0.3, 0.1, lc, 101)
-factory.addPoint(0.08, 0.4, 0.1, lc, 102)
-factory.addPoint(0., 0.4, 0.13, lc, 103)
+factory.addPoint(0., 0.3, 0.12, lc, 100)
+factory.addPoint(0.1, 0.3, 0.12, lc, 101)
+factory.addPoint(0.1, 0.35, 0.12, lc, 102)
+
+factory.synchronize()
+xyz = model.getValue(0, 5, [])
+factory.addPoint(xyz[1], xyz[2], 0.12, lc, 103)
 
 factory.addLine(4, 100, 110)
 factory.addLine(3, 101, 111)
@@ -74,7 +77,7 @@ factory.addPlaneSurface([126], 127)
 factory.addSurfaceLoop([127, 119, 121, 123, 125, 11], 128)
 factory.addVolume([128], 129)
 
-ov2 = factory.extrude([ov[1]], 0, 0, 0.12)
+ov2 = factory.extrude([ov[2]], 0, 0, 0.12)
 
 factory.mesh.setSize([(0,103), (0,105), (0,109), (0,102), (0,28),
                       (0, 24), (0,6), (0,5)], lc * 3)
