@@ -5652,12 +5652,12 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
 int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& state) {
   PView* vH = PView::getViewByName("H");
   if (vH == NULL) {
-    Msg::Info("view 'H' not found");
+    Msg::Error("view 'H' not found");
     return -1;
   }
   PViewData *vhd = vH->getData();
   if (vH == NULL) {
-    Msg::Info("view 'H' has no data");
+    Msg::Error("view 'H' has no data");
     return -1;
   }
 
@@ -6148,22 +6148,25 @@ int generateQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
     }
   }
   if (sizemapTag == -1) {
-    Msg::Error("Quad size map (view 's') not found but required");
-    return -1;
+    Msg::Warning("Quad size map (view 's') not found, using uniform");
   }
 
   std::string quad_layout_name = gm->getName();
   double size_min = CTX::instance()->mesh.lcMin;
   double size_max = CTX::instance()->mesh.lcMax;
+  double size_uniform = 0.;
   if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
     size_min *= CTX::instance()->mesh.lcFactor;
+    size_uniform = size_min;
   }
   if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
     size_max *= CTX::instance()->mesh.lcFactor;
+    size_uniform = size_max;
   }
   if (size_min == 0 && size_max == 1.e22) {
     SBoundingBox3d bbox = gm->bounds();
     size_min = 0.1 * bbox.diag() * CTX::instance()->mesh.lcFactor;
+    size_uniform = size_min;
     Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal*clscale");
   }
   

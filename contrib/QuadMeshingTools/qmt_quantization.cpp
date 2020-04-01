@@ -829,7 +829,7 @@ namespace QMT {
     /* Collect edges and faces ti split */
     vector<id> edges_to_split;
     vector<id> faces_to_split;
-    FC(f,M.faces.size(),M.faces[f].edges.size() == 3) {
+    FC(f,M.faces.size(),M.faces[f].edges.size() >= 3 && M.faces[f].edges.size() != 4) {
       faces_to_split.push_back(f);
       F(le,M.faces[f].edges.size()) {
         edges_to_split.push_back(M.faces[f].edges[le]);
@@ -858,7 +858,7 @@ namespace QMT {
       bool oksf = split_TFace(M, f, vertexFromEdgeSplit);
       if (!oksf) {
         error("failed to split face {}", f);
-        return false;
+       return false;
       }
       vertexFromEdgeSplit.resize(M.vertices.size(),false);
     }
@@ -1216,6 +1216,14 @@ namespace QMT {
 
     bool okcs = build_qtmesh_from_cut_mesh(T, M);
     RFC(!okcs,"failed to classify cut mesh");
+
+    if (accept_degenerate_faces) {
+      bool oks = subdivide_degenerate_faces(M);
+      if (!oks) {
+        error("failed to fix degenerate faces by subdivision");
+        return false;
+      }
+    }
 
     /* B. Fill missing info in the QTMesh data structure */
     M.vertToEdges.resize(M.vertices.size());
@@ -1734,7 +1742,7 @@ namespace QMT {
     QTMesh tM;
     constexpr bool NEW_VERSION = true;
     if (NEW_VERSION) {
-      bool okq = generate_qtmesh_from_cut_mesh(modelName, tM);
+      bool okq = generate_qtmesh_from_cut_mesh(modelName, tM, true);
       if (!okq) {
         error("failed to generate QTMesh (quad mesh with T-junctions)");
         return false;
@@ -1772,18 +1780,17 @@ namespace QMT {
     return true;
   }
 
-  bool fill_vertex_sizes_from_sizemap(QMesh& M, int sizemapTag) {
+  bool fill_vertex_sizes_from_sizemap(QMesh& M, int sizemapTag, double size_uniform) {
     if (!QMT_QZ_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_QZ_Utils::global_gmsh_initialized = true;
     }
-    if (sizemapTag < 0) {
+    if (size_uniform == 0. && sizemapTag < 0) {
       error("wrong size map tag: {}", sizemapTag);
       return false;
     }
 
-    double target_edge_len = 0.;
-    SizeMapR sizemap(sizemapTag,target_edge_len);
+    SizeMapR sizemap(sizemapTag,size_uniform);
 
     vector<bool> used(M.points.size(),false);
     FC(c,M.quads.size(),M.quads[c][0] != NO_ID)  F(lv,4) used[M.quads[c][lv]] = true;
