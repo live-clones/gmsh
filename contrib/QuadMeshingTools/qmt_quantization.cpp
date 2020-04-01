@@ -1234,7 +1234,7 @@ namespace QMT {
 
     info("QTMesh construction: {} vertices, {} edges, {} faces", M.vertices.size(), M.edges.size(), M.faces.size());
 
-    std::cout << M << std::endl; // for debug
+    // std::cout << M << std::endl; // for debug
 
     gmsh::model::setCurrent(cname);
     return true;
