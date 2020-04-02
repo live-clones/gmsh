@@ -79,7 +79,7 @@ vin = gmsh.model.getEntitiesInBoundingBox(2-eps,-eps,-eps,
 for v in vin: out.remove(v)
 gmsh.model.removeEntities(out, True) # Delete outside parts recursively
 
-# We now set some a non-uniform mesh size constraint (again to check results
+# We now set a non-uniform mesh size constraint (again to check results
 # visually):
 p = gmsh.model.getBoundary(vin, False, False, True) # Get all points
 gmsh.model.mesh.setSize(p, 0.1)

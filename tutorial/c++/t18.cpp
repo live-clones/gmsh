@@ -90,7 +90,7 @@ int main(int argc, char **argv)
   }
   gmsh::model::removeEntities(out, true); // Delete outside parts recursively
 
-  // We now set some a non-uniform mesh size constraint (again to check results
+  // We now set a non-uniform mesh size constraint (again to check results
   // visually):
   std::vector<std::pair<int, int> > p;
   gmsh::model::getBoundary(in, p, false, false, true); // Get all points
