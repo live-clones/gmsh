@@ -590,6 +590,7 @@ Surface *CreateSurface(int Num, int Typ)
   pS->ReverseMesh = 0;
   pS->MeshAlgorithm = 0;
   pS->MeshSizeFromBoundary = -1;
+  pS->OnlyInitialMesh = 0;
   return (pS);
 }
 
@@ -840,6 +841,7 @@ static void CopySurface(Surface *s, Surface *ss)
     ss->ReverseMesh = s->ReverseMesh;
     ss->MeshAlgorithm = s->MeshAlgorithm;
     ss->MeshSizeFromBoundary = s->MeshSizeFromBoundary;
+    ss->OnlyInitialMesh = s->OnlyInitialMesh;
     if(List_Nbr(s->TrsfPoints))
       Msg::Warning(
         "Only automatic transfinite surface specifications can be copied");

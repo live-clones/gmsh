@@ -2594,7 +2594,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
     std::vector<MVertex *> vertices(numVertices);
     std::vector<unsigned int> verticesOrder(numVertices);
     const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
-    
+
     std::size_t entityOffset = 0;
 
     for(std::size_t iEntity = 0; iEntity < entities.size(); ++iEntity) {
@@ -2636,7 +2636,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
 
         basisFunctionsOrientation[entityOffset + iElement] = (int)elementOrientation;
       }
-      
+
       entityOffset += localNumElements;
     }
   }
@@ -4056,6 +4056,21 @@ GMSH_API void gmsh::model::mesh::setSizeFromBoundary(const int dim,
   }
 }
 
+GMSH_API void gmsh::model::mesh::setOnlyInitialMesh(const int dim,
+                                                    const int tag,
+                                                    const int val)
+{
+  if(!_isInitialized()) { throw - 1; }
+  if(dim == 2) {
+    GFace *gf = GModel::current()->getFaceByTag(tag);
+    if(!gf) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    gf->meshAttributes.onlyInitialMesh = val;
+  }
+}
+
 GMSH_API void gmsh::model::mesh::setCompound(const int dim,
                                              const std::vector<int> &tags)
 {
@@ -4907,6 +4922,14 @@ GMSH_API void gmsh::model::geo::mesh::setSizeFromBoundary(const int dim,
 {
   if(!_isInitialized()) { throw - 1; }
   GModel::current()->getGEOInternals()->setMeshSizeFromBoundary(dim, tag, val);
+}
+
+GMSH_API void gmsh::model::geo::mesh::setOnlyInitialMesh(const int dim,
+                                                         const int tag,
+                                                         const int val)
+{
+  if(!_isInitialized()) { throw - 1; }
+  GModel::current()->getGEOInternals()->setOnlyInitialMesh(dim, tag, val);
 }
 
 GMSH_API void gmsh::model::geo::mesh::setSize(const vectorpair &dimTags,

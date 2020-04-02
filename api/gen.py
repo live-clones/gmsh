@@ -371,6 +371,9 @@ mesh.add('setAlgorithm', doc, None, iint('dim'), iint('tag'), iint('val'))
 doc = '''Force the mesh size to be extended from the boundary, or not, for the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
 mesh.add('setSizeFromBoundary', doc, None, iint('dim'), iint('tag'), iint('val'))
 
+doc = '''Only generate the initial mesh (or not) for the entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
+mesh.add('setOnlyInitialMesh', doc, None, iint('dim'), iint('tag'), iint('val'))
+
 doc = '''Set a compound meshing constraint on the model entities of dimension `dim' and tags `tags'. During meshing, compound entities are treated as a single discrete entity, which is automatically reparametrized.'''
 mesh.add('setCompound', doc, None, iint('dim'), ivectorint('tags'))
 
@@ -559,8 +562,11 @@ mesh.add('setReverse', doc, None, iint('dim'), iint('tag'), ibool('val', 'true',
 doc = '''Set the meshing algorithm on the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
 mesh.add('setAlgorithm', doc, None, iint('dim'), iint('tag'), iint('val'))
 
-doc = '''Force the mesh size to be extended from the boundary, or not, for the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
+doc = '''Force the mesh size to be extended from the boundary (or not) for the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
 mesh.add('setSizeFromBoundary', doc, None, iint('dim'), iint('tag'), iint('val'))
+
+doc = '''Only generate the initial mesh (or not) for the entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
+mesh.add('setOnlyInitialMesh', doc, None, iint('dim'), iint('tag'), iint('val'))
 
 ################################################################################
 

@@ -1454,6 +1454,17 @@ GMSH_API void gmshModelMeshSetSizeFromBoundary(const int dim, const int tag, con
   }
 }
 
+GMSH_API void gmshModelMeshSetOnlyInitialMesh(const int dim, const int tag, const int val, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setOnlyInitialMesh(dim, tag, val);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetCompound(const int dim, int * tags, size_t tags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2248,6 +2259,17 @@ GMSH_API void gmshModelGeoMeshSetSizeFromBoundary(const int dim, const int tag, 
   if(ierr) *ierr = 0;
   try {
     gmsh::model::geo::mesh::setSizeFromBoundary(dim, tag, val);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGeoMeshSetOnlyInitialMesh(const int dim, const int tag, const int val, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::geo::mesh::setOnlyInitialMesh(dim, tag, val);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

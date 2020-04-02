@@ -2725,6 +2725,25 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def setOnlyInitialMesh(dim, tag, val):
+            """
+            gmsh.model.mesh.setOnlyInitialMesh(dim, tag, val)
+
+            Only generate the initial mesh (or not) for the entity of dimension `dim'
+            and tag `tag'. Currently only supported for `dim' == 2.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSetOnlyInitialMesh(
+                c_int(dim),
+                c_int(tag),
+                c_int(val),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetOnlyInitialMesh returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def setCompound(dim, tags):
             """
             gmsh.model.mesh.setCompound(dim, tags)
@@ -4092,7 +4111,7 @@ class model:
                 """
                 gmsh.model.geo.mesh.setSizeFromBoundary(dim, tag, val)
 
-                Force the mesh size to be extended from the boundary, or not, for the model
+                Force the mesh size to be extended from the boundary (or not) for the model
                 entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
                 == 2.
                 """
@@ -4105,6 +4124,25 @@ class model:
                 if ierr.value != 0:
                     raise ValueError(
                         "gmshModelGeoMeshSetSizeFromBoundary returned non-zero error code: ",
+                        ierr.value)
+
+            @staticmethod
+            def setOnlyInitialMesh(dim, tag, val):
+                """
+                gmsh.model.geo.mesh.setOnlyInitialMesh(dim, tag, val)
+
+                Only generate the initial mesh (or not) for the entity of dimension `dim'
+                and tag `tag'. Currently only supported for `dim' == 2.
+                """
+                ierr = c_int()
+                lib.gmshModelGeoMeshSetOnlyInitialMesh(
+                    c_int(dim),
+                    c_int(tag),
+                    c_int(val),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise ValueError(
+                        "gmshModelGeoMeshSetOnlyInitialMesh returned non-zero error code: ",
                         ierr.value)
 
 

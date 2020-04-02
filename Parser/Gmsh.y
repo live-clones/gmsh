@@ -206,7 +206,7 @@ struct doubleXstring{
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence
-%token tIntersect tMeshAlgorithm tReverseMesh tMeshSizeFromBoundary
+%token tIntersect tMeshAlgorithm tReverseMesh tMeshSizeFromBoundary tOnlyInitialMesh
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts
 %token tRecombLaterals tTransfQuadTri
@@ -4617,8 +4617,8 @@ Constraints :
     }
   | tMeshSizeFromBoundary tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
     {
-      // lcExtendFromBoundary onstraints are stored in GEO internals in addition
-      // to GModel, as they can be copied around during GEO operations
+      // these constraints are stored in GEO internals in addition to GModel, as
+      // they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -4629,6 +4629,23 @@ Constraints :
         GModel::current()->getGEOInternals()->setMeshSizeFromBoundary(2, tag, (int)$7);
         GFace *gf = GModel::current()->getFaceByTag(tag);
         if(gf) gf->setMeshSizeFromBoundary((int)$7);
+      }
+      List_Delete($4);
+    }
+  | tOnlyInitialMesh tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
+    {
+      // these constraints are stored in GEO internals in addition to GModel, as
+      // they can be copied around during GEO operations
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      for(int i = 0; i < List_Nbr($4); i++){
+        double d;
+        List_Read($4, i, &d);
+        int tag = (int)d;
+        GModel::current()->getGEOInternals()->setOnlyInitialMesh(2, tag, (int)$7);
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(gf) gf->setOnlyInitialMesh((int)$7);
       }
       List_Delete($4);
     }

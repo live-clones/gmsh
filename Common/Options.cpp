@@ -4805,6 +4805,12 @@ double opt_geometry_match_mesh_tolerance(OPT_ARGS_NUM)
   return CTX::instance()->geom.matchMeshTolerance;
 }
 
+double opt_mesh_only_initial(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.onlyInitial = (double)val;
+  return CTX::instance()->mesh.onlyInitial;
+}
+
 double opt_mesh_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

@@ -1619,6 +1619,19 @@ entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
 -
 @end table
 
+@item gmsh/model/mesh/setOnlyInitialMesh
+Only generate the initial mesh (or not) for the entity of dimension @code{dim}
+and tag @code{tag}. Currently only supported for @code{dim} == 2.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item gmsh/model/mesh/setCompound
 Set a compound meshing constraint on the model entities of dimension @code{dim}
 and tags @code{tags}. During meshing, compound entities are treated as a single
@@ -2499,9 +2512,22 @@ Set the meshing algorithm on the model entity of dimension @code{dim} and tag
 @end table
 
 @item gmsh/model/geo/mesh/setSizeFromBoundary
-Force the mesh size to be extended from the boundary, or not, for the model
+Force the mesh size to be extended from the boundary (or not) for the model
 entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
 @code{dim} == 2.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/geo/mesh/setOnlyInitialMesh
+Only generate the initial mesh (or not) for the entity of dimension @code{dim}
+and tag @code{tag}. Currently only supported for @code{dim} == 2.
 
 @table @asis
 @item Input:
