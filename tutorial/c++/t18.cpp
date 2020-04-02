@@ -35,7 +35,7 @@ int main(int argc, char **argv)
   // To impose that the mesh on surface 2 (the right side of the cube) should
   // match the mesh from surface 1 (the left side), the following periodicity
   // constraint is set:
-  std::vector<double> translation({1,0,0,1, 0,1,0,0, 0,0,1,0, 0,0,0,0});
+  std::vector<double> translation({1,0,0,1, 0,1,0,0, 0,0,1,0, 0,0,0,1});
   gmsh::model::mesh::setPeriodic(2, {2}, {1}, translation);
 
   // The periodicity transform is provided as a 4x4 affine transformation
@@ -43,6 +43,12 @@ int main(int argc, char **argv)
 
   // During mesh generation, the mesh on surface 2 will be created by copying
   // the mesh from surface 1.
+
+  // Multiple periodicities can be imposed in the same way:
+  gmsh::model::mesh::setPeriodic(2, {6}, {5},
+                                 {1,0,0,0, 0,1,0,0, 0,0,1,1, 0,0,0,1});
+  gmsh::model::mesh::setPeriodic(2, {4}, {3},
+                                 {1,0,0,0, 0,1,0,1, 0,0,1,0, 0,0,0,1});
 
   // For more complicated cases, finding the corresponding surfaces by hand can
   // be tedious, especially when geometries are created through solid
@@ -127,6 +133,9 @@ int main(int argc, char **argv)
       }
     }
   }
+
+  gmsh::model::mesh::generate(3);
+  gmsh::write("t18.msh");
 
   // gmsh::fltk::run();
 

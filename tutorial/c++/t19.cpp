@@ -98,6 +98,9 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 0.001);
   gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.3);
 
+  gmsh::model::mesh::generate(3);
+  gmsh::write("t19.msh");
+
   // gmsh::fltk::run();
   return 0;
 }
