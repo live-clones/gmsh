@@ -536,6 +536,20 @@ namespace QMT_QZ_Utils {
     return edge.vertices;
   }
 
+
+  using namespace GLog;
+  void debug_show_face_in_view(const QTMesh& M, id f, const std::string& viewName) {
+    const vector<id>& edges = M.faces[f].edges; 
+    GeoLog log;
+    F(le,edges.size()) {
+      const TEdge& te = M.edges[edges[le]];
+      F(i,te.pts.size()-1) {
+        log.add({te.pts[i],te.pts[i+1]},double(le),viewName);
+      }
+    }
+    log.toGmsh();
+  }
+
 }
 
 namespace QMT {
@@ -834,7 +848,11 @@ namespace QMT {
       F(le,M.faces[f].edges.size()) {
         edges_to_split.push_back(M.faces[f].edges[le]);
       }
+      warn("face {} has {} edges, flag for midpoint subdivision", f, M.faces[f].edges.size());
       nf += 1;
+
+      // DEBUG
+      debug_show_face_in_view(M,f,"to_split_"+std::to_string(f));
     }
     sort_unique(edges_to_split);
 
@@ -863,6 +881,14 @@ namespace QMT {
       vertexFromEdgeSplit.resize(M.vertices.size(),false);
     }
     if (nf > 0) info("fixed {} degenerate faces via QTMesh splitting", nf);
+
+    constexpr bool VERIFY = true;
+    if (VERIFY) {
+      FC(f,M.faces.size(),M.faces[f].edges.size() > 0 && M.faces[f].edges.size() != 4) {
+        warn("verification: face {} has {} edges", f, M.faces[f].edges.size());
+        debug_show_face_in_view(M,f,"tj_"+std::to_string(f));
+      }
+    }
 
     return true;
   }
@@ -1556,6 +1582,34 @@ namespace QMT {
 
     F(e,M.edges.size()) {
       debug("  e={},edge={} | nx = {} -> n = {}]", e, M.edges[e], edge_nx[e], edge_n[e]);
+    }
+
+    constexpr bool VERIFY_QUANTIZATION = true;
+    if (VERIFY_QUANTIZATION) {
+      F(f,M.faces.size()) {
+        const TFace& tf = M.faces[f];
+        id4 side_n = {0,0,0,0};
+        F(le,tf.edges.size()) {
+          id e = tf.edges[le];
+          uint8_t side = tf.edge_sides[le];
+          if (side > 3) {
+            error("Quantization verification | face {}, edge {}: side={}", f, e, id(side));
+            return false;
+          }
+          if (edge_n[e] == 0) {
+            error("Quantization verification | face {}, edge {}, side={}: n = {} (nx = {})",
+                f, e, id(side), edge_n[e], edge_nx[e]);
+            return false;
+          }
+          side_n[side] += edge_n[e];
+        }
+        if (side_n[0] != side_n[2] || side_n[1] != side_n[3]) {
+          error("Quantization verification | face {}: side_n = {}  (edges = {})",
+              f, side_n, tf.edges);
+          return false;
+        }
+        
+      }
     }
 
     return true;

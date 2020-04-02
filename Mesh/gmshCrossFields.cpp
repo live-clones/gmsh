@@ -4795,6 +4795,7 @@ public:
       }      
     }
     
+    GModel::current()->pruneMeshVertexAssociations();
   }
 
   int correctionOnCutGraph(
