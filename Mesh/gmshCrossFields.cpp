@@ -1773,8 +1773,9 @@ computeSingularities(std::vector<GFace*> &f,
 	diffs += std::min(diff0,diff1);
 	
       }
+      //      if (singularities.find(v) != singularities.end())
+      //	printf("DIFF (%lu) = %12.5E\n",v->getNum(),diffs);
       if (fabs(diffs) > .95*M_PI/2) {
-	//	printf("DIFF (%lu) = %12.5E\n",v->getNum(),diffs);
 	singularities2.insert(v);
       }
     }
@@ -1786,33 +1787,40 @@ computeSingularities(std::vector<GFace*> &f,
       MVertex *v0 = f[i]->triangles[j]->getVertex(0);
       MVertex *v1 = f[i]->triangles[j]->getVertex(1);
       MVertex *v2 = f[i]->triangles[j]->getVertex(2);
-      if (singularities.find(v0) != singularities.end() &&
-	  singularities.find(v1) != singularities.end() &&
-	  singularities.find(v2) != singularities.end()){
-	if (singularities2.find(v0) != singularities.end() &&
-	    singularities2.find(v1) == singularities.end() &&
-	    singularities2.find(v2) == singularities.end() ){
-	  singularities.erase(v1);
-	  singularities.erase(v2);
+      std::set<MVertex *, MVertexPtrLessThan>::iterator it0 = singularities.find(v0);
+      std::set<MVertex *, MVertexPtrLessThan>::iterator it1 = singularities.find(v1);
+      std::set<MVertex *, MVertexPtrLessThan>::iterator it2 = singularities.find(v2);
+      bool v0_singular = it0 != singularities.end();
+      bool v1_singular = it1 != singularities.end();
+      bool v2_singular = it2 != singularities.end();
+      if (v0_singular && v1_singular && v2_singular){
+	if (singularities2.find(v0) != singularities2.end() &&
+	    singularities2.find(v1) == singularities2.end() &&
+	    singularities2.find(v2) == singularities2.end() ){
+	  singularities.erase(it1);
+	  singularities.erase(it2);
 	}
-	else if (singularities2.find(v1) != singularities.end() &&
-		 singularities2.find(v0) == singularities.end() &&
-		 singularities2.find(v2) == singularities.end() ){
-	  singularities.erase(v0);
-	  singularities.erase(v2);
+	else if (singularities2.find(v1) != singularities2.end() &&
+		 singularities2.find(v0) == singularities2.end() &&
+		 singularities2.find(v2) == singularities2.end() ){
+	  singularities.erase(it0);
+	  singularities.erase(it2);
 	}
-	else if (singularities2.find(v2) != singularities.end() &&
-		 singularities2.find(v0) == singularities.end() &&
-		 singularities2.find(v1) == singularities.end() ){
-	  singularities.erase(v0);
-	  singularities.erase(v1);
+	else if (singularities2.find(v2) != singularities2.end() &&
+		 singularities2.find(v0) == singularities2.end() &&
+		 singularities2.find(v1) == singularities2.end() ){
+	  singularities.erase(it0);
+	  singularities.erase(it1);
+	}
+	else {
+	  Msg::Warning("triangle %d (%lu %lu %lu) is singular",f[i]->triangles[j]->getNum(),v0->getNum(),v1->getNum(),v2->getNum());
 	}
       }	  
     }
   }
   
-  printf("%lu singularities\n",singularities.size());
-  printf("%lu singularities\n",singularities2.size());
+  //  printf("%lu singularities\n",singularities.size());
+  //  printf("%lu singularities\n",singularities2.size());
 
   std::set<MVertex *, MVertexPtrLessThan>::iterator its = singularities.begin();
   for (; its != singularities.end(); ++its){
@@ -3778,7 +3786,7 @@ public:
     PView* theta = PView::getViewByName("theta");
     if (theta) cf_tag = theta->getTag();
     std::map<std::pair<size_t,size_t>,double> edge_to_angle;
-    int bc_expansion_layers = 1;
+    int bc_expansion_layers = 0;
     bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,&edge_to_angle, bc_expansion_layers);
     if (!okcf) {
       Msg::Error("Failed to compute cross field");
@@ -5171,28 +5179,26 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     GModel::current()->remove(de);
     //  delete de;
     GModel::current()->pruneMeshVertexAssociations();
-  }
-
-  /* Debug export */
-  std::string mshout = gm->getName() + "_Cut.msh";
-  gm->writeMSH(mshout, 4.0, false, true);
-
-  /* Validity check */
-  int countError = 0;
-  for(GModel::fiter it = GModel::current()->firstFace();
-      it != GModel::current()->lastFace(); it++) {
-    if((*it)->edges().size() != 4) {
-      Msg::Warning("quad layout failed : face %lu has %lu boundaries",
-                   (*it)->tag(), (*it)->edges().size());
-      countError++;
+    /* Debug export */
+    std::string mshout = gm->getName() + "_Cut.msh";
+    gm->writeMSH(mshout, 4.0, false, true);
+    /* Validity check */
+    int countError = 0;
+    for(GModel::fiter it = GModel::current()->firstFace();
+	it != GModel::current()->lastFace(); it++) {
+      if((*it)->edges().size() != 4) {
+	Msg::Warning("quad layout failed : face %lu has %lu boundaries",
+		     (*it)->tag(), (*it)->edges().size());
+	countError++;
+      }
     }
-  }
-  if(!countError) {
-    Msg::Info(
-      "Quad layout success : the model is partitioned in %d master quads",
-      GModel::current()->getNumFaces());
-    Msg::Info("Partitioned mesh has been saved in %s", mshout.c_str());
-    Msg::Info("Result of computations have been saved in %s", posout.c_str());
+    if(!countError) {
+      Msg::Info(
+		"Quad layout success : the model is partitioned in %d master quads",
+		GModel::current()->getNumFaces());
+      Msg::Info("Partitioned mesh has been saved in %s", mshout.c_str());
+      Msg::Info("Result of computations have been saved in %s", posout.c_str());
+    }
   }
 
   //

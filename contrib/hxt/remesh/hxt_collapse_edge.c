@@ -5,37 +5,6 @@
 #include "hxt_post_debugging.h"
 
 
-//*************************************************************************************************
-//*************************************************************************************************
-//
-// FUNCTION 
-//
-// Check if edge is oriented in this triangle
-//
-//*************************************************************************************************
-//*************************************************************************************************
-inline int isEdgeOrientedInTriangle (HXTMesh *mesh, 
-                              HXTEdges *edges, 
-                              uint64_t ct, 
-                              uint32_t ce)
-{
-  int flag = 0;
-  for (uint32_t i=0; i<3; i++){
-    if (edges->tri2edg[3*ct+i] == ce){
-      flag = 1;
-      if(edges->node[2*ce+0] == mesh->triangles.node[3*ct+i] &&
-         edges->node[2*ce+1] == mesh->triangles.node[3*ct+(i+1)%3]) return 1;
-    }
-  }
-  if (flag == 0){
-    printf("Edge %d not in triangle %lu\n", ce,ct);
-    return -1;
-  }
-
-  return 0; 
-}
-
-
 //***************************************************************************************
 //***************************************************************************************
 //
@@ -79,6 +48,36 @@ HXTStatus hxtTempPrintCavity (HXTMesh *mesh,
   hxtPosFinish(tc);
 
   return HXT_STATUS_OK;
+}
+
+//*************************************************************************************************
+//*************************************************************************************************
+//
+// FUNCTION 
+//
+// Check if edge is oriented in this triangle
+//
+//*************************************************************************************************
+//*************************************************************************************************
+inline int isEdgeOrientedInTriangle (HXTMesh *mesh, 
+                              HXTEdges *edges, 
+                              uint64_t ct, 
+                              uint32_t ce)
+{
+  int flag = 0;
+  for (uint32_t i=0; i<3; i++){
+    if (edges->tri2edg[3*ct+i] == ce){
+      flag = 1;
+      if(edges->node[2*ce+0] == mesh->triangles.node[3*ct+i] &&
+         edges->node[2*ce+1] == mesh->triangles.node[3*ct+(i+1)%3]) return 1;
+    }
+  }
+  if (flag == 0){
+    printf("Edge %d not in triangle %lu\n", ce,ct);
+    return -1;
+  }
+
+  return 0; 
 }
 
 //***************************************************************************************
@@ -129,13 +128,14 @@ HXTStatus hxtPointGenSort(HXTEdges *edges, uint32_t num, uint32_t *list, uint32_
 }
 
 
+//***************************************************************************************
+//***************************************************************************************
 static inline uint64_t cavMod(uint64_t a, uint64_t b) {
   if (a == UINT64_MAX) a = b-1;
   const uint64_t result = a % b;
   //return result >= 0 ? result : result + b;
   return result;
 }
-
 
 
 //***************************************************************************************
@@ -183,15 +183,6 @@ HXTStatus hxtCanWeCollapseBoundaryCavity (HXTMesh *mesh,
 
   // Find remaining triangle in position of currentTri
   uint64_t rt = cavity[1];
-
-  /*printf("\n\n");*/
-  /*for (uint64_t i=0; i<cavSize; i++){*/
-    /*printf("%lu %lu %d %d %d \n", i, cavity[i], edges->tri2edg[3*cavity[i]+0], edges->tri2edg[3*cavity[i]+1], edges->tri2edg[3*cavity[i]+2]);*/
-  /*}*/
-  /*printf("\n");*/
-  /*for (uint32_t i=0; i<perimSize; i++){*/
-    /*printf("%d %d \n", i, perim[i]);*/
-  /*}*/
 
   //=====================================================================================
   // Create an array with resulting triangles after collapse
@@ -490,21 +481,21 @@ HXTStatus hxtCanWeCollapseBoundaryVertex(HXTMesh *mesh,
 //
 //***************************************************************************************
 //***************************************************************************************
-HXTStatus hxtCanWeCollapseInteriorEdgeNEW(HXTMesh *mesh, 
-                                          HXTEdges *edges, 
-                                          HXTPointGenParent *parent,
-                                          uint32_t *lines2edges,
-                                          uint64_t *edges2lines,
-                                          uint64_t *lines2triangles,
-                                          uint64_t maxNumTriToLine,
-                                          uint64_t *vertices2lines,
-                                          uint64_t maxNumLinesToVertex,
-                                          uint64_t cavSize, 
-                                          uint64_t *cavity, 
-                                          uint32_t vd,     // node to be removed
-                                          uint64_t currentTri,     // current triangle
-                                          uint32_t ce,     // edge to be collapsed
-                                          int *canWeCollapse)
+HXTStatus hxtCanWeCollapseInteriorEdge(HXTMesh *mesh, 
+                                       HXTEdges *edges, 
+                                       HXTPointGenParent *parent,
+                                       uint32_t *lines2edges,
+                                       uint64_t *edges2lines,
+                                       uint64_t *lines2triangles,
+                                       uint64_t maxNumTriToLine,
+                                       uint64_t *vertices2lines,
+                                       uint64_t maxNumLinesToVertex,
+                                       uint64_t cavSize, 
+                                       uint64_t *cavity, 
+                                       uint32_t vd,     // node to be removed
+                                       uint64_t currentTri,     // current triangle
+                                       uint32_t ce,     // edge to be collapsed
+                                       int *canWeCollapse)
 {
   HXT_UNUSED(parent);
   HXT_UNUSED(lines2edges);
@@ -539,7 +530,13 @@ HXTStatus hxtCanWeCollapseInteriorEdgeNEW(HXTMesh *mesh,
 
   //=====================================================================================
   // Find the corresponding remaining triangles
-  // TODO small schematic here to explain the cavMod
+  //
+  // Cavity: |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |
+  //                  tt0   t0    t1    tt1        
+  //
+  //    OR                       tt1    t1    t0    tt0    
+  //
+  //    ETC
   //=====================================================================================
   uint64_t tt0 = UINT64_MAX;
   uint64_t tt1 = UINT64_MAX;
@@ -748,420 +745,6 @@ if (0){
   return HXT_STATUS_OK;
 }
 
-
-
-
-
-//***************************************************************************************
-//***************************************************************************************
-//
-// FUNCTION 
-//
-//***************************************************************************************
-//***************************************************************************************
-HXTStatus hxtCanWeCollapseInteriorEdge (HXTMesh *mesh, 
-                                        HXTEdges *edges, 
-                                        HXTPointGenParent *parent,
-                                        uint32_t *lines2edges,
-                                        uint64_t *edges2lines,
-                                        uint64_t *lines2triangles,
-                                        uint64_t maxNumTriToLine,
-                                        uint64_t *vertices2lines,
-                                        uint64_t maxNumLinesToVertex,
-                                        uint64_t cavSize, 
-                                        uint64_t *cavity, 
-                                        uint32_t vd,     // node to be removed
-                                        uint64_t currentTri,     // current triangle
-                                        uint32_t ce,     // edge to be collapsed
-                                        int *canWeCollapse)
-{
-  HXT_UNUSED(lines2edges);
-  HXT_UNUSED(edges2lines);
-  HXT_UNUSED(lines2triangles);
-  HXT_UNUSED(maxNumTriToLine);
-  HXT_UNUSED(vertices2lines);
-  HXT_UNUSED(maxNumLinesToVertex);
-
-  uint64_t t1 = edges->edg2tri[2*ce+0];
-  uint64_t t2 = edges->edg2tri[2*ce+1];
-  
-  if (edges->node[2*ce+0] != vd && edges->node[2*ce+1] != vd) 
-    return(HXT_ERROR_MSG(HXT_STATUS_FAILED, "Node %d is not in edge %d ", vd,ce));
-  
-  // The vertex onto which vd will collapse
-  uint64_t vr = (edges->node[2*ce+0] == vd) ? edges->node[2*ce+1] : edges->node[2*ce+0];
-  // TODO special attention should be given here if the other vertex vr
-  // is on the boundary, especially on a non manifold boundary line
-  // ALSO in the following if the cavity is adjacent to a boundary line
-  
-  // For now DO NOT collapse to a boundary
-  // TODO CHANGE THAT
-  
-  if (parent[vr].type != 2){
-    printf(" 1 BOUNDARY\n");
-    *canWeCollapse = 0;
-    return HXT_STATUS_OK;
-  }
-
-
-  //=====================================================================================
-  // Create an array with the neigh triangles surrounding the caviy
-  //=====================================================================================
-  uint64_t neighs[cavSize];
-  for (uint64_t i=0; i<cavSize; i++) neighs[i] = UINT64_MAX;
-  uint64_t numNeighs = 0;
-  for (uint64_t i=0; i<cavSize; i++){
-    uint64_t neigh = UINT64_MAX;
-    for (uint32_t j=0; j<3; j++){
-      hxtGetNeighbourTriangle(edges,cavity[i],j,&neigh);
-      if (mesh->triangles.colors[neigh] == UINT16_MAX) 
-        return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Deleted tri remaining");
-      int isNeigh = 0;
-      for (uint64_t j=0; j<cavSize; j++){
-        if (cavity[j] == neigh){
-          isNeigh = 1;
-          break;
-        }
-      }
-      if (isNeigh == 0){
-        neighs[i] = neigh;
-        numNeighs++;
-      }
-    }
-    // TODO delete or debug
-    if (neighs[i] == UINT64_MAX){
-      FILE *test;
-      hxtPosInit("checkNoNeigh.pos","Tris",&test);
-      for (uint64_t k=0; k<cavSize; k++){
-        uint64_t ct = cavity[k];
-        uint32_t *n = &mesh->triangles.node[3*ct+0]; 
-        hxtPosAddTriangle(test,&mesh->vertices.coord[4*n[0]],
-                               &mesh->vertices.coord[4*n[1]],
-                               &mesh->vertices.coord[4*n[2]],0);
-      }
-      hxtPosFinish(test);
-      HXT_CHECK(hxtMeshWriteGmsh(mesh, "checkNoNeigh.msh"));
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Did not find neighbour for this tri %lu",currentTri);
-    }
-  }
-
-
-
-        /*hxtTempPrintCavity (mesh,*/
-                            /*edges,*/
-                            /*cavSize,*/
-                            /*cavity,*/
-                            /*neighs,*/
-                            /*vd,*/
-                            /*currentTri,*/
-                            /*ce);*/
-
-
-
-  //=====================================================================================
-  // Create an array with all the normals of the cavity triangles
-  //=====================================================================================
-  double normals[3*cavSize];
-  for (uint64_t i=0; i<cavSize; i++){
-    normal2triangle(mesh,cavity[i],&normals[3*i]);
-  }
-
-  //=====================================================================================
-  // Create an array with all the normals of the neigh triangles
-  //=====================================================================================
-  double normalsNeigh[3*cavSize];
-  for (uint64_t i=0; i<cavSize; i++){
-    normal2triangle(mesh,neighs[i],&normalsNeigh[3*i]);
-  }
-
-  //=====================================================================================
-  // Create an array with resulting triangles after collapse
-  //=====================================================================================
-  uint32_t cavityNew[3*cavSize];
-  for (uint64_t i=0; i<cavSize; i++){
-    uint32_t nodes[3] = {UINT32_MAX}; 
-    nodes[0] = mesh->triangles.node[3*cavity[i]+0];
-    nodes[1] = mesh->triangles.node[3*cavity[i]+1];
-    nodes[2] = mesh->triangles.node[3*cavity[i]+2];
-
-    cavityNew[3*i+0] = nodes[0] == vd ? vr : nodes[0];
-    cavityNew[3*i+1] = nodes[1] == vd ? vr : nodes[1];
-    cavityNew[3*i+2] = nodes[2] == vd ? vr : nodes[2];
-
-    if (cavity[i] == t1 || cavity[i] == t2){
-      cavityNew[3*i+0] = UINT32_MAX;
-      cavityNew[3*i+1] = UINT32_MAX;
-      cavityNew[3*i+2] = UINT32_MAX;
-    }
-
-  }
-
-  //=====================================================================================
-  // Create an array with all the normals of resulting cavity triangles
-  //=====================================================================================
-  double normalsNew[3*cavSize];
-  for (uint64_t i=0; i<3*cavSize; i++) normalsNew[i] = 0.0;
-  for (uint64_t i=0; i<cavSize; i++){
-    if (cavity[i] == t1 || cavity[i] == t2) continue;
-    double *v0 = mesh->vertices.coord + 4*cavityNew[3*i+0];
-    double *v1 = mesh->vertices.coord + 4*cavityNew[3*i+1];
-    double *v2 = mesh->vertices.coord + 4*cavityNew[3*i+2];
-    normal2triangleV(v0,v1,v2,&normalsNew[3*i]);
-  }
-
-  //=====================================================================================
-  // Check consistent normals in the resulting cavity 
-  //=====================================================================================
-  for (uint32_t i=0; i<cavSize; i++){
-    if (cavity[i] == t1 || cavity[i] == t2) continue;
-    for (uint64_t j=0; j<cavSize; j++){
-    if (cavity[i] == t1 || cavity[i] == t2) continue;
-      double test = myDot(&normalsNew[3*i],&normalsNew[3*j]);
-      if (test < 0.0 ){
-        printf(" 2 OPPOSITE NORMALS RESULTING CAVITY\n");
-      
-
-        *canWeCollapse = 0;
-        return HXT_STATUS_OK;
-      }
-    }
-  }
- 
-
-  //=====================================================================================
-  // Topological check
-  // Check if a resulting edge already exists 
-  //=====================================================================================
-  {
-    uint32_t cavSizeEdges = 0;
-    uint32_t cavityEdges[1000];
-  
-    // Build cavity of edges of the other vertex vr
-    // TODO attention if it is on a boundary line 
-    cavSizeEdges = 0;
-    HXT_CHECK(hxtVertexCavityEdges(mesh, edges, vr, t1, &cavSizeEdges, cavityEdges));
-
-    uint32_t nodesNumVR = 0;
-    uint32_t saveNodesVR[cavSizeEdges];
-    for (uint32_t i=0; i<cavSizeEdges; i++){
-      uint32_t v0 = edges->node[2*cavityEdges[i]+0];
-      uint32_t v1 = edges->node[2*cavityEdges[i]+1];
-
-      uint32_t vt = v0 == vr ? v1 : v0;
-      if (vt != vd){
-        saveNodesVR[nodesNumVR] = vt;
-        nodesNumVR++;
-      }
-    }
-
-    // Build cavity of edges of vertex vd
-    cavSizeEdges = 0;
-    HXT_CHECK(hxtVertexCavityEdges(mesh, edges, vd, t1, &cavSizeEdges, cavityEdges));
-
-    uint32_t nodesNumVD = 0;
-    uint32_t saveNodesVD[cavSizeEdges];
-    for (uint32_t i=0; i<cavSizeEdges; i++){
-      uint32_t ce = cavityEdges[i];
-      if (edges->edg2tri[2*ce+0] == t1 || edges->edg2tri[2*ce+0] == t2) continue;
-      if (edges->edg2tri[2*ce+1] == t1 || edges->edg2tri[2*ce+1] == t2) continue;
-
-
-      uint32_t v0 = edges->node[2*cavityEdges[i]+0];
-      uint32_t v1 = edges->node[2*cavityEdges[i]+1];
-
-      uint32_t vt = v0 == vd ? v1 : v0;
-      if (vt != vr){
-        saveNodesVD[nodesNumVD] = vt;
-        nodesNumVD++;
-      }
-    }
-
-    for (uint32_t i=0; i<nodesNumVR; i++){
-      uint32_t v0 = saveNodesVR[i];
-      for (uint32_t j=0; j<nodesNumVD; j++){
-        uint32_t v1 = saveNodesVD[j];
-        if (v0 == v1){
-          printf(" 3 TOPOLOGICAL\n");
-          *canWeCollapse = 0;
-          return HXT_STATUS_OK; 
-        }
-      }
-    }
-  }
-
-  //=====================================================================================
-  // Check if triangles become degenerate
-  //=====================================================================================
-  for (uint64_t i=0; i<cavSize; i++){
-    if (cavity[i] == t1 || cavity[i] == t2) continue;
-    uint32_t nodes[3];
-    nodes[0] = mesh->triangles.node[3*cavity[i]+0];
-    nodes[1] = mesh->triangles.node[3*cavity[i]+1];
-    nodes[2] = mesh->triangles.node[3*cavity[i]+2];
-
-    double *v0 = mesh->vertices.coord + 4*nodes[0];
-    double *v1 = mesh->vertices.coord + 4*nodes[1];
-    double *v2 = mesh->vertices.coord + 4*nodes[2];
-
-    double normals0[3];
-    normal2triangleAreaV(v0,v1,v2,normals0);
-
-    for (uint32_t j=0; j<3; j++){
-      if (nodes[0] == vd) nodes[0] = vr;
-      if (nodes[1] == vd) nodes[1] = vr;
-      if (nodes[2] == vd) nodes[2] = vr;
-    }
-
-    v0 = mesh->vertices.coord + 4*nodes[0];
-    v1 = mesh->vertices.coord + 4*nodes[1];
-    v2 = mesh->vertices.coord + 4*nodes[2];
- 
-    double normals1[3];
-    normal2triangleAreaV(v0,v1,v2,normals1);
-
-    // First way 
-    double lenA = distance(v0,v1);
-    double lenB = distance(v1,v2);
-    double lenC = distance(v0,v2);
-
-    // Second way 
-    double v01[3], v12[3];
-    v01[0] = v1[0] - v0[0];
-    v01[1] = v1[1] - v0[1];
-    v01[2] = v1[2] - v0[2];
-    v12[0] = v2[0] - v1[0];
-    v12[1] = v2[1] - v1[1];
-    v12[2] = v2[2] - v1[2];
-    double cross[3];
-    myCrossprod(v01,v12,cross);
-    double area = norm(cross);
-    area /=2 ;
-
-    //int is0 = 0;
-    if (lenA+lenB>lenC && lenA+lenC>lenB && lenB+lenC>lenA){
-    }
-    else{
-      printf(" 4 AREA\n");
-      //is0 = 1;
-      *canWeCollapse = 0;
-      return HXT_STATUS_OK;
-    }
-
-    //int is1 = 0;
-    if (area < 10e-9){
-      printf(" 5 AREA\n");
-      //is1 = 1;
-      *canWeCollapse = 0;
-      return HXT_STATUS_OK;
-    }
-  }
-
-
-
-
-  //=====================================================================================
-  // Check if cavity triangles have opposite normals (orientation)
-  // TODO is this really necessary ?
-  //=====================================================================================
-  double angleLim = 0.0;
-  for (uint64_t i=0; i<cavSize; i++){
-    if (mesh->triangles.colors[cavity[i]] == UINT16_MAX) continue;
-    for (uint64_t j=0; j<cavSize; j++){
-      if (mesh->triangles.colors[cavity[j]] == UINT16_MAX) continue;
-      //double test = hxtAngle_0_pi(&normals[3*i],&normals[3*j]);
-      double test = myDot(&normals[3*i],&normals[3*j]);
-      if (test < angleLim ){
-        printf(" 6 CAVITY OPPOSITE NORMAlS\n");
- 
-        *canWeCollapse = 0;
-        return HXT_STATUS_OK;
-      }
-    }
-  }
-
-
-  //=====================================================================================
-  // Check angle with neigh triangles
-  //=====================================================================================
-  angleLim = 0.00;
-  for (uint64_t i=0; i<cavSize; i++){
-
-    uint64_t neigh = neighs[i];
-    double normals1[3];
-    normal2triangle(mesh,neigh,normals1);
-    normalize(normals1);
-
-    double dot = myDot(&normals[3*i],normals1);
-    double test = hxtAngle_0_pi(&normals[3*i],normals1);
-    //if (dot < angleLim){
-    if (dot < -10e-9 && test>M_PI/6){
-
-        printf(" 7 NEIGH ANGLES\n");
-
-          *canWeCollapse = 0;
-          return HXT_STATUS_OK;
-
-      for (uint32_t j=0; j<3; j++){
-        if (edges->tri2edg[3*cavity[i]+j] == ce){
-
-          *canWeCollapse = 0;
-          return HXT_STATUS_OK;
-        }
-      }
-    }
-  }
-
-  //=====================================================================================
-  // CHECK IF TRIANGLES ARE FLIPPED 
-  //=====================================================================================
-  for (uint64_t i=0; i<cavSize; i++){
-    if (cavity[i] == t1 || cavity[i] == t2) continue;
-    uint32_t nodes[3];
-    nodes[0] = mesh->triangles.node[3*cavity[i]+0];
-    nodes[1] = mesh->triangles.node[3*cavity[i]+1];
-    nodes[2] = mesh->triangles.node[3*cavity[i]+2];
-
-    double *v0 = mesh->vertices.coord + 4*nodes[0];
-    double *v1 = mesh->vertices.coord + 4*nodes[1];
-    double *v2 = mesh->vertices.coord + 4*nodes[2];
-
-    double normals0[3];
-    normal2triangleV(v0,v1,v2,normals0);
-
-    for (uint32_t j=0; j<3; j++){
-      if (nodes[0] == vd) nodes[0] = vr;
-      if (nodes[1] == vd) nodes[1] = vr;
-      if (nodes[2] == vd) nodes[2] = vr;
-    }
-
-    v0 = mesh->vertices.coord + 4*nodes[0];
-    v1 = mesh->vertices.coord + 4*nodes[1];
-    v2 = mesh->vertices.coord + 4*nodes[2];
- 
-    double normals1[3];
-    normal2triangleV(v0,v1,v2,normals1);
-
-    double collapseAngle = 0.00;
- 
-    if (myDot(normals0,normals1) < collapseAngle ){
-      printf(" 8 FLIPPED TRIANGLES\n");
-
-      *canWeCollapse = 0;
-      return HXT_STATUS_OK;
-    }
-  }
-
-  // If all tests are succesfull
-  *canWeCollapse = 1;
-  
-  return HXT_STATUS_OK;
-}
-
-
-
-
-
-
 //***************************************************************************************
 //***************************************************************************************
 //
@@ -1200,50 +783,27 @@ HXTStatus hxtCanWeCollapseInteriorVertex(HXTMesh *mesh,
   for (uint32_t k=0; k<cavSizeEdges; k++){
     uint32_t ce = cavityEdgesSorted[k];
 
-    //int canWeCollapse = 0;
-    int canWeCollapse1 = 1;
+    int canWeCollapse = 1;
     
     // TODO for now tests 
-    HXT_CHECK(hxtCanWeCollapseInteriorEdgeNEW(mesh, 
-                                              edges, 
-                                              parent, 
-                                              lines2edges,
-                                              edges2lines,
-                                              lines2triangles,
-                                              maxNumTriToLine,
-                                              vertices2lines,
-                                              maxNumLinesToVertex,
-                                              cavSize, 
-                                              cavity, 
-                                              vd, 
-                                              ct, 
-                                              ce, 
-                                              &canWeCollapse1));
+    HXT_CHECK(hxtCanWeCollapseInteriorEdge(mesh, 
+                                           edges, 
+                                           parent, 
+                                           lines2edges,
+                                           edges2lines,
+                                           lines2triangles,
+                                           maxNumTriToLine,
+                                           vertices2lines,
+                                           maxNumLinesToVertex,
+                                           cavSize, 
+                                           cavity, 
+                                           vd, 
+                                           ct, 
+                                           ce, 
+                                           &canWeCollapse));
  
-    /*HXT_CHECK(hxtCanWeCollapseInteriorEdge(mesh, */
-                                           /*edges, */
-                                           /*parent, */
-                                           /*lines2edges,*/
-                                           /*edges2lines,*/
-                                           /*lines2triangles,*/
-                                           /*maxNumTriToLine,*/
-                                           /*vertices2lines,*/
-                                           /*maxNumLinesToVertex,*/
-                                           /*cavSize, */
-                                           /*cavity, */
-                                           /*vd, */
-                                           /*ct, */
-                                           /*ce, */
-                                           /*&canWeCollapse));*/
 
-   /* printf("Vertex %d %d\n", vd, ce);*/
-    /*printf("%d %d \n", canWeCollapse1, canWeCollapse);*/
-    /*if (canWeCollapse1 == 0 && canWeCollapse == 1){*/
-      /*printf("HERE %d %d\n", vd, ce);*/
-      /*//return HXT_STATUS_OK;*/
-    /*}*/
-
-    if (canWeCollapse1 == 1){
+    if (canWeCollapse == 1){
       *edgeToCollapse = ce;
       return HXT_STATUS_OK;
     }
@@ -1680,7 +1240,7 @@ HXTStatus hxtRemoveInteriorVertex(HXTMesh *mesh,
   uint64_t cavSize = 0;
   uint64_t cavity[1000];
   cavSize = 0;
-  HXT_CHECK(hxtVertexCavity(mesh, edges, vd, parent[vd].id, &cavSize, cavity));
+  HXT_CHECK(hxtVertexCavity(mesh, edges, vd, ct, &cavSize, cavity));
 
 
   uint32_t edgeToCollapse = UINT32_MAX;
