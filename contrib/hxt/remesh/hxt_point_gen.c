@@ -136,8 +136,8 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   printf(" Allocated mesh num of vertices:  %d \n",  fmesh->vertices.size);
   printf("        Final mesh num of lines:  %lu \n", fmesh->lines.num);
   printf("    Allocated mesh num of lines:  %lu \n", fmesh->lines.size);
-  printf("        Final mesh num of points:  %lu \n", fmesh->points.num);
-  printf("    Allocated mesh num of points:  %lu \n", fmesh->points.size);
+  printf("        Final mesh num of points:  %d \n", fmesh->points.num);
+  printf("    Allocated mesh num of points:  %d \n", fmesh->points.size);
   printf("\n");
 
   //**********************************************************************************************************
@@ -179,9 +179,6 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     parent[i].id = pointParent[i];
   }
 
-  printf(" POINTS NUM  = %d \n", fmesh->points.num);
-  printf(" POINTS SIZE = %d \n", fmesh->points.size);
-
   // Fill point gen parent struct with corner points 
   for (uint32_t i=0; i<fmesh->points.num; i++){
     uint32_t nodeID = fmesh->points.node[i];
@@ -192,7 +189,6 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     parent[nodeID].id = pointParent[nodeID];
   }
   HXT_CHECK(hxtFree(&pointParent));
-
   // Checking correct number of 1d point elements (i.e. "corners")
   // TODO delete
   uint32_t countCorners = 0;
