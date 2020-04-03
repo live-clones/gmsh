@@ -19,6 +19,7 @@
 
 #include "gmsh.h"
 #include "qmt_utils.hpp"
+#include "geolog.h"
 
 /* - Shortcuts for loops */
 #define F(_VAR,_NB) for(size_t _VAR = 0; _VAR < (size_t) _NB; ++_VAR)
@@ -170,7 +171,6 @@ namespace QMT {
   }
 
 
-
   bool smooth_quad_mesh(QMesh& M, size_t iter_max,
       const BoundaryProjector* projector) {
     info("winslow smoothing (explicit, {} iterations) ...", iter_max);
@@ -193,14 +193,38 @@ namespace QMT {
     vector<id> projectionEltCache(M.points.size(),NO_ID);
 
     /* Build the vertex stencils */
+    constexpr id ST_WINSLOW_FD4 = 1;
+    constexpr id ST_BDR_ORTH_PROJ = 2;
+    constexpr id ST_LAPLACIAN = 3; // TODO: replace by winslow FD disk
+    vector<id> smoothing_type(M.points.size(),NO_ID);
     vector<id> stencils(8*M.points.size(),NO_ID);
-    F(v,M.points.size()) {
-      if (v2quads[v].size() == 4) {
+    size_t nbnm = 0;
+    FC(v,M.points.size(),v2v[v].size() > 0) {
+      if (M.entity[v].first != 0 && v2quads[v].size() == 4) {
         vector<id2> edges;
+        bool acute_notch = false;
+        bool non_manifold = false;
         F(lq,4) F(lv,4) {
           id v2 = M.quads[v2quads[v][lq]][lv];
           id v3 = M.quads[v2quads[v][lq]][(lv+1)%4];
           if (v2 != v && v3 != v) edges.push_back({v2,v3});
+          if ((v2 == v && v3 != v) || (v2 != v && v3 == v)) {
+            sid neigh = M.quad_neighbors[v2quads[v][lq]][lv];
+            if (neigh == NO_ID) { /* acute notch ? ignore */
+              acute_notch = true;
+              break;
+            } else if (neigh < 0) {
+              non_manifold = true;
+              break;
+            }
+          }
+        }
+        if (acute_notch) {
+          continue; /* do not smooth */
+        } else if (non_manifold) {
+          nbnm += 1;
+          smoothing_type[nbnm] = ST_LAPLACIAN;
+          continue;
         }
         if (edges.size() != 8) {
           error("wrong nb of edges: {}", edges);
@@ -209,23 +233,14 @@ namespace QMT {
         vector<id> orderedVertices;
         bool oko = getOrderedVerticesFromEdges(v2v[v][0], edges, orderedVertices);
         if (!oko || orderedVertices.size() != 8) {
-          error("failed to get a stencil, v = {}, v2quads[v].size()={}, orderedVertices = {}", v, v2quads[v].size(), orderedVertices);
-          return false;
-        }
-        F(k,8) stencils[8*v+k] = orderedVertices[k];
-      } else if (v2quads[v].size() == 2) { // TODO: do the same for feature curves !
-        if (M.entity[v].first != 1) { /* Valence 2 but not on curve ? */
-          int dim = 1; /* look for closest curve */
-          int tag = -1;
-          double dist;
-          bool okc = projector->closestEntity({M.points[v]}, dist, dim, tag);
-          if (!okc || dim == -1 || tag == -1) {
-            warn("failed to find closest entity for v = {}, okc = {}, dim = {}, tag = {}", v, okc, dim, tag);
-          } else {
-            M.entity[v] = {dim,tag};
-            warn(" v = {}, pt = {}, v2quads[v].size()={}, M.entity[v]={} corrected to {}",v,M.points[v],v2quads[v].size(),M.entity[v], std::make_pair(dim,tag));
+          if (M.entity[v].first == 2) { /* should be ok for interior points */
+            error("failed to get a stencil, v = {}, v2quads[v].size()={}, orderedVertices = {}", v, v2quads[v].size(), orderedVertices);
+            return false;
           }
         }
+        F(k,8) stencils[8*v+k] = orderedVertices[k];
+        smoothing_type[v] = ST_WINSLOW_FD4;
+      } else if (M.entity[v].first == 1 && v2quads[v].size() == 2) {
         vector<id2> edges;
         F(lq,2) F(le,4) {
           id v2 = M.quads[v2quads[v][lq]][le];
@@ -247,18 +262,21 @@ namespace QMT {
           return false;
         }
         F(k,6) stencils[8*v+k] = orderedVertices[k];
+      } else if (M.entity[v].first == 2) {
+        smoothing_type[v] = ST_LAPLACIAN;
       }
+    }
+    if (nbnm != 0) {
+      warn("{} vertices on non-manifold edges, using laplacian smoothing for them", nbnm);
     }
 
     /* Explicit smoothing loop */
     F(k, iter_max) {
       if (k >= 50 && k % (iter_max / 10) == 0) info("  {} / {} iter", k, iter_max);
 
-      /* A. Winslow smoothing of interior vertices */
+      /* A. Smoothing of interior vertices */
       FC(v,M.points.size(),M.entity[v].first == 2) {
-        if (v2v[v].size() < 3) {
-          continue;
-        } else if (v2v[v].size() == 4) {
+        if (smoothing_type[v] == ST_WINSLOW_FD4) {
           vec3 ptsStencil[8];
           F(k,8) ptsStencil[k] = M.points[stencils[8*v+k]];
 
@@ -281,7 +299,7 @@ namespace QMT {
           };
 
           M.points[v] = winslow2DNewPosition(ptsStencilR);
-        } else {
+        } else if (smoothing_type[v] == ST_LAPLACIAN){
           vec3 avg = {0,0,0};
           F(lv,v2v[v].size()) {
             avg = avg + M.points[v2v[v][lv]];
@@ -300,31 +318,85 @@ namespace QMT {
             }
             M.points[v] = proj;
           } else {
-            error("failed to project point {} on {}", M.points[v], M.entity[v]);
+            error("iter {}, v={} (surface), smoothing_type = {}: failed to project point {} on {}, v2v[v] = {}", k, v, smoothing_type[v], M.points[v], M.entity[v], v2v[v]);
             return false;
           }
         }
       }
 
-      /* B. Boundary orthogonality correction */
-      FC(v,M.points.size(),v2quads[v].size() == 2) { // TODO do the same for feature curves
-        vec3 ptsStencil[6];
-        F(k,6) {
-          ptsStencil[k] = M.points[stencils[8*v+k]];
+      /* B. Feature curve vertices (boundary or internal curve) */
+      FC(v,M.points.size(),M.entity[v].first == 1) { 
+        bool require_proj = false;
+        if (smoothing_type[v] == ST_BDR_ORTH_PROJ) { /* Orthogonal projection on boundary */
+          vec3 ptsStencil[6];
+          F(k,6) {
+            ptsStencil[k] = M.points[stencils[8*v+k]];
+          }
+          /* Boundary stencil in stencils[]:
+           * --5---0---1--
+           *   |   |   |
+           * --4---3---2--
+           *   |   |   |
+           * Orth. correction: project 3 on {5,0,1}
+           */
+          if (projector != NULL && M.entity[v].first != -1) {
+            /* Projection on underlying curve */
+            vec3 query = ptsStencil[3];
+            vec3 proj;
+            bool okp = projector->project(M.entity[v].first,M.entity[v].second,query,proj,projectionEltCache[v]);
+            if (okp) {
+              if (proj[0] == DBL_MAX) {
+                error("wrong projected point: {}", proj);
+                continue;
+              }
+              M.points[v] = proj;
+            } else {
+              error("iter {}, v={} (feature curve), smoothing_type = {}: failed to project point {} on {}", k, v, smoothing_type[v], M.points[v], M.entity[v]);
+              return false;
+            }
+          } else {
+            /* Projection on boundary stencil */
+            M.points[v] = project_point_on_curve(ptsStencil[3],{ptsStencil[1],ptsStencil[0],ptsStencil[5]});
+          }
+        } else if (smoothing_type[v] == ST_WINSLOW_FD4) {
+          vec3 ptsStencil[8];
+          F(k,8) ptsStencil[k] = M.points[stencils[8*v+k]];
+
+          /* Stencil for Winslow smoothin (different from ordering in stencils[]):
+           *   6---1---4
+           *   |   |   |
+           *   2--- ---0
+           *   |   |   |
+           *   7---3---5
+           */
+          vec3 ptsStencilR[8] = {
+            ptsStencil[0],
+            ptsStencil[2],
+            ptsStencil[4],
+            ptsStencil[6],
+            ptsStencil[1],
+            ptsStencil[7],
+            ptsStencil[3],
+            ptsStencil[5]
+          };
+
+          M.points[v] = winslow2DNewPosition(ptsStencilR);
+          require_proj = true;
+
+        } else if (smoothing_type[v] == ST_LAPLACIAN) {
+          vec3 avg = {0,0,0};
+          F(lv,v2v[v].size()) {
+            avg = avg + M.points[v2v[v][lv]];
+          }
+          avg  = avg * double(1. / v2v[v].size());
+          M.points[v] = avg;
+          require_proj = true;
         }
 
-        /* Boundary stencil in stencils[]:
-         * --5---0---1--
-         *   |   |   |
-         * --4---3---2--
-         *   |   |   |
-         * Orth. correction: project 3 on {5,0,1}
-         */
-        if (projector != NULL && M.entity[v].first != -1) {
-          /* Projection on underlying curve */
-          vec3 query = ptsStencil[3];
+        /* Projection on feature curve */
+        if (require_proj && projector != NULL && M.entity[v].second != -1) {
           vec3 proj;
-          bool okp = projector->project(M.entity[v].first,M.entity[v].second,query,proj,projectionEltCache[v]);
+          bool okp = projector->project(M.entity[v].first,M.entity[v].second,M.points[v],proj,projectionEltCache[v]);
           if (okp) {
             if (proj[0] == DBL_MAX) {
               error("wrong projected point: {}", proj);
@@ -332,12 +404,9 @@ namespace QMT {
             }
             M.points[v] = proj;
           } else {
-            error("failed to project point {} on {}", M.points[v], M.entity[v]);
+            error("iter {}, v={} (feature curve), smoothing_type = {}: failed to project point {} on {}", k, v, smoothing_type[v], M.points[v], M.entity[v]);
             return false;
           }
-        } else {
-          /* Projection on boundary stencil */
-          M.points[v] = project_point_on_curve(ptsStencil[3],{ptsStencil[1],ptsStencil[0],ptsStencil[5]});
         }
       }
     }

@@ -5195,7 +5195,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   qLayout.cutMesh(cuts,inverseClassificationEdges);
   gm->writeMSH("cutmesh.msh", 4.0, false, true);
 
-  constexpr bool do_reclassify = true; /* no longer needed, done by QMT */
+  constexpr bool do_reclassify = false; /* no longer needed, done by QMT */
   if (do_reclassify) {
     Msg::Info("Classifying the model");
     discreteEdge *de = new discreteEdge(
@@ -5212,17 +5212,17 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     /* Validity check */
     int countError = 0;
     for(GModel::fiter it = GModel::current()->firstFace();
-	it != GModel::current()->lastFace(); it++) {
+        it != GModel::current()->lastFace(); it++) {
       if((*it)->edges().size() != 4) {
-	Msg::Warning("quad layout failed : face %lu has %lu boundaries",
-		     (*it)->tag(), (*it)->edges().size());
-	countError++;
+        Msg::Warning("quad layout failed : face %lu has %lu boundaries",
+            (*it)->tag(), (*it)->edges().size());
+        countError++;
       }
     }
     if(!countError) {
       Msg::Info(
-		"Quad layout success : the model is partitioned in %d master quads",
-		GModel::current()->getNumFaces());
+          "Quad layout success : the model is partitioned in %d master quads",
+          GModel::current()->getNumFaces());
       Msg::Info("Partitioned mesh has been saved in %s", mshout.c_str());
       Msg::Info("Result of computations have been saved in %s", posout.c_str());
     }
