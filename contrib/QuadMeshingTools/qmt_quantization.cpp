@@ -1647,7 +1647,6 @@ namespace QMT {
         if (f == pf) continue; /* avoid come back through the same face in the QTMesh */
         if (parent[e2] != NO_ID) { /* node already reached ... */
           if (parent_face[e2] == f) { /* do not go again through the same edge in the same direction */
-            warn("NO !");
             continue;
           }
 
@@ -1938,9 +1937,9 @@ namespace QMT {
         side_edge_invert[s].push_back(face.edge_orient_invert[le]);
       }
       // warning/note: if face.edge_orient_invert[le0] = true, not sure if it works
-      if (face.edge_orient_invert[le0]) {
-        warn("(not sure if ok) f={}, le0={}: edge orient invert = true", f, le0);
-      }
+      // if (face.edge_orient_invert[le0]) {
+      //   warn("(not sure if ok) f={}, le0={}: edge orient invert = true", f, le0);
+      // }
 
       // DBG("-----");
       // DBG(f);
