@@ -538,14 +538,36 @@ namespace QMT_QZ_Utils {
 
 
   using namespace GLog;
-  void debug_show_face_in_view(const QTMesh& M, id f, const std::string& viewName) {
+  void debug_show_face_in_view(const QTMesh& M, id f, const std::string& viewName, const vector<id>& edge_n = {}) {
     const vector<id>& edges = M.faces[f].edges; 
     GeoLog log;
     F(le,edges.size()) {
       const TEdge& te = M.edges[edges[le]];
+      double val = (edge_n.size() > 0) ? edge_n[edges[le]] : double(le);
       F(i,te.pts.size()-1) {
-        log.add({te.pts[i],te.pts[i+1]},double(le),viewName);
+        log.add({te.pts[i],te.pts[i+1]},val,viewName);
       }
+    }
+    log.toGmsh();
+  }
+
+  vec3 tedge_center(const QTMesh& M, id e) {
+    vec3 p = M.edges[e].pts[M.edges[e].pts.size()/2];
+    if (M.edges[e].pts.size() < 5) {
+      p = 0.5 * (M.edges[e].pts[0] + M.edges[e].pts[1]);
+    }
+    return p;
+  }
+
+  void debug_show_tchord_in_view(const QTMesh& M, const vector<id>& tchord, const std::string& viewName) {
+    if (tchord.size()<2) return;
+    GeoLog log;
+    F(i,tchord.size()-1) {
+      id e1 = tchord[i];
+      id e2 = tchord[i+1];
+      vec3 p1 = tedge_center(M, e1);
+      vec3 p2 = tedge_center(M, e2);
+      log.add({p1,p2},double(i),viewName);
     }
     log.toGmsh();
   }
@@ -838,8 +860,8 @@ namespace QMT {
   }
 
   bool subdivide_degenerate_faces(QTMesh& M) {
+    constexpr bool SHOW_MPS = false;
     size_t nf = 0;
-
     /* Collect edges and faces ti split */
     vector<id> edges_to_split;
     vector<id> faces_to_split;
@@ -851,8 +873,7 @@ namespace QMT {
       warn("face {} has {} edges, flag for midpoint subdivision", f, M.faces[f].edges.size());
       nf += 1;
 
-      // DEBUG
-      debug_show_face_in_view(M,f,"to_split_"+std::to_string(f));
+      if (SHOW_MPS) debug_show_face_in_view(M,f,"to_split_"+std::to_string(f));
     }
     sort_unique(edges_to_split);
 
@@ -870,6 +891,7 @@ namespace QMT {
       vertexFromEdgeSplit[nv] = true;
     }
 
+    id nfb = M.faces.size();
     /* Split faces (midpoint subdivision) */
     F(lf,faces_to_split.size()) {
       id f = faces_to_split[lf];
@@ -882,11 +904,13 @@ namespace QMT {
     }
     if (nf > 0) info("fixed {} degenerate faces via QTMesh splitting", nf);
 
-    constexpr bool VERIFY = true;
-    if (VERIFY) {
-      FC(f,M.faces.size(),M.faces[f].edges.size() > 0 && M.faces[f].edges.size() != 4) {
-        warn("verification: face {} has {} edges", f, M.faces[f].edges.size());
-        debug_show_face_in_view(M,f,"tj_"+std::to_string(f));
+    if (SHOW_MPS) {
+      FC(f,M.faces.size(),M.faces[f].edges.size() > 0) {
+        if (M.faces[f].edges.size() != 4) {
+          debug_show_face_in_view(M,f,"tj_"+std::to_string(f));
+        } else if (inVector(id(f),faces_to_split) || f >= nfb){
+          debug_show_face_in_view(M,f,"as_"+std::to_string(f));
+        }
       }
     }
 
@@ -1418,16 +1442,17 @@ namespace QMT {
     return edges;
   }
 
-  bool unroll_parent(const vector<id>& parent, id e, vector<id>& path) {
+  bool unroll_parent(const vector<id>& parent, id e, vector<id>& path, id eStart, const vector<id>& finished) {
     if (e == NO_ID) return false;
     if (parent[e] == NO_ID) return false;
     path.clear();
     path.push_back(e);
-    while(parent[path.back()] != path.back()) {
-      path.push_back(parent[path.back()]);
-      if (parent[path.back()] == NO_ID) return false;
-    }
-    std::reverse(path.begin(),path.end());
+    bool stop = false;
+    do {
+      e = parent[e];
+      stop = (e == NO_ID) || (parent[e] == e) || inVector(e, finished);
+      if (!stop) path.push_back(e);
+    } while(!stop);
     return true;
   }
 
@@ -1459,7 +1484,7 @@ namespace QMT {
     vector<id> direction(M.edges.size(),NO_ID); /* lf from eStart */
     vector<id> finished(M.edgeToFaces[eStart].size(), NO_ID);
 
-    constexpr bool VERB = false;
+    bool VERB = false;
     if (VERB) info("====== tchord from eStart = {} ======", eStart);
     /* Propagation */
     bool all_finished = false;
@@ -1489,6 +1514,7 @@ namespace QMT {
             all_finished = true;
             break;
           }
+          if (parent[oe] != NO_ID) continue;
           parent[oe] = e;
           Q.push({edge_nx[oe],oe});
           direction[oe] = (e == eStart) ? lf : direction[e];
@@ -1517,13 +1543,183 @@ namespace QMT {
 
     F(i,finished.size()) {
       vector<id> path;
-      bool oku = unroll_parent(parent, finished[i], path);
+      bool oku = unroll_parent(parent, finished[i], path, eStart, finished);
       if (!oku) {
         error("failed to unroll parent chain for finished[{}]={}", i, finished[i]);
+        return false;
       }
+      if (finished.size() == 2) {
+        if (i == 0) {
+          path.push_back(eStart);
+          std::reverse(path.begin(),path.end());
+        }
+      }
+      
       F(j,path.size()) tchord.push_back(path[j]);
     }
+
     sort_unique(tchord);
+
+    return true;
+  }
+
+  bool build_graph_from_QTMesh(const QTMesh& M, vector<id3>& gedges, vector<vector<id>>& gv2ge) {
+    /* QTMesh edge becomes gvertices, linked by gedges */
+    gedges.clear();
+    gv2ge.clear();
+    id mgv = 0;
+    F(f,M.faces.size()) {
+      vector<vector<id> > side_edges(4);
+      F(le,M.faces[f].edges.size()) {
+        side_edges[M.faces[f].edge_sides[le]].push_back(M.faces[f].edges[le]);
+      }
+      F(s,2) {
+        id os = s+2;
+        F(i,side_edges[s].size()) {
+          F(j,side_edges[os].size()) {
+            id2 gedge_01 = sorted(side_edges[s][i],side_edges[os][j]);
+            id3 gedge = {gedge_01[0],gedge_01[1],(id)f};
+            gedges.push_back(gedge);
+            mgv = std::max(mgv,gedge[0]);
+            mgv = std::max(mgv,gedge[1]);
+          }
+        }
+      }
+    }
+    sort_unique(gedges);
+    gv2ge.resize(mgv+1);
+    F(i,gedges.size()) F(lv,2) gv2ge[gedges[i][lv]].push_back(i);
+
+    return true;
+  }
+
+  bool tchord_propagation(
+      const vector<id3>& gedges,
+      const vector<vector<id> >& e2ge,
+      const vector<bool>& eIsStop,
+      const vector<double>& edge_nx,
+      const vector<id>& edge_n,
+      id eStart,
+      vector<id>& tchord,
+      const QTMesh& Mdbg) {
+
+    /* QTMesh meshes adjacent to eStart */
+    vector<id> startFs;
+    F(i,e2ge[eStart].size()) {
+      id ge = e2ge[eStart][i];
+      id f = gedges[ge][2];
+      startFs.push_back(f);
+    }
+    sort_unique(startFs);
+    if (startFs.size() != 1 && startFs.size() != 2) {
+      error("cannot propagate from eStart = {}, adjacent faces: {}", eStart, startFs);
+      return false;
+    }
+    std::unordered_map<id,id> startFaceEnding;
+    F(i,startFs.size()) startFaceEnding[startFs[i]] = NO_ID;
+
+    vector<bool> visited(gedges.size(),false);
+    vector<id> parent(e2ge.size(),NO_ID);
+    vector<id> parent_face(e2ge.size(),NO_ID);
+    vector<id> parent_face_start(e2ge.size(),NO_ID);
+    std::priority_queue<std::pair<double,id>, std::vector<std::pair<double,id> > > Q; 
+
+    bool finished = false;
+    id FIRST = NO_ID - 1;
+    parent[eStart] = FIRST;
+    parent_face[eStart] = FIRST;
+    parent_face_start[eStart] = FIRST;
+    Q.push({DBL_MAX,eStart});
+    vector<id> lgeStrartReachedBdr(e2ge[eStart].size(),NO_ID);
+    bool closed_loop = false;
+    while (Q.size() > 0.) {
+      id e = Q.top().second;
+      id pf = parent_face[e];
+      Q.pop();
+      bool prop = false;
+      F(lge,e2ge[e].size()) {
+        if (e != eStart && eIsStop[e]) continue; /* do not propagate through boundary / non-manifold */
+        id ge = e2ge[e][lge];
+        if (visited[ge]) continue; /* each graph edge visited only one time */
+        id3 gedge = gedges[ge];
+        id e2 = (gedge[0] != e) ? gedge[0] : gedge[1];
+        id f = gedge[2];
+        if (f == pf) continue; /* avoid come back through the same face in the QTMesh */
+        if (parent[e2] != NO_ID) { /* node already reached ... */
+          if (parent_face[e2] == f) { /* do not go again through the same edge in the same direction */
+            continue;
+          }
+
+          /* closed loop */
+          startFaceEnding[parent_face_start[e]] = e; /* finish current path */
+          startFaceEnding[parent_face_start[e2]] = e2; /* cut the other path */
+          closed_loop = true;
+          break;
+        }
+        double prio = 0;
+        if (edge_n[e2] == 0.) {
+          prio = 1.e6 * std::abs(edge_nx[e2] - double(edge_n[e2]));
+        } else {
+          prio = edge_nx[e2] - edge_n[e2]; /* negative if nx < n */
+        }
+        Q.push({prio,e2});
+        visited[ge] = true;
+        parent[e2] = e;
+        parent_face[e2] = f;
+        if (e == eStart) {
+          parent_face_start[e2] = f;
+        } else {
+          parent_face_start[e2] = parent_face_start[e];
+        }
+        prop = true;
+      }
+      if (closed_loop || (!prop && eIsStop[e])) {
+        if (e == eStart) {
+          error("no propagation from eStart = {}", eStart);
+          return false;
+        }
+        startFaceEnding[parent_face_start[e]] = e;
+        finished = true;
+        for (auto& kv: startFaceEnding) {
+          if (kv.second == NO_ID) finished = false;
+        }
+        if (finished) break;
+      }
+    }
+    if (!finished) {
+      error("tchord_propagation: failed to finish, eStart = {}", eStart);
+      for (auto& kv: startFaceEnding) {
+        error("  k={}, startFaceEnding[k]]={}", kv.first, kv.second);
+        if (kv.second != NO_ID) finished = false;
+      }
+      return false;
+    }
+
+    /* Path unrolling */
+    tchord.clear();
+    id i = 0;
+    for (auto& kv: startFaceEnding) {
+      id e_last = kv.second;
+      id e = e_last;
+      vector<id> spath;
+      if (e != eStart) {
+        do {
+          spath.push_back(e);
+          e = parent[e];
+        } while (e != eStart);
+      }
+      if (i == 0) {
+        F(j,spath.size()) tchord.push_back(spath[j]);
+        tchord.push_back(eStart);
+      } else if (i == 1) {
+        std::reverse(spath.begin(),spath.end());
+        F(j,spath.size()) tchord.push_back(spath[j]);
+      } else {
+        error("more than 2 startFaceEnding should not happen");
+        return false;
+      }
+      i += 1;
+    }
 
     return true;
   }
@@ -1553,32 +1749,84 @@ namespace QMT {
     }
     std::sort(nx_edge.begin(), nx_edge.end());
 
-    /* Append integer values to edge_n by using t-chord propagation */
-    F(i,nx_edge.size()) {
-      id e = nx_edge[i].second;
-      if (edge_n[e] != 0) continue;
-      // TODO: also append value if edge_n[e] different from rounded nx ? 
+    constexpr bool GRAPH_VERSION = true;
+    if (GRAPH_VERSION) {
+      vector<id3> gedges; /* graph edges, triplet (e1,e2,f) */
+      vector<vector<id> > e2ge; /* QTMesh edge to graph edges */
+      bool okbg = build_graph_from_QTMesh(M, gedges, e2ge);
+      RFC(!okbg, "failed to build graph from QTMesh");
+      RFC(e2ge.size() != M.edges.size(), "wrong number of graph edges");
+      vector<bool> eIsStop(M.edges.size(),false);
+      FC(e,M.edgeToFaces.size(),M.edgeToFaces[e].size() != 2) eIsStop[e] = true;
 
-      vector<id> tchord;
-      bool oktc = tchord_propagation(M, edge_nx, e, tchord);
-      if (!oktc || tchord.size() == 0) {
-        error("failed to propagate tchord from e = {}", e);
-        return false;
-      }
+      /* Append integer values to edge_n by using t-chord propagation */
+      F(i,nx_edge.size()) {
+        id e = nx_edge[i].second;
+        if (edge_n[e] != 0) continue;
+        // TODO: also append value if edge_n[e] different from rounded nx ? 
 
-      double nx_avg = 0.;
-      F(j,tchord.size()) {
-        id e2 = tchord[j];
-        nx_avg += (edge_nx[e2] - double(edge_n[e2]));
+        vector<id> tchord;
+        bool oktc = tchord_propagation(gedges, e2ge, eIsStop, edge_nx, edge_n, e, tchord, M);
+        if (!oktc || tchord.size() == 0) {
+          error("failed to propagate tchord in graph from e = {}", e);
+          return false;
+        }
+        // debug_show_tchord_in_view(M, tchord, "view_tc"+std::to_string(e)); 
+
+        double diff_avg = 0.;
+        double diff_min = DBL_MAX;
+        F(j,tchord.size()) {
+          id e2 = tchord[j];
+          diff_avg += (edge_nx[e2] - double(edge_n[e2]));
+          diff_min = std::min(diff_min, std::abs(edge_nx[e2] - double(edge_n[e2])));
+        }
+        diff_avg /= double(tchord.size());
+        constexpr bool USE_MIN = true;
+        int inc = 0;
+        if (USE_MIN) {
+          inc = (int) std::floor(diff_min);
+        } else {
+          inc = (int) std::floor(diff_avg);
+        }
+        if (inc <= 0) inc = 1;
+        F(j,tchord.size()) {
+          id e2 = tchord[j];
+          edge_n[e2] += inc;
+        }
       }
-      nx_avg /= double(tchord.size());
-      int inc = (int) std::round(nx_avg);
-      if (inc <= 0) inc = 1;
-      F(j,tchord.size()) {
-        id e2 = tchord[j];
-        edge_n[e2] += inc;
+    } else {
+      vector<id> f12_edges = M.faces[12].edges;
+      /* Append integer values to edge_n by using t-chord propagation */
+      F(i,nx_edge.size()) {
+        id e = nx_edge[i].second;
+        if (edge_n[e] != 0) continue;
+        // TODO: also append value if edge_n[e] different from rounded nx ? 
+
+        vector<id> tchord;
+        bool oktc = tchord_propagation(M, edge_nx, e, tchord);
+        if (!oktc || tchord.size() == 0) {
+          error("failed to propagate tchord from e = {}", e);
+          return false;
+        }
+
+        double nx_avg = 0.;
+        F(j,tchord.size()) {
+          id e2 = tchord[j];
+          nx_avg += (edge_nx[e2] - double(edge_n[e2]));
+        }
+        nx_avg /= double(tchord.size());
+        int inc = (int) std::round(nx_avg);
+        if (inc <= 0) inc = 1;
+        F(j,tchord.size()) {
+          id e2 = tchord[j];
+          edge_n[e2] += inc;
+          if (inVector(e2,f12_edges)) {
+            DBG(i,e,tchord.size(),j,e2,inc,edge_n[e2]);
+          }
+        }
       }
     }
+
 
     F(e,M.edges.size()) {
       debug("  e={},edge={} | nx = {} -> n = {}]", e, M.edges[e], edge_nx[e], edge_n[e]);
@@ -1606,6 +1854,12 @@ namespace QMT {
         if (side_n[0] != side_n[2] || side_n[1] != side_n[3]) {
           error("Quantization verification | face {}: side_n = {}  (edges = {})",
               f, side_n, tf.edges);
+          error("  face {}: {}", f, tf);
+          F(le,tf.edges.size()) {
+            id e = tf.edges[le];
+            error("  edge {} (n={},nx={}): {}", e, edge_n[e], edge_nx[e], M.edges[e]);
+          }
+          debug_show_face_in_view(M, f, "qprob_f"+std::to_string(f), edge_n);
           return false;
         }
         
@@ -1683,9 +1937,9 @@ namespace QMT {
         side_edge_invert[s].push_back(face.edge_orient_invert[le]);
       }
       // warning/note: if face.edge_orient_invert[le0] = true, not sure if it works
-      if (face.edge_orient_invert[le0]) {
-        warn("(not sure if ok) f={}, le0={}: edge orient invert = true", f, le0);
-      }
+      // if (face.edge_orient_invert[le0]) {
+      //   warn("(not sure if ok) f={}, le0={}: edge orient invert = true", f, le0);
+      // }
 
       // DBG("-----");
       // DBG(f);
