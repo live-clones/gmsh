@@ -233,6 +233,64 @@ void GModel::deleteMesh()
   _lastMeshVertexError.clear();
 }
 
+void GModel::deleteMesh(const std::vector<GEntity*> &entities)
+{
+  if(entities.empty()) {
+    deleteMesh();
+    return;
+  }
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    bool ok = true;
+    switch(ge->dim()) {
+    case 0:
+      {
+        std::vector<GEdge *> e = ge->edges();
+        for(std::vector<GEdge *>::iterator it = e.begin(); it != e.end(); ++it) {
+          if((*it)->getNumMeshElements()) {
+            ok = false;
+            break;
+          }
+        }
+      }
+      break;
+    case 1:
+      {
+        std::vector<GFace *> f = ge->faces();
+        for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
+          if((*it)->getNumMeshElements()) {
+            ok = false;
+            break;
+          }
+        }
+      }
+      break;
+    case 2:
+      {
+        std::list<GRegion *> r = ge->regions();
+        for(std::list<GRegion *>::iterator it = r.begin(); it != r.end(); ++it) {
+          if((*it)->getNumMeshElements()) {
+            ok = false;
+            break;
+          }
+        }
+      }
+      break;
+    }
+    if(ok) {
+      ge->deleteMesh();
+    }
+    else {
+      Msg::Warning("Cannot delete mesh of entity (%d, %d), connected to mesh "
+                   "of higher dimensional entity", ge->dim(), ge->tag());
+    }
+  }
+  destroyMeshCaches();
+  _currentMeshEntity = 0;
+  _lastMeshEntityError.clear();
+  _lastMeshVertexError.clear();
+}
+
 void GModel::deleteVertexArrays()
 {
   for(riter it = firstRegion(); it != lastRegion(); ++it)

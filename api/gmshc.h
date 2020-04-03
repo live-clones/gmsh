@@ -449,8 +449,12 @@ GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n
 GMSH_API void gmshModelMeshGetLastNodeError(size_t ** nodeTags, size_t * nodeTags_n,
                                             int * ierr);
 
-/* Clear the mesh, i.e. delete all the nodes and elements. */
-GMSH_API void gmshModelMeshClear(int * ierr);
+/* Clear the mesh, i.e. delete all the nodes and elements, for the entities
+ * `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh
+ * of an entity can only be cleared if this entity is not on the boundary of
+ * another entity with a non-empty mesh. */
+GMSH_API void gmshModelMeshClear(int * dimTags, size_t dimTags_n,
+                                 int * ierr);
 
 /* Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
  * `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and

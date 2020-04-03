@@ -832,12 +832,17 @@ namespace gmsh { // Top-level functions
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
-      // Clear the mesh, i.e. delete all the nodes and elements.
-      inline void clear()
+      // Clear the mesh, i.e. delete all the nodes and elements, for the entities
+      // `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh
+      // of an entity can only be cleared if this entity is not on the boundary of
+      // another entity with a non-empty mesh.
+      inline void clear(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
       {
         int ierr = 0;
-        gmshModelMeshClear(&ierr);
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshClear(api_dimTags_, api_dimTags_n_, &ierr);
         if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
       }
 
       // Get the nodes classified on the entity of dimension `dim' and tag `tag'.

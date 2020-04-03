@@ -1120,15 +1120,20 @@ function getLastNodeError()
 end
 
 """
-    gmsh.model.mesh.clear()
+    gmsh.model.mesh.clear(dimTags = Tuple{Cint,Cint}[])
 
-Clear the mesh, i.e. delete all the nodes and elements.
+Clear the mesh, i.e. delete all the nodes and elements, for the entities
+`dimTags`. if `dimTags` is empty, clear the whole mesh. Note that the mesh of an
+entity can only be cleared if this entity is not on the boundary of another
+entity with a non-empty mesh.
 """
-function clear()
+function clear(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClear, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshClear returned non-zero error code: $(ierr[])")
     return nothing
 end

@@ -1000,10 +1000,21 @@ gmsh::model::mesh::getLastNodeError(std::vector<std::size_t> &nodeTags)
   for(std::size_t i = 0; i < v.size(); i++) nodeTags.push_back(v[i]->getNum());
 }
 
-GMSH_API void gmsh::model::mesh::clear()
+GMSH_API void gmsh::model::mesh::clear(const vectorpair &dimTags)
 {
   if(!_isInitialized()) { throw - 1; }
-  GModel::current()->deleteMesh();
+  std::vector<GEntity*> entities;
+  for(std::size_t i = 0; i < dimTags.size(); i++) {
+    int dim = dimTags[i].first;
+    int tag = dimTags[i].second;
+    GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+    if(!ge) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    entities.push_back(ge);
+  }
+  GModel::current()->deleteMesh(entities);
 }
 
 static void _getAdditionalNodesOnBoundary(GEntity *entity,

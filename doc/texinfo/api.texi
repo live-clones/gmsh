@@ -832,11 +832,14 @@ populated by the new 3D meshing algorithms.
 @end table
 
 @item gmsh/model/mesh/clear
-Clear the mesh, i.e. delete all the nodes and elements.
+Clear the mesh, i.e. delete all the nodes and elements, for the entities
+@code{dimTags}. if @code{dimTags} is empty, clear the whole mesh. Note that the
+mesh of an entity can only be cleared if this entity is not on the boundary of
+another entity with a non-empty mesh.
 
 @table @asis
 @item Input:
--
+@code{dimTags = []}
 @item Output:
 -
 @item Return:
@@ -1609,6 +1612,19 @@ Set the meshing algorithm on the model entity of dimension @code{dim} and tag
 Force the mesh size to be extended from the boundary, or not, for the model
 entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
 @code{dim} == 2.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/setOnlyInitialMesh
+Only generate the initial mesh (or not) for the entity of dimension @code{dim}
+and tag @code{tag}. Currently only supported for @code{dim} == 2.
 
 @table @asis
 @item Input:
@@ -2499,9 +2515,22 @@ Set the meshing algorithm on the model entity of dimension @code{dim} and tag
 @end table
 
 @item gmsh/model/geo/mesh/setSizeFromBoundary
-Force the mesh size to be extended from the boundary, or not, for the model
+Force the mesh size to be extended from the boundary (or not) for the model
 entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
 @code{dim} == 2.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/geo/mesh/setOnlyInitialMesh
+Only generate the initial mesh (or not) for the entity of dimension @code{dim}
+and tag @code{tag}. Currently only supported for @code{dim} == 2.
 
 @table @asis
 @item Input:

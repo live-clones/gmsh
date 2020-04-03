@@ -832,11 +832,14 @@ populated by the new 3D meshing algorithms.
 @end table
 
 @item gmsh/model/mesh/clear
-Clear the mesh, i.e. delete all the nodes and elements.
+Clear the mesh, i.e. delete all the nodes and elements, for the entities
+@code{dimTags}. if @code{dimTags} is empty, clear the whole mesh. Note that the
+mesh of an entity can only be cleared if this entity is not on the boundary of
+another entity with a non-empty mesh.
 
 @table @asis
 @item Input:
--
+@code{dimTags = []}
 @item Output:
 -
 @item Return:

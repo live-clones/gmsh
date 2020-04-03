@@ -539,8 +539,11 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::clear
       //
-      // Clear the mesh, i.e. delete all the nodes and elements.
-      GMSH_API void clear();
+      // Clear the mesh, i.e. delete all the nodes and elements, for the entities
+      // `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh
+      // of an entity can only be cleared if this entity is not on the boundary of
+      // another entity with a non-empty mesh.
+      GMSH_API void clear(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // gmsh::model::mesh::getNodes
       //

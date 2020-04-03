@@ -1471,14 +1471,19 @@ class model:
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
-        def clear():
+        def clear(dimTags=[]):
             """
-            gmsh.model.mesh.clear()
+            gmsh.model.mesh.clear(dimTags=[])
 
-            Clear the mesh, i.e. delete all the nodes and elements.
+            Clear the mesh, i.e. delete all the nodes and elements, for the entities
+            `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh
+            of an entity can only be cleared if this entity is not on the boundary of
+            another entity with a non-empty mesh.
             """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
             lib.gmshModelMeshClear(
+                api_dimTags_, api_dimTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
