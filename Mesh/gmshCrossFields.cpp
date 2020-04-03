@@ -2525,9 +2525,6 @@ struct edgeCuts {
     xis.push_back(xi);
     indexOfCuts.push_back(ind);
     idsOfCuts.push_back(id);
-    MEdgeVertex *v =
-      new MEdgeVertex(p.x(), p.y(), p.z(), NULL, 0.0);
-    vs.push_back(v);
     return true;
   }
   void finish(GModel *gm, GEdge *mother, MVertex *v0, MVertex *v1, FILE *f)
@@ -2557,14 +2554,11 @@ struct edgeCuts {
     }
     
     for(size_t i = 0; i < ps.size(); i++) {
-      MEdgeVertex *v = (MEdgeVertex*)vs[i];
       GEdge *ge = gm->getEdgeByTag(indexOfCuts[i]);
       if(!ge) {
         ge = new discreteEdge(gm, indexOfCuts[i]);
         gm->add(ge);
       }
-      v->setEntity(ge);
-      ge->mesh_vertices.push_back(v);
       double xi = 0.0;
       if (mother){// FIXME
 	//	SPoint3 p0 (v0->x(),v0->y(),v0->z());
@@ -2576,10 +2570,13 @@ struct edgeCuts {
 	//	GPoint gp = mother->point (xi);
 	//	ps[i] = SPoint3(gp.x(),gp.y(),gp.z());
       }  
-      
+      MEdgeVertex *v =
+        new MEdgeVertex(ps[i].x(), ps[i].y(), ps[i].z(), ge, xi);
       if(f)
         fprintf(f, "SP(%g,%g,%g){%d};\n", ps[i].x(), ps[i].y(), ps[i].z(),
                 ge->tag());
+      vs.push_back(v);
+      ge->mesh_vertices.push_back(v);
     }
   }
   edgeCuts() {}
@@ -3812,7 +3809,7 @@ public:
     PView* theta = PView::getViewByName("theta");
     if (theta) cf_tag = theta->getTag();
     std::map<std::pair<size_t,size_t>,double> edge_to_angle;
-    int bc_expansion_layers = 0;
+    int bc_expansion_layers = 1;
     bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,&edge_to_angle, bc_expansion_layers);
     if (!okcf) {
       Msg::Error("Failed to compute cross field");
@@ -5198,7 +5195,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   qLayout.cutMesh(cuts,inverseClassificationEdges);
   gm->writeMSH("cutmesh.msh", 4.0, false, true);
 
-  constexpr bool do_reclassify = true;//false; /* no longer needed, done by QMT */
+  constexpr bool do_reclassify = true; /* no longer needed, done by QMT */
   if (do_reclassify) {
     Msg::Info("Classifying the model");
     discreteEdge *de = new discreteEdge(
@@ -5876,6 +5873,11 @@ int computeUV(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& stat
       buildVertexToElement(f[i]->triangles, adj);
     }
     computeSingularities(qLayout.C, qLayout.singularities, qLayout.indices, f);
+    computeUniqueVectorPerTriangle(gm, f, qLayout.C, qLayout.d0, qLayout.d1);
+    computeSingularities(f,qLayout.d0, qLayout.singularities, qLayout.indices);
+    qLayout.d0.clear();
+    qLayout.d1.clear();
+
   }
 
   /* cut-graph and cross field projection */
