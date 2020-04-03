@@ -2196,7 +2196,6 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTMesh *mesh,
 
   for (uint32_t i=0; i<numMaxPoints; i++){
 
-
     // Take origin point
     double *originPoint = coords + 4*i;
 

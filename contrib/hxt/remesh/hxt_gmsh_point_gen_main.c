@@ -27,6 +27,7 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
     for (uint32_t j=0; j<6; j++){
       directions[9*i+j] = data[7*i+j];
     }
+    // dummy third direction (normal to the surface) 
     HXT_CHECK(myNormalizedCrossprod(&directions[9*i+0],&directions[9*i+3],&directions[9*i+6]));
 
     h_function[i] = data[7*i+6];
