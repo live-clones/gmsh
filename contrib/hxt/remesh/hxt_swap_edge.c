@@ -645,7 +645,7 @@ HXTStatus hxtSwapEdge (HXTMesh *mesh,
   if (ori == 1){
     validity = _check_triangle_validity_3d (mesh, nt1, n1, nt0, normal)
 	          && _check_triangle_validity_3d (mesh, nt1, nt0, n0, normal);
-	  return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Should not go here");
+	  //return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Should not go here");
   }
   else {
     validity = _check_triangle_validity_3d (mesh, n1, nt1, nt0, normal)
