@@ -1834,7 +1834,6 @@ GMSH_API void gmsh::model::mesh::getJacobians(
   const std::size_t numTasks)
 {
   if(!_isInitialized()) { throw - 1; }
-  BasisFactory::getNodalBasis(elementType);
   int dim = ElementType::getDimension(elementType);
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
@@ -2077,6 +2076,7 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
 {
   if(!_isInitialized()) { throw - 1; }
   int dim = ElementType::getDimension(elementType);
+  BasisFactory::getNodalBasis(elementType);
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
