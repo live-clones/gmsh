@@ -605,7 +605,7 @@ HXTStatus hxtSwapEdge (HXTMesh *mesh,
     nt1 = nodes_of_t1[(n0IndexInt1+1)%3];
     ori = 1;
     // TODO by definition it does not go here? 
-	  return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Should not go here");
+	  //return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Should not go here");
   }
   else{
     nt0 = nodes_of_t0[(n0IndexInt0+1)%3];
@@ -645,7 +645,7 @@ HXTStatus hxtSwapEdge (HXTMesh *mesh,
   if (ori == 1){
     validity = _check_triangle_validity_3d (mesh, nt1, n1, nt0, normal)
 	          && _check_triangle_validity_3d (mesh, nt1, nt0, n0, normal);
-	  return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Should not go here");
+	  //return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Should not go here");
   }
   else {
     validity = _check_triangle_validity_3d (mesh, n1, nt1, nt0, normal)
