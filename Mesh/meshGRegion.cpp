@@ -95,6 +95,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   }
 
   if(CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
      CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D)
     return;
 
@@ -183,7 +184,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
     refineMeshMMG(gr);
   }
-  else{
+  else if(CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY) {
     insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D,
                            1., true, &sqr);
 
