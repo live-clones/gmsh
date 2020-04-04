@@ -34,6 +34,11 @@ HierarchicalBasisH1Pri::HierarchicalBasisH1Pri(int order)
 
 HierarchicalBasisH1Pri::~HierarchicalBasisH1Pri() {}
 
+unsigned int HierarchicalBasisH1Pri::getNumberOfOrientations() const
+{
+  return 720; // factorial 6
+}
+
 double HierarchicalBasisH1Pri::_affineCoordinate(const int &j, const double &u,
                                                  const double &v,
                                                  const double &w)

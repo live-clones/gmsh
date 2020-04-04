@@ -18,7 +18,7 @@ variables:
 # ----------------------------------------------
 
 linux64_ci:
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu20.04
   script:
     - mkdir build
     - cd build
@@ -34,7 +34,7 @@ linux64_ci:
     - tags
 
 linux64_compatibility_ci:
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu20.04
   script:
     - mkdir build
     - cd build
@@ -345,7 +345,7 @@ macos64-sdk_official_release:
 # ----------------------------------------------
 
 .source_official: &source_official
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu20.04
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -382,7 +382,7 @@ source_official_release:
 
 doc_official_snapshot:
   stage: .post
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu20.04
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -401,7 +401,7 @@ doc_official_snapshot:
 
 doc_official_release:
   stage: .post
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu20.04
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   only:

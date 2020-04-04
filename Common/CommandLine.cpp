@@ -108,8 +108,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "(Mesh.SaveParametric)"));
   s.push_back(mp("-save_topology", "Save model topology (Mesh.SaveTopology)"));
   s.push_back(mp("-algo string", "Select mesh algorithm: auto, meshadapt, del2d, front2d, "
-                 "delquad, pack, del3d, front3d, mmg3d, hxt (Mesh.Algorithm and"
-                 "Mesh.Algorithm3D)"));
+                 "delquad, pack, initial2d, del3d, front3d, mmg3d, hxt, initial3d "
+                 "(Mesh.Algorithm and Mesh.Algorithm3D)"));
   s.push_back(mp("-smooth int", "Set number of mesh smoothing steps (Mesh.Smoothing)"));
   s.push_back(mp("-order int", "Set mesh order (Mesh.ElementOrder)"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements "
@@ -1135,6 +1135,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           else if(!strncmp(argv[i], "PackingOfParallelograms", 23) ||
                   !strncmp(argv[i], "pack", 4))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
+          else if(!strncmp(argv[i], "initial2d", 10))
+            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_INITIAL_ONLY);
           else if(!strncmp(argv[i], "del3d", 5) ||
                   !strncmp(argv[i], "gmsh3d", 6))
             opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_DELAUNAY);
@@ -1147,6 +1149,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_RTREE);
           else if(!strncmp(argv[i], "hxt", 3) )
             opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_HXT);
+          else if(!strncmp(argv[i], "initial3d", 10))
+            opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_INITIAL_ONLY);
           else{
             Msg::Error("Unknown mesh algorithm");
             if(exitOnError) Msg::Exit(1);

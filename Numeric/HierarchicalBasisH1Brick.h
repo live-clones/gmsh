@@ -46,6 +46,7 @@ class HierarchicalBasisH1Brick : public HierarchicalBasisH1 {
 public:
   HierarchicalBasisH1Brick(int order);
   virtual ~HierarchicalBasisH1Brick();
+  virtual unsigned int getNumberOfOrientations() const;
   // vertexBasis=[v0,...,v12]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
   // faceBasis=[phif0_{2,2},...,phif0_{2,pF0_2},...,phif0_{pF0_1,2},...,phief0_{pF0_1,pF0_2},phif1_{2,2}...}]

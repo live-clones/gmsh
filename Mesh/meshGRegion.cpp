@@ -20,6 +20,8 @@
 #include "GRegion.h"
 #include "GFace.h"
 #include "GEdge.h"
+#include "discreteFace.h"
+#include "discreteEdge.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MTetrahedron.h"
@@ -27,6 +29,28 @@
 #include "ExtrudeParams.h"
 #include "OS.h"
 #include "Context.h"
+
+static bool isFullyDiscrete(GRegion *gr)
+{
+  if(gr->geomType() != GEntity::DiscreteVolume) return false;
+  std::vector<GFace *> f = gr->faces();
+  for(std::size_t i = 0; i < f.size(); i++) {
+    if(f[i]->geomType() != GEntity::DiscreteSurface ||
+       (f[i]->geomType() == GEntity::DiscreteSurface &&
+        static_cast<discreteFace *>(f[i])->haveParametrization())) {
+      return false;
+    }
+  }
+  std::vector<GEdge *> e = gr->edges();
+  for(std::size_t i = 0; i < e.size(); i++) {
+    if(e[i]->geomType() != GEntity::DiscreteCurve ||
+       (e[i]->geomType() == GEntity::DiscreteCurve &&
+        static_cast<discreteEdge *>(e[i])->haveParametrization())) {
+      return false;
+    }
+  }
+  return true;
+}
 
 void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 {
@@ -50,7 +74,7 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
   for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); it++){
     GRegion *gr = *it;
     if(gr->meshAttributes.method == MESH_TRANSFINITE) continue;
-    if(gr->geomType() == GEntity::DiscreteVolume) continue;
+    if(isFullyDiscrete(gr)) continue;
     ExtrudeParams *ep = gr->meshAttributes.extrude;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) continue;
 
@@ -95,6 +119,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   }
 
   if(CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
      CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D)
     return;
 
@@ -183,7 +208,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
     refineMeshMMG(gr);
   }
-  else{
+  else if(CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY) {
     insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D,
                            1., true, &sqr);
 
@@ -204,7 +229,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
 void deMeshGRegion::operator()(GRegion *gr)
 {
-  if(gr->geomType() == GEntity::DiscreteVolume) return;
+  if(isFullyDiscrete(gr)) return;
   gr->deleteMesh();
 }
 
@@ -212,9 +237,10 @@ void meshGRegion::operator()(GRegion *gr)
 {
   gr->model()->setCurrentMeshEntity(gr);
 
-  if(gr->geomType() == GEntity::DiscreteVolume) return;
+  if(isFullyDiscrete(gr)) return;
   if(gr->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) return;
+  if(CTX::instance()->mesh.meshOnlyEmpty && gr->getNumMeshElements()) return;
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh) return;
@@ -237,7 +263,7 @@ void optimizeMeshGRegion::operator()(GRegion *gr, bool always)
 {
   gr->model()->setCurrentMeshEntity(gr);
 
-  if(!always && gr->geomType() == GEntity::DiscreteVolume) return;
+  if(!always && isFullyDiscrete(gr)) return;
 
   // don't optimize extruded meshes
   if(gr->meshAttributes.method == MESH_TRANSFINITE) return;

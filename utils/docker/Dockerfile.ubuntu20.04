@@ -1,0 +1,20 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get install -y apt-utils git curl cmake g++ gfortran python3 python3-numpy python3-scipy swig clang-tidy emacs-nox valgrind texlive texlive-latex-recommended texinfo libreoffice fonts-cmu petsc-dev slepc-dev python3-dev libopenblas-dev libfltk1.3-dev libfreetype6-dev libgl1-mesa-dev libxi-dev libxmu-dev mesa-common-dev tcl-dev tk-dev libhdf5-dev libcgns-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev libocct-foundation-dev libocct-data-exchange-dev libocct-ocaf-dev libopenmpi-dev && apt-get clean
+
+# to convert a .fodt document, simply run
+# soffice --headless --convert-to pdf Tutorials.fodt
+
+# "docker build --build-arg REBUILD_GMSH=somethingnew"
+ARG REBUILD_GMSH=
+
+RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git && cd gmsh && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_PRIVATE_API=1 .. && make -j8 shared && make install/fast && cd .. && rm -rf gmsh
+
+VOLUME ["/etc/gitlab-runner"]
+RUN useradd -ms /bin/bash validator
+USER validator
+WORKDIR /home/validator
+RUN mkdir -p ~/.ssh
+RUN chmod 700 ~/.ssh

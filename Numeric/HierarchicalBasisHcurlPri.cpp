@@ -39,6 +39,11 @@ HierarchicalBasisHcurlPri::HierarchicalBasisHcurlPri(int order)
 
 HierarchicalBasisHcurlPri::~HierarchicalBasisHcurlPri() {}
 
+unsigned int HierarchicalBasisHcurlPri::getNumberOfOrientations() const
+{
+  return 720; // factorial 6
+}
+
 double HierarchicalBasisHcurlPri::_affineCoordinate(const int &j,
                                                     const double &u,
                                                     const double &v,

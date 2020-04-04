@@ -29,6 +29,10 @@ Periodic Surface {2} = {1} Translate {1, 0, 0};
 // mesh from surface 1.  Periodicity constraints can be specified with a
 // `Translation', a `Rotation' or a general `Affine' transform.
 
+// Multiple periodicities can be imposed in the same way:
+Periodic Surface {6} = {5} Translate {0, 0, 1};
+Periodic Surface {4} = {3} Translate {0, 1, 0};
+
 // For more complicated cases, finding the corresponding surfaces by hand can be
 // tedious, especially when geometries are created through solid
 // modelling. Let's construct a slightly more complicated geometry.
@@ -60,7 +64,7 @@ vin() = Volume In BoundingBox {2-eps,-eps,-eps, 2+1+eps,1+eps,1+eps};
 v() -= vin();
 Recursive Delete{ Volume{v()}; }
 
-// We now set some a non-uniform mesh size constraint (again to check results
+// We now set a non-uniform mesh size constraint (again to check results
 // visually):
 Characteristic Length { PointsOf{ Volume{vin()}; }} = 0.1;
 p() = Point In BoundingBox{2-eps, -eps, -eps, 2+eps, eps, eps};

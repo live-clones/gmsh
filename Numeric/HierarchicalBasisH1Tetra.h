@@ -52,6 +52,7 @@ class HierarchicalBasisH1Tetra : public HierarchicalBasisH1 {
 public:
   HierarchicalBasisH1Tetra(int order);
   virtual ~HierarchicalBasisH1Tetra();
+  virtual unsigned int getNumberOfOrientations() const;
   // vertexBasis=[v0,...,v3]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
   // faceBasis=[phif0_{1,1},...,phif0_{1,pF0-2},phif0_{2,1}...,phif0_{2,pF0-3},...,phief0_{pF-2,1},phif1_{1,1}...]

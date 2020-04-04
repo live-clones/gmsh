@@ -1009,10 +1009,12 @@ StringXNumber GeometryOptions_Number[] = {
 
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_FRONTAL ,
-    "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, "
-    "7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)" },
+    "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 3: Initial mesh only, "
+    "5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, "
+    "9: Packing of Parallelograms)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
-    "3D mesh algorithm (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)" },
+    "3D mesh algorithm (1: Delaunay, 3: Initial mesh only, 4: Frontal, "
+    "7: MMG3D, 9: R-tree, 10: HXT)" },
   { F|O, "AlgorithmSwitchOnFailure" , opt_mesh_algo_switch_on_failure , 1 ,
     "Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based "
     "algorithms, switching to MeshAdapt)"},
@@ -1154,6 +1156,8 @@ StringXNumber MeshOptions_Number[] = {
     "pending mesh"},
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental)" },
+  { F|O, "MeshOnlyEmpty" , opt_mesh_mesh_only_empty, 0. ,
+    "Mesh only entities that have no existing mesh" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
     "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
