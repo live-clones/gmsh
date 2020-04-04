@@ -2857,15 +2857,23 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 void deMeshGFace::operator()(GFace *gf)
 {
   if(gf->geomType() == GEntity::DiscreteSurface) {
-    if(!static_cast<discreteFace *>(gf)->haveParametrization()){
-      return;
+    // if the surface and all the bounding curves are also discrete (without
+    // parametrization!), we keep the mesh
+    bool keep = !static_cast<discreteFace *>(gf)->haveParametrization();
+    std::vector<GEdge *> e = gf->edges();
+    for(std::size_t i = 0; i < e.size(); i++) {
+      if(e[i]->geomType() != GEntity::DiscreteCurve ||
+         (e[i]->geomType() == GEntity::DiscreteCurve &&
+          static_cast<discreteEdge *>(e[i])->haveParametrization())) {
+        keep = false;
+        break;
+      }
     }
+    if(keep) return;
   }
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
-  gf->correspondingVertices.clear();
-  gf->correspondingHOPoints.clear();
 }
 
 static double TRIANGLE_VALIDITY(GFace *gf, MTriangle *t)

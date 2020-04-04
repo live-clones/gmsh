@@ -20,6 +20,8 @@
 #include "GRegion.h"
 #include "GFace.h"
 #include "GEdge.h"
+#include "discreteFace.h"
+#include "discreteEdge.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MTetrahedron.h"
@@ -205,7 +207,30 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
 void deMeshGRegion::operator()(GRegion *gr)
 {
-  if(gr->geomType() == GEntity::DiscreteVolume) return;
+  if(gr->geomType() == GEntity::DiscreteVolume) {
+    // if all the bounding shapes are also discrete (without parametrization!),
+    // we keep the mesh
+    bool keep = true;
+    std::vector<GFace *> f = gr->faces();
+    for(std::size_t i = 0; i < f.size(); i++) {
+      if(f[i]->geomType() != GEntity::DiscreteSurface ||
+         (f[i]->geomType() == GEntity::DiscreteSurface &&
+          static_cast<discreteFace *>(f[i])->haveParametrization())) {
+        keep = false;
+        break;
+      }
+    }
+    std::vector<GEdge *> e = gr->edges();
+    for(std::size_t i = 0; i < e.size(); i++) {
+      if(e[i]->geomType() != GEntity::DiscreteCurve ||
+         (e[i]->geomType() == GEntity::DiscreteCurve &&
+          static_cast<discreteEdge *>(e[i])->haveParametrization())) {
+        keep = false;
+        break;
+      }
+    }
+    if(keep) return;
+  }
   gr->deleteMesh();
 }
 
