@@ -146,7 +146,6 @@ void gmshFace::resetMeshAttributes()
   meshAttributes.reverseMesh = s->ReverseMesh;
   meshAttributes.algorithm = s->MeshAlgorithm;
   meshAttributes.meshSizeFromBoundary = s->MeshSizeFromBoundary;
-  meshAttributes.onlyInitialMesh = s->OnlyInitialMesh;
 }
 
 Range<double> gmshFace::parBounds(int i) const { return Range<double>(0, 1); }

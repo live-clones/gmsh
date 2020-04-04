@@ -20,10 +20,15 @@ class MVertex;
 // Create the mesh of the face
 class meshGFace {
   const bool repairSelfIntersecting1dMesh;
+  bool onlyInitialMesh;
 
 public:
-  meshGFace(bool r = true) : repairSelfIntersecting1dMesh(r) {}
+  meshGFace(bool r = true)
+    : repairSelfIntersecting1dMesh(r), onlyInitialMesh(false)
+  {
+  }
   void operator()(GFace *, bool print = true);
+  void setOnlyInitial() { onlyInitialMesh = true; }
 };
 
 // Destroy the mesh of the face

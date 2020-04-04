@@ -486,11 +486,6 @@ Number of edge subdivisions when displaying high-order elements@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.OnlyInitial
-Only generate the initial mesh in 2D and 3D, i.e. without inserting interior nodes@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.Optimize
 Optimize the mesh to improve the quality of tetrahedral elements@*
 Default value: @code{1}@*

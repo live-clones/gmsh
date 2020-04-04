@@ -1725,17 +1725,6 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
-      // Only generate the initial mesh (or not) for the entity of dimension `dim'
-      // and tag `tag'. Currently only supported for `dim' == 2.
-      inline void setOnlyInitialMesh(const int dim,
-                                     const int tag,
-                                     const int val)
-      {
-        int ierr = 0;
-        gmshModelMeshSetOnlyInitialMesh(dim, tag, val, &ierr);
-        if(ierr) throw ierr;
-      }
-
       // Set a compound meshing constraint on the model entities of dimension `dim'
       // and tags `tags'. During meshing, compound entities are treated as a single
       // discrete entity, which is automatically reparametrized.
@@ -2624,7 +2613,7 @@ namespace gmsh { // Top-level functions
           if(ierr) throw ierr;
         }
 
-        // Force the mesh size to be extended from the boundary (or not) for the
+        // Force the mesh size to be extended from the boundary, or not, for the
         // model entity of dimension `dim' and tag `tag'. Currently only supported
         // for `dim' == 2.
         inline void setSizeFromBoundary(const int dim,
@@ -2633,17 +2622,6 @@ namespace gmsh { // Top-level functions
         {
           int ierr = 0;
           gmshModelGeoMeshSetSizeFromBoundary(dim, tag, val, &ierr);
-          if(ierr) throw ierr;
-        }
-
-        // Only generate the initial mesh (or not) for the entity of dimension
-        // `dim' and tag `tag'. Currently only supported for `dim' == 2.
-        inline void setOnlyInitialMesh(const int dim,
-                                       const int tag,
-                                       const int val)
-        {
-          int ierr = 0;
-          gmshModelGeoMeshSetOnlyInitialMesh(dim, tag, val, &ierr);
           if(ierr) throw ierr;
         }
 

@@ -1173,6 +1173,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
   if(CTX::instance()->debugSurface > 0) debug = true;
 
+  // onlyInitialMesh=true;
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_EXTERIOR(1, 3);
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
@@ -2089,8 +2090,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
   if(CTX::instance()->debugSurface > 0) debug = true;
 
-  bool onlyInitialMesh = gf->getOnlyInitialMesh();
-
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
   std::multimap<MVertex *, BDS_Point *> recoverMultiMapInv;
 
@@ -2786,20 +2785,18 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     buildBackgroundMesh(gf, false, &equivalence, &parametricCoordinates);
   }
 
-  if(!onlyInitialMesh) {
-    // boundary layer
-    std::vector<MQuadrangle *> blQuads;
-    std::vector<MTriangle *> blTris;
-    std::set<MVertex *> verts;
-    modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
-    gf->quadrangles.insert(gf->quadrangles.begin(), blQuads.begin(),
-                           blQuads.end());
-    gf->triangles.insert(gf->triangles.begin(), blTris.begin(), blTris.end());
-    gf->mesh_vertices.insert(gf->mesh_vertices.begin(), verts.begin(),
-                             verts.end());
-  }
+  // boundary layer
+  std::vector<MQuadrangle *> blQuads;
+  std::vector<MTriangle *> blTris;
+  std::set<MVertex *> verts;
+  modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
+  gf->quadrangles.insert(gf->quadrangles.begin(), blQuads.begin(),
+                         blQuads.end());
+  gf->triangles.insert(gf->triangles.begin(), blTris.begin(), blTris.end());
+  gf->mesh_vertices.insert(gf->mesh_vertices.begin(), verts.begin(),
+                           verts.end());
 
-  if(algoDelaunay2D(gf) && !onlyInitialMesh) {
+  if(algoDelaunay2D(gf)) {
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates,
                           &true_boundary);
@@ -2971,7 +2968,7 @@ void meshGFace::operator()(GFace *gf, bool print)
     }
   }
   else {
-    meshGenerator(gf, 0, repairSelfIntersecting1dMesh, gf->getOnlyInitialMesh(),
+    meshGenerator(gf, 0, repairSelfIntersecting1dMesh, onlyInitialMesh,
                   debugSurface >= 0 || debugSurface == -100);
   }
 

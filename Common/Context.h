@@ -24,7 +24,7 @@ struct contextMeshOptions {
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
   double anisoMax, smoothRatio;
-  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary, onlyInitial;
+  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;

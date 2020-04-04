@@ -2130,21 +2130,6 @@ function setSizeFromBoundary(dim, tag, val)
 end
 
 """
-    gmsh.model.mesh.setOnlyInitialMesh(dim, tag, val)
-
-Only generate the initial mesh (or not) for the entity of dimension `dim` and
-tag `tag`. Currently only supported for `dim` == 2.
-"""
-function setOnlyInitialMesh(dim, tag, val)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetOnlyInitialMesh, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cint}),
-          dim, tag, val, ierr)
-    ierr[] != 0 && error("gmshModelMeshSetOnlyInitialMesh returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
     gmsh.model.mesh.setCompound(dim, tags)
 
 Set a compound meshing constraint on the model entities of dimension `dim` and
@@ -3242,7 +3227,7 @@ end
 """
     gmsh.model.geo.mesh.setSizeFromBoundary(dim, tag, val)
 
-Force the mesh size to be extended from the boundary (or not) for the model
+Force the mesh size to be extended from the boundary, or not, for the model
 entity of dimension `dim` and tag `tag`. Currently only supported for `dim` ==
 2.
 """
@@ -3252,21 +3237,6 @@ function setSizeFromBoundary(dim, tag, val)
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetSizeFromBoundary returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
-    gmsh.model.geo.mesh.setOnlyInitialMesh(dim, tag, val)
-
-Only generate the initial mesh (or not) for the entity of dimension `dim` and
-tag `tag`. Currently only supported for `dim` == 2.
-"""
-function setOnlyInitialMesh(dim, tag, val)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelGeoMeshSetOnlyInitialMesh, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cint}),
-          dim, tag, val, ierr)
-    ierr[] != 0 && error("gmshModelGeoMeshSetOnlyInitialMesh returned non-zero error code: $(ierr[])")
     return nothing
 end
 

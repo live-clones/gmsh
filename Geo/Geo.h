@@ -125,7 +125,7 @@ public:
   // that this representation should be the only one in gmsh, so parameter
   // "Type" should disappear from the class Surface.
   gmshSurface *geometry;
-  int ReverseMesh, MeshAlgorithm, MeshSizeFromBoundary, OnlyInitialMesh;
+  int ReverseMesh, MeshAlgorithm, MeshSizeFromBoundary;
   bool degenerate() const;
 };
 

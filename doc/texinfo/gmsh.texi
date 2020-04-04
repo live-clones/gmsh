@@ -3204,12 +3204,7 @@ default value is 45). @value{SYNC}
 Forces the meshing algorithm per surface.
 
 @item MeshSizeFromBoundary Surface @{ @var{expression-list} @} = @var{expression};
-Forces the mesh sizes to be extended from the boundary (or not) for the
-specified surfaces.
-
-@item OnlyInitialMesh Surface @{ @var{expression-list} @} = @var{expression};
-Forces the mesher to ony generate the initial mesh (or not)for for the
-specified surfaces.
+Forces the mesh size to be extended from the boudnary, or not, per surface.
 
 @item Compound Curve | Surface @{ @var{expression-list-or-all} @} ;
 Treats the given entities as a single entity when meshing, i.e. perform
