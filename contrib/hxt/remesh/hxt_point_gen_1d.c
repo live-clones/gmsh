@@ -237,15 +237,16 @@ HXTStatus hxtDiscretizeLine(HXTMesh *mesh,
 //*****************************************************************************************
 //*****************************************************************************************
 HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh, 
+                                   HXTPointGenOptions *opt,
                                    const double *directions,
                                    const double *sizemap, 
                                    HXTMesh *fmesh, 
                                    uint64_t *pointParent)
 {
-  printf("\n===================================\n");
-  printf("      GENERATING POINTS ON LINES \n\n");
 
-  int verbosity = 0;
+  HXT_INFO("");
+  HXT_INFO("========= Generating points on lines ==========");
+  HXT_INFO_COND(opt->verbosity>1,"");
 
   HXT_ASSERT_MSG(mesh->lines.num != 0, "Mesh does not have lines");
 
@@ -271,7 +272,6 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
   uint32_t numCorners = 0; // connected to 1 or 3+ lines 
   uint32_t maxLinesToPoint = 0; // maximum number of lines starting from a corner
 
-
   for (uint32_t i=0; i<mesh->vertices.num; i++){
     if (cornerflag[i] == UINT32_MAX) continue; // FOR 2D
     numCorners++;
@@ -280,7 +280,6 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
 
   // Correction if we have only closed lineloops without corners 
   if (maxLinesToPoint == 0) maxLinesToPoint = 2;
-
 
 
   // C. Store corner points correspondance of initial mesh
@@ -380,7 +379,7 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
       uint32_t curr = start;
       uint64_t line0, line1;
 
-      printf("Start %d %lu %lu - %d %d \n", start+1, currentLine, currentLine + mesh->points.num, node0, node1);
+      HXT_INFO_COND(opt->verbosity>1,"Start %d %lu %lu - %d %d", start+1, currentLine, currentLine + mesh->points.num, node0, node1);
 
       while(1){
 
@@ -413,7 +412,8 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
 
       // At this point we have the ordered array orderLines with numOrderLines lines (i.e. boundary edges)
       numProcessedLines += numOrderLines;
-      if(verbosity) printf("Corner point %3d - Number of boundary edges %3lu - Number of processed lines %3lu \n ", start, numOrderLines, numProcessedLines);
+
+      HXT_INFO_COND(opt->verbosity>1,"Corner point %3d - Number of boundary edges %3lu - Number of processed lines %3lu", start, numOrderLines, numProcessedLines);
 
       HXT_CHECK(hxtDiscretizeLine(mesh,directions,sizemap,numOrderLines,orderLines,start,cornerpoints,fmesh,pointParent));
 
@@ -494,7 +494,7 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
 
     // At this point we have the ordered array orderLines with numOrderLines lines (i.e. boundary edges)
     numProcessedLines += numOrderLines;
-    if (verbosity) printf("Closed line loop - Number of boundary edges %3lu - Number of processed lines %3lu \n ", numOrderLines, numProcessedLines);
+    HXT_INFO_COND(opt->verbosity>1,"Closed line loop - Number of boundary edges %3lu - Number of processed lines %3lu", numOrderLines, numProcessedLines);
 
     HXT_CHECK(hxtDiscretizeLine(mesh,directions,sizemap,numOrderLines,orderLines,start,cornerpoints,fmesh,pointParent));
     numClosedLoops++;
@@ -505,18 +505,14 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
   HXT_ASSERT_MSG(mesh->lines.num == numProcessedLines, "Did not process all mesh lines");
   HXT_ASSERT_MSG((numCorners+numClosedLoops)==countStartPoints, "Something is missing");
 
-  printf("\n");
-  printf("          Total number of lines:  %lu \n", mesh->lines.num);
-  printf("      Processed number of lines:  %lu \n", numProcessedLines);
-  printf("           Left number of lines:  %lu \n", mesh->lines.num-numProcessedLines);
-  printf("         Number of closed lines:  %lu \n", numClosedLines);
-  printf("\n");
-  printf("       Number of actual corners:  %d \n",  numCorners);
-  printf("         Number of start points:  %d \n",  countStartPoints);
-  printf("     Number of closed lineloops:  %lu \n", numClosedLoops);
-  printf("       Number of fmesh vertices:  %d \n",  fmesh->vertices.num);
-  printf("  Number of fmesh corner points:  %d \n",  fmesh->points.num);
-  printf("          Number of fmesh lines:  %lu \n", fmesh->lines.num);
+  HXT_INFO_COND(opt->verbosity>1,"");
+  HXT_INFO_COND(opt->verbosity>1,"Initial mesh number of lines         %lu", mesh->lines.num);
+  HXT_INFO_COND(opt->verbosity>1,"Number of actual corners:            %d",  numCorners);
+  HXT_INFO_COND(opt->verbosity>1,"Number of start points:              %d",  countStartPoints);
+  HXT_INFO_COND(opt->verbosity>1,"Number of closed lineloops:          %lu", numClosedLoops);
+  HXT_INFO_COND(opt->verbosity>1,"Number of fmesh vertices:            %d",  fmesh->vertices.num);
+  HXT_INFO_COND(opt->verbosity>1,"Number of fmesh corner points:       %d",  fmesh->points.num);
+  HXT_INFO_COND(opt->verbosity>1,"Number of fmesh lines:               %lu", fmesh->lines.num);
 
 
   HXT_CHECK(hxtFree(&cornerflag));

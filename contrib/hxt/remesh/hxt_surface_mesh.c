@@ -757,7 +757,8 @@ HXTStatus hxtSurfaceMeshInsertLineVertex(HXTMesh *tmesh,
 //
 //**************************************************************************************************
 //**************************************************************************************************
-HXTStatus hxtSurfaceMeshInsertionSwap(HXTMesh *mesh,
+HXTStatus hxtSurfaceMeshInsertionSwap(HXTPointGenOptions *opt,
+                                      HXTMesh *mesh,
                                       HXTMesh *fmesh,
                                       HXTEdges *edges,
                                       HXTPointGenParent *parent,
@@ -890,7 +891,7 @@ HXTStatus hxtSurfaceMeshInsertionSwap(HXTMesh *mesh,
     /*snprintf(buffer,sizeof(char)*32,"FINALMESH_%i.msh",(int)ii);*/
     /*HXT_CHECK(hxtMeshWriteGmsh(mesh, buffer));*/
 
-    printf("%d - Number of swaps in insertion %d \n", ii, numSwaps);
+    HXT_INFO_COND(opt->verbosity>1,"%d - Number of swaps in insertion %d", ii, numSwaps);
     if (numSwapsOld == numSwaps) break;
     numSwapsOld = numSwaps;
   }
@@ -913,8 +914,9 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                          HXTMesh *nmesh)
 {
 
-  printf("\n===================================\n");
-  printf("      SURFACE MESHING \n\n");
+  HXT_INFO("");
+  HXT_INFO("========= Surface Remeshing - Inserting Generated Points  ==========");
+  HXT_INFO_COND(opt->verbosity>1,"");
 
   uint32_t numInitialVertices   = mesh->vertices.num;
   uint32_t numGeneratedVertices = fmesh->vertices.num;
@@ -923,11 +925,13 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   uint32_t numGeneratedVerticesOnCorners = 0;
   uint32_t numGeneratedVerticesOnLines   = 0;
   uint32_t numGeneratedVerticesInterior  = 0;
+  uint32_t numGeneratedVerticesOnVolumes = 0;
 
   for (uint32_t i=0; i<fmesh->vertices.num; i++){
     if (parent[i].type == 15) numGeneratedVerticesOnCorners++;
     if (parent[i].type ==  1) numGeneratedVerticesOnLines++;
     if (parent[i].type ==  2) numGeneratedVerticesInterior++;
+    if (parent[i].type ==  4) numGeneratedVerticesOnVolumes++;
   }
 
   // We consider that all the generated points will either split a triangle 
@@ -950,26 +954,29 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   // The maximum number of new mesh lines can be estimated as:
   uint32_t maxNumLines = mesh->lines.num + numGeneratedVerticesOnLines;
 
-  printf("  Number of initial mesh vertices:     %d  \n", numInitialVertices);
-  printf("  Number of initial mesh triangles:    %lu \n", mesh->triangles.num);
-  printf("  Number of initial mesh edges:        %d  \n", edges->numEdges);
-  printf("  Number of initial boundary lines:    %lu \n", mesh->lines.num);
-  printf("\n");
-  printf("  Generated mesh vertices on lines:    %d  \n", numGeneratedVerticesOnLines);
-  printf("  Generated mesh vertices on corners:  %d  \n", numGeneratedVerticesOnCorners);
-  printf("  Generated mesh vertices interior:    %d  \n", numGeneratedVerticesInterior);
-  printf("  Generated mesh vertices TOTAL:       %d  \n", numGeneratedVertices);
-  printf("  Allocated final mesh vertices:       %d  \n", fmesh->vertices.size);
-  printf("\n");
-  printf("  Estimated total mesh vertices        %d  \n",  numTotalVertices);
-  printf("  Estimated number of triangles        %lu \n",  2*(uint64_t)numTotalVertices);
-  printf("  Estimated number of edges            %d  \n",  3*numTotalVertices);
-  printf("\n");
+
+  HXT_INFO_COND(opt->verbosity>1,"");
+  HXT_INFO_COND(opt->verbosity>1,"Number of initial mesh vertices:     %d  ", numInitialVertices);
+  HXT_INFO_COND(opt->verbosity>1,"Number of initial mesh triangles:    %lu ", mesh->triangles.num);
+  HXT_INFO_COND(opt->verbosity>1,"Number of initial mesh edges:        %d  ", edges->numEdges);
+  HXT_INFO_COND(opt->verbosity>1,"Number of initial boundary lines:    %lu ", mesh->lines.num);
+  HXT_INFO_COND(opt->verbosity>1,"");
+  HXT_INFO_COND(opt->verbosity>1,"Generated mesh vertices on lines:    %d  ", numGeneratedVerticesOnLines);
+  HXT_INFO_COND(opt->verbosity>1,"Generated mesh vertices on corners:  %d  ", numGeneratedVerticesOnCorners);
+  HXT_INFO_COND(opt->verbosity>1,"Generated mesh vertices interior:    %d  ", numGeneratedVerticesInterior);
+  HXT_INFO_COND(opt->verbosity>1,"Generated mesh vertices on volume:   %d  ", numGeneratedVerticesOnVolumes);
+  HXT_INFO_COND(opt->verbosity>1,"Generated mesh vertices TOTAL:       %d  ", numGeneratedVertices);
+  HXT_INFO_COND(opt->verbosity>1,"Allocated final mesh vertices:       %d  ", fmesh->vertices.size);
+  HXT_INFO_COND(opt->verbosity>1,"");
+  HXT_INFO_COND(opt->verbosity>1,"Estimated total mesh vertices        %d  ",  numTotalVertices);
+  HXT_INFO_COND(opt->verbosity>1,"Estimated number of triangles        %lu ",  2*(uint64_t)numTotalVertices);
+  HXT_INFO_COND(opt->verbosity>1,"Estimated number of edges            %d  ",  3*numTotalVertices);
 
   //***********************************************************************************************
   // Transfer triangles and vertices of initial mesh to intermediate mesh tmesh
   //***********************************************************************************************
-  printf("- Transfering initial mesh to temp mesh \n");
+  HXT_INFO_COND(opt->verbosity>1,"");
+  HXT_INFO_COND(opt->verbosity>1,"Transfering initial mesh to temp mesh");
 
   HXTContext *context;
   HXT_CHECK(hxtContextCreate(&context));
@@ -985,20 +992,9 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                                              edges));
 
   //***********************************************************************************************
-  // Create list of colors of triangles
-  //***********************************************************************************************
-  // TODO not used - delete
-  printf("- Create list of colors \n");
-
-  uint16_t *triColors;
-  uint16_t numTriColors;
-  HXT_CHECK(hxtGetTrianglesColorsList(tmesh,&numTriColors,&triColors));
-  printf("    Number of colors:  %d \n", numTriColors);
-
-  //***********************************************************************************************
   // Create lines to edges array; 
   //***********************************************************************************************
-  printf("- Create lines to edges \n");
+  HXT_INFO_COND(opt->verbosity>1,"Create lines to edges");
 
   uint32_t *lines2edges;
   HXT_CHECK(hxtMalloc(&lines2edges,maxNumLines*sizeof(uint32_t)));
@@ -1008,7 +1004,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   //***********************************************************************************************
   // Create edges to lines array;
   //***********************************************************************************************
-  printf("- Create edges to lines \n");
+  HXT_INFO_COND(opt->verbosity>1,"Create edges to lines");
 
   uint64_t *edges2lines;
   HXT_CHECK(hxtMalloc(&edges2lines,maxNumEdges*sizeof(uint64_t)));
@@ -1020,13 +1016,13 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   // This is used to handle non-manifold triangulations
   // where mesh lines can have more than 2 triangles
   //***********************************************************************************************
-  printf("- Create lines to triangles \n");
+  HXT_INFO_COND(opt->verbosity>1,"Create lines to triangles");
 
   uint64_t *lines2triangles;
   HXT_CHECK(hxtMalloc(&lines2triangles,maxNumTriToLine*tmesh->lines.size*sizeof(uint64_t)));
   for (uint64_t i=0; i<maxNumTriToLine*tmesh->lines.size; i++) lines2triangles[i] = UINT64_MAX;
   HXT_CHECK(hxtGetLinesToTriangles(edges,maxNumTriToLine,edges2lines,lines2triangles));
-  printf("    Number of max tri to line:  %lu \n", maxNumTriToLine);
+  HXT_INFO_COND(opt->verbosity>1,"Number of max tri to line:  %lu", maxNumTriToLine);
 
 
   //***********************************************************************************************
@@ -1034,7 +1030,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   // We use this to find the vertices that are contained in each triangle
   // It is not updated (no new vertices are inserted) 
   //***********************************************************************************************
-  printf("- Create RTree \n");
+  HXT_INFO_COND(opt->verbosity>1,"Create RTree");
 
   double boxSmall = 10e-16;
   void* data;
@@ -1081,8 +1077,8 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   // Insert points on corners
   // Insert points on lines 
   //***********************************
-  printf("\n  -------------------------------------------------\n");
-  printf(  "    Insert points on corners and lines \n");
+  HXT_INFO("");
+  HXT_INFO("--- Inserting points on corners and lines");
 
   for (uint32_t i=0; i<fmesh->vertices.num; i++){
     if (parent[i].type == 2) continue;
@@ -1175,16 +1171,16 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
     }
   }
 
-  HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH0lines.msh"));
+  if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH0lines.msh"));
 
   //***********************************
   // Swapping after insertion 
   // of points on lines
   //***********************************
-  printf("\n  -------------------------------------------------\n");
-  printf(  "    Swaps after insertion on lines \n");
+  HXT_INFO("--- Swaps after insertion on lines");
 
-  HXT_CHECK(hxtSurfaceMeshInsertionSwap(tmesh,
+  HXT_CHECK(hxtSurfaceMeshInsertionSwap(opt,
+                                        tmesh,
                                         fmesh,
                                         edges,
                                         parent,
@@ -1197,18 +1193,17 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                                         0));
 
 
-  HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH1lines_swap.msh"));
+  if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH1lines_swap.msh"));
 
   //***********************************
   // Loop over generate vertices
   // Insert interior points
   //***********************************
-  printf("\n  -------------------------------------------------\n");
-  printf(  "    Insert points on interior \n");
+  HXT_INFO("--- Inserting points on interior");
 
   for (uint32_t i=0; i<fmesh->vertices.num; i++){
 
-    if (parent[i].type == 1 || parent[i].type == 15) continue;
+    if (parent[i].type != 2) continue;
 
     // Insert point in triangulation
     HXT_CHECK(hxtSurfaceMeshInsertInteriorVertex(tmesh,
@@ -1226,7 +1221,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
     countPointsOnTriangles++;
 
   }
-  HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH2interior.msh"));
+  if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH2interior.msh"));
 
   // TODO delete or debug
   // checking if initial points to remain are correct
@@ -1283,12 +1278,11 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   //***********************************
   // Swapping
   //***********************************
-  printf("\n  -------------------------------------------------\n");
-  printf(  "    Swapping after insertion of points \n\n");
+  HXT_INFO("--- Swaps after insertion on interior");
 
 
-
-  HXT_CHECK(hxtSurfaceMeshInsertionSwap(tmesh,
+  HXT_CHECK(hxtSurfaceMeshInsertionSwap(opt,
+                                        tmesh,
                                         fmesh,
                                         edges,
                                         parent,
@@ -1301,39 +1295,20 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                                         100));
 
 
-  HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH3interiorswap.msh"));
+  if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH3interiorswap.msh"));
 
   //HXT_CHECK(hxtCheckEdgesAndMesh(tmesh,edges));
 
-  //***********************************
   // COUNTING THINGS TODO delete
-  //***********************************
-  uint32_t countVerticesToRemove = 0;
-  for (uint32_t i=0; i<numTotalVertices; i++){
-    if (flagV[i] == UINT32_MAX) countVerticesToRemove++;
-  }
 
-
-  printf("\n");
-  printf("  Generated mesh vertices:                    %d  \n", numGeneratedVertices);
-  printf("  Generated mesh vertices on lines:           %d  \n", numGeneratedVerticesOnLines);
-  printf("  Generated mesh vertices on corners:         %d  \n", numGeneratedVerticesOnCorners);
-  printf("  Generated mesh vertices interior:           %d  \n", numGeneratedVerticesInterior);
-  printf("  Vertices to be removed                      %d  \n", countVerticesToRemove);
-  printf("\n");
-  printf("  Number of corner points:                    %d \n", countPointsOnCorners);
-  printf("  Number of points on line vertices:          %d \n", countPointsOnLineVertices);
-  printf("  Number of all points on boundary vertices:  %d \n", countPointsOnBoundaryVertices);
-  printf("  Number of line points (without corners):    %d \n", countPointsOnLines);
-  printf("  Number of points on triangles:              %d \n", countPointsOnTriangles);
-  printf("  Number of all points on vertices:           %d \n", countPointsOnVerticesTotal);
-  printf("  Number of points on triangle vertices:      %d \n", countPointsOnTriangleVertices);
-  printf("\n");
-  printf("  Initial mesh lines:                         %lu \n", mesh->lines.num);
-  printf("  Final mesh lines:                           %lu \n", fmesh->lines.num);
-  printf("  Temp mesh lines:                            %lu \n", tmesh->lines.num);
-  printf("  Edges num:                                  %d  \n", edges->numEdges);
-  printf("\n");
+  HXT_INFO_COND(opt->verbosity>1,"");
+  HXT_INFO_COND(opt->verbosity>1,"Number of corner points:                    %d", countPointsOnCorners);
+  HXT_INFO_COND(opt->verbosity>1,"Number of points on line vertices:          %d", countPointsOnLineVertices);
+  HXT_INFO_COND(opt->verbosity>1,"Number of all points on boundary vertices:  %d", countPointsOnBoundaryVertices);
+  HXT_INFO_COND(opt->verbosity>1,"Number of line points (without corners):    %d", countPointsOnLines);
+  HXT_INFO_COND(opt->verbosity>1,"Number of points on triangles:              %d", countPointsOnTriangles);
+  HXT_INFO_COND(opt->verbosity>1,"Number of all points on vertices:           %d", countPointsOnVerticesTotal);
+  HXT_INFO_COND(opt->verbosity>1,"Number of points on triangle vertices:      %d", countPointsOnTriangleVertices);
 
   //***********************************************************************************************
   // COLLAPSE
@@ -1346,16 +1321,25 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   for (uint32_t i=0; i<tmesh->vertices.num; i++) tparent[i].id = UINT64_MAX;
   HXT_CHECK(hxtCreateParentStructure(mesh,fmesh,tmesh,parent,tparent));
 
+
+  uint32_t countVerticesToRemove = 0;
+  for (uint32_t i=0; i<numTotalVertices; i++){
+    if (flagV[i] == UINT32_MAX) countVerticesToRemove++;
+  }
+
   uint32_t countVolumeVerticesToRemove = 0;
   for (uint32_t i=0; i<tmesh->vertices.num; i++){
     if (tparent[i].type == 4) countVolumeVerticesToRemove++;
   }
 
-  printf("  Total Vertices to be removed                %d  \n", countVerticesToRemove);
-  printf("  Volume Vertices to be removed               %d  \n", countVolumeVerticesToRemove);
-  printf("  Surface Vertices to be removed              %d  \n", countVerticesToRemove-countVolumeVerticesToRemove);
+  HXT_INFO_COND(opt->verbosity>1,"");
+  HXT_INFO_COND(opt->verbosity>1,"Vertices to be removed                      %d", countVerticesToRemove);
+  HXT_INFO_COND(opt->verbosity>1,"Total Vertices to be removed                %d", countVerticesToRemove);
+  HXT_INFO_COND(opt->verbosity>1,"Volume Vertices to be removed               %d", countVolumeVerticesToRemove);
+  HXT_INFO_COND(opt->verbosity>1,"Surface Vertices to be removed              %d", countVerticesToRemove-countVolumeVerticesToRemove);
 
   clock_t time0 = clock();
+
   HXT_CHECK(hxtSurfaceMeshCollapse(opt,
                                    tmesh,
                                    nmesh,
@@ -1365,7 +1349,9 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
 
   clock_t time1 = clock();
   double time_estimate = (double)(time1-time0) / CLOCKS_PER_SEC;
-  printf("TIME FOR COLLAPSE = %f \n", time_estimate);
+
+  HXT_INFO("");
+  HXT_INFO("Time for collapse = %f", time_estimate);
 
   //***********************************************************************************************
   // Clear things 
@@ -1384,7 +1370,6 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   HXT_CHECK(hxtFree(&lines2edges));
   HXT_CHECK(hxtFree(&edges2lines));
   HXT_CHECK(hxtFree(&lines2triangles));
-  HXT_CHECK(hxtFree(&triColors));
 
   return HXT_STATUS_OK;
 }

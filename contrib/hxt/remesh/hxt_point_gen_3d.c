@@ -466,7 +466,7 @@ HXTStatus hxtWalkToCandidatePoint3dRK4(HXTMesh *mesh,
   if (tet2 == UINT64_MAX) return HXT_STATUS_OK;
 
   // Get barycentric coordinates
-  double uv2[3];
+  double uv2[4];
   hxtGetBarycentricTetra(mesh, tet2, p2, uv2);
 
   // Get new frame and size
@@ -484,7 +484,7 @@ HXTStatus hxtWalkToCandidatePoint3dRK4(HXTMesh *mesh,
   if (tet3 == UINT64_MAX) return HXT_STATUS_OK;
 
   // Get barycentric coordinates
-  double uv3[3];
+  double uv3[4];
   HXT_CHECK(hxtGetBarycentricTetra(mesh, tet3, p3, uv3));
 
   // Get new frame and size
@@ -503,7 +503,7 @@ HXTStatus hxtWalkToCandidatePoint3dRK4(HXTMesh *mesh,
   if (tet4 == UINT64_MAX) return HXT_STATUS_OK;
 
   // Get barycentric coordinates
-  double uv4[3];
+  double uv4[4];
   HXT_CHECK(hxtGetBarycentricTetra(mesh, tet4, p4, uv4));
 
   // Get new frame and size
@@ -813,14 +813,17 @@ HXTStatus hxtPointGenCorrection3d(HXTMesh *mesh,
 //*****************************************************************************************
 //*****************************************************************************************
 HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh, 
+                                     HXTPointGenOptions *opt,
                                      const double *sizemap, 
                                      const double *directions,
                                      HXTPointGenParent *parent,   
                                      HXTMesh *fmesh) 
 {
-  printf("\n===================================\n");
-  printf("      GENERATING POINTS ON VOLUMES \n\n");
 
+  HXT_INFO("");
+  HXT_INFO("========= Generating points on volumes ==========");
+  HXT_INFO_COND(opt->verbosity>1,"");
+  
   double threshold = 0.72;
 
   // Points on surfaces are on fmesh
@@ -842,10 +845,11 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   clock_t time01 = clock();
   double time_estimate = (double)(time01-time00) / CLOCKS_PER_SEC;
-  printf(" Time to create tri2tet  %f \n", time_estimate); 
+  HXT_INFO_COND(opt->verbosity>1,"Time to create tri2tet  %f", time_estimate); 
 
 
 
+  // TODO two functions doing the same - check 
 
   clock_t time11 = clock();
   uint64_t *tri2tetTEST;
@@ -853,10 +857,10 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
   for (uint64_t i=0; i < mesh->triangles.num; i++) tri2tetTEST[i] = UINT64_MAX;
   uint64_t missing;
   HXT_CHECK(hxtGetTri2TetMap(mesh,tri2tet,&missing));
-  printf("Missing = %lu \n", missing);
+  HXT_INFO_COND(opt->verbosity>1,"Missing = %lu", missing);
   clock_t time12 = clock();
   time_estimate = (double)(time12-time11) / CLOCKS_PER_SEC;
-  printf(" Time to create tri2tet TEST  %f \n", time_estimate); 
+  HXT_INFO_COND(opt->verbosity>1,"Time to create tri2tet TEST  %f", time_estimate); 
 
   for (uint64_t i=0; i<mesh->triangles.num; i++){
     tri2tet[i] = tri2tet[i]/4;
@@ -879,8 +883,11 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   clock_t time02 = clock();
   time_estimate = (double)(time02-time01) / CLOCKS_PER_SEC;
-  printf(" Time to create rtree  %f \n", time_estimate); 
+  HXT_INFO_COND(opt->verbosity>1,"Time to create rtree  %f", time_estimate); 
 
+  HXT_INFO("");
+  HXT_INFO_COND(opt->walkMethod3D==0,"Walking method to candidate point - simple");
+  HXT_INFO_COND(opt->walkMethod3D==1,"Walking method to candidate point - RungeKutta4");
 
   //********************************************************
   // Queue-like loop to generate points
@@ -940,12 +947,11 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
       double candidate[3] = {0.,0.,0.};
       uint64_t ct = UINT64_MAX;
 
-      int walkCase = 1;
       
-      if (walkCase == 0) 
+      if (opt->walkMethod3D == 0) 
         HXT_CHECK(hxtWalkToCandidatePoint3d(mesh, originPoint, originTet, dir, size, candidate, &ct));
 
-      if (walkCase == 1)
+      if (opt->walkMethod3D == 1) 
         HXT_CHECK(hxtWalkToCandidatePoint3dRK4(mesh, sizemap, directions, originPoint, originTet, dir, size, candidate, &ct));
 
       if (ct == UINT64_MAX) continue;
@@ -1028,8 +1034,7 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   clock_t time03 = clock();
   time_estimate = (double)(time03-time02) / CLOCKS_PER_SEC;
-  printf(" Time to generate points  %f \n", time_estimate); 
-  printf(" Total points generated   %d \n", numGenPoints);
+  HXT_INFO_COND(opt->verbosity>1,"Time to generate points  %f", time_estimate); 
 
   // Cleaning things 
   HXT_CHECK(hxtRTreeDelete(&data));

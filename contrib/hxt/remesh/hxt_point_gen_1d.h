@@ -6,6 +6,7 @@
 #include "hxt_point_gen_options.h"
 
 HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh, 
+                                   HXTPointGenOptions *opt,
                                    const double *directions,
                                    const double *sizemap, 
                                    HXTMesh *outmesh, 

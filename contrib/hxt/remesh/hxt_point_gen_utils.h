@@ -33,10 +33,11 @@ HXTStatus hxtPointGenDirectionsTrianglesToEdges(HXTMesh *mesh, double *dirs, dou
 HXTStatus hxtPointGenGetSizesInputMesh(HXTEdges *edges, double factor, double *sizemap);
 HXTStatus hxtPointGenGetSizesCurvature(HXTEdges *edges, int N, double a, double minSize, double *sizemap);
 HXTStatus hxtPointGenSizemapSmoothing(HXTEdges *edges, double factor, double *sizemap);
+HXTStatus hxtPointGenSizemapFromNelements(HXTMesh *mesh, uint64_t nelem, double *sizemap);
 
 // Extract lines from dihedral angles function
 HXTStatus hxtPointGenOpenLines(HXTMesh *mesh);
-HXTStatus hxtPointGenDihedralLines(HXTMesh *mesh, HXTEdges *edges); 
+HXTStatus hxtPointGenClassifyDihedralLines(HXTMesh *mesh, HXTEdges *edges); 
 
 // Function to associate elements
 HXTStatus hxtGetLinesToEdges(HXTEdges *edges, uint32_t *lines2edges);
