@@ -1,11 +1,5 @@
 // Maillage de l Hypervapotron partie solide
 
-//Mesh.Algorithm                   = 3    ;
-//Mesh.Smoothing                   = 4    ;
-//Mesh.CharacteristicLengthFactor  = 6  ;
-//Mesh.Algorithm3D                 = 4    ;
-
-
 lc1 = .00025 *10     ;
 lc2 = .000392699  *10 ;
 
