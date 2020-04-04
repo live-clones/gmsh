@@ -1,4 +1,5 @@
-4.6.0 (Work-in-progress):
+4.6.0 (Work-in-progress): New options to only generate initial 2D or 3D meshes
+(without node insertion), and to only mesh non-meshed entities.
 
 * Incompatible API changes: new optional argument to mesh/clear; new argument to
   mesh/getBasisFunctions, removed mesh/preallocateBasisFunctions and

@@ -5968,6 +5968,17 @@ double opt_mesh_mesh_only_visible(OPT_ARGS_NUM)
   return CTX::instance()->mesh.meshOnlyVisible;
 }
 
+double opt_mesh_mesh_only_empty(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.meshOnlyEmpty)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.meshOnlyEmpty = (int)val;
+  }
+  return CTX::instance()->mesh.meshOnlyEmpty;
+}
+
 double opt_mesh_min_circ_points(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

@@ -2910,6 +2910,7 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   if(gf->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;
+  if(CTX::instance()->mesh.meshOnlyEmpty && gf->getNumMeshElements()) return;
 
   // destroy the mesh if it exists
   deMeshGFace dem;

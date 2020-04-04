@@ -569,12 +569,12 @@ void meshGEdge::operator()(GEdge *ge)
     return;
   }
 
-  if ((ge->geomType() == GEntity::BoundaryLayerCurve) ||
-     (ge->meshAttributes.method == MESH_NONE) ||
-     (CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility())) {
-    return;
-  }
+  if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
+  if(ge->meshAttributes.method == MESH_NONE) return;
+  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
+  if(CTX::instance()->mesh.meshOnlyEmpty && ge->getNumMeshElements()) return;
 
+  // destroy the mesh if it exists
   deMeshGEdge dem;
   dem(ge);
 

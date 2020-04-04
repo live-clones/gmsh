@@ -1156,6 +1156,8 @@ StringXNumber MeshOptions_Number[] = {
     "pending mesh"},
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental)" },
+  { F|O, "MeshOnlyEmpty" , opt_mesh_mesh_only_empty, 0. ,
+    "Mesh only entities that have no existing mesh" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
     "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,

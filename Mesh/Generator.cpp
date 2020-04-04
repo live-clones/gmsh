@@ -939,7 +939,10 @@ static void Mesh3D(GModel *m)
   bool emptyRegionFound = false;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     GRegion *gr = *it;
-    if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) continue;
+    if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility())
+      continue;
+    if(CTX::instance()->mesh.meshOnlyEmpty && gr->getNumMeshElements())
+      continue;
     if(gr->getNumMeshElements() == 0) {
       debugInfo << gr->tag() << " ";
       emptyRegionFound = true;
