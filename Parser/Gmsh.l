@@ -247,7 +247,6 @@ Nurbs			return tNurbs;
 
 OnelabAction            return tOnelabAction;
 OnelabRun               return tOnelabRun;
-OnlyInitialMesh         return tOnlyInitialMesh;
 Order			return tNurbsOrder;
 
 Parametric		return tParametric;

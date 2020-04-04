@@ -1154,14 +1154,6 @@ namespace gmsh { // Top-level functions
                                         const int tag,
                                         const int val);
 
-      // gmsh::model::mesh::setOnlyInitialMesh
-      //
-      // Only generate the initial mesh (or not) for the entity of dimension `dim'
-      // and tag `tag'. Currently only supported for `dim' == 2.
-      GMSH_API void setOnlyInitialMesh(const int dim,
-                                       const int tag,
-                                       const int val);
-
       // gmsh::model::mesh::setCompound
       //
       // Set a compound meshing constraint on the model entities of dimension `dim'
@@ -1754,20 +1746,12 @@ namespace gmsh { // Top-level functions
 
         // gmsh::model::geo::mesh::setSizeFromBoundary
         //
-        // Force the mesh size to be extended from the boundary (or not) for the
+        // Force the mesh size to be extended from the boundary, or not, for the
         // model entity of dimension `dim' and tag `tag'. Currently only supported
         // for `dim' == 2.
         GMSH_API void setSizeFromBoundary(const int dim,
                                           const int tag,
                                           const int val);
-
-        // gmsh::model::geo::mesh::setOnlyInitialMesh
-        //
-        // Only generate the initial mesh (or not) for the entity of dimension
-        // `dim' and tag `tag'. Currently only supported for `dim' == 2.
-        GMSH_API void setOnlyInitialMesh(const int dim,
-                                         const int tag,
-                                         const int val);
 
       } // namespace mesh
 

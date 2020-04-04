@@ -147,7 +147,6 @@ public:
   void setReverseMesh(int dim, int tag, bool val = 1);
   void setMeshAlgorithm(int dim, int tag, int val);
   void setMeshSizeFromBoundary(int dim, int tag, int val);
-  void setOnlyInitialMesh(int dim, int tag, int val);
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model, bool resetMeshAttributes = true);

@@ -316,9 +316,6 @@ public:
     int algorithm;
     // do we force calculation of mesh size from boundary (if >= 0)
     int meshSizeFromBoundary;
-    // only generate the initial mesh, i.e. without interior nodes? (< 0:
-    // default; 0 = no; 1 = yes)
-    int onlyInitialMesh;
   } meshAttributes;
 
   int getMeshingAlgo() const;
@@ -334,11 +331,6 @@ public:
   void setMeshSizeFromBoundary(int val)
   {
     meshAttributes.meshSizeFromBoundary = val;
-  }
-  bool getOnlyInitialMesh() const;
-  void setOnlyInitialMesh(int val)
-  {
-    meshAttributes.onlyInitialMesh = val;
   }
   virtual double getMeshSize() const
   {

@@ -1167,15 +1167,6 @@ void GEO_Internals::setMeshSizeFromBoundary(int dim, int tag, int val)
   _changed = true;
 }
 
-void GEO_Internals::setOnlyInitialMesh(int dim, int tag, int val)
-{
-  if(dim == 2) {
-    Surface *s = FindSurface(tag);
-    if(s) s->OnlyInitialMesh = val;
-  }
-  _changed = true;
-}
-
 void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
 {
   Msg::Debug("Syncing GEO_Internals with GModel");
