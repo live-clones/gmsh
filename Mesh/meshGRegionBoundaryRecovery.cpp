@@ -150,7 +150,7 @@ namespace tetgenBR {
             CTX::instance()->mesh.angleToleranceFacetOverlap);
     b->parse_commandline(opts);
 
-    double t_start = Cpu();
+    double t_start = Cpu(), w_start = TimeOfDay();
     std::vector<MVertex *> _vertices;
     std::map<int, MVertex *> _extras;
     // Get the set of vertices from GRegion.
@@ -1020,7 +1020,8 @@ namespace tetgenBR {
       }
     } // mesh output
 
-    Msg::Info("Done reconstructing mesh (%g s)", Cpu() - t_start);
+    Msg::Info("Done reconstructing mesh (Wall %gs, CPU %gs)",
+              TimeOfDay() - w_start, Cpu() - t_start);
 
     // Put all coordinates back so they are not pertubated anymore (pertubation
     // done in delaunayTriangulation)

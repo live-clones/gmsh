@@ -1131,7 +1131,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           else if(!strncmp(argv[i], "PackingOfParallelograms", 23) ||
                   !strncmp(argv[i], "pack", 4))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
-          else if(!strncmp(argv[i], "initial2d", 10))
+          else if(!strncmp(argv[i], "initial2d", 9))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_INITIAL_ONLY);
           else if(!strncmp(argv[i], "del3d", 5) ||
                   !strncmp(argv[i], "gmsh3d", 6))
@@ -1145,7 +1145,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_RTREE);
           else if(!strncmp(argv[i], "hxt", 3) )
             opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_HXT);
-          else if(!strncmp(argv[i], "initial3d", 10))
+          else if(!strncmp(argv[i], "initial3d", 9))
             opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_INITIAL_ONLY);
           else{
             Msg::Error("Unknown mesh algorithm");

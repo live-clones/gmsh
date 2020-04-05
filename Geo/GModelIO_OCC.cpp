@@ -4086,7 +4086,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     return;
 
   Msg::Info("Healing shapes (tolerance: %g)", tolerance);
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   _somap.Clear();
   _shmap.Clear();
@@ -4400,8 +4400,8 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   for(exp0.Init(myshape, TopAbs_COMPOUND); exp0.More(); exp0.Next()) nnrc++;
   for(exp0.Init(myshape, TopAbs_COMPSOLID); exp0.More(); exp0.Next()) nnrcs++;
 
-  double t2 = Cpu();
-  Msg::Info("Done healing shapes (%g s):", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::Info("Done healing shapes (Wall %gs, CPU %gs):", w2 - w1, t2 - t1);
   Msg::Info(" - Compounds          : %d (%d)", nnrc, nrc);
   Msg::Info(" - Composite solids   : %d (%d)", nnrcs, nrcs);
   Msg::Info(" - Solids             : %d (%d)", nnrso, nrso);

@@ -446,7 +446,7 @@ std::string Msg::PrintResources(bool printDate, bool printWallTime,
   std::string pwall = "";
   if(printWallTime){
     char tmp[128];
-    sprintf(tmp, "Wall = %gs", TimeOfDay() - _startTime);
+    sprintf(tmp, "Wall %gs", TimeOfDay() - _startTime);
     pwall = tmp;
     if(printCpu || (printMem && mem))
       pwall += ", ";
@@ -455,7 +455,7 @@ std::string Msg::PrintResources(bool printDate, bool printWallTime,
   std::string pcpu = "";
   if(printCpu){
     char tmp[128];
-    sprintf(tmp, "CPU = %gs", Cpu());
+    sprintf(tmp, "CPU %gs", Cpu());
     pcpu = tmp;
     if(printMem && mem)
       pcpu += ", ";
@@ -464,13 +464,13 @@ std::string Msg::PrintResources(bool printDate, bool printWallTime,
   std::string pmem = "";
   if(mem && printMem){
     char tmp[128];
-    sprintf(tmp, "Mem = %gMb", (double)mem / 1024. / 1024.);
+    sprintf(tmp, "Mem %gMb", (double)mem / 1024. / 1024.);
     pmem = tmp;
   }
 
   std::string str;
   if(pdate.size() || pwall.size() || pcpu.size() || pmem.size())
-    str += " (" + pdate +  pwall +  pcpu +  pmem + ")";
+    str += " (From start: " + pdate +  pwall +  pcpu +  pmem + ")";
   return str;
 }
 

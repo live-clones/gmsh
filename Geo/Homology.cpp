@@ -90,7 +90,7 @@ void Homology::_getElements(const std::vector<GEntity *> &entities,
 void Homology::_createCellComplex()
 {
   Msg::StatusBar(true, "Creating cell complex...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   if(_domainEntities.empty()) Msg::Error("Domain is empty");
   if(_subdomainEntities.empty()) Msg::Info("Subdomain is empty");
@@ -115,8 +115,9 @@ void Homology::_createCellComplex()
   if(_cellComplex->getSize(0) == 0) {
     Msg::Error("Cell Complex is empty: check the domain and the mesh");
   }
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done creating cell complex (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done creating cell complex (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
             _cellComplex->getSize(3), _cellComplex->getSize(2),
             _cellComplex->getSize(1), _cellComplex->getSize(0));
@@ -157,7 +158,7 @@ Homology::~Homology()
 
 void Homology::findHomologyBasis(std::vector<int> dim)
 {
-  double t0 = Cpu();
+  double t0 = Cpu(), w0 = TimeOfDay();
   std::string domain = _getDomainString(_domain, _subdomain);
   Msg::Info("");
   Msg::Info("To compute domain (%s) homology spaces", domain.c_str());
@@ -172,7 +173,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
 
   Msg::StatusBar(true, "Reducing cell complex...");
 
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
   double size1 = _cellComplex->getSize(-1);
   _cellComplex->reduceComplex(_combine, _omit);
 
@@ -184,20 +185,21 @@ void Homology::findHomologyBasis(std::vector<int> dim)
     }
   }
 
-  double t2 = Cpu();
+  double t2 = Cpu(), w2 = TimeOfDay();
   double size2 = _cellComplex->getSize(-1);
-  Msg::StatusBar(true, "Done reducing cell complex (%g s, %g %%)", t2 - t1,
-                 (1. - size2 / size1) * 100.);
+  Msg::StatusBar(true, "Done reducing cell complex (Wall %gs, CPU %gs, %g%%)",
+                 w2 - w1, t2 - t1, (1. - size2 / size1) * 100.);
   Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
             _cellComplex->getSize(3), _cellComplex->getSize(2),
             _cellComplex->getSize(1), _cellComplex->getSize(0));
 
   Msg::StatusBar(true, "Computing homology space bases...");
-  t1 = Cpu();
+  t1 = Cpu(); w1 = TimeOfDay();
   ChainComplex chainComplex = ChainComplex(_cellComplex);
   chainComplex.computeHomology();
-  t2 = Cpu();
-  Msg::StatusBar(true, "Done computing homology space bases (%g s)", t2 - t1);
+  t2 = Cpu(); w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done computing homology space bases (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 
   _deleteChains(dim);
   for(int j = 0; j < 4; j++) {
@@ -228,9 +230,9 @@ void Homology::findHomologyBasis(std::vector<int> dim)
   Msg::Info("H_2 = %d", _betti[2]);
   Msg::Info("H_3 = %d", _betti[3]);
 
-  double t3 = Cpu();
-  Msg::Info("Done computing (%s) homology spaces (%g s)", domain.c_str(),
-            t3 - t0);
+  double t3 = Cpu(), w3 = TimeOfDay();
+  Msg::Info("Done computing (%s) homology spaces (Wall %gs, CPU %gs)",
+            domain.c_str(), w3 - w0, t3 - t0);
   Msg::StatusBar(false, "H_0: %d, H_1: %d, H_2: %d, H_3: %d", _betti[0],
                  _betti[1], _betti[2], _betti[3]);
 
@@ -242,7 +244,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
 
 void Homology::findCohomologyBasis(std::vector<int> dim)
 {
-  double t0 = Cpu();
+  double t0 = Cpu(), w0 = TimeOfDay();
   std::string domain = _getDomainString(_domain, _subdomain);
   Msg::Info("");
   Msg::Info("To compute domain (%s) cohomology spaces", domain.c_str());
@@ -257,7 +259,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
 
   Msg::StatusBar(true, "Reducing cell complex...");
 
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
   double size1 = _cellComplex->getSize(-1);
 
   _cellComplex->coreduceComplex(_combine, _omit, _heuristic);
@@ -271,21 +273,22 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
     }
   }
 
-  double t2 = Cpu();
+  double t2 = Cpu(), w2 = TimeOfDay();
   double size2 = _cellComplex->getSize(-1);
 
-  Msg::StatusBar(true, "Done reducing cell complex (%g s, %g %%)", t2 - t1,
-                 (1. - size2 / size1) * 100.);
+  Msg::StatusBar(true, "Done reducing cell complex (Wall %gs, CPU %gs, %g %%)",
+                 w2 - w1, t2 - t1, (1. - size2 / size1) * 100.);
   Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
             _cellComplex->getSize(3), _cellComplex->getSize(2),
             _cellComplex->getSize(1), _cellComplex->getSize(0));
 
   Msg::StatusBar(true, "Computing cohomology space bases ...");
-  t1 = Cpu();
+  t1 = Cpu(); w1 = TimeOfDay();
   ChainComplex chainComplex = ChainComplex(_cellComplex);
   chainComplex.computeHomology(true);
-  t2 = Cpu();
-  Msg::StatusBar(true, "Done computing cohomology space bases (%g s)", t2 - t1);
+  t2 = Cpu(); w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done computing cohomology space bases (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 
   _deleteCochains(dim);
   for(int i = 0; i < 4; i++) _betti[i] = 0;
@@ -317,9 +320,9 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   Msg::Info("H^2 = %d", _betti[2]);
   Msg::Info("H^3 = %d", _betti[3]);
 
-  double t3 = Cpu();
-  Msg::Info("Done computing (%s) cohomology spaces (%g s)", domain.c_str(),
-            t3 - t0);
+  double t3 = Cpu(), w3 = TimeOfDay();
+  Msg::Info("Done computing (%s) cohomology spaces (Wall %gs, CPU %gs)",
+            domain.c_str(), w3 - w0, t3 - t0);
   Msg::StatusBar(false, "H^0: %d, H^1: %d, H^2: %d, H^3: %d", _betti[0],
                  _betti[1], _betti[2], _betti[3]);
 
@@ -526,29 +529,30 @@ void Homology::findBettiNumbers()
     if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
 
     Msg::StatusBar(true, "Reducing cell complex...");
-    double t1 = Cpu();
+    double t1 = Cpu(), w1 = TimeOfDay();
     double size1 = _cellComplex->getSize(-1);
 
     _cellComplex->bettiReduceComplex();
 
-    double t2 = Cpu();
+    double t2 = Cpu(), w2 = TimeOfDay();
     double size2 = _cellComplex->getSize(-1);
 
-    Msg::StatusBar(true, "Done reducing cell complex (%g s, %g %%)", t2 - t1,
-                   (1. - size2 / size1) * 100.);
+    Msg::StatusBar(true, "Done reducing cell complex (Wall %gs, CPU %gs, %g %%)",
+                   w2 - w1, t2 - t1, (1. - size2 / size1) * 100.);
     Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
               _cellComplex->getSize(3), _cellComplex->getSize(2),
               _cellComplex->getSize(1), _cellComplex->getSize(0));
 
     Msg::StatusBar(true, "Computing betti numbers...");
-    t1 = Cpu();
+    t1 = Cpu(); w1 = TimeOfDay();
     ChainComplex chainComplex = ChainComplex(_cellComplex);
     chainComplex.computeHomology();
 
     for(int i = 0; i < 4; i++) _betti[i] = chainComplex.getBasisSize(i, 3);
 
-    t2 = Cpu();
-    Msg::StatusBar(true, "Betti numbers computed (%g s)", t2 - t1);
+    t2 = Cpu(); w2 = TimeOfDay();
+    Msg::StatusBar(true, "Betti numbers computed (Wall %gs, CPU %gs)",
+                   w2 - w1, t2 - t1);
   }
 
   std::string domain = _getDomainString(_domain, _subdomain);

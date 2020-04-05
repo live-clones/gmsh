@@ -684,7 +684,7 @@ void GModel::createTopologyFromMeshNew()
 {
   const int dim = getDim();
 
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   if(topoExists(this)) {
     Msg::Info("Topology exists: no need to create one from mesh");
@@ -714,6 +714,7 @@ void GModel::createTopologyFromMeshNew()
   cc.insert(cc.begin(), vs.begin(), vs.end());
   _storeVerticesInEntities(cc);
 
-  double t2 = Cpu();
-  Msg::Info("Done creating topology from mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::Info("Done creating topology from mesh (Wall %gs, CPU %gs)",
+            w2 - w1, t2 - t1);
 }

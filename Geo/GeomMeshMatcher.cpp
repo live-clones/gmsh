@@ -864,7 +864,7 @@ void copy_elements(GModel *geom, GModel *mesh,
 int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 {
   Msg::StatusBar(true, "Matching discrete mesh to actual CAD ...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   GModel::setCurrent(geom);
   geom->setPhysicalNames(mesh->getPhysicalNames());
@@ -899,24 +899,18 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   std::map<MVertex *, MVertex *> _mesh_to_geom;
 
   if(ok) {
+    Msg::Info("Copying mesh nodes and elements to CAD model entities...");
     copy_vertices(geom, mesh, _mesh_to_geom, coresp_v, coresp_e, coresp_f,
                   coresp_r);
-
-    double t00 = Cpu();
     copy_elements(geom, mesh, _mesh_to_geom, coresp_v, coresp_e, coresp_f,
                   coresp_r);
-    Msg::Info("Copying mesh elements to CAD model entities took %g s",
-              Cpu() - t00);
-
-    t00 = Cpu();
+    Msg::Info("Applying periodicity to CAD model entities...");
     if(!apply_periodicity(*coresp_v))
       copy_periodicity(*coresp_v, _mesh_to_geom);
     if(!apply_periodicity(*coresp_e))
       copy_periodicity(*coresp_e, _mesh_to_geom);
     if(!apply_periodicity(*coresp_f))
       copy_periodicity(*coresp_f, _mesh_to_geom);
-    Msg::Info("Applying periodicity to CAD model entities took %g s",
-              Cpu() - t00);
   }
 
   if(coresp_v) delete coresp_v;
@@ -925,8 +919,8 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   if(coresp_r) delete coresp_r;
 
   if(ok)
-    Msg::StatusBar(true, "Matched successfully mesh to CAD in %g s",
-                   Cpu() - t1);
+    Msg::StatusBar(true, "Successfully matched mesh to CAD (Wall %gs, CPU %gs)",
+                   TimeOfDay() - w1, Cpu() - t1);
   else
     Msg::Error("Failed to match mesh to CAD, please check");
 
