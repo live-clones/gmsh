@@ -27,7 +27,6 @@
 #include "meshGRegionLocalMeshMod.h"
 #include "meshRelocateVertex.h"
 #include "meshRefine.h"
-#include "discreteFace.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "ExtrudeParams.h"
@@ -482,11 +481,6 @@ static void Mesh2D(GModel *m)
   if(m->getFields()->getNumBoundaryLayerFields()) Msg::SetNumThreads(1);
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    // STL remeshing is not yet thread-safe
-    //    if((*it)->geomType() == GEntity::DiscreteSurface){
-    //      if(static_cast<discreteFace *>(*it)->haveParametrization())
-    //        Msg::SetNumThreads(1);
-    //    }
     // Frontal-Delaunay for quads and co are not yet thread-safe
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||

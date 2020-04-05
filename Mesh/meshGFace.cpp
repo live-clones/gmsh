@@ -2857,14 +2857,14 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 static bool isFullyDiscrete(GFace *gf)
 {
   if(gf->geomType() != GEntity::DiscreteSurface) return false;
-  if(static_cast<discreteFace *>(gf)->haveParametrization()) return false;
+  // a discrete surface could actually be a gmshFace!
+  discreteFace *df = dynamic_cast<discreteFace*>(gf);
+  if(df && df->haveParametrization()) return false;
   std::vector<GEdge *> e = gf->edges();
   for(std::size_t i = 0; i < e.size(); i++) {
-    if(e[i]->geomType() != GEntity::DiscreteCurve ||
-       (e[i]->geomType() == GEntity::DiscreteCurve &&
-        static_cast<discreteEdge *>(e[i])->haveParametrization())) {
-      return false;
-    }
+    if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
+    discreteEdge *de = dynamic_cast<discreteEdge*>(e[i]);
+    if(de && de->haveParametrization()) return false;
   }
   return true;
 }
