@@ -83,10 +83,10 @@ for i in range(1, 6):
 gmsh.model.addPhysicalGroup(3, [ov[-1][1]], 10)
 
 # Creating entities using constructive solid geometry is very powerful, but can
-# lead to small pratical issues for e.g. setting mesh sizes at points, or
-# identifying boundaries.
+# lead to practical issues for e.g. setting mesh sizes at points, or identifying
+# boundaries.
 
-# To identify point or other bounding entities you can take advantage of the
+# To identify points or other bounding entities you can take advantage of the
 # `getEntities()', `getBoundary()' and `getEntitiesInBoundingBox()' functions:
 
 lcar1 = .1
@@ -110,7 +110,7 @@ model.mesh.generate(3)
 gmsh.write("t16.msh")
 
 # Additional examples created with the OpenCASCADE geometry kernel are available
-# in `t18.py', `t19.py' as well as in the `demos/api' directory.
+# in `t18.py', `t19.py' and `t20.py', as well as in the `demos/api' directory.
 
 # Inspect the log:
 log = gmsh.logger.get()

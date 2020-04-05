@@ -103,11 +103,11 @@ int main(int argc, char **argv)
   // programmatically:
   gmsh::model::addPhysicalGroup(3, {ov[ov.size() - 1].second}, 10);
 
-  // Creating entities using constructive solid geometry is very powerful, but can
-  // lead to small pratical issues for e.g. setting mesh sizes at points, or
+  // Creating entities using constructive solid geometry is very powerful, but
+  // can lead to practical issues for e.g. setting mesh sizes at points, or
   // identifying boundaries.
 
-  // To identify point or other bounding entities you can take advantage of the
+  // To identify points or other bounding entities you can take advantage of the
   // `getEntities()', `getBoundary()' and `getEntitiesInBoundingBox()'
   // functions:
 
@@ -134,7 +134,8 @@ int main(int argc, char **argv)
   gmsh::write("t16.msh");
 
   // Additional examples created with the OpenCASCADE geometry kernel are
-  // available in `t18.cpp', `t19.cpp' as well as in the `demos/api' directory.
+  // available in `t18.cpp', `t19.cpp' and `t20.cpp', as well as in the
+  // `demos/api' directory.
 
   // Inspect the log:
   std::vector<std::string> log;
