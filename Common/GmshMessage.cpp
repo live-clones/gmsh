@@ -589,7 +589,7 @@ void Msg::Info(const char *fmt, ...)
   if(CTX::instance()->terminal){
     if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
        _commSize == 1)
-      fprintf(stdout, "Info    : [%3d %%] %s\n", _progressMeterCurrent, str);
+      fprintf(stdout, "Info    : [%3d%%] %s\n", _progressMeterCurrent, str);
     else if(_commSize > 1)
       fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
     else
@@ -783,7 +783,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     va_end(args);
     int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-    sprintf(str2, "Info    : [%3d %%] %s", _progressMeterCurrent, str);
+    sprintf(str2, "Info    : [%3d%%] %s", _progressMeterCurrent, str);
 
     if(_client) _client->Progress(str2);
 
