@@ -2,16 +2,17 @@
 //
 //  Gmsh GEO tutorial 20
 //
-//  STEP import and manipulation
+//  STEP import and manipulation, geometry partitioning
 //
 // -----------------------------------------------------------------------------
 
-// The OpenCASCADE geometry kernel allows to import STEP files and to
-// modify them
+// The OpenCASCADE geometry kernel allows to import STEP files and to modify
+// them. In this tutorial we will load a STEP geometry and partition it into
+// slices.
 
 SetFactory("OpenCASCADE");
 
-// Load a STEP file (Using `ShapeFromFile' instead of `Merge' allows to directly
+// Load a STEP file (using `ShapeFromFile' instead of `Merge' allows to directly
 // retrieve the tags of the highest dimensional imported entities):
 v() = ShapeFromFile("t20_data.step");
 
@@ -22,7 +23,7 @@ v() = ShapeFromFile("t20_data.step");
 // before merging the STEP file, OpenCASCADE would have converted the units to
 // meters (instead of the default, which is millimeters).
 
-// Get the bounding box of the loaded volume:
+// Get the bounding box of the volume:
 bbox() = BoundingBox Volume{v()};
 xmin = bbox(0);
 ymin = bbox(1);
@@ -48,22 +49,10 @@ EndFor
 // Fragment (i.e. intersect) the volume with all the cutting planes:
 BooleanFragments{ Volume{v()}; Delete; }{ Surface{1000+1:1000+N-1}; Delete; }
 
-// Now delete all the surfaces that are not on the boundary of a volume, all
-// curves that are not on the boundary of a surface, and all the points that are
-// not on the boundary of a curve:
-Delete { Surface{:}; Curve{:}; Point{:}; }
-
-// Note that to slice the mesh instead the CAD, we could have used the
-// "SimplePartition" Plugin:
-//
-// Plugin("SimplePartition").NumSlicesX = 1;
-// Plugin("SimplePartition").NumSlicesY = 1;
-// Plugin("SimplePartition").NumSlicesZ = N;
-// Plugin("SimplePartition").Run
-//
-// And for a general mesh partitioning using Metis, we could have used:
-//
-// PartitionMesh N;
+// Now remove all the surfaces (and their bounding entities) that are not on the
+// boundary of a volume, i.e. the parts of the cutting planes that "stick out"
+// of the volume:
+Recursive Delete { Surface{:}; }
 
 If(surf)
   // If we want to only keep the surfaces, retrieve the surfaces in bounding
@@ -74,7 +63,7 @@ If(surf)
     s() += Surface In BoundingBox{xmin-eps,ymin-eps,zmin + i * dz - eps,
       xmax+eps,ymax+eps,zmin + i * dz + eps};
   EndFor
-  // ...and delete all the other entities:
+  // ...and remove all the other entities:
   dels = Surface{:};
   dels -= s();
   Delete { Volume{:}; Surface{dels()}; Curve{:}; Point{:}; }
@@ -83,3 +72,5 @@ EndIf
 // Finally, let's specify a global mesh size:
 Mesh.CharacteristicLengthMin = 3;
 Mesh.CharacteristicLengthMax = 3;
+
+// To partition the mesh instead of the geometry, see `t21.geo'.
