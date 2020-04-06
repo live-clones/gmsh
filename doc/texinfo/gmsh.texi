@@ -5142,7 +5142,7 @@ system}. Screencasts that show how to use the GUI are available on
 * t17.geo:: Anisotropic background mesh
 * t18.geo:: Periodic meshes
 * t19.geo:: Thrusections, fillets, pipes, mesh size from curvature
-* t20.geo:: STEP import and manipulation
+* t20.geo:: STEP import and manipulation, geometry partitioning
 @end menu
 
 @c -------------------------------------------------------------------------

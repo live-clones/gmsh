@@ -2074,19 +2074,32 @@ GMSH_API void gmshModelOccImportShapesNativePointer(const void * shape,
                                                     const int highestDimOnly,
                                                     int * ierr);
 
-/* Set a mesh size constraint on the model entities `dimTags'. Currently only
- * entities of dimension 0 (points) are handled. */
-GMSH_API void gmshModelOccSetMeshSize(int * dimTags, size_t dimTags_n,
-                                      const double size,
+/* Get all the OpenCASCADE entities. If `dim' is >= 0, return only the
+ * entities of the specified dimension (e.g. points if `dim' == 0). The
+ * entities are returned as a vector of (dim, tag) integer pairs. */
+GMSH_API void gmshModelOccGetEntities(int ** dimTags, size_t * dimTags_n,
+                                      const int dim,
                                       int * ierr);
 
-/* Get the mass of the model entity of dimension `dim' and tag `tag'. */
+/* Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
+ * the OpenCASCADE entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelOccGetBoundingBox(const int dim,
+                                         const int tag,
+                                         double * xmin,
+                                         double * ymin,
+                                         double * zmin,
+                                         double * xmax,
+                                         double * ymax,
+                                         double * zmax,
+                                         int * ierr);
+
+/* Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelOccGetMass(const int dim,
                                   const int tag,
                                   double * mass,
                                   int * ierr);
 
-/* Get the center of mass of the model entity of dimension `dim' and tag
+/* Get the center of mass of the OpenCASCADE entity of dimension `dim' and tag
  * `tag'. */
 GMSH_API void gmshModelOccGetCenterOfMass(const int dim,
                                           const int tag,
@@ -2095,8 +2108,8 @@ GMSH_API void gmshModelOccGetCenterOfMass(const int dim,
                                           double * z,
                                           int * ierr);
 
-/* Get the matrix of inertia (by row) of the model entity of dimension `dim'
- * and tag `tag'. */
+/* Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
+ * `dim' and tag `tag'. */
 GMSH_API void gmshModelOccGetMatrixOfInertia(const int dim,
                                              const int tag,
                                              double ** mat, size_t * mat_n,
@@ -2107,6 +2120,12 @@ GMSH_API void gmshModelOccGetMatrixOfInertia(const int dim,
  * of processing, the number of synchronization points should normally be
  * minimized. */
 GMSH_API void gmshModelOccSynchronize(int * ierr);
+
+/* Set a mesh size constraint on the model entities `dimTags'. Currently only
+ * entities of dimension 0 (points) are handled. */
+GMSH_API void gmshModelOccSetSize(int * dimTags, size_t dimTags_n,
+                                  const double size,
+                                  int * ierr);
 
 /* Add a new post-processing view, with name `name'. If `tag' is positive use
  * it (and remove the view with that tag if it already exists), otherwise

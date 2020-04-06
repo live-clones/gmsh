@@ -2347,24 +2347,38 @@ namespace gmsh { // Top-level functions
                                               gmsh::vectorpair & outDimTags,
                                               const bool highestDimOnly = true);
 
-      // gmsh::model::occ::setMeshSize
+      // gmsh::model::occ::getEntities
       //
-      // Set a mesh size constraint on the model entities `dimTags'. Currently only
-      // entities of dimension 0 (points) are handled.
-      GMSH_API void setMeshSize(const gmsh::vectorpair & dimTags,
-                                const double size);
+      // Get all the OpenCASCADE entities. If `dim' is >= 0, return only the
+      // entities of the specified dimension (e.g. points if `dim' == 0). The
+      // entities are returned as a vector of (dim, tag) integer pairs.
+      GMSH_API void getEntities(gmsh::vectorpair & dimTags,
+                                const int dim = -1);
+
+      // gmsh::model::occ::getBoundingBox
+      //
+      // Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
+      // the OpenCASCADE entity of dimension `dim' and tag `tag'.
+      GMSH_API void getBoundingBox(const int dim,
+                                   const int tag,
+                                   double & xmin,
+                                   double & ymin,
+                                   double & zmin,
+                                   double & xmax,
+                                   double & ymax,
+                                   double & zmax);
 
       // gmsh::model::occ::getMass
       //
-      // Get the mass of the model entity of dimension `dim' and tag `tag'.
+      // Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
       GMSH_API void getMass(const int dim,
                             const int tag,
                             double & mass);
 
       // gmsh::model::occ::getCenterOfMass
       //
-      // Get the center of mass of the model entity of dimension `dim' and tag
-      // `tag'.
+      // Get the center of mass of the OpenCASCADE entity of dimension `dim' and
+      // tag `tag'.
       GMSH_API void getCenterOfMass(const int dim,
                                     const int tag,
                                     double & x,
@@ -2373,8 +2387,8 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::getMatrixOfInertia
       //
-      // Get the matrix of inertia (by row) of the model entity of dimension `dim'
-      // and tag `tag'.
+      // Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
+      // `dim' and tag `tag'.
       GMSH_API void getMatrixOfInertia(const int dim,
                                        const int tag,
                                        std::vector<double> & mat);
@@ -2386,6 +2400,17 @@ namespace gmsh { // Top-level functions
       // amount of processing, the number of synchronization points should normally
       // be minimized.
       GMSH_API void synchronize();
+
+      // gmsh::model::occ::setSize
+      //
+      // Set a mesh size constraint on the model entities `dimTags'. Currently only
+      // entities of dimension 0 (points) are handled.
+      GMSH_API void setSize(const gmsh::vectorpair & dimTags,
+                            const double size);
+
+      namespace mesh { // OpenCASCADE CAD kernel meshing constraints
+
+      } // namespace mesh
 
     } // namespace occ
 

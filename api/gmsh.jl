@@ -4239,26 +4239,54 @@ function importShapes(fileName, highestDimOnly = true, format = "")
 end
 
 """
-    gmsh.model.occ.setMeshSize(dimTags, size)
+    gmsh.model.occ.getEntities(dim = -1)
 
-Set a mesh size constraint on the model entities `dimTags`. Currently only
-entities of dimension 0 (points) are handled.
+Get all the OpenCASCADE entities. If `dim` is >= 0, return only the entities of
+the specified dimension (e.g. points if `dim` == 0). The entities are returned
+as a vector of (dim, tag) integer pairs.
+
+Return `dimTags`.
 """
-function setMeshSize(dimTags, size)
-    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
-    api_dimTags_n_ = length(api_dimTags_)
+function getEntities(dim = -1)
+    api_dimTags_ = Ref{Ptr{Cint}}()
+    api_dimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccSetMeshSize, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          api_dimTags_, api_dimTags_n_, size, ierr)
-    ierr[] != 0 && error("gmshModelOccSetMeshSize returned non-zero error code: $(ierr[])")
-    return nothing
+    ccall((:gmshModelOccGetEntities, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, dim, ierr)
+    ierr[] != 0 && error("gmshModelOccGetEntities returned non-zero error code: $(ierr[])")
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own=true)
+    dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
+    return dimTags
+end
+
+"""
+    gmsh.model.occ.getBoundingBox(dim, tag)
+
+Get the bounding box (`xmin`, `ymin`, `zmin`), (`xmax`, `ymax`, `zmax`) of the
+OpenCASCADE entity of dimension `dim` and tag `tag`.
+
+Return `xmin`, `ymin`, `zmin`, `xmax`, `ymax`, `zmax`.
+"""
+function getBoundingBox(dim, tag)
+    api_xmin_ = Ref{Cdouble}()
+    api_ymin_ = Ref{Cdouble}()
+    api_zmin_ = Ref{Cdouble}()
+    api_xmax_ = Ref{Cdouble}()
+    api_ymax_ = Ref{Cdouble}()
+    api_zmax_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetBoundingBox, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
+          dim, tag, api_xmin_, api_ymin_, api_zmin_, api_xmax_, api_ymax_, api_zmax_, ierr)
+    ierr[] != 0 && error("gmshModelOccGetBoundingBox returned non-zero error code: $(ierr[])")
+    return api_xmin_[], api_ymin_[], api_zmin_[], api_xmax_[], api_ymax_[], api_zmax_[]
 end
 
 """
     gmsh.model.occ.getMass(dim, tag)
 
-Get the mass of the model entity of dimension `dim` and tag `tag`.
+Get the mass of the OpenCASCADE entity of dimension `dim` and tag `tag`.
 
 Return `mass`.
 """
@@ -4275,7 +4303,8 @@ end
 """
     gmsh.model.occ.getCenterOfMass(dim, tag)
 
-Get the center of mass of the model entity of dimension `dim` and tag `tag`.
+Get the center of mass of the OpenCASCADE entity of dimension `dim` and tag
+`tag`.
 
 Return `x`, `y`, `z`.
 """
@@ -4294,8 +4323,8 @@ end
 """
     gmsh.model.occ.getMatrixOfInertia(dim, tag)
 
-Get the matrix of inertia (by row) of the model entity of dimension `dim` and
-tag `tag`.
+Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension `dim`
+and tag `tag`.
 
 Return `mat`.
 """
@@ -4326,6 +4355,34 @@ function synchronize()
     ierr[] != 0 && error("gmshModelOccSynchronize returned non-zero error code: $(ierr[])")
     return nothing
 end
+
+"""
+    gmsh.model.occ.setSize(dimTags, size)
+
+Set a mesh size constraint on the model entities `dimTags`. Currently only
+entities of dimension 0 (points) are handled.
+"""
+function setSize(dimTags, size)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccSetSize, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, size, ierr)
+    ierr[] != 0 && error("gmshModelOccSetSize returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    module gmsh.model.occ.mesh
+
+OpenCASCADE CAD kernel meshing constraints
+"""
+module mesh
+
+import ....gmsh
+
+end # end of module mesh
 
 end # end of module occ
 
