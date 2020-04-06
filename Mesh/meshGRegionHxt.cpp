@@ -5,6 +5,11 @@
 
 #include <map>
 #include <set>
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include "GmshConfig.h"
 #include "meshGRegionHxt.h"
 #include "Context.h"
@@ -16,6 +21,9 @@
 #include "MLine.h"
 #include "GmshMessage.h"
 #include "BackgroundMeshTools.h"
+#include "OS.h"
+
+
 
 #if defined(HAVE_HXT3D)
 
@@ -216,25 +224,42 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     gf->second->triangles.push_back(new MTriangle(v0, v1, v2));
   }
 
-  for(size_t i = 0; i < m->tetrahedra.num; i++) {
-    uint32_t *i0 = &m->tetrahedra.node[4 * i + 0];
-    uint16_t c = m->tetrahedra.colors[i];
-    if(c < regions.size()) {
-      MVertex *vv[4];
-      GRegion *gr = regions[c];
-      for(int j = 0; j < 4; j++) {
-        MVertex *v0 = c2v[i0[j]];
-        if(!v0) {
-          double *x = &m->vertices.coord[4 * i0[j]];
-          v0 = new MVertex(x[0], x[1], x[2], gr);
-          gr->mesh_vertices.push_back(v0);
-          c2v[i0[j]] = v0;
+  int numThreads = Msg::GetMaxThreads()>12?12:Msg::GetMaxThreads();
+  #pragma omp parallel num_threads(numThreads)
+  {
+    std::vector<std::vector<MVertex *>> thread_local_vertex_vector(regions.size());
+    std::vector<std::vector<MTetrahedron *>> thread_local_tetrahedron_vector(regions.size());  
+    #pragma omp for nowait  
+    for(size_t i = 0; i < m->tetrahedra.num; i++) {
+      uint32_t *i0 = &m->tetrahedra.node[4 * i + 0];
+      uint16_t c = m->tetrahedra.colors[i];
+      if(c < regions.size()) {
+        MVertex *vv[4];
+        GRegion *gr = regions[c];
+        for(int j = 0; j < 4; j++) {
+          MVertex *v0 = c2v[i0[j]];
+          if(!v0) {
+            double *x = &m->vertices.coord[4 * i0[j]];
+            v0 = new MVertex(x[0], x[1], x[2], gr);
+            // Insert the points into the thread-local vector first and then summarize at the end
+            thread_local_vertex_vector[c].push_back(v0);
+            c2v[i0[j]] = v0;
+          }
+          vv[j] = v0;
         }
-        vv[j] = v0;
+        // same as the MVertex object
+        thread_local_tetrahedron_vector[c].push_back(new MTetrahedron(vv[0], vv[1], vv[2], vv[3]));
       }
-      // this is very slow for large meshes - weird (and it's not the push_back)
-      MTetrahedron *tt = new MTetrahedron(vv[0], vv[1], vv[2], vv[3]);
-      gr->tetrahedra.push_back(tt);
+    }
+    // insert thread local vector into the global vector
+    #pragma omp critical
+    {
+      for(size_t i = 0; i < regions.size(); i++)
+      {
+        GRegion *gr = regions[i];  
+        gr->mesh_vertices.insert(gr->mesh_vertices.end(),thread_local_vertex_vector[i].begin(),thread_local_vertex_vector[i].end());
+        gr->tetrahedra.insert(gr->tetrahedra.end(),thread_local_tetrahedron_vector[i].begin(),thread_local_tetrahedron_vector[i].end());
+      }
     }
   }
   Msg::Debug("End Hxt2Gmsh");
