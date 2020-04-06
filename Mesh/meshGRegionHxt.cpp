@@ -224,8 +224,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     gf->second->triangles.push_back(new MTriangle(v0, v1, v2));
   }
 
-  int numThreads = Msg::GetMaxThreads()>12?12:Msg::GetMaxThreads();
-  #pragma omp parallel num_threads(numThreads)
+  #pragma omp parallel
   {
     std::vector<std::vector<MVertex *>> thread_local_vertex_vector(regions.size());
     std::vector<std::vector<MTetrahedron *>> thread_local_tetrahedron_vector(regions.size());  
