@@ -227,8 +227,8 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   #pragma omp parallel
   #endif
   {
-    std::vector<std::vector<MVertex *>> thread_local_vertex_vector(regions.size());
-    std::vector<std::vector<MTetrahedron *>> thread_local_tetrahedron_vector(regions.size());
+    std::vector<std::vector<MVertex *> > thread_local_vertex_vector(regions.size());
+    std::vector<std::vector<MTetrahedron *> > thread_local_tetrahedron_vector(regions.size());
     #if defined(_OPENMP)  
     #pragma omp for nowait
     #endif  
