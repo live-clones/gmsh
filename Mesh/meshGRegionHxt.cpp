@@ -223,12 +223,15 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     }
     gf->second->triangles.push_back(new MTriangle(v0, v1, v2));
   }
-
+  #if defined(_OPENMP)
   #pragma omp parallel
+  #endif
   {
     std::vector<std::vector<MVertex *>> thread_local_vertex_vector(regions.size());
-    std::vector<std::vector<MTetrahedron *>> thread_local_tetrahedron_vector(regions.size());  
-    #pragma omp for nowait  
+    std::vector<std::vector<MTetrahedron *>> thread_local_tetrahedron_vector(regions.size());
+    #if defined(_OPENMP)  
+    #pragma omp for nowait
+    #endif  
     for(size_t i = 0; i < m->tetrahedra.num; i++) {
       uint32_t *i0 = &m->tetrahedra.node[4 * i + 0];
       uint16_t c = m->tetrahedra.colors[i];
@@ -251,7 +254,9 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
       }
     }
     // insert thread local vector into the global vector
+    #if defined(_OPENMP)
     #pragma omp critical
+    #endif
     {
       for(size_t i = 0; i < regions.size(); i++)
       {
