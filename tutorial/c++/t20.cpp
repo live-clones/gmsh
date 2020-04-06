@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <gmsh.h>
+#include <algorithm>
 
 int main(int argc, char **argv)
 {
@@ -24,7 +25,14 @@ int main(int argc, char **argv)
   // Load a STEP file (using `importShapes' instead of `merge' allows to
   // directly retrieve the tags of the highest dimensional imported entities):
   std::vector<std::pair<int, int> > v;
-  gmsh::model::occ::importShapes("../t20_data.step", v);
+  try {
+    gmsh::model::occ::importShapes("../t20_data.step", v);
+  }
+  catch(...) {
+    gmsh::logger::write("Could not load STEP file: bye!");
+    gmsh::finalize();
+    return 0;
+  }
 
   // If we had specified
   //
