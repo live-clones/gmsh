@@ -2245,50 +2245,6 @@ class model:
             return _ovectorint(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_.value)
 
         @staticmethod
-        def getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1):
-            """
-            gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1)
-
-            Get the element-dependent basis functions of the elements of type
-            `elementType' in the entity of tag `tag' at the integration points
-            `integrationPoints' (given as concatenated triplets of coordinates in the
-            reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
-            space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
-            order hierarchical H1 Legendre functions or their gradient, in the u, v, w
-            coordinates of the reference elements). `numComponents' returns the number
-            C of components of a basis function. `numBasisFunctions' returns the number
-            N of basis functions per element. `basisFunctions' returns the value of the
-            basis functions at the integration points for each element: [e1g1f1,...,
-            e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,...,
-            e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: This function is deprecated -
-            use `getBasisFunctions' instead.
-
-            Return `numComponents', `numFunctionsPerElement', `basisFunctions'.
-            """
-            api_integrationPoints_, api_integrationPoints_n_ = _ivectordouble(integrationPoints)
-            api_numComponents_ = c_int()
-            api_numFunctionsPerElement_ = c_int()
-            api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetBasisFunctionsForElements(
-                c_int(elementType),
-                api_integrationPoints_, api_integrationPoints_n_,
-                c_char_p(functionSpaceType.encode()),
-                byref(api_numComponents_),
-                byref(api_numFunctionsPerElement_),
-                byref(api_basisFunctions_), byref(api_basisFunctions_n_),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: ",
-                    ierr.value)
-            return (
-                api_numComponents_.value,
-                api_numFunctionsPerElement_.value,
-                _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
-
-        @staticmethod
         def getEdgeNumber(edgeNodes):
             """
             gmsh.model.mesh.getEdgeNumber(edgeNodes)
