@@ -2975,16 +2975,24 @@ GMSH_API void gmshModelOccImportShapesNativePointer(const void * shape, int ** o
   }
 }
 
-GMSH_API void gmshModelOccSetMeshSize(int * dimTags, size_t dimTags_n, const double size, int * ierr)
+GMSH_API void gmshModelOccGetEntities(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::vectorpair api_dimTags_(dimTags_n/2);
-    for(size_t i = 0; i < dimTags_n/2; ++i){
-      api_dimTags_[i].first = dimTags[i * 2 + 0];
-      api_dimTags_[i].second = dimTags[i * 2 + 1];
-    }
-    gmsh::model::occ::setMeshSize(api_dimTags_, size);
+    gmsh::vectorpair api_dimTags_;
+    gmsh::model::occ::getEntities(api_dimTags_, dim);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccGetBoundingBox(const int dim, const int tag, double * xmin, double * ymin, double * zmin, double * xmax, double * ymax, double * zmax, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::getBoundingBox(dim, tag, *xmin, *ymin, *zmin, *xmax, *ymax, *zmax);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -3031,6 +3039,22 @@ GMSH_API void gmshModelOccSynchronize(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::occ::synchronize();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccSetSize(int * dimTags, size_t dimTags_n, const double size, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::occ::setSize(api_dimTags_, size);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

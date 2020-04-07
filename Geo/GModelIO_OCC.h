@@ -154,6 +154,11 @@ private:
   void _copyExtrudedAttributes(TopoDS_Face face, GFace *gf);
   void _copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr);
 
+  // STL
+  bool _makeSTL(const TopoDS_Shape &s, std::vector<SPoint3> &vertices,
+                std::vector<SVector3> &normals,
+                std::vector<int> &triangles);
+
 public:
   OCC_Internals();
   ~OCC_Internals();
@@ -354,7 +359,10 @@ public:
   void synchronize(GModel *model);
 
   // queries
+  bool getEntities(std::vector<std::pair<int, int> > &dimTags, int dim);
   bool getVertex(int tag, double &x, double &y, double &z);
+  bool getBoundingBox(int dim, int tag, double &xmin, double &ymin,
+                      double &zmin, double &xmax, double &ymax, double &zmax);
   bool getMass(int dim, int tag, double &mass);
   bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z);
   bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat);
@@ -373,9 +381,6 @@ public:
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
   bool makeEdgeSTLFromFace(const TopoDS_Edge &c, const TopoDS_Face &s,
                            std::vector<SPoint3> *vertices);
-  bool makeSolidSTL(const TopoDS_Solid &s, std::vector<SPoint3> &vertices,
-                    std::vector<SVector3> &normals,
-                    std::vector<int> &triangles);
   bool makeRectangleSTL(double x, double y, double z, double dx, double dy,
                         double roundedRadius, std::vector<SPoint3> &vertices,
                         std::vector<SVector3> &normals,
@@ -698,7 +703,16 @@ public:
   }
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}
+  bool getEntities(std::vector<std::pair<int, int> > &dimTags, int dim)
+  {
+    return false;
+  }
   bool getVertex(int tag, double &x, double &y, double &z) { return false; }
+  bool getBoundingBox(int dim, int tag, double &xmin, double &ymin,
+                      double &zmin, double &xmax, double &ymax, double &zmax)
+  {
+    return false;
+  }
   bool getMass(int dim, int tag, double &mass) { return false; }
   bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z)
   {

@@ -703,20 +703,30 @@ occ.add('importShapes', doc, None, istring('fileName'), ovectorpair('outDimTags'
 doc = '''Imports an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. For C and C++ only. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
 occ.add_special('importShapesNativePointer', doc, ['onlycc++'], None, ivoidstar('shape'), ovectorpair('outDimTags'), ibool('highestDimOnly', 'true', 'True'))
 
-doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
-occ.add('setMeshSize', doc, None, ivectorpair('dimTags'), idouble('size'))
+doc = '''Get all the OpenCASCADE entities. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
+occ.add('getEntities', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
 
-doc = '''Get the mass of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
+occ.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
+
+doc = '''Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMass', doc, None, iint('dim'), iint('tag'), odouble('mass'))
 
-doc = '''Get the center of mass of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the center of mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getCenterOfMass', doc, None, iint('dim'), iint('tag'), odouble('x'), odouble('y'), odouble('z'))
 
-doc = '''Get the matrix of inertia (by row) of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMatrixOfInertia', doc, None, iint('dim'), iint('tag'), ovectordouble('mat'))
 
 doc = '''Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 occ.add('synchronize', doc, None)
+
+################################################################################
+
+mesh = occ.add_module('mesh', 'OpenCASCADE CAD kernel meshing constraints')
+
+doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
+occ.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
 ################################################################################
 

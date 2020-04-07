@@ -56,10 +56,10 @@ v() = BooleanFragments{ Volume{3}; Delete; }{ Volume{3 + 1 : 3 + 5}; Delete; };
 Physical Volume(10) = v(#v()-1);
 
 // Creating entities using constructive solid geometry is very powerful, but can
-// lead to small pratical issues for e.g. setting mesh sizes at points, or
+// lead to practical issues for e.g. setting mesh sizes at points, or
 // identifying boundaries.
 
-// To identify point or other bounding entities you can take advantage of the
+// To identify points or other bounding entities you can take advantage of the
 // `PointfsOf' (a special case of the more general `Boundary' command) and the
 // `In BoundingBox' commands.
 lcar1 = .1;
@@ -79,5 +79,5 @@ p() = Point In BoundingBox{0.5-eps, 0.5-eps, 0.5-eps,
 Characteristic Length{ p() } = lcar2;
 
 // Additional examples created with the OpenCASCADE geometry kernel are
-// available in `t18.geo', `t19.geo' as well as in the `demos/boolean'
-// directory.
+// available in `t18.geo', `t19.geo' and `t20.geo', as well as in the
+// `demos/boolean' directory.

@@ -154,27 +154,27 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
   for(int dim = 1; dim <= 3 && dim <= _m->getDim(); ++dim) {
     if((askedDim == 4 && dim > 1) || dim == askedDim) {
       if(!_computedJac[dim - 1]) {
-        double time = Cpu();
+        double time = Cpu(), w = TimeOfDay();
         Msg::StatusBar(true, "Computing Jacobian for %dD elements...", dim);
         _computeMinMaxJandValidity(dim);
-        Msg::StatusBar(true, "Done computing Jacobian for %dD elements (%g s)",
-                       dim, Cpu() - time);
+        Msg::StatusBar(true, "Done computing Jacobian for %dD elements (Wall %gs, "
+                       "CPU %gs)", dim, TimeOfDay() - w, Cpu() - time);
         printStatJ = true;
       }
       if(computeIGE && !_computedIGE[dim - 1]) {
-        double time = Cpu();
+        double time = Cpu(), w = TimeOfDay();
         Msg::StatusBar(true, "Computing IGE for %dD elements...", dim);
         _computeMinIGE(dim);
-        Msg::StatusBar(true, "Done computing IGE for %dD elements (%g s)", dim,
-                       Cpu() - time);
+        Msg::StatusBar(true, "Done computing IGE for %dD elements (Wall %gs, "
+                       "CPU %gs)", dim, TimeOfDay() - w, Cpu() - time);
         printStatS = true;
       }
       if(computeICN && !_computedICN[dim - 1]) {
-        double time = Cpu();
+        double time = Cpu(), w = TimeOfDay();
         Msg::StatusBar(true, "Computing ICN for %dD elements...", dim);
         _computeMinICN(dim);
-        Msg::StatusBar(true, "Done computing ICN for %dD elements (%g s)", dim,
-                       Cpu() - time);
+        Msg::StatusBar(true, "Done computing ICN for %dD elements (Wall %gs, "
+                       "CPU %gs)", dim, TimeOfDay() - w, Cpu() - time);
         printStatI = true;
       }
     }

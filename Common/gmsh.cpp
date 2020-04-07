@@ -2605,7 +2605,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
     std::vector<MVertex *> vertices(numVertices);
     std::vector<unsigned int> verticesOrder(numVertices);
     const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
-    
+
     std::size_t entityOffset = 0;
 
     for(std::size_t iEntity = 0; iEntity < entities.size(); ++iEntity) {
@@ -2647,7 +2647,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
 
         basisFunctionsOrientation[entityOffset + iElement] = (int)elementOrientation;
       }
-      
+
       entityOffset += localNumElements;
     }
   }
@@ -3900,12 +3900,6 @@ gmsh::model::mesh::getGhostElements(const int dim, const int tag,
     partitions.push_back(it->second);
   }
 }
-
-// TODO: give access to closures
-// GMSH_API void gmsh::model::mesh::getElementClosures(const int elementType,
-// ...)
-// {
-// }
 
 GMSH_API void gmsh::model::mesh::setSize(const vectorpair &dimTags,
                                          const double size)
@@ -5573,14 +5567,25 @@ GMSH_API void gmsh::model::occ::importShapesNativePointer(
 #endif
 }
 
-GMSH_API void gmsh::model::occ::setMeshSize(const vectorpair &dimTags,
-                                            const double size)
+GMSH_API void gmsh::model::occ::getEntities(vectorpair &dimTags, const int dim)
 {
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
-  for(std::size_t i = 0; i < dimTags.size(); i++) {
-    int dim = dimTags[i].first, tag = dimTags[i].second;
-    GModel::current()->getOCCInternals()->setMeshSize(dim, tag, size);
+  if(!GModel::current()->getOCCInternals()->getEntities(dimTags, dim)) {
+    throw 1;
+  }
+}
+
+GMSH_API void gmsh::model::occ::getBoundingBox(const int dim, const int tag,
+                                               double &xmin, double &ymin,
+                                               double &zmin, double &xmax,
+                                               double &ymax, double &zmax)
+{
+  if(!_isInitialized()) { throw - 1; }
+  _createOcc();
+  if(!GModel::current()->getOCCInternals()->getBoundingBox
+     (dim, tag, xmin, ymin, zmin, xmax, ymax, zmax)) {
+    throw 1;
   }
 }
 
@@ -5620,6 +5625,19 @@ GMSH_API void gmsh::model::occ::synchronize()
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
   GModel::current()->getOCCInternals()->synchronize(GModel::current());
+}
+
+// gmsh::model::occ::mesh
+
+GMSH_API void gmsh::model::occ::setSize(const vectorpair &dimTags,
+                                            const double size)
+{
+  if(!_isInitialized()) { throw - 1; }
+  _createOcc();
+  for(std::size_t i = 0; i < dimTags.size(); i++) {
+    int dim = dimTags[i].first, tag = dimTags[i].second;
+    GModel::current()->getOCCInternals()->setMeshSize(dim, tag, size);
+  }
 }
 
 // gmsh::view

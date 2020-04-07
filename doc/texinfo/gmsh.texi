@@ -5142,6 +5142,7 @@ system}. Screencasts that show how to use the GUI are available on
 * t17.geo:: Anisotropic background mesh
 * t18.geo:: Periodic meshes
 * t19.geo:: Thrusections, fillets, pipes, mesh size from curvature
+* t20.geo:: STEP import and manipulation, geometry partitioning
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5346,11 +5347,22 @@ system}. Screencasts that show how to use the GUI are available on
 @c t19.geo
 @c -------------------------------------------------------------------------
 
-@node t19.geo,  , t18.geo, Tutorial
+@node t19.geo, t20.geo, t18.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t19.geo,t19.geo}
 
 @smallformat
 @verbatiminclude ../../tutorial/t19.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t20.geo
+@c -------------------------------------------------------------------------
+
+@node t20.geo,  , t19.geo, Tutorial
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t20.geo,t20.geo}
+
+@smallformat
+@verbatiminclude ../../tutorial/t20.geo
 @end smallformat
 
 @c =========================================================================
