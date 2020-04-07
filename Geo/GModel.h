@@ -224,28 +224,28 @@ public:
   // get/set global vertex/element num
   std::size_t getMaxVertexNumber() const { return _maxVertexNum; }
   std::size_t getMaxElementNumber() const { return _maxElementNum; }
-  void setMaxVertexNumber(std::size_t num) 
+  void setMaxVertexNumber(std::size_t num)
   {
-    #if defined(_OPENMP)
-    #pragma omp atomic write
-    #endif
-    _maxVertexNum = _maxVertexNum > num ? _maxVertexNum : num; 
+#if defined(_OPENMP)
+#pragma omp atomic write
+#endif
+    _maxVertexNum = _maxVertexNum > num ? _maxVertexNum : num;
   }
-  void setMaxElementNumber(std::size_t num) 
+  void setMaxElementNumber(std::size_t num)
   {
-    #if defined(_OPENMP)
-    #pragma omp atomic write
-    #endif
-    _maxElementNum = _maxElementNum > num ? _maxElementNum : num; 
+#if defined(_OPENMP)
+#pragma omp atomic write
+#endif
+    _maxElementNum = _maxElementNum > num ? _maxElementNum : num;
   }
 
   // increment and get global vertex/element num
   std::size_t incrementAndGetMaxVertexNumber()
   {
     std::size_t _myVertexNum;
-    #if defined(_OPENMP)
-    #pragma omp atomic capture
-    #endif
+#if defined(_OPENMP)
+#pragma omp atomic capture
+#endif
     {
       ++_maxVertexNum;
       _myVertexNum = _maxVertexNum;
@@ -255,9 +255,9 @@ public:
   std::size_t incrementAndGetMaxElementNumber()
   {
     std::size_t _myElementNum;
-    #if defined(_OPENMP)
-    #pragma omp atomic capture
-    #endif
+#if defined(_OPENMP)
+#pragma omp atomic capture
+#endif
     {
       ++_maxElementNum;
       _myElementNum = _maxElementNum;
@@ -268,10 +268,10 @@ public:
   // decrement global vertex num
   void decrementMaxVertexNumber()
   {
-    #if defined(_OPENMP)
-    #pragma omp atomic update
-    #endif
-      --_maxVertexNum;
+#if defined(_OPENMP)
+#pragma omp atomic update
+#endif
+    --_maxVertexNum;
   }
 
   void checkPointMaxNumbers()
@@ -289,7 +289,7 @@ public:
   int addMEdge(const MEdge &edge);
   // get the edge number
   int getEdgeNumber(const MEdge &edge);
-  //number the faces
+  // number the faces
   int addMFace(const MFace &face);
 
   // renumber mesh vertices and elements in a continuous sequence (this
@@ -302,7 +302,7 @@ public:
   void destroyMeshCaches();
   // delete the mesh stored in entities and call destroMeshCaches
   void deleteMesh();
-  void deleteMesh(const std::vector<GEntity*> &entities);
+  void deleteMesh(const std::vector<GEntity *> &entities);
   // delete the vertex arrays used for efficient mesh drawing
   void deleteVertexArrays();
 
@@ -365,10 +365,16 @@ public:
   const_viter lastVertex() const { return vertices.end(); }
 
   // get the set of entities
-  std::set<GRegion *, GEntityPtrLessThan> getRegions() const { return regions; };
+  std::set<GRegion *, GEntityPtrLessThan> getRegions() const
+  {
+    return regions;
+  };
   std::set<GFace *, GEntityPtrLessThan> getFaces() const { return faces; };
   std::set<GEdge *, GEntityPtrLessThan> getEdges() const { return edges; };
-  std::set<GVertex *, GEntityPtrLessThan> getVertices() const { return vertices; };
+  std::set<GVertex *, GEntityPtrLessThan> getVertices() const
+  {
+    return vertices;
+  };
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
@@ -511,8 +517,8 @@ public:
   std::size_t getNumMeshElements(unsigned c[6]);
 
   // access a mesh element by coordinates (using an octree search)
-  MElement *getMeshElementByCoord(SPoint3 &p, SPoint3 &param,
-                                  int dim = -1, bool strict = true);
+  MElement *getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim = -1,
+                                  bool strict = true);
   std::vector<MElement *> getMeshElementsByCoord(SPoint3 &p, int dim = -1,
                                                  bool strict = true);
 
@@ -639,8 +645,7 @@ public:
                  bool splitIntoHexas = false, bool barycentric = false);
 
   // optimize the mesh
-  int optimizeMesh(const std::string &how, bool force = false,
-                   int niter = 1);
+  int optimizeMesh(const std::string &how, bool force = false, int niter = 1);
 
   // recombine the mesh
   int recombineMesh();
@@ -729,9 +734,9 @@ public:
                int oneSolidPerSurface = 0);
 
   // X3D (only output from OCCT's triangulation)
-  int writeX3D(const std::string &name,
-               bool saveAll = false, double scalingFactor = 1.0,
-               int x3dsurfaces = 1, int x3dedges = 0, int x3dvertices = 0);
+  int writeX3D(const std::string &name, bool saveAll = false,
+               double scalingFactor = 1.0, int x3dsurfaces = 1,
+               int x3dedges = 0, int x3dvertices = 0);
 
   // PLY(2) format (ascii text format)
   int readPLY(const std::string &name);

@@ -23,8 +23,6 @@
 #include "BackgroundMeshTools.h"
 #include "OS.h"
 
-
-
 #if defined(HAVE_HXT3D)
 
 extern "C" {
@@ -33,7 +31,8 @@ extern "C" {
 #include "hxt_tetMesh.h"
 }
 
-static HXTStatus myRecoveryFun (HXTMesh* mesh, void* userData){
+static HXTStatus myRecoveryFun(HXTMesh *mesh, void *userData)
+{
   return hxt_boundary_recovery(mesh);
 }
 
@@ -45,8 +44,7 @@ HXTStatus hxtGmshMsgCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-double hxtMeshSizeGmshCallBack(double x, double y, double z,
-                               void *userData)
+double hxtMeshSizeGmshCallBack(double x, double y, double z, void *userData)
 {
   GRegion *gr = (GRegion *)userData;
   double lc2 = BGM_MeshSize(gr, 0, 0, x, y, z);
@@ -155,15 +153,11 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     i2e[allEdges[i]->tag()] = allEdges[i];
 
   c2v.resize(m->vertices.num);
-  for(size_t i = c2v.size(); i < m->vertices.num; i++) {
-    c2v[i] = NULL;
-  }
+  for(size_t i = c2v.size(); i < m->vertices.num; i++) { c2v[i] = NULL; }
 
   for(size_t j = 0; j < allEdges.size(); j++) {
     GEdge *ge = allEdges[j];
-    for(size_t i = 0; i < ge->lines.size(); i++) {
-      delete ge->lines[i];
-    }
+    for(size_t i = 0; i < ge->lines.size(); i++) { delete ge->lines[i]; }
     ge->lines.clear();
   }
 
@@ -223,15 +217,17 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     }
     gf->second->triangles.push_back(new MTriangle(v0, v1, v2));
   }
-  #if defined(_OPENMP)
-  #pragma omp parallel
-  #endif
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
   {
-    std::vector<std::vector<MVertex *> > thread_local_vertex_vector(regions.size());
-    std::vector<std::vector<MTetrahedron *> > thread_local_tetrahedron_vector(regions.size());
-    #if defined(_OPENMP)  
-    #pragma omp for nowait
-    #endif  
+    std::vector<std::vector<MVertex *> > thread_local_vertex_vector(
+      regions.size());
+    std::vector<std::vector<MTetrahedron *> > thread_local_tetrahedron_vector(
+      regions.size());
+#if defined(_OPENMP)
+#pragma omp for nowait
+#endif
     for(size_t i = 0; i < m->tetrahedra.num; i++) {
       uint32_t *i0 = &m->tetrahedra.node[4 * i + 0];
       uint16_t c = m->tetrahedra.colors[i];
@@ -243,26 +239,31 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
           if(!v0) {
             double *x = &m->vertices.coord[4 * i0[j]];
             v0 = new MVertex(x[0], x[1], x[2], gr);
-            // Insert the points into the thread-local vector first and then summarize at the end
+            // Insert the points into the thread-local vector first and then
+            // summarize at the end
             thread_local_vertex_vector[c].push_back(v0);
             c2v[i0[j]] = v0;
           }
           vv[j] = v0;
         }
         // same as the MVertex object
-        thread_local_tetrahedron_vector[c].push_back(new MTetrahedron(vv[0], vv[1], vv[2], vv[3]));
+        thread_local_tetrahedron_vector[c].push_back(
+          new MTetrahedron(vv[0], vv[1], vv[2], vv[3]));
       }
     }
-    // insert thread local vector into the global vector
-    #if defined(_OPENMP)
-    #pragma omp critical
-    #endif
+// insert thread local vector into the global vector
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
     {
-      for(size_t i = 0; i < regions.size(); i++)
-      {
-        GRegion *gr = regions[i];  
-        gr->mesh_vertices.insert(gr->mesh_vertices.end(),thread_local_vertex_vector[i].begin(),thread_local_vertex_vector[i].end());
-        gr->tetrahedra.insert(gr->tetrahedra.end(),thread_local_tetrahedron_vector[i].begin(),thread_local_tetrahedron_vector[i].end());
+      for(size_t i = 0; i < regions.size(); i++) {
+        GRegion *gr = regions[i];
+        gr->mesh_vertices.insert(gr->mesh_vertices.end(),
+                                 thread_local_vertex_vector[i].begin(),
+                                 thread_local_vertex_vector[i].end());
+        gr->tetrahedra.insert(gr->tetrahedra.end(),
+                              thread_local_tetrahedron_vector[i].begin(),
+                              thread_local_tetrahedron_vector[i].end());
       }
     }
   }
@@ -271,8 +272,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 }
 
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
-		   std::vector<MVertex *> &c2v)
+                   std::map<MVertex *, int> &v2c, std::vector<MVertex *> &c2v)
 {
   std::set<MVertex *> all;
   std::vector<GFace *> faces;

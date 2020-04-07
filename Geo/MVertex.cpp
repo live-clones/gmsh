@@ -41,8 +41,7 @@ MVertex::MVertex(double x, double y, double z, GEntity *ge, std::size_t num)
 void MVertex::deleteLast()
 {
   GModel *m = GModel::current();
-  if(_num == m->getMaxVertexNumber())
-    m->decrementMaxVertexNumber();
+  if(_num == m->getMaxVertexNumber()) m->decrementMaxVertexNumber();
   delete this;
 }
 
@@ -197,7 +196,8 @@ void MVertex::writeVRML(FILE *fp, double scalingFactor)
           z() * scalingFactor);
 }
 
-void MVertex::writeUNV(FILE *fp, bool officialExponentFormat, double scalingFactor)
+void MVertex::writeUNV(FILE *fp, bool officialExponentFormat,
+                       double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -207,7 +207,7 @@ void MVertex::writeUNV(FILE *fp, bool officialExponentFormat, double scalingFact
   fprintf(fp, "%10ld%10d%10d%10d\n", _index, coord_sys, displacement_coord_sys,
           color);
 
-  if(officialExponentFormat){
+  if(officialExponentFormat) {
     // hack to print the numbers with "D+XX" exponents
     char tmp[128];
     sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
@@ -216,7 +216,7 @@ void MVertex::writeUNV(FILE *fp, bool officialExponentFormat, double scalingFact
       if(tmp[i] == 'E') tmp[i] = 'D';
     fprintf(fp, "%s", tmp);
   }
-  else{
+  else {
     fprintf(fp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
             y() * scalingFactor, z() * scalingFactor);
   }
@@ -507,7 +507,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
 bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
-  if(!v->onWhat()){
+  if(!v->onWhat()) {
     Msg::Error("Mesh node %d is not classified: cannot reparametrize",
                v->getNum());
     return false;
