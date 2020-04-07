@@ -3258,6 +3258,21 @@ entities are returned as a vector of (dim, tag) integer pairs.
 -
 @end table
 
+@item gmsh/model/occ/getEntitiesInBoundingBox
+Get the OpenCASCADE entities in the bounding box defined by the two points
+(@code{xmin}, @code{ymin}, @code{zmin}) and (@code{xmax}, @code{ymax},
+@code{zmax}). If @code{dim} is >= 0, return only the entities of the specified
+dimension (e.g. points if @code{dim} == 0).
+
+@table @asis
+@item Input:
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}, @code{dim = -1}
+@item Output:
+@code{tags}
+@item Return:
+-
+@end table
+
 @item gmsh/model/occ/getBoundingBox
 Get the bounding box (@code{xmin}, @code{ymin}, @code{zmin}), (@code{xmax},
 @code{ymax}, @code{zmax}) of the OpenCASCADE entity of dimension @code{dim} and

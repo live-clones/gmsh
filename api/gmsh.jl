@@ -4261,6 +4261,28 @@ function getEntities(dim = -1)
 end
 
 """
+    gmsh.model.occ.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
+
+Get the OpenCASCADE entities in the bounding box defined by the two points
+(`xmin`, `ymin`, `zmin`) and (`xmax`, `ymax`, `zmax`). If `dim` is >= 0, return
+only the entities of the specified dimension (e.g. points if `dim` == 0).
+
+Return `tags`.
+"""
+function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetEntitiesInBoundingBox, gmsh.lib), Cvoid,
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, api_tags_n_, dim, ierr)
+    ierr[] != 0 && error("gmshModelOccGetEntitiesInBoundingBox returned non-zero error code: $(ierr[])")
+    tmp_api_tags_ = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    tags = [ (tmp_api_tags_[i], tmp_api_tags_[i+1]) for i in 1:2:length(tmp_api_tags_) ]
+    return tags
+end
+
+"""
     gmsh.model.occ.getBoundingBox(dim, tag)
 
 Get the bounding box (`xmin`, `ymin`, `zmin`), (`xmax`, `ymax`, `zmax`) of the

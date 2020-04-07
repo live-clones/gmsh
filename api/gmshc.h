@@ -2081,6 +2081,20 @@ GMSH_API void gmshModelOccGetEntities(int ** dimTags, size_t * dimTags_n,
                                       const int dim,
                                       int * ierr);
 
+/* Get the OpenCASCADE entities in the bounding box defined by the two points
+ * (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+ * return only the entities of the specified dimension (e.g. points if `dim'
+ * == 0). */
+GMSH_API void gmshModelOccGetEntitiesInBoundingBox(const double xmin,
+                                                   const double ymin,
+                                                   const double zmin,
+                                                   const double xmax,
+                                                   const double ymax,
+                                                   const double zmax,
+                                                   int ** tags, size_t * tags_n,
+                                                   const int dim,
+                                                   int * ierr);
+
 /* Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
  * the OpenCASCADE entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelOccGetBoundingBox(const int dim,

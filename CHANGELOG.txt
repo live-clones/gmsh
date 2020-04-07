@@ -1,5 +1,7 @@
-4.6.0 (Work-in-progress): New options to only generate initial 2D or 3D meshes
-(without node insertion), and to only mesh non-meshed entities; small bug fixes.
+4.6.0 (Work-in-progress): new options to only generate initial 2D or 3D meshes
+(without node insertion), and to only mesh non-meshed entities; new OCC API
+functions to reduce the number of synchronizations for complex models; small bug
+fixes.
 
 * Incompatible API changes: new optional argument to mesh/clear; new argument to
   mesh/getBasisFunctions, removed mesh/preallocateBasisFunctions and
@@ -36,7 +38,7 @@ adapted meshes (Mesh.MinimumElementsPerTwoPi and "-clcurv val"); improved
 handling of anisotropic surface meshes in 3D Delaunay; improved high-order
 periodic meshing; improved 2D boolean unions; file chooser type is now
 changeable at runtime; FLTK GUI can now be created and destroyed at will through
-the api; fixed regression in MeshAdapt for non-periodic surfaces with
+the API; fixed regression in MeshAdapt for non-periodic surfaces with
 singularities; combining views now copies options; added API support for mesh
 compounds, per-surface mesh algorithm and mesh size from boundary; renamed
 plugin AnalyseCurvedMesh to AnalyseMeshQuality; fixed regression for built-in

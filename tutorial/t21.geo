@@ -18,7 +18,7 @@
 //
 // The major advantage of this approach is that it allows to maintain a full
 // boundary representation of the partition entities, which Gmsh creates
-// `Mesh.PartitionCreateTopology' is set.
+// automatically if `Mesh.PartitionCreateTopology' is set.
 
 // Let us start by creating a simple geometry with two adjacent squares sharing
 // an edge:
