@@ -224,8 +224,20 @@ public:
   // get/set global vertex/element num
   std::size_t getMaxVertexNumber() const { return _maxVertexNum; }
   std::size_t getMaxElementNumber() const { return _maxElementNum; }
-  void setMaxVertexNumber(std::size_t num) { _maxVertexNum = num; }
-  void setMaxElementNumber(std::size_t num) { _maxElementNum = num; }
+  void setMaxVertexNumber(std::size_t num) 
+  {
+    #if defined(_OPENMP)
+    #pragma omp atomic write
+    #endif
+    _maxVertexNum = _maxVertexNum > num ? _maxVertexNum : num; 
+  }
+  void setMaxElementNumber(std::size_t num) 
+  {
+    #if defined(_OPENMP)
+    #pragma omp atomic write
+    #endif
+    _maxElementNum = _maxElementNum > num ? _maxElementNum : num; 
+  }
 
   // increment and get global vertex/element num
   std::size_t incrementAndGetMaxVertexNumber()
@@ -251,6 +263,15 @@ public:
       _myElementNum = _maxElementNum;
     }
     return _myElementNum;
+  }
+
+  // decrement global vertex num
+  void decrementMaxVertexNumber()
+  {
+    #if defined(_OPENMP)
+    #pragma omp atomic update
+    #endif
+      --_maxVertexNum;
   }
 
   void checkPointMaxNumbers()
