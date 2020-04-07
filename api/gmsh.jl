@@ -1120,15 +1120,20 @@ function getLastNodeError()
 end
 
 """
-    gmsh.model.mesh.clear()
+    gmsh.model.mesh.clear(dimTags = Tuple{Cint,Cint}[])
 
-Clear the mesh, i.e. delete all the nodes and elements.
+Clear the mesh, i.e. delete all the nodes and elements, for the entities
+`dimTags`. if `dimTags` is empty, clear the whole mesh. Note that the mesh of an
+entity can only be cleared if this entity is not on the boundary of another
+entity with a non-empty mesh.
 """
-function clear()
+function clear(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClear, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshClear returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2121,21 +2126,6 @@ function setSizeFromBoundary(dim, tag, val)
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[] != 0 && error("gmshModelMeshSetSizeFromBoundary returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
-    gmsh.model.mesh.setOnlyInitialMesh(dim, tag, val)
-
-Only generate the initial mesh (or not) for the entity of dimension `dim` and
-tag `tag`. Currently only supported for `dim` == 2.
-"""
-function setOnlyInitialMesh(dim, tag, val)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetOnlyInitialMesh, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cint}),
-          dim, tag, val, ierr)
-    ierr[] != 0 && error("gmshModelMeshSetOnlyInitialMesh returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -3237,7 +3227,7 @@ end
 """
     gmsh.model.geo.mesh.setSizeFromBoundary(dim, tag, val)
 
-Force the mesh size to be extended from the boundary (or not) for the model
+Force the mesh size to be extended from the boundary, or not, for the model
 entity of dimension `dim` and tag `tag`. Currently only supported for `dim` ==
 2.
 """
@@ -3247,21 +3237,6 @@ function setSizeFromBoundary(dim, tag, val)
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetSizeFromBoundary returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
-    gmsh.model.geo.mesh.setOnlyInitialMesh(dim, tag, val)
-
-Only generate the initial mesh (or not) for the entity of dimension `dim` and
-tag `tag`. Currently only supported for `dim` == 2.
-"""
-function setOnlyInitialMesh(dim, tag, val)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelGeoMeshSetOnlyInitialMesh, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cint}),
-          dim, tag, val, ierr)
-    ierr[] != 0 && error("gmshModelGeoMeshSetOnlyInitialMesh returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -4264,26 +4239,76 @@ function importShapes(fileName, highestDimOnly = true, format = "")
 end
 
 """
-    gmsh.model.occ.setMeshSize(dimTags, size)
+    gmsh.model.occ.getEntities(dim = -1)
 
-Set a mesh size constraint on the model entities `dimTags`. Currently only
-entities of dimension 0 (points) are handled.
+Get all the OpenCASCADE entities. If `dim` is >= 0, return only the entities of
+the specified dimension (e.g. points if `dim` == 0). The entities are returned
+as a vector of (dim, tag) integer pairs.
+
+Return `dimTags`.
 """
-function setMeshSize(dimTags, size)
-    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
-    api_dimTags_n_ = length(api_dimTags_)
+function getEntities(dim = -1)
+    api_dimTags_ = Ref{Ptr{Cint}}()
+    api_dimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccSetMeshSize, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          api_dimTags_, api_dimTags_n_, size, ierr)
-    ierr[] != 0 && error("gmshModelOccSetMeshSize returned non-zero error code: $(ierr[])")
-    return nothing
+    ccall((:gmshModelOccGetEntities, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, dim, ierr)
+    ierr[] != 0 && error("gmshModelOccGetEntities returned non-zero error code: $(ierr[])")
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own=true)
+    dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
+    return dimTags
+end
+
+"""
+    gmsh.model.occ.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
+
+Get the OpenCASCADE entities in the bounding box defined by the two points
+(`xmin`, `ymin`, `zmin`) and (`xmax`, `ymax`, `zmax`). If `dim` is >= 0, return
+only the entities of the specified dimension (e.g. points if `dim` == 0).
+
+Return `tags`.
+"""
+function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetEntitiesInBoundingBox, gmsh.lib), Cvoid,
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, api_tags_n_, dim, ierr)
+    ierr[] != 0 && error("gmshModelOccGetEntitiesInBoundingBox returned non-zero error code: $(ierr[])")
+    tmp_api_tags_ = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    tags = [ (tmp_api_tags_[i], tmp_api_tags_[i+1]) for i in 1:2:length(tmp_api_tags_) ]
+    return tags
+end
+
+"""
+    gmsh.model.occ.getBoundingBox(dim, tag)
+
+Get the bounding box (`xmin`, `ymin`, `zmin`), (`xmax`, `ymax`, `zmax`) of the
+OpenCASCADE entity of dimension `dim` and tag `tag`.
+
+Return `xmin`, `ymin`, `zmin`, `xmax`, `ymax`, `zmax`.
+"""
+function getBoundingBox(dim, tag)
+    api_xmin_ = Ref{Cdouble}()
+    api_ymin_ = Ref{Cdouble}()
+    api_zmin_ = Ref{Cdouble}()
+    api_xmax_ = Ref{Cdouble}()
+    api_ymax_ = Ref{Cdouble}()
+    api_zmax_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetBoundingBox, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
+          dim, tag, api_xmin_, api_ymin_, api_zmin_, api_xmax_, api_ymax_, api_zmax_, ierr)
+    ierr[] != 0 && error("gmshModelOccGetBoundingBox returned non-zero error code: $(ierr[])")
+    return api_xmin_[], api_ymin_[], api_zmin_[], api_xmax_[], api_ymax_[], api_zmax_[]
 end
 
 """
     gmsh.model.occ.getMass(dim, tag)
 
-Get the mass of the model entity of dimension `dim` and tag `tag`.
+Get the mass of the OpenCASCADE entity of dimension `dim` and tag `tag`.
 
 Return `mass`.
 """
@@ -4300,7 +4325,8 @@ end
 """
     gmsh.model.occ.getCenterOfMass(dim, tag)
 
-Get the center of mass of the model entity of dimension `dim` and tag `tag`.
+Get the center of mass of the OpenCASCADE entity of dimension `dim` and tag
+`tag`.
 
 Return `x`, `y`, `z`.
 """
@@ -4319,8 +4345,8 @@ end
 """
     gmsh.model.occ.getMatrixOfInertia(dim, tag)
 
-Get the matrix of inertia (by row) of the model entity of dimension `dim` and
-tag `tag`.
+Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension `dim`
+and tag `tag`.
 
 Return `mat`.
 """
@@ -4351,6 +4377,34 @@ function synchronize()
     ierr[] != 0 && error("gmshModelOccSynchronize returned non-zero error code: $(ierr[])")
     return nothing
 end
+
+"""
+    gmsh.model.occ.setSize(dimTags, size)
+
+Set a mesh size constraint on the model entities `dimTags`. Currently only
+entities of dimension 0 (points) are handled.
+"""
+function setSize(dimTags, size)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccSetSize, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, size, ierr)
+    ierr[] != 0 && error("gmshModelOccSetSize returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    module gmsh.model.occ.mesh
+
+OpenCASCADE CAD kernel meshing constraints
+"""
+module mesh
+
+import ....gmsh
+
+end # end of module mesh
 
 end # end of module occ
 

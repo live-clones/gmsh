@@ -302,6 +302,7 @@ public:
   void destroyMeshCaches();
   // delete the mesh stored in entities and call destroMeshCaches
   void deleteMesh();
+  void deleteMesh(const std::vector<GEntity*> &entities);
   // delete the vertex arrays used for efficient mesh drawing
   void deleteVertexArrays();
 

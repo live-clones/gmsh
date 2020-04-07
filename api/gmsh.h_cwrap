@@ -832,12 +832,17 @@ namespace gmsh { // Top-level functions
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
-      // Clear the mesh, i.e. delete all the nodes and elements.
-      inline void clear()
+      // Clear the mesh, i.e. delete all the nodes and elements, for the entities
+      // `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh
+      // of an entity can only be cleared if this entity is not on the boundary of
+      // another entity with a non-empty mesh.
+      inline void clear(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
       {
         int ierr = 0;
-        gmshModelMeshClear(&ierr);
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshClear(api_dimTags_, api_dimTags_n_, &ierr);
         if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
       }
 
       // Get the nodes classified on the entity of dimension `dim' and tag `tag'.
@@ -1717,17 +1722,6 @@ namespace gmsh { // Top-level functions
       {
         int ierr = 0;
         gmshModelMeshSetSizeFromBoundary(dim, tag, val, &ierr);
-        if(ierr) throw ierr;
-      }
-
-      // Only generate the initial mesh (or not) for the entity of dimension `dim'
-      // and tag `tag'. Currently only supported for `dim' == 2.
-      inline void setOnlyInitialMesh(const int dim,
-                                     const int tag,
-                                     const int val)
-      {
-        int ierr = 0;
-        gmshModelMeshSetOnlyInitialMesh(dim, tag, val, &ierr);
         if(ierr) throw ierr;
       }
 
@@ -2619,7 +2613,7 @@ namespace gmsh { // Top-level functions
           if(ierr) throw ierr;
         }
 
-        // Force the mesh size to be extended from the boundary (or not) for the
+        // Force the mesh size to be extended from the boundary, or not, for the
         // model entity of dimension `dim' and tag `tag'. Currently only supported
         // for `dim' == 2.
         inline void setSizeFromBoundary(const int dim,
@@ -2628,17 +2622,6 @@ namespace gmsh { // Top-level functions
         {
           int ierr = 0;
           gmshModelGeoMeshSetSizeFromBoundary(dim, tag, val, &ierr);
-          if(ierr) throw ierr;
-        }
-
-        // Only generate the initial mesh (or not) for the entity of dimension
-        // `dim' and tag `tag'. Currently only supported for `dim' == 2.
-        inline void setOnlyInitialMesh(const int dim,
-                                       const int tag,
-                                       const int val)
-        {
-          int ierr = 0;
-          gmshModelGeoMeshSetOnlyInitialMesh(dim, tag, val, &ierr);
           if(ierr) throw ierr;
         }
 
@@ -3527,19 +3510,56 @@ namespace gmsh { // Top-level functions
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
 
-      // Set a mesh size constraint on the model entities `dimTags'. Currently only
-      // entities of dimension 0 (points) are handled.
-      inline void setMeshSize(const gmsh::vectorpair & dimTags,
-                              const double size)
+      // Get all the OpenCASCADE entities. If `dim' is >= 0, return only the
+      // entities of the specified dimension (e.g. points if `dim' == 0). The
+      // entities are returned as a vector of (dim, tag) integer pairs.
+      inline void getEntities(gmsh::vectorpair & dimTags,
+                              const int dim = -1)
       {
         int ierr = 0;
-        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
-        gmshModelOccSetMeshSize(api_dimTags_, api_dimTags_n_, size, &ierr);
+        int *api_dimTags_; size_t api_dimTags_n_;
+        gmshModelOccGetEntities(&api_dimTags_, &api_dimTags_n_, dim, &ierr);
         if(ierr) throw ierr;
-        gmshFree(api_dimTags_);
+        dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
       }
 
-      // Get the mass of the model entity of dimension `dim' and tag `tag'.
+      // Get the OpenCASCADE entities in the bounding box defined by the two points
+      // (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+      // return only the entities of the specified dimension (e.g. points if `dim'
+      // == 0).
+      inline void getEntitiesInBoundingBox(const double xmin,
+                                           const double ymin,
+                                           const double zmin,
+                                           const double xmax,
+                                           const double ymax,
+                                           const double zmax,
+                                           gmsh::vectorpair & tags,
+                                           const int dim = -1)
+      {
+        int ierr = 0;
+        int *api_tags_; size_t api_tags_n_;
+        gmshModelOccGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, &api_tags_, &api_tags_n_, dim, &ierr);
+        if(ierr) throw ierr;
+        tags.resize(api_tags_n_ / 2); for(size_t i = 0; i < api_tags_n_ / 2; ++i){ tags[i].first = api_tags_[i * 2 + 0]; tags[i].second = api_tags_[i * 2 + 1]; } gmshFree(api_tags_);
+      }
+
+      // Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
+      // the OpenCASCADE entity of dimension `dim' and tag `tag'.
+      inline void getBoundingBox(const int dim,
+                                 const int tag,
+                                 double & xmin,
+                                 double & ymin,
+                                 double & zmin,
+                                 double & xmax,
+                                 double & ymax,
+                                 double & zmax)
+      {
+        int ierr = 0;
+        gmshModelOccGetBoundingBox(dim, tag, &xmin, &ymin, &zmin, &xmax, &ymax, &zmax, &ierr);
+        if(ierr) throw ierr;
+      }
+
+      // Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
       inline void getMass(const int dim,
                           const int tag,
                           double & mass)
@@ -3549,8 +3569,8 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
-      // Get the center of mass of the model entity of dimension `dim' and tag
-      // `tag'.
+      // Get the center of mass of the OpenCASCADE entity of dimension `dim' and
+      // tag `tag'.
       inline void getCenterOfMass(const int dim,
                                   const int tag,
                                   double & x,
@@ -3562,8 +3582,8 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
-      // Get the matrix of inertia (by row) of the model entity of dimension `dim'
-      // and tag `tag'.
+      // Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
+      // `dim' and tag `tag'.
       inline void getMatrixOfInertia(const int dim,
                                      const int tag,
                                      std::vector<double> & mat)
@@ -3585,6 +3605,22 @@ namespace gmsh { // Top-level functions
         gmshModelOccSynchronize(&ierr);
         if(ierr) throw ierr;
       }
+
+      // Set a mesh size constraint on the model entities `dimTags'. Currently only
+      // entities of dimension 0 (points) are handled.
+      inline void setSize(const gmsh::vectorpair & dimTags,
+                          const double size)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelOccSetSize(api_dimTags_, api_dimTags_n_, size, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
+      }
+
+      namespace mesh { // OpenCASCADE CAD kernel meshing constraints
+
+      } // namespace mesh
 
     } // namespace occ
 

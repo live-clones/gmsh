@@ -27,7 +27,6 @@
 #include "meshGRegionLocalMeshMod.h"
 #include "meshRelocateVertex.h"
 #include "meshRefine.h"
-#include "discreteFace.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "ExtrudeParams.h"
@@ -341,7 +340,7 @@ static void Mesh1D(GModel *m)
 
   if(TooManyElements(m, 1)) return;
   Msg::StatusBar(true, "Meshing 1D...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   int prevNumThreads = Msg::GetMaxThreads();
   if(CTX::instance()->mesh.maxNumThreads1D > 0 &&
@@ -395,9 +394,10 @@ static void Mesh1D(GModel *m)
 
   Msg::SetNumThreads(prevNumThreads);
 
-  double t2 = Cpu();
-  CTX::instance()->meshTimer[0] = t2 - t1;
-  Msg::StatusBar(true, "Done meshing 1D (%g s)", CTX::instance()->meshTimer[0]);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  CTX::instance()->meshTimer[0] = w2 - w1;
+  Msg::StatusBar(true, "Done meshing 1D (Wall %gs, CPU %gs)",
+                 CTX::instance()->meshTimer[0], t2 - t1);
 }
 
 static void PrintMesh2dStatistics(GModel *m)
@@ -471,7 +471,7 @@ static void Mesh2D(GModel *m)
 
   if(TooManyElements(m, 2)) return;
   Msg::StatusBar(true, "Meshing 2D...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   int prevNumThreads = Msg::GetMaxThreads();
   if(CTX::instance()->mesh.maxNumThreads2D > 0 &&
@@ -482,11 +482,6 @@ static void Mesh2D(GModel *m)
   if(m->getFields()->getNumBoundaryLayerFields()) Msg::SetNumThreads(1);
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    // STL remeshing is not yet thread-safe
-    //    if((*it)->geomType() == GEntity::DiscreteSurface){
-    //      if(static_cast<discreteFace *>(*it)->haveParametrization())
-    //        Msg::SetNumThreads(1);
-    //    }
     // Frontal-Delaunay for quads and co are not yet thread-safe
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
@@ -547,9 +542,10 @@ static void Mesh2D(GModel *m)
 
   Msg::SetNumThreads(prevNumThreads);
 
-  double t2 = Cpu();
-  CTX::instance()->meshTimer[1] = t2 - t1;
-  Msg::StatusBar(true, "Done meshing 2D (%g s)", CTX::instance()->meshTimer[1]);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  CTX::instance()->meshTimer[1] = w2 - w1;
+  Msg::StatusBar(true, "Done meshing 2D (Wall %gs, CPU %gs)",
+                 CTX::instance()->meshTimer[1], t2 - t1);
 
   PrintMesh2dStatistics(m);
 }
@@ -803,7 +799,7 @@ static void Mesh3D(GModel *m)
 
   if(TooManyElements(m, 3)) return;
   Msg::StatusBar(true, "Meshing 3D...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   int prevNumThreads = Msg::GetMaxThreads();
   if(CTX::instance()->mesh.maxNumThreads3D > 0 &&
@@ -884,7 +880,7 @@ static void Mesh3D(GModel *m)
           optimizeMeshGRegion opt;
           opt(gr);
         }
-        double a = Cpu();
+        double a = TimeOfDay();
         // CTX::instance()->mesh.recombine3DLevel = 2;
         if(CTX::instance()->mesh.recombine3DLevel >= 0) {
           Recombinator rec;
@@ -907,7 +903,7 @@ static void Mesh3D(GModel *m)
         nb_hexa_recombination += post.get_nb_hexahedra();
         vol_element_recombination += post.get_vol_elements();
         vol_hexa_recombination += post.get_vol_hexahedra();
-        time_recombination += (Cpu() - a);
+        time_recombination += (TimeOfDay() - a);
       }
     }
 #endif
@@ -939,7 +935,10 @@ static void Mesh3D(GModel *m)
   bool emptyRegionFound = false;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     GRegion *gr = *it;
-    if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) continue;
+    if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility())
+      continue;
+    if(CTX::instance()->mesh.meshOnlyEmpty && gr->getNumMeshElements())
+      continue;
     if(gr->getNumMeshElements() == 0) {
       debugInfo << gr->tag() << " ";
       emptyRegionFound = true;
@@ -952,15 +951,16 @@ static void Mesh3D(GModel *m)
 
   Msg::SetNumThreads(prevNumThreads);
 
-  double t2 = Cpu();
-  CTX::instance()->meshTimer[2] = t2 - t1;
+  double t2 = Cpu(), w2 = TimeOfDay();
+  CTX::instance()->meshTimer[2] = w2 - w1;
 
   if(m->getNumRegions()) {
     Msg::ProgressMeter(1, false, "Meshing 3D...");
     Msg::StopProgressMeter();
   }
 
-  Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
+  Msg::StatusBar(true, "Done meshing 3D (Wall %gs, CPU %gs)",
+                 CTX::instance()->meshTimer[2], t2 - t1);
 }
 
 void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
@@ -977,7 +977,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     Msg::StatusBar(true, "Optimizing mesh...");
   else
     Msg::StatusBar(true, "Optimizing mesh (%s)...", how.c_str());
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   if(how == "" || how == "Gmsh" || how == "Optimize") {
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
@@ -1050,26 +1050,28 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     std::for_each(m->firstRegion(), m->lastRegion(),
                   EmbeddedCompatibilityTest());
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done optimizing mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done optimizing mesh (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 }
 
 void AdaptMesh(GModel *m)
 {
   Msg::StatusBar(true, "Adapting 3D mesh...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   for(int i = 0; i < 10; i++)
     std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done adaptating 3D mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done adaptating 3D mesh (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 }
 
 void RecombineMesh(GModel *m)
 {
   Msg::StatusBar(true, "Recombining 2D mesh...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *gf = *it;
@@ -1079,8 +1081,9 @@ void RecombineMesh(GModel *m)
     recombineIntoQuads(gf, blossom, topo, true, .01);
   }
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done recombining 2D mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done recombining 2D mesh (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 }
 
 static SPoint3 transform(MVertex *vsource, const std::vector<double> &tfo)
@@ -1403,7 +1406,9 @@ void GenerateMesh(GModel *m, int ask)
     std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
 
   // Optimize quality of 3D tet mesh
-  if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algo3d != ALGO_3D_HXT) {
+  if(m->getMeshStatus() == 3 &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_HXT) {
     for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
                                 CTX::instance()->mesh.optimizeNetgen);
         i++) {

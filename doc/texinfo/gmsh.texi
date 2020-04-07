@@ -3204,12 +3204,7 @@ default value is 45). @value{SYNC}
 Forces the meshing algorithm per surface.
 
 @item MeshSizeFromBoundary Surface @{ @var{expression-list} @} = @var{expression};
-Forces the mesh sizes to be extended from the boundary (or not) for the
-specified surfaces.
-
-@item OnlyInitialMesh Surface @{ @var{expression-list} @} = @var{expression};
-Forces the mesher to ony generate the initial mesh (or not)for for the
-specified surfaces.
+Forces the mesh size to be extended from the boudnary, or not, per surface.
 
 @item Compound Curve | Surface @{ @var{expression-list-or-all} @} ;
 Treats the given entities as a single entity when meshing, i.e. perform
@@ -5147,6 +5142,8 @@ system}. Screencasts that show how to use the GUI are available on
 * t17.geo:: Anisotropic background mesh
 * t18.geo:: Periodic meshes
 * t19.geo:: Thrusections, fillets, pipes, mesh size from curvature
+* t20.geo:: STEP import and manipulation, geometry partitioning
+* t21.geo:: Mesh partitioning
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5351,11 +5348,33 @@ system}. Screencasts that show how to use the GUI are available on
 @c t19.geo
 @c -------------------------------------------------------------------------
 
-@node t19.geo,  , t18.geo, Tutorial
+@node t19.geo, t20.geo, t18.geo, Tutorial
 @section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t19.geo,t19.geo}
 
 @smallformat
 @verbatiminclude ../../tutorial/t19.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t20.geo
+@c -------------------------------------------------------------------------
+
+@node t20.geo, t21.geo, t19.geo, Tutorial
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t20.geo,t20.geo}
+
+@smallformat
+@verbatiminclude ../../tutorial/t20.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t21.geo
+@c -------------------------------------------------------------------------
+
+@node t21.geo,  , t20.geo, Tutorial
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t21.geo,t21.geo}
+
+@smallformat
+@verbatiminclude ../../tutorial/t21.geo
 @end smallformat
 
 @c =========================================================================

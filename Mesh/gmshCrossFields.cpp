@@ -1108,9 +1108,9 @@ static void computePotential(
       _lsys->addToRightHandSide(num31, RHS31 * V);
     }
   }
-  double A = Cpu();
+  double A = TimeOfDay();
   _lsys->systemSolve();
-  double B = Cpu();
+  double B = TimeOfDay();
   Msg::Info("Computing potentials (%d unknowns) in %3lf seconds",
             myAssembler.sizeOfR(), B - A);
 
@@ -3275,18 +3275,18 @@ public:
   int computeCrossFieldAndH(std::map<MVertex *, int> *s,
                             std::map<int, std::vector<double> > &dataTHETA)
   {
-    double a = Cpu();
+    double a = TimeOfDay();
     computeHFromSingularities(*s);
-    double b = Cpu();
+    double b = TimeOfDay();
     Msg::Info("Real part H (nodal) has been computed in %4g sec", b - a);
 
     std::map<MEdge, MEdge, MEdgeLessThan> duplicateEdges;
 
-    double c = Cpu();
+    double c = TimeOfDay();
     computeCutGraph(duplicateEdges);
     Msg::Info("Cut Graph has been computed in %4g sec", c - b);
 
-    double d = Cpu();
+    double d = TimeOfDay();
     computeThetaUsingHCrouzeixRaviart(dataTHETA);
     Msg::Info("Imaginary part H (crouzeix raviart/multi-valued) has been "
               "computed in %4g sec",

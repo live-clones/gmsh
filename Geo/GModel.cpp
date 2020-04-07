@@ -233,6 +233,64 @@ void GModel::deleteMesh()
   _lastMeshVertexError.clear();
 }
 
+void GModel::deleteMesh(const std::vector<GEntity*> &entities)
+{
+  if(entities.empty()) {
+    deleteMesh();
+    return;
+  }
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    bool ok = true;
+    switch(ge->dim()) {
+    case 0:
+      {
+        std::vector<GEdge *> e = ge->edges();
+        for(std::vector<GEdge *>::iterator it = e.begin(); it != e.end(); ++it) {
+          if((*it)->getNumMeshElements()) {
+            ok = false;
+            break;
+          }
+        }
+      }
+      break;
+    case 1:
+      {
+        std::vector<GFace *> f = ge->faces();
+        for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
+          if((*it)->getNumMeshElements()) {
+            ok = false;
+            break;
+          }
+        }
+      }
+      break;
+    case 2:
+      {
+        std::list<GRegion *> r = ge->regions();
+        for(std::list<GRegion *>::iterator it = r.begin(); it != r.end(); ++it) {
+          if((*it)->getNumMeshElements()) {
+            ok = false;
+            break;
+          }
+        }
+      }
+      break;
+    }
+    if(ok) {
+      ge->deleteMesh();
+    }
+    else {
+      Msg::Warning("Cannot delete mesh of entity (%d, %d), connected to mesh "
+                   "of higher dimensional entity", ge->dim(), ge->tag());
+    }
+  }
+  destroyMeshCaches();
+  _currentMeshEntity = 0;
+  _lastMeshEntityError.clear();
+  _lastMeshVertexError.clear();
+}
+
 void GModel::deleteVertexArrays()
 {
   for(riter it = firstRegion(); it != lastRegion(); ++it)
@@ -1961,7 +2019,7 @@ static void _associateEntityWithElementVertices(GEntity *ge,
 void GModel::createGeometryOfDiscreteEntities()
 {
   Msg::StatusBar(true, "Creating geometry of discrete curves...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
     if(de){
@@ -1970,12 +2028,12 @@ void GModel::createGeometryOfDiscreteEntities()
                    de->tag());
     }
   }
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done creating geometry of discrete curves (%g s)",
-                 t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done creating geometry of discrete curves "
+                 "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
 
   Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
-  t1 = Cpu();
+  t1 = Cpu(); w1 = TimeOfDay();
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
     if(df){
@@ -1984,9 +2042,10 @@ void GModel::createGeometryOfDiscreteEntities()
                    df->tag());
     }
   }
-  t2 = Cpu();
-  Msg::StatusBar(true, "Done creating geometry of discrete surfaces (%g s)",
-                 t2 - t1);
+  t2 = Cpu(); w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done creating geometry of discrete surfaces "
+                 "(Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 }
 
 void GModel::_associateEntityWithMeshVertices(bool force)
@@ -2866,7 +2925,7 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
     Msg::Info("Cutting mesh...");
   else
     Msg::Info("Splitting mesh...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   GModel *cutGM =
     buildCutMesh(this, ls, elements, vertexMap, physicals, cutElem);
@@ -2891,9 +2950,11 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
   }
 
   if(cutElem)
-    Msg::Info("Mesh cutting completed (%g s)", Cpu() - t1);
+    Msg::Info("Mesh cutting completed (Wall %gs, CPU %gs)", TimeOfDay() - w1,
+              Cpu() - t1);
   else
-    Msg::Info("Mesh splitting completed (%g s)", Cpu() - t1);
+    Msg::Info("Mesh splitting completed (Wall %gs, CPU %gs)", TimeOfDay() - w1,
+              Cpu() - t1);
 
   return cutGM;
 }
@@ -2973,7 +3034,7 @@ void GModel::computeHomology()
 
 #if defined(HAVE_KBIPACK)
   Msg::StatusBar(true, "Homology and cohomology computation...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   // find unique domain/subdomain requests
   typedef std::pair<const std::vector<int>, const std::vector<int> > dpair;
@@ -3049,9 +3110,9 @@ void GModel::computeHomology()
   }
   Msg::Info("");
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done homology and cohomology computation (%g s)",
-                 t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done homology and cohomology computation "
+                 "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
 
 #else
   Msg::Error("Homology computation requires KBIPACK");

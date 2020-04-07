@@ -4805,12 +4805,6 @@ double opt_geometry_match_mesh_tolerance(OPT_ARGS_NUM)
   return CTX::instance()->geom.matchMeshTolerance;
 }
 
-double opt_mesh_only_initial(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.onlyInitial = (double)val;
-  return CTX::instance()->mesh.onlyInitial;
-}
-
 double opt_mesh_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -5808,6 +5802,9 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
     case ALGO_2D_PACK_PRLGRMS:
       FlGui::instance()->options->mesh.choice[2]->value(6);
       break;
+    case ALGO_2D_INITIAL_ONLY:
+      FlGui::instance()->options->mesh.choice[2]->value(7);
+      break;
     case ALGO_2D_AUTO:
     default: FlGui::instance()->options->mesh.choice[2]->value(0); break;
     }
@@ -5933,8 +5930,8 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.algo3d)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algo3d = (int)val;
-    if(CTX::instance()->mesh.algo3d ==
-       2) // "New Delaunay" is now simply "Delaunay"
+    // "New Delaunay" is now simply "Delaunay"
+    if(CTX::instance()->mesh.algo3d == 2)
       CTX::instance()->mesh.algo3d = 1;
   }
 #if defined(HAVE_FLTK)
@@ -5948,6 +5945,9 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
       break;
     case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(3);
+      break;
+    case ALGO_3D_INITIAL_ONLY:
+      FlGui::instance()->options->mesh.choice[3]->value(4);
       break;
     case ALGO_3D_DELAUNAY:
     default: FlGui::instance()->options->mesh.choice[3]->value(0); break;
@@ -5966,6 +5966,17 @@ double opt_mesh_mesh_only_visible(OPT_ARGS_NUM)
     CTX::instance()->mesh.meshOnlyVisible = (int)val;
   }
   return CTX::instance()->mesh.meshOnlyVisible;
+}
+
+double opt_mesh_mesh_only_empty(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.meshOnlyEmpty)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.meshOnlyEmpty = (int)val;
+  }
+  return CTX::instance()->mesh.meshOnlyEmpty;
 }
 
 double opt_mesh_min_circ_points(OPT_ARGS_NUM)

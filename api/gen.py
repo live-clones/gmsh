@@ -227,8 +227,8 @@ mesh.add('getLastEntityError', doc, None, ovectorpair('dimTags'))
 doc = '''Get the last nodes (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastNodeError', doc, None, ovectorsize('nodeTags'))
 
-doc = '''Clear the mesh, i.e. delete all the nodes and elements.'''
-mesh.add('clear', doc, None)
+doc = '''Clear the mesh, i.e. delete all the nodes and elements, for the entities `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh of an entity can only be cleared if this entity is not on the boundary of another entity with a non-empty mesh.'''
+mesh.add('clear', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
 doc = '''Get the nodes classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0 and `returnParamtricCoord' is set, `parametricCoord' contains the parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If `includeBoundary' is set, also return the nodes classified on the boundary of the entity (which will be reparametrized on the entity if `dim' >= 0 in order to compute their parametric coordinates).'''
 mesh.add('getNodes', doc, None, ovectorsize('nodeTags'), ovectordouble('coord'), ovectordouble('parametricCoord'), iint('dim', '-1'), iint('tag', '-1'), ibool('includeBoundary', 'false', 'False'), ibool('returnParametricCoord', 'true', 'True'))
@@ -370,9 +370,6 @@ mesh.add('setAlgorithm', doc, None, iint('dim'), iint('tag'), iint('val'))
 
 doc = '''Force the mesh size to be extended from the boundary, or not, for the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
 mesh.add('setSizeFromBoundary', doc, None, iint('dim'), iint('tag'), iint('val'))
-
-doc = '''Only generate the initial mesh (or not) for the entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
-mesh.add('setOnlyInitialMesh', doc, None, iint('dim'), iint('tag'), iint('val'))
 
 doc = '''Set a compound meshing constraint on the model entities of dimension `dim' and tags `tags'. During meshing, compound entities are treated as a single discrete entity, which is automatically reparametrized.'''
 mesh.add('setCompound', doc, None, iint('dim'), ivectorint('tags'))
@@ -562,11 +559,8 @@ mesh.add('setReverse', doc, None, iint('dim'), iint('tag'), ibool('val', 'true',
 doc = '''Set the meshing algorithm on the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
 mesh.add('setAlgorithm', doc, None, iint('dim'), iint('tag'), iint('val'))
 
-doc = '''Force the mesh size to be extended from the boundary (or not) for the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
+doc = '''Force the mesh size to be extended from the boundary, or not, for the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
 mesh.add('setSizeFromBoundary', doc, None, iint('dim'), iint('tag'), iint('val'))
-
-doc = '''Only generate the initial mesh (or not) for the entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
-mesh.add('setOnlyInitialMesh', doc, None, iint('dim'), iint('tag'), iint('val'))
 
 ################################################################################
 
@@ -709,20 +703,33 @@ occ.add('importShapes', doc, None, istring('fileName'), ovectorpair('outDimTags'
 doc = '''Imports an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. For C and C++ only. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
 occ.add_special('importShapesNativePointer', doc, ['onlycc++'], None, ivoidstar('shape'), ovectorpair('outDimTags'), ibool('highestDimOnly', 'true', 'True'))
 
-doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
-occ.add('setMeshSize', doc, None, ivectorpair('dimTags'), idouble('size'))
+doc = '''Get all the OpenCASCADE entities. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
+occ.add('getEntities', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
 
-doc = '''Get the mass of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the OpenCASCADE entities in the bounding box defined by the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
+occ.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'), idouble('zmin'), idouble('xmax'), idouble('ymax'), idouble('zmax'), ovectorpair('tags'), iint('dim', '-1'))
+
+doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
+occ.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
+
+doc = '''Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMass', doc, None, iint('dim'), iint('tag'), odouble('mass'))
 
-doc = '''Get the center of mass of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the center of mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getCenterOfMass', doc, None, iint('dim'), iint('tag'), odouble('x'), odouble('y'), odouble('z'))
 
-doc = '''Get the matrix of inertia (by row) of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMatrixOfInertia', doc, None, iint('dim'), iint('tag'), ovectordouble('mat'))
 
 doc = '''Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 occ.add('synchronize', doc, None)
+
+################################################################################
+
+mesh = occ.add_module('mesh', 'OpenCASCADE CAD kernel meshing constraints')
+
+doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
+occ.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
 ################################################################################
 

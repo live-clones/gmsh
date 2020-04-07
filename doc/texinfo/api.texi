@@ -9,6 +9,7 @@
 * Namespace gmsh/model/geo::
 * Namespace gmsh/model/geo/mesh::
 * Namespace gmsh/model/occ::
+* Namespace gmsh/model/occ/mesh::
 * Namespace gmsh/view::
 * Namespace gmsh/plugin::
 * Namespace gmsh/graphics::
@@ -832,11 +833,14 @@ populated by the new 3D meshing algorithms.
 @end table
 
 @item gmsh/model/mesh/clear
-Clear the mesh, i.e. delete all the nodes and elements.
+Clear the mesh, i.e. delete all the nodes and elements, for the entities
+@code{dimTags}. if @code{dimTags} is empty, clear the whole mesh. Note that the
+mesh of an entity can only be cleared if this entity is not on the boundary of
+another entity with a non-empty mesh.
 
 @table @asis
 @item Input:
--
+@code{dimTags = []}
 @item Output:
 -
 @item Return:
@@ -2514,7 +2518,7 @@ entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
 
 @end ftable
 
-@node Namespace gmsh/model/occ, Namespace gmsh/view, Namespace gmsh/model/geo/mesh, Gmsh API
+@node Namespace gmsh/model/occ, Namespace gmsh/model/occ/mesh, Namespace gmsh/model/geo/mesh, Gmsh API
 @section Namespace @code{gmsh/model/occ}: OpenCASCADE CAD kernel functions
 
 @ftable @code
@@ -3240,21 +3244,52 @@ an invalid pointer will lead to undefined behavior.
 -
 @end table
 
-@item gmsh/model/occ/setMeshSize
-Set a mesh size constraint on the model entities @code{dimTags}. Currently only
-entities of dimension 0 (points) are handled.
+@item gmsh/model/occ/getEntities
+Get all the OpenCASCADE entities. If @code{dim} is >= 0, return only the
+entities of the specified dimension (e.g. points if @code{dim} == 0). The
+entities are returned as a vector of (dim, tag) integer pairs.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{size}
+@code{dim = -1}
 @item Output:
+@code{dimTags}
+@item Return:
 -
+@end table
+
+@item gmsh/model/occ/getEntitiesInBoundingBox
+Get the OpenCASCADE entities in the bounding box defined by the two points
+(@code{xmin}, @code{ymin}, @code{zmin}) and (@code{xmax}, @code{ymax},
+@code{zmax}). If @code{dim} is >= 0, return only the entities of the specified
+dimension (e.g. points if @code{dim} == 0).
+
+@table @asis
+@item Input:
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}, @code{dim = -1}
+@item Output:
+@code{tags}
+@item Return:
+-
+@end table
+
+@item gmsh/model/occ/getBoundingBox
+Get the bounding box (@code{xmin}, @code{ymin}, @code{zmin}), (@code{xmax},
+@code{ymax}, @code{zmax}) of the OpenCASCADE entity of dimension @code{dim} and
+tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}
 @item Return:
 -
 @end table
 
 @item gmsh/model/occ/getMass
-Get the mass of the model entity of dimension @code{dim} and tag @code{tag}.
+Get the mass of the OpenCASCADE entity of dimension @code{dim} and tag
+@code{tag}.
 
 @table @asis
 @item Input:
@@ -3266,7 +3301,7 @@ Get the mass of the model entity of dimension @code{dim} and tag @code{tag}.
 @end table
 
 @item gmsh/model/occ/getCenterOfMass
-Get the center of mass of the model entity of dimension @code{dim} and tag
+Get the center of mass of the OpenCASCADE entity of dimension @code{dim} and tag
 @code{tag}.
 
 @table @asis
@@ -3279,8 +3314,8 @@ Get the center of mass of the model entity of dimension @code{dim} and tag
 @end table
 
 @item gmsh/model/occ/getMatrixOfInertia
-Get the matrix of inertia (by row) of the model entity of dimension @code{dim}
-and tag @code{tag}.
+Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
+@code{dim} and tag @code{tag}.
 
 @table @asis
 @item Input:
@@ -3305,9 +3340,28 @@ processing, the number of synchronization points should normally be minimized.
 -
 @end table
 
+@item gmsh/model/occ/setSize
+Set a mesh size constraint on the model entities @code{dimTags}. Currently only
+entities of dimension 0 (points) are handled.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{size}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @end ftable
 
-@node Namespace gmsh/view, Namespace gmsh/plugin, Namespace gmsh/model/occ, Gmsh API
+@node Namespace gmsh/model/occ/mesh, Namespace gmsh/view, Namespace gmsh/model/occ, Gmsh API
+@section Namespace @code{gmsh/model/occ/mesh}: OpenCASCADE CAD kernel meshing constraints
+
+@ftable @code
+@end ftable
+
+@node Namespace gmsh/view, Namespace gmsh/plugin, Namespace gmsh/model/occ/mesh, Gmsh API
 @section Namespace @code{gmsh/view}: post-processing view functions
 
 @ftable @code

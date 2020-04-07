@@ -64,7 +64,7 @@ vin() = Volume In BoundingBox {2-eps,-eps,-eps, 2+1+eps,1+eps,1+eps};
 v() -= vin();
 Recursive Delete{ Volume{v()}; }
 
-// We now set some a non-uniform mesh size constraint (again to check results
+// We now set a non-uniform mesh size constraint (again to check results
 // visually):
 Characteristic Length { PointsOf{ Volume{vin()}; }} = 0.1;
 p() = Point In BoundingBox{2-eps, -eps, -eps, 2+eps, eps, eps};

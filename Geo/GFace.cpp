@@ -73,14 +73,6 @@ int GFace::getMeshSizeFromBoundary() const
     return CTX::instance()->mesh.lcExtendFromBoundary;
 }
 
-bool GFace::getOnlyInitialMesh() const
-{
-  if(meshAttributes.onlyInitialMesh >= 0)
-    return meshAttributes.onlyInitialMesh ? true : false;
-  else
-    return CTX::instance()->mesh.onlyInitial ? true : false;
-}
-
 void GFace::delFreeEdge(GEdge *edge)
 {
   // delete the edge from the edge list and the orientation list
@@ -150,6 +142,8 @@ void GFace::deleteMesh()
   quadrangles.clear();
   for(std::size_t i = 0; i < polygons.size(); i++) delete polygons[i];
   polygons.clear();
+  correspondingVertices.clear();
+  correspondingHOPoints.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
@@ -239,7 +233,6 @@ void GFace::resetMeshAttributes()
   meshAttributes.meshSizeFactor = 1.;
   meshAttributes.algorithm = 0;
   meshAttributes.meshSizeFromBoundary = -1;
-  meshAttributes.onlyInitialMesh = -1;
 }
 
 SBoundingBox3d GFace::bounds(bool fast)

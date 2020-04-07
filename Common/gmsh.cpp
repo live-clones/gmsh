@@ -1000,10 +1000,21 @@ gmsh::model::mesh::getLastNodeError(std::vector<std::size_t> &nodeTags)
   for(std::size_t i = 0; i < v.size(); i++) nodeTags.push_back(v[i]->getNum());
 }
 
-GMSH_API void gmsh::model::mesh::clear()
+GMSH_API void gmsh::model::mesh::clear(const vectorpair &dimTags)
 {
   if(!_isInitialized()) { throw - 1; }
-  GModel::current()->deleteMesh();
+  std::vector<GEntity*> entities;
+  for(std::size_t i = 0; i < dimTags.size(); i++) {
+    int dim = dimTags[i].first;
+    int tag = dimTags[i].second;
+    GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+    if(!ge) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    entities.push_back(ge);
+  }
+  GModel::current()->deleteMesh(entities);
 }
 
 static void _getAdditionalNodesOnBoundary(GEntity *entity,
@@ -3890,12 +3901,6 @@ gmsh::model::mesh::getGhostElements(const int dim, const int tag,
   }
 }
 
-// TODO: give access to closures
-// GMSH_API void gmsh::model::mesh::getElementClosures(const int elementType,
-// ...)
-// {
-// }
-
 GMSH_API void gmsh::model::mesh::setSize(const vectorpair &dimTags,
                                          const double size)
 {
@@ -4053,21 +4058,6 @@ GMSH_API void gmsh::model::mesh::setSizeFromBoundary(const int dim,
       throw 2;
     }
     gf->meshAttributes.meshSizeFromBoundary = val;
-  }
-}
-
-GMSH_API void gmsh::model::mesh::setOnlyInitialMesh(const int dim,
-                                                    const int tag,
-                                                    const int val)
-{
-  if(!_isInitialized()) { throw - 1; }
-  if(dim == 2) {
-    GFace *gf = GModel::current()->getFaceByTag(tag);
-    if(!gf) {
-      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-      throw 2;
-    }
-    gf->meshAttributes.onlyInitialMesh = val;
   }
 }
 
@@ -4924,14 +4914,6 @@ GMSH_API void gmsh::model::geo::mesh::setSizeFromBoundary(const int dim,
   GModel::current()->getGEOInternals()->setMeshSizeFromBoundary(dim, tag, val);
 }
 
-GMSH_API void gmsh::model::geo::mesh::setOnlyInitialMesh(const int dim,
-                                                         const int tag,
-                                                         const int val)
-{
-  if(!_isInitialized()) { throw - 1; }
-  GModel::current()->getGEOInternals()->setOnlyInitialMesh(dim, tag, val);
-}
-
 GMSH_API void gmsh::model::geo::mesh::setSize(const vectorpair &dimTags,
                                               const double size)
 {
@@ -5585,14 +5567,37 @@ GMSH_API void gmsh::model::occ::importShapesNativePointer(
 #endif
 }
 
-GMSH_API void gmsh::model::occ::setMeshSize(const vectorpair &dimTags,
-                                            const double size)
+GMSH_API void gmsh::model::occ::getEntities(vectorpair &dimTags, const int dim)
 {
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
-  for(std::size_t i = 0; i < dimTags.size(); i++) {
-    int dim = dimTags[i].first, tag = dimTags[i].second;
-    GModel::current()->getOCCInternals()->setMeshSize(dim, tag, size);
+  if(!GModel::current()->getOCCInternals()->getEntities(dimTags, dim)) {
+    throw 1;
+  }
+}
+
+GMSH_API void gmsh::model::occ::getEntitiesInBoundingBox(
+  const double xmin, const double ymin, const double zmin, const double xmax,
+  const double ymax, const double zmax, vectorpair &dimTags, const int dim)
+{
+  if(!_isInitialized()) { throw - 1; }
+  dimTags.clear();
+  if(!GModel::current()->getOCCInternals()->getEntitiesInBoundingBox
+     (xmin, ymin, zmin, xmax, ymax, zmax, dimTags, dim)) {
+    throw 1;
+  }
+}
+
+GMSH_API void gmsh::model::occ::getBoundingBox(const int dim, const int tag,
+                                               double &xmin, double &ymin,
+                                               double &zmin, double &xmax,
+                                               double &ymax, double &zmax)
+{
+  if(!_isInitialized()) { throw - 1; }
+  _createOcc();
+  if(!GModel::current()->getOCCInternals()->getBoundingBox
+     (dim, tag, xmin, ymin, zmin, xmax, ymax, zmax)) {
+    throw 1;
   }
 }
 
@@ -5632,6 +5637,19 @@ GMSH_API void gmsh::model::occ::synchronize()
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
   GModel::current()->getOCCInternals()->synchronize(GModel::current());
+}
+
+// gmsh::model::occ::mesh
+
+GMSH_API void gmsh::model::occ::setSize(const vectorpair &dimTags,
+                                            const double size)
+{
+  if(!_isInitialized()) { throw - 1; }
+  _createOcc();
+  for(std::size_t i = 0; i < dimTags.size(); i++) {
+    int dim = dimTags[i].first, tag = dimTags[i].second;
+    GModel::current()->getOCCInternals()->setMeshSize(dim, tag, size);
+  }
 }
 
 // gmsh::view

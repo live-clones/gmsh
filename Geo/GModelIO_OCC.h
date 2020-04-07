@@ -128,7 +128,8 @@ private:
   bool _extrudePerDim(int mode, int inDim, const std::vector<int> &inTags,
                       double x, double y, double z, double dx, double dy,
                       double dz, double ax, double ay, double az, double angle,
-                      int wireTag, std::vector<std::pair<int, int> > &outDimTags,
+                      int wireTag,
+                      std::vector<std::pair<int, int> > &outDimTags,
                       ExtrudeParams *e);
   bool _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
                 double x, double y, double z, double dx, double dy, double dz,
@@ -153,6 +154,14 @@ private:
   void _copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge);
   void _copyExtrudedAttributes(TopoDS_Face face, GFace *gf);
   void _copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr);
+
+  // bounding box
+  bool _getBoundingBox(const TopoDS_Shape &s, double &xmin, double &ymin,
+                       double &zmin, double &xmax, double &ymax, double &zmax);
+
+  // STL
+  bool _makeSTL(const TopoDS_Shape &s, std::vector<SPoint3> &vertices,
+                std::vector<SVector3> &normals, std::vector<int> &triangles);
 
 public:
   OCC_Internals();
@@ -354,7 +363,14 @@ public:
   void synchronize(GModel *model);
 
   // queries
+  bool getEntities(std::vector<std::pair<int, int> > &dimTags, int dim);
   bool getVertex(int tag, double &x, double &y, double &z);
+  bool getBoundingBox(int dim, int tag, double &xmin, double &ymin,
+                      double &zmin, double &xmax, double &ymax, double &zmax);
+  bool getEntitiesInBoundingBox(double xmin, double ymin, double zmin,
+                                double xmax, double ymax, double zmax,
+                                std::vector<std::pair<int, int> > &dimTags,
+                                int dim);
   bool getMass(int dim, int tag, double &mass);
   bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z);
   bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat);
@@ -373,9 +389,6 @@ public:
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
   bool makeEdgeSTLFromFace(const TopoDS_Edge &c, const TopoDS_Face &s,
                            std::vector<SPoint3> *vertices);
-  bool makeSolidSTL(const TopoDS_Solid &s, std::vector<SPoint3> &vertices,
-                    std::vector<SVector3> &normals,
-                    std::vector<int> &triangles);
   bool makeRectangleSTL(double x, double y, double z, double dx, double dy,
                         double roundedRadius, std::vector<SPoint3> &vertices,
                         std::vector<SVector3> &normals,
@@ -408,8 +421,8 @@ public:
                     double angle, std::vector<SPoint3> &vertices,
                     std::vector<SVector3> &normals,
                     std::vector<int> &triangles);
-  void fixSTLBounds(double &xmin, double &ymin, double &zmin,
-                    double &xmax, double &ymax, double &zmax);
+  void fixSTLBounds(double &xmin, double &ymin, double &zmin, double &xmax,
+                    double &ymax, double &zmax);
 };
 
 #else
@@ -698,7 +711,23 @@ public:
   }
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}
+  bool getEntities(std::vector<std::pair<int, int> > &dimTags, int dim)
+  {
+    return false;
+  }
   bool getVertex(int tag, double &x, double &y, double &z) { return false; }
+  bool getBoundingBox(int dim, int tag, double &xmin, double &ymin,
+                      double &zmin, double &xmax, double &ymax, double &zmax)
+  {
+    return false;
+  }
+  bool getEntitiesInBoundingBox(double xmin, double ymin, double zmin,
+                                double xmax, double ymax, double zmax,
+                                std::vector<std::pair<int, int> > &dimTags,
+                                int dim)
+  {
+    return false;
+  }
   bool getMass(int dim, int tag, double &mass) { return false; }
   bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z)
   {

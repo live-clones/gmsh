@@ -1471,14 +1471,19 @@ class model:
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
-        def clear():
+        def clear(dimTags=[]):
             """
-            gmsh.model.mesh.clear()
+            gmsh.model.mesh.clear(dimTags=[])
 
-            Clear the mesh, i.e. delete all the nodes and elements.
+            Clear the mesh, i.e. delete all the nodes and elements, for the entities
+            `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh
+            of an entity can only be cleared if this entity is not on the boundary of
+            another entity with a non-empty mesh.
             """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
             lib.gmshModelMeshClear(
+                api_dimTags_, api_dimTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -2722,25 +2727,6 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshSetSizeFromBoundary returned non-zero error code: ",
-                    ierr.value)
-
-        @staticmethod
-        def setOnlyInitialMesh(dim, tag, val):
-            """
-            gmsh.model.mesh.setOnlyInitialMesh(dim, tag, val)
-
-            Only generate the initial mesh (or not) for the entity of dimension `dim'
-            and tag `tag'. Currently only supported for `dim' == 2.
-            """
-            ierr = c_int()
-            lib.gmshModelMeshSetOnlyInitialMesh(
-                c_int(dim),
-                c_int(tag),
-                c_int(val),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetOnlyInitialMesh returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -4111,7 +4097,7 @@ class model:
                 """
                 gmsh.model.geo.mesh.setSizeFromBoundary(dim, tag, val)
 
-                Force the mesh size to be extended from the boundary (or not) for the model
+                Force the mesh size to be extended from the boundary, or not, for the model
                 entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
                 == 2.
                 """
@@ -4124,25 +4110,6 @@ class model:
                 if ierr.value != 0:
                     raise ValueError(
                         "gmshModelGeoMeshSetSizeFromBoundary returned non-zero error code: ",
-                        ierr.value)
-
-            @staticmethod
-            def setOnlyInitialMesh(dim, tag, val):
-                """
-                gmsh.model.geo.mesh.setOnlyInitialMesh(dim, tag, val)
-
-                Only generate the initial mesh (or not) for the entity of dimension `dim'
-                and tag `tag'. Currently only supported for `dim' == 2.
-                """
-                ierr = c_int()
-                lib.gmshModelGeoMeshSetOnlyInitialMesh(
-                    c_int(dim),
-                    c_int(tag),
-                    c_int(val),
-                    byref(ierr))
-                if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelGeoMeshSetOnlyInitialMesh returned non-zero error code: ",
                         ierr.value)
 
 
@@ -5403,30 +5370,103 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def setMeshSize(dimTags, size):
+        def getEntities(dim=-1):
             """
-            gmsh.model.occ.setMeshSize(dimTags, size)
+            gmsh.model.occ.getEntities(dim=-1)
 
-            Set a mesh size constraint on the model entities `dimTags'. Currently only
-            entities of dimension 0 (points) are handled.
+            Get all the OpenCASCADE entities. If `dim' is >= 0, return only the
+            entities of the specified dimension (e.g. points if `dim' == 0). The
+            entities are returned as a vector of (dim, tag) integer pairs.
+
+            Return `dimTags'.
             """
-            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelOccSetMeshSize(
-                api_dimTags_, api_dimTags_n_,
-                c_double(size),
+            lib.gmshModelOccGetEntities(
+                byref(api_dimTags_), byref(api_dimTags_n_),
+                c_int(dim),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccSetMeshSize returned non-zero error code: ",
+                    "gmshModelOccGetEntities returned non-zero error code: ",
                     ierr.value)
+            return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
+
+        @staticmethod
+        def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
+            """
+            gmsh.model.occ.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1)
+
+            Get the OpenCASCADE entities in the bounding box defined by the two points
+            (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+            return only the entities of the specified dimension (e.g. points if `dim'
+            == 0).
+
+            Return `tags'.
+            """
+            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccGetEntitiesInBoundingBox(
+                c_double(xmin),
+                c_double(ymin),
+                c_double(zmin),
+                c_double(xmax),
+                c_double(ymax),
+                c_double(zmax),
+                byref(api_tags_), byref(api_tags_n_),
+                c_int(dim),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccGetEntitiesInBoundingBox returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorpair(api_tags_, api_tags_n_.value)
+
+        @staticmethod
+        def getBoundingBox(dim, tag):
+            """
+            gmsh.model.occ.getBoundingBox(dim, tag)
+
+            Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
+            the OpenCASCADE entity of dimension `dim' and tag `tag'.
+
+            Return `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
+            """
+            api_xmin_ = c_double()
+            api_ymin_ = c_double()
+            api_zmin_ = c_double()
+            api_xmax_ = c_double()
+            api_ymax_ = c_double()
+            api_zmax_ = c_double()
+            ierr = c_int()
+            lib.gmshModelOccGetBoundingBox(
+                c_int(dim),
+                c_int(tag),
+                byref(api_xmin_),
+                byref(api_ymin_),
+                byref(api_zmin_),
+                byref(api_xmax_),
+                byref(api_ymax_),
+                byref(api_zmax_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccGetBoundingBox returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_xmin_.value,
+                api_ymin_.value,
+                api_zmin_.value,
+                api_xmax_.value,
+                api_ymax_.value,
+                api_zmax_.value)
 
         @staticmethod
         def getMass(dim, tag):
             """
             gmsh.model.occ.getMass(dim, tag)
 
-            Get the mass of the model entity of dimension `dim' and tag `tag'.
+            Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
 
             Return `mass'.
             """
@@ -5448,7 +5488,7 @@ class model:
             """
             gmsh.model.occ.getCenterOfMass(dim, tag)
 
-            Get the center of mass of the model entity of dimension `dim' and tag
+            Get the center of mass of the OpenCASCADE entity of dimension `dim' and tag
             `tag'.
 
             Return `x', `y', `z'.
@@ -5478,8 +5518,8 @@ class model:
             """
             gmsh.model.occ.getMatrixOfInertia(dim, tag)
 
-            Get the matrix of inertia (by row) of the model entity of dimension `dim'
-            and tag `tag'.
+            Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
+            `dim' and tag `tag'.
 
             Return `mat'.
             """
@@ -5513,6 +5553,31 @@ class model:
                 raise ValueError(
                     "gmshModelOccSynchronize returned non-zero error code: ",
                     ierr.value)
+
+        @staticmethod
+        def setSize(dimTags, size):
+            """
+            gmsh.model.occ.setSize(dimTags, size)
+
+            Set a mesh size constraint on the model entities `dimTags'. Currently only
+            entities of dimension 0 (points) are handled.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelOccSetSize(
+                api_dimTags_, api_dimTags_n_,
+                c_double(size),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccSetSize returned non-zero error code: ",
+                    ierr.value)
+
+
+        class mesh:
+            """
+            OpenCASCADE CAD kernel meshing constraints
+            """
 
 
 class view:
