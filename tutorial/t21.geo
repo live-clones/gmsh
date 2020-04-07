@@ -71,15 +71,10 @@ Mesh.PartitionSplitMeshFiles = split;
 If (partitioner == 0)
   // Use Metis to create N partitions
   PartitionMesh N;
-  //
-  // Several Metis options can be set:
-  //
-  // Mesh.MetisAlgorithm = 1; // 1: Recursive, 2: K-way
-  // Mesh.MetisObjective = 1; // 1:mmin. edge-cut, 2: min. communication volume
-  // Mesh.PartitionTriWeight = -1; // weight of triangles (-1: automatic)
-  // Mesh.PartitionQuadWeight = -1; // weight of quads (-1: automatic)
-  //
-  // etc.
+  // Several options can be set to control Metis: `Mesh.MetisAlgorithm' (1:
+  // Recursive, 2: K-way), `Mesh.MetisObjective' (1: min. edge-cut, 2:
+  // min. communication volume), `Mesh.PartitionTriWeight' (weight of
+  // triangles), `Mesh.PartitionQuadWeight' (weight of quads), ...
 Else
   // Use the `SimplePartition' plugin to create chessboard-like partitions
   Plugin(SimplePartition).NumSlicesX = N;
