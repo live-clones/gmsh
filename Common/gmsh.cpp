@@ -5576,6 +5576,18 @@ GMSH_API void gmsh::model::occ::getEntities(vectorpair &dimTags, const int dim)
   }
 }
 
+GMSH_API void gmsh::model::occ::getEntitiesInBoundingBox(
+  const double xmin, const double ymin, const double zmin, const double xmax,
+  const double ymax, const double zmax, vectorpair &dimTags, const int dim)
+{
+  if(!_isInitialized()) { throw - 1; }
+  dimTags.clear();
+  if(!GModel::current()->getOCCInternals()->getEntitiesInBoundingBox
+     (xmin, ymin, zmin, xmax, ymax, zmax, dimTags, dim)) {
+    throw 1;
+  }
+}
+
 GMSH_API void gmsh::model::occ::getBoundingBox(const int dim, const int tag,
                                                double &xmin, double &ymin,
                                                double &zmin, double &xmax,

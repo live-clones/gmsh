@@ -3523,6 +3523,26 @@ namespace gmsh { // Top-level functions
         dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
       }
 
+      // Get the OpenCASCADE entities in the bounding box defined by the two points
+      // (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+      // return only the entities of the specified dimension (e.g. points if `dim'
+      // == 0).
+      inline void getEntitiesInBoundingBox(const double xmin,
+                                           const double ymin,
+                                           const double zmin,
+                                           const double xmax,
+                                           const double ymax,
+                                           const double zmax,
+                                           gmsh::vectorpair & tags,
+                                           const int dim = -1)
+      {
+        int ierr = 0;
+        int *api_tags_; size_t api_tags_n_;
+        gmshModelOccGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, &api_tags_, &api_tags_n_, dim, &ierr);
+        if(ierr) throw ierr;
+        tags.resize(api_tags_n_ / 2); for(size_t i = 0; i < api_tags_n_ / 2; ++i){ tags[i].first = api_tags_[i * 2 + 0]; tags[i].second = api_tags_[i * 2 + 1]; } gmshFree(api_tags_);
+      }
+
       // Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
       // the OpenCASCADE entity of dimension `dim' and tag `tag'.
       inline void getBoundingBox(const int dim,

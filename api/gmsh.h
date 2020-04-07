@@ -2355,6 +2355,21 @@ namespace gmsh { // Top-level functions
       GMSH_API void getEntities(gmsh::vectorpair & dimTags,
                                 const int dim = -1);
 
+      // gmsh::model::occ::getEntitiesInBoundingBox
+      //
+      // Get the OpenCASCADE entities in the bounding box defined by the two points
+      // (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+      // return only the entities of the specified dimension (e.g. points if `dim'
+      // == 0).
+      GMSH_API void getEntitiesInBoundingBox(const double xmin,
+                                             const double ymin,
+                                             const double zmin,
+                                             const double xmax,
+                                             const double ymax,
+                                             const double zmax,
+                                             gmsh::vectorpair & tags,
+                                             const int dim = -1);
+
       // gmsh::model::occ::getBoundingBox
       //
       // Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of

@@ -706,6 +706,9 @@ occ.add_special('importShapesNativePointer', doc, ['onlycc++'], None, ivoidstar(
 doc = '''Get all the OpenCASCADE entities. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 occ.add('getEntities', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
 
+doc = '''Get the OpenCASCADE entities in the bounding box defined by the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
+occ.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'), idouble('zmin'), idouble('xmax'), idouble('ymax'), idouble('zmax'), ovectorpair('tags'), iint('dim', '-1'))
+
 doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
 

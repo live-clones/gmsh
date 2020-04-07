@@ -3149,8 +3149,11 @@ Delete :
     }
   | tDelete String__Index tEND
     {
-      if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
+      if(!strcmp($2, "All")){
         ClearProject();
+      }
+      else if(!strcmp($2, "Meshes")){
+	GModel::current()->deleteMesh();
       }
       else if(!strcmp($2, "Model")){
 	GModel::current()->destroy(true); // destroy, but keep name/filename

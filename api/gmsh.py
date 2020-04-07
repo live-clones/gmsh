@@ -5393,6 +5393,36 @@ class model:
             return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
         @staticmethod
+        def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
+            """
+            gmsh.model.occ.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1)
+
+            Get the OpenCASCADE entities in the bounding box defined by the two points
+            (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+            return only the entities of the specified dimension (e.g. points if `dim'
+            == 0).
+
+            Return `tags'.
+            """
+            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccGetEntitiesInBoundingBox(
+                c_double(xmin),
+                c_double(ymin),
+                c_double(zmin),
+                c_double(xmax),
+                c_double(ymax),
+                c_double(zmax),
+                byref(api_tags_), byref(api_tags_n_),
+                c_int(dim),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccGetEntitiesInBoundingBox returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorpair(api_tags_, api_tags_n_.value)
+
+        @staticmethod
         def getBoundingBox(dim, tag):
             """
             gmsh.model.occ.getBoundingBox(dim, tag)
