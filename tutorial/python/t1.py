@@ -2,8 +2,7 @@
 #
 #  Gmsh Python tutorial 1
 #
-#  Elementary entities (points, curves, surfaces), physical groups
-#  (points, curves, surfaces)
+#  Geometry basics, elementary entities, physical groups
 #
 # ------------------------------------------------------------------------------
 

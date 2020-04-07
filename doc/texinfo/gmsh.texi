@@ -5125,17 +5125,17 @@ system}. Screencasts that show how to use the GUI are available on
 @menu
 * t1.geo:: Geometry basics, elementary entities, physical groups
 * t2.geo:: Transformations, extruded geometries, volumes
-* t3.geo:: Extruded meshes, input parameters, options
+* t3.geo:: Extruded meshes, parameters, options
 * t4.geo:: Built-in functions, holes in surfaces, annotations, entity colors
 * t5.geo:: Characteristic lengths, macros, loops, holes in volumes
 * t6.geo:: Transfinite meshes
 * t7.geo:: Background meshes
-* t8.geo:: Post-processing, scripting, animations, options
-* t9.geo:: Post-processing plugins (levelsets, sections, annotations)
+* t8.geo:: Post-processing and animations
+* t9.geo:: Plugins
 * t10.geo:: Mesh size fields
 * t11.geo:: Unstructured quadrangular meshes
 * t12.geo:: Cross-patch meshing with compounds
-* t13.geo:: Remeshing a STL file without an underlying CAD model
+* t13.geo:: Remeshing an STL file without an underlying CAD model
 * t14.geo:: Homology and cohomology computation
 * t15.geo:: Embedded points, lines and surfaces
 * t16.geo:: Constructive Solid Geometry, OpenCASCADE geometry kernel

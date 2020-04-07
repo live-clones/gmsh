@@ -2,7 +2,7 @@
 //
 //  Gmsh GEO tutorial 13
 //
-//  Remeshing without an underlying CAD model
+//  Remeshing an STL file without an underlying CAD model
 //
 // -----------------------------------------------------------------------------
 

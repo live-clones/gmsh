@@ -2,8 +2,7 @@
 
    Gmsh C tutorial 1
 
-   Elementary entities (points, curves, surfaces), physical groups (points,
-   curves, surfaces)
+   Elementary entities (points, curves, surfaces), physical groups
 
    --------------------------------------------------------------------------- */
 

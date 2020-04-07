@@ -2,7 +2,7 @@
 //
 //  Gmsh GEO tutorial 10
 //
-//  General mesh size fields
+//  Mesh size fields
 //
 // -----------------------------------------------------------------------------
 

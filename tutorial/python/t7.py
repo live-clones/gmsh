@@ -2,7 +2,7 @@
 #
 #  Gmsh Python tutorial 7
 #
-#  Background mesh
+#  Background meshes
 #
 # ------------------------------------------------------------------------------
 
