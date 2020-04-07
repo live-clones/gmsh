@@ -2324,8 +2324,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
             const int orientationFlag =
               (edge.getMinVertex()->getNum() !=
                    unsigned(element->getVertexSolin(iEdge, 0)) ?
-                 1 :
-                 -1);
+                 -1 :
+                 1);
             for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
               basis->orientEdge(orientationFlag, iEdge, eTableCopy[q],
                                 eTable[q], eTableNegativeFlag[q]);
@@ -2464,8 +2464,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
             const int orientationFlag =
               (edge.getMinVertex()->getNum() !=
                    unsigned(element->getVertexSolin(iEdge, 0)) ?
-                 1 :
-                 -1);
+                 -1 :
+                 1);
             for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
               basis->orientEdge(orientationFlag, iEdge, eTableCopy[q],
                                 eTable[q], eTableNegativeFlag[q]);
