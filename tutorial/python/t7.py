@@ -43,6 +43,9 @@ bg_field = model.mesh.field.add("PostView")
 # Apply the view as the current background mesh
 model.mesh.field.setAsBackgroundMesh(bg_field)
 
+# Background meshes are one particular case of general mesh size fields: see
+# `t10.py' for more mesh size field examples.
+
 gmsh.model.mesh.generate(2)
 gmsh.write("t7.msh")
 

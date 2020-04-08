@@ -21,7 +21,7 @@ angle = DefineNumber[40, Min 20, Max 120, Step 1,
 forceParametrizablePatches = DefineNumber[0, Choices{0,1},
   Name "Parameters/Create surfaces guaranteed to be parametrizable"];
 
-// For open surfaces include the boundary edges in the classification process.
+// For open surfaces include the boundary edges in the classification process:
 includeBoundary = 1;
 
 // Force curves to be split on given angle:

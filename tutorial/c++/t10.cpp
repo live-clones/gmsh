@@ -116,7 +116,7 @@ int main(int argc, char **argv)
   // 2) if `Mesh.CharacteristicLengthFromPoints' is set, the mesh size specified
   //    at geometrical points;
   // 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based
-  //    on the curvature and `Mesh.MinimumCirclePoints';
+  //    on the curvature and `Mesh.MinimumElementsPerTwoPi';
   // 4) the background mesh field;
   // 5) any per-entity mesh size constraint.
   //

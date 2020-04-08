@@ -49,6 +49,9 @@ int main(int argc, char **argv)
   // Apply the view as the current background mesh
   gmsh::model::mesh::field::setAsBackgroundMesh(bg_field);
 
+  // Background meshes are one particular case of general mesh size fields: see
+  // `t10.cpp' for more mesh size field examples.
+
   gmsh::model::mesh::generate(2);
   gmsh::write("t7.msh");
 

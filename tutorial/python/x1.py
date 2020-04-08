@@ -2,7 +2,7 @@
 #
 #  Gmsh Python extended tutorial 1
 #
-#  Access basic geometrical and mesh data
+#  Geometrical and mesh data access
 #
 # -----------------------------------------------------------------------------
 
