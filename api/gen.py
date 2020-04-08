@@ -729,7 +729,7 @@ occ.add('synchronize', doc, None)
 mesh = occ.add_module('mesh', 'OpenCASCADE CAD kernel meshing constraints')
 
 doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
-occ.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
+mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
 ################################################################################
 

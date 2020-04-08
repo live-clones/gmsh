@@ -3058,7 +3058,7 @@ GMSH_API void gmshModelOccSynchronize(int * ierr)
   }
 }
 
-GMSH_API void gmshModelOccSetSize(int * dimTags, size_t dimTags_n, const double size, int * ierr)
+GMSH_API void gmshModelOccMeshSetSize(int * dimTags, size_t dimTags_n, const double size, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -3067,7 +3067,7 @@ GMSH_API void gmshModelOccSetSize(int * dimTags, size_t dimTags_n, const double 
       api_dimTags_[i].first = dimTags[i * 2 + 0];
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
-    gmsh::model::occ::setSize(api_dimTags_, size);
+    gmsh::model::occ::mesh::setSize(api_dimTags_, size);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

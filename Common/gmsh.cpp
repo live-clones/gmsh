@@ -5641,8 +5641,8 @@ GMSH_API void gmsh::model::occ::synchronize()
 
 // gmsh::model::occ::mesh
 
-GMSH_API void gmsh::model::occ::setSize(const vectorpair &dimTags,
-                                            const double size)
+GMSH_API void gmsh::model::occ::mesh::setSize(const vectorpair &dimTags,
+                                              const double size)
 {
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
