@@ -119,7 +119,7 @@ bool PViewDataGModel::addData(GModel *model, const std::vector<std::size_t> &tag
   for(std::size_t i = 0; i < tags.size(); i++) {
     double *d = _steps[step]->getData(tags[i], true, mult);
     int k = i * stride;
-    for(int j = 0; j < stride; j++) d[j] = data[k + j];
+    for(std::size_t j = 0; j < stride; j++) d[j] = data[k + j];
   }
   if(partition >= 0) _steps[step]->getPartitions().insert(partition);
   finalize();
