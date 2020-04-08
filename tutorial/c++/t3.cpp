@@ -98,9 +98,9 @@ int main(int argc, char **argv)
 
   // gmsh::fltk::run();
 
-  // When the GUI is launched, you can use the `Help->Current options' menu to
-  // see the current values of all options. To save the options in a file, use
-  // `File->Export->Gmsh options', or through the api:
+  // When the GUI is launched, you can use the `Help->Current Options and
+  // Workspace' menu to see the current values of all options. To save the
+  // options in a file, use `File->Export->Gmsh Options', or through the api:
 
   // gmsh::write("t3.opt");
 
