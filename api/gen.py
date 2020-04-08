@@ -311,9 +311,6 @@ mesh.add('getBasisFunctionsOrientationForElements', doc, None, iint('elementType
 doc = '''Preallocate data before calling `getBasisFunctionsOrientationForElements' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateBasisFunctionsOrientationForElements', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
-doc = '''Get the element-dependent basis functions of the elements of type `elementType' in the entity of tag `tag' at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates of the reference elements). `numComponents' returns the number C of components of a basis function. `numBasisFunctions' returns the number N of basis functions per element. `basisFunctions' returns the value of the basis functions at the integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: This function is deprecated - use `getBasisFunctions' instead.'''
-mesh.add('getBasisFunctionsForElements', doc, None, iint('elementType'), ivectordouble('integrationPoints'), istring('functionSpaceType'), oint('numComponents'), oint('numFunctionsPerElement'), ovectordouble('basisFunctions'), iint('tag','-1'))
-
 doc = '''Get the global edge identifier `edgeNum' for an input list of node pairs, concatenated in the vector `edgeNodes'.  Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getEdgeNumber',doc,None,ivectorint('edgeNodes'),ovectorint('edgeNum'))
 
