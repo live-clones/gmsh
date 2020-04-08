@@ -2163,6 +2163,23 @@ GMSH_API void gmshViewAddModelData(const int tag,
                                    const int partition,
                                    int * ierr);
 
+/* Add homogeneous model-based post-processing data to the view with tag
+ * `tag'. The arguments have the same meaning as in `addModelData', except
+ * that `data' is supposed to be homogeneous and is thus flattened in a single
+ * vector. This is always possible e.g. for "NodeData" and "ElementData", but
+ * only if data is associated to elements of the same type for
+ * "ElementNodeData". */
+GMSH_API void gmshViewAddHomogeneousModelData(const int tag,
+                                              const int step,
+                                              const char * modelName,
+                                              const char * dataType,
+                                              size_t * tags, size_t tags_n,
+                                              double * data, size_t data_n,
+                                              const double time,
+                                              const int numComponents,
+                                              const int partition,
+                                              int * ierr);
+
 /* Get model-based post-processing data from the view with tag `tag' at step
  * `step'. Return the `data' associated to the nodes or the elements with tags
  * `tags', as well as the `dataType' and the number of components

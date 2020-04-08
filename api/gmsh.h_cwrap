@@ -3670,6 +3670,30 @@ namespace gmsh { // Top-level functions
       for(size_t i = 0; i < api_data_nn_; ++i){ gmshFree(api_data_[i]); } gmshFree(api_data_); gmshFree(api_data_n_);
     }
 
+    // Add homogeneous model-based post-processing data to the view with tag `tag'.
+    // The arguments have the same meaning as in `addModelData', except that `data'
+    // is supposed to be homogeneous and is thus flattened in a single vector. This
+    // is always possible e.g. for "NodeData" and "ElementData", but only if data
+    // is associated to elements of the same type for "ElementNodeData".
+    inline void addHomogeneousModelData(const int tag,
+                                        const int step,
+                                        const std::string & modelName,
+                                        const std::string & dataType,
+                                        const std::vector<std::size_t> & tags,
+                                        const std::vector<double> & data,
+                                        const double time = 0.,
+                                        const int numComponents = -1,
+                                        const int partition = 0)
+    {
+      int ierr = 0;
+      size_t *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
+      double *api_data_; size_t api_data_n_; vector2ptr(data, &api_data_, &api_data_n_);
+      gmshViewAddHomogeneousModelData(tag, step, modelName.c_str(), dataType.c_str(), api_tags_, api_tags_n_, api_data_, api_data_n_, time, numComponents, partition, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_tags_);
+      gmshFree(api_data_);
+    }
+
     // Get model-based post-processing data from the view with tag `tag' at step
     // `step'. Return the `data' associated to the nodes or the elements with tags
     // `tags', as well as the `dataType' and the number of components

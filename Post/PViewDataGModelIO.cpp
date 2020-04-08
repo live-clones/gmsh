@@ -57,9 +57,14 @@ bool PViewDataGModel::addData(GModel *model, const std::vector<std::size_t> &tag
   if(data.empty() || tags.empty() || data.size() != tags.size()) return false;
 
   if(numComp < 0) {
-    numComp = 9;
-    for(std::size_t i = 0; i < data.size(); i++)
-      numComp = std::min(numComp, (int)data[i].size());
+    if(_type == ElementNodeData) {
+      numComp = 1; // cannot infer, as we can have different element types
+    }
+    else{
+      numComp = 9;
+      for(std::size_t i = 0; i < data.size(); i++)
+        numComp = std::min(numComp, (int)data[i].size());
+    }
   }
 
   while(step >= (int)_steps.size())
@@ -76,6 +81,45 @@ bool PViewDataGModel::addData(GModel *model, const std::vector<std::size_t> &tag
     int mult = data[i].size() / numComp;
     double *d = _steps[step]->getData(tags[i], true, mult);
     for(int j = 0; j < numComp * mult; j++) d[j] = data[i][j];
+  }
+  if(partition >= 0) _steps[step]->getPartitions().insert(partition);
+  finalize();
+  return true;
+}
+
+bool PViewDataGModel::addData(GModel *model, const std::vector<std::size_t> &tags,
+                              const std::vector<double> &data,
+                              int step, double time, int partition, int numComp)
+{
+  if(data.empty() || tags.empty()) return false;
+
+  std::size_t stride = data.size() / tags.size();
+  if(stride < 1) return false;
+
+  if(numComp < 0) {
+    if(_type == ElementNodeData) {
+      numComp = 1; // cannot infer, as we can have different element types
+    }
+    else {
+      numComp = (int)stride;
+    }
+  }
+
+  while(step >= (int)_steps.size())
+    _steps.push_back(new stepData<double>(model, numComp));
+  _steps[step]->fillEntities();
+  _steps[step]->computeBoundingBox();
+  _steps[step]->setTime(time);
+
+  int numEnt = (_type == NodeData) ? model->getNumMeshVertices() :
+                                     model->getNumMeshElements();
+  _steps[step]->resizeData(numEnt);
+
+  int mult = stride / numComp;
+  for(std::size_t i = 0; i < tags.size(); i++) {
+    double *d = _steps[step]->getData(tags[i], true, mult);
+    int k = i * stride;
+    for(int j = 0; j < stride; j++) d[j] = data[k + j];
   }
   if(partition >= 0) _steps[step]->getPartitions().insert(partition);
   finalize();

@@ -4483,6 +4483,24 @@ function addModelData(tag, step, modelName, dataType, tags, data, time = 0., num
 end
 
 """
+    gmsh.view.addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
+
+Add homogeneous model-based post-processing data to the view with tag `tag`. The
+arguments have the same meaning as in `addModelData`, except that `data` is
+supposed to be homogeneous and is thus flattened in a single vector. This is
+always possible e.g. for "NodeData" and "ElementData", but only if data is
+associated to elements of the same type for "ElementNodeData".
+"""
+function addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
+    ierr = Ref{Cint}()
+    ccall((:gmshViewAddHomogeneousModelData, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Cint, Cint, Ptr{Cint}),
+          tag, step, modelName, dataType, convert(Vector{Csize_t}, tags), length(tags), convert(Vector{Cdouble}, data), length(data), time, numComponents, partition, ierr)
+    ierr[] != 0 && error("gmshViewAddHomogeneousModelData returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.view.getModelData(tag, step)
 
 Get model-based post-processing data from the view with tag `tag` at step
