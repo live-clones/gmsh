@@ -1199,20 +1199,6 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
   }
 }
 
-GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int * numComponents, int * numFunctionsPerElement, double ** basisFunctions, size_t * basisFunctions_n, const int tag, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
-    std::vector<double> api_basisFunctions_;
-    gmsh::model::mesh::getBasisFunctionsForElements(elementType, api_integrationPoints_, functionSpaceType, *numComponents, *numFunctionsPerElement, api_basisFunctions_, tag);
-    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
 GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n, int ** edgeNum, size_t * edgeNum_n, int * ierr)
 {
   if(ierr) *ierr = 0;
