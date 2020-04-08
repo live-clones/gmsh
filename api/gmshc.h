@@ -2115,9 +2115,9 @@ GMSH_API void gmshModelOccSynchronize(int * ierr);
 
 /* Set a mesh size constraint on the model entities `dimTags'. Currently only
  * entities of dimension 0 (points) are handled. */
-GMSH_API void gmshModelOccSetSize(int * dimTags, size_t dimTags_n,
-                                  const double size,
-                                  int * ierr);
+GMSH_API void gmshModelOccMeshSetSize(int * dimTags, size_t dimTags_n,
+                                      const double size,
+                                      int * ierr);
 
 /* Add a new post-processing view, with name `name'. If `tag' is positive use
  * it (and remove the view with that tag if it already exists), otherwise

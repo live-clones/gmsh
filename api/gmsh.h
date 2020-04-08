@@ -2393,14 +2393,14 @@ namespace gmsh { // Top-level functions
       // be minimized.
       GMSH_API void synchronize();
 
-      // gmsh::model::occ::setSize
-      //
-      // Set a mesh size constraint on the model entities `dimTags'. Currently only
-      // entities of dimension 0 (points) are handled.
-      GMSH_API void setSize(const gmsh::vectorpair & dimTags,
-                            const double size);
-
       namespace mesh { // OpenCASCADE CAD kernel meshing constraints
+
+        // gmsh::model::occ::mesh::setSize
+        //
+        // Set a mesh size constraint on the model entities `dimTags'. Currently
+        // only entities of dimension 0 (points) are handled.
+        GMSH_API void setSize(const gmsh::vectorpair & dimTags,
+                              const double size);
 
       } // namespace mesh
 

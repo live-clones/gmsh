@@ -5510,30 +5510,30 @@ class model:
                     "gmshModelOccSynchronize returned non-zero error code: ",
                     ierr.value)
 
-        @staticmethod
-        def setSize(dimTags, size):
-            """
-            gmsh.model.occ.setSize(dimTags, size)
-
-            Set a mesh size constraint on the model entities `dimTags'. Currently only
-            entities of dimension 0 (points) are handled.
-            """
-            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
-            ierr = c_int()
-            lib.gmshModelOccSetSize(
-                api_dimTags_, api_dimTags_n_,
-                c_double(size),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccSetSize returned non-zero error code: ",
-                    ierr.value)
-
 
         class mesh:
             """
             OpenCASCADE CAD kernel meshing constraints
             """
+
+            @staticmethod
+            def setSize(dimTags, size):
+                """
+                gmsh.model.occ.mesh.setSize(dimTags, size)
+
+                Set a mesh size constraint on the model entities `dimTags'. Currently only
+                entities of dimension 0 (points) are handled.
+                """
+                api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+                ierr = c_int()
+                lib.gmshModelOccMeshSetSize(
+                    api_dimTags_, api_dimTags_n_,
+                    c_double(size),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise ValueError(
+                        "gmshModelOccMeshSetSize returned non-zero error code: ",
+                        ierr.value)
 
 
 class view:

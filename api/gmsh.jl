@@ -4347,7 +4347,16 @@ function synchronize()
 end
 
 """
-    gmsh.model.occ.setSize(dimTags, size)
+    module gmsh.model.occ.mesh
+
+OpenCASCADE CAD kernel meshing constraints
+"""
+module mesh
+
+import ....gmsh
+
+"""
+    gmsh.model.occ.mesh.setSize(dimTags, size)
 
 Set a mesh size constraint on the model entities `dimTags`. Currently only
 entities of dimension 0 (points) are handled.
@@ -4356,21 +4365,12 @@ function setSize(dimTags, size)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccSetSize, gmsh.lib), Cvoid,
+    ccall((:gmshModelOccMeshSetSize, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, size, ierr)
-    ierr[] != 0 && error("gmshModelOccSetSize returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelOccMeshSetSize returned non-zero error code: $(ierr[])")
     return nothing
 end
-
-"""
-    module gmsh.model.occ.mesh
-
-OpenCASCADE CAD kernel meshing constraints
-"""
-module mesh
-
-import ....gmsh
 
 end # end of module mesh
 

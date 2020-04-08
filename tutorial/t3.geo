@@ -92,8 +92,8 @@ Mesh.Color.Points = {255, 0, 0};
 
 Geometry.Color.Surfaces = Geometry.Color.Points;
 
-// You can use the `Help->Current options' menu to see the current values of all
-// options. To save all the options in a file, use `File->Export->Gmsh
-// options'. To associate the current options with the current file use
-// `File->Save Options->For Current File'. To save the current options for all
-// future Gmsh sessions use `File->Save Options->As default'.
+// You can use the `Help->Current Options and Workspace' menu to see the current
+// values of all options. To save all the options in a file, use
+// `File->Export->Gmsh Options'. To associate the current options with the
+// current file use `File->Save Model Options'. To save the current options for
+// all future Gmsh sessions use `File->Save Options As Default'.

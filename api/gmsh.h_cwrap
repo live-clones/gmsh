@@ -3576,19 +3576,19 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
-      // Set a mesh size constraint on the model entities `dimTags'. Currently only
-      // entities of dimension 0 (points) are handled.
-      inline void setSize(const gmsh::vectorpair & dimTags,
-                          const double size)
-      {
-        int ierr = 0;
-        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
-        gmshModelOccSetSize(api_dimTags_, api_dimTags_n_, size, &ierr);
-        if(ierr) throw ierr;
-        gmshFree(api_dimTags_);
-      }
-
       namespace mesh { // OpenCASCADE CAD kernel meshing constraints
+
+        // Set a mesh size constraint on the model entities `dimTags'. Currently
+        // only entities of dimension 0 (points) are handled.
+        inline void setSize(const gmsh::vectorpair & dimTags,
+                            const double size)
+        {
+          int ierr = 0;
+          int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+          gmshModelOccMeshSetSize(api_dimTags_, api_dimTags_n_, size, &ierr);
+          if(ierr) throw ierr;
+          gmshFree(api_dimTags_);
+        }
 
       } // namespace mesh
 

@@ -3316,7 +3316,13 @@ processing, the number of synchronization points should normally be minimized.
 -
 @end table
 
-@item gmsh/model/occ/setSize
+@end ftable
+
+@node Namespace gmsh/model/occ/mesh, Namespace gmsh/view, Namespace gmsh/model/occ, Gmsh API
+@section Namespace @code{gmsh/model/occ/mesh}: OpenCASCADE CAD kernel meshing constraints
+
+@ftable @code
+@item gmsh/model/occ/mesh/setSize
 Set a mesh size constraint on the model entities @code{dimTags}. Currently only
 entities of dimension 0 (points) are handled.
 
@@ -3329,12 +3335,6 @@ entities of dimension 0 (points) are handled.
 -
 @end table
 
-@end ftable
-
-@node Namespace gmsh/model/occ/mesh, Namespace gmsh/view, Namespace gmsh/model/occ, Gmsh API
-@section Namespace @code{gmsh/model/occ/mesh}: OpenCASCADE CAD kernel meshing constraints
-
-@ftable @code
 @end ftable
 
 @node Namespace gmsh/view, Namespace gmsh/plugin, Namespace gmsh/model/occ/mesh, Gmsh API
