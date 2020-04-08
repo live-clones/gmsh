@@ -5106,9 +5106,12 @@ the same for all other kinds of values.
 @cindex Tutorial
 
 The following tutorials introduce new features gradually, starting with
-@ref{t1}. The files corresponding to these examples are available in the
+@ref{t1}. The corresponding files are available in the
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}
-directory of the Gmsh distribution.
+directory of the Gmsh distribution. The files starting with @code{t}
+introduce features available both in @code{.geo} scripts and through the
+@ref{Gmsh API}. The files starting with @code{x} introduce features that
+are only available via the API.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
@@ -6210,9 +6213,9 @@ file.geo -0), and use this new file for subsequent computations;
 @item
 or you may set the @code{Geometry.AutoCoherence} option to 0. This will
 prevent any automatic duplicate check/replacement. If you still need to
-remove the duplicates entities, simply add @code{Coherence;} at strategic
-locations in your geo files (e.g. before the creation of curve loops,
-etc.).
+remove the duplicates entities, simply add @code{Coherence;} at
+strategic locations in your @code{.geo} files (e.g. before the creation
+of curve loops, etc.).
 @end itemize
 
 @item How can I display only selected parts of my model?
@@ -6230,14 +6233,14 @@ commands after that to delete parts, create new parts or apply boolean
 operators. See
 e.g. @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/import.geo,demos/boolean/import.geo}.
 
-@item Why are there surfaces missing when I export a STEP as an unrolled .geo file?
+@item Why are there surfaces missing when I export a STEP as an unrolled @code{.geo} file?
 
-You should @emph{not} export STEP models as .geo files. By design, Gmsh
-never translates from one CAD format to another. The ``unrolled GEO''
-feature is there for unrolling complex GEO scripts. While it can indeed
-export a limited subset of geometrical entities created by other CAD
-kernels, it's there only for debugging purposes. If you want to modify a
-STEP model, see the previous question.
+You should @emph{not} export STEP models as @code{.geo} files. By
+design, Gmsh never translates from one CAD format to another. The
+``unrolled GEO'' feature is there for unrolling complex GEO
+scripts. While it can indeed export a limited subset of geometrical
+entities created by other CAD kernels, it's there only for debugging
+purposes. If you want to modify a STEP model, see the previous question.
 
 @item How can I build modular geometries?
 
