@@ -9,6 +9,7 @@
 * Namespace gmsh/model/geo::
 * Namespace gmsh/model/geo/mesh::
 * Namespace gmsh/model/occ::
+* Namespace gmsh/model/occ/mesh::
 * Namespace gmsh/view::
 * Namespace gmsh/plugin::
 * Namespace gmsh/graphics::
@@ -1310,30 +1311,6 @@ with @code{numTasks} > 1. For C and C++ only.
 -
 @end table
 
-@item gmsh/model/mesh/getBasisFunctionsForElements
-Get the element-dependent basis functions of the elements of type
-@code{elementType} in the entity of tag @code{tag} at the integration points
-@code{integrationPoints} (given as concatenated triplets of coordinates in the
-reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
-@code{functionSpaceType} (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order
-hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates
-of the reference elements). @code{numComponents} returns the number C of
-components of a basis function. @code{numBasisFunctions} returns the number N of
-basis functions per element. @code{basisFunctions} returns the value of the
-basis functions at the integration points for each element: [e1g1f1,..., e1g1fN,
-e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw,
-e1g2f1u,..., e2g1f1u, ...]. Warning: This function is deprecated - use
-@code{getBasisFunctions} instead.
-
-@table @asis
-@item Input:
-@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag = -1}
-@item Output:
-@code{numComponents}, @code{numFunctionsPerElement}, @code{basisFunctions}
-@item Return:
--
-@end table
-
 @item gmsh/model/mesh/getEdgeNumber
 Get the global edge identifier @code{edgeNum} for an input list of node pairs,
 concatenated in the vector @code{edgeNodes}.  Warning: this is an experimental
@@ -1612,19 +1589,6 @@ Set the meshing algorithm on the model entity of dimension @code{dim} and tag
 Force the mesh size to be extended from the boundary, or not, for the model
 entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
 @code{dim} == 2.
-
-@table @asis
-@item Input:
-@code{dim}, @code{tag}, @code{val}
-@item Output:
--
-@item Return:
--
-@end table
-
-@item gmsh/model/mesh/setOnlyInitialMesh
-Only generate the initial mesh (or not) for the entity of dimension @code{dim}
-and tag @code{tag}. Currently only supported for @code{dim} == 2.
 
 @table @asis
 @item Input:
@@ -2515,7 +2479,7 @@ Set the meshing algorithm on the model entity of dimension @code{dim} and tag
 @end table
 
 @item gmsh/model/geo/mesh/setSizeFromBoundary
-Force the mesh size to be extended from the boundary (or not) for the model
+Force the mesh size to be extended from the boundary, or not, for the model
 entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
 @code{dim} == 2.
 
@@ -2528,22 +2492,9 @@ entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
 -
 @end table
 
-@item gmsh/model/geo/mesh/setOnlyInitialMesh
-Only generate the initial mesh (or not) for the entity of dimension @code{dim}
-and tag @code{tag}. Currently only supported for @code{dim} == 2.
-
-@table @asis
-@item Input:
-@code{dim}, @code{tag}, @code{val}
-@item Output:
--
-@item Return:
--
-@end table
-
 @end ftable
 
-@node Namespace gmsh/model/occ, Namespace gmsh/view, Namespace gmsh/model/geo/mesh, Gmsh API
+@node Namespace gmsh/model/occ, Namespace gmsh/model/occ/mesh, Namespace gmsh/model/geo/mesh, Gmsh API
 @section Namespace @code{gmsh/model/occ}: OpenCASCADE CAD kernel functions
 
 @ftable @code
@@ -3269,21 +3220,52 @@ an invalid pointer will lead to undefined behavior.
 -
 @end table
 
-@item gmsh/model/occ/setMeshSize
-Set a mesh size constraint on the model entities @code{dimTags}. Currently only
-entities of dimension 0 (points) are handled.
+@item gmsh/model/occ/getEntities
+Get all the OpenCASCADE entities. If @code{dim} is >= 0, return only the
+entities of the specified dimension (e.g. points if @code{dim} == 0). The
+entities are returned as a vector of (dim, tag) integer pairs.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{size}
+@code{dim = -1}
 @item Output:
+@code{dimTags}
+@item Return:
 -
+@end table
+
+@item gmsh/model/occ/getEntitiesInBoundingBox
+Get the OpenCASCADE entities in the bounding box defined by the two points
+(@code{xmin}, @code{ymin}, @code{zmin}) and (@code{xmax}, @code{ymax},
+@code{zmax}). If @code{dim} is >= 0, return only the entities of the specified
+dimension (e.g. points if @code{dim} == 0).
+
+@table @asis
+@item Input:
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}, @code{dim = -1}
+@item Output:
+@code{tags}
+@item Return:
+-
+@end table
+
+@item gmsh/model/occ/getBoundingBox
+Get the bounding box (@code{xmin}, @code{ymin}, @code{zmin}), (@code{xmax},
+@code{ymax}, @code{zmax}) of the OpenCASCADE entity of dimension @code{dim} and
+tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}
 @item Return:
 -
 @end table
 
 @item gmsh/model/occ/getMass
-Get the mass of the model entity of dimension @code{dim} and tag @code{tag}.
+Get the mass of the OpenCASCADE entity of dimension @code{dim} and tag
+@code{tag}.
 
 @table @asis
 @item Input:
@@ -3295,7 +3277,7 @@ Get the mass of the model entity of dimension @code{dim} and tag @code{tag}.
 @end table
 
 @item gmsh/model/occ/getCenterOfMass
-Get the center of mass of the model entity of dimension @code{dim} and tag
+Get the center of mass of the OpenCASCADE entity of dimension @code{dim} and tag
 @code{tag}.
 
 @table @asis
@@ -3308,8 +3290,8 @@ Get the center of mass of the model entity of dimension @code{dim} and tag
 @end table
 
 @item gmsh/model/occ/getMatrixOfInertia
-Get the matrix of inertia (by row) of the model entity of dimension @code{dim}
-and tag @code{tag}.
+Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
+@code{dim} and tag @code{tag}.
 
 @table @asis
 @item Input:
@@ -3336,7 +3318,26 @@ processing, the number of synchronization points should normally be minimized.
 
 @end ftable
 
-@node Namespace gmsh/view, Namespace gmsh/plugin, Namespace gmsh/model/occ, Gmsh API
+@node Namespace gmsh/model/occ/mesh, Namespace gmsh/view, Namespace gmsh/model/occ, Gmsh API
+@section Namespace @code{gmsh/model/occ/mesh}: OpenCASCADE CAD kernel meshing constraints
+
+@ftable @code
+@item gmsh/model/occ/mesh/setSize
+Set a mesh size constraint on the model entities @code{dimTags}. Currently only
+entities of dimension 0 (points) are handled.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{size}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@node Namespace gmsh/view, Namespace gmsh/plugin, Namespace gmsh/model/occ/mesh, Gmsh API
 @section Namespace @code{gmsh/view}: post-processing view functions
 
 @ftable @code
@@ -3405,6 +3406,23 @@ argument associate a time value with the data. @code{numComponents} gives the
 number of data components (1 for scalar data, 3 for vector data, etc.) per
 entity; if negative, it is automatically inferred (when possible) from the input
 data. @code{partition} allows to specify data in several sub-sets.
+
+@table @asis
+@item Input:
+@code{tag}, @code{step}, @code{modelName}, @code{dataType}, @code{tags}, @code{data}, @code{time = 0.}, @code{numComponents = -1}, @code{partition = 0}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/view/addHomogeneousModelData
+Add homogeneous model-based post-processing data to the view with tag
+@code{tag}. The arguments have the same meaning as in @code{addModelData},
+except that @code{data} is supposed to be homogeneous and is thus flattened in a
+single vector. This is always possible e.g. for "NodeData" and "ElementData",
+but only if data is associated to elements of the same type for
+"ElementNodeData".
 
 @table @asis
 @item Input:

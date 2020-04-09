@@ -5930,8 +5930,8 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.algo3d)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algo3d = (int)val;
-    if(CTX::instance()->mesh.algo3d ==
-       2) // "New Delaunay" is now simply "Delaunay"
+    // "New Delaunay" is now simply "Delaunay"
+    if(CTX::instance()->mesh.algo3d == 2)
       CTX::instance()->mesh.algo3d = 1;
   }
 #if defined(HAVE_FLTK)

@@ -2332,7 +2332,7 @@ int PartitionMesh(GModel *const model)
   if(CTX::instance()->mesh.numPartitions <= 0) return 0;
 
   Msg::StatusBar(true, "Partitioning mesh...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   Graph graph(model);
   if(MakeGraph(model, graph, -1)) return 1;
@@ -2368,8 +2368,9 @@ int PartitionMesh(GModel *const model)
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done partitioning mesh (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 
   for(std::size_t i = 0; i < TYPE_MAX_NUM + 1; i++) {
     std::vector<int> &count = elmCount[i];
@@ -2395,21 +2396,23 @@ int PartitionMesh(GModel *const model)
       graph.getBoundaryElements();
     CreatePartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
-    double t3 = Cpu();
-    Msg::StatusBar(true, "Done creating partition topology (%g s)", t3 - t2);
+    double t3 = Cpu(), w3 = TimeOfDay();
+    Msg::StatusBar(true, "Done creating partition topology (Wall %gs, CPU %gs)",
+                   w3 - w2, t3 - t2);
   }
 
   AssignPhysicals(model);
   AssignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
-    double t4 = Cpu();
+    double t4 = Cpu(), w4 = TimeOfDay();
     Msg::StatusBar(true, "Creating ghost cells...");
     graph.clearDualGraph();
     graph.createDualGraph(true);
     graph.assignGhostCells();
-    double t5 = Cpu();
-    Msg::StatusBar(true, "Done creating ghost cells (%g s)", t5 - t4);
+    double t5 = Cpu(), w5 = TimeOfDay();
+    Msg::StatusBar(true, "Done creating ghost cells (Wall %gs, CPU %gs)",
+                   w5 - w4, t5 - t4);
   }
 
   return 0;

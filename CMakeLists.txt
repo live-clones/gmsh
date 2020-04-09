@@ -2100,7 +2100,7 @@ if(NOT DISABLE_GMSH_TESTS)
   endforeach()
   # test c++ api tutorials with dynamic builds (except on 32 bit windows for
   # now: our win32 setup does not currently handle exceptions)
-  if(ENABLE_BUILD_DYNAMIC AND NOT ${GMSH_OS} MATCHES "Windows32")
+  if(ENABLE_CXX11 AND ENABLE_BUILD_DYNAMIC AND NOT ${GMSH_OS} MATCHES "Windows32")
     file(GLOB_RECURSE TESTFILES tutorial/c++/*.cpp)
     foreach(TESTFILE ${TESTFILES})
       get_filename_component(TEST ${TESTFILE} NAME_WE)

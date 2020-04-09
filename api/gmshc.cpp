@@ -1199,20 +1199,6 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
   }
 }
 
-GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int * numComponents, int * numFunctionsPerElement, double ** basisFunctions, size_t * basisFunctions_n, const int tag, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
-    std::vector<double> api_basisFunctions_;
-    gmsh::model::mesh::getBasisFunctionsForElements(elementType, api_integrationPoints_, functionSpaceType, *numComponents, *numFunctionsPerElement, api_basisFunctions_, tag);
-    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
 GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n, int ** edgeNum, size_t * edgeNum_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2975,16 +2961,37 @@ GMSH_API void gmshModelOccImportShapesNativePointer(const void * shape, int ** o
   }
 }
 
-GMSH_API void gmshModelOccSetMeshSize(int * dimTags, size_t dimTags_n, const double size, int * ierr)
+GMSH_API void gmshModelOccGetEntities(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::vectorpair api_dimTags_(dimTags_n/2);
-    for(size_t i = 0; i < dimTags_n/2; ++i){
-      api_dimTags_[i].first = dimTags[i * 2 + 0];
-      api_dimTags_[i].second = dimTags[i * 2 + 1];
-    }
-    gmsh::model::occ::setMeshSize(api_dimTags_, size);
+    gmsh::vectorpair api_dimTags_;
+    gmsh::model::occ::getEntities(api_dimTags_, dim);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccGetEntitiesInBoundingBox(const double xmin, const double ymin, const double zmin, const double xmax, const double ymax, const double zmax, int ** tags, size_t * tags_n, const int dim, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_tags_;
+    gmsh::model::occ::getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, dim);
+    vectorpair2intptr(api_tags_, tags, tags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccGetBoundingBox(const int dim, const int tag, double * xmin, double * ymin, double * zmin, double * xmax, double * ymax, double * zmax, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::getBoundingBox(dim, tag, *xmin, *ymin, *zmin, *xmax, *ymax, *zmax);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -3031,6 +3038,22 @@ GMSH_API void gmshModelOccSynchronize(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::occ::synchronize();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccMeshSetSize(int * dimTags, size_t dimTags_n, const double size, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::occ::mesh::setSize(api_dimTags_, size);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -3096,6 +3119,19 @@ GMSH_API void gmshViewAddModelData(const int tag, const int step, const char * m
     for(size_t i = 0; i < data_nn; ++i)
       api_data_[i] = std::vector<double>(data[i], data[i] + data_n[i]);
     gmsh::view::addModelData(tag, step, modelName, dataType, api_tags_, api_data_, time, numComponents, partition);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshViewAddHomogeneousModelData(const int tag, const int step, const char * modelName, const char * dataType, size_t * tags, size_t tags_n, double * data, size_t data_n, const double time, const int numComponents, const int partition, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_tags_(tags, tags + tags_n);
+    std::vector<double> api_data_(data, data + data_n);
+    gmsh::view::addHomogeneousModelData(tag, step, modelName, dataType, api_tags_, api_data_, time, numComponents, partition);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

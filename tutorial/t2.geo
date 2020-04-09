@@ -2,8 +2,7 @@
 //
 //  Gmsh GEO tutorial 2
 //
-//  Includes, geometrical transformations, extruded geometries, elementary
-//  entities (volumes), physical groups (volumes)
+//  Transformations, extruded geometries, volumes
 //
 // -----------------------------------------------------------------------------
 

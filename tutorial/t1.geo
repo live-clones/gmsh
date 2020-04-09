@@ -2,8 +2,7 @@
 //
 //  Gmsh GEO tutorial 1
 //
-//  Variables, elementary entities (points, curves, surfaces), physical groups
-//  (points, curves, surfaces)
+//  Geometry basics, elementary entities, physical groups
 //
 // -----------------------------------------------------------------------------
 
@@ -136,5 +135,5 @@ Physical Surface("My surface") = {1};
 // The underlying curves and points could be accessed with the `Boundary' or
 // `CombinedBoundary' operators.
 //
-// See e.g. `t16.geo', `t18.geo' or `t19.geo' for complete examples based on
-// OpenCASCADE, and `demos/boolean' for more.
+// See e.g. `t16.geo', `t18.geo', `t19.geo' or `t20.geo' for complete examples
+// based on OpenCASCADE, and `demos/boolean' for more.
