@@ -2,13 +2,10 @@
 
 import gmsh
 
-model = gmsh.model
-factory = model.geo
-
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
 
-model.add("t4")
+gmsh.model.add("t4")
 
 cm = 1e-02
 e1 = 4.5 * cm; e2 = 6 * cm / 2; e3 =  5 * cm / 2
@@ -24,6 +21,7 @@ end
 ccos = (-h5*R1 + e2 * hypot(h5, hypot(e2, R1))) / (h5*h5 + e2*e2)
 ssin = sqrt(1 - ccos*ccos)
 
+factory = gmsh.model.geo
 factory.addPoint(-e1-e2, 0    , 0, Lc1, 1)
 factory.addPoint(-e1-e2, h1   , 0, Lc1, 2)
 factory.addPoint(-e3-r , h1   , 0, Lc2, 3)
@@ -93,7 +91,7 @@ factory.addPlaneSurface([23,21], 24)
 
 factory.synchronize()
 
-model.mesh.generate(2)
+gmsh.model.mesh.generate(2)
 
 gmsh.write("t4.msh")
 

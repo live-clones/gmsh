@@ -17,9 +17,6 @@
 #include <gmsh.h>
 #include <math.h>
 
-namespace factory = gmsh::model::geo;
-namespace model = gmsh::model;
-
 int main(int argc, char **argv)
 {
   gmsh::initialize();
