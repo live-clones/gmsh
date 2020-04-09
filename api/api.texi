@@ -1788,11 +1788,14 @@ assuming that each can be parametrized with a single map.
 @item gmsh/model/mesh/createTopology
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
-underlying model).
+underlying model). If @code{makeSimplyConnected} is set, enforce simply
+connected discrete surfaces and volumes. If @code{exportDiscrete} is set, clear
+any built-in CAD kernel entities and export the discrete entities in the built-
+in CAD kernel.
 
 @table @asis
 @item Input:
--
+@code{makeSimplyConnected = True}, @code{exportDiscrete = True}
 @item Output:
 -
 @item Return:
@@ -3406,6 +3409,23 @@ argument associate a time value with the data. @code{numComponents} gives the
 number of data components (1 for scalar data, 3 for vector data, etc.) per
 entity; if negative, it is automatically inferred (when possible) from the input
 data. @code{partition} allows to specify data in several sub-sets.
+
+@table @asis
+@item Input:
+@code{tag}, @code{step}, @code{modelName}, @code{dataType}, @code{tags}, @code{data}, @code{time = 0.}, @code{numComponents = -1}, @code{partition = 0}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/view/addHomogeneousModelData
+Add homogeneous model-based post-processing data to the view with tag
+@code{tag}. The arguments have the same meaning as in @code{addModelData},
+except that @code{data} is supposed to be homogeneous and is thus flattened in a
+single vector. This is always possible e.g. for "NodeData" and "ElementData",
+but only if data is associated to elements of the same type for
+"ElementNodeData".
 
 @table @asis
 @item Input:

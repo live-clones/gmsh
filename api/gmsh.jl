@@ -2321,17 +2321,19 @@ function createGeometry()
 end
 
 """
-    gmsh.model.mesh.createTopology()
+    gmsh.model.mesh.createTopology(makeSimplyConnected = true, exportDiscrete = true)
 
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
-underlying model).
+underlying model). If `makeSimplyConnected` is set, enforce simply connected
+discrete surfaces and volumes. If `exportDiscrete` is set, clear any built-in
+CAD kernel entities and export the discrete entities in the built-in CAD kernel.
 """
-function createTopology()
+function createTopology(makeSimplyConnected = true, exportDiscrete = true)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshCreateTopology, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
+          (Cint, Cint, Ptr{Cint}),
+          makeSimplyConnected, exportDiscrete, ierr)
     ierr[] != 0 && error("gmshModelMeshCreateTopology returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -4479,6 +4481,24 @@ function addModelData(tag, step, modelName, dataType, tags, data, time = 0., num
           (Cint, Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Cdouble, Cint, Cint, Ptr{Cint}),
           tag, step, modelName, dataType, convert(Vector{Csize_t}, tags), length(tags), convert(Vector{Vector{Cdouble}},data), api_data_n_, length(data), time, numComponents, partition, ierr)
     ierr[] != 0 && error("gmshViewAddModelData returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.view.addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
+
+Add homogeneous model-based post-processing data to the view with tag `tag`. The
+arguments have the same meaning as in `addModelData`, except that `data` is
+supposed to be homogeneous and is thus flattened in a single vector. This is
+always possible e.g. for "NodeData" and "ElementData", but only if data is
+associated to elements of the same type for "ElementNodeData".
+"""
+function addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
+    ierr = Ref{Cint}()
+    ccall((:gmshViewAddHomogeneousModelData, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Cint, Cint, Ptr{Cint}),
+          tag, step, modelName, dataType, convert(Vector{Csize_t}, tags), length(tags), convert(Vector{Cdouble}, data), length(data), time, numComponents, partition, ierr)
+    ierr[] != 0 && error("gmshViewAddHomogeneousModelData returned non-zero error code: $(ierr[])")
     return nothing
 end
 

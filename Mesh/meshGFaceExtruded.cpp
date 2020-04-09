@@ -93,8 +93,8 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
     for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
       std::vector<MVertex *> extruded_vertices;
       MVertex *v = from->mesh_vertices[i];
-      MEdgeVertex *mv = (MEdgeVertex *)v;
-      mv->bl_data = new MVertexBoundaryLayerData();
+      MEdgeVertex *mv = dynamic_cast<MEdgeVertex *>(v);
+      if(mv) mv->bl_data = new MVertexBoundaryLayerData();
       for(int j = 0; j < ep->mesh.NbLayer; j++) {
         for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
           double x = v->x(), y = v->y(), z = v->z();
@@ -102,7 +102,8 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
           if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1) {
             MVertex *newv = pos.find(x, y, z);
             if(!newv) {
-              if(to->geomType() != GEntity::DiscreteSurface &&
+              if(from->geomType() != GEntity::DiscreteCurve &&
+                 to->geomType() != GEntity::DiscreteSurface &&
                  to->geomType() != GEntity::BoundaryLayerSurface) {
                 // This can be inefficient, and sometimes useless. We could add an
                 // option to disable it.
@@ -120,7 +121,7 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
           }
         }
       }
-      mv->bl_data->addChildrenFamily(extruded_vertices);
+      if(mv) mv->bl_data->addChildrenFamily(extruded_vertices);
     }
   }
 

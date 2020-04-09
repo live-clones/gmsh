@@ -3549,7 +3549,11 @@ Command :
     }
    | tCreateTopology tEND
     {
+      GModel::current()->makeDiscreteRegionsSimplyConnected();
+      GModel::current()->makeDiscreteFacesSimplyConnected();
       GModel::current()->createTopologyFromMesh();
+      // Warning: this clears GEO_Internals! Make it optional?
+      GModel::current()->exportDiscreteGEOInternals();
     }
   | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr '}' tEND
     {
