@@ -413,16 +413,19 @@ HXTStatus hxtPointGenGetSizesCurvature(HXTEdges *edges, int N, double a, double 
     double K = fmax(k1,k2);
 
     double size = (2*M_PI)/(N*K);
-    if (sizemap[i] > a*size)
-      sizemap[i] = a*size;
-    if (sizemap[i] < minSize)
-      sizemap[i] = minSize;
+    if (sizemap[3*i+0] > a*size)
+      sizemap[3*i+0] = a*size;
+    if (sizemap[3*i+0] < minSize)
+      sizemap[3*i+0] = minSize;
+  }
+
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    sizemap[3*i+1] = sizemap[3*i+0];
+    sizemap[3*i+2] = sizemap[3*i+0];
   }
 
   HXT_CHECK(hxtFree(&nodalCurvatures));
   HXT_CHECK(hxtFree(&curvatureCrossfield));
-
-  HXT_CHECK(hxtEdgesDelete(&edges));
 
 
   return HXT_STATUS_OK; 
@@ -967,6 +970,59 @@ HXTStatus hxtGetTrianglesToTetrahedra(HXTMesh *mesh,
 
   return HXT_STATUS_OK;
 }
+
+//*****************************************************************************************
+//*****************************************************************************************
+//
+//  FUNCTION to associate the boundary tetrahedra with surface triangles
+//           returns an array tet2tri of size 4*numBoundaryTetrahedra
+//           TODO not used 
+//           
+//
+//*****************************************************************************************
+//*****************************************************************************************
+HXTStatus hxtGetBoundaryTetrahedraToTriangles(HXTMesh *mesh,
+                                              uint64_t *tri2tet,
+                                              uint64_t **tet2tri)
+{
+
+  // First 4 positions are the corresponding triangles
+  // Next  6 are the corresponding boundary lines 
+  HXT_CHECK(hxtMalloc(tet2tri,sizeof(uint64_t)*mesh->tetrahedra.num*4));
+  for (uint64_t i=0; i<4*mesh->tetrahedra.num; i++) (*tet2tri)[i] = UINT64_MAX;
+
+  for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
+    uint32_t *vtet = mesh->tetrahedra.node + 4*i;
+
+    int ctri= 0;
+
+    for (uint64_t j=0; j<mesh->triangles.num; j++){
+      uint64_t tri = j;
+      uint32_t *vtri = mesh->triangles.node + 3*j;
+      
+      int count = 0;
+      for (uint32_t k=0; k<4; k++){
+        for (uint32_t l=0; l<3; l++){
+          if (vtet[k] == vtri[l]) count++;
+        }
+      }
+
+      if (count >= 1){
+        for (uint32_t l=0; l<4; l++){
+          if ((*tet2tri)[4*i+l] != UINT64_MAX) continue;
+          if ((*tet2tri)[4*i+l] == tri) break;
+          (*tet2tri)[4*i+l] = tri;
+          ctri++;
+          if (ctri>3) printf("ERROR %lu %d \n", i, ctri);
+          break;
+        }
+      }
+    }
+  }
+
+  return HXT_STATUS_OK;
+}
+
 
 //*****************************************************************************************
 //*****************************************************************************************

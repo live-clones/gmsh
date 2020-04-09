@@ -2,8 +2,7 @@
 //
 //  Gmsh GEO tutorial 1
 //
-//  Variables, elementary entities (points, curves, surfaces), physical groups
-//  (points, curves, surfaces)
+//  Geometry basics, elementary entities, physical groups
 //
 // -----------------------------------------------------------------------------
 

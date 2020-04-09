@@ -15,4 +15,9 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
                                      HXTPointGenParent *pointParent,   
                                      HXTMesh *fmesh); 
 
+HXTStatus hxtGetPointsOnSurfacesFromInputMesh(HXTMesh *mesh, 
+                                              HXTPointGenOptions *opt,
+                                              HXTMesh *fmesh, 
+                                              HXTPointGenParent *parent);
+
 #endif

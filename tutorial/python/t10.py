@@ -2,7 +2,7 @@
 #
 #  Gmsh Python tutorial 10
 #
-#  General mesh size fields
+#  Mesh size fields
 #
 # ------------------------------------------------------------------------------
 
@@ -109,12 +109,12 @@ model.mesh.field.setAsBackgroundMesh(7)
 # 2) if `Mesh.CharacteristicLengthFromPoints' is set, the mesh size specified
 #    at geometrical points;
 # 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based
-#    on the curvature and `Mesh.MinimumCirclePoints';
+#    on the curvature and `Mesh.MinimumElementsPerTwoPi';
 # 4) the background mesh field;
 # 5) any per-entity mesh size constraint.
 #
 # This value is then constrained in the interval
-# [`Mesh.CharacteristicLengthMin', `MeshCharacteristicLengthMax'] and
+# [`Mesh.CharacteristicLengthMin', `Mesh.CharacteristicLengthMax'] and
 # multiplied by `Mesh.CharacteristicLengthFactor'.  In addition, boundary
 # mesh sizes (on curves or surfaces) are interpolated inside the enclosed
 # entity (surface or volume, respectively) if the option

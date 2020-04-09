@@ -19,8 +19,8 @@ typedef struct {
                                *  - if verbosity==1: print basic information on each pass
                                *  - if verbosity>=2: print everything */
 
-  int generateLines;          /**< Generate points on mesh lines */
-  int generateSurfaces;       /**< Generate points on mesh surfaces */
+  int generateLines;          /**< Generate points on mesh lines, 0 to get from input mesh */
+  int generateSurfaces;       /**< Generate points on mesh surfaces, 0 to get from input mesh */
   int generateVolumes;        /**< Generate points on mesh volumes */
   int remeshSurfaces;         /**< Remesh surface with local mesh modifications */
 

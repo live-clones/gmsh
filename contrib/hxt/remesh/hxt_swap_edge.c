@@ -604,7 +604,7 @@ HXTStatus hxtSwapEdge (HXTMesh *mesh,
     nt0 = nodes_of_t0[(n0IndexInt0+2)%3];
     nt1 = nodes_of_t1[(n0IndexInt1+1)%3];
     ori = 1;
-    // TODO by definition it does not go here? 
+    // TODO by definition it does not go here?
 	  //return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Should not go here");
   }
   else{

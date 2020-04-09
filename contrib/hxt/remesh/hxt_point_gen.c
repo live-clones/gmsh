@@ -46,6 +46,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //*************************************************************************************
   //*************************************************************************************
   // Sizing from input mesh 
+  // TODO 
   if (0){
     HXT_CHECK(hxtPointGenGetSizesInputMesh(edges,3.0,sizemap));
     HXT_CHECK(hxtPointGenSizemapSmoothing(edges,1.5,sizemap));
@@ -55,16 +56,18 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //*************************************************************************************
   //*************************************************************************************
   // Sizing from curvature
+  // TODO 
   if(0){
-    HXT_CHECK(hxtPointGenGetSizesCurvature(edges,30,0.8,0.1,sizemap));
+    HXT_CHECK(hxtPointGenGetSizesCurvature(edges,100,0.8,0.1,sizemap));
     //HXT_CHECK(hxtPointGenSizemapSmoothing(edges,1.5,sizemap));
-    HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,sizemap,"sizesInput.msh"));
+    HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,sizemap,"sizesCurvature.msh"));
   }
 
   //*************************************************************************************
   //*************************************************************************************
   // If mesh does not have lines start propagation from a random edge
-  if (mesh->lines.num == 0){
+  // TODO 
+  if (mesh->lines.num == 0 && opt->generateLines && opt->generateSurfaces){
     HXT_INFO("********** ATTENTION **********");
     HXT_INFO("Mesh does not have lines - starting propagation from a random edge");
     // Create edges structure
@@ -90,6 +93,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //*************************************************************************************
   //*************************************************************************************
   // Boundary vertex connectivity 
+  // TODO not used for now 
   uint32_t *vert2vert;
   HXT_CHECK(hxtMalloc(&vert2vert, 2*mesh->vertices.num*sizeof(uint32_t)));
   for (uint32_t i=0; i<2*mesh->vertices.num; i++) vert2vert[i] = UINT32_MAX;
@@ -134,59 +138,37 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   HXT_CHECK(hxtLinesReserve(fmesh, estNumLines));
 
   HXT_INFO("");
-  HXT_INFO("Allocated mesh num of vertices       %d", fmesh->vertices.size); 
-  HXT_INFO("Allocated mesh num of points         %d", fmesh->vertices.size); 
-  HXT_INFO("Allocated mesh num of lines          %lu", fmesh->vertices.size); 
-
+  HXT_INFO("Allocated mesh num of vertices       %d",  fmesh->vertices.size); 
+  HXT_INFO("Allocated mesh num of points         %d",  fmesh->points.size); 
+  HXT_INFO("Allocated mesh num of lines          %lu", fmesh->lines.size); 
+  
+  // Create structure for parent elements of generated points 
+  HXTPointGenParent *parent;
+  HXT_CHECK(hxtMalloc(&parent, estNumVertices*sizeof(HXTPointGenParent)));
+  for (uint32_t i=0; i<estNumVertices; i++) parent[i].type = UINT8_MAX;
+  for (uint32_t i=0; i<estNumVertices; i++) parent[i].id = UINT64_MAX;
+  
   //**********************************************************************************************************
   //**********************************************************************************************************
   // GENERATE POINTS ON LINES 
   //**********************************************************************************************************
   //**********************************************************************************************************
 
-  // Array to store point "parent" element 
-  // - for corner points gives id of corner vertex of initial mesh
-  // - for points on lines gives the id of line
-  uint64_t *pointParent = NULL;
-  HXT_CHECK(hxtMalloc(&pointParent,estNumVertices*sizeof(uint64_t)));
-  for (uint32_t i=0; i<estNumVertices; i++) pointParent[i] = UINT64_MAX;
-
-  HXT_CHECK(hxtGeneratePointsOnLines(mesh,opt,directions,sizemap,fmesh,pointParent));
-
+  if (opt->generateLines){
+    HXT_CHECK(hxtGeneratePointsOnLines(mesh,opt,directions,sizemap,fmesh,parent));
+  }
+  else{
+    HXT_CHECK(hxtGetPointsOnLinesFromInputMesh(mesh,opt,fmesh,parent));
+  }
+    
   // Check if there is even number of points generated on lines 
   // TODO 
-  if (fmesh->lines.num%2 != 0){
-    printf("\n\nContinue with odd number of points? y/n \n\n");
-    char ch = getchar();
-    getchar();
-    if ( ch == 'n') return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Number of points on lines not even");
-  }
-
-  // Create structure for parent elements of generated points 
-  HXTPointGenParent *parent;
-  HXT_CHECK(hxtMalloc(&parent, estNumVertices*sizeof(HXTPointGenParent)));
-  for (uint32_t i=0; i<estNumVertices; i++) parent[i].type = UINT8_MAX;
-  for (uint32_t i=0; i<estNumVertices; i++) parent[i].id = UINT64_MAX;
-
-  // Fill point gen parent struct with lines 
-  for (uint32_t i=0; i<fmesh->vertices.num; i++){
-    if (pointParent[i] == UINT64_MAX){
-      return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Vertex %d does not have parent element",i);
-    }
-    parent[i].type = 1;
-    parent[i].id = pointParent[i];
-  }
-
-  // Fill point gen parent struct with corner points 
-  for (uint32_t i=0; i<fmesh->points.num; i++){
-    uint32_t nodeID = fmesh->points.node[i];
-    if (pointParent[nodeID] == UINT64_MAX){
-      return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Vertex %d does not have parent element",i);
-    }
-    parent[nodeID].type = 15;
-    parent[nodeID].id = pointParent[nodeID];
-  }
-  HXT_CHECK(hxtFree(&pointParent));
+/*  if (fmesh->lines.num%2 != 0){*/
+    /*printf("\n\nContinue with odd number of points? y/n \n\n");*/
+    /*char ch = getchar();*/
+    /*getchar();*/
+    /*if ( ch == 'n') return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Number of points on lines not even");*/
+  /*}*/
 
   // Checking correct number of 1d point elements (i.e. "corners")
   // TODO delete
@@ -194,14 +176,13 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   for (uint32_t i=0; i<fmesh->vertices.num; i++){
     if (parent[i].type == 15) countCorners++;
   }
-  if (countCorners != fmesh->points.num) return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Corner problem");
+  if (countCorners != fmesh->points.num) 
+    return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Corner problem %d %d", countCorners, fmesh->points.num);
 
-  if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(fmesh, "FINALMESHlines.msh"));
+  if (opt->verbosity > 1) HXT_CHECK(hxtMeshWriteGmsh(fmesh, "FINALMESHlines.msh"));
 
   HXT_INFO("");
   HXT_INFO("Number of points generated on lines = %d", fmesh->vertices.num);
-
-
 
 
   //**********************************************************************************************************
@@ -210,9 +191,14 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
   //**********************************************************************************************************
   
-  HXT_CHECK(hxtGeneratePointsOnSurface(opt,mesh,edges,sizemap,directions,parent,fmesh));
+  if (opt->generateSurfaces){
+    HXT_CHECK(hxtGeneratePointsOnSurface(opt,mesh,edges,sizemap,directions,parent,fmesh));
+  }
+  else{
+    HXT_CHECK(hxtGetPointsOnSurfacesFromInputMesh(mesh,opt,fmesh,parent));
+  }
 
-  if (opt->verbosity == 2) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh,"pointsSurface.pos"));
+  if (opt->verbosity > 1) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh,"pointsSurface.pos"));
 
   HXT_INFO("");
   HXT_INFO("Number of points generated on surfaces = %d", fmesh->vertices.num);
@@ -261,20 +247,16 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
   //**********************************************************************************************************
   
-  
-
+ 
   if (opt->generateVolumes){
   
     HXT_CHECK(hxtGeneratePointsOnVolumes(mesh,opt,sizemap,directions,parent,fmesh));
   
-    if (opt->verbosity == 2) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh,"pointsVolume.pos"));
+    if (opt->verbosity > 1) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh,"pointsVolume.pos"));
 
     HXT_INFO("");
     HXT_INFO("Number of points generated total = %d", fmesh->vertices.num);
-
-
   }
-
 
   //**********************************************************************************************************
   //**********************************************************************************************************
@@ -282,15 +264,24 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
   //**********************************************************************************************************
  
-  // Find max length to create an area threshold 
-  double maxLength = 0;
-  HXT_CHECK(hxtPointGenModelMaxLength(mesh->vertices.coord,mesh->vertices.num,&maxLength));
-  opt->areaThreshold = maxLength*maxLength*10e-8;
-  
-
-  // Surface remesher
-  HXT_CHECK(hxtSurfaceMesh(opt,mesh,edges,parent,fmesh,nmesh));
-
+  if (opt->remeshSurfaces){
+    // Find max length to create an area threshold 
+    // TODO use that 
+    double maxLength = 0;
+    HXT_CHECK(hxtPointGenModelMaxLength(mesh->vertices.coord,mesh->vertices.num,&maxLength));
+    opt->areaThreshold = maxLength*maxLength*10e-8;
+    
+    // Surface remesher
+    HXT_CHECK(hxtSurfaceMesh(opt,mesh,edges,parent,fmesh,nmesh));
+  }
+  else{
+    if (opt->generateLines==0 && opt->generateSurfaces==0){
+      HXT_CHECK(hxtGetSurfaceMesh(opt,mesh,fmesh,nmesh));
+    }
+    else{
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR,"not working for now");
+    }
+  }
 
   //********************************************************
   // A LOT OF DIFFERENT MESH STRUCTURES 
@@ -319,7 +310,6 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
   if(0) HXT_CHECK(hxtPointGenOptim(mesh,directions,sizemap));
   
-
 
 
 

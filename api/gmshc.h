@@ -806,28 +806,6 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
                                                                            const int tag,
                                                                            int * ierr);
 
-/* Get the element-dependent basis functions of the elements of type
- * `elementType' in the entity of tag `tag' at the integration points
- * `integrationPoints' (given as concatenated triplets of coordinates in the
- * reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
- * space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
- * order hierarchical H1 Legendre functions or their gradient, in the u, v, w
- * coordinates of the reference elements). `numComponents' returns the number
- * C of components of a basis function. `numBasisFunctions' returns the number
- * N of basis functions per element. `basisFunctions' returns the value of the
- * basis functions at the integration points for each element: [e1g1f1,...,
- * e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,...,
- * e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: This function is deprecated -
- * use `getBasisFunctions' instead. */
-GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
-                                                        double * integrationPoints, size_t integrationPoints_n,
-                                                        const char * functionSpaceType,
-                                                        int * numComponents,
-                                                        int * numFunctionsPerElement,
-                                                        double ** basisFunctions, size_t * basisFunctions_n,
-                                                        const int tag,
-                                                        int * ierr);
-
 /* Get the global edge identifier `edgeNum' for an input list of node pairs,
  * concatenated in the vector `edgeNodes'.  Warning: this is an experimental
  * feature and will probably change in a future release. */
@@ -2137,9 +2115,9 @@ GMSH_API void gmshModelOccSynchronize(int * ierr);
 
 /* Set a mesh size constraint on the model entities `dimTags'. Currently only
  * entities of dimension 0 (points) are handled. */
-GMSH_API void gmshModelOccSetSize(int * dimTags, size_t dimTags_n,
-                                  const double size,
-                                  int * ierr);
+GMSH_API void gmshModelOccMeshSetSize(int * dimTags, size_t dimTags_n,
+                                      const double size,
+                                      int * ierr);
 
 /* Add a new post-processing view, with name `name'. If `tag' is positive use
  * it (and remove the view with that tag if it already exists), otherwise

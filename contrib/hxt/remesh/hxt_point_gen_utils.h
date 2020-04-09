@@ -48,6 +48,7 @@ HXTStatus hxtCountMaxNumberOfLinesToVertices(HXTMesh *mesh, uint64_t *maxNumLine
 HXTStatus hxtGetVerticesToLines(HXTMesh *mesh, uint64_t maxVL, uint64_t *vertices2lines);
 HXTStatus hxtGetVerticesToTriangles(HXTMesh *mesh, uint64_t *vertices2triangles);
 HXTStatus hxtGetTrianglesToTetrahedra(HXTMesh *mesh, uint64_t *tri2tet,uint64_t *lines2tet);
+HXTStatus hxtGetBoundaryTetrahedraToTriangles(HXTMesh *mesh, uint64_t *tri2tet, uint64_t **tet2tri);
 
 HXTStatus hxtGetLinesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t **listColors);
 HXTStatus hxtGetTrianglesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t **listColors);

@@ -57,7 +57,8 @@ void cheeseHole(double x, double y, double z, double r, double lc,
   // With the OpenCASCADE kernel, `gmsh::model::occ::addSurfaceFilling()' uses a
   // much more general generic surface filling algorithm, creating a BSpline
   // surface passing through an arbitrary number of boundary curves. The
-  // `gmsh::model::geo::addThruSections()' allows to create ruled surfaces.
+  // `gmsh::model::geo::addThruSections()' allows to create ruled surfaces (see
+  // `t19.cpp').
 
   int s1 = factory::addSurfaceFilling({l1});
   int s2 = factory::addSurfaceFilling({l2});
@@ -103,6 +104,8 @@ int main(int argc, char **argv)
   // the mesh counts approximately 231,000 nodes and 1,360,000 tetrahedra. You
   // can check mesh statistics in the graphical user interface
   // (gmsh::fltk::run()) with the `Tools->Statistics' menu.
+  //
+  // See `t10.cpp' for more information about mesh sizes.
 
   // We proceed by defining some elementary entities describing a truncated cube:
 

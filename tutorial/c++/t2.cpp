@@ -2,8 +2,7 @@
 //
 //  Gmsh C++ tutorial 2
 //
-//  Geometrical transformations, extruded geometries, elementary entities
-//  (volumes), physical groups (volumes)
+//  Transformations, extruded geometries, volumes
 //
 // -----------------------------------------------------------------------------
 
