@@ -629,6 +629,18 @@ int GModel::_readMSH2(const std::string &name)
       postpro = true;
       break;
     }
+    else if(!strncmp(&str[1], "Periodic", 8) &&
+            strncmp(&str[1], "PeriodicNodes", 13)) {
+      // Reading periodic node information is optional in the MSH2 reader,
+      // because the full topology of the model is not stored in MSH2 files. If
+      // the full mesh is not saved (e.g. because only volume mesh elements are
+      // saved), some or all master/slave (lower dimensional) entities will not
+      // have been created when reading the file, which means that no model
+      // entities will exist to store the periodic node information.
+      if(!CTX::instance()->mesh.ignorePeriodicity)
+        readMSHPeriodicNodes(fp, this);
+      break;
+    }
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
@@ -652,31 +664,13 @@ int GModel::_readMSH2(const std::string &name)
   // store the physical tags
   for(int i = 0; i < 4; i++) _storePhysicalTagsInEntities(i, physicals[i]);
 
-  // copying periodic information from the mesh
-
-  if(!CTX::instance()->mesh.ignorePeriodicity) {
-    rewind(fp);
-
-    while(1) {
-      while(str[0] != '$') {
-        if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
-      }
-      if(feof(fp)) break;
-
-      if(!strncmp(&str[1], "Periodic", 8) &&
-         strncmp(&str[1], "PeriodicNodes", 13)) {
-        readMSHPeriodicNodes(fp, this);
-        break;
-      }
-      do {
-        if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
-      } while(str[0] != '$');
-    }
-  }
-
   fclose(fp);
 
-  if(!CTX::instance()->mesh.ignorePeriodicity) alignPeriodicBoundaries();
+  // This post-processing step for periodic boundaries should be removed from
+  // the MSH2 reader. Until then, we also disable it by default.
+  if(!CTX::instance()->mesh.ignorePeriodicity) {
+    alignPeriodicBoundaries();
+  }
 
   return postpro ? 2 : 1;
 }

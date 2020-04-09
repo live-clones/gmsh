@@ -1293,8 +1293,8 @@ StringXNumber MeshOptions_Number[] = {
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 1. ,
-    "Ignore alignment of periodic boundaries when reading the mesh in MSH2 format "
-    "(used by ParaView plugin)"},
+    "Skip periodic node section and skip periodic boundary alignement step when "
+    "reading meshes in the MSH2 format." },
 #if defined(HAVE_BLOSSOM)
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 1 ,
 #else
