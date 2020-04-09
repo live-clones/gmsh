@@ -1625,12 +1625,7 @@ int GModel::writeGEO(const std::string &name, bool printLabels,
 
 int GModel::exportDiscreteGEOInternals()
 {
-  int maxv = 1; // FIXME: temorary - see TODO below
-
-  if(_geo_internals) {
-    maxv = _geo_internals->getMaxTag(3);
-    delete _geo_internals;
-  }
+  if(_geo_internals) delete _geo_internals;
   _geo_internals = new GEO_Internals;
 
   for(viter it = firstVertex(); it != lastVertex(); it++) {
@@ -1644,31 +1639,38 @@ int GModel::exportDiscreteGEOInternals()
       bool ok = true;
       Curve *c = CreateCurve((*it)->tag(), MSH_SEGM_DISCRETE, 1, NULL, NULL, -1,
                              -1, 0., 1., ok);
-      List_T *points = Tree2List(_geo_internals->Points);
+      c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
       GVertex *gvb = (*it)->getBeginVertex();
-      GVertex *gve = (*it)->getEndVertex();
-      if(!gvb || !gve) {
-        Msg::Error("Discrete curve %d has NULL endpoint(s): %p %p",
-                   (*it)->tag(), gvb, gve);
-      }
-      int nb = 2;
-      c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
-      for(int i = 0; i < List_Nbr(points); i++) {
-        Vertex *v;
-        List_Read(points, i, &v);
-        if(gvb && gvb->tag() == v->Num) {
+      if(gvb) {
+        Vertex *v = FindPoint(gvb->tag());
+        if(v) {
           List_Add(c->Control_Points, &v);
           c->beg = v;
         }
-        if(gve && gve->tag() == v->Num) {
+        else {
+          Msg::Error("Could not find GEO point %d", gvb->tag());
+        }
+      }
+      else {
+        Msg::Warning("Discrete curve %d has no begin point", (*it)->tag());
+      }
+      GVertex *gve = (*it)->getEndVertex();
+      if(gve) {
+        Vertex *v = FindPoint(gve->tag());
+        if(v) {
           List_Add(c->Control_Points, &v);
           c->end = v;
         }
+        else {
+          Msg::Error("Could not find GEO point %d", gve->tag());
+        }
+      }
+      else {
+        Msg::Warning("Discrete curve %d has no end point", (*it)->tag());
       }
       EndCurve(c);
       Tree_Add(_geo_internals->Curves, &c);
       CreateReversedCurve(c);
-      List_Delete(points);
     }
   }
 
@@ -1676,29 +1678,45 @@ int GModel::exportDiscreteGEOInternals()
     if((*it)->geomType() == GEntity::DiscreteSurface) {
       Surface *s = CreateSurface((*it)->tag(), MSH_SURF_DISCRETE);
       std::vector<GEdge *> const &edges = (*it)->edges();
-      s->Generatrices = List_Create(edges.size(), 1, sizeof(Curve *));
-      List_T *curves = Tree2List(_geo_internals->Curves);
-      Curve *c;
+      s->Generatrices = List_Create(edges.size() + 1, 1, sizeof(Curve *));
       for(std::vector<GEdge *>::const_iterator ite = edges.begin();
           ite != edges.end(); ite++) {
-        for(int i = 0; i < List_Nbr(curves); i++) {
-          List_Read(curves, i, &c);
-          if(c->Num == (*ite)->tag()) { List_Add(s->Generatrices, &c); }
+        Curve *c = FindCurve((*ite)->tag());
+        if(c) {
+          List_Add(s->Generatrices, &c);
+        }
+        else {
+          Msg::Error("Could not find GEO curve %d", (*ite)->tag());
         }
       }
       Tree_Add(_geo_internals->Surfaces, &s);
-      List_Delete(curves);
     }
   }
 
-  // TODO: create Volumes from discreteRegions ; meanwhile, keep track of
-  // maximum volume tag so that we don't break later operations:
-  _geo_internals->setMaxTag(3, maxv);
+  for(riter it = firstRegion(); it != lastRegion(); it++) {
+    if((*it)->geomType() == GEntity::DiscreteVolume) {
+      Volume *v = CreateVolume((*it)->tag(), MSH_VOLUME_DISCRETE);
+      std::vector<GFace *> faces = (*it)->faces();
+      v->Surfaces = List_Create(faces.size() + 1, 1, sizeof(Surface *));
+      for(std::vector<GFace *>::iterator itf = faces.begin();
+          itf != faces.end(); itf++) {
+        Surface *s = FindSurface((*itf)->tag());
+        if(s) {
+          List_Add(v->Surfaces, &s);
+        }
+        else {
+          Msg::Error("Could not find GEO surface %d", (*itf)->tag());
+        }
+      }
+      Tree_Add(_geo_internals->Volumes, &v);
+    }
+  }
 
   Msg::Debug("Geo internal model has:");
   Msg::Debug("%d points", Tree_Nbr(_geo_internals->Points));
   Msg::Debug("%d curves", Tree_Nbr(_geo_internals->Curves));
   Msg::Debug("%d surfaces", Tree_Nbr(_geo_internals->Surfaces));
+  Msg::Debug("%d volumes", Tree_Nbr(_geo_internals->Volumes));
 
   return 1;
 }
