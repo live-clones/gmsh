@@ -41,7 +41,6 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
-#include "GModelCreateTopologyFromMesh.h"
 #include "GModelParametrize.h"
 
 #if defined(HAVE_MESH)
@@ -2723,14 +2722,6 @@ void GModel::makeDiscreteFacesSimplyConnected()
   }
 
   Msg::Info("Done making discrete faces simply connected");
-}
-
-void GModel::createTopologyFromMesh()
-{
-  makeDiscreteRegionsSimplyConnected();
-  makeDiscreteFacesSimplyConnected();
-  createTopologyFromMeshNew();
-  exportDiscreteGEOInternals();
 }
 
 static void

@@ -1091,8 +1091,13 @@ GMSH_API void gmshModelMeshCreateGeometry(int * ierr);
 
 /* Create a boundary representation from the mesh if the model does not have
  * one (e.g. when imported from mesh file formats with no BRep representation
- * of the underlying model). */
-GMSH_API void gmshModelMeshCreateTopology(int * ierr);
+ * of the underlying model). If `makeSimplyConnected' is set, enforce simply
+ * connected discrete surfaces and volumes. If `exportDiscrete' is set, clear
+ * any built-in CAD kernel entities and export the discrete entities in the
+ * built-in CAD kernel. */
+GMSH_API void gmshModelMeshCreateTopology(const int makeSimplyConnected,
+                                          const int exportDiscrete,
+                                          int * ierr);
 
 /* Compute a basis representation for homology spaces after a mesh has been
  * generated. The computation domain is given in a list of physical group tags

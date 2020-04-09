@@ -1788,11 +1788,14 @@ assuming that each can be parametrized with a single map.
 @item gmsh/model/mesh/createTopology
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
-underlying model).
+underlying model). If @code{makeSimplyConnected} is set, enforce simply
+connected discrete surfaces and volumes. If @code{exportDiscrete} is set, clear
+any built-in CAD kernel entities and export the discrete entities in the built-
+in CAD kernel.
 
 @table @asis
 @item Input:
--
+@code{makeSimplyConnected = True}, @code{exportDiscrete = True}
 @item Output:
 -
 @item Return:

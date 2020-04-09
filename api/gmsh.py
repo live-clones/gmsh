@@ -2957,16 +2957,21 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def createTopology():
+        def createTopology(makeSimplyConnected=True, exportDiscrete=True):
             """
-            gmsh.model.mesh.createTopology()
+            gmsh.model.mesh.createTopology(makeSimplyConnected=True, exportDiscrete=True)
 
             Create a boundary representation from the mesh if the model does not have
             one (e.g. when imported from mesh file formats with no BRep representation
-            of the underlying model).
+            of the underlying model). If `makeSimplyConnected' is set, enforce simply
+            connected discrete surfaces and volumes. If `exportDiscrete' is set, clear
+            any built-in CAD kernel entities and export the discrete entities in the
+            built-in CAD kernel.
             """
             ierr = c_int()
             lib.gmshModelMeshCreateTopology(
+                c_int(bool(makeSimplyConnected)),
+                c_int(bool(exportDiscrete)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

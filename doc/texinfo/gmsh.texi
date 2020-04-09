@@ -3154,9 +3154,11 @@ and extruded meshes). @value{SYNC}
 Removes all duplicate mesh nodes.
 
 @item CreateTopology;
-Creates a boundary representation from the mesh if the model does not
-have one (e.g. when imported from mesh file formats with no BRep
-representation of the underlying model).
+Creates a boundary representation from the mesh of the current model if
+the model does not have one (e.g. when imported from mesh file formats
+with no BRep representation of the underlying model), clears any
+built-in CAD kernel entities, and exports the discrete entities in the
+built-in CAD kernel.
 
 @item CreateGeometry;
 Creates a parametrization for curves and surfaces that do not have one

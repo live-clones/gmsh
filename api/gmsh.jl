@@ -2321,17 +2321,19 @@ function createGeometry()
 end
 
 """
-    gmsh.model.mesh.createTopology()
+    gmsh.model.mesh.createTopology(makeSimplyConnected = true, exportDiscrete = true)
 
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
-underlying model).
+underlying model). If `makeSimplyConnected` is set, enforce simply connected
+discrete surfaces and volumes. If `exportDiscrete` is set, clear any built-in
+CAD kernel entities and export the discrete entities in the built-in CAD kernel.
 """
-function createTopology()
+function createTopology(makeSimplyConnected = true, exportDiscrete = true)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshCreateTopology, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
+          (Cint, Cint, Ptr{Cint}),
+          makeSimplyConnected, exportDiscrete, ierr)
     ierr[] != 0 && error("gmshModelMeshCreateTopology returned non-zero error code: $(ierr[])")
     return nothing
 end

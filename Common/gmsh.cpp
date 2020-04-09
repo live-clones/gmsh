@@ -3920,10 +3920,20 @@ GMSH_API void gmsh::model::mesh::createGeometry()
   GModel::current()->createGeometryOfDiscreteEntities();
 }
 
-GMSH_API void gmsh::model::mesh::createTopology()
+GMSH_API void gmsh::model::mesh::createTopology(const bool makeSimplyConnected,
+                                                const bool exportDiscrete)
 {
   if(!_isInitialized()) { throw - 1; }
+
+  if(makeSimplyConnected) {
+    GModel::current()->makeDiscreteRegionsSimplyConnected();
+    GModel::current()->makeDiscreteFacesSimplyConnected();
+  }
   GModel::current()->createTopologyFromMesh();
+  if(exportDiscrete) {
+    // Warning: this clears GEO_Internals!
+    GModel::current()->exportDiscreteGEOInternals();
+  }
 }
 
 GMSH_API void

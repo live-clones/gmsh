@@ -1605,11 +1605,11 @@ GMSH_API void gmshModelMeshCreateGeometry(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshCreateTopology(int * ierr)
+GMSH_API void gmshModelMeshCreateTopology(const int makeSimplyConnected, const int exportDiscrete, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::createTopology();
+    gmsh::model::mesh::createTopology(makeSimplyConnected, exportDiscrete);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

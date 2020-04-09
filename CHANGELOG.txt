@@ -3,10 +3,10 @@
 functions to reduce the number of synchronizations for complex models; small bug
 fixes.
 
-* Incompatible API changes: new optional argument to mesh/clear; new argument to
-  mesh/getBasisFunctions; removed mesh/preallocateBasisFunctions,
-  mesh/precomputeBasisFunctions and mesh/getBasisFunctionsForElements; renamed
-  occ/setMeshSize as occ/mesh/setSize
+* Incompatible API changes: new optional arguments to mesh/clear and
+  mesh/createTopology; new argument to mesh/getBasisFunctions; removed
+  mesh/preallocateBasisFunctions, mesh/precomputeBasisFunctions and
+  mesh/getBasisFunctionsForElements; renamed occ/setMeshSize as occ/mesh/setSize
 
 4.5.6 (March 30, 2020): better calculation of OCC bounding boxes using STL; API
 tutorials; small bug fixes.
