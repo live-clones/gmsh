@@ -105,11 +105,6 @@ int GModel::_readMSH2(const std::string &name)
     return 0;
   }
 
-  if(CTX::instance()->mesh.ignorePeriodicity) {
-    Msg::Info("Periodic information will be ignored, disable option "
-              "'Mesh.IgnorePeriodicity' to change this", name.c_str());
-  }
-
   char str[256] = "XXX";
   double version = 1.0;
   bool binary = false, swap = false, postpro = false;
