@@ -63,7 +63,7 @@ Mesh.CharacteristicLengthFromCurvature = 1;
 // And we set the minimum number of elements per 2*Pi radians:
 Mesh.MinimumElementsPerTwoPi = 20;
 
-// We can constraints the min and max element sizes to stay within reasonnable
+// We can constraint the min and max element sizes to stay within reasonnable
 // values (see `t10.geo' for more details):
 Mesh.CharacteristicLengthMin = 0.001;
 Mesh.CharacteristicLengthMax = 0.3;

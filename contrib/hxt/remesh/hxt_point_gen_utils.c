@@ -464,6 +464,45 @@ HXTStatus hxtPointGenSizemapSmoothing(HXTEdges *edges, double factor, double *si
 //*****************************************************************************************
 //*****************************************************************************************
 //
+//  FUNCTION to generate a sizemap from a desired number of elements
+//
+//*****************************************************************************************
+//*****************************************************************************************
+HXTStatus hxtPointGenSizemapFromNelements(HXTMesh *mesh, uint64_t nelem, double *sizemap)
+{
+
+  double integral = 0;
+
+  for (uint64_t i=0; i<mesh->triangles.num; i++){
+
+    uint32_t *nod = mesh->triangles.node + 3*i;
+    
+    double *v0 = mesh->vertices.coord + 4*nod[0];
+    double *v1 = mesh->vertices.coord + 4*nod[1];
+    double *v2 = mesh->vertices.coord + 4*nod[2];
+
+    double area = hxtTriangleArea3D(v0,v1,v2);
+    
+    integral += area * 1. / pow(1./3. * (sizemap[nod[0]]+sizemap[nod[1]]+sizemap[nod[2]]),2.);
+  }
+
+  integral *= 2;
+
+  double FAC = (double)nelem/integral;
+  double sf  = 1 / sqrt(FAC);
+
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    sizemap[3*i+0] *= sf;
+    sizemap[3*i+1] *= sf;
+    sizemap[3*i+2] *= sf;
+  }
+
+  return HXT_STATUS_OK;
+}
+
+//*****************************************************************************************
+//*****************************************************************************************
+//
 //  FUNCTION to get feature lines of input open surface mesh with no lines 
 //
 //  TODO attention, are they oriented?
@@ -508,7 +547,7 @@ HXTStatus hxtPointGenOpenLines(HXTMesh *mesh)
 //
 //*****************************************************************************************
 //*****************************************************************************************
-HXTStatus hxtPointGenDihedralLines(HXTMesh *mesh, HXTEdges *edges)
+HXTStatus hxtPointGenClassifyDihedralLines(HXTMesh *mesh, HXTEdges *edges)
 {
 
   // TODO clean write this function
@@ -541,6 +580,7 @@ HXTStatus hxtPointGenDihedralLines(HXTMesh *mesh, HXTEdges *edges)
     double d = 0.;
     for (int i=0; i<3; i++)
       d += Nt1[i]*Nt2[i];
+
     if (fabs(d) < angleThreshold){
       double *v0 = mesh->vertices.coord + 4*edges->node[2*i+0];
       double *v1 = mesh->vertices.coord + 4*edges->node[2*i+1];
@@ -638,13 +678,6 @@ HXTStatus hxtPointGenDihedralLines(HXTMesh *mesh, HXTEdges *edges)
     printf("Mesh lines num %lu \n", mesh->lines.num);
     printf("Mesh lines size %lu \n", mesh->lines.size);
   }
-
-
-  return HXT_STATUS_OK;
-  for (uint64_t i=0; i<mesh->triangles.num; i++){
-    mesh->triangles.colors[i] = 0;
-  }
-  
 
 
   return HXT_STATUS_OK;

@@ -37,6 +37,7 @@ public:
   HierarchicalBasisH1Quad(int pf1, int pf2, int pe0, int pe1, int pe2, int pe3);
   HierarchicalBasisH1Quad(int order);
   virtual ~HierarchicalBasisH1Quad();
+  virtual unsigned int getNumberOfOrientations() const;
   // vertexBasis=[v0,...,v3]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
   // faceBasis=[phief_{2,2},...,phief_{2,pf2},phief_{3,2},...,phief_{3,pf2},...,phief_{pf1,2},...,phief_{pf1,pf2}]

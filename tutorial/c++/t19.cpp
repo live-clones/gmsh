@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   gmsh::model::occ::addThruSections({1,2,3}, out, 1);
   gmsh::model::occ::synchronize();
 
-  // With `Ruled ThruSections' you can force the use of ruled surfaces:
+  // We can also force the creation of ruled surfaces:
   gmsh::model::occ::addCircle(2+0,0,0, 0.5, 11);
   gmsh::model::occ::addCurveLoop({11}, 11);
   gmsh::model::occ::addCircle(2+0.1,0.05,1, 0.1, 12);
@@ -93,10 +93,13 @@ int main(int argc, char **argv)
   // And we set the minimum number of elements per 2*Pi radians:
   gmsh::option::setNumber("Mesh.MinimumElementsPerTwoPi", 20);
 
-  // We can constraints the min and max element sizes to stay within reasonnable
-  // values (see `t10.geo' for more details):
+  // We can constraint the min and max element sizes to stay within reasonnable
+  // values (see `t10.cpp' for more details):
   gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 0.001);
   gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.3);
+
+  gmsh::model::mesh::generate(3);
+  gmsh::write("t19.msh");
 
   // gmsh::fltk::run();
   return 0;

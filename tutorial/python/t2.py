@@ -9,6 +9,7 @@
 
 import gmsh
 import sys
+import math
 
 # We start by giving some nice shortcuts for some namespaces
 model = gmsh.model
@@ -46,19 +47,22 @@ factory.addLine(4, 5, 5)
 # elementary entities or copies of elementary entities.  Geometrical
 # transformations take a vector of pairs of integers as first argument, which
 # contains the list of entities, represented by (dimension, tag) pairs.  For
-# example, the point 3 (dimension=0, tag=3) can be moved by 0.05 to the left
-# (dx=-0.05, dy=0, dz=0) with
-factory.translate([(0, 3)], -0.05, 0, 0)
+# example, the point 5 (dimension=0, tag=5) can be moved by 0.02 to the left
+# (dx=-0.02, dy=0, dz=0) with
+factory.translate([(0, 5)], -0.02, 0, 0)
+
+# And it can be further rotated by -Pi/4 around (0, 0.3, 0) (with the rotation
+# along the z axis) with:
+factory.rotate([(0, 5)], 0,0.3,0, 0,0,1, -math.pi/4)
 
 # Note that there are no units in Gmsh: coordinates are just numbers - it's
 # up to the user to associate a meaning to them.
 
-# The resulting point can also be duplicated and translated by 0.1 along the y
-# axis. The "Duplicata" functionality in .geo files is handled by
-# model.geo.copy(), which takes a vector of (dim, tag) pairs as input, and
+# Point 3 can be duplicated and translated by 0.05 along the y axis by using the
+# copy() function, which takes a vector of (dim, tag) pairs as input, and
 # returns another vector of (dim, tag) pairs:
 ov = factory.copy([(0, 3)])
-factory.translate(ov, 0, 0.1, 0)
+factory.translate(ov, 0, 0.05, 0)
 
 # The new point tag is available in ov[0][1], and can be used to create new
 # lines:
@@ -78,11 +82,15 @@ print "New surfaces " + str(ov[0][1]) + " and " + str(ov[1][1])
 # one defines curve loops to build surfaces, one has to define surface loops
 # (i.e. `shells') to build volumes. The following volume does not have holes and
 # thus consists of a single surface loop:
+factory.addPoint(0., 0.3, 0.12, lc, 100)
+factory.addPoint(0.1, 0.3, 0.12, lc, 101)
+factory.addPoint(0.1, 0.35, 0.12, lc, 102)
 
-factory.addPoint(0., 0.3, 0.13, lc, 100)
-factory.addPoint(0.08, 0.3, 0.1, lc, 101)
-factory.addPoint(0.08, 0.4, 0.1, lc, 102)
-factory.addPoint(0., 0.4, 0.13, lc, 103)
+# We would like to retrieve the coordinates of point 5 to create point 103, so
+# we synchronize the model, and use `getValue()'
+factory.synchronize()
+xyz = model.getValue(0, 5, [])
+factory.addPoint(xyz[0], xyz[1], 0.12, lc, 103)
 
 factory.addLine(4, 100, 110)
 factory.addLine(3, 101, 111)

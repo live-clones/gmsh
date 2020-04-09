@@ -17,17 +17,23 @@ Include "t1.geo";
 Point(5) = {0, .4, 0, lc};
 Line(5) = {4, 5};
 
-// But Gmsh also provides tools to transform (translate, rotate, etc.)
-// elementary entities or copies of elementary entities. For example, the point
-// 3 can be moved by 0.05 to the left with:
+// Gmsh also provides tools to transform (translate, rotate, etc.)
+// elementary entities or copies of elementary entities. For example, point
+// 5 can be moved by 0.02 to the left with:
 
-Translate {-0.05, 0, 0} { Point{3}; }
+Translate {-0.02, 0, 0} { Point{5}; }
+
+// And it can be further rotated by -Pi/4 around (0, 0.3, 0) (with the rotation
+// along the z axis) with:
+
+Rotate {{0,0,1}, {0,0.3,0}, -Pi/4} { Point{5}; }
 
 // Note that there are no units in Gmsh: coordinates are just numbers - it's up
-// to the user to associate a meaning to them. The resulting point can also be
-// duplicated and translated by 0.1 along the y axis:
+// to the user to associate a meaning to them.
 
-Translate {0, 0.1, 0} { Duplicata{ Point{3}; } }
+// Point 3 can be duplicated and translated by 0.05 along the y axis:
+
+Translate {0, 0.05, 0} { Duplicata{ Point{3}; } }
 
 // This command created a new point with an automatically assigned tag. This tag
 // can be obtained using the graphical user interface by hovering the mouse over
@@ -64,8 +70,11 @@ Printf("New surfaces '%g' and '%g'", my_new_surfs[0], my_new_surfs[1]);
 // (i.e. `shells') to build volumes. The following volume does not have holes
 // and thus consists of a single surface loop:
 
-Point(100) = {0., 0.3, 0.13, lc};  Point(101) = {0.08, 0.3, 0.1, lc};
-Point(102) = {0.08, 0.4, 0.1, lc}; Point(103) = {0., 0.4, 0.13, lc};
+Point(100) = {0., 0.3, 0.12, lc};  Point(101) = {0.1, 0.3, 0.12, lc};
+Point(102) = {0.1, 0.35, 0.12, lc};
+
+xyz[] = Point{5}; // Get coordinates of point 5
+Point(103) = {xyz[0], xyz[1], 0.12, lc};
 
 Line(110) = {4, 100};   Line(111) = {3, 101};
 Line(112) = {6, 102};   Line(113) = {5, 103};
