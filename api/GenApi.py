@@ -8,6 +8,8 @@
 
 import textwrap
 import string
+import os
+import re
 
 class arg:
     def __init__(self, name, value, python_value, julia_value,
@@ -1429,7 +1431,34 @@ class API:
                 write_module(f, module, "", "", 1)
 
     def write_texi(self):
-        def write_module(module, path, node, node_next, node_prev):
+        def tryint(s):
+            try:
+                return int(s)
+            except:
+                return s
+        def alphanum_key(s):
+            return [ tryint(c) for c in re.split('([0-9]+)', s) ]
+        def get_file_data(path, ext):
+            data = []
+            for r, d, f in os.walk(path):
+                for file in f:
+                    if file.endswith(ext):
+                        filename = os.path.join(r, file)
+                        contents = []
+                        for line in open(filename, 'r'):
+                            contents.append(line)
+                        data.append([filename, contents])
+            data.sort(key=lambda x: alphanum_key(x[0]))
+            return data
+        def find_function(name, data):
+            for file in data:
+                l = 0
+                for line in file[1]:
+                    l = l+1
+                    if re.search(name, line):
+                        return file[0], l
+            return '', 0
+        def write_module(module, path, node, node_next, node_prev, cpp_data, py_data):
             f.write("@node " + node + ", " + node_next + ", " + node_prev + ", Gmsh API\n");
             f.write("@section Namespace @code{" + path + "}: " + module.doc + "\n\n");
             f.write("@ftable @code\n");
@@ -1448,6 +1477,23 @@ class API:
                          if len(oargs) else "-") + "\n")
                 f.write("@item " + "Return:\n" +
                         (rtype.rtexi_type if rtype else "-") + "\n")
+                cpp_name = path.replace('/', '::') + '::' + name
+                cpp_file, cpp_line = find_function(cpp_name, cpp_data)
+                py_name = path.replace('/', '.') + '.' + name
+                py_file, py_line = find_function(py_name, py_data)
+                if cpp_file or py_file:
+                    git = 'https://gitlab.onelab.info/gmsh/gmsh/tree/master/'
+                    f.write("@item " + "Examples:\n")
+                    if cpp_file:
+                        f.write('C++ (@url{' + git + cpp_file[3:] +
+                                '#L' + str(cpp_line) + ',' +
+                                os.path.basename(cpp_file) + '})')
+                        if py_file: f.write(', ')
+                    if py_file:
+                        f.write('Python (@url{' + git + py_file[3:] +
+                                '#L' + str(py_line) + ',' +
+                                os.path.basename(py_file) + '})')
+                    f.write('\n')
                 f.write("@end table\n\n");
             f.write("@end ftable\n\n");
         with open("api.texi", "w") as f:
@@ -1467,7 +1513,12 @@ class API:
             for i in range(N):
                 f.write("* " + node_name(flat[i]) + "::\n")
             f.write("@end menu\n\n")
+            cpp_data = get_file_data('../tutorial', '.cpp')
+            cpp_data.extend(get_file_data('../demos/api', '.cpp'))
+            py_data = get_file_data('../tutorial', '.py')
+            py_data.extend(get_file_data('../demos/api', '.py'))
             for i in range(N):
                 write_module(flat[i][0], flat[i][1], node_name(flat[i]),
                              "" if i == N - 1 else node_name(flat[i+1]),
-                             "" if i == 0 else node_name(flat[i-1]))
+                             "" if i == 0 else node_name(flat[i-1]),
+                             cpp_data, py_data)
