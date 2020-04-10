@@ -30,6 +30,11 @@ int main(int argc, char **argv)
   // in the MSH format: `t1.exe file.msh'
   gmsh::open(argv[1]);
 
+  // Print the model name and dimension:
+  std::string name;
+  gmsh::model::getCurrent(name);
+  std::cout << "Model " << name << " (" << gmsh::model::getDimension() << "D)\n";
+
   // Geometrical data is made of elementary model `entities', called `points'
   // (entities of dimension 0), `curves' (entities of dimension 1), `surfaces'
   // (entities of dimension 2) and `volumes' (entities of dimension 3). As we
@@ -80,7 +85,11 @@ int main(int argc, char **argv)
     // * Type of the entity:
     std::string type;
     gmsh::model::getType(dim, tag, type);
-    std::cout << "Entity (" << dim << "," << tag << ") of type " << type << "\n";
+    std::string name;
+    gmsh::model::getEntityName(dim, tag, name);
+    if(name.size()) name += " ";
+    std::cout << "Entity " << name << "(" << dim << "," << tag << ") of type "
+              << type << "\n";
 
     // * Number of mesh nodes and elements:
     int numElem = 0;
@@ -94,7 +103,7 @@ int main(int argc, char **argv)
     if(boundary.size()) {
       std::cout << " - Boundary entities: ";
       for(std::size_t j = 0; j < boundary.size(); j++)
-        std::cout << " (" << boundary[j].first << "," << boundary[j].second << ")";
+        std::cout << "(" << boundary[j].first << "," << boundary[j].second << ") ";
       std::cout << "\n";
     }
 
@@ -102,9 +111,13 @@ int main(int argc, char **argv)
     std::vector<int> physicalTags;
     gmsh::model::getPhysicalGroupsForEntity(dim, tag, physicalTags);
     if(physicalTags.size()) {
-      std::cout << " - Physical group tags:";
-      for(std::size_t j = 0; j < physicalTags.size(); j++)
-        std::cout << " " << physicalTags[j];
+      std::cout << " - Physical group: ";
+      for(std::size_t j = 0; j < physicalTags.size(); j++) {
+        std::string n;
+        gmsh::model::getPhysicalName(dim, physicalTags[j], n);
+        if(n.size()) n += " ";
+        std::cout << n << "(" << dim << ", " << physicalTags[j] << ") ";
+      }
       std::cout << "\n";
     }
 
@@ -134,6 +147,9 @@ int main(int argc, char **argv)
       std::cout << ")\n";
     }
   }
+
+  // We can use this to clear all the model data:
+  gmsh::clear();
 
   gmsh::finalize();
   return 0;
