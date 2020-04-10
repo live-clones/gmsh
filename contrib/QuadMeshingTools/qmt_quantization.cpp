@@ -97,6 +97,7 @@ namespace QMT_QZ_Utils {
   using namespace QMT_Utils;
 
   bool global_gmsh_initialized = false;
+  const bool ERROR_VISU = true;
 
   /************************************/
   /* Formatting and Logging functions */
@@ -1219,6 +1220,13 @@ namespace QMT {
               tedges.push_back(te);
             } else {
               error("color {}: tri {}, le={}, neig={}, edge {} not found in lines", col, f, le, neig, sedge);
+              if (ERROR_VISU) {
+                GeoLog log;
+                vec3 p1 = M.points[sedge[0]];
+                vec3 p2 = M.points[sedge[1]];
+                log.add({p1,p2},double(0),"edge_not_found_in_lines");
+                log.toGmsh();
+              }
               return false;
             }
           }
