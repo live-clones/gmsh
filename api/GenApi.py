@@ -1451,13 +1451,15 @@ class API:
             data.sort(key=lambda x: alphanum_key(x[0]))
             return data
         def find_function(name, data):
+            match = []
             for file in data:
                 l = 0
                 for line in file[1]:
                     l = l+1
                     if re.search(name, line):
-                        return file[0], l
-            return '', 0
+                        match.append((file[0], l))
+                        break # keep only one match per file
+            return match
         def write_module(module, path, node, node_next, node_prev, cpp_data, py_data):
             f.write("@node " + node + ", " + node_next + ", " + node_prev + ", Gmsh API\n");
             f.write("@section Namespace @code{" + path + "}: " + module.doc + "\n\n");
@@ -1478,22 +1480,27 @@ class API:
                 f.write("@item " + "Return:\n" +
                         (rtype.rtexi_type if rtype else "-") + "\n")
                 cpp_name = path.replace('/', '::') + '::' + name + '\('
-                cpp_file, cpp_line = find_function(cpp_name, cpp_data)
+                cpp = find_function(cpp_name, cpp_data)
                 py_name = path.replace('/', '.') + '.' + name + '\('
-                py_file, py_line = find_function(py_name, py_data)
-                if cpp_file or py_file:
+                py = find_function(py_name, py_data)
+                def write_matches(lang, matches):
                     git = 'https://gitlab.onelab.info/gmsh/gmsh/tree/master/'
+                    f.write(lang + ' (')
+                    for i in range(min(5, len(matches))): # write max 5 matches
+                        if i > 0: f.write(', ')
+                        f.write('@url{' + git + matches[i][0][3:] +
+                                '#L' + str(matches[i][1]) + ',' +
+                                os.path.basename(matches[i][0]) + '}')
+                    if len(matches) > 5: f.write(', ...')
+                    f.write(')')
+                if len(cpp) or len(py):
                     f.write("@item " + "Examples:\n")
-                    if cpp_file:
-                        f.write('C++ (@url{' + git + cpp_file[3:] +
-                                '#L' + str(cpp_line) + ',' +
-                                os.path.basename(cpp_file) + '})')
-                        if py_file: f.write(', ')
-                    if py_file:
-                        f.write('Python (@url{' + git + py_file[3:] +
-                                '#L' + str(py_line) + ',' +
-                                os.path.basename(py_file) + '})')
-                    f.write('\n')
+                    if len(cpp):
+                        write_matches("C++", cpp)
+                        if len(py): f.write(', ')
+                    if len(py):
+                        write_matches("Python", py)
+                    f.write("\n")
                 f.write("@end table\n\n");
             f.write("@end ftable\n\n");
         with open("api.texi", "w") as f:
