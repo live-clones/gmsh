@@ -41,7 +41,7 @@ int main(int argc, char **argv)
   gmsh::model::occ::addRectangle(1, 0, 0, 1, 1, 2);
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
-  gmsh::model::occ::fragment({{2,1}}, {{2,2}}, ov, ovv);
+  gmsh::model::occ::fragment({{2, 1}}, {{2, 2}}, ov, ovv);
   gmsh::model::occ::synchronize();
   std::vector<std::pair<int, int> > tmp;
   gmsh::model::getEntities(tmp, 0);
@@ -55,7 +55,8 @@ int main(int argc, char **argv)
   gmsh::model::setPhysicalName(2, 200, "Right");
   gmsh::model::mesh::generate(2);
 
-  // We now define several constants to fine-tune how the mesh will be partitioned
+  // We now define several constants to fine-tune how the mesh will be
+  // partitioned
   int partitioner = 0; // 0 for Metis, 1 for SimplePartition
   int N = 3; // Number of partitions
   int topology = 1; // Create partition topology (BRep)?
@@ -98,8 +99,7 @@ int main(int argc, char **argv)
   }
 
   // Save mesh file (or files, if `Mesh.PartitionSplitMeshFiles' is set):
-  if(write)
-    gmsh::write("t21.msh");
+  if(write) gmsh::write("t21.msh");
 
   // Iterate over partitioned entities and print some info (see the first
   // extended tutorial `x1.cpp' for additional information):

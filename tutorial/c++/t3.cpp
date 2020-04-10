@@ -19,9 +19,9 @@ int main(int argc, char **argv)
   // Copied from t1.cpp...
   double lc = 1e-2;
   gmsh::model::geo::addPoint(0, 0, 0, lc, 1);
-  gmsh::model::geo::addPoint(.1, 0,  0, lc, 2);
+  gmsh::model::geo::addPoint(.1, 0, 0, lc, 2);
   gmsh::model::geo::addPoint(.1, .3, 0, lc, 3);
-  gmsh::model::geo::addPoint(0,  .3, 0, lc, 4);
+  gmsh::model::geo::addPoint(0, .3, 0, lc, 4);
   gmsh::model::geo::addLine(1, 2, 1);
   gmsh::model::geo::addLine(3, 2, 2);
   gmsh::model::geo::addLine(3, 4, 3);
@@ -42,14 +42,15 @@ int main(int argc, char **argv)
 
   double h = 0.1, angle = 90.;
   std::vector<std::pair<int, int> > ov;
-  gmsh::model::geo::extrude({{2,1}}, 0, 0, h, ov, {8,2}, {0.5,1});
+  gmsh::model::geo::extrude({{2, 1}}, 0, 0, h, ov, {8, 2}, {0.5, 1});
 
   // The extrusion can also be performed with a rotation instead of a
   // translation, and the resulting mesh can be recombined into prisms (we use
   // only one layer here, with 7 subdivisions). All rotations are specified by
   // an an axis point (-0.1, 0, 0.1), an axis direction (0, 1, 0), and a
   // rotation angle (-Pi/2):
-  gmsh::model::geo::revolve({{2,28}}, -0.1,0,0.1, 0,1,0, -M_PI/2, ov, {7});
+  gmsh::model::geo::revolve({{2, 28}}, -0.1, 0, 0.1, 0, 1, 0, -M_PI / 2, ov,
+                            {7});
 
   // Using the built-in geometry kernel, only rotations with angles < Pi are
   // supported. To do a full turn, you will thus need to apply at least 3
@@ -59,8 +60,8 @@ int main(int argc, char **argv)
   // can also be combined to form a "twist".  The last (optional) argument for
   // the extrude() and twist() functions specifies whether the extruded mesh
   // should be recombined or not.
-  gmsh::model::geo::twist({{2,50}}, 0,0.15,0.25, -2*h,0,0, 1,0,0,
-                          angle*M_PI/180., ov, {10}, {}, true);
+  gmsh::model::geo::twist({{2, 50}}, 0, 0.15, 0.25, -2 * h, 0, 0, 1, 0, 0,
+                          angle * M_PI / 180., ov, {10}, {}, true);
 
   gmsh::model::geo::synchronize();
 

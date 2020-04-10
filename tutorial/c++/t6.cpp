@@ -18,9 +18,9 @@ int main(int argc, char **argv)
   // Copied from t1.cpp...
   double lc = 1e-2;
   gmsh::model::geo::addPoint(0, 0, 0, lc, 1);
-  gmsh::model::geo::addPoint(.1, 0,  0, lc, 2);
+  gmsh::model::geo::addPoint(.1, 0, 0, lc, 2);
   gmsh::model::geo::addPoint(.1, .3, 0, lc, 3);
-  gmsh::model::geo::addPoint(0,  .3, 0, lc, 4);
+  gmsh::model::geo::addPoint(0, .3, 0, lc, 4);
   gmsh::model::geo::addLine(1, 2, 1);
   gmsh::model::geo::addLine(3, 2, 2);
   gmsh::model::geo::addLine(3, 4, 3);
@@ -29,7 +29,7 @@ int main(int argc, char **argv)
   gmsh::model::geo::addPlaneSurface({1}, 1);
 
   // Delete the surface and the left line, and replace the line with 3 new ones:
-  gmsh::model::geo::remove({{2,1}, {1,4}});
+  gmsh::model::geo::remove({{2, 1}, {1, 4}});
 
   int p1 = gmsh::model::geo::addPoint(-0.05, 0.05, 0, lc);
   int p2 = gmsh::model::geo::addPoint(-0.05, 0.1, 0, lc);
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
   // the nodes on the boundary using a structured grid. If the surface has more
   // than 4 corner points, the corners of the transfinite interpolation have to
   // be specified by hand:
-  gmsh::model::geo::mesh::setTransfiniteSurface(1, "Left", {1,2,3,4});
+  gmsh::model::geo::mesh::setTransfiniteSurface(1, "Left", {1, 2, 3, 4});
 
   // To create quadrangles instead of triangles, one can use the `setRecombine'
   // constraint:

@@ -62,7 +62,7 @@ int main(int argc, char **argv)
   gmsh::model::geo::addPlaneSurface({13, 14}, 15);
 
   std::vector<std::pair<int, int> > ext_tags;
-  gmsh::model::geo::extrude({{2,15}}, 0, 0, h, ext_tags);
+  gmsh::model::geo::extrude({{2, 15}}, 0, 0, h, ext_tags);
 
   // Create physical groups, which are used to define the domain of the
   // (co)homology computation and the subdomain of the relative (co)homology
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
   // Whole domain
   int domain_tag = 1;
   int domain_physical_tag = 1001;
-  gmsh::model::addPhysicalGroup(3,{domain_tag}, domain_physical_tag);
+  gmsh::model::addPhysicalGroup(3, {domain_tag}, domain_physical_tag);
   gmsh::model::setPhysicalName(3, domain_physical_tag, "Whole domain");
 
   // Four "terminals" of the model
@@ -109,20 +109,17 @@ int main(int argc, char **argv)
   // Find bases for relative homology spaces of the domain modulo the four
   // terminals
   gmsh::model::mesh::computeHomology({domain_physical_tag},
-                                     {terminals_physical_tag},
-                                     {0,1,2,3});
+                                     {terminals_physical_tag}, {0, 1, 2, 3});
 
   // Find homology space bases isomorphic to the previous bases: homology spaces
   // modulo the non-terminal domain surface, a.k.a the thin cuts
   gmsh::model::mesh::computeHomology({domain_physical_tag},
-                                     {complement_physical_tag},
-                                     {0,1,2,3});
+                                     {complement_physical_tag}, {0, 1, 2, 3});
 
   // Find cohomology space bases isomorphic to the previous bases: cohomology
   // spaces of the domain modulo the four terminals, a.k.a the thick cuts
   gmsh::model::mesh::computeCohomology({domain_physical_tag},
-                                       {terminals_physical_tag},
-                                       {0,1,2,3});
+                                       {terminals_physical_tag}, {0, 1, 2, 3});
 
   // More examples:
   // gmsh::model::mesh::computeHomology();
