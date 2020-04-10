@@ -3,41 +3,46 @@
 #include <map>
 #include <complex>
 
-class myVertex{
- private:
+class myVertex {
+private:
   int _tag;
   double _x, _y, _z;
- public:
+
+public:
   myVertex(int tag, double x, double y, double z)
-    : _tag(tag), _x(x), _y(y), _z(z) {}
+    : _tag(tag), _x(x), _y(y), _z(z)
+  {
+  }
   int tag() const { return _tag; }
   double x() const { return _x; }
   double y() const { return _y; }
   double z() const { return _z; }
   double distance(const myVertex &other) const
   {
-    return sqrt(std::pow(x() - other.x(), 2) +
-                std::pow(y() - other.y(), 2) +
+    return sqrt(std::pow(x() - other.x(), 2) + std::pow(y() - other.y(), 2) +
                 std::pow(z() - other.z(), 2));
   }
 };
 
-class myElement{
- private:
+class myElement {
+private:
   int _tag;
-  std::vector<myVertex*> _nodes;
+  std::vector<myVertex *> _nodes;
   std::vector<double> _qu, _qv, _qw, _qweight, _qx, _qy, _qz, _qdet, _qjac;
- public:
-  myElement(int tag, const std::vector<myVertex*> &nodes,
+
+public:
+  myElement(int tag, const std::vector<myVertex *> &nodes,
             const std::vector<double> &qu, const std::vector<double> &qv,
             const std::vector<double> &qw, const std::vector<double> &qweight,
             const std::vector<double> &qx, const std::vector<double> &qy,
             const std::vector<double> &qz, const std::vector<double> &qdet,
             const std::vector<double> &qjac)
-    : _tag(tag), _nodes(nodes), _qu(qu), _qv(qv), _qw(qw),
-      _qweight(qweight), _qx(qx), _qy(qy), _qz(qz), _qdet(qdet), _qjac(qjac) {}
+    : _tag(tag), _nodes(nodes), _qu(qu), _qv(qv), _qw(qw), _qweight(qweight),
+      _qx(qx), _qy(qy), _qz(qz), _qdet(qdet), _qjac(qjac)
+  {
+  }
   int tag() const { return _tag; }
-  const std::vector<myVertex*> &nodes() const { return _nodes; }
+  const std::vector<myVertex *> &nodes() const { return _nodes; }
   const std::vector<double> &qu() const { return _qu; }
   const std::vector<double> &qv() const { return _qv; }
   const std::vector<double> &qw() const { return _qw; }
@@ -49,24 +54,25 @@ class myElement{
   const std::vector<double> &qjac() const { return _qjac; }
   double maxEdge() const
   {
-    if(_nodes.size() == 3){
+    if(_nodes.size() == 3) {
       double a = _nodes[0]->distance(*_nodes[1]);
       double b = _nodes[0]->distance(*_nodes[2]);
       double c = _nodes[1]->distance(*_nodes[2]);
       return std::max(a, std::max(b, c));
     }
-    else{
+    else {
       std::printf("maxEdge only implemented for 3-node triangles");
       exit(1);
     }
   }
 };
 
-class myMesh{
- private:
-  std::map<std::size_t, myVertex*> _nodes;
-  std::map<std::size_t, myElement*> _elements;
- public:
+class myMesh {
+private:
+  std::map<std::size_t, myVertex *> _nodes;
+  std::map<std::size_t, myElement *> _elements;
+
+public:
   myMesh()
   {
     std::vector<std::size_t> vtags;
@@ -75,55 +81,60 @@ class myMesh{
     std::vector<int> etypes;
     std::vector<std::vector<std::size_t> > etags, evtags;
     gmsh::model::mesh::getElements(etypes, etags, evtags);
-    for(unsigned int i = 0; i < vtags.size(); i++){
-      _nodes[vtags[i]] = new myVertex
-        (vtags[i], vxyz[3*i], vxyz[3*i+1], vxyz[3*i+2]);
+    for(unsigned int i = 0; i < vtags.size(); i++) {
+      _nodes[vtags[i]] =
+        new myVertex(vtags[i], vxyz[3 * i], vxyz[3 * i + 1], vxyz[3 * i + 2]);
     }
-    for(unsigned int i = 0; i < etypes.size(); i++){
+    for(unsigned int i = 0; i < etypes.size(); i++) {
       std::vector<double> quvw, qweight;
-      gmsh::model::mesh::getIntegrationPoints(etypes[i], "Gauss2", quvw, qweight);
+      gmsh::model::mesh::getIntegrationPoints(etypes[i], "Gauss2", quvw,
+                                              qweight);
       std::vector<double> qdeter, qjacob, qpoints;
       gmsh::model::mesh::getJacobians(etypes[i], quvw, qjacob, qdeter, qpoints);
       int nev = evtags[i].size() / etags[i].size();
       int nq = quvw.size() / 3;
       std::vector<double> qu, qv, qw;
-      for(unsigned int j = 0; j < quvw.size(); j+=3){
+      for(unsigned int j = 0; j < quvw.size(); j += 3) {
         qu.push_back(quvw[j]);
-        qv.push_back(quvw[j+1]);
-        qw.push_back(quvw[j+2]);
+        qv.push_back(quvw[j + 1]);
+        qw.push_back(quvw[j + 2]);
       }
-      for(unsigned int j = 0; j < etags[i].size(); j++){
-        std::vector<myVertex*> ev;
+      for(unsigned int j = 0; j < etags[i].size(); j++) {
+        std::vector<myVertex *> ev;
         for(unsigned int k = nev * j; k < nev * (j + 1); k++)
           ev.push_back(_nodes[evtags[i][k]]);
         std::vector<double> qx, qy, qz, qdet, qjac;
-        for(unsigned int k = 3*nq*j; k < 3*nq*(j+1); k += 3){
+        for(unsigned int k = 3 * nq * j; k < 3 * nq * (j + 1); k += 3) {
           qx.push_back(qpoints[k]);
-          qy.push_back(qpoints[k+1]);
-          qz.push_back(qpoints[k+2]);
+          qy.push_back(qpoints[k + 1]);
+          qz.push_back(qpoints[k + 2]);
         }
-        for(unsigned int k = 1*nq*j; k < 1*nq*(j+1); k += 1){
+        for(unsigned int k = 1 * nq * j; k < 1 * nq * (j + 1); k += 1) {
           qdet.push_back(qdeter[k]);
         }
-        for(unsigned int k = 9*nq*j; k < 9*nq*(j+1); k += 9){
+        for(unsigned int k = 9 * nq * j; k < 9 * nq * (j + 1); k += 9) {
           for(int m = 0; m < 9; m++) qjac.push_back(qjacob[k + m]);
         }
-        _elements[etags[i][j]] = new myElement
-          (etags[i][j], ev, qu, qv, qw, qweight, qx, qy, qz, qdet, qjac);
+        _elements[etags[i][j]] = new myElement(etags[i][j], ev, qu, qv, qw,
+                                               qweight, qx, qy, qz, qdet, qjac);
       }
     }
   }
-  const std::map<std::size_t, myVertex*> &nodes() const { return _nodes; }
-  const std::map<std::size_t, myElement*> &elements() const { return _elements; }
+  const std::map<std::size_t, myVertex *> &nodes() const { return _nodes; }
+  const std::map<std::size_t, myElement *> &elements() const
+  {
+    return _elements;
+  }
 };
 
-class myFunction{
+class myFunction {
 public:
   double operator()(double x, double y, double z) const
   {
-    std::complex<double> a = 6*(std::sqrt(std::pow(x-.5, 2)+std::pow(y-.5, 2))-.2);
+    std::complex<double> a =
+      6 * (std::sqrt(std::pow(x - .5, 2) + std::pow(y - .5, 2)) - .2);
     return atanh(a).real();
-    //return (x*y)*(x*y);
+    // return (x*y)*(x*y);
   }
 };
 
@@ -132,26 +143,28 @@ void computeInterpolationError(const myMesh &mesh, const myFunction &f,
                                std::map<std::size_t, double> &err_ele)
 {
   // evaluate f at the nodes
-  for(std::map<std::size_t, myVertex*>::const_iterator it = mesh.nodes().begin();
-      it != mesh.nodes().end(); it++){
+  for(std::map<std::size_t, myVertex *>::const_iterator it =
+        mesh.nodes().begin();
+      it != mesh.nodes().end(); it++) {
     myVertex *v = it->second;
     f_nod[it->first] = f(v->x(), v->y(), v->z());
   }
   // compute the interpolation error on the elements
-  for(std::map<std::size_t, myElement*>::const_iterator it = mesh.elements().begin();
-      it != mesh.elements().end(); it++){
+  for(std::map<std::size_t, myElement *>::const_iterator it =
+        mesh.elements().begin();
+      it != mesh.elements().end(); it++) {
     myElement *e = it->second;
-    if(e->nodes().size() == 3){
+    if(e->nodes().size() == 3) {
       double err = 0.;
       int t0 = e->nodes()[0]->tag();
       int t1 = e->nodes()[1]->tag();
       int t2 = e->nodes()[2]->tag();
-      for(unsigned int i = 0; i < e->qweight().size(); i++){
+      for(unsigned int i = 0; i < e->qweight().size(); i++) {
         double u = e->qu()[i], v = e->qv()[i], w = e->qw()[i];
         double weight = e->qweight()[i];
         double x = e->qx()[i], y = e->qy()[i], z = e->qz()[i];
         double det = std::abs(e->qdet()[i]);
-        double f_fem = f_nod[t0]*(1-u-v) + f_nod[t1]*u + f_nod[t2]*v;
+        double f_fem = f_nod[t0] * (1 - u - v) + f_nod[t1] * u + f_nod[t2] * v;
         err += std::pow(f(x, y, z) - f_fem, 2) * det * weight;
       }
       err_ele[it->first] = std::sqrt(err);
@@ -160,25 +173,26 @@ void computeInterpolationError(const myMesh &mesh, const myFunction &f,
 }
 
 void computeSizeField(const myMesh &mesh,
-                      const std::map<std::size_t, double> &err_ele,
-                      int N,
+                      const std::map<std::size_t, double> &err_ele, int N,
                       std::map<std::size_t, double> &sf_ele)
 {
   double a = 2.;
   double d = 2.;
   double fact = 0.;
   for(std::map<std::size_t, double>::const_iterator it = err_ele.begin();
-      it != err_ele.end(); it++){
+      it != err_ele.end(); it++) {
     double e = it->second;
-    fact += std::pow(e, 2./(1.+a));
+    fact += std::pow(e, 2. / (1. + a));
   }
-  fact *= (std::pow(a, (2.+a)/(1.+a)) + std::pow(a, 1./(1.+a)));
+  fact *= (std::pow(a, (2. + a) / (1. + a)) + std::pow(a, 1. / (1. + a)));
   for(std::map<std::size_t, double>::const_iterator it = err_ele.begin();
-      it != err_ele.end(); it++){
+      it != err_ele.end(); it++) {
     double e = it->second;
-    double ri = std::pow(e, 2./(2.*(1+a))) * std::pow(a, 1./(d*(1.+a))) *
-      std::pow((1.+a)*N/fact, 1./d);
-    std::map<std::size_t, myElement*>::const_iterator ite = mesh.elements().find(it->first);
+    double ri = std::pow(e, 2. / (2. * (1 + a))) *
+                std::pow(a, 1. / (d * (1. + a))) *
+                std::pow((1. + a) * N / fact, 1. / d);
+    std::map<std::size_t, myElement *>::const_iterator ite =
+      mesh.elements().find(it->first);
     sf_ele[it->first] = ite->second->maxEdge() / ri;
   }
 }
@@ -190,7 +204,7 @@ void getKeysValues(const std::map<std::size_t, double> &f,
   keys.clear();
   values.clear();
   for(std::map<std::size_t, double>::const_iterator it = f.begin();
-      it != f.end(); it++){
+      it != f.end(); it++) {
     keys.push_back(it->first);
     values.push_back(std::vector<double>(1, it->second));
   }
@@ -217,7 +231,7 @@ int main(int argc, char **argv)
 
   // create initial uniform mesh
   std::vector<std::pair<int, int> > pnts;
-  gmsh::model::getBoundary({{2,square}}, pnts, true, true, true);
+  gmsh::model::getBoundary({{2, square}}, pnts, true, true, true);
   gmsh::model::mesh::setSize(pnts, lc);
   gmsh::model::mesh::generate(2);
   if(dumpfiles) gmsh::write("mesh.msh");
@@ -269,7 +283,8 @@ int main(int argc, char **argv)
   if(dumpfiles) gmsh::view::write(f2_view, "f2.pos");
   int err2_view = gmsh::view::add("element-wise error on adapted mesh");
   getKeysValues(err2_ele, keys, values);
-  gmsh::view::addModelData(err2_view, 0, "square2", "ElementData", keys, values);
+  gmsh::view::addModelData(err2_view, 0, "square2", "ElementData", keys,
+                           values);
   if(dumpfiles) gmsh::view::write(err2_view, "err2.pos");
 
   // show everything in the gui

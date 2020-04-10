@@ -19,13 +19,12 @@ void compute(const std::string &arg)
   bool show = (progress.size() && progress[0]) ? true : false;
   int p = 0;
   double k = 0., last_refresh = 0.;
-  for(int j = 0; j < n; j++){
+  for(int j = 0; j < n; j++) {
     // stop computation if requested by clicking on "Stop it!"
-    if(stop_computation)
-      break;
+    if(stop_computation) break;
     k = sin(k) + cos(j / 45.);
     // show progress in real time?
-    if(show && n > 1 && !(j % (n / 100))){
+    if(show && n > 1 && !(j % (n / 100))) {
       p++;
       gmsh::onelab::setString(arg, {std::to_string(p) + "%"});
       // any code in a thread other than the main thread that modifies the user
@@ -35,7 +34,7 @@ void compute(const std::string &arg)
       gmsh::fltk::unlock();
       // ask the main thread to process pending events and to update the user
       // interface, maximum 10 times per second
-      if(gmsh::logger::getWallTime() - last_refresh > 0.1){
+      if(gmsh::logger::getWallTime() - last_refresh > 0.1) {
         last_refresh = gmsh::logger::getWallTime();
         gmsh::fltk::awake("update");
       }
@@ -72,10 +71,9 @@ int main(int argc, char **argv)
   // create the graphical user interface
   gmsh::fltk::initialize();
 
-  while(1){
+  while(1) {
     // check if GUI has been closed
-    if(!gmsh::fltk::isAvailable())
-      break;
+    if(!gmsh::fltk::isAvailable()) break;
 
     // wait for an event
     gmsh::fltk::wait();
@@ -84,10 +82,8 @@ int main(int argc, char **argv)
     // value of the "ONELAB/Action" parameter
     std::vector<std::string> action;
     gmsh::onelab::getString("ONELAB/Action", action);
-    if(action.empty()){
-      continue;
-    }
-    else if(action[0] == "should compute"){
+    if(action.empty()) { continue; }
+    else if(action[0] == "should compute") {
       gmsh::onelab::setString("ONELAB/Action", {""});
       gmsh::onelab::setString("ONELAB/Button", {"Stop!", "should stop"});
       // force interface update (to show the new button label)
@@ -96,28 +92,28 @@ int main(int argc, char **argv)
       std::vector<double> v;
       gmsh::onelab::getNumber("My App/Number of threads", v);
       int n = v.size() ? static_cast<int>(v[0]) : 1;
-      for(unsigned int i = 0; i < n; i++){
+      for(unsigned int i = 0; i < n; i++) {
         std::thread t(compute, "My App/Thread " + std::to_string(i + 1));
         t.detach();
       }
     }
-    else if(action[0] == "should stop"){
+    else if(action[0] == "should stop") {
       stop_computation = true;
     }
-    else if(action[0] == "done computing"){
+    else if(action[0] == "done computing") {
       // should not detach threads, and join them all here
       gmsh::onelab::setString("ONELAB/Action", {""});
       gmsh::onelab::setString("ONELAB/Button", {"Do it!", "should compute"});
       gmsh::fltk::update();
       stop_computation = false;
     }
-    else if(action[0] == "reset"){
+    else if(action[0] == "reset") {
       // user clicked on "Reset database"
       gmsh::onelab::setString("ONELAB/Action", {""});
       gmsh::onelab::set(parameters);
       gmsh::fltk::update();
     }
-    else if(action[0] == "check"){
+    else if(action[0] == "check") {
       // could perform action here after each change in ONELAB parameters,
       // e.g. rebuild a CAD model, update other parameters, ...
       continue;

@@ -13,14 +13,14 @@ int main(int argc, char **argv)
   gmsh::model::add("my test model");
 
   // create three solids using the OpenCASCADE CAD kernel
-  int v1 = gmsh::model::occ::addBox(0,0,0, 1,1,1);
-  int v2 = gmsh::model::occ::addBox(1,0,0, 1,1,1);
-  int v3 = gmsh::model::occ::addSphere(1.5,0.5,0.5, 0.25);
+  int v1 = gmsh::model::occ::addBox(0, 0, 0, 1, 1, 1);
+  int v2 = gmsh::model::occ::addBox(1, 0, 0, 1, 1, 1);
+  int v3 = gmsh::model::occ::addSphere(1.5, 0.5, 0.5, 0.25);
 
   // fragment all volumes to have a conformal, non-overlapping geometry
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
-  gmsh::model::occ::fragment({{3,v1},{3,v2},{3,v3}}, {}, ov, ovv);
+  gmsh::model::occ::fragment({{3, v1}, {3, v2}, {3, v3}}, {}, ov, ovv);
 
   // synchronize the CAD model with the Gmsh model
   gmsh::model::occ::synchronize();
@@ -31,25 +31,24 @@ int main(int argc, char **argv)
   // explore the mesh: what type of 3D elements do we have?
   std::vector<int> eleTypes;
   gmsh::model::mesh::getElementTypes(eleTypes, 3);
-  if(eleTypes.size() != 1){
-    gmsh::logger::write("Hybrid meshes not handled in this example!",
-                        "error");
+  if(eleTypes.size() != 1) {
+    gmsh::logger::write("Hybrid meshes not handled in this example!", "error");
     return 1;
   }
   int eleType3D = eleTypes[0];
   std::string name;
   int dim, order, numNodes, numPrimaryNodes;
   std::vector<double> paramCoord;
-  gmsh::model::mesh::getElementProperties(eleType3D, name, dim, order,
-                                          numNodes, paramCoord, numPrimaryNodes);
-  gmsh::logger::write("3D elements are of type '" + name + "' (type = " +
-                      std::to_string(eleType3D) + ") ");
+  gmsh::model::mesh::getElementProperties(eleType3D, name, dim, order, numNodes,
+                                          paramCoord, numPrimaryNodes);
+  gmsh::logger::write("3D elements are of type '" + name +
+                      "' (type = " + std::to_string(eleType3D) + ") ");
 
   // iterate over all volumes, get the 3D elements and create new 2D elements
   // for all faces
   std::vector<std::pair<int, int> > entities;
   gmsh::model::getEntities(entities, 3);
-  for(std::size_t i = 0; i < entities.size(); i++){
+  for(std::size_t i = 0; i < entities.size(); i++) {
     int v = entities[i].second;
     std::vector<std::size_t> elementTags, nodeTags;
     gmsh::model::mesh::getElementsByType(eleType3D, elementTags, nodeTags, v);
@@ -79,7 +78,7 @@ int main(int argc, char **argv)
     // faces, allowing to keep track of neighbors
   }
 
-  //gmsh::write("faces.msh");
+  // gmsh::write("faces.msh");
 
   // iterate over all 2D elements and get integration information
   gmsh::model::mesh::getElementTypes(eleTypes, 2);
@@ -90,7 +89,7 @@ int main(int argc, char **argv)
   int numComp;
   gmsh::model::mesh::getBasisFunctions(eleType2D, uvw, "Lagrange", numComp, bf);
   gmsh::model::getEntities(entities, 2);
-  for(std::size_t i = 0; i < entities.size(); i++){
+  for(std::size_t i = 0; i < entities.size(); i++) {
     int s = entities[i].second;
     std::vector<std::size_t> elementTags, nodeTags;
     gmsh::model::mesh::getElementsByType(eleType2D, elementTags, nodeTags, s);

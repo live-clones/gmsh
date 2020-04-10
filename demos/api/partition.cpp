@@ -27,9 +27,7 @@ int main(int argc, char **argv)
   // other options to govern how physical groups are treated
   // (Mesh.PartitionCreatePhysicals), and if ghost cells should be created
   // (Mesh.PartitionCreateGhostCells).
-  if(partition_using_metis) {
-    gmsh::model::mesh::partition(3);
-  }
+  if(partition_using_metis) { gmsh::model::mesh::partition(3); }
   else {
     gmsh::plugin::setNumber("SimplePartition", "NumSlicesX", 3.);
     gmsh::plugin::run("SimplePartition");
@@ -37,7 +35,7 @@ int main(int argc, char **argv)
 
   // write the partitioned mesh to disk?
   if(write_file) {
-    //create one file per partition?
+    // create one file per partition?
     if(write_one_file_per_partition) {
       gmsh::option::setNumber("Mesh.PartitionSplitMeshFiles", 1);
     }
