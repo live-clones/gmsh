@@ -9,13 +9,10 @@
 import gmsh
 import math
 
-model = gmsh.model
-factory = model.geo
-
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
 
-model.add("t4")
+gmsh.model.add("t4")
 
 cm = 1e-02
 e1 = 4.5 * cm; e2 = 6 * cm / 2; e3 =  5 * cm / 2
@@ -30,7 +27,9 @@ def hypot(a, b):
 ccos = (-h5*R1 + e2 * hypot(h5, hypot(e2, R1))) / (h5*h5 + e2*e2)
 ssin = math.sqrt(1 - ccos*ccos)
 
-# We start by defining some points and some lines:
+# We start by defining some points and some lines. To make the code shorter we
+# can redefine a namespace:
+factory = gmsh.model.geo
 factory.addPoint(-e1-e2, 0    , 0, Lc1, 1)
 factory.addPoint(-e1-e2, h1   , 0, Lc1, 2)
 factory.addPoint(-e3-r , h1   , 0, Lc2, 3)
@@ -160,7 +159,7 @@ gmsh.model.setColor([(2, 24)], 160, 32, 240) # Purple
 gmsh.model.setColor([(1, i) for i in range(1, 15)], 255, 0, 0) # Red
 gmsh.model.setColor([(1, i) for i in range(15, 21)], 255, 255, 0) # Yellow
 
-model.mesh.generate(2)
+gmsh.model.mesh.generate(2)
 
 gmsh.write("t4.msh")
 

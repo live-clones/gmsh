@@ -61,6 +61,7 @@ else:
 gmsh.model.mesh.field.setAsBackgroundMesh(f)
 
 gmsh.model.mesh.generate(3)
+gmsh.write('t13.msh')
 
 # gmsh.fltk.run()
 

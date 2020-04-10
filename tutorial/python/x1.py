@@ -28,6 +28,10 @@ gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.open(sys.argv[1])
 
+# Print the model name and dimension:
+print('Model ' + gmsh.model.getCurrent() + ' (' +
+      str(gmsh.model.getDimension()) + 'D)')
+
 # Geometrical data is made of elementary model `entities', called `points'
 # (entities of dimension 0), `curves' (entities of dimension 1), `surfaces'
 # (entities of dimension 2) and `volumes' (entities of dimension 3). As we have
@@ -71,8 +75,11 @@ for e in entities:
     # Let's print a summary of the information available on the entity and its
     # mesh.
 
-    # * Type of the entity:
-    print("Entity " + str(e) + " of type " + gmsh.model.getType(e[0], e[1]))
+    # * Type and name of the entity:
+    type = gmsh.model.getType(e[0], e[1])
+    name = gmsh.model.getEntityName(e[0], e[1])
+    if len(name): name += ' '
+    print("Entity " + name + str(e) + " of type " + type)
 
     # * Number of mesh nodes and elements:
     numElem = sum(len(i) for i in elemTags)
@@ -87,7 +94,12 @@ for e in entities:
     # * Does the entity belong to physical groups?
     physicalTags = gmsh.model.getPhysicalGroupsForEntity(dim, tag)
     if len(physicalTags):
-        print(" - Physical group tags: " + str(physicalTags))
+        s = ''
+        for p in physicalTags:
+            n = gmsh.model.getPhysicalName(dim, p)
+            if n: n += ' '
+            s += n + '(' + str(dim) + ', ' + str(p) + ') '
+        print(" - Physical groups: " + s)
 
     # * Is the entity a partition entity? If so, what is its parent entity?
     partitions = gmsh.model.getPartitions(e[0], e[1])
@@ -100,3 +112,8 @@ for e in entities:
         name, dim, order, numv, parv, _ = gmsh.model.mesh.getElementProperties(t)
         print(" - Element type: " + name + ", order " + str(order) + " (" +
               str(numv) + " nodes in param coord: " + str(parv) + ")")
+
+# We can use this to clear all the model data:
+gmsh.clear()
+
+gmsh.finalize()
