@@ -1477,9 +1477,9 @@ class API:
                          if len(oargs) else "-") + "\n")
                 f.write("@item " + "Return:\n" +
                         (rtype.rtexi_type if rtype else "-") + "\n")
-                cpp_name = path.replace('/', '::') + '::' + name
+                cpp_name = path.replace('/', '::') + '::' + name + '\('
                 cpp_file, cpp_line = find_function(cpp_name, cpp_data)
-                py_name = path.replace('/', '.') + '.' + name
+                py_name = path.replace('/', '.') + '.' + name + '\('
                 py_file, py_line = find_function(py_name, py_data)
                 if cpp_file or py_file:
                     git = 'https://gitlab.onelab.info/gmsh/gmsh/tree/master/'
