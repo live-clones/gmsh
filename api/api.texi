@@ -503,7 +503,7 @@ overall model.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L84,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L76,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L77,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L69,x2.py})
 @end table
 
 @item gmsh/model/removeEntities
@@ -780,6 +780,8 @@ Set the @code{x}, @code{y}, @code{z} coordinates of a geometrical point.
 -
 @item Return:
 -
+@item Examples:
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L78,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L70,x2.py})
 @end table
 
 @end ftable
@@ -1050,7 +1052,7 @@ automatically assigned to the nodes.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L90,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L82,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L91,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L83,x2.py})
 @end table
 
 @item gmsh/model/mesh/reclassifyNodes
@@ -1067,7 +1069,7 @@ after the elements have been set.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L105,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L96,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L106,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L97,x2.py})
 @end table
 
 @item gmsh/model/mesh/relocateNodes
@@ -1304,7 +1306,7 @@ are automatically assigned to the elements.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L96,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L88,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L97,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L89,x2.py})
 @end table
 
 @item gmsh/model/mesh/getIntegrationPoints
@@ -1614,7 +1616,7 @@ Currently supported types are "Progression" (geometrical progression with power
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L151,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L141,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L152,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L142,x2.py})
 @end table
 
 @item gmsh/model/mesh/setTransfiniteSurface
@@ -1634,7 +1636,7 @@ its boundary.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L155,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L143,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L156,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L144,x2.py})
 @end table
 
 @item gmsh/model/mesh/setTransfiniteVolume
@@ -1650,7 +1652,7 @@ interpolation explicitly.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L159,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L146,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L160,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L147,x2.py})
 @end table
 
 @item gmsh/model/mesh/setRecombine
@@ -1681,7 +1683,7 @@ and tag @code{tag}. @code{val} iterations of a Laplace smoother are applied.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L157,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L145,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L158,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L146,x2.py})
 @end table
 
 @item gmsh/model/mesh/setReverse

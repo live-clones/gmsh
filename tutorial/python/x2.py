@@ -44,12 +44,12 @@ nodes = []
 # terrain surface:
 tris = []
 
-# The connectivities of the line elements on the 4 boundnaries (2 node tags
-# for each line element)
+# The connectivities of the line elements on the 4 boundaries (2 node tags
+# for each line element):
 lin = [[],[],[],[]]
 
 # The connectivities of the point elements on the 4 corners (1 node tag for each
-# point element)
+# point element):
 pnt = [tag(0, 0), tag(N, 0), tag(N, N), tag(0, N)]
 
 for i in range(N + 1):
@@ -64,21 +64,22 @@ for i in range(N + 1):
         if (j == 0 or j == N) and i > 0:
             lin[0 if j == 0 else 2].extend([tag(i-1, j), tag(i, j)])
 
-# Create 4 CAD points for the 4 corners of the terrain surface
-gmsh.model.geo.addPoint(0, 0, coords[3*tag(0,0)-1], 1)
-gmsh.model.geo.addPoint(1, 0, coords[3*tag(N,0)-1], 2)
-gmsh.model.geo.addPoint(1, 1, coords[3*tag(N,N)-1], 3)
-gmsh.model.geo.addPoint(0, 1, coords[3*tag(0,N)-1], 4)
-gmsh.model.geo.synchronize()
+# Create 4 discrete points for the 4 corners of the terrain surface:
+for i in range(4):
+    gmsh.model.addDiscreteEntity(0, i+1)
+gmsh.model.setCoordinates(1, 0, 0, coords[3*tag(0,0)-1])
+gmsh.model.setCoordinates(2, 1, 0, coords[3*tag(N,0)-1])
+gmsh.model.setCoordinates(3, 1, 1, coords[3*tag(N,N)-1])
+gmsh.model.setCoordinates(4, 0, 1, coords[3*tag(0,N)-1])
 
-# Create 4 discrete bounding curves, with their (CAD) boundary points
+# Create 4 discrete bounding curves, with their (CAD) boundary points:
 for i in range(4):
     gmsh.model.addDiscreteEntity(1, i+1, [i+1 , i+2 if i < 3 else 1])
 
-# Create one discrete surface, with its bounding curves
+# Create one discrete surface, with its bounding curves:
 gmsh.model.addDiscreteEntity(2, 1, [1, 2, -3, -4])
 
-# Add all the nodes on the surface (for simplicity... see below)
+# Add all the nodes on the surface (for simplicity... see below):
 gmsh.model.mesh.addNodes(2, 1, nodes, coords)
 
 # Add point elements on the 4 CAD points, line elements on the 4 curves, and
