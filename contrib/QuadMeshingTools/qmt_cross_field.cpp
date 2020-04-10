@@ -605,9 +605,18 @@ namespace QMT {
       double time;
       int numComponents;
       gmsh::view::getModelData(tagCrossField, 0, dataType, tags, data, time, numComponents);
+      std::unordered_map<id,id> TagToF(M.triangles.size());
+      F(f,M.triangles.size()) TagToF[M.tri_elt_tags[f]] = f;
+
       if (dataType == "ElementData" && tags.size() == M.triangles.size()) {
-        F(f,M.triangles.size()) {
-          if (data[f].size() != 3) {
+        F(i,tags.size()) {
+          auto it = TagToF.find(tags[i]);
+          if (it == TagToF.end()) {
+            error("triangle with tag {} not found", tags[i]);
+            return false;
+          }
+          id f = it->second;
+          if (data[i].size() != 3) {
             error("data size should be 3");
             return false;
           }
@@ -616,7 +625,7 @@ namespace QMT {
             if (ue2theta[ue] == DBL_MAX) {
               id2 tri_edge = {M.triangles[f][le],M.triangles[f][(le+1)%3]};
               id2 glo_edge = uIEdges[ue];
-              double val = data[f][le];
+              double val = data[i][le];
               if (tri_edge == glo_edge) {
                 ue2theta[ue] = val;
               } else if (tri_edge[0] == glo_edge[1] && tri_edge[1] == glo_edge[0]) {
@@ -646,7 +655,22 @@ namespace QMT {
 
       vec3 p = 0.5*(p1+p2);
       vec3 edg = normalize(p2-p1);
-      vec3 N = triangle_normal(M,uIEdgeToOld[ue][0]/3);
+      vec3 N = normalize(triangle_normal(M,uIEdgeToOld[ue][0]/3));
+      if (uIEdgeToOld[ue].size() > 1) {
+        if (dot(N,triangle_normal(M,uIEdgeToOld[ue][1]/3)) > 0.) {
+          N = (N + normalize(triangle_normal(M,uIEdgeToOld[ue][1]/3)));
+          N = normalize(N);
+        }
+      }
+      {
+        id t = uIEdgeToOld[ue][0] / 3;
+        id le = uIEdgeToOld[ue][0] % 3;
+        id tv1 = M.triangles[t][le];
+        id tv2 = M.triangles[t][(le+1)%3];
+        if (tv1 == v2 && tv2 == v1) {
+          N = -1. * N;
+        }
+      }
       vec3 edgo = normalize(cross(N,edg));
       vec3 cross1 = cos(theta) * edg + sin(theta) * edgo;
       vec3 cross2 = cross(N,cross1);
@@ -1072,14 +1096,14 @@ namespace QMT {
           double len = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
           double theta = (len > EPS) ? 1./4*atan2(x[2*e+1]/len,x[2*e]/len) : 0.;
           id2 edge = uIEdges[e];
-          if (v1 == edge[0] && v2 == edge[1]) {
-            vals.push_back(theta);
-          } else if (v1 == edge[1] && v2 == edge[0]) {
-            vals.push_back(-theta);
-          } else {
-            error("problem with triangle {}, local edge {}: v1={},v2={} but edge={}", f, le, v1, v2, edge);
-            return false;
-          }
+          vals.push_back(theta); /* WARNING: do not orient for compatibility with gmshCrossFields.cpp code */
+          // if (v1 == edge[0] && v2 == edge[1]) {
+          // } else if (v1 == edge[1] && v2 == edge[0]) {
+          //   vals.push_back(-theta);
+          // } else {
+          //   error("problem with triangle {}, local edge {}: v1={},v2={} but edge={}", f, le, v1, v2, edge);
+          //   return false;
+          // }
         }
         values.push_back(vals);
       }
