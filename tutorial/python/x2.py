@@ -77,7 +77,7 @@ gmsh.model.setCoordinates(2, 1, 0, coords[3 * tag(N, 0) - 1])
 gmsh.model.setCoordinates(3, 1, 1, coords[3 * tag(N, N) - 1])
 gmsh.model.setCoordinates(4, 0, 1, coords[3 * tag(0, N) - 1])
 
-# Create 4 discrete bounding curves, with their (CAD) boundary points:
+# Create 4 discrete bounding curves, with their boundary points:
 for i in range(4):
     gmsh.model.addDiscreteEntity(1, i + 1, [i + 1, i + 2 if i < 3 else 1])
 
@@ -87,7 +87,7 @@ gmsh.model.addDiscreteEntity(2, 1, [1, 2, -3, -4])
 # Add all the nodes on the surface (for simplicity... see below):
 gmsh.model.mesh.addNodes(2, 1, nodes, coords)
 
-# Add point elements on the 4 CAD points, line elements on the 4 curves, and
+# Add point elements on the 4 points, line elements on the 4 curves, and
 # triangle elements on the surface:
 for i in range(4):
     # Type 15 for point elements:

@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   gmsh::model::setCoordinates(3, 1, 1, coords[3 * tag(N, N) - 1]);
   gmsh::model::setCoordinates(4, 0, 1, coords[3 * tag(0, N) - 1]);
 
-  // Create 4 discrete bounding curves, with their CAD boundary points:
+  // Create 4 discrete bounding curves, with their boundary points:
   for(int i = 0; i < 4; i++)
     gmsh::model::addDiscreteEntity(1, i + 1, {i + 1, (i < 3) ? (i + 2) : 1});
 
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
   // Add all the nodes on the surface (for simplicity... see below):
   gmsh::model::mesh::addNodes(2, 1, nodes, coords);
 
-  // Add point elements on the 4 CAD points, line elements on the 4 curves, and
+  // Add point elements on the 4 points, line elements on the 4 curves, and
   // triangle elements on the surface:
   for(int i = 0; i < 4; i++) {
     // Type 15 for point elements:
