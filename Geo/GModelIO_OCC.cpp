@@ -2417,13 +2417,11 @@ static int getReturnedShapes(const TopoDS_Compound &c, T *sweep,
   return 0;
 }
 
-bool OCC_Internals::_extrudePerDim(int mode, int inDim,
-                                   const std::vector<int> &inTags,
-                                   double x, double y, double z, double dx, double dy,
-                                   double dz, double ax, double ay, double az,
-                                   double angle, int wireTag,
-                                   std::vector<std::pair<int, int> > &outDimTags,
-                                   ExtrudeParams *e)
+bool OCC_Internals::_extrudePerDim(
+  int mode, int inDim, const std::vector<int> &inTags, double x, double y,
+  double z, double dx, double dy, double dz, double ax, double ay, double az,
+  double angle, int wireTag, std::vector<std::pair<int, int> > &outDimTags,
+  ExtrudeParams *e)
 {
   // build a single compound shape, so that we won't duplicate internal
   // boundaries
@@ -2432,8 +2430,8 @@ bool OCC_Internals::_extrudePerDim(int mode, int inDim,
   b.MakeCompound(c);
   for(std::size_t i = 0; i < inTags.size(); i++) {
     if(!_isBound(inDim, inTags[i])) {
-      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", inDim,
-                 inTags[i]);
+      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                 inDim, inTags[i]);
       return false;
     }
     TopoDS_Shape shape = _find(inDim, inTags[i]);
@@ -3274,9 +3272,8 @@ bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
       a.resize(12, 0.);
     }
     gp_GTrsf gt;
-    gt.SetVectorialPart(gp_Mat(a[0], a[1], a[2],
-                               a[4], a[5], a[6],
-                               a[8], a[9], a[10]));
+    gt.SetVectorialPart(
+      gp_Mat(a[0], a[1], a[2], a[4], a[5], a[6], a[8], a[9], a[10]));
     gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
     BRepBuilderAPI_GTransform gtfo(gt);
     return _transform(inDimTags, 0, &gtfo);
@@ -3372,10 +3369,14 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
     int dim =
-      (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
-      (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ? 1 :
-      (shape.ShapeType() == TopAbs_FACE || shape.ShapeType() == TopAbs_SHELL) ? 2 :
-      3;
+      (shape.ShapeType() == TopAbs_VERTEX) ?
+        0 :
+        (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
+        1 :
+        (shape.ShapeType() == TopAbs_FACE ||
+         shape.ShapeType() == TopAbs_SHELL) ?
+        2 :
+        3;
 
     Handle(TCollection_HAsciiString) matName;
     Handle(TCollection_HAsciiString) matDescription;
@@ -3412,29 +3413,28 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     // check explicit coloring of boundary entities
     if(dim == 3) {
       TopExp_Explorer xp2(shape, TopAbs_FACE);
-      while (xp2.More()) {
-        if (colorTool->GetColor(xp2.Current(), XCAFDoc_ColorGen, col) ||
-            colorTool->GetColor(xp2.Current(), XCAFDoc_ColorSurf, col) ||
-            colorTool->GetColor(xp2.Current(), XCAFDoc_ColorCurv, col)) {
+      while(xp2.More()) {
+        if(colorTool->GetColor(xp2.Current(), XCAFDoc_ColorGen, col) ||
+           colorTool->GetColor(xp2.Current(), XCAFDoc_ColorSurf, col) ||
+           colorTool->GetColor(xp2.Current(), XCAFDoc_ColorCurv, col)) {
           double r = col.Red(), g = col.Green(), b = col.Blue();
           Msg::Info(" - Color (%g, %g, %g) (Surface)", r, g, b);
           TopoDS_Face face = TopoDS::Face(xp2.Current());
-          attributes->insert(new OCCAttributes(2, face,
-                                               r, g, b, 1.));
+          attributes->insert(new OCCAttributes(2, face, r, g, b, 1.));
         }
         xp2.Next();
       }
     }
     if(dim == 2) {
       TopExp_Explorer xp1(shape, TopAbs_EDGE);
-      while (xp1.More()) {
-        if (colorTool->GetColor(xp1.Current(), XCAFDoc_ColorGen, col) ||
-            colorTool->GetColor(xp1.Current(), XCAFDoc_ColorSurf, col) ||
-            colorTool->GetColor(xp1.Current(), XCAFDoc_ColorCurv, col)) {
+      while(xp1.More()) {
+        if(colorTool->GetColor(xp1.Current(), XCAFDoc_ColorGen, col) ||
+           colorTool->GetColor(xp1.Current(), XCAFDoc_ColorSurf, col) ||
+           colorTool->GetColor(xp1.Current(), XCAFDoc_ColorCurv, col)) {
           double r = col.Red(), g = col.Green(), b = col.Blue();
           Msg::Info(" - Color (%g, %g, %g) (Curve)", r, g, b);
-          attributes->insert(new OCCAttributes(1, TopoDS::Face(xp1.Current()),
-                                               r, g, b, 1.));
+          attributes->insert(
+            new OCCAttributes(1, TopoDS::Face(xp1.Current()), r, g, b, 1.));
         }
         xp1.Next();
       }
@@ -3642,6 +3642,24 @@ void OCC_Internals::setMeshSize(int dim, int tag, double size)
   }
 }
 
+bool OCC_Internals::getEntities(std::vector<std::pair<int, int> > &dimTags,
+                                int dim)
+{
+  for(int d = 0; d < 4; d++) {
+    if(dim != -1 && dim != d) continue;
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
+    switch(d) {
+    case 0: exp.Initialize(_tagVertex); break;
+    case 1: exp.Initialize(_tagEdge); break;
+    case 2: exp.Initialize(_tagFace); break;
+    case 3: exp.Initialize(_tagSolid); break;
+    }
+    for(; exp.More(); exp.Next())
+      dimTags.push_back(std::pair<int, int>(d, exp.Key()));
+  }
+  return true;
+}
+
 bool OCC_Internals::getVertex(int tag, double &x, double &y, double &z)
 {
   if(_tagVertex.IsBound(tag)) {
@@ -3652,6 +3670,67 @@ bool OCC_Internals::getVertex(int tag, double &x, double &y, double &z)
     return true;
   }
   return false;
+}
+
+bool OCC_Internals::_getBoundingBox(const TopoDS_Shape &shape, double &xmin,
+                                    double &ymin, double &zmin, double &xmax,
+                                    double &ymax, double &zmax)
+{
+  if(CTX::instance()->geom.occBoundsUseSTL) {
+    std::vector<SPoint3> vertices;
+    std::vector<SVector3> normals;
+    std::vector<int> triangles;
+    _makeSTL(shape, vertices, normals, triangles);
+  }
+  Bnd_Box b;
+  try {
+    BRepBndLib::Add(shape, b);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+  b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+  if(CTX::instance()->geom.occBoundsUseSTL)
+    fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
+  return true;
+}
+
+bool OCC_Internals::getBoundingBox(int dim, int tag, double &xmin, double &ymin,
+                                   double &zmin, double &xmax, double &ymax,
+                                   double &zmax)
+{
+  if(!_isBound(dim, tag)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
+               tag);
+    return false;
+  }
+  TopoDS_Shape shape = _find(dim, tag);
+  return _getBoundingBox(shape, xmin, ymin, zmin, xmax, ymax, zmax);
+}
+
+bool OCC_Internals::getEntitiesInBoundingBox(
+  double xmin, double ymin, double zmin, double xmax, double ymax, double zmax,
+  std::vector<std::pair<int, int> > &dimTags, int dim)
+{
+  // if we use this often, create an rtree to avoid the linear search
+  for(int d = 0; d < 4; d++) {
+    if(dim != -1 && dim != d) continue;
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
+    switch(d) {
+    case 0: exp.Initialize(_tagVertex); break;
+    case 1: exp.Initialize(_tagEdge); break;
+    case 2: exp.Initialize(_tagFace); break;
+    case 3: exp.Initialize(_tagSolid); break;
+    }
+    for(; exp.More(); exp.Next()) {
+      double xmin2 = 0, ymin2 = 0, zmin2 = 0, xmax2 = 0, ymax2 = 0, zmax2 = 0;
+      _getBoundingBox(exp.Value(), xmin2, ymin2, zmin2, xmax2, ymax2, zmax2);
+      if(xmin2 >= xmin && xmax2 <= xmax && ymin2 >= ymin && ymax2 <= ymax &&
+         zmin2 >= zmin && zmax2 <= zmax)
+        dimTags.push_back(std::pair<int, int>(d, exp.Key()));
+    }
+  }
+  return true;
 }
 
 bool OCC_Internals::getMass(int dim, int tag, double &mass)
@@ -3774,8 +3853,7 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(occv);
     }
     double lc = _attributes->getMeshSize(0, vertex);
-    if(lc != MAX_LC)
-      occv->setPrescribedMeshSizeAtVertex(lc);
+    if(lc != MAX_LC) occv->setPrescribedMeshSizeAtVertex(lc);
     std::vector<std::string> labels;
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
@@ -4086,7 +4164,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     return;
 
   Msg::Info("Healing shapes (tolerance: %g)", tolerance);
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   _somap.Clear();
   _shmap.Clear();
@@ -4400,8 +4478,8 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   for(exp0.Init(myshape, TopAbs_COMPOUND); exp0.More(); exp0.Next()) nnrc++;
   for(exp0.Init(myshape, TopAbs_COMPSOLID); exp0.More(); exp0.Next()) nnrcs++;
 
-  double t2 = Cpu();
-  Msg::Info("Done healing shapes (%g s):", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::Info("Done healing shapes (Wall %gs, CPU %gs):", w2 - w1, t2 - t1);
   Msg::Info(" - Compounds          : %d (%d)", nnrc, nrc);
   Msg::Info(" - Composite solids   : %d (%d)", nnrcs, nrcs);
   Msg::Info(" - Solids             : %d (%d)", nnrso, nrso);
@@ -4608,10 +4686,10 @@ bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
   return makeSTL(s, 0, &vertices, &normals, triangles);
 }
 
-bool OCC_Internals::makeSolidSTL(const TopoDS_Solid &s,
-                                 std::vector<SPoint3> &vertices,
-                                 std::vector<SVector3> &normals,
-                                 std::vector<int> &triangles)
+bool OCC_Internals::_makeSTL(const TopoDS_Shape &s,
+                             std::vector<SPoint3> &vertices,
+                             std::vector<SVector3> &normals,
+                             std::vector<int> &triangles)
 {
   bool ret = true;
   TopExp_Explorer exp0;
@@ -4656,7 +4734,7 @@ bool OCC_Internals::makeSphereSTL(double xc, double yc, double zc,
   TopoDS_Solid result;
   if(!makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
     return false;
-  if(!makeSolidSTL(result, vertices, normals, triangles)) return false;
+  if(!_makeSTL(result, vertices, normals, triangles)) return false;
   return true;
 }
 
@@ -4668,7 +4746,7 @@ bool OCC_Internals::makeBoxSTL(double x, double y, double z, double dx,
 {
   TopoDS_Solid result;
   if(!makeBox(result, x, y, z, dx, dy, dz)) return false;
-  if(!makeSolidSTL(result, vertices, normals, triangles)) return false;
+  if(!_makeSTL(result, vertices, normals, triangles)) return false;
   return true;
 }
 
@@ -4681,7 +4759,7 @@ bool OCC_Internals::makeCylinderSTL(double x, double y, double z, double dx,
 {
   TopoDS_Solid result;
   if(!makeCylinder(result, x, y, z, dx, dy, dz, r, angle)) return false;
-  if(!makeSolidSTL(result, vertices, normals, triangles)) return false;
+  if(!_makeSTL(result, vertices, normals, triangles)) return false;
   return true;
 }
 
@@ -4693,7 +4771,7 @@ bool OCC_Internals::makeConeSTL(double x, double y, double z, double dx,
 {
   TopoDS_Solid result;
   if(!makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle)) return false;
-  if(!makeSolidSTL(result, vertices, normals, triangles)) return false;
+  if(!_makeSTL(result, vertices, normals, triangles)) return false;
   return true;
 }
 
@@ -4705,7 +4783,7 @@ bool OCC_Internals::makeWedgeSTL(double x, double y, double z, double dx,
 {
   TopoDS_Solid result;
   if(!makeWedge(result, x, y, z, dx, dy, dz, ltx)) return false;
-  if(!makeSolidSTL(result, vertices, normals, triangles)) return false;
+  if(!_makeSTL(result, vertices, normals, triangles)) return false;
   return true;
 }
 
@@ -4717,7 +4795,7 @@ bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1,
 {
   TopoDS_Solid result;
   if(!makeTorus(result, x, y, z, r1, r2, angle)) return false;
-  if(!makeSolidSTL(result, vertices, normals, triangles)) return false;
+  if(!_makeSTL(result, vertices, normals, triangles)) return false;
   return true;
 }
 

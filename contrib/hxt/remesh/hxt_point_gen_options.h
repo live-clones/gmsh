@@ -19,16 +19,31 @@ typedef struct {
                                *  - if verbosity==1: print basic information on each pass
                                *  - if verbosity>=2: print everything */
 
-  int generateLines;          /**< Generate points on mesh lines */
-  int generateSurfaces;       /**< Generate points on mesh surfaces */
+  int generateLines;          /**< Generate points on mesh lines, 0 to get from input mesh */
+  int generateSurfaces;       /**< Generate points on mesh surfaces, 0 to get from input mesh */
   int generateVolumes;        /**< Generate points on mesh volumes */
   int remeshSurfaces;         /**< Remesh surface with local mesh modifications */
 
+  int walkMethod2D;           /**<
+                               *  - if 0: simple 
+                               *  - if 1: Runge-Kutta 4
+                               *  - if 2: planar simple
+                               *  - if 3: planar Runge-Kutta 4*/
+
+  int walkMethod3D;           /**<
+                               *  - if 0: simple 
+                               *  - if 1: Runge-Kutta 4*/
+
+
   int dirType;                /**< 0 for hard-coded axis oriented 1 to compute for 3D */
 
-  double areaThreshold;       
+  double uniformSize;         /**< Background mesh size  */
 
-  double uniformSize; 
+  double areaThreshold;       /**< Minimum triangle area */
+
+  double tolerance;           /**< Tolerance for remeshing */
+
+  uint64_t numTris;           /**< Desired number of triangles */
 
 
 }HXTPointGenOptions;

@@ -13,6 +13,6 @@ HXTStatus hxtGetCoherentDirectionsInTri(HXTMesh* m, const double* directions, ui
 HXTStatus hxtGetCoherentDirectionsInTet(HXTMesh* m, const double* directions, uint64_t tet, double tetDirs[4][9]);
 
 /* directions[9*i+3*j] is a unit direction (3 consecutive doubles) associated to the j-th branch of the i-th 3D cross */
-HXTStatus hxtOrientationFieldToDirections(uint32_t n, const double* orientation3d, double* directions);
+HXTStatus hxtOrientationFieldToDirections(uint32_t n, double* orientation3d, double* directions);
 
 #endif

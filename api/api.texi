@@ -9,6 +9,7 @@
 * Namespace gmsh/model/geo::
 * Namespace gmsh/model/geo/mesh::
 * Namespace gmsh/model/occ::
+* Namespace gmsh/model/occ/mesh::
 * Namespace gmsh/view::
 * Namespace gmsh/plugin::
 * Namespace gmsh/graphics::
@@ -832,11 +833,14 @@ populated by the new 3D meshing algorithms.
 @end table
 
 @item gmsh/model/mesh/clear
-Clear the mesh, i.e. delete all the nodes and elements.
+Clear the mesh, i.e. delete all the nodes and elements, for the entities
+@code{dimTags}. if @code{dimTags} is empty, clear the whole mesh. Note that the
+mesh of an entity can only be cleared if this entity is not on the boundary of
+another entity with a non-empty mesh.
 
 @table @asis
 @item Input:
--
+@code{dimTags = []}
 @item Output:
 -
 @item Return:
@@ -1258,16 +1262,51 @@ integration points @code{integrationPoints} (given as concatenated triplets of
 coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for
 the function space @code{functionSpaceType} (e.g. "Lagrange" or "GradLagrange"
 for Lagrange basis functions or their gradient, in the u, v, w coordinates of
-the reference element). @code{numComponents} returns the number C of components
-of a basis function. @code{basisFunctions} returns the value of the N basis
-functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...]
-when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
+the reference element; or "H1Legendre3" or "GradH1Legendre3" for 3rd order
+hierarchical H1 Legendre functions). @code{numComponents} returns the number C
+of components of a basis function. @code{basisFunctions} returns the value of
+the N basis functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN,
+g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...]
+when C == 3. For basis functions that depend on the orientation of the elements,
+all values for the first orientation are returned first, followed by values for
+the secondd, etc. @code{numOrientations} returns the overall number of
+orientations.
 
 @table @asis
 @item Input:
 @code{elementType}, @code{integrationPoints}, @code{functionSpaceType}
 @item Output:
-@code{numComponents}, @code{basisFunctions}
+@code{numComponents}, @code{basisFunctions}, @code{numOrientations}
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/getBasisFunctionsOrientationForElements
+Get the orientation index of the elements of type @code{elementType} in the
+entity of tag @code{tag}. The arguments have the same meaning as in
+@code{getBasisFunctions}. @code{basisFunctionsOrientation} is a vector giving
+for each element the orientation index in the values returned by
+@code{getBasisFunctions}. For Lagrange basis functions the call is superfluous
+as it will return a vector of zeros.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{functionSpaceType}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
+@item Output:
+@code{basisFunctionsOrientation}
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/preallocateBasisFunctionsOrientationForElements
+Preallocate data before calling @code{getBasisFunctionsOrientationForElements}
+with @code{numTasks} > 1. For C and C++ only.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{tag = -1}
+@item Output:
+@code{basisFunctionsOrientation}
 @item Return:
 -
 @end table
@@ -1296,44 +1335,6 @@ probably change in a future release.
 @code{elementType}, @code{tag = -1}
 @item Output:
 @code{localMultipliers}
-@item Return:
--
-@end table
-
-@item gmsh/model/mesh/getBasisFunctionsForElements
-Get the element-dependent basis functions of the elements of type
-@code{elementType} in the entity of tag @code{tag}at the integration points
-@code{integrationPoints} (given as concatenated triplets of coordinates in the
-reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
-@code{functionSpaceType} (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order
-hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates
-of the reference elements). @code{numComponents} returns the number C of
-components of a basis function. @code{numBasisFunctions} returns the number N of
-basis functions per element. @code{basisFunctions} returns the value of the
-basis functions at the integration points for each element: [e1g1f1,..., e1g1fN,
-e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw,
-e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental feature and will
-probably change in a future release. If @code{numTasks} > 1, only compute and
-return the part of the data indexed by @code{task}.
-
-@table @asis
-@item Input:
-@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
-@item Output:
-@code{numComponents}, @code{numFunctionsPerElements}, @code{basisFunctions}
-@item Return:
--
-@end table
-
-@item gmsh/model/mesh/preallocateBasisFunctions
-Preallocate data before calling @code{getBasisFunctionsForElements} with
-@code{numTasks} > 1. For C and C++ only.
-
-@table @asis
-@item Input:
-@code{elementType}, @code{numIntegrationPoints}, @code{functionSpaceType}, @code{tag = -1}
-@item Output:
-@code{basisFunctions}
 @item Return:
 -
 @end table
@@ -1381,18 +1382,6 @@ experimental feature and will probably change in a future release.
 @code{keys}, @code{elementType}, @code{functionSpaceType}
 @item Output:
 @code{infoKeys}
-@item Return:
--
-@end table
-
-@item gmsh/model/mesh/precomputeBasisFunctions
-Precomputes the basis functions corresponding to @code{elementType}.
-
-@table @asis
-@item Input:
-@code{elementType}
-@item Output:
--
 @item Return:
 -
 @end table
@@ -2505,7 +2494,7 @@ entity of dimension @code{dim} and tag @code{tag}. Currently only supported for
 
 @end ftable
 
-@node Namespace gmsh/model/occ, Namespace gmsh/view, Namespace gmsh/model/geo/mesh, Gmsh API
+@node Namespace gmsh/model/occ, Namespace gmsh/model/occ/mesh, Namespace gmsh/model/geo/mesh, Gmsh API
 @section Namespace @code{gmsh/model/occ}: OpenCASCADE CAD kernel functions
 
 @ftable @code
@@ -3231,21 +3220,52 @@ an invalid pointer will lead to undefined behavior.
 -
 @end table
 
-@item gmsh/model/occ/setMeshSize
-Set a mesh size constraint on the model entities @code{dimTags}. Currently only
-entities of dimension 0 (points) are handled.
+@item gmsh/model/occ/getEntities
+Get all the OpenCASCADE entities. If @code{dim} is >= 0, return only the
+entities of the specified dimension (e.g. points if @code{dim} == 0). The
+entities are returned as a vector of (dim, tag) integer pairs.
 
 @table @asis
 @item Input:
-@code{dimTags}, @code{size}
+@code{dim = -1}
 @item Output:
+@code{dimTags}
+@item Return:
 -
+@end table
+
+@item gmsh/model/occ/getEntitiesInBoundingBox
+Get the OpenCASCADE entities in the bounding box defined by the two points
+(@code{xmin}, @code{ymin}, @code{zmin}) and (@code{xmax}, @code{ymax},
+@code{zmax}). If @code{dim} is >= 0, return only the entities of the specified
+dimension (e.g. points if @code{dim} == 0).
+
+@table @asis
+@item Input:
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}, @code{dim = -1}
+@item Output:
+@code{tags}
+@item Return:
+-
+@end table
+
+@item gmsh/model/occ/getBoundingBox
+Get the bounding box (@code{xmin}, @code{ymin}, @code{zmin}), (@code{xmax},
+@code{ymax}, @code{zmax}) of the OpenCASCADE entity of dimension @code{dim} and
+tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}
 @item Return:
 -
 @end table
 
 @item gmsh/model/occ/getMass
-Get the mass of the model entity of dimension @code{dim} and tag @code{tag}.
+Get the mass of the OpenCASCADE entity of dimension @code{dim} and tag
+@code{tag}.
 
 @table @asis
 @item Input:
@@ -3257,7 +3277,7 @@ Get the mass of the model entity of dimension @code{dim} and tag @code{tag}.
 @end table
 
 @item gmsh/model/occ/getCenterOfMass
-Get the center of mass of the model entity of dimension @code{dim} and tag
+Get the center of mass of the OpenCASCADE entity of dimension @code{dim} and tag
 @code{tag}.
 
 @table @asis
@@ -3270,8 +3290,8 @@ Get the center of mass of the model entity of dimension @code{dim} and tag
 @end table
 
 @item gmsh/model/occ/getMatrixOfInertia
-Get the matrix of inertia (by row) of the model entity of dimension @code{dim}
-and tag @code{tag}.
+Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
+@code{dim} and tag @code{tag}.
 
 @table @asis
 @item Input:
@@ -3298,7 +3318,26 @@ processing, the number of synchronization points should normally be minimized.
 
 @end ftable
 
-@node Namespace gmsh/view, Namespace gmsh/plugin, Namespace gmsh/model/occ, Gmsh API
+@node Namespace gmsh/model/occ/mesh, Namespace gmsh/view, Namespace gmsh/model/occ, Gmsh API
+@section Namespace @code{gmsh/model/occ/mesh}: OpenCASCADE CAD kernel meshing constraints
+
+@ftable @code
+@item gmsh/model/occ/mesh/setSize
+Set a mesh size constraint on the model entities @code{dimTags}. Currently only
+entities of dimension 0 (points) are handled.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{size}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@node Namespace gmsh/view, Namespace gmsh/plugin, Namespace gmsh/model/occ/mesh, Gmsh API
 @section Namespace @code{gmsh/view}: post-processing view functions
 
 @ftable @code

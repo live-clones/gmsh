@@ -57,7 +57,7 @@ Save nodes with their parametric coordinates (Mesh.SaveParametric)
 @item -save_topology
 Save model topology (Mesh.SaveTopology)
 @item -algo string
-Select mesh algorithm: auto, meshadapt, del2d, front2d, delquad, pack, del3d, front3d, mmg3d, hxt (Mesh.Algorithm andMesh.Algorithm3D)
+Select mesh algorithm: auto, meshadapt, del2d, front2d, delquad, pack, initial2d, del3d, front3d, mmg3d, hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)
 @item -smooth int
 Set number of mesh smoothing steps (Mesh.Smoothing)
 @item -order int

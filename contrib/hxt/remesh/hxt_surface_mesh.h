@@ -13,6 +13,10 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                          HXTEdges *edges,
                          HXTPointGenParent *parent,
                          HXTMesh *fmesh,
-                         HXTMesh *omesh);
+                         HXTMesh *nmesh);
 
+HXTStatus hxtGetSurfaceMesh(HXTPointGenOptions *opt,
+                            HXTMesh *mesh,
+                            HXTMesh *fmesh,
+                            HXTMesh *nmesh);
 #endif

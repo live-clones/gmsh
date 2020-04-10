@@ -31,6 +31,7 @@ class HierarchicalBasisH1Line : public HierarchicalBasisH1 {
 public:
   HierarchicalBasisH1Line(int pe);
   virtual ~HierarchicalBasisH1Line();
+  virtual unsigned int getNumberOfOrientations() const;
   // vertexBasis=[v0,v1]
   // edgeBasis=[phie_{2},...,phie_{pe}]
   virtual void generateBasis(double const &u, double const &v, double const &w,

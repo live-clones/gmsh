@@ -2,8 +2,7 @@
 #
 #  Gmsh Python tutorial 1
 #
-#  Elementary entities (points, curves, surfaces), physical groups
-#  (points, curves, surfaces)
+#  Geometry basics, elementary entities, physical groups
 #
 # ------------------------------------------------------------------------------
 
@@ -164,8 +163,8 @@ gmsh.write("t1.msh")
 # the underlying curves and points could be accessed with
 # gmsh.model.getBoundary().
 #
-# See e.g. `t16.py', `t18.py' or `t19.py' for complete examples based on
-# OpenCASCADE, and `demos/api' for more.
+# See e.g. `t16.py', `t18.py', `t19.py' or `t20.py' for complete examples based
+# on OpenCASCADE, and `demos/api' for more.
 
 # This should be called when you are done using the Gmsh Python API:
 gmsh.finalize()

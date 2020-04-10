@@ -24,7 +24,8 @@ Field[1].F = "0.01*(1.0+30.*(y-x*x)*(y-x*x) + (1-x)*(1-x))";
 Background Field = 1;
 
 // To generate quadrangles instead of triangles, we can simply add
-//Recombine Surface{100};
+//
+// Recombine Surface{100};
 
 // If we'd had several surfaces, we could have used `Recombine Surface {:};'.
 // Yet another way would be to specify the global option "Mesh.RecombineAll =

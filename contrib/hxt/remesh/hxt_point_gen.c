@@ -20,8 +20,17 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
                                 HXTPointGenOptions *opt, 
                                 double *sizemap, 
                                 const double *directions,
-                                HXTMesh *fmesh)   
+                                HXTMesh *nmesh)   
 {
+
+  //*************************************************************************************
+  //*************************************************************************************
+  // Create a temp mesh to hold generated vertices
+  HXTContext *fcontext;
+  hxtContextCreate(&fcontext);
+  HXTMesh *fmesh;
+  HXT_CHECK(hxtMeshCreate(fcontext,&fmesh));
+ 
   //*************************************************************************************
   //*************************************************************************************
   // Create edges structure
@@ -31,22 +40,13 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
 
   //*************************************************************************************
   //*************************************************************************************
-  // Find max length to create an area threshold 
-  double maxLength = 0;
-  HXT_CHECK(hxtPointGenModelMaxLength(mesh->vertices.coord,mesh->vertices.num,&maxLength));
-  printf("Max Length = %f \n", maxLength);
-  opt->areaThreshold = maxLength*maxLength*10e-8;
-  printf("Max Area   = %e \n", opt->areaThreshold);
-  
-
-  //*************************************************************************************
-  //*************************************************************************************
   if (0) HXT_CHECK(hxtCheckZeroAreaTriangles(mesh,"FINALMESHtriangleWithZeroArea.msh"));
 
 
   //*************************************************************************************
   //*************************************************************************************
   // Sizing from input mesh 
+  // TODO 
   if (0){
     HXT_CHECK(hxtPointGenGetSizesInputMesh(edges,3.0,sizemap));
     HXT_CHECK(hxtPointGenSizemapSmoothing(edges,1.5,sizemap));
@@ -56,18 +56,20 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //*************************************************************************************
   //*************************************************************************************
   // Sizing from curvature
+  // TODO 
   if(0){
-    HXT_CHECK(hxtPointGenGetSizesCurvature(edges,30,0.8,0.1,sizemap));
+    HXT_CHECK(hxtPointGenGetSizesCurvature(edges,100,0.8,0.1,sizemap));
     //HXT_CHECK(hxtPointGenSizemapSmoothing(edges,1.5,sizemap));
-    HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,sizemap,"sizesInput.msh"));
+    HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,sizemap,"sizesCurvature.msh"));
   }
 
   //*************************************************************************************
   //*************************************************************************************
   // If mesh does not have lines start propagation from a random edge
-  if (mesh->lines.num == 0){
-    printf("ATTENTION !!!!!!!!!!!!!!!!! \n");
-    printf("Mesh does not have lines - starting propagation from a random edge");
+  // TODO 
+  if (mesh->lines.num == 0 && opt->generateLines && opt->generateSurfaces){
+    HXT_INFO("********** ATTENTION **********");
+    HXT_INFO("Mesh does not have lines - starting propagation from a random edge");
     // Create edges structure
     hxtLinesReserve(mesh,2);
     mesh->lines.colors[0] = 0;
@@ -84,14 +86,14 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //*************************************************************************************
   // Extract mesh lines based on dihedral angle 
   // TODO rewrite this function
-  if (0) HXT_CHECK(hxtPointGenDihedralLines(mesh,edges));
-
+  if (0) HXT_CHECK(hxtPointGenClassifyDihedralLines(mesh,edges));
 
 
 
   //*************************************************************************************
   //*************************************************************************************
   // Boundary vertex connectivity 
+  // TODO not used for now 
   uint32_t *vert2vert;
   HXT_CHECK(hxtMalloc(&vert2vert, 2*mesh->vertices.num*sizeof(uint32_t)));
   for (uint32_t i=0; i<2*mesh->vertices.num; i++) vert2vert[i] = UINT32_MAX;
@@ -105,11 +107,14 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   HXT_CHECK(hxtFree(&vert2vert));
 
 
-  printf("\n");
-  printf("   Initial mesh num of vertices:  %d \n",  mesh->vertices.num);
-  printf("    Initial mesh num of corners:  %d \n",  mesh->points.num);
-  printf("      Initial mesh num of lines:  %lu \n", mesh->lines.num);
-  printf("\n");
+  //*************************************************************************************
+  //*************************************************************************************
+  HXT_INFO("");
+  HXT_INFO("Initial mesh num of vertices         %d",  mesh->vertices.num);
+  HXT_INFO("Initial mesh num of points           %d",  mesh->points.num);
+  HXT_INFO("Initial mesh num of lines            %lu",  mesh->lines.num);
+  HXT_INFO("Initial mesh num of triangles        %lu",  mesh->triangles.num);
+  HXT_INFO("Initial mesh num of tetrahedra       %lu",  mesh->tetrahedra.num);
 
   // Estimate number of generated vertices 
   uint32_t estNumVertices = 0;
@@ -132,72 +137,52 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   uint64_t estNumLines = estNumVertices; // TODO that is a big number for mesh lines! - reallocate down
   HXT_CHECK(hxtLinesReserve(fmesh, estNumLines));
 
-  printf("     Final mesh num of vertices:  %d \n",  fmesh->vertices.num);
-  printf(" Allocated mesh num of vertices:  %d \n",  fmesh->vertices.size);
-  printf("        Final mesh num of lines:  %lu \n", fmesh->lines.num);
-  printf("    Allocated mesh num of lines:  %lu \n", fmesh->lines.size);
-  printf("        Final mesh num of points:  %d \n", fmesh->points.num);
-  printf("    Allocated mesh num of points:  %d \n", fmesh->points.size);
-  printf("\n");
-
+  HXT_INFO("");
+  HXT_INFO("Allocated mesh num of vertices       %d",  fmesh->vertices.size); 
+  HXT_INFO("Allocated mesh num of points         %d",  fmesh->points.size); 
+  HXT_INFO("Allocated mesh num of lines          %lu", fmesh->lines.size); 
+  
+  // Create structure for parent elements of generated points 
+  HXTPointGenParent *parent;
+  HXT_CHECK(hxtMalloc(&parent, estNumVertices*sizeof(HXTPointGenParent)));
+  for (uint32_t i=0; i<estNumVertices; i++) parent[i].type = UINT8_MAX;
+  for (uint32_t i=0; i<estNumVertices; i++) parent[i].id = UINT64_MAX;
+  
   //**********************************************************************************************************
   //**********************************************************************************************************
   // GENERATE POINTS ON LINES 
   //**********************************************************************************************************
   //**********************************************************************************************************
 
-  // Array to store point "parent" element 
-  // - for corner points gives id of corner vertex of initial mesh
-  // - for points on lines gives the id of line
-  uint64_t *pointParent = NULL;
-  HXT_CHECK(hxtMalloc(&pointParent,estNumVertices*sizeof(uint64_t)));
-  for (uint32_t i=0; i<estNumVertices; i++) pointParent[i] = UINT64_MAX;
-
-  HXT_CHECK(hxtGeneratePointsOnLines(mesh,directions,sizemap,fmesh,pointParent));
-
+  if (opt->generateLines){
+    HXT_CHECK(hxtGeneratePointsOnLines(mesh,opt,directions,sizemap,fmesh,parent));
+  }
+  else{
+    HXT_CHECK(hxtGetPointsOnLinesFromInputMesh(mesh,opt,fmesh,parent));
+  }
+    
   // Check if there is even number of points generated on lines 
   // TODO 
-  if (fmesh->lines.num%2 != 0){
-    printf("\n\nContinue with odd number of points? y/n \n\n");
-    char ch = getchar();
-    getchar();
-    if ( ch == 'n') return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Number of points on lines not even");
-  }
+/*  if (fmesh->lines.num%2 != 0){*/
+    /*printf("\n\nContinue with odd number of points? y/n \n\n");*/
+    /*char ch = getchar();*/
+    /*getchar();*/
+    /*if ( ch == 'n') return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Number of points on lines not even");*/
+  /*}*/
 
-  // Create structure for parent elements of generated points 
-  HXTPointGenParent *parent;
-  HXT_CHECK(hxtMalloc(&parent, estNumVertices*sizeof(HXTPointGenParent)));
-  for (uint32_t i=0; i<estNumVertices; i++) parent[i].type = UINT8_MAX;
-  for (uint32_t i=0; i<estNumVertices; i++) parent[i].id = UINT64_MAX;
-
-  // Fill point gen parent struct with lines 
-  for (uint32_t i=0; i<fmesh->vertices.num; i++){
-    if (pointParent[i] == UINT64_MAX){
-      return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Vertex %d does not have parent element",i);
-    }
-    parent[i].type = 1;
-    parent[i].id = pointParent[i];
-  }
-
-  // Fill point gen parent struct with corner points 
-  for (uint32_t i=0; i<fmesh->points.num; i++){
-    uint32_t nodeID = fmesh->points.node[i];
-    if (pointParent[nodeID] == UINT64_MAX){
-      return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Vertex %d does not have parent element",i);
-    }
-    parent[nodeID].type = 15;
-    parent[nodeID].id = pointParent[nodeID];
-  }
-  HXT_CHECK(hxtFree(&pointParent));
   // Checking correct number of 1d point elements (i.e. "corners")
   // TODO delete
   uint32_t countCorners = 0;
   for (uint32_t i=0; i<fmesh->vertices.num; i++){
     if (parent[i].type == 15) countCorners++;
   }
-  if (countCorners != fmesh->points.num) return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Corner problem");
+  if (countCorners != fmesh->points.num) 
+    return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Corner problem %d %d", countCorners, fmesh->points.num);
 
-  HXT_CHECK(hxtMeshWriteGmsh(fmesh, "FINALMESHlines.msh"));
+  if (opt->verbosity > 1) HXT_CHECK(hxtMeshWriteGmsh(fmesh, "FINALMESHlines.msh"));
+
+  HXT_INFO("");
+  HXT_INFO("Number of points generated on lines = %d", fmesh->vertices.num);
 
 
   //**********************************************************************************************************
@@ -206,7 +191,18 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
   //**********************************************************************************************************
   
-  HXT_CHECK(hxtGeneratePointsOnSurface(opt,mesh,edges,sizemap,directions,parent,fmesh));
+  if (opt->generateSurfaces){
+    HXT_CHECK(hxtGeneratePointsOnSurface(opt,mesh,edges,sizemap,directions,parent,fmesh));
+  }
+  else{
+    HXT_CHECK(hxtGetPointsOnSurfacesFromInputMesh(mesh,opt,fmesh,parent));
+  }
+
+  if (opt->verbosity > 1) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh,"pointsSurface.pos"));
+
+  HXT_INFO("");
+  HXT_INFO("Number of points generated on surfaces = %d", fmesh->vertices.num);
+
 
   // TODO just for checking, delete
   // Check if parent elements are correct
@@ -251,89 +247,58 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
   //**********************************************************************************************************
   
-  uint32_t numPointsOnSurfaces = fmesh->vertices.num;
-  HXT_INFO("Number of points generated on surfaces = %d \n", numPointsOnSurfaces);
-  
-  HXTContext *ncontext;
-  hxtContextCreate(&ncontext);
-  HXTMesh *nmesh;
-  HXT_CHECK(hxtMeshCreate(ncontext, &nmesh));
-
-  HXT_CHECK(hxtPointsReserve(nmesh,fmesh->points.num));
-  HXT_CHECK(hxtLinesReserve(nmesh,fmesh->lines.num));
-  HXT_CHECK(hxtVerticesReserve(nmesh, estNumVertices));
-  HXT_CHECK(hxtTrianglesReserve(nmesh,fmesh->triangles.num));
-
+ 
   if (opt->generateVolumes){
-    nmesh->points.num = fmesh->points.num;
-    nmesh->lines.num = fmesh->lines.num;
-    nmesh->vertices.num = fmesh->vertices.num;
-    nmesh->triangles.num = fmesh->triangles.num;
   
-    // Transfer points to temp mesh
-    for (uint32_t i=0; i<fmesh->points.num; i++) nmesh->points.node[i] = fmesh->points.node[i];
+    HXT_CHECK(hxtGeneratePointsOnVolumes(mesh,opt,sizemap,directions,parent,fmesh));
   
-    // Transfer lines to temp mesh
-    for (uint32_t i=0; i<fmesh->lines.num; i++){
-      nmesh->lines.node[2*i+0] = fmesh->lines.node[2*i+0];
-      nmesh->lines.node[2*i+1] = fmesh->lines.node[2*i+1];
-      nmesh->lines.colors[i] = fmesh->lines.colors[i];
-    }
-  
-    // Transfer triangles to temp mesh
-    for (uint64_t i=0; i<fmesh->triangles.num; i++){
-      nmesh->triangles.node[3*i+0] = fmesh->triangles.node[3*i+0];
-      nmesh->triangles.node[3*i+1] = fmesh->triangles.node[3*i+1];
-      nmesh->triangles.node[3*i+2] = fmesh->triangles.node[3*i+2];
-      nmesh->triangles.colors[i] = fmesh->triangles.colors[i];
-    }
-    
-    // Store vertices of initial mesh to temp mesh
-    for (uint32_t i=0; i<fmesh->vertices.num; i++){
-      nmesh->vertices.coord[4*i+0] = fmesh->vertices.coord[4*i+0];
-      nmesh->vertices.coord[4*i+1] = fmesh->vertices.coord[4*i+1];
-      nmesh->vertices.coord[4*i+2] = fmesh->vertices.coord[4*i+2];
-    }
-  
-  
-    HXT_CHECK(hxtGeneratePointsOnVolumes(mesh,sizemap,directions,parent,nmesh));
-  
-    HXT_CHECK(hxtMeshWriteGmsh(nmesh,"FINALMESHvolume.msh"));
-    HXT_CHECK(hxtPointGenExportPointsToPos(nmesh,"pointsVolume.pos"));
-  }
+    if (opt->verbosity > 1) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh,"pointsVolume.pos"));
 
+    HXT_INFO("");
+    HXT_INFO("Number of points generated total = %d", fmesh->vertices.num);
+  }
 
   //**********************************************************************************************************
   //**********************************************************************************************************
   // CREATE SURFACE MESH 
   //**********************************************************************************************************
   //**********************************************************************************************************
-
-  HXTContext *ocontext;
-  hxtContextCreate(&ocontext);
-  HXTMesh *omesh;
-  HXT_CHECK(hxtMeshCreate(ocontext,&omesh));
  
-  HXT_CHECK(hxtSurfaceMesh(opt,mesh,edges,parent,fmesh,omesh));
- 
-  if(opt->generateVolumes){
-    int countB = 0;
-    int countI = 0;
-    for (uint32_t i=0; i<nmesh->vertices.num; i++){
-      if (parent[i].type != 4) countB++;
-      if (parent[i].type == 4) countI++;
-    } 
-    HXT_CHECK(hxtVerticesReserve(omesh, nmesh->vertices.size));
-    for (uint32_t i=0; i<nmesh->vertices.num; i++){
-      if (parent[i].type == 4){
-        omesh->vertices.coord[4*omesh->vertices.num+0] = nmesh->vertices.coord[4*i+0];
-        omesh->vertices.coord[4*omesh->vertices.num+1] = nmesh->vertices.coord[4*i+1];
-        omesh->vertices.coord[4*omesh->vertices.num+2] = nmesh->vertices.coord[4*i+2];
-        omesh->vertices.num++;
-      }
+  if (opt->remeshSurfaces){
+    // Find max length to create an area threshold 
+    // TODO use that 
+    double maxLength = 0;
+    HXT_CHECK(hxtPointGenModelMaxLength(mesh->vertices.coord,mesh->vertices.num,&maxLength));
+    opt->areaThreshold = maxLength*maxLength*10e-8;
+    
+    // Surface remesher
+    HXT_CHECK(hxtSurfaceMesh(opt,mesh,edges,parent,fmesh,nmesh));
+  }
+  else{
+    if (opt->generateLines==0 && opt->generateSurfaces==0){
+      HXT_CHECK(hxtGetSurfaceMesh(opt,mesh,fmesh,nmesh));
+    }
+    else{
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR,"not working for now");
     }
   }
 
+  //********************************************************
+  // A LOT OF DIFFERENT MESH STRUCTURES 
+  // -  mesh -> initial mesh 
+  // - fmesh -> holds feature points, lines, and generated vertices 
+  // - omesh -> holds final mesh triangles and vertices (without lines and points)
+ 
+
+  if (opt->generateVolumes){
+    for (uint32_t i=0; i<fmesh->vertices.num; i++){
+      if (parent[i].type != 4) continue;
+      nmesh->vertices.coord[4*nmesh->vertices.num+0] = fmesh->vertices.coord[4*i+0];
+      nmesh->vertices.coord[4*nmesh->vertices.num+1] = fmesh->vertices.coord[4*i+1];
+      nmesh->vertices.coord[4*nmesh->vertices.num+2] = fmesh->vertices.coord[4*i+2];
+      nmesh->vertices.num++;
+    }
+  }
 
 
   //**********************************************************************************************************
@@ -348,16 +313,17 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
 
 
 
-  HXT_CHECK(hxtMeshWriteGmsh(omesh, "FINALMESHcollapsed.msh"));
-  HXT_CHECK(hxtMeshDelete(&omesh));
-  HXT_CHECK(hxtContextDelete(&ocontext));
+  /*HXT_CHECK(hxtMeshDelete(&nmesh));*/
+  /*HXT_CHECK(hxtContextDelete(&ncontext));*/
+
+  HXT_CHECK(hxtMeshDelete(&fmesh));
+  HXT_CHECK(hxtContextDelete(&fcontext));
+ 
  
 
   HXT_CHECK(hxtFree(&parent));
   HXT_CHECK(hxtEdgesDelete(&edges));
 
-  HXT_CHECK(hxtMeshDelete(&nmesh));
-  HXT_CHECK(hxtContextDelete(&ncontext));
 
   return HXT_STATUS_OK; 
 }

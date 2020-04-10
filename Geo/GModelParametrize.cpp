@@ -541,7 +541,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
 
   Msg::StatusBar(true, "Classifying surfaces (angle: %g)...",
                  angleThreshold * 180. / M_PI);
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   std::set<GFace *> faces;
   std::vector<MElement *> elements;
@@ -590,8 +590,9 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
   // show up at the next sync between the GEO database and the GModel).
   gm->exportDiscreteGEOInternals();
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done classifying surfaces (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done classifying surfaces (Wall %gs, %gs)",
+                 w2 - w1, t2 - t1);
 
 #else
   Msg::Error("Surface classification requires the mesh module");

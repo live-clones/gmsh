@@ -2,7 +2,7 @@
 //
 //  Gmsh GEO tutorial 9
 //
-//  Post-processing plugins (levelsets, sections, annotations)
+//  Plugins
 //
 // -----------------------------------------------------------------------------
 

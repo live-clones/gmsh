@@ -237,17 +237,27 @@ HXTStatus hxtDiscretizeLine(HXTMesh *mesh,
 //*****************************************************************************************
 //*****************************************************************************************
 HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh, 
+                                   HXTPointGenOptions *opt,
                                    const double *directions,
                                    const double *sizemap, 
                                    HXTMesh *fmesh, 
-                                   uint64_t *pointParent)
+                                   HXTPointGenParent *parent)
 {
-  printf("\n===================================\n");
-  printf("      GENERATING POINTS ON LINES \n\n");
 
-  int verbosity = 0;
+  HXT_INFO("");
+  HXT_INFO("========= Generating points on lines ==========");
+  HXT_INFO_COND(opt->verbosity>0,"");
 
   HXT_ASSERT_MSG(mesh->lines.num != 0, "Mesh does not have lines");
+
+
+  // Array to store point "parent" element 
+  // - for corner points gives id of corner vertex of initial mesh
+  // - for points on lines gives the id of line
+  uint64_t *pointParent = NULL;
+  HXT_CHECK(hxtMalloc(&pointParent,fmesh->vertices.size*sizeof(uint64_t)));
+  for (uint32_t i=0; i<fmesh->vertices.size; i++) pointParent[i] = UINT64_MAX;
+ 
 
   // A. Flag corner points
   uint32_t *cornerflag;
@@ -271,7 +281,6 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
   uint32_t numCorners = 0; // connected to 1 or 3+ lines 
   uint32_t maxLinesToPoint = 0; // maximum number of lines starting from a corner
 
-
   for (uint32_t i=0; i<mesh->vertices.num; i++){
     if (cornerflag[i] == UINT32_MAX) continue; // FOR 2D
     numCorners++;
@@ -280,6 +289,10 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
 
   // Correction if we have only closed lineloops without corners 
   if (maxLinesToPoint == 0) maxLinesToPoint = 2;
+
+  // Realloc if numCorners > fmesh->points.size
+  // TODO Realloc 
+  if (numCorners>fmesh->points.size) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Num of corners larger than allocated - TODO realloc");
 
 
 
@@ -380,7 +393,7 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
       uint32_t curr = start;
       uint64_t line0, line1;
 
-      printf("Start %d %lu %lu - %d %d \n", start+1, currentLine, currentLine + mesh->points.num, node0, node1);
+      HXT_INFO_COND(opt->verbosity>0,"Start %d %lu %lu - %d %d", start+1, currentLine, currentLine + mesh->points.num, node0, node1);
 
       while(1){
 
@@ -413,7 +426,8 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
 
       // At this point we have the ordered array orderLines with numOrderLines lines (i.e. boundary edges)
       numProcessedLines += numOrderLines;
-      if(verbosity) printf("Corner point %3d - Number of boundary edges %3lu - Number of processed lines %3lu \n ", start, numOrderLines, numProcessedLines);
+
+      HXT_INFO_COND(opt->verbosity>0,"Corner point %3d - Number of boundary edges %3lu - Number of processed lines %3lu", start, numOrderLines, numProcessedLines);
 
       HXT_CHECK(hxtDiscretizeLine(mesh,directions,sizemap,numOrderLines,orderLines,start,cornerpoints,fmesh,pointParent));
 
@@ -494,30 +508,50 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
 
     // At this point we have the ordered array orderLines with numOrderLines lines (i.e. boundary edges)
     numProcessedLines += numOrderLines;
-    if (verbosity) printf("Closed line loop - Number of boundary edges %3lu - Number of processed lines %3lu \n ", numOrderLines, numProcessedLines);
+    HXT_INFO_COND(opt->verbosity>0,"Closed line loop - Number of boundary edges %3lu - Number of processed lines %3lu", numOrderLines, numProcessedLines);
 
     HXT_CHECK(hxtDiscretizeLine(mesh,directions,sizemap,numOrderLines,orderLines,start,cornerpoints,fmesh,pointParent));
     numClosedLoops++;
 
   }
 
-
   HXT_ASSERT_MSG(mesh->lines.num == numProcessedLines, "Did not process all mesh lines");
   HXT_ASSERT_MSG((numCorners+numClosedLoops)==countStartPoints, "Something is missing");
 
-  printf("\n");
-  printf("          Total number of lines:  %lu \n", mesh->lines.num);
-  printf("      Processed number of lines:  %lu \n", numProcessedLines);
-  printf("           Left number of lines:  %lu \n", mesh->lines.num-numProcessedLines);
-  printf("         Number of closed lines:  %lu \n", numClosedLines);
-  printf("\n");
-  printf("       Number of actual corners:  %d \n",  numCorners);
-  printf("         Number of start points:  %d \n",  countStartPoints);
-  printf("     Number of closed lineloops:  %lu \n", numClosedLoops);
-  printf("       Number of fmesh vertices:  %d \n",  fmesh->vertices.num);
-  printf("  Number of fmesh corner points:  %d \n",  fmesh->points.num);
-  printf("          Number of fmesh lines:  %lu \n", fmesh->lines.num);
 
+
+  // Fill point gen parent struct with lines and points   
+  for (uint32_t i=0; i<fmesh->vertices.num; i++){
+    if (pointParent[i] == UINT64_MAX){
+      return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Vertex %d does not have parent element",i);
+    }
+    parent[i].type = 1;
+    parent[i].id = pointParent[i];
+  }
+
+  // Fill point gen parent struct with corner points 
+  for (uint32_t i=0; i<fmesh->points.num; i++){
+    uint32_t nodeID = fmesh->points.node[i];
+    if (pointParent[nodeID] == UINT64_MAX){
+      return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Vertex %d does not have parent element",i);
+    }
+    parent[nodeID].type = 15;
+    parent[nodeID].id = pointParent[nodeID];
+  }
+
+
+
+
+  HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>0,"Initial mesh number of lines         %lu", mesh->lines.num);
+  HXT_INFO_COND(opt->verbosity>0,"Number of actual corners:            %d",  numCorners);
+  HXT_INFO_COND(opt->verbosity>0,"Number of start points:              %d",  countStartPoints);
+  HXT_INFO_COND(opt->verbosity>0,"Number of closed lineloops:          %lu", numClosedLoops);
+  HXT_INFO_COND(opt->verbosity>0,"Number of fmesh vertices:            %d",  fmesh->vertices.num);
+  HXT_INFO_COND(opt->verbosity>0,"Number of fmesh corner points:       %d",  fmesh->points.num);
+  HXT_INFO_COND(opt->verbosity>0,"Number of fmesh lines:               %lu", fmesh->lines.num);
+
+  HXT_CHECK(hxtFree(&pointParent));
 
   HXT_CHECK(hxtFree(&cornerflag));
   HXT_CHECK(hxtFree(&cornerpoints));
@@ -529,3 +563,57 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
 }
 
 
+//*****************************************************************************************
+//*****************************************************************************************
+//
+// FUNCTION to get line vertices and lines/points from input mesh
+//  
+//
+//*****************************************************************************************
+//*****************************************************************************************
+HXTStatus hxtGetPointsOnLinesFromInputMesh(HXTMesh *mesh, 
+                                           HXTPointGenOptions *opt,
+                                           HXTMesh *fmesh, 
+                                           HXTPointGenParent *fparent)
+{
+  HXT_INFO("");
+  HXT_INFO("========= Get points on lines from input mesh ==========");
+
+  HXTPointGenParent *parent;
+  HXT_CHECK(hxtMalloc(&parent,mesh->vertices.num*sizeof(HXTPointGenParent)));
+  for (uint32_t i=0; i<mesh->vertices.num; i++) parent[i].type = UINT8_MAX;
+  for (uint32_t i=0; i<mesh->vertices.num; i++) parent[i].id = UINT64_MAX;
+  
+  for (uint64_t i=0; i<mesh->lines.num; i++){
+    fmesh->lines.node[2*i+0] = mesh->lines.node[2*i+0];
+    fmesh->lines.node[2*i+1] = mesh->lines.node[2*i+1];
+    fmesh->lines.colors[i] = mesh->lines.colors[i];
+    parent[mesh->lines.node[2*i+0]].type = 1;
+    parent[mesh->lines.node[2*i+1]].type = 1;
+    parent[mesh->lines.node[2*i+0]].id = i;
+    parent[mesh->lines.node[2*i+1]].id = i;
+    fmesh->lines.num++;
+  }
+  for (uint32_t i=0; i<mesh->points.num; i++){
+    fmesh->points.node[i] = mesh->points.node[i];
+    parent[mesh->points.node[i]].type = 15;
+    parent[mesh->points.node[i]].id = mesh->points.node[i];
+    fmesh->points.num++;
+  }
+
+  uint32_t countV = 0;
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    if (parent[i].type == UINT8_MAX) continue;
+    fmesh->vertices.coord[4*countV+0] = mesh->vertices.coord[4*i+0];
+    fmesh->vertices.coord[4*countV+1] = mesh->vertices.coord[4*i+1];
+    fmesh->vertices.coord[4*countV+2] = mesh->vertices.coord[4*i+2];
+    fparent[countV].type = parent[i].type;
+    fparent[countV].id = parent[i].id;
+    countV++;
+    fmesh->vertices.num++;
+  }
+
+  HXT_CHECK(hxtFree(&parent));
+
+  return HXT_STATUS_OK;
+}

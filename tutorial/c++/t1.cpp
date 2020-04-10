@@ -2,8 +2,7 @@
 //
 //  Gmsh C++ tutorial 1
 //
-//  Elementary entities (points, curves, surfaces), physical groups (points,
-//  curves, surfaces)
+//  Geometry basics, elementary entities, physical groups
 //
 // -----------------------------------------------------------------------------
 
@@ -169,8 +168,8 @@ int main(int argc, char **argv)
   // the underlying curves and points could be accessed with
   // gmsh::model::getBoundary().
   //
-  // See e.g `t16.cpp', `t18.cpp' or `t19.cpp' for complete examples based on
-  // OpenCASCADE, and `demos/api' for more.
+  // See e.g `t16.cpp', `t18.cpp', `t19.cpp' or `t20.cpp' for complete examples
+  // based on OpenCASCADE, and `demos/api' for more.
 
   // This should be called when you are done using the Gmsh C++ API:
   gmsh::finalize();

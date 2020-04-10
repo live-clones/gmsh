@@ -34,13 +34,30 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
     sizemap[3*i+0] = (1./exp(data[7*i+6]))*opt->uniformSize;
     sizemap[3*i+1] = (1./exp(data[7*i+6]))*opt->uniformSize;
     sizemap[3*i+2] = (1./exp(data[7*i+6]))*opt->uniformSize;
+
+    /*sizemap[3*i+0] = opt->uniformSize;*/
+    /*sizemap[3*i+1] = opt->uniformSize;*/
+    /*sizemap[3*i+2] = opt->uniformSize;*/
+ 
   }
 
   HXT_CHECK(hxtPointGenWriteDirections(mesh,directions,"GMSH_TEST_directionsPoints.pos"));
   HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,h_function,"GMSH_TEST_hfunction.pos"));
+
+  if (opt->numTris){
+    HXT_INFO("Scaling sizemap for estimated %lu final triangles",opt->numTris);
+    HXT_CHECK(hxtPointGenSizemapFromNelements(mesh,opt->numTris,sizemap));
+  }
+
   HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,sizemap,"GMSH_TEST_sizemap.pos"));
   
   HXT_CHECK(hxtGeneratePointsMain(mesh,opt,sizemap,directions,fmesh));
+
+  const char *meshoutput = "finalmesh.msh";
+  if (meshoutput){
+    HXT_INFO("Writing final mesh to \"%s\"", meshoutput);
+    HXT_CHECK(hxtMeshWriteGmsh(fmesh,meshoutput));
+  }
 
 
   HXT_CHECK(hxtFree(&directions));

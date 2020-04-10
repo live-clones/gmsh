@@ -219,14 +219,61 @@ void GModel::destroyMeshCaches()
 
 void GModel::deleteMesh()
 {
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    (*it)->deleteMesh();
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    (*it)->deleteMesh();
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    (*it)->deleteMesh();
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
-    (*it)->deleteMesh();
+  for(riter it = firstRegion(); it != lastRegion(); ++it) (*it)->deleteMesh();
+  for(fiter it = firstFace(); it != lastFace(); ++it) (*it)->deleteMesh();
+  for(eiter it = firstEdge(); it != lastEdge(); ++it) (*it)->deleteMesh();
+  for(viter it = firstVertex(); it != lastVertex(); ++it) (*it)->deleteMesh();
+  destroyMeshCaches();
+  _currentMeshEntity = 0;
+  _lastMeshEntityError.clear();
+  _lastMeshVertexError.clear();
+}
+
+void GModel::deleteMesh(const std::vector<GEntity *> &entities)
+{
+  if(entities.empty()) {
+    deleteMesh();
+    return;
+  }
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    bool ok = true;
+    switch(ge->dim()) {
+    case 0: {
+      std::vector<GEdge *> e = ge->edges();
+      for(std::vector<GEdge *>::iterator it = e.begin(); it != e.end(); ++it) {
+        if((*it)->getNumMeshElements()) {
+          ok = false;
+          break;
+        }
+      }
+    } break;
+    case 1: {
+      std::vector<GFace *> f = ge->faces();
+      for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
+        if((*it)->getNumMeshElements()) {
+          ok = false;
+          break;
+        }
+      }
+    } break;
+    case 2: {
+      std::list<GRegion *> r = ge->regions();
+      for(std::list<GRegion *>::iterator it = r.begin(); it != r.end(); ++it) {
+        if((*it)->getNumMeshElements()) {
+          ok = false;
+          break;
+        }
+      }
+    } break;
+    }
+    if(ok) { ge->deleteMesh(); }
+    else {
+      Msg::Warning("Cannot delete mesh of entity (%d, %d), connected to mesh "
+                   "of higher dimensional entity",
+                   ge->dim(), ge->tag());
+    }
+  }
   destroyMeshCaches();
   _currentMeshEntity = 0;
   _lastMeshEntityError.clear();
@@ -900,7 +947,7 @@ int GModel::mesh(int dimension)
 {
 #if defined(HAVE_MESH)
   GenerateMesh(this, dimension);
-  if(CTX::instance()->mesh.renumber){
+  if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
     renumberMeshElements();
   }
@@ -1048,7 +1095,7 @@ int GModel::adaptMesh()
 {
 #if defined(HAVE_MESH)
   AdaptMesh(this);
-  if(CTX::instance()->mesh.renumber){
+  if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
     renumberMeshElements();
   }
@@ -1217,7 +1264,7 @@ int GModel::adaptMesh(std::vector<int> technique,
   // copy context (in order to allow multiple calls)
   *(CTX::instance()) = _backup;
 
-  if(CTX::instance()->mesh.renumber){
+  if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
     renumberMeshElements();
   }
@@ -1234,13 +1281,11 @@ int GModel::refineMesh(int linear, bool splitIntoQuads, bool splitIntoHexas,
                        bool barycentric)
 {
 #if defined(HAVE_MESH)
-  if(!barycentric){
-    RefineMesh(this, linear, splitIntoQuads, splitIntoHexas);
-  }
-  else{
+  if(!barycentric) { RefineMesh(this, linear, splitIntoQuads, splitIntoHexas); }
+  else {
     BarycentricRefineMesh(this);
   }
-  if(CTX::instance()->mesh.renumber){
+  if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
     renumberMeshElements();
   }
@@ -1256,7 +1301,7 @@ int GModel::recombineMesh()
 {
 #if defined(HAVE_MESH)
   RecombineMesh(this);
-  if(CTX::instance()->mesh.renumber){
+  if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
     renumberMeshElements();
   }
@@ -1273,7 +1318,7 @@ int GModel::optimizeMesh(const std::string &how, const bool force, int niter)
 #if defined(HAVE_MESH)
   OptimizeMesh(this, how, force, niter);
   FixPeriodicMesh(this);
-  if(CTX::instance()->mesh.renumber){
+  if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
     renumberMeshElements();
   }
@@ -1293,7 +1338,7 @@ int GModel::setOrderN(int order, int linear, int incomplete)
   else
     SetOrder1(this);
   FixPeriodicMesh(this);
-  if(CTX::instance()->mesh.renumber){
+  if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
     renumberMeshElements();
   }
@@ -1371,15 +1416,12 @@ int GModel::addMEdge(const MEdge &edge)
 
 int GModel::getEdgeNumber(const MEdge &edge)
 {
-  hashmapMEdge::iterator it=_mapEdgeNum.find(edge);
-  if (it!=_mapEdgeNum.end())
-  {
-    return _mapEdgeNum.find(edge)->second;
+  hashmapMEdge::iterator it = _mapEdgeNum.find(edge);
+  if(it != _mapEdgeNum.end()) { return _mapEdgeNum.find(edge)->second; }
+  else {
+    Msg::Error("this edge does not exist in the mapEdgeNum");
+    throw 2;
   }
-  else{
-    Msg::Error("this edge does not exist in the mapEdgeNum"); throw 2;
-  }
-
 }
 int GModel::addMFace(const MFace &face)
 {
@@ -1529,20 +1571,20 @@ std::size_t GModel::getNumMeshElements(unsigned c[6])
   return 0;
 }
 
-MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param,
-                                        int dim, bool strict)
+MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
+                                        bool strict)
 {
   if(!_elementOctree) {
     Msg::Debug("Rebuilding mesh element octree");
     _elementOctree = new MElementOctree(this);
   }
   MElement *e = _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
-  if(e){
+  if(e) {
     double xyz[3] = {p.x(), p.y(), p.z()}, uvw[3];
     e->xyz2uvw(xyz, uvw);
     param.setPosition(uvw[0], uvw[1], uvw[2]);
   }
-  else{
+  else {
     param.setPosition(0, 0, 0);
   }
   return e;
@@ -1961,32 +2003,37 @@ static void _associateEntityWithElementVertices(GEntity *ge,
 void GModel::createGeometryOfDiscreteEntities()
 {
   Msg::StatusBar(true, "Creating geometry of discrete curves...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
-    if(de){
+    if(de) {
       if(de->createGeometry())
-        Msg::Error("Could not create geometry of discrete curve %d",
-                   de->tag());
+        Msg::Error("Could not create geometry of discrete curve %d", de->tag());
     }
   }
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done creating geometry of discrete curves (%g s)",
-                 t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true,
+                 "Done creating geometry of discrete curves "
+                 "(Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 
   Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
   t1 = Cpu();
+  w1 = TimeOfDay();
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
-    if(df){
+    if(df) {
       if(df->createGeometry())
         Msg::Error("Could not create geometry of discrete surface %d",
                    df->tag());
     }
   }
   t2 = Cpu();
-  Msg::StatusBar(true, "Done creating geometry of discrete surfaces (%g s)",
-                 t2 - t1);
+  w2 = TimeOfDay();
+  Msg::StatusBar(true,
+                 "Done creating geometry of discrete surfaces "
+                 "(Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 }
 
 void GModel::_associateEntityWithMeshVertices(bool force)
@@ -2333,9 +2380,10 @@ void GModel::alignPeriodicBoundaries()
           if(srcIter == v2v.end() || !srcIter->second) {
             srcIter = geV2v.find(tgtVtx);
             if(srcIter == geV2v.end() || !srcIter->second) {
-              Msg::Debug("Could not find periodic counterpart of node %d on curve %d "
-                         "or on entity %d of dimension %d",
-                         tgtVtx->getNum(), tgt->tag(), ge->tag(), ge->dim());
+              Msg::Debug(
+                "Could not find periodic counterpart of node %d on curve %d "
+                "or on entity %d of dimension %d",
+                tgtVtx->getNum(), tgt->tag(), ge->tag(), ge->dim());
               return;
             }
             else
@@ -2351,11 +2399,11 @@ void GModel::alignPeriodicBoundaries()
           srcLines.find(tgtEdge);
 
         if(sIter == srcLines.end() || !sIter->second) {
-          Msg::Debug("Could not find periodic counterpart of mesh edge %d-%d on "
-                     "curve %d for mesh edge %d-%d on curve %d",
-                     tgtLine->getVertex(0)->getNum(),
-                     tgtLine->getVertex(1)->getNum(), tgt->tag(),
-                     tgtVtcs[0]->getNum(), tgtVtcs[1]->getNum(), src->tag());
+          Msg::Debug(
+            "Could not find periodic counterpart of mesh edge %d-%d on "
+            "curve %d for mesh edge %d-%d on curve %d",
+            tgtLine->getVertex(0)->getNum(), tgtLine->getVertex(1)->getNum(),
+            tgt->tag(), tgtVtcs[0]->getNum(), tgtVtcs[1]->getNum(), src->tag());
           return;
         }
         else {
@@ -2445,11 +2493,13 @@ void GModel::alignPeriodicBoundaries()
           bool swap = false;
 
           if(!tgtFace.computeCorrespondence(srcFace, rotation, swap)) {
-            Msg::Debug("Could not find correspondance between mesh face %d-%d-%d (slave) "
-                       "and %d-%d-%d (master)",
-                       tgtElmt->getVertex(0)->getNum(), tgtElmt->getVertex(1)->getNum(),
-                       tgtElmt->getVertex(2)->getNum(), srcElmt->getVertex(0)->getNum(),
-                       srcElmt->getVertex(1)->getNum(), srcElmt->getVertex(2)->getNum());
+            Msg::Debug(
+              "Could not find correspondance between mesh face %d-%d-%d "
+              "(slave) "
+              "and %d-%d-%d (master)",
+              tgtElmt->getVertex(0)->getNum(), tgtElmt->getVertex(1)->getNum(),
+              tgtElmt->getVertex(2)->getNum(), srcElmt->getVertex(0)->getNum(),
+              srcElmt->getVertex(1)->getNum(), srcElmt->getVertex(2)->getNum());
             return;
           }
 
@@ -2462,11 +2512,10 @@ void GModel::alignPeriodicBoundaries()
   Msg::Debug("Done aligning periodic boundaries");
 }
 
-static void
-connectMElementsByMFace(const MFace &f,
-                        std::multimap<MFace, MElement *, MFaceLessThan> &e2f,
-                        std::set<MElement *> &group,
-                        std::set<MFace, MFaceLessThan> &touched, int recur_level)
+static void connectMElementsByMFace(
+  const MFace &f, std::multimap<MFace, MElement *, MFaceLessThan> &e2f,
+  std::set<MElement *> &group, std::set<MFace, MFaceLessThan> &touched,
+  int recur_level)
 {
   // this is very slow...
   std::stack<MFace> _stack;
@@ -2866,7 +2915,7 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
     Msg::Info("Cutting mesh...");
   else
     Msg::Info("Splitting mesh...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   GModel *cutGM =
     buildCutMesh(this, ls, elements, vertexMap, physicals, cutElem);
@@ -2891,9 +2940,11 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
   }
 
   if(cutElem)
-    Msg::Info("Mesh cutting completed (%g s)", Cpu() - t1);
+    Msg::Info("Mesh cutting completed (Wall %gs, CPU %gs)", TimeOfDay() - w1,
+              Cpu() - t1);
   else
-    Msg::Info("Mesh splitting completed (%g s)", Cpu() - t1);
+    Msg::Info("Mesh splitting completed (Wall %gs, CPU %gs)", TimeOfDay() - w1,
+              Cpu() - t1);
 
   return cutGM;
 }
@@ -2946,8 +2997,7 @@ void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension,
   setPhysicalNumToEntitiesInBox(EntityDimension, PhysicalNumber, box);
 }
 
-void GModel::classifySurfaces(double angleThreshold,
-                              bool includeBoundary,
+void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
                               bool forReparametrization,
                               double curveAngleThreshold)
 {
@@ -2973,7 +3023,7 @@ void GModel::computeHomology()
 
 #if defined(HAVE_KBIPACK)
   Msg::StatusBar(true, "Homology and cohomology computation...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   // find unique domain/subdomain requests
   typedef std::pair<const std::vector<int>, const std::vector<int> > dpair;
@@ -3049,9 +3099,11 @@ void GModel::computeHomology()
   }
   Msg::Info("");
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done homology and cohomology computation (%g s)",
-                 t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true,
+                 "Done homology and cohomology computation "
+                 "(Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 
 #else
   Msg::Error("Homology computation requires KBIPACK");

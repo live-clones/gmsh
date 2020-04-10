@@ -2,7 +2,7 @@
 #
 #  Gmsh Python tutorial 8
 #
-#  Post-processing, animations, options
+#  Post-processing and animations
 #
 # ------------------------------------------------------------------------------
 

@@ -22,6 +22,7 @@ class HierarchicalBasisH1Point : public HierarchicalBasisH1 {
 public:
   HierarchicalBasisH1Point();
   virtual ~HierarchicalBasisH1Point();
+  virtual unsigned int getNumberOfOrientations() const;
   // vertexBasis=[v0]
   virtual void generateBasis(double const &u, double const &v, double const &w,
                              std::vector<double> &vertexBasis,

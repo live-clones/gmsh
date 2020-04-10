@@ -33,10 +33,11 @@ HXTStatus hxtPointGenDirectionsTrianglesToEdges(HXTMesh *mesh, double *dirs, dou
 HXTStatus hxtPointGenGetSizesInputMesh(HXTEdges *edges, double factor, double *sizemap);
 HXTStatus hxtPointGenGetSizesCurvature(HXTEdges *edges, int N, double a, double minSize, double *sizemap);
 HXTStatus hxtPointGenSizemapSmoothing(HXTEdges *edges, double factor, double *sizemap);
+HXTStatus hxtPointGenSizemapFromNelements(HXTMesh *mesh, uint64_t nelem, double *sizemap);
 
 // Extract lines from dihedral angles function
 HXTStatus hxtPointGenOpenLines(HXTMesh *mesh);
-HXTStatus hxtPointGenDihedralLines(HXTMesh *mesh, HXTEdges *edges); 
+HXTStatus hxtPointGenClassifyDihedralLines(HXTMesh *mesh, HXTEdges *edges); 
 
 // Function to associate elements
 HXTStatus hxtGetLinesToEdges(HXTEdges *edges, uint32_t *lines2edges);
@@ -47,6 +48,7 @@ HXTStatus hxtCountMaxNumberOfLinesToVertices(HXTMesh *mesh, uint64_t *maxNumLine
 HXTStatus hxtGetVerticesToLines(HXTMesh *mesh, uint64_t maxVL, uint64_t *vertices2lines);
 HXTStatus hxtGetVerticesToTriangles(HXTMesh *mesh, uint64_t *vertices2triangles);
 HXTStatus hxtGetTrianglesToTetrahedra(HXTMesh *mesh, uint64_t *tri2tet,uint64_t *lines2tet);
+HXTStatus hxtGetBoundaryTetrahedraToTriangles(HXTMesh *mesh, uint64_t *tri2tet, uint64_t **tet2tri);
 
 HXTStatus hxtGetLinesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t **listColors);
 HXTStatus hxtGetTrianglesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t **listColors);
