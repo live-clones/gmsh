@@ -104,12 +104,13 @@ for e in entities:
     # * Is the entity a partition entity? If so, what is its parent entity?
     partitions = gmsh.model.getPartitions(e[0], e[1])
     if len(partitions):
-           print(" - Partition tags: " + str(partitions) +
-                 " - parent entity " + str(gmsh.model.getParent(e[0], e[1])))
+        print(" - Partition tags: " + str(partitions) + " - parent entity " +
+              str(gmsh.model.getParent(e[0], e[1])))
 
     # * List all types of elements making up the mesh of the entity:
     for t in elemTypes:
-        name, dim, order, numv, parv, _ = gmsh.model.mesh.getElementProperties(t)
+        name, dim, order, numv, parv, _ = gmsh.model.mesh.getElementProperties(
+            t)
         print(" - Element type: " + name + ", order " + str(order) + " (" +
               str(numv) + " nodes in param coord: " + str(parv) + ")")
 

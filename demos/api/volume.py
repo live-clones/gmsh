@@ -4,7 +4,7 @@ import sys
 gmsh.initialize(sys.argv)
 gmsh.option.setNumber("General.Terminal", 1)
 
-s = gmsh.model.occ.addRectangle(0,0,0, 3,2)
+s = gmsh.model.occ.addRectangle(0, 0, 0, 3, 2)
 gmsh.model.occ.synchronize()
 
 m = gmsh.model.occ.getMass(2, s)

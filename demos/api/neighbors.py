@@ -7,8 +7,8 @@ import sys
 gmsh.initialize(sys.argv)
 gmsh.option.setNumber("General.Terminal", 1)
 
-gmsh.model.add("my test model");
-gmsh.model.occ.addBox(0,0,0, 1,1,1);
+gmsh.model.add("my test model")
+gmsh.model.occ.addBox(0, 0, 0, 1, 1, 1)
 gmsh.model.occ.synchronize()
 gmsh.model.mesh.generate(3)
 
@@ -20,9 +20,9 @@ print "--- computing face x tet incidence"
 faces = []
 fxt = {}
 for i in range(0, len(fnodes), 3):
-    f = tuple(sorted(fnodes[i:i+3]))
+    f = tuple(sorted(fnodes[i:i + 3]))
     faces.append(f)
-    t = tets[i/12]
+    t = tets[i / 12]
     if not f in fxt:
         fxt[f] = [t]
     else:
@@ -32,7 +32,7 @@ print "--- computing neighbors by face"
 txt = {}
 for i in range(0, len(faces)):
     f = faces[i]
-    t = tets[i/4]
+    t = tets[i / 4]
     if not t in txt:
         txt[t] = set()
     for tt in fxt[f]:

@@ -35,7 +35,7 @@ gmsh.onelab.set("""
 
 # get the full parameter, store it as a python dict, and change an attribute
 p = json.loads(gmsh.onelab.get("check 1"))
-p["attributes"] = {"Highlight":"Blue"}
+p["attributes"] = {"Highlight": "Blue"}
 gmsh.onelab.set(json.dumps(p))
 
 # shorter way to just change the value, without json overhead

@@ -22,7 +22,7 @@ gmsh.option.setNumber("General.Terminal", 1)
 # Copied from t1.py...
 lc = 1e-2
 gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
-gmsh.model.geo.addPoint(.1, 0,  0, lc, 2)
+gmsh.model.geo.addPoint(.1, 0, 0, lc, 2)
 gmsh.model.geo.addPoint(.1, .3, 0, lc, 3)
 gmsh.model.geo.addPoint(0, .3, 0, lc, 4)
 gmsh.model.geo.addLine(1, 2, 1)
@@ -63,24 +63,24 @@ p = gmsh.model.geo.addPoint(0.07, 0.15, 0.025, lc)
 gmsh.model.geo.synchronize()
 gmsh.model.mesh.embed(0, [p], 3, 1)
 
-gmsh.model.geo.addPoint(0.025, 0.15, 0.025, lc, p+1)
-l = gmsh.model.geo.addLine(7, p+1)
+gmsh.model.geo.addPoint(0.025, 0.15, 0.025, lc, p + 1)
+l = gmsh.model.geo.addLine(7, p + 1)
 
 gmsh.model.geo.synchronize()
 gmsh.model.mesh.embed(1, [l], 3, 1)
 
 # Finally, we can also embed a surface in a volume:
-gmsh.model.geo.addPoint(0.02, 0.12, 0.05, lc, p+2)
-gmsh.model.geo.addPoint(0.04, 0.12, 0.05, lc, p+3)
-gmsh.model.geo.addPoint(0.04, 0.18, 0.05, lc, p+4)
-gmsh.model.geo.addPoint(0.02, 0.18, 0.05, lc, p+5)
+gmsh.model.geo.addPoint(0.02, 0.12, 0.05, lc, p + 2)
+gmsh.model.geo.addPoint(0.04, 0.12, 0.05, lc, p + 3)
+gmsh.model.geo.addPoint(0.04, 0.18, 0.05, lc, p + 4)
+gmsh.model.geo.addPoint(0.02, 0.18, 0.05, lc, p + 5)
 
-gmsh.model.geo.addLine(p+2, p+3, l+1)
-gmsh.model.geo.addLine(p+3, p+4, l+2)
-gmsh.model.geo.addLine(p+4, p+5, l+3)
-gmsh.model.geo.addLine(p+5, p+2, l+4)
+gmsh.model.geo.addLine(p + 2, p + 3, l + 1)
+gmsh.model.geo.addLine(p + 3, p + 4, l + 2)
+gmsh.model.geo.addLine(p + 4, p + 5, l + 3)
+gmsh.model.geo.addLine(p + 5, p + 2, l + 4)
 
-ll = gmsh.model.geo.addCurveLoop([l+1, l+2, l+3, l+4])
+ll = gmsh.model.geo.addCurveLoop([l + 1, l + 2, l + 3, l + 4])
 s = gmsh.model.geo.addPlaneSurface([ll])
 
 gmsh.model.geo.synchronize()

@@ -30,9 +30,11 @@ gmsh.model.add("x2")
 # We will create the terrain surface mesh from N x N input data points:
 N = 100
 
+
 # Helper function to return a node tag given two indices i and j:
 def tag(i, j):
-    return (N+1) * i + j + 1
+    return (N + 1) * i + j + 1
+
 
 # The x, y, z coordinates of all the nodes:
 coords = []
@@ -46,7 +48,7 @@ tris = []
 
 # The connectivities of the line elements on the 4 boundaries (2 node tags
 # for each line element):
-lin = [[],[],[],[]]
+lin = [[], [], [], []]
 
 # The connectivities of the point elements on the 4 corners (1 node tag for each
 # point element):
@@ -55,26 +57,29 @@ pnt = [tag(0, 0), tag(N, 0), tag(N, N), tag(0, N)]
 for i in range(N + 1):
     for j in range(N + 1):
         nodes.append(tag(i, j))
-        coords.extend([float(i)/N, float(j)/N, 0.05 * math.sin(10*float(i+j) / N)])
+        coords.extend([
+            float(i) / N,
+            float(j) / N, 0.05 * math.sin(10 * float(i + j) / N)
+        ])
         if i > 0 and j > 0:
-            tris.extend([tag(i-1, j-1), tag(i, j-1), tag(i-1, j)])
-            tris.extend([tag(i, j-1), tag(i, j), tag(i-1, j)])
+            tris.extend([tag(i - 1, j - 1), tag(i, j - 1), tag(i - 1, j)])
+            tris.extend([tag(i, j - 1), tag(i, j), tag(i - 1, j)])
         if (i == 0 or i == N) and j > 0:
-            lin[3 if i == 0 else 1].extend([tag(i, j-1), tag(i, j)])
+            lin[3 if i == 0 else 1].extend([tag(i, j - 1), tag(i, j)])
         if (j == 0 or j == N) and i > 0:
-            lin[0 if j == 0 else 2].extend([tag(i-1, j), tag(i, j)])
+            lin[0 if j == 0 else 2].extend([tag(i - 1, j), tag(i, j)])
 
 # Create 4 discrete points for the 4 corners of the terrain surface:
 for i in range(4):
-    gmsh.model.addDiscreteEntity(0, i+1)
-gmsh.model.setCoordinates(1, 0, 0, coords[3*tag(0,0)-1])
-gmsh.model.setCoordinates(2, 1, 0, coords[3*tag(N,0)-1])
-gmsh.model.setCoordinates(3, 1, 1, coords[3*tag(N,N)-1])
-gmsh.model.setCoordinates(4, 0, 1, coords[3*tag(0,N)-1])
+    gmsh.model.addDiscreteEntity(0, i + 1)
+gmsh.model.setCoordinates(1, 0, 0, coords[3 * tag(0, 0) - 1])
+gmsh.model.setCoordinates(2, 1, 0, coords[3 * tag(N, 0) - 1])
+gmsh.model.setCoordinates(3, 1, 1, coords[3 * tag(N, N) - 1])
+gmsh.model.setCoordinates(4, 0, 1, coords[3 * tag(0, N) - 1])
 
 # Create 4 discrete bounding curves, with their (CAD) boundary points:
 for i in range(4):
-    gmsh.model.addDiscreteEntity(1, i+1, [i+1 , i+2 if i < 3 else 1])
+    gmsh.model.addDiscreteEntity(1, i + 1, [i + 1, i + 2 if i < 3 else 1])
 
 # Create one discrete surface, with its bounding curves:
 gmsh.model.addDiscreteEntity(2, 1, [1, 2, -3, -4])
@@ -118,15 +123,15 @@ c10 = gmsh.model.geo.addLine(p1, 1)
 c11 = gmsh.model.geo.addLine(p2, 2)
 c12 = gmsh.model.geo.addLine(p3, 3)
 c13 = gmsh.model.geo.addLine(p4, 4)
-ll1 = gmsh.model.geo.addCurveLoop([c1,c2,c3,c4])
+ll1 = gmsh.model.geo.addCurveLoop([c1, c2, c3, c4])
 s1 = gmsh.model.geo.addPlaneSurface([ll1])
-ll3 = gmsh.model.geo.addCurveLoop([c1,c11,-1,-c10])
+ll3 = gmsh.model.geo.addCurveLoop([c1, c11, -1, -c10])
 s3 = gmsh.model.geo.addPlaneSurface([ll3])
-ll4 = gmsh.model.geo.addCurveLoop([c2,c12,-2,-c11])
+ll4 = gmsh.model.geo.addCurveLoop([c2, c12, -2, -c11])
 s4 = gmsh.model.geo.addPlaneSurface([ll4])
-ll5 = gmsh.model.geo.addCurveLoop([c3,c13,3,-c12])
+ll5 = gmsh.model.geo.addCurveLoop([c3, c13, 3, -c12])
 s5 = gmsh.model.geo.addPlaneSurface([ll5])
-ll6 = gmsh.model.geo.addCurveLoop([c4,c10,4,-c13])
+ll6 = gmsh.model.geo.addCurveLoop([c4, c10, 4, -c13])
 s6 = gmsh.model.geo.addPlaneSurface([ll6])
 sl1 = gmsh.model.geo.addSurfaceLoop([s1, s3, s4, s5, s6, 1])
 v1 = gmsh.model.geo.addVolume([sl1])
