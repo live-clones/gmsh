@@ -14,7 +14,7 @@ p = gmsh.model.addPhysicalGroup(2, [s])
 gmsh.model.mesh.generate(2)
 
 gmsh.plugin.setNumber("MeshVolume", "Dimension", 2)
-gmsh.plugin.setNumber("MeshVolume", "Physical", p)
+gmsh.plugin.setNumber("MeshVolume", "PhysicalGroup", p)
 gmsh.plugin.run("MeshVolume")
 
 _, _, data = gmsh.view.getListData(0)

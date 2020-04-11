@@ -21,7 +21,7 @@ gmsh.view.addListData(t, "ST", 1, tri1)
 t2 = gmsh.view.add("some other data")
 gmsh.view.addListData(t2, "ST", 1, tri2)
 
-gmsh.view.combine("elements", "all")
+gmsh.view.combine("elements", "all", remove = False)
 
 # gmsh.view.write(t, "data.pos")
 

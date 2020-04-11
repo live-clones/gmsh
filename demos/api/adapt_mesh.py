@@ -29,7 +29,7 @@ def my_function(xyz):
 def compute_interpolation_error(nodes, triangles, f):
     uvw, weights = gmsh.model.mesh.getIntegrationPoints(2, "Gauss2")
     jac, det, pt = gmsh.model.mesh.getJacobians(2, uvw)
-    numcomp, sf = gmsh.model.mesh.getBasisFunctions(2, uvw, "Lagrange")
+    numcomp, sf, _ = gmsh.model.mesh.getBasisFunctions(2, uvw, "Lagrange")
     sf = sf.reshape((weights.shape[0], -1))
     qx = pt.reshape((triangles.shape[0], -1, 3))
     det = np.abs(det.reshape((triangles.shape[0], -1)))
