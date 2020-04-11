@@ -28,10 +28,9 @@ int main(int argc, char **argv)
 
   // We first create two cubes:
   try {
-    gmsh::model::occ::addBox(0,0,0, 1,1,1, 1);
-    gmsh::model::occ::addBox(0,0,0, 0.5,0.5,0.5, 2);
-  }
-  catch(...) {
+    gmsh::model::occ::addBox(0, 0, 0, 1, 1, 1, 1);
+    gmsh::model::occ::addBox(0, 0, 0, 0.5, 0.5, 0.5, 2);
+  } catch(...) {
     gmsh::logger::write("Could not create OpenCASCADE shapes: bye!");
     return 0;
   }
@@ -39,19 +38,19 @@ int main(int argc, char **argv)
   // We apply a boolean difference to create the "cube minus one eigth" shape:
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
-  gmsh::model::occ::cut({{3,1}}, {{3,2}}, ov, ovv, 3);
+  gmsh::model::occ::cut({{3, 1}}, {{3, 2}}, ov, ovv, 3);
 
   // Boolean operations with OpenCASCADE always create new entities. By default
   // the extra arguments `removeObject' and `removeTool' in `cut()' are set to
   // `true', which will delete the original entities.
 
   // We then create the five spheres:
-  double x = 0, y = 0.75, z = 0, r = 0.09 ;
+  double x = 0, y = 0.75, z = 0, r = 0.09;
   std::vector<std::pair<int, int> > holes;
-  for(int t = 1; t <= 5; t++){
-    x += 0.166 ;
-    z += 0.166 ;
-    gmsh::model::occ::addSphere(x,y,z,r, 3 + t);
+  for(int t = 1; t <= 5; t++) {
+    x += 0.166;
+    z += 0.166;
+    gmsh::model::occ::addSphere(x, y, z, r, 3 + t);
     holes.push_back({3, 3 + t});
   }
 
@@ -59,7 +58,7 @@ int main(int argc, char **argv)
   // want five spherical inclusions, whose mesh should be conformal with the
   // mesh of the cube: we thus use `fragment()', which intersects all volumes in
   // a conformal manner (without creating duplicate interfaces):
-  gmsh::model::occ::fragment({{3,3}}, holes, ov, ovv);
+  gmsh::model::occ::fragment({{3, 3}}, holes, ov, ovv);
 
   // ov contains all the generated entities of the same dimension as the input
   // entities:
@@ -74,10 +73,10 @@ int main(int argc, char **argv)
   in.insert(in.end(), holes.begin(), holes.end());
   for(std::size_t i = 0; i < in.size(); i++) {
     std::string s = "parent (" + std::to_string(in[i].first) + "," +
-      std::to_string(in[i].second) + ") -> child";
+                    std::to_string(in[i].second) + ") -> child";
     for(std::size_t j = 0; j < ovv[i].size(); j++) {
       s += " (" + std::to_string(ovv[i][j].first) + "," +
-        std::to_string(ovv[i][j].second) + ")";
+           std::to_string(ovv[i][j].second) + ")";
     }
     gmsh::logger::write(s);
   }
@@ -93,8 +92,7 @@ int main(int argc, char **argv)
   // directly, as the five spheres (volumes 4, 5, 6, 7 and 8), which will be
   // deleted by the fragment operations, will be recreated identically (albeit
   // with new surfaces) with the same tags.:
-  for(int i = 1; i <= 5; i++)
-    gmsh::model::addPhysicalGroup(3, {3 + i}, i);
+  for(int i = 1; i <= 5; i++) gmsh::model::addPhysicalGroup(3, {3 + i}, i);
 
   // The tag of the cube will change though, so we need to access it
   // programmatically:
@@ -122,8 +120,8 @@ int main(int argc, char **argv)
 
   // Select the corner point by searching for it geometrically:
   double eps = 1e-3;
-  gmsh::model::getEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
-                                  0.5+eps, 0.5+eps, 0.5+eps, ov, 0);
+  gmsh::model::getEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
+                                        0.5 + eps, 0.5 + eps, 0.5 + eps, ov, 0);
   gmsh::model::mesh::setSize(ov, lcar2);
 
   gmsh::model::mesh::generate(3);

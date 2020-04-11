@@ -20,18 +20,18 @@ gmsh.model.add("t10")
 
 # Let's create a simple rectangular geometry:
 lc = .15
-gmsh.model.geo.addPoint(0.0,0.0,0, lc, 1)
-gmsh.model.geo.addPoint(1,0.0,0, lc, 2)
-gmsh.model.geo.addPoint(1,1,0, lc, 3)
-gmsh.model.geo.addPoint(0,1,0, lc, 4)
-gmsh.model.geo.addPoint(0.2,.5,0, lc, 5)
+gmsh.model.geo.addPoint(0.0, 0.0, 0, lc, 1)
+gmsh.model.geo.addPoint(1, 0.0, 0, lc, 2)
+gmsh.model.geo.addPoint(1, 1, 0, lc, 3)
+gmsh.model.geo.addPoint(0, 1, 0, lc, 4)
+gmsh.model.geo.addPoint(0.2, .5, 0, lc, 5)
 
-gmsh.model.geo.addLine(1,2, 1);
-gmsh.model.geo.addLine(2,3, 2);
-gmsh.model.geo.addLine(3,4, 3);
-gmsh.model.geo.addLine(4,1, 4);
+gmsh.model.geo.addLine(1, 2, 1)
+gmsh.model.geo.addLine(2, 3, 2)
+gmsh.model.geo.addLine(3, 4, 3)
+gmsh.model.geo.addLine(4, 1, 4)
 
-gmsh.model.geo.addCurveLoop([1,2,3,4], 5)
+gmsh.model.geo.addCurveLoop([1, 2, 3, 4], 5)
 gmsh.model.geo.addPlaneSurface([5], 6)
 
 gmsh.model.geo.synchronize()
@@ -57,8 +57,8 @@ gmsh.model.mesh.field.setNumbers(1, "EdgesList", [2])
 # LcMin -o----------------/
 #        |                |       |
 #      Point           DistMin DistMax
-gmsh.model.mesh.field.add("Threshold", 2);
-gmsh.model.mesh.field.setNumber(2, "IField", 1);
+gmsh.model.mesh.field.add("Threshold", 2)
+gmsh.model.mesh.field.setNumber(2, "IField", 1)
 gmsh.model.mesh.field.setNumber(2, "LcMin", lc / 30)
 gmsh.model.mesh.field.setNumber(2, "LcMax", lc)
 gmsh.model.mesh.field.setNumber(2, "DistMin", 0.15)
@@ -67,7 +67,8 @@ gmsh.model.mesh.field.setNumber(2, "DistMax", 0.5)
 # Say we want to modulate the mesh element sizes using a mathematical function
 # of the spatial coordinates. We can do this with the MathEval field:
 gmsh.model.mesh.field.add("MathEval", 3)
-gmsh.model.mesh.field.setString(3, "F", "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101")
+gmsh.model.mesh.field.setString(3, "F",
+                                "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101")
 
 # We could also combine MathEval with values coming from other fields. For
 # example, let's define a `Distance' field around point 1
@@ -77,7 +78,7 @@ gmsh.model.mesh.field.setNumbers(4, "NodesList", [1])
 # We can then create a `MathEval' field with a function that depends on the
 # return value of the `Distance' field 4, i.e., depending on the distance to
 # point 1 (here using a cubic law, with minimum element size = lc / 100)
-gmsh.model.mesh.field.add("MathEval", 5);
+gmsh.model.mesh.field.add("MathEval", 5)
 gmsh.model.mesh.field.setString(5, "F", "F4^3 + " + str(lc / 100))
 
 # We could also use a `Box' field to impose a step change in element sizes

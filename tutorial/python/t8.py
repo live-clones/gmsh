@@ -18,7 +18,7 @@ gmsh.option.setNumber("General.Terminal", 1)
 # We first create a simple geometry
 lc = 1e-2
 gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
-gmsh.model.geo.addPoint(.1, 0,  0, lc, 2)
+gmsh.model.geo.addPoint(.1, 0, 0, lc, 2)
 gmsh.model.geo.addPoint(.1, .3, 0, lc, 3)
 gmsh.model.geo.addPoint(0, .3, 0, lc, 4)
 gmsh.model.geo.addLine(1, 2, 1)
@@ -34,7 +34,7 @@ gmsh.model.geo.synchronize()
 path = os.path.dirname(os.path.abspath(__file__))
 gmsh.merge(os.path.join(path, '..', 'view1.pos'))
 gmsh.merge(os.path.join(path, '..', 'view1.pos'))
-gmsh.merge(os.path.join(path, '..', 'view4.pos')) # contains 2 views inside
+gmsh.merge(os.path.join(path, '..', 'view4.pos'))  # contains 2 views inside
 
 # Gmsh can read post-processing views in various formats. Here the `view1.pos'
 # and `view4.pos' files are in the Gmsh "parsed" format, which is interpreted by
@@ -63,7 +63,7 @@ set_color("General.Foreground", black)
 set_color("General.Text", black)
 
 gmsh.option.setNumber("General.Orthographic", 0)
-gmsh.option.setNumber("General.Axes", 0);
+gmsh.option.setNumber("General.Axes", 0)
 gmsh.option.setNumber("General.SmallAxes", 0)
 
 # Show the GUI
@@ -79,6 +79,7 @@ view_tags = [v0, v1, v2, v3] = gmsh.view.getTags()
 # View name format helper function: returns "View[index]." for a given view tag
 view_fmt = lambda v_tag: "View[" + str(gmsh.view.getIndex(v_tag)) + "]."
 
+
 # Option setter
 def set_opt(name, val):
     # if it's a string, call the string method
@@ -92,6 +93,7 @@ def set_opt(name, val):
         print("error: bad input to set_opt: " + name + " = " + str(val))
         print("error: set_opt is only meant for numbers and strings, aborting")
         quit(1)
+
 
 # We'll use this helper function for our views
 set_view_opt = lambda v_tag, name, val: set_opt(view_fmt(v_tag) + name, val)
@@ -136,7 +138,7 @@ set_view_opt(v3, "Visible", 0)
 # saved to disk as an image, and multiple frames can be encoded to form a
 # movie. Below is an example of such a custom animation.
 
-t = 0 # Initial step
+t = 0  # Initial step
 
 for num in range(1, 4):
 

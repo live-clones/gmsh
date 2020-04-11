@@ -27,8 +27,7 @@ int main(int argc, char **argv)
   // Let us for example include a three-dimensional scalar view:
   try {
     gmsh::merge("../view3.pos");
-  }
-  catch(...) {
+  } catch(...) {
     gmsh::logger::write("Could not load post-processing views: bye!");
     gmsh::finalize();
     return 0;

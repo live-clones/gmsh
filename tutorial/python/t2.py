@@ -21,7 +21,7 @@ gmsh.model.add("t2")
 # Copied from t1.py...
 lc = 1e-2
 gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
-gmsh.model.geo.addPoint(.1, 0,  0, lc, 2)
+gmsh.model.geo.addPoint(.1, 0, 0, lc, 2)
 gmsh.model.geo.addPoint(.1, .3, 0, lc, 3)
 gmsh.model.geo.addPoint(0, .3, 0, lc, 4)
 gmsh.model.geo.addLine(1, 2, 1)
@@ -48,7 +48,7 @@ gmsh.model.geo.translate([(0, 5)], -0.02, 0, 0)
 
 # And it can be further rotated by -Pi/4 around (0, 0.3, 0) (with the rotation
 # along the z axis) with:
-gmsh.model.geo.rotate([(0, 5)], 0,0.3,0, 0,0,1, -math.pi/4)
+gmsh.model.geo.rotate([(0, 5)], 0, 0.3, 0, 0, 0, 1, -math.pi / 4)
 
 # Note that there are no units in Gmsh: coordinates are just numbers - it's
 # up to the user to associate a meaning to them.
@@ -63,7 +63,7 @@ gmsh.model.geo.translate(ov, 0, 0.05, 0)
 # lines:
 gmsh.model.geo.addLine(3, ov[0][1], 7)
 gmsh.model.geo.addLine(ov[0][1], 5, 8)
-gmsh.model.geo.addCurveLoop([5,-8,-7,3], 10)
+gmsh.model.geo.addCurveLoop([5, -8, -7, 3], 10)
 gmsh.model.geo.addPlaneSurface([10], 11)
 
 # In the same way, we can translate copies of the two surfaces 1 and 11 to the
@@ -121,12 +121,12 @@ ov2 = gmsh.model.geo.extrude([ov[1]], 0, 0, 0.12)
 
 # Mesh sizes associated to geometrical points can be set by passing a vector of
 # (dim, tag) pairs for the corresponding points:
-gmsh.model.geo.mesh.setSize([(0,103), (0,105), (0,109), (0,102), (0,28),
-                             (0, 24), (0,6), (0,5)], lc * 3)
+gmsh.model.geo.mesh.setSize([(0, 103), (0, 105), (0, 109), (0, 102), (0, 28),
+                             (0, 24), (0, 6), (0, 5)], lc * 3)
 
 # We finally group volumes 129 and 130 in a single physical group with tag `1'
 # and name "The volume":
-gmsh.model.addPhysicalGroup(3, [129,130], 1)
+gmsh.model.addPhysicalGroup(3, [129, 130], 1)
 gmsh.model.setPhysicalName(3, 1, "The volume")
 
 # We finish by synchronizing the data from the built-in geometry kernel with the

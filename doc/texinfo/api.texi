@@ -37,7 +37,7 @@ configuration files (gmshrc and gmsh-options).
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L16,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L14,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L16,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L14,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L14,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L16,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L77,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L14,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L13,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L12,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L12,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L12,t5.py}, ...)
 @end table
 
 @item gmsh/finalize
@@ -51,7 +51,7 @@ Finalize Gmsh. This must be called when you are done using the Gmsh API.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L175,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L170,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L175,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L167,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L105,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L172,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L231,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L170,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L160,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L101,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L179,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L225,t5.py}, ...)
 @end table
 
 @item gmsh/open
@@ -67,7 +67,7 @@ model data will create a new model.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L31,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L29,x1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L31,x1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.cpp#L13,explore.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/onelab_data.cpp#L14,onelab_data.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/open.cpp#L13,open.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L29,x1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.py#L10,explore.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/flatten.py#L14,flatten.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/heal.py#L6,heal.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/onelab_data.py#L11,onelab_data.py}, ...)
 @end table
 
 @item gmsh/merge
@@ -83,7 +83,7 @@ file with model data will add the data to the current model.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L38,t7.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L35,t7.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L38,t7.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L37,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L29,t9.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L22,t13.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t17.cpp#L33,t17.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L35,t7.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L35,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L26,t9.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L20,t13.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t17.py#L32,t17.py}, ...)
 @end table
 
 @item gmsh/write
@@ -97,7 +97,7 @@ Write a file. The export format is determined by the file extension.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L126,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L121,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L126,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L142,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L77,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L167,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L227,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L121,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L136,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L74,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L174,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L221,t5.py}, ...)
 @end table
 
 @item gmsh/clear
@@ -111,7 +111,7 @@ Clear all loaded models and post-processing data, and add a new empty model.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L152,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L117,x1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L156,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L118,x1.py})
 @end table
 
 @end ftable
@@ -133,7 +133,7 @@ are listed in the Gmsh reference manual.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L20,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L18,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L20,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L18,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L15,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L17,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L78,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L18,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L17,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L13,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L13,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L13,t5.py}, ...)
 @end table
 
 @item gmsh/option/getNumber
@@ -149,7 +149,7 @@ are listed in the Gmsh reference manual.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L118,t8.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L149,t8.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L117,t8.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L151,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/test.py#L6,test.py})
 @end table
 
 @item gmsh/option/setString
@@ -165,7 +165,7 @@ are listed in the Gmsh reference manual.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L143,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L138,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L143,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L151,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L91,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L38,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L138,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L159,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L88,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L29,t20.py})
 @end table
 
 @item gmsh/option/getString
@@ -181,7 +181,7 @@ are listed in the Gmsh reference manual.
 @item Return:
 -
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/test.py#L33,test.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/test.py#L30,test.py})
 @end table
 
 @item gmsh/option/setColor
@@ -199,7 +199,7 @@ reference manual, with the "Color." middle string removed.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L83,t3.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L80,t3.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L84,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L61,t8.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L81,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L58,t8.py})
 @end table
 
 @item gmsh/option/getColor
@@ -216,7 +216,7 @@ the "Color." middle string removed.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L91,t3.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L87,t3.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L92,t3.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L88,t3.py})
 @end table
 
 @end ftable
@@ -236,7 +236,7 @@ Add a new model, with name @code{name}, and set it as the current model.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L22,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L20,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L22,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L20,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L17,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L19,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t6.cpp#L16,t6.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L20,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L19,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L15,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L15,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L15,t5.py}, ...)
 @end table
 
 @item gmsh/model/remove
@@ -274,7 +274,7 @@ Get the name of the current model.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L35,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L32,x1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L35,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L32,x1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.py#L12,explore.py})
 @end table
 
 @item gmsh/model/setCurrent
@@ -289,7 +289,7 @@ the same name, select the one that was added first.
 @item Return:
 -
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L123,x3.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L132,x3.py})
 @end table
 
 @item gmsh/model/getEntities
@@ -305,7 +305,7 @@ entities are returned as a vector of (dim, tag) integer pairs.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L198,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L181,t5.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L200,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L55,t13.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L114,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L31,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L81,t20.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L195,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L47,t13.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L97,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L29,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L63,t20.py}, ...)
 @end table
 
 @item gmsh/model/setEntityName
@@ -331,7 +331,7 @@ Get the name of the entity of dimension @code{dim} and tag @code{tag}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L89,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L80,x1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L90,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L80,x1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/step_assembly.py#L13,step_assembly.py})
 @end table
 
 @item gmsh/model/getPhysicalGroups
@@ -346,6 +346,8 @@ only the entities of the specified dimension (e.g. physical points if @code{dim}
 @code{dimTags}
 @item Return:
 -
+@item Examples:
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L83,poisson.py})
 @end table
 
 @item gmsh/model/getEntitiesForPhysicalGroup
@@ -359,6 +361,8 @@ Get the tags of the model entities making up the physical group of dimension
 @code{tags}
 @item Return:
 -
+@item Examples:
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L88,poisson.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/test.py#L25,test.py})
 @end table
 
 @item gmsh/model/getPhysicalGroupsForEntity
@@ -373,7 +377,7 @@ dimension @code{dim} and tag @code{tag} belongs.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L112,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L95,x1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L115,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L95,x1.py})
 @end table
 
 @item gmsh/model/addPhysicalGroup
@@ -389,7 +393,7 @@ tags @code{tags}. Return the tag of the physical group, equal to @code{tag} if
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L109,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L104,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L109,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L34,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L31,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L178,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t14.cpp#L74,t14.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L104,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L33,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L29,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L177,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t14.py#L70,t14.py}, ...)
 @end table
 
 @item gmsh/model/setPhysicalName
@@ -403,7 +407,7 @@ Set the name of the physical group of dimension @code{dim} and tag @code{tag}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L111,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L106,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L111,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L36,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L33,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t14.cpp#L75,t14.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L53,t21.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L106,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L35,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L31,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t14.py#L71,t14.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L41,t21.py}, ...)
 @end table
 
 @item gmsh/model/getPhysicalName
@@ -417,7 +421,7 @@ Get the name of the physical group of dimension @code{dim} and tag @code{tag}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L117,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L99,x1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L120,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L99,x1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L87,poisson.py})
 @end table
 
 @item gmsh/model/getBoundary
@@ -436,7 +440,7 @@ recursively down to dimension 0 (i.e. to points) if @code{recursive} is true.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L169,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L164,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L169,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t14.cpp#L85,t14.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L118,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L97,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L50,t19.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L164,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t14.py#L82,t14.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L100,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L88,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L46,t19.py}, ...)
 @end table
 
 @item gmsh/model/getEntitiesInBoundingBox
@@ -453,7 +457,7 @@ dimension (e.g. points if @code{dim} == 0).
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L125,t16.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L101,t16.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L123,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L86,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L96,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L105,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L80,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L77,t20.py})
 @end table
 
 @item gmsh/model/getBoundingBox
@@ -470,7 +474,7 @@ the whole model.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L112,t18.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L101,t18.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L113,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L46,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L103,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L36,t20.py})
 @end table
 
 @item gmsh/model/getDimension
@@ -503,7 +507,7 @@ overall model.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L84,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L76,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L77,x2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/discrete.cpp#L11,discrete.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L63,edges.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L63,faces.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L11,plugin.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L74,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L81,x3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/discrete.py#L10,discrete.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/mesh_from_discrete_curve.py#L11,mesh_from_discrete_curve.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L9,plugin.py}, ...)
 @end table
 
 @item gmsh/model/removeEntities
@@ -518,7 +522,7 @@ true, remove all the entities on their boundaries, down to dimension 0.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L91,t18.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L80,t18.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L92,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L110,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L84,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L86,t20.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spherical_surf.py#L16,spherical_surf.py})
 @end table
 
 @item gmsh/model/removeEntityName
@@ -569,7 +573,7 @@ Get the type of the entity of dimension @code{dim} and tag @code{tag}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L115,t21.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L95,t21.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L115,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L88,x1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.cpp#L36,explore.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.cpp#L55,partition.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L96,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L79,x1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.py#L18,explore.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.py#L44,partition.py})
 @end table
 
 @item gmsh/model/getParent
@@ -585,7 +589,7 @@ tag @code{tag}, i.e. from which the entity is a part of, if any.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L123,t21.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L97,t21.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L123,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L135,x1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.cpp#L47,explore.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.cpp#L63,partition.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L98,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L108,x1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.py#L32,explore.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.py#L46,partition.py})
 @end table
 
 @item gmsh/model/getPartitions
@@ -600,7 +604,7 @@ belongs.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L112,t21.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L93,t21.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L112,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L129,x1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.cpp#L41,explore.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.cpp#L52,partition.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L93,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L105,x1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.py#L29,explore.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.py#L41,partition.py})
 @end table
 
 @item gmsh/model/getValue
@@ -620,7 +624,7 @@ coordinates in @code{points}, concatenated: [p1x, p1y, p1z, p2x, ...].
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L91,t2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L87,t2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L91,t2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L87,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain_stl.py#L36,terrain_stl.py})
 @end table
 
 @item gmsh/model/getDerivative
@@ -723,7 +727,7 @@ the visibility setting recursively if @code{recursive} is true.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L199,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L182,t5.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L201,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L196,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L30,gui.py})
 @end table
 
 @item gmsh/model/getVisibility
@@ -753,7 +757,7 @@ should be integers between 0 and 255. Apply the color setting recursively if
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L159,t4.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L157,t4.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L158,t4.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L167,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L32,gui.py})
 @end table
 
 @item gmsh/model/getColor
@@ -780,6 +784,8 @@ Set the @code{x}, @code{y}, @code{z} coordinates of a geometrical point.
 -
 @item Return:
 -
+@item Examples:
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L78,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L75,x2.py})
 @end table
 
 @end ftable
@@ -799,7 +805,7 @@ Generate a mesh of the current model, up to dimension @code{dim} (0, 1, 2 or 3).
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L123,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L118,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L123,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L141,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L76,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L165,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L226,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L118,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L135,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L73,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L172,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L220,t5.py}, ...)
 @end table
 
 @item gmsh/model/mesh/partition
@@ -813,7 +819,7 @@ Partition the mesh of the current model into @code{numPart} partitions.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L86,t21.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L73,t21.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L87,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L36,boolean.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.cpp#L30,partition.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L73,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.py#L36,boolean.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.py#L26,partition.py})
 @end table
 
 @item gmsh/model/mesh/unpartition
@@ -873,7 +879,7 @@ Refine the mesh of the current model by uniformly splitting the elements.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t11.cpp#L92,t11.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t11.py#L90,t11.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t11.cpp#L92,t11.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L34,boolean.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t11.py#L90,t11.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.py#L34,boolean.py})
 @end table
 
 @item gmsh/model/mesh/setOrder
@@ -887,7 +893,7 @@ Set the order of the elements in the mesh of the current model to @code{order}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L35,boolean.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/periodic.py#L17,periodic.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L35,boolean.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.py#L35,boolean.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/periodic.py#L18,periodic.py})
 @end table
 
 @item gmsh/model/mesh/getLastEntityError
@@ -930,7 +936,7 @@ another entity with a non-empty mesh.
 @item Return:
 -
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/flatten.py#L30,flatten.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/flatten.py#L31,flatten.py})
 @end table
 
 @item gmsh/model/mesh/getNodes
@@ -956,7 +962,7 @@ the entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L75,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L70,x1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L76,x1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L80,adapt_mesh.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.cpp#L24,explore.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L70,x1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L15,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.py#L20,explore.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/flatten.py#L26,flatten.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/normals.py#L23,normals.py}, ...)
 @end table
 
 @item gmsh/model/mesh/getNodesByElementType
@@ -1050,7 +1056,7 @@ automatically assigned to the nodes.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L90,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L82,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L91,x2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/discrete.cpp#L14,discrete.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L12,plugin.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/view.cpp#L11,view.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L88,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L82,x3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/discrete.py#L13,discrete.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/flatten.py#L37,flatten.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/mesh_from_discrete_curve.py#L16,mesh_from_discrete_curve.py}, ...)
 @end table
 
 @item gmsh/model/mesh/reclassifyNodes
@@ -1067,7 +1073,7 @@ after the elements have been set.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L105,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L96,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L106,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L102,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain.py#L67,terrain.py})
 @end table
 
 @item gmsh/model/mesh/relocateNodes
@@ -1108,7 +1114,7 @@ that contains the node tags of all the elements of the given type, concatenated:
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L80,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L73,x1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L81,x1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L83,adapt_mesh.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.cpp#L29,explore.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L73,x1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.py#L22,explore.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/flatten.py#L28,flatten.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/test.py#L42,test.py})
 @end table
 
 @item gmsh/model/mesh/getElement
@@ -1191,7 +1197,7 @@ mesh.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L33,edges.cpp})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L33,edges.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L33,faces.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L92,poisson.py})
 @end table
 
 @item gmsh/model/mesh/getElementType
@@ -1208,7 +1214,7 @@ corresponding serendip element type (element without interior nodes).
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L67,edges.cpp})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L66,edges.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L66,faces.cpp})
 @end table
 
 @item gmsh/model/mesh/getElementProperties
@@ -1226,7 +1232,7 @@ of primary (first order) nodes (@code{numPrimaryNodes}).
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L141,x1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L112,x1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp#L145,x1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L42,edges.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.cpp#L55,explore.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L42,faces.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py#L112,x1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/explore.py#L34,explore.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L111,poisson.py})
 @end table
 
 @item gmsh/model/mesh/getElementsByType
@@ -1248,7 +1254,7 @@ indexed by @code{task}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L55,edges.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L19,adapt_mesh.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L54,edges.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L54,faces.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L18,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/neighbors.py#L16,neighbors.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L95,poisson.py})
 @end table
 
 @item gmsh/model/mesh/preallocateElementsByType
@@ -1284,7 +1290,7 @@ e1nN, e2n1, ...].
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/discrete.cpp#L22,discrete.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/discrete.py#L21,discrete.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/discrete.cpp#L21,discrete.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L14,plugin.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/view.cpp#L13,view.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/discrete.py#L33,discrete.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/flatten.py#L38,flatten.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/mesh_from_discrete_curve.py#L22,mesh_from_discrete_curve.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L12,plugin.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/test.py#L48,test.py}, ...)
 @end table
 
 @item gmsh/model/mesh/addElementsByType
@@ -1304,7 +1310,7 @@ are automatically assigned to the elements.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L96,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L88,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L97,x2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L67,edges.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L67,faces.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L94,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L87,x3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain.py#L59,terrain.py})
 @end table
 
 @item gmsh/model/mesh/getIntegrationPoints
@@ -1323,7 +1329,7 @@ points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L84,adapt_mesh.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L31,adapt_mesh.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L90,adapt_mesh.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L87,edges.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L87,faces.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L30,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L112,poisson.py})
 @end table
 
 @item gmsh/model/mesh/getJacobians
@@ -1350,7 +1356,7 @@ and return the part of the data indexed by @code{task}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L86,adapt_mesh.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L32,adapt_mesh.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L93,adapt_mesh.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L99,edges.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L99,faces.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L31,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L131,poisson.py})
 @end table
 
 @item gmsh/model/mesh/preallocateJacobians
@@ -1390,7 +1396,7 @@ orientations.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L91,edges.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L33,adapt_mesh.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L90,edges.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L90,faces.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L32,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L114,poisson.py})
 @end table
 
 @item gmsh/model/mesh/getBasisFunctionsOrientationForElements
@@ -1547,7 +1553,7 @@ indexed by @code{task}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L61,edges.cpp})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L60,edges.cpp})
 @end table
 
 @item gmsh/model/mesh/getElementFaceNodes
@@ -1569,7 +1575,7 @@ the data indexed by @code{task}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L61,faces.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/neighbors.py#L17,neighbors.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L60,faces.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/neighbors.py#L17,neighbors.py})
 @end table
 
 @item gmsh/model/mesh/getGhostElements
@@ -1597,7 +1603,7 @@ entities of dimension 0 (points) are handled.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L117,t16.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L94,t16.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L115,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L32,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L48,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L235,adapt_mesh.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L97,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L29,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L36,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L75,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/periodic.py#L12,periodic.py}, ...)
 @end table
 
 @item gmsh/model/mesh/setTransfiniteCurve
@@ -1614,7 +1620,7 @@ Currently supported types are "Progression" (geometrical progression with power
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L151,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L141,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L152,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L147,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain.py#L148,terrain.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain_stl.py#L77,terrain_stl.py})
 @end table
 
 @item gmsh/model/mesh/setTransfiniteSurface
@@ -1634,7 +1640,7 @@ its boundary.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L155,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L143,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L156,x2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.cpp#L11,perf.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/square.cpp#L7,square.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L149,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.py#L8,perf.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain.py#L150,terrain.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain_stl.py#L79,terrain_stl.py})
 @end table
 
 @item gmsh/model/mesh/setTransfiniteVolume
@@ -1650,7 +1656,7 @@ interpolation explicitly.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L159,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L146,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L160,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L152,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain.py#L153,terrain.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain_stl.py#L82,terrain_stl.py})
 @end table
 
 @item gmsh/model/mesh/setRecombine
@@ -1666,7 +1672,7 @@ recombine triangles into quadrangles) are supported.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t11.cpp#L44,t11.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t11.py#L42,t11.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t11.cpp#L44,t11.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L157,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t11.py#L42,t11.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L150,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L238,poisson.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain.py#L151,terrain.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain_stl.py#L80,terrain_stl.py})
 @end table
 
 @item gmsh/model/mesh/setSmoothing
@@ -1681,7 +1687,7 @@ and tag @code{tag}. @code{val} iterations of a Laplace smoother are applied.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L157,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L145,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L158,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L151,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain.py#L152,terrain.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain_stl.py#L81,terrain_stl.py})
 @end table
 
 @item gmsh/model/mesh/setReverse
@@ -1712,7 +1718,7 @@ Set the meshing algorithm on the model entity of dimension @code{dim} and tag
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L209,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L192,t5.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L213,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L207,t5.py})
 @end table
 
 @item gmsh/model/mesh/setSizeFromBoundary
@@ -1846,7 +1852,7 @@ and @code{dim} == 2.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L39,t18.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L36,t18.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L40,t18.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L36,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/periodic.py#L14,periodic.py})
 @end table
 
 @item gmsh/model/mesh/getPeriodicNodes
@@ -1863,7 +1869,7 @@ corresponding master node tags @code{nodeTagsMaster}, and the affine transform
 @item Return:
 -
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/periodic.py#L19,periodic.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/periodic.py#L20,periodic.py})
 @end table
 
 @item gmsh/model/mesh/removeDuplicateNodes
@@ -1910,7 +1916,7 @@ less than Pi, also force curves to be split according to @code{curveAngle}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L46,t13.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L38,t13.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L45,t13.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L38,t13.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/glue_and_remesh_stl.py#L19,glue_and_remesh_stl.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/remesh_stl.py#L18,remesh_stl.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain.py#L70,terrain.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain_stl.py#L17,terrain_stl.py})
 @end table
 
 @item gmsh/model/mesh/createGeometry
@@ -1926,7 +1932,7 @@ assuming that each can be parametrized with a single map.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L53,t13.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L45,t13.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L51,t13.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L110,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L44,t13.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L106,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/glue_and_remesh_stl.py#L32,glue_and_remesh_stl.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/remesh_stl.py#L22,remesh_stl.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain.py#L76,terrain.py}, ...)
 @end table
 
 @item gmsh/model/mesh/createTopology
@@ -1966,7 +1972,7 @@ as physical groups in the mesh.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t14.cpp#L111,t14.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t14.py#L107,t14.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t14.cpp#L111,t14.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t14.py#L112,t14.py})
 @end table
 
 @item gmsh/model/mesh/computeCohomology
@@ -1987,7 +1993,7 @@ stored as physical groups in the mesh.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t14.cpp#L123,t14.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t14.py#L119,t14.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t14.cpp#L121,t14.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t14.py#L124,t14.py})
 @end table
 
 @item gmsh/model/mesh/computeCrossField
@@ -2022,7 +2028,7 @@ the field tag.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L47,t7.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L38,t7.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L46,t7.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t10.cpp#L46,t10.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t11.cpp#L38,t11.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L65,t13.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t17.cpp#L41,t17.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L38,t7.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t10.py#L44,t10.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L55,t13.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t17.py#L35,t17.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L106,adapt_mesh.py})
 @end table
 
 @item gmsh/model/mesh/field/remove
@@ -2049,7 +2055,7 @@ Set the numerical option @code{option} to value @code{value} for field
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t10.cpp#L48,t10.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t10.py#L46,t10.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t10.cpp#L48,t10.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L271,adapt_mesh.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t10.py#L46,t10.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L107,adapt_mesh.py})
 @end table
 
 @item gmsh/model/mesh/field/setString
@@ -2063,7 +2069,7 @@ Set the string option @code{option} to value @code{value} for field @code{tag}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t10.cpp#L87,t10.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t10.py#L70,t10.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t10.cpp#L73,t10.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t11.cpp#L39,t11.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L67,t13.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t10.py#L70,t10.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L57,t13.py})
 @end table
 
 @item gmsh/model/mesh/field/setNumbers
@@ -2092,7 +2098,7 @@ Set the field @code{tag} as the background mesh size field.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L50,t7.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L41,t7.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L49,t7.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t10.cpp#L108,t10.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t11.cpp#L41,t11.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L70,t13.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t17.cpp#L42,t17.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L41,t7.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t10.py#L102,t10.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L60,t13.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t17.py#L36,t17.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L108,adapt_mesh.py})
 @end table
 
 @item gmsh/model/mesh/field/setAsBoundaryLayer
@@ -2130,7 +2136,7 @@ the geo module.)
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L32,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L30,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L32,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L24,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L21,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L18,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t6.cpp#L20,t6.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L30,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L23,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L19,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L45,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t6.py#L19,t6.py}, ...)
 @end table
 
 @item gmsh/model/geo/addLine
@@ -2146,7 +2152,7 @@ new tag is selected automatically. Return the tag of the line.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L71,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L68,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L71,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L28,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L25,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L125,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t6.cpp#L24,t6.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L68,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L27,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L23,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L60,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t6.py#L23,t6.py}, ...)
 @end table
 
 @item gmsh/model/geo/addCircleArc
@@ -2164,7 +2170,7 @@ the plane of the circle arc. Return the tag of the circle arc.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L26,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L109,t5.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L26,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L119,t5.py})
 @end table
 
 @item gmsh/model/geo/addEllipseArc
@@ -2276,7 +2282,7 @@ curve loop.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L84,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L80,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L84,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L32,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L29,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L39,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t6.cpp#L28,t6.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L80,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L31,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L27,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L82,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t6.py#L27,t6.py}, ...)
 @end table
 
 @item gmsh/model/geo/addPlaneSurface
@@ -2293,7 +2299,7 @@ selected automatically. Return the tag of the surface.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L89,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L85,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L89,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L33,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L30,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L148,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t6.cpp#L29,t6.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L85,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L32,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L28,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L83,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t6.py#L28,t6.py}, ...)
 @end table
 
 @item gmsh/model/geo/addSurfaceFilling
@@ -2310,7 +2316,7 @@ tag is selected automatically. Return the tag of the surface.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L49,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L132,t5.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L49,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t12.cpp#L71,t12.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L142,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t12.py#L67,t12.py})
 @end table
 
 @item gmsh/model/geo/addSurfaceLoop
@@ -2326,7 +2332,7 @@ automatically. Return the tag of the shell.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L114,t2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L110,t2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L114,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L69,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L58,t13.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L140,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L110,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L103,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L48,t13.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L136,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/glue_and_remesh_stl.py#L38,glue_and_remesh_stl.py}, ...)
 @end table
 
 @item gmsh/model/geo/addVolume
@@ -2343,7 +2349,7 @@ selected automatically. Return the tag of the volume.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L115,t2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L111,t2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L115,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L70,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L59,t13.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L141,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L111,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L163,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L49,t13.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L137,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/glue_and_remesh_stl.py#L39,glue_and_remesh_stl.py}, ...)
 @end table
 
 @item gmsh/model/geo/extrude
@@ -2363,7 +2369,7 @@ extruded along their normal.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L125,t2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L120,t2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L125,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L45,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t14.cpp#L65,t14.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t15.cpp#L63,t15.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L120,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L43,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t14.py#L61,t14.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t15.py#L59,t15.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/hex.py#L8,hex.py})
 @end table
 
 @item gmsh/model/geo/revolve
@@ -2406,7 +2412,7 @@ normalized to 1.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L62,t3.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L59,t3.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L63,t3.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L60,t3.py})
 @end table
 
 @item gmsh/model/geo/translate
@@ -2550,7 +2556,7 @@ processing, the number of synchronization points should normally be minimized.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L115,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L110,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L115,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L89,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L66,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L196,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t6.cpp#L99,t6.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L110,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L86,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L63,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L192,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t6.py#L94,t6.py}, ...)
 @end table
 
 @end ftable
@@ -2571,7 +2577,7 @@ entities of dimension 0 (points) are handled.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L129,t2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L124,t2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L129,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t15.cpp#L41,t15.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L124,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t15.py#L37,t15.py})
 @end table
 
 @item gmsh/model/geo/mesh/setTransfiniteCurve
@@ -2720,7 +2726,7 @@ the occ module.)
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L67,t19.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L59,t19.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L67,t19.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L11,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L59,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L14,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L10,spline.py})
 @end table
 
 @item gmsh/model/occ/addLine
@@ -2820,7 +2826,7 @@ same. Return the tag of the spline curve.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L71,t19.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L62,t19.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L71,t19.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L13,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L62,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L12,spline.py})
 @end table
 
 @item gmsh/model/occ/addBSpline
@@ -2838,6 +2844,8 @@ tag of the b-spline curve.
 -
 @item Return:
 integer value
+@item Examples:
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L14,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L13,spline.py})
 @end table
 
 @item gmsh/model/occ/addBezier
@@ -2852,6 +2860,8 @@ Return the tag of the Bezier curve.
 -
 @item Return:
 integer value
+@item Examples:
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L15,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L14,spline.py})
 @end table
 
 @item gmsh/model/occ/addWire
@@ -2906,7 +2916,7 @@ tag of the rectangle.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L162,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L157,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L162,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t17.cpp#L28,t17.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L63,t20.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L40,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L229,adapt_mesh.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L157,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t17.py#L27,t17.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L52,t20.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L32,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L70,adapt_mesh.py}, ...)
 @end table
 
 @item gmsh/model/occ/addDisk
@@ -2923,7 +2933,7 @@ tag of the disk.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L77,t19.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L68,t19.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L77,t19.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L18,edges.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L68,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L37,poisson.py})
 @end table
 
 @item gmsh/model/occ/addPlaneSurface
@@ -2955,7 +2965,7 @@ surface to pass through the given points.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L54,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L137,t5.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L54,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L147,t5.py})
 @end table
 
 @item gmsh/model/occ/addSurfaceLoop
@@ -3005,7 +3015,7 @@ sphere.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L54,t16.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L44,t16.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L53,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L61,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L23,boolean.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L18,faces.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L21,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L47,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L59,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.py#L23,boolean.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L19,gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/normals.py#L6,normals.py}, ...)
 @end table
 
 @item gmsh/model/occ/addBox
@@ -3022,7 +3032,7 @@ box.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L31,t16.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L28,t16.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L31,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L27,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L22,boolean.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp#L16,faces.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L20,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L28,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L26,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.py#L22,boolean.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L18,gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/neighbors.py#L11,neighbors.py}, ...)
 @end table
 
 @item gmsh/model/occ/addCylinder
@@ -3041,7 +3051,7 @@ Return the tag of the cylinder.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L25,boolean.cpp})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L25,boolean.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L23,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.py#L25,boolean.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L21,gui.py})
 @end table
 
 @item gmsh/model/occ/addCone
@@ -3232,7 +3242,7 @@ is set. Remove the tool if @code{removeTool} is set.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L28,boolean.cpp})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L28,boolean.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L26,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.py#L28,boolean.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L24,gui.py})
 @end table
 
 @item gmsh/model/occ/intersect
@@ -3251,7 +3261,7 @@ set.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L24,boolean.cpp})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L24,boolean.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L22,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.py#L24,boolean.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L20,gui.py})
 @end table
 
 @item gmsh/model/occ/cut
@@ -3269,7 +3279,7 @@ is set. Remove the tool if @code{removeTool} is set.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L42,t16.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L32,t16.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L41,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.cpp#L29,boolean.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L27,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L32,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/boolean.py#L29,boolean.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L25,gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spherical_surf.py#L13,spherical_surf.py})
 @end table
 
 @item gmsh/model/occ/fragment
@@ -3288,7 +3298,7 @@ set.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L62,t16.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L51,t16.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L61,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L75,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L72,t20.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L44,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L23,edges.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L54,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L70,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L56,t20.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L34,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L21,crack.py}, ...)
 @end table
 
 @item gmsh/model/occ/translate
@@ -3406,7 +3416,7 @@ entities on their boundaries, down to dimension 0.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L85,t19.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L76,t19.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L85,t19.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L82,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L76,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L63,t20.py})
 @end table
 
 @item gmsh/model/occ/removeAllDuplicates
@@ -3488,7 +3498,7 @@ entities are returned as a vector of (dim, tag) integer pairs.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L87,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L66,t20.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L85,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L66,t20.py})
 @end table
 
 @item gmsh/model/occ/getEntitiesInBoundingBox
@@ -3519,7 +3529,7 @@ tag @code{tag}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L51,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L39,t20.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L50,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L40,t20.py})
 @end table
 
 @item gmsh/model/occ/getMass
@@ -3534,7 +3544,7 @@ Get the mass of the OpenCASCADE entity of dimension @code{dim} and tag
 @item Return:
 -
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/step_assembly.py#L18,step_assembly.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/step_assembly.py#L18,step_assembly.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/volume.py#L10,volume.py})
 @end table
 
 @item gmsh/model/occ/getCenterOfMass
@@ -3576,7 +3586,7 @@ processing, the number of synchronization points should normally be minimized.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L166,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L161,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L166,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L84,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t17.cpp#L29,t17.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L28,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L33,t19.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L161,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L67,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t17.py#L28,t17.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L27,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L30,t19.py}, ...)
 @end table
 
 @end ftable
@@ -3617,7 +3627,7 @@ associate a new tag. Return the view tag.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L110,t4.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L108,t4.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L111,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L246,adapt_mesh.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L18,plugin.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/view.cpp#L17,view.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/viewlist.cpp#L20,viewlist.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L118,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L27,x3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L83,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/normals.py#L41,normals.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L16,plugin.py}, ...)
 @end table
 
 @item gmsh/view/remove
@@ -3631,7 +3641,7 @@ Remove the view with tag @code{tag}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L46,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L35,plugin.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L38,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L29,plugin.py})
 @end table
 
 @item gmsh/view/getIndex
@@ -3661,7 +3671,7 @@ Get the tags of all views.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L50,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L76,t8.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L42,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L76,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L32,plugin.py})
 @end table
 
 @item gmsh/view/addModelData
@@ -3686,7 +3696,7 @@ data. @code{partition} allows to specify data in several sub-sets.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L234,adapt_mesh.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L84,x3.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L248,adapt_mesh.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L19,plugin.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/view.cpp#L21,view.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L95,x3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L84,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L17,plugin.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/poisson.py#L229,poisson.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/view.py#L20,view.py})
 @end table
 
 @item gmsh/view/addHomogeneousModelData
@@ -3705,7 +3715,7 @@ but only if data is associated to elements of the same type for
 @item Return:
 -
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L95,x3.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L105,x3.py})
 @end table
 
 @item gmsh/view/getModelData
@@ -3722,7 +3732,7 @@ tags @code{tags}, as well as the @code{dataType} and the number of components
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.cpp#L17,perf.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.py#L12,perf.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.cpp#L20,perf.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L28,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.py#L12,perf.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L21,plugin.py})
 @end table
 
 @item gmsh/view/addListData
@@ -3739,7 +3749,7 @@ contains the data for the @code{numEle} elements.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/viewlist.cpp#L29,viewlist.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L46,x3.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/viewlist.cpp#L25,viewlist.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L53,x3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/normals.py#L42,normals.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/view_combine.py#L19,view_combine.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/viewlist.py#L20,viewlist.py})
 @end table
 
 @item gmsh/view/getListData
@@ -3755,7 +3765,7 @@ data type and the @code{data} for each data type.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L56,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L42,plugin.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L48,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L36,plugin.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/volume.py#L20,volume.py})
 @end table
 
 @item gmsh/view/addListDataString
@@ -3773,7 +3783,7 @@ views) strings. @code{style} contains pairs of styling parameters, concatenated.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L114,t4.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L112,t4.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L115,t4.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L122,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L59,x3.py})
 @end table
 
 @item gmsh/view/getListDataStrings
@@ -3869,7 +3879,7 @@ file extension. Append to the file if @code{append} is set.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L235,adapt_mesh.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L121,x3.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L249,adapt_mesh.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L44,plugin.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/view.cpp#L25,view.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/viewlist.cpp#L27,viewlist.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L130,x3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L86,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/normals.py#L43,normals.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L34,plugin.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/view.py#L28,view.py}, ...)
 @end table
 
 @end ftable
@@ -3890,7 +3900,7 @@ Set the numerical option @code{option} to the value @code{value} for plugin
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L39,t9.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L30,t9.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L38,t9.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L95,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.cpp#L32,partition.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L34,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L30,t9.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L80,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L36,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.py#L28,partition.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L25,plugin.py}, ...)
 @end table
 
 @item gmsh/plugin/setString
@@ -3905,7 +3915,7 @@ Set the string option @code{option} to the value @code{value} for plugin
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L55,t9.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L46,t9.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L54,t9.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L46,t9.py})
 @end table
 
 @item gmsh/plugin/run
@@ -3919,7 +3929,7 @@ Run the plugin @code{name}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L41,t9.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L32,t9.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L40,t9.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L98,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.cpp#L33,partition.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.cpp#L13,perf.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L35,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L32,t9.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L83,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L37,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.py#L29,partition.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.py#L10,perf.py}, ...)
 @end table
 
 @end ftable
@@ -3939,7 +3949,7 @@ Draw all the OpenGL scenes.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L151,t8.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L175,t8.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L149,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L33,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L177,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L36,gui.py})
 @end table
 
 @end ftable
@@ -3959,7 +3969,7 @@ Create the FLTK graphical user interface. Can only be called in the main thread.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L75,t8.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L70,t8.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L75,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L72,custom_gui.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L10,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L70,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L5,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L70,custom_gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L8,gui.py})
 @end table
 
 @item gmsh/fltk/wait
@@ -3976,7 +3986,7 @@ thread.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L81,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L76,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L79,custom_gui.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L35,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L78,custom_gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L38,gui.py})
 @end table
 
 @item gmsh/fltk/update
@@ -3993,7 +4003,7 @@ update of the user interface from another thread.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L94,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L87,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L90,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L89,custom_gui.py})
 @end table
 
 @item gmsh/fltk/awake
@@ -4008,7 +4018,7 @@ perform an action (currently the only @code{action} allowed is "update").
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L40,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L61,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L39,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L62,custom_gui.py})
 @end table
 
 @item gmsh/fltk/lock
@@ -4022,7 +4032,7 @@ Block the current thread until it can safely modify the user interface.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L33,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L54,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L32,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L55,custom_gui.py})
 @end table
 
 @item gmsh/fltk/unlock
@@ -4036,7 +4046,7 @@ Release the lock that was set using lock.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L35,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L56,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L34,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L57,custom_gui.py})
 @end table
 
 @item gmsh/fltk/run
@@ -4052,7 +4062,7 @@ been initialized. Can only be called in the main thread.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L151,t1.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L146,t1.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L151,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L97,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L170,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L103,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L58,t7.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L146,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L93,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L177,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L38,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L50,t7.py}, ...)
 @end table
 
 @item gmsh/fltk/isAvailable
@@ -4066,7 +4076,7 @@ Check if the user interface is available (e.g. to detect if it has been closed).
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L77,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L72,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L76,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L74,custom_gui.py})
 @end table
 
 @item gmsh/fltk/selectEntities
@@ -4123,7 +4133,7 @@ Set one or more parameters in the ONELAB database, encoded in @code{format}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L70,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L29,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L69,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L29,custom_gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/onelab_test.py#L11,onelab_test.py})
 @end table
 
 @item gmsh/onelab/get
@@ -4138,7 +4148,7 @@ ONELAB database, encoded in @code{format}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/onelab_data.cpp#L20,onelab_data.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/onelab_data.py#L16,onelab_data.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/onelab_data.cpp#L20,onelab_data.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/onelab_data.py#L16,onelab_data.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/onelab_test.py#L37,onelab_test.py})
 @end table
 
 @item gmsh/onelab/setNumber
@@ -4153,7 +4163,7 @@ the parameter if it does not exist; update the value if the parameter exists.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L44,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L62,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L43,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L63,custom_gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/onelab_test.py#L42,onelab_test.py})
 @end table
 
 @item gmsh/onelab/setString
@@ -4168,7 +4178,7 @@ the parameter if it does not exist; update the value if the parameter exists.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L30,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L51,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L29,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L52,custom_gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/onelab_test.py#L43,onelab_test.py})
 @end table
 
 @item gmsh/onelab/getNumber
@@ -4183,7 +4193,7 @@ Return an empty vector if the parameter does not exist.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L16,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L36,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L16,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L37,custom_gui.py})
 @end table
 
 @item gmsh/onelab/getString
@@ -4198,7 +4208,7 @@ Return an empty vector if the parameter does not exist.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L86,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L80,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L84,custom_gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L82,custom_gui.py})
 @end table
 
 @item gmsh/onelab/clear
@@ -4248,7 +4258,7 @@ Write a @code{message}. @code{level} can be "info", "warning" or "error".
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L41,t7.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L55,custom_gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L40,t7.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L41,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L31,t9.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L24,t13.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L34,t16.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L56,custom_gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain_stl.py#L27,terrain_stl.py})
 @end table
 
 @item gmsh/logger/start
@@ -4276,7 +4286,7 @@ Get logged messages.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L139,t16.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L113,t16.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L137,t16.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L117,t16.py})
 @end table
 
 @item gmsh/logger/stop
@@ -4290,7 +4300,7 @@ Stop logging messages.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L141,t16.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L115,t16.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L139,t16.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L119,t16.py})
 @end table
 
 @item gmsh/logger/getWallTime
@@ -4304,7 +4314,7 @@ Return wall clock time.
 @item Return:
 floating point value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L38,custom_gui.cpp})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L37,custom_gui.cpp})
 @end table
 
 @item gmsh/logger/getCpuTime

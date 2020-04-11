@@ -31,7 +31,7 @@ gmsh.option.setNumber("General.Terminal", 1)
 gmsh.model.add("t21")
 gmsh.model.occ.addRectangle(0, 0, 0, 1, 1, 1)
 gmsh.model.occ.addRectangle(1, 0, 0, 1, 1, 2)
-gmsh.model.occ.fragment([(2,1)], [(2,2)])
+gmsh.model.occ.fragment([(2, 1)], [(2, 2)])
 gmsh.model.occ.synchronize()
 gmsh.model.mesh.setSize(gmsh.model.getEntities(0), 0.05)
 
@@ -44,13 +44,13 @@ gmsh.model.setPhysicalName(2, 200, "Right")
 gmsh.model.mesh.generate(2)
 
 # We now define several constants to fine-tune how the mesh will be partitioned
-partitioner = 0 # 0 for Metis, 1 for SimplePartition
-N = 3 # Number of partitions
-topology = 1 # Create partition topology (BRep)?
-ghosts = 0 # Create ghost cells?
-physicals = 0 # Create new physical groups?
-write = 1 # Write file to disk?
-split = 1 # Write one file per partition?
+partitioner = 0  # 0 for Metis, 1 for SimplePartition
+N = 3  # Number of partitions
+topology = 1  # Create partition topology (BRep)?
+ghosts = 0  # Create ghost cells?
+physicals = 0  # Create new physical groups?
+write = 1  # Write file to disk?
+split = 1  # Write one file per partition?
 
 # Should we create the boundary representation of the partition entities?
 gmsh.option.setNumber("Mesh.PartitionCreateTopology", topology)
@@ -92,7 +92,8 @@ entities = gmsh.model.getEntities()
 for e in entities:
     partitions = gmsh.model.getPartitions(e[0], e[1])
     if len(partitions):
-        print("Entity " + str(e) + " of type " + gmsh.model.getType(e[0], e[1]))
+        print("Entity " + str(e) + " of type " +
+              gmsh.model.getType(e[0], e[1]))
         print(" - Partition(s): " + str(partitions))
         print(" - Parent: " + str(gmsh.model.getParent(e[0], e[1])))
         print(" - Boundary: " + str(gmsh.model.getBoundary([e])))

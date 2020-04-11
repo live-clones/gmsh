@@ -36,8 +36,8 @@ int main(int argc, char **argv)
   gmsh::model::geo::synchronize();
 
   gmsh::model::mesh::field::add("MathEval", 1);
-  gmsh::model::mesh::field::setString
-    (1, "F", "0.01*(1.0+30.*(y-x*x)*(y-x*x) + (1-x)*(1-x))");
+  gmsh::model::mesh::field::setString(
+    1, "F", "0.01*(1.0+30.*(y-x*x)*(y-x*x) + (1-x)*(1-x))");
   gmsh::model::mesh::field::setAsBackgroundMesh(1);
 
   // To generate quadrangles instead of triangles, we can simply add

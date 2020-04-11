@@ -20,8 +20,7 @@ int main(int argc, char **argv)
   // directory):
   try {
     gmsh::merge("../t13_data.stl");
-  }
-  catch(...) {
+  } catch(...) {
     gmsh::logger::write("Could not load STL mesh: bye!");
     gmsh::finalize();
     return 0;
@@ -43,8 +42,7 @@ int main(int argc, char **argv)
   // Force curves to be split on given angle:
   double curveAngle = 180;
 
-  gmsh::model::mesh::classifySurfaces(angle * M_PI / 180.,
-                                      includeBoundary,
+  gmsh::model::mesh::classifySurfaces(angle * M_PI / 180., includeBoundary,
                                       forceParametrizablePatches,
                                       curveAngle * M_PI / 180.);
 
@@ -63,7 +61,7 @@ int main(int argc, char **argv)
   gmsh::model::geo::synchronize();
 
   // We specify element sizes imposed by a size field, just because we can :-)
-  bool funny = true;//false;
+  bool funny = true; // false;
   int f = gmsh::model::mesh::field::add("MathEval");
   if(funny)
     gmsh::model::mesh::field::setString(f, "F", "2*Sin((x+y)/5) + 3");

@@ -21,9 +21,9 @@ int main(int argc, char **argv)
   // We first create a simple geometry
   double lc = 1e-2;
   gmsh::model::geo::addPoint(0, 0, 0, lc, 1);
-  gmsh::model::geo::addPoint(.1, 0,  0, lc, 2);
+  gmsh::model::geo::addPoint(.1, 0, 0, lc, 2);
   gmsh::model::geo::addPoint(.1, .3, 0, lc, 3);
-  gmsh::model::geo::addPoint(0,  .3, 0, lc, 4);
+  gmsh::model::geo::addPoint(0, .3, 0, lc, 4);
   gmsh::model::geo::addLine(1, 2, 1);
   gmsh::model::geo::addLine(3, 2, 2);
   gmsh::model::geo::addLine(3, 4, 3);
@@ -37,8 +37,7 @@ int main(int argc, char **argv)
     gmsh::merge("../view1.pos");
     gmsh::merge("../view1.pos");
     gmsh::merge("../view4.pos"); // contains 2 views inside
-  }
-  catch(...) {
+  } catch(...) {
     gmsh::logger::write("Could not load post-processing views: bye!");
     gmsh::finalize();
     return 0;
@@ -62,8 +61,9 @@ int main(int argc, char **argv)
   gmsh::option::setColor("General.Background", white[0], white[1], white[2]);
 
   // We can make our own shorter versions of repetitive methods
-  auto set_color = [] (std::string name, int c[3]) -> void
-                   { gmsh::option::setColor(name, c[0], c[1], c[2]); };
+  auto set_color = [](std::string name, int c[3]) -> void {
+    gmsh::option::setColor(name, c[0], c[1], c[2]);
+  };
   set_color("General.Foreground", black);
   set_color("General.Text", black);
 
@@ -113,7 +113,6 @@ int main(int argc, char **argv)
   int t = 0; // Initial step
 
   for(int num = 1; num <= 3; num++) {
-
     double nbt;
     gmsh::option::getNumber("View[0].NbTimeStep", nbt);
     t = (t < nbt - 1) ? t + 1 : 0;
@@ -137,7 +136,6 @@ int main(int argc, char **argv)
 
     int frames = 50;
     for(int num2 = 1; num2 <= frames; num2++) {
-
       // Incrementally rotate the scene
       double rotx;
       gmsh::option::getNumber("General.RotationX", rotx);

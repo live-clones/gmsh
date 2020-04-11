@@ -11,4 +11,3 @@ gmsh.open(sys.argv[1])
 gmsh.model.mesh.generate(3)
 gmsh.write("test.msh")
 gmsh.finalize()
-

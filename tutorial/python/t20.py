@@ -33,7 +33,8 @@ v = gmsh.model.occ.importShapes(os.path.join(path, '..', 't20_data.step'))
 
 # Get the bounding box of the volume:
 gmsh.model.occ.synchronize()
-xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(v[0][0], v[0][1])
+xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
+    v[0][0], v[0][1])
 
 # Note that the synchronization step can be avoided in Gmsh >= 4.6 by using
 # `gmsh.model.occ.getBoundingBox()' instead of `gmsh.model.getBoundingBox()'.
@@ -41,19 +42,18 @@ xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(v[0][0], v[0][1])
 # We want to slice the model into N slices, and either keep the volume slices
 # or just the surfaces obtained by the cutting:
 
-N = 5 # Number of slices
-surf = False # Keep only surfaces?
+N = 5  # Number of slices
+surf = False  # Keep only surfaces?
 
-dz = (zmax - zmin) / N;
+dz = (zmax - zmin) / N
 
 # Define the cutting planes
 for i in range(1, N):
-    gmsh.model.occ.addRectangle(xmin, ymin, zmin + i * dz,
-                                xmax-xmin, ymax-ymin,
-                                1000 + i)
+    gmsh.model.occ.addRectangle(xmin, ymin, zmin + i * dz, xmax - xmin,
+                                ymax - ymin, 1000 + i)
 
 # Fragment (i.e. intersect) the volume with all the cutting planes:
-gmsh.model.occ.fragment(v, [(2, i) for i in range(1000+1, 1000+N)])
+gmsh.model.occ.fragment(v, [(2, i) for i in range(1000 + 1, 1000 + N)])
 
 # Now remove all the surfaces (and their bounding entities) that are not on the
 # boundary of a volume, i.e. the parts of the cutting planes that "stick out" of
@@ -73,9 +73,11 @@ if surf:
     eps = 1e-4
     s = []
     for i in range(1, N):
-        s.extend(gmsh.model.getEntitiesInBoundingBox(
-            xmin-eps,ymin-eps,zmin + i * dz - eps,
-            xmax+eps,ymax+eps,zmin + i * dz + eps, 2))
+        s.extend(
+            gmsh.model.getEntitiesInBoundingBox(xmin - eps, ymin - eps,
+                                                zmin + i * dz - eps,
+                                                xmax + eps, ymax + eps,
+                                                zmin + i * dz + eps, 2))
     # ...and remove all the other entities (here directly in the model, as we
     # won't modify any OpenCASCADE entities later on):
     dels = gmsh.model.getEntities(2)
