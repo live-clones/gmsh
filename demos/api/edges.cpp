@@ -86,8 +86,9 @@ int main(int argc, char **argv)
   std::vector<double> uvw, q;
   gmsh::model::mesh::getIntegrationPoints(eleType1D, "Gauss3", uvw, q);
   std::vector<double> bf;
-  int numComp;
-  gmsh::model::mesh::getBasisFunctions(eleType1D, uvw, "Lagrange", numComp, bf);
+  int numComp, numOrientations;
+  gmsh::model::mesh::getBasisFunctions(eleType1D, uvw, "Lagrange", numComp, bf,
+                                       numOrientations);
   gmsh::model::getEntities(entities, 1);
   for(std::size_t i = 0; i < entities.size(); i++) {
     int c = entities[i].second;
