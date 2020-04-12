@@ -77,6 +77,18 @@ namespace QMT {
     return os;
   }
 
+  std::ostream& operator<<(std::ostream& os, const QMT::TVertex& tv) { 
+    os << "[";
+    QMT_Utils::operator<<(os,tv.pt);
+    os << ", origin=";
+    os << tv.origin;
+    os << ", entity=";
+    QMT_Utils::operator<<(os,tv.entity);
+    os << "]";
+    return os;
+  }
+
+
   std::ostream& operator<<(std::ostream& os, const QMT::QTMesh& M) { 
     os << "------ QTMesh" << std::endl;
     os << M.vertices.size() << " vertices" << std::endl;
@@ -552,6 +564,29 @@ namespace QMT_QZ_Utils {
     log.toGmsh();
   }
 
+  void debug_show_edge_in_view(const QTMesh& M, id e, const std::string& viewName) {
+    GeoLog log;
+    const TEdge& te = M.edges[e];
+    log.add({M.vertices[te.vertices[0]].pt},0.,viewName);
+    log.add({M.vertices[te.vertices[1]].pt},0.,viewName);
+    F(i,te.pts.size()-1) {
+      log.add({te.pts[i],te.pts[i+1]},{double(i),double(i+1)},viewName);
+    }
+    log.toGmsh();
+  }
+
+  void debug_show_qtmesh_in_view(const QTMesh& M, const std::string& viewName) {
+    GeoLog log;
+    F(e,M.edges.size()) {
+      const TEdge& te = M.edges[e];
+      double val = double(e);
+      F(i,te.pts.size()-1) {
+        log.add({te.pts[i],te.pts[i+1]},val,viewName);
+      }
+    }
+    log.toGmsh();
+  }
+
   vec3 tedge_center(const QTMesh& M, id e) {
     vec3 p = M.edges[e].pts[M.edges[e].pts.size()/2];
     if (M.edges[e].pts.size() < 5) {
@@ -659,9 +694,27 @@ namespace QMT {
       double lp = length(tgp);
       double lc = length(tgc);
       constexpr double EPS_LEN = 1.e-14;
+      if (lp < EPS_LEN && ep.pts.size() >= 3) { 
+        if (!einvert[lep]) {
+          tgp = ep.pts[ep.pts.size()-1] - ep.pts[ep.pts.size()-3];
+        } else {
+          tgp = ep.pts[0] - ep.pts[2];
+        }
+      }
+      if (lc < EPS_LEN && ec.pts.size() >= 3) { 
+        if (!einvert[le]) {
+          tgc = ec.pts[ec.pts.size()-1] - ec.pts[ec.pts.size()-3];
+        } else {
+          tgc = ec.pts[0] - ec.pts[2];
+        }
+      }
+      lp = length(tgp);
+      lc = length(tgc);
       if (lp < EPS_LEN || lc < EPS_LEN) {
         error("face {}, {}-{} local edges: tangent length too small, cannot compute angle, length(tgp) = {}, length(tgc) = {}", f, lep, le, lp, lc);
-        return true;
+        if (lp < EPS_LEN) error("  prev edge pts: {}", ep.pts);
+        if (lc < EPS_LEN) error("  cur edge pts: {}", ec.pts);
+        return false;
       }
       tgp = 1./lp * tgp;
       tgc = 1./lc * tgc;
@@ -764,7 +817,8 @@ namespace QMT {
     return true;
   }
 
-  bool split_TFace(QTMesh& M, id f, const vector<bool>& vertexFromEdgeSplit) {
+  bool split_TFace(QTMesh& M, id f, const vector<bool>& vertexFromEdgeSplit, id& fnv) {
+    fnv = NO_ID;
     vector<id>& edges = M.faces[f].edges; 
     vector<bool>& invorient = M.faces[f].edge_orient_invert;
     vector<id> corners;
@@ -789,7 +843,7 @@ namespace QMT {
     }
     tvm.pt = 1./double(nvs.size()) * tvm.pt;
     id vmid = M.vertices.size();
-    M.vertices.push_back(tvm);
+    fnv = vmid;
 
     /* Create edges to midpoint */
     map<id,id> nvToNe;
@@ -798,7 +852,7 @@ namespace QMT {
       te.vertices = {nvs[i],vmid};
       te.entity = M.faces[f].entity;
       te.origin = -1;
-      te.pts = {M.vertices[nvs[i]].pt, M.vertices[vmid].pt};
+      te.pts = {M.vertices[nvs[i]].pt, tvm.pt};
       id ne = M.edges.size();
       nvToNe[nvs[i]] = ne;
       M.edges.push_back(te);
@@ -860,13 +914,13 @@ namespace QMT {
     return true;
   }
 
-  bool subdivide_degenerate_faces(QTMesh& M) {
+  bool subdivide_degenerate_faces(QTMesh& M, const BoundaryProjector* projector = NULL) {
     constexpr bool SHOW_MPS = false;
     size_t nf = 0;
     /* Collect edges and faces ti split */
     vector<id> edges_to_split;
     vector<id> faces_to_split;
-    FC(f,M.faces.size(),M.faces[f].edges.size() >= 3 && M.faces[f].edges.size() != 4) {
+    FC(f,M.faces.size(),true || M.faces[f].edges.size() >= 3 && M.faces[f].edges.size() != 4) {
       faces_to_split.push_back(f);
       F(le,M.faces[f].edges.size()) {
         edges_to_split.push_back(M.faces[f].edges[le]);
@@ -888,21 +942,73 @@ namespace QMT {
         error("failed to split edge {}", e);
         return false;
       }
+      if (projector != NULL) {
+        if (M.vertices[nv].entity.first == -1 || M.vertices[nv].entity.second == -1) {
+          double dist;
+          projector->closestEntity(M.vertices[nv].pt,dist,M.vertices[nv].entity.first,M.vertices[nv].entity.second);
+        }
+        vec3 proj;
+        bool ok = projector->project(M.vertices[nv].entity.first,M.vertices[nv].entity.second,M.vertices[nv].pt,proj);
+        if (ok) {
+          DBG("edge",nv,M.vertices[nv].pt,"->",proj);
+          M.vertices[nv].pt = proj;
+        }
+      }
       vertexFromEdgeSplit.resize(M.vertices.size(),false);
       vertexFromEdgeSplit[nv] = true;
     }
 
+    if (projector != NULL) { /* Update tedge pts */
+      F(e,M.edges.size()) FC(lv,2,vertexFromEdgeSplit[M.edges[e].vertices[lv]]) {
+        if (lv == 0) {
+          M.edges[e].pts.front() = M.vertices[M.edges[e].vertices[lv]].pt;
+        } else if (lv == 1) {
+          M.edges[e].pts.back() = M.vertices[M.edges[e].vertices[lv]].pt;
+        }
+      }
+    }
+
     id nfb = M.faces.size();
     /* Split faces (midpoint subdivision) */
+    vector<bool> vertexFromFaceSplit(M.vertices.size(),false);
     F(lf,faces_to_split.size()) {
       id f = faces_to_split[lf];
-      bool oksf = split_TFace(M, f, vertexFromEdgeSplit);
+      id nv = NO_ID;
+      bool oksf = split_TFace(M, f, vertexFromEdgeSplit, nv);
       if (!oksf) {
         error("failed to split face {}", f);
        return false;
       }
+      if (projector != NULL) {
+        if (M.vertices[nv].entity.first == -1 || M.vertices[nv].entity.second == -1) {
+          double dist;
+          projector->closestEntity(M.vertices[nv].pt,dist,M.vertices[nv].entity.first,M.vertices[nv].entity.second);
+        }
+        vec3 proj;
+        bool ok = projector->project(M.vertices[nv].entity.first,M.vertices[nv].entity.second,M.vertices[nv].pt,proj);
+        if (ok) {
+          DBG("face",nv,M.vertices[nv].pt,"->",proj);
+          M.vertices[nv].pt = proj;
+        }
+      }
       vertexFromEdgeSplit.resize(M.vertices.size(),false);
+      vertexFromFaceSplit.resize(M.vertices.size(),false);
+      vertexFromFaceSplit[nv] = true;
     }
+
+    if (projector != NULL) { /* Update tedge pts */
+      F(e,M.edges.size()) F(lv,2) {
+        id v = M.edges[e].vertices[lv];
+        if (vertexFromEdgeSplit[v] || vertexFromFaceSplit[v]) {
+          if (lv == 0) {
+            M.edges[e].pts.front() = M.vertices[M.edges[e].vertices[lv]].pt;
+          } else if (lv == 1) {
+            M.edges[e].pts.back() = M.vertices[M.edges[e].vertices[lv]].pt;
+          }
+        }
+      }
+    }
+
     if (nf > 0) info("fixed {} degenerate faces via QTMesh splitting", nf);
 
     if (SHOW_MPS) {
@@ -1113,9 +1219,14 @@ namespace QMT {
     FC(v,v2l.size(),v2l[v].size() > 0) {
       if (v2l[v].size() != 2) {
         isCorner[v] = true;
+        DBG(v,isCorner[v],v2l[v].size(),v2l[v]);
+        F(ii,v2l[v].size()) {
+          DBG("  ", ii, M.lines[v2l[v][ii]]);
+        }
       } else if (v2l[v].size() == 2) {
         if (M.line_colors[v2l[v][0]] != M.line_colors[v2l[v][1]]) {
           isCorner[v] = true;
+          DBG(v,isCorner[v],M.line_colors[v2l[v][0]],M.line_colors[v2l[v][1]]);
         }
       }
       if (isCorner[v]) {
@@ -1257,7 +1368,8 @@ namespace QMT {
   bool generate_qtmesh_from_cut_mesh(
       const std::string& modelName,
       QTMesh& M,
-      bool accept_degenerate_faces = false) {
+      bool accept_degenerate_faces = false,
+      const BoundaryProjector* projector = NULL) {
     if (!QMT_QZ_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_QZ_Utils::global_gmsh_initialized = true;
@@ -1274,14 +1386,16 @@ namespace QMT {
     RFC(!oki,"failed to import TMesh from gmsh");
 
     bool okcs = build_qtmesh_from_cut_mesh(T, M);
-    RFC(!okcs,"failed to classify cut mesh");
+    RFC(!okcs,"failed build qtmesh from cut mesh");
 
     if (accept_degenerate_faces) {
-      bool oks = subdivide_degenerate_faces(M);
+      debug_show_qtmesh_in_view(M, "qtmesh_Bsplit");
+      bool oks = subdivide_degenerate_faces(M, projector);
       if (!oks) {
         error("failed to fix degenerate faces by subdivision");
         return false;
       }
+      debug_show_qtmesh_in_view(M, "qtmesh_Asplit");
     }
 
     /* B. Fill missing info in the QTMesh data structure */
@@ -1321,9 +1435,15 @@ namespace QMT {
     if (pts.size() < 2) return false;
 
     /* Size map size(t) */
+    vector<vec3> failed_probes;
     vector<double> size(pts.size(),0.);
     if (use_sizemap) {
-      F(i, size.size()) size[i] = sizemap.eval(pts[i]);
+      F(i, size.size()) {
+        size[i] = sizemap.eval(pts[i]);
+        if (size[i] == DBL_MAX) {
+          failed_probes.push_back(pts[i]);
+        }
+      }
     }
 
     vector<double> Pri(pts.size(),0.);
@@ -1341,6 +1461,15 @@ namespace QMT {
     } else {
       curveLen = totalLen;
     }
+
+    if (ERROR_VISU && failed_probes.size() > 0) {
+      GeoLog log;
+      F(i,failed_probes.size()) {
+        log.add({failed_probes[i]},double(i), "edge_pts_length_probe_failures");
+      }
+      log.toGmsh();
+    }
+    RFC(failed_probes.size() > 0, "edge_pts_length | {} probe failures", failed_probes.size());
 
     return true;
   }
@@ -1748,6 +1877,7 @@ namespace QMT {
       bool okl = edge_pts_length(M.edges[e].pts, true, sizemap, clen);
       if (!okl) {
         error("TEdge {}: failed to compute polyline length, details: {}", e, M.edges[e]);
+        if (ERROR_VISU) debug_show_edge_in_view(M, e, "error_polyline_"+std::to_string(e));
         return false;
       }
       // double nx = clen / target_edge_len;
@@ -1777,6 +1907,13 @@ namespace QMT {
         bool oktc = tchord_propagation(gedges, e2ge, eIsStop, edge_nx, edge_n, e, tchord, M);
         if (!oktc || tchord.size() == 0) {
           error("failed to propagate tchord in graph from e = {}", e);
+          error("  tedge {}: {}", e, M.edges[e]);
+          error("  tvertex {}: {}", M.edges[e].vertices[0], M.vertices[M.edges[e].vertices[0]]);
+          error("  tvertex {}: {}", M.edges[e].vertices[1], M.vertices[M.edges[e].vertices[1]]);
+          if (ERROR_VISU) {
+            debug_show_qtmesh_in_view(M, "qtmesh");
+            debug_show_edge_in_view(M, e, "qprob_e"+std::to_string(e));
+          }
           return false;
         }
         // debug_show_tchord_in_view(M, tchord, "view_tc"+std::to_string(e)); 
@@ -1867,7 +2004,10 @@ namespace QMT {
             id e = tf.edges[le];
             error("  edge {} (n={},nx={}): {}", e, edge_n[e], edge_nx[e], M.edges[e]);
           }
-          debug_show_face_in_view(M, f, "qprob_f"+std::to_string(f), edge_n);
+          if (ERROR_VISU) {
+            debug_show_qtmesh_in_view(M, "qtmesh");
+            debug_show_face_in_view(M, f, "qprob_f"+std::to_string(f), edge_n);
+          }
           return false;
         }
         
@@ -2064,7 +2204,7 @@ namespace QMT {
     QTMesh tM;
     constexpr bool NEW_VERSION = true;
     if (NEW_VERSION) {
-      bool okq = generate_qtmesh_from_cut_mesh(modelName, tM, true);
+      bool okq = generate_qtmesh_from_cut_mesh(modelName, tM, true, projector);
       if (!okq) {
         error("failed to generate QTMesh (quad mesh with T-junctions)");
         return false;
