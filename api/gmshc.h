@@ -1091,8 +1091,13 @@ GMSH_API void gmshModelMeshCreateGeometry(int * ierr);
 
 /* Create a boundary representation from the mesh if the model does not have
  * one (e.g. when imported from mesh file formats with no BRep representation
- * of the underlying model). */
-GMSH_API void gmshModelMeshCreateTopology(int * ierr);
+ * of the underlying model). If `makeSimplyConnected' is set, enforce simply
+ * connected discrete surfaces and volumes. If `exportDiscrete' is set, clear
+ * any built-in CAD kernel entities and export the discrete entities in the
+ * built-in CAD kernel. */
+GMSH_API void gmshModelMeshCreateTopology(const int makeSimplyConnected,
+                                          const int exportDiscrete,
+                                          int * ierr);
 
 /* Compute a basis representation for homology spaces after a mesh has been
  * generated. The computation domain is given in a list of physical group tags
@@ -2162,6 +2167,23 @@ GMSH_API void gmshViewAddModelData(const int tag,
                                    const int numComponents,
                                    const int partition,
                                    int * ierr);
+
+/* Add homogeneous model-based post-processing data to the view with tag
+ * `tag'. The arguments have the same meaning as in `addModelData', except
+ * that `data' is supposed to be homogeneous and is thus flattened in a single
+ * vector. This is always possible e.g. for "NodeData" and "ElementData", but
+ * only if data is associated to elements of the same type for
+ * "ElementNodeData". */
+GMSH_API void gmshViewAddHomogeneousModelData(const int tag,
+                                              const int step,
+                                              const char * modelName,
+                                              const char * dataType,
+                                              size_t * tags, size_t tags_n,
+                                              double * data, size_t data_n,
+                                              const double time,
+                                              const int numComponents,
+                                              const int partition,
+                                              int * ierr);
 
 /* Get model-based post-processing data from the view with tag `tag' at step
  * `step'. Return the `data' associated to the nodes or the elements with tags

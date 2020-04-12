@@ -13,13 +13,10 @@
 import gmsh
 import math
 
-model = gmsh.model
-factory = model.occ
-
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
 
-model.add("t16")
+gmsh.model.add("t16")
 
 # Let's build the same model as in `t5.geo', but using constructive solid
 # geometry.
@@ -28,11 +25,11 @@ model.add("t16")
 gmsh.logger.start()
 
 # We first create two cubes:
-factory.addBox(0,0,0, 1,1,1, 1)
-factory.addBox(0,0,0, 0.5,0.5,0.5, 2)
+gmsh.model.occ.addBox(0,0,0, 1,1,1, 1)
+gmsh.model.occ.addBox(0,0,0, 0.5,0.5,0.5, 2)
 
 # We apply a boolean difference to create the "cube minus one eigth" shape:
-factory.cut([(3,1)], [(3,2)], 3)
+gmsh.model.occ.cut([(3,1)], [(3,2)], 3)
 
 # Boolean operations with OpenCASCADE always create new entities. By default the
 # extra arguments `removeObject' and `removeTool' in `cut()' are set to `True',
@@ -44,14 +41,14 @@ holes = []
 for t in range(1, 6):
     x += 0.166
     z += 0.166
-    factory.addSphere(x,y,z,r, 3 + t)
+    gmsh.model.occ.addSphere(x,y,z,r, 3 + t)
     holes.append((3, 3 + t))
 
 # If we had wanted five empty holes we would have used `cut()' again. Here we
 # want five spherical inclusions, whose mesh should be conformal with the mesh
 # of the cube: we thus use `fragment()', which intersects all volumes in a
 # conformal manner (without creating duplicate interfaces):
-ov, ovv = factory.fragment([(3,3)], holes)
+ov, ovv = gmsh.model.occ.fragment([(3,3)], holes)
 
 # ov contains all the generated entities of the same dimension as the input
 # entities:
@@ -64,7 +61,7 @@ print("before/after fragment relations:")
 for e in zip([(3,3)] + holes, ovv):
     print("parent " + str(e[0]) + " -> child " + str(e[1]))
 
-factory.synchronize()
+gmsh.model.occ.synchronize()
 
 # When the boolean operation leads to simple modifications of entities, and if
 # one deletes the original entities, Gmsh tries to assign the same tag to the
@@ -94,18 +91,18 @@ lcar2 = .0005
 lcar3 = .055
 
 # Assign a mesh size to all the points:
-model.mesh.setSize(model.getEntities(0), lcar1)
+gmsh.model.mesh.setSize(gmsh.model.getEntities(0), lcar1)
 
 # Override this constraint on the points of the five spheres:
-model.mesh.setSize(model.getBoundary(holes, False, False, True), lcar3)
+gmsh.model.mesh.setSize(gmsh.model.getBoundary(holes, False, False, True), lcar3)
 
 # Select the corner point by searching for it geometrically:
 eps = 1e-3
-ov = model.getEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
-                                    0.5+eps, 0.5+eps, 0.5+eps, 0)
-model.mesh.setSize(ov, lcar2)
+ov = gmsh.model.getEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
+                                         0.5+eps, 0.5+eps, 0.5+eps, 0)
+gmsh.model.mesh.setSize(ov, lcar2)
 
-model.mesh.generate(3)
+gmsh.model.mesh.generate(3)
 
 gmsh.write("t16.msh")
 

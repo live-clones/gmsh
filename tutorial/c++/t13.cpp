@@ -9,8 +9,6 @@
 #include <gmsh.h>
 #include <math.h>
 
-namespace factory = gmsh::model::geo;
-
 int main(int argc, char **argv)
 {
   gmsh::initialize();

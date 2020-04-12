@@ -283,6 +283,10 @@ GMSH_API void gmsh::model::setCurrent(const std::string &name)
   GModel *m = GModel::findByName(name);
   if(!m) { throw 1; }
   GModel::setCurrent(m);
+  for(std::size_t i = 0; i < GModel::list.size(); i++)
+    GModel::list[i]->setVisibility(0);
+  GModel::current()->setVisibility(1);
+  CTX::instance()->mesh.changed = ENT_ALL;
 }
 
 GMSH_API void gmsh::model::getEntities(vectorpair &dimTags, const int dim)
@@ -3916,10 +3920,20 @@ GMSH_API void gmsh::model::mesh::createGeometry()
   GModel::current()->createGeometryOfDiscreteEntities();
 }
 
-GMSH_API void gmsh::model::mesh::createTopology()
+GMSH_API void gmsh::model::mesh::createTopology(const bool makeSimplyConnected,
+                                                const bool exportDiscrete)
 {
   if(!_isInitialized()) { throw - 1; }
+
+  if(makeSimplyConnected) {
+    GModel::current()->makeDiscreteRegionsSimplyConnected();
+    GModel::current()->makeDiscreteFacesSimplyConnected();
+  }
   GModel::current()->createTopologyFromMesh();
+  if(exportDiscrete) {
+    // Warning: this clears GEO_Internals!
+    GModel::current()->exportDiscreteGEOInternals();
+  }
 }
 
 GMSH_API void
@@ -5321,13 +5335,13 @@ GMSH_API void gmsh::view::getTags(std::vector<int> &tags)
 #endif
 }
 
-GMSH_API void gmsh::view::addModelData(
+template <class T>
+static void _addModelData(
   const int tag, const int step, const std::string &modelName,
   const std::string &dataType, const std::vector<std::size_t> &tags,
-  const std::vector<std::vector<double> > &data, const double time,
-  const int numComponents, const int partition)
+  const T &data, const double time, const int numComponents,
+  const int partition)
 {
-  if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_POST)
   PView *view = PView::getViewByTag(tag);
   if(!view) {
@@ -5341,10 +5355,6 @@ GMSH_API void gmsh::view::addModelData(
       Msg::Error("Unknown model '%s'", modelName.c_str());
       throw 2;
     }
-  }
-  if(tags.size() != data.size()) {
-    Msg::Error("Incompatible number of tags and data");
-    throw 2;
   }
   PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(view->getData());
   if(!d) { // change the view type
@@ -5370,7 +5380,10 @@ GMSH_API void gmsh::view::addModelData(
     d->setFileName(name + ".msh");
     view->setData(d);
   }
-  d->addData(model, tags, data, step, time, partition, numComponents);
+  if(!d->addData(model, tags, data, step, time, partition, numComponents)) {
+    Msg::Error("Could not add model data");
+    throw 2;
+  }
   if(view->getOptions()->adaptVisualizationGrid)
     d->initAdaptiveData(view->getOptions()->timeStep,
                         view->getOptions()->maxRecursionLevel,
@@ -5379,6 +5392,32 @@ GMSH_API void gmsh::view::addModelData(
   Msg::Error("Views require the post-processing module");
   throw - 1;
 #endif
+}
+
+GMSH_API void gmsh::view::addModelData(
+  const int tag, const int step, const std::string &modelName,
+  const std::string &dataType, const std::vector<std::size_t> &tags,
+  const std::vector<std::vector<double> > &data, const double time,
+  const int numComponents, const int partition)
+{
+  if(!_isInitialized()) { throw - 1; }
+  if(tags.size() != data.size()) {
+    Msg::Error("Incompatible number of tags and data");
+    throw 2;
+  }
+  _addModelData(tag, step, modelName, dataType, tags, data, time,
+                numComponents, partition);
+}
+
+GMSH_API void gmsh::view::addHomogeneousModelData(
+  const int tag, const int step, const std::string &modelName,
+  const std::string &dataType, const std::vector<std::size_t> &tags,
+  const std::vector<double> &data, const double time,
+  const int numComponents, const int partition)
+{
+  if(!_isInitialized()) { throw - 1; }
+  _addModelData(tag, step, modelName, dataType, tags, data, time,
+                numComponents, partition);
 }
 
 GMSH_API void gmsh::view::getModelData(const int tag, const int step,

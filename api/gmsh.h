@@ -1249,8 +1249,12 @@ namespace gmsh { // Top-level functions
       //
       // Create a boundary representation from the mesh if the model does not have
       // one (e.g. when imported from mesh file formats with no BRep representation
-      // of the underlying model).
-      GMSH_API void createTopology();
+      // of the underlying model). If `makeSimplyConnected' is set, enforce simply
+      // connected discrete surfaces and volumes. If `exportDiscrete' is set, clear
+      // any built-in CAD kernel entities and export the discrete entities in the
+      // built-in CAD kernel.
+      GMSH_API void createTopology(const bool makeSimplyConnected = true,
+                                   const bool exportDiscrete = true);
 
       // gmsh::model::mesh::computeHomology
       //
@@ -2458,6 +2462,23 @@ namespace gmsh { // Top-level functions
                                const double time = 0.,
                                const int numComponents = -1,
                                const int partition = 0);
+
+    // gmsh::view::addHomogeneousModelData
+    //
+    // Add homogeneous model-based post-processing data to the view with tag `tag'.
+    // The arguments have the same meaning as in `addModelData', except that `data'
+    // is supposed to be homogeneous and is thus flattened in a single vector. This
+    // is always possible e.g. for "NodeData" and "ElementData", but only if data
+    // is associated to elements of the same type for "ElementNodeData".
+    GMSH_API void addHomogeneousModelData(const int tag,
+                                          const int step,
+                                          const std::string & modelName,
+                                          const std::string & dataType,
+                                          const std::vector<std::size_t> & tags,
+                                          const std::vector<double> & data,
+                                          const double time = 0.,
+                                          const int numComponents = -1,
+                                          const int partition = 0);
 
     // gmsh::view::getModelData
     //

@@ -605,11 +605,12 @@ public:
   // discrete entities
   void createGeometryOfDiscreteEntities();
 
-  // create topology from mesh
-  void createTopologyFromMeshNew();
-  void createTopologyFromMesh();
+  // make discrete entities simply connected
   void makeDiscreteRegionsSimplyConnected();
   void makeDiscreteFacesSimplyConnected();
+
+  // create topology from mesh
+  void createTopologyFromMesh();
 
   // align periodic boundaries
   void alignPeriodicBoundaries();
