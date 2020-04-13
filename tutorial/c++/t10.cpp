@@ -22,18 +22,18 @@ int main(int argc, char **argv)
 
   // Let's create a simple rectangular geometry:
   double lc = .15;
-  gmsh::model::geo::addPoint(0.0,0.0,0,lc, 1);
-  gmsh::model::geo::addPoint(1,0.0,0,lc, 2);
-  gmsh::model::geo::addPoint(1,1,0,lc, 3);
-  gmsh::model::geo::addPoint(0,1,0,lc, 4);
-  gmsh::model::geo::addPoint(0.2,.5,0,lc, 5);
+  gmsh::model::geo::addPoint(0.0, 0.0, 0, lc, 1);
+  gmsh::model::geo::addPoint(1, 0.0, 0, lc, 2);
+  gmsh::model::geo::addPoint(1, 1, 0, lc, 3);
+  gmsh::model::geo::addPoint(0, 1, 0, lc, 4);
+  gmsh::model::geo::addPoint(0.2, .5, 0, lc, 5);
 
-  gmsh::model::geo::addLine(1,2, 1);
-  gmsh::model::geo::addLine(2,3, 2);
-  gmsh::model::geo::addLine(3,4, 3);
-  gmsh::model::geo::addLine(4,1, 4);
+  gmsh::model::geo::addLine(1, 2, 1);
+  gmsh::model::geo::addLine(2, 3, 2);
+  gmsh::model::geo::addLine(3, 4, 3);
+  gmsh::model::geo::addLine(4, 1, 4);
 
-  gmsh::model::geo::addCurveLoop({1,2,3,4}, 5);
+  gmsh::model::geo::addCurveLoop({1, 2, 3, 4}, 5);
   gmsh::model::geo::addPlaneSurface({5}, 6);
 
   gmsh::model::geo::synchronize();
@@ -70,8 +70,8 @@ int main(int argc, char **argv)
   // function of the spatial coordinates. We can do this with the MathEval
   // field:
   gmsh::model::mesh::field::add("MathEval", 3);
-  gmsh::model::mesh::field::setString
-    (3, "F", "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101");
+  gmsh::model::mesh::field::setString(
+    3, "F", "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101");
 
   // We could also combine MathEval with values coming from other fields. For
   // example, let's define a `Distance' field around point 1

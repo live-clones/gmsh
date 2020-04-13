@@ -18,7 +18,7 @@
 
 int main(int argc, char **argv)
 {
-  if(argc < 2){
+  if(argc < 2) {
     std::cout << "Usage: " << argv[0] << " file" << std::endl;
     return 0;
   }
@@ -33,7 +33,8 @@ int main(int argc, char **argv)
   // Print the model name and dimension:
   std::string name;
   gmsh::model::getCurrent(name);
-  std::cout << "Model " << name << " (" << gmsh::model::getDimension() << "D)\n";
+  std::cout << "Model " << name << " (" << gmsh::model::getDimension()
+            << "D)\n";
 
   // Geometrical data is made of elementary model `entities', called `points'
   // (entities of dimension 0), `curves' (entities of dimension 1), `surfaces'
@@ -50,7 +51,7 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > entities;
   gmsh::model::getEntities(entities);
 
-  for(std::size_t i = 0; i < entities.size(); i++){
+  for(std::size_t i = 0; i < entities.size(); i++) {
     // Mesh data is made of `elements' (points, lines, triangles, ...), defined
     // by an ordered list of their `nodes'. Elements and nodes are identified by
     // `tags' as well (strictly positive identification numbers), and are stored
@@ -93,17 +94,19 @@ int main(int argc, char **argv)
 
     // * Number of mesh nodes and elements:
     int numElem = 0;
-    for(std::size_t j = 0; j < elemTags.size(); j++) numElem += elemTags[j].size();
+    for(std::size_t j = 0; j < elemTags.size(); j++)
+      numElem += elemTags[j].size();
     std::cout << " - Mesh has " << nodeTags.size() << " nodes and " << numElem
               << " elements\n";
 
     // * Entities on its boundary:
     std::vector<std::pair<int, int> > boundary;
-    gmsh::model::getBoundary({{dim,tag}}, boundary);
+    gmsh::model::getBoundary({{dim, tag}}, boundary);
     if(boundary.size()) {
       std::cout << " - Boundary entities: ";
       for(std::size_t j = 0; j < boundary.size(); j++)
-        std::cout << "(" << boundary[j].first << "," << boundary[j].second << ") ";
+        std::cout << "(" << boundary[j].first << "," << boundary[j].second
+                  << ") ";
       std::cout << "\n";
     }
 
@@ -124,17 +127,18 @@ int main(int argc, char **argv)
     // * Is the entity a partition entity? If so, what is its parent entity?
     std::vector<int> partitions;
     gmsh::model::getPartitions(dim, tag, partitions);
-    if(partitions.size()){
+    if(partitions.size()) {
       std::cout << " - Partition tags:";
       for(std::size_t j = 0; j < partitions.size(); j++)
         std::cout << " " << partitions[j];
       int parentDim, parentTag;
       gmsh::model::getParent(dim, tag, parentDim, parentTag);
-      std::cout << " - parent entity (" << parentDim << "," << parentTag << ")\n";
+      std::cout << " - parent entity (" << parentDim << "," << parentTag
+                << ")\n";
     }
 
     // * List all types of elements making up the mesh of the entity:
-    for(std::size_t j = 0; j < elemTypes.size(); j++){
+    for(std::size_t j = 0; j < elemTypes.size(); j++) {
       std::string name;
       int d, order, numv, numpv;
       std::vector<double> param;

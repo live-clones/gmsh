@@ -18,7 +18,7 @@ for e in ent:
               str(gmsh.model.occ.getMass(e[0], e[1])) + ')')
         path = n.split('/')
         if e[0] == 3 and len(path) > 3:
-            if(path[2] not in physicals):
+            if (path[2] not in physicals):
                 physicals[path[2]] = []
             physicals[path[2]].append(e[1])
 

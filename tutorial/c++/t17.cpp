@@ -31,8 +31,7 @@ int main(int argc, char **argv)
   // Merge a post-processing view containing the target anisotropic mesh sizes
   try {
     gmsh::merge("../t17_bgmesh.pos");
-  }
-  catch(...) {
+  } catch(...) {
     gmsh::logger::write("Could not load background mesh: bye!");
     gmsh::finalize();
     return 0;

@@ -273,7 +273,8 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
 }
 
 
-HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces,
+HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
+		   std::vector<GFace *> &faces,
 		   std::vector<GEdge *> &edges,
 		   std::vector<GVertex*> &vertices,
 		   HXTMesh *m,
@@ -282,6 +283,7 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces,
 {
   std::set<MVertex *> all;
 
+  uint64_t ntets = 0;
   uint64_t ntri = 0;
   uint64_t nedg = 0;
   uint64_t npts = 0;
@@ -314,6 +316,16 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces,
     }
   }
 
+  for(size_t j = 0; j < regions.size(); j++) {
+    GRegion *gr = regions[j];
+    ntets += gr->tetrahedra.size();
+    for(size_t i = 0; i < gr->tetrahedra.size(); i++) {
+      all.insert(gr->tetrahedra[i]->getVertex(0));
+      all.insert(gr->tetrahedra[i]->getVertex(1));
+      all.insert(gr->tetrahedra[i]->getVertex(2));
+      all.insert(gr->tetrahedra[i]->getVertex(3));
+    }
+  }
   //  printf("%d vertices %d triangles\n",all.size(),ntri);
 
   m->vertices.num = m->vertices.size = all.size();
@@ -386,6 +398,26 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces,
       index++;
     }
   }
+
+  m->tetrahedra.num = m->tetrahedra.size = ntets;
+  HXT_CHECK(hxtAlignedMalloc(&m->tetrahedra.node,
+                             (m->tetrahedra.num) * 4 * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->tetrahedra.colors,
+                             (m->tetrahedra.num) * sizeof(uint16_t)));
+
+  index = 0;
+  for(size_t j = 0; j < regions.size(); j++) {
+    GRegion *gr = regions[j];
+    for(size_t i = 0; i < gr->tetrahedra.size(); i++) {
+      m->tetrahedra.node[4 * index + 0] = v2c[gr->tetrahedra[i]->getVertex(0)];
+      m->tetrahedra.node[4 * index + 1] = v2c[gr->tetrahedra[i]->getVertex(1)];
+      m->tetrahedra.node[4 * index + 2] = v2c[gr->tetrahedra[i]->getVertex(2)];
+      m->tetrahedra.node[4 * index + 3] = v2c[gr->tetrahedra[i]->getVertex(2)];
+      m->tetrahedra.colors[index] = gr->tag();
+      index++;
+    }
+  }
+
   return HXT_STATUS_OK;
 }
 
@@ -398,7 +430,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   std::vector<GVertex *> vertices;
   HXT_CHECK(getAllFacesOfAllRegions(regions, m, faces));
   HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
-  HXT_CHECK(Gmsh2Hxt(faces,edges,vertices,m,v2c,c2v));
+  HXT_CHECK(Gmsh2Hxt(regions,faces,edges,vertices,m,v2c,c2v));
   return HXT_STATUS_OK;
 }
 
@@ -406,13 +438,15 @@ HXTStatus Gmsh2Hxt(GModel*gm, HXTMesh *m,
 		   std::map<MVertex *, int> &v2c,
 		   std::vector<MVertex *> &c2v)
 {
+  std::vector<GRegion *> regions;
   std::vector<GFace *> faces;
   std::vector<GEdge *> edges;
   std::vector<GVertex *> vertices;
+  regions.insert(regions.begin(), gm->firstRegion(), gm->lastRegion());
   faces.insert(faces.begin(), gm->firstFace(), gm->lastFace());
   edges.insert(edges.begin(), gm->firstEdge(), gm->lastEdge());
   vertices.insert(vertices.begin(), gm->firstVertex(), gm->lastVertex());
-  HXT_CHECK(Gmsh2Hxt(faces,edges,vertices,m,v2c,c2v));
+  HXT_CHECK(Gmsh2Hxt(regions,faces,edges,vertices,m,v2c,c2v));
   return HXT_STATUS_OK;
 }
 

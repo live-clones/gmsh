@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   int N = 100;
 
   // Helper function to return a node tag given two indices i and j:
-  auto tag = [N] (std::size_t i, std::size_t j) { return (N+1) * i + j + 1; };
+  auto tag = [N](std::size_t i, std::size_t j) { return (N + 1) * i + j + 1; };
 
   // The x, y, z coordinates of all the points:
   std::vector<double> coords;
@@ -44,52 +44,53 @@ int main(int argc, char **argv)
   // the terrain surface:
   std::vector<std::size_t> tris;
 
-  // The connectivities of the line elements on the 4 boundnaries (2 node tags
-  // for each line element)
+  // The connectivities of the line elements on the 4 boundaries (2 node tags
+  // for each line element):
   std::vector<std::size_t> lin[4];
 
   // The connectivities of the point elements on the 4 corners (1 node tag for
-  // each point element)
+  // each point element):
   std::size_t pnt[4] = {tag(0, 0), tag(N, 0), tag(N, N), tag(0, N)};
 
   for(std::size_t i = 0; i < N + 1; i++) {
     for(std::size_t j = 0; j < N + 1; j++) {
       nodes.push_back(tag(i, j));
       coords.insert(coords.end(), {(double)i / N, (double)j / N,
-                                   0.05 * sin(10 * (double)(i+j) / N)});
+                                   0.05 * sin(10 * (double)(i + j) / N)});
       if(i > 0 && j > 0) {
-        tris.insert(tris.end(), {tag(i-1, j-1), tag(i, j-1), tag(i-1, j)});
-        tris.insert(tris.end(), {tag(i, j-1), tag(i, j), tag(i-1, j)});
+        tris.insert(tris.end(),
+                    {tag(i - 1, j - 1), tag(i, j - 1), tag(i - 1, j)});
+        tris.insert(tris.end(), {tag(i, j - 1), tag(i, j), tag(i - 1, j)});
       }
       if((i == 0 || i == N) && j > 0) {
         std::size_t s = (i == 0) ? 3 : 1;
-        lin[s].insert(lin[s].end(), {tag(i, j-1), tag(i, j)});
+        lin[s].insert(lin[s].end(), {tag(i, j - 1), tag(i, j)});
       }
       if((j == 0 || j == N) && i > 0) {
         std::size_t s = (j == 0) ? 0 : 2;
-        lin[s].insert(lin[s].end(), {tag(i-1, j), tag(i, j)});
+        lin[s].insert(lin[s].end(), {tag(i - 1, j), tag(i, j)});
       }
     }
   }
 
-  // Create 4 CAD points for the 4 corners of the terrain surface
-  gmsh::model::geo::addPoint(0, 0, coords[3*tag(0,0)-1], 1);
-  gmsh::model::geo::addPoint(1, 0, coords[3*tag(N,0)-1], 2);
-  gmsh::model::geo::addPoint(1, 1, coords[3*tag(N,N)-1], 3);
-  gmsh::model::geo::addPoint(0, 1, coords[3*tag(0,N)-1], 4);
-  gmsh::model::geo::synchronize();
+  // Create 4 discrete points for the 4 corners of the terrain surface:
+  for(int i = 0; i < 4; i++) gmsh::model::addDiscreteEntity(0, i + 1);
+  gmsh::model::setCoordinates(1, 0, 0, coords[3 * tag(0, 0) - 1]);
+  gmsh::model::setCoordinates(2, 1, 0, coords[3 * tag(N, 0) - 1]);
+  gmsh::model::setCoordinates(3, 1, 1, coords[3 * tag(N, N) - 1]);
+  gmsh::model::setCoordinates(4, 0, 1, coords[3 * tag(0, N) - 1]);
 
-  // Create 4 discrete bounding curves, with their CAD boundary points
+  // Create 4 discrete bounding curves, with their boundary points:
   for(int i = 0; i < 4; i++)
-    gmsh::model::addDiscreteEntity(1, i+1, {i+1, (i < 3) ? (i+2) : 1});
+    gmsh::model::addDiscreteEntity(1, i + 1, {i + 1, (i < 3) ? (i + 2) : 1});
 
-  // Create one discrete surface, with its bounding curves
+  // Create one discrete surface, with its bounding curves:
   gmsh::model::addDiscreteEntity(2, 1, {1, 2, -3, -4});
 
-  // Add all the nodes on the surface (for simplicity... see below)
+  // Add all the nodes on the surface (for simplicity... see below):
   gmsh::model::mesh::addNodes(2, 1, nodes, coords);
 
-  // Add point elements on the 4 CAD points, line elements on the 4 curves, and
+  // Add point elements on the 4 points, line elements on the 4 curves, and
   // triangle elements on the surface:
   for(int i = 0; i < 4; i++) {
     // Type 15 for point elements:
@@ -104,8 +105,8 @@ int main(int argc, char **argv)
   // the surface before with `addNodes' for simplicity)
   gmsh::model::mesh::reclassifyNodes();
 
-  // Create a geometry for the discrete curves and surfaces, so that we can remesh
-  // them later on:
+  // Create a geometry for the discrete curves and surfaces, so that we can
+  // remesh them later on:
   gmsh::model::mesh::createGeometry();
 
   // Note that for more complicated meshes, e.g. for on input unstructured STL
@@ -126,15 +127,15 @@ int main(int argc, char **argv)
   int c11 = gmsh::model::geo::addLine(p2, 2);
   int c12 = gmsh::model::geo::addLine(p3, 3);
   int c13 = gmsh::model::geo::addLine(p4, 4);
-  int ll1 = gmsh::model::geo::addCurveLoop({c1,c2,c3,c4});
+  int ll1 = gmsh::model::geo::addCurveLoop({c1, c2, c3, c4});
   int s1 = gmsh::model::geo::addPlaneSurface({ll1});
-  int ll3 = gmsh::model::geo::addCurveLoop({c1,c11,-1,-c10});
+  int ll3 = gmsh::model::geo::addCurveLoop({c1, c11, -1, -c10});
   int s3 = gmsh::model::geo::addPlaneSurface({ll3});
-  int ll4 = gmsh::model::geo::addCurveLoop({c2,c12,-2,-c11});
+  int ll4 = gmsh::model::geo::addCurveLoop({c2, c12, -2, -c11});
   int s4 = gmsh::model::geo::addPlaneSurface({ll4});
-  int ll5 = gmsh::model::geo::addCurveLoop({c3,c13,3,-c12});
+  int ll5 = gmsh::model::geo::addCurveLoop({c3, c13, 3, -c12});
   int s5 = gmsh::model::geo::addPlaneSurface({ll5});
-  int ll6 = gmsh::model::geo::addCurveLoop({c4,c10,4,-c13});
+  int ll6 = gmsh::model::geo::addCurveLoop({c4, c10, 4, -c13});
   int s6 = gmsh::model::geo::addPlaneSurface({ll6});
   int sl1 = gmsh::model::geo::addSurfaceLoop({s1, s3, s4, s5, s6, 1});
   int v1 = gmsh::model::geo::addVolume({sl1});

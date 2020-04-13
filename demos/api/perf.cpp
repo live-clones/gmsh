@@ -12,8 +12,11 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(2);
   gmsh::plugin::run("NewView");
   std::cout << "before get" << std::endl;
-  std::string type; std::vector<std::size_t> tags;
-  std::vector<std::vector<double> > data; double time; int numComp;
+  std::string type;
+  std::vector<std::size_t> tags;
+  std::vector<std::vector<double> > data;
+  double time;
+  int numComp;
   gmsh::view::getModelData(0, 0, type, tags, data, time, numComp);
   std::cout << "after get" << std::endl;
   gmsh::finalize();

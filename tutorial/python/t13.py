@@ -22,7 +22,7 @@ gmsh.merge(os.path.join(path, '..', 't13_data.stl'))
 # We first classify ("color") the surfaces by splitting the original surface
 # along sharp geometrical features. This will create new discrete surfaces,
 # curves and points.
-angle = 40 # Angle for surface detection
+angle = 40  # Angle for surface detection
 
 # For complex geometries, patches can be too complex, too elongated or too large
 # to be parametrized; setting the following option will force the creation of
@@ -33,12 +33,11 @@ forceParametrizablePatches = False
 includeBoundary = True
 
 # Force curves to be split on given angle:
-curveAngle = 180;
+curveAngle = 180
 
-gmsh.model.mesh.classifySurfaces(angle * math.pi/180.,
-                                 includeBoundary,
+gmsh.model.mesh.classifySurfaces(angle * math.pi / 180., includeBoundary,
                                  forceParametrizablePatches,
-                                 curveAngle * math.pi/180.)
+                                 curveAngle * math.pi / 180.)
 
 # Create a geometry for all the discrete curves and surfaces in the mesh, by
 # computing a parametrization for each one
@@ -53,11 +52,11 @@ gmsh.model.geo.synchronize()
 
 # We specify element sizes imposed by a size field, just because we can :-)
 funny = False
-f = gmsh.model.mesh.field.add("MathEval");
+f = gmsh.model.mesh.field.add("MathEval")
 if funny:
-  gmsh.model.mesh.field.setString(f, "F", "2*Sin((x+y)/5) + 3")
+    gmsh.model.mesh.field.setString(f, "F", "2*Sin((x+y)/5) + 3")
 else:
-  gmsh.model.mesh.field.setString(f, "F", "4")
+    gmsh.model.mesh.field.setString(f, "F", "4")
 gmsh.model.mesh.field.setAsBackgroundMesh(f)
 
 gmsh.model.mesh.generate(3)
