@@ -27,8 +27,7 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > v;
   try {
     gmsh::model::occ::importShapes("../t20_data.step", v);
-  }
-  catch(...) {
+  } catch(...) {
     gmsh::logger::write("Could not load STEP file: bye!");
     gmsh::finalize();
     return 0;
@@ -44,8 +43,8 @@ int main(int argc, char **argv)
   // Get the bounding box of the volume:
   gmsh::model::occ::synchronize();
   double xmin, ymin, zmin, xmax, ymax, zmax;
-  gmsh::model::getBoundingBox(v[0].first, v[0].second, xmin, ymin, zmin,
-                              xmax, ymax, zmax);
+  gmsh::model::getBoundingBox(v[0].first, v[0].second, xmin, ymin, zmin, xmax,
+                              ymax, zmax);
 
   // Note that the synchronization step can be avoided in Gmsh >= 4.6 by using
   // `gmsh::model::occ::getBoundingBox()' instead of
@@ -61,9 +60,8 @@ int main(int argc, char **argv)
 
   // Define the cutting planes
   for(int i = 1; i < N; i++)
-    gmsh::model::occ::addRectangle(xmin, ymin, zmin + i * dz,
-                                   xmax-xmin, ymax-ymin,
-                                   1000 + i);
+    gmsh::model::occ::addRectangle(xmin, ymin, zmin + i * dz, xmax - xmin,
+                                   ymax - ymin, 1000 + i);
 
   // Fragment (i.e. intersect) the volume with all the cutting planes:
   std::vector<std::pair<int, int> > p;
@@ -95,9 +93,9 @@ int main(int argc, char **argv)
     std::vector<std::pair<int, int> > s;
     for(int i = 1; i < N; i++) {
       std::vector<std::pair<int, int> > e;
-      gmsh::model::getEntitiesInBoundingBox
-        (xmin-eps,ymin-eps,zmin + i * dz - eps,
-         xmax+eps,ymax+eps,zmin + i * dz + eps, e, 2);
+      gmsh::model::getEntitiesInBoundingBox(
+        xmin - eps, ymin - eps, zmin + i * dz - eps, xmax + eps, ymax + eps,
+        zmin + i * dz + eps, e, 2);
       s.insert(s.end(), e.begin(), e.end());
     }
     // ...and remove all the other entities (here directly in the model, as we

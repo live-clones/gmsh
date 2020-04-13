@@ -17,7 +17,7 @@ gmsh.model.add("t6")
 # Copied from t1.py...
 lc = 1e-2
 gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
-gmsh.model.geo.addPoint(.1, 0,  0, lc, 2)
+gmsh.model.geo.addPoint(.1, 0, 0, lc, 2)
 gmsh.model.geo.addPoint(.1, .3, 0, lc, 3)
 gmsh.model.geo.addPoint(0, .3, 0, lc, 4)
 gmsh.model.geo.addLine(1, 2, 1)
@@ -28,7 +28,7 @@ gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 gmsh.model.geo.addPlaneSurface([1], 1)
 
 # Delete the surface and the left line, and replace the line with 3 new ones:
-gmsh.model.geo.remove([[2,1], [1,4]])
+gmsh.model.geo.remove([[2, 1], [1, 4]])
 
 p1 = gmsh.model.geo.addPoint(-0.05, 0.05, 0, lc)
 p2 = gmsh.model.geo.addPoint(-0.05, 0.1, 0, lc)
@@ -63,7 +63,7 @@ gmsh.model.geo.mesh.setTransfiniteCurve(3, 30, "Progression", 1.2)
 # nodes on the boundary using a structured grid. If the surface has more than 4
 # corner points, the corners of the transfinite interpolation have to be
 # specified by hand:
-gmsh.model.geo.mesh.setTransfiniteSurface(1, "Left", [1,2,3,4])
+gmsh.model.geo.mesh.setTransfiniteSurface(1, "Left", [1, 2, 3, 4])
 
 # To create quadrangles instead of triangles, one can use the `setRecombine'
 # constraint:
@@ -82,7 +82,7 @@ gmsh.model.geo.addLine(10, 7, 12)
 gmsh.model.geo.addLine(7, 8, 13)
 gmsh.model.geo.addCurveLoop([13, 10, 11, 12], 14)
 gmsh.model.geo.addPlaneSurface([14], 15)
-for i in range(10,14):
+for i in range(10, 14):
     gmsh.model.geo.mesh.setTransfiniteCurve(i, 10)
 gmsh.model.geo.mesh.setTransfiniteSurface(15)
 

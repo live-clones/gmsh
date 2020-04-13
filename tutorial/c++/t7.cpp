@@ -21,9 +21,9 @@ int main(int argc, char **argv)
   // Create a simple rectangular geometry
   double lc = 1e-2;
   gmsh::model::geo::addPoint(0, 0, 0, lc, 1);
-  gmsh::model::geo::addPoint(.1, 0,  0, lc, 2);
+  gmsh::model::geo::addPoint(.1, 0, 0, lc, 2);
   gmsh::model::geo::addPoint(.1, .3, 0, lc, 3);
-  gmsh::model::geo::addPoint(0,  .3, 0, lc, 4);
+  gmsh::model::geo::addPoint(0, .3, 0, lc, 4);
   gmsh::model::geo::addLine(1, 2, 1);
   gmsh::model::geo::addLine(3, 2, 2);
   gmsh::model::geo::addLine(3, 4, 3);
@@ -36,8 +36,7 @@ int main(int argc, char **argv)
   // Merge a post-processing view containing the target mesh sizes
   try {
     gmsh::merge("../t7_bgmesh.pos");
-  }
-  catch(...) {
+  } catch(...) {
     gmsh::logger::write("Could not load background mesh: bye!");
     gmsh::finalize();
     return 0;

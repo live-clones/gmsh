@@ -46,7 +46,7 @@ gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
 #
 # We can then define some additional points. All points should have different
 # tags:
-gmsh.model.geo.addPoint(.1, 0,  0, lc, 2)
+gmsh.model.geo.addPoint(.1, 0, 0, lc, 2)
 gmsh.model.geo.addPoint(.1, .3, 0, lc, 3)
 
 # If the tag is not provided explicitly, a new tag is automatically created, and
@@ -156,7 +156,7 @@ gmsh.write("t1.msh")
 #
 # gmsh.model.occ.addRectangle(.2, 0, 0, .1, .3)
 #
-# Afther synchronization with the Gmsh model with
+# After synchronization with the Gmsh model with
 #
 # gmsh.model.occ.synchronize()
 #

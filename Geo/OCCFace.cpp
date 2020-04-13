@@ -65,6 +65,7 @@ void OCCFace::setup()
   edgeLoops.clear();
   l_edges.clear();
   l_dirs.clear();
+
   TopExp_Explorer exp2, exp3;
   for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp2.More();
       exp2.Next()) {
@@ -80,26 +81,17 @@ void OCCFace::setup()
       else if(edge.Orientation() == TopAbs_INTERNAL) {
         Msg::Debug("Adding embedded curve %d in surface %d", e->tag(), tag());
         embedded_edges.push_back(e);
-        e->addFace(this);
-        OCCEdge *occe = (OCCEdge *)e;
-        occe->setTrimmed(this);
       }
       else {
-        l_wire.push_back(e);
         Msg::Debug("Curve %d (%d --> %d) ori %d", e->tag(),
                    e->getBeginVertex() ? e->getBeginVertex()->tag() : -1,
                    e->getEndVertex() ? e->getEndVertex()->tag() : -1,
                    edge.Orientation());
-        e->addFace(this);
-        if(!e->is3D()) {
-          OCCEdge *occe = (OCCEdge *)e;
-          occe->setTrimmed(this);
-        }
+        l_wire.push_back(e);
       }
     }
 
     GEdgeLoop el(l_wire);
-    // printf("l_wire of size %d %d\n",l_wire.size(),el.count());
     for(GEdgeLoop::citer it = el.begin(); it != el.end(); ++it) {
       l_edges.push_back(it->ge);
       l_dirs.push_back(it->_sign);
@@ -113,6 +105,19 @@ void OCCFace::setup()
       }
     }
     edgeLoops.push_back(el);
+  }
+
+  for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
+      exp2.More(); exp2.Next()) {
+    TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
+    GVertex *v = 0;
+    if(model()->getOCCInternals())
+      v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
+    if(!v) { Msg::Error("Unknown point in surface %d", tag()); }
+    else if(vertex.Orientation() == TopAbs_INTERNAL) {
+      Msg::Debug("Adding embedded point %d in surface %d", v->tag(), tag());
+      embedded_vertices.insert(v);
+    }
   }
 
   BRepAdaptor_Surface surface(s);
@@ -133,25 +138,27 @@ void OCCFace::setup()
   vmax += std::max(fabs(dv) / 100.0, 1e-12);
   occface = BRep_Tool::Surface(s);
 
-  for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
-      exp2.More(); exp2.Next()) {
-    TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
-    GVertex *v = 0;
-    if(model()->getOCCInternals())
-      v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
-    if(!v) { Msg::Error("Unknown point in surface %d", tag()); }
-    else if(vertex.Orientation() == TopAbs_INTERNAL) {
-      Msg::Debug("Adding embedded point %d in surface %d", v->tag(), tag());
-      embedded_vertices.insert(v);
-    }
-  }
-
   if(OCCFace::geomType() == GEntity::Sphere) {
     BRepAdaptor_Surface surface(s);
     gp_Sphere sphere = surface.Sphere();
     _radius = sphere.Radius();
     gp_Pnt loc = sphere.Location();
     _center = SPoint3(loc.X(), loc.Y(), loc.Z());
+  }
+
+  // Only store references to this new face in edges at the end of the
+  // constructor, to avoid accessing it too early (e.g. when drawing an edge)
+  for(std::size_t i = 0; i < l_edges.size(); i++) {
+    GEdge *e = l_edges[i];
+    e->addFace(this);
+    OCCEdge *occe = dynamic_cast<OCCEdge *>(e);
+    if(occe && !e->is3D()) occe->setTrimmed(this);
+  }
+  for(std::size_t i = 0; i < embedded_edges.size(); i++) {
+    GEdge *e = embedded_edges[i];
+    e->addFace(this);
+    OCCEdge *occe = dynamic_cast<OCCEdge *>(e);
+    if(occe && !e->is3D()) occe->setTrimmed(this);
   }
 }
 

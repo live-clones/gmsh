@@ -5,14 +5,10 @@ int main(int argc, char **argv)
   gmsh::initialize();
   gmsh::option::setNumber("General.Terminal", 1);
 
-  std::vector<double> tri1 = {0., 1., 1.,
-                              0., 0., 1.,
-                              0., 0., 0.};
-  std::vector<double> tri2 = {0., 1., 0.,
-                              0., 1., 1.,
-                              0., 0., 0.};
+  std::vector<double> tri1 = {0., 1., 1., 0., 0., 1., 0., 0., 0.};
+  std::vector<double> tri2 = {0., 1., 0., 0., 1., 1., 0., 0., 0.};
 
-  for(int step = 0; step < 10; step++){
+  for(int step = 0; step < 10; step++) {
     tri1.push_back(10.);
     tri1.push_back(10.);
     tri1.push_back(12. + step);

@@ -31,10 +31,11 @@ gmsh.onelab.set(parameters)
 # flag that will be set to interrupt a calculation
 stop_computation = False
 
+
 # a computationally expensive routine, that will be run in its own thread
 def compute(arg):
     iterations = gmsh.onelab.getNumber("My App/Iterations")
-    progress= gmsh.onelab.getNumber("My App/Show progress?")
+    progress = gmsh.onelab.getNumber("My App/Show progress?")
     n = int(iterations[0]) if len(iterations) > 0 else 1
     show = True if (len(progress) > 0 and progress[0] == 1) else False
     p = 0
@@ -44,7 +45,7 @@ def compute(arg):
         # stop computation if requested by clicking on "Stop it!"
         if stop_computation:
             break
-        k = math.sin(k) + math.cos(j/45.)
+        k = math.sin(k) + math.cos(j / 45.)
         # show progress in real time?
         if (show == 1) and (n > 1) and (not j % (n / 100)):
             p = p + 1
@@ -63,6 +64,7 @@ def compute(arg):
     gmsh.onelab.setString("ONELAB/Action", ["done computing"])
     gmsh.fltk.awake("update")
     return
+
 
 # create the graphical user interface
 gmsh.fltk.initialize()
@@ -89,7 +91,7 @@ while 1:
         n = int(gmsh.onelab.getNumber("My App/Number of threads")[0])
         for i in range(n):
             t = threading.Thread(target=compute,
-                                 args=("My App/Thread {0}".format(i + 1),))
+                                 args=("My App/Thread {0}".format(i + 1), ))
             t.start()
     elif action[0] == "should stop":
         stop_computation = True
