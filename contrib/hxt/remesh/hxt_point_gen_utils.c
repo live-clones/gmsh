@@ -16,6 +16,138 @@ static double sign(double a){
 //*****************************************************************************************
 //*****************************************************************************************
 //
+// FUNCTION to split all quads of a mesh to triangles 
+//          and assign them to a color 
+//
+//*****************************************************************************************
+//*****************************************************************************************
+HXTStatus hxtPointGenSplitQuads(HXTMesh *mesh, uint16_t *color)
+{
+
+  //******************************************************************
+  // Find a color that is not on the list of colors of the input mesh
+  // This will be used to flag triangles splitted from quads 
+  //******************************************************************
+  uint16_t *triColors; 
+  uint16_t numTriColors; 
+  HXT_CHECK(hxtGetTrianglesColorsList(mesh,&numTriColors,&triColors)); 
+  HXT_INFO("Number of input mesh colors          %d", numTriColors); 
+  for (uint16_t i=0; i<UINT16_MAX; i++){
+    int found = 0;
+    for (uint16_t j=0; j<numTriColors; j++){
+      uint16_t cc = triColors[j];
+      if (i == cc){
+        found = 1;
+        break;
+      }
+    }
+    if (found == 0){
+      *color = i;
+      break;
+    }
+  }
+  HXT_CHECK(hxtFree(&triColors));
+
+
+  //******************************************************************
+  // Allocate triangles and split quads
+  //******************************************************************
+  HXT_CHECK(hxtTrianglesReserve(mesh,mesh->quads.num*2));
+
+  for (uint64_t i=0; i<mesh->quads.num; i++){
+    uint32_t *v = mesh->quads.node + 4*i;
+
+    mesh->triangles.node[3*mesh->triangles.num+0] = v[0];
+    mesh->triangles.node[3*mesh->triangles.num+1] = v[1];
+    mesh->triangles.node[3*mesh->triangles.num+2] = v[2];
+    mesh->triangles.colors[mesh->triangles.num] = *color;
+    mesh->triangles.num++;
+
+    mesh->triangles.node[3*mesh->triangles.num+0] = v[0];
+    mesh->triangles.node[3*mesh->triangles.num+1] = v[2];
+    mesh->triangles.node[3*mesh->triangles.num+2] = v[3];
+    mesh->triangles.colors[mesh->triangles.num] = *color;
+    mesh->triangles.num++;
+  }
+
+  //******************************************************************
+  // Save mesh lines (interface edges between quads and triangles)
+  //******************************************************************
+  HXTEdges *edges;
+  HXT_CHECK(hxtEdgesCreateNonManifold(mesh,&edges));
+  uint64_t countLines = 0;
+  for (uint64_t i=0; i<mesh->triangles.num; i++){
+    if (mesh->triangles.colors[i] == *color) continue;
+    for (uint32_t j=0; j<3; j++){
+      uint32_t ce = edges->tri2edg[3*i+j];
+      uint64_t t0 = edges->edg2tri[2*ce+0];
+      uint64_t t1 = edges->edg2tri[2*ce+1];
+      uint16_t c0 = mesh->triangles.colors[t0];
+      uint16_t c1 = mesh->triangles.colors[t1];
+      if (c0 != *color && c1 != *color) continue;
+      if(c0 != c1) countLines++;
+    }
+  }
+  HXT_CHECK(hxtLinesReserve(mesh,countLines));
+  for (uint64_t i=0; i<mesh->triangles.num; i++){
+    if (mesh->triangles.colors[i] == *color) continue;
+    for (uint32_t j=0; j<3; j++){
+      uint32_t ce = edges->tri2edg[3*i+j];
+      uint64_t t0 = edges->edg2tri[2*ce+0];
+      uint64_t t1 = edges->edg2tri[2*ce+1];
+
+      uint16_t c0 = mesh->triangles.colors[t0];
+      uint16_t c1 = mesh->triangles.colors[t1];
+      if (c0 != *color && c1 != *color) continue;
+      if(c0 != c1){
+        mesh->lines.node[2*mesh->lines.num+0] = edges->node[2*ce+0];
+        mesh->lines.node[2*mesh->lines.num+1] = edges->node[2*ce+1];
+        mesh->lines.colors[mesh->lines.num] = 0;
+        mesh->lines.num++;
+      }
+    }
+  }
+  HXT_CHECK(hxtEdgesDelete(&edges));
+
+  //******************************************************************
+  // Save mesh points
+  //******************************************************************
+  uint64_t *counter;
+  HXT_CHECK(hxtMalloc(&counter,sizeof(UINT64_MAX)*mesh->vertices.num));
+  for (uint32_t i=0; i<mesh->vertices.num; i++) counter[i]=0;
+  for (uint64_t i=0; i<mesh->lines.num; i++){
+    counter[mesh->lines.node[2*i+0]]++;
+    counter[mesh->lines.node[2*i+1]]++;
+  }
+  uint32_t countBP = 0;
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    if (counter[i]>2) countBP++;
+  }
+  HXT_CHECK(hxtPointsReserve(mesh,countBP));
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    if (counter[i]>2){
+      mesh->points.node[mesh->points.num] = i;
+      mesh->points.num++;
+    }
+  }
+  HXT_CHECK(hxtFree(&counter));
+
+
+
+  //******************************************************************
+  // Delete quads
+  //******************************************************************
+  HXT_CHECK( hxtAlignedFree(&mesh->quads.node) );
+  HXT_CHECK( hxtAlignedFree(&mesh->quads.colors) );
+  mesh->quads.num = 0 ;
+  mesh->quads.size = 0 ;
+
+  return HXT_STATUS_OK;
+}
+
+//*****************************************************************************************
+//*****************************************************************************************
+//
 // FUNCTION to extract and write out a color 
 //
 //*****************************************************************************************
@@ -752,6 +884,16 @@ HXTStatus hxtCountMaxNumberOfTrianglesToEdges(HXTEdges *edges, uint64_t *maxNumT
     if (counter[edges->tri2edg[3*i+1]]>maxCount) maxCount = counter[edges->tri2edg[3*i+1]];
     if (counter[edges->tri2edg[3*i+2]]>maxCount) maxCount = counter[edges->tri2edg[3*i+2]];
   }
+
+
+    FILE *nm;
+    hxtPosInit("checkNonManifold.pos","lines",&nm);
+    for (uint32_t i=0; i<edges->numEdges; i++){
+      if (counter[i]<=2) continue;
+      uint32_t *v = edges->node + 2*i;
+      hxtPosAddLine(nm,&mesh->vertices.coord[4*v[0]],&mesh->vertices.coord[4*v[1]],0);
+    }
+    hxtPosFinish(nm);
   
   *maxNumTri = maxCount;
   HXT_CHECK(hxtFree(&counter));
@@ -982,7 +1124,6 @@ HXTStatus hxtGetTrianglesToTetrahedra(HXTMesh *mesh,
 //*****************************************************************************************
 //*****************************************************************************************
 HXTStatus hxtGetBoundaryTetrahedraToTriangles(HXTMesh *mesh,
-                                              uint64_t *tri2tet,
                                               uint64_t **tet2tri)
 {
 

@@ -139,7 +139,7 @@ HXTStatus hxtSplitTriangle  (HXTMesh *mesh, HXTEdges *edges, uint64_t ct, double
   }
 
   mesh->triangles.num += 2;
-  uint64_t nt[3] = {mesh->triangles.num-2, mesh->triangles.num-1, ct};
+  uint32_t nt[3] = {mesh->triangles.num-2, mesh->triangles.num-1, ct};
 
   edges->numEdges += 3;
   uint32_t ne[3] = {edges->numEdges-3,edges->numEdges-2,edges->numEdges-1};

@@ -24,6 +24,9 @@ HXTStatus hxtAddTriangleInRTree64(double *p0,
                                   double *p2, 
                                   double box, uint64_t id, void *data);
 
+HXTStatus hxtAddLineInRTree64(double *p0,
+                              double *p1,
+                              double box, uint64_t id, void *data);
 
 #ifdef __cplusplus
 }
