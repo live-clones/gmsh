@@ -409,10 +409,10 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
   for(size_t j = 0; j < regions.size(); j++) {
     GRegion *gr = regions[j];
     for(size_t i = 0; i < gr->tetrahedra.size(); i++) {
-      m->tetrahedra.node[3 * index + 0] = v2c[gr->tetrahedra[i]->getVertex(0)];
-      m->tetrahedra.node[3 * index + 1] = v2c[gr->tetrahedra[i]->getVertex(1)];
-      m->tetrahedra.node[3 * index + 2] = v2c[gr->tetrahedra[i]->getVertex(2)];
-      m->tetrahedra.node[3 * index + 2] = v2c[gr->tetrahedra[i]->getVertex(2)];
+      m->tetrahedra.node[4 * index + 0] = v2c[gr->tetrahedra[i]->getVertex(0)];
+      m->tetrahedra.node[4 * index + 1] = v2c[gr->tetrahedra[i]->getVertex(1)];
+      m->tetrahedra.node[4 * index + 2] = v2c[gr->tetrahedra[i]->getVertex(2)];
+      m->tetrahedra.node[4 * index + 3] = v2c[gr->tetrahedra[i]->getVertex(2)];
       m->tetrahedra.colors[index] = gr->tag();
       index++;
     }
