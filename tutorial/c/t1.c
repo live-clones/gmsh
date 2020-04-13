@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 
      gmshModelOccAddRectangle(.2, 0, 0, .1, .3, -1, 0, &ierr);
 
-     Afther synchronization with the Gmsh model with
+     After synchronization with the Gmsh model with
 
      gmshModelOccSynchronize();
 

@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 
   gmsh::model::add("t16");
 
-  // Let's build the same model as in `t5.geo', but using constructive solid
+  // Let's build the same model as in `t5.cpp', but using constructive solid
   // geometry.
 
   // We can log all messages for further processing with:
