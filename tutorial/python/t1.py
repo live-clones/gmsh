@@ -156,7 +156,7 @@ gmsh.write("t1.msh")
 #
 # gmsh.model.occ.addRectangle(.2, 0, 0, .1, .3)
 #
-# Afther synchronization with the Gmsh model with
+# After synchronization with the Gmsh model with
 #
 # gmsh.model.occ.synchronize()
 #

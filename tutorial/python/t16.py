@@ -18,7 +18,7 @@ gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t16")
 
-# Let's build the same model as in `t5.geo', but using constructive solid
+# Let's build the same model as in `t5.py', but using constructive solid
 # geometry.
 
 # We can log all messages for further processing with:
