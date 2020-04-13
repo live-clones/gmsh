@@ -657,6 +657,7 @@ void ClearProject()
   Msg::Info("Clearing all models and views...");
 #if defined(HAVE_POST)
   for(int i = PView::list.size() - 1; i >= 0; i--) delete PView::list[i];
+  PView::setGlobalTag(0);
 #endif
 #if defined(HAVE_PARSER)
   gmsh_yysymbols.clear();

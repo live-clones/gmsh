@@ -13,15 +13,12 @@
 #include <iostream>
 #include <gmsh.h>
 
-namespace model = gmsh::model;
-namespace factory = gmsh::model::occ;
-
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
   gmsh::option::setNumber("General.Terminal", 1);
 
-  model::add("t16");
+  gmsh::model::add("t16");
 
   // Let's build the same model as in `t5.geo', but using constructive solid
   // geometry.
@@ -31,8 +28,8 @@ int main(int argc, char **argv)
 
   // We first create two cubes:
   try {
-    factory::addBox(0,0,0, 1,1,1, 1);
-    factory::addBox(0,0,0, 0.5,0.5,0.5, 2);
+    gmsh::model::occ::addBox(0,0,0, 1,1,1, 1);
+    gmsh::model::occ::addBox(0,0,0, 0.5,0.5,0.5, 2);
   }
   catch(...) {
     gmsh::logger::write("Could not create OpenCASCADE shapes: bye!");
@@ -42,7 +39,7 @@ int main(int argc, char **argv)
   // We apply a boolean difference to create the "cube minus one eigth" shape:
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
-  factory::cut({{3,1}}, {{3,2}}, ov, ovv, 3);
+  gmsh::model::occ::cut({{3,1}}, {{3,2}}, ov, ovv, 3);
 
   // Boolean operations with OpenCASCADE always create new entities. By default
   // the extra arguments `removeObject' and `removeTool' in `cut()' are set to
@@ -54,7 +51,7 @@ int main(int argc, char **argv)
   for(int t = 1; t <= 5; t++){
     x += 0.166 ;
     z += 0.166 ;
-    factory::addSphere(x,y,z,r, 3 + t);
+    gmsh::model::occ::addSphere(x,y,z,r, 3 + t);
     holes.push_back({3, 3 + t});
   }
 
@@ -62,7 +59,7 @@ int main(int argc, char **argv)
   // want five spherical inclusions, whose mesh should be conformal with the
   // mesh of the cube: we thus use `fragment()', which intersects all volumes in
   // a conformal manner (without creating duplicate interfaces):
-  factory::fragment({{3,3}}, holes, ov, ovv);
+  gmsh::model::occ::fragment({{3,3}}, holes, ov, ovv);
 
   // ov contains all the generated entities of the same dimension as the input
   // entities:
@@ -85,7 +82,7 @@ int main(int argc, char **argv)
     gmsh::logger::write(s);
   }
 
-  factory::synchronize();
+  gmsh::model::occ::synchronize();
 
   // When the boolean operation leads to simple modifications of entities, and
   // if one deletes the original entities, Gmsh tries to assign the same tag to
@@ -103,11 +100,11 @@ int main(int argc, char **argv)
   // programmatically:
   gmsh::model::addPhysicalGroup(3, {ov[ov.size() - 1].second}, 10);
 
-  // Creating entities using constructive solid geometry is very powerful, but can
-  // lead to small pratical issues for e.g. setting mesh sizes at points, or
+  // Creating entities using constructive solid geometry is very powerful, but
+  // can lead to practical issues for e.g. setting mesh sizes at points, or
   // identifying boundaries.
 
-  // To identify point or other bounding entities you can take advantage of the
+  // To identify points or other bounding entities you can take advantage of the
   // `getEntities()', `getBoundary()' and `getEntitiesInBoundingBox()'
   // functions:
 
@@ -116,25 +113,26 @@ int main(int argc, char **argv)
   double lcar3 = .055;
 
   // Assign a mesh size to all the points:
-  model::getEntities(ov, 0);
-  model::mesh::setSize(ov, lcar1);
+  gmsh::model::getEntities(ov, 0);
+  gmsh::model::mesh::setSize(ov, lcar1);
 
   // Override this constraint on the points of the five spheres:
-  model::getBoundary(holes, ov, false, false, true);
-  model::mesh::setSize(ov, lcar3);
+  gmsh::model::getBoundary(holes, ov, false, false, true);
+  gmsh::model::mesh::setSize(ov, lcar3);
 
   // Select the corner point by searching for it geometrically:
   double eps = 1e-3;
-  model::getEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
+  gmsh::model::getEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
                                   0.5+eps, 0.5+eps, 0.5+eps, ov, 0);
-  model::mesh::setSize(ov, lcar2);
+  gmsh::model::mesh::setSize(ov, lcar2);
 
-  model::mesh::generate(3);
+  gmsh::model::mesh::generate(3);
 
   gmsh::write("t16.msh");
 
   // Additional examples created with the OpenCASCADE geometry kernel are
-  // available in `t18.cpp', `t19.cpp' as well as in the `demos/api' directory.
+  // available in `t18.cpp', `t19.cpp' and `t20.cpp', as well as in the
+  // `demos/api' directory.
 
   // Inspect the log:
   std::vector<std::string> log;

@@ -6,9 +6,9 @@
 //
 // -----------------------------------------------------------------------------
 
-// Characteristic lengths can be specified very accurately by providing a
-// background mesh, i.e., a post-processing view that contains the target mesh
-// sizes.
+// As seen in `t7.cpp', characteristic lengths can be specified very accurately
+// by providing a background mesh, i.e., a post-processing view that contains
+// the target mesh sizes.
 
 // Here, the background mesh is represented as a metric tensor field defined on
 // a square. One should use bamg as 2d mesh generator to enable anisotropic
@@ -16,9 +16,6 @@
 
 #include <gmsh.h>
 #include <math.h>
-
-namespace factory = gmsh::model::geo;
-namespace model = gmsh::model;
 
 int main(int argc, char **argv)
 {

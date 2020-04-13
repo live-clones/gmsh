@@ -9,29 +9,26 @@
 import gmsh
 import math
 
-model = gmsh.model
-factory = model.geo
-
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
 
-model.add("t3")
+gmsh.model.add("t3")
 
 # Copied from t1.py...
 lc = 1e-2
-factory.addPoint(0, 0, 0, lc, 1)
-factory.addPoint(.1, 0,  0, lc, 2)
-factory.addPoint(.1, .3, 0, lc, 3)
-factory.addPoint(0, .3, 0, lc, 4)
-factory.addLine(1, 2, 1)
-factory.addLine(3, 2, 2)
-factory.addLine(3, 4, 3)
-factory.addLine(4, 1, 4)
-factory.addCurveLoop([4, 1, -2, 3], 1)
-factory.addPlaneSurface([1], 1)
-model.addPhysicalGroup(1, [1, 2, 4], 5)
-ps = model.addPhysicalGroup(2, [1])
-model.setPhysicalName(2, ps, "My surface")
+gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
+gmsh.model.geo.addPoint(.1, 0,  0, lc, 2)
+gmsh.model.geo.addPoint(.1, .3, 0, lc, 3)
+gmsh.model.geo.addPoint(0, .3, 0, lc, 4)
+gmsh.model.geo.addLine(1, 2, 1)
+gmsh.model.geo.addLine(3, 2, 2)
+gmsh.model.geo.addLine(3, 4, 3)
+gmsh.model.geo.addLine(4, 1, 4)
+gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
+gmsh.model.geo.addPlaneSurface([1], 1)
+gmsh.model.addPhysicalGroup(1, [1, 2, 4], 5)
+ps = gmsh.model.addPhysicalGroup(2, [1])
+gmsh.model.setPhysicalName(2, ps, "My surface")
 
 # As in `t2.py', we plan to perform an extrusion along the z axis.  But here,
 # instead of only extruding the geometry, we also want to extrude the 2D
@@ -43,13 +40,13 @@ model.setPhysicalName(2, ps, "My surface")
 
 h = 0.1
 angle = 90.
-ov = factory.extrude([(2,1)], 0, 0, h, [8,2], [0.5,1])
+ov = gmsh.model.geo.extrude([(2,1)], 0, 0, h, [8,2], [0.5,1])
 
 # The extrusion can also be performed with a rotation instead of a translation,
 # and the resulting mesh can be recombined into prisms (we use only one layer
 # here, with 7 subdivisions). All rotations are specified by an an axis point
 # (-0.1, 0, 0.1), an axis direction (0, 1, 0), and a rotation angle (-Pi/2):
-ov = factory.revolve([(2,28)], -0.1,0,0.1, 0,1,0, -math.pi/2, [7])
+ov = gmsh.model.geo.revolve([(2,28)], -0.1,0,0.1, 0,1,0, -math.pi/2, [7])
 
 # Using the built-in geometry kernel, only rotations with angles < Pi are
 # supported. To do a full turn, you will thus need to apply at least 3
@@ -59,10 +56,10 @@ ov = factory.revolve([(2,28)], -0.1,0,0.1, 0,1,0, -math.pi/2, [7])
 # also be combined to form a "twist".  The last (optional) argument for the
 # extrude() and twist() functions specifies whether the extruded mesh should be
 # recombined or not.
-ov = factory.twist([(2,50)], 0,0.15,0.25, -2*h,0,0, 1,0,0, angle*math.pi/180.,
-                   [10], [], True)
+ov = gmsh.model.geo.twist([(2,50)], 0,0.15,0.25, -2*h,0,0, 1,0,0,
+                          angle*math.pi/180., [10], [], True)
 
-factory.synchronize()
+gmsh.model.geo.synchronize()
 
 # All the extrusion functions return a vector of extruded entities: the "top" of
 # the extruded surface (in `ov[0]'), the newly created volume (in `ov[1]') and
@@ -70,9 +67,9 @@ factory.synchronize()
 
 # We can then define a new physical volume (with tag 101) to group all the
 # elementary volumes:
-model.addPhysicalGroup(3, [1, 2, ov[1][1]], 101)
+gmsh.model.addPhysicalGroup(3, [1, 2, ov[1][1]], 101)
 
-model.mesh.generate(3)
+gmsh.model.mesh.generate(3)
 gmsh.write("t3.msh")
 
 # Let us now change some options... Since all interactive options are accessible
@@ -94,9 +91,9 @@ gmsh.option.setColor("Geometry.Surfaces", r, g, b, a);
 
 # gmsh.fltk.run();
 
-# When the GUI is launched, you can use the `Help->Current options' menu to
-# see the current values of all options. To save the options in a file, use
-# `File->Export->Gmsh options', or through the api:
+# When the GUI is launched, you can use the `Help->Current Options and
+# Workspace' menu to see the current values of all options. To save the options
+# in a file, use `File->Export->Gmsh Options', or through the api:
 
 # gmsh.write("t3.opt");
 

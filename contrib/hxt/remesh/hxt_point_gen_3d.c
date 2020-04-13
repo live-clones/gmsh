@@ -4,7 +4,7 @@
 #include "hxt_rtree_wrapper.h"
 
 #include "predicates.h"
-#include "hxt_tetFlag.h"
+//#include "hxt_tetFlag.h"
 #include "hxt_point_gen_orientation.h"
 #include "hxt_orientation3d_tools.h"
 
@@ -227,7 +227,7 @@ HXTStatus hxtInterpolateFrame3d(HXTMesh *mesh,
   double frame[18];
   for (uint32_t i=0; i<18; i++) frame[i] = 0.;
 
-  HXT_CHECK(hxtOrientation3DgetScaledCrossInTetFromDir(triFrames,uv,frame));
+  HXT_CHECK(hxtOr3DgetScaledCrossInTetFromDir(triFrames,uv,frame));
   sizes[0] = sizes[3] = norm(&frame[0]);
   sizes[1] = sizes[4] = norm(&frame[3]);
   sizes[2] = sizes[5] = norm(&frame[6]);
@@ -560,23 +560,59 @@ HXTStatus hxtWalkToCandidatePoint3dRK4(HXTMesh *mesh,
 //
 //*************************************************************************************************
 //*************************************************************************************************
-HXTStatus hxtPointGenFilterAligned3d(double *coords,
+HXTStatus hxtPointGenFilterAligned3d(HXTMesh *mesh,
+                                     uint64_t ct,
+                                     double *coords,
                                      double *pp, // candidate point
                                      double *frame,
                                      double *sizes,
                                      double threshold,
                                      void *data,
+                                     void *dataTri,
                                      int *pass)
 {
-  // Find nearby points from RTree
+  //============================================================================
+  // Define a box size to search from the maximum size
   double size =0;
   for (int i=0; i<3; i++)
     if (sizes[i]>size) size = sizes[i];
 
-  double box = 2*size;
+  double box = 1.5*size;
 
   double ppmin[3] = {pp[0] - box, pp[1] - box, pp[2] - box};
   double ppmax[3] = {pp[0] + box, pp[1] + box, pp[2] + box};
+ 
+
+  //============================================================================
+  // Find close surface triangles from RTree of triangles  
+  // This is an addition for when sizemap inside of the domain differs 
+  uint64_t numCloseTris = 0;
+  uint64_t *idCloseTris = NULL;
+  HXT_CHECK(hxtRTreeSearch64(ppmin,ppmax,&numCloseTris,&idCloseTris,dataTri));
+
+  if (numCloseTris == 0){
+  }
+  else{
+    for (uint64_t i=0; i<numCloseTris; i++){
+      uint64_t tri = idCloseTris[i];
+      double dist, closePt[3];
+      int in = 0;
+      HXT_CHECK(hxtSignedDistancePointTriangle(&mesh->vertices.coord[4*mesh->triangles.node[3*tri+0]],
+                                               &mesh->vertices.coord[4*mesh->triangles.node[3*tri+1]],
+                                               &mesh->vertices.coord[4*mesh->triangles.node[3*tri+2]],
+                                               pp,
+                                               &dist,
+                                               &in,
+                                               closePt));
+      if (fabs(dist)<sizes[0]){
+        *pass = 0;
+        return HXT_STATUS_OK;
+      }
+    }
+  }
+
+  //============================================================================
+  // Find nearby generated points from RTree
  
   int numClose = 0;
   int *idClose = NULL;
@@ -822,9 +858,9 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   HXT_INFO("");
   HXT_INFO("========= Generating points on volumes ==========");
-  HXT_INFO_COND(opt->verbosity>1,"");
+  HXT_INFO_COND(opt->verbosity>0,"");
   
-  double threshold = 0.72;
+  double threshold = 0.72; // TODO 
 
   // Points on surfaces are on fmesh
   // along with the parent information on parent 
@@ -845,34 +881,33 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   clock_t time01 = clock();
   double time_estimate = (double)(time01-time00) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>1,"Time to create tri2tet  %f", time_estimate); 
+  HXT_INFO_COND(opt->verbosity>0,"Time to create tri2tet  %f", time_estimate); 
 
-
+  
 
   // TODO two functions doing the same - check 
 
-  clock_t time11 = clock();
-  uint64_t *tri2tetTEST;
-  HXT_CHECK(hxtMalloc(&tri2tetTEST,mesh->triangles.num*sizeof(uint64_t)));
-  for (uint64_t i=0; i < mesh->triangles.num; i++) tri2tetTEST[i] = UINT64_MAX;
-  uint64_t missing;
-  HXT_CHECK(hxtGetTri2TetMap(mesh,tri2tet,&missing));
-  HXT_INFO_COND(opt->verbosity>1,"Missing = %lu", missing);
-  clock_t time12 = clock();
-  time_estimate = (double)(time12-time11) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>1,"Time to create tri2tet TEST  %f", time_estimate); 
+/*  clock_t time11 = clock();*/
+  /*uint64_t *tri2tetTEST;*/
+  /*HXT_CHECK(hxtMalloc(&tri2tetTEST,mesh->triangles.num*sizeof(uint64_t)));*/
+  /*for (uint64_t i=0; i < mesh->triangles.num; i++) tri2tetTEST[i] = UINT64_MAX;*/
+  /*uint64_t missing;*/
+  /*HXT_CHECK(hxtGetTri2TetMap(mesh,tri2tet,&missing));*/
+  /*HXT_INFO_COND(opt->verbosity>0,"Missing = %lu", missing);*/
+  /*clock_t time12 = clock();*/
+  /*time_estimate = (double)(time12-time11) / CLOCKS_PER_SEC;*/
+  /*HXT_INFO_COND(opt->verbosity>0,"Time to create tri2tet TEST  %f", time_estimate); */
 
-  for (uint64_t i=0; i<mesh->triangles.num; i++){
-    tri2tet[i] = tri2tet[i]/4;
-  }
-
-  HXT_CHECK(hxtFree(&tri2tetTEST));
+  /*for (uint64_t i=0; i<mesh->triangles.num; i++){*/
+    /*tri2tet[i] = tri2tet[i]/4;*/
+  /*}*/
+  /*HXT_CHECK(hxtFree(&tri2tetTEST));*/
 
 
   //********************************************************
   // Create RTree for filtering 
   //********************************************************
-  double tol = 10e-16;
+  double tol = 10e-16; // TODO 
   void* data;
   HXT_CHECK(hxtRTreeCreate(&data));
   // Add line points in RTree
@@ -883,15 +918,34 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   clock_t time02 = clock();
   time_estimate = (double)(time02-time01) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>1,"Time to create rtree  %f", time_estimate); 
+  HXT_INFO_COND(opt->verbosity>0,"Time to create rtree          %f", time_estimate); 
 
-  HXT_INFO("");
-  HXT_INFO_COND(opt->walkMethod3D==0,"Walking method to candidate point - simple");
-  HXT_INFO_COND(opt->walkMethod3D==1,"Walking method to candidate point - RungeKutta4");
+
+  // A second auxillary rtree for surface triangles
+  
+  tol = 10e-16; // TODO 
+  void *dataTri;
+  HXT_CHECK(hxtRTreeCreate64(&dataTri));
+  for (uint64_t i=0; i<mesh->triangles.num; i++){
+    double *p0 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+0];
+    double *p1 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+1];
+    double *p2 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+2];
+    HXT_CHECK(hxtAddTriangleInRTree64(p0,p1,p2,tol,i,dataTri));
+  }
+
+  clock_t time02b = clock();
+  time_estimate = (double)(time02b-time02) / CLOCKS_PER_SEC;
+  HXT_INFO_COND(opt->verbosity>0,"Time to create rtree for tri  %f", time_estimate);
+
 
   //********************************************************
   // Queue-like loop to generate points
   //********************************************************
+  HXT_INFO("");
+  HXT_INFO_COND(opt->walkMethod3D==0,"Walking method to candidate point - simple");
+  HXT_INFO_COND(opt->walkMethod3D==1,"Walking method to candidate point - RungeKutta4");
+
+
   uint32_t numGenPoints = 0;
   numGenPoints += fmesh->vertices.num;
 
@@ -975,7 +1029,16 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
       // FILTERING 
       //HXT_CHECK(hxtPointGenFilter(fmesh->vertices.coord,candidate,size,threshold,data,&insert));
-      HXT_CHECK(hxtPointGenFilterAligned3d(fmesh->vertices.coord,candidate,frameCandidate,sizesCandidate,threshold,data,&insert));
+      HXT_CHECK(hxtPointGenFilterAligned3d(mesh,
+                                           ct,
+                                           fmesh->vertices.coord,
+                                           candidate,
+                                           frameCandidate,
+                                           sizesCandidate,
+                                           threshold,
+                                           data,
+                                           dataTri,
+                                           &insert));
 
       // (function of correction)
       // TODO 
@@ -1008,7 +1071,16 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
   
         // FILTERING corrected point 
         //HXT_CHECK(hxtPointGenFilter(fmesh->vertices.coord,candidate,size,threshold,data,&insert));
-        HXT_CHECK(hxtPointGenFilterAligned3d(fmesh->vertices.coord,candidate,frameCandidate,sizesCandidate,threshold,data,&insert));
+        HXT_CHECK(hxtPointGenFilterAligned3d(mesh,
+                                             ct,
+                                             fmesh->vertices.coord,
+                                             candidate,
+                                             frameCandidate,
+                                             sizesCandidate,
+                                             threshold,
+                                             data,
+                                             dataTri,
+                                             &insert));
 
       }
 
@@ -1034,12 +1106,16 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   clock_t time03 = clock();
   time_estimate = (double)(time03-time02) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>1,"Time to generate points  %f", time_estimate); 
+  HXT_INFO_COND(opt->verbosity>0,"Time to generate points  %f", time_estimate); 
 
   // Cleaning things 
   HXT_CHECK(hxtRTreeDelete(&data));
+  HXT_CHECK(hxtRTreeDelete(&dataTri));
   HXT_CHECK(hxtFree(&tri2tet));
   HXT_CHECK(hxtFree(&lines2tet));
+
+  
+
 
   return HXT_STATUS_OK;
 }

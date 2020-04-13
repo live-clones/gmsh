@@ -90,7 +90,7 @@ StringXString *GMSH_SpanningTreePlugin::getOptionStr(int iopt)
 void GMSH_SpanningTreePlugin::run(void)
 {
   // Get data
-  double time = Cpu();
+  double time = Cpu(), w = TimeOfDay();
   int output = (int)SpanningTreeOptions_Number[0].def;
   string volume = SpanningTreeOptions_String[0].def;
   string surface = SpanningTreeOptions_String[1].def;
@@ -139,7 +139,8 @@ void GMSH_SpanningTreePlugin::run(void)
   addToModel(*model, tree, output);
 
   // Done
-  Msg::Info("Spanning tree built! (%g s)", Cpu() - time);
+  Msg::Info("Spanning tree built (Wall %gs, CPU %gs)", TimeOfDay() - w,
+            Cpu() - time);
 }
 
 void GMSH_SpanningTreePlugin::spanningTree(EdgeSet &edge, DSU &vertex,

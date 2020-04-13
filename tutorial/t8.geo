@@ -2,7 +2,7 @@
 //
 //  Gmsh GEO tutorial 8
 //
-//  Post-processing, scripting, animations, options
+//  Post-processing and animations
 //
 // -----------------------------------------------------------------------------
 

@@ -35,19 +35,16 @@ static bool isFullyDiscrete(GRegion *gr)
   if(gr->geomType() != GEntity::DiscreteVolume) return false;
   std::vector<GFace *> f = gr->faces();
   for(std::size_t i = 0; i < f.size(); i++) {
-    if(f[i]->geomType() != GEntity::DiscreteSurface ||
-       (f[i]->geomType() == GEntity::DiscreteSurface &&
-        static_cast<discreteFace *>(f[i])->haveParametrization())) {
-      return false;
-    }
+    if(f[i]->geomType() != GEntity::DiscreteSurface) return false;
+    // a discrete surface could actually be a gmshFace!
+    discreteFace *df = dynamic_cast<discreteFace*>(f[i]);
+    if(df && df->haveParametrization()) return false;
   }
   std::vector<GEdge *> e = gr->edges();
   for(std::size_t i = 0; i < e.size(); i++) {
-    if(e[i]->geomType() != GEntity::DiscreteCurve ||
-       (e[i]->geomType() == GEntity::DiscreteCurve &&
-        static_cast<discreteEdge *>(e[i])->haveParametrization())) {
-      return false;
-    }
+    if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
+    discreteEdge *de = dynamic_cast<discreteEdge*>(e[i]);
+    if(de && de->haveParametrization()) return false;
   }
   return true;
 }

@@ -27,6 +27,8 @@ lcar3 = .055;
 // the mesh counts approximately 231,000 nodes and 1,360,000 tetrahedra. You can
 // check mesh statistics in the graphical user interface with the
 // `Tools->Statistics' menu.
+//
+// See `t10.geo' for more information about mesh sizes.
 
 // We proceed by defining some elementary entities describing a truncated cube:
 
@@ -64,7 +66,7 @@ Macro CheeseHole
   // In the following commands we use the reserved variable name `newp', which
   // automatically selects a new point tag. Analogously to `newp', the special
   // variables `newl', `newll, `news', `newsl' and `newv' select new curve,
-  // curve loop, surface, surface loop and volume tag.
+  // curve loop, surface, surface loop and volume tags.
   //
   // If `Geometry.OldNewReg' is set to 0, the new tags are chosen as the highest
   // current tag for each category (points, curves, curve loops, ...), plus
@@ -95,7 +97,7 @@ Macro CheeseHole
   // With the OpenCASCADE kernel, `Surface' uses a much more general generic
   // surface filling algorithm, creating a BSpline surface passing through an
   // arbitrary number of boundary curves; and `ThruSections' allows to create
-  // ruled surfaces.
+  // ruled surfaces (see `t19.geo').
 
   l1 = newll; Curve Loop(l1) = {c5,c10,c4};
   l2 = newll; Curve Loop(l2) = {c9,-c5,c1};
@@ -115,8 +117,8 @@ Macro CheeseHole
   s7 = news; Surface(s7) = {l7};
   s8 = news; Surface(s8) = {l8};
 
-  // We then store the surface loops identification numbers in a list for later
-  // reference (we will need these to define the final volume):
+  // We then store the surface loops tags in a list for later reference (we will
+  // need these to define the final volume):
 
   theloops[t] = newsl;
   Surface Loop(theloops[t]) = {s1, s2, s3, s4, s5, s6, s7, s8};
@@ -144,9 +146,9 @@ For t In {1:5}
   Physical Volume (t) = thehole;
 
   // We also print some variables on the terminal (note that, since all
-  // variables are treated internally as floating point numbers, the format
-  // string should only contain valid floating point format specifiers like
-  // `%g', `%f', '%e', etc.):
+  // variables in `.geo' files are treated internally as floating point numbers,
+  // the format string should only contain valid floating point format
+  // specifiers like `%g', `%f', '%e', etc.):
 
   Printf("Hole %g (center = {%g,%g,%g}, radius = %g) has number %g!",
 	 t, x, y, z, r, thehole);

@@ -2245,50 +2245,6 @@ class model:
             return _ovectorint(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_.value)
 
         @staticmethod
-        def getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1):
-            """
-            gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag=-1)
-
-            Get the element-dependent basis functions of the elements of type
-            `elementType' in the entity of tag `tag' at the integration points
-            `integrationPoints' (given as concatenated triplets of coordinates in the
-            reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
-            space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
-            order hierarchical H1 Legendre functions or their gradient, in the u, v, w
-            coordinates of the reference elements). `numComponents' returns the number
-            C of components of a basis function. `numBasisFunctions' returns the number
-            N of basis functions per element. `basisFunctions' returns the value of the
-            basis functions at the integration points for each element: [e1g1f1,...,
-            e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,...,
-            e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: This function is deprecated -
-            use `getBasisFunctions' instead.
-
-            Return `numComponents', `numFunctionsPerElement', `basisFunctions'.
-            """
-            api_integrationPoints_, api_integrationPoints_n_ = _ivectordouble(integrationPoints)
-            api_numComponents_ = c_int()
-            api_numFunctionsPerElement_ = c_int()
-            api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetBasisFunctionsForElements(
-                c_int(elementType),
-                api_integrationPoints_, api_integrationPoints_n_,
-                c_char_p(functionSpaceType.encode()),
-                byref(api_numComponents_),
-                byref(api_numFunctionsPerElement_),
-                byref(api_basisFunctions_), byref(api_basisFunctions_n_),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: ",
-                    ierr.value)
-            return (
-                api_numComponents_.value,
-                api_numFunctionsPerElement_.value,
-                _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
-
-        @staticmethod
         def getEdgeNumber(edgeNodes):
             """
             gmsh.model.mesh.getEdgeNumber(edgeNodes)
@@ -3001,16 +2957,21 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def createTopology():
+        def createTopology(makeSimplyConnected=True, exportDiscrete=True):
             """
-            gmsh.model.mesh.createTopology()
+            gmsh.model.mesh.createTopology(makeSimplyConnected=True, exportDiscrete=True)
 
             Create a boundary representation from the mesh if the model does not have
             one (e.g. when imported from mesh file formats with no BRep representation
-            of the underlying model).
+            of the underlying model). If `makeSimplyConnected' is set, enforce simply
+            connected discrete surfaces and volumes. If `exportDiscrete' is set, clear
+            any built-in CAD kernel entities and export the discrete entities in the
+            built-in CAD kernel.
             """
             ierr = c_int()
             lib.gmshModelMeshCreateTopology(
+                c_int(bool(makeSimplyConnected)),
+                c_int(bool(exportDiscrete)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -5370,30 +5331,103 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def setMeshSize(dimTags, size):
+        def getEntities(dim=-1):
             """
-            gmsh.model.occ.setMeshSize(dimTags, size)
+            gmsh.model.occ.getEntities(dim=-1)
 
-            Set a mesh size constraint on the model entities `dimTags'. Currently only
-            entities of dimension 0 (points) are handled.
+            Get all the OpenCASCADE entities. If `dim' is >= 0, return only the
+            entities of the specified dimension (e.g. points if `dim' == 0). The
+            entities are returned as a vector of (dim, tag) integer pairs.
+
+            Return `dimTags'.
             """
-            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelOccSetMeshSize(
-                api_dimTags_, api_dimTags_n_,
-                c_double(size),
+            lib.gmshModelOccGetEntities(
+                byref(api_dimTags_), byref(api_dimTags_n_),
+                c_int(dim),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccSetMeshSize returned non-zero error code: ",
+                    "gmshModelOccGetEntities returned non-zero error code: ",
                     ierr.value)
+            return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
+
+        @staticmethod
+        def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
+            """
+            gmsh.model.occ.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1)
+
+            Get the OpenCASCADE entities in the bounding box defined by the two points
+            (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+            return only the entities of the specified dimension (e.g. points if `dim'
+            == 0).
+
+            Return `tags'.
+            """
+            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccGetEntitiesInBoundingBox(
+                c_double(xmin),
+                c_double(ymin),
+                c_double(zmin),
+                c_double(xmax),
+                c_double(ymax),
+                c_double(zmax),
+                byref(api_tags_), byref(api_tags_n_),
+                c_int(dim),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccGetEntitiesInBoundingBox returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorpair(api_tags_, api_tags_n_.value)
+
+        @staticmethod
+        def getBoundingBox(dim, tag):
+            """
+            gmsh.model.occ.getBoundingBox(dim, tag)
+
+            Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
+            the OpenCASCADE entity of dimension `dim' and tag `tag'.
+
+            Return `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
+            """
+            api_xmin_ = c_double()
+            api_ymin_ = c_double()
+            api_zmin_ = c_double()
+            api_xmax_ = c_double()
+            api_ymax_ = c_double()
+            api_zmax_ = c_double()
+            ierr = c_int()
+            lib.gmshModelOccGetBoundingBox(
+                c_int(dim),
+                c_int(tag),
+                byref(api_xmin_),
+                byref(api_ymin_),
+                byref(api_zmin_),
+                byref(api_xmax_),
+                byref(api_ymax_),
+                byref(api_zmax_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccGetBoundingBox returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_xmin_.value,
+                api_ymin_.value,
+                api_zmin_.value,
+                api_xmax_.value,
+                api_ymax_.value,
+                api_zmax_.value)
 
         @staticmethod
         def getMass(dim, tag):
             """
             gmsh.model.occ.getMass(dim, tag)
 
-            Get the mass of the model entity of dimension `dim' and tag `tag'.
+            Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
 
             Return `mass'.
             """
@@ -5415,7 +5449,7 @@ class model:
             """
             gmsh.model.occ.getCenterOfMass(dim, tag)
 
-            Get the center of mass of the model entity of dimension `dim' and tag
+            Get the center of mass of the OpenCASCADE entity of dimension `dim' and tag
             `tag'.
 
             Return `x', `y', `z'.
@@ -5445,8 +5479,8 @@ class model:
             """
             gmsh.model.occ.getMatrixOfInertia(dim, tag)
 
-            Get the matrix of inertia (by row) of the model entity of dimension `dim'
-            and tag `tag'.
+            Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
+            `dim' and tag `tag'.
 
             Return `mat'.
             """
@@ -5480,6 +5514,31 @@ class model:
                 raise ValueError(
                     "gmshModelOccSynchronize returned non-zero error code: ",
                     ierr.value)
+
+
+        class mesh:
+            """
+            OpenCASCADE CAD kernel meshing constraints
+            """
+
+            @staticmethod
+            def setSize(dimTags, size):
+                """
+                gmsh.model.occ.mesh.setSize(dimTags, size)
+
+                Set a mesh size constraint on the model entities `dimTags'. Currently only
+                entities of dimension 0 (points) are handled.
+                """
+                api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+                ierr = c_int()
+                lib.gmshModelOccMeshSetSize(
+                    api_dimTags_, api_dimTags_n_,
+                    c_double(size),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise ValueError(
+                        "gmshModelOccMeshSetSize returned non-zero error code: ",
+                        ierr.value)
 
 
 class view:
@@ -5601,6 +5660,37 @@ class view:
         if ierr.value != 0:
             raise ValueError(
                 "gmshViewAddModelData returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0):
+        """
+        gmsh.view.addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0)
+
+        Add homogeneous model-based post-processing data to the view with tag
+        `tag'. The arguments have the same meaning as in `addModelData', except
+        that `data' is supposed to be homogeneous and is thus flattened in a single
+        vector. This is always possible e.g. for "NodeData" and "ElementData", but
+        only if data is associated to elements of the same type for
+        "ElementNodeData".
+        """
+        api_tags_, api_tags_n_ = _ivectorsize(tags)
+        api_data_, api_data_n_ = _ivectordouble(data)
+        ierr = c_int()
+        lib.gmshViewAddHomogeneousModelData(
+            c_int(tag),
+            c_int(step),
+            c_char_p(modelName.encode()),
+            c_char_p(dataType.encode()),
+            api_tags_, api_tags_n_,
+            api_data_, api_data_n_,
+            c_double(time),
+            c_int(numComponents),
+            c_int(partition),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshViewAddHomogeneousModelData returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod

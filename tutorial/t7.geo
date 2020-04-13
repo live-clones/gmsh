@@ -2,7 +2,7 @@
 //
 //  Gmsh GEO tutorial 7
 //
-//  Background mesh
+//  Background meshes
 //
 // -----------------------------------------------------------------------------
 
@@ -17,3 +17,6 @@ Merge "t7_bgmesh.pos";
 
 // Apply the view as the current background mesh
 Background Mesh View[0];
+
+// Background meshes are actually a particular case of general mesh size
+// fields: see `t10.geo'.

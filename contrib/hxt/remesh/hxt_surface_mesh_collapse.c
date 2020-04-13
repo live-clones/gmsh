@@ -293,7 +293,7 @@ HXTStatus hxtSurfaceMeshCollapseSwap(HXTPointGenOptions *opt,
 
     }
 
-    HXT_INFO_COND(opt->verbosity>1,"%d - Number of swaps in collapsing %d", ii, numSwaps);
+    HXT_INFO_COND(opt->verbosity>0,"%d - Number of swaps in collapsing %d", ii, numSwaps);
     if (numSwapsOld == numSwaps) break;
     numSwapsOld = numSwaps;
   }
@@ -321,7 +321,7 @@ HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
 
   HXT_INFO("");
   HXT_INFO("========= Surface Remeshing - Removing Initial Vertices  ==========");
-  HXT_INFO_COND(opt->verbosity>1,"");
+  HXT_INFO_COND(opt->verbosity>0,"");
    
 
   // TODO normally we could take the following structures as input from insertion step
@@ -333,7 +333,7 @@ HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
   uint16_t *triColors;
   uint16_t numTriColors;
   HXT_CHECK(hxtGetTrianglesColorsList(tmesh,&numTriColors,&triColors));
-  HXT_INFO_COND(opt->verbosity>1,"Number of colors:  %d", numTriColors);
+  HXT_INFO_COND(opt->verbosity>0,"Number of colors:  %d", numTriColors);
 
   //***********************************************************************************************
   // Create lines to edges array; 
@@ -358,7 +358,7 @@ HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
   //***********************************************************************************************
   uint64_t maxNumTriToLine = 0; // maximum number of triangles adjacent to a line
   HXT_CHECK(hxtCountMaxNumberOfTrianglesToEdges(tedges,&maxNumTriToLine));
-  HXT_INFO_COND(opt->verbosity>1,"Number of max tri to line:  %lu", maxNumTriToLine);
+  HXT_INFO_COND(opt->verbosity>0,"Number of max tri to line:  %lu", maxNumTriToLine);
   uint64_t *lines2triangles;
   HXT_CHECK(hxtMalloc(&lines2triangles,maxNumTriToLine*tmesh->lines.size*sizeof(uint64_t)));
   for (uint64_t i=0; i<maxNumTriToLine*tmesh->lines.size; i++) lines2triangles[i] = UINT64_MAX;
@@ -369,7 +369,7 @@ HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
   //***********************************************************************************************
   uint64_t maxNumLinesToVertex = 0;
   HXT_CHECK(hxtCountMaxNumberOfLinesToVertices(tmesh,&maxNumLinesToVertex));
-  HXT_INFO_COND(opt->verbosity>1,"Number of max lines to vertex:  %lu", maxNumLinesToVertex);
+  HXT_INFO_COND(opt->verbosity>0,"Number of max lines to vertex:  %lu", maxNumLinesToVertex);
 
   // TODO we do not really need maxNumLinesToVertex
   // since we are concerned only with boundary vertices that are not corners
@@ -393,8 +393,14 @@ HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
       }
       if (countLines == 0) 
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Could not find lines for this vertex");
-      if (countLines>2 && parent[v].type != 15)
-        return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Vertex with more than 2 lines is not a corner");
+
+      /*if (countLines>2 && parent[v].type != 15){*/
+        /*FILE *test;*/
+        /*hxtPosInit("checkNonManifoldPoint.pos","point",&test);*/
+        /*hxtPosAddPoint(test,&tmesh->vertices.coord[4*v],0);*/
+        /*hxtPosFinish(test);*/
+        /*return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Vertex with more than 2 lines is not a corner");*/
+      /*}*/
     }
   }
 
@@ -468,7 +474,7 @@ for (uint32_t kk=0; kk<100; kk++){
 
   }
 
-  HXT_INFO_COND(opt->verbosity>1,"Iteration %d collapsed = %d", kk, countPointsCollapsed);
+  HXT_INFO_COND(opt->verbosity>0,"Iteration %d collapsed = %d", kk, countPointsCollapsed);
 
   int finalSwaps = 1;
   HXT_CHECK(hxtSurfaceMeshCollapseSwap(opt,
@@ -502,7 +508,7 @@ for (uint32_t kk=0; kk<100; kk++){
   HXT_INFO("--- Swaps after removing points on interior");
 
   int numSwapsCollapseLines = 0;
-  HXT_INFO_COND(opt->verbosity>1,"Number of swaps = %d ", numSwapsCollapseLines);
+  HXT_INFO_COND(opt->verbosity>0,"Number of swaps = %d ", numSwapsCollapseLines);
   HXT_CHECK(hxtSurfaceMeshCollapseSwap(opt,
                                        tmesh,
                                        tedges,
@@ -566,7 +572,7 @@ for (uint32_t kk=0; kk<10; kk++){
     /*HXT_CHECK(hxtMeshWriteGmsh(tmesh, buffer));*/
 
   }
-  HXT_INFO_COND(opt->verbosity>1,"Iteration %d collapsed = %d", kk, countPointsCollapsed);
+  HXT_INFO_COND(opt->verbosity>0,"Iteration %d collapsed = %d", kk, countPointsCollapsed);
 
   int finalSwaps = 1;
   HXT_CHECK(hxtSurfaceMeshCollapseSwap(opt,

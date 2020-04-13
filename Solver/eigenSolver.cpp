@@ -115,7 +115,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which,
 
   // solve
   Msg::Info("SLEPc solving...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
   _check(EPSSolve(eps));
 
   // check convergence
@@ -124,8 +124,9 @@ bool eigenSolver::solve(int numEigenValues, std::string which,
   EPSConvergedReason reason;
   _check(EPSGetConvergedReason(eps, &reason));
   if(reason == EPS_CONVERGED_TOL) {
-    double t2 = Cpu();
-    Msg::Debug("SLEPc converged in %d iterations (%g s)", its, t2 - t1);
+    double t2 = Cpu(), w2 = TimeOfDay();
+    Msg::Debug("SLEPc converged in %d iterations (Wall %gs, CPU %gs)", its,
+               w2 - w1, t2 - t1);
   }
   else if(reason == EPS_DIVERGED_ITS)
     Msg::Error("SLEPc diverged after %d iterations", its);

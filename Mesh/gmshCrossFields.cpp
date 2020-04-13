@@ -24,6 +24,7 @@
 #ifdef HAVE_QUADMESHINGTOOLS
 #include "quad_meshing_tools.h"
 #include "qmt_utils.hpp" /* for debug print macro */
+#include "geolog.h" /* for debug print macro */
 #include "gmsh.h"
 #endif
 
@@ -3839,19 +3840,22 @@ public:
     }
     /* Fill the info in quadLayoutData */
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
-    std::vector<cross2d *> pc;
-    for(it = C.begin(); it != C.end(); ++it) pc.push_back(&(it->second));
     for(it = C.begin(); it != C.end(); ++it) {
-      std::pair<size_t,size_t> edge = std::make_pair(it->first.getMinVertex()->getNum(),
-          it->first.getMaxVertex()->getNum());
-      std::map<std::pair<size_t,size_t>,double>::iterator itr = edgeToTheta.find(edge);
+      size_t v1 = it->first.getVertex(0)->getNum();
+      size_t v2 = it->first.getVertex(1)->getNum();
+      std::pair<size_t,size_t> edge = std::make_pair(v1,v2);
+      std::pair<size_t,size_t> sedge = (v1 < v2) ? edge : std::make_pair(v2,v1);
+      std::map<std::pair<size_t,size_t>,double>::iterator itr = edgeToTheta.find(sedge);
       double A = 0;
       if (itr == edgeToTheta.end()) {
         Msg::Error("Edge (%i,%i) not found in result", edge.first, edge.second);
         return -1;
-      }
-      else{
-        A = itr->second;
+      } else{
+        if (edge == sedge) {
+          A = itr->second;
+        } else {
+          A = -itr->second;
+        }
       }
       it->second._a = it->second._atemp = A;
       it->second.o_i = it->second._tgt * cos(it->second._atemp) + it->second._tgt2 * sin(it->second._atemp);
@@ -4638,7 +4642,8 @@ public:
   }
 
   int computeCrossFieldAndH(std::map<MVertex *, int> *s,
-                            std::map<int, std::vector<double> > &dataTHETA)
+                            std::map<int, std::vector<double> > &dataTHETA,
+                            bool createViewTheta = false)
   {
     double a = Cpu();
     computeHFromSingularities(*s);
@@ -4657,6 +4662,53 @@ public:
               "computed in %4g sec",
               d - c);
     restoreInitialMesh();
+
+    if (createViewTheta) { /* For interoperability with the quadMeshingTools API */
+      std::vector<std::size_t> keys;
+      std::vector<std::vector<double> > values;
+      for(size_t i = 0; i < f.size(); i++) {
+        for(size_t j = 0; j < f[i]->triangles.size(); j++) {
+          MTriangle *t = f[i]->triangles[j];
+          SVector3 tri_normal = crossprod(t->getVertex(2)->point()-t->getVertex(0)->point(),
+              t->getVertex(1)->point()-t->getVertex(0)->point());
+          tri_normal.normalize();
+          size_t tnum = t->getNum();
+          keys.push_back(tnum);
+          double vals[3] = {0.,0.,0.};
+          for(size_t k = 0; k < 3; k++) {
+            size_t tv1 = t->getVertex(k)->getNum();
+            size_t tv2 = t->getVertex((k+1)%3)->getNum();
+            MEdge edge = t->getEdge(k);
+            auto it = C.find(edge);
+            if (it != C.end()) {
+              MEdge edge_found = it->second._e;
+              if (tv1 == edge_found.getVertex(0)->getNum() && tv2 == edge_found.getVertex(1)->getNum()) {
+                vals[k] = it->second._a;
+              } else if (tv1 == edge_found.getVertex(1)->getNum() && tv2 == edge_found.getVertex(0)->getNum()) {
+                vals[k] = -it->second._a;
+              } else {
+                Msg::Error("create view 'theta': tri %i, edge %i,%i not matching triangle ?", tnum, 
+                    edge.getVertex(0)->getNum(),
+                    edge.getVertex(1)->getNum());
+              }
+            } else {
+              Msg::Error("create view 'theta': tri %i, edge %i,%i not found in C", tnum, 
+                  edge.getVertex(0)->getNum(),
+                  edge.getVertex(1)->getNum());
+              return -1;
+            }
+          }
+          values.push_back({vals[0],vals[1],vals[2]});
+        }
+      }
+      PView* theta = PView::getViewByName("theta");
+      if (theta) {delete theta; theta = NULL;}
+      gmsh::initialize();
+      std::string cname;
+      gmsh::model::getCurrent(cname);
+      int crossFieldTag = gmsh::view::add("theta");
+      gmsh::view::addModelData(crossFieldTag, 0, cname, "ElementData", keys, values);
+    }
     return 0;
   }
 
@@ -5816,27 +5868,10 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     Msg::Info("Computing cross field from %d prescribed singularities",
         temp.size());
     std::map<int, std::vector<double> > dataTHETA;
-    qLayout.computeCrossFieldAndH(&temp, dataTHETA);
 
-    /* View export */
-    /* - View 'theta' */
-    Msg::Error("getting 'theta' (angle per edge) from cross-field computed from prescribed singularities is not implemented, stay tuned");
-    // int cf_tag = -1;
-    // PView* theta = PView::getViewByName("theta");
-    // if (theta) {delete theta; theta = NULL;}
-    // if (!theta) {
-    //   Msg::Info("create a view 'theta'");
-    //   theta = new PView();
-    //   theta->getData()->setName("theta");
-    //   cf_tag = theta->getTag();
-    // }
-    // PViewDataGModel* dt = dynamic_cast<PViewDataGModel*>(theta->getData());
-    // if(dt) {
-    //   delete theta->getData();
-    //   dt = new PViewDataGModel(PViewDataGModel::ElementData);
-    //   dt->setName("theta");
-    //   theta->setData(dt);
-    // }
+    const bool createViewTheta = true; /* - View 'theta' */
+    qLayout.computeCrossFieldAndH(&temp, dataTHETA, createViewTheta);
+
 
 
     /* - View 'H' */
@@ -5913,11 +5948,89 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
   return 0;
 }
 
+int computeQuadSizeMapUniform(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& state) {
+  PView* vS = PView::getViewByName("s");
+  if (vS) {delete vS; vS = NULL;}
+
+  double size_min = CTX::instance()->mesh.lcMin;
+  double size_max = CTX::instance()->mesh.lcMax;
+  double h = 0;
+  if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
+    size_min *= CTX::instance()->mesh.lcFactor;
+    h = size_min;
+  }
+  if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
+    size_max *= CTX::instance()->mesh.lcFactor;
+    h = size_max;
+  }
+  if (size_min == 0 && size_max == 1.e22) {
+    SBoundingBox3d bbox = gm->bounds();
+    size_min = 0.1 * bbox.diag() * CTX::instance()->mesh.lcFactor;
+    h = size_min;
+    Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal*clscale");
+  }
+
+  double integral = 0.;
+  double smin = DBL_MAX;
+  double smax = -DBL_MAX;
+  std::vector<GFace *> f;
+  getFacesOfTheModel(gm, f);
+  int numElements = 0;
+  std::vector<double> data;
+  for(size_t i = 0; i < f.size(); i++) {
+    for(size_t j = 0; j < f[i]->triangles.size(); j++) {
+      MTriangle *t = f[i]->triangles[j];
+      SVector3 pts[3];
+      for (size_t d = 0; d < 3; ++d) {
+        for (size_t lv = 0; lv < 3; ++lv) {
+          data.push_back(t->getVertex(lv)->point()[d]);
+        }
+      }
+      for (size_t lv = 0; lv < 3; ++lv) {
+        pts[lv] = t->getVertex(lv)->point();
+        data.push_back(h);
+      }
+      numElements += 1;
+      double area = 0.5 * crossprod(pts[2]-pts[0],pts[1]-pts[0]).norm();
+      integral += area * 1. / std::pow(h,2);
+    }
+  }
+  double FAC = 1.;
+  if (opt.sizemap_nb_quads != 0) { /* target number of quads */
+    FAC = double(opt.sizemap_nb_quads) / integral;
+    double sf = 1./std::sqrt(FAC);
+    smin = DBL_MAX;
+    smax = -DBL_MAX;
+    for(size_t ele = 0; ele < numElements; ele++) {
+      for(size_t nod = 0; nod < 3; nod++) {
+        double& val = data[12*ele+3*3+nod];
+        val = sf * val;
+        smin = std::min(smin,val);
+        smax = std::max(smax,val);
+      }
+    }
+  }
+
+  Msg::Info("create a view 's' with %li triangles", numElements);
+  gmsh::initialize();
+  int vi = gmsh::view::add("s");
+  gmsh::view::addListData(vi, "ST", numElements, data);
+
+  state.s_tag = vi;
+  state.s_min = smin;
+  state.s_max = smax;
+  state.s_nb_quad_estimate = (size_t) (0.5 + FAC * integral);
+  Msg::Info("size map: min=%.3f, max=%.3f, estimated number of quads: %li", state.s_min, state.s_max, state.s_nb_quad_estimate);
+
+  return 0;
+}
+
 int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& state) {
   PView* vH = PView::getViewByName("H");
   if (vH == NULL) {
     Msg::Error("view 'H' not found");
-    return -1;
+    Msg::Warning("computing uniform size map ...");
+    return computeQuadSizeMapUniform(gm, opt, state);
   }
   PViewData *vhd = vH->getData();
   if (vH == NULL) {
@@ -6404,6 +6517,19 @@ int generateQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
   QMT::BoundaryProjector* projector = NULL;
   if (state.data_boundary_projector == NULL) {
     Msg::Warning("BoundaryProjector* not found in QuadMeshingState (this one is created by the Cut step). Proceed to quantization without projection.");
+
+    bool force_one_boundary_projector = true;
+    if (force_one_boundary_projector) {
+      Msg::Warning("wait ! creating one from the current model, may be a bad idea ...");
+      QMT::TMesh boundary;
+      bool oki = QMT::import_TMesh_from_gmsh(gm->getName(),boundary);
+      if (!oki) {
+        Msg::Error("Failed to import triangular mesh");
+        return -1;
+      }
+      state.data_boundary_projector = (void*) new QMT::BoundaryProjector(boundary);
+      Msg::Debug("saved QMT::BoundaryProjector* in QuadMeshingState");
+    }
   } 
   if (state.data_boundary_projector != NULL) {
     projector = static_cast<QMT::BoundaryProjector*>(state.data_boundary_projector);

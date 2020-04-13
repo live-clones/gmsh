@@ -110,15 +110,15 @@ int meshGFaceHxt(GModel *gm)
   HXTPointGenOptions opt = { .verbosity = 0,
                              .generateLines = 1,
                              .generateSurfaces = 1,
-                             .generateVolumes = 0,
+                             .generateVolumes = 1,
                              .remeshSurfaces = 1,
                              .walkMethod2D = 0,
                              .walkMethod3D = 0,
                              .dirType = 1,
-                             .uniformSize = 0.1,
+                             .uniformSize = 0.10,
                              .areaThreshold = 10e-9,
                              .tolerance = 10e-9,
-                             .numTris = 1000};
+                             .numTris = 0};
 
   
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data,fmesh));

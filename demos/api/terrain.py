@@ -38,7 +38,7 @@ gmsh.model.geo.synchronize()
 
 # create 4 discrete bounding curves, with their boundary points
 for i in range(4):
-    gmsh.model.addDiscreteEntity(1, i+1, [i+1 , i+2 if i < N else 1])
+    gmsh.model.addDiscreteEntity(1, i+1, [i+1, i+2 if i < 3 else 1])
 
 # create one discrete surface, with its bounding curves
 gmsh.model.addDiscreteEntity(2, 1, [1, 2, -3, -4])
@@ -48,8 +48,11 @@ gmsh.model.mesh.addNodes(2, 1, nodes, coords)
 
 # add elements on the 4 points, the 4 curves and the surface
 for i in range(4):
+    # type 15 for point elements:
     gmsh.model.mesh.addElementsByType(i + 1, 15, [], [pnt[i]])
+    # type 1 for 2-node line elements:
     gmsh.model.mesh.addElementsByType(i + 1, 1, [], lin[i])
+# type 2 for 3-node triangle elements:
 gmsh.model.mesh.addElementsByType(1, 2, [], tris)
 
 # reclassify the nodes on the curves and the points (since we put them all on

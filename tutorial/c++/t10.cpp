@@ -2,7 +2,7 @@
 //
 //  Gmsh C++ tutorial 10
 //
-//  General mesh size fields
+//  Mesh size fields
 //
 // -----------------------------------------------------------------------------
 
@@ -13,43 +13,40 @@
 #include <gmsh.h>
 #include <sstream>
 
-namespace model = gmsh::model;
-namespace factory = gmsh::model::geo;
-
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
   gmsh::option::setNumber("General.Terminal", 1);
 
-  model::add("t10");
+  gmsh::model::add("t10");
 
   // Let's create a simple rectangular geometry:
   double lc = .15;
-  factory::addPoint(0.0,0.0,0,lc, 1);
-  factory::addPoint(1,0.0,0,lc, 2);
-  factory::addPoint(1,1,0,lc, 3);
-  factory::addPoint(0,1,0,lc, 4);
-  factory::addPoint(0.2,.5,0,lc, 5);
+  gmsh::model::geo::addPoint(0.0,0.0,0,lc, 1);
+  gmsh::model::geo::addPoint(1,0.0,0,lc, 2);
+  gmsh::model::geo::addPoint(1,1,0,lc, 3);
+  gmsh::model::geo::addPoint(0,1,0,lc, 4);
+  gmsh::model::geo::addPoint(0.2,.5,0,lc, 5);
 
-  factory::addLine(1,2, 1);
-  factory::addLine(2,3, 2);
-  factory::addLine(3,4, 3);
-  factory::addLine(4,1, 4);
+  gmsh::model::geo::addLine(1,2, 1);
+  gmsh::model::geo::addLine(2,3, 2);
+  gmsh::model::geo::addLine(3,4, 3);
+  gmsh::model::geo::addLine(4,1, 4);
 
-  factory::addCurveLoop({1,2,3,4}, 5);
-  factory::addPlaneSurface({5}, 6);
+  gmsh::model::geo::addCurveLoop({1,2,3,4}, 5);
+  gmsh::model::geo::addPlaneSurface({5}, 6);
 
-  factory::synchronize();
+  gmsh::model::geo::synchronize();
 
   // Say we would like to obtain mesh elements with size lc/30 near curve 2 and
   // point 5, and size lc elsewhere. To achieve this, we can use two fields:
   // "Distance", and "Threshold". We first define a Distance field (`Field[1]')
   // on points 5 and on curve 2. This field returns the distance to point 5 and
   // to (100 equidistant points on) curve 2.
-  model::mesh::field::add("Distance", 1);
-  model::mesh::field::setNumbers(1, "NodesList", {5});
-  model::mesh::field::setNumber(1, "NNodesByEdge", 100);
-  model::mesh::field::setNumbers(1, "EdgesList", {2});
+  gmsh::model::mesh::field::add("Distance", 1);
+  gmsh::model::mesh::field::setNumbers(1, "NodesList", {5});
+  gmsh::model::mesh::field::setNumber(1, "NNodesByEdge", 100);
+  gmsh::model::mesh::field::setNumbers(1, "EdgesList", {2});
 
   // We then define a `Threshold' field, which uses the return value of the
   // `Distance' field 1 in order to define a simple change in element size
@@ -62,41 +59,42 @@ int main(int argc, char **argv)
   // LcMin -o----------------/
   //        |                |       |
   //      Point           DistMin DistMax
-  model::mesh::field::add("Threshold", 2);
-  model::mesh::field::setNumber(2, "IField", 1);
-  model::mesh::field::setNumber(2, "LcMin", lc / 30);
-  model::mesh::field::setNumber(2, "LcMax", lc);
-  model::mesh::field::setNumber(2, "DistMin", 0.15);
-  model::mesh::field::setNumber(2, "DistMax", 0.5);
+  gmsh::model::mesh::field::add("Threshold", 2);
+  gmsh::model::mesh::field::setNumber(2, "IField", 1);
+  gmsh::model::mesh::field::setNumber(2, "LcMin", lc / 30);
+  gmsh::model::mesh::field::setNumber(2, "LcMax", lc);
+  gmsh::model::mesh::field::setNumber(2, "DistMin", 0.15);
+  gmsh::model::mesh::field::setNumber(2, "DistMax", 0.5);
 
   // Say we want to modulate the mesh element sizes using a mathematical
   // function of the spatial coordinates. We can do this with the MathEval
   // field:
-  model::mesh::field::add("MathEval", 3);
-  model::mesh::field::setString(3, "F", "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101");
+  gmsh::model::mesh::field::add("MathEval", 3);
+  gmsh::model::mesh::field::setString
+    (3, "F", "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101");
 
   // We could also combine MathEval with values coming from other fields. For
   // example, let's define a `Distance' field around point 1
-  model::mesh::field::add("Distance", 4);
-  model::mesh::field::setNumbers(4, "NodesList", {1});
+  gmsh::model::mesh::field::add("Distance", 4);
+  gmsh::model::mesh::field::setNumbers(4, "NodesList", {1});
 
   // We can then create a `MathEval' field with a function that depends on the
   // return value of the `Distance' field 4, i.e., depending on the distance to
   // point 1 (here using a cubic law, with minimum element size = lc / 100)
-  model::mesh::field::add("MathEval", 5);
+  gmsh::model::mesh::field::add("MathEval", 5);
   std::stringstream stream;
   stream << "F4^3 + " << lc / 100;
-  model::mesh::field::setString(5, "F", stream.str());
+  gmsh::model::mesh::field::setString(5, "F", stream.str());
 
   // We could also use a `Box' field to impose a step change in element sizes
   // inside a box
-  model::mesh::field::add("Box", 6);
-  model::mesh::field::setNumber(6, "VIn", lc / 15);
-  model::mesh::field::setNumber(6, "VOut", lc);
-  model::mesh::field::setNumber(6, "XMin", 0.3);
-  model::mesh::field::setNumber(6, "XMax", 0.6);
-  model::mesh::field::setNumber(6, "YMin", 0.3);
-  model::mesh::field::setNumber(6, "YMax", 0.6);
+  gmsh::model::mesh::field::add("Box", 6);
+  gmsh::model::mesh::field::setNumber(6, "VIn", lc / 15);
+  gmsh::model::mesh::field::setNumber(6, "VOut", lc);
+  gmsh::model::mesh::field::setNumber(6, "XMin", 0.3);
+  gmsh::model::mesh::field::setNumber(6, "XMax", 0.6);
+  gmsh::model::mesh::field::setNumber(6, "YMin", 0.3);
+  gmsh::model::mesh::field::setNumber(6, "YMax", 0.6);
 
   // Many other types of fields are available: see the reference manual for a
   // complete list. You can also create fields directly in the graphical user
@@ -104,10 +102,10 @@ int main(int argc, char **argv)
 
   // Finally, let's use the minimum of all the fields as the background mesh
   // field:
-  model::mesh::field::add("Min", 7);
-  model::mesh::field::setNumbers(7, "FieldsList", {2, 3, 5, 6});
+  gmsh::model::mesh::field::add("Min", 7);
+  gmsh::model::mesh::field::setNumbers(7, "FieldsList", {2, 3, 5, 6});
 
-  model::mesh::field::setAsBackgroundMesh(7);
+  gmsh::model::mesh::field::setAsBackgroundMesh(7);
 
   // To determine the size of mesh elements, Gmsh locally computes the minimum
   // of
@@ -116,7 +114,7 @@ int main(int argc, char **argv)
   // 2) if `Mesh.CharacteristicLengthFromPoints' is set, the mesh size specified
   //    at geometrical points;
   // 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based
-  //    on the curvature and `Mesh.MinimumCirclePoints';
+  //    on the curvature and `Mesh.MinimumElementsPerTwoPi';
   // 4) the background mesh field;
   // 5) any per-entity mesh size constraint.
   //
@@ -137,7 +135,7 @@ int main(int argc, char **argv)
 
   // This will prevent over-refinement due to small mesh sizes on the boundary.
 
-  model::mesh::generate(2);
+  gmsh::model::mesh::generate(2);
   gmsh::write("t10.msh");
 
   // gmsh::fltk::run();

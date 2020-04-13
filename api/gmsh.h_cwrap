@@ -1400,36 +1400,6 @@ namespace gmsh { // Top-level functions
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
 
-      // Get the element-dependent basis functions of the elements of type
-      // `elementType' in the entity of tag `tag' at the integration points
-      // `integrationPoints' (given as concatenated triplets of coordinates in the
-      // reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
-      // space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
-      // order hierarchical H1 Legendre functions or their gradient, in the u, v, w
-      // coordinates of the reference elements). `numComponents' returns the number
-      // C of components of a basis function. `numBasisFunctions' returns the
-      // number N of basis functions per element. `basisFunctions' returns the
-      // value of the basis functions at the integration points for each element:
-      // [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u,
-      // e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: This function
-      // is deprecated - use `getBasisFunctions' instead.
-      inline void getBasisFunctionsForElements(const int elementType,
-                                               const std::vector<double> & integrationPoints,
-                                               const std::string & functionSpaceType,
-                                               int & numComponents,
-                                               int & numFunctionsPerElement,
-                                               std::vector<double> & basisFunctions,
-                                               const int tag = -1)
-      {
-        int ierr = 0;
-        double *api_integrationPoints_; size_t api_integrationPoints_n_; vector2ptr(integrationPoints, &api_integrationPoints_, &api_integrationPoints_n_);
-        double *api_basisFunctions_; size_t api_basisFunctions_n_;
-        gmshModelMeshGetBasisFunctionsForElements(elementType, api_integrationPoints_, api_integrationPoints_n_, functionSpaceType.c_str(), &numComponents, &numFunctionsPerElement, &api_basisFunctions_, &api_basisFunctions_n_, tag, &ierr);
-        if(ierr) throw ierr;
-        gmshFree(api_integrationPoints_);
-        basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
-      }
-
       // Get the global edge identifier `edgeNum' for an input list of node pairs,
       // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
       // feature and will probably change in a future release.
@@ -1900,11 +1870,15 @@ namespace gmsh { // Top-level functions
 
       // Create a boundary representation from the mesh if the model does not have
       // one (e.g. when imported from mesh file formats with no BRep representation
-      // of the underlying model).
-      inline void createTopology()
+      // of the underlying model). If `makeSimplyConnected' is set, enforce simply
+      // connected discrete surfaces and volumes. If `exportDiscrete' is set, clear
+      // any built-in CAD kernel entities and export the discrete entities in the
+      // built-in CAD kernel.
+      inline void createTopology(const bool makeSimplyConnected = true,
+                                 const bool exportDiscrete = true)
       {
         int ierr = 0;
-        gmshModelMeshCreateTopology(&ierr);
+        gmshModelMeshCreateTopology((int)makeSimplyConnected, (int)exportDiscrete, &ierr);
         if(ierr) throw ierr;
       }
 
@@ -3510,19 +3484,56 @@ namespace gmsh { // Top-level functions
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
 
-      // Set a mesh size constraint on the model entities `dimTags'. Currently only
-      // entities of dimension 0 (points) are handled.
-      inline void setMeshSize(const gmsh::vectorpair & dimTags,
-                              const double size)
+      // Get all the OpenCASCADE entities. If `dim' is >= 0, return only the
+      // entities of the specified dimension (e.g. points if `dim' == 0). The
+      // entities are returned as a vector of (dim, tag) integer pairs.
+      inline void getEntities(gmsh::vectorpair & dimTags,
+                              const int dim = -1)
       {
         int ierr = 0;
-        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
-        gmshModelOccSetMeshSize(api_dimTags_, api_dimTags_n_, size, &ierr);
+        int *api_dimTags_; size_t api_dimTags_n_;
+        gmshModelOccGetEntities(&api_dimTags_, &api_dimTags_n_, dim, &ierr);
         if(ierr) throw ierr;
-        gmshFree(api_dimTags_);
+        dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
       }
 
-      // Get the mass of the model entity of dimension `dim' and tag `tag'.
+      // Get the OpenCASCADE entities in the bounding box defined by the two points
+      // (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+      // return only the entities of the specified dimension (e.g. points if `dim'
+      // == 0).
+      inline void getEntitiesInBoundingBox(const double xmin,
+                                           const double ymin,
+                                           const double zmin,
+                                           const double xmax,
+                                           const double ymax,
+                                           const double zmax,
+                                           gmsh::vectorpair & tags,
+                                           const int dim = -1)
+      {
+        int ierr = 0;
+        int *api_tags_; size_t api_tags_n_;
+        gmshModelOccGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, &api_tags_, &api_tags_n_, dim, &ierr);
+        if(ierr) throw ierr;
+        tags.resize(api_tags_n_ / 2); for(size_t i = 0; i < api_tags_n_ / 2; ++i){ tags[i].first = api_tags_[i * 2 + 0]; tags[i].second = api_tags_[i * 2 + 1]; } gmshFree(api_tags_);
+      }
+
+      // Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
+      // the OpenCASCADE entity of dimension `dim' and tag `tag'.
+      inline void getBoundingBox(const int dim,
+                                 const int tag,
+                                 double & xmin,
+                                 double & ymin,
+                                 double & zmin,
+                                 double & xmax,
+                                 double & ymax,
+                                 double & zmax)
+      {
+        int ierr = 0;
+        gmshModelOccGetBoundingBox(dim, tag, &xmin, &ymin, &zmin, &xmax, &ymax, &zmax, &ierr);
+        if(ierr) throw ierr;
+      }
+
+      // Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
       inline void getMass(const int dim,
                           const int tag,
                           double & mass)
@@ -3532,8 +3543,8 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
-      // Get the center of mass of the model entity of dimension `dim' and tag
-      // `tag'.
+      // Get the center of mass of the OpenCASCADE entity of dimension `dim' and
+      // tag `tag'.
       inline void getCenterOfMass(const int dim,
                                   const int tag,
                                   double & x,
@@ -3545,8 +3556,8 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
-      // Get the matrix of inertia (by row) of the model entity of dimension `dim'
-      // and tag `tag'.
+      // Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
+      // `dim' and tag `tag'.
       inline void getMatrixOfInertia(const int dim,
                                      const int tag,
                                      std::vector<double> & mat)
@@ -3568,6 +3579,22 @@ namespace gmsh { // Top-level functions
         gmshModelOccSynchronize(&ierr);
         if(ierr) throw ierr;
       }
+
+      namespace mesh { // OpenCASCADE CAD kernel meshing constraints
+
+        // Set a mesh size constraint on the model entities `dimTags'. Currently
+        // only entities of dimension 0 (points) are handled.
+        inline void setSize(const gmsh::vectorpair & dimTags,
+                            const double size)
+        {
+          int ierr = 0;
+          int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+          gmshModelOccMeshSetSize(api_dimTags_, api_dimTags_n_, size, &ierr);
+          if(ierr) throw ierr;
+          gmshFree(api_dimTags_);
+        }
+
+      } // namespace mesh
 
     } // namespace occ
 
@@ -3645,6 +3672,30 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
       gmshFree(api_tags_);
       for(size_t i = 0; i < api_data_nn_; ++i){ gmshFree(api_data_[i]); } gmshFree(api_data_); gmshFree(api_data_n_);
+    }
+
+    // Add homogeneous model-based post-processing data to the view with tag `tag'.
+    // The arguments have the same meaning as in `addModelData', except that `data'
+    // is supposed to be homogeneous and is thus flattened in a single vector. This
+    // is always possible e.g. for "NodeData" and "ElementData", but only if data
+    // is associated to elements of the same type for "ElementNodeData".
+    inline void addHomogeneousModelData(const int tag,
+                                        const int step,
+                                        const std::string & modelName,
+                                        const std::string & dataType,
+                                        const std::vector<std::size_t> & tags,
+                                        const std::vector<double> & data,
+                                        const double time = 0.,
+                                        const int numComponents = -1,
+                                        const int partition = 0)
+    {
+      int ierr = 0;
+      size_t *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
+      double *api_data_; size_t api_data_n_; vector2ptr(data, &api_data_, &api_data_n_);
+      gmshViewAddHomogeneousModelData(tag, step, modelName.c_str(), dataType.c_str(), api_tags_, api_tags_n_, api_data_, api_data_n_, time, numComponents, partition, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_tags_);
+      gmshFree(api_data_);
     }
 
     // Get model-based post-processing data from the view with tag `tag' at step

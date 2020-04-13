@@ -1407,7 +1407,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   Msg::StatusBar(true, msg);
 
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   m->destroyMeshCaches();
 
@@ -1455,7 +1455,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     updateHighOrderVertices(*it, newHOVert[*it], onlyVisible);
 
-  double t2 = Cpu();
+  double t2 = Cpu(), w2 = TimeOfDay();
 
   std::vector<MElement *> bad;
   double worst;
@@ -1463,5 +1463,6 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
   // FIXME: add other element check
 
-  Msg::StatusBar(true, "Done meshing order %d (%g s)", order, t2 - t1);
+  Msg::StatusBar(true, "Done meshing order %d (Wall %gs, CPU %gs)", order,
+                 w2 - w1, t2 - t1);
 }

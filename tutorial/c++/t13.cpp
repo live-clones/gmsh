@@ -2,14 +2,12 @@
 //
 //  Gmsh C++ tutorial 13
 //
-//  Remeshing without an underlying CAD model
+//  Remeshing an STL file without an underlying CAD model
 //
 // -----------------------------------------------------------------------------
 
 #include <gmsh.h>
 #include <math.h>
-
-namespace factory = gmsh::model::geo;
 
 int main(int argc, char **argv)
 {
@@ -39,7 +37,7 @@ int main(int argc, char **argv)
   // creation of patches that are amenable to reparametrization:
   bool forceParametrizablePatches = false;
 
-  // For open surfaces include the boundary edges in the classification process.
+  // For open surfaces include the boundary edges in the classification process:
   bool includeBoundary = true;
 
   // Force curves to be split on given angle:

@@ -34,6 +34,11 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
     sizemap[3*i+0] = (1./exp(data[7*i+6]))*opt->uniformSize;
     sizemap[3*i+1] = (1./exp(data[7*i+6]))*opt->uniformSize;
     sizemap[3*i+2] = (1./exp(data[7*i+6]))*opt->uniformSize;
+
+    /*sizemap[3*i+0] = opt->uniformSize;*/
+    /*sizemap[3*i+1] = opt->uniformSize;*/
+    /*sizemap[3*i+2] = opt->uniformSize;*/
+ 
   }
 
   HXT_CHECK(hxtPointGenWriteDirections(mesh,directions,"GMSH_TEST_directionsPoints.pos"));

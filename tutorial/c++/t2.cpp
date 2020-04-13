@@ -2,17 +2,12 @@
 //
 //  Gmsh C++ tutorial 2
 //
-//  Geometrical transformations, extruded geometries, elementary entities
-//  (volumes), physical groups (volumes)
+//  Transformations, extruded geometries, volumes
 //
 // -----------------------------------------------------------------------------
 
 #include <gmsh.h>
 #include <math.h>
-
-// We start by giving some nice shortcuts for some namespaces
-namespace model = gmsh::model;
-namespace factory = gmsh::model::geo;
 
 int main(int argc, char **argv)
 {
@@ -22,28 +17,28 @@ int main(int argc, char **argv)
 
   gmsh::option::setNumber("General.Terminal", 1);
 
-  model::add("t2");
+  gmsh::model::add("t2");
 
   // Copied from t1.cpp...
   double lc = 1e-2;
-  factory::addPoint(0, 0, 0, lc, 1);
-  factory::addPoint(.1, 0,  0, lc, 2);
-  factory::addPoint(.1, .3, 0, lc, 3);
-  factory::addPoint(0,  .3, 0, lc, 4);
-  factory::addLine(1, 2, 1);
-  factory::addLine(3, 2, 2);
-  factory::addLine(3, 4, 3);
-  factory::addLine(4, 1, 4);
-  factory::addCurveLoop({4, 1, -2, 3}, 1);
-  factory::addPlaneSurface({1}, 1);
-  model::addPhysicalGroup(1, {1, 2, 4}, 5);
-  int ps = model::addPhysicalGroup(2, {1});
-  model::setPhysicalName(2, ps, "My surface");
+  gmsh::model::geo::addPoint(0, 0, 0, lc, 1);
+  gmsh::model::geo::addPoint(.1, 0,  0, lc, 2);
+  gmsh::model::geo::addPoint(.1, .3, 0, lc, 3);
+  gmsh::model::geo::addPoint(0,  .3, 0, lc, 4);
+  gmsh::model::geo::addLine(1, 2, 1);
+  gmsh::model::geo::addLine(3, 2, 2);
+  gmsh::model::geo::addLine(3, 4, 3);
+  gmsh::model::geo::addLine(4, 1, 4);
+  gmsh::model::geo::addCurveLoop({4, 1, -2, 3}, 1);
+  gmsh::model::geo::addPlaneSurface({1}, 1);
+  gmsh::model::addPhysicalGroup(1, {1, 2, 4}, 5);
+  int ps = gmsh::model::addPhysicalGroup(2, {1});
+  gmsh::model::setPhysicalName(2, ps, "My surface");
 
   // We can then add new points and curves in the same way as we did in
   // `t1.cpp':
-  factory::addPoint(0, .4, 0, lc, 5);
-  factory::addLine(4, 5, 5);
+  gmsh::model::geo::addPoint(0, .4, 0, lc, 5);
+  gmsh::model::geo::addLine(4, 5, 5);
 
   // But Gmsh also provides tools to transform (translate, rotate, etc.)
   // elementary entities or copies of elementary entities.  Geometrical
@@ -51,11 +46,11 @@ int main(int argc, char **argv)
   // contains the list of entities, represented by (dimension, tag) pairs.  For
   // example, the point 5 (dimension=0, tag=5) can be moved by 0.02 to the left
   // (dx=-0.02, dy=0, dz=0) with
-  factory::translate({{0, 5}}, -0.02, 0, 0);
+  gmsh::model::geo::translate({{0, 5}}, -0.02, 0, 0);
 
   // And it can be further rotated by -Pi/4 around (0, 0.3, 0) (with the
   // rotation along the z axis) with:
-  factory::rotate({{0, 5}}, 0,0.3,0, 0,0,1, -M_PI/4);
+  gmsh::model::geo::rotate({{0, 5}}, 0,0.3,0, 0,0,1, -M_PI/4);
 
   // Note that there are no units in Gmsh: coordinates are just numbers - it's
   // up to the user to associate a meaning to them.
@@ -64,20 +59,20 @@ int main(int argc, char **argv)
   // the `copy()' function, which takes a vector of (dim, tag) pairs as input,
   // and returns another vector of (dim, tag) pairs:
   std::vector<std::pair<int, int> > ov;
-  factory::copy({{0, 3}}, ov);
-  factory::translate(ov, 0, 0.05, 0);
+  gmsh::model::geo::copy({{0, 3}}, ov);
+  gmsh::model::geo::translate(ov, 0, 0.05, 0);
 
   // The new point tag is available in ov[0].second, and can be used to create
   // new lines:
-  factory::addLine(3, ov[0].second, 7);
-  factory::addLine(ov[0].second, 5, 8);
-  factory::addCurveLoop({5,-8,-7,3}, 10);
-  factory::addPlaneSurface({10}, 11);
+  gmsh::model::geo::addLine(3, ov[0].second, 7);
+  gmsh::model::geo::addLine(ov[0].second, 5, 8);
+  gmsh::model::geo::addCurveLoop({5,-8,-7,3}, 10);
+  gmsh::model::geo::addPlaneSurface({10}, 11);
 
   // In the same way, we can translate copies of the two surfaces 1 and 11 to
   // the right with the following command:
-  factory::copy({{2, 1}, {2, 11}}, ov);
-  factory::translate(ov, 0.12, 0, 0);
+  gmsh::model::geo::copy({{2, 1}, {2, 11}}, ov);
+  gmsh::model::geo::translate(ov, 0.12, 0, 0);
 
   std::printf("New surfaces '%d' and '%d'\n", ov[0].second, ov[1].second);
 
@@ -85,39 +80,39 @@ int main(int argc, char **argv)
   // one defines curve loops to build surfaces, one has to define surface loops
   // (i.e. `shells') to build volumes. The following volume does not have holes
   // and thus consists of a single surface loop:
-  factory::addPoint(0., 0.3, 0.12, lc, 100);
-  factory::addPoint(0.1, 0.3, 0.12, lc, 101);
-  factory::addPoint(0.1, 0.35, 0.12, lc, 102);
+  gmsh::model::geo::addPoint(0., 0.3, 0.12, lc, 100);
+  gmsh::model::geo::addPoint(0.1, 0.3, 0.12, lc, 101);
+  gmsh::model::geo::addPoint(0.1, 0.35, 0.12, lc, 102);
 
   // We would like to retrieve the coordinates of point 5 to create point 103,
   // so we synchronize the model, and use `getValue()'
-  factory::synchronize();
+  gmsh::model::geo::synchronize();
   std::vector<double> xyz;
-  model::getValue(0, 5, {}, xyz);
-  factory::addPoint(xyz[0], xyz[1], 0.12, lc, 103);
+  gmsh::model::getValue(0, 5, {}, xyz);
+  gmsh::model::geo::addPoint(xyz[0], xyz[1], 0.12, lc, 103);
 
-  factory::addLine(4, 100, 110);
-  factory::addLine(3, 101, 111);
-  factory::addLine(6, 102, 112);
-  factory::addLine(5, 103, 113);
-  factory::addLine(103, 100, 114);
-  factory::addLine(100, 101, 115);
-  factory::addLine(101, 102, 116);
-  factory::addLine(102, 103, 117);
+  gmsh::model::geo::addLine(4, 100, 110);
+  gmsh::model::geo::addLine(3, 101, 111);
+  gmsh::model::geo::addLine(6, 102, 112);
+  gmsh::model::geo::addLine(5, 103, 113);
+  gmsh::model::geo::addLine(103, 100, 114);
+  gmsh::model::geo::addLine(100, 101, 115);
+  gmsh::model::geo::addLine(101, 102, 116);
+  gmsh::model::geo::addLine(102, 103, 117);
 
-  factory::addCurveLoop({115, -111, 3, 110}, 118);
-  factory::addPlaneSurface({118}, 119);
-  factory::addCurveLoop({111, 116, -112, -7}, 120);
-  factory::addPlaneSurface({120}, 121);
-  factory::addCurveLoop({112, 117, -113, -8}, 122);
-  factory::addPlaneSurface({122}, 123);
-  factory::addCurveLoop({114, -110, 5, 113}, 124);
-  factory::addPlaneSurface({124}, 125);
-  factory::addCurveLoop({115, 116, 117, 114}, 126);
-  factory::addPlaneSurface({126}, 127);
+  gmsh::model::geo::addCurveLoop({115, -111, 3, 110}, 118);
+  gmsh::model::geo::addPlaneSurface({118}, 119);
+  gmsh::model::geo::addCurveLoop({111, 116, -112, -7}, 120);
+  gmsh::model::geo::addPlaneSurface({120}, 121);
+  gmsh::model::geo::addCurveLoop({112, 117, -113, -8}, 122);
+  gmsh::model::geo::addPlaneSurface({122}, 123);
+  gmsh::model::geo::addCurveLoop({114, -110, 5, 113}, 124);
+  gmsh::model::geo::addPlaneSurface({124}, 125);
+  gmsh::model::geo::addCurveLoop({115, 116, 117, 114}, 126);
+  gmsh::model::geo::addPlaneSurface({126}, 127);
 
-  factory::addSurfaceLoop({127, 119, 121, 123, 125, 11}, 128);
-  factory::addVolume({128}, 129);
+  gmsh::model::geo::addSurfaceLoop({127, 119, 121, 123, 125, 11}, 128);
+  gmsh::model::geo::addVolume({128}, 129);
 
   // When a volume can be extruded from a surface, it is usually easier to use
   // the `extrude()' function directly instead of creating all the points,
@@ -127,22 +122,22 @@ int main(int argc, char **argv)
   // function takes a vector of (dim, tag) pairs as input as well as the
   // translation vector, and returns a vector of (dim, tag) pairs as output:
   std::vector<std::pair<int, int> > ov2;
-  factory::extrude({ov[1]}, 0, 0, 0.12, ov2);
+  gmsh::model::geo::extrude({ov[1]}, 0, 0, 0.12, ov2);
 
   // Mesh sizes associated to geometrical points can be set by passing a vector
   // of (dim, tag) pairs for the corresponding points:
-  factory::mesh::setSize({{0,103}, {0,105}, {0,109}, {0,102}, {0,28},
-                          {0, 24}, {0,6}, {0,5}}, lc * 3);
+  gmsh::model::geo::mesh::setSize({{0,103}, {0,105}, {0,109}, {0,102}, {0,28},
+                                   {0, 24}, {0,6}, {0,5}}, lc * 3);
 
   // We finally group volumes 129 and 130 in a single physical group with tag
   // `1' and name "The volume":
-  model::addPhysicalGroup(3, {129, 130}, 1);
-  model::setPhysicalName(3, 1, "The volume");
+  gmsh::model::addPhysicalGroup(3, {129, 130}, 1);
+  gmsh::model::setPhysicalName(3, 1, "The volume");
 
   // We finish by synchronizing the data from the built-in geometry kernel with
   // the Gmsh model, and by generating and saving the mesh:
-  factory::synchronize();
-  model::mesh::generate(3);
+  gmsh::model::geo::synchronize();
+  gmsh::model::mesh::generate(3);
   gmsh::write("t2.msh");
 
   // Note that, if the transformation tools are handy to create complex

@@ -4,12 +4,18 @@
 #include "hxt_api.h"
 #include "hxt_mesh.h"
 #include "hxt_point_gen_options.h"
+#include "hxt_point_gen_utils.h"
 
 HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh, 
                                    HXTPointGenOptions *opt,
                                    const double *directions,
                                    const double *sizemap, 
                                    HXTMesh *outmesh, 
-                                   uint64_t *pointParent);   
+                                   HXTPointGenParent *parent);
 
+
+HXTStatus hxtGetPointsOnLinesFromInputMesh(HXTMesh *mesh, 
+                                          HXTPointGenOptions *opt,
+                                          HXTMesh *fmesh, 
+                                          HXTPointGenParent *parent);
 #endif

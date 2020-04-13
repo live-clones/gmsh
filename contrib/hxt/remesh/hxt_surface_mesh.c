@@ -891,7 +891,7 @@ HXTStatus hxtSurfaceMeshInsertionSwap(HXTPointGenOptions *opt,
     /*snprintf(buffer,sizeof(char)*32,"FINALMESH_%i.msh",(int)ii);*/
     /*HXT_CHECK(hxtMeshWriteGmsh(mesh, buffer));*/
 
-    HXT_INFO_COND(opt->verbosity>1,"%d - Number of swaps in insertion %d", ii, numSwaps);
+    HXT_INFO_COND(opt->verbosity>0,"%d - Number of swaps in insertion %d", ii, numSwaps);
     if (numSwapsOld == numSwaps) break;
     numSwapsOld = numSwaps;
   }
@@ -916,7 +916,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
 
   HXT_INFO("");
   HXT_INFO("========= Surface Remeshing - Inserting Generated Points  ==========");
-  HXT_INFO_COND(opt->verbosity>1,"");
+  HXT_INFO_COND(opt->verbosity>0,"");
 
   uint32_t numInitialVertices   = mesh->vertices.num;
   uint32_t numGeneratedVertices = fmesh->vertices.num;
@@ -955,28 +955,28 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   uint32_t maxNumLines = mesh->lines.num + numGeneratedVerticesOnLines;
 
 
-  HXT_INFO_COND(opt->verbosity>1,"");
-  HXT_INFO_COND(opt->verbosity>1,"Number of initial mesh vertices:     %d  ", numInitialVertices);
-  HXT_INFO_COND(opt->verbosity>1,"Number of initial mesh triangles:    %lu ", mesh->triangles.num);
-  HXT_INFO_COND(opt->verbosity>1,"Number of initial mesh edges:        %d  ", edges->numEdges);
-  HXT_INFO_COND(opt->verbosity>1,"Number of initial boundary lines:    %lu ", mesh->lines.num);
-  HXT_INFO_COND(opt->verbosity>1,"");
-  HXT_INFO_COND(opt->verbosity>1,"Generated mesh vertices on lines:    %d  ", numGeneratedVerticesOnLines);
-  HXT_INFO_COND(opt->verbosity>1,"Generated mesh vertices on corners:  %d  ", numGeneratedVerticesOnCorners);
-  HXT_INFO_COND(opt->verbosity>1,"Generated mesh vertices interior:    %d  ", numGeneratedVerticesInterior);
-  HXT_INFO_COND(opt->verbosity>1,"Generated mesh vertices on volume:   %d  ", numGeneratedVerticesOnVolumes);
-  HXT_INFO_COND(opt->verbosity>1,"Generated mesh vertices TOTAL:       %d  ", numGeneratedVertices);
-  HXT_INFO_COND(opt->verbosity>1,"Allocated final mesh vertices:       %d  ", fmesh->vertices.size);
-  HXT_INFO_COND(opt->verbosity>1,"");
-  HXT_INFO_COND(opt->verbosity>1,"Estimated total mesh vertices        %d  ",  numTotalVertices);
-  HXT_INFO_COND(opt->verbosity>1,"Estimated number of triangles        %lu ",  2*(uint64_t)numTotalVertices);
-  HXT_INFO_COND(opt->verbosity>1,"Estimated number of edges            %d  ",  3*numTotalVertices);
+  HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>0,"Number of initial mesh vertices:     %d  ", numInitialVertices);
+  HXT_INFO_COND(opt->verbosity>0,"Number of initial mesh triangles:    %lu ", mesh->triangles.num);
+  HXT_INFO_COND(opt->verbosity>0,"Number of initial mesh edges:        %d  ", edges->numEdges);
+  HXT_INFO_COND(opt->verbosity>0,"Number of initial boundary lines:    %lu ", mesh->lines.num);
+  HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>0,"Generated mesh vertices on lines:    %d  ", numGeneratedVerticesOnLines);
+  HXT_INFO_COND(opt->verbosity>0,"Generated mesh vertices on corners:  %d  ", numGeneratedVerticesOnCorners);
+  HXT_INFO_COND(opt->verbosity>0,"Generated mesh vertices interior:    %d  ", numGeneratedVerticesInterior);
+  HXT_INFO_COND(opt->verbosity>0,"Generated mesh vertices on volume:   %d  ", numGeneratedVerticesOnVolumes);
+  HXT_INFO_COND(opt->verbosity>0,"Generated mesh vertices TOTAL:       %d  ", numGeneratedVertices);
+  HXT_INFO_COND(opt->verbosity>0,"Allocated final mesh vertices:       %d  ", fmesh->vertices.size);
+  HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>0,"Estimated total mesh vertices        %d  ",  numTotalVertices);
+  HXT_INFO_COND(opt->verbosity>0,"Estimated number of triangles        %lu ",  2*(uint64_t)numTotalVertices);
+  HXT_INFO_COND(opt->verbosity>0,"Estimated number of edges            %d  ",  3*numTotalVertices);
 
   //***********************************************************************************************
   // Transfer triangles and vertices of initial mesh to intermediate mesh tmesh
   //***********************************************************************************************
-  HXT_INFO_COND(opt->verbosity>1,"");
-  HXT_INFO_COND(opt->verbosity>1,"Transfering initial mesh to temp mesh");
+  HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>0,"Transfering initial mesh to temp mesh");
 
   HXTContext *context;
   HXT_CHECK(hxtContextCreate(&context));
@@ -994,7 +994,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   //***********************************************************************************************
   // Create lines to edges array; 
   //***********************************************************************************************
-  HXT_INFO_COND(opt->verbosity>1,"Create lines to edges");
+  HXT_INFO_COND(opt->verbosity>0,"Create lines to edges");
 
   uint32_t *lines2edges;
   HXT_CHECK(hxtMalloc(&lines2edges,maxNumLines*sizeof(uint32_t)));
@@ -1004,7 +1004,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   //***********************************************************************************************
   // Create edges to lines array;
   //***********************************************************************************************
-  HXT_INFO_COND(opt->verbosity>1,"Create edges to lines");
+  HXT_INFO_COND(opt->verbosity>0,"Create edges to lines");
 
   uint64_t *edges2lines;
   HXT_CHECK(hxtMalloc(&edges2lines,maxNumEdges*sizeof(uint64_t)));
@@ -1016,13 +1016,13 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   // This is used to handle non-manifold triangulations
   // where mesh lines can have more than 2 triangles
   //***********************************************************************************************
-  HXT_INFO_COND(opt->verbosity>1,"Create lines to triangles");
+  HXT_INFO_COND(opt->verbosity>0,"Create lines to triangles");
 
   uint64_t *lines2triangles;
   HXT_CHECK(hxtMalloc(&lines2triangles,maxNumTriToLine*tmesh->lines.size*sizeof(uint64_t)));
   for (uint64_t i=0; i<maxNumTriToLine*tmesh->lines.size; i++) lines2triangles[i] = UINT64_MAX;
   HXT_CHECK(hxtGetLinesToTriangles(edges,maxNumTriToLine,edges2lines,lines2triangles));
-  HXT_INFO_COND(opt->verbosity>1,"Number of max tri to line:  %lu", maxNumTriToLine);
+  HXT_INFO_COND(opt->verbosity>0,"Number of max tri to line:  %lu", maxNumTriToLine);
 
 
   //***********************************************************************************************
@@ -1030,7 +1030,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   // We use this to find the vertices that are contained in each triangle
   // It is not updated (no new vertices are inserted) 
   //***********************************************************************************************
-  HXT_INFO_COND(opt->verbosity>1,"Create RTree");
+  HXT_INFO_COND(opt->verbosity>0,"Create RTree");
 
   double boxSmall = 10e-16;
   void* data;
@@ -1301,14 +1301,14 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
 
   // COUNTING THINGS TODO delete
 
-  HXT_INFO_COND(opt->verbosity>1,"");
-  HXT_INFO_COND(opt->verbosity>1,"Number of corner points:                    %d", countPointsOnCorners);
-  HXT_INFO_COND(opt->verbosity>1,"Number of points on line vertices:          %d", countPointsOnLineVertices);
-  HXT_INFO_COND(opt->verbosity>1,"Number of all points on boundary vertices:  %d", countPointsOnBoundaryVertices);
-  HXT_INFO_COND(opt->verbosity>1,"Number of line points (without corners):    %d", countPointsOnLines);
-  HXT_INFO_COND(opt->verbosity>1,"Number of points on triangles:              %d", countPointsOnTriangles);
-  HXT_INFO_COND(opt->verbosity>1,"Number of all points on vertices:           %d", countPointsOnVerticesTotal);
-  HXT_INFO_COND(opt->verbosity>1,"Number of points on triangle vertices:      %d", countPointsOnTriangleVertices);
+  HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>0,"Number of corner points:                    %d", countPointsOnCorners);
+  HXT_INFO_COND(opt->verbosity>0,"Number of points on line vertices:          %d", countPointsOnLineVertices);
+  HXT_INFO_COND(opt->verbosity>0,"Number of all points on boundary vertices:  %d", countPointsOnBoundaryVertices);
+  HXT_INFO_COND(opt->verbosity>0,"Number of line points (without corners):    %d", countPointsOnLines);
+  HXT_INFO_COND(opt->verbosity>0,"Number of points on triangles:              %d", countPointsOnTriangles);
+  HXT_INFO_COND(opt->verbosity>0,"Number of all points on vertices:           %d", countPointsOnVerticesTotal);
+  HXT_INFO_COND(opt->verbosity>0,"Number of points on triangle vertices:      %d", countPointsOnTriangleVertices);
 
   //***********************************************************************************************
   // COLLAPSE
@@ -1332,11 +1332,11 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
     if (tparent[i].type == 4) countVolumeVerticesToRemove++;
   }
 
-  HXT_INFO_COND(opt->verbosity>1,"");
-  HXT_INFO_COND(opt->verbosity>1,"Vertices to be removed                      %d", countVerticesToRemove);
-  HXT_INFO_COND(opt->verbosity>1,"Total Vertices to be removed                %d", countVerticesToRemove);
-  HXT_INFO_COND(opt->verbosity>1,"Volume Vertices to be removed               %d", countVolumeVerticesToRemove);
-  HXT_INFO_COND(opt->verbosity>1,"Surface Vertices to be removed              %d", countVerticesToRemove-countVolumeVerticesToRemove);
+  HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>0,"Vertices to be removed                      %d", countVerticesToRemove);
+  HXT_INFO_COND(opt->verbosity>0,"Total Vertices to be removed                %d", countVerticesToRemove);
+  HXT_INFO_COND(opt->verbosity>0,"Volume Vertices to be removed               %d", countVolumeVerticesToRemove);
+  HXT_INFO_COND(opt->verbosity>0,"Surface Vertices to be removed              %d", countVerticesToRemove-countVolumeVerticesToRemove);
 
   clock_t time0 = clock();
 
@@ -1374,4 +1374,75 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   return HXT_STATUS_OK;
 }
 
+
+//**************************************************************************************************
+//**************************************************************************************************
+//
+// FUNCTION to transfer surface mesh from initial mesh  
+//
+//**************************************************************************************************
+//**************************************************************************************************
+HXTStatus hxtGetSurfaceMesh(HXTPointGenOptions *opt,
+                            HXTMesh *mesh,
+                            HXTMesh *fmesh,
+                            HXTMesh *nmesh)
+{
+  HXT_UNUSED(opt);
+
+  HXT_INFO("");
+  HXT_INFO("========= Transfer input surface mesh to final mesh for hxtMesh3d ==========");
+  HXT_INFO("");
+  HXT_INFO("NO Point Generation on Lines");
+  HXT_INFO("NO Point Generation on Surfaces");
+  HXT_INFO("NO Surface Remeshing");
+
+  // We want to get the surface mesh from the input mesh (not the interior points)
+  
+  uint32_t *isOnSurface;
+  HXT_CHECK(hxtMalloc(&isOnSurface,mesh->vertices.num*sizeof(uint32_t)));
+  for (uint32_t i=0; i<mesh->vertices.num; i++) isOnSurface[i] = UINT32_MAX;
+
+  for (uint64_t i=0; i<mesh->triangles.num; i++){
+    for (uint32_t j=0; j<3; j++){
+      isOnSurface[mesh->triangles.node[3*i+j]] = mesh->triangles.node[3*i+j];
+    }
+  }
+
+  HXT_CHECK(hxtVerticesReserve(nmesh,   mesh->vertices.num+fmesh->vertices.num));
+  HXT_CHECK(hxtPointsReserve(nmesh,      mesh->points.num));
+  HXT_CHECK(hxtLinesReserve(nmesh,       mesh->lines.num));
+  HXT_CHECK(hxtTrianglesReserve(nmesh,   mesh->triangles.num));
+
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    if (isOnSurface[i] == UINT32_MAX) continue;
+    nmesh->vertices.coord[4*nmesh->vertices.num+0] = mesh->vertices.coord[4*i+0];
+    nmesh->vertices.coord[4*nmesh->vertices.num+1] = mesh->vertices.coord[4*i+1];
+    nmesh->vertices.coord[4*nmesh->vertices.num+2] = mesh->vertices.coord[4*i+2];
+    isOnSurface[i] = nmesh->vertices.num;
+    nmesh->vertices.num++;
+  }
+
+  for (uint32_t i=0; i<mesh->points.num; i++){
+    nmesh->points.node[i] = isOnSurface[mesh->points.node[i]];
+    nmesh->points.num++;
+  }
+  for (uint32_t i=0; i<mesh->lines.num; i++){
+    nmesh->lines.node[2*i+0] = isOnSurface[mesh->lines.node[2*i+0]];
+    nmesh->lines.node[2*i+1] = isOnSurface[mesh->lines.node[2*i+1]];
+    nmesh->lines.colors[i] = mesh->lines.colors[i];
+    nmesh->lines.num++;
+  }
+  for (uint32_t i=0; i<mesh->triangles.num; i++){
+    nmesh->triangles.node[3*i+0] = isOnSurface[mesh->triangles.node[3*i+0]];
+    nmesh->triangles.node[3*i+1] = isOnSurface[mesh->triangles.node[3*i+1]];
+    nmesh->triangles.node[3*i+2] = isOnSurface[mesh->triangles.node[3*i+2]];
+    nmesh->triangles.colors[i] = mesh->triangles.colors[i];
+    nmesh->triangles.num++;
+  }
+
+
+  HXT_CHECK(hxtFree(&isOnSurface));
+
+  return HXT_STATUS_OK;
+}
 

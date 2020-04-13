@@ -9,9 +9,6 @@
 #include <math.h>
 #include <gmsh.h>
 
-namespace model = gmsh::model;
-namespace factory = gmsh::model::geo;
-
 double hypoth(double a, double b){ return sqrt(a * a + b * b); }
 
 int main(int argc, char **argv)
@@ -19,7 +16,7 @@ int main(int argc, char **argv)
   gmsh::initialize(argc, argv);
   gmsh::option::setNumber("General.Terminal", 1);
 
-  model::add("t4");
+  gmsh::model::add("t4");
 
   double cm = 1e-02;
   double e1 = 4.5 * cm, e2 = 6 * cm / 2, e3 =  5 * cm / 2;
@@ -31,7 +28,9 @@ int main(int argc, char **argv)
   double ccos = (-h5*R1 + e2 * hypot(h5, hypot(e2, R1))) / (h5*h5 + e2*e2);
   double ssin = sqrt(1 - ccos*ccos);
 
-  // We start by defining some points and some lines:
+  // We start by defining some points and some lines. To make the code shorter
+  // we can redefine a namespace:
+  namespace factory = gmsh::model::geo;
   factory::addPoint(-e1-e2, 0    , 0, Lc1, 1);
   factory::addPoint(-e1-e2, h1   , 0, Lc1, 2);
   factory::addPoint(-e3-r , h1   , 0, Lc2, 3);
@@ -164,7 +163,7 @@ int main(int argc, char **argv)
   for(int i = 15; i <= 20; i++)
     gmsh::model::setColor({{1, i}}, 255, 255, 0); // Yellow
 
-  model::mesh::generate(2);
+  gmsh::model::mesh::generate(2);
 
   gmsh::write("t4.msh");
 

@@ -2,7 +2,7 @@
 #
 #  Gmsh Python tutorial 13
 #
-#  Remeshing without an underlying CAD model
+#  Remeshing an STL file without an underlying CAD model
 #
 # ------------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ angle = 40 # Angle for surface detection
 # patches that are amenable to reparametrization:
 forceParametrizablePatches = False
 
-# For open surfaces include the boundary edges in the classification process.
+# For open surfaces include the boundary edges in the classification process:
 includeBoundary = True
 
 # Force curves to be split on given angle:
@@ -61,6 +61,7 @@ else:
 gmsh.model.mesh.field.setAsBackgroundMesh(f)
 
 gmsh.model.mesh.generate(3)
+gmsh.write('t13.msh')
 
 # gmsh.fltk.run()
 
