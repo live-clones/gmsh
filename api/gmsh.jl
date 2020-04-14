@@ -878,6 +878,29 @@ function getParametrization(dim, tag, points)
 end
 
 """
+    gmsh.model.getParametrizationBounds(dim, tag)
+
+Get the `min` and `max` bounds of the parametric coordinates for the entity of
+dimension `dim` and tag `tag`.
+
+Return `min`, `max`.
+"""
+function getParametrizationBounds(dim, tag)
+    api_min_ = Ref{Ptr{Cdouble}}()
+    api_min_n_ = Ref{Csize_t}()
+    api_max_ = Ref{Ptr{Cdouble}}()
+    api_max_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetParametrizationBounds, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_min_, api_min_n_, api_max_, api_max_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetParametrizationBounds returned non-zero error code: $(ierr[])")
+    min = unsafe_wrap(Array, api_min_[], api_min_n_[], own=true)
+    max = unsafe_wrap(Array, api_max_[], api_max_n_[], own=true)
+    return min, max
+end
+
+"""
     gmsh.model.setVisibility(dimTags, value, recursive = false)
 
 Set the visibility of the model entities `dimTags` to `value`. Apply the

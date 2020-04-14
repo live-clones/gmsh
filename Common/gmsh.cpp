@@ -820,6 +820,26 @@ gmsh::model::getParametrization(const int dim, const int tag,
   }
 }
 
+GMSH_API void
+gmsh::model::getParametrizationBounds(const int dim, const int tag,
+                                      std::vector<double> &min,
+                                      std::vector<double> &max)
+{
+  if(!_isInitialized()) { throw - 1; }
+  min.clear();
+  max.clear();
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  for(int dim = 0; dim < entity->dim(); dim++) {
+    Range<double> r = entity->parBounds(dim);
+    min.push_back(r.low());
+    max.push_back(r.high());
+  }
+}
+
 GMSH_API void gmsh::model::setVisibility(const vectorpair &dimTags,
                                          const int value, const bool recursive)
 {

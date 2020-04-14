@@ -365,6 +365,14 @@ GMSH_API void gmshModelGetParametrization(const int dim,
                                           double ** parametricCoord, size_t * parametricCoord_n,
                                           int * ierr);
 
+/* Get the `min' and `max' bounds of the parametric coordinates for the entity
+ * of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetParametrizationBounds(const int dim,
+                                                const int tag,
+                                                double ** min, size_t * min_n,
+                                                double ** max, size_t * max_n,
+                                                int * ierr);
+
 /* Set the visibility of the model entities `dimTags' to `value'. Apply the
  * visibility setting recursively if `recursive' is true. */
 GMSH_API void gmshModelSetVisibility(int * dimTags, size_t dimTags_n,

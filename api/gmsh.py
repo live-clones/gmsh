@@ -1187,6 +1187,33 @@ class model:
         return _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value)
 
     @staticmethod
+    def getParametrizationBounds(dim, tag):
+        """
+        gmsh.model.getParametrizationBounds(dim, tag)
+
+        Get the `min' and `max' bounds of the parametric coordinates for the entity
+        of dimension `dim' and tag `tag'.
+
+        Return `min', `max'.
+        """
+        api_min_, api_min_n_ = POINTER(c_double)(), c_size_t()
+        api_max_, api_max_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetParametrizationBounds(
+            c_int(dim),
+            c_int(tag),
+            byref(api_min_), byref(api_min_n_),
+            byref(api_max_), byref(api_max_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetParametrizationBounds returned non-zero error code: ",
+                ierr.value)
+        return (
+            _ovectordouble(api_min_, api_min_n_.value),
+            _ovectordouble(api_max_, api_max_n_.value))
+
+    @staticmethod
     def setVisibility(dimTags, value, recursive=False):
         """
         gmsh.model.setVisibility(dimTags, value, recursive=False)

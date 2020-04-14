@@ -675,6 +675,22 @@ namespace gmsh { // Top-level functions
       parametricCoord.assign(api_parametricCoord_, api_parametricCoord_ + api_parametricCoord_n_); gmshFree(api_parametricCoord_);
     }
 
+    // Get the `min' and `max' bounds of the parametric coordinates for the entity
+    // of dimension `dim' and tag `tag'.
+    inline void getParametrizationBounds(const int dim,
+                                         const int tag,
+                                         std::vector<double> & min,
+                                         std::vector<double> & max)
+    {
+      int ierr = 0;
+      double *api_min_; size_t api_min_n_;
+      double *api_max_; size_t api_max_n_;
+      gmshModelGetParametrizationBounds(dim, tag, &api_min_, &api_min_n_, &api_max_, &api_max_n_, &ierr);
+      if(ierr) throw ierr;
+      min.assign(api_min_, api_min_ + api_min_n_); gmshFree(api_min_);
+      max.assign(api_max_, api_max_ + api_max_n_); gmshFree(api_max_);
+    }
+
     // Set the visibility of the model entities `dimTags' to `value'. Apply the
     // visibility setting recursively if `recursive' is true.
     inline void setVisibility(const gmsh::vectorpair & dimTags,

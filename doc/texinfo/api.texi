@@ -715,6 +715,19 @@ the surface (if @code{dim} = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
 -
 @end table
 
+@item gmsh/model/getParametrizationBounds
+Get the @code{min} and @code{max} bounds of the parametric coordinates for the
+entity of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{min}, @code{max}
+@item Return:
+-
+@end table
+
 @item gmsh/model/setVisibility
 Set the visibility of the model entities @code{dimTags} to @code{value}. Apply
 the visibility setting recursively if @code{recursive} is true.

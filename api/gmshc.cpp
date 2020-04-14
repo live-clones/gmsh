@@ -627,6 +627,21 @@ GMSH_API void gmshModelGetParametrization(const int dim, const int tag, double *
   }
 }
 
+GMSH_API void gmshModelGetParametrizationBounds(const int dim, const int tag, double ** min, size_t * min_n, double ** max, size_t * max_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_min_;
+    std::vector<double> api_max_;
+    gmsh::model::getParametrizationBounds(dim, tag, api_min_, api_max_);
+    vector2ptr(api_min_, min, min_n);
+    vector2ptr(api_max_, max, max_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelSetVisibility(int * dimTags, size_t dimTags_n, const int value, const int recursive, int * ierr)
 {
   if(ierr) *ierr = 0;

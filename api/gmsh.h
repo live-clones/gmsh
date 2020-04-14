@@ -432,6 +432,15 @@ namespace gmsh { // Top-level functions
                                      const std::vector<double> & points,
                                      std::vector<double> & parametricCoord);
 
+    // gmsh::model::getParametrizationBounds
+    //
+    // Get the `min' and `max' bounds of the parametric coordinates for the entity
+    // of dimension `dim' and tag `tag'.
+    GMSH_API void getParametrizationBounds(const int dim,
+                                           const int tag,
+                                           std::vector<double> & min,
+                                           std::vector<double> & max);
+
     // gmsh::model::setVisibility
     //
     // Set the visibility of the model entities `dimTags' to `value'. Apply the
