@@ -45,6 +45,8 @@ typedef struct {
 
   uint64_t numTris;           /**< Desired number of triangles */
 
+  uint16_t skipColor;         /**< Skip this color in pointGen (used in mixed quad-tri input) */
+
 
 }HXTPointGenOptions;
 

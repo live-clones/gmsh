@@ -561,7 +561,6 @@ HXTStatus hxtWalkToCandidatePoint3dRK4(HXTMesh *mesh,
 //*************************************************************************************************
 //*************************************************************************************************
 HXTStatus hxtPointGenFilterAligned3d(HXTMesh *mesh,
-                                     uint64_t ct,
                                      double *coords,
                                      double *pp, // candidate point
                                      double *frame,
@@ -604,11 +603,14 @@ HXTStatus hxtPointGenFilterAligned3d(HXTMesh *mesh,
                                                &dist,
                                                &in,
                                                closePt));
-      if (fabs(dist)<sizes[0]){
+      if (fabs(dist)<threshold*size){
         *pass = 0;
+        HXT_CHECK(hxtFree(&idCloseTris));
         return HXT_STATUS_OK;
       }
     }
+
+    HXT_CHECK(hxtFree(&idCloseTris));
   }
 
   //============================================================================
@@ -648,6 +650,7 @@ HXTStatus hxtPointGenFilterAligned3d(HXTMesh *mesh,
   }
 
   HXT_CHECK(hxtFree(&idClose));
+  HXT_CHECK(hxtFree(&idCloseTris));
   return HXT_STATUS_OK;
 }
 
@@ -922,15 +925,16 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
 
   // A second auxillary rtree for surface triangles
-  
   tol = 10e-16; // TODO 
   void *dataTri;
   HXT_CHECK(hxtRTreeCreate64(&dataTri));
-  for (uint64_t i=0; i<mesh->triangles.num; i++){
-    double *p0 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+0];
-    double *p1 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+1];
-    double *p2 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+2];
-    HXT_CHECK(hxtAddTriangleInRTree64(p0,p1,p2,tol,i,dataTri));
+  if (opt->generateSurfaces == 0){
+    for (uint64_t i=0; i<mesh->triangles.num; i++){
+      double *p0 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+0];
+      double *p1 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+1];
+      double *p2 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+2];
+      HXT_CHECK(hxtAddTriangleInRTree64(p0,p1,p2,tol,i,dataTri));
+    }
   }
 
   clock_t time02b = clock();
@@ -1030,7 +1034,6 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
       // FILTERING 
       //HXT_CHECK(hxtPointGenFilter(fmesh->vertices.coord,candidate,size,threshold,data,&insert));
       HXT_CHECK(hxtPointGenFilterAligned3d(mesh,
-                                           ct,
                                            fmesh->vertices.coord,
                                            candidate,
                                            frameCandidate,
@@ -1072,7 +1075,6 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
         // FILTERING corrected point 
         //HXT_CHECK(hxtPointGenFilter(fmesh->vertices.coord,candidate,size,threshold,data,&insert));
         HXT_CHECK(hxtPointGenFilterAligned3d(mesh,
-                                             ct,
                                              fmesh->vertices.coord,
                                              candidate,
                                              frameCandidate,
