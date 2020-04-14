@@ -53,5 +53,5 @@ Table of contents
 
 Extended tutorials (API only):
 
-* x1: Geometrical and mesh data access
+* x1: Geometry and mesh data
 * x2: Mesh import, discrete entities, hybrid models, terrain meshing
