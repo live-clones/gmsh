@@ -841,6 +841,7 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
   return true;
 }
 
+
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut)
 {
@@ -912,7 +913,8 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
       else {
 #if defined(HAVE_MESH)
         int *p = new int[(*it)->triangles.size()];
-        if(!PartitionFace(*it, np, p)) {
+        if(!PartitionFaceMinEdgeLength(*it, np, p)) {
+        //if(!PartitionFace(*it, np, p)) {
           std::vector<MTriangle *> t[1000];
           for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
             t[(*it)->triangles[i]->getPartition()].push_back(

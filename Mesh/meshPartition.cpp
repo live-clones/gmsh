@@ -2303,6 +2303,76 @@ static void AssignPhysicals(GModel *model)
   }
 }
 
+bool cmp_hedges(const std::pair<MEdge,size_t> &he0, const std::pair<MEdge,size_t> &he1) {
+  MEdgeLessThan cmp;
+  return cmp(he0.first,he1.first);
+}
+
+int PartitionFaceMinEdgeLength(GFace *gf, int np, int *p, double tol)
+{
+  std::vector<std::pair<MEdge,size_t> > halfEdges;
+  halfEdges.reserve(gf->triangles.size()*3);
+  for(size_t i = 0; i < gf->triangles.size(); ++i) {
+    for(size_t j = 0; j < 3; ++j) {
+      halfEdges.push_back(std::make_pair(gf->triangles[i]->getEdge(j),i));
+    }
+  }
+  std::sort(halfEdges.begin(),halfEdges.end(),cmp_hedges);
+  std::vector<idx_t> neighbors(gf->triangles.size()*3,-1);
+  std::vector<double> neighborsWeight(gf->triangles.size()*3,-1);
+  MEdgeEqual eq;
+  double minEdgeLength = std::numeric_limits<double>::max();
+  for (size_t i = 0; i+1 < halfEdges.size(); ++i) {
+    if (eq(halfEdges[i].first,halfEdges[i+1].first)) {
+      size_t t0 = halfEdges[i].second;
+      size_t t1 = halfEdges[i+1].second;
+      double l = halfEdges[i].first.length();
+      minEdgeLength = std::min(l,minEdgeLength);
+      for (int j = 0; j < 3; ++j) {
+        if (neighbors[t0*3+j] == -1) {
+          neighbors[t0*3+j] = t1;
+          neighborsWeight[t0*3+j] = l;
+          break;
+        }
+      }
+      for (int j = 0; j < 3; ++j) {
+        if (neighbors[t1*3+j] == -1) {
+          neighbors[t1*3+j] = t0;
+          neighborsWeight[t1*3+j] = l;
+          break;
+        }
+      }
+      i++;
+    }
+  }
+  std::vector<idx_t> adjncy;
+  std::vector<idx_t> xadjncy;
+  std::vector<idx_t> adjncyw;
+  xadjncy.push_back(0);
+  for (size_t i=0; i< gf->triangles.size(); ++i) {
+    for (size_t j=0; j<3; ++j) {
+      if (neighbors[i*3+j] == -1) break;
+      adjncy.push_back(neighbors[i*3+j]);
+      adjncyw.push_back((idx_t)(neighborsWeight[i*3+j]/minEdgeLength*10));
+    }
+    xadjncy.push_back(adjncy.size());
+  }
+  idx_t nvtxs = gf->triangles.size(), ncon = 1, nparts = np, objval;
+  std::vector<idx_t>epart(gf->triangles.size());
+  real_t ubvec = tol;
+  METIS_PartGraphKway(
+      &nvtxs, &ncon, &xadjncy[0],
+      &adjncy[0], NULL, NULL, &adjncyw[0],
+      &nparts, NULL, &ubvec, NULL, &objval,
+      &epart[0]);
+  for (size_t i=0; i< gf->triangles.size(); ++i) {
+    gf->triangles[i]->setPartition(epart[i]);
+    if(p)
+      p[i] = epart[i];
+  }
+  return 0;
+}
+
 int PartitionFace(GFace *gf, int np, int *p)
 {
   GModel m;
@@ -2321,7 +2391,6 @@ int PartitionFace(GFace *gf, int np, int *p)
   //  for (size_t i=0;i<graph.ne();++i)p[i]=graph.partition(i);
   for(unsigned int i = 0; i < graph.ne(); i++)
     graph.element(i)->setPartition(graph.partition(i));
-
   return 0;
 }
 
