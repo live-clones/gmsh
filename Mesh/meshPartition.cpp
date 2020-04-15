@@ -2773,4 +2773,10 @@ int PartitionFace(GFace *gf, int np, int *p)
   return 0;
 }
 
+int PartitionFaceMinEdgeLength(GFace *gf, int np, int *p, double tol)
+{
+  Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
+  return 0;
+}
+
 #endif
