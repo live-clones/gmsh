@@ -2873,7 +2873,7 @@ static void computeOneIsoTillNextCutGraph(
   bool start = true;
 
   SBoundingBox3d bbox = GModel::current()->bounds();
-  double TOLERANCE = 1.e-10*bbox.diag();
+  double TOLERANCE = 1.e-08*bbox.diag();
 
   while (1){
     MEdge e(v0, v1);  
@@ -2884,7 +2884,7 @@ static void computeOneIsoTillNextCutGraph(
       double d=1.e12;
       MVertex *close = inSingularZone (singularities, p, d);
       //MVertex *close = inSingularZone (singularities, p, e, adj, d);
-      if (d < 1.e-10){
+      if (d < TOLERANCE){
 	passage._type = cutGraphPassage::SING_TO_SING;
 	passage.close = true;
 	passage.sing_conn = close;
@@ -5474,7 +5474,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   qLayout.cutMesh(cuts,inverseClassificationEdges);
   gm->writeMSH("cutmesh.msh", 4.0, false, true);
 
-  constexpr bool do_reclassify = false; /* no longer needed, done by QMT */
+  constexpr bool do_reclassify = true; /* no longer needed, done by QMT */
   if (do_reclassify) {
     Msg::Info("Classifying the model");
     discreteEdge *de = new discreteEdge(
