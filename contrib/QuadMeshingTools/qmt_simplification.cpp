@@ -756,6 +756,7 @@ namespace QMT {
         double s2 = M.size[v2];
         if (s1 == DBL_MAX || s2 == DBL_MAX) {
           warn("size not defined at edge v1={},v2={}", v1, v2);
+          return false;
           continue;
         }
         clen *= 1. / (0.5 * (s1 + s2));

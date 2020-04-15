@@ -936,6 +936,22 @@ namespace QMT {
     return true;
   }
 
+  bool update_entity_and_project(vec3& pt, pair<int,int>& entity, const BoundaryProjector& projector) {
+    if (entity.first == -1 || entity.second == -1) {
+      double dist;
+      bool okc = projector.closestEntity(pt,dist,entity.first,entity.second);
+      if (!okc) return false;
+    }
+    vec3 proj;
+    bool ok = projector.project(entity.first,entity.second,pt,proj);
+    if (ok) {
+      pt = proj;
+    } else {
+      return false;
+    }
+    return true;
+  }
+
   bool subdivide_degenerate_faces(QTMesh& M, const BoundaryProjector* projector = NULL) {
     constexpr bool SHOW_MPS = false;
     size_t nf = 0;
@@ -991,16 +1007,7 @@ namespace QMT {
         return false;
       }
       if (projector != NULL) {
-        if (M.vertices[nv].entity.first == -1 || M.vertices[nv].entity.second == -1) {
-          double dist;
-          projector->closestEntity(M.vertices[nv].pt,dist,M.vertices[nv].entity.first,M.vertices[nv].entity.second);
-        }
-        vec3 proj;
-        bool ok = projector->project(M.vertices[nv].entity.first,M.vertices[nv].entity.second,M.vertices[nv].pt,proj);
-        if (ok) {
-          // DBG("edge",nv,M.vertices[nv].pt,"->",proj);
-          M.vertices[nv].pt = proj;
-        }
+        bool oku = update_entity_and_project(M.vertices[nv].pt,M.vertices[nv].entity,*projector);
       }
       vertexFromEdgeSplit.resize(M.vertices.size(),false);
       vertexFromEdgeSplit[nv] = true;
@@ -1028,16 +1035,7 @@ namespace QMT {
        return false;
       }
       if (projector != NULL) {
-        if (M.vertices[nv].entity.first == -1 || M.vertices[nv].entity.second == -1) {
-          double dist;
-          projector->closestEntity(M.vertices[nv].pt,dist,M.vertices[nv].entity.first,M.vertices[nv].entity.second);
-        }
-        vec3 proj;
-        bool ok = projector->project(M.vertices[nv].entity.first,M.vertices[nv].entity.second,M.vertices[nv].pt,proj);
-        if (ok) {
-          // DBG("face",nv,M.vertices[nv].pt,"->",proj);
-          M.vertices[nv].pt = proj;
-        }
+        bool oku = update_entity_and_project(M.vertices[nv].pt,M.vertices[nv].entity,*projector);
       }
       vertexFromEdgeSplit.resize(M.vertices.size(),false);
       vertexFromFaceSplit.resize(M.vertices.size(),false);
@@ -1543,8 +1541,14 @@ namespace QMT {
     if (N == 0) return true;
 
     /* Size map size(t) */
+    vector<vec3> failed_probes;
     vector<double> size(pts.size(),0.);
-    F(i, size.size()) size[i] = sizemap.eval(pts[i]);
+    F(i, size.size()) {
+      size[i] = sizemap.eval(pts[i]);
+      if (size[i] == DBL_MAX) {
+        failed_probes.push_back(pts[i]);
+      }
+    }
 
     vector<double> Pri(pts.size(),0.);
     /* Integral of inverse, Pri = int(1/size(t),t) */
@@ -1622,6 +1626,15 @@ namespace QMT {
         return false;
       }
     }
+
+    if (ERROR_VISU && failed_probes.size() > 0) {
+      GeoLog log;
+      F(i,failed_probes.size()) {
+        log.add({failed_probes[i]},double(i), "compute_subdivided_edge_internal_points");
+      }
+      log.toGmsh();
+    }
+    RFC(failed_probes.size() > 0, "compute_subdivided_edge_internal_points | {} probe failures", failed_probes.size());
 
     return true;
   }
@@ -2080,6 +2093,7 @@ namespace QMT {
       const QTMesh& M,
       const vector<id>& edge_n,
       const SizeMapR& sizemap,
+      const BoundaryProjector* projector,
       QMesh& Q) {
     info("generate quad mesh from quantization ...");
 
@@ -2113,7 +2127,8 @@ namespace QMT {
       vector<id> nvert;
       F(k,ipts.size()) {
         double h = newSizes[k];
-        id nv = add_vertex(Q, ipts[k], h, entity);
+        vec3 pt = ipts[k];
+        id nv = add_vertex(Q, pt, h, entity);
         nvert.push_back(nv);
       }
       edge2nivert[e] = nvert;
@@ -2199,8 +2214,18 @@ namespace QMT {
       }
       vector<id> qVertices(ipts.size(),NO_ID);
       F(i,ipts.size()) {
-        double h = sizemap.eval(ipts[i]); /* call the gmsh API */
-        id nv = add_vertex(Q, ipts[i], h, face.entity);
+        vec3 pt = ipts[i];
+        pair<int,int> nvEntity = face.entity;
+        if (projector != NULL) {
+          bool oku = update_entity_and_project(pt,nvEntity,*projector);
+          RFC(!oku, "interior point {}: failed to update entity and project", pt);
+        }
+        double h = sizemap.eval(pt); /* call the gmsh API */
+        if (h == DBL_MAX) {
+          error("probe failed at new patch interior vertex");
+          return false;
+        }
+        id nv = add_vertex(Q, pt, h, nvEntity);
         qVertices[i] = nv;
       }
       /* Generate refined quads in patch */
@@ -2293,7 +2318,7 @@ namespace QMT {
       error("failed to compute quantization of QTMesh");
       return false;
     }
-    bool okg = generate_quad_mesh_from_quantization(tM, edge_n, sizemap, M);
+    bool okg = generate_quad_mesh_from_quantization(tM, edge_n, sizemap, projector, M);
     if (!okg) {
       error("failed to generate quad mesh from quantization");
       return false;
