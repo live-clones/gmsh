@@ -72,12 +72,22 @@ bool discreteFace::param::checkPlanar()
   SVector3 VY(mp.plan[1][0], mp.plan[1][1], mp.plan[1][2]);
   SPoint3 XP(mp.x, mp.y, mp.z);
 
+  umin = 1e200;
+  vmin = 1e200;
+  umax = -1e200;
+  vmax = -1e200;
+
   int count = 0;
   for(size_t i = 0; i < t2d.size(); i++) {
     for(int j = 0; j < 3; j++) {
       SVector3 DX = vp[count++] - XP;
-      t2d[i].getVertex(j)->x() = dot(DX, VX);
-      t2d[i].getVertex(j)->y() = dot(DX, VY);
+      MVertex *v = t2d[i].getVertex(j);
+      v->x() = dot(DX, VX);
+      v->y() = dot(DX, VY);
+      umin = std::min(umin, v->x());
+      vmin = std::min(vmin, v->y());
+      umax = std::max(umax, v->x());
+      vmax = std::max(vmax, v->y());
     }
   }
   return true;
@@ -292,6 +302,22 @@ SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
   GPoint gp = closestPoint(p, 1e-6);
   return SPoint2(gp.u(), gp.v());
+}
+
+Range<double> discreteFace::parBounds(int i) const
+{
+  if(i == 0)
+    return Range<double>(_param.umin, _param.umax);
+  else
+    return Range<double>(_param.vmin, _param.vmax);
+}
+
+bool discreteFace::containsParam(const SPoint2 &pt)
+{
+  if(_param.empty()) return false;
+  if(_param.oct->find(pt.x(), pt.y(), 0.0, -1, true))
+    return true;
+  return false;
 }
 
 SVector3 discreteFace::normal(const SPoint2 &param) const
