@@ -152,4 +152,37 @@ HXTStatus hxtAddTriangleInRTree64(double *p0,
   return HXT_STATUS_OK;
 }
 
+HXTStatus hxtAddLineInRTree64(double *p0,
+                              double *p1,
+                              double box, uint64_t id, void *data)
+{
+
+  double cpmin[3] = {DBL_MAX,DBL_MAX,DBL_MAX};
+  double cpmax[3] = {-DBL_MAX,-DBL_MAX,-DBL_MAX};
+    
+  if (p0[0] < cpmin[0]) cpmin[0] = p0[0];
+  if (p0[1] < cpmin[1]) cpmin[1] = p0[1];
+  if (p0[2] < cpmin[2]) cpmin[2] = p0[2];
+  if (p0[0] > cpmax[0]) cpmax[0] = p0[0];
+  if (p0[1] > cpmax[1]) cpmax[1] = p0[1];
+  if (p0[2] > cpmax[2]) cpmax[2] = p0[2];
+
+  if (p1[0] < cpmin[0]) cpmin[0] = p1[0];
+  if (p1[1] < cpmin[1]) cpmin[1] = p1[1];
+  if (p1[2] < cpmin[2]) cpmin[2] = p1[2];
+  if (p1[0] > cpmax[0]) cpmax[0] = p1[0];
+  if (p1[1] > cpmax[1]) cpmax[1] = p1[1];
+  if (p1[2] > cpmax[2]) cpmax[2] = p1[2];
+
+  cpmin[0] = cpmin[0]-box;
+  cpmin[1] = cpmin[1]-box;
+  cpmin[2] = cpmin[2]-box;
+  cpmax[0] = cpmax[0]+box;
+  cpmax[1] = cpmax[1]+box;
+  cpmax[2] = cpmax[2]+box;
+
+  HXT_CHECK(hxtRTreeInsert(cpmin,cpmax,id,data));
+  return HXT_STATUS_OK;
+}
+
 

@@ -815,6 +815,7 @@ static void unDuplicateNodesInCutGraph(
   }
 }
 
+
 static void duplicateNodesInCutGraph(
   std::vector<GFace *> &f, std::map<MEdge, cross2d, MEdgeLessThan> &C,
   std::map<MVertex *, MVertex *, MVertexPtrLessThan> &new2old,
@@ -4898,11 +4899,11 @@ public:
       std::vector<GEdge*> ed_of_fi = f[i]->edges();
       modelEdges.insert(ed_of_fi.begin(),ed_of_fi.end());
       for (size_t j=0;j<ed_of_fi.size();j++){
-	for (size_t k=0;k<ed_of_fi[j]->lines.size();k++){
-	  MEdge e (ed_of_fi[j]->lines[k]->getVertex(0),
-		   ed_of_fi[j]->lines[k]->getVertex(1));
-	  inverseClassificationEdges[e] = ed_of_fi[j];
-	}
+        for (size_t k=0;k<ed_of_fi[j]->lines.size();k++){
+          MEdge e (ed_of_fi[j]->lines[k]->getVertex(0),
+              ed_of_fi[j]->lines[k]->getVertex(1));
+          inverseClassificationEdges[e] = ed_of_fi[j];
+        }
       }
     }
     
@@ -5098,15 +5099,18 @@ public:
     {
       std::set<GEdge*>::iterator it = modelEdges.begin();    
       for (; it != modelEdges.end();++it){
-	for (size_t i=0;i< (*it)->lines.size(); ++i)delete (*it)->lines[i];
-	(*it)->lines.clear();
+        for (size_t i=0;i< (*it)->lines.size(); ++i)delete (*it)->lines[i];
+        (*it)->lines.clear();
       }
     }
     {
+      size_t nbl = 0;
       std::map<MEdge, GEdge*, MEdgeLessThan>::iterator it = inverseClassificationEdges.begin();
       for (; it != inverseClassificationEdges.end();++it){
-	it->second->lines.push_back(new MLine (it->first.getVertex(0),it->first.getVertex(1)));
+        it->second->lines.push_back(new MLine (it->first.getVertex(0),it->first.getVertex(1)));
+        nbl += 1;
       }      
+      Msg::Info("created %i lines on the boundary", nbl);
     }
     
     GModel::current()->pruneMeshVertexAssociations();
@@ -5658,9 +5662,10 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
     return -1;
   }
 
+  bool repair_bad_decomposition = false;
   QMT::QMesh Q;
   bool okg = QMT::generate_quad_mesh_via_tmesh_quantization(
-      quad_layout_name, sizemapTag, size_min, size_max, Q, &projector);
+      quad_layout_name, sizemapTag, size_min, size_max, Q, &projector, repair_bad_decomposition);
   if (!okg) {
     Msg::Error("Failed to generate quad mesh");
     return -1;
@@ -6389,7 +6394,7 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
   /* change to a new model (created via disk write/read, not good but ...) */
   Msg::Info("create a new model '%s'", opt.model_cut.c_str());
   std::string tmp_path = "tmp_mesh.msh";
-  GmshWriteFile(tmp_path);
+  gm->writeMSH(tmp_path, 4.1, false, true);
   GModel* gcc = GModel::findByName(opt.model_cut);
   if (gcc) {
     Msg::Warning("already a model with the same name, deleting it");
@@ -6567,7 +6572,7 @@ int generateQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
   
   QMT::QMesh Q;
   bool okg = QMT::generate_quad_mesh_via_tmesh_quantization(
-      quad_layout_name, sizemapTag, size_min, size_max, Q, projector);
+      quad_layout_name, sizemapTag, size_min, size_max, Q, projector, opt.fix_decomposition);
   if (!okg) {
     Msg::Error("Failed to generate quad mesh");
     return -1;
@@ -6728,6 +6733,7 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
     Msg::Error("BoundaryProjector* not found in QuadMeshingState. This one is created by the Cut step.");
     return -1;
   }
+  // projector->show_projector(); /* only for debug */
 
   /* Import current quad mesh */
   QMT::QMesh Q;

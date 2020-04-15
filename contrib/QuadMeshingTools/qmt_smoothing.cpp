@@ -192,6 +192,8 @@ namespace QMT {
 
     vector<id> projectionEltCache(M.points.size(),NO_ID);
 
+    constexpr bool TMP_FALLBACK_LAPLACIAN = true;
+
     /* Build the vertex stencils */
     constexpr id ST_WINSLOW_FD4 = 1;
     constexpr id ST_BDR_ORTH_PROJ = 2;
@@ -199,6 +201,7 @@ namespace QMT {
     vector<id> smoothing_type(M.points.size(),NO_ID);
     vector<id> stencils(8*M.points.size(),NO_ID);
     size_t nbnm = 0;
+    size_t nbr = 0;
     FC(v,M.points.size(),v2v[v].size() > 0) {
       if (M.entity[v].first != 0 && v2quads[v].size() == 4) {
         vector<id2> edges;
@@ -223,7 +226,7 @@ namespace QMT {
           continue; /* do not smooth */
         } else if (non_manifold) {
           nbnm += 1;
-          smoothing_type[nbnm] = ST_LAPLACIAN;
+          smoothing_type[v] = ST_LAPLACIAN;
           continue;
         }
         if (edges.size() != 8) {
@@ -234,7 +237,12 @@ namespace QMT {
         bool oko = getOrderedVerticesFromEdges(v2v[v][0], edges, orderedVertices);
         if (!oko || orderedVertices.size() != 8) {
           if (M.entity[v].first == 2) { /* should be ok for interior points */
-            error("failed to get a stencil, v = {}, v2quads[v].size()={}, orderedVertices = {}", v, v2quads[v].size(), orderedVertices);
+            error("interior | failed to get a stencil, v = {}, v2quads[v].size()={}, orderedVertices = {}", v, v2quads[v].size(), orderedVertices);
+            if (TMP_FALLBACK_LAPLACIAN) {
+              smoothing_type[v] = ST_LAPLACIAN;
+              error("   temporary solution: fallback to laplacian for v = {}", v);
+              continue;
+            }
             return false;
           }
         }
@@ -258,17 +266,34 @@ namespace QMT {
         vector<id> orderedVertices;
         bool oko = getOrderedVerticesFromEdges(v, edges, orderedVertices);
         if (!oko || orderedVertices.size() != 6) {
-          error("failed to get a stencil, v = {}, v2quads[v].size()={}, orderedVertices = {}", v, v2quads[v].size(), orderedVertices);
+          error("boundary | failed to get a stencil, v = {}, v2quads[v].size()={}, orderedVertices = {}", v, v2quads[v].size(), orderedVertices);
           return false;
         }
         F(k,6) stencils[8*v+k] = orderedVertices[k];
+        smoothing_type[v] = ST_BDR_ORTH_PROJ;
       } else if (M.entity[v].first == 2) {
         smoothing_type[v] = ST_LAPLACIAN;
+      } else {
+        nbr += 1;
       }
     }
-    if (nbnm != 0) {
-      warn("{} vertices on non-manifold edges, using laplacian smoothing for them", nbnm);
-    }
+    if (nbnm != 0) warn("{} vertices on non-manifold edges, using laplacian smoothing for them", nbnm);
+    if (nbr != 0) warn("{} vertices not classified for smoothing", nbr);
+    
+    // GLog::GeoLog log;
+    // F(v,M.points.size()) {
+    //   if (smoothing_type[v] == ST_LAPLACIAN) {
+    //     log.add({M.points[v]},double(),"st_laplace");
+    //   } else if (smoothing_type[v] == ST_BDR_ORTH_PROJ) {
+    //     log.add({M.points[v]},double(),"st_bdr_ortho");
+    //   } else if (smoothing_type[v] == ST_WINSLOW_FD4) {
+    //     log.add({M.points[v]},double(),"st_winslow4");
+    //   } else {
+    //     log.add({M.points[v]},double(),"st_none");
+    //   }
+    // }
+    // log.toGmsh();
+
 
     /* Explicit smoothing loop */
     F(k, iter_max) {

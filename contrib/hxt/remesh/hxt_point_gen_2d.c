@@ -1324,20 +1324,58 @@ HXTStatus hxtWalkToCandidatePointRK4(HXTEdges *edges,
 //
 //*************************************************************************************************
 //*************************************************************************************************
-HXTStatus hxtPointGenFilterAligned(double *coords,
+HXTStatus hxtPointGenFilterAligned(HXTMesh *mesh,
+                                   double *coords,
                                    double *pp, // candidate point
                                    double *frame,
                                    double *sizes,
                                    double threshold,
                                    void *data,
+                                   void *dataLine,
                                    int *pass)
 {
-  // Find nearby points from RTree
+  //============================================================================
+  // Define a box size to search from the maximum size
   double size = sizes[0] < sizes[1] ? sizes[1] : sizes[0];
-  double box = 2*size;
+
+  double box = 1.5*size;
 
   double ppmin[3] = {pp[0] - box, pp[1] - box, pp[2] - box};
   double ppmax[3] = {pp[0] + box, pp[1] + box, pp[2] + box};
+ 
+  //============================================================================
+  // Find close boundary lines from RTree of lines  
+  // This is an addition for when sizemap inside of the domain differs 
+  uint64_t numCloseLines = 0;
+  uint64_t *idCloseLines = NULL;
+  HXT_CHECK(hxtRTreeSearch64(ppmin,ppmax,&numCloseLines,&idCloseLines,dataLine));
+
+  if (numCloseLines == 0){
+  }
+  else{
+    for (uint64_t i=0; i<numCloseLines; i++){
+      uint64_t line = idCloseLines[i];
+
+      double *p0 = mesh->vertices.coord + 4*mesh->lines.node[2*line+0];
+      double *p1 = mesh->vertices.coord + 4*mesh->lines.node[2*line+1];
+      double dist = -1;
+      double alpha = -1;
+      double closePt[3] = {0,0,0};
+      HXT_CHECK(hxtSignedDistancePointEdge(p0,p1,pp,&dist,&alpha,closePt));
+
+      if (fabs(dist)<threshold*size){
+        *pass = 0;
+        HXT_CHECK(hxtFree(&idCloseLines));
+        return HXT_STATUS_OK;
+      }
+    }
+
+    HXT_CHECK(hxtFree(&idCloseLines));
+  }
+
+
+   //============================================================================
+  // Find nearby generated points from RTree
  
   int numClose = 0;
   int *idClose = NULL;
@@ -2155,6 +2193,18 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
     //hxtPosAddPoint(out,cp,mesh->triangles.colors[parentTri[i]]);
   }
 
+  // A second auxillary rtree for surface triangles
+  void *dataLine;
+  HXT_CHECK(hxtRTreeCreate64(&dataLine));
+  if (opt->generateLines == 0){
+    for (uint64_t i=0; i<mesh->lines.num; i++){
+      double *p0 = mesh->vertices.coord + 4*mesh->lines.node[2*i+0];
+      double *p1 = mesh->vertices.coord + 4*mesh->lines.node[2*i+1];
+      HXT_CHECK(hxtAddLineInRTree64(p0,p1,tol,i,dataLine));
+    }
+  }
+
+
   //********************************************************
   // Create node connectivity during point generation 
   //********************************************************
@@ -2323,7 +2373,15 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
 
       // FILTERING 
       //HXT_CHECK(hxtPointGenFilter(coords,candidate,size,threshold,data,&insert));
-      HXT_CHECK(hxtPointGenFilterAligned(coords,candidate, frameCandidate, sizesCandidate, threshold, data, &insert));
+      HXT_CHECK(hxtPointGenFilterAligned(mesh,
+                                         coords,
+                                         candidate, 
+                                         frameCandidate, 
+                                         sizesCandidate, 
+                                         threshold, 
+                                         data, 
+                                         dataLine,
+                                         &insert));
 
 
 
@@ -2334,7 +2392,21 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
 
         double candidateNew[3] = {0,0,0};
         uint64_t parentNew = UINT64_MAX;
-        HXT_CHECK(hxtPointGenCorrection(edges,edges2lines,sizemap,directions,parentTri,coords,i,candidate,parent,frameCandidate,sizesCandidate,normal,data,candidateNew, &parentNew));
+        HXT_CHECK(hxtPointGenCorrection(edges,
+                                        edges2lines,
+                                        sizemap,
+                                        directions,
+                                        parentTri,
+                                        coords,
+                                        i,
+                                        candidate,
+                                        parent,
+                                        frameCandidate,
+                                        sizesCandidate,
+                                        normal,
+                                        data,
+                                        candidateNew, 
+                                        &parentNew));
 
         if (parentNew != UINT64_MAX){
           parent = parentNew;
@@ -2357,7 +2429,15 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
 
         // FILTERING corrected point 
         //HXT_CHECK(hxtPointGenFilter(coords,candidate,size,threshold,data,&insert));
-        HXT_CHECK(hxtPointGenFilterAligned(coords,candidate, frameCandidate, sizesCandidate, threshold, data, &insert));
+        HXT_CHECK(hxtPointGenFilterAligned(mesh,
+                                           coords,
+                                           candidate, 
+                                           frameCandidate, 
+                                           sizesCandidate, 
+                                           threshold, 
+                                           data, 
+                                           dataLine,
+                                           &insert));
 
       }
 
@@ -2393,6 +2473,8 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
   *numGeneratedPoints = numGenPoints;
 
   HXT_CHECK(hxtRTreeDelete(&data));
+  HXT_CHECK(hxtRTreeDelete(&dataLine));
+
   return HXT_STATUS_OK;
 }
 
@@ -2466,13 +2548,17 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
 
 
   HXT_INFO("Number of max triangles per line     %lu", maxNumTriToLine);
-  if (maxNumTriToLine>2) HXT_INFO("***** non-manifold input mesh *****");
+  if (maxNumTriToLine>2){
+    HXT_INFO("***** non-manifold input mesh *****");
+
+  }
 
 
   //hxtPosInit("pointsClean.pos","points",&out);
   
-  // ****************************************
-  // ****************************************
+
+  // *********************************************************************************
+  // *********************************************************************************
   // Iterate per color 
   
   HXT_INFO_COND(opt->walkMethod2D==0,"Walking method to candidate point - simple");
@@ -2489,6 +2575,8 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
   for (uint16_t c=0; c<numTriColors; c++){
 
     uint16_t color = triColors[c];
+
+    if (color == opt->skipColor) continue; // QUADTRI 
 
     // Get points on lines for current color 
     clock_t time0 = clock();

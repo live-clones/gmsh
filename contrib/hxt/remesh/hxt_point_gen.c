@@ -19,9 +19,24 @@
 HXTStatus hxtGeneratePointsMain(HXTMesh *mesh, 
                                 HXTPointGenOptions *opt, 
                                 double *sizemap, 
-                                const double *directions,
+                                double *directions,
                                 HXTMesh *nmesh)   
 {
+
+  //*************************************************************************************
+  //*************************************************************************************
+  // If mesh has quads, split them to get a 100% triangular mesh 
+  opt->skipColor = UINT16_MAX; // TODO 
+  if (mesh->quads.num){
+    HXT_INFO("");
+    HXT_INFO("========== Input mesh has quads -> splitting them to triangles");
+    if (opt->generateLines != 0) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Not working");
+    uint16_t color = 0;
+    HXT_CHECK(hxtPointGenSplitQuads(mesh,&color));
+    HXT_CHECK(hxtMeshWriteGmsh(mesh, "input_no_quads.msh"));
+    opt->skipColor = color;
+  }
+  
 
   //*************************************************************************************
   //*************************************************************************************
@@ -67,7 +82,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //*************************************************************************************
   // If mesh does not have lines start propagation from a random edge
   // TODO 
-  if (mesh->lines.num == 0 && opt->generateLines && opt->generateSurfaces){
+  if (mesh->lines.num == 0 && opt->generateSurfaces){
     HXT_INFO("********** ATTENTION **********");
     HXT_INFO("Mesh does not have lines - starting propagation from a random edge");
     // Create edges structure
@@ -107,6 +122,9 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   HXT_CHECK(hxtFree(&vert2vert));
 
 
+
+
+
   //*************************************************************************************
   //*************************************************************************************
   HXT_INFO("");
@@ -114,6 +132,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   HXT_INFO("Initial mesh num of points           %d",  mesh->points.num);
   HXT_INFO("Initial mesh num of lines            %lu",  mesh->lines.num);
   HXT_INFO("Initial mesh num of triangles        %lu",  mesh->triangles.num);
+  HXT_INFO("Initial mesh num of quads            %lu",  mesh->quads.num);
   HXT_INFO("Initial mesh num of tetrahedra       %lu",  mesh->tetrahedra.num);
 
   // Estimate number of generated vertices 
@@ -301,6 +320,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   }
 
 
+
   //**********************************************************************************************************
   //**********************************************************************************************************
   // TEST 20/11/2019 
@@ -309,7 +329,8 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
   //**********************************************************************************************************
   if(0) HXT_CHECK(hxtPointGenOptim(mesh,directions,sizemap));
-  
+
+
 
 
 
@@ -328,5 +349,3 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   return HXT_STATUS_OK; 
 }
 
-
-  

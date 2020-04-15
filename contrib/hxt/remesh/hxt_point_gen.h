@@ -19,7 +19,7 @@
 HXTStatus hxtGeneratePointsMain(HXTMesh *mesh, 
                                 HXTPointGenOptions *opt, 
                                 double *sizemap, 
-                                const double *directions,
+                                double *directions,
                                 HXTMesh *fmesh);   
 
 

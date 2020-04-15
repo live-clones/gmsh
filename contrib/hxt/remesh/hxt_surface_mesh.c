@@ -849,10 +849,10 @@ HXTStatus hxtSurfaceMeshInsertionSwap(HXTPointGenOptions *opt,
         hxtPosAddLine(dd,v0,v1,t0);
         hxtPosFinish(dd);
         HXT_CHECK(hxtMeshWriteGmsh(mesh, "FINALMESHcannotSwap.msh"));
-        return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap color of t0 == UINT64_MAX");
+        return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap color of t0 == UINT16_MAX");
       }
       if (mesh->triangles.colors[t1] == UINT16_MAX){
-        return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap color of t1 == UINT64_MAX");
+        return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap color of t1 == UINT16_MAX");
       }
 
       for (uint32_t j=0; j<3; j++){
@@ -949,8 +949,8 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   
   uint32_t maxNumSplits    = numTotalVertices;
   uint32_t maxNumVertices  =   maxNumSplits;
-  uint64_t maxNumTriangles = 2*maxNumSplits + maxNumTriToLine*numGeneratedVerticesOnLines;
-  uint32_t maxNumEdges     = 3*maxNumSplits + maxNumTriToLine*numGeneratedVerticesOnLines;
+  uint64_t maxNumTriangles = 2*maxNumSplits + 2*maxNumTriToLine*numGeneratedVerticesOnLines;
+  uint32_t maxNumEdges     = 3*maxNumSplits + 3*maxNumTriToLine*numGeneratedVerticesOnLines;
   // The maximum number of new mesh lines can be estimated as:
   uint32_t maxNumLines = mesh->lines.num + numGeneratedVerticesOnLines;
 
@@ -968,6 +968,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   HXT_INFO_COND(opt->verbosity>0,"Generated mesh vertices TOTAL:       %d  ", numGeneratedVertices);
   HXT_INFO_COND(opt->verbosity>0,"Allocated final mesh vertices:       %d  ", fmesh->vertices.size);
   HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>0,"Max number of triangles to lines     %d  ",  maxNumTriToLine);
   HXT_INFO_COND(opt->verbosity>0,"Estimated total mesh vertices        %d  ",  numTotalVertices);
   HXT_INFO_COND(opt->verbosity>0,"Estimated number of triangles        %lu ",  2*(uint64_t)numTotalVertices);
   HXT_INFO_COND(opt->verbosity>0,"Estimated number of edges            %d  ",  3*numTotalVertices);
@@ -1055,7 +1056,6 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
  
   uint32_t countPointsOnCorners = 0;
   uint32_t countPointsOnLines = 0;
-  uint32_t countPointsOnBoundaryVertices = 0;
   uint32_t countPointsOnLineVertices = 0;
   uint32_t countPointsOnTriangles = 0;
   uint32_t countPointsOnVerticesTotal = 0;
@@ -1071,6 +1071,14 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   HXT_CHECK(hxtMalloc(&flagV,numTotalVertices*sizeof(uint32_t)));
   for (uint32_t i=0; i<numInitialVertices; i++) flagV[i] = UINT32_MAX;
   for (uint32_t i=numInitialVertices; i<numTotalVertices; i++) flagV[i] = i-numInitialVertices;
+
+  // QUADTRI 
+  for (uint64_t i=0; i<mesh->triangles.num; i++){
+    if (mesh->triangles.colors[i] != opt->skipColor) continue;
+    flagV[mesh->triangles.node[3*i+0]] = 1;
+    flagV[mesh->triangles.node[3*i+1]] = 1;
+    flagV[mesh->triangles.node[3*i+2]] = 1;
+  }
 
   //***********************************
   // Loop over generate vertices
@@ -1140,37 +1148,6 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
     }
   }
 
-
-  // TODO delete or debug mode
-  // check if flagV is correct
-  for (uint32_t i=0; i<numInitialVertices; i++){
-    if (flagV[i] == UINT32_MAX) continue;
-    double *p0 = tmesh->vertices.coord + 4*i;
-    double *p1 = fmesh->vertices.coord + 4*flagV[i];
-    if (fabs(distance(p0,p1)) > tolerance) return HXT_STATUS_ERROR;
-    countPointsOnBoundaryVertices++;
-    if (parent[flagV[i]].type != 15) countPointsOnLineVertices++;
-  }
-
-  // TODO delete or debug
-  // checking triangles area 
-  for (uint64_t i=0; i<tmesh->triangles.num; i++){
-    double *v0 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*i+0];
-    double *v1 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*i+1];
-    double *v2 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*i+2];
-    double normals[3];
-    normal2triangleAreaV(v0,v1,v2,normals);
-    double area  = norm(normals)/2.;
-    if (area<10e-16){
-      FILE *lt;
-      hxtPosInit("triangleWithZeroArea.pos", "Check", &lt); 
-      hxtPosAddTriangle(lt,v0,v1,v2,tmesh->triangles.colors[i]);
-      hxtPosFinish(lt);
-      HXT_CHECK(hxtMeshWriteGmsh(tmesh,"FINALMESHtriangleWithZeroArea.msh"));
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Triangle with zero area %lu %lu - %.16f",i, i+tmesh->points.num+tmesh->lines.num+1,area);
-    }
-  }
-
   if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH0lines.msh"));
 
   //***********************************
@@ -1223,57 +1200,6 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   }
   if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH2interior.msh"));
 
-  // TODO delete or debug
-  // checking if initial points to remain are correct
-  for (uint32_t i=0; i<numInitialVertices; i++){
-    if (flagV[i] == UINT32_MAX) continue;
-    double *p0 = tmesh->vertices.coord + 4*i;
-    double *p1 = fmesh->vertices.coord + 4*flagV[i];
-    if (fabs(distance(p0,p1)) > tolerance) return HXT_STATUS_ERROR;
-    countPointsOnVerticesTotal++;
-    if(parent[flagV[i]].type == 2) countPointsOnTriangleVertices++;
-  }
-
-  // TODO delete or debug
-  // checking triangles area 
-  for (uint64_t i=0; i<tmesh->triangles.num; i++){
-    double *v0 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*i+0];
-    double *v1 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*i+1];
-    double *v2 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*i+2];
-    double normals[3];
-    normal2triangleAreaV(v0,v1,v2,normals);
-    double area  = norm(normals)/2.;
-    if (area<10e-12){
-      FILE *lt;
-      hxtPosInit("triangleWithZeroArea.pos", "Check", &lt); 
-      hxtPosAddTriangle(lt,v0,v1,v2,tmesh->triangles.colors[i]);
-      hxtPosFinish(lt);
-      HXT_CHECK(hxtMeshWriteGmsh(tmesh,"FINALMESHtriangleWithZeroArea.msh"));
-      //return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Triangle with zero area %lu %lu - %.16f",i, i+tmesh->points.num+tmesh->lines.num+1,area);
-    }
-
-  }
-
-  // TODO check this problem
-  // during insertions and swaps lines2triangles is not updated 
-  if(0){
-    FILE *lt;
-    hxtPosInit("checkingLinesToTriangles.pos", "Check", &lt); 
-    for (uint64_t i=0; i<tmesh->lines.num; i++){
-      uint64_t cl = i;
-
-      for (uint64_t j=0; j<maxNumTriToLine; j++){
-        uint64_t ct = lines2triangles[maxNumTriToLine*cl+j];
-        if (ct == UINT64_MAX) continue;
-
-        double *v0 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*ct+0];
-        double *v1 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*ct+1];
-        double *v2 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*ct+2];
-        hxtPosAddTriangle(lt,v0,v1,v2,tmesh->triangles.colors[ct]);
-      }
-    }
-    hxtPosFinish(lt);
-  }
 
   //***********************************
   // Swapping
@@ -1297,14 +1223,11 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
 
   if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH3interiorswap.msh"));
 
-  //HXT_CHECK(hxtCheckEdgesAndMesh(tmesh,edges));
 
   // COUNTING THINGS TODO delete
-
   HXT_INFO_COND(opt->verbosity>0,"");
   HXT_INFO_COND(opt->verbosity>0,"Number of corner points:                    %d", countPointsOnCorners);
   HXT_INFO_COND(opt->verbosity>0,"Number of points on line vertices:          %d", countPointsOnLineVertices);
-  HXT_INFO_COND(opt->verbosity>0,"Number of all points on boundary vertices:  %d", countPointsOnBoundaryVertices);
   HXT_INFO_COND(opt->verbosity>0,"Number of line points (without corners):    %d", countPointsOnLines);
   HXT_INFO_COND(opt->verbosity>0,"Number of points on triangles:              %d", countPointsOnTriangles);
   HXT_INFO_COND(opt->verbosity>0,"Number of all points on vertices:           %d", countPointsOnVerticesTotal);

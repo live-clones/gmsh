@@ -170,8 +170,11 @@ namespace QMT {
         if (views[v].objs.size() == 0) continue;
         int view = gmsh::view::add(views[v].name);
         std::vector<double> data_VP;
-        std::vector<double> data_SL;
-        std::vector<double> data_SQ;
+        // std::vector<double> data_SP;
+        // std::vector<double> data_SL;
+        // std::vector<double> data_ST;
+        // std::vector<double> data_SQ;
+        std::vector<std::vector<double>> data_Sx(5);
         for (size_t i = 0; i < views[v].objs.size(); ++i) {
           bool isVector = views[v].objs[i].isVector;
           if (isVector) {
@@ -184,25 +187,34 @@ namespace QMT {
             size_t N = views[v].objs[i].n;
             for (size_t d = 0; d < 3; ++d) {
               for (size_t lv = 0; lv < N; ++lv) {
-                if (N == 2) {
-                  data_SL.push_back(views[v].objs[i].pts[lv][d]);
-                } else if (N == 4) {
-                  data_SQ.push_back(views[v].objs[i].pts[lv][d]);
-                }
+                  data_Sx[N].push_back(views[v].objs[i].pts[lv][d]);
+                // if (N == 1) {
+                // } else if (N == 2) {
+                //   data_SL.push_back(views[v].objs[i].pts[lv][d]);
+                // } else if (N == 2) {
+                //   data_ST.push_back(views[v].objs[i].pts[lv][d]);
+                // } else if (N == 4) {
+                //   data_SQ.push_back(views[v].objs[i].pts[lv][d]);
+                // }
               }
             }
             for (size_t lv = 0; lv < views[v].objs[i].n; ++lv) {
-              if (N == 2) {
-                data_SL.push_back(views[v].objs[i].values[lv]);
-              } else if (N == 4) {
-                data_SQ.push_back(views[v].objs[i].values[lv]);
-              }
+              data_Sx[N].push_back(views[v].objs[i].values[lv]);
+              // if (N == 2) {
+              //   data_SL.push_back(views[v].objs[i].values[lv]);
+              // } else if (N == 4) {
+              //   data_SQ.push_back(views[v].objs[i].values[lv]);
+              // }
             }
           }
         }
-        gmsh::view::addListData(view, "SL", data_SL.size()/(6+2), data_SL);
-        gmsh::view::addListData(view, "SQ", data_SQ.size()/(12+4), data_SQ);
-        gmsh::view::addListData(view, "VP", data_VP.size()/6, data_VP);
+        if (data_Sx[1].size() > 0) gmsh::view::addListData(view, "SP", data_Sx[1].size()/(3+1), data_Sx[1]);
+        if (data_Sx[2].size() > 0) gmsh::view::addListData(view, "SL", data_Sx[2].size()/(6+2), data_Sx[2]);
+        if (data_Sx[3].size() > 0) gmsh::view::addListData(view, "ST", data_Sx[3].size()/(9+3), data_Sx[3]);
+        if (data_Sx[4].size() > 0) gmsh::view::addListData(view, "SQ", data_Sx[4].size()/(12+4), data_Sx[4]);
+        if (data_VP.size()) gmsh::view::addListData(view, "VP", data_VP.size()/6, data_VP);
+        // gmsh::view::addListData(view, "SL", data_SL.size()/(6+2), data_SL);
+        // gmsh::view::addListData(view, "SQ", data_SQ.size()/(12+4), data_SQ);
       }
       exportedToGmsh = true;
       return true;

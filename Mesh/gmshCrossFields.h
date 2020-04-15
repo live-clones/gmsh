@@ -29,7 +29,8 @@ struct QuadMeshingOptions {
   bool cross_field_use_prescribed_if_available = true;
   int cross_field_iter        = 6;
   int cross_field_bc_expansion = 1;
-  size_t sizemap_nb_quads = 1000;
+  size_t sizemap_nb_quads = 10000;
+  bool fix_decomposition = false;
   double simplify_size_factor = 0.9;
   int smoothing_explicit_iter = 100;
   std::string model_cut = "cut";

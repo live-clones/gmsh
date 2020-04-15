@@ -394,13 +394,13 @@ HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
       if (countLines == 0) 
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Could not find lines for this vertex");
 
-      /*if (countLines>2 && parent[v].type != 15){*/
-        /*FILE *test;*/
-        /*hxtPosInit("checkNonManifoldPoint.pos","point",&test);*/
-        /*hxtPosAddPoint(test,&tmesh->vertices.coord[4*v],0);*/
-        /*hxtPosFinish(test);*/
-        /*return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Vertex with more than 2 lines is not a corner");*/
-      /*}*/
+      if (countLines>2 && parent[v].type != 15){
+        FILE *test;
+        hxtPosInit("checkNonManifoldPoint.pos","point",&test);
+        hxtPosAddPoint(test,&tmesh->vertices.coord[4*v],0);
+        hxtPosFinish(test);
+        return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Vertex with more than 2 lines is not a corner");
+      }
     }
   }
 
@@ -632,6 +632,20 @@ for (uint32_t kk=0; kk<10; kk++){
   }
   if (countNOT != (countPointsToDelete-countPointsCollapsed))
     return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Problem in counting points not collapsed");
+
+  // Write out not collapsed points
+  if(countNOT!=0){
+    FILE *nc;
+    hxtPosInit("pointsNotCollapsed.pos","points",&nc);
+    for (uint32_t i=0; i<tmesh->vertices.num; i++){
+      if (parent[i].type == 4) continue;
+      if (flagV[i] == UINT32_MAX){
+        hxtPosAddPoint(nc,&tmesh->vertices.coord[4*i],0);
+      }
+   
+    }
+    hxtPosFinish(nc);
+  }
 
 
 
