@@ -28,6 +28,7 @@ namespace QMT {
       bool project(int dim, int tag, vec3 query, vec3& projection, id& cache) const;
       bool closestEntity(const std::vector<vec3>& queries, double& dist, int& dim, int& tag) const;
       bool closestEntity(const vec3& query, double& dist, int& dim, int& tag) const;
+      void show_projector(const std::string& viewPrefix = "bp");
 
     protected:
       const TMesh M; /* deep copy */

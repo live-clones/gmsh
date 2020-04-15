@@ -15,6 +15,7 @@
 #include "nanoflann.hpp"
 #include "gmsh.h"
 #include "qmt_utils.hpp"
+#include "geolog.h"
 
 /* - Shortcuts for loops */
 #define F(_VAR,_NB) for(size_t _VAR = 0; _VAR < (size_t) _NB; ++_VAR)
@@ -695,6 +696,45 @@ namespace QMT {
     return true;
   }
 
+  using namespace GLog;
+  void BoundaryProjector::show_projector(const std::string& viewPrefix) {
+    GeoLog log;
+    FC(i,curve_tree.size(),curve_tree[i] != NULL) {
+      vector<id> edges;
+      F(j,cTreeIdToEdges[i].size()) {
+        F(k,cTreeIdToEdges[i][j].size()) {
+          id e = cTreeIdToEdges[i][j][k];
+          edges.push_back(e);
+        }
+      }
+      sort_unique(edges);
+      F(le,edges.size()) {
+        id e = edges[le];
+        vec3 p1 = M.points[M.lines[e][0]];
+        vec3 p2 = M.points[M.lines[e][1]];
+        log.add({p1,p2},double(i),viewPrefix+"_c"+std::to_string(i));
+      }
+    }
+    FC(i,surface_tree.size(),surface_tree[i] != NULL) {
+      vector<id> tris;
+      F(j,sTreeIdToTris[i].size()) {
+        F(k,sTreeIdToTris[i][j].size()) {
+          id t = sTreeIdToTris[i][j][k];
+          tris.push_back(t);
+        }
+      }
+      sort_unique(tris);
+      F(lt,tris.size()) {
+        id t = tris[lt];
+        vec3 p1 = M.points[M.triangles[t][0]];
+        vec3 p2 = M.points[M.triangles[t][1]];
+        vec3 p3 = M.points[M.triangles[t][2]];
+        log.add({p1,p2,p3},double(i),viewPrefix+"_s"+std::to_string(i));
+      }
+    }
+    log.toGmsh();
+  }
+
   bool assignClosestEntities(QMesh& M, const BoundaryProjector& projector) {
     vector<bool> used(M.points.size(),false);
     F(f,M.quads.size()) 
@@ -719,4 +759,5 @@ namespace QMT {
     info("vertex to entity assignement: {} vertices -> {} to nodes, {} to curves and {} to surfaces",nv,nb[0],nb[1],nb[2]);
     return true;
   }
+
 }

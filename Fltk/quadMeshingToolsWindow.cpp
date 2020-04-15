@@ -107,6 +107,7 @@ static void qmt_quad_generate(Fl_Widget *w, void *data)
   QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
   quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
   opt.model_quad_init = std::string(win->fli_name_qinit->value());
+  opt.fix_decomposition = FlGui::instance()->quadmeshingtools->check_fix_dcp->value();
   int status = generateQuadMesh(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to generate initial quad mesh (quantization)");
@@ -276,6 +277,11 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
 
     push_quad_sizemap = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Size Map");
     push_quad_sizemap->callback(qmt_quad_sizemap);
+
+    y += BH; /* ---------------------------- new line ---------------------------------*/
+    check_fix_dcp = new Fl_Check_Button(x, y, width - 4 * WB, BH, "Repair decomposition");
+    check_fix_dcp->type(FL_TOGGLE_BUTTON);
+    check_fix_dcp->value(opt->fix_decomposition);
 
     y += BH; /* ---------------------------- new line ---------------------------------*/
     fli_name_qinit = new Fl_Input(x, y, IW, BH, "New model name");

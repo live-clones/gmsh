@@ -112,11 +112,12 @@ namespace QMT {
    * @warning this function calls the gmsh API
    * @param[in] meshName name of the model containing the mesh in gmsh, ignored if equals to "current"
    * @param[out] M Output mesh containing lines and triangles
+   * @param[in] compute_adjacencies Fill the neighborhood datastructures
+   * @param[in] add_missing_non_manifold_lines If compute_adjacencies and a non-manifold edge is not in lines, add it
    * @return True if the import succeed
    */
-  bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M, bool compute_adjacencies = false);
-
-
+  bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M, bool compute_adjacencies = false,
+      bool add_missing_non_manifold_lines = false);
 
 
 
@@ -134,7 +135,8 @@ namespace QMT {
       double size_min,
       double size_max,
       QMesh& M,
-      const BoundaryProjector* projector = NULL);
+      const BoundaryProjector* projector = NULL,
+      bool repair_decomposition = false);
 
 
 

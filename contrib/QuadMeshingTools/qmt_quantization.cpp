@@ -646,20 +646,18 @@ namespace QMT {
     }
   };
 
-  bool compute_edge_sides_from_angles(QTMesh& M, id f) {
+  /* use N_fixed = 0 to let the number of sides as unknown */
+  bool compute_edge_sides_from_angles(QTMesh& M, id f, id N_fixed = 4, double angle_threshold_deg = 0.) {
     vector<id>& edges = M.faces[f].edges;
     vector<uint8_t>& sides = M.faces[f].edge_sides;
-    if (edges.size() < 4) {
+    if (N_fixed != 0 && edges.size() < N_fixed) {
       error("compute sides | face {}: edges = {}", f, edges);
+      if (ERROR_VISU) debug_show_face_in_view(M, f, "fprob_" + std::to_string(f));
       return false;
-    } else if (edges.size() == 4) {
+    } else if (N_fixed != 0 && edges.size() == N_fixed) {
       F(le,edges.size()) sides[le] = le;
       return true;
     }
-
-    /* Remaining case: there are more than 4 edges, each edge
-     * must be assigned a side (0,1,2,3) to have a quad layout 
-     * (with T-junctions) structure */
 
     /* Compute the angle between consecutive edges */
     vector<bool>& einvert = M.faces[f].edge_orient_invert;
@@ -687,9 +685,9 @@ namespace QMT {
         tgp = ep.pts[0] - ep.pts[1];
       }
       if (!einvert[le]) {
-        tgc = ec.pts[ec.pts.size()-1] - ec.pts[ec.pts.size()-2];
+        tgc = ec.pts[1] - ec.pts[0];
       } else {
-        tgc = ec.pts[0] - ec.pts[1];
+        tgc = ec.pts[ec.pts.size()-2] - ec.pts[ec.pts.size()-1];
       }
       double lp = length(tgp);
       double lc = length(tgc);
@@ -703,9 +701,9 @@ namespace QMT {
       }
       if (lc < EPS_LEN && ec.pts.size() >= 3) { 
         if (!einvert[le]) {
-          tgc = ec.pts[ec.pts.size()-1] - ec.pts[ec.pts.size()-3];
+          tgc = ec.pts[2] - ec.pts[0];
         } else {
-          tgc = ec.pts[0] - ec.pts[2];
+          tgc = ec.pts[ec.pts.size()-3] - ec.pts[ec.pts.size()-1];
         }
       }
       lp = length(tgp);
@@ -727,16 +725,40 @@ namespace QMT {
     F(le,edges.size()) angle_le.push_back({angles[le],le});
     std::sort(angle_le.begin(),angle_le.end());
     std::reverse(angle_le.begin(),angle_le.end());
+
     std::vector<bool> isCorner(edges.size(),false);
-    F(i,4) isCorner[angle_le[i].second] = true;
+    id Nm = 0;
+    if (N_fixed != 0) {
+      /* There are more than N_fixed edges, each edge
+       * must be assigned a side (0,1,2,3) to have a quad layout 
+       * (with T-junctions) structure */
+      F(i,N_fixed) isCorner[angle_le[i].second] = true;
+      Nm = N_fixed;
+    } else {
+      F(i,angle_le.size()) {
+        double a = angle_le[i].first;
+        if (a * 180. / M_PI > angle_threshold_deg) {
+          isCorner[angle_le[i].second] = true;
+          Nm += 1;
+        }
+      }
+    }
+    if (Nm <= 2) {
+      error("face {}: found only {} sides from {} edges", f, Nm, edges.size());
+      F(i,angle_le.size()) {
+        DBG("  ", i, angle_le[i].second, 180. / M_PI * angle_le[i].first);
+      }
+      if (ERROR_VISU) debug_show_face_in_view(M, f, "prob_face_" + std::to_string(f));
+      return false;
+    }
 
     /* Set the sides */
-    uint8_t cs = 0;
+    id cs = 0;
     F(le,edges.size()) {
       if (isCorner[le]) {
         cs += 1;
       }
-      sides[le] = cs % 4;
+      sides[le] = uint8_t(cs % Nm); /* warning: number of sides limited to max uint8_t */
     }
 
     return true;
@@ -920,15 +942,41 @@ namespace QMT {
     /* Collect edges and faces ti split */
     vector<id> edges_to_split;
     vector<id> faces_to_split;
-    FC(f,M.faces.size(),true || M.faces[f].edges.size() >= 3 && M.faces[f].edges.size() != 4) {
-      faces_to_split.push_back(f);
-      F(le,M.faces[f].edges.size()) {
-        edges_to_split.push_back(M.faces[f].edges[le]);
-      }
-      warn("face {} has {} edges, flag for midpoint subdivision", f, M.faces[f].edges.size());
-      nf += 1;
+    F(f,M.faces.size()) {
+      if (M.faces[f].edges.size() < 3) {
+        if (M.faces[f].edges.size() == 2) {
+          warn("repair_decomposition | face {}: only {} edges, split both and try quads ...", f, M.faces[f].edges.size());
+          /* warning: do not split face in this case ! */
+          F(le,M.faces[f].edges.size()) {
+            edges_to_split.push_back(M.faces[f].edges[le]);
+          }
+        } else {
+          error("face {}: only {} edges: {}", f, M.faces[f].edges.size(), M.faces[f].edges);
+          if (ERROR_VISU) debug_show_face_in_view(M, f, "prob_face_" + std::to_string(f));
+          return false;
+        }
+      } else if (M.faces[f].edges.size() != 4) {
+        double agl_deg = 45.;
+        bool oks = compute_edge_sides_from_angles(M, f, 0, agl_deg);
+        if (!oks) {
+          error("face {}: failed to compute quad sides", f);
+          return false;
+        }
+        id ns = 0;
+        F(le,M.faces[f].edge_sides.size()) {
+          ns = std::max(ns,id(M.faces[f].edge_sides[le]+1));
+        }
+        if (ns != 4) {
+          faces_to_split.push_back(f);
+          F(le,M.faces[f].edges.size()) {
+            edges_to_split.push_back(M.faces[f].edges[le]);
+          }
+          warn("repair decomposition | face {} has {} sides, flag for midpoint subdivision", f, M.faces[f].edges.size());
+          nf += 1;
 
-      if (SHOW_MPS) debug_show_face_in_view(M,f,"to_split_"+std::to_string(f));
+          if (SHOW_MPS) debug_show_face_in_view(M,f,"to_split_"+std::to_string(f));
+        }
+      }
     }
     sort_unique(edges_to_split);
 
@@ -950,7 +998,7 @@ namespace QMT {
         vec3 proj;
         bool ok = projector->project(M.vertices[nv].entity.first,M.vertices[nv].entity.second,M.vertices[nv].pt,proj);
         if (ok) {
-          DBG("edge",nv,M.vertices[nv].pt,"->",proj);
+          // DBG("edge",nv,M.vertices[nv].pt,"->",proj);
           M.vertices[nv].pt = proj;
         }
       }
@@ -987,7 +1035,7 @@ namespace QMT {
         vec3 proj;
         bool ok = projector->project(M.vertices[nv].entity.first,M.vertices[nv].entity.second,M.vertices[nv].pt,proj);
         if (ok) {
-          DBG("face",nv,M.vertices[nv].pt,"->",proj);
+          // DBG("face",nv,M.vertices[nv].pt,"->",proj);
           M.vertices[nv].pt = proj;
         }
       }
@@ -1009,7 +1057,7 @@ namespace QMT {
       }
     }
 
-    if (nf > 0) info("fixed {} degenerate faces via QTMesh splitting", nf);
+    if (nf > 0) info("repair decomposition | fixed {} degenerate faces via QTMesh splitting", nf);
 
     if (SHOW_MPS) {
       FC(f,M.faces.size(),M.faces[f].edges.size() > 0) {
@@ -1219,14 +1267,28 @@ namespace QMT {
     FC(v,v2l.size(),v2l[v].size() > 0) {
       if (v2l[v].size() != 2) {
         isCorner[v] = true;
-        DBG(v,isCorner[v],v2l[v].size(),v2l[v]);
-        F(ii,v2l[v].size()) {
-          DBG("  ", ii, M.lines[v2l[v][ii]]);
-        }
       } else if (v2l[v].size() == 2) {
         if (M.line_colors[v2l[v][0]] != M.line_colors[v2l[v][1]]) {
           isCorner[v] = true;
-          DBG(v,isCorner[v],M.line_colors[v2l[v][0]],M.line_colors[v2l[v][1]]);
+        } else if (M.line_colors[v2l[v][0]] == NO_ID) { /* both uncolored line */
+          id2 line1 = M.lines[v2l[v][0]];
+          id2 line2 = M.lines[v2l[v][1]];
+          if (line1[1] != v) std::reverse(line1.begin(),line1.end());
+          if (line2[0] != v) std::reverse(line2.begin(),line2.end());
+          vec3 tg1 = M.points[line1[1]] - M.points[line1[0]];
+          vec3 tg2 = M.points[line2[1]] - M.points[line2[0]];
+          const double EPS_LEN = 1.e-14;
+          if (length(tg1) < EPS_LEN || length(tg2) < EPS_LEN) {
+            continue;
+          }
+          tg1 = normalize(tg1);
+          tg2 = normalize(tg2);
+          double agl = angle_nvectors(tg1,tg2);
+          const double line_split_angle_threshold_deg = 45;
+          if (agl * 180. / M_PI > line_split_angle_threshold_deg) {
+            isCorner[v] = true;
+            warn("repair decomposition | corner created on uncolored curve because angle = {} deg", agl * 180./M_PI);
+          }
         }
       }
       if (isCorner[v]) {
@@ -1368,8 +1430,8 @@ namespace QMT {
   bool generate_qtmesh_from_cut_mesh(
       const std::string& modelName,
       QTMesh& M,
-      bool accept_degenerate_faces = false,
-      const BoundaryProjector* projector = NULL) {
+      const BoundaryProjector* projector = NULL,
+      bool repair_decomposition = false) {
     if (!QMT_QZ_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_QZ_Utils::global_gmsh_initialized = true;
@@ -1382,13 +1444,14 @@ namespace QMT {
 
     TMesh T;
     bool compute_adjacencies = true;
-    bool oki = import_TMesh_from_gmsh(modelName, T, compute_adjacencies);
+    bool add_missing_non_manifold_lines = repair_decomposition;
+    bool oki = import_TMesh_from_gmsh(modelName, T, compute_adjacencies, add_missing_non_manifold_lines);
     RFC(!oki,"failed to import TMesh from gmsh");
 
     bool okcs = build_qtmesh_from_cut_mesh(T, M);
     RFC(!okcs,"failed build qtmesh from cut mesh");
 
-    if (accept_degenerate_faces) {
+    if (repair_decomposition) {
       debug_show_qtmesh_in_view(M, "qtmesh_Bsplit");
       bool oks = subdivide_degenerate_faces(M, projector);
       if (!oks) {
@@ -1940,7 +2003,6 @@ namespace QMT {
         }
       }
     } else {
-      vector<id> f12_edges = M.faces[12].edges;
       /* Append integer values to edge_n by using t-chord propagation */
       F(i,nx_edge.size()) {
         id e = nx_edge[i].second;
@@ -1965,9 +2027,6 @@ namespace QMT {
         F(j,tchord.size()) {
           id e2 = tchord[j];
           edge_n[e2] += inc;
-          if (inVector(e2,f12_edges)) {
-            DBG(i,e,tchord.size(),j,e2,inc,edge_n[e2]);
-          }
         }
       }
     }
@@ -2187,7 +2246,8 @@ namespace QMT {
       double size_min,
       double size_max,
       QMesh& M,
-      const BoundaryProjector* projector) {
+      const BoundaryProjector* projector,
+      bool repair_decomposition) {
     if (!QMT_QZ_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_QZ_Utils::global_gmsh_initialized = true;
@@ -2204,7 +2264,7 @@ namespace QMT {
     QTMesh tM;
     constexpr bool NEW_VERSION = true;
     if (NEW_VERSION) {
-      bool okq = generate_qtmesh_from_cut_mesh(modelName, tM, true, projector);
+      bool okq = generate_qtmesh_from_cut_mesh(modelName, tM, projector, repair_decomposition);
       if (!okq) {
         error("failed to generate QTMesh (quad mesh with T-junctions)");
         return false;

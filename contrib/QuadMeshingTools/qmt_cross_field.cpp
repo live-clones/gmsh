@@ -160,7 +160,7 @@ namespace QMT {
     return true;
   }
 
-  bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M, bool compute_adjacencies) {
+  bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M, bool compute_adjacencies, bool add_missing_non_manifold_lines) {
     if (!QMT_CF_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_CF_Utils::global_gmsh_initialized = true;
@@ -254,6 +254,29 @@ namespace QMT {
       if (!oka) {
         error("failed to compute mesh adjacencies");
         return false;
+      }
+      if (add_missing_non_manifold_lines) {
+        size_t na = 0;
+        std::unordered_map<id2,id,id2Hash> sedgeToLine;
+        F(l,M.lines.size()) {
+          id2 sedge = sorted(M.lines[l][0],M.lines[l][1]);
+          sedgeToLine[sedge] = l;
+        }
+        FC(e,uIEdgeToOld.size(),uIEdgeToOld[e].size() != 2) {
+          id2 edge = uIEdges[e];
+          id2 sedge = sorted(edge[0],edge[1]);
+          auto it = sedgeToLine.find(sedge);
+          if (it == sedgeToLine.end()) {
+            sedgeToLine[sedge] = M.lines.size();
+            M.lines.push_back(sedge);
+            M.line_elt_tags.push_back(NO_ID);
+            M.line_colors.push_back(NO_ID);
+            na += 1;
+          }
+        }
+        if (na != 0) {
+          info("added {} lines from non-manifold edges not found in curves", na);
+        }
       }
     }
 
