@@ -901,6 +901,25 @@ function getParametrizationBounds(dim, tag)
 end
 
 """
+    gmsh.model.isInside(dim, tag, parametricCoord)
+
+Check if the parametric coordinates provided in `parametricCoord` correspond to
+points inside the entitiy of dimension `dim` and tag `tag`, and return the
+number of points inside. This feature is only avalaiable for a subset of curves
+and surfaces, depending on the underyling geometrical representation.
+
+Return an integer value.
+"""
+function isInside(dim, tag, parametricCoord)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelIsInside, gmsh.lib), Cint,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), ierr)
+    ierr[] != 0 && error("gmshModelIsInside returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.model.setVisibility(dimTags, value, recursive = false)
 
 Set the visibility of the model entities `dimTags` to `value`. Apply the

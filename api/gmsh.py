@@ -1214,6 +1214,32 @@ class model:
             _ovectordouble(api_max_, api_max_n_.value))
 
     @staticmethod
+    def isInside(dim, tag, parametricCoord):
+        """
+        gmsh.model.isInside(dim, tag, parametricCoord)
+
+        Check if the parametric coordinates provided in `parametricCoord'
+        correspond to points inside the entitiy of dimension `dim' and tag `tag',
+        and return the number of points inside. This feature is only avalaiable for
+        a subset of curves and surfaces, depending on the underyling geometrical
+        representation.
+
+        Return an integer value.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        ierr = c_int()
+        api__result__ = lib.gmshModelIsInside(
+            c_int(dim),
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelIsInside returned non-zero error code: ",
+                ierr.value)
+        return api__result__
+
+    @staticmethod
     def setVisibility(dimTags, value, recursive=False):
         """
         gmsh.model.setVisibility(dimTags, value, recursive=False)

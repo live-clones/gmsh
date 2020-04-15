@@ -691,6 +691,22 @@ namespace gmsh { // Top-level functions
       max.assign(api_max_, api_max_ + api_max_n_); gmshFree(api_max_);
     }
 
+    // Check if the parametric coordinates provided in `parametricCoord' correspond
+    // to points inside the entitiy of dimension `dim' and tag `tag', and return
+    // the number of points inside. This feature is only avalaiable for a subset of
+    // curves and surfaces, depending on the underyling geometrical representation.
+    inline int isInside(const int dim,
+                        const int tag,
+                        const std::vector<double> & parametricCoord)
+    {
+      int ierr = 0;
+      double *api_parametricCoord_; size_t api_parametricCoord_n_; vector2ptr(parametricCoord, &api_parametricCoord_, &api_parametricCoord_n_);
+      int result_api_ = gmshModelIsInside(dim, tag, api_parametricCoord_, api_parametricCoord_n_, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_parametricCoord_);
+      return result_api_;
+    }
+
     // Set the visibility of the model entities `dimTags' to `value'. Apply the
     // visibility setting recursively if `recursive' is true.
     inline void setVisibility(const gmsh::vectorpair & dimTags,

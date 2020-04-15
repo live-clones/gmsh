@@ -728,6 +728,22 @@ entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
+@item gmsh/model/isInside
+Check if the parametric coordinates provided in @code{parametricCoord}
+correspond to points inside the entitiy of dimension @code{dim} and tag
+@code{tag}, and return the number of points inside. This feature is only
+avalaiable for a subset of curves and surfaces, depending on the underyling
+geometrical representation.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{parametricCoord}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
 @item gmsh/model/setVisibility
 Set the visibility of the model entities @code{dimTags} to @code{value}. Apply
 the visibility setting recursively if @code{recursive} is true.

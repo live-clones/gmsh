@@ -184,6 +184,9 @@ model.add('getParametrization', doc, None, iint('dim'), iint('tag'), ivectordoub
 doc = '''Get the `min' and `max' bounds of the parametric coordinates for the entity of dimension `dim' and tag `tag'.'''
 model.add('getParametrizationBounds', doc, None, iint('dim'), iint('tag'), ovectordouble('min'), ovectordouble('max'))
 
+doc = '''Check if the parametric coordinates provided in `parametricCoord' correspond to points inside the entitiy of dimension `dim' and tag `tag', and return the number of points inside. This feature is only avalaiable for a subset of curves and surfaces, depending on the underyling geometrical representation.'''
+model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('parametricCoord'))
+
 doc = '''Set the visibility of the model entities `dimTags' to `value'. Apply the visibility setting recursively if `recursive' is true.'''
 model.add('setVisibility', doc, None, ivectorpair('dimTags'), iint('value'), ibool('recursive', 'false', 'False'))
 

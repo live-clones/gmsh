@@ -373,6 +373,16 @@ GMSH_API void gmshModelGetParametrizationBounds(const int dim,
                                                 double ** max, size_t * max_n,
                                                 int * ierr);
 
+/* Check if the parametric coordinates provided in `parametricCoord'
+ * correspond to points inside the entitiy of dimension `dim' and tag `tag',
+ * and return the number of points inside. This feature is only avalaiable for
+ * a subset of curves and surfaces, depending on the underyling geometrical
+ * representation. */
+GMSH_API int gmshModelIsInside(const int dim,
+                               const int tag,
+                               double * parametricCoord, size_t parametricCoord_n,
+                               int * ierr);
+
 /* Set the visibility of the model entities `dimTags' to `value'. Apply the
  * visibility setting recursively if `recursive' is true. */
 GMSH_API void gmshModelSetVisibility(int * dimTags, size_t dimTags_n,
