@@ -22,9 +22,12 @@ files.
 
  * A binary Software Development Kit (SDK) for Windows, Linux and macOS, that
    contains the dynamic Gmsh library and the associated header and module files,
-   can be downloaded from http://gmsh.info. Several Linux distributions also
-   ship the Gmsh SDK. See the top-level `README.txt' in the Gmsh source code for
-   instructions on how to compile the dynamic Gmsh library from source.
+   can be downloaded from http://gmsh.info. Python users can use `pip install
+   --upgrade gmsh', which will download the binary SDK automatically, and
+   install the files in the appropriate system directories. Several Linux
+   distributions also ship the Gmsh SDK. See the top-level `README.txt' in the
+   Gmsh source code for instructions on how to compile the dynamic Gmsh library
+   from source.
 
 Table of contents
 =================
