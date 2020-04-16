@@ -19,7 +19,7 @@ from setuptools.command.install import install
 
 # Server and gmsh version
 server = 'https://gmsh.info/bin'
-version = '4.6.0'
+version = '${GMSH_VERSION}'
 iversion = version+'-1'  # installer number
 
 # Determine file name and and url to be downloaded and installed
@@ -34,7 +34,7 @@ plat = 'MacOSX' if 'darwin' in system else plat
 if plat is None:
     raise TypeError(
             "Platform '{}' is not supported.".format(system+'-'+machine))
-name = "gmsh-{}-{}-sdk".format(version, plat)
+name = "gmsh-dev-{}-sdk".format(plat)
 ext = '.zip' if plat.startswith('Windows') else '.tgz'
 fname = name + ext
 if plat.startswith('Linux'):
@@ -82,9 +82,9 @@ class DownloadAndInstall(install):
 
 # Run setup
 if __name__ == "__main__":
-    setup(name            = 'gmsh',
+    setup(name            = 'gmsh-dev',
         version           = iversion,
-        description       = 'Gmsh app and SDK installer. Gmsh is a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities.',
+        description       = 'Gmsh app and SDK installer for the latest development snapshot. Gmsh is a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities.',
         long_description  = open('README.rst', 'r').read(),
         long_description_content_type='text/x-rst',
         maintainer        = 'Christophe Geuzaine',
