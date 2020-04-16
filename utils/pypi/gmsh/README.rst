@@ -7,9 +7,10 @@ The aim of this package is to download and install the `Gmsh app and SDK
 
 Installation should work under Linux, Windows and macOS for both Python 2 and 3.
 
-Before installation make sure that possibly conflicting ``gmsh-sdk`` or
-``gmsh-sdk-git`` are uninstalled::
+Before installation make sure that possibly conflicting ``gmsh-dev``,
+``gmsh-sdk`` or ``gmsh-sdk-git`` are uninstalled::
 
+    $ pip uninstall gmsh-dev
     $ pip uninstall gmsh-sdk
     $ pip uninstall gmsh-sdk-git
 

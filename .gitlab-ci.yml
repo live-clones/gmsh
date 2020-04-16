@@ -425,7 +425,29 @@ doc_official_release:
 # PyPi package
 # ----------------------------------------------
 
-pypi:
+pypi_official_snapshot:
+  stage: .post
+  image: onelab/ubuntu20.04
+  only:
+    - master@gmsh/gmsh
+  before_script:
+    - echo "[distutils]" > ~/.pypirc
+    - echo "index-servers = pypi" >> ~/.pypirc
+    - echo "[pypi]" >> ~/.pypirc
+    - echo "username = __token__" >> ~/.pypirc
+    - echo "password = $PYPI_TOKEN" >> ~/.pypirc
+  script:
+    - cd utils/pypi/gmsh-dev
+    - python3 setup.py sdist
+    - twine check dist/*
+    - twine upload dist/*
+  tags:
+    - linux64
+    - docker
+  except:
+    - tags
+
+pypi_official_release:
   stage: .post
   image: onelab/ubuntu20.04
   variables:

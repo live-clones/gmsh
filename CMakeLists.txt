@@ -1567,6 +1567,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
                ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py.in
                ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 
