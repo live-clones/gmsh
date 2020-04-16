@@ -744,6 +744,23 @@ geometrical representation.
 integer value
 @end table
 
+@item gmsh/model/reparametrizeOnSurface
+Reparametrize the boundary entity (point or curve, i.e. with @code{dim} == 0 or
+@code{dim} == 1) of tag @code{tag} on the surface @code{surfaceTag}. If
+@code{dim} == 1, reparametrize all the points corresponding to the parametric
+coordinates @code{parametricCoord}. Multiple matches in case of periodic
+surfaces can be selected with @code{which}. This feature is only avalaiable for
+a subset of entities, depending on the underyling geometrical representation.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{parametricCoord}, @code{surfaceTag}, @code{which = 0}
+@item Output:
+@code{surfaceParametricCoord}
+@item Return:
+-
+@end table
+
 @item gmsh/model/setVisibility
 Set the visibility of the model entities @code{dimTags} to @code{value}. Apply
 the visibility setting recursively if @code{recursive} is true.

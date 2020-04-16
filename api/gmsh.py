@@ -1240,6 +1240,37 @@ class model:
         return api__result__
 
     @staticmethod
+    def reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which=0):
+        """
+        gmsh.model.reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which=0)
+
+        Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
+        `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1,
+        reparametrize all the points corresponding to the parametric coordinates
+        `parametricCoord'. Multiple matches in case of periodic surfaces can be
+        selected with `which'. This feature is only avalaiable for a subset of
+        entities, depending on the underyling geometrical representation.
+
+        Return `surfaceParametricCoord'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_surfaceParametricCoord_, api_surfaceParametricCoord_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelReparametrizeOnSurface(
+            c_int(dim),
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            c_int(surfaceTag),
+            byref(api_surfaceParametricCoord_), byref(api_surfaceParametricCoord_n_),
+            c_int(which),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelReparametrizeOnSurface returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_surfaceParametricCoord_, api_surfaceParametricCoord_n_.value)
+
+    @staticmethod
     def setVisibility(dimTags, value, recursive=False):
         """
         gmsh.model.setVisibility(dimTags, value, recursive=False)

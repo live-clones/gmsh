@@ -793,19 +793,6 @@ gmsh::model::getParametrization(const int dim, const int tag,
                                 const std::vector<double> &points,
                                 std::vector<double> &parametricCoord)
 {
-  // We could add an optional argument (e.g. onSurfaceTag), that would return
-  // the parametrization of curves or points on surfaces, by calling
-  //
-  //   SPoint2 reparamOnFace(const GFace *gf, double par, int dir)
-  //
-  // for curves and
-  //
-  //   SPoint2 reparamOnFace(const GFace *gf, int dir)
-  //
-  // for points. We could also add a new function for that (since the natural
-  // input is not a point in 3D space, but in the parametric space of the curve
-  // (and trivial for points).
-
   if(!_isInitialized()) { throw - 1; }
   parametricCoord.clear();
   GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
@@ -879,6 +866,41 @@ gmsh::model::isInside(const int dim, const int tag,
     }
   }
   return num;
+}
+
+GMSH_API void
+gmsh::model::reparametrizeOnSurface(const int dim, const int tag,
+                                    const std::vector<double> &parametricCoord,
+                                    const int surfaceTag,
+                                    std::vector<double> &surfaceParametricCoord,
+                                    const int which)
+{
+  if(!_isInitialized()) { throw - 1; }
+  surfaceParametricCoord.clear();
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  GFace *gf = GModel::current()->getFaceByTag(surfaceTag);
+  if(!gf) {
+    Msg::Error("%s does not exist", _getEntityName(2, surfaceTag).c_str());
+    throw 2;
+  }
+  if(dim == 0) {
+    GVertex *gv = static_cast<GVertex *>(entity);
+    SPoint2 p = gv->reparamOnFace(gf, which);
+    surfaceParametricCoord.push_back(p.x());
+    surfaceParametricCoord.push_back(p.y());
+  }
+  else if(dim == 1) {
+    GEdge *ge = static_cast<GEdge *>(entity);
+    for(std::size_t i = 0; i < parametricCoord.size(); i++) {
+      SPoint2 p = ge->reparamOnFace(gf, parametricCoord[i], which);
+      surfaceParametricCoord.push_back(p.x());
+      surfaceParametricCoord.push_back(p.y());
+    }
+  }
 }
 
 GMSH_API void gmsh::model::setVisibility(const vectorpair &dimTags,

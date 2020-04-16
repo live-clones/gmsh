@@ -920,6 +920,30 @@ function isInside(dim, tag, parametricCoord)
 end
 
 """
+    gmsh.model.reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which = 0)
+
+Reparametrize the boundary entity (point or curve, i.e. with `dim` == 0 or `dim`
+== 1) of tag `tag` on the surface `surfaceTag`. If `dim` == 1, reparametrize all
+the points corresponding to the parametric coordinates `parametricCoord`.
+Multiple matches in case of periodic surfaces can be selected with `which`. This
+feature is only avalaiable for a subset of entities, depending on the underyling
+geometrical representation.
+
+Return `surfaceParametricCoord`.
+"""
+function reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which = 0)
+    api_surfaceParametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_surfaceParametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelReparametrizeOnSurface, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), surfaceTag, api_surfaceParametricCoord_, api_surfaceParametricCoord_n_, which, ierr)
+    ierr[] != 0 && error("gmshModelReparametrizeOnSurface returned non-zero error code: $(ierr[])")
+    surfaceParametricCoord = unsafe_wrap(Array, api_surfaceParametricCoord_[], api_surfaceParametricCoord_n_[], own=true)
+    return surfaceParametricCoord
+end
+
+"""
     gmsh.model.setVisibility(dimTags, value, recursive = false)
 
 Set the visibility of the model entities `dimTags` to `value`. Apply the

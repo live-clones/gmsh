@@ -656,6 +656,20 @@ GMSH_API int gmshModelIsInside(const int dim, const int tag, double * parametric
   return result_api_;
 }
 
+GMSH_API void gmshModelReparametrizeOnSurface(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, const int surfaceTag, double ** surfaceParametricCoord, size_t * surfaceParametricCoord_n, const int which, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    std::vector<double> api_surfaceParametricCoord_;
+    gmsh::model::reparametrizeOnSurface(dim, tag, api_parametricCoord_, surfaceTag, api_surfaceParametricCoord_, which);
+    vector2ptr(api_surfaceParametricCoord_, surfaceParametricCoord, surfaceParametricCoord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelSetVisibility(int * dimTags, size_t dimTags_n, const int value, const int recursive, int * ierr)
 {
   if(ierr) *ierr = 0;

@@ -707,6 +707,28 @@ namespace gmsh { // Top-level functions
       return result_api_;
     }
 
+    // Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
+    // `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1,
+    // reparametrize all the points corresponding to the parametric coordinates
+    // `parametricCoord'. Multiple matches in case of periodic surfaces can be
+    // selected with `which'. This feature is only avalaiable for a subset of
+    // entities, depending on the underyling geometrical representation.
+    inline void reparametrizeOnSurface(const int dim,
+                                       const int tag,
+                                       const std::vector<double> & parametricCoord,
+                                       const int surfaceTag,
+                                       std::vector<double> & surfaceParametricCoord,
+                                       const int which = 0)
+    {
+      int ierr = 0;
+      double *api_parametricCoord_; size_t api_parametricCoord_n_; vector2ptr(parametricCoord, &api_parametricCoord_, &api_parametricCoord_n_);
+      double *api_surfaceParametricCoord_; size_t api_surfaceParametricCoord_n_;
+      gmshModelReparametrizeOnSurface(dim, tag, api_parametricCoord_, api_parametricCoord_n_, surfaceTag, &api_surfaceParametricCoord_, &api_surfaceParametricCoord_n_, which, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_parametricCoord_);
+      surfaceParametricCoord.assign(api_surfaceParametricCoord_, api_surfaceParametricCoord_ + api_surfaceParametricCoord_n_); gmshFree(api_surfaceParametricCoord_);
+    }
+
     // Set the visibility of the model entities `dimTags' to `value'. Apply the
     // visibility setting recursively if `recursive' is true.
     inline void setVisibility(const gmsh::vectorpair & dimTags,
