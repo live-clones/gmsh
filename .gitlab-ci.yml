@@ -420,3 +420,33 @@ doc_official_release:
     - docker
   only:
     - /^gmsh_.*$/
+
+# ----------------------------------------------
+# PyPi package
+# ----------------------------------------------
+
+pypi_official_release:
+  stage: .post
+  image: onelab/ubuntu20.04
+  variables:
+    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+  only:
+    - master@gmsh/gmsh
+  before_script:
+    - echo "[distutils]" > ~/.pypirc
+    - echo "index-servers = pypi" >> ~/.pypirc
+    - echo "[pypi]" >> ~/.pypirc
+    - echo "username = __token__" >> ~/.pypirc
+    - echo "password = $PYPI_TOKEN" >> ~/.pypirc
+  script:
+    - cd utils/pypi/gmsh
+    - python3 setup.py sdist
+    - twine upload dist/*
+    - cd ../gmsh-dev
+    - python3 setup.py sdist
+    - twine upload dist/*
+  tags:
+    - linux64
+    - docker
+  only:
+    - /^gmsh_.*$/

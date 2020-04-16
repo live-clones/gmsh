@@ -120,8 +120,9 @@ if(NOT GMSH_RELEASE)
   set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION_TEXI} (development version)")
 endif()
 
-set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
-set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
+set(GMSH_SHORT_VERSION
+    "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}")
+set(GMSH_VERSION "${GMSH_SHORT_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
 set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
@@ -1559,14 +1560,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshConfig.h.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h)
 
-# the texi version file is modified in the source directory (not ideal, but
-# since git tracks the contents of the file this is acceptable as it will only
-# change when the actual version is changed - not for each git hash)
+# the texi and pypi version files are modified in the source directory (not
+# ideal for version.texi, but since git tracks the contents of the file this is
+# acceptable as it will only change when the actual version is changed - not for
+# each git hash; setup.py is not under version control)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
                ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py)
 
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt
-     ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION})
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 
 # process cmake environment variables so we can append them to the -I include
 # commands. This is not recommended (we should only use the cache variables) but
