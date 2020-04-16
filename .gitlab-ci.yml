@@ -440,7 +440,7 @@ pypi:
     - echo "password = $PYPI_TOKEN" >> ~/.pypirc
   script:
     - cd utils/pypi/gmsh
-    - python setup.py sdist
+    - python3 setup.py sdist
     - twine check dist/*
     - twine upload dist/*
   tags:
