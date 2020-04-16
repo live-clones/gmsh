@@ -1,6 +1,6 @@
-====
-gmsh
-====
+========
+gmsh-dev
+========
 
 The aim of this package is to download and install the `Gmsh app and SDK
 <http://gmsh.info>`_ in a pythonic way, i.e. via the ``pip`` command.
@@ -14,9 +14,9 @@ or ``gmsh-sdk-git`` are uninstalled::
     $ pip uninstall gmsh-sdk
     $ pip uninstall gmsh-sdk-git
 
-then install (or upgrade) ``gmsh``::
+then install (or upgrade) ``gmsh-dev``::
 
-    $ pip install --upgrade gmsh
+    $ pip install --upgrade gmsh-dev
 
 and use::
 

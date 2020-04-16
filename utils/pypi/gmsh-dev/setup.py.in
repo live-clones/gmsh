@@ -34,7 +34,7 @@ plat = 'MacOSX' if 'darwin' in system else plat
 if plat is None:
     raise TypeError(
             "Platform '{}' is not supported.".format(system+'-'+machine))
-name = "gmsh-dev-{}-sdk".format(plat)
+name = "gmsh-git-{}-sdk".format(plat)
 ext = '.zip' if plat.startswith('Windows') else '.tgz'
 fname = name + ext
 if plat.startswith('Linux'):
