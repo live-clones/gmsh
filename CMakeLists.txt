@@ -2007,10 +2007,6 @@ if(APPLE AND ENABLE_BUILD_LIB)
   endif()
 endif()
 
-add_custom_target(pypi COMMAND ${CMAKE_COMMAND} -E tar zcvf
-                  ${CMAKE_CURRENT_BINARY_DIR}/gmsh-pypi-${GMSH_SHORT_VERSION}.tar.gz
-                  gmsh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi)
-
 set(CPACK_PACKAGE_VENDOR "Christophe Geuzaine and Jean-Francois Remacle")
 set(CPACK_PACKAGE_VERSION_MAJOR ${GMSH_MAJOR_VERSION})
 set(CPACK_PACKAGE_VERSION_MINOR ${GMSH_MINOR_VERSION})

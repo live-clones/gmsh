@@ -428,14 +428,15 @@ doc_official_release:
 pypi:
   stage: .post
   image: onelab/ubuntu20.04
-  <<: *ssh_config
+  before_script:
+    - echo "[pypi]" > ~/.pypirc
+    - echo "username = __token__" >> ~/.pypirc
+    - echo "password = $PYPI_TOKEN" >> ~/.pypirc
   script:
-    - mkdir build_pypi
-    - cd build_pypi
-    - cmake ${EXTRA_OPTION} ..
-    - make pypi
-    - scp gmsh-pypi-*.tar.gz geuzaine@gmsh.info:.wwwgmsh/pypi/
-    # then do the magic to upload it to PyPi :-)
+    - cd utils/pypi/gmsh
+    - python setup.py sdist
+    - twine check dist/*
+    # twine upload dist/*
   tags:
     - linux64
     - docker
