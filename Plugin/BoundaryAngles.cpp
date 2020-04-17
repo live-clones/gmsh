@@ -140,6 +140,9 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
           data->SP.push_back(p2.x());
           data->SP.push_back(p2.y());
           data->SP.push_back(p2.z());
+          // Choose the angle inside the polygon
+          if(a>0)
+            a = -(2*M_PI-a);
           data->SP.push_back(a);
           data->NbSP++;
         }
