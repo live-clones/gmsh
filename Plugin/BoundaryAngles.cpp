@@ -128,7 +128,6 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
           }
         }
         // Handle last elements
-        nodes[0].push_back(nodes[0][0]);
         nodes[0].push_back(nodes[0][1]);
         // Compute angle at each point (mod 2pi)
         for(std::size_t i = 0; i < nodes[0].size() - 2; i++) {
@@ -141,6 +140,9 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
           data->SP.push_back(p2.x());
           data->SP.push_back(p2.y());
           data->SP.push_back(p2.z());
+          // Choose the angle inside the polygon
+          if(a>0)
+            a = -(2*M_PI-a);
           data->SP.push_back(a);
           data->NbSP++;
         }
