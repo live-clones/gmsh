@@ -146,17 +146,18 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
         }
       }
     }
-    std::string viewname(filename_prefix);
-    viewname +=  "_" + std::to_string(gf->tag());
+
+    char viewname[500];
+    sprintf(viewname, "%s_%d", filename_prefix.c_str(), gf->tag());
     data->Time.push_back(0.);
-    data->setName(viewname.c_str());
-    std::string filename = viewname + ".pos";
-    data->setFileName(filename);
+    data->setName(viewname);
+    strcat(viewname, ".pos");
+    data->setFileName(viewname);
     data->finalize();
     if(!viewVisible)
       view->getOptions()->visible = 0;
     if(saveOnDisk)
-      view->write(filename, 0, false);
+      view->write(viewname, 0, false);
     if(removeView)
       delete view;
     
