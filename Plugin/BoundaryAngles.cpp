@@ -4,15 +4,24 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
+#include "PViewOptions.h"
 #include "BoundaryAngles.h"
 #include "GModel.h"
 #include "discreteEdge.h"
 #include "MLine.h"
 #include <cstring>
 #include <algorithm>
+#include <string>
 
 StringXNumber BoundaryAnglesOptions_Number[] = {
   {GMSH_FULLRC, "View", NULL, -1.},
+  {GMSH_FULLRC, "Save", NULL, 0.},
+  {GMSH_FULLRC, "Visible", NULL, 0.},
+  {GMSH_FULLRC, "Remove", NULL, 0.},
+};
+
+StringXString BoundaryAnglesOptions_String[] = {
+  {GMSH_FULLRC, "Filename", NULL, "Angles_Surface"},
 };
 
 extern "C" {
@@ -40,6 +49,16 @@ StringXNumber *GMSH_BoundaryAnglesPlugin::getOption(int iopt)
   return &BoundaryAnglesOptions_Number[iopt];
 }
 
+int GMSH_BoundaryAnglesPlugin::getNbOptionsStr() const
+{
+  return sizeof(BoundaryAnglesOptions_String) / sizeof(StringXString);
+}
+
+StringXString *GMSH_BoundaryAnglesPlugin::getOptionStr(int iopt)
+{
+  return &BoundaryAnglesOptions_String[iopt];
+}
+
 struct Less_EdgeEle {
   bool operator()(const std::pair<MEdge, MElement *> &e1,
                   const std::pair<MEdge, MElement *> &e2) const
@@ -51,6 +70,10 @@ struct Less_EdgeEle {
 
 PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
 {
+  int saveOnDisk = (int)BoundaryAnglesOptions_Number[1].def;
+  int viewVisible = (int)BoundaryAnglesOptions_Number[2].def;
+  int removeView = (int)BoundaryAnglesOptions_Number[3].def;
+  std::string filename_prefix = BoundaryAnglesOptions_String[0].def;
   // get the mesh of the current model, and iterate on the surfaces
   GModel *m = GModel::current();
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
@@ -72,7 +95,6 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
 
     PView *view = new PView();
     PViewDataList *data = getDataList(view);
-
     std::vector<MEdge> edges;
     SVector3 normal(0, 0, 1.);
     for(std::set<std::pair<MEdge, MElement *>, Less_EdgeEle>::iterator it =
@@ -107,6 +129,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
         }
         // Handle last elements
         nodes[0].push_back(nodes[0][0]);
+        nodes[0].push_back(nodes[0][1]);
         // Compute angle at each point (mod 2pi)
         for(std::size_t i = 0; i < nodes[0].size() - 2; i++) {
           SPoint3 p1 = nodes[0][i]->point();
@@ -124,13 +147,20 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
       }
     }
 
-    char tmp[500];
-    sprintf(tmp, "Surface%d_Angles", gf->tag());
+    char viewname[500];
+    sprintf(viewname, "%s_%d", filename_prefix.c_str(), gf->tag());
     data->Time.push_back(0.);
-    data->setName(tmp);
-    strcat(tmp, ".pos");
-    data->setFileName(tmp);
+    data->setName(viewname);
+    strcat(viewname, ".pos");
+    data->setFileName(viewname);
     data->finalize();
+    if(!viewVisible)
+      view->getOptions()->visible = 0;
+    if(saveOnDisk)
+      view->write(viewname, 0, false);
+    if(removeView)
+      delete view;
+    
   }
 
   return 0;
