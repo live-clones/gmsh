@@ -125,6 +125,8 @@ void classifyFaces(GModel *gm, double curveAngleThreshold, bool splitInternalCur
 {
 #if defined(HAVE_MESH)
 
+  splitInternalCurves = false;
+  
   size_t MAX0 = gm->getMaxElementaryNumber(0);
   size_t MAX1 = gm->getMaxElementaryNumber(1);
   size_t MAX2 = gm->getMaxElementaryNumber(2);

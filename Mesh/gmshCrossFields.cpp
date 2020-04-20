@@ -1122,17 +1122,23 @@ LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
     duplicateEdges.find(ed);
     if(ite != duplicateEdges.end()) ed = ite->second;
     */
+
+    double S = 0;
+    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
+    for(size_t j = 0; j < N; j++) {
+      it = C.find(groups[i][j]->_e);
+      SVector3 aaa = lift[it->second._t[0]];      
+      S += fabs(dot(it->second._tgt, aaa));
+    }
+    S /= N;
+    
+    it = C.find(groups[i][0]->_e);
     
     MVertex *v = ed.getVertex(0);
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it =
-      C.find(groups[i][0]->_e);
-    SVector3 aaa = lift[it->second._t[0]];
-
-    double S = fabs(dot(it->second._tgt, aaa));
-
+    
     if(it->second.inInternalBoundary)continue; 
 
-    //    if (i == 20)    printf("DIR %d S = %12.5E %d edges reference vertex %lu\n",NUMDOF, S, N,v->getNum());
+    //    printf("group %d DIR %d S = %12.5E %d edges reference vertex %lu assemble %d\n",i,NUMDOF, S, N,v->getNum(), assemble);
 
     if(S < .2 /*sqrt(2)/2.0*/) {
       for(size_t j = 0; j < N; j++) {
@@ -1150,6 +1156,7 @@ LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
                        Dof::createTypeWithTwoInts(0, 5 + 100 * i));
               Dof Uref(vk->getNum(), Dof::createTypeWithTwoInts(0, NUMDOF));
               Dof U(v->getNum(), Dof::createTypeWithTwoInts(0, NUMDOF));
+	      //	      printf("group %d : %lu equalsd %lu\n",i, v->getNum(),vk->getNum());
               myAssembler.assembleSym(Eref, Uref, 1.0);
               myAssembler.assembleSym(Eref, U, -1.0);
 	      //              myAssembler.assemble(Uref, Eref, 1.0);
@@ -1520,11 +1527,11 @@ static bool computePotential(
     }
   }
 
-#if defined(HAVE_PETSC)
-  linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_MUMPS)
-  //linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
+#if defined(HAVE_MUMPS)
   linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
+#elif defined(HAVE_PETSC)
+  linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+  //linearSystemGmm<double> *_lsys = new linearSystemGmm<double>;
   //  _lsys->setParameter("symmetry","symmetric");
 
 #else
@@ -2874,7 +2881,7 @@ static void computeOneIsoTillNextCutGraph(
   bool start = true;
 
   SBoundingBox3d bbox = GModel::current()->bounds();
-  double TOLERANCE = 1.e-10*bbox.diag();
+  double TOLERANCE = 1.e-08*bbox.diag();
 
   while (1){
     MEdge e(v0, v1);  
@@ -2885,7 +2892,7 @@ static void computeOneIsoTillNextCutGraph(
       double d=1.e12;
       MVertex *close = inSingularZone (singularities, p, d);
       //MVertex *close = inSingularZone (singularities, p, e, adj, d);
-      if (d < 1.e-10){
+      if (d < TOLERANCE){
 	passage._type = cutGraphPassage::SING_TO_SING;
 	passage.close = true;
 	passage.sing_conn = close;
@@ -3302,11 +3309,15 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     SPoint3 p1(v1->x(), v1->y(), v1->z());
     SPoint3 p2(v2->x(), v2->y(), v2->z());
 
+    //    printf("%lu (%lu %lu %lu) %12.5E %12.5E %12.5E  %12.5E\n",vsing->getNum(),
+    //	   v0->getNum(),v1->getNum(),v2->getNum(),u,U0, U1,U2);
+
+    
     double EPS = 1.e-8;
     if(v2 == vsing && (U0 - u) * (U1 - u) <= 0) {
       double xi = coord1d(U0, U1, u);
-      //      if(corner)printf("%lu %12.5E %12.5E %12.5E  %12.5E\n",vsing->getNum(),xi,U0, U1,u);
       if (!corner || (xi > EPS && xi < 1-EPS)){
+	//	printf("%lu %12.5E %12.5E %12.5E  %12.5E\n",vsing->getNum(),xi,U0, U1,u);
 	if (fake){
 	  COUNT++;
 	}
@@ -3319,8 +3330,8 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     }
     else if(v1 == vsing && (U0 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U0, U2, u);
-      //      if(corner)printf("%lu %12.5E %12.5E %12.5E  %12.5E\n",vsing->getNum(),xi,U0, U2, u);
       if (!corner || (xi > EPS && xi < 1-EPS)){
+	//	printf("%lu %12.5E %12.5E %12.5E  %12.5E\n",vsing->getNum(),xi,U0, U2, u);
 	if (fake){
 	  COUNT++;
 	}
@@ -3333,8 +3344,8 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
     }
     else if(v0 == vsing && (U1 - u) * (U2 - u) <= 0) {
       double xi = coord1d(U1, U2, u);
-      //      if(corner)printf("%lu %12.5E %12.5E %12.5E %12.5E\n",vsing->getNum(),xi,U1, U2, u);
       if (!corner || (xi > EPS && xi < 1-EPS)){
+	//	printf("%lu %12.5E %12.5E %12.5E %12.5E\n",vsing->getNum(),xi,U1, U2, u);
 	if (fake){
 	  COUNT++;
 	}
