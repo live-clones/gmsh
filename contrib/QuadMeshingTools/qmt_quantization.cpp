@@ -993,7 +993,9 @@ namespace QMT {
           if (SHOW_MPS) debug_show_face_in_view(M,f,"to_split_"+std::to_string(f));
         }
       }
+      // faces_to_split.push_back(f); // ONLY FOR DEBUG, SPLIT ALL
     }
+    sort_unique(faces_to_split);
     sort_unique(edges_to_split);
 
     /* Split edges and flag new vertices */
