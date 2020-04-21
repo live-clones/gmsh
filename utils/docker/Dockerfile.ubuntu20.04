@@ -9,6 +9,8 @@ RUN pip3 install twine
 # to convert a .fodt document, simply run
 # soffice --headless --convert-to pdf Tutorials.fodt
 
+RUN apt-get update && apt-get install -y libboost-dev && apt-get clean
+
 # "docker build --build-arg REBUILD_GMSH=somethingnew"
 ARG REBUILD_GMSH=
 
