@@ -1203,6 +1203,8 @@ endif()
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
   add_subdirectory(contrib/hxt)
   include_directories(BEFORE ${HXT_INC_DIRS})
+  set_config_option(HAVE_HXT "Hxt")
+  set_config_option(HAVE_HXT3D "Hxt3D")
 endif()
 
 if(ENABLE_OCC)
