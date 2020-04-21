@@ -1200,28 +1200,35 @@ if(HAVE_SOLVER)
   endif()
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND
-   ENABLE_HXT AND HAVE_METIS)
-  set_config_option(HAVE_HXT "Hxt")
-  add_subdirectory(contrib/hxt)
-  include_directories(BEFORE contrib/hxt)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/hxt_tetDelaunay.c)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
+  if("${CMAKE_VERSION}" VERSION_LESS "3.9.0")
+    message(WARNING "Your CMake version is not sufficient to compile hxt")
+  else()
+    set_config_option(HAVE_HXT "Hxt")
     set_config_option(HAVE_HXT3D "Hxt3D")
-  endif()
-  if(MSVC)
-    # Visual C++ does not support C99 - force compilation as C++ code
-    file(GLOB_RECURSE HXT_SRC contrib/hxt/*.c)
-    set_compile_flags(HXT_SRC "/TP")
-  endif()
-  check_include_file("immintrin.h" HAVE_IMMINTRIN_H)
-  if(NOT HAVE_IMMINTRIN_H)
-    add_definitions(-DHAVE_NO_IMMINTRIN_H)
-  endif()
-  if(HAVE_PETSC)
-    add_definitions(-DHXT_HAVE_PETSC)
-  endif()
-  if(CMAKE_C_COMPILER MATCHES "pgi")
-    add_definitions(-DHAVE_NO_OPENMP_SIMD)
+
+    set(HXT_REPARAM_OBJECT_ONLY ON CACHE BOOL "use object library" FORCE)
+    set(HXT_TETMESH_OBJECT_ONLY ON CACHE BOOL "use object library" FORCE)
+    set(HXT_TETBR_OBJECT_ONLY ON CACHE BOOL "use object library" FORCE)
+
+    add_subdirectory(contrib/hxt/core) # need to be included before reparam tetMesh & tetBR
+    add_subdirectory(contrib/hxt/predicates) # need to be included before tetMesh & tetBR
+    add_subdirectory(contrib/hxt/reparam)
+    add_subdirectory(contrib/hxt/tetMesh)
+    add_subdirectory(contrib/hxt/tetBR)
+
+    list(APPEND EXTERNAL_LIBRARIES hxt_core hxt_predicates hxt_reparam hxt_tetMesh hxt_tetBR)
+    list(APPEND EXTERNAL_INCLUDES $<TARGET_PROPERTY:hxt_core,INCLUDE_DIRECTORIES>
+                                  $<TARGET_PROPERTY:hxt_predicates,INCLUDE_DIRECTORIES>
+                                  $<TARGET_PROPERTY:hxt_reparam,INCLUDE_DIRECTORIES>
+                                  $<TARGET_PROPERTY:hxt_tetMesh,INCLUDE_DIRECTORIES>
+                                  $<TARGET_PROPERTY:hxt_tetBR,INCLUDE_DIRECTORIES>)
+
+    if(HAVE_P4EST)
+      # this will compile together with GMSH
+      add_subdirectory(contrib/hxt/sizeField)
+      include_directories(BEFORE contrib/hxt/sizeField)
+    endif()
   endif()
 endif()
 
