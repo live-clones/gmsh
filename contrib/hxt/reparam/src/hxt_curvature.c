@@ -187,7 +187,12 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
   //  uint64_t nEdgesBdry = mesh->lines.num;
   uint64_t nVertices   = mesh->vertices.num;
   
-  HXT_CHECK(hxtMalloc(nodalCurvatures,6*nVertices*sizeof(double))); 
+  HXT_CHECK(hxtMalloc(nodalCurvatures,6*nVertices*sizeof(double)));
+
+  // FIXME: not all nodalCurvatures are initialized by the following algorithm,
+  // => it result in an undefined behavior when computing cross-field (line 374+)
+  // To at least have a deterministic result, I decided to initialize nodalCurvature to 0
+  memset(*nodalCurvatures, 0, 6*nVertices*sizeof(double));
 
   uint64_t *node2tri;
   HXT_CHECK(hxtMalloc(&node2tri,3*2*nTriangles*sizeof(uint64_t))); 
