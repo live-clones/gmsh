@@ -20,6 +20,7 @@
 #if defined(HAVE_HXT)
 extern "C" {
 #include "hxt_mesh.h"
+#include "hxt_tools.h"
 #include "hxt_edge.h"
 #include "hxt_mean_values.h"
 #include "hxt_linear_system.h"
@@ -446,10 +447,8 @@ static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
   int tag = gf->tag();
   const std::vector<MTriangle *> &t = gf->triangles;
 
-  HXTContext *context;
-  hxtContextCreate(&context);
   HXTMesh *m;
-  HXT_CHECK(hxtMeshCreate(context, &m));
+  HXT_CHECK(hxtMeshCreate(&m));
   std::set<MVertex *> all;
   for(size_t i = 0; i < t.size(); i++) {
     all.insert(t[i]->getVertex(0));

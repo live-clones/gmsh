@@ -26,7 +26,7 @@
 #if defined(HAVE_HXT3D)
 
 extern "C" {
-#include "hxt_api.h"
+#include "hxt_tools.h"
 #include "hxt_boundary_recovery.h"
 #include "hxt_tetMesh.h"
 }
@@ -365,9 +365,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 
   /*******************  ^ all argument were processed *********************/
   HXTMesh *mesh;
-  HXTContext *context;
-  HXT_CHECK(hxtContextCreate(&context));
-  HXT_CHECK(hxtMeshCreate(context, &mesh));
+  HXT_CHECK(hxtMeshCreate(&mesh));
 
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;
@@ -399,7 +397,6 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
 
   HXT_CHECK(hxtMeshDelete(&mesh));
-  HXT_CHECK(hxtContextDelete(&context));
   return HXT_STATUS_OK;
 }
 
