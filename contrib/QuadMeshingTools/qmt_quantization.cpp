@@ -170,6 +170,7 @@ namespace QMT_QZ_Utils {
         error("infinite loop ? iter = {}", iter);
         return false;
       }
+      RFC(edges[e][0] == edges[e][1], "periodic edge not supported: edge = {}", edges[e]);
       if (edges[e][0] == v) {
         pos.push_back(e);
       } else if (edges[e][1] == v) {
@@ -194,6 +195,7 @@ namespace QMT_QZ_Utils {
 
     if (edges.size() != pos.size()) {
       error("edgesToOrderedAndSignedPositions: edges = {}, pos = {}", edges, pos);
+      error("TODO: is this a periodic quad ? (two times the same edge, e.g. ring)");
       return false;
     }
 
@@ -1327,10 +1329,58 @@ namespace QMT {
     vector<vector<id>> loop_vertices;
     bool okl = computeEdgeLoops(M.lines, v2l, isCorner, loop_edges, loop_vertices);
     RFC(!okl,"failed to compute edge loops");
+
+    /* Pre-processing: split periodic loops in two loops if possible */
+    F(i,loop_vertices.size()) {
+      vector<id>& vert = loop_vertices[i];
+      vector<id>& edgs = loop_edges[i];
+      if (vert.front() == vert.back()) {
+        if (!isCorner[vert.front()] || vert.size() < 3) {
+          error("loop {}: got closed periodic edge without corner, cannot split, vert: {}" , i, vert);
+          return false;
+        } else { /* periodic edge that starts and stops at a corner */
+          size_t mid = vert.size() / 2;
+          vector<id> part1_vert(vert.begin(),vert.begin()+mid+1);
+          vector<id> part1_edgs(edgs.begin(),edgs.begin()+mid);
+          vector<id> part2_vert(vert.begin()+mid,vert.end());
+          vector<id> part2_edgs(edgs.begin()+mid,edgs.end());
+
+          /* Create a new TVertex */
+          id tvId = Q.vertices.size();
+          {
+            id v = part1_vert.back();
+            isCorner[v] = true;
+            TVertex tv;
+            tv.pt = M.points[v];
+            if (M.pt_color[v] != 0) {
+              tv.entity = {0,M.pt_color[v]};
+            } else {
+              tv.entity = {-1,-1};
+            }
+            tv.origin = v;
+            Q.vertices.push_back(tv);
+            v2TVertex[v] = tvId;
+          }
+
+          loop_vertices[i] = part1_vert;
+          loop_edges[i] = part1_edgs;
+          loop_vertices.push_back(part2_vert);
+          loop_edges.push_back(part2_edgs);
+          warn("splitting periodic edge {} in two edges by adding the node {}", i, tvId);
+        }
+      }
+    }
     F(i,loop_vertices.size()) {
       vector<id>& vert = loop_vertices[i];
       if (vert.front() == vert.back()) {
         error("loop {}: got closed loop, should not happen, vert: {}" , i, vert);
+        if (ERROR_VISU && vert.size() > 1) {
+          GeoLog log;
+          F(j,vert.size()-1) {
+            log.add({M.points[vert[j]],M.points[vert[j+1]]},{double(j),double(1.+j)},"closed_loop_"+std::to_string(i));
+          }
+          log.toGmsh();
+        }
         return false;
       }
 
@@ -1340,7 +1390,7 @@ namespace QMT {
       id tv1 = v2TVertex[vert.front()];
       id tv2 = v2TVertex[vert.back()];
       if (tv1 == NO_ID || tv2 == NO_ID) {
-        error("loop {}: extremities not found in TVertex, vert: {}" , i, vert);
+        error("loop {}: extremities {},{} (-> {},{}) not found in TVertex, vert: {}" , i, vert.front(), vert.back(), tv1, tv2, vert);
         return false;
       }
 
@@ -1399,14 +1449,14 @@ namespace QMT {
       F(lf,colorToTris[col].size()) {
         id f = colorToTris[col][lf];
         F(le,3) {
-          sid neig = M.triangle_neighbors[f][le];
-          if (neig < 0 || neig == NO_SID || color[f] != color[neig/3]) {
-            id2 sedge = sorted(M.triangles[f][le],M.triangles[f][(le+1)%3]);
-            auto it = ibdr.find(sedge);
-            if (it != ibdr.end()) {
-              id te = l2TEdge[it->second];
-              tedges.push_back(te);
-            } else {
+          id2 sedge = sorted(M.triangles[f][le],M.triangles[f][(le+1)%3]);
+          auto it = ibdr.find(sedge);
+          if (it != ibdr.end()) {
+            id te = l2TEdge[it->second];
+            tedges.push_back(te);
+          } else {
+            sid neig = M.triangle_neighbors[f][le];
+            if (neig < 0 || neig == NO_SID || color[f] != color[neig/3]) {
               error("color {}: tri {}, le={}, neig={}, edge {} not found in lines", col, f, le, neig, sedge);
               if (ERROR_VISU) {
                 GeoLog log;
@@ -1420,11 +1470,18 @@ namespace QMT {
           }
         }
       }
+
       sort_unique(tedges);
       vector<id2> teVertices(tedges.size());
       F(i,tedges.size()) teVertices[i] = Q.edges[tedges[i]].vertices;
       vector<int> pos;
       bool oke = edgesToOrderedAndSignedPositions(teVertices, pos);
+      if (!oke && ERROR_VISU) {
+        F(i,tedges.size()) {
+          debug_show_edge_in_view(Q, tedges[i], "error_edgesToOrderedAndSignedPositions");
+        }
+        debug_show_qtmesh_in_view(Q, "qtmesh");
+      }
       RFC(!oke, "failed to get ordered/signed positions");
 
       TFace tf;
