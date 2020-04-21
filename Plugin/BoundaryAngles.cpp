@@ -171,11 +171,8 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
     #else
       char slash = '/';
     #endif
-    if(opt_dir.back() != slash)
-    {
+    if(opt_dir[opt_dir.length()-1] != slash)
       opt_dir.push_back(slash);
-      Msg::Warning("BoundaryAngles: Slash added ! %s", opt_dir.c_str());
-    }
     char outputdir[500];
     sprintf(outputdir, "%s%s", currentDir.c_str(), opt_dir.c_str());
     CreatePath(outputdir);
