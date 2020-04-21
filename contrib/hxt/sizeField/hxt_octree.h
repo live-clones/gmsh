@@ -26,7 +26,7 @@
 // HXT INCLUDES
 
 extern "C" {
-#include "hxt_api.h"
+#include "hxt_message.h"
 #include "hxt_mesh.h"
 #include "hxt_bbox.h"
 }

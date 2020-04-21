@@ -12,4 +12,4 @@ if(NOT HAVE_P4EST)
 	endif()
 endif()
 
-append_gmsh_src(contrib/hxt/hxt_sizeField "hxt_octree.cpp;hxt_octree.h")
+append_gmsh_src(contrib/hxt/sizeField "hxt_octree.cpp;hxt_octree.h")

@@ -1226,6 +1226,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
 
     if(HAVE_P4EST)
       # this will compile together with GMSH
+
+      # FIXME Gmsh: Mesh/automaticMeshSizeField seem to require an MPI-capable compiler
+      # when HAVE_P4EST and HAVE_HXT...
       add_subdirectory(contrib/hxt/sizeField)
       include_directories(BEFORE contrib/hxt/sizeField)
     endif()

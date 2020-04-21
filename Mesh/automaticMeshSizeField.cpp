@@ -146,7 +146,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   HXT_CHECK(hxtFree(&curvatureCrossfield));
   HXT_CHECK(hxtFree(&nodalCurvature)              );
   HXT_CHECK(hxtMeshDelete(&mesh)                  );
-  HXT_CHECK(hxtContextDelete(&context)            );
+  return HXT_STATUS_OK;
 }
 
 #endif
