@@ -5994,7 +5994,6 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     qLayout.computeCrossFieldAndH(&temp, dataTHETA, createViewTheta);
 
 
-
     /* - View 'H' */
     int h_tag = -1;
     std::map<int, std::vector<double> > dataH;
