@@ -1201,38 +1201,8 @@ if(HAVE_SOLVER)
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
-  if("${CMAKE_VERSION}" VERSION_LESS "3.9.0")
-    message(WARNING "Your CMake version is not sufficient to compile hxt")
-  else()
-    set_config_option(HAVE_HXT "Hxt")
-    set_config_option(HAVE_HXT3D "Hxt3D")
-
-    set(HXT_REPARAM_OBJECT_ONLY ON CACHE BOOL "use object library" FORCE)
-    set(HXT_TETMESH_OBJECT_ONLY ON CACHE BOOL "use object library" FORCE)
-    set(HXT_TETBR_OBJECT_ONLY ON CACHE BOOL "use object library" FORCE)
-
-    add_subdirectory(contrib/hxt/core) # need to be included before reparam tetMesh & tetBR
-    add_subdirectory(contrib/hxt/predicates) # need to be included before tetMesh & tetBR
-    add_subdirectory(contrib/hxt/reparam)
-    add_subdirectory(contrib/hxt/tetMesh)
-    add_subdirectory(contrib/hxt/tetBR)
-
-    list(APPEND EXTERNAL_LIBRARIES hxt_core hxt_predicates hxt_reparam hxt_tetMesh hxt_tetBR)
-    list(APPEND EXTERNAL_INCLUDES $<TARGET_PROPERTY:hxt_core,INCLUDE_DIRECTORIES>
-                                  $<TARGET_PROPERTY:hxt_predicates,INCLUDE_DIRECTORIES>
-                                  $<TARGET_PROPERTY:hxt_reparam,INCLUDE_DIRECTORIES>
-                                  $<TARGET_PROPERTY:hxt_tetMesh,INCLUDE_DIRECTORIES>
-                                  $<TARGET_PROPERTY:hxt_tetBR,INCLUDE_DIRECTORIES>)
-
-    if(HAVE_P4EST)
-      # this will compile together with GMSH
-
-      # FIXME Gmsh: Mesh/automaticMeshSizeField seem to require an MPI-capable compiler
-      # when HAVE_P4EST and HAVE_HXT...
-      add_subdirectory(contrib/hxt/sizeField)
-      include_directories(BEFORE contrib/hxt/sizeField)
-    endif()
-  endif()
+  add_subdirectory(contrib/hxt)
+  include_directories(BEFORE ${HXT_INC_DIRS})
 endif()
 
 if(ENABLE_OCC)

@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(hxt_tetMesh C)
 
-# options are inherited from hxt_core (see ../core/CMakeList.txt)
-
+# most options are inherited from hxt_core (see ../core/CMakeList.txt)
 option(HXT_TETMESH_OBJECT_ONLY "Do not create hxt_tetMesh library" OFF)
 
 set(HXT_TETMESH_SRC
