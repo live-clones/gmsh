@@ -52,7 +52,8 @@ static HXTStatus allocConnectivity (struct HXTConnectivity *c, int n, int q)
   c->quantum = q;
   HXT_CHECK( hxtMalloc(&c->allocated,        sizeof(int) * c->nNodes) );
   HXT_CHECK( hxtMalloc(&c->degree,           sizeof(int) * c->nNodes) );
-  HXT_CHECK( hxtMalloc(&c->nodeConnectivity, sizeof(int) * c->nNodes) );
+  HXT_CHECK( hxtMalloc(&c->nodeConnectivity, sizeof(int*) * c->nNodes) );
+
   for (int i=0;i<c->nNodes;i++){
     c->allocated[i] = c->quantum;
     c->degree [i] = 0;
