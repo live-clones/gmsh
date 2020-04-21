@@ -1770,6 +1770,49 @@ void GModel::removeInvisibleElements()
   destroyMeshCaches();
 }
 
+
+template <class T>
+static void reverseInvisible(std::vector<T *> &elements, bool all)
+{
+  std::vector<T *> tmp;
+  for(std::size_t i = 0; i < elements.size(); i++) {
+    if(all || !elements[i]->getVisibility()) {
+      elements[i]->reverse();
+      elements[i]->setVisibility(1);
+    }
+  }
+}
+
+void GModel::reverseInvisibleElements()
+{
+  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+    bool all = !(*it)->getVisibility();
+    reverseInvisible((*it)->tetrahedra, all);
+    reverseInvisible((*it)->hexahedra, all);
+    reverseInvisible((*it)->prisms, all);
+    reverseInvisible((*it)->pyramids, all);
+    reverseInvisible((*it)->trihedra, all);
+    reverseInvisible((*it)->polyhedra, all);
+    (*it)->deleteVertexArrays();
+    if(all) (*it)->setVisibility(1);
+  }
+  for(fiter it = firstFace(); it != lastFace(); ++it) {
+    bool all = !(*it)->getVisibility();
+    reverseInvisible((*it)->triangles, all);
+    reverseInvisible((*it)->quadrangles, all);
+    reverseInvisible((*it)->polygons, all);
+    (*it)->deleteVertexArrays();
+    if(all) (*it)->setVisibility(1);
+  }
+  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+    bool all = !(*it)->getVisibility();
+    reverseInvisible((*it)->lines, all);
+    (*it)->deleteVertexArrays();
+    if(all) (*it)->setVisibility(1);
+  }
+  destroyMeshCaches();
+}
+
 std::size_t GModel::indexMeshVertices(bool all, int singlePartition,
                                       bool renumber)
 {
