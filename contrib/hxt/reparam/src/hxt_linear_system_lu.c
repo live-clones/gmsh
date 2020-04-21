@@ -382,7 +382,7 @@ HXTStatus hxtLinearSystemLUCreate(HXTLinearSystemLU **pSystem, int nElements, in
 
   HXT_CHECK( hxtAlignedMalloc(&system->M, sizeof(double)*totalSize) );
 
-  HXT_CHECK( hxtMalloc(&system->rows, sizeof(double)*system->n) );
+  HXT_CHECK( hxtMalloc(&system->rows, sizeof(double*)*system->n) );
   for (int i = 0; i < totalSize; ++i)
     system->M[i] = 0.0;
 
