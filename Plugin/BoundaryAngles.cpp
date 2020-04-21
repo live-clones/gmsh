@@ -173,14 +173,13 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
     #endif
     if(opt_dir[opt_dir.length()-1] != slash)
       opt_dir.push_back(slash);
-    char outputdir[500];
-    sprintf(outputdir, "%s%s", currentDir.c_str(), opt_dir.c_str());
+    std::string outputdir = currentDir + opt_dir;
     CreatePath(outputdir);
     //viewname and filename (=outputdir/viewname.pos)
     char viewname[500];
     char filename[500];
     sprintf(viewname, "%s_%d", rootname.c_str(), gf->tag());
-    sprintf(filename, "%s%s.pos", outputdir, viewname);
+    sprintf(filename, "%s%s_%d.pos", outputdir.c_str(),  rootname.c_str(), gf->tag());
     data->Time.push_back(0.);
     data->setName(viewname);
     data->setFileName(filename);
