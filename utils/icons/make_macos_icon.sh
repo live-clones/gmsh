@@ -1,10 +1,10 @@
 #!/bin/sh
 
-# create a MacOS icon from a 1024x1024 png master
+# create a macOS icon from a 1024x1024 png master
 
 if [ $# -lt 2 ]; then
   echo "Usage: $0 pngfile iconname" 1>&2;
-  echo "Example: $0 gmsh_1024x1024.png MacIcons" 1>&2;
+  echo "Example: $0 gmsh-no-text.png MacIcons" 1>&2;
   exit 1;
 fi
 
