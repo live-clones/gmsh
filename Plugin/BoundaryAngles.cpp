@@ -4,6 +4,9 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
+#include "Context.h"
+#include "OS.h"
+#include "StringUtils.h"
 #include "PViewOptions.h"
 #include "BoundaryAngles.h"
 #include "GModel.h"
@@ -12,6 +15,7 @@
 #include <cstring>
 #include <algorithm>
 #include <string>
+#include <vector>
 
 StringXNumber BoundaryAnglesOptions_Number[] = {
   {GMSH_FULLRC, "View", NULL, -1.},
@@ -22,6 +26,7 @@ StringXNumber BoundaryAnglesOptions_Number[] = {
 
 StringXString BoundaryAnglesOptions_String[] = {
   {GMSH_FULLRC, "Filename", NULL, "Angles_Surface"},
+  {GMSH_FULLRC, "Dir", NULL, ""},
 };
 
 extern "C" {
@@ -36,7 +41,13 @@ std::string GMSH_BoundaryAnglesPlugin::getHelp() const
   return "Plugin(BoundaryAngles) computes the (interior) angles between the "
          "line elements on the boundary of all surfaces. The angles, computed "
          "modulo 2*Pi, are stored in a new post-processing view, one for each "
-         "surface. The plugin currently only works for planar surfaces.";
+         "surface. The plugin currently only works for planar surfaces."
+         "Available options:"
+         "- Visible (1=True, 0 = False, Default = 1): Visibility of the Views in the GUI "
+         "- Save (1=True, 0 = False, Default = 0): Save the Views on disk ?"
+         "- Remove (1=True, 0 = False, Default = 0): Remove the View from the memory after execution?"
+         "- Filename (Default = 'Angles_Surface'): Root name for the Views (in case of save / Visibility)"
+         "- Dir (Default = ''): Output directory (possibly nested)";
 }
 
 int GMSH_BoundaryAnglesPlugin::getNbOptions() const
@@ -73,7 +84,8 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
   int saveOnDisk = (int)BoundaryAnglesOptions_Number[1].def;
   int viewVisible = (int)BoundaryAnglesOptions_Number[2].def;
   int removeView = (int)BoundaryAnglesOptions_Number[3].def;
-  std::string filename_prefix = BoundaryAnglesOptions_String[0].def;
+  std::string opt_filename = BoundaryAnglesOptions_String[0].def;
+  std::string opt_dir = BoundaryAnglesOptions_String[1].def;
   // get the mesh of the current model, and iterate on the surfaces
   GModel *m = GModel::current();
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
@@ -148,18 +160,38 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
         }
       }
     }
-
+    //Filename and path
+    std::string currentDir = SplitFileName(GetAbsolutePath(GModel::current()->getFileName()))[0];
+    // Cleaning filename (if needed)
+    std::string rootname = SplitFileName(opt_filename)[1];
+    // Output directory
+    // Add trailing (back)slash if needed
+    #if defined(WIN32)
+      char slash = '\\';
+    #else
+      char slash = '/';
+    #endif
+    if(opt_dir.back() != slash)
+    {
+      opt_dir.push_back(slash);
+      Msg::Warning("BoundaryAngles: Slash added ! %s", opt_dir.c_str());
+    }
+    char outputdir[500];
+    sprintf(outputdir, "%s%s", currentDir.c_str(), opt_dir.c_str());
+    CreatePath(outputdir);
+    //viewname and filename (=outputdir/viewname.pos)
     char viewname[500];
-    sprintf(viewname, "%s_%d", filename_prefix.c_str(), gf->tag());
+    char filename[500];
+    sprintf(viewname, "%s_%d", rootname.c_str(), gf->tag());
+    sprintf(filename, "%s%s.pos", outputdir, viewname);
     data->Time.push_back(0.);
     data->setName(viewname);
-    strcat(viewname, ".pos");
-    data->setFileName(viewname);
+    data->setFileName(filename);
     data->finalize();
     if(!viewVisible)
       view->getOptions()->visible = 0;
     if(saveOnDisk)
-      view->write(viewname, 0, false);
+      view->write(filename, 0, false);
     if(removeView)
       delete view;
     
