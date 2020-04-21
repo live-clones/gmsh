@@ -275,7 +275,7 @@ namespace QMT {
           }
         }
         if (na != 0) {
-          info("added {} lines from non-manifold edges not found in curves", na);
+          warn("added {} lines from non-manifold edges not found in curves (repair)", na);
         }
       }
     }
