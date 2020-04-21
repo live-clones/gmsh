@@ -1,4 +1,4 @@
-// Hxt - Copyright (C) 
+// Hxt - Copyright (C)
 // 2016 - 2020 UCLouvain
 //
 // See the LICENSE.txt file for license information.
@@ -24,7 +24,7 @@ extern "C" {
  *    to the triangle `i` in mesh->triangles.
  *    If there is no such tetrahedron (happens only if nbMissing!=0),
  *    it is set to HXT_NO_ADJACENT.
- *   
+ *
  *    The tetrahedron on the other side is easily obtainable by doing
  *    `mesh->tetrahedra.neigh[tri2TetMap[i]]`
  */
@@ -39,7 +39,7 @@ HXTStatus hxtGetLines2TriMap(HXTMesh* mesh, uint64_t* lines2TriMap, uint64_t* nb
 /* Same as above with lines and tets: `lines2TetMap = 6*tet+edge | HXT_NO_ADJACENT`
  (edge is a number between 0 & 5, explained below in "ANATOMY OF A TET.")
    Lines that begin and ends at the same point are not reported in nbMissing, but the mapping is
-  set to HXT_NO_ADJACENT nevertheless 
+  set to HXT_NO_ADJACENT nevertheless
 
   !! DOES NOT WORK IF A TETRAHEDRON HAS NO NEIGHBOR !!
   => HXT_NO_ADJACENT not permitted: add ghost tetrahedra */
@@ -121,7 +121,7 @@ HXTStatus hxtConstrainLinesNotInTriangles(HXTMesh* mesh, uint64_t* lines2TetMap,
   edge 4 contain node 1 & 3
   edge 5 contain node 2 & 3
 
-  - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
  ********************************
  *  mesh->tetrahedra.flag[tet]  *
@@ -247,7 +247,7 @@ static inline void unsetEdgeConstraint(HXTMesh* mesh, uint64_t tet, int edgeNum)
 /*
  gives the index of the nodes of a facet
  given in counter-clockwise order, as seen from the opposite vertex
- 
+
  double* a = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*tet+getNode0FromFacet(f)];
  double* b = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*tet+getNode1FromFacet(f)];
  double* c = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*tet+getNode2FromFacet(f)];
@@ -357,7 +357,7 @@ static inline void unsetUnusedFlag(HXTMesh* mesh, uint64_t tet, unsigned id) {
 
 
 static inline void resetUnusedFlags(HXTMesh* mesh, uint64_t tet) {
-  mesh->tetrahedra.flag[tet] &= ~UINT16_C(HXT_ALL_UNUSED_MASK);
+  mesh->tetrahedra.flag[tet] &= ~(HXT_ALL_UNUSED_MASK);
 }
 
 
