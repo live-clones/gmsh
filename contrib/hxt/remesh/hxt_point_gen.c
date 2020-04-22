@@ -41,10 +41,8 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //*************************************************************************************
   //*************************************************************************************
   // Create a temp mesh to hold generated vertices
-  HXTContext *fcontext;
-  hxtContextCreate(&fcontext);
   HXTMesh *fmesh;
-  HXT_CHECK(hxtMeshCreate(fcontext,&fmesh));
+  HXT_CHECK(hxtMeshCreate(&fmesh));
  
   //*************************************************************************************
   //*************************************************************************************
@@ -338,8 +336,6 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   /*HXT_CHECK(hxtContextDelete(&ncontext));*/
 
   HXT_CHECK(hxtMeshDelete(&fmesh));
-  HXT_CHECK(hxtContextDelete(&fcontext));
- 
  
 
   HXT_CHECK(hxtFree(&parent));

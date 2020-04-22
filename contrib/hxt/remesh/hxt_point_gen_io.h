@@ -1,7 +1,7 @@
 #ifndef HXT_POINT_GEN_H_IO
 #define HXT_POINT_GEN_H_IO
 
-#include "hxt_api.h"
+#include "hxt_tools.h"
 #include "hxt_mesh.h"
 #include "hxt_edge.h"
 

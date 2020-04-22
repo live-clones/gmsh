@@ -624,7 +624,7 @@ coordinates in @code{points}, concatenated: [p1x, p1y, p1z, p2x, ...].
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L91,t2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L87,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain_stl.py#L36,terrain_stl.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L91,t2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L87,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/reparamOnFace.py#L20,reparamOnFace.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/terrain_stl.py#L36,terrain_stl.py})
 @end table
 
 @item gmsh/model/getDerivative
@@ -715,6 +715,56 @@ the surface (if @code{dim} = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
 -
 @end table
 
+@item gmsh/model/getParametrizationBounds
+Get the @code{min} and @code{max} bounds of the parametric coordinates for the
+entity of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{min}, @code{max}
+@item Return:
+-
+@item Examples:
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/reparamOnFace.py#L17,reparamOnFace.py})
+@end table
+
+@item gmsh/model/isInside
+Check if the parametric coordinates provided in @code{parametricCoord}
+correspond to points inside the entitiy of dimension @code{dim} and tag
+@code{tag}, and return the number of points inside. This feature is only
+available for a subset of curves and surfaces, depending on the underyling
+geometrical representation.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{parametricCoord}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item gmsh/model/reparametrizeOnSurface
+Reparametrize the boundary entity (point or curve, i.e. with @code{dim} == 0 or
+@code{dim} == 1) of tag @code{tag} on the surface @code{surfaceTag}. If
+@code{dim} == 1, reparametrize all the points corresponding to the parametric
+coordinates @code{parametricCoord}. Multiple matches in case of periodic
+surfaces can be selected with @code{which}. This feature is only available for a
+subset of entities, depending on the underyling geometrical representation.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{parametricCoord}, @code{surfaceTag}, @code{which = 0}
+@item Output:
+@code{surfaceParametricCoord}
+@item Return:
+-
+@item Examples:
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/reparamOnFace.py#L19,reparamOnFace.py})
+@end table
+
 @item gmsh/model/setVisibility
 Set the visibility of the model entities @code{dimTags} to @code{value}. Apply
 the visibility setting recursively if @code{recursive} is true.
@@ -785,7 +835,7 @@ Set the @code{x}, @code{y}, @code{z} coordinates of a geometrical point.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L78,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L75,x2.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L78,x2.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py#L75,x2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/reparamOnFace.py#L23,reparamOnFace.py})
 @end table
 
 @end ftable

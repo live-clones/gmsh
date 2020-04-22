@@ -61,8 +61,7 @@ string GMSH_SpanningTreePlugin::getHelp(void) const
          "and spaces are ignored.\n"
          "Remark - This plugin does not overwrite a physical group."
          "Therefore, if an existing physical tag is used in OutputPhysical, "
-         "the edges of the tree will be /added/ to the specified group.\n"
-         "Limitation - Unknown behaviour with curved meshes.";
+         "the edges of the tree will be /added/ to the specified group.";
 }
 
 string GMSH_SpanningTreePlugin::getAuthor(void) const { return "N. Marsic"; }
@@ -315,6 +314,16 @@ void GMSH_SpanningTreePlugin::DSU::join(int a, int b)
     if(rank[aRoot] == rank[bRoot]) // If both sets had the same rank
       rank[aRoot]++; // -> Increase rank of bigger set (A)
   }
+}
+
+string GMSH_SpanningTreePlugin::DSU::toString(void)
+{
+  // Show (node, parent) [using Gmsh's 1-base index]
+  stringstream str;
+  for(size_t i = 0; i < parent.size(); i++)
+    str << "(" << i+1 << ", " << parent[i]+1 << ")" << endl;
+
+  return str.str();
 }
 
 bool GMSH_SpanningTreePlugin::Sort::operator()(

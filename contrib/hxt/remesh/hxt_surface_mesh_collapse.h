@@ -1,7 +1,6 @@
 #ifndef HXT_SURFACE_MESH_COLLAPSE_H
 #define HXT_SURFACE_MESH_COLLAPSE_H
 
-#include "hxt_api.h"
 #include "hxt_mesh.h"
 #include "hxt_edge.h"
 

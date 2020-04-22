@@ -1943,7 +1943,7 @@ void mesh_3d_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
+static void mesh_modify_parts(Fl_Widget *w, void *data, const std::string &action)
 {
   const char *str = (const char*)data;
   int what;
@@ -2048,9 +2048,17 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
       }
       else{
         for(std::size_t i = 0; i < ent.size(); i++)
-          if(ent[i]->getSelection() == 1) ent[i]->setVisibility(0);
+          if(ent[i]->getSelection() == 1){
+            ent[i]->setVisibility(0);
+            ent[i]->setSelection(0);
+          }
       }
-      GModel::current()->removeInvisibleElements();
+      if(action == "delete")
+        GModel::current()->removeInvisibleElements();
+      else if(action == "reverse")
+        GModel::current()->reverseInvisibleElements();
+      else
+        Msg::Error("Unknown action on mesh part");
       ele.clear();
       ent.clear();
     }
@@ -2064,6 +2072,16 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
   Msg::StatusGl("");
+}
+
+static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
+{
+  mesh_modify_parts(w, data, "delete");
+}
+
+static void mesh_reverse_parts_cb(Fl_Widget *w, void *data)
+{
+  mesh_modify_parts(w, data, "reverse");
 }
 
 static void mesh_inspect_cb(Fl_Widget *w, void *data)
@@ -4327,6 +4345,14 @@ static menuItem static_modules[] = {
   {"0Modules/Mesh/Experimental/Quad meshing tools",
    (Fl_Callback *)quadmeshingtools_cb},
 #endif
+  {"0Modules/Mesh/Reverse/Elements",
+   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"elements"} ,
+  {"0Modules/Mesh/Reverse/Curves",
+   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"curves"} ,
+  {"0Modules/Mesh/Reverse/Surfaces",
+   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"surfaces"} ,
+  {"0Modules/Mesh/Reverse/Volumes",
+   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"volumes"} ,
   {"0Modules/Mesh/Delete/Elements",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
   {"0Modules/Mesh/Delete/Curves",

@@ -23,7 +23,7 @@ linux64_ci:
     - mkdir build
     - cd build
     - export CXXFLAGS=-Werror
-    - cmake ${EXTRA_OPTION} ..
+    - cmake ..
     - make -j 8
     - ctest -j 8 --output-on-failure
     - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorial/t5.geo -3
@@ -38,7 +38,7 @@ linux64_compatibility_ci:
   script:
     - mkdir build
     - cd build
-    - cmake -DDEFAULT=0 ${EXTRA_OPTION} ..
+    - cmake -DDEFAULT=0 ..
     - make -j 8
     - cmake -DENABLE_PARSER=1 ..
     - make -j 8
@@ -60,7 +60,7 @@ windows64_ci:
   script:
     - md build
     - cd build
-    - bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
+    - bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 .."
     - bash -c "/usr/bin/make -j 8"
     - bash -c "/usr/bin/ctest -j 8 --output-on-failure"
   tags:
@@ -73,7 +73,7 @@ windows64_msvc_ci:
   script:
     - md build
     - cd build
-    - cmake -DENABLE_BLAS_LAPACK=0 -DENABLE_HXT=0 ${EXTRA_OPTION} ..
+    - cmake -DENABLE_BLAS_LAPACK=0 -DENABLE_HXT=0 ..
     - msbuild package.vcxproj
   tags:
     - windows64
@@ -389,7 +389,7 @@ doc_official_snapshot:
   script:
     - mkdir build_doc
     - cd build_doc
-    - cmake ${EXTRA_OPTION} ..
+    - cmake ..
     - make doc
     - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/dev && tar zxvf ../doc.tgz"
@@ -402,19 +402,48 @@ doc_official_snapshot:
 doc_official_release:
   stage: .post
   image: onelab/ubuntu20.04
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1"
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
   script:
     - mkdir build_doc
     - cd build_doc
-    - cmake ${EXTRA_OPTION} ..
+    - cmake -DGMSH_RELEASE=1 ..
     - make doc
     - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
     - ssh geuzaine@gmsh.info "cd .wwwgmsh && tar zxvf doc.tgz"
     - scp ../doc/gmsh.html geuzaine@gmsh.info:.wwwgmsh/
+  tags:
+    - linux64
+    - docker
+  only:
+    - /^gmsh_.*$/
+
+# ----------------------------------------------
+# PyPi package
+# ----------------------------------------------
+
+pypi_official_release:
+  stage: .post
+  image: onelab/ubuntu20.04
+  only:
+    - master@gmsh/gmsh
+  before_script:
+    - echo "[distutils]" > ~/.pypirc
+    - echo "index-servers = pypi" >> ~/.pypirc
+    - echo "[pypi]" >> ~/.pypirc
+    - echo "username = __token__" >> ~/.pypirc
+    - echo "password = $PYPI_TOKEN" >> ~/.pypirc
+  script:
+    - mkdir build_pypi
+    - cd build_pypi
+    - cmake -DGMSH_RELEASE=1 ..
+    - cd ../utils/pypi/gmsh
+    - python3 setup.py sdist
+    - twine upload dist/*
+    - cd ../gmsh-dev
+    - python3 setup.py sdist
+    - twine upload dist/*
   tags:
     - linux64
     - docker

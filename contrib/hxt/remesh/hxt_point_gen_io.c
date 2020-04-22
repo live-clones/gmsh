@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "hxt_point_gen_io.h"
 
 HXTStatus hxtPrintVec(const double *vec)

@@ -1,7 +1,7 @@
 #ifndef HXT_POINT_GEN_REALLOC_H
 #define HXT_POINT_GEN_REALLOC_H
 
-#include "hxt_api.h"
+#include "hxt_tools.h"
 #include "hxt_mesh.h"
 
 HXTStatus hxtVerticesReserve(HXTMesh* mesh, uint32_t nbNewVertices);

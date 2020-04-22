@@ -979,10 +979,8 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   HXT_INFO_COND(opt->verbosity>0,"");
   HXT_INFO_COND(opt->verbosity>0,"Transfering initial mesh to temp mesh");
 
-  HXTContext *context;
-  HXT_CHECK(hxtContextCreate(&context));
   HXTMesh *tmesh;
-  HXT_CHECK(hxtMeshCreate(context,&tmesh));
+  HXT_CHECK(hxtMeshCreate(&tmesh));
   HXT_CHECK(hxtTransferInitialMeshToTempMesh(mesh,
                                              numInitialVertices,
                                              maxNumVertices,
@@ -1283,7 +1281,6 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   HXT_CHECK(hxtFree(&tparent));
 
   HXT_CHECK(hxtMeshDelete(&tmesh));
-  HXT_CHECK(hxtContextDelete(&context));
   
   HXT_CHECK(hxtFree(&flagV));
   HXT_CHECK(hxtRTreeDelete(&data));

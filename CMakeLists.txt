@@ -79,9 +79,9 @@ opt(OPENMP "Enable OpenMP" OFF)
 opt(OPTHOM "Enable high-order mesh optimization tools" ${DEFAULT})
 opt(OS_SPECIFIC_INSTALL "Enable OS-specific (e.g. app bundle) installation" OFF)
 opt(OSMESA "Enable OSMesa for offscreen rendering (experimental)" OFF)
-opt(P4EST "Enable p4est for enabling automatic mesh size firld (experimental)" OFF)
+opt(P4EST "Enable p4est for enabling automatic mesh size field (experimental)" OFF)
 opt(PACKAGE_STRIP "Strip symbols in install packages to reduce install size" ON)
-opt(PARSER "Enable GEO file parser (required for .geo/.pos files)" ${DEFAULT})
+opt(PARSER "Enable GEO file parser (required for .geo/.pos scripts)" ${DEFAULT})
 opt(PETSC "Enable PETSc linear solvers (required for SLEPc)" OFF)
 opt(PLUGINS "Enable post-processing plugins" ${DEFAULT})
 opt(POST "Enable post-processing module (required by GUI)" ${DEFAULT})
@@ -91,14 +91,14 @@ opt(QUADMESHINGTOOLS "Enable QuadMeshingTools extensions" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
 opt(SLEPC "Enable SLEPc eigensolvers" OFF)
-opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${DEFAULT})
+opt(SOLVER "Enable built-in finite element solvers (required for reparametrization)" ${DEFAULT})
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
-opt(WRAP_JAVA "Enable generation of Java wrappers for private API" OFF)
-opt(WRAP_PYTHON "Enable generation of Python wrappers for private API" OFF)
+opt(WRAP_JAVA "Generate SWIG Java wrappers for private API" OFF)
+opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by public API)" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
@@ -121,8 +121,9 @@ if(NOT GMSH_RELEASE)
   set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION_TEXI} (development version)")
 endif()
 
-set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
-set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
+set(GMSH_SHORT_VERSION
+    "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}")
+set(GMSH_VERSION "${GMSH_SHORT_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
 set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
@@ -144,6 +145,14 @@ if(ENABLE_PRIVATE_API)
   if(IAMCHILD)
     set(GMSH_PRIVATE_API ${GMSH_PRIVATE_API} PARENT_SCOPE)
   endif()
+  if(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+    set(ENABLE_BUILD_DYNAMIC ON)
+    message(WARNING "SWIG wrappers for the private API are unsupported and "
+            "undocumented. The stable public Python API does not required SWIG.")
+  endif()
+endif()
+
+if(NOT ENABLE_BUILD_SHARED)
 endif()
 
 set(ONELAB_PY contrib/onelab/python/onelab.py)
@@ -227,12 +236,6 @@ if(NOT APPLE)
     set(GMSH_OS "${GMSH_OS}64")
   else()
     set(GMSH_OS "${GMSH_OS}32")
-  endif()
-endif()
-
-if(NOT ENABLE_BUILD_SHARED)
-  if(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
-    set(ENABLE_BUILD_DYNAMIC ON)
   endif()
 endif()
 
@@ -1198,29 +1201,11 @@ if(HAVE_SOLVER)
   endif()
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND
-   ENABLE_HXT AND HAVE_METIS)
-  set_config_option(HAVE_HXT "Hxt")
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
   add_subdirectory(contrib/hxt)
-  include_directories(BEFORE contrib/hxt)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/hxt_tetDelaunay.c)
-    set_config_option(HAVE_HXT3D "Hxt3D")
-  endif()
-  if(MSVC)
-    # Visual C++ does not support C99 - force compilation as C++ code
-    file(GLOB_RECURSE HXT_SRC contrib/hxt/*.c)
-    set_compile_flags(HXT_SRC "/TP")
-  endif()
-  check_include_file("immintrin.h" HAVE_IMMINTRIN_H)
-  if(NOT HAVE_IMMINTRIN_H)
-    add_definitions(-DHAVE_NO_IMMINTRIN_H)
-  endif()
-  if(HAVE_PETSC)
-    add_definitions(-DHXT_HAVE_PETSC)
-  endif()
-  if(CMAKE_C_COMPILER MATCHES "pgi")
-    add_definitions(-DHAVE_NO_OPENMP_SIMD)
-  endif()
+  include_directories(BEFORE ${HXT_INC_DIRS})
+  set_config_option(HAVE_HXT "Hxt")
+  set_config_option(HAVE_HXT3D "Hxt3D")
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools AND ENABLE_QUADMESHINGTOOLS)
@@ -1564,14 +1549,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshConfig.h.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h)
 
-# the texi version file is modified in the source directory (not ideal, but
-# since git tracks the contents of the file this is acceptable as it will only
-# change when the actual version is changed - not for each git hash)
+# the texi and pypi version files are modified in the source directory (not
+# ideal for version.texi, but since git tracks the contents of the file this is
+# acceptable as it will only change when the actual version is changed - not for
+# each git hash; setup.py is not under version control)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
                ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py)
 
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt
-     ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION})
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 
 # process cmake environment variables so we can append them to the -I include
 # commands. This is not recommended (we should only use the cache variables) but

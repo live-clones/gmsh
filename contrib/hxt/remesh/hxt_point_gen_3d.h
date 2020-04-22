@@ -1,7 +1,7 @@
 #ifndef HXT_POINT_GEN_3D_H
 #define HXT_POINT_GEN_3D_H
 
-#include "hxt_api.h"
+#include "hxt_tools.h"
 #include "hxt_mesh.h"
 #include "hxt_point_gen_utils.h"
 #include "hxt_point_gen_options.h"

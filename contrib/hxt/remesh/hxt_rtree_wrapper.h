@@ -1,10 +1,10 @@
 #ifndef HXT_RTREE_WRAPPER_H
 #define HXT_RTREE_WRAPPER_H
 
-#include "hxt_api.h"
 
 #ifdef __cplusplus
 extern "C" {
+#include "hxt_message.h"
 #endif
 
 HXTStatus hxtRTreeCreate(void ** data);

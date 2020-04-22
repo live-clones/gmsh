@@ -1,7 +1,7 @@
 #ifndef HXT_COLLAPSE_EDGE_H
 #define HXT_COLLAPSE_EDGE_H
 
-#include "hxt_api.h"
+#include "hxt_tools.h"
 #include "hxt_mesh.h"
 #include "hxt_edge.h"
 

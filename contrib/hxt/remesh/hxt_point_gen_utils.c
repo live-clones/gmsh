@@ -155,10 +155,8 @@ HXTStatus hxtPointGenSplitQuads(HXTMesh *mesh, uint16_t *color)
 HXTStatus hxtExtractColoredSurface(HXTMesh *mesh, uint16_t color)
 {
   printf("Extracting and writng out colored surface %d\n", color);
-  HXTContext *ocontext;
-  hxtContextCreate(&ocontext);
   HXTMesh *omesh;
-  HXT_CHECK(hxtMeshCreate(ocontext,&omesh));
+  HXT_CHECK(hxtMeshCreate(&omesh));
 
   uint64_t countTri = 0;
   for (uint64_t i=0; i<mesh->triangles.num; i++){
@@ -183,7 +181,6 @@ HXTStatus hxtExtractColoredSurface(HXTMesh *mesh, uint16_t color)
   }
   HXT_CHECK(hxtMeshWriteGmsh(omesh, "extractedColor.msh"));
   HXT_CHECK(hxtMeshDelete(&omesh));
-  HXT_CHECK(hxtContextDelete(&ocontext));
   return HXT_STATUS_OK;
 }
 

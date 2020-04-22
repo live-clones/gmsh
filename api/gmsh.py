@@ -1187,6 +1187,90 @@ class model:
         return _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value)
 
     @staticmethod
+    def getParametrizationBounds(dim, tag):
+        """
+        gmsh.model.getParametrizationBounds(dim, tag)
+
+        Get the `min' and `max' bounds of the parametric coordinates for the entity
+        of dimension `dim' and tag `tag'.
+
+        Return `min', `max'.
+        """
+        api_min_, api_min_n_ = POINTER(c_double)(), c_size_t()
+        api_max_, api_max_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetParametrizationBounds(
+            c_int(dim),
+            c_int(tag),
+            byref(api_min_), byref(api_min_n_),
+            byref(api_max_), byref(api_max_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetParametrizationBounds returned non-zero error code: ",
+                ierr.value)
+        return (
+            _ovectordouble(api_min_, api_min_n_.value),
+            _ovectordouble(api_max_, api_max_n_.value))
+
+    @staticmethod
+    def isInside(dim, tag, parametricCoord):
+        """
+        gmsh.model.isInside(dim, tag, parametricCoord)
+
+        Check if the parametric coordinates provided in `parametricCoord'
+        correspond to points inside the entitiy of dimension `dim' and tag `tag',
+        and return the number of points inside. This feature is only available for
+        a subset of curves and surfaces, depending on the underyling geometrical
+        representation.
+
+        Return an integer value.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        ierr = c_int()
+        api__result__ = lib.gmshModelIsInside(
+            c_int(dim),
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelIsInside returned non-zero error code: ",
+                ierr.value)
+        return api__result__
+
+    @staticmethod
+    def reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which=0):
+        """
+        gmsh.model.reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which=0)
+
+        Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
+        `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1,
+        reparametrize all the points corresponding to the parametric coordinates
+        `parametricCoord'. Multiple matches in case of periodic surfaces can be
+        selected with `which'. This feature is only available for a subset of
+        entities, depending on the underyling geometrical representation.
+
+        Return `surfaceParametricCoord'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_surfaceParametricCoord_, api_surfaceParametricCoord_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelReparametrizeOnSurface(
+            c_int(dim),
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            c_int(surfaceTag),
+            byref(api_surfaceParametricCoord_), byref(api_surfaceParametricCoord_n_),
+            c_int(which),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelReparametrizeOnSurface returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_surfaceParametricCoord_, api_surfaceParametricCoord_n_.value)
+
+    @staticmethod
     def setVisibility(dimTags, value, recursive=False):
         """
         gmsh.model.setVisibility(dimTags, value, recursive=False)

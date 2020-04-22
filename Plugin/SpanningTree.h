@@ -30,6 +30,8 @@ private:
 
     int find(int a);
     void join(int a, int b);
+
+    std::string toString(void);
   };
 
   struct Sort {

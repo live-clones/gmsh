@@ -1,7 +1,7 @@
 #ifndef HXT_GMSH_POINT_GEN_MAIN_H
 #define HXT_GMSH_POINT_GEN_MAIN_H
 
-#include "hxt_api.h"
+#include "hxt_tools.h"
 #include "hxt_mesh.h"
 #include "hxt_point_gen_options.h"
 

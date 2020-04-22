@@ -10,21 +10,24 @@
 
 #if defined(HAVE_HXT)
 extern "C" {
-#include "hxt_api.h"
-#include "remesh/hxt_gmsh_point_gen_main.h"
-#include "remesh/hxt_point_gen_options.h"
+  //#include "hxt_mesh.h"
+    #include "hxt_gmsh_point_gen_main.h"
+    #include "hxt_point_gen_options.h"
 }
 
+static HXTStatus messageCallback(HXTMessage *msg)
+{
+  if(msg) Msg::Info("%s", msg->string);
+  return HXT_STATUS_OK;
+}
 
 int meshGFaceHxt(GModel *gm)
 {
 
-  HXT_CHECK(hxtSetMessageCallback(hxtGmshMsgCallback));
+  HXT_CHECK(hxtSetMessageCallback(messageCallback));
 
   HXTMesh *mesh;
-  HXTContext *context;
-  HXT_CHECK(hxtContextCreate(&context));
-  HXT_CHECK(hxtMeshCreate(context, &mesh));
+  HXT_CHECK(hxtMeshCreate(&mesh));
   
   std::map<int, std::vector<double> > dataH;
   std::map<int, std::vector<double> > dataDir;
@@ -101,10 +104,8 @@ int meshGFaceHxt(GModel *gm)
   
   ///// HERE WE NEED THE CODE TO THE REMESHING STUFF
    
-  HXTContext *fcontext;
   HXTMesh *fmesh;
-  HXT_CHECK(hxtContextCreate(&fcontext));
-  HXT_CHECK(hxtMeshCreate(fcontext, &fmesh));
+  HXT_CHECK(hxtMeshCreate(&fmesh));
 
   // TODO 
   HXTPointGenOptions opt = { .verbosity = 1,
@@ -125,14 +126,12 @@ int meshGFaceHxt(GModel *gm)
   HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
   
   HXT_CHECK(hxtMeshDelete(&fmesh));
-  HXT_CHECK(hxtContextDelete(&fcontext));
  
  
   ///// END OF HERE WE NEED THE CODE TO THE REMESHING STUFF
 
   free (data);
   HXT_CHECK(hxtMeshDelete(&mesh));
-  HXT_CHECK(hxtContextDelete(&context));
   
 
   return 0;
