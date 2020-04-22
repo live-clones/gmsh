@@ -1,4 +1,4 @@
-// Hxt - Copyright (C) 
+// Hxt - Copyright (C)
 // 2016 - 2020 UCLouvain
 //
 // See the LICENSE.txt file for license information.
@@ -16,9 +16,9 @@
 HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
 {
 // we assume that the input is a surface mesh
-  if (mesh->tetrahedra.num)  
+  if (mesh->tetrahedra.num)
     return HXT_ERROR_MSG(HXT_STATUS_FAILED, "The input mesh should only contain triangles");
-  if (mesh->triangles.num == 0)  
+  if (mesh->triangles.num == 0)
     return HXT_ERROR_MSG(HXT_STATUS_FAILED, "The input mesh should contain triangles");
 
   hxtNodeInfo* nodeInfo;
@@ -43,7 +43,7 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
 #endif
 
   HXT_CHECK( hxtAlignedFree(&nodeInfo) );
-  
+
   return HXT_STATUS_OK;
 }
 
@@ -244,7 +244,7 @@ static inline void getTetCoordAndNodalSize(HXTMesh* mesh, double* nodalSizes, ui
 
 //   #pragma omp parallel for
 //   for(uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-    
+
 //     if(getProcessedFlag(mesh, i))
 //       continue;
 
@@ -299,7 +299,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
       while(threadID <= maxThreads) {
         startIndex[threadID++] = mesh->tetrahedra.num;
       }
-      
+
       HXT_CHECK( hxtAlignedMalloc(&newVertices, sizeof(double)*4*numToProcess) );
     }
 
@@ -326,7 +326,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
         double s[4];
         double bary[4];
         double newCoord [3];
-        double vtaSize;
+        double vtaSize = 0.;
         getTetCoordAndNodalSize(mesh, delOptions->nodalSizes, i, p, s);
 
         // try to add the point at the circumcenter
@@ -337,15 +337,15 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
         if(bary[0] > 0 && bary[1] > 0 && bary[2] > 0 && bary[3] > 0) {
 
           // computing the mesh size
-          if(meshSizeFun!=NULL) {
+          if(meshSizeFun != NULL) {
             vtaSize = meshSizeFun(newCoord[0], newCoord[1], newCoord[2], meshSizeData);
           }
-          else { // we suppose delOptions->nodalSize!=NULL
+          if(vtaSize <= 0.) {
             vtaSize = getNodalSizeFromBary(s, bary);
           }
 
           double circumradius2 = square_dist(p[0], newCoord);
-          
+
           if(!is_too_close(s[0], vtaSize, circumradius2) &&
              !is_too_close(s[1], vtaSize, circumradius2) &&
              !is_too_close(s[2], vtaSize, circumradius2) &&
@@ -359,7 +359,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
             localAdd++;
           }
         }
-        
+
         // try to add the point at barycentric coordinates
         // ponderated by the inverse of the mesh size
         if(!pointAdded){
@@ -381,8 +381,9 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
           }
 #endif
 
-          if(meshSizeFun!=NULL) {
-            vtaSize = meshSizeFun(newCoord[0], newCoord[1], newCoord[2], meshSizeData);
+          if(meshSizeFun != NULL) {
+            double s = meshSizeFun(newCoord[0], newCoord[1], newCoord[2], meshSizeData);
+            if(s > 0.) vtaSize = s;
           }
 
           if(!is_too_close(s[0], vtaSize, square_dist(p[0], newCoord)) &&
@@ -452,7 +453,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
     mesh->vertices.num += add;
 
     delOptions->partitionability = 1.0 - pow(0.5, iter);
-    
+
     HXT_CHECK(hxtDelaunay(mesh, delOptions));
 
     uint32_t numAdd = mesh->vertices.num - delOptions->numVerticesInMesh;
@@ -466,4 +467,3 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
 
   return HXT_STATUS_OK;
 }
-

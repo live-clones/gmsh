@@ -1,4 +1,4 @@
-// Hxt - Copyright (C) 
+// Hxt - Copyright (C)
 // 2016 - 2020 UCLouvain
 //
 // See the LICENSE.txt file for license information.
@@ -67,7 +67,7 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
                                    .delaunayThreads = options->delaunayThreads};
 
   uint32_t numVerticesConstrained = mesh->vertices.num;
-  
+
   HXT_INFO_COND(options->verbosity>0, "Creating an empty mesh with %u vertices", numVerticesConstrained);
   HXT_CHECK( hxtEmptyMesh(mesh, &delOptions) );
   HXT_INFO_COND(options->verbosity>1, "Empty mesh finished\n");
@@ -82,7 +82,7 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
 
   HXT_CHECK( hxtAlignedMalloc(&tri2TetMap, mesh->triangles.num*sizeof(uint64_t)) );
   HXT_CHECK( hxtAlignedMalloc(&lines2TriMap, mesh->lines.num*sizeof(uint64_t)) );
-  
+
   HXT_CHECK( hxtGetTri2TetMap(mesh, tri2TetMap, &nbMissingTriangles) );
   HXT_CHECK( hxtGetLines2TriMap(mesh, lines2TriMap, &nbLinesNotInTriangles) );
 
@@ -113,7 +113,7 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
     if(delOptions.numVerticesInMesh < mesh->vertices.num) {
       HXT_INFO("Steiner(s) point(s) were inserted");
       delOptions.numVerticesInMesh = mesh->vertices.num;
-    } 
+    }
 
     t[3] = omp_get_wtime();
 
@@ -135,7 +135,7 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   }
 
   HXT_CHECK( hxtConstrainTriangles(mesh, tri2TetMap) );
-  
+
   if(nbLinesNotInTriangles!=0)
     HXT_CHECK( hxtConstrainLinesNotInTriangles(mesh, lines2TetMap, lines2TriMap) );
 
@@ -150,17 +150,20 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   t[4] = omp_get_wtime();
 
   if(options->refine){
-    // HXT_CHECK(hxtComputeMeshSizeFromMesh(mesh, &delOptions));
-    if(options->meshSizeFun==NULL)
-      HXT_CHECK(hxtCreateNodalsizeFromTrianglesAndLines(mesh, &delOptions.nodalSizes));
+    HXT_CHECK(hxtCreateNodalSize(mesh, &delOptions.nodalSizes));
+
+    if(options->meshSizeFun!=NULL) {
+      if(hxtComputeNodalSizeFromFunction(mesh, delOptions.nodalSizes, options->meshSizeFun, options->meshSizeData)!=HXT_STATUS_OK)
+        HXT_CHECK(hxtComputeNodalSizeFromTrianglesAndLines(mesh, delOptions.nodalSizes));
+    }
     else
-      HXT_CHECK(hxtCreateNodalSizeFromFunction(mesh, &delOptions.nodalSizes, options->meshSizeFun, options->meshSizeData) );
+      HXT_CHECK(hxtComputeNodalSizeFromTrianglesAndLines(mesh, delOptions.nodalSizes));
 
     HXT_CHECK( setFlagsToProcessOnlyVolumesInBrep(mesh) );
 
     HXT_CHECK(hxtRefineTetrahedra(mesh, &delOptions, options->meshSizeFun, options->meshSizeData));
 
-    HXT_CHECK( hxtDestroyNodalsize(&delOptions.nodalSizes) );
+    HXT_CHECK( hxtDestroyNodalSize(&delOptions.nodalSizes) );
 
     HXT_INFO_COND(options->verbosity>1, "Mesh refinement finished\n");
   }
@@ -189,7 +192,7 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   // aspect_ratio_graph(mesh);
   t[6] = omp_get_wtime();
 
-  
+
   if(options->stat){
     HXT_INFO(" \tFinal tet. mesh contains %" HXTu64 " tetrahedra", mesh->tetrahedra.num);
     HXT_INFO(" \tFinal tet. mesh contains %u vertices", mesh->vertices.num);
@@ -218,4 +221,3 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
 
   return HXT_STATUS_OK;
 }
-

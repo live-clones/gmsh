@@ -1,4 +1,4 @@
-// Hxt - Copyright (C) 
+// Hxt - Copyright (C)
 // 2016 - 2020 UCLouvain
 //
 // See the LICENSE.txt file for license information.
@@ -9,32 +9,35 @@
 #include "hxt_vertices.h"
 #include <math.h>
 
-
-HXTStatus hxtCreateNodalSizeFromFunction(HXTMesh* mesh, double** nodalSizes_ptr,
-                                         double (*meshSizeFun)(double x, double y, double z,
-                                                               void* meshSizeData),
-                                         void* meshSizeData)
+HXTStatus hxtCreateNodalSize(HXTMesh* mesh, double** nodalSizes_ptr)
 {
   HXT_CHECK(hxtAlignedMalloc(nodalSizes_ptr,mesh->vertices.num*sizeof(double)));
-  double* nodalSizes = *nodalSizes_ptr;
+  return HXT_STATUS_OK;
+}
 
+HXTStatus hxtComputeNodalSizeFromFunction(HXTMesh* mesh, double* nodalSizes,
+                                          double (*meshSizeFun)(double x, double y, double z,
+                                                                void* meshSizeData),
+                                          void* meshSizeData)
+{
   #pragma omp parallel for
   for (uint32_t i=0; i<mesh->vertices.num; i++) {
     double* coord = &mesh->vertices.coord[4*i];
     nodalSizes[i] = meshSizeFun(coord[0], coord[1], coord[2], meshSizeData);
   }
 
+  for (uint32_t i=0; i<mesh->vertices.num; i++) {
+    if(nodalSizes[i] <= 0.)
+      return HXT_STATUS_FAILED;
+  }
+
   return HXT_STATUS_OK;
 }
 
-
-HXTStatus hxtCreateNodalsizeFromTrianglesAndLines(HXTMesh* mesh, double** nodalSizes_ptr)
+HXTStatus hxtComputeNodalSizeFromTrianglesAndLines(HXTMesh* mesh, double* nodalSizes)
 {
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
 
-  HXT_CHECK(hxtAlignedMalloc(nodalSizes_ptr,mesh->vertices.num*sizeof(double)));
-  double* nodalSizes = *nodalSizes_ptr;
-  
   #pragma omp parallel for
   for (uint32_t i = 0; i<mesh->vertices.num; i++){
     nodalSizes[i] = 0;
@@ -45,8 +48,8 @@ HXTStatus hxtCreateNodalsizeFromTrianglesAndLines(HXTMesh* mesh, double** nodalS
   // we do not take into account hereafter nodalSizes = to DBL_MAX
   // could be changed in another fashion
   for (uint32_t i = 0; i<mesh->triangles.num; i++){
-    for (uint32_t j = 0; j<3; j++){  
-      for (uint32_t k = j+1; k<3; k++){  
+    for (uint32_t j = 0; j<3; j++){
+      for (uint32_t k = j+1; k<3; k++){
         uint32_t n1 = mesh->triangles.node[3*i+j];
         uint32_t n2 = mesh->triangles.node[3*i+k];
         if (n1 != HXT_GHOST_VERTEX && n2 != HXT_GHOST_VERTEX){
@@ -90,15 +93,12 @@ HXTStatus hxtCreateNodalsizeFromTrianglesAndLines(HXTMesh* mesh, double** nodalS
       nodalSizes[i] /= (double) vertices[i].padding.hilbertDist;
     }
   }
-  return HXT_STATUS_OK;    
+  return HXT_STATUS_OK;
 }
 
-HXTStatus hxtCreateNodalsizeFromMesh(HXTMesh* mesh, double** nodalSizes_ptr)
+HXTStatus hxtComputeNodalSizeFromMesh(HXTMesh* mesh, double* nodalSizes)
 {
 
-  HXT_CHECK(hxtAlignedMalloc(nodalSizes_ptr,mesh->vertices.num*sizeof(double)));
-  double* nodalSizes = *nodalSizes_ptr;
-  
   #pragma omp parallel for
   for (uint32_t i = 0; i<mesh->vertices.num; i++){
     nodalSizes[i] = DBL_MAX;
@@ -108,8 +108,8 @@ HXTStatus hxtCreateNodalsizeFromMesh(HXTMesh* mesh, double** nodalSizes_ptr)
   // we do not take into account hereafter nodalSizes = to DBL_MAX
   // could be changed in another fashion
   for (uint32_t i = 0; i<mesh->tetrahedra.num; i++){
-    for (uint32_t j = 0; j<4; j++){  
-      for (uint32_t k = j+1; k<4; k++){  
+    for (uint32_t j = 0; j<4; j++){
+      for (uint32_t k = j+1; k<4; k++){
         uint32_t n1 = mesh->tetrahedra.node[4*i+j];
         uint32_t n2 = mesh->tetrahedra.node[4*i+k];
         if (n1 != HXT_GHOST_VERTEX && n2 != HXT_GHOST_VERTEX){
@@ -127,7 +127,7 @@ HXTStatus hxtCreateNodalsizeFromMesh(HXTMesh* mesh, double** nodalSizes_ptr)
   return HXT_STATUS_OK;
 }
 
-HXTStatus hxtDestroyNodalsize(double** nodalSizes_ptr)
+HXTStatus hxtDestroyNodalSize(double** nodalSizes_ptr)
 {
   HXT_CHECK( hxtAlignedFree(nodalSizes_ptr) );
   return HXT_STATUS_OK;

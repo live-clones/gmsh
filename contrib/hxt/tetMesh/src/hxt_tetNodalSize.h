@@ -1,4 +1,4 @@
-// Hxt - Copyright (C) 
+// Hxt - Copyright (C)
 // 2016 - 2020 UCLouvain
 //
 // See the LICENSE.txt file for license information.
@@ -11,15 +11,19 @@
 
 #include "hxt_mesh.h"
 
+HXTStatus hxtCreateNodalSize(HXTMesh* mesh, double** nodalSizes_ptr);
+HXTStatus hxtDestroyNodalsize(double** nodalSize);
+
 /// Compute sizes at vertices of the mesh from meshSizeFun
-HXTStatus hxtCreateNodalSizeFromFunction(HXTMesh* mesh, double** nodalSize,
-                                         double (*meshSizeFun)(double x, double y, double z,
-                                                               void* meshSizeData),
-                                         void* meshSizeData);
+HXTStatus hxtComputeNodalSizeFromFunction(HXTMesh* mesh, double* nodalSize,
+                                          double (*meshSizeFun)(double x, double y, double z,
+                                                                void* meshSizeData),
+                                          void* meshSizeData);
 
 /// Compute sizes at vertices of the mesh from existing edges
-HXTStatus hxtCreateNodalsizeFromTrianglesAndLines(HXTMesh* mesh, double** nodalSize);
-HXTStatus hxtCreateNodalsizeFromMesh(HXTMesh* mesh, double** nodalSize);
-HXTStatus hxtDestroyNodalsize(double** nodalSize);
+HXTStatus hxtComputeNodalsizeFromTrianglesAndLines(HXTMesh* mesh, double* nodalSize);
+HXTStatus hxtComputeNodalsizeFromMesh(HXTMesh* mesh, double* nodalSize);
+
+
 
 #endif
