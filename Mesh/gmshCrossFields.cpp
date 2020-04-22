@@ -402,12 +402,15 @@ struct cross2dPtrLessThan {
 //        DO IT ON SURFACES
 // ---------------------------------------------
 
+
+
 static void closest(const cross2d &c1, const cross2d &c2, double &a2,
                     double &diff)
 {
-  SVector3 d = c1._tgt * cos(c1._atemp) + c1._tgt2 * sin(c1._atemp);
 
   double P = M_PI / 2;
+
+  SVector3 d = c1._tgt * cos(c1._atemp + 0*P) + c1._tgt2 * sin(c1._atemp + 0*P);
 
   SVector3 d1 = c2._tgt * cos(c2._atemp) + c2._tgt2 * sin(c2._atemp);
   SVector3 d2 = c2._tgt * cos(c2._atemp + P) + c2._tgt2 * sin(c2._atemp + P);
@@ -422,20 +425,25 @@ static void closest(const cross2d &c1, const cross2d &c2, double &a2,
   double D4 = dot(d, d4);
   if(D1 > D2 && D1 > D3 && D1 > D4) {
     a2 = c2._atemp;
-    diff = acos(D1);
+    SVector3 pv = crossprod (d,d1);
+    diff = std::min(acos(D1),acos(pv.norm()));
   }
   else if(D2 > D1 && D2 > D3 && D2 > D4) {
     a2 = c2._atemp + P;
-    diff = acos(D2);
+    SVector3 pv = crossprod (d,d2);
+    diff = std::min(acos(D2),acos(pv.norm()));
   }
   else if(D3 > D1 && D3 > D2 && D3 > D4) {
     a2 = c2._atemp + 2 * P;
-    diff = acos(D3);
+    SVector3 pv = crossprod (d,d3);
+    diff = std::min(acos(D3),acos(pv.norm()));
   }
   else {
     a2 = c2._atemp + 3 * P;
-    diff = acos(D4);
+    SVector3 pv = crossprod (d,d4);
+    diff = std::min(acos(D4),acos(pv.norm()));
   }
+  
 }
 
 static void
@@ -964,8 +972,8 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
       dir1 = d0[t0];
     }
 
-    printf("GROUP %d %12.5E %12.5E (%lu,%lu)\n",g.groupId, fabs(dot(g.crosses[0]->_tgt, dir0)),
-           fabs(dot(g.crosses[0]->_tgt, dir1)), g.left[0]->getNum(), g.right[0]->getNum());
+    //    printf("GROUP %d %12.5E %12.5E (%lu,%lu)\n",g.groupId, fabs(dot(g.crosses[0]->_tgt, dir0)),
+    //           fabs(dot(g.crosses[0]->_tgt, dir1)), g.left[0]->getNum(), g.right[0]->getNum());
 
     Dof U1R(g.left[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
     Dof U2R(g.right[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
@@ -1974,8 +1982,8 @@ static bool isSingular (MVertex *v,
   if (periodic){
     vsorted[0].resize(vsorted[0].size()-1);
     double diffs = 0;
-    //	printf("NODE %lu\n",v->getNum());
     size_t N = periodic ?  vsorted[0].size()  :  vsorted[0].size() -2;
+    //    if (v->getNum() == 45)printf("NODE %lu periodic %d N %lu \n",v->getNum(),periodic, N);
     for(size_t i = 0; i < N; ++i) {
       MVertex *v0 = vsorted[0][i%vsorted[0].size()];
       MVertex *v1 = vsorted[0][(i+1)%vsorted[0].size()];
@@ -1987,13 +1995,18 @@ static bool isSingular (MVertex *v,
       double diff0 = acos( fabs(dot(dir0,dir1)));
       SVector3 pv = crossprod(dir0,dir1);
       double diff1 = acos(pv.norm());
+      //      if (v->getNum() == 45)printf("(%lu %lu %lu %g,%g,%g) %g %g %g -- %g %g %g\n",v0->getNum(),v1->getNum(),v2->getNum(),
+      //				   diff0,diff1, std::min(diff0,diff1),dir0.x(),dir0.y(),dir0.z(),dir1.x(),dir1.y(),dir1.z());
       diffs += std::min(diff0,diff1);    
     }
     
     double curvature = 2*M_PI - K[v];
+
+    
     double x = fabs (diffs - curvature);
 
     if (x > .95*M_PI/2) {
+      printf("%lu %12.5E %12.5E\n",v->getNum(),diffs,2*M_PI -K[v]);
       return true;
     }
   }
@@ -2159,6 +2172,8 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
 	double angle;
 	if (it01 != C.end()  && it12 != C.end() ){
 	  closest (it01->second, it12->second, angle, diff); 
+	  if (v->getNum() == 45)printf("(%lu %lu %lu %g) \n",v0->getNum(),v1->getNum(),v2->getNum(),
+				       diff);
 	  diffs_external += diff;
 	}
       }
@@ -4901,7 +4916,7 @@ public:
     for (size_t i=0;i<t_junctions.size();i++){
       if (t_junctions[i].first == t && t_junctions[i].second == index)_found = true;
     }
-    printf("triangle %lu is a t-junction for %d --> %d\n",t->getNum(),index,_found);
+    //    printf("triangle %lu is a t-junction for %d --> %d\n",t->getNum(),index,_found);
     return !_found ;
   }
   
@@ -5245,8 +5260,8 @@ public:
 		  if (op_equal(e, it_e->first)){
 		    for (size_t l=0;l<it_e->second.indexOfCuts.size();l++){
 		      std::pair<MTriangle*,int> pp = std::make_pair(f[i]->triangles[j],it_e->second.indexOfCuts[l]);
-		      printf ("TRIANGLE %lu is associated to T-Junction for iso %d\n",f[i]->triangles[j]->getNum(),
-			      it_e->second.indexOfCuts[l]);
+		      //		      printf ("TRIANGLE %lu is associated to T-Junction for iso %d\n",f[i]->triangles[j]->getNum(),
+		      //			      it_e->second.indexOfCuts[l]);
 		      tj.push_back(pp);
 		    }
 		  }
@@ -5594,7 +5609,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   qLayout.cutMesh(cuts,inverseClassificationEdges, t_junctions);
   gm->writeMSH("cutmesh.msh", 4.0, false, true);
 
-  constexpr bool do_reclassify = false; /* no longer needed, done by QMT */
+  constexpr bool do_reclassify = true; /* no longer needed, done by QMT */
   if (do_reclassify) {
     Msg::Info("Classifying the model");
     discreteEdge *de = new discreteEdge(
@@ -5992,6 +6007,7 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
 
     const bool createViewTheta = true; /* - View 'theta' */
     qLayout.computeCrossFieldAndH(&temp, dataTHETA, createViewTheta);
+
 
 
     /* - View 'H' */
