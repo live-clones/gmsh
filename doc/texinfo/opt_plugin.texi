@@ -76,11 +76,24 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(BoundaryAngles)
-Plugin(BoundaryAngles) computes the (interior) angles between the line elements on the boundary of all surfaces. The angles, computed modulo 2*Pi, are stored in a new post-processing view, one for each surface. The plugin currently only works for planar surfaces.
+Plugin(BoundaryAngles) computes the (interior) angles between the line elements on the boundary of all surfaces. The angles, computed modulo 2*Pi, are stored in a new post-processing view, one for each surface. The plugin currently only works for planar surfaces.Available options:- Visible (1=True, 0 = False, Default = 1): Visibility of the Views in the GUI - Save (1=True, 0 = False, Default = 0): Save the Views on disk ?- Remove (1=True, 0 = False, Default = 0): Remove the View from the memory after execution?- Filename (Default = 'Angles_Surface'): Root name for the Views (in case of save / Visibility)- Dir (Default = ''): Output directory (possibly nested)
+String options:
+@table @code
+@item Filename
+Default value: @code{"Angles_Surface"}
+@item Dir
+Default value: @code{""}
+@end table
 Numeric options:
 @table @code
 @item View
 Default value: @code{-1}
+@item Save
+Default value: @code{0}
+@item Visible
+Default value: @code{0}
+@item Remove
+Default value: @code{0}
 @end table
 
 @item Plugin(Bubbles)
@@ -1192,8 +1205,7 @@ Parameters@*
 - OutputPhysical: physical tag of the generated tree (-1 will select a new tag automatically).@*
 @*
 Note - Lists must be comma separated integers and spaces are ignored.@*
-Remark - This plugin does not overwrite a physical group.Therefore, if an existing physical tag is used in OutputPhysical, the edges of the tree will be /added/ to the specified group.@*
-Limitation - Unknown behaviour with curved meshes.
+Remark - This plugin does not overwrite a physical group.Therefore, if an existing physical tag is used in OutputPhysical, the edges of the tree will be /added/ to the specified group.
 String options:
 @table @code
 @item PhysicalVolumes
