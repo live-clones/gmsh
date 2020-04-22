@@ -7,7 +7,6 @@
 //   Célestin Marot
 
 #include "hxt_vertices.h"
-#include <math.h>
 
 HXTStatus hxtCreateNodalSize(HXTMesh* mesh, double** nodalSizes_ptr)
 {

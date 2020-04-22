@@ -1,6 +1,7 @@
 #include "predicates.h"
 #include "hxt_triangle_quality.h"
 #include "hxt_point_gen_numerics.h"
+#include <math.h>
 
 static inline void prodve(double a[3], double b[3], double c[3])
 {

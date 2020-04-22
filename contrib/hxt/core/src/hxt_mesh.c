@@ -96,13 +96,6 @@ HXTStatus hxtMeshDelete ( HXTMesh** mesh) {
 }
 
 
-
-
-
-
-
-#ifdef HXT_CORE_FILEIO
-
 // TODO: more checking of fgets
 HXTStatus ReadNodesFromGmsh(FILE *fp,  HXTMesh* m){
   rewind (fp);
@@ -582,6 +575,4 @@ HXTStatus  hxtMeshWriteGmsh  ( HXTMesh* mesh , const char *filename) {
   fclose(file);
   return HXT_STATUS_OK;
 }
-
-#endif
 

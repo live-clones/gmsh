@@ -7,6 +7,7 @@
 //   Célestin Marot
 
 #include "hxt_tetDelaunay.h"
+#include "hxt_tetPartition.h"
 #include "predicates.h"
 #include "hxt_tetSync.h"
 #include "hxt_tetFlag.h"
@@ -505,7 +506,7 @@ static int tetInsphere(HXTMesh* mesh, const uint64_t curTet, const uint32_t vta)
 /***********************************
  * walk to cavity
  ***********************************/
-HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, uint64_t* __restrict__ curTet, const uint32_t vta)
+static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, uint64_t* __restrict__ curTet, const uint32_t vta)
 {
   uint64_t nextTet = *curTet;
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;

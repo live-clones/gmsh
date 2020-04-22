@@ -1,10 +1,8 @@
-#include <math.h>
 #include <time.h>
 #include <float.h>
 #include "hxt_surface_mesh.h"
 #include "hxt_surface_mesh_collapse.h"
 
-#include "hxt_point_gen_utils.h"
 #include "hxt_point_gen_realloc.h"
 #include "hxt_rtree_wrapper.h"
 

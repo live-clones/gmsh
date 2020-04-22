@@ -1,6 +1,6 @@
-#include <math.h>
 #include "hxt_point_gen_numerics.h"
 #include "predicates.h"
+#include <math.h>
 
 int hxtGetSys2x2(double mat[2][2], double b[2], double res[2])
 // FUNCTION sys2x2 from gmsh/Numeric/Numeric.cpp
@@ -14,7 +14,7 @@ int hxtGetSys2x2(double mat[2][2], double b[2], double res[2])
   // TOLERANCE ! WARNING WARNING
   if(norm == 0.0 || fabs(det) / norm < 1.e-16) {
     if(norm) //Msg::Debug("Assuming 2x2 matrix is singular (det/norm == %.16g)", fabs(det) / norm);
-        printf("Assuming 2x2 matrix is singular (det/norm == %.16g)\n", fabs(det) / norm);
+        HXT_WARNING("Assuming 2x2 matrix is singular (det/norm == %.16g)\n", fabs(det) / norm);
     res[0] = res[1] = 0.0;
     return 0;
   }
@@ -58,7 +58,7 @@ double inv3x3(double mat[3][3], double inv[3][3])
     inv[2][2] =  (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]) * ud;
   }
   else{
-    printf("Singular matrix 3x3");
+    HXT_WARNING("Singular matrix 3x3");
     for(int i = 0; i < 3; i++)
       for(int j = 0; j < 3; j++)
         inv[i][j] = 0.;

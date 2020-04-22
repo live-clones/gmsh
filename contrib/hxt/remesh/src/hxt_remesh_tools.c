@@ -1,4 +1,3 @@
-#include "hxt_message.h"
 #include "hxt_tools.h"
 #include "hxt_remesh_tools.h"
 

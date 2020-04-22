@@ -7,9 +7,10 @@
 //   Célestin Marot
 
 #include "hxt_omp.h"
-#include <string.h>
 #include "hxt_vertices.h"
 #include "hxt_sort.h"
+#include <string.h>
+
 
 #if defined( __BMI2__ ) || defined( __AVX2__ ) || (defined(__AVX512F__) && defined(__AVX512VL__))
 #include <immintrin.h>

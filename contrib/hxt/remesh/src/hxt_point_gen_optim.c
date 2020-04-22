@@ -1,6 +1,5 @@
-#include <math.h>
+#include "hxt_tools.h"
 #include "hxt_edge.h"
-#include "hxt_point_gen_optim.h"
 #include "hxt_point_gen_utils.h"
 
 #include "hxt_triangle_quality.h"

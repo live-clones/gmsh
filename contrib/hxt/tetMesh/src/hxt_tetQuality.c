@@ -6,7 +6,6 @@
 // Contributor(s):
 //   Célestin Marot
 
-#include <math.h>
 #include "hxt_tools.h"
 
 //!\ this function does not return the aspect ratio 'r'. It returns 'r^2/24'

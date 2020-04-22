@@ -1,10 +1,8 @@
-#include <math.h>
-#include <float.h>
+#include "hxt_tools.h"
+
 #include "hxt_point_gen_1d.h"
 
 #include "hxt_point_gen_numerics.h"
-
-#include "hxt_post_debugging.h"
 
 
 // For the following: a line is a boundary edge

@@ -1,6 +1,8 @@
 #ifndef HXT_POINT_GEN_OPTIONS_H
 #define HXT_POINT_GEN_OPTIONS_H
 
+#include <stdint.h>
+
 /**
 * \file hxt_point_gen_options.h Point generation.
 * \author Christos Georgiadis 

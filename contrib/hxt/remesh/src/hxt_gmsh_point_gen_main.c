@@ -3,6 +3,8 @@
 #include "hxt_point_gen_options.h"
 #include "hxt_point_gen_io.h"
 #include "hxt_point_gen_numerics.h"
+#include "hxt_point_gen_utils.h"
+#include "hxt_point_gen.h"
 
 #include "hxt_tetRepair.h"
 

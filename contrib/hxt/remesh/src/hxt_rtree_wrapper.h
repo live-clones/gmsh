@@ -5,6 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #include "hxt_message.h"
+#include <stdint.h>
 #endif
 
 HXTStatus hxtRTreeCreate(void ** data);

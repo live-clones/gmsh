@@ -1,7 +1,5 @@
 #include "hxt_edge.h"
 #include "hxt_tools.h"
-#include <string.h>
-#include <math.h>
 
 struct hxtLineLoopStruct{
   double length;
@@ -23,6 +21,7 @@ double hxtEdgesLength(const HXTEdges *edges,uint32_t ie){
   
   int i1 = edges->node[2*ie+0];
   int i2 = edges->node[2*ie+1];;
+
   double *x1 = mesh->vertices.coord+i1*4;
   double *x2 = mesh->vertices.coord+i2*4;
   double dx = x1[0]-x2[0];

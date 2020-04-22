@@ -1,8 +1,6 @@
 #ifndef HXT_MESH_H
 #define HXT_MESH_H
 
-#define HXT_CORE_FILEIO
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -110,13 +108,13 @@ typedef struct {
     uint64_t num;
     uint64_t size;
   } lines;
+
   struct {
     uint32_t* node;
     uint16_t* colors;
     uint32_t num;
     uint32_t size;
   } points;
-
 
   // boundary representation
   struct {
@@ -136,10 +134,10 @@ typedef struct {
 HXTStatus  hxtMeshCreate          ( HXTMesh** mesh);
 HXTStatus  hxtMeshDelete          ( HXTMesh** meshPtr);
 
-#ifdef HXT_CORE_FILEIO
+// mesh I/O
 HXTStatus  hxtMeshReadGmsh       ( HXTMesh* mesh, const char* filename);
 HXTStatus  hxtMeshWriteGmsh      ( HXTMesh* mesh, const char* filename);
-#endif
+
 
 #ifdef __cplusplus
 }

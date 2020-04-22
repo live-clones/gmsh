@@ -6,7 +6,6 @@
 // Contributor(s):
 //   Célestin Marot
 
-#include <math.h>
 #include "hxt_tetDelaunay.h"
 #include "predicates.h"
 #include "hxt_tetFlag.h"
