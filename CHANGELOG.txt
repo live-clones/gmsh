@@ -1,7 +1,8 @@
 4.6.0 (Work-in-progress): new options to only generate initial 2D or 3D meshes
-(without node insertion), and to only mesh non-meshed entities; new OCC API
-functions to reduce the number of synchronizations for complex models; MED
-output now preserves node and element tags; small bug fixes.
+(without node insertion), and to only mesh non-meshed entities; added support
+for mesh size fields in HXT; new OCC API functions to reduce the number of
+synchronizations for complex models; MED output now preserves node and element
+tags; small bug fixes.
 
 * Incompatible API changes: new optional arguments to mesh/clear and
   mesh/createTopology; new argument to mesh/getBasisFunctions; removed

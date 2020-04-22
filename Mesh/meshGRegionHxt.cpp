@@ -31,24 +31,23 @@ extern "C" {
 #include "hxt_tetMesh.h"
 }
 
-static HXTStatus myRecoveryFun(HXTMesh *mesh, void *userData)
+static HXTStatus recoveryCallback(HXTMesh *mesh, void *userData)
 {
   return hxt_boundary_recovery(mesh);
 }
 
 // This is a list of regions that are simply connected
 
-HXTStatus hxtGmshMsgCallback(HXTMessage *msg)
+static HXTStatus messageCallback(HXTMessage *msg)
 {
   if(msg) Msg::Info("%s", msg->string);
   return HXT_STATUS_OK;
 }
 
-double hxtMeshSizeGmshCallBack(double x, double y, double z, void *userData)
+static double meshSizeCallBack(double x, double y, double z, void *userData)
 {
   GRegion *gr = (GRegion *)userData;
-  double lc2 = BGM_MeshSize(gr, 0, 0, x, y, z);
-  return lc2;
+  return BGM_MeshSize(gr, 0, 0, x, y, z);
 }
 
 static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
@@ -361,9 +360,8 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 
 static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 {
-  HXT_CHECK(hxtSetMessageCallback(hxtGmshMsgCallback));
+  HXT_CHECK(hxtSetMessageCallback(messageCallback));
 
-  /*******************  ^ all argument were processed *********************/
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
 
@@ -383,13 +381,12 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     0.35, // double qualityMin;
     0, // double (*qualityFun)
     0, // void* qualityData;
-    0, // double (*meshSizeFun)
-    0, // void* meshSizeData;
-    myRecoveryFun, // HXTStatus (*recoveryFun)
+    meshSizeCallBack, // double (*meshSizeFun)
+    regions[0], // void* meshSizeData; // FIXME: should be dynamic!
+    recoveryCallback, // HXTStatus (*recoveryFun)
     0 // void* recoveryData;
   };
 
-  //  Msg::Info("Entering hxtTetMesh3d using %d threads",nthreads);
   HXT_CHECK(hxtTetMesh(mesh, &options));
 
   //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
