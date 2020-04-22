@@ -47,7 +47,20 @@ static HXTStatus messageCallback(HXTMessage *msg)
 static double meshSizeCallBack(double x, double y, double z, void *userData)
 {
   GRegion *gr = (GRegion *)userData;
-  return BGM_MeshSize(gr, 0, 0, x, y, z);
+  double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0, x, y, z);
+  if(lc == MAX_LC && CTX::instance()->mesh.lcExtendFromBoundary) {
+    // let hxt compute the mesh size from the boundary mesh size
+    lc = 0.;
+  }
+  else {
+    // constrain by global lcMin and lcMax
+    lc = std::max(lc, CTX::instance()->mesh.lcMin);
+    lc = std::min(lc, CTX::instance()->mesh.lcMax);
+    // apply global scaling
+    if(gr->getMeshSizeFactor() != 1.0) lc *= gr->getMeshSizeFactor();
+    lc *= CTX::instance()->mesh.lcFactor;
+  }
+  return lc;
 }
 
 static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
