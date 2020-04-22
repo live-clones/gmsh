@@ -393,11 +393,11 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     0, // int delaunayThreads;
     0, // int improveThreads;
     1, // int reproducible;
-    1, // int verbosity;
+    (Msg::GetVerbosity() > 5) ? 2 : 1, // int verbosity;
     1, // int stat;
     1, // int refine;
     CTX::instance()->mesh.optimize, // int optimize;
-    0.35, // double qualityMin;
+    CTX::instance()->mesh.optimizeThreshold, // double qualityMin;
     0, // double (*qualityFun)
     0, // void* qualityData;
     meshSizeCallBack, // double (*meshSizeFun)
