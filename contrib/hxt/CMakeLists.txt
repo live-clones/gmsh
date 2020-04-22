@@ -74,7 +74,19 @@ set(SRC ${SRC}
   remesh/hxt_surface_mesh_collapse.c
   remesh/hxt_swap_edge.c
   remesh/hxt_triangle_quality.c
-)
+  )
+# HXT (multiblock)
+set(SRC ${SRC}
+  multiblock/hxt_quadMultiBlock.cpp
+  multiblock/hxt_qmbSingularity.cpp
+  multiblock/hxt_qmbCorner.cpp
+  multiblock/hxt_qmbBoundaryLine.cpp
+  multiblock/hxt_qmbBoundary.cpp
+  multiblock/hxt_qmbSeparatrice.cpp
+  multiblock/hxt_qmbSepGroup.cpp
+  multiblock/hxt_qmbMultiBlock.cpp
+  multiblock/hxt_qmbQuadGenerator.cpp
+  )
 
 # do not use arithmetic contraction in predicates.c
 if("x${CMAKE_C_COMPILER_ID}" STREQUAL "xMSVC" )

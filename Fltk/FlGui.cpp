@@ -22,7 +22,8 @@
 #include "statisticsWindow.h"
 #include "visibilityWindow.h"
 #include "highOrderToolsWindow.h"
-#include "quadMeshingToolsWindow.h"
+#include "quadMeshingToolsWindow.h" 
+#include "multiblockWindow.h"
 #include "clippingWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
@@ -594,6 +595,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
   highordertools = new highOrderToolsWindow(CTX::instance()->deltaFontSize);
   quadmeshingtools = new quadMeshingToolsWindow(CTX::instance()->deltaFontSize);
+  multiblock =  new multiblockWindow(CTX::instance()->deltaFontSize);
   clipping = new clippingWindow(CTX::instance()->deltaFontSize);
   manip = new manipWindow(CTX::instance()->deltaFontSize);
   elementaryContext =
@@ -629,6 +631,7 @@ FlGui::~FlGui()
   delete visibility;
   delete highordertools;
   delete quadmeshingtools;
+  delete multiblock;
   delete clipping;
   delete manip;
   delete elementaryContext;
@@ -871,6 +874,16 @@ int FlGui::testGlobalShortcuts(int event)
       FlGui::instance()->quadmeshingtools->win->hide();
     } else {
       FlGui::instance()->quadmeshingtools->win->show();
+    }
+    status = 1;
+#endif
+  }
+  else if(Fl::test_shortcut(FL_SHIFT + 'j')) {
+#if defined(HAVE_HXT)
+    if (FlGui::instance()->multiblock->win->shown()) {
+      FlGui::instance()->multiblock->win->hide();
+    } else {
+      FlGui::instance()->multiblock->win->show();
     }
     status = 1;
 #endif
@@ -1376,6 +1389,8 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->highordertools->win->iconize();
     if(FlGui::instance()->quadmeshingtools->win->shown())
       FlGui::instance()->quadmeshingtools->win->iconize();
+    if(FlGui::instance()->multiblock->win->shown())
+      FlGui::instance()->multiblock->win->iconize();
     if(FlGui::instance()->clipping->win->shown())
       FlGui::instance()->clipping->win->iconize();
     if(FlGui::instance()->manip->win->shown())
@@ -1455,6 +1470,8 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->highordertools->win->show();
     if(FlGui::instance()->quadmeshingtools->win->shown())
       FlGui::instance()->quadmeshingtools->win->show();
+     if(FlGui::instance()->multiblock->win->shown())
+      FlGui::instance()->multiblock->win->show();
     if(FlGui::instance()->clipping->win->shown())
       FlGui::instance()->clipping->win->show();
     if(FlGui::instance()->manip->win->shown())

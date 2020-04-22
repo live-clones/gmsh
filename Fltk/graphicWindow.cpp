@@ -69,6 +69,9 @@ typedef unsigned long intptr_t;
 #if defined(HAVE_QUADMESHINGTOOLS)
 #include "quadMeshingToolsWindow.h"
 #endif
+#if defined(HAVE_HXT)
+#include "multiblockWindow.h"
+#endif
 
 static void file_new_cb(Fl_Widget *w, void *data)
 {
@@ -4326,6 +4329,10 @@ static menuItem static_modules[] = {
 #if defined(HAVE_QUADMESHINGTOOLS)
   {"0Modules/Mesh/Experimental/Quad meshing tools",
    (Fl_Callback *)quadmeshingtools_cb},
+#endif
+  #if defined(HAVE_HXT)
+  {"0Modules/Mesh/Experimental/Multiblock and meshing tools",
+   (Fl_Callback *)multiblock_cb},
 #endif
   {"0Modules/Mesh/Delete/Elements",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,

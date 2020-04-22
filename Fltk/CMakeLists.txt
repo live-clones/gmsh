@@ -18,6 +18,7 @@ set(SRC
     visibilityWindow.cpp
     highOrderToolsWindow.cpp
     quadMeshingToolsWindow.cpp
+    multiblockWindow.cpp
     clippingWindow.cpp
     manipWindow.cpp
     contextWindow.cpp
