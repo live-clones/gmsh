@@ -2467,9 +2467,15 @@ entities, combined as if a single entity, in
 boundary of the elementary entities. Useful to compute the boundary of a
 complex part. @value{SYNC}
 
-@c @item Intersect Curve @{ @var{expression-list} @} Surface @{ @var{expression} @}
-@c (Not a transformation per-se.) Returns the intersections of the curves
-@c given in @var{expression-list} with the specified surface.
+@item Intersect Curve @{ @var{expression-list} @} Surface @{ @var{expression} @}
+(Not a transformation per-se.) Returns the intersections of the curves
+given in @var{expression-list} with the specified surface. Currently
+only available with the built-in kernel.
+
+@item Split Curve @{ @var{expression} @} Point @{ @var{expression-list} @}
+(Not a transformation per-se.) Returns the curves created by splitting
+curve @var{expression} on the speficied points. Currently only available
+with the built-in kernel.
 @end ftable
 
 @noindent with
