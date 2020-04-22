@@ -158,16 +158,16 @@ list(APPEND HXT_INC_DIRS
      contrib/hxt/remesh)
 
 # HXT (multiblock)
-set(SRC ${SRC}
-  multiblock/hxt_quadMultiBlock.cpp
-  multiblock/hxt_qmbSingularity.cpp
-  multiblock/hxt_qmbCorner.cpp
-  multiblock/hxt_qmbBoundaryLine.cpp
-  multiblock/hxt_qmbBoundary.cpp
-  multiblock/hxt_qmbSeparatrice.cpp
-  multiblock/hxt_qmbSepGroup.cpp
-  multiblock/hxt_qmbMultiBlock.cpp
-  multiblock/hxt_qmbQuadGenerator.cpp
+set(SRC
+  hxt_quadMultiBlock.cpp
+  hxt_qmbSingularity.cpp
+  hxt_qmbCorner.cpp
+  hxt_qmbBoundaryLine.cpp
+  hxt_qmbBoundary.cpp
+  hxt_qmbSeparatrice.cpp
+  hxt_qmbSepGroup.cpp
+  hxt_qmbMultiBlock.cpp
+  hxt_qmbQuadGenerator.cpp
   )
 append_gmsh_src(contrib/hxt/multiblock "${SRC}")
 list(APPEND HXT_INC_DIRS
