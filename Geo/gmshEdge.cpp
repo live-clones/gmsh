@@ -53,7 +53,8 @@ Range<double> gmshEdge::parBounds(int i) const
   return Range<double>(c->ubeg, c->uend);
 }
 
-double gmshEdge::prescribedMeshSizeAtParam(double u) {
+double gmshEdge::prescribedMeshSizeAtParam(double u)
+{
   if (!CTX::instance()->mesh.lcFromParametricPoints) {
     return GEdge::prescribedMeshSizeAtParam(u);
   }
