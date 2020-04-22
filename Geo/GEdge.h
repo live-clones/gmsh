@@ -163,6 +163,8 @@ public:
     return meshAttributes.meshSize;
   }
 
+  virtual double prescribedMeshSizeAtParam(double u);
+
   // true if start == end and no more than 2 segments
   void setTooSmall(bool const b) { _tooSmall = b; }
   virtual bool isMeshDegenerated() const

@@ -1061,6 +1061,9 @@ StringXNumber MeshOptions_Number[] = {
     "Automatically compute mesh element sizes from curvature" },
   { F|O, "CharacteristicLengthFromPoints" , opt_mesh_lc_from_points , 1. ,
     "Compute mesh element sizes from values given at geometry points" },
+  { F|O, "CharacteristicLengthFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
+    "Compute mesh element sizes from values given at geometry points defining parametric "
+    "curves (requires CharacteristicLengthFromPoins)" },
   { F,   "Clip" , opt_mesh_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
