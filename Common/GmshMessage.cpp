@@ -62,6 +62,7 @@ int Msg::_progressMeterCurrent = -1;
 int Msg::_progressMeterTotal = 0;
 std::map<std::string, double> Msg::_timers;
 bool Msg::_infoCpu = false;
+bool Msg::_infoMem = false;
 double Msg::_startTime = 0.;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
@@ -271,6 +272,11 @@ void Msg::StopProgressMeter()
 void Msg::SetInfoCpu(bool val)
 {
   _infoCpu = val;
+}
+
+void Msg::SetInfoMem(bool val)
+{
+  _infoMem = val;
 }
 
 double &Msg::Timer(const std::string &str) { return _timers[str]; }
@@ -569,8 +575,8 @@ void Msg::Info(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-  if(_infoCpu){
-    std::string res = PrintResources(false, true, true, true);
+  if(_infoCpu || _infoMem){
+    std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
     strcat(str, res.c_str());
   }
 
@@ -666,8 +672,8 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-  if(_infoCpu){
-    std::string res = PrintResources(false, true, true, true);
+  if(_infoCpu || _infoMem){
+    std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
     strcat(str, res.c_str());
   }
 

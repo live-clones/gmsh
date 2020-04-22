@@ -278,6 +278,7 @@ static void GoodbyeMessage()
   time(&now);
   std::string currtime = ctime(&now);
   currtime.resize(currtime.size() - 1);
+  Msg::SetInfoCpu(true); // always print cpu info at the end
   Msg::Info("Stopped on %s", currtime.c_str());
 }
 

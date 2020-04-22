@@ -471,6 +471,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "cpu")) {
         Msg::SetInfoCpu(true);
+        Msg::SetInfoMem(true);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "log")) {
