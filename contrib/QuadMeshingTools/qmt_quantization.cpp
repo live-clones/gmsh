@@ -1952,33 +1952,41 @@ namespace QMT {
 
     /* Two cases:
      * - starting edge (eq. gv/2) is on the boundary => looking for open circuit
-     * - starting edge (eq. gv/2) inside => looking for closed circuit
+     * - starting edge (eq. gv/2) inside => looking for either closed circuit or open circuit
      */
-    const id TT_CLOSED = 1;
-    const id TT_OPEN = 2;
+    const id SE_INSIDE = 1;
+    const id SE_BDR = 2;
     id tt = 0;
     id eStart = gvStart/2;
+    id2 gvStarts = {NO_ID,NO_ID};
     if (gv2ge[2*eStart+0].size() > 0 && gv2ge[2*eStart+1].size() > 0) {
-      /* Both directions available from eStart => inside */
-      tt = TT_CLOSED;
+      /* Both directions available from eStart => inside, open or closed */
+      tt = SE_INSIDE;
+      gvStarts = {2*eStart,2*eStart+1};
     } else if (gvStart == 2*eStart && gv2ge[2*eStart].size() > 0 && gv2ge[2*eStart+1].size() == 0) {
       /* Only one direction from eStart => on the boundary */
-      tt = TT_OPEN;
+      gvStarts = {gvStart,NO_ID};
+      tt = SE_BDR;
     } else {
       RF("tchord prop. case not supported: gvStart = {}, eStart = {}, gv2ge[2*eStart+0] = {}, gv2ge[2*eStart+1] = {}", 
           gvStart, eStart, gv2ge[2*eStart], gv2ge[2*eStart+1]);
     }
 
     /* Dijsktra algorithm */
+    // info("tchord eStart {} | tt = {}, prop ...", eStart, tt);
     vector<double> dist(gv2ge.size(),DBL_MAX);
     vector<id> prev(gv2ge.size(),NO_ID);
     vector<bool> visited(gv2ge.size(),false);
+    id2 lasts = {NO_ID,NO_ID}; /* for open circuits, the two extremities are two bdr edges */
     std::priority_queue<std::pair<double,id>,  std::vector<std::pair<double,id> >,  std::greater<std::pair<double,id> > > Q; 
 
     /* Init */
-    dist[gvStart] = 0.;
-    Q.push({0.,gvStart});
-    id last = NO_ID;
+    F(i,2) {
+      if (gvStarts[i] != NO_ID) {
+        dist[gvStarts[i]] = 0.;
+        Q.push({0.,gvStarts[i]});
+      }
+    }
     double time_count = 0.; /* only for debug */
 
     /* Dijsktra loop */
@@ -1987,14 +1995,33 @@ namespace QMT {
       Q.pop();
 
       /* Check ending condition */
-      if (tt == TT_CLOSED && gv == gvStart && visited[gv]) {
-        /* Closed loop */
-        last = gvStart;
-        break;
-      } else if (tt == TT_OPEN && gv != gvStart && gv2ge[2*(gv/2)+1].size() == 0) {
-        /* Open loop */
-        last = gv;
-        break;
+      /* - Closed circuit condition */
+      if (tt == SE_INSIDE) {
+        bool finished = false;
+        FC(i,2,visited[gv] && gv == gvStarts[i]) {
+          finished = true;
+          lasts = {gvStarts[i],gvStarts[i]};
+          break;
+        }
+        if (finished) break;
+      }
+      /* - Open circuit condition */
+      if (tt == SE_BDR || tt == SE_INSIDE) {
+        bool onBdr = (gv2ge[2*(gv/2)].size() > 0 && gv2ge[2*(gv/2)+1].size() == 0);
+        if (onBdr) {
+          if (lasts[0] == NO_ID) {
+            lasts[0] = gv;
+          } else if (lasts[1] == NO_ID) {
+            lasts[1] = gv;
+          } else {
+            RF("should not happen, lasts already full");
+          }
+          if (lasts[0] != NO_ID && lasts[1] != NO_ID) {
+            break; /* finished, both ends reached */
+          }
+          /* do not propagate from bdrs, except if starting from bdr */
+          if (!(tt == SE_BDR && gv == gvStart)) continue; 
+        }
       }
 
       /* Propagate */
@@ -2009,9 +2036,11 @@ namespace QMT {
           dist[gv2] = alt;
           prev[gv2] = gv;
         }
-        if (tt == TT_CLOSED && gv2 == gvStart) { /* Special case for closed loop */
-          dist[gv2] = alt;
-          prev[gv2] = gv;
+        if (tt == SE_INSIDE) { /* Special case for closed loop */
+          if (gv2 == gvStarts[0] || gv2 == gvStarts[1]) { /* closing loop (see ending condition) */
+            dist[gv2] = alt;
+            prev[gv2] = gv;
+          }
         }
         if (!visited[gv2]) {
           Q.push({dist[gv2],gv2});
@@ -2020,33 +2049,69 @@ namespace QMT {
       }
     }
 
-
-    if (last == NO_ID && ERROR_VISU) {
-      GeoLog log;
-      FC(gv, gv2ge.size(), prev[gv] < gv2ge.size()) {
-        vec3 p1 = tedge_center(Mdbg, prev[gv]/2, prev[gv]%2);
-        vec3 p2 = tedge_center(Mdbg, gv/2, gv%2);
-        log.add({p1,p2},{dist[prev[gv]],dist[gv]},"prop_gv"+std::to_string(gvStart));
-      }
-      log.toGmsh();
-    }
-    RFC(last == NO_ID, "dijkstra issue, failed to propagate: finished but last = {}", last);
+    // if (last == NO_ID && ERROR_VISU) {
+    //   GeoLog log;
+    //   FC(gv, gv2ge.size(), prev[gv] < gv2ge.size()) {
+    //     vec3 p1 = tedge_center(Mdbg, prev[gv]/2, prev[gv]%2);
+    //     vec3 p2 = tedge_center(Mdbg, gv/2, gv%2);
+    //     log.add({p1,p2},{dist[prev[gv]],dist[gv]},"prop_gv"+std::to_string(gvStart));
+    //   }
+    //   log.toGmsh();
+    // }
+    // RFC(last == NO_ID, "dijkstra issue, failed to propagate: finished but last = {}", last);
 
     /* Unroll the path */
     vector<id> path;
-    {
-      id gv = last;
+    if (tt == SE_INSIDE && lasts[0] == lasts[1]){ /* closed loop */
+      // info("tchord eStart {} | unroll closed loop", eStart);
+      size_t it = 0;
+      id gv = lasts[0];
       while (gv != NO_ID) {
+        it += 1;
+        RFC(it > 1e6, "infinite loop in unroll closed loop ? it = {}", it);
         path.push_back(gv);
         gv = prev[gv];
-        if (tt == TT_CLOSED && gv == gvStart) break; /* closed loop */
+        if (gv == lasts[0]) break; /* closed loop */
       }
       std::reverse(path.begin(),path.end());
+    } else { /* open loop */
+      // info("tchord eStart {} | unroll open loop", eStart);
+      id gv = lasts[0];
+      size_t it = 0;
+      while (gv != NO_ID) {
+        it += 1;
+        RFC(it > 1e6, "infinite loop in unroll open loop ? it = {}", it);
+        path.push_back(gv);
+        gv = prev[gv];
+      }
+      vector<id> path2;
+      gv = lasts[1];
+      while (gv != NO_ID) {
+        it += 1;
+        RFC(it > 1e6, "infinite loop in unroll open loop ? it = {}", it);
+        path2.push_back(gv);
+        gv = prev[gv];
+      }
+      std::reverse(path2.begin(),path2.end());
+      FC(i,path2.size(),i>0) {
+        path.push_back(path2[i]);
+      }
     }
 
     /* Get the edges from the gv */
     tchord.resize(path.size());
     F(i,path.size()) tchord[i] = path[i] / 2;
+
+    const id DBG_ID = NO_ID;
+    if (ERROR_VISU && eStart == DBG_ID) {
+      GeoLog log;
+      F(i, path.size()-1) {
+        vec3 p1 = tedge_center(Mdbg, path[i]/2, path[i]%2);
+        vec3 p2 = tedge_center(Mdbg, path[i+1]/2, path[i+1]%2);
+        log.add({p1,p2},{double(i),double(i+2)},"_dbg_eStart"+std::to_string(DBG_ID));
+      }
+      log.toGmsh();
+    }
 
     return true;
   }
@@ -2358,7 +2423,7 @@ namespace QMT {
     constexpr bool GRAPH_VERSION = true;
     constexpr bool USE_ONE_WAY = true;
     if (USE_DOUBLE_DIRECTED_GRAPH) {
-      info("use DOUBLE DIRECTED_GRAPH");
+      info("use DOUBLE DIRECTED GRAPH (experimental)");
     } else if (GRAPH_VERSION) {
       info("use GRAPH_VERSION");
       if (USE_ONE_WAY) info("use ONE_WAY tchord propagation");
@@ -2373,7 +2438,7 @@ namespace QMT {
       /* Append integer values to edge_n by using t-chord propagation */
       F(pass,2) {
         /* pass = 0: all the open t-chods that start on the boundary */
-        /* pass = 1: all the closed t-chods that stay inside */
+        /* pass = 1: all the closed t-chords that stay inside, or open t-chord that starts inside */
         F(gvStart,gv2ge.size()) {
           id e = gvStart / 2;
           if (edge_n[e] != 0) continue;
@@ -2393,6 +2458,10 @@ namespace QMT {
             }
             return false;
           }
+          // if (ERROR_VISU && intersection(tchord,M.faces[4].edges).size() > 0) {
+          //   DBG(pass,e,tchord);
+          //   debug_show_tchord_in_view(M, tchord, "_dbg_e"+std::to_string(e));
+          // }
 
           double diff_avg = 0.;
           double diff_min = DBL_MAX;
@@ -2541,7 +2610,7 @@ namespace QMT {
           error("  face {}: {}", f, tf);
           F(le,tf.edges.size()) {
             id e = tf.edges[le];
-            error("  edge {} (n={},nx={}): {}", e, edge_n[e], edge_nx[e], M.edges[e]);
+            error("    edge {} (n={},nx={}): {}", e, edge_n[e], edge_nx[e], M.edges[e]);
           }
           if (ERROR_VISU) {
             debug_show_qtmesh_in_view(M, "qtmesh");
