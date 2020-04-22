@@ -6,7 +6,7 @@
 #include <map>
 #include <set>
 
-#ifdef _OPENMP
+#if defined(_OPENMP)
 #include <omp.h>
 #endif
 
@@ -35,8 +35,6 @@ static HXTStatus recoveryCallback(HXTMesh *mesh, void *userData)
 {
   return hxt_boundary_recovery(mesh);
 }
-
-// This is a list of regions that are simply connected
 
 static HXTStatus messageCallback(HXTMessage *msg)
 {
@@ -100,10 +98,6 @@ static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
     for(size_t j = 0; j < f_e.size(); j++)
       m->brep.surfacesPerVolume[counter++] = f_e[j]->tag();
   }
-
-  //  printf("volume 0 has %d faces\n",m->brep.numSurfacesPerVolume[0]);
-  //  for (int i=0;i<m->brep.numSurfacesPerVolume[0];i++)printf("%d
-  //  ",m->brep.surfacesPerVolume[i]); printf("\n");
 
   return HXT_STATUS_OK;
 }
@@ -320,8 +314,6 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
       all.insert(gf->triangles[i]->getVertex(2));
     }
   }
-
-  //  printf("%d vertices %d triangles\n",all.size(),ntri);
 
   m->vertices.num = m->vertices.size = all.size();
   HXT_CHECK(
