@@ -873,7 +873,8 @@ std::vector<GVertex *> GEdge::vertices() const
   return res;
 }
 
-double GEdge::prescribedMeshSizeAtParam(double u) {
+double GEdge::prescribedMeshSizeAtParam(double u)
+{
   if (v0 && v1) {
     double lc0 = v0->prescribedMeshSizeAtVertex();
     double lc1 = v1->prescribedMeshSizeAtVertex();
