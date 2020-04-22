@@ -432,6 +432,40 @@ namespace gmsh { // Top-level functions
                                      const std::vector<double> & points,
                                      std::vector<double> & parametricCoord);
 
+    // gmsh::model::getParametrizationBounds
+    //
+    // Get the `min' and `max' bounds of the parametric coordinates for the entity
+    // of dimension `dim' and tag `tag'.
+    GMSH_API void getParametrizationBounds(const int dim,
+                                           const int tag,
+                                           std::vector<double> & min,
+                                           std::vector<double> & max);
+
+    // gmsh::model::isInside
+    //
+    // Check if the parametric coordinates provided in `parametricCoord' correspond
+    // to points inside the entitiy of dimension `dim' and tag `tag', and return
+    // the number of points inside. This feature is only available for a subset of
+    // curves and surfaces, depending on the underyling geometrical representation.
+    GMSH_API int isInside(const int dim,
+                          const int tag,
+                          const std::vector<double> & parametricCoord);
+
+    // gmsh::model::reparametrizeOnSurface
+    //
+    // Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
+    // `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1,
+    // reparametrize all the points corresponding to the parametric coordinates
+    // `parametricCoord'. Multiple matches in case of periodic surfaces can be
+    // selected with `which'. This feature is only available for a subset of
+    // entities, depending on the underyling geometrical representation.
+    GMSH_API void reparametrizeOnSurface(const int dim,
+                                         const int tag,
+                                         const std::vector<double> & parametricCoord,
+                                         const int surfaceTag,
+                                         std::vector<double> & surfaceParametricCoord,
+                                         const int which = 0);
+
     // gmsh::model::setVisibility
     //
     // Set the visibility of the model entities `dimTags' to `value'. Apply the

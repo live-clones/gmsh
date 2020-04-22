@@ -25,7 +25,8 @@ private:
     std::vector<MTriangle> t2d;
     std::vector<MTriangle> t3d;
     std::vector<SVector3> CURV;
-    param() : oct(NULL) {}
+    double umin, umax, vmin, vmax;
+    param() : oct(NULL), umin(-1), umax(1), vmin(-1), vmax(1) {}
     ~param();
     bool empty() const { return t2d.empty(); }
     void clear();
@@ -41,6 +42,8 @@ public:
   using GFace::point;
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true) const;
+  Range<double> parBounds(int i) const;
+  bool containsParam(const SPoint2 &pt);
   GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance,
                       SVector3 *normal = NULL) const;
   GPoint closestPoint(const SPoint3 &queryPoint,

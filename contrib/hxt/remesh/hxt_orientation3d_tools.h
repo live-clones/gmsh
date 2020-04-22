@@ -1,7 +1,7 @@
 #ifndef HXT_ORIENTATION3D_TOOLS_H
 #define HXT_ORIENTATION3D_TOOLS_H
 
-#include "hxt_api.h"
+#include "hxt_tools.h"
 #include "hxt_mesh.h"
 
 // frame tools

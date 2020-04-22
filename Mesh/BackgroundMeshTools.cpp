@@ -203,48 +203,59 @@ SMetric3 buildMetricTangentToSurface(SVector3 &t1, SVector3 &t2, double l_t1,
   return Metric;
 }
 
-// This is the only function that is used by the meshers
-double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y,
-                    double Z)
+double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
+                                  double Y, double Z)
 {
-  // default lc (mesh size == size of the model)
-  double l1 = CTX::instance()->lc;
-
-  if(!ge)
-    Msg::Warning("No entity in background mesh size evaluation");
-
   // lc from points
-  double l2 = MAX_LC;
+  double l1 = MAX_LC;
   if(ge && CTX::instance()->mesh.lcFromPoints && ge->dim() < 2)
-    l2 = LC_MVertex_PNTS(ge, U, V);
+    l1 = LC_MVertex_PNTS(ge, U, V);
 
   // lc from curvature
-  double l3 = MAX_LC;
+  double l2 = MAX_LC;
   if(ge && CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
-    l3 = LC_MVertex_CURV(ge, U, V);
+    l2 = LC_MVertex_CURV(ge, U, V);
 
   // lc from fields
-  double l4 = MAX_LC;
+  double l3 = MAX_LC;
   if(ge){
     FieldManager *fields = ge->model()->getFields();
     if(fields->getBackgroundField() > 0) {
       Field *f = fields->get(fields->getBackgroundField());
-      if(f) l4 = (*f)(X, Y, Z, ge);
+      if(f) l3 = (*f)(X, Y, Z, ge);
     }
   }
 
   // global lc from entity
-  double l5 = ge ? ge->getMeshSize() : MAX_LC;
+  double l4 = ge ? ge->getMeshSize() : MAX_LC;
 
-  // take the minimum, then constrain by lcMin and lcMax
-  double lc = std::min(std::min(std::min(std::min(l1, l2), l3), l4), l5);
+  // take the minimum
+  double lc = std::min(std::min(std::min(l1, l2), l3), l4);
+
+  return lc;
+}
+
+// This is the only function that is used by the meshers
+double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y,
+                    double Z)
+{
+  if(!ge)
+    Msg::Warning("No entity in background mesh size evaluation");
+
+  // default size to size of model
+  double lc = CTX::instance()->lc;
+
+  // min of all sizes
+  lc = std::min(lc, BGM_MeshSizeWithoutScaling(ge, U, V, X, Y, Z));
+
+  // constrain by lcMin and lcMax
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
 
   if(lc <= 0.) {
     Msg::Error("Wrong mesh element size lc = %g (lcmin = %g, lcmax = %g)", lc,
                CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
-    lc = l1;
+    lc = CTX::instance()->lc;
   }
 
   // size factor from entity

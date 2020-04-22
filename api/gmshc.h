@@ -365,6 +365,38 @@ GMSH_API void gmshModelGetParametrization(const int dim,
                                           double ** parametricCoord, size_t * parametricCoord_n,
                                           int * ierr);
 
+/* Get the `min' and `max' bounds of the parametric coordinates for the entity
+ * of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetParametrizationBounds(const int dim,
+                                                const int tag,
+                                                double ** min, size_t * min_n,
+                                                double ** max, size_t * max_n,
+                                                int * ierr);
+
+/* Check if the parametric coordinates provided in `parametricCoord'
+ * correspond to points inside the entitiy of dimension `dim' and tag `tag',
+ * and return the number of points inside. This feature is only available for
+ * a subset of curves and surfaces, depending on the underyling geometrical
+ * representation. */
+GMSH_API int gmshModelIsInside(const int dim,
+                               const int tag,
+                               double * parametricCoord, size_t parametricCoord_n,
+                               int * ierr);
+
+/* Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
+ * `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1,
+ * reparametrize all the points corresponding to the parametric coordinates
+ * `parametricCoord'. Multiple matches in case of periodic surfaces can be
+ * selected with `which'. This feature is only available for a subset of
+ * entities, depending on the underyling geometrical representation. */
+GMSH_API void gmshModelReparametrizeOnSurface(const int dim,
+                                              const int tag,
+                                              double * parametricCoord, size_t parametricCoord_n,
+                                              const int surfaceTag,
+                                              double ** surfaceParametricCoord, size_t * surfaceParametricCoord_n,
+                                              const int which,
+                                              int * ierr);
+
 /* Set the visibility of the model entities `dimTags' to `value'. Apply the
  * visibility setting recursively if `recursive' is true. */
 GMSH_API void gmshModelSetVisibility(int * dimTags, size_t dimTags_n,

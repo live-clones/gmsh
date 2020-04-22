@@ -1,7 +1,6 @@
 #ifndef HXT_POINT_GEN_NUMERICS_H
 #define HXT_POINT_GEN_NUMERICS_H
 
-#include "hxt_api.h"
 #include "hxt_mesh.h"
 
 // In Gmsh Numeric.cpp

@@ -22,29 +22,41 @@
 #if defined(HAVE_HXT3D)
 
 extern "C" {
-#include "hxt_api.h"
+#include "hxt_tools.h"
 #include "hxt_boundary_recovery.h"
 #include "hxt_tetMesh.h"
 }
 
-static HXTStatus myRecoveryFun (HXTMesh* mesh, void* userData){
+static HXTStatus recoveryCallback(HXTMesh *mesh, void *userData)
+{
   return hxt_boundary_recovery(mesh);
 }
 
 // This is a list of regions that are simply connected
 
-HXTStatus hxtGmshMsgCallback(HXTMessage *msg)
+static HXTStatus messageCallback(HXTMessage *msg)
 {
   if(msg) Msg::Info("%s", msg->string);
   return HXT_STATUS_OK;
 }
 
-double hxtMeshSizeGmshCallBack(double x, double y, double z,
-                               void *userData)
+static double meshSizeCallBack(double x, double y, double z, void *userData)
 {
   GRegion *gr = (GRegion *)userData;
-  double lc2 = BGM_MeshSize(gr, 0, 0, x, y, z);
-  return lc2;
+  double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0, x, y, z);
+  if(lc == MAX_LC && CTX::instance()->mesh.lcExtendFromBoundary) {
+    // let hxt compute the mesh size from the boundary mesh size
+    lc = 0.;
+  }
+  else {
+    // constrain by global lcMin and lcMax
+    lc = std::max(lc, CTX::instance()->mesh.lcMin);
+    lc = std::min(lc, CTX::instance()->mesh.lcMax);
+    // apply global scaling
+    if(gr->getMeshSizeFactor() != 1.0) lc *= gr->getMeshSizeFactor();
+    lc *= CTX::instance()->mesh.lcFactor;
+  }
+  return lc;
 }
 
 static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
@@ -455,13 +467,10 @@ HXTStatus Gmsh2Hxt(GModel*gm, HXTMesh *m,
 
 static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 {
-  HXT_CHECK(hxtSetMessageCallback(hxtGmshMsgCallback));
+  HXT_CHECK(hxtSetMessageCallback(messageCallback));
 
-  /*******************  ^ all argument were processed *********************/
   HXTMesh *mesh;
-  HXTContext *context;
-  HXT_CHECK(hxtContextCreate(&context));
-  HXT_CHECK(hxtMeshCreate(context, &mesh));
+  HXT_CHECK(hxtMeshCreate(&mesh));
 
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;
@@ -479,13 +488,12 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     0.35, // double qualityMin;
     0, // double (*qualityFun)
     0, // void* qualityData;
-    0, // double (*meshSizeFun)
-    0, // void* meshSizeData;
-    myRecoveryFun, // HXTStatus (*recoveryFun)
+    meshSizeCallBack, // double (*meshSizeFun)
+    regions[0], // void* meshSizeData; // FIXME: should be dynamic!
+    recoveryCallback, // HXTStatus (*recoveryFun)
     0 // void* recoveryData;
   };
 
-  //  Msg::Info("Entering hxtTetMesh3d using %d threads",nthreads);
   HXT_CHECK(hxtTetMesh(mesh, &options));
 
   //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
@@ -493,7 +501,6 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
 
   HXT_CHECK(hxtMeshDelete(&mesh));
-  HXT_CHECK(hxtContextDelete(&context));
   return HXT_STATUS_OK;
 }
 

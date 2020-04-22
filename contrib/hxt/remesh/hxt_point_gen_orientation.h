@@ -1,7 +1,6 @@
 #ifndef HXT_POINT_GEN_ORIENTATION_H
 #define HXT_POINT_GEN_ORIENTATION_H
 
-#include "hxt_api.h"
 #include "hxt_mesh.h"
 
 /* in a tri, directions may not be ordered "coherently" at the different vertices,

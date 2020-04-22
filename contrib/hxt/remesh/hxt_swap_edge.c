@@ -1,4 +1,5 @@
 #include <limits.h>
+#include <math.h>
 #include "hxt_swap_edge.h"
 #include "hxt_triangle_quality.h"
 #include "hxt_point_gen_numerics.h"

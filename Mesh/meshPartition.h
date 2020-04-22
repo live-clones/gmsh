@@ -12,6 +12,7 @@ class GFace;
 
 int PartitionMesh(GModel *const model);
 int PartitionFace(GFace *gf, int np, int *p);
+int PartitionFaceMinEdgeLength(GFace *gf, int np, int *p, double tol=1.02);
 int UnpartitionMesh(GModel *const model);
 int ConvertOldPartitioningToNewOne(GModel *const model);
 

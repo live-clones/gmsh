@@ -4,16 +4,15 @@ API.
 To run the Python tutorials, you need the Gmsh dynamic library and the Python
 module (`gmsh.py'). These can be either obtained
 
+- using `pip install --upgrade gmsh', which will download and install the
+  necessary files.
+
 - from the binary Software Development Kit (SDK) available on the Gmsh website
-  http://gmsh.info/bin/, for Windows, Linux and macOS. Download and uncompress
-  the relevant gmsh*-sdk.* archive for your operating system and add the "lib"
-  directory from the SDK to PYTHONPATH, e.g., if you are currently in the root
-  directory of the SDK:
+  http://gmsh.info/bin/. Download and uncompress the relevant gmsh*-sdk.*
+  archive for your operating system and add the "lib" directory from the SDK to
+  PYTHONPATH, e.g., if you are currently in the root directory of the SDK:
 
     export PYTHONPATH=${PYTHONPATH}:${PWD}/lib
-
-- using `pip install gmsh-sdk', which will download the binary SDK
-  automatically, and install the files in the appropriate system directories.
 
 - by compiling the Gmsh source code. Follow these steps in the top-level
   directory of the Gmsh source code:

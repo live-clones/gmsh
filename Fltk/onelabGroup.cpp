@@ -894,6 +894,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
   if(p.getReadOnly()) {
     outputRange *but = new outputRange(1, 1, ww, hh);
     but->callback(onelab_number_output_range_cb, (void *)path);
+    but->numberFormat(p.getAttribute("NumberFormat"));
     but->value(p.getValue());
     but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     but->graph(p.getAttribute("Graph"));
@@ -904,6 +905,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
   // general number input
   inputRange *but = new inputRange(1, 1, ww, hh, onelab::parameter::maxNumber(),
                                    p.getAttribute("ReadOnlyRange") == "1");
+  but->numberFormat(p.getAttribute("NumberFormat"));
   but->value(p.getValue());
   but->minimum(p.getMin());
   but->maximum(p.getMax());

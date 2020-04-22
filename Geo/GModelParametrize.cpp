@@ -33,6 +33,7 @@
 #if defined(HAVE_HXT)
 extern "C" {
 #include "hxt_mesh.h"
+#include "hxt_tools.h"
 #include "hxt_edge.h"
 #include "hxt_curvature.h"
 #include "hxt_linear_system.h"
@@ -607,10 +608,8 @@ static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle *> &t,
                           HXTMesh **pm, std::map<MVertex *, int> &v2c,
                           std::vector<MVertex *> &c2v)
 {
-  HXTContext *context;
-  hxtContextCreate(&context);
   HXTMesh *m;
-  HXT_CHECK(hxtMeshCreate(context, &m));
+  HXT_CHECK(hxtMeshCreate(&m));
   std::set<MVertex *> all;
   for(std::size_t i = 0; i < t.size(); i++) {
     all.insert(t[i]->getVertex(0));
@@ -965,6 +964,7 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
   return true;
 }
 
+
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut)
 {
@@ -1036,7 +1036,8 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
       else {
 #if defined(HAVE_MESH)
         int *p = new int[(*it)->triangles.size()];
-        if(!PartitionFace(*it, np, p)) {
+        if(!PartitionFaceMinEdgeLength(*it, np, p)) {
+        //if(!PartitionFace(*it, np, p)) {
           std::vector<MTriangle *> t[1000];
           for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
             t[(*it)->triangles[i]->getPartition()].push_back(

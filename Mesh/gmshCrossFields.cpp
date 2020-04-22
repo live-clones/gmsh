@@ -409,12 +409,15 @@ struct cross2dPtrLessThan {
 //        DO IT ON SURFACES
 // ---------------------------------------------
 
+
+
 static void closest(const cross2d &c1, const cross2d &c2, double &a2,
                     double &diff)
 {
-  SVector3 d = c1._tgt * cos(c1._atemp) + c1._tgt2 * sin(c1._atemp);
 
   double P = M_PI / 2;
+
+  SVector3 d = c1._tgt * cos(c1._atemp + 0*P) + c1._tgt2 * sin(c1._atemp + 0*P);
 
   SVector3 d1 = c2._tgt * cos(c2._atemp) + c2._tgt2 * sin(c2._atemp);
   SVector3 d2 = c2._tgt * cos(c2._atemp + P) + c2._tgt2 * sin(c2._atemp + P);
@@ -429,20 +432,25 @@ static void closest(const cross2d &c1, const cross2d &c2, double &a2,
   double D4 = dot(d, d4);
   if(D1 > D2 && D1 > D3 && D1 > D4) {
     a2 = c2._atemp;
-    diff = acos(D1);
+    SVector3 pv = crossprod (d,d1);
+    diff = std::min(acos(D1),acos(pv.norm()));
   }
   else if(D2 > D1 && D2 > D3 && D2 > D4) {
     a2 = c2._atemp + P;
-    diff = acos(D2);
+    SVector3 pv = crossprod (d,d2);
+    diff = std::min(acos(D2),acos(pv.norm()));
   }
   else if(D3 > D1 && D3 > D2 && D3 > D4) {
     a2 = c2._atemp + 2 * P;
-    diff = acos(D3);
+    SVector3 pv = crossprod (d,d3);
+    diff = std::min(acos(D3),acos(pv.norm()));
   }
   else {
     a2 = c2._atemp + 3 * P;
-    diff = acos(D4);
+    SVector3 pv = crossprod (d,d4);
+    diff = std::min(acos(D4),acos(pv.norm()));
   }
+  
 }
 
 static void
@@ -652,72 +660,76 @@ static void computeLifting(GModel *gm, std::vector<GFace *> &f,
   computeUniqueVectorPerTriangle(gm, f,C,d0,d1);
   
   std::set<MTriangle*> visited;
-  std::stack<MTriangle*> _stack;
-
-  std::map<MTriangle *, SVector3>::iterator it = d0.begin();
-  MTriangle *current = NULL;
-  for (; it != d0.end(); ++it){
-    if (!isSingular(it->first,sing) && !isBndry(it->first,C)){
-      current =it->first;
-      break;
-    }
-  }
-  _stack.push(current);
-  visited.insert(current);
-  while (!_stack.empty()){
-    current  = _stack.top();
-    SVector3 ref0 = d0[current];
-    SVector3 ref1 = d1[current];
-    _stack.pop();
-
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator its[3];
-
-    for (size_t i=0;i<3;i++){
-      MEdge e = current->getEdge(i);
-      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
-      if (cutG.find(e) == cutG.end() && it->second._t.size() == 2){
-	MTriangle *t = it->second._t[0] == current ? it->second._t[1] : it->second._t[0]; 
-	if (visited.find(t) == visited.end()){
-	  cross2d* bnd = isBndry (t,C);
-	  if (bnd){
-	    treatmentOfBoundary (bnd, ref0, ref1, d0, d1, groups,
-				 _groupIds, _done, visited, _stack);
-	  }
-	  else {
-	    visited.insert(t);
-	    _stack.push (t);
-	    SVector3 dir0 = d0[t];
-	    SVector3 dir1 = d1[t];
-	    SVector3 dir2 = dir0*(-1.0);
-	    SVector3 dir3 = dir1*(-1.0);
-	    double dot_0 = dot (dir0,ref0); 
-	    double dot_1 = dot (dir1,ref0); 
-	    double dot_2 = dot (dir2,ref0); 
-	    double dot_3 = dot (dir3,ref0);
-	    if (dot_0 > dot_1 && dot_0 > dot_2 && dot_0 > dot_3)d0[t] = dir0;
-	    else if (dot_1 > dot_0 && dot_1 > dot_2 && dot_1 > dot_3)d0[t] = dir1;
-	    else if (dot_2 > dot_0 && dot_2 > dot_1 && dot_2 > dot_3)d0[t] = dir2;
-	    else d0[t] = dir3;
-	    dot_0 = dot (dir0,ref1); 
-	    dot_1 = dot (dir1,ref1); 
-	    dot_2 = dot (dir2,ref1); 
-	    dot_3 = dot (dir3,ref1);
-	    if (dot_0 > dot_1 && dot_0 > dot_2 && dot_0 > dot_3)d1[t] = dir0;
-	    else if (dot_1 > dot_0 && dot_1 > dot_2 && dot_1 > dot_3)d1[t] = dir1;
-	    else if (dot_2 > dot_0 && dot_2 > dot_1 && dot_2 > dot_3)d1[t] = dir2;
-	    else d1[t] = dir3;
-	  }
+ 
+  while (visited.size() != d0.size()){  
+    std::stack<MTriangle*> _stack;
+    std::map<MTriangle *, SVector3>::iterator it = d0.begin();
+    MTriangle *current = NULL;
+    for (; it != d0.end(); ++it){
+      if (visited.find(it->first)==visited.end()){
+	if (!isSingular(it->first,sing) && !isBndry(it->first,C)){
+	  current =it->first;
+	  break;
 	}
       }
-      else if (it->second._t.size() > 2){
-	Msg::Error ("to be continued %s at line %d",__FILE__,__LINE__);
-      }
-    }    
+    }
+    if (current == NULL)break;
+    _stack.push(current);
+    visited.insert(current);
+    while (!_stack.empty()){
+      current  = _stack.top();
+      SVector3 ref0 = d0[current];
+      SVector3 ref1 = d1[current];
+      _stack.pop();
+      
+      std::map<MEdge, cross2d, MEdgeLessThan>::iterator its[3];
+      
+      for (size_t i=0;i<3;i++){
+	MEdge e = current->getEdge(i);
+	std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
+	if (cutG.find(e) == cutG.end() && it->second._t.size() == 2){
+	  MTriangle *t = it->second._t[0] == current ? it->second._t[1] : it->second._t[0]; 
+	  if (visited.find(t) == visited.end()){
+	    cross2d* bnd = isBndry (t,C);
+	    if (bnd){
+	      treatmentOfBoundary (bnd, ref0, ref1, d0, d1, groups,
+				   _groupIds, _done, visited, _stack);
+	    }
+	    else {
+	      visited.insert(t);
+	      _stack.push (t);
+	      SVector3 dir0 = d0[t];
+	      SVector3 dir1 = d1[t];
+	      SVector3 dir2 = dir0*(-1.0);
+	      SVector3 dir3 = dir1*(-1.0);
+	      double dot_0 = dot (dir0,ref0); 
+	      double dot_1 = dot (dir1,ref0); 
+	      double dot_2 = dot (dir2,ref0); 
+	      double dot_3 = dot (dir3,ref0);
+	      if (dot_0 > dot_1 && dot_0 > dot_2 && dot_0 > dot_3)d0[t] = dir0;
+	      else if (dot_1 > dot_0 && dot_1 > dot_2 && dot_1 > dot_3)d0[t] = dir1;
+	      else if (dot_2 > dot_0 && dot_2 > dot_1 && dot_2 > dot_3)d0[t] = dir2;
+	      else d0[t] = dir3;
+	      dot_0 = dot (dir0,ref1); 
+	      dot_1 = dot (dir1,ref1); 
+	      dot_2 = dot (dir2,ref1); 
+	      dot_3 = dot (dir3,ref1);
+	      if (dot_0 > dot_1 && dot_0 > dot_2 && dot_0 > dot_3)d1[t] = dir0;
+	      else if (dot_1 > dot_0 && dot_1 > dot_2 && dot_1 > dot_3)d1[t] = dir1;
+	      else if (dot_2 > dot_0 && dot_2 > dot_1 && dot_2 > dot_3)d1[t] = dir2;
+	      else d1[t] = dir3;
+	    }
+	  }
+	}
+	else if (it->second._t.size() > 2){
+	  Msg::Error ("to be continued %s at line %d",__FILE__,__LINE__);
+	}
+      }    
+    }
   }
   if (visited.size() != d0.size())Msg::Error ("not all triangles visited %lu vs %lu (FILE %s at line %d)",
 					      visited.size(), d0.size(),__FILE__,__LINE__);
 }
-
 
 
 static void computeLifting(cross2d *first, int branch,
@@ -927,6 +939,7 @@ static void createLagrangeMultipliers(dofManager<double> &myAssembler,
                                       groupOfCross2d &g)
 {
   // return;
+  if(g.crosses[0]->inInternalBoundary) return;
   for(size_t K = 1 ; K < g.left.size(); K++) {
     if (g.left[K] != g.left[0]){
       myAssembler.numberVertex(g.left[K], 0, 3 + 100 * (g.groupId+1));
@@ -966,8 +979,8 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
       dir1 = d0[t0];
     }
 
-    printf("GROUP %d %12.5E %12.5E (%lu,%lu)\n",g.groupId, fabs(dot(g.crosses[0]->_tgt, dir0)),
-           fabs(dot(g.crosses[0]->_tgt, dir1)), g.left[0]->getNum(), g.right[0]->getNum());
+    //    printf("GROUP %d %12.5E %12.5E (%lu,%lu)\n",g.groupId, fabs(dot(g.crosses[0]->_tgt, dir0)),
+    //           fabs(dot(g.crosses[0]->_tgt, dir1)), g.left[0]->getNum(), g.right[0]->getNum());
 
     Dof U1R(g.left[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
     Dof U2R(g.right[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
@@ -1976,8 +1989,8 @@ static bool isSingular (MVertex *v,
   if (periodic){
     vsorted[0].resize(vsorted[0].size()-1);
     double diffs = 0;
-    //	printf("NODE %lu\n",v->getNum());
     size_t N = periodic ?  vsorted[0].size()  :  vsorted[0].size() -2;
+    //    if (v->getNum() == 45)printf("NODE %lu periodic %d N %lu \n",v->getNum(),periodic, N);
     for(size_t i = 0; i < N; ++i) {
       MVertex *v0 = vsorted[0][i%vsorted[0].size()];
       MVertex *v1 = vsorted[0][(i+1)%vsorted[0].size()];
@@ -1989,13 +2002,18 @@ static bool isSingular (MVertex *v,
       double diff0 = acos( fabs(dot(dir0,dir1)));
       SVector3 pv = crossprod(dir0,dir1);
       double diff1 = acos(pv.norm());
+      //      if (v->getNum() == 45)printf("(%lu %lu %lu %g,%g,%g) %g %g %g -- %g %g %g\n",v0->getNum(),v1->getNum(),v2->getNum(),
+      //				   diff0,diff1, std::min(diff0,diff1),dir0.x(),dir0.y(),dir0.z(),dir1.x(),dir1.y(),dir1.z());
       diffs += std::min(diff0,diff1);    
     }
     
     double curvature = 2*M_PI - K[v];
+
+    
     double x = fabs (diffs - curvature);
 
     if (x > .95*M_PI/2) {
+      printf("%lu %12.5E %12.5E\n",v->getNum(),diffs,2*M_PI -K[v]);
       return true;
     }
   }
@@ -2161,6 +2179,8 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
 	double angle;
 	if (it01 != C.end()  && it12 != C.end() ){
 	  closest (it01->second, it12->second, angle, diff); 
+	  if (v->getNum() == 45)printf("(%lu %lu %lu %g) \n",v0->getNum(),v1->getNum(),v2->getNum(),
+				       diff);
 	  diffs_external += diff;
 	}
       }
@@ -2753,15 +2773,21 @@ struct edgeCuts {
   std::vector<MVertex *> vs;
   std::vector<int> indexOfCuts;
   std::vector<int> idsOfCuts;
+  std::vector<int> p_occur;
+  int n_occur;
   bool add(const SPoint3 &p, int ind, int id, double eps)
   {
     for(size_t i = 0; i < ps.size(); i++) {
       SVector3 v(ps[i], p);
-      if(v.norm() < eps) { return false; }
+      if(v.norm() < eps) {
+	p_occur [i] ++;
+	return false;
+      }
     }
     ps.push_back(p);
     indexOfCuts.push_back(ind);
     idsOfCuts.push_back(id);
+    p_occur.push_back(1);
     return true;
   }
   void finish(GModel *gm, GEdge *mother, MVertex *v0, MVertex *v1, FILE *f)
@@ -2788,6 +2814,10 @@ struct edgeCuts {
 	if (fabs (u0 - x0) > fabs (u1 - x0))x1 = u1;
 	else x1 = u0;
       }
+    }
+
+    if (v0->getNum() == 120 ||v0->getNum() == 121){
+      printf("%lu\n",ps.size());
     }
     
     for(size_t i = 0; i < ps.size(); i++) {
@@ -2816,7 +2846,7 @@ struct edgeCuts {
       ge->mesh_vertices.push_back(v);
     }
   }
-  edgeCuts() {}
+  edgeCuts() : n_occur (0){}
 };
 
 static bool addCut(const SPoint3 &p, const MEdge &e, int COUNT, int ID,
@@ -3193,7 +3223,6 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     p[1] = (1. - xi) * e.getVertex(0)->y() + xi * e.getVertex(1)->y();
     p[2] = (1. - xi) * e.getVertex(0)->z() + xi * e.getVertex(1)->z();
     cutGraphEnds.erase(cutGraphEnds.begin());
-
     
     int ROT = 0;
     int maxCount = 0;
@@ -3240,8 +3269,14 @@ static void computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL,
     }
     if(maxCount == 0) printf("IMPOSSIBLE\n");
 
+    //    Msg::Info("ISO %d is reaching cut graph %d (internal %d)",COUNT,cutGraphId, G[cutGraphId].crosses[0]->inInternalBoundary); 
+    
+    if (G[cutGraphId].crosses[0]->inInternalBoundary){
+      Msg::Info("ISO %d is reaching internal boundary %d",COUNT,cutGraphId); 
+      break;
+    }
+    
     if (!passage.close) {
-      if (COUNT == 5523001)printf("ADDING to %d cut graph part %d\n",COUNT,cutGraphId);
       passage.addPassage (POT == potU ? 0 : 1, cutGraphId);
       passage.eds.push_back(e);
       passage.pts_on_eds.push_back(p);
@@ -3366,6 +3401,19 @@ static void computeIso(MVertex *vsing, v2t_cont &adj, double u,
   }
 }
 
+static void computeDuplicateEdgesOnCutGraph(std::vector<groupOfCross2d> &G,
+					    std::map<MEdge, MEdge, MEdgeLessThan> &d1){
+  d1.clear();
+  for(size_t i = 0; i < G.size(); i++) {
+    for(size_t j = 1; j < G[i].left.size(); j++) {
+      MEdge l(G[i].left[j-1], G[i].left[j]);
+      MEdge r(G[i].right[j-1], G[i].right[j]);
+      d1[l] = r;
+      d1[r] = l;
+    }
+  }
+}
+
 static bool computeIsos(
   GModel *gm, std::vector<GFace *> &faces,
   std::set<MVertex *, MVertexPtrLessThan> singularities,
@@ -3379,7 +3427,8 @@ static bool computeIsos(
   std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
   std::vector<cutGraphPassage> &passages,
   std::set<MVertex *, MVertexPtrLessThan> &corners,
-  std::map<size_t,int> &COUNTS)
+  std::map<size_t,int> &COUNTS,
+  std::map<MEdge, MEdge, MEdgeLessThan> &d1)			  
 {
   passages.clear();
   v2t_cont adj;
@@ -3416,39 +3465,6 @@ static bool computeIsos(
     }
   }
   
-  std::map<MEdge, MEdge, MEdgeLessThan> d1;
-  {
-    //   FILE *fdf = fopen("debug_lines.pos","w");
-    //    fprintf(fdf,"View \"\"{\n");
-
-
-    for(size_t i = 0; i < G.size(); i++) {
-      bool boundary = true;
-      for(size_t j = 0; j < G[i].left.size(); j++) {
-	MVertex *vleft  = new2old.find(G[i].left[j]) == new2old.end() ? G[i].left[j] : new2old[G[i].left[j]];
-	if (boundaries.find (vleft) == boundaries.end())boundary = false;
-      }
-      // This should work now
-      if (!boundary){
-	for(size_t j = 1; j < G[i].left.size(); j++) {
-	  MEdge l(G[i].left[j-1], G[i].left[j]);
-	  MEdge r(G[i].right[j-1], G[i].right[j]);
-	  //	fprintf(fdf,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
-	  //		G[i].left[j-1]->x(),G[i].left[j-1]->y(),G[i].left[j-1]->z(),
-	  //		G[i].left[j]->x(),G[i].left[j]->y(),G[i].left[j]->z(),
-	  //		G[i].groupId,G[i].groupId) ;
-	  d1[l] = r;
-	  d1[r] = l;
-	}
-      }
-      else {
-	printf("GROUP %d is an internal boundary\n",G[i].groupId);
-      }
-    }
-    //    fprintf(fdf,"};\n");
-    //    fclose(fdf);
-  }
-
 
   std::string fn = gm->getName() + "_QLayoutResults.pos";
   FILE *f = fopen(fn.c_str(), "w");
@@ -4801,7 +4817,7 @@ public:
                     MVertex *v2, GEdge *ge,
                     std::map<MEdge, int, MEdgeLessThan> &ecuts, int index,
                     FILE *f, std::map<MEdge,GEdge*,MEdgeLessThan> &inverseClassificationEdges,
-		    double model_size)
+		    double model_size, bool t_junction)
   {
     std::map<MEdge, MVertex *, MEdgeLessThan> e_cut;
     std::vector<MTriangle *> newt;
@@ -4830,36 +4846,31 @@ public:
       if(!vs[0] && !vs[1] && !vs[2])
         newt.push_back(ts[i]);
       else if(vs[0] && !vs[1] && !vs[2]) {
-        //	printf("\n");
         newt.push_back(
           new MTriangle(ts[i]->getVertex(0), vs[0], ts[i]->getVertex(2)));
         newt.push_back(
           new MTriangle(vs[0], ts[i]->getVertex(1), ts[i]->getVertex(2)));
         cut_edge(ecuts, ts[i]->getVertex(0), ts[i]->getVertex(1), vs[0]);
         MEdge ed(ts[i]->getVertex(2), vs[0]);
-        ecuts[ed] = index;
-
-
+        if (!t_junction)ecuts[ed] = index;
       }
       else if(!vs[0] && vs[1] && !vs[2]) {
-        //	printf("coucouc\n");
         newt.push_back(
           new MTriangle(ts[i]->getVertex(0), ts[i]->getVertex(1), vs[1]));
         newt.push_back(
           new MTriangle(ts[i]->getVertex(0), vs[1], ts[i]->getVertex(2)));
         cut_edge(ecuts, ts[i]->getVertex(2), ts[i]->getVertex(1), vs[1]);
         MEdge ed(ts[i]->getVertex(0), vs[1]);
-        ecuts[ed] = index;
+	if (!t_junction)  ecuts[ed] = index;
       }
       else if(!vs[0] && !vs[1] && vs[2]) {
-        //	printf("coucouc\n");
         newt.push_back(
           new MTriangle(ts[i]->getVertex(0), ts[i]->getVertex(1), vs[2]));
         newt.push_back(
           new MTriangle(vs[2], ts[i]->getVertex(1), ts[i]->getVertex(2)));
         cut_edge(ecuts, ts[i]->getVertex(2), ts[i]->getVertex(0), vs[2]);
         MEdge ed(ts[i]->getVertex(1), vs[2]);
-        ecuts[ed] = index;
+	if (!t_junction)ecuts[ed] = index;
       }
       else if(vs[0] && vs[1] && !vs[2]) { // OK
         newt.push_back(new MTriangle(ts[i]->getVertex(0), vs[0], vs[1]));
@@ -4869,7 +4880,7 @@ public:
         cut_edge(ecuts, ts[i]->getVertex(0), ts[i]->getVertex(1), vs[0]);
         cut_edge(ecuts, ts[i]->getVertex(2), ts[i]->getVertex(1), vs[1]);
         MEdge ed(vs[0], vs[1]);
-        ecuts[ed] = index;
+        if (!t_junction)ecuts[ed] = index;
       }
       else if(vs[0] && !vs[1] && vs[2]) { // OK
         newt.push_back(new MTriangle(ts[i]->getVertex(0), vs[0], vs[2]));
@@ -4879,7 +4890,7 @@ public:
         cut_edge(ecuts, ts[i]->getVertex(0), ts[i]->getVertex(1), vs[0]);
         cut_edge(ecuts, ts[i]->getVertex(2), ts[i]->getVertex(0), vs[2]);
         MEdge ed(vs[0], vs[2]);
-        ecuts[ed] = index;
+        if (!t_junction)ecuts[ed] = index;
       }
       else if(!vs[0] && vs[1] && vs[2]) {
         newt.push_back(new MTriangle(ts[i]->getVertex(2), vs[2], vs[1]));
@@ -4889,7 +4900,7 @@ public:
         cut_edge(ecuts, ts[i]->getVertex(1), ts[i]->getVertex(2), vs[1]);
         cut_edge(ecuts, ts[i]->getVertex(2), ts[i]->getVertex(0), vs[2]);
         MEdge ed(vs[1], vs[2]);
-        ecuts[ed] = index;
+        if (!t_junction)ecuts[ed] = index;
       }
       else if(vs[0] && vs[1] && vs[2]) {
         newt.push_back(new MTriangle(vs[0], vs[1], vs[2]));
@@ -4904,8 +4915,21 @@ public:
     ts = newt;
   }
 
+  static bool isTjunction (std::vector<std::pair<MTriangle*,int> > &t_junctions,
+			   int index, MTriangle *t){
+
+
+    bool _found = false;
+    for (size_t i=0;i<t_junctions.size();i++){
+      if (t_junctions[i].first == t && t_junctions[i].second == index)_found = true;
+    }
+    //    printf("triangle %lu is a t-junction for %d --> %d\n",t->getNum(),index,_found);
+    return !_found ;
+  }
+  
   void cutMesh(std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
-	       std::map<MEdge, GEdge*, MEdgeLessThan> &inverseClassificationEdges)
+	       std::map<MEdge, GEdge*, MEdgeLessThan> &inverseClassificationEdges,
+	       std::vector<std::pair<MTriangle*,int> > &t_junctions)
   {
     SBoundingBox3d bnd = GModel::current()->bounds();
     double model_size = bnd.diag();
@@ -4937,7 +4961,7 @@ public:
 	it->second.finish(gm, ite->second, it->first.getVertex(0), it->first.getVertex(1), F);
       }
       else {
-	it->second.finish(gm, NULL ,0, 0, F);
+	it->second.finish(gm, NULL ,it->first.getVertex(0), it->first.getVertex(1), F);
       }
     }
 
@@ -4947,17 +4971,19 @@ public:
       for(size_t j = 0; j < f[i]->triangles.size(); j++) {
         std::set<int> indices;
         std::multimap<int, std::pair<MVertex *, std::pair<int, int> > > tcuts;
-	
+
+	std::set<int> t_indices;
         for(size_t k = 0; k < 3; k++) {
           MEdge e = f[i]->triangles[j]->getEdge(k);
           std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it = cuts.find(e);
           if(it != cuts.end()) {
             for(size_t l = 0; l < it->second.vs.size(); ++l) {
+	      if (it->second.p_occur[l] != it->second.n_occur)t_indices.insert(it->second.indexOfCuts[l]);
               std::pair<int, std::pair<MVertex *, std::pair<int, int> > > pp =
                 std::make_pair(
                   it->second.indexOfCuts[l],
                   std::make_pair(it->second.vs[l],
-                                 std::make_pair(k, it->second.idsOfCuts[l])));
+                                 std::make_pair(k , it->second.idsOfCuts[l])));
               tcuts.insert(pp);
               indices.insert(it->second.indexOfCuts[l]);
             }
@@ -4969,16 +4995,22 @@ public:
         ttt.push_back(f[i]->triangles[j]);
         for(; iti != indices.end(); ++iti) {
           //	  if (*iti != 313310)continue;
+	  bool TJUNCTION = (t_indices.find(*iti) != t_indices.end()) &&
+	    isTjunction (t_junctions, *iti, (f[i]->triangles[j]));
+	  
           GEdge *ge = gm->getEdgeByTag(*iti);
           if(tcuts.count(*iti) == 1) {
             std::multimap<
               int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
               tcuts.lower_bound(*iti);
             MVertex *v0 = itt->second.first;
-            int k = itt->second.second.first;
-            cutTriangles(ttt, f[i], v0,
-                         f[i]->triangles[j]->getVertex((k + 2) % 3), ge, ecuts,
-                         *iti, F, inverseClassificationEdges, model_size);
+	    int k = itt->second.second.first;	    
+	    //	    if (itt->second.second.second < 0){
+	    //	      printf("T JUNCTION %lu %lu \n",v0->getNum(), f[i]->triangles[j]->getVertex((k + 2) % 3)->getNum());
+	    //	    }
+	    cutTriangles(ttt, f[i], v0,
+			 f[i]->triangles[j]->getVertex((k + 2) % 3), ge, ecuts,
+			 *iti, F, inverseClassificationEdges, model_size, TJUNCTION);
           }
           else if(tcuts.count(*iti) == 2) {
             std::multimap<
@@ -4987,42 +5019,42 @@ public:
             MVertex *v0 = itt->second.first;
             ++itt;
             MVertex *v1 = itt->second.first;
-            cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
+            cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F, inverseClassificationEdges, model_size, TJUNCTION);
           }
           else if(tcuts.count(*iti) == 3) {
             std::multimap<
               int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
               tcuts.lower_bound(*iti);
             int k0 = itt->second.second.first;
-            int id0 = itt->second.second.second;
+            int id0 = abs(itt->second.second.second);
             MVertex *v0 = itt->second.first;
             ++itt;
             int k1 = itt->second.second.first;
-            int id1 = itt->second.second.second;
+            int id1 = abs(itt->second.second.second);
             MVertex *v1 = itt->second.first;
             ++itt;
             int k2 = itt->second.second.first;
-            int id2 = itt->second.second.second;
+            int id2 = abs(itt->second.second.second);
             MVertex *v2 = itt->second.first;
             ;
 
             if(abs(id0 - id1) <= 2) {
               cutTriangles(ttt, f[i], v2,
                            f[i]->triangles[j]->getVertex((k2 + 2) % 3), ge,
-                           ecuts, *iti, F, inverseClassificationEdges, model_size);
-              cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
+                           ecuts, *iti, F, inverseClassificationEdges, model_size, TJUNCTION);
+              cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F, inverseClassificationEdges, model_size, TJUNCTION);
             }
             else if(abs(id0 - id2) <= 2) {
               cutTriangles(ttt, f[i], v1,
                            f[i]->triangles[j]->getVertex((k1 + 2) % 3), ge,
-                           ecuts, *iti, F, inverseClassificationEdges, model_size);
-              cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
+                           ecuts, *iti, F, inverseClassificationEdges, model_size, TJUNCTION);
+              cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F, inverseClassificationEdges, model_size, TJUNCTION);
             }
             else if(abs(id1 - id2) <= 2) {
               cutTriangles(ttt, f[i], v0,
                            f[i]->triangles[j]->getVertex((k0 + 2) % 3), ge,
-                           ecuts, *iti, F, inverseClassificationEdges, model_size);
-              cutTriangles(ttt, f[i], v1, v2, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
+                           ecuts, *iti, F, inverseClassificationEdges, model_size, TJUNCTION);
+              cutTriangles(ttt, f[i], v1, v2, ge, ecuts, *iti, F, inverseClassificationEdges, model_size, TJUNCTION);
             }
             else {
               printf("BAD BEHAVIOR 3\n");
@@ -5035,28 +5067,28 @@ public:
             std::multimap<
               int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
               tcuts.lower_bound(*iti);
-            int id0 = itt->second.second.second;
+            int id0 = abs(itt->second.second.second);
             MVertex *v0 = itt->second.first;
             ++itt;
-            int id1 = itt->second.second.second;
+            int id1 = abs(itt->second.second.second);
             MVertex *v1 = itt->second.first;
             ++itt;
-            int id2 = itt->second.second.second;
+            int id2 = abs(itt->second.second.second);
             MVertex *v2 = itt->second.first;
             ++itt;
-            int id3 = itt->second.second.second;
+            int id3 = abs(itt->second.second.second);
             MVertex *v3 = itt->second.first;
             if(abs(id0 - id1) <= 2 || abs(id2 - id3) <= 2) {
-              cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
-              cutTriangles(ttt, f[i], v2, v3, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
+              cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F, inverseClassificationEdges, model_size,TJUNCTION);
+              cutTriangles(ttt, f[i], v2, v3, ge, ecuts, *iti, F, inverseClassificationEdges, model_size,TJUNCTION);
             }
             else if(abs(id0 - id2) <= 2 || abs(id1 - id3) <= 2) {
-              cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
-              cutTriangles(ttt, f[i], v1, v3, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
+              cutTriangles(ttt, f[i], v0, v2, ge, ecuts, *iti, F, inverseClassificationEdges, model_size,TJUNCTION);
+              cutTriangles(ttt, f[i], v1, v3, ge, ecuts, *iti, F, inverseClassificationEdges, model_size,TJUNCTION);
             }
             else if(abs(id0 - id3) <= 2 || abs(id1 - id2) <= 2) {
-              cutTriangles(ttt, f[i], v0, v3, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
-              cutTriangles(ttt, f[i], v1, v2, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
+              cutTriangles(ttt, f[i], v0, v3, ge, ecuts, *iti, F, inverseClassificationEdges, model_size,TJUNCTION);
+              cutTriangles(ttt, f[i], v1, v2, ge, ecuts, *iti, F, inverseClassificationEdges, model_size,TJUNCTION);
             }
 	    else{
 	      printf("ERRROOOOR IN 4 CUTS %d %d %d %d\n",id0,id1,id2,id3);
@@ -5068,14 +5100,14 @@ public:
               tcuts.lower_bound(*iti);
 	    std::pair<int,MVertex*> id[10];
 	    for (std::size_t kk=0;kk< tcuts.count(*iti);kk++){
-	      id[kk] = std::make_pair(itt->second.second.second, itt->second.first);
+	      id[kk] = std::make_pair(abs(itt->second.second.second), itt->second.first);
 	      ++itt;
 	    }
 	    std::sort(id,id+6);
-	    cutTriangles(ttt, f[i], id[0].second, id[1].second, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
-	    cutTriangles(ttt, f[i], id[2].second, id[3].second, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
-	    cutTriangles(ttt, f[i], id[4].second, id[5].second, ge, ecuts, *iti, F, inverseClassificationEdges, model_size);
-	    printf("%d %d %d %d %d %d\n",id[0].first,id[1].first,id[2].first,id[3].first,id[4].first,id[5].first);
+	    cutTriangles(ttt, f[i], id[0].second, id[1].second, ge, ecuts, *iti, F, inverseClassificationEdges, model_size,TJUNCTION);
+	    cutTriangles(ttt, f[i], id[2].second, id[3].second, ge, ecuts, *iti, F, inverseClassificationEdges, model_size,TJUNCTION);
+	    cutTriangles(ttt, f[i], id[4].second, id[5].second, ge, ecuts, *iti, F, inverseClassificationEdges, model_size,TJUNCTION);
+	    //	    printf("%d %d %d %d %d %d\n",id[0].first,id[1].first,id[2].first,id[3].first,id[4].first,id[5].first);
           }
           else {
             Msg::Error("TODO %lu in CutMesh !!!!!!!", tcuts.count(*iti));
@@ -5134,49 +5166,131 @@ public:
     GModel::current()->pruneMeshVertexAssociations();
   }
 
-  int correctionOnCutGraph(
-    std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
-    std::map<MVertex *, MVertex *, MVertexPtrLessThan> &new2old)
+
+  // create edge cut points on the original edges of the uncut mesh
+  // find out t-junctions
+  int correctionOnCutGraph(std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
+			   std::map<MVertex *, MVertex *, MVertexPtrLessThan> &new2old,
+			   std::vector<GFace*> &f,
+			   std::vector<std::pair<MTriangle*,int> > &tj)
   {
+
+    SBoundingBox3d bbox = GModel::current()->bounds();
+    double TOLERANCE = 1.e-08*bbox.diag();
+    
     std::map<MEdge, MEdge, MEdgeLessThan> duplicateEdges;
 
-    for(std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it = cuts.begin();
-        it != cuts.end(); ++it) {
-      MVertex *v0 = it->first.getVertex(0);
-      MVertex *v1 = it->first.getVertex(1);
-      MVertex *v2 = new2old.find(v0) == new2old.end() ? v0 : new2old[v0];
-      MVertex *v3 = new2old.find(v1) == new2old.end() ? v1 : new2old[v1];
-      MEdge e0(v0, v1);
-      MEdge e1(v2, v3);
-      duplicateEdges[e0] = e1;
+    std::multimap<MEdge, MEdge, MEdgeLessThan> t_junctions;
+    std::set<MEdge, MEdgeLessThan> originals;
+
+    // create empty edgecuts for t-junctions
+    {
+      edgeCuts empty;
+      for(size_t i = 0; i < f.size(); i++) {
+	for(size_t j = 0; j < f[i]->triangles.size(); j++) {
+	  for(size_t k = 0; k < 3; k++) {
+	    MEdge e =  f[i]->triangles[j]->getEdge(k);
+	    std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it_cg = cuts.find(e);
+	    if (it_cg == cuts.end())cuts[e] = empty;
+	  }
+	}
+      }
     }
 
-    for(std::map<MEdge, MEdge, MEdgeLessThan>::iterator it2 =
-          duplicateEdges.begin();
-        it2 != duplicateEdges.end(); ++it2) {
-      std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it3 =
-        cuts.find(it2->first);
-      std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it4 =
-        cuts.find(it2->second);
-      if(it3 != cuts.end() && it4 == cuts.end()) {
-        cuts[it2->second] = it3->second;
-      }
-      else if(it4 != cuts.end() && it3 == cuts.end()) {
-        cuts[it2->first] = it4->second;
-      }
-      else if(it4 != cuts.end() && it3 != cuts.end()) {
-        it4->second.vs.insert(it4->second.vs.begin(), it3->second.vs.begin(),
-                              it3->second.vs.end());
-        it4->second.indexOfCuts.insert(it4->second.indexOfCuts.begin(),
-                                       it3->second.indexOfCuts.begin(),
-                                       it3->second.indexOfCuts.end());
-        it3->second.vs.insert(it3->second.vs.begin(), it4->second.vs.begin(),
-                              it4->second.vs.end());
-        it3->second.indexOfCuts.insert(it3->second.indexOfCuts.begin(),
-                                       it4->second.indexOfCuts.begin(),
-                                       it4->second.indexOfCuts.end());
+    {
+      for(std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it = cuts.begin();
+	  it != cuts.end(); ++it) {
+	MVertex *v0 = it->first.getVertex(0);
+	MVertex *v1 = it->first.getVertex(1);	
+	MVertex *v2 = new2old.find(v0) == new2old.end() ? v0 : new2old[v0];
+	MVertex *v3 = new2old.find(v1) == new2old.end() ? v1 : new2old[v1];		
+	MEdge e(v2, v3);
+	MEdge ex(v0, v1);
+	duplicateEdges[ex] = e;
+	std::pair<MEdge, MEdge> p = std::make_pair(e,ex);
+	t_junctions.insert (p);
+	originals.insert(e);
       }
     }
+    FILE *ff = fopen("t_junctions.pos","w");
+    fprintf(ff,"View \"t_junctions\"{\n");
+    {
+      MEdgeEqual op_equal;
+      std::set<MEdge, MEdgeLessThan>::iterator it =  originals.begin();
+      int t_counter = 0;
+      for (; it != originals.end();++it){
+	MEdge e = *it;	
+
+	edgeCuts cut_original;
+	
+	std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it_original = cuts.find(e);
+	if (it_original != cuts.end()) {
+	  cut_original.n_occur ++;
+	  for (size_t k = 0 ; k < it_original->second.ps.size() ; ++k){
+	    bool added = cut_original.add (it_original->second.ps[k],
+					   it_original->second.indexOfCuts[k],
+					   it_original->second.idsOfCuts[k],TOLERANCE);
+	  }
+	}
+	
+	for (std::multimap<MEdge, MEdge, MEdgeLessThan>::iterator ite = t_junctions.lower_bound(e);
+	     ite != t_junctions.upper_bound(e);++ite){
+	  std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it_copy = cuts.find(ite->second);
+	  
+	  if (!op_equal(ite->first,ite->second)){
+	    cut_original.n_occur ++;
+	    for (size_t k = 0 ; k < it_copy->second.ps.size() ; ++k){
+	      bool added = cut_original.add (it_copy->second.ps[k],
+					     it_copy->second.indexOfCuts[k],
+					     it_copy->second.idsOfCuts[k],TOLERANCE);
+	    }
+	    //	    cuts.erase(it_copy);
+	  }
+	}
+
+	bool t_j = false;
+	for (size_t i=0;i<cut_original.p_occur.size();i++)
+	  if (cut_original.p_occur[i] != cut_original.n_occur) t_j = true;
+	if (t_j){
+	  std::vector<MEdge> all_copies;
+	  all_copies.push_back(e);
+	  for (std::multimap<MEdge, MEdge, MEdgeLessThan>::iterator ite = t_junctions.lower_bound(e);
+	       ite != t_junctions.upper_bound(e);++ite){
+	    all_copies.push_back(ite->second);
+	  }
+	  for (size_t K=0;K<all_copies.size();K++){
+	    std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it_e = cuts.find(all_copies[K]);
+	    for(size_t i = 0; i < f.size(); i++) {
+	      for(size_t j = 0; j < f[i]->triangles.size(); j++) {
+		for(size_t k = 0; k < 3; k++) {
+		  MEdge e =  f[i]->triangles[j]->getEdge(k);
+		  if (op_equal(e, it_e->first)){
+		    for (size_t l=0;l<it_e->second.indexOfCuts.size();l++){
+		      std::pair<MTriangle*,int> pp = std::make_pair(f[i]->triangles[j],it_e->second.indexOfCuts[l]);
+		      //		      printf ("TRIANGLE %lu is associated to T-Junction for iso %d\n",f[i]->triangles[j]->getNum(),
+		      //			      it_e->second.indexOfCuts[l]);
+		      tj.push_back(pp);
+		    }
+		  }
+		}
+	      }
+	    }
+	  }
+	  
+	  fprintf(ff,"SL(%g,%g,%g,%g,%g,%g) {%d,%d};\n",e.getVertex(0)->x(),
+		  e.getVertex(0)->y(),e.getVertex(0)->z(),
+		  e.getVertex(1)->x(),e.getVertex(1)->y(),e.getVertex(1)->z(),t_counter,t_counter++);
+	  printf ("original %lu %lu --> %lu copies, exists %d %lu pts (%d)",
+		  e.getVertex(0)->getNum(),e.getVertex(1)->getNum(),  t_junctions.count(e) , it_original != cuts.end(),
+		  cut_original.ps.size(),cut_original.n_occur  );
+	  for (size_t i=0;i<cut_original.p_occur.size();i++)printf("%d ",cut_original.p_occur[i]);
+	  printf("\n");
+	}
+	cuts[e] = cut_original;
+      }
+    }
+    fprintf(ff,"};\,n");
+    fclose(ff);
     return 0;
   }
 
@@ -5184,7 +5298,8 @@ public:
 			 std::map<MVertex *, double> &potV,
 			 std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges,
 			 std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts,
-			 std::vector<cutGraphPassage> &passages)
+			 std::vector<cutGraphPassage> &passages,
+			 std::vector<std::pair<MTriangle*,int> > &tj)
   {
     potU.clear();
     potV.clear();
@@ -5193,9 +5308,12 @@ public:
     if (!computePotential(gm, f, *myAssembler, C, new2old, groups,
 			  d0, d1, G, potU, potV, passages))return false;
     
+    std::map<MEdge, MEdge, MEdgeLessThan>duplicates;
+    computeDuplicateEdgesOnCutGraph (G, duplicates);
+    
     std::map<size_t,int> COUNTS;
     bool success = computeIsos(gm, f, singularities, C, new2old, duplicateEdges, groups,
-			       groups_cg, potU, potV, cutG, G, cuts, passages, corners, COUNTS);
+			       groups_cg, potU, potV, cutG, G, cuts, passages, corners, COUNTS, duplicates);
 
 
     double chi_sing = 0.0;
@@ -5226,11 +5344,12 @@ public:
       Msg::Info("Compatibility test FAILED %12.5E (singularities) vs %12.5E (curvature/exact)",chi_sing,chi_curv/2/M_PI);
     }
     
-    correctionOnCutGraph(cuts, new2old);
+    correctionOnCutGraph(cuts, new2old, f, tj);
     
     double MAXX = 0.;
     //    double SUM_LEFT = 0 , SUM_RIGHT = 0;
     for(size_t i = 0; i < groups_cg.size(); i++) {
+      if (G[i].crosses[0]->inInternalBoundary)continue;
       double MAXD1 = -1.e22, MIND1 = 1.e22, MAXD2 = -1.e22, MIND2 = 1.e22;
       for(size_t j = 0; j < G[i].left.size(); j++) {
         double Ul = potU[G[i].left[j]];
@@ -5385,12 +5504,13 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     qLayout.computeThetaUsingHCrouzeixRaviart(dataTHETA);
   }
 
+  std::vector<std::pair<MTriangle*,int> > t_junctions;
   if(layout) {
     /// ARGHHHHHHHHHHHHHHHHH
     std::vector<cutGraphPassage> passages;
     int ITER = 0;
     while (1){
-      qLayout.computeQuadLayout(potU, potV, duplicateEdges, cuts, passages);
+      qLayout.computeQuadLayout(potU, potV, duplicateEdges, cuts, passages, t_junctions);
       for (size_t i=0 ; i< passages.size() ; ++i){
 	passages[i].analyze(potU,potV,qLayout.G,qLayout.new2old);
 	//	passages[i].Print("All ");
@@ -5493,10 +5613,10 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   
   Msg::Info("Cutting the mesh");
   std::map<MEdge,GEdge*,MEdgeLessThan> inverseClassificationEdges;
-  qLayout.cutMesh(cuts,inverseClassificationEdges);
+  qLayout.cutMesh(cuts,inverseClassificationEdges, t_junctions);
   gm->writeMSH("cutmesh.msh", 4.0, false, true);
 
-  constexpr bool do_reclassify = false; /* no longer needed, done by QMT */
+  constexpr bool do_reclassify = true; /* no longer needed, done by QMT */
   if (do_reclassify) {
     Msg::Info("Classifying the model");
     discreteEdge *de = new discreteEdge(
@@ -6255,11 +6375,12 @@ int computeUV(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& stat
   std::map<MVertex *, double> potU, potV;
   std::map<MEdge, edgeCuts, MEdgeLessThan> cuts;
   bool layout = true;
+  std::vector<std::pair<MTriangle*,int> > t_junctions;
   if(layout) {
     std::vector<cutGraphPassage> passages;
     int ITER = 0;
     while (1){
-      qLayout.computeQuadLayout(potU, potV, duplicateEdges, cuts, passages);
+      qLayout.computeQuadLayout(potU, potV, duplicateEdges, cuts, passages, t_junctions);
       for (size_t i=0 ; i< passages.size() ; ++i){
         passages[i].analyze(potU,potV,qLayout.G,qLayout.new2old);
       }
@@ -6408,7 +6529,6 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
 #endif
   }
 
-
   /* change to a new model (created via disk write/read, not good but ...) */
   Msg::Info("create a new model '%s'", opt.model_cut.c_str());
   std::string tmp_path = "tmp_mesh.msh";
@@ -6480,7 +6600,10 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
   quadLayoutData qLayout(gcc, f, gcc->getName());
   Msg::Info("Cutting the mesh");
   std::map<MEdge,GEdge*,MEdgeLessThan> inverseClassificationEdges;
-  qLayout.cutMesh(cuts, inverseClassificationEdges);
+
+  /// FIXME MAXENCE --> need for t_junctions 
+  std::vector<std::pair<MTriangle*,int> > t_junctions;
+  qLayout.cutMesh(cuts, inverseClassificationEdges, t_junctions);
 
   constexpr bool do_reclassify = false; /* no longer needed, done by QMT */
   if (do_reclassify) {

@@ -1,5 +1,7 @@
 #ifndef _HXT_SPLIT_TRIANGLE_H_
 #define _HXT_SPLIT_TRIANGLE_H_
+#include "hxt_tools.h"
+
 #include "hxt_mesh.h"
 #include "hxt_edge.h"
 

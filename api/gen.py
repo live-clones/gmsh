@@ -181,6 +181,15 @@ model.add('getNormal', doc, None, iint('tag'), ivectordouble('parametricCoord'),
 doc = '''Get the parametric coordinates `parametricCoord' for the points `points' on the entity of dimension `dim' and tag `tag'. `points' are given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
 model.add('getParametrization', doc, None, iint('dim'), iint('tag'), ivectordouble('points'), ovectordouble('parametricCoord'))
 
+doc = '''Get the `min' and `max' bounds of the parametric coordinates for the entity of dimension `dim' and tag `tag'.'''
+model.add('getParametrizationBounds', doc, None, iint('dim'), iint('tag'), ovectordouble('min'), ovectordouble('max'))
+
+doc = '''Check if the parametric coordinates provided in `parametricCoord' correspond to points inside the entitiy of dimension `dim' and tag `tag', and return the number of points inside. This feature is only available for a subset of curves and surfaces, depending on the underyling geometrical representation.'''
+model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('parametricCoord'))
+
+doc = '''Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1, reparametrize all the points corresponding to the parametric coordinates `parametricCoord'. Multiple matches in case of periodic surfaces can be selected with `which'. This feature is only available for a subset of entities, depending on the underyling geometrical representation.'''
+model.add('reparametrizeOnSurface', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), iint('surfaceTag'), ovectordouble('surfaceParametricCoord'), iint('which', '0'))
+
 doc = '''Set the visibility of the model entities `dimTags' to `value'. Apply the visibility setting recursively if `recursive' is true.'''
 model.add('setVisibility', doc, None, ivectorpair('dimTags'), iint('value'), ibool('recursive', 'false', 'False'))
 

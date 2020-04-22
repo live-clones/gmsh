@@ -245,7 +245,7 @@ API}. A brief description of the four modules is given hereafter.
 @end menu
 
 @c -------------------------------------------------------------------------
-@c Geometry: geometrical entity definition
+@c Geometry: model entity creation
 @c -------------------------------------------------------------------------
 
 @node Geometry, Mesh, Overview, Overview
@@ -5144,7 +5144,7 @@ Python and Julia API examples, see the respective subdirectories in
 * t19:: Thrusections, fillets, pipes, mesh size from curvature
 * t20:: STEP import and manipulation, geometry partitioning
 * t21:: Mesh partitioning
-* x1::  Geometrical and mesh data access
+* x1::  Geometry and mesh data
 * x2::  Mesh import, discrete entities, hybrid models, terrain meshing
 @end menu
 
@@ -5545,7 +5545,7 @@ and Python
 @c -------------------------------------------------------------------------
 
 @node x1, x2, t21, Tutorial
-@section @code{x1}: Geometrical and mesh data access
+@section @code{x1}: Geometry and mesh data
 
 See
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py,x1.py}.

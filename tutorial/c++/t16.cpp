@@ -91,7 +91,7 @@ int main(int argc, char **argv)
   // Here the `Physical Volume' definitions can thus be made for the 5 spheres
   // directly, as the five spheres (volumes 4, 5, 6, 7 and 8), which will be
   // deleted by the fragment operations, will be recreated identically (albeit
-  // with new surfaces) with the same tags.:
+  // with new surfaces) with the same tags:
   for(int i = 1; i <= 5; i++) gmsh::model::addPhysicalGroup(3, {3 + i}, i);
 
   // The tag of the cube will change though, so we need to access it

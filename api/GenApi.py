@@ -1543,15 +1543,34 @@ class API:
             data.sort(key=lambda x: alphanum_key(x[0]))
             return data
 
-        def find_function(name, data):
+        def find_function(lang, name, data):
+            only_unique = False # only report unique matches?
+            in_comments = True # report matches in comments?
+            if lang == 'Python':
+                func = name.replace('/', '.')
+                comment = '#'
+            else:
+                func = name.replace('/', '::')
+                comment = '//'
             match = []
+            unique = set()
             for file in data:
                 l = 0
                 for line in file[1]:
                     l = l + 1
-                    if re.search(name, line):
-                        match.append((file[0], l))
-                        break  # keep only one match per file
+                    # allow white space between func name and (
+                    if re.search(func + '\s*\(', line):
+                        strip = re.sub(r'\s+', '', line)
+                        # don't report matches in comments
+                        if not in_comments and strip.startswith(comment):
+                            continue
+                        # only report a given match once
+                        if (not only_unique) or (strip not in unique):
+                            match.append((file[0], l))
+                            unique.add(strip)
+                            break  # report only one match per file
+                        else:
+                            unique.add(strip)
             return match
 
         def write_module(module, path, node, node_next, node_prev, cpp_data,
@@ -1576,30 +1595,27 @@ class API:
                     for oarg in oargs) if len(oargs) else "-") + "\n")
                 f.write("@item " + "Return:\n" +
                         (rtype.rtexi_type if rtype else "-") + "\n")
-                cpp_name = path.replace('/', '::') + '::' + name + '\('
-                cpp = find_function(cpp_name, cpp_data)
-                py_name = path.replace('/', '.') + '.' + name + '\('
-                py = find_function(py_name, py_data)
-
-                def write_matches(lang, matches):
+                cpp = find_function('C++', path + '/' + name, cpp_data)
+                py = find_function('Python', path + '/' + name, py_data)
+                def write_matches(lang, matches, max_matches):
                     git = 'https://gitlab.onelab.info/gmsh/gmsh/tree/master/'
                     f.write(lang + ' (')
-                    for i in range(min(5,
+                    for i in range(min(max_matches,
                                        len(matches))):  # write max 5 matches
                         if i > 0: f.write(', ')
                         f.write('@url{' + git + matches[i][0][3:] + '#L' +
                                 str(matches[i][1]) + ',' +
                                 os.path.basename(matches[i][0]) + '}')
-                    if len(matches) > 5: f.write(', ...')
+                    if len(matches) > max_matches: f.write(', ...')
                     f.write(')')
 
                 if len(cpp) or len(py):
                     f.write("@item " + "Examples:\n")
                     if len(cpp):
-                        write_matches("C++", cpp)
+                        write_matches("C++", cpp, 5)
                         if len(py): f.write(', ')
                     if len(py):
-                        write_matches("Python", py)
+                        write_matches("Python", py, 5)
                     f.write("\n")
                 f.write("@end table\n\n")
             f.write("@end ftable\n\n")

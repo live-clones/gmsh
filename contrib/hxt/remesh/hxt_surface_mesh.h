@@ -1,7 +1,7 @@
 #ifndef HXT_SURFACE_MESH_H
 #define HXT_SURFACE_MESH_H
 
-#include "hxt_api.h"
+#include "hxt_tools.h"
 #include "hxt_mesh.h"
 #include "hxt_edge.h"
 

@@ -1,5 +1,6 @@
 #ifndef _HXT_SPLIT_EDGE_H_
 #define _HXT_SPLIT_EDGE_H_
+#include "hxt_tools.h"
 #include "hxt_mesh.h"
 #include "hxt_edge.h"
 

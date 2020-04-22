@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "hxt_api.h"
+#include "hxt_message.h"
 
 /**
  * Computes the eigen vectors of a 6 by 6 symmetric matrix.
