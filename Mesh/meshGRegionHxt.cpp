@@ -188,7 +188,10 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
     std::map<int, GEdge *>::iterator ge = i2e.find(c);
-    if(ge == i2e.end()) return HXT_STATUS_ERROR;
+    if(ge == i2e.end()) {
+      Msg::Warning("Could not find curve for HXT color %d", c);
+      continue;
+    }
     if(!v0) {
       double *x = &m->vertices.coord[4 * i0];
       // FIXME compute true coordinates
@@ -211,7 +214,10 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     MVertex *v1 = c2v[i1];
     MVertex *v2 = c2v[i2];
     std::map<int, GFace *>::iterator gf = i2f.find(c);
-    if(gf == i2f.end()) return HXT_STATUS_ERROR;
+    if(gf == i2f.end()) {
+      Msg::Warning("Could not find surface for HXT color %d", c);
+      continue;
+    }
     if(!v0) {
       // FIXME compute true coordinates
       double *x = &m->vertices.coord[4 * i0];
@@ -390,7 +396,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     1, // int verbosity;
     1, // int stat;
     1, // int refine;
-    1, // int optimize;
+    CTX::instance()->mesh.optimize, // int optimize;
     0.35, // double qualityMin;
     0, // double (*qualityFun)
     0, // void* qualityData;
@@ -402,10 +408,9 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 
   HXT_CHECK(hxtTetMesh(mesh, &options));
 
-  //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
+  // HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
 
   HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
-
   HXT_CHECK(hxtMeshDelete(&mesh));
   return HXT_STATUS_OK;
 }
