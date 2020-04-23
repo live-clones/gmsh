@@ -7,8 +7,8 @@
 #define _GLWIDGET_H_
 
 #include <QGLWidget>
-#include "GmshGlobal.h"
-#include "drawContext.h"
+#include <gmsh/GmshGlobal.h>
+#include <gmsh/drawContext.h>
 
 class GLWidget : public QGLWidget
 {
