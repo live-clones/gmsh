@@ -42,6 +42,8 @@ private:
   static std::map<std::string, double> _timers;
   // report cpu time for each info message?
   static bool _infoCpu;
+  // report memory for each info message?
+  static bool _infoMem;
   // starting time (gettimeofday at startup)
   static double _startTime;
   // counters
@@ -106,6 +108,7 @@ public:
   static void SetProgressMeterStep(int step);
   static int GetProgressMeterStep();
   static void SetInfoCpu(bool val);
+  static void SetInfoMem(bool val);
   static double &Timer(const std::string &str);
   static void PrintTimers();
   static void ResetErrorCounter();

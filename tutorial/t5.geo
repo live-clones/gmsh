@@ -184,8 +184,7 @@ Physical Volume (10) = 186;
 
 // Meshing algorithms can changed globally using options:
 
-Mesh.Algorithm = 6; // 2D algorithm set to Frontal-Delaunay
-Mesh.Algorithm3D = 1; // 3D algorithm set to Delaunay
+Mesh.Algorithm = 6; // Frontal-Delaunay for 2D meshes
 
 // They can also be set for individual surfaces, e.g.
 

@@ -11,6 +11,7 @@
 
 #if defined(HAVE_HXT)
 extern "C" {
+#include "hxt_message.h"
 #include "hxt_mesh.h"
 #include <stdint.h>
 }
