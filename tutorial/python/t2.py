@@ -71,7 +71,7 @@ gmsh.model.geo.addPlaneSurface([10], 11)
 ov = gmsh.model.geo.copy([(2, 1), (2, 11)])
 gmsh.model.geo.translate(ov, 0.12, 0, 0)
 
-print "New surfaces " + str(ov[0][1]) + " and " + str(ov[1][1])
+print("New surfaces " + str(ov[0][1]) + " and " + str(ov[1][1]))
 
 # Volumes are the fourth type of elementary entities in Gmsh. In the same way
 # one defines curve loops to build surfaces, one has to define surface loops
