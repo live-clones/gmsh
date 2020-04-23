@@ -149,12 +149,12 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
 		   std::vector<GFace *> allFaces,
 		   std::vector<GEdge *> allEdges,
 		   HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v)
 {
   Msg::Debug("Start Hxt2Gmsh");
-  std::map<int, GEdge *> i2e;
-  std::map<int, GFace *> i2f;
+  std::map<uint32_t, GEdge *> i2e;
+  std::map<uint32_t, GFace *> i2f;
   for(size_t i = 0; i < allFaces.size(); i++)
     i2f[allFaces[i]->tag()] = allFaces[i];
   for(size_t i = 0; i < allEdges.size(); i++)
@@ -187,7 +187,7 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
     uint16_t c = m->lines.colors[i];
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
-    std::map<int, GEdge *>::iterator ge = i2e.find(c);
+    std::map<uint32_t, GEdge *>::iterator ge = i2e.find(c);
     if(ge == i2e.end()) return HXT_STATUS_ERROR;
     if(!v0) {
       double *x = &m->vertices.coord[4 * i0];
@@ -210,7 +210,7 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
     MVertex *v2 = c2v[i2];
-    std::map<int, GFace *>::iterator gf = i2f.find(c);
+    std::map<uint32_t, GFace *>::iterator gf = i2f.find(c);
     if(gf == i2f.end()) return HXT_STATUS_ERROR;
     if(!v0) {
       // FIXME compute true coordinates
@@ -258,7 +258,7 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
 
 HXTStatus Hxt2Gmsh(GModel *gm,
 		   HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v)
 {
   std::vector<GRegion *> regions;
@@ -273,7 +273,7 @@ HXTStatus Hxt2Gmsh(GModel *gm,
 
 HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
 		   HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v)
 {
   std::vector<GFace *> allFaces;
@@ -290,7 +290,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
 		   std::vector<GEdge *> &edges,
 		   std::vector<GVertex*> &vertices,
 		   HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v)
 {
   std::set<MVertex *> all;
@@ -434,7 +434,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
 }
 
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v)
 {
   std::vector<GFace *> faces;
@@ -447,7 +447,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 }
 
 HXTStatus Gmsh2Hxt(GModel*gm, HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v)
 {
   std::vector<GRegion *> regions;
@@ -472,7 +472,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
 
-  std::map<MVertex *, int> v2c;
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
