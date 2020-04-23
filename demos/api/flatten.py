@@ -6,7 +6,7 @@ import sys
 # modified mesh in the same model.
 
 if len(sys.argv) < 2:
-    print "Usage: " + sys.argv[0] + " file.msh"
+    print("Usage: " + sys.argv[0] + " file.msh")
     exit(0)
 
 gmsh.initialize()
