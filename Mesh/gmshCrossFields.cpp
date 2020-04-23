@@ -2970,21 +2970,21 @@ static void computeOneIsoTillNextCutGraph(
     
     MVertex *vs[2] = {NULL, NULL};
     int count = 0;
-    MElement *next = NULL;
+    // MElement *next = NULL;
     for(size_t i = 0; i < lst.size(); i++) {
       if((lst[i]->getVertex(0) == v0 && lst[i]->getVertex(1) == v1) ||
          (lst[i]->getVertex(0) == v1 && lst[i]->getVertex(1) == v0)) {
-        next = lst[i];
+        // next = lst[i];
         vs[count++] = lst[i]->getVertex(2);
       }
       else if((lst[i]->getVertex(0) == v0 && lst[i]->getVertex(2) == v1) ||
               (lst[i]->getVertex(0) == v1 && lst[i]->getVertex(2) == v0)) {
-        next = lst[i];
+        // next = lst[i];
         vs[count++] = lst[i]->getVertex(1);
       }
       else if((lst[i]->getVertex(1) == v0 && lst[i]->getVertex(2) == v1) ||
               (lst[i]->getVertex(1) == v1 && lst[i]->getVertex(2) == v0)) {
-        next = lst[i];
+        // next = lst[i];
         vs[count++] = lst[i]->getVertex(0);
       }
     }
@@ -5223,6 +5223,8 @@ public:
             bool added = cut_original.add (it_original->second.ps[k],
                                            it_original->second.indexOfCuts[k],
                                            it_original->second.idsOfCuts[k],TOLERANCE);
+            // !!! Fixme: error if !added
+            (void)(added); // just suppress the warning so that it compiles
           }
         }
         
@@ -5236,6 +5238,8 @@ public:
               bool added = cut_original.add (it_copy->second.ps[k],
                                              it_copy->second.indexOfCuts[k],
                                              it_copy->second.idsOfCuts[k],TOLERANCE);
+              // !!! Fixme: error if !added
+              (void)(added); // just suppress the warning so that it compiles
             }
             //            cuts.erase(it_copy);
           }
@@ -5753,7 +5757,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   }
 
   std::string quad_layout_name = gm->getName();
-  int H_tag = tags.size() > 0 ? tags[0] : -1;
+  // int H_tag = tags.size() > 0 ? tags[0] : -1;
   double size_min = CTX::instance()->mesh.lcMin;
   double size_max = CTX::instance()->mesh.lcMax;
   if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
@@ -6012,7 +6016,7 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
 
 
     /* - View 'H' */
-    int h_tag = -1;
+    // int h_tag = -1;
     std::map<int, std::vector<double> > dataH;
     qLayout.getH(dataH);
     std::map<int, double > dataH2;
@@ -6025,7 +6029,7 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
       Msg::Info("create a view 'H'");
       vH = new PView();
       vH->getData()->setName("H");
-      h_tag = vH->getTag();
+      // h_tag = vH->getTag();
     }
     PViewDataList* d = dynamic_cast<PViewDataList*>(vH->getData());
     if(!d) { // change the view type
@@ -6689,19 +6693,19 @@ int generateQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
   std::string quad_layout_name = gm->getName();
   double size_min = CTX::instance()->mesh.lcMin;
   double size_max = CTX::instance()->mesh.lcMax;
-  double size_uniform = 0.;
+  // double size_uniform = 0.;
   if (CTX::instance()->mesh.lcMin != 0. && CTX::instance()->mesh.lcFactor) {
     size_min *= CTX::instance()->mesh.lcFactor;
-    size_uniform = size_min;
+    // size_uniform = size_min;
   }
   if (CTX::instance()->mesh.lcMax != 1.e22 && CTX::instance()->mesh.lcFactor) {
     size_max *= CTX::instance()->mesh.lcFactor;
-    size_uniform = size_max;
+    // size_uniform = size_max;
   }
   if (size_min == 0 && size_max == 1.e22) {
     SBoundingBox3d bbox = gm->bounds();
     size_min = 0.1 * bbox.diag() * CTX::instance()->mesh.lcFactor;
-    size_uniform = size_min;
+    // size_uniform = size_min;
     Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal*clscale");
   }
   
@@ -6778,8 +6782,8 @@ int simplifyQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
     size_min = 0.1 * bbox.diag();
     Msg::Warning("No size specified, using hmin = 0.1*bbox diagonal");
   }
-  double hc = opt.simplify_size_factor * size_min;
-  if (size_min == 0.) hc = opt.simplify_size_factor * size_max;
+  // double hc = opt.simplify_size_factor * size_min;
+  // if (size_min == 0.) hc = opt.simplify_size_factor * size_max;
 
   /* Import current quad mesh */
   QMT::QMesh Q;
