@@ -527,7 +527,7 @@ void computeLocalOrientationsOfABoundaryGroup (cross2d *reference,
   if (vsorted[0][0] == vsorted[0][vsorted[0].size()-1])
     vsorted[0].resize(vsorted[0].size()-1);
 
-  int ori0, ori1;
+  int ori0=0, ori1=0;
   
   for(size_t i = 0; i < vsorted[0].size() - 1; ++i) {
     MEdge e ( vsorted[0][i] , vsorted[0][i+1] );
@@ -5283,7 +5283,7 @@ public:
         cuts[e] = cut_original;
       }
     }
-    fprintf(ff,"};\,n");
+    fprintf(ff,"};\n");
     fclose(ff);
     return 0;
   }
@@ -5880,7 +5880,7 @@ int create_datalist_view_from_scalar_field(
     std::map<int, double>& dataH,
     PViewDataList* d) {
   std::vector<double> data;
-  size_t numElements = 0;
+  int numElements = 0;
   for(size_t i = 0; i < f.size(); i++) {
     for(size_t j = 0; j < f[i]->triangles.size(); j++) {
       MTriangle *t = f[i]->triangles[j];
@@ -6138,7 +6138,7 @@ int computeQuadSizeMapUniform(GModel * gm, const QuadMeshingOptions& opt, QuadMe
     double sf = 1./std::sqrt(FAC);
     smin = DBL_MAX;
     smax = -DBL_MAX;
-    for(size_t ele = 0; ele < numElements; ele++) {
+    for(int ele = 0; ele < numElements; ele++) {
       for(size_t nod = 0; nod < 3; nod++) {
         double& val = data[12*ele+3*3+nod];
         val = sf * val;
@@ -6148,7 +6148,7 @@ int computeQuadSizeMapUniform(GModel * gm, const QuadMeshingOptions& opt, QuadMe
     }
   }
 
-  Msg::Info("create a view 's' with %li triangles", numElements);
+  Msg::Info("create a view 's' with %d triangles", numElements);
   gmsh::initialize();
   int vi = gmsh::view::add("s");
   gmsh::view::addListData(vi, "ST", numElements, data);
@@ -6227,9 +6227,9 @@ int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSt
   gmsh::view::getListData(vH->getTag(), dataType, numElements, data);
   size_t et_tri = 1e6;
   for(size_t et = 0; et < numElements.size(); ++et)  {
-    if (numElements[et] == 0 || data[et].size() != numElements[et]*12) continue;
+    if (numElements[et] == 0 || data[et].size() != (size_t) numElements[et]*12) continue;
     et_tri = et;
-    for(size_t ele = 0; ele < numElements[et]; ele++) {
+    for(int ele = 0; ele < numElements[et]; ele++) {
       double values[3] = {0,0,0};
       SVector3 pts[3];
       for(size_t nod = 0; nod < 3; nod++) {
@@ -6262,7 +6262,7 @@ int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSt
     double sf = 1./std::sqrt(FAC);
     smin = DBL_MAX;
     smax = -DBL_MAX;
-    for(size_t ele = 0; ele < numElements[et_tri]; ele++) {
+    for(int ele = 0; ele < numElements[et_tri]; ele++) {
       for(size_t nod = 0; nod < 3; nod++) {
         double& val = data[et_tri][12*ele+3*3+nod];
         val = sf * val;
@@ -6276,7 +6276,7 @@ int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSt
   PView* vS = PView::getViewByName("s");
   if (vS) {delete vS; vS = NULL;}
 
-  Msg::Info("create a view 's' with %li triangles", numElements[et_tri]);
+  Msg::Info("create a view 's' with %d triangles", numElements[et_tri]);
   int vi = gmsh::view::add("s");
   gmsh::view::addListData(vi, "ST", numElements[et_tri], data[et_tri]);
 
