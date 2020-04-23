@@ -8,7 +8,8 @@ gmsh.model.occ.synchronize()
 gmsh.model.mesh.setTransfiniteSurface(100)
 gmsh.model.mesh.generate(2)
 gmsh.plugin.run("NewView")
-print "before get"
+print("before get")
 type, tags, data, time, numComp = gmsh.view.getModelData(0, 0)
-print "after get"
+# print(type, tags, data, time, numComp)
+print("after get")
 gmsh.finalize()

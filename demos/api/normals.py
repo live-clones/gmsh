@@ -36,14 +36,14 @@ for e in ent:
         cc.append(coord[i])
         cc.append(coord[i + 1])
         cc.append(coord[i + 2])
-        cc.append(curv[i / 3])
+        cc.append(curv[i // 3])
 
 t = gmsh.view.add("normals")
-gmsh.view.addListData(t, "VP", len(nn) / 6, nn)
+gmsh.view.addListData(t, "VP", len(nn) // 6, nn)
 gmsh.view.write(t, "normals.pos")
 
 t = gmsh.view.add("curvatures")
-gmsh.view.addListData(t, "SP", len(cc) / 4, cc)
+gmsh.view.addListData(t, "SP", len(cc) // 4, cc)
 gmsh.view.write(t, "curvatures.pos")
 
 gmsh.finalize()

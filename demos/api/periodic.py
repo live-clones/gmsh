@@ -19,6 +19,6 @@ gmsh.model.mesh.generate(2)
 
 masterTag, nodeTags, nodeMasterTags, tfo = gmsh.model.mesh.getPeriodicNodes(
     2, 2)
-print masterTag, nodeTags, nodeMasterTags, tfo
+print(masterTag, nodeTags, nodeMasterTags, tfo)
 
 gmsh.write("periodic.msh")
