@@ -2629,6 +2629,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     }
     }
 
+    for(unsigned int i = 0; i < numVertices; ++i) {
+      delete vertices[i];
+    }
     delete element;
     delete basis;
   }
