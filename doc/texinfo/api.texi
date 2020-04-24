@@ -37,7 +37,7 @@ configuration files (gmshrc and gmsh-options).
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L16,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L14,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L14,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L16,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L77,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L14,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L13,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L12,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L12,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L12,t5.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L16,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L14,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L14,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L16,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L77,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L14,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L13,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L12,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L13,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L12,t5.py}, ...)
 @end table
 
 @item gmsh/finalize
@@ -51,7 +51,7 @@ Finalize Gmsh. This must be called when you are done using the Gmsh API.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L175,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L167,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L105,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L172,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L228,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L170,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L160,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L101,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L179,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L223,t5.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L175,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L167,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L105,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L172,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L228,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L170,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L160,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L101,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L181,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L223,t5.py}, ...)
 @end table
 
 @item gmsh/open
@@ -83,7 +83,7 @@ file with model data will add the data to the current model.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L38,t7.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L37,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L29,t9.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L22,t13.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t17.cpp#L33,t17.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L35,t7.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L35,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L26,t9.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L20,t13.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t17.py#L32,t17.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L38,t7.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L37,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L29,t9.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#L22,t13.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t17.cpp#L33,t17.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L35,t7.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L36,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L27,t9.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py#L20,t13.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t17.py#L32,t17.py}, ...)
 @end table
 
 @item gmsh/write
@@ -97,7 +97,7 @@ Write a file. The export format is determined by the file extension.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L126,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L142,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L77,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L167,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L224,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L121,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L136,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L74,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L174,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L219,t5.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L126,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L142,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L77,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L167,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L224,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L121,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L136,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L74,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L175,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L219,t5.py}, ...)
 @end table
 
 @item gmsh/clear
@@ -133,7 +133,7 @@ are listed in the Gmsh reference manual.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L20,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L18,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L15,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L17,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L78,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L18,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L17,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L13,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L13,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L13,t5.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L20,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L18,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L15,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L17,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L78,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L18,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L17,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L13,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L14,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L13,t5.py}, ...)
 @end table
 
 @item gmsh/option/getNumber
@@ -149,7 +149,7 @@ are listed in the Gmsh reference manual.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L117,t8.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L151,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/test.py#L6,test.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L117,t8.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L153,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/test.py#L6,test.py})
 @end table
 
 @item gmsh/option/setString
@@ -165,7 +165,7 @@ are listed in the Gmsh reference manual.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L143,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L151,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L91,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L38,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L138,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L159,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L88,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L29,t20.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L143,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L151,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L91,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L38,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L138,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L160,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L90,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L29,t20.py})
 @end table
 
 @item gmsh/option/getString
@@ -199,7 +199,7 @@ reference manual, with the "Color." middle string removed.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L84,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L61,t8.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L81,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L58,t8.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L84,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L61,t8.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L81,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L59,t8.py})
 @end table
 
 @item gmsh/option/getColor
@@ -236,7 +236,7 @@ Add a new model, with name @code{name}, and set it as the current model.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L22,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L20,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L17,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L19,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t6.cpp#L16,t6.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L20,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L19,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L15,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L15,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L15,t5.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L22,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L20,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L17,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L19,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t6.cpp#L16,t6.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L20,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L19,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L15,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L16,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L15,t5.py}, ...)
 @end table
 
 @item gmsh/model/remove
@@ -807,7 +807,7 @@ should be integers between 0 and 255. Apply the color setting recursively if
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L158,t4.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L167,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L32,gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L158,t4.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L168,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L32,gui.py})
 @end table
 
 @item gmsh/model/getColor
@@ -855,7 +855,7 @@ Generate a mesh of the current model, up to dimension @code{dim} (0, 1, 2 or 3).
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L123,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L141,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L76,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L165,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L223,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L118,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L135,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L73,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L172,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L218,t5.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L123,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L141,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L76,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L165,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L223,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L118,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L135,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L73,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L173,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L218,t5.py}, ...)
 @end table
 
 @item gmsh/model/mesh/partition
@@ -3677,7 +3677,7 @@ associate a new tag. Return the view tag.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L111,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L246,adapt_mesh.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L18,plugin.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/view.cpp#L17,view.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/viewlist.cpp#L20,viewlist.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L118,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L27,x3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L83,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/normals.py#L41,normals.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L16,plugin.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L111,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.cpp#L246,adapt_mesh.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L18,plugin.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/view.cpp#L17,view.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/viewlist.cpp#L20,viewlist.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L119,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L27,x3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.py#L83,adapt_mesh.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/normals.py#L41,normals.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L16,plugin.py}, ...)
 @end table
 
 @item gmsh/view/remove
@@ -3707,7 +3707,7 @@ access view options.
 @item Return:
 integer value
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L80,t8.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L82,t8.py})
 @end table
 
 @item gmsh/view/getTags
@@ -3721,7 +3721,7 @@ Get the tags of all views.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L42,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L76,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L32,plugin.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L42,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L78,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L32,plugin.py})
 @end table
 
 @item gmsh/view/addModelData
@@ -3833,7 +3833,7 @@ views) strings. @code{style} contains pairs of styling parameters, concatenated.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L115,t4.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L122,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L50,x3.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L115,t4.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L123,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x3.py#L50,x3.py})
 @end table
 
 @item gmsh/view/getListDataStrings
@@ -3950,7 +3950,7 @@ Set the numerical option @code{option} to the value @code{value} for plugin
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L38,t9.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L95,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.cpp#L32,partition.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L34,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L30,t9.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L80,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L36,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.py#L28,partition.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L25,plugin.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L38,t9.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L95,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.cpp#L32,partition.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L34,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L31,t9.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L80,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L36,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.py#L28,partition.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.py#L25,plugin.py}, ...)
 @end table
 
 @item gmsh/plugin/setString
@@ -3965,7 +3965,7 @@ Set the string option @code{option} to the value @code{value} for plugin
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L54,t9.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L46,t9.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L54,t9.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L47,t9.py})
 @end table
 
 @item gmsh/plugin/run
@@ -3979,7 +3979,7 @@ Run the plugin @code{name}.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L40,t9.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L98,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.cpp#L33,partition.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.cpp#L13,perf.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L35,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L32,t9.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L83,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L37,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.py#L29,partition.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.py#L10,perf.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp#L40,t9.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L98,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.cpp#L33,partition.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.cpp#L13,perf.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/plugin.cpp#L35,plugin.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py#L33,t9.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L83,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L37,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/partition.py#L29,partition.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/perf.py#L10,perf.py}, ...)
 @end table
 
 @end ftable
@@ -3999,7 +3999,7 @@ Draw all the OpenGL scenes.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L149,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L33,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L177,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L36,gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L149,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L33,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L179,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L36,gui.py})
 @end table
 
 @end ftable
@@ -4019,7 +4019,7 @@ Create the FLTK graphical user interface. Can only be called in the main thread.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L75,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L72,custom_gui.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L10,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L70,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L5,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L70,custom_gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L8,gui.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp#L75,t8.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp#L72,custom_gui.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.cpp#L10,gui.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py#L72,t8.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L5,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py#L70,custom_gui.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/gui.py#L8,gui.py})
 @end table
 
 @item gmsh/fltk/wait
@@ -4112,7 +4112,7 @@ been initialized. Can only be called in the main thread.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L151,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L97,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L170,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L103,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L58,t7.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L146,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L93,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L177,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L38,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L50,t7.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L151,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L97,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L170,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L103,t5.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp#L58,t7.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L146,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L93,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L179,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L38,t5.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py#L50,t7.py}, ...)
 @end table
 
 @item gmsh/fltk/isAvailable

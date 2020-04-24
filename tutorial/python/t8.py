@@ -8,6 +8,7 @@
 
 import gmsh
 import os
+import sys
 
 # In addition to creating geometries and meshes, the Python API can also be used
 # to manipulate post-processing datasets (called "views" in Gmsh).
@@ -67,7 +68,8 @@ gmsh.option.setNumber("General.Axes", 0)
 gmsh.option.setNumber("General.SmallAxes", 0)
 
 # Show the GUI
-gmsh.fltk.initialize()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.initialize()
 
 # We also set some options for each post-processing view:
 
@@ -191,5 +193,7 @@ for num in range(1, 4):
         # subprocess.call(call_ffmpeg1.split(' '))
         # subprocess.call(call_ffmpeg2.split(' '))
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
 gmsh.finalize()
