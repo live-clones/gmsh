@@ -51,7 +51,7 @@ Finalize Gmsh. This must be called when you are done using the Gmsh API.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L175,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L167,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L105,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L172,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L231,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L170,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L160,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L101,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L179,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L225,t5.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L175,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L167,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L105,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L172,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L228,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L170,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L160,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L101,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L179,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L223,t5.py}, ...)
 @end table
 
 @item gmsh/open
@@ -97,7 +97,7 @@ Write a file. The export format is determined by the file extension.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L126,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L142,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L77,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L167,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L227,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L121,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L136,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L74,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L174,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L221,t5.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L126,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L142,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L77,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L167,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L224,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L121,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L136,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L74,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L174,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L219,t5.py}, ...)
 @end table
 
 @item gmsh/clear
@@ -855,7 +855,7 @@ Generate a mesh of the current model, up to dimension @code{dim} (0, 1, 2 or 3).
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L123,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L141,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L76,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L165,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L226,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L118,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L135,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L73,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L172,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L220,t5.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp#L123,t1.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp#L141,t2.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp#L76,t3.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp#L165,t4.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L223,t5.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py#L118,t1.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py#L135,t2.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py#L73,t3.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py#L172,t4.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L218,t5.py}, ...)
 @end table
 
 @item gmsh/model/mesh/partition
@@ -1768,7 +1768,7 @@ Set the meshing algorithm on the model entity of dimension @code{dim} and tag
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L213,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L207,t5.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L210,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L205,t5.py})
 @end table
 
 @item gmsh/model/mesh/setSizeFromBoundary
