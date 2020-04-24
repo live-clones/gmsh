@@ -474,14 +474,14 @@ computeUniqueVectorPerTriangle(GModel *gm, std::vector<GFace *> &f,
         std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
         if(it != C.end()) {
           if(!it->second.inCutGraph) {
-	    double angle;
-	    if (FIRST == NULL){
-	      FIRST = &it->second;
-	      angle = it->second._atemp;
-	    }
-	    else {
-	      closest (*FIRST, it->second, angle);
-	    }
+            double angle;
+            if (FIRST == NULL){
+              FIRST = &it->second;
+              angle = it->second._atemp;
+            }
+            else {
+              closest (*FIRST, it->second, angle);
+            }
             n++;
             SVector3 aa = it->second._tgt * cos(angle) + it->second._tgt2 * sin(angle);
             SVector3 bb = it->second._tgt * sin(angle) - it->second._tgt2 * cos(angle);
@@ -2116,8 +2116,8 @@ computeSingularities(std::vector<GFace*> &f,
     }
   }
   
-    printf("%lu singularities\n",singularities.size());
-    printf("%lu singularities\n",singularities2.size());
+  printf("%lu singularities\n",singularities.size());
+  printf("%lu singularities\n",singularities2.size());
 
   std::set<MVertex *, MVertexPtrLessThan>::iterator its = singularities.begin();
   for (; its != singularities.end(); ++its){
@@ -2134,11 +2134,11 @@ computeSingularities(std::vector<GFace*> &f,
 
 static void
 computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
-		     std::set<MVertex *, MVertexPtrLessThan> &singularities,
-		     std::map<MVertex *, int> &indices,
-		     std::vector<GFace*> &f,
-		     std::map<MVertex *, double> &K,
-		     std::map<MVertex *, double> &source)
+                     std::set<MVertex *, MVertexPtrLessThan> &singularities,
+                     std::map<MVertex *, int> &indices,
+                     std::vector<GFace*> &f,
+                     std::map<MVertex *, double> &K,
+                     std::map<MVertex *, double> &source)
 {
   FILE *f_ = fopen("sing2.pos", "w");
   fprintf(f_, "View \"S\"{\n");
@@ -2170,21 +2170,21 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
       double diffs_external = 0.0;
       size_t N = periodic ?  vsorted[0].size()  :  vsorted[0].size() -1;
       for(size_t i = 0; i < N; ++i) {
-	MVertex *v0 = vsorted[0][i%vsorted[0].size()];
-	MVertex *v1 = vsorted[0][(i+1)%vsorted[0].size()];
-	MVertex *v2 = vsorted[0][(i+2)%vsorted[0].size()];
-	MEdge e01 (v0,v1);
-	MEdge e12 (v1,v2);
-	MEdge e1 (v,v1);
-	std::map<MEdge, cross2d, MEdgeLessThan>::iterator it01 = C.find(e01);
-	std::map<MEdge, cross2d, MEdgeLessThan>::iterator it12 = C.find(e12);
-	std::map<MEdge, cross2d, MEdgeLessThan>::iterator it1 = C.find(e1);
-	if (it01 != C.end()  && it12 != C.end() && it1 != C.end()){
-	  double diff=closest_diff (it1->second._nrml, it01->second, it12->second); 
-	  
-	  if (v->getNum()==3)	  printf("(%lu %lu %lu %g) \n",v0->getNum(),v1->getNum(),v2->getNum(),diff);
-	  diffs_external += diff;
-	}
+        MVertex *v0 = vsorted[0][i%vsorted[0].size()];
+        MVertex *v1 = vsorted[0][(i+1)%vsorted[0].size()];
+        MVertex *v2 = vsorted[0][(i+2)%vsorted[0].size()];
+        MEdge e01 (v0,v1);
+        MEdge e12 (v1,v2);
+        MEdge e1 (v,v1);
+        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it01 = C.find(e01);
+        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it12 = C.find(e12);
+        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it1 = C.find(e1);
+        if (it01 != C.end()  && it12 != C.end() && it1 != C.end()){
+          double diff=closest_diff (it1->second._nrml, it01->second, it12->second); 
+          
+          if (v->getNum()==3)	  printf("(%lu %lu %lu %g) \n",v0->getNum(),v1->getNum(),v2->getNum(),diff);
+          diffs_external += diff;
+        }
       }
       double curvature = 2*M_PI - K[v];
 
@@ -2192,7 +2192,7 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
       
       if (v->getNum()==3)printf("FINALLY (%g %g) \n",diffs_external, curvature);
       if (fabs(diffs_external/*-curvature*/) > .95*M_PI/2) {
-	singularities.insert(v);
+        singularities.insert(v);
       }
     }
     ++it;
