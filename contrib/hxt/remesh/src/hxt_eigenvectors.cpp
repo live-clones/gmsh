@@ -5,9 +5,9 @@
 #include <Eigen/Eigenvalues>
 
 template<int N>
-HXTStatus eigMat(double * __restrict__ mat,
-                 double * __restrict__ vp,
-                 double * __restrict__ dirPropres) {
+static HXTStatus eigMat(double * __restrict__ mat,
+                        double * __restrict__ vp,
+                        double * __restrict__ dirPropres) {
   typedef Eigen::Matrix<double, N, N, Eigen::ColMajor> Matrix;
   // typedef Eigen::Map<Matrix, Eigen::Unaligned> Map;
 
@@ -46,9 +46,9 @@ extern "C" void dsyev_( char* jobz, char* uplo, int* n, double* a, int* lda,
                         double* w, double* work, int* lwork, int* info );
 
 template<int n>
-HXTStatus eigMat(double * __restrict__ mat,
-                 double * __restrict__ vp,
-                 double * __restrict__ dirPropres) {
+static HXTStatus eigMat(double * __restrict__ mat,
+                        double * __restrict__ vp,
+                        double * __restrict__ dirPropres) {
   /* Locals */
   int lda = n, info, lwork;
   double wkopt;

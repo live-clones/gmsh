@@ -39,7 +39,7 @@ target_link_libraries(hxt_predicates m) # link with the math library
 if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
 	target_compile_options(hxt_predicates PRIVATE "/fp:strict")
 elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
-	target_compile_options(${target} ${keyword} "-fp-model" "strict")
+	target_compile_options(hxt_predicates PRIVATE "-fp-model=strict")
 elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
 	target_compile_options(hxt_predicates
 	                       PRIVATE
