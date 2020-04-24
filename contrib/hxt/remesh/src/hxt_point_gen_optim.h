@@ -1,0 +1,9 @@
+#ifndef HXT_POINT_GEN_OPTIM_H
+#define HXT_POINT_GEN_OPTIM_H
+
+#include "hxt_mesh.h"
+
+HXTStatus hxtPointGenOptim(HXTMesh *mesh, const double *directions, const double *sizemap);
+HXTStatus hxtPointGenSmoothing(HXTMesh *mesh);
+
+#endif

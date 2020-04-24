@@ -570,8 +570,9 @@ public:
     return _lastMeshVertexError;
   }
 
-  // delete all invisble mesh elements
+  // delete or reverse all invisble mesh elements
   void removeInvisibleElements();
+  void reverseInvisibleElements();
 
   // the list of partitions
   std::size_t getNumPartitions() const { return _numPartitions; }

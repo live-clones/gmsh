@@ -820,6 +820,89 @@ gmsh::model::getParametrization(const int dim, const int tag,
   }
 }
 
+GMSH_API void
+gmsh::model::getParametrizationBounds(const int dim, const int tag,
+                                      std::vector<double> &min,
+                                      std::vector<double> &max)
+{
+  if(!_isInitialized()) { throw - 1; }
+  min.clear();
+  max.clear();
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  for(int dim = 0; dim < entity->dim(); dim++) {
+    Range<double> r = entity->parBounds(dim);
+    min.push_back(r.low());
+    max.push_back(r.high());
+  }
+}
+
+GMSH_API int
+gmsh::model::isInside(const int dim, const int tag,
+                      const std::vector<double> &parametricCoord)
+{
+  if(!_isInitialized()) { throw - 1; }
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  int num = 0;
+  if(dim == 1) {
+    GEdge *ge = static_cast<GEdge *>(entity);
+    for(std::size_t i = 0; i < parametricCoord.size(); i++) {
+      if(ge->containsParam(parametricCoord[i])) num++;
+    }
+  }
+  else if(dim == 2) {
+    if(parametricCoord.size() % 2) return num;
+    GFace *gf = static_cast<GFace *>(entity);
+    for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
+      SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
+      if(gf->containsParam(param)) num++;
+    }
+  }
+  return num;
+}
+
+GMSH_API void
+gmsh::model::reparametrizeOnSurface(const int dim, const int tag,
+                                    const std::vector<double> &parametricCoord,
+                                    const int surfaceTag,
+                                    std::vector<double> &surfaceParametricCoord,
+                                    const int which)
+{
+  if(!_isInitialized()) { throw - 1; }
+  surfaceParametricCoord.clear();
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  GFace *gf = GModel::current()->getFaceByTag(surfaceTag);
+  if(!gf) {
+    Msg::Error("%s does not exist", _getEntityName(2, surfaceTag).c_str());
+    throw 2;
+  }
+  if(dim == 0) {
+    GVertex *gv = static_cast<GVertex *>(entity);
+    SPoint2 p = gv->reparamOnFace(gf, which);
+    surfaceParametricCoord.push_back(p.x());
+    surfaceParametricCoord.push_back(p.y());
+  }
+  else if(dim == 1) {
+    GEdge *ge = static_cast<GEdge *>(entity);
+    for(std::size_t i = 0; i < parametricCoord.size(); i++) {
+      SPoint2 p = ge->reparamOnFace(gf, parametricCoord[i], which);
+      surfaceParametricCoord.push_back(p.x());
+      surfaceParametricCoord.push_back(p.y());
+    }
+  }
+}
+
 GMSH_API void gmsh::model::setVisibility(const vectorpair &dimTags,
                                          const int value, const bool recursive)
 {

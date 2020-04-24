@@ -25,7 +25,7 @@ private:
   Fl_Toggle_Button *_loop_butt;
   Fl_Button *_range_butt, *_graph_butt;
   Fl_Menu_Button *_graph_menu;
-  std::string _loop_val, _graph_val;
+  std::string _loop_val, _graph_val, _number_format;
   double _min, _max, _step, _max_number;
   std::vector<double> _choices;
   std::string _range, _range_tooltip;
@@ -366,6 +366,7 @@ public:
   }
   int color() { return _input->color(); }
   Fl_Value_Input *input() { return _input; }
+  void numberFormat(const std::string &fmt) { _input->numberFormat(fmt); }
 };
 
 #endif

@@ -537,6 +537,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_lc_from_curvature(0, GMSH_SET, o->mesh.butt[1]->value());
   opt_mesh_min_elements_2pi(0, GMSH_SET, o->mesh.value[1]->value());
   opt_mesh_lc_from_points(0, GMSH_SET, o->mesh.butt[5]->value());
+  opt_mesh_lc_from_parametric_points(0, GMSH_SET, o->mesh.butt[26]->value());
   opt_mesh_lc_extend_from_boundary(0, GMSH_SET, o->mesh.butt[16]->value());
   opt_mesh_optimize(0, GMSH_SET, o->mesh.butt[2]->value());
   opt_mesh_optimize_netgen(0, GMSH_SET, o->mesh.butt[24]->value());
@@ -2539,15 +2540,22 @@ optionWindow::optionWindow(int deltaFontSize)
                             "Compute element sizes using point values");
       mesh.butt[5]->tooltip("Mesh.CharacteristicLengthFromPoints");
       mesh.butt[5]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[5]->callback(mesh_options_ok_cb);
+      mesh.butt[5]->callback(mesh_options_ok_cb,(void*)"mesh_lc_from_points");
 
-      mesh.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
+      mesh.butt[26] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
+                            "Compute element sizes using parametric point values");
+      mesh.butt[26]->tooltip("Mesh.CharacteristicLengthFromParametricPoints");
+      mesh.butt[26]->type(FL_TOGGLE_BUTTON);
+      mesh.butt[26]->callback(mesh_options_ok_cb);
+
+      mesh.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
         "Compute element sizes from curvature");
       mesh.butt[1]->tooltip("Mesh.CharacteristicLengthFromCurvature");
       mesh.butt[1]->type(FL_TOGGLE_BUTTON);
       mesh.butt[1]->callback(mesh_options_ok_cb, (void *)"mesh_curvature");
 
-      mesh.value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH,
+      mesh.value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW / 2, BH,
                                          "Number of elements per 2 pi radians");
       mesh.value[1]->tooltip("Mesh.MinimumElementsPerTwoPi");
       mesh.value[1]->minimum(3);
@@ -2557,20 +2565,20 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[1]->deactivate();
       mesh.value[1]->callback(mesh_options_ok_cb);
 
-      mesh.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
+      mesh.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
                                           "Extend element sizes from boundary");
       mesh.butt[16]->tooltip("Mesh.CharacteristicLengthExtendFromBoundary");
       mesh.butt[16]->type(FL_TOGGLE_BUTTON);
       mesh.butt[16]->callback(mesh_options_ok_cb);
 
-      mesh.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
+      mesh.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
                                          "Optimize quality of tetrahedra");
       mesh.butt[2]->tooltip("Mesh.Optimize");
       mesh.butt[2]->type(FL_TOGGLE_BUTTON);
       mesh.butt[2]->callback(mesh_options_ok_cb);
 
       mesh.butt[24] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
                             "Optimize quality of tetrahedra with Netgen");
       mesh.butt[24]->tooltip("Mesh.OptimizeNetgen");
       mesh.butt[24]->type(FL_TOGGLE_BUTTON);
@@ -2580,7 +2588,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[24]->callback(mesh_options_ok_cb);
 
       mesh.butt[3] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
                             "Optimize high-order meshes");
       mesh.butt[3]->tooltip("Mesh.HighOrderOptimize");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
@@ -4314,6 +4322,14 @@ void optionWindow::activate(const char *what)
       mesh.butt[19]->deactivate();
       mesh.choice[10]->deactivate();
       mesh.value[18]->deactivate();
+    }
+  }
+  else if(!strcmp(what, "mesh_lc_from_points")) {
+    if(mesh.butt[5]->value()) {
+      mesh.butt[26]->activate();
+    }
+    else {
+      mesh.butt[26]->deactivate();
     }
   }
   else if(!strcmp(what, "mesh_curvature")) {

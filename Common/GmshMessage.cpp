@@ -62,6 +62,7 @@ int Msg::_progressMeterCurrent = -1;
 int Msg::_progressMeterTotal = 0;
 std::map<std::string, double> Msg::_timers;
 bool Msg::_infoCpu = false;
+bool Msg::_infoMem = false;
 double Msg::_startTime = 0.;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
@@ -273,6 +274,11 @@ void Msg::SetInfoCpu(bool val)
   _infoCpu = val;
 }
 
+void Msg::SetInfoMem(bool val)
+{
+  _infoMem = val;
+}
+
 double &Msg::Timer(const std::string &str) { return _timers[str]; }
 
 int Msg::GetWarningCount()
@@ -338,7 +344,7 @@ void Msg::Exit(int level)
     PetscFinalize();
 #endif
 #if defined(HAVE_MPI)
-    // force general abort (wven if the fatal error occurred on 1 cpu only)
+    // force general abort (even if the fatal error occurred on 1 cpu only)
     MPI_Abort(MPI_COMM_WORLD, level);
     int finalized;
     MPI_Finalized(&finalized);
@@ -373,7 +379,7 @@ void Msg::Exit(int level)
   PetscFinalize();
 #endif
 #if defined(HAVE_MPI)
-  int finalized; //Some PETSc versions call MPI_FINALIZE
+  int finalized; // Some PETSc versions call MPI_FINALIZE
   MPI_Finalized(&finalized);
   if (!finalized)
     MPI_Finalize();
@@ -569,8 +575,8 @@ void Msg::Info(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-  if(_infoCpu){
-    std::string res = PrintResources(false, true, true, true);
+  if(_infoCpu || _infoMem){
+    std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
     strcat(str, res.c_str());
   }
 
@@ -666,8 +672,8 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-  if(_infoCpu){
-    std::string res = PrintResources(false, true, true, true);
+  if(_infoCpu || _infoMem){
+    std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
     strcat(str, res.c_str());
   }
 
@@ -1391,6 +1397,8 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     ps[0].setAttribute("Closed", copt["Closed"][0]);
   if(noClosed && fopt.count("Closed"))
     ps[0].setAttribute("Closed", fopt["Closed"][0] ? "1" : "0");
+  if(copt.count("NumberFormat"))
+    ps[0].setAttribute("NumberFormat", copt["NumberFormat"][0]);
   _setStandardOptions(&ps[0], fopt, copt);
   _onelabClient->set(ps[0]);
 #endif

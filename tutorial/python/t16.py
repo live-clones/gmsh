@@ -74,7 +74,7 @@ gmsh.model.occ.synchronize()
 # Here the `Physical Volume' definitions can thus be made for the 5 spheres
 # directly, as the five spheres (volumes 4, 5, 6, 7 and 8), which will be
 # deleted by the fragment operations, will be recreated identically (albeit with
-# new surfaces) with the same tags.:
+# new surfaces) with the same tags:
 for i in range(1, 6):
     gmsh.model.addPhysicalGroup(3, [3 + i], i)
 

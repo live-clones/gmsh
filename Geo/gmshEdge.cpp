@@ -53,6 +53,15 @@ Range<double> gmshEdge::parBounds(int i) const
   return Range<double>(c->ubeg, c->uend);
 }
 
+double gmshEdge::prescribedMeshSizeAtParam(double u)
+{
+  if (!CTX::instance()->mesh.lcFromParametricPoints) {
+    return GEdge::prescribedMeshSizeAtParam(u);
+  }
+  Vertex a = InterpolateCurve(c,u,0);
+  return a.lc;
+}
+
 GPoint gmshEdge::point(double par) const
 {
   Vertex a = InterpolateCurve(c, par, 0);
