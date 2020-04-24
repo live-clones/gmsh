@@ -5253,6 +5253,9 @@ public:
     }
     FILE *ff = fopen("t_junctions.pos","w");
     fprintf(ff,"View \"t_junctions\"{\n");
+
+    std::set<MEdge,MEdgeLessThan> toRemove;
+    
     {
       MEdgeEqual op_equal;
       std::set<MEdge, MEdgeLessThan>::iterator it =  originals.begin();
@@ -5270,7 +5273,7 @@ public:
                                            it_original->second.indexOfCuts[k],
                                            it_original->second.idsOfCuts[k],TOLERANCE);
             // !!! Fixme: error if !added
-            (void)(added); // just suppress the warning so that it compiles
+	    //            (void)(added); // just suppress the warning so that it compiles
           }
         }
         
@@ -5287,7 +5290,7 @@ public:
               // !!! Fixme: error if !added
               (void)(added); // just suppress the warning so that it compiles
             }
-            //            cuts.erase(it_copy);
+	    toRemove.insert(it_copy->first);
           }
         }
 
@@ -5335,6 +5338,14 @@ public:
     }
     fprintf(ff,"};\n");
     fclose(ff);
+    {
+      std::set<MEdge,MEdgeLessThan>::iterator it =  toRemove.begin();
+      for (; it != toRemove.end();++it){
+	cuts.erase(*it);
+      }
+    }
+
+
     return 0;
   }
 
