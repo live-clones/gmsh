@@ -2,7 +2,7 @@
 #include "GModel.h"
 #include "GRegion.h"
 #include "MVertex.h"
-#include "MeshGRegionHxt.h"
+#include "meshGRegionHxt.h"
 
 #ifdef HAVE_HXT
 extern "C" {
