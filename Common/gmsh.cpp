@@ -2629,6 +2629,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     }
     }
 
+    delete element;
     delete basis;
   }
 
