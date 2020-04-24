@@ -29,6 +29,7 @@ include_directories(${GMSH_INC})
 find_package(OpenGL REQUIRED)
 
 # Find Qt
+# On macOS with homebrew, need to set Qt5_DIR=/usr/local/opt/qt5/lib/cmake/Qt5
 find_package(Qt5 REQUIRED COMPONENTS Widgets OpenGL)
 
 # Add qtgmsh executable
