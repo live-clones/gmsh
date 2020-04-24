@@ -474,7 +474,6 @@ computeUniqueVectorPerTriangle(GModel *gm, std::vector<GFace *> &f,
         std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
         if(it != C.end()) {
           if(!it->second.inCutGraph) {
-<<<<<<< HEAD
 	    double angle;
 	    if (FIRST == NULL){
 	      FIRST = &it->second;
@@ -483,17 +482,6 @@ computeUniqueVectorPerTriangle(GModel *gm, std::vector<GFace *> &f,
 	    else {
 	      closest (*FIRST, it->second, angle);
 	    }
-=======
-            double angle;
-            if (FIRST == NULL){
-              FIRST = &it->second;
-              angle = it->second._atemp;
-            }
-            else {
-              double diff;
-              closest (*FIRST, it->second, angle, diff);
-            }
->>>>>>> 5c8d927b8248edf1ea7964091f35fc791b66261d
             n++;
             SVector3 aa = it->second._tgt * cos(angle) + it->second._tgt2 * sin(angle);
             SVector3 bb = it->second._tgt * sin(angle) - it->second._tgt2 * cos(angle);
@@ -2146,18 +2134,11 @@ computeSingularities(std::vector<GFace*> &f,
 
 static void
 computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
-<<<<<<< HEAD
 		     std::set<MVertex *, MVertexPtrLessThan> &singularities,
 		     std::map<MVertex *, int> &indices,
 		     std::vector<GFace*> &f,
 		     std::map<MVertex *, double> &K,
 		     std::map<MVertex *, double> &source)
-=======
-                     std::set<MVertex *, MVertexPtrLessThan> &singularities,
-                     std::map<MVertex *, int> &indices,
-                     std::vector<GFace*> &f,
-                     std::map<MVertex *, double> &K)
->>>>>>> 5c8d927b8248edf1ea7964091f35fc791b66261d
 {
   FILE *f_ = fopen("sing2.pos", "w");
   fprintf(f_, "View \"S\"{\n");
@@ -2189,7 +2170,6 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
       double diffs_external = 0.0;
       size_t N = periodic ?  vsorted[0].size()  :  vsorted[0].size() -1;
       for(size_t i = 0; i < N; ++i) {
-<<<<<<< HEAD
 	MVertex *v0 = vsorted[0][i%vsorted[0].size()];
 	MVertex *v1 = vsorted[0][(i+1)%vsorted[0].size()];
 	MVertex *v2 = vsorted[0][(i+2)%vsorted[0].size()];
@@ -2213,28 +2193,6 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
       if (v->getNum()==3)printf("FINALLY (%g %g) \n",diffs_external, curvature);
       if (fabs(diffs_external/*-curvature*/) > .95*M_PI/2) {
 	singularities.insert(v);
-=======
-        MVertex *v0 = vsorted[0][i%vsorted[0].size()];
-        MVertex *v1 = vsorted[0][(i+1)%vsorted[0].size()];
-        MVertex *v2 = vsorted[0][(i+2)%vsorted[0].size()];
-        MEdge e01 (v0,v1);
-        MEdge e12 (v1,v2);
-        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it01 = C.find(e01);
-        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it12 = C.find(e12);
-        double diff;
-        double angle;
-        if (it01 != C.end()  && it12 != C.end() ){
-          closest (it01->second, it12->second, angle, diff); 
-          if (v->getNum() == 45)printf("(%lu %lu %lu %g) \n",v0->getNum(),v1->getNum(),v2->getNum(),
-                                       diff);
-          diffs_external += diff;
-        }
-      }
-      double curvature = 2*M_PI - K[v];
-    
-      if ((diffs_external-curvature) > .95*M_PI/2) {
-        singularities.insert(v);
->>>>>>> 5c8d927b8248edf1ea7964091f35fc791b66261d
       }
     }
     ++it;

@@ -2,6 +2,7 @@
 #include "GModel.h"
 #include "GRegion.h"
 #include "MVertex.h"
+#include "MeshGRegionHxt.h"
 
 #ifdef HAVE_HXT
 extern "C" {
@@ -37,10 +38,6 @@ automaticMeshSizeField::~automaticMeshSizeField(){
 
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
 
-HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
-		   std::vector<MVertex *> &c2v);
-
 
 HXTStatus automaticMeshSizeField:: updateHXT(){
 
@@ -68,7 +65,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   // create HXT mesh structure
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
-  std::map<MVertex *, int> v2c;
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
