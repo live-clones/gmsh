@@ -542,7 +542,7 @@ void hxtOr3DframeToMandel4th(const double *frame, double *mandel4th) //mod
   for (int b = 0; b < 9; b++)
     for (int i = 0; i < 6; i++)
       for (int j = 0; j < 6; j++)
-	mandel4th[6*i+j]+=frame[b]*basis[i][j][b];
+        mandel4th[6*i+j]+=frame[b]*basis[i][j][b];
   double sphereCoef=3.0/sqrt(5);
   for (int i = 0; i < 6; i++)
     for (int j = 0; j < 6; j++)
@@ -559,7 +559,7 @@ void hxtOr3Dmandel4thToFrame(const double *mandel4th, double *frame) //mod
     double scalarP=0.0;
     for (int i = 0; i < 6; i++)
       for (int j = 0; j < 6; j++)
-	scalarP+=basis[i][j][b]*mandel4th[6*i+j];
+        scalarP+=basis[i][j][b]*mandel4th[6*i+j];
     frame[b]=scalarP;
   }
   return;
@@ -764,38 +764,38 @@ void hxtOr3DnormalEulerToFrame(const double *normal, const double gamma, double 
 /*     frame[0] = a4 + (pow(b2 + c2,2)*(3 + cos4Gamma))/4.; */
 
 /*     frame[1] = (3*a4*b4 + 4*b8 + 6*a2*b2*c2 + */
-/* 		8*b6*c2 + (3 + 4*b4)*c4 + */
-/* 		(a4*b4 - 6*a2*b2*c2 + c4)*cos4Gamma + */
-/* 		4*a*b*c*(-(a2*b2) + c2)*sin4Gamma)/ */
+/*                 8*b6*c2 + (3 + 4*b4)*c4 + */
+/*                 (a4*b4 - 6*a2*b2*c2 + c4)*cos4Gamma + */
+/*                 4*a*b*c*(-(a2*b2) + c2)*sin4Gamma)/ */
 /*       (4.*pow(b2 + c2,2)); */
 
 /*     frame[2] = (3*a4*c4 + 4*c8 + b4*(3 + 4*c4) + */
-/* 		b2*(6*a2*c2 + 8*c6) + */
-/* 		(b4 - 6*a2*b2*c2 + a4*c4)*cos4Gamma - */
-/* 		4*a*b*c*(b - a*c)*(b + a*c)*sin4Gamma)/(4.*pow(b2 + c2,2)); */
+/*                 b2*(6*a2*c2 + 8*c6) + */
+/*                 (b4 - 6*a2*b2*c2 + a4*c4)*cos4Gamma - */
+/*                 4*a*b*c*(b - a*c)*(b + a*c)*sin4Gamma)/(4.*pow(b2 + c2,2)); */
 
 /*     frame[3] = (b*c*(-1 + 7*a2 + (1 + a2)*cos4Gamma) + a*(b - c)*(b + c)*sin4Gamma)/4.; */
 
 /*     frame[4] = (b3*(-3*a2 + 3*a4 + 4*b4)*c + */
-/* 		b*(-3 + 3*a2 + 8*b4)*c3 + 4*b3*c5 + */
-/* 		b*c*(a2*(3 + a2)*b2 - (1 + 3*a2)*c2)*cos4Gamma + */
-/* 		a*(a2*b4 - 3*(1 + a2)*b2*c2 + c4)*sin4Gamma) */
+/*                 b*(-3 + 3*a2 + 8*b4)*c3 + 4*b3*c5 + */
+/*                 b*c*(a2*(3 + a2)*b2 - (1 + 3*a2)*c2)*cos4Gamma + */
+/*                 a*(a2*b4 - 3*(1 + a2)*b2*c2 + c4)*sin4Gamma) */
 /*       /(4.*pow(b2 + c2,2)); */
 
 /*     frame[5] = a3*c - (3*a*c*(b2 + c2))/4. - */
 /*       ((b2 + c2)*(a*c*cos4Gamma + b*sin4Gamma))/4.; */
 
 /*     frame[6] = (a*b2*(2 - 3*a2 + 4*b2)*c + a*(-1 + 4*b2)*c3 + */
-/* 		a*c*(-((2 + a2)*b2) + c2)*cos4Gamma + */
-/* 		b*(c2 - a2*(b2 - 2*c2))*sin4Gamma)/ */
+/*                 a*c*(-((2 + a2)*b2) + c2)*cos4Gamma + */
+/*                 b*(c2 - a2*(b2 - 2*c2))*sin4Gamma)/ */
 /*       (4.*(b2 + c2)); */
 
 /*     frame[7] = a3*b - (3*a*b*(b2 + c2))/4. - */
 /*       ((b2 + c2)*(a*b*cos4Gamma - c*sin4Gamma))/4.; */
 
 /*     frame[8] = (a*b*(-3*a2*b2 + 4*b4 + (-3 + 4*b2)*c2 + */
-/* 		     (-(a2*b2) + 3*c2)*cos4Gamma) - */
-/* 		c*(-3*a2*b2 + c2)*sin4Gamma)/(4.*(b2 + c2)); */
+/*                      (-(a2*b2) + 3*c2)*cos4Gamma) - */
+/*                 c*(-3*a2*b2 + c2)*sin4Gamma)/(4.*(b2 + c2)); */
 /*   } */
 /* } */
 
@@ -856,8 +856,8 @@ HXTStatus hxtOr3DframeToDirections(const double *frame, double *stableDir, doubl
   hxtEigenvectors6(mat, vpMat, dirPropres);
 
   //  HXT_INFO("EIGS %g %g %g %g %g %g \n",
-  //	 vpMat[0],vpMat[1],vpMat[2],
-  //	 vpMat[3],vpMat[4],vpMat[5]);
+  //         vpMat[0],vpMat[1],vpMat[2],
+  //         vpMat[3],vpMat[4],vpMat[5]);
 
 
   // take the 2 ones
@@ -884,7 +884,7 @@ HXTStatus hxtOr3DframeToDirections(const double *frame, double *stableDir, doubl
         r4tV5r4[3*i+i]+=r4[3*k+i]*v5[3*k+l]*r4[3*l+i];
         r5tV4r5[3*i+i]+=r5[3*k+i]*v4[3*k+l]*r5[3*l+i];
         r4tV4r4[3*i+i]+=r4[3*k+i]*v4[3*k+l]*r4[3*l+i];
-        r5tV5r5[3*i+i]+=r5[3*k+i]*v5[3*k+l]*r5[3*l+i];	
+        r5tV5r5[3*i+i]+=r5[3*k+i]*v5[3*k+l]*r5[3*l+i];
       }
     }
   }
@@ -932,7 +932,7 @@ HXTStatus hxtOr3DframeToDirections(const double *frame, double *stableDir, doubl
       double mandel2ndDir[6];
       double dir[3];
       for(int k=0; k<3; k++)
-	dir[k]=dirFinal[3*i+k];
+        dir[k]=dirFinal[3*i+k];
       /* HXT_INFO("dir : %g %g %g\n",dir[0],dir[1],dir[2]); */
       hxtOr3Dvec3ToMandel2ndDyadic(dir, mandel2ndDir);
       /* HXT_INFO("mandel : %g %g %g %g %g %g\n",mandel2ndDir[0],mandel2ndDir[1],mandel2ndDir[2],mandel2ndDir[3],mandel2ndDir[4],mandel2ndDir[5]); */
@@ -1029,7 +1029,7 @@ HXTStatus hxtOr3DgetCrossInTetFromDir(const double *directions, double* coordPar
     double dirK[9]={0.0};
     for(int j=0;j<3;j++)
       for(int l=0;l<3;l++)
-	dirK[3*j+l]=directions[9*k+3*j+l];
+        dirK[3*j+l]=directions[9*k+3*j+l];
     hxtOr3DdirectionsToFrame(dirK, frameK);
   }
   double xi=coordParam[0];
@@ -1116,180 +1116,180 @@ HXTStatus hxtOr3DdBdEuler(const double euler[3], double dBdEuler[9][3]){
   double theta = euler[1];
   double phi = euler[2];
   dBdEuler[0][0] = (Sqrt(9.5 - Sqrt(70))*(4*(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi))*
-					  Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),3) -
-					  4*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3)*
-					  (Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi)) +
-					  4*Power(Cos(psi),3)*Sin(psi)*Power(Sin(theta),4)))/3. +
+                                          Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),3) -
+                                          4*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3)*
+                                          (Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi)) +
+                                          4*Power(Cos(psi),3)*Sin(psi)*Power(Sin(theta),4)))/3. +
     (4*Sqrt(30.5 + 2*Sqrt(70))*(Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3)*
-				(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi)) -
-				(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
-				Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),3) +
-				Cos(psi)*Power(Sin(psi),3)*Power(Sin(theta),4)))/3.;
+                                (Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi)) -
+                                (Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
+                                Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),3) +
+                                Cos(psi)*Power(Sin(psi),3)*Power(Sin(theta),4)))/3.;
   dBdEuler[0][1] = (-4*(-Sqrt(5) + Sqrt(14))*Cos(psi)*Sin(theta)*
-		    (-(Sin(phi)*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3)) -
-		     Cos(phi)*Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),3) +
-		     Power(Cos(psi),3)*Cos(theta)*Power(Sin(theta),2)) +
-		    4*(Sqrt(5) + 2*Sqrt(14))*Sin(psi)*Sin(theta)*
-		    (-(Cos(phi)*Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3)) +
-		     Sin(phi)*Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),3) +
-		     Cos(theta)*Power(Sin(psi),3)*Power(Sin(theta),2)) +
-		    (-Sqrt(5) + Sqrt(14))*(4*Power(Cos(theta),3)*Sin(theta) -
-					   (3 + Cos(4*phi))*Cos(theta)*Power(Sin(theta),3)))/(3.*Sqrt(2));
+                    (-(Sin(phi)*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3)) -
+                     Cos(phi)*Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),3) +
+                     Power(Cos(psi),3)*Cos(theta)*Power(Sin(theta),2)) +
+                    4*(Sqrt(5) + 2*Sqrt(14))*Sin(psi)*Sin(theta)*
+                    (-(Cos(phi)*Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3)) +
+                     Sin(phi)*Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),3) +
+                     Cos(theta)*Power(Sin(psi),3)*Power(Sin(theta),2)) +
+                    (-Sqrt(5) + Sqrt(14))*(4*Power(Cos(theta),3)*Sin(theta) -
+                                           (3 + Cos(4*phi))*Cos(theta)*Power(Sin(theta),3)))/(3.*Sqrt(2));
   dBdEuler[0][2] = (-4*(-Sqrt(5) + Sqrt(14))*(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi))*
-		    (Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3) -
-		     (Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
-		     Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),2)) +
-		    4*(Sqrt(5) + 2*Sqrt(14))*(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi))*
-		    (Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3) -
-		     (Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi))*
-		     Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),2)) +
-		    (-Sqrt(5) + Sqrt(14))*Sin(4*phi)*Power(Sin(theta),4))/(3.*Sqrt(2));
+                    (Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3) -
+                     (Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
+                     Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),2)) +
+                    4*(Sqrt(5) + 2*Sqrt(14))*(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi))*
+                    (Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3) -
+                     (Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi))*
+                     Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),2)) +
+                    (-Sqrt(5) + Sqrt(14))*Sin(4*phi)*Power(Sin(theta),4))/(3.*Sqrt(2));
 
   dBdEuler[1][0] = ((4*Sqrt(7) + Sqrt(10))*(-4*(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi))*
-					    Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),3) +
-					    4*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3)*
-					    (Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi)) -
-					    4*Power(Cos(psi),3)*Sin(psi)*Power(Sin(theta),4)) -
-		    4*Sqrt(38 - 4*Sqrt(70))*(Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3)*
-					     (Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi)) -
-					     (Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
-					     Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),3) +
-					     Cos(psi)*Power(Sin(psi),3)*Power(Sin(theta),4)))/6.;
+                                            Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),3) +
+                                            4*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3)*
+                                            (Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi)) -
+                                            4*Power(Cos(psi),3)*Sin(psi)*Power(Sin(theta),4)) -
+                    4*Sqrt(38 - 4*Sqrt(70))*(Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3)*
+                                             (Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi)) -
+                                             (Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
+                                             Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),3) +
+                                             Cos(psi)*Power(Sin(psi),3)*Power(Sin(theta),4)))/6.;
   dBdEuler[1][1] = (4*(Sqrt(5) + 2*Sqrt(14))*Cos(psi)*Sin(theta)*
-		    (-(Sin(phi)*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3)) -
-		     Cos(phi)*Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),3) +
-		     Power(Cos(psi),3)*Cos(theta)*Power(Sin(theta),2)) -
-		    4*(-Sqrt(5) + Sqrt(14))*Sin(psi)*Sin(theta)*
-		    (-(Cos(phi)*Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3)) +
-		     Sin(phi)*Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),3) +
-		     Cos(theta)*Power(Sin(psi),3)*Power(Sin(theta),2)) +
-		    (-Sqrt(5) + Sqrt(14))*(4*Power(Cos(theta),3)*Sin(theta) -
-					   (3 + Cos(4*phi))*Cos(theta)*Power(Sin(theta),3)))/(3.*Sqrt(2));
+                    (-(Sin(phi)*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3)) -
+                     Cos(phi)*Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),3) +
+                     Power(Cos(psi),3)*Cos(theta)*Power(Sin(theta),2)) -
+                    4*(-Sqrt(5) + Sqrt(14))*Sin(psi)*Sin(theta)*
+                    (-(Cos(phi)*Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3)) +
+                     Sin(phi)*Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),3) +
+                     Cos(theta)*Power(Sin(psi),3)*Power(Sin(theta),2)) +
+                    (-Sqrt(5) + Sqrt(14))*(4*Power(Cos(theta),3)*Sin(theta) -
+                                           (3 + Cos(4*phi))*Cos(theta)*Power(Sin(theta),3)))/(3.*Sqrt(2));
   dBdEuler[1][2] = (4*(Sqrt(5) + 2*Sqrt(14))*(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi))*
-		    (Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3) -
-		     (Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
-		     Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),2)) -
-		    4*(-Sqrt(5) + Sqrt(14))*(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi))*
-		    (Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3) -
-		     (Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi))*
-		     Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),2)) +
-		    (-Sqrt(5) + Sqrt(14))*Sin(4*phi)*Power(Sin(theta),4))/(3.*Sqrt(2));
+                    (Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),3) -
+                     (Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
+                     Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),2)) -
+                    4*(-Sqrt(5) + Sqrt(14))*(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi))*
+                    (Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3) -
+                     (Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi))*
+                     Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),2)) +
+                    (-Sqrt(5) + Sqrt(14))*Sin(4*phi)*Power(Sin(theta),4))/(3.*Sqrt(2));
 
   dBdEuler[2][0] = (Sqrt(9.5 - Sqrt(70))*(8*Cos(4*psi)*(7*Cos(theta) + Cos(3*theta))*Sin(4*phi) +
-					  Sin(4*psi)*(Cos(4*phi)*(35 + 28*Cos(2*theta) + Cos(4*theta)) + 56*Power(Sin(theta),4))))/96.;
+                                          Sin(4*psi)*(Cos(4*phi)*(35 + 28*Cos(2*theta) + Cos(4*theta)) + 56*Power(Sin(theta),4))))/96.;
   dBdEuler[2][1] = (-(Sqrt(297.5 + 35*Sqrt(70))*(4*Power(Sin(2*phi),2)*Sin(2*theta) +
-						 (7 + Cos(4*phi))*Sin(4*theta))) +
-		    Sqrt(9.5 - Sqrt(70))*(-2*Sin(4*phi)*Sin(4*psi)*(7*Sin(theta) + 3*Sin(3*theta)) +
-					  Cos(4*psi)*(-28*Power(Sin(2*phi),2)*Sin(2*theta) + (7 + Cos(4*phi))*Sin(4*theta))))/96.;
+                                                 (7 + Cos(4*phi))*Sin(4*theta))) +
+                    Sqrt(9.5 - Sqrt(70))*(-2*Sin(4*phi)*Sin(4*psi)*(7*Sin(theta) + 3*Sin(3*theta)) +
+                                          Cos(4*psi)*(-28*Power(Sin(2*phi),2)*Sin(2*theta) + (7 + Cos(4*phi))*Sin(4*theta))))/96.;
   dBdEuler[2][2] = -(Sqrt(30.5 + 2*Sqrt(70))*Sin(4*phi)*Power(Sin(theta),4))/3. +
     (Sqrt(9.5 - Sqrt(70))*(8*Cos(4*phi)*(7*Cos(theta) + Cos(3*theta))*Sin(4*psi) +
-			   Sin(4*phi)*(Cos(4*psi)*(35 + 28*Cos(2*theta) + Cos(4*theta)) + 24*Power(Sin(theta),4))))/96.;
+                           Sin(4*phi)*(Cos(4*psi)*(35 + 28*Cos(2*theta) + Cos(4*theta)) + 24*Power(Sin(theta),4))))/96.;
 
 
   dBdEuler[3][0] = 3*(1 + Sqrt(7))*Sin(theta)*(-(Cos(phi)*(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi))*
-						 Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),2)) +
-					       Sin(phi)*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),2)*
-					       (Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi)) +
-					       Power(Cos(psi),2)*Cos(theta)*Sin(psi)*Power(Sin(theta),2)) -
+                                                 Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),2)) +
+                                               Sin(phi)*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),2)*
+                                               (Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi)) +
+                                               Power(Cos(psi),2)*Cos(theta)*Sin(psi)*Power(Sin(theta),2)) -
     ((-1 + Sqrt(7))*Sin(theta)*(-4*Power(Cos(theta),3)*Sin(psi) +
-				(Cos(psi)*Sin(4*phi) + (3 + Cos(4*phi))*Cos(theta)*Sin(psi))*Power(Sin(theta),2)))/4.;
+                                (Cos(psi)*Sin(4*phi) + (3 + Cos(4*phi))*Cos(theta)*Sin(psi))*Power(Sin(theta),2)))/4.;
   dBdEuler[3][1] = (4*Cos(psi)*((7 + Cos(4*phi))*(Sqrt(8 - 3*Sqrt(7)) + Sqrt(4 + Sqrt(7))*Cos(2*psi))*Cos(4*theta) +
-				2*(Sqrt(7*(8 + 3*Sqrt(7))) - 7*Sqrt(4 + Sqrt(7))*Cos(2*psi))*Cos(2*theta)*
-				Power(Sin(2*phi),2)) + (-2*Sqrt(7*(16 - 5*Sqrt(7)))*Cos(theta) -
-							3*Sqrt(2)*(5 + Sqrt(7))*Cos(3*theta) -
-							2*Sqrt(4 + Sqrt(7))*Cos(2*psi)*(7*Cos(theta) + 9*Cos(3*theta)))*Sin(4*phi)*Sin(psi))/
+                                2*(Sqrt(7*(8 + 3*Sqrt(7))) - 7*Sqrt(4 + Sqrt(7))*Cos(2*psi))*Cos(2*theta)*
+                                Power(Sin(2*phi),2)) + (-2*Sqrt(7*(16 - 5*Sqrt(7)))*Cos(theta) -
+                                                        3*Sqrt(2)*(5 + Sqrt(7))*Cos(3*theta) -
+                                                        2*Sqrt(4 + Sqrt(7))*Cos(2*psi)*(7*Cos(theta) + 9*Cos(3*theta)))*Sin(4*phi)*Sin(psi))/
     (32.*Sqrt(2));
   dBdEuler[3][2] = ((1 + Sqrt(7))*((3*(Cos(psi) - 5*Cos(3*psi))*Cos(theta) - 4*Power(Cos(psi),3)*Cos(3*theta))*
-				   Sin(4*phi) - 4*Cos(4*phi)*(1 + 5*Cos(2*psi) + 6*Power(Cos(psi),2)*Cos(2*theta))*Sin(psi))*
-		    Sin(theta))/16. - (-1 + Sqrt(7))*(Cos(psi)*Cos(theta)*Sin(4*phi) + Cos(4*phi)*Sin(psi))*
+                                   Sin(4*phi) - 4*Cos(4*phi)*(1 + 5*Cos(2*psi) + 6*Power(Cos(psi),2)*Cos(2*theta))*Sin(psi))*
+                    Sin(theta))/16. - (-1 + Sqrt(7))*(Cos(psi)*Cos(theta)*Sin(4*phi) + Cos(4*phi)*Sin(psi))*
     Power(Sin(theta),3);
 
   dBdEuler[4][0] = 3*(-1 + Sqrt(7))*Sin(theta)*(-(Cos(phi)*(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi))*
-						  Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),2)) +
-						Sin(phi)*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),2)*
-						(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi)) +
-						Power(Cos(psi),2)*Cos(theta)*Sin(psi)*Power(Sin(theta),2)) +
+                                                  Power(Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi),2)) +
+                                                Sin(phi)*Power(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi),2)*
+                                                (Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi)) +
+                                                Power(Cos(psi),2)*Cos(theta)*Sin(psi)*Power(Sin(theta),2)) +
     ((1 + Sqrt(7))*Sin(theta)*(4*Power(Cos(theta),3)*Sin(psi) -
-			       (Cos(psi)*Sin(4*phi) + (3 + Cos(4*phi))*Cos(theta)*Sin(psi))*Power(Sin(theta),2)))/4.;
+                               (Cos(psi)*Sin(4*phi) + (3 + Cos(4*phi))*Cos(theta)*Sin(psi))*Power(Sin(theta),2)))/4.;
   dBdEuler[4][1] = (2*Cos(psi)*(Sqrt(2)*(7 + Cos(4*phi))*(-3 - Sqrt(7) + (-1 + Sqrt(7))*Cos(2*psi))*Cos(4*theta) +
-				2*(2*Sqrt(7*(8 - 3*Sqrt(7))) - 7*Sqrt(2)*(-1 + Sqrt(7))*Cos(2*psi))*Cos(2*theta)*
-				Power(Sin(2*phi),2)) + (-2*Sqrt(7*(16 + 5*Sqrt(7)))*Cos(theta) -
-							3*Sqrt(2)*(-5 + Sqrt(7))*Cos(3*theta) -
-							Sqrt(2)*(-1 + Sqrt(7))*Cos(2*psi)*(7*Cos(theta) + 9*Cos(3*theta)))*Sin(4*phi)*Sin(psi))/
+                                2*(2*Sqrt(7*(8 - 3*Sqrt(7))) - 7*Sqrt(2)*(-1 + Sqrt(7))*Cos(2*psi))*Cos(2*theta)*
+                                Power(Sin(2*phi),2)) + (-2*Sqrt(7*(16 + 5*Sqrt(7)))*Cos(theta) -
+                                                        3*Sqrt(2)*(-5 + Sqrt(7))*Cos(3*theta) -
+                                                        Sqrt(2)*(-1 + Sqrt(7))*Cos(2*psi)*(7*Cos(theta) + 9*Cos(3*theta)))*Sin(4*phi)*Sin(psi))/
     (32.*Sqrt(2));
   dBdEuler[4][2] = ((-1 + Sqrt(7))*((3*(Cos(psi) - 5*Cos(3*psi))*Cos(theta) - 4*Power(Cos(psi),3)*Cos(3*theta))*
-				    Sin(4*phi) - 4*Cos(4*phi)*(1 + 5*Cos(2*psi) + 6*Power(Cos(psi),2)*Cos(2*theta))*Sin(psi))*
-		    Sin(theta))/16. - (1 + Sqrt(7))*(Cos(psi)*Cos(theta)*Sin(4*phi) + Cos(4*phi)*Sin(psi))*
+                                    Sin(4*phi) - 4*Cos(4*phi)*(1 + 5*Cos(2*psi) + 6*Power(Cos(psi),2)*Cos(2*theta))*Sin(psi))*
+                    Sin(theta))/16. - (1 + Sqrt(7))*(Cos(psi)*Cos(theta)*Sin(4*phi) + Cos(4*phi)*Sin(psi))*
     Power(Sin(theta),3);
 
   dBdEuler[5][0] = (1 + Sqrt(7))*Sin(theta)*(-3*Cos(phi)*Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),2)*
-					     (Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi)) -
-					     3*Sin(phi)*(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
-					     Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),2) +
-					     3*Cos(psi)*Cos(theta)*Power(Sin(psi),2)*Power(Sin(theta),2)) +
+                                             (Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi)) -
+                                             3*Sin(phi)*(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
+                                             Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),2) +
+                                             3*Cos(psi)*Cos(theta)*Power(Sin(psi),2)*Power(Sin(theta),2)) +
     ((-1 + Sqrt(7))*(4*Cos(psi)*Power(Cos(theta),3)*Sin(theta) +
-		     (-((3 + Cos(4*phi))*Cos(psi)*Cos(theta)) + Sin(4*phi)*Sin(psi))*Power(Sin(theta),3)))/4.;
+                     (-((3 + Cos(4*phi))*Cos(psi)*Cos(theta)) + Sin(4*phi)*Sin(psi))*Power(Sin(theta),3)))/4.;
   dBdEuler[5][1] = (4*Cos(psi)*Cos(theta)*(11 - Sqrt(7) - 3*(5 + Sqrt(7))*Cos(2*theta) +
-					   (1 + Sqrt(7))*Cos(2*psi)*(-1 + 9*Cos(2*theta)))*Sin(4*phi) -
-		    56*(1 + Sqrt(7))*Cos(4*theta)*Power(Sin(psi),3) +
-		    2*(1 + Sqrt(7))*(7*(-1 + Cos(4*phi))*Cos(2*theta) + Cos(4*phi)*Cos(4*theta))*Sin(3*psi) +
-		    2*Sin(psi)*(28*(-1 + Sqrt(7))*Cos(4*theta) +
-				(-7 + Sqrt(7))*(Cos(2*theta) - 2*Cos(4*phi)*(1 + 2*Cos(2*theta))*Power(Sin(theta),2))))/64.;
+                                           (1 + Sqrt(7))*Cos(2*psi)*(-1 + 9*Cos(2*theta)))*Sin(4*phi) -
+                    56*(1 + Sqrt(7))*Cos(4*theta)*Power(Sin(psi),3) +
+                    2*(1 + Sqrt(7))*(7*(-1 + Cos(4*phi))*Cos(2*theta) + Cos(4*phi)*Cos(4*theta))*Sin(3*psi) +
+                    2*Sin(psi)*(28*(-1 + Sqrt(7))*Cos(4*theta) +
+                                (-7 + Sqrt(7))*(Cos(2*theta) - 2*Cos(4*phi)*(1 + 2*Cos(2*theta))*Power(Sin(theta),2))))/64.;
   dBdEuler[5][2] = (2*Cos(4*phi)*(-4*(-7 + Sqrt(7))*Cos(psi)*Power(Sin(theta),3) +
-				  (1 + Sqrt(7))*Cos(3*psi)*(7*Sin(theta) + 3*Sin(3*theta))) +
-		    Sin(4*phi)*(8*(-7 + Sqrt(7))*Cos(theta)*Sin(psi)*Power(Sin(theta),3) -
-				(1 + Sqrt(7))*Sin(3*psi)*(14*Sin(2*theta) + Sin(4*theta))))/32.;
+                                  (1 + Sqrt(7))*Cos(3*psi)*(7*Sin(theta) + 3*Sin(3*theta))) +
+                    Sin(4*phi)*(8*(-7 + Sqrt(7))*Cos(theta)*Sin(psi)*Power(Sin(theta),3) -
+                                (1 + Sqrt(7))*Sin(3*psi)*(14*Sin(2*theta) + Sin(4*theta))))/32.;
 
   dBdEuler[6][0] = (-1 + Sqrt(7))*Sin(theta)*(-3*Cos(phi)*Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),2)*
-					      (Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi)) -
-					      3*Sin(phi)*(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
-					      Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),2) +
-					      3*Cos(psi)*Cos(theta)*Power(Sin(psi),2)*Power(Sin(theta),2)) +
+                                              (Cos(phi)*Cos(psi)*Cos(theta) - Sin(phi)*Sin(psi)) -
+                                              3*Sin(phi)*(Cos(psi)*Cos(theta)*Sin(phi) + Cos(phi)*Sin(psi))*
+                                              Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),2) +
+                                              3*Cos(psi)*Cos(theta)*Power(Sin(psi),2)*Power(Sin(theta),2)) +
     ((1 + Sqrt(7))*(4*Cos(psi)*Power(Cos(theta),3)*Sin(theta) +
-		    (-((3 + Cos(4*phi))*Cos(psi)*Cos(theta)) + Sin(4*phi)*Sin(psi))*Power(Sin(theta),3)))/4.;
+                    (-((3 + Cos(4*phi))*Cos(psi)*Cos(theta)) + Sin(4*phi)*Sin(psi))*Power(Sin(theta),3)))/4.;
   dBdEuler[6][1] = (-1 + Sqrt(7))*Sin(psi)*Power(Sin(theta),2)*
     (2*Power(Cos(theta),2)*Power(Sin(psi),2) +
      3*Power(Cos(phi),2)*Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),2) +
      3*Power(Sin(phi),2)*Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),2) -
      Power(Sin(psi),2)*Power(Sin(theta),2)) +
     (-1 + Sqrt(7))*Cos(theta)*(-(Cos(phi)*
-				 Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3)) +
-			       Sin(phi)*Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),3) +
-			       Cos(theta)*Power(Sin(psi),3)*Power(Sin(theta),2)) +
+                                 Power(Cos(psi)*Sin(phi) + Cos(phi)*Cos(theta)*Sin(psi),3)) +
+                               Sin(phi)*Power(Cos(phi)*Cos(psi) - Cos(theta)*Sin(phi)*Sin(psi),3) +
+                               Cos(theta)*Power(Sin(psi),3)*Power(Sin(theta),2)) +
     ((1 + Sqrt(7))*(4*Power(Cos(theta),4)*Sin(psi) -
-		    3*Cos(theta)*(Cos(psi)*Sin(4*phi) + (7 + Cos(4*phi))*Cos(theta)*Sin(psi))*
-		    Power(Sin(theta),2) + (3 + Cos(4*phi))*Sin(psi)*Power(Sin(theta),4)))/4.;
+                    3*Cos(theta)*(Cos(psi)*Sin(4*phi) + (7 + Cos(4*phi))*Cos(theta)*Sin(psi))*
+                    Power(Sin(theta),2) + (3 + Cos(4*phi))*Sin(psi)*Power(Sin(theta),4)))/4.;
   dBdEuler[6][2] = (1 + Sqrt(7))*(-(Cos(4*phi)*Cos(psi)) + Cos(theta)*Sin(4*phi)*Sin(psi))*Power(Sin(theta),3) +
     ((-1 + Sqrt(7))*(Cos(4*phi)*(9*Cos(psi)*Sin(theta) + 7*Cos(3*psi)*Sin(theta) -
-				 6*Sin(psi)*Sin(2*psi)*Sin(3*theta)) +
-		     2*Sin(4*phi)*Sin(psi)*(-((5 + 7*Cos(2*psi))*Sin(2*theta)) + Power(Sin(psi),2)*Sin(4*theta)))
+                                 6*Sin(psi)*Sin(2*psi)*Sin(3*theta)) +
+                     2*Sin(4*phi)*Sin(psi)*(-((5 + 7*Cos(2*psi))*Sin(2*theta)) + Power(Sin(psi),2)*Sin(4*theta)))
      )/16.;
 
   dBdEuler[7][0] = (-8*(7*Cos(theta) + Cos(3*theta))*Sin(4*phi)*Sin(4*psi) +
-		    4*Sqrt(7)*Cos(2*psi)*(5 + 7*Cos(2*theta) + Cos(4*phi)*(3 + Cos(2*theta)))*
-		    Power(Sin(theta),2) + Cos(4*psi)*(Cos(4*phi)*(35 + 28*Cos(2*theta) + Cos(4*theta)) +
-						      56*Power(Sin(theta),4)) - 8*Sqrt(7)*Sin(4*phi)*Sin(2*psi)*Sin(theta)*Sin(2*theta))/32.;
+                    4*Sqrt(7)*Cos(2*psi)*(5 + 7*Cos(2*theta) + Cos(4*phi)*(3 + Cos(2*theta)))*
+                    Power(Sin(theta),2) + Cos(4*psi)*(Cos(4*phi)*(35 + 28*Cos(2*theta) + Cos(4*theta)) +
+                                                      56*Power(Sin(theta),4)) - 8*Sqrt(7)*Sin(4*phi)*Sin(2*psi)*Sin(theta)*Sin(2*theta))/32.;
   dBdEuler[7][1] = (-2*Sqrt(7)*Cos(2*psi)*Sin(4*phi)*(Sin(theta) - 3*Sin(3*theta)) -
-		    2*Cos(4*psi)*Sin(4*phi)*(7*Sin(theta) + 3*Sin(3*theta)) +
-		    2*Sin(2*psi)*(-4*(Sqrt(7) - 7*Cos(2*psi))*Power(Sin(2*phi),2)*Sin(2*theta) +
-				  (7 + Cos(4*phi))*(Sqrt(7) - Cos(2*psi))*Sin(4*theta)))/32.;
+                    2*Cos(4*psi)*Sin(4*phi)*(7*Sin(theta) + 3*Sin(3*theta)) +
+                    2*Sin(2*psi)*(-4*(Sqrt(7) - 7*Cos(2*psi))*Power(Sin(2*phi),2)*Sin(2*theta) +
+                                  (7 + Cos(4*phi))*(Sqrt(7) - Cos(2*psi))*Sin(4*theta)))/32.;
   dBdEuler[7][2] = (8*Cos(4*phi)*(Cos(4*psi)*(7*Cos(theta) + Cos(3*theta)) +
-				  4*Sqrt(7)*Cos(2*psi)*Cos(theta)*Power(Sin(theta),2)) +
-		    Sin(4*phi)*(-((35 + 28*Cos(2*theta) + Cos(4*theta))*Sin(4*psi)) -
-				8*Sqrt(7)*(3 + Cos(2*theta))*Sin(2*psi)*Power(Sin(theta),2)))/32.;
+                                  4*Sqrt(7)*Cos(2*psi)*Cos(theta)*Power(Sin(theta),2)) +
+                    Sin(4*phi)*(-((35 + 28*Cos(2*theta) + Cos(4*theta))*Sin(4*psi)) -
+                                8*Sqrt(7)*(3 + Cos(2*theta))*Sin(2*psi)*Power(Sin(theta),2)))/32.;
 
   dBdEuler[8][0] = (8*(7*Cos(theta) + Cos(3*theta))*Sin(4*phi)*Sin(4*psi) +
-		    4*Sqrt(7)*Cos(2*psi)*(5 + 7*Cos(2*theta) + Cos(4*phi)*(3 + Cos(2*theta)))*
-		    Power(Sin(theta),2) - Cos(4*psi)*(Cos(4*phi)*(35 + 28*Cos(2*theta) + Cos(4*theta)) +
-						      56*Power(Sin(theta),4)) - 8*Sqrt(7)*Sin(4*phi)*Sin(2*psi)*Sin(theta)*Sin(2*theta))/32.;
+                    4*Sqrt(7)*Cos(2*psi)*(5 + 7*Cos(2*theta) + Cos(4*phi)*(3 + Cos(2*theta)))*
+                    Power(Sin(theta),2) - Cos(4*psi)*(Cos(4*phi)*(35 + 28*Cos(2*theta) + Cos(4*theta)) +
+                                                      56*Power(Sin(theta),4)) - 8*Sqrt(7)*Sin(4*phi)*Sin(2*psi)*Sin(theta)*Sin(2*theta))/32.;
   dBdEuler[8][1] = (-2*Sqrt(7)*Cos(2*psi)*Sin(4*phi)*(Sin(theta) - 3*Sin(3*theta)) +
-		    2*Cos(4*psi)*Sin(4*phi)*(7*Sin(theta) + 3*Sin(3*theta)) +
-		    2*Sin(2*psi)*(-4*(Sqrt(7) + 7*Cos(2*psi))*Power(Sin(2*phi),2)*Sin(2*theta) +
-				  (7 + Cos(4*phi))*(Sqrt(7) + Cos(2*psi))*Sin(4*theta)))/32.;
+                    2*Cos(4*psi)*Sin(4*phi)*(7*Sin(theta) + 3*Sin(3*theta)) +
+                    2*Sin(2*psi)*(-4*(Sqrt(7) + 7*Cos(2*psi))*Power(Sin(2*phi),2)*Sin(2*theta) +
+                                  (7 + Cos(4*phi))*(Sqrt(7) + Cos(2*psi))*Sin(4*theta)))/32.;
   dBdEuler[8][2] = (-8*Cos(4*phi)*(Cos(4*psi)*(7*Cos(theta) + Cos(3*theta)) -
-				   4*Sqrt(7)*Cos(2*psi)*Cos(theta)*Power(Sin(theta),2)) +
-		    Sin(4*phi)*((35 + 28*Cos(2*theta) + Cos(4*theta))*Sin(4*psi) -
-				8*Sqrt(7)*(3 + Cos(2*theta))*Sin(2*psi)*Power(Sin(theta),2)))/32.;
+                                   4*Sqrt(7)*Cos(2*psi)*Cos(theta)*Power(Sin(theta),2)) +
+                    Sin(4*phi)*((35 + 28*Cos(2*theta) + Cos(4*theta))*Sin(4*psi) -
+                                8*Sqrt(7)*(3 + Cos(2*theta))*Sin(2*psi)*Power(Sin(theta),2)))/32.;
 
   return HXT_STATUS_OK;
 }
@@ -1489,8 +1489,8 @@ HXTStatus hxtOr3DliftBasis(const double *dirRef, double *dir){
       double scalarProd=0.0;
       hxtOr3DdotProd(vRef,dir+3*i,3, &scalarProd);
       if(fabs(scalarProd)>maxDotProd){
-	indMax=i;
-	maxDotProd=fabs(scalarProd);
+        indMax=i;
+        maxDotProd=fabs(scalarProd);
       }
     }
   }
@@ -1514,8 +1514,8 @@ HXTStatus hxtOr3DliftBasis(const double *dirRef, double *dir){
       double scalarProd=0.0;
       hxtOr3DdotProd(wRef,dir+3*i,3, &scalarProd);
       if(fabs(scalarProd)>maxDotProd){
-	indMax=i;
-	maxDotProd=fabs(scalarProd);
+        indMax=i;
+        maxDotProd=fabs(scalarProd);
       }
     }
   }
@@ -1575,7 +1575,7 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       for(int k=0;k<3;k++){
-	gradInit[i][j]+=dLdX[k][j]*eulerElem[3*k+i];
+        gradInit[i][j]+=dLdX[k][j]*eulerElem[3*k+i];
       }
     }
   }
@@ -1602,10 +1602,10 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
     if(!(k==indRef)){
       double *euler=eulerElem+3*k;
       for(int i=0;i<3;i++){
-  	if(fabs(euler[i]-2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
-  	  euler[i]=euler[i]-2*M_PI;
-  	if(fabs(euler[i]+2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
-  	  euler[i]=euler[i]+2*M_PI;
+        if(fabs(euler[i]-2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
+          euler[i]=euler[i]-2*M_PI;
+        if(fabs(euler[i]+2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
+          euler[i]=euler[i]+2*M_PI;
       }
     }
   }
@@ -1614,10 +1614,10 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
   if(!elemNoNutation[indRef]){
     for(int k=0;k<3;k++){
       if((!(k==indRef))&&elemNoNutation[k]){
-	double *euler=eulerElem+3*k;
-	double sum = euler[0]+flagNotUnique[k]*euler[2];
-	euler[2]=0.5*(flagNotUnique[k]*sum - flagNotUnique[k]*eulerRef[0] + eulerRef[2]);
-	euler[0]=sum-flagNotUnique[k]*euler[2];
+        double *euler=eulerElem+3*k;
+        double sum = euler[0]+flagNotUnique[k]*euler[2];
+        euler[2]=0.5*(flagNotUnique[k]*sum - flagNotUnique[k]*eulerRef[0] + eulerRef[2]);
+        euler[0]=sum-flagNotUnique[k]*euler[2];
       }
     }
   }
@@ -1627,10 +1627,10 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
     if(!(k==indRef)){
       double *euler=eulerElem+3*k;
       for(int i=0;i<3;i++){
-  	if(fabs(euler[i]-2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
-  	  euler[i]=euler[i]-2*M_PI;
-  	if(fabs(euler[i]+2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
-  	  euler[i]=euler[i]+2*M_PI;
+          if(fabs(euler[i]-2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
+            euler[i]=euler[i]-2*M_PI;
+          if(fabs(euler[i]+2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
+            euler[i]=euler[i]+2*M_PI;
       }
     }
   }
@@ -1646,7 +1646,7 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
   /*     HXT_INFO("euler %i :\n",k); */
   /*     HXT_INFO("%g %g %g\n",euler[0],euler[1],euler[2]); */
   /*     /\* for(int l=0;l<3;l++) *\/ */
-  /*     /\* 	normInit+=(euler[l]-eulerRef[l])*(euler[l]-eulerRef[l]); *\/ */
+  /*     /\*         normInit+=(euler[l]-eulerRef[l])*(euler[l]-eulerRef[l]); *\/ */
   /*   } */
   /* } */
   //DBG solve non unicity here
@@ -1655,91 +1655,91 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
       double *euler=eulerElem+3*k;
 
       if(fabs(euler[0]-M_PI-eulerRef[0])<fabs(euler[0]-eulerRef[0])){
-      	/* HXT_INFO("case 1\n"); */
-      	euler[0]=euler[0]-M_PI;
-      	euler[2]=euler[2]-M_PI;
-      	euler[1]=-euler[1];
-      	if(fabs(2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[1]=2*M_PI+euler[1];
-      	}
-      	if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[1]=-2*M_PI+euler[1];
-      	}
-      	if(fabs(2*M_PI+euler[2]-eulerRef[2])<fabs(euler[2]-eulerRef[2])){
-      	  euler[2]=2*M_PI+euler[2];
-      	}
-      	if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[2]=-2*M_PI+euler[2];
-      	}
+        /* HXT_INFO("case 1\n"); */
+        euler[0]=euler[0]-M_PI;
+        euler[2]=euler[2]-M_PI;
+        euler[1]=-euler[1];
+        if(fabs(2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[1]=2*M_PI+euler[1];
+        }
+        if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[1]=-2*M_PI+euler[1];
+        }
+        if(fabs(2*M_PI+euler[2]-eulerRef[2])<fabs(euler[2]-eulerRef[2])){
+          euler[2]=2*M_PI+euler[2];
+        }
+        if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[2]=-2*M_PI+euler[2];
+        }
       }
       if(fabs(euler[0]+M_PI-eulerRef[0])<fabs(euler[0]-eulerRef[0])){
-      	/* HXT_INFO("case 2\n"); */
-      	euler[0]=euler[0]+M_PI;
-      	euler[2]=euler[2]-M_PI;
-      	euler[1]=-euler[1];
-      	if(fabs(2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[1]=2*M_PI+euler[1];
-      	}
-      	if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[1]=-2*M_PI+euler[1];
-      	}
-      	if(fabs(2*M_PI+euler[2]-eulerRef[2])<fabs(euler[2]-eulerRef[2])){
-      	  euler[2]=2*M_PI+euler[2];
-      	}
-      	if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[2]=-2*M_PI+euler[2];
-      	}
+        /* HXT_INFO("case 2\n"); */
+        euler[0]=euler[0]+M_PI;
+        euler[2]=euler[2]-M_PI;
+        euler[1]=-euler[1];
+        if(fabs(2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[1]=2*M_PI+euler[1];
+        }
+        if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[1]=-2*M_PI+euler[1];
+        }
+        if(fabs(2*M_PI+euler[2]-eulerRef[2])<fabs(euler[2]-eulerRef[2])){
+          euler[2]=2*M_PI+euler[2];
+        }
+        if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[2]=-2*M_PI+euler[2];
+        }
       }
 
       /* //ICI */
       /* double test[3]={euler[0],euler[1],euler[2]}; */
       /* if(fabs(test[0]-M_PI-eulerRef[0])<fabs(test[0]-eulerRef[0])){ */
-      /* 	HXT_INFO("case 1\n"); */
-      /* 	test[0]=test[0]-M_PI; */
-      /* 	test[2]=test[2]-M_PI; */
-      /* 	test[1]=-test[1]; */
-      /* 	if(fabs(2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[1]=2*M_PI+test[1]; */
-      /* 	} */
-      /* 	if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[1]=-2*M_PI+test[1]; */
-      /* 	} */
-      /* 	if(fabs(2*M_PI+test[2]-eulerRef[2])<fabs(test[2]-eulerRef[2])){ */
-      /* 	  test[2]=2*M_PI+test[2]; */
-      /* 	} */
-      /* 	if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[2]=-2*M_PI+test[2]; */
-      /* 	} */
+      /*         HXT_INFO("case 1\n"); */
+      /*         test[0]=test[0]-M_PI; */
+      /*         test[2]=test[2]-M_PI; */
+      /*         test[1]=-test[1]; */
+      /*         if(fabs(2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*           test[1]=2*M_PI+test[1]; */
+      /*         } */
+      /*         if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*           test[1]=-2*M_PI+test[1]; */
+      /*         } */
+      /*         if(fabs(2*M_PI+test[2]-eulerRef[2])<fabs(test[2]-eulerRef[2])){ */
+      /*           test[2]=2*M_PI+test[2]; */
+      /*         } */
+      /*         if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*           test[2]=-2*M_PI+test[2]; */
+      /*         } */
       /* } */
       /* if(fabs(test[0]+M_PI-eulerRef[0])<fabs(test[0]-eulerRef[0])){ */
-      /* 	HXT_INFO("case 2\n"); */
-      /* 	test[0]=test[0]+M_PI; */
-      /* 	test[2]=test[2]-M_PI; */
-      /* 	test[1]=-test[1]; */
-      /* 	if(fabs(2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[1]=2*M_PI+test[1]; */
-      /* 	} */
-      /* 	if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[1]=-2*M_PI+test[1]; */
-      /* 	} */
-      /* 	if(fabs(2*M_PI+test[2]-eulerRef[2])<fabs(test[2]-eulerRef[2])){ */
-      /* 	  test[2]=2*M_PI+test[2]; */
-      /* 	} */
-      /* 	if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[2]=-2*M_PI+test[2]; */
-      /* 	} */
+      /*         HXT_INFO("case 2\n"); */
+      /*         test[0]=test[0]+M_PI; */
+      /*         test[2]=test[2]-M_PI; */
+      /*         test[1]=-test[1]; */
+      /*         if(fabs(2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*           test[1]=2*M_PI+test[1]; */
+      /*         } */
+      /*         if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*           test[1]=-2*M_PI+test[1]; */
+      /*         } */
+      /*         if(fabs(2*M_PI+test[2]-eulerRef[2])<fabs(test[2]-eulerRef[2])){ */
+      /*           test[2]=2*M_PI+test[2]; */
+      /*         } */
+      /*         if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*           test[2]=-2*M_PI+test[2]; */
+      /*         } */
       /* } */
       /* double normTest=0.0; */
       /* for(int l=0;l<3;l++) */
-      /* 	normTest+=(euler[l]-eulerRef[l])*(euler[l]-eulerRef[l]); */
+      /*         normTest+=(euler[l]-eulerRef[l])*(euler[l]-eulerRef[l]); */
       /* double normTestNew=0.0; */
       /* for(int l=0;l<3;l++) */
-      /* 	normTestNew+=(test[l]-eulerRef[l])*(test[l]-eulerRef[l]); */
+      /*         normTestNew+=(test[l]-eulerRef[l])*(test[l]-eulerRef[l]); */
       /* if(fabs(normTestNew)<fabs(normTest)+1e-8){ */
       /* /\* if(1){ *\/ */
-      /* 	euler[0]=test[0]; */
-      /* 	euler[1]=test[1]; */
-      /* 	euler[2]=test[2]; */
+      /*         euler[0]=test[0]; */
+      /*         euler[1]=test[1]; */
+      /*         euler[2]=test[2]; */
       /* } */
     }
   }
@@ -1756,7 +1756,7 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       for(int k=0;k<3;k++){
-	gradFinal[i][j]+=dLdX[k][j]*eulerElem[3*k+i];
+        gradFinal[i][j]+=dLdX[k][j]*eulerElem[3*k+i];
       }
     }
   }
@@ -1823,7 +1823,7 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       for(int k=0;k<4;k++){
-	gradInit[i][j]+=dLdX[k][j]*eulerElem[3*k+i];
+        gradInit[i][j]+=dLdX[k][j]*eulerElem[3*k+i];
       }
     }
   }
@@ -1850,10 +1850,10 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
     if(!(k==indRef)){
       double *euler=eulerElem+3*k;
       for(int i=0;i<3;i++){
-  	if(fabs(euler[i]-2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
-  	  euler[i]=euler[i]-2*M_PI;
-  	if(fabs(euler[i]+2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
-  	  euler[i]=euler[i]+2*M_PI;
+        if(fabs(euler[i]-2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
+          euler[i]=euler[i]-2*M_PI;
+        if(fabs(euler[i]+2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
+          euler[i]=euler[i]+2*M_PI;
       }
     }
   }
@@ -1862,10 +1862,10 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
   if(!elemNoNutation[indRef]){
     for(int k=0;k<4;k++){
       if((!(k==indRef))&&elemNoNutation[k]){
-	double *euler=eulerElem+3*k;
-	double sum = euler[0]+flagNotUnique[k]*euler[2];
-	euler[2]=0.5*(flagNotUnique[k]*sum - flagNotUnique[k]*eulerRef[0] + eulerRef[2]);
-	euler[0]=sum-flagNotUnique[k]*euler[2];
+        double *euler=eulerElem+3*k;
+        double sum = euler[0]+flagNotUnique[k]*euler[2];
+        euler[2]=0.5*(flagNotUnique[k]*sum - flagNotUnique[k]*eulerRef[0] + eulerRef[2]);
+        euler[0]=sum-flagNotUnique[k]*euler[2];
       }
     }
   }
@@ -1875,10 +1875,10 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
     if(!(k==indRef)){
       double *euler=eulerElem+3*k;
       for(int i=0;i<3;i++){
-  	if(fabs(euler[i]-2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
-  	  euler[i]=euler[i]-2*M_PI;
-  	if(fabs(euler[i]+2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
-  	  euler[i]=euler[i]+2*M_PI;
+        if(fabs(euler[i]-2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
+          euler[i]=euler[i]-2*M_PI;
+        if(fabs(euler[i]+2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
+          euler[i]=euler[i]+2*M_PI;
       }
     }
   }
@@ -1894,7 +1894,7 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
   /*     HXT_INFO("euler %i :\n",k); */
   /*     HXT_INFO("%g %g %g\n",euler[0],euler[1],euler[2]); */
   /*     /\* for(int l=0;l<3;l++) *\/ */
-  /*     /\* 	normInit+=(euler[l]-eulerRef[l])*(euler[l]-eulerRef[l]); *\/ */
+  /*     /\*         normInit+=(euler[l]-eulerRef[l])*(euler[l]-eulerRef[l]); *\/ */
   /*   } */
   /* } */
   //DBG solve non unicity here
@@ -1903,91 +1903,91 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
       double *euler=eulerElem+3*k;
 
       if(fabs(euler[0]-M_PI-eulerRef[0])<fabs(euler[0]-eulerRef[0])){
-      	/* HXT_INFO("case 1\n"); */
-      	euler[0]=euler[0]-M_PI;
-      	euler[2]=euler[2]-M_PI;
-      	euler[1]=-euler[1];
-      	if(fabs(2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[1]=2*M_PI+euler[1];
-      	}
-      	if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[1]=-2*M_PI+euler[1];
-      	}
-      	if(fabs(2*M_PI+euler[2]-eulerRef[2])<fabs(euler[2]-eulerRef[2])){
-      	  euler[2]=2*M_PI+euler[2];
-      	}
-      	if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[2]=-2*M_PI+euler[2];
-      	}
+        /* HXT_INFO("case 1\n"); */
+        euler[0]=euler[0]-M_PI;
+        euler[2]=euler[2]-M_PI;
+        euler[1]=-euler[1];
+        if(fabs(2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[1]=2*M_PI+euler[1];
+        }
+        if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[1]=-2*M_PI+euler[1];
+        }
+        if(fabs(2*M_PI+euler[2]-eulerRef[2])<fabs(euler[2]-eulerRef[2])){
+          euler[2]=2*M_PI+euler[2];
+        }
+        if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[2]=-2*M_PI+euler[2];
+        }
       }
       if(fabs(euler[0]+M_PI-eulerRef[0])<fabs(euler[0]-eulerRef[0])){
-      	/* HXT_INFO("case 2\n"); */
-      	euler[0]=euler[0]+M_PI;
-      	euler[2]=euler[2]-M_PI;
-      	euler[1]=-euler[1];
-      	if(fabs(2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[1]=2*M_PI+euler[1];
-      	}
-      	if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[1]=-2*M_PI+euler[1];
-      	}
-      	if(fabs(2*M_PI+euler[2]-eulerRef[2])<fabs(euler[2]-eulerRef[2])){
-      	  euler[2]=2*M_PI+euler[2];
-      	}
-      	if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
-      	  euler[2]=-2*M_PI+euler[2];
-      	}
+        /* HXT_INFO("case 2\n"); */
+        euler[0]=euler[0]+M_PI;
+        euler[2]=euler[2]-M_PI;
+        euler[1]=-euler[1];
+        if(fabs(2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[1]=2*M_PI+euler[1];
+        }
+        if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[1]=-2*M_PI+euler[1];
+        }
+        if(fabs(2*M_PI+euler[2]-eulerRef[2])<fabs(euler[2]-eulerRef[2])){
+          euler[2]=2*M_PI+euler[2];
+        }
+        if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+          euler[2]=-2*M_PI+euler[2];
+        }
       }
 
       /* //ICI */
       /* double test[3]={euler[0],euler[1],euler[2]}; */
       /* if(fabs(test[0]-M_PI-eulerRef[0])<fabs(test[0]-eulerRef[0])){ */
-      /* 	HXT_INFO("case 1\n"); */
-      /* 	test[0]=test[0]-M_PI; */
-      /* 	test[2]=test[2]-M_PI; */
-      /* 	test[1]=-test[1]; */
-      /* 	if(fabs(2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[1]=2*M_PI+test[1]; */
-      /* 	} */
-      /* 	if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[1]=-2*M_PI+test[1]; */
-      /* 	} */
-      /* 	if(fabs(2*M_PI+test[2]-eulerRef[2])<fabs(test[2]-eulerRef[2])){ */
-      /* 	  test[2]=2*M_PI+test[2]; */
-      /* 	} */
-      /* 	if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[2]=-2*M_PI+test[2]; */
-      /* 	} */
+      /*   HXT_INFO("case 1\n"); */
+      /*   test[0]=test[0]-M_PI; */
+      /*   test[2]=test[2]-M_PI; */
+      /*   test[1]=-test[1]; */
+      /*   if(fabs(2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*     test[1]=2*M_PI+test[1]; */
+      /*   } */
+      /*   if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*     test[1]=-2*M_PI+test[1]; */
+      /*   } */
+      /*   if(fabs(2*M_PI+test[2]-eulerRef[2])<fabs(test[2]-eulerRef[2])){ */
+      /*     test[2]=2*M_PI+test[2]; */
+      /*   } */
+      /*   if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*     test[2]=-2*M_PI+test[2]; */
+      /*   } */
       /* } */
       /* if(fabs(test[0]+M_PI-eulerRef[0])<fabs(test[0]-eulerRef[0])){ */
-      /* 	HXT_INFO("case 2\n"); */
-      /* 	test[0]=test[0]+M_PI; */
-      /* 	test[2]=test[2]-M_PI; */
-      /* 	test[1]=-test[1]; */
-      /* 	if(fabs(2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[1]=2*M_PI+test[1]; */
-      /* 	} */
-      /* 	if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[1]=-2*M_PI+test[1]; */
-      /* 	} */
-      /* 	if(fabs(2*M_PI+test[2]-eulerRef[2])<fabs(test[2]-eulerRef[2])){ */
-      /* 	  test[2]=2*M_PI+test[2]; */
-      /* 	} */
-      /* 	if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
-      /* 	  test[2]=-2*M_PI+test[2]; */
-      /* 	} */
+      /*   HXT_INFO("case 2\n"); */
+      /*   test[0]=test[0]+M_PI; */
+      /*   test[2]=test[2]-M_PI; */
+      /*   test[1]=-test[1]; */
+      /*   if(fabs(2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*     test[1]=2*M_PI+test[1]; */
+      /*   } */
+      /*   if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*     test[1]=-2*M_PI+test[1]; */
+      /*   } */
+      /*   if(fabs(2*M_PI+test[2]-eulerRef[2])<fabs(test[2]-eulerRef[2])){ */
+      /*     test[2]=2*M_PI+test[2]; */
+      /*   } */
+      /*   if(fabs(-2*M_PI+test[1]-eulerRef[1])<fabs(test[1]-eulerRef[1])){ */
+      /*     test[2]=-2*M_PI+test[2]; */
+      /*   } */
       /* } */
       /* double normTest=0.0; */
       /* for(int l=0;l<3;l++) */
-      /* 	normTest+=(euler[l]-eulerRef[l])*(euler[l]-eulerRef[l]); */
+      /*         normTest+=(euler[l]-eulerRef[l])*(euler[l]-eulerRef[l]); */
       /* double normTestNew=0.0; */
       /* for(int l=0;l<3;l++) */
-      /* 	normTestNew+=(test[l]-eulerRef[l])*(test[l]-eulerRef[l]); */
+      /*         normTestNew+=(test[l]-eulerRef[l])*(test[l]-eulerRef[l]); */
       /* if(fabs(normTestNew)<fabs(normTest)+1e-8){ */
       /* /\* if(1){ *\/ */
-      /* 	euler[0]=test[0]; */
-      /* 	euler[1]=test[1]; */
-      /* 	euler[2]=test[2]; */
+      /*         euler[0]=test[0]; */
+      /*         euler[1]=test[1]; */
+      /*         euler[2]=test[2]; */
       /* } */
     }
   }
@@ -2004,7 +2004,7 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       for(int k=0;k<4;k++){
-	gradFinal[i][j]+=dLdX[k][j]*eulerElem[3*k+i];
+        gradFinal[i][j]+=dLdX[k][j]*eulerElem[3*k+i];
       }
     }
   }
@@ -2190,107 +2190,107 @@ HXTStatus hxtOr3DgetRankMat9x3(const double mat[9][3], int baseVect[3], int *ran
   else{
     if(normWOrth<=tolRank){
       if(normU<=1e-10){
-	*rank=1;
-	baseVect[0]=-1;
+        *rank=1;
+        baseVect[0]=-1;
         baseVect[1]=1;
         baseVect[2]=-1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
       if(normV<=1e-10){
-	*rank=1;
-	baseVect[0]=1;
+        *rank=1;
+        baseVect[0]=1;
         baseVect[1]=-1;
         baseVect[2]=-1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
       double uOrthV[9]={0.0};
       for(int k=0;k<9;k++)
-	uOrthV[k]=u[k]-(sUV*v[k]);
+        uOrthV[k]=u[k]-(sUV*v[k]);
       double normUOrthV=0.0;
       hxtNorm2V(uOrthV, 9, &normUOrthV);
       if(normUOrthV<=tolRank){
-	*rank=1;
-	baseVect[0]=1;
+        *rank=1;
+        baseVect[0]=1;
         baseVect[1]=-1;
         baseVect[2]=-1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
       else{
-	*rank=2;
-	baseVect[0]=1;
+        *rank=2;
+        baseVect[0]=1;
         baseVect[1]=1;
         baseVect[2]=-1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
     }
     else if(normVOrth<=tolRank){
       if(normU<=1e-10){
-	*rank=1;
-	baseVect[0]=-1;
+        *rank=1;
+        baseVect[0]=-1;
         baseVect[1]=-1;
         baseVect[2]=1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
       if(normW<=1e-10){
-	*rank=1;
-	baseVect[0]=1;
+        *rank=1;
+        baseVect[0]=1;
         baseVect[1]=-1;
         baseVect[2]=-1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
       double uOrthW[9]={0.0};
       for(int k=0;k<9;k++)
-	uOrthW[k]=u[k]-(sUW*w[k]);
+        uOrthW[k]=u[k]-(sUW*w[k]);
       double normUOrthW=0.0;
       hxtNorm2V(uOrthW, 9, &normUOrthW);
       if(normUOrthW<=tolRank){
-	*rank=1;
-	baseVect[0]=1;
+        *rank=1;
+        baseVect[0]=1;
         baseVect[1]=-1;
         baseVect[2]=-1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
       else{
-	*rank=2;
-	baseVect[0]=1;
+        *rank=2;
+        baseVect[0]=1;
         baseVect[1]=-1;
         baseVect[2]=1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
     }
     else if(normUOrth<=tolRank){
       if(normV<=1e-10){
-	*rank=1;
-	baseVect[0]=-1;
+        *rank=1;
+        baseVect[0]=-1;
         baseVect[1]=-1;
         baseVect[2]=1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
       if(normW<=1e-10){
-	*rank=1;
-	baseVect[0]=-1;
+        *rank=1;
+        baseVect[0]=-1;
         baseVect[1]=1;
         baseVect[2]=-1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
       double vOrthW[9]={0.0};
       for(int k=0;k<9;k++)
-	vOrthW[k]=v[k]-(sVW*w[k]);
+        vOrthW[k]=v[k]-(sVW*w[k]);
       double normVOrthW=0.0;
       hxtNorm2V(vOrthW, 9, &normVOrthW);
       if(normVOrthW<=tolRank){
-	*rank=1;
-	baseVect[0]=-1;
+        *rank=1;
+        baseVect[0]=-1;
         baseVect[1]=1;
         baseVect[2]=-1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
       else{
-	*rank=2;
-	baseVect[0]=-1;
+        *rank=2;
+        baseVect[0]=-1;
         baseVect[1]=1;
         baseVect[2]=1;
-	return HXT_STATUS_OK;
+        return HXT_STATUS_OK;
       }
     }
     else{
@@ -2326,8 +2326,8 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
     {
       double pInv[3][9]={{0.0}};
       for(int i=0;i<3;i++)
-	for(int j=0;j<9;j++)
-	  pseudoInv[i][j]=pInv[i][j];
+        for(int j=0;j<9;j++)
+          pseudoInv[i][j]=pInv[i][j];
       break;
     }
   case 1:
@@ -2336,25 +2336,25 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
       double *vectRef=NULL;
       double normRef=0.0;
       if(normU>1e-10){
-	vectRef=u;
-	normRef=normU;
+        vectRef=u;
+        normRef=normU;
       }
       else if(normV>1e-10){
-	vectRef=v;
-	normRef=normV;
+        vectRef=v;
+        normRef=normV;
       }
       else if(normW>1e-10){
-	vectRef=w;
-	normRef=normW;
+        vectRef=w;
+        normRef=normW;
       }
       else{
-	HXT_INFO("pb result rank\n");
-	exit(0);
+        HXT_INFO("pb result rank\n");
+        exit(0);
       }
       double B[9][1]={{0.0}};
       double C[1][3]={{0.0}};
       for(int j=0;j<9;j++)
-	B[j][0]=vectRef[j];
+        B[j][0]=vectRef[j];
       double sUvRef=0.0;
       double sVvRef=0.0;
       double sWvRef=0.0;
@@ -2362,27 +2362,27 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
       hxtOr3DdotProd(v, vectRef, 9, &sVvRef);
       hxtOr3DdotProd(w, vectRef, 9, &sWvRef);
       if(normU<1e-10)
-	normU=1;
+        normU=1;
       C[0][0] = sUvRef/(normU*normRef);
       if(normV<1e-10)
-	normV=1;
+        normV=1;
       C[0][1] = sVvRef/(normV*normRef);
       if(normW<1e-10)
-	normW=1;
+        normW=1;
       C[0][2] = sWvRef/(normW*normRef);
       double BtB=0.0;
       double CCt=0.0;
       for(int j=0;j<9;j++)
-	BtB+=B[j][0]*B[j][0];
+        BtB+=B[j][0]*B[j][0];
       for(int k=0;k<3;k++)
-	CCt+=C[0][k]*C[0][k];
+        CCt+=C[0][k]*C[0][k];
       double pInv[3][9]={{0.0}};
       for(int i=0;i<3;i++)
-	for(int j=0;j<9;j++)
-	  pInv[i][j]+=C[0][i]*B[j][0]/(CCt*BtB);
+        for(int j=0;j<9;j++)
+          pInv[i][j]+=C[0][i]*B[j][0]/(CCt*BtB);
       for(int i=0;i<3;i++)
-	for(int j=0;j<9;j++)
-	  pseudoInv[i][j]=pInv[i][j];
+        for(int j=0;j<9;j++)
+          pseudoInv[i][j]=pInv[i][j];
       break;
     }
   case 2:
@@ -2392,40 +2392,40 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
       double vectRef2[9]={0.0};
       int nBaseGet=0;
       for(int k=0;k<3;k++){
-	if(baseVect[k]==1){
-	  if(nBaseGet==0){
-	    if(k==0){
-	      for(int j=0;j<9;j++)
-		vectRef1[j]=u[j];
-	      nBaseGet++;
-	    }
-	    else if(k==1){
-	      for(int j=0;j<9;j++)
-		vectRef1[j]=v[j];
-	      nBaseGet++;
-	    }
-	    else{
-	      HXT_INFO("pb in baseVect\n");
-	      exit(0);
-	    }
-	  }
-	  else if(nBaseGet==1){
-	    if(k==1){
-	      for(int j=0;j<9;j++)
-		vectRef2[j]=v[j];
-	      nBaseGet++;
-	    }
-	    else if(k==2){
-	      for(int j=0;j<9;j++)
-		vectRef2[j]=w[j];
-	      nBaseGet++;
-	    }
-	    else{
-	      HXT_INFO("pb in baseVect\n");
-	      exit(0);
-	    }
-	  }	    
-	}
+        if(baseVect[k]==1){
+          if(nBaseGet==0){
+            if(k==0){
+              for(int j=0;j<9;j++)
+                vectRef1[j]=u[j];
+              nBaseGet++;
+            }
+            else if(k==1){
+              for(int j=0;j<9;j++)
+                vectRef1[j]=v[j];
+              nBaseGet++;
+            }
+            else{
+              HXT_INFO("pb in baseVect\n");
+              exit(0);
+            }
+          }
+          else if(nBaseGet==1){
+            if(k==1){
+              for(int j=0;j<9;j++)
+                vectRef2[j]=v[j];
+              nBaseGet++;
+            }
+            else if(k==2){
+              for(int j=0;j<9;j++)
+                vectRef2[j]=w[j];
+              nBaseGet++;
+            }
+            else{
+              HXT_INFO("pb in baseVect\n");
+              exit(0);
+            }
+          }            
+        }
       }
       double normRef1 = 0.0;
       hxtNorm2V(vectRef1, 9, &normRef1);
@@ -2438,9 +2438,9 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
       double B[9][2]={{0.0}};
       double C[2][3]={{0.0}};
       for(int j=0;j<9;j++)
-	B[j][0]=vectRef1[j];
+        B[j][0]=vectRef1[j];
       for(int j=0;j<9;j++)
-	B[j][1]=vectRef2[j];
+        B[j][1]=vectRef2[j];
       double sUvRef1=0.0;
       double sVvRef1=0.0;
       double sWvRef1=0.0;
@@ -2454,11 +2454,11 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
       hxtOr3DdotProd(v, vectRef2, 9, &sVvRef2);
       hxtOr3DdotProd(w, vectRef2, 9, &sWvRef2);
       if(normU<1e-10)
-	normU=1;
+        normU=1;
       if(normV<1e-10)
-	normV=1;
+        normV=1;
       if(normW<1e-10)
-	normW=1;
+        normW=1;
       C[0][0] = sUvRef1/(normU*normRef1);
       C[1][0] = sUvRef2/(normU*normRef2);
       C[0][1] = sVvRef1/(normV*normRef1);
@@ -2468,13 +2468,13 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
       double BtB[2][2]={{0.0}};
       double CCt[2][2]={{0.0}};
       for(int l=0;l<2;l++)
-	for(int k=0;k<2;k++)
-	  for(int j=0;j<9;j++)
-	    BtB[l][k]+=B[j][l]*B[j][k];
+        for(int k=0;k<2;k++)
+          for(int j=0;j<9;j++)
+            BtB[l][k]+=B[j][l]*B[j][k];
       for(int l=0;l<2;l++)
-	for(int k=0;k<2;k++)
-	  for(int j=0;j<3;j++)
-	    CCt[l][k]+=C[l][j]*C[k][j];
+        for(int k=0;k<2;k++)
+          for(int j=0;j<3;j++)
+            CCt[l][k]+=C[l][j]*C[k][j];
       double invBtB[2][2]={{0.0}};
       double invCCt[2][2]={{0.0}};
       double det;
@@ -2482,16 +2482,16 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
       HXT_CHECK(hxtInv2x2(CCt, invCCt, &det));
       double pInv[3][9]={{0.0}};
       for(int i=0;i<3;i++)
-	for(int j=0;j<9;j++)
-	  for(int k=0;k<2;k++)
-	    for(int l=0;l<2;l++)
-	      for(int m=0;m<2;m++)
-		pInv[i][j]+=C[k][i]*invCCt[k][l]*invBtB[l][m]*B[j][m];
+        for(int j=0;j<9;j++)
+          for(int k=0;k<2;k++)
+            for(int l=0;l<2;l++)
+              for(int m=0;m<2;m++)
+                pInv[i][j]+=C[k][i]*invCCt[k][l]*invBtB[l][m]*B[j][m];
       for(int i=0;i<3;i++)
-	for(int j=0;j<9;j++){
-	  pseudoInv[i][j]=pInv[i][j];
-	  /* pritnf("val : %g\n",pseudoInv[i][j]); */
-	}
+        for(int j=0;j<9;j++){
+          pseudoInv[i][j]=pInv[i][j];
+          /* pritnf("val : %g\n",pseudoInv[i][j]); */
+        }
       
       break;
     }
@@ -2500,20 +2500,20 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
       /* HXT_INFO("rank 3 pInv computation\n"); */
       double intMat[3][3]={{0.0}};
       for(int i=0;i<3;i++)
-	for(int j=0;j<3;j++)
-	  for(int k=0;k<9;k++)
-	    intMat[i][j]+=mat[k][i]*mat[k][j];
+        for(int j=0;j<3;j++)
+          for(int k=0;k<9;k++)
+            intMat[i][j]+=mat[k][i]*mat[k][j];
       double invIntMat[3][3]={{0.0}};
       double det=0.0;
       HXT_CHECK(hxtInv3x3(intMat, invIntMat, &det));
       double pInv[3][9]={{0.0}};
       for(int i=0;i<3;i++)
-	for(int j=0;j<9;j++)
-	  for(int k=0;k<3;k++)
-	    pInv[i][j]+=invIntMat[i][k]*mat[j][k];
+        for(int j=0;j<9;j++)
+          for(int k=0;k<3;k++)
+            pInv[i][j]+=invIntMat[i][k]*mat[j][k];
       for(int i=0;i<3;i++)
-	for(int j=0;j<9;j++)
-	  pseudoInv[i][j]=pInv[i][j];
+        for(int j=0;j<9;j++)
+          pseudoInv[i][j]=pInv[i][j];
       break;
     default:
       HXT_INFO("Pb rank dBdEuler\n");
@@ -2565,40 +2565,40 @@ HXTStatus hxtOr3DcheckIfPinvOk(const double A[9][3], const double pInvA[3][9]){
   for(int i=0;i<9;i++)
     for(int j=0;j<3;j++)
       for(int k=0;k<3;k++)
-	for(int l=0;l<9;l++)
-	  p1[i][j]+=A[i][k]*pInvA[k][l]*A[l][j];	  
+        for(int l=0;l<9;l++)
+          p1[i][j]+=A[i][k]*pInvA[k][l]*A[l][j];          
   for(int i=0;i<9;i++)
     for(int j=0;j<3;j++)
       p1[i][j]-=A[i][j];
   for(int i=0;i<3;i++)
     for(int j=0;j<9;j++)
       for(int k=0;k<9;k++)
-	for(int l=0;l<3;l++)
-	  p2[i][j]+=pInvA[i][k]*A[k][l]*pInvA[l][j];
+        for(int l=0;l<3;l++)
+          p2[i][j]+=pInvA[i][k]*A[k][l]*pInvA[l][j];
   for(int i=0;i<3;i++)
     for(int j=0;j<9;j++)
       p2[i][j]-=pInvA[i][j];
   for(int i=0;i<9;i++)
     for(int j=0;j<3;j++)
       for(int k=0;k<9;k++)
-	p3[i][k]+=A[i][j]*pInvA[j][k];
+        p3[i][k]+=A[i][j]*pInvA[j][k];
   for(int i=0;i<9;i++)
     for(int j=i;j<9;j++){
       double temp=p3[i][j];
       p3[i][j]-=p3[j][i];
       if(i!=j)
-	p3[j][i]-=temp;
+        p3[j][i]-=temp;
     }
   for(int i=0;i<3;i++)
     for(int j=0;j<9;j++)
       for(int k=0;k<3;k++)
-	p4[i][k]+=pInvA[i][j]*A[j][k];
+        p4[i][k]+=pInvA[i][j]*A[j][k];
   for(int i=0;i<3;i++)
     for(int k=i;k<3;k++){
       double temp=p4[i][k];
       p4[i][k]-=p4[k][i];
       if(i!=k)
-	p4[k][i]-=temp;
+        p4[k][i]-=temp;
     }
 
   double valP1=0.0;
@@ -2636,8 +2636,8 @@ HXTStatus hxtOr3DcheckIfPinvOk(const double A[9][3], const double pInvA[3][9]){
     double id[3][3]={{0.0}};
     for(int i=0;i<3;i++)
       for(int j=0;j<3;j++)
-	for(int k=0;k<9;k++)
-	  id[i][j]+=A[k][i]*pInvA[j][k];
+        for(int k=0;k<9;k++)
+          id[i][j]+=A[k][i]*pInvA[j][k];
     HXT_INFO("id\n");
     for(int i=0;i<3;i++)
       HXT_INFO("%g // %g // %g\n",id[i][0],id[i][1],id[i][2]);
