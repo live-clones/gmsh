@@ -4,6 +4,7 @@
 /*#include "hxt_orientation3d_explicit.h"*/
 
 #include "hxt_orientation3d_tools.h"
+#include <math.h>
 
 //#include "float.h"
 

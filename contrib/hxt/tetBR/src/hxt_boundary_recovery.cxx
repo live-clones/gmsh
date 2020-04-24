@@ -6,7 +6,6 @@ extern "C" {
 }
 
 #include <assert.h>
-#include <math.h>
 #include <set>
 #include <vector>
 #include <time.h>

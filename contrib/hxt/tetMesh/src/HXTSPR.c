@@ -7,7 +7,7 @@
 //   Célestin Marot
 
 #include "HXTSPR.h"
-#include <math.h>
+#include "hxt_tetOptiUtils.h"
 #include "hxt_tetFlag.h"
 #include "predicates.h"
 

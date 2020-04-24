@@ -2567,13 +2567,35 @@ Transform :
       if(!r) yymsg(0, "Could not intersect line");
       List_Delete($4);
     }
-  // syntax is wrong: should use {} around FExpr
-  | tSplit tCurve '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
+  | tSplit tCurve '{' FExpr '}' tPoint '{' RecursiveListOfDouble '}' tEND
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Split Line not available with OpenCASCADE geometry kernel");
+        yymsg(0, "Split Curve not available with OpenCASCADE geometry kernel");
+      }
+      else{
+        std::vector<int> vertices, curves; ListOfDouble2Vector($8, vertices);
+        r = GModel::current()->getGEOInternals()->splitCurve
+          ((int)$4, vertices, curves);
+        for(std::size_t i = 0; i < curves.size(); i++){
+          Shape s;
+          s.Type = MSH_SEGM_LINE;
+          s.Num = curves[i];
+          List_Add($$, &s);
+        }
+      }
+      if(!r) yymsg(0, "Could not split curve");
+      List_Delete($8);
+    }
+  | tSplit tCurve '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
+    {
+      yymsg(2, "'Split Curve(c) {...}' is deprecated: "
+            "use 'Split Curve {c} Point {...}' instead");
+      $$ = List_Create(2, 1, sizeof(Shape));
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Split Curve not available with OpenCASCADE geometry kernel");
       }
       else{
         std::vector<int> vertices, curves; ListOfDouble2Vector($7, vertices);
@@ -2586,7 +2608,7 @@ Transform :
           List_Add($$, &s);
         }
       }
-      if(!r) yymsg(0, "Could not split line");
+      if(!r) yymsg(0, "Could not split curve");
       List_Delete($7);
     }
 ;

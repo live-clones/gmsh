@@ -1,6 +1,7 @@
 #ifndef HXT_REMESH_TOOLS_H
 #define HXT_REMESH_TOOLS_H
 
+#include "hxt_message.h"
 
 /*********************************************************
  * Operations on 3D vectors

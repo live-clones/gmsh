@@ -5030,11 +5030,29 @@ double opt_mesh_lc_from_points(OPT_ARGS_NUM)
     CTX::instance()->mesh.lcFromPoints = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
+  if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->mesh.butt[5]->value(
       CTX::instance()->mesh.lcFromPoints ? 1 : 0);
+    FlGui::instance()->options->activate("mesh_lc_from_points");
+  }
 #endif
   return CTX::instance()->mesh.lcFromPoints;
+}
+
+double opt_mesh_lc_from_parametric_points(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.lcFromParametricPoints)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.lcFromParametricPoints = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.butt[26]->value(
+      CTX::instance()->mesh.lcFromParametricPoints ? 1 : 0);
+#endif
+  return CTX::instance()->mesh.lcFromParametricPoints;
 }
 
 double opt_mesh_lc_extend_from_boundary(OPT_ARGS_NUM)

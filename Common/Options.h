@@ -440,6 +440,7 @@ double opt_mesh_tolerance_initial_delaunay(OPT_ARGS_NUM);
 double opt_mesh_lc_factor(OPT_ARGS_NUM);
 double opt_mesh_lc_from_curvature(OPT_ARGS_NUM);
 double opt_mesh_lc_from_points(OPT_ARGS_NUM);
+double opt_mesh_lc_from_parametric_points(OPT_ARGS_NUM);
 double opt_mesh_lc_extend_from_boundary(OPT_ARGS_NUM);
 double opt_mesh_lc_integration_precision(OPT_ARGS_NUM);
 double opt_mesh_rand_factor(OPT_ARGS_NUM);

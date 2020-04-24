@@ -36,7 +36,7 @@ typedef struct {
 } Statistic;
 
 
-typedef struct 
+typedef struct
 {
   /*** located here ***/
   // list of deleted tet. Added when the cavity is created, removed when the cavity is filled

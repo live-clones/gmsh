@@ -34,7 +34,7 @@ int meshGFaceHxt(GModel *gm)
   std::map<int, std::vector<double> > dataDirOrtho;
   computeCrossFieldAndH(gm,dataH,dataDir,dataDirOrtho);
 
-  std::map<MVertex *, int> v2c;
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
 
@@ -51,7 +51,7 @@ int meshGFaceHxt(GModel *gm)
     SVector3 t2 (dirOrtho[0],dirOrtho[1],dirOrtho[2]);
     SVector3 n = crossprod(t1,t2);
     
-    for (int i=0;i< e->getNumVertices();i++){
+    for (size_t i=0;i< e->getNumVertices();i++){
       MVertex *v = e->getVertex (i);
       if (v2c.find(v)  == v2c.end())Msg::Error ("FILE %s LINE %d Cannot find vertex %lu",__FILE__,__LINE__,v->getNum()); 
       if (v2c[v] >= v2c.size())Msg::Error ("FILE %s LINE %d Bad numbering v2c[%lu] = %lu",__FILE__,__LINE__,v->getNum(),v2c[v]); 

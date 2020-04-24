@@ -872,3 +872,24 @@ std::vector<GVertex *> GEdge::vertices() const
   if(getEndVertex()) res.push_back(getEndVertex());
   return res;
 }
+
+double GEdge::prescribedMeshSizeAtParam(double u)
+{
+  if (v0 && v1) {
+    double lc0 = v0->prescribedMeshSizeAtVertex();
+    double lc1 = v1->prescribedMeshSizeAtVertex();
+    if(lc0 >= MAX_LC && lc1 >= MAX_LC) {
+      // FIXME we might want to remove this to make all lc treatment
+      // consistent
+      return CTX::instance()->lc / 10.;
+    }
+    else {
+      Range<double> range = parBounds(0);
+      double a = (u - range.low()) / (range.high() - range.low());
+      return (1 - a) * lc0 + (a)*lc1;
+    }
+  }
+  else {
+    return MAX_LC;
+  }
+}

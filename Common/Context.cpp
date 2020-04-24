@@ -90,7 +90,7 @@ CTX::CTX() : debugSurface(-1), gamepad(0)
   mesh.optimize = mesh.optimizeNetgen = 0;
   mesh.refineSteps = mesh.scalingFactor = mesh.lcFactor = mesh.lcMin = mesh.lcMax = 0;
   mesh.toleranceEdgeLength = mesh.toleranceInitialDelaunay = 0;
-  mesh.lcFromCurvature = mesh.lcFromPoints = mesh.lcExtendFromBoundary = 0;
+  mesh.lcFromCurvature = mesh.lcFromPoints = mesh.lcExtendFromBoundary = mesh.lcFromParametricPoints = 0;
   mesh.lcIntegrationPrecision = mesh.randFactor = 0;
   mesh.algo2d = mesh.algo3d = mesh.algoRecombine = mesh.recombineAll = 0;
   mesh.recombine3DAll = mesh.algoSubdivide = mesh.meshOnlyVisible = 0;

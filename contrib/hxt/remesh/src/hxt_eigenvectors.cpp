@@ -9,7 +9,7 @@ HXTStatus eigMat(double * __restrict__ mat,
                  double * __restrict__ vp,
                  double * __restrict__ dirPropres) {
   typedef Eigen::Matrix<double, N, N, Eigen::ColMajor> Matrix;
-  typedef Eigen::Map<Matrix, Eigen::Unaligned> Map;
+  // typedef Eigen::Map<Matrix, Eigen::Unaligned> Map;
 
   Matrix eig_mat(mat);
   Eigen::SelfAdjointEigenSolver<Matrix> solver(eig_mat);

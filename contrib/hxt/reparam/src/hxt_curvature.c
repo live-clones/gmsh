@@ -1,6 +1,5 @@
 #include "hxt_curvature.h"
 #include "hxt_tools.h"
-#include <math.h>
 #include <stdio.h>
 
 // #include <time.h> // for commented timings

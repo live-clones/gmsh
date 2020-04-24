@@ -13,7 +13,9 @@
 extern "C" {
 #endif
 
-#include "hxt_tetPartition.h"
+#include "hxt_mesh.h"
+#include "hxt_vertices.h"
+#include "hxt_bbox.h"
 
 /**
 * \file hxt_tetDelaunay.h Delaunay tetrahedrization
@@ -134,9 +136,6 @@ HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* options);
 //                             uint64_t** deleted, size_t* numDeleted, size_t* sizeDeleted, void** buffer);
 
 // HXTStatus hxtDelaunayFreeBuffer(void** buffer);
-
-
-HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, uint64_t* __restrict__ curTet, const uint32_t vta);
 
 
 #ifdef __cplusplus

@@ -1,7 +1,7 @@
 #include "hxt_orientation3d_tools.h"
-#include "hxt_tools.h"
 #include "hxt_eigenvectors.h"
-#include <math.h>
+#include "hxt_tools.h"
+#include "hxt_remesh_tools.h"
 
 void normalize6x6(double mat[6][6]){
   double norm=0.0;
@@ -855,7 +855,7 @@ HXTStatus hxtOr3DframeToDirections(const double *frame, double *stableDir, doubl
   //  get eigentensors
   hxtEigenvectors6(mat, vpMat, dirPropres);
 
-  //  printf("EIGS %g %g %g %g %g %g \n",
+  //  HXT_INFO("EIGS %g %g %g %g %g %g \n",
   //	 vpMat[0],vpMat[1],vpMat[2],
   //	 vpMat[3],vpMat[4],vpMat[5]);
 
@@ -904,18 +904,18 @@ HXTStatus hxtOr3DframeToDirections(const double *frame, double *stableDir, doubl
   else
     rFinal=r5;
 
-  /* printf("R4\n"); */
-  /* printf("%12.5E %12.5E %12.5E\n",r4[0],r4[1],r4[2]); */
-  /* printf("%12.5E %12.5E %12.5E\n",r4[3],r4[4],r4[5]); */
-  /* printf("%12.5E %12.5E %12.5E\n",r4[6],r4[7],r4[8]); */
-  /* printf("R5\n"); */
-  /* printf("%12.5E %12.5E %12.5E\n",r5[0],r5[1],r5[2]); */
-  /* printf("%12.5E %12.5E %12.5E\n",r5[3],r5[4],r5[5]); */
-  /* printf("%12.5E %12.5E %12.5E\n",r5[6],r5[7],r5[8]); */
-  /* printf("RFinal\n"); */
-  /* printf("%12.5E %12.5E %12.5E\n",rFinal[0],rFinal[1],rFinal[2]); */
-  /* printf("%12.5E %12.5E %12.5E\n",rFinal[3],rFinal[4],rFinal[5]); */
-  /* printf("%12.5E %12.5E %12.5E\n",rFinal[6],rFinal[7],rFinal[8]); */
+  /* HXT_INFO("R4\n"); */
+  /* HXT_INFO("%12.5E %12.5E %12.5E\n",r4[0],r4[1],r4[2]); */
+  /* HXT_INFO("%12.5E %12.5E %12.5E\n",r4[3],r4[4],r4[5]); */
+  /* HXT_INFO("%12.5E %12.5E %12.5E\n",r4[6],r4[7],r4[8]); */
+  /* HXT_INFO("R5\n"); */
+  /* HXT_INFO("%12.5E %12.5E %12.5E\n",r5[0],r5[1],r5[2]); */
+  /* HXT_INFO("%12.5E %12.5E %12.5E\n",r5[3],r5[4],r5[5]); */
+  /* HXT_INFO("%12.5E %12.5E %12.5E\n",r5[6],r5[7],r5[8]); */
+  /* HXT_INFO("RFinal\n"); */
+  /* HXT_INFO("%12.5E %12.5E %12.5E\n",rFinal[0],rFinal[1],rFinal[2]); */
+  /* HXT_INFO("%12.5E %12.5E %12.5E\n",rFinal[3],rFinal[4],rFinal[5]); */
+  /* HXT_INFO("%12.5E %12.5E %12.5E\n",rFinal[6],rFinal[7],rFinal[8]); */
 
   for (int i=0;i<3;i++){
     for (int j=0;j<3;j++){
@@ -933,18 +933,18 @@ HXTStatus hxtOr3DframeToDirections(const double *frame, double *stableDir, doubl
       double dir[3];
       for(int k=0; k<3; k++)
 	dir[k]=dirFinal[3*i+k];
-      /* printf("dir : %g %g %g\n",dir[0],dir[1],dir[2]); */
+      /* HXT_INFO("dir : %g %g %g\n",dir[0],dir[1],dir[2]); */
       hxtOr3Dvec3ToMandel2ndDyadic(dir, mandel2ndDir);
-      /* printf("mandel : %g %g %g %g %g %g\n",mandel2ndDir[0],mandel2ndDir[1],mandel2ndDir[2],mandel2ndDir[3],mandel2ndDir[4],mandel2ndDir[5]); */
+      /* HXT_INFO("mandel : %g %g %g %g %g %g\n",mandel2ndDir[0],mandel2ndDir[1],mandel2ndDir[2],mandel2ndDir[3],mandel2ndDir[4],mandel2ndDir[5]); */
       double imMandel2ndDir[6]={0.0};
       for(int k=0; k<6; k++)
         for(int m=0; m<6; m++)
           imMandel2ndDir[k]+=mat[6*k+m]*mandel2ndDir[m];
-      /* printf("imMandel : %g %g %g %g %g %g\n",imMandel2ndDir[0],imMandel2ndDir[1],imMandel2ndDir[2],imMandel2ndDir[3],imMandel2ndDir[4],imMandel2ndDir[5]); */
+      /* HXT_INFO("imMandel : %g %g %g %g %g %g\n",imMandel2ndDir[0],imMandel2ndDir[1],imMandel2ndDir[2],imMandel2ndDir[3],imMandel2ndDir[4],imMandel2ndDir[5]); */
       double scalarP=0.0;
       for(int k=0; k<6; k++)
         scalarP+=imMandel2ndDir[k]*mandel2ndDir[k];
-      /* printf("scalarP : %g\n",scalarP); */
+      /* HXT_INFO("scalarP : %g\n",scalarP); */
       /* exit(0); */
       stableDir[i]=scalarP;
     }
@@ -1560,17 +1560,17 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
   double *eulerRef=eulerElem+3*indRef;
 
   //ICI
-  /* printf("-----------------********************--------------------\n"); */
-  /* printf("eulemNoNutation :\n"); */
-  /* printf("%i %i %i %i\n",elemNoNutation[0],elemNoNutation[1],elemNoNutation[2],elemNoNutation[3]); */
-  /* printf("indRef : %i\n",indRef); */
-  /* printf("u : %g %g %g\n",dirElem[0],dirElem[1],dirElem[2]); */
-  /* printf("v : %g %g %g\n",dirElem[3],dirElem[4],dirElem[5]); */
-  /* printf("w : %g %g %g\n",dirElem[6],dirElem[7],dirElem[8]); */
-  /* printf("-----------------********************--------------------\n"); */
+  /* HXT_INFO("-----------------********************--------------------\n"); */
+  /* HXT_INFO("eulemNoNutation :\n"); */
+  /* HXT_INFO("%i %i %i %i\n",elemNoNutation[0],elemNoNutation[1],elemNoNutation[2],elemNoNutation[3]); */
+  /* HXT_INFO("indRef : %i\n",indRef); */
+  /* HXT_INFO("u : %g %g %g\n",dirElem[0],dirElem[1],dirElem[2]); */
+  /* HXT_INFO("v : %g %g %g\n",dirElem[3],dirElem[4],dirElem[5]); */
+  /* HXT_INFO("w : %g %g %g\n",dirElem[6],dirElem[7],dirElem[8]); */
+  /* HXT_INFO("-----------------********************--------------------\n"); */
   double normInit=0.0;
-  /* printf("eulerRef :\n"); */
-  /* printf("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
+  /* HXT_INFO("eulerRef :\n"); */
+  /* HXT_INFO("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
   double gradInit[3][3]={{0.0}};
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
@@ -1586,14 +1586,14 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
   /* for(int k=0;k<4;k++){ */
   /*   if(!(k==indRef)){ */
   /*     double *euler=eulerElem+3*k; */
-  /*     printf("euler %i :\n",k); */
-  /*     printf("%g %g %g\n",euler[0],euler[1],euler[2]); */
-  /*     printf("u:\n"); */
-  /*     printf("%g %g %g\n",dirElem[9*k+0],dirElem[9*k+1],dirElem[9*k+2]); */
-  /*     printf("v:\n"); */
-  /*     printf("%g %g %g\n",dirElem[9*k+3],dirElem[9*k+4],dirElem[9*k+5]); */
-  /*     printf("w:\n"); */
-  /*     printf("%g %g %g\n",dirElem[9*k+6],dirElem[9*k+7],dirElem[9*k+8]); */
+  /*     HXT_INFO("euler %i :\n",k); */
+  /*     HXT_INFO("%g %g %g\n",euler[0],euler[1],euler[2]); */
+  /*     HXT_INFO("u:\n"); */
+  /*     HXT_INFO("%g %g %g\n",dirElem[9*k+0],dirElem[9*k+1],dirElem[9*k+2]); */
+  /*     HXT_INFO("v:\n"); */
+  /*     HXT_INFO("%g %g %g\n",dirElem[9*k+3],dirElem[9*k+4],dirElem[9*k+5]); */
+  /*     HXT_INFO("w:\n"); */
+  /*     HXT_INFO("%g %g %g\n",dirElem[9*k+6],dirElem[9*k+7],dirElem[9*k+8]); */
   /*   } */
   /* } */
 
@@ -1637,14 +1637,14 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
   
   /* //ICI */
   /* /\* double normInit=0.0; *\/ */
-  /* printf("**********************val int\n"); */
-  /* printf("eulerRef :\n"); */
-  /* printf("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
+  /* HXT_INFO("**********************val int\n"); */
+  /* HXT_INFO("eulerRef :\n"); */
+  /* HXT_INFO("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
   /* for(int k=0;k<4;k++){ */
   /*   if(!(k==indRef)){ */
   /*     double *euler=eulerElem+3*k; */
-  /*     printf("euler %i :\n",k); */
-  /*     printf("%g %g %g\n",euler[0],euler[1],euler[2]); */
+  /*     HXT_INFO("euler %i :\n",k); */
+  /*     HXT_INFO("%g %g %g\n",euler[0],euler[1],euler[2]); */
   /*     /\* for(int l=0;l<3;l++) *\/ */
   /*     /\* 	normInit+=(euler[l]-eulerRef[l])*(euler[l]-eulerRef[l]); *\/ */
   /*   } */
@@ -1655,7 +1655,7 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
       double *euler=eulerElem+3*k;
 
       if(fabs(euler[0]-M_PI-eulerRef[0])<fabs(euler[0]-eulerRef[0])){
-      	/* printf("case 1\n"); */
+      	/* HXT_INFO("case 1\n"); */
       	euler[0]=euler[0]-M_PI;
       	euler[2]=euler[2]-M_PI;
       	euler[1]=-euler[1];
@@ -1673,7 +1673,7 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
       	}
       }
       if(fabs(euler[0]+M_PI-eulerRef[0])<fabs(euler[0]-eulerRef[0])){
-      	/* printf("case 2\n"); */
+      	/* HXT_INFO("case 2\n"); */
       	euler[0]=euler[0]+M_PI;
       	euler[2]=euler[2]-M_PI;
       	euler[1]=-euler[1];
@@ -1694,7 +1694,7 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
       /* //ICI */
       /* double test[3]={euler[0],euler[1],euler[2]}; */
       /* if(fabs(test[0]-M_PI-eulerRef[0])<fabs(test[0]-eulerRef[0])){ */
-      /* 	printf("case 1\n"); */
+      /* 	HXT_INFO("case 1\n"); */
       /* 	test[0]=test[0]-M_PI; */
       /* 	test[2]=test[2]-M_PI; */
       /* 	test[1]=-test[1]; */
@@ -1712,7 +1712,7 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
       /* 	} */
       /* } */
       /* if(fabs(test[0]+M_PI-eulerRef[0])<fabs(test[0]-eulerRef[0])){ */
-      /* 	printf("case 2\n"); */
+      /* 	HXT_INFO("case 2\n"); */
       /* 	test[0]=test[0]+M_PI; */
       /* 	test[2]=test[2]-M_PI; */
       /* 	test[1]=-test[1]; */
@@ -1750,9 +1750,9 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
   //ICI
   double normFinal=0.0;
   double gradFinal[3][3]={{0.0}};
-  /* printf("+++++++++++++++++++++++++++++++++++++\n"); */
-  /* printf("eulerRef Final:\n"); */
-  /* printf("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
+  /* HXT_INFO("+++++++++++++++++++++++++++++++++++++\n"); */
+  /* HXT_INFO("eulerRef Final:\n"); */
+  /* HXT_INFO("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       for(int k=0;k<3;k++){
@@ -1766,17 +1766,17 @@ HXTStatus hxtOr3DdirectionsToEulerTri(const double dirElem[9*3], const double dL
   /* for(int k=0;k<4;k++){ */
   /*   if(!(k==indRef)){ */
   /*     double *euler=eulerElem+3*k; */
-  /*     printf("euler %i :\n",k); */
-  /*     printf("%g %g %g\n",euler[0],euler[1],euler[2]); */
+  /*     HXT_INFO("euler %i :\n",k); */
+  /*     HXT_INFO("%g %g %g\n",euler[0],euler[1],euler[2]); */
   /*   } */
   /* } */
   /* if(fabs(normFinal)>fabs(normInit)+1e-8){ */
-  /*   printf("normInit : %g\n",normInit); */
-  /*   printf("normFinal : %g\n",normFinal); */
-  /*   printf("Houston we have a pb\n"); */
+  /*   HXT_INFO("normInit : %g\n",normInit); */
+  /*   HXT_INFO("normFinal : %g\n",normFinal); */
+  /*   HXT_INFO("Houston we have a pb\n"); */
   /*   /\* exit(0); *\/ */
   /* } */
-  /* printf("-----------------********************--------------------\n"); */
+  /* HXT_INFO("-----------------********************--------------------\n"); */
   return HXT_STATUS_OK;
 }
 
@@ -1808,17 +1808,17 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
   double *eulerRef=eulerElem+3*indRef;
 
   //ICI
-  /* printf("-----------------********************--------------------\n"); */
-  /* printf("eulemNoNutation :\n"); */
-  /* printf("%i %i %i %i\n",elemNoNutation[0],elemNoNutation[1],elemNoNutation[2],elemNoNutation[3]); */
-  /* printf("indRef : %i\n",indRef); */
-  /* printf("u : %g %g %g\n",dirElem[0],dirElem[1],dirElem[2]); */
-  /* printf("v : %g %g %g\n",dirElem[3],dirElem[4],dirElem[5]); */
-  /* printf("w : %g %g %g\n",dirElem[6],dirElem[7],dirElem[8]); */
-  /* printf("-----------------********************--------------------\n"); */
+  /* HXT_INFO("-----------------********************--------------------\n"); */
+  /* HXT_INFO("eulemNoNutation :\n"); */
+  /* HXT_INFO("%i %i %i %i\n",elemNoNutation[0],elemNoNutation[1],elemNoNutation[2],elemNoNutation[3]); */
+  /* HXT_INFO("indRef : %i\n",indRef); */
+  /* HXT_INFO("u : %g %g %g\n",dirElem[0],dirElem[1],dirElem[2]); */
+  /* HXT_INFO("v : %g %g %g\n",dirElem[3],dirElem[4],dirElem[5]); */
+  /* HXT_INFO("w : %g %g %g\n",dirElem[6],dirElem[7],dirElem[8]); */
+  /* HXT_INFO("-----------------********************--------------------\n"); */
   double normInit=0.0;
-  /* printf("eulerRef :\n"); */
-  /* printf("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
+  /* HXT_INFO("eulerRef :\n"); */
+  /* HXT_INFO("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
   double gradInit[3][3]={{0.0}};
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
@@ -1834,14 +1834,14 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
   /* for(int k=0;k<4;k++){ */
   /*   if(!(k==indRef)){ */
   /*     double *euler=eulerElem+3*k; */
-  /*     printf("euler %i :\n",k); */
-  /*     printf("%g %g %g\n",euler[0],euler[1],euler[2]); */
-  /*     printf("u:\n"); */
-  /*     printf("%g %g %g\n",dirElem[9*k+0],dirElem[9*k+1],dirElem[9*k+2]); */
-  /*     printf("v:\n"); */
-  /*     printf("%g %g %g\n",dirElem[9*k+3],dirElem[9*k+4],dirElem[9*k+5]); */
-  /*     printf("w:\n"); */
-  /*     printf("%g %g %g\n",dirElem[9*k+6],dirElem[9*k+7],dirElem[9*k+8]); */
+  /*     HXT_INFO("euler %i :\n",k); */
+  /*     HXT_INFO("%g %g %g\n",euler[0],euler[1],euler[2]); */
+  /*     HXT_INFO("u:\n"); */
+  /*     HXT_INFO("%g %g %g\n",dirElem[9*k+0],dirElem[9*k+1],dirElem[9*k+2]); */
+  /*     HXT_INFO("v:\n"); */
+  /*     HXT_INFO("%g %g %g\n",dirElem[9*k+3],dirElem[9*k+4],dirElem[9*k+5]); */
+  /*     HXT_INFO("w:\n"); */
+  /*     HXT_INFO("%g %g %g\n",dirElem[9*k+6],dirElem[9*k+7],dirElem[9*k+8]); */
   /*   } */
   /* } */
 
@@ -1885,14 +1885,14 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
   
   /* //ICI */
   /* /\* double normInit=0.0; *\/ */
-  /* printf("**********************val int\n"); */
-  /* printf("eulerRef :\n"); */
-  /* printf("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
+  /* HXT_INFO("**********************val int\n"); */
+  /* HXT_INFO("eulerRef :\n"); */
+  /* HXT_INFO("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
   /* for(int k=0;k<4;k++){ */
   /*   if(!(k==indRef)){ */
   /*     double *euler=eulerElem+3*k; */
-  /*     printf("euler %i :\n",k); */
-  /*     printf("%g %g %g\n",euler[0],euler[1],euler[2]); */
+  /*     HXT_INFO("euler %i :\n",k); */
+  /*     HXT_INFO("%g %g %g\n",euler[0],euler[1],euler[2]); */
   /*     /\* for(int l=0;l<3;l++) *\/ */
   /*     /\* 	normInit+=(euler[l]-eulerRef[l])*(euler[l]-eulerRef[l]); *\/ */
   /*   } */
@@ -1903,7 +1903,7 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
       double *euler=eulerElem+3*k;
 
       if(fabs(euler[0]-M_PI-eulerRef[0])<fabs(euler[0]-eulerRef[0])){
-      	/* printf("case 1\n"); */
+      	/* HXT_INFO("case 1\n"); */
       	euler[0]=euler[0]-M_PI;
       	euler[2]=euler[2]-M_PI;
       	euler[1]=-euler[1];
@@ -1921,7 +1921,7 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
       	}
       }
       if(fabs(euler[0]+M_PI-eulerRef[0])<fabs(euler[0]-eulerRef[0])){
-      	/* printf("case 2\n"); */
+      	/* HXT_INFO("case 2\n"); */
       	euler[0]=euler[0]+M_PI;
       	euler[2]=euler[2]-M_PI;
       	euler[1]=-euler[1];
@@ -1942,7 +1942,7 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
       /* //ICI */
       /* double test[3]={euler[0],euler[1],euler[2]}; */
       /* if(fabs(test[0]-M_PI-eulerRef[0])<fabs(test[0]-eulerRef[0])){ */
-      /* 	printf("case 1\n"); */
+      /* 	HXT_INFO("case 1\n"); */
       /* 	test[0]=test[0]-M_PI; */
       /* 	test[2]=test[2]-M_PI; */
       /* 	test[1]=-test[1]; */
@@ -1960,7 +1960,7 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
       /* 	} */
       /* } */
       /* if(fabs(test[0]+M_PI-eulerRef[0])<fabs(test[0]-eulerRef[0])){ */
-      /* 	printf("case 2\n"); */
+      /* 	HXT_INFO("case 2\n"); */
       /* 	test[0]=test[0]+M_PI; */
       /* 	test[2]=test[2]-M_PI; */
       /* 	test[1]=-test[1]; */
@@ -1998,9 +1998,9 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
   //ICI
   double normFinal=0.0;
   double gradFinal[3][3]={{0.0}};
-  /* printf("+++++++++++++++++++++++++++++++++++++\n"); */
-  /* printf("eulerRef Final:\n"); */
-  /* printf("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
+  /* HXT_INFO("+++++++++++++++++++++++++++++++++++++\n"); */
+  /* HXT_INFO("eulerRef Final:\n"); */
+  /* HXT_INFO("%g %g %g\n",eulerRef[0],eulerRef[1],eulerRef[2]); */
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       for(int k=0;k<4;k++){
@@ -2014,17 +2014,17 @@ HXTStatus hxtOr3DdirectionsToEulerTet(const double dirElem[9*4], const double dL
   /* for(int k=0;k<4;k++){ */
   /*   if(!(k==indRef)){ */
   /*     double *euler=eulerElem+3*k; */
-  /*     printf("euler %i :\n",k); */
-  /*     printf("%g %g %g\n",euler[0],euler[1],euler[2]); */
+  /*     HXT_INFO("euler %i :\n",k); */
+  /*     HXT_INFO("%g %g %g\n",euler[0],euler[1],euler[2]); */
   /*   } */
   /* } */
   /* if(fabs(normFinal)>fabs(normInit)+1e-8){ */
-  /*   printf("normInit : %g\n",normInit); */
-  /*   printf("normFinal : %g\n",normFinal); */
-  /*   printf("Houston we have a pb\n"); */
+  /*   HXT_INFO("normInit : %g\n",normInit); */
+  /*   HXT_INFO("normFinal : %g\n",normFinal); */
+  /*   HXT_INFO("Houston we have a pb\n"); */
   /*   /\* exit(0); *\/ */
   /* } */
-  /* printf("-----------------********************--------------------\n"); */
+  /* HXT_INFO("-----------------********************--------------------\n"); */
   return HXT_STATUS_OK;
 }
 
@@ -2065,21 +2065,21 @@ HXTStatus hxtOr3DframesToEulerDataTet(const double *framesElem, const double dLd
   /*   double normDiff=0.0; */
   /*   hxtNorm2V(diffTest, 9, &normDiff); */
   /*   /\* if(normDiff>1e-10){ *\/ */
-  /*   /\*   printf("ok pb ici: normDiff = %g\n",normDiff); *\/ */
-  /*   /\*   printf("euler :\n"); *\/ */
-  /*   /\*   printf("%g %g %g\n",eulerElem[0],eulerElem[1],eulerElem[2]); *\/ */
-  /*   /\*   printf("u:\n"); *\/ */
-  /*   /\*   printf("%g %g %g\n",dirElem[0],dirElem[1],dirElem[2]); *\/ */
-  /*   /\*   printf("uRebuilt:\n"); *\/ */
-  /*   /\*   printf("%g %g %g\n",u[0],u[1],u[2]); *\/ */
-  /*   /\*   printf("v:\n"); *\/ */
-  /*   /\*   printf("%g %g %g\n",dirElem[3],dirElem[4],dirElem[5]); *\/ */
-  /*   /\*   printf("vRebuilt:\n"); *\/ */
-  /*   /\*   printf("%g %g %g\n",v[0],v[1],v[2]); *\/ */
-  /*   /\*   printf("w:\n"); *\/ */
-  /*   /\*   printf("%g %g %g\n",dirElem[6],dirElem[7],dirElem[8]); *\/ */
-  /*   /\*   printf("wRebuilt:\n"); *\/ */
-  /*   /\*   printf("%g %g %g\n",w[0],w[1],w[2]); *\/ */
+  /*   /\*   HXT_INFO("ok pb ici: normDiff = %g\n",normDiff); *\/ */
+  /*   /\*   HXT_INFO("euler :\n"); *\/ */
+  /*   /\*   HXT_INFO("%g %g %g\n",eulerElem[0],eulerElem[1],eulerElem[2]); *\/ */
+  /*   /\*   HXT_INFO("u:\n"); *\/ */
+  /*   /\*   HXT_INFO("%g %g %g\n",dirElem[0],dirElem[1],dirElem[2]); *\/ */
+  /*   /\*   HXT_INFO("uRebuilt:\n"); *\/ */
+  /*   /\*   HXT_INFO("%g %g %g\n",u[0],u[1],u[2]); *\/ */
+  /*   /\*   HXT_INFO("v:\n"); *\/ */
+  /*   /\*   HXT_INFO("%g %g %g\n",dirElem[3],dirElem[4],dirElem[5]); *\/ */
+  /*   /\*   HXT_INFO("vRebuilt:\n"); *\/ */
+  /*   /\*   HXT_INFO("%g %g %g\n",v[0],v[1],v[2]); *\/ */
+  /*   /\*   HXT_INFO("w:\n"); *\/ */
+  /*   /\*   HXT_INFO("%g %g %g\n",dirElem[6],dirElem[7],dirElem[8]); *\/ */
+  /*   /\*   HXT_INFO("wRebuilt:\n"); *\/ */
+  /*   /\*   HXT_INFO("%g %g %g\n",w[0],w[1],w[2]); *\/ */
   /*   /\*   exit(0); *\/ */
   /*   /\* } *\/ */
   /* } */
@@ -2294,11 +2294,11 @@ HXTStatus hxtOr3DgetRankMat9x3(const double mat[9][3], int baseVect[3], int *ran
       }
     }
     else{
-      printf("pb in rank computation in rank<3\n");
+      HXT_INFO("pb in rank computation in rank<3\n");
       exit(0);
     }
   }
-  printf("pb in rank computation\n");
+  HXT_INFO("pb in rank computation\n");
   return HXT_STATUS_ERROR;
 }
 
@@ -2332,7 +2332,7 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
     }
   case 1:
     {
-      printf("rank1 pInv computation\n");
+      HXT_INFO("rank1 pInv computation\n");
       double *vectRef=NULL;
       double normRef=0.0;
       if(normU>1e-10){
@@ -2348,7 +2348,7 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
 	normRef=normW;
       }
       else{
-	printf("pb result rank\n");
+	HXT_INFO("pb result rank\n");
 	exit(0);
       }
       double B[9][1]={{0.0}};
@@ -2387,7 +2387,7 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
     }
   case 2:
     {
-      /* printf("rank2 pInv computation\n"); */
+      /* HXT_INFO("rank2 pInv computation\n"); */
       double vectRef1[9]={0.0};
       double vectRef2[9]={0.0};
       int nBaseGet=0;
@@ -2405,7 +2405,7 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
 	      nBaseGet++;
 	    }
 	    else{
-	      printf("pb in baseVect\n");
+	      HXT_INFO("pb in baseVect\n");
 	      exit(0);
 	    }
 	  }
@@ -2421,7 +2421,7 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
 	      nBaseGet++;
 	    }
 	    else{
-	      printf("pb in baseVect\n");
+	      HXT_INFO("pb in baseVect\n");
 	      exit(0);
 	    }
 	  }	    
@@ -2431,10 +2431,10 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
       hxtNorm2V(vectRef1, 9, &normRef1);
       double normRef2 = 0.0;
       hxtNorm2V(vectRef2, 9, &normRef2);
-      /* printf("----------------norm vects ref -----------------------\n"); */
-      /* printf("%g\n",normRef1); */
-      /* printf("%g\n",normRef2); */
-      /* printf("------------------------------------------------------\n"); */
+      /* HXT_INFO("----------------norm vects ref -----------------------\n"); */
+      /* HXT_INFO("%g\n",normRef1); */
+      /* HXT_INFO("%g\n",normRef2); */
+      /* HXT_INFO("------------------------------------------------------\n"); */
       double B[9][2]={{0.0}};
       double C[2][3]={{0.0}};
       for(int j=0;j<9;j++)
@@ -2497,7 +2497,7 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
     }
   case 3:
     {
-      /* printf("rank 3 pInv computation\n"); */
+      /* HXT_INFO("rank 3 pInv computation\n"); */
       double intMat[3][3]={{0.0}};
       for(int i=0;i<3;i++)
 	for(int j=0;j<3;j++)
@@ -2516,7 +2516,7 @@ HXTStatus hxtOr3DpseudoInv9x3(const double mat[9][3], double pseudoInv[3][9]){
 	  pseudoInv[i][j]=pInv[i][j];
       break;
     default:
-      printf("Pb rank dBdEuler\n");
+      HXT_INFO("Pb rank dBdEuler\n");
       exit(0);
       break;
     }
@@ -2536,10 +2536,10 @@ HXTStatus hxtOr3DcheckIfBasisDirect(const double basis[9]){
   double scalarP=0.0;
   hxtOr3DdotProd(n, w, 3, &scalarP);
   if(scalarP<0){
-    printf("Basis not direct, exiting.....\n");
-    printf("u : %g %g %g\n",u[0],u[1],u[2]);
-    printf("v : %g %g %g\n",v[0],v[1],v[2]);
-    printf("w : %g %g %g\n",w[0],w[1],w[2]);
+    HXT_INFO("Basis not direct, exiting.....\n");
+    HXT_INFO("u : %g %g %g\n",u[0],u[1],u[2]);
+    HXT_INFO("v : %g %g %g\n",v[0],v[1],v[2]);
+    HXT_INFO("w : %g %g %g\n",w[0],w[1],w[2]);
     exit(0);
   }
   return HXT_STATUS_OK;
@@ -2549,9 +2549,9 @@ HXTStatus hxtOr3DprintBase(const double basis[9]){
   const double *u=basis;
   const double *v=basis+3;
   const double *w=basis+6;
-  printf("u : %g %g %g\n",u[0],u[1],u[2]);
-  printf("v : %g %g %g\n",v[0],v[1],v[2]);
-  printf("w : %g %g %g\n",w[0],w[1],w[2]);  
+  HXT_INFO("u : %g %g %g\n",u[0],u[1],u[2]);
+  HXT_INFO("v : %g %g %g\n",v[0],v[1],v[2]);
+  HXT_INFO("w : %g %g %g\n",w[0],w[1],w[2]);  
   return HXT_STATUS_OK;
 }
 
@@ -2624,25 +2624,25 @@ HXTStatus hxtOr3DcheckIfPinvOk(const double A[9][3], const double pInvA[3][9]){
     int baseVect[3];
     int rank=0;
     hxtOr3DgetRankMat9x3(A,baseVect,&rank);
-    printf("pb with pseudo inverse\n");
-    printf("rank : %i\n",rank);
-    printf("A\n");
+    HXT_INFO("pb with pseudo inverse\n");
+    HXT_INFO("rank : %i\n",rank);
+    HXT_INFO("A\n");
     for(int i=0;i<9;i++)
-      printf("%g // %g // %g\n",A[i][0],A[i][1],A[i][2]);
-    printf("---------------\n");
-    printf("pInvA\n");
+      HXT_INFO("%g // %g // %g\n",A[i][0],A[i][1],A[i][2]);
+    HXT_INFO("---------------\n");
+    HXT_INFO("pInvA\n");
     for(int i=0;i<3;i++)
-      printf("%g // %g // %g // %g // %g // %g // %g // %g // %g\n",pInvA[i][0],pInvA[i][1],pInvA[i][2],pInvA[i][3],pInvA[i][4],pInvA[i][5],pInvA[i][6],pInvA[i][7],pInvA[i][8]);
+      HXT_INFO("%g // %g // %g // %g // %g // %g // %g // %g // %g\n",pInvA[i][0],pInvA[i][1],pInvA[i][2],pInvA[i][3],pInvA[i][4],pInvA[i][5],pInvA[i][6],pInvA[i][7],pInvA[i][8]);
     double id[3][3]={{0.0}};
     for(int i=0;i<3;i++)
       for(int j=0;j<3;j++)
 	for(int k=0;k<9;k++)
 	  id[i][j]+=A[k][i]*pInvA[j][k];
-    printf("id\n");
+    HXT_INFO("id\n");
     for(int i=0;i<3;i++)
-      printf("%g // %g // %g\n",id[i][0],id[i][1],id[i][2]);
-    printf("values check pInv\n");
-    printf("first  : %g // %g // %g // %g\n",sqrt(valP1),sqrt(valP2),sqrt(valP3),sqrt(valP4));
+      HXT_INFO("%g // %g // %g\n",id[i][0],id[i][1],id[i][2]);
+    HXT_INFO("values check pInv\n");
+    HXT_INFO("first  : %g // %g // %g // %g\n",sqrt(valP1),sqrt(valP2),sqrt(valP3),sqrt(valP4));
     exit(0);
   }
   //
