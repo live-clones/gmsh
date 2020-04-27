@@ -5333,7 +5333,9 @@ public:
           for (size_t i=0;i<cut_original.p_occur.size();i++)printf("%d ",cut_original.p_occur[i]);
           printf("\n");
         }
-        cuts[e] = cut_original;
+
+        if (!cut_original.indexOfCuts.empty())cuts[e] = cut_original;
+	else toRemove.insert(*it);
       }
     }
     fprintf(ff,"};\n");
