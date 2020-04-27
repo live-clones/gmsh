@@ -879,7 +879,7 @@ double GEdge::prescribedMeshSizeAtParam(double u)
   if (_lc.empty()) {
     return MAX_LC;
   }
-  const auto &it = std::lower_bound(_u_lc.begin(),_u_lc.end(),u);
+  const std::vector<double>::iterator &it = std::lower_bound(_u_lc.begin(),_u_lc.end(),u);
   size_t i1 = std::min<size_t>(it-_u_lc.begin(),_u_lc.size()-1);
   size_t i0 = std::max<size_t>(1,i1)-1;
   double u0 = _u_lc[i0], u1 = _u_lc[i1];
