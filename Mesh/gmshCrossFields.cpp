@@ -970,19 +970,29 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
       return;
     }
 
-    MTriangle *t0 = g.crosses[0]->_t[0];
-    MTriangle *t1 = g.crosses[0]->_t[1];
-    SVector3 dir0 = d0[t0];
-    SVector3 dir1 = d0[t1];
 
-    if(std::find(g.side.begin(), g.side.end(), t1) != g.side.end()) {
-      dir0 = d0[t1];
-      dir1 = d0[t0];
+
+    double S1 = 0 , S0 = 0;
+    {
+      size_t N = g.crosses.size();
+      for(size_t j = 0; j < N ; j++) {
+	MTriangle *t0 = g.crosses[j]->_t[0];
+	MTriangle *t1 = g.crosses[j]->_t[1];
+	SVector3 dir0 = d0[t0];
+	SVector3 dir1 = d0[t1];
+	if(std::find(g.side.begin(), g.side.end(), t1) != g.side.end()) {
+	  dir0 = d0[t1];
+	  dir1 = d0[t0];
+	}
+	S0 += fabs(dot(g.crosses[j]->_tgt, dir0));
+	S1 += fabs(dot(g.crosses[j]->_tgt, dir1));
+      }
+      S0 /= N;
+      S1 /= N;
     }
 
-    //    printf("GROUP %d %12.5E %12.5E (%lu,%lu)\n",g.groupId, fabs(dot(g.crosses[0]->_tgt, dir0)),
-    //           fabs(dot(g.crosses[0]->_tgt, dir1)), g.left[0]->getNum(), g.right[0]->getNum());
-
+    printf("GROUP %d %12.5E %12.5E (%lu,%lu)\n",g.groupId, S0, S1, g.left[0]->getNum(), g.right[0]->getNum());
+    
     Dof U1R(g.left[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
     Dof U2R(g.right[0]->getNum(), Dof::createTypeWithTwoInts(0, 1));
     Dof V1R(g.left[0]->getNum(), Dof::createTypeWithTwoInts(0, 2));
@@ -999,7 +1009,7 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
       Dof V1(g.left[K]->getNum(), Dof::createTypeWithTwoInts(0, 2));
       Dof V2(g.right[K]->getNum(), Dof::createTypeWithTwoInts(0, 2));
 
-      if(fabs(dot(g.crosses[0]->_tgt, dir0)) < .2) {
+      if(S0 < .2) {
         myAssembler.assembleSym(E1, U1, 1.0);
         //        myAssembler.assemble(U1, E1, 1.0);
         myAssembler.assembleSym(E1, U1R, -1.0);
@@ -1012,7 +1022,7 @@ static void LagrangeMultipliers3(dofManager<double> &myAssembler,
         //        myAssembler.assemble(V1R, E1, -1.0);
       }
 
-      if(fabs(dot(g.crosses[0]->_tgt, dir1)) < .2) {
+      if(S1 < .2) {
         //        printf("HAHAHA %d\n",g.groupId);
         myAssembler.assembleSym(E2, U2, 1.0);
         //        myAssembler.assemble(U2, E2, 1.0);
@@ -6675,20 +6685,20 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     GModel::current()->remove(de);
     //  delete de;
     GModel::current()->pruneMeshVertexAssociations();
-  }
 
-  int countError = 0;
-  for(GModel::fiter it = GModel::current()->firstFace();
-      it != GModel::current()->lastFace(); it++) {
-    if((*it)->edges().size() != 4) {
-      Msg::Warning("quad layout failed : face %lu has %lu boundaries",
-                   (*it)->tag(), (*it)->edges().size());
-      countError++;
+    int countError = 0;
+    for(GModel::fiter it = GModel::current()->firstFace();
+	it != GModel::current()->lastFace(); it++) {
+      if((*it)->edges().size() != 4) {
+	Msg::Warning("quad layout failed : face %lu has %lu boundaries",
+		     (*it)->tag(), (*it)->edges().size());
+	countError++;
+      }
     }
-  }
-  if(!countError) {
-    Msg::Info("Quad layout success : the model is partitioned in %d master quads",
-      GModel::current()->getNumFaces());
+    if(!countError) {
+      Msg::Info("Quad layout success : the model is partitioned in %d master quads",
+		GModel::current()->getNumFaces());
+    }
   }
 
   /* Remove temporary mesh file */
