@@ -138,4 +138,14 @@ namespace QMT {
   inline double dot      (const vec2& a, const vec2& b) { return a[0]*b[0]+a[1]*b[1]; }
   inline double length2  (const vec2& a) { return dot(a,a); }
   inline double length   (const vec2& a) { return sqrt(length2(a)); }
+
+  /* other */
+  inline id2 sorted(id v1, id v2) { if (v1 < v2) { return {v1,v2}; } else { return {v2,v1}; } }
+
+  struct id2Hash {
+    size_t operator()(id2 p) const noexcept {
+      return size_t(p[0]) << 32 | p[1];
+    }
+  };
+
 }

@@ -104,4 +104,14 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
 /* generate a view "crosses" with crosses scaled by H */
 int showScaledCrosses(GModel* gm, const QuadMeshingOptions& opt, QuadMeshingState& state);
 
+/* generate a model data view "scaled_directions" with one branch of cross field per triangle, 
+ * scaled by a sizemap computed from H and adjusted to match sizemap_nb_quads */
+int computePerTriangleScaledCrossField(
+    GModel* gm,
+    int& viewTag,
+    int cross_field_iter         = 6,
+    int cross_field_bc_expansion = 1,
+    size_t sizemap_nb_quads      = 10000,
+    bool delete_other_tmp_views = true);
+
 #endif

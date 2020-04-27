@@ -2664,6 +2664,7 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
     }
   }
   // to do !!!
+  return myAssembler;
 }
 
 static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
@@ -6979,3 +6980,80 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
   return -1;
 #endif
 }
+
+int computePerTriangleScaledCrossField(
+    GModel* gm,
+    int& viewTag,
+    int cross_field_iter,
+    int cross_field_bc_expansion,
+    size_t sizemap_nb_quads,
+    bool delete_other_tmp_views) {
+#if defined(HAVE_QUADMESHINGTOOLS)
+  PView* theta = PView::getViewByName("theta");
+  if (theta) {delete theta; theta = NULL;}
+
+  /* Cross field */
+  int cf_tag = -1;
+  bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,cross_field_iter,NULL,cross_field_bc_expansion);
+  if (!okcf) {
+    Msg::Error("Failed to compute cross field");
+    return -1;
+  }
+
+  /* Conformal scaling factor */
+  int h_tag = -1;
+  std::vector<GFace *> f;
+  getFacesOfTheModel(gm, f);
+  quadLayoutData qLayout(gm, f, gm->getName());
+  int status_h = compute_H_from_cross_field_view(gm, qLayout, f, cf_tag, h_tag);
+  if (status_h != 0) {
+    Msg::Error("Failed to compute H from cross field view");
+    return -1;
+  }
+
+  /* Size map */
+  QuadMeshingOptions opt;
+  opt.sizemap_nb_quads = sizemap_nb_quads;
+  QuadMeshingState state;
+  int status_sizemap = computeQuadSizeMap(gm, opt, state);
+  if (status_sizemap != 0) {
+    Msg::Error("Failed to compute size map from H");
+    return -1;
+  }
+  int sizemapTag = -1;
+  if (sizemapTag == -1) {
+    PView* view_s = PView::getViewByName("s");
+    if (view_s) {
+      sizemapTag = view_s->getTag();
+    }
+  }
+  if (sizemapTag == -1) {
+    Msg::Error("Quad size map (view 's') not found but required");
+    return -1;
+  }
+
+  /* ElementData view */
+  bool okpt = QMT::create_per_triangle_scaled_cross_field_view(gm->getName(), cf_tag, sizemapTag, "scaled_directions", viewTag);
+  if (!okpt) {
+    Msg::Error("Failed create scaled directions view from cross field and size map");
+    return -1;
+  }
+
+  if (delete_other_tmp_views) {
+    PView* view_t = PView::getViewByName("theta");
+    if (view_t) {delete view_t; view_t = NULL;}
+    PView* view_h = PView::getViewByName("H");
+    if (view_h) {delete view_h; view_h = NULL;}
+    PView* view_s = PView::getViewByName("s");
+    if (view_s) {delete view_s; view_s = NULL;}
+  }
+
+  return 0;
+
+#else
+  Msg::Error("requires the QuadMeshingTools module");
+  return -1;
+#endif
+}
+
+

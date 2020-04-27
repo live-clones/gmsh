@@ -32,6 +32,13 @@
 
 static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 {
+  // ONLY FOR TESTING NEW FUNCTION FOR JF
+  // int vt = -1;
+  // computePerTriangleScaledCrossField(GModel::current(),vt);
+  // if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  // drawContext::global()->draw();
+  // return;
+
   QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
   opt.cross_field_iter = FlGui::instance()->quadmeshingtools->flv_cross_field_iter->value();
   opt.cross_field_bc_expansion = FlGui::instance()->quadmeshingtools->flv_bc_expansion->value();
