@@ -140,6 +140,15 @@ static void qmt_quad_simplify(Fl_Widget *w, void *data)
 
 static void qmt_quad_smooth(Fl_Widget *w, void *data)
 {
+  // JUST TO TEST A FUNCTION, DO NOT USE
+  // int st = smoothQuadMesh(GModel::current(),100,NULL);
+  // if (st != 0) {
+  //   Msg::Error("failed to smooth quad mesh");
+  // }
+  // if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  // drawContext::global()->draw();
+  // return ;
+
   quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
   QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
   QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;

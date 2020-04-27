@@ -374,6 +374,45 @@ namespace QMT {
       }
     }
 
+    { /* nodes */
+      vectorpair nodes;
+      gmsh::model::getEntities(nodes, 0);
+      F(k,nodes.size()) {
+        std::vector<int> elementTypes;
+        std::vector<std::vector<size_t>> elementTags;
+        std::vector<std::vector<size_t>> nodeTags;
+        gmsh::model::mesh::getElements(elementTypes,elementTags,nodeTags,nodes[k].first,nodes[k].second);
+        F(i,elementTypes.size()) {
+          if (elementTypes[i] == 0) { /* nodes */
+            F(j,elementTags[i].size()) {
+              id v = nodeTags[i][j];
+              M.entity[v] = nodes[k];
+            }
+          }
+        }
+      }
+    }
+
+    { /* lines */
+      vectorpair curves;
+      gmsh::model::getEntities(curves, 1);
+      F(k,curves.size()) {
+        std::vector<int> elementTypes;
+        std::vector<std::vector<size_t>> elementTags;
+        std::vector<std::vector<size_t>> nodeTags;
+        gmsh::model::mesh::getElements(elementTypes,elementTags,nodeTags,curves[k].first,curves[k].second);
+        F(i,elementTypes.size()) {
+          if (elementTypes[i] == 1) { /* lines */
+            F(j,elementTags[i].size()) {
+              M.lines.push_back({id(nodeTags[i][2*j+0]),id(nodeTags[i][2*j+1])});
+              M.line_colors.push_back(id(curves[k].second));
+              M.line_elt_tags.push_back(id(elementTags[i][j]));
+            }
+          }
+        }
+      }
+    }
+
     { /* quads */
       vectorpair surfs;
       gmsh::model::getEntities(surfs, 2);
@@ -388,7 +427,7 @@ namespace QMT {
               M.quads.push_back(
                   {id(nodeTags[i][4*j+0]),id(nodeTags[i][4*j+1]),
                   id(nodeTags[i][4*j+2]), id(nodeTags[i][4*j+3])});
-              M.quadEntity.push_back(-1);
+              M.quadEntity.push_back(surfs[k].second);
               M.color.push_back(surfs[k].second);
             }
           }
@@ -453,5 +492,31 @@ namespace QMT {
     return true;
   }
 
+  bool convert_quad_mesh_to_tri_mesh(const QMesh& Q, TMesh& T) {
+    T.points = Q.points;
+    T.size = Q.size;
+    T.pt_color.resize(Q.points.size(),0);
+    FC(i,Q.entity.size(),Q.entity[i].first == 0) T.pt_color[i] = Q.entity[i].second;
+
+    T.lines = Q.lines;
+    T.line_colors = Q.line_colors;
+    T.line_elt_tags = Q.line_elt_tags;
+
+    T.triangles.resize(2*Q.quads.size());
+    T.tri_colors.resize(2*Q.quads.size(),0);
+    T.tri_elt_tags.resize(2*Q.quads.size(),NO_ID);
+    T.triangle_neighbors.clear();
+    T.nm_triangle_neighbors.clear();
+    F(i,Q.quads.size()) {
+      T.triangles[2*i+0] = {Q.quads[i][0],Q.quads[i][1],Q.quads[i][2]};
+      T.triangles[2*i+1] = {Q.quads[i][0],Q.quads[i][2],Q.quads[i][3]};
+      T.tri_colors[2*i+0] = Q.quadEntity[i];
+      T.tri_colors[2*i+1] = Q.quadEntity[i];
+      T.tri_elt_tags[2*i+0] = NO_ID;
+      T.tri_elt_tags[2*i+1] = NO_ID;
+    }
+
+    return true;
+  }
 
 }
