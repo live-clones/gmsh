@@ -3608,6 +3608,19 @@ GMSH_API void gmsh::model::mesh::setSize(const vectorpair &dimTags,
   }
 }
 
+GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
+    const int dim, const int tag,
+    const std::vector<double> &points,
+    const std::vector<double> &sizes)
+{
+  if(!_isInitialized()) { throw - 1; }
+  if(dim == 1) {
+    GEdge *ge = GModel::current()->getEdgeByTag(tag);
+    if(ge) ge->setMeshSizeParametric(points,sizes);
+  }
+}
+
+
 GMSH_API void
 gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
                                        const std::string &meshType,
@@ -4627,6 +4640,7 @@ GMSH_API void gmsh::model::geo::mesh::setSize(const vectorpair &dimTags,
     GModel::current()->getGEOInternals()->setMeshSize(dim, tag, size);
   }
 }
+
 
 // gmsh::model::occ
 

@@ -2604,6 +2604,28 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def setSizeAtParametricPoints(dim, tag, points, sizes):
+            """
+            gmsh.model.mesh.setSizeAtParametricPoints(dim, tag, points, sizes)
+
+            Set mesh size at given parametric point on the model entities `dimTags'.
+            Currently only entities of dimension 1 (lines) are handled.
+            """
+            api_points_, api_points_n_ = _ivectordouble(points)
+            api_sizes_, api_sizes_n_ = _ivectordouble(sizes)
+            ierr = c_int()
+            lib.gmshModelMeshSetSizeAtParametricPoints(
+                c_int(dim),
+                c_int(tag),
+                api_points_, api_points_n_,
+                api_sizes_, api_sizes_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetSizeAtParametricPoints returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
             """
             gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.)

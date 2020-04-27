@@ -1398,6 +1398,19 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n, const double
   }
 }
 
+GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim, const int tag, double * points, size_t points_n, double * sizes, size_t sizes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_points_(points, points + points_n);
+    std::vector<double> api_sizes_(sizes, sizes + sizes_n);
+    gmsh::model::mesh::setSizeAtParametricPoints(dim, tag, api_points_, api_sizes_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetTransfiniteCurve(const int tag, const int numNodes, const char * meshType, const double coef, int * ierr)
 {
   if(ierr) *ierr = 0;

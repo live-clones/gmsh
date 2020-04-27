@@ -5033,7 +5033,6 @@ double opt_mesh_lc_from_points(OPT_ARGS_NUM)
   if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->mesh.butt[5]->value(
       CTX::instance()->mesh.lcFromPoints ? 1 : 0);
-    FlGui::instance()->options->activate("mesh_lc_from_points");
   }
 #endif
   return CTX::instance()->mesh.lcFromPoints;

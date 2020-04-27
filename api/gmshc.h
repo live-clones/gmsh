@@ -956,6 +956,14 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,
                                    const double size,
                                    int * ierr);
 
+/* Set mesh size at given parametric point on the model entities `dimTags'.
+ * Currently only entities of dimension 1 (lines) are handled. */
+GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim,
+                                                     const int tag,
+                                                     double * points, size_t points_n,
+                                                     double * sizes, size_t sizes_n,
+                                                     int * ierr);
+
 /* Set a transfinite meshing constraint on the curve `tag', with `numNodes'
  * nodes distributed according to `meshType' and `coef'. Currently supported
  * types are "Progression" (geometrical progression with power `coef') and
