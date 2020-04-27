@@ -5,6 +5,7 @@ set(QMT_SRC
     qmt_cross_field.cpp
     qmt_projection.cpp
     qmt_quantization.cpp
+    qmt_gmsh_io.cpp
     geolog.cpp
     linearSystemMUMPS2.cpp
  )
