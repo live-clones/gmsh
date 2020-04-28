@@ -902,7 +902,8 @@ void GEdge::setMeshSizeParametric(const std::vector<double> u, const std::vector
     Msg::Error("setMeshSizeParametric : number of coordinates and number of mesh size do not match.");
   }
   std::vector<size_t> index(u.size());
-  std::iota(index.begin(),index.end(),0);
+  for (size_t i = 0; i < u.size(); ++i)
+    index[i] = i;
   std::sort(index.begin(),index.end(),vindexsort(u));
   _u_lc.resize(u.size());
   _lc.resize(lc.size());
