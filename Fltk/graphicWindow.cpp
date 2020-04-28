@@ -2146,7 +2146,7 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
   std::vector<int> tags;
-  computeCrossField (GModel::current(), tags);
+  computeStructuredQuadMesh (GModel::current(), tags);
   drawContext::global()->draw();
 }
 
@@ -4335,7 +4335,7 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_recombine_cb} ,
   {"0Modules/Mesh/Reclassify 2D",
    (Fl_Callback *)mesh_classify_cb} ,
-  {"0Modules/Mesh/Experimental/Compute quad layout",
+  {"0Modules/Mesh/Experimental/Compute structured quad mesh",
    (Fl_Callback *)mesh_cross_compute_cb} ,
 #if defined(HAVE_METIS)
   {"0Modules/Mesh/Experimental/Convert old partitioning",

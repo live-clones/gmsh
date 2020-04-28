@@ -1028,9 +1028,9 @@ GMSH_API void gmsh::model::mesh::computeCrossField(std::vector<int> &tags)
 {
   if(!_isInitialized()) { throw - 1; }
 #if defined(HAVE_MESH)
-  if(computeCrossField(GModel::current(), tags)) throw 1;
+  if(computeStructuredQuadMesh(GModel::current(), tags)) throw 1;
 #else
-  Msg::Error("computeCrossField requires the mesh module");
+  Msg::Error("computeStructuredQuadMesh requires the mesh module");
   throw - 1;
 #endif
 }

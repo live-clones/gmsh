@@ -348,17 +348,25 @@ int GmshBatch()
         (CTX::instance()->batchSomeValue * M_PI / 180., true, true, M_PI);
       GModel::current()->createGeometryOfDiscreteEntities();
     }
+    else if(CTX::instance()->batch == 67){
+      // compute a scaled cross field "per triangle"
+      int viewTag = -1;
+      computePerTriangleScaledCrossField (GModel::current(), viewTag);
+      PView* crossField = PView::getViewByTag(viewTag);
+      std::string posout = GModel::current()->getName() + "_scaled_crossfield.pos";
+      crossField->getData()->writeMSH(posout, 4.0);
+    }
     else if(CTX::instance()->batch == 68){
       // global surface remeshing
       meshGFaceHxt(GModel::current());
     }
     else if(CTX::instance()->batch == 69){
       std::vector<int> tags;
-      int result = computeCrossField (GModel::current(), tags);
-      GoodbyeMessage();
+      int result = computeStructuredQuadMesh (GModel::current(), tags);
+      //      GoodbyeMessage();
       CTX::instance()->batch =0;
       // still a bug in allocation somewhere
-      exit(result);
+      //      exit(result);
     }
 #endif
   }

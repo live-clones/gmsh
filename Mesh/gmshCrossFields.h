@@ -12,7 +12,7 @@
 #include <vector>
 class GModel;
 
-int computeCrossField    (GModel *, std::vector<int> &tags);
+int computeStructuredQuadMesh(GModel *, std::vector<int> &tags);
 int computeCrossFieldAndH(GModel *gm,
 			  std::map<int, std::vector<double> > &dataH,
 			  std::map<int, std::vector<double> > &dataDir,
