@@ -1089,11 +1089,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Element shrinking factor (between 0 and 1)" },
 
+  { F|O, "FirstElementTag" , opt_mesh_first_element_tag , 1. ,
+    "First tag (>= 1) of mesh elements" },
+  { F|O, "FirstNodeTag" , opt_mesh_first_node_tag , 1. ,
+    "First tag (>= 1) of mesh nodes" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
     "Allow transfinite constraints to be modified for Blossom or by global mesh size factor" },
-  { F|O, "NewtonConvergenceTestXYZ" , opt_mesh_newton_convergence_test_xyz , 0. ,
-    "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
-    "coordinates (experimental)" },
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO ,
     "Mesh output format (1: msh, 2: unv, 10: auto, 16: vtk, 19: vrml, 21: mail, "
     "26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, 33: med, 34: diff, "
@@ -1241,6 +1242,9 @@ StringXNumber MeshOptions_Number[] = {
     "Number of tetrahedra in the current mesh (read-only)" },
   { F, "NbTriangles" , opt_mesh_nb_triangles , 0. ,
     "Number of triangles in the current mesh (read-only)" },
+  { F|O, "NewtonConvergenceTestXYZ" , opt_mesh_newton_convergence_test_xyz , 0. ,
+    "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
+    "coordinates (experimental)" },
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
     "Display size of normal vectors (in pixels)" },
   { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,

@@ -43,7 +43,7 @@ struct contextMeshOptions {
   double compoundLcFactor;
   unsigned int randomSeed;
   // mesh IO
-  int fileFormat;
+  int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveTri, saveGroupsOfNodes, saveGroupsOfElements;

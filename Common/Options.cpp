@@ -5199,6 +5199,22 @@ double opt_mesh_label_type(OPT_ARGS_NUM)
   return CTX::instance()->mesh.labelType;
 }
 
+double opt_mesh_first_element_tag(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.firstElementTag = (val > 1) ? (int)val : 1;
+  }
+  return CTX::instance()->mesh.firstElementTag;
+}
+
+double opt_mesh_first_node_tag(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.firstNodeTag = (val > 1) ? (int)val : 1;
+  }
+  return CTX::instance()->mesh.firstNodeTag;
+}
+
 double opt_mesh_points(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { CTX::instance()->mesh.points = (int)val; }

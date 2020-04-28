@@ -156,13 +156,18 @@ Element shrinking factor (between 0 and 1)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.FlexibleTransfinite
-Allow transfinite constraints to be modified for Blossom or by global mesh size factor@*
-Default value: @code{0}@*
+@item Mesh.FirstElementTag
+First tag (>= 1) of mesh elements@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.NewtonConvergenceTestXYZ
-Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)@*
+@item Mesh.FirstNodeTag
+First tag (>= 1) of mesh nodes@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.FlexibleTransfinite
+Allow transfinite constraints to be modified for Blossom or by global mesh size factor@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -485,6 +490,11 @@ Saved in: @code{-}
 Number of triangles in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
+
+@item Mesh.NewtonConvergenceTestXYZ
+Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Normals
 Display size of normal vectors (in pixels)@*

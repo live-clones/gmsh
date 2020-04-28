@@ -451,6 +451,8 @@ double opt_mesh_quality_type(OPT_ARGS_NUM);
 double opt_mesh_radius_inf(OPT_ARGS_NUM);
 double opt_mesh_radius_sup(OPT_ARGS_NUM);
 double opt_mesh_label_type(OPT_ARGS_NUM);
+double opt_mesh_first_element_tag(OPT_ARGS_NUM);
+double opt_mesh_first_node_tag(OPT_ARGS_NUM);
 double opt_mesh_points(OPT_ARGS_NUM);
 double opt_mesh_lines(OPT_ARGS_NUM);
 double opt_mesh_triangles(OPT_ARGS_NUM);
