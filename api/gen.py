@@ -534,6 +534,12 @@ geo.add('removeAllDuplicates', doc, None)
 doc = '''Split the model curve of tag `tag' on the control points `pointTags'. Return the tags `curveTags' of the newly created curves.'''
 geo.add('splitCurve', doc, None, iint('tag'), ivectorint('pointTags'), ovectorint('curveTags'))
 
+doc = '''Get the maximum tag of entities of dimension `dim' in the built-in CAD representation.'''
+geo.add('getMaxTag', doc, oint, iint('dim'))
+
+doc = '''Set the maximum tag `maxTag' for entities of dimension `dim' in the built-in CAD representation.'''
+geo.add('setMaxTag', doc, None, iint('dim'), iint('maxTag'))
+
 doc = '''Synchronize the built-in CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 geo.add('synchronize', doc, None)
 
@@ -726,6 +732,12 @@ occ.add('getCenterOfMass', doc, None, iint('dim'), iint('tag'), odouble('x'), od
 
 doc = '''Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMatrixOfInertia', doc, None, iint('dim'), iint('tag'), ovectordouble('mat'))
+
+doc = '''Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD representation.'''
+occ.add('getMaxTag', doc, oint, iint('dim'))
+
+doc = '''Set the maximum tag `maxTag' for entities of dimension `dim' in the OpenCASCADE CAD representation.'''
+occ.add('setMaxTag', doc, None, iint('dim'), iint('maxTag'))
 
 doc = '''Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 occ.add('synchronize', doc, None)

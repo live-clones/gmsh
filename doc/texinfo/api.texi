@@ -2593,6 +2593,32 @@ Return the tags @code{curveTags} of the newly created curves.
 -
 @end table
 
+@item gmsh/model/geo/getMaxTag
+Get the maximum tag of entities of dimension @code{dim} in the built-in CAD
+representation.
+
+@table @asis
+@item Input:
+@code{dim}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item gmsh/model/geo/setMaxTag
+Set the maximum tag @code{maxTag} for entities of dimension @code{dim} in the
+built-in CAD representation.
+
+@table @asis
+@item Input:
+@code{dim}, @code{maxTag}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item gmsh/model/geo/synchronize
 Synchronize the built-in CAD representation with the current Gmsh model. This
 can be called at any time, but since it involves a non trivial amount of
@@ -3619,6 +3645,32 @@ Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
 @code{dim}, @code{tag}
 @item Output:
 @code{mat}
+@item Return:
+-
+@end table
+
+@item gmsh/model/occ/getMaxTag
+Get the maximum tag of entities of dimension @code{dim} in the OpenCASCADE CAD
+representation.
+
+@table @asis
+@item Input:
+@code{dim}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
+@item gmsh/model/occ/setMaxTag
+Set the maximum tag @code{maxTag} for entities of dimension @code{dim} in the
+OpenCASCADE CAD representation.
+
+@table @asis
+@item Input:
+@code{dim}, @code{maxTag}
+@item Output:
+-
 @item Return:
 -
 @end table

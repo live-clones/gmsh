@@ -2171,6 +2171,30 @@ GMSH_API void gmshModelGeoSplitCurve(const int tag, int * pointTags, size_t poin
   }
 }
 
+GMSH_API int gmshModelGeoGetMaxTag(const int dim, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::geo::getMaxTag(dim);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelGeoSetMaxTag(const int dim, const int maxTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::geo::setMaxTag(dim, maxTag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelGeoSynchronize(int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -3070,6 +3094,30 @@ GMSH_API void gmshModelOccGetMatrixOfInertia(const int dim, const int tag, doubl
     std::vector<double> api_mat_;
     gmsh::model::occ::getMatrixOfInertia(dim, tag, api_mat_);
     vector2ptr(api_mat_, mat, mat_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API int gmshModelOccGetMaxTag(const int dim, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::getMaxTag(dim);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelOccSetMaxTag(const int dim, const int maxTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::setMaxTag(dim, maxTag);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

@@ -3104,6 +3104,38 @@ function splitCurve(tag, pointTags)
 end
 
 """
+    gmsh.model.geo.getMaxTag(dim)
+
+Get the maximum tag of entities of dimension `dim` in the built-in CAD
+representation.
+
+Return an integer value.
+"""
+function getMaxTag(dim)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelGeoGetMaxTag, gmsh.lib), Cint,
+          (Cint, Ptr{Cint}),
+          dim, ierr)
+    ierr[] != 0 && error("gmshModelGeoGetMaxTag returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
+    gmsh.model.geo.setMaxTag(dim, maxTag)
+
+Set the maximum tag `maxTag` for entities of dimension `dim` in the built-in CAD
+representation.
+"""
+function setMaxTag(dim, maxTag)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoSetMaxTag, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}),
+          dim, maxTag, ierr)
+    ierr[] != 0 && error("gmshModelGeoSetMaxTag returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.geo.synchronize()
 
 Synchronize the built-in CAD representation with the current Gmsh model. This
@@ -4396,6 +4428,38 @@ function getMatrixOfInertia(dim, tag)
     ierr[] != 0 && error("gmshModelOccGetMatrixOfInertia returned non-zero error code: $(ierr[])")
     mat = unsafe_wrap(Array, api_mat_[], api_mat_n_[], own=true)
     return mat
+end
+
+"""
+    gmsh.model.occ.getMaxTag(dim)
+
+Get the maximum tag of entities of dimension `dim` in the OpenCASCADE CAD
+representation.
+
+Return an integer value.
+"""
+function getMaxTag(dim)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelOccGetMaxTag, gmsh.lib), Cint,
+          (Cint, Ptr{Cint}),
+          dim, ierr)
+    ierr[] != 0 && error("gmshModelOccGetMaxTag returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
+    gmsh.model.occ.setMaxTag(dim, maxTag)
+
+Set the maximum tag `maxTag` for entities of dimension `dim` in the OpenCASCADE
+CAD representation.
+"""
+function setMaxTag(dim, maxTag)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccSetMaxTag, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}),
+          dim, maxTag, ierr)
+    ierr[] != 0 && error("gmshModelOccSetMaxTag returned non-zero error code: $(ierr[])")
+    return nothing
 end
 
 """

@@ -4533,6 +4533,18 @@ GMSH_API void gmsh::model::geo::splitCurve(const int tag,
   }
 }
 
+GMSH_API int gmsh::model::geo::getMaxTag(const int dim)
+{
+  if(!_isInitialized()) { throw - 1; }
+  return GModel::current()->getGEOInternals()->getMaxTag(dim);
+}
+
+GMSH_API void gmsh::model::geo::setMaxTag(const int dim, const int maxTag)
+{
+  if(!_isInitialized()) { throw - 1; }
+  GModel::current()->getGEOInternals()->setMaxTag(dim, maxTag);
+}
+
 GMSH_API void gmsh::model::geo::synchronize()
 {
   if(!_isInitialized()) { throw - 1; }
@@ -5334,6 +5346,18 @@ GMSH_API void gmsh::model::occ::getMatrixOfInertia(const int dim, const int tag,
   if(!GModel::current()->getOCCInternals()->getMatrixOfInertia(dim, tag, m)) {
     throw 1;
   }
+}
+
+GMSH_API int gmsh::model::occ::getMaxTag(const int dim)
+{
+  if(!_isInitialized()) { throw - 1; }
+  return GModel::current()->getOCCInternals()->getMaxTag(dim);
+}
+
+GMSH_API void gmsh::model::occ::setMaxTag(const int dim, const int maxTag)
+{
+  if(!_isInitialized()) { throw - 1; }
+  GModel::current()->getOCCInternals()->setMaxTag(dim, maxTag);
 }
 
 GMSH_API void gmsh::model::occ::synchronize()

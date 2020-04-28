@@ -1469,6 +1469,17 @@ GMSH_API void gmshModelGeoSplitCurve(const int tag,
                                      int ** curveTags, size_t * curveTags_n,
                                      int * ierr);
 
+/* Get the maximum tag of entities of dimension `dim' in the built-in CAD
+ * representation. */
+GMSH_API int gmshModelGeoGetMaxTag(const int dim,
+                                   int * ierr);
+
+/* Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
+ * in CAD representation. */
+GMSH_API void gmshModelGeoSetMaxTag(const int dim,
+                                    const int maxTag,
+                                    int * ierr);
+
 /* Synchronize the built-in CAD representation with the current Gmsh model.
  * This can be called at any time, but since it involves a non trivial amount
  * of processing, the number of synchronization points should normally be
@@ -2143,6 +2154,17 @@ GMSH_API void gmshModelOccGetMatrixOfInertia(const int dim,
                                              const int tag,
                                              double ** mat, size_t * mat_n,
                                              int * ierr);
+
+/* Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD
+ * representation. */
+GMSH_API int gmshModelOccGetMaxTag(const int dim,
+                                   int * ierr);
+
+/* Set the maximum tag `maxTag' for entities of dimension `dim' in the
+ * OpenCASCADE CAD representation. */
+GMSH_API void gmshModelOccSetMaxTag(const int dim,
+                                    const int maxTag,
+                                    int * ierr);
 
 /* Synchronize the OpenCASCADE CAD representation with the current Gmsh model.
  * This can be called at any time, but since it involves a non trivial amount

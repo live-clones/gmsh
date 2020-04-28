@@ -2523,6 +2523,26 @@ namespace gmsh { // Top-level functions
         curveTags.assign(api_curveTags_, api_curveTags_ + api_curveTags_n_); gmshFree(api_curveTags_);
       }
 
+      // Get the maximum tag of entities of dimension `dim' in the built-in CAD
+      // representation.
+      inline int getMaxTag(const int dim)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelGeoGetMaxTag(dim, &ierr);
+        if(ierr) throw ierr;
+        return result_api_;
+      }
+
+      // Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
+      // in CAD representation.
+      inline void setMaxTag(const int dim,
+                            const int maxTag)
+      {
+        int ierr = 0;
+        gmshModelGeoSetMaxTag(dim, maxTag, &ierr);
+        if(ierr) throw ierr;
+      }
+
       // Synchronize the built-in CAD representation with the current Gmsh model.
       // This can be called at any time, but since it involves a non trivial amount
       // of processing, the number of synchronization points should normally be
@@ -3621,6 +3641,26 @@ namespace gmsh { // Top-level functions
         gmshModelOccGetMatrixOfInertia(dim, tag, &api_mat_, &api_mat_n_, &ierr);
         if(ierr) throw ierr;
         mat.assign(api_mat_, api_mat_ + api_mat_n_); gmshFree(api_mat_);
+      }
+
+      // Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD
+      // representation.
+      inline int getMaxTag(const int dim)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelOccGetMaxTag(dim, &ierr);
+        if(ierr) throw ierr;
+        return result_api_;
+      }
+
+      // Set the maximum tag `maxTag' for entities of dimension `dim' in the
+      // OpenCASCADE CAD representation.
+      inline void setMaxTag(const int dim,
+                            const int maxTag)
+      {
+        int ierr = 0;
+        gmshModelOccSetMaxTag(dim, maxTag, &ierr);
+        if(ierr) throw ierr;
       }
 
       // Synchronize the OpenCASCADE CAD representation with the current Gmsh

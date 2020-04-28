@@ -214,7 +214,7 @@ struct doubleXstring{
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tElseIf tElse tEndIf tExit tAbort
 %token tField tReturn tCall tSlide tMacro tShow tHide tGetValue tGetStringValue tGetEnv
-%token tGetString tGetNumber tUnique
+%token tGetString tGetNumber tUnique tSetMaxTag
 %token tHomology tCohomology tBetti tExists tFileExists tGetForced tGetForcedStr
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
@@ -4579,52 +4579,28 @@ Constraints :
         List_Delete($2);
       }
     }
-  | tSetTag tPoint '(' FExpr ',' FExpr ')' tEND
+  | tSetTag GeoEntity '(' FExpr ',' FExpr ')' tEND
     {
+      int dim = (int)$2;
       int tag = (int)$4;
-      GVertex *gf = GModel::current()->getVertexByTag(tag);
-      if(gf){
+      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+      if(ge){
 	int new_tag = (int)$6;
-	gf->setTag(new_tag);
+	ge->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown model point %d",tag);
+	yymsg(0, "Unknown model entity of dimension %d and tag %d", dim, tag);
       }
     }
-  | tSetTag tCurve '(' FExpr ',' FExpr ')' tEND
+  | tSetMaxTag GeoEntity '(' FExpr ')' tEND
     {
+      int dim = (int)$2;
       int tag = (int)$4;
-      GEdge *gf = GModel::current()->getEdgeByTag(tag);
-      if(gf){
-	int new_tag = (int)$6;
-	gf->setTag(new_tag);
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->setMaxTag(dim, tag);
       }
-      else{
-	yymsg(0, "Unknown model curve %d",tag);
-      }
-    }
-  | tSetTag tSurface '(' FExpr ',' FExpr ')' tEND
-    {
-      int tag = (int)$4;
-      GFace *gf = GModel::current()->getFaceByTag(tag);
-      if(gf){
-	int new_tag = (int)$6;
-	gf->setTag(new_tag);
-      }
-      else{
-	yymsg(0, "Unknown model surface %d",tag);
-      }
-    }
-  | tSetTag tVolume '(' FExpr ',' FExpr ')' tEND
-    {
-      int tag = (int)$4;
-      GRegion *gf = GModel::current()->getRegionByTag(tag);
-      if(gf){
-	int new_tag = (int)$6;
-	gf->setTag(new_tag);
-      }
-      else{
-	yymsg(0, "Unknown model volume %d",tag);
+      else {
+        GModel::current()->getGEOInternals()->setMaxTag(dim, tag);
       }
     }
   | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
@@ -5271,7 +5247,9 @@ FExpr_Single :
       $$ = val[0];
     }
   | DefineStruct
-    { $$ = $1; }
+    {
+      $$ = $1;
+    }
   | tGetNumber LP StringExprVar RP
     {
       $$ = Msg::GetOnelabNumber($3);

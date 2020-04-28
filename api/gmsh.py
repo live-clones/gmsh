@@ -3948,6 +3948,44 @@ class model:
             return _ovectorint(api_curveTags_, api_curveTags_n_.value)
 
         @staticmethod
+        def getMaxTag(dim):
+            """
+            gmsh.model.geo.getMaxTag(dim)
+
+            Get the maximum tag of entities of dimension `dim' in the built-in CAD
+            representation.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelGeoGetMaxTag(
+                c_int(dim),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoGetMaxTag returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def setMaxTag(dim, maxTag):
+            """
+            gmsh.model.geo.setMaxTag(dim, maxTag)
+
+            Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
+            in CAD representation.
+            """
+            ierr = c_int()
+            lib.gmshModelGeoSetMaxTag(
+                c_int(dim),
+                c_int(maxTag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoSetMaxTag returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def synchronize():
             """
             gmsh.model.geo.synchronize()
@@ -5580,6 +5618,44 @@ class model:
                     "gmshModelOccGetMatrixOfInertia returned non-zero error code: ",
                     ierr.value)
             return _ovectordouble(api_mat_, api_mat_n_.value)
+
+        @staticmethod
+        def getMaxTag(dim):
+            """
+            gmsh.model.occ.getMaxTag(dim)
+
+            Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD
+            representation.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelOccGetMaxTag(
+                c_int(dim),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccGetMaxTag returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def setMaxTag(dim, maxTag):
+            """
+            gmsh.model.occ.setMaxTag(dim, maxTag)
+
+            Set the maximum tag `maxTag' for entities of dimension `dim' in the
+            OpenCASCADE CAD representation.
+            """
+            ierr = c_int()
+            lib.gmshModelOccSetMaxTag(
+                c_int(dim),
+                c_int(maxTag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccSetMaxTag returned non-zero error code: ",
+                    ierr.value)
 
         @staticmethod
         def synchronize():

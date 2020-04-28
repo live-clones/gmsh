@@ -2520,6 +2520,9 @@ all its sub-entities of lower dimension. @value{SYNC}
 Deletes all the embedded entities in the elementary entities whose tags
 are given in @var{expression-list-or-all}. @value{SYNC}
 
+@item SetMaxTag Point | Curve | Surface | Volume ( @var{expression} )
+Forces the maximum tag for a category of entities to a given value, so that subsequently created entities in the same category will not have tags smaller than the given value.
+
 @item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Hide the entities listed in @var{expression-list-or-all}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{1}.

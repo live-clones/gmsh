@@ -1674,6 +1674,19 @@ namespace gmsh { // Top-level functions
                                const std::vector<int> & pointTags,
                                std::vector<int> & curveTags);
 
+      // gmsh::model::geo::getMaxTag
+      //
+      // Get the maximum tag of entities of dimension `dim' in the built-in CAD
+      // representation.
+      GMSH_API int getMaxTag(const int dim);
+
+      // gmsh::model::geo::setMaxTag
+      //
+      // Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
+      // in CAD representation.
+      GMSH_API void setMaxTag(const int dim,
+                              const int maxTag);
+
       // gmsh::model::geo::synchronize
       //
       // Synchronize the built-in CAD representation with the current Gmsh model.
@@ -2422,6 +2435,19 @@ namespace gmsh { // Top-level functions
       GMSH_API void getMatrixOfInertia(const int dim,
                                        const int tag,
                                        std::vector<double> & mat);
+
+      // gmsh::model::occ::getMaxTag
+      //
+      // Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD
+      // representation.
+      GMSH_API int getMaxTag(const int dim);
+
+      // gmsh::model::occ::setMaxTag
+      //
+      // Set the maximum tag `maxTag' for entities of dimension `dim' in the
+      // OpenCASCADE CAD representation.
+      GMSH_API void setMaxTag(const int dim,
+                              const int maxTag);
 
       // gmsh::model::occ::synchronize
       //
