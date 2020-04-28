@@ -732,6 +732,7 @@ namespace QMT {
         log.add({p1,p2,p3},double(i),viewPrefix+"_s"+std::to_string(i));
       }
     }
+
     log.toGmsh();
   }
 
@@ -757,6 +758,21 @@ namespace QMT {
       }
     }
     info("vertex to entity assignement: {} vertices -> {} to nodes, {} to curves and {} to surfaces",nv,nb[0],nb[1],nb[2]);
+    F(f,M.quads.size()) {
+      vec3 mid = 0.25 * (M.points[M.quads[f][0]] + M.points[M.quads[f][1]]
+          + M.points[M.quads[f][2]] + M.points[M.quads[f][3]]);
+      int dim = -1;
+      int tag = -1;
+      double dist = DBL_MAX;
+      bool okc = projector.closestEntity(mid,dist,dim,tag);
+      if (okc) {
+        M.quadEntity[f] = tag;
+      } else {
+        error("failed to assign closest entity to quad {}",f);
+        return false;
+      }
+    }
+    info("{} quads assigned to surface entities", M.quads.size());
     return true;
   }
 

@@ -159,6 +159,7 @@ namespace QMT {
   /* ModelData view, can be used for meshing */
   bool create_per_triangle_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagSizeMap, const std::string& viewName, int& viewTag);
 
+  bool convert_quad_mesh_to_tri_mesh(const QMesh& Q, TMesh& T);
 
   /****************************************************************************************/
   /* internal functions which are used in multiple QMT source files                       */

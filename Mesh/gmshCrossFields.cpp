@@ -6870,6 +6870,7 @@ int simplifyQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
     Msg::Error("Failed to assign quad vertices to closest entities in the BoundaryProjector");
     return -1;
   }
+  // projector->show_projector();
 
   /* Fill size map values in Q */
   int sizemapTag = -1;
@@ -6968,25 +6969,28 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
     return -1;
   }
 
-  /* Replace current mesh with smoothed quad */
+  /* Update GModel vertex positions */
   {
-    Msg::Info("create a new model '%s'",opt.model_quad.c_str());
+    std::vector<GFace *> f;
+    getFacesOfTheModel(gm, f);
+    std::set<MVertex *, MVertexPtrLessThan> vs;
+    for(size_t i = 0; i < f.size(); i++) {
+      for(size_t j = 0; j < f[i]->quadrangles.size(); j++) {
+        MQuadrangle *t = f[i]->quadrangles[j];
+        for(size_t k = 0; k < 4; k++) { vs.insert(t->getVertex(k)); }
+      }
+    }
+    for (auto& v: vs) {
+      size_t num = v->getNum();
+      v->setXYZ(Q.points[num][0],Q.points[num][1],Q.points[num][2]);
+    }
+  }
 
-  }
-  std::string cname = gm->getName();
-  delete gm;
-  gm = NULL;
-  bool oke3 = QMT::export_qmesh_to_gmsh_mesh(Q, cname);
-  gm = GModel::current();
-  if (!oke3) {
-    Msg::Error("Failed to export quad mesh");
-    return -1;
-  }
 
   CTX::instance()->mesh.changed = ENT_ALL;
   return 0;
 #else
-  Msg::Error("Quad mesh simplification requires the QuadMeshingTools module");
+  Msg::Error("Quad mesh smoothing requires the QuadMeshingTools module");
   return -1;
 #endif
 }
@@ -7062,6 +7066,87 @@ int computePerTriangleScaledCrossField(
 
 #else
   Msg::Error("requires the QuadMeshingTools module");
+  return -1;
+#endif
+}
+
+int smoothQuadMesh(GModel* gm, int explicit_iter, void* data_boundary_projector) {
+#if defined(HAVE_QUADMESHINGTOOLS)
+  { /* Input verification */
+    bool have_triangles = false;
+    bool have_quads = false;
+    std::vector<GFace *> f;
+    getFacesOfTheModel(gm, f);
+    for(size_t i = 0; i < f.size(); i++) {
+      if (f[i]->triangles.size() > 0) have_triangles = true;
+      if (f[i]->quadrangles.size() > 0) have_quads = true;
+    }
+    if (have_triangles || !have_quads) {
+      Msg::Error("Input model '%s' is not a quadrangulation", gm->getName().c_str());
+      return -1;
+    }
+  }
+
+
+  /* Import current quad mesh */
+  QMT::QMesh Q;
+  bool oki = QMT::import_QMesh_from_gmsh(gm->getName(),Q);
+  if (!oki) {
+    Msg::Error("Failed to simplify quad mesh");
+    return -1;
+  }
+
+  /* Create boundary projector if necessary */
+  QMT::BoundaryProjector* projector = NULL;
+  bool proj_to_del = false;
+  if (data_boundary_projector != NULL) {
+    projector = static_cast<QMT::BoundaryProjector*>(data_boundary_projector);
+  }
+  if (projector == NULL) {
+    Msg::Info("building a discrete BoundaryProjector from split quad mesh");
+    QMT::TMesh T;
+    QMT::convert_quad_mesh_to_tri_mesh(Q,T);
+    projector = new QMT::BoundaryProjector(T);
+    proj_to_del = true;
+    // projector->show_projector();
+  }
+
+  bool oka = QMT::assignClosestEntities(Q, *projector);
+  if (!oka) {
+    Msg::Error("Failed to assign quad vertices to closest entities in the BoundaryProjector");
+    return -1;
+  }
+
+  /* Smoothing */
+  bool oksm = QMT::smooth_quad_mesh(Q, explicit_iter, projector);
+  if (!oksm) {
+    Msg::Error("Failed to smooth quad mesh");
+    return -1;
+  }
+
+  /* Update GModel vertex positions */
+  {
+    std::vector<GFace *> f;
+    getFacesOfTheModel(gm, f);
+    std::set<MVertex *, MVertexPtrLessThan> vs;
+    for(size_t i = 0; i < f.size(); i++) {
+      for(size_t j = 0; j < f[i]->quadrangles.size(); j++) {
+        MQuadrangle *t = f[i]->quadrangles[j];
+        for(size_t k = 0; k < 4; k++) { vs.insert(t->getVertex(k)); }
+      }
+    }
+    for (auto& v: vs) {
+      size_t num = v->getNum();
+      v->setXYZ(Q.points[num][0],Q.points[num][1],Q.points[num][2]);
+    }
+  }
+
+  if (proj_to_del) { delete projector; projector = NULL; }
+
+  CTX::instance()->mesh.changed = ENT_ALL;
+  return 0;
+#else
+  Msg::Error("Quad mesh smoothing requires the QuadMeshingTools module");
   return -1;
 #endif
 }

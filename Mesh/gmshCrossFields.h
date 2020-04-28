@@ -104,6 +104,11 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
 /* generate a view "crosses" with crosses scaled by H */
 int showScaledCrosses(GModel* gm, const QuadMeshingOptions& opt, QuadMeshingState& state);
 
+
+/********************************************************/
+/* Attempt at an API callable step-by-step from the GUI */
+/********************************************************/
+
 /* generate a model data view "scaled_directions" with one branch of cross field per triangle, 
  * scaled by a sizemap computed from H and adjusted to match sizemap_nb_quads */
 int computePerTriangleScaledCrossField(
@@ -113,5 +118,8 @@ int computePerTriangleScaledCrossField(
     int cross_field_bc_expansion = 1,
     size_t sizemap_nb_quads      = 10000,
     bool delete_other_tmp_views = true);
+
+/* smooth the current quad mesh (Winslow FDM), create boundary projector if not given */
+int smoothQuadMesh(GModel* gm, int explicit_iter = 100, void* data_boundary_projector = NULL);
 
 #endif

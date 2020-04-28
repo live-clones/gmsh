@@ -202,6 +202,9 @@ namespace QMT {
     vector<id> stencils(8*M.points.size(),NO_ID);
     size_t nbnm = 0;
     size_t nbr = 0;
+    size_t nbl = 0;
+    size_t nbw = 0;
+    size_t nbo = 0;
     FC(v,M.points.size(),v2v[v].size() > 0) {
       if (M.entity[v].first != 0 && v2quads[v].size() == 4) {
         vector<id2> edges;
@@ -227,6 +230,7 @@ namespace QMT {
         } else if (non_manifold) {
           nbnm += 1;
           smoothing_type[v] = ST_LAPLACIAN;
+          nbl += 1;
           continue;
         }
         if (edges.size() != 8) {
@@ -240,6 +244,7 @@ namespace QMT {
             error("interior | failed to get a stencil, v = {}, v2quads[v].size()={}, orderedVertices = {}", v, v2quads[v].size(), orderedVertices);
             if (TMP_FALLBACK_LAPLACIAN) {
               smoothing_type[v] = ST_LAPLACIAN;
+              nbl += 1;
               error("   temporary solution: fallback to laplacian for v = {}", v);
               continue;
             }
@@ -248,6 +253,7 @@ namespace QMT {
         }
         F(k,8) stencils[8*v+k] = orderedVertices[k];
         smoothing_type[v] = ST_WINSLOW_FD4;
+        nbw += 1;
       } else if (M.entity[v].first == 1 && v2quads[v].size() == 2) {
         vector<id2> edges;
         F(lq,2) F(le,4) {
@@ -271,14 +277,17 @@ namespace QMT {
         }
         F(k,6) stencils[8*v+k] = orderedVertices[k];
         smoothing_type[v] = ST_BDR_ORTH_PROJ;
+        nbo += 1;
       } else if (M.entity[v].first == 2) {
         smoothing_type[v] = ST_LAPLACIAN;
+        nbl += 1;
       } else {
         nbr += 1;
       }
     }
     if (nbnm != 0) warn("{} vertices on non-manifold edges, using laplacian smoothing for them", nbnm);
     if (nbr != 0) warn("{} vertices not classified for smoothing", nbr);
+    info("smoother vertex flags: {} for Winslow, {} for Laplacian, {} for bdr. orth. projection ({} not classified)", nbw, nbl, nbo, nbr);
     
     // GLog::GeoLog log;
     // F(v,M.points.size()) {

@@ -38,6 +38,11 @@ namespace QMT {
     // std::vector<std::pair<int,int>> geoEntity;
     std::vector<std::pair<int,int>> entity;
 
+    /* one value per line */
+    std::vector<id2> lines;
+    std::vector<id> line_colors;
+    std::vector<id> line_elt_tags;
+
     /* one value per quad */
     std::vector<id4> quads;
     std::vector<id> color;
