@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
+#include <stack>
 #include <algorithm>
 
 #include <string>
@@ -610,6 +611,131 @@ namespace QMT_QZ_Utils {
     }
 
     return p;
+  }
+
+  bool dfs(const QTMesh& M, 
+      const vector<id3>& gedges, 
+      const vector<vector<id>>& gv2ge, 
+      id gvStart,
+      vector<id>& path) {
+
+    vector<id> parent(gv2ge.size(),NO_ID);
+    vector<uint8_t> discovered(gv2ge.size(),0);
+    std::stack<id> S;
+    S.push(gvStart);
+
+    bool found = false;
+    id last = NO_ID;
+    while (!S.empty()) {
+      id gv = S.top();
+      S.pop();
+      if (!discovered[gv]) {
+        discovered[gv] = 1;
+        vector<pair<double,id>> w_gv2;
+        F(i,gv2ge[gv].size()) {
+          double w_ij = 1.;
+          id gv2 = gedges[gv2ge[gv][i]][1];
+          if (gv2 == gvStart) {
+            found = true;
+            last = gv;
+            break;
+          }
+
+          w_gv2.push_back({w_ij,gv2});
+        }
+        if (found) break;
+        std::sort(w_gv2.begin(),w_gv2.end());
+        F(i,w_gv2.size()) {
+          S.push(w_gv2[i].second);
+          parent[w_gv2[i].second] = gv;
+          DBG("dfs", gv, w_gv2[i].second);
+        }
+      }
+    }
+
+    path.clear();
+    if (found) {
+      id cur = last;
+      while (cur != NO_ID) {
+        path.push_back(cur);
+        cur = parent[cur];
+      }
+      std::reverse(path.begin(),path.end());
+    }
+    return found;
+  }
+
+  void debug_show_graph_in_view(const QTMesh& M, const vector<id3>& gedges, const vector<vector<id>>& gv2ge, const std::string& viewName) {
+    GeoLog log;
+    F(i,gedges.size()) {
+      id gv1 = gedges[i][0];
+      id gv2 = gedges[i][1];
+      if (gv1 == NO_ID || gv2 == NO_ID) continue;
+      if (gv1 == 2*M.edges.size() || gv2 == 2*M.edges.size()) continue;
+      vec3 p1 = tedge_center(M, gv1/2, gv1%2);
+      vec3 p2 = tedge_center(M, gv2/2, gv2%2);
+      log.add({p1,p2},{0.,1.},viewName + "_gedges");
+      vec3 mid = 0.5 * (p1+p2);
+      vec3 dir = normalize(p2-p1);
+      log.addVector(mid, dir, viewName + "_gedges");
+    }
+
+    // /* BFS from gvStart */
+    // id gvStart = 205;
+    // vector<bool> visited(gv2ge.size(),false);
+    // std::queue<id> Q;
+    // Q.push(gvStart);
+    // visited[gvStart] = true;
+    // vector<id> parent(gv2ge.size(),NO_ID);
+    // vector<double> time(gv2ge.size(),0);
+    // double count = 0;
+    // while (Q.size() > 0) {
+    //   id gv = Q.front();
+    //   Q.pop();
+    //   count += 1;
+    //   F(i,gv2ge[gv].size()) {
+    //     id gv2 = gedges[gv2ge[gv][i]][1];
+    //     if (visited[gv2]) continue;
+    //     Q.push(gv2);
+    //     visited[gv2] = true;
+    //     parent[gv2] = gv;
+    //     time[gv2] = count;
+    //   }
+    // }
+    // FC(gv2,gv2ge.size(),parent[gv2] != NO_ID) {
+    //   id gv1 = parent[gv2];
+    //   if (gv1 == NO_ID || gv2 == NO_ID) continue;
+    //   if (gv1 == 2*M.edges.size() || gv2 == 2*M.edges.size()) continue;
+    //   vec3 p1 = tedge_center(M, gv1/2, gv1%2);
+    //   vec3 p2 = tedge_center(M, gv2/2, gv2%2);
+    //   log.add({p1,p2},{time[gv1],time[gv2]},"bfs_gv"+std::to_string(gvStart));
+    //   vec3 mid = 0.5 * (p1+p2);
+    //   vec3 dir = normalize(p2-p1);
+    //   log.addVector(mid, dir, "bfs_gv"+std::to_string(gvStart)+"_dir");
+    // }
+
+    // if (true) {
+    //   vector<id> path;
+    //   bool found = dfs(M, gedges, gv2ge, gvStart, path);
+    //   if (found) {
+    //     F(i,path.size()) {
+    //       id gv1 = path[i];
+    //       id gv2 = path[(i+1)%path.size()];
+    //       if (gv1 == NO_ID || gv2 == NO_ID) continue;
+    //       if (gv1 == 2*M.edges.size() || gv2 == 2*M.edges.size()) continue;
+    //       vec3 p1 = tedge_center(M, gv1/2, gv1%2);
+    //       vec3 p2 = tedge_center(M, gv2/2, gv2%2);
+    //       log.add({p1,p2},{time[gv1],time[gv2]},"dfs_gv"+std::to_string(gvStart));
+    //       vec3 mid = 0.5 * (p1+p2);
+    //       vec3 dir = normalize(p2-p1);
+    //       log.addVector(mid, dir, "dfs_gv"+std::to_string(gvStart)+"_dir");
+    //     }
+    //   } else {
+    //     error("DFS cycle not found");
+    //   }
+    // }
+
+    log.toGmsh();
   }
 
   void debug_show_tchord_in_view(const QTMesh& M, const vector<id>& tchord, const std::string& viewName) {
@@ -2043,8 +2169,8 @@ namespace QMT {
     }
 
     if (!closed) {
-      error("finished dijkstra but didn't find a closed loop ...");
-      if (ERROR_VISU) {
+      warn("finished dijkstra but didn't find a closed loop ... gvStart = {}", gvStart);
+      if (false && ERROR_VISU) {
         GeoLog log;
         FC(gv, gv2ge.size(), prev[gv] < gv2ge.size()) {
           id gv1 = prev[gv];
@@ -2082,7 +2208,7 @@ namespace QMT {
       tchord.push_back(path[i] / 2);
     }
 
-    if (true) {
+    if (false) {
       GeoLog log;
       F(i, path.size()) {
         id gv1 = path[i];
@@ -2606,6 +2732,8 @@ namespace QMT {
       bool okbg = build_double_directed_graph_from_QTMesh(M, gedges, gv2ge, true);
       RFC(!okbg, "failed to build double directed graph from QTMesh");
       RFC(gv2ge.size() != 2*M.edges.size() && gv2ge.size() != 2*M.edges.size() + 1, "wrong number of graph vertices");
+      debug_show_graph_in_view(M, gedges, gv2ge, "ddg");
+      vector<id> edges_to_0;
       F(gvStart,2*M.edges.size()) {
         id e = gvStart / 2;
         if (edge_n[e] != 0) continue;
@@ -2615,10 +2743,14 @@ namespace QMT {
         vector<id> tchord;
         bool oktc = tchord_propagation_in_double_directed_graph_simple(gedges, gv2ge, edge_nx, edge_n, gvStart, tchord, M);
         if (!oktc || tchord.size() == 0) {
+          warn("failed to propagate tchord in double directed graph from gv = {}", gvStart);
+          edges_to_0.push_back(gvStart/2);
+          continue;
+
           error("failed to propagate tchord in double directed graph from gv = {}", gvStart);
           error("  tedge {}: {}", e, M.edges[e]);
           if (ERROR_VISU) {
-            debug_show_qtmesh_in_view(M, "qtmesh");
+            // debug_show_qtmesh_in_view(M, "qtmesh");
             debug_show_edge_in_view(M, e, "qprob_e"+std::to_string(e));
           }
           return false;
@@ -2650,7 +2782,9 @@ namespace QMT {
           edge_n[e2] += inc;
         }
       }
-
+      if (edges_to_0.size() > 0) {
+        warn("edge where propagation failed: {}", edges_to_0);
+      }
     } else if (USE_DOUBLE_DIRECTED_GRAPH) {
       vector<id3> gedges; /* graph edges, triplet (gv1,gv2,f) */
       vector<vector<id> > gv2ge; /* graph vertex to graph edges */
@@ -2708,7 +2842,6 @@ namespace QMT {
           }
         }
       }
-
     } else if (GRAPH_VERSION) {
       vector<id3> gedges; /* graph edges, triplet (e1,e2,f) */
       vector<vector<id> > e2ge; /* QTMesh edge to graph edges */
@@ -2820,14 +2953,19 @@ namespace QMT {
             error("Quantization verification | face {}, edge {}: side={}", f, e, id(side));
             return false;
           }
-          if (edge_n[e] == 0) {
-            error("Quantization verification | face {}, edge {}, side={}: n = {} (nx = {})",
-                f, e, id(side), edge_n[e], edge_nx[e]);
-            return false;
-          }
+          // if (edge_n[e] == 0) {
+          //   error("Quantization verification | face {}, edge {}, side={}: n = {} (nx = {})",
+          //       f, e, id(side), edge_n[e], edge_nx[e]);
+          //   error("  face {}: {}", f, tf);
+          //   F(le,tf.edges.size()) {
+          //     id e = tf.edges[le];
+          //     error("    edge {} (n={},nx={}): {}", e, edge_n[e], edge_nx[e], M.edges[e]);
+          //   }
+          //   return false;
+          // }
           side_n[side] += edge_n[e];
         }
-        if (side_n[0] != side_n[2] || side_n[1] != side_n[3]) {
+        if (side_n[0] != side_n[2] || side_n[1] != side_n[3] || side_n[0] == 0 || side_n[1] == 0) {
           error("Quantization verification | face {}: side_n = {}  (edges = {})",
               f, side_n, tf.edges);
           error("  face {}: {}", f, tf);
@@ -2841,7 +2979,6 @@ namespace QMT {
           }
           return false;
         }
-        
       }
     }
 
@@ -2868,6 +3005,16 @@ namespace QMT {
         old2new[v] = nv;
       }
     }
+
+    /* Edge collapses (experimental) */
+    FC(e,M.edges.size(),edge_n[e] == 0.) {
+      id v1 = M.edges[e].vertices[0];
+      id v2 = M.edges[e].vertices[1];
+      id nv1 = old2new[v1];
+      old2new[v2] = nv1;
+      warn("edge {}, quantization length is 0, trying collapse {}-{}",e,v1,v2);
+    }
+
 
     /* Vertices from subdivision of QTMesh edges */
     vector<vector<id> > edge2nivert(M.edges.size());
@@ -2914,6 +3061,7 @@ namespace QMT {
         id le = i % face.edges.size();
         id e = face.edges[le];
         id s = face.edge_sides[le];
+        if (edge_n[e] == 0) continue;
         side_edges[s].push_back(e);
         side_edge_invert[s].push_back(face.edge_orient_invert[le]);
       }
@@ -2967,7 +3115,11 @@ namespace QMT {
       if (side_points[0].size() > 2 && side_points[1].size() > 2)  {
         bool oktfi = transfinite_interpolation(side_points[0],side_points[1],side_points[2],side_points[3], ipts);
         if (!oktfi) {
-          error("generate quads, failed to TFI");
+          error("generate quads, failed to TFI face {}", f);
+          error("  side 0 points: {}", side_points[0]);
+          error("  side 1 points: {}", side_points[1]);
+          error("  side 2 points: {}", side_points[2]);
+          error("  side 3 points: {}", side_points[3]);
           return false;
         }
       }
