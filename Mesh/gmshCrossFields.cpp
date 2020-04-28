@@ -6569,7 +6569,14 @@ int computeUV(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState& stat
       delete ptr;
       state.data_uv_cuts = NULL;
     }
+    if (state.data_uv_cuts_tj != NULL) {
+      std::vector<std::pair<MTriangle*,int> >* ptr = static_cast<std::vector<std::pair<MTriangle*,int> >* >(state.data_uv_cuts_tj);
+      delete ptr;
+      state.data_uv_cuts_tj = NULL;
+    }
+    std::vector<std::pair<MTriangle*,int> >* tjptr = new std::vector<std::pair<MTriangle*,int> >(t_junctions);
     state.data_uv_cuts = (void*) (cutsPtr);
+    state.data_uv_cuts_tj = (void*) (tjptr);
     Msg::Debug("saved cuts map pointer in QuadMeshingState");
   }
 
@@ -6603,7 +6610,7 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     Msg::Error("View 'U' and 'V' are not defined on current model '%s'", gm->getName().c_str());
     return -1;
   }
-  if (state.data_uv_cuts == NULL) {
+  if (state.data_uv_cuts == NULL || state.data_uv_cuts_tj == NULL) {
     Msg::Error("Cuts not found in QuadMeshingState");
     return -1;
   }
@@ -6645,12 +6652,14 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
   std::vector<GFace *> f;
   getFacesOfTheModel(gcc, f);
   std::map<MVertex*,MVertex*,MVertexPtrLessThan> omv2mv;
+  std::map<MTriangle*,MTriangle*> omt2mt;
   if (f.size() != of.size()) {Msg::Error("bad!");return -1;}
   for(size_t i = 0; i < f.size(); i++) {
     if (f[i]->triangles.size() != of[i]->triangles.size()) {Msg::Error("bad!");return -1;}
     for(size_t j = 0; j < f[i]->triangles.size(); j++) {
       MTriangle *t = f[i]->triangles[j];
       MTriangle *ot = of[i]->triangles[j];
+      omt2mt[ot] = t;
       for(size_t k = 0; k < 3; k++) { 
         MVertex* omv = ot->getVertex(k);
         MVertex* mv = t->getVertex(k);
@@ -6661,6 +6670,8 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
 
   /* Update cuts */
   std::map<MEdge, edgeCuts, MEdgeLessThan>* cutsPtr = static_cast<std::map<MEdge, edgeCuts, MEdgeLessThan>*>(state.data_uv_cuts);
+  std::vector<std::pair<MTriangle*,int> >* cutsTjPtr = static_cast<std::vector<std::pair<MTriangle*,int> >* >(state.data_uv_cuts_tj);
+
   std::map<MEdge, edgeCuts, MEdgeLessThan>& cuts = *cutsPtr;
   std::map<MEdge, edgeCuts, MEdgeLessThan> gccCuts;
   for (auto& edge_cut : cuts) {
@@ -6692,6 +6703,9 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     }
     gccCuts[gccEdge] = gccCut;
   }
+  for (auto& tj: *cutsTjPtr) {
+    tj.first = omt2mt[tj.first];
+  }
 
   /* Cutting the gcc mesh */
   quadLayoutData qLayout(gcc, f, gcc->getName());
@@ -6699,8 +6713,8 @@ int computeQuadLayout(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
   std::map<MEdge,GEdge*,MEdgeLessThan> inverseClassificationEdges;
 
   /// FIXME MAXENCE --> need for t_junctions 
-  std::vector<std::pair<MTriangle*,int> > t_junctions;
-  qLayout.cutMesh(cuts, inverseClassificationEdges, t_junctions);
+  // std::vector<std::pair<MTriangle*,int> > t_junctions;
+  qLayout.cutMesh(cuts, inverseClassificationEdges, *cutsTjPtr);
 
   constexpr bool do_reclassify = false; /* no longer needed, done by QMT */
   if (do_reclassify) {

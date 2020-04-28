@@ -61,6 +61,7 @@ struct QuadMeshingState {
   int U_tag = -1;
   int V_tag = -1;
   void* data_uv_cuts = NULL;
+  void* data_uv_cuts_tj = NULL;
 
   /* cut model, triangulation */
   std::string model_cut = "";
@@ -105,9 +106,9 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
 int showScaledCrosses(GModel* gm, const QuadMeshingOptions& opt, QuadMeshingState& state);
 
 
-/********************************************************/
-/* Attempt at an API callable step-by-step from the GUI */
-/********************************************************/
+/*****************************************************************************/
+/* Wrappers to call QMT functions from outside the QuadMeshingTools pipeline */
+/*****************************************************************************/
 
 /* generate a model data view "scaled_directions" with one branch of cross field per triangle, 
  * scaled by a sizemap computed from H and adjusted to match sizemap_nb_quads */
