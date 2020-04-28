@@ -890,6 +890,12 @@ double GEdge::prescribedMeshSizeAtParam(double u)
   return l0*(1-alpha) + l1*(alpha);
 }
 
+struct vindexsort {
+  const std::vector<double> &v;
+  vindexsort(const std::vector<double> &vp) :v(vp){};
+  bool operator()(size_t i0, size_t i1) {return v[i0]<v[i1];}
+};
+
 void GEdge::setMeshSizeParametric(const std::vector<double> u, const std::vector<double> lc)
 {
   if (u.size() != lc.size()) {
@@ -897,7 +903,7 @@ void GEdge::setMeshSizeParametric(const std::vector<double> u, const std::vector
   }
   std::vector<size_t> index(u.size());
   std::iota(index.begin(),index.end(),0);
-  std::sort(index.begin(),index.end(),[&u](size_t i0, size_t i1){return (u[i0]<u[i1]);});
+  std::sort(index.begin(),index.end(),vindexsort(u));
   _u_lc.resize(u.size());
   _lc.resize(lc.size());
   for (size_t i = 0; i < u.size(); ++i){
