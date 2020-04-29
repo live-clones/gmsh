@@ -32,7 +32,7 @@
 
 static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 {
-  // ONLY FOR TESTING NEW FUNCTION FOR JF
+  // // ONLY FOR TESTING NEW FUNCTION FOR JF
   // int vt = -1;
   // computePerTriangleScaledCrossField(GModel::current(),vt);
   // if(FlGui::available()) FlGui::instance()->updateViews(true, true);

@@ -546,8 +546,10 @@ namespace QMT {
     }
 
     /* Compute averaged cross on each triangle */
+    bool create_data_list_view = true;
     std::vector<std::size_t> keys;
     std::vector<std::vector<double> > values;
+    std::vector<double> datalist;
     {
       std::string dataType;
       std::vector<std::size_t> tags;
@@ -560,7 +562,7 @@ namespace QMT {
 
       if (dataType == "ElementData" && tags.size() == M.triangles.size()) {
         F(i,tags.size()) {
-          keys.push_back(tags[i]);
+          if (!create_data_list_view) keys.push_back(tags[i]);
           auto it = TagToF.find(tags[i]);
           if (it == TagToF.end()) {
             error("triangle with tag {} not found", tags[i]);
@@ -602,7 +604,20 @@ namespace QMT {
           }
           double asize = 1./3. * (sizemap[M.triangles[f][0]] + sizemap[M.triangles[f][1]] + sizemap[M.triangles[f][2]]);
           vec3 avgScaledDir = asize * 1./3. * avgCross;
-          values.push_back({avgScaledDir[0],avgScaledDir[1],avgScaledDir[2]});
+          if (create_data_list_view) {
+            for (size_t d = 0; d < 3; ++d) {
+              for (size_t lv = 0; lv < 3; ++lv) {
+                datalist.push_back(M.points[M.triangles[f][lv]][d]);
+              }
+            }
+            for (size_t lv = 0; lv < 3; ++lv) {
+              for (size_t d = 0; d < 3; ++d) {
+                datalist.push_back(avgScaledDir[d]);
+              }
+            }
+          } else {
+            values.push_back({avgScaledDir[0],avgScaledDir[1],avgScaledDir[2]});
+          }
         }
       } else {
         error("problem with 'theta' view, mesh contains {} triangles but {} tags in view", M.triangles.size(), tags.size());
@@ -616,9 +631,13 @@ namespace QMT {
     } else {
       info("overwrite view with tag {}",viewTag);
     }
-    std::string cname;
-    gmsh::model::getCurrent(cname);
-    gmsh::view::addModelData(viewTag, 0, cname, "ElementData", keys, values);
+    if (create_data_list_view) {
+      gmsh::view::addListData(viewTag, "VT", datalist.size()/(9+9), datalist);
+    } else {
+      std::string cname;
+      gmsh::model::getCurrent(cname);
+      gmsh::view::addModelData(viewTag, 0, cname, "ElementData", keys, values);
+    }
 
     return true;
   }
