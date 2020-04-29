@@ -1840,12 +1840,14 @@ GMSH_API int gmshModelOccAddTorus(const double x,
  * set the tag explicitly; otherwise a new tag is selected automatically. The
  * new entities are returned in `outDimTags'. If the optional argument
  * `makeRuled' is set, the surfaces created on the boundary are forced to be
- * ruled surfaces. */
+ * ruled surfaces. If `maxDegree' is positive, set the maximal degree of
+ * resulting surface. */
 GMSH_API void gmshModelOccAddThruSections(int * wireTags, size_t wireTags_n,
                                           int ** outDimTags, size_t * outDimTags_n,
                                           const int tag,
                                           const int makeSolid,
                                           const int makeRuled,
+                                          const int maxDegree,
                                           int * ierr);
 
 /* Add a hollowed volume built from an initial volume `volumeTag' and a set of

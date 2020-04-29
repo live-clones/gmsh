@@ -4833,16 +4833,17 @@ class model:
             return api__result__
 
         @staticmethod
-        def addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False):
+        def addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False, maxDegree=-1):
             """
-            gmsh.model.occ.addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False)
+            gmsh.model.occ.addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False, maxDegree=-1)
 
             Add a volume (if the optional argument `makeSolid' is set) or surfaces
             defined through the open or closed wires `wireTags'. If `tag' is positive,
             set the tag explicitly; otherwise a new tag is selected automatically. The
             new entities are returned in `outDimTags'. If the optional argument
             `makeRuled' is set, the surfaces created on the boundary are forced to be
-            ruled surfaces.
+            ruled surfaces. If `maxDegree' is positive, set the maximal degree of
+            resulting surface.
 
             Return `outDimTags'.
             """
@@ -4855,6 +4856,7 @@ class model:
                 c_int(tag),
                 c_int(bool(makeSolid)),
                 c_int(bool(makeRuled)),
+                c_int(maxDegree),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

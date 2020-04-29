@@ -2,12 +2,14 @@
 (without node insertion), and to only mesh non-meshed entities; added support
 for mesh size fields in HXT; new OCC API functions to reduce the number of
 synchronizations for complex models; MED output now preserves node and element
-tags; small bug fixes.
+tags; new functions and options to control the first tag of entities, nodes and
+elements; small bug fixes.
 
-* Incompatible API changes: new optional arguments to mesh/clear and
-  mesh/createTopology; new argument to mesh/getBasisFunctions; removed
-  mesh/preallocateBasisFunctions, mesh/precomputeBasisFunctions and
-  mesh/getBasisFunctionsForElements; renamed occ/setMeshSize as occ/mesh/setSize
+* Incompatible API changes: new optional arguments to mesh/clear,
+  mesh/createTopology, occ/addThruSections; new argument to
+  mesh/getBasisFunctions; removed mesh/preallocateBasisFunctions,
+  mesh/precomputeBasisFunctions and mesh/getBasisFunctionsForElements; renamed
+  occ/setMeshSize as occ/mesh/setSize
 
 4.5.6 (March 30, 2020): better calculation of OCC bounding boxes using STL; API
 tutorials; small bug fixes.

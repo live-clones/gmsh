@@ -4974,13 +4974,14 @@ GMSH_API int gmsh::model::occ::addTorus(const double x, const double y,
 GMSH_API void
 gmsh::model::occ::addThruSections(const std::vector<int> &wireTags,
                                   vectorpair &outDimTags, const int tag,
-                                  const bool makeSolid, const bool makeRuled)
+                                  const bool makeSolid, const bool makeRuled,
+                                  const int maxDegree)
 {
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->addThruSections(
-       tag, wireTags, makeSolid, makeRuled, outDimTags)) {
+       tag, wireTags, makeSolid, makeRuled, outDimTags, maxDegree)) {
     throw 1;
   }
 }

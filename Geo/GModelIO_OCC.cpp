@@ -1597,7 +1597,7 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
 
     if(!_tagWire.IsBound(wireTag)) {
       Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
-      //      return false;
+      return false;
     }
     else {
       TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -1624,7 +1624,6 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
     }
     BPSurf.Perform();
 
-    printf("making the wire\n");
     Standard_Integer MaxSeg = 9;
     Standard_Integer MaxDegree = 8;
     Standard_Integer CritOrder = 0;
@@ -2119,7 +2118,7 @@ bool OCC_Internals::addWedge(int &tag, double x, double y, double z, double dx,
 
 bool OCC_Internals::addThruSections(
   int tag, const std::vector<int> &wireTags, bool makeSolid, bool makeRuled,
-  std::vector<std::pair<int, int> > &outDimTags)
+  std::vector<std::pair<int, int> > &outDimTags, int maxDegree)
 {
   int dim = makeSolid ? 3 : 2;
   if(tag >= 0 && _isBound(dim, tag)) {
@@ -2134,6 +2133,23 @@ bool OCC_Internals::addThruSections(
   TopoDS_Shape result;
   try {
     BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
+    // ts.SetContinuity(GeomAbs_C1);
+    // Available choices:
+    //    GeomAbs_C0, GeomAbs_G1, GeomAbs_C1, GeomAbs_G2, GeomAbs_C2,
+    //    GeomAbs_C3, GeomAbs_CN
+
+    // ts.SetCriteriumWeight(1, 1, 1);
+
+    if(maxDegree > 0)
+      ts.SetMaxDegree(maxDegree);
+    else if(CTX::instance()->geom.occThruSectionsDegree > 0)
+      ts.SetMaxDegree(CTX::instance()->geom.occThruSectionsDegree);
+
+    // ts.SetParType(Approx_ChordLength);
+    // Available choices:
+    //    Approx_ChordLength, Approx_Centripetal, Approx_IsoParametric
+
+    // ts.SetSmoothing(Standard_True);
     for(std::size_t i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])) {
         Msg::Error("Unknown OpenCASCADE wire or line loop with tag %d",

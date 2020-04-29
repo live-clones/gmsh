@@ -3098,17 +3098,19 @@ namespace gmsh { // Top-level functions
       // set the tag explicitly; otherwise a new tag is selected automatically. The
       // new entities are returned in `outDimTags'. If the optional argument
       // `makeRuled' is set, the surfaces created on the boundary are forced to be
-      // ruled surfaces.
+      // ruled surfaces. If `maxDegree' is positive, set the maximal degree of
+      // resulting surface.
       inline void addThruSections(const std::vector<int> & wireTags,
                                   gmsh::vectorpair & outDimTags,
                                   const int tag = -1,
                                   const bool makeSolid = true,
-                                  const bool makeRuled = false)
+                                  const bool makeRuled = false,
+                                  const int maxDegree = -1)
       {
         int ierr = 0;
         int *api_wireTags_; size_t api_wireTags_n_; vector2ptr(wireTags, &api_wireTags_, &api_wireTags_n_);
         int *api_outDimTags_; size_t api_outDimTags_n_;
-        gmshModelOccAddThruSections(api_wireTags_, api_wireTags_n_, &api_outDimTags_, &api_outDimTags_n_, tag, (int)makeSolid, (int)makeRuled, &ierr);
+        gmshModelOccAddThruSections(api_wireTags_, api_wireTags_n_, &api_outDimTags_, &api_outDimTags_n_, tag, (int)makeSolid, (int)makeRuled, maxDegree, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_wireTags_);
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);

@@ -3185,11 +3185,12 @@ defined through the open or closed wires @code{wireTags}. If @code{tag} is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 The new entities are returned in @code{outDimTags}. If the optional argument
 @code{makeRuled} is set, the surfaces created on the boundary are forced to be
-ruled surfaces.
+ruled surfaces. If @code{maxDegree} is positive, set the maximal degree of
+resulting surface.
 
 @table @asis
 @item Input:
-@code{wireTags}, @code{tag = -1}, @code{makeSolid = True}, @code{makeRuled = False}
+@code{wireTags}, @code{tag = -1}, @code{makeSolid = True}, @code{makeRuled = False}, @code{maxDegree = -1}
 @item Output:
 @code{outDimTags}
 @item Return:

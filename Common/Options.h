@@ -406,6 +406,7 @@ double opt_geometry_occ_parallel(OPT_ARGS_NUM);
 double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM);
 double opt_geometry_occ_scaling(OPT_ARGS_NUM);
 double opt_geometry_occ_import_labels(OPT_ARGS_NUM);
+double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM);
 double opt_geometry_old_circle(OPT_ARGS_NUM);
 double opt_geometry_old_newreg(OPT_ARGS_NUM);
 double opt_geometry_old_ruled_surface(OPT_ARGS_NUM);

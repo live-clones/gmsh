@@ -3768,23 +3768,24 @@ function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
 end
 
 """
-    gmsh.model.occ.addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false)
+    gmsh.model.occ.addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false, maxDegree = -1)
 
 Add a volume (if the optional argument `makeSolid` is set) or surfaces defined
 through the open or closed wires `wireTags`. If `tag` is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. The new entities are
 returned in `outDimTags`. If the optional argument `makeRuled` is set, the
-surfaces created on the boundary are forced to be ruled surfaces.
+surfaces created on the boundary are forced to be ruled surfaces. If `maxDegree`
+is positive, set the maximal degree of resulting surface.
 
 Return `outDimTags`.
 """
-function addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false)
+function addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false, maxDegree = -1)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccAddThruSections, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, wireTags), length(wireTags), api_outDimTags_, api_outDimTags_n_, tag, makeSolid, makeRuled, ierr)
+          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, wireTags), length(wireTags), api_outDimTags_, api_outDimTags_n_, tag, makeSolid, makeRuled, maxDegree, ierr)
     ierr[] != 0 && error("gmshModelOccAddThruSections returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]

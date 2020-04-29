@@ -4642,6 +4642,12 @@ double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
   return CTX::instance()->geom.occUnionUnify;
 }
 
+double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occThruSectionsDegree = (int)val;
+  return CTX::instance()->geom.occThruSectionsDegree;
+}
+
 double opt_geometry_occ_parallel(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occParallel = (int)val;

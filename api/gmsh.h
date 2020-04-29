@@ -2092,12 +2092,14 @@ namespace gmsh { // Top-level functions
       // set the tag explicitly; otherwise a new tag is selected automatically. The
       // new entities are returned in `outDimTags'. If the optional argument
       // `makeRuled' is set, the surfaces created on the boundary are forced to be
-      // ruled surfaces.
+      // ruled surfaces. If `maxDegree' is positive, set the maximal degree of
+      // resulting surface.
       GMSH_API void addThruSections(const std::vector<int> & wireTags,
                                     gmsh::vectorpair & outDimTags,
                                     const int tag = -1,
                                     const bool makeSolid = true,
-                                    const bool makeRuled = false);
+                                    const bool makeRuled = false,
+                                    const int maxDegree = -1);
 
       // gmsh::model::occ::addThickSolid
       //
