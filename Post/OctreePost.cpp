@@ -23,7 +23,6 @@ static void minmax(int n, double *X, double *Y, double *Z, double *min,
                    double *max)
 {
 
-  
   min[0] = X[0];
   min[1] = Y[0];
   min[2] = Z[0];
@@ -49,7 +48,7 @@ static void minmax(int n, double *X, double *Y, double *Z, double *min,
   min[1] = bb.min().y();
   min[2] = bb.min().z();
 
-  double eps = .01;//CTX::instance()->geom.tolerance;
+  double eps = CTX::instance()->geom.tolerance;
   for(int i = 0; i < 3; i++) {
     min[i] -= eps;
     max[i] += eps;
@@ -270,9 +269,7 @@ OctreePost::OctreePost(PViewData *data) { _create(data); }
 
 void OctreePost::_create(PViewData *data)
 {
-    printf("CAboum\n");
-
-    _sp = _vp = _tp = _sl = _vl = _tl = _st = _vt = _tt = 0;
+  _sp = _vp = _tp = _sl = _vl = _tl = _st = _vt = _tt = 0;
   _sq = _vq = _tq = _ss = _vs = _ts = _sh = _vh = _th = 0;
   _si = _vi = _ti = _sy = _vy = _ty = 0;
   _theViewDataList = 0;
@@ -287,7 +284,6 @@ void OctreePost::_create(PViewData *data)
   if(_theViewDataList) {
     PViewDataList *l = _theViewDataList;
 
-    
     if(l->haveInterpolationMatrices() && !l->isAdapted()) {
       Msg::Error("Cannot create octree for non-adapted high-order list-based "
                  "view: you need");

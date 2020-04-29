@@ -1548,15 +1548,17 @@ public:
   void operator()(double x, double y, double z, SVector3 &v, GEntity *ge = 0){
     if (numComponents() == 3){// scaled cross field
       double values[3];
-      if(!octree->searchVectorWithTol(x, y, z, values, 0, 0, 0.05)){
+      if(!octree->searchVectorWithTol(x, y, z, values, 0, 0, .05)){
+	if(!octree->searchVectorWithTol(x, y, z, values, 0, 0, .25)){
 	Msg::Info("No vector element found containing point (%g,%g,%g)", x, y, z);
+	}
       }
       else{
 	v = SVector3(values[0],values[1],values[2]);
       }
     }
     else {
-      Msg::Info("No vector element found containing point (%g,%g,%g)", x, y, z);
+      Msg::Info("No vector element ");
     }
   }
   

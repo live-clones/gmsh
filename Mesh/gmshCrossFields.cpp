@@ -4648,12 +4648,15 @@ public:
 
     computeLifting(gm, f, C, d0, d1, cutG, singularities, groups);    
     return 0;
+  }
+
+  int computeUniqueVectorsPerTriangle_old()
+  {
     // LIFTING
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
     std::set<cross2d *> visited;
     int ITER = 0;
     while(1) {
-      printf("ITER = %d %lu %lu\n",ITER, visited.size(),C.size() );
       bool allVisited = true;
       for(it = C.begin(); it != C.end(); ++it) {
         if (it->second._btemp < 1000)allVisited = false; 
@@ -4670,6 +4673,7 @@ public:
     return 0;
   }
 
+  
   int computeCutGraph(std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges)
   {
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
@@ -5679,16 +5683,14 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   std::string temp_  = gm->getName() + "_temp.pos";
   
   qLayout.restoreInitialMesh();
-  if(Msg::GetVerbosity() == 99) {
-    dt->writePOS(posout, false, true, true);
-    dd->writePOS(posout, false, true, true);
-    d->writePOS(posout, false, true, true);
+  dt->writePOS(posout, false, true, true);
+  dd->writePOS(posout, false, true, true);
+  d->writePOS(posout, false, true, true);
   // a temporary file
-    d->writePOS(temp_, false, true, false);
-    if(layout) {
-      U->writePOS(posout, false, true, true);
-      V->writePOS(posout, false, true, true);
-    }
+  d->writePOS(temp_, false, true, false);
+  if(layout) {
+    U->writePOS(posout, false, true, true);
+    V->writePOS(posout, false, true, true);
   }
   //  return 0;
 
@@ -5787,8 +5789,9 @@ int computeCrossFieldAndH(GModel *gm,
     Msg::Info("Computing a cross field");
     qLayout.computeCrossFieldAndH();
   }
-
-  qLayout.computeUniqueVectorsPerTriangle();
+  printf("coucou1\n");
+  qLayout.computeUniqueVectorsPerTriangle_old();
+  printf("coucou2\n");
 
   qLayout.getH (dataH);
   qLayout.getDir (dataDir,dataDirOrtho);

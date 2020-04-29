@@ -354,7 +354,7 @@ int GmshBatch()
       computePerTriangleScaledCrossField (GModel::current(), viewTag);
       PView* crossField = PView::getViewByTag(viewTag);
       std::string posout = GModel::current()->getName() + "_scaled_crossfield.pos";
-      crossField->getData()->writeMSH(posout, 4.0);
+      crossField->getData()->writePOS(posout);
     }
     else if(CTX::instance()->batch == 68){
       // global surface remeshing
