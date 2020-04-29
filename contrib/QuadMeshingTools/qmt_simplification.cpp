@@ -1072,7 +1072,7 @@ namespace QMT {
         }
       }
       if (nb == 2) {
-        error("triple quad band not supported");
+        warn("triple quad band not supported");
         return false;
       }
     }

@@ -697,8 +697,11 @@ namespace QMT {
   }
 
   using namespace GLog;
-  void BoundaryProjector::show_projector(const std::string& viewPrefix) {
+  void BoundaryProjector::show_projector(const std::string& viewPrefix) const {
     GeoLog log;
+    F(i,nodes.size()) {
+      log.add({nodes[i]},double(i),viewPrefix+std::string("_nodes"));
+    }
     FC(i,curve_tree.size(),curve_tree[i] != NULL) {
       vector<id> edges;
       F(j,cTreeIdToEdges[i].size()) {

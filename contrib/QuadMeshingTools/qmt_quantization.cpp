@@ -2732,7 +2732,7 @@ namespace QMT {
       bool okbg = build_double_directed_graph_from_QTMesh(M, gedges, gv2ge, true);
       RFC(!okbg, "failed to build double directed graph from QTMesh");
       RFC(gv2ge.size() != 2*M.edges.size() && gv2ge.size() != 2*M.edges.size() + 1, "wrong number of graph vertices");
-      debug_show_graph_in_view(M, gedges, gv2ge, "ddg");
+      // debug_show_graph_in_view(M, gedges, gv2ge, "ddg");
       vector<id> edges_to_0;
       F(gvStart,2*M.edges.size()) {
         id e = gvStart / 2;
