@@ -185,7 +185,7 @@ namespace QMT {
         std::vector<std::vector<size_t>> nodeTags;
         gmsh::model::mesh::getElements(elementTypes,elementTags,nodeTags,nodes[k].first,nodes[k].second);
         F(i,elementTypes.size()) {
-          if (elementTypes[i] == 0) { /* nodes */
+          if (elementTypes[i] == 15) { /* nodes */
             F(j,elementTags[i].size()) {
               id v = nodeTags[i][j];
               M.pt_color[v] = nodes[k].second;

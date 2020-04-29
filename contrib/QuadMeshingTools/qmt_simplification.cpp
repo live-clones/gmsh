@@ -588,7 +588,10 @@ namespace QMT {
     return true;
   }
 
-  bool chord_is_collapsible(const QMesh& M, const Chord& chord, const vector<int>* valence = NULL) {
+  bool chord_is_collapsible(const QMesh& M, const Chord& chord, 
+      const vector<int>* valence = NULL, 
+      const unordered_map<id2,id,id2Hash>* edgeOnCurve = NULL) {
+    constexpr bool EXPLAIN = true;
     if (valence && valence->size() != M.points.size()) {
       error("M.points.size() = {} and valence.size() = {}", M.points.size(), valence->size());
       return false;
@@ -615,6 +618,7 @@ namespace QMT {
         id n2 = neighs[(side+3)%4];
         id nn1 = M.quad_neighbors[n1/4][(n1%4+2)%4];
         if (nn1 != NO_ID && nn1/4 == n2/4) {
+          if (EXPLAIN) warn("not collapsible: neighbors make a loop, n1 = {}, nn1/4 = {}, n2/4 = {}", n1, nn1/4, n2/4);
           return false;
         }
       }
@@ -623,16 +627,24 @@ namespace QMT {
         id v1 = M.quads[q][le];
         id v2 = M.quads[q][(le+1)%4];
         if (M.entity[v1].first == 0 && M.entity[v2].first == 0) { /* both on corner */
+          if (EXPLAIN) warn("not collapsible: both edge extremities are nodes");
           return false;
         }
-        if (valence && !collapse_val3_on_bdr && (*valence)[v1] == 3 && M.entity[v1].first == 2 && M.entity[v2].first <= 1)
-          return false;
-        if (valence && !collapse_val3_on_bdr && (*valence)[v2] == 3 && M.entity[v2].first == 2 && M.entity[v1].first <= 1)
-          return false;
-        if (valence && !collapse_val5_on_bdr && (*valence)[v1] == 5 && M.entity[v1].first == 2 && M.entity[v2].first <= 1)
-          return false;
-        if (valence && !collapse_val5_on_bdr && (*valence)[v2] == 5 && M.entity[v2].first == 2 && M.entity[v1].first <= 1)
-          return false;
+        if (valence) {
+          if (!collapse_val3_on_bdr && (*valence)[v1] == 3 && M.entity[v1].first == 2 && M.entity[v2].first <= 1) {
+            if (EXPLAIN) warn("not collapsible: valences reject");
+            return false;
+          } else if (!collapse_val3_on_bdr && (*valence)[v2] == 3 && M.entity[v2].first == 2 && M.entity[v1].first <= 1) {
+            if (EXPLAIN) warn("not collapsible: valences reject");
+            return false;
+          } else if (!collapse_val5_on_bdr && (*valence)[v1] == 5 && M.entity[v1].first == 2 && M.entity[v2].first <= 1) {
+            if (EXPLAIN) warn("not collapsible: valences reject");
+            return false;
+          } else if (!collapse_val5_on_bdr && (*valence)[v2] == 5 && M.entity[v2].first == 2 && M.entity[v1].first <= 1) {
+            if (EXPLAIN) warn("not collapsible: valences reject");
+            return false;
+          }
+        }
 
         sid qe = neighs[le];
         if (qe == NO_ID) continue;
@@ -647,8 +659,15 @@ namespace QMT {
 
         /* Reject collapse of edges if both nodes are on
          * the boundary and not an bdr edge */
-        if (M.entity[av1].first <= 1 && M.entity[av2].first <= 1 && neighs[le] != NO_ID) {
-          return false;
+        if (edgeOnCurve) {
+          if (M.entity[av1].first <= 1 && M.entity[av2].first <= 1) {
+            id2 edge = sorted(av1,av2);
+            auto it = edgeOnCurve->find(edge);
+            if (it == edgeOnCurve->end()) {
+              if (EXPLAIN) warn("not collapsible: both edge extremities are on nodes/curves and not a line");
+              return false;
+            }
+          }
         }
       }
     }
@@ -1053,7 +1072,7 @@ namespace QMT {
         }
       }
       if (nb == 2) {
-        error("triple quad band not supported");
+        warn("triple quad band not supported");
         return false;
       }
     }
@@ -1649,14 +1668,15 @@ namespace QMT {
     }
 
     /* Precompute a list of chord collapse candidates */
+    warn("a check has been removed for multidomain, not sure if current version is guaranteed to preserve topology");
     vector<pair<double,Chord>> chord_to_collapse;
     {
       double wming = DBL_MAX;
       double wmaxg = -DBL_MAX;
       vector<Chord> chords;
       bool okc = build_chords(M.quads, M.quad_neighbors, chords);
-      if (!okc) {
-        error("failed to build chord basis");
+      if (!okc || chords.size() == 0) {
+        error("failed to build chord basis (ok = {}, chords.size() = {})", okc, chords.size());
         return false;
       }
       vector<pair<double,Chord>> candidates;
@@ -1676,7 +1696,12 @@ namespace QMT {
       std::sort(chord_to_collapse.begin(), chord_to_collapse.end(),
           [](const pair<double,Chord>& a, const pair<double,Chord>& b) {
           return a.first < b.first; });
-      info("precomputation: {} chord collapse candidates. Chord avg. width stats: min={}, max={}", chord_to_collapse.size(), wming, wmaxg);
+      if (chord_to_collapse.size() > 0) {
+        info("precomputation: {} chord collapse candidates. Chord avg. width stats: min={}, max={}", chord_to_collapse.size(), wming, wmaxg);
+      } else {
+        warn("precomputation: {} chord collapse candidates", chord_to_collapse.size());
+        return true;
+      }
     }
 
     /* Memory optimization */
@@ -1734,8 +1759,9 @@ namespace QMT {
 
       bool okc = apply_chord_collapse(M, chord, q2qs, v2quads);
       if (!okc) {
-        error("iter {}, failed to collapse (should not happen) !", iter);
-        return false;
+        warn("iter {}, failed to collapse (should not happen ?) !", iter);
+        continue;
+        // return false;
       }
       if (SHOW_DETAILS) show_qmesh_in_view(M, "_i" + std::to_string(iter)+"_M");
 
