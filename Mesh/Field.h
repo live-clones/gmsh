@@ -11,6 +11,7 @@
 #include <vector>
 #include <list>
 #include "GmshConfig.h"
+#include "SVector3.h"
 #include "STensor3.h"
 #include <fstream>
 #include <string>
@@ -105,10 +106,16 @@ public:
   int id;
   std::map<std::string, FieldOption *> options;
   std::map<std::string, FieldCallback *> callbacks;
+  virtual int numComponents()const { return 1; }
   virtual bool isotropic() const { return true; }
-  // isotropic
-  virtual double operator()(double x, double y, double z, GEntity *ge = 0) = 0;
-  // anisotropic
+  // scalar value
+  virtual double operator()(double x, double y, double z, GEntity *ge = 0)=0;
+  // vector value
+  virtual void operator()(double x, double y, double z, SVector3 &,
+                          GEntity *ge = 0)
+  {
+  }
+  // tensor value
   virtual void operator()(double x, double y, double z, SMetric3 &,
                           GEntity *ge = 0)
   {

@@ -1532,12 +1532,34 @@ public:
     }
     return v;
   }
+  virtual int numComponents() const
+  {
+    PView *v = getView();
+    if(v && v->getData()->getNumTensors()) return 9;
+    if(v && v->getData()->getNumVectors()) return 3;
+    return 1;
+  }
   virtual bool isotropic() const
   {
     PView *v = getView();
     if(v && v->getData()->getNumTensors()) return false;
     return true;
   }
+  void operator()(double x, double y, double z, SVector3 &v, GEntity *ge = 0){
+    if (numComponents() == 3){// scaled cross field
+      double values[3];
+      if(!octree->searchVectorWithTol(x, y, z, values, 0, 0, 0.05)){
+	Msg::Info("No vector element found containing point (%g,%g,%g)", x, y, z);
+      }
+      else{
+	v = SVector3(values[0],values[1],values[2]);
+      }
+    }
+    else {
+      Msg::Info("No vector element found containing point (%g,%g,%g)", x, y, z);
+    }
+  }
+  
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
     PView *v = getView();
@@ -1550,9 +1572,25 @@ public:
     double l = 0.;
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
-    /// FIXME THIS DOES NOT WORK 
-    if(!octree->searchScalarWithTol(x, y, z, &l, 0, 0, 0.05))
-      Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
+
+    if (numComponents() == 3){// scaled cross field
+      double values[3];
+      if(!octree->searchVectorWithTol(x, y, z, values, 0, 0, 0.05)){
+	Msg::Info("No vector element found containing point (%g,%g,%g)", x, y, z);
+      }
+      else{
+	l = sqrt (values[0]*values[0]+values[1]*values[1]+values[2]*values[2]);
+      }
+    }
+    
+    else if (numComponents() == 1){
+      if(!octree->searchScalarWithTol(x, y, z, &l, 0, 0, 0.05)){
+	Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
+      }
+    }
+    else {
+      Msg::Info("No element found containing point (%g,%g,%g)", x, y, z);
+    }
     if(l <= 0 && crop_negative_values) return MAX_LC;
     return l;
   }
@@ -1570,26 +1608,6 @@ public:
     // of finding an element
     if(!octree->searchTensorWithTol(x, y, z, l, 0, 0, 0.05))
       Msg::Info("No tensor element found containing point (%g,%g,%g)", x, y, z);
-    if(0 && crop_negative_values) {
-      if(l[0] <= 0 && l[1] <= 0 && l[2] <= 0 && l[3] <= 0 && l[4] <= 0 &&
-         l[5] <= 0 && l[6] <= 0 && l[7] <= 0 && l[8] <= 0) {
-        for(int i = 0; i < 9; i++) l[i] = MAX_LC;
-      }
-      else {
-        for(int i = 0; i < 9; i++) {
-          if(l[i] <= 0) l[i] = 0;
-        }
-      }
-    }
-    metr(0, 0) = l[0];
-    metr(0, 1) = l[1];
-    metr(0, 2) = l[2];
-    metr(1, 0) = l[3];
-    metr(1, 1) = l[4];
-    metr(1, 2) = l[5];
-    metr(2, 0) = l[6];
-    metr(2, 1) = l[7];
-    metr(2, 2) = l[8];
   }
   const char *getName() { return "PostView"; }
   std::string getDescription()

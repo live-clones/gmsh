@@ -12,16 +12,15 @@
 #include "GEntity.h"
 
 surfacePointWithExclusionRegion::surfacePointWithExclusionRegion(
-  MVertex *v, SPoint2 p[4][NUMDIR], SPoint2 &_mp, SMetric3 &meshMetric,
+  MVertex *v, SPoint2 p[4], SPoint2 &_mp, SMetric3 &meshMetric,
   surfacePointWithExclusionRegion *father)
 {
   _v = v;
   _meshMetric = meshMetric;
   _center = _mp;
   for(int i = 0; i < 4; i++)
-    _q[i] = _center + (p[i][0] + p[(i + 1) % 4][0] - _center * 2) * FACTOR;
-  for(int i = 0; i < 4; i++)
-    for(int j = 0; j < NUMDIR; j++) _p[i][j] = p[i][j];
+    _q[i] = _center + (p[i] + p[(i + 1) % 4] - _center * 2) * FACTOR;
+  for(int i = 0; i < 4; i++)_p[i] = p[i];
 
   if(!father) {
     fullMatrix<double> V(3, 3);

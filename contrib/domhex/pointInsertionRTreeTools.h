@@ -21,8 +21,8 @@ static const double k2 = 0.5; // k2*h is the minimal distance to the boundary
 static const double sqrt3 = 1.73205081;
 static const double FACTOR = .71;
 
-static const int NUMDIR = 1;
-static const double DIRS[NUMDIR] = {0.0};
+//static const int NUMDIR = 1;
+//static const double DIRS[NUMDIR] = {0.0};
 
 // static const int NUMDIR = 3;
 // static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
@@ -31,7 +31,7 @@ class surfacePointWithExclusionRegion {
 public:
   MVertex *_v;
   SPoint2 _center;
-  SPoint2 _p[4][NUMDIR];
+  SPoint2 _p[4];
   SPoint2 _q[4];
   SMetric3 _meshMetric;
   double _distanceSummed;
@@ -43,7 +43,7 @@ public:
      + p1
 
    */
-  surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[4][NUMDIR],
+  surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[4],
                                   SPoint2 &_mp, SMetric3 &meshMetric,
                                   surfacePointWithExclusionRegion *father = 0);
 

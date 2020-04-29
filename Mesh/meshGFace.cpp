@@ -1722,7 +1722,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       buildBackgroundMesh(gf, CTX::instance()->mesh.crossFieldClosestPoint);
   }
   else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
-          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
+	  gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
     infty = true;
     if(!onlyInitialMesh) buildBackgroundMesh(gf, false);
   }
@@ -1739,9 +1739,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS) {
       bowyerWatsonParallelograms(gf);
-    }
-    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
-      bowyerWatsonParallelogramsConstrained(gf, gf->constr_vertices);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO) {
@@ -2782,7 +2779,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                         &equivalence, &parametricCoordinates);
   }
   else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
-          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
+	  gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
     infty = true;
     buildBackgroundMesh(gf, false, &equivalence, &parametricCoordinates);
   }
@@ -2810,9 +2807,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       bowyerWatsonFrontalLayers(gf, true, &equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
       bowyerWatsonParallelograms(gf, &equivalence, &parametricCoordinates);
-    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
-      bowyerWatsonParallelogramsConstrained(
-        gf, gf->constr_vertices, &equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf, 1000000000, &equivalence, &parametricCoordinates);
@@ -2971,9 +2965,6 @@ void meshGFace::operator()(GFace *gf, bool print)
     break;
   case ALGO_2D_PACK_PRLGRMS:
     algo = "Packing of Parallelograms";
-    break;
-  case ALGO_2D_PACK_PRLGRMS_CSTR:
-    algo = "Packing of Parallelograms Constrained";
     break;
   }
 
