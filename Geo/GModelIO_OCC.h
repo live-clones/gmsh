@@ -347,10 +347,6 @@ public:
   bool importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags);
 
-  // export all bound shapes to file
-  bool exportShapes(const std::string &fileName,
-                    const std::string &format = "");
-
   // apply various healing algorithms to try to fix the shapes
   bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
                   std::vector<std::pair<int, int> > &outDimTags,
@@ -362,6 +358,10 @@ public:
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);
+
+  // export all bound shapes to file
+  bool exportShapes(GModel *model, const std::string &fileName,
+                    const std::string &format = "");
 
   // queries
   bool getEntities(std::vector<std::pair<int, int> > &dimTags, int dim);
@@ -700,10 +700,6 @@ public:
   {
     return _error("import shape");
   }
-  bool exportShapes(const std::string &fileName, const std::string &format = "")
-  {
-    return _error("export shape");
-  }
   bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
                   std::vector<std::pair<int, int> > &outDimTags,
                   double tolerance, bool fixDegenerated, bool fixSmallEdges,
@@ -713,6 +709,11 @@ public:
   }
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}
+  bool exportShapes(GModel *model, const std::string &fileName,
+                    const std::string &format = "")
+  {
+    return _error("export shape");
+  }
   bool getEntities(std::vector<std::pair<int, int> > &dimTags, int dim)
   {
     return false;

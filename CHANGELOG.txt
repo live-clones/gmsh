@@ -3,7 +3,7 @@
 for mesh size fields in HXT; new OCC API functions to reduce the number of
 synchronizations for complex models; MED output now preserves node and element
 tags; new functions and options to control the first tag of entities, nodes and
-elements; small bug fixes.
+elements; fixed duplicated entities in STEP output; small bug fixes.
 
 * Incompatible API changes: new optional arguments to mesh/clear,
   mesh/createTopology, occ/addThruSections; new argument to

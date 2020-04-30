@@ -3586,36 +3586,36 @@ bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
   return true;
 }
 
-bool OCC_Internals::exportShapes(const std::string &fileName,
+bool OCC_Internals::exportShapes(GModel *model,
+                                 const std::string &fileName,
                                  const std::string &format)
 {
-  // iterate over all shapes with tags, and import them into the (sub)shape
-  // _maps
-  _somap.Clear();
-  _shmap.Clear();
-  _fmap.Clear();
-  _wmap.Clear();
-  _emap.Clear();
-  _vmap.Clear();
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
-  for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
-  for(; exp1.More(); exp1.Next()) _addShapeToMaps(exp1.Value());
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
-  for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp3(_tagSolid);
-  for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
-
-  // build a single compound shape
+  // put all top-level OCC shapes from a GModel in a single compound (we use the
+  // topology to only consider top-level shapes; otherwise we get duplicates in
+  // the STEP export)
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(int i = 1; i <= _vmap.Extent(); i++) b.Add(c, _vmap(i));
-  for(int i = 1; i <= _emap.Extent(); i++) b.Add(c, _emap(i));
-  for(int i = 1; i <= _wmap.Extent(); i++) b.Add(c, _wmap(i));
-  for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
-  for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
-  for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
+  for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); it++) {
+    GRegion *gr = *it;
+    if(gr->getNativeType() == GEntity::OpenCascadeModel)
+      b.Add(c, *(TopoDS_Solid *)gr->getNativePtr());
+  }
+  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); it++) {
+    GFace *gf = *it;
+    if(!gf->numRegions() && gf->getNativeType() == GEntity::OpenCascadeModel)
+      b.Add(c, *(TopoDS_Face *)gf->getNativePtr());
+  }
+  for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); it++) {
+    GEdge *ge = *it;
+    if(!ge->numFaces() && ge->getNativeType() == GEntity::OpenCascadeModel)
+      b.Add(c, *(TopoDS_Edge *)ge->getNativePtr());
+  }
+  for(GModel::viter it = model->firstVertex(); it != model->lastVertex(); it++) {
+    GVertex *gv = *it;
+    if(!gv->numEdges() && gv->getNativeType() == GEntity::OpenCascadeModel)
+      b.Add(c, *(TopoDS_Vertex *)gv->getNativePtr());
+  }
 
   std::vector<std::string> split = SplitFileName(fileName);
 
@@ -3629,10 +3629,6 @@ bool OCC_Internals::exportShapes(const std::string &fileName,
             split[2] == ".STEP" || split[2] == ".STP") {
       STEPControl_Writer writer;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
-      // writes shapes having a structure of (possibly nested) TopoDS_Compounds
-      // in the form of STEP assemblies, single shapes are written without
-      // assembly structures.
-      Interface_Static::SetCVal("write.step.assembly", "2");
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
         if(writer.Write(occfile.ToCString()) != IFSelect_RetDone) {
           Msg::Error("Could not create file '%s'", fileName.c_str());
@@ -4895,7 +4891,7 @@ int GModel::writeOCCBREP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(fn, "brep");
+  _occ_internals->exportShapes(this, fn, "brep");
   return 1;
 }
 
@@ -4905,7 +4901,7 @@ int GModel::writeOCCSTEP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(fn, "step");
+  _occ_internals->exportShapes(this, fn, "step");
   return 1;
 }
 

@@ -110,6 +110,9 @@ public:
   // faces that this entity bounds
   virtual std::vector<GFace *> faces() const { return l_faces; }
 
+  // get number of faces
+  virtual std::size_t numFaces() const { return l_faces.size(); }
+
   // get the point for the given parameter location
   virtual GPoint point(double p) const = 0;
 
