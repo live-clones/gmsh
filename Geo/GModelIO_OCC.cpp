@@ -3629,6 +3629,10 @@ bool OCC_Internals::exportShapes(const std::string &fileName,
             split[2] == ".STEP" || split[2] == ".STP") {
       STEPControl_Writer writer;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+      // writes shapes having a structure of (possibly nested) TopoDS_Compounds
+      // in the form of STEP assemblies, single shapes are written without
+      // assembly structures.
+      Interface_Static::SetCVal("write.step.assembly", "2");
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
         if(writer.Write(occfile.ToCString()) != IFSelect_RetDone) {
           Msg::Error("Could not create file '%s'", fileName.c_str());
