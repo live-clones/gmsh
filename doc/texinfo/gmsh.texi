@@ -483,10 +483,6 @@ developers}) to remedy the aforementioned (and all other) shortcomings!
 
 @cindex Bugs, reporting
 @cindex Reporting bugs
-@cindex Contact information
-@cindex Mailing list
-@cindex Authors, e-mail
-@cindex E-mail, authors
 
 Please file issues on
 @url{https://gitlab.onelab.info/gmsh/gmsh/issues}. Provide as precise a
@@ -6106,9 +6102,8 @@ for the licensing constraints.
 
 @url{http://gmsh.info} is the primary location to obtain information
 about Gmsh. There you will for example find the complete reference
-manual, a @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking
-database} and a searchable archive of the Gmsh mailing list
-(@email{gmsh@@onelab.info}).
+manual and the @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug
+tracking database}.
 @end enumerate
 
 @c -------------------------------------------------------------------------
