@@ -181,7 +181,7 @@ static void _computeICN(const fullVector<double> &det,
   }
 }
 
-static void _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
+static bool _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
                                      FuncSpaceData &fsDet,
                                      int orderSamplingPoints = 0)
 {
@@ -213,8 +213,7 @@ static void _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
     default:
       Msg::Error("Quality measure not implemented for type of element %d",
                  el->getType());
-      fsGrad = FuncSpaceData();
-      fsDet = FuncSpaceData();
+      return false;
     }
   }
   else {
@@ -233,10 +232,12 @@ static void _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
       fsDet = FuncSpaceData(el, true, 1, orderSamplingPoints - 1, false);
       break;
     default:
-      Msg::Error("IGE not implemented for type of element %d", el->getType());
-      return;
+      Msg::Error("Quality measure not implemented for type of element %d",
+                 el->getType());
+      return false;
     }
   }
+  return true;
 }
 
 namespace jacobianBasedQuality {
@@ -296,7 +297,7 @@ namespace jacobianBasedQuality {
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
-    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace);
+    if(!_getQualityFunctionSpace(el, jacMatSpace, jacDetSpace)) return 0;
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
@@ -342,7 +343,7 @@ namespace jacobianBasedQuality {
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
-    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace);
+    if(!_getQualityFunctionSpace(el, jacMatSpace, jacDetSpace)) return 0;
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
@@ -438,7 +439,7 @@ namespace jacobianBasedQuality {
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
-    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg);
+    if(!_getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg)) return;
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
@@ -465,7 +466,7 @@ namespace jacobianBasedQuality {
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
-    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg);
+    if(!_getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg)) return;
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
