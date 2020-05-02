@@ -28,6 +28,8 @@ private:
   double _length;
   bool _tooSmall;
   closestPointFinder *_cp;
+  // prescribed mesh size (_lc) at parametric points (_u_lc) (sorted by _u_lc)
+  std::vector<double> _u_lc, _lc;
 
 protected:
   GVertex *v0, *v1;
@@ -161,12 +163,14 @@ public:
   double length(const double &u0, const double &u1, const int nbQuadPoints = 4);
 
   // get the prescribed mesh size on the edge
-  virtual double prescribedMeshSizeAtVertex() const
+  double prescribedMeshSizeAtVertex() const
   {
     return meshAttributes.meshSize;
   }
 
-  virtual double prescribedMeshSizeAtParam(double u);
+  double prescribedMeshSizeAtParam(double u);
+
+  void setMeshSizeParametric(const std::vector<double> u, const std::vector<double> lc);
 
   // true if start == end and no more than 2 segments
   void setTooSmall(bool const b) { _tooSmall = b; }

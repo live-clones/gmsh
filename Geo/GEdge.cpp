@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include <numeric>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
@@ -875,21 +876,39 @@ std::vector<GVertex *> GEdge::vertices() const
 
 double GEdge::prescribedMeshSizeAtParam(double u)
 {
-  if (v0 && v1) {
-    double lc0 = v0->prescribedMeshSizeAtVertex();
-    double lc1 = v1->prescribedMeshSizeAtVertex();
-    if(lc0 >= MAX_LC && lc1 >= MAX_LC) {
-      // FIXME we might want to remove this to make all lc treatment
-      // consistent
-      return CTX::instance()->lc / 10.;
-    }
-    else {
-      Range<double> range = parBounds(0);
-      double a = (u - range.low()) / (range.high() - range.low());
-      return (1 - a) * lc0 + (a)*lc1;
-    }
-  }
-  else {
+  if (_lc.empty()) {
     return MAX_LC;
+  }
+  const std::vector<double>::iterator &it = std::lower_bound(_u_lc.begin(),_u_lc.end(),u);
+  size_t i1 = std::min<size_t>(it-_u_lc.begin(),_u_lc.size()-1);
+  size_t i0 = std::max<size_t>(1,i1)-1;
+  double u0 = _u_lc[i0], u1 = _u_lc[i1];
+  double l0 = _lc[i0], l1 = _lc[i1];
+  if (i1 == i0 || u0 == u1)
+    return l0;
+  double alpha = (u-u0)/(u1-u0);
+  return l0*(1-alpha) + l1*(alpha);
+}
+
+struct vindexsort {
+  const std::vector<double> &v;
+  vindexsort(const std::vector<double> &vp) :v(vp){};
+  bool operator()(size_t i0, size_t i1) {return v[i0]<v[i1];}
+};
+
+void GEdge::setMeshSizeParametric(const std::vector<double> u, const std::vector<double> lc)
+{
+  if (u.size() != lc.size()) {
+    Msg::Error("setMeshSizeParametric : number of coordinates and number of mesh size do not match.");
+  }
+  std::vector<size_t> index(u.size());
+  for (size_t i = 0; i < u.size(); ++i)
+    index[i] = i;
+  std::sort(index.begin(),index.end(),vindexsort(u));
+  _u_lc.resize(u.size());
+  _lc.resize(lc.size());
+  for (size_t i = 0; i < u.size(); ++i){
+    _u_lc[i] = u[index[i]];
+    _lc[i] = lc[index[i]];
   }
 }

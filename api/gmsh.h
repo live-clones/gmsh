@@ -1089,6 +1089,15 @@ namespace gmsh { // Top-level functions
       GMSH_API void setSize(const gmsh::vectorpair & dimTags,
                             const double size);
 
+      // gmsh::model::mesh::setSizeAtParametricPoints
+      //
+      // Set mesh size at given parametric point on the model entities `dimTags'.
+      // Currently only entities of dimension 1 (lines) are handled.
+      GMSH_API void setSizeAtParametricPoints(const int dim,
+                                              const int tag,
+                                              const std::vector<double> & points,
+                                              const std::vector<double> & sizes);
+
       // gmsh::model::mesh::setTransfiniteCurve
       //
       // Set a transfinite meshing constraint on the curve `tag', with `numNodes'

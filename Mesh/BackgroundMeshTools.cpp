@@ -138,7 +138,24 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
   }
   case 1: {
     GEdge *ged = (GEdge *)ge;
-    return ged->prescribedMeshSizeAtParam(U);
+    GVertex *v1 = ged->getBeginVertex();
+    GVertex *v2 = ged->getEndVertex();
+    if(v1 && v2) {
+      double lc1 = v1->prescribedMeshSizeAtVertex();
+      double lc2 = v2->prescribedMeshSizeAtVertex();
+      if(lc1 >= MAX_LC && lc2 >= MAX_LC) {
+        // FIXME we might want to remove this to make all lc treatment
+        // consistent
+        return CTX::instance()->lc / 10.;
+      }
+      else {
+        Range<double> range = ged->parBounds(0);
+        double a = (U - range.low()) / (range.high() - range.low());
+        return (1 - a) * lc1 + (a)*lc2;
+      }
+    }
+    else
+      return MAX_LC;
   }
   default: return MAX_LC;
   }
@@ -212,8 +229,10 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
   // global lc from entity
   double l4 = ge ? ge->getMeshSize() : MAX_LC;
 
+  double l5 = (ge && ge->dim() == 1) ? ((GEdge*)ge)->prescribedMeshSizeAtParam(U) : MAX_LC;
+
   // take the minimum
-  double lc = std::min(std::min(std::min(l1, l2), l3), l4);
+  double lc = std::min(std::min(std::min(std::min(l1, l2), l3), l4),l5);
 
   return lc;
 }

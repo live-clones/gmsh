@@ -2033,6 +2033,21 @@ function setSize(dimTags, size)
 end
 
 """
+    gmsh.model.mesh.setSizeAtParametricPoints(dim, tag, points, sizes)
+
+Set mesh size at given parametric point on the model entities `dimTags`.
+Currently only entities of dimension 1 (lines) are handled.
+"""
+function setSizeAtParametricPoints(dim, tag, points, sizes)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetSizeAtParametricPoints, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, points), length(points), convert(Vector{Cdouble}, sizes), length(sizes), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetSizeAtParametricPoints returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
 
 Set a transfinite meshing constraint on the curve `tag`, with `numNodes` nodes

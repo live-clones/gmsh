@@ -1645,6 +1645,22 @@ namespace gmsh { // Top-level functions
         gmshFree(api_dimTags_);
       }
 
+      // Set mesh size at given parametric point on the model entities `dimTags'.
+      // Currently only entities of dimension 1 (lines) are handled.
+      inline void setSizeAtParametricPoints(const int dim,
+                                            const int tag,
+                                            const std::vector<double> & points,
+                                            const std::vector<double> & sizes)
+      {
+        int ierr = 0;
+        double *api_points_; size_t api_points_n_; vector2ptr(points, &api_points_, &api_points_n_);
+        double *api_sizes_; size_t api_sizes_n_; vector2ptr(sizes, &api_sizes_, &api_sizes_n_);
+        gmshModelMeshSetSizeAtParametricPoints(dim, tag, api_points_, api_points_n_, api_sizes_, api_sizes_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_points_);
+        gmshFree(api_sizes_);
+      }
+
       // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
       // nodes distributed according to `meshType' and `coef'. Currently supported
       // types are "Progression" (geometrical progression with power `coef') and

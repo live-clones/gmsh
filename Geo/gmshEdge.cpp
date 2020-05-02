@@ -13,10 +13,37 @@
 #include "Context.h"
 #include "decasteljau.h"
 
+static void setMeshSizeFromCurvePoints(GEdge &edge, const Curve &curve) {
+  if (!CTX::instance()->mesh.lcFromParametricPoints)
+    return;
+  switch(curve.Typ) {
+    case MSH_SEGM_LINE:
+    case MSH_SEGM_SPLN:
+    case MSH_SEGM_BSPLN:
+    case MSH_SEGM_NURBS:
+    case MSH_SEGM_BEZIER:
+      {
+        int n =  List_Nbr(curve.Control_Points);
+        std::vector<double> lc(n), u_lc(n);
+        for (int i = 0; i < n; ++i) {
+          Vertex *v;
+          List_Read(curve.Control_Points,i,&v);
+          u_lc[i] = i*1./(n-1);
+          lc[i] = v->lc;
+        }
+        edge.setMeshSizeParametric(u_lc,lc);
+        break;
+      }
+    default:
+      break;
+  }
+}
+
 gmshEdge::gmshEdge(GModel *m, Curve *edge, GVertex *v1, GVertex *v2)
   : GEdge(m, edge->Num, v1, v2), c(edge)
 {
   gmshEdge::resetMeshAttributes();
+  setMeshSizeFromCurvePoints(*this,*edge);
 }
 
 void gmshEdge::resetNativePtr(Curve *edge, GVertex *_v1, GVertex *_v2)
@@ -26,6 +53,7 @@ void gmshEdge::resetNativePtr(Curve *edge, GVertex *_v1, GVertex *_v2)
   v1 = _v2;
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);
+  setMeshSizeFromCurvePoints(*this,*edge);
 }
 
 bool gmshEdge::degenerate(int dim) const
@@ -51,15 +79,6 @@ void gmshEdge::resetMeshAttributes()
 Range<double> gmshEdge::parBounds(int i) const
 {
   return Range<double>(c->ubeg, c->uend);
-}
-
-double gmshEdge::prescribedMeshSizeAtParam(double u)
-{
-  if (!CTX::instance()->mesh.lcFromParametricPoints) {
-    return GEdge::prescribedMeshSizeAtParam(u);
-  }
-  Vertex a = InterpolateCurve(c,u,0);
-  return a.lc;
 }
 
 GPoint gmshEdge::point(double par) const

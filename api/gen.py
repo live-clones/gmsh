@@ -353,6 +353,9 @@ mesh.add('getGhostElements', doc, None, iint('dim'), iint('tag'), ovectorsize('e
 doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
+doc = '''Set mesh size at given parametric point on the model entities `dimTags'. Currently only entities of dimension 1 (lines) are handled.'''
+mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('points'), ivectordouble('sizes'))
+
 doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
 mesh.add('setTransfiniteCurve', doc, None, iint('tag'), iint('numNodes'), istring('meshType', '"Progression"'), idouble('coef', '1.'))
 
