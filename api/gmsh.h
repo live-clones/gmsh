@@ -905,8 +905,8 @@ namespace gmsh { // Top-level functions
       // and C++ only.
       GMSH_API void preallocateJacobians(const int elementType,
                                          const int numEvaluationPoints,
-                                         const bool allocateJacobian,
-                                         const bool allocateDeterminant,
+                                         const bool allocateJacobians,
+                                         const bool allocateDeterminants,
                                          const bool allocateCoord,
                                          std::vector<double> & jacobians,
                                          std::vector<double> & determinants,

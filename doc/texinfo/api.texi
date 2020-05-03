@@ -1415,7 +1415,7 @@ For C and C++ only.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{numEvaluationPoints}, @code{allocateJacobian}, @code{allocateDeterminant}, @code{allocateCoord}, @code{tag = -1}
+@code{elementType}, @code{numEvaluationPoints}, @code{allocateJacobians}, @code{allocateDeterminants}, @code{allocateCoord}, @code{tag = -1}
 @item Output:
 @code{jacobians}, @code{determinants}, @code{coord}
 @item Return:

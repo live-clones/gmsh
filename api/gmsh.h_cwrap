@@ -1371,8 +1371,8 @@ namespace gmsh { // Top-level functions
       // and C++ only.
       inline void preallocateJacobians(const int elementType,
                                        const int numEvaluationPoints,
-                                       const bool allocateJacobian,
-                                       const bool allocateDeterminant,
+                                       const bool allocateJacobians,
+                                       const bool allocateDeterminants,
                                        const bool allocateCoord,
                                        std::vector<double> & jacobians,
                                        std::vector<double> & determinants,
@@ -1383,7 +1383,7 @@ namespace gmsh { // Top-level functions
         double *api_jacobians_; size_t api_jacobians_n_;
         double *api_determinants_; size_t api_determinants_n_;
         double *api_coord_; size_t api_coord_n_;
-        gmshModelMeshPreallocateJacobians(elementType, numEvaluationPoints, (int)allocateJacobian, (int)allocateDeterminant, (int)allocateCoord, &api_jacobians_, &api_jacobians_n_, &api_determinants_, &api_determinants_n_, &api_coord_, &api_coord_n_, tag, &ierr);
+        gmshModelMeshPreallocateJacobians(elementType, numEvaluationPoints, (int)allocateJacobians, (int)allocateDeterminants, (int)allocateCoord, &api_jacobians_, &api_jacobians_n_, &api_determinants_, &api_determinants_n_, &api_coord_, &api_coord_n_, tag, &ierr);
         if(ierr) throw ierr;
         jacobians.assign(api_jacobians_, api_jacobians_ + api_jacobians_n_); gmshFree(api_jacobians_);
         determinants.assign(api_determinants_, api_determinants_ + api_determinants_n_); gmshFree(api_determinants_);

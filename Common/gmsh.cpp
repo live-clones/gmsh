@@ -1917,7 +1917,7 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
 GMSH_API void gmsh::model::mesh::getJacobians(
   const int elementType, const std::vector<double> &referenceCoord,
   std::vector<double> &jacobians, std::vector<double> &determinants,
-  std::vector<double> &points, const int tag, const std::size_t task,
+  std::vector<double> &coord, const int tag, const std::size_t task,
   const std::size_t numTasks)
 {
   if(!_isInitialized()) { throw - 1; }
@@ -1926,19 +1926,19 @@ GMSH_API void gmsh::model::mesh::getJacobians(
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
-  int numIntegrationPoints = referenceCoord.size() / 3;
+  int numPoints = referenceCoord.size() / 3;
   // check arrays
   bool haveJacobians = jacobians.size();
   bool haveDeterminants = determinants.size();
-  bool havePoints = points.size();
+  bool havePoints = coord.size();
   if(!haveDeterminants && !haveJacobians && !havePoints) {
     if(numTasks > 1)
       Msg::Warning("Jacobians, determinants and points should be preallocated "
                    "if numTasks > 1");
     haveJacobians = haveDeterminants = havePoints = true;
-    preallocateJacobians(elementType, numIntegrationPoints, haveJacobians,
+    preallocateJacobians(elementType, numPoints, haveJacobians,
                          haveDeterminants, havePoints, jacobians, determinants,
-                         points, tag);
+                         coord, tag);
   }
   // get data
   {
@@ -1953,25 +1953,25 @@ GMSH_API void gmsh::model::mesh::getJacobians(
     }
     const size_t begin = (task * numElements) / numTasks;
     const size_t end = ((task + 1) * numElements) / numTasks;
-    if(haveDeterminants && (end * numIntegrationPoints > determinants.size())) {
+    if(haveDeterminants && (end * numPoints > determinants.size())) {
       Msg::Error("Wrong size of determinants array (%d < %d)",
-                 determinants.size(), end * numIntegrationPoints);
+                 determinants.size(), end * numPoints);
       throw 4;
     }
-    if(haveJacobians && (9 * end * numIntegrationPoints > jacobians.size())) {
+    if(haveJacobians && (9 * end * numPoints > jacobians.size())) {
       Msg::Error("Wrong size of jacobians array (%d < %d)", jacobians.size(),
-                 9 * end * numIntegrationPoints);
+                 9 * end * numPoints);
       throw 4;
     }
-    if(havePoints && (3 * end * numIntegrationPoints > points.size())) {
-      Msg::Error("Wrong size of points array (%d < %d)", points.size(),
-                 3 * end * numIntegrationPoints);
+    if(havePoints && (3 * end * numPoints > coord.size())) {
+      Msg::Error("Wrong size of points array (%d < %d)", coord.size(),
+                 3 * end * numPoints);
       throw 4;
     }
     if(haveDeterminants && haveJacobians && havePoints) {
       std::vector<std::vector<SVector3> > gsf;
       size_t o = 0;
-      size_t idx = begin * numIntegrationPoints;
+      size_t idx = begin * numPoints;
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -1979,8 +1979,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(
           if(o >= begin && o < end) {
             MElement *e = ge->getMeshElementByType(familyType, j);
             if(gsf.size() == 0) {
-              gsf.resize(numIntegrationPoints);
-              for(int k = 0; k < numIntegrationPoints; k++) {
+              gsf.resize(numPoints);
+              for(int k = 0; k < numPoints; k++) {
                 double value[1256][3];
                 e->getGradShapeFunctions(referenceCoord[3 * k],
                                          referenceCoord[3 * k + 1],
@@ -1993,9 +1993,9 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                 }
               }
             }
-            for(int k = 0; k < numIntegrationPoints; k++) {
+            for(int k = 0; k < numPoints; k++) {
               e->pnt(referenceCoord[3 * k], referenceCoord[3 * k + 1],
-                     referenceCoord[3 * k + 2], &points[idx * 3]);
+                     referenceCoord[3 * k + 2], &coord[idx * 3]);
               determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx * 9]);
               idx++;
             }
@@ -2007,7 +2007,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
     else if(haveDeterminants && haveJacobians && !havePoints) {
       std::vector<std::vector<SVector3> > gsf;
       size_t o = 0;
-      size_t idx = begin * numIntegrationPoints;
+      size_t idx = begin * numPoints;
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -2015,8 +2015,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(
           if(o >= begin && o < end) {
             MElement *e = ge->getMeshElementByType(familyType, j);
             if(gsf.size() == 0) {
-              gsf.resize(numIntegrationPoints);
-              for(int k = 0; k < numIntegrationPoints; k++) {
+              gsf.resize(numPoints);
+              for(int k = 0; k < numPoints; k++) {
                 double value[1256][3];
                 e->getGradShapeFunctions(referenceCoord[3 * k],
                                          referenceCoord[3 * k + 1],
@@ -2029,7 +2029,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                 }
               }
             }
-            for(int k = 0; k < numIntegrationPoints; k++) {
+            for(int k = 0; k < numPoints; k++) {
               determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx * 9]);
               idx++;
             }
@@ -2042,7 +2042,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
       std::vector<double> jac(9, 0.);
       std::vector<std::vector<SVector3> > gsf;
       size_t o = 0;
-      size_t idx = begin * numIntegrationPoints;
+      size_t idx = begin * numPoints;
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -2050,8 +2050,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(
           if(o >= begin && o < end) {
             MElement *e = ge->getMeshElementByType(familyType, j);
             if(gsf.size() == 0) {
-              gsf.resize(numIntegrationPoints);
-              for(int k = 0; k < numIntegrationPoints; k++) {
+              gsf.resize(numPoints);
+              for(int k = 0; k < numPoints; k++) {
                 double value[1256][3];
                 e->getGradShapeFunctions(referenceCoord[3 * k],
                                          referenceCoord[3 * k + 1],
@@ -2064,9 +2064,9 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                 }
               }
             }
-            for(int k = 0; k < numIntegrationPoints; k++) {
+            for(int k = 0; k < numPoints; k++) {
               e->pnt(referenceCoord[3 * k], referenceCoord[3 * k + 1],
-                     referenceCoord[3 * k + 2], &points[idx * 3]);
+                     referenceCoord[3 * k + 2], &coord[idx * 3]);
               determinants[idx] = e->getJacobian(gsf[k], &jac[0]);
               idx++;
             }
@@ -2079,7 +2079,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
       std::vector<double> jac(9, 0.);
       std::vector<std::vector<SVector3> > gsf;
       size_t o = 0;
-      size_t idx = begin * numIntegrationPoints;
+      size_t idx = begin * numPoints;
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -2087,8 +2087,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(
           if(o >= begin && o < end) {
             MElement *e = ge->getMeshElementByType(familyType, j);
             if(gsf.size() == 0) {
-              gsf.resize(numIntegrationPoints);
-              for(int k = 0; k < numIntegrationPoints; k++) {
+              gsf.resize(numPoints);
+              for(int k = 0; k < numPoints; k++) {
                 double value[1256][3];
                 e->getGradShapeFunctions(referenceCoord[3 * k],
                                          referenceCoord[3 * k + 1],
@@ -2101,7 +2101,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                 }
               }
             }
-            for(int k = 0; k < numIntegrationPoints; k++) {
+            for(int k = 0; k < numPoints; k++) {
               determinants[idx] = e->getJacobian(gsf[k], &jac[0]);
               idx++;
             }
@@ -2113,7 +2113,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
     else if(!haveDeterminants && haveJacobians && !havePoints) {
       std::vector<std::vector<SVector3> > gsf;
       size_t o = 0;
-      size_t idx = begin * numIntegrationPoints;
+      size_t idx = begin * numPoints;
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -2121,8 +2121,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(
           if(o >= begin && o < end) {
             MElement *e = ge->getMeshElementByType(familyType, j);
             if(gsf.size() == 0) {
-              gsf.resize(numIntegrationPoints);
-              for(int k = 0; k < numIntegrationPoints; k++) {
+              gsf.resize(numPoints);
+              for(int k = 0; k < numPoints; k++) {
                 double value[1256][3];
                 e->getGradShapeFunctions(referenceCoord[3 * k],
                                          referenceCoord[3 * k + 1],
@@ -2135,7 +2135,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                 }
               }
             }
-            for(int k = 0; k < numIntegrationPoints; k++) {
+            for(int k = 0; k < numPoints; k++) {
               e->getJacobian(gsf[k], &jacobians[idx * 9]);
               idx++;
             }
@@ -2157,9 +2157,10 @@ GMSH_API void gmsh::model::mesh::getJacobians(
 }
 
 GMSH_API void gmsh::model::mesh::preallocateJacobians(
-  const int elementType, const int numIntegrationPoints, const bool jacobian,
-  const bool determinant, const bool point, std::vector<double> &jacobians,
-  std::vector<double> &determinants, std::vector<double> &points, const int tag)
+  const int elementType, const int numPoints,
+  const bool allocateJacobians, const bool allocateDeterminants,
+  const bool allocateCoord, std::vector<double> &jacobians,
+  std::vector<double> &determinants, std::vector<double> &coord, const int tag)
 {
   if(!_isInitialized()) { throw - 1; }
   int dim = ElementType::getDimension(elementType);
@@ -2171,17 +2172,17 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
-  if(jacobian) {
+  if(allocateJacobians) {
     jacobians.clear();
-    jacobians.resize(9 * numElements * numIntegrationPoints);
+    jacobians.resize(9 * numElements * numPoints);
   }
-  if(determinant) {
+  if(allocateDeterminants) {
     determinants.clear();
-    determinants.resize(numElements * numIntegrationPoints);
+    determinants.resize(numElements * numPoints);
   }
-  if(point) {
-    points.clear();
-    points.resize(3 * numElements * numIntegrationPoints);
+  if(allocateCoord) {
+    coord.clear();
+    coord.resize(3 * numElements * numPoints);
   }
 }
 

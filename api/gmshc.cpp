@@ -1185,14 +1185,14 @@ GMSH_API void gmshModelMeshGetJacobians(const int elementType, double * referenc
   }
 }
 
-GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType, const int numEvaluationPoints, const int allocateJacobian, const int allocateDeterminant, const int allocateCoord, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, double ** coord, size_t * coord_n, const int tag, int * ierr)
+GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType, const int numEvaluationPoints, const int allocateJacobians, const int allocateDeterminants, const int allocateCoord, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, double ** coord, size_t * coord_n, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_jacobians_;
     std::vector<double> api_determinants_;
     std::vector<double> api_coord_;
-    gmsh::model::mesh::preallocateJacobians(elementType, numEvaluationPoints, allocateJacobian, allocateDeterminant, allocateCoord, api_jacobians_, api_determinants_, api_coord_, tag);
+    gmsh::model::mesh::preallocateJacobians(elementType, numEvaluationPoints, allocateJacobians, allocateDeterminants, allocateCoord, api_jacobians_, api_determinants_, api_coord_, tag);
     vector2ptr(api_jacobians_, jacobians, jacobians_n);
     vector2ptr(api_determinants_, determinants, determinants_n);
     vector2ptr(api_coord_, coord, coord_n);
