@@ -323,7 +323,8 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
     if(normals) delete normals;
   }
   if(cntInverted) {
-    Msg::Warning("%d elements are completely inverted", cntInverted);
+    Msg::Warning("%d element%s completely inverted", (cntInverted > 1) ?
+                 "s are" : " is");
   }
   _computedJac[dim - 1] = true;
   bezierCoeff::releasePools();
@@ -404,7 +405,7 @@ int GMSH_AnalyseMeshQualityPlugin::_hideWithThreshold(int askedDim,
 void GMSH_AnalyseMeshQualityPlugin::_printStatJacobian()
 {
   if(_data.empty()) {
-    Msg::Info("No stat to print.");
+    Msg::Info("No stat to print");
     return;
   }
   double infminJ, supminJ, avgminJ;
@@ -453,7 +454,7 @@ void GMSH_AnalyseMeshQualityPlugin::_printStatJacobian()
 void GMSH_AnalyseMeshQualityPlugin::_printStatIGE()
 {
   if(_data.empty()) {
-    Msg::Info("No stat to print.");
+    Msg::Info("No stat to print");
     return;
   }
   double infminS, supminS, avgminS;
@@ -473,7 +474,7 @@ void GMSH_AnalyseMeshQualityPlugin::_printStatIGE()
 void GMSH_AnalyseMeshQualityPlugin::_printStatICN()
 {
   if(_data.empty()) {
-    Msg::Info("No stat to print.");
+    Msg::Info("No stat to print");
     return;
   }
   double infminI, supminI, avgminI;
