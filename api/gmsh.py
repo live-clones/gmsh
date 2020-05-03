@@ -1016,24 +1016,24 @@ class model:
         parametric coordinates on the curve) or 2 (with `parametricCoord'
         containing pairs of u, v parametric coordinates on the surface,
         concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z coordinates
-        in `points', concatenated: [p1x, p1y, p1z, p2x, ...].
+        in `coord', concatenated: [p1x, p1y, p1z, p2x, ...].
 
-        Return `points'.
+        Return `coord'.
         """
         api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
-        api_points_, api_points_n_ = POINTER(c_double)(), c_size_t()
+        api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
         ierr = c_int()
         lib.gmshModelGetValue(
             c_int(dim),
             c_int(tag),
             api_parametricCoord_, api_parametricCoord_n_,
-            byref(api_points_), byref(api_points_n_),
+            byref(api_coord_), byref(api_coord_n_),
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(
                 "gmshModelGetValue returned non-zero error code: ",
                 ierr.value)
-        return _ovectordouble(api_points_, api_points_n_.value)
+        return _ovectordouble(api_coord_, api_coord_n_.value)
 
     @staticmethod
     def getDerivative(dim, tag, parametricCoord):
@@ -1158,12 +1158,12 @@ class model:
         return _ovectordouble(api_normals_, api_normals_n_.value)
 
     @staticmethod
-    def getParametrization(dim, tag, points):
+    def getParametrization(dim, tag, coord):
         """
-        gmsh.model.getParametrization(dim, tag, points)
+        gmsh.model.getParametrization(dim, tag, coord)
 
-        Get the parametric coordinates `parametricCoord' for the points `points' on
-        the entity of dimension `dim' and tag `tag'. `points' are given as triplets
+        Get the parametric coordinates `parametricCoord' for the points `coord' on
+        the entity of dimension `dim' and tag `tag'. `coord' are given as triplets
         of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
         `parametricCoord' returns the parametric coordinates t on the curve (if
         `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if
@@ -1171,13 +1171,13 @@ class model:
 
         Return `parametricCoord'.
         """
-        api_points_, api_points_n_ = _ivectordouble(points)
+        api_coord_, api_coord_n_ = _ivectordouble(coord)
         api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
         ierr = c_int()
         lib.gmshModelGetParametrization(
             c_int(dim),
             c_int(tag),
-            api_points_, api_points_n_,
+            api_coord_, api_coord_n_,
             byref(api_parametricCoord_), byref(api_parametricCoord_n_),
             byref(ierr))
         if ierr.value != 0:
@@ -2185,62 +2185,62 @@ class model:
             Get the numerical quadrature information for the given element type
             `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
             Gauss quadrature suited for integrating 4th order polynomials).
-            `integrationPoints' contains the u, v, w coordinates of the G integration
+            `referenceCoord' contains the u, v, w coordinates of the G integration
             points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
-            `integrationWeigths' contains the associated weights: [g1q, ..., gGq].
+            `weights' contains the associated weights: [g1q, ..., gGq].
 
-            Return `integrationPoints', `integrationWeights'.
+            Return `referenceCoord', `weights'.
             """
-            api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
-            api_integrationWeights_, api_integrationWeights_n_ = POINTER(c_double)(), c_size_t()
+            api_referenceCoord_, api_referenceCoord_n_ = POINTER(c_double)(), c_size_t()
+            api_weights_, api_weights_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetIntegrationPoints(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
-                byref(api_integrationPoints_), byref(api_integrationPoints_n_),
-                byref(api_integrationWeights_), byref(api_integrationWeights_n_),
+                byref(api_referenceCoord_), byref(api_referenceCoord_n_),
+                byref(api_weights_), byref(api_weights_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshGetIntegrationPoints returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
-                _ovectordouble(api_integrationWeights_, api_integrationWeights_n_.value))
+                _ovectordouble(api_referenceCoord_, api_referenceCoord_n_.value),
+                _ovectordouble(api_weights_, api_weights_n_.value))
 
         @staticmethod
-        def getJacobians(elementType, integrationPoints, tag=-1, task=0, numTasks=1):
+        def getJacobians(elementType, referenceCoord, tag=-1, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getJacobians(elementType, integrationPoints, tag=-1, task=0, numTasks=1)
+            gmsh.model.mesh.getJacobians(elementType, referenceCoord, tag=-1, task=0, numTasks=1)
 
             Get the Jacobians of all the elements of type `elementType' classified on
-            the entity of tag `tag', at the G integration points `integrationPoints'
-            given as concatenated triplets of coordinates in the reference element
-            [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with
-            elements in the same order as in `getElements' and `getElementsByType'.
-            `jacobians' contains for each element the 9 entries of the 3x3 Jacobian
-            matrix at each integration point. The matrix is returned by column:
-            [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw,
-            e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for
-            each element the determinant of the Jacobian matrix at each integration
-            point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each
-            element the x, y, z coordinates of the integration points. If `tag' < 0,
-            get the Jacobian data for all entities. If `numTasks' > 1, only compute and
-            return the part of the data indexed by `task'.
+            the entity of tag `tag', at the G evaluation points `referenceCoord' given
+            as concatenated triplets of coordinates in the reference element [g1u, g1v,
+            g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the
+            same order as in `getElements' and `getElementsByType'. `jacobians'
+            contains for each element the 9 entries of the 3x3 Jacobian matrix at each
+            evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu,
+            e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
+            Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for each element the
+            determinant of the Jacobian matrix at each evaluation point: [e1g1, e1g2,
+            ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z
+            coordinates of the evaluation points. If `tag' < 0, get the Jacobian data
+            for all entities. If `numTasks' > 1, only compute and return the part of
+            the data indexed by `task'.
 
-            Return `jacobians', `determinants', `points'.
+            Return `jacobians', `determinants', `coord'.
             """
-            api_integrationPoints_, api_integrationPoints_n_ = _ivectordouble(integrationPoints)
+            api_referenceCoord_, api_referenceCoord_n_ = _ivectordouble(referenceCoord)
             api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
             api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
-            api_points_, api_points_n_ = POINTER(c_double)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetJacobians(
                 c_int(elementType),
-                api_integrationPoints_, api_integrationPoints_n_,
+                api_referenceCoord_, api_referenceCoord_n_,
                 byref(api_jacobians_), byref(api_jacobians_n_),
                 byref(api_determinants_), byref(api_determinants_n_),
-                byref(api_points_), byref(api_points_n_),
+                byref(api_coord_), byref(api_coord_n_),
                 c_int(tag),
                 c_size_t(task),
                 c_size_t(numTasks),
@@ -2252,15 +2252,15 @@ class model:
             return (
                 _ovectordouble(api_jacobians_, api_jacobians_n_.value),
                 _ovectordouble(api_determinants_, api_determinants_n_.value),
-                _ovectordouble(api_points_, api_points_n_.value))
+                _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
-        def getBasisFunctions(elementType, integrationPoints, functionSpaceType):
+        def getBasisFunctions(elementType, referenceCoord, functionSpaceType):
             """
-            gmsh.model.mesh.getBasisFunctions(elementType, integrationPoints, functionSpaceType)
+            gmsh.model.mesh.getBasisFunctions(elementType, referenceCoord, functionSpaceType)
 
             Get the basis functions of the element of type `elementType' at the
-            integration points `integrationPoints' (given as concatenated triplets of
+            evaluation points `referenceCoord' (given as concatenated triplets of
             coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
             for the function space `functionSpaceType' (e.g. "Lagrange" or
             "GradLagrange" for Lagrange basis functions or their gradient, in the u, v,
@@ -2268,7 +2268,7 @@ class model:
             "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions).
             `numComponents' returns the number C of components of a basis function.
             `basisFunctions' returns the value of the N basis functions at the
-            integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
+            evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
             [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
             functions that depend on the orientation of the elements, all values for
             the first orientation are returned first, followed by values for the
@@ -2276,14 +2276,14 @@ class model:
 
             Return `numComponents', `basisFunctions', `numOrientations'.
             """
-            api_integrationPoints_, api_integrationPoints_n_ = _ivectordouble(integrationPoints)
+            api_referenceCoord_, api_referenceCoord_n_ = _ivectordouble(referenceCoord)
             api_numComponents_ = c_int()
             api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
             api_numOrientations_ = c_int()
             ierr = c_int()
             lib.gmshModelMeshGetBasisFunctions(
                 c_int(elementType),
-                api_integrationPoints_, api_integrationPoints_n_,
+                api_referenceCoord_, api_referenceCoord_n_,
                 c_char_p(functionSpaceType.encode()),
                 byref(api_numComponents_),
                 byref(api_basisFunctions_), byref(api_basisFunctions_n_),
@@ -2604,20 +2604,21 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setSizeAtParametricPoints(dim, tag, points, sizes):
+        def setSizeAtParametricPoints(dim, tag, parametricCoord, sizes):
             """
-            gmsh.model.mesh.setSizeAtParametricPoints(dim, tag, points, sizes)
+            gmsh.model.mesh.setSizeAtParametricPoints(dim, tag, parametricCoord, sizes)
 
-            Set mesh size at given parametric point on the model entities `dimTags'.
-            Currently only entities of dimension 1 (lines) are handled.
+            Set mesh size constraints at the given parametric points `parametricCoord'
+            on the model entity of dimension `dim' and tag `tag'. Currently only
+            entities of dimension 1 (lines) are handled.
             """
-            api_points_, api_points_n_ = _ivectordouble(points)
+            api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
             api_sizes_, api_sizes_n_ = _ivectordouble(sizes)
             ierr = c_int()
             lib.gmshModelMeshSetSizeAtParametricPoints(
                 c_int(dim),
                 c_int(tag),
-                api_points_, api_points_n_,
+                api_parametricCoord_, api_parametricCoord_n_,
                 api_sizes_, api_sizes_n_,
                 byref(ierr))
             if ierr.value != 0:

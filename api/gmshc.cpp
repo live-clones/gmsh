@@ -537,14 +537,14 @@ GMSH_API void gmshModelGetPartitions(const int dim, const int tag, int ** partit
   }
 }
 
-GMSH_API void gmshModelGetValue(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double ** points, size_t * points_n, int * ierr)
+GMSH_API void gmshModelGetValue(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double ** coord, size_t * coord_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
-    std::vector<double> api_points_;
-    gmsh::model::getValue(dim, tag, api_parametricCoord_, api_points_);
-    vector2ptr(api_points_, points, points_n);
+    std::vector<double> api_coord_;
+    gmsh::model::getValue(dim, tag, api_parametricCoord_, api_coord_);
+    vector2ptr(api_coord_, coord, coord_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -613,13 +613,13 @@ GMSH_API void gmshModelGetNormal(const int tag, double * parametricCoord, size_t
   }
 }
 
-GMSH_API void gmshModelGetParametrization(const int dim, const int tag, double * points, size_t points_n, double ** parametricCoord, size_t * parametricCoord_n, int * ierr)
+GMSH_API void gmshModelGetParametrization(const int dim, const int tag, double * coord, size_t coord_n, double ** parametricCoord, size_t * parametricCoord_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_points_(points, points + points_n);
+    std::vector<double> api_coord_(coord, coord + coord_n);
     std::vector<double> api_parametricCoord_;
-    gmsh::model::getParametrization(dim, tag, api_points_, api_parametricCoord_);
+    gmsh::model::getParametrization(dim, tag, api_coord_, api_parametricCoord_);
     vector2ptr(api_parametricCoord_, parametricCoord, parametricCoord_n);
   }
   catch(int api_ierr_){
@@ -1152,63 +1152,63 @@ GMSH_API void gmshModelMeshAddElementsByType(const int tag, const int elementTyp
   }
 }
 
-GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType, const char * integrationType, double ** integrationPoints, size_t * integrationPoints_n, double ** integrationWeights, size_t * integrationWeights_n, int * ierr)
+GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType, const char * integrationType, double ** referenceCoord, size_t * referenceCoord_n, double ** weights, size_t * weights_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_integrationPoints_;
-    std::vector<double> api_integrationWeights_;
-    gmsh::model::mesh::getIntegrationPoints(elementType, integrationType, api_integrationPoints_, api_integrationWeights_);
-    vector2ptr(api_integrationPoints_, integrationPoints, integrationPoints_n);
-    vector2ptr(api_integrationWeights_, integrationWeights, integrationWeights_n);
+    std::vector<double> api_referenceCoord_;
+    std::vector<double> api_weights_;
+    gmsh::model::mesh::getIntegrationPoints(elementType, integrationType, api_referenceCoord_, api_weights_);
+    vector2ptr(api_referenceCoord_, referenceCoord, referenceCoord_n);
+    vector2ptr(api_weights_, weights, weights_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
   }
 }
 
-GMSH_API void gmshModelMeshGetJacobians(const int elementType, double * integrationPoints, size_t integrationPoints_n, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, double ** points, size_t * points_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
+GMSH_API void gmshModelMeshGetJacobians(const int elementType, double * referenceCoord, size_t referenceCoord_n, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, double ** coord, size_t * coord_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
+    std::vector<double> api_referenceCoord_(referenceCoord, referenceCoord + referenceCoord_n);
     std::vector<double> api_jacobians_;
     std::vector<double> api_determinants_;
-    std::vector<double> api_points_;
-    gmsh::model::mesh::getJacobians(elementType, api_integrationPoints_, api_jacobians_, api_determinants_, api_points_, tag, task, numTasks);
+    std::vector<double> api_coord_;
+    gmsh::model::mesh::getJacobians(elementType, api_referenceCoord_, api_jacobians_, api_determinants_, api_coord_, tag, task, numTasks);
     vector2ptr(api_jacobians_, jacobians, jacobians_n);
     vector2ptr(api_determinants_, determinants, determinants_n);
-    vector2ptr(api_points_, points, points_n);
+    vector2ptr(api_coord_, coord, coord_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
   }
 }
 
-GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType, const int numIntegrationPoints, const int jacobian, const int determinant, const int point, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, double ** points, size_t * points_n, const int tag, int * ierr)
+GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType, const int numEvaluationPoints, const int allocateJacobian, const int allocateDeterminant, const int allocateCoord, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, double ** coord, size_t * coord_n, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_jacobians_;
     std::vector<double> api_determinants_;
-    std::vector<double> api_points_;
-    gmsh::model::mesh::preallocateJacobians(elementType, numIntegrationPoints, jacobian, determinant, point, api_jacobians_, api_determinants_, api_points_, tag);
+    std::vector<double> api_coord_;
+    gmsh::model::mesh::preallocateJacobians(elementType, numEvaluationPoints, allocateJacobian, allocateDeterminant, allocateCoord, api_jacobians_, api_determinants_, api_coord_, tag);
     vector2ptr(api_jacobians_, jacobians, jacobians_n);
     vector2ptr(api_determinants_, determinants, determinants_n);
-    vector2ptr(api_points_, points, points_n);
+    vector2ptr(api_coord_, coord, coord_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
   }
 }
 
-GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, double * integrationPoints, size_t integrationPoints_n, const char * functionSpaceType, int * numComponents, double ** basisFunctions, size_t * basisFunctions_n, int * numOrientations, int * ierr)
+GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, double * referenceCoord, size_t referenceCoord_n, const char * functionSpaceType, int * numComponents, double ** basisFunctions, size_t * basisFunctions_n, int * numOrientations, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_integrationPoints_(integrationPoints, integrationPoints + integrationPoints_n);
+    std::vector<double> api_referenceCoord_(referenceCoord, referenceCoord + referenceCoord_n);
     std::vector<double> api_basisFunctions_;
-    gmsh::model::mesh::getBasisFunctions(elementType, api_integrationPoints_, functionSpaceType, *numComponents, api_basisFunctions_, *numOrientations);
+    gmsh::model::mesh::getBasisFunctions(elementType, api_referenceCoord_, functionSpaceType, *numComponents, api_basisFunctions_, *numOrientations);
     vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
   }
   catch(int api_ierr_){
@@ -1398,13 +1398,13 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n, const double
   }
 }
 
-GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim, const int tag, double * points, size_t points_n, double * sizes, size_t sizes_n, int * ierr)
+GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double * sizes, size_t sizes_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_points_(points, points + points_n);
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
     std::vector<double> api_sizes_(sizes, sizes + sizes_n);
-    gmsh::model::mesh::setSizeAtParametricPoints(dim, tag, api_points_, api_sizes_);
+    gmsh::model::mesh::setSizeAtParametricPoints(dim, tag, api_parametricCoord_, api_sizes_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
