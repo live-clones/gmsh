@@ -5789,9 +5789,7 @@ int computeCrossFieldAndH(GModel *gm,
     Msg::Info("Computing a cross field");
     qLayout.computeCrossFieldAndH();
   }
-  printf("coucou1\n");
   qLayout.computeUniqueVectorsPerTriangle_old();
-  printf("coucou2\n");
 
   qLayout.getH (dataH);
   qLayout.getDir (dataDir,dataDirOrtho);

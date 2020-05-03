@@ -41,6 +41,7 @@ static void minmax(int n, double *X, double *Y, double *Z, double *min,
   // make bounding boxes larger up to (absolute) geometrical tolerance
   SBoundingBox3d bb(min[0],min[1],min[2],max[0],max[1],max[2]);
   bb *= 1.1;
+  bb.makeCube();
   max[0] = bb.max().x();
   max[1] = bb.max().y();
   max[2] = bb.max().z();
@@ -48,11 +49,13 @@ static void minmax(int n, double *X, double *Y, double *Z, double *min,
   min[1] = bb.min().y();
   min[2] = bb.min().z();
 
+  
   double eps = CTX::instance()->geom.tolerance;
   for(int i = 0; i < 3; i++) {
     min[i] -= eps;
     max[i] += eps;
   }
+
 }
 
 static void centroid(int n, double *X, double *Y, double *Z, double *c)
@@ -293,6 +296,9 @@ void OctreePost::_create(PViewData *data)
 
     SBoundingBox3d bb = l->getBoundingBox();
     // make bounding box larger up to (absolute) geometrical tolerance
+
+    bb *= 1.1;
+
     double eps = CTX::instance()->geom.tolerance;
     SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
     bbmin -= bbeps;

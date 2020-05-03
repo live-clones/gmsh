@@ -351,7 +351,8 @@ int GmshBatch()
     else if(CTX::instance()->batch == 67){
       // compute a scaled cross field "per triangle"
       int viewTag = -1;
-      computePerTriangleScaledCrossField (GModel::current(), viewTag);
+      computePerTriangleScaledCrossField (GModel::current(), viewTag,
+					  6,1,20000);
       PView* crossField = PView::getViewByTag(viewTag);
       std::string posout = GModel::current()->getName() + "_scaled_crossfield.pos";
       crossField->getData()->writePOS(posout);
