@@ -4324,14 +4324,6 @@ void optionWindow::activate(const char *what)
       mesh.value[18]->deactivate();
     }
   }
-  else if(!strcmp(what, "mesh_lc_from_points")) {
-    if(mesh.butt[5]->value()) {
-      mesh.butt[26]->activate();
-    }
-    else {
-      mesh.butt[26]->deactivate();
-    }
-  }
   else if(!strcmp(what, "mesh_curvature")) {
     if(mesh.butt[1]->value()) {
       mesh.value[1]->activate();

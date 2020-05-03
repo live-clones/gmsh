@@ -53,6 +53,9 @@ public:
   // get the edges that this vertex bounds
   virtual std::vector<GEdge *> const &edges() const { return l_edges; }
 
+  // get number of edges
+  virtual std::size_t numEdges() const { return l_edges.size(); }
+
   // faces that bound this entity or that this entity bounds.
   virtual std::vector<GFace *> faces() const;
 

@@ -4642,6 +4642,12 @@ double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
   return CTX::instance()->geom.occUnionUnify;
 }
 
+double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occThruSectionsDegree = (int)val;
+  return CTX::instance()->geom.occThruSectionsDegree;
+}
+
 double opt_geometry_occ_parallel(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occParallel = (int)val;
@@ -5033,7 +5039,6 @@ double opt_mesh_lc_from_points(OPT_ARGS_NUM)
   if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->mesh.butt[5]->value(
       CTX::instance()->mesh.lcFromPoints ? 1 : 0);
-    FlGui::instance()->options->activate("mesh_lc_from_points");
   }
 #endif
   return CTX::instance()->mesh.lcFromPoints;
@@ -5197,6 +5202,22 @@ double opt_mesh_label_type(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->mesh.labelType;
+}
+
+double opt_mesh_first_element_tag(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.firstElementTag = (val > 1) ? (int)val : 1;
+  }
+  return CTX::instance()->mesh.firstElementTag;
+}
+
+double opt_mesh_first_node_tag(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.firstNodeTag = (val > 1) ? (int)val : 1;
+  }
+  return CTX::instance()->mesh.firstNodeTag;
 }
 
 double opt_mesh_points(OPT_ARGS_NUM)

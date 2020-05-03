@@ -956,6 +956,14 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,
                                    const double size,
                                    int * ierr);
 
+/* Set mesh size at given parametric point on the model entities `dimTags'.
+ * Currently only entities of dimension 1 (lines) are handled. */
+GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim,
+                                                     const int tag,
+                                                     double * points, size_t points_n,
+                                                     double * sizes, size_t sizes_n,
+                                                     int * ierr);
+
 /* Set a transfinite meshing constraint on the curve `tag', with `numNodes'
  * nodes distributed according to `meshType' and `coef'. Currently supported
  * types are "Progression" (geometrical progression with power `coef') and
@@ -1469,6 +1477,17 @@ GMSH_API void gmshModelGeoSplitCurve(const int tag,
                                      int ** curveTags, size_t * curveTags_n,
                                      int * ierr);
 
+/* Get the maximum tag of entities of dimension `dim' in the built-in CAD
+ * representation. */
+GMSH_API int gmshModelGeoGetMaxTag(const int dim,
+                                   int * ierr);
+
+/* Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
+ * in CAD representation. */
+GMSH_API void gmshModelGeoSetMaxTag(const int dim,
+                                    const int maxTag,
+                                    int * ierr);
+
 /* Synchronize the built-in CAD representation with the current Gmsh model.
  * This can be called at any time, but since it involves a non trivial amount
  * of processing, the number of synchronization points should normally be
@@ -1829,12 +1848,14 @@ GMSH_API int gmshModelOccAddTorus(const double x,
  * set the tag explicitly; otherwise a new tag is selected automatically. The
  * new entities are returned in `outDimTags'. If the optional argument
  * `makeRuled' is set, the surfaces created on the boundary are forced to be
- * ruled surfaces. */
+ * ruled surfaces. If `maxDegree' is positive, set the maximal degree of
+ * resulting surface. */
 GMSH_API void gmshModelOccAddThruSections(int * wireTags, size_t wireTags_n,
                                           int ** outDimTags, size_t * outDimTags_n,
                                           const int tag,
                                           const int makeSolid,
                                           const int makeRuled,
+                                          const int maxDegree,
                                           int * ierr);
 
 /* Add a hollowed volume built from an initial volume `volumeTag' and a set of
@@ -2143,6 +2164,17 @@ GMSH_API void gmshModelOccGetMatrixOfInertia(const int dim,
                                              const int tag,
                                              double ** mat, size_t * mat_n,
                                              int * ierr);
+
+/* Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD
+ * representation. */
+GMSH_API int gmshModelOccGetMaxTag(const int dim,
+                                   int * ierr);
+
+/* Set the maximum tag `maxTag' for entities of dimension `dim' in the
+ * OpenCASCADE CAD representation. */
+GMSH_API void gmshModelOccSetMaxTag(const int dim,
+                                    const int maxTag,
+                                    int * ierr);
 
 /* Synchronize the OpenCASCADE CAD representation with the current Gmsh model.
  * This can be called at any time, but since it involves a non trivial amount

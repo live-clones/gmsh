@@ -294,34 +294,6 @@ double MElement::minScaledJacobian(bool knownValid, bool reversedOK)
 #endif
 }
 
-double MElement::specialQuality()
-{
-#if defined(HAVE_MESH)
-  double minJ, maxJ;
-  jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
-  if(minJ <= 0.) return minJ;
-  //  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
-  //  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
-  return jacobianBasedQuality::minICNMeasure(this, true);
-#else
-  return 0;
-#endif
-}
-
-double MElement::specialQuality2()
-{
-#if defined(HAVE_MESH)
-  double minJ, maxJ;
-  jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
-  if(minJ <= 0.) return minJ;
-  //  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
-  //  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
-  return jacobianBasedQuality::minIGEMeasure(this, true);
-#else
-  return 0;
-#endif
-}
-
 void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
 {
   jmin = jmax = 1.0;
@@ -2359,6 +2331,13 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
     if(name) *name = "Unknown";
     return -1;
   }
+}
+
+std::string MElement::getName()
+{
+  const char *name;
+  MElement::getInfoMSH(getTypeForMSH(), &name);
+  return name;
 }
 
 void MElement::getVerticesIdForMSH(std::vector<int> &verts)

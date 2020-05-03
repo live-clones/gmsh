@@ -1597,7 +1597,7 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
 
     if(!_tagWire.IsBound(wireTag)) {
       Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
-      //      return false;
+      return false;
     }
     else {
       TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -1624,7 +1624,6 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
     }
     BPSurf.Perform();
 
-    printf("making the wire\n");
     Standard_Integer MaxSeg = 9;
     Standard_Integer MaxDegree = 8;
     Standard_Integer CritOrder = 0;
@@ -2119,7 +2118,7 @@ bool OCC_Internals::addWedge(int &tag, double x, double y, double z, double dx,
 
 bool OCC_Internals::addThruSections(
   int tag, const std::vector<int> &wireTags, bool makeSolid, bool makeRuled,
-  std::vector<std::pair<int, int> > &outDimTags)
+  std::vector<std::pair<int, int> > &outDimTags, int maxDegree)
 {
   int dim = makeSolid ? 3 : 2;
   if(tag >= 0 && _isBound(dim, tag)) {
@@ -2134,6 +2133,23 @@ bool OCC_Internals::addThruSections(
   TopoDS_Shape result;
   try {
     BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
+    // ts.SetContinuity(GeomAbs_C1);
+    // Available choices:
+    //    GeomAbs_C0, GeomAbs_G1, GeomAbs_C1, GeomAbs_G2, GeomAbs_C2,
+    //    GeomAbs_C3, GeomAbs_CN
+
+    // ts.SetCriteriumWeight(1, 1, 1);
+
+    if(maxDegree > 0)
+      ts.SetMaxDegree(maxDegree);
+    else if(CTX::instance()->geom.occThruSectionsDegree > 0)
+      ts.SetMaxDegree(CTX::instance()->geom.occThruSectionsDegree);
+
+    // ts.SetParType(Approx_ChordLength);
+    // Available choices:
+    //    Approx_ChordLength, Approx_Centripetal, Approx_IsoParametric
+
+    // ts.SetSmoothing(Standard_True);
     for(std::size_t i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])) {
         Msg::Error("Unknown OpenCASCADE wire or line loop with tag %d",
@@ -3570,36 +3586,36 @@ bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
   return true;
 }
 
-bool OCC_Internals::exportShapes(const std::string &fileName,
+bool OCC_Internals::exportShapes(GModel *model,
+                                 const std::string &fileName,
                                  const std::string &format)
 {
-  // iterate over all shapes with tags, and import them into the (sub)shape
-  // _maps
-  _somap.Clear();
-  _shmap.Clear();
-  _fmap.Clear();
-  _wmap.Clear();
-  _emap.Clear();
-  _vmap.Clear();
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
-  for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
-  for(; exp1.More(); exp1.Next()) _addShapeToMaps(exp1.Value());
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
-  for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp3(_tagSolid);
-  for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
-
-  // build a single compound shape
+  // put all top-level OCC shapes from a GModel in a single compound (we use the
+  // topology to only consider top-level shapes; otherwise we get duplicates in
+  // the STEP export)
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(int i = 1; i <= _vmap.Extent(); i++) b.Add(c, _vmap(i));
-  for(int i = 1; i <= _emap.Extent(); i++) b.Add(c, _emap(i));
-  for(int i = 1; i <= _wmap.Extent(); i++) b.Add(c, _wmap(i));
-  for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
-  for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
-  for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
+  for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); it++) {
+    GRegion *gr = *it;
+    if(gr->getNativeType() == GEntity::OpenCascadeModel)
+      b.Add(c, *(TopoDS_Solid *)gr->getNativePtr());
+  }
+  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); it++) {
+    GFace *gf = *it;
+    if(!gf->numRegions() && gf->getNativeType() == GEntity::OpenCascadeModel)
+      b.Add(c, *(TopoDS_Face *)gf->getNativePtr());
+  }
+  for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); it++) {
+    GEdge *ge = *it;
+    if(!ge->numFaces() && ge->getNativeType() == GEntity::OpenCascadeModel)
+      b.Add(c, *(TopoDS_Edge *)ge->getNativePtr());
+  }
+  for(GModel::viter it = model->firstVertex(); it != model->lastVertex(); it++) {
+    GVertex *gv = *it;
+    if(!gv->numEdges() && gv->getNativeType() == GEntity::OpenCascadeModel)
+      b.Add(c, *(TopoDS_Vertex *)gv->getNativePtr());
+  }
 
   std::vector<std::string> split = SplitFileName(fileName);
 
@@ -4875,7 +4891,7 @@ int GModel::writeOCCBREP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(fn, "brep");
+  _occ_internals->exportShapes(this, fn, "brep");
   return 1;
 }
 
@@ -4885,7 +4901,7 @@ int GModel::writeOCCSTEP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(fn, "step");
+  _occ_internals->exportShapes(this, fn, "step");
   return 1;
 }
 

@@ -2115,6 +2115,21 @@ if(NOT DISABLE_GMSH_TESTS)
       add_test(${TEST}_cpp ${TEST})
     endforeach()
   endif()
+  # enable this once we have removed the interactive/graphical tests
+  # if(ENABLE_BUILD_DYNAMIC)
+  #   find_package(PythonInterp)
+  #   if(PYTHONINTERP_FOUND)
+  #     file(GLOB_RECURSE TESTFILES tutorial/python/*.py)
+  #     foreach(TESTFILE ${TESTFILES})
+  #       get_filename_component(TEST ${TESTFILE} NAME_WE)
+  #       add_test(NAME ${TEST}_py COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
+  #       set_property(TEST ${TEST}_py APPEND PROPERTY ENVIRONMENT
+  #                    "PYTHONPATH=${CMAKE_SOURCE_DIR}/api")
+  #       set_property(TEST ${TEST}_py APPEND PROPERTY ENVIRONMENT
+  #                    "LD_LIBRARY_PATH=${CMAKE_CURRENT_BINARY_DIR}")
+  #       endforeach()
+  #   endif()
+  # endif()
 endif()
 
 message(STATUS "")

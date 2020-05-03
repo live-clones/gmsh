@@ -2604,6 +2604,28 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def setSizeAtParametricPoints(dim, tag, points, sizes):
+            """
+            gmsh.model.mesh.setSizeAtParametricPoints(dim, tag, points, sizes)
+
+            Set mesh size at given parametric point on the model entities `dimTags'.
+            Currently only entities of dimension 1 (lines) are handled.
+            """
+            api_points_, api_points_n_ = _ivectordouble(points)
+            api_sizes_, api_sizes_n_ = _ivectordouble(sizes)
+            ierr = c_int()
+            lib.gmshModelMeshSetSizeAtParametricPoints(
+                c_int(dim),
+                c_int(tag),
+                api_points_, api_points_n_,
+                api_sizes_, api_sizes_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetSizeAtParametricPoints returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
             """
             gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.)
@@ -3948,6 +3970,44 @@ class model:
             return _ovectorint(api_curveTags_, api_curveTags_n_.value)
 
         @staticmethod
+        def getMaxTag(dim):
+            """
+            gmsh.model.geo.getMaxTag(dim)
+
+            Get the maximum tag of entities of dimension `dim' in the built-in CAD
+            representation.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelGeoGetMaxTag(
+                c_int(dim),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoGetMaxTag returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def setMaxTag(dim, maxTag):
+            """
+            gmsh.model.geo.setMaxTag(dim, maxTag)
+
+            Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
+            in CAD representation.
+            """
+            ierr = c_int()
+            lib.gmshModelGeoSetMaxTag(
+                c_int(dim),
+                c_int(maxTag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoSetMaxTag returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def synchronize():
             """
             gmsh.model.geo.synchronize()
@@ -4795,16 +4855,17 @@ class model:
             return api__result__
 
         @staticmethod
-        def addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False):
+        def addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False, maxDegree=-1):
             """
-            gmsh.model.occ.addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False)
+            gmsh.model.occ.addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False, maxDegree=-1)
 
             Add a volume (if the optional argument `makeSolid' is set) or surfaces
             defined through the open or closed wires `wireTags'. If `tag' is positive,
             set the tag explicitly; otherwise a new tag is selected automatically. The
             new entities are returned in `outDimTags'. If the optional argument
             `makeRuled' is set, the surfaces created on the boundary are forced to be
-            ruled surfaces.
+            ruled surfaces. If `maxDegree' is positive, set the maximal degree of
+            resulting surface.
 
             Return `outDimTags'.
             """
@@ -4817,6 +4878,7 @@ class model:
                 c_int(tag),
                 c_int(bool(makeSolid)),
                 c_int(bool(makeRuled)),
+                c_int(maxDegree),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -5580,6 +5642,44 @@ class model:
                     "gmshModelOccGetMatrixOfInertia returned non-zero error code: ",
                     ierr.value)
             return _ovectordouble(api_mat_, api_mat_n_.value)
+
+        @staticmethod
+        def getMaxTag(dim):
+            """
+            gmsh.model.occ.getMaxTag(dim)
+
+            Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD
+            representation.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelOccGetMaxTag(
+                c_int(dim),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccGetMaxTag returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def setMaxTag(dim, maxTag):
+            """
+            gmsh.model.occ.setMaxTag(dim, maxTag)
+
+            Set the maximum tag `maxTag' for entities of dimension `dim' in the
+            OpenCASCADE CAD representation.
+            """
+            ierr = c_int()
+            lib.gmshModelOccSetMaxTag(
+                c_int(dim),
+                c_int(maxTag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccSetMaxTag returned non-zero error code: ",
+                    ierr.value)
 
         @staticmethod
         def synchronize():

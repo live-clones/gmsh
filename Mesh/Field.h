@@ -238,7 +238,7 @@ public:
 
   void computeFor1dMesh(double x, double y, double z, SMetric3 &metr);
   void setupFor1d(int iE);
-  void setupFor2d(int iF);
+  bool setupFor2d(int iF);
   void removeAttractors();
 };
 

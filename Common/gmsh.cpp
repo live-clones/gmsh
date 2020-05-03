@@ -2629,6 +2629,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     }
     }
 
+    for(unsigned int i = 0; i < numVertices; ++i) {
+      delete vertices[i];
+    }
+    delete element;
     delete basis;
   }
 
@@ -3604,6 +3608,19 @@ GMSH_API void gmsh::model::mesh::setSize(const vectorpair &dimTags,
   }
 }
 
+GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
+    const int dim, const int tag,
+    const std::vector<double> &points,
+    const std::vector<double> &sizes)
+{
+  if(!_isInitialized()) { throw - 1; }
+  if(dim == 1) {
+    GEdge *ge = GModel::current()->getEdgeByTag(tag);
+    if(ge) ge->setMeshSizeParametric(points,sizes);
+  }
+}
+
+
 GMSH_API void
 gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
                                        const std::string &meshType,
@@ -4529,6 +4546,18 @@ GMSH_API void gmsh::model::geo::splitCurve(const int tag,
   }
 }
 
+GMSH_API int gmsh::model::geo::getMaxTag(const int dim)
+{
+  if(!_isInitialized()) { throw - 1; }
+  return GModel::current()->getGEOInternals()->getMaxTag(dim);
+}
+
+GMSH_API void gmsh::model::geo::setMaxTag(const int dim, const int maxTag)
+{
+  if(!_isInitialized()) { throw - 1; }
+  GModel::current()->getGEOInternals()->setMaxTag(dim, maxTag);
+}
+
 GMSH_API void gmsh::model::geo::synchronize()
 {
   if(!_isInitialized()) { throw - 1; }
@@ -4623,6 +4652,7 @@ GMSH_API void gmsh::model::geo::mesh::setSize(const vectorpair &dimTags,
     GModel::current()->getGEOInternals()->setMeshSize(dim, tag, size);
   }
 }
+
 
 // gmsh::model::occ
 
@@ -4958,13 +4988,14 @@ GMSH_API int gmsh::model::occ::addTorus(const double x, const double y,
 GMSH_API void
 gmsh::model::occ::addThruSections(const std::vector<int> &wireTags,
                                   vectorpair &outDimTags, const int tag,
-                                  const bool makeSolid, const bool makeRuled)
+                                  const bool makeSolid, const bool makeRuled,
+                                  const int maxDegree)
 {
   if(!_isInitialized()) { throw - 1; }
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->addThruSections(
-       tag, wireTags, makeSolid, makeRuled, outDimTags)) {
+       tag, wireTags, makeSolid, makeRuled, outDimTags, maxDegree)) {
     throw 1;
   }
 }
@@ -5330,6 +5361,18 @@ GMSH_API void gmsh::model::occ::getMatrixOfInertia(const int dim, const int tag,
   if(!GModel::current()->getOCCInternals()->getMatrixOfInertia(dim, tag, m)) {
     throw 1;
   }
+}
+
+GMSH_API int gmsh::model::occ::getMaxTag(const int dim)
+{
+  if(!_isInitialized()) { throw - 1; }
+  return GModel::current()->getOCCInternals()->getMaxTag(dim);
+}
+
+GMSH_API void gmsh::model::occ::setMaxTag(const int dim, const int maxTag)
+{
+  if(!_isInitialized()) { throw - 1; }
+  GModel::current()->getOCCInternals()->setMaxTag(dim, maxTag);
 }
 
 GMSH_API void gmsh::model::occ::synchronize()

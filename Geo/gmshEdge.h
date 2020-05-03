@@ -35,7 +35,6 @@ public:
                   std::vector<double> &ts);
   virtual bool degenerate(int dim) const;
   void resetNativePtr(Curve *edge, GVertex *v1, GVertex *v2);
-  virtual double prescribedMeshSizeAtParam(double u);
 };
 
 #endif
