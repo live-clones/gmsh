@@ -107,7 +107,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthFromParametricPoints
-Compute mesh element sizes from values given at geometry points defining parametric curves (requires CharacteristicLengthFromPoins)@*
+Compute mesh element sizes from values given at geometry points defining parametric curves@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
