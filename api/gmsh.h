@@ -789,15 +789,15 @@ namespace gmsh { // Top-level functions
       //
       // Get the properties of an element of type `elementType': its name
       // (`elementName'), dimension (`dim'), order (`order'), number of nodes
-      // (`numNodes'), coordinates of the nodes in the reference element
-      // (`nodeCoord' vector, of length `dim' times `numNodes') and number of
+      // (`numNodes'), local coordinates of the nodes in the reference element
+      // (`localNodeCoord' vector, of length `dim' times `numNodes') and number of
       // primary (first order) nodes (`numPrimaryNodes').
       GMSH_API void getElementProperties(const int elementType,
                                          std::string & elementName,
                                          int & dim,
                                          int & order,
                                          int & numNodes,
-                                         std::vector<double> & nodeCoord,
+                                         std::vector<double> & localNodeCoord,
                                          int & numPrimaryNodes);
 
       // gmsh::model::mesh::getElementsByType
@@ -866,21 +866,21 @@ namespace gmsh { // Top-level functions
       // Get the numerical quadrature information for the given element type
       // `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
       // Gauss quadrature suited for integrating 4th order polynomials).
-      // `referenceCoord' contains the u, v, w coordinates of the G integration
-      // points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
-      // `weights' contains the associated weights: [g1q, ..., gGq].
+      // `localCoord' contains the u, v, w coordinates of the G integration points
+      // in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights'
+      // contains the associated weights: [g1q, ..., gGq].
       GMSH_API void getIntegrationPoints(const int elementType,
                                          const std::string & integrationType,
-                                         std::vector<double> & referenceCoord,
+                                         std::vector<double> & localCoord,
                                          std::vector<double> & weights);
 
       // gmsh::model::mesh::getJacobians
       //
       // Get the Jacobians of all the elements of type `elementType' classified on
-      // the entity of tag `tag', at the G evaluation points `referenceCoord' given
-      // as concatenated triplets of coordinates in the reference element [g1u,
-      // g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements
-      // in the same order as in `getElements' and `getElementsByType'. `jacobians'
+      // the entity of tag `tag', at the G evaluation points `localCoord' given as
+      // concatenated triplets of coordinates in the reference element [g1u, g1v,
+      // g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in
+      // the same order as in `getElements' and `getElementsByType'. `jacobians'
       // contains for each element the 9 entries of the 3x3 Jacobian matrix at each
       // evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu,
       // e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
@@ -891,7 +891,7 @@ namespace gmsh { // Top-level functions
       // for all entities. If `numTasks' > 1, only compute and return the part of
       // the data indexed by `task'.
       GMSH_API void getJacobians(const int elementType,
-                                 const std::vector<double> & referenceCoord,
+                                 const std::vector<double> & localCoord,
                                  std::vector<double> & jacobians,
                                  std::vector<double> & determinants,
                                  std::vector<double> & coord,
@@ -916,7 +916,7 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getBasisFunctions
       //
       // Get the basis functions of the element of type `elementType' at the
-      // evaluation points `referenceCoord' (given as concatenated triplets of
+      // evaluation points `localCoord' (given as concatenated triplets of
       // coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
       // for the function space `functionSpaceType' (e.g. "Lagrange" or
       // "GradLagrange" for Lagrange basis functions or their gradient, in the u,
@@ -931,7 +931,7 @@ namespace gmsh { // Top-level functions
       // secondd, etc. `numOrientations' returns the overall number of
       // orientations.
       GMSH_API void getBasisFunctions(const int elementType,
-                                      const std::vector<double> & referenceCoord,
+                                      const std::vector<double> & localCoord,
                                       const std::string & functionSpaceType,
                                       int & numComponents,
                                       std::vector<double> & basisFunctions,

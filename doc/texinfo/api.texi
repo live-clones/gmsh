@@ -1270,15 +1270,15 @@ C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L
 @item gmsh/model/mesh/getElementProperties
 Get the properties of an element of type @code{elementType}: its name
 (@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
-nodes (@code{numNodes}), coordinates of the nodes in the reference element
-(@code{nodeCoord} vector, of length @code{dim} times @code{numNodes}) and number
-of primary (first order) nodes (@code{numPrimaryNodes}).
+nodes (@code{numNodes}), local coordinates of the nodes in the reference element
+(@code{localNodeCoord} vector, of length @code{dim} times @code{numNodes}) and
+number of primary (first order) nodes (@code{numPrimaryNodes}).
 
 @table @asis
 @item Input:
 @code{elementType}
 @item Output:
-@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{nodeCoord}, @code{numPrimaryNodes}
+@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{localNodeCoord}, @code{numPrimaryNodes}
 @item Return:
 -
 @item Examples:
@@ -1367,15 +1367,15 @@ C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp#L
 Get the numerical quadrature information for the given element type
 @code{elementType} and integration rule @code{integrationType} (e.g. "Gauss4"
 for a Gauss quadrature suited for integrating 4th order polynomials).
-@code{referenceCoord} contains the u, v, w coordinates of the G integration
-points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
-@code{weights} contains the associated weights: [g1q, ..., gGq].
+@code{localCoord} contains the u, v, w coordinates of the G integration points
+in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. @code{weights}
+contains the associated weights: [g1q, ..., gGq].
 
 @table @asis
 @item Input:
 @code{elementType}, @code{integrationType}
 @item Output:
-@code{referenceCoord}, @code{weights}
+@code{localCoord}, @code{weights}
 @item Return:
 -
 @item Examples:
@@ -1384,23 +1384,23 @@ C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/adapt_mesh.
 
 @item gmsh/model/mesh/getJacobians
 Get the Jacobians of all the elements of type @code{elementType} classified on
-the entity of tag @code{tag}, at the G evaluation points @code{referenceCoord}
-given as concatenated triplets of coordinates in the reference element [g1u,
-g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the
-same order as in @code{getElements} and @code{getElementsByType}.
-@code{jacobians} contains for each element the 9 entries of the 3x3 Jacobian
-matrix at each evaluation point. The matrix is returned by column: [e1g1Jxu,
-e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...],
-with Jxu=dx/du, Jyu=dy/du, etc. @code{determinants} contains for each element
-the determinant of the Jacobian matrix at each evaluation point: [e1g1, e1g2,
-... e1gG, e2g1, ...]. @code{coord} contains for each element the x, y, z
-coordinates of the evaluation points. If @code{tag} < 0, get the Jacobian data
-for all entities. If @code{numTasks} > 1, only compute and return the part of
-the data indexed by @code{task}.
+the entity of tag @code{tag}, at the G evaluation points @code{localCoord} given
+as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w,
+..., gGu, gGv, gGw]. Data is returned by element, with elements in the same
+order as in @code{getElements} and @code{getElementsByType}. @code{jacobians}
+contains for each element the 9 entries of the 3x3 Jacobian matrix at each
+evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu,
+e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du,
+Jyu=dy/du, etc. @code{determinants} contains for each element the determinant of
+the Jacobian matrix at each evaluation point: [e1g1, e1g2, ... e1gG, e2g1, ...].
+@code{coord} contains for each element the x, y, z coordinates of the evaluation
+points. If @code{tag} < 0, get the Jacobian data for all entities. If
+@code{numTasks} > 1, only compute and return the part of the data indexed by
+@code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{referenceCoord}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
+@code{elementType}, @code{localCoord}, @code{tag = -1}, @code{task = 0}, @code{numTasks = 1}
 @item Output:
 @code{jacobians}, @code{determinants}, @code{coord}
 @item Return:
@@ -1424,7 +1424,7 @@ For C and C++ only.
 
 @item gmsh/model/mesh/getBasisFunctions
 Get the basis functions of the element of type @code{elementType} at the
-evaluation points @code{referenceCoord} (given as concatenated triplets of
+evaluation points @code{localCoord} (given as concatenated triplets of
 coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for
 the function space @code{functionSpaceType} (e.g. "Lagrange" or "GradLagrange"
 for Lagrange basis functions or their gradient, in the u, v, w coordinates of
@@ -1440,7 +1440,7 @@ orientations.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{referenceCoord}, @code{functionSpaceType}
+@code{elementType}, @code{localCoord}, @code{functionSpaceType}
 @item Output:
 @code{numComponents}, @code{basisFunctions}, @code{numOrientations}
 @item Return:

@@ -2048,17 +2048,17 @@ class model:
 
             Get the properties of an element of type `elementType': its name
             (`elementName'), dimension (`dim'), order (`order'), number of nodes
-            (`numNodes'), coordinates of the nodes in the reference element
-            (`nodeCoord' vector, of length `dim' times `numNodes') and number of
+            (`numNodes'), local coordinates of the nodes in the reference element
+            (`localNodeCoord' vector, of length `dim' times `numNodes') and number of
             primary (first order) nodes (`numPrimaryNodes').
 
-            Return `elementName', `dim', `order', `numNodes', `nodeCoord', `numPrimaryNodes'.
+            Return `elementName', `dim', `order', `numNodes', `localNodeCoord', `numPrimaryNodes'.
             """
             api_elementName_ = c_char_p()
             api_dim_ = c_int()
             api_order_ = c_int()
             api_numNodes_ = c_int()
-            api_nodeCoord_, api_nodeCoord_n_ = POINTER(c_double)(), c_size_t()
+            api_localNodeCoord_, api_localNodeCoord_n_ = POINTER(c_double)(), c_size_t()
             api_numPrimaryNodes_ = c_int()
             ierr = c_int()
             lib.gmshModelMeshGetElementProperties(
@@ -2067,7 +2067,7 @@ class model:
                 byref(api_dim_),
                 byref(api_order_),
                 byref(api_numNodes_),
-                byref(api_nodeCoord_), byref(api_nodeCoord_n_),
+                byref(api_localNodeCoord_), byref(api_localNodeCoord_n_),
                 byref(api_numPrimaryNodes_),
                 byref(ierr))
             if ierr.value != 0:
@@ -2079,7 +2079,7 @@ class model:
                 api_dim_.value,
                 api_order_.value,
                 api_numNodes_.value,
-                _ovectordouble(api_nodeCoord_, api_nodeCoord_n_.value),
+                _ovectordouble(api_localNodeCoord_, api_localNodeCoord_n_.value),
                 api_numPrimaryNodes_.value)
 
         @staticmethod
@@ -2185,19 +2185,19 @@ class model:
             Get the numerical quadrature information for the given element type
             `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
             Gauss quadrature suited for integrating 4th order polynomials).
-            `referenceCoord' contains the u, v, w coordinates of the G integration
-            points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
-            `weights' contains the associated weights: [g1q, ..., gGq].
+            `localCoord' contains the u, v, w coordinates of the G integration points
+            in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights'
+            contains the associated weights: [g1q, ..., gGq].
 
-            Return `referenceCoord', `weights'.
+            Return `localCoord', `weights'.
             """
-            api_referenceCoord_, api_referenceCoord_n_ = POINTER(c_double)(), c_size_t()
+            api_localCoord_, api_localCoord_n_ = POINTER(c_double)(), c_size_t()
             api_weights_, api_weights_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetIntegrationPoints(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
-                byref(api_referenceCoord_), byref(api_referenceCoord_n_),
+                byref(api_localCoord_), byref(api_localCoord_n_),
                 byref(api_weights_), byref(api_weights_n_),
                 byref(ierr))
             if ierr.value != 0:
@@ -2205,17 +2205,17 @@ class model:
                     "gmshModelMeshGetIntegrationPoints returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectordouble(api_referenceCoord_, api_referenceCoord_n_.value),
+                _ovectordouble(api_localCoord_, api_localCoord_n_.value),
                 _ovectordouble(api_weights_, api_weights_n_.value))
 
         @staticmethod
-        def getJacobians(elementType, referenceCoord, tag=-1, task=0, numTasks=1):
+        def getJacobians(elementType, localCoord, tag=-1, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getJacobians(elementType, referenceCoord, tag=-1, task=0, numTasks=1)
+            gmsh.model.mesh.getJacobians(elementType, localCoord, tag=-1, task=0, numTasks=1)
 
             Get the Jacobians of all the elements of type `elementType' classified on
-            the entity of tag `tag', at the G evaluation points `referenceCoord' given
-            as concatenated triplets of coordinates in the reference element [g1u, g1v,
+            the entity of tag `tag', at the G evaluation points `localCoord' given as
+            concatenated triplets of coordinates in the reference element [g1u, g1v,
             g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the
             same order as in `getElements' and `getElementsByType'. `jacobians'
             contains for each element the 9 entries of the 3x3 Jacobian matrix at each
@@ -2230,14 +2230,14 @@ class model:
 
             Return `jacobians', `determinants', `coord'.
             """
-            api_referenceCoord_, api_referenceCoord_n_ = _ivectordouble(referenceCoord)
+            api_localCoord_, api_localCoord_n_ = _ivectordouble(localCoord)
             api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
             api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetJacobians(
                 c_int(elementType),
-                api_referenceCoord_, api_referenceCoord_n_,
+                api_localCoord_, api_localCoord_n_,
                 byref(api_jacobians_), byref(api_jacobians_n_),
                 byref(api_determinants_), byref(api_determinants_n_),
                 byref(api_coord_), byref(api_coord_n_),
@@ -2255,12 +2255,12 @@ class model:
                 _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
-        def getBasisFunctions(elementType, referenceCoord, functionSpaceType):
+        def getBasisFunctions(elementType, localCoord, functionSpaceType):
             """
-            gmsh.model.mesh.getBasisFunctions(elementType, referenceCoord, functionSpaceType)
+            gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType)
 
             Get the basis functions of the element of type `elementType' at the
-            evaluation points `referenceCoord' (given as concatenated triplets of
+            evaluation points `localCoord' (given as concatenated triplets of
             coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
             for the function space `functionSpaceType' (e.g. "Lagrange" or
             "GradLagrange" for Lagrange basis functions or their gradient, in the u, v,
@@ -2276,14 +2276,14 @@ class model:
 
             Return `numComponents', `basisFunctions', `numOrientations'.
             """
-            api_referenceCoord_, api_referenceCoord_n_ = _ivectordouble(referenceCoord)
+            api_localCoord_, api_localCoord_n_ = _ivectordouble(localCoord)
             api_numComponents_ = c_int()
             api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
             api_numOrientations_ = c_int()
             ierr = c_int()
             lib.gmshModelMeshGetBasisFunctions(
                 c_int(elementType),
-                api_referenceCoord_, api_referenceCoord_n_,
+                api_localCoord_, api_localCoord_n_,
                 c_char_p(functionSpaceType.encode()),
                 byref(api_numComponents_),
                 byref(api_basisFunctions_), byref(api_basisFunctions_n_),

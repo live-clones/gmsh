@@ -1752,7 +1752,7 @@ GMSH_API int gmsh::model::mesh::getElementType(const std::string &family,
 
 GMSH_API void gmsh::model::mesh::getElementProperties(
   const int elementType, std::string &name, int &dim, int &order, int &numNodes,
-  std::vector<double> &nodeCoord, int &numPrimaryNodes)
+  std::vector<double> &localNodeCoord, int &numPrimaryNodes)
 {
   if(!_isInitialized()) { throw - 1; }
   const char *n;
@@ -1773,7 +1773,7 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
   }
   for(int i = 0; i < basis->points.size1(); i++)
     for(int j = 0; j < basis->points.size2(); j++)
-      nodeCoord.push_back(basis->points(i, j));
+      localNodeCoord.push_back(basis->points(i, j));
   delete basis;
   numPrimaryNodes =
     ElementType::getNumVertices(ElementType::getPrimaryType(elementType));
@@ -1915,7 +1915,7 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
 }
 
 GMSH_API void gmsh::model::mesh::getJacobians(
-  const int elementType, const std::vector<double> &referenceCoord,
+  const int elementType, const std::vector<double> &localCoord,
   std::vector<double> &jacobians, std::vector<double> &determinants,
   std::vector<double> &coord, const int tag, const std::size_t task,
   const std::size_t numTasks)
@@ -1926,7 +1926,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
-  int numPoints = referenceCoord.size() / 3;
+  int numPoints = localCoord.size() / 3;
   // check arrays
   bool haveJacobians = jacobians.size();
   bool haveDeterminants = determinants.size();
@@ -1982,9 +1982,9 @@ GMSH_API void gmsh::model::mesh::getJacobians(
               gsf.resize(numPoints);
               for(int k = 0; k < numPoints; k++) {
                 double value[1256][3];
-                e->getGradShapeFunctions(referenceCoord[3 * k],
-                                         referenceCoord[3 * k + 1],
-                                         referenceCoord[3 * k + 2], value);
+                e->getGradShapeFunctions(localCoord[3 * k],
+                                         localCoord[3 * k + 1],
+                                         localCoord[3 * k + 2], value);
                 gsf[k].resize(e->getNumShapeFunctions());
                 for(std::size_t l = 0; l < e->getNumShapeFunctions(); l++) {
                   gsf[k][l][0] = value[l][0];
@@ -1994,8 +1994,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(
               }
             }
             for(int k = 0; k < numPoints; k++) {
-              e->pnt(referenceCoord[3 * k], referenceCoord[3 * k + 1],
-                     referenceCoord[3 * k + 2], &coord[idx * 3]);
+              e->pnt(localCoord[3 * k], localCoord[3 * k + 1],
+                     localCoord[3 * k + 2], &coord[idx * 3]);
               determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx * 9]);
               idx++;
             }
@@ -2018,9 +2018,9 @@ GMSH_API void gmsh::model::mesh::getJacobians(
               gsf.resize(numPoints);
               for(int k = 0; k < numPoints; k++) {
                 double value[1256][3];
-                e->getGradShapeFunctions(referenceCoord[3 * k],
-                                         referenceCoord[3 * k + 1],
-                                         referenceCoord[3 * k + 2], value);
+                e->getGradShapeFunctions(localCoord[3 * k],
+                                         localCoord[3 * k + 1],
+                                         localCoord[3 * k + 2], value);
                 gsf[k].resize(e->getNumShapeFunctions());
                 for(std::size_t l = 0; l < e->getNumShapeFunctions(); l++) {
                   gsf[k][l][0] = value[l][0];
@@ -2053,9 +2053,9 @@ GMSH_API void gmsh::model::mesh::getJacobians(
               gsf.resize(numPoints);
               for(int k = 0; k < numPoints; k++) {
                 double value[1256][3];
-                e->getGradShapeFunctions(referenceCoord[3 * k],
-                                         referenceCoord[3 * k + 1],
-                                         referenceCoord[3 * k + 2], value);
+                e->getGradShapeFunctions(localCoord[3 * k],
+                                         localCoord[3 * k + 1],
+                                         localCoord[3 * k + 2], value);
                 gsf[k].resize(e->getNumShapeFunctions());
                 for(std::size_t l = 0; l < e->getNumShapeFunctions(); l++) {
                   gsf[k][l][0] = value[l][0];
@@ -2065,8 +2065,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(
               }
             }
             for(int k = 0; k < numPoints; k++) {
-              e->pnt(referenceCoord[3 * k], referenceCoord[3 * k + 1],
-                     referenceCoord[3 * k + 2], &coord[idx * 3]);
+              e->pnt(localCoord[3 * k], localCoord[3 * k + 1],
+                     localCoord[3 * k + 2], &coord[idx * 3]);
               determinants[idx] = e->getJacobian(gsf[k], &jac[0]);
               idx++;
             }
@@ -2090,9 +2090,9 @@ GMSH_API void gmsh::model::mesh::getJacobians(
               gsf.resize(numPoints);
               for(int k = 0; k < numPoints; k++) {
                 double value[1256][3];
-                e->getGradShapeFunctions(referenceCoord[3 * k],
-                                         referenceCoord[3 * k + 1],
-                                         referenceCoord[3 * k + 2], value);
+                e->getGradShapeFunctions(localCoord[3 * k],
+                                         localCoord[3 * k + 1],
+                                         localCoord[3 * k + 2], value);
                 gsf[k].resize(e->getNumShapeFunctions());
                 for(std::size_t l = 0; l < e->getNumShapeFunctions(); l++) {
                   gsf[k][l][0] = value[l][0];
@@ -2124,9 +2124,9 @@ GMSH_API void gmsh::model::mesh::getJacobians(
               gsf.resize(numPoints);
               for(int k = 0; k < numPoints; k++) {
                 double value[1256][3];
-                e->getGradShapeFunctions(referenceCoord[3 * k],
-                                         referenceCoord[3 * k + 1],
-                                         referenceCoord[3 * k + 2], value);
+                e->getGradShapeFunctions(localCoord[3 * k],
+                                         localCoord[3 * k + 1],
+                                         localCoord[3 * k + 2], value);
                 gsf[k].resize(e->getNumShapeFunctions());
                 for(std::size_t l = 0; l < e->getNumShapeFunctions(); l++) {
                   gsf[k][l][0] = value[l][0];
@@ -2187,7 +2187,7 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
 }
 
 GMSH_API void gmsh::model::mesh::getBasisFunctions(
-  const int elementType, const std::vector<double> &referenceCoord,
+  const int elementType, const std::vector<double> &localCoord,
   const std::string &functionSpaceType, int &numComponents,
   std::vector<double> &basisFunctions, int &numOrientations)
 {
@@ -2202,7 +2202,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     throw 2;
   }
 
-  const std::size_t numberOfGaussPoints = referenceCoord.size() / 3;
+  const std::size_t numberOfGaussPoints = localCoord.size() / 3;
   const int familyType = ElementType::getParentType(elementType);
 
   if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
@@ -2221,9 +2221,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       basisFunctions.resize(n * numComponents * numberOfGaussPoints, 0.);
       double s[1256], ds[1256][3];
       for(std::size_t i = 0; i < numberOfGaussPoints; i++) {
-        double u = referenceCoord[i * 3];
-        double v = referenceCoord[i * 3 + 1];
-        double w = referenceCoord[i * 3 + 2];
+        double u = localCoord[i * 3];
+        double v = localCoord[i * 3 + 1];
+        double w = localCoord[i * 3 + 2];
         switch(numComponents) {
         case 1:
           basis->f(u, v, w, s);
@@ -2361,9 +2361,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         std::vector<double>(eSize)); // edge functions of one element
 
       for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-        const double u = referenceCoord[3 * q];
-        const double v = referenceCoord[3 * q + 1];
-        const double w = referenceCoord[3 * q + 2];
+        const double u = localCoord[3 * q];
+        const double v = localCoord[3 * q + 1];
+        const double w = localCoord[3 * q + 2];
 
         basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q],
                              bTable[q]);
@@ -2387,9 +2387,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         std::vector<double>(basis->getnTriFaceFunction() * 6, 0));
       if(fSize != 0) {
         for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-          const double u = referenceCoord[3 * q];
-          const double v = referenceCoord[3 * q + 1];
-          const double w = referenceCoord[3 * q + 2];
+          const double u = localCoord[3 * q];
+          const double v = localCoord[3 * q + 1];
+          const double w = localCoord[3 * q + 2];
 
           basis->addAllOrientedFaceFunctions(
             u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q],
@@ -2492,9 +2492,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
           eSize, std::vector<double>(3, 0.))); // edge functions of one element
 
       for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-        const double u = referenceCoord[3 * q];
-        const double v = referenceCoord[3 * q + 1];
-        const double w = referenceCoord[3 * q + 2];
+        const double u = localCoord[3 * q];
+        const double v = localCoord[3 * q + 1];
+        const double w = localCoord[3 * q + 2];
 
         basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q],
                              bTable[q], fsName);
@@ -2523,9 +2523,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
                                             std::vector<double>(3, 0.)));
       if(fSize != 0) {
         for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-          const double u = referenceCoord[3 * q];
-          const double v = referenceCoord[3 * q + 1];
-          const double w = referenceCoord[3 * q + 2];
+          const double u = localCoord[3 * q];
+          const double v = localCoord[3 * q + 1];
+          const double w = localCoord[3 * q + 2];
 
           basis->addAllOrientedFaceFunctions(
             u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q],
@@ -3385,11 +3385,11 @@ static bool _getIntegrationInfo(const std::string &intType,
 GMSH_API void
 gmsh::model::mesh::getIntegrationPoints(const int elementType,
                                         const std::string &integrationType,
-                                        std::vector<double> &referenceCoord,
+                                        std::vector<double> &localCoord,
                                         std::vector<double> &weigths)
 {
   if(!_isInitialized()) { throw - 1; }
-  referenceCoord.clear();
+  localCoord.clear();
   weigths.clear();
   std::string intName = "";
   int intOrder = 0;
@@ -3406,12 +3406,12 @@ gmsh::model::mesh::getIntegrationPoints(const int elementType,
     Msg::Error("Wrong integration point format");
     throw 3;
   }
-  referenceCoord.resize(3 * pts.size1());
+  localCoord.resize(3 * pts.size1());
   weigths.resize(pts.size1());
   for(int i = 0; i < pts.size1(); i++) {
-    referenceCoord[3 * i] = pts(i, 0);
-    referenceCoord[3 * i + 1] = pts(i, 1);
-    referenceCoord[3 * i + 2] = pts(i, 2);
+    localCoord[3 * i] = pts(i, 0);
+    localCoord[3 * i + 1] = pts(i, 1);
+    localCoord[3 * i + 2] = pts(i, 2);
     weigths[i] = weights(i);
   }
 }
