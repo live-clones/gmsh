@@ -175,6 +175,8 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     gf->triangles.clear();
   }
 
+  uint16_t warning = 0;
+
   for(size_t i = 0; i < m->lines.num; i++) {
     uint32_t i0 = m->lines.node[2 * i + 0];
     uint32_t i1 = m->lines.node[2 * i + 1];
@@ -183,7 +185,10 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     MVertex *v1 = c2v[i1];
     std::map<int, GEdge *>::iterator ge = i2e.find(c);
     if(ge == i2e.end()) {
-      Msg::Warning("Could not find curve for HXT color %d", c);
+      if(warning != c) {
+        warning = c;
+        Msg::Warning("Could not find curve for HXT color %d", c);
+      }
       continue;
     }
     if(!v0) {
@@ -209,7 +214,10 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     MVertex *v2 = c2v[i2];
     std::map<int, GFace *>::iterator gf = i2f.find(c);
     if(gf == i2f.end()) {
-      Msg::Warning("Could not find surface for HXT color %d", c);
+      if(warning != c) {
+        warning = c;
+        Msg::Warning("Could not find surface for HXT color %d", c);
+      }
       continue;
     }
     if(!v0) {
