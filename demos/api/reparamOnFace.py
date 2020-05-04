@@ -1,4 +1,5 @@
 import gmsh
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber('General.Terminal', 1)
@@ -22,5 +23,6 @@ for c in bnd:
         p = gmsh.model.addDiscreteEntity(0)
         gmsh.model.setCoordinates(p, xyz[i], xyz[i+1], xyz[i+2])
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 gmsh.finalize()

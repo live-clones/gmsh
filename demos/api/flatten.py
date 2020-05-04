@@ -38,7 +38,8 @@ for e in entities:
     gmsh.model.mesh.addElements(e[0], e[1], elementTypes[e], elementTags[e],
                                 elementNodeTags[e])
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 #gmsh.write('flat.msh')
 
 gmsh.finalize()

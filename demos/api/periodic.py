@@ -22,3 +22,4 @@ masterTag, nodeTags, nodeMasterTags, tfo = gmsh.model.mesh.getPeriodicNodes(
 print(masterTag, nodeTags, nodeMasterTags, tfo)
 
 gmsh.write("periodic.msh")
+gmsh.finalize()

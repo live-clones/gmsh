@@ -2,6 +2,7 @@ import gmsh
 import math
 import time
 import threading
+import sys
 
 # This example shows how to implement a custom user interface running
 # computationally expensive calculations in separate threads. The threads can
@@ -67,7 +68,8 @@ def compute(arg):
 
 
 # create the graphical user interface
-gmsh.fltk.initialize()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.initialize()
 
 while 1:
     # check if GUI has been closed
