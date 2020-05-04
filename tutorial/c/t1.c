@@ -86,7 +86,7 @@ int main(int argc, char **argv)
      orientation of the curve to form a loop). The API function to create curve
      loops takes a pointer to an array of integers as first argument, the number
      of elements in the array as the second argument, and the curve loop tag
-     (which must ne unique amongst curve loops) as the third argument: */
+     (which must be unique amongst curve loops) as the third argument: */
   gmshModelGeoAddCurveLoop(cl1, sizeof(cl1)/sizeof(cl1[0]), 1, &ierr);
 
   /* We can then define the surface as a list of curve loops (only one here,
