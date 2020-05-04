@@ -20,6 +20,7 @@ set(SRC
   meshGRegionBoundaryLayer.cpp
   meshRelocateVertex.cpp
   meshMetric.cpp
+  meshWinslow2d.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp
   BoundaryLayers.cpp

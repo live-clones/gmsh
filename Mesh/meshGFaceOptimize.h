@@ -117,4 +117,8 @@ struct RecombineTriangle {
   }
 };
 
+void _relocate(GFace *gf, MVertex *ver,
+	       const std::vector<MElement *> &lt);
+
+
 #endif

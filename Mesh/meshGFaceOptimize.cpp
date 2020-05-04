@@ -896,8 +896,8 @@ struct p1p2p3 {
   MVertex *p1, *p2;
 };
 
-static void _relocate(GFace *gf, MVertex *ver,
-                      const std::vector<MElement *> &lt)
+void _relocate(GFace *gf, MVertex *ver,
+	       const std::vector<MElement *> &lt)
 {
   if(ver->onWhat() != gf) return;
   MFaceVertex *fv = dynamic_cast<MFaceVertex *>(ver);

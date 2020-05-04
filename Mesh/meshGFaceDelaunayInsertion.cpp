@@ -23,6 +23,7 @@
 #include "discreteFace.h"
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
+#include "meshWinslow2d.h"
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertion.h"
@@ -1672,6 +1673,7 @@ void bowyerWatsonParallelograms(
   // the crossfield (i.e. edges that are aligned are preferred for combination)
 
   recombineIntoQuads(gf, false, 0, false, .1);
+  meshWinslow2d (gf);
   
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
