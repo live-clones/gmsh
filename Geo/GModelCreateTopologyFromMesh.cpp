@@ -297,7 +297,6 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
       gv1->addEdge(ge);
       gv2->addEdge(ge);
     }
-
     else {
       std::vector<GEdge *> splits = ensureSimplyConnectedEdge(ge);
       if(splits.size() == 1) { // periodic case
