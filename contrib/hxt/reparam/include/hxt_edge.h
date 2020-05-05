@@ -44,6 +44,7 @@ HXTStatus hxtEdgesSetBoundaries(HXTEdges *edges, HXTBoundaries **boundaries);
 
 
 HXTStatus hxtEdgesCreate(HXTMesh *mesh, HXTEdges** edges);
+HXTStatus hxtEdgesCreateNonManifold(HXTMesh *mesh, HXTEdges** edges);
 HXTStatus hxtEdgesDelete(HXTEdges **edges);
 
 int hxtEdgesIsBoundary (HXTEdges *edges, uint32_t *e);

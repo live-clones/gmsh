@@ -11,7 +11,10 @@
 # Fixme: HXT should rather be included using simple target_link_library calls,
 # as for external libraries
 
-# === HXT core
+
+#################################################################################
+# HXT core
+#################################################################################
 set(SRC
     hxt_bbox.c
     hxt_mesh.c
@@ -34,7 +37,10 @@ list(APPEND HXT_INC_DIRS
      contrib/hxt/core/src
      contrib/hxt/core/include)
 
-# === HXT reparam
+
+#################################################################################
+# HXT reparam
+#################################################################################
 set(SRC
     hxt_class_macro.h
     hxt_curvature.c
@@ -62,13 +68,19 @@ list(APPEND HXT_INC_DIRS
      contrib/hxt/reparam/src
      contrib/hxt/reparam/include)
 
-# === HXT sizeField
+
+#################################################################################
+# HXT sizeField
+#################################################################################
 if(HAVE_P4EST)
   append_gmsh_src(contrib/hxt/sizeField "hxt_octree.cpp;hxt_octree.h" )
   list(APPEND HXT_INC_DIRS contrib/hxt/sizeField)
 endif()
 
-# === HXT predicates
+
+#################################################################################
+# HXT predicates
+#################################################################################
 # do not use arithmetic contraction in predicates.c
 if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
   set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/predicates/src/predicates.c"
@@ -93,7 +105,9 @@ list(APPEND HXT_INC_DIRS
      contrib/hxt/predicates/include)
 
 
-# === HXT tetBR
+#################################################################################
+# HXT tetBR
+#################################################################################
 append_gmsh_src(contrib/hxt/tetBR/src hxt_boundary_recovery.cxx)
 append_gmsh_src(contrib/hxt/tetBR/include hxt_boundary_recovery.h)
 list(APPEND HXT_INC_DIRS
@@ -101,30 +115,56 @@ list(APPEND HXT_INC_DIRS
      contrib/hxt/tetBR/include)
 
 
-# === HXT tetMesh
+#################################################################################
+# HXT tetMesh
+#################################################################################
 set(SRC
     hxt_edgeRemoval.c
+    hxt_edgeRemoval.h
     hxt_smoothing.c
+    hxt_smoothing.h
     HXTSPR.c
+    HXTSPR.h
     hxt_tetColor.c
+    hxt_tetColor.h
     hxt_tetDelaunay.c
     hxt_tetFlag.c
     hxt_tetMesh.c
     hxt_tetNodalSize.c
+    hxt_tetNodalSize.h
     hxt_tetOpti.c
+    hxt_tetOptiUtils.h
+    hxt_tetPartition.h
     hxt_tetQuality.c
+    hxt_tetQuality.h
     hxt_tetRefine.c
+    hxt_tetRefine.h
     hxt_tetRepair.c
     hxt_tetSync.c
+    hxt_tetSync.h
     hxt_tetUtils.c
+    hxt_tetUtils.h
     hxt_vertices.c
    )
 
+set(INC
+    hxt_tetDelaunay.h
+    hxt_tetFlag.h
+    hxt_tetMesh.h
+    hxt_tetOpti.h
+    hxt_tetRepair.h
+    hxt_vertices.h
+   )
+
 append_gmsh_src(contrib/hxt/tetMesh/src "${SRC}")
-append_gmsh_src(contrib/hxt/tetMesh/include hxt_tetMesh.h)
+append_gmsh_src(contrib/hxt/tetMesh/include "${INC}")
+
 list(APPEND HXT_INC_DIRS
      contrib/hxt/tetMesh/src
      contrib/hxt/tetMesh/include)
 
-# this variable should be available in the parent CMakeLists
+
+#################################################################################
+# propagate HXT_INC_DIRS to parent CMakeLists
+#################################################################################
 set(HXT_INC_DIRS ${HXT_INC_DIRS} PARENT_SCOPE)

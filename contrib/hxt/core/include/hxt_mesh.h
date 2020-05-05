@@ -134,10 +134,10 @@ typedef struct {
 HXTStatus  hxtMeshCreate          ( HXTMesh** mesh);
 HXTStatus  hxtMeshDelete          ( HXTMesh** meshPtr);
 
-#ifdef HXT_CORE_FILEIO
+// mesh I/O
 HXTStatus  hxtMeshReadGmsh       ( HXTMesh* mesh, const char* filename);
 HXTStatus  hxtMeshWriteGmsh      ( HXTMesh* mesh, const char* filename);
-#endif
+
 
 #ifdef __cplusplus
 }
