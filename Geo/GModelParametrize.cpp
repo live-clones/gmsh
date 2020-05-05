@@ -480,7 +480,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
 #if defined(HAVE_HXT)
 
 static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle *> &t,
-                          HXTMesh **pm, std::map<MVertex *, int> &v2c,
+                          HXTMesh **pm, std::map<MVertex *, uint32_t> &v2c,
                           std::vector<MVertex *> &c2v)
 {
   HXTMesh *m;
@@ -526,7 +526,7 @@ static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle *> &t,
 }
 
 static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
-                          std::map<MVertex *, int> &v2c,
+                          std::map<MVertex *, uint32_t> &v2c,
                           std::vector<MVertex *> &c2v)
 {
   return gmsh2hxt(gf->tag(), gf->triangles, pm, v2c, c2v);
@@ -544,7 +544,7 @@ int computeDiscreteCurvatures(GModel *gm)
     HXTEdges *edges;
     double *nodalCurvatures;
     double *crossField;
-    std::map<MVertex *, int> v2c;
+    std::map<MVertex *, uint32_t> v2c;
     std::vector<MVertex *> c2v;
     gmsh2hxt(*it, &m, v2c, c2v);
     HXT_CHECK(hxtEdgesCreate(m, &edges));
@@ -741,7 +741,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   HXTMesh *m;
   HXTMeanValues *param;
   HXTEdges *edges;
-  std::map<MVertex *, int> v2c;
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   gmsh2hxt(1, t, &m, v2c, c2v);
   HXT_CHECK(hxtEdgesCreate(m, &edges));
