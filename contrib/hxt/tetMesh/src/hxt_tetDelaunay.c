@@ -195,9 +195,9 @@ unsigned computePasses(uint32_t passes[12],
                        uint32_t nInserted,
                        uint32_t nToInsert,
                        double partitionability,
-                       int maxThreads)
+                       int maxPartitions)
 {
-  double alpha = 1.0/(maxThreads*maxThreads);
+  double alpha = 1.0/(maxPartitions*maxPartitions);
   nInserted *= ((1.0 - alpha) * partitionability + alpha);
 
   unsigned npasses=0;
@@ -1337,11 +1337,11 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
   uint32_t seed = 1;
 
   // third, divide indices in different passes
-  const int maxThreads = options->delaunayThreads;
+  const int maxPartitions = options->delaunayThreads;
   const int perfectlyDelaunay = mesh->tetrahedra.num<=5;
 
   uint32_t passes[12];
-  unsigned npasses = computePasses(passes, options->numVerticesInMesh, nToInsert, options->partitionability, maxThreads);
+  unsigned npasses = computePasses(passes, options->numVerticesInMesh, nToInsert, options->partitionability, maxPartitions);
 
   // that ugly cast because people want an array of double into the mesh structure
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
@@ -1350,7 +1350,6 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
           shuffle (and optimize cache locality)
   ******************************************************/
   int firstPassEver = (options->numVerticesInMesh==0);
-  uint32_t firstToInsert = mesh->vertices.num - nToInsert;
   HXT_INFO_COND(options->verbosity>1, "Reordering points from %u to %u", mesh->vertices.num - nToInsert, mesh->vertices.num);
   HXTVertex* verticesToInsert = vertices + mesh->vertices.num - nToInsert;
 
@@ -1370,22 +1369,12 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
 
     #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
     for (uint32_t i=0; i<nToInsert; i++) {
-      nodeInfo[i].node = firstToInsert + i;
-      nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
       nodeInfo[i].hilbertDist = verticesToInsert[i].padding.hilbertDist;
     }
   }
   else{
 
     HXT_CHECK( hxtMoore(options->bbox, vertices, mesh->vertices.num, NULL) );
-
-    if(!noReordering) {
-      #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
-      for (uint32_t i=0; i<nToInsert; i++) {
-        nodeInfo[i].node = firstToInsert + i;
-        nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
-      }
-    }
 
     if(npasses>1 || firstPassEver)
       HXT_CHECK( hxtNodeInfoShuffle(nodeInfo, nToInsert) );
@@ -1400,7 +1389,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
     }
 
     if(!noReordering) {
-      double* sizesToInsert = options->nodalSizes + firstToInsert;
+      double* sizesToInsert = options->nodalSizes + options->insertionFirst;
 
       size_t vertSize = nToInsert*sizeof(HXTVertex);
       size_t sizeSize = nToInsert*sizeof(double);
@@ -1411,9 +1400,9 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
 
       #pragma omp parallel for simd aligned(vertCopy,sizeCopy,nodeInfo: SIMD_ALIGN)
       for (uint32_t i=0; i<nToInsert; i++) {
-        vertCopy[i] = verticesToInsert[nodeInfo[i].node-firstToInsert];
-        sizeCopy[i] = sizesToInsert[nodeInfo[i].node-firstToInsert];
-        nodeInfo[i].node = firstToInsert + i;
+        vertCopy[i] = verticesToInsert[nodeInfo[i].node-options->insertionFirst];
+        sizeCopy[i] = sizesToInsert[nodeInfo[i].node-options->insertionFirst];
+        nodeInfo[i].node = options->insertionFirst + i;
       }
 
       memcpy(verticesToInsert, vertCopy, vertSize);
@@ -1446,21 +1435,22 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
 #endif
 
   TetLocal* Locals;
-  HXT_CHECK( hxtMalloc(&Locals, maxThreads*sizeof(TetLocal)) );
+  HXT_CHECK( hxtMalloc(&Locals, maxPartitions*sizeof(TetLocal)) );
 
   uint64_t* startTetGlobal;
-  HXT_CHECK( hxtMalloc(&startTetGlobal, maxThreads*maxThreads*sizeof(uint64_t)) );
+  if(options->reproducible)
+    HXT_CHECK( hxtMalloc(&startTetGlobal, omp_get_max_threads()*maxPartitions*sizeof(uint64_t)) );
 
-  for (int i=0; i<maxThreads; i++)
+  for (int i=0; i<maxPartitions; i++)
     localInit(&Locals[i]);
 
   HXT_INFO_COND(options->verbosity>0,
                 "Delaunay of %10u points on %3d threads - mesh.nvert: %-10u",
-                passes[npasses] - passes[0], maxThreads, options->numVerticesInMesh);
+                passes[npasses] - passes[0], maxPartitions, options->numVerticesInMesh);
 
   for (uint32_t ipass=0; ipass<npasses; ipass++)
   {
-    int nthreads = maxThreads;
+    int nthreads = maxPartitions;
     double conflictRatio = 0.0;
 
     for(uint32_t iround=0; passes[ipass+1]-passes[ipass]; iround++)
@@ -1588,15 +1578,22 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
                               .otherArraysSetDeleted = {NULL},
                               .threadFinished = 0};
 
+      int reproducibleSearchThreads = 0;
       if(nthreads>1){
         if(options->reproducible){
+          reproducibleSearchThreads = computeNumberOfThreads(0.0, omp_get_max_threads(), mesh->tetrahedra.num, 32768);
 
-          #pragma omp parallel num_threads(maxThreads)
+          #pragma omp parallel num_threads(reproducibleSearchThreads)
           {
             int threadID = omp_get_thread_num();
-            // we want to reorder tets only at the very end. Because the selected tet should not depend
-            // on the ordering of tet in reproducible mode, we have very few options...
-            // we will select the tet in the good partition that has the lowest nodes in lexicographic order
+            /* we want to reorder tets only at the very end. Therefore, the newly created tet are in non-predictable order.
+             * Because the selected tet should not depend on the ordering of tet in reproducible mode,
+             * we will select the tet in the good partition that has the lowest lexicographic ordering of its nodes.
+             * In this section, we run the maximum number of threads: max threads (=>not corresponding to partitions threads)
+             * Each of the max thread look at a chunk of tetrahedra and updates its own array with his idea of what tet.
+             * will be the first for each partiton thread.
+             * Next (line 1659 as I'm writing this), each partition threads will check the results obtained by each maxThreads
+             * threads and take the tet which appear first lexicographically. */
             uint64_t* startTetLocal = startTetGlobal + threadID * nthreads;
             for(int i=0; i<nthreads; i++) {
               startTetLocal[i] = UINT64_MAX;
@@ -1659,7 +1656,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
                           find starting tetrahedron
           ******************************************************/
           if(options->reproducible){
-            for(int t=0; t<maxThreads; t++) {
+            for(int t=0; t<reproducibleSearchThreads; t++) {
               uint64_t startTet = startTetGlobal[t*nthreads + threadID];
               if(startTet != UINT64_MAX) {
                 if(curTet==HXT_NO_ADJACENT) {
@@ -1812,7 +1809,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
           nonDeterministic = 1;
       }
 
-      for(int threadID=0; threadID<maxThreads; threadID++) {
+      for(int threadID=0; threadID<maxPartitions; threadID++) {
         Locals[threadID].deleted.createdNew = 0;
       }
     }
@@ -1823,7 +1820,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
   /******************************************************
                   Cleaning
   ******************************************************/
-  #pragma omp parallel num_threads(maxThreads)
+  #pragma omp parallel num_threads(maxPartitions)
   {
     const int threadID = omp_get_thread_num();
     for (uint64_t i=0; i<Locals[threadID].deleted.num; i++) {
@@ -1834,14 +1831,16 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
   }
   HXT_CHECK( hxtRemoveDeleted(mesh) );
 
-  for (int i=0; i<maxThreads; i++){
+  for (int i=0; i<maxPartitions; i++){
     HXT_CHECK( hxtAlignedFree(&Locals[i].deleted.array));
     HXT_CHECK( hxtAlignedFree(&Locals[i].ball.array));
   }
 
   HXT_CHECK( hxtAlignedFree(&verticesID) );
   HXT_CHECK( hxtFree(&Locals) );
-  HXT_CHECK( hxtFree(&startTetGlobal) );
+
+  if(options->reproducible)
+    HXT_CHECK( hxtFree(&startTetGlobal) );
 
   /***************************************************************
     if reordering allowed, remove vertices we could not insert
@@ -1994,11 +1993,18 @@ HXT_ASSERT(options!=NULL);
 
   const uint32_t nToInsert = mesh->vertices.num - options->insertionFirst;
 
-  // if(options.reproducible && nToInsert<16554) // not worth launching threads and having to reorder tets after...
-  //   options.delaunayThreads = 1;
+  // don't create more threads than necessary
+  options->delaunayThreads = computeNumberOfThreads(0.0, options->delaunayThreads, nToInsert, SMALLEST_PASS);
 
   hxtNodeInfo* nodeInfo;
   HXT_CHECK( hxtAlignedMalloc(&nodeInfo, nToInsert*sizeof(hxtNodeInfo)) );
+
+  // we fill nodeInfo with the indices of each vertices to insert...
+  #pragma omp parallel for simd
+  for (uint32_t i=0; i<nToInsert; i++) {
+    nodeInfo[i].node = options->insertionFirst + i;
+    nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
+  }
 
   HXT_CHECK( parallelDelaunay3D(mesh, options, nodeInfo, nToInsert, 0) );
 
@@ -2019,8 +2025,8 @@ HXT_ASSERT(nodeInfo!=NULL);
   HXTBbox bbox;
   HXT_CHECK( DelaunayOptionsInit(mesh, options, &bbox) );
 
-  // if(options.reproducible && nToInsert<16554) // not worth launching threads and having to reorder tets after...
-  //   options.delaunayThreads = 1;
+  // don't create more threads than necessary
+  options->delaunayThreads = computeNumberOfThreads(0.0, options->delaunayThreads, nToInsert, SMALLEST_PASS);
 
   HXT_ASSERT(options->insertionFirst+nToInsert <= mesh->vertices.num);
 

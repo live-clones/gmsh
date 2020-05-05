@@ -573,9 +573,9 @@ HXTStatus hxtOptimizeTetrahedra(HXTMesh *mesh,
     }
 
     shared.numThreads = computeNumberOfThreads(conflictRatio,
-                                                shared.numThreads,
-                                                shared.badTets.num,
-                                                doSPR ? 8 : 128);
+                                               shared.numThreads,
+                                               shared.badTets.num,
+                                               doSPR ? 8 : 128);
 
     shared.toSync.threadFinished = 0;
 
