@@ -1429,6 +1429,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
         Initializations and allocations
   ******************************************************/
   if(mesh->tetrahedra.num<5){
+    HXT_ASSERT_MSG(options->numVerticesInMesh==0 && mesh->tetrahedra.num==0, "no ghosts or unvalid mesh");
     HXT_INFO_COND(options->verbosity>0,
                   "Initialization of tet. mesh");
     HXT_CHECK( hxtTetrahedraInit(mesh, nodeInfo, nToInsert, options->verbosity) );
@@ -1949,40 +1950,14 @@ static HXTStatus DelaunayOptionsInit(HXTMesh* mesh,
                                      HXTDelaunayOptions* options,
                                      HXTBbox* bbox){
 HXT_ASSERT(mesh!=NULL);
-HXT_ASSERT_MSG(options->numVerticesInMesh==0 || mesh->tetrahedra.num!=0,
-               "Told there was 0 vertices in the mesh, which is incompatible with the number of tetrahedra (>0)");
+HXT_ASSERT_MSG((options->numVerticesInMesh==0 && mesh->tetrahedra.num==0) ||
+               (options->numVerticesInMesh>=4 && mesh->tetrahedra.num>0),
+               "Number of vertices in the mesh and number of tetrahedra cannot match");
   
   const uint32_t nVert = mesh->vertices.num;
 
-  if(options->numVerticesInMesh==0 && mesh->tetrahedra.num!=0) {
-
-    HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
-
-    // count the number of vertices in the mesh
-    #pragma omp parallel for
-    for (uint32_t i=0; i<nVert; i++) {
-      vertices[i].padding.index = 0;
-    }
-
-    #pragma omp parallel for
-    for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-      vertices[mesh->tetrahedra.node[4*i+0]].padding.index = 1;
-      vertices[mesh->tetrahedra.node[4*i+1]].padding.index = 1;
-      vertices[mesh->tetrahedra.node[4*i+2]].padding.index = 1;
-      if(mesh->tetrahedra.node[4*i+3]!=HXT_GHOST_VERTEX)
-        vertices[mesh->tetrahedra.node[4*i+3]].padding.index = 1;
-    }
-
-    uint32_t numVerticesInMesh = 0;
-    #pragma omp parallel for reduction(+:numVerticesInMesh)
-    for (uint32_t i=0; i<nVert; i++) {
-        numVerticesInMesh += vertices[i].padding.index;
-    }
-
-    options->numVerticesInMesh = numVerticesInMesh;
-  }
-
 HXT_ASSERT(options->numVerticesInMesh <= nVert);
+HXT_ASSERT(options->insertionFirst <= nVert);
 
   if(options->bbox==NULL){
     options->bbox = bbox;
@@ -2011,30 +1986,21 @@ HXT_ASSERT(options->numVerticesInMesh <= nVert);
  * parallel Delaunay
  * see header for a complete description
  ****************************************/
-HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* userOptions){
-  HXTDelaunayOptions options;
-  if(userOptions!=NULL)
-    options = *userOptions;
-  else
-    options = (HXTDelaunayOptions) {.bbox=NULL,
-                                    .nodalSizes=NULL,
-                                    .numVerticesInMesh=0,
-                                    .verbosity=1,
-                                    .delaunayThreads=0,
-                                    .reproducible=0};
-
+HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* options){
+HXT_ASSERT(mesh!=NULL);
+HXT_ASSERT(options!=NULL);
   HXTBbox bbox;
-  HXT_CHECK( DelaunayOptionsInit(mesh, &options, &bbox) );
+  HXT_CHECK( DelaunayOptionsInit(mesh, options, &bbox) );
 
-  const uint32_t nToInsert = mesh->vertices.num - options.numVerticesInMesh;
+  const uint32_t nToInsert = mesh->vertices.num - options->insertionFirst;
 
-  if(options.reproducible && nToInsert<16554) // not worth launching threads and having to reorder tets after...
-    options.delaunayThreads = 1;
+  // if(options.reproducible && nToInsert<16554) // not worth launching threads and having to reorder tets after...
+  //   options.delaunayThreads = 1;
 
   hxtNodeInfo* nodeInfo;
   HXT_CHECK( hxtAlignedMalloc(&nodeInfo, nToInsert*sizeof(hxtNodeInfo)) );
 
-  HXT_CHECK( parallelDelaunay3D(mesh, &options, nodeInfo, nToInsert, 0) );
+  HXT_CHECK( parallelDelaunay3D(mesh, options, nodeInfo, nToInsert, 0) );
 
   HXT_CHECK( hxtAlignedFree(&nodeInfo) );
 
@@ -2046,29 +2012,19 @@ HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* userOptions){
  * parallel Delaunay without moving the vertices
  * see header for a complete description
  ***********************************************/
-HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* userOptions, hxtNodeInfo* nodeInfo, uint64_t nToInsert){
+HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* nodeInfo, uint64_t nToInsert){
+HXT_ASSERT(mesh!=NULL);
+HXT_ASSERT(options!=NULL);
 HXT_ASSERT(nodeInfo!=NULL);
-
-  HXTDelaunayOptions options;
-  if(userOptions!=NULL)
-    options = *userOptions;
-  else
-    options = (HXTDelaunayOptions) {.bbox=NULL,
-                                    .nodalSizes=NULL,
-                                    .numVerticesInMesh=0,
-                                    .verbosity=1,
-                                    .delaunayThreads=0,
-                                    .reproducible=0};
-
   HXTBbox bbox;
-  HXT_CHECK( DelaunayOptionsInit(mesh, &options, &bbox) );
+  HXT_CHECK( DelaunayOptionsInit(mesh, options, &bbox) );
 
-  if(options.reproducible && nToInsert<16554) // not worth launching threads and having to reorder tets after...
-    options.delaunayThreads = 1;
+  // if(options.reproducible && nToInsert<16554) // not worth launching threads and having to reorder tets after...
+  //   options.delaunayThreads = 1;
 
-HXT_ASSERT(options.numVerticesInMesh+nToInsert <= mesh->vertices.num);
+  HXT_ASSERT(options->insertionFirst+nToInsert <= mesh->vertices.num);
 
-  HXT_CHECK( parallelDelaunay3D(mesh, &options, nodeInfo, nToInsert, 1) );
+  HXT_CHECK( parallelDelaunay3D(mesh, options, nodeInfo, nToInsert, 1) );
 
   return HXT_STATUS_OK;
 }

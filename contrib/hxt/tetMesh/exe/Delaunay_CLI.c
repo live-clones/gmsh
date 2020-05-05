@@ -157,6 +157,7 @@ int main(int argc, char** argv) {
     .bbox = NULL,
     .nodalSizes = NULL,
     .numVerticesInMesh = 0,
+    .insertionFirst = 0,
     .partitionability = 0,
     .verbosity = verbosity,
     .reproducible = reproducible,

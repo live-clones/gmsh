@@ -62,7 +62,6 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
   }
 
   HXT_CHECK( hxtDelaunaySteadyVertices(mesh, delOptions, nodeInfo, numToInsert) );
-  delOptions->numVerticesInMesh = mesh->vertices.num;
 
 #ifdef DEBUG
   #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
@@ -335,6 +334,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
     }
 
 
+    delOptions->insertionFirst = mesh->vertices.num; // prepare for the next insertion
 
     uint32_t add = 0;
     HXTStatus status = HXT_STATUS_OK;
@@ -484,13 +484,11 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
     mesh->vertices.num += add;
 
     delOptions->partitionability = 1.0 - pow(0.5, iter);
+    uint32_t oldNumVerticesInMesh = delOptions->numVerticesInMesh;
 
     HXT_CHECK(hxtDelaunay(mesh, delOptions));
 
-    uint32_t numAdd = mesh->vertices.num - delOptions->numVerticesInMesh;
-    delOptions->numVerticesInMesh = mesh->vertices.num;
-
-    if (numAdd == 0) break;
+    if (delOptions->numVerticesInMesh == oldNumVerticesInMesh) break;
   }
 
   HXT_CHECK( hxtFree(&startIndex) );
