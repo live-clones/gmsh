@@ -19,7 +19,7 @@
 static const double k1 = 0.61; // k1*h is the minimal distance between two nodes
 static const double k2 = 0.5; // k2*h is the minimal distance to the boundary
 static const double sqrt3 = 1.73205081;
-static const double FACTOR = .71;
+static const double FACTOR = .61;
 
 //static const int NUMDIR = 1;
 //static const double DIRS[NUMDIR] = {0.0};
@@ -57,25 +57,6 @@ public:
   bool _tooclose;
   SPoint2 _p;
   my_wrapper(const SPoint2 &sp);
-};
-
-struct smoothness_point_pair {
-  double rank;
-  surfacePointWithExclusionRegion *ptr;
-};
-
-class compareSurfacePointWithExclusionRegionPtr_Smoothness {
-public:
-  inline bool operator()(const smoothness_point_pair &a,
-                         const smoothness_point_pair &b) const
-  {
-    if(a.rank == b.rank) {
-      if(a.ptr->_distanceSummed > b.ptr->_distanceSummed) return false;
-      if(a.ptr->_distanceSummed < b.ptr->_distanceSummed) return true;
-      return a.ptr < b.ptr;
-    }
-    return (a.rank < b.rank);
-  }
 };
 
 class compareSurfacePointWithExclusionRegionPtr {

@@ -1549,8 +1549,11 @@ public:
     if (numComponents() == 3){// scaled cross field
       double values[3];
       if(!octree->searchVectorWithTol(x, y, z, values, 0, 0, .05)){
-	if(!octree->searchVectorWithTol(x, y, z, values, 0, 0, .25)){
-	Msg::Info("No vector element found containing point (%g,%g,%g)", x, y, z);
+	if(!octree->searchVectorWithTol(x, y, z, values, 0, 0, .1)){
+	  Msg::Debug("No vector element found containing point (%g,%g,%g)", x, y, z);
+	}
+	else {
+	  v = SVector3(values[0],values[1],values[2]);
 	}
       }
       else{
@@ -2733,11 +2736,11 @@ void BoundaryLayerField::setupFor1d(int iE)
   removeAttractors();
 }
 
-void BoundaryLayerField::setupFor2d(int iF)
+bool BoundaryLayerField::setupFor2d(int iF)
 {
   if(std::find(excluded_faces_id.begin(), excluded_faces_id.end(), iF) !=
      excluded_faces_id.end())
-    return;
+    return false;
 
   // remove GFaces from the attractors (only used in 2D) for edges and vertices
   if(edges_id_saved.empty()) {
@@ -2798,6 +2801,7 @@ void BoundaryLayerField::setupFor2d(int iF)
   }
 
   removeAttractors();
+  return true;
 }
 
 double BoundaryLayerField::operator()(double x, double y, double z, GEntity *ge)

@@ -43,5 +43,6 @@ gmsh.option.setNumber("Mesh.Algorithm", 7)
 gmsh.model.mesh.generate(2)
 gmsh.write("t17.msh")
 
-gmsh.fltk.run()
+# gmsh.fltk.run()
+
 gmsh.finalize()

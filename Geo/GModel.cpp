@@ -65,11 +65,15 @@ std::vector<GModel *> GModel::list;
 int GModel::_current = -1;
 
 GModel::GModel(const std::string &name)
-  : _maxVertexNum(0), _maxElementNum(0), _checkPointedMaxVertexNum(0),
-    _checkPointedMaxElementNum(0), _destroying(false), _name(name), _visible(1),
-    _elementOctree(0), _geo_internals(0), _occ_internals(0), _acis_internals(0),
-    _fields(0), _currentMeshEntity(0), _numPartitions(0), normals(0)
+  : _destroying(false), _name(name), _visible(1), _elementOctree(0),
+    _geo_internals(0), _occ_internals(0), _acis_internals(0), _fields(0),
+    _currentMeshEntity(0), _numPartitions(0), normals(0)
 {
+  _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
+  _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
+  _checkPointedMaxVertexNum = _maxVertexNum;
+  _checkPointedMaxElementNum = _maxElementNum;
+
   // hide all other models
   for(std::size_t i = 0; i < list.size(); i++) list[i]->setVisibility(0);
 
@@ -163,8 +167,10 @@ void GModel::destroy(bool keepName)
     _fileNames.clear();
   }
 
-  _maxVertexNum = _maxElementNum = 0;
-  _checkPointedMaxVertexNum = _checkPointedMaxElementNum = 0;
+  _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
+  _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
+  _checkPointedMaxVertexNum = _maxVertexNum;
+  _checkPointedMaxElementNum = _maxElementNum;
   _currentMeshEntity = 0;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
@@ -1432,7 +1438,7 @@ int GModel::addMFace(const MFace &face)
 void GModel::renumberMeshVertices()
 {
   destroyMeshCaches();
-  setMaxVertexNumber(0);
+  setMaxVertexNumber(CTX::instance()->mesh.firstNodeTag - 1);
   std::vector<GEntity *> entities;
   getEntities(entities);
 
@@ -1448,13 +1454,13 @@ void GModel::renumberMeshVertices()
     }
   }
 
-  std::size_t n = 0;
+  std::size_t n = CTX::instance()->mesh.firstNodeTag - 1;
   if(potentiallySaveSubset) {
     Msg::Debug("Renumbering for potentially partial mesh save");
     // if we potentially only save a subset of elements, make sure to first
     // renumber the nodes that belong to those elements (so that we end up
     // with a dense node numbering in the output file)
-    std::size_t nv = 0;
+    std::size_t nv = CTX::instance()->mesh.firstNodeTag - 1;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       nv += ge->getNumMeshVertices();
@@ -1505,7 +1511,7 @@ void GModel::renumberMeshVertices()
 void GModel::renumberMeshElements()
 {
   destroyMeshCaches();
-  setMaxElementNumber(0);
+  setMaxElementNumber(CTX::instance()->mesh.firstElementTag - 1);
   std::vector<GEntity *> entities;
   getEntities(entities);
 
@@ -1521,7 +1527,7 @@ void GModel::renumberMeshElements()
     }
   }
 
-  std::size_t n = 0;
+  std::size_t n = CTX::instance()->mesh.firstElementTag - 1;
   if(potentiallySaveSubset) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];

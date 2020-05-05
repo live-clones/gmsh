@@ -1089,6 +1089,15 @@ namespace gmsh { // Top-level functions
       GMSH_API void setSize(const gmsh::vectorpair & dimTags,
                             const double size);
 
+      // gmsh::model::mesh::setSizeAtParametricPoints
+      //
+      // Set mesh size at given parametric point on the model entities `dimTags'.
+      // Currently only entities of dimension 1 (lines) are handled.
+      GMSH_API void setSizeAtParametricPoints(const int dim,
+                                              const int tag,
+                                              const std::vector<double> & points,
+                                              const std::vector<double> & sizes);
+
       // gmsh::model::mesh::setTransfiniteCurve
       //
       // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
@@ -1674,6 +1683,19 @@ namespace gmsh { // Top-level functions
                                const std::vector<int> & pointTags,
                                std::vector<int> & curveTags);
 
+      // gmsh::model::geo::getMaxTag
+      //
+      // Get the maximum tag of entities of dimension `dim' in the built-in CAD
+      // representation.
+      GMSH_API int getMaxTag(const int dim);
+
+      // gmsh::model::geo::setMaxTag
+      //
+      // Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
+      // in CAD representation.
+      GMSH_API void setMaxTag(const int dim,
+                              const int maxTag);
+
       // gmsh::model::geo::synchronize
       //
       // Synchronize the built-in CAD representation with the current Gmsh model.
@@ -2079,12 +2101,14 @@ namespace gmsh { // Top-level functions
       // set the tag explicitly; otherwise a new tag is selected automatically. The
       // new entities are returned in `outDimTags'. If the optional argument
       // `makeRuled' is set, the surfaces created on the boundary are forced to be
-      // ruled surfaces.
+      // ruled surfaces. If `maxDegree' is positive, set the maximal degree of
+      // resulting surface.
       GMSH_API void addThruSections(const std::vector<int> & wireTags,
                                     gmsh::vectorpair & outDimTags,
                                     const int tag = -1,
                                     const bool makeSolid = true,
-                                    const bool makeRuled = false);
+                                    const bool makeRuled = false,
+                                    const int maxDegree = -1);
 
       // gmsh::model::occ::addThickSolid
       //
@@ -2422,6 +2446,19 @@ namespace gmsh { // Top-level functions
       GMSH_API void getMatrixOfInertia(const int dim,
                                        const int tag,
                                        std::vector<double> & mat);
+
+      // gmsh::model::occ::getMaxTag
+      //
+      // Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD
+      // representation.
+      GMSH_API int getMaxTag(const int dim);
+
+      // gmsh::model::occ::setMaxTag
+      //
+      // Set the maximum tag `maxTag' for entities of dimension `dim' in the
+      // OpenCASCADE CAD representation.
+      GMSH_API void setMaxTag(const int dim,
+                              const int maxTag);
 
       // gmsh::model::occ::synchronize
       //

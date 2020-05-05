@@ -17,6 +17,7 @@
 class GFace;
 class GVertex;
 class MVertex;
+class Field;
 
 struct edge_angle {
   MVertex *v1, *v2;
@@ -108,45 +109,16 @@ struct RecombineTriangle {
   double quality;
   MVertex *n1, *n2, *n3, *n4;
 
-  RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_t2)
-    : t1(_t1), t2(_t2)
-  {
-    n1 = me.getVertex(0);
-    n2 = me.getVertex(1);
-    n3 = 0;
-    n4 = 0;
-
-    if(t1->getVertex(0) != n1 && t1->getVertex(0) != n2)
-      n3 = t1->getVertex(0);
-    else if(t1->getVertex(1) != n1 && t1->getVertex(1) != n2)
-      n3 = t1->getVertex(1);
-    else if(t1->getVertex(2) != n1 && t1->getVertex(2) != n2)
-      n3 = t1->getVertex(2);
-
-    if(t2->getVertex(0) != n1 && t2->getVertex(0) != n2)
-      n4 = t2->getVertex(0);
-    else if(t2->getVertex(1) != n1 && t2->getVertex(1) != n2)
-      n4 = t2->getVertex(1);
-    else if(t2->getVertex(2) != n1 && t2->getVertex(2) != n2)
-      n4 = t2->getVertex(2);
-
-    MQuadrangle q(n1, n3, n2, n4);
-    angle = q.etaShapeMeasure();
-
-    double const a1 = 180 * angle3Vertices(n1, n4, n2) / M_PI;
-    double const a2 = 180 * angle3Vertices(n4, n2, n3) / M_PI;
-    double const a3 = 180 * angle3Vertices(n2, n3, n1) / M_PI;
-    double const a4 = 180 * angle3Vertices(n3, n1, n4) / M_PI;
-    quality = std::abs(90. - a1);
-    quality = std::max(std::abs(90. - a2), quality);
-    quality = std::max(std::abs(90. - a3), quality);
-    quality = std::max(std::abs(90. - a4), quality);
-  }
+  RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_t2, Field *f);
 
   bool operator<(const RecombineTriangle &other) const
   {
     return quality < other.quality;
   }
 };
+
+void _relocate(GFace *gf, MVertex *ver,
+	       const std::vector<MElement *> &lt);
+
 
 #endif

@@ -1,2 +1,2 @@
 @echo off
-python %~f0\..\gmsh %*
+python "%~f0\..\gmsh" %*

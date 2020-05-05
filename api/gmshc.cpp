@@ -1398,6 +1398,19 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n, const double
   }
 }
 
+GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim, const int tag, double * points, size_t points_n, double * sizes, size_t sizes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_points_(points, points + points_n);
+    std::vector<double> api_sizes_(sizes, sizes + sizes_n);
+    gmsh::model::mesh::setSizeAtParametricPoints(dim, tag, api_points_, api_sizes_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetTransfiniteCurve(const int tag, const int numNodes, const char * meshType, const double coef, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2171,6 +2184,30 @@ GMSH_API void gmshModelGeoSplitCurve(const int tag, int * pointTags, size_t poin
   }
 }
 
+GMSH_API int gmshModelGeoGetMaxTag(const int dim, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::geo::getMaxTag(dim);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelGeoSetMaxTag(const int dim, const int maxTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::geo::setMaxTag(dim, maxTag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelGeoSynchronize(int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2599,13 +2636,13 @@ GMSH_API int gmshModelOccAddTorus(const double x, const double y, const double z
   return result_api_;
 }
 
-GMSH_API void gmshModelOccAddThruSections(int * wireTags, size_t wireTags_n, int ** outDimTags, size_t * outDimTags_n, const int tag, const int makeSolid, const int makeRuled, int * ierr)
+GMSH_API void gmshModelOccAddThruSections(int * wireTags, size_t wireTags_n, int ** outDimTags, size_t * outDimTags_n, const int tag, const int makeSolid, const int makeRuled, const int maxDegree, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_wireTags_(wireTags, wireTags + wireTags_n);
     gmsh::vectorpair api_outDimTags_;
-    gmsh::model::occ::addThruSections(api_wireTags_, api_outDimTags_, tag, makeSolid, makeRuled);
+    gmsh::model::occ::addThruSections(api_wireTags_, api_outDimTags_, tag, makeSolid, makeRuled, maxDegree);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(int api_ierr_){
@@ -3070,6 +3107,30 @@ GMSH_API void gmshModelOccGetMatrixOfInertia(const int dim, const int tag, doubl
     std::vector<double> api_mat_;
     gmsh::model::occ::getMatrixOfInertia(dim, tag, api_mat_);
     vector2ptr(api_mat_, mat, mat_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API int gmshModelOccGetMaxTag(const int dim, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::getMaxTag(dim);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelOccSetMaxTag(const int dim, const int maxTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::setMaxTag(dim, maxTag);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

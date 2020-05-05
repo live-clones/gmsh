@@ -317,13 +317,17 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
          _pt[0],_pt[1],_pt[2], ptrBucket->minPt[0],ptrBucket->minPt[1],ptrBucket->minPt[2],
          ptrBucket->maxPt[0],ptrBucket->maxPt[1],ptrBucket->maxPt[2], ptr1);
   if (ptr1 == NULL) {
-    printf("empty element list for centroid list!?\n, possible!");
+    printf("empty element list for centroid list!?\n");
   }
 #endif
 
+  int count = 0;
   while(ptr1 != NULL) {
     flag = xyzInElementBB(_pt, ptr1->region, BBElement);
-    if(flag == 1) flag = xyzInElement(ptr1->region, _pt);
+    if(flag == 1) {
+      flag = xyzInElement(ptr1->region, _pt);
+      count ++;
+    }
     if(flag == 1) {
       _globalPara->ptrToPrevElement = ptr1->region;
       return ptr1->region;
@@ -331,18 +335,22 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
     ptr1 = ptr1->next;
   }
 
+  //  printf("Point %22.15E %22.15E %22.15E is not found in all elements! It is not in the domain but is in %d bboxes\n",
+  //	 _pt[0],_pt[1],_pt[2], count);
+  
   for(iter = (ptrBucket->listBB).begin(); iter != (ptrBucket->listBB).end();
       iter++) {
     flag = xyzInElementBB(_pt, *iter, BBElement);
-    if(flag == 1) flag = xyzInElement(*iter, _pt);
+    if(flag == 1) {
+      flag = xyzInElement(*iter, _pt);
+    }
     if(flag == 1) {
       _globalPara->ptrToPrevElement = *iter;
       return *iter;
     }
   }
 
-  // printf("This point is not found in all elements! It is not in the domain
-  // \n");
+  
   return NULL;
 }
 

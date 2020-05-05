@@ -287,6 +287,7 @@ ScaleLastLayer          return tScaleLast;
 SetChanged              return tSetChanged;
 SetFactory              return tSetFactory;
 SetTag                  return tSetTag;
+SetMaxTag               return tSetMaxTag;
 SetNumber               return tSetNumber;
 SetPartition            return tSetPartition;
 SetString               return tSetString;

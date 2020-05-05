@@ -1138,8 +1138,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
                   !strncmp(argv[i], "delquad", 7))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL_QUAD);
           else if(!strncmp(argv[i], "PackingOfParallelograms", 23) ||
-                  !strncmp(argv[i], "pack", 4))
+                  !strncmp(argv[i], "pack", 4)){
+	    CTX::instance()->mesh.algoSubdivide = 1;
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
+	  }
           else if(!strncmp(argv[i], "initial2d", 9))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_INITIAL_ONLY);
           else if(!strncmp(argv[i], "del3d", 5) ||

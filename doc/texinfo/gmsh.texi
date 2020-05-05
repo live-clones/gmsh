@@ -483,10 +483,6 @@ developers}) to remedy the aforementioned (and all other) shortcomings!
 
 @cindex Bugs, reporting
 @cindex Reporting bugs
-@cindex Contact information
-@cindex Mailing list
-@cindex Authors, e-mail
-@cindex E-mail, authors
 
 Please file issues on
 @url{https://gitlab.onelab.info/gmsh/gmsh/issues}. Provide as precise a
@@ -2520,6 +2516,9 @@ all its sub-entities of lower dimension. @value{SYNC}
 Deletes all the embedded entities in the elementary entities whose tags
 are given in @var{expression-list-or-all}. @value{SYNC}
 
+@item SetMaxTag Point | Curve | Surface | Volume ( @var{expression} )
+Forces the maximum tag for a category of entities to a given value, so that subsequently created entities in the same category will not have tags smaller than the given value.
+
 @item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Hide the entities listed in @var{expression-list-or-all}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{1}.
@@ -2653,12 +2652,13 @@ anisotropic triangulations.
 @end itemize
 
 For very complex curved surfaces the ``MeshAdapt'' algorithm is the most
-robust. When high element quality is important, the ``Delaunay-Frontal''
+robust. When high element quality is important, the ``Frontal-Delaunay''
 algorithm should be tried. For very large meshes of plane surfaces the
-``Delaunay'' algorithm is the fastest.  When the ``Delaunay'' or
-``Frontal-Delaunay'' algorithms fail, ``MeshAdapt'' is automatically
-triggered. The ``Automatic'' algorithm uses ``Delaunay'' for plane
-surfaces and ``MeshAdapt'' for all other surfaces.
+``Delaunay'' algorithm is the fastest; it usually also handles complex
+mesh size fields better than the ``Frontal-Delaunay''.  When the
+``Delaunay'' or ``Frontal-Delaunay'' algorithms fail, ``MeshAdapt'' is
+automatically triggered. The ``Automatic'' algorithm uses ``Delaunay''
+for plane surfaces and ``MeshAdapt'' for all other surfaces.
 
 Several 3D unstructured algorithms are also available:
 
@@ -6102,9 +6102,8 @@ for the licensing constraints.
 
 @url{http://gmsh.info} is the primary location to obtain information
 about Gmsh. There you will for example find the complete reference
-manual, a @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking
-database} and a searchable archive of the Gmsh mailing list
-(@email{gmsh@@onelab.info}).
+manual and the @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug
+tracking database}.
 @end enumerate
 
 @c -------------------------------------------------------------------------

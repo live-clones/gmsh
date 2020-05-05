@@ -50,8 +50,8 @@ int main(int argc, char **argv)
   // the `embed()' function:
   gmsh::model::mesh::embed(0, {5}, 2, 1);
 
-  // In the same way, one use `embed()' to force a curve to be embedded in the
-  // 2D mesh:
+  // In the same way, one can use `embed()' to force a curve to be embedded in
+  // the 2D mesh:
   gmsh::model::geo::addPoint(0.02, 0.12, 0., lc, 6);
   gmsh::model::geo::addPoint(0.04, 0.18, 0., lc, 7);
   gmsh::model::geo::addLine(6, 7, 5);

@@ -23,6 +23,7 @@
 #include "discreteFace.h"
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
+#include "meshWinslow2d.h"
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertion.h"
@@ -1460,7 +1461,7 @@ void buildBackgroundMesh(GFace *gf, bool crossFieldClosestPoint,
     int CurvControl = CTX::instance()->mesh.lcFromCurvature;
     CTX::instance()->mesh.lcFromCurvature = 0;
     // do a background mesh
-    bowyerWatson(gf, 40, equivalence, parametricCoordinates);
+    bowyerWatson(gf, 4, equivalence, parametricCoordinates);
     // re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;
     // apply this to the BGM
@@ -1619,7 +1620,7 @@ void bowyerWatsonParallelograms(
 #endif
 
   
-  Msg::Info("Nodes inserted");
+  Msg::Info("%lu Nodes created --> now staring insertion",packed.size());
   
   if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)){
     Msg::Error("Invalid meshing data structure");
@@ -1663,10 +1664,17 @@ void bowyerWatsonParallelograms(
       }
     }
   }
-
+  //  //  if (gf->tag() == 3)
+  //    _printTris ("name.pos", AllTris.begin(), AllTris.end(), &DATA);
   transferDataStructure(gf, AllTris, DATA);
   //  backgroundMesh::unset();
 
+  // pack is made for quads --> we do the quads taking into account
+  // the crossfield (i.e. edges that are aligned are preferred for combination)
+
+  recombineIntoQuads(gf, false, 0, false, .1);
+  meshWinslow2d (gf);
+  
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
 

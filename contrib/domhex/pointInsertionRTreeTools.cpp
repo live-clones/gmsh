@@ -74,10 +74,12 @@ void surfacePointWithExclusionRegion::minmax(double _min[2],
 
 void surfacePointWithExclusionRegion::print(FILE *f, int i)
 {
-  fprintf(f, "SP(%g,%g,%g){%d};\n", _center.x(), _center.y(), 0.0, i);
+  fprintf(f, "SP(%g,%g,%g){%d};\n", _v->x(), _v->y(), _v->z(), i);
+  /*  fprintf(f, "SP(%g,%g,%g){%d};\n", _center.x(), _center.y(), 0.0, i);
   fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
           _q[0].x(), _q[0].y(), 0.0, _q[1].x(), _q[1].y(), 0.0, _q[2].x(),
           _q[2].y(), 0.0, _q[3].x(), _q[3].y(), 0.0, i, i, i, i);
+  */
 }
 
 my_wrapper::my_wrapper(const SPoint2 &sp) : _tooclose(false), _p(sp) {}
@@ -101,13 +103,15 @@ bool inExclusionZone(
 {
   // should assert that the point is inside the domain
   // OLD BGM
-  if(old_algo_hexa()) {
-    if(!backgroundMesh::current()->inDomain(p.x(), p.y(), 0)) return true;
-  }
-  else {
-    // NEW BGM
-    if(!BGMManager::current2D()->inDomain(p.x(), p.y(), 0)) return true;
-  }
+  //  if(old_algo_hexa()) {
+  //    if(!backgroundMesh::current()->inDomain(p.x(), p.y(), 0)) {
+  //      return true;
+  //    }
+  //  }
+  //  else {
+  //    // NEW BGM
+  //    if(!BGMManager::current2D()->inDomain(p.x(), p.y(), 0)) return true;
+  //  }
 
   my_wrapper w(p);
   double _min[2] = {p.x() - 1.e-1, p.y() - 1.e-1},

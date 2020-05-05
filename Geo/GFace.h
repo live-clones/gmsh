@@ -78,12 +78,12 @@ public:
   GRegion *getRegion(int const num) const { return num == 0 ? r1 : r2; }
 
   // get number of regions
-  int numRegions() const { return (r1 != NULL) + (r2 != NULL); }
+  std::size_t numRegions() const { return (r1 != NULL) + (r2 != NULL); }
 
   std::list<GRegion *> regions() const
   {
     std::list<GRegion *> r;
-    for(int i = 0; i < numRegions(); i++) r.push_back(getRegion(i));
+    for(std::size_t i = 0; i < numRegions(); i++) r.push_back(getRegion(i));
     return r;
   }
 

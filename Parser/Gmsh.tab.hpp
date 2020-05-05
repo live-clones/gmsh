@@ -249,35 +249,36 @@
      tGetString = 465,
      tGetNumber = 466,
      tUnique = 467,
-     tHomology = 468,
-     tCohomology = 469,
-     tBetti = 470,
-     tExists = 471,
-     tFileExists = 472,
-     tGetForced = 473,
-     tGetForcedStr = 474,
-     tGMSH_MAJOR_VERSION = 475,
-     tGMSH_MINOR_VERSION = 476,
-     tGMSH_PATCH_VERSION = 477,
-     tGmshExecutableName = 478,
-     tSetPartition = 479,
-     tNameToString = 480,
-     tStringToName = 481,
-     tAFFECTDIVIDE = 482,
-     tAFFECTTIMES = 483,
-     tAFFECTMINUS = 484,
-     tAFFECTPLUS = 485,
-     tOR = 486,
-     tAND = 487,
-     tNOTEQUAL = 488,
-     tEQUAL = 489,
-     tGREATERGREATER = 490,
-     tLESSLESS = 491,
-     tGREATEROREQUAL = 492,
-     tLESSOREQUAL = 493,
-     UNARYPREC = 494,
-     tMINUSMINUS = 495,
-     tPLUSPLUS = 496
+     tSetMaxTag = 468,
+     tHomology = 469,
+     tCohomology = 470,
+     tBetti = 471,
+     tExists = 472,
+     tFileExists = 473,
+     tGetForced = 474,
+     tGetForcedStr = 475,
+     tGMSH_MAJOR_VERSION = 476,
+     tGMSH_MINOR_VERSION = 477,
+     tGMSH_PATCH_VERSION = 478,
+     tGmshExecutableName = 479,
+     tSetPartition = 480,
+     tNameToString = 481,
+     tStringToName = 482,
+     tAFFECTDIVIDE = 483,
+     tAFFECTTIMES = 484,
+     tAFFECTMINUS = 485,
+     tAFFECTPLUS = 486,
+     tOR = 487,
+     tAND = 488,
+     tNOTEQUAL = 489,
+     tEQUAL = 490,
+     tGREATERGREATER = 491,
+     tLESSLESS = 492,
+     tGREATEROREQUAL = 493,
+     tLESSOREQUAL = 494,
+     UNARYPREC = 495,
+     tMINUSMINUS = 496,
+     tPLUSPLUS = 497
    };
 #endif
 /* Tokens.  */
@@ -491,35 +492,36 @@
 #define tGetString 465
 #define tGetNumber 466
 #define tUnique 467
-#define tHomology 468
-#define tCohomology 469
-#define tBetti 470
-#define tExists 471
-#define tFileExists 472
-#define tGetForced 473
-#define tGetForcedStr 474
-#define tGMSH_MAJOR_VERSION 475
-#define tGMSH_MINOR_VERSION 476
-#define tGMSH_PATCH_VERSION 477
-#define tGmshExecutableName 478
-#define tSetPartition 479
-#define tNameToString 480
-#define tStringToName 481
-#define tAFFECTDIVIDE 482
-#define tAFFECTTIMES 483
-#define tAFFECTMINUS 484
-#define tAFFECTPLUS 485
-#define tOR 486
-#define tAND 487
-#define tNOTEQUAL 488
-#define tEQUAL 489
-#define tGREATERGREATER 490
-#define tLESSLESS 491
-#define tGREATEROREQUAL 492
-#define tLESSOREQUAL 493
-#define UNARYPREC 494
-#define tMINUSMINUS 495
-#define tPLUSPLUS 496
+#define tSetMaxTag 468
+#define tHomology 469
+#define tCohomology 470
+#define tBetti 471
+#define tExists 472
+#define tFileExists 473
+#define tGetForced 474
+#define tGetForcedStr 475
+#define tGMSH_MAJOR_VERSION 476
+#define tGMSH_MINOR_VERSION 477
+#define tGMSH_PATCH_VERSION 478
+#define tGmshExecutableName 479
+#define tSetPartition 480
+#define tNameToString 481
+#define tStringToName 482
+#define tAFFECTDIVIDE 483
+#define tAFFECTTIMES 484
+#define tAFFECTMINUS 485
+#define tAFFECTPLUS 486
+#define tOR 487
+#define tAND 488
+#define tNOTEQUAL 489
+#define tEQUAL 490
+#define tGREATERGREATER 491
+#define tLESSLESS 492
+#define tGREATEROREQUAL 493
+#define tLESSOREQUAL 494
+#define UNARYPREC 495
+#define tMINUSMINUS 496
+#define tPLUSPLUS 497
 
 
 
@@ -538,7 +540,7 @@ typedef union YYSTYPE
   struct TwoChar c2;
 }
 /* Line 1529 of yacc.c.  */
-#line 542 "Gmsh.tab.hpp"
+#line 544 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

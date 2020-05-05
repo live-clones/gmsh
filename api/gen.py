@@ -353,6 +353,9 @@ mesh.add('getGhostElements', doc, None, iint('dim'), iint('tag'), ovectorsize('e
 doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
+doc = '''Set mesh size at given parametric point on the model entities `dimTags'. Currently only entities of dimension 1 (lines) are handled.'''
+mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('points'), ivectordouble('sizes'))
+
 doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
 mesh.add('setTransfiniteCurve', doc, None, iint('tag'), iint('numNodes'), istring('meshType', '"Progression"'), idouble('coef', '1.'))
 
@@ -534,6 +537,12 @@ geo.add('removeAllDuplicates', doc, None)
 doc = '''Split the model curve of tag `tag' on the control points `pointTags'. Return the tags `curveTags' of the newly created curves.'''
 geo.add('splitCurve', doc, None, iint('tag'), ivectorint('pointTags'), ovectorint('curveTags'))
 
+doc = '''Get the maximum tag of entities of dimension `dim' in the built-in CAD representation.'''
+geo.add('getMaxTag', doc, oint, iint('dim'))
+
+doc = '''Set the maximum tag `maxTag' for entities of dimension `dim' in the built-in CAD representation.'''
+geo.add('setMaxTag', doc, None, iint('dim'), iint('maxTag'))
+
 doc = '''Synchronize the built-in CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 geo.add('synchronize', doc, None)
 
@@ -641,8 +650,8 @@ occ.add('addWedge', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble
 doc = '''Add a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The optional argument `angle' defines the angular opening (from 0 to 2*Pi). Return the tag of the wedge.'''
 occ.add('addTorus', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('r1'), idouble('r2'), iint('tag', '-1'), idouble('angle', '2*M_PI', '2*pi', '2*pi'))
 
-doc = '''Add a volume (if the optional argument `makeSolid' is set) or surfaces defined through the open or closed wires `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The new entities are returned in `outDimTags'. If the optional argument `makeRuled' is set, the surfaces created on the boundary are forced to be ruled surfaces.'''
-occ.add('addThruSections', doc, None, ivectorint('wireTags'), ovectorpair('outDimTags'), iint('tag', '-1'), ibool('makeSolid', 'true', 'True'), ibool('makeRuled', 'false', 'False'))
+doc = '''Add a volume (if the optional argument `makeSolid' is set) or surfaces defined through the open or closed wires `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The new entities are returned in `outDimTags'. If the optional argument `makeRuled' is set, the surfaces created on the boundary are forced to be ruled surfaces. If `maxDegree' is positive, set the maximal degree of resulting surface.'''
+occ.add('addThruSections', doc, None, ivectorint('wireTags'), ovectorpair('outDimTags'), iint('tag', '-1'), ibool('makeSolid', 'true', 'True'), ibool('makeRuled', 'false', 'False'), iint('maxDegree', '-1'))
 
 doc = '''Add a hollowed volume built from an initial volume `volumeTag' and a set of faces from this volume `excludeSurfaceTags', which are to be removed. The remaining faces of the volume become the walls of the hollowed solid, with thickness `offset'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.'''
 occ.add('addThickSolid', doc, None, iint('volumeTag'), ivectorint('excludeSurfaceTags'), idouble('offset'), ovectorpair('outDimTags'), iint('tag', '-1'))
@@ -726,6 +735,12 @@ occ.add('getCenterOfMass', doc, None, iint('dim'), iint('tag'), odouble('x'), od
 
 doc = '''Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMatrixOfInertia', doc, None, iint('dim'), iint('tag'), ovectordouble('mat'))
+
+doc = '''Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD representation.'''
+occ.add('getMaxTag', doc, oint, iint('dim'))
+
+doc = '''Set the maximum tag `maxTag' for entities of dimension `dim' in the OpenCASCADE CAD representation.'''
+occ.add('setMaxTag', doc, None, iint('dim'), iint('maxTag'))
 
 doc = '''Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 occ.add('synchronize', doc, None)

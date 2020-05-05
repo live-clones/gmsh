@@ -34,6 +34,7 @@
 #include "Field.h"
 #include "Options.h"
 #include "Generator.h"
+#include "meshWinslow2d.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -1418,8 +1419,10 @@ void GenerateMesh(GModel *m, int ask)
   }
 
   // Subdivide into quads or hexas
-  if(m->getMeshStatus() == 2 && CTX::instance()->mesh.algoSubdivide == 1)
+  if(m->getMeshStatus() == 2 && CTX::instance()->mesh.algoSubdivide == 1){
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, true);
+    meshWinslow2d (m,10);
+  }
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);
 

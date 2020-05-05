@@ -43,7 +43,7 @@ struct contextMeshOptions {
   double compoundLcFactor;
   unsigned int randomSeed;
   // mesh IO
-  int fileFormat;
+  int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveTri, saveGroupsOfNodes, saveGroupsOfElements;
@@ -86,6 +86,7 @@ struct contextGeometryOptions {
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occUnionUnify;
+  int occThruSectionsDegree;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
