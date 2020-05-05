@@ -511,8 +511,17 @@ namespace QMT {
     return true;
   }
 
+  vec3 crouzeix_raviart_interpolation(vec3 lambda, vec3 edge_values[3]) {
+    double x = lambda[1];
+    double y = lambda[2];
+    vec3 shape = {1.0 - 2.0 * y, -1.0 + 2.0 * (x + y), 1.0 - 2.0 * x};
+    return shape[0] * edge_values[0] + shape[1] * edge_values[1] + shape[2] * edge_values[2];
+  }
+
   bool create_per_triangle_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagSizeMap, const std::string& viewName, int& viewTag) {
     initialize_gmsh_api_if_necessary();
+
+    constexpr bool crouzeix_raviart_linear_interp = true;
 
     /* Get the mesh and internal edges */
     TMesh M;
@@ -576,6 +585,7 @@ namespace QMT {
           vec3 N = normalize(triangle_normal(M,f));
           vec3 refCross = {0.,0.,0.};
           vec3 avgCross = {0.,0.,0.};
+          vec3 lifted_dirs[3];
           F(le,3) {
             double agl = data[i][le];
             id ue = old2IEdge[3*f+le];
@@ -589,6 +599,7 @@ namespace QMT {
             if (le == 0) {
               refCross = cross1;
               avgCross = avgCross + cross1;
+              lifted_dirs[le] = refCross;
             } else {
               vec3 candidates[4] = {cross1,-1.*cross1,cross2,-1.*cross2};
               vec3 closest = {0.,0.,0.};
@@ -599,11 +610,26 @@ namespace QMT {
                   dotmax = dot(candidates[k],refCross);
                 }
               }
+              lifted_dirs[le] = closest;
               avgCross = avgCross + closest;
             }
           }
           double asize = 1./3. * (sizemap[M.triangles[f][0]] + sizemap[M.triangles[f][1]] + sizemap[M.triangles[f][2]]);
           vec3 avgScaledDir = asize * 1./3. * avgCross;
+          vec3 vertex_dirs[3];
+          if (crouzeix_raviart_linear_interp) {
+            vec3 edge_dirs[3];
+            F(le,3) {
+              double se = 0.5 * (sizemap[M.triangles[f][le]] + sizemap[M.triangles[f][(le+1)%3]]);
+              edge_dirs[le] = 0.5 * lifted_dirs[le];
+            }
+            F(lv,3) {
+              vec3 lambda = {0.,0.,0.};
+              lambda[lv] = 1.;
+              vertex_dirs[lv] = crouzeix_raviart_interpolation(lambda,edge_dirs);
+            }
+          }
+
           if (create_data_list_view) {
             for (size_t d = 0; d < 3; ++d) {
               for (size_t lv = 0; lv < 3; ++lv) {
@@ -612,7 +638,11 @@ namespace QMT {
             }
             for (size_t lv = 0; lv < 3; ++lv) {
               for (size_t d = 0; d < 3; ++d) {
-                datalist.push_back(avgScaledDir[d]);
+                if (crouzeix_raviart_linear_interp) {
+                  datalist.push_back(vertex_dirs[lv][d]);
+                } else {
+                  datalist.push_back(avgScaledDir[d]);
+                }
               }
             }
           } else {
