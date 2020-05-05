@@ -621,13 +621,17 @@ namespace QMT {
             vec3 edge_dirs[3];
             F(le,3) {
               double se = 0.5 * (sizemap[M.triangles[f][le]] + sizemap[M.triangles[f][(le+1)%3]]);
-              edge_dirs[le] = 0.5 * lifted_dirs[le];
+              edge_dirs[le] = se * lifted_dirs[le];
             }
             F(lv,3) {
               vec3 lambda = {0.,0.,0.};
               lambda[lv] = 1.;
               vertex_dirs[lv] = crouzeix_raviart_interpolation(lambda,edge_dirs);
             }
+            // DBG("----");
+            // DBG(avgScaledDir);
+            // DBG(edge_dirs[0],edge_dirs[1],edge_dirs[2]);
+            // DBG(vertex_dirs[0],vertex_dirs[1],vertex_dirs[2]);
           }
 
           if (create_data_list_view) {
