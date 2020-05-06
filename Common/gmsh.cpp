@@ -2447,7 +2447,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       unsigned int iOrientationIndex = 0;
       for(unsigned int iOrientation = 0; iOrientation < maxOrientation; ++iOrientation) {
         if(wantedOrientations.size() != 0) {
-          auto it = std::find(wantedOrientations.begin(), wantedOrientations.end(), iOrientation);
+          std::vector< int >::const_iterator it = std::find(wantedOrientations.begin(), wantedOrientations.end(), iOrientation);
           if(it != wantedOrientations.end()) {
             iOrientationIndex = &(*it) - &wantedOrientations[0];
           }
@@ -2601,7 +2601,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       for(unsigned int iOrientation = 0; iOrientation < maxOrientation;
           ++iOrientation) {
         if(wantedOrientations.size() != 0) {
-          auto it = std::find(wantedOrientations.begin(), wantedOrientations.end(), iOrientation);
+          std::vector< int >::const_iterator it = std::find(wantedOrientations.begin(), wantedOrientations.end(), iOrientation);
           if(it != wantedOrientations.end()) {
             iOrientationIndex = &(*it) - &wantedOrientations[0];
           }
