@@ -352,7 +352,7 @@ int GmshBatch()
       // compute a scaled cross field "per triangle"
       int viewTag = -1;
       computePerTriangleScaledCrossField (GModel::current(), viewTag,
-					  6,1,20000);
+					  6,1,CTX::instance()->mesh.numQuads/4);// we split the whole mesh afterwards
       PView* crossField = PView::getViewByTag(viewTag);
       std::string posout = GModel::current()->getName() + "_scaled_crossfield.pos";
       crossField->getData()->writePOS(posout);

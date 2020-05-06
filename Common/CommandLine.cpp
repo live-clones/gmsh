@@ -525,6 +525,13 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "crossfield")) {
         CTX::instance()->batch = 67;
         i++;
+        if(argv[i]){
+          CTX::instance()->mesh.numQuads = atoi(argv[i++]) ;
+        }
+        else{
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
       }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;

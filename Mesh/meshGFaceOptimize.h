@@ -68,6 +68,10 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
 // used for meshGFaceRecombine development
 void quadsToTriangles(GFace *gf, double minqual);
 
+int removeTwoQuadsNodes(GFace *gf);
+int removeDiamonds(GFace *gf);
+
+
 void splitElementsInBoundaryLayerIfNeeded(GFace *gf);
 
 struct swapquad {

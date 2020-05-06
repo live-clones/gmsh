@@ -1673,6 +1673,8 @@ void bowyerWatsonParallelograms(
   // the crossfield (i.e. edges that are aligned are preferred for combination)
 
   recombineIntoQuads(gf, false, 0, false, .1);
+  removeTwoQuadsNodes(gf);
+  //  removeDiamonds(gf);
   meshWinslow2d (gf);
   
   splitElementsInBoundaryLayerIfNeeded(gf);

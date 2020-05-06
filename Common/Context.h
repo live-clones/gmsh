@@ -75,6 +75,7 @@ struct contextMeshOptions {
   double pointSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int smoothNormals, clip;
+  int numQuads;
 };
 
 struct contextGeometryOptions {
