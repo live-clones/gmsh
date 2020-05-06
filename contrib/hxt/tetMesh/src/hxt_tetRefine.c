@@ -47,8 +47,8 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
   if (mesh->triangles.num == 0)
     return HXT_ERROR_MSG(HXT_STATUS_FAILED, "The input mesh should contain triangles");
 
-  hxtNodeInfo* nodeInfo;
-  HXT_CHECK( hxtAlignedMalloc(&nodeInfo, sizeof(hxtNodeInfo)*mesh->vertices.num) );
+  HXTNodeInfo* nodeInfo;
+  HXT_CHECK( hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo)*mesh->vertices.num) );
 
   markMeshPoints(mesh);
 

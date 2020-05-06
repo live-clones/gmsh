@@ -76,7 +76,7 @@ static int compareNodeLexicographically(uint32_t* nodes0, uint32_t* nodes1)
  * create the initial tetrahedron 
  * surrounded by 4 ghost tetrahedra
  ***********************************/
-static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, hxtNodeInfo* nodeInfo, uint32_t nToInsert, int verbosity){
+static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, uint32_t nToInsert, int verbosity){
   if(nToInsert < 4){
     return HXT_ERROR_MSG(HXT_STATUS_ERROR, "cannot mesh less than four points");
   }
@@ -118,7 +118,7 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, hxtNodeInfo* nodeInfo, 
 
   // swap 0<->i  1<->j 2<->k 3<->l
   {
-    hxtNodeInfo tmp = nodeInfo[i];
+    HXTNodeInfo tmp = nodeInfo[i];
     nodeInfo[i] = nodeInfo[0];
     nodeInfo[0] = tmp;
     nodeInfo[0].status = HXT_STATUS_TRUE;
@@ -1289,7 +1289,7 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
 // TODO: this should be done way before assigning partition
 // it should be used to identify a possible imbalance ahead of time !
 static inline uint32_t filterOnMooreCurve(HXTVertex* vertices,
-                                          hxtNodeInfo* nodeInfo,
+                                          HXTNodeInfo* nodeInfo,
                                           uint32_t n,
                                           double* nodalSizes)
 {
@@ -1327,7 +1327,7 @@ static inline uint32_t filterOnMooreCurve(HXTVertex* vertices,
  ************************************************************/
 static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
                                     HXTDelaunayOptions* options,
-                                    hxtNodeInfo* nodeInfo,
+                                    HXTNodeInfo* nodeInfo,
                                     const uint32_t nToInsert,
                                     int noReordering)
 {
@@ -1766,7 +1766,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
           shift++;
         }
         else if(shift!=0) {
-          hxtNodeInfo tmp = nodeInfo[i];
+          HXTNodeInfo tmp = nodeInfo[i];
           nodeInfo[i] = nodeInfo[i+shift];
           nodeInfo[i+shift] = tmp;
         }
@@ -1996,8 +1996,8 @@ HXT_ASSERT(options!=NULL);
   // don't create more threads than necessary
   options->delaunayThreads = computeNumberOfThreads(0.0, options->delaunayThreads, nToInsert, SMALLEST_PASS);
 
-  hxtNodeInfo* nodeInfo;
-  HXT_CHECK( hxtAlignedMalloc(&nodeInfo, nToInsert*sizeof(hxtNodeInfo)) );
+  HXTNodeInfo* nodeInfo;
+  HXT_CHECK( hxtAlignedMalloc(&nodeInfo, nToInsert*sizeof(HXTNodeInfo)) );
 
   // we fill nodeInfo with the indices of each vertices to insert...
   #pragma omp parallel for simd
@@ -2018,7 +2018,7 @@ HXT_ASSERT(options!=NULL);
  * parallel Delaunay without moving the vertices
  * see header for a complete description
  ***********************************************/
-HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* nodeInfo, uint64_t nToInsert){
+HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, HXTNodeInfo* nodeInfo, uint64_t nToInsert){
 HXT_ASSERT(mesh!=NULL);
 HXT_ASSERT(options!=NULL);
 HXT_ASSERT(nodeInfo!=NULL);
@@ -2048,7 +2048,7 @@ HXT_ASSERT(nodeInfo!=NULL);
 // } hxtDelaunayBuffer_t;
 
 
-// HXTStatus hxtDelaunayAddOne(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* vtaNodeInfo,
+// HXTStatus hxtDelaunayAddOne(HXTMesh* mesh, HXTDelaunayOptions* options, HXTNodeInfo* vtaNodeInfo,
 //                             uint64_t** deleted, size_t* numDeleted, size_t* sizeDeleted, void** buffer)
 // {
 // HXT_ASSERT(buffer!=NULL);

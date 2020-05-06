@@ -70,9 +70,9 @@ typedef struct {
 /**
  * \brief Delaunay of a set of vertices that does not modify their order
  * \details This perform the insertion of the vertices whose indices are
- * given in nodeInfo (in the \ref hxtNodeInfo.node wtructure member)\n
+ * given in nodeInfo (in the \ref HXTNodeInfo.node wtructure member)\n
  * This function does not change the order of vertices in the mesh.\n
- * \ref hxtNodeInfo.status will be modified by the function to tell
+ * \ref HXTNodeInfo.status will be modified by the function to tell
  * if the vertex was successfully inserted or not.
  *  - nodeInfo[i].status==HXT_STATUS_TRUE  if the vertex was successfully inserted.
  *  - nodeInfo[i].status==HXT_STATUS_FALSE  if the vertex was not inserted.
@@ -80,7 +80,7 @@ typedef struct {
  *
  * \warning
  *  - the order of nodeInfo will change
- *  - hxtNodeInfo[i].hilbertDist will change
+ *  - HXTNodeInfo[i].hilbertDist will change
  *  - mesh->tetrahedra.* will change
  *  - mesh->vertices.coord[4*i+3] will change
  *  - options->numVerticesInMesh will change
@@ -90,7 +90,7 @@ typedef struct {
  * \param[in, out] nodeInfo: the indices of the vertices to insert in the tetrahedral mesh.
  * \param nToInsert: the number of element in nodeInfo, hence the number of vertices to insert.
  */
-HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* nodeInfo, uint64_t nToInsert);
+HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, HXTNodeInfo* nodeInfo, uint64_t nToInsert);
 
 
 /**
@@ -134,7 +134,7 @@ HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* options);
  * \param buffer: a buffer reused by hxtDelaunayAddOne. The first time you use it, buffer should point to NULL
  *                when you will not used hxtDelaunayAddOne anymore, use hxtDelaunayFreeBuffer to free it
  */
-// HXTStatus hxtDelaunayAddOne(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* vtaNodeInfo,
+// HXTStatus hxtDelaunayAddOne(HXTMesh* mesh, HXTDelaunayOptions* options, HXTNodeInfo* vtaNodeInfo,
 //                             uint64_t** deleted, size_t* numDeleted, size_t* sizeDeleted, void** buffer);
 
 // HXTStatus hxtDelaunayFreeBuffer(void** buffer);
