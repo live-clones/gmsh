@@ -2189,7 +2189,8 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
 GMSH_API void gmsh::model::mesh::getBasisFunctions(
   const int elementType, const std::vector<double> &localCoord,
   const std::string &functionSpaceType, int &numComponents,
-  std::vector<double> &basisFunctions, int &numOrientations)
+  std::vector<double> &basisFunctions, int &numOrientations,
+  const std::vector< int > &wantedOrientations)
 {
   if(!_isInitialized()) { throw - 1; }
   numComponents = 0;
@@ -2206,6 +2207,20 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   const int familyType = ElementType::getParentType(elementType);
 
   if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
+    // Check if there is no error in wantedOrientations
+    if(wantedOrientations.size() != 0)
+    {
+      if(wantedOrientations.size() > 1) {
+        Msg::Error("Asking for more orientation that there exist.");
+        throw 10;
+      }
+      
+      if(wantedOrientations[0] != 0) {
+        Msg::Error("Orientation %i does not exist for function stace named '%s' on %s.", wantedOrientations[0], fsName.c_str(), ElementType::nameOfParentType(familyType, true).c_str());
+        throw 11;
+      }
+    }
+    
     const nodalBasis *basis = 0;
     if(numComponents) {
       if(fsOrder == -1) { // isoparametric
@@ -2312,8 +2327,33 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     const unsigned int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
 
-    basisFunctions.resize(maxOrientation * numberOfGaussPoints *
+    basisFunctions.resize((wantedOrientations.size() == 0 ? maxOrientation : wantedOrientations.size()) * numberOfGaussPoints *
                           numFunctionsPerElement * numComponents);
+                          
+    // Check if there is no error in wantedOrientations
+    if(wantedOrientations.size() != 0)
+    {
+      if(wantedOrientations.size() > maxOrientation) {
+        Msg::Error("Asking for more orientation that there exist.");
+        throw 10;
+      }
+      for(unsigned int i = 0; i < wantedOrientations.size(); ++i) {
+        if(wantedOrientations[i] >= maxOrientation || wantedOrientations[i] < 0) {
+          Msg::Error("Orientation %i does not exist for function stace named '%s' on %s.", wantedOrientations[i], fsName.c_str(), ElementType::nameOfParentType(familyType, true).c_str());
+          throw 11;
+        }
+      }
+      std::vector< int > sortedWantedOrientations = wantedOrientations;
+      std::sort(sortedWantedOrientations.begin(), sortedWantedOrientations.end());
+      int previousInt = sortedWantedOrientations[0];
+      for(unsigned int i = 1; i < sortedWantedOrientations.size(); ++i) {
+        if(previousInt == sortedWantedOrientations[i]) {
+          Msg::Error("Duplicate wanted orientation found.");
+          throw 12;
+        }
+        previousInt = sortedWantedOrientations[i];
+      }
+    }
 
     std::vector<MVertex *> vertices(numVertices);
     for(unsigned int i = 0; i < numVertices; ++i) {
@@ -2404,8 +2444,21 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         numberOfGaussPoints,
         std::vector<double>(fSize, 0)); // use fTableCopy to orient the faces
 
-      for(unsigned int iOrientation = 0; iOrientation < maxOrientation;
-          ++iOrientation) {
+      unsigned int iOrientationIndex = 0;
+      for(unsigned int iOrientation = 0; iOrientation < maxOrientation; ++iOrientation) {
+        if(wantedOrientations.size() != 0) {
+          auto it = std::find(wantedOrientations.begin(), wantedOrientations.end(), iOrientation);
+          if(it != wantedOrientations.end()) {
+            iOrientationIndex = &(*it) - &wantedOrientations[0];
+          }
+          else {
+            continue;
+          }
+        }
+        else {
+          iOrientationIndex = iOrientation;
+        }
+        
         if(eSize != 0) {
           for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
             MEdge edge = element->getEdge(iEdge);
@@ -2439,7 +2492,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         }
 
         const std::size_t offsetOrientation =
-          iOrientation * numberOfGaussPoints * numFunctionsPerElement;
+          iOrientationIndex * numberOfGaussPoints * numFunctionsPerElement;
         for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
           const std::size_t offsetGP = q * numFunctionsPerElement;
 
@@ -2544,8 +2597,22 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
           fSize,
           std::vector<double>(3, 0.))); // use fTableCopy to orient the faces
 
+      unsigned int iOrientationIndex = 0;
       for(unsigned int iOrientation = 0; iOrientation < maxOrientation;
           ++iOrientation) {
+        if(wantedOrientations.size() != 0) {
+          auto it = std::find(wantedOrientations.begin(), wantedOrientations.end(), iOrientation);
+          if(it != wantedOrientations.end()) {
+            iOrientationIndex = &(*it) - &wantedOrientations[0];
+          }
+          else {
+            continue;
+          }
+        }
+        else {
+          iOrientationIndex = iOrientation;
+        }
+        
         if(eSize != 0) {
           for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
             MEdge edge = element->getEdge(iEdge);
@@ -2579,7 +2646,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         }
 
         const std::size_t offsetOrientation =
-          iOrientation * numberOfGaussPoints * numFunctionsPerElement * 3;
+          iOrientationIndex * numberOfGaussPoints * numFunctionsPerElement * 3;
         for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
           const std::size_t offsetGP = q * numFunctionsPerElement * 3;
 

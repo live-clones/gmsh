@@ -1472,8 +1472,8 @@ end
 Search the mesh for an element located at coordinates (`x`, `y`, `z`). This
 function performs a search in a spatial octree. If an element is found, return
 its tag, type and node tags, as well as the local coordinates (`u`, `v`, `w`)
-within the element corresponding to search location. If `dim` is >= 0, only
-search for elements of the given dimension. If `strict` is not set, use a
+within the reference element corresponding to search location. If `dim` is >= 0,
+only search for elements of the given dimension. If `strict` is not set, use a
 tolerance to find elements near the search location.
 
 Return `elementTag`, `elementType`, `nodeTags`, `u`, `v`, `w`.
@@ -1748,7 +1748,7 @@ function getJacobians(elementType, localCoord, tag = -1, task = 0, numTasks = 1)
 end
 
 """
-    gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType)
+    gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations = Cint[])
 
 Get the basis functions of the element of type `elementType` at the evaluation
 points `localCoord` (given as concatenated triplets of coordinates in the
@@ -1766,15 +1766,15 @@ first orientation are returned first, followed by values for the secondd, etc.
 
 Return `numComponents`, `basisFunctions`, `numOrientations`.
 """
-function getBasisFunctions(elementType, localCoord, functionSpaceType)
+function getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations = Cint[])
     api_numComponents_ = Ref{Cint}()
     api_basisFunctions_ = Ref{Ptr{Cdouble}}()
     api_basisFunctions_n_ = Ref{Csize_t}()
     api_numOrientations_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctions, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}),
-          elementType, convert(Vector{Cdouble}, localCoord), length(localCoord), functionSpaceType, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, api_numOrientations_, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, localCoord), length(localCoord), functionSpaceType, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, api_numOrientations_, convert(Vector{Cint}, wantedOrientations), length(wantedOrientations), ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctions returned non-zero error code: $(ierr[])")
     basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
     return api_numComponents_[], basisFunctions, api_numOrientations_[]

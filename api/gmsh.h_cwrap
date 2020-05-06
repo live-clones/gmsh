@@ -1108,8 +1108,8 @@ namespace gmsh { // Top-level functions
       // Search the mesh for an element located at coordinates (`x', `y', `z').
       // This function performs a search in a spatial octree. If an element is
       // found, return its tag, type and node tags, as well as the local
-      // coordinates (`u', `v', `w') within the element corresponding to search
-      // location. If `dim' is >= 0, only search for elements of the given
+      // coordinates (`u', `v', `w') within the reference element corresponding to
+      // search location. If `dim' is >= 0, only search for elements of the given
       // dimension. If `strict' is not set, use a tolerance to find elements near
       // the search location.
       inline void getElementByCoordinates(const double x,
@@ -1410,15 +1410,18 @@ namespace gmsh { // Top-level functions
                                     const std::string & functionSpaceType,
                                     int & numComponents,
                                     std::vector<double> & basisFunctions,
-                                    int & numOrientations)
+                                    int & numOrientations,
+                                    const std::vector<int> & wantedOrientations = std::vector<int>())
       {
         int ierr = 0;
         double *api_localCoord_; size_t api_localCoord_n_; vector2ptr(localCoord, &api_localCoord_, &api_localCoord_n_);
         double *api_basisFunctions_; size_t api_basisFunctions_n_;
-        gmshModelMeshGetBasisFunctions(elementType, api_localCoord_, api_localCoord_n_, functionSpaceType.c_str(), &numComponents, &api_basisFunctions_, &api_basisFunctions_n_, &numOrientations, &ierr);
+        int *api_wantedOrientations_; size_t api_wantedOrientations_n_; vector2ptr(wantedOrientations, &api_wantedOrientations_, &api_wantedOrientations_n_);
+        gmshModelMeshGetBasisFunctions(elementType, api_localCoord_, api_localCoord_n_, functionSpaceType.c_str(), &numComponents, &api_basisFunctions_, &api_basisFunctions_n_, &numOrientations, api_wantedOrientations_, api_wantedOrientations_n_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_localCoord_);
         basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
+        gmshFree(api_wantedOrientations_);
       }
 
       // Get the orientation index of the elements of type `elementType' in the
