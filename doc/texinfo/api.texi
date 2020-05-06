@@ -1464,6 +1464,19 @@ as it will return a vector of zeros.
 -
 @end table
 
+@item gmsh/model/mesh/getNumberOfOrientations
+Get the number of possible orientations for elements of type @code{elementType}
+and function space named @code{functionSpaceType}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{functionSpaceType}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
 @item gmsh/model/mesh/preallocateBasisFunctionsOrientationForElements
 Preallocate data before calling @code{getBasisFunctionsOrientationForElements}
 with @code{numTasks} > 1. For C and C++ only.

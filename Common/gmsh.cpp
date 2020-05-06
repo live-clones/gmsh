@@ -2814,6 +2814,33 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
   return;
 }
 
+GMSH_API int gmsh::model::mesh::getNumberOfOrientations(const int elementType,
+                                     const std::string & functionSpaceType)
+{
+  if(!_isInitialized()) { throw - 1; }
+
+  int basisOrder = 0;
+  std::string fsName = "";
+  int numComponents = 0;
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
+                            numComponents)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    throw 2;
+  }
+
+  if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
+    return 1;
+  }
+  else { // Hierarchical type
+    const int familyType = ElementType::getParentType(elementType);
+    const unsigned int numVertices = ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
+    const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
+    return factorial[numVertices];
+  }
+
+  return 0;
+}
+
 GMSH_API void
 gmsh::model::mesh::preallocateBasisFunctionsOrientationForElements(
   const int elementType, std::vector<int> &basisFunctionsOrientation,

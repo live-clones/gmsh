@@ -953,6 +953,13 @@ namespace gmsh { // Top-level functions
                                                             const std::size_t task = 0,
                                                             const std::size_t numTasks = 1);
 
+      // gmsh::model::mesh::getNumberOfOrientations
+      //
+      // Get the number of possible orientations for elements of type `elementType'
+      // and function space named `functionSpaceType'.
+      GMSH_API int getNumberOfOrientations(const int elementType,
+                                           const std::string & functionSpaceType);
+
       // gmsh::model::mesh::preallocateBasisFunctionsOrientationForElements
       //
       // Preallocate data before calling `getBasisFunctionsOrientationForElements'

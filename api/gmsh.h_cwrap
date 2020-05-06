@@ -1444,6 +1444,17 @@ namespace gmsh { // Top-level functions
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
 
+      // Get the number of possible orientations for elements of type `elementType'
+      // and function space named `functionSpaceType'.
+      inline int getNumberOfOrientations(const int elementType,
+                                         const std::string & functionSpaceType)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelMeshGetNumberOfOrientations(elementType, functionSpaceType.c_str(), &ierr);
+        if(ierr) throw ierr;
+        return result_api_;
+      }
+
       // Preallocate data before calling `getBasisFunctionsOrientationForElements'
       // with `numTasks' > 1. For C and C++ only.
       inline void preallocateBasisFunctionsOrientationForElements(const int elementType,

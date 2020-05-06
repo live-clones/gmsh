@@ -2331,6 +2331,27 @@ class model:
             return _ovectorint(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_.value)
 
         @staticmethod
+        def getNumberOfOrientations(elementType, functionSpaceType):
+            """
+            gmsh.model.mesh.getNumberOfOrientations(elementType, functionSpaceType)
+
+            Get the number of possible orientations for elements of type `elementType'
+            and function space named `functionSpaceType'.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelMeshGetNumberOfOrientations(
+                c_int(elementType),
+                c_char_p(functionSpaceType.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNumberOfOrientations returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
         def getEdgeNumber(edgeNodes):
             """
             gmsh.model.mesh.getEdgeNumber(edgeNodes)

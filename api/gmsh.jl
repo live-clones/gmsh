@@ -1804,6 +1804,23 @@ function getBasisFunctionsOrientationForElements(elementType, functionSpaceType,
 end
 
 """
+    gmsh.model.mesh.getNumberOfOrientations(elementType, functionSpaceType)
+
+Get the number of possible orientations for elements of type `elementType` and
+function space named `functionSpaceType`.
+
+Return an integer value.
+"""
+function getNumberOfOrientations(elementType, functionSpaceType)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelMeshGetNumberOfOrientations, gmsh.lib), Cint,
+          (Cint, Ptr{Cchar}, Ptr{Cint}),
+          elementType, functionSpaceType, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNumberOfOrientations returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.model.mesh.getEdgeNumber(edgeNodes)
 
 Get the global edge identifier `edgeNum` for an input list of node pairs,

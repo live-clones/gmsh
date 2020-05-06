@@ -832,6 +832,12 @@ GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElements(const int ele
                                                                    const size_t numTasks,
                                                                    int * ierr);
 
+/* Get the number of possible orientations for elements of type `elementType'
+ * and function space named `functionSpaceType'. */
+GMSH_API int gmshModelMeshGetNumberOfOrientations(const int elementType,
+                                                  const char * functionSpaceType,
+                                                  int * ierr);
+
 /* Preallocate data before calling `getBasisFunctionsOrientationForElements'
  * with `numTasks' > 1. For C and C++ only. */
 GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const int elementType,
