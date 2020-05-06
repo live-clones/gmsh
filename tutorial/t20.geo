@@ -35,19 +35,37 @@ zmax = bbox(5);
 // We want to slice the model into N slices, and either keep the volume slices
 // or just the surfaces obtained by the cutting:
 DefineConstant[
-  N = {5, Min 2, Max 100, Step 1, Name "Number of slices"}
-  surf = {0, Choices{0, 1}, Name "Keep only surfaces?"}
+  N = {5, Min 2, Max 100, Step 1, Name "Parameters/0Number of slices"}
+  dir = {0, Choices{0="X", 1="Y", 2="Z"}, Name "Parameters/1Direction"}
+  surf = {0, Choices{0, 1}, Name "Parameters/2Keep only surfaces?"}
 ];
-dz = (zmax - zmin) / N;
 
-// Define the cutting planes
-For i In {1:N-1}
-  Rectangle(1000 + i) = {xmin, ymin, zmin + i * dz,
-                         xmax-xmin, ymax-ymin};
+dx = (xmax - xmin);
+dy = (ymax - ymin);
+dz = (zmax - zmin);
+L = (dir == 0) ? dz : dx;
+H = (dir == 1) ? dz : dy;
+
+// Create the first cutting plane:
+s() = {news};
+Rectangle(s(0)) = {xmin, ymin, zmin, L, H};
+If(dir == 0)
+  Rotate{ {0, 1, 0}, {xmin, ymin, zmin}, -Pi/2 } { Surface{s(0)}; }
+ElseIf(dir == 1)
+  Rotate{ {1, 0, 0}, {xmin, ymin, zmin}, Pi/2 } { Surface{s(0)}; }
+EndIf
+tx = (dir == 0) ? dx / N : 0;
+ty = (dir == 1) ? dy / N : 0;
+tz = (dir == 2) ? dz / N : 0;
+Translate{tx, ty, tz} { Surface{s(0)}; }
+
+// Create the other cutting planes:
+For i In {1:N-2}
+  s() += Translate{i * tx, i * ty, i * tz} { Duplicata{ Surface{s(0)}; } };
 EndFor
 
 // Fragment (i.e. intersect) the volume with all the cutting planes:
-BooleanFragments{ Volume{v()}; Delete; }{ Surface{1000+1:1000+N-1}; Delete; }
+BooleanFragments{ Volume{v()}; Delete; }{ Surface{s()}; Delete; }
 
 // Now remove all the surfaces (and their bounding entities) that are not on the
 // boundary of a volume, i.e. the parts of the cutting planes that "stick out"
@@ -60,8 +78,12 @@ If(surf)
   eps = 1e-4;
   s() = {};
   For i In {1:N-1}
-    s() += Surface In BoundingBox{xmin-eps,ymin-eps,zmin + i * dz - eps,
-      xmax+eps,ymax+eps,zmin + i * dz + eps};
+    xx = (dir == 0) ? xmin : xmax;
+    yy = (dir == 1) ? ymin : ymax;
+    zz = (dir == 2) ? zmin : zmax;
+    s() += Surface In BoundingBox
+      {xmin - eps + i * tx, ymin - eps + i * ty, zmin - eps + i * tz,
+       xx + eps + i * tx, yy + eps + i * ty, zz + eps + i * tz};
   EndFor
   // ...and remove all the other entities:
   dels = Surface{:};

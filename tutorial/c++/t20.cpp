@@ -54,30 +54,46 @@ int main(int argc, char **argv)
   // or just the surfaces obtained by the cutting:
 
   int N = 5; // Number of slices
+  std::string dir = "X"; // Direction: "X", "Y" or "Z"
   bool surf = false; // Keep only surfaces?
 
-  double dz = (zmax - zmin) / N;
+  double dx = (xmax - xmin);
+  double dy = (ymax - ymin);
+  double dz = (zmax - zmin);
+  double L = (dir == "X") ? dz : dx;
+  double H = (dir == "Y") ? dz : dy;
 
-  // Define the cutting planes
-  for(int i = 1; i < N; i++)
-    gmsh::model::occ::addRectangle(xmin, ymin, zmin + i * dz, xmax - xmin,
-                                   ymax - ymin, 1000 + i);
+  // Create the first cutting plane
+  std::vector<std::pair<int, int> > s;
+  s.push_back({2, gmsh::model::occ::addRectangle(xmin, ymin, zmin, L, H)});
+  if(dir == "X") {
+    gmsh::model::occ::rotate({s[0]}, xmin, ymin, zmin, 0, 1, 0, -M_PI/2);
+  }
+  else if(dir == "Y") {
+    gmsh::model::occ::rotate({s[0]}, xmin, ymin, zmin, 1, 0, 0, M_PI/2);
+  }
+  double tx = (dir == "X") ? dx / N : 0;
+  double ty = (dir == "Y") ? dy / N : 0;
+  double tz = (dir == "Z") ? dz / N : 0;
+  gmsh::model::occ::translate({s[0]}, tx, ty, tz);
+
+  // Create the other cutting planes:
+  std::vector<std::pair<int, int> > tmp;
+  for(int i = 1; i < N - 1; i++) {
+    gmsh::model::occ::copy({s[0]}, tmp);
+    s.push_back(tmp[0]);
+    gmsh::model::occ::translate({s.back()}, i * tx, i * ty, i * tz);
+  }
 
   // Fragment (i.e. intersect) the volume with all the cutting planes:
-  std::vector<std::pair<int, int> > p;
-  for(int i = 1000 + 1; i < 1000 + N; i++)
-    p.push_back(std::pair<int, int>(2, i));
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
-  gmsh::model::occ::fragment(v, p, ov, ovv);
+  gmsh::model::occ::fragment(v, s, ov, ovv);
 
   // Now remove all the surfaces (and their bounding entities) that are not on
   // the boundary of a volume, i.e. the parts of the cutting planes that "stick
   // out" of the volume:
-
   gmsh::model::occ::synchronize();
-
-  std::vector<std::pair<int, int> > tmp;
   gmsh::model::getEntities(tmp, 2);
   gmsh::model::occ::remove(tmp, true);
 
@@ -92,10 +108,13 @@ int main(int argc, char **argv)
     double eps = 1e-4;
     std::vector<std::pair<int, int> > s;
     for(int i = 1; i < N; i++) {
+      double xx = (dir == "X") ? xmin : xmax;
+      double yy = (dir == "Y") ? ymin : ymax;
+      double zz = (dir == "Z") ? zmin : zmax;
       std::vector<std::pair<int, int> > e;
       gmsh::model::getEntitiesInBoundingBox(
-        xmin - eps, ymin - eps, zmin + i * dz - eps, xmax + eps, ymax + eps,
-        zmin + i * dz + eps, e, 2);
+        xmin - eps + i * tx, ymin - eps + i * ty, zmin - eps + i * tz,
+        xx + eps + i * tx, yy + eps + i * ty, zz + eps + i * tz, e, 2);
       s.insert(s.end(), e.begin(), e.end());
     }
     // ...and remove all the other entities (here directly in the model, as we
