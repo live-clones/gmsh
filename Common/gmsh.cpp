@@ -2338,7 +2338,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         throw 10;
       }
       for(unsigned int i = 0; i < wantedOrientations.size(); ++i) {
-        if(wantedOrientations[i] >= maxOrientation || wantedOrientations[i] < 0) {
+        if(wantedOrientations[i] >= static_cast< int >(maxOrientation) || wantedOrientations[i] < 0) {
           Msg::Error("Orientation %i does not exist for function stace named '%s' on %s.", wantedOrientations[i], fsName.c_str(), ElementType::nameOfParentType(familyType, true).c_str());
           throw 11;
         }
