@@ -1890,9 +1890,9 @@ class model:
             Search the mesh for an element located at coordinates (`x', `y', `z'). This
             function performs a search in a spatial octree. If an element is found,
             return its tag, type and node tags, as well as the local coordinates (`u',
-            `v', `w') within the element corresponding to search location. If `dim' is
-            >= 0, only search for elements of the given dimension. If `strict' is not
-            set, use a tolerance to find elements near the search location.
+            `v', `w') within the reference element corresponding to search location. If
+            `dim' is >= 0, only search for elements of the given dimension. If `strict'
+            is not set, use a tolerance to find elements near the search location.
 
             Return `elementTag', `elementType', `nodeTags', `u', `v', `w'.
             """
@@ -2255,9 +2255,9 @@ class model:
                 _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
-        def getBasisFunctions(elementType, localCoord, functionSpaceType):
+        def getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations=[]):
             """
-            gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType)
+            gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations=[])
 
             Get the basis functions of the element of type `elementType' at the
             evaluation points `localCoord' (given as concatenated triplets of
@@ -2280,6 +2280,7 @@ class model:
             api_numComponents_ = c_int()
             api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
             api_numOrientations_ = c_int()
+            api_wantedOrientations_, api_wantedOrientations_n_ = _ivectorint(wantedOrientations)
             ierr = c_int()
             lib.gmshModelMeshGetBasisFunctions(
                 c_int(elementType),
@@ -2288,6 +2289,7 @@ class model:
                 byref(api_numComponents_),
                 byref(api_basisFunctions_), byref(api_basisFunctions_n_),
                 byref(api_numOrientations_),
+                api_wantedOrientations_, api_wantedOrientations_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -2327,6 +2329,27 @@ class model:
                     "gmshModelMeshGetBasisFunctionsOrientationForElements returned non-zero error code: ",
                     ierr.value)
             return _ovectorint(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_.value)
+
+        @staticmethod
+        def getNumberOfOrientations(elementType, functionSpaceType):
+            """
+            gmsh.model.mesh.getNumberOfOrientations(elementType, functionSpaceType)
+
+            Get the number of possible orientations for elements of type `elementType'
+            and function space named `functionSpaceType'.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelMeshGetNumberOfOrientations(
+                c_int(elementType),
+                c_char_p(functionSpaceType.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNumberOfOrientations returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
 
         @staticmethod
         def getEdgeNumber(edgeNodes):

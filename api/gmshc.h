@@ -614,9 +614,9 @@ GMSH_API void gmshModelMeshGetElement(const size_t elementTag,
 /* Search the mesh for an element located at coordinates (`x', `y', `z'). This
  * function performs a search in a spatial octree. If an element is found,
  * return its tag, type and node tags, as well as the local coordinates (`u',
- * `v', `w') within the element corresponding to search location. If `dim' is
- * >= 0, only search for elements of the given dimension. If `strict' is not
- * set, use a tolerance to find elements near the search location. */
+ * `v', `w') within the reference element corresponding to search location. If
+ * `dim' is >= 0, only search for elements of the given dimension. If `strict'
+ * is not set, use a tolerance to find elements near the search location. */
 GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
                                                    const double y,
                                                    const double z,
@@ -815,6 +815,7 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              int * numComponents,
                                              double ** basisFunctions, size_t * basisFunctions_n,
                                              int * numOrientations,
+                                             int * wantedOrientations, size_t wantedOrientations_n,
                                              int * ierr);
 
 /* Get the orientation index of the elements of type `elementType' in the
@@ -830,6 +831,12 @@ GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElements(const int ele
                                                                    const size_t task,
                                                                    const size_t numTasks,
                                                                    int * ierr);
+
+/* Get the number of possible orientations for elements of type `elementType'
+ * and function space named `functionSpaceType'. */
+GMSH_API int gmshModelMeshGetNumberOfOrientations(const int elementType,
+                                                  const char * functionSpaceType,
+                                                  int * ierr);
 
 /* Preallocate data before calling `getBasisFunctionsOrientationForElements'
  * with `numTasks' > 1. For C and C++ only. */

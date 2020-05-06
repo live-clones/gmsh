@@ -719,8 +719,8 @@ namespace gmsh { // Top-level functions
       // Search the mesh for an element located at coordinates (`x', `y', `z').
       // This function performs a search in a spatial octree. If an element is
       // found, return its tag, type and node tags, as well as the local
-      // coordinates (`u', `v', `w') within the element corresponding to search
-      // location. If `dim' is >= 0, only search for elements of the given
+      // coordinates (`u', `v', `w') within the reference element corresponding to
+      // search location. If `dim' is >= 0, only search for elements of the given
       // dimension. If `strict' is not set, use a tolerance to find elements near
       // the search location.
       GMSH_API void getElementByCoordinates(const double x,
@@ -935,7 +935,8 @@ namespace gmsh { // Top-level functions
                                       const std::string & functionSpaceType,
                                       int & numComponents,
                                       std::vector<double> & basisFunctions,
-                                      int & numOrientations);
+                                      int & numOrientations,
+                                      const std::vector<int> & wantedOrientations = std::vector<int>());
 
       // gmsh::model::mesh::getBasisFunctionsOrientationForElements
       //
@@ -951,6 +952,13 @@ namespace gmsh { // Top-level functions
                                                             const int tag = -1,
                                                             const std::size_t task = 0,
                                                             const std::size_t numTasks = 1);
+
+      // gmsh::model::mesh::getNumberOfOrientations
+      //
+      // Get the number of possible orientations for elements of type `elementType'
+      // and function space named `functionSpaceType'.
+      GMSH_API int getNumberOfOrientations(const int elementType,
+                                           const std::string & functionSpaceType);
 
       // gmsh::model::mesh::preallocateBasisFunctionsOrientationForElements
       //
