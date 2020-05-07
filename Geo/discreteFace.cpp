@@ -441,7 +441,7 @@ void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
 #if defined(HAVE_HXT)
 
 static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
-                          std::map<MVertex *, int> &v2c,
+                          std::map<MVertex *, uint32_t> &v2c,
                           std::vector<MVertex *> &c2v)
 {
   int tag = gf->tag();
@@ -500,7 +500,7 @@ int discreteFace::createGeometry()
   HXTMesh *m;
   HXTMeanValues *param;
   HXTEdges *edges;
-  std::map<MVertex *, int> v2c;
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   gmsh2hxt(this, &m, v2c, c2v);
   HXT_CHECK(hxtEdgesCreate(m, &edges));

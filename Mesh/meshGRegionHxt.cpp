@@ -143,7 +143,7 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
 }
 
 static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
-                          std::map<MVertex *, int> &v2c,
+                          std::map<MVertex *, uint32_t> &v2c,
                           std::vector<MVertex *> &c2v)
 {
   Msg::Debug("Start Hxt2Gmsh");
@@ -151,8 +151,8 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   std::vector<GEdge *> allEdges;
   HXT_CHECK(getAllFacesOfAllRegions(regions, NULL, allFaces));
   HXT_CHECK(getAllEdgesOfAllFaces(allFaces, NULL, allEdges));
-  std::map<int, GEdge *> i2e;
-  std::map<int, GFace *> i2f;
+  std::map<uint32_t, GEdge *> i2e;
+  std::map<uint32_t, GFace *> i2f;
   for(size_t i = 0; i < allFaces.size(); i++)
     i2f[allFaces[i]->tag()] = allFaces[i];
   for(size_t i = 0; i < allEdges.size(); i++)
@@ -183,7 +183,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     uint16_t c = m->lines.colors[i];
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
-    std::map<int, GEdge *>::iterator ge = i2e.find(c);
+    std::map<uint32_t, GEdge *>::iterator ge = i2e.find(c);
     if(ge == i2e.end()) {
       if(warning != c) {
         warning = c;
@@ -212,7 +212,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
     MVertex *v2 = c2v[i2];
-    std::map<int, GFace *>::iterator gf = i2f.find(c);
+    std::map<uint32_t, GFace *>::iterator gf = i2f.find(c);
     if(gf == i2f.end()) {
       if(warning != c) {
         warning = c;
@@ -292,7 +292,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 }
 
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-                   std::map<MVertex *, int> &v2c, std::vector<MVertex *> &c2v)
+                   std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v)
 {
   std::set<MVertex *> all;
   std::vector<GFace *> faces;
@@ -384,7 +384,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
 
-  std::map<MVertex *, int> v2c;
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 

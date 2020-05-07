@@ -13,7 +13,9 @@
 extern "C" {
 #endif
 
-#include "hxt_tetPartition.h"
+#include "hxt_mesh.h"
+#include "hxt_vertices.h"
+#include "hxt_bbox.h"
 
 /**
 * \file hxt_tetDelaunay.h Delaunay tetrahedrization
@@ -42,7 +44,8 @@ typedef struct {
                                *  \warning a segmentation fault will occur if a vertex
                                * doesn't have a corresponding mesh size */
 
-  uint32_t numVerticesInMesh; /**< The number of vertices in the mesh (all vertices below this point are not (re-)inserted */
+  uint32_t numVerticesInMesh; /**< the number of vertices in the mesh. This value gets incremented by hxtDelaunay */
+  uint32_t insertionFirst;    /**< all vertices with an index below insertionFirst are not (re-)inserted and not reordered */
   double partitionability;    /**< a number between 0 and 1 telling if this mesh is good for making partitions.
                                    Generally, put 0 for an empty mesh, 1-(1/2)^n for a mesh refined n time */
 
@@ -67,9 +70,9 @@ typedef struct {
 /**
  * \brief Delaunay of a set of vertices that does not modify their order
  * \details This perform the insertion of the vertices whose indices are
- * given in nodeInfo (in the \ref hxtNodeInfo.node wtructure member)\n
+ * given in nodeInfo (in the \ref HXTNodeInfo.node wtructure member)\n
  * This function does not change the order of vertices in the mesh.\n
- * \ref hxtNodeInfo.status will be modified by the function to tell
+ * \ref HXTNodeInfo.status will be modified by the function to tell
  * if the vertex was successfully inserted or not.
  *  - nodeInfo[i].status==HXT_STATUS_TRUE  if the vertex was successfully inserted.
  *  - nodeInfo[i].status==HXT_STATUS_FALSE  if the vertex was not inserted.
@@ -77,29 +80,30 @@ typedef struct {
  *
  * \warning
  *  - the order of nodeInfo will change
- *  - hxtNodeInfo[i].hilbertDist will change
+ *  - HXTNodeInfo[i].hilbertDist will change
  *  - mesh->tetrahedra.* will change
  *  - mesh->vertices.coord[4*i+3] will change
+ *  - options->numVerticesInMesh will change
  *
  * \param mesh: a valid Delaunay mesh
- * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions (here options->numVerticesInMesh is useless)
+ * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions
  * \param[in, out] nodeInfo: the indices of the vertices to insert in the tetrahedral mesh.
  * \param nToInsert: the number of element in nodeInfo, hence the number of vertices to insert.
  */
-HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* nodeInfo, uint64_t nToInsert);
+HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, HXTNodeInfo* nodeInfo, uint64_t nToInsert);
 
 
 /**
  * \brief Delaunay of a set of vertices
  * \details This perform the insertion of the vertices
- * from numVerticesInMesh to mesh->vertices.num\n
+ * from insertionFirst to mesh->vertices.num\n
  *
  * \warning
- *  - the order of mesh->vertices will change
- *  - hxtNodeInfo[i].hilbertDist will change
+ *  - the order of mesh->vertices will change, except for those below options->insertionFirst
  *  - mesh->tetrahedra.* will change
  *  - mesh->vertices.coord[4*i+3] will change
  *  - vertices that could not be inserted are deleted from mesh->vertices !
+ *  - options->numVerticesInMesh will change
  *
  * \param mesh: a valid Delaunay mesh
  * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions
@@ -107,7 +111,7 @@ HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, 
 HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* options);
 
 
-/**
+/** ! THIS PART IS NOT IMPLEMENTED YET ! (I keep this for the future)
  * \brief just add one vertex in the mesh
  * \details This perform the single insertion of the vertex vta (vertex to add) in the mesh given by mesh
  *          To avoid repetitive allocations and effort to directly eliminate deleted tetrahedra from the mesh,
@@ -118,7 +122,7 @@ HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* options);
  *          => options->reproducible and options->delaunayThreads are useless
  *
  * \param mesh: a valid Delaunay mesh
- * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions (here options->numVerticesInMesh is useless)
+ * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions (here options->insertionFirst is useless)
  * \param vtaNodeInfo[in, out]: the index of the vertex to insert in the tetrahedral mesh
  *                              (see \ref hxtDelaunaySteadyVertices to understand how it gets filled)
  * \param deleted: a valid pointer to an array of deleted tetrahedra (that must be marked as deleted as well => see hxt_tetFlag.c)
@@ -130,13 +134,10 @@ HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* options);
  * \param buffer: a buffer reused by hxtDelaunayAddOne. The first time you use it, buffer should point to NULL
  *                when you will not used hxtDelaunayAddOne anymore, use hxtDelaunayFreeBuffer to free it
  */
-// HXTStatus hxtDelaunayAddOne(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* vtaNodeInfo,
+// HXTStatus hxtDelaunayAddOne(HXTMesh* mesh, HXTDelaunayOptions* options, HXTNodeInfo* vtaNodeInfo,
 //                             uint64_t** deleted, size_t* numDeleted, size_t* sizeDeleted, void** buffer);
 
 // HXTStatus hxtDelaunayFreeBuffer(void** buffer);
-
-
-HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, uint64_t* __restrict__ curTet, const uint32_t vta);
 
 
 #ifdef __cplusplus

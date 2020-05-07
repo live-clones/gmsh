@@ -108,11 +108,12 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
       HXT_INFO("Recovering %" HXTu64 " missing edge(s)",
                nbMissingLines);
 
+    uint32_t oldNumVertices = mesh->vertices.num;
     HXT_CHECK(options->recoveryFun(mesh, options->recoveryData));
 
-    if(delOptions.numVerticesInMesh < mesh->vertices.num) {
+    if(oldNumVertices < mesh->vertices.num) {
       HXT_INFO("Steiner(s) point(s) were inserted");
-      delOptions.numVerticesInMesh = mesh->vertices.num;
+      delOptions.numVerticesInMesh += mesh->vertices.num - oldNumVertices;
     }
 
     t[3] = omp_get_wtime();

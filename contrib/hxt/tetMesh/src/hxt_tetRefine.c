@@ -6,11 +6,37 @@
 // Contributor(s):
 //   Célestin Marot
 
-#include <math.h>
 #include "hxt_tetDelaunay.h"
 #include "predicates.h"
 #include "hxt_tetFlag.h"
 #include "hxt_omp.h"
+
+// mark all the points which are in mesh->(points | lines | triangles)
+static void markMeshPoints(HXTMesh* mesh)
+{
+  #pragma omp parallel for simd
+  for(uint32_t i=0; i<mesh->vertices.num; i++) {
+    mesh->vertices.coord[4*i+3] = 0.0;
+  }
+
+  for(uint64_t i=0; i<mesh->triangles.num; i++) {
+    for(int j=0; j<3; j++) {
+      mesh->vertices.coord[4* mesh->triangles.node[3*i+j] + 3] = 1.0;
+    }
+  }
+
+  for(uint64_t i=0; i<mesh->lines.num; i++) {
+    for(int j=0; j<2; j++) {
+      mesh->vertices.coord[4* mesh->lines.node[2*i+j] + 3] = 1.0;
+    }
+  }
+
+  for(uint64_t i=0; i<mesh->points.num; i++) {
+    for(int j=0; j<2; j++) {
+      mesh->vertices.coord[4* mesh->lines.node[2*i+j] + 3] = 1.0;
+    }
+  }
+}
 
 
 HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
@@ -21,21 +47,25 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
   if (mesh->triangles.num == 0)
     return HXT_ERROR_MSG(HXT_STATUS_FAILED, "The input mesh should contain triangles");
 
-  hxtNodeInfo* nodeInfo;
-  HXT_CHECK( hxtAlignedMalloc(&nodeInfo, sizeof(hxtNodeInfo)*mesh->vertices.num) );
+  HXTNodeInfo* nodeInfo;
+  HXT_CHECK( hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo)*mesh->vertices.num) );
 
-  #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
+  markMeshPoints(mesh);
+
+  uint32_t numToInsert = 0;
   for (uint32_t i=0; i<mesh->vertices.num; i++) {
-    nodeInfo[i].node = i;
-    nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
+    if(mesh->vertices.coord[4 * i + 3]==1.0) {
+      nodeInfo[numToInsert].node = i;
+      nodeInfo[numToInsert].status = HXT_STATUS_TRYAGAIN;
+      numToInsert++;
+    }
   }
 
-  HXT_CHECK( hxtDelaunaySteadyVertices(mesh, delOptions, nodeInfo, mesh->vertices.num) );
-  delOptions->numVerticesInMesh = mesh->vertices.num;
+  HXT_CHECK( hxtDelaunaySteadyVertices(mesh, delOptions, nodeInfo, numToInsert) );
 
 #ifdef DEBUG
   #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
-  for (uint32_t i=0; i<mesh->vertices.num; i++) {
+  for (uint32_t i=0; i<numToInsert; i++) {
     if(nodeInfo[i].status!=HXT_STATUS_TRUE){
       HXT_WARNING("point %u of the empty mesh was not inserted\n", nodeInfo[i].node);
     }
@@ -304,6 +334,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
     }
 
 
+    delOptions->insertionFirst = mesh->vertices.num; // prepare for the next insertion
 
     uint32_t add = 0;
     HXTStatus status = HXT_STATUS_OK;
@@ -453,13 +484,11 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
     mesh->vertices.num += add;
 
     delOptions->partitionability = 1.0 - pow(0.5, iter);
+    uint32_t oldNumVerticesInMesh = delOptions->numVerticesInMesh;
 
     HXT_CHECK(hxtDelaunay(mesh, delOptions));
 
-    uint32_t numAdd = mesh->vertices.num - delOptions->numVerticesInMesh;
-    delOptions->numVerticesInMesh = mesh->vertices.num;
-
-    if (numAdd == 0) break;
+    if (delOptions->numVerticesInMesh == oldNumVerticesInMesh) break;
   }
 
   HXT_CHECK( hxtFree(&startIndex) );

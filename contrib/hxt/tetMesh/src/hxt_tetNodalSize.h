@@ -12,7 +12,7 @@
 #include "hxt_mesh.h"
 
 HXTStatus hxtCreateNodalSize(HXTMesh* mesh, double** nodalSizes_ptr);
-HXTStatus hxtDestroyNodalsize(double** nodalSize);
+HXTStatus hxtDestroyNodalSize(double** nodalSize);
 
 /// Compute sizes at vertices of the mesh from meshSizeFun
 HXTStatus hxtComputeNodalSizeFromFunction(HXTMesh* mesh, double* nodalSize,
@@ -21,8 +21,8 @@ HXTStatus hxtComputeNodalSizeFromFunction(HXTMesh* mesh, double* nodalSize,
                                           void* meshSizeData);
 
 /// Compute sizes at vertices of the mesh from existing edges
-HXTStatus hxtComputeNodalsizeFromTrianglesAndLines(HXTMesh* mesh, double* nodalSize);
-HXTStatus hxtComputeNodalsizeFromMesh(HXTMesh* mesh, double* nodalSize);
+HXTStatus hxtComputeNodalSizeFromTrianglesAndLines(HXTMesh* mesh, double* nodalSize);
+HXTStatus hxtComputeNodalSizeFromMesh(HXTMesh* mesh, double* nodalSize);
 
 
 
