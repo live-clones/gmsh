@@ -97,10 +97,11 @@ HXTStatus hxtMeshDelete ( HXTMesh** mesh) {
 
 
 // TODO: more checking of fgets
-HXTStatus ReadNodesFromGmsh(FILE *fp,  HXTMesh* m){
+static HXTStatus ReadNodesFromGmsh(FILE *fp,  HXTMesh* m)
+{
   rewind (fp);
   size_t n;
-  char buf[BUFSIZ]={""};
+  char buf[BUFSIZ];
   // scan for Nodes
   m->vertices.num = 0;
   while( fgets(buf, BUFSIZ, fp )!=NULL){
@@ -123,15 +124,42 @@ HXTStatus ReadNodesFromGmsh(FILE *fp,  HXTMesh* m){
   }  
   return HXT_STATUS_OK;
 }
+
+
+static HXTStatus ReadMeshFormatFromGmsh(FILE *fp)
+{
+  char buf[BUFSIZ];
+  int found = 0;
+  while(fgets(buf, BUFSIZ, fp )){    
+    if(strstr(buf, "$MeshFormat")){
+      printf("header found\n");
+      if(fgets(buf, BUFSIZ, fp )==NULL)
+        return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to format");
+      float version;
+      int match = sscanf(buf, " %f 0 8 ", &version);
+      if(match!=1 || version!=2.2f) {
+        return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Hxt only support Gmsh's MSH2 ASCII file format %f %d", version, match);
+      }
+      found = 1;
+      break;
+    }
+  }
+
+  if(!found)
+    return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Unrecognized format. Hxt only support Gmsh's MSH2 ASCII file format");
+
+  return HXT_STATUS_OK;
+}
   
 
 // TODO: add possibility to read the elements from an array
 
 // TODO: more checking of fgets
 // TODO: why set to zero AND use malloc ? => either set to zero and use realloc, either trust it is zero and malloc
-HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m){
+static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
+{
   int k;
-  char buf[BUFSIZ]={""};
+  char buf[BUFSIZ];
   
   rewind (fp);
 
@@ -409,6 +437,9 @@ HXTStatus  hxtMeshReadGmsh  ( HXTMesh* m , const char *filename) {
   if (f==NULL)
     return HXT_ERROR_MSG(HXT_STATUS_FILE_CANNOT_BE_OPENED,
       "Cannot open mesh file \"%s\"",(filename==NULL)?"(null)":filename);
+
+  HXT_CHECK(
+    ReadMeshFormatFromGmsh(f));
 
   HXT_CHECK(
     ReadNodesFromGmsh(f,m));
