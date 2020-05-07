@@ -107,12 +107,14 @@ bool compute4neighbors(
   double size_1 = sqrt (covar1[0]*covar1[0]+covar1[1]*covar1[1]);
   double size_2 = sqrt (covar2[0]*covar2[0]+covar2[1]*covar2[1]);
 
-  //    double L1 = sqrt(covar1[0]*covar1[0]*M+2*covar1[1]*covar1[0]*E+covar1[1]*covar1[1]*N);
-  //    double L2 = sqrt(covar2[0]*covar2[0]*M+2*covar2[1]*covar2[0]*E+covar2[1]*covar2[1]*N);
-
-  //    printf("T(%g,%g,%g) N(%g,%g,%g) S1(%g,%g,%g) S2(%g,%g,%g) COVAR (%g %g) (%g %g) L %g %g %g\n",t1.x(),t1.y(),t1.z(),n.x(),n.y(),n.z(),
-  //  	 s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z(),covar1[0],covar1[1],covar2[0],covar2[1],L, L1, L2);
-
+  if (gf->tag() == 1){
+    //double L1 = sqrt(covar1[0]*covar1[0]*M+2*covar1[1]*covar1[0]*E+covar1[1]*covar1[1]*N);
+    //Double L2(covar2[0]*covar2[0]*M+2*covar2[1]*covar2[0]*E+covar2[1]*covar2[1]*N);
+    
+    //    printf("T(%g,%g,%g) N(%g,%g,%g) S1(%g,%g,%g) S2(%g,%g,%g) COVAR (%g %g) (%g %g) L %g %g %g\n",t1.x(),t1.y(),t1.z(),n.x(),n.y(),n.z(),
+    //	   s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z(),covar1[0],covar1[1],covar2[0],covar2[1],M,E,N);
+  }
+  
   if (singular){
     Msg::Error("CORONAVIRUS ALERT !!!!\n");
   }
@@ -131,6 +133,14 @@ bool compute4neighbors(
   }
 
   return true;
+}
+
+bool outBounds(SPoint2 p, GFace *gf){
+  for (int i=0;i<2;i++){
+    Range<double> bnds = gf->parBounds(i);
+    if (p[i] > bnds.high() || p[i] < bnds.low() ) return true;
+  }
+  return false;
 }
 
 void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
@@ -201,7 +211,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     globalMult /= count;
   }
 
-  printf("MULT %12.5E\n",globalMult);
+  //  printf("MULT %12.5E\n",globalMult);
 
 
   // put boundary vertices in a fifo queue
@@ -223,24 +233,25 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
       if (gf->periodic(i)){
 	reparamMeshVertexOnFace(*it, gf, midpoint);
 	Range<double> bnds = gf->parBounds(i);      
-	if (midpoint[i] == bnds.low()){
+	//	if (1 || midpoint[i] == bnds.low()){
 	  if (i == 0)
 	    du[NP] =  bnds.high() -  bnds.low();
 	  else
 	    dv[NP] =  bnds.high() -  bnds.low();
 	  NP++;
-	}
-	else if (midpoint[i] == bnds.high()){
+	  //	}
+	  //	else if (midpoint[i] == bnds.high()){
 	  if (i == 0)
 	    du[NP] =  -(bnds.high() -  bnds.low());
 	  else
 	    dv[NP] =  -(bnds.high() -  bnds.low());
 	  NP++;
-	}
+	  //	}
       }
     }
     for (int i=0;i<NP;i++){
       compute4neighbors(gf, *it, midpoint, newp, metricField, cross_field, du[i],dv[i],globalMult );
+      //      if (NP !=1) printf("%1d %12.5E %12.5E %12.5E %12.5E\n",i,midpoint.x(),midpoint.y(),du[i],dv[i]);
       surfacePointWithExclusionRegion *sp =
 	new surfacePointWithExclusionRegion(*it, newp, midpoint, metricField);
       fifo.push(sp);
@@ -259,7 +270,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     surfacePointWithExclusionRegion *parent = fifo.front();
     fifo.pop();
     for(int i = 0; i < 4; i++) {
-      if(!inExclusionZone(parent->_p[i], rtree, vertices) && gf->containsParam(parent->_p[i])) {
+      if(!inExclusionZone(parent->_p[i], rtree, vertices) && !outBounds(parent->_p[i],gf) && gf->containsParam(parent->_p[i])) {
 	GPoint gp = gf->point(parent->_p[i]);
 	MFaceVertex *v =
 	  new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());

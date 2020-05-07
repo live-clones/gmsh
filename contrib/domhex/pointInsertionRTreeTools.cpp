@@ -75,11 +75,11 @@ void surfacePointWithExclusionRegion::minmax(double _min[2],
 void surfacePointWithExclusionRegion::print(FILE *f, int i)
 {
   fprintf(f, "SP(%g,%g,%g){%d};\n", _v->x(), _v->y(), _v->z(), i);
-  /*  fprintf(f, "SP(%g,%g,%g){%d};\n", _center.x(), _center.y(), 0.0, i);
+    fprintf(f, "SP(%g,%g,%g){%d};\n", _center.x(), _center.y(), 0.0, i);
   fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
           _q[0].x(), _q[0].y(), 0.0, _q[1].x(), _q[1].y(), 0.0, _q[2].x(),
           _q[2].y(), 0.0, _q[3].x(), _q[3].y(), 0.0, i, i, i, i);
-  */
+  
 }
 
 my_wrapper::my_wrapper(const SPoint2 &sp) : _tooclose(false), _p(sp) {}
