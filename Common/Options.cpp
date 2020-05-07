@@ -6813,12 +6813,13 @@ double opt_view_time(OPT_ARGS_NUM)
     if(val >= 0.) {
       // if negative (the default), don't do anything so that we do not compete
       // with timestep
+      double dt_min = std::numeric_limits<double>::max();
       int step = 0;
       for(int i = 0; i < data->getNumTimeSteps(); i++) {
-        double time = data->getTime(i);
-        if(fabs(time - val) < 1.e-15) {
+        double dt = std::abs(data->getTime(i) - val);
+        if(dt < dt_min) {
           step = i;
-          break;
+          dt_min = std::min(dt_min, dt);
         }
       }
       opt_view_timestep(num, action, step);
