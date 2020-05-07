@@ -1256,13 +1256,16 @@ namespace gmsh { // Top-level functions
       //
       // Get the master entity `tagMaster', the node tags `nodeTags' and their
       // corresponding master node tags `nodeTagsMaster', and the affine transform
-      // `affineTransform' for the entity of dimension `dim' and tag `tag'.
+      // `affineTransform' for the entity of dimension `dim' and tag `tag'. If
+      // `includeHighOrderNodes' is set, include high-order nodes in the returned
+      // data.
       GMSH_API void getPeriodicNodes(const int dim,
                                      const int tag,
                                      int & tagMaster,
                                      std::vector<std::size_t> & nodeTags,
                                      std::vector<std::size_t> & nodeTagsMaster,
-                                     std::vector<double> & affineTransform);
+                                     std::vector<double> & affineTransform,
+                                     const bool includeHighOrderNodes = false);
 
       // gmsh::model::mesh::removeDuplicateNodes
       //

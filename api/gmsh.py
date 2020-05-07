@@ -2978,13 +2978,15 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def getPeriodicNodes(dim, tag):
+        def getPeriodicNodes(dim, tag, includeHighOrderNodes=False):
             """
-            gmsh.model.mesh.getPeriodicNodes(dim, tag)
+            gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes=False)
 
             Get the master entity `tagMaster', the node tags `nodeTags' and their
             corresponding master node tags `nodeTagsMaster', and the affine transform
-            `affineTransform' for the entity of dimension `dim' and tag `tag'.
+            `affineTransform' for the entity of dimension `dim' and tag `tag'. If
+            `includeHighOrderNodes' is set, include high-order nodes in the returned
+            data.
 
             Return `tagMaster', `nodeTags', `nodeTagsMaster', `affineTransform'.
             """
@@ -3000,6 +3002,7 @@ class model:
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
                 byref(api_nodeTagsMaster_), byref(api_nodeTagsMaster_n_),
                 byref(api_affineTransform_), byref(api_affineTransform_n_),
+                c_int(bool(includeHighOrderNodes)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

@@ -1614,14 +1614,14 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n,
   }
 }
 
-GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim, const int tag, int * tagMaster, size_t ** nodeTags, size_t * nodeTags_n, size_t ** nodeTagsMaster, size_t * nodeTagsMaster_n, double ** affineTransform, size_t * affineTransform_n, int * ierr)
+GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim, const int tag, int * tagMaster, size_t ** nodeTags, size_t * nodeTags_n, size_t ** nodeTagsMaster, size_t * nodeTagsMaster_n, double ** affineTransform, size_t * affineTransform_n, const int includeHighOrderNodes, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_nodeTags_;
     std::vector<std::size_t> api_nodeTagsMaster_;
     std::vector<double> api_affineTransform_;
-    gmsh::model::mesh::getPeriodicNodes(dim, tag, *tagMaster, api_nodeTags_, api_nodeTagsMaster_, api_affineTransform_);
+    gmsh::model::mesh::getPeriodicNodes(dim, tag, *tagMaster, api_nodeTags_, api_nodeTagsMaster_, api_affineTransform_, includeHighOrderNodes);
     vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
     vector2ptr(api_nodeTagsMaster_, nodeTagsMaster, nodeTagsMaster_n);
     vector2ptr(api_affineTransform_, affineTransform, affineTransform_n);

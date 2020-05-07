@@ -394,8 +394,8 @@ public:
   // corresponding mesh vertices
   std::map<MVertex *, MVertex *> correspondingVertices;
 
-  // corresponding high order control points
-  std::map<MVertex *, MVertex *> correspondingHOPoints;
+  // corresponding high order vertices
+  std::map<MVertex *, MVertex *> correspondingHighOrderVertices;
 
   // reorder the mesh elements of the given type, according to ordering
   virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering)

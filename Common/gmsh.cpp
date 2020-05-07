@@ -4066,7 +4066,7 @@ gmsh::model::mesh::setPeriodic(const int dim, const std::vector<int> &tags,
 GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   const int dim, const int tag, int &tagMaster,
   std::vector<std::size_t> &nodeTags, std::vector<std::size_t> &nodeTagsMaster,
-  std::vector<double> &affineTransform)
+  std::vector<double> &affineTransform, const bool includeHighOrderNodes)
 {
   if(!_isInitialized()) { throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -4081,6 +4081,14 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
         it != ge->correspondingVertices.end(); ++it) {
       nodeTags.push_back(it->first->getNum());
       nodeTagsMaster.push_back(it->second->getNum());
+    }
+    if(includeHighOrderNodes) {
+      for(std::map<MVertex *, MVertex *>::iterator it =
+            ge->correspondingHighOrderVertices.begin();
+          it != ge->correspondingHighOrderVertices.end(); ++it) {
+        nodeTags.push_back(it->first->getNum());
+        nodeTagsMaster.push_back(it->second->getNum());
+      }
     }
     affineTransform = ge->affineTransform;
   }

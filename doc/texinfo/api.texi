@@ -1936,11 +1936,12 @@ C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#
 Get the master entity @code{tagMaster}, the node tags @code{nodeTags} and their
 corresponding master node tags @code{nodeTagsMaster}, and the affine transform
 @code{affineTransform} for the entity of dimension @code{dim} and tag
-@code{tag}.
+@code{tag}. If @code{includeHighOrderNodes} is set, include high-order nodes in
+the returned data.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}
+@code{dim}, @code{tag}, @code{includeHighOrderNodes = False}
 @item Output:
 @code{tagMaster}, @code{nodeTags}, @code{nodeTagsMaster}, @code{affineTransform}
 @item Return:

@@ -16,9 +16,9 @@ struct hxtBoundariesStruct{
 
 
 double hxtEdgesLength(const HXTEdges *edges,uint32_t ie){
-  
+
   HXTMesh* mesh = edges->edg2mesh;
-  
+
   int i1 = edges->node[2*ie+0];
   int i2 = edges->node[2*ie+1];;
 
@@ -34,7 +34,7 @@ double hxtEdgesLength(const HXTEdges *edges,uint32_t ie){
 
 
 static inline int halfedgecmp(const void *p0, const void *p1)
-{ 
+{
   const uint32_t *e0 = (const uint32_t*)p0;
   uint32_t es0[2] = {e0[0] < e0[1] ? e0[0] : e0[1], e0[0] < e0[1] ? e0[1] : e0[0]};
   const uint32_t *e1 = (const uint32_t*)p1;
@@ -112,7 +112,7 @@ HXTStatus hxtBoundariesGetLengthOfLineLoop(HXTBoundaries *boundaries, int i, dou
     *length = boundaries->lineLoop[i].length;
   else
     return HXT_ERROR(HXT_STATUS_ERROR);
-  
+
   return HXT_STATUS_OK;
 }
 
@@ -124,7 +124,7 @@ HXTStatus hxtBoundariesGetEdgesOfLineLoop(HXTBoundaries *boundaries, int i, uint
     *edges = boundaries->lineLoop[i].edges;
   else
     return HXT_ERROR(HXT_STATUS_ERROR);
-  
+
   return HXT_STATUS_OK;
 }
 
@@ -135,7 +135,7 @@ HXTStatus hxtBoundariesGetLineLoop(HXTBoundaries *boundaries, int i, HXTLineLoop
     *lineLoop = &(boundaries->lineLoop[i]);
   else
     return HXT_ERROR(HXT_STATUS_ERROR);
-  
+
   return HXT_STATUS_OK;
 }
 
@@ -153,27 +153,27 @@ HXTStatus hxtEdgesSetBoundaries(HXTEdges *edges, HXTBoundaries **boundaries)
   *boundaries = lineLoops;
   lineLoops->seamPoint = 0;
   /**/
-  
-  uint64_t* edg2tri = edges->edg2tri;  
-  uint32_t* tri2edg = edges->tri2edg;  
+
+  uint64_t* edg2tri = edges->edg2tri;
+  uint32_t* tri2edg = edges->tri2edg;
   int nbBorder = 0;// number of edges which belong only (each) to one single triangle
-  uint32_t *firstNode2Edge;  
+  uint32_t *firstNode2Edge;
   HXT_CHECK(hxtMalloc(&firstNode2Edge,edges->numEdges*sizeof(uint32_t)));
   for(uint32_t i=0; i<(edges)->numEdges; i++)
     firstNode2Edge[i] = -1;
   uint32_t *idx;
   HXT_CHECK(hxtMalloc(&idx,(edges)->numEdges*sizeof(uint32_t)));
   int *invIdx;
-  HXT_CHECK(hxtMalloc(&invIdx,(edges)->numEdges*sizeof(int)));  
+  HXT_CHECK(hxtMalloc(&invIdx,(edges)->numEdges*sizeof(int)));
   for(uint32_t i=0; i<(edges)->numEdges; i++){
     if((edges)->edg2tri[2*i+1] == (uint64_t)-1 ){
-      
+
       if(firstNode2Edge[edges->node[2*i+0]] == (uint32_t)-1 || firstNode2Edge[edges->node[2*i+0]]==i)
-	firstNode2Edge[edges->node[2*i+0]] = i;      
+	firstNode2Edge[edges->node[2*i+0]] = i;
       else
-	lineLoops->seamPoint = 1;     
-      
-      idx[nbBorder] = i;      
+	lineLoops->seamPoint = 1;
+
+      idx[nbBorder] = i;
       invIdx[i] = nbBorder;
       nbBorder++;
     }
@@ -184,21 +184,21 @@ HXTStatus hxtEdgesSetBoundaries(HXTEdges *edges, HXTBoundaries **boundaries)
   }
   HXT_CHECK(hxtFree(&firstNode2Edge));
   lineLoops->nbedg = nbBorder;
-  if(lineLoops->seamPoint==1){
+  if(0 && lineLoops->seamPoint==1){
     HXT_WARNING("SEAM POINT!!!!\n");
     lineLoops->nll=-1;
     lineLoops->lineLoop = NULL;
-    return HXT_STATUS_OK;	
+    return HXT_STATUS_OK;
   }
-  
+
   uint32_t *border;
   HXT_CHECK(hxtMalloc(&border,nbBorder*sizeof(uint32_t)));
   int *flag;
-  HXT_CHECK(hxtMalloc(&flag,nbBorder*sizeof(int)));  
+  HXT_CHECK(hxtMalloc(&flag,nbBorder*sizeof(int)));
   for(int i=0; i<nbBorder; i++){
     border[i] = idx[i];
     flag[i] = 0;
-  }   
+  }
 
   uint32_t *edg;
   HXT_CHECK(hxtMalloc(&edg,nbBorder*sizeof(uint32_t)));
@@ -206,8 +206,8 @@ HXTStatus hxtEdgesSetBoundaries(HXTEdges *edges, HXTBoundaries **boundaries)
   HXT_CHECK(hxtMalloc(&nedges,nbBorder/3*sizeof(uint32_t)));
   double *lengths;
   HXT_CHECK(hxtMalloc(&lengths,nbBorder/3*sizeof(double)));
-  
-  
+
+
   int cf = 0;
   int cb = 0;
 
@@ -218,8 +218,8 @@ HXTStatus hxtEdgesSetBoundaries(HXTEdges *edges, HXTBoundaries **boundaries)
     // step forward if current edge has already been used to build a line loop
     while((i<nbBorder) && flag[i]==1)
       i++;
-    if(!(i<nbBorder))      
-      break;    
+    if(!(i<nbBorder))
+      break;
 
     startEnd = border[i];
     current = startEnd;
@@ -249,7 +249,7 @@ HXTStatus hxtEdgesSetBoundaries(HXTEdges *edges, HXTBoundaries **boundaries)
       } while(invIdx[current] == -1);
 
       nEdges++;
-    } while(current!=startEnd);    
+    } while(current!=startEnd);
 
     lengths[cb] = ll;
     nedges[cb++] = nEdges;
@@ -258,8 +258,8 @@ HXTStatus hxtEdgesSetBoundaries(HXTEdges *edges, HXTBoundaries **boundaries)
   HXTLineLoop *loops;
   HXT_CHECK( hxtMalloc(&loops,cb*sizeof(HXTLineLoop)));
   lineLoops->nll = cb;
-  
-  
+
+
   int offset = 0;
   for(int i=0; i<cb; i++){
     loops[i].length = lengths[i];
@@ -269,15 +269,15 @@ HXTStatus hxtEdgesSetBoundaries(HXTEdges *edges, HXTBoundaries **boundaries)
   }
 
   lineLoops->lineLoop = loops;
-  
+
   HXT_CHECK(hxtFree(&idx));
   HXT_CHECK(hxtFree(&invIdx));
   HXT_CHECK(hxtFree(&border));
   HXT_CHECK(hxtFree(&flag));
   HXT_CHECK(hxtFree(&nedges));
   HXT_CHECK(hxtFree(&lengths));
-  
-  
+
+
   return HXT_STATUS_OK;
 }
 
@@ -305,10 +305,10 @@ HXTStatus hxtEdgesCreate(HXTMesh *mesh, HXTEdges** edges)
   (*edges)->color     = NULL;
   (*edges)->edg2tri   = NULL;
   (*edges)->tri2edg   = NULL;
-  
+
   (*edges)->edg2mesh = mesh;
- 
-   
+
+
   // build edge
   uint32_t *halfedges;
   HXT_CHECK(hxtMalloc(&halfedges,3*3*nTriangles*sizeof(uint32_t)));
@@ -327,14 +327,14 @@ HXTStatus hxtEdgesCreate(HXTMesh *mesh, HXTEdges** edges)
     uint32_t *he = halfedges+i*3;
     for(int k=0; k<3; k++)
       if (mesh->triangles.node[he[2]*3+k] == he[0])
-        tri2edg[he[2]*3+k] = nEdges;   
+        tri2edg[he[2]*3+k] = nEdges;
     if (i+1 == nTriangles*3 || halfedgecmp(he,he+3) != 0)
       nEdges++;
   }
   (*edges)->numEdges = nEdges;
   (*edges)->tri2edg   = tri2edg;
 
-  
+
   uint32_t *node;
   HXT_CHECK(hxtMalloc(&node,2*nEdges*sizeof(uint32_t)));
   int p=0;
@@ -367,13 +367,13 @@ HXTStatus hxtEdgesCreate(HXTMesh *mesh, HXTEdges** edges)
     }
   }
   (*edges)->edg2tri = edg2tri;
-  
+
   // compute the total number of boundary edges
   int edgesBdryTotal = 0;
   for(uint32_t i=0; i<(*edges)->numEdges; i++)
     if((*edges)->edg2tri[2*i+1] == (uint64_t)-1 ||
        hxtEdgesIsBoundary ((*edges), &((*edges)->node[2*i]) ))
-      edgesBdryTotal++;      
+      edgesBdryTotal++;
   (*edges)->edgesBdryTotal = edgesBdryTotal;
 
   return HXT_STATUS_OK;
@@ -404,10 +404,10 @@ HXTStatus hxtEdgesCreateNonManifold(HXTMesh *mesh, HXTEdges** edges)
   (*edges)->color     = NULL;
   (*edges)->edg2tri   = NULL;
   (*edges)->tri2edg   = NULL;
-  
+
   (*edges)->edg2mesh = mesh;
- 
-   
+
+
   // build edge
   uint32_t *halfedges;
   HXT_CHECK(hxtMalloc(&halfedges,3*3*nTriangles*sizeof(uint32_t)));
@@ -426,14 +426,14 @@ HXTStatus hxtEdgesCreateNonManifold(HXTMesh *mesh, HXTEdges** edges)
     uint32_t *he = halfedges+i*3;
     for(int k=0; k<3; k++)
       if (mesh->triangles.node[he[2]*3+k] == he[0])
-        tri2edg[he[2]*3+k] = nEdges;   
+        tri2edg[he[2]*3+k] = nEdges;
     if (i+1 == nTriangles*3 || halfedgecmp(he,he+3) != 0)
       nEdges++;
   }
   (*edges)->numEdges = nEdges;
   (*edges)->tri2edg   = tri2edg;
 
-  
+
   uint32_t *node;
   HXT_CHECK(hxtMalloc(&node,2*nEdges*sizeof(uint32_t)));
   int p=0;
@@ -461,8 +461,8 @@ HXTStatus hxtEdgesCreateNonManifold(HXTMesh *mesh, HXTEdges** edges)
       else
         edg2tri[e*2+1] = i;
 
-        // ATTENTION TODO non manifold case fix 
-        
+        // ATTENTION TODO non manifold case fix
+
         /*if(edg2tri[e*2+1] == (uint64_t)-1)*/
           /*edg2tri[e*2+1] = i;*/
         /*else{*/
@@ -480,17 +480,17 @@ HXTStatus hxtEdgesCreateNonManifold(HXTMesh *mesh, HXTEdges** edges)
           /*return HXT_ERROR_MSG( HXT_STATUS_ASSERTION_FAILED,*/
               /*"hxt_edge.c:\t topology is wrong for edge creation \n\t At least three triangles (%lu,%lu,%lu) share the same edge\n",i,edg2tri[e*2+0],edg2tri[e*2+1]);*/
         /*}*/
-      
+
     }
   }
   (*edges)->edg2tri = edg2tri;
-  
+
   // compute the total number of boundary edges
   int edgesBdryTotal = 0;
   for(uint32_t i=0; i<(*edges)->numEdges; i++)
     if((*edges)->edg2tri[2*i+1] == (uint64_t)-1 ||
        hxtEdgesIsBoundary ((*edges), &((*edges)->node[2*i]) ))
-      edgesBdryTotal++;      
+      edgesBdryTotal++;
   (*edges)->edgesBdryTotal = edgesBdryTotal;
 
   return HXT_STATUS_OK;
@@ -507,4 +507,3 @@ HXTStatus hxtEdgesDelete(HXTEdges** edgesp)
   HXT_CHECK(hxtFree(edgesp));
   return HXT_STATUS_OK;
 }
-

@@ -2328,15 +2328,16 @@ function setPeriodic(dim, tags, tagsMaster, affineTransform)
 end
 
 """
-    gmsh.model.mesh.getPeriodicNodes(dim, tag)
+    gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
 
 Get the master entity `tagMaster`, the node tags `nodeTags` and their
 corresponding master node tags `nodeTagsMaster`, and the affine transform
-`affineTransform` for the entity of dimension `dim` and tag `tag`.
+`affineTransform` for the entity of dimension `dim` and tag `tag`. If
+`includeHighOrderNodes` is set, include high-order nodes in the returned data.
 
 Return `tagMaster`, `nodeTags`, `nodeTagsMaster`, `affineTransform`.
 """
-function getPeriodicNodes(dim, tag)
+function getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
     api_tagMaster_ = Ref{Cint}()
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
@@ -2346,8 +2347,8 @@ function getPeriodicNodes(dim, tag)
     api_affineTransform_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPeriodicNodes, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, api_tagMaster_, api_nodeTags_, api_nodeTags_n_, api_nodeTagsMaster_, api_nodeTagsMaster_n_, api_affineTransform_, api_affineTransform_n_, ierr)
+          (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          dim, tag, api_tagMaster_, api_nodeTags_, api_nodeTags_n_, api_nodeTagsMaster_, api_nodeTagsMaster_n_, api_affineTransform_, api_affineTransform_n_, includeHighOrderNodes, ierr)
     ierr[] != 0 && error("gmshModelMeshGetPeriodicNodes returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     nodeTagsMaster = unsafe_wrap(Array, api_nodeTagsMaster_[], api_nodeTagsMaster_n_[], own=true)

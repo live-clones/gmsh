@@ -57,7 +57,7 @@ void GEdge::deleteMesh()
   for(std::size_t i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
   correspondingVertices.clear();
-  correspondingHOPoints.clear();
+  correspondingHighOrderVertices.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }

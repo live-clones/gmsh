@@ -1889,19 +1889,22 @@ namespace gmsh { // Top-level functions
 
       // Get the master entity `tagMaster', the node tags `nodeTags' and their
       // corresponding master node tags `nodeTagsMaster', and the affine transform
-      // `affineTransform' for the entity of dimension `dim' and tag `tag'.
+      // `affineTransform' for the entity of dimension `dim' and tag `tag'. If
+      // `includeHighOrderNodes' is set, include high-order nodes in the returned
+      // data.
       inline void getPeriodicNodes(const int dim,
                                    const int tag,
                                    int & tagMaster,
                                    std::vector<std::size_t> & nodeTags,
                                    std::vector<std::size_t> & nodeTagsMaster,
-                                   std::vector<double> & affineTransform)
+                                   std::vector<double> & affineTransform,
+                                   const bool includeHighOrderNodes = false)
       {
         int ierr = 0;
         size_t *api_nodeTags_; size_t api_nodeTags_n_;
         size_t *api_nodeTagsMaster_; size_t api_nodeTagsMaster_n_;
         double *api_affineTransform_; size_t api_affineTransform_n_;
-        gmshModelMeshGetPeriodicNodes(dim, tag, &tagMaster, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTagsMaster_, &api_nodeTagsMaster_n_, &api_affineTransform_, &api_affineTransform_n_, &ierr);
+        gmshModelMeshGetPeriodicNodes(dim, tag, &tagMaster, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTagsMaster_, &api_nodeTagsMaster_n_, &api_affineTransform_, &api_affineTransform_n_, (int)includeHighOrderNodes, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
         nodeTagsMaster.assign(api_nodeTagsMaster_, api_nodeTagsMaster_ + api_nodeTagsMaster_n_); gmshFree(api_nodeTagsMaster_);

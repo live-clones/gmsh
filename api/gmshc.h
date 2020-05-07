@@ -1101,13 +1101,16 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim,
 
 /* Get the master entity `tagMaster', the node tags `nodeTags' and their
  * corresponding master node tags `nodeTagsMaster', and the affine transform
- * `affineTransform' for the entity of dimension `dim' and tag `tag'. */
+ * `affineTransform' for the entity of dimension `dim' and tag `tag'. If
+ * `includeHighOrderNodes' is set, include high-order nodes in the returned
+ * data. */
 GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
                                             const int tag,
                                             int * tagMaster,
                                             size_t ** nodeTags, size_t * nodeTags_n,
                                             size_t ** nodeTagsMaster, size_t * nodeTagsMaster_n,
                                             double ** affineTransform, size_t * affineTransform_n,
+                                            const int includeHighOrderNodes,
                                             int * ierr);
 
 /* Remove duplicate nodes in the mesh of the current model. */

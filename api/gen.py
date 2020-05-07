@@ -407,8 +407,8 @@ mesh.add('renumberElements', doc, None)
 doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsMaster', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). If used after meshing, generate the periodic node correspondence information assuming the meshes of entities `tags' effectively match the meshes of entities `tagsMaster' (useful for structured and extruded meshes). Currently only available for @code{dim} == 1 and @code{dim} == 2.'''
 mesh.add('setPeriodic', doc, None, iint('dim'), ivectorint('tags'), ivectorint('tagsMaster'), ivectordouble('affineTransform'))
 
-doc = '''Get the master entity `tagMaster', the node tags `nodeTags' and their corresponding master node tags `nodeTagsMaster', and the affine transform `affineTransform' for the entity of dimension `dim' and tag `tag'.'''
-mesh.add('getPeriodicNodes', doc, None, iint('dim'), iint('tag'), oint('tagMaster'), ovectorsize('nodeTags'), ovectorsize('nodeTagsMaster'), ovectordouble('affineTransform'))
+doc = '''Get the master entity `tagMaster', the node tags `nodeTags' and their corresponding master node tags `nodeTagsMaster', and the affine transform `affineTransform' for the entity of dimension `dim' and tag `tag'. If `includeHighOrderNodes' is set, include high-order nodes in the returned data.'''
+mesh.add('getPeriodicNodes', doc, None, iint('dim'), iint('tag'), oint('tagMaster'), ovectorsize('nodeTags'), ovectorsize('nodeTagsMaster'), ovectordouble('affineTransform'), ibool('includeHighOrderNodes', 'false', 'False'))
 
 doc = '''Remove duplicate nodes in the mesh of the current model.'''
 mesh.add('removeDuplicateNodes', doc, None)
