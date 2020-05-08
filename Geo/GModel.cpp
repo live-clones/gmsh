@@ -376,19 +376,33 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
 void GModel::remove(GRegion *r)
 {
   riter it = std::find(firstRegion(), lastRegion(), r);
-  if(it != (riter)regions.end()) regions.erase(it);
+  if(it != (riter)regions.end()) {
+    regions.erase(it);
+    std::vector<GFace *> f = r->faces();
+    for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); it++)
+      (*it)->delRegion(r);
+  }
 }
 
 void GModel::remove(GFace *f)
 {
   fiter it = std::find(firstFace(), lastFace(), f);
-  if(it != faces.end()) faces.erase(it);
+  if(it != faces.end()){
+    faces.erase(it);
+    std::vector<GEdge *> const &e = f->edges();
+    for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end(); it++)
+      (*it)->delFace(f);
+  }
 }
 
 void GModel::remove(GEdge *e)
 {
   eiter it = std::find(firstEdge(), lastEdge(), e);
-  if(it != edges.end()) edges.erase(it);
+  if(it != edges.end()) {
+    edges.erase(it);
+    if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
+    if(e->getEndVertex()) e->getEndVertex()->delEdge(e);
+  }
 }
 
 void GModel::remove(GVertex *v)
