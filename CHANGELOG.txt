@@ -6,7 +6,7 @@ tags; new functions and options to control the first tag of entities, nodes and
 elements; fixed duplicated entities in STEP output; small bug fixes.
 
 * Incompatible API changes: new optional arguments to mesh/clear,
-  mesh/createTopology, occ/addThruSections, mesh/getPeriodicNodes; new argument
+  mesh/createTopology, occ/addThruSections, mesh/getPeriodicNodes; new arguments
   to mesh/getBasisFunctions; removed mesh/preallocateBasisFunctions,
   mesh/precomputeBasisFunctions and mesh/getBasisFunctionsForElements; renamed
   occ/setMeshSize as occ/mesh/setSize
