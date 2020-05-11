@@ -2456,6 +2456,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
             iOrientationIndex = &(*it) - &wantedOrientations[0];
           }
           else {
+            MVertexPtrLessThan comp;
+            std::next_permutation(vertices.begin(), vertices.end(), comp);
+            for(unsigned int i = 0; i < numVertices; ++i) {
+              element->setVertex(i, vertices[i]);
+            }
             continue;
           }
         }
@@ -2611,6 +2616,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
             iOrientationIndex = &(*it) - &wantedOrientations[0];
           }
           else {
+            MVertexPtrLessThan comp;
+            std::next_permutation(vertices.begin(), vertices.end(), comp);
+            for(unsigned int i = 0; i < numVertices; ++i) {
+              element->setVertex(i, vertices[i]);
+            }
             continue;
           }
         }
