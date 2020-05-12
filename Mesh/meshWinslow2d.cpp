@@ -19,9 +19,9 @@ static std::vector<MVertex*> build_crown (MVertex *v, const std::vector<MElement
   //  printf("building crown %lu %lu\n",v->getNum(),_e.size());
   std::vector<MEdge> veds;
   std::set<MVertex*> connected;
-  for (size_t i=0;i<_e.size();i++){
+  for (size_t i=0;i<(size_t)_e.size();i++){
     //    printf("%lu %lu %lu %lu \n",_e[i]->getVertex(0)->getNum(),_e[i]->getVertex(1)->getNum(),_e[i]->getVertex(2)->getNum(),_e[i]->getVertex(3)->getNum());
-    for (size_t j=0;j<_e[i]->getNumEdges();j++){
+    for (size_t j=0;j<(size_t)_e[i]->getNumEdges();j++){
       MEdge ed = _e[i]->getEdge(j);
       if (ed.getVertex(0) != v && ed.getVertex(1) != v)	veds.push_back(ed);
       else if (ed.getVertex(0) == v)connected.insert(ed.getVertex(1));

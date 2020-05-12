@@ -50,20 +50,20 @@
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
 
-static inline double lifting(double a, double _a)
-{
-  double D = M_PI * .5;
-  if(fabs(_a - a) < fabs(_a - (a + D)) && fabs(_a - a) < fabs(_a - (a - D))) {
-    return a;
-  }
-  else if(fabs(_a - (a + D)) < fabs(_a - a) &&
-          fabs(_a - (a + D)) < fabs(_a - (a - D))) {
-    return a + D;
-  }
-  else {
-    return a - D;
-  }
-}
+// static inline double lifting(double a, double _a)
+// {
+//   double D = M_PI * .5;
+//   if(fabs(_a - a) < fabs(_a - (a + D)) && fabs(_a - a) < fabs(_a - (a - D))) {
+//     return a;
+//   }
+//   else if(fabs(_a - (a + D)) < fabs(_a - a) &&
+//           fabs(_a - (a + D)) < fabs(_a - (a - D))) {
+//     return a + D;
+//   }
+//   else {
+//     return a - D;
+//   }
+// }
 
 static inline double compat_orientation_extrinsic(const double *o0,
                                                   const double *n0,
@@ -1712,6 +1712,8 @@ static bool computePotential(
             myAssembler.sizeOfR(), B - A);
 
   FILE *F, *F2;
+  F = NULL;
+  F2 = NULL;
   if(Msg::GetVerbosity() == 99) {
     F = fopen("map.pos", "w");
     F2 = fopen("mapstr.pos", "w");
@@ -2658,40 +2660,40 @@ fastImplementationExtrinsic(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   delete[] graph;
 }
 
-static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
-                                    std::set<MVertex *, MVertexPtrLessThan> &vs,
-				    std::map<MVertex *, double> &source)
-{
-#if defined(HAVE_PETSC)
-  linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_MUMPS)
-  linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
-#else
-  linearSystemFull<double> *_lsys = new linearSystemFull<double>;
-#endif
-
-  dofManager<double> *myAssembler = new dofManager<double>(_lsys);
-
-  //  myAssembler.fixVertex(*vs.begin(), 0, 1, 0);
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
-      it != vs.end(); ++it)
-    myAssembler->numberVertex(*it, 0, 1);
-
-
-  simpleFunction<double> ONE(1.0);
-  laplaceTerm l(0, 1, &ONE);
-
-  for(size_t i = 0; i < f.size(); i++) {
-    for(size_t j = 0; j < f[i]->triangles.size(); j++) {
-      MTriangle *t = f[i]->triangles[j];
-
-      SElement se(t);
-      l.addToMatrix(*myAssembler, &se);
-    }
-  }
-  // to do !!!
-  return myAssembler;
-}
+// static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
+//                                     std::set<MVertex *, MVertexPtrLessThan> &vs,
+// 				    std::map<MVertex *, double> &source)
+// {
+// #if defined(HAVE_PETSC)
+//   linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+// #elif defined(HAVE_MUMPS)
+//   linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
+// #else
+//   linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+// #endif
+// 
+//   dofManager<double> *myAssembler = new dofManager<double>(_lsys);
+// 
+//   //  myAssembler.fixVertex(*vs.begin(), 0, 1, 0);
+//   for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
+//       it != vs.end(); ++it)
+//     myAssembler->numberVertex(*it, 0, 1);
+// 
+// 
+//   simpleFunction<double> ONE(1.0);
+//   laplaceTerm l(0, 1, &ONE);
+// 
+//   for(size_t i = 0; i < f.size(); i++) {
+//     for(size_t j = 0; j < f[i]->triangles.size(); j++) {
+//       MTriangle *t = f[i]->triangles[j];
+// 
+//       SElement se(t);
+//       l.addToMatrix(*myAssembler, &se);
+//     }
+//   }
+//   // to do !!!
+//   return myAssembler;
+// }
 
 static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
                                     std::set<MVertex *, MVertexPtrLessThan> &vs,
@@ -5305,8 +5307,9 @@ public:
             bool added = cut_original.add (it_original->second.ps[k],
                                            it_original->second.indexOfCuts[k],
                                            it_original->second.idsOfCuts[k],TOLERANCE);
+
             // !!! Fixme: error if !added
-	    //            (void)(added); // just suppress the warning so that it compiles
+            (void)(added); // just suppress the warning so that it compiles
           }
         }
         
@@ -5809,7 +5812,7 @@ int computeCrossFieldAndH(GModel *gm)
   std::vector<int> tags;
   
 #if defined(HAVE_SOLVER) && defined(HAVE_POST)
-  return (gm, f, tags, false);
+  return computeCrossFieldAndH(gm, f, tags, false);
 #else
   Msg::Error("Cross field computation requires solver and post-pro module");
   return -1;
@@ -6281,7 +6284,7 @@ int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSt
   double Hmin = DBL_MAX;
   double Hmax = -DBL_MAX;
   {
-    /* Restrict to boundary curves if possible */
+    /* Restrict to boundary curves if possible (warning: ignore corners !) */
     const std::set<GEdge*, GEntityPtrLessThan>& edges =  gm->getEdges();
     for (const auto& edge : edges) {
       for (size_t i = 0; i < edge->getNumMeshVertices(); ++i) {
@@ -6323,6 +6326,17 @@ int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSt
   double integral = 0.;
   double smin = DBL_MAX;
   double smax = -DBL_MAX;
+
+  constexpr bool CLAMP_WITH_IMPLIED_MIN_MAX = false;
+  double implied_size_min = 0;
+  double implied_size_max = 0;
+  if (size_min != 0.) {
+    implied_size_min = size_min * (exp(-Hmax)/exp(-Hmax));
+    implied_size_max = size_min * (exp(-Hmin)/exp(-Hmax));
+  } else if (size_max != 1.e22) {
+    implied_size_min = size_max * (exp(-Hmax)/exp(-Hmin));
+    implied_size_max = size_max * (exp(-Hmin)/exp(-Hmin));
+  }
   
   std::vector<std::string> dataType;
   std::vector<int> numElements;
@@ -6341,6 +6355,10 @@ int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSt
           val = size_min * (exp(-val)/exp(-Hmax));
         } else if (size_max != 1.e22) {
           val = size_max * (exp(-val)/exp(-Hmin));
+        }
+        if (CLAMP_WITH_IMPLIED_MIN_MAX) {
+          val = std::max(val,implied_size_min);
+          val = std::min(val,implied_size_max);
         }
         values[nod] = val;
         smin = std::min(smin,val);
