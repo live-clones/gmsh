@@ -946,7 +946,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
   }
 
-  double sliverLimit = 0.04;
+  double sliverLimit = 0.01;
   int nbESwap = 0, nbReloc = 0;
   double worstA = 0.0;
 
@@ -1031,8 +1031,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   }
 
   if(illegals.size()) {
-    Msg::Info("%d ill-shaped tets are still in the mesh",
-              illegals.size());
+    Msg::Warning("%d ill-shaped tets are still in the mesh",
+                 illegals.size());
   }
   else {
     Msg::Info("No ill-shaped tets in the mesh :-)");
