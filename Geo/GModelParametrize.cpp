@@ -642,7 +642,6 @@ int computeDiscreteCurvatures(GModel *gm)
 int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
                                   double ar, std::ostringstream &why)
 {
-#if defined(HAVE_HXT)
   int XX = (int)t.size();
   if(XX > Nmax) {
     why << "too many triangles (" << XX << " vs. " << Nmax << ")";
@@ -664,13 +663,13 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     }
   }
   std::map<MEdge, int, MEdgeLessThan>::iterator it = e.begin();
-  std::vector<MEdge> _bnd;
+  std::vector<MEdge> bnd;
   for(; it != e.end(); ++it) {
-    if(it->second == 1) _bnd.push_back(it->first);
+    if(it->second == 1) bnd.push_back(it->first);
   }
 
   std::vector<std::vector<MVertex *> > vs;
-  if(!SortEdgeConsecutive(_bnd, vs)) {
+  if(!SortEdgeConsecutive(bnd, vs)) {
     // we have vertices adjacent to more than 2 model edges
 #if 0
     FILE *f = fopen("bug.pos","w");
@@ -702,9 +701,9 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   }
 
   double poincare =
-    t.size() - (2 * (v.size() - 1) - _bnd.size() + 2 * (vs.size() - 1));
+    t.size() - (2 * (v.size() - 1) - bnd.size() + 2 * (vs.size() - 1));
 
-  if(_bnd.empty()) {
+  if(bnd.empty()) {
     why << "poincare characteristic 2 is not 0";
     return 2;
   }
@@ -719,6 +718,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     return 2;
   }
 
+#if defined(HAVE_HXT)
   int n = 1;
   HXT_CHECK(hxtInitializeLinearSystems(&n, NULL));
 
