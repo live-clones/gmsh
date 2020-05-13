@@ -55,7 +55,7 @@ namespace QMT_Utils {
 
   /* sformat inspired from variadic printf at
    * https://web.archive.org/web/20131018185034/http://www.generic-programming.org/~dgregor/cpp/variadic-templates.html */
-  static void sformat(std::ostream& out, const char* s) {
+  static inline void sformat(std::ostream& out, const char* s) {
     while (*s) {
       if (*s == '{' && *++s != '}') 
         throw std::runtime_error("invalid format string: missing arguments");

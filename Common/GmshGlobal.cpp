@@ -364,6 +364,9 @@ int GmshBatch()
     else if(CTX::instance()->batch == 69){
       std::vector<int> tags;
       int result = computeStructuredQuadMesh (GModel::current(), tags);
+      if (result != 0) {
+        Msg::Error("Failed to compute structured quad mesh");
+      }
       //      GoodbyeMessage();
       CTX::instance()->batch =0;
       // still a bug in allocation somewhere

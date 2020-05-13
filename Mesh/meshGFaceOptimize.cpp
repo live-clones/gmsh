@@ -1066,7 +1066,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   FieldManager *fields = gf->model()->getFields();
   Field *cross_field = NULL;
   SVector3 t1;
-  double L;
+  // double L; /* unused ? */
   if(fields->getBackgroundField() > 0) {        
     cross_field = fields->get(fields->getBackgroundField());
     if(cross_field->numComponents() != 3) {// we hae a true scaled cross fiel
