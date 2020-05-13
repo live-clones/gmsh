@@ -16,6 +16,7 @@
 #include "Octree.h"
 #include "Context.h"
 #include "GEdgeLoop.h"
+#include "MEdge.h"
 
 #if defined(HAVE_HXT)
 extern "C" {
@@ -25,6 +26,12 @@ extern "C" {
 #include "hxt_mean_values.h"
 #include "hxt_linear_system.h"
 }
+#endif
+
+#if defined(HAVE_SOLVER)
+#include "linearSystemPETSc.h"
+#include "linearSystemCSR.h"
+#include "linearSystemFull.h"
 #endif
 
 discreteFace::param::~param()
@@ -491,11 +498,219 @@ static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
 
 #endif
 
+bool computeParametrization(const std::vector<MTriangle*> &triangles,
+                            std::vector<SPoint2> &stl_vertices_uv,
+                            std::vector<SPoint3> &stl_vertices_xyz,
+                            std::vector<int> &stl_triangles)
+{
+  stl_vertices_uv.clear();
+  stl_vertices_xyz.clear();
+  stl_triangles.clear();
+
+  if(triangles.empty()) return false;
+
+  // get nodes and edges
+  std::vector<MVertex*> nodes;
+  std::map<MVertex*, int> nodeIndex;
+  std::map<MEdge, std::vector<MTriangle*>, MEdgeLessThan> edges;
+  for(std::size_t i = 0; i < triangles.size(); i++) {
+    MTriangle *t = triangles[i];
+    for(int j = 0; j < 3; j++) {
+      MVertex *v = t->getVertex(j);
+      if(nodeIndex.find(v) == nodeIndex.end()) {
+        nodeIndex[v] = nodes.size();
+        nodes.push_back(v);
+      }
+      edges[t->getEdge(j)].push_back(t);
+    }
+  }
+
+  // compute edge loops
+  std::vector<MEdge> es;
+  for(std::map<MEdge, std::vector<MTriangle*>, MEdgeLessThan>::const_iterator
+        it = edges.begin(); it != edges.end(); ++it) {
+    if(it->second.size() == 1) { // on boundary
+      es.push_back(it->first);
+    }
+    else if(it->second.size() == 2) { // inside
+    }
+    else{ // non-manifold: not supported
+      Msg::Error("Wrong topology of triangulation for parametrization: one edge "
+                 "is incident to %d triangles", it->second.size());
+      return false;
+    }
+  }
+  std::vector<std::vector<MVertex *> > vs;
+  if(!SortEdgeConsecutive(es, vs)) {
+    Msg::Error("Wrong topology of boundary mesh for parametrization");
+    return false;
+  }
+  if(vs.empty() || vs[0].size() < 2) {
+    Msg::Error("Invalid exterior boundary mesh for parametrization");
+    return false;
+  }
+
+  Msg::Debug("Parametrisation of surface with %lu triangles, %lu edges and "
+             "%lu holes", triangles.size(), edges.size(), vs.size() - 1);
+
+  std::vector<double> u(nodes.size(), 0.), v(nodes.size(), 0.);
+
+  // total length of exterior boundary
+  double totalLength = 0.;
+  for(std::size_t i = 1; i < vs[0].size(); i++)
+    totalLength += vs[0][i]->point().distance(vs[0][i - 1]->point());
+
+  // boundary conditions
+  std::vector<bool> bc(nodes.size(), false);
+  double currentLength = 0;
+  int index = nodeIndex[vs[0][0]];
+  bc[index] = true;
+  u[index] = 1.;
+  v[index] = 0.;
+  for(std::size_t i = 1; i < vs[0].size(); i++) {
+    double angle = 2 * M_PI * currentLength / totalLength;
+    index = nodeIndex[vs[0][i]];
+    bc[index] = true;
+    u[index] = cos(angle);
+    v[index] = sin(angle);
+    currentLength += vs[0][i]->point().distance(vs[0][i - 1]->point());
+  }
+
+  // assemble matrix
+#if defined(HAVE_SOLVER)
+#if defined(HAVE_PETSC)
+  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_GMM)
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+#else
+  linearSystemFull<double> *lsys = new linearSystemFull<double>;
+#endif
+  lsys->allocate(nodes.size());
+  for(std::map<MEdge, std::vector<MTriangle*>, MEdgeLessThan>::const_iterator
+        it = edges.begin(); it != edges.end(); ++it) {
+    for(int ij = 0; ij < 2; ij++) {
+      MVertex *v0 = it->first.getVertex(ij);
+      int index0 = nodeIndex[v0];
+      if(bc[index0]) continue; // boundary condition
+      MVertex *v1 = it->first.getVertex(1 - ij);
+      int index1 = nodeIndex[v1];
+      MTriangle *tLeft = it->second[0];
+      MVertex *vLeft = tLeft->getVertex(0);
+      if(vLeft == v0 || vLeft == v1) vLeft = tLeft->getVertex(1);
+      if(vLeft == v0 || vLeft == v1) vLeft = tLeft->getVertex(2);
+      double e[3] = {v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z()};
+      double ne = sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+      double a[3] = {vLeft->x() - v0->x(), vLeft->y() - v0->y(), vLeft->z() - v0->z()};
+      double na = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+      double thetaL = acos((a[0] * e[0] + a[1] * e[1] + a[2] * e[2]) / (na * ne));
+      double thetaR = 0.;
+      if(it->second.size() == 2) {
+        MTriangle *tRight = it->second[1];
+        MVertex *vRight = tRight->getVertex(0);
+        if(vRight == v0 || vRight == v1) vRight = tRight->getVertex(1);
+        if(vRight == v0 || vRight == v1) vRight = tRight->getVertex(2);
+        double b[3] = {vRight->x() - v0->x(), vRight->y() - v0->y(), vRight->z() - v0->z()};
+        double nb = sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
+        thetaR = acos((b[0] * e[0] + b[1] * e[1] + b[2] * e[2]) / (nb * ne));
+      }
+      double c = (tan(.5 * thetaL) + tan(.5 * thetaR)) / ne;
+      lsys->addToMatrix(index0, index1, -c);
+      lsys->addToMatrix(index0, index0, c);
+    }
+  }
+  for(std::size_t i = 0; i < vs[0].size(); i++) {
+    int row = nodeIndex[vs[0][i]];
+    if(bc[row])
+      lsys->addToMatrix(row, row, 1);
+  }
+
+  lsys->setNoisy(10);
+  lsys->setPrec(1e-14);
+
+  lsys->zeroRightHandSide();
+  for(std::size_t i = 0; i < vs[0].size(); i++) {
+    int row = nodeIndex[vs[0][i]];
+    if(bc[row])
+      lsys->addToRightHandSide(row, u[row]);
+  }
+  lsys->systemSolve();
+  for(std::size_t i = 0; i < nodes.size(); i++)
+    lsys->getFromSolution(i, u[i]);
+
+  lsys->zeroRightHandSide();
+  for(std::size_t i = 0; i < vs[0].size(); i++) {
+    int row = nodeIndex[vs[0][i]];
+    if(bc[row])
+      lsys->addToRightHandSide(row, v[row]);
+  }
+  lsys->systemSolve();
+  for(std::size_t i = 0; i < nodes.size(); i++)
+    lsys->getFromSolution(i, v[i]);
+
+  delete lsys;
+#endif
+
+  stl_vertices_uv.resize(nodes.size());
+  stl_vertices_xyz.resize(nodes.size());
+  for(std::size_t i = 0; i < nodes.size(); i++) {
+    stl_vertices_uv[i] = SPoint2(u[i], v[i]);
+    stl_vertices_xyz[i] = nodes[i]->point();
+  }
+  stl_triangles.resize(3 * triangles.size());
+  for(std::size_t i = 0; i < triangles.size(); i++) {
+    stl_triangles[3 * i + 0] = nodeIndex[triangles[i]->getVertex(0)];
+    stl_triangles[3 * i + 1] = nodeIndex[triangles[i]->getVertex(1)];
+    stl_triangles[3 * i + 2] = nodeIndex[triangles[i]->getVertex(2)];
+  }
+
+  return true;
+}
+
+void discreteFace::_debugParametrization(bool uv)
+{
+  char tmp[256];
+  sprintf(tmp, "discrete_param_%d.pos", tag());
+  FILE *fp = fopen(tmp, "w");
+  if(fp) {
+    fprintf(fp, "View \"uv\" {\n");
+    for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
+      int i0 = stl_triangles[i + 0];
+      int i1 = stl_triangles[i + 1];
+      int i2 = stl_triangles[i + 2];
+      SPoint3 xyz0 = stl_vertices_xyz[i0];
+      SPoint3 xyz1 = stl_vertices_xyz[i1];
+      SPoint3 xyz2 = stl_vertices_xyz[i2];
+      SPoint2 uv0 = stl_vertices_uv[i0];
+      SPoint2 uv1 = stl_vertices_uv[i1];
+      SPoint2 uv2 = stl_vertices_uv[i2];
+      if(uv) {
+        for(int j = 0; j < 2; j++) {
+          xyz0[j] = uv0[j];
+          xyz1[j] = uv1[j];
+          xyz2[j] = uv2[j];
+        }
+        xyz0[2] = xyz1[2] = xyz2[2] = 0;
+      }
+      fprintf(fp, "ST(%g,%g,%g, %g,%g,%g, %g,%g,%g){%g,%g,%g, %g,%g,%g};\n",
+              xyz0.x(), xyz0.y(), xyz0.z(), xyz1.x(), xyz1.y(), xyz1.z(),
+              xyz2.x(), xyz2.y(), xyz2.z(), uv0.x(), uv1.x(), uv2.x(),
+              uv0.y(), uv1.y(), uv2.y());
+    }
+    fprintf(fp, "};\n");
+    fclose(fp);
+  }
+}
+
 int discreteFace::createGeometry()
 {
+  stl_vertices_uv.clear();
+  stl_vertices_xyz.clear();
+  stl_curvatures.clear();
+  stl_triangles.clear();
+  if(triangles.empty()) return 0;
+
 #if defined(HAVE_HXT)
   int n = 1;
-  if(triangles.empty()) return 0;
   HXT_CHECK(hxtInitializeLinearSystems(&n, NULL));
   HXTMesh *m;
   HXTMeanValues *param;
@@ -509,10 +724,6 @@ int discreteFace::createGeometry()
   double *uvc = NULL;
   int nv, ne;
   HXT_CHECK(hxtMeanValuesGetData(param, NULL, NULL, &uvc, &nv, &ne, 1));
-  stl_vertices_uv.clear();
-  stl_vertices_xyz.clear();
-  stl_curvatures.clear();
-
   stl_vertices_uv.resize(nv);
   stl_vertices_xyz.resize(nv);
   if(model()->getCurvatures().size()) stl_curvatures.resize(2 * nv);
@@ -530,26 +741,29 @@ int discreteFace::createGeometry()
       }
     }
     stl_vertices_uv[iv] = SPoint2(uvc[2 * iv], uvc[2 * iv + 1]);
-
-    stl_vertices_xyz[iv] =
-      SPoint3(m->vertices.coord[4 * iv + 0], m->vertices.coord[4 * iv + 1],
-              m->vertices.coord[4 * iv + 2]);
+    stl_vertices_xyz[iv] = SPoint3(m->vertices.coord[4 * iv + 0],
+                                   m->vertices.coord[4 * iv + 1],
+                                   m->vertices.coord[4 * iv + 2]);
   }
-  stl_triangles.clear();
   stl_triangles.resize(3 * ne);
   for(int ie = 0; ie < ne; ie++) {
     stl_triangles[3 * ie + 0] = m->triangles.node[3 * ie + 0];
     stl_triangles[3 * ie + 1] = m->triangles.node[3 * ie + 1];
     stl_triangles[3 * ie + 2] = m->triangles.node[3 * ie + 2];
   }
-
-  _computeSTLNormals();
-  _createGeometryFromSTL();
-
   HXT_CHECK(hxtMeshDelete(&m));
   HXT_CHECK(hxtEdgesDelete(&edges));
   HXT_CHECK(hxtFree(&uvc));
 #endif
+
+  computeParametrization(triangles, stl_vertices_uv, stl_vertices_xyz,
+                         stl_triangles);
+
+  _computeSTLNormals();
+  _createGeometryFromSTL();
+
+  _debugParametrization(false);
+
   return 0;
 }
 
@@ -586,8 +800,9 @@ void discreteFace::_createGeometryFromSTL()
   _param.clear();
 
   for(size_t i = 0; i < stl_vertices_uv.size(); i++) {
-    _param.v2d.push_back(
-      MVertex(stl_vertices_uv[i].x(), stl_vertices_uv[i].y(), 0.0));
+    _param.v2d.push_back(MVertex(stl_vertices_uv[i].x(),
+                                 stl_vertices_uv[i].y(),
+                                 0.0));
     _param.v3d.push_back(MVertex(stl_vertices_xyz[i].x(),
                                  stl_vertices_xyz[i].y(),
                                  stl_vertices_xyz[i].z()));
@@ -636,38 +851,6 @@ void discreteFace::_createGeometryFromSTL()
     _param.rtree3d.Insert(MIN, MAX, tt);
   }
   _param.oct = new MElementOctree(temp);
-
-  //#define debug
-#ifdef debug
-  char zz[256];
-  sprintf(zz, "parametrization_P%d.pos", tag());
-  FILE *f = fopen(zz, "w");
-  fprintf(f, "View \"\"{\n");
-  sprintf(zz, "parametrization_R%d.pos", tag());
-  FILE *f2 = fopen(zz, "w");
-  fprintf(f2, "View \"\"{\n");
-  for(size_t j = 0; j < _param.t2d.size(); j++) {
-    MTriangle *t2 = &_param.t2d[j];
-    MTriangle *t3 = &_param.t3d[j];
-    MVertex *vv0 = t2->getVertex(0);
-    MVertex *vv1 = t2->getVertex(1);
-    MVertex *vv2 = t2->getVertex(2);
-    MVertex *v0 = t3->getVertex(0);
-    MVertex *v1 = t3->getVertex(1);
-    MVertex *v2 = t3->getVertex(2);
-    fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n", vv0->x(),
-            vv0->y(), vv0->z(), vv1->x(), vv1->y(), vv1->z(), vv2->x(),
-            vv2->y(), vv2->z(), 1, 1, 1);
-    fprintf(f2, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g};\n", v0->x(),
-            v0->y(), v0->z(), v1->x(), v1->y(), v1->z(), v2->x(), v2->y(),
-            v2->z(), vv0->x(), vv1->x(), vv2->x(), vv0->y(), vv1->y(),
-            vv2->y());
-  }
-  fprintf(f, "};\n");
-  fclose(f);
-  fprintf(f2, "};\n");
-  fclose(f2);
-#endif
 }
 
 void discreteFace::mesh(bool verbose)
