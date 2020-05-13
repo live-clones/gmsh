@@ -132,7 +132,9 @@ public:
     return p;
   }
   
-  double smooth (GEdge *ge){    
+  double smooth (GEdge *ge){
+    return 0;
+    if (stencil.empty())return 0;
     SPoint3 p;    
     if (type == 1 && stencil.size() == 8){
       p = new3dPosition4quads();
@@ -157,8 +159,9 @@ public:
 
 
   double smooth (GFace *gf){
+    if (stencil.empty())return 0;
     SPoint3 p;    
-    if (type == 1 && stencil.size() == 8){
+    if (type == 1 && stencil.size() == 8){      
       p = new3dPosition4quads();
     }
     else if (type == 1 && stencil.size() == 6){
@@ -181,7 +184,6 @@ public:
     else {
       GPoint gp = gf->closestPoint(p,uv);
       if (!gp.succeeded()){
-	printf("coucou\n");
 	return 0;
       }
       dx = sqrt ((gp.x()-center->x())*(gp.x()-center->x())+
@@ -260,6 +262,33 @@ void addToAdjacencyList (MElement*e,  v2t_cont &adj){
     }
   }
 }
+
+
+int removeNodeWithTwoTriangles(GFace * gf, v2t_cont &adj) {
+
+  int nbDone=0;
+  v2t_cont::iterator it = adj.begin();
+  while(it != adj.end()) {
+    MVertex *v = it->first;
+    if (v->onWhat() == gf) {
+      const std::vector<MElement *> e = it->second;
+      int ntri = 0;
+      int nqua = 0;
+      int indextri[12];
+      int indexqua[12];
+      for (size_t i=0;i<e.size();i++){
+	if (e[i]->getTypeForMSH() == MSH_TRI_3)indextri[ntri++] = i;
+	else if (e[i]->getTypeForMSH() == MSH_QUA_4)indextri[nqua++] = i;
+      }
+      if (ntri == 2 && nqua == 3){
+	winslowStencil st (v, e);	
+      }
+    }
+  }
+  return nbDone;
+}
+
+
 
 int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
 
@@ -353,6 +382,7 @@ int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
 
 void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
 
+  Msg::Info ("Winslow Smoothing face %lu",gf->tag());
   nIter = 1;
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
@@ -384,6 +414,65 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
   }  
 }
 
+static MVertex* next_vertex (GFace *gf, MVertex *prev, MVertex *current, v2t_cont &adj){
+  v2t_cont::iterator it = adj.find(current);
+  const std::vector<MElement *> e = it->second;
+  if (current->onWhat() != gf || e.size() != 4)return NULL;
+  winslowStencil st (current, e);
+  std::vector<MVertex *> &crown = st.stencil;
+  for (size_t i=0;i<crown.size();i++){
+    if (crown[i] == prev)return crown[(i+4)%8];    
+  }
+  return NULL;
+}
+
+static void printEdge (int num, MVertex *v1, MVertex *v2, FILE *f){
+  fprintf(f,"SL(%g,%g,%g,%g,%g,%g) {%d,%d};\n",
+	  v1->x(),v1->y(),v1->z(),
+	  v2->x(),v2->y(),v2->z(),num,num);
+}
+
+static void printVertex (int num, MVertex *v1, FILE *f){
+  fprintf(f,"SP(%g,%g,%g) {%d};\n",
+	  v1->x(),v1->y(),v1->z(),num);
+}
+
+
+void computeLayout (GFace * gf, FILE *f) {
+
+  v2t_cont adj;
+  buildVertexToElement(gf->triangles, adj);
+  buildVertexToElement(gf->quadrangles, adj);
+  v2t_cont::iterator it = adj.begin();
+  int numSep = 1;
+  
+  while(it != adj.end()) {
+    MVertex *v = it->first;
+    const std::vector<MElement *> e = it->second;
+    if (v->onWhat() == gf && e.size() != 4) {
+      winslowStencil st (v, e);
+      std::vector<MVertex *> &crown = st.stencil;
+      printVertex (e.size(), v,f);
+      for (int i=1;i<crown.size();i+=2){
+	MVertex *prec    = v;
+	MVertex *current = crown[i];
+	MVertex *next  = NULL;
+	printEdge   (numSep, prec, current,f);
+	while (1){
+	  next = next_vertex (gf, prec, current, adj);
+	  if (!next)break;
+	  prec = current;
+	  current = next;
+	  printEdge (numSep, prec, current,f);
+	}
+	numSep++;
+      }      
+    }
+    ++it;
+  }
+}
+
+
 
 
 void meshWinslow2d (GModel * gm, int nIter, Field *f) {
@@ -405,4 +494,12 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
       meshWinslow2d (temp[i],nIter/4, f, true);
     }
   }
+  return;
+  std::string name = gm->getName()+"_layout.pos";
+  FILE *_f = fopen(name.c_str(),"w");
+  fprintf(_f,"View\"Layout\"{\n");
+  for (size_t i=0;i<temp.size();i++)
+    computeLayout (temp[i], _f);
+  fprintf(_f,"};\n");
+  fclose(_f); 
 }

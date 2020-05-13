@@ -2894,6 +2894,9 @@ static double TRIANGLE_VALIDITY(GFace *gf, MTriangle *t)
 
 static bool isMeshValid(GFace *gf)
 {
+
+  if (gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS) return true;
+
   size_t invalid = 0;
   for(size_t i = 0; i < gf->triangles.size(); i++) {
     double v = TRIANGLE_VALIDITY(gf, gf->triangles[i]);
