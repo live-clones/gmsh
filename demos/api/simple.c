@@ -17,7 +17,7 @@ int main(int argc, char **argv)
   int ll[] = {1, 2, 3, line4};
   gmshModelGeoAddCurveLoop(ll, 4, 1, &ierr);
   int s[]= { 1 };
-  gmshModelGeoAddPlaneSurface(ll, 1, 6, &ierr);
+  gmshModelGeoAddPlaneSurface(s, 1, 6, &ierr);
   gmshModelGeoSynchronize(&ierr);
   gmshModelMeshGenerate(2, &ierr);
   gmshWrite("square.msh", &ierr);
