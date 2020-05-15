@@ -3,32 +3,32 @@ Logiciel initial: MMG3D Version 4.0
 Co-auteurs : Cecile Dobrzynski et Pascal Frey.
 Propriétaires :IPB - UPMC -INRIA.
 
-Copyright © 2004-2005-2006-2007-2008-2009-2010-2011, 
+Copyright © 2004-2005-2006-2007-2008-2009-2010-2011,
 diffusé sous les termes et conditions de la licence publique générale de GNU
-Version 3 ou toute version ultérieure.  
+Version 3 ou toute version ultérieure.
 
 Ce fichier est une partie de MMG3D.
 MMG3D est un logiciel libre ; vous pouvez le redistribuer et/ou le modifier
 suivant les termes de la licence publique générale de GNU
 Version 3 ou toute version ultérieure.
-MMG3D est distribué dans l'espoir qu'il sera utile, mais SANS 
-AUCUNE GARANTIE ; sans même garantie de valeur marchande.  
+MMG3D est distribué dans l'espoir qu'il sera utile, mais SANS
+AUCUNE GARANTIE ; sans même garantie de valeur marchande.
 Voir la licence publique générale de GNU pour plus de détails.
-MMG3D est diffusé en espérant qu’il sera utile, 
-mais SANS AUCUNE GARANTIE, ni explicite ni implicite, 
-y compris les garanties de commercialisation ou 
-d’adaptation dans un but spécifique. 
+MMG3D est diffusé en espérant qu’il sera utile,
+mais SANS AUCUNE GARANTIE, ni explicite ni implicite,
+y compris les garanties de commercialisation ou
+d’adaptation dans un but spécifique.
 Reportez-vous à la licence publique générale de GNU pour plus de détails.
-Vous devez avoir reçu une copie de la licence publique générale de GNU 
-en même temps que ce document. 
+Vous devez avoir reçu une copie de la licence publique générale de GNU
+en même temps que ce document.
 Si ce n’est pas le cas, aller voir <http://www.gnu.org/licenses/>.
 /****************************************************************************
 Initial software: MMG3D Version 4.0
 Co-authors: Cecile Dobrzynski et Pascal Frey.
 Owners: IPB - UPMC -INRIA.
 
-Copyright © 2004-2005-2006-2007-2008-2009-2010-2011, 
-spread under the terms and conditions of the license GNU General Public License 
+Copyright © 2004-2005-2006-2007-2008-2009-2010-2011,
+spread under the terms and conditions of the license GNU General Public License
 as published Version 3, or (at your option) any later version.
 
 This file is part of MMG3D
@@ -41,7 +41,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
-along with MMG3D. If not, see <http://www.gnu.org/licenses/>.  
+along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 #ifndef _MMG3D_H
 #define _MMG3D_H
@@ -74,9 +74,9 @@ along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 #define EPSOK    1.e-18
 #define EPS30    1.e-30
 
-#define ALPHAC   0.20412415      /* sqrt(6)/12 */  
+#define ALPHAC   0.20412415      /* sqrt(6)/12 */
 #define ALPHAD   0.04811252      /* 1.0/(12*sqrt(3)) */
-#define BETAC    0.03928371      /* sqrt(2)/36 */   
+#define BETAC    0.03928371      /* sqrt(2)/36 */
 #define CALLIM   1.E+35    	    /*valeur de la qual pire*/
 
 
@@ -125,14 +125,14 @@ extern unsigned char MMG_iare[6][2];
 extern unsigned char MMG_ifar[6][2];
 extern unsigned char MMG_isar[6][2];
 extern unsigned char MMG_arpt[4][3];
-                             
+
 
 typedef struct {
   int      min,max,iel,nxt;
 } hedge;
 typedef struct {
   int      size,nhmax,hnxt;
-  hedge   *item;  
+  hedge   *item;
 } Hedge;
 typedef Hedge * pHedge;
 
@@ -189,8 +189,8 @@ int MMG_interp_iso(double *,double *,double *,double );
 int MMG_correction(pMesh ,int ,pList ,int ,int ,char );
 int MMG_delone(pMesh ,pSol ,int ,pList ,int );
 int MMG_delons(pMesh ,pSol ,pQueue ,int ,pList ,int ,double );
-int MMG_cenrad_ani(pMesh ,double * ,double *,double *,double *); 
-int MMG_cenrad_iso(pMesh ,double * ,double *,double *); 
+int MMG_cenrad_ani(pMesh ,double * ,double *,double *,double *);
+int MMG_cenrad_iso(pMesh ,double * ,double *,double *);
 
 /*pattern*/
 int MMG_pattern1(pMesh ,pSol ,pHedge ,int );
@@ -398,17 +398,17 @@ int    MMG_movevertex_iso(pMesh ,pSol ,int ,int );
 
 /* function pointers */
 typedef int (*MMG_Swap)(pMesh ,pSol ,pList );
-MMG_Swap MMG_swpptr;
-double (*MMG_length)(double *,double *,double *,double *);
-double (*MMG_caltet)(pMesh ,pSol ,int );
-double (*MMG_calte1)(pMesh ,pSol ,int );
-int    (*MMG_caltet2)(pMesh ,pSol ,int ,int ,double ,double *);
-int    (*MMG_cavity)(pMesh ,pSol ,int ,int ,pList ,int );
-int    (*MMG_buckin)(pMesh ,pSol ,pBucket ,int );
-int    (*MMG_optlen)(pMesh ,pSol ,double ,int );
-int    (*MMG_interp)(double *,double *,double *,double );
-int    (*MMG_optlentet)(pMesh ,pSol ,pQueue ,double ,int ,int );
-int    (*MMG_movevertex)(pMesh ,pSol ,int ,int );
+extern MMG_Swap MMG_swpptr;
+extern double (*MMG_length)(double *,double *,double *,double *);
+extern double (*MMG_caltet)(pMesh ,pSol ,int );
+extern double (*MMG_calte1)(pMesh ,pSol ,int );
+extern int    (*MMG_caltet2)(pMesh ,pSol ,int ,int ,double ,double *);
+extern int    (*MMG_cavity)(pMesh ,pSol ,int ,int ,pList ,int );
+extern int    (*MMG_buckin)(pMesh ,pSol ,pBucket ,int );
+extern int    (*MMG_optlen)(pMesh ,pSol ,double ,int );
+extern int    (*MMG_interp)(double *,double *,double *,double );
+extern int    (*MMG_optlentet)(pMesh ,pSol ,pQueue ,double ,int ,int );
+extern int    (*MMG_movevertex)(pMesh ,pSol ,int ,int );
 
 
 #endif
