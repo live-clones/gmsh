@@ -495,8 +495,11 @@ namespace tetgenBR {
     }
 #endif
 
-    std::vector<GFace *> const &f_list = _gr->faces();
-    std::vector<GEdge *> const &e_list = _gr->embeddedEdges();
+    std::vector<GFace *> f_list = _gr->faces();
+    std::vector<GEdge *> e_list = _gr->edges();
+    e_list.insert(e_list.end(),
+                  _gr->embeddedEdges().begin(),
+                  _gr->embeddedEdges().end());
 
     {
       Msg::Info(" - Creating surface mesh");
