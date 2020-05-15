@@ -30,6 +30,12 @@
 #include "meshGFaceOptimize.h"
 #endif
 
+#if defined(HAVE_SOLVER)
+#include "linearSystemPETSc.h"
+#include "linearSystemCSR.h"
+#include "linearSystemFull.h"
+#endif
+
 #if defined(HAVE_HXT)
 extern "C" {
 #include "hxt_mesh.h"
@@ -639,6 +645,197 @@ int computeDiscreteCurvatures(GModel *gm)
   return 0;
 }
 
+bool computeParametrization(const std::vector<MTriangle*> &triangles,
+                            std::vector<MVertex*> &nodes,
+                            std::vector<SPoint2> &stl_vertices_uv,
+                            std::vector<SPoint3> &stl_vertices_xyz,
+                            std::vector<int> &stl_triangles)
+{
+  stl_vertices_uv.clear();
+  stl_vertices_xyz.clear();
+  stl_triangles.clear();
+  nodes.clear();
+
+  if(triangles.empty()) return false;
+
+  // get nodes and edges
+  std::map<MVertex*, int> nodeIndex;
+  std::map<MEdge, std::vector<MTriangle*>, MEdgeLessThan> edges;
+  for(std::size_t i = 0; i < triangles.size(); i++) {
+    MTriangle *t = triangles[i];
+    for(int j = 0; j < 3; j++) {
+      MVertex *v = t->getVertex(j);
+      if(nodeIndex.find(v) == nodeIndex.end()) {
+        nodeIndex[v] = nodes.size();
+        nodes.push_back(v);
+      }
+      edges[t->getEdge(j)].push_back(t);
+    }
+  }
+
+  // compute edge loops
+  std::vector<MEdge> es;
+  for(std::map<MEdge, std::vector<MTriangle*>, MEdgeLessThan>::const_iterator
+        it = edges.begin(); it != edges.end(); ++it) {
+    if(it->second.size() == 1) { // on boundary
+      es.push_back(it->first);
+    }
+    else if(it->second.size() == 2) { // inside
+    }
+    else{ // non-manifold: not supported
+      Msg::Error("Wrong topology of triangulation for parametrization: one edge "
+                 "is incident to %d triangles", it->second.size());
+      return false;
+    }
+  }
+  std::vector<std::vector<MVertex *> > vs;
+  if(!SortEdgeConsecutive(es, vs)) {
+    Msg::Error("Wrong topology of boundary mesh for parametrization");
+    return false;
+  }
+  if(vs.empty() || vs[0].size() < 2) {
+    Msg::Error("Invalid exterior boundary mesh for parametrization");
+    return false;
+  }
+
+  Msg::Debug("Parametrisation of surface with %lu triangles, %lu edges and "
+             "%lu holes", triangles.size(), edges.size(), vs.size() - 1);
+
+  // find longest loop and use it as the "exterior" loop
+  int loop = 0;
+  double longest = 0.;
+  for(std::size_t i = 0; i < vs.size(); i++) {
+    double l = 0.;
+    for(std::size_t j = 1; j < vs[i].size(); j++) {
+      l += vs[i][j]->point().distance(vs[i][j - 1]->point());
+    }
+    if(l > longest) {
+      longest = l;
+      loop = i;
+    }
+  }
+
+  // check orientation of the loop and reverse if necessary
+  bool reverse = true;
+  MEdge ref(vs[loop][0], vs[loop][1]);
+  for(std::size_t i = 0; i < triangles.size(); i++) {
+    MTriangle *t = triangles[i];
+    for(int j = 0; j < 3; j++) {
+      MEdge e = t->getEdge(j);
+      if(e.getVertex(0) == ref.getVertex(0) &&
+         e.getVertex(1) == ref.getVertex(1)) {
+        reverse = false;
+        break;
+      }
+    }
+    if(!reverse) break;
+  }
+  if(reverse) {
+    std::reverse(vs[0].begin(), vs[0].end());
+  }
+
+  std::vector<double> u(nodes.size(), 0.), v(nodes.size(), 0.);
+
+  // boundary conditions
+  std::vector<bool> bc(nodes.size(), false);
+  double currentLength = 0;
+  int index = nodeIndex[vs[loop][0]];
+  bc[index] = true;
+  u[index] = 1.;
+  v[index] = 0.;
+  for(std::size_t i = 1; i < vs[loop].size() - 1; i++) {
+    currentLength += vs[loop][i]->point().distance(vs[loop][i - 1]->point());
+    double angle = 2 * M_PI * currentLength / longest;
+    index = nodeIndex[vs[loop][i]];
+    bc[index] = true;
+    u[index] = cos(angle);
+    v[index] = sin(angle);
+  }
+
+  // assemble matrix
+#if defined(HAVE_SOLVER)
+#if defined(HAVE_PETSC)
+  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_GMM)
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+#else
+  linearSystemFull<double> *lsys = new linearSystemFull<double>;
+#endif
+  lsys->allocate(nodes.size());
+  for(std::map<MEdge, std::vector<MTriangle*>, MEdgeLessThan>::const_iterator
+        it = edges.begin(); it != edges.end(); ++it) {
+    for(int ij = 0; ij < 2; ij++) {
+      MVertex *v0 = it->first.getVertex(ij);
+      int index0 = nodeIndex[v0];
+      if(bc[index0]) continue; // boundary condition
+      MVertex *v1 = it->first.getVertex(1 - ij);
+      int index1 = nodeIndex[v1];
+      MTriangle *tLeft = it->second[0];
+      MVertex *vLeft = tLeft->getVertex(0);
+      if(vLeft == v0 || vLeft == v1) vLeft = tLeft->getVertex(1);
+      if(vLeft == v0 || vLeft == v1) vLeft = tLeft->getVertex(2);
+      double e[3] = {v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z()};
+      double ne = sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+      double a[3] = {vLeft->x() - v0->x(), vLeft->y() - v0->y(), vLeft->z() - v0->z()};
+      double na = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+      double thetaL = acos((a[0] * e[0] + a[1] * e[1] + a[2] * e[2]) / (na * ne));
+      double thetaR = 0.;
+      if(it->second.size() == 2) {
+        MTriangle *tRight = it->second[1];
+        MVertex *vRight = tRight->getVertex(0);
+        if(vRight == v0 || vRight == v1) vRight = tRight->getVertex(1);
+        if(vRight == v0 || vRight == v1) vRight = tRight->getVertex(2);
+        double b[3] = {vRight->x() - v0->x(), vRight->y() - v0->y(), vRight->z() - v0->z()};
+        double nb = sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
+        thetaR = acos((b[0] * e[0] + b[1] * e[1] + b[2] * e[2]) / (nb * ne));
+      }
+      double c = (tan(.5 * thetaL) + tan(.5 * thetaR)) / ne;
+      lsys->addToMatrix(index0, index1, -c);
+      lsys->addToMatrix(index0, index0, c);
+    }
+  }
+  for(std::size_t i = 0; i < vs[loop].size() - 1; i++) {
+    int row = nodeIndex[vs[loop][i]];
+    lsys->addToMatrix(row, row, 1);
+  }
+
+  lsys->zeroRightHandSide();
+  for(std::size_t i = 0; i < vs[loop].size() - 1; i++) {
+    int row = nodeIndex[vs[loop][i]];
+    lsys->addToRightHandSide(row, u[row]);
+  }
+  lsys->systemSolve();
+  for(std::size_t i = 0; i < nodes.size(); i++)
+    lsys->getFromSolution(i, u[i]);
+
+  lsys->zeroRightHandSide();
+  for(std::size_t i = 0; i < vs[loop].size() - 1; i++) {
+    int row = nodeIndex[vs[loop][i]];
+    lsys->addToRightHandSide(row, v[row]);
+  }
+  lsys->systemSolve();
+  for(std::size_t i = 0; i < nodes.size(); i++)
+    lsys->getFromSolution(i, v[i]);
+
+  delete lsys;
+#endif
+
+  stl_vertices_uv.resize(nodes.size());
+  stl_vertices_xyz.resize(nodes.size());
+  for(std::size_t i = 0; i < nodes.size(); i++) {
+    stl_vertices_uv[i] = SPoint2(u[i], v[i]);
+    stl_vertices_xyz[i] = nodes[i]->point();
+  }
+  stl_triangles.resize(3 * triangles.size());
+  for(std::size_t i = 0; i < triangles.size(); i++) {
+    stl_triangles[3 * i + 0] = nodeIndex[triangles[i]->getVertex(0)];
+    stl_triangles[3 * i + 1] = nodeIndex[triangles[i]->getVertex(1)];
+    stl_triangles[3 * i + 2] = nodeIndex[triangles[i]->getVertex(2)];
+  }
+
+  return true;
+}
+
 int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
                                   double ar, std::ostringstream &why)
 {
@@ -670,23 +867,6 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
 
   std::vector<std::vector<MVertex *> > vs;
   if(!SortEdgeConsecutive(bnd, vs)) {
-    // we have vertices adjacent to more than 2 model edges
-#if 0
-    FILE *f = fopen("bug.pos","w");
-    fprintf(f,"View\"\"{\n");
-    for (std::size_t i = 0; i < t.size(); i++){
-      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-              t[i]->getVertex(0)->x(), t[i]->getVertex(0)->y(),
-              t[i]->getVertex(0)->z(), t[i]->getVertex(1)->x(),
-              t[i]->getVertex(1)->y(), t[i]->getVertex(1)->z(),
-              t[i]->getVertex(2)->x(), t[i]->getVertex(2)->y(),
-              t[i]->getVertex(2)->z(), t[i]->getVertex(0)->getNum(),
-              t[i]->getVertex(1)->getNum(), t[i]->getVertex(2)->getNum());
-    }
-    fprintf(f,"};\n");
-    fclose(f);
-    getchar();
-#endif
     why << "boundary not manifold";
     return 2;
   }
@@ -718,26 +898,28 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     return 2;
   }
 
-#if defined(HAVE_HXT)
+#if 1
+  std::vector<MVertex*> nodes;
+  std::vector<SPoint2> stl_nodes_uv;
+  std::vector<SPoint3> stl_nodes_xyz;
+  std::vector<int> stl_triangles;
+  computeParametrization(t, nodes, stl_nodes_uv, stl_nodes_xyz, stl_triangles);
+  for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
+    double u0 = stl_nodes_uv[stl_triangles[i + 0]].x();
+    double v0 = stl_nodes_uv[stl_triangles[i + 0]].y();
+    double u1 = stl_nodes_uv[stl_triangles[i + 1]].x();
+    double v1 = stl_nodes_uv[stl_triangles[i + 1]].y();
+    double u2 = stl_nodes_uv[stl_triangles[i + 2]].x();
+    double v2 = stl_nodes_uv[stl_triangles[i + 2]].y();
+    double det = fabs((u1 - u0) * (v2 - v0) - (v1 - v0) * (u2 - u0));
+    if(det < 1.e-8) {
+      why << "parametrized triangles are too small (" << det << ")";
+      return 2;
+    }
+  }
+#elif defined(HAVE_HXT)
   int n = 1;
   HXT_CHECK(hxtInitializeLinearSystems(&n, NULL));
-
-#if 0
-  FILE *f = fopen("bug.pos","w");
-  fprintf(f,"View\"\"{\n");
-  for (std:: size_t i = 0; i < t.size(); i++){
-    fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-            t[i]->getVertex(0)->x(), t[i]->getVertex(0)->y(),
-            t[i]->getVertex(0)->z(), t[i]->getVertex(1)->x(),
-            t[i]->getVertex(1)->y(), t[i]->getVertex(1)->z(),
-            t[i]->getVertex(2)->x(), t[i]->getVertex(2)->y(),
-            t[i]->getVertex(2)->z(), t[i]->getVertex(0)->getNum(),
-            t[i]->getVertex(1)->getNum(), t[i]->getVertex(2)->getNum());
-  }
-  fprintf(f,"};\n");
-  fclose(f);
-#endif
-
   HXTMesh *m;
   HXTMeanValues *param;
   HXTEdges *edges;
@@ -750,7 +932,6 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   double *uvc = NULL;
   int nv, ne;
   HXT_CHECK(hxtMeanValuesGetData(param, NULL, NULL, &uvc, &nv, &ne, 1));
-
   for(int ie = 0; ie < ne; ie++) {
     double u0 = uvc[2 * m->triangles.node[3 * ie + 0] + 0];
     double v0 = uvc[2 * m->triangles.node[3 * ie + 0] + 1];
@@ -759,7 +940,6 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     double u2 = uvc[2 * m->triangles.node[3 * ie + 2] + 0];
     double v2 = uvc[2 * m->triangles.node[3 * ie + 2] + 1];
     double det = fabs((u1 - u0) * (v2 - v0) - (v1 - v0) * (u2 - u0));
-
     if(det < 1.e-8) {
       HXT_CHECK(hxtMeshDelete(&m));
       HXT_CHECK(hxtEdgesDelete(&edges));
@@ -768,7 +948,6 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
       return 2;
     }
   }
-
   HXT_CHECK(hxtMeshDelete(&m));
   HXT_CHECK(hxtEdgesDelete(&edges));
   HXT_CHECK(hxtFree(&uvc));
@@ -847,24 +1026,6 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
   GModel m;
 
   Msg::Info("Splitting triangulations to make them parametrizable:");
-
-#if 0 // this is now done in the STL reader
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    std::vector<MTriangle *> aa;
-    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
-      if((*it)->triangles[i]->getVertex(0) ==
-         (*it)->triangles[i]->getVertex(1) ||
-         (*it)->triangles[i]->getVertex(0) ==
-         (*it)->triangles[i]->getVertex(2) ||
-         (*it)->triangles[i]->getVertex(1) ==
-         (*it)->triangles[i]->getVertex(2)) {
-      }
-      else
-        aa.push_back((*it)->triangles[i]);
-    }
-    (*it)->triangles = aa;
-  }
-#endif
 
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     int part = 0;
