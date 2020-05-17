@@ -2092,7 +2092,7 @@ void GModel::createGeometryOfDiscreteEntities()
   for(std::size_t i = 0; i < surfaces.size(); i++) {
     discreteFace *df = dynamic_cast<discreteFace *>(surfaces[i]);
     if(df) {
-      Msg::ProgressMeter(i, false, "Creating geometry");
+      Msg::ProgressMeter(i, true, "Creating geometry");
       if(df->createGeometry())
         Msg::Error("Could not create geometry of discrete surface %d",
                    df->tag());

@@ -865,10 +865,10 @@ bool computeParametrization(const std::vector<MTriangle*> &triangles,
 int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
                                   double ar, std::ostringstream &why)
 {
-  int XX = (int)t.size();
-  if(XX > Nmax) {
-    why << "too many triangles (" << XX << " vs. " << Nmax << ")";
-    return XX / (Nmax + 1); // + 1 to get some margin
+  if(Nmax > 1 && (int)t.size() > Nmax) {
+    why << "too many triangles (" << t.size() << " vs. " << Nmax << ")";
+    int np = t.size() / (Nmax - 1);
+    if(np > 1) return np;
   }
   std::set<MVertex *> v;
   std::map<MEdge, int, MEdgeLessThan> e;
@@ -885,10 +885,15 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
         it->second++;
     }
   }
-  std::map<MEdge, int, MEdgeLessThan>::iterator it = e.begin();
   std::vector<MEdge> bnd;
-  for(; it != e.end(); ++it) {
+  for(std::map<MEdge, int, MEdgeLessThan>::iterator it = e.begin();
+      it != e.end(); ++it) {
     if(it->second == 1) bnd.push_back(it->first);
+  }
+
+  if(bnd.empty()) {
+    why << "poincare characteristic 2 is not 0";
+    return 2;
   }
 
   std::vector<std::vector<MVertex *> > vs;
@@ -897,27 +902,8 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     return 2;
   }
 
-  double lmax = 0;
-  for(std::size_t i = 0; i < vs.size(); i++) {
-    double li = 0;
-    for(std::size_t j = 1; j < vs[i].size(); j++) {
-      li += distance(vs[i][j], vs[i][j - 1]);
-    }
-    lmax = std::max(li, lmax);
-  }
-
   double poincare =
     t.size() - (2 * (v.size() - 1) - bnd.size() + 2 * (vs.size() - 1));
-
-  if(bnd.empty()) {
-    why << "poincare characteristic 2 is not 0";
-    return 2;
-  }
-
-  // if(ar * lmax * lmax < 2 * M_PI * surf) {
-  //   why << "aspect ratio " << surf *2 * M_PI/(ar * lmax * lmax) << " is too
-  //   large"; return 2;
-  // }
 
   if(poincare != 0) {
     why << "poincare characteristic " << poincare << " is not 0";
