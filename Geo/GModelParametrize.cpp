@@ -24,6 +24,7 @@
 #include "OS.h"
 #include "GmshMessage.h"
 #include "GModelParametrize.h"
+#include "Context.h"
 
 #if defined(HAVE_MESH)
 #include "meshPartition.h"
@@ -459,7 +460,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
 
   computeDiscreteCurvatures(gm);
   if(forParametrization)
-    computeEdgeCut(gm, edge->lines, 250000);
+    computeEdgeCut(gm, edge->lines, CTX::instance()->mesh.reparamMaxTriangles);
   computeNonManifoldEdges(gm, edge->lines, true);
   classifyFaces(gm, curveAngleThreshold);
 
@@ -866,10 +867,13 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
                                   double ar, std::ostringstream &why)
 {
   if(Nmax > 1 && (int)t.size() > Nmax) {
-    why << "too many triangles (" << t.size() << " vs. " << Nmax << ")";
-    int np = t.size() / (Nmax - 1);
-    if(np > 1) return np;
+    int np = t.size() / (Nmax - 1) + 1;
+    if(np > 1) {
+      why << "too many triangles (" << t.size() << " vs. " << Nmax << ")";
+      return np;
+    }
   }
+
   std::set<MVertex *> v;
   std::map<MEdge, int, MEdgeLessThan> e;
   double surf = 0;
@@ -890,7 +894,6 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
       it != e.end(); ++it) {
     if(it->second == 1) bnd.push_back(it->first);
   }
-
   if(bnd.empty()) {
     why << "poincare characteristic 2 is not 0";
     return 2;
@@ -904,7 +907,6 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
 
   double poincare =
     t.size() - (2 * (v.size() - 1) - bnd.size() + 2 * (vs.size() - 1));
-
   if(poincare != 0) {
     why << "poincare characteristic " << poincare << " is not 0";
     return 2;
