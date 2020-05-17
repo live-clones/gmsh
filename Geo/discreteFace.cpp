@@ -19,7 +19,9 @@
 #include "MEdge.h"
 #include "GModelParametrize.h"
 
-#if defined(HAVE_HXT)
+#define NEW_REPARAM
+
+#if !defined(NEW_REPARAM) && defined(HAVE_HXT)
 extern "C" {
 #include "hxt_mesh.h"
 #include "hxt_tools.h"
@@ -440,7 +442,7 @@ void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
   return;
 }
 
-#if defined(HAVE_HXT)
+#if !defined(NEW_REPARAM) && defined(HAVE_HXT)
 
 static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
                           std::map<MVertex *, uint32_t> &v2c,
@@ -538,7 +540,7 @@ int discreteFace::createGeometry()
 
   std::vector<MVertex *> nodes;
 
-#if 1
+#if defined(NEW_REPARAM)
   computeParametrization(triangles, nodes,
                          stl_vertices_uv, stl_vertices_xyz, stl_triangles);
 #elif defined(HAVE_HXT)

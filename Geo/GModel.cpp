@@ -540,8 +540,10 @@ void GModel::getEntities(std::vector<GEntity *> &entities, int dim) const
   case 0:
     entities.insert(entities.end(), vertices.begin(), vertices.end());
     break;
-  case 1: entities.insert(entities.end(), edges.begin(), edges.end()); break;
-  case 2: entities.insert(entities.end(), faces.begin(), faces.end()); break;
+  case 1:
+    entities.insert(entities.end(), edges.begin(), edges.end()); break;
+  case 2:
+    entities.insert(entities.end(), faces.begin(), faces.end()); break;
   case 3:
     entities.insert(entities.end(), regions.begin(), regions.end());
     break;
@@ -2066,8 +2068,10 @@ void GModel::createGeometryOfDiscreteEntities()
 {
   Msg::StatusBar(true, "Creating geometry of discrete curves...");
   double t1 = Cpu(), w1 = TimeOfDay();
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
+  std::vector<GEntity*> curves;
+  getEntities(curves, 1);
+  for(std::size_t i = 0; i < curves.size(); i++) {
+    discreteEdge *de = dynamic_cast<discreteEdge *>(curves[i]);
     if(de) {
       if(de->createGeometry())
         Msg::Error("Could not create geometry of discrete curve %d", de->tag());
@@ -2082,14 +2086,19 @@ void GModel::createGeometryOfDiscreteEntities()
   Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
   t1 = Cpu();
   w1 = TimeOfDay();
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
-    discreteFace *df = dynamic_cast<discreteFace *>(*it);
+  std::vector<GEntity*> surfaces;
+  getEntities(surfaces, 2);
+  Msg::StartProgressMeter(surfaces.size());
+  for(std::size_t i = 0; i < surfaces.size(); i++) {
+    discreteFace *df = dynamic_cast<discreteFace *>(surfaces[i]);
     if(df) {
+      Msg::ProgressMeter(i, false, "Creating geometry");
       if(df->createGeometry())
         Msg::Error("Could not create geometry of discrete surface %d",
                    df->tag());
     }
   }
+  Msg::StopProgressMeter();
   t2 = Cpu();
   w2 = TimeOfDay();
   Msg::StatusBar(true,

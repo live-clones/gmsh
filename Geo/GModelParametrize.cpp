@@ -36,6 +36,8 @@
 #include "linearSystemFull.h"
 #endif
 
+#define NEW_REPARAM
+
 #if defined(HAVE_HXT)
 extern "C" {
 #include "hxt_mesh.h"
@@ -420,7 +422,6 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
                    bool forParametrization, double curveAngleThreshold)
 {
 #if defined(HAVE_MESH)
-
   size_t MAX1 = gm->getMaxElementaryNumber(1);
 
   Msg::StatusBar(true, "Classifying surfaces (angle: %g)...",
@@ -457,7 +458,8 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
   }
 
   computeDiscreteCurvatures(gm);
-  if(forParametrization) computeEdgeCut(gm, edge->lines, 100000);
+  if(forParametrization)
+    computeEdgeCut(gm, edge->lines, 250000);
   computeNonManifoldEdges(gm, edge->lines, true);
   classifyFaces(gm, curveAngleThreshold);
 
@@ -475,7 +477,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
   gm->exportDiscreteGEOInternals();
 
   double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done classifying surfaces (Wall %gs, %gs)",
+  Msg::StatusBar(true, "Done classifying surfaces (Wall %gs, CPU %gs)",
                  w2 - w1, t2 - t1);
 
 #else
@@ -756,12 +758,36 @@ bool computeParametrization(const std::vector<MTriangle*> &triangles,
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
+  std::string options = "-ksp_type preonly -pc_type lu ";
+#if defined(PETSC_HAVE_MUMPS)
+  options += "-pc_factor_mat_solver_type mumps";
+#elif defined(PETSC_HAVE_MKL_PARDISO)
+  options += "-pc_factor_mat_solver_type mkl_pardiso";
+#elif defined(PETSC_HAVE_UMFPACK) || defined(PETSC_HAVE_SUITESPARSE)
+  options += "-pc_factor_mat_solver_type umfpack";
+#endif
+  lsys->setParameter("petsc_solver_options", options);
+  lsys->setParameter("matrix_reuse", "same_matrix");
 #elif defined(HAVE_GMM)
   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
 #else
   linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #endif
+
   lsys->allocate(nodes.size());
+
+#if defined(HAVE_PETSC)
+  for(std::map<MEdge, std::vector<MTriangle*>, MEdgeLessThan>::const_iterator
+        it = edges.begin(); it != edges.end(); ++it) {
+    for(int i = 0; i < 2; i++) {
+      for(int j = 0; j < 2; j++) {
+        lsys->insertInSparsityPattern(nodeIndex[it->first.getVertex(i)],
+                                      nodeIndex[it->first.getVertex(j)]);
+      }
+    }
+  }
+#endif
+
   for(std::map<MEdge, std::vector<MTriangle*>, MEdgeLessThan>::const_iterator
         it = edges.begin(); it != edges.end(); ++it) {
     for(int ij = 0; ij < 2; ij++) {
@@ -842,7 +868,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
   int XX = (int)t.size();
   if(XX > Nmax) {
     why << "too many triangles (" << XX << " vs. " << Nmax << ")";
-    return XX / Nmax + 1;
+    return XX / (Nmax + 1); // + 1 to get some margin
   }
   std::set<MVertex *> v;
   std::map<MEdge, int, MEdgeLessThan> e;
@@ -898,7 +924,7 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     return 2;
   }
 
-#if 1
+#if defined(NEW_REPARAM)
   std::vector<MVertex*> nodes;
   std::vector<SPoint2> stl_nodes_uv;
   std::vector<SPoint3> stl_nodes_xyz;
@@ -1023,8 +1049,6 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut)
 {
-  GModel m;
-
   Msg::Info("Splitting triangulations to make them parametrizable:");
 
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
