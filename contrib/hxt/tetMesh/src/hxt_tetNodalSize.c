@@ -15,22 +15,22 @@ HXTStatus hxtCreateNodalSize(HXTMesh* mesh, double** nodalSizes_ptr)
 }
 
 HXTStatus hxtComputeNodalSizeFromFunction(HXTMesh* mesh, double* nodalSizes,
-                                          double (*meshSizeFun)(double x, double y, double z,
-                                                                void* meshSizeData),
+                                          HXTStatus (*meshSizeFun)(double* coord, size_t n,
+                                                                   void* meshSizeData),
                                           void* meshSizeData)
 {
-  #pragma omp parallel for
+  HXT_CHECK( meshSizeFun(mesh->vertices.coord, mesh->vertices.num, meshSizeData) );
+
+  int failed = 0;
+
+  #pragma omp parallel for reduction(||:failed)
   for (uint32_t i=0; i<mesh->vertices.num; i++) {
-    double* coord = &mesh->vertices.coord[4*i];
-    nodalSizes[i] = meshSizeFun(coord[0], coord[1], coord[2], meshSizeData);
+    if(mesh->vertices.coord[4 * i + 3] <= 0.)
+      failed = 1;
+    nodalSizes[i] = mesh->vertices.coord[4 * i + 3];
   }
 
-  for (uint32_t i=0; i<mesh->vertices.num; i++) {
-    if(nodalSizes[i] <= 0.)
-      return HXT_STATUS_FAILED;
-  }
-
-  return HXT_STATUS_OK;
+  return failed==0 ? HXT_STATUS_OK : HXT_STATUS_FAILED;
 }
 
 HXTStatus hxtComputeNodalSizeFromTrianglesAndLines(HXTMesh* mesh, double* nodalSizes)
