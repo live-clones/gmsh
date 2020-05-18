@@ -104,8 +104,8 @@ static void solveEig(double A, double B, double C, double D, double *lambda1,
 
 static inline int node2trianglescmp(const void *p0, const void *p1)
 {
-  const uint64_t *e0 = (const uint64_t *)p0;
-  const uint64_t *e1 = (const uint64_t *)p1;
+  const std::size_t *e0 = (const std::size_t *)p0;
+  const std::size_t *e1 = (const std::size_t *)p1;
 
   if(e0[0] < e1[0]) return -1;
   if(e0[0] > e1[0]) return 1;
@@ -173,20 +173,20 @@ bool CurvatureRusinkiewicz(
   const std::vector<int> &triangles, const std::vector<SPoint3> &nodes,
   std::vector<std::pair<SVector3, SVector3> > &nodalCurvatures)
 {
-  uint64_t nTriangles = triangles.size() / 3;
-  uint64_t nVertices = nodes.size();
+  std::size_t nTriangles = triangles.size() / 3;
+  std::size_t nVertices = nodes.size();
 
   nodalCurvatures.resize(nVertices);
 
-  std::vector<uint64_t> node2tri(3 * 2 * nTriangles);
+  std::vector<std::size_t> node2tri(3 * 2 * nTriangles);
 
   // first compute node normals and node-to-triangle connectivity
 
   std::vector<double> nodeNormals(3 * nVertices, 0.);
-  uint64_t counter = 0;
+  std::size_t counter = 0;
   double n[3], surf;
 
-  for(uint64_t i = 0; i < nTriangles; i++) {
+  for(std::size_t i = 0; i < nTriangles; i++) {
     node2tri[counter++] = triangles[3 * i + 0];
     node2tri[counter++] = i;
     node2tri[counter++] = triangles[3 * i + 1];
@@ -199,21 +199,21 @@ bool CurvatureRusinkiewicz(
     double *n0 = &nodeNormals[3 * triangles[3 * i + 0]];
     double *n1 = &nodeNormals[3 * triangles[3 * i + 1]];
     double *n2 = &nodeNormals[3 * triangles[3 * i + 2]];
-    for(uint64_t i1 = 0; i1 < 3; i1++) {
+    for(std::size_t i1 = 0; i1 < 3; i1++) {
       n0[i1] += n[i1];
       n1[i1] += n[i1];
       n2[i1] += n[i1];
     }
   }
-  for(uint64_t i = 0; i < nVertices; i++) normalize(&nodeNormals[3 * i]);
+  for(std::size_t i = 0; i < nVertices; i++) normalize(&nodeNormals[3 * i]);
 
-  qsort(&node2tri[0], 3 * nTriangles, 2 * sizeof(uint64_t), node2trianglescmp);
+  qsort(&node2tri[0], 3 * nTriangles, 2 * sizeof(std::size_t), node2trianglescmp);
 
   // compute the second fundamental tensor on each triangle using least squares
 
   std::vector<double> CURV(4 * nTriangles);
 
-  for(uint64_t i = 0; i < nTriangles; i++) {
+  for(std::size_t i = 0; i < nTriangles; i++) {
     double *n0 = &nodeNormals[3 * triangles[3 * i + 0]];
     double *n1 = &nodeNormals[3 * triangles[3 * i + 1]];
     double *n2 = &nodeNormals[3 * triangles[3 * i + 2]];
@@ -256,21 +256,21 @@ bool CurvatureRusinkiewicz(
     rhs[4] = dotprod(temp, u);
     rhs[5] = dotprod(temp, v);
 
-    for(uint64_t i1 = 0; i1 < 4; i1++) {
+    for(std::size_t i1 = 0; i1 < 4; i1++) {
       B[i1] = 0.0;
-      for(uint64_t i3 = 0; i3 < 6; i3++) { B[i1] += sys[i3][i1] * rhs[i3]; }
-      for(uint64_t i2 = 0; i2 < 4; i2++) {
+      for(std::size_t i3 = 0; i3 < 6; i3++) { B[i1] += sys[i3][i1] * rhs[i3]; }
+      for(std::size_t i2 = 0; i2 < 4; i2++) {
         A[i1 + 4 * i2] = 0.0;
-        for(uint64_t i3 = 0; i3 < 6; i3++) {
+        for(std::size_t i3 = 0; i3 < 6; i3++) {
           A[i1 + 4 * i2] += sys[i3][i2] * sys[i3][i1];
         }
       }
     }
     double det;
     Inv4x4ColumnMajor(A, invA, &det);
-    for(uint64_t i1 = 0; i1 < 4; i1++) {
+    for(std::size_t i1 = 0; i1 < 4; i1++) {
       CURV[4 * i + i1] = 0.0;
-      for(uint64_t i2 = 0; i2 < 4; i2++) {
+      for(std::size_t i2 = 0; i2 < 4; i2++) {
         CURV[4 * i + i1] += invA[i1 + 4 * i2] * B[i2];
       }
     }
@@ -279,12 +279,12 @@ bool CurvatureRusinkiewicz(
   }
 
   // get vertex curvatures by averaging triangle curvatures
-  uint64_t currentVertex = nVertices + 1;
-  uint64_t count = 0;
+  std::size_t currentVertex = nVertices + 1;
+  std::size_t count = 0;
   double uP[3], vP[3], A, B, D;
-  for(uint64_t i = 0; i < 6 * nTriangles; i += 2) {
-    uint64_t iVertex = node2tri[i];
-    uint64_t iTriangle = node2tri[i + 1];
+  for(std::size_t i = 0; i < 6 * nTriangles; i += 2) {
+    std::size_t iVertex = node2tri[i];
+    std::size_t iTriangle = node2tri[i + 1];
     if(currentVertex != iVertex) {
       // compute the real stuff
       if(currentVertex != nVertices + 1) {
