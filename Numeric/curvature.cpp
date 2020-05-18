@@ -281,7 +281,8 @@ bool CurvatureRusinkiewicz(
   // get vertex curvatures by averaging triangle curvatures
   std::size_t currentVertex = nVertices + 1;
   std::size_t count = 0;
-  double uP[3], vP[3], A, B, D;
+  double uP[3] = {0., 0., 0.}, vP[3] = {0., 0., 0.};
+  double A = 0., B = 0., D = 0.;
   for(std::size_t i = 0; i < 6 * nTriangles; i += 2) {
     std::size_t iVertex = node2tri[i];
     std::size_t iTriangle = node2tri[i + 1];
