@@ -44,7 +44,7 @@ linux64_compatibility_ci:
     - make -j 8
     - cmake -DENABLE_POST=1 ..
     - make -j 8
-    - cmake -DENABLE_MESH=1 -DENABLE_BUILD_DYNAMIC=1 -DENABLE_PRIVATE_API=1 -DENABLE_WRAP_PYTHON=1 ..
+    - cmake -DENABLE_MESH=1 -DENABLE_BUILD_DYNAMIC=1 -DENABLE_PRIVATE_API=1 -DENABLE_WRAP_PYTHON=1 -DENABLE_PETSC=1 ..
     - make -j 8
     - rm -rf *
     - export CXXFLAGS=-std=c++98
@@ -86,13 +86,13 @@ windows64_msvc_ci:
 # ------------------------------------------
 
 .linux_official: &linux_official
-  only:
-    - master@gmsh/gmsh
+#  only:
+#    - master@gmsh/gmsh
   <<: *ssh_config
   script:
     - mkdir build
     - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info ${EXTRA_OPTION} ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/petsc-3.10.2 ${EXTRA_OPTION} ..
     - make package -j 8
     - PKG=`ls gmsh-*.tar*`
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
@@ -186,12 +186,12 @@ linux32-sdk_official_release:
 # --------------------------------------------
 
 .windows_official: &windows_official
-  only:
-    - master@gmsh/gmsh
+#  only:
+#    - master@gmsh/gmsh
   script:
     - md build
     - cd build
-    - bash -c "/usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
+    - bash -c "/usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
     - bash -c "/usr/bin/make package -j 3"
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
     - bash -c "/usr/bin/ctest -j 3 --output-on-failure"
@@ -289,12 +289,12 @@ windows32-sdk_official_release:
 # ------------------------------------------
 
 .macos_official: &macos_official
-  only:
-    - master@gmsh/gmsh
+#  only:
+#    - master@gmsh/gmsh
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/opt/local/lib/gcc5/libgfortran.a;/opt/local/lib/gcc5/libquadmath.a;/opt/local/lib/gcc5/gcc/x86_64-apple-darwin13/5.4.0/libgcc.a' -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_GMP=0 ${EXTRA_OPTION} ..
+    - /usr/local/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/opt/local/lib/gcc5/libgfortran.a;/opt/local/lib/gcc5/libquadmath.a;/opt/local/lib/gcc5/gcc/x86_64-apple-darwin13/5.4.0/libgcc.a' -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_GMP=0 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc  ${EXTRA_OPTION} ..
     - make package -j 2
     - PKG=`ls gmsh-*.[dt][ma][gr]*`
     - if [[ $PKG == *".dmg"* ]]; then scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp; fi
