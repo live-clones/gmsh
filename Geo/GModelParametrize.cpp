@@ -25,6 +25,7 @@
 #include "GmshMessage.h"
 #include "GModelParametrize.h"
 #include "Context.h"
+#include "curvature.h"
 
 #if defined(HAVE_MESH)
 #include "meshPartition.h"
@@ -39,7 +40,7 @@
 
 #define NEW_REPARAM
 
-#if defined(HAVE_HXT)
+#if !defined(NEW_REPARAM) && defined(HAVE_HXT)
 extern "C" {
 #include "hxt_mesh.h"
 #include "hxt_tools.h"
@@ -486,7 +487,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
 #endif
 }
 
-#if defined(HAVE_HXT)
+#if !defined(NEW_REPARAM) && defined(HAVE_HXT)
 
 static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle *> &t,
                           HXTMesh **pm, std::map<MVertex *, uint32_t> &v2c,
@@ -545,10 +546,36 @@ static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
 
 int computeDiscreteCurvatures(GModel *gm)
 {
-#if defined(HAVE_HXT)
   std::map<MVertex *, std::pair<SVector3, SVector3> > &C = gm->getCurvatures();
   C.clear();
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+#if defined(NEW_REPARAM)
+    GFace *gf = *it;
+    std::map<MVertex*, int> nodeIndex;
+    std::vector<SPoint3> nodes;
+    std::vector<int> tris;
+    std::vector<std::pair<SVector3, SVector3> > curv;
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+      MTriangle *t = gf->triangles[i];
+      for(int j = 0; j < 3; j++) {
+        MVertex *v = t->getVertex(j);
+        if(nodeIndex.find(v) == nodeIndex.end()) {
+          int idx = nodes.size();
+          nodeIndex[v] = idx;
+          nodes.push_back(v->point());
+          tris.push_back(idx);
+        }
+        else {
+          tris.push_back(nodeIndex[v]);
+        }
+      }
+    }
+    CurvatureRusinkiewicz(tris, nodes, curv);
+    for(std::map<MVertex*, int>::iterator itv = nodeIndex.begin();
+        itv != nodeIndex.end(); itv++) {
+      C[itv->first] = curv[itv->second];
+    }
+#elif defined(HAVE_HXT)
     HXTMesh *m;
     HXTEdges *edges;
     double *nodalCurvatures;
@@ -643,8 +670,8 @@ int computeDiscreteCurvatures(GModel *gm)
     HXT_CHECK(hxtFree(&nodalCurvatures));
     HXT_CHECK(hxtFree(&crossField));
     HXT_CHECK(hxtMeshDelete(&m));
-  }
 #endif
+  }
   return 0;
 }
 
