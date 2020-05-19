@@ -2249,7 +2249,7 @@ void GModel::checkMeshCoherence(double tolerance)
       vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
                       entities[i]->mesh_vertices.end());
     MVertexRTree pos(eps);
-    std::set<MVertex *> duplicates;
+    std::set<MVertex *, MVertexPtrLessThan> duplicates;
     int num = pos.insert(vertices, true, &duplicates);
     if(num) {
       Msg::Error("%d duplicate node%s: see `duplicate_node.pos'", num,
