@@ -514,6 +514,8 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
         if (getProcessedFlag(mesh, i))
           continue;
 
+        setProcessedFlag(mesh, i); // we do not need to refine that tetrahedron anymore
+
         double p[4][4];
         double s[4];
         getTetCoordAndNodalSize(mesh, delOptions->nodalSizes, i, p, s);
