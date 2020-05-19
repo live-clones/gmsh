@@ -128,7 +128,7 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
   double s2 = nodalSize[2]!=DBL_MAX && nodalSize[2] ? nodalSize[2] : avg;
   double s3 = nodalSize[3]!=DBL_MAX && nodalSize[3] ? nodalSize[3] : avg;
 
-  double sa = s0/(s0 + s1); // 2/s0 x mean size of the edge a
+  double sa = s0/(s0 + s1); // proportional to the inverse of the average size on a
   double sb = s0/(s0 + s2);
   double sc = s0/(s0 + s3);
 
