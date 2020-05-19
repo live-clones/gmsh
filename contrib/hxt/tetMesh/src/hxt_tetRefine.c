@@ -78,122 +78,28 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
 }
 
 
-/* the point with barycentric coord (h0,h1,h2,h3) */
-// static void isotomicConjugateOfIncenter(double p[4][4], double bary[4])
-// {
-//   /* Use coordinates relative to point `p[0]' of the tetrahedron. */
-//   double xa = p[1][0] - p[0][0];
-//   double ya = p[1][1] - p[0][1];
-//   double za = p[1][2] - p[0][2];
-//   double xb = p[2][0] - p[0][0];
-//   double yb = p[2][1] - p[0][1];
-//   double zb = p[2][2] - p[0][2];
-//   double xc = p[3][0] - p[0][0];
-//   double yc = p[3][1] - p[0][1];
-//   double zc = p[3][2] - p[0][2];
-  
-//   /* Cross products of these edges. */
-//   double xcrossbc = yb * zc - yc * zb;
-//   double ycrossbc = zb * xc - zc * xb;
-//   double zcrossbc = xb * yc - xc * yb;
-//   double xcrossca = yc * za - ya * zc;
-//   double ycrossca = zc * xa - za * xc;
-//   double zcrossca = xc * ya - xa * yc;
-//   double xcrossab = ya * zb - yb * za;
-//   double ycrossab = za * xb - zb * xa;
-//   double zcrossab = xa * yb - xb * ya;
-
-//   // get the cross product corresponding to the last face: (c-a)x(a-b)
-//   // the sum of the cross product of the faces of a tetrahedron = 0
-//   double xsumcros = xcrossab + xcrossbc + xcrossca;
-//   double ysumcros = ycrossab + ycrossbc + ycrossca;
-//   double zsumcros = zcrossab + zcrossbc + zcrossca;
-
-//   double invA0x2 = 1.0/sqrt(xsumcros*xsumcros + ysumcros*ysumcros + zsumcros*zsumcros); // (2 x area of the facet opposite to p0)^-1
-//   double invA1x2 = 1.0/sqrt(xcrossbc*xcrossbc + ycrossbc*ycrossbc + zcrossbc*zcrossbc); // (2 x area of the facet opposite to p1)^-1
-//   double invA2x2 = 1.0/sqrt(xcrossca*xcrossca + ycrossca*ycrossca + zcrossca*zcrossca); // (2 x area of the facet opposite to p2)^-1
-//   double invA3x2 = 1.0/sqrt(xcrossab*xcrossab + ycrossab*ycrossab + zcrossab*zcrossab); // (2 x area of the facet opposite to p3)^-1
-
-//   double AsumInv = invA0x2 + invA1x2 + invA2x2 + invA3x2;
-
-//   bary[0] = 0.125 + 0.5 * invA0x2 / AsumInv;
-//   bary[1] = 0.125 + 0.5 * invA1x2 / AsumInv;
-//   bary[2] = 0.125 + 0.5 * invA2x2 / AsumInv;
-//   // bary[3] = 0.125 + 0.5 * invA3x2 / AsumInv;
-//   bary[3] = 1.0 - bary[0] - bary[1] - bary[2];
-// }
+static inline double square_dist(double v0[3], double v1[3])
+{
+  return (v1[0] - v0[0])*(v1[0] - v0[0]) +
+         (v1[1] - v0[1])*(v1[1] - v0[1]) +
+         (v1[2] - v0[2])*(v1[2] - v0[2]);
+}
 
 
-// static void hxtTetCircumcenter(double p[4][4], double center[3], double bary[4])
-// {
-//   /* Use coordinates relative to point `p[0]' of the tetrahedron. */
-//   double xa = p[1][0] - p[0][0];
-//   double ya = p[1][1] - p[0][1];
-//   double za = p[1][2] - p[0][2];
-//   double xb = p[2][0] - p[0][0];
-//   double yb = p[2][1] - p[0][1];
-//   double zb = p[2][2] - p[0][2];
-//   double xc = p[3][0] - p[0][0];
-//   double yc = p[3][1] - p[0][1];
-//   double zc = p[3][2] - p[0][2];
+static int is_too_close(double ptSize, double vtaSize, double squareDist)
+{
+  if(ptSize!=DBL_MAX) {
+    double meanSize = 0.5*(ptSize+vtaSize);
+    if(squareDist < /*(0.94*0.94) * */meanSize * meanSize) {
+      return 1;
+    }
+  }
 
-//    Squares of lengths of the edges incident to `p[0]'. 
-//   double alength = xa * xa + ya * ya + za * za;
-//   double blength = xb * xb + yb * yb + zb * zb;
-//   double clength = xc * xc + yc * yc + zc * zc;
-
-//   /* Cross products of these edges. */
-//   double xcrossbc = yb * zc - yc * zb;
-//   double ycrossbc = zb * xc - zc * xb;
-//   double zcrossbc = xb * yc - xc * yb;
-//   double xcrossca = yc * za - ya * zc;
-//   double ycrossca = zc * xa - za * xc;
-//   double zcrossca = xc * ya - xa * yc;
-//   double xcrossab = ya * zb - yb * za;
-//   double ycrossab = za * xb - zb * xa;
-//   double zcrossab = xa * yb - xb * ya;
-
-//   /* calculate the denominator of the formulae. */
-//   /* Use orient3d() from http://www.cs.cmu.edu/~quake/robust.html     */
-//   /*   to ensure a correctly signed (and reasonably accurate) result, */
-//   /*   avoiding any possibility of division by zero.                  */
-//   double xxx = xa * xcrossbc + ya * ycrossbc + za * zcrossbc;
-//   int sureSign = (xxx > o3dstaticfilter) - (xxx < -o3dstaticfilter);
-//   if(sureSign==0)
-//     xxx = orient3d(p[1], p[2], p[3], p[0]);
-//   double denominator = 0.5 / xxx;
-  
-
-//   /* Calculate offset (from `p[0]') of circumcenter. */
-//   double xcirca = (alength * xcrossbc + blength * xcrossca + clength * xcrossab) *
-//                   denominator;
-//   double ycirca = (alength * ycrossbc + blength * ycrossca + clength * ycrossab) *
-//                   denominator;
-//   double zcirca = (alength * zcrossbc + blength * zcrossca + clength * zcrossab) *
-//                   denominator;
-//   center[0] =  xcirca + p[0][0];
-//   center[1] =  ycirca + p[0][1];
-//   center[2] =  zcirca + p[0][2];
-
-//   if (bary != NULL) {
-//     /* To interpolate a linear function at the circumcenter, define a    */
-//     /*   coordinate system with a bary0-axis directed from `p[0]' to `p[1]',      */
-//     /*   an bary1-axis directed from `p[0]' to `p[2]', and a bary2-axis directed  */
-//     /*   from `p[0]' to `p[3]'.  The values for bary0, bary1, and bary2 are computed */
-//      /*   by Cramer's Rule for solving systems of linear equations.       */
-//     bary[0] = (xcirca * xcrossbc + ycirca * ycrossbc + zcirca * zcrossbc) *
-//               (2.0 * denominator);
-//     bary[1] = (xcirca * xcrossca + ycirca * ycrossca + zcirca * zcrossca) *
-//               (2.0 * denominator);
-//     bary[2] = (xcirca * xcrossab + ycirca * ycrossab + zcirca * zcrossab) *
-//               (2.0 * denominator);
-//     bary[3] = 1.0 - bary[0] - bary[1] - bary[2];
-//   }
-//   // return xxx; // return 6 times volume
-// }
+  return 0;
+}
 
 
-static void getBestCenter(double p[4][4], double nodalSize[4], double center[3], double bary[4])
+static void getBestCenter(double p[4][4], double nodalSize[4], double center[4])
 {
   double avg = 0.0;
   double num = 0;
@@ -270,19 +176,35 @@ static void getBestCenter(double p[4][4], double nodalSize[4], double center[3],
   /*   an bary1-axis directed from `p[0]' to `p[2]', and a bary2-axis directed  */
   /*   from `p[0]' to `p[3]'.  The values for bary0, bary1, and bary2 are computed */
    /*   by Cramer's Rule for solving systems of linear equations.       */
-  bary[0] = (xcirca * xcrossbc + ycirca * ycrossbc + zcirca * zcrossbc) *
-            (2.0 * denominator);
-  bary[1] = (xcirca * xcrossca + ycirca * ycrossca + zcirca * zcrossca) *
-            (2.0 * denominator);
-  bary[2] = (xcirca * xcrossab + ycirca * ycrossab + zcirca * zcrossab) *
-            (2.0 * denominator);
-  bary[3] = 1.0 - bary[0] - bary[1] - bary[2];
+  double bary0 = (xcirca * xcrossbc + ycirca * ycrossbc + zcirca * zcrossbc) *
+                   (2.0 * denominator);
+  double bary1 = (xcirca * xcrossca + ycirca * ycrossca + zcirca * zcrossca) *
+                   (2.0 * denominator);
+  double bary2 = (xcirca * xcrossab + ycirca * ycrossab + zcirca * zcrossab) *
+                   (2.0 * denominator);
+  double bary3 = 1.0 - bary0 - bary1 - bary2;
 
-  /* if we are outside the tet, we get back inside, by using the isotomic conjugate of the incenter
-   * instead of the circumcenter.
-   * We also want to recalculate a new center if any bary is NAN. Because comparison with NAN evaluate
-   *  to false, we need to build our comparison backwards and negate it... */
-  if(!(bary[0]>0.0 && bary[1]>0.0 && bary[2]>0.0 && bary[3]>0.0)) {
+  int useOtherCenter = 0;
+  if(bary0>0.0 && bary1>0.0 && bary2>0.0 && bary3>0.0) {
+      // compute the cartesian coordinates from the barycentric ones
+    center[0] = bary0*p[0][0] + bary1*p[1][0] + bary2*p[2][0] + bary3*p[3][0];
+    center[1] = bary0*p[0][1] + bary1*p[1][1] + bary2*p[2][1] + bary3*p[3][1];
+    center[2] = bary0*p[0][2] + bary1*p[1][2] + bary2*p[2][2] + bary3*p[3][2];
+    center[3] = bary0*s0 + bary1*s1 + bary2*s2 + bary3*s3; // the interpolated nodalSize
+
+    if(is_too_close(s0, center[3], square_dist(p[0], center)) ||
+       is_too_close(s1, center[3], square_dist(p[1], center)) ||
+       is_too_close(s2, center[3], square_dist(p[2], center)) ||
+       is_too_close(s3, center[3], square_dist(p[3], center)))
+      useOtherCenter = 1;
+  }
+  else {
+    useOtherCenter = 1;
+  }
+
+  /* if we are outside the tet, or too close to another point, we get back inside,
+   * by using the isotomic conjugate of the incenter instead of the circumcenter. */
+  if(useOtherCenter) {
     /* get the cross product corresponding to the last face: (c-a)x(a-b) */
     /* the sum of the cross product of the faces of a tetrahedron = 0 */
     double xsumcros = xcrossab + xcrossbc + xcrossca;
@@ -298,65 +220,16 @@ static void getBestCenter(double p[4][4], double nodalSize[4], double center[3],
 
     const double alpha = 0.5;
 
-    bary[0] = (1.0 - alpha)*0.25 + alpha*invA0x2/x75_den;
-    bary[1] = (1.0 - alpha)*0.25 + alpha*invA1x2/x75_den;
-    bary[2] = (1.0 - alpha)*0.25 + alpha*invA2x2/x75_den;
-    bary[3] = (1.0 - alpha)*0.25 + alpha*invA3x2/x75_den;
-  }
+    bary0 = (1.0 - alpha)*0.25 + alpha*invA0x2/x75_den;
+    bary1 = (1.0 - alpha)*0.25 + alpha*invA1x2/x75_den;
+    bary2 = (1.0 - alpha)*0.25 + alpha*invA2x2/x75_den;
+    bary3 = (1.0 - alpha)*0.25 + alpha*invA3x2/x75_den;
 
-  // compute the cartesian coordinates from the barycentric ones
-  center[0] = bary[0]*p[0][0] + bary[1]*p[1][0] + bary[2]*p[2][0] + bary[3]*p[3][0];
-  center[1] = bary[0]*p[0][1] + bary[1]*p[1][1] + bary[2]*p[2][1] + bary[3]*p[3][1];
-  center[2] = bary[0]*p[0][2] + bary[1]*p[1][2] + bary[2]*p[2][2] + bary[3]*p[3][2];
-}
-
-
-static inline double square_dist(double v0[3], double v1[3])
-{
-  return (v1[0] - v0[0])*(v1[0] - v0[0]) +
-         (v1[1] - v0[1])*(v1[1] - v0[1]) +
-         (v1[2] - v0[2])*(v1[2] - v0[2]);
-}
-
-
-static int is_too_close(double ptSize, double vtaSize, double squareDist)
-{
-  if(ptSize!=DBL_MAX) {
-    double meanSize = 0.5*(ptSize+vtaSize);
-    if(squareDist < /*(0.94*0.94) * */meanSize * meanSize) {
-      return 1;
-    }
-  }
-
-  return 0;
-}
-
-
-/* receives the 4 nodalSize of the node of a tet, as well as the barycentric
- * coordinates of a point in the tet, and estimate the nodalSize at that point */
-static inline double getNodalSizeFromBary(double* nodalSize, double* bary)
-{
-  double denom = 0.0;
-  double num = 0.0;
-  int ndef = 0;
-  for (int j=0;j<4;j++){
-    double size = nodalSize[j];
-    if (size != DBL_MAX){
-      double weight = bary[j];
-      denom += weight;
-      num += weight * size;
-    }
-    else {
-      ndef++;
-    }
-  }
-
-  if(ndef!=4) {
-    return num/denom;
-  }
-  else {
-    HXT_WARNING("tetrahedron with undefined size");
-    return DBL_MAX;
+    // compute the cartesian coordinates from the barycentric ones
+    center[0] = bary0*p[0][0] + bary1*p[1][0] + bary2*p[2][0] + bary3*p[3][0];
+    center[1] = bary0*p[0][1] + bary1*p[1][1] + bary2*p[2][1] + bary3*p[3][1];
+    center[2] = bary0*p[0][2] + bary1*p[1][2] + bary2*p[2][2] + bary3*p[3][2];
+    center[3] = bary0*s0 + bary1*s1 + bary2*s2 + bary3*s3; // the interpolated nodalSize
   }
 }
 
@@ -521,8 +394,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
         getTetCoordAndNodalSize(mesh, delOptions->nodalSizes, i, p, s);
 
         // TODO: do a SIMD getBestCenter function if it gets slow
-        double bary[4];
-        getBestCenter(p, s, &newVertices[4*ptIndex], bary);
+        getBestCenter(p, s, &newVertices[4*ptIndex]);
 
 // // #ifdef DEBUG
 //         if(insphere(p[0], p[1], p[2], p[3], &newVertices[4*ptIndex])>=0.0)
@@ -531,14 +403,11 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
 
         ptToTet[ptIndex] = i;
 
-        if(meshSizeFun==NULL) /* we could compute it anyway. TODO: vectorize */
-          newVertices[4*ptIndex+3] = getNodalSizeFromBary(s, bary);
-
         ptIndex++;
       }
     }
 
-    // second step (meshSizeFun): compute the mesh size at all these newly create points
+    // second step (meshSizeFun): compute the effective mesh size at all these newly create points
     if(meshSizeFun!=NULL)
       HXT_CHECK( meshSizeFun(newVertices, totNewPts, meshSizeData) );
 
