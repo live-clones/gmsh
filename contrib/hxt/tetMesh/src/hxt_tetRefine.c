@@ -99,7 +99,11 @@ static int is_too_close(double ptSize, double vtaSize, double squareDist)
 }
 
 
-static void getBestCenter(double p[4][4], double nodalSize[4], double center[4])
+/* compute a point (center) inside the tetrahedron which is very likely to respect the nodalsize.
+ * return 0 if the computed point does respect the interpolated nodalsize
+ * return 1 if the computed point does not respect the interpolated nodalsize
+ * the interpolated nodalsize is placed into center[3]  */
+static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
 {
   double avg = 0.0;
   double num = 0;
@@ -184,7 +188,8 @@ static void getBestCenter(double p[4][4], double nodalSize[4], double center[4])
                    (2.0 * denominator);
   double bary3 = 1.0 - bary0 - bary1 - bary2;
 
-  int useOtherCenter = 0;
+  int circumcenterOutside = 0;
+  int circumcenterTooClose = 0;
   if(bary0>0.0 && bary1>0.0 && bary2>0.0 && bary3>0.0) {
       // compute the cartesian coordinates from the barycentric ones
     center[0] = bary0*p[0][0] + bary1*p[1][0] + bary2*p[2][0] + bary3*p[3][0];
@@ -192,19 +197,21 @@ static void getBestCenter(double p[4][4], double nodalSize[4], double center[4])
     center[2] = bary0*p[0][2] + bary1*p[1][2] + bary2*p[2][2] + bary3*p[3][2];
     center[3] = bary0*s0 + bary1*s1 + bary2*s2 + bary3*s3; // the interpolated nodalSize
 
-    if(is_too_close(s0, center[3], square_dist(p[0], center)) ||
-       is_too_close(s1, center[3], square_dist(p[1], center)) ||
-       is_too_close(s2, center[3], square_dist(p[2], center)) ||
-       is_too_close(s3, center[3], square_dist(p[3], center)))
-      useOtherCenter = 1;
+    circumcenterTooClose = (
+      is_too_close(s0, center[3], square_dist(p[0], center)) ||
+      is_too_close(s1, center[3], square_dist(p[1], center)) ||
+      is_too_close(s2, center[3], square_dist(p[2], center)) ||
+      is_too_close(s3, center[3], square_dist(p[3], center))
+    );
   }
   else {
-    useOtherCenter = 1;
+    circumcenterOutside = 1;
   }
 
   /* if we are outside the tet, or too close to another point, we get back inside,
    * by using the isotomic conjugate of the incenter instead of the circumcenter. */
-  if(useOtherCenter) {
+  int otherCenterTooClose = 0;
+  if(circumcenterOutside || circumcenterTooClose) {
     /* get the cross product corresponding to the last face: (c-a)x(a-b) */
     /* the sum of the cross product of the faces of a tetrahedron = 0 */
     double xsumcros = xcrossab + xcrossbc + xcrossca;
@@ -226,11 +233,28 @@ static void getBestCenter(double p[4][4], double nodalSize[4], double center[4])
     bary3 = (1.0 - alpha)*0.25 + alpha*invA3x2/x75_den;
 
     // compute the cartesian coordinates from the barycentric ones
-    center[0] = bary0*p[0][0] + bary1*p[1][0] + bary2*p[2][0] + bary3*p[3][0];
-    center[1] = bary0*p[0][1] + bary1*p[1][1] + bary2*p[2][1] + bary3*p[3][1];
-    center[2] = bary0*p[0][2] + bary1*p[1][2] + bary2*p[2][2] + bary3*p[3][2];
-    center[3] = bary0*s0 + bary1*s1 + bary2*s2 + bary3*s3; // the interpolated nodalSize
+    double otherCenter[4];
+    otherCenter[0] = bary0*p[0][0] + bary1*p[1][0] + bary2*p[2][0] + bary3*p[3][0];
+    otherCenter[1] = bary0*p[0][1] + bary1*p[1][1] + bary2*p[2][1] + bary3*p[3][1];
+    otherCenter[2] = bary0*p[0][2] + bary1*p[1][2] + bary2*p[2][2] + bary3*p[3][2];
+    otherCenter[3] = bary0*s0 + bary1*s1 + bary2*s2 + bary3*s3; // the interpolated nodalSize
+
+    otherCenterTooClose = (
+      is_too_close(s0, otherCenter[3], square_dist(p[0], otherCenter)) ||
+      is_too_close(s1, otherCenter[3], square_dist(p[1], otherCenter)) ||
+      is_too_close(s2, otherCenter[3], square_dist(p[2], otherCenter)) ||
+      is_too_close(s3, otherCenter[3], square_dist(p[3], otherCenter))
+    );
+
+    if(circumcenterOutside || !otherCenterTooClose) {
+      center[0] = otherCenter[0];
+      center[1] = otherCenter[1];
+      center[2] = otherCenter[2];
+      center[3] = otherCenter[3];
+    }
   }
+
+  return otherCenterTooClose;
 }
 
 
@@ -394,15 +418,15 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
         getTetCoordAndNodalSize(mesh, delOptions->nodalSizes, i, p, s);
 
         // TODO: do a SIMD getBestCenter function if it gets slow
-        getBestCenter(p, s, &newVertices[4*ptIndex]);
+        if(getBestCenter(p, s, &newVertices[4*ptIndex]) && meshSizeFun==NULL)
+          newVertices[4*ptIndex+3] = -DBL_MAX;
 
-// // #ifdef DEBUG
-//         if(insphere(p[0], p[1], p[2], p[3], &newVertices[4*ptIndex])>=0.0)
-//           HXT_WARNING("the added point is not even in the circumsphere %.12g", orient3d(p[0], p[1], p[2], p[3]));
-// // #endif
+#ifndef NDEBUG
+        if(insphere(p[0], p[1], p[2], p[3], &newVertices[4*ptIndex])>=0.0)
+          HXT_WARNING("new point is not in the circumsphere of the tet that spawned it");
+#endif
 
         ptToTet[ptIndex] = i;
-
         ptIndex++;
       }
     }
@@ -425,11 +449,10 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
 
       #pragma omp for schedule(static)
       for(size_t i=0; i<totNewPts; i++) {
+        if(newVertices[4*i + 3] == -DBL_MAX)
+          continue;
+
         uint64_t tetID = ptToTet[i];
-        // if(tetID==HXT_NO_ADJACENT) {
-        //   newVertices[4*i + 3] = -DBL_MAX;
-        //   continue;
-        // }
         double p[4][4];
         double s[4];
         getTetCoordAndNodalSize(mesh, delOptions->nodalSizes, tetID, p, s);
@@ -481,13 +504,13 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
       if(status==HXT_STATUS_OK){
         #pragma omp for schedule(static)
         for (uint64_t i=0; i<totNewPts; i++){
-          if(newVertices[4*i + 3] != -DBL_MAX) {
-            mesh->vertices.coord[v*4  ] = newVertices[4*i + 0];
-            mesh->vertices.coord[v*4+1] = newVertices[4*i + 1];
-            mesh->vertices.coord[v*4+2] = newVertices[4*i + 2];
-            delOptions->nodalSizes[v] = newVertices[4*i + 3];
-            v++;
-          }
+          if(newVertices[4*i + 3] == -DBL_MAX)
+            continue;
+          mesh->vertices.coord[v*4  ] = newVertices[4*i + 0];
+          mesh->vertices.coord[v*4+1] = newVertices[4*i + 1];
+          mesh->vertices.coord[v*4+2] = newVertices[4*i + 2];
+          delOptions->nodalSizes[v] = newVertices[4*i + 3];
+          v++;
         }
       }
     }
