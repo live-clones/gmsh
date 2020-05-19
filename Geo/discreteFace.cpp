@@ -19,18 +19,6 @@
 #include "MEdge.h"
 #include "GModelParametrize.h"
 
-#define NEW_REPARAM
-
-#if !defined(NEW_REPARAM) && defined(HAVE_HXT)
-extern "C" {
-#include "hxt_mesh.h"
-#include "hxt_tools.h"
-#include "hxt_edge.h"
-#include "hxt_mean_values.h"
-#include "hxt_linear_system.h"
-}
-#endif
-
 discreteFace::param::~param()
 {
   if(oct) delete oct;
@@ -442,59 +430,6 @@ void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
   return;
 }
 
-#if !defined(NEW_REPARAM) && defined(HAVE_HXT)
-
-static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
-                          std::map<MVertex *, uint32_t> &v2c,
-                          std::vector<MVertex *> &c2v)
-{
-  int tag = gf->tag();
-  const std::vector<MTriangle *> &t = gf->triangles;
-
-  HXTMesh *m;
-  HXT_CHECK(hxtMeshCreate(&m));
-  std::set<MVertex *> all;
-  for(size_t i = 0; i < t.size(); i++) {
-    all.insert(t[i]->getVertex(0));
-    all.insert(t[i]->getVertex(1));
-    all.insert(t[i]->getVertex(2));
-  }
-  m->vertices.num = m->vertices.size = all.size();
-  HXT_CHECK(
-    hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
-
-  size_t count = 0;
-  c2v.resize(all.size());
-  for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
-    m->vertices.coord[4 * count + 0] = (*it)->x();
-    m->vertices.coord[4 * count + 1] = (*it)->y();
-    m->vertices.coord[4 * count + 2] = (*it)->z();
-    m->vertices.coord[4 * count + 3] = 0.0;
-    v2c[*it] = count;
-    c2v[count++] = *it;
-  }
-  all.clear();
-
-  m->triangles.num = m->triangles.size = t.size();
-  HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
-                             (m->triangles.num) * 3 * sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedMalloc(&m->triangles.colors,
-                             (m->triangles.num) * sizeof(uint16_t)));
-  for(size_t i = 0; i < t.size(); i++) {
-    m->triangles.node[3 * i + 0] = v2c[t[i]->getVertex(0)];
-    m->triangles.node[3 * i + 1] = v2c[t[i]->getVertex(1)];
-    m->triangles.node[3 * i + 2] = v2c[t[i]->getVertex(2)];
-    m->triangles.colors[i] = tag;
-  }
-
-  m->lines.num = m->lines.size = 0;
-
-  *pm = m;
-  return HXT_STATUS_OK;
-}
-
-#endif
-
 void discreteFace::_debugParametrization(bool uv)
 {
   char tmp[256];
@@ -539,42 +474,8 @@ int discreteFace::createGeometry()
   if(triangles.empty()) return 0;
 
   std::vector<MVertex *> nodes;
-
-#if defined(NEW_REPARAM)
   computeParametrization(triangles, nodes,
                          stl_vertices_uv, stl_vertices_xyz, stl_triangles);
-#elif defined(HAVE_HXT)
-  int n = 1;
-  HXT_CHECK(hxtInitializeLinearSystems(&n, NULL));
-  HXTMesh *m;
-  HXTMeanValues *param;
-  HXTEdges *edges;
-  std::map<MVertex *, uint32_t> nodeIndex;
-  gmsh2hxt(this, &m, nodeIndex, nodes);
-  HXT_CHECK(hxtEdgesCreate(m, &edges));
-  HXT_CHECK(hxtMeanValuesCreate(edges, &param));
-  HXT_CHECK(hxtMeanValuesCompute(param));
-  double *uvc = NULL;
-  int nv, ne;
-  HXT_CHECK(hxtMeanValuesGetData(param, NULL, NULL, &uvc, &nv, &ne, 1));
-  stl_vertices_uv.resize(nv);
-  stl_vertices_xyz.resize(nv);
-  for(int iv = 0; iv < nv; iv++) {
-    stl_vertices_uv[iv] = SPoint2(uvc[2 * iv], uvc[2 * iv + 1]);
-    stl_vertices_xyz[iv] = SPoint3(m->vertices.coord[4 * iv + 0],
-                                   m->vertices.coord[4 * iv + 1],
-                                   m->vertices.coord[4 * iv + 2]);
-  }
-  stl_triangles.resize(3 * ne);
-  for(int ie = 0; ie < ne; ie++) {
-    stl_triangles[3 * ie + 0] = m->triangles.node[3 * ie + 0];
-    stl_triangles[3 * ie + 1] = m->triangles.node[3 * ie + 1];
-    stl_triangles[3 * ie + 2] = m->triangles.node[3 * ie + 2];
-  }
-  HXT_CHECK(hxtMeshDelete(&m));
-  HXT_CHECK(hxtEdgesDelete(&edges));
-  HXT_CHECK(hxtFree(&uvc));
-#endif
 
   if(model()->getCurvatures().size()) {
     stl_curvatures.resize(2 * nodes.size());

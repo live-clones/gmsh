@@ -38,19 +38,6 @@
 #include "linearSystemFull.h"
 #endif
 
-#define NEW_REPARAM
-
-#if !defined(NEW_REPARAM) && defined(HAVE_HXT)
-extern "C" {
-#include "hxt_mesh.h"
-#include "hxt_tools.h"
-#include "hxt_edge.h"
-#include "hxt_curvature.h"
-#include "hxt_linear_system.h"
-#include "hxt_mean_values.h"
-}
-#endif
-
 #if defined(HAVE_MESH)
 
 static GEdge *
@@ -480,75 +467,16 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done classifying surfaces (Wall %gs, CPU %gs)", w2 - w1,
                  t2 - t1);
-
 #else
   Msg::Error("Surface classification requires the mesh module");
 #endif
 }
-
-#if !defined(NEW_REPARAM) && defined(HAVE_HXT)
-
-static HXTStatus gmsh2hxt(int tag, const std::vector<MTriangle *> &t,
-                          HXTMesh **pm, std::map<MVertex *, uint32_t> &v2c,
-                          std::vector<MVertex *> &c2v)
-{
-  HXTMesh *m;
-  HXT_CHECK(hxtMeshCreate(&m));
-  std::set<MVertex *> all;
-  for(std::size_t i = 0; i < t.size(); i++) {
-    all.insert(t[i]->getVertex(0));
-    all.insert(t[i]->getVertex(1));
-    all.insert(t[i]->getVertex(2));
-  }
-  m->vertices.num = m->vertices.size = all.size();
-  HXT_CHECK(
-    hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
-
-  std::size_t count = 0;
-  c2v.resize(all.size());
-  for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
-    m->vertices.coord[4 * count + 0] = (*it)->x();
-    m->vertices.coord[4 * count + 1] = (*it)->y();
-    m->vertices.coord[4 * count + 2] = (*it)->z();
-    m->vertices.coord[4 * count + 3] = 0.0;
-    v2c[*it] = count;
-    c2v[count++] = *it;
-  }
-  all.clear();
-
-  m->triangles.num = m->triangles.size = t.size();
-  HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
-                             (m->triangles.num) * 3 * sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedMalloc(&m->triangles.colors,
-                             (m->triangles.num) * sizeof(uint16_t)));
-  for(std::size_t i = 0; i < t.size(); i++) {
-    m->triangles.node[3 * i + 0] = v2c[t[i]->getVertex(0)];
-    m->triangles.node[3 * i + 1] = v2c[t[i]->getVertex(1)];
-    m->triangles.node[3 * i + 2] = v2c[t[i]->getVertex(2)];
-    m->triangles.colors[i] = tag;
-  }
-
-  m->lines.num = m->lines.size = 0;
-
-  *pm = m;
-  return HXT_STATUS_OK;
-}
-
-static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
-                          std::map<MVertex *, uint32_t> &v2c,
-                          std::vector<MVertex *> &c2v)
-{
-  return gmsh2hxt(gf->tag(), gf->triangles, pm, v2c, c2v);
-}
-
-#endif
 
 int computeDiscreteCurvatures(GModel *gm)
 {
   std::map<MVertex *, std::pair<SVector3, SVector3> > &C = gm->getCurvatures();
   C.clear();
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-#if defined(NEW_REPARAM)
     GFace *gf = *it;
     std::map<MVertex *, int> nodeIndex;
     std::vector<SPoint3> nodes;
@@ -574,102 +502,6 @@ int computeDiscreteCurvatures(GModel *gm)
         itv != nodeIndex.end(); itv++) {
       C[itv->first] = curv[itv->second];
     }
-#elif defined(HAVE_HXT)
-    HXTMesh *m;
-    HXTEdges *edges;
-    double *nodalCurvatures;
-    double *crossField;
-    std::map<MVertex *, uint32_t> v2c;
-    std::vector<MVertex *> c2v;
-    gmsh2hxt(*it, &m, v2c, c2v);
-    HXT_CHECK(hxtEdgesCreate(m, &edges));
-    HXT_CHECK(
-      hxtCurvatureRusinkiewicz(m, &nodalCurvatures, &crossField, edges, false));
-    const double ratioMax = 1.3;
-    const bool debug = false;
-    if(debug) {
-      char name[256];
-      sprintf(name, "nodalCurvatures%d.pos", (*it)->tag());
-      saveNodalField(m, nodalCurvatures, 6, name);
-    }
-    while(0) {
-      int touched = 0;
-      for(std::size_t i = 0; i < m->triangles.num; i++) {
-        for(int j = 0; j < 3; j++) {
-          uint32_t v0 = m->triangles.node[3 * i + (j + 0) % 3];
-          uint32_t v1 = m->triangles.node[3 * i + (j + 1) % 3];
-          double *c0 = &nodalCurvatures[6 * v0];
-          double *c1 = &nodalCurvatures[6 * v1];
-          SVector3 cMax0(c0[0], c0[1], c0[2]);
-          SVector3 cMin0(c0[3], c0[4], c0[5]);
-          SVector3 cMax1(c1[0], c1[1], c1[2]);
-          SVector3 cMin1(c1[3], c1[4], c1[5]);
-          SPoint3 p0(m->vertices.coord[4 * v0 + 0],
-                     m->vertices.coord[4 * v0 + 1],
-                     m->vertices.coord[4 * v0 + 2]);
-          SPoint3 p1(m->vertices.coord[4 * v1 + 0],
-                     m->vertices.coord[4 * v1 + 1],
-                     m->vertices.coord[4 * v1 + 2]);
-          double d01 = p0.distance(p1);
-          double M0 = cMax0.norm();
-          double M1 = cMax1.norm();
-          // change M0
-          if(d01 > 0 && M0 > 0 && M1 > 0 && M0 > M1) {
-            // the largest size is at node 0
-            double size0 = 2 * M_PI * M0 / (15);
-            double size1 = 2 * M_PI * M1 / (15);
-            double gradSize = (size0 - size1) / d01;
-            if(gradSize > ratioMax) {
-              touched++;
-              size0 = size1 - ratioMax * d01;
-              M0 = size0 * 15 / (2 * M_PI);
-              cMax0.normalize();
-              cMax0 *= M0;
-              nodalCurvatures[6 * v0 + 0] = cMax0.x();
-              nodalCurvatures[6 * v0 + 1] = cMax0.y();
-              nodalCurvatures[6 * v0 + 2] = cMax0.z();
-            }
-          }
-          else if(d01 > 0 && M0 > 0 && M1 > 0 && M1 > M0) {
-            // the largest size is at node 0
-            double size0 = 2 * M_PI * M0 / (15);
-            double size1 = 2 * M_PI * M1 / (15);
-            double gradSize = (size1 - size0) / d01;
-            if(gradSize > ratioMax) {
-              touched++;
-              size1 = size0 - ratioMax * d01;
-              M1 = size1 * 15 / (2 * M_PI);
-              cMax1.normalize();
-              cMax1 *= M0;
-              nodalCurvatures[6 * v1 + 0] = cMax0.x();
-              nodalCurvatures[6 * v1 + 1] = cMax0.y();
-              nodalCurvatures[6 * v1 + 2] = cMax0.z();
-            }
-          }
-        }
-      }
-      if(!touched) break;
-    }
-
-    if(debug) {
-      char name[256];
-      sprintf(name, "nodalCurvaturesCorrected%d.pos", (*it)->tag());
-      saveNodalField(m, nodalCurvatures, 6, name);
-    }
-
-    for(std::size_t i = 0; i < m->vertices.num; i++) {
-      MVertex *v = c2v[i];
-      double *c = &nodalCurvatures[6 * i];
-      SVector3 cMax(c[0], c[1], c[2]);
-      SVector3 cMin(c[3], c[4], c[5]);
-      std::pair<SVector3, SVector3> out = std::make_pair(cMax, cMin);
-      C.insert(std::make_pair(v, out));
-    }
-    HXT_CHECK(hxtEdgesDelete(&edges));
-    HXT_CHECK(hxtFree(&nodalCurvatures));
-    HXT_CHECK(hxtFree(&crossField));
-    HXT_CHECK(hxtMeshDelete(&m));
-#endif
   }
   return 0;
 }
@@ -933,14 +765,13 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
     return 2;
   }
 
-  double poincare =
+  std::size_t poincare =
     t.size() - (2 * (v.size() - 1) - bnd.size() + 2 * (vs.size() - 1));
   if(poincare != 0) {
     why << "poincare characteristic " << poincare << " is not 0";
     return 2;
   }
 
-#if defined(NEW_REPARAM)
   std::vector<MVertex *> nodes;
   std::vector<SPoint2> stl_nodes_uv;
   std::vector<SPoint3> stl_nodes_xyz;
@@ -959,41 +790,6 @@ int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
       return 2;
     }
   }
-#elif defined(HAVE_HXT)
-  int n = 1;
-  HXT_CHECK(hxtInitializeLinearSystems(&n, NULL));
-  HXTMesh *m;
-  HXTMeanValues *param;
-  HXTEdges *edges;
-  std::map<MVertex *, uint32_t> v2c;
-  std::vector<MVertex *> c2v;
-  gmsh2hxt(1, t, &m, v2c, c2v);
-  HXT_CHECK(hxtEdgesCreate(m, &edges));
-  HXT_CHECK(hxtMeanValuesCreate(edges, &param));
-  HXT_CHECK(hxtMeanValuesCompute(param));
-  double *uvc = NULL;
-  int nv, ne;
-  HXT_CHECK(hxtMeanValuesGetData(param, NULL, NULL, &uvc, &nv, &ne, 1));
-  for(int ie = 0; ie < ne; ie++) {
-    double u0 = uvc[2 * m->triangles.node[3 * ie + 0] + 0];
-    double v0 = uvc[2 * m->triangles.node[3 * ie + 0] + 1];
-    double u1 = uvc[2 * m->triangles.node[3 * ie + 1] + 0];
-    double v1 = uvc[2 * m->triangles.node[3 * ie + 1] + 1];
-    double u2 = uvc[2 * m->triangles.node[3 * ie + 2] + 0];
-    double v2 = uvc[2 * m->triangles.node[3 * ie + 2] + 1];
-    double det = fabs((u1 - u0) * (v2 - v0) - (v1 - v0) * (u2 - u0));
-    if(det < 1.e-8) {
-      HXT_CHECK(hxtMeshDelete(&m));
-      HXT_CHECK(hxtEdgesDelete(&edges));
-      HXT_CHECK(hxtFree(&uvc));
-      why << "parametrized triangles are too small (" << det << ")";
-      return 2;
-    }
-  }
-  HXT_CHECK(hxtMeshDelete(&m));
-  HXT_CHECK(hxtEdgesDelete(&edges));
-  HXT_CHECK(hxtFree(&uvc));
-#endif
   return 1;
 }
 
@@ -1099,7 +895,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                   "parts because %s",
                   level, (*it)->triangles.size(), np, why.str().c_str());
       }
-      else if(np < 0) { // HXT_STATUS_ERROR are < 0
+      else if(np < 0) {
         Msg::Error("Could not create parametrization (check orientation of "
                    "input triangulations)");
         break;
