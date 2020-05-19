@@ -658,9 +658,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;
       opt << "kway";
       break;
-    default:
-      opt << "default";
-      break;
+    default: opt << "default"; break;
     }
 
     opt << ", ufactor:";
@@ -683,9 +681,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_SHEM;
       opt << "shem";
       break;
-    default:
-      opt << "default";
-      break;
+    default: opt << "default"; break;
     }
 
     opt << ", rtype:";
@@ -706,9 +702,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_SEP1SIDED;
       opt << "sep1sided";
       break;
-    default:
-      opt << "default";
-      break;
+    default: opt << "default"; break;
     }
 
     opt << ", objtype:";
@@ -721,9 +715,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_VOL;
       opt << "vol";
       break;
-    default:
-      opt << "default";
-      break;
+    default: opt << "default"; break;
     }
 
     opt << ", minconn:";
@@ -736,13 +728,10 @@ static int PartitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_MINCONN] = 1;
       opt << 1;
       break;
-    default:
-      opt << "default";
-      break;
+    default: opt << "default"; break;
     }
 
-    if(verbose)
-      Msg::Info("Running METIS with %s", opt.str().c_str());
+    if(verbose) Msg::Info("Running METIS with %s", opt.str().c_str());
 
     // C numbering
     metisOptions[METIS_OPTION_NUMBERING] = 0;
@@ -797,8 +786,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
       }
     }
     graph.partition(epart);
-    if(verbose)
-      Msg::Info("%d partitions, %d total edge-cuts", numPart, objval);
+    if(verbose) Msg::Info("%d partitions, %d total edge-cuts", numPart, objval);
   } catch(...) {
     Msg::Error("METIS exception");
     return 2;
@@ -1610,9 +1598,10 @@ static partitionFace *assignPartitionBoundary(
 {
   partitionFace *newEntity = 0;
   partitionFace pf(model, partitions);
-  std::pair<
-    std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan>::iterator,
-    std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan>::iterator>
+  std::pair<std::multimap<partitionFace *, GEntity *,
+                          partitionFacePtrLessThan>::iterator,
+            std::multimap<partitionFace *, GEntity *,
+                          partitionFacePtrLessThan>::iterator>
     ret = pfaces.equal_range(&pf);
 
   partitionFace *ppf =
@@ -1678,9 +1667,10 @@ static partitionEdge *assignPartitionBoundary(
 {
   partitionEdge *newEntity = 0;
   partitionEdge pe(model, partitions);
-  std::pair<
-    std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan>::iterator,
-    std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan>::iterator>
+  std::pair<std::multimap<partitionEdge *, GEntity *,
+                          partitionEdgePtrLessThan>::iterator,
+            std::multimap<partitionEdge *, GEntity *,
+                          partitionEdgePtrLessThan>::iterator>
     ret = pedges.equal_range(&pe);
 
   partitionEdge *ppe =
@@ -1719,14 +1709,16 @@ static partitionEdge *assignPartitionBoundary(
 static partitionVertex *assignPartitionBoundary(
   GModel *const model, MVertex *ve, MElement *reference,
   const std::vector<unsigned int> &partitions,
-  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan> &pvertices,
+  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>
+    &pvertices,
   hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionVertex *newEntity = 0;
   partitionVertex pv(model, partitions);
-  std::pair<
-    std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>::iterator,
-    std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>::iterator>
+  std::pair<std::multimap<partitionVertex *, GEntity *,
+                          partitionVertexPtrLessThan>::iterator,
+            std::multimap<partitionVertex *, GEntity *,
+                          partitionVertexPtrLessThan>::iterator>
     ret = pvertices.equal_range(&pv);
 
   partitionVertex *ppv =
@@ -1899,7 +1891,8 @@ static void CreatePartitionTopology(
 
   std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan> pfaces;
   std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan> pedges;
-  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan> pvertices;
+  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>
+    pvertices;
 
   hashmapface faceToElement;
   hashmapedge edgeToElement;
@@ -2303,42 +2296,44 @@ static void AssignPhysicals(GModel *model)
   }
 }
 
-bool cmp_hedges(const std::pair<MEdge,size_t> &he0, const std::pair<MEdge,size_t> &he1) {
+bool cmp_hedges(const std::pair<MEdge, size_t> &he0,
+                const std::pair<MEdge, size_t> &he1)
+{
   MEdgeLessThan cmp;
-  return cmp(he0.first,he1.first);
+  return cmp(he0.first, he1.first);
 }
 
-int PartitionFaceMinEdgeLength(GFace *gf, int np, int *p, double tol)
+int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
 {
-  std::vector<std::pair<MEdge,size_t> > halfEdges;
-  halfEdges.reserve(gf->triangles.size()*3);
+  std::vector<std::pair<MEdge, size_t> > halfEdges;
+  halfEdges.reserve(gf->triangles.size() * 3);
   for(size_t i = 0; i < gf->triangles.size(); ++i) {
     for(size_t j = 0; j < 3; ++j) {
-      halfEdges.push_back(std::make_pair(gf->triangles[i]->getEdge(j),i));
+      halfEdges.push_back(std::make_pair(gf->triangles[i]->getEdge(j), i));
     }
   }
-  std::sort(halfEdges.begin(),halfEdges.end(),cmp_hedges);
-  std::vector<idx_t> neighbors(gf->triangles.size()*3,-1);
-  std::vector<double> neighborsWeight(gf->triangles.size()*3,-1);
+  std::sort(halfEdges.begin(), halfEdges.end(), cmp_hedges);
+  std::vector<idx_t> neighbors(gf->triangles.size() * 3, -1);
+  std::vector<double> neighborsWeight(gf->triangles.size() * 3, -1);
   MEdgeEqual eq;
   double minEdgeLength = std::numeric_limits<double>::max();
-  for (size_t i = 0; i+1 < halfEdges.size(); ++i) {
-    if (eq(halfEdges[i].first,halfEdges[i+1].first)) {
+  for(size_t i = 0; i + 1 < halfEdges.size(); ++i) {
+    if(eq(halfEdges[i].first, halfEdges[i + 1].first)) {
       size_t t0 = halfEdges[i].second;
-      size_t t1 = halfEdges[i+1].second;
+      size_t t1 = halfEdges[i + 1].second;
       double l = halfEdges[i].first.length();
-      minEdgeLength = std::min(l,minEdgeLength);
-      for (int j = 0; j < 3; ++j) {
-        if (neighbors[t0*3+j] == -1) {
-          neighbors[t0*3+j] = t1;
-          neighborsWeight[t0*3+j] = l;
+      minEdgeLength = std::min(l, minEdgeLength);
+      for(int j = 0; j < 3; ++j) {
+        if(neighbors[t0 * 3 + j] == -1) {
+          neighbors[t0 * 3 + j] = t1;
+          neighborsWeight[t0 * 3 + j] = l;
           break;
         }
       }
-      for (int j = 0; j < 3; ++j) {
-        if (neighbors[t1*3+j] == -1) {
-          neighbors[t1*3+j] = t0;
-          neighborsWeight[t1*3+j] = l;
+      for(int j = 0; j < 3; ++j) {
+        if(neighbors[t1 * 3 + j] == -1) {
+          neighbors[t1 * 3 + j] = t0;
+          neighborsWeight[t1 * 3 + j] = l;
           break;
         }
       }
@@ -2349,48 +2344,24 @@ int PartitionFaceMinEdgeLength(GFace *gf, int np, int *p, double tol)
   std::vector<idx_t> xadjncy;
   std::vector<idx_t> adjncyw;
   xadjncy.push_back(0);
-  for (size_t i=0; i< gf->triangles.size(); ++i) {
-    for (size_t j=0; j<3; ++j) {
-      if (neighbors[i*3+j] == -1) break;
-      adjncy.push_back(neighbors[i*3+j]);
-      adjncyw.push_back((idx_t)(neighborsWeight[i*3+j]/minEdgeLength*10));
+  for(size_t i = 0; i < gf->triangles.size(); ++i) {
+    for(size_t j = 0; j < 3; ++j) {
+      if(neighbors[i * 3 + j] == -1) break;
+      adjncy.push_back(neighbors[i * 3 + j]);
+      adjncyw.push_back(
+        (idx_t)(neighborsWeight[i * 3 + j] / minEdgeLength * 10));
     }
     xadjncy.push_back(adjncy.size());
   }
   idx_t nvtxs = gf->triangles.size(), ncon = 1, nparts = np, objval;
-  std::vector<idx_t>epart(gf->triangles.size());
+  std::vector<idx_t> epart(gf->triangles.size());
   real_t ubvec = tol;
-  METIS_PartGraphKway(
-      &nvtxs, &ncon, &xadjncy[0],
-      &adjncy[0], NULL, NULL, &adjncyw[0],
-      &nparts, NULL, &ubvec, NULL, &objval,
-      &epart[0]);
-  for (size_t i=0; i< gf->triangles.size(); ++i) {
-    gf->triangles[i]->setPartition(epart[i]);
-    if(p)
-      p[i] = epart[i];
-  }
-  return 0;
-}
-
-int PartitionFace(GFace *gf, int np, int *p)
-{
-  GModel m;
-  m.add(gf);
+  METIS_PartGraphKway(&nvtxs, &ncon, &xadjncy[0], &adjncy[0], NULL, NULL,
+                      &adjncyw[0], &nparts, NULL, &ubvec, NULL, &objval,
+                      &epart[0]);
   for(size_t i = 0; i < gf->triangles.size(); ++i) {
-    for(size_t j = 0; j < 3; ++j) {
-      int n = gf->triangles[i]->getVertex(j)->getNum();
-      if(n > (int)m.getMaxVertexNumber()) m.setMaxVertexNumber(n);
-    }
+    gf->triangles[i]->setPartition(epart[i]);
   }
-  Graph graph(&m);
-  if(MakeGraph(&m, graph, -1)) return 1;
-  graph.nparts(np);
-  if(PartitionGraph(graph, false)) return 1;
-  m.remove(gf);
-  //  for (size_t i=0;i<graph.ne();++i)p[i]=graph.partition(i);
-  for(unsigned int i = 0; i < graph.ne(); i++)
-    graph.element(i)->setPartition(graph.partition(i));
   return 0;
 }
 
@@ -2438,8 +2409,8 @@ int PartitionMesh(GModel *const model)
   elmToPartition.clear();
 
   double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done partitioning mesh (Wall %gs, CPU %gs)",
-                 w2 - w1, t2 - t1);
+  Msg::StatusBar(true, "Done partitioning mesh (Wall %gs, CPU %gs)", w2 - w1,
+                 t2 - t1);
 
   for(std::size_t i = 0; i < TYPE_MAX_NUM + 1; i++) {
     std::vector<int> &count = elmCount[i];
@@ -2452,8 +2423,8 @@ int PartitionMesh(GModel *const model)
       totCount += count[j];
     }
     if(totCount > 0) {
-      Msg::Info(" - Repartition of %d %s: %d(min) %d(max) %g(avg)",
-                totCount, ElementType::nameOfParentType(i, totCount > 1).c_str(),
+      Msg::Info(" - Repartition of %d %s: %d(min) %d(max) %g(avg)", totCount,
+                ElementType::nameOfParentType(i, totCount > 1).c_str(),
                 minCount, maxCount,
                 totCount / (double)CTX::instance()->mesh.numPartitions);
     }

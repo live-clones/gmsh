@@ -1070,7 +1070,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
     int part = 0;
     if((*it)->triangles.empty()) continue;
     std::vector<MVertex *> verts = (*it)->mesh_vertices;
-    std::map<MTriangle *, int> global;
+    std::map<MTriangle *, int, MElementPtrLessThan> global;
     std::map<MEdge, int, MEdgeLessThan> cuts;
     std::stack<std::vector<MTriangle *> > partitions;
     std::stack<int> _levels;
@@ -1111,17 +1111,20 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
       }
       else {
 #if defined(HAVE_MESH)
-        int *p = new int[(*it)->triangles.size()];
-        if(!PartitionFaceMinEdgeLength(*it, np, p)) {
-        //if(!PartitionFace(*it, np, p)) {
-          std::vector<MTriangle *> t[1000];
-          for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
-            t[(*it)->triangles[i]->getPartition()].push_back(
-              (*it)->triangles[i]);
-          for(int i = 0; i < np; i++) {
+        if(!PartitionFaceMinEdgeLength(*it, np)) {
+          std::vector<std::vector<MTriangle *> > t(np);
+          for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
+            int p = (*it)->triangles[i]->getPartition();
+            if(p >= 0 && p < np)
+              t[p].push_back((*it)->triangles[i]);
+            else
+              Msg::Error("Invalid partition index");
+          }
+          for(std::size_t i = 0; i < t.size(); i++) {
             std::vector<std::vector<MTriangle *> > ts;
             if(!makePartitionSimplyConnected(t[i], ts)) {
-              break; // FIXME
+              Msg::Warning("Could not make partition simply connected");
+              break;
             }
             for(std::size_t j = 0; j < ts.size(); j++) {
               _levels.push(level + 1);
@@ -1129,15 +1132,14 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
             }
           }
         }
-        delete[] p;
 #else
         Msg::Error("Partitioning surface requires Mesh module");
 #endif
       }
     }
     (*it)->triangles.clear();
-    std::map<MTriangle *, int>::iterator it2 = global.begin();
-    for(; it2 != global.end(); ++it2) {
+    for(std::map<MTriangle *, int, MElementPtrLessThan>::iterator it2 =
+          global.begin(); it2 != global.end(); ++it2) {
       MTriangle *t = it2->first;
       (*it)->triangles.push_back(t);
       for(int i = 0; i < 3; i++) {
