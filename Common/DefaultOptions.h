@@ -956,7 +956,6 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ReparamOnFaceRobust" , opt_geometry_reparam_on_face_robust, 0 ,
     "Use projection for reparametrization of a point classified on GEdge on a GFace" },
 
-
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 ,
     "Global geometry scaling factor" },
   { F|O, "OrientedPhysicals" , opt_geometry_oriented_physicals, 1. ,
@@ -1226,6 +1225,9 @@ StringXNumber MeshOptions_Number[] = {
     "referencing new partitioned entities, except on partition boundaries), "
     "for backward compatibility" },
 
+  { F|O, "ReparamMaxTriangles" , opt_mesh_reparam_max_triangles , 250000 ,
+    "Maximum number of triangles in a single parametrization patch" },
+
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. ,
     "Number of hexahedra in the current mesh (read-only)" },
   { F, "NbNodes" , opt_mesh_nb_nodes , 0. ,
@@ -1301,6 +1303,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
+  { F|O, "IgnoreParametrization" , opt_mesh_ignore_parametrization, 0. ,
+    "Skip parametrization section when reading meshes in the MSH4 format." },
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 1. ,
     "Skip periodic node section and skip periodic boundary alignement step when "
     "reading meshes in the MSH2 format." },

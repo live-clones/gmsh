@@ -36,10 +36,10 @@ struct contextMeshOptions {
   int hoDistCAD;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
-  int ignorePeriodicity, boundaryLayerFanPoints;
+  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
-  int renumber, compoundClassify;
+  int renumber, compoundClassify, reparamMaxTriangles;
   double compoundLcFactor;
   unsigned int randomSeed;
   // mesh IO

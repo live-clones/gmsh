@@ -1192,6 +1192,8 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
 
 static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 {
+  if(CTX::instance()->mesh.ignoreParametrizationMsh4) return true;
+
   std::size_t nParamE, nParamF;
 
   if(binary){

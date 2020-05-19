@@ -69,15 +69,13 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
                          std::vector<std::vector<MVertex *> > &vs)
 {
   if(e.empty()) return true;
-  std::map<MVertex *, std::pair<MVertex *, MVertex *> > c;
+  std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan> c;
 
   for(size_t i = 0; i < e.size(); i++) {
     MVertex *v0 = e[i].getVertex(0);
     MVertex *v1 = e[i].getVertex(1);
-    std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it0 =
-      c.find(v0);
-    std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it1 =
-      c.find(v1);
+    std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan>
+      ::iterator it0 = c.find(v0), it1 = c.find(v1);
     if(it0 == c.end())
       c[v0] = std::make_pair(v1, (MVertex *)NULL);
     else {
@@ -105,8 +103,8 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
     std::vector<MVertex *> v;
     MVertex *start = NULL;
     {
-      std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it =
-        c.begin();
+      std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan>
+        ::iterator it = c.begin();
       start = it->first;
       for(; it != c.end(); ++it) {
         if(it->second.second == NULL) {
@@ -116,8 +114,8 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       }
     }
 
-    std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator its =
-      c.find(start);
+    std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan >
+      ::iterator its = c.find(start);
 
     MVertex *prev =
       (its->second.second == start) ? its->second.first : its->second.second;
@@ -129,8 +127,8 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
         return false;
       }
       v.push_back(current);
-      std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it =
-        c.find(current);
+      std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan>
+        ::iterator it = c.find(current);
       if(it == c.end() || it->first == NULL) {
         Msg::Error("Impossible to find %d", current->getNum());
         return false;

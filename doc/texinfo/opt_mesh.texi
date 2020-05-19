@@ -446,6 +446,11 @@ Write partitioned meshes in MSH2 format using old style (i.e. by not referencing
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.ReparamMaxTriangles
+Maximum number of triangles in a single parametrization patch@*
+Default value: @code{250000}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.NbHexahedra
 Number of hexahedra in the current mesh (read-only)@*
 Default value: @code{0}@*
@@ -606,6 +611,11 @@ Preserve element numbering in MSH2 format (will break meshes with multiple physi
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.IgnoreParametrization
+Skip parametrization section when reading meshes in the MSH4 format.@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.IgnorePeriodicity
 Skip periodic node section and skip periodic boundary alignement step when reading meshes in the MSH2 format.@*
 Default value: @code{1}@*
@@ -652,7 +662,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveAll
-Save all elements, even if they don't belong to physical groups@*
+Save all elements, even if they don't belong to physical groups (for some mesh formats, this removes physical groups altogether)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
