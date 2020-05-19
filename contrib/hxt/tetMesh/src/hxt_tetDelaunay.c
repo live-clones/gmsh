@@ -1237,11 +1237,17 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
 
   HXT_CHECK( walking2Cavity(mesh, &local->partition, curTet, vta) );
 
+  const uint16_t color = mesh->tetrahedra.colors[*curTet];
+
+  /* if color==UINT16_MAX, the inserted point is not in any defined volume.
+   * other than in a perfectDelaunay context, I don't see why anybody would
+   * want such insertion. */
+  HXT_ASSERT(perfectlyDelaunay || color!=UINT16_MAX);
+
   if(nodalSizes!=NULL && filterTet(mesh, nodalSizes, *curTet, vta)){
     return HXT_STATUS_FALSE;
   }
 
-  const uint16_t color = mesh->tetrahedra.colors[*curTet];
   int edgeConstraint = 0;
   HXTStatus status = diggingACavity(mesh, local, *curTet, vta, &edgeConstraint);
 
