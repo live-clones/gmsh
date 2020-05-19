@@ -22,7 +22,9 @@ gmsh.merge(os.path.join(path, '..', 't13_data.stl'))
 # We first classify ("color") the surfaces by splitting the original surface
 # along sharp geometrical features. This will create new discrete surfaces,
 # curves and points.
-angle = 40  # Angle for surface detection
+
+# Angle between two triangles above which an edge is considered as sharp:
+angle = 40
 
 # For complex geometries, patches can be too complex, too elongated or too large
 # to be parametrized; setting the following option will force the creation of
