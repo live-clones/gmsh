@@ -42,23 +42,30 @@ static HXTStatus messageCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-static double meshSizeCallBack(double x, double y, double z, void *userData)
+static HXTStatus meshSizeCallBack(double* pts, size_t numPts, void *userData)
 {
   GRegion *gr = (GRegion *)userData;
-  double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0, x, y, z);
-  if(lc == MAX_LC && CTX::instance()->mesh.lcExtendFromBoundary) {
-    // let hxt compute the mesh size from the boundary mesh size
-    lc = 0.;
+
+  for(size_t i=0; i<numPts; i++) {
+    double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0,
+                                           pts[4 * i + 0],
+                                           pts[4 * i + 1],
+                                           pts[4 * i + 2]);
+    if(lc != MAX_LC || !CTX::instance()->mesh.lcExtendFromBoundary) {
+      // constrain by global lcMin and lcMax
+      lc = std::max(lc, CTX::instance()->mesh.lcMin);
+      lc = std::min(lc, CTX::instance()->mesh.lcMax);
+      // apply global scaling
+      if(gr->getMeshSizeFactor() != 1.0) lc *= gr->getMeshSizeFactor();
+        lc *= CTX::instance()->mesh.lcFactor;
+
+      // if(lc > 0.0)
+      pts[4 * i + 3] = lc;
+    }
+    // else pts[4 * i + 3] already contains the size computed by HXT
   }
-  else {
-    // constrain by global lcMin and lcMax
-    lc = std::max(lc, CTX::instance()->mesh.lcMin);
-    lc = std::min(lc, CTX::instance()->mesh.lcMax);
-    // apply global scaling
-    if(gr->getMeshSizeFactor() != 1.0) lc *= gr->getMeshSizeFactor();
-    lc *= CTX::instance()->mesh.lcFactor;
-  }
-  return lc;
+  
+  return HXT_STATUS_OK;
 }
 
 static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,

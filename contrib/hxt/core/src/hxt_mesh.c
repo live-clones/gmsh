@@ -132,7 +132,6 @@ static HXTStatus ReadMeshFormatFromGmsh(FILE *fp)
   int found = 0;
   while(fgets(buf, BUFSIZ, fp )){    
     if(strstr(buf, "$MeshFormat")){
-      printf("header found\n");
       if(fgets(buf, BUFSIZ, fp )==NULL)
         return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to format");
       float version;
