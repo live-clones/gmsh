@@ -19,10 +19,14 @@ HXTStatus hxtComputeNodalSizeFromFunction(HXTMesh* mesh, double* nodalSizes,
                                                                    void* meshSizeData),
                                           void* meshSizeData)
 {
+  #pragma omp parallel for
+  for (uint32_t i = 0; i<mesh->vertices.num; i++){
+    mesh->vertices.coord[4 * i + 3] = -DBL_MAX;
+  }
+
   HXT_CHECK( meshSizeFun(mesh->vertices.coord, mesh->vertices.num, meshSizeData) );
 
   int failed = 0;
-
   #pragma omp parallel for reduction(||:failed)
   for (uint32_t i=0; i<mesh->vertices.num; i++) {
     if(mesh->vertices.coord[4 * i + 3] <= 0.)
