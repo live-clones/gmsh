@@ -6,7 +6,6 @@
 // Contributed by Anthony Royer.
 
 // FIXME: The partitioning code should be updated to
-// - make it deterministic!
 // - use int for partition tags (to match the type for other entities in Gmsh)
 // - use size_t for element/node tags, and thus the graph
 
@@ -24,23 +23,26 @@
 #include "GModel.h"
 #include "ElementType.h"
 
-struct OriGEntityPtrLessThan {
+struct OriGEntityPtrFullLessThan {
   bool operator()(const std::pair<int, GEntity *> &p1,
                   const std::pair<int, GEntity *> &p2) const
   {
-    return (p1.first < p2.first) ||
-           (!(p2.first < p1.first) && p1.second->tag() < p2.second->tag());
+    if(p1.first != p2.first)
+      return p1.first < p2.first;
+    if(p1.second->dim() != p2.second->dim())
+      return p1.second->dim() < p2.second->dim();
+    return p1.second->tag() < p2.second->tag();
   }
 };
 
-typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrLessThan> setorientity;
+typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrFullLessThan> setorientity;
 
 // TODO C++11 remove this nasty stuff
 #if __cplusplus >= 201103L
 #include <unordered_map>
 #define hashmap std::unordered_map
 #define hashmapentity                                                          \
-  std::unordered_map<GEntity *, setorientity, GEntityPtrHash, GEntityPtrEqual>
+  std::unordered_map<GEntity *, setorientity, GEntityPtrFullHash, GEntityPtrFullEqual>
 #define hashmapelement                                                         \
   std::unordered_map<MElement *, GEntity *, MElementPtrHash, MElementPtrEqual>
 #define hashmapelementpart                                                     \
@@ -61,7 +63,7 @@ typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrLessThan> setorientity;
     MVertexPtrHash, MVertexPtrEqual>
 #else
 #define hashmap std::map
-#define hashmapentity std::map<GEntity *, setorientity, GEntityPtrLessThan>
+#define hashmapentity std::map<GEntity *, setorientity, GEntityPtrFullLessThan>
 #define hashmapelement std::map<MElement *, GEntity *, MElementPtrLessThan>
 #define hashmapelementpart                                                     \
   std::map<MElement *, unsigned int, MElementPtrLessThan>
@@ -1804,14 +1806,14 @@ static int computeOrientation(MElement *reference, MElement *element)
 }
 
 static void assignBrep(GModel *const model,
-                       std::map<GEntity *, MElement *, GEntityPtrLessThan>
+                       std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
                          &boundaryEntityAndRefElement,
                        GEntity *e)
 {
   if(e->dim() == 2) {
     partitionFace *entity = static_cast<partitionFace *>(e);
 
-    for(std::map<GEntity *, MElement *, GEntityPtrLessThan>::iterator it =
+    for(std::map<GEntity *, MElement *, GEntityPtrFullLessThan>::iterator it =
           boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
       static_cast<GRegion *>(it->first)->setFace(
@@ -1822,7 +1824,7 @@ static void assignBrep(GModel *const model,
   else if(e->dim() == 1) {
     partitionEdge *entity = static_cast<partitionEdge *>(e);
 
-    for(std::map<GEntity *, MElement *, GEntityPtrLessThan>::iterator it =
+    for(std::map<GEntity *, MElement *, GEntityPtrFullLessThan>::iterator it =
           boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
       static_cast<GFace *>(it->first)->setEdge(
@@ -1833,7 +1835,7 @@ static void assignBrep(GModel *const model,
   else if(e->dim() == 0) {
     partitionVertex *entity = static_cast<partitionVertex *>(e);
 
-    for(std::map<GEntity *, MElement *, GEntityPtrLessThan>::iterator it =
+    for(std::map<GEntity *, MElement *, GEntityPtrFullLessThan>::iterator it =
           boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
       static_cast<GEdge *>(it->first)->setVertex(
@@ -1853,6 +1855,10 @@ void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
       if(current->getDim() == graph.element(graph.adjncy(j))->getDim() + 1) {
         GEntity *g1 = elementToEntity[current];
         GEntity *g2 = elementToEntity[graph.element(graph.adjncy(j))];
+        if(!g1 || !g2){
+          printf("AAAAAAAAAAAAAAAA\n");
+          continue;
+        }
         if(brepWithoutOri.find(std::pair<GEntity *, GEntity *>(g1, g2)) ==
            brepWithoutOri.end()) {
           const int ori =
@@ -1954,7 +1960,7 @@ static void CreatePartitionTopology(
         assignPartitionBoundary(model, f, reference, partitions, pfaces,
                                 elementToEntity, numFaceEntity);
       if(pf) {
-        std::map<GEntity *, MElement *, GEntityPtrLessThan>
+        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
           boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++)
           boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
@@ -2050,7 +2056,7 @@ static void CreatePartitionTopology(
         assignPartitionBoundary(model, e, reference, partitions, pedges,
                                 elementToEntity, numEdgeEntity);
       if(pe) {
-        std::map<GEntity *, MElement *, GEntityPtrLessThan>
+        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
           boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++) {
           boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
@@ -2140,7 +2146,7 @@ static void CreatePartitionTopology(
         assignPartitionBoundary(model, v, reference, partitions, pvertices,
                                 elementToEntity, numVertexEntity);
       if(pv) {
-        std::map<GEntity *, MElement *, GEntityPtrLessThan>
+        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
           boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++)
           boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(

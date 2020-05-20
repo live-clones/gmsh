@@ -1569,7 +1569,7 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
 static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
                               bool binary, double scalingFactor, double version)
 {
-  std::set<GEntity *, GEntityPtrLessThan> ghost;
+  std::set<GEntity *, GEntityPtrFullLessThan> ghost;
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
@@ -1629,7 +1629,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         tags.resize(2 * ghostSize);
         int index = 0;
-        for(std::set<GEntity *, GEntityPtrLessThan>::iterator it = ghost.begin();
+        for(std::set<GEntity *, GEntityPtrFullLessThan>::iterator it = ghost.begin();
             it != ghost.end(); ++it) {
           if((*it)->geomType() == GEntity::GhostCurve) {
             tags[index] = (*it)->tag();
@@ -1818,7 +1818,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         tags.resize(2 * ghostSize);
         int index = 0;
-        for(std::set<GEntity *, GEntityPtrLessThan>::iterator it = ghost.begin();
+        for(std::set<GEntity *, GEntityPtrFullLessThan>::iterator it = ghost.begin();
             it != ghost.end(); ++it) {
           if((*it)->geomType() == GEntity::GhostCurve) {
             tags[index] = (*it)->tag();
