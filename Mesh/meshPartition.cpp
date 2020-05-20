@@ -1855,10 +1855,6 @@ void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
       if(current->getDim() == graph.element(graph.adjncy(j))->getDim() + 1) {
         GEntity *g1 = elementToEntity[current];
         GEntity *g2 = elementToEntity[graph.element(graph.adjncy(j))];
-        if(!g1 || !g2){
-          printf("AAAAAAAAAAAAAAAA\n");
-          continue;
-        }
         if(brepWithoutOri.find(std::pair<GEntity *, GEntity *>(g1, g2)) ==
            brepWithoutOri.end()) {
           const int ori =
