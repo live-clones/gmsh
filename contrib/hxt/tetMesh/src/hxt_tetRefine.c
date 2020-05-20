@@ -128,51 +128,48 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
   double s2 = nodalSize[2]!=DBL_MAX && nodalSize[2] ? nodalSize[2] : avg;
   double s3 = nodalSize[3]!=DBL_MAX && nodalSize[3] ? nodalSize[3] : avg;
 
-  double sa = s0/(s0 + s1); // proportional to the inverse of the average size on a
-  double sb = s0/(s0 + s2);
-  double sc = s0/(s0 + s3);
+  double e0l2 = square_dist(p[0], p[1])/(s0 + s1);
+  double e1l2 = square_dist(p[0], p[2])/(s0 + s2);
+  double e2l2 = square_dist(p[0], p[3])/(s0 + s3);
+  double e3l2 = square_dist(p[1], p[2])/(s1 + s2);
+  double e4l2 = square_dist(p[1], p[3])/(s1 + s3);
+  double e5l2 = square_dist(p[2], p[3])/(s2 + s3);
 
-  /* Use coordinates relative to point `p[0]' of the tetrahedron. */
-  double xa = (p[1][0] - p[0][0])*sa;
-  double ya = (p[1][1] - p[0][1])*sa;
-  double za = (p[1][2] - p[0][2])*sa;
-  double xb = (p[2][0] - p[0][0])*sb;
-  double yb = (p[2][1] - p[0][1])*sb;
-  double zb = (p[2][2] - p[0][2])*sb;
-  double xc = (p[3][0] - p[0][0])*sc;
-  double yc = (p[3][1] - p[0][1])*sc;
-  double zc = (p[3][2] - p[0][2])*sc;
+  // O = (0,0,0)
+  // A = (xa,0,0)
+  // B = (xb,yb,0)
+  // C = (xc,yc,zc)
 
-  /* Squares of lengths of the edges incident to `p[0]'. */
-  double alength = xa * xa + ya * ya + za * za;
-  double blength = xb * xb + yb * yb + zb * zb;
-  double clength = xc * xc + yc * yc + zc * zc;
+  // these formula accumulate a lot of errors...
+  double xa = sqrt(e0l2);
+  double xb = (e1l2 + e0l2 - e3l2)/(2*xa);
+  double yb = sqrt(e1l2 - xb*xb);
+  double xc = (e2l2 + e0l2 - e4l2)/(2*xa);
+  double yc = (e1l2 + e2l2 - e5l2 - 2*xb*xc)/(2*yb);
+  double zc = sqrt(e2l2 - xc*xc - yc*yc);
 
   /* Cross products of these edges. */
-  double xcrossbc = yb * zc - yc * zb;
-  double ycrossbc = zb * xc - zc * xb;
+  double xcrossbc = yb * zc;
+  double ycrossbc = - zc * xb;
   double zcrossbc = xb * yc - xc * yb;
-  double xcrossca = yc * za - ya * zc;
-  double ycrossca = zc * xa - za * xc;
-  double zcrossca = xc * ya - xa * yc;
-  double xcrossab = ya * zb - yb * za;
-  double ycrossab = za * xb - zb * xa;
-  double zcrossab = xa * yb - xb * ya;
+  double ycrossca = zc * xa;
+  double zcrossca = - xa * yc;
+  double zcrossab = xa * yb;
 
-  /* calculate the denominator of the formulae. */
-  /* Use orient3d() from http://www.cs.cmu.edu/~quake/robust.html     */
-  /*   to ensure a correctly signed (and reasonably accurate) result, */
-  /*   avoiding any possibility of division by zero.                  */
-  double xxx = xa * xcrossbc + ya * ycrossbc + za * zcrossbc;
-  double denominator = 0.5 / xxx;
-  
+  double denominator = 0.5 / (xa * yb * zc);
+
+  // /* the same, only in terms of the lengths (just for fun)*/
+  // if(!isfinite(denominator))
+  //   denominator = 1.0 / sqrt(4*e0l2*e1l2*e2l2
+  //                            + (e0l2 + e1l2 - e3l2)*(e0l2 + e2l2 - e4l2)*(e1l2 + e2l2 - e5l2)
+  //                            - e0l2*(e1l2 + e2l2 - e5l2)*(e1l2 + e2l2 - e5l2)
+  //                            - e1l2*(e0l2 + e2l2 - e4l2)*(e0l2 + e2l2 - e4l2)
+  //                            - e2l2*(e0l2 + e1l2 - e3l2)*(e0l2 + e1l2 - e3l2));
 
   /* Calculate offset (from `p[0]') of circumcenter. */
-  double xcirca = (alength * xcrossbc + blength * xcrossca + clength * xcrossab) *
-                  denominator;
-  double ycirca = (alength * ycrossbc + blength * ycrossca + clength * ycrossab) *
-                  denominator;
-  double zcirca = (alength * zcrossbc + blength * zcrossca + clength * zcrossab) *
+  double xcirca = 0.5 * xa;
+  double ycirca = (e0l2 * ycrossbc + e1l2 * ycrossca) * denominator;
+  double zcirca = (e0l2 * zcrossbc + e1l2 * zcrossca + e2l2 * zcrossab) *
                   denominator;
 
   /* To interpolate a linear function at the circumcenter, define a    */
@@ -182,10 +179,8 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
    /*   by Cramer's Rule for solving systems of linear equations.       */
   double bary0 = (xcirca * xcrossbc + ycirca * ycrossbc + zcirca * zcrossbc) *
                    (2.0 * denominator);
-  double bary1 = (xcirca * xcrossca + ycirca * ycrossca + zcirca * zcrossca) *
-                   (2.0 * denominator);
-  double bary2 = (xcirca * xcrossab + ycirca * ycrossab + zcirca * zcrossab) *
-                   (2.0 * denominator);
+  double bary1 = (ycirca * ycrossca + zcirca * zcrossca) * (2.0 * denominator);
+  double bary2 = (zcirca * zcrossab) * (2.0 * denominator);
   double bary3 = 1.0 - bary0 - bary1 - bary2;
 
   int circumcenterOutside = 0;
@@ -204,7 +199,7 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
       is_too_close(s3, center[3], square_dist(p[3], center))
     );
   }
-  else {
+  else { // we should also enter this if a bary is not finite
     circumcenterOutside = 1;
   }
 
@@ -214,14 +209,14 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
   if(circumcenterOutside || circumcenterTooClose) {
     /* get the cross product corresponding to the last face: (c-a)x(a-b) */
     /* the sum of the cross product of the faces of a tetrahedron = 0 */
-    double xsumcros = xcrossab + xcrossbc + xcrossca;
-    double ysumcros = ycrossab + ycrossbc + ycrossca;
+    double xsumcros = xcrossbc;
+    double ysumcros = ycrossbc + ycrossca;
     double zsumcros = zcrossab + zcrossbc + zcrossca;
 
     double invA0x2 = 1.0/sqrt(xsumcros*xsumcros + ysumcros*ysumcros + zsumcros*zsumcros); /* (2 x area of the facet opposite to p0)^-1 */
     double invA1x2 = 1.0/sqrt(xcrossbc*xcrossbc + ycrossbc*ycrossbc + zcrossbc*zcrossbc); /* (2 x area of the facet opposite to p1)^-1 */
-    double invA2x2 = 1.0/sqrt(xcrossca*xcrossca + ycrossca*ycrossca + zcrossca*zcrossca); /* (2 x area of the facet opposite to p2)^-1 */
-    double invA3x2 = 1.0/sqrt(xcrossab*xcrossab + ycrossab*ycrossab + zcrossab*zcrossab); /* (2 x area of the facet opposite to p3)^-1 */
+    double invA2x2 = 1.0/sqrt(ycrossca*ycrossca + zcrossca*zcrossca); /* (2 x area of the facet opposite to p2)^-1 */
+    double invA3x2 = 1.0/zcrossab; /* (2 x area of the facet opposite to p3)^-1 */
 
     double x75_den = invA0x2 + invA1x2 + invA2x2 + invA3x2;
 
@@ -231,6 +226,9 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
     bary1 = (1.0 - alpha)*0.25 + alpha*invA1x2/x75_den;
     bary2 = (1.0 - alpha)*0.25 + alpha*invA2x2/x75_den;
     bary3 = (1.0 - alpha)*0.25 + alpha*invA3x2/x75_den;
+
+    if(!isfinite(bary0) || !isfinite(bary1) || !isfinite(bary2) || !isfinite(bary3))
+      bary0 = bary1 = bary2 = bary3 = 0.25;
 
     // compute the cartesian coordinates from the barycentric ones
     double otherCenter[4];
@@ -449,7 +447,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
 
       #pragma omp for schedule(static)
       for(size_t i=0; i<totNewPts; i++) {
-        if(newVertices[4*i + 3] == -DBL_MAX)
+        if(newVertices[4*i + 3] <= 0.0)
           continue;
 
         uint64_t tetID = ptToTet[i];
@@ -463,8 +461,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
         if(is_too_close(s[0], vtaSize, square_dist(p[0], vtaCoord)) ||
            is_too_close(s[1], vtaSize, square_dist(p[1], vtaCoord)) ||
            is_too_close(s[2], vtaSize, square_dist(p[2], vtaCoord)) ||
-           is_too_close(s[3], vtaSize, square_dist(p[3], vtaCoord)) ||
-           newVertices[4*i + 3] < 0.0){
+           is_too_close(s[3], vtaSize, square_dist(p[3], vtaCoord))){
           newVertices[4*i + 3] = -DBL_MAX;
         }
         else {
@@ -485,7 +482,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
 
         startPt[maxThreads] = sum;
 
-        HXT_INFO_COND(delOptions->verbosity>1, "Refinement adds %u points", sum);
+        HXT_INFO_COND(delOptions->verbosity>1, "Refinement adds %u points from %" HXTu64 " tetrahedra", sum, mesh->tetrahedra.num);
 
         mesh->vertices.num += sum;
 
@@ -493,7 +490,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
         if(mesh->vertices.num > mesh->vertices.size){
           status=hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double)*4*mesh->vertices.num);
           if(status==HXT_STATUS_OK){
-            status=hxtAlignedRealloc(&delOptions->nodalSizes, mesh->vertices.num*sizeof(double));
+            status=hxtAlignedRealloc(&delOptions->nodalSizes, sizeof(double)*mesh->vertices.num);
             mesh->vertices.size = mesh->vertices.num;
           }
         }
@@ -504,7 +501,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
       if(status==HXT_STATUS_OK){
         #pragma omp for schedule(static)
         for (uint64_t i=0; i<totNewPts; i++){
-          if(newVertices[4*i + 3] == -DBL_MAX)
+          if(newVertices[4*i + 3] <= 0.0)
             continue;
           mesh->vertices.coord[v*4  ] = newVertices[4*i + 0];
           mesh->vertices.coord[v*4+1] = newVertices[4*i + 1];
