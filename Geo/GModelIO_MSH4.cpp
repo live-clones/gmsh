@@ -346,7 +346,10 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   std::size_t strl = std::max(4096, 128 * nume);
   char *str = new char[strl];
 
-  Msg::Info("%d entities", nume);
+  if(partition)
+    Msg::Info("%d partition entities", nume);
+  else
+    Msg::Info("%d entities", nume);
 
   for(int dim = 0; dim < 4; dim++) {
     for(std::size_t i = 0; i < numEntities[dim]; i++) {
