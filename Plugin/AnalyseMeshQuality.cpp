@@ -255,7 +255,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
 {
   if(_computedJac[dim - 1]) return;
 
-  std::set<GEntity *, GEntityPtrLessThan> entities;
+  std::set<GEntity *, GEntityPtrFullLessThan> entities;
   switch(dim) {
   case 3:
     for(GModel::riter it = _m->firstRegion(); it != _m->lastRegion(); it++)
@@ -273,7 +273,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
   }
 
   int cntInverted = 0;
-  std::set<GEntity *, GEntityPtrLessThan>::iterator it;
+  std::set<GEntity *, GEntityPtrFullLessThan>::iterator it;
   for(it = entities.begin(); it != entities.end(); ++it) {
     GEntity *entity = *it;
     unsigned num = entity->getNumMeshElements();

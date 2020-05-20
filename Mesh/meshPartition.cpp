@@ -6,7 +6,6 @@
 // Contributed by Anthony Royer.
 
 // FIXME: The partitioning code should be updated to
-// - make it deterministic!
 // - use int for partition tags (to match the type for other entities in Gmsh)
 // - use size_t for element/node tags, and thus the graph
 
@@ -24,12 +23,31 @@
 #include "GModel.h"
 #include "ElementType.h"
 
+struct OriGEntityPtrFullLessThan {
+  bool operator()(const std::pair<int, GEntity *> &p1,
+                  const std::pair<int, GEntity *> &p2) const
+  {
+    if(p1.first != p2.first)
+      return p1.first < p2.first;
+    if(p1.second->dim() != p2.second->dim())
+      return p1.second->dim() < p2.second->dim();
+    return p1.second->tag() < p2.second->tag();
+  }
+};
+
+typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrFullLessThan> setorientity;
+
 // TODO C++11 remove this nasty stuff
 #if __cplusplus >= 201103L
 #include <unordered_map>
 #define hashmap std::unordered_map
+#define hashmapentity                                                          \
+  std::unordered_map<GEntity *, setorientity, GEntityPtrFullHash, GEntityPtrFullEqual>
 #define hashmapelement                                                         \
   std::unordered_map<MElement *, GEntity *, MElementPtrHash, MElementPtrEqual>
+#define hashmapelementpart                                                     \
+  std::unordered_map<MElement *, unsigned int,                                 \
+    MElementPtrHash, MElementPtrEqual>
 #define hashmapface                                                            \
   std::unordered_map<                                                          \
     MFace, std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
@@ -45,7 +63,10 @@
     MVertexPtrHash, MVertexPtrEqual>
 #else
 #define hashmap std::map
+#define hashmapentity std::map<GEntity *, setorientity, GEntityPtrFullLessThan>
 #define hashmapelement std::map<MElement *, GEntity *, MElementPtrLessThan>
+#define hashmapelementpart                                                     \
+  std::map<MElement *, unsigned int, MElementPtrLessThan>
 #define hashmapface                                                            \
   std::map<MFace,                                                              \
            std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
@@ -803,7 +824,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
 template <class ENTITY, class ITERATOR>
 static void
 assignElementsToEntities(GModel *const model,
-                         hashmap<MElement *, unsigned int> &elmToPartition,
+                         hashmapelementpart &elmToPartition,
                          std::vector<ENTITY *> &newEntities, ITERATOR it_beg,
                          ITERATOR it_end, int &elementaryNumber)
 {
@@ -890,12 +911,12 @@ static void AssignMeshVertices(GModel *model)
   }
 }
 
-static void
-fillConnectedElements(std::vector<std::set<MElement *> > &connectedElements,
-                      Graph &graph)
+static void fillConnectedElements(
+  std::vector<std::set<MElement *, MElementPtrLessThan> > &connectedElements,
+  Graph &graph)
 {
   std::stack<unsigned int> elementStack;
-  std::set<MElement *> elements;
+  std::set<MElement *, MElementPtrLessThan> elements;
   unsigned int startElement = 0;
   bool stop = true;
   unsigned int size = 0;
@@ -1049,7 +1070,8 @@ dividedNonConnectedEntities(GModel *const model, int dim,
           continue;
         }
 
-        std::vector<std::set<MElement *> > connectedElements;
+        std::vector<std::set<MElement *, MElementPtrLessThan> >
+          connectedElements;
         fillConnectedElements(connectedElements, graph);
 
         if(connectedElements.size() > 1) {
@@ -1074,7 +1096,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
             pedge->setParentEntity(edge->getParentEntity());
             // Add to model
             model->add(pedge);
-            for(std::set<MElement *>::iterator itSet =
+            for(std::set<MElement *, MElementPtrLessThan>::iterator itSet =
                   connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
@@ -1148,7 +1170,8 @@ dividedNonConnectedEntities(GModel *const model, int dim,
           continue;
         }
 
-        std::vector<std::set<MElement *> > connectedElements;
+        std::vector<std::set<MElement *, MElementPtrLessThan> >
+          connectedElements;
         fillConnectedElements(connectedElements, graph);
 
         if(connectedElements.size() > 1) {
@@ -1170,7 +1193,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
             pface->setParentEntity(face->getParentEntity());
             // Add to model
             model->add(pface);
-            for(std::set<MElement *>::iterator itSet =
+            for(std::set<MElement *, MElementPtrLessThan>::iterator itSet =
                   connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
@@ -1254,7 +1277,8 @@ dividedNonConnectedEntities(GModel *const model, int dim,
           continue;
         }
 
-        std::vector<std::set<MElement *> > connectedElements;
+        std::vector<std::set<MElement *, MElementPtrLessThan> >
+          connectedElements;
         fillConnectedElements(connectedElements, graph);
 
         if(connectedElements.size() > 1) {
@@ -1267,7 +1291,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
             pregion->setParentEntity(region->getParentEntity());
             // Add to model
             model->add(pregion);
-            for(std::set<MElement *>::iterator itSet =
+            for(std::set<MElement *, MElementPtrLessThan>::iterator itSet =
                   connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
@@ -1295,7 +1319,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
 
 // Create the new volume entities (omega)
 static void CreateNewEntities(GModel *const model,
-                              hashmap<MElement *, unsigned int> &elmToPartition)
+                              hashmapelementpart &elmToPartition)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
   std::set<GFace *, GEntityPtrLessThan> faces = model->getFaces();
@@ -1781,15 +1805,15 @@ static int computeOrientation(MElement *reference, MElement *element)
   return 0;
 }
 
-static void
-assignBrep(GModel *const model,
-           std::map<GEntity *, MElement *> &boundaryEntityAndRefElement,
-           GEntity *e)
+static void assignBrep(GModel *const model,
+                       std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
+                         &boundaryEntityAndRefElement,
+                       GEntity *e)
 {
   if(e->dim() == 2) {
     partitionFace *entity = static_cast<partitionFace *>(e);
 
-    for(std::map<GEntity *, MElement *>::iterator it =
+    for(std::map<GEntity *, MElement *, GEntityPtrFullLessThan>::iterator it =
           boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
       static_cast<GRegion *>(it->first)->setFace(
@@ -1800,7 +1824,7 @@ assignBrep(GModel *const model,
   else if(e->dim() == 1) {
     partitionEdge *entity = static_cast<partitionEdge *>(e);
 
-    for(std::map<GEntity *, MElement *>::iterator it =
+    for(std::map<GEntity *, MElement *, GEntityPtrFullLessThan>::iterator it =
           boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
       static_cast<GFace *>(it->first)->setEdge(
@@ -1811,7 +1835,7 @@ assignBrep(GModel *const model,
   else if(e->dim() == 0) {
     partitionVertex *entity = static_cast<partitionVertex *>(e);
 
-    for(std::map<GEntity *, MElement *>::iterator it =
+    for(std::map<GEntity *, MElement *, GEntityPtrFullLessThan>::iterator it =
           boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
       static_cast<GEdge *>(it->first)->setVertex(
@@ -1824,7 +1848,7 @@ assignBrep(GModel *const model,
 void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
 {
   std::set<std::pair<GEntity *, GEntity *> > brepWithoutOri;
-  hashmap<GEntity *, std::set<std::pair<int, GEntity *> > > brep;
+  hashmapentity brep;
   for(unsigned int i = 0; i < graph.ne(); i++) {
     MElement *current = graph.element(i);
     for(unsigned int j = graph.xadj(i); j < graph.xadj(i + 1); j++) {
@@ -1842,13 +1866,10 @@ void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
     }
   }
 
-  for(hashmap<GEntity *, std::set<std::pair<int, GEntity *> > >::iterator it =
-        brep.begin();
-      it != brep.end(); ++it) {
+  for(hashmapentity::iterator it = brep.begin(); it != brep.end(); ++it) {
     switch(it->first->dim()) {
     case 3:
-      for(std::set<std::pair<int, GEntity *> >::iterator itSet =
-            it->second.begin();
+      for(setorientity::iterator itSet = it->second.begin();
           itSet != it->second.end(); ++itSet) {
         static_cast<GRegion *>(it->first)->setFace(
           static_cast<GFace *>(itSet->second), itSet->first);
@@ -1857,8 +1878,7 @@ void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
       }
       break;
     case 2:
-      for(std::set<std::pair<int, GEntity *> >::iterator itSet =
-            it->second.begin();
+      for(setorientity::iterator itSet = it->second.begin();
           itSet != it->second.end(); ++itSet) {
         static_cast<GFace *>(it->first)->setEdge(
           static_cast<GEdge *>(itSet->second), itSet->first);
@@ -1867,8 +1887,7 @@ void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
       }
       break;
     case 1:
-      for(std::set<std::pair<int, GEntity *> >::iterator itSet =
-            it->second.begin();
+      for(setorientity::iterator itSet = it->second.begin();
           itSet != it->second.end(); ++itSet) {
         static_cast<GEdge *>(it->first)->setVertex(
           static_cast<GVertex *>(itSet->second), itSet->first);
@@ -1937,7 +1956,8 @@ static void CreatePartitionTopology(
         assignPartitionBoundary(model, f, reference, partitions, pfaces,
                                 elementToEntity, numFaceEntity);
       if(pf) {
-        std::map<GEntity *, MElement *> boundaryEntityAndRefElement;
+        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
+          boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++)
           boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
             elementToEntity[it->second[i].first], it->second[i].first));
@@ -1958,7 +1978,8 @@ static void CreatePartitionTopology(
 
     if(meshDim == 2) {
       for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
-        for(std::set<MElement *>::iterator it = boundaryElements[i].begin();
+        for(std::set<MElement *, MElementPtrLessThan>::iterator it =
+              boundaryElements[i].begin();
             it != boundaryElements[i].end(); ++it) {
           for(int j = 0; j < (*it)->getNumEdges(); j++) {
             edgeToElement[(*it)->getEdge(j)].push_back(
@@ -2031,7 +2052,8 @@ static void CreatePartitionTopology(
         assignPartitionBoundary(model, e, reference, partitions, pedges,
                                 elementToEntity, numEdgeEntity);
       if(pe) {
-        std::map<GEntity *, MElement *> boundaryEntityAndRefElement;
+        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
+          boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++) {
           boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
             elementToEntity[it->second[i].first], it->second[i].first));
@@ -2052,7 +2074,8 @@ static void CreatePartitionTopology(
     Msg::Info(" - Creating partition points");
     if(meshDim == 1) {
       for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
-        for(std::set<MElement *>::iterator it = boundaryElements[i].begin();
+        for(std::set<MElement *, MElementPtrLessThan>::iterator it =
+              boundaryElements[i].begin();
             it != boundaryElements[i].end(); ++it) {
           for(std::size_t j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
             vertexToElement[(*it)->getVertex(j)].push_back(
@@ -2119,7 +2142,8 @@ static void CreatePartitionTopology(
         assignPartitionBoundary(model, v, reference, partitions, pvertices,
                                 elementToEntity, numVertexEntity);
       if(pv) {
-        std::map<GEntity *, MElement *> boundaryEntityAndRefElement;
+        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
+          boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++)
           boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
             elementToEntity[it->second[i].first], it->second[i].first));
@@ -2392,7 +2416,7 @@ int PartitionMesh(GModel *const model)
   }
 
   // Assign partitions to elements
-  hashmap<MElement *, unsigned int> elmToPartition;
+  hashmapelementpart elmToPartition;
   for(unsigned int i = 0; i < graph.ne(); i++) {
     if(graph.element(i)) {
       if(graph.nparts() > 1) {
@@ -2642,7 +2666,7 @@ int UnpartitionMesh(GModel *const model)
 // Create the partition according to the element split given by elmToPartition
 // Returns: 0 = success, 1 = no elements found.
 int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
-                            hashmap<MElement *, unsigned int> &elmToPartition)
+                            hashmapelementpart &elmToPartition)
 {
   Graph graph(model);
   if(MakeGraph(model, graph, -1)) return 1;
@@ -2710,7 +2734,7 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
 {
   Msg::StatusBar(true, "Converting old partitioning...");
 
-  hashmap<MElement *, unsigned int> elmToPartition;
+  hashmapelementpart elmToPartition;
   std::set<unsigned int> partitions;
   std::vector<GEntity *> entities;
   model->getEntities(entities);
@@ -2739,7 +2763,7 @@ int UnpartitionMesh(GModel *const model) { return 0; }
 int ConvertOldPartitioningToNewOne(GModel *const model) { return 0; }
 
 int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
-                            hashmap<MElement *, unsigned int> &elmToPartition)
+                            hashmapelementpart &elmToPartition)
 {
   Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;

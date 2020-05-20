@@ -405,9 +405,34 @@ public:
 };
 
 struct GEntityPtrLessThan {
-  bool operator()(GEntity const *const ent1, GEntity const *const ent2) const
+  // beware that this comparison function does *not* compare the entity
+  // dimension; this is on purpose
+  bool operator()(const GEntity *ent1, const GEntity *ent2) const
   {
     return ent1->tag() < ent2->tag();
+  }
+};
+
+struct GEntityPtrFullLessThan {
+  bool operator()(const GEntity *ent1, const GEntity *ent2) const
+  {
+    if(ent1->dim() != ent2->dim())
+      return ent1->dim() < ent2->dim();
+    return ent1->tag() < ent2->tag();
+  }
+};
+
+struct GEntityPtrFullEqual {
+  bool operator()(const GEntity *ent1, const GEntity *ent2) const
+  {
+    return (ent1->dim() == ent2->dim()) && (ent1->tag() == ent2->tag());
+  }
+};
+
+struct GEntityPtrFullHash {
+  size_t operator()(GEntity const *const ent) const
+  {
+    return 10 * ent->tag() + ent->dim();
   }
 };
 
