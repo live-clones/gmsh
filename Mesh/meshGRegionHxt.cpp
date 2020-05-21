@@ -23,7 +23,7 @@
 #include "BackgroundMeshTools.h"
 #include "OS.h"
 
-#if defined(HAVE_HXT3D)
+#if defined(HAVE_HXT)
 
 extern "C" {
 #include "hxt_tools.h"
@@ -64,7 +64,7 @@ static HXTStatus meshSizeCallBack(double* pts, size_t numPts, void *userData)
     }
     // else pts[4 * i + 3] already contains the size computed by HXT
   }
-  
+
   return HXT_STATUS_OK;
 }
 
