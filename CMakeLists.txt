@@ -222,11 +222,9 @@ macro(set_config_option VARNAME STRING)
   message(STATUS "Found " ${STRING})
 endmacro()
 
-# check if the machine is 64 bits (this is more reliable than using
-# CMAKE_SIZEOF_VOID_P, which does not seem to work e.g. on some Suse
-# machines)
-check_type_size("void*" SIZEOF_VOID_P)
-if(SIZEOF_VOID_P EQUAL 8)
+# check the size of size_t
+check_type_size("size_t" SIZEOF_SIZE_T)
+if(SIZEOF_SIZE_T EQUAL 8)
   set_config_option(HAVE_64BIT_SIZE_T "64Bit")
 endif()
 

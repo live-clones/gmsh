@@ -621,7 +621,9 @@ static int PartitionGraph(Graph &graph, bool verbose)
     idx_t metisOptions[METIS_NOPTIONS];
     METIS_SetDefaultOptions(metisOptions);
 
-    opt << "ptype:";
+    opt << 8 * sizeof(idx_t) << " bit indices";
+
+    opt << ", ptype:";
     switch(CTX::instance()->mesh.metisAlgorithm) {
     case 1: // Recursive
       metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_RB;

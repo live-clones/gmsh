@@ -7,6 +7,7 @@
 #define GMSH_CONFIG_H
 
 #cmakedefine HAVE_3M
+#cmakedefine HAVE_64BIT_SIZE_T
 #cmakedefine HAVE_ACIS
 #cmakedefine HAVE_ALGLIB
 #cmakedefine HAVE_ANN
