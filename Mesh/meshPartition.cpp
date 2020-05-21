@@ -293,10 +293,8 @@ public:
   }
   void createDualGraph(bool connectedAll)
   {
-    int *nptr = new int[_nn + 1];
-    for(std::size_t i = 0; i < _nn + 1; i++) nptr[i] = 0;
-    int *nind = new int[_eptr[_ne]];
-    for(idx_t i = 0; i < _eptr[_ne]; i++) nind[i] = 0;
+    std::vector<idx_t> nptr(_nn + 1, 0);
+    std::vector<idx_t> nind(_eptr[_ne], 0);
 
     for(std::size_t i = 0; i < _ne; i++) {
       for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) { nptr[_eind[j]]++; }
@@ -317,18 +315,14 @@ public:
 
     _xadj = new idx_t[_ne + 1];
     for(std::size_t i = 0; i < _ne + 1; i++) _xadj[i] = 0;
-    int *nbrs = new int[_ne];
-    int *marker = new int[_ne];
-    for(std::size_t i = 0; i < _ne; i++) {
-      nbrs[i] = 0;
-      marker[i] = 0;
-    }
 
+    std::vector<idx_t> nbrs(_ne, 0);
+    std::vector<idx_t> marker(_ne, 0);
     for(std::size_t i = 0; i < _ne; i++) {
       std::size_t l = 0;
       for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) {
-        for(int k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
-          if(nind[k] != (int)i) {
+        for(idx_t k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
+          if(nind[k] != (idx_t)i) {
             if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
             marker[nind[k]]++;
           }
@@ -360,7 +354,7 @@ public:
       std::size_t l = 0;
       for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) {
         for(idx_t k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
-          if(nind[k] != i) {
+          if(nind[k] != (idx_t)i) {
             if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
             marker[nind[k]]++;
           }
@@ -379,14 +373,8 @@ public:
         nbrs[j] = 0;
       }
     }
-    delete[] nbrs;
-    delete[] marker;
-
     for(std::size_t i = _ne; i > 0; i--) _xadj[i] = _xadj[i - 1];
     _xadj[0] = 0;
-
-    delete[] nptr;
-    delete[] nind;
   }
   void fillDefaultWeights()
   {
@@ -1457,12 +1445,12 @@ static MElement *getReferenceElement(
   // Take only the elements having the less partition in commun. For exemple we
   // take (1,2) and (3,8) but not (2,5,9) or (1,4,5,7)
   for(std::size_t i = 0; i < elementPairs.size(); i++) {
-    if(min > elementPairs[i].second.size()) {
+    if(min > (int)elementPairs[i].second.size()) {
       minSizeElementPairs.clear();
       min = elementPairs[i].second.size();
       minSizeElementPairs.push_back(elementPairs[i]);
     }
-    else if(min == elementPairs[i].second.size()) {
+    else if(min == (int)elementPairs[i].second.size()) {
       minSizeElementPairs.push_back(elementPairs[i]);
     }
   }
