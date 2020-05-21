@@ -3018,7 +3018,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         }
       } break;
       case GEntity::GhostCurve:
-        if(i == static_cast<ghostEdge *>(ge)->getPartition()) {
+        if((int)i == static_cast<ghostEdge *>(ge)->getPartition()) {
           static_cast<ghostEdge *>(ge)->saveMesh(true);
           tmp->add(static_cast<ghostEdge *>(ge));
           if(ghostEntities.size()) entitiesSet.insert(ge);
@@ -3026,7 +3026,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         }
         break;
       case GEntity::GhostSurface:
-        if(i == static_cast<ghostFace *>(ge)->getPartition()) {
+        if((int)i == static_cast<ghostFace *>(ge)->getPartition()) {
           static_cast<ghostFace *>(ge)->saveMesh(true);
           tmp->add(static_cast<ghostFace *>(ge));
           if(ghostEntities.size()) entitiesSet.insert(ge);
@@ -3034,7 +3034,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         }
         break;
       case GEntity::GhostVolume:
-        if(i == static_cast<ghostRegion *>(ge)->getPartition()) {
+        if((int)i == static_cast<ghostRegion *>(ge)->getPartition()) {
           static_cast<ghostRegion *>(ge)->saveMesh(true);
           tmp->add(static_cast<ghostRegion *>(ge));
           if(ghostEntities.size()) entitiesSet.insert(ge);
