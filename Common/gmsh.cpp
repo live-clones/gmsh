@@ -614,7 +614,7 @@ GMSH_API void gmsh::model::getPartitions(const int dim, const int tag,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  std::vector<unsigned int> p;
+  std::vector<int> p;
   if(ge->geomType() == GEntity::PartitionPoint)
     p = static_cast<partitionVertex *>(ge)->getPartitions();
   else if(ge->geomType() == GEntity::PartitionCurve)
@@ -3687,7 +3687,7 @@ gmsh::model::mesh::getGhostElements(const int dim, const int tag,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  std::map<MElement *, unsigned int> ghostCells;
+  std::map<MElement *, int> ghostCells;
   if(ge->geomType() == GEntity::GhostCurve)
     ghostCells = static_cast<ghostEdge *>(ge)->getGhostCells();
   else if(ge->geomType() == GEntity::GhostSurface)
@@ -3695,8 +3695,7 @@ gmsh::model::mesh::getGhostElements(const int dim, const int tag,
   else if(ge->geomType() == GEntity::GhostVolume)
     ghostCells = static_cast<ghostRegion *>(ge)->getGhostCells();
 
-  for(std::map<MElement *, unsigned int>::const_iterator it =
-        ghostCells.begin();
+  for(std::map<MElement *, int>::const_iterator it = ghostCells.begin();
       it != ghostCells.end(); it++) {
     elementTags.push_back(it->first->getNum());
     partitions.push_back(it->second);
