@@ -456,9 +456,9 @@ static void fillElementsToNodesMap(Graph &graph, GEntity *entity,
   }
 }
 
-static int getSizeOfEind(GModel *model)
+static std::size_t getSizeOfEind(GModel *model)
 {
-  int size = 0;
+  std::size_t size = 0;
   // Loop over volumes
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion();
       ++it) {
@@ -495,7 +495,7 @@ static int getSizeOfEind(GModel *model)
 // = no elements found, 2 = error.
 static int MakeGraph(GModel *model, Graph &graph, int selectDim)
 {
-  int eindSize = 0;
+  std::size_t eindSize = 0;
   if(selectDim < 0) {
     graph.ne(model->getNumMeshElements());
     graph.nn(model->getNumMeshVertices());
@@ -743,7 +743,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
     // Check and correct the topology
     for(int i = 1; i < 4; i++) {
       for(std::size_t j = 0; j < graph.ne(); j++) {
-        if(graph.element(j)->getDim() == (int)graph.dim()) continue;
+        if(graph.element(j)->getDim() == graph.dim()) continue;
 
         for(idx_t k = graph.xadj(j); k < graph.xadj(j + 1); k++) {
           if(graph.element(j)->getDim() ==
@@ -983,7 +983,7 @@ dividedNonConnectedEntities(GModel *model, int dim,
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
     graph.eptr(0, 0);
-    const int eindSize = getSizeOfEind(model);
+    std::size_t eindSize = getSizeOfEind(model);
     graph.eindResize(eindSize);
 
     int elementaryNumber = model->getMaxElementaryNumber(1);
@@ -1048,7 +1048,7 @@ dividedNonConnectedEntities(GModel *model, int dim,
             }
             // Move B-Rep
             if(BRepFaces.size() > 0) {
-              int i = 0;
+              std::size_t i = 0;
               for(std::vector<GFace *>::iterator itBRep = BRepFaces.begin();
                   itBRep != BRepFaces.end(); ++itBRep) {
                 (*itBRep)->setEdge(pedge, oldOrientations[i]);
@@ -1080,7 +1080,7 @@ dividedNonConnectedEntities(GModel *model, int dim,
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
     graph.eptr(0, 0);
-    const int eindSize = getSizeOfEind(model);
+    std::size_t eindSize = getSizeOfEind(model);
     graph.eindResize(eindSize);
 
     int elementaryNumber = model->getMaxElementaryNumber(2);
@@ -1145,7 +1145,7 @@ dividedNonConnectedEntities(GModel *model, int dim,
             }
             // Move B-Rep
             if(BRepRegions.size() > 0) {
-              int i = 0;
+              std::size_t i = 0;
               for(std::list<GRegion *>::iterator itBRep = BRepRegions.begin();
                   itBRep != BRepRegions.end(); ++itBRep) {
                 (*itBRep)->setFace(pface, oldOrientations[i]);
@@ -1178,7 +1178,7 @@ dividedNonConnectedEntities(GModel *model, int dim,
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
     graph.eptr(0, 0);
-    const int eindSize = getSizeOfEind(model);
+    std::size_t eindSize = getSizeOfEind(model);
     graph.eindResize(eindSize);
 
     int elementaryNumber = model->getMaxElementaryNumber(3);
@@ -1845,7 +1845,7 @@ static void CreatePartitionTopology(
     &boundaryElements,
   Graph &meshGraph)
 {
-  const int meshDim = model->getMeshDim();
+  int meshDim = model->getMeshDim();
   hashmapelement elementToEntity;
   fillElementToEntity(model, elementToEntity, -1);
   assignNewEntityBRep(meshGraph, elementToEntity);
@@ -2346,7 +2346,7 @@ int PartitionMesh(GModel *model)
   graph.nparts(CTX::instance()->mesh.numPartitions);
   if(PartitionGraph(graph, true)) return 1;
 
-  std::vector<int> elmCount[TYPE_MAX_NUM + 1];
+  std::vector<std::size_t> elmCount[TYPE_MAX_NUM + 1];
   for(int i = 0; i < TYPE_MAX_NUM + 1; i++) {
     elmCount[i].resize(CTX::instance()->mesh.numPartitions, 0);
   }
@@ -2380,17 +2380,17 @@ int PartitionMesh(GModel *model)
                  t2 - t1);
 
   for(std::size_t i = 0; i < TYPE_MAX_NUM + 1; i++) {
-    std::vector<int> &count = elmCount[i];
-    int minCount = std::numeric_limits<int>::max();
-    int maxCount = 0;
-    int totCount = 0;
+    std::vector<std::size_t> &count = elmCount[i];
+    std::size_t minCount = std::numeric_limits<std::size_t>::max();
+    std::size_t maxCount = 0;
+    std::size_t totCount = 0;
     for(std::size_t j = 0; j < count.size(); j++) {
       minCount = std::min(count[j], minCount);
       maxCount = std::max(count[j], maxCount);
       totCount += count[j];
     }
     if(totCount > 0) {
-      Msg::Info(" - Repartition of %d %s: %d(min) %d(max) %g(avg)", totCount,
+      Msg::Info(" - Repartition of %d %s: %lu(min) %lu(max) %g(avg)", totCount,
                 ElementType::nameOfParentType(i, totCount > 1).c_str(),
                 minCount, maxCount,
                 totCount / (double)CTX::instance()->mesh.numPartitions);
@@ -2626,7 +2626,7 @@ int PartitionUsingThisSplit(GModel *model, std::size_t npart,
   // Check and correct the topology
   for(int i = 1; i < 4; i++) {
     for(std::size_t j = 0; j < graph.ne(); j++) {
-      if(graph.element(j)->getDim() == (int)graph.dim()) continue;
+      if(graph.element(j)->getDim() == graph.dim()) continue;
 
       for(idx_t k = graph.xadj(j); k < graph.xadj(j + 1); k++) {
         if(graph.element(j)->getDim() ==
