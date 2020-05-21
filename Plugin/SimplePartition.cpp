@@ -21,20 +21,6 @@
 #include "meshPartition.h"
 #endif
 
-#if __cplusplus >= 201103L
-#include <unordered_map>
-#define hashmapelementpart                                                     \
-  std::unordered_map<MElement *, unsigned int, MElementPtrHash,                \
-                     MElementPtrEqual>
-#else
-#include <map>
-#define hashmapelementpart                                                     \
-  std::map<MElement *, unsigned int, MElementPtrLessThan>
-#endif
-
-int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
-                            hashmapelementpart &elmToPartition);
-
 StringXNumber SimplePartitionOptions_Number[] = {
   {GMSH_FULLRC, "NumSlicesX", NULL, 4.},
   {GMSH_FULLRC, "NumSlicesY", NULL, 1.},
@@ -153,7 +139,7 @@ void GMSH_SimplePartitionPlugin::run()
 
   std::vector<GEntity *> entities;
   m->getEntities(entities);
-  hashmapelementpart elmToPartition;
+  std::vector<std::pair<MElement *, int> > elmToPartition;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
@@ -173,7 +159,7 @@ void GMSH_SimplePartitionPlugin::run()
                (emptyZ || (kz == 0 && ppZ[0] == point[2]) ||
                 (ppZ[kz] < point[2] && point[2] <= ppZ[kz + 1]))) {
               part = kx * numSlicesY * numSlicesZ + ky * numSlicesZ + kz + 1;
-              elmToPartition.insert(
+              elmToPartition.push_back(
                 std::pair<MElement *, unsigned int>(e, part));
               e->setPartition(part); // this will be removed
             }

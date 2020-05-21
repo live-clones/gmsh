@@ -576,7 +576,7 @@ public:
 
   // the list of partitions
   std::size_t getNumPartitions() const { return _numPartitions; }
-  void setNumPartitions(unsigned int npart) { _numPartitions = npart; }
+  void setNumPartitions(std::size_t npart) { _numPartitions = npart; }
 
   // partition the mesh
   int partitionMesh(int num);

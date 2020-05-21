@@ -354,16 +354,15 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   for(int dim = 0; dim < 4; dim++) {
     for(std::size_t i = 0; i < numEntities[dim]; i++) {
       int tag = 0, parentDim = 0, parentTag = 0;
-      std::vector<int> parts;
+      std::vector<int> partitions;
       double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
       if(!readMSH4EntityInfo(fp, binary, str, strl, swap, version, partition,
-                             dim, tag, parentDim, parentTag, parts, minX, minY,
+                             dim, tag, parentDim, parentTag, partitions, minX, minY,
                              minZ, maxX, maxY, maxZ)) {
         delete[] str;
         return false;
       }
-      // FIXME: rewrite partition classes in terms of int
-      std::vector<unsigned int> partitions(parts.begin(), parts.end());
+
       switch(dim) {
       case 0: {
         GVertex *gv = model->getVertexByTag(tag);
@@ -2672,7 +2671,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
   std::map<MElement *, std::vector<int> > ghostCells;
 
   for(std::size_t i = 0; i < entities.size(); i++) {
-    std::map<MElement *, unsigned int> ghostElements; // FIXME
+    std::map<MElement *, int> ghostElements;
     int partition;
 
     if(entities[i]->geomType() == GEntity::GhostCurve) {
@@ -2688,7 +2687,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
       partition = static_cast<ghostRegion *>(entities[i])->getPartition();
     }
 
-    for(std::map<MElement *, unsigned int>::iterator it = ghostElements.begin();
+    for(std::map<MElement *, int>::iterator it = ghostElements.begin();
         it != ghostElements.end(); ++it) {
       if(ghostCells[it->first].size() == 0)
         ghostCells[it->first].push_back(it->second);
