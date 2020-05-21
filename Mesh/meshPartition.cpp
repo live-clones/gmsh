@@ -493,7 +493,7 @@ static std::size_t getSizeOfEind(GModel *model)
 
 // Creates a mesh data structure used by Metis routines. Returns: 0 = success, 1
 // = no elements found, 2 = error.
-static int MakeGraph(GModel *model, Graph &graph, int selectDim)
+static int makeGraph(GModel *model, Graph &graph, int selectDim)
 {
   std::size_t eindSize = 0;
   if(selectDim < 0) {
@@ -611,9 +611,9 @@ static int MakeGraph(GModel *model, Graph &graph, int selectDim)
   return 0;
 }
 
-// Partition a graph created by MakeGraph using Metis library. Returns: 0 =
+// Partition a graph created by makeGraph using Metis library. Returns: 0 =
 // success, 1 = error, 2 = exception thrown.
-static int PartitionGraph(Graph &graph, bool verbose)
+static int partitionGraph(Graph &graph, bool verbose)
 {
 #ifdef HAVE_METIS
   std::stringstream opt;
@@ -789,7 +789,8 @@ assignElementsToEntities(GModel *model, hashmapelementpart &elmToPartition,
 }
 
 template <class ITERATOR>
-void setVerticesToEntity(GEntity *entity, ITERATOR it_beg, ITERATOR it_end)
+static void setVerticesToEntity(GEntity *entity, ITERATOR it_beg,
+                                ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
@@ -802,7 +803,7 @@ void setVerticesToEntity(GEntity *entity, ITERATOR it_beg, ITERATOR it_end)
 }
 
 template <class ITERATOR>
-void removeVerticesEntity(ITERATOR it_beg, ITERATOR it_end)
+static void removeVerticesEntity(ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
@@ -816,7 +817,7 @@ void removeVerticesEntity(ITERATOR it_beg, ITERATOR it_end)
 }
 
 // Assign the vertices to its corresponding entity
-static void AssignMeshVertices(GModel *model)
+static void assignMeshVertices(GModel *model)
 {
   removeVerticesEntity(model->firstVertex(), model->lastVertex());
   removeVerticesEntity(model->firstEdge(), model->lastEdge());
@@ -918,11 +919,11 @@ static void fillConnectedElements(
 }
 
 static bool
-dividedNonConnectedEntities(GModel *model, int dim,
-                            std::set<GRegion *, GEntityPtrLessThan> &regions,
-                            std::set<GFace *, GEntityPtrLessThan> &faces,
-                            std::set<GEdge *, GEntityPtrLessThan> &edges,
-                            std::set<GVertex *, GEntityPtrLessThan> &vertices)
+divideNonConnectedEntities(GModel *model, int dim,
+                           std::set<GRegion *, GEntityPtrLessThan> &regions,
+                           std::set<GFace *, GEntityPtrLessThan> &faces,
+                           std::set<GEdge *, GEntityPtrLessThan> &edges,
+                           std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
   bool ret = false;
   // Loop over points
@@ -1262,7 +1263,7 @@ dividedNonConnectedEntities(GModel *model, int dim,
 }
 
 // Create the new volume entities (omega)
-static void CreateNewEntities(GModel *model, hashmapelementpart &elmToPartition)
+static void createNewEntities(GModel *model, hashmapelementpart &elmToPartition)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
   std::set<GFace *, GEntityPtrLessThan> faces = model->getFaces();
@@ -1367,13 +1368,13 @@ static void CreateNewEntities(GModel *model, hashmapelementpart &elmToPartition)
   }
 
   // If we don't create the partition topology let's just assume that the user
-  // does not care about multi-connected partitions or partition boundaries.
+  // does not care about multiply connected partitions or partition boundaries.
   if(!CTX::instance()->mesh.partitionCreateTopology) return;
   regions = model->getRegions();
   faces = model->getFaces();
   edges = model->getEdges();
   vertices = model->getVertices();
-  dividedNonConnectedEntities(model, -1, regions, faces, edges, vertices);
+  divideNonConnectedEntities(model, -1, regions, faces, edges, vertices);
 }
 
 static void fillElementToEntity(GModel *model, hashmapelement &elmToEntity,
@@ -1783,7 +1784,7 @@ static void assignBrep(GModel *model,
   }
 }
 
-void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
+static void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
 {
   std::set<std::pair<GEntity *, GEntity *> > brepWithoutOri;
   hashmapentity brep;
@@ -1839,7 +1840,7 @@ void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
 }
 
 // Create the new entities between each partitions (sigma and bndSigma).
-static void CreatePartitionTopology(
+static void createPartitionTopology(
   GModel *model,
   const std::vector<std::set<MElement *, MElementPtrLessThan> >
     &boundaryElements,
@@ -1906,7 +1907,7 @@ static void CreatePartitionTopology(
     faceToElement.clear();
 
     faces = model->getFaces();
-    dividedNonConnectedEntities(model, 2, regions, faces, edges, vertices);
+    divideNonConnectedEntities(model, 2, regions, faces, edges, vertices);
     elementToEntity.clear();
     fillElementToEntity(model, elementToEntity, 2);
   }
@@ -1929,7 +1930,7 @@ static void CreatePartitionTopology(
     }
     else {
       Graph subGraph(model);
-      MakeGraph(model, subGraph, 2);
+      makeGraph(model, subGraph, 2);
       subGraph.createDualGraph(false);
       std::vector<idx_t> part(subGraph.ne());
       int partIndex = 0;
@@ -1943,7 +1944,7 @@ static void CreatePartitionTopology(
             static_cast<partitionFace *>(*it)->getPartitions();
           mapOfPartitions.insert(std::pair<idx_t, std::vector<int> >(
             mapOfPartitionsTag, partitions));
-          // Must absolutely be in the same order as in the MakeGraph function
+          // Must absolutely be in the same order as in the makeGraph function
           for(std::vector<MTriangle *>::iterator itElm =
                 (*it)->triangles.begin();
               itElm != (*it)->triangles.end(); ++itElm)
@@ -2002,7 +2003,7 @@ static void CreatePartitionTopology(
     edgeToElement.clear();
 
     edges = model->getEdges();
-    dividedNonConnectedEntities(model, 1, regions, faces, edges, vertices);
+    divideNonConnectedEntities(model, 1, regions, faces, edges, vertices);
     elementToEntity.clear();
     fillElementToEntity(model, elementToEntity, 1);
   }
@@ -2024,7 +2025,7 @@ static void CreatePartitionTopology(
     }
     else {
       Graph subGraph(model);
-      MakeGraph(model, subGraph, 1);
+      makeGraph(model, subGraph, 1);
       subGraph.createDualGraph(false);
       std::vector<idx_t> part(subGraph.ne());
       int partIndex = 0;
@@ -2038,7 +2039,7 @@ static void CreatePartitionTopology(
             static_cast<partitionEdge *>(*it)->getPartitions();
           mapOfPartitions.insert(std::pair<idx_t, std::vector<int> >(
             mapOfPartitionsTag, partitions));
-          // Must absolutely be in the same order as in the MakeGraph function
+          // Must absolutely be in the same order as in the makeGraph function
           for(std::vector<MLine *>::iterator itElm = (*it)->lines.begin();
               itElm != (*it)->lines.end(); ++itElm)
             part[partIndex++] = mapOfPartitionsTag;
@@ -2090,7 +2091,7 @@ static void CreatePartitionTopology(
     vertexToElement.clear();
 
     vertices = model->getVertices();
-    dividedNonConnectedEntities(model, 0, regions, faces, edges, vertices);
+    divideNonConnectedEntities(model, 0, regions, faces, edges, vertices);
   }
 }
 
@@ -2224,7 +2225,7 @@ static void addPhysical(GModel *model, GEntity *entity,
 }
 
 // Assign physical group information
-static void AssignPhysicals(GModel *model)
+static void assignPhysicals(GModel *model)
 {
   hashmap<std::string, int> nameToNumber;
   std::vector<GModel::piter> iterators;
@@ -2342,9 +2343,9 @@ int PartitionMesh(GModel *model)
   double t1 = Cpu(), w1 = TimeOfDay();
 
   Graph graph(model);
-  if(MakeGraph(model, graph, -1)) return 1;
+  if(makeGraph(model, graph, -1)) return 1;
   graph.nparts(CTX::instance()->mesh.numPartitions);
-  if(PartitionGraph(graph, true)) return 1;
+  if(partitionGraph(graph, true)) return 1;
 
   std::vector<std::size_t> elmCount[TYPE_MAX_NUM + 1];
   for(int i = 0; i < TYPE_MAX_NUM + 1; i++) {
@@ -2372,7 +2373,7 @@ int PartitionMesh(GModel *model)
   }
   model->setNumPartitions(graph.nparts());
 
-  CreateNewEntities(model, elmToPartition);
+  createNewEntities(model, elmToPartition);
   elmToPartition.clear();
 
   double t2 = Cpu(), w2 = TimeOfDay();
@@ -2401,15 +2402,15 @@ int PartitionMesh(GModel *model)
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector<std::set<MElement *, MElementPtrLessThan> > boundaryElements =
       graph.getBoundaryElements();
-    CreatePartitionTopology(model, boundaryElements, graph);
+    createPartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
     double t3 = Cpu(), w3 = TimeOfDay();
     Msg::StatusBar(true, "Done creating partition topology (Wall %gs, CPU %gs)",
                    w3 - w2, t3 - t2);
   }
 
-  AssignPhysicals(model);
-  AssignMeshVertices(model);
+  assignPhysicals(model);
+  assignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
     double t4 = Cpu(), w4 = TimeOfDay();
@@ -2605,7 +2606,7 @@ int PartitionUsingThisSplit(GModel *model, std::size_t npart,
                             std::vector<std::pair<MElement *, int> > &elmToPart)
 {
   Graph graph(model);
-  if(MakeGraph(model, graph, -1)) return 1;
+  if(makeGraph(model, graph, -1)) return 1;
   graph.createDualGraph(false);
   graph.nparts(npart);
 
@@ -2643,20 +2644,20 @@ int PartitionUsingThisSplit(GModel *model, std::size_t npart,
 
   model->setNumPartitions(graph.nparts());
 
-  CreateNewEntities(model, elmToPartition);
+  createNewEntities(model, elmToPartition);
   elmToPartition.clear();
 
   if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector<std::set<MElement *, MElementPtrLessThan> > boundaryElements =
       graph.getBoundaryElements();
-    CreatePartitionTopology(model, boundaryElements, graph);
+    createPartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
     Msg::StatusBar(true, "Done creating partition topology");
   }
 
-  AssignPhysicals(model);
-  AssignMeshVertices(model);
+  assignPhysicals(model);
+  assignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
     graph.clearDualGraph();
