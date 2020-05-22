@@ -85,6 +85,8 @@ RecombineTriangle::RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_
     //    double ErrL = fabs(L1-L2)/(L1);
     //    printf("quality %g err %g L %g %g\n",quality,ErrL,L1,L2);
     quality /= ErrDir;
+    if (n1->onWhat()->dim() < 2 || n2->onWhat()->dim() < 2)quality /= 10;
+
   }
 }
 

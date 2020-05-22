@@ -11,31 +11,34 @@
 #include "pointInsertion.h"
 #include "GEntity.h"
 
-surfacePointWithExclusionRegion::surfacePointWithExclusionRegion(
-  MVertex *v, SPoint2 p[4], SPoint2 &_mp, SMetric3 &meshMetric,
-  surfacePointWithExclusionRegion *father)
+surfacePointWithExclusionRegion::surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[8], SPoint2 &_mp, SMetric3 &meshMetric,
+								 surfacePointWithExclusionRegion *father)
 {
   _v = v;
   _meshMetric = meshMetric;
   _center = _mp;
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < 4; i++){
     _q[i] = _center + (p[i] + p[(i + 1) % 4] - _center * 2) * FACTOR;
+    //    printf("%g %g vs %g %g\n",_q[i].x(),_q[i].y(),p[i+4].x(),p[i+4].y());
+    //    _q[i] = p[i+4];
+  }
   for(int i = 0; i < 4; i++)_p[i] = p[i];
 
   if(!father) {
-    fullMatrix<double> V(3, 3);
-    fullVector<double> S(3);
-    meshMetric.eig(V, S);
-    double l = std::max(std::max(S(0), S(1)), S(2));
-    _distanceSummed = sqrt(1 / (l * l));
+    _father = NULL;
   }
   else {
-    _distanceSummed = father->_distanceSummed + distance(father->_v, _v);
+    _father = father->_v;
   }
 }
 
-bool surfacePointWithExclusionRegion::inExclusionZone(const SPoint2 &p)
+bool surfacePointWithExclusionRegion::inExclusionZone(const SPoint2 &p, MVertex *parent)
 {
+  if (_father == parent) {
+    //    printf("parent = me\n");
+    return false;
+  }
+
   double mat[2][2];
   double b[2], uv[2];
   mat[0][0] = _q[1].x() - _q[0].x();
@@ -74,60 +77,37 @@ void surfacePointWithExclusionRegion::minmax(double _min[2],
 
 void surfacePointWithExclusionRegion::print(FILE *f, int i)
 {
-  fprintf(f, "SP(%g,%g,%g){%d};\n", _v->x(), _v->y(), _v->z(), i);
-    fprintf(f, "SP(%g,%g,%g){%d};\n", _center.x(), _center.y(), 0.0, i);
+  //  fprintf(f, "SP(%g,%g,%g){%d};\n", _v->x(), _v->y(), _v->z(), i);
+  //  return;
+  fprintf(f, "SP(%g,%g,%g){%d};\n", _center.x(), _center.y(), 0.0, i);
   fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
           _q[0].x(), _q[0].y(), 0.0, _q[1].x(), _q[1].y(), 0.0, _q[2].x(),
           _q[2].y(), 0.0, _q[3].x(), _q[3].y(), 0.0, i, i, i, i);
   
 }
 
-my_wrapper::my_wrapper(const SPoint2 &sp) : _tooclose(false), _p(sp) {}
-
 bool rtree_callback(surfacePointWithExclusionRegion *neighbour, void *point)
 {
   my_wrapper *w = static_cast<my_wrapper *>(point);
 
-  if(neighbour->inExclusionZone(w->_p)) {
+  if(neighbour->inExclusionZone(w->_p, w->_parent)) {
     w->_tooclose = true;
     return false;
   }
-
   return true;
 }
 
 bool inExclusionZone(
+  MVertex *parent,
   SPoint2 &p,
-  RTree<surfacePointWithExclusionRegion *, double, 2, double> &rtree,
-  std::vector<surfacePointWithExclusionRegion *> &all)
+  RTree<surfacePointWithExclusionRegion *, double, 2, double> &rtree)
 {
-  // should assert that the point is inside the domain
-  // OLD BGM
-  //  if(old_algo_hexa()) {
-  //    if(!backgroundMesh::current()->inDomain(p.x(), p.y(), 0)) {
-  //      return true;
-  //    }
-  //  }
-  //  else {
-  //    // NEW BGM
-  //    if(!BGMManager::current2D()->inDomain(p.x(), p.y(), 0)) return true;
-  //  }
-
-  my_wrapper w(p);
+  my_wrapper w(p, parent);
   double _min[2] = {p.x() - 1.e-1, p.y() - 1.e-1},
          _max[2] = {p.x() + 1.e-1, p.y() + 1.e-1};
   rtree.Search(_min, _max, rtree_callback, &w);
 
   return w._tooclose;
-
-  for(unsigned int i = 0; i < all.size(); ++i) {
-    if(all[i]->inExclusionZone(p)) {
-      // printf("%g %g is in exclusion zone of %g
-      //        %g\n",p.x(),p.y(),all[i]._center.x(),all[i]._center.y());
-      return true;
-    }
-  }
-  return false;
 }
 
 frameFieldBackgroundMesh3D *Wrapper3D::bgmesh = NULL;

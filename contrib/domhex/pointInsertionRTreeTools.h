@@ -14,6 +14,7 @@
 #include "STensor3.h"
 #include "BackgroundMesh3D.h"
 #include "GEntity.h"
+#include "GFace.h"
 #include "rtree.h"
 
 static const double k1 = 0.61; // k1*h is the minimal distance between two nodes
@@ -30,11 +31,11 @@ static const double FACTOR = .61;
 class surfacePointWithExclusionRegion {
 public:
   MVertex *_v;
+  MVertex *_father;
   SPoint2 _center;
   SPoint2 _p[4];
   SPoint2 _q[4];
   SMetric3 _meshMetric;
-  double _distanceSummed;
   /*
      + p3
      p4   |
@@ -43,11 +44,11 @@ public:
      + p1
 
    */
-  surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[4],
+  surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[8],
                                   SPoint2 &_mp, SMetric3 &meshMetric,
                                   surfacePointWithExclusionRegion *father = 0);
 
-  bool inExclusionZone(const SPoint2 &p);
+  bool inExclusionZone(const SPoint2 &p, MVertex *v);
   void minmax(double _min[2], double _max[2]) const;
   void print(FILE *f, int i);
 };
@@ -55,28 +56,18 @@ public:
 class my_wrapper {
 public:
   bool _tooclose;
+  MVertex *_parent;
   SPoint2 _p;
-  my_wrapper(const SPoint2 &sp);
+  my_wrapper(const SPoint2 &sp, MVertex *parent) :
+  _p(sp), _parent(parent), _tooclose(false){}
 };
 
-class compareSurfacePointWithExclusionRegionPtr {
-public:
-  inline bool operator()(const surfacePointWithExclusionRegion *a,
-                         const surfacePointWithExclusionRegion *b) const
-  {
-    if(a->_distanceSummed > b->_distanceSummed) return false;
-    if(a->_distanceSummed < b->_distanceSummed) return true;
-    return a < b;
-  }
-};
+ bool rtree_callback(surfacePointWithExclusionRegion *neighbour,
+		     void *point);
 
-extern bool rtree_callback(surfacePointWithExclusionRegion *neighbour,
-                           void *point);
-
-extern bool inExclusionZone(
-  SPoint2 &p,
-  RTree<surfacePointWithExclusionRegion *, double, 2, double> &rtree,
-  std::vector<surfacePointWithExclusionRegion *> &all);
+bool inExclusionZone(MVertex *parent,
+		     SPoint2 &p,
+		     RTree<surfacePointWithExclusionRegion *, double, 2, double> &rtree);
 
 class Wrapper3D {
 private:

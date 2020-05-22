@@ -549,6 +549,7 @@ static void Mesh2D(GModel *m)
                  CTX::instance()->meshTimer[1], t2 - t1);
 
   PrintMesh2dStatistics(m);
+  m->writeMSH("packinit.msh", 4.0, false, true);
 }
 
 static void
