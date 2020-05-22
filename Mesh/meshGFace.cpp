@@ -1538,10 +1538,11 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     while(itt != m->triangles.end()) {
       BDS_Face *t = *itt;
       BDS_Point *n[4];
-      t->getNodes(n);
-      if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
-        recur_tag(t, &CLASS_EXTERIOR);
-        break;
+      if(t->getNodes(n)) {
+        if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
+          recur_tag(t, &CLASS_EXTERIOR);
+          break;
+        }
       }
       ++itt;
     }
@@ -1671,17 +1672,18 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       BDS_Face *t = *itt;
       if(!t->deleted) {
         BDS_Point *n[4];
-        t->getNodes(n);
-        MVertex *v1 = recoverMap[n[0]];
-        MVertex *v2 = recoverMap[n[1]];
-        MVertex *v3 = recoverMap[n[2]];
-        if(!n[3]) {
-          if(v1 != v2 && v1 != v3 && v2 != v3)
-            gf->triangles.push_back(new MTriangle(v1, v2, v3));
-        }
-        else {
-          MVertex *v4 = recoverMap[n[3]];
-          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+        if(t->getNodes(n)) {
+          MVertex *v1 = recoverMap[n[0]];
+          MVertex *v2 = recoverMap[n[1]];
+          MVertex *v3 = recoverMap[n[2]];
+          if(!n[3]) {
+            if(v1 != v2 && v1 != v3 && v2 != v3)
+              gf->triangles.push_back(new MTriangle(v1, v2, v3));
+          }
+          else {
+            MVertex *v4 = recoverMap[n[3]];
+            gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+          }
         }
       }
       ++itt;
@@ -2573,10 +2575,11 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
         continue;
       }
       BDS_Point *n[4];
-      t->getNodes(n);
-      if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
-        recur_tag(t, &CLASS_EXTERIOR);
-        break;
+      if(t->getNodes(n)) {
+        if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
+          recur_tag(t, &CLASS_EXTERIOR);
+          break;
+        }
       }
       ++itt;
     }
