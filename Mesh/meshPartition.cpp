@@ -5,8 +5,6 @@
 //
 // Contributed by Anthony Royer.
 
-// TODO: define METIS' IDXTYPEWIDTH according to the size of std::size_t
-
 #include <vector>
 #include <set>
 #include <sstream>
@@ -35,7 +33,7 @@ struct OriGEntityPtrFullLessThan {
 typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrFullLessThan>
   setorientity;
 
-// TODO C++11 remove the fallbaks
+// TODO C++11 remove the fallbacks
 #if __cplusplus >= 201103L
 #include <unordered_map>
 #define hashmap std::unordered_map
