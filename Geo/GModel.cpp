@@ -66,8 +66,9 @@ int GModel::_current = -1;
 
 GModel::GModel(const std::string &name)
   : _destroying(false), _name(name), _visible(1), _elementOctree(0),
-    _geo_internals(0), _occ_internals(0), _acis_internals(0), _fields(0),
-    _currentMeshEntity(0), _numPartitions(0), normals(0)
+    _geo_internals(0), _occ_internals(0), _acis_internals(0),
+    _parasolid_internals(0), _fields(0), _currentMeshEntity(0),
+    _numPartitions(0), normals(0)
 {
   _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
@@ -82,7 +83,7 @@ GModel::GModel(const std::string &name)
 
   // we always create an internal GEO model; other CAD internals are created
   // on-demand
-  _createGEOInternals();
+  createGEOInternals();
 
 #if defined(HAVE_MESH)
   _fields = new FieldManager();
@@ -105,8 +106,10 @@ GModel::~GModel()
   }
 
   destroy();
-  _deleteGEOInternals();
-  _deleteOCCInternals();
+  deleteGEOInternals();
+  deleteOCCInternals();
+  deleteACISInternals();
+  deleteParasolidInternals();
 #if defined(HAVE_MESH)
   delete _fields;
 #endif
@@ -193,7 +196,7 @@ void GModel::destroy(bool keepName)
 
   destroyMeshCaches();
 
-  _resetOCCInternals();
+  resetOCCInternals();
 
   if(normals) delete normals;
   normals = 0;
@@ -3172,3 +3175,33 @@ void GModel::computeHomology()
   Msg::Error("Homology computation requires KBIPACK");
 #endif
 }
+
+#if !defined(HAVE_ACIS)
+
+void GModel::createACISInternals() { }
+
+void GModel::deleteACISInternals() { }
+
+int GModel::readACISSAT(const std::string &fn)
+{
+  Msg::Error("Gmsh must be compiled with ACIS support to load '%s'",
+             fn.c_str());
+  return 0;
+}
+
+#endif
+
+#if !defined(HAVE_PARASOLID)
+
+void GModel::createParasolidInternals() { }
+
+void GModel::deleteParasolidInternals() { }
+
+int GModel::readParasolid(const std::string &fn)
+{
+  Msg::Error("Gmsh must be compiled with Parasolid support to load '%s'",
+             fn.c_str());
+  return 0;
+}
+
+#endif

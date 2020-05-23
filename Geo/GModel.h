@@ -35,6 +35,7 @@ template <class scalar> class simpleFunction;
 class GEO_Internals;
 class OCC_Internals;
 class ACIS_Internals;
+class Parasolid_Internals;
 class smooth_normals;
 class FieldManager;
 class gLevelset;
@@ -114,12 +115,14 @@ protected:
   // global cache storage of discrete curvatures
   std::map<MVertex *, std::pair<SVector3, SVector3> > _curvatures;
 
-  // Geo (Gmsh native) model internal data
+  // GEO (Gmsh native) model internal data
   GEO_Internals *_geo_internals;
-  // OpenCascade model internal data
+  // OpenCASCADE model internal data
   OCC_Internals *_occ_internals;
   // ACIS model internal data
   ACIS_Internals *_acis_internals;
+  // Parasolid model internal data
+  Parasolid_Internals *_parasolid_internals;
 
   // characteristic length (mesh size) fields
   FieldManager *_fields;
@@ -150,14 +153,6 @@ protected:
   std::size_t _numPartitions;
 
 protected:
-  void _createGEOInternals();
-  void _deleteGEOInternals();
-
-  void _deleteOCCInternals();
-  void _resetOCCInternals();
-
-  void _deleteACISInternals();
-
   // store the elements given in the map (indexed by elementary region
   // number) into the model, creating discrete geometrical entities on
   // the fly if needed
@@ -312,10 +307,19 @@ public:
   void pruneMeshVertexAssociations();
 
   // access internal CAD representations
-  GEO_Internals *getGEOInternals() { return _geo_internals; }
+  void createGEOInternals();
   void createOCCInternals();
+  void createACISInternals();
+  void createParasolidInternals();
   OCC_Internals *getOCCInternals() { return _occ_internals; }
+  GEO_Internals *getGEOInternals() { return _geo_internals; }
   ACIS_Internals *getACISInternals() { return _acis_internals; }
+  Parasolid_Internals *getParasolidInternals() { return _parasolid_internals; }
+  void deleteGEOInternals();
+  void deleteOCCInternals();
+  void resetOCCInternals();
+  void deleteACISInternals();
+  void deleteParasolidInternals();
 
   // access characteristic length (mesh size) fields
   FieldManager *getFields() { return _fields; }
@@ -706,6 +710,9 @@ public:
 
   // ACIS Model
   int readACISSAT(const std::string &name);
+
+  // Parasolid Model
+  int readParasolid(const std::string &name);
 
   // Gmsh mesh file format
   int readMSH(const std::string &name);

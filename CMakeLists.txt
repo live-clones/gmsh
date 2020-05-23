@@ -30,7 +30,6 @@ macro(opt OPTION HELP VALUE)
 endmacro()
 
 opt(3M "Enable proprietary 3M extension" OFF)
-opt(ACIS "Enable ACIS geometrical models (experimental)" ${DEFAULT})
 opt(ALGLIB "Enable ALGLIB (used by some mesh optimizers)" ${DEFAULT})
 opt(ANN "Enable ANN (used for fast point search in mesh/post)" ${DEFAULT})
 opt(BAMG "Enable Bamg 2D anisotropic mesh generator" ${DEFAULT})
@@ -1332,18 +1331,6 @@ if(ENABLE_OCC)
   endif()
 endif()
 
-if(ENABLE_ACIS)
-  find_library(ACIS_LIB SpaACIS PATH_SUFFIXES bin/maci386)
-  if(ACIS_LIB)
-    find_path(ACIS_INC "kernapi.hxx" PATH_SUFFIXES include)
-    if(ACIS_INC)
-      set_config_option(HAVE_ACIS "Acis")
-      list(APPEND EXTERNAL_LIBRARIES ${ACIS_LIB})
-      list(APPEND EXTERNAL_INCLUDES ${ACIS_INC})
-    endif()
-  endif()
-endif()
-
 if(ENABLE_ZIPPER)
   if(ENABLE_BUILD_IOS)
     set_config_option(HAVE_LIBZ "Zlib")
@@ -2132,7 +2119,7 @@ message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
 mark_as_advanced(GMSH_EXTRA_VERSION
-                 ACIS_LIB ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
+                 ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
                  GMP_INC GMP_LIB MMG3D_INC MMG3D_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB

@@ -16,12 +16,11 @@ set(SRC
     gmshSurface.cpp
     OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
     discreteVertex.cpp discreteEdge.cpp discreteFace.cpp discreteRegion.cpp
-    ACISVertex.cpp ACISEdge.cpp ACISFace.cpp
   GModel.cpp
     GModelCreateTopologyFromMesh.cpp
     GModelVertexArrays.cpp
     GModelParametrize.cpp
-    GModelIO_GEO.cpp GModelIO_ACIS.cpp GModelIO_OCC.cpp
+    GModelIO_GEO.cpp GModelIO_OCC.cpp
     GModelIO_MSH.cpp GModelIO_MSH2.cpp GModelIO_MSH3.cpp GModelIO_MSH4.cpp
     GModelIO_VTK.cpp GModelIO_CGNS.cpp GModelIO_MED.cpp GModelIO_MESH.cpp
     GModelIO_STL.cpp  GModelIO_TOCHNOG.cpp GModelIO_PLY.cpp GModelIO_VRML.cpp

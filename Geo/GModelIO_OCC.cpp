@@ -4845,13 +4845,13 @@ void GModel::createOCCInternals()
   _occ_internals = new OCC_Internals;
 }
 
-void GModel::_deleteOCCInternals()
+void GModel::deleteOCCInternals()
 {
   if(_occ_internals) delete _occ_internals;
   _occ_internals = 0;
 }
 
-void GModel::_resetOCCInternals()
+void GModel::resetOCCInternals()
 {
   if(!_occ_internals) return;
   _occ_internals->reset();
