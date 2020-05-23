@@ -9,7 +9,7 @@
 #include "hxt_tetDelaunay.h"
 #include "predicates.h"
 #include "hxt_tetFlag.h"
-#include "hxt_omp.h"
+#include "hxt_sort.h"
 
 // mark all the points which are in mesh->(points | lines | triangles)
 static void markMeshPoints(HXTMesh* mesh)
@@ -99,6 +99,7 @@ static int is_too_close(double ptSize, double vtaSize, double squareDist)
 }
 
 
+
 /* compute a point (center) inside the tetrahedron which is very likely to respect the nodalsize.
  * return 0 if the computed point does respect the interpolated nodalsize
  * return 1 if the computed point does not respect the interpolated nodalsize
@@ -128,12 +129,13 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
   double s2 = nodalSize[2]!=DBL_MAX && nodalSize[2] ? nodalSize[2] : avg;
   double s3 = nodalSize[3]!=DBL_MAX && nodalSize[3] ? nodalSize[3] : avg;
 
-  double e0l2 = square_dist(p[0], p[1])/(s0 + s1);
-  double e1l2 = square_dist(p[0], p[2])/(s0 + s2);
-  double e2l2 = square_dist(p[0], p[3])/(s0 + s3);
-  double e3l2 = square_dist(p[1], p[2])/(s1 + s2);
-  double e4l2 = square_dist(p[1], p[3])/(s1 + s3);
-  double e5l2 = square_dist(p[2], p[3])/(s2 + s3);
+  // (e/s)^2  (e is the norm of the edge, s is the mean nodalSize over that edge)
+  double e0l2 = square_dist(p[0], p[1])/(0.25*(s0 + s1)*(s0 + s1));
+  double e1l2 = square_dist(p[0], p[2])/(0.25*(s0 + s2)*(s0 + s2));
+  double e2l2 = square_dist(p[0], p[3])/(0.25*(s0 + s3)*(s0 + s3));
+  double e3l2 = square_dist(p[1], p[2])/(0.25*(s1 + s2)*(s1 + s2));
+  double e4l2 = square_dist(p[1], p[3])/(0.25*(s1 + s3)*(s1 + s3));
+  double e5l2 = square_dist(p[2], p[3])/(0.25*(s2 + s3)*(s2 + s3));
 
   // O = (0,0,0)
   // A = (xa,0,0)
