@@ -42,11 +42,11 @@
 #include <gp_Sphere.hxx>
 #include <BRepTools.hxx>
 
-OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
-  : GFace(m, num), s(_s), sf(_s, Standard_True), _radius(-1)
+OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
+  : GFace(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
 {
-  setup();
-  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(s, num);
+  _setup();
+  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(_s, num);
 
   if(CTX::instance()->debugSurface > 0 &&
      tag() == CTX::instance()->debugSurface)
@@ -56,18 +56,18 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
 OCCFace::~OCCFace()
 {
   if(model()->getOCCInternals() && !model()->isBeingDestroyed()) {
-    model()->getOCCInternals()->unbind(s, tag()); // potentially slow
+    model()->getOCCInternals()->unbind(_s, tag()); // potentially slow
   }
 }
 
-void OCCFace::setup()
+void OCCFace::_setup()
 {
   edgeLoops.clear();
   l_edges.clear();
   l_dirs.clear();
 
   TopExp_Explorer exp2, exp3;
-  for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp2.More();
+  for(exp2.Init(_s.Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp2.More();
       exp2.Next()) {
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
     Msg::Debug("OCC surface %d - new wire", tag());
@@ -107,7 +107,7 @@ void OCCFace::setup()
     edgeLoops.push_back(el);
   }
 
-  for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
+  for(exp2.Init(_s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
       exp2.More(); exp2.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
     GVertex *v = 0;
@@ -120,26 +120,26 @@ void OCCFace::setup()
     }
   }
 
-  BRepAdaptor_Surface surface(s);
+  BRepAdaptor_Surface surface(_s);
   _periodic[0] = surface.IsUPeriodic();
   _periodic[1] = surface.IsVPeriodic();
   if(_periodic[0]) _period[0] = surface.UPeriod();
   if(_periodic[1]) _period[1] = surface.VPeriod();
 
-  ShapeAnalysis::GetFaceUVBounds(s, umin, umax, vmin, vmax);
+  ShapeAnalysis::GetFaceUVBounds(_s, _umin, _umax, _vmin, _vmax);
   Msg::Debug("OCC surface %d with %d parameter bounds (%g,%g)(%g,%g)", tag(),
-             l_edges.size(), umin, umax, vmin, vmax);
+             l_edges.size(), _umin, _umax, _vmin, _vmax);
   // we do that for the projections to converge on the borders of the surface
-  const double du = umax - umin;
-  const double dv = vmax - vmin;
-  umin -= std::max(fabs(du) / 100.0, 1e-12);
-  vmin -= std::max(fabs(dv) / 100.0, 1e-12);
-  umax += std::max(fabs(du) / 100.0, 1e-12);
-  vmax += std::max(fabs(dv) / 100.0, 1e-12);
-  occface = BRep_Tool::Surface(s);
+  const double du = _umax - _umin;
+  const double dv = _vmax - _vmin;
+  _umin -= std::max(fabs(du) / 100.0, 1e-12);
+  _vmin -= std::max(fabs(dv) / 100.0, 1e-12);
+  _umax += std::max(fabs(du) / 100.0, 1e-12);
+  _vmax += std::max(fabs(dv) / 100.0, 1e-12);
+  _occface = BRep_Tool::Surface(_s);
 
   if(OCCFace::geomType() == GEntity::Sphere) {
-    BRepAdaptor_Surface surface(s);
+    BRepAdaptor_Surface surface(_s);
     gp_Sphere sphere = surface.Sphere();
     _radius = sphere.Radius();
     gp_Pnt loc = sphere.Location();
@@ -169,7 +169,7 @@ SBoundingBox3d OCCFace::bounds(bool fast)
 
   Bnd_Box b;
   try {
-    BRepBndLib::Add(s, b);
+    BRepBndLib::Add(_s, b);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return SBoundingBox3d();
@@ -188,7 +188,7 @@ Range<double> OCCFace::parBounds(int i) const
 {
   double umin2, umax2, vmin2, vmax2;
 
-  ShapeAnalysis::GetFaceUVBounds(s, umin2, umax2, vmin2, vmax2);
+  ShapeAnalysis::GetFaceUVBounds(_s, umin2, umax2, vmin2, vmax2);
   if(i == 0) return Range<double>(umin2, umax2);
   return Range<double>(vmin2, vmax2);
 }
@@ -198,13 +198,13 @@ SVector3 OCCFace::normal(const SPoint2 &param) const
   gp_Pnt pnt;
   gp_Vec du, dv;
 
-  occface->D1(param.x(), param.y(), pnt, du, dv);
+  _occface->D1(param.x(), param.y(), pnt, du, dv);
 
   SVector3 t1(du.X(), du.Y(), du.Z());
   SVector3 t2(dv.X(), dv.Y(), dv.Z());
   SVector3 n(crossprod(t1, t2));
   n.normalize();
-  if(s.Orientation() == TopAbs_REVERSED) return n * (-1.);
+  if(_s.Orientation() == TopAbs_REVERSED) return n * (-1.);
   return n;
 }
 
@@ -212,7 +212,7 @@ Pair<SVector3, SVector3> OCCFace::firstDer(const SPoint2 &param) const
 {
   gp_Pnt pnt;
   gp_Vec du, dv;
-  occface->D1(param.x(), param.y(), pnt, du, dv);
+  _occface->D1(param.x(), param.y(), pnt, du, dv);
   return Pair<SVector3, SVector3>(SVector3(du.X(), du.Y(), du.Z()),
                                   SVector3(dv.X(), dv.Y(), dv.Z()));
 }
@@ -222,7 +222,7 @@ void OCCFace::secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
 {
   gp_Pnt pnt;
   gp_Vec du, dv, duu, dvv, duv;
-  occface->D2(param.x(), param.y(), pnt, du, dv, duu, dvv, duv);
+  _occface->D2(param.x(), param.y(), pnt, du, dv, duu, dvv, duv);
 
   dudu = SVector3(duu.X(), duu.Y(), duu.Z());
   dvdv = SVector3(dvv.X(), dvv.Y(), dvv.Z());
@@ -234,12 +234,12 @@ GPoint OCCFace::point(double par1, double par2) const
   double pp[2] = {par1, par2};
 
 #if 1
-  gp_Pnt val = occface->Value(par1, par2);
+  gp_Pnt val = _occface->Value(par1, par2);
   return GPoint(val.X(), val.Y(), val.Z(), this, pp);
 #else // this is horribly slow!
   double umin2, umax2, vmin2, vmax2;
 
-  ShapeAnalysis::GetFaceUVBounds(s, umin2, umax2, vmin2, vmax2);
+  ShapeAnalysis::GetFaceUVBounds(_s, umin2, umax2, vmin2, vmax2);
 
   double du = umax2 - umin2;
   double dv = vmax2 - vmin2;
@@ -253,7 +253,7 @@ GPoint OCCFace::point(double par1, double par2) const
 
   try {
     gp_Pnt val;
-    val = occface->Value(par1, par2);
+    val = _occface->Value(par1, par2);
     return GPoint(val.X(), val.Y(), val.Z(), this, pp);
   } catch(Standard_OutOfRange) {
     GPoint p(0, 0, 0, this, pp);
@@ -268,8 +268,8 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   double a, b, c, d;
-  ShapeAnalysis::GetFaceUVBounds(s, a, b, c, d);
-  GeomAPI_ProjectPointOnSurf proj(pnt, occface, a, b, c, d);
+  ShapeAnalysis::GetFaceUVBounds(_s, a, b, c, d);
+  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, a, b, c, d);
 
   if(!proj.NbPoints()) {
     Msg::Debug("OCC projection of point on surface failed");
@@ -281,7 +281,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   double pp[2] = {initialGuess[0], initialGuess[1]};
   proj.LowerDistanceParameters(pp[0], pp[1]);
 
-  if((pp[0] < umin || umax < pp[0]) || (pp[1] < vmin || vmax < pp[1])) {
+  if((pp[0] < _umin || _umax < pp[0]) || (pp[1] < _vmin || _vmax < pp[1])) {
     Msg::Warning("Point projection is out of face bounds");
     GPoint gp(0, 0);
     gp.setNoSuccess();
@@ -295,7 +295,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
+  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, _umin, _umax, _vmin, _vmax);
   if(!proj.NbPoints()) {
     Msg::Error("OCC projection of point on surface failed");
     return GFace::parFromPoint(qp);
@@ -307,21 +307,21 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
 
 GEntity::GeomType OCCFace::geomType() const
 {
-  if(occface->DynamicType() == STANDARD_TYPE(Geom_Plane))
+  if(_occface->DynamicType() == STANDARD_TYPE(Geom_Plane))
     return Plane;
-  else if(occface->DynamicType() == STANDARD_TYPE(Geom_ToroidalSurface))
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_ToroidalSurface))
     return Torus;
-  else if(occface->DynamicType() == STANDARD_TYPE(Geom_BezierSurface))
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_BezierSurface))
     return BezierSurface;
-  else if(occface->DynamicType() == STANDARD_TYPE(Geom_CylindricalSurface))
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_CylindricalSurface))
     return Cylinder;
-  else if(occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
     return Cone;
-  else if(occface->DynamicType() == STANDARD_TYPE(Geom_SurfaceOfRevolution))
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_SurfaceOfRevolution))
     return SurfaceOfRevolution;
-  else if(occface->DynamicType() == STANDARD_TYPE(Geom_SphericalSurface))
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_SphericalSurface))
     return Sphere;
-  else if(occface->DynamicType() == STANDARD_TYPE(Geom_BSplineSurface))
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_BSplineSurface))
     return BSplineSurface;
   return Unknown;
 }
@@ -329,7 +329,7 @@ GEntity::GeomType OCCFace::geomType() const
 double OCCFace::curvatureMax(const SPoint2 &param) const
 {
   const double eps = 1.e-12;
-  BRepLProp_SLProps prop(sf, 2, eps);
+  BRepLProp_SLProps prop(_sf, 2, eps);
   prop.SetParameters(param.x(), param.y());
 
   if(!prop.IsCurvatureDefined()) { return eps; }
@@ -342,7 +342,7 @@ double OCCFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
                            double &curvMin) const
 {
   const double eps = 1.e-12;
-  BRepLProp_SLProps prop(sf, 2, eps);
+  BRepLProp_SLProps prop(_sf, 2, eps);
   prop.SetParameters(param.x(), param.y());
 
   if(!prop.IsCurvatureDefined()) { return -1.; }
@@ -367,7 +367,7 @@ double OCCFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 bool OCCFace::containsPoint(const SPoint3 &pt) const
 {
   if(geomType() == Plane) {
-    gp_Pln pl = Handle(Geom_Plane)::DownCast(occface)->Pln();
+    gp_Pln pl = Handle(Geom_Plane)::DownCast(_occface)->Pln();
     double n[3], c;
     pl.Coefficients(n[0], n[1], n[2], c);
     norme(n);
@@ -414,7 +414,7 @@ bool OCCFace::buildSTLTriangulation(bool force)
   stl_vertices_xyz.clear();
   stl_triangles.clear();
   if(!model()->getOCCInternals()->makeFaceSTL(
-       s, stl_vertices_uv, stl_vertices_xyz, stl_normals, stl_triangles)) {
+      _s, stl_vertices_uv, stl_vertices_xyz, stl_normals, stl_triangles)) {
     Msg::Info("OpenCASCADE triangulation of surface %d failed", tag());
     // add a dummy triangle so that we won't try again
     stl_vertices_uv.push_back(SPoint2(0., 0.));
@@ -430,7 +430,7 @@ bool OCCFace::buildSTLTriangulation(bool force)
   for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end(); it++) {
     if ((*it)->stl_vertices_xyz.size() == 0) {
       const TopoDS_Edge *c = (TopoDS_Edge *)(*it)->getNativePtr();
-      model()->getOCCInternals()->makeEdgeSTLFromFace(*c, s, &((*it)->stl_vertices_xyz));
+      model()->getOCCInternals()->makeEdgeSTLFromFace(*c, _s, &((*it)->stl_vertices_xyz));
     }
   }
 
@@ -470,9 +470,9 @@ bool OCCFace::containsParam(const SPoint2 &pt)
   }
   return false;
 #else
-  const Standard_Real tolerance = BRep_Tool::Tolerance(s);
+  const Standard_Real tolerance = BRep_Tool::Tolerance(_s);
   BRepClass_FaceClassifier faceClassifier;
-  faceClassifier.Perform(s, gp_Pnt2d{pt.x(), pt.y()}, tolerance);
+  faceClassifier.Perform(_s, gp_Pnt2d{pt.x(), pt.y()}, tolerance);
   const TopAbs_State state = faceClassifier.State();
   return (state == TopAbs_IN || state == TopAbs_ON);
 #endif
@@ -483,7 +483,7 @@ void OCCFace::writeBREP(const char *filename)
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  b.Add(c, s);
+  b.Add(c, _s);
   BRepTools::Write(c, filename);
 }
 

@@ -13,7 +13,8 @@
 #include "Context.h"
 #include "decasteljau.h"
 
-static void setMeshSizeFromCurvePoints(GEdge &edge, const Curve &curve) {
+static void setMeshSizeFromCurvePoints(GEdge &edge, const Curve &curve)
+{
   if (!CTX::instance()->mesh.lcFromParametricPoints)
     return;
   switch(curve.Typ) {
@@ -39,27 +40,27 @@ static void setMeshSizeFromCurvePoints(GEdge &edge, const Curve &curve) {
   }
 }
 
-gmshEdge::gmshEdge(GModel *m, Curve *edge, GVertex *v1, GVertex *v2)
-  : GEdge(m, edge->Num, v1, v2), c(edge)
+gmshEdge::gmshEdge(GModel *m, Curve *c, GVertex *v1, GVertex *v2)
+  : GEdge(m, c->Num, v1, v2), _c(c)
 {
   gmshEdge::resetMeshAttributes();
-  setMeshSizeFromCurvePoints(*this,*edge);
+  setMeshSizeFromCurvePoints(*this, *c);
 }
 
-void gmshEdge::resetNativePtr(Curve *edge, GVertex *_v1, GVertex *_v2)
+void gmshEdge::resetNativePtr(Curve *c, GVertex *v1, GVertex *v2)
 {
-  c = edge;
-  v0 = _v1;
-  v1 = _v2;
-  if(v0) v0->addEdge(this);
-  if(v1 && v1 != v0) v1->addEdge(this);
-  setMeshSizeFromCurvePoints(*this,*edge);
+  _c = c;
+  _v0 = v1;
+  _v1 = v2;
+  if(_v0) _v0->addEdge(this);
+  if(_v1 && _v1 != _v0) _v1->addEdge(this);
+  setMeshSizeFromCurvePoints(*this, *c);
 }
 
 bool gmshEdge::degenerate(int dim) const
 {
-  if(c->beg == c->end && c->Typ == MSH_SEGM_LINE &&
-     List_Nbr(c->Control_Points) == 0) {
+  if(_c->beg == _c->end && _c->Typ == MSH_SEGM_LINE &&
+     List_Nbr(_c->Control_Points) == 0) {
     Msg::Info("Curve %d is degenerate", tag());
     return true;
   }
@@ -68,40 +69,40 @@ bool gmshEdge::degenerate(int dim) const
 
 void gmshEdge::resetMeshAttributes()
 {
-  meshAttributes.method = c->Method;
-  meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
-  meshAttributes.typeTransfinite = c->typeTransfinite;
-  meshAttributes.coeffTransfinite = c->coeffTransfinite;
-  meshAttributes.extrude = c->Extrude;
-  meshAttributes.reverseMesh = c->ReverseMesh;
+  meshAttributes.method = _c->Method;
+  meshAttributes.nbPointsTransfinite = _c->nbPointsTransfinite;
+  meshAttributes.typeTransfinite = _c->typeTransfinite;
+  meshAttributes.coeffTransfinite = _c->coeffTransfinite;
+  meshAttributes.extrude = _c->Extrude;
+  meshAttributes.reverseMesh = _c->ReverseMesh;
 }
 
 Range<double> gmshEdge::parBounds(int i) const
 {
-  return Range<double>(c->ubeg, c->uend);
+  return Range<double>(_c->ubeg, _c->uend);
 }
 
 GPoint gmshEdge::point(double par) const
 {
-  Vertex a = InterpolateCurve(c, par, 0);
+  Vertex a = InterpolateCurve(_c, par, 0);
   return GPoint(a.Pos.X, a.Pos.Y, a.Pos.Z, this, par);
 }
 
 SVector3 gmshEdge::firstDer(double par) const
 {
-  Vertex a = InterpolateCurve(c, par, 1);
+  Vertex a = InterpolateCurve(_c, par, 1);
   return SVector3(a.Pos.X, a.Pos.Y, a.Pos.Z);
 }
 
 SVector3 gmshEdge::secondDer(double par) const
 {
-  Vertex a = InterpolateCurve(c, par, 2);
+  Vertex a = InterpolateCurve(_c, par, 2);
   return SVector3(a.Pos.X, a.Pos.Y, a.Pos.Z);
 }
 
 GEntity::GeomType gmshEdge::geomType() const
 {
-  switch(c->Typ) {
+  switch(_c->Typ) {
   case MSH_SEGM_LINE: return Line;
   case MSH_SEGM_CIRC:
   case MSH_SEGM_CIRC_INV: return Circle;
@@ -124,13 +125,13 @@ bool gmshEdge::haveParametrization()
 
 std::string gmshEdge::getAdditionalInfoString(bool multline)
 {
-  if(List_Nbr(c->Control_Points) > 0) {
+  if(List_Nbr(_c->Control_Points) > 0) {
     std::ostringstream sstream;
     sstream << "Control points: ";
-    for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+    for(int i = 0; i < List_Nbr(_c->Control_Points); i++) {
       if(i) sstream << ", ";
       Vertex *v;
-      List_Read(c->Control_Points, i, &v);
+      List_Read(_c->Control_Points, i, &v);
       sstream << v->Num;
     }
 
@@ -167,7 +168,7 @@ int gmshEdge::minimumMeshSegments() const
     np = GEdge::minimumMeshSegments();
   }
   else if(geomType() == Circle || geomType() == Ellipse) {
-    double a = fabs(c->Circle.t1 - c->Circle.t2);
+    double a = fabs(_c->Circle.t1 - _c->Circle.t2);
     double n = CTX::instance()->mesh.minCircPoints;
     if(a > 6.28)
       np = n;
@@ -182,10 +183,10 @@ int gmshEdge::minimumMeshSegments() const
 
 int gmshEdge::minimumDrawSegments() const
 {
-  int n = List_Nbr(c->Control_Points) - 1;
+  int n = List_Nbr(_c->Control_Points) - 1;
   if(!n) n = GEdge::minimumDrawSegments();
 
-  if(geomType() == Line && !c->geometry)
+  if(geomType() == Line && !_c->geometry)
     return n;
   else
     return CTX::instance()->geom.numSubEdges * n;
@@ -195,20 +196,20 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 {
   Surface *s = (Surface *)face->getNativePtr();
 
-  bool periodic = (c->end == c->beg);
+  bool periodic = (_c->end == _c->beg);
   if(s->geometry) {
-    switch(c->Typ) {
+    switch(_c->Typ) {
     case MSH_SEGM_LINE: {
       Vertex *v[3];
-      List_Read(c->Control_Points, 0, &v[1]);
-      List_Read(c->Control_Points, 1, &v[2]);
+      List_Read(_c->Control_Points, 0, &v[1]);
+      List_Read(_c->Control_Points, 1, &v[2]);
       SPoint2 p = v[1]->pntOnGeometry +
                   (v[2]->pntOnGeometry - v[1]->pntOnGeometry) * epar;
       return p;
     }
     case MSH_SEGM_BSPLN:
     case MSH_SEGM_BEZIER: {
-      int NbControlPoints = List_Nbr(c->Control_Points);
+      int NbControlPoints = List_Nbr(_c->Control_Points);
       int NbCurves = NbControlPoints + (periodic ? -1 : 1);
       int iCurve = (int)floor(epar * (double)NbCurves);
       if(iCurve >= NbCurves)
@@ -224,13 +225,13 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
         if(k < 0) k = periodic ? k + NbControlPoints - 1 : 0;
         if(k >= NbControlPoints)
           k = periodic ? k - NbControlPoints + 1 : NbControlPoints - 1;
-        List_Read(c->Control_Points, k, &v[j]);
+        List_Read(_c->Control_Points, k, &v[j]);
       }
-      return InterpolateCubicSpline(v, t, c->mat, t1, t2, c->geometry, 0);
+      return InterpolateCubicSpline(v, t, _c->mat, t1, t2, _c->geometry, 0);
     }
     case MSH_SEGM_SPLN: {
       Vertex temp1, temp2;
-      int N = List_Nbr(c->Control_Points);
+      int N = List_Nbr(_c->Control_Points);
       int i = (int)((double)(N - 1) * epar);
       if(i < 0) i = 0;
       if(i >= N - 1) i = N - 2;
@@ -238,11 +239,11 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       double t2 = (double)(i + 1) / (double)(N - 1);
       double t = (epar - t1) / (t2 - t1);
       Vertex *v[4];
-      List_Read(c->Control_Points, i, &v[1]);
-      List_Read(c->Control_Points, i + 1, &v[2]);
+      List_Read(_c->Control_Points, i, &v[1]);
+      List_Read(_c->Control_Points, i + 1, &v[2]);
       if(!i) {
-        if(c->beg == c->end) {
-          List_Read(c->Control_Points, N - 2, &v[0]);
+        if(_c->beg == _c->end) {
+          List_Read(_c->Control_Points, N - 2, &v[0]);
         }
         else {
           v[0] = &temp1;
@@ -250,11 +251,11 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
         }
       }
       else {
-        List_Read(c->Control_Points, i - 1, &v[0]);
+        List_Read(_c->Control_Points, i - 1, &v[0]);
       }
       if(i == N - 2) {
-        if(c->beg == c->end) {
-          List_Read(c->Control_Points, 1, &v[3]);
+        if(_c->beg == _c->end) {
+          List_Read(_c->Control_Points, 1, &v[3]);
         }
         else {
           v[3] = &temp2;
@@ -262,9 +263,9 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
         }
       }
       else {
-        List_Read(c->Control_Points, i + 2, &v[3]);
+        List_Read(_c->Control_Points, i + 2, &v[3]);
       }
-      return InterpolateCubicSpline(v, t, c->mat, t1, t2, c->geometry, 0);
+      return InterpolateCubicSpline(v, t, _c->mat, t1, t2, _c->geometry, 0);
     }
     default: Msg::Error("Unknown curve type in reparamOnFace"); return SPoint2();
     }
@@ -275,40 +276,40 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     for(int i = 0; i < 4; i++) List_Read(s->Generatrices, i, &C[i]);
 
     double U, V;
-    if(C[0]->Num == c->Num) {
+    if(C[0]->Num == _c->Num) {
       U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg);
       V = 0;
     }
-    else if(C[0]->Num == -c->Num) {
+    else if(C[0]->Num == -_c->Num) {
       U = (C[0]->uend - epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg);
       V = 0;
     }
-    else if(C[1]->Num == c->Num) {
+    else if(C[1]->Num == _c->Num) {
       V = (epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg);
       U = 1;
     }
-    else if(C[1]->Num == -c->Num) {
+    else if(C[1]->Num == -_c->Num) {
       V = (C[1]->uend - epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg);
       U = 1;
     }
-    else if(C[2]->Num == c->Num) {
+    else if(C[2]->Num == _c->Num) {
       U = 1 - (epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg);
       V = 1;
     }
-    else if(C[2]->Num == -c->Num) {
+    else if(C[2]->Num == -_c->Num) {
       U = 1 - (C[2]->uend - epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg);
       V = 1;
     }
-    else if(C[3]->Num == c->Num) {
+    else if(C[3]->Num == _c->Num) {
       V = 1 - (epar - C[3]->ubeg) / (C[3]->uend - C[3]->ubeg);
       U = 0;
     }
-    else if(C[3]->Num == -c->Num) {
+    else if(C[3]->Num == -_c->Num) {
       V = 1 - (C[3]->uend - epar - C[3]->ubeg) / (C[3]->uend - C[3]->ubeg);
       U = 0;
     }
     else {
-      Msg::Info("Reparameterizing curve %d on surface %d", c->Num, s->Num);
+      Msg::Info("Reparameterizing curve %d on surface %d", _c->Num, s->Num);
       return GEdge::reparamOnFace(face, epar, dir);
     }
     return SPoint2(U, V);
@@ -318,32 +319,32 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     for(int i = 0; i < 3; i++) List_Read(s->Generatrices, i, &C[i]);
     double U, V;
     if(CTX::instance()->geom.oldRuledSurface) {
-      if(C[0]->Num == c->Num) {
+      if(C[0]->Num == _c->Num) {
         U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg);
         V = 0;
       }
-      else if(C[0]->Num == -c->Num) {
+      else if(C[0]->Num == -_c->Num) {
         U = (C[0]->uend - epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg);
         V = 0;
       }
-      else if(C[1]->Num == c->Num) {
+      else if(C[1]->Num == _c->Num) {
         V = (epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg);
         U = 1;
       }
-      else if(C[1]->Num == -c->Num) {
+      else if(C[1]->Num == -_c->Num) {
         V = (C[1]->uend - epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg);
         U = 1;
       }
-      else if(C[2]->Num == c->Num) {
+      else if(C[2]->Num == _c->Num) {
         U = 1 - (epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg);
         V = 1;
       }
-      else if(C[2]->Num == -c->Num) {
+      else if(C[2]->Num == -_c->Num) {
         U = 1 - (C[2]->uend - epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg);
         V = 1;
       }
       else {
-        Msg::Info("Reparameterizing curve %d on surface %d", c->Num, s->Num);
+        Msg::Info("Reparameterizing curve %d on surface %d", _c->Num, s->Num);
         return GEdge::reparamOnFace(face, epar, dir);
       }
     }
@@ -353,32 +354,32 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       if(CTX::instance()->geom.exactExtrusion && s->Extrude &&
          s->Extrude->geo.Mode == EXTRUDED_ENTITY && s->Typ != MSH_SURF_PLAN)
         hack = true;
-      if(C[0]->Num == c->Num) {
+      if(C[0]->Num == _c->Num) {
         U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg);
         V = 0;
       }
-      else if(C[0]->Num == -c->Num) {
+      else if(C[0]->Num == -_c->Num) {
         U = (C[0]->uend - epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg);
         V = 0;
       }
-      else if(C[1]->Num == c->Num) {
+      else if(C[1]->Num == _c->Num) {
         V = (epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg);
         U = 1;
       }
-      else if(C[1]->Num == -c->Num) {
+      else if(C[1]->Num == -_c->Num) {
         V = (C[1]->uend - epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg);
         U = 1;
       }
-      else if(C[2]->Num == c->Num) {
+      else if(C[2]->Num == _c->Num) {
         U = 1 - (epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg);
         V = hack ? 1 : U;
       }
-      else if(C[2]->Num == -c->Num) {
+      else if(C[2]->Num == -_c->Num) {
         U = 1 - (C[2]->uend - epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg);
         V = hack ? 1 : U;
       }
       else {
-        Msg::Info("Reparameterizing curve %d on surface %d", c->Num, s->Num);
+        Msg::Info("Reparameterizing curve %d on surface %d", _c->Num, s->Num);
         return GEdge::reparamOnFace(face, epar, dir);
       }
     }
@@ -391,45 +392,45 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 
 void gmshEdge::writeGEO(FILE *fp)
 {
-  if(!c || c->Num < 0 || c->Typ == MSH_SEGM_DISCRETE) return;
-  switch(c->Typ) {
-  case MSH_SEGM_LINE: fprintf(fp, "Line(%d) = ", c->Num); break;
+  if(!_c || _c->Num < 0 || _c->Typ == MSH_SEGM_DISCRETE) return;
+  switch(_c->Typ) {
+  case MSH_SEGM_LINE: fprintf(fp, "Line(%d) = ", _c->Num); break;
   case MSH_SEGM_CIRC:
-  case MSH_SEGM_CIRC_INV: fprintf(fp, "Circle(%d) = ", c->Num); break;
+  case MSH_SEGM_CIRC_INV: fprintf(fp, "Circle(%d) = ", _c->Num); break;
   case MSH_SEGM_ELLI:
-  case MSH_SEGM_ELLI_INV: fprintf(fp, "Ellipse(%d) = ", c->Num); break;
+  case MSH_SEGM_ELLI_INV: fprintf(fp, "Ellipse(%d) = ", _c->Num); break;
   case MSH_SEGM_NURBS:
-    fprintf(fp, "Nurbs(%d) = {", c->Num);
-    for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+    fprintf(fp, "Nurbs(%d) = {", _c->Num);
+    for(int i = 0; i < List_Nbr(_c->Control_Points); i++) {
       Vertex *v;
-      List_Read(c->Control_Points, i, &v);
+      List_Read(_c->Control_Points, i, &v);
       if(!i)
         fprintf(fp, "%d", v->Num);
       else
         fprintf(fp, ", %d", v->Num);
-      if(i % 8 == 7 && i != List_Nbr(c->Control_Points) - 1) fprintf(fp, "\n");
+      if(i % 8 == 7 && i != List_Nbr(_c->Control_Points) - 1) fprintf(fp, "\n");
     }
     fprintf(fp, "}\n");
     fprintf(fp, "  Knots {");
-    for(int j = 0; j < List_Nbr(c->Control_Points) + c->degre + 1; j++) {
+    for(int j = 0; j < List_Nbr(_c->Control_Points) + _c->degre + 1; j++) {
       if(!j)
-        fprintf(fp, "%.16g", c->k[j]);
+        fprintf(fp, "%.16g", _c->k[j]);
       else
-        fprintf(fp, ", %.16g", c->k[j]);
-      if(j % 5 == 4 && j != List_Nbr(c->Control_Points) + c->degre)
+        fprintf(fp, ", %.16g", _c->k[j]);
+      if(j % 5 == 4 && j != List_Nbr(_c->Control_Points) + _c->degre)
         fprintf(fp, "\n        ");
     }
     fprintf(fp, "}\n");
-    fprintf(fp, "  Order %d;\n", c->degre);
+    fprintf(fp, "  Order %d;\n", _c->degre);
     return;
-  case MSH_SEGM_SPLN: fprintf(fp, "Spline(%d) = ", c->Num); break;
-  case MSH_SEGM_BSPLN: fprintf(fp, "BSpline(%d) = ", c->Num); break;
-  case MSH_SEGM_BEZIER: fprintf(fp, "Bezier(%d) = ", c->Num); break;
-  default: Msg::Error("Unknown curve type %d", c->Typ); return;
+  case MSH_SEGM_SPLN: fprintf(fp, "Spline(%d) = ", _c->Num); break;
+  case MSH_SEGM_BSPLN: fprintf(fp, "BSpline(%d) = ", _c->Num); break;
+  case MSH_SEGM_BEZIER: fprintf(fp, "Bezier(%d) = ", _c->Num); break;
+  default: Msg::Error("Unknown curve type %d", _c->Typ); return;
   }
-  for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+  for(int i = 0; i < List_Nbr(_c->Control_Points); i++) {
     Vertex *v;
-    List_Read(c->Control_Points, i, &v);
+    List_Read(_c->Control_Points, i, &v);
     if(i)
       fprintf(fp, ", %d", v->Num);
     else
@@ -465,25 +466,25 @@ static inline SPoint3 curveGetPoint(Curve *c, int i)
 void gmshEdge::discretize(double tol, std::vector<SPoint3> &pts,
                           std::vector<double> &ts)
 {
-  switch(c->Typ) {
+  switch(_c->Typ) {
   case MSH_SEGM_LINE: {
-    int NPt = List_Nbr(c->Control_Points);
+    int NPt = List_Nbr(_c->Control_Points);
     pts.resize(NPt);
     ts.resize(NPt);
     for(int i = 0; i < NPt; ++i) {
-      pts[i] = curveGetPoint(c, i);
+      pts[i] = curveGetPoint(_c, i);
       ts[i] = i / (double)(NPt - 1);
     }
     return;
   }
   case MSH_SEGM_BEZIER: {
-    int NbCurves = (List_Nbr(c->Control_Points) - 1) / 3;
+    int NbCurves = (List_Nbr(_c->Control_Points) - 1) / 3;
     for(int iCurve = 0; iCurve < NbCurves; ++iCurve) {
       double t1 = (iCurve) / (double)(NbCurves);
       double t2 = (iCurve + 1) / (double)(NbCurves);
       SPoint3 pt[4];
       for(int i = 0; i < 4; i++) {
-        pt[i] = curveGetPoint(c, iCurve * 3 + i);
+        pt[i] = curveGetPoint(_c, iCurve * 3 + i);
       }
       std::vector<double> lts;
       std::vector<SPoint3> lpts;
@@ -496,8 +497,8 @@ void gmshEdge::discretize(double tol, std::vector<SPoint3> &pts,
     break;
   }
   case MSH_SEGM_BSPLN: {
-    bool periodic = (c->end == c->beg);
-    int NbControlPoints = List_Nbr(c->Control_Points);
+    bool periodic = (_c->end == _c->beg);
+    int NbControlPoints = List_Nbr(_c->Control_Points);
     int NbCurves = NbControlPoints + (periodic ? -1 : 1);
     SPoint3 pt[4];
     for(int iCurve = 0; iCurve < NbCurves; ++iCurve) {
@@ -512,7 +513,7 @@ void gmshEdge::discretize(double tol, std::vector<SPoint3> &pts,
         else {
           k = std::max(0, std::min(iCurve - 2 + i, NbControlPoints - 1));
         }
-        pt[i] = curveGetPoint(c, k);
+        pt[i] = curveGetPoint(_c, k);
       }
       SPoint3 bpt[4] = {(pt[0] + pt[1] * 4 + pt[2]) * (1. / 6.),
                         (pt[1] * 2 + pt[2]) * (1. / 3.),
@@ -529,29 +530,29 @@ void gmshEdge::discretize(double tol, std::vector<SPoint3> &pts,
     break;
   }
   case MSH_SEGM_SPLN: {
-    int NbCurves = List_Nbr(c->Control_Points) - 1;
+    int NbCurves = List_Nbr(_c->Control_Points) - 1;
     SPoint3 pt[4];
     for(int iCurve = 0; iCurve < NbCurves; ++iCurve) {
       double t1 = (iCurve) / (double)(NbCurves);
       double t2 = (iCurve + 1) / (double)(NbCurves);
-      pt[1] = curveGetPoint(c, iCurve);
-      pt[2] = curveGetPoint(c, iCurve + 1);
+      pt[1] = curveGetPoint(_c, iCurve);
+      pt[2] = curveGetPoint(_c, iCurve + 1);
       if(iCurve == 0) {
-        if(c->beg == c->end)
-          pt[0] = curveGetPoint(c, NbCurves - 1);
+        if(_c->beg == _c->end)
+          pt[0] = curveGetPoint(_c, NbCurves - 1);
         else
           pt[0] = SPoint3(pt[1] * 2 - pt[2]);
       }
       else
-        pt[0] = curveGetPoint(c, iCurve - 1);
+        pt[0] = curveGetPoint(_c, iCurve - 1);
       if(iCurve == NbCurves - 1) {
-        if(c->beg == c->end)
-          pt[3] = curveGetPoint(c, 1);
+        if(_c->beg == _c->end)
+          pt[3] = curveGetPoint(_c, 1);
         else
           pt[3] = SPoint3(2 * pt[2] - pt[1]);
       }
       else
-        pt[3] = curveGetPoint(c, iCurve + 2);
+        pt[3] = curveGetPoint(_c, iCurve + 2);
       SPoint3 bpt[4] = {pt[1], (pt[1] * 6 + pt[2] - pt[0]) * (1. / 6.),
                         (pt[2] * 6 - pt[3] + pt[1]) * (1. / 6.), pt[2]};
       std::vector<double> lts;

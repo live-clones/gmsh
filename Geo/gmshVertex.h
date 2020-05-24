@@ -11,11 +11,11 @@
 class Vertex;
 
 class gmshVertex : public GVertex {
-protected:
-  Vertex *v;
+private:
+  Vertex *_v;
 
 public:
-  gmshVertex(GModel *m, Vertex *_v);
+  gmshVertex(GModel *m, Vertex *v);
   virtual ~gmshVertex() {}
   virtual void resetMeshAttributes();
   virtual GPoint point() const;
@@ -25,11 +25,11 @@ public:
   virtual void setPosition(GPoint &p);
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return v; }
+  void *getNativePtr() const { return _v; }
   virtual void setPrescribedMeshSizeAtVertex(double l);
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");
-  void resetNativePtr(Vertex *_v);
+  void resetNativePtr(Vertex *v);
 };
 
 #endif

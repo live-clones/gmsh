@@ -11,12 +11,11 @@
 class Surface;
 
 class gmshFace : public GFace {
-protected:
-  Surface *s;
-  bool buildSTLTriangulation(bool force);
+private:
+  Surface *_s;
 
 public:
-  gmshFace(GModel *m, Surface *face);
+  gmshFace(GModel *m, Surface *s);
   virtual ~gmshFace() {}
   Range<double> parBounds(int i) const;
   void setModelEdges(std::list<GEdge *> &);
@@ -33,10 +32,10 @@ public:
   virtual GEntity::GeomType geomType() const;
   virtual bool haveParametrization();
   ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return s; }
+  void *getNativePtr() const { return _s; }
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
   virtual void resetMeshAttributes();
-  void resetNativePtr(Surface *_s);
+  void resetNativePtr(Surface *s);
   bool degenerate(int dim) const;
 };
 

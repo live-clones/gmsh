@@ -23,18 +23,18 @@
 #include "meshGEdge.h"
 #endif
 
-GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
-  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), v0(_v0),
-    v1(_v1), masterOrientation(0), compoundCurve(NULL)
+GEdge::GEdge(GModel *model, int tag, GVertex *v0, GVertex *v1)
+  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), _v0(v0),
+    _v1(v1), masterOrientation(0), compoundCurve(NULL)
 {
-  if(v0) v0->addEdge(this);
-  if(v1 && v1 != v0) v1->addEdge(this);
+  if(_v0) _v0->addEdge(this);
+  if(_v1 && _v1 != _v0) _v1->addEdge(this);
   meshStatistics.status = GEdge::PENDING;
   GEdge::resetMeshAttributes();
 }
 
 GEdge::GEdge(GModel *model, int tag)
-  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), v0(0), v1(0),
+  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), _v0(0), _v1(0),
     masterOrientation(0), compoundCurve(NULL)
 {
   meshStatistics.status = GEdge::PENDING;
@@ -43,8 +43,8 @@ GEdge::GEdge(GModel *model, int tag)
 
 GEdge::~GEdge()
 {
-  if(v0) v0->delEdge(this);
-  if(v1 && v1 != v0) v1->delEdge(this);
+  if(_v0) _v0->delEdge(this);
+  if(_v1 && _v1 != _v0) _v1->delEdge(this);
   if(_cp) delete _cp;
   GEdge::deleteMesh();
 }
@@ -149,9 +149,9 @@ void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
 
 void GEdge::reverse()
 {
-  GVertex *tmp = v0;
-  v0 = v1;
-  v1 = tmp;
+  GVertex *tmp = _v0;
+  _v0 = _v1;
+  _v1 = tmp;
   for(std::vector<MLine *>::iterator line = lines.begin(); line != lines.end();
       line++)
     (*line)->reverse();
@@ -217,15 +217,15 @@ void GEdge::resetMeshAttributes()
 
 void GEdge::addFace(GFace *f)
 {
-  if(std::find(l_faces.begin(), l_faces.end(), f) == l_faces.end())
-    l_faces.push_back(f);
+  if(std::find(_faces.begin(), _faces.end(), f) == _faces.end())
+    _faces.push_back(f);
 }
 
 void GEdge::delFace(GFace *f)
 {
   std::vector<GFace *>::iterator it =
-    std::find(l_faces.begin(), l_faces.end(), f);
-  if(it != l_faces.end()) l_faces.erase(it);
+    std::find(_faces.begin(), _faces.end(), f);
+  if(it != _faces.end()) _faces.erase(it);
 }
 
 SBoundingBox3d GEdge::bounds(bool fast)
@@ -298,8 +298,8 @@ void GEdge::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive) {
-    if(v0) v0->setVisibility(val);
-    if(v1) v1->setVisibility(val);
+    if(_v0) _v0->setVisibility(val);
+    if(_v1) _v1->setVisibility(val);
   }
 }
 
@@ -307,8 +307,8 @@ void GEdge::setColor(unsigned int val, bool recursive)
 {
   GEntity::setColor(val);
   if(recursive) {
-    if(v0) v0->setColor(val);
-    if(v1) v1->setColor(val);
+    if(_v0) _v0->setColor(val);
+    if(_v1) _v1->setColor(val);
   }
 }
 
@@ -317,8 +317,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
   std::ostringstream sstream;
   sstream.precision(12);
 
-  if(v0 && v1) {
-    sstream << "Boundary points: " << v0->tag() << ", " << v1->tag();
+  if(_v0 && _v1) {
+    sstream << "Boundary points: " << _v0->tag() << ", " << _v1->tag();
     if(multline)
       sstream << "\n";
     else

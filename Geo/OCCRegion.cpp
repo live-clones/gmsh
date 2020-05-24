@@ -23,11 +23,11 @@
 #include <BRepBndLib.hxx>
 #include <BRepTools.hxx>
 
-OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
-  : GRegion(m, num), s(_s)
+OCCRegion::OCCRegion(GModel *m, TopoDS_Solid s, int num)
+  : GRegion(m, num), _s(s)
 {
-  setup();
-  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(s, num);
+  _setup();
+  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(_s, num);
 
   // if(tag() == 1) writeBREP("v1.brep");
 }
@@ -35,14 +35,14 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
 OCCRegion::~OCCRegion()
 {
   if(model()->getOCCInternals() && !model()->isBeingDestroyed())
-    model()->getOCCInternals()->unbind(s, tag()); // potentially slow
+    model()->getOCCInternals()->unbind(_s, tag()); // potentially slow
 }
 
-void OCCRegion::setup()
+void OCCRegion::_setup()
 {
   l_faces.clear();
   TopExp_Explorer exp2, exp3;
-  for(exp2.Init(s, TopAbs_SHELL); exp2.More(); exp2.Next()) {
+  for(exp2.Init(_s, TopAbs_SHELL); exp2.More(); exp2.Next()) {
     const TopoDS_Shape &shell = exp2.Current();
     Msg::Debug("OCC volume %d - new shell", tag());
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()) {
@@ -64,7 +64,7 @@ void OCCRegion::setup()
     }
   }
 
-  for(exp3.Init(s, TopAbs_EDGE, TopAbs_FACE); exp3.More(); exp3.Next()) {
+  for(exp3.Init(_s, TopAbs_EDGE, TopAbs_FACE); exp3.More(); exp3.Next()) {
     TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
     GEdge *e = 0;
     if(model()->getOCCInternals())
@@ -80,7 +80,7 @@ void OCCRegion::setup()
     }
   }
 
-  for(exp3.Init(s, TopAbs_VERTEX, TopAbs_FACE); exp3.More(); exp3.Next()) {
+  for(exp3.Init(_s, TopAbs_VERTEX, TopAbs_FACE); exp3.More(); exp3.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp3.Current());
     GVertex *v = 0;
     if(model()->getOCCInternals())
@@ -109,7 +109,7 @@ SBoundingBox3d OCCRegion::bounds(bool fast)
 
   Bnd_Box b;
   try {
-    BRepBndLib::Add(s, b);
+    BRepBndLib::Add(_s, b);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return SBoundingBox3d();
@@ -131,7 +131,7 @@ void OCCRegion::writeBREP(const char *filename)
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  b.Add(c, s);
+  b.Add(c, _s);
   BRepTools::Write(c, filename);
 }
 

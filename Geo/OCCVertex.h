@@ -15,7 +15,7 @@
 #include <TopoDS_Vertex.hxx>
 
 class OCCVertex : public GVertex {
-protected:
+private:
   TopoDS_Vertex _v;
   double _x, _y, _z;
 
