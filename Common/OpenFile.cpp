@@ -381,6 +381,10 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   else if(ext == ".sat" || ext == ".SAT") {
     status = GModel::current()->readACISSAT(fileName);
   }
+  else if(ext == ".x_t" || ext == ".xmt_txt" ||
+          ext == ".x_b" || ext == ".xmt_bin") {
+    status = GModel::current()->readParasolid(fileName);
+  }
   else if(ext == ".unv" || ext == ".UNV") {
     status = GModel::current()->readUNV(fileName);
   }
