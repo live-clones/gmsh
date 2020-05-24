@@ -1761,8 +1761,10 @@ basis function. `basisFunctions` returns the value of the N basis functions at
 the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
 [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
 functions that depend on the orientation of the elements, all values for the
-first orientation are returned first, followed by values for the secondd, etc.
-`numOrientations` returns the overall number of orientations.
+first orientation are returned first, followed by values for the second, etc.
+`numOrientations` returns the overall number of orientations. If
+`wantedOrientations` is not empty, only return the values for the desired
+orientation indices.
 
 Return `numComponents`, `basisFunctions`, `numOrientations`.
 """

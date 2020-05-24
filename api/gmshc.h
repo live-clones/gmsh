@@ -808,7 +808,9 @@ GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
  * [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
  * functions that depend on the orientation of the elements, all values for
  * the first orientation are returned first, followed by values for the
- * secondd, etc. `numOrientations' returns the overall number of orientations. */
+ * second, etc. `numOrientations' returns the overall number of orientations.
+ * If `wantedOrientations' is not empty, only return the values for the
+ * desired orientation indices. */
 GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              double * localCoord, size_t localCoord_n,
                                              const char * functionSpaceType,
