@@ -80,7 +80,8 @@ public:
     UnknownModel,
     GmshModel,
     OpenCascadeModel,
-    AcisModel
+    AcisModel,
+    ParasolidModel
   };
 
   // all known entity types

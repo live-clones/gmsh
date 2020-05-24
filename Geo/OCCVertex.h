@@ -18,8 +18,6 @@ class OCCVertex : public GVertex {
 protected:
   TopoDS_Vertex _v;
   double _x, _y, _z;
-  mutable double max_curvature;
-  double max_curvature_of_surfaces() const;
 
 public:
   OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc = MAX_LC);
