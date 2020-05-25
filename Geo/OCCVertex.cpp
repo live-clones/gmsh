@@ -16,7 +16,7 @@
 #include "GModelIO_OCC.h"
 #include <gp_Pnt.hxx>
 
-OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc)
+OCCVertex::OCCVertex(GModel *m, TopoDS_Vertex v, int num, double lc)
   : GVertex(m, num, lc), _v(v)
 {
   gp_Pnt pnt = BRep_Tool::Pnt(_v);

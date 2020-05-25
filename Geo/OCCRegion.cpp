@@ -7,7 +7,6 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GModelIO_OCC.h"
-#include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "OCCRegion.h"

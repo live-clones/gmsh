@@ -3865,7 +3865,7 @@ void OCC_Internals::synchronize(GModel *model)
         tag = ++vTagMax;
         Msg::Info("Binding unbound OpenCASCADE point to tag %d", tag);
       }
-      occv = new OCCVertex(model, tag, vertex);
+      occv = new OCCVertex(model, vertex, tag);
       model->add(occv);
     }
     double lc = _attributes->getMeshSize(0, vertex);

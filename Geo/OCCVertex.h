@@ -20,7 +20,7 @@ private:
   double _x, _y, _z;
 
 public:
-  OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc = MAX_LC);
+  OCCVertex(GModel *m, TopoDS_Vertex v, int num, double lc = MAX_LC);
   virtual ~OCCVertex();
   virtual GPoint point() const { return GPoint(x(), y(), z()); }
   virtual double x() const { return _x; }
