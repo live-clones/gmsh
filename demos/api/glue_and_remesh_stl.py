@@ -1,12 +1,15 @@
 import gmsh
 import math
+import os
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber('General.Terminal', 1)
 
 # load two STL surfaces
-gmsh.merge('surface1.stl')
-gmsh.merge('surface2.stl')
+path = os.path.dirname(os.path.abspath(__file__))
+gmsh.merge(os.path.join(path, 'surface1.stl'))
+gmsh.merge(os.path.join(path, 'surface2.stl'))
 
 # merge nodes that are at the same position up to some tol
 gmsh.option.setNumber('Geometry.Tolerance', 1e-4)
@@ -14,7 +17,7 @@ gmsh.model.mesh.removeDuplicateNodes()
 
 # classify surface mesh according to given angle, and create discrete model
 # entities (surfaces, curves and points) accordingly
-gmsh.model.mesh.classifySurfaces(math.pi/2)
+gmsh.model.mesh.classifySurfaces(math.pi / 2)
 
 # Notes:
 #
@@ -40,10 +43,11 @@ gmsh.model.geo.addVolume([l])
 gmsh.model.geo.synchronize()
 
 # mesh
-gmsh.option.setNumber("Mesh.Algorithm", 6);
-gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.4);
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.4);
+gmsh.option.setNumber("Mesh.Algorithm", 6)
+gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.4)
+gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.4)
 gmsh.model.mesh.generate(3)
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 gmsh.finalize()

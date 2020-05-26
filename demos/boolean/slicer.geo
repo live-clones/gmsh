@@ -5,15 +5,18 @@ v() = ShapeFromFile("component8.step");
 
 // get bounding box of volume
 bbox() = BoundingBox Volume{v()};
-xmin = bbox(0);
-ymin = bbox(1);
-zmin = bbox(2);
-xmax = bbox(3);
-ymax = bbox(4);
-zmax = bbox(5);
+
+eps = 1e-2;
+
+xmin = bbox(0) - eps;
+ymin = bbox(1) - eps;
+zmin = bbox(2) - eps;
+xmax = bbox(3) + eps;
+ymax = bbox(4) + eps;
+zmax = bbox(5) + eps;
 
 // define number of slices along z-axis
-DefineConstant[ N = {3, Min 2, Max 100, Step 1, Name "Number of slices"}];
+DefineConstant[ N = {10, Min 2, Max 100, Step 1, Name "Number of slices"}];
 dz = (zmax - zmin) / N;
 
 // define cutting planes

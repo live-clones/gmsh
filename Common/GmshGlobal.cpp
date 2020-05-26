@@ -279,6 +279,7 @@ static void GoodbyeMessage()
   time(&now);
   std::string currtime = ctime(&now);
   currtime.resize(currtime.size() - 1);
+  Msg::SetInfoCpu(true); // always print cpu info at the end
   Msg::Info("Stopped on %s", currtime.c_str());
 }
 
@@ -343,7 +344,8 @@ int GmshBatch()
     else if(CTX::instance()->batch == 5)
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
     else if(CTX::instance()->batch == 6)
-      GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear, true);
+      GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
+                                    false, false, true);
     else if(CTX::instance()->batch == 7)
       GModel::current()->classifySurfaces
         (CTX::instance()->batchSomeValue * M_PI / 180., true, false, M_PI);

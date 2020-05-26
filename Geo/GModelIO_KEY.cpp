@@ -21,7 +21,7 @@ static std::string physicalName(GModel *m, int dim, int num)
     char tmp[256];
     sprintf(tmp, "%s%d",
             (dim == 3) ? "PhysicalVolume" :
-                         (dim == 2) ? "PhysicalSurface" : "PhysicalLine",
+            (dim == 2) ? "PhysicalSurface" : "PhysicalLine",
             num);
     name = tmp;
   }
@@ -72,7 +72,7 @@ int GModel::writeKEY(const std::string &name, int saveAll,
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeKEY(fp, scalingFactor);
 
-  if(!(saveAll & 0x2)) // save or ignore Vertex, not in GUI
+  if(!(saveAll & 0x2)) // save or ignore points (not in GUI)
     for(viter it = firstVertex(); it != lastVertex(); ++it) {
       writeElementsKEY(fp, *it, (*it)->points, saveAll & 0x1);
     }
@@ -85,7 +85,7 @@ int GModel::writeKEY(const std::string &name, int saveAll,
       writeElementsKEY(fp, *it, (*it)->triangles, saveAll & 0x10);
       writeElementsKEY(fp, *it, (*it)->quadrangles, saveAll & 0x10);
     }
-  if(!(saveAll & 0x80)) // save or ignore surface
+  if(!(saveAll & 0x80)) // save or ignore volume
     for(riter it = firstRegion(); it != lastRegion(); ++it) {
       writeElementsKEY(fp, *it, (*it)->tetrahedra, saveAll & 0x40);
       writeElementsKEY(fp, *it, (*it)->hexahedra, saveAll & 0x40);

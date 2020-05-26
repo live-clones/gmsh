@@ -27,7 +27,6 @@
 #include "meshGRegionLocalMeshMod.h"
 #include "meshRelocateVertex.h"
 #include "meshRefine.h"
-#include "discreteFace.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "ExtrudeParams.h"
@@ -172,8 +171,7 @@ GetQualityMeasure(std::vector<T *> &ele, double &gamma, double &gammaMin,
   }
 }
 
-void GetStatistics(double stat[50], double quality[3][100],
-                   bool visibleOnly)
+void GetStatistics(double stat[50], double quality[3][100], bool visibleOnly)
 {
   for(int i = 0; i < 50; i++) stat[i] = 0.;
 
@@ -342,7 +340,7 @@ static void Mesh1D(GModel *m)
 
   if(TooManyElements(m, 1)) return;
   Msg::StatusBar(true, "Meshing 1D...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   int prevNumThreads = Msg::GetMaxThreads();
   if(CTX::instance()->mesh.maxNumThreads1D > 0 &&
@@ -350,8 +348,7 @@ static void Mesh1D(GModel *m)
     Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads1D);
 
   // boundary layers are not yet thread-safe
-  if(m->getFields()->getNumBoundaryLayerFields())
-    Msg::SetNumThreads(1);
+  if(m->getFields()->getNumBoundaryLayerFields()) Msg::SetNumThreads(1);
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     // Extruded meshes are not yet fully thread-safe (not sure why!)
@@ -397,9 +394,10 @@ static void Mesh1D(GModel *m)
 
   Msg::SetNumThreads(prevNumThreads);
 
-  double t2 = Cpu();
-  CTX::instance()->meshTimer[0] = t2 - t1;
-  Msg::StatusBar(true, "Done meshing 1D (%g s)", CTX::instance()->meshTimer[0]);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  CTX::instance()->meshTimer[0] = w2 - w1;
+  Msg::StatusBar(true, "Done meshing 1D (Wall %gs, CPU %gs)",
+                 CTX::instance()->meshTimer[0], t2 - t1);
 }
 
 static void PrintMesh2dStatistics(GModel *m)
@@ -473,7 +471,7 @@ static void Mesh2D(GModel *m)
 
   if(TooManyElements(m, 2)) return;
   Msg::StatusBar(true, "Meshing 2D...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   int prevNumThreads = Msg::GetMaxThreads();
   if(CTX::instance()->mesh.maxNumThreads2D > 0 &&
@@ -481,23 +479,16 @@ static void Mesh2D(GModel *m)
     Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads2D);
 
   // boundary layers are not yet thread-safe
-  if(m->getFields()->getNumBoundaryLayerFields())
-    Msg::SetNumThreads(1);
+  if(m->getFields()->getNumBoundaryLayerFields()) Msg::SetNumThreads(1);
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    // STL remeshing is not yet thread-safe
-    //    if((*it)->geomType() == GEntity::DiscreteSurface){
-    //      if(static_cast<discreteFace *>(*it)->haveParametrization())
-    //        Msg::SetNumThreads(1);
-    //    }
     // Frontal-Delaunay for quads and co are not yet thread-safe
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
       Msg::SetNumThreads(1);
     // Periodic meshing is not yet thread-safe
-    if((*it)->getMeshMaster() != *it)
-      Msg::SetNumThreads(1);
+    if((*it)->getMeshMaster() != *it) Msg::SetNumThreads(1);
     // Extruded meshes are not yet fully thread-safe (not sure why!)
     if((*it)->meshAttributes.extrude &&
        (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
@@ -551,9 +542,10 @@ static void Mesh2D(GModel *m)
 
   Msg::SetNumThreads(prevNumThreads);
 
-  double t2 = Cpu();
-  CTX::instance()->meshTimer[1] = t2 - t1;
-  Msg::StatusBar(true, "Done meshing 2D (%g s)", CTX::instance()->meshTimer[1]);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  CTX::instance()->meshTimer[1] = w2 - w1;
+  Msg::StatusBar(true, "Done meshing 2D (Wall %gs, CPU %gs)",
+                 CTX::instance()->meshTimer[1], t2 - t1);
 
   PrintMesh2dStatistics(m);
 }
@@ -597,8 +589,8 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
     connected.push_back(temp2);
     delaunay = temp1;
   }
-  Msg::Info("3D Meshing %d volume%s with %d connected component%s",
-            nbVolumes, nbVolumes > 1 ? "s" : "", connected.size(),
+  Msg::Info("3D Meshing %d volume%s with %d connected component%s", nbVolumes,
+            nbVolumes > 1 ? "s" : "", connected.size(),
             connected.size() > 1 ? "s" : "");
 }
 
@@ -644,12 +636,10 @@ bool MakeMeshConformal(GModel *gm, int howto)
   // bnd2 contains non conforming faces
 
   std::set<MFace, MFaceLessThan> bnd2;
-  for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin(); itf != bnd.end();
-      ++itf) {
+  for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin();
+      itf != bnd.end(); ++itf) {
     GFace *gfound = findInFaceSearchStructure(*itf, search);
-    if(!gfound) {
-      bnd2.insert(*itf);
-    }
+    if(!gfound) { bnd2.insert(*itf); }
   }
   bnd.clear();
 
@@ -693,9 +683,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
         std::set<MFace, MFaceLessThan>::iterator it = ncf.find(f);
-        if(it == ncf.end()) {
-          faces.push_back(f);
-        }
+        if(it == ncf.end()) { faces.push_back(f); }
         else {
           faces.push_back(
             MFace(it->getVertex(0), it->getVertex(1), it->getVertex(3)));
@@ -704,9 +692,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
         }
       }
       // Hex is only surrounded by compatible elements
-      if((int)faces.size() == e->getNumFaces()) {
-        remainingHexes.push_back(e);
-      }
+      if((int)faces.size() == e->getNumFaces()) { remainingHexes.push_back(e); }
       else {
         SPoint3 pp = e->barycenter();
         MVertex *newv = new MVertex(pp.x(), pp.y(), pp.z(), gr);
@@ -734,9 +720,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
         std::set<MFace, MFaceLessThan>::iterator it = ncf.find(f);
-        if(it == ncf.end()) {
-          faces.push_back(f);
-        }
+        if(it == ncf.end()) { faces.push_back(f); }
         else {
           faces.push_back(
             MFace(it->getVertex(0), it->getVertex(1), it->getVertex(3)));
@@ -799,9 +783,7 @@ static void TestConformity(GModel *gm)
     for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin();
         itf != bnd.end(); ++itf) {
       GFace *gfound = findInFaceSearchStructure(*itf, search);
-      if(!gfound) {
-        count++;
-      }
+      if(!gfound) { count++; }
     }
   }
   if(!count)
@@ -817,7 +799,7 @@ static void Mesh3D(GModel *m)
 
   if(TooManyElements(m, 3)) return;
   Msg::StatusBar(true, "Meshing 3D...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   int prevNumThreads = Msg::GetMaxThreads();
   if(CTX::instance()->mesh.maxNumThreads3D > 0 &&
@@ -898,7 +880,7 @@ static void Mesh3D(GModel *m)
           optimizeMeshGRegion opt;
           opt(gr);
         }
-        double a = Cpu();
+        double a = TimeOfDay();
         // CTX::instance()->mesh.recombine3DLevel = 2;
         if(CTX::instance()->mesh.recombine3DLevel >= 0) {
           Recombinator rec;
@@ -921,7 +903,7 @@ static void Mesh3D(GModel *m)
         nb_hexa_recombination += post.get_nb_hexahedra();
         vol_element_recombination += post.get_vol_elements();
         vol_hexa_recombination += post.get_vol_hexahedra();
-        time_recombination += (Cpu() - a);
+        time_recombination += (TimeOfDay() - a);
       }
     }
 #endif
@@ -945,7 +927,8 @@ static void Mesh3D(GModel *m)
   m->setAllVolumesPositive();
 
   if(Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
+    std::for_each(m->firstRegion(), m->lastRegion(),
+                  EmbeddedCompatibilityTest());
 
   std::stringstream debugInfo;
   debugInfo << "No elements in volume ";
@@ -953,6 +936,8 @@ static void Mesh3D(GModel *m)
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     GRegion *gr = *it;
     if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility())
+      continue;
+    if(CTX::instance()->mesh.meshOnlyEmpty && gr->getNumMeshElements())
       continue;
     if(gr->getNumMeshElements() == 0) {
       debugInfo << gr->tag() << " ";
@@ -966,27 +951,24 @@ static void Mesh3D(GModel *m)
 
   Msg::SetNumThreads(prevNumThreads);
 
-  double t2 = Cpu();
-  CTX::instance()->meshTimer[2] = t2 - t1;
+  double t2 = Cpu(), w2 = TimeOfDay();
+  CTX::instance()->meshTimer[2] = w2 - w1;
 
   if(m->getNumRegions()) {
     Msg::ProgressMeter(1, false, "Meshing 3D...");
     Msg::StopProgressMeter();
   }
 
-  Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
+  Msg::StatusBar(true, "Done meshing 3D (Wall %gs, CPU %gs)",
+                 CTX::instance()->meshTimer[2], t2 - t1);
 }
 
 void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 {
-  if(how != "" && how != "Gmsh" && how != "Optimize" &&
-     how != "Netgen" &&
-     how != "HighOrder" &&
-     how != "HighOrderElastic" &&
-     how != "HighOrderFastCurving" &&
-     how != "Laplace2D" &&
-     how != "Relocate2D" &&
-     how != "Relocate3D") {
+  if(how != "" && how != "Gmsh" && how != "Optimize" && how != "Netgen" &&
+     how != "HighOrder" && how != "HighOrderElastic" &&
+     how != "HighOrderFastCurving" && how != "Laplace2D" &&
+     how != "Relocate2D" && how != "Relocate3D") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
   }
@@ -995,17 +977,17 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     Msg::StatusBar(true, "Optimizing mesh...");
   else
     Msg::StatusBar(true, "Optimizing mesh (%s)...", how.c_str());
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   if(how == "" || how == "Gmsh" || how == "Optimize") {
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
       optimizeMeshGRegion opt;
       opt(*it, force);
     }
     m->setAllVolumesPositive();
   }
   else if(how == "Netgen") {
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
       optimizeMeshGRegionNetgen opt;
       opt(*it, force);
     }
@@ -1065,28 +1047,31 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
   }
 
   if(Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
+    std::for_each(m->firstRegion(), m->lastRegion(),
+                  EmbeddedCompatibilityTest());
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done optimizing mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done optimizing mesh (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 }
 
 void AdaptMesh(GModel *m)
 {
   Msg::StatusBar(true, "Adapting 3D mesh...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   for(int i = 0; i < 10; i++)
     std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done adaptating 3D mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done adaptating 3D mesh (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 }
 
 void RecombineMesh(GModel *m)
 {
   Msg::StatusBar(true, "Recombining 2D mesh...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *gf = *it;
@@ -1096,8 +1081,279 @@ void RecombineMesh(GModel *m)
     recombineIntoQuads(gf, blossom, topo, true, .01);
   }
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done recombining 2D mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done recombining 2D mesh (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
+}
+
+static SPoint3 transform(MVertex *vsource, const std::vector<double> &tfo)
+{
+  double ps[4] = {vsource->x(), vsource->y(), vsource->z(), 1.};
+  double res[4] = {0., 0., 0., 0.};
+  int idx = 0;
+  for(int i = 0; i < 4; i++)
+    for(int j = 0; j < 4; j++) res[i] += tfo[idx++] * ps[j];
+
+  return SPoint3(res[0], res[1], res[2]);
+}
+
+static void relocateSlaveVertices(GFace *slave,
+                                  std::map<MVertex *, MVertex *> &vertS2M,
+                                  bool useClosestPoint)
+{
+  for(std::map<MVertex *, MVertex *>::iterator vit = vertS2M.begin();
+      vit != vertS2M.end(); ++vit) {
+    MFaceVertex *v = dynamic_cast<MFaceVertex *>(vit->first);
+    if(v && v->onWhat() == slave) {
+      SPoint3 p = transform(vit->second, slave->affineTransform);
+      SPoint2 p2;
+      if(useClosestPoint) {
+        double guess[2];
+        v->getParameter(0, guess[0]);
+        v->getParameter(1, guess[1]);
+        GPoint pp = slave->closestPoint(p, guess);
+        p2.setPosition(pp.u(), pp.v());
+      }
+      else {
+        p2 = slave->parFromPoint(p);
+      }
+      GPoint gp = slave->point(p2);
+      v->setXYZ(gp.x(), gp.y(), gp.z());
+      v->setParameter(0, gp.u());
+      v->setParameter(1, gp.v());
+    }
+  }
+}
+
+static void relocateSlaveVertices(GEdge *slave,
+                                  std::map<MVertex *, MVertex *> &vertS2M,
+                                  bool useClosestPoint)
+{
+  for(std::map<MVertex *, MVertex *>::iterator vit = vertS2M.begin();
+      vit != vertS2M.end(); ++vit) {
+    MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(vit->first);
+    if(v && v->onWhat() == slave) {
+      SPoint3 p = transform(vit->second, slave->affineTransform);
+      double u;
+      if(useClosestPoint) {
+        v->getParameter(0, u);
+        GPoint pp = slave->closestPoint(p, u);
+        u = pp.u();
+      }
+      else {
+        u = slave->parFromPoint(p);
+      }
+      GPoint gp = slave->point(u);
+      v->setXYZ(gp.x(), gp.y(), gp.z());
+      v->setParameter(0, u);
+    }
+  }
+}
+
+static void relocateSlaveVertices(std::vector<GEntity *> &entities,
+                                  bool useClosestPoint)
+{
+  std::multimap<GEntity *, GEntity *> master2slave;
+  for(std::size_t i = 0; i < entities.size(); ++i) {
+    if(entities[i]->dim() == 0) continue;
+    GEntity *master = entities[i]->getMeshMaster();
+    if(master != entities[i]) {
+      master2slave.insert(std::make_pair(master, entities[i]));
+    }
+  }
+
+  for(std::multimap<GEntity *, GEntity *>::iterator it = master2slave.begin();
+      it != master2slave.end(); ++it) {
+    if(it->first->dim() == 2) {
+      GFace *master = dynamic_cast<GFace *>(it->first);
+      GFace *slave = dynamic_cast<GFace *>(it->second);
+      if(slave->affineTransform.size() < 16) continue;
+      Msg::Info("Relocating nodes of slave surface %i using master %i%s",
+                slave->tag(), master->tag(),
+                useClosestPoint ? " (using closest point)" : "");
+      relocateSlaveVertices(slave, slave->correspondingVertices,
+                            useClosestPoint);
+      relocateSlaveVertices(slave, slave->correspondingHighOrderVertices,
+                            useClosestPoint);
+    }
+    else if(it->first->dim() == 1) {
+      GEdge *master = dynamic_cast<GEdge *>(it->first);
+      GEdge *slave = dynamic_cast<GEdge *>(it->second);
+      if(slave->affineTransform.size() < 16) continue;
+      Msg::Info("Relocating nodes of slave curve %i using master %i%s",
+                slave->tag(), master->tag(),
+                useClosestPoint ? " (using closest point)" : "");
+      relocateSlaveVertices(slave, slave->correspondingVertices,
+                            useClosestPoint);
+      relocateSlaveVertices(slave, slave->correspondingHighOrderVertices,
+                            useClosestPoint);
+    }
+  }
+}
+
+void FixPeriodicMesh(GModel *m)
+{
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+    GEdge *tgt = *it;
+
+    // non complete periodic info (e.g. through extrusion)
+    if(tgt->vertexCounterparts.empty()) continue;
+
+    GEdge *src = dynamic_cast<GEdge *>(tgt->getMeshMaster());
+
+    if(src != NULL && src != tgt) {
+      std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
+      std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHighOrderVertices;
+      p2p.clear();
+
+      Msg::Info("Reconstructing periodicity for curve connection %d - %d",
+                tgt->tag(), src->tag());
+
+      std::map<MEdge, MLine *, MEdgeLessThan> srcEdges;
+      for(std::size_t i = 0; i < src->getNumMeshElements(); i++) {
+        MLine *srcLine = dynamic_cast<MLine *>(src->getMeshElement(i));
+        if(!srcLine) {
+          Msg::Error("Master element %d is not a line",
+                     src->getMeshElement(i)->getNum());
+          return;
+        }
+        srcEdges[MEdge(srcLine->getVertex(0), srcLine->getVertex(1))] = srcLine;
+      }
+
+      for(std::size_t i = 0; i < tgt->getNumMeshElements(); ++i) {
+        MLine *tgtLine = dynamic_cast<MLine *>(tgt->getMeshElement(i));
+        MVertex *vtcs[2];
+        if(!tgtLine) {
+          Msg::Error("Slave element %d is not a line",
+                     tgt->getMeshElement(i)->getNum());
+          return;
+        }
+        for(int iVtx = 0; iVtx < 2; iVtx++) {
+          MVertex *vtx = tgtLine->getVertex(iVtx);
+          std::map<MVertex *, MVertex *>::iterator tIter = v2v.find(vtx);
+          if(tIter == v2v.end()) {
+            Msg::Error("Cannot find periodic counterpart of node %d"
+                       " of curve %d on curve %d",
+                       vtx->getNum(), tgt->tag(), src->tag());
+            return;
+          }
+          else
+            vtcs[iVtx] = tIter->second;
+        }
+
+        std::map<MEdge, MLine *, MEdgeLessThan>::iterator srcIter =
+          srcEdges.find(MEdge(vtcs[0], vtcs[1]));
+        if(srcIter == srcEdges.end()) {
+          Msg::Error("Can't find periodic counterpart of mesh edge %d-%d "
+                     "on curve %d, connected to mesh edge %d-%d on curve %d",
+                     tgtLine->getVertex(0)->getNum(),
+                     tgtLine->getVertex(1)->getNum(), tgt->tag(),
+                     vtcs[0]->getNum(), vtcs[1]->getNum(), src->tag());
+          return;
+        }
+        else {
+          MLine *srcLine = srcIter->second;
+          for(std::size_t i = 2; i < tgtLine->getNumVertices(); i++)
+            p2p[tgtLine->getVertex(i)] = srcLine->getVertex(i);
+        }
+      }
+    }
+  }
+
+  if(CTX::instance()->mesh.hoPeriodic) {
+    std::vector<GEntity *> modelEdges(m->firstEdge(), m->lastEdge());
+    relocateSlaveVertices(modelEdges, CTX::instance()->mesh.hoPeriodic > 1);
+  }
+
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    GFace *tgt = *it;
+
+    // non complete periodic info (e.g. through extrusion)
+    if(tgt->vertexCounterparts.empty()) continue;
+
+    GFace *src = dynamic_cast<GFace *>(tgt->getMeshMaster());
+    if(src != NULL && src != tgt) {
+      Msg::Info("Reconstructing periodicity for surface connection %d - %d",
+                tgt->tag(), src->tag());
+
+      std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
+      std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHighOrderVertices;
+      p2p.clear();
+
+      if(tgt->getNumMeshElements() && v2v.empty()) {
+        Msg::Info("No periodic vertices in surface %d (maybe due to a "
+                  "structured mesh constraint on the target surface)",
+                  tgt->tag());
+        continue;
+      }
+
+      std::map<MFace, MElement *, MFaceLessThan> srcFaces;
+
+      for(std::size_t i = 0; i < src->getNumMeshElements(); ++i) {
+        MElement *srcElmt = src->getMeshElement(i);
+        int nbVtcs = 0;
+        if(dynamic_cast<MTriangle *>(srcElmt)) nbVtcs = 3;
+        if(dynamic_cast<MQuadrangle *>(srcElmt)) nbVtcs = 4;
+        std::vector<MVertex *> vtcs;
+        vtcs.reserve(nbVtcs);
+        for(int iVtx = 0; iVtx < nbVtcs; iVtx++) {
+          vtcs.push_back(srcElmt->getVertex(iVtx));
+        }
+        srcFaces[MFace(vtcs)] = srcElmt;
+      }
+
+      for(std::size_t i = 0; i < tgt->getNumMeshElements(); ++i) {
+        MElement *tgtElmt = tgt->getMeshElement(i);
+        int nbVtcs = 0;
+        if(dynamic_cast<MTriangle *>(tgtElmt)) nbVtcs = 3;
+        if(dynamic_cast<MQuadrangle *>(tgtElmt)) nbVtcs = 4;
+        std::vector<MVertex *> vtcs;
+        for(int iVtx = 0; iVtx < nbVtcs; iVtx++) {
+          MVertex *vtx = tgtElmt->getVertex(iVtx);
+
+          std::map<MVertex *, MVertex *>::iterator tIter = v2v.find(vtx);
+          if(tIter == v2v.end()) {
+            Msg::Error("Cannot find periodic counterpart of node %d "
+                       "of surface %d on surface %d",
+                       vtx->getNum(), tgt->tag(), src->tag());
+            return;
+          }
+          else
+            vtcs.push_back(tIter->second);
+        }
+
+        MFace tgtFace(vtcs);
+        std::map<MFace, MElement *, MFaceLessThan>::iterator srcIter =
+          srcFaces.find(tgtFace);
+        if(srcIter == srcFaces.end()) {
+          std::ostringstream faceDef;
+          for(int iVtx = 0; iVtx < nbVtcs; iVtx++)
+            faceDef << vtcs[iVtx]->getNum() << " ";
+          Msg::Error("Cannot find periodic counterpart of mesh face %s in "
+                     "surface %d on surface %d",
+                     faceDef.str().c_str(), tgt->tag(), src->tag());
+          return;
+        }
+        else {
+          MElement *srcElmt = srcIter->second;
+          // Warning: this check is made in case the source and target surface
+          // meshes are oriented differently (e.g. to be consistent with the
+          // underlying orientation of the geometrical surfaces)
+          bool revert = dot(tgtFace.normal(), srcIter->first.normal()) < 0;
+          if(revert) srcElmt->reverse();
+          for(std::size_t j = nbVtcs; j < srcElmt->getNumVertices(); j++) {
+            p2p[tgtElmt->getVertex(j)] = srcElmt->getVertex(j);
+          }
+          if(revert) srcElmt->reverse();
+        }
+      }
+    }
+  }
+
+  if(CTX::instance()->mesh.hoPeriodic) {
+    std::vector<GEntity *> modelFaces(m->firstFace(), m->lastFace());
+    relocateSlaveVertices(modelFaces, CTX::instance()->mesh.hoPeriodic > 1);
+  }
 }
 
 //#include <google/profiler.h>
@@ -1140,9 +1396,7 @@ void GenerateMesh(GModel *m, int ask)
   }
 
   // 3D mesh
-  if(ask == 3) {
-    Mesh3D(m);
-  }
+  if(ask == 3) { Mesh3D(m); }
 
   // Orient the line and surface meshes so that they match the orientation of
   // the geometrical entities and/or the user orientation constraints
@@ -1152,7 +1406,9 @@ void GenerateMesh(GModel *m, int ask)
     std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
 
   // Optimize quality of 3D tet mesh
-  if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algo3d != ALGO_3D_HXT) {
+  if(m->getMeshStatus() == 3 &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_HXT) {
     for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
                                 CTX::instance()->mesh.optimizeNetgen);
         i++) {
@@ -1167,7 +1423,7 @@ void GenerateMesh(GModel *m, int ask)
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);
 
-  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1){
+  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1) {
     // Create high order elements
     SetOrderN(m, CTX::instance()->mesh.order,
               CTX::instance()->mesh.secondOrderLinear,

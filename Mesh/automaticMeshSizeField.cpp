@@ -11,6 +11,7 @@
 
 #ifdef HAVE_HXT
 extern "C" {
+#include "hxt_tools.h"
 #include "hxt_edge.h"
 #include "hxt_curvature.h"
 #include "hxt_bbox.h"
@@ -103,7 +104,7 @@ inline static bool isPoint(double x1, double y1, double z1, double x2, double y2
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
 
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v);
 
 HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m,
@@ -140,7 +141,6 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     std::string dataFile   = root + ".data";
     // forestOptions->forestFile = root.c_str();
     HXT_CHECK( hxtForestLoad(&forest, forestFile.c_str(), dataFile.c_str(), forestOptions) );
-
   } else{
     // Compute the size field otherwise
     int dim = GModel::current()->getDim();
@@ -553,7 +553,6 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   }
 
   return HXT_STATUS_OK;
-  
 }
 
 #endif

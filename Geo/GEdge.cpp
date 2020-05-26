@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include <numeric>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
@@ -22,18 +23,18 @@
 #include "meshGEdge.h"
 #endif
 
-GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
-  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), v0(_v0),
-    v1(_v1), masterOrientation(0), compoundCurve(NULL)
+GEdge::GEdge(GModel *model, int tag, GVertex *v0, GVertex *v1)
+  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), _v0(v0),
+    _v1(v1), masterOrientation(0), compoundCurve(NULL)
 {
-  if(v0) v0->addEdge(this);
-  if(v1 && v1 != v0) v1->addEdge(this);
+  if(_v0) _v0->addEdge(this);
+  if(_v1 && _v1 != _v0) _v1->addEdge(this);
   meshStatistics.status = GEdge::PENDING;
   GEdge::resetMeshAttributes();
 }
 
 GEdge::GEdge(GModel *model, int tag)
-  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), v0(0), v1(0),
+  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), _v0(0), _v1(0),
     masterOrientation(0), compoundCurve(NULL)
 {
   meshStatistics.status = GEdge::PENDING;
@@ -42,8 +43,8 @@ GEdge::GEdge(GModel *model, int tag)
 
 GEdge::~GEdge()
 {
-  if(v0) v0->delEdge(this);
-  if(v1 && v1 != v0) v1->delEdge(this);
+  if(_v0) _v0->delEdge(this);
+  if(_v1 && _v1 != _v0) _v1->delEdge(this);
   if(_cp) delete _cp;
   GEdge::deleteMesh();
 }
@@ -55,6 +56,8 @@ void GEdge::deleteMesh()
   mesh_vertices.clear();
   for(std::size_t i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
+  correspondingVertices.clear();
+  correspondingHighOrderVertices.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
@@ -146,9 +149,9 @@ void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
 
 void GEdge::reverse()
 {
-  GVertex *tmp = v0;
-  v0 = v1;
-  v1 = tmp;
+  GVertex *tmp = _v0;
+  _v0 = _v1;
+  _v1 = tmp;
   for(std::vector<MLine *>::iterator line = lines.begin(); line != lines.end();
       line++)
     (*line)->reverse();
@@ -214,18 +217,18 @@ void GEdge::resetMeshAttributes()
 
 void GEdge::addFace(GFace *f)
 {
-  if(std::find(l_faces.begin(), l_faces.end(), f) == l_faces.end())
-    l_faces.push_back(f);
+  if(std::find(_faces.begin(), _faces.end(), f) == _faces.end())
+    _faces.push_back(f);
 }
 
 void GEdge::delFace(GFace *f)
 {
   std::vector<GFace *>::iterator it =
-    std::find(l_faces.begin(), l_faces.end(), f);
-  if(it != l_faces.end()) l_faces.erase(it);
+    std::find(_faces.begin(), _faces.end(), f);
+  if(it != _faces.end()) _faces.erase(it);
 }
 
-SBoundingBox3d GEdge::bounds(bool fast) const
+SBoundingBox3d GEdge::bounds(bool fast)
 {
   SBoundingBox3d bbox;
   if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve &&
@@ -295,8 +298,8 @@ void GEdge::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive) {
-    if(v0) v0->setVisibility(val);
-    if(v1) v1->setVisibility(val);
+    if(_v0) _v0->setVisibility(val);
+    if(_v1) _v1->setVisibility(val);
   }
 }
 
@@ -304,8 +307,8 @@ void GEdge::setColor(unsigned int val, bool recursive)
 {
   GEntity::setColor(val);
   if(recursive) {
-    if(v0) v0->setColor(val);
-    if(v1) v1->setColor(val);
+    if(_v0) _v0->setColor(val);
+    if(_v1) _v1->setColor(val);
   }
 }
 
@@ -314,8 +317,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
   std::ostringstream sstream;
   sstream.precision(12);
 
-  if(v0 && v1) {
-    sstream << "Boundary points: " << v0->tag() << ", " << v1->tag();
+  if(_v0 && _v1) {
+    sstream << "Boundary points: " << _v0->tag() << ", " << _v1->tag();
     if(multline)
       sstream << "\n";
     else
@@ -324,7 +327,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
 
   if(meshAttributes.method == MESH_TRANSFINITE ||
      (meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh) ||
-     meshAttributes.reverseMesh) {
+     meshAttributes.reverseMesh ||
+     (getMeshMaster() && getMeshMaster() != this)) {
     sstream << "Mesh attributes:";
     if(meshAttributes.method == MESH_TRANSFINITE) {
       sstream << " transfinite " << meshAttributes.nbPointsTransfinite;
@@ -338,6 +342,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
     if(meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)
       sstream << " extruded";
     if(meshAttributes.reverseMesh) sstream << " reversed";
+    if(getMeshMaster() && getMeshMaster() != this)
+      sstream << " periodic copy of curve " << getMeshMaster()->tag();
   }
   std::string str = sstream.str();
   if(str.size() && (str[str.size() - 1] == '\n' || str[str.size() - 1] == ' '))
@@ -637,13 +643,9 @@ void GEdge::relocateMeshVertices()
   }
 }
 
-SPoint3 GEdge::closestPoint(SPoint3 &p, double tolerance)
+SPoint3 GEdge::closestPointWithTol(SPoint3 &p, double tolerance)
 {
   if(!_cp || _cp->tol() != tolerance) {
-    if(_cp)
-      printf("coucou %12.15E %22.15E \n", tolerance, _cp->tol());
-    else
-      printf("coucou %12.5E \n", tolerance);
     if(_cp) delete _cp;
     _cp = new closestPointFinder(this, tolerance);
   }
@@ -732,37 +734,78 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,
 }
 
 #if defined(HAVE_MESH)
+
+static bool recreateConsecutiveElements(GEdge *ge)
+{
+  std::size_t ss = ge->lines.size();
+  if(!ss) return true;
+
+  std::vector<MEdge> ed;
+  std::vector<std::vector<MVertex *> > vs;
+  for(std::size_t i = 0; i < ge->lines.size(); i++) {
+    ed.push_back(MEdge(ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1)));
+  }
+  ge->lines.clear();
+
+  if(!SortEdgeConsecutive(ed, vs))
+    Msg::Warning("Line elements on curve %d cannot be ordered", ge->tag());
+
+  if(vs.size() != 1)
+    Msg::Warning("Mesh of curve %d is mutiply connected", ge->tag());
+
+  std::size_t start = 0;
+  for(; start < vs[0].size(); start++)
+    if(vs[0][start]->onWhat()->dim() == 0) break;
+
+  if(start == vs[0].size())
+    Msg::Warning("Mesh topology of curve %d is wrong", ge->tag());
+
+  std::size_t i = start;
+  while(ge->lines.size() != ss) {
+    if(vs[0][i % vs[0].size()] != vs[0][(i + 1) % vs[0].size()])
+      ge->lines.push_back(
+        new MLine(vs[0][i % vs[0].size()], vs[0][(i + 1) % vs[0].size()]));
+    i++;
+  }
+
+  ge->mesh_vertices.clear();
+  for(std::size_t i = 0; i < ge->lines.size() - 1; ++i) {
+    MVertex *v11 = ge->lines[i]->getVertex(1);
+    if(v11->onWhat() == ge || !v11->onWhat()){
+      v11->setEntity(ge);
+      ge->mesh_vertices.push_back(v11);
+    }
+  }
+
+  return true;
+}
+
 static void meshCompound(GEdge *ge)
 {
-  // store all line elements of the compound in a new (compound) discrete curve;
-  // no new mesh nodes are created here
   discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000);
   ge->model()->add(de);
   std::vector<int> phys;
   for(std::size_t i = 0; i < ge->compound.size(); i++) {
     GEdge *c = (GEdge *)ge->compound[i];
-    // cannot use the same line elements, as they get deleted in createGeometry
-    for(std::size_t j = 0; j < c->lines.size(); j++) {
-      de->lines.push_back(new MLine(c->lines[j]->getVertex(0),
-                                    c->lines[j]->getVertex(1)));
-    }
+    de->lines.insert(de->lines.end(), c->lines.begin(), c->lines.end());
     c->compoundCurve = de;
     phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
     c->physicals.clear();
   }
-  // create the geometry of the compound
-  de->createGeometry(true);
-  // once the geometry is created, delete the newly created mesh elements and
-  // reset the mesh - because meshGEdge would delete the mesh
-  for(std::size_t j = 0; j < de->lines.size(); j++)
-    delete de->lines[j];
+
+  // recreate a 1D mesh with consecutive elements (this creates new MLines)
+  recreateConsecutiveElements(de);
+  // create the geometry
+  de->createGeometry();
+  // delete the MLines just created above
+  for(std::size_t i = 0; i < de->lines.size(); i++)
+    delete de->lines[i];
   de->lines.clear();
   de->mesh_vertices.clear();
-  de->deleteVertexArrays();
-  // mesh the compound
   de->mesh(false);
   de->physicals = phys;
 }
+
 #endif
 
 void GEdge::mesh(bool verbose)
@@ -829,4 +872,43 @@ std::vector<GVertex *> GEdge::vertices() const
   if(getBeginVertex()) res.push_back(getBeginVertex());
   if(getEndVertex()) res.push_back(getEndVertex());
   return res;
+}
+
+double GEdge::prescribedMeshSizeAtParam(double u)
+{
+  if (_lc.empty()) {
+    return MAX_LC;
+  }
+  const std::vector<double>::iterator &it = std::lower_bound(_u_lc.begin(),_u_lc.end(),u);
+  size_t i1 = std::min<size_t>(it-_u_lc.begin(),_u_lc.size()-1);
+  size_t i0 = std::max<size_t>(1,i1)-1;
+  double u0 = _u_lc[i0], u1 = _u_lc[i1];
+  double l0 = _lc[i0], l1 = _lc[i1];
+  if (i1 == i0 || u0 == u1)
+    return l0;
+  double alpha = (u-u0)/(u1-u0);
+  return l0*(1-alpha) + l1*(alpha);
+}
+
+struct vindexsort {
+  const std::vector<double> &v;
+  vindexsort(const std::vector<double> &vp) :v(vp){};
+  bool operator()(size_t i0, size_t i1) {return v[i0]<v[i1];}
+};
+
+void GEdge::setMeshSizeParametric(const std::vector<double> u, const std::vector<double> lc)
+{
+  if (u.size() != lc.size()) {
+    Msg::Error("setMeshSizeParametric : number of coordinates and number of mesh size do not match.");
+  }
+  std::vector<size_t> index(u.size());
+  for (size_t i = 0; i < u.size(); ++i)
+    index[i] = i;
+  std::sort(index.begin(),index.end(),vindexsort(u));
+  _u_lc.resize(u.size());
+  _lc.resize(lc.size());
+  for (size_t i = 0; i < u.size(); ++i){
+    _u_lc[i] = u[index[i]];
+    _lc[i] = lc[index[i]];
+  }
 }

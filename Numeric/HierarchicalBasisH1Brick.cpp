@@ -34,6 +34,11 @@ HierarchicalBasisH1Brick::HierarchicalBasisH1Brick(int order)
 
 HierarchicalBasisH1Brick::~HierarchicalBasisH1Brick() {}
 
+unsigned int HierarchicalBasisH1Brick::getNumberOfOrientations() const
+{
+  return 40320; // factorial 8
+}
+
 double HierarchicalBasisH1Brick::_affineCoordinate(const int &j,
                                                    const double &u,
                                                    const double &v,

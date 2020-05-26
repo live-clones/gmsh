@@ -31,7 +31,7 @@ Spline(14) = {1000,1001,1002,1003};
 Line Loop(15) = {11,12,13,14};
 Surface(16) = {15};
 
-pp[] = Intersect Line {1:N} Surface {16};
+pp[] = Intersect Curve {1:N} Surface {16};
 
 Spline(1000) = {pp[], pp[0]};
 

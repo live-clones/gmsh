@@ -6,8 +6,8 @@
 #include <stack>
 #include <set>
 #include <map>
+#include <sstream>
 #include "OS.h"
-#include "GModelCreateTopologyFromMesh.h"
 #include "GModel.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
@@ -23,8 +23,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
-
-#include <sstream>
+#include "Context.h"
 
 // Assumption: The input mesh is potentially (partially) coloured
 
@@ -45,7 +44,7 @@ bool topoExists(GModel *gm)
   return true;
 }
 
-// FIXME : To TIMES THE SAME MLINE IN EACH CONNECTED PART IF PERIODIC
+// FIXME: Two times the same MLine in each connected part if periodic
 std::vector<GEdge *> ensureSimplyConnectedEdge(GEdge *ge)
 {
   std::vector<GEdge *> _all;
@@ -54,7 +53,7 @@ std::vector<GEdge *> ensureSimplyConnectedEdge(GEdge *ge)
 
   _all.push_back(ge);
 
-  // create vertex to edge connectivity : only To neighbors are considered ...
+  // create vertex to edge connectivity: only two neighbors are considered...
   for(std::size_t i = 0; i < ge->lines.size(); i++) {
     _lines.insert(ge->lines[i]);
     for(int j = 0; j < 2; j++) {
@@ -221,13 +220,13 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
     if(gv->mesh_vertices.size()) {
       MVertex *mv = gv->mesh_vertices[0];
       mVertexToGVertex[mv] = gv;
-      Msg::Info("The model already has point %i, containing node %i",
-                gv->tag(), mv->getNum());
+      Msg::Debug("The model already has point %i, containing node %i",
+                 gv->tag(), mv->getNum());
     }
   }
 
-  // create bundles of edges for each MVertex on the GEdge
-  // if GVertex already present, link it to the GEdge
+  // create bundles of edges for each MVertex on the GEdge; if GVertex already
+  // present, link it to the GEdge
 
   MVertexToGEdgesMap mVertexToGEdges;
   GEdgeToGVerticesMap gEdgeToGVertices;
@@ -280,9 +279,8 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
     }
   }
 
-  // link all GEdge to GVertex and vice versa
-  // we expect to see two GVertex per GEdge
-  // unless it is periodic !!!!
+  // link all GEdge to GVertex and vice versa (we expect to see two GVertex per
+  // GEdge unless it is periodic!)
 
   for(GEdgeToGVerticesMap::iterator gEIter = gEdgeToGVertices.begin();
       gEIter != gEdgeToGVertices.end(); ++gEIter) {
@@ -299,7 +297,6 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
       gv1->addEdge(ge);
       gv2->addEdge(ge);
     }
-
     else {
       std::vector<GEdge *> splits = ensureSimplyConnectedEdge(ge);
       if(splits.size() == 1) { // periodic case
@@ -321,8 +318,8 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
     }
   }
 
-  // add GVertex for self-intersecting GEdge
-  // we still need to check this is actually the case ...
+  // add GVertex for self-intersecting GEdge; we still need to check this is
+  // actually the case...
 
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
@@ -570,8 +567,8 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
     }
   }
 
-  // create inverse dictionary for all other faces
-  // This is the most time consuming part !
+  // create inverse dictionary for all other faces; this is the most time
+  // consuming part!
 
   TFaceToGRegionPairMap tFaceToGRegionPair;
   GRegionToGFacesMap gRegionToGFaces;
@@ -680,16 +677,15 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
   }
 }
 
-void GModel::createTopologyFromMeshNew()
+void GModel::createTopologyFromMesh()
 {
-  const int dim = getDim();
-
-  double t1 = Cpu();
-
   if(topoExists(this)) {
     Msg::Info("Topology exists: no need to create one from mesh");
     return;
   }
+
+  const int dim = getDim();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   Msg::Info("Creating topology from mesh...");
   int numF = 0, numE = 0, numV = 0;
@@ -714,6 +710,9 @@ void GModel::createTopologyFromMeshNew()
   cc.insert(cc.begin(), vs.begin(), vs.end());
   _storeVerticesInEntities(cc);
 
-  double t2 = Cpu();
-  Msg::Info("Done creating topology from mesh (%g s)", t2 - t1);
+  CTX::instance()->mesh.changed = ENT_ALL;
+
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::Info("Done creating topology from mesh (Wall %gs, CPU %gs)",
+            w2 - w1, t2 - t1);
 }

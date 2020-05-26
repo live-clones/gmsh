@@ -48,7 +48,7 @@ int GModel::readCGNS(const std::string &name,
   // index start at 1 with empty name to account for unclassified elements
   std::vector<std::string> allGeomName(2, "");
 
-  // read number of zones (allZones[0] is dummy because index starts at 1) 
+  // read number of zones (allZones[0] is dummy because index starts at 1)
   int nbZone = 0;
   cgnsErr = cg_nzones(fileIndex, baseIndex, &nbZone);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
@@ -63,7 +63,7 @@ int GModel::readCGNS(const std::string &name,
   // data structures for element and vertices
   std::vector<MVertex *> allVert;                     // all vertices
   std::map<int, std::vector<MElement *> > allElt[10]; // all elements by type
-  
+
    // vertex and element (global) tags per zone for postpro
   vertPerZone.resize(nbZone+1);
   eltPerZone.resize(nbZone+1);
@@ -105,7 +105,7 @@ int GModel::readCGNS(const std::string &name,
   setPeriodicityInEntities(allZones);
 
   // remove potential duplicate vertices if several zones (keeping vertices
-  // classified on entities of lowest dimension) 
+  // classified on entities of lowest dimension)
   // TODO: disable this through option ?
   if(nbZone > 1) removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
 
@@ -118,7 +118,7 @@ int GModel::readCGNS(const std::string &name,
   }
 
   // reconstruct geometrical topology if required
-  if(CTX::instance()->mesh.cgnsConstructTopology) createTopologyFromMeshNew();
+  if(CTX::instance()->mesh.cgnsConstructTopology) createTopologyFromMesh();
 
   return postpro ? 2 : 1;
 }

@@ -35,6 +35,7 @@ template <class scalar> class simpleFunction;
 class GEO_Internals;
 class OCC_Internals;
 class ACIS_Internals;
+class Parasolid_Internals;
 class smooth_normals;
 class FieldManager;
 class gLevelset;
@@ -114,12 +115,14 @@ protected:
   // global cache storage of discrete curvatures
   std::map<MVertex *, std::pair<SVector3, SVector3> > _curvatures;
 
-  // Geo (Gmsh native) model internal data
+  // GEO (Gmsh native) model internal data
   GEO_Internals *_geo_internals;
-  // OpenCascade model internal data
+  // OpenCASCADE model internal data
   OCC_Internals *_occ_internals;
   // ACIS model internal data
   ACIS_Internals *_acis_internals;
+  // Parasolid model internal data
+  Parasolid_Internals *_parasolid_internals;
 
   // characteristic length (mesh size) fields
   FieldManager *_fields;
@@ -150,14 +153,6 @@ protected:
   std::size_t _numPartitions;
 
 protected:
-  void _createGEOInternals();
-  void _deleteGEOInternals();
-
-  void _deleteOCCInternals();
-  void _resetOCCInternals();
-
-  void _deleteACISInternals();
-
   // store the elements given in the map (indexed by elementary region
   // number) into the model, creating discrete geometrical entities on
   // the fly if needed
@@ -224,8 +219,56 @@ public:
   // get/set global vertex/element num
   std::size_t getMaxVertexNumber() const { return _maxVertexNum; }
   std::size_t getMaxElementNumber() const { return _maxElementNum; }
-  void setMaxVertexNumber(std::size_t num) { _maxVertexNum = num; }
-  void setMaxElementNumber(std::size_t num) { _maxElementNum = num; }
+  void setMaxVertexNumber(std::size_t num)
+  {
+#if defined(_OPENMP)
+#pragma omp atomic write
+#endif
+    _maxVertexNum = _maxVertexNum > num ? _maxVertexNum : num;
+  }
+  void setMaxElementNumber(std::size_t num)
+  {
+#if defined(_OPENMP)
+#pragma omp atomic write
+#endif
+    _maxElementNum = _maxElementNum > num ? _maxElementNum : num;
+  }
+
+  // increment and get global vertex/element num
+  std::size_t incrementAndGetMaxVertexNumber()
+  {
+    std::size_t _myVertexNum;
+#if defined(_OPENMP)
+#pragma omp atomic capture
+#endif
+    {
+      ++_maxVertexNum;
+      _myVertexNum = _maxVertexNum;
+    }
+    return _myVertexNum;
+  }
+  std::size_t incrementAndGetMaxElementNumber()
+  {
+    std::size_t _myElementNum;
+#if defined(_OPENMP)
+#pragma omp atomic capture
+#endif
+    {
+      ++_maxElementNum;
+      _myElementNum = _maxElementNum;
+    }
+    return _myElementNum;
+  }
+
+  // decrement global vertex num
+  void decrementMaxVertexNumber()
+  {
+#if defined(_OPENMP)
+#pragma omp atomic update
+#endif
+    --_maxVertexNum;
+  }
+
   void checkPointMaxNumbers()
   {
     _checkPointedMaxVertexNum = _maxVertexNum;
@@ -239,7 +282,9 @@ public:
 
   // number the edges
   int addMEdge(const MEdge &edge);
-  //number the faces
+  // get the edge number
+  int getEdgeNumber(const MEdge &edge);
+  // number the faces
   int addMFace(const MFace &face);
 
   // renumber mesh vertices and elements in a continuous sequence (this
@@ -252,6 +297,7 @@ public:
   void destroyMeshCaches();
   // delete the mesh stored in entities and call destroMeshCaches
   void deleteMesh();
+  void deleteMesh(const std::vector<GEntity *> &entities);
   // delete the vertex arrays used for efficient mesh drawing
   void deleteVertexArrays();
 
@@ -261,10 +307,19 @@ public:
   void pruneMeshVertexAssociations();
 
   // access internal CAD representations
-  GEO_Internals *getGEOInternals() { return _geo_internals; }
+  void createGEOInternals();
   void createOCCInternals();
+  void createACISInternals();
+  void createParasolidInternals();
   OCC_Internals *getOCCInternals() { return _occ_internals; }
+  GEO_Internals *getGEOInternals() { return _geo_internals; }
   ACIS_Internals *getACISInternals() { return _acis_internals; }
+  Parasolid_Internals *getParasolidInternals() { return _parasolid_internals; }
+  void deleteGEOInternals();
+  void deleteOCCInternals();
+  void resetOCCInternals();
+  void deleteACISInternals();
+  void deleteParasolidInternals();
 
   // access characteristic length (mesh size) fields
   FieldManager *getFields() { return _fields; }
@@ -314,10 +369,16 @@ public:
   const_viter lastVertex() const { return vertices.end(); }
 
   // get the set of entities
-  std::set<GRegion *, GEntityPtrLessThan> getRegions() const { return regions; };
+  std::set<GRegion *, GEntityPtrLessThan> getRegions() const
+  {
+    return regions;
+  };
   std::set<GFace *, GEntityPtrLessThan> getFaces() const { return faces; };
   std::set<GEdge *, GEntityPtrLessThan> getEdges() const { return edges; };
-  std::set<GVertex *, GEntityPtrLessThan> getVertices() const { return vertices; };
+  std::set<GVertex *, GEntityPtrLessThan> getVertices() const
+  {
+    return vertices;
+  };
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
@@ -460,8 +521,8 @@ public:
   std::size_t getNumMeshElements(unsigned c[6]);
 
   // access a mesh element by coordinates (using an octree search)
-  MElement *getMeshElementByCoord(SPoint3 &p, SPoint3 &param,
-                                  int dim = -1, bool strict = true);
+  MElement *getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim = -1,
+                                  bool strict = true);
   std::vector<MElement *> getMeshElementsByCoord(SPoint3 &p, int dim = -1,
                                                  bool strict = true);
 
@@ -513,12 +574,13 @@ public:
     return _lastMeshVertexError;
   }
 
-  // delete all invisble mesh elements
+  // delete or reverse all invisble mesh elements
   void removeInvisibleElements();
+  void reverseInvisibleElements();
 
   // the list of partitions
   std::size_t getNumPartitions() const { return _numPartitions; }
-  void setNumPartitions(unsigned int npart) { _numPartitions = npart; }
+  void setNumPartitions(std::size_t npart) { _numPartitions = npart; }
 
   // partition the mesh
   int partitionMesh(int num);
@@ -548,11 +610,12 @@ public:
   // discrete entities
   void createGeometryOfDiscreteEntities();
 
-  // create topology from mesh
-  void createTopologyFromMeshNew();
-  void createTopologyFromMesh();
+  // make discrete entities simply connected
   void makeDiscreteRegionsSimplyConnected();
   void makeDiscreteFacesSimplyConnected();
+
+  // create topology from mesh
+  void createTopologyFromMesh();
 
   // align periodic boundaries
   void alignPeriodicBoundaries();
@@ -584,11 +647,11 @@ public:
   int setOrderN(int order, int linear, int incomplete);
 
   // refine the mesh by splitting all elements
-  int refineMesh(int linear, bool barycentric = false);
+  int refineMesh(int linear, bool splitIntoQuads = false,
+                 bool splitIntoHexas = false, bool barycentric = false);
 
   // optimize the mesh
-  int optimizeMesh(const std::string &how, bool force = false,
-                   int niter = 1);
+  int optimizeMesh(const std::string &how, bool force = false, int niter = 1);
 
   // recombine the mesh
   int recombineMesh();
@@ -651,6 +714,9 @@ public:
   // ACIS Model
   int readACISSAT(const std::string &name);
 
+  // Parasolid Model
+  int readParasolid(const std::string &name);
+
   // Gmsh mesh file format
   int readMSH(const std::string &name);
   int writeMSH(const std::string &name, double version = 2.2,
@@ -680,9 +746,9 @@ public:
                int oneSolidPerSurface = 0);
 
   // X3D (only output from OCCT's triangulation)
-  int writeX3D(const std::string &name,
-               bool saveAll = false, double scalingFactor = 1.0,
-               int x3dsurfaces = 1, int x3dedges = 0, int x3dvertices = 0);
+  int writeX3D(const std::string &name, bool saveAll = false,
+               double scalingFactor = 1.0, int x3dsurfaces = 1,
+               int x3dedges = 0, int x3dvertices = 0);
 
   // PLY(2) format (ascii text format)
   int readPLY(const std::string &name);
@@ -756,7 +822,8 @@ public:
 
   // Abaqus
   int writeINP(const std::string &name, bool saveAll = false,
-               bool saveGroupsOfNodes = false, double scalingFactor = 1.0);
+               int saveGroupsOfElements = 1, int saveGroupsOfNodes = 0,
+               double scalingFactor = 1.0);
 
   // LSDYNA
   int writeKEY(const std::string &name, int saveAll = 0,

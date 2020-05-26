@@ -59,6 +59,7 @@
 #include "Scal2Tens.h"
 #include "Scal2Vec.h"
 #include "CutMesh.h"
+#include "SpanningTree.h"
 #include "NewView.h"
 #include "MeshSubEntities.h"
 #include "MeshVolume.h"
@@ -67,6 +68,7 @@
 #include "GaussPoints.h"
 #include "VoroMetal.h"
 #include "Summation.h"
+#include "BoundaryAngles.h"
 #include "MeshSizeFieldView.h"
 
 // for testing purposes only :-)
@@ -271,6 +273,8 @@ void PluginManager::registerDefaultPlugins()
       "GaussPoints", GMSH_RegisterGaussPointsPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "Summation", GMSH_RegisterSummationPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
+      "BoundaryAngles", GMSH_RegisterBoundaryAnglesPlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "AnalyseMeshQuality", GMSH_RegisterAnalyseMeshQualityPlugin()));
@@ -303,6 +307,8 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "CutMesh", GMSH_RegisterCutMeshPlugin()));
 #endif
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
+      "SpanningTree", GMSH_RegisterSpanningTreePlugin()));
   }
 
 #if defined(HAVE_FLTK)

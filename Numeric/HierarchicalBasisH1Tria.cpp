@@ -49,6 +49,11 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
 }
 HierarchicalBasisH1Tria::~HierarchicalBasisH1Tria() {}
 
+unsigned int HierarchicalBasisH1Tria::getNumberOfOrientations() const
+{
+  return 6; // factorial 3
+}
+
 double HierarchicalBasisH1Tria::_affineCoordinate(int const &j, double const &u,
                                                   double const &v)
 {
@@ -555,7 +560,7 @@ void HierarchicalBasisH1Tria::orientFace(
   std::vector<double> &fTableCopy)
 {
   int iOrientation = numberOrientationTriFace(flag1, flag2);
-  int offset = iOrientation * _nQuadFaceFunction;
+  int offset = iOrientation * _nTriFaceFunction;
   for(int i = 0; i < _nTriFaceFunction; i++) {
     fTableCopy[i] = triFaceFunctionsAllOrientation[i + offset];
   }
@@ -567,7 +572,7 @@ void HierarchicalBasisH1Tria::orientFace(
   std::vector<std::vector<double> > &fTableCopy)
 {
   int iOrientation = numberOrientationTriFace(flag1, flag2);
-  int offset = iOrientation * _nQuadFaceFunction;
+  int offset = iOrientation * _nTriFaceFunction;
   for(int i = 0; i < _nTriFaceFunction; i++) {
     fTableCopy[i][0] = triFaceFunctionsAllOrientation[i + offset][0];
     fTableCopy[i][1] = triFaceFunctionsAllOrientation[i + offset][1];

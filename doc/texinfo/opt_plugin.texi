@@ -2,12 +2,12 @@
 
 @ftable @code
 @item Plugin(AnalyseMeshQuality)
-Plugin(AnalyseMeshQuality) analyse all elements of a given dimension. According to what is asked, it computes the minimum of the Jacobian determinant (J), the IGE quality measure (Inverse Gradient Error) and/or the ICN quality measure (Inverse Condition Number). Statistics are printed and, if asked, a Pview is created for each measure. The plugin hides elements for which the measure mu > 'Hiding threshold', where mu is the ICN measure if asked otherwise the IGE measure if asked otherwise the Jacobian determinant.@*
+Plugin(AnalyseMeshQuality) analyses the quality of all the elements of a given dimension. Depending on what is asked, it computes the minimum of the Jacobian determinant (J), the IGE quality measure (Inverse Gradient Error) and/or the ICN quality measure (Inverse Condition Number). Statistics are printed and, if requested, a post-processing view is created for each quality measure. The plugin hides elements for which the measure is greater than 'Hiding threshold'.@*
 @*
-J is faster to compute but gives information only on validity while the other measure gives also information on quality.@*
+J is faster to compute but gives information only on element validity while the other measures also give information on element quality.@*
 The IGE measure is related to the error on the gradient of the finite element solution. It is the scaled Jacobian for quads and hexes and a new measure for triangles and tetrahedra.@*
 The ICN measure is related to the condition number of the stiffness matrix.@*
-(See article "Efficient computation of the minimum of shape quality measures on curvilinear finite elements" for details.)@*
+(See the article "Efficient computation of the minimum of shape quality measures on curvilinear finite elements" for details.)@*
 @*
 Parameters:@*
 @*
@@ -17,13 +17,13 @@ Parameters:@*
 @*
 - ICNMeasure = @{0, 1@}@*
 @*
-- HidingThreshold = [0, 1]: Hides all element for which min(mu) is strictly greater than the threshold, where mu is ICN ifICNMeasure == 1, otherwise it is IGE if IGEMeasure == 1. If ICNMeasure == IGEMeasure == 0, nothing happens. If threshold == 0, hides all elements except invalid.@*
+- HidingThreshold = [0, 1]: Hides all elements for which min(mu) is strictly greater than the threshold, where mu is ICN ifICNMeasure == 1, otherwise it is IGE if IGEMeasure == 1. If ICNMeasure == IGEMeasure == 0, nothing happens. If threshold == 0, hides all elements except invalid elements.@*
 @*
-- DrawPView = @{0, 1@}: Creates a PView of min(J)/max(J), min(IGE) and/or min(ICN) according to what is asked. If 'Recompute' = 1, new PViews are created.@*
+- CreateView = @{0, 1@}: Creates a post-processing view of min(J)/max(J), min(IGE) and/or min(ICN). If 'Recompute' = 1, new views are created.@*
 @*
 - Recompute = @{0,1@}: Should be 1 if the mesh has changed.@*
 @*
-- DimensionOfElements = @{-1, 1, 2, 3, 4@}: If == -1, analyse element of the greater dimension. If == 4, analyse 2D and 3D elements.
+- DimensionOfElements = @{-1, 1, 2, 3, 4@}: If == -1, analyse element of the highest dimension. If == 4, analyse 2D and 3D elements.
 Numeric options:
 @table @code
 @item JacobianDeterminant
@@ -34,7 +34,7 @@ Default value: @code{0}
 Default value: @code{0}
 @item HidingThreshold
 Default value: @code{9}
-@item DrawPView
+@item CreateView
 Default value: @code{0}
 @item Recompute
 Default value: @code{0}
@@ -73,6 +73,27 @@ Default value: @code{0}
 Default value: @code{14}
 @item View
 Default value: @code{-1}
+@end table
+
+@item Plugin(BoundaryAngles)
+Plugin(BoundaryAngles) computes the (interior) angles between the line elements on the boundary of all surfaces. The angles, computed modulo 2*Pi, are stored in a new post-processing view, one for each surface. The plugin currently only works for planar surfaces.Available options:- Visible (1=True, 0 = False, Default = 1): Visibility of the Views in the GUI - Save (1=True, 0 = False, Default = 0): Save the Views on disk ?- Remove (1=True, 0 = False, Default = 0): Remove the View from the memory after execution?- Filename (Default = 'Angles_Surface'): Root name for the Views (in case of save / Visibility)- Dir (Default = ''): Output directory (possibly nested)
+String options:
+@table @code
+@item Filename
+Default value: @code{"Angles_Surface"}
+@item Dir
+Default value: @code{""}
+@end table
+Numeric options:
+@table @code
+@item View
+Default value: @code{-1}
+@item Save
+Default value: @code{0}
+@item Visible
+Default value: @code{0}
+@item Remove
+Default value: @code{0}
 @end table
 
 @item Plugin(Bubbles)
@@ -1170,6 +1191,33 @@ Plugin(Smooth) is executed in-place.
 Numeric options:
 @table @code
 @item View
+Default value: @code{-1}
+@end table
+
+@item Plugin(SpanningTree)
+Plugin(SpanningTree) builds a tree spanning every vertex of a mesh and stores it directly in the model.@*
+The tree is constructed by starting first on the curves, then on the surfaces and finally on the volumes.@*
+@*
+Parameters@*
+- PhysicalVolumes: list of the physical volumes upon which the tree must be built.@*
+- PhysicalSurfaces: list of the physical surfaces upon which the tree must be built.@*
+- PhysicalCurves: list of the physical curves upon which the tree must be built.@*
+- OutputPhysical: physical tag of the generated tree (-1 will select a new tag automatically).@*
+@*
+Note - Lists must be comma separated integers and spaces are ignored.@*
+Remark - This plugin does not overwrite a physical group.Therefore, if an existing physical tag is used in OutputPhysical, the edges of the tree will be /added/ to the specified group.
+String options:
+@table @code
+@item PhysicalVolumes
+Default value: @code{""}
+@item PhysicalSurfaces
+Default value: @code{""}
+@item PhysicalCurves
+Default value: @code{""}
+@end table
+Numeric options:
+@table @code
+@item OutputPhysical
 Default value: @code{-1}
 @end table
 

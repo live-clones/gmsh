@@ -39,34 +39,23 @@ double MElement::_isInsideTolerance = 1.e-6;
 
 MElement::MElement(std::size_t num, int part) : _visible(1)
 {
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-  {
-    // we should make GModel a mandatory argument to the constructor
-    GModel *m = GModel::current();
-    if(num) {
-      _num = num;
-      m->setMaxElementNumber(std::max(m->getMaxElementNumber(), _num));
-    }
-    else {
-      m->setMaxElementNumber(m->getMaxElementNumber() + 1);
-      _num = m->getMaxElementNumber();
-    }
-    _partition = (short)part;
+  // we should make GModel a mandatory argument to the constructor
+  GModel *m = GModel::current();
+  if(num) {
+    _num = num;
+    m->setMaxElementNumber(_num);
   }
+  else {
+    _num = m->incrementAndGetMaxElementNumber();
+  }
+  _partition = (short)part;
 }
 
 void MElement::forceNum(std::size_t num)
 {
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-  {
-    GModel *m = GModel::current();
-    _num = num;
-    m->setMaxElementNumber(std::max(m->getMaxElementNumber(), _num));
-  }
+  GModel *m = GModel::current();
+  _num = num;
+  m->setMaxElementNumber(_num);
 }
 
 void MElement::setTolerance(const double tol) { _isInsideTolerance = tol; }
@@ -123,9 +112,7 @@ void MElement::_getEdgeRep(MVertex *v0, MVertex *v1, double *x, double *y,
   x[1] = v1->x();
   y[1] = v1->y();
   z[1] = v1->z();
-  if(faceIndex >= 0) {
-    n[0] = n[1] = getFace(faceIndex).normal();
-  }
+  if(faceIndex >= 0) { n[0] = n[1] = getFace(faceIndex).normal(); }
   else {
     MEdge e(v0, v1);
     n[0] = n[1] = e.normal();
@@ -190,14 +177,10 @@ MEdgeN MElement::getHighOrderEdge(int num, int sign)
   const int end = (int)getNumPrimaryVertices() + (num + 1) * (order - 1);
   int k = 1;
   if(sign > 0) {
-    for(int i = start; i < end; ++i) {
-      vertices[++k] = getVertex(i);
-    }
+    for(int i = start; i < end; ++i) { vertices[++k] = getVertex(i); }
   }
   else {
-    for(int i = end - 1; i >= start; --i) {
-      vertices[++k] = getVertex(i);
-    }
+    for(int i = end - 1; i >= start; --i) { vertices[++k] = getVertex(i); }
   }
   return MEdgeN(vertices);
 }
@@ -308,34 +291,6 @@ double MElement::minScaledJacobian(bool knownValid, bool reversedOK)
   return jacobianBasedQuality::minIGEMeasure(this, knownValid, reversedOK);
 #else
   return 0.;
-#endif
-}
-
-double MElement::specialQuality()
-{
-#if defined(HAVE_MESH)
-  double minJ, maxJ;
-  jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
-  if(minJ <= 0.) return minJ;
-  //  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
-  //  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
-  return jacobianBasedQuality::minICNMeasure(this, true);
-#else
-  return 0;
-#endif
-}
-
-double MElement::specialQuality2()
-{
-#if defined(HAVE_MESH)
-  double minJ, maxJ;
-  jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
-  if(minJ <= 0.) return minJ;
-  //  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
-  //  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
-  return jacobianBasedQuality::minIGEMeasure(this, true);
-#else
-  return 0;
 #endif
 }
 
@@ -954,9 +909,7 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf,
 double MElement::getJacobian(const std::vector<SVector3> &gsf,
                              double *jac) const
 {
-  for(std::size_t i = 0; i < 9; i++) {
-    jac[i] = 0.;
-  }
+  for(std::size_t i = 0; i < 9; i++) { jac[i] = 0.; }
 
   const int numShapeFunctions = getNumVertices();
   for(int i = 0; i < numShapeFunctions; i++) {
@@ -1144,9 +1097,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
     }
     const nodalBasis *nb = getFunctionSpace();
     fullMatrix<double> refpnts = nb->getReferenceNodes();
-    for(int i = 0; i < getDim(); i++) {
-      uvw[i] = refpnts(numNearer, i);
-    }
+    for(int i = 0; i < getDim(); i++) { uvw[i] = refpnts(numNearer, i); }
   }
 
   int iter = 1, maxiter = 20;
@@ -1236,9 +1187,7 @@ void MElement::interpolateGrad(double val[], double u, double v, double w,
     dfdu[2] += val[j] * gsf[i][2];
     j += stride;
   }
-  if(invjac) {
-    matvec(invjac, dfdu, f);
-  }
+  if(invjac) { matvec(invjac, dfdu, f); }
   else {
     double jac[3][3], inv[3][3];
     getJacobian(u, v, w, jac);
@@ -1596,7 +1545,8 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
     fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
     fprintf(fp, "  outer loop\n");
     for(int j = 0; j < 3; j++)
-      fprintf(fp, "    vertex %g %g %g\n", getVertex(j)->x() * scalingFactor,
+      fprintf(fp, "    vertex %.16g %.16g %.16g\n",
+              getVertex(j)->x() * scalingFactor,
               getVertex(j)->y() * scalingFactor,
               getVertex(j)->z() * scalingFactor);
     fprintf(fp, "  endloop\n");
@@ -1605,7 +1555,7 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
       fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
       fprintf(fp, "  outer loop\n");
       for(int j = 0; j < 3; j++)
-        fprintf(fp, "    vertex %g %g %g\n",
+        fprintf(fp, "    vertex %.16g %.16g %.16g\n",
                 getVertex(qid[j])->x() * scalingFactor,
                 getVertex(qid[j])->y() * scalingFactor,
                 getVertex(qid[j])->z() * scalingFactor);
@@ -1858,7 +1808,7 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType,
       fprintf(fp, "%-8s%-8s%-8s", "0.", "0.", "0.");
     fprintf(fp, "\n");
   }
-  else{ // large field format
+  else { // large field format
     fprintf(fp, "%-8s%-8lu%-8d", str, _num, tag);
     for(int i = 0; i < n; i++) {
       fprintf(fp, "%-8ld", getVertexBDF(i)->getIndex());
@@ -2383,6 +2333,13 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
   }
 }
 
+std::string MElement::getName()
+{
+  const char *name;
+  MElement::getInfoMSH(getTypeForMSH(), &name);
+  return name;
+}
+
 void MElement::getVerticesIdForMSH(std::vector<int> &verts)
 {
   int n = getNumVerticesForMSH();
@@ -2612,9 +2569,7 @@ MElement *MElementFactory::create(int num, int type,
     for(int i = 0; i < numVertices; i++) {
       int numVertex = data[startVertices + i];
       MVertex *v = model->getMeshVertexByTag(numVertex);
-      if(v) {
-        vertices[i] = v;
-      }
+      if(v) { vertices[i] = v; }
       else {
         Msg::Error("Unknown node %d in element %d", numVertex, num);
         return 0;

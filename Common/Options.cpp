@@ -3586,10 +3586,8 @@ double opt_general_stereo_mode(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->stereo = (int)val;
   if(CTX::instance()->stereo) opt_general_camera_mode(num, action, 1.);
 #if defined(HAVE_FLTK)
-    /*
-      if(FlGui::available() && (action & GMSH_GUI))
-      FlGui::instance()->options->general.butt[17]->value(CTX::instance()->stereo);
-    */
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[17]->value(CTX::instance()->stereo);
 #endif
   return CTX::instance()->stereo;
 }
@@ -3598,11 +3596,9 @@ double opt_general_eye_sep_ratio(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->eye_sep_ratio = (double)val;
 #if defined(HAVE_FLTK)
-    /*
-    if(FlGui::available() && (action & GMSH_GUI))
-      FlGui::instance()->options->general.value[29]->value
-        (CTX::instance()->eye_sep_ratio) ;
-    */
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[29]->value
+      (CTX::instance()->eye_sep_ratio) ;
 #endif
   return CTX::instance()->eye_sep_ratio;
 }
@@ -3610,10 +3606,10 @@ double opt_general_eye_sep_ratio(OPT_ARGS_NUM)
 double opt_general_focallength_ratio(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->focallength_ratio = (double)val;
-#if defined(HAVE_FLTK) /*                                                      \
-   if(FlGui::available() && (action & GMSH_GUI))                               \
-     FlGui::instance()->options->general.value[30]->value                      \
-     (CTX::instance()->focallength_ratio) ;*/
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[30]->value
+      (CTX::instance()->focallength_ratio);
 #endif
   return CTX::instance()->focallength_ratio;
 }
@@ -3621,10 +3617,10 @@ double opt_general_focallength_ratio(OPT_ARGS_NUM)
 double opt_general_camera_aperture(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->camera_aperture = (double)val;
-#if defined(HAVE_FLTK) /*                                                      \
-   if(FlGui::available() && (action & GMSH_GUI))                               \
-     FlGui::instance()->options->general.value[31]->value                      \
-     (CTX::instance()->camera_aperture);*/
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[31]->value
+      (CTX::instance()->camera_aperture);
 #endif
   return CTX::instance()->camera_aperture;
 }
@@ -3633,14 +3629,11 @@ double opt_general_camera_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->camera = (int)val;
 #if defined(HAVE_FLTK)
-    /*
-    if(FlGui::available() && (action & GMSH_GUI)){
-      FlGui::instance()->options->general.butt[18]->value
-        (CTX::instance()->camera);
-      FlGui::instance()->options->activate("general_camera");
-
-    }
-    */
+  if(FlGui::available() && (action & GMSH_GUI)){
+    FlGui::instance()->options->general.butt[18]->value
+      (CTX::instance()->camera);
+    FlGui::instance()->options->activate("general_camera");
+  }
 #endif
   return CTX::instance()->camera;
 }
@@ -4571,6 +4564,12 @@ double opt_geometry_occ_auto_fix(OPT_ARGS_NUM)
   return CTX::instance()->geom.occAutoFix;
 }
 
+double opt_geometry_occ_bounds_use_stl(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occBoundsUseSTL = val ? 1 : 0;
+  return CTX::instance()->geom.occBoundsUseSTL;
+}
+
 double opt_geometry_occ_disable_stl(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occDisableSTL = val ? 1 : 0;
@@ -4641,6 +4640,12 @@ double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occUnionUnify = (int)val;
   return CTX::instance()->geom.occUnionUnify;
+}
+
+double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occThruSectionsDegree = (int)val;
+  return CTX::instance()->geom.occThruSectionsDegree;
 }
 
 double opt_geometry_occ_parallel(OPT_ARGS_NUM)
@@ -4938,6 +4943,10 @@ double opt_mesh_lc_factor(OPT_ARGS_NUM)
       if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.lcFactor)
         Msg::SetOnelabChanged(2);
       CTX::instance()->mesh.lcFactor = val;
+      if(CTX::instance()->mesh.lcFactor <= 0.0){
+        Msg::Error("Mesh element size factor must be > 0");
+        CTX::instance()->mesh.lcFactor = 1.;
+      }
     }
   }
 #if defined(HAVE_FLTK)
@@ -5009,9 +5018,11 @@ double opt_mesh_lc_from_curvature(OPT_ARGS_NUM)
     CTX::instance()->mesh.lcFromCurvature = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
+  if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->mesh.butt[1]->value(
       CTX::instance()->mesh.lcFromCurvature ? 1 : 0);
+    FlGui::instance()->options->activate("mesh_curvature");
+  }
 #endif
   return CTX::instance()->mesh.lcFromCurvature;
 }
@@ -5025,11 +5036,28 @@ double opt_mesh_lc_from_points(OPT_ARGS_NUM)
     CTX::instance()->mesh.lcFromPoints = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
+  if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->mesh.butt[5]->value(
       CTX::instance()->mesh.lcFromPoints ? 1 : 0);
+  }
 #endif
   return CTX::instance()->mesh.lcFromPoints;
+}
+
+double opt_mesh_lc_from_parametric_points(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.lcFromParametricPoints)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.lcFromParametricPoints = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.butt[26]->value(
+      CTX::instance()->mesh.lcFromParametricPoints ? 1 : 0);
+#endif
+  return CTX::instance()->mesh.lcFromParametricPoints;
 }
 
 double opt_mesh_lc_extend_from_boundary(OPT_ARGS_NUM)
@@ -5174,6 +5202,22 @@ double opt_mesh_label_type(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->mesh.labelType;
+}
+
+double opt_mesh_first_element_tag(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.firstElementTag = (val > 1) ? (int)val : 1;
+  }
+  return CTX::instance()->mesh.firstElementTag;
+}
+
+double opt_mesh_first_node_tag(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.firstNodeTag = (val > 1) ? (int)val : 1;
+  }
+  return CTX::instance()->mesh.firstNodeTag;
 }
 
 double opt_mesh_points(OPT_ARGS_NUM)
@@ -5797,6 +5841,9 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
     case ALGO_2D_PACK_PRLGRMS:
       FlGui::instance()->options->mesh.choice[2]->value(6);
       break;
+    case ALGO_2D_INITIAL_ONLY:
+      FlGui::instance()->options->mesh.choice[2]->value(7);
+      break;
     case ALGO_2D_AUTO:
     default: FlGui::instance()->options->mesh.choice[2]->value(0); break;
     }
@@ -5922,8 +5969,8 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.algo3d)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algo3d = (int)val;
-    if(CTX::instance()->mesh.algo3d ==
-       2) // "New Delaunay" is now simply "Delaunay"
+    // "New Delaunay" is now simply "Delaunay"
+    if(CTX::instance()->mesh.algo3d == 2)
       CTX::instance()->mesh.algo3d = 1;
   }
 #if defined(HAVE_FLTK)
@@ -5937,6 +5984,9 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
       break;
     case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(3);
+      break;
+    case ALGO_3D_INITIAL_ONLY:
+      FlGui::instance()->options->mesh.choice[3]->value(4);
       break;
     case ALGO_3D_DELAUNAY:
     default: FlGui::instance()->options->mesh.choice[3]->value(0); break;
@@ -5955,6 +6005,17 @@ double opt_mesh_mesh_only_visible(OPT_ARGS_NUM)
     CTX::instance()->mesh.meshOnlyVisible = (int)val;
   }
   return CTX::instance()->mesh.meshOnlyVisible;
+}
+
+double opt_mesh_mesh_only_empty(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.meshOnlyEmpty)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.meshOnlyEmpty = (int)val;
+  }
+  return CTX::instance()->mesh.meshOnlyEmpty;
 }
 
 double opt_mesh_min_circ_points(OPT_ARGS_NUM)
@@ -5976,6 +6037,11 @@ double opt_mesh_min_elements_2pi(OPT_ARGS_NUM)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.minElementsPerTwoPi = (int)val;
   }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.value[1]->value(
+      CTX::instance()->mesh.minElementsPerTwoPi);
+#endif
   return CTX::instance()->mesh.minElementsPerTwoPi;
 }
 
@@ -6076,13 +6142,6 @@ double opt_mesh_ho_poisson(OPT_ARGS_NUM)
     CTX::instance()->mesh.hoPoissonRatio = ratio;
   }
   return CTX::instance()->mesh.hoPoissonRatio;
-}
-
-double opt_mesh_second_order_experimental(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.secondOrderExperimental = (int)val;
-  return CTX::instance()->mesh.secondOrderExperimental;
 }
 
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)
@@ -6193,6 +6252,12 @@ double opt_mesh_save_topology(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.saveTopology = val ? 1 : 0;
   return CTX::instance()->mesh.saveTopology;
+}
+
+double opt_mesh_save_groups_of_elements(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.saveGroupsOfElements = (int)val;
+  return CTX::instance()->mesh.saveGroupsOfElements;
 }
 
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM)
@@ -6395,8 +6460,8 @@ double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM)
 
 double opt_mesh_ignore_periodicity(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.ignorePeriodicity = (int)val;
-  return CTX::instance()->mesh.ignorePeriodicity;
+  if(action & GMSH_SET) CTX::instance()->mesh.ignorePeriodicityMsh2 = (int)val;
+  return CTX::instance()->mesh.ignorePeriodicityMsh2;
 }
 
 double opt_mesh_max_iter_delaunay_3d(OPT_ARGS_NUM)
@@ -6438,6 +6503,18 @@ double opt_mesh_unv_strict_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.unvStrictFormat = (int)val;
   return CTX::instance()->mesh.unvStrictFormat;
+}
+
+double opt_mesh_reparam_max_triangles(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.reparamMaxTriangles = (int)val;
+  return CTX::instance()->mesh.reparamMaxTriangles;
+}
+
+double opt_mesh_ignore_parametrization(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.ignoreParametrizationMsh4 = (int)val;
+  return CTX::instance()->mesh.ignoreParametrizationMsh4;
 }
 
 double opt_solver_listen(OPT_ARGS_NUM)
@@ -6748,12 +6825,13 @@ double opt_view_time(OPT_ARGS_NUM)
     if(val >= 0.) {
       // if negative (the default), don't do anything so that we do not compete
       // with timestep
+      double dt_min = std::numeric_limits<double>::max();
       int step = 0;
       for(int i = 0; i < data->getNumTimeSteps(); i++) {
-        double time = data->getTime(i);
-        if(fabs(time - val) < 1.e-15) {
+        double dt = std::abs(data->getTime(i) - val);
+        if(dt < dt_min) {
           step = i;
-          break;
+          dt_min = std::min(dt_min, dt);
         }
       }
       opt_view_timestep(num, action, step);
@@ -9071,6 +9149,18 @@ double opt_print_tex_as_equation(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->print.texAsEquation = (int)val;
   return CTX::instance()->print.texAsEquation;
+}
+
+double opt_print_tex_force_fontsize(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.texForceFontSize = (int)val;
+  return CTX::instance()->print.texForceFontSize;
+}
+
+double opt_print_tex_width_in_mm(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.texWidthInMm = val;
+  return CTX::instance()->print.texWidthInMm;
 }
 
 double opt_print_composite_windows(OPT_ARGS_NUM)

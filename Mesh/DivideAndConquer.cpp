@@ -31,9 +31,9 @@
 PointNumero DocRecord::Predecessor(PointNumero a, PointNumero b)
 {
   DListPeek p = points[a].adjacent;
-  if(p == NULL) return -1;
 
   do {
+    if(p == NULL) return -1;
     if(p->point_num == b) return Pred(p)->point_num;
     p = Pred(p);
   } while(p != points[a].adjacent);
@@ -44,9 +44,9 @@ PointNumero DocRecord::Predecessor(PointNumero a, PointNumero b)
 PointNumero DocRecord::Successor(PointNumero a, PointNumero b)
 {
   DListPeek p = points[a].adjacent;
-  if(p == NULL) return -1;
 
   do {
+    if(p == NULL) return -1;
     if(p->point_num == b) return Succ(p)->point_num;
     p = Succ(p);
   } while(p != points[a].adjacent);

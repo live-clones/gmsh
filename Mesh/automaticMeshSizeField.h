@@ -9,7 +9,7 @@
 #include "Field.h"
 #include "Context.h"
 
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT) && defined(HAVE_P4EST)
 #include "hxt_octree.h"
 #endif
 

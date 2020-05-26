@@ -8,16 +8,32 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Value_Input.H>
+#include <string>
 
 // same as FL_Value_Input, but prints values in engineering notation
 
 class inputValue : public Fl_Value_Input {
+private:
+  std::string _number_format;
 public:
   inputValue(int x, int y, int w, int h, const char *l = 0)
     : Fl_Value_Input(x, y, w, h, l)
   {
   }
-  virtual int format(char *buffer) { return sprintf(buffer, "%g", value()); }
+  void numberFormat(const std::string &fmt) { _number_format = fmt; }
+  virtual int format(char *buffer)
+  {
+    if(_number_format.empty()) {
+      return sprintf(buffer, "%g", value());
+    }
+    else {
+      if(_number_format.find("d") != std::string::npos ||
+         _number_format.find("u") != std::string::npos)
+        return sprintf(buffer, _number_format.c_str(), (int)value());
+      else
+        return sprintf(buffer, _number_format.c_str(), value());
+    }
+  }
 };
 
 // same as inputValue, but forces the underlying FL_Value_Input to always accept

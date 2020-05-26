@@ -2,7 +2,6 @@ import gmsh
 import sys
 
 gmsh.initialize(sys.argv)
-gmsh.fltk.initialize()
 
 gmsh.option.setNumber("General.Terminal", 1)
 
@@ -18,7 +17,7 @@ pt3 = gmsh.model.occ.addPoint(0.6, 0.1, 0)
 pt4 = gmsh.model.occ.addPoint(0.1, 0.3, 0)
 line2 = gmsh.model.occ.addLine(pt3, pt4)
 
-o, m = gmsh.model.occ.fragment([(2,surf1)], [(1,line1), (1,line2)])
+o, m = gmsh.model.occ.fragment([(2, surf1)], [(1, line1), (1, line2)])
 gmsh.model.occ.synchronize()
 
 # m contains, for each input entity (surf1, line1 and line2), the child entities
@@ -36,6 +35,7 @@ gmsh.model.mesh.generate(2)
 gmsh.plugin.setNumber("Crack", "PhysicalGroup", 101)
 gmsh.plugin.run("Crack")
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

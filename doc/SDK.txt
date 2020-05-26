@@ -21,7 +21,11 @@ SDK layout:
   * include/gmshc.h: C API header
   * include/gmsh.h_cwrap: C++ wrapper of the C API (see the `Notes' below)
   * bin/gmsh: gmsh executable (linked with the shared Gmsh library)
-  * share/doc/gmsh/demos/api : API examples in C++, C, Python and Julia
+  * share/doc/gmsh/tutorial/c++ : C++ API tutorial
+  * share/doc/gmsh/tutorial/c : C API tutorial
+  * share/doc/gmsh/tutorial/python : Python API tutorial
+  * share/doc/gmsh/tutorial/julia : Julia API tutorial
+  * share/doc/gmsh/demos/api : Other API examples in C++, C, Python and Julia
 
 Notes:
 
@@ -44,9 +48,9 @@ Notes:
     in the Visual Studio shell and run it, you would do:
 
     C:\gmsh-git-Windows64-sdk> ren include\gmsh.h_cwrap gmsh.h
-    C:\gmsh-git-Windows64-sdk> cl /Iinclude share\doc\gmsh\demos\api\simple.cpp lib\gmsh.lib
+    C:\gmsh-git-Windows64-sdk> cl /Iinclude share\doc\gmsh\tutorial\c++\t1.cpp lib\gmsh.lib
     C:\gmsh-git-Windows64-sdk> cd lib
-    C:\gmsh-git-Windows64-sdk\lib> ..\simple.exe
+    C:\gmsh-git-Windows64-sdk\lib> ..\t1.exe
 
   * To make it as portable and as easy-to-use as possible the shared Gmsh
     library embeds most Gmsh dependencies statically linked directly inside the

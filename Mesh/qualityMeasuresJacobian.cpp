@@ -33,7 +33,7 @@ static void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
   case TYPE_TET: coeff.resize(sz1, 6); break;
   case TYPE_PYR: coeff.resize(sz1, 6); break;
   default:
-    Msg::Error("Unkown type for IGE computation");
+    Msg::Warning("Unkown element type %d for quality computation", type);
     coeff.resize(0, 0);
     return;
   }
@@ -181,7 +181,7 @@ static void _computeICN(const fullVector<double> &det,
   }
 }
 
-static void _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
+static bool _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
                                      FuncSpaceData &fsDet,
                                      int orderSamplingPoints = 0)
 {
@@ -211,10 +211,8 @@ static void _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
       fsDet = FuncSpaceData(el, false, jacOrder, jacOrder - 3, false);
       break;
     default:
-      Msg::Error("Quality measure not implemented for type of element %d",
-                 el->getType());
-      fsGrad = FuncSpaceData();
-      fsDet = FuncSpaceData();
+      Msg::Info("Quality measure not implemented for %s", el->getName().c_str());
+      return false;
     }
   }
   else {
@@ -233,10 +231,11 @@ static void _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
       fsDet = FuncSpaceData(el, true, 1, orderSamplingPoints - 1, false);
       break;
     default:
-      Msg::Error("IGE not implemented for type of element %d", el->getType());
-      return;
+      Msg::Info("Quality measure not implemented for %s", el->getName().c_str());
+      return false;
     }
   }
+  return true;
 }
 
 namespace jacobianBasedQuality {
@@ -247,9 +246,8 @@ namespace jacobianBasedQuality {
     // Get Jacobian basis
     const JacobianBasis *jfs = el->getJacobianFuncSpace();
     if(!jfs) {
-      Msg::Error(
-        "Jacobian function space not implemented for type of element %d",
-        el->getTypeForMSH());
+      Msg::Warning("Jacobian function space not implemented for %s",
+                   el->getName().c_str());
       min = 99;
       max = -99;
       return;
@@ -270,7 +268,7 @@ namespace jacobianBasedQuality {
     _subdivideDomains(domains, true, debug);
 
     // Get extrema
-    min = std::numeric_limits<double>::infinity();
+    min = std::numeric_limits<double>::max();
     max = -min;
     for(std::size_t i = 0; i < domains.size(); ++i) {
       min = std::min(min, domains[i]->minB());
@@ -284,8 +282,8 @@ namespace jacobianBasedQuality {
                        const fullMatrix<double> *normals, bool debug)
   {
     if(!knownValid) {
-      // Computation of the measure should never
-      // be performed to invalid elements (for which the measure is 0).
+      // Computation of the measure should never be performed to invalid
+      // elements (for which the measure is 0).
       double jmin, jmax;
       minMaxJacobianDeterminant(el, jmin, jmax, normals);
       if((jmin <= 0 && jmax >= 0) || (jmax < 0 && !reversedOk)) return 0;
@@ -296,7 +294,7 @@ namespace jacobianBasedQuality {
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
-    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace);
+    if(!_getQualityFunctionSpace(el, jacMatSpace, jacDetSpace)) return 0;
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
@@ -342,7 +340,7 @@ namespace jacobianBasedQuality {
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
-    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace);
+    if(!_getQualityFunctionSpace(el, jacMatSpace, jacDetSpace)) return 0;
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
@@ -378,7 +376,7 @@ namespace jacobianBasedQuality {
     fullVector<double> jac;
     sampleJacobianDeterminant(el, deg, jac, normals);
 
-    min = std::numeric_limits<double>::infinity();
+    min = std::numeric_limits<double>::max();
     max = -min;
     for(int i = 0; i < jac.size(); ++i) {
       min = std::min(min, jac(i));
@@ -391,7 +389,7 @@ namespace jacobianBasedQuality {
     fullVector<double> ige;
     sampleIGEMeasure(el, deg, ige);
 
-    min = std::numeric_limits<double>::infinity();
+    min = std::numeric_limits<double>::max();
     max = -min;
     for(int i = 0; i < ige.size(); ++i) {
       min = std::min(min, ige(i));
@@ -404,7 +402,7 @@ namespace jacobianBasedQuality {
     fullVector<double> icn;
     sampleICNMeasure(el, deg, icn);
 
-    min = std::numeric_limits<double>::infinity();
+    min = std::numeric_limits<double>::max();
     max = -min;
     for(int i = 0; i < icn.size(); ++i) {
       min = std::min(min, icn(i));
@@ -438,7 +436,7 @@ namespace jacobianBasedQuality {
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
-    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg);
+    if(!_getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg)) return;
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
@@ -465,7 +463,7 @@ namespace jacobianBasedQuality {
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
-    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg);
+    if(!_getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg)) return;
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
@@ -585,7 +583,7 @@ namespace jacobianBasedQuality {
     _computeCoeffLengthVectors(mat, v, _type);
     _computeIGE(det, v, ige, _type);
 
-    min = std::numeric_limits<double>::infinity();
+    min = std::numeric_limits<double>::max();
     max = -min;
     for(int i = 0; i < ige.size(); ++i) {
       min = std::min(min, ige(i));
@@ -721,7 +719,7 @@ namespace jacobianBasedQuality {
       return cPyr * result / 8;
     }
 
-    default: Msg::Info("Unknown type for IGE (%d)", _type); return -1;
+    default: Msg::Info("Unknown element type %d for IGE", _type); return -1;
     }
   }
 
@@ -776,9 +774,8 @@ namespace jacobianBasedQuality {
     _coeffMat->getCornerCoeffs(mat);
     _computeICN(det, mat, icn, _dim);
 
-    min = std::numeric_limits<double>::infinity();
+    min = std::numeric_limits<double>::max();
     max = -min;
-
     for(int i = 0; i < icn.size(); i++) {
       min = std::min(min, icn(i));
       max = std::max(max, icn(i));
@@ -875,7 +872,7 @@ namespace jacobianBasedQuality {
                          bool debug)
   {
     if(domains.empty()) {
-      Msg::Warning("empty vector in Bezier subdivision, nothing to do");
+      Msg::Warning("Empty vector in Bezier subdivision, nothing to do");
       return;
     }
     double minL = domains[0]->minL();
@@ -926,7 +923,7 @@ namespace jacobianBasedQuality {
     }
 
     // upper and lower bound of the desired bound:
-    const double inf = std::numeric_limits<double>::infinity();
+    const double inf = std::numeric_limits<double>::max();
     double upperBound = inf;
     double lowerBound = -inf;
 
@@ -973,7 +970,7 @@ namespace jacobianBasedQuality {
   void testAllMeasuresAllElements()
   {
     GModel *m = GModel::current();
-    std::set<GEntity *, GEntityPtrLessThan> entities;
+    std::set<GEntity *, GEntityPtrFullLessThan> entities;
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       entities.insert(*it);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
@@ -981,7 +978,7 @@ namespace jacobianBasedQuality {
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
       entities.insert(*it);
 
-    std::set<GEntity *, GEntityPtrLessThan>::iterator it;
+    std::set<GEntity *, GEntityPtrFullLessThan>::iterator it;
     for(it = entities.begin(); it != entities.end(); ++it) {
       unsigned num = (*it)->getNumMeshElements();
       for(unsigned i = 0; i < num; ++i) {

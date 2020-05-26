@@ -31,6 +31,11 @@ HierarchicalBasisHcurlBrick::HierarchicalBasisHcurlBrick(int order)
 
 HierarchicalBasisHcurlBrick::~HierarchicalBasisHcurlBrick() {}
 
+unsigned int HierarchicalBasisHcurlBrick::getNumberOfOrientations() const
+{
+  return 40320; // factorial 8
+}
+
 double HierarchicalBasisHcurlBrick::_affineCoordinate(const int &j,
                                                       const double &u,
                                                       const double &v,

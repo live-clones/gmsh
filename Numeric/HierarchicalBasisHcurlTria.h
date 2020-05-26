@@ -38,6 +38,7 @@ class HierarchicalBasisHcurlTria : public HierarchicalBasisHcurl {
 public:
   HierarchicalBasisHcurlTria(int order);
   virtual ~HierarchicalBasisHcurlTria();
+  virtual unsigned int getNumberOfOrientations() const;
   virtual void generateBasis(double const &u, double const &v, double const &w,
                              std::vector<std::vector<double> > &vertexBasis,
                              std::vector<std::vector<double> > &edgeBasis,

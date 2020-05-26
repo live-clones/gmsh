@@ -480,7 +480,7 @@ void getEntitiesInPartitions(const std::vector<GEntity *> &entities,
 {
   for(std::size_t j = 0; j < entities.size(); j++) {
     GEntity *ge = entities[j];
-    const std::vector<unsigned int> *parts = 0;
+    const std::vector<int> *parts = 0;
     switch(ge->geomType()) {
     case GEntity::PartitionVolume: {
       partitionRegion *pr = static_cast<partitionRegion *>(ge);

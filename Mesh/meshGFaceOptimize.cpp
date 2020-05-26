@@ -1240,7 +1240,7 @@ static bool _isModelOkForTopologicalOpti(GModel *m)
 void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
                         bool nodeRepositioning, double minqual)
 {
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   bool haveParam = (gf->geomType() != GEntity::DiscreteSurface);
   bool debug = (Msg::GetVerbosity() == 99);
@@ -1289,11 +1289,11 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   if(haveParam && nodeRepositioning)
     RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
 
-  double t2 = Cpu();
+  double t2 = Cpu(), w2 = TimeOfDay();
 
   char name[256];
-  sprintf(name, "%s recombination completed (%g s)", blossom ? "Blossom" :
-          "Simple", t2 - t1);
+  sprintf(name, "%s recombination completed (Wall %gs, CPU %gs)",
+          blossom ? "Blossom" : "Simple", w2 - w1, t2 - t1);
   printStats(gf, name);
 
   if(debug)

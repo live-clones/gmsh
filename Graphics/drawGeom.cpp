@@ -337,7 +337,6 @@ public:
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles) {
         bool selected = false;
         if(f->getSelection()) selected = true;
-
         _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
                          selected, CTX::instance()->color.geom.selection);
       }

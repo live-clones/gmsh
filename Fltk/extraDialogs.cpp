@@ -51,12 +51,15 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
       new paletteWindow(2 * BB + 3 * WB, 4 * BH + 3 * WB,
                         CTX::instance()->nonModalWindows ? true : false);
     editor->sa = new Fl_Value_Slider(WB, WB, BB, BH, "Head radius");
+    editor->sa->tooltip("General.ArrowHeadRadius");
     editor->sa->type(FL_HOR_SLIDER);
     editor->sa->align(FL_ALIGN_RIGHT);
     editor->sb = new Fl_Value_Slider(WB, WB + BH, BB, BH, "Stem length");
+    editor->sb->tooltip("General.ArrowStemLength");
     editor->sb->type(FL_HOR_SLIDER);
     editor->sb->align(FL_ALIGN_RIGHT);
     editor->sc = new Fl_Value_Slider(WB, WB + 2 * BH, BB, BH, "Stem radius");
+    editor->sc->tooltip("General.ArrowStemRadius");
     editor->sc->type(FL_HOR_SLIDER);
     editor->sc->align(FL_ALIGN_RIGHT);
     editor->apply = new Fl_Return_Button(WB, 2 * WB + 3 * BH, BB, BH, "Apply");

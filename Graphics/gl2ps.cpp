@@ -1,6 +1,6 @@
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2017 C. Geuzaine
+ * Copyright (C) 1999-2020 C. Geuzaine
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of either:
@@ -229,6 +229,9 @@ typedef struct {
   /* for image map list */
   GL2PSimagemap *imagemap_head;
   GL2PSimagemap *imagemap_tail;
+
+  /* for TEX scaling */
+  GLfloat tex_scaling;
 } GL2PScontext;
 
 typedef struct {
@@ -2415,12 +2418,12 @@ static void gl2psParseFeedbackBuffer(GLint used)
       case GL2PS_LINE_CAP_TOKEN :
         current += 2;
         used -= 2;
-        lcap = current[1];
+        lcap = (GLint)current[1];
         break;
       case GL2PS_LINE_JOIN_TOKEN :
         current += 2;
         used -= 2;
-        ljoin = current[1];
+        ljoin = (GLint)current[1];
         break;
       case GL2PS_LINE_WIDTH_TOKEN :
         current += 2;
@@ -3333,6 +3336,7 @@ static void gl2psPrintTeXHeader(void)
   char name[256];
   time_t now;
   int i;
+  GLfloat s;
 
   if(gl2ps->filename && strlen(gl2ps->filename) < 256){
     for(i = (int)strlen(gl2ps->filename) - 1; i >= 0; i--){
@@ -3359,14 +3363,17 @@ static void gl2psPrintTeXHeader(void)
           GL2PS_PATCH_VERSION, GL2PS_EXTRA_VERSION, GL2PS_COPYRIGHT,
           gl2ps->producer, ctime(&now));
 
+  s = gl2ps->tex_scaling;
+  if(s <= 0.) s = 1.;
   fprintf(gl2ps->stream,
-          "\\setlength{\\unitlength}{1pt}\n"
+          "\\setlength{\\unitlength}{%gpt}\n"
           "\\begin{picture}(0,0)\n"
-          "\\includegraphics{%s}\n"
+          "\\includegraphics[scale=%g]{%s}\n"
           "\\end{picture}%%\n"
           "%s\\begin{picture}(%d,%d)(0,0)\n",
-          name, (gl2ps->options & GL2PS_LANDSCAPE) ? "\\rotatebox{90}{" : "",
-          (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
+          s, s, name,
+          (gl2ps->options & GL2PS_LANDSCAPE) ? "\\rotatebox{90}{" : "",
+          (int)(gl2ps->viewport[2]), (int)(gl2ps->viewport[3]));
 }
 
 static void gl2psPrintTeXPrimitive(void *data)
@@ -3377,10 +3384,12 @@ static void gl2psPrintTeXPrimitive(void *data)
 
   switch(prim->type){
   case GL2PS_TEXT :
-    fprintf(gl2ps->stream, "\\fontsize{%d}{0}\n\\selectfont",
-            prim->data.text->fontsize);
+    if(!(gl2ps->options & GL2PS_NO_TEX_FONTSIZE))
+      fprintf(gl2ps->stream, "\\fontsize{%d}{0}\\selectfont",
+              prim->data.text->fontsize);
     fprintf(gl2ps->stream, "\\put(%g,%g)",
-            prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+            prim->verts[0].xyz[0],
+            prim->verts[0].xyz[1]);
     if(prim->data.text->angle)
       fprintf(gl2ps->stream, "{\\rotatebox{%g}", prim->data.text->angle);
     fprintf(gl2ps->stream, "{\\makebox(0,0)");
@@ -6151,6 +6160,8 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
     gl2ps->buffersize = 0;
   }
 
+  gl2ps->tex_scaling = 1.;
+
   return GL2PS_SUCCESS;
 }
 
@@ -6568,6 +6579,10 @@ GL2PSDLL_API const char *gl2psGetFormatDescription(GLint format)
 
 GL2PSDLL_API GLint gl2psGetFileFormat()
 {
+  if(!gl2ps) {
+    return GL2PS_UNINITIALIZED;
+  }
+
   return gl2ps->format;
 }
 
@@ -6586,6 +6601,17 @@ GL2PSDLL_API GLint gl2psForceRasterPos(GL2PSvertex *vert)
   gl2ps->rasterpos.rgba[1] = vert->rgba[1];
   gl2ps->rasterpos.rgba[2] = vert->rgba[2];
   gl2ps->rasterpos.rgba[3] = vert->rgba[3];
+
+  return GL2PS_SUCCESS;
+}
+
+GL2PSDLL_API GLint gl2psSetTexScaling(GLfloat scaling)
+{
+
+  if(!gl2ps) {
+    return GL2PS_UNINITIALIZED;
+  }
+  gl2ps->tex_scaling = scaling;
 
   return GL2PS_SUCCESS;
 }

@@ -1,6 +1,6 @@
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2017 C. Geuzaine
+ * Copyright (C) 1999-2020 C. Geuzaine
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of either:
@@ -90,7 +90,7 @@
 
 #define GL2PS_MAJOR_VERSION 1
 #define GL2PS_MINOR_VERSION 4
-#define GL2PS_PATCH_VERSION 1
+#define GL2PS_PATCH_VERSION 2
 #define GL2PS_EXTRA_VERSION ""
 
 #define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \
@@ -141,6 +141,7 @@
 #define GL2PS_NO_BLENDING          (1<<11)
 #define GL2PS_TIGHT_BOUNDING_BOX   (1<<12)
 #define GL2PS_NO_OPENGL_CONTEXT    (1<<13)
+#define GL2PS_NO_TEX_FONTSIZE      (1<<14)
 
 /* Arguments for gl2psEnable/gl2psDisable */
 
@@ -148,7 +149,6 @@
 #define GL2PS_POLYGON_BOUNDARY    2
 #define GL2PS_LINE_STIPPLE        3
 #define GL2PS_BLEND               4
-
 
 /* Arguments for gl2psLineCap/Join */
 
@@ -252,6 +252,7 @@ GL2PSDLL_API GLint gl2psDrawImageMap(GLsizei width, GLsizei height,
 GL2PSDLL_API const char *gl2psGetFileExtension(GLint format);
 GL2PSDLL_API const char *gl2psGetFormatDescription(GLint format);
 GL2PSDLL_API GLint gl2psGetFileFormat();
+GL2PSDLL_API GLint gl2psSetTexScaling(GLfloat scaling);
 
 #if defined(__cplusplus)
 }

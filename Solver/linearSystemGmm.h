@@ -30,7 +30,7 @@ private:
 
 public:
   linearSystemGmm(const std::string &method = "gmres", double tol = 1e-8,
-                  int noisy = 1)
+                  int noisy = 0)
     : _x(0), _b(0), _a(0), _method(method), _tol(tol), _noisy(noisy) {}
   virtual bool isAllocated() const { return _a != 0; }
   virtual void allocate(int nbRows)
@@ -97,10 +97,10 @@ public:
   virtual int systemSolve()
   {
 #if defined(HAVE_MUMPS)
-    //    if(_method == "mumps"){
+    if(_method == "mumps"){
       gmm::MUMPS_solve(*_a, *_x, *_b);
       return 1;
-      //    }
+    }
 #else
     //gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 25, 0.);
     gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 30, 1.e-10);
@@ -111,6 +111,9 @@ public:
       gmm::gmres(*_a, *_x, *_b, P, 100, iter);
     else
       gmm::cg(*_a, *_x, *_b, P, iter);
+    if(!iter.converged())
+      Msg::Warning("Iterative linear solver has not converged (res = %g)",
+                   iter.get_res());
 #endif
     return 1;
   }

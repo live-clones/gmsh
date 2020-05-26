@@ -1,4 +1,31 @@
-4.5.3 (Work-in-progress): small compilation fixes.
+4.6.0 (Work-in-progress): new options to only generate initial 2D or 3D meshes
+(without node insertion), and to only mesh non-meshed entities; added support
+for mesh size fields in HXT; improve reparametrization and partitioning code;
+new OCC API functions to reduce the number of synchronizations for complex
+models; MED output now preserves node and element tags; new functions and
+options to control the first tag of entities, nodes and elements; fixed
+duplicated entities in STEP output; small bug fixes.
+
+* Incompatible API changes: new optional arguments to mesh/clear,
+  mesh/createTopology, occ/addThruSections, mesh/getPeriodicNodes; new arguments
+  to mesh/getBasisFunctions; removed mesh/preallocateBasisFunctions,
+  mesh/precomputeBasisFunctions and mesh/getBasisFunctionsForElements; renamed
+  occ/setMeshSize as occ/mesh/setSize
+
+4.5.6 (March 30, 2020): better calculation of OCC bounding boxes using STL; API
+tutorials; small bug fixes.
+
+4.5.5 (March 21, 2020): tooltips in GUI to help discovery of scripting options;
+fixed MED IO of high-order elements; fixed OCC attribute search by bounding box;
+fix parsing of mac-encoded scripts; new RecombineMesh command; added support for
+extrusion of mixed-dimension entities with OCC; small bug fixes.
+
+4.5.4 (February 29, 2020): periodic mesh optimization now ensures that the
+master mesh is not modified; code cleanup; small bug fixes.
+
+4.5.3 (February 22, 2020): improved positioning of corresponding nodes on
+periodic entities; improved LaTeX output; improved curve splitting in
+reparametrization; new binary PLY reader; small compilation fixes.
 
 4.5.2 (January 30, 2020): periodic meshes now obey reorientation constraints;
 physical group definitions now follow compound meshing constraints; small bug
@@ -16,7 +43,7 @@ adapted meshes (Mesh.MinimumElementsPerTwoPi and "-clcurv val"); improved
 handling of anisotropic surface meshes in 3D Delaunay; improved high-order
 periodic meshing; improved 2D boolean unions; file chooser type is now
 changeable at runtime; FLTK GUI can now be created and destroyed at will through
-the api; fixed regression in MeshAdapt for non-periodic surfaces with
+the API; fixed regression in MeshAdapt for non-periodic surfaces with
 singularities; combining views now copies options; added API support for mesh
 compounds, per-surface mesh algorithm and mesh size from boundary; renamed
 plugin AnalyseCurvedMesh to AnalyseMeshQuality; fixed regression for built-in
@@ -327,7 +354,7 @@ mesh refinement (thanks Brian!); fixed various other small bugs.
 
 2.2.5 (Oct 25, 2008): Gmsh now requires FLTK 1.1.7 or above; various small
 improvements (STL and VTK mesh I/O, Netgen upgrade, Visual C++ support, Fields,
-Mesh.{Msh,Stl,...}Binary changed to Mesh.Bindary) and bug fixes (pyramid
+Mesh.{Msh,Stl,...}Binary changed to Mesh.Binary) and bug fixes (pyramid
 interpolation, Chaco crashes).
 
 2.2.4 (Aug 14, 2008): integrated Metis and Chaco mesh partitioners; variables

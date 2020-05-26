@@ -16,10 +16,9 @@
 #include "GModelIO_OCC.h"
 #include <gp_Pnt.hxx>
 
-OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc)
+OCCVertex::OCCVertex(GModel *m, TopoDS_Vertex v, int num, double lc)
   : GVertex(m, num, lc), _v(v)
 {
-  max_curvature = -1;
   gp_Pnt pnt = BRep_Tool::Pnt(_v);
   _x = pnt.X();
   _y = pnt.Y();
@@ -58,20 +57,6 @@ double max_surf_curvature(const GVertex *gv, double x, double y, double z,
     ++it;
   }
   return curv;
-}
-
-double OCCVertex::max_curvature_of_surfaces() const
-{
-  if(max_curvature < 0) {
-    for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
-        it != l_edges.end(); ++it) {
-      max_curvature =
-        std::max(max_surf_curvature(this, x(), y(), z(), *it), max_curvature);
-    }
-    // printf("max curvature (%d) = %12.5E lc = %12.5E\n",tag(),
-    //        max_curvature, prescribedMeshSizeAtVertex());
-  }
-  return max_curvature;
 }
 
 SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const

@@ -23,6 +23,7 @@ public:
   }
   void print() const;
   int getSign() const { return _sign; }
+  GEdge *getEdge() const { return ge; }
 };
 
 class GEdgeLoop {
@@ -40,6 +41,9 @@ public:
   inline void erase(iter it) { loop.erase(it); }
   int count(GEdge *) const;
   int count() const { return (int)loop.size(); }
+  void print() const;
+  void getEdges(std::vector<GEdge*> &edges) const;
+  void getSigns(std::vector<int> &signs) const;
 };
 
 #endif

@@ -26,47 +26,30 @@ double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3)
 MVertex::MVertex(double x, double y, double z, GEntity *ge, std::size_t num)
   : _visible(1), _order(1), _x(x), _y(y), _z(z), _ge(ge)
 {
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-  {
-    // we should make GModel a mandatory argument to the constructor
-    GModel *m = GModel::current();
-    if(num) {
-      _num = num;
-      m->setMaxVertexNumber(std::max(m->getMaxVertexNumber(), _num));
-    }
-    else {
-      m->setMaxVertexNumber(m->getMaxVertexNumber() + 1);
-      _num = m->getMaxVertexNumber();
-    }
-    _index = (long int)num;
+  // we should make GModel a mandatory argument to the constructor
+  GModel *m = GModel::current();
+  if(num) {
+    _num = num;
+    m->setMaxVertexNumber(_num);
   }
+  else {
+    _num = m->incrementAndGetMaxVertexNumber();
+  }
+  _index = (long int)num;
 }
 
 void MVertex::deleteLast()
 {
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-  {
-    GModel *m = GModel::current();
-    if(_num == m->getMaxVertexNumber())
-      m->setMaxVertexNumber(m->getMaxVertexNumber() - 1);
-    delete this;
-  }
+  GModel *m = GModel::current();
+  if(_num == m->getMaxVertexNumber()) m->decrementMaxVertexNumber();
+  delete this;
 }
 
 void MVertex::forceNum(std::size_t num)
 {
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-  {
-    GModel *m = GModel::current();
-    _num = num;
-    m->setMaxVertexNumber(std::max(m->getMaxVertexNumber(), _num));
-  }
+  GModel *m = GModel::current();
+  _num = num;
+  m->setMaxVertexNumber(_num);
 }
 
 void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric,
@@ -213,7 +196,8 @@ void MVertex::writeVRML(FILE *fp, double scalingFactor)
           z() * scalingFactor);
 }
 
-void MVertex::writeUNV(FILE *fp, bool officialExponentFormat, double scalingFactor)
+void MVertex::writeUNV(FILE *fp, bool officialExponentFormat,
+                       double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -223,7 +207,7 @@ void MVertex::writeUNV(FILE *fp, bool officialExponentFormat, double scalingFact
   fprintf(fp, "%10ld%10d%10d%10d\n", _index, coord_sys, displacement_coord_sys,
           color);
 
-  if(officialExponentFormat){
+  if(officialExponentFormat) {
     // hack to print the numbers with "D+XX" exponents
     char tmp[128];
     sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
@@ -232,7 +216,7 @@ void MVertex::writeUNV(FILE *fp, bool officialExponentFormat, double scalingFact
       if(tmp[i] == 'E') tmp[i] = 'D';
     fprintf(fp, "%s", tmp);
   }
-  else{
+  else {
     fprintf(fp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
             y() * scalingFactor, z() * scalingFactor);
   }
@@ -381,7 +365,7 @@ void MVertex::writeKEY(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
-  fprintf(fp, "%ld, %.14g, %.14g, %.14g\n", _index, x() * scalingFactor,
+  fprintf(fp, "%ld, %.12g, %.12g, %.12g\n", _index, x() * scalingFactor,
           y() * scalingFactor, z() * scalingFactor);
 }
 
@@ -523,7 +507,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
 bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
-  if(!v->onWhat()){
+  if(!v->onWhat()) {
     Msg::Error("Mesh node %d is not classified: cannot reparametrize",
                v->getNum());
     return false;

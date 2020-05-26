@@ -339,7 +339,7 @@ void CreateOutputFile(const std::string &fileName, int format,
        CTX::instance()->print.x3dEdges,
        CTX::instance()->print.x3dVertices);
     break;
-    
+
   case FORMAT_VRML:
     GModel::current()->writeVRML
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
@@ -405,7 +405,9 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_INP:
     GModel::current()->writeINP
-      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
+      (name, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.saveGroupsOfElements,
+       CTX::instance()->mesh.saveGroupsOfNodes,
        CTX::instance()->mesh.scalingFactor);
     break;
 
@@ -604,14 +606,23 @@ void CreateOutputFile(const std::string &fileName, int format,
       std::string base = SplitFileName(name)[1];
       GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+      GLfloat width_desired_in_mm = CTX::instance()->print.texWidthInMm;
+      GLfloat scaling = 1.;
+      if(width_desired_in_mm > 0) {
+        GLfloat width_desired_in_pt = width_desired_in_mm * 72.27 / 25.4;
+        scaling = width_desired_in_pt / width;
+      }
       GLint pixel_viewport[4] = {0, 0, width, height};
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
         buffsize += 2048 * 2048;
         gl2psBeginPage(base.c_str(), "Gmsh", pixel_viewport,
-                       GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL,
+                       GL2PS_TEX, GL2PS_NO_SORT,
+                       CTX::instance()->print.texForceFontSize ? GL2PS_NONE :
+                       GL2PS_NO_TEX_FONTSIZE, GL_RGBA, 0, NULL,
                        0, 0, 0, buffsize, fp, base.c_str());
+        gl2psSetTexScaling(scaling);
         int oldtext = CTX::instance()->print.text;
         CTX::instance()->print.text = 1;
         drawContext::global()->drawCurrentOpenglWindow(true);

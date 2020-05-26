@@ -3,32 +3,32 @@ Logiciel initial: MMG3D Version 4.0
 Co-auteurs : Cecile Dobrzynski et Pascal Frey.
 Propriétaires :IPB - UPMC -INRIA.
 
-Copyright © 2004-2005-2006-2007-2008-2009-2010-2011, 
+Copyright © 2004-2005-2006-2007-2008-2009-2010-2011,
 diffusé sous les termes et conditions de la licence publique générale de GNU
-Version 3 ou toute version ultérieure.  
+Version 3 ou toute version ultérieure.
 
 Ce fichier est une partie de MMG3D.
 MMG3D est un logiciel libre ; vous pouvez le redistribuer et/ou le modifier
 suivant les termes de la licence publique générale de GNU
 Version 3 ou toute version ultérieure.
-MMG3D est distribué dans l'espoir qu'il sera utile, mais SANS 
-AUCUNE GARANTIE ; sans même garantie de valeur marchande.  
+MMG3D est distribué dans l'espoir qu'il sera utile, mais SANS
+AUCUNE GARANTIE ; sans même garantie de valeur marchande.
 Voir la licence publique générale de GNU pour plus de détails.
-MMG3D est diffusé en espérant qu’il sera utile, 
-mais SANS AUCUNE GARANTIE, ni explicite ni implicite, 
-y compris les garanties de commercialisation ou 
-d’adaptation dans un but spécifique. 
+MMG3D est diffusé en espérant qu’il sera utile,
+mais SANS AUCUNE GARANTIE, ni explicite ni implicite,
+y compris les garanties de commercialisation ou
+d’adaptation dans un but spécifique.
 Reportez-vous à la licence publique générale de GNU pour plus de détails.
-Vous devez avoir reçu une copie de la licence publique générale de GNU 
-en même temps que ce document. 
+Vous devez avoir reçu une copie de la licence publique générale de GNU
+en même temps que ce document.
 Si ce n’est pas le cas, aller voir <http://www.gnu.org/licenses/>.
 /****************************************************************************
 Initial software: MMG3D Version 4.0
 Co-authors: Cecile Dobrzynski et Pascal Frey.
 Owners: IPB - UPMC -INRIA.
 
-Copyright © 2004-2005-2006-2007-2008-2009-2010-2011, 
-spread under the terms and conditions of the license GNU General Public License 
+Copyright © 2004-2005-2006-2007-2008-2009-2010-2011,
+spread under the terms and conditions of the license GNU General Public License
 as published Version 3, or (at your option) any later version.
 
 This file is part of MMG3D
@@ -41,7 +41,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
-along with MMG3D. If not, see <http://www.gnu.org/licenses/>.  
+along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 #include "compil.date"
 #include "mesh.h"
@@ -57,6 +57,19 @@ unsigned char MMG_iare[6][2] = { {0,1}, {0,2}, {0,3}, {1,2}, {1,3}, {2,3} };
 unsigned char MMG_ifar[6][2] = { {2,3}, {1,3}, {1,2}, {0,3}, {0,2}, {0,1} };
 unsigned char MMG_isar[6][2] = { {2,3}, {3,1}, {1,2}, {0,3}, {2,0}, {0,1} };
 unsigned char MMG_arpt[4][3] = { {0,1,2}, {0,4,3}, {1,3,5}, {2,5,4} };
+
+/* function pointers */
+MMG_Swap MMG_swpptr;
+double (*MMG_length)(double *,double *,double *,double *);
+double (*MMG_caltet)(pMesh ,pSol ,int );
+double (*MMG_calte1)(pMesh ,pSol ,int );
+int    (*MMG_caltet2)(pMesh ,pSol ,int ,int ,double ,double *);
+int    (*MMG_cavity)(pMesh ,pSol ,int ,int ,pList ,int );
+int    (*MMG_buckin)(pMesh ,pSol ,pBucket ,int );
+int    (*MMG_optlen)(pMesh ,pSol ,double ,int );
+int    (*MMG_interp)(double *,double *,double *,double );
+int    (*MMG_optlentet)(pMesh ,pSol ,pQueue ,double ,int ,int );
+int    (*MMG_movevertex)(pMesh ,pSol ,int ,int );
 
 static void excfun(int sigid) {
   switch (sigid) {
@@ -81,7 +94,7 @@ static void excfun(int sigid) {
 
 static void usage(char *prog) {
   fprintf(stdout,"usage: %s [-v[n]] [-h] [-m n] [opts..] filein[.mesh] [-out fileout]\n",prog);
-  
+
   fprintf(stdout,"\n** Generic options :\n");
   fprintf(stdout,"-d      Turn on debug mode\n");
   fprintf(stdout,"-h      Print this message\n");
@@ -102,7 +115,7 @@ static void usage(char *prog) {
   fprintf(stdout,"-nomove        no point relocation\n");
   fprintf(stdout,"-noinsert      no new point\n");
   //fprintf(stdout,"-bdry          add points on boundary mesh\n");
-  fprintf(stdout,"-out fileout   Specify output file name\n");  
+  fprintf(stdout,"-out fileout   Specify output file name\n");
 #ifdef USE_SCOTCH
   fprintf(stdout,"-rn n num         Specify the number of vertices by box to renumber nodes and the renumberings\n");
 #endif
@@ -136,7 +149,7 @@ static int parsar(int argc,char *argv[],pMesh mesh,pSol sol) {
 	        else
 	          i--;
 	      }
-	      else if ( !strcmp(argv[i],"-bdry") ){  
+	      else if ( !strcmp(argv[i],"-bdry") ){
           printf("-bdry option discarded\n");
   	      //info->bdry = 1;
 	      }
@@ -145,7 +158,7 @@ static int parsar(int argc,char *argv[],pMesh mesh,pSol sol) {
 	        usage(argv[0]);
 	      }
         break;
-      
+
       case 'd':  /* debug */
         if ( !strcmp(argv[i],"-dt") ) {
           ++i;
@@ -213,7 +226,7 @@ static int parsar(int argc,char *argv[],pMesh mesh,pSol sol) {
           ++i;
           sol->name = argv[i];
         }
-        break; 
+        break;
 #ifdef USE_SCOTCH
  /* renumbering begin */
       case 'r':
@@ -249,13 +262,13 @@ static int parsar(int argc,char *argv[],pMesh mesh,pSol sol) {
           }
         }
         break;
-/* renumbering end */ 
+/* renumbering end */
 #endif
       case 'v':
         if ( ++i < argc ) {
 	  if ( argv[i][0] == '-' || isdigit(argv[i][0]) )
 	    info->imprim = atoi(argv[i]);
-	  else 
+	  else
 	    i--;
 	}
 	else {
@@ -299,7 +312,7 @@ static int parsar(int argc,char *argv[],pMesh mesh,pSol sol) {
     mesh->name = (char *)calloc(128,sizeof(char));
     assert(mesh->name);
     fprintf(stdout,"  -- FILE BASENAME ?\n");
-    fflush(stdin); 
+    fflush(stdin);
     fscanf(stdin,"%s",mesh->name);
   }
   if ( sol->name == NULL ) {
@@ -319,13 +332,13 @@ static int parsar(int argc,char *argv[],pMesh mesh,pSol sol) {
     mesh->move = (char *)calloc(128,sizeof(char));
     assert(mesh->move);
     fprintf(stdout,"  -- DISPLACEMENT FILE ?\n");
-    fflush(stdin); 
+    fflush(stdin);
     fscanf(stdin,"%s",mesh->move);
   }
 
   return(1);
 }
- 
+
 
 int parsop(pMesh mesh) {
   int      i,ret;
@@ -375,7 +388,7 @@ void endcod() {
   int      k,call[TIMEMAX];
 
   TIM_chrono(OFF,&MMG_ctim[0]);
-  
+
   for (k=0; k<TIMEMAX; k++) {
     call[k] = MMG_ctim[k].call;
     ttim[k] = MMG_ctim[k].call ? TIM_gttime(MMG_ctim[k]) : 0.0;
@@ -480,7 +493,7 @@ int MMG_setfunc(int type) {
 
 /* /\*   if ( !parsar(argc,argv,mesh,sol) )  return(1); *\/ */
 /* /\*   MMG_imprim = info->imprim; *\/ */
-  
+
 
 /* /\*   if ( MMG_imprim )   fprintf(stdout,"\n  -- INPUT DATA\n"); *\/ */
 /* /\*   TIM_chrono(ON,&MMG_ctim[1]); *\/ */
@@ -501,7 +514,7 @@ int MMG_setfunc(int type) {
 /* /\*   if ( MMG_imprim ) *\/ */
 /* /\*     fprintf(stdout,"  -- DATA READING COMPLETED.     %.2f sec.\n", *\/ */
 /* /\*             TIM_gttime(MMG_ctim[1])); *\/ */
-  
+
 /* /\*   if ( abs(MMG_imprim) > 3 )  { *\/ */
 /* /\*     alert = MMG_outqua(mesh,sol); *\/ */
 /* /\*     if(alert) { *\/ */
@@ -535,12 +548,12 @@ int MMG_setfunc(int type) {
 /* /\*             TIM_gttime(MMG_ctim[2])); *\/ */
 
 /* /\*   if ( info->ddebug )  MMG_chkmsh(mesh,1,1); *\/ */
-  
+
 /* /\*   if ( abs(MMG_imprim) > 4 )  { *\/ */
 /* /\* 	  MMG_prilen(mesh,sol); *\/ */
 /* /\*     MMG_ratio(mesh,sol,NULL);         *\/ */
 /* /\*   }                        *\/ */
-   
+
 /* /\* #ifdef USE_SCOTCH *\/ */
 /* /\*   /\\* renumbering begin *\\/ *\/ */
 /* /\* 	  /\\*check enough vertex to renum*\\/  *\/ */
@@ -549,7 +562,7 @@ int MMG_setfunc(int type) {
 /* /\*      if ( MMG_imprim < -6) *\/ */
 /* /\*        fprintf(stdout,"renumbering"); *\/ */
 /* /\*      renumbering(info->rn, mesh, sol);   *\/ */
-    
+
 /* /\*      if ( !MMG_hashTetra(mesh) )    return(1);     *\/ */
 /* /\*      TIM_chrono(OFF,&MMG_ctim[5]);  *\/ */
 /* /\*      if ( MMG_imprim < -6) *\/ */
@@ -593,7 +606,7 @@ int MMG_setfunc(int type) {
 /* /\*          } *\/ */
 /* /\*       } *\/ */
 /* /\*     }  *\/ */
-    
+
 /* /\*     if(!info->noinsert) { *\/ */
 /* /\*       if(abs(info->option) == 4){ *\/ */
 /* /\*         MMG_mmg3d4(mesh,sol,&alert); *\/ */
@@ -601,7 +614,7 @@ int MMG_setfunc(int type) {
 /* /\*         MMG_mmg3d1(mesh,sol,&alert); *\/ */
 /* /\*       } *\/ */
 /* /\*     } *\/ */
-      
+
 /* /\*     TIM_chrono(OFF,&MMG_ctim[3]); *\/ */
 /* /\*     if ( MMG_imprim ) *\/ */
 /* /\*       fprintf(stdout,"  -- PHASE 2 COMPLETED.     %.2f sec.\n", *\/ */
@@ -644,7 +657,7 @@ int MMG_setfunc(int type) {
 /* /\*          MMG_optra4(mesh,sol);  *\/ */
 /* /\*       } *\/ */
 /* /\*     } *\/ */
-    
+
 /* /\*     if ( info->ddebug )  MMG_chkmsh(mesh,1,1); *\/ */
 /* /\*     TIM_chrono(OFF,&MMG_ctim[4]); *\/ */
 /* /\*     if ( MMG_imprim ) *\/ */

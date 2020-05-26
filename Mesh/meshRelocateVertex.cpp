@@ -30,7 +30,6 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
   double minQual = 1.0;
   for(std::size_t i = 0; i < lt.size(); i++) {
     if(lt[i]->getNumVertices() == 4) {
-      //      if (onlytet)
       double V;
       double Q = qmTetrahedron::gamma(
         lt[i]->getVertex(0)->x(), lt[i]->getVertex(0)->y(),
@@ -41,11 +40,10 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
         lt[i]->getVertex(3)->y(), lt[i]->getVertex(3)->z(), &V);
       if(V > 0) Q = -Q;
       minQual = std::min(Q, minQual);
-      //      else minQual = std::min((lt[i]->minSICNShapeMeasure()), minQual);
     }
-    else if(!onlytet)
-      //  minQual = std::min((lt[i]->specialQuality()), minQual);
+    else if(!onlytet) {
       minQual = std::min(std::abs(lt[i]->minSICNShapeMeasure()) * .2, minQual);
+    }
   }
   ver->x() = x;
   ver->y() = y;
