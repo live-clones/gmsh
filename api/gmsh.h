@@ -1347,6 +1347,10 @@ namespace gmsh { // Top-level functions
       // of the views
       GMSH_API void computeCrossField(std::vector<int> & viewTags);
 
+      GMSH_API void efficiencyIndex(const std::string &forestFile, const std::string &dataFile);
+
+      GMSH_API void discreteGradient();
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

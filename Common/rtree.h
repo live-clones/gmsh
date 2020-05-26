@@ -198,6 +198,7 @@ public:
 
     /// Find the next data element
     bool operator++()                             { return FindNextData(); }
+    bool operator--()                             { return FindNextData2(); }
 
     /// Get the bounds for this node
     void GetBounds(ELEMTYPE a_min[NUMDIMS], ELEMTYPE a_max[NUMDIMS])
@@ -212,6 +213,8 @@ public:
         a_max[index] = curBranch.m_rect.m_max[index];
       }
     }
+
+    
 
   private:
 
@@ -242,6 +245,54 @@ public:
         }
         else
         {
+          if(curTos.m_branchIndex+1 < curTos.m_node->m_count)
+          {
+            // Push sibling on for future tree walk
+            // This is the 'fall back' node when we finish with the current level
+            Push(curTos.m_node, curTos.m_branchIndex + 1);
+          }
+          // Since cur node is not a leaf, push first of next level to get deeper into the tree
+          Node* nextLevelnode = curTos.m_node->m_branch[curTos.m_branchIndex].m_child;
+          Push(nextLevelnode, 0);
+
+          // If we pushed on a new leaf, exit as the data is ready at TOS
+          if(nextLevelnode->IsLeaf())
+          {
+            return true;
+          }
+        }
+      }
+    }
+
+    bool FindNextData2()
+    {
+      for(;;)
+      {
+        if(m_tos <= 0)
+        {
+          return false;
+        }
+        StackElement curTos = Pop(); // Copy stack top cause it may change as we use it
+
+        if(curTos.m_node->IsLeaf())
+        {
+          // Keep walking through data while we can
+          if(curTos.m_branchIndex+1 < curTos.m_node->m_count)
+          {
+            // There is more data, just point to the next one
+            Push(curTos.m_node, curTos.m_branchIndex + 1);
+            return true;
+          }
+          // No more data, so it will fall back to previous level
+        }
+        else
+        {
+          if(!curTos.m_node->m_wasChecked[curTos.m_branchIndex]){
+            Push(curTos.m_node, curTos.m_branchIndex);
+            curTos.m_node->m_wasChecked[curTos.m_branchIndex] = true;
+            return true;
+          }
+
           if(curTos.m_branchIndex+1 < curTos.m_node->m_count)
           {
             // Push sibling on for future tree walk
@@ -309,6 +360,7 @@ public:
 
   /// Get Next for iteration
   void GetNext(Iterator& a_it)                    { ++a_it; }
+  void GetNext2(Iterator& a_it)                   { --a_it; }
 
   /// Is iterator NULL, or at end?
   bool IsNull(Iterator& a_it)                     { return a_it.IsNull(); }
@@ -343,6 +395,8 @@ protected:
   {
     bool IsInternalNode()                         { return (m_level > 0); } // Not a leaf, but a internal node
     bool IsLeaf()                                 { return (m_level == 0); } // A leaf, contains data
+
+    bool m_wasChecked[MAXNODES];
 
     int m_count;                                  ///< Count
     int m_level;                                  ///< Leaf is zero, others positive
@@ -905,6 +959,7 @@ void RTREE_QUAL::InitNode(Node* a_node)
 {
   a_node->m_count = 0;
   a_node->m_level = -1;
+  for(int i = 0; i < MAXNODES; ++i) a_node->m_wasChecked[i] = false;
 }
 
 

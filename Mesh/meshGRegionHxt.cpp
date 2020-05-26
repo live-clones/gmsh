@@ -299,7 +299,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 }
 
 HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m,
-       std::map<MVertex *, int> &v2c,
+       std::map<MVertex *, uint32_t> &v2c,
        std::vector<MVertex *> &c2v)
 {
   std::vector<GEdge *> edges;
@@ -385,7 +385,7 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m,
 
 
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v)
 {
   std::vector<GFace *> faces;
@@ -418,9 +418,9 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     CTX::instance()->mesh.optimizeThreshold, // double qualityMin;
     0, // double (*qualityFun)
     0, // void* qualityData;
-    &hxtMeshSizeGmshCallBack, // double (*meshSizeFun)
+    meshSizeCallBack,//&hxtMeshSizeGmshCallBack, // double (*meshSizeFun)
     regions[0], // void* meshSizeData;
-    myRecoveryFun, // HXTStatus (*recoveryFun)
+    recoveryCallback, // HXTStatus (*recoveryFun)
     0 // void* recoveryData;
   };
 

@@ -88,7 +88,7 @@
 #endif
 
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
-#include "hxt_api.h"
+#include "hxt_tools.h"
 #include "hxt_octree.h"
 #endif
 
@@ -4174,7 +4174,6 @@ gmsh::model::mesh::computeCohomology(const std::vector<int> &domainTags,
                                         dims);
 }
 
-#if defined(HAVE_HXT) && defined(HAVE_P4EST)
 GMSH_API void gmsh::model::mesh::efficiencyIndex(const std::string &forestFile, const std::string &dataFile){
 
   if(!_isInitialized()) { throw - 1; }
@@ -4543,7 +4542,11 @@ GMSH_API void gmsh::model::mesh::efficiencyIndex(const std::string &forestFile, 
   if (forest) hxtForestDelete(&forest);
   if (forestOptions)hxtForestOptionsDelete(&forestOptions);
 }
-#endif // HXT & P4EST
+
+GMSH_API void gmsh::model::mesh::discreteGradient(){
+}
+
+
 
 // gmsh::model::mesh::field
 

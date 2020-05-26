@@ -4,6 +4,7 @@
 
 #include "SPoint3.h"
 #include "SVector3.h"
+#include "Numeric.h"
 
 #include "hxt_octree.h"
 #include "hxt_boundary_recovery.h"
@@ -20,6 +21,10 @@
 #define P8EST_QMAXLEVEL 20
 
 #ifdef HAVE_P4EST
+
+static inline void norme2(double v[3], double* norme2){
+  *norme2 = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+}
 
 inline double myFun(double x, double y, double z){
   return 3.0*x*x*x + x*y*y + 5*z*z*y;
@@ -362,8 +367,8 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
           double *v2 = forestOptions->nodalCurvature + 6*node + 3;
 
           double k1, k2;
-          hxtNorm2V3(v1, &k1);
-          hxtNorm2V3(v2, &k2);
+          norme2(v1, &k1);
+          norme2(v2, &k2);
 
           kmax = fmax(kmax,fmax(k1,k2));
           kmin = fmin(kmin,fmin(k1,k2));
@@ -479,8 +484,8 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
           double *v2 = forestOptions->nodalCurvature + 6*node + 3;
 
           double k1, k2;
-          hxtNorm2V3(v1, &k1);
-          hxtNorm2V3(v2, &k2);
+          norme2(v1, &k1);
+          norme2(v2, &k2);
 
           kmax = fmax(kmax,fmax(k1,k2));
         }
@@ -1415,8 +1420,7 @@ void signedDistancePointTriangle2(const SPoint3 &p1, const SPoint3 &p2, const SP
                      {t1.y(), t2.y(), -n.y()},
                      {t1.z(), t2.z(), -n.z()}};
  double inv[3][3];
- double det;
- hxtInv3x3(mat, inv, &det);
+ double det = inv3x3(mat, inv);
  if(det == 0.0) return;
 
  double u, v;

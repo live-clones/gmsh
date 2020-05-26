@@ -15,24 +15,16 @@ extern "C" {
 #include "hxt_edge.h"
 #include "hxt_curvature.h"
 #include "hxt_bbox.h"
-#include "hxt_mesh3d.h"
-#include "hxt_mesh3d_main.h"
+// #include "hxt_mesh3d.h"
+// #include "hxt_mesh3d_main.h"
 #include "hxt_tetMesh.h"
 #include "hxt_tetUtils.h"
 #include "hxt_tetFlag.h"
 }
 #endif
 
-double f1(double p){
-  return 2*p;
-}
-
-double f2(double p){
-  return p+1.;
-}
-
-double f3(double p){
-  return 2*p+1;
+static inline void norme2(double v[3], double* norme2){
+  *norme2 = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
 }
 
 static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
@@ -156,7 +148,6 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
     RTree<uint64_t, double, 3> triRTree;
     HXTMesh *mesh;
-    HXTContext *context;
     double *nodalCurvature;
     double *nodeNormals;
     std::vector<std::function<double(double)>> curvFunctions;
@@ -190,8 +181,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
       // Create global HXT mesh structure
       // HXTMesh *mesh;
-      HXT_CHECK(hxtContextCreate(&context));
-      HXT_CHECK(hxtMeshCreate(context, &mesh));
+      HXT_CHECK(hxtMeshCreate(&mesh));
       std::map<MVertex *, int> v2c;
       std::vector<MVertex *> c2v;  
       Gmsh2Hxt(faces, mesh, v2c, c2v);
@@ -199,7 +189,6 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
       if(mesh->vertices.num == 0){
         Msg::Error("Surface mesh is empty");
         HXT_CHECK(hxtMeshDelete(&mesh));
-        HXT_CHECK(hxtContextDelete(&context));
         Msg::Exit(1);
       }
 
@@ -211,7 +200,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
       std::vector<HXTMesh *> faceMeshes;
       for(size_t i = 0; i < faces.size(); ++i){
         HXTMesh *meshFace;
-        HXT_CHECK(hxtMeshCreate(context, &meshFace));
+        HXT_CHECK(hxtMeshCreate(&meshFace));
         std::vector<GFace*> oneFace;
         oneFace.push_back(faces[i]);
         std::map<MVertex *, int> v2cLoc;
@@ -264,7 +253,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
               v1[0] = nodalCurvatureFace[6*i];
               v1[1] = nodalCurvatureFace[6*i+1];
               v1[2] = nodalCurvatureFace[6*i+2];
-              hxtNorm2V3(v1, &norme);
+              norme2(v1, &norme);
               if(norme > 1000){
                 printf("%u vertices on face %lu \n", meshFace->vertices.num, j);
                 printf(" v1 = %f \t %f \t %f - norme = %f\n", 
@@ -277,7 +266,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
               v2[0] = nodalCurvatureFace[6*i+3];
               v2[1] = nodalCurvatureFace[6*i+4];
               v2[2] = nodalCurvatureFace[6*i+5];
-              hxtNorm2V3(v2, &norme);
+              norme2(v2, &norme);
               if(norme > 1000){
                 printf("%u vertices on face %lu \n", meshFace->vertices.num, j);
                 printf(" v2 = %f \t %f \t %f - norme = %f\n\n", 
@@ -313,10 +302,10 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
             //   double *vCurrent2 = nodalCurvature + 6*nodeGlobal+3;
             //   double *vNew1 = nodalCurvatureFace + 6*i;
             //   double *vNew2 = nodalCurvatureFace + 6*i+3;
-            //   hxtNorm2V3(vCurrent1, &nc1);
-            //   hxtNorm2V3(vCurrent2, &nc2);
-            //   hxtNorm2V3(vNew1, &nn1);
-            //   hxtNorm2V3(vNew2, &nn2);
+            //   norme2(vCurrent1, &nc1);
+            //   norme2(vCurrent2, &nc2);
+            //   norme2(vNew1, &nn1);
+            //   norme2(vNew2, &nn2);
 
             //   if(nn1 > nc1 || nn2 > nc2){
             //     nodalCurvature[6 * nodeGlobal + 0] = nodalCurvatureFace[6 * i + 0];
@@ -444,7 +433,6 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
       }
 
       mesh = NULL;
-      context = NULL;
       nodalCurvature = NULL;
       nodeNormals = NULL;
 
@@ -549,7 +537,6 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
     if(nodalCurvature) HXT_CHECK(hxtFree(&nodalCurvature));
     if(nodeNormals)    HXT_CHECK(hxtFree(&nodeNormals));
     HXT_CHECK(hxtMeshDelete(&mesh));
-    HXT_CHECK(hxtContextDelete(&context));
   }
 
   return HXT_STATUS_OK;
