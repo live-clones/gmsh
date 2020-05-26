@@ -177,8 +177,9 @@ HXTStatus hxtCurvatureNormals (HXTMesh *mesh, double **nodeNormals, int debug)
       n2[i1]+=n[i1];
     }
   }
-  for (uint64_t i = 0; i<nVertices; i++)normalize(&(*nodeNormals)[3*i]);  
-  // if (debug) saveNodalField (mesh,nodeNormals, 3, "normals.pos");
+  for (uint64_t i = 0; i<nVertices; i++)normalize(&(*nodeNormals)[3*i]); 
+  printf("Saving normals\n");
+  if (debug) saveNodalField (mesh, *nodeNormals, 3, "normals.pos");
 
   HXT_CHECK(hxtFree(&node2tri));
 }
@@ -234,7 +235,7 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
 
   for (uint64_t i = 0; i<nVertices; i++){ normalize(&nodeNormals[3*i]); }
   
-  if (debug) saveNodalField (mesh,nodeNormals, 3, "normals.pos");
+  // if (debug) saveNodalField (mesh,nodeNormals, 3, "normals.pos");
   
   qsort(node2tri,3*nTriangles,2*sizeof(uint64_t),node2trianglescmp);
 
@@ -505,7 +506,7 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
     nodalCurvatures2[6 * iVert + 4] = fabs(lambda2) * (v2x * uP[1] + v2y * vP[1]);      
     nodalCurvatures2[6 * iVert + 5] = fabs(lambda2) * (v2x * uP[2] + v2y * vP[2]); 
     // printf("Done writing\n"); 
-    computeLocalFrame (&nodeNormals[3*iVertex], uP, vP);
+    // computeLocalFrame (&nodeNormals[3*iVert], uP, vP);
   } // for iVert
 
   for(int i = 0; i < nVertices*6; ++i){
@@ -513,9 +514,9 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
     (*nodalCurvatures)[i] = nodalCurvatures2[i];
   }
   //if (debug)
-  saveNodalField (mesh,*nodalCurvatures,  6, "curvaturesMax.pos");
+  // saveNodalField (mesh,*nodalCurvatures,  6, "curvaturesMax.pos");
   //if (debug)
-  saveNodalField (mesh,*nodalCurvatures, -6, "curvaturesMin.pos");
+  // saveNodalField (mesh,*nodalCurvatures, -6, "curvaturesMin.pos");
   //-----------------------------------------------------------------------------
   //            C R O S S    F I E L D    
   //-----------------------------------------------------------------------------

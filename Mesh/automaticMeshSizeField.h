@@ -39,7 +39,7 @@ class automaticMeshSizeField : public Field {
                          double hmin = -1.0,
                          double hmax = -1.0,
                          double hbulk = -1.0,
-                         int nRefine = 20,
+                         int nRefine = 100,
                          int smoothing = true,
                          int gaps = true)  
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
@@ -56,10 +56,6 @@ class automaticMeshSizeField : public Field {
     _nRefine          = nRefine;
     _smoothing        = smoothing;
     _gaps             = gaps;
-
-    printf("density = %d\n", _nPointsPerCircle);
-    printf("gaps = %d\n", _nPointsPerGap);
-    printf("gradation = %f\n", _gradation);
 
     options["FileToLoad"] = new FieldOptionString(_forestFile,
                  "p4est file containing the size field",&update_needed);    

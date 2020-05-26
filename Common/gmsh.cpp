@@ -86,6 +86,11 @@
 #include "onelabUtils.h"
 #endif
 
+#if defined(HAVE_HXT) && defined(HAVE_P4EST)
+#include "hxt_api.h"
+#include "hxt_octree.h"
+#endif
+
 // automatically generated C++ and C headers (in gmsh/api)
 #include "gmsh.h"
 extern "C" {
@@ -3702,6 +3707,377 @@ gmsh::model::mesh::computeCohomology(const std::vector<int> &domainTags,
   GModel::current()->addHomologyRequest("Cohomology", domainTags, subdomainTags,
                                         dims);
 }
+
+#if defined(HAVE_HXT) && defined(HAVE_P4EST)
+GMSH_API void gmsh::model::mesh::efficiencyIndex(const std::string &forestFile, const std::string &dataFile){
+
+  if(!_isInitialized()) { throw - 1; }
+
+  HXTForestOptions* forestOptions;
+  HXTForest*        forest;
+  if(!forestFile.empty() && !dataFile.empty()){
+
+    HXTStatus s = hxtForestOptionsCreate(&forestOptions);
+    if(s != HXT_STATUS_OK) Msg::Error("Probleme a la creation de forestOptions");
+    // std::string forestFile = GModel::current()->getName() + ".p4est";
+    // std::string dataFile   = GModel::current()->getName() + ".data";
+    Msg::Info("Efficiency index : loading size field from %s/%s", forestFile.c_str(), dataFile.c_str());
+    s = hxtForestLoad(&forest, forestFile.c_str(), dataFile.c_str(), forestOptions);
+    if(s != HXT_STATUS_OK) Msg::Error("Probleme a la creation de forest");
+  }
+
+  std::vector<GRegion *> regions;
+  for(std::set<GRegion*, GEntityPtrLessThan>::iterator it = GModel::current()->firstRegion(); it != GModel::current()->lastRegion(); ++it){
+    regions.push_back(*it);
+  }
+
+  std::vector<GFace *> allFaces;
+  std::vector<GEdge *> allEdges;
+  
+  // Getting all GFaces and GEdges
+  std::set<GFace *, GEntityPtrLessThan> allFacesSet;
+  for(std::size_t i = 0; i < regions.size(); i++) {
+    std::vector<GFace *> const &f = regions[i]->faces();
+    std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
+    allFacesSet.insert(f.begin(), f.end());
+    allFacesSet.insert(f_e.begin(), f_e.end());
+  }
+  allFaces.insert(allFaces.begin(), allFacesSet.begin(), allFacesSet.end());
+
+  std::set<GEdge *, GEntityPtrLessThan> allEdgesSet;
+  for(std::size_t i = 0; i < allFaces.size(); i++) {
+    std::vector<GEdge *> const &f = allFaces[i]->edges();
+    std::vector<GEdge *> const &f_e = allFaces[i]->embeddedEdges();
+    allEdgesSet.insert(f.begin(), f.end());
+    allEdgesSet.insert(f_e.begin(), f_e.end());
+  }
+  allEdges.insert(allEdges.begin(), allEdgesSet.begin(), allEdgesSet.end());
+
+  std::set<MEdge, MEdgeLessThan> allElementEdgesSet;
+  std::set<MEdge, MEdgeLessThan> allElementEdgesSetFromVolume;
+  std::set<MEdge, MEdgeLessThan> allElementEdgesSetFromSurface;
+  std::set<MEdge, MEdgeLessThan> allElementEdgesSetFromCurve;
+  std::vector<MEdge> allElementEdges;
+  std::vector<MEdge> allElementEdgesFromVolume;
+  std::vector<MEdge> allElementEdgesFromSurface;
+  std::vector<MEdge> allElementEdgesFromCurve;
+
+  std::map<MVertex *, std::vector<double>> lengthsAtVerticesFromTets;
+  std::map<MVertex *, std::vector<double>>::iterator it;
+
+  // Getting all MEdges from tetrahedra, triangles and lines
+  for(std::size_t i = 0; i < regions.size(); i++) {
+    std::vector<MTetrahedron *> tetrahedra = regions[i]->tetrahedra;
+    for(std::size_t j = 0; j < tetrahedra.size(); ++j){
+      for(std::size_t k = 0; k < tetrahedra[j]->getNumEdges(); ++k){
+        allElementEdgesSet.insert(tetrahedra[j]->getEdge(k));
+        allElementEdgesSetFromVolume.insert(tetrahedra[j]->getEdge(k));
+      }
+
+      for(std::size_t k = 0; k < tetrahedra[j]->getNumVertices(); ++k){
+        MVertex *v = tetrahedra[j]->getVertex(k);
+        it = lengthsAtVerticesFromTets.find(v);
+        if(it != lengthsAtVerticesFromTets.end()){
+          it->second.push_back(tetrahedra[j]->getCircumRadius());
+        } else{
+          std::vector<double> rad {tetrahedra[j]->getCircumRadius()};
+          lengthsAtVerticesFromTets.insert( std::pair<MVertex *, std::vector<double>>(v,rad) );
+        }
+      }
+    }
+  }
+  for(std::size_t i = 0; i < allFaces.size(); i++) {
+    std::vector<MTriangle *> triangles = allFaces[i]->triangles;
+    for(std::size_t j = 0; j < triangles.size(); ++j){
+      for(std::size_t k = 0; k < triangles[j]->getNumEdges(); ++k){
+        allElementEdgesSet.insert(triangles[j]->getEdge(k));
+        allElementEdgesSetFromSurface.insert(triangles[j]->getEdge(k));
+      }
+    }
+  }
+  for(std::size_t i = 0; i < allEdges.size(); ++i){
+    std::vector<MLine *> lines = allEdges[i]->lines;
+    for(std::size_t j = 0; j < lines.size(); ++j){
+      allElementEdgesSet.insert(lines[j]->getEdge(0));
+      allElementEdgesSetFromCurve.insert(lines[j]->getEdge(0));
+    }
+  }
+  allElementEdges.insert(allElementEdges.begin(), allElementEdgesSet.begin(), allElementEdgesSet.end());
+  allElementEdgesFromVolume.insert(allElementEdgesFromVolume.begin(), allElementEdgesSetFromVolume.begin(), allElementEdgesSetFromVolume.end());
+  allElementEdgesFromSurface.insert(allElementEdgesFromSurface.begin(), allElementEdgesSetFromSurface.begin(), allElementEdgesSetFromSurface.end());
+  allElementEdgesFromCurve.insert(allElementEdgesFromCurve.begin(), allElementEdgesSetFromCurve.begin(), allElementEdgesSetFromCurve.end());
+
+  double sum = 0;
+  double sumNoBad = 0;
+  MVertex *v0, *v1;
+  double x, y, z, size;
+  double e;
+
+  std::map<MVertex *, std::vector<double>> lengthsAtVertices;
+  std::map<MVertex *, std::vector<double>> lengthsAtVerticesFromVolume;
+  std::map<MVertex *, std::vector<double>> lengthsAtVerticesFromSurface;
+  std::map<MVertex *, std::vector<double>> lengthsAtVerticesFromCurve;
+  std::map<MVertex *, std::vector<double>>::iterator it2;
+
+  int badCounter = 0;
+
+  for(std::vector<MEdge>::iterator it = allElementEdges.begin(); it != allElementEdges.end(); ++it){
+    // Evaluating size field at midpoint
+    v0 = it->getVertex(0);
+    v1 = it->getVertex(1);
+    x = (v0->x() + v1->x())/2.;
+    y = (v0->y() + v1->y())/2.;
+    z = (v0->z() + v1->z())/2.; 
+
+    size = 1.0;
+    if(!forestFile.empty() && !dataFile.empty()){
+      HXTStatus s = hxtForestSearchOne(forest, x, y, z, &size, true);
+      if(s != HXT_STATUS_OK) Msg::Error("Erreur hxtForestSearchOne");
+    }
+
+    e = it->length()/size;
+
+    if(e <= sqrt(2.) && e >= 1./sqrt(2.)){
+      sumNoBad += (e < 1.) ? (e - 1.) : (1./e - 1.);
+    } else{
+      ++badCounter;
+    }
+
+    sum += (e < 1.) ? (e - 1.) : (1./e - 1.);
+
+    it2 = lengthsAtVertices.find(v0);
+    if(it2 == lengthsAtVertices.end()){
+      std::vector<double> minmax {it->length(), it->length()};
+      lengthsAtVertices.insert( std::pair<MVertex *, std::vector<double>>(v0, minmax) );
+    } else{
+      it2->second[0] = fmin(it2->second[0], it->length());
+      it2->second[1] = fmax(it2->second[1], it->length());
+    }
+
+    it2 = lengthsAtVertices.find(v1);
+    if(it2 == lengthsAtVertices.end()){
+      std::vector<double> minmax {it->length(), it->length()};
+      lengthsAtVertices.insert( std::pair<MVertex *, std::vector<double>>(v1, minmax) );
+    } else{
+      it2->second[0] = fmin(it2->second[0], it->length());
+      it2->second[1] = fmax(it2->second[1], it->length());
+    }
+  }
+
+  double t = exp( sum/allElementEdges.size() );
+  double tNoBad = exp( sumNoBad/(allElementEdges.size()-badCounter) );
+
+  double discreteGrad;
+  double dGAvg = 0;
+  for(std::map<MVertex *, std::vector<double>>::iterator it = lengthsAtVertices.begin(); it != lengthsAtVertices.end(); ++it){
+    discreteGrad = it->second[1]/it->second[0];
+    dGAvg += discreteGrad;
+    // printf("discreteGrad = vertex %lu = %f - l = %f - %f\n", it->first->getNum(), discreteGrad, it->second[0], it->second[1]);
+  }
+  dGAvg /= lengthsAtVertices.size();
+  printf("Average discrete gradient (global) = %f\n", dGAvg);
+  double dGVar = 0;
+  for(std::map<MVertex *, std::vector<double>>::iterator it = lengthsAtVertices.begin(); it != lengthsAtVertices.end(); ++it){
+    discreteGrad = it->second[1]/it->second[0];
+    dGVar += (discreteGrad - dGAvg) * (discreteGrad - dGAvg);
+    // printf("discreteGrad = vertex %lu = %f\n", it->first->getNum(), discreteGrad);
+  }
+  dGVar /= lengthsAtVertices.size();
+  double dGStdDev = sqrt(dGVar);
+  printf("Variance = %f\n", dGVar);
+  printf("Standard deviation = %f\n", dGStdDev);
+
+  // RAYONS
+
+  dGAvg = 0;
+  for(std::map<MVertex *, std::vector<double>>::iterator it = lengthsAtVerticesFromTets.begin(); it != lengthsAtVerticesFromTets.end(); ++it){
+    // printf("vertex %d : ", it->first->getNum());
+    double min = 1e22, max = -1.0;
+    for(int i = 0; i < it->second.size(); ++i){
+      // printf("%f, ", it->second[i]);
+      min = fmin(min, it->second[i]);
+      max = fmax(max, it->second[i]);
+    }
+    discreteGrad = max/min;
+    // printf("===> %f\n", discreteGrad);
+
+    dGAvg += discreteGrad;
+    // printf("discreteGrad = vertex %lu = %f - l = %f - %f\n", it->first->getNum(), discreteGrad, min, max);
+  }
+  dGAvg /= lengthsAtVerticesFromTets.size();
+  printf("Average discrete gradient (from tets) = %f\n", dGAvg);
+
+  // VOLUMES
+
+  for(std::vector<MEdge>::iterator it = allElementEdgesFromVolume.begin(); it != allElementEdgesFromVolume.end(); ++it){
+    v0 = it->getVertex(0);
+    v1 = it->getVertex(1);
+    // printf("Volume edge : %d - %d\n", v0->getNum(), v1->getNum());
+    it2 = lengthsAtVerticesFromVolume.find(v0);
+    if(it2 == lengthsAtVerticesFromVolume.end()){
+      // std::vector<double> minmax {it->length(), it->length()};
+      std::vector<double> minmax {it->length()};
+      // printf("At %d : Added [%f - %f]\n", v0->getNum(), minmax[0], minmax[1]);
+      lengthsAtVerticesFromVolume.insert( std::pair<MVertex *, std::vector<double>>(v0, minmax) );
+    } else{
+      // printf("At %d : Found [%f - %f] with it->length() = %f\n", v0->getNum(), it2->second[0], it2->second[1], it->length());
+      // it2->second[0] = fmin(it2->second[0], it->length());
+      // it2->second[1] = fmax(it2->second[1], it->length());
+      it2->second.push_back(it->length());
+      // printf("At %d : Modified [%f - %f]\n", v0->getNum(), it2->second[0], it2->second[1]);
+    }
+
+    it2 = lengthsAtVerticesFromVolume.find(v1);
+    if(it2 == lengthsAtVerticesFromVolume.end()){
+      // std::vector<double> minmax {it->length(), it->length()};
+      std::vector<double> minmax {it->length()};
+      // printf("At %d : Added [%f - %f]\n", v1->getNum(), minmax[0], minmax[1]);
+      lengthsAtVerticesFromVolume.insert( std::pair<MVertex *, std::vector<double>>(v1, minmax) );
+    } else{
+      // printf("At %d : Found [%f - %f] with it->length() = %f\n", v1->getNum(), it2->second[0], it2->second[1], it->length());
+      // it2->second[0] = fmin(it2->second[0], it->length());
+      // it2->second[1] = fmax(it2->second[1], it->length());
+      it2->second.push_back(it->length());
+      // printf("At %d : Modified [%f - %f]\n", v1->getNum(), it2->second[0], it2->second[1]);
+    }
+
+  }
+
+  dGAvg = 0;
+  for(std::map<MVertex *, std::vector<double>>::iterator it = lengthsAtVerticesFromVolume.begin(); it != lengthsAtVerticesFromVolume.end(); ++it){
+    // discreteGrad = it->second[1]/it->second[0];
+    // printf("vertex %d : ", it->first->getNum());
+    double min = 1e22, max = -1.0;
+    double lengthAvg = 0;
+    for(int i = 0; i < it->second.size(); ++i){
+      // printf("%f, ", it->second[i]);
+      min = fmin(min, it->second[i]);
+      max = fmax(max, it->second[i]);
+      lengthAvg += it->second[i];
+    }
+    discreteGrad = max/min;
+    lengthAvg /= it->second.size();
+    it->second[0] = lengthAvg;
+    // printf("===> %f\n", discreteGrad);
+
+    dGAvg += discreteGrad;
+    // printf("discreteGrad = vertex %lu = %f - l = %f - %f\n", it->first->getNum(), discreteGrad, it->second[0], it->second[1]);
+  }
+  dGAvg /= lengthsAtVerticesFromVolume.size();
+  printf("Average discrete gradient (from volume) = %f\n", dGAvg);
+
+  dGAvg = 0;
+  for(std::vector<MEdge>::iterator it = allElementEdgesFromVolume.begin(); it != allElementEdgesFromVolume.end(); ++it){
+    v0 = it->getVertex(0);
+    v1 = it->getVertex(1);
+    std::map<MVertex *, std::vector<double>>::iterator it0 = lengthsAtVerticesFromVolume.find(v0);
+    std::map<MVertex *, std::vector<double>>::iterator it1 = lengthsAtVerticesFromVolume.find(v1);
+    double min = fmin(it0->second[0], it1->second[0]);
+    double max = fmax(it0->second[0], it1->second[0]);
+    discreteGrad = max/min;
+    dGAvg += discreteGrad;
+    // printf("%f\n", discreteGrad);
+  }
+  dGAvg /= allElementEdgesFromVolume.size();
+  printf("Average discrete gradient (from edges : gradient des moyennes) = %f\n", dGAvg);
+
+
+  // SURFACES
+
+  for(std::vector<MEdge>::iterator it = allElementEdgesFromSurface.begin(); it != allElementEdgesFromSurface.end(); ++it){
+    v0 = it->getVertex(0);
+    v1 = it->getVertex(1);
+    it2 = lengthsAtVerticesFromSurface.find(v0);
+    if(it2 == lengthsAtVerticesFromSurface.end()){
+      std::vector<double> minmax {it->length(), it->length()};
+      lengthsAtVerticesFromSurface.insert( std::pair<MVertex *, std::vector<double>>(v0, minmax) );
+    } else{
+      it2->second[0] = fmin(it2->second[0], it->length());
+      it2->second[1] = fmax(it2->second[1], it->length());
+    }
+
+    it2 = lengthsAtVerticesFromSurface.find(v1);
+    if(it2 == lengthsAtVerticesFromSurface.end()){
+      std::vector<double> minmax {it->length(), it->length()};
+      lengthsAtVerticesFromSurface.insert( std::pair<MVertex *, std::vector<double>>(v1, minmax) );
+    } else{
+      it2->second[0] = fmin(it2->second[0], it->length());
+      it2->second[1] = fmax(it2->second[1], it->length());
+    }
+
+  }
+
+  dGAvg = 0;
+  for(std::map<MVertex *, std::vector<double>>::iterator it = lengthsAtVerticesFromSurface.begin(); it != lengthsAtVerticesFromSurface.end(); ++it){
+    discreteGrad = it->second[1]/it->second[0];
+    dGAvg += discreteGrad;
+    // printf("discreteGrad = vertex %lu = %f - l = %f - %f\n", it->first->getNum(), discreteGrad, it->second[0], it->second[1]);
+  }
+  dGAvg /= lengthsAtVerticesFromSurface.size();
+  printf("Average discrete gradient (from surface) = %f\n", dGAvg);
+  dGVar = 0;
+  for(std::map<MVertex *, std::vector<double>>::iterator it = lengthsAtVerticesFromSurface.begin(); it != lengthsAtVerticesFromSurface.end(); ++it){
+    discreteGrad = it->second[1]/it->second[0];
+    dGVar += (discreteGrad - dGAvg) * (discreteGrad - dGAvg);
+    // printf("discreteGrad = vertex %lu = %f\n", it->first->getNum(), discreteGrad);
+  }
+  dGVar /= lengthsAtVerticesFromSurface.size();
+  dGStdDev = sqrt(dGVar);
+  printf("Variance = %f\n", dGVar);
+  printf("Standard deviation = %f\n", dGStdDev);
+
+  // CURVES
+
+  for(std::vector<MEdge>::iterator it = allElementEdgesFromCurve.begin(); it != allElementEdgesFromCurve.end(); ++it){
+    v0 = it->getVertex(0);
+    v1 = it->getVertex(1);
+    it2 = lengthsAtVerticesFromCurve.find(v0);
+    if(it2 == lengthsAtVerticesFromCurve.end()){
+      std::vector<double> minmax {it->length(), it->length()};
+      lengthsAtVerticesFromCurve.insert( std::pair<MVertex *, std::vector<double>>(v0, minmax) );
+    } else{
+      it2->second[0] = fmin(it2->second[0], it->length());
+      it2->second[1] = fmax(it2->second[1], it->length());
+    }
+
+    it2 = lengthsAtVerticesFromCurve.find(v1);
+    if(it2 == lengthsAtVerticesFromCurve.end()){
+      std::vector<double> minmax {it->length(), it->length()};
+      lengthsAtVerticesFromCurve.insert( std::pair<MVertex *, std::vector<double>>(v1, minmax) );
+    } else{
+      it2->second[0] = fmin(it2->second[0], it->length());
+      it2->second[1] = fmax(it2->second[1], it->length());
+    }
+
+  }
+
+  dGAvg = 0;
+  for(std::map<MVertex *, std::vector<double>>::iterator it = lengthsAtVerticesFromCurve.begin(); it != lengthsAtVerticesFromCurve.end(); ++it){
+    discreteGrad = it->second[1]/it->second[0];
+    dGAvg += discreteGrad;
+    // printf("discreteGrad = vertex %lu = %f - l = %f - %f\n", it->first->getNum(), discreteGrad, it->second[0], it->second[1]);
+  }
+  dGAvg /= lengthsAtVerticesFromCurve.size();
+  printf("Average discrete gradient (from curve) = %f\n", dGAvg);
+  dGVar = 0;
+  for(std::map<MVertex *, std::vector<double>>::iterator it = lengthsAtVerticesFromCurve.begin(); it != lengthsAtVerticesFromCurve.end(); ++it){
+    discreteGrad = it->second[1]/it->second[0];
+    dGVar += (discreteGrad - dGAvg) * (discreteGrad - dGAvg);
+    // printf("discreteGrad = vertex %lu = %f\n", it->first->getNum(), discreteGrad);
+  }
+  dGVar /= lengthsAtVerticesFromCurve.size();
+  dGStdDev = sqrt(dGVar);
+  printf("Variance = %f\n", dGVar);
+  printf("Standard deviation = %f\n", dGStdDev);
+
+
+  // printf("My beautiful model has %lu curves containing %lu lines total : t = %f.\n", allEdges.size(), allElementEdges.size(), t);
+  // printf("%d bad edges out of %d edges. Without them : t = %f.\n", badCounter, allElementEdges.size(), tNoBad);
+
+  if (forest) hxtForestDelete(&forest);
+  if (forestOptions)hxtForestOptionsDelete(&forestOptions);
+}
+#endif // HXT & P4EST
 
 // gmsh::model::mesh::field
 

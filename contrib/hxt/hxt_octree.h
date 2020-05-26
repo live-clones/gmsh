@@ -1,6 +1,8 @@
 #ifndef HXT_OCTREE_H
 #define HXT_OCTREE_H
 
+#include <functional>
+
 // GMSH INCLUDES
 #include "rtree.h"
 
@@ -17,6 +19,7 @@ extern "C" {
 
 // Information needed to create and compute an HXTForest
 typedef struct HXTForestOptions{
+  int           dim;
   double 				hmax;
   double 				hmin;
   double 				hbulk;
@@ -26,11 +29,14 @@ typedef struct HXTForestOptions{
   int           nodePerGap;
   double       *bbox;
   double      (*sizeFunction)(double, double, double, double);
-  const char   *forestFile;
+  // const char   *forestFile;
   RTree<uint64_t,double,3>  *triRTree;
   HXTMesh                   *mesh;
   double                    *nodalCurvature;
   double                    *nodeNormals;
+  std::vector<std::function<double(double)>> *curvFunctions;
+  std::vector<std::function<double(double)>> *xFunctions;
+  std::vector<std::function<double(double)>> *yFunctions;
 } HXTForestOptions;
 
 // The structure containing the size field information
@@ -45,15 +51,18 @@ typedef struct HXTForest{
 typedef struct size_data{
   double size;
 #ifdef HAVE_P4EST
-  // Size gradient
-  double ds[P4EST_DIM];
+  double ds[P4EST_DIM]; // Size gradient
 #endif
-  double h;
-  // Half cell length for finite differences
-  double h_xL, h_xR;
+  double h; // The cell size
+  // TODO : remplacer les double par un teableu de booleen qui indique si le voisin est full ou hanging
+  // Comme ça il faudra juste ajouter h/2
+  double h_xL, h_xR; // Half cell length for finite differences
   double h_yD, h_yU;
   double h_zB, h_zT;
   int isBoundary;
+
+  // Coordinates of center : TO REMOVE
+  double c[3];
 } size_data_t;
 
 // A node to search in the tree
@@ -77,15 +86,25 @@ HXTStatus hxtForestOptionsDelete(HXTForestOptions **forestOptions);
 HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char* filename, HXTForestOptions *forestOptions);
 HXTStatus hxtForestDelete(HXTForest **forest);
 
-HXTStatus hxtForestSave(HXTForest *forest, const char* fFile);
-HXTStatus hxtForestExport(HXTForest *forest);
-HXTStatus hxtForestLoad(HXTForest **forest, const char* filename, HXTForestOptions *forestOptions);
+HXTStatus hxtForestSave(HXTForest *forest, const char* forestFile, const char *dataFile);
+HXTStatus hxtForestExport(HXTForest *forest, const char *forestFile);
+HXTStatus hxtForestExport2D(HXTForest *forest, const char *forestFile);
+HXTStatus hxtForestLoad(HXTForest **forest, const char* forestFile, const char *dataFile, HXTForestOptions *forestOptions);
 
 HXTStatus hxtForestRefine(HXTForest *forest);
 HXTStatus hxtForestSizeSmoothing(HXTForest *forest);
 HXTStatus hxtForestCloseSurfaces(HXTForest *forest);
+HXTStatus hxtComputeGradientOnce(HXTForest *forest);
 
 HXTStatus hxtOctreeElementEstimation(HXTForest *forest, double *elemEstimate);
 HXTStatus hxtForestSearchOne(HXTForest *forest, double x, double y, double z, double *size, int linear);
+
+// Pour calculer la convergence des derivees
+HXTStatus hxtForestRefineToBulk(HXTForest *forest);
+HXTStatus hxtForestRefineOneLevel(HXTForest *forest);
+HXTStatus hxtL2NormGradient(HXTForest *forest, double *error);
+HXTStatus hxtLInfNormGradient(HXTForest *forest, double *error);
+HXTStatus hxtGetSmallestCellSize(HXTForest *forest, double *minsize);
+HXTStatus hxtGetLargestCellSize(HXTForest *forest, double *maxsize);
 
 #endif
