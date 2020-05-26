@@ -751,7 +751,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "setstring")) {
         i++;
-	if (i + 1 < argc && argv[i][0] != '-' && argv[i + 1][0] != '-') {
+	if (i + 1 < argc) {
           std::string n(argv[i]), cat, opt, v = argv[i + 1];
           int index = 0;
           if(SplitOptionName(n, cat, opt, index)){
@@ -772,7 +772,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if (!strcmp(argv[i]+1, "setnumber")) {
         i++;
-	if (i + 1 < argc && argv[i][0] != '-') {
+	if (i + 1 < argc) {
           std::string n(argv[i]), cat, opt;
           double v = atof(argv[i + 1]);
           int index = 0;
