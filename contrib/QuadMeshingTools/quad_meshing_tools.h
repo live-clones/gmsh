@@ -161,6 +161,11 @@ namespace QMT {
 
   bool convert_quad_mesh_to_tri_mesh(const QMesh& Q, TMesh& T);
 
+  bool simplify_quad_mesh_by_merging_irregular_vertices(
+      QMesh& M, 
+      int nb_collapse_max = -1,
+      const BoundaryProjector* projector = NULL);
+
   /****************************************************************************************/
   /* internal functions which are used in multiple QMT source files                       */
   /****************************************************************************************/

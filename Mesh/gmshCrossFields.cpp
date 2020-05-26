@@ -6264,6 +6264,11 @@ int computeQuadSizeMapUniform(GModel * gm, const QuadMeshingOptions& opt, QuadMe
     }
   }
 
+  if (numElements == 0)  {
+    Msg::Error("no triangles, failed to build quad size map");
+    return -1;
+  }
+
   Msg::Info("create a view 's' with %d triangles", numElements);
   gmsh::initialize();
   int vi = gmsh::view::add("s");
@@ -6401,6 +6406,11 @@ int computeQuadSizeMap(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSt
         smax = std::max(smax,val);
       }
     }
+  }
+
+  if (numElements[et_tri] == 0)  {
+    Msg::Error("no triangles, failed to build quad size map");
+    return -1;
   }
 
 
@@ -6901,14 +6911,49 @@ int simplifyQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
   }
 
 #if defined(HAVE_QUADMESHINGTOOLS)
+  /* Import current quad mesh */
+  QMT::QMesh Q;
+  bool oki = QMT::import_QMesh_from_gmsh(gm->getName(),Q);
+  if (!oki) {
+    Msg::Error("Failed to simplify quad mesh");
+    return -1;
+  }
+
+  /* Fill size map values in Q */
+  int sizemapTag = -1;
+  if (sizemapTag == -1) {
+    PView* view_s = PView::getViewByName("s");
+    if (view_s) {
+      sizemapTag = view_s->getTag();
+    } else {
+      Msg::Warning("Size map (view named 's') not found, simplification without it");
+    }
+  }
+
+  /* BoundaryProjector */
   QMT::BoundaryProjector* projector = NULL;
+  bool proj_to_del = false;
   if (state.data_boundary_projector != NULL) {
     projector = static_cast<QMT::BoundaryProjector*>(state.data_boundary_projector);
   }
   if (projector == NULL) {
-    Msg::Error("BoundaryProjector* not found in QuadMeshingState. This one is created by the Cut step.");
-    return -1;
+    Msg::Info("building a discrete BoundaryProjector from split quad mesh");
+    QMT::TMesh T;
+    QMT::convert_quad_mesh_to_tri_mesh(Q,T);
+    projector = new QMT::BoundaryProjector(T);
+    bool keep_it_for_smoothing = true;
+    if (keep_it_for_smoothing) {
+      state.data_boundary_projector = (void*) projector;
+      Msg::Debug("saved QMT::BoundaryProjector* in QuadMeshingState");
+    } else {
+      proj_to_del = true;
+    }
+    // projector->show_projector();
   }
+  // if (projector == NULL) {
+  //   Msg::Error("BoundaryProjector* not found in QuadMeshingState. This one is created by the Cut step.");
+  //   return -1;
+  // }
 
   /* Simplification sizes */
   double size_min = CTX::instance()->mesh.lcMin;
@@ -6927,14 +6972,6 @@ int simplifyQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
   // double hc = opt.simplify_size_factor * size_min;
   // if (size_min == 0.) hc = opt.simplify_size_factor * size_max;
 
-  /* Import current quad mesh */
-  QMT::QMesh Q;
-  bool oki = QMT::import_QMesh_from_gmsh(gm->getName(),Q);
-  if (!oki) {
-    Msg::Error("Failed to simplify quad mesh");
-    return -1;
-  }
-
   /* Temporary solution because CAD not transfered */
   bool oka = QMT::assignClosestEntities(Q, *projector);
   if (!oka) {
@@ -6943,26 +6980,31 @@ int simplifyQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
   }
   // projector->show_projector();
 
-  /* Fill size map values in Q */
-  int sizemapTag = -1;
-  if (sizemapTag == -1) {
-    PView* view_s = PView::getViewByName("s");
-    if (view_s) {
-      sizemapTag = view_s->getTag();
+  if (sizemapTag != -1) { /* Simplification based on sizes */
+    bool oksm = QMT::fill_vertex_sizes_from_sizemap(Q, sizemapTag);
+    if (!oksm) {
+      Msg::Error("Failed to evaluate size map on quad mesh");
+      return -1;
     }
-  }
 
-  bool oksm = QMT::fill_vertex_sizes_from_sizemap(Q, sizemapTag);
-  if (!oksm) {
-    Msg::Error("Failed to evaluate size map on quad mesh");
+    /* Apply simplification */
+    bool oks = QMT::simplify_quad_mesh(Q, opt.simplify_size_factor, -1, projector);
+    if (!oks) {
+      Msg::Error("Failed to simplify quad mesh");
+      return -1;
+    }
+  } else { 
+    Msg::Error("Size map required for the simplification");
     return -1;
-  }
 
-  /* Apply simplification */
-  bool oks = QMT::simplify_quad_mesh(Q, opt.simplify_size_factor, -1, projector);
-  if (!oks) {
-    Msg::Error("Failed to simplify quad mesh");
-    return -1;
+    // // Purely topological 3-5 chord collapse is not very effective in practice ... 
+    // // commented for the moment
+    // /* Apply simplification */
+    // bool oks = QMT::simplify_quad_mesh_by_merging_irregular_vertices(Q, -1, projector);
+    // if (!oks) {
+    //   Msg::Error("Failed to simplify quad mesh");
+    //   return -1;
+    // }
   }
 
   /* Export simplified quad mesh to new gmsh model */
@@ -6979,6 +7021,8 @@ int simplifyQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingStat
     Msg::Error("Failed to export quad mesh");
     return -1;
   }
+
+  if (proj_to_del) { delete projector; projector = NULL; }
 
   CTX::instance()->mesh.changed = ENT_ALL;
 
@@ -7007,6 +7051,14 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
   }
 
 #if defined(HAVE_QUADMESHINGTOOLS)
+  /* Import current quad mesh */
+  QMT::QMesh Q;
+  bool oki = QMT::import_QMesh_from_gmsh(gm->getName(),Q);
+  if (!oki) {
+    Msg::Error("Failed to simplify quad mesh");
+    return -1;
+  }
+
   QMT::BoundaryProjector* projector = NULL;
   if (state.data_boundary_projector != NULL) {
     projector = static_cast<QMT::BoundaryProjector*>(state.data_boundary_projector);
@@ -7016,14 +7068,6 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
     return -1;
   }
   // projector->show_projector(); /* only for debug */
-
-  /* Import current quad mesh */
-  QMT::QMesh Q;
-  bool oki = QMT::import_QMesh_from_gmsh(gm->getName(),Q);
-  if (!oki) {
-    Msg::Error("Failed to simplify quad mesh");
-    return -1;
-  }
 
   /* Temporary solution because CAD not transfered */
   bool oka = QMT::assignClosestEntities(Q, *projector);
@@ -7056,7 +7100,6 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
       v->setXYZ(Q.points[num][0],Q.points[num][1],Q.points[num][2]);
     }
   }
-
 
   CTX::instance()->mesh.changed = ENT_ALL;
   return 0;

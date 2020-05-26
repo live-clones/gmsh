@@ -36,6 +36,7 @@ using gmsh::vectorpair;
 
 using Chord = std::vector<QMT::id>;
 
+
 namespace QMT_SMP_Utils {
   using namespace QMT;
   using namespace QMT_Utils;
@@ -305,6 +306,8 @@ namespace QMT {
   using namespace QMT_Utils;
   using namespace QMT_SMP_Utils;
   using namespace GLog;
+
+  const id QQQ = 29063;
 
   struct SizeMap {
     double hmin = 0.;
@@ -843,8 +846,10 @@ namespace QMT {
 
     /* Check diagonals */
     if (M.entity[vert[0]].first <= 1 && M.entity[vert[2]].first <= 1) {
+      error("diagonal issue: both opposite vertices on feature node/curve");
       return false;
     } else if (M.entity[vert[1]].first <= 1 && M.entity[vert[3]].first <= 1) {
+      error("diagonal issue: both opposite vertices on feature node/curve");
       return false;
     }
 
@@ -1109,7 +1114,7 @@ namespace QMT {
       id side = q2qs[q][0] % 2;
       bool okc = collapse_quad_to_line(M, q, side, v2quads);
       if (!okc) {
-        error("failed to collapse quad to one vertex ...");
+        error("failed to collapse quad to edge ...");
         return false;
       }
     }
@@ -1768,6 +1773,190 @@ namespace QMT {
       nbc += 1;
     }
     info("simplification done, collapsed {} chords", nbc);
+
+    { /* Output statistics */
+      size_t nbv = 0;
+      size_t nbirr = 0;
+      size_t nbq = 0;
+      vector<bool> inside(M.points.size(),false);
+      FC(c,M.quads.size(),M.quads[c][0] != NO_ID) {
+        nbq += 1;
+        F(lv,4) inside[M.quads[c][lv]] = true;
+      }
+      FC(v,M.points.size(), inside[v]) nbv += 1;
+      FC(v,M.points.size(), inside[v] && M.entity[v].first == 2 && valence[v] != 4) nbirr += 1;
+      info("output: {} vertices ({} irregular), {} quads", nbv, nbirr, nbq);
+    }
+
+    if (projector != NULL) {
+      vector<bool> used(M.points.size(),false);
+      FC(c,M.quads.size(),M.quads[c][0] != NO_ID)  F(lv,4) used[M.quads[c][lv]] = true;
+      size_t nc = 0;
+      double dmax = 0.;
+      FC(v,M.points.size(),used[v] && (M.entity[v].first == -1 || M.entity[v].second == -1)) {
+        if (M.entity[v].first == -1) {
+          error("cannot deal with vertex v={}, M.entity[v] = {}", v, M.entity[v]);
+          return false;
+        }
+        int dim = M.entity[v].first;
+        int tag = -1;
+        double dist;
+        bool okc = projector->closestEntity({M.points[v]}, dist, dim, tag);
+        if (okc) {
+          // warn("  v = {}, pt = {}, M.entity[v] = {} -> {}", v, M.points[v], M.entity[v], std::make_pair(dim,tag));
+          M.entity[v] = {dim,tag};
+          nc += 1;
+          dmax = std::max(dmax,dist);
+        } else {
+          warn("v = {}, mapping from entity ({},{}) to initial one not found", v, M.entity[v].first, M.entity[v].second);
+          continue;
+        }
+      }
+      if (nc > 0) {
+        warn("{} vertices got closest entity assigned (dist max = {})", nc, dmax);
+      }
+
+      bool okp = project_points_via_discrete_projector(M, *projector);
+      if (!okp) {
+        error("failed to project point on initial geometry");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool simplify_quad_mesh_by_merging_irregular_vertices(
+      QMesh& M, 
+      int nb_collapse_max,
+      const BoundaryProjector* projector) {
+    info("quad mesh simplification (merging irregular vertices) ...");
+
+    constexpr bool SHOW_DETAILS = true; /* Show low of intermediate stuff in views, only for debugging */
+
+    vector<int> valence(M.points.size(),0);
+    { /* Init valence */
+      valence.resize(M.points.size());
+      std::fill(valence.begin(),valence.end(),0.);
+      F(q,M.quads.size()) FC(lv,4,M.quads[q][lv] != NO_ID) valence[M.quads[q][lv]] = valence[M.quads[q][lv]] + 1;
+    }
+
+    { /* Input statistics */
+      size_t nbv = 0;
+      size_t nbirr = 0;
+      size_t nbq = 0;
+      vector<bool> inside(M.points.size(),false);
+      FC(c,M.quads.size(),M.quads[c][0] != NO_ID) {
+        nbq += 1;
+        F(lv,4) inside[M.quads[c][lv]] = true;
+      }
+      FC(v,M.points.size(), inside[v]) nbv += 1;
+      FC(v,M.points.size(), inside[v] && M.entity[v].first == 2 && valence[v] != 4)  nbirr += 1;
+      info("input: {} vertices ({} irregular), {} quads", nbv, nbirr, nbq);
+    }
+
+    { /* Update adjacencies if necessary */
+      if (M.quad_neighbors.size() == 0.) {
+        bool oka = compute_quad_adjacencies(M.quads, M.quad_neighbors, M.nm_quad_neighbors);
+        if (!oka) {
+          error("failed to compute quad adjacencies");
+          return false;
+        }
+      }
+    }
+
+    /* Memory optimization */
+    vector<vector<id>> q2qs(M.quads.size());     /* outside loop for re-use */
+    vector<vector<id>> v2quads(M.points.size()); /* outside loop for re-use */
+
+    /* Simplification loop */
+    info("simplification loop in progress ...");
+    bool active = true;
+    size_t iter = 0;
+    int nbc = 0;
+    while (active) {
+      iter += 1;
+      active = false;
+
+      if (nb_collapse_max >= 0 && nbc >= nb_collapse_max) {
+        info("reached maximum number of collapse: {}", nb_collapse_max);
+        break;
+      }
+
+      { /* Update valence and onBoundary */
+        valence.resize(M.points.size());
+        std::fill(valence.begin(),valence.end(),0.);
+        F(q,M.quads.size()) {
+          if (M.quads[q][0] == NO_ID) continue;
+          FC(lv,4,M.quads[q][lv] != NO_ID) valence[M.quads[q][lv]] = valence[M.quads[q][lv]] + 1;
+          FC(le,4,M.quad_neighbors[q][le] == NO_SID) {
+            // !!!! TODO: how to replace these ones ? !!!!!!
+            // M.onBoundary[M.quads[q][le]] = true;
+            // M.onBoundary[M.quads[q][(le+1)%4]] = true;
+          }
+        }
+      }
+
+      /* Find chord to collapse */
+      Chord chord;
+      FC(c,M.quads.size(),M.quads[c][0] != NO_ID) {
+        F(le,4) {
+          if (   (valence[M.quads[c][le]] == 3 && valence[M.quads[c][(le+1)%4]] == 5) 
+              || (valence[M.quads[c][le]] == 5 && valence[M.quads[c][(le+1)%4]] == 3)) {
+            bool okc = build_chord(M.quads, M.quad_neighbors,2*c+le%2,chord);
+            if (okc) {
+              active = true;
+              break;
+            }
+          }
+        }
+        F(diag,2) {
+          if (   (valence[M.quads[c][diag]] == 3 && valence[M.quads[c][(diag+2)%4]] == 5) 
+              || (valence[M.quads[c][diag]] == 5 && valence[M.quads[c][(diag+1)%4]] == 3)) {
+            bool okc = build_chord(M.quads, M.quad_neighbors,2*c+diag%2,chord);
+            if (okc) {
+              active = true;
+              break;
+            }
+          }
+        }
+        if (active) break;
+      }
+      if (!active) break;
+
+
+      /* Checking chord */
+      sort_unique(chord);
+      if (chord.size() == 0) {
+        error("chord is empty");
+        return false;
+      }
+      if (!chord_is_collapsible(M, chord, &valence)) {
+        warn("  chord not collapsible, continue");
+        if (SHOW_DETAILS) show_chord_in_view(M, {chord}, "_i" + std::to_string(iter)+"_ch_rej_nc");
+        return false;
+      }
+
+      /* Collapsing chord */
+      if (SHOW_DETAILS) show_chord_in_view(M, {chord}, "_i" + std::to_string(iter)+"_chord");
+      bool okc = apply_chord_collapse(M, chord, q2qs, v2quads);
+      if (!okc) {
+        warn("iter {}, failed to collapse (should not happen ?) !", iter);
+        return false;
+        // continue;
+      }
+      if (SHOW_DETAILS) show_qmesh_in_view(M, "_i" + std::to_string(iter)+"_M");
+      nbc += 1;
+
+      if (false) {
+        bool oka = compute_quad_adjacencies(M.quads, M.quad_neighbors, M.nm_quad_neighbors);
+        if (!oka) {
+          error("failed to compute quad adjacencies");
+          return false;
+        }
+      }
+
+    }
 
     { /* Output statistics */
       size_t nbv = 0;
