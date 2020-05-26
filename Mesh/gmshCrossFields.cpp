@@ -4791,7 +4791,7 @@ public:
               if (tv1 == edge_found.getVertex(0)->getNum() && tv2 == edge_found.getVertex(1)->getNum()) {
                 vals[k] = it->second._a;
               } else if (tv1 == edge_found.getVertex(1)->getNum() && tv2 == edge_found.getVertex(0)->getNum()) {
-                vals[k] = -it->second._a;
+                vals[k] = it->second._a;
               } else {
                 Msg::Error("create view 'theta': tri %i, edge %i,%i not matching triangle ?", tnum, 
                     edge.getVertex(0)->getNum(),
@@ -5490,6 +5490,16 @@ public:
     }
   }
 
+  void getH (std::map<int, double > & dataH){
+    for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
+        it != vs.end(); ++it) {
+      double h;
+      myAssembler->getDofValue(*it, 0, 1, h);
+      dataH[(*it)->getNum()] = h;
+    }
+  }
+
+  
   void getDir (std::map<int, std::vector<double> > &dataDir,
                std::map<int, std::vector<double> > &dataDirOrtho){
     for(std::map<MTriangle *, SVector3>::iterator it = d0.begin();
@@ -7067,23 +7077,47 @@ int computePerTriangleScaledCrossField(
   PView* theta = PView::getViewByName("theta");
   if (theta) {delete theta; theta = NULL;}
 
-  /* Cross field */
-  int cf_tag = -1;
-  bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,cross_field_iter,NULL,cross_field_bc_expansion);
-  if (!okcf) {
-    Msg::Error("Failed to compute cross field");
-    return -1;
-  }
-
-  /* Conformal scaling factor */
-  int h_tag = -1;
   std::vector<GFace *> f;
   getFacesOfTheModel(gm, f);
   quadLayoutData qLayout(gm, f, gm->getName());
-  int status_h = compute_H_from_cross_field_view(gm, qLayout, f, cf_tag, h_tag);
-  if (status_h != 0) {
-    Msg::Error("Failed to compute H from cross field view");
-    return -1;
+  std::map<MVertex *, int> temp;
+  findPhysicalGroupsForSingularities(gm, f, temp);
+  
+  int cf_tag = -1;
+  if (temp.size()){
+    std::map<int, double > dataH;
+    std::map<int, std::vector<double> > dataTHETA;
+    const bool createViewTheta = true; /* - View 'theta' */
+    qLayout.computeCrossFieldAndH(&temp, dataTHETA, createViewTheta);
+    qLayout.getH (dataH);
+    PViewDataList *d = new PViewDataList;
+    d->setName("H");
+    int sview = create_datalist_view_from_scalar_field(f, dataH, d);
+    d->finalize();
+    PView *vv = new PView(d);
+
+    vv = PView::getViewByName("theta");
+    if (vv) {
+      cf_tag = vv->getTag();
+    }
+
+    
+  }
+  else {
+    /* Cross field */
+    bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,cross_field_iter,NULL,cross_field_bc_expansion);
+    if (!okcf) {
+      Msg::Error("Failed to compute cross field");
+      return -1;
+    }
+
+    /* Conformal scaling factor */
+    int h_tag = -1;
+    int status_h = compute_H_from_cross_field_view(gm, qLayout, f, cf_tag, h_tag);
+    if (status_h != 0) {
+      Msg::Error("Failed to compute H from cross field view");
+      return -1;
+    }
   }
 
   /* Size map */
@@ -7095,6 +7129,7 @@ int computePerTriangleScaledCrossField(
     Msg::Error("Failed to compute size map from H");
     return -1;
   }
+
   int sizemapTag = -1;
   if (sizemapTag == -1) {
     PView* view_s = PView::getViewByName("s");
