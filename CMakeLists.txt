@@ -295,12 +295,12 @@ endif()
 
 if(ENABLE_OPENMP)
   find_package(OpenMP)
-  if(OpenMP_FOUND)
+  if(OpenMP_FOUND OR OPENMP_FOUND)
     set_config_option(HAVE_OPENMP "OpenMP")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   elseif(APPLE AND EXISTS "/opt/local/lib/libomp")
-    # just for testing the official Apple compiler with macports' libomp
+    # official Apple compiler with macports' libomp
     set_config_option(HAVE_OPENMP "OpenMP[MacPorts]")
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
@@ -308,6 +308,7 @@ if(ENABLE_OPENMP)
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/local/lib/libomp -lomp")
   elseif(APPLE AND EXISTS "/usr/local/lib/libomp.dylib")
+    # official Apple compiler with homebrew's libomp
     set_config_option(HAVE_OPENMP "OpenMP[usr/local]")
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
