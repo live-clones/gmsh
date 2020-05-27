@@ -712,7 +712,8 @@ public:
   int readACISSAT(const std::string &name);
 
   // Parasolid Model
-  int readParasolid(const std::string &name);
+  int readParasolidXMT(const std::string &name);
+  int writeParasolidSTEP(const std::string &name);
 
   // Gmsh mesh file format
   int readMSH(const std::string &name);

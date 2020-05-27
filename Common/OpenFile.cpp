@@ -383,7 +383,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   }
   else if(ext == ".x_t" || ext == ".xmt_txt" ||
           ext == ".x_b" || ext == ".xmt_bin") {
-    status = GModel::current()->readParasolid(fileName);
+    status = GModel::current()->readParasolidXMT(fileName);
   }
   else if(ext == ".unv" || ext == ".UNV") {
     status = GModel::current()->readUNV(fileName);

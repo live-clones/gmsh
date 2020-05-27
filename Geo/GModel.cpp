@@ -3197,9 +3197,16 @@ void GModel::createParasolidInternals() { }
 
 void GModel::deleteParasolidInternals() { }
 
-int GModel::readParasolid(const std::string &fn)
+int GModel::readParasolidXMT(const std::string &fn)
 {
   Msg::Error("Gmsh must be compiled with Parasolid support to load '%s'",
+             fn.c_str());
+  return 0;
+}
+
+int GModel::writeParasolidSTEP(const std::string &fn)
+{
+  Msg::Error("Gmsh must be compiled with Parasolid support to write '%s'",
              fn.c_str());
   return 0;
 }

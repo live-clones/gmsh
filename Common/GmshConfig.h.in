@@ -55,6 +55,7 @@
 #cmakedefine HAVE_OSMESA
 #cmakedefine HAVE_P4EST
 #cmakedefine HAVE_PARASOLID
+#cmakedefine HAVE_PARASOLID_STEP
 #cmakedefine HAVE_PARSER
 #cmakedefine HAVE_PETSC
 #cmakedefine HAVE_PETSC4PY

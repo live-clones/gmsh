@@ -457,11 +457,19 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
   case FORMAT_BREP:
-    GModel::current()->writeOCCBREP(name);
+    if(GModel::current()->getOCCInternals())
+      GModel::current()->writeOCCBREP(name);
+    else
+      Msg::Error("No OpenCASCADE CAD data found for BREP export");
     break;
 
   case FORMAT_STEP:
-    GModel::current()->writeOCCSTEP(name);
+    if(GModel::current()->getParasolidInternals())
+      GModel::current()->writeParasolidSTEP(name);
+    else if(GModel::current()->getOCCInternals())
+      GModel::current()->writeOCCSTEP(name);
+    else
+      Msg::Error("No suitable CAD data found for STEP export");
     break;
 
   case FORMAT_NEU:
