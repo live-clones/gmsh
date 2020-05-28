@@ -272,6 +272,7 @@ if(ENABLE_RPATH)
   endif()
 else()
   set(CMAKE_MACOSX_RPATH 0)
+  set(CMAKE_SKIP_BUILD_RPATH TRUE)
 endif()
 
 if(MSVC)
