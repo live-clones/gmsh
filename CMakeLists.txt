@@ -89,6 +89,7 @@ opt(PRIVATE_API "Enable private API" OFF)
 opt(PRO "Enable PRO extensions" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
+opt(RPATH "Use RPATH in shared libraries dynamic build" ON)
 opt(SLEPC "Enable SLEPc eigensolvers" OFF)
 opt(SOLVER "Enable built-in finite element solvers (required for reparametrization)" ${DEFAULT})
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
@@ -240,16 +241,15 @@ if(ENABLE_BUILD_DYNAMIC)
   set(GMSH_OS "${GMSH_OS}-sdk")
 endif()
 
-if(APPLE)
-  # FIXME: change this once we understand rpaths - the options below do not work
-  set(CMAKE_MACOSX_RPATH 0)
-else()
-  # make sure that dynamic libraries can be found when installing/ displacing the
-  # binaries: from https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/
-  # RPATH-handling:
+if(ENABLE_RPATH)
+  set(CMAKE_MACOSX_RPATH 1)
+
+  # make sure that dynamic libraries can be found when installing/ displacing
+  # the binaries: from https://gitlab.kitware.com/cmake/community/wikis/doc/
+  # cmake/RPATH-handling:
 
   # use, i.e. don't skip the full RPATH for the build tree
-  set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+  set(CMAKE_SKIP_BUILD_RPATH FALSE)
 
   # when building, don't use the install RPATH already (but later on when
   # installing)
@@ -266,6 +266,8 @@ else()
   if("${isSystemDir}" STREQUAL "-1")
      set(CMAKE_INSTALL_RPATH "\\\$ORIGIN/../lib")
   endif()
+else()
+  set(CMAKE_MACOSX_RPATH 0)
 endif()
 
 if(MSVC)
@@ -1835,14 +1837,6 @@ else()
   set(GMSH_DOC ${CMAKE_INSTALL_DOCDIR})
   set(GMSH_MAN ${CMAKE_INSTALL_MANDIR}/man1)
   set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
-endif()
-
-# FIXME: change this once we understand rpaths
-if(APPLE)
-  if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
-    set_target_properties(shared PROPERTIES INSTALL_NAME_DIR
-                          ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
-  endif()
 endif()
 
 # mark targets as optional so we can install them separately if needed
