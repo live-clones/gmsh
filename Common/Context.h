@@ -132,6 +132,8 @@ public:
   std::vector<std::string> recentFiles;
   // create mesh statistics report (0: do nothing, 1: create, 2: append)
   int createAppendMeshStatReport;
+  // behavior on error
+  int abortOnError;
   // should we launch a solver at startup?
   int launchSolverAtStartup;
   // save session/option file on exit?

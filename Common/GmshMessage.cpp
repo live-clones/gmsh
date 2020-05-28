@@ -521,6 +521,13 @@ void Msg::Error(const char *fmt, ...)
       fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
     fflush(stderr);
   }
+
+  if(CTX::instance()->abortOnError == 2) {
+    throw 1;
+  }
+  else if(CTX::instance()->abortOnError == 3) {
+    Exit(1);
+  }
 }
 
 void Msg::Warning(const char *fmt, ...)

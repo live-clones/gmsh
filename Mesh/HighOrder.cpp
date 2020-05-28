@@ -1382,6 +1382,8 @@ void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
 void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
                bool onlyVisible)
 {
+  if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
+
   // replace all the elements in the mesh with second order elements
   // by creating unique vertices on the edges/faces of the mesh:
   //

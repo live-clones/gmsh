@@ -349,6 +349,8 @@ StringXString PrintOptions_String[] = {
 // NUMBERS
 
 StringXNumber GeneralOptions_Number[] = {
+  { F|O, "AbortOnError" , opt_general_abort_on_error , 0. ,
+    "Abort on error? (0: no, 1: abort meshing, 2: throw an exception, 3: exit)" },
   { F|O, "AlphaBlending" , opt_general_alpha_blending , 1. ,
     "Enable alpha blending (transparency) in post-processing views" },
   { F|O, "Antialiasing" , opt_general_antialiasing , 0. ,

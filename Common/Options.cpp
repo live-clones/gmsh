@@ -2127,6 +2127,12 @@ std::string opt_print_parameter_command(OPT_ARGS_STR)
 
 // Numeric option routines
 
+double opt_general_abort_on_error(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->abortOnError = (int)val;
+  return CTX::instance()->abortOnError;
+}
+
 double opt_general_initial_context(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->initialContext = (int)val;
