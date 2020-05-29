@@ -1152,6 +1152,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     if(name != "Gmsh"){ // load db from file:
       FILE *fp = Fopen(name.c_str(), "rb");
       if(fp){
+        Msg::Info("Reading ONELAB database '%s'", name.c_str());
         _onelabClient->fromFile(fp);
         fclose(fp);
       }
