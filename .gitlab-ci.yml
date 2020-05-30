@@ -449,3 +449,31 @@ pypi_official_release:
     - docker
   only:
     - /^gmsh_.*$/
+
+# ----------------------------------------------
+# Cookbook pages website (master branch only)
+# ----------------------------------------------
+
+generate-book:
+  stage: .post # build and check examples here?
+  image:
+    name: michaelfbryan/mdbook-docker-image:latest
+    entrypoint: [""]
+  script:
+    - mdbook build doc/cookbook
+  artifacts:
+    paths:
+      - doc/cookbook/book/html
+    expire_in: 1 week
+
+pages:
+  stage: .post
+  image: onelab/ubuntu20.04
+  only:
+    - master@gmsh/gmsh
+  script:
+    - mkdir public
+    - cp -r doc/cookbook/book/html public
+  artifacts:
+    paths:
+    - public
