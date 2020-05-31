@@ -4979,6 +4979,20 @@ gmsh::model::occ::addSurfaceFilling(const int wireTag, const int tag,
 }
 
 GMSH_API int
+gmsh::model::occ::addBSplineFilling(const int wireTag, const int tag,
+                                    const std::string &type)
+{
+  if(!_isInitialized()) { throw -1; }
+  _createOcc();
+  int outTag = tag;
+  if(!GModel::current()->getOCCInternals()->addBSplineFilling(outTag, wireTag,
+                                                              type)) {
+    throw 1;
+  }
+  return outTag;
+}
+
+GMSH_API int
 gmsh::model::occ::addSurfaceLoop(const std::vector<int> &surfaceTags,
                                  const int tag, const bool sewing)
 {
