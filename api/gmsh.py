@@ -4632,10 +4632,10 @@ class model:
             """
             gmsh.model.occ.addSurfaceFilling(wireTag, tag=-1, pointTags=[])
 
-            Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
-            set the tag explicitly; otherwise a new tag is selected automatically.
-            Return the tag of the surface. If `pointTags' are provided, force the
-            surface to pass through the given points.
+            Add a surface filling the curve loop `wireTag'. If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the surface. If `pointTags' are provided, force the surface to
+            pass through the given points.
 
             Return an integer value.
             """
@@ -4649,6 +4649,34 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelOccAddSurfaceFilling returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def addBSplineFilling(wireTag, tag=-1, type=""):
+            """
+            gmsh.model.occ.addBSplineFilling(wireTag, tag=-1, type="")
+
+            Add a BSpline surface filling the curve loop `wireTag'. The curve loop
+            should be made of 2, 3 or 4 BSpline curves. The optional `type' argument
+            specifies the type of filling: "Stretch" creates the flattest patch,
+            "Curved" (the default) creates the most rounded patch, and "Coons" creates
+            a rounded patch with less depth than "Curved". "Stretch" and "Coons" are
+            only available for 4-sided surfaces. If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. Return the tag
+            of the surface.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelOccAddBSplineFilling(
+                c_int(wireTag),
+                c_int(tag),
+                c_char_p(type.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccAddBSplineFilling returned non-zero error code: ",
                     ierr.value)
             return api__result__
 

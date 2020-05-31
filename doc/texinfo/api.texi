@@ -3057,10 +3057,10 @@ integer value
 @end table
 
 @item gmsh/model/occ/addSurfaceFilling
-Add a surface filling the curve loops in @code{wireTags}. If @code{tag} is
-positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the surface. If @code{pointTags} are provided, force the
-surface to pass through the given points.
+Add a surface filling the curve loop @code{wireTag}. If @code{tag} is positive,
+set the tag explicitly; otherwise a new tag is selected automatically. Return
+the tag of the surface. If @code{pointTags} are provided, force the surface to
+pass through the given points.
 
 @table @asis
 @item Input:
@@ -3071,6 +3071,24 @@ surface to pass through the given points.
 integer value
 @item Examples:
 C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp#L54,t5.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py#L147,t5.py})
+@end table
+
+@item gmsh/model/occ/addBSplineFilling
+Add a BSpline surface filling the curve loop @code{wireTag}. The curve loop
+should be made of 2, 3 or 4 BSpline curves. The optional @code{type} argument
+specifies the type of filling: "Stretch" creates the flattest patch, "Curved"
+(the default) creates the most rounded patch, and "Coons" creates a rounded
+patch with less depth than "Curved". "Stretch" and "Coons" are only available
+for 4-sided surfaces. If @code{tag} is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the surface.
+
+@table @asis
+@item Input:
+@code{wireTag}, @code{tag = -1}, @code{type = ""}
+@item Output:
+-
+@item Return:
+integer value
 @end table
 
 @item gmsh/model/occ/addSurfaceLoop
