@@ -4681,6 +4681,45 @@ class model:
             return api__result__
 
         @staticmethod
+        def addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[]):
+            """
+            gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[])
+
+            Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
+            control points given as a single vector [p11, ... p`NumPointsU'1, p12,
+            ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
+            `multiplicitiesV' are not provided, default parameters are computed
+            automatically. If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. Return the tag of the b-spline surface.
+
+            Return an integer value.
+            """
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
+            api_weights_, api_weights_n_ = _ivectordouble(weights)
+            api_knotsU_, api_knotsU_n_ = _ivectordouble(knotsU)
+            api_knotsV_, api_knotsV_n_ = _ivectordouble(knotsV)
+            api_multiplicitiesU_, api_multiplicitiesU_n_ = _ivectorint(multiplicitiesU)
+            api_multiplicitiesV_, api_multiplicitiesV_n_ = _ivectorint(multiplicitiesV)
+            ierr = c_int()
+            api__result__ = lib.gmshModelOccAddBSplineSurface(
+                api_pointTags_, api_pointTags_n_,
+                c_int(numPointsU),
+                c_int(tag),
+                c_int(degreeU),
+                c_int(degreeV),
+                api_weights_, api_weights_n_,
+                api_knotsU_, api_knotsU_n_,
+                api_knotsV_, api_knotsV_n_,
+                api_multiplicitiesU_, api_multiplicitiesU_n_,
+                api_multiplicitiesV_, api_multiplicitiesV_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccAddBSplineSurface returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
         def addSurfaceLoop(surfaceTags, tag=-1, sewing=False):
             """
             gmsh.model.occ.addSurfaceLoop(surfaceTags, tag=-1, sewing=False)

@@ -232,6 +232,15 @@ public:
     const std::vector<int> &surfaceContinuity = std::vector<int>());
   bool addBSplineFilling(int &tag, int wireTag,
                          const std::string &type = "");
+  bool addBSplineSurface(int &tag,
+                         const std::vector<int> &pointTags,
+                         const int numPointsU,
+                         const int degreeU, const int degreeV,
+                         const std::vector<double> &weights,
+                         const std::vector<double> &knotsU,
+                         const std::vector<double> &knotsV,
+                         const std::vector<int> &multiplicitiesU,
+                         const std::vector<int> &multiplicitiesV);
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
@@ -526,6 +535,18 @@ public:
                          const std::string &type = "")
   {
     return _error("add BSpline filling");
+  }
+  bool addBSplineSurface(int &tag,
+                         const std::vector<int> &pointTags,
+                         const int numPointsU,
+                         const int degreeU, const int degreeV,
+                         const std::vector<double> &weights,
+                         const std::vector<double> &knotsU,
+                         const std::vector<double> &knotsV,
+                         const std::vector<int> &multiplicitiesU,
+                         const std::vector<int> &multiplicitiesV)
+  {
+    return _error("add BSpline surface");
   }
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing)

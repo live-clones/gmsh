@@ -3669,6 +3669,27 @@ function addBSplineFilling(wireTag, tag = -1, type = "")
 end
 
 """
+    gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = Cdouble[], knotsU = Cdouble[], knotsV = Cdouble[], multiplicitiesU = Cint[], multiplicitiesV = Cint[])
+
+Add a b-spline surface of degree `degreeU` x `degreeV` with `pointTags` control
+points given as a single vector [p11, ... p`NumPointsU`1, p12, ...]. If
+`weights`, `knotsU`, `knotsV`, `multiplicitiesU` or `multiplicitiesV` are not
+provided, default parameters are computed automatically. If `tag` is positive,
+set the tag explicitly; otherwise a new tag is selected automatically. Return
+the tag of the b-spline surface.
+
+Return an integer value.
+"""
+function addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = Cdouble[], knotsU = Cdouble[], knotsV = Cdouble[], multiplicitiesU = Cint[], multiplicitiesV = Cint[])
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelOccAddBSplineSurface, gmsh.lib), Cint,
+          (Ptr{Cint}, Csize_t, Cint, Cint, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cint}, pointTags), length(pointTags), numPointsU, tag, degreeU, degreeV, convert(Vector{Cdouble}, weights), length(weights), convert(Vector{Cdouble}, knotsU), length(knotsU), convert(Vector{Cdouble}, knotsV), length(knotsV), convert(Vector{Cint}, multiplicitiesU), length(multiplicitiesU), convert(Vector{Cint}, multiplicitiesV), length(multiplicitiesV), ierr)
+    ierr[] != 0 && error("gmshModelOccAddBSplineSurface returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
 
 Add a surface loop (a closed shell) formed by `surfaceTags`.  If `tag` is

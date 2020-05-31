@@ -1760,6 +1760,24 @@ GMSH_API int gmshModelOccAddBSplineFilling(const int wireTag,
                                            const char * type,
                                            int * ierr);
 
+/* Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
+ * control points given as a single vector [p11, ... p`NumPointsU'1, p12,
+ * ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
+ * `multiplicitiesV' are not provided, default parameters are computed
+ * automatically. If `tag' is positive, set the tag explicitly; otherwise a
+ * new tag is selected automatically. Return the tag of the b-spline surface. */
+GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n,
+                                           const int numPointsU,
+                                           const int tag,
+                                           const int degreeU,
+                                           const int degreeV,
+                                           double * weights, size_t weights_n,
+                                           double * knotsU, size_t knotsU_n,
+                                           double * knotsV, size_t knotsV_n,
+                                           int * multiplicitiesU, size_t multiplicitiesU_n,
+                                           int * multiplicitiesV, size_t multiplicitiesV_n,
+                                           int * ierr);
+
 /* Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
  * positive, set the tag explicitly; otherwise a new tag is selected
  * automatically. Return the tag of the surface loop. Setting `sewing' allows

@@ -4992,6 +4992,22 @@ gmsh::model::occ::addBSplineFilling(const int wireTag, const int tag,
   return outTag;
 }
 
+GMSH_API int gmsh::model::occ::addBSplineSurface(
+  const std::vector<int> &pointTags, const int numPointsU, const int tag,
+  const int degreeU, const int degreeV, const std::vector<double> &weights,
+  const std::vector<double> &knotsU, const std::vector<double> &knotsV,
+  const std::vector<int> &multiplicitiesU, const std::vector<int> &multiplicitiesV)
+{
+  if(!_isInitialized()) { throw -1; }
+  int outTag = tag;
+  if(!GModel::current()->getOCCInternals()->addBSplineSurface(
+       outTag, pointTags, numPointsU, degreeU, degreeV, weights, knotsU, knotsV,
+       multiplicitiesU, multiplicitiesV)) {
+    throw 1;
+  }
+  return outTag;
+}
+
 GMSH_API int
 gmsh::model::occ::addSurfaceLoop(const std::vector<int> &surfaceTags,
                                  const int tag, const bool sewing)

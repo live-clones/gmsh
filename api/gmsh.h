@@ -2004,6 +2004,25 @@ namespace gmsh { // Top-level functions
                                      const int tag = -1,
                                      const std::string & type = "");
 
+      // gmsh::model::occ::addBSplineSurface
+      //
+      // Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
+      // control points given as a single vector [p11, ... p`NumPointsU'1, p12,
+      // ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
+      // `multiplicitiesV' are not provided, default parameters are computed
+      // automatically. If `tag' is positive, set the tag explicitly; otherwise a
+      // new tag is selected automatically. Return the tag of the b-spline surface.
+      GMSH_API int addBSplineSurface(const std::vector<int> & pointTags,
+                                     const int numPointsU,
+                                     const int tag = -1,
+                                     const int degreeU = 3,
+                                     const int degreeV = 3,
+                                     const std::vector<double> & weights = std::vector<double>(),
+                                     const std::vector<double> & knotsU = std::vector<double>(),
+                                     const std::vector<double> & knotsV = std::vector<double>(),
+                                     const std::vector<int> & multiplicitiesU = std::vector<int>(),
+                                     const std::vector<int> & multiplicitiesV = std::vector<int>());
+
       // gmsh::model::occ::addSurfaceLoop
       //
       // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is

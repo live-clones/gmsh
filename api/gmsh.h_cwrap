@@ -2993,6 +2993,41 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
+      // Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
+      // control points given as a single vector [p11, ... p`NumPointsU'1, p12,
+      // ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
+      // `multiplicitiesV' are not provided, default parameters are computed
+      // automatically. If `tag' is positive, set the tag explicitly; otherwise a
+      // new tag is selected automatically. Return the tag of the b-spline surface.
+      inline int addBSplineSurface(const std::vector<int> & pointTags,
+                                   const int numPointsU,
+                                   const int tag = -1,
+                                   const int degreeU = 3,
+                                   const int degreeV = 3,
+                                   const std::vector<double> & weights = std::vector<double>(),
+                                   const std::vector<double> & knotsU = std::vector<double>(),
+                                   const std::vector<double> & knotsV = std::vector<double>(),
+                                   const std::vector<int> & multiplicitiesU = std::vector<int>(),
+                                   const std::vector<int> & multiplicitiesV = std::vector<int>())
+      {
+        int ierr = 0;
+        int *api_pointTags_; size_t api_pointTags_n_; vector2ptr(pointTags, &api_pointTags_, &api_pointTags_n_);
+        double *api_weights_; size_t api_weights_n_; vector2ptr(weights, &api_weights_, &api_weights_n_);
+        double *api_knotsU_; size_t api_knotsU_n_; vector2ptr(knotsU, &api_knotsU_, &api_knotsU_n_);
+        double *api_knotsV_; size_t api_knotsV_n_; vector2ptr(knotsV, &api_knotsV_, &api_knotsV_n_);
+        int *api_multiplicitiesU_; size_t api_multiplicitiesU_n_; vector2ptr(multiplicitiesU, &api_multiplicitiesU_, &api_multiplicitiesU_n_);
+        int *api_multiplicitiesV_; size_t api_multiplicitiesV_n_; vector2ptr(multiplicitiesV, &api_multiplicitiesV_, &api_multiplicitiesV_n_);
+        int result_api_ = gmshModelOccAddBSplineSurface(api_pointTags_, api_pointTags_n_, numPointsU, tag, degreeU, degreeV, api_weights_, api_weights_n_, api_knotsU_, api_knotsU_n_, api_knotsV_, api_knotsV_n_, api_multiplicitiesU_, api_multiplicitiesU_n_, api_multiplicitiesV_, api_multiplicitiesV_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_pointTags_);
+        gmshFree(api_weights_);
+        gmshFree(api_knotsU_);
+        gmshFree(api_knotsV_);
+        gmshFree(api_multiplicitiesU_);
+        gmshFree(api_multiplicitiesV_);
+        return result_api_;
+      }
+
       // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, set the tag explicitly; otherwise a new tag is selected
       // automatically. Return the tag of the surface loop. Setting `sewing' allows

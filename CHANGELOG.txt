@@ -2,7 +2,7 @@
 (without node insertion), and to only mesh non-meshed entities; added support
 for mesh size fields in HXT; improve reparametrization and partitioning code;
 new OCC API functions to reduce the number of synchronizations for complex
-models; new OCC BSpline surface filling; MED output now preserves node and
+models; new OCC BSpline surface interfaces; MED output now preserves node and
 element tags; new functions and options to control the first tag of entities,
 nodes and elements; fixed duplicated entities in STEP output; small bug fixes.
 

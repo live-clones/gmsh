@@ -1302,17 +1302,17 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
   if(k.empty()) {
     bool periodic = (pointTags.front() == pointTags.back());
     if(!periodic) {
-      int sum_of_all_mult = np + d + 1;
-      int num_knots = sum_of_all_mult - 2 * d;
-      if(num_knots < 2) {
+      int sumOfAllMult = np + d + 1;
+      int numKnots = sumOfAllMult - 2 * d;
+      if(numKnots < 2) {
         Msg::Error("Not enough control points for building BSpline of "
                    "degree %d",
                    d);
         return false;
       }
-      k.resize(num_knots);
+      k.resize(numKnots);
       for(std::size_t i = 0; i < k.size(); i++) k[i] = i;
-      m.resize(num_knots, 1);
+      m.resize(numKnots, 1);
       m.front() = d + 1;
       m.back() = d + 1;
     }
@@ -1814,6 +1814,154 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
     fix.Perform();
     fix.FixOrientation();
     result = fix.Face();
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+
+  if(tag < 0) tag = getMaxTag(2) + 1;
+  bind(result, tag, true);
+  return true;
+}
+
+bool OCC_Internals::addBSplineSurface(int &tag,
+                                      const std::vector<int> &pointTags,
+                                      const int numPointsU,
+                                      const int degreeU, const int degreeV,
+                                      const std::vector<double> &weights,
+                                      const std::vector<double> &knotsU,
+                                      const std::vector<double> &knotsV,
+                                      const std::vector<int> &multiplicitiesU,
+                                      const std::vector<int> &multiplicitiesV)
+{
+  if(tag >= 0 && _tagFace.IsBound(tag)) {
+    Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
+    return false;
+  }
+
+  // deal with default values
+  if(numPointsU < 1) {
+    Msg::Error("Wrong number of control points along U for BSpline surface");
+    return false;
+  }
+  int numPointsV = pointTags.size() / numPointsU;
+  if(numPointsU * numPointsV != pointTags.size()) {
+    Msg::Error("Wrong number of control points for BSpline surface");
+    return false;
+  }
+  int dU = degreeU, dV = degreeV;
+  std::vector<double> w(weights), kU(knotsU), kV(knotsV);
+  std::vector<int> mU(multiplicitiesU), mV(multiplicitiesV);
+  // degree 3 if not specified...
+  if(dU <= 0) dU = 3;
+  if(dV <= 0) dV = 3;
+  // ... or number of control points - 1 if not enough points
+  if(dU > numPointsU - 1) dU = numPointsU - 1;
+  if(dV > numPointsV - 1) dV = numPointsV - 1;
+  // automatic default weights if not provided:
+  if(w.empty()) w.resize(pointTags.size(), 1);
+  if(w.size() != pointTags.size()) {
+    Msg::Error("Wrong number of weigths for BSpline surface");
+    return false;
+  }
+  bool periodicU = true;
+  for(std::size_t i = 0; i < numPointsV; i++) {
+    if(pointTags[i * numPointsU] != pointTags[(i + 1) * numPointsU - 1]) {
+      periodicU = false;
+      break;
+    }
+  }
+  bool periodicV = true;
+  for(std::size_t i = 0; i < numPointsU; i++) {
+    if(pointTags[i * numPointsV] != pointTags[(i + 1) * numPointsV - 1]) {
+      periodicV = false;
+      break;
+    }
+  }
+  // automatic default knots and multiplicities along U if not provided:
+  if(kU.empty()) {
+    if(!periodicU) {
+      int sumOfAllMultU = numPointsU + dU + 1;
+      int numKnotsU = sumOfAllMultU - 2 * dU;
+      if(numKnotsU < 2) {
+        Msg::Error("Not enough control points along U for building BSpline of "
+                   "degree %d x %d", dU, dV);
+        return false;
+      }
+      kU.resize(numKnotsU);
+      for(std::size_t i = 0; i < kU.size(); i++) kU[i] = i;
+      mU.resize(numKnotsU, 1);
+      mU.front() = dU + 1;
+      mU.back() = dU + 1;
+    }
+    else {
+      kU.resize(numPointsU - dU + 2);
+      for(std::size_t i = 0; i < kU.size(); i++) kU[i] = i;
+      mU.resize(kU.size(), 1);
+      mU.front() = dU - 1;
+      mU.back() = dU - 1;
+    }
+  }
+  // automatic default knots and multiplicities along V if not provided:
+  if(kV.empty()) {
+    if(!periodicV) {
+      int sumOfAllMultV = numPointsV + dV + 1;
+      int numKnotsV = sumOfAllMultV - 2 * dV;
+      if(numKnotsV < 2) {
+        Msg::Error("Not enough control points along V for building BSpline of "
+                   "degree %d x %d", dU, dV);
+        return false;
+      }
+      kV.resize(numKnotsV);
+      for(std::size_t i = 0; i < kV.size(); i++) kV[i] = i;
+      mV.resize(numKnotsV, 1);
+      mV.front() = dV + 1;
+      mV.back() = dV + 1;
+    }
+    else {
+      kV.resize(numPointsV - dV + 2);
+      for(std::size_t i = 0; i < kV.size(); i++) kV[i] = i;
+      mV.resize(kV.size(), 1);
+      mV.front() = dV - 1;
+      mV.back() = dV - 1;
+    }
+  }
+
+  TopoDS_Face result;
+  try{
+    int npU = (periodicU ? numPointsU - 1 : numPointsU);
+    int npV = (periodicV ? numPointsV - 1 : numPointsV);
+    TColgp_Array2OfPnt pp(1, npU, 1, npV);
+    for(int i = 1; i <= npU; i++) {
+      for(int j = 1; j <= npV; j++) {
+        int k = (j - 1) * numPointsU + (i - 1);
+        if(!_tagVertex.IsBound(pointTags[k])) {
+          Msg::Error("Unknown OpenCASCADE point with tag %d", pointTags[k]);
+          return false;
+        }
+        TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(pointTags[k]));
+        pp.SetValue(i, j, BRep_Tool::Pnt(vertex));
+      }
+    }
+    TColStd_Array2OfReal ww(1, npU, 1, npV);
+    for(int i = 1; i <= npU; i++) {
+      for(int j = 1; j <= npV; j++) {
+        int k = (j - 1) * numPointsU + (i - 1);
+        ww.SetValue(i, j, w[k]);
+      }
+    }
+    TColStd_Array1OfReal kkU(1, kU.size());
+    for(std::size_t i = 1; i <= kU.size(); i++) kkU.SetValue(i, kU[i - 1]);
+    TColStd_Array1OfReal kkV(1, kV.size());
+    for(std::size_t i = 1; i <= kV.size(); i++) kkV.SetValue(i, kV[i - 1]);
+    TColStd_Array1OfInteger mmU(1, mU.size());
+    for(std::size_t i = 1; i <= mU.size(); i++) mmU.SetValue(i, mU[i - 1]);
+    TColStd_Array1OfInteger mmV(1, mV.size());
+    for(std::size_t i = 1; i <= mV.size(); i++) mmV.SetValue(i, mV[i - 1]);
+    Handle(Geom_BSplineSurface) surf =
+      new Geom_BSplineSurface(pp, ww, kkU, kkV, mmU, mmV, dU, dV,
+                              periodicU, periodicV);
+    result = BRepBuilderAPI_MakeFace(surf, CTX::instance()->geom.tolerance);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
