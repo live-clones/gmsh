@@ -1761,7 +1761,7 @@ GMSH_API int gmshModelOccAddBSplineFilling(const int wireTag,
                                            int * ierr);
 
 /* Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
- * control points given as a single vector [p11, ... p`NumPointsU'1, p12,
+ * control points given as a single vector [p11, ... p`numPointsU'1, p12,
  * ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
  * `multiplicitiesV' are not provided, default parameters are computed
  * automatically. If `tag' is positive, set the tag explicitly; otherwise a

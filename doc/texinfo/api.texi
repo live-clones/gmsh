@@ -3094,7 +3094,7 @@ integer value
 @item gmsh/model/occ/addBSplineSurface
 Add a b-spline surface of degree @code{degreeU} x @code{degreeV} with
 @code{pointTags} control points given as a single vector [p11, ...
-p@code{NumPointsU}1, p12, ...]. If @code{weights}, @code{knotsU}, @code{knotsV},
+p@code{numPointsU}1, p12, ...]. If @code{weights}, @code{knotsU}, @code{knotsV},
 @code{multiplicitiesU} or @code{multiplicitiesV} are not provided, default
 parameters are computed automatically. If @code{tag} is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. Return the tag of the
