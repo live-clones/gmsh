@@ -230,6 +230,8 @@ public:
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>());
+  bool addBSplineFilling(int &tag, int wireTag,
+                         const std::string &type = "");
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
@@ -519,6 +521,11 @@ public:
     const std::vector<int> &surfaceContinuity = std::vector<int>())
   {
     return _error("add surface filling");
+  }
+  bool addBSplineFilling(int &tag, int wireTag,
+                         const std::string &type)
+  {
+    return _error("add BSpline filling");
   }
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing)

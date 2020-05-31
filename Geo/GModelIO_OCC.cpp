@@ -58,6 +58,7 @@
 #include <BRep_Tool.hxx>
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
+#include <GeomFill_BSplineCurves.hxx>
 #include <GeomPlate_BuildPlateSurface.hxx>
 #include <GeomPlate_PointConstraint.hxx>
 #include <GeomAPI_Interpolate.hxx>
@@ -1745,6 +1746,77 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
     fix.SetPrecision(CTX::instance()->geom.tolerance);
     fix.Perform();
     fix.FixOrientation(); // and I don't understand why this is necessary
+    result = fix.Face();
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+
+  if(tag < 0) tag = getMaxTag(2) + 1;
+  bind(result, tag, true);
+  return true;
+}
+
+bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
+                                      const std::string &type)
+{
+  if(tag >= 0 && _tagFace.IsBound(tag)) {
+    Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
+    return false;
+  }
+
+  TopoDS_Face result;
+  try {
+    GeomFill_BSplineCurves f;
+    if(!_tagWire.IsBound(wireTag)) {
+      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      return false;
+    }
+    TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
+    TopExp_Explorer exp0;
+    std::vector<Handle(Geom_BSplineCurve)> bsplines;
+    for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
+      TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+      double s0, s1;
+      Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, s0, s1);
+      if(curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve)){
+        bsplines.push_back(Handle(Geom_BSplineCurve)::DownCast(curve));
+      }
+      else{
+        Msg::Error("Bounding curve for BSpline filling should be a BSpline");
+      }
+    }
+
+    if(bsplines.size() == 4) {
+      GeomFill_FillingStyle t;
+      if(type == "Stretch")
+        t = GeomFill_StretchStyle; // flattest patch
+      else if(type == "Coons")
+        t = GeomFill_CoonsStyle; // rounded with less depth than Curved
+      else
+        t = GeomFill_CurvedStyle; // most rounded patch
+      f.Init(bsplines[0], bsplines[1], bsplines[2], bsplines[3], t);
+    }
+    else if(bsplines.size() == 3) {
+      if(type != "" && type != "Curved")
+        Msg::Warning("Only \"Curved\" BSpline filling available for 3-sided patch");
+      f.Init(bsplines[0], bsplines[1], bsplines[2], GeomFill_CurvedStyle);
+    }
+    else if(bsplines.size() == 2) {
+      if(type != "" && type != "Curved")
+        Msg::Warning("Only \"Curved\" BSpline filling available for 2-sided patch");
+      f.Init(bsplines[0], bsplines[1], GeomFill_CurvedStyle);
+    }
+    else{
+      Msg::Error("BSpline filling requires between 2 and 4 boundary BSpline curves");
+      return false;
+    }
+    const Handle(Geom_BSplineSurface) &surf = f.Surface();
+    result = BRepBuilderAPI_MakeFace(surf, wire);
+    ShapeFix_Face fix(result); // not sure why, but this is necessary
+    fix.SetPrecision(CTX::instance()->geom.tolerance);
+    fix.Perform();
+    fix.FixOrientation();
     result = fix.Face();
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());

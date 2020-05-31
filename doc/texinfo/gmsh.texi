@@ -2083,6 +2083,11 @@ built-in kernel, the optional @code{In Sphere} argument forces the
 surface to be a spherical patch (the extra parameter gives the tag of
 the center of the sphere).
 
+@item BSpline Surface ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a BSpline surface filling. Only a single curve loop made of 2, 3
+or 4 BSpline curves can be provided. @code{BSpline Surface} is only
+available with the OpenCASCADE kernel.
+
 @item Disk ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a disk. When four expressions are provided on the right hand
 side (3 coordinates of the center and the radius), the disk is circular.

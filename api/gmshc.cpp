@@ -2544,6 +2544,19 @@ GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int
   return result_api_;
 }
 
+GMSH_API int gmshModelOccAddBSplineFilling(const int wireTag, const int tag, const char * type, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::addBSplineFilling(wireTag, tag, type);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
 GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n, const int tag, const int sewing, int * ierr)
 {
   int result_api_ = 0;

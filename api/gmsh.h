@@ -1982,13 +1982,27 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::addSurfaceFilling
       //
-      // Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
-      // set the tag explicitly; otherwise a new tag is selected automatically.
-      // Return the tag of the surface. If `pointTags' are provided, force the
-      // surface to pass through the given points.
+      // Add a surface filling the curve loop `wireTag'. If `tag' is positive, set
+      // the tag explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the surface. If `pointTags' are provided, force the surface to
+      // pass through the given points.
       GMSH_API int addSurfaceFilling(const int wireTag,
                                      const int tag = -1,
                                      const std::vector<int> & pointTags = std::vector<int>());
+
+      // gmsh::model::occ::addBSplineFilling
+      //
+      // Add a BSpline surface filling the curve loop `wireTag'. The curve loop
+      // should be made of 2, 3 or 4 BSpline curves. The optional `type' argument
+      // specifies the type of filling: "Stretch" creates the flattest patch,
+      // "Curved" (the default) creates the most rounded patch, and "Coons" creates
+      // a rounded patch with less depth than "Curved". "Stretch" and "Coons" are
+      // only available for 4-sided surfaces. If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the surface.
+      GMSH_API int addBSplineFilling(const int wireTag,
+                                     const int tag = -1,
+                                     const std::string & type = "");
 
       // gmsh::model::occ::addSurfaceLoop
       //
