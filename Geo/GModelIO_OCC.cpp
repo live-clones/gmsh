@@ -1634,8 +1634,8 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
     Tol = 0.0001;
     GeomPlate_MakeApprox Mapp(PSurf, Tol, MaxSeg, MaxDegree, dmax, CritOrder);
     Handle(Geom_Surface) Surf(Mapp.Surface());
-    // create a face corresponding to the approximated Plate
 
+    // create a face corresponding to the approximated Plate
     if(snap) {
       BRepBuilderAPI_MakeWire makeWire;
       {
@@ -1644,18 +1644,14 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
         for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
           TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
           Standard_Real first, last;
-          printf("making the wire -a\n");
           Handle(Geom_Curve) ccc2 = BRep_Tool::Curve(edge, first, last);
-          printf("making the wire -b\n");
           Handle(Geom_Curve) c2 = GeomProjLib::Project(ccc2, Surf);
-          printf("making the wire -c\n");
           TopoDS_Edge aEdgepj = BRepBuilderAPI_MakeEdge(
             c2, c2->FirstParameter(), c2->LastParameter());
           makeWire.Add(aEdgepj);
         }
       }
       makeWire.Build();
-
       result = BRepBuilderAPI_MakeFace(Surf, makeWire.Wire());
     }
     else {
@@ -1668,18 +1664,18 @@ bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
     }
 
     ShapeFix_Face fix(result);
-
     fix.SetPrecision(CTX::instance()->geom.tolerance);
     fix.Perform();
     fix.FixOrientation(); // and I don't understand why this is necessary
     result = fix.Face();
-    if(tag < 0) tag = getMaxTag(2) + 1;
-    bind(result, tag, true);
-    return true;
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
+
+  if(tag < 0) tag = getMaxTag(2) + 1;
+  bind(result, tag, true);
+  return true;
 }
 
 bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
