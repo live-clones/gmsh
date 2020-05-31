@@ -1162,9 +1162,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       if(knots.size() != multiplicities.size()) {
         Msg::Error(
-          "Number of BSpline knots (%d) and multiplicities (%d) should "
-          "equal",
-          knots.size(), multiplicities.size());
+          "Number of BSpline knots (%d) and multiplicities (%d) should be "
+          "equal", knots.size(), multiplicities.size());
         return false;
       }
       if(knots.size() < 2) {
@@ -1902,6 +1901,10 @@ bool OCC_Internals::addBSplineSurface(int &tag,
       mU.back() = dU - 1;
     }
   }
+  if(kU.size() != mU.size()) {
+    Msg::Error("Number of BSpline knots and multiplicities should be equal");
+    return false;
+  }
   // automatic default knots and multiplicities along V if not provided:
   if(kV.empty()) {
     if(!periodicV) {
@@ -1925,6 +1928,10 @@ bool OCC_Internals::addBSplineSurface(int &tag,
       mV.front() = dV - 1;
       mV.back() = dV - 1;
     }
+  }
+  if(kV.size() != mV.size()) {
+    Msg::Error("Number of BSpline knots and multiplicities should be equal");
+    return false;
   }
 
   TopoDS_Face result;
