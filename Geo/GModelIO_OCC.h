@@ -523,7 +523,7 @@ public:
     return _error("add surface filling");
   }
   bool addBSplineFilling(int &tag, int wireTag,
-                         const std::string &type)
+                         const std::string &type = "")
   {
     return _error("add BSpline filling");
   }
