@@ -420,6 +420,21 @@ doc_official_release:
     - /^gmsh_.*$/
 
 # ----------------------------------------------
+# Cookbook
+# ----------------------------------------------
+
+generate-book:
+  stage: .post
+  image: onelab/ubuntu20.04
+  <<: *ssh_config
+  script:
+    - mdbook build doc/cookbook
+    - scp -r doc/cookbook/book geuzaine@gmsh.info:.wwwgmsh/doc/cookbook
+  tags:
+    - linux64
+    - docker
+
+# ----------------------------------------------
 # PyPi package
 # ----------------------------------------------
 
