@@ -1810,25 +1810,22 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
       }
     }
 
+    GeomFill_FillingStyle t;
+    if(type == "Stretch")
+      t = GeomFill_StretchStyle; // flattest patch
+    else if(type == "Coons")
+      t = GeomFill_CoonsStyle; // rounded with less depth than Curved
+    else
+      t = GeomFill_CurvedStyle; // most rounded patch
+
     if(bsplines.size() == 4) {
-      GeomFill_FillingStyle t;
-      if(type == "Stretch")
-        t = GeomFill_StretchStyle; // flattest patch
-      else if(type == "Coons")
-        t = GeomFill_CoonsStyle; // rounded with less depth than Curved
-      else
-        t = GeomFill_CurvedStyle; // most rounded patch
       f.Init(bsplines[0], bsplines[1], bsplines[2], bsplines[3], t);
     }
     else if(bsplines.size() == 3) {
-      if(type != "" && type != "Curved")
-        Msg::Warning("Only \"Curved\" BSpline filling available for 3-sided patch");
-      f.Init(bsplines[0], bsplines[1], bsplines[2], GeomFill_CurvedStyle);
+      f.Init(bsplines[0], bsplines[1], bsplines[2], t);
     }
     else if(bsplines.size() == 2) {
-      if(type != "" && type != "Curved")
-        Msg::Warning("Only \"Curved\" BSpline filling available for 2-sided patch");
-      f.Init(bsplines[0], bsplines[1], GeomFill_CurvedStyle);
+      f.Init(bsplines[0], bsplines[1], t);
     }
     else{
       Msg::Error("BSpline filling requires between 2 and 4 boundary BSpline curves");

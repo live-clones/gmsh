@@ -4661,10 +4661,9 @@ class model:
             should be made of 2, 3 or 4 BSpline curves. The optional `type' argument
             specifies the type of filling: "Stretch" creates the flattest patch,
             "Curved" (the default) creates the most rounded patch, and "Coons" creates
-            a rounded patch with less depth than "Curved". "Stretch" and "Coons" are
-            only available for 4-sided surfaces. If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. Return the tag
-            of the surface.
+            a rounded patch with less depth than "Curved". If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the surface.
 
             Return an integer value.
             """
