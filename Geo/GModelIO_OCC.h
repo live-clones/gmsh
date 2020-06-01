@@ -189,6 +189,7 @@ public:
   void unbind(const TopoDS_Shell &shell, int tag, bool recursive = false);
   void unbind(const TopoDS_Solid &solid, int tag, bool recursive = false);
   void unbind(TopoDS_Shape shape, int dim, int tag, bool recursive = false);
+  void unbind();
 
   // set/get max tag of entity for each dimension (0, 1, 2, 3), as well as
   // -2 for shells and -1 for wires

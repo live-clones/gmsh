@@ -142,7 +142,6 @@ OCC_Internals::~OCC_Internals() { delete _attributes; }
 
 void OCC_Internals::reset()
 {
-  for(int i = 0; i < 6; i++) _maxTag[i] = 0;
   _attributes->clear();
   _somap.Clear();
   _shmap.Clear();
@@ -150,19 +149,7 @@ void OCC_Internals::reset()
   _wmap.Clear();
   _emap.Clear();
   _vmap.Clear();
-  _vertexTag.Clear();
-  _edgeTag.Clear();
-  _faceTag.Clear();
-  _solidTag.Clear();
-  _tagVertex.Clear();
-  _tagEdge.Clear();
-  _tagFace.Clear();
-  _tagSolid.Clear();
-  _wireTag.Clear();
-  _shellTag.Clear();
-  _tagWire.Clear();
-  _tagShell.Clear();
-  _changed = true;
+  unbind();
 }
 
 void OCC_Internals::setMaxTag(int dim, int val)
@@ -582,6 +569,47 @@ void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag, bool recursive)
   case -2: unbind(TopoDS::Shell(shape), tag, recursive); break;
   default: break;
   }
+}
+
+void OCC_Internals::unbind()
+{
+  for(int i = 0; i < 6; i++) _maxTag[i] = 0;
+
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
+  exp.Initialize(_tagVertex);
+  for(; exp.More(); exp.Next())
+    _toRemove.insert(std::pair<int, int>(0, exp.Key()));
+  exp.Initialize(_tagEdge);
+  for(; exp.More(); exp.Next())
+    _toRemove.insert(std::pair<int, int>(1, exp.Key()));
+  exp.Initialize(_tagFace);
+  for(; exp.More(); exp.Next())
+    _toRemove.insert(std::pair<int, int>(2, exp.Key()));
+  exp.Initialize(_tagSolid);
+  for(; exp.More(); exp.Next())
+    _toRemove.insert(std::pair<int, int>(3, exp.Key()));
+  exp.Initialize(_tagWire);
+  for(; exp.More(); exp.Next())
+    _toRemove.insert(std::pair<int, int>(-1, exp.Key()));
+  exp.Initialize(_tagShell);
+  for(; exp.More(); exp.Next())
+    _toRemove.insert(std::pair<int, int>(-2, exp.Key()));
+
+  _tagVertex.Clear();
+  _tagEdge.Clear();
+  _tagFace.Clear();
+  _tagSolid.Clear();
+  _tagWire.Clear();
+  _tagShell.Clear();
+
+  _vertexTag.Clear();
+  _edgeTag.Clear();
+  _faceTag.Clear();
+  _solidTag.Clear();
+  _wireTag.Clear();
+  _shellTag.Clear();
+
+  _changed = true;
 }
 
 void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
@@ -4790,6 +4818,8 @@ bool OCC_Internals::healShapes(
     for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
     for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
     for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
+    // unbind everything
+    unbind();
   }
   else {
     // construct a compound with the given shapes
