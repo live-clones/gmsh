@@ -430,6 +430,9 @@ generate-book:
   script:
     - mdbook build doc/cookbook
     - scp -r doc/cookbook/book geuzaine@gmsh.info:.wwwgmsh/doc/cookbook
+  tags:
+    - linux64
+    - docker
 
 # ----------------------------------------------
 # PyPi package
