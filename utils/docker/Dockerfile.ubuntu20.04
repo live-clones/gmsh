@@ -9,6 +9,9 @@ RUN pip3 install twine
 # to convert a .fodt document, simply run
 # soffice --headless --convert-to pdf Tutorials.fodt
 
+RUN apt-get update && apt-get install -y cargo && apt-get clean
+RUN cargo install mdbook
+
 # "docker build --build-arg REBUILD_GMSH=somethingnew"
 ARG REBUILD_GMSH=
 
