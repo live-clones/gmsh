@@ -1844,7 +1844,7 @@ bool OCC_Internals::addBSplineSurface(int &tag,
     return false;
   }
   int numPointsV = pointTags.size() / numPointsU;
-  if(numPointsU * numPointsV != pointTags.size()) {
+  if(numPointsU * numPointsV != (int)pointTags.size()) {
     Msg::Error("Wrong number of control points for BSpline surface");
     return false;
   }
@@ -1864,14 +1864,14 @@ bool OCC_Internals::addBSplineSurface(int &tag,
     return false;
   }
   bool periodicU = true;
-  for(std::size_t i = 0; i < numPointsV; i++) {
+  for(int i = 0; i < numPointsV; i++) {
     if(pointTags[i * numPointsU] != pointTags[(i + 1) * numPointsU - 1]) {
       periodicU = false;
       break;
     }
   }
   bool periodicV = true;
-  for(std::size_t i = 0; i < numPointsU; i++) {
+  for(int i = 0; i < numPointsU; i++) {
     if(pointTags[i * numPointsV] != pointTags[(i + 1) * numPointsV - 1]) {
       periodicV = false;
       break;
