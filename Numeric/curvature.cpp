@@ -9,9 +9,8 @@
 
 #define tolerance 0.1e-20
 
-static bool Inv4x4ColumnMajor(double m[16], double invOut[16], double *det)
+static bool Inv4x4ColumnMajor(double m[16], double inv[16], double *det)
 {
-  double inv[16];
   int i;
 
   inv[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] - m[9] * m[6] * m[15] +
@@ -53,7 +52,7 @@ static bool Inv4x4ColumnMajor(double m[16], double invOut[16], double *det)
 
   double invDet = 1.0 / *det;
 
-  for(i = 0; i < 16; i++) invOut[i] = inv[i] * invDet;
+  for(i = 0; i < 16; i++) inv[i] *= invDet;
 
   return true;
 }

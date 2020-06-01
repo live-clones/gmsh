@@ -10,7 +10,7 @@ RUN pip3 install twine
 # soffice --headless --convert-to pdf Tutorials.fodt
 
 RUN apt-get update && apt-get install -y cargo && apt-get clean
-RUN cargo install mdbook --version "^0.3.7"
+RUN cargo install --root /opt/cargo mdbook --version "^0.3.7"
 
 # "docker build --build-arg REBUILD_GMSH=somethingnew"
 ARG REBUILD_GMSH=
@@ -23,3 +23,4 @@ USER validator
 WORKDIR /home/validator
 RUN mkdir -p ~/.ssh
 RUN chmod 700 ~/.ssh
+ENV PATH="/opt/cargo/bin:${PATH}"
