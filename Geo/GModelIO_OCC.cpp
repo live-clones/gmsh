@@ -1936,6 +1936,7 @@ bool OCC_Internals::addBSplineSurface(int &tag,
 
   TopoDS_Face result;
   try{
+    std::vector<TopoDS_Vertex> corners;
     int npU = (periodicU ? numPointsU - 1 : numPointsU);
     int npV = (periodicV ? numPointsV - 1 : numPointsV);
     TColgp_Array2OfPnt pp(1, npU, 1, npV);
@@ -1947,6 +1948,9 @@ bool OCC_Internals::addBSplineSurface(int &tag,
           return false;
         }
         TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(pointTags[k]));
+        if((i == 1 && j == 1) || (i == 1 && j == npV) ||
+           (i == npU && j == 1) || (i == npU && j == npV))
+          corners.push_back(vertex);
         pp.SetValue(i, j, BRep_Tool::Pnt(vertex));
       }
     }
@@ -1969,6 +1973,44 @@ bool OCC_Internals::addBSplineSurface(int &tag,
       new Geom_BSplineSurface(pp, ww, kkU, kkV, mmU, mmV, dU, dV,
                               periodicU, periodicV);
     result = BRepBuilderAPI_MakeFace(surf, CTX::instance()->geom.tolerance);
+
+#if 0
+    // Activate this to use input points as corners if they are on the corners
+    // of the patch. (Since the natural "Replace(old_vertex, new_vertex)" on the
+    // face does not work, we do it on each edge. Sigh...)  Since when buiding
+    // multi-patch models a fragment or sewing will eventually be necessary to
+    // glue the patches, let's leave this commented out.
+    ShapeBuild_ReShape rebuild;
+    TopExp_Explorer exp0;
+    for(exp0.Init(result, TopAbs_EDGE); exp0.More(); exp0.Next()) {
+      TopoDS_Edge e = TopoDS::Edge(exp0.Current());
+      TopoDS_Vertex v1 = TopExp::FirstVertex(e);
+      TopoDS_Vertex v2 = TopExp::LastVertex(e);
+      double s0, s1;
+      Handle(Geom_Curve) curve = BRep_Tool::Curve(e, s0, s1);
+      if(curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve)){
+        Handle(Geom_BSplineCurve) bs = Handle(Geom_BSplineCurve)::DownCast(curve);
+        for(std::size_t i = 0; i < corners.size(); i++) {
+          if(bs->StartPoint().IsEqual(BRep_Tool::Pnt(corners[i]),
+                                      CTX::instance()->geom.tolerance)) {
+            v1 = corners[i];
+          }
+          if(bs->EndPoint().IsEqual(BRep_Tool::Pnt(corners[i]),
+                                    CTX::instance()->geom.tolerance)) {
+            v2 = corners[i];
+          }
+        }
+      }
+      BRepBuilderAPI_MakeEdge newe(curve, v1, v2);
+      rebuild.Replace(e, newe);
+    }
+    result = TopoDS::Face(rebuild.Apply(result));
+    ShapeFix_Face fix(result); // not sure why, but this is necessary
+    fix.SetPrecision(CTX::instance()->geom.tolerance);
+    fix.Perform();
+    fix.FixOrientation();
+    result = fix.Face();
+#endif
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
