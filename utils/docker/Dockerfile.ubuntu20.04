@@ -10,7 +10,7 @@ RUN pip3 install twine
 # soffice --headless --convert-to pdf Tutorials.fodt
 
 RUN apt-get update && apt-get install -y cargo && apt-get clean
-RUN cargo install mdbook
+RUN cargo install mdbook --version "^0.3.7"
 
 # "docker build --build-arg REBUILD_GMSH=somethingnew"
 ARG REBUILD_GMSH=
