@@ -2831,7 +2831,7 @@ the occ module.)
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L67,t19.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L11,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L59,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_patch.py#L6,bspline_patch.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L13,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L11,spline.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L67,t19.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L11,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L59,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L15,bspline_filling.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_patch.py#L6,bspline_patch.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L13,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L11,spline.py})
 @end table
 
 @item gmsh/model/occ/addLine
@@ -2950,7 +2950,7 @@ tag of the b-spline curve.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L14,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L14,spline.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L14,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L19,bspline_filling.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L14,spline.py})
 @end table
 
 @item gmsh/model/occ/addBezier
@@ -2984,7 +2984,7 @@ wire.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L74,t19.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L65,t19.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L74,t19.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L65,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L37,bspline_filling.py})
 @end table
 
 @item gmsh/model/occ/addCurveLoop
@@ -3089,16 +3089,18 @@ surface.
 -
 @item Return:
 integer value
+@item Examples:
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L39,bspline_filling.py})
 @end table
 
 @item gmsh/model/occ/addBSplineSurface
 Add a b-spline surface of degree @code{degreeU} x @code{degreeV} with
-@code{pointTags} control points given as a single vector [p11, ...
-p@code{numPointsU}1, p12, ...]. If @code{weights}, @code{knotsU}, @code{knotsV},
-@code{multiplicitiesU} or @code{multiplicitiesV} are not provided, default
-parameters are computed automatically. If @code{tag} is positive, set the tag
-explicitly; otherwise a new tag is selected automatically. Return the tag of the
-b-spline surface.
+@code{pointTags} control points given as a single vector [Pu1v1, ...
+Pu@code{numPointsU}v1, Pu1v2, ...]. If @code{weights}, @code{knotsU},
+@code{knotsV}, @code{multiplicitiesU} or @code{multiplicitiesV} are not
+provided, default parameters are computed automatically. If @code{tag} is
+positive, set the tag explicitly; otherwise a new tag is selected automatically.
+Return the tag of the b-spline surface.
 
 @table @asis
 @item Input:

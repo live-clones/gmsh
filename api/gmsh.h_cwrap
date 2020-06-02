@@ -2993,8 +2993,8 @@ namespace gmsh { // Top-level functions
       }
 
       // Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
-      // control points given as a single vector [p11, ... p`numPointsU'1, p12,
-      // ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
+      // control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1,
+      // Pu1v2, ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
       // `multiplicitiesV' are not provided, default parameters are computed
       // automatically. If `tag' is positive, set the tag explicitly; otherwise a
       // new tag is selected automatically. Return the tag of the b-spline surface.

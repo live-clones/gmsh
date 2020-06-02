@@ -3671,7 +3671,7 @@ end
     gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = Cdouble[], knotsU = Cdouble[], knotsV = Cdouble[], multiplicitiesU = Cint[], multiplicitiesV = Cint[])
 
 Add a b-spline surface of degree `degreeU` x `degreeV` with `pointTags` control
-points given as a single vector [p11, ... p`numPointsU`1, p12, ...]. If
+points given as a single vector [Pu1v1, ... Pu`numPointsU`v1, Pu1v2, ...]. If
 `weights`, `knotsU`, `knotsV`, `multiplicitiesU` or `multiplicitiesV` are not
 provided, default parameters are computed automatically. If `tag` is positive,
 set the tag explicitly; otherwise a new tag is selected automatically. Return
