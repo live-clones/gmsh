@@ -423,7 +423,7 @@ doc_official_release:
 # Cookbook
 # ----------------------------------------------
 
-generate-book:
+doc_cookbook:
   stage: .post
   image: onelab/ubuntu20.04
   <<: *ssh_config
