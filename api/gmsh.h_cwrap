@@ -3027,6 +3027,22 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
+      // Add a Bezier surface with `pointTags' control points given as a single
+      // vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive,
+      // set the tag explicitly; otherwise a new tag is selected automatically.
+      // Return the tag of the b-spline surface.
+      inline int addBezierSurface(const std::vector<int> & pointTags,
+                                  const int numPointsU,
+                                  const int tag = -1)
+      {
+        int ierr = 0;
+        int *api_pointTags_; size_t api_pointTags_n_; vector2ptr(pointTags, &api_pointTags_, &api_pointTags_n_);
+        int result_api_ = gmshModelOccAddBezierSurface(api_pointTags_, api_pointTags_n_, numPointsU, tag, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_pointTags_);
+        return result_api_;
+      }
+
       // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, set the tag explicitly; otherwise a new tag is selected
       // automatically. Return the tag of the surface loop. Setting `sewing' allows

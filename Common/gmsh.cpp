@@ -5008,6 +5008,18 @@ GMSH_API int gmsh::model::occ::addBSplineSurface(
   return outTag;
 }
 
+GMSH_API int gmsh::model::occ::addBezierSurface(
+  const std::vector<int> &pointTags, const int numPointsU, const int tag)
+{
+  if(!_isInitialized()) { throw -1; }
+  int outTag = tag;
+  if(!GModel::current()->getOCCInternals()->addBezierSurface(
+       outTag, pointTags, numPointsU)) {
+    throw 1;
+  }
+  return outTag;
+}
+
 GMSH_API int
 gmsh::model::occ::addSurfaceLoop(const std::vector<int> &surfaceTags,
                                  const int tag, const bool sewing)

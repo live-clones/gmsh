@@ -4719,6 +4719,31 @@ class model:
             return api__result__
 
         @staticmethod
+        def addBezierSurface(pointTags, numPointsU, tag=-1):
+            """
+            gmsh.model.occ.addBezierSurface(pointTags, numPointsU, tag=-1)
+
+            Add a Bezier surface with `pointTags' control points given as a single
+            vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the b-spline surface.
+
+            Return an integer value.
+            """
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
+            ierr = c_int()
+            api__result__ = lib.gmshModelOccAddBezierSurface(
+                api_pointTags_, api_pointTags_n_,
+                c_int(numPointsU),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccAddBezierSurface returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
         def addSurfaceLoop(surfaceTags, tag=-1, sewing=False):
             """
             gmsh.model.occ.addSurfaceLoop(surfaceTags, tag=-1, sewing=False)

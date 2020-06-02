@@ -242,6 +242,8 @@ public:
                          const std::vector<double> &knotsV,
                          const std::vector<int> &multiplicitiesU,
                          const std::vector<int> &multiplicitiesV);
+  bool addBezierSurface(int &tag, const std::vector<int> &pointTags,
+                        const int numPointsU);
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
@@ -548,6 +550,11 @@ public:
                          const std::vector<int> &multiplicitiesV)
   {
     return _error("add BSpline surface");
+  }
+  bool addBezierSurface(int &tag, const std::vector<int> &pointTags,
+                        const int numPointsU)
+  {
+    return _error("add Bezier surface");
   }
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing)

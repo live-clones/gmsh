@@ -3689,6 +3689,25 @@ function addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV
 end
 
 """
+    gmsh.model.occ.addBezierSurface(pointTags, numPointsU, tag = -1)
+
+Add a Bezier surface with `pointTags` control points given as a single vector
+[Pu1v1, ... Pu`numPointsU`v1, Pu1v2, ...]. If `tag` is positive, set the tag
+explicitly; otherwise a new tag is selected automatically. Return the tag of the
+b-spline surface.
+
+Return an integer value.
+"""
+function addBezierSurface(pointTags, numPointsU, tag = -1)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelOccAddBezierSurface, gmsh.lib), Cint,
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, pointTags), length(pointTags), numPointsU, tag, ierr)
+    ierr[] != 0 && error("gmshModelOccAddBezierSurface returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
 
 Add a surface loop (a closed shell) formed by `surfaceTags`.  If `tag` is

@@ -2576,6 +2576,20 @@ GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n, 
   return result_api_;
 }
 
+GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n, const int numPointsU, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
+    result_api_ = gmsh::model::occ::addBezierSurface(api_pointTags_, numPointsU, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
 GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n, const int tag, const int sewing, int * ierr)
 {
   int result_api_ = 0;

@@ -45,8 +45,16 @@ gmsh.model.occ.addPoint(-2,3,0)
 gmsh.model.occ.addPoint(-3,3,0)
 gmsh.model.occ.addPoint(-4,3,0)
 
-gmsh.model.occ.addBSplineSurface(range(1,21), 5)
-gmsh.model.occ.addBSplineSurface(range(21,41), 5)
+bezier = False
+bezier = True
+
+if bezier:
+    gmsh.model.occ.addBezierSurface(range(1,21), 5)
+    gmsh.model.occ.addBezierSurface(range(21,41), 5)
+else:
+    gmsh.model.occ.addBSplineSurface(range(1,21), 5)
+    gmsh.model.occ.addBSplineSurface(range(21,41), 5)
+
 
 # 3 methods to glue the 2 patches
 method = 1

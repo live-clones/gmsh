@@ -635,6 +635,9 @@ occ.add('addBSplineFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), istr
 doc = '''Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags' control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or `multiplicitiesV' are not provided, default parameters are computed automatically. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the b-spline surface.'''
 occ.add('addBSplineSurface', doc, oint, ivectorint('pointTags'), iint('numPointsU'), iint('tag', '-1'), iint('degreeU', '3'), iint('degreeV', '3'), ivectordouble('weights', 'std::vector<double>()', "[]", "[]"), ivectordouble('knotsU', 'std::vector<double>()', "[]", "[]"), ivectordouble('knotsV', 'std::vector<double>()', "[]", "[]"), ivectorint('multiplicitiesU', 'std::vector<int>()', "[]", "[]"), ivectorint('multiplicitiesV', 'std::vector<int>()', "[]", "[]"))
 
+doc = '''Add a Bezier surface with `pointTags' control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the b-spline surface.'''
+occ.add('addBezierSurface', doc, oint, ivectorint('pointTags'), iint('numPointsU'), iint('tag', '-1'))
+
 doc = '''Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface loop. Setting `sewing' allows to build a shell made of surfaces that share geometrically identical (but topologically different) curves.'''
 occ.add('addSurfaceLoop', doc, oint, ivectorint('surfaceTags'), iint('tag', '-1'), ibool('sewing', 'false', 'False'))
 

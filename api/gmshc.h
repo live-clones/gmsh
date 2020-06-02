@@ -1777,6 +1777,15 @@ GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n,
                                            int * multiplicitiesV, size_t multiplicitiesV_n,
                                            int * ierr);
 
+/* Add a Bezier surface with `pointTags' control points given as a single
+ * vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the b-spline surface. */
+GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n,
+                                          const int numPointsU,
+                                          const int tag,
+                                          int * ierr);
+
 /* Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
  * positive, set the tag explicitly; otherwise a new tag is selected
  * automatically. Return the tag of the surface loop. Setting `sewing' allows

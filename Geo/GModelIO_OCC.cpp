@@ -65,6 +65,7 @@
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include <Geom_BezierCurve.hxx>
+#include <Geom_BezierSurface.hxx>
 #include <Geom_Circle.hxx>
 #include <Geom_Ellipse.hxx>
 #include <GeomPlate_Surface.hxx>
@@ -2036,6 +2037,53 @@ bool OCC_Internals::addBSplineSurface(int &tag,
     fix.FixOrientation();
     result = fix.Face();
 #endif
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+
+  if(tag < 0) tag = getMaxTag(2) + 1;
+  bind(result, tag, true);
+  return true;
+}
+
+bool OCC_Internals::addBezierSurface(int &tag,
+                                     const std::vector<int> &pointTags,
+                                     const int numPointsU)
+{
+  if(tag >= 0 && _tagFace.IsBound(tag)) {
+    Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
+    return false;
+  }
+
+  // deal with default values
+  if(numPointsU < 1) {
+    Msg::Error("Wrong number of control points along U for Bezier surface");
+    return false;
+  }
+  int numPointsV = pointTags.size() / numPointsU;
+  if(numPointsU * numPointsV != (int)pointTags.size()) {
+    Msg::Error("Wrong number of control points for Bezier surface");
+    return false;
+  }
+
+  TopoDS_Face result;
+  try{
+    TColgp_Array2OfPnt pp(1, numPointsU, 1, numPointsV);
+    for(int i = 1; i <= numPointsU; i++) {
+      for(int j = 1; j <= numPointsV; j++) {
+        int k = (j - 1) * numPointsU + (i - 1);
+        if(!_tagVertex.IsBound(pointTags[k])) {
+          Msg::Error("Unknown OpenCASCADE point with tag %d", pointTags[k]);
+          return false;
+        }
+        TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(pointTags[k]));
+        pp.SetValue(i, j, BRep_Tool::Pnt(vertex));
+      }
+    }
+    Handle(Geom_BezierSurface) surf =
+      new Geom_BezierSurface(pp);
+    result = BRepBuilderAPI_MakeFace(surf, CTX::instance()->geom.tolerance);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;

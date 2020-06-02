@@ -2022,6 +2022,16 @@ namespace gmsh { // Top-level functions
                                      const std::vector<int> & multiplicitiesU = std::vector<int>(),
                                      const std::vector<int> & multiplicitiesV = std::vector<int>());
 
+      // gmsh::model::occ::addBezierSurface
+      //
+      // Add a Bezier surface with `pointTags' control points given as a single
+      // vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive,
+      // set the tag explicitly; otherwise a new tag is selected automatically.
+      // Return the tag of the b-spline surface.
+      GMSH_API int addBezierSurface(const std::vector<int> & pointTags,
+                                    const int numPointsU,
+                                    const int tag = -1);
+
       // gmsh::model::occ::addSurfaceLoop
       //
       // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
