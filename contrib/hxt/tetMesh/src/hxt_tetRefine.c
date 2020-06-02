@@ -124,10 +124,10 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
     avg /= num;
   }
 
-  double s0 = nodalSize[0]!=DBL_MAX && nodalSize[0] ? nodalSize[0] : avg;
-  double s1 = nodalSize[1]!=DBL_MAX && nodalSize[1] ? nodalSize[1] : avg;
-  double s2 = nodalSize[2]!=DBL_MAX && nodalSize[2] ? nodalSize[2] : avg;
-  double s3 = nodalSize[3]!=DBL_MAX && nodalSize[3] ? nodalSize[3] : avg;
+  double s0 = nodalSize[0]!=DBL_MAX && nodalSize[0]>0.0 ? nodalSize[0] : avg;
+  double s1 = nodalSize[1]!=DBL_MAX && nodalSize[1]>0.0 ? nodalSize[1] : avg;
+  double s2 = nodalSize[2]!=DBL_MAX && nodalSize[2]>0.0 ? nodalSize[2] : avg;
+  double s3 = nodalSize[3]!=DBL_MAX && nodalSize[3]>0.0 ? nodalSize[3] : avg;
 
   // (e/s)^2  (e is the norm of the edge, s is the mean nodalSize over that edge)
   double e0l2 = square_dist(p[0], p[1])/(0.25*(s0 + s1)*(s0 + s1));
@@ -136,6 +136,10 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
   double e3l2 = square_dist(p[1], p[2])/(0.25*(s1 + s2)*(s1 + s2));
   double e4l2 = square_dist(p[1], p[3])/(0.25*(s1 + s3)*(s1 + s3));
   double e5l2 = square_dist(p[2], p[3])/(0.25*(s2 + s3)*(s2 + s3));
+
+  // normally, this thing should be near 1 if the tet are well refined
+  // it can be below 1 only on the surface, because we averaged the line lengths to get the nodalsize
+  // in the interior, we forbid that it is below 1.
 
   // O = (0,0,0)
   // A = (xa,0,0)
@@ -312,7 +316,7 @@ static uint64_t* scanbsearch(uint64_t* array, uint64_t key, size_t num)
  * We got the nice additional properties that:
  *  - startPt[0] = 0
  *  - startTet[maxThreads] = mesh->tetrahedra.num
- *  - `startPt[t+1] - startPt[t]` gives how many point will be create by thread t
+ *  - `startPt[t+1] - startPt[t]` gives how many point will be created by thread t
  */
 static HXTStatus refineBalanceWork(HXTMesh* mesh, uint32_t* startPt, size_t* startTet, int maxThreads)
 {
@@ -375,6 +379,229 @@ static HXTStatus refineBalanceWork(HXTMesh* mesh, uint32_t* startPt, size_t* sta
 }
 
 
+/* good hash function for non-cryptographic purpose
+ * see https://stackoverflow.com/a/12996028 */
+static inline uint64_t hash64(uint64_t x) {
+    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
+    x = x ^ (x >> 31);
+    return x;
+}
+
+/* just a function such that:
+ * if transitiveHashLess(a,b)==true
+ * then transitiveHashLess(b,a)==false
+ *
+ * AND transitiveHashLess(a,b)==true and transitiveHashLess(b,c)==true
+ * imply that transitiveHashLess(a,c)==true
+ * and inversely if you replace true with false (the relation is transitive) */
+static inline uint64_t transitiveHashLess(uint64_t a, uint64_t b) {
+  return hash64(a) < hash64(b);
+}
+
+
+// at the first pass, we split long edges instead of computing the circumcenter
+static HXTStatus hxtRefineTetrahedraFirstPass(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
+                                              HXTStatus (*meshSizeFun)(double* coord, size_t n,
+                                                                       void* meshSizeData),
+                                              void* meshSizeData)
+{
+  const int maxThreads = omp_get_max_threads();
+  HXTStatus status = HXT_STATUS_OK;
+
+  uint64_t* startPt;
+  HXT_CHECK( hxtMalloc(&startPt, maxThreads*sizeof(uint64_t)) );
+
+  unsigned char* edgeFlag;
+  HXT_CHECK( hxtAlignedMalloc(&edgeFlag, mesh->tetrahedra.num*sizeof(char)) );
+  memset(edgeFlag, 0, mesh->tetrahedra.num*sizeof(char));
+
+  delOptions->insertionFirst = mesh->vertices.num;
+
+  #pragma omp parallel
+  {
+    const int threadID = omp_get_thread_num();
+    size_t localNum = 0;
+
+    #pragma omp for schedule(static)
+    for (uint64_t tet=0; tet<mesh->tetrahedra.num; tet++) {
+      if (getProcessedFlag(mesh, tet))
+        continue;
+
+      for (int edge=0; edge<6; edge++) {
+        // get some info on the edge (adjacent facets and nodes)
+        unsigned in_facet, out_facet;
+        getFacetsFromEdge(edge, &in_facet, &out_facet);
+
+        uint32_t p0, p1;
+        {
+          unsigned n0, n1;
+          getNodesFromEdge(edge, &n0, &n1);
+          p0 = mesh->tetrahedra.node[4*tet + n0];
+          p1 = mesh->tetrahedra.node[4*tet + n1];
+        }
+
+        if(p0==HXT_GHOST_VERTEX || p1==HXT_GHOST_VERTEX)
+          continue;
+
+        double* v0 = &mesh->vertices.coord[4*p0];
+        double* v1 = &mesh->vertices.coord[4*p1];
+
+        double s0 = delOptions->nodalSizes[p0];
+        double s1 = delOptions->nodalSizes[p1];
+
+        if(s0 <= 0.0 || s0==DBL_MAX ||
+           s1 <= 0.0 || s1==DBL_MAX)
+          continue;
+
+        double l2 = square_dist(v0, v1);
+
+        if(l2 <= 0.25*(s0 + s1)*(s0 + s1))
+          continue;
+
+        /* visit tetrahedra `tet` by turning around the edge
+           we only want the edge to be registered once,
+           thus we stop as soon as `transitiveHashLess(curTet, tet)==true`
+        */
+        int truth = 1;
+        uint64_t curTet = tet;
+        do
+        {
+          uint32_t newV = mesh->tetrahedra.node[4*curTet + in_facet];
+
+          // go into the neighbor through out_facet
+          uint64_t neigh = mesh->tetrahedra.neigh[4*curTet + out_facet];
+          curTet = neigh/4;
+          in_facet = neigh%4;
+
+          if(transitiveHashLess(curTet, tet)) {
+            truth=0;
+            break;
+          }
+
+          uint32_t* nodes = mesh->tetrahedra.node + 4*curTet;
+          for (out_facet=0; out_facet<3; out_facet++)
+            if(nodes[out_facet]==newV)
+              break;
+
+        } while (curTet!=tet);
+
+        // only the tetrahedron with the biggest hash will register the edge
+        if(truth){
+          // count the number of points that you can put on that edge
+          double ds = s1 - s0;
+          double dx = sqrt(l2);
+
+          int n = log2(s1/s0)/log2((2*dx + ds)/(2*dx - ds));
+
+          if(n > 2.0) {
+            edgeFlag[tet] |= 1U<<edge;
+            localNum += n-1;
+          }
+        }
+      }
+    }
+
+    startPt[threadID] = localNum;
+
+    #pragma omp barrier
+    #pragma omp single
+    {
+      // exclusive scan used to compute starting indices
+      int nthreads = omp_get_num_threads();
+      size_t sum = 0;
+      for (int i=0; i<nthreads; i++) {
+        printf("thread %d creates %lu points\n", i, startPt[i]);
+        size_t tsum = sum + startPt[i];
+        startPt[i] = sum;
+        sum = tsum;
+      }
+
+      mesh->vertices.num += sum;
+
+      if(mesh->vertices.num > mesh->vertices.size){
+        status=hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double)*4*mesh->vertices.num);
+        if(status==HXT_STATUS_OK){
+          status=hxtAlignedRealloc(&delOptions->nodalSizes, sizeof(double)*mesh->vertices.num);
+          mesh->vertices.size = mesh->vertices.num;
+        }
+      }
+    }
+
+    if(status==HXT_STATUS_OK) {
+      localNum = startPt[threadID] + delOptions->insertionFirst;
+
+      #pragma omp for schedule(static)
+      for (uint64_t tet=0; tet<mesh->tetrahedra.num; tet++) {
+        for (unsigned edge=0; edge<6; edge++) {
+          if(edgeFlag[tet] & (1U<<edge)){
+            uint32_t p0, pn;
+            {
+              unsigned n0, nn;
+              getNodesFromEdge(edge, &n0, &nn);
+              p0 = mesh->tetrahedra.node[4*tet + n0];
+              pn = mesh->tetrahedra.node[4*tet + nn];
+            }
+
+            double* v0 = &mesh->vertices.coord[4*p0];
+            double* vn = &mesh->vertices.coord[4*pn];
+
+            double s0 = delOptions->nodalSizes[p0];
+            double sn = delOptions->nodalSizes[pn];
+
+            double ds = sn - s0;
+            double rs = sn/s0;
+            double dx = sqrt(square_dist(v0, vn));
+
+            int n = log2(rs)/log2((2*dx + ds)/(2*dx - ds));
+
+            // subdivide the edge and create the new points
+            for(int i=1; i<n; i++) {
+              double si = pow(rs, (double) i/n) * s0;
+              double alpha = (si - s0)/ds;
+
+              mesh->vertices.coord[4 * localNum + 0] = (1.0 - alpha) * v0[0] + alpha * vn[0];
+              mesh->vertices.coord[4 * localNum + 1] = (1.0 - alpha) * v0[1] + alpha * vn[1];
+              mesh->vertices.coord[4 * localNum + 2] = (1.0 - alpha) * v0[2] + alpha * vn[2];
+              mesh->vertices.coord[4 * localNum + 3] = si; // this is the precomputed nodalSize
+              localNum++;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if(status!=HXT_STATUS_OK){
+    HXT_TRACE(status);
+    return status;
+  }
+
+  HXT_CHECK( hxtFree(&startPt) );
+  HXT_CHECK( hxtAlignedFree(&edgeFlag) );
+
+  if(meshSizeFun!=NULL)
+    HXT_CHECK( meshSizeFun(&mesh->vertices.coord[4*delOptions->insertionFirst], mesh->vertices.num - delOptions->insertionFirst, meshSizeData) );
+
+  #pragma omp parallel for simd
+  for(size_t i=delOptions->insertionFirst; i<mesh->vertices.num; i++) {
+    delOptions->nodalSizes[i] = mesh->vertices.coord[4*i+3];
+  }
+
+  if(delOptions->insertionFirst == mesh->vertices.num)
+      return HXT_STATUS_INTERNAL;
+
+  delOptions->partitionability = 0.0;
+  uint32_t oldNumVerticesInMesh = delOptions->numVerticesInMesh;
+
+  HXT_CHECK(hxtDelaunay(mesh, delOptions));
+
+  if (delOptions->numVerticesInMesh == oldNumVerticesInMesh) return HXT_STATUS_INTERNAL;
+
+  return HXT_STATUS_OK;
+}
+
+
 HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
                               HXTStatus (*meshSizeFun)(double* coord, size_t n,
                                                        void* meshSizeData),
@@ -382,13 +609,21 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
 {
   int maxThreads = omp_get_max_threads();
 
+  {
+    HXTStatus status = hxtRefineTetrahedraFirstPass(mesh, delOptions, meshSizeFun, meshSizeData);
+    if(status==HXT_STATUS_INTERNAL)
+      return HXT_STATUS_OK;
+    else
+      HXT_CHECK(status);
+  }
+
   uint64_t* startTet; // see refineBalanceWork
   HXT_CHECK( hxtMalloc(&startTet, (maxThreads+1)*sizeof(size_t)) );
 
   uint32_t* startPt; // see refineBalanceWork
   HXT_CHECK( hxtMalloc(&startPt, (maxThreads+1)*sizeof(uint32_t)) );
 
-  for(int iter=0; iter<42; iter++) {
+  for(int iter=1; iter<42; iter++) {
 
     delOptions->insertionFirst = mesh->vertices.num;
 
