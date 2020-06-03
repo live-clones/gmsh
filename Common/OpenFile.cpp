@@ -377,6 +377,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   }
   else if(ext == ".step" || ext == ".STEP" || ext == ".stp" || ext == ".STP") {
     status = GModel::current()->readOCCSTEP(fileName);
+    //status = GModel::current()->readParasolidSTEP(fileName);
   }
   else if(ext == ".sat" || ext == ".SAT") {
     status = GModel::current()->readACISSAT(fileName);

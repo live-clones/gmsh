@@ -111,8 +111,15 @@ static const char *input_formats =
 #endif
 #if defined(HAVE_OCC)
   "Geometry - OpenCASCADE BRep\t*.brep\n"
-  "Geometry - OpenCASCADE IGES\t*.{igs,iges}\n"
-  "Geometry - OpenCASCADE STEP\t*.{stp,step}\n"
+#endif
+#if defined(HAVE_PARASOLID)
+  "Geometry - Parasolid XMT\t*.xmt_txt\n"
+#endif
+#if defined(HAVE_OCC) || defined(HAVE_PARASOLID_STEP)
+  "Geometry - STEP\t*.{stp,step}\n"
+#endif
+#if defined(HAVE_OCC)
+  "Geometry - IGES\t*.{igs,iges}\n"
 #endif
   "Mesh - Gmsh MSH\t*.msh\n"
   "Mesh - Diffpack 3D\t*.diff\n"
@@ -278,6 +285,7 @@ static int _save_options(const char *name){ return optionsFileDialog(name); }
 static int _save_geo(const char *name){ return geoFileDialog(name); }
 static int _save_brep(const char *name){ CreateOutputFile(name, FORMAT_BREP); return 1; }
 static int _save_step(const char *name){ CreateOutputFile(name, FORMAT_STEP); return 1; }
+static int _save_xmt(const char *name){ CreateOutputFile(name, FORMAT_XMT); return 1; }
 static int _save_cgns(const char *name){ return cgnsFileDialog(name); }
 static int _save_unv(const char *name){ return unvinpFileDialog
     (name, "UNV Options", FORMAT_UNV); }
@@ -393,6 +401,7 @@ static int _save_auto(const char *name)
   case FORMAT_SVG  : return _save_svg(name);
   case FORMAT_TIKZ : return _save_tikz(name);
   case FORMAT_YUV  : return _save_yuv(name);
+  case FORMAT_XMT  : return _save_xmt(name);
   default :
     CreateOutputFile(name, FORMAT_AUTO);
     return 1;
@@ -411,8 +420,13 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Geometry - Gmsh Options\t*.opt", _save_options},
     {"Geometry - Gmsh Unrolled GEO\t*.geo_unrolled", _save_geo},
 #if defined(HAVE_OCC)
-    {"Geometry - OpenCASCADE STEP\t*.step", _save_step},
     {"Geometry - OpenCASCADE BRep\t*.brep", _save_brep},
+#endif
+#if defined(HAVE_PARASOLID)
+    {"Geometry - Parasolid XMT\t*.xmt_txt", _save_xmt},
+#endif
+#if defined(HAVE_OCC) || defined(HAVE_PARASOLID_STEP)
+    {"Geometry - STEP\t*.step", _save_step},
 #endif
     {"Mesh - Gmsh MSH\t*.msh", _save_msh},
     {"Mesh - Abaqus INP\t*.inp", _save_inp},

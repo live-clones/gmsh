@@ -713,6 +713,8 @@ public:
 
   // Parasolid Model
   int readParasolidXMT(const std::string &name);
+  int writeParasolidXMT(const std::string &name);
+  int readParasolidSTEP(const std::string &name);
   int writeParasolidSTEP(const std::string &name);
 
   // Gmsh mesh file format
