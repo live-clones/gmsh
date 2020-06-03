@@ -24,7 +24,7 @@ GMSH_API_VERSION_MINOR = 6
 
 __version__ = GMSH_API_VERSION
 
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
     libpath = os.path.join(libdir, "gmsh-4.6.dll")
@@ -212,6 +212,7 @@ def finalize():
     ierr = c_int()
     lib.gmshFinalize(
         byref(ierr))
+    signal.signal(signal.SIGINT, oldsig)
     if ierr.value != 0:
         raise ValueError(
             "gmshFinalize returned non-zero error code: ",

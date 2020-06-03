@@ -1005,7 +1005,7 @@ from math import pi
 
 __version__ = {5}_API_VERSION
 
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
     libpath = os.path.join(libdir, "{6}-{3}.{4}.dll")
@@ -1386,6 +1386,8 @@ class API:
                     (",\n" + indent + "    ").join(
                         tuple((a.python_arg
                                for a in args)) + ("byref(ierr)", )) + ")\n")
+            if name == "finalize": # special case for finalize() function
+                f.write(indent + "signal.signal(signal.SIGINT, oldsig)\n")
             f.write(indent + "if ierr.value != 0:\n")
             f.write(indent + "    raise ValueError(\n")
             f.write(indent + '        "' + c_name +
