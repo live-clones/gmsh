@@ -49,6 +49,14 @@
 #include "linearSystemCSR.h"
 #include "OS.h"
 
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
+#ifndef MAX_NUM_THREADS_OMP_
+#define MAX_NUM_THREADS_OMP_ 4
+#endif
+
 #define SQU(a) ((a) * (a))
 
 void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
@@ -56,7 +64,7 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
   bool CAD, complete;
   int meshOrder;
 
-  double t1 = Cpu();
+  // double t1 = Cpu();
   Msg::StatusBar(true, "Applying elastic analogy to high-order mesh...");
 
   getMeshInfoForHighOrder(m, meshOrder, complete, CAD);
@@ -80,6 +88,7 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
   }
   checkHighOrderTriangles("Final surface mesh", m, bad, worst);
 
+  double t1 = omp_get_wtime();
   checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
   {
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
@@ -95,7 +104,8 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
   }
   checkHighOrderTetrahedron("Final volume mesh", m, bad, worst);
 
-  double t2 = Cpu();
+  // double t2 = Cpu();
+  double t2 = omp_get_wtime();
   Msg::StatusBar(true, "Done applying elastic analogy to high-order mesh (%g s)",
                  t2 - t1);
 }
@@ -602,107 +612,569 @@ void highOrderTools::_computeStraightSidedPositions()
             _straightSidedLocation.size());
 }
 
-// apply a displacement that does not create elements that are distorted over a
-// value "thres"
+double parallelPS(fullVector<double> &u, fullVector<double> &v){
+  std::size_t N=u.size();
+#if defined(_OPENMP)
+  int sizeRed=MAX_NUM_THREADS_OMP_;
+  // int nT=omp_get_num_threads();
+#else
+  intSizeRed=1;
+  // int nT=1;
+#endif
+  std::vector<double> redPS;
+  redPS.resize(sizeRed,0.0);
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+  {
+#if defined(_OPENMP)
+    int nT=omp_get_num_threads();
+    int threadID = omp_get_thread_num();
+#else
+    int nT=1;
+    int threadID = 0;
+#endif
+    nT=omp_get_num_threads();
+    size_t start=threadID*N/nT;
+    size_t end= (threadID+1)*N/nT > N ? N : (threadID+1)*N/nT;
+    fullVector<double> uThread(u.getDataPtr()+start,end-start);
+    fullVector<double> vThread(v.getDataPtr()+start,end-start);
+    // for(std::size_t k = start; k < end; k++)
+    //   redPS[threadID]+=u[k]*v[k];
+    redPS[threadID]=uThread*vThread;
+    
+  }
+  double ps=0.0;
+  for(std::size_t k = 0; k < sizeRed; k++)
+    ps+=redPS[k];
+  return ps;
+}
+
+void _parallelAxpy(fullVector<double> &u, fullVector<double> &x, double alpha = 1.){
+  std::size_t N=u.size();
+// #if defined(_OPENMP)
+//   // int nT=MAX_NUM_THREADS_OMP_;
+//   int nT=omp_get_num_threads();
+// #else
+//   int nT=1;
+// #endif
+
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+  {
+#if defined(_OPENMP)
+    int nT=omp_get_num_threads();
+    // printf("threadID : %i\n",omp_get_thread_num());
+    // printf("nT: %i\n",nT);
+    int threadID = omp_get_thread_num();
+#else
+    int nT=1;
+    int threadID = 0;
+#endif
+    nT=omp_get_num_threads();
+    size_t start=threadID*N/nT;
+    // size_t end=(threadID+1)*N/nT;
+    size_t end= (threadID+1)*N/nT > N ? N : (threadID+1)*N/nT;
+    // printf("start: %i // end: %i\n",start,end);
+    fullVector<double> uThread(u.getDataPtr()+start,end-start);
+    fullVector<double> xThread(x.getDataPtr()+start,end-start);
+    // for(std::size_t k = start; k < end; k++)
+    //   redPS[threadID]+=u[k]*v[k];
+    uThread.axpy(xThread,alpha);
+  }
+  return;
+}
+
+void _parallelFullVectorCopy(fullVector<double> &u, fullVector<double> &x){
+  std::size_t N=u.size();
+// #if defined(_OPENMP)
+//   // int nT=MAX_NUM_THREADS_OMP_;
+//   int nT=omp_get_num_threads();
+// #else
+//   int nT=1;
+// #endif
+
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+  {
+#if defined(_OPENMP)
+    int nT=omp_get_num_threads();
+    // printf("threadID : %i\n",omp_get_thread_num());
+    // printf("nT: %i\n",nT);
+    int threadID = omp_get_thread_num();
+#else
+    int nT=1;
+    int threadID = 0;
+#endif
+    // nT=omp_get_num_threads();
+    size_t start=threadID*N/nT;
+    // size_t end=(threadID+1)*N/nT;
+    size_t end= (threadID+1)*N/nT > N ? N : (threadID+1)*N/nT;
+    // printf("start: %i // end: %i\n",start,end);
+    fullVector<double> uThread(u.getDataPtr()+start,end-start);
+    fullVector<double> xThread(x.getDataPtr()+start,end-start);
+    for(std::size_t k = 0; k < end-start; k++)
+      uThread(k)=xThread(k);
+  }
+  return;
+}
+
+void _parallelFullVectorScale(fullVector<double> &u, double scaling){
+  std::size_t N=u.size();
+// #if defined(_OPENMP)
+//   // int nT=MAX_NUM_THREADS_OMP_;
+//   int nT=omp_get_num_threads();
+// #else
+//   int nT=1;
+// #endif
+
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+  {
+#if defined(_OPENMP)
+    int nT=omp_get_num_threads();
+    // printf("threadID : %i\n",omp_get_thread_num());
+    // printf("nT: %i\n",nT);
+    int threadID = omp_get_thread_num();
+#else
+    int nT=1;
+    int threadID = 0;
+#endif
+    nT=omp_get_num_threads();
+    size_t start=threadID*N/nT;
+    // size_t end=(threadID+1)*N/nT;
+    size_t end= (threadID+1)*N/nT > N ? N : (threadID+1)*N/nT;
+    fullVector<double> uThread(u.getDataPtr()+start,end-start);
+    uThread.scale(scaling);
+  }
+  return;
+}
+
+void _parallelApplyBC(fullVector<double> &u, fullVector<double> &bc, std::vector<int> indFixed){
+  std::size_t N=indFixed.size();
+// #if defined(_OPENMP)
+//   // int nT=MAX_NUM_THREADS_OMP_;
+//   int nT=omp_get_num_threads();
+// #else
+//   int nT=1;
+// #endif
+
+#if defined(_OPENMP)
+#pragma omp parallel
+  {
+    int nT=omp_get_num_threads();	
+    // printf("threadID : %i\n",omp_get_thread_num());
+    // printf("nT: %i\n",nT);
+#pragma omp for
+#endif
+    for(size_t i=0;i<indFixed.size();i++){
+      u(3*indFixed[i]+0)=bc(3*indFixed[i]+0);
+      u(3*indFixed[i]+1)=bc(3*indFixed[i]+1);
+      u(3*indFixed[i]+2)=bc(3*indFixed[i]+2);
+    }
+#if defined(_OPENMP)
+  }
+#endif
+  return;
+}
+
+void highOrderTools::_parallelMultUnassMatVect(std::vector<MElement *> &e, std::vector<fullMatrix<double>> &matElem, fullVector<double> &v, fullVector<double> &res){
+  std::size_t nElem=matElem.size();
+#if defined(_OPENMP)
+  // int nT=MAX_NUM_THREADS_OMP_;
+  // int nT=omp_get_num_threads();
+  int sizeRed=MAX_NUM_THREADS_OMP_;
+#else
+  // int nT=1;
+  int sizeRed=1;
+#endif
+  fullVector<double> init(v.size());
+  init.setAll(0.0);
+  std::vector<fullVector<double>> redAX(sizeRed,init);
+  //split the vector v in parallel block
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+  {
+#if defined(_OPENMP)
+    int nT=omp_get_num_threads();
+    // printf("threadID : %i\n",omp_get_thread_num());
+    // printf("nT: %i\n",nT);
+    int threadID = omp_get_thread_num();
+#else
+    int nT=1;
+    int threadID = 0;
+#endif
+    nT=omp_get_num_threads();
+    size_t start=threadID*nElem/nT;
+    // size_t end=(threadID+1)*nElem/nT;
+    size_t end= (threadID+1)*nElem/nT > nElem ? nElem : (threadID+1)*nElem/nT;
+    // printf("threadId %i :: start: %i // end: %i\n",threadID,start,end);
+    for(std::size_t k = start; k < end; k++){
+      fullVector<double> vectElem(matElem[k].size1());
+      int nVertElem=e[k]->getNumVertices();
+      for(std::size_t l=0; l < nVertElem; l++){
+	for(std::size_t d=0; d < _dim; d++){
+	  // vectElem.set(nVertElem*d+l, v(_dim*e[k]->getVertex(l)->getIndex()+d));
+	  int indLoc=nVertElem*d+l;
+	  // int indLoc=_dim*l+d;
+	  int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
+	  vectElem(indLoc) = v(indGlob);
+	}
+      }
+      fullVector<double> resMult(matElem[k].size1());
+      matElem[k].mult(vectElem, resMult);
+      fullVector<double> threadRed(redAX[threadID].getDataPtr(),redAX[threadID].size());
+      for(std::size_t l=0; l < nVertElem; l++){
+	for(std::size_t d=0; d < _dim; d++){
+	  int indLoc=nVertElem*d+l;
+	  // int indLoc=_dim*l+d;
+	  int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
+	  threadRed(indGlob)+=resMult(indLoc);
+	}
+      }
+    }
+  }
+  //Sum reductions
+#if defined(_OPENMP)
+#pragma omp parallel
+  {
+#pragma omp for
+#endif
+    for(std::size_t k = 0; k < res.size(); k++){
+      res(k)=0.0;
+      for(std::size_t l = 0; l < sizeRed; l++)
+	res(k)+=redAX[l](k);
+    }
+#if defined(_OPENMP)
+  }
+#endif
+  return;
+}
+
 double highOrderTools::_applyIncrementalDisplacement(
   double max_incr, std::vector<MElement *> &v, bool mixed, double thres,
   char *meshName, std::vector<MElement *> &disto)
 {
   if(v.empty()) return 1.;
 
-#if defined(HAVE_PETSC)
-  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_GMM)
-  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
-#else
-  linearSystemFull<double> *lsys = new linearSystemFull<double>;
-#endif
+// #if defined(HAVE_PETSC)
+//   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
+// #elif defined(HAVE_GMM)
+//   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+// #else
+//   linearSystemFull<double> *lsys = new linearSystemFull<double>;
+// #endif
 
-  // assume that the mesh is OK, yet already curved
-  Msg::Info("Generating elastic system...");
-  dofManager<double> myAssembler(lsys);
-  elasticityMixedTerm El_mixed(0, 1.0, .333, _tag);
-  elasticityTerm El(0, 1.0, .333, _tag);
+  #if defined(_OPENMP)
+  // #pragma omp parallel num_threads(MAX_NUM_THREADS_OMP_)
+    omp_set_num_threads(MAX_NUM_THREADS_OMP_);
+    // omp_set_num_threads(1);
+  // #pragma omp parallel
+    printf("numThreads set to : %i\n",MAX_NUM_THREADS_OMP_);
+    // printf("numThreads set to : %i\n",2);
+  #endif
+  printf("Ok on est là\n");
+  // Reindex mesh nodes
+  for(std::size_t i = 0; i < v.size(); i++)
+    for(int j = 0; j < v[i]->getNumVertices(); j++)
+      v[i]->getVertex(j)->setIndex(-1);
+  long int nVertRenum=0;
+  for(std::size_t i = 0; i < v.size(); i++)
+    for(int j = 0; j < v[i]->getNumVertices(); j++)
+      if(v[i]->getVertex(j)->getIndex()==-1){
+	v[i]->getVertex(j)->setIndex(nVertRenum);
+	nVertRenum++;
+      }
+  //Compute elementary matrices
+  elasticityTerm El(0, 1.0, .333, _tag);  
+  std::vector<fullMatrix<double>> matElem;
+  fullMatrix<double> init;
+  matElem.resize(v.size(),init);
 
-  std::set<MVertex *, MVertexPtrLessThan> _vertices;
+  for(std::size_t i = 0; i < v.size(); i++){
+    SElement se(v[i]);
+    const int nbR = El.sizeOfR(&se);
+    const int nbC = El.sizeOfC(&se);
+    matElem[i].resize(nbR,nbC);
+    El.elementMatrix(&se, matElem[i]);
+  }
+
+  printf("end compute mat elem\n");
+  //Building bc vector
+  std::set<MVertex *, MVertexPtrLessThan> vertices1;
 
   // Boundary Conditions & Numbering
-
   // fix all dof that correspond to vertices on the boundary the value is equal
   for(std::size_t i = 0; i < v.size(); i++) {
     for(int j = 0; j < v[i]->getNumVertices(); j++) {
       MVertex *vert = v[i]->getVertex(j);
-      _vertices.insert(vert);
+      vertices1.insert(vert);
     }
   }
-
-  // Fix d tr(eps) = 0
-  if(mixed) {
-    for(std::size_t i = 0; i < disto.size(); i++) {
-      for(int j = 0; j < disto[i]->getNumVertices(); j++) {
-        MVertex *vert = disto[i]->getVertex(j);
-        myAssembler.fixVertex(vert, 4, _tag, 0.0);
-      }
-    }
-  }
-
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
-      it != _vertices.end(); ++it) {
+  std::vector<int> indFixed;
+  std::vector<int> indFlag(nVertRenum,-1);
+  indFixed.reserve(1000);
+  int cptBC=0;
+  fullVector<double> bcX(nVertRenum*_dim);
+  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vertices1.begin();
+      it != vertices1.end(); ++it) {
     MVertex *vert = *it;
     std::map<MVertex *, SVector3>::iterator itt = _targetLocation.find(vert);
     // impose displacement @ boundary
     if(itt != _targetLocation.end() && vert->onWhat()->dim() < _dim) {
-      myAssembler.fixVertex(vert, 0, _tag, itt->second.x() - vert->x());
-      myAssembler.fixVertex(vert, 1, _tag, itt->second.y() - vert->y());
-      myAssembler.fixVertex(vert, 2, _tag, itt->second.z() - vert->z());
+      if(indFlag[vert->getIndex()]<0){
+	bcX(_dim*vert->getIndex()+0)=itt->second.x() - vert->x();
+	bcX(_dim*vert->getIndex()+1)=itt->second.y() - vert->y();
+	bcX(_dim*vert->getIndex()+2)=itt->second.z() - vert->z();
+	indFixed.push_back(vert->getIndex());
+	indFlag[vert->getIndex()]=1;
+	cptBC++;
+      }
     }
     // ensure we do not touch any vertex that is on the boundary
     else if(vert->onWhat()->dim() < _dim) {
-      myAssembler.fixVertex(vert, 0, _tag, 0);
-      myAssembler.fixVertex(vert, 1, _tag, 0);
-      myAssembler.fixVertex(vert, 2, _tag, 0);
-    }
-    if(_dim == 2) myAssembler.fixVertex(vert, 2, _tag, 0);
-    // number vertices
-    myAssembler.numberVertex(vert, 0, _tag);
-    myAssembler.numberVertex(vert, 1, _tag);
-    myAssembler.numberVertex(vert, 2, _tag);
-    if(mixed) {
-      myAssembler.numberVertex(vert, 3, _tag);
-      myAssembler.numberVertex(vert, 4, _tag);
+      if(indFlag[vert->getIndex()]<0){
+	bcX(_dim*vert->getIndex()+0)=0.0;
+	bcX(_dim*vert->getIndex()+1)=0.0;
+	bcX(_dim*vert->getIndex()+2)=0.0;
+	indFixed.push_back(vert->getIndex());
+	indFlag[vert->getIndex()]=1;
+	cptBC++;
+      }
     }
   }
+  printf("nNodes on boundary: %i\n",cptBC);
+  printf("size indFixed: %i\n",indFixed.size());
+  printf("total number of nodes : %i\n",nVertRenum);
+  //declare and init vectors for cg
+  fullVector<double> x(nVertRenum*_dim);
+  _parallelApplyBC(x,bcX,indFixed);
+  // // DBG rigid body motion
+  // for(std::size_t k=0;k<nVertRenum;k++){
+  //   x(3*k+0)=1.0;
+  //   x(3*k+1)=2.0;
+  //   x(3*k+2)=3.0;
+  // }
+  // //
+  fullVector<double> Ax(nVertRenum*_dim);
+  fullVector<double> Apk(nVertRenum*_dim);
+  fullVector<double> zero(nVertRenum*_dim);
+  for(std::size_t k=0;k<nVertRenum*_dim;k++){
+    zero(k)=0.0;
+  }
+  printf("Dim: %i\n",_dim);
+  // fullMatrix<double> A(nVertRenum*_dim,nVertRenum*_dim);
+  // printf("end alloc\n");
+  // for(std::size_t k=0;k<matElem.size();k++){
+  //   int nVertElem=v[k]->getNumVertices();
+  //   for(std::size_t l=0; l < nVertElem; l++){
+  //     for(std::size_t d=0; d < _dim; d++){
+  // 	for(std::size_t l1=0; l1 < nVertElem; l1++){
+  // 	  for(std::size_t d1=0; d1 < _dim; d1++){
+  // 	    int indLoc=nVertElem*d+l;
+  // 	    int indLoc1=nVertElem*d1+l1;
+  // 	    if(v[k]->getVertex(l)->getIndex()<0){
+  // 	      printf("pb index\n");
+  // 	      exit(0);
+  // 	    }
+  // 	    int indGlob=_dim*v[k]->getVertex(l)->getIndex()+d;
+  // 	    int indGlob1=_dim*v[k]->getVertex(l1)->getIndex()+d1;
+  // 	    A(indGlob,indGlob1)+=matElem[k](indLoc,indLoc1);
+  // 	  }
+  // 	}
+  //     }
+  //   }
+  // }
+  // //DBG check if A is sym
+  // double dbgCheck=0.0;
+  // for(std::size_t k=0;k<nVertRenum*_dim;k++){
+  //   for(std::size_t l=0;l<nVertRenum*_dim;l++){
+  //     dbgCheck+=(A(k,l)-A(l,k))*(A(k,l)-A(l,k));
+  //   }
+  // }
+  // dbgCheck=sqrt(dbgCheck);
+  // printf("dbgCheck: %g\n",dbgCheck);
+  // if(dbgCheck>1e-12){
+  //   printf("A is not sym: %g\n",dbgCheck);
+  // }
+  //
+  fullVector<double> r1(nVertRenum*_dim);
+  fullVector<double> r2(nVertRenum*_dim);
+  fullVector<double> p1(nVertRenum*_dim);
+  fullVector<double> p2(nVertRenum*_dim);
+  fullVector<double> rk(r1.getDataPtr(),nVertRenum*_dim);
+  fullVector<double> rk1(r2.getDataPtr(),nVertRenum*_dim);
+  // fullVector<double> rk(r1.getDataPtr(),nVertRenum*_dim);
+  // fullVector<double> rk1(r1.getDataPtr(),nVertRenum*_dim);
+  //
+  double epsilon = 1e10;
+  double precision = 1e-10;
+  int nIt=0;
+  int nItMax=1000;
+  //-- calcul r0=b-Ax0 et p0=r0
+  printf("begin mul unassembled mat\n");
+  printf("nVertRenum: %i\n",nVertRenum);
+  // A.mult(x,Ax);
+  _parallelMultUnassMatVect(v, matElem, x, Ax); //OK
+  printf("--norm Ax : %g\n",Ax*Ax);
+  printf("end mul unassembled mat\n");
+  _parallelFullVectorCopy(rk,Ax);
+  _parallelFullVectorScale(rk,-1.0);
+  // for(std::size_t k=0;k<nVertRenum*_dim;k++){
+  //   rk(k)=-Ax(k);
+  // }
+  _parallelApplyBC(rk,zero,indFixed);
+  // fullVector<double> pk(nVertRenum*_dim);
+  fullVector<double> pk(p1.getDataPtr(),nVertRenum*_dim);
+  _parallelFullVectorCopy(pk,rk);
+  // for(std::size_t k=0;k<nVertRenum*_dim;k++){
+  //   pk(k)=rk(k);
+  // }
+  _parallelApplyBC(pk,zero,indFixed);
+  // fullVector<double> pk1(nVertRenum*_dim);
+  fullVector<double> pk1(p2.getDataPtr(),nVertRenum*_dim);
+  //-- calculm norm2(r0)
+  // double norm2Rk=rk*rk;
+  double norm2Rk=parallelPS(rk, rk);
+  printf("nVertRenum: %i\n",nVertRenum);  
+  printf("normRk : %g\n",sqrt(norm2Rk));
+  double norm2Rk1=norm2Rk;
+  //-- tant que epsilon>precision
+  printf("beginning while\n");
+  while(epsilon>precision&&nIt<nItMax){
+    //-->> alphak=norm(rk)/normA(pK)
+    // A.mult(pk,Apk);
+    _parallelMultUnassMatVect(v, matElem, pk, Apk);
+    _parallelApplyBC(Apk,zero,indFixed); //
+    double alphak=norm2Rk/parallelPS(pk, Apk);
+    //-->> xk+1=xk+alphak*pk
+    _parallelAxpy(x,pk,alphak);
+    // for(std::size_t k=0;k<nVertRenum*_dim;k++){
+    //   // x(k)=x(k)+alphak*pk(k);
+    //   x(k)+=alphak*pk(k);
+    // }
+    _parallelApplyBC(x,bcX,indFixed); //
+    // _parallelApplyBC(x,bcX,indFixed);
+    //-->> rk+1=rk-alphak*A*pk
+    _parallelFullVectorCopy(rk1,rk);
+    _parallelAxpy(rk1,Apk,-alphak);
+    // for(std::size_t k=0;k<nVertRenum*_dim;k++){
+    //   rk1(k)=rk(k)-alphak*Apk(k);
+    // }
+    _parallelApplyBC(rk1,zero,indFixed); //
+    //-->> calcul norm(rk+1)
+    // norm2Rk1=rk1*rk1;
+    norm2Rk1=parallelPS(rk1, rk1);
+    //-->> bk=norm(rk+1)/norm(rk)
+    // double betak=(rk1*rk1)/(rk*rk);
+    double betak=norm2Rk1/norm2Rk;
+    //-->> pk+1=rk+betak*pk
+    _parallelFullVectorCopy(pk1,rk1);
+    _parallelAxpy(pk1,pk,betak);
+    // for(std::size_t k=0;k<nVertRenum*_dim;k++){
+    //   pk1(k)=rk1(k)+betak*pk(k);
+    // }
+    _parallelApplyBC(pk1,zero,indFixed); //
+    //-->> k=k+1
+    //-->> update rk pk and norm2Rk
+    fullVector<double> temp(rk1.getDataPtr(),rk1.size());
+    rk1.setAsProxy(rk,0,rk.size());
+    rk.setAsProxy(temp,0,temp.size());
+    temp.setAsProxy(pk1.getDataPtr(),pk1.size());
+    pk1.setAsProxy(pk,0,pk.size());
+    pk.setAsProxy(temp,0,temp.size());
+    // for(std::size_t k=0;k<nVertRenum*_dim;k++){
+    //   rk(k)=rk1(k);
+    //   pk(k)=pk1(k);
+    // }
+    //    
+    norm2Rk=norm2Rk1;
+    //-->> epsilon= norm(rk+1)
+    epsilon = sqrt(norm2Rk);
+    nIt++;
+    printf("--- iter %i epsilon : %g\n",nIt,epsilon);
+  }
+  printf("end while\n");
+  // assume that the mesh is OK, yet already curved
+  Msg::Info("Generating elastic system...");
+  // dofManager<double> myAssembler(lsys);
 
-  if(myAssembler.sizeOfR()) {
-    // assembly of the elasticity term on the
-    for(std::size_t i = 0; i < v.size(); i++) {
-      SElement se(v[i]);
-      if(mixed)
-        El_mixed.addToMatrix(myAssembler, &se);
-      else
-        El.addToMatrix(myAssembler, &se);
-    }
-    Msg::Info("Solving linear system (%d unknowns)...", myAssembler.sizeOfR());
-    // solve the system
-    lsys->systemSolve();
-  }
+  // std::set<MVertex *, MVertexPtrLessThan> _vertices;
+
+  // Boundary Conditions & Numbering
+
+  // // fix all dof that correspond to vertices on the boundary the value is equal
+  // for(std::size_t i = 0; i < v.size(); i++) {
+  //   for(int j = 0; j < v[i]->getNumVertices(); j++) {
+  //     MVertex *vert = v[i]->getVertex(j);
+  //     _vertices.insert(vert);
+  //   }
+  // }
+
+  // for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
+  //     it != _vertices.end(); ++it) {
+  //   MVertex *vert = *it;
+  //   std::map<MVertex *, SVector3>::iterator itt = _targetLocation.find(vert);
+  //   // impose displacement @ boundary
+  //   if(itt != _targetLocation.end() && vert->onWhat()->dim() < _dim) {
+  //     myAssembler.fixVertex(vert, 0, _tag, itt->second.x() - vert->x());
+  //     myAssembler.fixVertex(vert, 1, _tag, itt->second.y() - vert->y());
+  //     myAssembler.fixVertex(vert, 2, _tag, itt->second.z() - vert->z());
+  //   }
+  //   // ensure we do not touch any vertex that is on the boundary
+  //   else if(vert->onWhat()->dim() < _dim) {
+  //     myAssembler.fixVertex(vert, 0, _tag, 0);
+  //     myAssembler.fixVertex(vert, 1, _tag, 0);
+  //     myAssembler.fixVertex(vert, 2, _tag, 0);
+  //   }
+  //   if(_dim == 2) myAssembler.fixVertex(vert, 2, _tag, 0);
+  //   // number vertices
+  //   myAssembler.numberVertex(vert, 0, _tag);
+  //   myAssembler.numberVertex(vert, 1, _tag);
+  //   myAssembler.numberVertex(vert, 2, _tag);
+  // }
+
+  // if(myAssembler.sizeOfR()) {
+  //   // assembly of the elasticity term on the
+  //   for(std::size_t i = 0; i < v.size(); i++) {
+  //     SElement se(v[i]);
+  //     El.addToMatrix(myAssembler, &se);
+  //   }
+  //   Msg::Info("Solving linear system (%d unknowns)...", myAssembler.sizeOfR());
+  //   // solve the system
+  //   lsys->systemSolve();
+  //   printf("size of R:%i\n",myAssembler.sizeOfR());
+  //   printf("size of F:%i\n",myAssembler.sizeOfF());
+  // }
 
   // Move vertices @ maximum
   //FILE *fd = Fopen("d.msh", "w");
   //fprintf(fd, "$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n"
   //            "\"tr(sigma)\"\n1\n0.0\n3\n1\n3\n%d\n",
   //            (int)_vertices.size());
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
-      it != _vertices.end(); ++it) {
+  double normRes=0.0;
+  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vertices1.begin();
+      it != vertices1.end(); ++it) {
+    MVertex *vert = *it;
     double ax, ay, az;
-    myAssembler.getDofValue(*it, 0, _tag, ax);
-    myAssembler.getDofValue(*it, 1, _tag, ay);
-    myAssembler.getDofValue(*it, 2, _tag, az);
-    (*it)->x() += max_incr * ax;
-    (*it)->y() += max_incr * ay;
-    (*it)->z() += max_incr * az;
+    // myAssembler.getDofValue(*it, 0, _tag, ax);
+    // myAssembler.getDofValue(*it, 1, _tag, ay);
+    // myAssembler.getDofValue(*it, 2, _tag, az);
+    // normRes+=(ax-x(_dim*vert->getIndex()+0))*(ax-x(_dim*vert->getIndex()+0)) + (ay-x(_dim*vert->getIndex()+1))*(ay-x(_dim*vert->getIndex()+1)) + (az-x(_dim*vert->getIndex()+2))*(az-x(_dim*vert->getIndex()+2));
+    // (*it)->x() += max_incr * ax;
+    // (*it)->y() += max_incr * ay;
+    // (*it)->z() += max_incr * az;
+    (*it)->x() += max_incr * x(_dim*vert->getIndex()+0);
+    (*it)->y() += max_incr * x(_dim*vert->getIndex()+1);
+    (*it)->z() += max_incr * x(_dim*vert->getIndex()+2);
     //fprintf(fd, "%d %g %g %g\n", (*it)->getIndex(), ax, ay, az);
   }
+  normRes=sqrt(normRes);
+  printf("error cg: %g\n",normRes);
   //fprintf(fd, "$EndNodeData\n");
   //fclose(fd);
 
@@ -711,28 +1183,28 @@ double highOrderTools::_applyIncrementalDisplacement(
   // (*_vertices.begin())->onWhat()->model()->writeMSH(meshName);
 
   double percentage = max_incr * 100.;
-  while(1) {
-    std::vector<MElement *> disto;
-    double minD;
-    getDistordedElements(v, 0.5, disto, minD);
-    if(minD < thres) {
-      percentage -= 10.;
-      for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
-          it != _vertices.end(); ++it) {
-        double ax, ay, az;
-        myAssembler.getDofValue(*it, 0, _tag, ax);
-        myAssembler.getDofValue(*it, 1, _tag, ay);
-        myAssembler.getDofValue(*it, 2, _tag, az);
-        (*it)->x() -= .1 * ax;
-        (*it)->y() -= .1 * ay;
-        (*it)->z() -= .1 * az;
-      }
-    }
-    else
-      break;
-  }
+  // while(1) {
+  //   std::vector<MElement *> disto;
+  //   double minD;
+  //   getDistordedElements(v, 0.5, disto, minD);
+  //   if(minD < thres) {
+  //     percentage -= 10.;
+  //     for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
+  //         it != _vertices.end(); ++it) {
+  //       double ax, ay, az;
+  //       myAssembler.getDofValue(*it, 0, _tag, ax);
+  //       myAssembler.getDofValue(*it, 1, _tag, ay);
+  //       myAssembler.getDofValue(*it, 2, _tag, az);
+  //       (*it)->x() -= .1 * ax;
+  //       (*it)->y() -= .1 * ay;
+  //       (*it)->z() -= .1 * az;
+  //     }
+  //   }
+  //   else
+  //     break;
+  // }
 
-  delete lsys;
+  // delete lsys;
   return percentage;
 }
 
