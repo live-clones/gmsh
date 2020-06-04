@@ -1376,26 +1376,43 @@ int GModel::setOrderN(int order, int linear, int incomplete)
 
 int GModel::getMeshStatus(bool countDiscrete)
 {
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteVolume &&
-                          (*it)->meshAttributes.method != MESH_NONE)) &&
-       ((*it)->tetrahedra.size() || (*it)->hexahedra.size() ||
-        (*it)->prisms.size() || (*it)->pyramids.size() ||
-        (*it)->polyhedra.size() || (*it)->trihedra.size()))
-      return 3;
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteSurface &&
-                          (*it)->meshAttributes.method != MESH_NONE)) &&
-       ((*it)->triangles.size() || (*it)->quadrangles.size() ||
-        (*it)->polygons.size()))
-      return 2;
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteCurve &&
-                          (*it)->meshAttributes.method != MESH_NONE)) &&
-       (*it)->lines.size())
-      return 1;
+  std::size_t numEle3D = 0;
+  bool toMesh3D = false;
+  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+    numEle3D += (*it)->getNumMeshElements();
+    if(countDiscrete && numEle3D) return 3;
+    if((*it)->geomType() != GEntity::DiscreteVolume &&
+       (*it)->meshAttributes.method != MESH_NONE) toMesh3D = true;
+  }
+  if(numEle3D && toMesh3D) return 3;
+
+  std::size_t numEle2D = 0;
+  bool toMesh2D = false, meshDone2D = true;
+  for(fiter it = firstFace(); it != lastFace(); ++it) {
+    numEle2D += (*it)->getNumMeshElements();
+    if(countDiscrete && numEle2D) return 2;
+    if((*it)->geomType() != GEntity::DiscreteSurface &&
+       (*it)->meshAttributes.method != MESH_NONE) toMesh2D = true;
+    if((*it)->meshStatistics.status != GEntity::DONE) meshDone2D = false;
+  }
+  if(numEle2D && toMesh2D && meshDone2D)
+    return 2;
+
+  std::size_t numEle1D = 0;
+  bool toMesh1D = false, meshDone1D = true;
+  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+    numEle1D += (*it)->getNumMeshElements();
+    if(countDiscrete && numEle1D) return 1;
+    if((*it)->geomType() != GEntity::DiscreteCurve &&
+       (*it)->meshAttributes.method != MESH_NONE) toMesh1D = true;
+    if((*it)->meshStatistics.status != GEntity::DONE) meshDone1D = false;
+  }
+  if(numEle1D && toMesh1D && meshDone1D)
+    return 1;
+
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;
+
   return -1;
 }
 
