@@ -300,118 +300,6 @@ static uint64_t* scanbsearch(uint64_t* array, uint64_t key, size_t num)
 }
 
 
-static int getNewPointsFirstPass(HXTMesh* mesh, double* nodalSizes, double* newVertices, uint64_t tet)
-{
-  if(getProcessedFlag(mesh, tet) || mesh->tetrahedra.node[4*tet+3]==HXT_GHOST_VERTEX)
-    return 0;
-
-  // we want to insert only in spire-like tetrahedra.
-  // we try only those with exactly one face which is constrained
-  int facetID = -1;
-  for(int i=0; i<4; i++) {
-    if(getFacetConstraint(mesh, tet, i)) {
-      if(facetID >= 0)
-        return 0;
-      facetID = i;
-    }
-  }
-
-  if(facetID==-1) {// tetrahedron is completely on the interior
-    if(newVertices!=NULL) {
-      double p[4][4];
-      double s[4];
-      getTetCoordAndNodalSize(mesh, nodalSizes, tet, p, s);
-      getBestCenter(p, s, newVertices);
-    }
-    return 1;
-  }
-
-  // TODO: we have to have another rule for "spire-like"
-  // the volume, compared to the size of that facet, should be big V/A > 2 biggest edge of the facet
-  // the surface should be the smallest by a big margin...
-  uint32_t p0 = mesh->tetrahedra.node[4*tet + facetID]; // the opposite node ID
-  uint32_t p1 = mesh->tetrahedra.node[4*tet + getNode0FromFacet(facetID)];
-  uint32_t p2 = mesh->tetrahedra.node[4*tet + getNode1FromFacet(facetID)];
-  uint32_t p3 = mesh->tetrahedra.node[4*tet + getNode2FromFacet(facetID)];
-
-  if(nodalSizes[p0] <= 0.0 || nodalSizes[p0] == DBL_MAX ||
-     nodalSizes[p1] <= 0.0 || nodalSizes[p1] == DBL_MAX ||
-     nodalSizes[p2] <= 0.0 || nodalSizes[p2] == DBL_MAX ||
-     nodalSizes[p3] <= 0.0 || nodalSizes[p3] == DBL_MAX)
-    return 0;
-
-  double* v1 = &mesh->vertices.coord[4*p1];
-  double* v2 = &mesh->vertices.coord[4*p2];
-  double* v3 = &mesh->vertices.coord[4*p3];
-
-  // we will insert points along the line that links the "center" of the constrained facet to the opposite node
-  // tbe center here, is simply the barycenter (we suppose that the mesh size doesn't vary much on the surface mesh)
-  double vb[3] = {
-                  0.33333333333333333*(v1[0]+v2[0]+v3[0]),
-                  0.33333333333333333*(v1[1]+v2[1]+v3[1]),
-                  0.33333333333333333*(v1[2]+v2[2]+v3[2])
-  };
-  double sb = 0.33333333333333333*(nodalSizes[p1]+nodalSizes[p2]+nodalSizes[p3]);
-
-  double* va = &mesh->vertices.coord[4*p0];
-  double sa = nodalSizes[p0];
-
-  double ax = v2[0] - v1[0];
-  double ay = v2[1] - v1[1];
-  double az = v2[2] - v1[2];
-  double bx = v3[0] - v1[0];
-  double by = v3[1] - v1[1];
-  double bz = v3[2] - v1[2];
-  double cx = va[0] - v1[0];
-  double cy = va[1] - v1[1];
-  double cz = va[2] - v1[2];
-
-  double crossabx = ay*bz - az*by;
-  double crossaby = az*bx - ax*bz;
-  double crossabz = ax*by - ay*bx;
-
-  double alength2 = ax*ax + ay*ay + az*az;
-  double blength2 = bx*bx + by*by + bz*bz;
-  double dlength2 = (bx-ax)*(bx-ax) + (by-ay)*(by-ay) + (bz-az)*(bz-az);
-
-  double e = sqrt(fmax(fmax(alength2, blength2),dlength2));
-  double A2 = sqrt(crossabx*crossabx + crossaby*crossaby + crossabz*crossabz);
-  double V6 = crossabx*cx + crossaby*cy + crossabz*cz;
-
-
-  // HXT_INFO("volume: %f, area: %f, height: %f, edge: %f", V6, A2, V6/A2, e);
-
-  if(V6/A2*sb < e*(sa + sb)){
-    return 0;
-  }
-
-  double dx = sqrt(square_dist(va, vb));
-  double ds = sb - sa;
-
-  int n = 0.7*log2(sb/sa)/log2((2*dx + ds)/(2*dx - ds));
-
-  if(n < 2.0)
-    return 0;
-
-  if(newVertices!=NULL) {
-
-    double rs = sb/sa;
-    // now just fill the newVertices array by subdividing a-b
-    for(int i=1; i<n/2; i++) {
-      double si = pow(rs, (double) i/n) * sa;
-      double alpha = (si - sa)/ds;
-
-      newVertices[4*(i-1) + 0] = (1.0 - alpha) * va[0] + alpha * vb[0];
-      newVertices[4*(i-1) + 1] = (1.0 - alpha) * va[1] + alpha * vb[1];
-      newVertices[4*(i-1) + 2] = (1.0 - alpha) * va[2] + alpha * vb[2];
-      newVertices[4*(i-1) + 3] = si; // this is the precomputed nodalSize
-    }
-  }
-
-  return n/2-1;
-}
-
-
 
 /* To balance the work between threads, we need, for each thread `t`:
  *  1 at which tetrahedron it needs to start creating points
@@ -429,10 +317,8 @@ static int getNewPointsFirstPass(HXTMesh* mesh, double* nodalSizes, double* newV
  *  - startPt[0] = 0
  *  - startTet[maxThreads] = mesh->tetrahedra.num
  *  - `startPt[t+1] - startPt[t]` gives how many point will be created by thread t
- *
- * if an edgeFlag array is given, balanceRefineWork suppose that
  */
-static HXTStatus balanceRefineWork(HXTMesh* mesh, double* nodalSizes, uint32_t* startPt, size_t* startTet, int maxThreads)
+static HXTStatus balanceRefineWork(HXTMesh* mesh, uint32_t* startPt, size_t* startTet, int maxThreads)
 {
   size_t* scan;
   uint32_t ptPerThreadGoal;
@@ -443,19 +329,10 @@ static HXTStatus balanceRefineWork(HXTMesh* mesh, double* nodalSizes, uint32_t* 
     int threadID = omp_get_thread_num();
     startPt[threadID] = 0;
 
-    if(nodalSizes!=NULL) { // it's the first pass... we do a special insertion to eliminate spire-like tetrahedra
-      #pragma omp for
-      for(uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-        scan[i] = getNewPointsFirstPass(mesh, nodalSizes, NULL, i);
-        startPt[threadID] += scan[i];
-      }
-    }
-    else {
-      #pragma omp for
-      for(uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-        scan[i] = getProcessedFlag(mesh, i)==0;
-        startPt[threadID] += scan[i];
-      }
+    #pragma omp for
+    for(uint64_t i=0; i<mesh->tetrahedra.num; i++) {
+      scan[i] = getProcessedFlag(mesh, i)==0;
+      startPt[threadID] += scan[i];
     }
 
     #pragma omp barrier
@@ -515,55 +392,11 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
   uint32_t* startPt; // see balanceRefineWork
   HXT_CHECK( hxtMalloc(&startPt, (maxThreads+1)*sizeof(uint32_t)) );
 
-  // the first pass is a little bit different, we do it out of the loop
-  delOptions->insertionFirst = mesh->vertices.num;
-
-  HXT_CHECK( balanceRefineWork(mesh, delOptions->nodalSizes, startPt, startTet, maxThreads) );
-
-  uint32_t totNewPts = startPt[maxThreads];
-
-  HXT_INFO_COND(delOptions->verbosity>0, "Beginning refinement: breaking spires");
-  HXT_INFO_COND(delOptions->verbosity>1, "Refinement adds %u points from %" HXTu64 " tetrahedra", totNewPts, mesh->tetrahedra.num);
-
-  if(totNewPts!=0) {
-    mesh->vertices.num += totNewPts;
-    HXT_CHECK( hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double) * 4 * mesh->vertices.num) );
-    mesh->vertices.size = mesh->vertices.num;
-
-    #pragma omp parallel
-    {
-      int threadID = omp_get_thread_num();
-      uint32_t ptIndex = startPt[threadID] + delOptions->insertionFirst;
-
-      for(uint64_t tet=startTet[threadID]; tet<startTet[threadID+1]; tet++) {
-        ptIndex += getNewPointsFirstPass(mesh, delOptions->nodalSizes, &mesh->vertices.coord[4*ptIndex], tet);
-      }
-    }
-
-    // compute the effective mesh size
-    if(meshSizeFun!=NULL)
-      HXT_CHECK( meshSizeFun(mesh->vertices.coord, totNewPts, meshSizeData) );
-
-    HXT_CHECK( hxtAlignedRealloc(&delOptions->nodalSizes, sizeof(double)*mesh->vertices.num) );
-
-    #pragma omp parallel for
-    for(int i=delOptions->insertionFirst; i<mesh->vertices.num; i++) {
-      delOptions->nodalSizes[i] = mesh->vertices.coord[4*i + 3];
-    }
-
-    delOptions->partitionability = 0.0;
-    // delOptions->nodalSizes = NULL;
-    HXT_CHECK(hxtDelaunay(mesh, delOptions));
-  }
-
-  // return HXT_STATUS_OK;
-
-
-  for(int iter=1; iter<42; iter++) {
+  for(int iter=0; iter<42; iter++) {
 
     delOptions->insertionFirst = mesh->vertices.num;
 
-    HXT_CHECK( balanceRefineWork(mesh, NULL, startPt, startTet, maxThreads) );
+    HXT_CHECK( balanceRefineWork(mesh, startPt, startTet, maxThreads) );
 
     uint32_t totNewPts = startPt[maxThreads];
 
