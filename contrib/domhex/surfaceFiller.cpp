@@ -108,7 +108,7 @@ bool compute4neighbors(
   }
   
   // compute the corners of the box as well
-  double LSQR = L *sqrt(2.0);
+  double LSQR = L ;
   SVector3 b1 = t1+t2;
   b1.normalize();
   SVector3 b2 = t1-t2;
@@ -168,7 +168,7 @@ bool compute4neighbors(
     double L2 = test.norm();
     double DIFF_ANG = fabs(dot(orthodirs[i],test)) / L2;
     double DIFF_L   = fabs(L2-LS[i]);
-    if (singular || DIFF_L > .01*LS[i] || DIFF_ANG > .1){
+    if (singular || DIFF_L > .1*LS[i] || DIFF_ANG > .1){
       curveFunctorCircle cf(dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()), LS[i]);
       double uvt[3] = {newPoint[i][0], newPoint[i][1], 0.0}; //
       if(intersectCurveSurface(cf, ss, uvt, size_1 * 1.e-6)) { 
@@ -204,6 +204,113 @@ bool compute4neighbors(
   return true;
 }
 
+// at crossfield singularities, directions are undefined
+// we draw a circle around
+void createSingularPatches (GFace *gf, std::map<MVertex *, int> &s, Field *f, std::vector<MVertex*> &toInsert){
+
+  FILE *_f = fopen("patches.pos","w");
+  fprintf(_f,"View \"\"{\n");
+  for (std::map<MVertex *, int>::iterator it = s.begin();it != s.end() ; ++it){
+    SPoint2 midpoint;
+    SPoint2 newP[8];
+    SMetric3 metricField;
+    compute4neighbors(gf, it->first, midpoint, newP, metricField, f, 0, 0, it->second == 5 ? .25 : 1); 
+    //the 8 points (I know, it's strange ...)
+    //                 2  
+    //             7       6
+    //          1             3  
+    //             4       5
+    //                 0
+
+    // get the unit normal at that point
+    Pair<SVector3, SVector3> der =
+      gf->firstDer(SPoint2(midpoint[0], midpoint[1]));
+    SVector3 s1 = der.first();
+    SVector3 s2 = der.second();
+    SVector3 n = crossprod(s1, s2);
+    n.normalize();
+    
+    int loop [8] = {0,4,1,7,2,6,3,5};
+    SVector3 t0[8],t1[8];
+    GPoint p0[8];
+    std::vector<double> dots;
+    std::vector<SPoint3> pts;
+    for (int i=0;i<8;i++){
+      p0[i] = gf->point(newP[loop[i]]);
+      (*f)(p0[i].x(), p0[i].y(),p0[i].z(),t0[i], gf);      
+      t0[i] -= n*dot(t0[i],n);
+      t0[i].normalize();  
+      t1[i] = crossprod(n, t0[i]);
+      t1[i].normalize();
+    }
+    int nSamples = 30;
+    SPoint3 p(it->first->x(),it->first->y(),it->first->z());
+    for (int i=0;i<8;i++){
+      SVector3 t0i = t0[i];
+      SVector3 t1i = t1[i];
+      SVector3 t0n = t0[(i+1)%8];
+      SVector3 t1n = t1[(i+1)%8];
+      if (fabs(dot(t0i,t0n)) < fabs(dot(t0i,t1n))){
+	SVector3 temp_ = t0n;
+	t0n = t1n;
+	t1n = temp_;	
+      }
+      if (dot(t0i,t0n) < 0)t0n = t0n * (-1.0);
+      if (dot(t1i,t1n) < 0)t1n = t1n * (-1.0);
+
+      GPoint pi = p0[i];
+      GPoint pn = p0[(i+1)%8];
+      fprintf(_f,"SP(%g,%g,%g){%d};\n",
+	      pi.x(),pi.y(),pi.z(),i);
+      for (int j=0;j<nSamples;j++){
+	double xi = (double)j/(nSamples);
+	SPoint3 pij (pi.x()*(1-xi)+pn.x()*xi,pi.y()*(1-xi)+pn.y()*xi,pi.z()*(1-xi)+pn.z()*xi);
+	SVector3 vij = p-pij;
+	pts.push_back (pij);
+	vij.normalize();
+	SVector3 v0 = t0i*(1-xi) + t0n*xi;
+	SVector3 v1 = t1i*(1-xi) + t1n*xi;
+	v0.normalize();
+	v1.normalize();
+	double dot0 = fabs(dot(v0,vij));
+	double dot1 = fabs(dot(v1,vij));
+	dots.push_back(std::max(dot0,dot1));
+	fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",
+		pij.x(),pij.y(),pij.z(),
+		dot0*v0.x(),dot0*v0.y(),dot0*v0.z());
+	fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",
+		pij.x(),pij.y(),pij.z(),
+		dot1*v1.x(),dot1*v1.y(),dot1*v1.z());
+      }
+    }           
+
+    int nbMax = 0;
+    for (size_t i=0;i<pts.size();i++){
+      double V0 = dots[i];
+      double V1 = dots[(i+1)%pts.size()];
+      double V2 = dots[(i+2)%pts.size()];
+      if (V1 > V0 && V1 > V2){
+	double uvt[2] = {0,0};
+	GPoint pp = gf->closestPoint(pts[i] ,uvt);
+	MFaceVertex *vv = new MFaceVertex (pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
+	toInsert.push_back(vv);
+	nbMax++;
+      }
+    }
+    if (nbMax == it-> second)printf("singularity %lu has a good set of %d sampling points\n",it->first->getNum(),nbMax);
+    else {
+      toInsert.resize(toInsert.size() - nbMax);
+      printf("singularity %lu has a bad set of %d vs %d sampling points\n",it->first->getNum(),nbMax,it->second);
+    }
+  }
+			
+  fprintf(_f,"};\n");
+  fclose(_f);
+  
+}
+
+
+
 bool outBounds(SPoint2 p, GFace *gf){
   for (int i=0;i<2;i++){
     Range<double> bnds = gf->parBounds(i);
@@ -231,10 +338,49 @@ bool close2sing(std::vector<MVertex*> &s, GFace *gf, SPoint2 p, Field *f){
 }
 
 
+static void findPhysicalGroupsForSingularities(GFace *gf,
+                                               std::map<MVertex *, int> &temp)
+{
+ 
+  std::set<GVertex *, GEntityPtrLessThan> emb = gf->embeddedVertices();
+  if (emb.empty())return;
+
+  std::map<int, std::vector<GEntity *> > groups[4];
+  gf->model()->getPhysicalGroups(groups);
+  for(std::map<int, std::vector<GEntity *> >::iterator it = groups[0].begin();
+      it != groups[0].end(); ++it) {
+    std::string name = gf->model()->getPhysicalName(0, it->first);
+    if(name == "SINGULARITY_OF_INDEX_THREE") {
+      for(size_t j = 0; j < it->second.size(); j++) {
+	if (emb.find((GVertex*)it->second[j]) != emb.end()){
+	  if(!it->second[j]->mesh_vertices.empty())
+	    temp[it->second[j]->mesh_vertices[0]] = 3;
+	}
+      }
+    }
+    else if(name == "SINGULARITY_OF_INDEX_FIVE") {
+      for(size_t j = 0; j < it->second.size(); j++) {
+	if (emb.find((GVertex*)it->second[j]) != emb.end()){
+	  if(!it->second[j]->mesh_vertices.empty())
+	    temp[it->second[j]->mesh_vertices[0]] = 5;
+	}
+      }
+    }
+    else if(name == "SINGULARITY_OF_INDEX_SIX") {
+      for(size_t j = 0; j < it->second.size(); j++) {
+	if (emb.find((GVertex*)it->second[j]) != emb.end()){
+	  if(!it->second[j]->mesh_vertices.empty())
+	    temp[it->second[j]->mesh_vertices[0]] = 6;
+	}
+      }
+    }
+  }
+}
+
+
 void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
                              std::vector<SMetric3> &metrics)
 {
-
 
   char ccc[256];
   sprintf(ccc, "points%d.pos", gf->tag());
@@ -266,10 +412,15 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     return;
   }
 
+  std::map<MVertex *, int, MVertexPtrLessThan> cf_singularities;
+  //  std::vector<MVertex*> toInsert;
+  //  findPhysicalGroupsForSingularities(gf,cf_singularities);
+  //  createSingularPatches (gf, cf_singularities,cross_field,toInsert);
+  
   const bool goNonLinear = true;
   
   // get all the boundary vertices
-  std::set<MVertex *> bnd_vertices;
+  std::set<MVertex *, MVertexPtrLessThan> bnd_vertices;
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *element = gf->getMeshElement(i);
     for(std::size_t j = 0; j < element->getNumVertices(); j++) {
@@ -288,10 +439,9 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   RTree<surfacePointWithExclusionRegion *, double, 2, double> rtree;
   SMetric3 metricField(1.0);
   SPoint2 newp[8];
-  std::set<MVertex *>::iterator it = bnd_vertices.begin();
+  std::set<MVertex *, MVertexPtrLessThan>::iterator it = bnd_vertices.begin();
 
-  std::vector<MVertex*> singularities;
-  
+  std::vector<MVertex*> singularities;  
   for(; it != bnd_vertices.end(); ++it) {
 
     int NP = 1;
@@ -321,7 +471,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     //    printf("%d vertices created %g %g %g\n",NP,du[0],du[1],du[2]);
     for (int i=0;i<NP;i++){
       bool singular = !compute4neighbors(gf, *it, midpoint, newp, metricField, cross_field, du[i],dv[i],globalMult );
-      if (!singular){
+      if (!singular && cf_singularities.find(*it) == cf_singularities.end()){
 	surfacePointWithExclusionRegion *sp =
 	  new surfacePointWithExclusionRegion(*it, newp, midpoint, metricField);
 	vertices.push_back(sp);
@@ -337,6 +487,19 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     }
   }
 
+  // patches
+  //  for (size_t i=0;i<toInsert.size(); i++){
+  //    SPoint2 midpoint;
+  //    compute4neighbors(gf,  toInsert[i], midpoint, newp, metricField, cross_field, 0,0,1 );
+  //    surfacePointWithExclusionRegion *sp =
+  //      new surfacePointWithExclusionRegion(toInsert[i], newp, midpoint, metricField);    
+    //    fifo.push(sp);
+  //    vertices.push_back(sp);
+  //    double _min[2], _max[2];
+  //    sp->minmax(_min, _max);
+  //    rtree.Insert(_min, _max, sp);
+  //  }
+  
   //  printf("initially : %d vertices in the domain\n",vertices.size());
 
   while(!fifo.empty()) {
