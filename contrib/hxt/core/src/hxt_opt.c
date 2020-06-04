@@ -164,7 +164,7 @@ static HXTStatus optionListReserve(int n)
 	}
 	else if(optionListLength + n > optionListSize) {
 		optionListSize = MAX(2*optionListSize, optionListLength + n);
-		HXT_CHECK( hxtRealloc(&optionList, optionListSize) );
+		HXT_CHECK( hxtRealloc(&optionList, optionListSize*sizeof(HXTOption)) );
 	}
 	return HXT_STATUS_OK;
 }
