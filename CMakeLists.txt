@@ -30,7 +30,6 @@ macro(opt OPTION HELP VALUE)
 endmacro()
 
 opt(3M "Enable proprietary 3M extension" OFF)
-opt(ACIS "Enable ACIS geometrical models (experimental)" ${DEFAULT})
 opt(ALGLIB "Enable ALGLIB (used by some mesh optimizers)" ${DEFAULT})
 opt(ANN "Enable ANN (used for fast point search in mesh/post)" ${DEFAULT})
 opt(BAMG "Enable Bamg 2D anisotropic mesh generator" ${DEFAULT})
@@ -79,30 +78,32 @@ opt(OPENMP "Enable OpenMP" OFF)
 opt(OPTHOM "Enable high-order mesh optimization tools" ${DEFAULT})
 opt(OS_SPECIFIC_INSTALL "Enable OS-specific (e.g. app bundle) installation" OFF)
 opt(OSMESA "Enable OSMesa for offscreen rendering (experimental)" OFF)
-opt(P4EST "Enable p4est for enabling automatic mesh size firld (experimental)" OFF)
+opt(P4EST "Enable p4est for enabling automatic mesh size field (experimental)" OFF)
 opt(PACKAGE_STRIP "Strip symbols in install packages to reduce install size" ON)
-opt(PARSER "Enable GEO file parser (required for .geo/.pos files)" ${DEFAULT})
+opt(PARSER "Enable GEO file parser (required for .geo/.pos scripts)" ${DEFAULT})
 opt(PETSC "Enable PETSc linear solvers (required for SLEPc)" OFF)
 opt(PLUGINS "Enable post-processing plugins" ${DEFAULT})
 opt(POST "Enable post-processing module (required by GUI)" ${DEFAULT})
 opt(POPPLER "Enable Poppler for displaying PDF documents (experimental)" OFF)
 opt(PRIVATE_API "Enable private API" OFF)
+opt(PRO "Enable PRO extensions" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
+opt(RPATH "Use RPATH in dynamically linked targets" ON)
 opt(SLEPC "Enable SLEPc eigensolvers" OFF)
-opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${DEFAULT})
+opt(SOLVER "Enable built-in finite element solvers (required for reparametrization)" ${DEFAULT})
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
-opt(WRAP_JAVA "Enable generation of Java wrappers for private API" OFF)
-opt(WRAP_PYTHON "Enable generation of Python wrappers for private API" OFF)
+opt(WRAP_JAVA "Generate SWIG Java wrappers for private API" OFF)
+opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by public API)" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 5)
-set(GMSH_PATCH_VERSION 4)
+set(GMSH_MINOR_VERSION 6)
+set(GMSH_PATCH_VERSION 0)
 set(GMSH_EXTRA_VERSION "")
 set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
 
@@ -120,8 +121,9 @@ if(NOT GMSH_RELEASE)
   set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION_TEXI} (development version)")
 endif()
 
-set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
-set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
+set(GMSH_SHORT_VERSION
+    "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}")
+set(GMSH_VERSION "${GMSH_SHORT_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
 set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
@@ -143,6 +145,14 @@ if(ENABLE_PRIVATE_API)
   if(IAMCHILD)
     set(GMSH_PRIVATE_API ${GMSH_PRIVATE_API} PARENT_SCOPE)
   endif()
+  if(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+    set(ENABLE_BUILD_DYNAMIC ON)
+    message(WARNING "SWIG wrappers for the private API are unsupported and "
+            "undocumented. The stable public Python API does not required SWIG.")
+  endif()
+endif()
+
+if(NOT ENABLE_BUILD_SHARED)
 endif()
 
 set(ONELAB_PY contrib/onelab/python/onelab.py)
@@ -212,11 +222,9 @@ macro(set_config_option VARNAME STRING)
   message(STATUS "Found " ${STRING})
 endmacro()
 
-# check if the machine is 64 bits (this is more reliable than using
-# CMAKE_SIZEOF_VOID_P, which does not seem to work e.g. on some Suse
-# machines)
-check_type_size("void*" SIZEOF_VOID_P)
-if(SIZEOF_VOID_P EQUAL 8)
+# check the size of size_t
+check_type_size("size_t" SIZEOF_SIZE_T)
+if(SIZEOF_SIZE_T EQUAL 8)
   set_config_option(HAVE_64BIT_SIZE_T "64Bit")
 endif()
 
@@ -229,26 +237,19 @@ if(NOT APPLE)
   endif()
 endif()
 
-if(NOT ENABLE_BUILD_SHARED)
-  if(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
-    set(ENABLE_BUILD_DYNAMIC ON)
-  endif()
-endif()
-
 if(ENABLE_BUILD_DYNAMIC)
   set(GMSH_OS "${GMSH_OS}-sdk")
 endif()
 
-if(APPLE)
-  # FIXME: change this once we understand rpaths - the options below do not work
-  set(CMAKE_MACOSX_RPATH 0)
-else()
-  # make sure that dynamic libraries can be found when installing/ displacing the
-  # binaries: from https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/
-  # RPATH-handling:
+if(ENABLE_RPATH)
+  set(CMAKE_MACOSX_RPATH 1)
+
+  # make sure that dynamic libraries can be found when installing/ displacing
+  # the binaries: from https://gitlab.kitware.com/cmake/community/wikis/doc/
+  # cmake/RPATH-handling:
 
   # use, i.e. don't skip the full RPATH for the build tree
-  set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+  set(CMAKE_SKIP_BUILD_RPATH FALSE)
 
   # when building, don't use the install RPATH already (but later on when
   # installing)
@@ -263,8 +264,15 @@ else()
   list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib"
        isSystemDir)
   if("${isSystemDir}" STREQUAL "-1")
-     set(CMAKE_INSTALL_RPATH "\\\$ORIGIN/../lib")
+    if(APPLE)
+      set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+    else()
+      set(CMAKE_INSTALL_RPATH "\\\$ORIGIN/../lib")
+    endif()
   endif()
+else()
+  set(CMAKE_MACOSX_RPATH 0)
+  set(CMAKE_SKIP_BUILD_RPATH TRUE)
 endif()
 
 if(MSVC)
@@ -294,12 +302,12 @@ endif()
 
 if(ENABLE_OPENMP)
   find_package(OpenMP)
-  if(OpenMP_FOUND)
+  if(OpenMP_FOUND OR OPENMP_FOUND)
     set_config_option(HAVE_OPENMP "OpenMP")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   elseif(APPLE AND EXISTS "/opt/local/lib/libomp")
-    # just for testing the official Apple compiler with macports' libomp
+    # official Apple compiler with macports' libomp
     set_config_option(HAVE_OPENMP "OpenMP[MacPorts]")
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
@@ -307,6 +315,7 @@ if(ENABLE_OPENMP)
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/local/lib/libomp -lomp")
   elseif(APPLE AND EXISTS "/usr/local/lib/libomp.dylib")
+    # official Apple compiler with homebrew's libomp
     set_config_option(HAVE_OPENMP "OpenMP[usr/local]")
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
@@ -569,7 +578,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Fltk AND ENABLE_FLTK)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --api-version
                     OUTPUT_VARIABLE FLTK_VERSION)
     string(STRIP "${FLTK_VERSION}" FLTK_VERSION)
-    if(FLTK_VERSION GREATER 1.1)
+    if(FLTK_VERSION VERSION_GREATER 1.1)
       add_subdirectory(Fltk)
       set_config_option(HAVE_FLTK "Fltk")
       message(STATUS "Using fltk-config script for Fltk " ${FLTK_VERSION})
@@ -649,8 +658,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Fltk AND ENABLE_FLTK)
 endif()
 
 if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
-  if(CMAKE_OSX_DEPLOYMENT_TARGET)
-    if(${CMAKE_OSX_DEPLOYMENT_TARGET} GREATER 10.11)
+  STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
+  if(OSX_SDK_VERSION)
+    if(${OSX_SDK_VERSION} VERSION_GREATER 10.11)
       set(GMSH_SRC ${GMSH_SRC};Fltk/touchBar.mm)
       set_config_option(HAVE_TOUCHBAR "TouchBar")
     endif()
@@ -766,8 +776,8 @@ if(ENABLE_ANN)
 endif()
 
 if(ENABLE_ALGLIB)
-  find_library(ALGLIB_LIB alglib PATH_SUFFIXES lib)
-  find_path(ALGLIB_INC "stdafx.h" PATH_SUFFIXES include)
+  find_library(ALGLIB_LIB alglib)
+  find_path(ALGLIB_INC "stdafx.h" PATH_SUFFIXES libalglib)
   if(ENABLE_SYSTEM_CONTRIB AND ALGLIB_LIB AND ALGLIB_INC)
     list(APPEND EXTERNAL_LIBRARIES ${ALGLIB_LIB})
     list(APPEND EXTERNAL_INCLUDES ${ALGLIB_INC})
@@ -915,8 +925,8 @@ if(HAVE_MESH)
   endif()
 
   if(ENABLE_VOROPP)
-    find_library(VOROPP_LIB voro++ PATH_SUFFIXES lib)
-    find_path(VOROPP_INC "voro++.hh" PATH_SUFFIXES include)
+    find_library(VOROPP_LIB voro++)
+    find_path(VOROPP_INC "voro++.hh" PATH_SUFFIXES voro++)
     if(ENABLE_SYSTEM_CONTRIB AND VOROPP_LIB AND VOROPP_INC)
       message(STATUS "Using system version of voro++")
       list(APPEND EXTERNAL_LIBRARIES ${VOROPP_LIB})
@@ -951,8 +961,8 @@ if(HAVE_MESH)
   endif()
 
   if(ENABLE_MMG3D)
-    find_library(MMG3D_LIB mmg3d PATH_SUFFIXES lib)
-    find_path(MMG3D_INC "libmmg3d.h" PATH_SUFFIXES src include)
+    find_library(MMG3D_LIB mmg3d)
+    find_path(MMG3D_INC "libmmg3d.h" PATH_SUFFIXES mmg/mmg3d)
     if(ENABLE_SYSTEM_CONTRIB AND MMG3D_LIB AND MMG3D_INC)
       list(APPEND EXTERNAL_LIBRARIES ${MMG3D_LIB})
       list(APPEND EXTERNAL_INCLUDES ${MMG3D_INC})
@@ -1197,29 +1207,14 @@ if(HAVE_SOLVER)
   endif()
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND
-   ENABLE_HXT AND HAVE_METIS)
-  set_config_option(HAVE_HXT "Hxt")
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
   add_subdirectory(contrib/hxt)
-  include_directories(BEFORE contrib/hxt)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/hxt_tetDelaunay.c)
-    set_config_option(HAVE_HXT3D "Hxt3D")
-  endif()
-  if(MSVC)
-    # Visual C++ does not support C99 - force compilation as C++ code
-    file(GLOB_RECURSE HXT_SRC contrib/hxt/*.c)
-    set_compile_flags(HXT_SRC "/TP")
-  endif()
-  check_include_file("immintrin.h" HAVE_IMMINTRIN_H)
-  if(NOT HAVE_IMMINTRIN_H)
-    add_definitions(-DHAVE_NO_IMMINTRIN_H)
-  endif()
-  if(HAVE_PETSC)
-    add_definitions(-DHXT_HAVE_PETSC)
-  endif()
-  if(CMAKE_C_COMPILER MATCHES "pgi")
-    add_definitions(-DHAVE_NO_OPENMP_SIMD)
-  endif()
+  include_directories(BEFORE ${HXT_INC_DIRS})
+  set_config_option(HAVE_HXT "Hxt")
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pro AND ENABLE_PRO)
+  add_subdirectory(pro)
 endif()
 
 if(ENABLE_OCC)
@@ -1340,18 +1335,6 @@ if(ENABLE_OCC)
       add_definitions(-DOCC_CONVERT_SIGNALS)
     elseif(MSVC)
       add_definitions(-DWNT)
-    endif()
-  endif()
-endif()
-
-if(ENABLE_ACIS)
-  find_library(ACIS_LIB SpaACIS PATH_SUFFIXES bin/maci386)
-  if(ACIS_LIB)
-    find_path(ACIS_INC "kernapi.hxx" PATH_SUFFIXES include)
-    if(ACIS_INC)
-      set_config_option(HAVE_ACIS "Acis")
-      list(APPEND EXTERNAL_LIBRARIES ${ACIS_LIB})
-      list(APPEND EXTERNAL_INCLUDES ${ACIS_INC})
     endif()
   endif()
 endif()
@@ -1557,11 +1540,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshConfig.h.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h)
 
-# the texi version file is modified in the source directory (not ideal, but
-# since git tracks the contents of the file this is acceptable as it will only
-# change when the actual version is changed - not for each git hash)
+# the texi and pypi version files are modified in the source directory (not
+# ideal for version.texi, but since git tracks the contents of the file this is
+# acceptable as it will only change when the actual version is changed - not for
+# each git hash; setup.py is not under version control)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
                ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py)
+
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 
 # process cmake environment variables so we can append them to the -I include
 # commands. This is not recommended (we should only use the cache variables) but
@@ -1664,6 +1654,11 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
       IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
   endif()
   target_link_libraries(shared ${LINK_LIBRARIES})
+  # don't define LC_RPATH in dylib for development, to not get endless warnings
+  # about code signing
+  if(APPLE AND NOT GMSH_RELEASE)
+    set_target_properties(shared PROPERTIES INSTALL_RPATH "")
+  endif()
   if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
     message(STATUS "Note: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
             "won't link. In MSVC change /MT to /MD in the shared project properties")
@@ -1767,7 +1762,11 @@ set(SDK_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/SDK.txt)
 set(LICENSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt)
 set(CREDITS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CREDITS.txt)
 set(CHANGELOG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.txt)
-file(GLOB TUTORIAL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/?*.*)
+file(GLOB TUTORIAL_GEO_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/?*.*)
+file(GLOB TUTORIAL_CPP_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/c++/?*.*)
+file(GLOB TUTORIAL_C_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/c/?*.*)
+file(GLOB TUTORIAL_PY_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/python/?*.*)
+file(GLOB TUTORIAL_JL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/julia/?*.*)
 file(GLOB DEMOS ${CMAKE_CURRENT_SOURCE_DIR}/demos/*)
 foreach(SUBDIR ${DEMOS})
   if(IS_DIRECTORY ${SUBDIR})
@@ -1823,7 +1822,11 @@ if(WIN32)
     unix2dos(LICENSE_FILE)
     unix2dos(CREDITS_FILE)
     unix2dos(CHANGELOG_FILE)
-    unix2dos(TUTORIAL_FILES)
+    unix2dos(TUTORIAL_GEO_FILES)
+    unix2dos(TUTORIAL_CPP_FILES)
+    unix2dos(TUTORIAL_C_FILES)
+    unix2dos(TUTORIAL_PY_FILES)
+    unix2dos(TUTORIAL_JL_FILES)
     foreach(DIR ${DEMOS_DIRS})
       file(GLOB DEMO_FILES ${DIR}/?*.*)
       unix2dos(DEMO_FILES)
@@ -1846,14 +1849,6 @@ else()
   set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
-# FIXME: change this once we understand rpaths
-if(APPLE)
-  if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
-    set_target_properties(shared PROPERTIES INSTALL_NAME_DIR
-                          ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
-  endif()
-endif()
-
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
 install(TARGETS gmsh DESTINATION ${GMSH_BIN} OPTIONAL)
@@ -1862,8 +1857,6 @@ if(ENABLE_BUILD_LIB)
 endif()
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
-  # FIXME once we cleanup the installation of the python module
-  install(TARGETS shared DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/api OPTIONAL)
 endif()
 
 if(ENABLE_ONELAB)
@@ -1885,7 +1878,11 @@ install(FILES ${WELCOME_FILE} DESTINATION ${GMSH_DOC} RENAME README.txt)
 install(FILES ${LICENSE_FILE} DESTINATION ${GMSH_DOC})
 install(FILES ${CREDITS_FILE} DESTINATION ${GMSH_DOC})
 install(FILES ${CHANGELOG_FILE} DESTINATION ${GMSH_DOC})
-install(FILES ${TUTORIAL_FILES} DESTINATION ${GMSH_DOC}/tutorial)
+install(FILES ${TUTORIAL_GEO_FILES} DESTINATION ${GMSH_DOC}/tutorial)
+install(FILES ${TUTORIAL_CPP_FILES} DESTINATION ${GMSH_DOC}/tutorial/c++)
+install(FILES ${TUTORIAL_C_FILES} DESTINATION ${GMSH_DOC}/tutorial/c)
+install(FILES ${TUTORIAL_PY_FILES} DESTINATION ${GMSH_DOC}/tutorial/python)
+install(FILES ${TUTORIAL_JL_FILES} DESTINATION ${GMSH_DOC}/tutorial/julia)
 foreach(DIR ${DEMOS_DIRS})
   get_filename_component(DEMOS_DIR_NAME ${DIR} NAME)
   file(GLOB DEMO_FILES ${DIR}/?*.*)
@@ -1922,7 +1919,7 @@ if(MAKEINFO)
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(txt DEPENDS ${TEX_DIR}/gmsh.txt)
   add_custom_command(OUTPUT ${TEX_DIR}/gmsh.html DEPENDS ${TEX_SRC}
-    COMMAND ${MAKEINFO} --html --css-ref=http://gmsh.info/gmsh.css
+    COMMAND ${MAKEINFO} --html --css-ref=/gmsh.css
     --no-split --set-customization-variable
     EXTRA_HEAD='<meta name="viewport" content="width=device-width,initial-scale=1.0">'
     ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
@@ -2072,6 +2069,11 @@ if(NOT DISABLE_GMSH_TESTS)
   file(GLOB_RECURSE TESTFILES
        tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
        benchmarks/occ/*.geo)
+  # disable this test for now on our Linux32 machine - the current config
+  # crashes on the OCC STL generation
+  if(${GMSH_OS} MATCHES "Linux32")
+    list(REMOVE_ITEM TESTFILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/t18.geo)
+  endif()
   foreach(TESTFILE ${TESTFILES})
     # use relative path for Cygwin/MinGW (the pure win exe built with the MinGW
     # compilers does not understand a full Cygwin-style path)
@@ -2080,6 +2082,35 @@ if(NOT DISABLE_GMSH_TESTS)
       add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
     endif()
   endforeach()
+  # test c++ api tutorials with dynamic builds (except on 32 bit windows for
+  # now: our win32 setup does not currently handle exceptions)
+  if(ENABLE_CXX11 AND ENABLE_BUILD_DYNAMIC AND NOT ${GMSH_OS} MATCHES "Windows32")
+    file(GLOB_RECURSE TESTFILES tutorial/c++/*.cpp)
+    foreach(TESTFILE ${TESTFILES})
+      get_filename_component(TEST ${TESTFILE} NAME_WE)
+      add_executable(${TEST} WIN32 ${TESTFILE})
+      target_link_libraries(${TEST} shared)
+      if(WIN32 AND NOT MSVC)
+        set_target_properties(${TEST} PROPERTIES LINK_FLAGS "-mwindows -static")
+      endif()
+      add_test(${TEST}_cpp ${TEST})
+    endforeach()
+  endif()
+  # enable this once we have removed the interactive/graphical tests
+  # if(ENABLE_BUILD_DYNAMIC)
+  #   find_package(PythonInterp)
+  #   if(PYTHONINTERP_FOUND)
+  #     file(GLOB_RECURSE TESTFILES tutorial/python/*.py)
+  #     foreach(TESTFILE ${TESTFILES})
+  #       get_filename_component(TEST ${TESTFILE} NAME_WE)
+  #       add_test(NAME ${TEST}_py COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
+  #       set_property(TEST ${TEST}_py APPEND PROPERTY ENVIRONMENT
+  #                    "PYTHONPATH=${CMAKE_SOURCE_DIR}/api")
+  #       set_property(TEST ${TEST}_py APPEND PROPERTY ENVIRONMENT
+  #                    "LD_LIBRARY_PATH=${CMAKE_CURRENT_BINARY_DIR}")
+  #       endforeach()
+  #   endif()
+  # endif()
 endif()
 
 message(STATUS "")
@@ -2093,7 +2124,7 @@ message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
 mark_as_advanced(GMSH_EXTRA_VERSION
-                 ACIS_LIB ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
+                 ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
                  GMP_INC GMP_LIB MMG3D_INC MMG3D_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB

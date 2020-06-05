@@ -191,8 +191,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double z = points[i][j + k].z();
         v[k] = pos.find(x, y, z);
         if(!v[k])
-          Msg::Error("Could not find node at position (%g, %g, %g) with tol=%g",
-                     x, y, z, eps);
+          Msg::Error("Could not find node at position (%.16g, %.16g, %.16g) "
+                     "with tol=%.16g", x, y, z, eps);
       }
       if(!v[0] || !v[1] || !v[2]) {
         // error
@@ -274,7 +274,7 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace*> &faces, bool binary,
           fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
           fprintf(fp, "  outer loop\n");
           for(int j = 0; j < 3; j++)
-            fprintf(fp, "    vertex %g %g %g\n", x[j] * scalingFactor,
+            fprintf(fp, "    vertex %.16g %.16g %.16g\n", x[j] * scalingFactor,
                     y[j] * scalingFactor, z[j] * scalingFactor);
           fprintf(fp, "  endloop\n");
           fprintf(fp, "endfacet\n");

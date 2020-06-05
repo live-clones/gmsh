@@ -12,32 +12,32 @@
 #include "MVertex.h"
 #include "MPoint.h"
 
-gmshVertex::gmshVertex(GModel *m, Vertex *_v)
-  : GVertex(m, _v->Num, _v->lc), v(_v)
+gmshVertex::gmshVertex(GModel *m, Vertex *v)
+  : GVertex(m, v->Num, v->lc), _v(v)
 {
   gmshVertex::resetMeshAttributes();
 }
 
-void gmshVertex::resetNativePtr(Vertex *_v) { v = _v; }
+void gmshVertex::resetNativePtr(Vertex *v) { _v = v; }
 
-void gmshVertex::resetMeshAttributes() { meshSize = v->lc; }
+void gmshVertex::resetMeshAttributes() { meshSize = _v->lc; }
 
 GPoint gmshVertex::point() const
 {
-  return GPoint(v->Pos.X, v->Pos.Y, v->Pos.Z, this);
+  return GPoint(_v->Pos.X, _v->Pos.Y, _v->Pos.Z, this);
 }
 
-double gmshVertex::x() const { return v->Pos.X; }
+double gmshVertex::x() const { return _v->Pos.X; }
 
-double gmshVertex::y() const { return v->Pos.Y; }
+double gmshVertex::y() const { return _v->Pos.Y; }
 
-double gmshVertex::z() const { return v->Pos.Z; }
+double gmshVertex::z() const { return _v->Pos.Z; }
 
 void gmshVertex::setPosition(GPoint &p)
 {
-  v->Pos.X = p.x();
-  v->Pos.Y = p.y();
-  v->Pos.Z = p.z();
+  _v->Pos.X = p.x();
+  _v->Pos.Y = p.y();
+  _v->Pos.Z = p.z();
   if(mesh_vertices.size()) {
     mesh_vertices[0]->x() = p.x();
     mesh_vertices[0]->y() = p.y();
@@ -47,7 +47,7 @@ void gmshVertex::setPosition(GPoint &p)
 
 GEntity::GeomType gmshVertex::geomType() const
 {
-  if(v->Typ == MSH_POINT_BND_LAYER)
+  if(_v->Typ == MSH_POINT_BND_LAYER)
     return BoundaryLayerPoint;
   else
     return Point;
@@ -56,7 +56,7 @@ GEntity::GeomType gmshVertex::geomType() const
 void gmshVertex::setPrescribedMeshSizeAtVertex(double l)
 {
   meshSize = l;
-  v->lc = meshSize;
+  _v->lc = meshSize;
 }
 
 SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
@@ -70,7 +70,7 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
       Range<double> bb = (*l_edges.begin())->parBounds(0);
       return (*l_edges.begin())->reparamOnFace(face, bb.low(), dir);
     }
-    return v->pntOnGeometry;
+    return _v->pntOnGeometry;
   }
 
   if(s->Typ == MSH_SURF_REGL) {
@@ -78,35 +78,35 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
     for(int i = 0; i < 4; i++) List_Read(s->Generatrices, i, &C[i]);
 
     double U, V;
-    if((C[0]->beg == v && C[3]->beg == v) ||
-       (C[0]->end == v && C[3]->beg == v) ||
-       (C[0]->beg == v && C[3]->end == v) ||
-       (C[0]->end == v && C[3]->end == v)) {
+    if((C[0]->beg == _v && C[3]->beg == _v) ||
+       (C[0]->end == _v && C[3]->beg == _v) ||
+       (C[0]->beg == _v && C[3]->end == _v) ||
+       (C[0]->end == _v && C[3]->end == _v)) {
       U = V = 0;
     }
-    else if((C[0]->beg == v && C[1]->beg == v) ||
-            (C[0]->end == v && C[1]->beg == v) ||
-            (C[0]->beg == v && C[1]->end == v) ||
-            (C[0]->end == v && C[1]->end == v)) {
+    else if((C[0]->beg == _v && C[1]->beg == _v) ||
+            (C[0]->end == _v && C[1]->beg == _v) ||
+            (C[0]->beg == _v && C[1]->end == _v) ||
+            (C[0]->end == _v && C[1]->end == _v)) {
       U = 1;
       V = 0;
     }
-    else if((C[2]->beg == v && C[1]->beg == v) ||
-            (C[2]->end == v && C[1]->beg == v) ||
-            (C[2]->beg == v && C[1]->end == v) ||
-            (C[2]->end == v && C[1]->end == v)) {
+    else if((C[2]->beg == _v && C[1]->beg == _v) ||
+            (C[2]->end == _v && C[1]->beg == _v) ||
+            (C[2]->beg == _v && C[1]->end == _v) ||
+            (C[2]->end == _v && C[1]->end == _v)) {
       U = 1;
       V = 1;
     }
-    else if((C[2]->beg == v && C[3]->beg == v) ||
-            (C[2]->end == v && C[3]->beg == v) ||
-            (C[2]->beg == v && C[3]->end == v) ||
-            (C[2]->end == v && C[3]->end == v)) {
+    else if((C[2]->beg == _v && C[3]->beg == _v) ||
+            (C[2]->end == _v && C[3]->beg == _v) ||
+            (C[2]->beg == _v && C[3]->end == _v) ||
+            (C[2]->end == _v && C[3]->end == _v)) {
       U = 0;
       V = 1;
     }
     else {
-      Msg::Info("Reparameterizing point %d on face %d", v->Num, s->Num);
+      Msg::Info("Reparameterizing point %d on face %d", _v->Num, s->Num);
       return GVertex::reparamOnFace(face, dir);
     }
     return SPoint2(U, V);
@@ -116,28 +116,28 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
     for(int i = 0; i < 3; i++) List_Read(s->Generatrices, i, &C[i]);
 
     double U, V;
-    if((C[0]->beg == v && C[2]->beg == v) ||
-       (C[0]->end == v && C[2]->beg == v) ||
-       (C[0]->beg == v && C[2]->end == v) ||
-       (C[0]->end == v && C[2]->end == v)) {
+    if((C[0]->beg == _v && C[2]->beg == _v) ||
+       (C[0]->end == _v && C[2]->beg == _v) ||
+       (C[0]->beg == _v && C[2]->end == _v) ||
+       (C[0]->end == _v && C[2]->end == _v)) {
       U = V = 0;
     }
-    else if((C[0]->beg == v && C[1]->beg == v) ||
-            (C[0]->end == v && C[1]->beg == v) ||
-            (C[0]->beg == v && C[1]->end == v) ||
-            (C[0]->end == v && C[1]->end == v)) {
+    else if((C[0]->beg == _v && C[1]->beg == _v) ||
+            (C[0]->end == _v && C[1]->beg == _v) ||
+            (C[0]->beg == _v && C[1]->end == _v) ||
+            (C[0]->end == _v && C[1]->end == _v)) {
       U = 1;
       V = 0;
     }
-    else if((C[2]->beg == v && C[1]->beg == v) ||
-            (C[2]->end == v && C[1]->beg == v) ||
-            (C[2]->beg == v && C[1]->end == v) ||
-            (C[2]->end == v && C[1]->end == v)) {
+    else if((C[2]->beg == _v && C[1]->beg == _v) ||
+            (C[2]->end == _v && C[1]->beg == _v) ||
+            (C[2]->beg == _v && C[1]->end == _v) ||
+            (C[2]->end == _v && C[1]->end == _v)) {
       U = 1;
       V = 1;
     }
     else {
-      Msg::Info("Reparameterizing point %d on face %d", v->Num, s->Num);
+      Msg::Info("Reparameterizing point %d on face %d", _v->Num, s->Num);
       return GVertex::reparamOnFace(face, dir);
     }
     return SPoint2(U, V);
@@ -149,6 +149,12 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
 
 void gmshVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
 {
-  fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n", v->Num, v->Pos.X,
-          v->Pos.Y, v->Pos.Z, v->lc);
+  if(meshSizeParameter.size())
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %s};\n", tag(), x(), y(),
+            z(), meshSizeParameter.c_str());
+  else if(_v->lc != MAX_LC)
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n", tag(), x(), y(),
+            z(), _v->lc);
+  else
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g};\n", tag(), x(), y(), z());
 }

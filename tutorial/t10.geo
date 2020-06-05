@@ -1,14 +1,14 @@
-/*********************************************************************
- *
- *  Gmsh tutorial 10
- *
- *  General mesh size fields
- *
- *********************************************************************/
+// -----------------------------------------------------------------------------
+//
+//  Gmsh GEO tutorial 10
+//
+//  Mesh size fields
+//
+// -----------------------------------------------------------------------------
 
-// In addition to specifying target mesh sizes at the points of the
-// geometry (see t1) or using a background mesh (see t7), you can use
-// general mesh size "Fields".
+// In addition to specifying target mesh sizes at the points of the geometry
+// (see `t1.geo') or using a background mesh (see `t7.geo'), you can use general
+// mesh size "Fields".
 
 // Let's create a simple rectangular geometry
 lc = .15;
@@ -22,7 +22,7 @@ Curve Loop(5) = {1,2,3,4}; Plane Surface(6) = {5};
 
 // Say we would like to obtain mesh elements with size lc/30 near curve 2 and
 // point 5, and size lc elsewhere. To achieve this, we can use two fields:
-// "Distance", and "Threshold". We first define a Distance field (Field[1]) on
+// "Distance", and "Threshold". We first define a Distance field (`Field[1]') on
 // points 5 and on curve 2. This field returns the distance to point 5 and to
 // (100 equidistant points on) curve 2.
 Field[1] = Distance;
@@ -30,9 +30,9 @@ Field[1].NodesList = {5};
 Field[1].NNodesByEdge = 100;
 Field[1].EdgesList = {2};
 
-// We then define a Threshold field, which uses the return value of the Distance
-// Field[1] in order to define a simple change in element size depending on the
-// computed distances
+// We then define a `Threshold' field, which uses the return value of the
+// `Distance' field 1 in order to define a simple change in element size
+// depending on the computed distances
 //
 // LcMax -                         /------------------
 //                               /
@@ -54,18 +54,18 @@ Field[3] = MathEval;
 Field[3].F = "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101";
 
 // We could also combine MathEval with values coming from other fields. For
-// example, let's define a Distance field around point 1
+// example, let's define a `Distance' field around point 1
 Field[4] = Distance;
 Field[4].NodesList = {1};
 
-// We can then create a MathEval field with a function that depends on the
-// return value of the Distance Field[4], i.e., depending on the distance to
-// point 1 (here using a cubic law, with minumum element size = lc / 100)
+// We can then create a `MathEval' field with a function that depends on the
+// return value of the `Distance' field 4, i.e., depending on the distance to
+// point 1 (here using a cubic law, with minimum element size = lc / 100)
 Field[5] = MathEval;
 Field[5].F = Sprintf("F4^3 + %g", lc / 100);
 
-// We could also use a Box field to impose a step change in element sizes inside
-// a box
+// We could also use a `Box' field to impose a step change in element sizes
+// inside a box
 Field[6] = Box;
 Field[6].VIn = lc / 15;
 Field[6].VOut = lc;
@@ -76,7 +76,7 @@ Field[6].YMax = 0.6;
 
 // Many other types of fields are available: see the reference manual for a
 // complete list. You can also create fields directly in the graphical user
-// interface by selecting Define->Fields in the Mesh module.
+// interface by selecting `Define->Fields' in the `Mesh' module.
 
 // Finally, let's use the minimum of all the fields as the background mesh field
 Field[7] = Min;
@@ -86,18 +86,19 @@ Background Field = 7;
 // To determine the size of mesh elements, Gmsh locally computes the minimum of
 //
 // 1) the size of the model bounding box;
-// 2) if Mesh.CharacteristicLengthFromPoints is set, the mesh size specified at
-//    geometrical points;
-// 3) if Mesh.CharacteristicLengthFromCurvature is set, the mesh size based on
-//    the curvature and Mesh.MinimumCirclePoints;
+// 2) if `Mesh.CharacteristicLengthFromPoints' is set, the mesh size specified
+//    at geometrical points;
+// 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based on
+//    the curvature and `Mesh.MinimumElementsPerTwoPi';
 // 4) the background mesh field;
 // 5) any per-entity mesh size constraint.
 //
-// This value is then constrained in the interval [Mesh.CharacteristicLengthMin,
-// MeshCharacteristicLengthMax] and multiplied by Mesh.CharacteristicLengthFactor.
-// In addition, boundary mesh sizes (on curves or surfaces) are interpolated
-// inside the enclosed entity (surface or volume, respectively) if the option
-// Mesh.CharacteristicLengthExtendFromBoundary is set (which is the case by
+// This value is then constrained in the interval
+// [`Mesh.CharacteristicLengthMin', `Mesh.CharacteristicLengthMax'] and
+// multiplied by `Mesh.CharacteristicLengthFactor'.  In addition, boundary mesh
+// sizes (on curves or surfaces) are interpolated inside the enclosed entity
+// (surface or volume, respectively) if the option
+// `Mesh.CharacteristicLengthExtendFromBoundary' is set (which is the case by
 // default).
 //
 // When the element size is fully specified by a background mesh (as it is in

@@ -28,10 +28,12 @@ private:
   double _length;
   bool _tooSmall;
   closestPointFinder *_cp;
+  // prescribed mesh size (_lc) at parametric points (_u_lc) (sorted by _u_lc)
+  std::vector<double> _u_lc, _lc;
 
 protected:
-  GVertex *v0, *v1;
-  std::vector<GFace *> l_faces;
+  GVertex *_v0, *_v1;
+  std::vector<GFace *> _faces;
 
 public:
   // same or opposite direction to the master
@@ -48,7 +50,7 @@ public:
   std::vector<SPoint3> stl_vertices_xyz;
 
 public:
-  GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
+  GEdge(GModel *model, int tag, GVertex *v0, GVertex *v1);
   GEdge(GModel *model, int tag);
   virtual ~GEdge();
 
@@ -56,16 +58,16 @@ public:
   virtual void deleteMesh();
 
   // get the start/end vertices of the edge
-  void setBeginVertex(GVertex *gv) { v0 = gv; }
-  void setEndVertex(GVertex *gv) { v1 = gv; }
-  virtual GVertex *getBeginVertex() const { return v0; }
-  virtual GVertex *getEndVertex() const { return v1; }
+  void setBeginVertex(GVertex *gv) { _v0 = gv; }
+  void setEndVertex(GVertex *gv) { _v1 = gv; }
+  virtual GVertex *getBeginVertex() const { return _v0; }
+  virtual GVertex *getEndVertex() const { return _v1; }
   void setVertex(GVertex *const f, const int orientation)
   {
     if(orientation > 0)
-      v0 = f;
+      _v0 = f;
     else if(orientation < 0)
-      v1 = f;
+      _v1 = f;
   }
 
   // specify mesh master with transformation, deduce edgeCounterparts
@@ -99,7 +101,7 @@ public:
   virtual bool isSeam(const GFace *face) const { return false; }
 
   // get the bounding box
-  virtual SBoundingBox3d bounds(bool fast = false) const;
+  virtual SBoundingBox3d bounds(bool fast = false);
 
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();
@@ -108,7 +110,10 @@ public:
   virtual std::list<GRegion *> regions() const;
 
   // faces that this entity bounds
-  virtual std::vector<GFace *> faces() const { return l_faces; }
+  virtual std::vector<GFace *> faces() const { return _faces; }
+
+  // get number of faces
+  virtual std::size_t numFaces() const { return _faces.size(); }
 
   // get the point for the given parameter location
   virtual GPoint point(double p) const = 0;
@@ -158,20 +163,24 @@ public:
   double length(const double &u0, const double &u1, const int nbQuadPoints = 4);
 
   // get the prescribed mesh size on the edge
-  virtual double prescribedMeshSizeAtVertex() const
+  double prescribedMeshSizeAtVertex() const
   {
     return meshAttributes.meshSize;
   }
+
+  double prescribedMeshSizeAtParam(double u);
+
+  void setMeshSizeParametric(const std::vector<double> u, const std::vector<double> lc);
 
   // true if start == end and no more than 2 segments
   void setTooSmall(bool const b) { _tooSmall = b; }
   virtual bool isMeshDegenerated() const
   {
     if(_tooSmall) Msg::Debug("Degenerated mesh on curve %d: too small", tag());
-    if(v0 && v0 == v1 && mesh_vertices.size() < 2)
+    if(_v0 && _v0 == _v1 && mesh_vertices.size() < 2)
       Msg::Debug("Degenerated mesh on curve %d: %d mesh nodes", tag(),
                  (int)mesh_vertices.size());
-    return _tooSmall || (v0 && v0 == v1 && mesh_vertices.size() < 2);
+    return _tooSmall || (_v0 && _v0 == _v1 && mesh_vertices.size() < 2);
   }
 
   // types of elements
@@ -200,7 +209,7 @@ public:
   virtual void resetMeshAttributes();
 
   // true if entity is periodic in the "dim" direction.
-  virtual bool periodic(int dim) const { return v0 == v1; }
+  virtual bool periodic(int dim) const { return _v0 == _v1; }
 
   // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;

@@ -8,7 +8,7 @@
 #include "GmshMessage.h"
 #include "discreteEdge.h"
 #include "MLine.h"
-#include "MPoint.h"
+#include "MEdge.h"
 #include "GModelIO_GEO.h"
 #include "Geo.h"
 
@@ -131,34 +131,6 @@ double discreteEdge::curvature(double par) const
   SPoint3 c =
     (_discretization[iEdgePlus] + _discretization[iEdgePlus + 1]) * .5;
 
-  // SPoint3 a((discrete_lines[iEdgeMinus]->getVertex(0)->x() +
-  //            discrete_lines[iEdgeMinus]->getVertex(1)->x()) *
-  //             .5,
-  //           (discrete_lines[iEdgeMinus]->getVertex(0)->y() +
-  //            discrete_lines[iEdgeMinus]->getVertex(1)->y()) *
-  //             .5,
-  //           (discrete_lines[iEdgeMinus]->getVertex(0)->z() +
-  //            discrete_lines[iEdgeMinus]->getVertex(1)->z()) *
-  //             .5);
-  // SPoint3 b((discrete_lines[iEdge]->getVertex(0)->x() +
-  //            discrete_lines[iEdge]->getVertex(1)->x()) *
-  //             .5,
-  //           (discrete_lines[iEdge]->getVertex(0)->y() +
-  //            discrete_lines[iEdge]->getVertex(1)->y()) *
-  //             .5,
-  //           (discrete_lines[iEdge]->getVertex(0)->z() +
-  //            discrete_lines[iEdge]->getVertex(1)->z()) *
-  //             .5);
-  // SPoint3 c((discrete_lines[iEdgePlus]->getVertex(0)->x() +
-  //            discrete_lines[iEdgePlus]->getVertex(1)->x()) *
-  //             .5,
-  //           (discrete_lines[iEdgePlus]->getVertex(0)->y() +
-  //            discrete_lines[iEdgePlus]->getVertex(1)->y()) *
-  //             .5,
-  //           (discrete_lines[iEdgePlus]->getVertex(0)->z() +
-  //            discrete_lines[iEdgePlus]->getVertex(1)->z()) *
-  //             .5);
-
   double A = b.distance(c);
   double B = c.distance(a);
   double C = a.distance(b);
@@ -167,8 +139,6 @@ double discreteEdge::curvature(double par) const
   // Heron's formula for the area of a triangle
   double R =
     A * B * C / sqrt((A + B + C) * (-A + B + C) * (A - B + C) * (A + B - C));
-
-  // printf("R(%d,%g) = %g\n",tag(),par,R);
 
   return R = 0.0 ? 1.E22 : 1. / R;
 }
@@ -184,33 +154,65 @@ int discreteEdge::createGeometry()
 
   if(!_discretization.empty()) return 0;
 
-  GVertex *g0 = dynamic_cast<GVertex *>
-    (lines[0]->getVertex(0)->onWhat());
-  if(g0) setBeginVertex(g0);
+  bool sorted = true;
 
-  GVertex *g1 = dynamic_cast<GVertex *>
-    (lines[lines.size() - 1]->getVertex(1)->onWhat());
-  if(g1) setEndVertex(g1);
+  std::vector<MVertex*> vertices;
+  vertices.push_back(lines[0]->getVertex(0));
+  for(std::size_t i = 0; i < lines.size(); i++) {
+    if(lines[i]->getVertex(0) == vertices.back()){
+      vertices.push_back(lines[i]->getVertex(1));
+    }
+    else{
+      sorted = false;
+      break;
+    }
+  }
 
-  if(!g0 || !g1){
-    Msg::Error("Discrete curve %d has no begin or end point", tag());
+  if(!sorted) {
+    Msg::Debug("Sorting nodes in discrete curve %d", tag());
+    std::vector<MEdge> allEdges;
+    for(std::size_t i = 0; i < lines.size(); i++) {
+      allEdges.push_back(MEdge(lines[i]->getVertex(0),
+                               lines[i]->getVertex(1)));
+    }
+    std::vector<std::vector<MVertex *> > vs;
+    SortEdgeConsecutive(allEdges, vs);
+    if(vs.size() == 1) {
+      vertices = vs[0];
+    }
+    else{
+      Msg::Error("Discrete curve %d has wrong topology", tag());
+      return 1;
+    }
+  }
+
+  GVertex *g0 = dynamic_cast<GVertex *>(vertices.front()->onWhat());
+  GVertex *g1 = dynamic_cast<GVertex *>(vertices.back()->onWhat());
+
+  if(g0) {
+    setBeginVertex(g0);
+  }
+  else if(g1 && g1->xyz().distance(vertices.front()->point()) < 1e-14) {
+    setBeginVertex(g1);
+  }
+
+  if(g1) {
+    setEndVertex(g1);
+  }
+  else if(g0 && g0->xyz().distance(vertices.back()->point()) < 1e-14) {
+    setEndVertex(g0);
+  }
+
+  if(!getBeginVertex() || !getEndVertex()) {
+    Msg::Warning("Discrete curve %d has no begin or end point", tag());
     return 1;
   }
 
-  _discretization.push_back(SPoint3(lines[0]->getVertex(0)->x(),
-                                    lines[0]->getVertex(0)->y(),
-                                    lines[0]->getVertex(0)->z()));
-  for(std::size_t i = 0; i < lines.size(); i++) {
-    _discretization.push_back(SPoint3(lines[i]->getVertex(1)->x(),
-                                      lines[i]->getVertex(1)->y(),
-                                      lines[i]->getVertex(1)->z()));
-  }
-
-  _pars.push_back(0.0);
-  for(std::size_t i = 1; i < lines.size(); i++) {
+  for(std::size_t i = 0; i < vertices.size(); i++) {
+    _discretization.push_back
+      (SPoint3(vertices[i]->x(), vertices[i]->y(), vertices[i]->z()));
     _pars.push_back((double)i);
   }
-  _pars.push_back((double)lines.size());
 
   return 0;
 }

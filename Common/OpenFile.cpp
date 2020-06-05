@@ -324,15 +324,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   std::string noExt = split[0] + split[1], ext = split[2];
 
   if(ext == ".gz") {
-#if defined(HAVE_COMPRESSED_IO) && defined(HAVE_LIBZ)
-    std::vector<std::string> subsplit = SplitFileName(noExt);
-    ext = subsplit[2];
-    if(ext != ".geo" && ext != ".GEO" && ext != ".unv" && ext != ".UNV") {
-      if(doSystemUncompress(fileName, noExt)) return MergeFile(noExt, false);
-    }
-#else
     if(doSystemUncompress(fileName, noExt)) return MergeFile(noExt, false);
-#endif
   }
 
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
@@ -385,9 +377,14 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   }
   else if(ext == ".step" || ext == ".STEP" || ext == ".stp" || ext == ".STP") {
     status = GModel::current()->readOCCSTEP(fileName);
+    //status = GModel::current()->readParasolidSTEP(fileName);
   }
   else if(ext == ".sat" || ext == ".SAT") {
     status = GModel::current()->readACISSAT(fileName);
+  }
+  else if(ext == ".x_t" || ext == ".xmt_txt" ||
+          ext == ".x_b" || ext == ".xmt_bin") {
+    status = GModel::current()->readParasolidXMT(fileName);
   }
   else if(ext == ".unv" || ext == ".UNV") {
     status = GModel::current()->readUNV(fileName);
@@ -665,6 +662,7 @@ void ClearProject()
   Msg::Info("Clearing all models and views...");
 #if defined(HAVE_POST)
   for(int i = PView::list.size() - 1; i >= 0; i--) delete PView::list[i];
+  PView::setGlobalTag(0);
 #endif
 #if defined(HAVE_PARSER)
   gmsh_yysymbols.clear();

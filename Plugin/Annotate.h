@@ -17,7 +17,7 @@ class GMSH_AnnotatePlugin : public GMSH_PostPlugin {
 private:
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
-  static std::string callbackStr(int num, int action, std::string value,
+  static std::string callbackStr(int num, int action, const std::string &value,
                                  std::string &opt);
 
 public:
@@ -36,9 +36,9 @@ public:
   static double callbackZ(int, int, double);
   static double callback3D(int, int, double);
   static double callbackFontSize(int, int, double);
-  static std::string callbackText(int, int, std::string);
-  static std::string callbackFont(int, int, std::string);
-  static std::string callbackAlign(int, int, std::string);
+  static std::string callbackText(int, int, const std::string &);
+  static std::string callbackFont(int, int, const std::string &);
+  static std::string callbackAlign(int, int, const std::string &);
   static void draw(void *context);
 };
 

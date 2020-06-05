@@ -28,6 +28,8 @@ public:
   std::string getAuthor() const { return "Bertrand Thierry"; }
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);
+  int getNbOptionsStr() const;
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

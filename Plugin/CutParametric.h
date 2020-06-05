@@ -18,7 +18,7 @@ class GMSH_CutParametricPlugin : public GMSH_PostPlugin {
 private:
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
-  static std::string callbackStr(int num, int action, std::string value,
+  static std::string callbackStr(int num, int action, const std::string &value,
                                  std::string &opt);
   static int fillXYZ();
   static int recompute;
@@ -45,9 +45,9 @@ public:
   static double callbackMaxV(int, int, double);
   static double callbackNV(int, int, double);
   static double callbackConnect(int, int, double);
-  static std::string callbackX(int, int, std::string);
-  static std::string callbackY(int, int, std::string);
-  static std::string callbackZ(int, int, std::string);
+  static std::string callbackX(int, int, const std::string &);
+  static std::string callbackY(int, int, const std::string &);
+  static std::string callbackZ(int, int, const std::string &);
   static void draw(void *context);
 };
 

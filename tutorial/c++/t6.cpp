@@ -1,96 +1,103 @@
-// This file reimplements gmsh/tutorial/t6.geo in C++.
+// -----------------------------------------------------------------------------
+//
+//  Gmsh C++ tutorial 6
+//
+//  Transfinite meshes
+//
+// -----------------------------------------------------------------------------
 
 #include <gmsh.h>
-
-namespace model = gmsh::model;
-namespace factory = gmsh::model::geo;
 
 int main(int argc, char **argv)
 {
   gmsh::initialize();
   gmsh::option::setNumber("General.Terminal", 1);
 
-  model::add("t2");
+  gmsh::model::add("t2");
 
   // Copied from t1.cpp...
   double lc = 1e-2;
-  factory::addPoint(0, 0, 0, lc, 1);
-  factory::addPoint(.1, 0,  0, lc, 2);
-  factory::addPoint(.1, .3, 0, lc, 3);
-  factory::addPoint(0,  .3, 0, lc, 4);
-  factory::addLine(1, 2, 1);
-  factory::addLine(3, 2, 2);
-  factory::addLine(3, 4, 3);
-  factory::addLine(4, 1, 4);
-  factory::addCurveLoop({4, 1, -2, 3}, 1);
-  factory::addPlaneSurface({1}, 1);
-  model::addPhysicalGroup(0, {1, 2}, 1);
-  model::addPhysicalGroup(1, {1, 2}, 2);
-  model::addPhysicalGroup(2, {1}, 6);
-  model::setPhysicalName(2, 6, "My surface");
-  // ...end of copy
+  gmsh::model::geo::addPoint(0, 0, 0, lc, 1);
+  gmsh::model::geo::addPoint(.1, 0, 0, lc, 2);
+  gmsh::model::geo::addPoint(.1, .3, 0, lc, 3);
+  gmsh::model::geo::addPoint(0, .3, 0, lc, 4);
+  gmsh::model::geo::addLine(1, 2, 1);
+  gmsh::model::geo::addLine(3, 2, 2);
+  gmsh::model::geo::addLine(3, 4, 3);
+  gmsh::model::geo::addLine(4, 1, 4);
+  gmsh::model::geo::addCurveLoop({4, 1, -2, 3}, 1);
+  gmsh::model::geo::addPlaneSurface({1}, 1);
 
-  // Delete surface 1 and left boundary (curve 4)
-  factory::remove({{2,1}, {1,4}});
+  // Delete the surface and the left line, and replace the line with 3 new ones:
+  gmsh::model::geo::remove({{2, 1}, {1, 4}});
 
-  // Replace left boundary with 3 new lines
-  int p1 = factory::addPoint(-0.05, 0.05, 0, lc);
-  int p2 = factory::addPoint(-0.05, 0.1, 0, lc);
-  int l1 = factory::addLine(1, p1);
-  int l2 = factory::addLine(p1, p2);
-  int l3 = factory::addLine(p2, 4);
+  int p1 = gmsh::model::geo::addPoint(-0.05, 0.05, 0, lc);
+  int p2 = gmsh::model::geo::addPoint(-0.05, 0.1, 0, lc);
+  int l1 = gmsh::model::geo::addLine(1, p1);
+  int l2 = gmsh::model::geo::addLine(p1, p2);
+  int l3 = gmsh::model::geo::addLine(p2, 4);
 
-  // Recreate surface
-  factory::addCurveLoop({2, -1, l1, l2, l3, -3}, 2);
-  factory::addPlaneSurface({-2}, 1);
+  // Create surface:
+  gmsh::model::geo::addCurveLoop({2, -1, l1, l2, l3, -3}, 2);
+  gmsh::model::geo::addPlaneSurface({-2}, 1);
 
-  // Put 20 points with a refinement toward the extremities on curve 2
-  factory::mesh::setTransfiniteCurve(2, 20, "Bump", 0.05);
+  // The `setTransfiniteCurve()' meshing constraints explicitly specifies the
+  // location of the nodes on the curve. For example, the following command
+  // forces 20 uniformly placed nodes on curve 2 (including the nodes on the two
+  // end points):
+  gmsh::model::geo::mesh::setTransfiniteCurve(2, 20);
 
-  // Put 20 points total on combination of curves l1, l2 and l3 (beware that the
-  // points p1 and p2 are shared by the curves, so we do not create 6 + 6 + 10 =
-  // 22 points, but 20!)
-  factory::mesh::setTransfiniteCurve(l1, 6);
-  factory::mesh::setTransfiniteCurve(l2, 6);
-  factory::mesh::setTransfiniteCurve(l3, 10);
+  // Let's put 20 points total on combination of curves `l1', `l2' and `l3'
+  // (beware that the points `p1' and `p2' are shared by the curves, so we do
+  // not create 6 + 6 + 10 = 22 nodes, but 20!)
+  gmsh::model::geo::mesh::setTransfiniteCurve(l1, 6);
+  gmsh::model::geo::mesh::setTransfiniteCurve(l2, 6);
+  gmsh::model::geo::mesh::setTransfiniteCurve(l3, 10);
 
-  // Put 30 points following a geometric progression on curve 1 (reversed) and
-  // on curve 3
-  factory::mesh::setTransfiniteCurve(1, 30, "Progression", -1.2);
-  factory::mesh::setTransfiniteCurve(3, 30, "Progression", 1.2);
+  // Finally, we put 30 nodes following a geometric progression on curve 1
+  // (reversed) and on curve 3: Put 30 points following a geometric progression
+  gmsh::model::geo::mesh::setTransfiniteCurve(1, 30, "Progression", -1.2);
+  gmsh::model::geo::mesh::setTransfiniteCurve(3, 30, "Progression", 1.2);
 
-  // Define the Surface as transfinite, by specifying the four corners of the
-  // transfinite interpolation
-  factory::mesh::setTransfiniteSurface(1, "Left", {1,2,3,4});
+  // The `setTransfiniteSurface()' meshing constraint uses a transfinite
+  // interpolation algorithm in the parametric plane of the surface to connect
+  // the nodes on the boundary using a structured grid. If the surface has more
+  // than 4 corner points, the corners of the transfinite interpolation have to
+  // be specified by hand:
+  gmsh::model::geo::mesh::setTransfiniteSurface(1, "Left", {1, 2, 3, 4});
 
-  // Recombine the triangles into quads
-  factory::mesh::setRecombine(2, 1);
+  // To create quadrangles instead of triangles, one can use the `setRecombine'
+  // constraint:
+  gmsh::model::geo::mesh::setRecombine(2, 1);
 
-  // Apply an elliptic smoother to the grid
-  gmsh::option::setNumber("Mesh.Smoothing", 100);
-  model::addPhysicalGroup(2, {1}, 1);
-
-  // When the surface has only 3 or 4 control points, the transfinite constraint
-  // can be applied automatically (without specifying the corners explictly).
-  factory::addPoint(0.2, 0.2, 0, 1.0, 7);
-  factory::addPoint(0.2, 0.1, 0, 1.0, 8);
-  factory::addPoint(0, 0.3, 0, 1.0, 9);
-  factory::addPoint(0.25, 0.2, 0, 1.0, 10);
-  factory::addPoint(0.3, 0.1, 0, 1.0, 11);
-  factory::addLine(8, 11, 10);
-  factory::addLine(11, 10, 11);
-  factory::addLine(10, 7, 12);
-  factory::addLine(7, 8, 13);
-  factory::addCurveLoop({13, 10, 11, 12}, 14);
-  factory::addPlaneSurface({14}, 15);
+  // When the surface has only 3 or 4 points on its boundary the list of corners
+  // can be omitted in the `setTransfiniteSurface()' call:
+  gmsh::model::geo::addPoint(0.2, 0.2, 0, 1.0, 7);
+  gmsh::model::geo::addPoint(0.2, 0.1, 0, 1.0, 8);
+  gmsh::model::geo::addPoint(0, 0.3, 0, 1.0, 9);
+  gmsh::model::geo::addPoint(0.25, 0.2, 0, 1.0, 10);
+  gmsh::model::geo::addPoint(0.3, 0.1, 0, 1.0, 11);
+  gmsh::model::geo::addLine(8, 11, 10);
+  gmsh::model::geo::addLine(11, 10, 11);
+  gmsh::model::geo::addLine(10, 7, 12);
+  gmsh::model::geo::addLine(7, 8, 13);
+  gmsh::model::geo::addCurveLoop({13, 10, 11, 12}, 14);
+  gmsh::model::geo::addPlaneSurface({14}, 15);
   for(int i = 10; i <= 13; i++)
-    factory::mesh::setTransfiniteCurve(i, 10);
-  factory::mesh::setTransfiniteSurface(15);
+    gmsh::model::geo::mesh::setTransfiniteCurve(i, 10);
+  gmsh::model::geo::mesh::setTransfiniteSurface(15);
 
-  model::addPhysicalGroup(2, {15}, 2);
+  // The way triangles are generated can be controlled by specifying "Left",
+  // "Right" or "Alternate" in `setTransfiniteSurface()' command. Try e.g.
+  //
+  // gmsh::model::geo::mesh::setTransfiniteSurface(15, "Alternate");
 
-  factory::synchronize();
-  model::mesh::generate(2);
+  // Finally we apply an elliptic smoother to the grid to have a more regular
+  // mesh:
+  gmsh::option::setNumber("Mesh.Smoothing", 100);
+
+  gmsh::model::geo::synchronize();
+  gmsh::model::mesh::generate(2);
   gmsh::write("t6.msh");
   gmsh::finalize();
   return 0;

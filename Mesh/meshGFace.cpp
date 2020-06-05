@@ -744,6 +744,9 @@ static bool algoDelaunay2D(GFace *gf)
   if(gf->getMeshingAlgo() == ALGO_2D_AUTO && gf->geomType() == GEntity::Plane)
     return true;
 
+  if(gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY)
+    return true;
+
   return false;
 }
 
@@ -1173,7 +1176,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
   if(CTX::instance()->debugSurface > 0) debug = true;
 
-  // onlyInitialMesh=true;
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_EXTERIOR(1, 3);
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
@@ -1536,10 +1538,11 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     while(itt != m->triangles.end()) {
       BDS_Face *t = *itt;
       BDS_Point *n[4];
-      t->getNodes(n);
-      if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
-        recur_tag(t, &CLASS_EXTERIOR);
-        break;
+      if(t->getNodes(n)) {
+        if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
+          recur_tag(t, &CLASS_EXTERIOR);
+          break;
+        }
       }
       ++itt;
     }
@@ -1669,17 +1672,18 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       BDS_Face *t = *itt;
       if(!t->deleted) {
         BDS_Point *n[4];
-        t->getNodes(n);
-        MVertex *v1 = recoverMap[n[0]];
-        MVertex *v2 = recoverMap[n[1]];
-        MVertex *v3 = recoverMap[n[2]];
-        if(!n[3]) {
-          if(v1 != v2 && v1 != v3 && v2 != v3)
-            gf->triangles.push_back(new MTriangle(v1, v2, v3));
-        }
-        else {
-          MVertex *v4 = recoverMap[n[3]];
-          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+        if(t->getNodes(n)) {
+          MVertex *v1 = recoverMap[n[0]];
+          MVertex *v2 = recoverMap[n[1]];
+          MVertex *v3 = recoverMap[n[2]];
+          if(!n[3]) {
+            if(v1 != v2 && v1 != v3 && v2 != v3)
+              gf->triangles.push_back(new MTriangle(v1, v2, v3));
+          }
+          else {
+            MVertex *v4 = recoverMap[n[3]];
+            gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+          }
         }
       }
       ++itt;
@@ -2571,10 +2575,11 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
         continue;
       }
       BDS_Point *n[4];
-      t->getNodes(n);
-      if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
-        recur_tag(t, &CLASS_EXTERIOR);
-        break;
+      if(t->getNodes(n)) {
+        if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
+          recur_tag(t, &CLASS_EXTERIOR);
+          break;
+        }
       }
       ++itt;
     }
@@ -2785,18 +2790,22 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     buildBackgroundMesh(gf, false, &equivalence, &parametricCoordinates);
   }
 
-  // boundary layer
-  std::vector<MQuadrangle *> blQuads;
-  std::vector<MTriangle *> blTris;
-  std::set<MVertex *> verts;
-  modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
-  gf->quadrangles.insert(gf->quadrangles.begin(), blQuads.begin(),
-                         blQuads.end());
-  gf->triangles.insert(gf->triangles.begin(), blTris.begin(), blTris.end());
-  gf->mesh_vertices.insert(gf->mesh_vertices.begin(), verts.begin(),
-                           verts.end());
+  bool onlyInitialMesh = (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY);
 
-  if(algoDelaunay2D(gf)) {
+  if(!onlyInitialMesh) {
+    // boundary layer
+    std::vector<MQuadrangle *> blQuads;
+    std::vector<MTriangle *> blTris;
+    std::set<MVertex *> verts;
+    modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
+    gf->quadrangles.insert(gf->quadrangles.begin(), blQuads.begin(),
+                           blQuads.end());
+    gf->triangles.insert(gf->triangles.begin(), blTris.begin(), blTris.end());
+    gf->mesh_vertices.insert(gf->mesh_vertices.begin(), verts.begin(),
+                             verts.end());
+  }
+
+  if(algoDelaunay2D(gf) && !onlyInitialMesh) {
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates,
                           &true_boundary);
@@ -2848,18 +2857,27 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   return true;
 }
 
+static bool isFullyDiscrete(GFace *gf)
+{
+  if(gf->geomType() != GEntity::DiscreteSurface) return false;
+  // a discrete surface could actually be a gmshFace!
+  discreteFace *df = dynamic_cast<discreteFace*>(gf);
+  if(df && df->haveParametrization()) return false;
+  std::vector<GEdge *> e = gf->edges();
+  for(std::size_t i = 0; i < e.size(); i++) {
+    if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
+    discreteEdge *de = dynamic_cast<discreteEdge*>(e[i]);
+    if(de && de->haveParametrization()) return false;
+  }
+  return true;
+}
+
 void deMeshGFace::operator()(GFace *gf)
 {
-  if(gf->geomType() == GEntity::DiscreteSurface) {
-    if(!static_cast<discreteFace *>(gf)->haveParametrization()){
-      return;
-    }
-  }
+  if(isFullyDiscrete(gf)) return;
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
-  gf->correspondingVertices.clear();
-  gf->correspondingHOPoints.clear();
 }
 
 static double TRIANGLE_VALIDITY(GFace *gf, MTriangle *t)
@@ -2904,6 +2922,7 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   if(gf->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;
+  if(CTX::instance()->mesh.meshOnlyEmpty && gf->getNumMeshElements()) return;
 
   // destroy the mesh if it exists
   deMeshGFace dem;
@@ -2932,17 +2951,34 @@ void meshGFace::operator()(GFace *gf, bool print)
   const char *algo = "Unknown";
 
   switch(gf->getMeshingAlgo()) {
-  case ALGO_2D_MESHADAPT: algo = "MeshAdapt"; break;
-  case ALGO_2D_FRONTAL: algo = "Frontal"; break;
-  case ALGO_2D_FRONTAL_QUAD: algo = "Frontal Quad"; break;
-  case ALGO_2D_DELAUNAY: algo = "Delaunay"; break;
-  case ALGO_2D_BAMG: algo = "Bamg"; break;
-  case ALGO_2D_PACK_PRLGRMS: algo = "Square Packing"; break;
+  case ALGO_2D_MESHADAPT:
+    algo = "MeshAdapt";
+    break;
   case ALGO_2D_AUTO:
     algo = (gf->geomType() == GEntity::Plane) ? "Delaunay" : "MeshAdapt";
     break;
+  case ALGO_2D_INITIAL_ONLY:
+    algo = "Initial Mesh Only";
+    break;
+  case ALGO_2D_DELAUNAY:
+    algo = "Delaunay";
+    break;
+  case ALGO_2D_FRONTAL:
+    algo = "Frontal-Delaunay";
+    break;
+  case ALGO_2D_BAMG:
+    algo = "Bamg";
+    break;
+  case ALGO_2D_FRONTAL_QUAD:
+    algo = "Frontal-Delaunay for Quads";
+    break;
+  case ALGO_2D_PACK_PRLGRMS:
+    algo = "Packing of Parallelograms";
+    break;
+  case ALGO_2D_PACK_PRLGRMS_CSTR:
+    algo = "Packing of Parallelograms Constrained";
+    break;
   }
-  if(!algoDelaunay2D(gf)) { algo = "MeshAdapt"; }
 
   if(print)
     Msg::Info("Meshing surface %d (%s, %s)", gf->tag(),
@@ -2968,7 +3004,8 @@ void meshGFace::operator()(GFace *gf, bool print)
     }
   }
   else {
-    meshGenerator(gf, 0, repairSelfIntersecting1dMesh, onlyInitialMesh,
+    meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
+                  gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY,
                   debugSurface >= 0 || debugSurface == -100);
   }
 
@@ -3074,7 +3111,7 @@ void orientMeshGFace::operator()(GFace *gf)
     // now. This has implications for high-order periodic meshes: see comment in
     // FixPeriodicMesh().
   }
-  else if(gf->geomType() == GEntity::DiscreteSurface ||
+  else if(isFullyDiscrete(gf) ||
           gf->geomType() == GEntity::BoundaryLayerSurface) {
     // Don't do anything
   }

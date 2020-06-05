@@ -20,7 +20,7 @@ private:
   Fl_Output *_output;
   Fl_Button *_graph_butt;
   Fl_Menu_Button *_graph_menu;
-  std::string _graph_val;
+  std::string _graph_val, _number_format;
   void _set_graph_value(const std::string &val, bool update_menu = true)
   {
     _graph_val = val;
@@ -140,9 +140,18 @@ public:
   }
   void value(double val)
   {
-    char tmp[128];
-    sprintf(tmp, "%g", val);
-    _output->value(tmp);
+    char buffer[256];
+    if(_number_format.empty()) {
+      sprintf(buffer, "%g", val);
+    }
+    else{
+      if(_number_format.find("d") != std::string::npos ||
+         _number_format.find("u") != std::string::npos)
+        sprintf(buffer, _number_format.c_str(), (int)val);
+      else
+        sprintf(buffer, _number_format.c_str(), val);
+    }
+    _output->value(buffer);
   }
   void graph(const std::string &val) { _set_graph_value(val); }
   std::string graph() { return _graph_val; }
@@ -151,6 +160,7 @@ public:
     _output->color(col);
     _output->textcolor(fl_contrast(FL_FOREGROUND_COLOR, col));
   }
+  void numberFormat(const std::string &fmt) { _number_format = fmt; }
 };
 
 #endif

@@ -174,7 +174,7 @@ void GRegion::resetMeshAttributes()
   meshAttributes.QuadTri = NO_QUADTRI;
 }
 
-SBoundingBox3d GRegion::bounds(bool fast) const
+SBoundingBox3d GRegion::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteVolume && geomType() != PartitionVolume) {
@@ -527,6 +527,41 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
     }
   }
   return volume;
+}
+
+std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
+{
+  std::set<MVertex *> tmp;
+  for(std::vector<GFace *>::const_iterator it = embedded_faces.begin();
+      it != embedded_faces.end(); it++) {
+    tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
+    std::vector<GEdge*> ed = (*it)->edges();
+    for(std::vector<GEdge *>::const_iterator it2 = ed.begin();
+        it2 != ed.end(); it2++) {
+      tmp.insert((*it2)->mesh_vertices.begin(), (*it2)->mesh_vertices.end());
+      if((*it2)->getBeginVertex())
+        tmp.insert((*it2)->getBeginVertex()->mesh_vertices.begin(),
+                   (*it2)->getBeginVertex()->mesh_vertices.end());
+      if((*it2)->getEndVertex())
+        tmp.insert((*it2)->getEndVertex()->mesh_vertices.begin(),
+                   (*it2)->getEndVertex()->mesh_vertices.end());
+    }
+  }
+  for(std::vector<GEdge *>::const_iterator it = embedded_edges.begin();
+      it != embedded_edges.end(); it++) {
+    tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
+    if((*it)->getBeginVertex())
+      tmp.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
+                 (*it)->getBeginVertex()->mesh_vertices.end());
+    if((*it)->getEndVertex())
+      tmp.insert((*it)->getEndVertex()->mesh_vertices.begin(),
+                 (*it)->getEndVertex()->mesh_vertices.end());
+  }
+  for(std::vector<GVertex *>::const_iterator it = embedded_vertices.begin();
+      it != embedded_vertices.end(); it++) {
+    tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
+  }
+  return std::vector<MVertex *>(tmp.begin(), tmp.end());
 }
 
 std::vector<GVertex *> GRegion::vertices() const

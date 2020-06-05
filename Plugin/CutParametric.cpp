@@ -159,7 +159,7 @@ double GMSH_CutParametricPlugin::callback(int num, int action, double value,
 }
 
 std::string GMSH_CutParametricPlugin::callbackStr(int num, int action,
-                                                  std::string value,
+                                                  const std::string &value,
                                                   std::string &opt)
 {
   opt = value;
@@ -212,19 +212,19 @@ double GMSH_CutParametricPlugin::callbackConnect(int num, int action,
 }
 
 std::string GMSH_CutParametricPlugin::callbackX(int num, int action,
-                                                std::string value)
+                                                const std::string &value)
 {
   return callbackStr(num, action, value, CutParametricOptions_String[0].def);
 }
 
 std::string GMSH_CutParametricPlugin::callbackY(int num, int action,
-                                                std::string value)
+                                                const std::string &value)
 {
   return callbackStr(num, action, value, CutParametricOptions_String[1].def);
 }
 
 std::string GMSH_CutParametricPlugin::callbackZ(int num, int action,
-                                                std::string value)
+                                                const std::string &value)
 {
   return callbackStr(num, action, value, CutParametricOptions_String[2].def);
 }

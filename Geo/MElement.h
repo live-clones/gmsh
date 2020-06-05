@@ -267,8 +267,6 @@ public:
   }
   double minIsotropyMeasure(bool knownValid = false, bool reversedOk = false);
   double minScaledJacobian(bool knownValid = false, bool reversedOk = false);
-  double specialQuality();
-  double specialQuality2();
   virtual double angleShapeMeasure() { return 1.0; }
   virtual void scaledJacRange(double &jmin, double &jmax,
                               GEntity *ge = 0) const;
@@ -493,6 +491,7 @@ public:
   // return the number of vertices, as well as the element name if 'name' != 0
   static unsigned int getInfoMSH(const int typeMSH,
                                  const char **const name = 0);
+  std::string getName();
   virtual std::size_t getNumVerticesForMSH() { return getNumVertices(); }
   virtual void getVerticesIdForMSH(std::vector<int> &verts);
 
@@ -521,6 +520,20 @@ struct MElementPtrLessThan {
   bool operator()(const MElement *e1, const MElement *e2) const
   {
     return e1->getNum() < e2->getNum();
+  }
+};
+
+struct MElementPtrEqual {
+  bool operator()(const MElement *e1, const MElement *e2) const
+  {
+    return e1->getNum() == e2->getNum();
+  }
+};
+
+struct MElementPtrHash {
+  size_t operator()(const MElement *e) const
+  {
+    return e->getNum();
   }
 };
 

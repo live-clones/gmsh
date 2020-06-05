@@ -5,11 +5,6 @@
 //
 // Contributed by Anthony Royer.
 
-// FIXME: The partitioning code should be updated to
-// - make it deterministic!
-// - use int for partition tags (to match the type for other entities in Gmsh)
-// - use size_t for element/node tags, and thus the graph
-
 #include <vector>
 #include <set>
 #include <sstream>
@@ -24,36 +19,56 @@
 #include "GModel.h"
 #include "ElementType.h"
 
-// TODO C++11 remove this nasty stuff
+struct OriGEntityPtrFullLessThan {
+  bool operator()(const std::pair<int, GEntity *> &p1,
+                  const std::pair<int, GEntity *> &p2) const
+  {
+    if(p1.first != p2.first) return p1.first < p2.first;
+    if(p1.second->dim() != p2.second->dim())
+      return p1.second->dim() < p2.second->dim();
+    return p1.second->tag() < p2.second->tag();
+  }
+};
+
+typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrFullLessThan>
+  setorientity;
+
+// TODO C++11 remove the fallbacks
 #if __cplusplus >= 201103L
 #include <unordered_map>
 #define hashmap std::unordered_map
+#define hashmapentity                                                          \
+  std::unordered_map<GEntity *, setorientity, GEntityPtrFullHash,              \
+                     GEntityPtrFullEqual>
+#define hashmapelement                                                         \
+  std::unordered_map<MElement *, GEntity *, MElementPtrHash, MElementPtrEqual>
+#define hashmapelementpart                                                     \
+  std::unordered_map<MElement *, int, MElementPtrHash, MElementPtrEqual>
 #define hashmapface                                                            \
-  std::unordered_map<                                                          \
-    MFace, std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
-    MFaceHash, MFaceEqual>
+  std::unordered_map<MFace,                                                    \
+                     std::vector<std::pair<MElement *, std::vector<int> > >,   \
+                     MFaceHash, MFaceEqual>
 #define hashmapedge                                                            \
-  std::unordered_map<                                                          \
-    MEdge, std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
-    MEdgeHash, MEdgeEqual>
+  std::unordered_map<MEdge,                                                    \
+                     std::vector<std::pair<MElement *, std::vector<int> > >,   \
+                     MEdgeHash, MEdgeEqual>
 #define hashmapvertex                                                          \
-  std::unordered_map<                                                          \
-    MVertex *,                                                                 \
-    std::vector<std::pair<MElement *, std::vector<unsigned int> > >,           \
-    MVertexPtrHash, MVertexPtrEqual>
+  std::unordered_map<MVertex *,                                                \
+                     std::vector<std::pair<MElement *, std::vector<int> > >,   \
+                     MVertexPtrHash, MVertexPtrEqual>
 #else
 #define hashmap std::map
+#define hashmapentity std::map<GEntity *, setorientity, GEntityPtrFullLessThan>
+#define hashmapelement std::map<MElement *, GEntity *, MElementPtrLessThan>
+#define hashmapelementpart std::map<MElement *, int, MElementPtrLessThan>
 #define hashmapface                                                            \
-  std::map<MFace,                                                              \
-           std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
+  std::map<MFace, std::vector<std::pair<MElement *, std::vector<int> > >,      \
            MFaceLessThan>
 #define hashmapedge                                                            \
-  std::map<MEdge,                                                              \
-           std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
+  std::map<MEdge, std::vector<std::pair<MElement *, std::vector<int> > >,      \
            MEdgeLessThan>
 #define hashmapvertex                                                          \
-  std::map<MVertex *,                                                          \
-           std::vector<std::pair<MElement *, std::vector<unsigned int> > >,    \
+  std::map<MVertex *, std::vector<std::pair<MElement *, std::vector<int> > >,  \
            MVertexPtrLessThan>
 #endif
 
@@ -90,39 +105,274 @@ private:
   // The GModel
   GModel *_model;
   // The number of partitions
-  unsigned int _nparts;
+  std::size_t _nparts;
   // The number of elements
-  unsigned int _ne;
+  std::size_t _ne;
   // The number of nodes
-  unsigned int _nn;
+  std::size_t _nn;
   // The dimension of the mesh
-  unsigned int _dim;
+  int _dim;
   // The list of nodes belonging to the ith element of the mesh are stored in
   // consecutive locations of eind starting at position eptr[i] up to (but not
   // including) position eptr[i+1]. The size of the eind array is of size equal
   // to the sum of the number of nodes in all the elements of the mesh.
-  unsigned int *_eind;
+  std::vector<idx_t> _eind;
   // The size of the eptr array is n + 1, where n is the number of elements in
   // the mesh.
-  unsigned int *_eptr;
+  std::vector<idx_t> _eptr;
   // The metis graph structure
-  unsigned int *_xadj, *_adjncy;
-  // Elements corresponding to each graph elements in eptr
-  MElement **_element;
-  // Vertices corresponding to each graph vertices in eptr
-  int *_vertex;
-  int _vertexSize;
-  // The width associated to each elements of eptr
-  unsigned int *_vwgt;
-  // The partitions output from the partitioner
-  unsigned int *_partition;
+  idx_t *_xadj, *_adjncy;
+  // The weight associated to each elements of eptr
+  idx_t *_vwgt;
+  // Element corresponding to each graph element in eptr
+  std::vector<MElement *> _element;
+  // Vertex corresponding to each graph vertex in eptr
+  std::vector<idx_t> _vertex;
+  // The partitions output from the partitioner, in an integer type independent
+  // from METIS
+  std::vector<int> _partition;
 
 public:
-  Graph(GModel *const model)
-    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _eind(0), _eptr(0),
-      _xadj(0), _adjncy(0), _element(0), _vertex(0), _vertexSize(0), _vwgt(0),
-      _partition(0)
+  Graph(GModel *model)
+    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _xadj(0), _adjncy(0),
+      _vwgt(0)
   {
+  }
+  ~Graph() { clear(); }
+  std::size_t nparts() const { return _nparts; };
+  std::size_t ne() const { return _ne; };
+  std::size_t nn() const { return _nn; };
+  int dim() const { return _dim; };
+  std::size_t eind(std::size_t i) const { return _eind[i]; };
+  std::size_t eptr(std::size_t i) const { return _eptr[i]; };
+  idx_t xadj(std::size_t i) const { return _xadj[i]; };
+  idx_t *xadj() const { return _xadj; };
+  idx_t adjncy(std::size_t i) const { return _adjncy[i]; };
+  idx_t *adjncy() const { return _adjncy; };
+  idx_t *vwgt() const { return _vwgt; };
+  MElement *element(std::size_t i) const { return _element[i]; };
+  idx_t vertex(std::size_t i) const { return _vertex[i]; };
+  int partition(std::size_t i) const { return _partition[i]; };
+  std::size_t numNodes() const { return _ne; };
+  std::size_t numEdges() const { return _xadj[_ne] / 2; };
+  void nparts(std::size_t nparts) { _nparts = nparts; };
+  void ne(std::size_t ne) { _ne = ne; };
+  void nn(std::size_t nn) { _nn = nn; };
+  void dim(int dim) { _dim = dim; };
+  void eindResize(std::size_t size)
+  {
+    _eind.clear();
+    _eind.resize(size, 0);
+  }
+  void eind(std::size_t i, idx_t eind) { _eind[i] = eind; };
+  void eptrResize(std::size_t size)
+  {
+    _eptr.clear();
+    _eptr.resize(size, 0);
+  }
+  void eptr(std::size_t i, idx_t eptr) { _eptr[i] = eptr; };
+  void elementResize(std::size_t size)
+  {
+    _element.clear();
+    _element.resize(size, 0);
+  }
+  void element(std::size_t i, MElement *element) { _element[i] = element; };
+  void vertexResize(std::size_t size)
+  {
+    _vertex.clear();
+    _vertex.resize(size, -1);
+  }
+  void adjncy(std::size_t i, idx_t adjncy) { _adjncy[i] = adjncy; };
+  void vertex(std::size_t i, idx_t vertex) { _vertex[i] = vertex; };
+  void partition(const std::vector<idx_t> &epart)
+  {
+    // converts into METIS-independent integer type
+    _partition.resize(epart.size());
+    for(std::size_t i = 0; i < epart.size(); i++) _partition[i] = epart[i];
+  };
+  void clear()
+  {
+    if(_xadj) {
+      delete[] _xadj;
+      _xadj = 0;
+    }
+    if(_adjncy) {
+      delete[] _adjncy;
+      _adjncy = 0;
+    }
+    if(_vwgt) {
+      delete[] _vwgt;
+      _vwgt = 0;
+    }
+  }
+  void clearDualGraph()
+  {
+    if(_xadj) {
+      delete[] _xadj;
+      _xadj = 0;
+    }
+    if(_adjncy) {
+      delete[] _adjncy;
+      _adjncy = 0;
+    }
+  }
+  void eraseVertex()
+  {
+    for(std::size_t i = 0; i < _vertex.size(); i++) _vertex[i] = -1;
+  }
+  std::vector<std::set<MElement *, MElementPtrLessThan> >
+  getBoundaryElements(idx_t size = 0)
+  {
+    std::vector<std::set<MElement *, MElementPtrLessThan> > elements(
+      (size ? size : _nparts), std::set<MElement *, MElementPtrLessThan>());
+    for(std::size_t i = 0; i < _ne; i++) {
+      for(idx_t j = _xadj[i]; j < _xadj[i + 1]; j++) {
+        if(_partition[i] != _partition[_adjncy[j]]) {
+          if(_element[i]->getDim() == _dim) {
+            elements[_partition[i]].insert(_element[i]);
+          }
+        }
+      }
+    }
+
+    return elements;
+  }
+  void assignGhostCells()
+  {
+    std::vector<GEntity *> ghostEntities(_nparts, (GEntity *)NULL);
+    int elementaryNumber = _model->getMaxElementaryNumber(_dim);
+    for(std::size_t i = 1; i <= _nparts; i++) {
+      switch(_dim) {
+      case 1:
+        ghostEntities[i - 1] = new ghostEdge(_model, ++elementaryNumber, i);
+        _model->add(static_cast<ghostEdge *>(ghostEntities[i - 1]));
+        break;
+      case 2:
+        ghostEntities[i - 1] = new ghostFace(_model, ++elementaryNumber, i);
+        _model->add(static_cast<ghostFace *>(ghostEntities[i - 1]));
+        break;
+      case 3:
+        ghostEntities[i - 1] = new ghostRegion(_model, ++elementaryNumber, i);
+        _model->add(static_cast<ghostRegion *>(ghostEntities[i - 1]));
+        break;
+      default: break;
+      }
+    }
+    for(std::size_t i = 0; i < _ne; i++) {
+      std::set<int> ghostCellsPartition;
+      for(idx_t j = _xadj[i]; j < _xadj[i + 1]; j++) {
+        if(_partition[i] != _partition[_adjncy[j]] &&
+           ghostCellsPartition.find(_partition[_adjncy[j]]) ==
+             ghostCellsPartition.end()) {
+          if(_element[i]->getDim() == _dim) {
+            switch(_dim) {
+            case 1:
+              static_cast<ghostEdge *>(ghostEntities[_partition[_adjncy[j]]])
+                ->addElement(_element[i]->getType(), _element[i],
+                             _partition[i] + 1);
+              break;
+            case 2:
+              static_cast<ghostFace *>(ghostEntities[_partition[_adjncy[j]]])
+                ->addElement(_element[i]->getType(), _element[i],
+                             _partition[i] + 1);
+              break;
+            case 3:
+              static_cast<ghostRegion *>(ghostEntities[_partition[_adjncy[j]]])
+                ->addElement(_element[i]->getType(), _element[i],
+                             _partition[i] + 1);
+              break;
+            default: break;
+            }
+            ghostCellsPartition.insert(_partition[_adjncy[j]]);
+          }
+        }
+      }
+    }
+  }
+  void createDualGraph(bool connectedAll)
+  {
+    std::vector<idx_t> nptr(_nn + 1, 0);
+    std::vector<idx_t> nind(_eptr[_ne], 0);
+
+    for(std::size_t i = 0; i < _ne; i++) {
+      for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) { nptr[_eind[j]]++; }
+    }
+
+    for(std::size_t i = 1; i < _nn; i++) nptr[i] += nptr[i - 1];
+    for(std::size_t i = _nn; i > 0; i--) nptr[i] = nptr[i - 1];
+    nptr[0] = 0;
+
+    for(std::size_t i = 0; i < _ne; i++) {
+      for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) {
+        nind[nptr[_eind[j]]++] = i;
+      }
+    }
+
+    for(std::size_t i = _nn; i > 0; i--) nptr[i] = nptr[i - 1];
+    nptr[0] = 0;
+
+    _xadj = new idx_t[_ne + 1];
+    for(std::size_t i = 0; i < _ne + 1; i++) _xadj[i] = 0;
+
+    std::vector<idx_t> nbrs(_ne, 0);
+    std::vector<idx_t> marker(_ne, 0);
+    for(std::size_t i = 0; i < _ne; i++) {
+      std::size_t l = 0;
+      for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) {
+        for(idx_t k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
+          if(nind[k] != (idx_t)i) {
+            if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
+            marker[nind[k]]++;
+          }
+        }
+      }
+
+      std::size_t nbrsNeighbors = 0;
+      for(std::size_t j = 0; j < l; j++) {
+        if(marker[nbrs[j]] >=
+           (connectedAll ?
+              1 :
+              _element[i]->numCommonNodesInDualGraph(_element[nbrs[j]])))
+          nbrsNeighbors++;
+        marker[nbrs[j]] = 0;
+        nbrs[j] = 0;
+      }
+
+      _xadj[i] = nbrsNeighbors;
+    }
+
+    for(std::size_t i = 1; i < _ne; i++) _xadj[i] = _xadj[i] + _xadj[i - 1];
+    for(std::size_t i = _ne; i > 0; i--) _xadj[i] = _xadj[i - 1];
+    _xadj[0] = 0;
+
+    _adjncy = new idx_t[_xadj[_ne]];
+    for(idx_t i = 0; i < _xadj[_ne]; i++) _adjncy[i] = 0;
+
+    for(std::size_t i = 0; i < _ne; i++) {
+      std::size_t l = 0;
+      for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) {
+        for(idx_t k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
+          if(nind[k] != (idx_t)i) {
+            if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
+            marker[nind[k]]++;
+          }
+        }
+      }
+
+      for(std::size_t j = 0; j < l; j++) {
+        if(marker[nbrs[j]] >=
+           (connectedAll ?
+              1 :
+              _element[i]->numCommonNodesInDualGraph(_element[nbrs[j]]))) {
+          _adjncy[_xadj[i]] = nbrs[j];
+          _xadj[i] = _xadj[i] + 1;
+        }
+        marker[nbrs[j]] = 0;
+        nbrs[j] = 0;
+      }
+    }
+    for(std::size_t i = _ne; i > 0; i--) _xadj[i] = _xadj[i - 1];
+    _xadj[0] = 0;
   }
   void fillDefaultWeights()
   {
@@ -135,7 +385,7 @@ public:
        CTX::instance()->mesh.partitionHexWeight == 1)
       return;
 
-    _vwgt = new unsigned int[_ne];
+    _vwgt = new idx_t[_ne];
     if(CTX::instance()->mesh.partitionLinWeight == -1 ||
        CTX::instance()->mesh.partitionTriWeight == -1 ||
        CTX::instance()->mesh.partitionQuaWeight == -1 ||
@@ -143,15 +393,15 @@ public:
        CTX::instance()->mesh.partitionPyrWeight == -1 ||
        CTX::instance()->mesh.partitionPriWeight == -1 ||
        CTX::instance()->mesh.partitionHexWeight == -1) {
-      for(unsigned int i = 0; i < _ne; i++) {
+      for(std::size_t i = 0; i < _ne; i++) {
         if(!_element[i]) { _vwgt[i] = 1; }
         else {
-          _vwgt[i] = (_element[i]->getDim() == (int)_dim ? 1 : 0);
+          _vwgt[i] = (_element[i]->getDim() == _dim ? 1 : 0);
         }
       }
     }
     else {
-      for(unsigned int i = 0; i < _ne; i++) {
+      for(std::size_t i = 0; i < _ne; i++) {
         if(!_element[i]) { _vwgt[i] = 1; }
         else {
           switch(_element[i]->getType()) {
@@ -182,289 +432,12 @@ public:
       }
     }
   }
-  ~Graph() { clear(); }
-  unsigned int nparts() const { return _nparts; };
-  unsigned int ne() const { return _ne; };
-  unsigned int nn() const { return _nn; };
-  unsigned int dim() const { return _dim; };
-  unsigned int eind(unsigned int i) const { return _eind[i]; };
-  unsigned int *eind() const { return _eind; };
-  unsigned int eptr(unsigned int i) const { return _eptr[i]; };
-  unsigned int *eptr() const { return _eptr; };
-  unsigned int xadj(unsigned int i) const { return _xadj[i]; };
-  unsigned int *xadj() const { return _xadj; };
-  unsigned int adjncy(unsigned int i) const { return _adjncy[i]; };
-  unsigned int *adjncy() const { return _adjncy; };
-  MElement *element(unsigned int i) const { return _element[i]; };
-  int vertex(unsigned int i) const { return _vertex[i]; };
-  unsigned int *vwgt() const { return _vwgt; };
-  unsigned int partition(unsigned int i) const { return _partition[i]; };
-  unsigned int *partition() const { return _partition; };
-  unsigned int numNodes() const { return _ne; };
-  unsigned int numEdges() const { return _xadj[_ne] / 2; };
-  void nparts(unsigned int nparts) { _nparts = nparts; };
-  void ne(unsigned int ne) { _ne = ne; };
-  void nn(unsigned int nn) { _nn = nn; };
-  void dim(unsigned int dim) { _dim = dim; };
-  void eindResize(unsigned int size)
-  {
-    _eind = new unsigned int[size];
-    for(unsigned int i = 0; i < size; i++) _eind[i] = 0;
-  }
-  void eind(unsigned int i, unsigned int eind) { _eind[i] = eind; };
-  void eptrResize(unsigned int size)
-  {
-    _eptr = new unsigned int[size];
-    for(unsigned int i = 0; i < size; i++) _eptr[i] = 0;
-  }
-  void eptr(unsigned int i, unsigned int eptr) { _eptr[i] = eptr; };
-  void elementResize(unsigned int size)
-  {
-    _element = new MElement *[size];
-    for(unsigned int i = 0; i < size; i++) _element[i] = 0;
-  }
-  void element(unsigned int i, MElement *element) { _element[i] = element; };
-  void vertexResize(unsigned int size)
-  {
-    _vertexSize = size;
-    _vertex = new int[size];
-    for(unsigned int i = 0; i < size; i++) _vertex[i] = -1;
-  }
-  void adjncy(unsigned int i, unsigned int adjncy) { _adjncy[i] = adjncy; };
-  void vertex(unsigned int i, int vertex) { _vertex[i] = vertex; };
-  void vwgt(unsigned int *vwgt) { _vwgt = vwgt; };
-  void partition(unsigned int *partition) { _partition = partition; };
-  void clear()
-  {
-    if(_eind) {
-      delete[] _eind;
-      _eind = 0;
-    }
-    if(_eptr) {
-      delete[] _eptr;
-      _eptr = 0;
-    }
-    if(_xadj) {
-      delete[] _xadj;
-      _xadj = 0;
-    }
-    if(_adjncy) {
-      delete[] _adjncy;
-      _adjncy = 0;
-    }
-    if(_element) {
-      delete[] _element;
-      _element = 0;
-    }
-    if(_vertex) {
-      delete[] _vertex;
-      _vertex = 0;
-    }
-    _vertexSize = 0;
-    if(_vwgt) {
-      delete[] _vwgt;
-      _vwgt = 0;
-    }
-    if(_partition) {
-      delete[] _partition;
-      _partition = 0;
-    }
-  }
-  void clearDualGraph()
-  {
-    if(_xadj) {
-      delete[] _xadj;
-      _xadj = 0;
-    }
-    if(_adjncy) {
-      delete[] _adjncy;
-      _adjncy = 0;
-    }
-  }
-  void eraseVertex()
-  {
-    if(_vertex) {
-      for(int i = 0; i < _vertexSize; i++) _vertex[i] = -1;
-    }
-  }
-
-  std::vector<std::set<MElement *> > getBoundaryElements(int size = 0)
-  {
-    std::vector<std::set<MElement *> > elements((size ? size : _nparts),
-                                                std::set<MElement *>());
-    for(unsigned int i = 0; i < _ne; i++) {
-      for(unsigned int j = _xadj[i]; j < _xadj[i + 1]; j++) {
-        if(_partition[i] != _partition[_adjncy[j]]) {
-          if(_element[i]->getDim() == (int)_dim) {
-            elements[_partition[i]].insert(_element[i]);
-          }
-        }
-      }
-    }
-
-    return elements;
-  }
-
-  void assignGhostCells()
-  {
-    std::vector<GEntity *> ghostEntities(_nparts, (GEntity *)NULL);
-    int elementaryNumber = _model->getMaxElementaryNumber(_dim);
-
-    for(unsigned int i = 1; i <= _nparts; i++) {
-      switch(_dim) {
-      case 1:
-        ghostEntities[i - 1] = new ghostEdge(_model, ++elementaryNumber, i);
-        _model->add(static_cast<ghostEdge *>(ghostEntities[i - 1]));
-        break;
-      case 2:
-        ghostEntities[i - 1] = new ghostFace(_model, ++elementaryNumber, i);
-        _model->add(static_cast<ghostFace *>(ghostEntities[i - 1]));
-        break;
-      case 3:
-        ghostEntities[i - 1] = new ghostRegion(_model, ++elementaryNumber, i);
-        _model->add(static_cast<ghostRegion *>(ghostEntities[i - 1]));
-        break;
-      default: break;
-      }
-    }
-
-    for(unsigned int i = 0; i < _ne; i++) {
-      std::set<short> ghostCellsPartition;
-      for(unsigned int j = _xadj[i]; j < _xadj[i + 1]; j++) {
-        if(_partition[i] != _partition[_adjncy[j]] &&
-           ghostCellsPartition.find(_partition[_adjncy[j]]) ==
-             ghostCellsPartition.end()) {
-          if(_element[i]->getDim() == (int)_dim) {
-            switch(_dim) {
-            case 1:
-              static_cast<ghostEdge *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i]->getType(), _element[i],
-                             _partition[i] + 1);
-              break;
-            case 2:
-              static_cast<ghostFace *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i]->getType(), _element[i],
-                             _partition[i] + 1);
-              break;
-            case 3:
-              static_cast<ghostRegion *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i]->getType(), _element[i],
-                             _partition[i] + 1);
-              break;
-            default: break;
-            }
-            ghostCellsPartition.insert(_partition[_adjncy[j]]);
-          }
-        }
-      }
-    }
-  }
-
-  void createDualGraph(bool connectedAll)
-  {
-    int *nptr = new int[_nn + 1];
-    for(unsigned int i = 0; i < _nn + 1; i++) nptr[i] = 0;
-    int *nind = new int[_eptr[_ne]];
-    for(unsigned int i = 0; i < _eptr[_ne]; i++) nind[i] = 0;
-
-    for(unsigned int i = 0; i < _ne; i++) {
-      for(unsigned int j = _eptr[i]; j < _eptr[i + 1]; j++) {
-        nptr[_eind[j]]++;
-      }
-    }
-
-    for(unsigned int i = 1; i < _nn; i++) nptr[i] += nptr[i - 1];
-    for(unsigned int i = _nn; i > 0; i--) nptr[i] = nptr[i - 1];
-    nptr[0] = 0;
-
-    for(unsigned int i = 0; i < _ne; i++) {
-      for(unsigned int j = _eptr[i]; j < _eptr[i + 1]; j++) {
-        nind[nptr[_eind[j]]++] = i;
-      }
-    }
-
-    for(unsigned int i = _nn; i > 0; i--) nptr[i] = nptr[i - 1];
-    nptr[0] = 0;
-
-    _xadj = new unsigned int[_ne + 1];
-    for(unsigned int i = 0; i < _ne + 1; i++) _xadj[i] = 0;
-    int *nbrs = new int[_ne];
-    int *marker = new int[_ne];
-    for(unsigned int i = 0; i < _ne; i++) {
-      nbrs[i] = 0;
-      marker[i] = 0;
-    }
-
-    for(unsigned int i = 0; i < _ne; i++) {
-      unsigned int l = 0;
-      for(unsigned int j = _eptr[i]; j < _eptr[i + 1]; j++) {
-        for(int k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
-          if(nind[k] != (int)i) {
-            if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
-            marker[nind[k]]++;
-          }
-        }
-      }
-
-      unsigned int nbrsNeighbors = 0;
-      for(unsigned int j = 0; j < l; j++) {
-        if(marker[nbrs[j]] >=
-           (connectedAll ?
-              1 :
-              _element[i]->numCommonNodesInDualGraph(_element[nbrs[j]])))
-          nbrsNeighbors++;
-        marker[nbrs[j]] = 0;
-        nbrs[j] = 0;
-      }
-
-      _xadj[i] = nbrsNeighbors;
-    }
-
-    for(unsigned int i = 1; i < _ne; i++) _xadj[i] = _xadj[i] + _xadj[i - 1];
-    for(unsigned int i = _ne; i > 0; i--) _xadj[i] = _xadj[i - 1];
-    _xadj[0] = 0;
-
-    _adjncy = new unsigned int[_xadj[_ne]];
-    for(unsigned int i = 0; i < _xadj[_ne]; i++) _adjncy[i] = 0;
-
-    for(unsigned int i = 0; i < _ne; i++) {
-      unsigned int l = 0;
-      for(unsigned int j = _eptr[i]; j < _eptr[i + 1]; j++) {
-        for(int k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
-          if(nind[k] != (int)i) {
-            if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
-            marker[nind[k]]++;
-          }
-        }
-      }
-
-      for(unsigned int j = 0; j < l; j++) {
-        if(marker[nbrs[j]] >=
-           (connectedAll ?
-              1 :
-              _element[i]->numCommonNodesInDualGraph(_element[nbrs[j]]))) {
-          _adjncy[_xadj[i]] = nbrs[j];
-          _xadj[i] = _xadj[i] + 1;
-        }
-        marker[nbrs[j]] = 0;
-        nbrs[j] = 0;
-      }
-    }
-    delete[] nbrs;
-    delete[] marker;
-
-    for(unsigned int i = _ne; i > 0; i--) _xadj[i] = _xadj[i - 1];
-    _xadj[0] = 0;
-
-    delete[] nptr;
-    delete[] nind;
-  }
 };
 
 template <class ITERATOR>
-static void fillElementsToNodesMap(Graph &graph, const GEntity *const entity,
-                                   int &eptrIndex, int &eindIndex,
-                                   int &numVertex, ITERATOR it_beg,
+static void fillElementsToNodesMap(Graph &graph, GEntity *entity,
+                                   idx_t &eptrIndex, idx_t &eindIndex,
+                                   idx_t &numVertex, ITERATOR it_beg,
                                    ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
@@ -481,10 +454,10 @@ static void fillElementsToNodesMap(Graph &graph, const GEntity *const entity,
   }
 }
 
-static int getSizeOfEind(const GModel *const model)
+static std::size_t getSizeOfEind(GModel *model)
 {
-  int size = 0;
-  // Loop over regions
+  std::size_t size = 0;
+  // Loop over volumes
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion();
       ++it) {
     size += 4 * (*it)->tetrahedra.size();
@@ -494,20 +467,20 @@ static int getSizeOfEind(const GModel *const model)
     size += 4 * (*it)->trihedra.size();
   }
 
-  // Loop over faces
+  // Loop over surfaces
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace();
       ++it) {
     size += 3 * (*it)->triangles.size();
     size += 4 * (*it)->quadrangles.size();
   }
 
-  // Loop over edges
+  // Loop over curves
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge();
       ++it) {
     size += 2 * (*it)->lines.size();
   }
 
-  // Loop over vertices
+  // Loop over points
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex();
       ++it) {
     size += 1 * (*it)->points.size();
@@ -518,9 +491,9 @@ static int getSizeOfEind(const GModel *const model)
 
 // Creates a mesh data structure used by Metis routines. Returns: 0 = success, 1
 // = no elements found, 2 = error.
-static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
+static int makeGraph(GModel *model, Graph &graph, int selectDim)
 {
-  int eindSize = 0;
+  std::size_t eindSize = 0;
   if(selectDim < 0) {
     graph.ne(model->getNumMeshElements());
     graph.nn(model->getNumMeshVertices());
@@ -570,9 +543,9 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
     delete tmp;
   }
 
-  int eptrIndex = 0;
-  int eindIndex = 0;
-  int numVertex = 0;
+  idx_t eptrIndex = 0;
+  idx_t eindIndex = 0;
+  idx_t numVertex = 0;
 
   if(graph.ne() == 0) {
     Msg::Error("No mesh elements were found");
@@ -583,11 +556,11 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
     return 1;
   }
 
-  // Loop over regions
+  // Loop over volumes
   if(selectDim < 0 || selectDim == 3) {
     for(GModel::const_riter it = model->firstRegion();
         it != model->lastRegion(); ++it) {
-      const GRegion *r = *it;
+      GRegion *r = *it;
       fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, numVertex,
                              r->tetrahedra.begin(), r->tetrahedra.end());
       fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, numVertex,
@@ -601,12 +574,11 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
     }
   }
 
-  // Loop over faces
+  // Loop over surfaces
   if(selectDim < 0 || selectDim == 2) {
     for(GModel::const_fiter it = model->firstFace(); it != model->lastFace();
         ++it) {
-      const GFace *f = *it;
-
+      GFace *f = *it;
       fillElementsToNodesMap(graph, f, eptrIndex, eindIndex, numVertex,
                              f->triangles.begin(), f->triangles.end());
       fillElementsToNodesMap(graph, f, eptrIndex, eindIndex, numVertex,
@@ -614,22 +586,21 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
     }
   }
 
-  // Loop over edges
+  // Loop over curves
   if(selectDim < 0 || selectDim == 1) {
     for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge();
         ++it) {
-      const GEdge *e = *it;
+      GEdge *e = *it;
       fillElementsToNodesMap(graph, e, eptrIndex, eindIndex, numVertex,
                              e->lines.begin(), e->lines.end());
     }
   }
 
-  // Loop over vertices
+  // Loop over points
   if(selectDim < 0 || selectDim == 0) {
     for(GModel::const_viter it = model->firstVertex();
         it != model->lastVertex(); ++it) {
       GVertex *v = *it;
-
       fillElementsToNodesMap(graph, v, eptrIndex, eindIndex, numVertex,
                              v->points.begin(), v->points.end());
     }
@@ -638,17 +609,19 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
   return 0;
 }
 
-// Partition a graph created by MakeGraph using Metis library. Returns: 0 =
+// Partition a graph created by makeGraph using Metis library. Returns: 0 =
 // success, 1 = error, 2 = exception thrown.
-static int PartitionGraph(Graph &graph, bool verbose)
+static int partitionGraph(Graph &graph, bool verbose)
 {
 #ifdef HAVE_METIS
   std::stringstream opt;
   try {
-    int metisOptions[METIS_NOPTIONS];
-    METIS_SetDefaultOptions((idx_t *)metisOptions);
+    idx_t metisOptions[METIS_NOPTIONS];
+    METIS_SetDefaultOptions(metisOptions);
 
-    opt << "ptype:";
+    opt << 8 * sizeof(idx_t) << " bit indices";
+
+    opt << ", ptype:";
     switch(CTX::instance()->mesh.metisAlgorithm) {
     case 1: // Recursive
       metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_RB;
@@ -658,9 +631,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;
       opt << "kway";
       break;
-    default:
-      opt << "default";
-      break;
+    default: opt << "default"; break;
     }
 
     opt << ", ufactor:";
@@ -683,9 +654,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_SHEM;
       opt << "shem";
       break;
-    default:
-      opt << "default";
-      break;
+    default: opt << "default"; break;
     }
 
     opt << ", rtype:";
@@ -706,9 +675,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_SEP1SIDED;
       opt << "sep1sided";
       break;
-    default:
-      opt << "default";
-      break;
+    default: opt << "default"; break;
     }
 
     opt << ", objtype:";
@@ -721,9 +688,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_VOL;
       opt << "vol";
       break;
-    default:
-      opt << "default";
-      break;
+    default: opt << "default"; break;
     }
 
     opt << ", minconn:";
@@ -736,40 +701,33 @@ static int PartitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_MINCONN] = 1;
       opt << 1;
       break;
-    default:
-      opt << "default";
-      break;
+    default: opt << "default"; break;
     }
 
-    if(verbose)
-      Msg::Info("Running METIS with %s", opt.str().c_str());
+    if(verbose) Msg::Info("Running METIS with %s", opt.str().c_str());
 
     // C numbering
     metisOptions[METIS_OPTION_NUMBERING] = 0;
 
-    int objval;
-    unsigned int *epart = new unsigned int[graph.ne()];
-    const unsigned int ne = graph.ne();
-    const int numPart = graph.nparts();
-    int ncon = 1;
+    idx_t objval;
+    std::vector<idx_t> epart(graph.ne());
+    idx_t ne = graph.ne();
+    idx_t numPart = graph.nparts();
+    idx_t ncon = 1;
     graph.fillDefaultWeights();
 
     int metisError = 0;
     graph.createDualGraph(false);
 
     if(metisOptions[METIS_OPTION_PTYPE] == METIS_PTYPE_KWAY) {
-      metisError = METIS_PartGraphKway(
-        (idx_t *)&ne, (idx_t *)&ncon, (idx_t *)graph.xadj(),
-        (idx_t *)graph.adjncy(), (idx_t *)graph.vwgt(), (idx_t *)0, 0,
-        (idx_t *)&numPart, 0, 0, (idx_t *)metisOptions, (idx_t *)&objval,
-        (idx_t *)epart);
+      metisError = METIS_PartGraphKway(&ne, &ncon, graph.xadj(), graph.adjncy(),
+                                       graph.vwgt(), 0, 0, &numPart, 0, 0,
+                                       metisOptions, &objval, &epart[0]);
     }
     else {
       metisError = METIS_PartGraphRecursive(
-        (idx_t *)&ne, (idx_t *)&ncon, (idx_t *)graph.xadj(),
-        (idx_t *)graph.adjncy(), (idx_t *)graph.vwgt(), (idx_t *)0, 0,
-        (idx_t *)&numPart, 0, 0, (idx_t *)metisOptions, (idx_t *)&objval,
-        (idx_t *)epart);
+        &ne, &ncon, graph.xadj(), graph.adjncy(), graph.vwgt(), 0, 0, &numPart,
+        0, 0, metisOptions, &objval, &epart[0]);
     }
 
     switch(metisError) {
@@ -782,10 +740,10 @@ static int PartitionGraph(Graph &graph, bool verbose)
 
     // Check and correct the topology
     for(int i = 1; i < 4; i++) {
-      for(unsigned int j = 0; j < graph.ne(); j++) {
-        if(graph.element(j)->getDim() == (int)graph.dim()) continue;
+      for(std::size_t j = 0; j < graph.ne(); j++) {
+        if(graph.element(j)->getDim() == graph.dim()) continue;
 
-        for(unsigned int k = graph.xadj(j); k < graph.xadj(j + 1); k++) {
+        for(idx_t k = graph.xadj(j); k < graph.xadj(j + 1); k++) {
           if(graph.element(j)->getDim() ==
              graph.element(graph.adjncy(k))->getDim() - i) {
             if(epart[j] != epart[graph.adjncy(k)]) {
@@ -797,8 +755,7 @@ static int PartitionGraph(Graph &graph, bool verbose)
       }
     }
     graph.partition(epart);
-    if(verbose)
-      Msg::Info("%d partitions, %d total edge-cuts", numPart, objval);
+    if(verbose) Msg::Info("%d partitions, %d total edge-cuts", numPart, objval);
   } catch(...) {
     Msg::Error("METIS exception");
     return 2;
@@ -810,16 +767,15 @@ static int PartitionGraph(Graph &graph, bool verbose)
 
 template <class ENTITY, class ITERATOR>
 static void
-assignElementsToEntities(GModel *const model,
-                         hashmap<MElement *, unsigned int> &elmToPartition,
+assignElementsToEntities(GModel *model, hashmapelementpart &elmToPartition,
                          std::vector<ENTITY *> &newEntities, ITERATOR it_beg,
                          ITERATOR it_end, int &elementaryNumber)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
-    const unsigned int partition = elmToPartition[(*it)] - 1;
+    int partition = elmToPartition[(*it)] - 1;
 
     if(!newEntities[partition]) {
-      std::vector<unsigned int> partitions;
+      std::vector<int> partitions;
       partitions.push_back(partition + 1);
       ENTITY *de = new ENTITY(model, ++elementaryNumber, partitions);
       model->add(de);
@@ -831,8 +787,8 @@ assignElementsToEntities(GModel *const model,
 }
 
 template <class ITERATOR>
-void setVerticesToEntity(GEntity *const entity, ITERATOR it_beg,
-                         ITERATOR it_end)
+static void setVerticesToEntity(GEntity *entity, ITERATOR it_beg,
+                                ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
@@ -845,7 +801,7 @@ void setVerticesToEntity(GEntity *const entity, ITERATOR it_beg,
 }
 
 template <class ITERATOR>
-void removeVerticesEntity(ITERATOR it_beg, ITERATOR it_end)
+static void removeVerticesEntity(ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
@@ -859,26 +815,26 @@ void removeVerticesEntity(ITERATOR it_beg, ITERATOR it_end)
 }
 
 // Assign the vertices to its corresponding entity
-static void AssignMeshVertices(GModel *model)
+static void assignMeshVertices(GModel *model)
 {
   removeVerticesEntity(model->firstVertex(), model->lastVertex());
   removeVerticesEntity(model->firstEdge(), model->lastEdge());
   removeVerticesEntity(model->firstFace(), model->lastFace());
   removeVerticesEntity(model->firstRegion(), model->lastRegion());
 
-  // Loop over vertices
+  // Loop over points
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex();
       ++it) {
     setVerticesToEntity(*it, (*it)->points.begin(), (*it)->points.end());
   }
 
-  // Loop over edges
+  // Loop over curves
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge();
       ++it) {
     setVerticesToEntity(*it, (*it)->lines.begin(), (*it)->lines.end());
   }
 
-  // Loop over faces
+  // Loop over surfaces
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace();
       ++it) {
     setVerticesToEntity(*it, (*it)->triangles.begin(), (*it)->triangles.end());
@@ -886,7 +842,7 @@ static void AssignMeshVertices(GModel *model)
                         (*it)->quadrangles.end());
   }
 
-  // Loop over regions
+  // Loop over volumes
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion();
       ++it) {
     setVerticesToEntity(*it, (*it)->tetrahedra.begin(),
@@ -898,16 +854,16 @@ static void AssignMeshVertices(GModel *model)
   }
 }
 
-static void
-fillConnectedElements(std::vector<std::set<MElement *> > &connectedElements,
-                      Graph &graph)
+static void fillConnectedElements(
+  std::vector<std::set<MElement *, MElementPtrLessThan> > &connectedElements,
+  Graph &graph)
 {
-  std::stack<unsigned int> elementStack;
-  std::set<MElement *> elements;
-  unsigned int startElement = 0;
+  std::stack<idx_t> elementStack;
+  std::set<MElement *, MElementPtrLessThan> elements;
+  idx_t startElement = 0;
   bool stop = true;
-  unsigned int size = 0;
-  int isolatedElements = 0;
+  std::size_t size = 0;
+  idx_t isolatedElements = 0;
 
   do {
     // Inititalization
@@ -915,11 +871,11 @@ fillConnectedElements(std::vector<std::set<MElement *> > &connectedElements,
     elements.insert(graph.element(startElement));
 
     while(elementStack.size() != 0) {
-      unsigned int top = elementStack.top();
+      idx_t top = elementStack.top();
       elementStack.pop();
       elements.insert(graph.element(top));
 
-      for(unsigned int i = graph.xadj(top); i < graph.xadj(top + 1); i++) {
+      for(idx_t i = graph.xadj(top); i < graph.xadj(top + 1); i++) {
         if(graph.adjncy(i) != 0) {
           elementStack.push(graph.adjncy(i));
           graph.adjncy(i, 0);
@@ -934,8 +890,8 @@ fillConnectedElements(std::vector<std::set<MElement *> > &connectedElements,
 
     startElement = 0;
     if(!stop) {
-      for(unsigned int i = 0; i < graph.ne(); i++) {
-        for(unsigned int j = graph.xadj(i); j < graph.xadj(i + 1); j++) {
+      for(std::size_t i = 0; i < graph.ne(); i++) {
+        for(idx_t j = graph.xadj(i); j < graph.xadj(i + 1); j++) {
           if(graph.adjncy(j) != 0) {
             startElement = i;
             i = graph.ne();
@@ -944,8 +900,8 @@ fillConnectedElements(std::vector<std::set<MElement *> > &connectedElements,
         }
       }
       if(startElement == 0) {
-        int skipIsolatedElements = 0;
-        for(unsigned int i = 1; i < graph.ne(); i++) {
+        idx_t skipIsolatedElements = 0;
+        for(std::size_t i = 1; i < graph.ne(); i++) {
           if(graph.xadj(i) == graph.xadj(i + 1)) {
             if(skipIsolatedElements == isolatedElements) {
               startElement = i;
@@ -961,14 +917,14 @@ fillConnectedElements(std::vector<std::set<MElement *> > &connectedElements,
 }
 
 static bool
-dividedNonConnectedEntities(GModel *const model, int dim,
-                            std::set<GRegion *, GEntityPtrLessThan> &regions,
-                            std::set<GFace *, GEntityPtrLessThan> &faces,
-                            std::set<GEdge *, GEntityPtrLessThan> &edges,
-                            std::set<GVertex *, GEntityPtrLessThan> &vertices)
+divideNonConnectedEntities(GModel *model, int dim,
+                           std::set<GRegion *, GEntityPtrLessThan> &regions,
+                           std::set<GFace *, GEntityPtrLessThan> &faces,
+                           std::set<GEdge *, GEntityPtrLessThan> &edges,
+                           std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
   bool ret = false;
-  // Loop over vertices
+  // Loop over points
   if(dim < 0 || dim == 0) {
     int elementaryNumber = model->getMaxElementaryNumber(0);
 
@@ -1015,7 +971,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     }
   }
 
-  // Loop over edges
+  // Loop over curves
   if(dim < 0 || dim == 1) {
     // We build a graph
     Graph graph(model);
@@ -1026,7 +982,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
     graph.eptr(0, 0);
-    const int eindSize = getSizeOfEind(model);
+    std::size_t eindSize = getSizeOfEind(model);
     graph.eindResize(eindSize);
 
     int elementaryNumber = model->getMaxElementaryNumber(1);
@@ -1041,23 +997,24 @@ dividedNonConnectedEntities(GModel *const model, int dim,
         graph.clearDualGraph();
         graph.eraseVertex();
 
-        int eptrIndex = 0;
-        int eindIndex = 0;
-        int numVertex = 0;
+        idx_t eptrIndex = 0;
+        idx_t eindIndex = 0;
+        idx_t numVertex = 0;
 
         fillElementsToNodesMap(graph, edge, eptrIndex, eindIndex, numVertex,
                                edge->lines.begin(), edge->lines.end());
         graph.nn(numVertex);
         graph.createDualGraph(false);
 
-        // if a graph contains more than ((n-1)*(n-2))/2 edges
-        // (where n is the number of nodes), then it is connected.
+        // if a graph contains more than ((n-1)*(n-2))/2 edges (where n is the
+        // number of nodes), then it is connected.
         if(((graph.numNodes() - 1) * (graph.numNodes() - 2)) / 2 <
            graph.numEdges()) {
           continue;
         }
 
-        std::vector<std::set<MElement *> > connectedElements;
+        std::vector<std::set<MElement *, MElementPtrLessThan> >
+          connectedElements;
         fillConnectedElements(connectedElements, graph);
 
         if(connectedElements.size() > 1) {
@@ -1082,7 +1039,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
             pedge->setParentEntity(edge->getParentEntity());
             // Add to model
             model->add(pedge);
-            for(std::set<MElement *>::iterator itSet =
+            for(std::set<MElement *, MElementPtrLessThan>::iterator itSet =
                   connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
@@ -1090,7 +1047,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
             }
             // Move B-Rep
             if(BRepFaces.size() > 0) {
-              int i = 0;
+              std::size_t i = 0;
               for(std::vector<GFace *>::iterator itBRep = BRepFaces.begin();
                   itBRep != BRepFaces.end(); ++itBRep) {
                 (*itBRep)->setEdge(pedge, oldOrientations[i]);
@@ -1111,7 +1068,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     }
   }
 
-  // Loop over faces
+  // Loop over surfaces
   if(dim < 0 || dim == 2) {
     // We build a graph
     Graph graph(model);
@@ -1122,7 +1079,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
     graph.eptr(0, 0);
-    const int eindSize = getSizeOfEind(model);
+    std::size_t eindSize = getSizeOfEind(model);
     graph.eindResize(eindSize);
 
     int elementaryNumber = model->getMaxElementaryNumber(2);
@@ -1137,9 +1094,9 @@ dividedNonConnectedEntities(GModel *const model, int dim,
         graph.clearDualGraph();
         graph.eraseVertex();
 
-        int eptrIndex = 0;
-        int eindIndex = 0;
-        int numVertex = 0;
+        idx_t eptrIndex = 0;
+        idx_t eindIndex = 0;
+        idx_t numVertex = 0;
 
         fillElementsToNodesMap(graph, face, eptrIndex, eindIndex, numVertex,
                                face->triangles.begin(), face->triangles.end());
@@ -1156,7 +1113,8 @@ dividedNonConnectedEntities(GModel *const model, int dim,
           continue;
         }
 
-        std::vector<std::set<MElement *> > connectedElements;
+        std::vector<std::set<MElement *, MElementPtrLessThan> >
+          connectedElements;
         fillConnectedElements(connectedElements, graph);
 
         if(connectedElements.size() > 1) {
@@ -1178,7 +1136,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
             pface->setParentEntity(face->getParentEntity());
             // Add to model
             model->add(pface);
-            for(std::set<MElement *>::iterator itSet =
+            for(std::set<MElement *, MElementPtrLessThan>::iterator itSet =
                   connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
@@ -1186,7 +1144,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
             }
             // Move B-Rep
             if(BRepRegions.size() > 0) {
-              int i = 0;
+              std::size_t i = 0;
               for(std::list<GRegion *>::iterator itBRep = BRepRegions.begin();
                   itBRep != BRepRegions.end(); ++itBRep) {
                 (*itBRep)->setFace(pface, oldOrientations[i]);
@@ -1208,7 +1166,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     }
   }
 
-  // Loop over regions
+  // Loop over volumes
   if(dim < 0 || dim == 3) {
     // We build a graph
     Graph graph(model);
@@ -1219,7 +1177,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
     graph.eptr(0, 0);
-    const int eindSize = getSizeOfEind(model);
+    std::size_t eindSize = getSizeOfEind(model);
     graph.eindResize(eindSize);
 
     int elementaryNumber = model->getMaxElementaryNumber(3);
@@ -1234,9 +1192,9 @@ dividedNonConnectedEntities(GModel *const model, int dim,
         graph.clearDualGraph();
         graph.eraseVertex();
 
-        int eptrIndex = 0;
-        int eindIndex = 0;
-        int numVertex = 0;
+        idx_t eptrIndex = 0;
+        idx_t eindIndex = 0;
+        idx_t numVertex = 0;
 
         fillElementsToNodesMap(graph, region, eptrIndex, eindIndex, numVertex,
                                region->tetrahedra.begin(),
@@ -1255,14 +1213,15 @@ dividedNonConnectedEntities(GModel *const model, int dim,
         graph.nn(numVertex);
         graph.createDualGraph(false);
 
-        // if a graph contains more than ((n-1)*(n-2))/2 edges
-        // (where n is the number of nodes), then it is connected.
+        // if a graph contains more than ((n-1)*(n-2))/2 edges (where n is the
+        // number of nodes), then it is connected.
         if(((graph.numNodes() - 1) * (graph.numNodes() - 2)) / 2 <
            graph.numEdges()) {
           continue;
         }
 
-        std::vector<std::set<MElement *> > connectedElements;
+        std::vector<std::set<MElement *, MElementPtrLessThan> >
+          connectedElements;
         fillConnectedElements(connectedElements, graph);
 
         if(connectedElements.size() > 1) {
@@ -1275,7 +1234,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
             pregion->setParentEntity(region->getParentEntity());
             // Add to model
             model->add(pregion);
-            for(std::set<MElement *>::iterator itSet =
+            for(std::set<MElement *, MElementPtrLessThan>::iterator itSet =
                   connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
@@ -1302,8 +1261,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
 }
 
 // Create the new volume entities (omega)
-static void CreateNewEntities(GModel *const model,
-                              hashmap<MElement *, unsigned int> &elmToPartition)
+static void createNewEntities(GModel *model, hashmapelementpart &elmToPartition)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
   std::set<GFace *, GEntityPtrLessThan> faces = model->getFaces();
@@ -1318,7 +1276,7 @@ static void CreateNewEntities(GModel *const model,
                              (*it)->points.begin(), (*it)->points.end(),
                              elementaryNumber);
 
-    for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
+    for(std::size_t i = 0; i < model->getNumPartitions(); i++) {
       if(newVertices[i]) {
         static_cast<partitionVertex *>(newVertices[i])->setParentEntity((*it));
       }
@@ -1337,7 +1295,7 @@ static void CreateNewEntities(GModel *const model,
                              (*it)->lines.begin(), (*it)->lines.end(),
                              elementaryNumber);
 
-    for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
+    for(std::size_t i = 0; i < model->getNumPartitions(); i++) {
       if(newEdges[i]) {
         static_cast<partitionEdge *>(newEdges[i])->setParentEntity(*it);
       }
@@ -1360,7 +1318,7 @@ static void CreateNewEntities(GModel *const model,
                              (*it)->quadrangles.end(), elementaryNumber);
 
     std::list<GRegion *> BRepRegions = (*it)->regions();
-    for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
+    for(std::size_t i = 0; i < model->getNumPartitions(); i++) {
       if(newFaces[i]) {
         static_cast<partitionFace *>(newFaces[i])->setParentEntity(*it);
       }
@@ -1392,7 +1350,7 @@ static void CreateNewEntities(GModel *const model,
                              (*it)->trihedra.begin(), (*it)->trihedra.end(),
                              elementaryNumber);
 
-    for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
+    for(std::size_t i = 0; i < model->getNumPartitions(); i++) {
       if(newRegions[i]) {
         static_cast<partitionRegion *>(newRegions[i])->setParentEntity(*it);
       }
@@ -1408,20 +1366,19 @@ static void CreateNewEntities(GModel *const model,
   }
 
   // If we don't create the partition topology let's just assume that the user
-  // does not care about multi-connected partitions or partition boundaries.
+  // does not care about multiply connected partitions or partition boundaries.
   if(!CTX::instance()->mesh.partitionCreateTopology) return;
   regions = model->getRegions();
   faces = model->getFaces();
   edges = model->getEdges();
   vertices = model->getVertices();
-  dividedNonConnectedEntities(model, -1, regions, faces, edges, vertices);
+  divideNonConnectedEntities(model, -1, regions, faces, edges, vertices);
 }
 
-static void fillElementToEntity(GModel *const model,
-                                hashmap<MElement *, GEntity *> &elmToEntity,
+static void fillElementToEntity(GModel *model, hashmapelement &elmToEntity,
                                 int dim)
 {
-  // Loop over regions
+  // Loop over volumes
   if(dim < 0 || dim == 3) {
     for(GModel::const_riter it = model->firstRegion();
         it != model->lastRegion(); ++it) {
@@ -1444,7 +1401,7 @@ static void fillElementToEntity(GModel *const model,
     }
   }
 
-  // Loop over faces
+  // Loop over surfaces
   if(dim < 0 || dim == 2) {
     for(GModel::const_fiter it = model->firstFace(); it != model->lastFace();
         ++it) {
@@ -1458,7 +1415,7 @@ static void fillElementToEntity(GModel *const model,
     }
   }
 
-  // Loop over edges
+  // Loop over curves
   if(dim < 0 || dim == 1) {
     for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge();
         ++it) {
@@ -1468,7 +1425,7 @@ static void fillElementToEntity(GModel *const model,
     }
   }
 
-  // Loop over vertices
+  // Loop over points
   if(dim < 0 || dim == 0) {
     for(GModel::const_viter it = model->firstVertex();
         it != model->lastVertex(); ++it) {
@@ -1480,24 +1437,21 @@ static void fillElementToEntity(GModel *const model,
 }
 
 static MElement *getReferenceElement(
-  const std::vector<std::pair<MElement *, std::vector<unsigned int> > >
-    &elementPairs)
+  const std::vector<std::pair<MElement *, std::vector<int> > > &elementPairs)
 {
-  unsigned int min = std::numeric_limits<unsigned int>::max();
-  std::vector<std::pair<MElement *, std::vector<unsigned int> > >
-    minSizeElementPairs;
-  std::vector<std::pair<MElement *, std::vector<unsigned int> > >
-    minSizeElementPairsTmp;
+  int min = std::numeric_limits<int>::max();
+  std::vector<std::pair<MElement *, std::vector<int> > > minSizeElementPairs;
+  std::vector<std::pair<MElement *, std::vector<int> > > minSizeElementPairsTmp;
 
   // Take only the elements having the less partition in commun. For exemple we
   // take (1,2) and (3,8) but not (2,5,9) or (1,4,5,7)
   for(std::size_t i = 0; i < elementPairs.size(); i++) {
-    if(min > elementPairs[i].second.size()) {
+    if(min > (int)elementPairs[i].second.size()) {
       minSizeElementPairs.clear();
       min = elementPairs[i].second.size();
       minSizeElementPairs.push_back(elementPairs[i]);
     }
-    else if(min == elementPairs[i].second.size()) {
+    else if(min == (int)elementPairs[i].second.size()) {
       minSizeElementPairs.push_back(elementPairs[i]);
     }
   }
@@ -1515,7 +1469,7 @@ static MElement *getReferenceElement(
   }
 
   while(minSizeElementPairs.size() > 1) {
-    min = std::numeric_limits<unsigned int>::max();
+    min = std::numeric_limits<int>::max();
     for(std::size_t i = 0; i < minSizeElementPairs.size(); i++) {
       // The partition vector is sorted thus we can check only the first element
       if(minSizeElementPairs[i].second.size() == 0)
@@ -1545,9 +1499,8 @@ static MElement *getReferenceElement(
 }
 
 static void getPartitionInVector(
-  std::vector<unsigned int> &partitions,
-  const std::vector<std::pair<MElement *, std::vector<unsigned int> > >
-    &boundaryPair)
+  std::vector<int> &partitions,
+  const std::vector<std::pair<MElement *, std::vector<int> > > &boundaryPair)
 {
   for(std::size_t i = 0; i < boundaryPair.size(); i++) {
     for(std::size_t j = 0; j < boundaryPair[i].second.size(); j++) {
@@ -1567,9 +1520,8 @@ static PART_ENTITY *createPartitionEntity(
                                    LESS_PART_ENTITY>::iterator,
             typename std::multimap<PART_ENTITY *, GEntity *,
                                    LESS_PART_ENTITY>::iterator> &ret,
-  GModel *const model, int &numEntity,
-  const std::vector<unsigned int> &partitions, GEntity *referenceEntity,
-  PART_ENTITY **newEntity,
+  GModel *model, int &numEntity, const std::vector<int> &partitions,
+  GEntity *referenceEntity, PART_ENTITY **newEntity,
   typename std::multimap<PART_ENTITY *, GEntity *, LESS_PART_ENTITY> &pentities)
 {
   PART_ENTITY *ppe = 0;
@@ -1603,16 +1555,17 @@ static PART_ENTITY *createPartitionEntity(
 }
 
 static partitionFace *assignPartitionBoundary(
-  GModel *const model, MFace &me, MElement *reference,
-  const std::vector<unsigned int> &partitions,
+  GModel *model, MFace &me, MElement *reference,
+  const std::vector<int> &partitions,
   std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan> &pfaces,
-  hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
+  hashmapelement &elementToEntity, int &numEntity)
 {
   partitionFace *newEntity = 0;
   partitionFace pf(model, partitions);
-  std::pair<
-    std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan>::iterator,
-    std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan>::iterator>
+  std::pair<std::multimap<partitionFace *, GEntity *,
+                          partitionFacePtrLessThan>::iterator,
+            std::multimap<partitionFace *, GEntity *,
+                          partitionFacePtrLessThan>::iterator>
     ret = pfaces.equal_range(&pf);
 
   partitionFace *ppf =
@@ -1671,16 +1624,17 @@ static partitionFace *assignPartitionBoundary(
 }
 
 static partitionEdge *assignPartitionBoundary(
-  GModel *const model, MEdge &me, MElement *reference,
-  const std::vector<unsigned int> &partitions,
+  GModel *model, MEdge &me, MElement *reference,
+  const std::vector<int> &partitions,
   std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan> &pedges,
-  hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
+  hashmapelement &elementToEntity, int &numEntity)
 {
   partitionEdge *newEntity = 0;
   partitionEdge pe(model, partitions);
-  std::pair<
-    std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan>::iterator,
-    std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan>::iterator>
+  std::pair<std::multimap<partitionEdge *, GEntity *,
+                          partitionEdgePtrLessThan>::iterator,
+            std::multimap<partitionEdge *, GEntity *,
+                          partitionEdgePtrLessThan>::iterator>
     ret = pedges.equal_range(&pe);
 
   partitionEdge *ppe =
@@ -1717,16 +1671,18 @@ static partitionEdge *assignPartitionBoundary(
 }
 
 static partitionVertex *assignPartitionBoundary(
-  GModel *const model, MVertex *ve, MElement *reference,
-  const std::vector<unsigned int> &partitions,
-  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan> &pvertices,
-  hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
+  GModel *model, MVertex *ve, MElement *reference,
+  const std::vector<int> &partitions,
+  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>
+    &pvertices,
+  hashmapelement &elementToEntity, int &numEntity)
 {
   partitionVertex *newEntity = 0;
   partitionVertex pv(model, partitions);
-  std::pair<
-    std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>::iterator,
-    std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>::iterator>
+  std::pair<std::multimap<partitionVertex *, GEntity *,
+                          partitionVertexPtrLessThan>::iterator,
+            std::multimap<partitionVertex *, GEntity *,
+                          partitionVertexPtrLessThan>::iterator>
     ret = pvertices.equal_range(&pv);
 
   partitionVertex *ppv =
@@ -1786,15 +1742,15 @@ static int computeOrientation(MElement *reference, MElement *element)
   return 0;
 }
 
-static void
-assignBrep(GModel *const model,
-           std::map<GEntity *, MElement *> &boundaryEntityAndRefElement,
-           GEntity *e)
+static void assignBrep(GModel *model,
+                       std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
+                         &boundaryEntityAndRefElement,
+                       GEntity *e)
 {
   if(e->dim() == 2) {
     partitionFace *entity = static_cast<partitionFace *>(e);
 
-    for(std::map<GEntity *, MElement *>::iterator it =
+    for(std::map<GEntity *, MElement *, GEntityPtrFullLessThan>::iterator it =
           boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
       static_cast<GRegion *>(it->first)->setFace(
@@ -1805,7 +1761,7 @@ assignBrep(GModel *const model,
   else if(e->dim() == 1) {
     partitionEdge *entity = static_cast<partitionEdge *>(e);
 
-    for(std::map<GEntity *, MElement *>::iterator it =
+    for(std::map<GEntity *, MElement *, GEntityPtrFullLessThan>::iterator it =
           boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
       static_cast<GFace *>(it->first)->setEdge(
@@ -1816,7 +1772,7 @@ assignBrep(GModel *const model,
   else if(e->dim() == 0) {
     partitionVertex *entity = static_cast<partitionVertex *>(e);
 
-    for(std::map<GEntity *, MElement *>::iterator it =
+    for(std::map<GEntity *, MElement *, GEntityPtrFullLessThan>::iterator it =
           boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
       static_cast<GEdge *>(it->first)->setVertex(
@@ -1826,14 +1782,13 @@ assignBrep(GModel *const model,
   }
 }
 
-void assignNewEntityBRep(Graph &graph,
-                         hashmap<MElement *, GEntity *> &elementToEntity)
+static void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
 {
   std::set<std::pair<GEntity *, GEntity *> > brepWithoutOri;
-  hashmap<GEntity *, std::set<std::pair<int, GEntity *> > > brep;
-  for(unsigned int i = 0; i < graph.ne(); i++) {
+  hashmapentity brep;
+  for(std::size_t i = 0; i < graph.ne(); i++) {
     MElement *current = graph.element(i);
-    for(unsigned int j = graph.xadj(i); j < graph.xadj(i + 1); j++) {
+    for(idx_t j = graph.xadj(i); j < graph.xadj(i + 1); j++) {
       if(current->getDim() == graph.element(graph.adjncy(j))->getDim() + 1) {
         GEntity *g1 = elementToEntity[current];
         GEntity *g2 = elementToEntity[graph.element(graph.adjncy(j))];
@@ -1848,13 +1803,10 @@ void assignNewEntityBRep(Graph &graph,
     }
   }
 
-  for(hashmap<GEntity *, std::set<std::pair<int, GEntity *> > >::iterator it =
-        brep.begin();
-      it != brep.end(); ++it) {
+  for(hashmapentity::iterator it = brep.begin(); it != brep.end(); ++it) {
     switch(it->first->dim()) {
     case 3:
-      for(std::set<std::pair<int, GEntity *> >::iterator itSet =
-            it->second.begin();
+      for(setorientity::iterator itSet = it->second.begin();
           itSet != it->second.end(); ++itSet) {
         static_cast<GRegion *>(it->first)->setFace(
           static_cast<GFace *>(itSet->second), itSet->first);
@@ -1863,8 +1815,7 @@ void assignNewEntityBRep(Graph &graph,
       }
       break;
     case 2:
-      for(std::set<std::pair<int, GEntity *> >::iterator itSet =
-            it->second.begin();
+      for(setorientity::iterator itSet = it->second.begin();
           itSet != it->second.end(); ++itSet) {
         static_cast<GFace *>(it->first)->setEdge(
           static_cast<GEdge *>(itSet->second), itSet->first);
@@ -1873,8 +1824,7 @@ void assignNewEntityBRep(Graph &graph,
       }
       break;
     case 1:
-      for(std::set<std::pair<int, GEntity *> >::iterator itSet =
-            it->second.begin();
+      for(setorientity::iterator itSet = it->second.begin();
           itSet != it->second.end(); ++itSet) {
         static_cast<GEdge *>(it->first)->setVertex(
           static_cast<GVertex *>(itSet->second), itSet->first);
@@ -1888,18 +1838,21 @@ void assignNewEntityBRep(Graph &graph,
 }
 
 // Create the new entities between each partitions (sigma and bndSigma).
-static void CreatePartitionTopology(
-  GModel *const model,
-  const std::vector<std::set<MElement *> > &boundaryElements, Graph &meshGraph)
+static void createPartitionTopology(
+  GModel *model,
+  const std::vector<std::set<MElement *, MElementPtrLessThan> >
+    &boundaryElements,
+  Graph &meshGraph)
 {
-  const int meshDim = model->getMeshDim();
-  hashmap<MElement *, GEntity *> elementToEntity;
+  int meshDim = model->getMeshDim();
+  hashmapelement elementToEntity;
   fillElementToEntity(model, elementToEntity, -1);
   assignNewEntityBRep(meshGraph, elementToEntity);
 
   std::multimap<partitionFace *, GEntity *, partitionFacePtrLessThan> pfaces;
   std::multimap<partitionEdge *, GEntity *, partitionEdgePtrLessThan> pedges;
-  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan> pvertices;
+  std::multimap<partitionVertex *, GEntity *, partitionVertexPtrLessThan>
+    pvertices;
 
   hashmapface faceToElement;
   hashmapedge edgeToElement;
@@ -1913,13 +1866,14 @@ static void CreatePartitionTopology(
   if(meshDim >= 3) {
     Msg::Info(" - Creating partition surfaces");
 
-    for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
-      for(std::set<MElement *>::iterator it = boundaryElements[i].begin();
+    for(std::size_t i = 0; i < model->getNumPartitions(); i++) {
+      for(std::set<MElement *, MElementPtrLessThan>::iterator it =
+            boundaryElements[i].begin();
           it != boundaryElements[i].end(); ++it) {
         for(int j = 0; j < (*it)->getNumFaces(); j++) {
           faceToElement[(*it)->getFace(j)].push_back(
-            std::pair<MElement *, std::vector<unsigned int> >(
-              *it, std::vector<unsigned int>(1, i + 1)));
+            std::pair<MElement *, std::vector<int> >(
+              *it, std::vector<int>(1, i + 1)));
         }
       }
     }
@@ -1928,7 +1882,7 @@ static void CreatePartitionTopology(
         it != faceToElement.end(); ++it) {
       MFace f = it->first;
 
-      std::vector<unsigned int> partitions;
+      std::vector<int> partitions;
       getPartitionInVector(partitions, it->second);
       if(partitions.size() < 2) continue;
 
@@ -1939,7 +1893,8 @@ static void CreatePartitionTopology(
         assignPartitionBoundary(model, f, reference, partitions, pfaces,
                                 elementToEntity, numFaceEntity);
       if(pf) {
-        std::map<GEntity *, MElement *> boundaryEntityAndRefElement;
+        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
+          boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++)
           boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
             elementToEntity[it->second[i].first], it->second[i].first));
@@ -1950,7 +1905,7 @@ static void CreatePartitionTopology(
     faceToElement.clear();
 
     faces = model->getFaces();
-    dividedNonConnectedEntities(model, 2, regions, faces, edges, vertices);
+    divideNonConnectedEntities(model, 2, regions, faces, edges, vertices);
     elementToEntity.clear();
     fillElementToEntity(model, elementToEntity, 2);
   }
@@ -1959,35 +1914,35 @@ static void CreatePartitionTopology(
     Msg::Info(" - Creating partition curves");
 
     if(meshDim == 2) {
-      for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
-        for(std::set<MElement *>::iterator it = boundaryElements[i].begin();
+      for(std::size_t i = 0; i < model->getNumPartitions(); i++) {
+        for(std::set<MElement *, MElementPtrLessThan>::iterator it =
+              boundaryElements[i].begin();
             it != boundaryElements[i].end(); ++it) {
           for(int j = 0; j < (*it)->getNumEdges(); j++) {
             edgeToElement[(*it)->getEdge(j)].push_back(
-              std::pair<MElement *, std::vector<unsigned int> >(
-                *it, std::vector<unsigned int>(1, i + 1)));
+              std::pair<MElement *, std::vector<int> >(
+                *it, std::vector<int>(1, i + 1)));
           }
         }
       }
     }
     else {
       Graph subGraph(model);
-      MakeGraph(model, subGraph, 2);
+      makeGraph(model, subGraph, 2);
       subGraph.createDualGraph(false);
-      unsigned int *part = new unsigned int[subGraph.ne()];
+      std::vector<idx_t> part(subGraph.ne());
       int partIndex = 0;
 
-      std::map<unsigned int, std::vector<unsigned int> > mapOfPartitions;
-      unsigned int mapOfPartitionsTag = 0;
+      std::map<idx_t, std::vector<int> > mapOfPartitions;
+      idx_t mapOfPartitionsTag = 0;
       for(GModel::const_fiter it = model->firstFace(); it != model->lastFace();
           ++it) {
         if((*it)->geomType() == GEntity::PartitionSurface) {
-          std::vector<unsigned int> partitions =
+          std::vector<int> partitions =
             static_cast<partitionFace *>(*it)->getPartitions();
-          mapOfPartitions.insert(
-            std::pair<unsigned int, std::vector<unsigned int> >(
-              mapOfPartitionsTag, partitions));
-          // Must absolutely be in the same order as in the MakeGraph function
+          mapOfPartitions.insert(std::pair<idx_t, std::vector<int> >(
+            mapOfPartitionsTag, partitions));
+          // Must absolutely be in the same order as in the makeGraph function
           for(std::vector<MTriangle *>::iterator itElm =
                 (*it)->triangles.begin();
               itElm != (*it)->triangles.end(); ++itElm)
@@ -2001,16 +1956,17 @@ static void CreatePartitionTopology(
       }
       subGraph.partition(part);
 
-      std::vector<std::set<MElement *> > subBoundaryElements =
-        subGraph.getBoundaryElements(mapOfPartitionsTag);
+      std::vector<std::set<MElement *, MElementPtrLessThan> >
+        subBoundaryElements = subGraph.getBoundaryElements(mapOfPartitionsTag);
 
-      for(unsigned int i = 0; i < mapOfPartitionsTag; i++) {
-        for(std::set<MElement *>::iterator it = subBoundaryElements[i].begin();
+      for(idx_t i = 0; i < mapOfPartitionsTag; i++) {
+        for(std::set<MElement *, MElementPtrLessThan>::iterator it =
+              subBoundaryElements[i].begin();
             it != subBoundaryElements[i].end(); ++it) {
           for(int j = 0; j < (*it)->getNumEdges(); j++) {
             edgeToElement[(*it)->getEdge(j)].push_back(
-              std::pair<MElement *, std::vector<unsigned int> >(
-                *it, mapOfPartitions[i]));
+              std::pair<MElement *, std::vector<int> >(*it,
+                                                       mapOfPartitions[i]));
           }
         }
       }
@@ -2021,7 +1977,7 @@ static void CreatePartitionTopology(
         it != edgeToElement.end(); ++it) {
       MEdge e = it->first;
 
-      std::vector<unsigned int> partitions;
+      std::vector<int> partitions;
       getPartitionInVector(partitions, it->second);
       if(partitions.size() < 2) continue;
 
@@ -2032,7 +1988,8 @@ static void CreatePartitionTopology(
         assignPartitionBoundary(model, e, reference, partitions, pedges,
                                 elementToEntity, numEdgeEntity);
       if(pe) {
-        std::map<GEntity *, MElement *> boundaryEntityAndRefElement;
+        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
+          boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++) {
           boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
             elementToEntity[it->second[i].first], it->second[i].first));
@@ -2044,7 +2001,7 @@ static void CreatePartitionTopology(
     edgeToElement.clear();
 
     edges = model->getEdges();
-    dividedNonConnectedEntities(model, 1, regions, faces, edges, vertices);
+    divideNonConnectedEntities(model, 1, regions, faces, edges, vertices);
     elementToEntity.clear();
     fillElementToEntity(model, elementToEntity, 1);
   }
@@ -2052,35 +2009,35 @@ static void CreatePartitionTopology(
   if(meshDim >= 1) {
     Msg::Info(" - Creating partition points");
     if(meshDim == 1) {
-      for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
-        for(std::set<MElement *>::iterator it = boundaryElements[i].begin();
+      for(std::size_t i = 0; i < model->getNumPartitions(); i++) {
+        for(std::set<MElement *, MElementPtrLessThan>::iterator it =
+              boundaryElements[i].begin();
             it != boundaryElements[i].end(); ++it) {
           for(std::size_t j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
             vertexToElement[(*it)->getVertex(j)].push_back(
-              std::pair<MElement *, std::vector<unsigned int> >(
-                *it, std::vector<unsigned int>(1, i + 1)));
+              std::pair<MElement *, std::vector<int> >(
+                *it, std::vector<int>(1, i + 1)));
           }
         }
       }
     }
     else {
       Graph subGraph(model);
-      MakeGraph(model, subGraph, 1);
+      makeGraph(model, subGraph, 1);
       subGraph.createDualGraph(false);
-      unsigned int *part = new unsigned int[subGraph.ne()];
+      std::vector<idx_t> part(subGraph.ne());
       int partIndex = 0;
 
-      std::map<unsigned int, std::vector<unsigned int> > mapOfPartitions;
-      unsigned int mapOfPartitionsTag = 0;
+      std::map<idx_t, std::vector<int> > mapOfPartitions;
+      idx_t mapOfPartitionsTag = 0;
       for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge();
           ++it) {
         if((*it)->geomType() == GEntity::PartitionCurve) {
-          std::vector<unsigned int> partitions =
+          std::vector<int> partitions =
             static_cast<partitionEdge *>(*it)->getPartitions();
-          mapOfPartitions.insert(
-            std::pair<unsigned int, std::vector<unsigned int> >(
-              mapOfPartitionsTag, partitions));
-          // Must absolutely be in the same order as in the MakeGraph function
+          mapOfPartitions.insert(std::pair<idx_t, std::vector<int> >(
+            mapOfPartitionsTag, partitions));
+          // Must absolutely be in the same order as in the makeGraph function
           for(std::vector<MLine *>::iterator itElm = (*it)->lines.begin();
               itElm != (*it)->lines.end(); ++itElm)
             part[partIndex++] = mapOfPartitionsTag;
@@ -2089,16 +2046,17 @@ static void CreatePartitionTopology(
       }
       subGraph.partition(part);
 
-      std::vector<std::set<MElement *> > subBoundaryElements =
-        subGraph.getBoundaryElements(mapOfPartitionsTag);
+      std::vector<std::set<MElement *, MElementPtrLessThan> >
+        subBoundaryElements = subGraph.getBoundaryElements(mapOfPartitionsTag);
 
-      for(unsigned int i = 0; i < mapOfPartitionsTag; i++) {
-        for(std::set<MElement *>::iterator it = subBoundaryElements[i].begin();
+      for(idx_t i = 0; i < mapOfPartitionsTag; i++) {
+        for(std::set<MElement *, MElementPtrLessThan>::iterator it =
+              subBoundaryElements[i].begin();
             it != subBoundaryElements[i].end(); ++it) {
           for(std::size_t j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
             vertexToElement[(*it)->getVertex(j)].push_back(
-              std::pair<MElement *, std::vector<unsigned int> >(
-                *it, mapOfPartitions[i]));
+              std::pair<MElement *, std::vector<int> >(*it,
+                                                       mapOfPartitions[i]));
           }
         }
       }
@@ -2108,7 +2066,7 @@ static void CreatePartitionTopology(
         it != vertexToElement.end(); ++it) {
       MVertex *v = it->first;
 
-      std::vector<unsigned int> partitions;
+      std::vector<int> partitions;
       getPartitionInVector(partitions, it->second);
       if(partitions.size() < 2) continue;
 
@@ -2119,7 +2077,8 @@ static void CreatePartitionTopology(
         assignPartitionBoundary(model, v, reference, partitions, pvertices,
                                 elementToEntity, numVertexEntity);
       if(pv) {
-        std::map<GEntity *, MElement *> boundaryEntityAndRefElement;
+        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
+          boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++)
           boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
             elementToEntity[it->second[i].first], it->second[i].first));
@@ -2130,11 +2089,11 @@ static void CreatePartitionTopology(
     vertexToElement.clear();
 
     vertices = model->getVertices();
-    dividedNonConnectedEntities(model, 0, regions, faces, edges, vertices);
+    divideNonConnectedEntities(model, 0, regions, faces, edges, vertices);
   }
 }
 
-static void addPhysical(GModel *const model, GEntity *entity,
+static void addPhysical(GModel *model, GEntity *entity,
                         hashmap<std::string, int> &nameToNumber,
                         std::vector<GModel::piter> &iterators, int &numPhysical)
 {
@@ -2148,7 +2107,7 @@ static void addPhysical(GModel *const model, GEntity *entity,
     return;
   }
 
-  unsigned int numPartitions = 0;
+  std::size_t numPartitions = 0;
   if(entity->dim() == 3) {
     numPartitions = static_cast<partitionRegion *>(entity)->numPartitions();
   }
@@ -2170,9 +2129,9 @@ static void addPhysical(GModel *const model, GEntity *entity,
   for(size_t phys = 0; phys < physical.size(); ++phys) {
     std::string name = "_part{";
 
-    for(unsigned int i = 0; i < numPartitions; i++) {
+    for(std::size_t i = 0; i < numPartitions; i++) {
       if(i > 0) name += ",";
-      unsigned int partition = 0;
+      int partition = 0;
       if(entity->dim() == 3) {
         partition = static_cast<partitionRegion *>(entity)->getPartition(i);
       }
@@ -2218,9 +2177,9 @@ static void addPhysical(GModel *const model, GEntity *entity,
   if(physical.size() == 0) {
     std::string name = "_part{";
 
-    for(unsigned int i = 0; i < numPartitions; i++) {
+    for(std::size_t i = 0; i < numPartitions; i++) {
       if(i > 0) name += ",";
-      unsigned int partition = 0;
+      int partition = 0;
       if(entity->dim() == 3) {
         partition = static_cast<partitionRegion *>(entity)->getPartition(i);
       }
@@ -2264,13 +2223,13 @@ static void addPhysical(GModel *const model, GEntity *entity,
 }
 
 // Assign physical group information
-static void AssignPhysicals(GModel *model)
+static void assignPhysicals(GModel *model)
 {
   hashmap<std::string, int> nameToNumber;
   std::vector<GModel::piter> iterators;
   model->getInnerPhysicalNamesIterators(iterators);
   int numPhysical = model->getMaxPhysicalNumber(-1);
-  // Loop over regions
+  // Loop over volumes
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion();
       ++it) {
     if((*it)->geomType() == GEntity::PartitionVolume) {
@@ -2278,7 +2237,7 @@ static void AssignPhysicals(GModel *model)
     }
   }
 
-  // Loop over faces
+  // Loop over surfaces
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace();
       ++it) {
     if((*it)->geomType() == GEntity::PartitionSurface) {
@@ -2286,7 +2245,7 @@ static void AssignPhysicals(GModel *model)
     }
   }
 
-  // Loop over edges
+  // Loop over curves
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge();
       ++it) {
     if((*it)->geomType() == GEntity::PartitionCurve) {
@@ -2294,7 +2253,7 @@ static void AssignPhysicals(GModel *model)
     }
   }
 
-  // Loop over vertices
+  // Loop over points
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex();
       ++it) {
     if((*it)->geomType() == GEntity::PartitionPoint) {
@@ -2303,53 +2262,100 @@ static void AssignPhysicals(GModel *model)
   }
 }
 
-int PartitionFace(GFace *gf, int np, int *p)
+bool cmp_hedges(const std::pair<MEdge, size_t> &he0,
+                const std::pair<MEdge, size_t> &he1)
 {
-  GModel m;
-  m.add(gf);
+  MEdgeLessThan cmp;
+  return cmp(he0.first, he1.first);
+}
+
+int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
+{
+  std::vector<std::pair<MEdge, size_t> > halfEdges;
+  halfEdges.reserve(gf->triangles.size() * 3);
   for(size_t i = 0; i < gf->triangles.size(); ++i) {
     for(size_t j = 0; j < 3; ++j) {
-      int n = gf->triangles[i]->getVertex(j)->getNum();
-      if(n > (int)m.getMaxVertexNumber()) m.setMaxVertexNumber(n);
+      halfEdges.push_back(std::make_pair(gf->triangles[i]->getEdge(j), i));
     }
   }
-  Graph graph(&m);
-  if(MakeGraph(&m, graph, -1)) return 1;
-  graph.nparts(np);
-  if(PartitionGraph(graph, false)) return 1;
-  m.remove(gf);
-  //  for (size_t i=0;i<graph.ne();++i)p[i]=graph.partition(i);
-  for(unsigned int i = 0; i < graph.ne(); i++)
-    graph.element(i)->setPartition(graph.partition(i));
-
+  std::sort(halfEdges.begin(), halfEdges.end(), cmp_hedges);
+  std::vector<idx_t> neighbors(gf->triangles.size() * 3, -1);
+  std::vector<double> neighborsWeight(gf->triangles.size() * 3, -1);
+  MEdgeEqual eq;
+  double minEdgeLength = std::numeric_limits<double>::max();
+  for(size_t i = 0; i + 1 < halfEdges.size(); ++i) {
+    if(eq(halfEdges[i].first, halfEdges[i + 1].first)) {
+      size_t t0 = halfEdges[i].second;
+      size_t t1 = halfEdges[i + 1].second;
+      double l = halfEdges[i].first.length();
+      minEdgeLength = std::min(l, minEdgeLength);
+      for(int j = 0; j < 3; ++j) {
+        if(neighbors[t0 * 3 + j] == -1) {
+          neighbors[t0 * 3 + j] = t1;
+          neighborsWeight[t0 * 3 + j] = l;
+          break;
+        }
+      }
+      for(int j = 0; j < 3; ++j) {
+        if(neighbors[t1 * 3 + j] == -1) {
+          neighbors[t1 * 3 + j] = t0;
+          neighborsWeight[t1 * 3 + j] = l;
+          break;
+        }
+      }
+      i++;
+    }
+  }
+  std::vector<idx_t> adjncy;
+  std::vector<idx_t> xadjncy;
+  std::vector<idx_t> adjncyw;
+  xadjncy.push_back(0);
+  for(size_t i = 0; i < gf->triangles.size(); ++i) {
+    for(size_t j = 0; j < 3; ++j) {
+      if(neighbors[i * 3 + j] == -1) break;
+      adjncy.push_back(neighbors[i * 3 + j]);
+      adjncyw.push_back(
+        (idx_t)(neighborsWeight[i * 3 + j] / minEdgeLength * 10));
+    }
+    xadjncy.push_back(adjncy.size());
+  }
+  idx_t nvtxs = gf->triangles.size(), ncon = 1, nparts = np, objval;
+  std::vector<idx_t> epart(gf->triangles.size());
+  real_t ubvec = tol;
+  METIS_PartGraphKway(&nvtxs, &ncon, &xadjncy[0], &adjncy[0], NULL, NULL,
+                      &adjncyw[0], &nparts, NULL, &ubvec, NULL, &objval,
+                      &epart[0]);
+  for(size_t i = 0; i < gf->triangles.size(); ++i) {
+    gf->triangles[i]->setPartition(epart[i]);
+  }
   return 0;
 }
 
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 
-int PartitionMesh(GModel *const model)
+int PartitionMesh(GModel *model)
 {
   if(CTX::instance()->mesh.numPartitions <= 0) return 0;
 
   Msg::StatusBar(true, "Partitioning mesh...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   Graph graph(model);
-  if(MakeGraph(model, graph, -1)) return 1;
+  if(makeGraph(model, graph, -1)) return 1;
   graph.nparts(CTX::instance()->mesh.numPartitions);
-  if(PartitionGraph(graph, true)) return 1;
+  if(partitionGraph(graph, true)) return 1;
 
-  std::vector<int> elmCount[TYPE_MAX_NUM + 1];
+  std::vector<std::size_t> elmCount[TYPE_MAX_NUM + 1];
   for(int i = 0; i < TYPE_MAX_NUM + 1; i++) {
     elmCount[i].resize(CTX::instance()->mesh.numPartitions, 0);
   }
 
   // Assign partitions to elements
-  hashmap<MElement *, unsigned int> elmToPartition;
-  for(unsigned int i = 0; i < graph.ne(); i++) {
+  hashmapelementpart elmToPartition;
+  for(std::size_t i = 0; i < graph.ne(); i++) {
     if(graph.element(i)) {
       if(graph.nparts() > 1) {
-        elmToPartition.insert(std::pair<MElement *, unsigned int>(
+        elmToPartition.insert(std::pair<MElement *, idx_t>(
           graph.element(i), graph.partition(i) + 1));
         elmCount[graph.element(i)->getType()][graph.partition(i)]++;
         // Should be removed
@@ -2357,7 +2363,7 @@ int PartitionMesh(GModel *const model)
       }
       else {
         elmToPartition.insert(
-          std::pair<MElement *, unsigned int>(graph.element(i), 1));
+          std::pair<MElement *, idx_t>(graph.element(i), 1));
         // Should be removed
         graph.element(i)->setPartition(1);
       }
@@ -2365,25 +2371,26 @@ int PartitionMesh(GModel *const model)
   }
   model->setNumPartitions(graph.nparts());
 
-  CreateNewEntities(model, elmToPartition);
+  createNewEntities(model, elmToPartition);
   elmToPartition.clear();
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done partitioning mesh (Wall %gs, CPU %gs)", w2 - w1,
+                 t2 - t1);
 
   for(std::size_t i = 0; i < TYPE_MAX_NUM + 1; i++) {
-    std::vector<int> &count = elmCount[i];
-    int minCount = std::numeric_limits<int>::max();
-    int maxCount = 0;
-    int totCount = 0;
+    std::vector<std::size_t> &count = elmCount[i];
+    std::size_t minCount = std::numeric_limits<std::size_t>::max();
+    std::size_t maxCount = 0;
+    std::size_t totCount = 0;
     for(std::size_t j = 0; j < count.size(); j++) {
       minCount = std::min(count[j], minCount);
       maxCount = std::max(count[j], maxCount);
       totCount += count[j];
     }
     if(totCount > 0) {
-      Msg::Info(" - Repartition of %d %s: %d(min) %d(max) %g(avg)",
-                totCount, ElementType::nameOfParentType(i, totCount > 1).c_str(),
+      Msg::Info(" - Repartition of %d %s: %lu(min) %lu(max) %g(avg)", totCount,
+                ElementType::nameOfParentType(i, totCount > 1).c_str(),
                 minCount, maxCount,
                 totCount / (double)CTX::instance()->mesh.numPartitions);
     }
@@ -2391,25 +2398,27 @@ int PartitionMesh(GModel *const model)
 
   if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
-    std::vector<std::set<MElement *> > boundaryElements =
+    std::vector<std::set<MElement *, MElementPtrLessThan> > boundaryElements =
       graph.getBoundaryElements();
-    CreatePartitionTopology(model, boundaryElements, graph);
+    createPartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
-    double t3 = Cpu();
-    Msg::StatusBar(true, "Done creating partition topology (%g s)", t3 - t2);
+    double t3 = Cpu(), w3 = TimeOfDay();
+    Msg::StatusBar(true, "Done creating partition topology (Wall %gs, CPU %gs)",
+                   w3 - w2, t3 - t2);
   }
 
-  AssignPhysicals(model);
-  AssignMeshVertices(model);
+  assignPhysicals(model);
+  assignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
-    double t4 = Cpu();
+    double t4 = Cpu(), w4 = TimeOfDay();
     Msg::StatusBar(true, "Creating ghost cells...");
     graph.clearDualGraph();
     graph.createDualGraph(true);
     graph.assignGhostCells();
-    double t5 = Cpu();
-    Msg::StatusBar(true, "Done creating ghost cells (%g s)", t5 - t4);
+    double t5 = Cpu(), w5 = TimeOfDay();
+    Msg::StatusBar(true, "Done creating ghost cells (Wall %gs, CPU %gs)",
+                   w5 - w4, t5 - t4);
   }
 
   return 0;
@@ -2435,7 +2444,7 @@ static void assignToParent(std::set<MVertex *> &verts, PART_ENTITY *entity,
 
 // Un-partition a mesh and return to the initial mesh geomerty. Returns: 0 =
 // success, 1 = error.
-int UnpartitionMesh(GModel *const model)
+int UnpartitionMesh(GModel *model)
 {
   // make a copy so we can iterate safely (we will remove some entities)
   std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
@@ -2445,7 +2454,7 @@ int UnpartitionMesh(GModel *const model)
 
   std::set<MVertex *> verts;
 
-  // Loop over vertices
+  // Loop over points
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
     GVertex *vertex = *it;
 
@@ -2467,7 +2476,7 @@ int UnpartitionMesh(GModel *const model)
     }
   }
 
-  // Loop over edges
+  // Loop over curves
   for(GModel::eiter it = edges.begin(); it != edges.end(); ++it) {
     GEdge *edge = *it;
     if(edge->geomType() == GEntity::PartitionCurve) {
@@ -2493,7 +2502,7 @@ int UnpartitionMesh(GModel *const model)
     }
   }
 
-  // Loop over faces
+  // Loop over surfaces
   for(GModel::fiter it = faces.begin(); it != faces.end(); ++it) {
     GFace *face = *it;
 
@@ -2526,7 +2535,7 @@ int UnpartitionMesh(GModel *const model)
     }
   }
 
-  // Loop over regions
+  // Loop over volumes
   for(GModel::riter it = regions.begin(); it != regions.end(); ++it) {
     GRegion *region = *it;
 
@@ -2591,30 +2600,34 @@ int UnpartitionMesh(GModel *const model)
 
 // Create the partition according to the element split given by elmToPartition
 // Returns: 0 = success, 1 = no elements found.
-int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
-                            hashmap<MElement *, unsigned int> &elmToPartition)
+int PartitionUsingThisSplit(GModel *model, std::size_t npart,
+                            std::vector<std::pair<MElement *, int> > &elmToPart)
 {
   Graph graph(model);
-  if(MakeGraph(model, graph, -1)) return 1;
+  if(makeGraph(model, graph, -1)) return 1;
   graph.createDualGraph(false);
   graph.nparts(npart);
+
+  hashmapelementpart elmToPartition;
+  for(std::size_t i = 0; i < elmToPart.size(); i++)
+    elmToPartition[elmToPart[i].first] = elmToPart[i].second;
 
   if(elmToPartition.size() != graph.ne()) {
     Msg::Error("All elements are not partitioned.");
     return 1;
   }
 
-  unsigned int *part = new unsigned int[graph.ne()];
-  for(unsigned int i = 0; i < graph.ne(); i++) {
+  std::vector<idx_t> part(graph.ne());
+  for(std::size_t i = 0; i < graph.ne(); i++) {
     if(graph.element(i)) { part[i] = elmToPartition[graph.element(i)] - 1; }
   }
 
   // Check and correct the topology
   for(int i = 1; i < 4; i++) {
-    for(unsigned int j = 0; j < graph.ne(); j++) {
-      if(graph.element(j)->getDim() == (int)graph.dim()) continue;
+    for(std::size_t j = 0; j < graph.ne(); j++) {
+      if(graph.element(j)->getDim() == graph.dim()) continue;
 
-      for(unsigned int k = graph.xadj(j); k < graph.xadj(j + 1); k++) {
+      for(idx_t k = graph.xadj(j); k < graph.xadj(j + 1); k++) {
         if(graph.element(j)->getDim() ==
            graph.element(graph.adjncy(k))->getDim() - i) {
           if(part[j] != part[graph.adjncy(k)]) {
@@ -2629,20 +2642,20 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
 
   model->setNumPartitions(graph.nparts());
 
-  CreateNewEntities(model, elmToPartition);
+  createNewEntities(model, elmToPartition);
   elmToPartition.clear();
 
   if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
-    std::vector<std::set<MElement *> > boundaryElements =
+    std::vector<std::set<MElement *, MElementPtrLessThan> > boundaryElements =
       graph.getBoundaryElements();
-    CreatePartitionTopology(model, boundaryElements, graph);
+    createPartitionTopology(model, boundaryElements, graph);
     boundaryElements.clear();
     Msg::StatusBar(true, "Done creating partition topology");
   }
 
-  AssignPhysicals(model);
-  AssignMeshVertices(model);
+  assignPhysicals(model);
+  assignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
     graph.clearDualGraph();
@@ -2656,19 +2669,19 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
 // Import a mesh partitionned by a tag given to the element and create the
 // topology (omega, sigma, bndSigma, ...). Returns: 0 = success, 1 = no elements
 // found.
-int ConvertOldPartitioningToNewOne(GModel *const model)
+int ConvertOldPartitioningToNewOne(GModel *model)
 {
   Msg::StatusBar(true, "Converting old partitioning...");
 
-  hashmap<MElement *, unsigned int> elmToPartition;
-  std::set<unsigned int> partitions;
+  std::vector<std::pair<MElement *, int> > elmToPartition;
+  std::set<int> partitions;
   std::vector<GEntity *> entities;
   model->getEntities(entities);
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       MElement *e = entities[i]->getMeshElement(i);
-      elmToPartition.insert(
-        std::pair<MElement *, unsigned int>(e, e->getPartition()));
+      elmToPartition.push_back(
+        std::pair<MElement *, idx_t>(e, e->getPartition()));
       partitions.insert(e->getPartition());
     }
   }
@@ -2678,24 +2691,25 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
 
 #else
 
-int PartitionMesh(GModel *const model)
+int PartitionMesh(GModel *model)
 {
   Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;
 }
 
-int UnpartitionMesh(GModel *const model) { return 0; }
+int UnpartitionMesh(GModel *model) { return 0; }
 
-int ConvertOldPartitioningToNewOne(GModel *const model) { return 0; }
+int ConvertOldPartitioningToNewOne(GModel *model) { return 0; }
 
-int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
-                            hashmap<MElement *, unsigned int> &elmToPartition)
+int PartitionUsingThisSplit(
+  GModel *model, std::size_t npart,
+  std::vector<std::pair<MElement *, int> > &elmToPartition)
 {
   Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;
 }
 
-int PartitionFace(GFace *gf, int np, int *p)
+int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
 {
   Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;

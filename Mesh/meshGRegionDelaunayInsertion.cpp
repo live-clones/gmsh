@@ -709,7 +709,7 @@ void adaptMeshGRegion::operator()(GRegion *gr)
 
   connectTets(allTets.begin(), allTets.end(), &allEmbeddedFaces);
 
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
   std::vector<MTet4 *> illegals;
   const int nbRanges = 10;
   int quality_ranges[nbRanges];
@@ -841,10 +841,11 @@ void adaptMeshGRegion::operator()(GRegion *gr)
         totalVolumeb += vol;
       }
     }
-    double t2 = Cpu();
-    Msg::Info("%d edge swaps, %d face swaps, %d node collapse, %d node relocations "
-              "(volume = %g): worst = %g / average = %g (%g s)", nbESwap, nbFSwap,
-              nbCollapse, nbReloc, totalVolumeb, worst, avg / count, t2 - t1);
+    double t2 = Cpu(), w2 = TimeOfDay();
+    Msg::Info("%d edge swaps, %d face swaps, %d node collapse, %d node "
+              "relocations (volume = %g): worst = %g / average = %g "
+              "(Wall %gs, CPU %gs)", nbESwap, nbFSwap, nbCollapse, nbReloc,
+              totalVolumeb, worst, avg / count, w2 - w1, t2 - t1);
     break;
   }
 
@@ -910,7 +911,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     connectTets(allTets.begin(), allTets.end(), &allEmbeddedFaces);
   }
 
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
   std::vector<MTet4 *> illegals;
   const int nbRanges = 10;
   int quality_ranges[nbRanges];
@@ -945,7 +946,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
   }
 
-  double sliverLimit = 0.04;
+  double sliverLimit = 0.001;
   int nbESwap = 0, nbReloc = 0;
   double worstA = 0.0;
 
@@ -1020,17 +1021,18 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
       }
     }
 
-    double t2 = Cpu();
+    double t2 = Cpu(), w2 = TimeOfDay();
     Msg::Info("%d edge swaps, %d node relocations (volume = %g): "
-              "worst = %g / average = %g (%g s)", nbESwap, nbReloc,
-              totalVolumeb, worst, avg / count, t2 - t1);
+              "worst = %g / average = %g (Wall %gs, CPU %gs)",
+              nbESwap, nbReloc, totalVolumeb, worst, avg / count,
+              w2 - w1, t2 - t1);
     if(worstA != 0.0 && worst - worstA < 1.e-6) break;
     worstA = worst;
   }
 
   if(illegals.size()) {
-    Msg::Info("%d ill-shaped tets are still in the mesh",
-              illegals.size());
+    Msg::Warning("%d ill-shaped tets are still in the mesh",
+                 illegals.size());
   }
   else {
     Msg::Info("No ill-shaped tets in the mesh :-)");
@@ -1316,14 +1318,13 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
         std::list<MTet4 *> theRegion;
         std::set<GFace *> faces_bound;
         GRegion *bidon = (GRegion *)123;
-        double _t1 = Cpu();
+        double _t1 = Cpu(), _w1 = TimeOfDay();
         Msg::Debug("start with a non classified tet");
         non_recursive_classify(*it, theRegion, faces_bound, bidon, gr->model(),
                                search);
-        double _t2 = Cpu();
-        Msg::Debug(
-          "found %d tets with %d faces (%g sec for the classification)",
-          theRegion.size(), faces_bound.size(), _t2 - _t1);
+        double _t2 = Cpu(), _w2 = TimeOfDay();
+        Msg::Debug("Found %d tets with %d faces (Wall %gs, CPU %gs)",
+                   theRegion.size(), faces_bound.size(), _w2 - _w1, _t2 - _t1);
         GRegion *myGRegion =
           getRegionFromBoundingFaces(gr->model(), faces_bound);
         if(myGRegion) { // a geometrical region associated to the list of faces
@@ -1387,7 +1388,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
   int COUNT_MISS_1 = 0;
   int COUNT_MISS_2 = 0;
 
-  double t1 = Cpu();
+  double t1 = TimeOfDay();
 
   // main loop in Delaunay inserstion starts here
 
@@ -1524,7 +1525,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
   }
 
   memoryCleanup(myFactory, allTets);
-  double t2 = Cpu();
+  double t2 = TimeOfDay();
   double dt = (t2 - t1);
   int COUNT_MISS = COUNT_MISS_1 + COUNT_MISS_2;
   Msg::Info("3D refinement terminated (%d nodes total):",
@@ -1569,8 +1570,10 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
 void delaunayMeshIn3D(std::vector<MVertex *> &v,
                       std::vector<MTetrahedron *> &result)
 {
-  double t1 = Cpu();
+  Msg::Info("Tetrahedrizing %d nodes...", v.size());
+  double t1 = Cpu(), w1 = TimeOfDay();
   delaunayTriangulation(1, 1, v, result);
-  double t2 = Cpu();
-  Msg::Info("Tetrahedrization of %d nodes in %g seconds", v.size(), t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::Info("Done tetrahedrizing %d nodes (Wall %gs, CPU %gs)",
+            v.size(), w2 - w1, t2 - t1);
 }

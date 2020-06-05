@@ -19,6 +19,8 @@
 #include "GmshMessage.h"
 #include "OS.h"
 #include "meshGFaceOptimize.h"
+#include "Generator.h"
+#include "Context.h"
 
 typedef std::map<MFace, std::vector<MVertex *>, MFaceLessThan> faceContainer;
 
@@ -466,11 +468,23 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
                 bool splitIntoHexas)
 {
   Msg::StatusBar(true, "Refining mesh...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   // Create 2nd order mesh (using "2nd order complete" elements) to
   // generate vertex positions
   SetOrderN(m, 2, linear, false);
+
+  // Optimize high order elements
+  if(CTX::instance()->mesh.hoOptimize == 2 ||
+     CTX::instance()->mesh.hoOptimize == 3)
+    OptimizeMesh(m, "HighOrderElastic");
+
+  if(CTX::instance()->mesh.hoOptimize == 1 ||
+     CTX::instance()->mesh.hoOptimize == 2)
+    OptimizeMesh(m, "HighOrder");
+
+  if(CTX::instance()->mesh.hoOptimize == 4)
+    OptimizeMesh(m, "HighOrderFastCurving");
 
   // only used when splitting tets into hexes
   faceContainer faceVertices;
@@ -487,14 +501,15 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
   // Check all 3D elements for negative volume and reverse if needed
   m->setAllVolumesPositive();
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done refining mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done refining mesh (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 }
 
 void BarycentricRefineMesh(GModel *m)
 {
   Msg::StatusBar(true, "Barycentrically refining mesh...");
-  double t1 = Cpu();
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   m->destroyMeshCaches();
 
@@ -549,8 +564,9 @@ void BarycentricRefineMesh(GModel *m)
     }
   }
 
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done barycentrically refining mesh (%g s)", t2 - t1);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done barycentrically refining mesh (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 }
 
 // Tristan Carrier Baudouin's contribution on Full Hex Meshing

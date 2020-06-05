@@ -21,41 +21,20 @@ char  *strsave(char *ptr);
 void   skipcomments(void);
 void   skipline(void);
 
-#if defined(HAVE_COMPRESSED_IO) && defined(HAVE_ZLIB)
-#define YY_INPUT(buf,result,max_size)                                   \
-     {                                                                  \
-       int c = '*', n;                                                  \
-       for ( n = 0; n < (int) max_size &&                               \
-               (c = gzgetc( yyin )) != EOF && c != '\n'; ++n )          \
-         buf[n] = (char) c;                                             \
-       if ( c == '\n' ){                                                \
-         buf[n++] = (char) c;                                           \
-         yylineno++;                                                    \
-       }                                                                \
-       if ( c == EOF )  {                                               \
-         int ernum;                                                     \
-         const char *msg = gzerror(yyin,&ernum);                        \
-         if (ernum)                                                     \
-            Msg::Error("Input in flex scanner failed");                 \
-       }                                                                \
-       result = n;                                                      \
-     }
-#else
 #define YY_INPUT(buf,result,max_size)					\
-     {									\
-       int c = '*', n;							\
-       for ( n = 0; n < (int) max_size &&                               \
-	       (c = fgetc( yyin )) != EOF && c != '\n'; ++n )		\
-	 buf[n] = (char) c;                                             \
-       if ( c == '\n' ){                                                \
-	 buf[n++] = (char) c;                                           \
-	 yylineno++;							\
-       }                                                                \
-       if ( c == EOF && ferror( yyin ) )				\
-	 Msg::Error("Input in flex scanner failed");			\
-       result = n;							\
-     }
-#endif
+  {									\
+    int c = '*', n;							\
+    for(n = 0; n < (int) max_size && (c = fgetc(yyin)) != EOF &&        \
+           c != '\n' && c != '\r'; ++n)                                 \
+      buf[n] = (char) c;                                                \
+    if(c == '\n' || c == '\r') {                                        \
+      buf[n++] = (char) c;                                              \
+      if(c == '\n') yylineno++;                                         \
+    }                                                                   \
+    if(c == EOF && ferror(yyin))                                        \
+      Msg::Error("Input in flex scanner failed");			\
+    result = n;                                                         \
+  }
 
 #if defined(WIN32)
 #define isatty(arg) -1
@@ -290,6 +269,7 @@ Recomb[lL]aterals       return tRecombLaterals;
 Recombine               return tRecombine;
 Rectangle               return tRectangle;
 Recursive               return tRecursive;
+RecombineMesh           return tRecombineMesh;
 RefineMesh              return tRefineMesh;
 RelocateMesh            return tRelocateMesh;
 ReorientMesh            return tReorientMesh;
@@ -307,6 +287,7 @@ ScaleLastLayer          return tScaleLast;
 SetChanged              return tSetChanged;
 SetFactory              return tSetFactory;
 SetTag                  return tSetTag;
+SetMaxTag               return tSetMaxTag;
 SetNumber               return tSetNumber;
 SetPartition            return tSetPartition;
 SetString               return tSetString;
@@ -378,21 +359,22 @@ Wire                    return tWire;
 
 #undef gmsh_yywrap
 
-int gmsh_yywrap() {return 1;}
+int gmsh_yywrap() { return 1; }
 
 void skipcomments(void)
 {
   int c;
 
   while (1) {
-    while ((c = yyinput()) != '*'){
-      // Test on YY_END_OF_BUFFER_CHAR (0), not on feof(yyin) because whole line in buffer
-      if(c=='\0'){
+    while ((c = yyinput()) != '*') {
+      // Test on YY_END_OF_BUFFER_CHAR (0), not on feof(yyin) because whole line
+      // in buffer
+      if(c == '\0') {
 	Msg::Error("End of file in commented region");
         return;
       }
     }
-    if ((c = yyinput()) == '/')
+    if((c = yyinput()) == '/')
       return;
     unput(c);
   }
@@ -403,16 +385,17 @@ void parsestring(char endchar)
   int c;
   char tmp[1024];
 
-  // Note that we keep special characters (end-of-line \n, tabs \t,
-  // etc.) "as is" in the output string: see yyinput() above
+  // Note that we keep special characters (end-of-line \n, tabs \t, etc.) "as
+  // is" in the output string: see yyinput() above
   int i = 0;
   while ((c = yyinput()) != endchar) {
-    // Test on YY_END_OF_BUFFER_CHAR (0), not on feof(yyin) because whole line in buffer
-    if(c=='\0'){
+    // Test on YY_END_OF_BUFFER_CHAR (0), not on feof(yyin) because whole line
+    // in buffer
+    if(c == '\0') {
       Msg::Error("End of file in string");
       break;
     }
-    else if(i >= (int)sizeof(tmp)-1){
+    else if(i >= (int)sizeof(tmp) - 1) {
       Msg::Error("String too long");
       break;
     }
@@ -426,19 +409,20 @@ void parsestring(char endchar)
 
 char *strsave(char *ptr)
 {
-  return((char*)strcpy((char*)malloc(strlen(ptr)+1),ptr));
+  return((char*)strcpy((char*)malloc(strlen(ptr) + 1), ptr));
 }
 
 void skipline()
 {
   int c;
-  while ((c = yyinput()) != '\n' && c!='\0') {}
-  // TODO: would be clever to skip the current buffer because whole line already in it
+  while ((c = yyinput()) != '\n' && c != '\0') {}
+  // TODO: would be clever to skip the current buffer because whole line already
+  // in it
 }
 
 static bool is_alpha(const int c)
 {
-  return (c>='a' && c<='z') || (c>='A' && c<='Z') || c=='_';
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
 
 void skip(const char *skip, const char *until)
@@ -448,36 +432,36 @@ void skip(const char *skip, const char *until)
   char chars[256];
   int c_next, c_next_skip, c_next_until, c_previous = 0;
 
-  l_skip = (skip)? strlen(skip) : 0;
+  l_skip = skip ? strlen(skip) : 0;
   l_until = strlen(until);
 
-  l_max = std::max(l_skip,l_until);
-  if(l_max >= (int)sizeof(chars)){
+  l_max = std::max(l_skip, l_until);
+  if(l_max >= (int)sizeof(chars)) {
     Msg::Error("Search pattern too long in skip");
     return;
   }
 
-  while(1){
-    while (1){
+  while(1) {
+    while(1) {
       chars[0] = yyinput();
       // TOFIX: do another test
-      if(feof(yyin)){
+      if(feof(yyin)) {
 	Msg::Error("Unexpected end of file");
 	return;
       }
-      if(chars[0] == '/'){
+      if(chars[0] == '/') {
         c_next = yyinput();
         if     (c_next ==  '*') skipcomments();
         else if(c_next ==  '/') skipline();
         else unput(c_next);
       }
-      if(chars[0] == '"'){
+      if(chars[0] == '"') {
         parsestring('"');
       }
-      if(chars[0] == '\''){
+      if(chars[0] == '\'') {
         parsestring('\'');
       }
-      if(!c_previous || !is_alpha(c_previous)){
+      if(!c_previous || !is_alpha(c_previous)) {
         if(chars[0] == until[0]) break;
         if(skip && chars[0] == skip[0]) break;
       }
@@ -486,27 +470,27 @@ void skip(const char *skip, const char *until)
 
     l = l_max;
 
-    for(i=1; i<l; i++){
+    for(i  =1; i < l; i++) {
       chars[i] = yyinput();
-      if(feof(yyin)){
+      if(feof(yyin)) {
 	l = i;
 	break;
       }
     }
 
     c_next = yyinput(); unput(c_next);
-    c_next_skip = (l_skip<l)? chars[l_skip] : c_next;
-    c_next_until = (l_until<l)? chars[l_until] : c_next;
+    c_next_skip = (l_skip < l) ? chars[l_skip] : c_next;
+    c_next_until = (l_until < l) ? chars[l_until] : c_next;
 
-    if(!strncmp(chars,until,l_until) && !is_alpha(c_next_until)){
-      if(!nb_skip){
+    if(!strncmp(chars, until, l_until) && !is_alpha(c_next_until)) {
+      if(!nb_skip) {
 	return;
       }
       else{
 	nb_skip--;
       }
     }
-    else if(skip && !strncmp(chars,skip,l_skip) && !is_alpha(c_next_skip)){
+    else if(skip && !strncmp(chars, skip, l_skip) && !is_alpha(c_next_skip)) {
       nb_skip++;
       // Attention: unput(.) should be applied a number of times equal to
       // l-l_skip (always >0 for skip="For" and until="EndFor", or skip="If" and
@@ -516,8 +500,8 @@ void skip(const char *skip, const char *until)
       // "EndIf". (Patrick)
     }
     else{
-      for(i=1;i<l-1;i++){
-	unput(chars[l-i]);
+      for(i = 1; i < l - 1; i++) {
+	unput(chars[l - i]);
       }
     }
 
@@ -530,33 +514,34 @@ void skipTest(const char *skip, const char *until,
   int i, nb_skip = 0;
   int l_skip, l_until, l_until2, l_max, l;
   char chars[256];
-  int c_next, c_next_skip, c_next_until, c_next_until2, c_previous = 0, flag_EOL_EOF = 0;
+  int c_next, c_next_skip, c_next_until, c_next_until2, c_previous = 0;
+  int flag_EOL_EOF = 0;
 
-  l_skip = (skip)? strlen(skip) : 0;
+  l_skip = skip ? strlen(skip) : 0;
   l_until = strlen(until);
-  l_until2 = (until2)? strlen(until2) : 0;
+  l_until2 = until2 ? strlen(until2) : 0;
 
-  l_max = std::max(l_skip,l_until);
-  l_max = std::max(l_max,l_until2);
-  if(l_max >= (int)sizeof(chars)){
+  l_max = std::max(l_skip, l_until);
+  l_max = std::max(l_max, l_until2);
+  if(l_max >= (int)sizeof(chars)) {
     Msg::Error("Search pattern too long in skipTest");
     return;
   }
 
-  while(1){
-    while (1){
+  while(1) {
+    while(1) {
       chars[0] = yyinput();
-      if(feof(yyin)){
+      if(feof(yyin)) {
 	Msg::Error("Unexpected end of file");
 	return;
       }
-      if(chars[0] == '/'){
+      if(chars[0] == '/') {
         c_next = yyinput();
         if     (c_next ==  '*') skipcomments();
         else if(c_next ==  '/') skipline();
         else unput(c_next);
       }
-      if(!c_previous || !is_alpha(c_previous)){
+      if(!c_previous || !is_alpha(c_previous)) {
         if(chars[0] == until[0]) break;
         if(skip && chars[0] == skip[0]) break;
         if(!nb_skip && until2 && chars[0] == until2[0]) break;
@@ -568,60 +553,62 @@ void skipTest(const char *skip, const char *until,
     l = l_max;
     flag_EOL_EOF = 0;
 
-    for(i=1; i<l; i++){
+    for(i = 1; i < l; i++) {
       chars[i] = yyinput();
-      if(chars[i] == '\n'){
+      if(chars[i] == '\n') {
         unput(chars[i]); chars[i] = 0; l = i; flag_EOL_EOF = 1;
         break;
       }
-      if(feof(yyin)){
+      if(feof(yyin)) {
 	l = i; flag_EOL_EOF = 1;
 	break;
       }
     }
 
-    if(!flag_EOL_EOF){
+    if(!flag_EOL_EOF) {
       c_next = yyinput(); unput(c_next);
-      c_next_skip = (l_skip<l)? chars[l_skip] : c_next;
-      c_next_until = (l_until<l)? chars[l_until] : c_next;
-      if (!nb_skip)
-        c_next_until2 = (l_until2<l)? chars[l_until2] : c_next;
+      c_next_skip = (l_skip < l) ? chars[l_skip] : c_next;
+      c_next_until = (l_until < l) ? chars[l_until] : c_next;
+      if(!nb_skip)
+        c_next_until2 = (l_until2 < l) ? chars[l_until2] : c_next;
     }
     else{
       c_next = 0; c_next_skip = 0; c_next_until = 0; c_next_until2 = 0;
     }
 
-    if(!nb_skip && !strncmp(chars,until2,l_until2) && !is_alpha(c_next_until2)){
+    if(!nb_skip && !strncmp(chars, until2, l_until2) &&
+       !is_alpha(c_next_until2)) {
       *type_until2 = 1; // Found word is full until2 (e.g., "ElseIf")
-      for(int i = 1; i <= l; i++){ // Only correct if l == l_until2
-        unput(chars[l-i]);
+      for(int i = 1; i <= l; i++) { // Only correct if l == l_until2
+        unput(chars[l - i]);
       } // New file position points "ElseIf", that will be then analysed by the parser
       return;
     }
-    else if(!nb_skip && !strncmp(chars,until2,l_until2_sub) && !is_alpha(chars[l_until2_sub])){
+    else if(!nb_skip && !strncmp(chars,until2,l_until2_sub) &&
+            !is_alpha(chars[l_until2_sub])) {
       *type_until2 = 2; // Found word is subword from until2 (e.g., "Else")
-      for(int i = 1; i <= l-l_until2_sub; i++){ // Only correct if l_until2_sub < l
-        unput(chars[l-i]);
+      for(int i = 1; i <= l - l_until2_sub; i++) { // Only correct if l_until2_sub < l
+        unput(chars[l - i]);
       }
       return;
     }
-    else if(!strncmp(chars,until,l_until) && !is_alpha(c_next_until)){
-      for(int i = 1; i <= l-l_until; i++){
-        unput(chars[l-i]);
+    else if(!strncmp(chars, until, l_until) && !is_alpha(c_next_until)) {
+      for(int i = 1; i <= l - l_until; i++) {
+        unput(chars[l - i]);
       }
-      if(!nb_skip){
+      if(!nb_skip) {
 	return;
       }
       else{
 	nb_skip--;
       }
     }
-    else if(skip && !strncmp(chars,skip,l_skip) && !is_alpha(c_next_skip)){
+    else if(skip && !strncmp(chars, skip, l_skip) && !is_alpha(c_next_skip)) {
       nb_skip++;
     }
     else{
-      for(i=1;i<l-1;i++){
-	unput(chars[l-i]);
+      for(i = 1; i < l - 1; i++) {
+	unput(chars[l - i]);
       }
     }
 

@@ -21,33 +21,32 @@ class OCCFace;
 #include <BRep_Tool.hxx>
 
 class OCCEdge : public GEdge {
-protected:
-  TopoDS_Edge _replacement;
-  TopoDS_Edge c;
-  TopoDS_Edge c_rev;
-  double s0, s1;
-  Handle(Geom_Curve) curve;
-  mutable Handle(Geom2d_Curve) curve2d;
-  mutable GFace *trimmed;
+private:
+  TopoDS_Edge _c;
+  TopoDS_Edge _c_rev;
+  double _s0, _s1;
+  Handle(Geom_Curve) _curve;
+  mutable Handle(Geom2d_Curve) _curve2d;
+  mutable GFace *_trimmed;
 
 public:
-  OCCEdge(GModel *model, TopoDS_Edge _e, int num, GVertex *v1, GVertex *v2);
+  OCCEdge(GModel *model, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2);
   virtual ~OCCEdge();
-  virtual SBoundingBox3d bounds(bool fast = false) const;
+  virtual SBoundingBox3d bounds(bool fast = false);
   virtual Range<double> parBounds(int i) const;
   virtual Range<double> parBoundsOnFace(GFace *face = NULL) const;
   virtual GeomType geomType() const;
-  virtual bool degenerate(int) const { return BRep_Tool::Degenerated(c); }
+  virtual bool degenerate(int) const { return BRep_Tool::Degenerated(_c); }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature(double par) const;
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
   ModelType getNativeType() const { return OpenCascadeModel; }
-  void *getNativePtr() const { return (void *)&c; }
+  void *getNativePtr() const { return (void *)&_c; }
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;
-  bool is3D() const { return !curve.IsNull(); }
+  bool is3D() const { return !_curve.IsNull(); }
   void setTrimmed(OCCFace *);
   bool isSeam(const GFace *) const;
   virtual void writeGEO(FILE *fp);

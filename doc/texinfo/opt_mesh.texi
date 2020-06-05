@@ -2,12 +2,12 @@
 
 @ftable @code
 @item Mesh.Algorithm
-2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)@*
+2D mesh algorithm (1: MeshAdapt, 2: Automatic, 3: Initial mesh only, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)@*
 Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)@*
+3D mesh algorithm (1: Delaunay, 3: Initial mesh only, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -106,13 +106,18 @@ Compute mesh element sizes from values given at geometry points@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.CharacteristicLengthFromParametricPoints
+Compute mesh element sizes from values given at geometry points defining parametric curves@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Clip
 Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.ColorCarousel
-Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical entity, 3: by partition)@*
+Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical group, 3: by mesh partition)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -151,13 +156,18 @@ Element shrinking factor (between 0 and 1)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.FlexibleTransfinite
-Allow transfinite constraints to be modified for Blossom or by global mesh size factor@*
-Default value: @code{0}@*
+@item Mesh.FirstElementTag
+First tag (>= 1) of mesh elements@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.NewtonConvergenceTestXYZ
-Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)@*
+@item Mesh.FirstNodeTag
+First tag (>= 1) of mesh nodes@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.FlexibleTransfinite
+Allow transfinite constraints to be modified for Blossom or by global mesh size factor@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -227,7 +237,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelType
-Type of element label (0: element number, 1: elementary entity number, 2: physical entity number, 3: partition number, 4: coordinates)@*
+Type of element label (0: node/element tag, 1: elementary entity tag, 2: physical entity tag, 3: partition, 4: coordinates)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -257,7 +267,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LineNumbers
-Display mesh line numbers?@*
+Display mesh line labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -293,6 +303,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshOnlyVisible
 Mesh only visible entities (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshOnlyEmpty
+Mesh only entities that have no existing mesh@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -431,6 +446,11 @@ Write partitioned meshes in MSH2 format using old style (i.e. by not referencing
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.ReparamMaxTriangles
+Maximum number of triangles in a single parametrization patch@*
+Default value: @code{250000}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.NbHexahedra
 Number of hexahedra in the current mesh (read-only)@*
 Default value: @code{0}@*
@@ -476,6 +496,11 @@ Number of triangles in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.NewtonConvergenceTestXYZ
+Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Normals
 Display size of normal vectors (in pixels)@*
 Default value: @code{0}@*
@@ -507,7 +532,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointNumbers
-Display mesh node numbers?@*
+Display mesh node labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -586,9 +611,14 @@ Preserve element numbering in MSH2 format (will break meshes with multiple physi
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.IgnorePeriodicity
-Ignore alignment of periodic boundaries when reading the mesh in MSH2 format (used by ParaView plugin)@*
+@item Mesh.IgnoreParametrization
+Skip parametrization section when reading meshes in the MSH4 format.@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.IgnorePeriodicity
+Skip periodic node section and skip periodic boundary alignement step when reading meshes in the MSH2 format.@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombinationAlgorithm
@@ -632,7 +662,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveAll
-Save all elements, even if they don't belong to physical groups@*
+Save all elements, even if they don't belong to physical groups (for some mesh formats, this removes physical groups altogether)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -651,19 +681,19 @@ Save parametric coordinates of nodes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.SaveGroupsOfElements
+Save groups of elements for each physical group (for INP mesh format)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveGroupsOfNodes
-Save groups of nodes for each physical line and surface (for UNV, INP and Tochnog mesh formats)@*
+Save groups of nodes for each physical group (for UNV, INP and Tochnog mesh formats). For the INP format, a negative value will save a group of node for each entity of dimension = (-Mesh.SaveGroupsOfNodes)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ScalingFactor
 Global scaling factor applied to the saved mesh@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.SecondOrderExperimental
-Use experimental code to generate second order mesh@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SecondOrderIncomplete
@@ -722,7 +752,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SubdivisionAlgorithm
-Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra)@*
+Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, 3: barycentric)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -737,7 +767,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SurfaceNumbers
-Display surface mesh element numbers?@*
+Display surface mesh element labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -787,7 +817,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.VolumeNumbers
-Display volume mesh element numbers?@*
+Display volume mesh element labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

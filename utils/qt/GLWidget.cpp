@@ -33,6 +33,7 @@ QSize GLWidget::sizeHint() const
 void GLWidget::setXRotation(int angle)
 {
   emit xRotationChanged(angle);
+  _ctx->addQuaternion(0.1, 0, 0, 0);
   updateGL();
 }
 
@@ -61,16 +62,4 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-  /*
-  int dx = event->x() - lastPos.x();
-  int dy = event->y() - lastPos.y();
-  if (event->buttons() & Qt::LeftButton) {
-    setXRotation(xRot + 8 * dy);
-    setYRotation(yRot + 8 * dx);
-  } else if (event->buttons() & Qt::RightButton) {
-    setXRotation(xRot + 8 * dy);
-    setZRotation(zRot + 8 * dx);
-  }
-  lastPos = event->pos();
-  */
 }

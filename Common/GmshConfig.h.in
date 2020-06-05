@@ -7,6 +7,7 @@
 #define GMSH_CONFIG_H
 
 #cmakedefine HAVE_3M
+#cmakedefine HAVE_64BIT_SIZE_T
 #cmakedefine HAVE_ACIS
 #cmakedefine HAVE_ALGLIB
 #cmakedefine HAVE_ANN
@@ -21,7 +22,6 @@
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GMP
 #cmakedefine HAVE_HXT
-#cmakedefine HAVE_HXT3D
 #cmakedefine HAVE_KBIPACK
 #cmakedefine HAVE_LAPACK
 #cmakedefine HAVE_LIBCGNS
@@ -54,6 +54,8 @@
 #cmakedefine HAVE_OPTHOM
 #cmakedefine HAVE_OSMESA
 #cmakedefine HAVE_P4EST
+#cmakedefine HAVE_PARASOLID
+#cmakedefine HAVE_PARASOLID_STEP
 #cmakedefine HAVE_PARSER
 #cmakedefine HAVE_PETSC
 #cmakedefine HAVE_PETSC4PY

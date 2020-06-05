@@ -1,4 +1,5 @@
 import gmsh
+import sys
 
 gmsh.initialize()
 
@@ -18,7 +19,7 @@ for e in ent:
               str(gmsh.model.occ.getMass(e[0], e[1])) + ')')
         path = n.split('/')
         if e[0] == 3 and len(path) > 3:
-            if(path[2] not in physicals):
+            if (path[2] not in physicals):
                 physicals[path[2]] = []
             physicals[path[2]].append(e[1])
 
@@ -27,4 +28,7 @@ for name, tags in physicals.items():
     p = gmsh.model.addPhysicalGroup(3, tags)
     gmsh.model.setPhysicalName(3, p, name)
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
+gmsh.finalize()

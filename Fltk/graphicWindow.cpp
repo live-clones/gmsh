@@ -111,8 +111,15 @@ static const char *input_formats =
 #endif
 #if defined(HAVE_OCC)
   "Geometry - OpenCASCADE BRep\t*.brep\n"
-  "Geometry - OpenCASCADE IGES\t*.{igs,iges}\n"
-  "Geometry - OpenCASCADE STEP\t*.{stp,step}\n"
+#endif
+#if defined(HAVE_PARASOLID)
+  "Geometry - Parasolid XMT\t*.xmt_txt\n"
+#endif
+#if defined(HAVE_OCC) || defined(HAVE_PARASOLID_STEP)
+  "Geometry - STEP\t*.{stp,step}\n"
+#endif
+#if defined(HAVE_OCC)
+  "Geometry - IGES\t*.{igs,iges}\n"
 #endif
   "Mesh - Gmsh MSH\t*.msh\n"
   "Mesh - Diffpack 3D\t*.diff\n"
@@ -278,6 +285,7 @@ static int _save_options(const char *name){ return optionsFileDialog(name); }
 static int _save_geo(const char *name){ return geoFileDialog(name); }
 static int _save_brep(const char *name){ CreateOutputFile(name, FORMAT_BREP); return 1; }
 static int _save_step(const char *name){ CreateOutputFile(name, FORMAT_STEP); return 1; }
+static int _save_xmt(const char *name){ CreateOutputFile(name, FORMAT_XMT); return 1; }
 static int _save_cgns(const char *name){ return cgnsFileDialog(name); }
 static int _save_unv(const char *name){ return unvinpFileDialog
     (name, "UNV Options", FORMAT_UNV); }
@@ -393,6 +401,7 @@ static int _save_auto(const char *name)
   case FORMAT_SVG  : return _save_svg(name);
   case FORMAT_TIKZ : return _save_tikz(name);
   case FORMAT_YUV  : return _save_yuv(name);
+  case FORMAT_XMT  : return _save_xmt(name);
   default :
     CreateOutputFile(name, FORMAT_AUTO);
     return 1;
@@ -411,8 +420,13 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Geometry - Gmsh Options\t*.opt", _save_options},
     {"Geometry - Gmsh Unrolled GEO\t*.geo_unrolled", _save_geo},
 #if defined(HAVE_OCC)
-    {"Geometry - OpenCASCADE STEP\t*.step", _save_step},
     {"Geometry - OpenCASCADE BRep\t*.brep", _save_brep},
+#endif
+#if defined(HAVE_PARASOLID)
+    {"Geometry - Parasolid XMT\t*.xmt_txt", _save_xmt},
+#endif
+#if defined(HAVE_OCC) || defined(HAVE_PARASOLID_STEP)
+    {"Geometry - STEP\t*.step", _save_step},
 #endif
     {"Mesh - Gmsh MSH\t*.msh", _save_msh},
     {"Mesh - Abaqus INP\t*.inp", _save_inp},
@@ -1940,7 +1954,7 @@ void mesh_3d_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
+static void mesh_modify_parts(Fl_Widget *w, void *data, const std::string &action)
 {
   const char *str = (const char*)data;
   int what;
@@ -2045,9 +2059,17 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
       }
       else{
         for(std::size_t i = 0; i < ent.size(); i++)
-          if(ent[i]->getSelection() == 1) ent[i]->setVisibility(0);
+          if(ent[i]->getSelection() == 1){
+            ent[i]->setVisibility(0);
+            ent[i]->setSelection(0);
+          }
       }
-      GModel::current()->removeInvisibleElements();
+      if(action == "delete")
+        GModel::current()->removeInvisibleElements();
+      else if(action == "reverse")
+        GModel::current()->reverseInvisibleElements();
+      else
+        Msg::Error("Unknown action on mesh part");
       ele.clear();
       ent.clear();
     }
@@ -2061,6 +2083,16 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
   Msg::StatusGl("");
+}
+
+static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
+{
+  mesh_modify_parts(w, data, "delete");
+}
+
+static void mesh_reverse_parts_cb(Fl_Widget *w, void *data)
+{
+  mesh_modify_parts(w, data, "reverse");
 }
 
 static void mesh_inspect_cb(Fl_Widget *w, void *data)
@@ -4320,6 +4352,14 @@ static menuItem static_modules[] = {
   {"0Modules/Mesh/Experimental/Convert old partitioning",
     (Fl_Callback *)mesh_convert_old_partitioning_cb} ,
 #endif
+  {"0Modules/Mesh/Reverse/Elements",
+   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"elements"} ,
+  {"0Modules/Mesh/Reverse/Curves",
+   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"curves"} ,
+  {"0Modules/Mesh/Reverse/Surfaces",
+   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"surfaces"} ,
+  {"0Modules/Mesh/Reverse/Volumes",
+   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"volumes"} ,
   {"0Modules/Mesh/Delete/Elements",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
   {"0Modules/Mesh/Delete/Curves",

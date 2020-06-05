@@ -5,6 +5,7 @@
 
 #ifdef HAVE_HXT
 extern "C" {
+#include "hxt_tools.h"
 #include "hxt_edge.h"
 #include "hxt_curvature.h"
 #include "hxt_bbox.h"
@@ -37,7 +38,7 @@ automaticMeshSizeField::~automaticMeshSizeField(){
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
 
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v);
 
 
@@ -66,10 +67,8 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
   // create HXT mesh structure
   HXTMesh *mesh;
-  HXTContext *context;
-  HXT_CHECK(hxtContextCreate(&context));
-  HXT_CHECK(hxtMeshCreate(context, &mesh));
-  std::map<MVertex *, int> v2c;
+  HXT_CHECK(hxtMeshCreate(&mesh));
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
@@ -147,7 +146,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   HXT_CHECK(hxtFree(&curvatureCrossfield));
   HXT_CHECK(hxtFree(&nodalCurvature)              );
   HXT_CHECK(hxtMeshDelete(&mesh)                  );
-  HXT_CHECK(hxtContextDelete(&context)            );
+  return HXT_STATUS_OK;
 }
 
 #endif

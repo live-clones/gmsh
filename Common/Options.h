@@ -21,7 +21,7 @@
 
 // action is a combination of GMSH_SET, GMSH_GET, GMSH_GUI
 
-#define OPT_ARGS_STR int num, int action, std::string val
+#define OPT_ARGS_STR int num, int action, const std::string &val
 #define OPT_ARGS_NUM int num, int action, double val
 #define OPT_ARGS_COL int num, int action, unsigned int val
 
@@ -143,6 +143,7 @@ std::string opt_print_parameter_command(OPT_ARGS_STR);
 
 // NUMBERS
 
+double opt_general_abort_on_error(OPT_ARGS_NUM);
 double opt_general_initial_context(OPT_ARGS_NUM);
 double opt_general_show_options_on_startup(OPT_ARGS_NUM);
 double opt_general_show_messages_on_startup(OPT_ARGS_NUM);
@@ -394,6 +395,7 @@ double opt_geometry_surface_type(OPT_ARGS_NUM);
 double opt_geometry_light(OPT_ARGS_NUM);
 double opt_geometry_light_two_side(OPT_ARGS_NUM);
 double opt_geometry_occ_auto_fix(OPT_ARGS_NUM);
+double opt_geometry_occ_bounds_use_stl(OPT_ARGS_NUM);
 double opt_geometry_occ_disable_stl(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM);
@@ -405,6 +407,7 @@ double opt_geometry_occ_parallel(OPT_ARGS_NUM);
 double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM);
 double opt_geometry_occ_scaling(OPT_ARGS_NUM);
 double opt_geometry_occ_import_labels(OPT_ARGS_NUM);
+double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM);
 double opt_geometry_old_circle(OPT_ARGS_NUM);
 double opt_geometry_old_newreg(OPT_ARGS_NUM);
 double opt_geometry_old_ruled_surface(OPT_ARGS_NUM);
@@ -439,6 +442,7 @@ double opt_mesh_tolerance_initial_delaunay(OPT_ARGS_NUM);
 double opt_mesh_lc_factor(OPT_ARGS_NUM);
 double opt_mesh_lc_from_curvature(OPT_ARGS_NUM);
 double opt_mesh_lc_from_points(OPT_ARGS_NUM);
+double opt_mesh_lc_from_parametric_points(OPT_ARGS_NUM);
 double opt_mesh_lc_extend_from_boundary(OPT_ARGS_NUM);
 double opt_mesh_lc_integration_precision(OPT_ARGS_NUM);
 double opt_mesh_rand_factor(OPT_ARGS_NUM);
@@ -449,6 +453,8 @@ double opt_mesh_quality_type(OPT_ARGS_NUM);
 double opt_mesh_radius_inf(OPT_ARGS_NUM);
 double opt_mesh_radius_sup(OPT_ARGS_NUM);
 double opt_mesh_label_type(OPT_ARGS_NUM);
+double opt_mesh_first_element_tag(OPT_ARGS_NUM);
+double opt_mesh_first_node_tag(OPT_ARGS_NUM);
 double opt_mesh_points(OPT_ARGS_NUM);
 double opt_mesh_lines(OPT_ARGS_NUM);
 double opt_mesh_triangles(OPT_ARGS_NUM);
@@ -526,6 +532,7 @@ double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM);
 double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);
+double opt_mesh_mesh_only_empty(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);
 double opt_mesh_min_elements_2pi(OPT_ARGS_NUM);
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM);
@@ -541,7 +548,6 @@ double opt_mesh_ho_prim_surf_mesh(OPT_ARGS_NUM);
 double opt_mesh_ho_dist_cad(OPT_ARGS_NUM);
 double opt_mesh_ho_iter_max(OPT_ARGS_NUM);
 double opt_mesh_ho_pass_max(OPT_ARGS_NUM);
-double opt_mesh_second_order_experimental(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM);
@@ -556,6 +562,7 @@ double opt_mesh_save_all(OPT_ARGS_NUM);
 double opt_mesh_save_element_tag_type(OPT_ARGS_NUM);
 double opt_mesh_save_parametric(OPT_ARGS_NUM);
 double opt_mesh_save_topology(OPT_ARGS_NUM);
+double opt_mesh_save_groups_of_elements(OPT_ARGS_NUM);
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM);
 double opt_mesh_color_carousel(OPT_ARGS_NUM);
 double opt_mesh_compound_classify(OPT_ARGS_NUM);
@@ -582,6 +589,8 @@ double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM);
 double opt_mesh_angle_tolerance_facet_overlap(OPT_ARGS_NUM);
 double opt_mesh_renumber(OPT_ARGS_NUM);
 double opt_mesh_unv_strict_format(OPT_ARGS_NUM);
+double opt_mesh_reparam_max_triangles(OPT_ARGS_NUM);
+double opt_mesh_ignore_parametrization(OPT_ARGS_NUM);
 double opt_solver_listen(OPT_ARGS_NUM);
 double opt_solver_timeout(OPT_ARGS_NUM);
 double opt_solver_plugins(OPT_ARGS_NUM);
@@ -866,7 +875,7 @@ typedef struct {
 typedef struct {
   int level;
   const char *str;
-  std::string (*function)(int num, int action, std::string val);
+  std::string (*function)(int num, int action, const std::string &val);
   std::string def;
   const char *help;
 } StringXString;

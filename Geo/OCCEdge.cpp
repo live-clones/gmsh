@@ -36,63 +36,67 @@
 #include <BRep_Builder.hxx>
 #include <BOPTools_AlgoTools.hxx>
 
-OCCEdge::OCCEdge(GModel *m, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
-  : GEdge(m, num, v1, v2), c(edge), trimmed(0)
+OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
+  : GEdge(m, num, v1, v2), _c(c), _trimmed(0)
 {
   // force orientation of internal/external edges: otherwise reverse will not
   // produce the expected result
-  if(c.Orientation() == TopAbs_INTERNAL || c.Orientation() == TopAbs_EXTERNAL) {
-    c = TopoDS::Edge(c.Oriented(TopAbs_FORWARD));
+  if(_c.Orientation() == TopAbs_INTERNAL || _c.Orientation() == TopAbs_EXTERNAL) {
+    _c = TopoDS::Edge(_c.Oriented(TopAbs_FORWARD));
   }
-  curve = BRep_Tool::Curve(c, s0, s1);
+  _curve = BRep_Tool::Curve(_c, _s0, _s1);
   // build the reverse curve
-  c_rev = c;
-  c_rev.Reverse();
-  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(c, num);
+  _c_rev = _c;
+  _c_rev.Reverse();
+  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(_c, num);
 }
 
 OCCEdge::~OCCEdge()
 {
   if(model()->getOCCInternals() && !model()->isBeingDestroyed())
-    model()->getOCCInternals()->unbind(c, tag()); // potentially slow
+    model()->getOCCInternals()->unbind(_c, tag()); // potentially slow
 }
 
-SBoundingBox3d OCCEdge::bounds(bool fast) const
+SBoundingBox3d OCCEdge::bounds(bool fast)
 {
   Bnd_Box b;
   try {
-    BRepBndLib::Add(c, b);
+    BRepBndLib::Add(_c, b);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return SBoundingBox3d();
   }
   double xmin, ymin, zmin, xmax, ymax, zmax;
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+
+  if(CTX::instance()->geom.occBoundsUseSTL)
+    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
+
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
 }
 
-Range<double> OCCEdge::parBounds(int i) const { return Range<double>(s0, s1); }
+Range<double> OCCEdge::parBounds(int i) const { return Range<double>(_s0, _s1); }
 
 Range<double> OCCEdge::parBoundsOnFace(GFace *face) const
 {
-  if (face->getNativeType() != GEntity::OpenCascadeModel || !degenerate(0)) {
+  if(face->getNativeType() != GEntity::OpenCascadeModel || !degenerate(0)) {
     return parBounds(0);
   }
 
   const TopoDS_Face *s = (TopoDS_Face *)((OCCFace *)face->getNativePtr());
   double s0, s1;
-  curve2d = BRep_Tool::CurveOnSurface(c, *s, s0, s1);
+  _curve2d = BRep_Tool::CurveOnSurface(_c, *s, s0, s1);
   return {s0, s1};
 }
 
 void OCCEdge::setTrimmed(OCCFace *f)
 {
-  if(!trimmed) {
-    trimmed = f;
-    const TopoDS_Face *s = (TopoDS_Face *)trimmed->getNativePtr();
-    curve2d = BRep_Tool::CurveOnSurface(c, *s, s0, s1);
-    if(curve2d.IsNull()) trimmed = 0;
+  if(!_trimmed) {
+    _trimmed = f;
+    const TopoDS_Face *s = (TopoDS_Face *)_trimmed->getNativePtr();
+    _curve2d = BRep_Tool::CurveOnSurface(_c, *s, _s0, _s1);
+    if(_curve2d.IsNull()) _trimmed = 0;
   }
 }
 
@@ -109,10 +113,10 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     Handle(Geom2d_Curve) c2d;
 
     if(dir == 1) {
-      c2d = BRep_Tool::CurveOnSurface(c, *s, t0, t1);
+      c2d = BRep_Tool::CurveOnSurface(_c, *s, t0, t1);
     }
     else {
-      c2d = BRep_Tool::CurveOnSurface(c_rev, *s, t0, t1);
+      c2d = BRep_Tool::CurveOnSurface(_c_rev, *s, t0, t1);
     }
 
     if(c2d.IsNull()) {
@@ -170,13 +174,13 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 
 GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 {
-  if(curve.IsNull()) {
+  if(_curve.IsNull()) {
     Msg::Error("OCC curve is null in closestPoint");
     return GPoint(0, 0);
   }
 
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  GeomAPI_ProjectPointOnCurve proj(pnt, curve, s0, s1);
+  GeomAPI_ProjectPointOnCurve proj(pnt, _curve, _s0, _s1);
 
   if(!proj.NbPoints()) {
     Msg::Error("OCC ProjectPointOnCurve failed");
@@ -185,7 +189,7 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 
   param = proj.LowerDistanceParameter();
 
-  if(param < s0 || param > s1) {
+  if(param < _s0 || param > _s1) {
     Msg::Error("Point projection is out of edge bounds");
     return GPoint(0, 0);
   }
@@ -199,19 +203,19 @@ bool OCCEdge::isSeam(const GFace *face) const
 {
   if(face->getNativeType() != GEntity::OpenCascadeModel) return false;
   const TopoDS_Face *s = (TopoDS_Face *)face->getNativePtr();
-  bool ret = BRep_Tool::IsClosed(c, *s);
+  bool ret = BRep_Tool::IsClosed(_c, *s);
   return ret;
 }
 
 GPoint OCCEdge::point(double par) const
 {
-  if(trimmed) {
+  if(_trimmed) {
     double u, v;
-    curve2d->Value(par).Coord(u, v);
-    return trimmed->point(u, v);
+    _curve2d->Value(par).Coord(u, v);
+    return _trimmed->point(u, v);
   }
-  else if(!curve.IsNull()) {
-    gp_Pnt pnt = curve->Value(par);
+  else if(!_curve.IsNull()) {
+    gp_Pnt pnt = _curve->Value(par);
     return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, par);
   }
   else if(degenerate(0)) {
@@ -228,7 +232,7 @@ GPoint OCCEdge::point(double par) const
 
 SVector3 OCCEdge::firstDer(double par) const
 {
-  BRepAdaptor_Curve brepc(c);
+  BRepAdaptor_Curve brepc(_c);
   BRepLProp_CLProps prop(brepc, 1, 1e-5);
   prop.SetParameter(par);
   gp_Vec d1 = prop.D1();
@@ -237,51 +241,51 @@ SVector3 OCCEdge::firstDer(double par) const
 
 GEntity::GeomType OCCEdge::geomType() const
 {
-  if(curve.IsNull()) {
-    if(curve2d.IsNull())
+  if(_curve.IsNull()) {
+    if(_curve2d.IsNull())
       return Unknown;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Circle))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_Circle))
       return Circle;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Line))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_Line))
       return Line;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
       return Ellipse;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Parabola))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_Parabola))
       return Parabola;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Hyperbola))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_Hyperbola))
       return Hyperbola;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_TrimmedCurve))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_TrimmedCurve))
       return TrimmedCurve;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_OffsetCurve))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_OffsetCurve))
       return OffsetCurve;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
       return BSpline;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
       return Bezier;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Conic))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_Conic))
       return Conic;
     return Unknown;
   }
   else {
-    if(curve->DynamicType() == STANDARD_TYPE(Geom_Circle))
+    if(_curve->DynamicType() == STANDARD_TYPE(Geom_Circle))
       return Circle;
-    else if(curve->DynamicType() == STANDARD_TYPE(Geom_Line))
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_Line))
       return Line;
-    else if(curve->DynamicType() == STANDARD_TYPE(Geom_Parabola))
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_Parabola))
       return Parabola;
-    else if(curve->DynamicType() == STANDARD_TYPE(Geom_Hyperbola))
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_Hyperbola))
       return Hyperbola;
-    else if(curve->DynamicType() == STANDARD_TYPE(Geom_TrimmedCurve))
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_TrimmedCurve))
       return TrimmedCurve;
-    else if(curve->DynamicType() == STANDARD_TYPE(Geom_OffsetCurve))
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_OffsetCurve))
       return OffsetCurve;
-    else if(curve->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
       return Ellipse;
-    else if(curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
       return BSpline;
-    else if(curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
       return Bezier;
-    else if(curve2d->DynamicType() == STANDARD_TYPE(Geom_Conic))
+    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_Conic))
       return Conic;
     return Unknown;
   }
@@ -292,13 +296,13 @@ int OCCEdge::minimumMeshSegments() const
   int np;
 
   // if it is a seam, then return 1
-  if(l_faces.size() == 1 && isSeam(l_faces[0])) return 1;
+  if(_faces.size() == 1 && isSeam(_faces[0])) return 1;
 
   if(geomType() == Line) {
     np = GEdge::minimumMeshSegments();
   }
   else if(geomType() == Circle || geomType() == Ellipse) {
-    double a = fabs(s0 - s1);
+    double a = fabs(_s0 - _s1);
     double n = CTX::instance()->mesh.minCircPoints;
     if(a > 6.28)
       np = n;
@@ -329,8 +333,8 @@ double OCCEdge::curvature(double par) const
   const double eps = 1.e-15;
 
   Standard_Real Crv;
-  if(curve.IsNull()) {
-    Geom2dLProp_CLProps2d aCLProps(curve2d, 2, eps);
+  if(_curve.IsNull()) {
+    Geom2dLProp_CLProps2d aCLProps(_curve2d, 2, eps);
     aCLProps.SetParameter(par);
     if(!aCLProps.IsTangentDefined())
       Crv = eps;
@@ -338,7 +342,7 @@ double OCCEdge::curvature(double par) const
       Crv = aCLProps.Curvature();
   }
   else {
-    BRepAdaptor_Curve brepc(c);
+    BRepAdaptor_Curve brepc(_c);
     BRepLProp_CLProps prop(brepc, 2, eps);
     prop.SetParameter(par);
     if(!prop.IsTangentDefined())
@@ -354,14 +358,14 @@ void OCCEdge::writeGEO(FILE *fp)
 {
   if(geomType() == Circle) {
     gp_Pnt center;
-    if(curve.IsNull()) {
-      center = Handle(Geom_Circle)::DownCast(curve2d)->Location();
+    if(_curve.IsNull()) {
+      center = Handle(Geom_Circle)::DownCast(_curve2d)->Location();
     }
     else {
-      center = Handle(Geom_Circle)::DownCast(curve)->Location();
+      center = Handle(Geom_Circle)::DownCast(_curve)->Location();
     }
     // GEO supports only circle arcs < Pi
-    if(s1 - s0 < M_PI && getBeginVertex() && getEndVertex()) {
+    if(_s1 - _s0 < M_PI && getBeginVertex() && getEndVertex()) {
       fprintf(fp, "p%d = newp;\n", tag());
       fprintf(fp, "Point(p%d + 1) = {%.16g, %.16g, %.16g};\n", tag(),
               center.X(), center.Y(), center.Z());

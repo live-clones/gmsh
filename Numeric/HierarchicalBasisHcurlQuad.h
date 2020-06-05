@@ -36,6 +36,7 @@ class HierarchicalBasisHcurlQuad : public HierarchicalBasisHcurl {
 public:
   HierarchicalBasisHcurlQuad(int order);
   virtual ~HierarchicalBasisHcurlQuad();
+  virtual unsigned int getNumberOfOrientations() const;
   virtual void generateBasis(double const &u, double const &v, double const &w,
                              std::vector<std::vector<double> > &vertexBasis,
                              std::vector<std::vector<double> > &edgeBasis,

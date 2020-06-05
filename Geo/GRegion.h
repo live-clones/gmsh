@@ -76,6 +76,7 @@ public:
   std::vector<GVertex *> &embeddedVertices() { return embedded_vertices; }
   std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
   std::vector<GFace *> &embeddedFaces() { return embedded_faces; }
+  std::vector<MVertex *> getEmbeddedMeshVertices() const;
 
   // edges that bound the region
   virtual std::vector<GEdge *> const &edges() const;
@@ -84,7 +85,7 @@ public:
   virtual std::vector<GVertex *> vertices() const;
 
   // get the bounding box
-  virtual SBoundingBox3d bounds(bool fast = false) const;
+  virtual SBoundingBox3d bounds(bool fast = false);
 
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();

@@ -1,39 +1,41 @@
-# This file reimplements gmsh/tutorial/t17.geo in Python.
+# ------------------------------------------------------------------------------
 #
-# Anisotropic background mesh
+#  Gmsh Python tutorial 17
+#
+#  Anisotropic background mesh
+#
+# ------------------------------------------------------------------------------
+
+# As seen in `t7.py', characteristic lengths can be specified very accurately by
+# providing a background mesh, i.e., a post-processing view that contains the
+# target mesh sizes.
+
+# Here, the background mesh is represented as a metric tensor field defined on a
+# square. One should use bamg as 2d mesh generator to enable anisotropic meshes
+# in 2D.
 
 import gmsh
 import math
 import os
 
-model = gmsh.model
-factory = model.geo
-
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
 
-factory.addPoint(-1, -1, 0)
-factory.addPoint(1, -1, 0)
-factory.addPoint(1, 1, 0)
-factory.addPoint(-1, 1, 0)
+gmsh.model.add("t17")
 
-factory.addLine(1, 2, 1)
-factory.addLine(2, 3, 2)
-factory.addLine(3, 4, 3)
-factory.addLine(4, 1, 4)
-factory.addCurveLoop([1, 2, 3, 4], 1)
-factory.addPlaneSurface([1], 1)
+# Create a square
+gmsh.model.occ.addRectangle(-1, -1, 0, 2, 2)
+gmsh.model.occ.synchronize()
 
-factory.synchronize()
-
-# add a post-processing view to use as a size field
+# Merge a post-processing view containing the target anisotropic mesh sizes
 path = os.path.dirname(os.path.abspath(__file__))
 gmsh.merge(os.path.join(path, '..', 't17_bgmesh.pos'))
 
-bg_field = model.mesh.field.add("PostView")
-model.mesh.field.setAsBackgroundMesh(bg_field)
+# Apply the view as the current background mesh
+bg_field = gmsh.model.mesh.field.add("PostView")
+gmsh.model.mesh.field.setAsBackgroundMesh(bg_field)
 
-# use bamg
+# Use bamg
 gmsh.option.setNumber("Mesh.SmoothRatio", 3)
 gmsh.option.setNumber("Mesh.AnisoMax", 1000)
 gmsh.option.setNumber("Mesh.Algorithm", 7)
@@ -41,5 +43,6 @@ gmsh.option.setNumber("Mesh.Algorithm", 7)
 gmsh.model.mesh.generate(2)
 gmsh.write("t17.msh")
 
-gmsh.fltk.run()
+# gmsh.fltk.run()
+
 gmsh.finalize()

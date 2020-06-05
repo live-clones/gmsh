@@ -55,6 +55,7 @@
 #define FORMAT_NEU          49
 #define FORMAT_MATLAB       50
 #define FORMAT_KEY          51
+#define FORMAT_XMT          52
 
 // Element types
 #define TYPE_PNT     1
@@ -233,6 +234,7 @@
 // 2D meshing algorithms (numbers should not be changed)
 #define ALGO_2D_MESHADAPT         1
 #define ALGO_2D_AUTO              2
+#define ALGO_2D_INITIAL_ONLY      3
 #define ALGO_2D_DELAUNAY          5
 #define ALGO_2D_FRONTAL           6
 #define ALGO_2D_BAMG              7
@@ -241,11 +243,12 @@
 #define ALGO_2D_PACK_PRLGRMS_CSTR 10
 
 // 3D meshing algorithms (numbers should not be changed)
-#define ALGO_3D_DELAUNAY 1
-#define ALGO_3D_FRONTAL  4
-#define ALGO_3D_MMG3D    7
-#define ALGO_3D_RTREE    9
-#define ALGO_3D_HXT      10
+#define ALGO_3D_DELAUNAY     1
+#define ALGO_3D_INITIAL_ONLY 3
+#define ALGO_3D_FRONTAL      4
+#define ALGO_3D_MMG3D        7
+#define ALGO_3D_RTREE        9
+#define ALGO_3D_HXT          10
 
 // Meshing methods
 #define MESH_NONE         0

@@ -197,7 +197,8 @@ struct doubleXstring{
 %token tPoint tCircle tEllipse tCurve tSphere tPolarSphere tSurface tSpline tVolume
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
-%token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
+%token tCharacteristic tLength tParametric tElliptic
+%token tRefineMesh tRecombineMesh tAdaptMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive tSewing
@@ -213,7 +214,7 @@ struct doubleXstring{
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tElseIf tElse tEndIf tExit tAbort
 %token tField tReturn tCall tSlide tMacro tShow tHide tGetValue tGetStringValue tGetEnv
-%token tGetString tGetNumber tUnique
+%token tGetString tGetNumber tUnique tSetMaxTag
 %token tHomology tCohomology tBetti tExists tFileExists tGetForced tGetForcedStr
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
@@ -1975,6 +1976,27 @@ Shape :
       $$.Type =  MSH_SURF_REGL;
       $$.Num = num;
     }
+  | tBSpline tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$4;
+      std::vector<int> wires; ListOfDouble2Vector($7, wires);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(wires.size() != 1) {
+          yymsg(0, "OpenCASCADE BSpline filling requires a single line loop");
+        }
+        else {
+          r = GModel::current()->getOCCInternals()->addBSplineFilling(num, wires[0]);
+        }
+      }
+      else{
+        yymsg(0, "BSpline surface only available with OpenCASCADE geometry kernel");
+      }
+      if(!r) yymsg(0, "Could not add BSpline surface");
+      List_Delete($7);
+      $$.Type = MSH_SURF_REGL;
+      $$.Num = num;
+    }
   | tEuclidian tCoordinates tEND
     {
       myGmshSurface = 0;
@@ -2566,13 +2588,35 @@ Transform :
       if(!r) yymsg(0, "Could not intersect line");
       List_Delete($4);
     }
-  // syntax is wrong: should use {} around FExpr
-  | tSplit tCurve '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
+  | tSplit tCurve '{' FExpr '}' tPoint '{' RecursiveListOfDouble '}' tEND
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Split Line not available with OpenCASCADE geometry kernel");
+        yymsg(0, "Split Curve not available with OpenCASCADE geometry kernel");
+      }
+      else{
+        std::vector<int> vertices, curves; ListOfDouble2Vector($8, vertices);
+        r = GModel::current()->getGEOInternals()->splitCurve
+          ((int)$4, vertices, curves);
+        for(std::size_t i = 0; i < curves.size(); i++){
+          Shape s;
+          s.Type = MSH_SEGM_LINE;
+          s.Num = curves[i];
+          List_Add($$, &s);
+        }
+      }
+      if(!r) yymsg(0, "Could not split curve");
+      List_Delete($8);
+    }
+  | tSplit tCurve '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
+    {
+      yymsg(2, "'Split Curve(c) {...}' is deprecated: "
+            "use 'Split Curve {c} Point {...}' instead");
+      $$ = List_Create(2, 1, sizeof(Shape));
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Split Curve not available with OpenCASCADE geometry kernel");
       }
       else{
         std::vector<int> vertices, curves; ListOfDouble2Vector($7, vertices);
@@ -2585,7 +2629,7 @@ Transform :
           List_Add($$, &s);
         }
       }
-      if(!r) yymsg(0, "Could not split line");
+      if(!r) yymsg(0, "Could not split curve");
       List_Delete($7);
     }
 ;
@@ -3148,8 +3192,11 @@ Delete :
     }
   | tDelete String__Index tEND
     {
-      if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
+      if(!strcmp($2, "All")){
         ClearProject();
+      }
+      else if(!strcmp($2, "Meshes")){
+	GModel::current()->deleteMesh();
       }
       else if(!strcmp($2, "Model")){
 	GModel::current()->destroy(true); // destroy, but keep name/filename
@@ -3545,7 +3592,11 @@ Command :
     }
    | tCreateTopology tEND
     {
+      GModel::current()->makeDiscreteRegionsSimplyConnected();
+      GModel::current()->makeDiscreteFacesSimplyConnected();
       GModel::current()->createTopologyFromMesh();
+      // Warning: this clears GEO_Internals! Make it optional?
+      GModel::current()->exportDiscreteGEOInternals();
     }
   | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr '}' tEND
     {
@@ -3574,7 +3625,19 @@ Command :
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
-      GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
+      GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
+                                    CTX::instance()->mesh.algoSubdivide == 1,
+                                    CTX::instance()->mesh.algoSubdivide == 2,
+                                    CTX::instance()->mesh.algoSubdivide == 3);
+    }
+   | tRecombineMesh tEND
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      GModel::current()->recombineMesh();
     }
   | tAdaptMesh '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
                '{' RecursiveListOfListOfDouble '}' '{' FExpr ',' FExpr '}' tEND
@@ -4537,52 +4600,28 @@ Constraints :
         List_Delete($2);
       }
     }
-  | tSetTag tPoint '(' FExpr ',' FExpr ')' tEND
+  | tSetTag GeoEntity '(' FExpr ',' FExpr ')' tEND
     {
+      int dim = (int)$2;
       int tag = (int)$4;
-      GVertex *gf = GModel::current()->getVertexByTag(tag);
-      if(gf){
+      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+      if(ge){
 	int new_tag = (int)$6;
-	gf->setTag(new_tag);
+	ge->setTag(new_tag);
       }
       else{
-	yymsg(0, "Unknown model point %d",tag);
+	yymsg(0, "Unknown model entity of dimension %d and tag %d", dim, tag);
       }
     }
-  | tSetTag tCurve '(' FExpr ',' FExpr ')' tEND
+  | tSetMaxTag GeoEntity '(' FExpr ')' tEND
     {
+      int dim = (int)$2;
       int tag = (int)$4;
-      GEdge *gf = GModel::current()->getEdgeByTag(tag);
-      if(gf){
-	int new_tag = (int)$6;
-	gf->setTag(new_tag);
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->setMaxTag(dim, tag);
       }
-      else{
-	yymsg(0, "Unknown model curve %d",tag);
-      }
-    }
-  | tSetTag tSurface '(' FExpr ',' FExpr ')' tEND
-    {
-      int tag = (int)$4;
-      GFace *gf = GModel::current()->getFaceByTag(tag);
-      if(gf){
-	int new_tag = (int)$6;
-	gf->setTag(new_tag);
-      }
-      else{
-	yymsg(0, "Unknown model surface %d",tag);
-      }
-    }
-  | tSetTag tVolume '(' FExpr ',' FExpr ')' tEND
-    {
-      int tag = (int)$4;
-      GRegion *gf = GModel::current()->getRegionByTag(tag);
-      if(gf){
-	int new_tag = (int)$6;
-	gf->setTag(new_tag);
-      }
-      else{
-	yymsg(0, "Unknown model volume %d",tag);
+      else {
+        GModel::current()->getGEOInternals()->setMaxTag(dim, tag);
       }
     }
   | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
@@ -5229,7 +5268,9 @@ FExpr_Single :
       $$ = val[0];
     }
   | DefineStruct
-    { $$ = $1; }
+    {
+      $$ = $1;
+    }
   | tGetNumber LP StringExprVar RP
     {
       $$ = Msg::GetOnelabNumber($3);

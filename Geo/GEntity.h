@@ -80,7 +80,8 @@ public:
     UnknownModel,
     GmshModel,
     OpenCascadeModel,
-    AcisModel
+    AcisModel,
+    ParasolidModel
   };
 
   // all known entity types
@@ -289,7 +290,7 @@ public:
   virtual void alignElementsWithMaster() {}
 
   // get the bounding box
-  virtual SBoundingBox3d bounds(bool fast = false) const
+  virtual SBoundingBox3d bounds(bool fast = false)
   {
     return SBoundingBox3d();
   }
@@ -394,8 +395,8 @@ public:
   // corresponding mesh vertices
   std::map<MVertex *, MVertex *> correspondingVertices;
 
-  // corresponding high order control points
-  std::map<MVertex *, MVertex *> correspondingHOPoints;
+  // corresponding high order vertices
+  std::map<MVertex *, MVertex *> correspondingHighOrderVertices;
 
   // reorder the mesh elements of the given type, according to ordering
   virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering)
@@ -405,9 +406,34 @@ public:
 };
 
 struct GEntityPtrLessThan {
-  bool operator()(GEntity const *const ent1, GEntity const *const ent2) const
+  // beware that this comparison function does *not* compare the entity
+  // dimension; this is on purpose
+  bool operator()(const GEntity *ent1, const GEntity *ent2) const
   {
     return ent1->tag() < ent2->tag();
+  }
+};
+
+struct GEntityPtrFullLessThan {
+  bool operator()(const GEntity *ent1, const GEntity *ent2) const
+  {
+    if(ent1->dim() != ent2->dim())
+      return ent1->dim() < ent2->dim();
+    return ent1->tag() < ent2->tag();
+  }
+};
+
+struct GEntityPtrFullEqual {
+  bool operator()(const GEntity *ent1, const GEntity *ent2) const
+  {
+    return (ent1->dim() == ent2->dim()) && (ent1->tag() == ent2->tag());
+  }
+};
+
+struct GEntityPtrFullHash {
+  size_t operator()(GEntity const *const ent) const
+  {
+    return 10 * ent->tag() + ent->dim();
   }
 };
 

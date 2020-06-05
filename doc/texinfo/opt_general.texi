@@ -38,12 +38,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 4.5.4-git-8a581f49e; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20200228; Build host: Christophes-MacBook-Pro.local; Build options: 64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[usr/local] OptHom P4est Parser Plugins Png Post QuadTri Solver TetGen/BR Voro++ Zlib; FLTK version: 1.4.0; OCC version: 7.4.1; MED version: 4.0.0; Packaged by: geuzaine; Web site: http://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 4.6.0-git-5f0460a88; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20200527; Build host: Christophes-MacBook-Pro.local; Build options: 64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Jpeg Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[usr/local] OptHom ParasolidSTEP Parser Plugins Png Post QuadTri Solver TetGen/BR TouchBar Voro++ Zlib; FLTK version: 1.4.0; OCC version: 7.4.1; MED version: 4.0.0; Packaged by: geuzaine; Web site: http://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{"64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[usr/local] OptHom P4est Parser Plugins Png Post QuadTri Solver TetGen/BR Voro++ Zlib"}@*
+Default value: @code{"64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Jpeg Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[usr/local] OptHom ParasolidSTEP Parser Plugins Png Post QuadTri Solver TetGen/BR TouchBar Voro++ Zlib"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
@@ -163,13 +163,18 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.5.4-git-8a581f49e"}@*
+Default value: @code{"4.6.0-git-5f0460a88"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
 Pattern of files to merge as they become available@*
 Default value: @code{""}@*
 Saved in: @code{-}
+
+@item General.AbortOnError
+Abort on error? (0: no, 1: abort meshing, 2: throw an exception, 3: exit)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
 
 @item General.AlphaBlending
 Enable alpha blending (transparency) in post-processing views@*

@@ -76,7 +76,7 @@ doc = '''Get the `value' of a string option. `name' is of the form "category.opt
 option.add('getString', doc, None, istring('name'), ostring('value'))
 
 doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
-option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '0'))
+option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
 
 doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
 option.add('getColor', doc, None, istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
@@ -163,8 +163,8 @@ model.add('getParent', doc, None, iint('dim'), iint('tag'), oint('parentDim'), o
 doc = '''In a partitioned model, return the tags of the partition(s) to which the entity belongs.'''
 model.add('getPartitions', doc, None, iint('dim'), iint('tag'), ovectorint('partitions'))
 
-doc = '''Evaluate the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 0 (with empty `parametricCoord'), 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z coordinates in `points', concatenated: [p1x, p1y, p1z, p2x, ...].'''
-model.add('getValue', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ovectordouble('points'))
+doc = '''Evaluate the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 0 (with empty `parametricCoord'), 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z coordinates in `coord', concatenated: [p1x, p1y, p1z, p2x, ...].'''
+model.add('getValue', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ovectordouble('coord'))
 
 doc = '''Evaluate the derivative of the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). For `dim' equal to 1 return the x, y, z components of the derivative with respect to u [d1ux, d1uy, d1uz, d2ux, ...]; for `dim' equal to 2 return the x, y, z components of the derivate with respect to u and v: [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux, ...].'''
 model.add('getDerivative', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ovectordouble('derivatives'))
@@ -178,8 +178,17 @@ model.add('getPrincipalCurvatures', doc, None, iint('tag'), ivectordouble('param
 doc = '''Get the normal to the surface with tag `tag' at the parametric coordinates `parametricCoord'. `parametricCoord' are given by pairs of u and v coordinates, concatenated: [p1u, p1v, p2u, ...]. `normals' are returned as triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].'''
 model.add('getNormal', doc, None, iint('tag'), ivectordouble('parametricCoord'), ovectordouble('normals'))
 
-doc = '''Get the parametric coordinates `parametricCoord' for the points `points' on the entity of dimension `dim' and tag `tag'. `points' are given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
-model.add('getParametrization', doc, None, iint('dim'), iint('tag'), ivectordouble('points'), ovectordouble('parametricCoord'))
+doc = '''Get the parametric coordinates `parametricCoord' for the points `coord' on the entity of dimension `dim' and tag `tag'. `coord' are given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
+model.add('getParametrization', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ovectordouble('parametricCoord'))
+
+doc = '''Get the `min' and `max' bounds of the parametric coordinates for the entity of dimension `dim' and tag `tag'.'''
+model.add('getParametrizationBounds', doc, None, iint('dim'), iint('tag'), ovectordouble('min'), ovectordouble('max'))
+
+doc = '''Check if the parametric coordinates provided in `parametricCoord' correspond to points inside the entitiy of dimension `dim' and tag `tag', and return the number of points inside. This feature is only available for a subset of curves and surfaces, depending on the underyling geometrical representation.'''
+model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('parametricCoord'))
+
+doc = '''Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1, reparametrize all the points corresponding to the parametric coordinates `parametricCoord'. Multiple matches in case of periodic surfaces can be selected with `which'. This feature is only available for a subset of entities, depending on the underyling geometrical representation.'''
+model.add('reparametrizeOnSurface', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), iint('surfaceTag'), ovectordouble('surfaceParametricCoord'), iint('which', '0'))
 
 doc = '''Set the visibility of the model entities `dimTags' to `value'. Apply the visibility setting recursively if `recursive' is true.'''
 model.add('setVisibility', doc, None, ivectorpair('dimTags'), iint('value'), ibool('recursive', 'false', 'False'))
@@ -188,7 +197,7 @@ doc = '''Get the visibility of the model entity of dimension `dim' and tag `tag'
 model.add('getVisibility', doc, None, iint('dim'), iint('tag'), oint('value'))
 
 doc = '''Set the color of the model entities `dimTags' to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255. Apply the color setting recursively if `recursive' is true.'''
-model.add('setColor', doc, None, ivectorpair('dimTags'), iint('r'), iint('g'), iint('b'), iint('a', '0'), ibool('recursive', 'false', 'False'))
+model.add('setColor', doc, None, ivectorpair('dimTags'), iint('r'), iint('g'), iint('b'), iint('a', '255'), ibool('recursive', 'false', 'False'))
 
 doc = '''Get the color of the model entity of dimension `dim' and tag `tag'.'''
 model.add('getColor', doc, None, iint('dim'), iint('tag'), oint('r'), oint('g'), oint('b'), oint('a'))
@@ -227,8 +236,8 @@ mesh.add('getLastEntityError', doc, None, ovectorpair('dimTags'))
 doc = '''Get the last nodes (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastNodeError', doc, None, ovectorsize('nodeTags'))
 
-doc = '''Clear the mesh, i.e. delete all the nodes and elements.'''
-mesh.add('clear', doc, None)
+doc = '''Clear the mesh, i.e. delete all the nodes and elements, for the entities `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh of an entity can only be cleared if this entity is not on the boundary of another entity with a non-empty mesh.'''
+mesh.add('clear', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
 doc = '''Get the nodes classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0 and `returnParamtricCoord' is set, `parametricCoord' contains the parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If `includeBoundary' is set, also return the nodes classified on the boundary of the entity (which will be reparametrized on the entity if `dim' >= 0 in order to compute their parametric coordinates).'''
 mesh.add('getNodes', doc, None, ovectorsize('nodeTags'), ovectordouble('coord'), ovectordouble('parametricCoord'), iint('dim', '-1'), iint('tag', '-1'), ibool('includeBoundary', 'false', 'False'), ibool('returnParametricCoord', 'true', 'True'))
@@ -263,7 +272,7 @@ mesh.add('getElements', doc, None, ovectorint('elementTypes'), ovectorvectorsize
 doc = '''Get the type and node tags of the element with tag `tag'. This function relies on an internal cache (a vector in case of dense element numbering, a map otherwise); for large meshes accessing elements in bulk is often preferable.'''
 mesh.add('getElement', doc, None, isize('elementTag'), oint('elementType'), ovectorsize('nodeTags'))
 
-doc = '''Search the mesh for an element located at coordinates (`x', `y', `z'). This function performs a search in a spatial octree. If an element is found, return its tag, type and node tags, as well as the local coordinates (`u', `v', `w') within the element corresponding to search location. If `dim' is >= 0, only search for elements of the given dimension. If `strict' is not set, use a tolerance to find elements near the search location.'''
+doc = '''Search the mesh for an element located at coordinates (`x', `y', `z'). This function performs a search in a spatial octree. If an element is found, return its tag, type and node tags, as well as the local coordinates (`u', `v', `w') within the reference element corresponding to search location. If `dim' is >= 0, only search for elements of the given dimension. If `strict' is not set, use a tolerance to find elements near the search location.'''
 mesh.add('getElementByCoordinates', doc, None, idouble('x'), idouble('y'), idouble('z'), osize('elementTag'), oint('elementType'), ovectorsize('nodeTags'), odouble('u'), odouble('v'), odouble('w'), iint('dim', '-1'), ibool('strict', 'false', 'False'))
 
 doc = '''Search the mesh for element(s) located at coordinates (`x', `y', `z'). This function performs a search in a spatial octree. Return the tags of all found elements in `elementTags'. Additional information about the elements can be accessed through `getElement' and `getLocalCoordinatesInElement'. If `dim' is >= 0, only search for elements of the given dimension. If `strict' is not set, use a tolerance to find elements near the search location.'''
@@ -278,8 +287,8 @@ mesh.add('getElementTypes', doc, None, ovectorint('elementTypes'), iint('dim', '
 doc = '''Return an element type given its family name `familyName' ("point", "line", "triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron") and polynomial order `order'. If `serendip' is true, return the corresponding serendip element type (element without interior nodes).'''
 mesh.add('getElementType', doc, oint, istring('familyName'), iint('order'), ibool('serendip', 'false', 'False'))
 
-doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes'), coordinates of the nodes in the reference element (`nodeCoord' vector, of length `dim' times `numNodes') and number of primary (first order) nodes (`numPrimaryNodes').'''
-mesh.add('getElementProperties', doc, None, iint('elementType'), ostring('elementName'), oint('dim'), oint('order'), oint('numNodes'), ovectordouble('nodeCoord'), oint('numPrimaryNodes'))
+doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes'), local coordinates of the nodes in the reference element (`localNodeCoord' vector, of length `dim' times `numNodes') and number of primary (first order) nodes (`numPrimaryNodes').'''
+mesh.add('getElementProperties', doc, None, iint('elementType'), ostring('elementName'), oint('dim'), oint('order'), oint('numNodes'), ovectordouble('localNodeCoord'), oint('numPrimaryNodes'))
 
 doc = '''Get the elements of type `elementType' classified on the entity of tag `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getElementsByType', doc, None, iint('elementType'), ovectorsize('elementTags'), ovectorsize('nodeTags'), iint('tag', '-1'), isize('task', '0'), isize('numTasks', '1'))
@@ -293,29 +302,32 @@ mesh.add('addElements', doc, None, iint('dim'), iint('tag'), ivectorint('element
 doc = '''Add elements of type `elementType' classified on the entity of tag `tag'. `elementTags' contains the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements times the number N of nodes per element, that contains the node tags of all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are automatically assigned to the elements.'''
 mesh.add('addElementsByType', doc, None, iint('tag'), iint('elementType'), ivectorsize('elementTags'), ivectorsize('nodeTags'))
 
-doc = '''Get the numerical quadrature information for the given element type `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a Gauss quadrature suited for integrating 4th order polynomials). `integrationPoints' contains the u, v, w coordinates of the G integration points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `integrationWeigths' contains the associated weights: [g1q, ..., gGq].'''
-mesh.add('getIntegrationPoints', doc, None, iint('elementType'), istring('integrationType'), ovectordouble('integrationPoints'), ovectordouble('integrationWeights'))
+doc = '''Get the numerical quadrature information for the given element type `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a Gauss quadrature suited for integrating 4th order polynomials). `localCoord' contains the u, v, w coordinates of the G integration points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights' contains the associated weights: [g1q, ..., gGq].'''
+mesh.add('getIntegrationPoints', doc, None, iint('elementType'), istring('integrationType'), ovectordouble('localCoord'), ovectordouble('weights'))
 
-doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of tag `tag', at the G integration points `integrationPoints' given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. `jacobians' contains for each element the 9 entries of the 3x3 Jacobian matrix at each integration point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for each element the determinant of the Jacobian matrix at each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z coordinates of the integration points. If `tag' < 0, get the Jacobian data for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
-mesh.add('getJacobians', doc, None, iint('elementType'), ivectordouble('integrationPoints'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('points'), iint('tag', '-1'), isize('task', '0'), isize('numTasks', '1'))
+doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of tag `tag', at the G evaluation points `localCoord' given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. `jacobians' contains for each element the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for each element the determinant of the Jacobian matrix at each evaluation point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z coordinates of the evaluation points. If `tag' < 0, get the Jacobian data for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+mesh.add('getJacobians', doc, None, iint('elementType'), ivectordouble('localCoord'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('coord'), iint('tag', '-1'), isize('task', '0'), isize('numTasks', '1'))
 
 doc = '''Preallocate data before calling `getJacobians' with `numTasks' > 1. For C and C++ only.'''
-mesh.add_special('preallocateJacobians', doc, ['onlycc++'], None, iint('elementType'), iint('numIntegrationPoints'), ibool('jacobian'), ibool('determinant'), ibool('point'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('points'), iint('tag', '-1'))
+mesh.add_special('preallocateJacobians', doc, ['onlycc++'], None, iint('elementType'), iint('numEvaluationPoints'), ibool('allocateJacobians'), ibool('allocateDeterminants'), ibool('allocateCoord'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('coord'), iint('tag', '-1'))
 
-doc = '''Get the basis functions of the element of type `elementType' at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element). `numComponents' returns the number C of components of a basis function. `basisFunctions' returns the value of the N basis functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.'''
-mesh.add('getBasisFunctions', doc, None, iint('elementType'), ivectordouble('integrationPoints'), istring('functionSpaceType'), oint('numComponents'), ovectordouble('basisFunctions'))
+doc = '''Get the basis functions of the element of type `elementType' at the evaluation points `localCoord' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element; or "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions). `numComponents' returns the number C of components of a basis function. `basisFunctions' returns the value of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis functions that depend on the orientation of the elements, all values for the first orientation are returned first, followed by values for the second, etc. `numOrientations' returns the overall number of orientations. If `wantedOrientations' is not empty, only return the values for the desired orientation indices.'''
+mesh.add('getBasisFunctions', doc, None, iint('elementType'), ivectordouble('localCoord'), istring('functionSpaceType'), oint('numComponents'), ovectordouble('basisFunctions'), oint('numOrientations'), ivectorint('wantedOrientations', 'std::vector<int>()', "[]", "[]"))
+
+doc = '''Get the orientation index of the elements of type `elementType' in the entity of tag `tag'. The arguments have the same meaning as in `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for each element the orientation index in the values returned by `getBasisFunctions'. For Lagrange basis functions the call is superfluous as it will return a vector of zeros.'''
+mesh.add('getBasisFunctionsOrientationForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorint('basisFunctionsOrientation'), iint('tag','-1'), isize('task', '0'), isize('numTasks', '1'))
+
+doc = '''Get the number of possible orientations for elements of type `elementType' and function space named `functionSpaceType'.'''
+mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('functionSpaceType'))
+
+doc = '''Preallocate data before calling `getBasisFunctionsOrientationForElements' with `numTasks' > 1. For C and C++ only.'''
+mesh.add_special('preallocateBasisFunctionsOrientationForElements', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
 doc = '''Get the global edge identifier `edgeNum' for an input list of node pairs, concatenated in the vector `edgeNodes'.  Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getEdgeNumber',doc,None,ivectorint('edgeNodes'),ovectorint('edgeNum'))
 
 doc = '''Get the local multipliers (to guarantee H(curl)-conformity) of the order 0 H(curl) basis functions. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getLocalMultipliersForHcurl0',doc,None,iint('elementType'),ovectorint('localMultipliers'),iint('tag','-1'))
-
-doc = '''Get the element-dependent basis functions of the elements of type `elementType' in the entity of tag `tag'at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates of the reference elements). `numComponents' returns the number C of components of a basis function. `numBasisFunctions' returns the number N of basis functions per element. `basisFunctions' returns the value of the basis functions at the integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental feature and will probably change in a future release. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
-mesh.add('getBasisFunctionsForElements', doc, None, iint('elementType'), ivectordouble('integrationPoints'), istring('functionSpaceType'), oint('numComponents'), oint('numFunctionsPerElements'), ovectordouble('basisFunctions'), iint('tag','-1'), isize('task', '0'), isize('numTasks', '1'))
-
-doc = '''Preallocate data before calling `getBasisFunctionsForElements' with `numTasks' > 1. For C and C++ only.'''
-mesh.add_special('preallocateBasisFunctions', doc, ['onlycc++'], None, iint('elementType'), iint('numIntegrationPoints'), istring('functionSpaceType'), ovectordouble('basisFunctions'), iint('tag', '-1'))
 
 doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
@@ -325,9 +337,6 @@ mesh.add('getNumberOfKeysForElements', doc, oint, iint('elementType'), istring('
 
 doc = '''Get information about the `keys'. `infoKeys' returns information about the functions associated with the `keys'. `infoKeys[0].first' describes the type of function (0 for  vertex function, 1 for edge function, 2 for face function and 3 for bubble function). `infoKeys[0].second' gives the order of the function associated with the key. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getInformationForElements', doc, None, ivectorpair('keys'), iint('elementType'), istring('functionSpaceType'), ovectorpair('infoKeys'))
-
-doc = '''Precomputes the basis functions corresponding to `elementType'. '''
-mesh.add('precomputeBasisFunctions', doc, None, iint('elementType'))
 
 doc = '''Get the barycenters of all elements of type `elementType' classified on the entity of tag `tag'. If `primary' is set, only the primary nodes of the elements are taken into account for the barycenter calculation. If `fast' is set, the function returns the sum of the primary node coordinates (without normalizing by the number of nodes). If `tag' < 0, get the barycenters for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getBarycenters', doc, None, iint('elementType'), iint('tag'), ibool('fast'), ibool('primary'), ovectordouble('barycenters'), isize('task', '0'), isize('numTasks', '1'))
@@ -346,6 +355,9 @@ mesh.add('getGhostElements', doc, None, iint('dim'), iint('tag'), ovectorsize('e
 
 doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
+
+doc = '''Set mesh size constraints at the given parametric points `parametricCoord' on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 1 (lines) are handled.'''
+mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
 
 doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
 mesh.add('setTransfiniteCurve', doc, None, iint('tag'), iint('numNodes'), istring('meshType', '"Progression"'), idouble('coef', '1.'))
@@ -395,8 +407,8 @@ mesh.add('renumberElements', doc, None)
 doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsMaster', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). If used after meshing, generate the periodic node correspondence information assuming the meshes of entities `tags' effectively match the meshes of entities `tagsMaster' (useful for structured and extruded meshes). Currently only available for @code{dim} == 1 and @code{dim} == 2.'''
 mesh.add('setPeriodic', doc, None, iint('dim'), ivectorint('tags'), ivectorint('tagsMaster'), ivectordouble('affineTransform'))
 
-doc = '''Get the master entity `tagMaster', the node tags `nodeTags' and their corresponding master node tags `nodeTagsMaster', and the affine transform `affineTransform' for the entity of dimension `dim' and tag `tag'.'''
-mesh.add('getPeriodicNodes', doc, None, iint('dim'), iint('tag'), oint('tagMaster'), ovectorsize('nodeTags'), ovectorsize('nodeTagsMaster'), ovectordouble('affineTransform'))
+doc = '''Get the master entity `tagMaster', the node tags `nodeTags' and their corresponding master node tags `nodeTagsMaster', and the affine transform `affineTransform' for the entity of dimension `dim' and tag `tag'. If `includeHighOrderNodes' is set, include high-order nodes in the returned data.'''
+mesh.add('getPeriodicNodes', doc, None, iint('dim'), iint('tag'), oint('tagMaster'), ovectorsize('nodeTags'), ovectorsize('nodeTagsMaster'), ovectordouble('affineTransform'), ibool('includeHighOrderNodes', 'false', 'False'))
 
 doc = '''Remove duplicate nodes in the mesh of the current model.'''
 mesh.add('removeDuplicateNodes', doc, None)
@@ -410,8 +422,8 @@ mesh.add('classifySurfaces', doc, None, idouble('angle'), ibool('boundary', 'tru
 doc = '''Create a parametrization for discrete curves and surfaces (i.e. curves and surfaces represented solely by a mesh, without an underlying CAD description), assuming that each can be parametrized with a single map.'''
 mesh.add('createGeometry', doc, None)
 
-doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model).'''
-mesh.add('createTopology', doc, None)
+doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model). If `makeSimplyConnected' is set, enforce simply connected discrete surfaces and volumes. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
+mesh.add('createTopology', doc, None, ibool('makeSimplyConnected', 'true', 'True'), ibool('exportDiscrete', 'true', 'True'))
 
 doc = '''Compute a basis representation for homology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative homology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute homology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation chains are stored as physical groups in the mesh.'''
 mesh.add('computeHomology', doc, None, ivectorint('domainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('subdomainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('dims', 'std::vector<int>()', "[]", "[]"))
@@ -528,6 +540,12 @@ geo.add('removeAllDuplicates', doc, None)
 doc = '''Split the model curve of tag `tag' on the control points `pointTags'. Return the tags `curveTags' of the newly created curves.'''
 geo.add('splitCurve', doc, None, iint('tag'), ivectorint('pointTags'), ovectorint('curveTags'))
 
+doc = '''Get the maximum tag of entities of dimension `dim' in the built-in CAD representation.'''
+geo.add('getMaxTag', doc, oint, iint('dim'))
+
+doc = '''Set the maximum tag `maxTag' for entities of dimension `dim' in the built-in CAD representation.'''
+geo.add('setMaxTag', doc, None, iint('dim'), iint('maxTag'))
+
 doc = '''Synchronize the built-in CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 geo.add('synchronize', doc, None)
 
@@ -608,8 +626,17 @@ occ.add('addDisk', doc, oint, idouble('xc'), idouble('yc'), idouble('zc'), idoub
 doc = '''Add a plane surface defined by one or more curve loops (or closed wires) `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 occ.add('addPlaneSurface', doc, oint, ivectorint('wireTags'), iint('tag', '-1'))
 
-doc = '''Add a surface filling the curve loops in `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface. If `pointTags' are provided, force the surface to pass through the given points.'''
+doc = '''Add a surface filling the curve loop `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface. If `pointTags' are provided, force the surface to pass through the given points.'''
 occ.add('addSurfaceFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), ivectorint('pointTags', 'std::vector<int>()', "[]", "[]"))
+
+doc = '''Add a BSpline surface filling the curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline curves. The optional `type' argument specifies the type of filling: "Stretch" creates the flattest patch, "Curved" (the default) creates the most rounded patch, and "Coons" creates a rounded patch with less depth than "Curved". If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
+occ.add('addBSplineFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), istring('type', '""'))
+
+doc = '''Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags' control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or `multiplicitiesV' are not provided, default parameters are computed automatically. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the b-spline surface.'''
+occ.add('addBSplineSurface', doc, oint, ivectorint('pointTags'), iint('numPointsU'), iint('tag', '-1'), iint('degreeU', '3'), iint('degreeV', '3'), ivectordouble('weights', 'std::vector<double>()', "[]", "[]"), ivectordouble('knotsU', 'std::vector<double>()', "[]", "[]"), ivectordouble('knotsV', 'std::vector<double>()', "[]", "[]"), ivectorint('multiplicitiesU', 'std::vector<int>()', "[]", "[]"), ivectorint('multiplicitiesV', 'std::vector<int>()', "[]", "[]"))
+
+doc = '''Add a Bezier surface with `pointTags' control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the b-spline surface.'''
+occ.add('addBezierSurface', doc, oint, ivectorint('pointTags'), iint('numPointsU'), iint('tag', '-1'))
 
 doc = '''Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface loop. Setting `sewing' allows to build a shell made of surfaces that share geometrically identical (but topologically different) curves.'''
 occ.add('addSurfaceLoop', doc, oint, ivectorint('surfaceTags'), iint('tag', '-1'), ibool('sewing', 'false', 'False'))
@@ -635,8 +662,8 @@ occ.add('addWedge', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble
 doc = '''Add a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The optional argument `angle' defines the angular opening (from 0 to 2*Pi). Return the tag of the wedge.'''
 occ.add('addTorus', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('r1'), idouble('r2'), iint('tag', '-1'), idouble('angle', '2*M_PI', '2*pi', '2*pi'))
 
-doc = '''Add a volume (if the optional argument `makeSolid' is set) or surfaces defined through the open or closed wires `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The new entities are returned in `outDimTags'. If the optional argument `makeRuled' is set, the surfaces created on the boundary are forced to be ruled surfaces.'''
-occ.add('addThruSections', doc, None, ivectorint('wireTags'), ovectorpair('outDimTags'), iint('tag', '-1'), ibool('makeSolid', 'true', 'True'), ibool('makeRuled', 'false', 'False'))
+doc = '''Add a volume (if the optional argument `makeSolid' is set) or surfaces defined through the open or closed wires `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The new entities are returned in `outDimTags'. If the optional argument `makeRuled' is set, the surfaces created on the boundary are forced to be ruled surfaces. If `maxDegree' is positive, set the maximal degree of resulting surface.'''
+occ.add('addThruSections', doc, None, ivectorint('wireTags'), ovectorpair('outDimTags'), iint('tag', '-1'), ibool('makeSolid', 'true', 'True'), ibool('makeRuled', 'false', 'False'), iint('maxDegree', '-1'))
 
 doc = '''Add a hollowed volume built from an initial volume `volumeTag' and a set of faces from this volume `excludeSurfaceTags', which are to be removed. The remaining faces of the volume become the walls of the hollowed solid, with thickness `offset'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.'''
 occ.add('addThickSolid', doc, None, iint('volumeTag'), ivectorint('excludeSurfaceTags'), idouble('offset'), ovectorpair('outDimTags'), iint('tag', '-1'))
@@ -703,20 +730,39 @@ occ.add('importShapes', doc, None, istring('fileName'), ovectorpair('outDimTags'
 doc = '''Imports an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. For C and C++ only. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
 occ.add_special('importShapesNativePointer', doc, ['onlycc++'], None, ivoidstar('shape'), ovectorpair('outDimTags'), ibool('highestDimOnly', 'true', 'True'))
 
-doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
-occ.add('setMeshSize', doc, None, ivectorpair('dimTags'), idouble('size'))
+doc = '''Get all the OpenCASCADE entities. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
+occ.add('getEntities', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
 
-doc = '''Get the mass of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the OpenCASCADE entities in the bounding box defined by the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
+occ.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'), idouble('zmin'), idouble('xmax'), idouble('ymax'), idouble('zmax'), ovectorpair('tags'), iint('dim', '-1'))
+
+doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
+occ.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
+
+doc = '''Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMass', doc, None, iint('dim'), iint('tag'), odouble('mass'))
 
-doc = '''Get the center of mass of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the center of mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getCenterOfMass', doc, None, iint('dim'), iint('tag'), odouble('x'), odouble('y'), odouble('z'))
 
-doc = '''Get the matrix of inertia (by row) of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMatrixOfInertia', doc, None, iint('dim'), iint('tag'), ovectordouble('mat'))
+
+doc = '''Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD representation.'''
+occ.add('getMaxTag', doc, oint, iint('dim'))
+
+doc = '''Set the maximum tag `maxTag' for entities of dimension `dim' in the OpenCASCADE CAD representation.'''
+occ.add('setMaxTag', doc, None, iint('dim'), iint('maxTag'))
 
 doc = '''Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 occ.add('synchronize', doc, None)
+
+################################################################################
+
+mesh = occ.add_module('mesh', 'OpenCASCADE CAD kernel meshing constraints')
+
+doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
+mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
 ################################################################################
 
@@ -737,6 +783,9 @@ view.add('getTags', doc, None, ovectorint('tags'))
 doc = '''Add model-based post-processing data to the view with tag `tag'. `modelName' identifies the model the data is attached to. `dataType' specifies the type of data, currently either "NodeData", "ElementData" or "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a sequence. `tags' gives the tags of the nodes or elements in the mesh to which the data is associated. `data' is a vector of the same length as `tags': each entry is the vector of double precision numbers representing the data associated with the corresponding tag. The optional `time' argument associate a time value with the data. `numComponents' gives the number of data components (1 for scalar data, 3 for vector data, etc.) per entity; if negative, it is automatically inferred (when possible) from the input data. `partition' allows to specify data in several sub-sets.'''
 view.add('addModelData', doc, None, iint('tag'), iint('step'), istring('modelName'), istring('dataType'), ivectorsize('tags'), ivectorvectordouble('data'), idouble('time', '0.'), iint('numComponents', '-1'), iint('partition', '0'))
 
+doc = '''Add homogeneous model-based post-processing data to the view with tag `tag'. The arguments have the same meaning as in `addModelData', except that `data' is supposed to be homogeneous and is thus flattened in a single vector. This is always possible e.g. for "NodeData" and "ElementData", but only if data is associated to elements of the same type for "ElementNodeData".'''
+view.add('addHomogeneousModelData', doc, None, iint('tag'), iint('step'), istring('modelName'), istring('dataType'), ivectorsize('tags'), ivectordouble('data'), idouble('time', '0.'), iint('numComponents', '-1'), iint('partition', '0'))
+
 doc = '''Get model-based post-processing data from the view with tag `tag' at step `step'. Return the `data' associated to the nodes or the elements with tags `tags', as well as the `dataType' and the number of components `numComponents'.'''
 view.add_special('getModelData', doc, ['rawc'], None, iint('tag'), iint('step'), ostring('dataType'), ovectorsize('tags'), ovectorvectordouble('data'), odouble('time'), oint('numComponents'))
 
@@ -745,6 +794,12 @@ view.add('addListData', doc, None, iint('tag'), istring('dataType'), iint('numEl
 
 doc = '''Get list-based post-processing data from the view with tag `tag'. Return the types `dataTypes', the number of elements `numElements' for each data type and the `data' for each data type.'''
 view.add('getListData', doc, None, iint('tag'), ovectorstring('dataType'), ovectorint('numElements'), ovectorvectordouble('data'))
+
+doc = '''Add a string to a list-based post-processing view with tag `tag'. If `coord' contains 3 coordinates the string is positioned in the 3D model space ("3D string"); if it contains 2 coordinates it is positioned in the 2D graphics viewport ("2D string"). `data' contains one or more (for multistep views) strings. `style' contains pairs of styling parameters, concatenated.'''
+view.add('addListDataString', doc, None, iint('tag'), ivectordouble('coord'), ivectorstring('data'), ivectorstring('style', 'std::vector<std::string>()', "[]", "[]"))
+
+doc = '''Get list-based post-processing data strings (2D strings if `dim' = 2, 3D strings if `dim' = 3) from the view with tag `tag'. Return the coordinates in `coord', the strings in `data' and the styles in `style'.'''
+view.add('getListDataStrings', doc, None, iint('tag'), iint('dim'), ovectordouble('coord'), ovectorstring('data'), ovectorstring('style'))
 
 doc = '''Add a post-processing view as an `alias' of the reference view with tag `refTag'. If `copyOptions' is set, copy the options of the reference view. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''
 view.add('addAlias', doc, oint, iint('refTag'), ibool('copyOptions', 'false', 'False'), iint('tag', '-1'))

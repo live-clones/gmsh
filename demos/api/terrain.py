@@ -5,51 +5,61 @@ import sys
 gmsh.initialize(sys.argv)
 gmsh.option.setNumber('General.Terminal', 1)
 
-gmsh.model.add("terrain");
+gmsh.model.add("terrain")
 
 # create the terrain surface from N x N input data points (here simulated using
 # a simple function):
 N = 100
-coords = [] # x, y, z coordinates of all the points
-nodes = [] # tags of corresponding nodes
-tris = [] # connectivities (node tags) of triangle elements
-lin = [[],[],[],[]] # connectivities of boundary line elements
+coords = []  # x, y, z coordinates of all the points
+nodes = []  # tags of corresponding nodes
+tris = []  # connectivities (node tags) of triangle elements
+lin = [[], [], [], []]  # connectivities of boundary line elements
+
+
 def tag(i, j):
-    return (N+1) * i + j + 1
+    return (N + 1) * i + j + 1
+
+
 for i in range(N + 1):
     for j in range(N + 1):
         nodes.append(tag(i, j))
-        coords.extend([float(i)/N, float(j)/N, 0.05 * math.sin(10*float(i+j) / N)])
+        coords.extend([
+            float(i) / N,
+            float(j) / N, 0.05 * math.sin(10 * float(i + j) / N)
+        ])
         if i > 0 and j > 0:
-            tris.extend([tag(i-1, j-1), tag(i, j-1), tag(i-1, j)])
-            tris.extend([tag(i, j-1), tag(i, j), tag(i-1, j)])
+            tris.extend([tag(i - 1, j - 1), tag(i, j - 1), tag(i - 1, j)])
+            tris.extend([tag(i, j - 1), tag(i, j), tag(i - 1, j)])
         if (i == 0 or i == N) and j > 0:
-            lin[3 if i == 0 else 1].extend([tag(i, j-1), tag(i, j)])
+            lin[3 if i == 0 else 1].extend([tag(i, j - 1), tag(i, j)])
         if (j == 0 or j == N) and i > 0:
-            lin[0 if j == 0 else 2].extend([tag(i-1, j), tag(i, j)])
-pnt = [tag(0, 0), tag(N, 0), tag(N, N), tag(0, N)] # corner points element
+            lin[0 if j == 0 else 2].extend([tag(i - 1, j), tag(i, j)])
+pnt = [tag(0, 0), tag(N, 0), tag(N, N), tag(0, N)]  # corner points element
 
 # create 4 corner points
-gmsh.model.geo.addPoint(0, 0, coords[3*tag(0,0)-1])
-gmsh.model.geo.addPoint(1, 0, coords[3*tag(N,0)-1])
-gmsh.model.geo.addPoint(1, 1, coords[3*tag(N,N)-1])
-gmsh.model.geo.addPoint(0, 1, coords[3*tag(0,N)-1])
+gmsh.model.geo.addPoint(0, 0, coords[3 * tag(0, 0) - 1], 1)
+gmsh.model.geo.addPoint(1, 0, coords[3 * tag(N, 0) - 1], 2)
+gmsh.model.geo.addPoint(1, 1, coords[3 * tag(N, N) - 1], 3)
+gmsh.model.geo.addPoint(0, 1, coords[3 * tag(0, N) - 1], 4)
 gmsh.model.geo.synchronize()
 
 # create 4 discrete bounding curves, with their boundary points
 for i in range(4):
-    gmsh.model.addDiscreteEntity(1, i+1, [i+1 , i+2 if i < N else 1])
+    gmsh.model.addDiscreteEntity(1, i + 1, [i + 1, i + 2 if i < 3 else 1])
 
 # create one discrete surface, with its bounding curves
-gmsh.model.addDiscreteEntity(2, 1, [1, 2, 3, 4])
+gmsh.model.addDiscreteEntity(2, 1, [1, 2, -3, -4])
 
 # add all the nodes on the surface (for simplicity... see below)
 gmsh.model.mesh.addNodes(2, 1, nodes, coords)
 
 # add elements on the 4 points, the 4 curves and the surface
 for i in range(4):
+    # type 15 for point elements:
     gmsh.model.mesh.addElementsByType(i + 1, 15, [], [pnt[i]])
+    # type 1 for 2-node line elements:
     gmsh.model.mesh.addElementsByType(i + 1, 1, [], lin[i])
+# type 2 for 3-node triangle elements:
 gmsh.model.mesh.addElementsByType(1, 2, [], tris)
 
 # reclassify the nodes on the curves and the points (since we put them all on
@@ -97,40 +107,59 @@ c16 = gmsh.model.geo.addLine(3, p7)
 c17 = gmsh.model.geo.addLine(4, p8)
 
 # bottom and top
-ll1 = gmsh.model.geo.addCurveLoop([c1,c2,c3,c4])
+ll1 = gmsh.model.geo.addCurveLoop([c1, c2, c3, c4])
 s1 = gmsh.model.geo.addPlaneSurface([ll1])
-ll2 = gmsh.model.geo.addCurveLoop([c5,c6,c7,c8])
+ll2 = gmsh.model.geo.addCurveLoop([c5, c6, c7, c8])
 s2 = gmsh.model.geo.addPlaneSurface([ll2])
 
 # lower
-ll3 = gmsh.model.geo.addCurveLoop([c1,c11,-1,-c10])
+ll3 = gmsh.model.geo.addCurveLoop([c1, c11, -1, -c10])
 s3 = gmsh.model.geo.addPlaneSurface([ll3])
-ll4 = gmsh.model.geo.addCurveLoop([c2,c12,-2,-c11])
+ll4 = gmsh.model.geo.addCurveLoop([c2, c12, -2, -c11])
 s4 = gmsh.model.geo.addPlaneSurface([ll4])
-ll5 = gmsh.model.geo.addCurveLoop([c3,c13,-3,-c12])
+ll5 = gmsh.model.geo.addCurveLoop([c3, c13, 3, -c12])
 s5 = gmsh.model.geo.addPlaneSurface([ll5])
-ll6 = gmsh.model.geo.addCurveLoop([c4,c10,-4,-c13])
+ll6 = gmsh.model.geo.addCurveLoop([c4, c10, 4, -c13])
 s6 = gmsh.model.geo.addPlaneSurface([ll6])
 sl1 = gmsh.model.geo.addSurfaceLoop([s1, s3, s4, s5, s6, 1])
 v1 = gmsh.model.geo.addVolume([sl1])
 
 # upper
-ll7 = gmsh.model.geo.addCurveLoop([c5,-c15,-1,c14])
+ll7 = gmsh.model.geo.addCurveLoop([c5, -c15, -1, c14])
 s7 = gmsh.model.geo.addPlaneSurface([ll7])
-ll8 = gmsh.model.geo.addCurveLoop([c6,-c16,-2,c15])
+ll8 = gmsh.model.geo.addCurveLoop([c6, -c16, -2, c15])
 s8 = gmsh.model.geo.addPlaneSurface([ll8])
-ll9 = gmsh.model.geo.addCurveLoop([c7,-c17,-3,c16])
+ll9 = gmsh.model.geo.addCurveLoop([c7, -c17, 3, c16])
 s9 = gmsh.model.geo.addPlaneSurface([ll9])
-ll10 = gmsh.model.geo.addCurveLoop([c8,-c14,-4,c17])
+ll10 = gmsh.model.geo.addCurveLoop([c8, -c14, 4, c17])
 s10 = gmsh.model.geo.addPlaneSurface([ll10])
 sl2 = gmsh.model.geo.addSurfaceLoop([s2, s7, s8, s9, s10, 1])
 v2 = gmsh.model.geo.addVolume([sl2])
 
 gmsh.model.geo.synchronize()
 
-gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.05)
-gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.05)
+# set this to True to build a fully hex mesh
+#transfinite = True
+transfinite = False
 
-gmsh.fltk.run()
+if transfinite:
+    NN = 30
+    for c in gmsh.model.getEntities(1):
+        gmsh.model.mesh.setTransfiniteCurve(c[1], NN)
+    for s in gmsh.model.getEntities(2):
+        gmsh.model.mesh.setTransfiniteSurface(s[1])
+        gmsh.model.mesh.setRecombine(s[0], s[1])
+        gmsh.model.mesh.setSmoothing(s[0], s[1], 100)
+    gmsh.model.mesh.setTransfiniteVolume(v1)
+    gmsh.model.mesh.setTransfiniteVolume(v2)
+else:
+    gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.05)
+    gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.05)
+
+#gmsh.model.mesh.generate(2)
+#gmsh.write('terrain.msh')
+
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()
