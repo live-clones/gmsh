@@ -45,9 +45,12 @@ HXTStatus hxtOr3DcomputeQuality(const double *frame, double *quality); //mod
 // frame 9x1 -> angles euler 3x1
 HXTStatus hxtOr3DframeToEuler(const double *frame, double* flagNotUnique, double *euler); //mod
 HXTStatus hxtOr3DdirectionsToEuler(const double *dir, double *flagNotUnique, double *euler); //directionsToEuler2
-HXTStatus hxtOr3DgetCrossInTetFromDir(const double *directions, double* coordParam, double *dirAtParamNode); //mod
-HXTStatus hxtOr3DgetScaledCrossInTetFromDir(const double *directions, double* coordParam, double *dirAtParamNode); //mod
+HXTStatus hxtOr3DgetCrossInTetFromDir(const double *directions, double* coordParam, double *dirAtParamNode, double *quality, int flagTrusted[3]); //mod
+HXTStatus hxtOr3DgetScaledCrossInTetFromDir(const double *directions, double* coordParam, double *dirAtParamNode, double *quality, int flagTrusted[3]); //mod
 HXTStatus hxtOr3DdBdEuler(const double euler[3], double dBdEuler[9][3]);
+
+//Cross fields tools
+HXTStatus hxtOr3DcrossNodesToElem(const HXTMesh *mesh, const double *directionsScaledNodes, double *directionsScaledElem, double *qualityElem);
 
 //FE for tet tools
 HXTStatus hxtOr3DFEbasisFctDataTetOrder1(const HXTMesh *mesh, uint64_t iel, double *wGDet, double L[4], double dLdX[4][3]);

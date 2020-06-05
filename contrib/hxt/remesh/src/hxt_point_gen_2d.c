@@ -2,12 +2,13 @@
 #include <time.h>
 #include "hxt_point_gen_2d.h"
 #include "hxt_rtree_wrapper.h"
+#include "hxt_pqueue_wrapper.h"
 
+#include "hxt_point_gen_io.h"
 #include "hxt_point_gen_orientation.h"
 #include "hxt_orientation3d_tools.h"
 
 #include "hxt_point_gen_numerics.h"
-
 
 #include "hxt_post_debugging.h"
 
@@ -147,7 +148,6 @@ HXTStatus hxtIntersectTriangleWithCircle(HXTMesh *mesh,
                                          double R,    // radius, i.e. mesh size at origin point
                                          double *n1,  // normal to triangle ct 
                                          double *n2,  // search direction
-
                                          double *uv,  // output: barycentric coordinates of new point 
                                          int *walk,   // ouput: -1 if found, otherwise next edge
                                          double *res) // output: coordinates of new point
@@ -497,7 +497,9 @@ HXTStatus hxtInterpolateFrame(HXTMesh *mesh,
   double frame[9];
   for (uint32_t i=0; i<9; i++) frame[i] = 0.;
 
-  HXT_CHECK(hxtOr3DgetScaledCrossInTetFromDir(triFrames,uvt,frame));
+  int flagTrusted[3];
+  double crossQuality;
+  HXT_CHECK(hxtOr3DgetScaledCrossInTetFromDir(triFrames,uvt,frame,&crossQuality,flagTrusted));
   double sizesTemp[3];
   sizesTemp[0] = norm(&frame[0]);
   sizesTemp[1] = norm(&frame[3]);
@@ -967,20 +969,6 @@ HXTStatus hxtWalkToCandidatePoint(HXTEdges *edges,
     }
     walkIter ++;
   }
-
-  // Last resort - search all triangles
-  
-  /*for (uint64_t i=0; i<mesh->triangles.num; i++){*/
-    /*if (mesh->triangles.colors[i] != mesh->triangles.colors[ot]) continue;*/
-
-    /*HXT_CHECK(hxtIntersectTriangleWithCircle(mesh, op, i, size, normal, dir, uvp, &walk, res));*/
-
-    /*// Intersection point was found */
-    /*if (walk == -1) {*/
-      /**parentFlag = i;*/
-      /*return HXT_STATUS_OK; */
-    /*}*/
-  /*}*/
 
   return HXT_STATUS_OK; 
 }
@@ -1523,7 +1511,6 @@ if(0){
       HXT_CHECK(hxtFree(&idClose));
       return HXT_STATUS_OK; 
     }
-
   }
 
   HXT_CHECK(hxtFree(&idClose));
@@ -2142,6 +2129,7 @@ HXTStatus hxtPointGenCorrection(HXTEdges *edges,
   HXT_CHECK(hxtFree(&idClose));
   return HXT_STATUS_OK;
 }
+
 
 
 

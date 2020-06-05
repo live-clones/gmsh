@@ -11,7 +11,10 @@
 HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                          HXTMesh *mesh,
                          HXTEdges *edges,
+                         const double *directions,
+                         const double *sizemap,
                          HXTPointGenParent *parent,
+                         uint64_t *p2t,
                          HXTMesh *fmesh,
                          HXTMesh *nmesh);
 

@@ -20,7 +20,6 @@ typedef struct{
 } HXTPointGenParent;
 
 // General functions
-HXTStatus hxtPointGenSplitQuads(HXTMesh *mesh, uint16_t *color);
 HXTStatus hxtExtractColoredSurface(HXTMesh *mesh, uint16_t color);
 HXTStatus hxtCheckZeroAreaTriangles(HXTMesh *mesh, const char *filename); 
 

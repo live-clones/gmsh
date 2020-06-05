@@ -52,6 +52,8 @@ set(HXT_REMESH_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_remesh_tools.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_rtree_wrapper.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_rtree_wrapper.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_pqueue.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_pqueue.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_split_edge.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_split_edge.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_split_triangle.c"

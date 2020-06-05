@@ -7,6 +7,15 @@
 #include "hxt_point_gen_utils.h"
 #include "hxt_point_gen_options.h"
 
+HXTStatus hxtGetDirections(HXTMesh *mesh, 
+                           const double *directions,
+                           const double *sizemap,
+                           uint64_t tri,
+                           double *normal,
+                           double *uv,
+                           double *frame,
+                           double *sizes);
+
 HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
                                      HXTMesh *mesh,
                                      HXTEdges *edges,

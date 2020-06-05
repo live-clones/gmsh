@@ -23,6 +23,10 @@ HXTStatus hxtPointGenWriteScalarTriangles(HXTMesh *mesh,
                                           const double *values,
                                           const char *filename);
 
+HXTStatus hxtPointGenWriteSizemapTriangles(HXTMesh *mesh, 
+                                           const double *values,
+                                           const char *filename);
+
 HXTStatus hxtPointGenWriteDirections(HXTMesh *mesh, 
                                      const double *directions,
                                      const char *filename);
@@ -30,6 +34,14 @@ HXTStatus hxtPointGenWriteDirections(HXTMesh *mesh,
 HXTStatus hxtPointGenWriteDirectionsEdges(HXTEdges *edges, 
                                           const double *directions,
                                           const char *filename);
+
+HXTStatus hxtPointGenWriteScaledDirections3d(HXTMesh *mesh, 
+                                          const double *directions,
+                                          const char *filename);
+
+HXTStatus hxtPointGenReadScaledDirections3d(HXTMesh *mesh, 
+                                            double *d,
+                                            const char *filename);
 
 
 
@@ -40,6 +52,12 @@ HXTStatus hxtPointGenReadSizesFile2D(const char *filename,
                                      uint32_t *numEdges, 
                                      uint32_t **edg, 
                                      double **dirs);
+
+
+HXTStatus hxtPointGenReadSingularities(const char *filename, 
+                                       uint32_t *numSings,
+                                       uint32_t **sings);
+
 
 
 #endif
