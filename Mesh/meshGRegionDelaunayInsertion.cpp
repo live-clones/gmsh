@@ -946,7 +946,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
   }
 
-  double sliverLimit = 0.01;
+  double sliverLimit = 0.001;
   int nbESwap = 0, nbReloc = 0;
   double worstA = 0.0;
 
