@@ -2256,6 +2256,46 @@ class model:
                 _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
+        def getJacobian(elementTag, localCoord):
+            """
+            gmsh.model.mesh.getJacobian(elementTag, localCoord)
+
+            Get the Jacobian for a single element `elementTag', at the G evaluation
+            points `localCoord' given as concatenated triplets of coordinates in the
+            reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians' contains
+            the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The
+            matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ...,
+            e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du,
+            etc. `determinants' contains the determinant of the Jacobian matrix at each
+            evaluation point. `coord' contains the x, y, z coordinates of the
+            evaluation points. This function relies on an internal cache (a vector in
+            case of dense element numbering, a map otherwise); for large meshes
+            accessing Jacobians in bulk is often preferable.
+
+            Return `jacobians', `determinants', `coord'.
+            """
+            api_localCoord_, api_localCoord_n_ = _ivectordouble(localCoord)
+            api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
+            api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetJacobian(
+                c_size_t(elementTag),
+                api_localCoord_, api_localCoord_n_,
+                byref(api_jacobians_), byref(api_jacobians_n_),
+                byref(api_determinants_), byref(api_determinants_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetJacobian returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_jacobians_, api_jacobians_n_.value),
+                _ovectordouble(api_determinants_, api_determinants_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value))
+
+        @staticmethod
         def getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations=[]):
             """
             gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations=[])

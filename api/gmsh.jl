@@ -1748,6 +1748,40 @@ function getJacobians(elementType, localCoord, tag = -1, task = 0, numTasks = 1)
 end
 
 """
+    gmsh.model.mesh.getJacobian(elementTag, localCoord)
+
+Get the Jacobian for a single element `elementTag`, at the G evaluation points
+`localCoord` given as concatenated triplets of coordinates in the reference
+element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians` contains the 9 entries
+of the 3x3 Jacobian matrix at each evaluation point. The matrix is returned by
+column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ...,
+e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants` contains
+the determinant of the Jacobian matrix at each evaluation point. `coord`
+contains the x, y, z coordinates of the evaluation points. This function relies
+on an internal cache (a vector in case of dense element numbering, a map
+otherwise); for large meshes accessing Jacobians in bulk is often preferable.
+
+Return `jacobians`, `determinants`, `coord`.
+"""
+function getJacobian(elementTag, localCoord)
+    api_jacobians_ = Ref{Ptr{Cdouble}}()
+    api_jacobians_n_ = Ref{Csize_t}()
+    api_determinants_ = Ref{Ptr{Cdouble}}()
+    api_determinants_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetJacobian, gmsh.lib), Cvoid,
+          (Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementTag, convert(Vector{Cdouble}, localCoord), length(localCoord), api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_coord_, api_coord_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetJacobian returned non-zero error code: $(ierr[])")
+    jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], own=true)
+    determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], own=true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    return jacobians, determinants, coord
+end
+
+"""
     gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations = Cint[])
 
 Get the basis functions of the element of type `elementType` at the evaluation

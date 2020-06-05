@@ -1852,6 +1852,7 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
   const int numNodesPerEle = ElementType::getNumVertices(elementType);
+  if(!numElements) return;
   if(elementTag) {
     elementTags.clear();
     elementTags.resize(numElements, 0);
@@ -1924,6 +1925,11 @@ GMSH_API void gmsh::model::mesh::getJacobians(
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
   int numPoints = localCoord.size() / 3;
+  if(!numPoints) {
+    Msg::Warning("No evaluation points in getJacobians");
+    return;
+  }
+
   // check arrays
   bool haveJacobians = jacobians.size();
   bool haveDeterminants = determinants.size();
@@ -2169,6 +2175,7 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
+  if(!numElements) return;
   if(allocateJacobians) {
     jacobians.clear();
     jacobians.resize(9 * numElements * numPoints);
@@ -2180,6 +2187,46 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
   if(allocateCoord) {
     coord.clear();
     coord.resize(3 * numElements * numPoints);
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getJacobian(
+  const std::size_t elementTag, const std::vector<double> &localCoord,
+  std::vector<double> &jacobians, std::vector<double> &determinants,
+  std::vector<double> &coord)
+{
+  if(!_isInitialized()) { throw -1; }
+  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  if(!e) {
+    Msg::Error("Unknown element %d", elementTag);
+    throw 2;
+  }
+  int numPoints = localCoord.size() / 3;
+  if(!numPoints) {
+    Msg::Warning("No evaluation points in getJacobian");
+    return;
+  }
+  std::vector<std::vector<SVector3> > gsf;
+  gsf.resize(numPoints);
+  jacobians.resize(9 * numPoints);
+  determinants.resize(numPoints);
+  coord.resize(3 * numPoints);
+  for(int k = 0; k < numPoints; k++) {
+    double value[1256][3];
+    e->getGradShapeFunctions(localCoord[3 * k],
+                             localCoord[3 * k + 1],
+                             localCoord[3 * k + 2], value);
+    gsf[k].resize(e->getNumShapeFunctions());
+    for(std::size_t l = 0; l < e->getNumShapeFunctions(); l++) {
+      gsf[k][l][0] = value[l][0];
+      gsf[k][l][1] = value[l][1];
+      gsf[k][l][2] = value[l][2];
+    }
+  }
+  for(int k = 0; k < numPoints; k++) {
+    e->pnt(localCoord[3 * k], localCoord[3 * k + 1],
+           localCoord[3 * k + 2], &coord[3 * k]);
+    determinants[k] = e->getJacobian(gsf[k], &jacobians[9 * k]);
   }
 }
 
@@ -2876,6 +2923,7 @@ gmsh::model::mesh::preallocateBasisFunctionsOrientationForElements(
     const GEntity *ge = entities[i];
     numElements += ge->getNumMeshElementsByType(familyType);
   }
+  if(!numElements) return;
   basisFunctionsOrientation.resize(numElements);
 }
 
@@ -2885,6 +2933,7 @@ gmsh::model::mesh::getEdgeNumber(const std::vector<int> &edgeNodes,
 {
   edgeNum.clear();
   int numEdges = edgeNodes.size() / 2;
+  if(!numEdges) return;
   edgeNum.resize(numEdges);
   for(int i = 0; i < numEdges; i++) {
     MEdge edge(GModel::current()->getMeshVertexByTag(edgeNodes[2 * i]),
@@ -2933,6 +2982,7 @@ GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
     std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
     numElements += numElementsInEntitie;
   }
+  if(!numElements) return;
   int numberEdge = basis->getNumEdge();
   localMultipliers.resize(numElements * numberEdge, 1);
   size_t indexNumElement = 0;
