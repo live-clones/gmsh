@@ -2791,18 +2791,17 @@ given geometry:
 First, if the two options @code{Mesh.CharacteristicLengthFromPoints} and
 @code{Mesh.CharacteristicLengthExtendFromBoundary} are set (they are by
 default; see @ref{Mesh options list}), you can simply specify desired
-mesh element sizes at the geometrical points of the model (with the
-@code{Point} command: see @ref{Points}). The size of the mesh elements
-will then be computed by interpolating these values inside the domain
-during mesh generation. This might sometimes lead to over-refinement in
-some areas, so that you may have to add ``dummy'' geometrical entities
-in the model in order to get the desired element sizes or use more
-advanced methods explained below.
+mesh element sizes at the geometrical points of the model. The size of
+the mesh elements will then be computed by interpolating these values
+inside the domain during mesh generation. This might sometimes lead to
+over-refinement in some areas, so that you may have to add ``dummy''
+geometrical entities in the model in order to get the desired element
+sizes or use more advanced methods explained below.
 @item
 Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
 not by default), the mesh will be adapted with respect to the curvature
-of the model entities and the value of @code{Mesh.MinimumCirclePoints},
-which gives the number of points per 2 Pi radians.
+of the model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
+which gives the number of elements per 2 Pi radians.
 @item
 Finally, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
