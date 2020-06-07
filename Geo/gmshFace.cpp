@@ -114,15 +114,6 @@ double gmshFace::getMetricEigenvalue(const SPoint2 &pt)
   return _s->geometry->getMetricEigenvalue(pt);
 }
 
-void gmshFace::setModelEdges(std::list<GEdge *> &ed)
-{
-  for(std::list<GEdge *>::iterator it = ed.begin(); it != ed.end(); ++it) {
-    l_edges.push_back(*it);
-    (*it)->addFace(this);
-    l_dirs.push_back(1);
-  }
-}
-
 void gmshFace::resetMeshAttributes()
 {
   meshAttributes.recombine = _s->Recombine;

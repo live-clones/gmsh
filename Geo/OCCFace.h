@@ -32,7 +32,7 @@ public:
   OCCFace(GModel *m, TopoDS_Face s, int num);
   virtual ~OCCFace();
   virtual SBoundingBox3d bounds(bool fast = false);
-  Range<double> parBounds(int i) const;
+  virtual Range<double> parBounds(int i) const;
   virtual GPoint point(double par1, double par2) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;
@@ -42,8 +42,8 @@ public:
   virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &,
                          SVector3 &) const;
   virtual GEntity::GeomType geomType() const;
-  ModelType getNativeType() const { return OpenCascadeModel; }
-  void *getNativePtr() const { return (void *)&_s; }
+  virtual ModelType getNativeType() const { return OpenCascadeModel; }
+  virtual void *getNativePtr() const { return (void *)&_s; }
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual double curvatures(const SPoint2 &param, SVector3 &dirMax,

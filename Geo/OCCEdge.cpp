@@ -198,7 +198,6 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
   return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, param);
 }
 
-// True if the edge is a seam for the given face
 bool OCCEdge::isSeam(const GFace *face) const
 {
   if(face->getNativeType() != GEntity::OpenCascadeModel) return false;

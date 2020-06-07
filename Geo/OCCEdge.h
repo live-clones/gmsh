@@ -42,13 +42,13 @@ public:
   virtual double curvature(double par) const;
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
-  ModelType getNativeType() const { return OpenCascadeModel; }
-  void *getNativePtr() const { return (void *)&_c; }
+  virtual ModelType getNativeType() const { return OpenCascadeModel; }
+  virtual void *getNativePtr() const { return (void *)&_c; }
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;
-  bool is3D() const { return !_curve.IsNull(); }
+  virtual bool is3D() const { return !_curve.IsNull(); }
   void setTrimmed(OCCFace *);
-  bool isSeam(const GFace *) const;
+  virtual bool isSeam(const GFace *) const;
   virtual void writeGEO(FILE *fp);
 };
 
