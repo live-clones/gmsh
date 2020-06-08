@@ -47,9 +47,6 @@ along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 #include "mesh.h"
 #include "eigenv.h"
 
-TIM_mytime         MMG_ctim[TIMEMAX];
-short	             MMG_imprim;
-
 unsigned char MMG_idir[4][3] = { {1,2,3}, {0,3,2}, {0,1,3}, {0,2,1} };
 unsigned char MMG_inxt[7]    = { 1,2,3,0,1,2,3 };
 unsigned char MMG_iarf[4][3] = { {5,4,3}, {5,1,2}, {4,2,0}, {3,0,1} };
@@ -381,35 +378,6 @@ int parsop(pMesh mesh) {
 
   return(1);
 }
-
-
-void endcod() {
-  double   ttot,ttim[TIMEMAX];
-  int      k,call[TIMEMAX];
-
-  TIM_chrono(OFF,&MMG_ctim[0]);
-
-  for (k=0; k<TIMEMAX; k++) {
-    call[k] = MMG_ctim[k].call;
-    ttim[k] = MMG_ctim[k].call ? TIM_gttime(MMG_ctim[k]) : 0.0;
-  }
-  ttot    = ttim[1]+ttim[2]+ttim[3]+ttim[4];
-  ttim[0] = M_MAX(ttim[0],ttot);
-
-  if ( abs(MMG_imprim) > 5 ) {
-    fprintf(stdout,"\n  -- CPU REQUIREMENTS\n");
-    fprintf(stdout,"  in/out    %8.2f %%    %3d. calls,   %7.2f sec/call\n",
-	    100.*ttim[1]/ttim[0],call[1],ttim[1]/(float)call[1]);
-    fprintf(stdout,"  analysis  %8.2f %%    %3d. calls,   %7.2f sec/call\n",
-	    100.*ttim[2]/ttim[0],call[2],ttim[2]/(float)call[2]);
-    fprintf(stdout,"  optim     %8.2f %%    %3d. calls,   %7.2f sec/call\n",
-	    100.*ttim[3]/ttim[0],call[3],ttim[3]/(float)call[3]);
-    fprintf(stdout,"  total     %8.2f %%    %3d. calls,   %7.2f sec/call\n",
-	    100.*ttot/ttim[0],call[0],ttot/(float)call[0]);
-  }
-  fprintf(stdout,"\n   ELAPSED TIME  %.2f SEC.  (%.2f)\n",ttim[0],ttot);
-}
-
 
 /* set function pointers */
 int MMG_setfunc(int type) {
