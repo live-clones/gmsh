@@ -4721,6 +4721,33 @@ class model:
             return api__result__
 
         @staticmethod
+        def addBezierFilling(wireTag, tag=-1, type=""):
+            """
+            gmsh.model.occ.addBezierFilling(wireTag, tag=-1, type="")
+
+            Add a Bezier surface filling the curve loop `wireTag'. The curve loop
+            should be made of 2, 3 or 4 Bezier curves. The optional `type' argument
+            specifies the type of filling: "Stretch" creates the flattest patch,
+            "Curved" (the default) creates the most rounded patch, and "Coons" creates
+            a rounded patch with less depth than "Curved". If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the surface.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelOccAddBezierFilling(
+                c_int(wireTag),
+                c_int(tag),
+                c_char_p(type.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccAddBezierFilling returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
         def addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[]):
             """
             gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[])

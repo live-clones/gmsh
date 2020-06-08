@@ -2575,6 +2575,19 @@ GMSH_API int gmshModelOccAddBSplineFilling(const int wireTag, const int tag, con
   return result_api_;
 }
 
+GMSH_API int gmshModelOccAddBezierFilling(const int wireTag, const int tag, const char * type, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::addBezierFilling(wireTag, tag, type);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
 GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n, const int numPointsU, const int tag, const int degreeU, const int degreeV, double * weights, size_t weights_n, double * knotsU, size_t knotsU_n, double * knotsV, size_t knotsV_n, int * multiplicitiesU, size_t multiplicitiesU_n, int * multiplicitiesV, size_t multiplicitiesV_n, int * ierr)
 {
   int result_api_ = 0;

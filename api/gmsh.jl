@@ -3702,6 +3702,27 @@ function addBSplineFilling(wireTag, tag = -1, type = "")
 end
 
 """
+    gmsh.model.occ.addBezierFilling(wireTag, tag = -1, type = "")
+
+Add a Bezier surface filling the curve loop `wireTag`. The curve loop should be
+made of 2, 3 or 4 Bezier curves. The optional `type` argument specifies the type
+of filling: "Stretch" creates the flattest patch, "Curved" (the default) creates
+the most rounded patch, and "Coons" creates a rounded patch with less depth than
+"Curved". If `tag` is positive, set the tag explicitly; otherwise a new tag is
+selected automatically. Return the tag of the surface.
+
+Return an integer value.
+"""
+function addBezierFilling(wireTag, tag = -1, type = "")
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelOccAddBezierFilling, gmsh.lib), Cint,
+          (Cint, Cint, Ptr{Cchar}, Ptr{Cint}),
+          wireTag, tag, type, ierr)
+    ierr[] != 0 && error("gmshModelOccAddBezierFilling returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = Cdouble[], knotsU = Cdouble[], knotsV = Cdouble[], multiplicitiesU = Cint[], multiplicitiesV = Cint[])
 
 Add a b-spline surface of degree `degreeU` x `degreeV` with `pointTags` control

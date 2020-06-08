@@ -2022,6 +2022,19 @@ namespace gmsh { // Top-level functions
                                      const int tag = -1,
                                      const std::string & type = "");
 
+      // gmsh::model::occ::addBezierFilling
+      //
+      // Add a Bezier surface filling the curve loop `wireTag'. The curve loop
+      // should be made of 2, 3 or 4 Bezier curves. The optional `type' argument
+      // specifies the type of filling: "Stretch" creates the flattest patch,
+      // "Curved" (the default) creates the most rounded patch, and "Coons" creates
+      // a rounded patch with less depth than "Curved". If `tag' is positive, set
+      // the tag explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the surface.
+      GMSH_API int addBezierFilling(const int wireTag,
+                                    const int tag = -1,
+                                    const std::string & type = "");
+
       // gmsh::model::occ::addBSplineSurface
       //
       // Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'

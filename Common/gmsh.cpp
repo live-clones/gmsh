@@ -5042,6 +5042,20 @@ gmsh::model::occ::addBSplineFilling(const int wireTag, const int tag,
   return outTag;
 }
 
+GMSH_API int
+gmsh::model::occ::addBezierFilling(const int wireTag, const int tag,
+                                   const std::string &type)
+{
+  if(!_isInitialized()) { throw -1; }
+  _createOcc();
+  int outTag = tag;
+  if(!GModel::current()->getOCCInternals()->addBezierFilling(outTag, wireTag,
+                                                             type)) {
+    throw 1;
+  }
+  return outTag;
+}
+
 GMSH_API int gmsh::model::occ::addBSplineSurface(
   const std::vector<int> &pointTags, const int numPointsU, const int tag,
   const int degreeU, const int degreeV, const std::vector<double> &weights,

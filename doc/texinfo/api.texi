@@ -3115,6 +3115,24 @@ integer value
 Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L39,bspline_filling.py})
 @end table
 
+@item gmsh/model/occ/addBezierFilling
+Add a Bezier surface filling the curve loop @code{wireTag}. The curve loop
+should be made of 2, 3 or 4 Bezier curves. The optional @code{type} argument
+specifies the type of filling: "Stretch" creates the flattest patch, "Curved"
+(the default) creates the most rounded patch, and "Coons" creates a rounded
+patch with less depth than "Curved". If @code{tag} is positive, set the tag
+explicitly; otherwise a new tag is selected automatically. Return the tag of the
+surface.
+
+@table @asis
+@item Input:
+@code{wireTag}, @code{tag = -1}, @code{type = ""}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
 @item gmsh/model/occ/addBSplineSurface
 Add a b-spline surface of degree @code{degreeU} x @code{degreeV} with
 @code{pointTags} control points given as a single vector [Pu1v1, ...

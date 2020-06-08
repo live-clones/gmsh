@@ -233,6 +233,8 @@ public:
     const std::vector<int> &surfaceContinuity = std::vector<int>());
   bool addBSplineFilling(int &tag, int wireTag,
                          const std::string &type = "");
+  bool addBezierFilling(int &tag, int wireTag,
+                        const std::string &type = "");
   bool addBSplineSurface(int &tag,
                          const std::vector<int> &pointTags,
                          const int numPointsU,
@@ -538,6 +540,11 @@ public:
                          const std::string &type = "")
   {
     return _error("add BSpline filling");
+  }
+  bool addBezierFilling(int &tag, int wireTag,
+                        const std::string &type = "")
+  {
+    return _error("add Bezier filling");
   }
   bool addBSplineSurface(int &tag,
                          const std::vector<int> &pointTags,

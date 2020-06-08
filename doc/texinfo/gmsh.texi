@@ -2088,6 +2088,11 @@ Creates a BSpline surface filling. Only a single curve loop made of 2, 3
 or 4 BSpline curves can be provided. @code{BSpline Surface} is only
 available with the OpenCASCADE kernel.
 
+@item Bezier Surface ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a Bezier surface filling. Only a single curve loop made of 2, 3
+or 4 Bezier curves can be provided. @code{Bezier Surface} is only
+available with the OpenCASCADE kernel.
+
 @item Disk ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a disk. When four expressions are provided on the right hand
 side (3 coordinates of the center and the radius), the disk is circular.

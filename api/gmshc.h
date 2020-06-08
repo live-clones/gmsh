@@ -1777,6 +1777,18 @@ GMSH_API int gmshModelOccAddBSplineFilling(const int wireTag,
                                            const char * type,
                                            int * ierr);
 
+/* Add a Bezier surface filling the curve loop `wireTag'. The curve loop
+ * should be made of 2, 3 or 4 Bezier curves. The optional `type' argument
+ * specifies the type of filling: "Stretch" creates the flattest patch,
+ * "Curved" (the default) creates the most rounded patch, and "Coons" creates
+ * a rounded patch with less depth than "Curved". If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the surface. */
+GMSH_API int gmshModelOccAddBezierFilling(const int wireTag,
+                                          const int tag,
+                                          const char * type,
+                                          int * ierr);
+
 /* Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
  * control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1,
  * Pu1v2, ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
