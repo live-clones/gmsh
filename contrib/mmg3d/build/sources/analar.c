@@ -50,11 +50,13 @@ along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 
 #define EPS4  1.e-04
 
-extern int MMG_npuiss,MMG_nvol,MMG_npres;
 extern int MMG_nlen,MMG_ncal,MMG_ntopo,MMG_nex;
 extern int MMG_npuisstot,MMG_nvoltot,MMG_nprestot;
 extern int MMG_npdtot;
-       int MMG_nplen,MMG_npref,MMG_bouffe;
+
+int MMG_npuiss,MMG_nvol,MMG_npres;
+
+static int MMG_nplen,MMG_npref,MMG_bouffe;
 
 int MMG_interp_ani(double *ma,double *mb,double *mp,double t) {
   double	dma[6],dmb[6],mai[6],mbi[6],mi[6];

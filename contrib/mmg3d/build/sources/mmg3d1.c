@@ -48,7 +48,6 @@ along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 extern TIM_mytime         MMG_ctim[TIMEMAX];
 
 int MMG_npdtot,MMG_npuisstot,MMG_nvoltot,MMG_nprestot;
-int MMG_npuiss,MMG_nvol,MMG_npres,MMG_npd;
 
 int MMG_cendellong(pMesh mesh,pSol sol,double declic,int base);
 
