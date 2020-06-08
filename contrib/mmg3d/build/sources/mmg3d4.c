@@ -45,8 +45,8 @@ along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 #include "mesh.h"
 
-int MMG_npuisstot,MMG_nvoltot,MMG_nprestot;
-int MMG_npdtot;
+extern int MMG_npuisstot,MMG_nvoltot,MMG_nprestot;
+extern int MMG_npdtot;
 
 int ddebug;
 
