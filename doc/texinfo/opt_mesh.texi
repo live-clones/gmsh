@@ -167,7 +167,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.FlexibleTransfinite
-Allow transfinite constraints to be modified for Blossom or by global mesh size factor@*
+Allow transfinite constraints to be modified for recombination (e.g. Blossom) or by global mesh size factor@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1097,7 +1097,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "FirstNodeTag" , opt_mesh_first_node_tag , 1. ,
     "First tag (>= 1) of mesh nodes" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
-    "Allow transfinite constraints to be modified for Blossom or by global mesh size factor" },
+    "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
+    "by global mesh size factor" },
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO ,
     "Mesh output format (1: msh, 2: unv, 10: auto, 16: vtk, 19: vrml, 21: mail, "
     "26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, 33: med, 34: diff, "
