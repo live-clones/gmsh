@@ -16,8 +16,6 @@ public:
   discreteRegion(GModel *model);
   virtual ~discreteRegion() {}
   virtual GeomType geomType() const { return DiscreteVolume; }
-  void findFaces(std::map<MFace, std::vector<int>, MFaceLessThan> &map_faces);
-  virtual void remesh();
 };
 
 #endif
