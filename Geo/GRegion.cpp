@@ -300,6 +300,43 @@ int GRegion::delFace(GFace *face)
   return orientation;
 }
 
+void GRegion::setBoundFaces(const std::set<int> &tagFaces)
+{
+  for(std::set<int>::const_iterator it = tagFaces.begin(); it != tagFaces.end();
+      ++it) {
+    GFace *face = model()->getFaceByTag(*it);
+    if(face) {
+      l_faces.push_back(face);
+      face->addRegion(this);
+    }
+    else {
+      Msg::Error("Unknown surface %d in volume %d", *it, tag());
+    }
+  }
+}
+
+void GRegion::setBoundFaces(const std::vector<int> &tagFaces,
+                            const std::vector<int> &signFaces)
+{
+  if(tagFaces.size() != signFaces.size()) {
+    Msg::Error("Wrong number of surface signs in volume %d", tag());
+    std::set<int> tags;
+    tags.insert(tagFaces.begin(), tagFaces.end());
+    setBoundFaces(tags);
+  }
+  for(std::size_t i = 0; i != tagFaces.size(); i++) {
+    GFace *face = model()->getFaceByTag(tagFaces[i]);
+    if(face) {
+      l_faces.push_back(face);
+      face->addRegion(this);
+      l_dirs.push_back(signFaces[i]);
+    }
+    else {
+      Msg::Error("Unknown surface %d in volume %d", tagFaces[i], tag());
+    }
+  }
+}
+
 std::string GRegion::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;

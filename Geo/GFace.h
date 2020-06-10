@@ -119,6 +119,10 @@ public:
     return false;
   }
 
+  void setBoundEdges(const std::vector<int> &tagEdges);
+  void setBoundEdges(const std::vector<int> &tagEdges,
+                     const std::vector<int> &signEdges);
+
   // direct access to embedded entities
   std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
   std::set<GVertex *, GEntityPtrLessThan> &embeddedVertices()

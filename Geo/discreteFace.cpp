@@ -99,44 +99,6 @@ discreteFace::discreteFace(GModel *model) : GFace(model, 0)
   // the corresponding entity in GEO internals
 }
 
-void discreteFace::setBoundEdges(const std::vector<int> &tagEdges)
-{
-  std::vector<GEdge*> e;
-  for(std::size_t i = 0; i != tagEdges.size(); i++) {
-    GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
-    if(ge) {
-      e.push_back(ge);
-      ge->addFace(this);
-    }
-    else {
-      Msg::Error("Unknown curve %d in discrete surface %d", tagEdges[i], tag());
-    }
-  }
-  GEdgeLoop el(e);
-  el.getEdges(l_edges);
-  el.getSigns(l_dirs);
-}
-
-void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
-                                 const std::vector<int> &signEdges)
-{
-  if(signEdges.size() != tagEdges.size()) {
-    Msg::Error("Wrong number of edge signs in discrete surface %d", tag());
-    setBoundEdges(tagEdges);
-  }
-  for(std::vector<int>::size_type i = 0; i != tagEdges.size(); i++) {
-    GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
-    if(ge) {
-      l_edges.push_back(ge);
-      l_dirs.push_back(signEdges[i]);
-      ge->addFace(this);
-    }
-    else {
-      Msg::Error("Unknown curve %d in discrete surface %d", tagEdges[i], tag());
-    }
-  }
-}
-
 int discreteFace::trianglePosition(double par1, double par2, double &u,
                                    double &v) const
 {

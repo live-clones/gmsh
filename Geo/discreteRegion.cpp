@@ -25,43 +25,6 @@ discreteRegion::discreteRegion(GModel *model) : GRegion(model, 0)
 {
 }
 
-void discreteRegion::setBoundFaces(const std::set<int> &tagFaces)
-{
-  for(std::set<int>::const_iterator it = tagFaces.begin(); it != tagFaces.end();
-      ++it) {
-    GFace *face = model()->getFaceByTag(*it);
-    if(face) {
-      l_faces.push_back(face);
-      face->addRegion(this);
-    }
-    else {
-      Msg::Error("Unknown model face %d", *it);
-    }
-  }
-}
-
-void discreteRegion::setBoundFaces(const std::vector<int> &tagFaces,
-                                   const std::vector<int> &signFaces)
-{
-  if(tagFaces.size() != signFaces.size()) {
-    Msg::Error("Wrong number of face signs in setBoundFaces");
-    std::set<int> tags;
-    tags.insert(tagFaces.begin(), tagFaces.end());
-    setBoundFaces(tags);
-  }
-  for(std::size_t i = 0; i != tagFaces.size(); i++) {
-    GFace *face = model()->getFaceByTag(tagFaces[i]);
-    if(face) {
-      l_faces.push_back(face);
-      face->addRegion(this);
-      l_dirs.push_back(signFaces[i]);
-    }
-    else {
-      Msg::Error("Unknown model face %d", tagFaces[i]);
-    }
-  }
-}
-
 void discreteRegion::findFaces(
   std::map<MFace, std::vector<int>, MFaceLessThan> &map_faces)
 {
