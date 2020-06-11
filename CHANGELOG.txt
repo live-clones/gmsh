@@ -1,17 +1,18 @@
 4.6.0 (Work-in-progress): new options to only generate initial 2D or 3D meshes
-(without node insertion), and to only mesh non-meshed entities; added support
-for mesh size fields in HXT; improved reparametrization and partitioning code;
-new OCC API functions to reduce the number of synchronizations for complex
-models; new OCC spline surface interfaces; new functions and options to control
-the first tag of entities, nodes and elements; fixed duplicated entities in STEP
-output; improved mesh subdivision pipeline; MED output now preserves node and
-element tags; small bug fixes.
+(without node insertion), and to only mesh non-meshed entities; added ability to
+only remesh parts of discrete models; added support for mesh size fields in HXT;
+improved reparametrization and partitioning code; new OCC API functions to
+reduce the number of synchronizations for complex models; new OCC spline surface
+interfaces; new functions and options to control the first tag of entities,
+nodes and elements; fixed duplicated entities in STEP output; improved mesh
+subdivision pipeline; MED output now preserves node and element tags; small bug
+fixes.
 
 * Incompatible API changes: new optional arguments to mesh/clear,
-  mesh/createTopology, occ/addThruSections, mesh/getPeriodicNodes; new arguments
-  to mesh/getBasisFunctions; removed mesh/preallocateBasisFunctions,
-  mesh/precomputeBasisFunctions and mesh/getBasisFunctionsForElements; renamed
-  occ/setMeshSize as occ/mesh/setSize
+  mesh/createTopology, mesh/createGeometry, occ/addThruSections,
+  mesh/getPeriodicNodes; new arguments to mesh/getBasisFunctions; removed
+  mesh/preallocateBasisFunctions, mesh/precomputeBasisFunctions and
+  mesh/getBasisFunctionsForElements; renamed occ/setMeshSize as occ/mesh/setSize
 
 4.5.6 (March 30, 2020): better calculation of OCC bounding boxes using STL; API
 tutorials; small bug fixes.

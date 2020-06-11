@@ -4177,10 +4177,10 @@ gmsh::model::mesh::classifySurfaces(const double angle, const bool boundary,
                                       curveAngle);
 }
 
-GMSH_API void gmsh::model::mesh::createGeometry()
+GMSH_API void gmsh::model::mesh::createGeometry(const vectorpair &dimTags)
 {
   if(!_isInitialized()) { throw -1; }
-  GModel::current()->createGeometryOfDiscreteEntities();
+  GModel::current()->createGeometryOfDiscreteEntities(dimTags);
 }
 
 GMSH_API void gmsh::model::mesh::createTopology(const bool makeSimplyConnected,

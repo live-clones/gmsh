@@ -3176,10 +3176,12 @@ with no BRep representation of the underlying model), clears any
 built-in CAD kernel entities, and exports the discrete entities in the
 built-in CAD kernel.
 
-@item CreateGeometry;
-Creates a parametrization for curves and surfaces that do not have one
-(i.e. discrete curves and surfaces represented solely by meshes, without
-an underlying CAD description).
+@item CreateGeometry < @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @} > ;
+Creates a geometry for discrete entities (represented solely by a mesh,
+without an underlying CAD description), i.e. create a parametrization
+for discrete curves and surfaces, assuming that each can be parametrized
+with a single map. If no entities are given, create a geometry for all
+discrete entities.
 
 @item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} < , @var{expression} > @};
 Classify (``color'') the surface mesh based on an angle threshold (the

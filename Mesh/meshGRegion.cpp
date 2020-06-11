@@ -33,6 +33,7 @@
 static bool isFullyDiscrete(GRegion *gr)
 {
   if(gr->geomType() != GEntity::DiscreteVolume) return false;
+  if(gr->haveParametrization()) return false;
   std::vector<GFace *> f = gr->faces();
   for(std::size_t i = 0; i < f.size(); i++) {
     if(f[i]->geomType() != GEntity::DiscreteSurface) return false;

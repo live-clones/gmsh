@@ -2084,47 +2084,88 @@ static void _associateEntityWithElementVertices(GEntity *ge,
   }
 }
 
-void GModel::createGeometryOfDiscreteEntities()
+void GModel::createGeometryOfDiscreteEntities
+  (const std::vector<std::pair<int, int> > &dimTags)
 {
-  Msg::StatusBar(true, "Creating geometry of discrete curves...");
-  double t1 = Cpu(), w1 = TimeOfDay();
-  std::vector<GEntity*> curves;
-  getEntities(curves, 1);
-  for(std::size_t i = 0; i < curves.size(); i++) {
-    discreteEdge *de = dynamic_cast<discreteEdge *>(curves[i]);
-    if(de) {
-      if(de->createGeometry())
-        Msg::Error("Could not create geometry of discrete curve %d", de->tag());
-    }
-  }
-  double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true,
-                 "Done creating geometry of discrete curves "
-                 "(Wall %gs, CPU %gs)",
-                 w2 - w1, t2 - t1);
+  std::vector<discreteEdge *> e;
+  std::vector<discreteFace *> f;
+  std::vector<discreteRegion *> r;
 
-  Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
-  t1 = Cpu();
-  w1 = TimeOfDay();
-  std::vector<GEntity*> surfaces;
-  getEntities(surfaces, 2);
-  Msg::StartProgressMeter(surfaces.size());
-  for(std::size_t i = 0; i < surfaces.size(); i++) {
-    discreteFace *df = dynamic_cast<discreteFace *>(surfaces[i]);
-    if(df) {
-      Msg::ProgressMeter(i, true, "Creating geometry");
-      if(df->createGeometry())
-        Msg::Error("Could not create geometry of discrete surface %d",
-                   df->tag());
+  if(dimTags.empty()) {
+    for(eiter it = firstEdge(); it != lastEdge(); it++) {
+      discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
+      if(de) e.push_back(de);
+    }
+    for(fiter it = firstFace(); it != lastFace(); it++) {
+      discreteFace *df = dynamic_cast<discreteFace *>(*it);
+      if(df) f.push_back(df);
+    }
+    for(riter it = firstRegion(); it != lastRegion(); it++) {
+      discreteRegion *dr = dynamic_cast<discreteRegion *>(*it);
+      if(dr) r.push_back(dr);
     }
   }
-  Msg::StopProgressMeter();
-  t2 = Cpu();
-  w2 = TimeOfDay();
-  Msg::StatusBar(true,
-                 "Done creating geometry of discrete surfaces "
-                 "(Wall %gs, CPU %gs)",
-                 w2 - w1, t2 - t1);
+  else {
+    for(std::size_t i = 0; i < dimTags.size(); i++) {
+      int dim = dimTags[i].first;
+      int tag = dimTags[i].second;
+      if(dim == 1) {
+        discreteEdge *de = dynamic_cast<discreteEdge *>(getEdgeByTag(tag));
+        if(de) e.push_back(de);
+        else Msg::Error("No discrete curve with tag %d", tag);
+      }
+      else if(dim == 2) {
+        discreteFace *df = dynamic_cast<discreteFace *>(getFaceByTag(tag));
+        if(df) f.push_back(df);
+        else Msg::Error("No discrete surface with tag %d", tag);
+      }
+      else if(dim == 3) {
+        discreteRegion *dr = dynamic_cast<discreteRegion *>(getRegionByTag(tag));
+        if(dr) r.push_back(dr);
+        else Msg::Error("No discrete volume with tag %d", tag);
+      }
+    }
+  }
+
+  if(e.size()) {
+    Msg::StatusBar(true, "Creating geometry of discrete curves...");
+    double t1 = Cpu(), w1 = TimeOfDay();
+    for(std::size_t i = 0; i < e.size(); i++) {
+      if(e[i]->createGeometry())
+        Msg::Error("Could not create geometry of discrete curve %d", e[i]->tag());
+    }
+    double t2 = Cpu(), w2 = TimeOfDay();
+    Msg::StatusBar(true, "Done creating geometry of discrete curves "
+                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+  }
+
+  if(f.size()) {
+    Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
+    double t1 = Cpu(), w1 = TimeOfDay();
+    Msg::StartProgressMeter(f.size());
+    for(std::size_t i = 0; i < f.size(); i++) {
+      Msg::ProgressMeter(i, true, "Creating geometry");
+      if(f[i]->createGeometry())
+        Msg::Error("Could not create geometry of discrete surface %d", f[i]->tag());
+    }
+    Msg::StopProgressMeter();
+    double t2 = Cpu();
+    double w2 = TimeOfDay();
+    Msg::StatusBar(true, "Done creating geometry of discrete surfaces "
+                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+  }
+
+  if(r.size()) {
+    Msg::StatusBar(true, "Creating geometry of discrete volumes...");
+    double t1 = Cpu(), w1 = TimeOfDay();
+    for(std::size_t i = 0; i < r.size(); i++) {
+      if(r[i]->createGeometry())
+        Msg::Error("Could not create geometry of discrete volume %d", r[i]->tag());
+    }
+    double t2 = Cpu(), w2 = TimeOfDay();
+    Msg::StatusBar(true, "Done creating geometry of discrete volumes "
+                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+  }
 }
 
 void GModel::_associateEntityWithMeshVertices(bool force)

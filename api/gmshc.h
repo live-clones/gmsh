@@ -1155,10 +1155,13 @@ GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const double curveAngle,
                                             int * ierr);
 
-/* Create a parametrization for discrete curves and surfaces (i.e. curves and
- * surfaces represented solely by a mesh, without an underlying CAD
- * description), assuming that each can be parametrized with a single map. */
-GMSH_API void gmshModelMeshCreateGeometry(int * ierr);
+/* Create a geometry for the discrete entities `dimTags' (represented solely
+ * by a mesh, without an underlying CAD description), i.e. create a
+ * parametrization for discrete curves and surfaces, assuming that each can be
+ * parametrized with a single map. If `dimTags' is empty, create a geometry
+ * for all the discrete entities. */
+GMSH_API void gmshModelMeshCreateGeometry(int * dimTags, size_t dimTags_n,
+                                          int * ierr);
 
 /* Create a boundary representation from the mesh if the model does not have
  * one (e.g. when imported from mesh file formats with no BRep representation

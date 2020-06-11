@@ -2021,13 +2021,15 @@ C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp#
 @end table
 
 @item gmsh/model/mesh/createGeometry
-Create a parametrization for discrete curves and surfaces (i.e. curves and
-surfaces represented solely by a mesh, without an underlying CAD description),
-assuming that each can be parametrized with a single map.
+Create a geometry for the discrete entities @code{dimTags} (represented solely
+by a mesh, without an underlying CAD description), i.e. create a parametrization
+for discrete curves and surfaces, assuming that each can be parametrized with a
+single map. If @code{dimTags} is empty, create a geometry for all the discrete
+entities.
 
 @table @asis
 @item Input:
--
+@code{dimTags = []}
 @item Output:
 -
 @item Return:
@@ -2853,7 +2855,7 @@ the occ module.)
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L67,t19.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L11,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L59,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L6,bspline_bezier_patches.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L15,bspline_filling.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L13,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L11,spline.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L67,t19.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L11,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L59,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L7,bspline_bezier_patches.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L16,bspline_filling.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L13,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L11,spline.py})
 @end table
 
 @item gmsh/model/occ/addLine
@@ -2972,7 +2974,7 @@ tag of the b-spline curve.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L14,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L19,bspline_filling.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L14,spline.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L14,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L20,bspline_filling.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L14,spline.py})
 @end table
 
 @item gmsh/model/occ/addBezier
@@ -3006,7 +3008,7 @@ wire.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L74,t19.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L65,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L37,bspline_filling.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L74,t19.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L65,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L38,bspline_filling.py})
 @end table
 
 @item gmsh/model/occ/addCurveLoop
@@ -3112,7 +3114,7 @@ surface.
 @item Return:
 integer value
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L39,bspline_filling.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L40,bspline_filling.py})
 @end table
 
 @item gmsh/model/occ/addBezierFilling
@@ -3150,7 +3152,7 @@ Return the tag of the b-spline surface.
 @item Return:
 integer value
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L55,bspline_bezier_patches.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L56,bspline_bezier_patches.py})
 @end table
 
 @item gmsh/model/occ/addBezierSurface
@@ -3167,7 +3169,7 @@ Return the tag of the b-spline surface.
 @item Return:
 integer value
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L52,bspline_bezier_patches.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L53,bspline_bezier_patches.py})
 @end table
 
 @item gmsh/model/occ/addSurfaceLoop
@@ -3501,7 +3503,7 @@ set.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L61,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L75,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L91,t20.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L44,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L23,edges.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L54,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L70,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L73,t20.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L34,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L70,bspline_bezier_patches.py}, ...)
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp#L61,t16.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp#L75,t18.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L91,t20.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp#L44,t21.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/edges.cpp#L23,edges.cpp}, ...), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py#L54,t16.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py#L70,t18.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L73,t20.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py#L34,t21.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L71,bspline_bezier_patches.py}, ...)
 @end table
 
 @item gmsh/model/occ/translate
@@ -3635,7 +3637,7 @@ entities.
 @item Return:
 -
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L75,bspline_bezier_patches.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L76,bspline_bezier_patches.py})
 @end table
 
 @item gmsh/model/occ/healShapes
@@ -3652,7 +3654,7 @@ manual.
 @item Return:
 -
 @item Examples:
-Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L65,bspline_bezier_patches.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/heal.py#L11,heal.py})
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L66,bspline_bezier_patches.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/heal.py#L11,heal.py})
 @end table
 
 @item gmsh/model/occ/importShapes
@@ -3703,7 +3705,7 @@ entities are returned as a vector of (dim, tag) integer pairs.
 @item Return:
 -
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L101,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L82,t20.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L70,bspline_bezier_patches.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp#L101,t20.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py#L82,t20.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L71,bspline_bezier_patches.py})
 @end table
 
 @item gmsh/model/occ/getEntitiesInBoundingBox

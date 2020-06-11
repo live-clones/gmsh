@@ -1,4 +1,5 @@
 import gmsh
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -76,5 +77,7 @@ elif method == 3:
 
 gmsh.model.occ.synchronize()
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
 gmsh.finalize()

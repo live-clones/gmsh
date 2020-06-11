@@ -1,6 +1,7 @@
 # Contributed by Roberto Agromayor
 
 import gmsh
+import sys
 import numpy as np
 
 gmsh.initialize()
@@ -44,7 +45,8 @@ gmsh.model.occ.addBSplineFilling(W1, type="Curved")
 gmsh.model.occ.synchronize()
 
 # Show the model
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 # Exit gmsh API
 gmsh.finalize()

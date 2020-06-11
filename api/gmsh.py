@@ -3116,16 +3116,20 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def createGeometry():
+        def createGeometry(dimTags=[]):
             """
-            gmsh.model.mesh.createGeometry()
+            gmsh.model.mesh.createGeometry(dimTags=[])
 
-            Create a parametrization for discrete curves and surfaces (i.e. curves and
-            surfaces represented solely by a mesh, without an underlying CAD
-            description), assuming that each can be parametrized with a single map.
+            Create a geometry for the discrete entities `dimTags' (represented solely
+            by a mesh, without an underlying CAD description), i.e. create a
+            parametrization for discrete curves and surfaces, assuming that each can be
+            parametrized with a single map. If `dimTags' is empty, create a geometry
+            for all the discrete entities.
             """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
             lib.gmshModelMeshCreateGeometry(
+                api_dimTags_, api_dimTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

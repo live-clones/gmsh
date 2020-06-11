@@ -422,8 +422,8 @@ mesh.add('splitQuadrangles', doc, None, idouble('quality', '1.'), iint('tag', '-
 doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create edges and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'.'''
 mesh.add('classifySurfaces', doc, None, idouble('angle'), ibool('boundary', 'true', 'True'), ibool('forReparametrization', 'false', 'False'), idouble('curveAngle', 'M_PI', 'pi', 'pi'))
 
-doc = '''Create a parametrization for discrete curves and surfaces (i.e. curves and surfaces represented solely by a mesh, without an underlying CAD description), assuming that each can be parametrized with a single map.'''
-mesh.add('createGeometry', doc, None)
+doc = '''Create a geometry for the discrete entities `dimTags' (represented solely by a mesh, without an underlying CAD description), i.e. create a parametrization for discrete curves and surfaces, assuming that each can be parametrized with a single map. If `dimTags' is empty, create a geometry for all the discrete entities.'''
+mesh.add('createGeometry', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
 doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model). If `makeSimplyConnected' is set, enforce simply connected discrete surfaces and volumes. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
 mesh.add('createTopology', doc, None, ibool('makeSimplyConnected', 'true', 'True'), ibool('exportDiscrete', 'true', 'True'))

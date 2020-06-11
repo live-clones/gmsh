@@ -605,10 +605,10 @@ public:
   // remove duplicate mesh vertices
   int removeDuplicateMeshVertices(double tolerance);
 
-  // create a topology from the mesh if necessary, move the mesh of discrete
-  // entities to a geometry container, compute a parametrization for the
-  // discrete entities
-  void createGeometryOfDiscreteEntities();
+  // create a geometry (i.e. a parametrization for curves and surfaces) for the
+  // given discrete entities (or all of them if dimTags is empty)
+  void createGeometryOfDiscreteEntities(const std::vector<std::pair<int, int> >
+                                        &dimTags = std::vector<std::pair<int, int> >());
 
   // make discrete entities simply connected
   void makeDiscreteRegionsSimplyConnected();

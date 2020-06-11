@@ -1315,10 +1315,12 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::createGeometry
       //
-      // Create a parametrization for discrete curves and surfaces (i.e. curves and
-      // surfaces represented solely by a mesh, without an underlying CAD
-      // description), assuming that each can be parametrized with a single map.
-      GMSH_API void createGeometry();
+      // Create a geometry for the discrete entities `dimTags' (represented solely
+      // by a mesh, without an underlying CAD description), i.e. create a
+      // parametrization for discrete curves and surfaces, assuming that each can
+      // be parametrized with a single map. If `dimTags' is empty, create a
+      // geometry for all the discrete entities.
+      GMSH_API void createGeometry(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // gmsh::model::mesh::createTopology
       //

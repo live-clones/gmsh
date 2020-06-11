@@ -1682,11 +1682,16 @@ GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int bounda
   }
 }
 
-GMSH_API void gmshModelMeshCreateGeometry(int * ierr)
+GMSH_API void gmshModelMeshCreateGeometry(int * dimTags, size_t dimTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::createGeometry();
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::createGeometry(api_dimTags_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

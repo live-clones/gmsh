@@ -3631,6 +3631,13 @@ Command :
     {
       GModel::current()->createGeometryOfDiscreteEntities();
     }
+   | tCreateGeometry '{' ListOfShapes '}'
+    {
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($3, dimTags);
+      GModel::current()->createGeometryOfDiscreteEntities(dimTags);
+      List_Delete($3);
+    }
    | tRenumberMeshNodes tEND
     {
       GModel::current()->renumberMeshVertices();

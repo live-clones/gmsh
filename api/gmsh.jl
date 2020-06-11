@@ -2441,17 +2441,21 @@ function classifySurfaces(angle, boundary = true, forReparametrization = false, 
 end
 
 """
-    gmsh.model.mesh.createGeometry()
+    gmsh.model.mesh.createGeometry(dimTags = Tuple{Cint,Cint}[])
 
-Create a parametrization for discrete curves and surfaces (i.e. curves and
-surfaces represented solely by a mesh, without an underlying CAD description),
-assuming that each can be parametrized with a single map.
+Create a geometry for the discrete entities `dimTags` (represented solely by a
+mesh, without an underlying CAD description), i.e. create a parametrization for
+discrete curves and surfaces, assuming that each can be parametrized with a
+single map. If `dimTags` is empty, create a geometry for all the discrete
+entities.
 """
-function createGeometry()
+function createGeometry(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshCreateGeometry, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshCreateGeometry returned non-zero error code: $(ierr[])")
     return nothing
 end
