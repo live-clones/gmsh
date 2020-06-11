@@ -11,11 +11,15 @@
 #include "MFace.h"
 
 class discreteRegion : public GRegion {
+private:
+  bool _geometry;
 public:
   discreteRegion(GModel *model, int num);
   discreteRegion(GModel *model);
   virtual ~discreteRegion() {}
   virtual GeomType geomType() const { return DiscreteVolume; }
+  virtual bool haveParametrization() { return _geometry; }
+  int createGeometry();
 };
 
 #endif
