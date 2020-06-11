@@ -31,11 +31,6 @@ extern "C" {
 #include "hxt_tetMesh.h"
 }
 
-static HXTStatus recoveryCallback(HXTMesh *mesh, void *userData)
-{
-  return hxt_boundary_recovery(mesh);
-}
-
 static HXTStatus messageCallback(HXTMessage *msg)
 {
   if(msg) Msg::Info("%s", msg->string);
@@ -404,13 +399,18 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     1, // int stat;
     1, // int refine;
     CTX::instance()->mesh.optimize, // int optimize;
-    CTX::instance()->mesh.optimizeThreshold, // double qualityMin;
-    0, // double (*qualityFun)
-    0, // void* qualityData;
-    meshSizeCallBack, // double (*meshSizeFun)
-    regions[0], // void* meshSizeData; // FIXME: should be dynamic!
-    recoveryCallback, // HXTStatus (*recoveryFun)
-    0 // void* recoveryData;
+    { // quality
+      0, // double (*callback)(.., userData)
+      0, // void* userData;
+      CTX::instance()->mesh.optimizeThreshold // double qualityMin;
+    },
+    { // meshSize
+      meshSizeCallBack, // HXTStatus (*callback)(double*, size_t, void* userData)
+      regions[0], // void* meshSizeData; // FIXME: should be dynamic!
+      CTX::instance()->mesh.lcMin,
+      CTX::instance()->mesh.lcMax,
+      CTX::instance()->mesh.lcFactor
+    }
   };
 
   HXT_CHECK(hxtTetMesh(mesh, &options));

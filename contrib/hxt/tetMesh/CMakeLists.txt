@@ -62,13 +62,14 @@ endif()
 
 add_subdirectory(../core "${CMAKE_CURRENT_BINARY_DIR}/core")
 add_subdirectory(../predicates "${CMAKE_CURRENT_BINARY_DIR}/predicates")
+add_subdirectory(../tetBR "${CMAKE_CURRENT_BINARY_DIR}/tetBR")
 
 target_include_directories(hxt_tetMesh
                            PUBLIC include
                            PRIVATE src)
 target_link_libraries(hxt_tetMesh
                       PUBLIC hxt_core
-                      PRIVATE hxt_predicates m)
+                      PRIVATE hxt_predicates hxt_tetBR m)
 target_compile_features(hxt_tetMesh PRIVATE c_std_99)
 
 
@@ -79,16 +80,13 @@ target_compile_features(hxt_tetMesh PRIVATE c_std_99)
 if(HXT_TETMESH_BUILD_CLI)
     # tetMesh_CLI
     add_executable(tetMesh_CLI "${CMAKE_CURRENT_SOURCE_DIR}/exe/tetMesh_CLI.c")
+    target_link_libraries(tetMesh_CLI hxt_core hxt_predicates hxt_tetBR hxt_tetMesh)
 
-    add_subdirectory(../tetBR "${CMAKE_CURRENT_BINARY_DIR}/tetBR")
-
-    target_link_libraries(tetMesh_CLI hxt_core hxt_predicates hxt_tetMesh hxt_tetBR)
-
-    # # Delaunay_CLI
+    # Delaunay_CLI
     add_executable(Delaunay_CLI "${CMAKE_CURRENT_SOURCE_DIR}/exe/Delaunay_CLI.c")
-    target_link_libraries(Delaunay_CLI hxt_core hxt_predicates hxt_tetMesh)
+    target_link_libraries(Delaunay_CLI hxt_core hxt_predicates hxt_tetBR hxt_tetMesh)
 
     # tetOpti_CLI
     add_executable(tetOpti_CLI "${CMAKE_CURRENT_SOURCE_DIR}/exe/tetOpti_CLI.c")
-    target_link_libraries(tetOpti_CLI hxt_core hxt_predicates hxt_tetMesh)
+    target_link_libraries(tetOpti_CLI hxt_core hxt_predicates hxt_tetBR hxt_tetMesh)
 endif()

@@ -7,17 +7,11 @@
 //   Célestin Marot
 
 #include "hxt_tetMesh.h"
-#include "hxt_boundary_recovery.h"
 #include "hxt_opt.h"
 #include "hxt_tools.h"
 #include "hxt_omp.h"
+#include <float.h>
 
-
-static HXTStatus recoveryFun(HXTMesh* mesh, void* userData) {
-  HXT_UNUSED(userData);
-  HXT_CHECK( hxt_boundary_recovery(mesh) );
-  return HXT_STATUS_OK;
-}
 
 int main(int argc, char** argv) {
 
@@ -25,7 +19,7 @@ int main(int argc, char** argv) {
   const char* output = NULL;
   const char* geoFile = NULL;
 
-  HXTTetMeshOptions options = {.refine=1, .optimize=1, .verbosity=1, .qualityMin=0.35, .recoveryFun=recoveryFun};
+  HXTTetMeshOptions options = {.refine=1, .optimize=1, .verbosity=1, .quality.min=0.35, .meshSize.min=0.0, .meshSize.max=DBL_MAX, .meshSize.scaling=1.0};
 
   HXT_CHECK( hxtAddOption('t', "omp_num_threads",
                           "Number of threads used for parallel work.\n"
@@ -46,20 +40,27 @@ int main(int argc, char** argv) {
                           "if given\n"
                           " - the same vertices in the same order\n"
                           " - the same number of threads\n"
+                          "and if compiled with the same compiler on the same machine.\n"
                           "WARNING: This option slows down the mesh generation\n"
                           "except with 1 thread", HXT_FLAG, NULL, &options.reproducible));
-  HXT_CHECK( hxtAddOption('v', "verbosity",
-                       "Verbosity level of output messages\n"
-                       " * NUM=0: print no information\n"
-                       " * NUM=1: print some information\n"
-                       " * NUM=2: print all information", HXT_INT, &HXT_0_2_RANGE, &options.verbosity));
-  HXT_CHECK( hxtAddOption('s', "stat", "Print timing for each portion of the program", HXT_FLAG, NULL, &options.stat));
-  HXT_CHECK( hxtAddOption('n', "no-refinement", "Do not refine the mesh => no vertices are added", HXT_NO_FLAG, NULL, &options.refine));
-  HXT_CHECK( hxtAddOption('N', "no-improvement", "Do not optimize the mesh quality", HXT_NO_FLAG, NULL, &options.optimize) );
-  HXT_CHECK( hxtAddOption('a', "aspect-ratio-min", "The threshold on the aspect-ratio used during the optimization", HXT_DOUBLE, &HXT_0_1_RANGE, &options.qualityMin));
 
   const HXTOptionArgumentConstraints geoSuffix = {.stringSuffix=".geo"};
   HXT_CHECK( hxtAddOption('g', "generate-geo", "Write a .geo file that describe the volumes from the input surface mesh", HXT_ASK_TO_ERASE_FILENAME, &geoSuffix, &geoFile));
+  HXT_CHECK( hxtAddOption('n', "no-refinement", "Do not refine the mesh => no vertices are added", HXT_NO_FLAG, NULL, &options.refine));
+  HXT_CHECK( hxtAddOption('N', "no-improvement", "Do not optimize the mesh quality", HXT_NO_FLAG, NULL, &options.optimize) );
+
+
+  HXT_CHECK( hxtAddOption('l', "clmin", "minimum mesh size", HXT_DOUBLE, &HXT_POSITIVE_RANGE, &options.meshSize.min));
+  HXT_CHECK( hxtAddOption('h', "clmax", "maximum mesh size", HXT_DOUBLE, &HXT_POSITIVE_RANGE, &options.meshSize.max));
+  HXT_CHECK( hxtAddOption('s', "clscale", "scale mesh size by a factor of VAL", HXT_DOUBLE, &HXT_POSITIVE_RANGE, &options.meshSize.scaling));
+  HXT_CHECK( hxtAddOption('a', "aspect-ratio-min", "The threshold on the aspect-ratio used during the optimization", HXT_DOUBLE, &HXT_0_1_RANGE, &options.quality.min));
+
+  HXT_CHECK( hxtAddOption('v', "verbosity",
+                          "Verbosity level of output messages\n"
+                          " * NUM=0: print no information\n"
+                          " * NUM=1: print some information\n"
+                          " * NUM=2: print all information", HXT_INT, &HXT_0_2_RANGE, &options.verbosity));
+  HXT_CHECK( hxtAddOption('p', "stat", "Print timing for each portion of the program", HXT_FLAG, NULL, &options.stat));
 
   HXT_CHECK( hxtAddTrailingOption("INPUT_FILE", HXT_EXISTING_FILENAME, NULL, &input));
   HXT_CHECK( hxtAddTrailingOption("OUTPUT_FILE", HXT_STRING, NULL, &output));
@@ -79,7 +80,7 @@ int main(int argc, char** argv) {
              "refine:            %s\noptimize :         %s\nmin aspect ratio:  %.3f\n\n",
            input?input:"-", output?output:"-", options.defaultThreads<=0?omp_get_max_threads():options.defaultThreads,
            options.delaunayThreads, options.improveThreads,
-           options.reproducible?T:F, (int) options.verbosity, options.stat?T:F, options.refine?T:F, options.optimize?T:F, options.qualityMin);
+           options.reproducible?T:F, (int) options.verbosity, options.stat?T:F, options.refine?T:F, options.optimize?T:F, options.quality.min);
   }
 
 
