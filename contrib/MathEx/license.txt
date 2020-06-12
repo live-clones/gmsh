@@ -27,7 +27,7 @@ End of license term
 -------------------
 
 For GNU Library/lesser General Public License, see the lesser.txt or visit
-http://www.gnu.org/
+https://www.gnu.org/
 
 June of 2003.
 

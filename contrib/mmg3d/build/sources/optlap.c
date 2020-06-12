@@ -21,7 +21,7 @@ d’adaptation dans un but spécifique.
 Reportez-vous à la licence publique générale de GNU pour plus de détails.
 Vous devez avoir reçu une copie de la licence publique générale de GNU 
 en même temps que ce document. 
-Si ce n’est pas le cas, aller voir <http://www.gnu.org/licenses/>.
+Si ce n’est pas le cas, aller voir <https://www.gnu.org/licenses/>.
 /****************************************************************************
 Initial software: MMG3D Version 4.0
 Co-authors: Cecile Dobrzynski et Pascal Frey.
@@ -41,7 +41,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
-along with MMG3D. If not, see <http://www.gnu.org/licenses/>.  
+along with MMG3D. If not, see <https://www.gnu.org/licenses/>.  
 ****************************************************************************/
 #include "mesh.h"
 

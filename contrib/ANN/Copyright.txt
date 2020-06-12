@@ -18,7 +18,7 @@ Lesser Public License for more details.
 A copy of the terms and conditions of the license can be found in
 License.txt or online at
 
-    http://www.gnu.org/copyleft/lesser.html
+    https://www.gnu.org/copyleft/lesser.html
 
 To obtain a copy, write to the Free Software Foundation, Inc.,
 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.

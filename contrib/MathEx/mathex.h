@@ -10,7 +10,7 @@
 // See license.txt for detail.                                           //
 // For GNU LGPL, see lesser.txt.                                         //
 // For information over GNU or GNU compatible license, visit the site    //
-// http://www.gnu.org.                                                   //
+// https://www.gnu.org.                                                   //
 ////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////

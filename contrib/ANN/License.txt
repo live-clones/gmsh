@@ -3,7 +3,7 @@ The ANN Library (all versions) is provided under the terms and
 conditions of the GNU Lesser General Public Library, which is stated
 below.  It can also be found at:
 
-   http://www.gnu.org/copyleft/lesser.html
+   https://www.gnu.org/copyleft/lesser.html
 
 ----------------------------------------------------------------------
 

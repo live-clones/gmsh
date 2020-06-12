@@ -19,7 +19,7 @@
 	equations", 
 	SIAM J. Comput., vol. 11, no. 4, pp. 687-708, 1982.
     [3] GMP homepage http://www.swox.com/gmp/
-    [4] GNU gmp page http://www.gnu.org/software/gmp/
+    [4] GNU gmp page https://www.gnu.org/software/gmp/
 
 
    Copyright (C) 30.10.2003Saku Suuriniemi  TUT/CEM
