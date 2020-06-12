@@ -14,3 +14,4 @@ gmsh.model.mesh.optimize('', True)
 # gmsh.model.mesh.optimize('Netgen', True)
 
 gmsh.write('opt.msh')
+gmsh.finalize()

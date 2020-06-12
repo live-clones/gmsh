@@ -255,7 +255,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
 {
   if(_computedJac[dim - 1]) return;
 
-  std::set<GEntity *, GEntityPtrLessThan> entities;
+  std::set<GEntity *, GEntityPtrFullLessThan> entities;
   switch(dim) {
   case 3:
     for(GModel::riter it = _m->firstRegion(); it != _m->lastRegion(); it++)
@@ -273,7 +273,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
   }
 
   int cntInverted = 0;
-  std::set<GEntity *, GEntityPtrLessThan>::iterator it;
+  std::set<GEntity *, GEntityPtrFullLessThan>::iterator it;
   for(it = entities.begin(); it != entities.end(); ++it) {
     GEntity *entity = *it;
     unsigned num = entity->getNumMeshElements();
@@ -323,7 +323,8 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
     if(normals) delete normals;
   }
   if(cntInverted) {
-    Msg::Warning("%d elements are completely inverted", cntInverted);
+    Msg::Warning("%d element%s completely inverted", (cntInverted > 1) ?
+                 "s are" : " is");
   }
   _computedJac[dim - 1] = true;
   bezierCoeff::releasePools();
@@ -404,7 +405,7 @@ int GMSH_AnalyseMeshQualityPlugin::_hideWithThreshold(int askedDim,
 void GMSH_AnalyseMeshQualityPlugin::_printStatJacobian()
 {
   if(_data.empty()) {
-    Msg::Info("No stat to print.");
+    Msg::Info("No stat to print");
     return;
   }
   double infminJ, supminJ, avgminJ;
@@ -453,7 +454,7 @@ void GMSH_AnalyseMeshQualityPlugin::_printStatJacobian()
 void GMSH_AnalyseMeshQualityPlugin::_printStatIGE()
 {
   if(_data.empty()) {
-    Msg::Info("No stat to print.");
+    Msg::Info("No stat to print");
     return;
   }
   double infminS, supminS, avgminS;
@@ -473,7 +474,7 @@ void GMSH_AnalyseMeshQualityPlugin::_printStatIGE()
 void GMSH_AnalyseMeshQualityPlugin::_printStatICN()
 {
   if(_data.empty()) {
-    Msg::Info("No stat to print.");
+    Msg::Info("No stat to print");
     return;
   }
   double infminI, supminI, avgminI;

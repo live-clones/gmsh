@@ -5,7 +5,8 @@ gmsh.initialize(sys.argv)
 
 # creates the FLTK user interface; this could also be called after the geometry
 # is created (or not at all - fltk.run() will do it automatically)
-gmsh.fltk.initialize()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.initialize()
 
 # Copied from boolean.py...
 gmsh.model.add("boolean")
@@ -38,6 +39,7 @@ gmsh.model.setColor(gmsh.model.getEntities(2), 249, 166, 2)
 #     gmsh.fltk.wait()
 #     print("just treated an event in the interface")
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

@@ -143,7 +143,7 @@ void GFace::deleteMesh()
   for(std::size_t i = 0; i < polygons.size(); i++) delete polygons[i];
   polygons.clear();
   correspondingVertices.clear();
-  correspondingHOPoints.clear();
+  correspondingHighOrderVertices.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }

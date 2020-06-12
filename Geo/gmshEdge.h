@@ -11,11 +11,11 @@
 class Curve;
 
 class gmshEdge : public GEdge {
-protected:
-  Curve *c;
+private:
+  Curve *_c;
 
 public:
-  gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2);
+  gmshEdge(GModel *model, Curve *c, GVertex *v1, GVertex *v2);
   virtual ~gmshEdge() {}
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const;
@@ -24,7 +24,7 @@ public:
   virtual SVector3 firstDer(double par) const;
   virtual SVector3 secondDer(double par) const;
   ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return c; }
+  void *getNativePtr() const { return _c; }
   virtual std::string getAdditionalInfoString(bool multline = false);
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;

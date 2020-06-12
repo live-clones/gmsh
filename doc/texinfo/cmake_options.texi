@@ -101,11 +101,11 @@ Enable OS-specific (e.g. app bundle) installation (default: OFF)
 @item ENABLE_OSMESA
 Enable OSMesa for offscreen rendering (experimental) (default: OFF)
 @item ENABLE_P4EST
-Enable p4est for enabling automatic mesh size firld (experimental) (default: OFF)
+Enable p4est for enabling automatic mesh size field (experimental) (default: OFF)
 @item ENABLE_PACKAGE_STRIP
 Strip symbols in install packages to reduce install size (default: ON)
 @item ENABLE_PARSER
-Enable GEO file parser (required for .geo/.pos files) (default: ON)
+Enable GEO file parser (required for .geo/.pos scripts) (default: ON)
 @item ENABLE_PETSC
 Enable PETSc linear solvers (required for SLEPc) (default: OFF)
 @item ENABLE_PLUGINS
@@ -116,6 +116,8 @@ Enable post-processing module (required by GUI) (default: ON)
 Enable Poppler for displaying PDF documents (experimental) (default: OFF)
 @item ENABLE_PRIVATE_API
 Enable private API (default: OFF)
+@item ENABLE_PRO
+Enable PRO extensions (default: ON)
 @item ENABLE_QUADTRI
 Enable QuadTri structured meshing extensions (default: ON)
 @item ENABLE_REVOROPT
@@ -123,7 +125,7 @@ Enable Revoropt (used for CVT remeshing) (default: OFF)
 @item ENABLE_SLEPC
 Enable SLEPc eigensolvers (default: OFF)
 @item ENABLE_SOLVER
-Enable built-in finite element solvers (required for compounds) (default: ON)
+Enable built-in finite element solvers (required for reparametrization) (default: ON)
 @item ENABLE_SYSTEM_CONTRIB
 Use system versions of contrib libraries, when possible (default: OFF)
 @item ENABLE_TCMALLOC
@@ -135,8 +137,8 @@ Enable additional visualization capabilities for development purposes (default: 
 @item ENABLE_VOROPP
 Enable voro++ (for hex meshing, experimental) (default: ON)
 @item ENABLE_WRAP_JAVA
-Enable generation of Java wrappers for private API (default: OFF)
+Generate SWIG Java wrappers for private API (default: OFF)
 @item ENABLE_WRAP_PYTHON
-Enable generation of Python wrappers for private API (default: OFF)
+Generate SWIG Python wrappers for private API (not used by public API) (default: OFF)
 @item ENABLE_ZIPPER
 Enable Zip file compression/decompression (default: OFF)

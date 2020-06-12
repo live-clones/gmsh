@@ -346,21 +346,23 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   std::size_t strl = std::max(4096, 128 * nume);
   char *str = new char[strl];
 
-  Msg::Info("%d entities", nume);
+  if(partition)
+    Msg::Info("%d partition entities", nume);
+  else
+    Msg::Info("%d entities", nume);
 
   for(int dim = 0; dim < 4; dim++) {
     for(std::size_t i = 0; i < numEntities[dim]; i++) {
       int tag = 0, parentDim = 0, parentTag = 0;
-      std::vector<int> parts;
+      std::vector<int> partitions;
       double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
       if(!readMSH4EntityInfo(fp, binary, str, strl, swap, version, partition,
-                             dim, tag, parentDim, parentTag, parts, minX, minY,
+                             dim, tag, parentDim, parentTag, partitions, minX, minY,
                              minZ, maxX, maxY, maxZ)) {
         delete[] str;
         return false;
       }
-      // FIXME: rewrite partition classes in terms of int
-      std::vector<unsigned int> partitions(parts.begin(), parts.end());
+
       switch(dim) {
       case 0: {
         GVertex *gv = model->getVertexByTag(tag);
@@ -1192,6 +1194,8 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
 
 static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 {
+  if(CTX::instance()->mesh.ignoreParametrizationMsh4) return true;
+
   std::size_t nParamE, nParamF;
 
   if(binary){
@@ -1564,7 +1568,7 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
 static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
                               bool binary, double scalingFactor, double version)
 {
-  std::set<GEntity *, GEntityPtrLessThan> ghost;
+  std::set<GEntity *, GEntityPtrFullLessThan> ghost;
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
@@ -1624,7 +1628,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         tags.resize(2 * ghostSize);
         int index = 0;
-        for(std::set<GEntity *, GEntityPtrLessThan>::iterator it = ghost.begin();
+        for(std::set<GEntity *, GEntityPtrFullLessThan>::iterator it = ghost.begin();
             it != ghost.end(); ++it) {
           if((*it)->geomType() == GEntity::GhostCurve) {
             tags[index] = (*it)->tag();
@@ -1813,7 +1817,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         tags.resize(2 * ghostSize);
         int index = 0;
-        for(std::set<GEntity *, GEntityPtrLessThan>::iterator it = ghost.begin();
+        for(std::set<GEntity *, GEntityPtrFullLessThan>::iterator it = ghost.begin();
             it != ghost.end(); ++it) {
           if((*it)->geomType() == GEntity::GhostCurve) {
             tags[index] = (*it)->tag();
@@ -2667,7 +2671,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
   std::map<MElement *, std::vector<int> > ghostCells;
 
   for(std::size_t i = 0; i < entities.size(); i++) {
-    std::map<MElement *, unsigned int> ghostElements; // FIXME
+    std::map<MElement *, int> ghostElements;
     int partition;
 
     if(entities[i]->geomType() == GEntity::GhostCurve) {
@@ -2683,7 +2687,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
       partition = static_cast<ghostRegion *>(entities[i])->getPartition();
     }
 
-    for(std::map<MElement *, unsigned int>::iterator it = ghostElements.begin();
+    for(std::map<MElement *, int>::iterator it = ghostElements.begin();
         it != ghostElements.end(); ++it) {
       if(ghostCells[it->first].size() == 0)
         ghostCells[it->first].push_back(it->second);
@@ -3014,7 +3018,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         }
       } break;
       case GEntity::GhostCurve:
-        if(i == static_cast<ghostEdge *>(ge)->getPartition()) {
+        if((int)i == static_cast<ghostEdge *>(ge)->getPartition()) {
           static_cast<ghostEdge *>(ge)->saveMesh(true);
           tmp->add(static_cast<ghostEdge *>(ge));
           if(ghostEntities.size()) entitiesSet.insert(ge);
@@ -3022,7 +3026,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         }
         break;
       case GEntity::GhostSurface:
-        if(i == static_cast<ghostFace *>(ge)->getPartition()) {
+        if((int)i == static_cast<ghostFace *>(ge)->getPartition()) {
           static_cast<ghostFace *>(ge)->saveMesh(true);
           tmp->add(static_cast<ghostFace *>(ge));
           if(ghostEntities.size()) entitiesSet.insert(ge);
@@ -3030,7 +3034,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         }
         break;
       case GEntity::GhostVolume:
-        if(i == static_cast<ghostRegion *>(ge)->getPartition()) {
+        if((int)i == static_cast<ghostRegion *>(ge)->getPartition()) {
           static_cast<ghostRegion *>(ge)->saveMesh(true);
           tmp->add(static_cast<ghostRegion *>(ge));
           if(ghostEntities.size()) entitiesSet.insert(ge);

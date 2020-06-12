@@ -6460,8 +6460,8 @@ double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM)
 
 double opt_mesh_ignore_periodicity(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.ignorePeriodicity = (int)val;
-  return CTX::instance()->mesh.ignorePeriodicity;
+  if(action & GMSH_SET) CTX::instance()->mesh.ignorePeriodicityMsh2 = (int)val;
+  return CTX::instance()->mesh.ignorePeriodicityMsh2;
 }
 
 double opt_mesh_max_iter_delaunay_3d(OPT_ARGS_NUM)
@@ -6503,6 +6503,18 @@ double opt_mesh_unv_strict_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.unvStrictFormat = (int)val;
   return CTX::instance()->mesh.unvStrictFormat;
+}
+
+double opt_mesh_reparam_max_triangles(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.reparamMaxTriangles = (int)val;
+  return CTX::instance()->mesh.reparamMaxTriangles;
+}
+
+double opt_mesh_ignore_parametrization(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.ignoreParametrizationMsh4 = (int)val;
+  return CTX::instance()->mesh.ignoreParametrizationMsh4;
 }
 
 double opt_solver_listen(OPT_ARGS_NUM)
@@ -6813,12 +6825,13 @@ double opt_view_time(OPT_ARGS_NUM)
     if(val >= 0.) {
       // if negative (the default), don't do anything so that we do not compete
       // with timestep
+      double dt_min = std::numeric_limits<double>::max();
       int step = 0;
       for(int i = 0; i < data->getNumTimeSteps(); i++) {
-        double time = data->getTime(i);
-        if(fabs(time - val) < 1.e-15) {
+        double dt = std::abs(data->getTime(i) - val);
+        if(dt < dt_min) {
           step = i;
-          break;
+          dt_min = std::min(dt_min, dt);
         }
       }
       opt_view_timestep(num, action, step);

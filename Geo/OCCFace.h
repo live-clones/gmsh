@@ -17,17 +17,16 @@
 #include <BRepLProp_SLProps.hxx>
 
 class OCCFace : public GFace {
-protected:
-  TopoDS_Face s;
-  Handle(Geom_Surface) occface;
-  const BRepAdaptor_Surface sf;
-  double umin, umax, vmin, vmax;
+private:
+  TopoDS_Face _s;
+  Handle(Geom_Surface) _occface;
+  const BRepAdaptor_Surface _sf;
+  double _umin, _umax, _vmin, _vmax;
   bool _periodic[2];
   double _period[2];
-  bool buildSTLTriangulation(bool force = false);
-  void setup();
   double _radius;
   SPoint3 _center;
+  void _setup();
 
 public:
   OCCFace(GModel *m, TopoDS_Face s, int num);
@@ -44,7 +43,7 @@ public:
                          SVector3 &) const;
   virtual GEntity::GeomType geomType() const;
   ModelType getNativeType() const { return OpenCascadeModel; }
-  void *getNativePtr() const { return (void *)&s; }
+  void *getNativePtr() const { return (void *)&_s; }
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual double curvatures(const SPoint2 &param, SVector3 &dirMax,
@@ -59,6 +58,7 @@ public:
   virtual bool containsParam(const SPoint2 &pt);
   // save itself in BREP format (for debug e.g.)
   void writeBREP(const char *filename);
+  bool buildSTLTriangulation(bool force = false);
 };
 
 #endif

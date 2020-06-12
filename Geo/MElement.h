@@ -523,4 +523,18 @@ struct MElementPtrLessThan {
   }
 };
 
+struct MElementPtrEqual {
+  bool operator()(const MElement *e1, const MElement *e2) const
+  {
+    return e1->getNum() == e2->getNum();
+  }
+};
+
+struct MElementPtrHash {
+  size_t operator()(const MElement *e) const
+  {
+    return e->getNum();
+  }
+};
+
 #endif

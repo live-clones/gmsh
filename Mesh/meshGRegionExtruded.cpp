@@ -51,6 +51,8 @@ static void addHexahedron(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
 static void createPriPyrTet(std::vector<MVertex *> &v, GRegion *to,
                             MElement *source)
 {
+  static int warningReg = 0;
+
   int dup[3];
   int j = 0;
   for(int i = 0; i < 3; i++)
@@ -74,13 +76,19 @@ static void createPriPyrTet(std::vector<MVertex *> &v, GRegion *to,
   }
   else {
     addPrism(v[0], v[1], v[2], v[3], v[4], v[5], to);
-    if(j) Msg::Error("Degenerated prism in extrusion of volume %d", to->tag());
+    if(j && warningReg != to->tag()) {
+      warningReg = to->tag();
+      Msg::Warning("Degenerated prism in extrusion of volume %d", to->tag());
+    }
   }
 }
 
 static void createHexPri(std::vector<MVertex *> &v, GRegion *to,
                          MElement *source)
 {
+  static int errorReg = 0;
+  static int warningReg = 0;
+
   int dup[4];
   int j = 0;
   for(int i = 0; i < 4; i++)
@@ -95,13 +103,17 @@ static void createHexPri(std::vector<MVertex *> &v, GRegion *to,
       addPrism(v[0], v[3], v[4], v[1], v[2], v[5], to);
     else if(dup[0] == 0 && dup[1] == 3)
       addPrism(v[0], v[1], v[5], v[3], v[2], v[6], to);
-    else
-      Msg::Error("Uncoherent hexahedron in extrusion of volume %d", to->tag());
+    else if(to->tag() != errorReg) {
+      errorReg = to->tag();
+      Msg::Error("Wrong hexahedron in extrusion of volume %d", to->tag());
+    }
   }
   else {
     addHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], to);
-    if(j)
-      Msg::Error("Degenerated hexahedron in extrusion of volume %d", to->tag());
+    if(j && warningReg != to->tag()) {
+      warningReg = to->tag();
+      Msg::Warning("Degenerated hexahedron in extrusion of volume %d", to->tag());
+    }
   }
 }
 

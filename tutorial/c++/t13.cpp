@@ -29,7 +29,10 @@ int main(int argc, char **argv)
   // We first classify ("color") the surfaces by splitting the original surface
   // along sharp geometrical features. This will create new discrete surfaces,
   // curves and points.
-  double angle = 40; // Angle for surface detection
+
+
+  // Angle between two triangles above which an edge is considered as sharp:
+  double angle = 40;
 
   // For complex geometries, patches can be too complex, too elongated or too
   // large to be parametrized; setting the following option will force the

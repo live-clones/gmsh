@@ -75,7 +75,7 @@ gmsh.model.geo.addLine(4, 1, p4)
 # to be defined. A curve loop is defined by an ordered list of connected curves,
 # a sign being associated with each curve (depending on the orientation of the
 # curve to form a loop). The API function to create curve loops takes a list
-# of integers as first argument, and the curve loop tag (which must ne unique
+# of integers as first argument, and the curve loop tag (which must be unique
 # amongst curve loops) as the second (optional) argument:
 gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 
