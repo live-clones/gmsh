@@ -3,7 +3,7 @@ gmsh-dev
 ========
 
 The aim of this package is to download and install the latest development
-snapshot of the `Gmsh app and SDK <http://gmsh.info>`_ in a pythonic way,
+snapshot of the `Gmsh app and SDK <https://gmsh.info>`_ in a pythonic way,
 i.e. via the ``pip`` command. For the latest stable release, use the ``gmsh``
 package instead.
 

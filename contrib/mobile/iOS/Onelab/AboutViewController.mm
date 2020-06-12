@@ -89,7 +89,7 @@
                     @"href=\"http://geuz.org/gmsh/LICENSE.txt\">licensing "
                     @"information</a></p><p><i>Build options:</i> "
                     @"%s</p><p>Visit <a "
-                    @"href=\"http://gmsh.info/\">http://gmsh.info</a> for more "
+                    @"href=\"https://gmsh.info/\">https://gmsh.info</a> for more "
                     @"information</p><h3>GetDP</h3>Version %s (<i>Build "
                     @"date:</i> %s)<p>Copyright (C) 1997-2020 Patrick Dular "
                     @"and Christophe Geuzaine, University of "

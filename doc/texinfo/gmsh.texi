@@ -152,7 +152,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 @cindex Download
 
 The source code and various pre-compiled versions of Gmsh (for Windows,
-Mac and Unix) can be downloaded from @uref{http://gmsh.info}.
+Mac and Unix) can be downloaded from @uref{https://gmsh.info}.
 Gmsh is also directly available in pre-packaged form in various Linux
 and BSD distributions (Debian, Ubuntu, FreeBSD, ...).
 
@@ -163,7 +163,7 @@ post-processing facilities}. International Journal for Numerical Methods
 in Engineering, Volume 79, Issue 11, pages 1309-1331, 2009''.  A
 preprint of that paper as well as other references and the latest news
 about Gmsh development are available on
-@uref{http://gmsh.info}.
+@uref{https://gmsh.info}.
 
 @c =========================================================================
 @c Copying Conditions
@@ -520,7 +520,7 @@ next chapter (@pxref{Running Gmsh on your system}) to learn how to
 launch Gmsh on your system, then go experiment with the GUI and the
 tutorial files (@pxref{Tutorial}) provided in the distribution.
 Screencasts that show how to use the GUI are available here:
-@uref{http://gmsh.info/screencasts/}.
+@uref{https://gmsh.info/screencasts/}.
 
 The aim of the reference manual is to explain everything you need to use
 Gmsh at the second level, i.e., using the built-in scripting language.
@@ -5136,7 +5136,7 @@ are only available via the API.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
-@uref{http://gmsh.info/screencasts/}. To learn how to run the C++, C,
+@uref{https://gmsh.info/screencasts/}. To learn how to run the C++, C,
 Python and Julia API examples, see the respective subdirectories in
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}.
 
@@ -5690,7 +5690,7 @@ All the options can be manipulated through the Gmsh API through the
 @appendix Compiling the source code
 
 Stable releases and source snapshots are available from
-@url{http://gmsh.info/src/}. You can also access the Git repository
+@url{https://gmsh.info/src/}. You can also access the Git repository
 directly:
 
 @enumerate
@@ -5771,7 +5771,7 @@ master API definition file
 The additional
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h_cwrap,gmsh.h_cwrap}
 header redefines the C++ API in terms of the C API. This is provided as
-a convenience for users of the @url{http://gmsh.info/bin,binary Gmsh
+a convenience for users of the @url{https://gmsh.info/bin,binary Gmsh
 Software Development Kit (SDK)} whose C++ compiler Application Binary
 Interface (ABI) is not compatible with the ABI of the C++ compiler used
 to create the SDK. To use these C++ bindings of the C API instead of the
@@ -6111,7 +6111,7 @@ for the licensing constraints.
 
 @item Where can I find more information?
 
-@url{http://gmsh.info} is the primary location to obtain information
+@url{https://gmsh.info} is the primary location to obtain information
 about Gmsh. There you will for example find the complete reference
 manual and the @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug
 tracking database}.

@@ -370,7 +370,7 @@ std::vector<std::string> GetBuildInfo()
   s.push_back(std::string("MED version   : ") + tmp);
 #endif
   s.push_back(std::string("Packaged by   : ") + GMSH_PACKAGER);
-  s.push_back("Web site      : http://gmsh.info");
+  s.push_back("Web site      : https://gmsh.info");
   s.push_back("Issue tracker : https://gitlab.onelab.info/gmsh/gmsh/issues");
   return s;
 }

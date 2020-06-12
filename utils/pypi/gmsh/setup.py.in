@@ -89,7 +89,7 @@ if __name__ == "__main__":
         maintainer        = 'Christophe Geuzaine',
         maintainer_email  = 'cgeuzaine@uliege.be',
         keywords          = ['fem', 'mesh', 'finite element method', 'cad'],
-        url               = 'http://gmsh.info',
+        url               = 'https://gmsh.info',
         license           = 'GPL-2',
         platforms         = 'Posix, Windows',
         classifiers       = ['Development Status :: 5 - Production/Stable',

@@ -7,7 +7,7 @@
 
    This is a hack from the Autocad DXF to DKB .Data file translator Version 1.0
    written by Aaron A. Collins (8/13/90) ( http://www.sdsc.edu/~mjb/mae152/dxf.spec.txt )
-   and from dxf2geo by Christophe Geuzaine ( http://www.gmsh.info )
+   and from dxf2geo by Christophe Geuzaine ( https://www.gmsh.info )
 
 */
 

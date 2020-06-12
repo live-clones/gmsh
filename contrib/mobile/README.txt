@@ -4,7 +4,7 @@ of ONELAB for iOS and Android devices.
 Copyright (C) 2014-2020 Christophe Geuzaine and Maxime Graulich, University of Liege
 
 The ONELAB (http://onelab.info) mobile app is a finite element package based on
-the open source mesh generator Gmsh (http://gmsh.info) and the solver GetDP
+the open source mesh generator Gmsh (https://gmsh.info) and the solver GetDP
 (http://getdp.info). It can be used to simulate a wide variety of multi-physic
 problems: electromagnetics, thermics, mechanics... It comes packaged with a
 selection of ready-to-use examples. New models can be added simply by opening
