@@ -25,6 +25,7 @@ public:
   virtual double curvature(double par) const;
   virtual bool haveParametrization() { return !_pars.empty(); }
   virtual Range<double> parBounds(int) const;
+  void destroyGeometry();
   int createGeometry();
   virtual void mesh(bool verbose);
   int minimumDrawSegments() const { return 2 * _pars.size(); }

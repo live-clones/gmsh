@@ -782,15 +782,22 @@ static bool recreateConsecutiveElements(GEdge *ge)
 
 static void meshCompound(GEdge *ge)
 {
-  discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000);
-  ge->model()->add(de);
-  std::vector<int> phys;
+  discreteEdge *de = dynamic_cast<discreteEdge*>(ge->model()->getEntityByTag(1,ge->tag()+100000));
+  if(!de) {
+    std::vector<int> phys;
+    de = new discreteEdge(ge->model(), ge->tag() + 100000);
+    ge->model()->add(de);
+    for(std::size_t i = 0; i < ge->compound.size(); i++) {
+      GEdge *c = (GEdge *)ge->compound[i];
+      c->compoundCurve = de;
+      phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
+      c->physicals.clear();
+    }
+    de->physicals = phys;
+  }
   for(std::size_t i = 0; i < ge->compound.size(); i++) {
     GEdge *c = (GEdge *)ge->compound[i];
     de->lines.insert(de->lines.end(), c->lines.begin(), c->lines.end());
-    c->compoundCurve = de;
-    phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
-    c->physicals.clear();
   }
 
   // recreate a 1D mesh with consecutive elements (this creates new MLines)
@@ -803,7 +810,6 @@ static void meshCompound(GEdge *ge)
   de->lines.clear();
   de->mesh_vertices.clear();
   de->mesh(false);
-  de->physicals = phys;
 }
 
 #endif

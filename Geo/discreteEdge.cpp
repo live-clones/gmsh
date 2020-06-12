@@ -148,6 +148,11 @@ Range<double> discreteEdge::parBounds(int i) const
   return Range<double>(0, (double)(_discretization.size() - 1));
 }
 
+void discreteEdge::destroyGeometry() {
+  _discretization.clear();
+  _pars.clear();
+}
+
 int discreteEdge::createGeometry()
 {
   if(lines.empty()) return 0;
