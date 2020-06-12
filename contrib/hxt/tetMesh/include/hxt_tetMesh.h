@@ -63,14 +63,17 @@ typedef struct {
 
     void* userData; /* user pointer given to callback */
 
-    /* mesh size s0 at a new point is first clamped between min and max,
-       then scaled by scaling. If another point of the mesh with mesh size
-       s1 (also clamped and scaled) is closer than 0.5*(s0+s1), then the new point
-       is filtered out */
+    /* if we want to insert a point p0 with size s0, and there is a point p1
+       with size s1 at a distance d, we check if
+
+       d > fmax(nodalSize.min, fmin(nodalSize.min, 0.5*(s0+s1))) * scaling
+
+      if it is not the case, the point is filtered out
+       */
     double min;     /* default value: 0.0                                     */
     double max;     /* default value: DBL_MAX (converted to DBL_MAX if <=0.0) */
-    double scaling; /* default value: 1.0     (converted to 1.0 if <=0.0)     */
-  } meshSize;
+    double factor;  /* default value: 1.0     (converted to 1.0 if <=0.0)     */
+  } nodalSizes;
 } HXTTetMeshOptions;
 
 

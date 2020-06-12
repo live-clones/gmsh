@@ -55,11 +55,11 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   if(options->defaultThreads>0) {
     omp_set_num_threads(options->defaultThreads);
   }
-  if(options->meshSize.max<=0.0) {
-    options->meshSize.max = DBL_MAX;
+  if(options->nodalSizes.max<=0.0) {
+    options->nodalSizes.max = DBL_MAX;
   }
-  if(options->meshSize.scaling<=0.0) {
-    options->meshSize.scaling = 1.0;
+  if(options->nodalSizes.factor<=0.0) {
+    options->nodalSizes.factor = 1.0;
   }
 
   double t[8]={0};
@@ -155,22 +155,32 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   t[4] = omp_get_wtime();
 
   if(options->refine){
-    HXT_CHECK(hxtCreateNodalSize(mesh, &delOptions.nodalSizes));
+    HXTNodalSizes nodalSizes = {
+      .array = NULL,
+      .callback = options->nodalSizes.callback,
+      .userData = options->nodalSizes.userData,
+      .min = options->nodalSizes.min,
+      .max = options->nodalSizes.max,
+      .factor = options->nodalSizes.factor
+    };
+    HXT_CHECK(hxtNodalSizesInit(mesh, &nodalSizes));
 
-    if(options->meshSize.callback!=NULL) {
-      if(hxtComputeNodalSizeFromFunction(mesh, delOptions.nodalSizes, options->meshSize.callback, options->meshSize.userData)!=HXT_STATUS_OK) {
+    if(nodalSizes.callback!=NULL) {
+      if(hxtComputeNodalSizesFromFunction(mesh, &nodalSizes)!=HXT_STATUS_OK) {
         HXT_WARNING("Initial sizes are interpolated instead of being fetched from the size map");
-        HXT_CHECK(hxtComputeNodalSizeFromTrianglesAndLines(mesh, delOptions.nodalSizes));
+        HXT_CHECK(hxtComputeNodalSizesFromTrianglesAndLines(mesh, &nodalSizes));
       }
     }
     else
-      HXT_CHECK(hxtComputeNodalSizeFromTrianglesAndLines(mesh, delOptions.nodalSizes));
+      HXT_CHECK(hxtComputeNodalSizesFromTrianglesAndLines(mesh, &nodalSizes));
+
+    delOptions.nodalSizes = &nodalSizes;
 
     HXT_CHECK( setFlagsToProcessOnlyVolumesInBrep(mesh) );
 
-    HXT_CHECK(hxtRefineTetrahedra(mesh, &delOptions, options->meshSize.callback, options->meshSize.userData));
+    HXT_CHECK( hxtRefineTetrahedra(mesh, &delOptions) );
 
-    HXT_CHECK( hxtDestroyNodalSize(&delOptions.nodalSizes) );
+    HXT_CHECK( hxtNodalSizesDestroy(&nodalSizes) );
 
     HXT_INFO_COND(options->verbosity>1, "Mesh refinement finished\n");
   }

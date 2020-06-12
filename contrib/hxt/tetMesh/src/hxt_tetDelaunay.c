@@ -13,6 +13,7 @@
 #include "hxt_tetFlag.h"
 #include "hxt_tetRepair.h"
 #include "hxt_sort.h"
+#include "hxt_tetNodalSize.h"
 
 
 /**
@@ -273,22 +274,11 @@ static inline HXTStatus checkTetrahedron(HXTVertex* vertices, HXTPartition* part
 }
 
 
-static inline HXTStatus pointIsTooClose(const double* __restrict__ p1, const double* __restrict__ p2, double nodalSize){
-  double d2 = (p1[0]-p2[0])*(p1[0]-p2[0])
-            + (p1[1]-p2[1])*(p1[1]-p2[1])
-            + (p1[2]-p2[2])*(p1[2]-p2[2]); 
-  if (d2 < /*(0.94*0.94) * */nodalSize*nodalSize){
-    return  HXT_STATUS_INTERNAL;
-  }
-
-  return HXT_STATUS_OK;
-}
-
 /* if one edge of the cavity is shorter than the nodalSize, return HXT_STATUS_INTERNAL */
-static inline HXTStatus filterCavity (TetLocal* local, HXTMesh *mesh, const double *nodalSizes, const uint32_t vta)
+static inline HXTStatus filterCavity (TetLocal* local, HXTMesh *mesh, const HXTNodalSizes* nodalSizes, const uint32_t vta)
 {
   double *vtaCoord = mesh->vertices.coord + 4*vta;
-  double vtaNodalSize = nodalSizes[vta];
+  double vtaNodalSize = nodalSizes->array[vta];
 
   for (uint64_t i = 0 ; i< local->ball.num ; i++) {
     for (unsigned j=0;j<3;j++) {
@@ -296,33 +286,35 @@ static inline HXTStatus filterCavity (TetLocal* local, HXTMesh *mesh, const doub
 
       if (j!=3 || nodej != HXT_GHOST_VERTEX){
         double *Xj = mesh->vertices.coord + 4*nodej;
-        double otherNodalSize = nodalSizes[nodej];
+        double otherNodalSize = nodalSizes->array[nodej];
         if(otherNodalSize==DBL_MAX){
           otherNodalSize = vtaNodalSize;
         }
-        HXT_CHECK( pointIsTooClose(vtaCoord, Xj, 0.5*( vtaNodalSize + otherNodalSize)) );
+        if( isTooClose(vtaNodalSize, otherNodalSize, squareDist(vtaCoord, Xj), nodalSizes) )
+          return HXT_STATUS_INTERNAL;
       }
     }
   }
   return  HXT_STATUS_OK;
 }
 
-static inline HXTStatus filterTet(HXTMesh* mesh, const double *nodalSizes, const uint64_t curTet, const uint32_t vta){
+static inline HXTStatus filterTet(HXTMesh* mesh, const HXTNodalSizes* nodalSizes, const uint64_t curTet, const uint32_t vta){
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
 
   double *vtaCoord = vertices[vta].coord;
-  double vtaNodalSize = nodalSizes[vta];
+  double vtaNodalSize = nodalSizes->array[vta];
 
   for (unsigned j=0; j<4; j++) {
     uint32_t nodej = mesh->tetrahedra.node[4*curTet+j];
 
     if (j!=3 || nodej != HXT_GHOST_VERTEX){
       double* Xj = vertices[nodej].coord;
-      double otherNodalSize = nodalSizes[nodej];
+      double otherNodalSize = nodalSizes->array[nodej];
       if(otherNodalSize==DBL_MAX){
         otherNodalSize = vtaNodalSize;
       }
-      HXT_CHECK( pointIsTooClose(vtaCoord, Xj, 0.5*( vtaNodalSize + otherNodalSize)) );
+      if( isTooClose(vtaNodalSize, otherNodalSize, squareDist(vtaCoord, Xj), nodalSizes) )
+          return HXT_STATUS_INTERNAL;
     }
   }
   return HXT_STATUS_OK;
@@ -1228,7 +1220,7 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
 static HXTStatus insertion(HXT2Sync* shared2sync,
                            TetLocal* local,
                            unsigned char* verticesID,
-                           const double* nodalSizes,
+                           const HXTNodalSizes* nodalSizes,
                            uint64_t* curTet,
                            const uint32_t vta,
                            int perfectlyDelaunay){
@@ -1297,7 +1289,7 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
 static inline uint32_t filterOnMooreCurve(HXTVertex* vertices,
                                           HXTNodeInfo* nodeInfo,
                                           uint32_t n,
-                                          double* nodalSizes)
+                                          HXTNodalSizes* nodalSizes)
 {
   uint32_t mooreSkipped = 0;
   #pragma omp parallel reduction(+:mooreSkipped)
@@ -1311,8 +1303,8 @@ static inline uint32_t filterOnMooreCurve(HXTVertex* vertices,
       uint32_t lastNode = nodeInfo[i].node;
       if(nodeInfo[i].status==HXT_STATUS_TRYAGAIN){
         double* p2 = vertices[lastNode].coord;
-        double p2Size = nodalSizes[lastNode];
-        if(p1!=NULL && pointIsTooClose(p1, p2, 0.5*(p1Size+p2Size))!=HXT_STATUS_OK){
+        double p2Size = nodalSizes->array[lastNode];
+        if(p1!=NULL && isTooClose(p1Size, p2Size, squareDist(p1, p2), nodalSizes)){
           mooreSkipped++;
           nodeInfo[i].status=HXT_STATUS_FALSE;
         }
@@ -1395,7 +1387,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
     }
 
     if(!noReordering) {
-      double* sizesToInsert = options->nodalSizes + options->insertionFirst;
+      double* sizesToInsert = options->nodalSizes->array + options->insertionFirst;
 
       size_t vertSize = nToInsert*sizeof(HXTVertex);
       size_t sizeSize = nToInsert*sizeof(double);
@@ -1921,7 +1913,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
     // 5th: put vertices at the right indices
     for (uint32_t i=firstShifted; i<mesh->vertices.num; i++) {
       if(options->nodalSizes!=NULL){
-        options->nodalSizes[vertices[i].padding.index] = options->nodalSizes[i];
+        options->nodalSizes->array[vertices[i].padding.index] = options->nodalSizes->array[i];
       }
       vertices[vertices[i].padding.index] = vertices[i];
     }

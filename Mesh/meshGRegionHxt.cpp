@@ -27,7 +27,6 @@
 
 extern "C" {
 #include "hxt_tools.h"
-#include "hxt_boundary_recovery.h"
 #include "hxt_tetMesh.h"
 }
 
@@ -37,7 +36,7 @@ static HXTStatus messageCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-static HXTStatus meshSizeCallBack(double* pts, size_t numPts, void *userData)
+static HXTStatus nodalSizesCallBack(double* pts, size_t numPts, void *userData)
 {
   GRegion *gr = (GRegion *)userData;
 
@@ -404,8 +403,8 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
       0, // void* userData;
       CTX::instance()->mesh.optimizeThreshold // double qualityMin;
     },
-    { // meshSize
-      meshSizeCallBack, // HXTStatus (*callback)(double*, size_t, void* userData)
+    { // nodalSize
+      nodalSizesCallBack, // HXTStatus (*callback)(double*, size_t, void* userData)
       regions[0], // void* meshSizeData; // FIXME: should be dynamic!
       CTX::instance()->mesh.lcMin,
       CTX::instance()->mesh.lcMax,
