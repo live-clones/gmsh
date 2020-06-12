@@ -1,5 +1,4 @@
 #include "hxt_tools.h"
-
 #include "hxt_point_gen_1d.h"
 
 #include "hxt_point_gen_numerics.h"

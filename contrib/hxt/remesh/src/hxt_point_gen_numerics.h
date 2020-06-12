@@ -1,6 +1,6 @@
 #ifndef HXT_POINT_GEN_NUMERICS_H
 #define HXT_POINT_GEN_NUMERICS_H
-
+#include "hxt_tools.h"
 #include "hxt_mesh.h"
 
 // In Gmsh Numeric.cpp
@@ -9,6 +9,7 @@ double    hxtGetDet2x2(double mat[2][2]);
 //double    det3x3(double mat[3][3]);
 //double    inv3x3(double mat[3][3], double inv[3][3]);
 
+HXTStatus hxtVector(const double *v0, const double *v1, double *vec);
 double    myDot(double *a, double *b);
 double    norm(double *u);
 
@@ -24,6 +25,8 @@ double    hxtTriangleArea3D (double * xa, double *xb, double *xc);
 
 double    hxtAngle(double *v0, double *v1);
 double    hxtAngle_0_pi(double *v0, double *v1);
+double    hxtAngleSigned(double *v0, double *v1, double *n);
+double    hxtAngle_0_2pi(double *v0, double *v1, double *n);
 double    distance2(double *a, double *b);
 double    distance(double *a, double *b);
 

@@ -456,7 +456,7 @@ HXTStatus hxtCanWeSwapEdge(HXTMesh *mesh,
     uint32_t ee = perimeterEdges[i];
 
     if (edges2lines[ee] == UINT64_MAX){
-      uint64_t nt = edges->edg2tri[2*ee+0]==tt ? edges->edg2tri[2*ce+1] : edges->edg2tri[2*ce+0];
+      uint64_t nt = edges->edg2tri[2*ee+0]==tt ? edges->edg2tri[2*ee+1] : edges->edg2tri[2*ee+0];
       normal2triangle(mesh,nt,normalN);
       if (myDot(normal0n,normalN) < -dotThreshold){
         *canWeSwap = 0;
@@ -503,7 +503,7 @@ HXTStatus hxtCanWeSwapEdge(HXTMesh *mesh,
     uint32_t ee = perimeterEdges[i];
 
     if (edges2lines[ee] == UINT64_MAX){
-      uint64_t nt = edges->edg2tri[2*ee+0]==tt ? edges->edg2tri[2*ce+1] : edges->edg2tri[2*ce+0];
+      uint64_t nt = edges->edg2tri[2*ee+0]==tt ? edges->edg2tri[2*ee+1] : edges->edg2tri[2*ee+0];
       normal2triangle(mesh,nt,normalN);
       if (myDot(normal1n,normalN) < -dotThreshold){
         *canWeSwap = 0;

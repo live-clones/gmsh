@@ -3,6 +3,7 @@
 #include "hxt_surface_mesh.h"
 #include "hxt_surface_mesh_collapse.h"
 
+
 #include "hxt_point_gen_realloc.h"
 #include "hxt_rtree_wrapper.h"
 
@@ -31,6 +32,7 @@ HXTStatus hxtTransferInitialMeshToTempMesh(HXTMesh *mesh,
                                            uint32_t maxNumEdges,
                                            uint32_t maxNumLines,
                                            HXTMesh *tmesh,
+                                           uint64_t *p2t,
                                            HXTEdges *edges)
 {
 
@@ -74,6 +76,9 @@ HXTStatus hxtTransferInitialMeshToTempMesh(HXTMesh *mesh,
     tmesh->triangles.node[3*i+1] = mesh->triangles.node[3*i+1];
     tmesh->triangles.node[3*i+2] = mesh->triangles.node[3*i+2];
     tmesh->triangles.colors[i] = mesh->triangles.colors[i];
+    p2t[tmesh->triangles.node[3*i+0]] = i;
+    p2t[tmesh->triangles.node[3*i+1]] = i;
+    p2t[tmesh->triangles.node[3*i+2]] = i;
   }
   
   // Store vertices of initial mesh to temp mesh
@@ -146,7 +151,6 @@ HXTStatus hxtCreateParentStructure(HXTMesh *mesh,
     printf("counted number of points = %d \n",numCorners);
     return HXT_STATUS_ERROR;
   }
-
 
 
   // TODO delete or debug
@@ -417,7 +421,8 @@ HXTStatus hxtSurfaceMeshInsertInteriorVertex(HXTMesh *tmesh,
                                              uint64_t maxNumTriToLine,
                                              uint64_t *lines2triangles,
                                              uint32_t cn, 
-                                             uint32_t *flagV)
+                                             uint32_t *flagV,
+                                             int *inserted)
 {
 
   // THREE CASES
@@ -478,6 +483,7 @@ HXTStatus hxtSurfaceMeshInsertInteriorVertex(HXTMesh *tmesh,
                                        3,
                                        tolerance,
                                        parent));
+
 
     // Update lines2triangles if the triangle is on boundary
     if (isBoundary){
@@ -553,6 +559,8 @@ HXTStatus hxtSurfaceMeshInsertInteriorVertex(HXTMesh *tmesh,
                                          2,
                                          tolerance,
                                          parent));
+
+
     }
     {
       uint64_t trilist[2] = {edges->edg2tri[2*ne+1],edges->edg2tri[2*ce+1]};
@@ -563,6 +571,7 @@ HXTStatus hxtSurfaceMeshInsertInteriorVertex(HXTMesh *tmesh,
                                          2,
                                          tolerance,
                                          parent));
+
     }
 
 
@@ -588,8 +597,9 @@ HXTStatus hxtSurfaceMeshInsertInteriorVertex(HXTMesh *tmesh,
       }
     }
 
-    return HXT_STATUS_OK;
   }
+
+  *inserted = 1;
 
   return HXT_STATUS_OK;
 }
@@ -612,7 +622,8 @@ HXTStatus hxtSurfaceMeshInsertLineVertex(HXTMesh *tmesh,
                                          uint64_t maxNumTriToLine,
                                          uint64_t *lines2triangles,
                                          uint32_t cn,
-                                         uint32_t *flagV) 
+                                         uint32_t *flagV,
+                                         int *inserted) 
 {
 
   // Given a point that lies on a line (boundary edge)
@@ -698,6 +709,8 @@ HXTStatus hxtSurfaceMeshInsertLineVertex(HXTMesh *tmesh,
                                        2,
                                        tolerance,
                                        parent));
+
+
   }
 
 
@@ -745,6 +758,8 @@ HXTStatus hxtSurfaceMeshInsertLineVertex(HXTMesh *tmesh,
   }
 
 
+  *inserted = 1;
+  
   return HXT_STATUS_OK; 
 }
 
@@ -755,8 +770,11 @@ HXTStatus hxtSurfaceMeshInsertLineVertex(HXTMesh *tmesh,
 //
 //**************************************************************************************************
 //**************************************************************************************************
-HXTStatus hxtSurfaceMeshInsertionSwap(HXTPointGenOptions *opt,
-                                      HXTMesh *mesh,
+HXTStatus hxtSurfaceMeshInsertionSwap(const HXTMesh *mesh,
+                                      const double *directions,
+                                      const double *sizemap,
+                                      HXTPointGenOptions *opt,
+                                      HXTMesh *tmesh,
                                       HXTMesh *fmesh,
                                       HXTEdges *edges,
                                       HXTPointGenParent *parent,
@@ -774,43 +792,20 @@ HXTStatus hxtSurfaceMeshInsertionSwap(HXTPointGenOptions *opt,
     int numSwaps = 0;
     for (uint32_t i = 0 ; i < edges->numEdges ; i++ ) {
 
-      if (edges2lines[i] != UINT64_MAX) continue;
 
-      //*************************************************************
-      // TODO 
-      // TO NOT COLLAPSE EDGES ADJACENT TO BOUNDARIES
-      // QUICK FIX 
-      // this is to not have a swap create a triangle that is 
-      // onto or creates intersections with the adjacent triangles
-      //*************************************************************
-      {
-        uint64_t t0 = edges->edg2tri[2*i+0];
-        uint64_t t1 = edges->edg2tri[2*i+1];
-        int b0 = 0;
-        int b1 = 0;
-        for (uint32_t k=0; k<3; k++){
-          uint32_t e = edges->tri2edg[3*t0+k];
-          if (edges2lines[e] != UINT64_MAX) b0 = 1;
-        }
-        if (t1 != UINT64_MAX){
-          for (uint32_t k=0; k<3; k++){
-            uint32_t e = edges->tri2edg[3*t1+k];
-            if (edges2lines[e] != UINT64_MAX) b1 = 1;
-          }
-        }
-        if (t1 == UINT64_MAX){
-          b1 = 1;
-        }
-        if (b0 == 1 && b1 == 1) {
-          continue;
-        }
-      }
+      if (edges2lines[i] != UINT64_MAX) continue; // Do not swap if it's boundary line
+
+      if (tmesh->triangles.colors[edges->edg2tri[2*i+0]] == opt->skipColor) continue;
+      if (tmesh->triangles.colors[edges->edg2tri[2*i+1]] == opt->skipColor) continue;
+
+      //hxtTempPrintSwap(mesh,edges,i,0);
+
 
       //*************************************************************
       // Swapping
       //*************************************************************
       int swapped = 0 ;
-      HXT_CHECK(hxtSwapEdge(mesh, 
+      HXT_CHECK(hxtSwapEdge(tmesh, 
                             edges, 
                             NULL,
                             NULL, 
@@ -823,6 +818,7 @@ HXTStatus hxtSurfaceMeshInsertionSwap(HXTPointGenOptions *opt,
       numSwaps += swapped;
 
       //*************************************************************
+      // Updating structures
       //*************************************************************
       // Do not rebuild structures if swap did not happen
       // Notice!
@@ -839,17 +835,17 @@ HXTStatus hxtSurfaceMeshInsertionSwap(HXTPointGenOptions *opt,
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap same triangles for one edge");
       
       // TODO delete or debug mode
-      if (mesh->triangles.colors[t0] == UINT16_MAX){ 
+      if (tmesh->triangles.colors[t0] == UINT16_MAX){ 
         FILE *dd;
         hxtPosInit("cannotCollapseSwap.pos", "Check", &dd);
-        double *v0 = mesh->vertices.coord + 4*edges->node[2*i+0];
-        double *v1 = mesh->vertices.coord + 4*edges->node[2*i+1];
+        double *v0 = tmesh->vertices.coord + 4*edges->node[2*i+0];
+        double *v1 = tmesh->vertices.coord + 4*edges->node[2*i+1];
         hxtPosAddLine(dd,v0,v1,t0);
         hxtPosFinish(dd);
-        HXT_CHECK(hxtMeshWriteGmsh(mesh, "FINALMESHcannotSwap.msh"));
+        HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESHcannotSwap.msh"));
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap color of t0 == UINT16_MAX");
       }
-      if (mesh->triangles.colors[t1] == UINT16_MAX){
+      if (tmesh->triangles.colors[t1] == UINT16_MAX){
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap color of t1 == UINT16_MAX");
       }
 
@@ -875,7 +871,7 @@ HXTStatus hxtSurfaceMeshInsertionSwap(HXTPointGenOptions *opt,
       //*************************************************************
       // Reassigning vertices contained on swapped triangles
       uint64_t trilist[2] = {t0,t1};
-      HXT_CHECK(reassignTriangleVertices(mesh,
+      HXT_CHECK(reassignTriangleVertices(tmesh,
                                          fmesh,
                                          data,
                                          trilist,
@@ -886,13 +882,14 @@ HXTStatus hxtSurfaceMeshInsertionSwap(HXTPointGenOptions *opt,
     }
 
     /*char buffer[32];*/
-    /*snprintf(buffer,sizeof(char)*32,"FINALMESH_%i.msh",(int)ii);*/
+    /*snprintf(buffer,sizeof(char)*32,"tmeshes/finalmesh_%i.msh",(int)ii);*/
     /*HXT_CHECK(hxtMeshWriteGmsh(mesh, buffer));*/
 
     HXT_INFO_COND(opt->verbosity>0,"%d - Number of swaps in insertion %d", ii, numSwaps);
     if (numSwapsOld == numSwaps) break;
     numSwapsOld = numSwaps;
   }
+
 
   return HXT_STATUS_OK; 
 }
@@ -907,7 +904,10 @@ HXTStatus hxtSurfaceMeshInsertionSwap(HXTPointGenOptions *opt,
 HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                          HXTMesh *mesh,
                          HXTEdges *edges,
+                         const double *directions,
+                         const double *sizemap,
                          HXTPointGenParent *parent,
+                         uint64_t *p2t,
                          HXTMesh *fmesh,
                          HXTMesh *nmesh)
 {
@@ -986,7 +986,9 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                                              maxNumEdges,
                                              maxNumLines,
                                              tmesh,
+                                             p2t,
                                              edges));
+
 
   //***********************************************************************************************
   // Create lines to edges array; 
@@ -1037,11 +1039,41 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
     if (parent[i].type == UINT8_MAX || parent[i].id == UINT64_MAX){
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"No parent for generated point");
     }
+    if (parent[i].type == 4) continue;
     double *cp = fmesh->vertices.coord + 4*i; 
     double cpmin[3] = {cp[0]-boxSmall, cp[1]-boxSmall, cp[2]-boxSmall};
     double cpmax[3] = {cp[0]+boxSmall, cp[1]+boxSmall, cp[2]+boxSmall};
     hxtRTreeInsert(cpmin,cpmax,i,data); 
   }
+
+  //***********************************************************************************************
+  // Complete p2t for fmesh->vertices 
+  //***********************************************************************************************
+  //
+  // i = 0                  -> mesh->vertices.num :                  initial vertices parents
+  // i = mesh->vertices.num -> numTotalVertices:                     parents of generated points inserted
+  // i = numTotalVertices   -> numTotalVertices+fmesh->vertices.num: generated points parent tri 
+  //
+  // The last one SHOULD NOT CHANGE, it is used to associate the indices 
+ 
+  for (uint32_t i=numTotalVertices; i<numTotalVertices+fmesh->vertices.num; i++){
+    uint32_t v = i-numTotalVertices;
+    if (parent[v].type == 4) continue;
+    if (parent[v].type == 2){
+      p2t[i] = parent[v].id;
+      continue;
+    }
+    if(parent[v].type == 1){
+      p2t[i] = lines2triangles[maxNumTriToLine*parent[v].id];
+      if (p2t[i] == UINT64_MAX) return HXT_STATUS_ERROR;
+      continue;
+    }
+    if(parent[v].type == 15){
+      // we don't care, they are not inserted
+      continue;
+    }
+  }
+
 
 
 
@@ -1126,6 +1158,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
 
 
       // Insert point in triangulation
+      int inserted = 0;
       HXT_CHECK(hxtSurfaceMeshInsertLineVertex(tmesh,
                                                fmesh,
                                                edges,
@@ -1137,12 +1170,16 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                                                maxNumTriToLine,
                                                lines2triangles,
                                                i,
-                                               flagV)); 
+                                               flagV,
+                                               &inserted)); 
+      
+      if(inserted) p2t[tmesh->vertices.num-1] = p2t[numTotalVertices+i];
  
       countPointsOnLines++;
 
     }
   }
+  HXT_INFO("    Number of inserted points on corners/lines = %d", countPointsOnCorners+countPointsOnLines);
 
   if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH0lines.msh"));
 
@@ -1152,7 +1189,14 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   //***********************************
   HXT_INFO("--- Swaps after insertion on lines");
 
-  HXT_CHECK(hxtSurfaceMeshInsertionSwap(opt,
+  int numInsertionSwaps = 0;
+  HXT_INFO("    Number of swaps = %d \n",numInsertionSwaps); 
+
+
+  HXT_CHECK(hxtSurfaceMeshInsertionSwap(mesh,
+                                        directions,
+                                        sizemap,
+                                        opt,
                                         tmesh,
                                         fmesh,
                                         edges,
@@ -1163,7 +1207,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                                         data,
                                         tolerance,
                                         0.99,
-                                        0));
+                                        numInsertionSwaps));
 
 
   if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH1lines_swap.msh"));
@@ -1179,6 +1223,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
     if (parent[i].type != 2) continue;
 
     // Insert point in triangulation
+    int inserted = 0;
     HXT_CHECK(hxtSurfaceMeshInsertInteriorVertex(tmesh,
                                                  fmesh,
                                                  edges,
@@ -1189,11 +1234,17 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                                                  maxNumTriToLine,
                                                  lines2triangles,
                                                  i,
-                                                 flagV));
+                                                 flagV,
+                                                 &inserted));
+
+    if(inserted) p2t[tmesh->vertices.num-1] = p2t[numTotalVertices+i];
 
     countPointsOnTriangles++;
 
   }
+
+  HXT_INFO("    Number of inserted points on interior = %d", countPointsOnTriangles);
+
   if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH2interior.msh"));
 
 
@@ -1202,8 +1253,13 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   //***********************************
   HXT_INFO("--- Swaps after insertion on interior");
 
+  int numInsertionSwapsFinal = 20;
+  HXT_INFO("    Number of swaps = %d",numInsertionSwapsFinal);
 
-  HXT_CHECK(hxtSurfaceMeshInsertionSwap(opt,
+  HXT_CHECK(hxtSurfaceMeshInsertionSwap(mesh,
+                                        directions,
+                                        sizemap,
+                                        opt,
                                         tmesh,
                                         fmesh,
                                         edges,
@@ -1214,7 +1270,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                                         data,
                                         tolerance,
                                         0.99,
-                                        100));
+                                        numInsertionSwapsFinal));
 
 
   if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH3interiorswap.msh"));
@@ -1229,6 +1285,10 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   HXT_INFO_COND(opt->verbosity>0,"Number of all points on vertices:           %d", countPointsOnVerticesTotal);
   HXT_INFO_COND(opt->verbosity>0,"Number of points on triangle vertices:      %d", countPointsOnTriangleVertices);
 
+
+  HXT_INFO("");
+  HXT_INFO("    Total number of inserted points = %d \n", countPointsOnCorners+countPointsOnLines+countPointsOnTriangles);
+
   //***********************************************************************************************
   // COLLAPSE
   //***********************************************************************************************
@@ -1239,6 +1299,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   for (uint32_t i=0; i<tmesh->vertices.num; i++) tparent[i].type = UINT8_MAX;
   for (uint32_t i=0; i<tmesh->vertices.num; i++) tparent[i].id = UINT64_MAX;
   HXT_CHECK(hxtCreateParentStructure(mesh,fmesh,tmesh,parent,tparent));
+
 
 
   uint32_t countVerticesToRemove = 0;
@@ -1259,12 +1320,18 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
 
   clock_t time0 = clock();
 
-  HXT_CHECK(hxtSurfaceMeshCollapse(opt,
+  HXT_CHECK(hxtSurfaceMeshCollapse(mesh,
+                                   directions,
+                                   sizemap,
+                                   opt,
                                    tmesh,
-                                   nmesh,
                                    edges,
                                    tparent,
-                                   flagV));
+                                   p2t,
+                                   flagV,
+                                   nmesh));
+
+
 
   clock_t time1 = clock();
   double time_estimate = (double)(time1-time0) / CLOCKS_PER_SEC;

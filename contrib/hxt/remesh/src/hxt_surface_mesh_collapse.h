@@ -7,12 +7,16 @@
 #include "hxt_point_gen_utils.h"
 #include "hxt_point_gen_options.h"
 
-HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
+HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
+                                 const double *directions,
+                                 const double *sizemap,
+                                 HXTPointGenOptions *opt,
                                  HXTMesh *tmesh,
-                                 HXTMesh *nmesh,
                                  HXTEdges *tedges,
                                  HXTPointGenParent *parent,
-                                 uint32_t *flagV);
+                                 uint64_t *p2t,
+                                 uint32_t *flagV,
+                                 HXTMesh *nmesh);
 
 
 #endif

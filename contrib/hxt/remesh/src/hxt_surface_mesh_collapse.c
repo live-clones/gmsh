@@ -121,11 +121,10 @@ HXTStatus hxtCheckOrientation(HXTMesh *mesh,
 //**************************************************************************************************
 //**************************************************************************************************
 HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
-                                          HXTPointGenParent *parent,
+                                          uint64_t *p2t,
                                           uint32_t *flagV,
                                           HXTMesh *nmesh)
 {
-  HXT_UNUSED(parent);
 
   for (uint32_t i=0; i<tmesh->vertices.num; i++) flagV[i] = UINT32_MAX;
 
@@ -172,6 +171,22 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
     cT++;
   }
 
+  uint64_t *np2t;
+  HXT_CHECK(hxtMalloc(&np2t,nmesh->vertices.num*sizeof(uint64_t)));
+  for (uint32_t i=0; i<nmesh->vertices.num; i++) np2t[i] = UINT64_MAX;
+
+  for (uint32_t i=0; i<tmesh->vertices.num; i++){
+    if (flagV[i] == UINT32_MAX) continue;
+    np2t[node2node[i]] = p2t[i];
+  }
+
+  for (uint32_t i=0; i<nmesh->vertices.num; i++){
+    if (np2t[i] == UINT64_MAX) return HXT_STATUS_ERROR;
+    p2t[i] = np2t[i];
+  }
+
+  HXT_CHECK(hxtFree(&np2t));
+
   HXT_CHECK(hxtFree(&node2node));
 
   return HXT_STATUS_OK;
@@ -184,29 +199,33 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
 //
 //**************************************************************************************************
 //**************************************************************************************************
-HXTStatus hxtSurfaceMeshCollapseSwap(HXTPointGenOptions *opt,
-                                     HXTMesh *mesh,
-                                     HXTEdges *edges,
+HXTStatus hxtSurfaceMeshCollapseSwap(const HXTMesh *mesh,
+                                     const double *directions,
+                                     const double *sizemap,
+                                     HXTPointGenOptions *opt,
+                                     HXTMesh *tmesh,
+                                     HXTEdges *tedges,
                                      uint32_t *flagE,
                                      HXTPointGenParent *parent,
                                      uint64_t *edges2lines,
                                      uint64_t maxNumTriToLine,
                                      uint64_t *lines2triangles,
-                                     double angle,
                                      int iter,
                                      int swapmax)
 {
   HXT_UNUSED(opt);
-  HXT_UNUSED(angle);
   HXT_UNUSED(iter);
 
   int numSwapsOld = 0;
   for (int ii=0; ii<swapmax; ii++){
     int numSwaps = 0;
-    for (uint32_t i = 0 ; i < edges->numEdges ; i++ ) {
+    for (uint32_t i = 0 ; i < tedges->numEdges ; i++ ) {
 
       if (flagE[i] == UINT32_MAX) continue; // Do not swap if edge is already collapsed
       if (edges2lines[i] != UINT64_MAX) continue; // Do not swap if it's boundary line
+
+      if (tmesh->triangles.colors[tedges->edg2tri[2*i+0]] == opt->skipColor) continue;
+      if (tmesh->triangles.colors[tedges->edg2tri[2*i+1]] == opt->skipColor) continue;
 
       //hxtTempPrintSwap(mesh,edges,i,0);
 
@@ -214,8 +233,8 @@ HXTStatus hxtSurfaceMeshCollapseSwap(HXTPointGenOptions *opt,
       // Swapping
       //*************************************************************
       int swapped = 0 ;
-      HXT_CHECK(hxtSwapEdge(mesh, 
-                            edges, 
+      HXT_CHECK(hxtSwapEdge(tmesh, 
+                            tedges, 
                             NULL, 
                             NULL,
                             edges2lines,
@@ -241,8 +260,8 @@ HXTStatus hxtSurfaceMeshCollapseSwap(HXTPointGenOptions *opt,
       if (swapped == 0) continue;
 
       // Rebuilding edges2lines and lines2triangles
-      uint64_t t0 = edges->edg2tri[2*i+0];
-      uint64_t t1 = edges->edg2tri[2*i+1];
+      uint64_t t0 = tedges->edg2tri[2*i+0];
+      uint64_t t1 = tedges->edg2tri[2*i+1];
       if (t0 == UINT64_MAX || t1 == UINT64_MAX){ 
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Collapse Swap edg2tri == UINT64_MAX");
       }
@@ -250,22 +269,22 @@ HXTStatus hxtSurfaceMeshCollapseSwap(HXTPointGenOptions *opt,
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap same triangles for one edge");
  
       // TODO delete or debug mode
-      if (mesh->triangles.colors[t0] == UINT16_MAX){ 
+      if (tmesh->triangles.colors[t0] == UINT16_MAX){ 
         FILE *dd;
         hxtPosInit("cannotCollapseSwap.pos", "Check", &dd);
-        double *v0 = mesh->vertices.coord + 4*edges->node[2*i+0];
-        double *v1 = mesh->vertices.coord + 4*edges->node[2*i+1];
+        double *v0 = tmesh->vertices.coord + 4*tedges->node[2*i+0];
+        double *v1 = tmesh->vertices.coord + 4*tedges->node[2*i+1];
         hxtPosAddLine(dd,v0,v1,t0);
         hxtPosFinish(dd);
-        HXT_CHECK(hxtMeshWriteGmsh(mesh, "FINALMESHcannotSwap.msh"));
+        HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESHcannotSwap.msh"));
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Collapse Swap color of t0 == UINT64_MAX");
       }
-      if (mesh->triangles.colors[t1] == UINT16_MAX){
+      if (tmesh->triangles.colors[t1] == UINT16_MAX){
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Collapse Swap color of t1 == UINT64_MAX");
       }
 
       for (uint32_t j=0; j<3; j++){
-        uint32_t ce = edges->tri2edg[3*t0+j];
+        uint32_t ce = tedges->tri2edg[3*t0+j];
         if (edges2lines[ce] == UINT64_MAX) continue;
         uint64_t cl = edges2lines[ce];
         for (uint64_t k=0; k<maxNumTriToLine; k++){
@@ -274,7 +293,7 @@ HXTStatus hxtSurfaceMeshCollapseSwap(HXTPointGenOptions *opt,
         }
       }
       for (uint32_t j=0; j<3; j++){
-        uint32_t ce = edges->tri2edg[3*t1+j];
+        uint32_t ce = tedges->tri2edg[3*t1+j];
         if (edges2lines[ce] == UINT64_MAX) continue;
         uint64_t cl = edges2lines[ce];
         for (uint64_t k=0; k<maxNumTriToLine; k++){
@@ -285,9 +304,9 @@ HXTStatus hxtSurfaceMeshCollapseSwap(HXTPointGenOptions *opt,
 
       // Updating parent
       for (uint32_t j=0; j<3; j++){
-        uint32_t v0 = mesh->triangles.node[3*t0+j];
+        uint32_t v0 = tmesh->triangles.node[3*t0+j];
         if (parent[v0].type == 2) parent[v0].id = t0;
-        uint32_t v1 = mesh->triangles.node[3*t1+j];
+        uint32_t v1 = tmesh->triangles.node[3*t1+j];
         if (parent[v1].type == 2) parent[v1].id = t1;
       }
 
@@ -311,12 +330,16 @@ HXTStatus hxtSurfaceMeshCollapseSwap(HXTPointGenOptions *opt,
 //
 //**************************************************************************************************
 //**************************************************************************************************
-HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
+HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
+                                 const double *directions,
+                                 const double *sizemap,
+                                 HXTPointGenOptions *opt,
                                  HXTMesh *tmesh, // intermediate mesh with initial+generated points
-                                 HXTMesh *nmesh, // to store final mesh 
                                  HXTEdges *tedges, 
-                                 HXTPointGenParent *parent,
-                                 uint32_t *flagV)
+                                 HXTPointGenParent *tparent,
+                                 uint64_t *p2t,
+                                 uint32_t *flagV,
+                                 HXTMesh *nmesh) // to store final mesh 
 {
 
   HXT_INFO("");
@@ -394,7 +417,7 @@ HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
       if (countLines == 0) 
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Could not find lines for this vertex");
 
-      if (countLines>2 && parent[v].type != 15){
+      if (countLines>2 && tparent[v].type != 15){
         FILE *test;
         hxtPosInit("checkNonManifoldPoint.pos","point",&test);
         hxtPosAddPoint(test,&tmesh->vertices.coord[4*v],0);
@@ -416,13 +439,14 @@ HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
   //**************************************************
   uint32_t countPointsToDelete = 0;
   for (uint32_t i=0; i<tmesh->vertices.num; i++){
-    if (parent[i].type == 4) continue;
+    if (tparent[i].type == 4) continue;
     if (flagV[i] == UINT32_MAX) countPointsToDelete++;
     if (flagV[i] != UINT32_MAX) flagV[i] = 2;
   }
 
   uint32_t countPointsCollapsed = 0;
 
+for (uint32_t kkk=0; kkk<10; kkk++){
 
   //***********************************************************************************************
   //***********************************************************************************************
@@ -435,6 +459,7 @@ HXTStatus hxtSurfaceMeshCollapse(HXTPointGenOptions *opt,
   uint32_t numCollapsedInteriorPoints = 0;
   uint32_t old = numCollapsedInteriorPoints;
 
+
 for (uint32_t kk=0; kk<100; kk++){
 
   for (uint32_t i=0; i<tmesh->vertices.num; i++){
@@ -446,12 +471,12 @@ for (uint32_t kk=0; kk<100; kk++){
     if (flagV[cv] != UINT32_MAX) continue;
 
     // Check if vertex is on the interior 
-    if (parent[cv].type != 2) continue;
+    if (tparent[cv].type != 2) continue;
 
     int collapsed = 0;
     HXT_CHECK(hxtRemoveInteriorVertex(tmesh, 
                                       tedges, 
-                                      parent,
+                                      tparent,
                                       flagE, 
                                       lines2edges,
                                       edges2lines,
@@ -477,15 +502,17 @@ for (uint32_t kk=0; kk<100; kk++){
   HXT_INFO_COND(opt->verbosity>0,"Iteration %d collapsed = %d", kk, countPointsCollapsed);
 
   int finalSwaps = 1;
-  HXT_CHECK(hxtSurfaceMeshCollapseSwap(opt,
+  HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
+                                       directions,
+                                       sizemap,
+                                       opt,
                                        tmesh,
                                        tedges,
                                        flagE,
-                                       parent,
+                                       tparent,
                                        edges2lines,
                                        maxNumTriToLine,
                                        lines2triangles,
-                                       0.0,
                                        kk,
                                        finalSwaps));
 
@@ -509,15 +536,17 @@ for (uint32_t kk=0; kk<100; kk++){
 
   int numSwapsCollapseLines = 0;
   HXT_INFO_COND(opt->verbosity>0,"Number of swaps = %d ", numSwapsCollapseLines);
-  HXT_CHECK(hxtSurfaceMeshCollapseSwap(opt,
+  HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
+                                       directions,
+                                       sizemap,
+                                       opt,
                                        tmesh,
                                        tedges,
                                        flagE,
-                                       parent,
+                                       tparent,
                                        edges2lines,
                                        maxNumTriToLine,
                                        lines2triangles,
-                                       0.99,
                                        0,
                                        numSwapsCollapseLines));
 
@@ -545,12 +574,12 @@ for (uint32_t kk=0; kk<10; kk++){
     if (flagV[cv] != UINT32_MAX) continue;
 
     // Check if vertex is on the boundary 
-    if (parent[cv].type != 1) continue;
+    if (tparent[cv].type != 1) continue;
     
     int collapsed = 0;
     HXT_CHECK(hxtRemoveBoundaryVertex(tmesh,
                                       tedges,
-                                      parent,
+                                      tparent,
                                       flagE,
                                       lines2edges,
                                       edges2lines,
@@ -575,15 +604,17 @@ for (uint32_t kk=0; kk<10; kk++){
   HXT_INFO_COND(opt->verbosity>0,"Iteration %d collapsed = %d", kk, countPointsCollapsed);
 
   int finalSwaps = 1;
-  HXT_CHECK(hxtSurfaceMeshCollapseSwap(opt,
+  HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
+                                       directions,
+                                       sizemap,
+                                       opt,
                                        tmesh,
                                        tedges,
                                        flagE,
-                                       parent,
+                                       tparent,
                                        edges2lines,
                                        maxNumTriToLine,
                                        lines2triangles,
-                                       0.0,
                                        kk,
                                        finalSwaps));
 
@@ -595,9 +626,9 @@ for (uint32_t kk=0; kk<10; kk++){
 }
 
 
-
   if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH6linecollapse.msh"));
 
+  }
 
   //***********************************************************************************************
   // Final swapping after collapsing edges
@@ -606,15 +637,17 @@ for (uint32_t kk=0; kk<10; kk++){
   HXT_INFO("--- Swaps final");
 
   int finalSwaps = 50;
-  HXT_CHECK(hxtSurfaceMeshCollapseSwap(opt,
+  HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
+                                       directions,
+                                       sizemap,
+                                       opt,
                                        tmesh,
                                        tedges,
                                        flagE,
-                                       parent,
+                                       tparent,
                                        edges2lines,
                                        maxNumTriToLine,
                                        lines2triangles,
-                                       0.0,
                                        0,
                                        finalSwaps));
 
@@ -627,7 +660,7 @@ for (uint32_t kk=0; kk<10; kk++){
   // TODO debug or delete
   uint32_t countNOT =0;
   for (uint32_t i=0; i<tmesh->vertices.num; i++){
-    if (parent[i].type == 4) continue;
+    if (tparent[i].type == 4) continue;
     if (flagV[i] == UINT32_MAX) countNOT++;
   }
   if (countNOT != (countPointsToDelete-countPointsCollapsed))
@@ -638,7 +671,7 @@ for (uint32_t kk=0; kk<10; kk++){
     FILE *nc;
     hxtPosInit("pointsNotCollapsed.pos","points",&nc);
     for (uint32_t i=0; i<tmesh->vertices.num; i++){
-      if (parent[i].type == 4) continue;
+      if (tparent[i].type == 4) continue;
       if (flagV[i] == UINT32_MAX){
         hxtPosAddPoint(nc,&tmesh->vertices.coord[4*i],0);
       }
@@ -647,67 +680,13 @@ for (uint32_t kk=0; kk<10; kk++){
     hxtPosFinish(nc);
   }
 
-
-
-  //*************************************************
-  // Temporary write out of final mesh 
-  // TODO delete
-  //*************************************************
-  if(0){
-    FILE *dd;
-    hxtPosInit("trianglesaftercollapse.pos", "Check", &dd); 
-    for (uint64_t l=0; l<tmesh->triangles.num; l++){
-      if (tmesh->triangles.colors[l] == UINT16_MAX) continue;
-      uint64_t t = l;
-      double *v0 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*t+0];
-      double *v1 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*t+1];
-      double *v2 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*t+2];
-      hxtPosAddTriangle(dd,v0,v1,v2,tmesh->triangles.colors[t]);
-
-      //double vc[3];
-      //vc[0] = (v0[0]+v1[0]+v2[0])/3.;
-      //vc[1] = (v0[1]+v1[1]+v2[1])/3.;
-      //vc[2] = (v0[2]+v1[2]+v2[2])/3.;
-      //hxtPosAddText(dd,vc,"%lu",l);
-    }
-    hxtPosFinish(dd);
-  }
-
-  //*************************************************
-  // Temporary write out of final lines 
-  // TODO delete
-  //*************************************************
-  if(0){
-    FILE *ll;
-    hxtPosInit("linesaftercollapse.pos", "Check", &ll); 
-    for (uint64_t l=0; l<tmesh->lines.num; l++){
-      if (tmesh->lines.colors[l] == UINT16_MAX) continue;
-      double *v0 = tmesh->vertices.coord + 4*tmesh->lines.node[2*l+0];
-      double *v1 = tmesh->vertices.coord + 4*tmesh->lines.node[2*l+1];
-      hxtPosAddLine(ll,v0,v1,tmesh->lines.colors[l]);
-      double vc[3];
-      vc[0] = (v0[0]+v1[0])/2.;
-      vc[1] = (v0[1]+v1[1])/2.;
-      vc[2] = (v0[2]+v1[2])/2.;
-      hxtPosAddText(ll,vc,"%lu",l);
-    }
-    hxtPosFinish(ll);
-  }
-
   //*************************************************
   // Transfer to new mesh 
   //*************************************************
   HXT_INFO("");
   HXT_INFO("Transfer to new mesh");
 
-  HXT_CHECK(hxtSurfaceMeshTransferToNewMesh(tmesh, parent, flagV, nmesh));
-
-
-  //*************************************************
-  // Simple smoothing
-  // TO BE REPLACED with right-angled optimization
-  //*************************************************
-  if(0) HXT_CHECK(hxtPointGenSmoothing(nmesh));
+  HXT_CHECK(hxtSurfaceMeshTransferToNewMesh(tmesh, p2t, flagV, nmesh));
 
 
   //*************************************************

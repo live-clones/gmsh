@@ -77,6 +77,37 @@ HXTStatus hxtPointGenWriteScalarTriangles(HXTMesh *mesh,
   return HXT_STATUS_OK;
 }
 
+HXTStatus hxtPointGenWriteSizemapTriangles(HXTMesh *mesh, 
+                                           const double *values,
+                                           const char *filename)
+{
+  FILE *file = fopen(filename,"w");
+  if (file == NULL) return HXT_STATUS_WRITE_ERROR;
+  fprintf(file,"View \"Sizes\"{\n");
+  for (uint64_t i=0; i<mesh->triangles.num; i++){
+    fprintf(file,"ST(");
+    for (uint32_t j=0; j<3; j++){
+      uint32_t vv = mesh->triangles.node[3*i+j];
+      fprintf(file,"%f,%f,%f", mesh->vertices.coord[4*vv+0], mesh->vertices.coord[4*vv+1], mesh->vertices.coord[4*vv+2]);
+      if (j<2)
+        fprintf(file,",");
+    }
+    fprintf(file,")");
+    fprintf(file,"{");
+    for ( uint32_t j=0; j<3; j++){
+      uint32_t vv = mesh->triangles.node[3*i+j];
+      fprintf(file,"%f", values[3*vv+0]);
+      if (j<2)
+        fprintf(file,",");
+    }
+    fprintf(file,"};\n");
+  }
+  fprintf(file,"};");
+  fclose(file);
+  
+  return HXT_STATUS_OK;
+}
+
 
 
 HXTStatus hxtPointGenWriteDirections(HXTMesh *mesh, 
@@ -182,6 +213,55 @@ HXTStatus hxtPointGenWriteDirectionsEdges(HXTEdges *edges,
 }
 
 
+HXTStatus hxtPointGenWriteScaledDirections3d(HXTMesh *mesh, 
+                                             const double *directions,
+                                             const char *filename)
+{
+
+  FILE *file = fopen(filename,"w");
+  for (uint64_t i=0; i<mesh->vertices.num; i++){
+    for (uint32_t j=0; j<3; j++){
+
+      double tempx = directions[9*i+3*j+0];
+      double tempy = directions[9*i+3*j+1];
+      double tempz = directions[9*i+3*j+2];
+      fprintf(file,"%.16g %.16g %.16g ", tempx,tempy,tempz);
+    }
+    fprintf(file,"\n");
+  }
+  fprintf(file,"\n");
+  fclose(file);
+  
+  return HXT_STATUS_OK;
+}
+
+HXTStatus hxtPointGenReadScaledDirections3d(HXTMesh *mesh, 
+                                            double *d,
+                                            const char *filename)
+{
+
+  FILE *fp = fopen(filename,"r");
+  if (fp == NULL)
+    return HXT_STATUS_ERROR;
+
+  rewind (fp);
+  size_t n;
+  char buf[BUFSIZ]={""};
+  while( fgets(buf, BUFSIZ, fp )!=NULL){
+    for(uint32_t i=0; i<mesh->vertices.num; i++){
+      sscanf(buf, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &d[9*i+0], &d[9*i+1], &d[9*i+2], &d[9*i+3], &d[9*i+4], &d[9*i+5], &d[9*i+6], &d[9*i+7], &d[9*i+8]);
+      if(fgets(buf, BUFSIZ, fp )==NULL)
+        return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to read line");
+    }
+  }
+
+
+  
+  return HXT_STATUS_OK;
+}
+
+
+
 
 
 HXTStatus hxtPointGenReadSizesFile2D(const char *filename, 
@@ -251,6 +331,43 @@ HXTStatus hxtPointGenReadSizesFile2D(const char *filename,
   fclose(fp);
   return HXT_STATUS_OK;
 }
+
+
+HXTStatus hxtPointGenReadSingularities(const char *filename, 
+                                       uint32_t *numSings,
+                                       uint32_t **sings)
+{
+
+  FILE *fp = fopen(filename,"r");
+  if (fp == NULL)
+    return HXT_STATUS_ERROR;
+
+  rewind (fp);
+  size_t n;
+  char buf[BUFSIZ]={""};
+  while( fgets(buf, BUFSIZ, fp )!=NULL){
+
+    uint32_t nums = atoi(buf);
+    *numSings = nums;
+    HXT_CHECK(hxtMalloc(sings, sizeof( int )*nums) );
+    if (sings == NULL)return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+    for(n=0;n<(size_t)nums;++n){
+      if(fgets(buf, BUFSIZ, fp )==NULL)
+        return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to read line");
+      sscanf(buf, "%d", &(*sings)[(size_t) n] );
+    }
+ 
+    break;
+  }  
+
+  fclose(fp);
+ 
+
+
+
+  return HXT_STATUS_OK;
+}
+
 
 
 
