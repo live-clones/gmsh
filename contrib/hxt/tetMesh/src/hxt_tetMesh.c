@@ -18,6 +18,8 @@
 #include "hxt_tetQuality.h"
 #include "hxt_omp.h"
 
+#include "hxt_boundary_recovery.h"
+
 // void aspect_ratio_graph(HXTMesh* mesh) {
 //     // make a count of aspect ratio...
 //   unsigned bins[21] = {0};
@@ -52,6 +54,12 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
 
   if(options->defaultThreads>0) {
     omp_set_num_threads(options->defaultThreads);
+  }
+  if(options->nodalSizes.max<=0.0) {
+    options->nodalSizes.max = DBL_MAX;
+  }
+  if(options->nodalSizes.factor<=0.0) {
+    options->nodalSizes.factor = 1.0;
   }
 
   double t[8]={0};
@@ -97,10 +105,6 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   t[2] = omp_get_wtime();
 
   if (nbMissingTriangles!=0 || nbMissingLines!=0){
-    if(options->recoveryFun==NULL)
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR,
-        "there are missing features but no boundary recovery function is given");
-
     if(nbMissingTriangles)
       HXT_INFO("Recovering %" HXTu64 " missing facet(s)",
                nbMissingTriangles);
@@ -109,7 +113,7 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
                nbMissingLines);
 
     uint32_t oldNumVertices = mesh->vertices.num;
-    HXT_CHECK(options->recoveryFun(mesh, options->recoveryData));
+    HXT_CHECK( hxt_boundary_recovery(mesh) );
 
     if(oldNumVertices < mesh->vertices.num) {
       HXT_INFO("Steiner(s) point(s) were inserted");
@@ -151,22 +155,32 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   t[4] = omp_get_wtime();
 
   if(options->refine){
-    HXT_CHECK(hxtCreateNodalSize(mesh, &delOptions.nodalSizes));
+    HXTNodalSizes nodalSizes = {
+      .array = NULL,
+      .callback = options->nodalSizes.callback,
+      .userData = options->nodalSizes.userData,
+      .min = options->nodalSizes.min,
+      .max = options->nodalSizes.max,
+      .factor = options->nodalSizes.factor
+    };
+    HXT_CHECK(hxtNodalSizesInit(mesh, &nodalSizes));
 
-    if(options->meshSizeFun!=NULL) {
-      if(hxtComputeNodalSizeFromFunction(mesh, delOptions.nodalSizes, options->meshSizeFun, options->meshSizeData)!=HXT_STATUS_OK) {
+    if(nodalSizes.callback!=NULL) {
+      if(hxtComputeNodalSizesFromFunction(mesh, &nodalSizes)!=HXT_STATUS_OK) {
         HXT_WARNING("Initial sizes are interpolated instead of being fetched from the size map");
-        HXT_CHECK(hxtComputeNodalSizeFromTrianglesAndLines(mesh, delOptions.nodalSizes));
+        HXT_CHECK(hxtComputeNodalSizesFromTrianglesAndLines(mesh, &nodalSizes));
       }
     }
     else
-      HXT_CHECK(hxtComputeNodalSizeFromTrianglesAndLines(mesh, delOptions.nodalSizes));
+      HXT_CHECK(hxtComputeNodalSizesFromTrianglesAndLines(mesh, &nodalSizes));
+
+    delOptions.nodalSizes = &nodalSizes;
 
     HXT_CHECK( setFlagsToProcessOnlyVolumesInBrep(mesh) );
 
-    HXT_CHECK(hxtRefineTetrahedra(mesh, &delOptions, options->meshSizeFun, options->meshSizeData));
+    HXT_CHECK( hxtRefineTetrahedra(mesh, &delOptions) );
 
-    HXT_CHECK( hxtDestroyNodalSize(&delOptions.nodalSizes) );
+    HXT_CHECK( hxtNodalSizesDestroy(&nodalSizes) );
 
     HXT_INFO_COND(options->verbosity>1, "Mesh refinement finished\n");
   }
@@ -181,9 +195,9 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
     HXT_CHECK( hxtOptimizeTetrahedra(mesh,
                                      &(HXTOptimizeOptions) {
                                        .bbox = &bbox,
-                                       .qualityFun = options->qualityFun,
-                                       .qualityData = options->qualityData,
-                                       .qualityMin = options->qualityMin,
+                                       .qualityFun = options->quality.callback,
+                                       .qualityData = options->quality.userData,
+                                       .qualityMin = options->quality.min,
                                        .numThreads = options->improveThreads,
                                        .numVerticesConstrained = numVerticesConstrained,
                                        .verbosity = options->verbosity,

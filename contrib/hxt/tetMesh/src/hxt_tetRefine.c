@@ -10,6 +10,7 @@
 #include "predicates.h"
 #include "hxt_tetFlag.h"
 #include "hxt_sort.h"
+#include "hxt_tetNodalSize.h"
 
 // mark all the points which are in mesh->(points | lines | triangles)
 static void markMeshPoints(HXTMesh* mesh)
@@ -78,33 +79,11 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
 }
 
 
-static inline double square_dist(double v0[3], double v1[3])
-{
-  return (v1[0] - v0[0])*(v1[0] - v0[0]) +
-         (v1[1] - v0[1])*(v1[1] - v0[1]) +
-         (v1[2] - v0[2])*(v1[2] - v0[2]);
-}
-
-
-static int is_too_close(double ptSize, double vtaSize, double squareDist)
-{
-  if(ptSize!=DBL_MAX) {
-    double meanSize = 0.5*(ptSize+vtaSize);
-    if(squareDist < /*(0.94*0.94) * */meanSize * meanSize) {
-      return 1;
-    }
-  }
-
-  return 0;
-}
-
-
-
 /* compute a point (center) inside the tetrahedron which is very likely to respect the nodalsize.
  * return 0 if the computed point does respect the interpolated nodalsize
  * return 1 if the computed point does not respect the interpolated nodalsize
  * the interpolated nodalsize is placed into center[3]  */
-static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
+static int getBestCenter(double p[4][4], double nodalSize[4], double center[4], HXTNodalSizes* ns)
 {
   double avg = 0.0;
   double num = 0;
@@ -130,12 +109,12 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
   double s3 = nodalSize[3]!=DBL_MAX && nodalSize[3]>0.0 ? nodalSize[3] : avg;
 
   // (e/s)^2  (e is the norm of the edge, s is the mean nodalSize over that edge)
-  double e0l2 = square_dist(p[0], p[1])/(0.25*(s0 + s1)*(s0 + s1));
-  double e1l2 = square_dist(p[0], p[2])/(0.25*(s0 + s2)*(s0 + s2));
-  double e2l2 = square_dist(p[0], p[3])/(0.25*(s0 + s3)*(s0 + s3));
-  double e3l2 = square_dist(p[1], p[2])/(0.25*(s1 + s2)*(s1 + s2));
-  double e4l2 = square_dist(p[1], p[3])/(0.25*(s1 + s3)*(s1 + s3));
-  double e5l2 = square_dist(p[2], p[3])/(0.25*(s2 + s3)*(s2 + s3));
+  double e0l2 = squareDist(p[0], p[1])/(0.25*(s0 + s1)*(s0 + s1));
+  double e1l2 = squareDist(p[0], p[2])/(0.25*(s0 + s2)*(s0 + s2));
+  double e2l2 = squareDist(p[0], p[3])/(0.25*(s0 + s3)*(s0 + s3));
+  double e3l2 = squareDist(p[1], p[2])/(0.25*(s1 + s2)*(s1 + s2));
+  double e4l2 = squareDist(p[1], p[3])/(0.25*(s1 + s3)*(s1 + s3));
+  double e5l2 = squareDist(p[2], p[3])/(0.25*(s2 + s3)*(s2 + s3));
 
   // normally, this thing should be near 1 if the tet are well refined
   // it can be below 1 only on the surface, because we averaged the line lengths to get the nodalsize
@@ -199,10 +178,10 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
     center[3] = bary0*s0 + bary1*s1 + bary2*s2 + bary3*s3; // the interpolated nodalSize
 
     circumcenterTooClose = (
-      is_too_close(s0, center[3], square_dist(p[0], center)) ||
-      is_too_close(s1, center[3], square_dist(p[1], center)) ||
-      is_too_close(s2, center[3], square_dist(p[2], center)) ||
-      is_too_close(s3, center[3], square_dist(p[3], center))
+      isTooClose(s0, center[3], squareDist(p[0], center), ns) ||
+      isTooClose(s1, center[3], squareDist(p[1], center), ns) ||
+      isTooClose(s2, center[3], squareDist(p[2], center), ns) ||
+      isTooClose(s3, center[3], squareDist(p[3], center), ns)
     );
   }
   else { // we should also enter this if a bary is not finite
@@ -244,10 +223,10 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
     otherCenter[3] = bary0*s0 + bary1*s1 + bary2*s2 + bary3*s3; // the interpolated nodalSize
 
     otherCenterTooClose = (
-      is_too_close(s0, otherCenter[3], square_dist(p[0], otherCenter)) ||
-      is_too_close(s1, otherCenter[3], square_dist(p[1], otherCenter)) ||
-      is_too_close(s2, otherCenter[3], square_dist(p[2], otherCenter)) ||
-      is_too_close(s3, otherCenter[3], square_dist(p[3], otherCenter))
+      isTooClose(s0, otherCenter[3], squareDist(p[0], otherCenter), ns) ||
+      isTooClose(s1, otherCenter[3], squareDist(p[1], otherCenter), ns) ||
+      isTooClose(s2, otherCenter[3], squareDist(p[2], otherCenter), ns) ||
+      isTooClose(s3, otherCenter[3], squareDist(p[3], otherCenter), ns)
     );
 
     if(circumcenterOutside || !otherCenterTooClose) {
@@ -264,7 +243,7 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4])
 
 /* just fill tetCoord and tetNodalSize with the coordinates and nodal size of each node of
  * tetrahedron tet */
-static inline void getTetCoordAndNodalSize(HXTMesh* mesh, double* nodalSizes, uint64_t tet,
+static inline void getTetCoordAndNodalSize(HXTMesh* mesh, double* nsarray, uint64_t tet,
                                            double tetCoord[4][4], double tetNodalSize[4])
 {
   uint32_t* nodes = &mesh->tetrahedra.node[4*tet];
@@ -273,7 +252,7 @@ static inline void getTetCoordAndNodalSize(HXTMesh* mesh, double* nodalSizes, ui
     tetCoord[i][1] = mesh->vertices.coord[4 * nodes[i] + 1];
     tetCoord[i][2] = mesh->vertices.coord[4 * nodes[i] + 2];
 
-    tetNodalSize[i] = nodalSizes[nodes[i]];
+    tetNodalSize[i] = nsarray[nodes[i]];
   }
 }
 
@@ -379,10 +358,8 @@ static HXTStatus balanceRefineWork(HXTMesh* mesh, uint32_t* startPt, size_t* sta
 }
 
 
-HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
-                              HXTStatus (*meshSizeFun)(double* coord, size_t n,
-                                                       void* meshSizeData),
-                              void* meshSizeData)
+HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
+                              HXTDelaunayOptions* delOptions)
 {
   int maxThreads = omp_get_max_threads();
 
@@ -419,10 +396,11 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
 
         double p[4][4];
         double s[4];
-        getTetCoordAndNodalSize(mesh, delOptions->nodalSizes, tet, p, s);
+        getTetCoordAndNodalSize(mesh, delOptions->nodalSizes->array, tet, p, s);
 
         // TODO: do a SIMD getBestCenter function if it gets slow
-        if(getBestCenter(p, s, &newVertices[4*ptIndex]) && meshSizeFun==NULL)
+        if(getBestCenter(p, s, &newVertices[4*ptIndex], delOptions->nodalSizes) &&
+                         delOptions->nodalSizes->callback==NULL)
           newVertices[4*ptIndex+3] = -DBL_MAX;
 
 #ifndef NDEBUG
@@ -435,9 +413,9 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
       }
     }
 
-    // second step (meshSizeFun): compute the effective mesh size at all these newly create points
-    if(meshSizeFun!=NULL)
-      HXT_CHECK( meshSizeFun(newVertices, totNewPts, meshSizeData) );
+    // second step (meshSizeCB): compute the effective mesh size at all these newly create points
+    if(delOptions->nodalSizes->callback!=NULL)
+      HXT_CHECK( delOptions->nodalSizes->callback(newVertices, totNewPts, delOptions->nodalSizes->userData) );
 
 
     HXTStatus status;
@@ -459,15 +437,15 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
         uint64_t tetID = ptToTet[i];
         double p[4][4];
         double s[4];
-        getTetCoordAndNodalSize(mesh, delOptions->nodalSizes, tetID, p, s);
+        getTetCoordAndNodalSize(mesh, delOptions->nodalSizes->array, tetID, p, s);
 
         double* vtaCoord = &newVertices[4*i];
         double vtaSize = newVertices[4*i + 3];
-
-        if(is_too_close(s[0], vtaSize, square_dist(p[0], vtaCoord)) ||
-           is_too_close(s[1], vtaSize, square_dist(p[1], vtaCoord)) ||
-           is_too_close(s[2], vtaSize, square_dist(p[2], vtaCoord)) ||
-           is_too_close(s[3], vtaSize, square_dist(p[3], vtaCoord))){
+        
+        if(isTooClose(s[0], vtaSize, squareDist(p[0], vtaCoord), delOptions->nodalSizes) ||
+           isTooClose(s[1], vtaSize, squareDist(p[1], vtaCoord), delOptions->nodalSizes) ||
+           isTooClose(s[2], vtaSize, squareDist(p[2], vtaCoord), delOptions->nodalSizes) ||
+           isTooClose(s[3], vtaSize, squareDist(p[3], vtaCoord), delOptions->nodalSizes)){
           newVertices[4*i + 3] = -DBL_MAX;
         }
         else {
@@ -496,7 +474,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
         if(mesh->vertices.num > mesh->vertices.size){
           status=hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double)*4*mesh->vertices.num);
           if(status==HXT_STATUS_OK){
-            status=hxtAlignedRealloc(&delOptions->nodalSizes, sizeof(double)*mesh->vertices.num);
+            status=hxtAlignedRealloc(&delOptions->nodalSizes->array, sizeof(double)*mesh->vertices.num);
             mesh->vertices.size = mesh->vertices.num;
           }
         }
@@ -512,7 +490,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
           mesh->vertices.coord[v*4  ] = newVertices[4*i + 0];
           mesh->vertices.coord[v*4+1] = newVertices[4*i + 1];
           mesh->vertices.coord[v*4+2] = newVertices[4*i + 2];
-          delOptions->nodalSizes[v] = newVertices[4*i + 3];
+          delOptions->nodalSizes->array[v] = newVertices[4*i + 3];
           v++;
         }
       }

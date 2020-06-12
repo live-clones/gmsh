@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#include "hxt_mesh.h"
+#include "hxt_tetNodalSize.h"
 #include "hxt_vertices.h"
 #include "hxt_bbox.h"
 
@@ -34,8 +34,8 @@ typedef struct {
                                *  - if bbox==NULL, the bbox is recomputed internally;
                                *  - if bbox!=NULL, bbox must contain all vertices */
 
-  double* nodalSizes;         /**<
-                               *  - if nodalSize==NULL, doesn't restrict nodalSize;
+  HXTNodalSizes* nodalSizes;  /**<
+                               *  - if nodalSizes==NULL, doesn't restrict nodalSize;
                                *  - if nodalSize!=NULL, nodalSize contains the minimum
                                *  mesh size at each vertex.\n
                                *  If the insertion of a vertex create an edge smaller than
