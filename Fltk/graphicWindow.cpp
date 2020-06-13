@@ -625,7 +625,7 @@ void file_watch_cb(Fl_Widget *w, void *data)
 
 static void help_online_cb(Fl_Widget *w, void *data)
 {
-  fl_open_uri("http://gmsh.info/doc/texinfo/");
+  fl_open_uri("https://gmsh.info/doc/texinfo/");
 }
 
 static void help_basic_cb(Fl_Widget *w, void *data)

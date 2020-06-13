@@ -331,11 +331,11 @@ JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getAboutGmsh(JNIEnv *env,
           << "(<i>Build date:</i> " << GMSH_DATE << ")"
           << "<p>Copyright (C) 1997-2020 Christophe Geuzaine and "
              "Jean-Fran&ccedil;ois Remacle</p>"
-          << "<p><a href=\"http://gmsh.info/CREDITS.txt\">Credits</a> "
-          << "and <a href=\"http://gmsh.info/LICENSE.txt\">licensing "
+          << "<p><a href=\"https://gmsh.info/CREDITS.txt\">Credits</a> "
+          << "and <a href=\"https://gmsh.info/LICENSE.txt\">licensing "
              "information</a></p>"
           << "<p><i>Build options:</i> " << GMSH_CONFIG_OPTIONS << "</p>"
-          << "<p>Visit <a href=\"http://gmsh.info\">http://gmsh.info</a> for "
+          << "<p>Visit <a href=\"https://gmsh.info\">https://gmsh.info</a> for "
              "more information</p></center>";
   return env->NewStringUTF(sstream.str().c_str());
 }
@@ -348,11 +348,11 @@ JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getAboutGetDP(JNIEnv *env,
           << "(<i>Build date:</i> " << GETDP_DATE << ")"
           << "<p>Copyright (C) 1997-2020 Patrick Dular and Christophe "
              "Geuzaine, University of Li&egrave;ge</p>"
-          << "<p><a href=\"http://getdp.info/CREDITS.txt\">Credits</a> "
-          << "and <a href=\"http://getdp.info/LICENSE.txt\">licensing "
+          << "<p><a href=\"https://getdp.info/CREDITS.txt\">Credits</a> "
+          << "and <a href=\"https://getdp.info/LICENSE.txt\">licensing "
              "information</a></p>"
           << "<p><i>Build options:</i> " << GETDP_CONFIG_OPTIONS << "</p>"
-          << "<p>Visit <a href=\"http://getdp.info\">http://getdp.info</a> for "
+          << "<p>Visit <a href=\"https://getdp.info\">https://getdp.info</a> for "
              "more information</p></center>";
   return env->NewStringUTF(sstream.str().c_str());
 }

@@ -7,7 +7,7 @@ the command line, run "gmsh t1.geo" (which will launch the GUI) or "gmsh t1.geo
 -2" (to perform 2D meshing in batch mode).
 
  * Binary versions of the Gmsh app for Windows, Linux and macOS can be
-   downloaded from http://gmsh.info. Several Linux distributions also ship the
+   downloaded from https://gmsh.info. Several Linux distributions also ship the
    Gmsh app. See the top-level `README.txt' file in the Gmsh source code for
    instructions on how to compile the app from source.
 
@@ -22,7 +22,7 @@ files.
 
  * A binary Software Development Kit (SDK) for Windows, Linux and macOS, that
    contains the dynamic Gmsh library and the associated header and module files,
-   can be downloaded from http://gmsh.info. Python users can use `pip install
+   can be downloaded from https://gmsh.info. Python users can use `pip install
    --upgrade gmsh', which will download the binary SDK automatically, and
    install the files in the appropriate system directories. Several Linux
    distributions also ship the Gmsh SDK. See the top-level `README.txt' in the

@@ -326,8 +326,8 @@ helpWindow::helpWindow()
       << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
       << "<p>Copyright (C) 1997-2020"
       << "<br>Christophe Geuzaine and Jean-Francois Remacle"
-      << "<p><a href=\"http://gmsh.info/CREDITS.txt\">Credits</a> "
-      << "and <a href=\"http://gmsh.info/LICENSE.txt\">licensing "
+      << "<p><a href=\"https://gmsh.info/CREDITS.txt\">Credits</a> "
+      << "and <a href=\"https://gmsh.info/LICENSE.txt\">licensing "
       << "information</a>"
       << "<p>Please report all issues on "
       << "<a href=\"https://gitlab.onelab.info/gmsh/gmsh/issues\">"
@@ -357,7 +357,7 @@ helpWindow::helpWindow()
       << "." << MED_NUM_RELEASE
 #endif
       << "<li><i>Packaged by:</i> " << GetGmshPackager() << "</ul>"
-      << "<center>Visit <a href=\"http://gmsh.info\">http://gmsh.info</a> "
+      << "<center>Visit <a href=\"https://gmsh.info\">https://gmsh.info</a> "
       << "for more information</center>";
     o->value(sstream.str().c_str());
     o->link(help_link);
