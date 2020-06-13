@@ -4272,7 +4272,8 @@ void OCC_Internals::synchronize(GModel *model)
         tag = _vertexTag.Find(vertex);
       else {
         tag = ++vTagMax;
-        Msg::Info("Binding unbound OpenCASCADE point to tag %d", tag);
+        Msg::Debug("Binding unbound OpenCASCADE point to tag %d", tag);
+        bind(vertex, tag);
       }
       occv = new OCCVertex(model, vertex, tag);
       model->add(occv);
@@ -4296,7 +4297,8 @@ void OCC_Internals::synchronize(GModel *model)
         tag = _edgeTag.Find(edge);
       else {
         tag = ++eTagMax;
-        Msg::Info("Binding unbound OpenCASCADE curve to tag %d", tag);
+        Msg::Debug("Binding unbound OpenCASCADE curve to tag %d", tag);
+        bind(edge, tag);
       }
       occe = new OCCEdge(model, edge, tag, v1, v2);
       model->add(occe);
@@ -4317,7 +4319,8 @@ void OCC_Internals::synchronize(GModel *model)
         tag = _faceTag.Find(face);
       else {
         tag = ++fTagMax;
-        Msg::Info("Binding unbound OpenCASCADE surface to tag %d", tag);
+        Msg::Debug("Binding unbound OpenCASCADE surface to tag %d", tag);
+        bind(face, tag);
       }
       occf = new OCCFace(model, face, tag);
       model->add(occf);
@@ -4347,7 +4350,8 @@ void OCC_Internals::synchronize(GModel *model)
         tag = _solidTag(region);
       else {
         tag = ++rTagMax;
-        Msg::Info("Binding unbound OpenCASCADE volume to tag %d", tag);
+        Msg::Debug("Binding unbound OpenCASCADE volume to tag %d", tag);
+        bind(region, tag);
       }
       occr = new OCCRegion(model, region, tag);
       model->add(occr);

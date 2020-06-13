@@ -48,7 +48,6 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
   // build the reverse curve
   _c_rev = _c;
   _c_rev.Reverse();
-  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(_c, num);
 }
 
 OCCEdge::~OCCEdge()
