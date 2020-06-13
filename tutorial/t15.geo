@@ -68,3 +68,8 @@ Surface{s} In Volume {1};
 // `BooleanFragments' command is applied to entities of different dimensions,
 // the lower dimensional entities will be autmatically embedded in the higher
 // dimensional entities if necessary.
+
+Physical Point("Embedded point") = {p};
+Physical Curve("Embdded curve") = {l};
+Physical Surface("Embedded surface") = {s};
+Physical Volume("Volume") = {1};
