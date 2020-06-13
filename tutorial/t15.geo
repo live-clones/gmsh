@@ -62,7 +62,7 @@ ll = newll;
 Curve Loop(ll) = {l+1:l+4};
 s = news;
 Plane Surface(s) = {ll};
-Surface{s} In Volume{1};
+Surface{s} In Volume {1};
 
 // Note that with the OpenCASCADE kernel (see `t16.geo'), when the
 // `BooleanFragments' command is applied to entities of different dimensions,
