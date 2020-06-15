@@ -453,13 +453,12 @@ namespace gmsh { // Top-level functions
 
     // gmsh::model::getClosestPoint
     //
-    // Get the closest points `closestCoord' to the points `coord' on the entity of
-    // dimension `dim' and tag `tag', by orthogonal projection. `coord' and
-    // `closestCoord' are given as triplets of x, y, z coordinates, concatenated:
-    // [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric
-    // coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates
-    // concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u,
-    // p1v, p2u, ...].
+    // Get the points `closestCoord' on the entity of dimension `dim' and tag `tag'
+    // to the points `coord', by orthogonal projection. `coord' and `closestCoord'
+    // are given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z,
+    // p2x, ...]. `parametricCoord' returns the parametric coordinates t on the
+    // curve (if `dim' = 1) or pairs of u and v coordinates concatenated on the
+    // surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
     GMSH_API void getClosestPoint(const int dim,
                                   const int tag,
                                   const std::vector<double> & coord,

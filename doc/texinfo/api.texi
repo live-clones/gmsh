@@ -747,13 +747,13 @@ integer value
 @end table
 
 @item gmsh/model/getClosestPoint
-Get the closest points @code{closestCoord} to the points @code{coord} on the
-entity of dimension @code{dim} and tag @code{tag}, by orthogonal projection.
-@code{coord} and @code{closestCoord} are given as triplets of x, y, z
-coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. @code{parametricCoord}
-returns the parametric coordinates t on the curve (if @code{dim} = 1) or pairs
-of u and v coordinates concatenated on the surface (if @code{dim} = 2), i.e.
-[p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+Get the points @code{closestCoord} on the entity of dimension @code{dim} and tag
+@code{tag} to the points @code{coord}, by orthogonal projection. @code{coord}
+and @code{closestCoord} are given as triplets of x, y, z coordinates,
+concatenated: [p1x, p1y, p1z, p2x, ...]. @code{parametricCoord} returns the
+parametric coordinates t on the curve (if @code{dim} = 1) or pairs of u and v
+coordinates concatenated on the surface (if @code{dim} = 2), i.e. [p1t, p2t,
+...] or [p1u, p1v, p2u, ...].
 
 @table @asis
 @item Input:
@@ -762,6 +762,8 @@ of u and v coordinates concatenated on the surface (if @code{dim} = 2), i.e.
 @code{closestCoord}, @code{parametricCoord}
 @item Return:
 -
+@item Examples:
+Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/closest_point.py#L12,closest_point.py})
 @end table
 
 @item gmsh/model/reparametrizeOnSurface
@@ -2873,7 +2875,7 @@ the occ module.)
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L67,t19.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L11,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L59,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L7,bspline_bezier_patches.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L16,bspline_filling.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L13,crack.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.py#L11,spline.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L67,t19.cpp}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/spline.cpp#L11,spline.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L59,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_bezier_patches.py#L7,bspline_bezier_patches.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/bspline_filling.py#L16,bspline_filling.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/closest_point.py#L15,closest_point.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/crack.py#L13,crack.py}, ...)
 @end table
 
 @item gmsh/model/occ/addLine
@@ -2921,7 +2923,7 @@ arc between the two angles. Return the tag of the circle.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L25,t19.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L23,t19.py})
+C++ (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp#L25,t19.cpp}), Python (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py#L23,t19.py}, @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/closest_point.py#L8,closest_point.py})
 @end table
 
 @item gmsh/model/occ/addEllipseArc
