@@ -320,7 +320,7 @@ mesh.add('getBasisFunctions', doc, None, iint('elementType'), ivectordouble('loc
 doc = '''Get the orientation index of the elements of type `elementType' in the entity of tag `tag'. The arguments have the same meaning as in `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for each element the orientation index in the values returned by `getBasisFunctions'. For Lagrange basis functions the call is superfluous as it will return a vector of zeros.'''
 mesh.add('getBasisFunctionsOrientationForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorint('basisFunctionsOrientation'), iint('tag','-1'), isize('task', '0'), isize('numTasks', '1'))
 
-doc = '''Get the orientation index of the elements of type `elementType' in the entity of tag `tag'. The arguments have the same meaning as in `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for each element the orientation index in the values returned by `getBasisFunctions'. For Lagrange basis functions the call is superfluous as it will return a vector of zeros.'''
+doc = '''Get the orientation of a single element `elementTag'.'''
 mesh.add('getBasisFunctionsOrientationForElement', doc, None, isize('elementTag'), istring('functionSpaceType'), oint('basisFunctionsOrientation'))
 
 doc = '''Get the number of possible orientations for elements of type `elementType' and function space named `functionSpaceType'.'''
@@ -338,7 +338,7 @@ mesh.add('getLocalMultipliersForHcurl0',doc,None,iint('elementType'),ovectorint(
 doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
 
-doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
+doc = '''Get the keys for a single element `elementTag'.'''
 mesh.add('getKeysForElement', doc, None, isize('elementTag'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), ibool('returnCoord', 'true', 'True'))
 
 doc = '''Get the number of keys by elements of type `elementType' for function space named `functionSpaceType'.'''
