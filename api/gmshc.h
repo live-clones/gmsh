@@ -866,6 +866,17 @@ GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElements(const int ele
                                                                    const size_t numTasks,
                                                                    int * ierr);
 
+/* Get the orientation index of the elements of type `elementType' in the
+ * entity of tag `tag'. The arguments have the same meaning as in
+ * `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
+ * each element the orientation index in the values returned by
+ * `getBasisFunctions'. For Lagrange basis functions the call is superfluous
+ * as it will return a vector of zeros. */
+GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElement(const size_t elementTag,
+                                                                  const char * functionSpaceType,
+                                                                  int * basisFunctionsOrientation,
+                                                                  int * ierr);
+
 /* Get the number of possible orientations for elements of type `elementType'
  * and function space named `functionSpaceType'. */
 GMSH_API int gmshModelMeshGetNumberOfOrientations(const int elementType,
@@ -907,6 +918,19 @@ GMSH_API void gmshModelMeshGetKeysForElements(const int elementType,
                                               const int tag,
                                               const int returnCoord,
                                               int * ierr);
+
+/* Generate the `keys' for the elements of type `elementType' in the entity of
+ * tag `tag', for the `functionSpaceType' function space. Each key uniquely
+ * identifies a basis function in the function space. If `returnCoord' is set,
+ * the `coord' vector contains the x, y, z coordinates locating basis
+ * functions for sorting purposes. Warning: this is an experimental feature
+ * and will probably change in a future release. */
+GMSH_API void gmshModelMeshGetKeysForElement(const size_t elementTag,
+                                             const char * functionSpaceType,
+                                             int ** keys, size_t * keys_n,
+                                             double ** coord, size_t * coord_n,
+                                             const int returnCoord,
+                                             int * ierr);
 
 /* Get the number of keys by elements of type `elementType' for function space
  * named `functionSpaceType'. */

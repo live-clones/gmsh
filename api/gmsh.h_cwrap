@@ -1498,6 +1498,21 @@ namespace gmsh { // Top-level functions
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
 
+      // Get the orientation index of the elements of type `elementType' in the
+      // entity of tag `tag'. The arguments have the same meaning as in
+      // `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
+      // each element the orientation index in the values returned by
+      // `getBasisFunctions'. For Lagrange basis functions the call is superfluous
+      // as it will return a vector of zeros.
+      inline void getBasisFunctionsOrientationForElement(const std::size_t elementTag,
+                                                         const std::string & functionSpaceType,
+                                                         int & basisFunctionsOrientation)
+      {
+        int ierr = 0;
+        gmshModelMeshGetBasisFunctionsOrientationForElement(elementTag, functionSpaceType.c_str(), &basisFunctionsOrientation, &ierr);
+        if(ierr) throw ierr;
+      }
+
       // Get the number of possible orientations for elements of type `elementType'
       // and function space named `functionSpaceType'.
       inline int getNumberOfOrientations(const int elementType,
@@ -1568,6 +1583,27 @@ namespace gmsh { // Top-level functions
         int *api_keys_; size_t api_keys_n_;
         double *api_coord_; size_t api_coord_n_;
         gmshModelMeshGetKeysForElements(elementType, functionSpaceType.c_str(), &api_keys_, &api_keys_n_, &api_coord_, &api_coord_n_, tag, (int)returnCoord, &ierr);
+        if(ierr) throw ierr;
+        keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
+        coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+      }
+
+      // Generate the `keys' for the elements of type `elementType' in the entity
+      // of tag `tag', for the `functionSpaceType' function space. Each key
+      // uniquely identifies a basis function in the function space. If
+      // `returnCoord' is set, the `coord' vector contains the x, y, z coordinates
+      // locating basis functions for sorting purposes. Warning: this is an
+      // experimental feature and will probably change in a future release.
+      inline void getKeysForElement(const std::size_t elementTag,
+                                    const std::string & functionSpaceType,
+                                    gmsh::vectorpair & keys,
+                                    std::vector<double> & coord,
+                                    const bool returnCoord = true)
+      {
+        int ierr = 0;
+        int *api_keys_; size_t api_keys_n_;
+        double *api_coord_; size_t api_coord_n_;
+        gmshModelMeshGetKeysForElement(elementTag, functionSpaceType.c_str(), &api_keys_, &api_keys_n_, &api_coord_, &api_coord_n_, (int)returnCoord, &ierr);
         if(ierr) throw ierr;
         keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
