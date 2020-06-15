@@ -2875,6 +2875,67 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
   return;
 }
 
+GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
+  const std::size_t elementTag, const std::string &functionSpaceType,
+  int &basisFunctionsOrientation)
+{
+  if(!_isInitialized()) { throw -1; }
+
+  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  int elementType = e->getTypeForMSH();
+  int familyType = ElementType::getParentType(elementType);
+
+  int basisOrder = 0;
+  std::string fsName = "";
+  int numComponents = 0;
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
+                            numComponents)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    throw 2;
+  }
+
+  if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
+    basisFunctionsOrientation = 0;
+  }
+  else { // Hierarchical type
+    const unsigned int numVertices =
+      ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
+    std::vector<MVertex *> vertices(numVertices);
+    std::vector<unsigned int> verticesOrder(numVertices);
+    const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
+
+    for(std::size_t i = 0; i < numVertices; ++i) {
+      vertices[i] = e->getVertex(i);
+    }
+
+    for(std::size_t i = 0; i < numVertices; ++i) {
+      std::size_t max = 0;
+      std::size_t maxPos = 0;
+      for(std::size_t j = 0; j < numVertices; ++j) {
+        if(vertices[j] != 0) {
+          if(max < vertices[j]->getNum()) {
+            max = vertices[j]->getNum();
+            maxPos = j;
+          }
+        }
+      }
+      vertices[maxPos] = 0;
+      verticesOrder[maxPos] = numVertices - i - 1;
+    }
+
+    basisFunctionsOrientation = 0;
+    for(std::size_t i = 0; i < numVertices; ++i) {
+      basisFunctionsOrientation +=
+        verticesOrder[i] * factorial[numVertices - i - 1];
+      for(std::size_t j = i + 1; j < numVertices; ++j) {
+        if(verticesOrder[j] > verticesOrder[i]) --verticesOrder[j];
+      }
+    }
+  }
+
+  return;
+}
+
 GMSH_API int
 gmsh::model::mesh::getNumberOfOrientations(const int elementType,
                                            const std::string &functionSpaceType)

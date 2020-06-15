@@ -2374,6 +2374,33 @@ class model:
             return _ovectorint(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_.value)
 
         @staticmethod
+        def getBasisFunctionsOrientationForElement(elementTag, functionSpaceType):
+            """
+            gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
+
+            Get the orientation index of the elements of type `elementType' in the
+            entity of tag `tag'. The arguments have the same meaning as in
+            `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
+            each element the orientation index in the values returned by
+            `getBasisFunctions'. For Lagrange basis functions the call is superfluous
+            as it will return a vector of zeros.
+
+            Return `basisFunctionsOrientation'.
+            """
+            api_basisFunctionsOrientation_ = c_int()
+            ierr = c_int()
+            lib.gmshModelMeshGetBasisFunctionsOrientationForElement(
+                c_size_t(elementTag),
+                c_char_p(functionSpaceType.encode()),
+                byref(api_basisFunctionsOrientation_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetBasisFunctionsOrientationForElement returned non-zero error code: ",
+                    ierr.value)
+            return api_basisFunctionsOrientation_.value
+
+        @staticmethod
         def getNumberOfOrientations(elementType, functionSpaceType):
             """
             gmsh.model.mesh.getNumberOfOrientations(elementType, functionSpaceType)

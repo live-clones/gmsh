@@ -1248,6 +1248,17 @@ GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElements(const int ele
   }
 }
 
+GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElement(const size_t elementTag, const char * functionSpaceType, int * basisFunctionsOrientation, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::getBasisFunctionsOrientationForElement(elementTag, functionSpaceType, *basisFunctionsOrientation);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API int gmshModelMeshGetNumberOfOrientations(const int elementType, const char * functionSpaceType, int * ierr)
 {
   int result_api_ = 0;

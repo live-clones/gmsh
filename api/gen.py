@@ -320,6 +320,9 @@ mesh.add('getBasisFunctions', doc, None, iint('elementType'), ivectordouble('loc
 doc = '''Get the orientation index of the elements of type `elementType' in the entity of tag `tag'. The arguments have the same meaning as in `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for each element the orientation index in the values returned by `getBasisFunctions'. For Lagrange basis functions the call is superfluous as it will return a vector of zeros.'''
 mesh.add('getBasisFunctionsOrientationForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorint('basisFunctionsOrientation'), iint('tag','-1'), isize('task', '0'), isize('numTasks', '1'))
 
+doc = '''Get the orientation index of the elements of type `elementType' in the entity of tag `tag'. The arguments have the same meaning as in `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for each element the orientation index in the values returned by `getBasisFunctions'. For Lagrange basis functions the call is superfluous as it will return a vector of zeros.'''
+mesh.add('getBasisFunctionsOrientationForElement', doc, None, isize('elementTag'), istring('functionSpaceType'), oint('basisFunctionsOrientation'))
+
 doc = '''Get the number of possible orientations for elements of type `elementType' and function space named `functionSpaceType'.'''
 mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('functionSpaceType'))
 

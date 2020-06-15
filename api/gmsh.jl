@@ -1840,6 +1840,27 @@ function getBasisFunctionsOrientationForElements(elementType, functionSpaceType,
 end
 
 """
+    gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
+
+Get the orientation index of the elements of type `elementType` in the entity of
+tag `tag`. The arguments have the same meaning as in `getBasisFunctions`.
+`basisFunctionsOrientation` is a vector giving for each element the orientation
+index in the values returned by `getBasisFunctions`. For Lagrange basis
+functions the call is superfluous as it will return a vector of zeros.
+
+Return `basisFunctionsOrientation`.
+"""
+function getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
+    api_basisFunctionsOrientation_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetBasisFunctionsOrientationForElement, gmsh.lib), Cvoid,
+          (Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}),
+          elementTag, functionSpaceType, api_basisFunctionsOrientation_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsOrientationForElement returned non-zero error code: $(ierr[])")
+    return api_basisFunctionsOrientation_[]
+end
+
+"""
     gmsh.model.mesh.getNumberOfOrientations(elementType, functionSpaceType)
 
 Get the number of possible orientations for elements of type `elementType` and

@@ -1487,6 +1487,23 @@ as it will return a vector of zeros.
 -
 @end table
 
+@item gmsh/model/mesh/getBasisFunctionsOrientationForElement
+Get the orientation index of the elements of type @code{elementType} in the
+entity of tag @code{tag}. The arguments have the same meaning as in
+@code{getBasisFunctions}. @code{basisFunctionsOrientation} is a vector giving
+for each element the orientation index in the values returned by
+@code{getBasisFunctions}. For Lagrange basis functions the call is superfluous
+as it will return a vector of zeros.
+
+@table @asis
+@item Input:
+@code{elementTag}, @code{functionSpaceType}
+@item Output:
+@code{basisFunctionsOrientation}
+@item Return:
+-
+@end table
+
 @item gmsh/model/mesh/getNumberOfOrientations
 Get the number of possible orientations for elements of type @code{elementType}
 and function space named @code{functionSpaceType}.
