@@ -656,6 +656,22 @@ GMSH_API int gmshModelIsInside(const int dim, const int tag, double * parametric
   return result_api_;
 }
 
+GMSH_API void gmshModelGetClosestPoint(const int dim, const int tag, double * coord, size_t coord_n, double ** closestCoord, size_t * closestCoord_n, double ** parametricCoord, size_t * parametricCoord_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<double> api_closestCoord_;
+    std::vector<double> api_parametricCoord_;
+    gmsh::model::getClosestPoint(dim, tag, api_coord_, api_closestCoord_, api_parametricCoord_);
+    vector2ptr(api_closestCoord_, closestCoord, closestCoord_n);
+    vector2ptr(api_parametricCoord_, parametricCoord, parametricCoord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelReparametrizeOnSurface(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, const int surfaceTag, double ** surfaceParametricCoord, size_t * surfaceParametricCoord_n, const int which, int * ierr)
 {
   if(ierr) *ierr = 0;

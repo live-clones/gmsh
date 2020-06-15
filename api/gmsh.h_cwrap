@@ -707,6 +707,30 @@ namespace gmsh { // Top-level functions
       return result_api_;
     }
 
+    // Get the closest points `closestCoord' to the points `coord' on the entity of
+    // dimension `dim' and tag `tag', by orthogonal projection. `coord' and
+    // `closestCoord' are given as triplets of x, y, z coordinates, concatenated:
+    // [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric
+    // coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates
+    // concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u,
+    // p1v, p2u, ...].
+    inline void getClosestPoint(const int dim,
+                                const int tag,
+                                const std::vector<double> & coord,
+                                std::vector<double> & closestCoord,
+                                std::vector<double> & parametricCoord)
+    {
+      int ierr = 0;
+      double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+      double *api_closestCoord_; size_t api_closestCoord_n_;
+      double *api_parametricCoord_; size_t api_parametricCoord_n_;
+      gmshModelGetClosestPoint(dim, tag, api_coord_, api_coord_n_, &api_closestCoord_, &api_closestCoord_n_, &api_parametricCoord_, &api_parametricCoord_n_, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_coord_);
+      closestCoord.assign(api_closestCoord_, api_closestCoord_ + api_closestCoord_n_); gmshFree(api_closestCoord_);
+      parametricCoord.assign(api_parametricCoord_, api_parametricCoord_ + api_parametricCoord_n_); gmshFree(api_parametricCoord_);
+    }
+
     // Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
     // `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1,
     // reparametrize all the points corresponding to the parametric coordinates

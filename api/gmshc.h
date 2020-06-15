@@ -383,6 +383,20 @@ GMSH_API int gmshModelIsInside(const int dim,
                                double * parametricCoord, size_t parametricCoord_n,
                                int * ierr);
 
+/* Get the closest points `closestCoord' to the points `coord' on the entity
+ * of dimension `dim' and tag `tag', by orthogonal projection. `coord' and
+ * `closestCoord' are given as triplets of x, y, z coordinates, concatenated:
+ * [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric
+ * coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates
+ * concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u,
+ * p1v, p2u, ...]. */
+GMSH_API void gmshModelGetClosestPoint(const int dim,
+                                       const int tag,
+                                       double * coord, size_t coord_n,
+                                       double ** closestCoord, size_t * closestCoord_n,
+                                       double ** parametricCoord, size_t * parametricCoord_n,
+                                       int * ierr);
+
 /* Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
  * `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1,
  * reparametrize all the points corresponding to the parametric coordinates

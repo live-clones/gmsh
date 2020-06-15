@@ -746,6 +746,24 @@ geometrical representation.
 integer value
 @end table
 
+@item gmsh/model/getClosestPoint
+Get the closest points @code{closestCoord} to the points @code{coord} on the
+entity of dimension @code{dim} and tag @code{tag}, by orthogonal projection.
+@code{coord} and @code{closestCoord} are given as triplets of x, y, z
+coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. @code{parametricCoord}
+returns the parametric coordinates t on the curve (if @code{dim} = 1) or pairs
+of u and v coordinates concatenated on the surface (if @code{dim} = 2), i.e.
+[p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{coord}
+@item Output:
+@code{closestCoord}, @code{parametricCoord}
+@item Return:
+-
+@end table
+
 @item gmsh/model/reparametrizeOnSurface
 Reparametrize the boundary entity (point or curve, i.e. with @code{dim} == 0 or
 @code{dim} == 1) of tag @code{tag} on the surface @code{surfaceTag}. If

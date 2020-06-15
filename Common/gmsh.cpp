@@ -900,6 +900,48 @@ GMSH_API void gmsh::model::reparametrizeOnSurface(
   }
 }
 
+GMSH_API void
+gmsh::model::getClosestPoint(const int dim, const int tag,
+                             const std::vector<double> &coord,
+                             std::vector<double> &closestCoord,
+                             std::vector<double> &parametricCoord)
+{
+  if(!_isInitialized()) { throw -1; }
+  closestCoord.clear();
+  parametricCoord.clear();
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  if(coord.size() % 3) return;
+  if(dim == 1) {
+    GEdge *ge = static_cast<GEdge *>(entity);
+    for(std::size_t i = 0; i < coord.size(); i += 3) {
+      SPoint3 p(coord[i], coord[i + 1], coord[i + 2]);
+      double t;
+      GPoint pp = ge->closestPoint(p, t);
+      closestCoord.push_back(pp.x());
+      closestCoord.push_back(pp.y());
+      closestCoord.push_back(pp.z());
+      parametricCoord.push_back(t);
+    }
+  }
+  else if(dim == 2) {
+    GFace *gf = static_cast<GFace *>(entity);
+    for(std::size_t i = 0; i < coord.size(); i += 3) {
+      SPoint3 p(coord[i], coord[i + 1], coord[i + 2]);
+      double uv[2] = {0, 0};
+      GPoint pp = gf->closestPoint(p, uv);
+      closestCoord.push_back(pp.x());
+      closestCoord.push_back(pp.y());
+      closestCoord.push_back(pp.z());
+      parametricCoord.push_back(uv[0]);
+      parametricCoord.push_back(uv[1]);
+    }
+  }
+}
+
 GMSH_API void gmsh::model::setVisibility(const vectorpair &dimTags,
                                          const int value, const bool recursive)
 {

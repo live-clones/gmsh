@@ -1241,6 +1241,40 @@ class model:
         return api__result__
 
     @staticmethod
+    def getClosestPoint(dim, tag, coord):
+        """
+        gmsh.model.getClosestPoint(dim, tag, coord)
+
+        Get the closest points `closestCoord' to the points `coord' on the entity
+        of dimension `dim' and tag `tag', by orthogonal projection. `coord' and
+        `closestCoord' are given as triplets of x, y, z coordinates, concatenated:
+        [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric
+        coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates
+        concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u,
+        p1v, p2u, ...].
+
+        Return `closestCoord', `parametricCoord'.
+        """
+        api_coord_, api_coord_n_ = _ivectordouble(coord)
+        api_closestCoord_, api_closestCoord_n_ = POINTER(c_double)(), c_size_t()
+        api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetClosestPoint(
+            c_int(dim),
+            c_int(tag),
+            api_coord_, api_coord_n_,
+            byref(api_closestCoord_), byref(api_closestCoord_n_),
+            byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetClosestPoint returned non-zero error code: ",
+                ierr.value)
+        return (
+            _ovectordouble(api_closestCoord_, api_closestCoord_n_.value),
+            _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+
+    @staticmethod
     def reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which=0):
         """
         gmsh.model.reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which=0)

@@ -920,6 +920,33 @@ function isInside(dim, tag, parametricCoord)
 end
 
 """
+    gmsh.model.getClosestPoint(dim, tag, coord)
+
+Get the closest points `closestCoord` to the points `coord` on the entity of
+dimension `dim` and tag `tag`, by orthogonal projection. `coord` and
+`closestCoord` are given as triplets of x, y, z coordinates, concatenated: [p1x,
+p1y, p1z, p2x, ...]. `parametricCoord` returns the parametric coordinates t on
+the curve (if `dim` = 1) or pairs of u and v coordinates concatenated on the
+surface (if `dim` = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+
+Return `closestCoord`, `parametricCoord`.
+"""
+function getClosestPoint(dim, tag, coord)
+    api_closestCoord_ = Ref{Ptr{Cdouble}}()
+    api_closestCoord_n_ = Ref{Csize_t}()
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetClosestPoint, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, coord), length(coord), api_closestCoord_, api_closestCoord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetClosestPoint returned non-zero error code: $(ierr[])")
+    closestCoord = unsafe_wrap(Array, api_closestCoord_[], api_closestCoord_n_[], own=true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    return closestCoord, parametricCoord
+end
+
+"""
     gmsh.model.reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which = 0)
 
 Reparametrize the boundary entity (point or curve, i.e. with `dim` == 0 or `dim`
