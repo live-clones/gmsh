@@ -712,7 +712,7 @@ static HXTStatus undeleteTetrahedron(TetLocal* local, HXTMesh* mesh, uint64_t te
   int nbndFace = 0;
 
   // we should update the boundary (that's the difficult part...)
-  // first remove all the boundary faces that come from the tetrahedron we just remove from the cavity
+  // first remove all the boundary faces that come from the tetrahedron we just remove to the cavity
   for (uint64_t i=local->ball.num; nbndFace<4 && i>0; i--) {
     if(mesh->tetrahedra.neigh[local->ball.array[i-1].neigh]/4==tetToUndelete) {
       bndFaces[nbndFace++] = local->ball.array[i-1].neigh;
@@ -726,7 +726,10 @@ static HXTStatus undeleteTetrahedron(TetLocal* local, HXTMesh* mesh, uint64_t te
   const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + tetToUndelete*4;
 
 #ifdef DEBUG
-  int nbndFace2 = (getDeletedFlag(mesh, curNeigh[0]/4)==0) + (getDeletedFlag(mesh, curNeigh[1]/4)==0) + (getDeletedFlag(mesh, curNeigh[2]/4)==0) + (getDeletedFlag(mesh, curNeigh[3]/4)==0);
+  int nbndFace2 = (getDeletedFlag(mesh, curNeigh[0]/4)==0 || getFacetConstraint(mesh, tetToUndelete, 0)) +
+                  (getDeletedFlag(mesh, curNeigh[1]/4)==0 || getFacetConstraint(mesh, tetToUndelete, 1)) +
+                  (getDeletedFlag(mesh, curNeigh[2]/4)==0 || getFacetConstraint(mesh, tetToUndelete, 2)) +
+                  (getDeletedFlag(mesh, curNeigh[3]/4)==0 || getFacetConstraint(mesh, tetToUndelete, 3));
   if(nbndFace!=nbndFace2)
     return HXT_ERROR_MSG(HXT_STATUS_ERROR, "found %d non-deleted tet adjacent to the tet we unremove but there should be %d %lu %lu %lu %lu", nbndFace, nbndFace2, bndFaces[0], bndFaces[1], bndFaces[2], bndFaces[3]);
 #endif
@@ -770,7 +773,6 @@ static HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uin
   uint64_t blindFace = 0;
   while(isStarShaped(local, mesh, vta, &blindFace)==HXT_STATUS_INTERNAL)
   {
-    // printf("deleting %lu  cavity:%lu  ball:%lu\n",mesh->tetrahedra.neigh[local->ball.array[blindFace].neigh]/4, local->deleted.num-prevDeleted, local->ball.num );
     HXT_CHECK( undeleteTetrahedron(local, mesh, mesh->tetrahedra.neigh[local->ball.array[blindFace].neigh]/4) );
   }
   return HXT_STATUS_OK;
@@ -929,7 +931,7 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
 
     /* and here we push stuff to local->ball or local->deleted, always keeping ghost tet at last place */
     uint64_t neigh = curNeigh[0]/4;
-    if(getDeletedFlag(mesh, neigh)==0){
+    if(getDeletedFlag(mesh, neigh)==0 || getFacetConstraint(mesh, curTet, 0)){
       if(getFacetConstraint(mesh, curTet, 0) || 
         tetInsphere(mesh, neigh*4, vta)>=0){
         bndPush(local, mesh->tetrahedra.flag[curTet] & UINT16_C(0x107),
@@ -951,7 +953,7 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
     }
 
     neigh = curNeigh[1]/4;
-    if(getDeletedFlag(mesh, neigh)==0){
+    if(getDeletedFlag(mesh, neigh)==0 || getFacetConstraint(mesh, curTet, 1)){
       if(getFacetConstraint(mesh, curTet, 1) || 
         tetInsphere(mesh, neigh*4, vta)>=0){
         bndPush(local, (getFacetConstraint(mesh, curTet, 1)>>1) |// constraint on facet 1 goes on facet 0
@@ -971,7 +973,7 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
     }
 
     neigh = curNeigh[2]/4;
-    if(getDeletedFlag(mesh, neigh)==0){
+    if(getDeletedFlag(mesh, neigh)==0 || getFacetConstraint(mesh, curTet, 2)){
       if(getFacetConstraint(mesh, curTet, 2)|| 
         tetInsphere(mesh, neigh*4, vta)>=0){
         bndPush(local, (getFacetConstraint(mesh, curTet, 2)>>2) |// constraint on facet 2 goes on facet 0
@@ -991,7 +993,7 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
     }
 
     neigh = curNeigh[3]/4;
-    if(getDeletedFlag(mesh, neigh)==0){
+    if(getDeletedFlag(mesh, neigh)==0 || getFacetConstraint(mesh, curTet, 3)){
       if(getFacetConstraint(mesh, curTet, 3) || 
         tetInsphere(mesh, neigh*4, vta)>=0){
         
