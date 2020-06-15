@@ -1550,6 +1550,27 @@ namespace gmsh { // Top-level functions
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
+      // Generate the `keys' for the elements of type `elementType' in the entity
+      // of tag `tag', for the `functionSpaceType' function space. Each key
+      // uniquely identifies a basis function in the function space. If
+      // `returnCoord' is set, the `coord' vector contains the x, y, z coordinates
+      // locating basis functions for sorting purposes. Warning: this is an
+      // experimental feature and will probably change in a future release.
+      inline void getKeysForElement(const std::size_t elementTag,
+                                    const std::string & functionSpaceType,
+                                    gmsh::vectorpair & keys,
+                                    std::vector<double> & coord,
+                                    const bool returnCoord = true)
+      {
+        int ierr = 0;
+        int *api_keys_; size_t api_keys_n_;
+        double *api_coord_; size_t api_coord_n_;
+        gmshModelMeshGetKeysForElement(elementTag, functionSpaceType.c_str(), &api_keys_, &api_keys_n_, &api_coord_, &api_coord_n_, (int)returnCoord, &ierr);
+        if(ierr) throw ierr;
+        keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
+        coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+      }
+
       // Get the number of keys by elements of type `elementType' for function
       // space named `functionSpaceType'.
       inline int getNumberOfKeysForElements(const int elementType,

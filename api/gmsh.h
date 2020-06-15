@@ -1020,6 +1020,20 @@ namespace gmsh { // Top-level functions
                                        const int tag = -1,
                                        const bool returnCoord = true);
 
+      // gmsh::model::mesh::getKeysForElement
+      //
+      // Generate the `keys' for the elements of type `elementType' in the entity
+      // of tag `tag', for the `functionSpaceType' function space. Each key
+      // uniquely identifies a basis function in the function space. If
+      // `returnCoord' is set, the `coord' vector contains the x, y, z coordinates
+      // locating basis functions for sorting purposes. Warning: this is an
+      // experimental feature and will probably change in a future release.
+      GMSH_API void getKeysForElement(const std::size_t elementTag,
+                                      const std::string & functionSpaceType,
+                                      gmsh::vectorpair & keys,
+                                      std::vector<double> & coord,
+                                      const bool returnCoord = true);
+
       // gmsh::model::mesh::getNumberOfKeysForElements
       //
       // Get the number of keys by elements of type `elementType' for function

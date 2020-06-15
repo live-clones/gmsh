@@ -1927,6 +1927,34 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
 end
 
 """
+    gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
+
+Generate the `keys` for the elements of type `elementType` in the entity of tag
+`tag`, for the `functionSpaceType` function space. Each key uniquely identifies
+a basis function in the function space. If `returnCoord` is set, the `coord`
+vector contains the x, y, z coordinates locating basis functions for sorting
+purposes. Warning: this is an experimental feature and will probably change in a
+future release.
+
+Return `keys`, `coord`.
+"""
+function getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
+    api_keys_ = Ref{Ptr{Cint}}()
+    api_keys_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetKeysForElement, gmsh.lib), Cvoid,
+          (Csize_t, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementTag, functionSpaceType, api_keys_, api_keys_n_, api_coord_, api_coord_n_, returnCoord, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetKeysForElement returned non-zero error code: $(ierr[])")
+    tmp_api_keys_ = unsafe_wrap(Array, api_keys_[], api_keys_n_[], own=true)
+    keys = [ (tmp_api_keys_[i], tmp_api_keys_[i+1]) for i in 1:2:length(tmp_api_keys_) ]
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    return keys, coord
+end
+
+"""
     gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
 
 Get the number of keys by elements of type `elementType` for function space

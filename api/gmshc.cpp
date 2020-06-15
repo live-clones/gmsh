@@ -1316,6 +1316,21 @@ GMSH_API void gmshModelMeshGetKeysForElements(const int elementType, const char 
   }
 }
 
+GMSH_API void gmshModelMeshGetKeysForElement(const size_t elementTag, const char * functionSpaceType, int ** keys, size_t * keys_n, double ** coord, size_t * coord_n, const int returnCoord, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_keys_;
+    std::vector<double> api_coord_;
+    gmsh::model::mesh::getKeysForElement(elementTag, functionSpaceType, api_keys_, api_coord_, returnCoord);
+    vectorpair2intptr(api_keys_, keys, keys_n);
+    vector2ptr(api_coord_, coord, coord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType, const char * functionSpaceType, int * ierr)
 {
   int result_api_ = 0;

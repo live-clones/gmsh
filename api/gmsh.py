@@ -2476,6 +2476,38 @@ class model:
                 _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
+        def getKeysForElement(elementTag, functionSpaceType, returnCoord=True):
+            """
+            gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord=True)
+
+            Generate the `keys' for the elements of type `elementType' in the entity of
+            tag `tag', for the `functionSpaceType' function space. Each key uniquely
+            identifies a basis function in the function space. If `returnCoord' is set,
+            the `coord' vector contains the x, y, z coordinates locating basis
+            functions for sorting purposes. Warning: this is an experimental feature
+            and will probably change in a future release.
+
+            Return `keys', `coord'.
+            """
+            api_keys_, api_keys_n_ = POINTER(c_int)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetKeysForElement(
+                c_size_t(elementTag),
+                c_char_p(functionSpaceType.encode()),
+                byref(api_keys_), byref(api_keys_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                c_int(bool(returnCoord)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetKeysForElement returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectorpair(api_keys_, api_keys_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value))
+
+        @staticmethod
         def getNumberOfKeysForElements(elementType, functionSpaceType):
             """
             gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
