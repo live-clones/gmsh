@@ -420,6 +420,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
   MVertex *vMin, *vMax;
   const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
   std::pair<MVertex *, MVertex *> p(vMin, vMax);
+
   std::vector<MVertex *> veEdge;
   // Get vertices on geometry if asked
   bool gotVertOnGeo =
@@ -437,7 +438,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
   }
   else if(p.first != p.second) {
     // Vertices already exist and edge is not a degenerated edge
-    Msg::Error("Mesh edges from different entities share nodes: create a finer mesh "
+    Msg::Error("Mesh edges from different curves share nodes: create a finer mesh "
                "(curve involved: %d)", ge->tag());
   }
   ve.insert(ve.end(), veEdge.begin(), veEdge.end());
@@ -1206,6 +1207,7 @@ static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
                           bool onlyVisible)
 {
   if(onlyVisible && !e->getVisibility()) return;
+  if(e->isFullyDiscrete()) return;
   std::vector<T *> elements1;
   for(std::size_t i = 0; i < elements.size(); i++) {
     T *ele = elements[i];
@@ -1220,11 +1222,10 @@ static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
   e->deleteVertexArrays();
 }
 
-static void updateHighOrderVertices(GEntity *e,
-                                    const std::vector<MVertex *> &newHOVert,
-                                    bool onlyVisible)
+static void deleteHighOrderVertices(GEntity *e, bool onlyVisible)
 {
   if(onlyVisible && !e->getVisibility()) return;
+  if(e->isFullyDiscrete()) return;
   std::vector<MVertex *> v1;
   for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
     if(e->mesh_vertices[i]->getPolynomialOrder() > 1)
@@ -1232,8 +1233,21 @@ static void updateHighOrderVertices(GEntity *e,
     else
       v1.push_back(e->mesh_vertices[i]);
   }
-  v1.insert(v1.end(), newHOVert.begin(), newHOVert.end());
   e->mesh_vertices = v1;
+  e->deleteVertexArrays();
+}
+
+static void updateHighOrderVertices(GEntity *e,
+                                    const std::vector<MVertex *> &newHOVert,
+                                    bool onlyVisible)
+{
+  if(onlyVisible && !e->getVisibility()) return;
+  if(e->isFullyDiscrete()) return;
+  for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
+    if(e->mesh_vertices[i]->getPolynomialOrder() > 1)
+      return; // we already have the high order mesh
+  }
+  e->mesh_vertices.insert(e->mesh_vertices.end(), newHOVert.begin(), newHOVert.end());
   e->deleteVertexArrays();
 }
 
@@ -1257,13 +1271,12 @@ void SetOrder1(GModel *m, bool onlyVisible)
   }
 
   // remove all high order vertices
-  std::vector<MVertex *> newHOVert;
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
-    updateHighOrderVertices(*it, newHOVert, onlyVisible);
+    deleteHighOrderVertices(*it, onlyVisible);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-    updateHighOrderVertices(*it, newHOVert, onlyVisible);
+    deleteHighOrderVertices(*it, onlyVisible);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
-    updateHighOrderVertices(*it, newHOVert, onlyVisible);
+    deleteHighOrderVertices(*it, onlyVisible);
 }
 
 void checkHighOrderTriangles(const char *cc, GModel *m,
@@ -1379,6 +1392,57 @@ void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
   }
 }
 
+static bool haveHighOrder(GEntity *ge)
+{
+  for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++) {
+    if(ge->mesh_vertices[i]->getPolynomialOrder() > 1) return true;
+  }
+  return false;
+}
+
+static void setHighOrderFromExistingMesh(GEdge *ge,
+                                         std::vector<MVertex *> &newHOVert,
+                                         edgeContainer &edgeVertices)
+{
+  for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+    MElement *e = ge->getMeshElement(i);
+    std::vector<MVertex *> v;
+    e->getVertices(v);
+    MVertex *vMin, *vMax;
+    getMinMaxVert(v[0], v[1], vMin, vMax);
+    std::pair<MVertex *, MVertex *> p(vMin, vMax);
+    for(std::size_t j = e->getNumPrimaryVertices(); j < e->getNumVertices(); j++) {
+      newHOVert.push_back(v[j]);
+      edgeVertices[p].push_back(v[j]);
+    }
+  }
+}
+
+static void setHighOrderFromExistingMesh(GFace *ge,
+                                         std::vector<MVertex *> &newHOVert,
+                                         faceContainer &faceVertices)
+{
+  for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+    MElement *e = ge->getMeshElement(i);
+    MFace f = e->getFace(0);
+    for(std::size_t j = e->getNumPrimaryVertices(); j < e->getNumVertices(); j++) {
+      newHOVert.push_back(e->getVertex(j));
+      faceVertices[f].push_back(e->getVertex(j));
+    }
+  }
+}
+
+static void setHighOrderFromExistingMesh(GRegion *ge,
+                                         std::vector<MVertex *> &newHOVert)
+{
+  for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+    MElement *e = ge->getMeshElement(i);
+    for(std::size_t j = e->getNumPrimaryVertices(); j < e->getNumVertices(); j++) {
+      newHOVert.push_back(e->getVertex(j));
+    }
+  }
+}
+
 void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
                bool onlyVisible)
 {
@@ -1426,15 +1490,21 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
     Msg::Info("Meshing curve %d order %d", (*it)->tag(), order);
     Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
-    setHighOrder(*it, newHOVert[*it], edgeVertices, linear, nPts);
+    if(haveHighOrder(*it))
+      setHighOrderFromExistingMesh(*it, newHOVert[*it], edgeVertices);
+    else
+      setHighOrder(*it, newHOVert[*it], edgeVertices, linear, nPts);
   }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     Msg::Info("Meshing surface %d order %d", (*it)->tag(), order);
     Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
-    setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, linear,
-                 incomplete, nPts);
+    if(haveHighOrder(*it))
+      setHighOrderFromExistingMesh(*it, newHOVert[*it], faceVertices);
+    else
+      setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, linear,
+                   incomplete, nPts);
     if((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
   }
 
@@ -1442,8 +1512,11 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
     Msg::Info("Meshing volume %d order %d", (*it)->tag(), order);
     Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
-    setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, incomplete,
-                 nPts);
+    if(haveHighOrder(*it))
+      setHighOrderFromExistingMesh(*it, newHOVert[*it]);
+    else
+      setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, incomplete,
+                   nPts);
     if((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
   }
 

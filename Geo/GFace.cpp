@@ -18,6 +18,7 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "OS.h"
+#include "discreteEdge.h"
 #include "discreteFace.h"
 #include "ExtrudeParams.h"
 
@@ -2329,4 +2330,18 @@ void GFace::alignElementsWithMaster()
       }
     }
   }
+}
+
+bool GFace::isFullyDiscrete()
+{
+  if(geomType() != GEntity::DiscreteSurface) return false;
+  discreteFace *df = dynamic_cast<discreteFace*>(this);
+  if(df && df->haveParametrization()) return false;
+  std::vector<GEdge *> e = edges();
+  for(std::size_t i = 0; i < e.size(); i++) {
+    if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
+    discreteEdge *de = dynamic_cast<discreteEdge*>(e[i]);
+    if(de && de->haveParametrization()) return false;
+  }
+  return true;
 }

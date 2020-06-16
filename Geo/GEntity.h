@@ -247,6 +247,11 @@ public:
   // does the entity have a parametrization?
   virtual bool haveParametrization() { return true; }
 
+  // is the entity and its bounding entities fully discrete (i.e. without
+  // parametrization for curves and surfaces), and should thus not be
+  // (re)meshed?
+  virtual bool isFullyDiscrete() { return !haveParametrization(); }
+
   // parametric bounds of the entity in the "i" direction.
   virtual Range<double> parBounds(int i) const { return Range<double>(0., 0.); }
 

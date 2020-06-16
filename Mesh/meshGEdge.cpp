@@ -344,11 +344,7 @@ static void copyMesh(GEdge *from, GEdge *to, int direction)
 
 void deMeshGEdge::operator()(GEdge *ge)
 {
-  if(ge->geomType() == GEntity::DiscreteCurve){
-    if(!static_cast<discreteEdge *>(ge)->haveParametrization()){
-      return;
-    }
-  }
+  if(ge->isFullyDiscrete()) return;
   ge->deleteMesh();
   ge->meshStatistics.status = GEdge::PENDING;
 }

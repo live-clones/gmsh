@@ -403,6 +403,8 @@ public:
 
   virtual bool reorder(const int elementType,
                        const std::vector<std::size_t> &ordering);
+
+  virtual bool isFullyDiscrete();
 };
 
 #endif

@@ -177,6 +177,8 @@ public:
   // set the reverseMesh constraint in the bounding surfaces so that the
   // boundary mesh has outward pointing normals, based on the STL triangulation
   bool setOutwardOrientationMeshConstraint();
+
+  virtual bool isFullyDiscrete();
 };
 
 #endif

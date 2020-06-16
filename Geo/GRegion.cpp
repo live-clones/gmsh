@@ -16,6 +16,8 @@
 #include "GmshMessage.h"
 #include "VertexArray.h"
 #include "boundaryLayersData.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
 #include "ExtrudeParams.h"
 #include "GmshDefines.h"
 
@@ -959,5 +961,24 @@ bool GRegion::setOutwardOrientationMeshConstraint()
     }
   }
 
+  return true;
+}
+
+bool GRegion::isFullyDiscrete()
+{
+  if(geomType() != GEntity::DiscreteVolume) return false;
+  if(haveParametrization()) return false;
+  std::vector<GFace *> f = faces();
+  for(std::size_t i = 0; i < f.size(); i++) {
+    if(f[i]->geomType() != GEntity::DiscreteSurface) return false;
+    discreteFace *df = dynamic_cast<discreteFace*>(f[i]);
+    if(df && df->haveParametrization()) return false;
+  }
+  std::vector<GEdge *> e = edges();
+  for(std::size_t i = 0; i < e.size(); i++) {
+    if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
+    discreteEdge *de = dynamic_cast<discreteEdge*>(e[i]);
+    if(de && de->haveParametrization()) return false;
+  }
   return true;
 }
