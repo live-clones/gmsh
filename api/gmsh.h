@@ -652,6 +652,11 @@ namespace gmsh { // Top-level functions
       // Rebuild the node cache.
       GMSH_API void rebuildNodeCache(const bool onlyIfNecessary = true);
 
+      // gmsh::model::mesh::rebuildElementCache
+      //
+      // Rebuild the element cache.
+      GMSH_API void rebuildElementCache(const bool onlyIfNecessary = true);
+
       // gmsh::model::mesh::getNodesForPhysicalGroup
       //
       // Get the nodes from all the elements belonging to the physical group of
@@ -989,12 +994,7 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getBasisFunctionsOrientationForElement
       //
-      // Get the orientation index of the elements of type `elementType' in the
-      // entity of tag `tag'. The arguments have the same meaning as in
-      // `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
-      // each element the orientation index in the values returned by
-      // `getBasisFunctions'. For Lagrange basis functions the call is superfluous
-      // as it will return a vector of zeros.
+      // Get the orientation of a single element `elementTag'.
       GMSH_API void getBasisFunctionsOrientationForElement(const std::size_t elementTag,
                                                            const std::string & functionSpaceType,
                                                            int & basisFunctionsOrientation);
@@ -1048,12 +1048,7 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getKeysForElement
       //
-      // Generate the `keys' for the elements of type `elementType' in the entity
-      // of tag `tag', for the `functionSpaceType' function space. Each key
-      // uniquely identifies a basis function in the function space. If
-      // `returnCoord' is set, the `coord' vector contains the x, y, z coordinates
-      // locating basis functions for sorting purposes. Warning: this is an
-      // experimental feature and will probably change in a future release.
+      // Get the keys for a single element `elementTag'.
       GMSH_API void getKeysForElement(const std::size_t elementTag,
                                       const std::string & functionSpaceType,
                                       gmsh::vectorpair & keys,

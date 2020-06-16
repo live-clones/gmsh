@@ -257,6 +257,9 @@ mesh.add('setNode', doc, None, isize('nodeTag'), ivectordouble('coord'), ivector
 doc = '''Rebuild the node cache.'''
 mesh.add('rebuildNodeCache', doc, None, ibool('onlyIfNecessary', 'true', 'True'))
 
+doc = '''Rebuild the element cache.'''
+mesh.add('rebuildElementCache', doc, None, ibool('onlyIfNecessary', 'true', 'True'))
+
 doc = '''Get the nodes from all the elements belonging to the physical group of dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].'''
 mesh.add('getNodesForPhysicalGroup', doc, None, iint('dim'), iint('tag'), ovectorsize('nodeTags'), ovectordouble('coord'))
 

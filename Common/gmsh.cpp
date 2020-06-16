@@ -1357,6 +1357,12 @@ GMSH_API void gmsh::model::mesh::rebuildNodeCache(bool onlyIfNecessary)
   GModel::current()->rebuildMeshVertexCache(onlyIfNecessary);
 }
 
+GMSH_API void gmsh::model::mesh::rebuildElementCache(bool onlyIfNecessary)
+{
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->rebuildMeshElementCache(onlyIfNecessary);
+}
+
 GMSH_API void
 gmsh::model::mesh::getNodesForPhysicalGroup(const int dim, const int tag,
                                             std::vector<std::size_t> &nodeTags,

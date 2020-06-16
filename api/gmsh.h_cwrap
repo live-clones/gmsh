@@ -1016,6 +1016,14 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
+      // Rebuild the element cache.
+      inline void rebuildElementCache(const bool onlyIfNecessary = true)
+      {
+        int ierr = 0;
+        gmshModelMeshRebuildElementCache((int)onlyIfNecessary, &ierr);
+        if(ierr) throw ierr;
+      }
+
       // Get the nodes from all the elements belonging to the physical group of
       // dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord'
       // is a vector of length 3 times the length of `nodeTags' that contains the
@@ -1498,12 +1506,7 @@ namespace gmsh { // Top-level functions
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
 
-      // Get the orientation index of the elements of type `elementType' in the
-      // entity of tag `tag'. The arguments have the same meaning as in
-      // `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
-      // each element the orientation index in the values returned by
-      // `getBasisFunctions'. For Lagrange basis functions the call is superfluous
-      // as it will return a vector of zeros.
+      // Get the orientation of a single element `elementTag'.
       inline void getBasisFunctionsOrientationForElement(const std::size_t elementTag,
                                                          const std::string & functionSpaceType,
                                                          int & basisFunctionsOrientation)
@@ -1588,12 +1591,7 @@ namespace gmsh { // Top-level functions
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
-      // Generate the `keys' for the elements of type `elementType' in the entity
-      // of tag `tag', for the `functionSpaceType' function space. Each key
-      // uniquely identifies a basis function in the function space. If
-      // `returnCoord' is set, the `coord' vector contains the x, y, z coordinates
-      // locating basis functions for sorting purposes. Warning: this is an
-      // experimental feature and will probably change in a future release.
+      // Get the keys for a single element `elementTag'.
       inline void getKeysForElement(const std::size_t elementTag,
                                     const std::string & functionSpaceType,
                                     gmsh::vectorpair & keys,

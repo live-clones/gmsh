@@ -556,6 +556,10 @@ GMSH_API void gmshModelMeshSetNode(const size_t nodeTag,
 GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary,
                                             int * ierr);
 
+/* Rebuild the element cache. */
+GMSH_API void gmshModelMeshRebuildElementCache(const int onlyIfNecessary,
+                                               int * ierr);
+
 /* Get the nodes from all the elements belonging to the physical group of
  * dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord'
  * is a vector of length 3 times the length of `nodeTags' that contains the x,
@@ -866,12 +870,7 @@ GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElements(const int ele
                                                                    const size_t numTasks,
                                                                    int * ierr);
 
-/* Get the orientation index of the elements of type `elementType' in the
- * entity of tag `tag'. The arguments have the same meaning as in
- * `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
- * each element the orientation index in the values returned by
- * `getBasisFunctions'. For Lagrange basis functions the call is superfluous
- * as it will return a vector of zeros. */
+/* Get the orientation of a single element `elementTag'. */
 GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElement(const size_t elementTag,
                                                                   const char * functionSpaceType,
                                                                   int * basisFunctionsOrientation,
@@ -919,12 +918,7 @@ GMSH_API void gmshModelMeshGetKeysForElements(const int elementType,
                                               const int returnCoord,
                                               int * ierr);
 
-/* Generate the `keys' for the elements of type `elementType' in the entity of
- * tag `tag', for the `functionSpaceType' function space. Each key uniquely
- * identifies a basis function in the function space. If `returnCoord' is set,
- * the `coord' vector contains the x, y, z coordinates locating basis
- * functions for sorting purposes. Warning: this is an experimental feature
- * and will probably change in a future release. */
+/* Get the keys for a single element `elementTag'. */
 GMSH_API void gmshModelMeshGetKeysForElement(const size_t elementTag,
                                              const char * functionSpaceType,
                                              int ** keys, size_t * keys_n,
