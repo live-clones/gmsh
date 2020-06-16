@@ -1436,6 +1436,9 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   int nTot = m->getNumEdges() + m->getNumFaces() + m->getNumRegions();
   Msg::StartProgressMeter(nTot);
 
+  // TODO: we can leak nodes of discrete entities with existing high-order
+  // nodes, if we ask a mesh with a different order
+
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     Msg::Info("Meshing curve %d order %d", (*it)->tag(), order);
     Msg::ProgressMeter(++counter, false, msg);
