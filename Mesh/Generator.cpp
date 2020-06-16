@@ -1406,8 +1406,9 @@ void GenerateMesh(GModel *m, int ask)
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
 
-  // Change any high order elements back into first order ones
-  SetOrder1(m);
+  // Change any high order elements back into first order ones (but skip
+  // discrete entities)
+  SetOrder1(m, false, true);
   FixPeriodicMesh(m);
 
   // 1D mesh
