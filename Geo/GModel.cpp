@@ -2231,10 +2231,13 @@ void GModel::pruneMeshVertexAssociations()
   std::set<MVertex *, MVertexPtrLessThan> vertSet;
   getEntities(entities);
   for(std::size_t i = 0; i < entities.size(); i++) {
-    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-      MVertex *v = entities[i]->mesh_vertices[j];
-      v->setEntity(0);
-      vertSet.insert(v);
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      MElement *e = entities[i]->getMeshElement(j);
+      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+        MVertex *v = e->getVertex(k);
+        v->setEntity(0);
+        vertSet.insert(v);
+      }
     }
     entities[i]->mesh_vertices.clear();
   }
