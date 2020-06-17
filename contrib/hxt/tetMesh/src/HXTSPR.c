@@ -197,10 +197,8 @@ static inline int tri_edge_intersection(int t012v0,
 static inline int tet_tri_intersection(SPRCavity* SPR,
                                        HXTBbox* tetBbox,
                                        uint8_t tet[4],
-                                       unsigned triangleID)
+                                       uint8_t* tri)
 {
-  uint8_t* tri = SPR->triangles.array[triangleID].node;
-
   HXTBbox triangleBbox;
   hxtBboxFrom(&triangleBbox, SPR->points.array[tri[0]].coord);
   hxtBboxAddOne(&triangleBbox, SPR->points.array[tri[1]].coord);
@@ -407,9 +405,8 @@ static inline int tet_tri_intersection(SPRCavity* SPR,
 static SPRNOINLINE int tet_edge_intersection(SPRCavity* SPR,
                                              HXTBbox* tetBbox,
                                              uint8_t tet[4],
-                                             unsigned edgeID)
+                                             uint8_t* edge)
 {
-  uint8_t* edge = SPR->edges.array[edgeID].node;
   double* l0 = SPR->points.array[edge[0]].coord;
   double* l1 = SPR->points.array[edge[1]].coord;
   if((tetBbox->max[0]<l0[0] && tetBbox->max[0]<l1[0]) ||
@@ -600,7 +597,7 @@ static double get_quality_map(SPRCavity* SPR,
  * that the best tetrahedralization could have */
 static inline uint16_t best_face_heuristic(SPRCavity* SPR, double* qualMax)
 {
-  const uint16_t nfaces = SPR->triangles.num;
+  const uint16_t nfaces = SPR->bndTriangles.num;
 
   const uint8_t npts = SPR->points.num;
   int minValid = 255;
@@ -610,7 +607,7 @@ static inline uint16_t best_face_heuristic(SPRCavity* SPR, double* qualMax)
   // new faces have a better chances of being bad, that why we decrement
   for (uint16_t i=nfaces; i>0; i--) {
     uint16_t triangleID = i-1;
-    SPRTet tet = SPR->triangles.array[triangleID];
+    SPRTet tet = SPR->bndTriangles.array[triangleID];
 
     int numValid = 0;
     double max = 0.0;
@@ -750,28 +747,28 @@ static void add_face(SPRCavity* SPR,
                      uint8_t v1,
                      uint8_t v2)
 {
-  SPR->triangles.array[SPR->triangles.num].node[0] = v0;
-  SPR->triangles.array[SPR->triangles.num].node[1] = v1;
-  SPR->triangles.array[SPR->triangles.num].node[2] = v2;
-  SPR->triangles.array[SPR->triangles.num].node[3] = v0;
-  add_face_map(SPR, v0, v1, v2, SPR->triangles.num);
+  SPR->bndTriangles.array[SPR->bndTriangles.num].node[0] = v0;
+  SPR->bndTriangles.array[SPR->bndTriangles.num].node[1] = v1;
+  SPR->bndTriangles.array[SPR->bndTriangles.num].node[2] = v2;
+  SPR->bndTriangles.array[SPR->bndTriangles.num].node[3] = v0;
+  add_face_map(SPR, v0, v1, v2, SPR->bndTriangles.num);
   increment_3valences(SPR, v0, v1, v2);
-  SPR->triangles.num++;
+  SPR->bndTriangles.num++;
 }
 
 static void remove_face(SPRCavity* SPR, uint16_t triangleID)
 {
-  SPRTriangle* del = &SPR->triangles.array[triangleID];
+  SPRTriangle* del = &SPR->bndTriangles.array[triangleID];
   remove_face_map(SPR, del->node[0], del->node[1], del->node[2]);
   decrement_3valences(SPR, del->node[0], del->node[1], del->node[2]);
 
-  if(triangleID!=SPR->triangles.num-1) {
-    SPRTriangle* last = &SPR->triangles.array[SPR->triangles.num-1];
+  if(triangleID!=SPR->bndTriangles.num-1) {
+    SPRTriangle* last = &SPR->bndTriangles.array[SPR->bndTriangles.num-1];
     add_face_map(SPR, last->node[0], last->node[1], last->node[2], triangleID);
     *del = *last;
   }
   
-  SPR->triangles.num--;
+  SPR->bndTriangles.num--;
 }
 
 static inline void new_tetrahedralization(SPRCavity* SPR, SPRStep* step)
@@ -857,8 +854,8 @@ static void SPR_init_faceMap_and_valences(SPRCavity* SPR)
     p->is_interior = 0;
   }
 
-  for (uint16_t i=0; i<SPR->triangles.num; i++) {
-    uint8_t* v = SPR->triangles.array[i].node;
+  for (uint16_t i=0; i<SPR->bndTriangles.num; i++) {
+    uint8_t* v = SPR->bndTriangles.array[i].node;
     v[3] = v[0];
     increment_3valences(SPR, v[0], v[1], v[2]);
     add_face_map(SPR, v[0], v[1], v[2], i);
@@ -907,7 +904,7 @@ static HXTStatus hxtSPR_advanced(SPRCavity* SPR) {
     }
 
     int rewind = 0;
-    if(SPR->triangles.num==0) { // we found a new (better) tetrahedralization
+    if(SPR->bndTriangles.num==0) { // we found a new (better) tetrahedralization
       new_tetrahedralization(SPR, step);
       rewind = 1;
     }
@@ -922,7 +919,7 @@ static HXTStatus hxtSPR_advanced(SPRCavity* SPR) {
         rewind = 1;
       }
       else {
-        step->tet = SPR->triangles.array[triangleID];
+        step->tet = SPR->bndTriangles.array[triangleID];
 
         // create (and order) the candidate array
         compute_candidates(SPR, step, qualMax);
@@ -964,8 +961,21 @@ static HXTStatus hxtSPR_advanced(SPRCavity* SPR) {
       if(stop)
         continue;
 
-      for (int edgeID=0; edgeID<SPR->edges.num; edgeID++) {
-        if(tet_edge_intersection(SPR, &tetBbox, step->tet.node, edgeID)) {
+      for (int edgeID=0; edgeID<SPR->CIEdges.num; edgeID++) {
+        uint8_t* edge = SPR->CIEdges.array[edgeID].node;
+        if(tet_edge_intersection(SPR, &tetBbox, step->tet.node, edge)) {
+          stop = 1;
+          SPR->map.qualities[index] = -DBL_MAX;
+          break;
+        }
+      }
+
+      if(stop)
+        continue;
+
+      for (int triangleID=0; triangleID<SPR->CITriangles.num; triangleID++) {
+        uint8_t* tri = SPR->CITriangles.array[triangleID].node;
+        if(tet_tri_intersection(SPR, &tetBbox, step->tet.node, tri)) {
           stop = 1;
           SPR->map.qualities[index] = -DBL_MAX;
           break;
@@ -976,8 +986,9 @@ static HXTStatus hxtSPR_advanced(SPRCavity* SPR) {
         continue;
 
       // test intersection with boundary triangles
-      for (int otherFaceID=0; otherFaceID<SPR->triangles.num; otherFaceID++) {
-        if(tet_tri_intersection(SPR, &tetBbox, step->tet.node, otherFaceID)){
+      for (int otherFaceID=0; otherFaceID<SPR->bndTriangles.num; otherFaceID++) {
+        uint8_t* tri = SPR->bndTriangles.array[otherFaceID].node;
+        if(tet_tri_intersection(SPR, &tetBbox, step->tet.node, tri)){
           stop = 1;
           break;
         }
@@ -1118,7 +1129,7 @@ typedef struct {
   SPRCavity cavity;
 
   // neighbor (mesh indices) of boundary triangles, given in original order
-  uint64_t meshAdjacencies[SPR_MAX_TRIANGLES];
+  uint64_t meshAdjacencies[SPR_MAX_BNDTRIANGLES];
 
   double worstQuality;
 } SPRGrowingCavity;
@@ -1174,8 +1185,9 @@ static inline HXTStatus SPROpti_init(SPRGrowingCavity* growingCav,
   SPR_clear_maps(SPR);
   // SPR_init_step(SPR); % already done later
   SPR->points.num = 4;    // we add those 4 points in the for loop hereafter
-  SPR->edges.num = 0;     // only constrained edge entirely interior
-  SPR->triangles.num = 0; // add_face() (in second for loop) already increments num
+  SPR->CIEdges.num = 0;     // only constrained edge entirely interior
+  SPR->CITriangles.num = 0; // add_face() (in second for loop) already increments num
+  SPR->bndTriangles.num = 0;
   SPR->tetrahedra.num = 1;
   SPR->tetrahedra.array[0] = (SPRTet) {{0,1,2,3}};
   SPR->tetrahedra.quality = local->quality->values[badTet];
@@ -1247,12 +1259,12 @@ static inline HXTStatus find_best_point(SPRGrowingCavity* growingCav,
   HXTMesh* mesh = local->toSync->mesh;
   uint64_t* adjacencies = growingCav->meshAdjacencies;
 
-  uint32_t opposite_point[SPR_MAX_TRIANGLES];
-  uint16_t numConnected[SPR_MAX_TRIANGLES];
+  uint32_t opposite_point[SPR_MAX_BNDTRIANGLES];
+  uint16_t numConnected[SPR_MAX_BNDTRIANGLES];
   int numPoints = 0;
 
   // for each point outside of the cavity
-  for(int i=0; i<SPR->triangles.num; i++) {
+  for(int i=0; i<SPR->bndTriangles.num; i++) {
     unsigned facet = adjacencies[i]%4;
     uint64_t tet = adjacencies[i]/4;
 
@@ -1312,7 +1324,7 @@ static inline HXTStatus find_best_point(SPRGrowingCavity* growingCav,
         uint32_t node = opposite_point[i];
         double score = 0.0;
 
-        for(int t=0; t<SPR->triangles.num; t++) {
+        for(int t=0; t<SPR->bndTriangles.num; t++) {
           if(adjacencies[t]==HXT_NO_ADJACENT || mesh->tetrahedra.node[adjacencies[t]]!=node || getFacetConstraint(mesh, adjacencies[t]/4, adjacencies[t]%4))
             continue;
           score -= local->quality->values[adjacencies[t]/4];
@@ -1402,7 +1414,7 @@ static inline HXTStatus attach_best_point(SPRGrowingCavity* growingCav,
 
   HXTDeleted* deleted = &local->deleted;
 
-  for(int i=0; i<SPR->triangles.num;) { // notice we don't increment i here
+  for(int i=0; i<SPR->bndTriangles.num;) { // notice we don't increment i here
     uint64_t meshTet = adjacencies[i]/4;
     unsigned facet = adjacencies[i]%4;
 
@@ -1427,7 +1439,7 @@ static inline HXTStatus attach_best_point(SPRGrowingCavity* growingCav,
       continue;
     }
 
-    // verify that the meshTet is in our partition
+    // verify that the tet is in our partition
     if(tetOutOfPartition(vertices, partition, &mesh->tetrahedra.node[4*meshTet])){
         return HXT_STATUS_CONFLICT;
     }
@@ -1444,7 +1456,7 @@ static inline HXTStatus attach_best_point(SPRGrowingCavity* growingCav,
 
     // we must now find the corresponding points ID in the SPR structure
     // and we add the tet to the SPR structure :-)
-    uint8_t* triV = SPR->triangles.array[i].node;
+    uint8_t* triV = SPR->bndTriangles.array[i].node;
     uint8_t* tetV = SPR->tetrahedra.array[SPR->tetrahedra.num++].node;
     
     tetV[facet] = oppositeV;
@@ -1476,7 +1488,7 @@ static inline HXTStatus attach_best_point(SPRGrowingCavity* growingCav,
       growingCav->worstQuality = local->quality->values[meshTet];
     }
 
-    adjacencies[i] = adjacencies[SPR->triangles.num-1];
+    adjacencies[i] = adjacencies[SPR->bndTriangles.num-1];
     remove_face(SPR, i);
 
     // for each facet
@@ -1491,16 +1503,17 @@ static inline HXTStatus attach_best_point(SPRGrowingCavity* growingCav,
 
       if(index == UINT16_MAX) {
         // add the adjacency
-        adjacencies[SPR->triangles.num] = mesh->tetrahedra.neigh[4*meshTet + f];
+        adjacencies[SPR->bndTriangles.num] = mesh->tetrahedra.neigh[4*meshTet + f];
         // add the face to the map
         add_face(SPR, p0, p1, p2);
       }
       else {
         if(getFacetConstraint(mesh, meshTet, f)) {
-          // we keep both facets, set adjacency to HXT_NO_ADJACENT
-          adjacencies[SPR->triangles.num] = HXT_NO_ADJACENT;
-          adjacencies[index] = HXT_NO_ADJACENT;
-          add_face(SPR, p0, p1, p2);
+          // we remove the found face and add the facet to the constrained facet.
+          adjacencies[index] = adjacencies[SPR->bndTriangles.num-1];
+          remove_face(SPR, index);
+
+          SPR->CITriangles.array[SPR->CITriangles.num++] = (SPRTriangle) {{p0, p1, p2, p0}};
         }
         else {
           // we may have a new constrained edge that is completely inside the cavity
@@ -1514,13 +1527,13 @@ static inline HXTStatus attach_best_point(SPRGrowingCavity* growingCav,
               getNodesFromEdge(edgeNum, &n0, &n1);
 
               // add the edge to the SPR structure
-              SPR->edges.array[SPR->edges.num++] = (SPREdge) {{tetV[n0], tetV[n1]}};
+              SPR->CIEdges.array[SPR->CIEdges.num++] = (SPREdge) {{tetV[n0], tetV[n1]}};
             }
           }
 
 
           // remove the face from the map, only if is not constrained
-          adjacencies[index] = adjacencies[SPR->triangles.num-1];
+          adjacencies[index] = adjacencies[SPR->bndTriangles.num-1];
           remove_face(SPR, index);
 
           // except now we may have a face we did not look at which is before i...
@@ -1545,15 +1558,15 @@ static HXTStatus fillConstrainedEdgeMap(HXTMesh* mesh, SPRCavity* SPR,
                                         char constrainedEdgeMap[][SPR_MAX_PTS])
 {
   // the edge that are in the SPR cavity structure are constrained
-  for(int i=0; i<SPR->edges.num; i++) {
-    int v0 = SPR->edges.array[i].node[0];
-    int v1 = SPR->edges.array[i].node[1];
+  for(int i=0; i<SPR->CIEdges.num; i++) {
+    int v0 = SPR->CIEdges.array[i].node[0];
+    int v1 = SPR->CIEdges.array[i].node[1];
     constrainedEdgeMap[v0][v1] = 1;
     constrainedEdgeMap[v1][v0] = 1;
   }
 
   // there might be other constrained edge on the surface of the cavity
-  for(int i=0; i<SPR->triangles.num; i++) {
+  for(int i=0; i<SPR->bndTriangles.num; i++) {
     if(adjacencies[i]==HXT_NO_ADJACENT)
       continue;
 
@@ -1563,7 +1576,7 @@ static HXTStatus fillConstrainedEdgeMap(HXTMesh* mesh, SPRCavity* SPR,
     // the indices of the node of the triangle in the tet
     unsigned ind[3] = {getNode0FromFacet(facet), getNode2FromFacet(facet), getNode1FromFacet(facet)};
 
-    uint8_t* triV = SPR->triangles.array[i].node;
+    uint8_t* triV = SPR->bndTriangles.array[i].node;
     // we must test the 3 rotations of the triangle to get one that match...
     int rotation;
     for(rotation=0; rotation<3; rotation++) {
@@ -1670,8 +1683,7 @@ static inline HXTStatus rebuildMesh(SPRGrowingCavity* growingCav,
       else {
         uint64_t adj = adjacencies[index];
 
-        if(adj==HXT_NO_ADJACENT) { // happens for constrained faces, or
-                                   // when there are no ghosts
+        if(adj==HXT_NO_ADJACENT) { // happens when there are no ghosts
           mesh->tetrahedra.neigh[4*meshTet + j] = HXT_NO_ADJACENT;
           setFacetConstraint(mesh, meshTet, j);
         }
@@ -1679,7 +1691,7 @@ static inline HXTStatus rebuildMesh(SPRGrowingCavity* growingCav,
           mesh->tetrahedra.neigh[4*meshTet + j] = adj;
           mesh->tetrahedra.neigh[adj] = 4*meshTet + j;
           if(getFacetConstraint(mesh, adj/4, adj%4))
-            setFacetConstraint(mesh, meshTet, j);
+             setFacetConstraint(mesh, meshTet, j);
         }
 #ifdef DEBUG
         numFound++;
@@ -1700,7 +1712,7 @@ static inline HXTStatus rebuildMesh(SPRGrowingCavity* growingCav,
   }
 
 #ifdef DEBUG
-  if(numFound!=SPR->triangles.num)
+  if(numFound!=SPR->bndTriangles.num)
     return HXT_ERROR_MSG(HXT_STATUS_ERROR, "DEBUG: missing external adjacency");
 #endif
 
@@ -1718,6 +1730,33 @@ static inline HXTStatus rebuildMesh(SPRGrowingCavity* growingCav,
                      4*i+j);
       }
     }
+  }
+
+  // reset constrained triangles flags
+  for(int i=0; i<SPR->CITriangles.num; i++) {
+    uint16_t adj0 = get_face_map(SPR,
+                                 SPR->CITriangles.array[i].node[0],
+                                 SPR->CITriangles.array[i].node[1],
+                                 SPR->CITriangles.array[i].node[2]);
+    uint16_t adj1 = get_face_map(SPR,
+                                 SPR->CITriangles.array[i].node[0],
+                                 SPR->CITriangles.array[i].node[2],
+                                 SPR->CITriangles.array[i].node[1]);
+      
+#ifndef NDEBUG
+    if(adj0==UINT16_MAX || adj1==UINT16_MAX)
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "constrained triangle not found in the tetrahedralization");
+#endif
+    uint64_t tet0 = newTet[adj0/4];
+    unsigned facet0 = adj0%4;
+    setFacetConstraint(mesh, tet0, facet0);
+
+    uint64_t tet1 = newTet[adj1/4];
+    unsigned facet1 = adj1%4;
+    setFacetConstraint(mesh, tet1, facet1);
+
+    mesh->tetrahedra.neigh[4*tet0 + facet0] = 4*tet1 + facet1;
+    mesh->tetrahedra.neigh[4*tet1 + facet1] = 4*tet0 + facet0;
   }
 
   for(int i=0; i<SPR->tetrahedra.num; i++) {
@@ -1840,12 +1879,12 @@ HXTStatus hxtSPR_opti(ThreadLocal* local,
       SPR_detect_interior_points(SPR);
       SPR_init_step(SPR);
 
-      // save the triangle in their current order
-      SPRTriangle original[SPR_MAX_TRIANGLES];
-      uint64_t adjacencies[SPR_MAX_TRIANGLES];
+      // save the triangles in their current order
+      SPRTriangle original[SPR_MAX_BNDTRIANGLES];
+      uint64_t adjacencies[SPR_MAX_BNDTRIANGLES];
 
-      memcpy(original, SPR->triangles.array, SPR->triangles.num*sizeof(SPRTriangle));
-      memcpy(adjacencies, growingCav.meshAdjacencies, SPR->triangles.num*sizeof(uint64_t));
+      memcpy(original, SPR->bndTriangles.array, SPR->bndTriangles.num*sizeof(SPRTriangle));
+      memcpy(adjacencies, growingCav.meshAdjacencies, SPR->bndTriangles.num*sizeof(uint64_t));
 
       status = hxtSPR_advanced(SPR);
 
@@ -1862,7 +1901,7 @@ HXTStatus hxtSPR_opti(ThreadLocal* local,
       }
 
       // reorder the adjacencies in the new order
-      for(int i=0; i<SPR->triangles.num; i++) {
+      for(int i=0; i<SPR->bndTriangles.num; i++) {
         uint8_t* triV = original[i].node;
 
         uint16_t index = get_face_map(SPR, triV[0], triV[1], triV[2]);
