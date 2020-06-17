@@ -3180,6 +3180,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(order);
     } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
@@ -3424,6 +3425,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(order);
     } break;
+    default: Msg::Error("Unknown familyType "); throw 2;
     }
   }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
