@@ -2542,7 +2542,9 @@ public:
       _zField = _zFieldId >= 0 ? (GModel::current()->getFields()->get(_zFieldId)) :
         NULL;
 
+      _infos.clear();
       std::vector<SPoint3> &points = P.pts;
+      points.clear();
       for(std::list<int>::iterator it = faces_id.begin(); it != faces_id.end();
           ++it) {
         GFace *f = GModel::current()->getFaceByTag(*it);
