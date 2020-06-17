@@ -25,24 +25,22 @@ extern "C" {
 // defines to set/unset the main optimizations
 #define SPR_SAVE_ORIENT3D
 
+
+
 #define SPR_MAX_PTS 32
-#define SPR_MAX_EDGES ((SPR_MAX_PTS*SPR_MAX_PTS - SPR_MAX_PTS)/2) //496
+
+/* From the book of Cheng et al. 'Delaunay Mesh Generation'
+ * A triangulation of n vertices in R^3 has at most `ntet=(n^2 − 3n − 2)/2` tetrahedra,
+ * at most nedg=(n^2 − n)/2` edges (this is simply the 2-combination of n)
+ * and at most `ntri=n^2 − 3n = 2*ntet+2` triangles */
 #define SPR_MAX_TETS ((SPR_MAX_PTS*SPR_MAX_PTS - 3*SPR_MAX_PTS - 2)/2) //463
 
-/* The cavity must be formed from a breadth first search,
- * meaning the original triangulation of the cavity
- * is connected through unconstrained triangles.
- * If we don't add any constrained face, it means that all
- * triangulations of the cavity will also be connected.
- * through unconstrained triangles.
- * A connected set of tetrahedra has at most 2*tet+2
- * boundary/constrained triangles (that's a tube of tet.)
- *
- * !!You can only add one additional constrained
- * triangle to recover!!, that's why there is at most
- * 2*SPR_MAX_TETS+4 triangles in the triangulation...
- */
-#define SPR_MAX_TRIANGLES 1024 //(2*SPR_MAX_TETS+4) //928
+/* In pratices however, the number of triangles will certainly never be greater than 500
+ * because the different constraints of the SPR make the upper bound impossible to be reached
+ * Same argument for constrained interior triangles and edges */
+#define SPR_MAX_BNDTRIANGLES 500
+#define SPR_MAX_CITRIANGLES 100
+#define SPR_MAX_CIEDGES 100
 
 
 /* structure for the points (32 bytes)*/
@@ -96,14 +94,21 @@ typedef struct {
     int num;
   } points;
 
-  /* Constrained edges
+  /* Constrained Interior edges
    * hxtSPR() might shuffle what you put in here */
   struct {
-    SPREdge array[SPR_MAX_EDGES];
+    SPREdge array[SPR_MAX_CIEDGES];
     int num;
-  } edges;
+  } CIEdges;
 
-  /* Boundary triangles + constrained triangles (appearing twice)
+  /* Constrained Interior triangles
+   * hxtSPR() might shuffle what you put in here */
+  struct {
+    SPRTriangle array[SPR_MAX_CITRIANGLES];
+    int num;
+  } CITriangles;
+
+  /* Boundary triangles
    *
    * Nodes of boundary triangles must appear in a counter-clockwise order
    * when seen from the interior of the cavity.
@@ -111,14 +116,11 @@ typedef struct {
    * Actually, there might be multiple closed surfaces but it is better to
    * tetrahedralize them separately...
    *
-   * Interior, constrained triangles must appear in both counter-clockwise
-   * and clockwise order (when seen from anywhere obviously...)
-   *
    * hxtSPR() might shuffle what you put in here */
   struct {
-    SPRTriangle array[SPR_MAX_TRIANGLES];
+    SPRTriangle array[SPR_MAX_BNDTRIANGLES];
     int num;
-  } triangles;
+  } bndTriangles;
 
   /* After the SPR, `tetrahedra.array` will contain the `tetrahedra.num`
    * tetrahedra of the best tetrahedralization found, or be left unchanged
@@ -187,7 +189,7 @@ typedef struct {
  *
  * If you only want to find high-quality tetrahedralization, or if you don't
  * want to waste time for poor quality result anyway, limit the number of nodes
- * in the search tree by setting max_search_nodes somewhere around SPR_MAX_TRIANGLES
+ * in the search tree by setting max_search_nodes somewhere around 500
  *
  * To call hxtSPR, fill the cavity structure as described in the structure
  * declaration, and, if there is no error (return value is 0),
