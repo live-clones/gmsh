@@ -88,7 +88,7 @@ HXTStatus hxtComputeNodalSizesFromTrianglesAndLines(HXTMesh* mesh, HXTNodalSizes
       nodalSizes->array[i] = DBL_MAX;
     }
     else {
-      nodalSizes->array[i] /= (double) vertices[i].padding.hilbertDist;
+      nodalSizes->array[i] /= (double) vertices[i].padding.hilbertDist * nodalSizes->factor;
     }
   }
   return HXT_STATUS_OK;
@@ -114,8 +114,8 @@ HXTStatus hxtComputeNodalSizesFromMesh(HXTMesh* mesh, HXTNodalSizes* nodalSizes)
           double l = sqrt ((X1[0]-X2[0])*(X1[0]-X2[0])+
                            (X1[1]-X2[1])*(X1[1]-X2[1])+
                            (X1[2]-X2[2])*(X1[2]-X2[2]));
-          if(l<nodalSizes->array[n1]) nodalSizes->array[n1] = l;
-          if(l<nodalSizes->array[n2]) nodalSizes->array[n2] = l;
+          if(l<nodalSizes->array[n1]) nodalSizes->array[n1] = l * nodalSizes->factor;
+          if(l<nodalSizes->array[n2]) nodalSizes->array[n2] = l * nodalSizes->factor;
         }
       }
     }
