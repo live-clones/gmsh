@@ -3430,6 +3430,10 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
           fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+    keys.reserve(e->getNumVertices());
+    if(generateCoord) {
+      coord.reserve(3 * e->getNumVertices());
+    }
     for(size_t k = 0; k < e->getNumVertices(); ++k) {
       keys.push_back(std::pair<int, std::size_t>(0, e->getVertex(k)->getNum()));
       if(generateCoord) {
@@ -3474,8 +3478,14 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   int const2 = const1 + numQuadFaceFunction;
   int const3 = const1 + numTriFaceFunction;
   int const4 = bSize + std::max(const3, const2);
+  int numDofsPerElement = vSize + bSize + eSize + fSize;
   delete basis;
 
+  keys.reserve(numDofsPerElement);
+  if(generateCoord) {
+    coord.reserve(3 * numDofsPerElement);
+  }
+    
   // vertices
   for(int k = 0; k < vSize; k++) {
     keys.push_back(std::pair<int, std::size_t>(0, e->getVertex(k)->getNum()));
