@@ -2700,10 +2700,10 @@ tetrahedralizations.
 @end itemize
 
 The ``Delaunay'' algorithm is currently the most robust and is the only
-one that supports embedded model entities and the automatic generation
-of hybrid meshes with pyramids. The @code{Field} mechanism to specify
-element sizes (@pxref{Specifying mesh element sizes}) is currently only
-supported by the ``Delaunay'' and ``HXT'' algorithms.
+one that supports the automatic generation of hybrid meshes with
+pyramids. Embedded model entities and the @code{Field} mechanism to
+specify element sizes (@pxref{Specifying mesh element sizes}) are
+currently only supported by the ``Delaunay'' and ``HXT'' algorithms.
 
 If your version of Gmsh is compiled with OpenMP support
 (@pxref{Compiling the source code}), most of the meshing steps can be

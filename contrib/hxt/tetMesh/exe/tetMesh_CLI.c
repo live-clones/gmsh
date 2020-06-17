@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 
   HXT_CHECK( hxtAddOption('L', "clmin", "minimum mesh size", HXT_DOUBLE, &HXT_POSITIVE_RANGE, &options.nodalSizes.min));
   HXT_CHECK( hxtAddOption('H', "clmax", "maximum mesh size", HXT_DOUBLE, &HXT_POSITIVE_RANGE, &options.nodalSizes.max));
-  HXT_CHECK( hxtAddOption('S', "clscale", "scale mesh size by a factor of VAL", HXT_DOUBLE, &HXT_POSITIVE_RANGE, &options.nodalSizes.factor));
+  // HXT_CHECK( hxtAddOption('S', "clscale", "scale mesh size by a factor of VAL", HXT_DOUBLE, &HXT_POSITIVE_RANGE, &options.nodalSizes.factor)); (no effect with interpolated nodalSizes)
   HXT_CHECK( hxtAddOption('A', "aspect-ratio-min", "The threshold on the aspect-ratio used during the optimization", HXT_DOUBLE, &HXT_0_1_RANGE, &options.quality.min));
 
   HXT_CHECK( hxtAddOption('v', "verbosity",

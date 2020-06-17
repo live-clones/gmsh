@@ -194,7 +194,8 @@ if(APPLE)
   set(GMSH_OS "MacOSX")
 elseif(CYGWIN OR MSYS)
   # detect if we use the MinGW compilers on Cygwin - if we do, handle the build
-  # as a pure Windows build
+  # as a pure Windows build and make cmake find pure Windows import libraries
+  # (.lib)
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
      CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpmachine
@@ -204,6 +205,8 @@ elseif(CYGWIN OR MSYS)
       set(GMSH_OS "Windows")
       set(WIN32 1)
       add_definitions(-DWIN32)
+      set(CMAKE_FIND_LIBRARY_PREFIXES "lib" "")
+      set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".lib" ".LIB" ".dll" ".DLL")
     endif()
   endif()
 else()

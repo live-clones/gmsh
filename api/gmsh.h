@@ -14,10 +14,6 @@
 // types from the C++ standard library. See `tutorial/c++' and `demos/api' for
 // examples.
 
-#if defined(_MSC_VER) && !defined(_USE_MATH_DEFINES)
-#define _USE_MATH_DEFINES
-#endif
-
 #include <cmath>
 #include <vector>
 #include <string>
@@ -35,6 +31,10 @@
 #endif
 #else
 #define GMSH_API
+#endif
+
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
 #endif
 
 namespace gmsh {
