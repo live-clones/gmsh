@@ -120,7 +120,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   FieldManager &fields = *GModel::current()->getFields();
 
   std::map<std::string, FieldFactory *>::iterator it;
-  for(it = fields.map_type_name.begin(); it != fields.map_type_name.end(); it++)
+  for(it = fields.mapTypeName.begin(); it != fields.mapTypeName.end(); it++)
     new_btn->add(it->first.c_str());
   new_btn->callback(field_new_cb);
 

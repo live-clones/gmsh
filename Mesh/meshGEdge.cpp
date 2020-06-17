@@ -461,8 +461,8 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
 {
   if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
-  const double hwall = blf->hwall(gv->tag());
-  double L = hwall;
+  const double hWall = blf->hWall(gv->tag());
+  double L = hWall;
   double LEdge = distance(ge->getBeginVertex()->mesh_vertices[0],
                           ge->getEndVertex()->mesh_vertices[0]);
   while(1) {
@@ -472,9 +472,9 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
 
     SPoint3 p(gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
     v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p), 0,
-                                blf->hfar));
+                                blf->hFar));
     int ith = v.size();
-    L += hwall * std::pow(blf->ratio, ith);
+    L += hWall * std::pow(blf->ratio, ith);
   }
 }
 

@@ -940,8 +940,7 @@ void PrintOptionsDoc()
     fprintf(file, "%s@ftable @code\n", warn);
     FieldManager &fields = *GModel::current()->getFields();
     for(std::map<std::string, FieldFactory *>::iterator it =
-          fields.map_type_name.begin();
-        it != fields.map_type_name.end(); it++) {
+          fields.mapTypeName.begin(); it != fields.mapTypeName.end(); it++) {
       fprintf(file, "@item %s\n", it->first.c_str());
       Field *f = (*it->second)();
       std::string field_description = f->getDescription();
