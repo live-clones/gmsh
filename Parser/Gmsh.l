@@ -470,7 +470,7 @@ void skip(const char *skip, const char *until)
 
     l = l_max;
 
-    for(i  =1; i < l; i++) {
+    for(i = 1; i < l; i++) {
       chars[i] = yyinput();
       if(feof(yyin)) {
 	l = i;

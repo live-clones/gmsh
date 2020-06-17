@@ -1326,39 +1326,6 @@ void checkHighOrderTetrahedron(const char *cc, GModel *m,
       minJGlob, avg / (count ? count : 1), bad.size());
 }
 
-void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
-                             bool &CAD)
-{
-  meshOrder = -1;
-  CAD = true;
-  complete = true;
-  // The following code does not allow to determine accurately if elements
-  // are complete or not. To be more precise, we should try to find a hexahedron
-  // if order = 2+, a prism or a pyramid if order = 3+ or a tet if order = 4+
-  // and so on...
-  // But it is more likely that we want complete elements so always
-  // setting true to 'complete' variable is acceptable.
-  for(GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
-    if((*itr)->getNumMeshElements()) {
-      meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder();
-      // complete = (meshOrder <= 2) ? 1 :
-      //   (*itr)->getMeshElement(0)->getNumVolumeVertices();
-      break;
-    }
-  }
-  for(GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
-    if((*itf)->getNumMeshElements()) {
-      if(meshOrder == -1) {
-        meshOrder = (*itf)->getMeshElement(0)->getPolynomialOrder();
-        // complete = (meshOrder <= 2) ? 1 :
-        //   (*itf)->getMeshElement(0)->getNumFaceVertices();
-        // if((*itf)->geomType() == GEntity::DiscreteSurface) CAD = false;
-        break;
-      }
-    }
-  }
-}
-
 static int getOrder(GEntity *ge)
 {
   for(std::size_t i = 0; i < ge->getNumMeshElements(); i++)

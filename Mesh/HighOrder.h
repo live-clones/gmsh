@@ -18,7 +18,5 @@ void checkHighOrderTriangles(const char *cc, GModel *m,
                              std::vector<MElement *> &bad, double &minJGlob);
 void checkHighOrderTetrahedron(const char *cc, GModel *m,
                                std::vector<MElement *> &bad, double &minJGlob);
-void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
-                             bool &CAD);
 
 #endif
