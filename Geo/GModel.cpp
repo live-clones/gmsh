@@ -1676,6 +1676,43 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
   }
 }
 
+void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
+{
+  if(!onlyIfNecessary || (_elementVectorCache.empty() && _elementMapCache.empty())) {
+    Msg::Debug("Rebuilding mesh element cache");
+    _elementVectorCache.clear();
+    _elementMapCache.clear();
+    bool dense = false;
+    if(_maxElementNum == getNumMeshElements()) {
+      Msg::Debug("We have a dense element numbering in the cache");
+      dense = true;
+    }
+    else if(_maxElementNum < 10 * getNumMeshElements()) {
+      Msg::Debug(
+        "We have a fairly dense element numbering - still using cache vector");
+      dense = true;
+    }
+    std::vector<GEntity *> entities;
+    getEntities(entities);
+    if(dense) {
+      // numbering starts at 1
+      _elementVectorCache.resize(_maxElementNum + 1, (MElement *)0);
+      for(std::size_t i = 0; i < entities.size(); i++)
+        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+          MElement *e = entities[i]->getMeshElement(j);
+          _elementVectorCache[e->getNum()] = e;
+        }
+    }
+    else {
+      for(std::size_t i = 0; i < entities.size(); i++)
+        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+          MElement *e = entities[i]->getMeshElement(j);
+          _elementMapCache[e->getNum()] = e;
+        }
+    }
+  }
+}
+
 MVertex *GModel::getMeshVertexByTag(int n)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
@@ -1719,36 +1756,7 @@ MElement *GModel::getMeshElementByTag(int n)
 {
   if(_elementVectorCache.empty() && _elementMapCache.empty()) {
     Msg::Debug("Rebuilding mesh element cache");
-    _elementVectorCache.clear();
-    _elementMapCache.clear();
-    bool dense = false;
-    if(_maxElementNum == getNumMeshElements()) {
-      Msg::Debug("We have a dense element numbering in the cache");
-      dense = true;
-    }
-    else if(_maxElementNum < 10 * getNumMeshElements()) {
-      Msg::Debug(
-        "We have a fairly dense element numbering - still using cache vector");
-      dense = true;
-    }
-    std::vector<GEntity *> entities;
-    getEntities(entities);
-    if(dense) {
-      // numbering starts at 1
-      _elementVectorCache.resize(_maxElementNum + 1, (MElement *)0);
-      for(std::size_t i = 0; i < entities.size(); i++)
-        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-          MElement *e = entities[i]->getMeshElement(j);
-          _elementVectorCache[e->getNum()] = e;
-        }
-    }
-    else {
-      for(std::size_t i = 0; i < entities.size(); i++)
-        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-          MElement *e = entities[i]->getMeshElement(j);
-          _elementMapCache[e->getNum()] = e;
-        }
-    }
+    rebuildMeshElementCache();
   }
 
   if(n < (int)_elementVectorCache.size())
