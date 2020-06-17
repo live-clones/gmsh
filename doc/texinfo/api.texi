@@ -1089,6 +1089,18 @@ Rebuild the node cache.
 -
 @end table
 
+@item gmsh/model/mesh/rebuildElementCache
+Rebuild the element cache.
+
+@table @asis
+@item Input:
+@code{onlyIfNecessary = True}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item gmsh/model/mesh/getNodesForPhysicalGroup
 Get the nodes from all the elements belonging to the physical group of dimension
 @code{dim} and tag @code{tag}. @code{nodeTags} contains the node tags;
@@ -1508,12 +1520,7 @@ as it will return a vector of zeros.
 @end table
 
 @item gmsh/model/mesh/getBasisFunctionsOrientationForElement
-Get the orientation index of the elements of type @code{elementType} in the
-entity of tag @code{tag}. The arguments have the same meaning as in
-@code{getBasisFunctions}. @code{basisFunctionsOrientation} is a vector giving
-for each element the orientation index in the values returned by
-@code{getBasisFunctions}. For Lagrange basis functions the call is superfluous
-as it will return a vector of zeros.
+Get the orientation of a single element @code{elementTag}.
 
 @table @asis
 @item Input:
@@ -1596,12 +1603,7 @@ experimental feature and will probably change in a future release.
 @end table
 
 @item gmsh/model/mesh/getKeysForElement
-Generate the @code{keys} for the elements of type @code{elementType} in the
-entity of tag @code{tag}, for the @code{functionSpaceType} function space. Each
-key uniquely identifies a basis function in the function space. If
-@code{returnCoord} is set, the @code{coord} vector contains the x, y, z
-coordinates locating basis functions for sorting purposes. Warning: this is an
-experimental feature and will probably change in a future release.
+Get the keys for a single element @code{elementTag}.
 
 @table @asis
 @item Input:

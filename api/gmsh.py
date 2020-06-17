@@ -1751,6 +1751,22 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def rebuildElementCache(onlyIfNecessary=True):
+            """
+            gmsh.model.mesh.rebuildElementCache(onlyIfNecessary=True)
+
+            Rebuild the element cache.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRebuildElementCache(
+                c_int(bool(onlyIfNecessary)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshRebuildElementCache returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def getNodesForPhysicalGroup(dim, tag):
             """
             gmsh.model.mesh.getNodesForPhysicalGroup(dim, tag)
@@ -2412,12 +2428,7 @@ class model:
             """
             gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
 
-            Get the orientation index of the elements of type `elementType' in the
-            entity of tag `tag'. The arguments have the same meaning as in
-            `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
-            each element the orientation index in the values returned by
-            `getBasisFunctions'. For Lagrange basis functions the call is superfluous
-            as it will return a vector of zeros.
+            Get the orientation of a single element `elementTag'.
 
             Return `basisFunctionsOrientation'.
             """
@@ -2541,12 +2552,7 @@ class model:
             """
             gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord=True)
 
-            Generate the `keys' for the elements of type `elementType' in the entity of
-            tag `tag', for the `functionSpaceType' function space. Each key uniquely
-            identifies a basis function in the function space. If `returnCoord' is set,
-            the `coord' vector contains the x, y, z coordinates locating basis
-            functions for sorting purposes. Warning: this is an experimental feature
-            and will probably change in a future release.
+            Get the keys for a single element `elementTag'.
 
             Return `keys', `coord'.
             """

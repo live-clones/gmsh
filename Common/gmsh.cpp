@@ -1357,6 +1357,12 @@ GMSH_API void gmsh::model::mesh::rebuildNodeCache(bool onlyIfNecessary)
   GModel::current()->rebuildMeshVertexCache(onlyIfNecessary);
 }
 
+GMSH_API void gmsh::model::mesh::rebuildElementCache(bool onlyIfNecessary)
+{
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->rebuildMeshElementCache(onlyIfNecessary);
+}
+
 GMSH_API void
 gmsh::model::mesh::getNodesForPhysicalGroup(const int dim, const int tag,
                                             std::vector<std::size_t> &nodeTags,
@@ -2370,7 +2376,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       case TYPE_PNT: {
         basis = new HierarchicalBasisH1Point();
       } break;
-      default: Msg::Error("Unknown familyType "); throw 2;
+      default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
       }
     }
     else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
@@ -2393,7 +2399,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       case TYPE_LIN: {
         basis = new HierarchicalBasisHcurlLine(fsOrder);
       } break;
-      default: Msg::Error("Unknown familyType "); throw 2;
+      default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
       }
     }
     else {
@@ -2473,7 +2479,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     case TYPE_PNT: {
       element = new MPoint(vertices);
     } break;
-    default: Msg::Error("Unknown familyType "); throw 2;
+    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
     }
 
     switch(numComponents) {
@@ -3076,7 +3082,7 @@ GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
   case TYPE_LIN: {
     basis = new HierarchicalBasisHcurlLine(basisOrder);
   } break;
-  default: Msg::Error("Unknown familyType "); throw 2;
+  default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
   }
   // compute the number of Element :
   std::size_t numElements = 0;
@@ -3151,7 +3157,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
     case TYPE_PNT: {
       basis = new HierarchicalBasisH1Point();
     } break;
-    default: Msg::Error("Unknown familyType "); throw 2;
+    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
     }
   }
   else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
@@ -3174,6 +3180,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(order);
     } break;
+    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
     }
   }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
@@ -3395,7 +3402,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     case TYPE_PNT: {
       basis = new HierarchicalBasisH1Point();
     } break;
-    default: Msg::Error("Unknown familyType "); throw 2;
+    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
     }
   }
   else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
@@ -3418,6 +3425,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(order);
     } break;
+    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
     }
   }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
@@ -3592,7 +3600,7 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
     case TYPE_PNT: {
       basis = new HierarchicalBasisH1Point();
     } break;
-    default: Msg::Error("Unknown familyType "); throw 2;
+    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
     }
     int vSize = basis->getnVertexFunction();
     int bSize = basis->getnBubbleFunction();
@@ -3623,7 +3631,7 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(basisOrder);
     } break;
-    default: Msg::Error("Unknown familyType "); throw 2;
+    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
     }
     int vSize = basis->getnVertexFunction();
     int bSize = basis->getnBubbleFunction();
@@ -3692,7 +3700,7 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     case TYPE_PNT: {
       basis = new HierarchicalBasisH1Point();
     } break;
-    default: Msg::Error("Unknown familyType "); throw 3;
+    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 3;
     }
   }
   else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
@@ -3715,7 +3723,7 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(basisOrder);
     } break;
-    default: Msg::Error("Unknown familyType "); throw 3;
+    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 3;
     }
   }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||

@@ -948,6 +948,17 @@ GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary, int * ier
   }
 }
 
+GMSH_API void gmshModelMeshRebuildElementCache(const int onlyIfNecessary, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::rebuildElementCache(onlyIfNecessary);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim, const int tag, size_t ** nodeTags, size_t * nodeTags_n, double ** coord, size_t * coord_n, int * ierr)
 {
   if(ierr) *ierr = 0;

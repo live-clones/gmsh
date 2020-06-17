@@ -539,6 +539,10 @@ public:
   // recompute _vertexVectorCache if there is a dense vertex numbering or
   // _vertexMapCache if not.
   void rebuildMeshVertexCache(bool onlyIfNecessary = false);
+  
+  // recompute _elementVectorCache if there is a dense element numbering or
+  // _elementMapCache if not.
+  void rebuildMeshElementCache(bool onlyIfNecessary = false);
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
