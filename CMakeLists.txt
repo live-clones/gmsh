@@ -319,7 +319,7 @@ if(ENABLE_OPENMP)
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/local/lib/libomp -lomp")
   elseif(APPLE AND EXISTS "/usr/local/lib/libomp.dylib")
     # official Apple compiler with homebrew's libomp
-    set_config_option(HAVE_OPENMP "OpenMP[usr/local]")
+    set_config_option(HAVE_OPENMP "OpenMP[Homebrew]")
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
     set(CMAKE_CXX_FLAGS
