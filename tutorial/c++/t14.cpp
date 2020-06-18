@@ -61,21 +61,22 @@ int main(int argc, char **argv)
   gmsh::model::geo::addCurveLoop({11, 12, 9, 10}, 14);
   gmsh::model::geo::addPlaneSurface({13, 14}, 15);
 
-  std::vector<std::pair<int, int> > ext_tags;
-  gmsh::model::geo::extrude({{2, 15}}, 0, 0, h, ext_tags);
+  std::vector<std::pair<int, int> > e;
+  gmsh::model::geo::extrude({{2, 15}}, 0, 0, h, e);
 
   // Create physical groups, which are used to define the domain of the
   // (co)homology computation and the subdomain of the relative (co)homology
   // computation.
 
   // Whole domain
-  int domain_tag = 1;
+  int domain_tag = e[1].second;
   int domain_physical_tag = 1001;
   gmsh::model::addPhysicalGroup(3, {domain_tag}, domain_physical_tag);
   gmsh::model::setPhysicalName(3, domain_physical_tag, "Whole domain");
 
   // Four "terminals" of the model
-  std::vector<int> terminal_tags = {36, 44, 52, 60};
+  std::vector<int> terminal_tags = {e[3].second, e[5].second,
+                                    e[7].second, e[9].second};
   int terminals_physical_tag = 2001;
   gmsh::model::addPhysicalGroup(2, terminal_tags, terminals_physical_tag);
   gmsh::model::setPhysicalName(2, terminals_physical_tag, "Terminals");
@@ -130,6 +131,8 @@ int main(int argc, char **argv)
 
   // Generate the mesh and perform the requested homology computations
   gmsh::model::mesh::generate(3);
+
+  gmsh::write("t14.msh");
 
   // For more information, see M. Pellikka, S. Suuriniemi, L. Kettunen and
   // C. Geuzaine. Homology and cohomology computation in finite element

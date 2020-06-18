@@ -32,28 +32,28 @@ Curve Loop(13) = {6, 7, 8, 1, 2, 3, 4, 5};
 Curve Loop(14) = {11, 12, 9, 10};
 Plane Surface(15) = {13, 14};
 
-Extrude {0, 0, h}{ Surface{15}; }
+e() = Extrude {0, 0, h}{ Surface{15}; };
 
 // Create physical groups, which are used to define the domain of the
 // (co)homology computation and the subdomain of the relative (co)homology
 // computation.
 
 // Whole domain
-Physical Volume(1) = {1};
+Physical Volume(1) = {e(1)};
 
 // Four "terminals" of the model
-Physical Surface(70) = {36};
-Physical Surface(71) = {44};
-Physical Surface(72) = {52};
-Physical Surface(73) = {60};
+Physical Surface(70) = {e(3)};
+Physical Surface(71) = {e(5)};
+Physical Surface(72) = {e(7)};
+Physical Surface(73) = {e(9)};
 
 // Whole domain surface
-bnd[] = Boundary{ Volume{1}; };
-Physical Surface(80) = bnd[];
+bnd() = Boundary{ Volume{e(1)}; };
+Physical Surface(80) = bnd();
 
 // Complement of the domain surface with respect to the four terminals
-bnd[] -= {36, 44, 52, 60};
-Physical Surface(75) = bnd[];
+bnd() -= {e(3), e(5), e(7), e(9)};
+Physical Surface(75) = bnd();
 
 // Find bases for relative homology spaces of the domain modulo the four
 // terminals.
