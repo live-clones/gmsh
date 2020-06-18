@@ -99,7 +99,7 @@ int main(int argc, char **argv)
   gmsh::model::addPhysicalGroup(2, boundary_tags, boundary_physical_tag);
   gmsh::model::setPhysicalName(2, boundary_physical_tag, "Boundary");
 
-  // Complement of the domain surface respect to the four terminals
+  // Complement of the domain surface with respect to the four terminals
   int complement_physical_tag = 2003;
   gmsh::model::addPhysicalGroup(2, complement_tags, complement_physical_tag);
   gmsh::model::setPhysicalName(2, complement_physical_tag, "Complement");

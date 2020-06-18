@@ -96,7 +96,7 @@ gmsh.model.addPhysicalGroup(dim=2,
                             tag=boundary_physical_tag)
 gmsh.model.setPhysicalName(dim=2, tag=boundary_physical_tag, name="Boundary")
 
-# Complement of the domain surface respect to the four terminals
+# Complement of the domain surface with respect to the four terminals
 complement_physical_tag = 2003
 gmsh.model.addPhysicalGroup(dim=2,
                             tags=complement_tags,

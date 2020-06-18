@@ -51,7 +51,7 @@ Physical Surface(73) = {60};
 bnd[] = Boundary{ Volume{1}; };
 Physical Surface(80) = bnd[];
 
-// Complement of the domain surface respect to the four terminals
+// Complement of the domain surface with respect to the four terminals
 bnd[] -= {36, 44, 52, 60};
 Physical Surface(75) = bnd[];
 
