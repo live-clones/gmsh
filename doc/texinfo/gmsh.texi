@@ -2710,7 +2710,7 @@ If your version of Gmsh is compiled with OpenMP support
 performed in parallel:
 @itemize
 @item
-1D and 2D meshing is parallelized using a coarse-grain approach,
+1D and 2D meshing is parallelized using a coarse-grained approach,
 i.e. curves (resp. surfaces) are each meshed sequentially, but several
 curves (resp. surfaces) can be meshed at the same time.
 @item
@@ -2744,10 +2744,11 @@ those elements that belong to at least one physical group. (Different
 mesh file formats treat physical groups in slightly different ways,
 depending on their capability to define groups.)
 
-To save all mesh element wether or not physical groups are defined, use
- the @code{Mesh.SaveAll} option (@pxref{Mesh options list}) or specify
- @code{-save_all} on the command line. In some formats (e.g. MSH2),
- setting @code{Mesh.SaveAll=1} discards all physical group definitions.
+To save all mesh elements wether or not physical groups are defined, use
+the @code{Mesh.SaveAll} option (@pxref{Mesh options list}) or specify
+@code{-save_all} on the command line. In some formats (e.g. MSH2),
+setting @code{Mesh.SaveAll=1} will however discard all physical group
+definitions.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands
