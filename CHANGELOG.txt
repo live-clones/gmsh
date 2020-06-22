@@ -1,12 +1,12 @@
-4.6.0 (Work-in-progress): new options to only generate initial 2D or 3D meshes
+4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
 (without node insertion), and to only mesh non-meshed entities; added ability to
 only remesh parts of discrete models; added support for mesh size fields and
 embedded entities in HXT; improved reparametrization and partitioning code; new
 OCC API functions to reduce the number of synchronizations for complex models;
 new OCC spline surface interfaces; new functions and options to control the
 first tag of entities, nodes and elements; fixed duplicated entities in STEP
-output; improved mesh subdivision pipeline; MED output now preserves node and
-element tags; small bug fixes.
+output; improved mesh subdivision and high-order pipeline; MED output now
+preserves node and element tags; small bug fixes.
 
 * Incompatible API changes: new optional arguments to mesh/clear,
   mesh/createTopology, mesh/createGeometry, occ/addThruSections,

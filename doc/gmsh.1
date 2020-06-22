@@ -1,4 +1,4 @@
-.TH Gmsh 1 "21 December 2019" "4.5" "Gmsh Manual Pages"
+.TH Gmsh 1 "22 June 2020" "4.6" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
 .SH NAME
@@ -16,8 +16,10 @@ visualization capabilities.
 .PP
 \fIGmsh\fR is built around four modules: geometry, mesh, solver and
 post-processing. The specification of any input to these modules is
-done either interactively using the graphical user interface or in
-ASCII text files using \fIGmsh\fR's own scripting language.
+done either interactively using the graphical user interface, in
+ASCII text files using \fIGmsh\fR's own scripting language (\fI.geo\fR
+files), or using the C++, C, Python or Julia Application Programming
+Interface (API).
 .\" ********************************************************************
 .SH GEOMETRY OPTIONS
 .TP 4
@@ -154,7 +156,7 @@ Christophe Geuzaine (cgeuzaine@uliege.be) and Jean-Francois Remacle
 .SH SEE ALSO
 .BR getdp (1),
 .br
-Gmsh examples (\fI/usr/share/doc/gmsh-*/\fR),
+Gmsh examples (\fI/usr/share/doc/gmsh\fR),
 .br
 Gmsh homepage (\fIhttps://gmsh.info\fR).
 .PP
