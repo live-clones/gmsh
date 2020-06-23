@@ -241,6 +241,11 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     return 0;
   }
 
+  int iPoint = getMaxElementaryNumber(0) + 1;
+  int iCurve = getMaxElementaryNumber(1) + 1;
+  int iSurface = getMaxElementaryNumber(2) + 1;
+  int iVolume = getMaxElementaryNumber(3) + 1;
+
   std::map<int, std::vector<MElement *> > elements[8];
 
   if(haveCells) {
@@ -305,31 +310,31 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
           }
         }
         switch(type) {
-        case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
+        case 1: elements[0][iPoint++].push_back(new MPoint(cells[i])); break;
         // first order elements
-        case 3: elements[1][1].push_back(new MLine(cells[i])); break;
-        case 5: elements[2][1].push_back(new MTriangle(cells[i])); break;
-        case 9: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
-        case 10: elements[4][1].push_back(new MTetrahedron(cells[i])); break;
-        case 12: elements[5][1].push_back(new MHexahedron(cells[i])); break;
-        case 13: elements[6][1].push_back(new MPrism(cells[i])); break;
-        case 14: elements[7][1].push_back(new MPyramid(cells[i])); break;
+        case 3: elements[1][iCurve].push_back(new MLine(cells[i])); break;
+        case 5: elements[2][iSurface].push_back(new MTriangle(cells[i])); break;
+        case 9: elements[3][iSurface].push_back(new MQuadrangle(cells[i])); break;
+        case 10: elements[4][iVolume].push_back(new MTetrahedron(cells[i])); break;
+        case 12: elements[5][iVolume].push_back(new MHexahedron(cells[i])); break;
+        case 13: elements[6][iVolume].push_back(new MPrism(cells[i])); break;
+        case 14: elements[7][iVolume].push_back(new MPyramid(cells[i])); break;
         // second order elements
-        case 21: elements[1][1].push_back(new MLine3(cells[i])); break;
-        case 22: elements[2][1].push_back(new MTriangle6(cells[i])); break;
-        case 23: elements[3][1].push_back(new MQuadrangle8(cells[i])); break;
-        case 28: elements[3][1].push_back(new MQuadrangle9(cells[i])); break;
-        case 24: elements[4][1].push_back(new MTetrahedron10(
+        case 21: elements[1][iCurve].push_back(new MLine3(cells[i])); break;
+        case 22: elements[2][iSurface].push_back(new MTriangle6(cells[i])); break;
+        case 23: elements[3][iSurface].push_back(new MQuadrangle8(cells[i])); break;
+        case 28: elements[3][iSurface].push_back(new MQuadrangle9(cells[i])); break;
+        case 24: elements[4][iVolume].push_back(new MTetrahedron10(
            cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
            cells[i][5], cells[i][6], cells[i][7], cells[i][9], cells[i][8]));
           break;
-        case 25: elements[5][1].push_back(new MHexahedron20(
+        case 25: elements[5][iVolume].push_back(new MHexahedron20(
            cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
            cells[i][5], cells[i][6], cells[i][7], cells[i][8], cells[i][11],
            cells[i][13], cells[i][9], cells[i][16], cells[i][18], cells[i][19],
            cells[i][17], cells[i][10], cells[i][12], cells[i][14], cells[i][15]));
           break;
-        case 29: elements[5][1].push_back(new MHexahedron27(
+        case 29: elements[5][iVolume].push_back(new MHexahedron27(
            cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
            cells[i][5], cells[i][6], cells[i][7], cells[i][8], cells[i][11],
            cells[i][13], cells[i][9], cells[i][16], cells[i][18], cells[i][19],
@@ -337,12 +342,12 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
            cells[i][22], cells[i][23], cells[i][21], cells[i][24], cells[i][20],
            cells[i][25], cells[i][26]));
           break;
-        case 26: elements[6][1].push_back(new MPrism15(
+        case 26: elements[6][iVolume].push_back(new MPrism15(
            cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
            cells[i][5], cells[i][6], cells[i][9], cells[i][7], cells[i][12],
            cells[i][14], cells[i][13], cells[i][8], cells[i][10], cells[i][11]));
           break;
-        case 32: elements[6][1].push_back(new MPrism18(
+        case 32: elements[6][iVolume].push_back(new MPrism18(
            cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
            cells[i][5], cells[i][6], cells[i][9], cells[i][7], cells[i][12],
            cells[i][14], cells[i][13], cells[i][8], cells[i][10], cells[i][11],
@@ -356,10 +361,10 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
       for(std::size_t i = 0; i < cells.size(); i++) {
         int nbNodes = (int)cells[i].size();
         switch(nbNodes) {
-        case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
-        case 2: elements[1][1].push_back(new MLine(cells[i])); break;
-        case 3: elements[2][1].push_back(new MTriangle(cells[i])); break;
-        case 4: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
+        case 1: elements[0][iPoint++].push_back(new MPoint(cells[i])); break;
+        case 2: elements[1][iCurve].push_back(new MLine(cells[i])); break;
+        case 3: elements[2][iSurface].push_back(new MTriangle(cells[i])); break;
+        case 4: elements[3][iSurface].push_back(new MQuadrangle(cells[i])); break;
         default:
           Msg::Error("Unknown type of mesh element with %d nodes", nbNodes);
           break;
@@ -371,9 +376,8 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     if(!binary) {
       int v0, v1;
       char line[100000], *p, *pEnd, *pEnd2;
-      int iLine = 1;
       for(int k = 0; k < numElements; k++) {
-        physicals[1][iLine][1] = "centerline";
+        physicals[1][iCurve][1] = "centerline";
         if(!fgets(line, sizeof(line), fp)) {
           fclose(fp);
           return 0;
@@ -384,11 +388,11 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
         while(1) {
           v1 = strtol(p, &pEnd, 10);
           if(p == pEnd) break;
-          elements[1][iLine].push_back(new MLine(vertices[v0], vertices[v1]));
+          elements[1][iCurve].push_back(new MLine(vertices[v0], vertices[v1]));
           p = pEnd;
           v0 = v1;
         }
-        iLine++;
+        iCurve++;
       }
     }
     else {
