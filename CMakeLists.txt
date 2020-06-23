@@ -136,9 +136,9 @@ if(ENABLE_PRIVATE_API)
           "(i.e. all the internal headers) and ship the stable public API instead "
           "(i.e. only the headers and modules in gmsh/api).")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h
-    Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
-    contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
-    contrib/MeshQualityOptimizer/*.h)
+    Post/*.h Plugin/*.h Graphics/*.h contrib/kbipack/*.h
+    contrib/DiscreteIntegration/*.h contrib/HighOrderMeshOptimizer/*.h
+    contrib/MeshOptimizer/*.h contrib/MeshQualityOptimizer/*.h)
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
       ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h ${HEADERS})
   get_property(IAMCHILD DIRECTORY PROPERTY PARENT_DIRECTORY)
